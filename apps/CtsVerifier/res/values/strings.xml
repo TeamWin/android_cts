@@ -1850,6 +1850,37 @@
     </string>
     <string name="its_test_progress">ITS test progress will be shown here.</string>
 
+    <!-- Strings for the Camera Webcam test activity -->
+    <string name="camera_webcam_test">Camera Webcam Test</string>
+    <string name="camera_webcam_test_info">
+        This test verifies the FPS rates the device advertises as a webcam. It also
+        includes manual verification on the functionality of the webcam stream.
+
+        \n\nInstructions for Test Run:
+        \n1. Connect your Android device to a computer with adb installed via a USB cable.
+        \n\n2. Setup the Camera Webcam test environment by following the setup instructions in the
+        README file found in the DeviceAsWebcam directory
+        (packages/services/DeviceAsWebcam/tests).
+
+        \n\n3. Ensure the camera is aimed at a bright scene to get the most accurate FPS reading.
+        \n\n4. Run the test script.
+        (python run_webcam_test.py -c config.yml).
+        Once the test has been run, the \'Yes\' and \'No\' buttons will be enabled. Confirm if the frames
+        from the webcam service were okay. Then, click \'Done\'. The \'PASS\' will be enabled
+        if the script results passed and the frames contained no issues.
+    </string>
+
+    <string name="camera_webcam_frames_pass">Yes</string>
+    <string name="camera_webcam_frames_fail">No</string>
+    <string name="camera_webcam_done_button">Done</string>
+    <string name="camera_webcam_start_text">Run the test script to begin.</string>
+    <string name="camera_webcam_confirm_frames_text">Webcam testing complete. Confirm if the frames from webcam stream were okay.</string>
+    <string name="camera_webcam_results_pass_frames_fail_text">Script results passed but frames contained errors. Test failed. Click Done to complete.</string>
+    <string name="camera_webcam_results_pass_frames_pass_text">Script results passed and frames were normal. Test passed Click Done to complete.</string>
+    <string name="camera_webcam_results_fail_frames_pass_text">Script results failed but frames were normal. Test failed. Click Done to complete.</string>
+    <string name="camera_webcam_results_fail_frames_fail_text">Script results failed and frames contained errors. Test failed. Click Done to complete.</string>
+    <string name="camera_webcam_not_supported_text">Webcam feature not supported. Test skipped. Click Done to complete.</string>
+
     <!-- Strings for the Camera Flashlight test activity -->
     <string name="camera_flashlight_test">Camera Flashlight</string>
     <string name="camera_flashlight_info">

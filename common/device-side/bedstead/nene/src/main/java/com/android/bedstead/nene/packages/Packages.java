@@ -19,6 +19,7 @@ package com.android.bedstead.nene.packages;
 import static android.Manifest.permission.INSTALL_PACKAGES;
 import static android.Manifest.permission.INTERACT_ACROSS_USERS;
 import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
+import static android.content.pm.PackageInstaller.EXTRA_PACKAGE_NAME;
 import static android.content.pm.PackageInstaller.EXTRA_STATUS;
 import static android.content.pm.PackageInstaller.EXTRA_STATUS_MESSAGE;
 import static android.content.pm.PackageInstaller.STATUS_FAILURE;
@@ -28,6 +29,7 @@ import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.R;
 
 import static com.android.bedstead.nene.permissions.CommonPermissions.INSTALL_TEST_ONLY_PACKAGE;
+import static com.android.bedstead.nene.permissions.CommonPermissions.USE_SYSTEM_DATA_LOADERS;
 import static com.android.compatibility.common.util.FileUtils.readInputStreamFully;
 
 import android.content.ComponentName;
@@ -252,9 +254,9 @@ public final class Packages {
             throw new NullPointerException();
         }
 
-//        if (Versions.meetsMinimumSdkVersionRequirement(Build.VERSION_CODES.S)) {
-//            return install(user, loadBytes(apkFile));
-//        }
+        if (Versions.meetsMinimumSdkVersionRequirement(Build.VERSION_CODES.S)) {
+            return install(user, loadBytes(apkFile));
+        }
 
         if (!user.exists()) {
             throw new NeneException("Packages can not be installed in non-existing users "
@@ -389,74 +391,79 @@ public final class Packages {
                 return null;
             }
 
-//            if (!Versions.meetsMinimumSdkVersionRequirement(Build.VERSION_CODES.S)) {
+            if (!Versions.meetsMinimumSdkVersionRequirement(Build.VERSION_CODES.S)) {
                 // Until we can skip verification without adb we'll fall back to adb
                 return installPreS(user, apkFile);
-//            }
-        }
+            }
 
-//        // This is not inside the try because if the install is unsuccessful we don't want to await
-//        // the broadcast
-//        BlockingBroadcastReceiver broadcastReceiver =
-//                registerPackageInstalledBroadcastReceiver(user);
-//
-//        try  {
-//            PackageManager packageManager =
-//                    TestApis.context().androidContextAsUser(user).getPackageManager();
-//            PackageInstaller packageInstaller = packageManager.getPackageInstaller();
-//
-//            int sessionId;
-//            try (PermissionContext p = TestApis.permissions().withPermission(
-//                    INTERACT_ACROSS_USERS_FULL, INTERACT_ACROSS_USERS, INSTALL_TEST_ONLY_PACKAGE)) {
-//                PackageInstaller.SessionParams sessionParams = new PackageInstaller.SessionParams(
-//                        MODE_FULL_INSTALL);
-//                sessionParams.setInstallFlagAllowTest();
-//                sessionId = packageInstaller.createSession(sessionParams);
-//            }
-//
-//            PackageInstaller.Session session = packageInstaller.openSession(sessionId);
-//            try (OutputStream out =
-//                         session.openWrite("NAME", 0, apkFile.length)) {
-//                out.write(apkFile);
-//                session.fsync(out);
-//            }
-//
-//            try (BlockingIntentSender intentSender = BlockingIntentSender.create()) {
-//                try (PermissionContext p =
-//                             TestApis.permissions().withPermission(
-//                                     INSTALL_PACKAGES, INSTALL_TEST_ONLY_PACKAGE)) {
-//                    session.commit(intentSender.intentSender());
-//                    session.close();
-//
-//                    Intent intent = intentSender.await();
-//
-//                    if (intent == null) {
-//                        throw new NeneException(
-//                                "Did not receive intent from package installer session when"
-//                                        + " installing bytes on user " + user
-//                                        + ". Relevant logcat: "
-//                                        + TestApis.logcat().dump(
-//                                                l -> l.contains("PackageInstaller")));
-//                    }
-//
-//                    if (intent.getIntExtra(EXTRA_STATUS, /* defaultValue= */ STATUS_FAILURE)
-//                            != STATUS_SUCCESS) {
-//                        throw new NeneException("Not successful while installing package. "
-//                                + "Got status: "
-//                                + intent.getIntExtra(
-//                                EXTRA_STATUS, /* defaultValue= */ STATUS_FAILURE)
-//                                + " extra info: " + intent.getStringExtra(EXTRA_STATUS_MESSAGE));
-//                    }
-//                }
-//            }
-//            return waitForPackageAddedBroadcast(broadcastReceiver);
-//        } catch (IOException e) {
-//            throw new NeneException("Could not install package", e);
-//        } finally {
-//            if (broadcastReceiver != null) {
-//                broadcastReceiver.unregisterQuietly();
-//            }
-//        }
+            // This is not inside the try because if the install is unsuccessful we don't want to
+            // await the broadcast
+            BlockingBroadcastReceiver broadcastReceiver =
+                    registerPackageInstalledBroadcastReceiver(user);
+
+            try {
+                PackageManager packageManager =
+                        TestApis.context().androidContextAsUser(user).getPackageManager();
+                PackageInstaller packageInstaller = packageManager.getPackageInstaller();
+
+                int sessionId;
+                try (PermissionContext p = TestApis.permissions().withPermission(
+                        INTERACT_ACROSS_USERS_FULL, INTERACT_ACROSS_USERS,
+                        INSTALL_TEST_ONLY_PACKAGE, USE_SYSTEM_DATA_LOADERS)) {
+                    PackageInstaller.SessionParams sessionParams =
+                            new PackageInstaller.SessionParams(
+                                    MODE_FULL_INSTALL);
+                    sessionParams.setInstallFlagAllowTest();
+                    sessionId = packageInstaller.createSession(sessionParams);
+                }
+
+                PackageInstaller.Session session = packageInstaller.openSession(sessionId);
+                try (OutputStream out =
+                             session.openWrite("NAME", 0, apkFile.length)) {
+                    out.write(apkFile);
+                    session.fsync(out);
+                }
+
+                try (BlockingIntentSender intentSender = BlockingIntentSender.create()) {
+                    try (PermissionContext p =
+                                 TestApis.permissions().withPermission(
+                                         INSTALL_PACKAGES, INSTALL_TEST_ONLY_PACKAGE)) {
+                        session.commit(intentSender.intentSender());
+                        session.close();
+
+                        Intent intent = intentSender.await();
+
+                        if (intent == null) {
+                            throw new NeneException(
+                                    "Did not receive intent from package installer session when"
+                                            + " installing bytes on user " + user
+                                            + ". Relevant logcat: "
+                                            + TestApis.logcat().dump(
+                                                    l -> l.contains("PackageInstaller")));
+                        }
+
+                        if (intent.getIntExtra(EXTRA_STATUS, /* defaultValue= */ STATUS_FAILURE)
+                                != STATUS_SUCCESS) {
+                            throw new NeneException("Not successful while installing package. "
+                                    + "Got status: "
+                                    + intent.getIntExtra(
+                                    EXTRA_STATUS, /* defaultValue= */ STATUS_FAILURE)
+                                    + " extra info: " + intent.getStringExtra(
+                                    EXTRA_STATUS_MESSAGE));
+                        }
+
+                        String installedPackageName = intent.getStringExtra(EXTRA_PACKAGE_NAME);
+                        return TestApis.packages().find(installedPackageName);
+                    }
+                }
+            } catch (IOException e) {
+                throw new NeneException("Could not install package", e);
+            } finally {
+                if (broadcastReceiver != null) {
+                    broadcastReceiver.unregisterQuietly();
+                }
+            }
+        }
     }
 
     @Nullable

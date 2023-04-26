@@ -1098,6 +1098,7 @@ def run_tests(args):
 
     try:
         for i, state in enumerate(states):
+            print(state.name())
             debug(args, "[Test] Running tests for " + state.name())
             if needs_to_enter_state:
                 state.enter(device_state)

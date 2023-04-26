@@ -269,7 +269,6 @@ public final class BluetoothTest {
     @EnsureHasNoDpc
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.os.UserManager#DISALLOW_BLUETOOTH_SHARING")
-    @RequireNotHeadlessSystemUserMode(reason = "Not working on headless TODO: Create bug")
     public void newManagedProfile_disallowBluetoothSharingIsSet() {
         try (RemoteDpc dpc = RemoteDpc.createWorkProfile()) {
             assertThat(TestApis.devicePolicy().userRestrictions(dpc.user())
@@ -472,7 +471,7 @@ public final class BluetoothTest {
     @Test
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.os.UserManager#DISALLOW_BLUETOOTH")
-    @RequireNotHeadlessSystemUserMode(reason = "b/276405672")
+    @RequireNotHeadlessSystemUserMode(reason = "b/276405672 bluetooth restriction not enforced on secondary users")
     public void share_disallowBluetoothRestrictionIsSet_canNotShare() {
         Poll.forValue("Opp Launcher Component Enabled",
                 () -> TestApis.packages().activity(OPP_LAUNCHER_COMPONENT)

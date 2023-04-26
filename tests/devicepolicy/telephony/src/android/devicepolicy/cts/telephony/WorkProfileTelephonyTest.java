@@ -97,10 +97,11 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 @RunWith(BedsteadJUnit4.class)
-public class WorkProfileTelephonyTest {
-    @ClassRule
-    @Rule
+public final class WorkProfileTelephonyTest {
+
+    @ClassRule @Rule
     public static final DeviceState sDeviceState = new DeviceState();
+
     private static final TestApp sSmsApp =
             sDeviceState.testApps().query().whereActivities().contains(
                     activity().where().intentFilters().contains(

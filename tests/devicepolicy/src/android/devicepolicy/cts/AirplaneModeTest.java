@@ -16,6 +16,8 @@
 
 package android.devicepolicy.cts;
 
+import static android.provider.Settings.Global.AIRPLANE_MODE_ON;
+
 import static com.android.bedstead.nene.userrestrictions.CommonUserRestrictions.DISALLOW_AIRPLANE_MODE;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -137,10 +139,24 @@ public final class AirplaneModeTest {
     @EnsureDoesNotHaveUserRestriction(DISALLOW_AIRPLANE_MODE)
     @Test
     @Postsubmit(reason = "new test")
+    @ApiTest(apis = "android.os.UserManager#DISALLOW_AIRPLANE_MODE")
+    public void disallowAirplaneModeIsNotSet_canTurnOnAirplaneMode() throws Exception {
+        try {
+            TestApis.settings().global().putInt(AIRPLANE_MODE_ON, 1);
+
+            assertThat(TestApis.settings().global().getInt(AIRPLANE_MODE_ON)).isEqualTo(1);
+        } finally {
+            TestApis.settings().global().putInt(AIRPLANE_MODE_ON, 0);
+        }
+    }
+
+    @EnsureDoesNotHaveUserRestriction(DISALLOW_AIRPLANE_MODE)
+    @Test
+    @Postsubmit(reason = "new test")
     @Interactive
     @ApiTest(apis = "android.os.UserManager#DISALLOW_AIRPLANE_MODE")
     @NotFullyAutomated(reason = "CanYouTurnOnAirplaneModeStep") // TODO: Automate
-    public void disallowAirplaneModeIsNotSet_canTurnOnAirplaneMode() throws Exception {
+    public void disallowAirplaneModeIsNotSet_canTurnOnAirplaneModeInUi() throws Exception {
         Step.execute(NavigateToPersonalNetworkSettingsStep.class);
 
         assertThat(Step.execute(CanYouTurnOnAirplaneModeStep.class)).isTrue();
@@ -149,10 +165,25 @@ public final class AirplaneModeTest {
     @EnsureHasUserRestriction(DISALLOW_AIRPLANE_MODE)
     @Test
     @Postsubmit(reason = "new test")
+    @ApiTest(apis = "android.os.UserManager#DISALLOW_AIRPLANE_MODE")
+    public void disallowAirplaneModeIsSet_canNotTurnOnAirplaneMode() throws Exception {
+        try {
+            TestApis.settings().global().putInt(AIRPLANE_MODE_ON, 1);
+
+            assertThat(TestApis.settings().global().getInt(AIRPLANE_MODE_ON)).isEqualTo(0);
+        } finally {
+            TestApis.settings().global().putInt(AIRPLANE_MODE_ON, 0);
+
+        }
+    }
+
+    @EnsureHasUserRestriction(DISALLOW_AIRPLANE_MODE)
+    @Test
+    @Postsubmit(reason = "new test")
     @Interactive
     @ApiTest(apis = "android.os.UserManager#DISALLOW_AIRPLANE_MODE")
     @NotFullyAutomated(reason = "CanYouTurnOnAirplaneModeStep") // TODO: Automate
-    public void disallowAirplaneModeIsSet_canNotTurnOnAirplaneMode() throws Exception {
+    public void disallowAirplaneModeIsSet_canNotTurnOnAirplaneModeInUi() throws Exception {
         Step.execute(NavigateToPersonalNetworkSettingsStep.class);
 
         assertThat(Step.execute(CanYouTurnOnAirplaneModeStep.class)).isFalse();

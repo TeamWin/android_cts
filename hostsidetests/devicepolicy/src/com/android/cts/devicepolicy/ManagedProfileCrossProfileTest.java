@@ -50,7 +50,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class ManagedProfileCrossProfileTest extends BaseManagedProfileTest {
+public final class ManagedProfileCrossProfileTest extends BaseManagedProfileTest {
     private static final String NOTIFICATION_APK = "CtsNotificationSenderApp.apk";
     private static final String WIDGET_PROVIDER_APK = "CtsWidgetProviderApp.apk";
     private static final String WIDGET_PROVIDER_PKG = "com.android.cts.widgetprovider";
@@ -375,22 +375,6 @@ public class ManagedProfileCrossProfileTest extends BaseManagedProfileTest {
         runWorkProfileDeviceTest(
                 ".CrossProfileTest",
                 "testSetCrossProfilePackages_resetsAppOpOfUnsetPackagesOnOtherProfile");
-    }
-
-    @Test
-    public void testSetCrossProfilePackages_sendsBroadcastWhenResettingAppOps() throws Exception {
-        installAllTestApps();
-        setupLogcatForTest();
-
-        runWorkProfileDeviceTest(
-                ".CrossProfileTest",
-                "testSetCrossProfilePackages_sendsBroadcastWhenResettingAppOps_noAsserts");
-        waitForBroadcastIdle();
-
-        assertTestAppsReceivedCanInteractAcrossProfilesChangedBroadcast(
-                UNSET_CROSS_PROFILE_PACKAGES);
-        assertTestAppsDidNotReceiveCanInteractAcrossProfilesChangedBroadcast(
-                MAINTAINED_CROSS_PROFILE_PACKAGES);
     }
 
     private void setupLogcatForTest() throws Exception {

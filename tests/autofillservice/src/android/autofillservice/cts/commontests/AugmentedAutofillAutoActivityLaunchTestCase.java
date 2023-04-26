@@ -119,7 +119,14 @@ public abstract class AugmentedAutofillAutoActivityLaunchTestCase
         AugmentedHelper.setAugmentedService(CtsAugmentedAutofillService.SERVICE_NAME);
 
         CtsAugmentedAutofillService service = mServiceWatcher.waitOnConnected();
-        service.waitUntilConnected();
         return service;
+    }
+
+    protected void waitUntilDisconnected() throws Exception {
+        if (mServiceWatcher != null) {
+            mServiceWatcher.waitOnDisconnected();
+            // Prevent SafeCleanerRule calls it again
+            mServiceWatcher = null;
+        }
     }
 }

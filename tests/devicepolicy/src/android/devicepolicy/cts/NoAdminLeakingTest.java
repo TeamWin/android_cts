@@ -37,6 +37,7 @@ import com.android.bedstead.harrier.policies.ScreenCaptureDisabled;
 import com.android.bedstead.testapp.TestApp;
 import com.android.bedstead.testapp.TestAppInstance;
 
+import org.junit.Assume;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -177,6 +178,8 @@ public class NoAdminLeakingTest {
     @CanSetPolicyTest(policy = ScreenCaptureDisabled.class)
     @Test
     public void testScreenCaptureDisabled_adminPolicyNotAvailableToNonAdmin() {
+        Assume.assumeFalse("Test not suitable for non-deviceadmins",
+                sDeviceState.dpc().componentName() == null);
         assertOnlyAggregatePolicyAvailableToNonAdmin(
                 (dpm, who) -> dpm.getScreenCaptureDisabled(who));
     }

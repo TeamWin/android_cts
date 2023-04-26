@@ -31,7 +31,6 @@ import androidx.annotation.ColorLong;
 import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
 
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.testng.Assert;
@@ -176,7 +175,6 @@ public class GainmapTests {
     }
 
     @Test
-    @Ignore // TODO(b/270744068): Investigate & enable
     public void gainmapToPqHardware() {
         Bitmap result = renderTestImageWithHardware(BT2020_PQ);
         assertTestImageResult(result);
@@ -189,7 +187,6 @@ public class GainmapTests {
     }
 
     @Test
-    @Ignore // TODO(b/270744068): Investigate & enable
     public void gainmapToPqPictureHardware() {
         Bitmap result = renderTestImageWithHardware(BT2020_PQ, true);
         assertTestImageResult(result);

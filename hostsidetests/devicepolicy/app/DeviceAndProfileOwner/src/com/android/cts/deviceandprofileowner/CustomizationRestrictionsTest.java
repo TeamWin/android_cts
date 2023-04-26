@@ -51,11 +51,13 @@ public class CustomizationRestrictionsTest extends BaseDeviceAdminTest {
 
         RestrictionApplicator(String restriction) {
             mRestriction = restriction;
+            mLocalDevicePolicyManager.addUserRestriction(ADMIN_RECEIVER_COMPONENT, mRestriction);
             mDevicePolicyManager.addUserRestriction(ADMIN_RECEIVER_COMPONENT, mRestriction);
         }
 
         @Override
         public void close() throws IOException {
+            mLocalDevicePolicyManager.clearUserRestriction(ADMIN_RECEIVER_COMPONENT, mRestriction);
             mDevicePolicyManager.clearUserRestriction(ADMIN_RECEIVER_COMPONENT, mRestriction);
         }
     }

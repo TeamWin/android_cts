@@ -43,7 +43,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Set of tests for Managed Profile use cases.
  */
-public class ManagedProfileTest extends BaseManagedProfileTest {
+public final class ManagedProfileTest extends BaseManagedProfileTest {
 
     private static final String DEVICE_OWNER_PKG = "com.android.cts.deviceowner";
     private static final String DEVICE_OWNER_APK = "CtsDeviceOwnerApp.apk";
@@ -376,16 +376,6 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
         } finally {
             changeUserCredential(null, TEST_PASSWORD, mProfileUserId);
         }
-    }
-
-    // TODO(b/149580605): Fix this flaky test.
-    @Test
-    @FlakyTest
-    @Ignore
-    public void testBasicCheck() throws Exception {
-        // Install SimpleApp in work profile only and check activity in it can be launched.
-        installAppAsUser(SIMPLE_APP_APK, mProfileUserId);
-        runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".BasicTest", mProfileUserId);
     }
 
     @Test

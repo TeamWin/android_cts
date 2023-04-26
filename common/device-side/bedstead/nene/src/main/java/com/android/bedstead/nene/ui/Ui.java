@@ -37,5 +37,4 @@ public final class Ui {
     public UiDevice device() {
         return UiDevice.getInstance(ShellCommandUtils.instrumentation());
     }
-
 }

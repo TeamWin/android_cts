@@ -42,13 +42,12 @@ public class PolicySetResultUtils {
                 .isEqualTo(ACTION_DEVICE_POLICY_SET_RESULT)
                 .whereIntent().extras().key(EXTRA_POLICY_KEY).stringValue()
                 .isEqualTo(policyIdentifier)
+                .whereIntent().extras().key(EXTRA_POLICY_UPDATE_RESULT_KEY).integerValue()
+                .isEqualTo(resultKey)
+                .whereIntent().extras().key(EXTRA_POLICY_TARGET_USER_ID).integerValue()
+                .isEqualTo(targetUser)
                 .poll(Duration.ofMinutes(1)).intent();
         assertThat(receivedIntent).isNotNull();
-
-        assertThat(receivedIntent.getIntExtra(EXTRA_POLICY_UPDATE_RESULT_KEY, /* default= */ -100))
-                .isEqualTo(resultKey);
-        assertThat(receivedIntent.getIntExtra(EXTRA_POLICY_TARGET_USER_ID, /* default= */ -100))
-                .isEqualTo(targetUser);
 
         // TODO: add checks on bundle values.
         for (String key : policyExtraBundle.keySet()) {

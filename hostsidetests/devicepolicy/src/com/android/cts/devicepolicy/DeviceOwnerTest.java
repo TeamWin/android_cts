@@ -46,14 +46,13 @@ import java.util.Map;
 /**
  * Set of tests for Device Owner use cases.
  */
-public class DeviceOwnerTest extends BaseDeviceOwnerTest {
+public final class DeviceOwnerTest extends BaseDeviceOwnerTest {
 
     private static final String MANAGED_PROFILE_PKG = "com.android.cts.managedprofile";
     private static final String MANAGED_PROFILE_APK = "CtsManagedProfileApp.apk";
     private static final String MANAGED_PROFILE_ADMIN =
             MANAGED_PROFILE_PKG + ".BaseManagedProfileTest$BasicAdminReceiver";
 
-    private static final String INTENT_RECEIVER_PKG = "com.android.cts.intent.receiver";
     private static final String INTENT_RECEIVER_APK = "CtsIntentReceiverApp.apk";
 
     private static final String SIMPLE_APP_APK ="CtsSimpleApp.apk";
@@ -70,9 +69,6 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
 
     private static final String ARG_NETWORK_LOGGING_BATCH_COUNT = "batchCount";
     private static final String ARG_PID_BEFORE_STOP = "pidOfSimpleapp";
-
-    private static final String LAUNCHER_TESTS_HAS_LAUNCHER_ACTIVITY_APK =
-            "CtsHasLauncherActivityApp.apk";
 
     private static final int TYPE_NONE = 0;
 
@@ -565,11 +561,6 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
     }
 
     @Test
-    public void testSetTime() throws Exception {
-        executeDeviceOwnerTest("SetTimeTest");
-    }
-
-    @Test
     public void testSetLocationEnabled() throws Exception {
         // Currently this method is only available for device owners, so on headless system user
         // it must run on system user.
@@ -714,11 +705,6 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
             getDevice().executeShellCommand(command);
             getDevice().uninstallPackage(TEST_APP_PKG);
         }
-    }
-
-    @Test
-    public void testAirplaneModeRestriction() throws Exception {
-        executeDeviceOwnerTest("AirplaneModeRestrictionTest");
     }
 
     @Test

@@ -57,6 +57,10 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Helper for common functionalities.
@@ -392,5 +396,25 @@ public final class Helper {
                 MULTIPLE_ACTIVE_HOTWORD_DETECTORS);
         Log.d(TAG, "enableMultipleHotwordDetectors = " + enableMultipleHotwordDetectors);
         return enableMultipleHotwordDetectors;
+    }
+
+    /**
+     * TODO: remove this helper when FutureSubject is available from
+     * {@link com.google.common.truth.Truth}
+     */
+    public static <V> V waitForFutureDoneAndAssertSuccessful(Future<V> future) {
+        try {
+            return future.get(WAIT_TIMEOUT_IN_MS, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException | ExecutionException | TimeoutException e) {
+            throw new AssertionError("future failed to complete", e);
+        }
+    }
+
+    /**
+     * TODO: remove this helper when FutureSubject is available from
+     * {@link com.google.common.truth.Truth}
+     */
+    public static void waitForVoidFutureAndAssertSuccessful(Future<Void> future) {
+        assertThat(waitForFutureDoneAndAssertSuccessful(future)).isNull();
     }
 }

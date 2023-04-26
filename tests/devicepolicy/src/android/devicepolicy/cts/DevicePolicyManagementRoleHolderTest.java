@@ -110,7 +110,7 @@ public class DevicePolicyManagementRoleHolderTest {
 
     @Postsubmit(reason = "new test")
     @RequireFeature(FEATURE_MANAGED_USERS)
-    @EnsureHasDeviceOwner
+    @EnsureHasDeviceOwner(isPrimary = true)
     @EnsureCanAddUser
     @EnsureHasDevicePolicyManagerRoleHolder(onUser = SYSTEM_USER)
     @Test

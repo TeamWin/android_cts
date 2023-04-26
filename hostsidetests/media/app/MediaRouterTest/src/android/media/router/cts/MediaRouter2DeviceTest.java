@@ -58,10 +58,8 @@ import com.android.compatibility.common.util.ApiTest;
 import com.google.common.truth.Truth;
 
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.function.ThrowingRunnable;
 
 import java.util.List;
 import java.util.Map;
@@ -83,6 +81,7 @@ public class MediaRouter2DeviceTest {
     private MediaRouter2Manager mRouter2Manager;
     private PowerManager.WakeLock mWakeLock;
     private Context mContext;
+    private ComponentName mPlaceholderComponentName;
 
     @Before
     public void setUp() throws Exception {
@@ -103,6 +102,7 @@ public class MediaRouter2DeviceTest {
                         "MediaRouterCts:MediaRouter2DeviceTest");
         mWakeLock.setReferenceCounted(false);
         mWakeLock.acquire();
+        mPlaceholderComponentName = new ComponentName(mContext, PlaceholderActivity.class);
     }
 
     @After
@@ -199,7 +199,7 @@ public class MediaRouter2DeviceTest {
                 new RouteListingPreference.Builder()
                         .setItems(items)
                         .setUseSystemOrdering(false)
-                        .setLinkedItemComponentName(new ComponentName(mContext, getClass()))
+                        .setLinkedItemComponentName(mPlaceholderComponentName)
                         .build();
         MediaRouter2ManagerCallbackImpl mediaRouter2ManagerCallback =
                 new MediaRouter2ManagerCallbackImpl();
@@ -225,7 +225,7 @@ public class MediaRouter2DeviceTest {
         Truth.assertThat(receivedRouteListingPreference.getItems().get(2).getSubText())
                 .isEqualTo(RouteListingPreference.Item.SUBTEXT_SUBSCRIPTION_REQUIRED);
         Truth.assertThat(receivedRouteListingPreference.getLinkedItemComponentName())
-                .isEqualTo(new ComponentName(mContext, getClass()));
+                .isEqualTo(mPlaceholderComponentName);
 
         // Check that null is also propagated correctly.
         mediaRouter2ManagerCallback.closeRouteListingPreferenceWaitingCondition();
@@ -277,20 +277,6 @@ public class MediaRouter2DeviceTest {
 
         // Check that the builder does not throw if we provide a message.
         builder.setCustomSubtextMessage("Fake disable reason message").build();
-    }
-
-    @Test
-    public void setRouteListingPreference_withIllegalComponentName_throws() {
-        ThrowingRunnable setRlpRunnable =
-                () ->
-                        mRouter2.setRouteListingPreference(
-                                new RouteListingPreference.Builder()
-                                        .setLinkedItemComponentName(
-                                                new ComponentName(
-                                                        /* package= */ "android",
-                                                        /* class= */ getClass().getCanonicalName()))
-                                        .build());
-        Assert.assertThrows(IllegalArgumentException.class, setRlpRunnable);
     }
 
     @Test

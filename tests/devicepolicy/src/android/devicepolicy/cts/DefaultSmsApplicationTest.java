@@ -18,6 +18,7 @@ package android.devicepolicy.cts;
 
 
 import static android.provider.DeviceConfig.NAMESPACE_DEVICE_POLICY_MANAGER;
+import static android.provider.DeviceConfig.NAMESPACE_TELEPHONY;
 
 import static com.android.bedstead.nene.flags.CommonFlags.DevicePolicyManager.PERMISSION_BASED_ACCESS_EXPERIMENT_FLAG;
 import static com.android.bedstead.nene.permissions.CommonPermissions.INTERACT_ACROSS_USERS;
@@ -93,6 +94,8 @@ public final class DefaultSmsApplicationTest {
     @Postsubmit(reason = "new test")
     @CanSetPolicyTest(policy = DefaultSmsApplication.class)
     @EnsureFeatureFlagEnabled(namespace = NAMESPACE_DEVICE_POLICY_MANAGER, key =
+            "enable_work_profile_telephony")
+    @EnsureFeatureFlagEnabled(namespace = NAMESPACE_TELEPHONY, key =
             "enable_work_profile_telephony")
     public void setDefaultSmsApplication_works() {
         //TODO(b/273529454): replace with EnsureTelephonyEnabledInUser annotation

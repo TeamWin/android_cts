@@ -28,7 +28,7 @@ import org.junit.Test;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-public class UserRestrictionsTest extends BaseDevicePolicyTest {
+public final class UserRestrictionsTest extends BaseDevicePolicyTest {
     private static final String DEVICE_ADMIN_PKG = "com.android.cts.deviceandprofileowner";
     private static final String DEVICE_ADMIN_APK = "CtsDeviceAndProfileOwnerApp.apk";
     private static final String ADMIN_RECEIVER_TEST_CLASS

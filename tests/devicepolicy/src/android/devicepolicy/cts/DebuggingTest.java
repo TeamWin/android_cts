@@ -33,12 +33,12 @@ import org.junit.Rule;
 import org.junit.runner.RunWith;
 
 @RunWith(BedsteadJUnit4.class)
-@Ignore // This currently can't be tested because it'll disable the test
 public final class DebuggingTest {
 
     @ClassRule @Rule
     public static final DeviceState sDeviceState = new DeviceState();
 
+    @Ignore
     @CannotSetPolicyTest(policy = DisallowDebuggingFeatures.class, includeNonDeviceAdminStates = false)
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.os.UserManager#DISALLOW_DEBUGGING_FEATURES")
