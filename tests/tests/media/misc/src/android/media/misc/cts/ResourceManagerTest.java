@@ -37,6 +37,8 @@ public class ResourceManagerTest
 
     public static final boolean FIRST_SDK_IS_AT_LEAST_U =
             ApiLevelUtil.isFirstApiAfter(Build.VERSION_CODES.TIRAMISU);
+    public static final boolean SDK_IS_AT_LEAST_U =
+            ApiLevelUtil.isAfter(Build.VERSION_CODES.TIRAMISU);
 
     public ResourceManagerTest() {
         super("android.media.misc.cts", ResourceManagerStubActivity.class);
@@ -46,8 +48,8 @@ public class ResourceManagerTest
             boolean highResolutionForActivity1,
             boolean highResolutionForActivity2) throws Exception {
         boolean highResolution = highResolutionForActivity1 || highResolutionForActivity2;
-        // Run high resolution test case only when the devices first shipped on U.
-        if (FIRST_SDK_IS_AT_LEAST_U || !highResolution) {
+        // Run high resolution test case only when the devices shipped on U.
+        if (SDK_IS_AT_LEAST_U || !highResolution) {
             Bundle extras = new Bundle();
             ResourceManagerStubActivity activity = launchActivity(
                     "android.media.misc.cts", ResourceManagerStubActivity.class, extras);
@@ -59,8 +61,8 @@ public class ResourceManagerTest
 
     private void doTestVideoCodecReclaim(boolean highResolution, String mimeType)
             throws Exception {
-        // Run high resolution test case only when the devices first shipped on U.
-        if (FIRST_SDK_IS_AT_LEAST_U || !highResolution) {
+        // Run high resolution test case only when the devices shipped on U.
+        if (SDK_IS_AT_LEAST_U || !highResolution) {
             Bundle extras = new Bundle();
             ResourceManagerStubActivity activity = launchActivity(
                     "android.media.misc.cts", ResourceManagerStubActivity.class, extras);
