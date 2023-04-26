@@ -2410,6 +2410,30 @@ public class TextViewTest {
     }
 
     @Test
+    public void testCopyAndPaste_byKey_reversed() throws Throwable {
+        initTextViewForTypingOnUiThread();
+
+        // Type "abc".
+        sendString(mTextView, "abc");
+        mActivityRule.runOnUiThread(() -> {
+            // Select "abc"
+            Selection.setSelection((Spannable) mTextView.getText(), 3, 0);
+        });
+        mInstrumentation.waitForIdleSync();
+        // Copy "abc"
+        sendKeys(mTextView, KeyEvent.KEYCODE_COPY);
+
+        mActivityRule.runOnUiThread(() -> {
+            // Set cursor between 'b' and 'c'.
+            Selection.setSelection((Spannable) mTextView.getText(), 2, 2);
+        });
+        mInstrumentation.waitForIdleSync();
+        // Paste "abc"
+        sendKeys(mTextView, KeyEvent.KEYCODE_PASTE);
+        assertEquals("ababcc", mTextView.getText().toString());
+    }
+
+    @Test
     public void testCopyAndPaste_byCtrlInsert() throws Throwable {
         // Test copy-and-paste by Ctrl-Insert and Shift-Insert.
         initTextViewForTypingOnUiThread();
