@@ -26,6 +26,8 @@ import android.media.MediaExtractor;
 import android.media.MediaFormat;
 
 import android.util.Log;
+import android.os.HandlerThread;
+import android.os.Handler;
 import android.os.Build;
 import android.platform.test.annotations.AppModeFull;
 import android.test.AndroidTestCase;
@@ -169,6 +171,121 @@ public class MediaCodecCryptoAsyncHelper {
     }
 
     /*
+     * Calling this function with a secure decoder should attempt to throw a
+     * CryptoException as clearKey video should not be using a secure codec.
+     * Since onCryptoError() is not overridden here, base implementation should
+     * by default throw an IllegalStateException. This exception is caught
+     * and queued.The exception can arrive before/after the IllegalStateException
+     * from the codec. Hence the test fails if onCryptoError() is not called within
+     * 500 ms.
+     */
+    public static void runShortClearKeyVideoWithNoCryptoErrorOverride(
+            MediaExtractor mediaExtractor,
+            Long lastBufferTimestampUs,
+            MediaCrypto crypto) throws Exception {
+        boolean secure = true;
+        OutputSurface outputSurface = null;
+        MediaCodec mediaCodec = null;
+        final LinkedBlockingQueue<Throwable>
+                threadExceptionQueue = new LinkedBlockingQueue<>();
+        final LinkedBlockingQueue<MediaCodecAsyncHelper.SlotEvent>
+                slotQueue = new LinkedBlockingQueue<>();
+        boolean isSecureDecodeASuccess = false;
+        try {
+            outputSurface = new OutputSurface(1, 1);
+            MediaFormat mediaFormat = mediaExtractor.getTrackFormat(
+                    mediaExtractor.getSampleTrackIndex());
+            String mime = mediaFormat.getString(MediaFormat.KEY_MIME);
+            String codecName = MediaCodecAsyncHelper.getDecoderForType(mime, secure);
+            Assume.assumeTrue("No Codec Found for this format", codecName != null);
+            mediaCodec = MediaCodec.createByCodecName(codecName);
+            HandlerThread callbackThread = new HandlerThread("MediaCodec callback thread");
+            callbackThread.start();
+            callbackThread.setUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
+
+                public void uncaughtException(Thread t, Throwable e) {
+                    try {
+                        if (e instanceof IllegalStateException) {
+                            threadExceptionQueue.put(e);
+                        }
+                    } catch(InterruptedException ex){/*ignore*/}
+                }
+            });
+            MediaCodec.Callback mediaCallback = new MediaCodec.Callback() {
+                @Override
+                public void onInputBufferAvailable(MediaCodec codec, int index) {
+                    slotQueue.offer(new MediaCodecAsyncHelper.SlotEvent(true, index));
+                }
+
+                @Override
+                public void onOutputBufferAvailable(
+                        MediaCodec codec, int index, MediaCodec.BufferInfo info) {
+                    slotQueue.offer(new MediaCodecAsyncHelper.SlotEvent(false, index, info));
+                }
+
+                @Override
+                public void onOutputFormatChanged(MediaCodec codec, MediaFormat format) {
+                }
+
+                @Override
+                public void onError(MediaCodec codec, CodecException e) {
+                }
+
+            };
+            mediaCodec.setCallback(mediaCallback, new Handler(callbackThread.getLooper()));
+            runComponentWithInput(
+                    mediaCodec,
+                    crypto,
+                    mediaFormat,
+                    outputSurface.getSurface(),
+                    false,  // encoder
+                    new MediaCodecCryptoAsyncHelper.ExtractorInputSlotListener
+                            .Builder()
+                            .setExtractor(mediaExtractor)
+                            .setLastBufferTimestampUs(lastBufferTimestampUs)
+                            .setContentEncrypted(crypto != null)
+                            .build(),
+                    new SurfaceOutputSlotListener(outputSurface),
+                    slotQueue);
+            // secure decoder should have failed
+            isSecureDecodeASuccess = true;
+
+        } catch (IllegalStateException e) {
+            /*
+             * expected, but do not propagate this as we need to see
+             * if an error is queued to "threadExceptionQueue"
+             */
+        } catch (CryptoException e) {
+            // this is caught only to revise error message
+            throw new IllegalStateException(
+                    "CryptoException should be thrown in callback", e);
+        } finally {
+            if (mediaCodec != null) {
+                mediaCodec.release();
+            }
+            if (mediaExtractor != null) {
+                mediaExtractor.release();
+            }
+            if (outputSurface != null) {
+                outputSurface.release();
+            }
+            if (crypto != null) {
+                crypto.release();
+            }
+        }
+
+        if (isSecureDecodeASuccess) {
+            /*secure decoders should have errored out here*/
+            throw new IllegalStateException("Secure codec should have failed");
+        }
+
+        // check to see if Base impl of onCryptoError() is called from framework
+        if (threadExceptionQueue.poll(500L, TimeUnit.MILLISECONDS) == null) {
+            throw new IllegalStateException("onCryptoError() base exception not called");
+        }
+    }
+
+    /*
      * This can be called with a secure decoder or with a normal decoder.
      * Since we have a clear key video, both decoder types are called with
      * a crypto object. Calling this function with a secure decoder
@@ -190,6 +307,8 @@ public class MediaCodecCryptoAsyncHelper {
         MediaCodec mediaCodec = null;
         final LinkedBlockingQueue<MediaCodec.CryptoInfo>
                 cryptoInfoQueue = new LinkedBlockingQueue<>();
+        final LinkedBlockingQueue<MediaCodecAsyncHelper.SlotEvent>
+                slotQueue = new LinkedBlockingQueue<>();
         try {
             outputSurface = new OutputSurface(1, 1);
             MediaFormat mediaFormat = mediaExtractor.getTrackFormat(
@@ -198,6 +317,40 @@ public class MediaCodecCryptoAsyncHelper {
             String codecName = MediaCodecAsyncHelper.getDecoderForType(mime, secure);
             Assume.assumeTrue("No Codec Found for this format", codecName != null);
             mediaCodec = MediaCodec.createByCodecName(codecName);
+            MediaCodec.Callback mediaCallback = new MediaCodec.Callback() {
+                @Override
+                public void onInputBufferAvailable(MediaCodec codec, int index) {
+                    slotQueue.offer(new MediaCodecAsyncHelper.SlotEvent(true, index));
+                }
+
+                @Override
+                public void onOutputBufferAvailable(
+                        MediaCodec codec, int index, MediaCodec.BufferInfo info) {
+                    slotQueue.offer(new MediaCodecAsyncHelper.SlotEvent(false, index, info));
+                }
+
+                @Override
+                public void onOutputFormatChanged(MediaCodec codec, MediaFormat format) {
+                }
+
+                @Override
+                public void onError(MediaCodec codec, CodecException e) {
+                }
+
+                @Override
+                public void onCryptoError(MediaCodec codec, CryptoException e) {
+                    MediaCodec.CryptoInfo info = e.getCryptoInfo();
+                    // set to indicate the callback has happened.
+                    if (info != null) {
+                        try {
+                            cryptoInfoQueue.put(info);
+                            Log.i(TAG, "MediaCodec fired Crypto Error: "
+                                    + e.getErrorCode() + " Detail: " + e.getMessage());
+                        } catch(InterruptedException ex) {/* ignore */}
+                    }
+                }
+            };
+            mediaCodec.setCallback(mediaCallback);
             runComponentWithInput(
                     mediaCodec,
                     crypto,
@@ -211,7 +364,7 @@ public class MediaCodecCryptoAsyncHelper {
                             .setContentEncrypted(crypto != null)
                             .build(),
                     new SurfaceOutputSlotListener(outputSurface),
-                    cryptoInfoQueue);
+                    slotQueue);
             if (secure) {
                 throw new IllegalStateException("Secure codec should have failed");
             }
@@ -251,44 +404,8 @@ public class MediaCodecCryptoAsyncHelper {
             boolean encoder,
             MediaCodecAsyncHelper.InputSlotListener inputListener,
             MediaCodecAsyncHelper.OutputSlotListener outputListener,
-            LinkedBlockingQueue<MediaCodec.CryptoInfo> cryptoInfoQueue)
+            LinkedBlockingQueue<MediaCodecAsyncHelper.SlotEvent> slotQueue)
             throws InterruptedException, Exception {
-        final LinkedBlockingQueue<MediaCodecAsyncHelper.SlotEvent>
-                queue = new LinkedBlockingQueue<>();
-        mediaCodec.setCallback(new MediaCodec.Callback() {
-            @Override
-            public void onInputBufferAvailable(MediaCodec codec, int index) {
-                queue.offer(new MediaCodecAsyncHelper.SlotEvent(true, index));
-            }
-
-            @Override
-            public void onOutputBufferAvailable(
-                    MediaCodec codec, int index, MediaCodec.BufferInfo info) {
-                queue.offer(new MediaCodecAsyncHelper.SlotEvent(false, index, info));
-            }
-
-            @Override
-            public void onOutputFormatChanged(MediaCodec codec, MediaFormat format) {
-            }
-
-            @Override
-            public void onError(MediaCodec codec, CodecException e) {
-            }
-
-            @Override
-            public void onCryptoError(MediaCodec codec, CryptoException e) {
-                MediaCodec.CryptoInfo info = e.getCryptoInfo();
-                // set to indicate the callback has happened.
-                if (info != null) {
-                    try {
-                        cryptoInfoQueue.put(info);
-                        Log.i(TAG, "MediaCodec fired Crypto Error: "
-                                + e.getErrorCode() + " Detail: " + e.getMessage());
-                    } catch(InterruptedException ex) {/* ignore */}
-                }
-            }
-
-        });
         int flags = MediaCodec.CONFIGURE_FLAG_USE_CRYPTO_ASYNC;
         mediaCodec.configure(mediaFormat, surface, crypto, flags);
         mediaCodec.start();
@@ -296,7 +413,7 @@ public class MediaCodecCryptoAsyncHelper {
         boolean signaledEos = false;
         while (!endOfStream && !Thread.interrupted()) {
             MediaCodecAsyncHelper.SlotEvent event;
-            event = queue.take();
+            event = slotQueue.take();
 
             if (event.input) {
                 inputListener.onInputSlot(mediaCodec, event.index);

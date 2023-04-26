@@ -50,6 +50,16 @@ public class MediaDrmCodecCryptoAsyncTest {
      * The test queues a few encrypted video frames
      * then signals end-of-stream. The test fails if the decoder doesn't output the queued frames.
      */
+
+    @Presubmit
+    @SmallTest
+    @RequiresDevice
+    @Test
+    public void testSecureDecWithNoonCryptoErrorOverride() throws InterruptedException {
+        MediaCodecAsyncHelper.runThread(
+                (Boolean secure) -> runClearKeyVideoWithNoonCryptoError(secure /*secure*/), true);
+    }
+
     @Presubmit
     @SmallTest
     @RequiresDevice
@@ -58,7 +68,6 @@ public class MediaDrmCodecCryptoAsyncTest {
         MediaCodecAsyncHelper.runThread(
                 (Boolean secure) -> runClearKeyVideoUsingCodec(secure /*secure*/), false);
     }
-
     @Presubmit
     @SmallTest
     @RequiresDevice
@@ -168,6 +177,23 @@ public class MediaDrmCodecCryptoAsyncTest {
                 ENCRYPTED_CONTENT_FIRST_BUFFER_TIMESTAMP_US,
                 MediaExtractor.SEEK_TO_CLOSEST_SYNC);
         return extractor;
+    }
+
+    /* tests */
+    private void runClearKeyVideoWithNoonCryptoError(boolean secure) {
+        try (ClearKeyDrmSession drmSession = new ClearKeyDrmSession(
+                CLEARKEY_SCHEME_UUID, DRM_INIT_DATA, CLEAR_KEY_CENC)) {
+            MediaExtractor extractor = setupExtractor("/clearkey/llama_h264_main_720p_8000.mp4");
+            MediaCrypto crypto = drmSession.getCrypto();
+
+            MediaCodecCryptoAsyncHelper.runShortClearKeyVideoWithNoCryptoErrorOverride(extractor,
+                    ENCRYPTED_CONTENT_LAST_BUFFER_TIMESTAMP_US,
+                    crypto);
+        } catch (AssumptionViolatedException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /* tests */
