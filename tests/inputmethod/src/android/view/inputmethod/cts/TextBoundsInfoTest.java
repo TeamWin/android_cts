@@ -17,6 +17,7 @@
 package android.view.inputmethod.cts;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -398,6 +399,32 @@ public class TextBoundsInfoTest {
             new TextBoundsInfo.Builder(0 , 1).setCharacterBidiLevel(new int[] { -1 });
             fail();
         } catch (IllegalArgumentException ignored) { }
+    }
+
+    @Test
+    @ApiTest(apis = { "android.view.inputmethod.TextBoundsInfo.Builder#setCharacterBidiLevel" })
+    public void testBuilder_characterBidiLevel_isCleared() {
+        final var builder = new TextBoundsInfo.Builder(5, 10)
+                .setMatrix(Matrix.IDENTITY_MATRIX)
+                .setCharacterFlags(CHARACTER_FLAGS1)
+                .setCharacterBidiLevel(CHARACTER_BIDI_LEVEL1)
+                .setCharacterBounds(CHARACTER_BOUNDS1)
+                .setGraphemeSegmentFinder(GRAPHEME_SEGMENT_FINDER1)
+                .setWordSegmentFinder(WORD_SEGMENT_FINDER2)
+                .setLineSegmentFinder(LINE_SEGMENT_FINDER1);
+        builder.build();
+
+        builder.clear();
+        builder.setMatrix(Matrix.IDENTITY_MATRIX)
+                .setStartAndEnd(5, 10)
+                .setCharacterFlags(CHARACTER_FLAGS1)
+                // omit setting characterBidiLevel.
+                .setCharacterBounds(CHARACTER_BOUNDS1)
+                .setGraphemeSegmentFinder(GRAPHEME_SEGMENT_FINDER1)
+                .setWordSegmentFinder(WORD_SEGMENT_FINDER2)
+                .setLineSegmentFinder(LINE_SEGMENT_FINDER1);
+
+        assertThrows(IllegalStateException.class, builder::build);
     }
 
     @Test(expected = IllegalArgumentException.class)
