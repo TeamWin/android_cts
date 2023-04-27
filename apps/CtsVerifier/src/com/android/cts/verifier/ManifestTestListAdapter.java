@@ -28,11 +28,13 @@ import android.content.pm.ResolveInfo;
 import android.content.res.Resources;
 import android.hardware.SensorPrivacyManager;
 import android.os.Bundle;
+import android.os.UserManager;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.widget.ListView;
 
 import com.android.cts.verifier.TestListActivity.DisplayMode;
+import com.android.modules.utils.build.SdkLevel;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -112,6 +114,14 @@ import java.util.stream.Collectors;
  *             <meta-data android:name="test_required_actions" android:value="android.app.action.ADD_DEVICE_ADMIN" />
  *         </pre>
  *     </li>
+ *     <li>OPTIONAL: Add a meta data attribute to indicate which intent actions should not run when
+ *         the user running the test is of the given "type" (notice that the type here is not
+ *         necessarily the same as {@link UserManager#getUserType()}).
+ *         Use a colon (:) to specify multiple user types.
+ *         <pre>
+ *             <meta-data android:name="test_excluded_user_types" android:value="visible_background_non-profile_user" />
+ *         </pre>
+ *     </li>
  *
  * </ol>
  */
@@ -131,6 +141,8 @@ public class ManifestTestListAdapter extends TestListAdapter {
     private static final String TEST_REQUIRED_CONFIG_META_DATA = "test_required_configs";
 
     private static final String TEST_REQUIRED_ACTIONS_META_DATA = "test_required_actions";
+
+    private static final String TEST_EXCLUDED_USER_TYPES_META_DATA = "test_excluded_user_types";
 
     private static final String TEST_DISPLAY_MODE_META_DATA = "display_mode";
 
@@ -155,6 +167,12 @@ public class ManifestTestListAdapter extends TestListAdapter {
     /** The config to represent that a test is needed to run in the multiple display modes
      * (i.e. both unfolded and folded) */
     private static final String MULTIPLE_DISPLAY_MODE = "multi_display_mode";
+
+    /**
+     * The user is not a {@link UserManager#isProfile() profile} and is running in the background,
+     * but {@link UserManager#isUserVisible() visible} in a display.
+     */
+    private static final String USER_TYPE_VISIBLE_BG_USER = "visible_background_non-profile_user";
 
     private final HashSet<String> mDisabledTests;
 
@@ -269,12 +287,13 @@ public class ManifestTestListAdapter extends TestListAdapter {
             String[] requiredConfigs = getRequiredConfigs(info.activityInfo.metaData);
             String[] requiredActions = getRequiredActions(info.activityInfo.metaData);
             String[] excludedFeatures = getExcludedFeatures(info.activityInfo.metaData);
+            String[] excludedUserTypes = getExcludedUserTypes(info.activityInfo.metaData);
             String[] applicableFeatures = getApplicableFeatures(info.activityInfo.metaData);
             String displayMode = getDisplayMode(info.activityInfo.metaData);
 
             TestListItem item = TestListItem.newTest(title, testName, intent, requiredFeatures,
                      requiredConfigs, requiredActions, excludedFeatures, applicableFeatures,
-                     displayMode);
+                     excludedUserTypes, displayMode);
 
             String testCategory = getTestCategory(mContext, info.activityInfo.metaData);
             addTestToCategory(testsByCategory, testCategory, item);
@@ -300,62 +319,34 @@ public class ManifestTestListAdapter extends TestListAdapter {
     }
 
     static String[] getRequiredFeatures(Bundle metaData) {
-        if (metaData == null) {
-            return null;
-        } else {
-            String value = metaData.getString(TEST_REQUIRED_FEATURES_META_DATA);
-            if (value == null) {
-                return null;
-            } else {
-                return value.split(":");
-            }
-        }
+        return getMetadataAttributes(metaData, TEST_REQUIRED_FEATURES_META_DATA);
     }
 
     static String[] getRequiredActions(Bundle metaData) {
-        if (metaData == null) {
-            return null;
-        } else {
-            String value = metaData.getString(TEST_REQUIRED_ACTIONS_META_DATA);
-            if (value == null) {
-                return null;
-            } else {
-                return value.split(":");
-            }
-        }
+        return getMetadataAttributes(metaData, TEST_REQUIRED_ACTIONS_META_DATA);
     }
 
     static String[] getRequiredConfigs(Bundle metaData) {
-        if (metaData == null) {
-            return null;
-        } else {
-            String value = metaData.getString(TEST_REQUIRED_CONFIG_META_DATA);
-            if (value == null) {
-                return null;
-            } else {
-                return value.split(":");
-            }
-        }
+        return getMetadataAttributes(metaData, TEST_REQUIRED_CONFIG_META_DATA);
     }
 
     static String[] getExcludedFeatures(Bundle metaData) {
-        if (metaData == null) {
-            return null;
-        } else {
-            String value = metaData.getString(TEST_EXCLUDED_FEATURES_META_DATA);
-            if (value == null) {
-                return null;
-            } else {
-                return value.split(":");
-            }
-        }
+        return getMetadataAttributes(metaData, TEST_EXCLUDED_FEATURES_META_DATA);
     }
 
     static String[] getApplicableFeatures(Bundle metaData) {
+        return getMetadataAttributes(metaData, TEST_APPLICABLE_FEATURES_META_DATA);
+    }
+
+    static String[] getExcludedUserTypes(Bundle metaData) {
+        return getMetadataAttributes(metaData, TEST_EXCLUDED_USER_TYPES_META_DATA);
+    }
+
+    private static String[] getMetadataAttributes(Bundle metaData, String attribute) {
         if (metaData == null) {
             return null;
         } else {
-            String value = metaData.getString(TEST_APPLICABLE_FEATURES_META_DATA);
+            String value = metaData.getString(attribute);
             if (value == null) {
                 return null;
             } else {
@@ -525,6 +516,40 @@ public class ManifestTestListAdapter extends TestListAdapter {
         }
     }
 
+    /**
+     * Checks whether the test is being run by a user type that doesn't support it.
+     */
+    private boolean matchAnyExcludedUserType(String[] userTypes) {
+        if (userTypes == null) {
+            return false;
+        }
+
+        for (String userType : userTypes) {
+            switch (userType) {
+                case USER_TYPE_VISIBLE_BG_USER:
+                    if (isVisibleBackgroundNonProfileUser()) {
+                        Log.d(LOG_TAG, "Match for " + USER_TYPE_VISIBLE_BG_USER);
+                        return true;
+                    }
+                    return false;
+                default:
+                    throw new IllegalArgumentException("Invalid "
+                            + TEST_EXCLUDED_USER_TYPES_META_DATA + " value: " + userType);
+            }
+        }
+
+        return false;
+    }
+
+    private boolean isVisibleBackgroundNonProfileUser() {
+        if (!SdkLevel.isAtLeastU()) {
+            Log.d(LOG_TAG, "isVisibleBagroundNonProfileUser() returning false on pre-UDC device");
+            return false;
+        }
+        UserManager userMgr = mContext.getSystemService(UserManager.class);
+        return userMgr.isUserVisible() && !userMgr.isUserForeground() && !userMgr.isProfile();
+    }
+
     private static boolean getSystemResourceFlag(Context context, String key) {
         final Resources systemRes = context.getResources().getSystem();
         final int id = systemRes.getIdentifier(key, "bool", "android");
@@ -558,7 +583,8 @@ public class ManifestTestListAdapter extends TestListAdapter {
             if (!hasAnyFeature(test.excludedFeatures) && hasAllFeatures(test.requiredFeatures)
                     && hasAllActions(test.requiredActions)
                     && matchAllConfigs(mContext, test.requiredConfigs)
-                    && matchDisplayMode(test.displayMode, mode)) {
+                    && matchDisplayMode(test.displayMode, mode)
+                    && !matchAnyExcludedUserType(test.excludedUserTypes)) {
                 if (test.applicableFeatures == null || hasAnyFeature(test.applicableFeatures)) {
                     // Add suffix in test name if the test is in the folded mode.
                     test.testName = setTestNameSuffix(mode, test.testName);
