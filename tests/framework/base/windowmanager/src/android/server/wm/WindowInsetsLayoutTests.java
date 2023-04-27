@@ -35,7 +35,6 @@ import android.view.WindowInsets;
 import android.view.WindowInsets.Side;
 import android.view.WindowInsets.Type;
 import android.view.WindowManager;
-import android.view.WindowMetrics;
 
 import androidx.annotation.Nullable;
 

@@ -64,7 +64,6 @@ import android.view.View;
 import android.view.WindowManager.LayoutParams;
 
 import androidx.annotation.NonNull;
-import androidx.test.filters.FlakyTest;
 
 import com.android.compatibility.common.util.SystemUtil;
 
@@ -136,7 +135,6 @@ public class WindowFocusTests extends WindowManagerTestBase {
      * - The window which lost top-focus can receive display-unspecified cancel events.
      */
     @Test
-    @FlakyTest(bugId = 271975866)
     public void testKeyReceiving() {
         final PrimaryActivity primaryActivity = startActivity(PrimaryActivity.class,
                 DEFAULT_DISPLAY);
@@ -185,7 +183,6 @@ public class WindowFocusTests extends WindowManagerTestBase {
     }
 
     @Test
-    @FlakyTest(bugId = 271975866)
     public void testKeyReceivingWithDisplayWithOwnFocus() {
         assumeTrue(supportsMultiDisplay());
         // This test specifically tests the behavior if a single display manages its own focus.
@@ -230,7 +227,6 @@ public class WindowFocusTests extends WindowManagerTestBase {
      * displays it only affects the displays that have the flag set.
      */
     @Test
-    @FlakyTest(bugId = 271975866)
     public void testOwnFocus() {
         assumeTrue(supportsMultiDisplay());
 
@@ -270,7 +266,6 @@ public class WindowFocusTests extends WindowManagerTestBase {
      * Test if a display targeted by a key event can be moved to top in a single-focus system.
      */
     @Test
-    @FlakyTest(bugId = 271975866)
     public void testMovingDisplayToTopByKeyEvent() {
         assumeTrue(supportsMultiDisplay());
 
@@ -419,7 +414,6 @@ public class WindowFocusTests extends WindowManagerTestBase {
      * Test if the focused window can still have focus after it is moved to another display.
      */
     @Test
-    @FlakyTest(bugId = 271975866)
     public void testDisplayChanged() {
         assumeTrue(supportsMultiDisplay());
 
@@ -443,7 +437,6 @@ public class WindowFocusTests extends WindowManagerTestBase {
      * that display.
      */
     @Test
-    @FlakyTest(bugId = 271975866)
     public void testTapFocusableWindow() {
         assumeTrue(supportsMultiDisplay());
         assumeFalse(perDisplayFocusEnabled());

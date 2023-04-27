@@ -35,8 +35,6 @@ import android.provider.Settings;
 import android.server.wm.WindowManagerState.DisplayContent;
 import android.server.wm.settings.SettingsSession;
 
-import androidx.test.filters.FlakyTest;
-
 import com.android.cts.verifier.vr.MockVrListenerService;
 
 import org.junit.Before;
@@ -49,7 +47,6 @@ import java.util.List;
  *     atest CtsWindowManagerDeviceTestCases:VrDisplayTests
  */
 @Presubmit
-@FlakyTest
 @android.server.wm.annotation.Group3
 public class VrDisplayTests extends MultiDisplayTestBase {
     private static final int VR_VIRTUAL_DISPLAY_WIDTH = 700;

@@ -65,7 +65,6 @@ import android.view.ViewGroup;
 import android.view.WindowInsets;
 
 import androidx.annotation.Nullable;
-import androidx.test.filters.FlakyTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.After;
@@ -279,7 +278,6 @@ public class ActivityTransitionTests extends ActivityManagerTestBase {
      * @see R.anim.alpha_0_with_red_backdrop for animation defintition.
      */
     @Test
-    @FlakyTest(bugId = 271998036)
     public void testAnimationBackgroundColorIsUsedDuringActivityTransition() {
         final int backgroundColor = Color.RED;
         final ActivityOptions activityOptions = ActivityOptions.makeCustomAnimation(mContext,
@@ -391,7 +389,6 @@ public class ActivityTransitionTests extends ActivityManagerTestBase {
      * @see R.anim.edge_extension_top for the transition applied.
      */
     @Test
-    @FlakyTest(bugId = 270682188)
     public void testTopEdgeExtensionWorksDuringActivityTransition() {
         final Bundle extras = new Bundle();
         extras.putInt(DIRECTION_KEY, TOP);
@@ -417,7 +414,6 @@ public class ActivityTransitionTests extends ActivityManagerTestBase {
      * @see R.anim.edge_extension_right for the transition applied.
      */
     @Test
-    @FlakyTest(bugId = 270682188)
     public void testRightEdgeExtensionWorksDuringActivityTransition() {
         final Bundle extras = new Bundle();
         extras.putInt(DIRECTION_KEY, RIGHT);
@@ -492,7 +488,6 @@ public class ActivityTransitionTests extends ActivityManagerTestBase {
      * @see R.anim.edge_extension_bottom for the transition applied.
      */
     @Test
-    @FlakyTest(bugId = 270682188)
     public void testBottomEdgeExtensionWorksDuringActivityTransition() {
         final Bundle extras = new Bundle();
         extras.putInt(DIRECTION_KEY, BOTTOM);
