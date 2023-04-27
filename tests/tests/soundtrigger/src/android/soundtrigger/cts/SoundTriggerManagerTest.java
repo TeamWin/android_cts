@@ -16,10 +16,10 @@
 
 package android.soundtrigger.cts;
 
-import static android.content.pm.PackageManager.FEATURE_MICROPHONE;
 import static android.Manifest.permission.CAPTURE_AUDIO_HOTWORD;
 import static android.Manifest.permission.MANAGE_SOUND_TRIGGER;
 import static android.Manifest.permission.RECORD_AUDIO;
+import static android.content.pm.PackageManager.FEATURE_MICROPHONE;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
@@ -34,7 +34,6 @@ import android.content.Context;
 import android.media.soundtrigger.SoundTriggerDetector.Callback;
 import android.media.soundtrigger.SoundTriggerDetector.EventPayload;
 import android.media.soundtrigger.SoundTriggerInstrumentation;
-import android.media.soundtrigger.SoundTriggerInstrumentation.ModelSession;
 import android.media.soundtrigger.SoundTriggerInstrumentation.RecognitionSession;
 import android.media.soundtrigger.SoundTriggerManager;
 import android.media.soundtrigger.SoundTriggerManager.Model;
@@ -45,8 +44,6 @@ import android.soundtrigger.cts.instrumentation.SoundTriggerInstrumentationObser
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import com.android.compatibility.common.util.RequiredFeatureRule;
-
-import com.google.common.util.concurrent.ListenableFuture;
 
 import org.junit.After;
 import org.junit.Before;
@@ -186,14 +183,12 @@ public class SoundTriggerManagerTest {
     @Test
     public void testStartRecognitionSucceeds_whenHoldingPermissions() throws Exception {
         getSoundTriggerPermissions();
-        ListenableFuture<RecognitionSession> onRecognitionStartedFuture =
-                mInstrumentationObserver.listenOnRecognitionStarted();
 
         prepareForRecognition();
         assertThat(startRecognitionForTest()).isTrue();
 
         RecognitionSession recognitionSession = waitForFutureDoneAndAssertSuccessful(
-                onRecognitionStartedFuture);
+                mInstrumentationObserver.getOnRecognitionStartedFuture());
         assertThat(recognitionSession).isNotNull();
 
         recognitionSession.triggerRecognitionEvent(new byte[] {0x11}, null);
@@ -203,13 +198,11 @@ public class SoundTriggerManagerTest {
     @Test
     public void testRecognitionEvent_notesAppOps() throws Exception {
         getSoundTriggerPermissions();
-        ListenableFuture<RecognitionSession> onRecognitionStartedFuture =
-                mInstrumentationObserver.listenOnRecognitionStarted();
 
         prepareForRecognition();
         assertThat(startRecognitionForTest()).isTrue();
         RecognitionSession recognitionSession = waitForFutureDoneAndAssertSuccessful(
-                onRecognitionStartedFuture);
+                mInstrumentationObserver.getOnRecognitionStartedFuture());
 
         assertThat(recognitionSession).isNotNull();
 
@@ -243,8 +236,7 @@ public class SoundTriggerManagerTest {
     public void testAttachInvalidSession_whenNoDspAvailable() {
         getSoundTriggerPermissions();
         if (mManager.listModuleProperties().size() == 1) {
-            assertThrows(
-                    IllegalStateException.class,
+            assertThrows(IllegalStateException.class,
                     () -> mRealManager.loadSoundModel(sModel.getSoundModel()));
         }
     }
