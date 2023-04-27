@@ -16,12 +16,14 @@
 
 package android.sdksandbox.webkit.cts;
 
+import android.app.sdksandbox.testutils.testscenario.KeepSdkSandboxAliveRule;
 import android.platform.test.annotations.AppModeFull;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.MediumTest;
 
 import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -30,21 +32,25 @@ import org.junit.runner.RunWith;
 @RunWith(AndroidJUnit4.class)
 public class SdkSandboxHttpAuthHandlerTest {
     @ClassRule
-    public static final WebViewSandboxTestRule sSdkTestSuiteSetup =
+    public static final KeepSdkSandboxAliveRule sSdkTestSuiteSetup =
+            new KeepSdkSandboxAliveRule("com.android.emptysdkprovider");
+
+    @Rule
+    public final WebViewSandboxTestRule sdkTester =
             new WebViewSandboxTestRule("android.webkit.cts.HttpAuthHandlerTest");
 
     @Test
-    public void testProceed() throws Throwable {
-        sSdkTestSuiteSetup.assertSdkTestRunPasses("testProceed");
+    public void testProceed() throws Exception {
+        sdkTester.assertSdkTestRunPasses("testProceed");
     }
 
     @Test
-    public void testCancel() throws Throwable {
-        sSdkTestSuiteSetup.assertSdkTestRunPasses("testCancel");
+    public void testCancel() throws Exception {
+        sdkTester.assertSdkTestRunPasses("testCancel");
     }
 
     @Test
-    public void testUseHttpAuthUsernamePassword() throws Throwable {
-        sSdkTestSuiteSetup.assertSdkTestRunPasses("testUseHttpAuthUsernamePassword");
+    public void testUseHttpAuthUsernamePassword() throws Exception {
+        sdkTester.assertSdkTestRunPasses("testUseHttpAuthUsernamePassword");
     }
 }
