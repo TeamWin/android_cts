@@ -55,6 +55,7 @@ public class AuthorizationList {
     public static final int KM_EC_CURVE_P256 = 1;
     public static final int KM_EC_CURVE_P384 = 2;
     public static final int KM_EC_CURVE_P521 = 3;
+    public static final int KM_EC_CURVE_25519 = 4;
 
     // Padding modes.
     public static final int KM_PAD_NONE = 1;
@@ -626,6 +627,8 @@ public class AuthorizationList {
                 return "secp384r1";
             case KM_EC_CURVE_P521:
                 return "secp521r1";
+            case KM_EC_CURVE_25519:
+                return "CURVE_25519";
             default:
                 return "unknown";
         }
