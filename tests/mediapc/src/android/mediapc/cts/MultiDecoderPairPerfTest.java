@@ -109,7 +109,7 @@ public class MultiDecoderPairPerfTest extends MultiCodecPerfTestBase {
         boolean hasVP9 = mFirstPair.first.equals(MediaFormat.MIMETYPE_VIDEO_VP9) ||
                 mSecondPair.first.equals(MediaFormat.MIMETYPE_VIDEO_VP9);
         int requiredMinInstances = getRequiredMinConcurrentInstances720p(hasVP9);
-        testCodec(m720pTestFiles, 720, 1280, requiredMinInstances);
+        testCodec(m720pTestFiles, null, 720, 1280, requiredMinInstances);
     }
 
     /**
@@ -133,17 +133,80 @@ public class MultiDecoderPairPerfTest extends MultiCodecPerfTestBase {
         boolean bothSecure = isFirstSecure & isSecondSecure;
 
         if (bothSecure) {
-            testCodec(null, 1080, 1920, REQUIRED_MIN_CONCURRENT_SECURE_INSTANCES);
+            testCodec(null, m1080pWidevineTestFiles, 1080, 1920,
+                    REQUIRED_MIN_CONCURRENT_SECURE_INSTANCES);
         } else if (onlyOneSecure) {
-            testCodec(m1080pTestFiles, 1080, 1920,
+            testCodec(m1080pTestFiles, m1080pWidevineTestFiles, 1080, 1920,
                     REQUIRED_CONCURRENT_NON_SECURE_INSTANCES_WITH_SECURE + 1);
         } else {
-            testCodec(m1080pTestFiles, 1080, 1920, REQUIRED_MIN_CONCURRENT_INSTANCES);
+            testCodec(m1080pTestFiles, null, 1080, 1920, REQUIRED_MIN_CONCURRENT_INSTANCES);
         }
     }
 
-    private void testCodec(Map<String, String> testFiles, int height, int width,
-            int requiredMinInstances) throws Exception {
+    /**
+     * This test calculates the number of 4k 30 fps SDR decoder instances that the given two
+     * (mime - decoder) pairs can support. Assigns the same number of instances to the two pairs
+     * (if max instances are even), or one more to one pair (if odd) and ensures that all the
+     * concurrent sessions succeed in decoding with meeting the expected frame rate.
+     */
+    @LargeTest
+    @Test(timeout = CodecTestBase.PER_TEST_TIMEOUT_LARGE_TEST_MS)
+    @CddTest(requirements = {
+            "2.2.7.1/5.1/H-1-1",
+            "2.2.7.1/5.1/H-1-2",
+            "2.2.7.1/5.1/H-1-9",
+            "2.2.7.1/5.1/H-1-10"})
+    public void test4k() throws Exception {
+        Assume.assumeTrue(Utils.isUPerfClass() || !Utils.isPerfClass());
+        boolean isFirstSecure = isSecureSupportedCodec(mFirstPair.second, mFirstPair.first);
+        boolean isSecondSecure = isSecureSupportedCodec(mSecondPair.second, mSecondPair.first);
+        boolean onlyOneSecure = isFirstSecure ^ isSecondSecure;
+        boolean bothSecure = isFirstSecure & isSecondSecure;
+
+        if (bothSecure) {
+            testCodec(null, m2160pWidevineTestFiles, 2160, 3840,
+                    REQUIRED_MIN_CONCURRENT_SECURE_INSTANCES);
+        } else if (onlyOneSecure) {
+            testCodec(m2160pTestFiles, m2160pWidevineTestFiles, 2160, 3840,
+                    REQUIRED_CONCURRENT_NON_SECURE_INSTANCES_WITH_SECURE + 1);
+        } else {
+            testCodec(m2160pTestFiles, null, 2160, 3840, REQUIRED_MIN_CONCURRENT_INSTANCES);
+        }
+    }
+
+    /**
+     * This test calculates the number of 4k 30 fps HDR decoder instances that the given two
+     * (mime - decoder) pairs can support. Assigns the same number of instances to the two pairs
+     * (if max instances are even), or one more to one pair (if odd) and ensures that all the
+     * concurrent sessions succeed in decoding with meeting the expected frame rate.
+     */
+    @LargeTest
+    @Test(timeout = CodecTestBase.PER_TEST_TIMEOUT_LARGE_TEST_MS)
+    @CddTest(requirements = {
+            "2.2.7.1/5.1/H-1-9",
+            "2.2.7.1/5.1/H-1-10"})
+    public void test4kHbd() throws Exception {
+        Assume.assumeTrue(Utils.isUPerfClass() || !Utils.isPerfClass());
+        boolean isFirstSecure = isSecureSupportedCodec(mFirstPair.second, mFirstPair.first);
+        boolean isSecondSecure = isSecureSupportedCodec(mSecondPair.second, mSecondPair.first);
+        boolean onlyOneSecure = isFirstSecure ^ isSecondSecure;
+        boolean bothSecure = isFirstSecure & isSecondSecure;
+
+        if (bothSecure) {
+            testCodec(null, m2160p10bitWidevineTestFiles, 2160, 3840,
+                    REQUIRED_MIN_CONCURRENT_SECURE_INSTANCES);
+        } else if (onlyOneSecure) {
+            // 2 non-secure 4k HDR, 1 secure 4k SDR , 1 non-secure 1080p SDR
+            testCodec(m2160p10bitTestFiles, m2160pWidevineTestFiles, 2160, 3840,
+                    REQUIRED_CONCURRENT_NON_SECURE_INSTANCES_WITH_SECURE + 1);
+        } else {
+            Assume.assumeFalse("Skipping regular performance tests for pair of non-secure decoders",
+                true);
+        }
+    }
+
+    private void testCodec(Map<String, String> testFiles, Map<String, String> widevineTestFiles,
+            int height, int width, int requiredMinInstances) throws Exception {
         mTestFiles = testFiles;
         ArrayList<Pair<String, String>> mimeDecoderPairs = new ArrayList<>();
         mimeDecoderPairs.add(mFirstPair);
@@ -152,6 +215,7 @@ public class MultiDecoderPairPerfTest extends MultiCodecPerfTestBase {
         boolean isSecondSecure = isSecureSupportedCodec(mSecondPair.second, mSecondPair.first);
         boolean secureWithUnsecure = isFirstSecure ^ isSecondSecure;
         boolean bothSecure = isFirstSecure & isSecondSecure;
+        boolean noneSecure = !(isFirstSecure || isSecondSecure);
         int maxInstances = checkAndGetMaxSupportedInstancesForCodecCombinations(height, width,
                 mimeDecoderPairs, false, requiredMinInstances);
         double achievedFrameRate = 0.0;
@@ -168,9 +232,25 @@ public class MultiDecoderPairPerfTest extends MultiCodecPerfTestBase {
                 maxInstances = requiredMinInstances;
             }
             List<Decode> testList = new ArrayList<>();
+
+            if (height > 1080 && secureWithUnsecure) {
+                // Add 1 1080p instance for H-1-9
+                if (isFirstSecure) {
+                    String testFile = m1080pTestFiles.get(mSecondPair.first);
+                    testList.add(new Decode(mSecondPair.first, testFile, mSecondPair.second,
+                            mIsAsync, false));
+                    secondPairInstances--;
+                } else {
+                    String testFile = m1080pTestFiles.get(mFirstPair.first);
+                    testList.add(new Decode(mFirstPair.first, testFile, mFirstPair.second,
+                            mIsAsync, false));
+                    firstPairInstances--;
+                }
+            }
+
             for (int i = 0; i < firstPairInstances; i++) {
                 boolean isSecure = isFirstSecure;
-                String testFile = isSecure ? m1080pWidevineTestFiles.get(mFirstPair.first) :
+                String testFile = isSecure ? widevineTestFiles.get(mFirstPair.first) :
                         mTestFiles.get(mFirstPair.first);
                 Assume.assumeTrue("Add " + (isSecure ? "secure" : "") + " test vector for mime: " +
                         mFirstPair.first, testFile != null);
@@ -179,8 +259,9 @@ public class MultiDecoderPairPerfTest extends MultiCodecPerfTestBase {
             }
             for (int i = 0; i < secondPairInstances; i++) {
                 boolean isSecure = isSecondSecure;
-                String testFile = isSecure ? m1080pWidevineTestFiles.get(mSecondPair.first) :
+                String testFile = isSecure ? widevineTestFiles.get(mSecondPair.first) :
                         mTestFiles.get(mSecondPair.first);
+                if (height > 1080 && noneSecure) testFile = m1080pTestFiles.get(mSecondPair.first);
                 Assume.assumeTrue("Add " + (isSecure ? "secure" : "") + " test vector for mime: " +
                         mSecondPair.first, testFile != null);
                 testList.add(new Decode(mSecondPair.first, testFile, mSecondPair.second,
@@ -195,12 +276,20 @@ public class MultiDecoderPairPerfTest extends MultiCodecPerfTestBase {
 
         PerformanceClassEvaluator pce = new PerformanceClassEvaluator(this.mTestName);
         if (secureWithUnsecure) {
-            PerformanceClassEvaluator.ConcurrentCodecRequirement r5_1__H_1_10 =
-                pce.addR5_1__H_1_10_1080p();
+            PerformanceClassEvaluator.ConcurrentCodecRequirement r5_1__H_1_10;
+            if (height > 1080) {
+                r5_1__H_1_10 = pce.addR5_1__H_1_10_4k();
+            } else {
+                r5_1__H_1_10 = pce.addR5_1__H_1_10_1080p();
+            }
             r5_1__H_1_10.setConcurrentFps(achievedFrameRate);
         } else if (bothSecure) {
-            PerformanceClassEvaluator.ConcurrentCodecRequirement r5_1__H_1_9 =
-                pce.addR5_1__H_1_9_1080p();
+            PerformanceClassEvaluator.ConcurrentCodecRequirement r5_1__H_1_9;
+            if (height > 1080) {
+                r5_1__H_1_9 = pce.addR5_1__H_1_9_4k();
+            } else {
+                r5_1__H_1_9 = pce.addR5_1__H_1_9_1080p();
+            }
             r5_1__H_1_9.setConcurrentFps(achievedFrameRate);
         } else {
             PerformanceClassEvaluator.ConcurrentCodecRequirement r5_1__H_1_1;
