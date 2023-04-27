@@ -168,18 +168,21 @@ public class SelfManagedConnectionTest extends BaseTelecomTestWithMockServices {
 
     @Override
     protected void setUp() throws Exception {
+        mContext = getInstrumentation().getContext();
         if (!mShouldTestTelecom) {
+            mShouldTestTelecom = false;
             return;
         }
         super.setUp();
         NewOutgoingCallBroadcastReceiver.reset();
-        mContext = getInstrumentation().getContext();
         mUiAutomation = getInstrumentation().getUiAutomation();
         if (mShouldTestTelecom) {
             mRoleManager = mContext.getSystemService(RoleManager.class);
             setupConnectionService(null, FLAG_ENABLE | FLAG_REGISTER);
             mTelecomManager.registerPhoneAccount(TestUtils.TEST_SELF_MANAGED_PHONE_ACCOUNT_4);
-            mDefaultDialer = getDefaultDialer();
+            if(mRoleManager.isRoleAvailable(RoleManager.ROLE_DIALER)) {
+                mDefaultDialer = getDefaultDialer();
+            }
         }
     }
 
@@ -199,7 +202,9 @@ public class SelfManagedConnectionTest extends BaseTelecomTestWithMockServices {
             if (connectionService != null) {
                 connectionService.tearDown();
                 mTelecomManager.unregisterPhoneAccount(TestUtils.TEST_SELF_MANAGED_HANDLE_4);
-                assertTrue(setDefaultDialer(mDefaultDialer));
+                if(mRoleManager.isRoleAvailable(RoleManager.ROLE_DIALER)) {
+                    assertTrue(setDefaultDialer(mDefaultDialer));
+                }
             }
         }
         super.tearDown();
@@ -236,7 +241,7 @@ public class SelfManagedConnectionTest extends BaseTelecomTestWithMockServices {
      * mode
      */
     public void testBindToSupportDefaultDialerNoCarMode() throws Exception {
-        if (!mShouldTestTelecom) {
+        if (!mShouldTestTelecom || !mRoleManager.isRoleAvailable(RoleManager.ROLE_DIALER)) {
             return;
         }
         TestServiceConnection controlConn = setUpControl(THIRD_PTY_CONTROL,
@@ -263,7 +268,7 @@ public class SelfManagedConnectionTest extends BaseTelecomTestWithMockServices {
      * in car mode
      */
     public void testNoBindToUnsupportDefaultDialerNoCarMode() throws Exception {
-        if (!mShouldTestTelecom) {
+        if (!mShouldTestTelecom || !mRoleManager.isRoleAvailable(RoleManager.ROLE_DIALER)) {
             return;
         }
         TestServiceConnection controlConn = setUpControl(THIRD_PTY_CONTROL,
