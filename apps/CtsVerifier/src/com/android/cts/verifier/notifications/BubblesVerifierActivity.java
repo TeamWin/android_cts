@@ -21,7 +21,8 @@ import static android.app.NotificationManager.BUBBLE_PREFERENCE_SELECTED;
 import static android.app.NotificationManager.IMPORTANCE_DEFAULT;
 import static android.content.Intent.ACTION_VIEW;
 import static android.content.pm.PackageManager.FEATURE_INPUT_METHODS;
-import static android.content.pm.PackageManager.FEATURE_PC;
+import static android.content.pm.PackageManager.FEATURE_SCREEN_LANDSCAPE;
+import static android.content.pm.PackageManager.FEATURE_SCREEN_PORTRAIT;
 import static android.view.View.GONE;
 import static android.view.View.INVISIBLE;
 import static android.view.View.VISIBLE;
@@ -198,8 +199,10 @@ public class BubblesVerifierActivity extends PassFailButtons.Activity {
             //
             // Expanded view appearance
             //
-            // At the moment, PC devices do not support rotation
-            if (!getPackageManager().hasSystemFeature(FEATURE_PC)) {
+            // Check if devices do not support rotation
+            if (getPackageManager().hasSystemFeature(FEATURE_SCREEN_LANDSCAPE) &&
+                getPackageManager().hasSystemFeature(FEATURE_SCREEN_PORTRAIT))
+            {
                 mTests.add(new PortraitAndLandscape());
             }
             mTests.add(new ScrimBehindExpandedView());
