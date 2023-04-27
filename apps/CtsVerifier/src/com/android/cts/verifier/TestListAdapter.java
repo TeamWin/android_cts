@@ -103,31 +103,34 @@ public abstract class TestListAdapter extends BaseAdapter {
     public static class TestListItem {
 
         /** Title shown in the {@link ListView}. */
-        final String title;
+        public final String title;
 
         /** Test name with class and test ID to uniquely identify the test. Null for categories. */
-        String testName;
+        public String testName;
 
         /** Intent used to launch the activity from the list. Null for categories. */
-        final Intent intent;
+        public final Intent intent;
 
         /** Features necessary to run this test. */
-        final String[] requiredFeatures;
+        public final String[] requiredFeatures;
 
         /** Configs necessary to run this test. */
-        final String[] requiredConfigs;
+        public final String[] requiredConfigs;
 
         /** Intent actions necessary to run this test. */
-        final String[] requiredActions;
+        public final String[] requiredActions;
 
         /** Features such that, if any present, the test gets excluded from being shown. */
-        final String[] excludedFeatures;
+        public final String[] excludedFeatures;
+
+        /** User "types" that, if any present, the test gets excluded from being shown. */
+        public final String[] excludedUserTypes;
 
         /** If any of of the features are present the test is meaningful to run. */
-        final String[] applicableFeatures;
+        public final String[] applicableFeatures;
 
         /** Configs display mode to run this test. */
-        final String displayMode;
+        public final String displayMode;
 
         // TODO: refactor to use a Builder approach instead
 
@@ -204,6 +207,7 @@ public abstract class TestListAdapter extends BaseAdapter {
                 String[] requiredActions,
                 String[] excludedFeatures,
                 String[] applicableFeatures,
+                String[] excludedUserTypes,
                 String displayMode) {
             return new TestListItem(
                     title,
@@ -214,6 +218,7 @@ public abstract class TestListAdapter extends BaseAdapter {
                     requiredActions,
                     excludedFeatures,
                     applicableFeatures,
+                    excludedUserTypes,
                     displayMode);
         }
 
@@ -235,9 +240,10 @@ public abstract class TestListAdapter extends BaseAdapter {
                     intent,
                     requiredFeatures,
                     requiredConfigs,
-                    /* requiredActions = */ null,
+                    /* requiredActions= */ null,
                     excludedFeatures,
                     applicableFeatures,
+                    /* excludedUserTypes= */ null,
                     /* displayMode= */ null);
         }
 
@@ -255,9 +261,10 @@ public abstract class TestListAdapter extends BaseAdapter {
                     intent,
                     requiredFeatures,
                     /* requiredConfigs= */ null,
-                    /* requiredActions = */ null,
+                    /* requiredActions= */ null,
                     excludedFeatures,
                     applicableFeatures,
+                    /* excludedUserTypes= */ null,
                     /* displayMode= */ null);
         }
 
@@ -274,9 +281,10 @@ public abstract class TestListAdapter extends BaseAdapter {
                     intent,
                     requiredFeatures,
                     /* requiredConfigs= */ null,
-                    /* requiredActions = */ null,
+                    /* requiredActions= */ null,
                     excludedFeatures,
                     /* applicableFeatures= */ null,
+                    /* excludedUserTypes= */ null,
                     /* displayMode= */ null);
         }
 
@@ -289,9 +297,10 @@ public abstract class TestListAdapter extends BaseAdapter {
                     intent,
                     requiredFeatures,
                     /* requiredConfigs= */ null,
-                    /* requiredActions = */ null,
+                    /* requiredActions= */ null,
                     /* excludedFeatures= */ null,
                     /* applicableFeatures= */ null,
+                    /* excludedUserTypes= */ null,
                     /* displayMode= */ null);
         }
 
@@ -306,9 +315,10 @@ public abstract class TestListAdapter extends BaseAdapter {
                     /* intent= */ null,
                     /* requiredFeatures= */ null,
                     /* requiredConfigs= */ null,
-                    /* requiredActions = */ null,
+                    /* requiredActions= */ null,
                     /* excludedFeatures= */ null,
                     /* applicableFeatures= */ null,
+                    /* excludedUserTypes= */ null,
                     /* displayMode= */ null);
         }
 
@@ -325,9 +335,10 @@ public abstract class TestListAdapter extends BaseAdapter {
                     intent,
                     requiredFeatures,
                     /* requiredConfigs= */ null,
-                    /* requiredActions = */ null,
+                    /* requiredActions= */ null,
                     excludedFeatures,
                     applicableFeatures,
+                    /* excludedUserTypes= */ null,
                     /* displayMode= */ null);
         }
 
@@ -340,6 +351,7 @@ public abstract class TestListAdapter extends BaseAdapter {
                 String[] requiredActions,
                 String[] excludedFeatures,
                 String[] applicableFeatures,
+                String[] excludedUserTypes,
                 String displayMode) {
             this.title = title;
             if (!sInitialLaunch) {
@@ -352,6 +364,7 @@ public abstract class TestListAdapter extends BaseAdapter {
             this.requiredConfigs = requiredConfigs;
             this.excludedFeatures = excludedFeatures;
             this.applicableFeatures = applicableFeatures;
+            this.excludedUserTypes = excludedUserTypes;
             this.displayMode = displayMode;
         }
 
