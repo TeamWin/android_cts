@@ -45,6 +45,8 @@ import android.content.pm.PackageInstaller.Session;
 import android.content.pm.PackageInstaller.SessionParams;
 import android.content.pm.PackageManager;
 import android.content.pm.PermissionInfo;
+import android.os.Process;
+import android.os.UserHandle;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.SystemUserOnly;
 import android.util.ArraySet;
@@ -57,6 +59,7 @@ import com.android.modules.utils.build.SdkLevel;
 
 import org.junit.After;
 import org.junit.AfterClass;
+import org.junit.Assume;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -179,6 +182,9 @@ public class RestrictedPermissionsTest {
     @AppModeFull
     @SystemUserOnly(reason = "Secondary users have the DISALLOW_SMS user restriction")
     public void testDefaultAllRestrictedPermissionsWhitelistedAtInstall22() throws Exception {
+        Assume.assumeTrue("Secondary users have the DISALLOW_SMS user restriction",
+                UserHandle.SYSTEM.equals(Process.myUserHandle()));
+
         String bypassLowTargetSdkFlag = "";
         if (SdkLevel.isAtLeastU()) {
             bypassLowTargetSdkFlag = " --bypass-low-target-sdk-block";
@@ -196,6 +202,9 @@ public class RestrictedPermissionsTest {
     @AppModeFull
     @SystemUserOnly(reason = "Secondary users have the DISALLOW_OUTGOING_CALLS user restriction")
     public void testSomeRestrictedPermissionsWhitelistedAtInstall22() throws Exception {
+        Assume.assumeTrue("Secondary users have the DISALLOW_OUTGOING_CALLS user restriction",
+                UserHandle.SYSTEM.equals(Process.myUserHandle()));
+
         // Whitelist only these permissions.
         final Set<String> whitelistedPermissions = new ArraySet<>(2);
         whitelistedPermissions.add(Manifest.permission.SEND_SMS);
@@ -255,6 +264,9 @@ public class RestrictedPermissionsTest {
     @AppModeFull
     @SystemUserOnly(reason = "Secondary users have the DISALLOW_OUTGOING_CALLS user restriction")
     public void testSomeRestrictedPermissionsGrantedAtInstall() throws Exception {
+        Assume.assumeTrue("Secondary users have the DISALLOW_OUTGOING_CALLS user restriction",
+                UserHandle.SYSTEM.equals(Process.myUserHandle()));
+
         // Grant only these permissions.
         final Set<String> grantedPermissions = new ArraySet<>(1);
         grantedPermissions.add(Manifest.permission.SEND_SMS);
@@ -290,6 +302,9 @@ public class RestrictedPermissionsTest {
     @AppModeFull
     @SystemUserOnly(reason = "Secondary users have the DISALLOW_SMS user restriction")
     public void testAllRestrictedPermissionsGrantedAtInstall() throws Exception {
+        Assume.assumeTrue("Secondary users have the DISALLOW_SMS user restriction",
+                UserHandle.SYSTEM.equals(Process.myUserHandle()));
+
         // Install with whitelisted permissions attempting to grant.
         installRestrictedPermissionUserApp(null /*whitelistedPermissions*/,
                 null);
@@ -367,6 +382,9 @@ public class RestrictedPermissionsTest {
     @AppModeFull
     @SystemUserOnly(reason = "Secondary users have the DISALLOW_SMS user restriction")
     public void shareUidBetweenRestrictedAndNotRestrictedApp() throws Exception {
+        Assume.assumeTrue("Secondary users have the DISALLOW_SMS user restriction",
+                UserHandle.SYSTEM.equals(Process.myUserHandle()));
+
         runShellCommand(
                 "pm install -g --force-queryable --restrict-permissions "
                 + APK_USES_SMS_RESTRICTED_SHARED_UID);
