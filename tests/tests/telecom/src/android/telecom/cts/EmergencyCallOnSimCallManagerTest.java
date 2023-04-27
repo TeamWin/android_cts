@@ -67,7 +67,7 @@ public class EmergencyCallOnSimCallManagerTest extends BaseTelecomTestWithMockSe
     public void setUp() throws Exception {
         super.setUp();
         NewOutgoingCallBroadcastReceiver.reset();
-        if (!mShouldTestTelecom) return;
+        if (!mShouldTestTelecom  || !TestUtils.hasTelephonyFeature(mContext)) return;
 
         setupConnectionService(null, FLAG_REGISTER | FLAG_ENABLE);
 
@@ -80,14 +80,14 @@ public class EmergencyCallOnSimCallManagerTest extends BaseTelecomTestWithMockSe
 
     @Override
     protected void tearDown() throws Exception {
-        if (mShouldTestTelecom) {
+        if (mShouldTestTelecom  || !TestUtils.hasTelephonyFeature(mContext)) {
             mTelecomManager.unregisterPhoneAccount(TEST_SIM_CALL_MANAGER_PHONE_ACCOUNT_HANDLE);
         }
         super.tearDown();
     }
 
     public void testQueryLocationException() {
-        if (!mShouldTestTelecom) return;
+        if (!mShouldTestTelecom  || !TestUtils.hasTelephonyFeature(mContext)) return;
 
         String message = "QueryLocationException";
         Throwable cause = new Throwable();
@@ -119,7 +119,7 @@ public class EmergencyCallOnSimCallManagerTest extends BaseTelecomTestWithMockSe
      * OutcomeReceiver)}
      */
     public void testQueryLocationForEmergencyTryNormalCall() throws Exception {
-        if (!mShouldTestTelecom) return;
+        if (!mShouldTestTelecom  || !TestUtils.hasTelephonyFeature(mContext)) return;
 
         try {
             placeAndVerifyCall();
@@ -161,7 +161,7 @@ public class EmergencyCallOnSimCallManagerTest extends BaseTelecomTestWithMockSe
      * OutcomeReceiver)}
      */
     public void testQueryLocationForEmergencyReturnLocation() throws Exception {
-        if (!mShouldTestTelecom) return;
+        if (!mShouldTestTelecom  || !TestUtils.hasTelephonyFeature(mContext)) return;
 
         try {
             // Add Test Provider
@@ -223,7 +223,7 @@ public class EmergencyCallOnSimCallManagerTest extends BaseTelecomTestWithMockSe
      * OutcomeReceiver)}
      */
     public void testQueryLocationForEmergencyReturnTimeoutException() throws Exception {
-        if (!mShouldTestTelecom) return;
+        if (!mShouldTestTelecom  || !TestUtils.hasTelephonyFeature(mContext)) return;
 
         try {
             // Add Test Provider
