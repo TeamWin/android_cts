@@ -16,8 +16,6 @@
 
 package android.soundtrigger.cts.instrumentation;
 
-import static android.Manifest.permission.MANAGE_SOUND_TRIGGER;
-
 import static com.google.common.truth.Truth.assertThat;
 
 import android.media.soundtrigger.SoundTriggerInstrumentation;
@@ -53,7 +51,7 @@ public class SoundTriggerInstrumentationObserver implements AutoCloseable {
     /**
      * Attaches to the SoundTrigger HAL instrumentation and registers listeners to HAL events
      *
-     * This call requires {@link MANAGE_SOUND_TRIGGER}.
+     * <p>This call requires {@link android.Manifest.permission.MANAGE_SOUND_TRIGGER}.
      * and then the permissions are revoked prior to returning.
      */
     public void attachInstrumentation() {
@@ -70,19 +68,20 @@ public class SoundTriggerInstrumentationObserver implements AutoCloseable {
     public static class ModelSessionObserver implements AutoCloseable {
         private final Object mModelSessionLock = new Object();
         @GuardedBy("mModelSessionLock")
-        private SettableFuture<RecognitionSession> mOnRecognitionStarted;
+        @NonNull
+        private SettableFuture<RecognitionSession> mOnRecognitionStarted = SettableFuture.create();
         @GuardedBy("mModelSessionLock")
-        private SettableFuture<Void> mOnRecognitionStopped;
+        @NonNull
+        private SettableFuture<Void> mOnRecognitionStopped = SettableFuture.create();
         @GuardedBy("mModelSessionLock")
-        private SettableFuture<Void> mOnModelUnloaded;
+        @NonNull
+        private SettableFuture<Void> mOnModelUnloaded = SettableFuture.create();
         private final ModelSession mModelSession;
 
         private final RecognitionCallback mRecognitionCallback = () -> {
             Log.d(TAG, "RecognitionCallback.onRecognitionStopped");
             synchronized (mModelSessionLock) {
-                if (mOnRecognitionStopped != null) {
-                    mOnRecognitionStopped.set(null);
-                }
+                mOnRecognitionStopped.set(null);
             }
         };
 
@@ -92,9 +91,7 @@ public class SoundTriggerInstrumentationObserver implements AutoCloseable {
                 Log.d(TAG, "ModelCallback.onRecognitionStarted");
                 recognitionSession.setRecognitionCallback(Runnable::run, mRecognitionCallback);
                 synchronized (mModelSessionLock) {
-                    if (mOnRecognitionStarted != null) {
-                        mOnRecognitionStarted.set(recognitionSession);
-                    }
+                    mOnRecognitionStarted.set(recognitionSession);
                 }
             }
 
@@ -102,9 +99,7 @@ public class SoundTriggerInstrumentationObserver implements AutoCloseable {
             public void onModelUnloaded() {
                 Log.d(TAG, "ModelCallback.onModelUnloaded");
                 synchronized (mModelSessionLock) {
-                    if (mOnModelUnloaded != null) {
-                        mOnModelUnloaded.set(null);
-                    }
+                    mOnModelUnloaded.set(null);
                 }
             }
         };
@@ -119,28 +114,20 @@ public class SoundTriggerInstrumentationObserver implements AutoCloseable {
         }
 
         /**
-         * Creates future to be completed on the next {@link ModelCallback#onRecognitionStarted}
+         * Returns a future to be completed on the next {@link ModelCallback#onRecognitionStarted}
          */
-        public ListenableFuture<RecognitionSession> listenOnRecognitionStarted() {
+        public ListenableFuture<RecognitionSession> getOnRecognitionStartedFuture() {
             synchronized (mModelSessionLock) {
-                if (mOnRecognitionStarted != null) {
-                    assertThat(mOnRecognitionStarted.isDone()).isTrue();
-                }
-                mOnRecognitionStarted = SettableFuture.create();
                 return mOnRecognitionStarted;
             }
         }
 
         /**
-         * Creates future to be completed on the next
+         * Returns a future to be completed on the next
          * {@link RecognitionCallback#onRecognitionStopped}
          */
-        public ListenableFuture<Void> listenOnRecognitionStopped() {
+        public ListenableFuture<Void> getOnRecognitionStoppedFuture() {
             synchronized (mModelSessionLock) {
-                if (mOnRecognitionStopped != null) {
-                    assertThat(mOnRecognitionStopped.isDone()).isTrue();
-                }
-                mOnRecognitionStopped = SettableFuture.create();
                 return mOnRecognitionStopped;
             }
         }
@@ -149,13 +136,45 @@ public class SoundTriggerInstrumentationObserver implements AutoCloseable {
          * Creates future to be completed on the next
          * {@link ModelCallback#onModelUnloaded}
          */
-        public ListenableFuture<Void> listenOnModelUnloaded() {
+        public ListenableFuture<Void> getOnModelUnloadedFuture() {
             synchronized (mModelSessionLock) {
-                if (mOnModelUnloaded != null) {
-                    assertThat(mOnModelUnloaded.isDone()).isTrue();
-                }
-                mOnModelUnloaded = SettableFuture.create();
                 return mOnModelUnloaded;
+            }
+        }
+
+        /**
+         * Reset future listening for {@link ModelCallback#onRecognitionStarted}
+         *
+         * <p>The future must be completed prior to calling this method.
+         */
+        public void resetOnRecognitionStartedFuture() {
+            synchronized (mModelSessionLock) {
+                assertThat(mOnRecognitionStarted.isDone()).isTrue();
+                mOnRecognitionStarted = SettableFuture.create();
+            }
+        }
+
+        /**
+         * Reset future listening for {@link RecognitionCallback#onRecognitionStopped}
+         *
+         * <p>The future must be completed prior to calling this method.
+         */
+        public void resetOnRecognitionStoppedFuture() {
+            synchronized (mModelSessionLock) {
+                assertThat(mOnRecognitionStopped.isDone()).isTrue();
+                mOnRecognitionStopped = SettableFuture.create();
+            }
+        }
+
+        /**
+         * Reset future listening for {@link ModelCallback#onModelUnloaded}
+         *
+         * <p>The future must be completed prior to calling this method.
+         */
+        public void resetOnModelUnloadedFuture() {
+            synchronized (mModelSessionLock) {
+                assertThat(mOnModelUnloaded.isDone()).isTrue();
+                mOnModelUnloaded = SettableFuture.create();
             }
         }
 
@@ -163,18 +182,9 @@ public class SoundTriggerInstrumentationObserver implements AutoCloseable {
         public void close() throws Exception {
             mModelSession.clearModelCallback();
             synchronized (mModelSessionLock) {
-                if (mOnRecognitionStarted != null) {
-                    mOnRecognitionStarted.cancel(true /* mayInterruptIfRunning */);
-                    mOnRecognitionStarted = null;
-                }
-                if (mOnRecognitionStopped != null) {
-                    mOnRecognitionStopped.cancel(true /* mayInterruptIfRunning */);
-                    mOnRecognitionStopped = null;
-                }
-                if (mOnModelUnloaded != null) {
-                    mOnModelUnloaded.cancel(true /* mayInterruptIfRunning */);
-                    mOnModelUnloaded = null;
-                }
+                mOnRecognitionStarted.cancel(true /* mayInterruptIfRunning */);
+                mOnRecognitionStopped.cancel(true /* mayInterruptIfRunning */);
+                mOnModelUnloaded.cancel(true /* mayInterruptIfRunning */);
             }
         }
     }
@@ -185,11 +195,14 @@ public class SoundTriggerInstrumentationObserver implements AutoCloseable {
     public static class GlobalCallbackObserver implements AutoCloseable {
         private final Object mGlobalObserverLock = new Object();
         @GuardedBy("mGlobalObserverLock")
-        private SettableFuture<ModelSessionObserver> mOnModelLoaded;
+        @NonNull
+        private SettableFuture<ModelSessionObserver> mOnModelLoaded = SettableFuture.create();
         @GuardedBy("mGlobalObserverLock")
-        private SettableFuture<Void> mOnClientAttached;
+        @NonNull
+        private SettableFuture<Void> mOnClientAttached = SettableFuture.create();
         @GuardedBy("mGlobalObserverLock")
-        private SettableFuture<Void> mOnClientDetached;
+        @NonNull
+        private SettableFuture<Void> mOnClientDetached = SettableFuture.create();
         // do not expose as an API, only held for cleanup
         @GuardedBy("mGlobalObserverLock")
         private ModelSessionObserver mModelSessionObserver;
@@ -201,9 +214,7 @@ public class SoundTriggerInstrumentationObserver implements AutoCloseable {
                 Log.d(TAG, "GlobalCallback.onModelLoaded");
                 synchronized (mGlobalObserverLock) {
                     mModelSessionObserver = new ModelSessionObserver(modelSession);
-                    if (mOnModelLoaded != null) {
-                        mOnModelLoaded.set(mModelSessionObserver);
-                    }
+                    mOnModelLoaded.set(mModelSessionObserver);
                 }
             }
 
@@ -211,9 +222,7 @@ public class SoundTriggerInstrumentationObserver implements AutoCloseable {
             public void onClientAttached() {
                 Log.d(TAG, "GlobalCallback.onClientAttached");
                 synchronized (mGlobalObserverLock) {
-                    if (mOnClientAttached != null) {
-                        mOnClientAttached.set(null);
-                    }
+                    mOnClientAttached.set(null);
                 }
             }
 
@@ -221,9 +230,7 @@ public class SoundTriggerInstrumentationObserver implements AutoCloseable {
             public void onClientDetached() {
                 Log.d(TAG, "GlobalCallback.onClientDetached");
                 synchronized (mGlobalObserverLock) {
-                    if (mOnClientDetached != null) {
-                        mOnClientDetached.set(null);
-                    }
+                    mOnClientDetached.set(null);
                 }
             }
         };
@@ -249,41 +256,65 @@ public class SoundTriggerInstrumentationObserver implements AutoCloseable {
         }
 
         /**
-         * Creates future to be completed on the next {@link GlobalCallback#onModelLoaded}
+         * Returns a future to be completed on the next {@link GlobalCallback#onModelLoaded}
          */
-        public ListenableFuture<ModelSessionObserver> listenOnModelLoaded() {
+        public ListenableFuture<ModelSessionObserver> getOnModelLoadedFuture() {
             synchronized (mGlobalObserverLock) {
-                if (mOnModelLoaded != null) {
-                    assertThat(mOnModelLoaded.isDone()).isTrue();
-                }
-                mOnModelLoaded = SettableFuture.create();
                 return mOnModelLoaded;
             }
         }
 
         /**
-         * Creates future to be completed on the next {@link GlobalCallback#onClientAttached()}
+         * Returns a future to be completed on the next {@link GlobalCallback#onClientAttached()}
          */
-        public ListenableFuture<Void> listenOnClientAttached() {
+        public ListenableFuture<Void> getOnClientAttachedFuture() {
             synchronized (mGlobalObserverLock) {
-                if (mOnClientAttached != null) {
-                    assertThat(mOnClientAttached.isDone()).isTrue();
-                }
-                mOnClientAttached = SettableFuture.create();
                 return mOnClientAttached;
             }
         }
 
         /**
-         * Creates future to be completed on the next {@link GlobalCallback#onClientDetached()}
+         * Returns a future to be completed on the next {@link GlobalCallback#onClientDetached()}
          */
-        public ListenableFuture<Void> listenOnClientDetached() {
+        public ListenableFuture<Void> getOnClientDetachedFuture() {
             synchronized (mGlobalObserverLock) {
-                if (mOnClientDetached != null) {
-                    assertThat(mOnClientDetached.isDone()).isTrue();
-                }
-                mOnClientDetached = SettableFuture.create();
                 return mOnClientDetached;
+            }
+        }
+
+        /**
+         * Reset future listening for {@link GlobalCallback#onModelLoaded}
+         *
+         * <p>The future must be completed prior to calling this method.
+         */
+        public void resetOnModelLoadedFuture() {
+            synchronized (mGlobalObserverLock) {
+                assertThat(mOnModelLoaded.isDone()).isTrue();
+                mOnModelLoaded = SettableFuture.create();
+            }
+        }
+
+        /**
+         * Reset future listening for {@link GlobalCallback#onModelLoaded}
+         *
+         * <p>The future must be completed prior to calling this method.
+         */
+        public void resetOnClientAttachedFuture() {
+            synchronized (mGlobalObserverLock) {
+                assertThat(mOnClientAttached.isDone()).isTrue();
+                mOnClientAttached = SettableFuture.create();
+            }
+        }
+
+        /**
+         * Reset future listening for {@link GlobalCallback#onModelLoaded}
+         *
+         * <p>The future must be completed prior to calling this method.
+         */
+        public void resetOnClientDetachedFuture() {
+            synchronized (mGlobalObserverLock) {
+                assertThat(mOnClientDetached.isDone()).isTrue();
+                mOnClientDetached = SettableFuture.create();
             }
         }
 
@@ -294,18 +325,9 @@ public class SoundTriggerInstrumentationObserver implements AutoCloseable {
                     mModelSessionObserver.close();
                     mModelSessionObserver = null;
                 }
-                if (mOnModelLoaded != null) {
-                    mOnModelLoaded.cancel(true /* mayInterruptIfRunning */);
-                    mOnModelLoaded = null;
-                }
-                if (mOnClientAttached != null) {
-                    mOnClientAttached.cancel(true /* mayInterruptIfRunning */);
-                    mOnClientAttached = null;
-                }
-                if (mOnClientDetached != null) {
-                    mOnClientDetached.cancel(true /* mayInterruptIfRunning */);
-                    mOnClientDetached = null;
-                }
+                mOnModelLoaded.cancel(true /* mayInterruptIfRunning */);
+                mOnClientAttached.cancel(true /* mayInterruptIfRunning */);
+                mOnClientDetached.cancel(true /* mayInterruptIfRunning */);
             }
             if (mInstrumentation != null) {
                 mInstrumentation.triggerRestart();
@@ -327,9 +349,9 @@ public class SoundTriggerInstrumentationObserver implements AutoCloseable {
     /**
      * Helper method for common listener of recognition started
      */
-    public ListenableFuture<RecognitionSession> listenOnRecognitionStarted() {
-        return Futures.transformAsync(getGlobalCallbackObserver().listenOnModelLoaded(),
-                ModelSessionObserver::listenOnRecognitionStarted, Runnable::run);
+    public ListenableFuture<RecognitionSession> getOnRecognitionStartedFuture() {
+        return Futures.transformAsync(getGlobalCallbackObserver().getOnModelLoadedFuture(),
+                ModelSessionObserver::getOnRecognitionStartedFuture, Runnable::run);
     }
 
     @Override
