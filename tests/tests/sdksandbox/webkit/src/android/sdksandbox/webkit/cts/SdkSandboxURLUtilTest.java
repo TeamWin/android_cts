@@ -16,12 +16,14 @@
 
 package android.sdksandbox.webkit.cts;
 
+import android.app.sdksandbox.testutils.testscenario.KeepSdkSandboxAliveRule;
 import android.platform.test.annotations.AppModeFull;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.MediumTest;
 
 import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -30,86 +32,90 @@ import org.junit.runner.RunWith;
 @RunWith(AndroidJUnit4.class)
 public class SdkSandboxURLUtilTest {
     @ClassRule
-    public static final WebViewSandboxTestRule sSdkTestSuiteSetup =
+    public static final KeepSdkSandboxAliveRule sSdkTestSuiteSetup =
+            new KeepSdkSandboxAliveRule("com.android.emptysdkprovider");
+
+    @Rule
+    public final WebViewSandboxTestRule sdkTester =
             new WebViewSandboxTestRule("android.webkit.cts.URLUtilTest");
 
     @Test
-    public void testIsAssetUrl() throws Throwable {
-        sSdkTestSuiteSetup.assertSdkTestRunPasses("testIsAssetUrl");
+    public void testIsAssetUrl() throws Exception {
+        sdkTester.assertSdkTestRunPasses("testIsAssetUrl");
     }
 
     @Test
-    public void testIsAboutUrl() throws Throwable {
-        sSdkTestSuiteSetup.assertSdkTestRunPasses("testIsAboutUrl");
+    public void testIsAboutUrl() throws Exception {
+        sdkTester.assertSdkTestRunPasses("testIsAboutUrl");
     }
 
     @Test
-    public void testIsContentUrl() throws Throwable {
-        sSdkTestSuiteSetup.assertSdkTestRunPasses("testIsContentUrl");
+    public void testIsContentUrl() throws Exception {
+        sdkTester.assertSdkTestRunPasses("testIsContentUrl");
     }
 
     @Test
-    public void testIsCookielessProxyUrl() throws Throwable {
-        sSdkTestSuiteSetup.assertSdkTestRunPasses("testIsCookielessProxyUrl");
+    public void testIsCookielessProxyUrl() throws Exception {
+        sdkTester.assertSdkTestRunPasses("testIsCookielessProxyUrl");
     }
 
     @Test
-    public void testIsDataUrl() throws Throwable {
-        sSdkTestSuiteSetup.assertSdkTestRunPasses("testIsDataUrl");
+    public void testIsDataUrl() throws Exception {
+        sdkTester.assertSdkTestRunPasses("testIsDataUrl");
     }
 
     @Test
-    public void testIsFileUrl() throws Throwable {
-        sSdkTestSuiteSetup.assertSdkTestRunPasses("testIsFileUrl");
+    public void testIsFileUrl() throws Exception {
+        sdkTester.assertSdkTestRunPasses("testIsFileUrl");
     }
 
     @Test
-    public void testIsHttpsUrl() throws Throwable {
-        sSdkTestSuiteSetup.assertSdkTestRunPasses("testIsHttpsUrl");
+    public void testIsHttpsUrl() throws Exception {
+        sdkTester.assertSdkTestRunPasses("testIsHttpsUrl");
     }
 
     @Test
-    public void testIsHttpUrl() throws Throwable {
-        sSdkTestSuiteSetup.assertSdkTestRunPasses("testIsHttpUrl");
+    public void testIsHttpUrl() throws Exception {
+        sdkTester.assertSdkTestRunPasses("testIsHttpUrl");
     }
 
     @Test
-    public void testIsJavaScriptUrl() throws Throwable {
-        sSdkTestSuiteSetup.assertSdkTestRunPasses("testIsJavaScriptUrl");
+    public void testIsJavaScriptUrl() throws Exception {
+        sdkTester.assertSdkTestRunPasses("testIsJavaScriptUrl");
     }
 
     @Test
-    public void testIsNetworkUrl() throws Throwable {
-        sSdkTestSuiteSetup.assertSdkTestRunPasses("testIsNetworkUrl");
+    public void testIsNetworkUrl() throws Exception {
+        sdkTester.assertSdkTestRunPasses("testIsNetworkUrl");
     }
 
     @Test
-    public void testIsValidUrl() throws Throwable {
-        sSdkTestSuiteSetup.assertSdkTestRunPasses("testIsValidUrl");
+    public void testIsValidUrl() throws Exception {
+        sdkTester.assertSdkTestRunPasses("testIsValidUrl");
     }
 
     @Test
-    public void testComposeSearchUrl() throws Throwable {
-        sSdkTestSuiteSetup.assertSdkTestRunPasses("testComposeSearchUrl");
+    public void testComposeSearchUrl() throws Exception {
+        sdkTester.assertSdkTestRunPasses("testComposeSearchUrl");
     }
 
     @Test
-    public void testDecode() throws Throwable {
-        sSdkTestSuiteSetup.assertSdkTestRunPasses("testDecode");
+    public void testDecode() throws Exception {
+        sdkTester.assertSdkTestRunPasses("testDecode");
     }
 
     @Test
-    public void testGuessFileName() throws Throwable {
-        sSdkTestSuiteSetup.assertSdkTestRunPasses("testGuessFileName");
+    public void testGuessFileName() throws Exception {
+        sdkTester.assertSdkTestRunPasses("testGuessFileName");
     }
 
     @Test
-    public void testGuessUrl() throws Throwable {
-        sSdkTestSuiteSetup.assertSdkTestRunPasses("testGuessUrl");
+    public void testGuessUrl() throws Exception {
+        sdkTester.assertSdkTestRunPasses("testGuessUrl");
     }
 
     @Test
-    public void testStripAnchor() throws Throwable {
-        sSdkTestSuiteSetup.assertSdkTestRunPasses("testStripAnchor");
+    public void testStripAnchor() throws Exception {
+        sdkTester.assertSdkTestRunPasses("testStripAnchor");
     }
 }
