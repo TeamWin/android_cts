@@ -20,6 +20,7 @@ import android.app.Activity;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.util.Log;
+import android.util.Pair;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -43,8 +44,10 @@ public class CodecDynamicTestActivity extends Activity implements SurfaceHolder.
     private final ArrayList<Surface> mSurfaces = new ArrayList<>();
     private final Lock[] mLocks = new Lock[mMaxSurfaces];
     private final Condition[] mConditions = new Condition[mMaxSurfaces];
+    private final ReentrantLock mMutex = new ReentrantLock();
+    private final boolean[] mIsUsable = new boolean[mMaxSurfaces];
 
-    public void addSurfaceView() {
+    public int addSurfaceView() {
         if (mMaxSurfaces == mSurfaceViews.size()) {
             throw new RuntimeException("number of surfaceViews exceed preconfigured limit");
         }
@@ -60,6 +63,7 @@ public class CodecDynamicTestActivity extends Activity implements SurfaceHolder.
         mHolders.add(holder);
         mLocks[index].unlock();
         runOnUiThread(() -> mLayOutList.addView(view));
+        return index;
     }
 
     @Override
@@ -74,6 +78,7 @@ public class CodecDynamicTestActivity extends Activity implements SurfaceHolder.
         setContentView(R.layout.main_layout);
         mLayOutList = findViewById(R.id.layout_list);
         for (int i = 0; i < mMaxSurfaces; i++) {
+            mIsUsable[i] = false;
             mLocks[i] = new ReentrantLock();
             mConditions[i] = mLocks[i].newCondition();
         }
@@ -97,6 +102,7 @@ public class CodecDynamicTestActivity extends Activity implements SurfaceHolder.
     public void surfaceDestroyed(SurfaceHolder holder) {
         Log.v(LOG_TAG, "surface deleted");
         int index = mHolders.indexOf(holder);
+        markSurface(index, false);
         mLocks[index].lock();
         mSurfaces.set(index, null);
         mLocks[index].unlock();
@@ -115,9 +121,26 @@ public class CodecDynamicTestActivity extends Activity implements SurfaceHolder.
         if (mSurfaces.get(index) == null) {
             throw new InterruptedException("Taking too long to attach a SurfaceView to a window.");
         }
+        markSurface(index, true);
     }
 
-    public Surface getSurface(int index) {
-        return mSurfaces.get(index);
+    public Pair<Integer, Surface> getSurface() {
+        Pair<Integer, Surface> obj = null;
+        mMutex.lock();
+        for (int index = 0; index < mSurfaces.size(); index++) {
+            if (mIsUsable[index]) {
+                mIsUsable[index] = false;
+                obj = Pair.create(index, mSurfaces.get(index));
+                break;
+            }
+        }
+        mMutex.unlock();
+        return obj;
+    }
+
+    public void markSurface(int index, boolean usable) {
+        mMutex.lock();
+        mIsUsable[index] = usable;
+        mMutex.unlock();
     }
 }

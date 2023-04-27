@@ -28,6 +28,8 @@ import android.media.MediaCodecInfo;
 import android.media.MediaCodecList;
 import android.media.MediaFormat;
 import android.util.Log;
+import android.util.Pair;
+import android.view.Surface;
 
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -93,25 +95,31 @@ public class MediaCodecInstancesTest {
         MediaFormat format = createMinFormat(mime, caps);
         Log.d(TAG, "Test format " + format);
         Vector<MediaCodec> codecs = new Vector<>();
+        Vector<Pair<Integer, Surface>> surfaces = new Vector<>();
         MediaCodec codec = null;
         ActivityManager am = CONTEXT.getSystemService(ActivityManager.class);
         ActivityManager.MemoryInfo outInfo = new ActivityManager.MemoryInfo();
-        if (isCompSecureVidDec) {
-            mActivityRule.getScenario().onActivity(activity -> mDynamicActivity = activity);
-        }
         for (int i = 0; i < max; ++i) {
+            Pair<Integer, Surface> obj = null;
             try {
                 Log.d(TAG, "Create codec " + name + " #" + i);
                 if (isCompSecureVidDec) {
-                    mDynamicActivity.addSurfaceView();
-                    mDynamicActivity.waitTillSurfaceIsCreated(i);
+                    obj = mDynamicActivity.getSurface();
+                    if (obj == null) {
+                        int index = mDynamicActivity.addSurfaceView();
+                        mDynamicActivity.waitTillSurfaceIsCreated(index);
+                        obj = mDynamicActivity.getSurface();
+                    }
                 }
                 codec = MediaCodec.createByCodecName(name);
-                codec.configure(format, isCompSecureVidDec ? mDynamicActivity.getSurface(i) : null,
-                        null, flag);
+                codec.configure(format, isCompSecureVidDec ? obj.second : null, null, flag);
                 codec.start();
                 codecs.add(codec);
                 codec = null;
+                if (isCompSecureVidDec) {
+                    surfaces.add(obj);
+                    obj = null;
+                }
 
                 am.getMemoryInfo(outInfo);
                 if (outInfo.lowMemory) {
@@ -140,12 +148,22 @@ public class MediaCodecInstancesTest {
                     codec.release();
                     codec = null;
                 }
+                if (obj != null) {
+                    mDynamicActivity.markSurface(obj.first, true);
+                }
             }
         }
         int actualMax = codecs.size();
         for (int i = 0; i < codecs.size(); ++i) {
             Log.d(TAG, "release codec #" + i);
             codecs.get(i).release();
+        }
+        if (isCompSecureVidDec) {
+            for (int i = 0; i < surfaces.size(); ++i) {
+                Log.d(TAG, "mark surface usable #" + i);
+                mDynamicActivity.markSurface(surfaces.get(i).first, true);
+            }
+            surfaces.clear();
         }
         codecs.clear();
         // encode both actual max and whether we ran out of memory
@@ -185,6 +203,7 @@ public class MediaCodecInstancesTest {
         StringBuilder xmlOverrides = new StringBuilder();
         MediaCodecList allCodecs = new MediaCodecList(MediaCodecList.ALL_CODECS);
         final boolean isLowRam = ActivityManager.isLowRamDeviceStatic();
+        mActivityRule.getScenario().onActivity(activity -> mDynamicActivity = activity);
         for (MediaCodecInfo info : allCodecs.getCodecInfos()) {
             Log.d(TAG, "codec: " + info.getName());
             Log.d(TAG, "  isEncoder = " + info.isEncoder());
