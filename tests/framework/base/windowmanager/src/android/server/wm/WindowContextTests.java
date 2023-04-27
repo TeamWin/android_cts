@@ -49,7 +49,6 @@ import android.window.WindowProviderService;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.test.core.app.ApplicationProvider;
-import androidx.test.filters.FlakyTest;
 import androidx.test.rule.ServiceTestRule;
 
 import org.junit.Test;
@@ -194,7 +193,6 @@ public class WindowContextTests extends WindowContextTestBase {
      * </ul>
      */
     @Test
-    @FlakyTest(bugId = 271975866)
     public void testWindowProviderServiceLifecycle() {
         assumeTrue(supportsSplitScreenMultiWindow());
 
