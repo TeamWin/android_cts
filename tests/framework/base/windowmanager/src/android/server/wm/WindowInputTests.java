@@ -387,7 +387,6 @@ public class WindowInputTests {
     }
 
     @Test
-    @FlakyTest(bugId = 263497259)
     public void testDoNotFlagTouchesWhenObscuredByZeroOpacityWindow() throws Throwable {
         final WindowManager.LayoutParams p = new WindowManager.LayoutParams();
 
