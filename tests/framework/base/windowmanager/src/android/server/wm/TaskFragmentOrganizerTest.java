@@ -43,8 +43,6 @@ import android.window.TaskFragmentInfo;
 import android.window.TaskFragmentOrganizer;
 import android.window.WindowContainerTransaction;
 
-import androidx.test.filters.FlakyTest;
-
 import com.android.compatibility.common.util.ApiTest;
 
 import org.junit.Test;
@@ -109,7 +107,6 @@ public class TaskFragmentOrganizerTest extends TaskFragmentOrganizerTestBase {
      * reparent {@link Activity} to TaskFragment.
      */
     @Test
-    @FlakyTest(bugId = 271975866)
     public void testReparentActivity() {
         mWmState.computeState(mOwnerActivityName);
 
@@ -144,7 +141,6 @@ public class TaskFragmentOrganizerTest extends TaskFragmentOrganizerTestBase {
      * Bundle)} to start Activity in TaskFragment without creating new Task.
      */
     @Test
-    @FlakyTest(bugId = 271975866)
     public void testStartActivityInTaskFragment_reuseTask() {
         final TaskFragmentCreationParams params = generateTaskFragCreationParams();
         final IBinder taskFragToken = params.getFragmentToken();
@@ -182,7 +178,6 @@ public class TaskFragmentOrganizerTest extends TaskFragmentOrganizerTestBase {
      * organized TaskFragment.
      */
     @Test
-    @FlakyTest(bugId = 271975866)
     @ApiTest(apis = {
             "android.window.WindowContainerTransaction#deleteTaskFragment"})
     public void testDeleteTaskFragment() {
@@ -215,7 +210,6 @@ public class TaskFragmentOrganizerTest extends TaskFragmentOrganizerTestBase {
      * organized TaskFragment with activity embedded.
      */
     @Test
-    @FlakyTest(bugId = 271975866)
     @ApiTest(apis = {
             "android.window.WindowContainerTransaction#deleteTaskFragment",
             "android.window.TaskFragmentOrganizer.#onTransactionReady"})
