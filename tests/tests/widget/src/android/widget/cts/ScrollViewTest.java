@@ -1095,12 +1095,12 @@ public class ScrollViewTest {
 
                     int topLeftColor = screenshot.getPixel(
                             coords[0] + containerWidth / 4,
-                            coords[1] + containerHeight / 4
+                            coords[1] + (containerHeight / 4) + 3
                     );
 
                     int topRightColor = screenshot.getPixel(
                             coords[0] + containerWidth / 2 + containerWidth / 4,
-                            coords[1] + containerHeight / 4
+                            coords[1] + (containerHeight / 4) + 3
                     );
 
                     int bottomLeftColor = screenshot.getPixel(
