@@ -62,8 +62,6 @@ import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.BatteryUtils;
 import com.android.compatibility.common.util.RequiredFeatureRule;
 
-import com.google.common.util.concurrent.ListenableFuture;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -198,11 +196,9 @@ public class AlwaysOnHotwordDetectorTest {
         // Grab permissions for more than a single call since we get callbacks
         adoptSoundTriggerPermissions();
         // Start recognition
-        ListenableFuture<RecognitionSession> onRecognitionStartedFuture =
-                mInstrumentationObserver.listenOnRecognitionStarted();
         mAlwaysOnHotwordDetector.startRecognition(0, new byte[]{1, 2, 3, 4, 5});
         RecognitionSession recognitionSession = waitForFutureDoneAndAssertSuccessful(
-                onRecognitionStartedFuture);
+                mInstrumentationObserver.getOnRecognitionStartedFuture());
         assertThat(recognitionSession).isNotNull();
 
         getService().initDetectRejectLatch();
@@ -222,10 +218,9 @@ public class AlwaysOnHotwordDetectorTest {
         adoptSoundTriggerPermissions();
 
         // We don't get callbacks if we don't have a recognition started
-        ListenableFuture<RecognitionSession> onRecognitionStartedFuture =
-                mInstrumentationObserver.listenOnRecognitionStarted();
         mAlwaysOnHotwordDetector.startRecognition(0, new byte[]{1, 2, 3, 4, 5});
-        assertThat(waitForFutureDoneAndAssertSuccessful(onRecognitionStartedFuture)).isNotNull();
+        assertThat(waitForFutureDoneAndAssertSuccessful(
+                mInstrumentationObserver.getOnRecognitionStartedFuture())).isNotNull();
 
         // Cause a restart
         getService().initOnFailureLatch();
@@ -243,11 +238,9 @@ public class AlwaysOnHotwordDetectorTest {
 
         SoundTriggerInstrumentation instrumentation =
                 mInstrumentationObserver.getGlobalCallbackObserver().getInstrumentation();
-        ListenableFuture<RecognitionSession> onRecognitionStartedFuture =
-                mInstrumentationObserver.listenOnRecognitionStarted();
         mAlwaysOnHotwordDetector.startRecognition(0, new byte[]{1, 2, 3, 4, 5});
         RecognitionSession recognitionSession = waitForFutureDoneAndAssertSuccessful(
-                onRecognitionStartedFuture);
+                mInstrumentationObserver.getOnRecognitionStartedFuture());
         assertThat(recognitionSession).isNotNull();
 
         instrumentation.setResourceContention(true);
@@ -278,11 +271,9 @@ public class AlwaysOnHotwordDetectorTest {
 
         SoundTriggerInstrumentation instrumentation =
                 mInstrumentationObserver.getGlobalCallbackObserver().getInstrumentation();
-        ListenableFuture<RecognitionSession> onRecognitionStartedFuture =
-                mInstrumentationObserver.listenOnRecognitionStarted();
         mAlwaysOnHotwordDetector.startRecognition(0, new byte[]{1, 2, 3, 4, 5});
         RecognitionSession recognitionSession = waitForFutureDoneAndAssertSuccessful(
-                onRecognitionStartedFuture);
+                mInstrumentationObserver.getOnRecognitionStartedFuture());
         assertThat(recognitionSession).isNotNull();
 
         getService().initOnRecognitionPausedLatch();
@@ -314,11 +305,10 @@ public class AlwaysOnHotwordDetectorTest {
         adoptSoundTriggerPermissions();
 
         try {
-            ListenableFuture<RecognitionSession> onRecognitionStartedFuture =
-                    mInstrumentationObserver.listenOnRecognitionStarted();
             mAlwaysOnHotwordDetector.startRecognition(0, new byte[]{1, 2, 3, 4, 5});
             assertThat(
-                    waitForFutureDoneAndAssertSuccessful(onRecognitionStartedFuture)).isNotNull();
+                    waitForFutureDoneAndAssertSuccessful(
+                            mInstrumentationObserver.getOnRecognitionStartedFuture())).isNotNull();
 
             BatteryUtils.runDumpsysBatteryUnplug();
 
@@ -345,11 +335,10 @@ public class AlwaysOnHotwordDetectorTest {
         adoptSoundTriggerPermissions();
 
         try {
-            ListenableFuture<RecognitionSession> onRecognitionStartedFuture =
-                    mInstrumentationObserver.listenOnRecognitionStarted();
             mAlwaysOnHotwordDetector.startRecognition(0, new byte[]{1, 2, 3, 4, 5});
             assertThat(
-                    waitForFutureDoneAndAssertSuccessful(onRecognitionStartedFuture)).isNotNull();
+                    waitForFutureDoneAndAssertSuccessful(
+                            mInstrumentationObserver.getOnRecognitionStartedFuture())).isNotNull();
 
             BatteryUtils.runDumpsysBatteryUnplug();
 
@@ -382,11 +371,10 @@ public class AlwaysOnHotwordDetectorTest {
         adoptSoundTriggerPermissions();
 
         try {
-            ListenableFuture<RecognitionSession> onRecognitionStartedFuture =
-                    mInstrumentationObserver.listenOnRecognitionStarted();
             mAlwaysOnHotwordDetector.startRecognition(0, new byte[]{1, 2, 3, 4, 5});
             assertThat(
-                    waitForFutureDoneAndAssertSuccessful(onRecognitionStartedFuture)).isNotNull();
+                    waitForFutureDoneAndAssertSuccessful(
+                            mInstrumentationObserver.getOnRecognitionStartedFuture())).isNotNull();
 
             BatteryUtils.runDumpsysBatteryUnplug();
 
@@ -418,13 +406,12 @@ public class AlwaysOnHotwordDetectorTest {
         // Grab permissions for more than a single call since we get callbacks
         adoptSoundTriggerPermissions();
         try {
-            ListenableFuture<RecognitionSession> onRecognitionStartedFuture =
-                    mInstrumentationObserver.listenOnRecognitionStarted();
             mAlwaysOnHotwordDetector.startRecognition(
                     AlwaysOnHotwordDetector.RECOGNITION_FLAG_RUN_IN_BATTERY_SAVER,
                     new byte[]{1, 2, 3, 4, 5});
             assertThat(
-                    waitForFutureDoneAndAssertSuccessful(onRecognitionStartedFuture)).isNotNull();
+                    waitForFutureDoneAndAssertSuccessful(
+                            mInstrumentationObserver.getOnRecognitionStartedFuture())).isNotNull();
 
             BatteryUtils.runDumpsysBatteryUnplug();
 
@@ -450,13 +437,12 @@ public class AlwaysOnHotwordDetectorTest {
         // Grab permissions for more than a single call since we get callbacks
         adoptSoundTriggerPermissions();
         try {
-            ListenableFuture<RecognitionSession> onRecognitionStartedFuture =
-                    mInstrumentationObserver.listenOnRecognitionStarted();
             mAlwaysOnHotwordDetector.startRecognition(
                     AlwaysOnHotwordDetector.RECOGNITION_FLAG_RUN_IN_BATTERY_SAVER,
                     new byte[]{1, 2, 3, 4, 5});
             assertThat(
-                    waitForFutureDoneAndAssertSuccessful(onRecognitionStartedFuture)).isNotNull();
+                    waitForFutureDoneAndAssertSuccessful(
+                            mInstrumentationObserver.getOnRecognitionStartedFuture())).isNotNull();
 
             BatteryUtils.runDumpsysBatteryUnplug();
 
@@ -484,13 +470,12 @@ public class AlwaysOnHotwordDetectorTest {
         adoptSoundTriggerPermissions();
 
         try {
-            ListenableFuture<RecognitionSession> onRecognitionStartedFuture =
-                    mInstrumentationObserver.listenOnRecognitionStarted();
             mAlwaysOnHotwordDetector.startRecognition(
                     AlwaysOnHotwordDetector.RECOGNITION_FLAG_RUN_IN_BATTERY_SAVER,
                     new byte[]{1, 2, 3, 4, 5});
             assertThat(
-                    waitForFutureDoneAndAssertSuccessful(onRecognitionStartedFuture)).isNotNull();
+                    waitForFutureDoneAndAssertSuccessful(
+                            mInstrumentationObserver.getOnRecognitionStartedFuture())).isNotNull();
 
             BatteryUtils.runDumpsysBatteryUnplug();
 
