@@ -24,6 +24,7 @@ import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
+import com.android.bedstead.harrier.annotations.enterprise.CoexistenceFlagsOn;
 import com.android.bedstead.harrier.policies.DisallowDebuggingFeatures;
 import com.android.compatibility.common.util.ApiTest;
 
@@ -33,6 +34,7 @@ import org.junit.Rule;
 import org.junit.runner.RunWith;
 
 @RunWith(BedsteadJUnit4.class)
+@CoexistenceFlagsOn
 public final class DebuggingTest {
 
     @ClassRule @Rule

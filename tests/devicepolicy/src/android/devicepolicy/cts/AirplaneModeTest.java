@@ -16,6 +16,8 @@
 
 package android.devicepolicy.cts;
 
+import static android.os.Build.VERSION_CODES.UPSIDE_DOWN_CAKE;
+
 import static android.provider.Settings.Global.AIRPLANE_MODE_ON;
 
 import static com.android.bedstead.nene.userrestrictions.CommonUserRestrictions.DISALLOW_AIRPLANE_MODE;
@@ -29,11 +31,13 @@ import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.EnsureDoesNotHaveUserRestriction;
 import com.android.bedstead.harrier.annotations.EnsureHasUserRestriction;
 import com.android.bedstead.harrier.annotations.Postsubmit;
+import com.android.bedstead.harrier.annotations.enterprise.AdditionalQueryParameters;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.CoexistenceFlagsOn;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
 import com.android.bedstead.harrier.policies.DisallowAirplaneMode;
+import com.android.bedstead.harrier.policies.DisallowAirplaneModePermissionBased;
 import com.android.bedstead.nene.TestApis;
 import com.android.compatibility.common.util.ApiTest;
 import com.android.interactive.Step;
@@ -42,6 +46,8 @@ import com.android.interactive.annotations.NotFullyAutomated;
 import com.android.interactive.steps.enterprise.settings.NavigateToPersonalNetworkSettingsStep;
 import com.android.interactive.steps.settings.CanYouTurnOnAirplaneModeStep;
 import com.android.interactive.steps.settings.IsThereTextExplainingThatAnITAdminHasLimitedThisFunctionalityStep;
+import com.android.queryable.annotations.IntegerQuery;
+import com.android.queryable.annotations.Query;
 
 import org.junit.ClassRule;
 import org.junit.Ignore;
@@ -50,6 +56,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @RunWith(BedsteadJUnit4.class)
+@CoexistenceFlagsOn
 public final class AirplaneModeTest {
 
     @ClassRule @Rule
@@ -80,12 +87,16 @@ public final class AirplaneModeTest {
         }
     }
 
-    @PolicyAppliesTest(policy = DisallowAirplaneMode.class)
+    @PolicyAppliesTest(policy = DisallowAirplaneModePermissionBased.class)
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.os.UserManager#DISALLOW_AIRPLANE_MODE")
     // TODO: Add restriction for permission based targeting U+
     @CoexistenceFlagsOn
-    @Ignore
+    @AdditionalQueryParameters(
+            forTestApp = "dpc",
+            query = @Query(targetSdkVersion =
+            @IntegerQuery(isGreaterThanOrEqualTo = UPSIDE_DOWN_CAKE))
+    )
     public void addUserRestriction_disallowAirplaneMode_targetAtLeastU_throwsIllegalArgumentException() {
         assertThrows(IllegalArgumentException.class, () -> {
             sDeviceState.dpc().devicePolicyManager().addUserRestriction(
@@ -93,13 +104,11 @@ public final class AirplaneModeTest {
         });
     }
 
-    @CanSetPolicyTest(policy = DisallowAirplaneMode.class)
+    @CanSetPolicyTest(policy = DisallowAirplaneModePermissionBased.class)
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.os.UserManager#DISALLOW_AIRPLANE_MODE")
     // TODO: Add restriction for permission based targeting U+
     // TODO: Test that this is actually global
-    @CoexistenceFlagsOn
-    @Ignore
     public void addUserRestrictionGlobally_disallowAirplaneMode_isSet() {
         try {
             sDeviceState.dpc().devicePolicyManager().addUserRestrictionGlobally(
@@ -113,13 +122,11 @@ public final class AirplaneModeTest {
         }
     }
 
-    @CanSetPolicyTest(policy = DisallowAirplaneMode.class)
+    @CanSetPolicyTest(policy = DisallowAirplaneModePermissionBased.class)
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.os.UserManager#DISALLOW_AIRPLANE_MODE")
     // TODO: Add restriction for permission based targeting U+
     // TODO: Test that this is actually global
-    @CoexistenceFlagsOn
-    @Ignore
     public void clearUserRestriction_disallowAirplaneMode_isNotSet() {
         try {
             sDeviceState.dpc().devicePolicyManager().addUserRestrictionGlobally(
