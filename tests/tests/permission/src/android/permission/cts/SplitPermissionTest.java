@@ -41,6 +41,8 @@ import static org.junit.Assert.assertEquals;
 
 import android.app.UiAutomation;
 import android.os.Build;
+import android.os.Process;
+import android.os.UserHandle;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.FlakyTest;
 import android.platform.test.annotations.SystemUserOnly;
@@ -51,6 +53,7 @@ import androidx.test.filters.SdkSuppress;
 import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.After;
+import org.junit.Assume;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -239,6 +242,9 @@ public class SplitPermissionTest {
     @Test
     @SystemUserOnly(reason = "Secondary users have the DISALLOW_OUTGOING_CALLS user restriction")
     public void nonInheritedStateLowTargetSDKPreM() throws Exception {
+        Assume.assumeTrue("Secondary users have the DISALLOW_OUTGOING_CALLS user restriction",
+                UserHandle.SYSTEM.equals(Process.myUserHandle()));
+
         install(APK_CONTACTS_15);
 
         assertPermissionGranted(READ_CONTACTS);
@@ -332,6 +338,9 @@ public class SplitPermissionTest {
     @Test
     @SystemUserOnly(reason = "Secondary users have the DISALLOW_OUTGOING_CALLS user restriction")
     public void inheritGrantedPermissionStatePreM() throws Exception {
+        Assume.assumeTrue("Secondary users have the DISALLOW_OUTGOING_CALLS user restriction",
+                UserHandle.SYSTEM.equals(Process.myUserHandle()));
+
         install(APK_CONTACTS_16);
 
         install(APK_CONTACTS_15);
@@ -400,6 +409,9 @@ public class SplitPermissionTest {
     @Test
     @SystemUserOnly(reason = "Secondary users have the DISALLOW_OUTGOING_CALLS user restriction")
     public void grantNewSplitPermissionStatePreM() throws Exception {
+        Assume.assumeTrue("Secondary users have the DISALLOW_OUTGOING_CALLS user restriction",
+                UserHandle.SYSTEM.equals(Process.myUserHandle()));
+
         install(APK_CONTACTS_15);
         revokePermission(APP_PKG, READ_CONTACTS);
 
@@ -503,6 +515,9 @@ public class SplitPermissionTest {
     @Test
     @SystemUserOnly(reason = "Secondary users have the DISALLOW_OUTGOING_CALLS user restriction")
     public void newPermissionGetRevokedOnUpgradePreM() throws Exception {
+        Assume.assumeTrue("Secondary users have the DISALLOW_OUTGOING_CALLS user restriction",
+                UserHandle.SYSTEM.equals(Process.myUserHandle()));
+
         install(APK_CONTACTS_15);
 
         install(APK_CONTACTS_CALLLOG_16);

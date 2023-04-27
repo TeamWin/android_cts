@@ -16,12 +16,14 @@
 
 package android.sdksandbox.webkit.cts;
 
+import android.app.sdksandbox.testutils.testscenario.KeepSdkSandboxAliveRule;
 import android.platform.test.annotations.Presubmit;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
 
 import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -29,32 +31,36 @@ import org.junit.runner.RunWith;
 @RunWith(AndroidJUnit4.class)
 public class SdkSandboxCookieTest {
     @ClassRule
-    public static final WebViewSandboxTestRule sSdkTestSuiteSetup =
+    public static final KeepSdkSandboxAliveRule sSdkTestSuiteSetup =
+            new KeepSdkSandboxAliveRule("com.android.emptysdkprovider");
+
+    @Rule
+    public final WebViewSandboxTestRule sdkTester =
             new WebViewSandboxTestRule("android.webkit.cts.CookieTest");
 
     @Presubmit
     @Test
-    public void testDomain() throws Throwable {
-        sSdkTestSuiteSetup.assertSdkTestRunPasses("testDomain");
+    public void testDomain() throws Exception {
+        sdkTester.assertSdkTestRunPasses("testDomain");
     }
 
     @Test
-    public void testSubDomain() throws Throwable {
-        sSdkTestSuiteSetup.assertSdkTestRunPasses("testSubDomain");
+    public void testSubDomain() throws Exception {
+        sdkTester.assertSdkTestRunPasses("testSubDomain");
     }
 
     @Test
-    public void testInvalidDomain() throws Throwable {
-        sSdkTestSuiteSetup.assertSdkTestRunPasses("testInvalidDomain");
+    public void testInvalidDomain() throws Exception {
+        sdkTester.assertSdkTestRunPasses("testInvalidDomain");
     }
 
     @Test
-    public void testPath() throws Throwable {
-        sSdkTestSuiteSetup.assertSdkTestRunPasses("testPath");
+    public void testPath() throws Exception {
+        sdkTester.assertSdkTestRunPasses("testPath");
     }
 
     @Test
-    public void testEmptyValue() throws Throwable {
-        sSdkTestSuiteSetup.assertSdkTestRunPasses("testEmptyValue");
+    public void testEmptyValue() throws Exception {
+        sdkTester.assertSdkTestRunPasses("testEmptyValue");
     }
 }

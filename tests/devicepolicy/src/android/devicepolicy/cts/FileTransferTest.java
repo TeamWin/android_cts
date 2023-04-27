@@ -28,6 +28,7 @@ import com.android.bedstead.harrier.annotations.EnsureDoesNotHaveUserRestriction
 import com.android.bedstead.harrier.annotations.EnsureHasUserRestriction;
 import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
+import com.android.bedstead.harrier.annotations.enterprise.CoexistenceFlagsOn;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyDoesNotApplyTest;
 import com.android.bedstead.harrier.policies.DisallowUsbFileTransfer;
@@ -45,6 +46,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @RunWith(BedsteadJUnit4.class)
+@CoexistenceFlagsOn
 public final class FileTransferTest {
 
     @ClassRule @Rule

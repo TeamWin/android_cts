@@ -101,8 +101,7 @@ public final class PermitInputMethodsTest {
     }
 
     @Postsubmit(reason = "New test")
-    @CanSetPolicyTest(
-            policy = PermittedInputMethods.class)
+    @CanSetPolicyTest(policy = PermittedInputMethods.class)
     @EnsureHasPermission({INTERACT_ACROSS_USERS_FULL, QUERY_ADMIN_POLICY})
     public void setPermittedInputMethods_doesNotThrowException() {
         sDeviceState.dpc().devicePolicyManager().setPermittedInputMethods(
@@ -110,8 +109,7 @@ public final class PermitInputMethodsTest {
     }
 
     @Postsubmit(reason = "New test")
-    @CannotSetPolicyTest(
-            policy = PermittedInputMethods.class, includeNonDeviceAdminStates = false)
+    @CannotSetPolicyTest(policy = PermittedInputMethods.class, includeNonDeviceAdminStates = false)
     @EnsureHasPermission({INTERACT_ACROSS_USERS_FULL, QUERY_ADMIN_POLICY})
     public void setPermittedInputMethods_canNotSet_throwsException() {
         assertThrows(SecurityException.class, () -> {
@@ -163,5 +161,15 @@ public final class PermitInputMethodsTest {
                 .containsExactlyElementsIn(permittedPlusSystem);
         assertThat(sLocalDevicePolicyManager.getPermittedInputMethodsForCurrentUser())
                 .containsExactlyElementsIn(permittedPlusSystem);
+    }
+
+    @Postsubmit(reason = "New test")
+    @CanSetPolicyTest(policy = PermittedInputMethods.class)
+    public void setPermittedInputMethods_packageNameTooLong_throwsException() {
+        // Invalid package name - too long
+        List<String> badMethods = List.of(new String(new char[1000]).replace('\0', 'A'));
+        assertThrows(IllegalArgumentException.class, () ->
+                sDeviceState.dpc().devicePolicyManager().setPermittedInputMethods(
+                        sDeviceState.dpc().componentName(), badMethods));
     }
 }

@@ -16,12 +16,14 @@
 
 package android.sdksandbox.webkit.cts;
 
+import android.app.sdksandbox.testutils.testscenario.KeepSdkSandboxAliveRule;
 import android.platform.test.annotations.AppModeFull;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.MediumTest;
 
 import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -30,26 +32,30 @@ import org.junit.runner.RunWith;
 @RunWith(AndroidJUnit4.class)
 public class SdkSandboxDateSorterTest {
     @ClassRule
-    public static final WebViewSandboxTestRule sSdkTestSuiteSetup =
+    public static final KeepSdkSandboxAliveRule sSdkTestSuiteSetup =
+            new KeepSdkSandboxAliveRule("com.android.emptysdkprovider");
+
+    @Rule
+    public final WebViewSandboxTestRule sdkTester =
             new WebViewSandboxTestRule("android.webkit.cts.DateSorterTest");
 
     @Test
-    public void testConstructor() throws Throwable {
-        sSdkTestSuiteSetup.assertSdkTestRunPasses("testConstructor");
+    public void testConstructor() throws Exception {
+        sdkTester.assertSdkTestRunPasses("testConstructor");
     }
 
     @Test
-    public void testGetLabel() throws Throwable {
-        sSdkTestSuiteSetup.assertSdkTestRunPasses("testGetLabel");
+    public void testGetLabel() throws Exception {
+        sdkTester.assertSdkTestRunPasses("testGetLabel");
     }
 
     @Test
-    public void testGetIndex() throws Throwable {
-        sSdkTestSuiteSetup.assertSdkTestRunPasses("testGetIndex");
+    public void testGetIndex() throws Exception {
+        sdkTester.assertSdkTestRunPasses("testGetIndex");
     }
 
     @Test
-    public void testGetBoundary() throws Throwable {
-        sSdkTestSuiteSetup.assertSdkTestRunPasses("testGetBoundary");
+    public void testGetBoundary() throws Exception {
+        sdkTester.assertSdkTestRunPasses("testGetBoundary");
     }
 }

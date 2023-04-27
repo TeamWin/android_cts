@@ -293,4 +293,13 @@ public final class AccountManagementTest {
                     sDeviceState.accounts().accountType(), /* disabled= */ false);
         }
     }
+
+    @Postsubmit(reason = "new test")
+    @CanSetPolicyTest(policy = AccountManagement.class)
+    public void setAccountManagementDisabled_accountTypeTooLong_throws() {
+        // String too long for account type, cannot be serialized correctly
+        String badAccountType = new String(new char[100000]).replace('\0', 'A');
+        assertThrows(IllegalArgumentException.class, () ->
+                mDpm.setAccountManagementDisabled(mAdmin, badAccountType, /* disabled= */ false));
+    }
 }

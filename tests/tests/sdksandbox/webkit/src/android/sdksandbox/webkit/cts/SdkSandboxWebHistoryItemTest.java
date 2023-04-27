@@ -16,10 +16,13 @@
 
 package android.sdksandbox.webkit.cts;
 
+import android.app.sdksandbox.testutils.testscenario.KeepSdkSandboxAliveRule;
+
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.MediumTest;
 
 import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -27,11 +30,15 @@ import org.junit.runner.RunWith;
 @RunWith(AndroidJUnit4.class)
 public class SdkSandboxWebHistoryItemTest {
     @ClassRule
-    public static final WebViewSandboxTestRule sSdkTestSuiteSetup =
+    public static final KeepSdkSandboxAliveRule sSdkTestSuiteSetup =
+            new KeepSdkSandboxAliveRule("com.android.emptysdkprovider");
+
+    @Rule
+    public final WebViewSandboxTestRule sdkTester =
             new WebViewSandboxTestRule("android.webkit.cts.WebHistoryItemTest");
 
     @Test
-    public void testWebHistoryItem() throws Throwable {
-        sSdkTestSuiteSetup.assertSdkTestRunPasses("testWebHistoryItem");
+    public void testWebHistoryItem() throws Exception {
+        sdkTester.assertSdkTestRunPasses("testWebHistoryItem");
     }
 }

@@ -16,10 +16,13 @@
 
 package android.sdksandbox.webkit.cts;
 
+import android.app.sdksandbox.testutils.testscenario.KeepSdkSandboxAliveRule;
+
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.MediumTest;
 
 import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -27,76 +30,80 @@ import org.junit.runner.RunWith;
 @RunWith(AndroidJUnit4.class)
 public class SdkSandboxCookieManagerTest {
     @ClassRule
-    public static final WebViewSandboxTestRule sSdkTestSuiteSetup =
+    public static final KeepSdkSandboxAliveRule sSdkTestSuiteSetup =
+            new KeepSdkSandboxAliveRule("com.android.emptysdkprovider");
+
+    @Rule
+    public final WebViewSandboxTestRule sdkTester =
             new WebViewSandboxTestRule("android.webkit.cts.CookieManagerTest");
 
     @Test
-    public void testGetInstance() throws Throwable {
-        sSdkTestSuiteSetup.assertSdkTestRunPasses("testGetInstance");
+    public void testGetInstance() throws Exception {
+        sdkTester.assertSdkTestRunPasses("testGetInstance");
     }
 
     @Test
-    public void testFlush() throws Throwable {
-        sSdkTestSuiteSetup.assertSdkTestRunPasses("testFlush");
+    public void testFlush() throws Exception {
+        sdkTester.assertSdkTestRunPasses("testFlush");
     }
 
     @Test
-    public void testAcceptCookie() throws Throwable {
-        sSdkTestSuiteSetup.assertSdkTestRunPasses("testAcceptCookie");
+    public void testAcceptCookie() throws Exception {
+        sdkTester.assertSdkTestRunPasses("testAcceptCookie");
     }
 
     @Test
-    public void testSetCookie() throws Throwable {
-        sSdkTestSuiteSetup.assertSdkTestRunPasses("testSetCookie");
+    public void testSetCookie() throws Exception {
+        sdkTester.assertSdkTestRunPasses("testSetCookie");
     }
 
     @Test
-    public void testSetCookieNullCallback() throws Throwable {
-        sSdkTestSuiteSetup.assertSdkTestRunPasses("testSetCookieNullCallback");
+    public void testSetCookieNullCallback() throws Exception {
+        sdkTester.assertSdkTestRunPasses("testSetCookieNullCallback");
     }
 
     @Test
-    public void testSetCookieCallback() throws Throwable {
-        sSdkTestSuiteSetup.assertSdkTestRunPasses("testSetCookieCallback");
+    public void testSetCookieCallback() throws Exception {
+        sdkTester.assertSdkTestRunPasses("testSetCookieCallback");
     }
 
     @Test
-    public void testRemoveCookies() throws Throwable {
-        sSdkTestSuiteSetup.assertSdkTestRunPasses("testRemoveCookies");
+    public void testRemoveCookies() throws Exception {
+        sdkTester.assertSdkTestRunPasses("testRemoveCookies");
     }
 
     @Test
-    public void testRemoveCookiesNullCallback() throws Throwable {
-        sSdkTestSuiteSetup.assertSdkTestRunPasses("testRemoveCookiesNullCallback");
+    public void testRemoveCookiesNullCallback() throws Exception {
+        sdkTester.assertSdkTestRunPasses("testRemoveCookiesNullCallback");
     }
 
     @Test
-    public void testRemoveCookiesCallback() throws Throwable {
-        sSdkTestSuiteSetup.assertSdkTestRunPasses("testRemoveCookiesCallback");
+    public void testRemoveCookiesCallback() throws Exception {
+        sdkTester.assertSdkTestRunPasses("testRemoveCookiesCallback");
     }
 
     @Test
-    public void testThirdPartyCookie() throws Throwable {
-        sSdkTestSuiteSetup.assertSdkTestRunPasses("testThirdPartyCookie");
+    public void testThirdPartyCookie() throws Exception {
+        sdkTester.assertSdkTestRunPasses("testThirdPartyCookie");
     }
 
     @Test
-    public void testSameSiteLaxByDefault() throws Throwable {
-        sSdkTestSuiteSetup.assertSdkTestRunPasses("testSameSiteLaxByDefault");
+    public void testSameSiteLaxByDefault() throws Exception {
+        sdkTester.assertSdkTestRunPasses("testSameSiteLaxByDefault");
     }
 
     @Test
-    public void testSameSiteNoneRequiresSecure() throws Throwable {
-        sSdkTestSuiteSetup.assertSdkTestRunPasses("testSameSiteNoneRequiresSecure");
+    public void testSameSiteNoneRequiresSecure() throws Exception {
+        sdkTester.assertSdkTestRunPasses("testSameSiteNoneRequiresSecure");
     }
 
     @Test
-    public void testSchemefulSameSite() throws Throwable {
-        sSdkTestSuiteSetup.assertSdkTestRunPasses("testSchemefulSameSite");
+    public void testSchemefulSameSite() throws Exception {
+        sdkTester.assertSdkTestRunPasses("testSchemefulSameSite");
     }
 
     @Test
-    public void testb3167208() throws Throwable {
-        sSdkTestSuiteSetup.assertSdkTestRunPasses("testb3167208");
+    public void testb3167208() throws Exception {
+        sdkTester.assertSdkTestRunPasses("testb3167208");
     }
 }
