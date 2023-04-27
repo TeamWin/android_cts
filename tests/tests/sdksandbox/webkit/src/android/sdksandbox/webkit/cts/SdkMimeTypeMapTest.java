@@ -16,12 +16,14 @@
 
 package android.sdksandbox.webkit.cts;
 
+import android.app.sdksandbox.testutils.testscenario.KeepSdkSandboxAliveRule;
 import android.platform.test.annotations.AppModeFull;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.MediumTest;
 
 import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -30,36 +32,40 @@ import org.junit.runner.RunWith;
 @RunWith(AndroidJUnit4.class)
 public class SdkMimeTypeMapTest {
     @ClassRule
-    public static final WebViewSandboxTestRule sSdkTestSuiteSetup =
+    public static final KeepSdkSandboxAliveRule sSdkTestSuiteSetup =
+            new KeepSdkSandboxAliveRule("com.android.emptysdkprovider");
+
+    @Rule
+    public final WebViewSandboxTestRule sdkTester =
             new WebViewSandboxTestRule("android.webkit.cts.MimeTypeMapTest");
 
     @Test
-    public void testGetFileExtensionFromUrl() throws Throwable {
-        sSdkTestSuiteSetup.assertSdkTestRunPasses("testGetFileExtensionFromUrl");
+    public void testGetFileExtensionFromUrl() throws Exception {
+        sdkTester.assertSdkTestRunPasses("testGetFileExtensionFromUrl");
     }
 
     @Test
-    public void testHasMimeType() throws Throwable {
-        sSdkTestSuiteSetup.assertSdkTestRunPasses("testHasMimeType");
+    public void testHasMimeType() throws Exception {
+        sdkTester.assertSdkTestRunPasses("testHasMimeType");
     }
 
     @Test
-    public void testGetMimeTypeFromExtension() throws Throwable {
-        sSdkTestSuiteSetup.assertSdkTestRunPasses("testGetMimeTypeFromExtension");
+    public void testGetMimeTypeFromExtension() throws Exception {
+        sdkTester.assertSdkTestRunPasses("testGetMimeTypeFromExtension");
     }
 
     @Test
-    public void testHasExtension() throws Throwable {
-        sSdkTestSuiteSetup.assertSdkTestRunPasses("testHasExtension");
+    public void testHasExtension() throws Exception {
+        sdkTester.assertSdkTestRunPasses("testHasExtension");
     }
 
     @Test
-    public void testGetExtensionFromMimeType() throws Throwable {
-        sSdkTestSuiteSetup.assertSdkTestRunPasses("testGetExtensionFromMimeType");
+    public void testGetExtensionFromMimeType() throws Exception {
+        sdkTester.assertSdkTestRunPasses("testGetExtensionFromMimeType");
     }
 
     @Test
-    public void testGetSingleton() throws Throwable {
-        sSdkTestSuiteSetup.assertSdkTestRunPasses("testGetSingleton");
+    public void testGetSingleton() throws Exception {
+        sdkTester.assertSdkTestRunPasses("testGetSingleton");
     }
 }
