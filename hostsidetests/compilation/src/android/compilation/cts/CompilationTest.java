@@ -17,16 +17,15 @@
 package android.compilation.cts;
 
 import static com.google.common.truth.Truth.assertThat;
-import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.compilation.cts.annotation.CtsTestCase;
 
-import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 import com.android.tradefed.testtype.junit4.DeviceTestRunOptions;
-import com.android.tradefed.util.CommandResult;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -36,18 +35,33 @@ import org.junit.runner.RunWith;
 @RunWith(DeviceJUnit4ClassRunner.class)
 @CtsTestCase
 public class CompilationTest extends BaseHostJUnit4Test {
-    private static final String APPLICATION_PACKAGE = "android.compilation.cts.statuscheckerapp";
+    private static final String STATUS_CHECKER_PKG = "android.compilation.cts.statuscheckerapp";
+    private static final String TEST_APP_PKG = "android.compilation.cts";
+    private static final String TEST_APP_APK_RES = "/CtsCompilationApp.apk";
+    private static final String TEST_APP_DM_RES = "/CtsCompilationApp.dm";
+
+    private Utils mUtils;
+
+    @Before
+    public void setUp() throws Exception {
+        mUtils = new Utils(getTestInformation());
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        getDevice().uninstallPackage(TEST_APP_PKG);
+    }
 
     @Test
     public void testCompile() throws Exception {
         var options =
-                new DeviceTestRunOptions(APPLICATION_PACKAGE)
+                new DeviceTestRunOptions(STATUS_CHECKER_PKG)
                         .setTestClassName(
                                 "android.compilation.cts.statuscheckerapp.StatusCheckerAppTest")
                         .setTestMethodName("checkStatus")
                         .setDisableHiddenApiCheck(true);
 
-        assertCommandSucceeds("pm compile -m speed -f " + APPLICATION_PACKAGE);
+        mUtils.assertCommandSucceeds("pm compile -m speed -f " + STATUS_CHECKER_PKG);
         options.addInstrumentationArg("compiler-filter", "speed")
                 .addInstrumentationArg("compilation-reason", "cmdline")
                 .addInstrumentationArg("is-verified", "true")
@@ -55,7 +69,7 @@ public class CompilationTest extends BaseHostJUnit4Test {
                 .addInstrumentationArg("is-fully-compiled", "true");
         assertThat(runDeviceTests(options)).isTrue();
 
-        assertCommandSucceeds("pm compile -m verify -f " + APPLICATION_PACKAGE);
+        mUtils.assertCommandSucceeds("pm compile -m verify -f " + STATUS_CHECKER_PKG);
         options.addInstrumentationArg("compiler-filter", "verify")
                 .addInstrumentationArg("compilation-reason", "cmdline")
                 .addInstrumentationArg("is-verified", "true")
@@ -63,7 +77,7 @@ public class CompilationTest extends BaseHostJUnit4Test {
                 .addInstrumentationArg("is-fully-compiled", "false");
         assertThat(runDeviceTests(options)).isTrue();
 
-        assertCommandSucceeds("pm delete-dexopt " + APPLICATION_PACKAGE);
+        mUtils.assertCommandSucceeds("pm delete-dexopt " + STATUS_CHECKER_PKG);
         options.addInstrumentationArg("compiler-filter", "run-from-apk")
                 .addInstrumentationArg("compilation-reason", "unknown")
                 .addInstrumentationArg("is-verified", "false")
@@ -72,8 +86,36 @@ public class CompilationTest extends BaseHostJUnit4Test {
         assertThat(runDeviceTests(options)).isTrue();
     }
 
-    private void assertCommandSucceeds(String command) throws DeviceNotAvailableException {
-        CommandResult result = getDevice().executeShellV2Command(command);
-        assertWithMessage(result.toString()).that(result.getExitCode()).isEqualTo(0);
+    // TODO(b/258223472): Remove this test once ART Service is the only dexopt implementation.
+    @Test
+    public void testArtService() throws Exception {
+        assertThat(getDevice().getProperty("dalvik.vm.useartservice")).isEqualTo("true");
+
+        mUtils.installFromResources(getAbi(), TEST_APP_APK_RES, TEST_APP_DM_RES);
+
+        // Clear all user data, including the profile.
+        mUtils.assertCommandSucceeds("pm clear " + TEST_APP_PKG);
+
+        // Overwrite the artifacts compiled with the profile.
+        mUtils.assertCommandSucceeds("pm compile -m verify -f " + TEST_APP_PKG);
+
+        String dump = mUtils.assertCommandSucceeds("pm art dump " + TEST_APP_PKG);
+        assertThat(dump).contains("[status=verify]");
+        assertThat(dump).doesNotContain("[status=speed-profile]");
+
+        dump = mUtils.assertCommandSucceeds("dumpsys package " + TEST_APP_PKG);
+        assertThat(dump).contains("[status=verify]");
+        assertThat(dump).doesNotContain("[status=speed-profile]");
+
+        // Compile the app. It should use the profile in the DM file.
+        mUtils.assertCommandSucceeds("pm compile -m speed-profile " + TEST_APP_PKG);
+
+        dump = mUtils.assertCommandSucceeds("pm art dump " + TEST_APP_PKG);
+        assertThat(dump).doesNotContain("[status=verify]");
+        assertThat(dump).contains("[status=speed-profile]");
+
+        dump = mUtils.assertCommandSucceeds("dumpsys package " + TEST_APP_PKG);
+        assertThat(dump).doesNotContain("[status=verify]");
+        assertThat(dump).contains("[status=speed-profile]");
     }
 }
