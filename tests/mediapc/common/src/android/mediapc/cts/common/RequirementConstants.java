@@ -42,6 +42,7 @@ public class RequirementConstants {
     public static final String R5_1__H_1_15 = "r5_1__h_1_15"; // 5.1/H-1-16
     public static final String R5_1__H_1_16 = "r5_1__h_1_16"; // 5.1/H-1-16
     public static final String R5_1__H_1_17 = "r5_1__h_1_17"; // 5.1/H-1-17
+    public static final String R5_1__H_1_19 = "r5_1__h_1_19"; // 5.1/H-1-19
     public static final String R5_3__H_1_1 = "r5_3__h_1_1"; // 5.3/H-1-1
     public static final String R5_3__H_1_2 = "r5_3__h_1_2"; // 5.3/H-1-2
     public static final String R5_6__H_1_1 = "r5_6__h_1_1"; // 5.6/H-1-1
