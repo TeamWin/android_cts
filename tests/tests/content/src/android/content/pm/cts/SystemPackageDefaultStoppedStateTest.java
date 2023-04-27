@@ -36,6 +36,7 @@ import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -55,6 +56,9 @@ public class SystemPackageDefaultStoppedStateTest {
     }
 
     @Test
+    @Ignore // TODO(269129704) - this is currently unreliable because:
+            // 1. The shim app doesn't have a launcher activity, and therefore won't be stopped
+            // 2. Even if it were stopped, side effects of other CTS tests might interfere.
     public void testSystemAppOnNewUser_isInDefaultStoppedState() {
         // Get com.android.internal.R.bool.config_stopSystemPackagesByDefault
         final int resId = mContext.getResources().getIdentifier(
