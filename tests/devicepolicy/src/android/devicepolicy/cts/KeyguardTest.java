@@ -74,6 +74,10 @@ public final class KeyguardTest {
     private static final PersistableBundle CONFIGURATION =
             PersistableBundle.forPair("key", "test.trust.agent");
 
+    // String longer than can be serialized to storage.
+    private static final String VERY_LONG_STRING =
+            new String(new char[100000]).replace('\0', 'A');
+
     @CannotSetPolicyTest(policy = KeyguardDisableWidgetsAll.class)
     @Postsubmit(reason = "New test")
     @ApiTest(apis = {
@@ -646,10 +650,81 @@ public final class KeyguardTest {
         }
     }
 
+    @CanSetPolicyTest(policy = TrustAgentConfiguration.class)
+    @Postsubmit(reason = "New test")
+    public void setTrustAgentConfiguration_veryLongPackage_throws() {
+        ComponentName badAgent =
+                ComponentName.createRelative(VERY_LONG_STRING, TRUST_AGENT.getClassName());
+
+        assertThrows(IllegalArgumentException.class, () -> sDeviceState.dpc()
+                .devicePolicyManager().setTrustAgentConfiguration(
+                        sDeviceState.dpc().componentName(), badAgent, CONFIGURATION));
+    }
+
+    @CanSetPolicyTest(policy = TrustAgentConfiguration.class)
+    @Postsubmit(reason = "New test")
+    public void setTrustAgentConfiguration_veryLongClassName_throws() {
+        ComponentName badAgent =
+                ComponentName.createRelative(TRUST_AGENT.getPackageName(), VERY_LONG_STRING);
+
+        assertThrows(IllegalArgumentException.class, () -> sDeviceState.dpc()
+                .devicePolicyManager().setTrustAgentConfiguration(
+                        sDeviceState.dpc().componentName(), badAgent, CONFIGURATION));
+    }
+
+    @CanSetPolicyTest(policy = TrustAgentConfiguration.class)
+    @Postsubmit(reason = "New test")
+    public void setTrustAgentConfiguration_veryLongConfigValue_throws() {
+        PersistableBundle badConfig =
+                PersistableBundle.forPair("key", VERY_LONG_STRING);
+
+        assertThrows(IllegalArgumentException.class, () -> sDeviceState.dpc()
+                .devicePolicyManager().setTrustAgentConfiguration(
+                        sDeviceState.dpc().componentName(), TRUST_AGENT, badConfig));
+    }
+
+    @CanSetPolicyTest(policy = TrustAgentConfiguration.class)
+    @Postsubmit(reason = "New test")
+    public void setTrustAgentConfiguration_veryLongConfigKey_throws() {
+        PersistableBundle badConfig =
+                PersistableBundle.forPair(VERY_LONG_STRING, "value");
+
+        assertThrows(IllegalArgumentException.class, () -> sDeviceState.dpc()
+                .devicePolicyManager().setTrustAgentConfiguration(
+                        sDeviceState.dpc().componentName(), TRUST_AGENT, badConfig));
+    }
+
+    @CanSetPolicyTest(policy = TrustAgentConfiguration.class)
+    @Postsubmit(reason = "New test")
+    public void setTrustAgentConfiguration_veryLongConfigValueInArray_throws() {
+        PersistableBundle badConfig = new PersistableBundle();
+        badConfig.putStringArray("key", new String[]{VERY_LONG_STRING});
+
+        assertThrows(IllegalArgumentException.class, () -> sDeviceState.dpc()
+                .devicePolicyManager().setTrustAgentConfiguration(
+                        sDeviceState.dpc().componentName(), TRUST_AGENT, badConfig));
+    }
+
+    @CanSetPolicyTest(policy = TrustAgentConfiguration.class)
+    @Postsubmit(reason = "New test")
+    public void setTrustAgentConfiguration_veryLongConfigValueInNestedBundle_throws() {
+        // Burrow it inside a deeply nested bundle
+        PersistableBundle bundle = PersistableBundle.forPair("key", VERY_LONG_STRING);
+        for (int i = 0; i < 100; i++) {
+            PersistableBundle nextLayer = new PersistableBundle();
+            nextLayer.putPersistableBundle("key", bundle);
+            bundle = nextLayer;
+        }
+        final PersistableBundle badConfig = bundle;
+
+        assertThrows(IllegalArgumentException.class, () -> sDeviceState.dpc()
+                .devicePolicyManager().setTrustAgentConfiguration(
+                        sDeviceState.dpc().componentName(), TRUST_AGENT, badConfig));
+    }
+
     private void assertContainsTestConfiguration(Set<PersistableBundle> bundle) {
         assertThat(bundle).hasSize(1);
         assertThat(bundle.iterator().next().getString("key"))
                 .isEqualTo(CONFIGURATION.getString("key"));
     }
-
 }
