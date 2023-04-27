@@ -39,7 +39,6 @@ import android.autofillservice.cts.testcore.AutofillActivityTestRule;
 import android.autofillservice.cts.testcore.AutofillLoggingTestRule;
 import android.autofillservice.cts.testcore.AutofillTestWatcher;
 import android.autofillservice.cts.testcore.Helper;
-import android.autofillservice.cts.testcore.IdMode;
 import android.autofillservice.cts.testcore.InlineUiBot;
 import android.autofillservice.cts.testcore.InstrumentedAutoFillService;
 import android.autofillservice.cts.testcore.InstrumentedAutoFillService.Replier;
@@ -70,7 +69,6 @@ import com.android.compatibility.common.util.TestNameUtils;
 import com.android.cts.mockime.ImeSettings;
 import com.android.cts.mockime.MockImeSessionRule;
 
-import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -486,11 +484,6 @@ public final class AutoFillServiceTestCase {
             sReplier.reset();
         }
 
-        @After
-        public void resetReplierIdMode() {
-            Log.d(TAG, "resetReplierIdMode()");
-            sReplier.setIdMode(IdMode.RESOURCE_ID);
-        }
         /**
          * Prepares the service before each test - by default, disables it
          */
