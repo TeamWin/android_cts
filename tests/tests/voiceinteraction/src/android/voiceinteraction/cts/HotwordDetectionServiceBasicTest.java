@@ -75,8 +75,6 @@ import com.android.compatibility.common.util.DisableAnimationRule;
 import com.android.compatibility.common.util.RequiredFeatureRule;
 import com.android.compatibility.common.util.SystemUtil;
 
-import com.google.common.util.concurrent.ListenableFuture;
-
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -831,11 +829,9 @@ public class HotwordDetectionServiceBasicTest {
             mService.initDetectRejectLatch();
 
             // start recognition and trigger recognition event via recognition session
-            ListenableFuture<RecognitionSession> onRecognitionStartedFuture =
-                    mInstrumentationObserver.listenOnRecognitionStarted();
             alwaysOnHotwordDetector.startRecognition(0, new byte[]{1, 2, 3, 4, 5});
             RecognitionSession recognitionSession = waitForFutureDoneAndAssertSuccessful(
-                    onRecognitionStartedFuture);
+                    mInstrumentationObserver.getOnRecognitionStartedFuture());
             assertThat(recognitionSession).isNotNull();
 
             recognitionSession.triggerRecognitionEvent(new byte[1024],
@@ -964,11 +960,9 @@ public class HotwordDetectionServiceBasicTest {
             mService.initDetectRejectLatch();
 
             // start recognition and trigger recognition event via recognition session
-            ListenableFuture<RecognitionSession> onRecognitionStartedFuture =
-                    mInstrumentationObserver.listenOnRecognitionStarted();
             alwaysOnHotwordDetector.startRecognition(0, new byte[]{1, 2, 3, 4, 5});
             RecognitionSession recognitionSession = waitForFutureDoneAndAssertSuccessful(
-                    onRecognitionStartedFuture);
+                    mInstrumentationObserver.getOnRecognitionStartedFuture());
             assertThat(recognitionSession).isNotNull();
 
             recognitionSession.triggerRecognitionEvent(new byte[1024],
@@ -1686,11 +1680,9 @@ public class HotwordDetectionServiceBasicTest {
 
             adoptShellPermissionIdentityForHotword();
 
-            ListenableFuture<RecognitionSession> onRecognitionStartedFuture =
-                    mInstrumentationObserver.listenOnRecognitionStarted();
             alwaysOnHotwordDetector.startRecognition(0, new byte[]{1, 2, 3, 4, 5});
             RecognitionSession recognitionSession = waitForFutureDoneAndAssertSuccessful(
-                    onRecognitionStartedFuture);
+                    mInstrumentationObserver.getOnRecognitionStartedFuture());
             assertThat(recognitionSession).isNotNull();
 
             // Verify we received model load, recognition start
@@ -1749,11 +1741,9 @@ public class HotwordDetectionServiceBasicTest {
             AlwaysOnHotwordDetector alwaysOnHotwordDetector,
             boolean shouldDisableTestModel) throws Throwable {
         try {
-            ListenableFuture<RecognitionSession> onRecognitionStartedFuture =
-                    mInstrumentationObserver.listenOnRecognitionStarted();
             alwaysOnHotwordDetector.startRecognition(0, new byte[]{1, 2, 3, 4, 5});
             RecognitionSession recognitionSession = waitForFutureDoneAndAssertSuccessful(
-                    onRecognitionStartedFuture);
+                    mInstrumentationObserver.getOnRecognitionStartedFuture());
             assertThat(recognitionSession).isNotNull();
 
             mService.initDetectRejectLatch();
