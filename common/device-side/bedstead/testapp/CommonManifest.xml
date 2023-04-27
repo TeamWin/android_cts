@@ -246,9 +246,8 @@
 
     <application
         android:appComponentFactory="com.android.bedstead.testapp.TestAppAppComponentFactory"
-        android:targetSandboxVersion="2"
-        android:debuggable="true"
-        >
+        android:targetSandboxVersion="2">
+<!--        android:debuggable="true"-->
 
         <activity android:name="android.testapp.MainActivity" android:exported="true">
             <intent-filter>
