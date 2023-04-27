@@ -106,6 +106,16 @@ public class InputMethodRegistrationTest {
                 disabled_ime1).isNotNull();
         assertWithMessage("Test setup failed: couldn't find " + INITIALLY_DISABLED_IME_2).that(
                 disabled_ime2).isNotNull();
+
+        // IME package was successfully installed, but we need to wait until all IMEs are loaded
+        final var imm = mContext.getSystemService(InputMethodManager.class);
+        final ComponentName firstMockImeComponentName = ComponentName.createRelative(
+                LARGE_RESOURCE_IME_PACKAGE, ".services.imeservice1");
+        PollingCheck.waitFor(2000L,
+                () -> imm.getInputMethodList().stream().filter(
+                        imi -> imi.getComponent().equals(firstMockImeComponentName)).count() == 1,
+                "IMEs were installed, but getInputMethodList() did not contain "
+                        + firstMockImeComponentName);
     }
 
     /**
@@ -210,7 +220,7 @@ public class InputMethodRegistrationTest {
                             LARGE_RESOURCE_IME_PACKAGE)).toList();
             assertWithMessage("Expected enabled IMEs to still be available, but they weren't.")
                     .that(filteredImis.stream().map(InputMethodInfo::getComponent).toList())
-                            .containsAtLeast(enable_ime19, enable_ime20);
+                    .containsAtLeast(enable_ime19, enable_ime20);
             assertWithMessage("Number of loaded IMEs (overall %s, filtered %s)",
                     imis.stream().map(InputMethodInfo::getId).toList(),
                     filteredImis.stream().map(InputMethodInfo::getId).toList()).that(
