@@ -315,6 +315,8 @@ public class PackageManagerTest {
         checkProviderInfoName(PROVIDER_NAME, providers);
     }
 
+    // Disable the test due to feature revert
+    @org.junit.Ignore
     @Test
     public void testEnforceIntentToMatchIntentFilter() {
         Intent intent = new Intent();
