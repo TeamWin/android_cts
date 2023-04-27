@@ -21,6 +21,8 @@ import static android.autofillservice.cts.testcore.Helper.assertHasFlags;
 import static android.autofillservice.cts.testcore.Helper.enableFillDialogFeature;
 import static android.service.autofill.FillRequest.FLAG_SUPPORTS_FILL_DIALOG;
 
+import static org.junit.Assume.assumeFalse;
+
 import android.autofillservice.cts.activities.FadeInActivity;
 import android.autofillservice.cts.commontests.AutoFillServiceTestCase;
 import android.autofillservice.cts.testcore.CannedFillResponse;
@@ -28,6 +30,7 @@ import android.autofillservice.cts.testcore.CannedFillResponse.CannedDataset;
 import android.autofillservice.cts.testcore.Helper;
 import android.autofillservice.cts.testcore.InstrumentedAutoFillService.FillRequest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 
 import org.junit.Test;
 
@@ -39,6 +42,10 @@ public class FadeInActivityTest extends AutoFillServiceTestCase.ManualActivityLa
 
     @Test
     public void testShowFillDialog_withFadeInAnimation() throws Exception {
+        // EditText will autofocus when running in TV target, fill dialog doesn't support
+        // for autofocus case, skip test op TV target
+        assumeFalse("Skip test on TV. Does not support autofocus for fill dialog", isTv());
+
         // Enable feature and test service
         enableFillDialogFeature(sContext);
         enableService();
@@ -74,5 +81,9 @@ public class FadeInActivityTest extends AutoFillServiceTestCase.ManualActivityLa
                 .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         mContext.startActivity(intent);
         mUiBot.assertShownByRelativeId(Helper.ID_PASSWORD_LABEL);
+    }
+
+    private boolean isTv() {
+        return mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_LEANBACK);
     }
 }
