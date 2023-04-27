@@ -1201,6 +1201,23 @@ public class PerformanceClassEvaluator {
 
             return create4k(RequirementConstants.R5_1__H_1_10, reqConcurrentFps);
         }
+
+        /**
+         * [2.2.7.1/5.1/H-1-19] Support 3 instances of hardware video decoder and hardware video
+         * encoder sessions (AVC, HEVC, VP9 or AV1) in any codec combination running concurrently
+         * at 4k(U) @30fps resolution for 10-bit with at most one encoder session.
+         */
+        public static ConcurrentCodecRequirement createR5_1__H_1_19() {
+            RequiredMeasurement<Double> reqConcurrentFps = RequiredMeasurement.<Double>builder()
+                .setId(RequirementConstants.CONCURRENT_FPS)
+                .setPredicate(RequirementConstants.DOUBLE_GTE)
+                // Test transcoding, fps calculated for encoder and decoder combined so req / 2
+                .addRequiredValue(Build.VERSION_CODES.UPSIDE_DOWN_CAKE,
+                        3 * FPS_30_TOLERANCE / 2)
+                .build();
+
+            return create4k(RequirementConstants.R5_1__H_1_19, reqConcurrentFps);
+        }
     }
 
     // used for requirements [2.2.7.1/5.1/H-1-11], [2.2.7.1/5.7/H-1-2]
@@ -2032,6 +2049,10 @@ public class PerformanceClassEvaluator {
 
     public ConcurrentCodecRequirement addR5_1__H_1_10_4k() {
         return this.addRequirement(ConcurrentCodecRequirement.createR5_1__H_1_10_4k());
+    }
+
+    public ConcurrentCodecRequirement addR5_1__H_1_19() {
+        return this.addRequirement(ConcurrentCodecRequirement.createR5_1__H_1_19());
     }
 
     public PrimaryCameraRequirement addPrimaryRearCameraReq() {
