@@ -186,7 +186,7 @@ public class EmergencyCallTests extends BaseTelecomTestWithMockServices {
      * Place an outgoing emergency call fail it to trigger persisting of diagnostic data
      */
     public void testEmergencyCallFailureCreatesDropboxEntries() throws Exception {
-        if (!mShouldTestTelecom) return;
+        if (!mShouldTestTelecom  || !TestUtils.hasTelephonyFeature(mContext)) return;
         long startTime = System.currentTimeMillis();
         mContext.registerReceiver(new BroadcastReceiver() {
             @Override
