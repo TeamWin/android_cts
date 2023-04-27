@@ -49,6 +49,7 @@ import java.security.NoSuchProviderException;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.security.spec.ECGenParameterSpec;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.Objects;
 import java.util.Optional;
@@ -133,11 +134,10 @@ public final class KeystoreAttestationDeviceInfo extends DeviceInfo {
         Certificate[] certificates = keystore.getCertificateChain(testAlias);
         assertTrue(certificates.length >= 1);
 
-        final X509Certificate attestationCert = (X509Certificate) certificates[0];
         final AuthorizationList keyDetailsList;
 
         ParsedAttestationRecord parsedAttestationRecord =
-                createParsedAttestationRecord(attestationCert);
+                createParsedAttestationRecord(Arrays.asList((X509Certificate[]) certificates));
 
         keyDetailsList = parsedAttestationRecord.teeEnforced;
 
