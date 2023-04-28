@@ -242,6 +242,11 @@ public class AudioFocusTest extends CtsAndroidTestCase {
                     + "skipped: not required for Auto platform");
             return;
         }
+        if (hasPCFeature(getContext())) {
+            Log.i(TAG, "Test testAudioFocusDelayedByCall "
+                    + "skipped: not required for Desktop platform");
+            return;
+        }
         Log.i(TAG, "testAudioFocusDelayedByCall");
         final AudioManager am = new AudioManager(getContext());
         final HandlerThread handlerThread = new HandlerThread(TAG);
@@ -318,6 +323,11 @@ public class AudioFocusTest extends CtsAndroidTestCase {
                     + "skipped: not required for Auto platform");
             return;
         }
+        if (hasPCFeature(getContext())) {
+            Log.i(TAG, "Test testAudioFocusTransientDelayedByCall "
+                    + "skipped: not required for Desktop platform");
+            return;
+        }
         Log.i(TAG, "testAudioFocusDelayedByCall");
         final AudioManager am = new AudioManager(getContext());
         final HandlerThread handlerThread = new HandlerThread(TAG);
@@ -387,6 +397,15 @@ public class AudioFocusTest extends CtsAndroidTestCase {
      */
     private static boolean hasAutomotiveFeature(Context context) {
         return context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE);
+    }
+
+    /**
+     * Determine if desktop feature is available
+     * @param context context to query
+     * @return true if desktop feature is available
+     */
+    private static boolean hasPCFeature(Context context) {
+        return context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_PC);
     }
 
     /**
