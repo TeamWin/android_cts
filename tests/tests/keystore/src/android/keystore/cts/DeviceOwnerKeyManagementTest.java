@@ -64,6 +64,7 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateParsingException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class DeviceOwnerKeyManagementTest {
@@ -124,13 +125,37 @@ public class DeviceOwnerKeyManagementTest {
         return SystemProperties.getInt("ro.board.first_api_level", 0);
     }
 
-    private void validateDeviceIdAttestationData(Certificate leaf,
+    private void validateDeviceIdAttestationData(Certificate[] certs,
                                                  String expectedSerial,
                                                  String expectedImei,
                                                  String expectedMeid,
                                                  String expectedSecondImei)
             throws CertificateParsingException {
-        Attestation attestationRecord = Attestation.loadFromCertificate((X509Certificate) leaf);
+
+        // find the first cert nearest to root contains the attestation data
+        Attestation attestationRecord = null;
+        for (int i = certs.length - 1; i >= 0; i--) {
+            try {
+                Attestation record;
+                record = Attestation.loadFromCertificate((X509Certificate) certs[i]);
+
+                // if there is no attestation data in the cert, loadFromCertificat will throw
+                // CertificateParsingException, if we got to here, then we have valid attestation
+                // data
+
+                // attestation data should not be in the root cert
+                assertThat(i).isNotEqualTo(certs.length - 1);
+                assertWithMessage("Duplicated attesaation data found in cert chain.")
+                    .that(attestationRecord)
+                    .isNull();
+                attestationRecord = record;
+            } catch (CertificateParsingException expected) {
+                continue;
+            }
+        }
+        if (attestationRecord == null) {
+            throw new CertificateParsingException("No attestation data found.");
+        }
         AuthorizationList teeAttestation = attestationRecord.getTeeEnforced();
         assertThat(teeAttestation).isNotNull();
         final String platformReportedBrand =
@@ -197,14 +222,14 @@ public class DeviceOwnerKeyManagementTest {
         }
     }
 
-    private void validateDeviceIdAttestationDataUsingExtLib(Certificate leaf,
+    private void validateDeviceIdAttestationDataUsingExtLib(Certificate[] certs,
                                                             String expectedSerial,
                                                             String expectedImei,
                                                             String expectedMeid,
                                                             String expectedSecondImei)
             throws CertificateParsingException, IOException {
         ParsedAttestationRecord parsedAttestationRecord =
-                createParsedAttestationRecord((X509Certificate) leaf);
+                createParsedAttestationRecord(Arrays.asList((X509Certificate[]) certs));
 
         com.google.android.attestation.AuthorizationList teeAttestation =
                 parsedAttestationRecord.teeEnforced;
@@ -301,7 +326,7 @@ public class DeviceOwnerKeyManagementTest {
      * If {@code signaturePaddings} is not null, it is added to the key parameters specification.
      * Returns the Attestation leaf certificate.
      */
-    private Certificate generateKeyAndCheckAttestation(
+    private Certificate[] generateKeyAndCheckAttestation(
             String keyAlgorithm, String signatureAlgorithm,
             String[] signaturePaddings, boolean useStrongBox,
             int deviceIdAttestationFlags) throws Exception {
@@ -364,7 +389,7 @@ public class DeviceOwnerKeyManagementTest {
             List<Certificate> attestation = generated.getAttestationRecord();
             validateAttestationRecord(attestation, attestationChallenge);
             validateSignatureChain(attestation, keyPair.getPublic());
-            return attestation.get(0);
+            return (Certificate[]) attestation.toArray();
         } catch (UnsupportedOperationException ex) {
             assertWithMessage(
                     String.format(
@@ -426,7 +451,7 @@ public class DeviceOwnerKeyManagementTest {
                 try {
                     // Now run the test with all supported key algorithms
                     for (SupportedKeyAlgorithm supportedKey: SUPPORTED_KEY_ALGORITHMS) {
-                        Certificate attestation = generateKeyAndCheckAttestation(
+                        Certificate[] attestation = generateKeyAndCheckAttestation(
                                 supportedKey.keyAlgorithm, supportedKey.signatureAlgorithm,
                                 supportedKey.signaturePaddingSchemes, useStrongBox, devIdOpt);
                         // generateKeyAndCheckAttestation should return null if device ID
