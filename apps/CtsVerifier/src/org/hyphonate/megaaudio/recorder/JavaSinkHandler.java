@@ -62,7 +62,7 @@ public class JavaSinkHandler extends Handler {
             case MSG_BUFFER_FILL:
                 if (mSink != null) {
                     mSink.push(mRecorder.getDataBuffer(),
-                            mRecorder.getNumBufferFrames(), mRecorder.getChannelCount());
+                            mRecorder.getNumExchangeFrames(), mRecorder.getChannelCount());
                 }
                 break;
 

@@ -24,9 +24,7 @@ import android.util.Log;
 
 import com.android.compatibility.common.util.CddTest;
 import com.android.cts.verifier.R;
-import com.android.cts.verifier.audio.audiolib.AudioSystemParams;
 
-import org.hyphonate.megaaudio.recorder.AudioSinkProvider;
 import org.hyphonate.megaaudio.recorder.Recorder;
 import org.hyphonate.megaaudio.recorder.RecorderBuilder;
 import org.hyphonate.megaaudio.recorder.sinks.AppCallback;
@@ -105,25 +103,20 @@ public class AudioInColdStartLatencyActivity
     //
     @Override
     boolean startAudioTest() {
-        AudioSystemParams audioSystemParams = new AudioSystemParams();
-        audioSystemParams.init(this);
-
-        mSampleRate = audioSystemParams.getSystemSampleRate();
-        mNumBufferFrames = audioSystemParams.getSystemBurstFrames();
-
         mPreviousCallbackTime = 0;
         mAccumulatedTime = 0;
         mNumCallbacks = 0;
 
-        AudioSinkProvider sinkProvider =
-                new AppCallbackAudioSinkProvider(new ColdStartAppCallback());
         try {
             mPreOpenTime = System.nanoTime();
-            mRecorder = (new RecorderBuilder())
-                    .setRecorderType(mAudioApi)
-                    .setAudioSinkProvider(sinkProvider)
-                    .build();
-            mRecorder.setupStream(NUM_CHANNELS, mSampleRate, mNumBufferFrames);
+            RecorderBuilder builder = new RecorderBuilder();
+            builder.setAudioSinkProvider(
+                    new AppCallbackAudioSinkProvider(new ColdStartAppCallback()))
+                .setRecorderType(mAudioApi)
+                .setChannelCount(NUM_CHANNELS)
+                .setSampleRate(mSampleRate)
+                .setNumExchangeFrames(mNumExchangeFrames);
+            mRecorder = builder.build();
             mPostOpenTime = System.nanoTime();
 
             mIsTestRunning = true;
@@ -178,9 +171,9 @@ public class AudioInColdStartLatencyActivity
 
             long time = System.nanoTime();
             if (mPreviousCallbackTime == 0) {
-                mNumBufferFrames = numFrames;
-                mNominalCallbackDelta
-                        = (long)((1000000000.0 * (double) mNumBufferFrames) / (double) mSampleRate);
+                mNumExchangeFrames = numFrames;
+                mNominalCallbackDelta = (long) ((1000000000.0 * (double) mNumExchangeFrames)
+                                            / (double) mSampleRate);
                 mCallbackThresholdTime = mNominalCallbackDelta + (mNominalCallbackDelta / 8);
                 // update attributes with actual buffer size
                 // showAttributes();
