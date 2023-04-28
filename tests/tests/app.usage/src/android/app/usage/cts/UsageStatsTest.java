@@ -2101,6 +2101,57 @@ public class UsageStatsTest {
 
     @AppModeFull(reason = "No usage events access in instant apps")
     @Test
+    public void testReportChooserSelection() throws Exception {
+        long startTime = System.currentTimeMillis();
+        mUsageStatsManager.reportChooserSelection(TEST_APP_PKG, 0,
+                "text/plain", null, "android.intent.action.SEND");
+        UsageEvents events = mUsageStatsManager.queryEvents(
+                startTime - 1000, System.currentTimeMillis() + 1000);
+        boolean foundEvent = false;
+        while (events.hasNextEvent()) {
+            final Event event = new Event();
+            events.getNextEvent(event);
+            if (event.mEventType == Event.CHOOSER_ACTION) {
+                foundEvent = true;
+                break;
+            }
+        }
+        assertTrue("Couldn't find the reported chooser action event.", foundEvent);
+
+        try {
+            mUsageStatsManager.reportChooserSelection(null, 0,
+                    "text/plain", null, "android.intent.action.SEND");
+            fail("Able to report a chooser selection with a null package");
+        } catch (IllegalArgumentException expected) { }
+        try {
+            mUsageStatsManager.reportChooserSelection(TEST_APP_PKG, 0,
+                    null, null, "android.intent.action.SEND");
+            fail("Able to report a chooser selection with a null content type");
+        } catch (IllegalArgumentException expected) { }
+        try {
+            mUsageStatsManager.reportChooserSelection(TEST_APP_PKG, 0,
+                    "text/plain", null, null);
+            fail("Able to report a chooser selection with a null action");
+        } catch (IllegalArgumentException expected) { }
+
+
+        Thread.sleep(1000); // wait for 1s so queryEvents doesn't pick up the previous event.
+        startTime = System.currentTimeMillis();
+        mUsageStatsManager.reportChooserSelection("android.app.usage.cts.nonexistent.pkg", 0,
+                "text/plain", null, "android.intent.action.SEND");
+        events = mUsageStatsManager.queryEvents(
+                startTime - 1000, System.currentTimeMillis() + 1000);
+        while (events.hasNextEvent()) {
+            final Event event = new Event();
+            events.getNextEvent(event);
+            if (event.mEventType == Event.CHOOSER_ACTION) {
+                fail("Able to report a chooser action event with a non-existent package.");
+            }
+        }
+    }
+
+    @AppModeFull(reason = "No usage events access in instant apps")
+    @Test
     public void testLocusIdEventsVisibility() throws Exception {
         final long startTime = System.currentTimeMillis();
         startAndDestroyActivityWithLocus();
