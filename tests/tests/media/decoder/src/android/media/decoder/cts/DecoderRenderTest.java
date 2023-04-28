@@ -24,14 +24,17 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeFalse;
 
+import android.graphics.SurfaceTexture;
 import android.media.MediaCodec;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.media.cts.MediaHeavyPresubmitTest;
 import android.media.cts.MediaTestBase;
+import android.media.cts.OutputSurface;
 import android.os.Build;
 import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
+import android.view.Surface;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SdkSuppress;
@@ -76,14 +79,29 @@ public class DecoderRenderTest extends MediaTestBase {
 
     /*
      * Tests that {@link MediaCodec.OnFramerenderedListener#onFrameRendered) is called for every
-     * video frame when playing back a full VP9 video.
+     * video frame rendered to the display when playing back a full VP9 video.
      */
     @Test
     @ApiTest(apis = {"android.media.MediaCodec.OnFrameRenderedListener#onFrameRendered"})
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE, codeName = "UpsideDownCake")
-    public void onFrameRendered_indicatesAllFramesRendered_vp9() throws Exception {
+    public void onFrameRendered_indicatesAllFramesRendered_toDisplay_vp9() throws Exception {
         onFrameRendered_indicatesAllFramesRendered(
-                "bbb_s1_640x360_webm_vp9_0p21_1600kbps_30fps_vorbis_stereo_128kbps_48000hz.webm");
+                "bbb_s1_640x360_webm_vp9_0p21_1600kbps_30fps_vorbis_stereo_128kbps_48000hz.webm",
+                getActivity().getSurfaceHolder().getSurface());
+    }
+
+    /*
+     * Tests that {@link MediaCodec.OnFramerenderedListener#onFrameRendered) is called for every
+     * video frame rendered to the surface texture when playing back a full VP9 video.
+     */
+    @Test
+    @ApiTest(apis = {"android.media.MediaCodec.OnFrameRenderedListener#onFrameRendered"})
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE, codeName = "UpsideDownCake")
+    public void onFrameRendered_indicatesAllFramesRendered_toTexture_vp9() throws Exception {
+        OutputSurface outputSurface = new OutputSurface(640, 360);
+        onFrameRendered_indicatesAllFramesRendered(
+                "bbb_s1_640x360_webm_vp9_0p21_1600kbps_30fps_vorbis_stereo_128kbps_48000hz.webm",
+                outputSurface.getSurface());
     }
 
     public class MutableData {
@@ -92,7 +110,8 @@ public class DecoderRenderTest extends MediaTestBase {
     }
 
     // TODO(b/234833109): Run this test against a variety of video files and codecs.
-    private void onFrameRendered_indicatesAllFramesRendered(String fileName) throws Exception {
+    private void onFrameRendered_indicatesAllFramesRendered(String fileName, Surface surface)
+            throws Exception {
         // TODO(b/268212517): Preplay one video frame to prime the video and graphics pipeline to
         // simulate a device in its normal steady-state (less chances for dropped frames). This
         // avoids problems, for example, with GPU shaders being compiled when rendering the first
@@ -105,7 +124,7 @@ public class DecoderRenderTest extends MediaTestBase {
         MediaFormat videoFormat = videoExtractor.getTrackFormat(videoTrackIndex);
         MediaCodec videoCodec = createCodecFor(videoFormat);
         assumeFalse("No video codec found for " + fileName, videoCodec == null);
-        videoCodec.configure(videoFormat, getActivity().getSurfaceHolder().getSurface(), null, 0);
+        videoCodec.configure(videoFormat, surface, null, 0);
 
         VideoDecoderCallback videoDecoderCallback = new VideoDecoderCallback(videoExtractor);
         videoCodec.setCallback(videoDecoderCallback);
