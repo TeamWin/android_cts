@@ -26,6 +26,7 @@ import static com.android.bedstead.metricsrecorder.truth.MetricQueryBuilderSubje
 import static com.android.bedstead.nene.appops.AppOpsMode.ALLOWED;
 import static com.android.bedstead.nene.appops.AppOpsMode.DEFAULT;
 import static com.android.bedstead.nene.appops.CommonAppOps.OPSTR_SYSTEM_EXEMPT_FROM_SUSPENSION;
+import static com.android.bedstead.nene.appops.CommonAppOps.OPSTR_SYSTEM_EXEMPT_FROM_POWER_RESTRICTIONS;
 import static com.android.bedstead.nene.flags.CommonFlags.DevicePolicyManager.PERMISSION_BASED_ACCESS_EXPERIMENT_FLAG;
 import static com.android.bedstead.nene.flags.CommonFlags.NAMESPACE_DEVICE_POLICY_MANAGER;
 import static com.android.bedstead.nene.permissions.CommonPermissions.MANAGE_DEVICE_POLICY_APP_EXEMPTIONS;
@@ -274,8 +275,7 @@ public class ApplicationExemptionsTest {
                     exemptionSet);
 
             assertThat(localApp.appOps()
-                    .get(APPLICATION_EXEMPTION_CONSTANTS_TO_APP_OPS.get(
-                            EXEMPT_FROM_POWER_RESTRICTIONS)))
+                    .get(OPSTR_SYSTEM_EXEMPT_FROM_POWER_RESTRICTIONS))
                     .isEqualTo(DEFAULT);
         }
     }
