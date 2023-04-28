@@ -25,10 +25,8 @@ import android.util.Log;
 
 import com.android.compatibility.common.util.CddTest;
 import com.android.cts.verifier.R;
-import com.android.cts.verifier.audio.audiolib.AudioSystemParams;
 import com.android.cts.verifier.audio.audiolib.SettingsUtils;
 
-import org.hyphonate.megaaudio.player.AudioSourceProvider;
 import org.hyphonate.megaaudio.player.Player;
 import org.hyphonate.megaaudio.player.PlayerBuilder;
 import org.hyphonate.megaaudio.player.sources.SilenceAudioSourceProvider;
@@ -162,20 +160,15 @@ public class AudioOutColdStartLatencyActivity
     //
     @Override
     boolean startAudioTest() {
-        AudioSystemParams audioSystemParams = new AudioSystemParams();
-        audioSystemParams.init(this);
-
-        mSampleRate = audioSystemParams.getSystemSampleRate();
-        mNumBufferFrames = audioSystemParams.getSystemBurstFrames();
-
-        AudioSourceProvider sourceProvider = new SilenceAudioSourceProvider();
         try {
             mPreOpenTime = System.nanoTime();
-            mPlayer = (new PlayerBuilder())
-                    .setPlayerType(mAudioApi)
-                    .setSourceProvider(sourceProvider)
-                    .build();
-            mPlayer.setupStream(NUM_CHANNELS, mSampleRate, mNumBufferFrames);
+            PlayerBuilder builder = new PlayerBuilder();
+            builder.setSourceProvider(new SilenceAudioSourceProvider())
+                .setPlayerType(mAudioApi)
+                .setChannelCount(NUM_CHANNELS)
+                .setSampleRate(mSampleRate)
+                .setNumExchangeFrames(mNumExchangeFrames);
+            mPlayer = builder.build();
             mPostOpenTime = System.nanoTime();
 
             mIsTestRunning = true;

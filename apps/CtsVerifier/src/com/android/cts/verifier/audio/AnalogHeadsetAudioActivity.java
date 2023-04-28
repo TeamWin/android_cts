@@ -44,6 +44,8 @@ import com.android.cts.verifier.CtsVerifierReportLog;
 import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
 
+import org.hyphonate.megaaudio.common.BuilderBase;
+import org.hyphonate.megaaudio.common.StreamBase;
 import org.hyphonate.megaaudio.player.AudioSourceProvider;
 import org.hyphonate.megaaudio.player.JavaPlayer;
 import org.hyphonate.megaaudio.player.PlayerBuilder;
@@ -392,16 +394,22 @@ public class AnalogHeadsetAudioActivity
     // Player
     //
     protected void setupPlayer() {
+        StreamBase.setup(this);
+        int numBufferFrames = StreamBase.getNumBurstFrames(BuilderBase.TYPE_JAVA);
+
         //
         // Allocate the source provider for the sort of signal we want to play
         //
         AudioSourceProvider sourceProvider = new SinAudioSourceProvider();
         try {
-            PlayerBuilder builder = new PlayerBuilder();
+            PlayerBuilder builder = (PlayerBuilder) new PlayerBuilder()
+                    .setChannelCount(NUM_CHANNELS)
+                    .setSampleRate(SAMPLE_RATE)
+                    .setNumExchangeFrames(numBufferFrames);
             mAudioPlayer = (JavaPlayer)builder
                     // choose one or the other of these for a Java or an Oboe player
                     .setPlayerType(PlayerBuilder.TYPE_JAVA)
-                    // .setPlayerType(PlayerBuilder.PLAYER_OBOE)
+                    // .setPlayerType(PlayerBuilder.TYPE_OBOE)
                     .setSourceProvider(sourceProvider)
                     .build();
         } catch (PlayerBuilder.BadStateException ex) {
@@ -411,8 +419,6 @@ public class AnalogHeadsetAudioActivity
 
     protected void startPlay() {
         if (!mIsPlaying) {
-            //TODO - explain the choice of 96 here.
-            mAudioPlayer.setupStream(NUM_CHANNELS, SAMPLE_RATE, 96);
             mAudioPlayer.startStream();
             mIsPlaying = true;
 

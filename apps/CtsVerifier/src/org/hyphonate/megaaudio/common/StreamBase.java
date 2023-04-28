@@ -16,7 +16,6 @@
 package org.hyphonate.megaaudio.common;
 
 import android.content.Context;
-import android.media.AudioDeviceInfo;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.util.Log;
@@ -31,10 +30,12 @@ public abstract class StreamBase {
     @SuppressWarnings("unused")
     private static final String TAG = StreamBase.class.getSimpleName();
     @SuppressWarnings("unused")
-    private static final boolean LOG = false;
+    private static final boolean LOG = true;
 
     static {
-        Log.i(TAG, "Loading MegaAudio Library...");
+        if (LOG) {
+            Log.d(TAG, "Loading MegaAudio Library...");
+        }
         try {
             System.loadLibrary("megaaudio_jni");
             JavaSourceProxy.initN();
@@ -58,20 +59,53 @@ public abstract class StreamBase {
     public static final int ERROR_INVALID_STATE = -3;
     public static final int ERROR_DISCONNECTED = -899; // must match Oboe
     public static final int ERROR_INVALIDSTATE = -895;
+
     //
     // System Attributes
     //
-    //
+    /**
+     * The size of the system "burst" buffer in frames.
+     * Note: Apps need to call calcNumBurstFrames(Context) to initialize this
+     * with the actual value for the system. 512 is an arbitrary, but safe value.
+     */
     private static int sSystemBurstFrames = 512;
+
+    /**
+     * The Preferred system sample rate.
+     */
     private static int sSystemSampleRate = 48000;
 
+    //
     // Stream attributes
     //
+    /**
+     * The number of channels in this stream.
+     */
     protected int mChannelCount;
+
+    /**
+     * The sample rate for this stream
+     */
     protected int mSampleRate;
 
-    // Routing
-    protected AudioDeviceInfo mRouteDevice;
+    /**
+     * The number of frames exchanged between the stream and the AudioSink/AudioSource.
+     * It is not (necessarily) the number of frames exchange with the OS player/recorder.
+     */
+    protected int mNumExchangeFrames;
+
+    /**
+     * The performance mode for this stream.
+     * See Performance Mode Constants in Builder class.
+     */
+    protected int mPerformanceMode;
+
+    /**
+     * The sharing mode for this stream. See Sharing Mode Constants in Builder class.
+     */
+    protected int mSharingMode;
+
+    //TODO - Add methods for changing the routing of an instantiated stream.
 
     // the thread on which the underlying Android AudioTrack/AudioRecord will run
     protected Thread mStreamThread = null;
@@ -99,7 +133,15 @@ public abstract class StreamBase {
     //
     // Attributes
     //
+
+    /**
+     * @return The number of channels associated with this stream.
+     */
     public int getChannelCount() { return mChannelCount; }
+
+    /**
+     * @return The sample rate for this stream.
+     */
     public int getSampleRate() { return mSampleRate; }
 
     /**
@@ -112,7 +154,7 @@ public abstract class StreamBase {
         String text = audioManager.getProperty(AudioManager.PROPERTY_OUTPUT_FRAMES_PER_BUFFER);
         sSystemBurstFrames = Integer.parseInt(text);
         if (LOG) {
-            Log.i(TAG, "sSystemBurstFrames:" + sSystemBurstFrames);
+            Log.d(TAG, "sSystemBurstFrames:" + sSystemBurstFrames);
         }
         return sSystemBurstFrames;
     }
@@ -122,6 +164,22 @@ public abstract class StreamBase {
      */
     public static int getSystemBurstFrames() {
         return sSystemBurstFrames;
+    }
+
+    /**
+     * @param api Specifies which API BuilderBase.TYPE_NONE, BuilderBase.TYPE_JAVA
+     * or BuilderBase.TYPE_OBOE
+     * @return The optimal capacity for a stream buffer of the specified type.
+     */
+    public static int getNumBurstFrames(int api) {
+        return sSystemBurstFrames;
+    }
+
+    /**
+     *
+     */
+    public int getNumExchangeFrames() {
+        return mNumExchangeFrames;
     }
 
     /**
@@ -143,11 +201,6 @@ public abstract class StreamBase {
     }
 
     // Routing
-    public void setRouteDevice(AudioDeviceInfo routeDevice) {
-        mRouteDevice = routeDevice;
-    }
-
-    public static final int ROUTED_DEVICE_ID_INVALID = -1;
     public abstract int getRoutedDeviceId();
 
     //
@@ -173,27 +226,6 @@ public abstract class StreamBase {
     //
     // State
     //
-
-    /**
-     * Sets up the stream with the specified attributes.
-     * @param channelCount  The number of channels of audio data to be streamed.
-     * @param sampleRate    The stream sample rate
-     * @param performanceMode See BuilderBase.PERFORMANCE_MODE flags
-     * @param sharingMode     See BuilderBase.SHARING_MODE flags
-     * @param numBufferFrames   The number of frames of audio data in the stream's buffer.
-     * @return
-     */
-    public abstract int setupStream(int channelCount, int sampleRate,
-                                    int performanceMode, int sharingMode, int numBufferFrames);
-
-    /**
-     * @param channelCount  The number of channels of audio data to be streamed.
-     * @param sampleRate    The stream sample rate
-     * @param numFrames     The number of frames of audio data in the stream's buffer.
-     * @return              ERROR_NONE if successful, otherwise an error code
-     */
-    public abstract int setupStream(int channelCount, int sampleRate, int numFrames);
-
     /**
      * Releases resources used by the stream.
      * @return
