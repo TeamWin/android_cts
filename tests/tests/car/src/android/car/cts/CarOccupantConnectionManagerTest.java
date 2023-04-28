@@ -109,7 +109,7 @@ public final class CarOccupantConnectionManagerTest extends AbstractCarTestCase 
     @ApiTest(apis = {
             "android.car.occupantconnection.CarOccupantConnectionManager#registerReceiver",
             "android.car.occupantconnection.CarOccupantConnectionManager#unregisterReceiver",
-            "android.car.occupantconnection.AbstractReceiverService#onReceiverRegistered",
+            "android.car.occupantconnection.AbstractReceiverService#getAllReceiverEndpoints",
             "android.car.occupantconnection.AbstractReceiverService#onLocalServiceBind"})
     public void testRegisterAndUnregisterReceiver() {
         mOccupantConnectionManager.registerReceiver(RECEIVER_ID, mExecutor,
@@ -118,12 +118,12 @@ public final class CarOccupantConnectionManagerTest extends AbstractCarTestCase 
         TestReceiverService receiverService = bindToLocalReceiverServiceAndWait();
 
         assertWithMessage("Failed to register the receiver").that(
-                receiverService.mOnReceiverRegisteredInvokedRecords.contains(RECEIVER_ID)).isTrue();
+                receiverService.getAllReceiverEndpoints().contains(RECEIVER_ID)).isTrue();
 
         mOccupantConnectionManager.unregisterReceiver(RECEIVER_ID);
 
         assertWithMessage("Failed to unregister the receiver").that(
-                receiverService.mOnReceiverRegisteredInvokedRecords.isEmpty()).isTrue();
+                receiverService.getAllReceiverEndpoints().isEmpty()).isTrue();
     }
 
     @Test
@@ -319,7 +319,6 @@ public final class CarOccupantConnectionManagerTest extends AbstractCarTestCase 
         // parameters.
         private final List<Pair<OccupantZoneInfo, Payload>> mOnPayloadReceivedInvokedRecords =
                 new ArrayList<>();
-        private final List<String> mOnReceiverRegisteredInvokedRecords = new ArrayList<>();
 
         private final LocalBinder mLocalBinder = new LocalBinder();
 
@@ -398,7 +397,6 @@ public final class CarOccupantConnectionManagerTest extends AbstractCarTestCase 
 
         @Override
         public void onReceiverRegistered(String receiverEndpointId) {
-            mOnReceiverRegisteredInvokedRecords.add(receiverEndpointId);
         }
 
         @Override
