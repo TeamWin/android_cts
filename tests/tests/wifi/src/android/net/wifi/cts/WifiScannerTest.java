@@ -93,7 +93,7 @@ public class WifiScannerTest extends WifiJUnit3TestBase {
      * Test ScanSettings object being serialized and deserialized while vendorIes keeping the
      * values unchanged.
      */
-    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE, codeName = "UpsideDownCake")
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
     public void testVendorIesParcelable() throws Exception {
         WifiScanner.ScanSettings requestSettings = createRequest(
                 WifiScanner.WIFI_BAND_BOTH_WITH_DFS, 0,
@@ -116,7 +116,7 @@ public class WifiScannerTest extends WifiJUnit3TestBase {
                 requestSettings.getVendorIes());
     }
 
-    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE, codeName = "UpsideDownCake")
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
     public void testPnoSettings() throws Exception {
         android.net.wifi.nl80211.PnoSettings pnoSettings =
                 new android.net.wifi.nl80211.PnoSettings();
