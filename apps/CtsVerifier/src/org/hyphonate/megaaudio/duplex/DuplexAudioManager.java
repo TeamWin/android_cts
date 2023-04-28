@@ -114,23 +114,19 @@ public class DuplexAudioManager {
         // Recorder
         if ((recorderType & BuilderBase.TYPE_MASK) != BuilderBase.TYPE_NONE) {
             try {
-                RecorderBuilder builder = new RecorderBuilder()
+//                mNumRecorderBufferFrames = Recorder.calcMinBufferFramesStatic(
+//                        mNumRecorderChannels, mRecorderSampleRate);
+                mNumRecorderBufferFrames = StreamBase.getNumBurstFrames(BuilderBase.TYPE_NONE);
+                Log.i(TAG, "mNumRecorderBufferFrames: " + mNumRecorderBufferFrames);
+                RecorderBuilder builder = (RecorderBuilder) new RecorderBuilder()
                         .setRecorderType(recorderType)
-                        .setAudioSinkProvider(mSinkProvider);
-                builder.setSampleRate(mRecorderSampleRate);
-                builder.setChannelCount(mNumRecorderChannels);
+                        .setAudioSinkProvider(mSinkProvider)
+                        .setInputPreset(mInputPreset)
+                        .setRouteDevice(mRecorderSelectedDevice)
+                        .setSampleRate(mRecorderSampleRate)
+                        .setChannelCount(mNumRecorderChannels)
+                        .setNumExchangeFrames(mNumRecorderBufferFrames);
                 mRecorder = builder.build();
-                if (mInputPreset != Recorder.INPUT_PRESET_NONE) {
-                    mRecorder.setInputPreset(mInputPreset);
-                }
-                mRecorder.setRouteDevice(mRecorderSelectedDevice);
-                mNumRecorderBufferFrames = StreamBase.getSystemBurstFrames();
-                int errorCode = mRecorder.setupStream(
-                        mNumRecorderChannels, mRecorderSampleRate, mNumRecorderBufferFrames);
-                if (errorCode != StreamBase.OK) {
-                    Log.e(TAG, "Recorder setupStream() failed code: " + errorCode);
-                    return errorCode;
-                }
             } catch (RecorderBuilder.BadStateException ex) {
                 Log.e(TAG, "Recorder - BadStateException" + ex);
                 return StreamBase.ERROR_UNSUPPORTED;
@@ -140,23 +136,23 @@ public class DuplexAudioManager {
         // Player
         if ((playerType & BuilderBase.TYPE_MASK) != BuilderBase.TYPE_NONE) {
             try {
-                mNumPlayerBurstFrames = StreamBase.getSystemBurstFrames();
-                PlayerBuilder builder = new PlayerBuilder()
+                mNumPlayerBurstFrames = StreamBase.getNumBurstFrames(playerType);
+                Log.i(TAG, "mNumPlayerBurstFrames:" + mNumPlayerBurstFrames);
+
+                PlayerBuilder builder = (PlayerBuilder) new PlayerBuilder()
                         .setPlayerType(playerType)
-                        .setSourceProvider(mSourceProvider);
-                builder.setSampleRate(mPlayerSampleRate);
-                builder.setChannelCount(mNumPlayerChannels);
+                        .setSourceProvider(mSourceProvider)
+                        .setSampleRate(mPlayerSampleRate)
+                        .setChannelCount(mNumPlayerChannels)
+                        .setRouteDevice(mPlayerSelectedDevice)
+                        .setNumExchangeFrames(mNumPlayerBurstFrames)
+                        .setPerformanceMode(BuilderBase.PERFORMANCE_MODE_LOWLATENCY);
                 mPlayer = builder.build();
-                mPlayer.setRouteDevice(mPlayerSelectedDevice);
-                int errorCode = mPlayer.setupStream(
-                        mNumPlayerChannels, mPlayerSampleRate, mNumPlayerBurstFrames);
-                if (errorCode != StreamBase.OK) {
-                    Log.e(TAG, "Player - setupStream() failed code: " + errorCode);
-                    return errorCode;
-                }
             } catch (PlayerBuilder.BadStateException ex) {
                 Log.e(TAG, "Player - BadStateException" + ex);
                 return StreamBase.ERROR_UNSUPPORTED;
+            } catch (Exception ex) {
+                Log.e(TAG, "Uncaught Error in Player Setup for DuplexAudioManager ex:" + ex);
             }
         }
 
