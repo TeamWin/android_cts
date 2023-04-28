@@ -30,7 +30,7 @@ public class UiAutomationTestA11yService extends AccessibilityService {
 
     private static final boolean VERBOSE = false;
 
-    public static Object sWaitObjectForConnectOrUnbind = new Object();
+    public static final Object sWaitObjectForConnectOrUnbind = new Object();
 
     public static UiAutomationTestA11yService sConnectedInstance;
 
