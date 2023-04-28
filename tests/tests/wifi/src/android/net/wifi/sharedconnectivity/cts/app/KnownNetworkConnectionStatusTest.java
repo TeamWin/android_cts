@@ -44,7 +44,7 @@ import java.util.Arrays;
 /**
  * CTS tests for {@link KnownNetworkConnectionStatus}.
  */
-@SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE, codeName = "UpsideDownCake")
+@SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
 @NonMainlineTest
 public class KnownNetworkConnectionStatusTest {
     private static final int NETWORK_SOURCE = NETWORK_SOURCE_NEARBY_SELF;

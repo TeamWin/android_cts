@@ -16,6 +16,7 @@
 
 package android.net.wifi.cts;
 
+import static android.content.Context.RECEIVER_EXPORTED;
 import static android.net.wifi.p2p.WifiP2pConfig.GROUP_CLIENT_IP_PROVISIONING_MODE_IPV6_LINK_LOCAL;
 
 import static org.junit.Assert.assertNotEquals;
@@ -230,8 +231,11 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
         mIntentFilter.addAction(WifiP2pManager.WIFI_P2P_DISCOVERY_CHANGED_ACTION);
         mIntentFilter.addAction(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION);
         mIntentFilter.addAction(WifiP2pManager.ACTION_WIFI_P2P_LISTEN_STATE_CHANGED);
-
-        mContext.registerReceiver(mReceiver, mIntentFilter);
+        if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)) {
+            mContext.registerReceiver(mReceiver, mIntentFilter, RECEIVER_EXPORTED);
+        } else {
+            mContext.registerReceiver(mReceiver, mIntentFilter);
+        }
         mWifiManager = (WifiManager) getContext().getSystemService(Context.WIFI_SERVICE);
         assertNotNull(mWifiManager);
 
@@ -1129,7 +1133,7 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
     }
 
     /** Test setWfdInfo() API. */
-    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE, codeName = "UpsideDownCake")
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
     public void testP2pSetWfdInfo() {
         if (!setupWifiP2p()) {
             return;
