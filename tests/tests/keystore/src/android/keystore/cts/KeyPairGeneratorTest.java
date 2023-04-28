@@ -31,6 +31,7 @@ import android.security.keystore.KeyProperties;
 import android.test.MoreAsserts;
 import android.text.TextUtils;
 import android.util.Log;
+import android.util.Pair;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
@@ -625,6 +626,57 @@ public class KeyPairGeneratorTest {
         replacesOldEntryWithSameAliasHelper(false /* useStrongbox */);
         if (TestUtils.hasStrongBox(getContext())) {
             replacesOldEntryWithSameAliasHelper(true /* useStrongbox */);
+        }
+    }
+
+    @Test
+    public void testGenerate_VerifyDifferentValidityPeriods() throws Exception {
+        // Generate keys with different validity durations, (Now, Now + 1 year),
+        // (Now, Now + 2 years), ..., (Now, Now + 10 years)
+        List<Pair<Date, Date>> certDurations = new ArrayList<Pair<Date, Date>>();
+        for (int year = 1; year <= 10; year++) {
+            Date notAfterDate = new Date(NOW.getYear() + year, 0, 1);
+            certDurations.add(new Pair<Date, Date>(NOW, notAfterDate));
+        }
+        // Add a new entry with not-before = Jan, 01, 2011 and not-after = Jan 01, 2032
+        certDurations.add(new Pair<Date, Date>(new Date(1293840000000L), new Date(1956528000000L)));
+
+        generateKeyWithDifferentValidityPeriods(certDurations, false /* useStrongbox */);
+        if (TestUtils.hasStrongBox(getContext())) {
+            generateKeyWithDifferentValidityPeriods(certDurations, true /* useStrongbox */);
+        }
+    }
+
+    private void generateKeyWithDifferentValidityPeriods(
+            List<Pair<Date, Date>> durations, boolean useStrongbox)
+            throws Exception {
+        for (Pair<Date, Date> pair : durations) {
+            KeyPairGenerator generator = getRsaGenerator();
+            Date certNotBefore = pair.first;
+            Date certNotAfter = pair.second;
+            generator.initialize(new KeyGenParameterSpec.Builder(
+                    TEST_ALIAS_1,
+                    KeyProperties.PURPOSE_SIGN
+                            | KeyProperties.PURPOSE_VERIFY
+                            | KeyProperties.PURPOSE_ENCRYPT
+                            | KeyProperties.PURPOSE_DECRYPT)
+                    .setDigests(KeyProperties.DIGEST_NONE)
+                    .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_RSA_PKCS1)
+                    .setCertificateSubject(TEST_DN_1)
+                    .setCertificateSerialNumber(TEST_SERIAL_1)
+                    .setCertificateNotBefore(certNotBefore)
+                    .setCertificateNotAfter(certNotAfter)
+                    .setIsStrongBoxBacked(useStrongbox)
+                    .build());
+            assertGeneratedKeyPairAndSelfSignedCertificate(
+                    generator.generateKeyPair(),
+                    TEST_ALIAS_1,
+                    "RSA",
+                    2048,
+                    TEST_DN_1,
+                    TEST_SERIAL_1,
+                    certNotBefore,
+                    certNotAfter);
         }
     }
 
