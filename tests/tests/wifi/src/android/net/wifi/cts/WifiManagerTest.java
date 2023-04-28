@@ -16,6 +16,7 @@
 
 package android.net.wifi.cts;
 
+import static android.content.Context.RECEIVER_EXPORTED;
 import static android.net.NetworkCapabilities.NET_CAPABILITY_NOT_METERED;
 import static android.net.NetworkCapabilities.TRANSPORT_WIFI;
 import static android.net.wifi.SoftApCapability.SOFTAP_FEATURE_ACS_OFFLOAD;
@@ -378,7 +379,11 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         mIntentFilter.addAction(WifiManager.NETWORK_IDS_CHANGED_ACTION);
         mIntentFilter.addAction(WifiManager.ACTION_PICK_WIFI_NETWORK);
 
-        mContext.registerReceiver(mReceiver, mIntentFilter);
+        if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)) {
+            mContext.registerReceiver(mReceiver, mIntentFilter, RECEIVER_EXPORTED);
+        } else {
+            mContext.registerReceiver(mReceiver, mIntentFilter);
+        }
         mWifiManager = (WifiManager) getContext().getSystemService(Context.WIFI_SERVICE);
         mConnectivityManager = getContext().getSystemService(ConnectivityManager.class);
         mTetheringManager = getContext().getSystemService(TetheringManager.class);
@@ -4832,7 +4837,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
     /**
      * Verify the usage of {@code WifiManager#getMaxSupportedConcurrentTdlsSessions}.
      */
-    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE, codeName = "UpsideDownCake")
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
     public void testGetMaxSupportedConcurrentTdlsSessions() throws Exception {
         if (!WifiFeature.isWifiSupported(getContext())) {
             // skip the test if WiFi is not supported
@@ -6325,7 +6330,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
      * {@link WifiManager#removeQosPolicies(int[])}, and
      * {@link WifiManager#removeAllQosPolicies()} do not crash.
      */
-    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE, codeName = "UpsideDownCake")
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
     public void testAddAndRemoveQosPolicies() throws Exception {
         if (!WifiFeature.isWifiSupported(getContext())) {
             // skip the test if WiFi is not supported
@@ -6427,7 +6432,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
     /**
      * Tests the builder and get methods for {@link QosPolicyParams}.
      */
-    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE, codeName = "UpsideDownCake")
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
     public void testQosPolicyParamsBuilder() throws Exception {
         final int policyId = 5;
         final int direction = QosPolicyParams.DIRECTION_DOWNLINK;
@@ -6642,7 +6647,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
      * Tests {@link WifiManager#isThirdPartyAppEnablingWifiConfirmationDialogEnabled()}
      * and {@link WifiManager#setThirdPartyAppEnablingWifiConfirmationDialogEnabled(boolean)}
      */
-    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE, codeName = "UpsideDownCake")
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
     public void testGetAndSetThirdPartyAppEnablingWifiConfirmationDialogEnabled() {
         // Expect a SecurityException without the required permissions.
         assertThrows(SecurityException.class,

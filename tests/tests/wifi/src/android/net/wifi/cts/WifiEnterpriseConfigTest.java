@@ -1039,7 +1039,7 @@ public class WifiEnterpriseConfigTest extends WifiJUnit3TestBase {
         assertTrue(config.hasCaCertificate());
     }
 
-    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE, codeName = "UpsideDownCake")
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
     public void testSetMinimumTlsVersion() throws Exception {
         if (!hasWifi()) {
             return;
