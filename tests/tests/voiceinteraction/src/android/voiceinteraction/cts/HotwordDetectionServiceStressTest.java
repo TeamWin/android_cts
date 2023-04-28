@@ -36,6 +36,7 @@ import android.app.UiAutomation;
 import android.content.pm.PackageManager;
 import android.os.ParcelFileDescriptor;
 import android.os.PersistableBundle;
+import android.os.Process;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.service.voice.AlwaysOnHotwordDetector;
@@ -90,8 +91,10 @@ public class HotwordDetectionServiceStressTest {
 
     private final AppOpsManager.OnOpNotedListener mOnOpNotedListener =
             (op, uid, pkgName, attributionTag, flags, result) -> {
-                Log.d(TAG, "Get OnOpNotedListener callback op = " + op);
-                if (AppOpsManager.OPSTR_RECORD_AUDIO.equals(op)) {
+                Log.d(TAG, "Get OnOpNotedListener callback op = " + op + ", uid = " + uid);
+                // We adopt ShellPermissionIdentity to pass the permission check, so the uid should
+                // be the shell uid.
+                if (Process.SHELL_UID == uid) {
                     if (mLatch != null) {
                         mLatch.countDown();
                     }
