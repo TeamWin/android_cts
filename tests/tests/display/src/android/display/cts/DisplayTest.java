@@ -64,15 +64,17 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 
-import androidx.test.InstrumentationRegistry;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
-import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.AdoptShellPermissionsRule;
 import com.android.compatibility.common.util.CddTest;
+import com.android.compatibility.common.util.DisplayStateManager;
 import com.android.compatibility.common.util.DisplayUtil;
 import com.android.compatibility.common.util.MediaUtils;
 import com.android.compatibility.common.util.PropertyUtil;
+import com.android.compatibility.common.util.StateKeeperRule;
 
 import com.google.common.truth.Truth;
 
@@ -130,7 +132,6 @@ public class DisplayTest extends TestBase {
     private Context mContext;
     private ColorSpace[] mSupportedWideGamuts;
     private Display mDefaultDisplay;
-    private HdrSettings mOriginalHdrSettings;
     private int mInitialRefreshRateSwitchingType;
 
     // To test display mode switches.
@@ -203,7 +204,7 @@ public class DisplayTest extends TestBase {
      * This rule adopts the Shell process permissions, needed because OVERRIDE_DISPLAY_MODE_REQUESTS
      * and ACCESS_SURFACE_FLINGER are privileged permission.
      */
-    @Rule
+    @Rule(order = 0)
     public AdoptShellPermissionsRule mAdoptShellPermissionsRule = new AdoptShellPermissionsRule(
             InstrumentationRegistry.getInstrumentation().getUiAutomation(),
             Manifest.permission.OVERRIDE_DISPLAY_MODE_REQUESTS,
@@ -211,6 +212,12 @@ public class DisplayTest extends TestBase {
             Manifest.permission.WRITE_SECURE_SETTINGS,
             Manifest.permission.HDMI_CEC,
             Manifest.permission.MODIFY_REFRESH_RATE_SWITCHING_TYPE);
+
+    @Rule(order = 1)
+    public StateKeeperRule<DisplayStateManager.DisplayState>
+            mDisplayManagerStateKeeper =
+            new StateKeeperRule<>(new DisplayStateManager(
+                    InstrumentationRegistry.getInstrumentation().getTargetContext()));
 
     @Before
     public void setUp() throws Exception {
@@ -226,14 +233,15 @@ public class DisplayTest extends TestBase {
         mUiModeManager = mContext.getSystemService(UiModeManager.class);
         mDefaultDisplay = mDisplayManager.getDisplay(DEFAULT_DISPLAY);
         mSupportedWideGamuts = mDefaultDisplay.getSupportedWideColorGamut();
-        mOriginalHdrSettings = new HdrSettings();
 
         addSecondaryDisplay();
     }
 
     @After
     public void tearDown() {
-        restoreOriginalHdrSettings();
+        if (mDisplayManager != null) {
+            mDisplayManager.overrideHdrTypes(DEFAULT_DISPLAY, new int[]{});
+        }
         mUiAutomation.executeShellCommand("settings delete global overlay_display_devices");
     }
 
@@ -368,7 +376,7 @@ public class DisplayTest extends TestBase {
     public void
             testGetHdrCapabilitiesWhenUserDisabledFormatsAreNotAllowedReturnsFilteredHdrTypes()
                     throws Exception {
-        cacheAndClearOriginalHdrSettings();
+        overrideHdrTypes();
         waitUntil(
                 mDefaultDisplay,
                 mDefaultDisplay ->
@@ -409,7 +417,7 @@ public class DisplayTest extends TestBase {
     public void
             testGetHdrCapabilitiesWhenUserDisabledFormatsAreAllowedReturnsNonFilteredHdrTypes()
                     throws Exception {
-        cacheAndClearOriginalHdrSettings();
+        overrideHdrTypes();
         waitUntil(
                 mDefaultDisplay,
                 mDefaultDisplay ->
@@ -438,7 +446,7 @@ public class DisplayTest extends TestBase {
      */
     @Test
     public void testSetUserDisabledHdrTypesStoresDisabledFormatsInSettings() throws Exception {
-        cacheAndClearOriginalHdrSettings();
+        overrideHdrTypes();
         waitUntil(
                 mDefaultDisplay,
                 mDefaultDisplay ->
@@ -463,30 +471,11 @@ public class DisplayTest extends TestBase {
         assertEquals(HdrCapabilities.HDR_TYPE_HLG, userDisabledFormats[1]);
     }
 
-    private static final class HdrSettings  {
-        public boolean areUserDisabledHdrTypesAllowed;
-        public int[] userDisabledHdrTypes;
-    }
-
-    private void cacheAndClearOriginalHdrSettings() {
-        mOriginalHdrSettings.areUserDisabledHdrTypesAllowed =
-                mDisplayManager.areUserDisabledHdrTypesAllowed();
-        mOriginalHdrSettings.userDisabledHdrTypes =
-                mDisplayManager.getUserDisabledHdrTypes();
+    private void overrideHdrTypes() {
         mDisplayManager.overrideHdrTypes(DEFAULT_DISPLAY, new int[]{
                 HdrCapabilities.HDR_TYPE_DOLBY_VISION, HdrCapabilities.HDR_TYPE_HDR10,
                 HdrCapabilities.HDR_TYPE_HLG, HdrCapabilities.HDR_TYPE_HDR10_PLUS});
         mDisplayManager.setAreUserDisabledHdrTypesAllowed(true);
-    }
-
-    private void restoreOriginalHdrSettings() {
-        if (mDisplayManager != null) {
-            mDisplayManager.overrideHdrTypes(DEFAULT_DISPLAY, new int[]{});
-            mDisplayManager.setUserDisabledHdrTypes(
-                    mOriginalHdrSettings.userDisabledHdrTypes);
-            mDisplayManager.setAreUserDisabledHdrTypesAllowed(
-                    mOriginalHdrSettings.areUserDisabledHdrTypesAllowed);
-        }
     }
 
     private void waitUntil(Display display, Predicate<Display> pred, Duration maxWait)
