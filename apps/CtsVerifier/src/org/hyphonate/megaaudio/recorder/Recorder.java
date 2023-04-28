@@ -22,13 +22,24 @@ import org.hyphonate.megaaudio.common.StreamBase;
 
 public abstract class Recorder extends StreamBase {
     private static final String TAG = Recorder.class.getSimpleName();
+
     protected AudioSinkProvider mSinkProvider;
 
+    // Recording state
+    /**
+     * <code>true</code> if currently recording audio data
+     */
+    protected boolean mRecording = false;
+
+    //
+    // Recorder-specific attributes
+    //
     // This value is to indicate that no explicit call to set an input preset in the builder
     // will be made.
     // Constants can be found here:
     // https://developer.android.com/reference/android/media/MediaRecorder.AudioSource
     // or preferentially in oboe/Definitions.h
+    int mInputPreset = INPUT_PRESET_NONE;
     public static final int INPUT_PRESET_NONE = -1;
     public static final int INPUT_PRESET_DEFAULT = 0;
     public static final int INPUT_PRESET_GENERIC = 1;
@@ -45,12 +56,16 @@ public abstract class Recorder extends StreamBase {
     public Recorder(AudioSinkProvider sinkProvider) {
         mSinkProvider = sinkProvider;
     }
-    public abstract void setInputPreset(int preset);
+
+    // It is not clear that this can be set post-create for Java
+    // public abstract void setInputPreset(int preset);
 
     /*
      * State
      */
-    public abstract boolean isRecording();
+    public boolean isRecording() {
+        return mRecording;
+    }
 
     /*
      * Utilities
@@ -82,16 +97,6 @@ public abstract class Recorder extends StreamBase {
      * Channel Utils
      */
     // TODO - Consider moving these into a "Utilities" library
-//    /**
-//     * @param chanCount The number of channels for which to generate an index mask.
-//     * @return  A channel index mask corresponding to the supplied channel count.
-//     *
-//     * @note The generated index mask has active channels from 0 to chanCount - 1
-//     */
-//    public static int countToIndexMask(int chanCount) {
-//        return  (1 << chanCount) - 1;
-//    }
-
     /* Not part of public API */
     private static int audioChannelMaskFromRepresentationAndBits(int representation, int bits)
     {
@@ -143,7 +148,7 @@ public abstract class Recorder extends StreamBase {
                 return AudioFormat.CHANNEL_INVALID;
         }
 
-        return audioChannelMaskFromRepresentationAndBits(AUDIO_CHANNEL_REPRESENTATION_POSITION, bits);
+        return audioChannelMaskFromRepresentationAndBits(
+                AUDIO_CHANNEL_REPRESENTATION_POSITION, bits);
     }
-
 }

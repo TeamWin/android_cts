@@ -282,13 +282,6 @@ public class AudioDataPathsActivity
                     AudioDeviceInfo.TYPE_BUILTIN_SPEAKER, 48000, 1,
                     AudioDeviceInfo.TYPE_BUILTIN_MIC, 48000, 1);
             testSpec.setSources(sinSourceProvider, mMicSinkProvider);
-            testSpec.setDescription("Speaker:1 Mic:1");
-            mTestSpecs.add(testSpec);
-
-            testSpec = new TestSpec(
-                    AudioDeviceInfo.TYPE_BUILTIN_SPEAKER, 48000, 1,
-                    AudioDeviceInfo.TYPE_BUILTIN_MIC, 48000, 1);
-            testSpec.setSources(sinSourceProvider, mMicSinkProvider);
             testSpec.setInputPreset(Recorder.INPUT_PRESET_UNPROCESSED);
             testSpec.setDescription("Speaker:1 Mic:1:UNPROCESSED");
             mTestSpecs.add(testSpec);

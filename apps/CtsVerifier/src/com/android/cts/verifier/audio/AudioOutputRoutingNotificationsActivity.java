@@ -36,7 +36,8 @@ import com.android.cts.verifier.CtsVerifierReportLog;
 import com.android.cts.verifier.R;
 import com.android.cts.verifier.audio.audiolib.AudioDeviceUtils;
 
-import org.hyphonate.megaaudio.player.AudioSourceProvider;
+import org.hyphonate.megaaudio.common.BuilderBase;
+import org.hyphonate.megaaudio.common.StreamBase;
 import org.hyphonate.megaaudio.player.JavaPlayer;
 import org.hyphonate.megaaudio.player.PlayerBuilder;
 import org.hyphonate.megaaudio.player.sources.SinAudioSourceProvider;
@@ -192,17 +193,15 @@ public class AudioOutputRoutingNotificationsActivity extends AudioWiredDeviceBas
         //
         // Allocate the source provider for the sort of signal we want to play
         //
-        AudioSourceProvider sourceProvider = new SinAudioSourceProvider();
+        int numExchangeFrames = StreamBase.getNumBurstFrames(BuilderBase.TYPE_NONE);
         try {
             PlayerBuilder builder = new PlayerBuilder();
-            mAudioPlayer = (JavaPlayer)builder
-                    // choose one or the other of these for a Java or an Oboe player
-                    .setPlayerType(PlayerBuilder.TYPE_JAVA)
-                    // .setPlayerType(PlayerBuilder.PLAYER_OBOE)
-                    .setSourceProvider(sourceProvider)
-                    .build();
-            //TODO - explain the choice of 96 here.
-            mAudioPlayer.setupStream(NUM_CHANNELS, SAMPLE_RATE, 96);
+            builder.setSourceProvider(new SinAudioSourceProvider())
+                .setPlayerType(PlayerBuilder.TYPE_JAVA)
+                .setChannelCount(NUM_CHANNELS)
+                .setSampleRate(SAMPLE_RATE)
+                .setNumExchangeFrames(numExchangeFrames);
+            mAudioPlayer = (JavaPlayer) builder.build();
         } catch (PlayerBuilder.BadStateException ex) {
             Log.e(TAG, "Failed MegaPlayer build.");
         }
