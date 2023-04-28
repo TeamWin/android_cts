@@ -22,6 +22,7 @@ import static com.android.cts.verifier.TestListAdapter.setTestNameSuffix;
 import android.mediapc.cts.common.PerformanceClassEvaluator;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
@@ -103,11 +104,11 @@ public class AudioTap2ToneActivity
     // Stats for latency
     private double mMaxRequiredLatency;
 
-    // REQUIRED CDD  5.6/H-1-1
-    private static final int MAX_TAP_2_TONE_LATENCY_BASIC = 500;  // ms
+    // REQUIRED CDD  [5.6/H-1-2]
+    private static final int MAX_TAP_2_TONE_LATENCY_BASIC = 300;  // ms
     // Requirement for "R" and "S"
     private static final int MAX_TAP_2_TONE_LATENCY_RS = 100;  // ms
-    // Requirement for "T"
+    // Requirement for "T" (or later)
     private static final int MAX_TAP_2_TONE_LATENCY_T     = 80;   // ms
     // Requirement for any builds declaring "ProAudio" and "LowLatency"
     private static final int MAX_TAP_2_TONE_LATENCY_PRO     = 80;   // ms
@@ -192,7 +193,8 @@ public class AudioTap2ToneActivity
         } else if (mpc == Build.VERSION_CODES.R) {
             mediaPerformanceClassString = "R";
         } else {
-            mediaPerformanceClassString = "none [" + mpc + "]";
+            mediaPerformanceClassString = "other [" + mpc + "]";
+            Log.e(TAG, "Unexpected Media Performance Class: " + mpc);
         }
         ((TextView) findViewById(R.id.audio_t2t_mpc)).setText(mediaPerformanceClassString);
 
@@ -204,11 +206,11 @@ public class AudioTap2ToneActivity
         if (claimsLowLatencyAudio) {
             mMaxRequiredLatency = Math.min(mMaxRequiredLatency, MAX_TAP_2_TONE_LATENCY_LOW);
         }
-        if (mpc == Build.VERSION_CODES.TIRAMISU) {
-            mMaxRequiredLatency = Math.min(mMaxRequiredLatency, MAX_TAP_2_TONE_LATENCY_T);
-        }
         if (mpc == Build.VERSION_CODES.R || mpc == Build.VERSION_CODES.S) {
             mMaxRequiredLatency = Math.min(mMaxRequiredLatency, MAX_TAP_2_TONE_LATENCY_RS);
+        }
+        if (mpc >= Build.VERSION_CODES.TIRAMISU) {
+            mMaxRequiredLatency = Math.min(mMaxRequiredLatency, MAX_TAP_2_TONE_LATENCY_T);
         }
 
         ((TextView) findViewById(R.id.audio_t2t_required_latency))
