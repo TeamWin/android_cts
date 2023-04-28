@@ -676,6 +676,7 @@ public class ImsCallingTest extends ImsCallingBase {
             }
         }
 
+        ImsUtils.waitInCurrentState(WAIT_IN_CURRENT_STATE);
         // simulate user hanging up the MT call at the same time as accept.
         mtCallSession.terminateIncomingCall();
         isCallDisconnected(mtCall, mtCallSession);
