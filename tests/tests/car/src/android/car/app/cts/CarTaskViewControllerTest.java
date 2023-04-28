@@ -106,7 +106,8 @@ public class CarTaskViewControllerTest {
                         mTargetContext.getMainExecutor(),
                         mCallback)
         );
-        PollingCheck.waitFor(() -> mCallback.mCarTaskViewController != null);
+        PollingCheck.waitFor(() -> mCallback.mCarTaskViewController != null,
+                "Failed to get the CarTaskViewController");
     }
 
     @After
@@ -192,15 +193,40 @@ public class CarTaskViewControllerTest {
         mHostActivity.waitForDestroyed();
 
         // Assert
-        PollingCheck.waitFor(() -> taskViewCallback.mTaskViewReleased);
+        PollingCheck.waitFor(() -> taskViewCallback.mTaskViewReleased, "TaskView not released");
         assertThat(taskViewCallback.mTaskViewReleased).isTrue();
         assertThat(EmbeddedTestActivity1.sInstance.waitForDestroyed()).isTrue();
         assertThat(taskViewCallback.mTaskView.getTaskInfo()).isNull();
 
-        PollingCheck.waitFor(() -> taskViewCallback2.mTaskViewReleased);
+        PollingCheck.waitFor(() -> taskViewCallback2.mTaskViewReleased, "TaskView not released");
         assertThat(taskViewCallback2.mTaskViewReleased).isTrue();
         assertThat(EmbeddedTestActivity2.sInstance.waitForDestroyed()).isTrue();
         assertThat(taskViewCallback2.mTaskView.getTaskInfo()).isNull();
+    }
+
+    @Test
+    @ApiTest(apis = {"android.car.app.ControlledRemoteCarTaskView#release()"})
+    public void releaseControlledCarTaskView_releasesTaskView() throws Exception {
+        // Arrange
+        CarTaskViewTestHolder taskViewCallback =
+                createControlledTaskView(/* parentId= */ R.id.top_container,
+                        EmbeddedTestActivity1.createLaunchIntent(mTargetContext));
+        CarTaskViewTestHolder taskViewCallback2 =
+                createControlledTaskView(/* parentId= */ R.id.bottom_container,
+                        EmbeddedTestActivity2.createLaunchIntent(mTargetContext));
+
+        // Act
+        taskViewCallback2.mTaskView.release();
+
+        // Assert
+        PollingCheck.waitFor(() -> taskViewCallback2.mTaskViewReleased, "TaskView not released");
+        assertThat(taskViewCallback2.mTaskViewReleased).isTrue();
+        assertThat(EmbeddedTestActivity2.sInstance.waitForDestroyed()).isTrue();
+        assertThat(taskViewCallback2.mTaskView.getTaskInfo()).isNull();
+
+        assertThat(taskViewCallback.mTaskViewReleased).isFalse();
+        assertThat(EmbeddedTestActivity1.sInstance.waitForDestroyed()).isFalse();
+        assertThat(taskViewCallback.mTaskView.getTaskInfo()).isNotNull();
     }
 
     @Test
@@ -217,13 +243,15 @@ public class CarTaskViewControllerTest {
                                         EmbeddedTestActivity1.createLaunchIntent(mTargetContext))
                                 .setShouldAutoRestartOnTaskRemoval(false)
                                 .build());
-        PollingCheck.waitFor(() -> EmbeddedTestActivity1.sInstance != null);
+        PollingCheck.waitFor(() -> EmbeddedTestActivity1.sInstance != null,
+                "EmbeddedActivity not created");
 
         // Act
         EmbeddedTestActivity1.sInstance.finishAndRemoveTask();
 
         // Assert
-        PollingCheck.waitFor(() -> taskViewHolder.mCurrentTask == null);
+        PollingCheck.waitFor(() -> taskViewHolder.mCurrentTask == null,
+                "onTaskVanished not received");
         assertThat(taskViewHolder.mCurrentTask).isNull();
     }
 
@@ -239,14 +267,17 @@ public class CarTaskViewControllerTest {
                                 .setShouldAutoRestartOnTaskRemoval(true)
                                 .build());
         int previousTaskId = taskViewHolder.mCurrentTask.taskId;
-        PollingCheck.waitFor(() -> EmbeddedTestActivity1.sInstance != null);
+        PollingCheck.waitFor(() -> EmbeddedTestActivity1.sInstance != null,
+                "EmbeddedActivity not created");
 
         // Act
         EmbeddedTestActivity1.sInstance.finishAndRemoveTask();
-        PollingCheck.waitFor(() -> taskViewHolder.mCurrentTask == null);
+        PollingCheck.waitFor(() -> taskViewHolder.mCurrentTask == null,
+                "onTaskVanished not received");
 
         // Assert
-        PollingCheck.waitFor(() -> taskViewHolder.mCurrentTask != null);
+        PollingCheck.waitFor(() -> taskViewHolder.mCurrentTask != null,
+                "onTaskAppeared not received");
         assertThat(previousTaskId).isNotEqualTo(taskViewHolder.mCurrentTask.taskId);
         assertThat(taskViewHolder.mCurrentTask.baseActivity.getClassName())
                 .isEqualTo(EmbeddedTestActivity1.class.getName());
@@ -264,8 +295,10 @@ public class CarTaskViewControllerTest {
         CarTaskViewTestHolder taskViewCallback2 =
                 createControlledTaskView(/* parentId= */ R.id.bottom_container,
                         EmbeddedTestActivity2.createLaunchIntent(mTargetContext));
-        PollingCheck.waitFor(() -> EmbeddedTestActivity1.sInstance != null);
-        PollingCheck.waitFor(() -> EmbeddedTestActivity2.sInstance != null);
+        PollingCheck.waitFor(() -> EmbeddedTestActivity1.sInstance != null,
+                "EmbeddedTestActivity1 not started");
+        PollingCheck.waitFor(() -> EmbeddedTestActivity2.sInstance != null,
+                "EmbeddedTestActivity2 not started");
 
         // Act
         // Start a temporary activity so that host no longer remains at the top of wm stack.
@@ -312,7 +345,7 @@ public class CarTaskViewControllerTest {
                 EmbeddedTestActivity1.createLaunchIntent(mTargetContext));
         PollingCheck.waitFor(() -> EmbeddedTestActivity1.sInstance != null
                 && EmbeddedTestActivity1.sInstance.mIsResumed,
-                "Embedded activity is not running.");
+                "EmbeddedTestActivity1 is not running.");
 
         // EmbeddedTestActivity is on the upper part of the screen.
         Point p = getTaskViewCenterOnScreen(carTaskViewHolder.mTaskView);
