@@ -76,9 +76,6 @@ public abstract class BackgroundActivityTestBase extends ActivityManagerTestBase
     static final String NAMESPACE_WINDOW_MANAGER = "window_manager";
     static final String ASM_RESTRICTIONS_ENABLED =
             "ActivitySecurity__asm_restrictions_enabled";
-    static final String ENABLE_DEFAULT_RESCIND_BAL_PRIVILEGES_FROM_PENDING_INTENT_SENDER =
-            "DefaultRescindBalPrivilegesFromPendingIntentSender__"
-                    + "enable_default_rescind_bal_privileges_from_pending_intent_sender";
     final DeviceConfigStateHelper mDeviceConfig =
             new DeviceConfigStateHelper(NAMESPACE_WINDOW_MANAGER);
 
@@ -87,8 +84,6 @@ public abstract class BackgroundActivityTestBase extends ActivityManagerTestBase
     @Before
     public void enableFeatureFlags() {
         mDeviceConfig.set(ASM_RESTRICTIONS_ENABLED, "1");
-        mDeviceConfig.set(
-                ENABLE_DEFAULT_RESCIND_BAL_PRIVILEGES_FROM_PENDING_INTENT_SENDER, "true");
     }
 
     @After
