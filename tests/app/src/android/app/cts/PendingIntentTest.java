@@ -16,6 +16,7 @@
 
 package android.app.cts;
 
+import android.app.Activity;
 import android.app.PendingIntent;
 import android.app.PendingIntent.CanceledException;
 import android.app.stubs.MockActivity;
@@ -34,6 +35,8 @@ import android.os.Message;
 import android.os.Parcel;
 import android.os.SystemClock;
 import android.test.AndroidTestCase;
+
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.ShellIdentityUtils;
 import com.android.compatibility.common.util.TestUtils;
@@ -60,6 +63,7 @@ public class PendingIntentTest extends AndroidTestCase {
     private boolean mLooperStart;
     private Looper mLooper;
     private Handler mHandler;
+    private Activity mActivity;
 
     @Override
     protected void setUp() throws Exception {
@@ -514,6 +518,38 @@ public class PendingIntentTest extends AndroidTestCase {
         assertTrue(mHandleResult);
         mPendingIntent.cancel();
 
+    }
+
+    public void testCreatePendingResult() {
+        Intent intent = new Intent(mContext, MockActivity.class)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        mActivity = InstrumentationRegistry.getInstrumentation().startActivitySync(intent);
+        mIntent = new Intent();
+        mIntent.setClass(mContext, MockService.class);
+
+        // creating a mutable explicit PendingResult works fine
+        mPendingIntent = mActivity.createPendingResult(1, mIntent,
+                PendingIntent.FLAG_MUTABLE);
+
+        // make mIntent implicit
+        mIntent.setComponent(null);
+        mIntent.setPackage(null);
+
+        // creating an immutable implicit PendingResult works fine
+        mPendingIntent = mActivity.createPendingResult(1, mIntent,
+                PendingIntent.FLAG_IMMUTABLE);
+
+        // retrieving a mutable implicit PendingResult with NO_CREATE works fine
+        mPendingIntent = mActivity.createPendingResult(1, mIntent,
+                PendingIntent.FLAG_MUTABLE | PendingIntent.FLAG_NO_CREATE);
+
+        // creating a mutable implicit PendingResult with ALLOW_UNSAFE_IMPLICIT_INTENT works fine
+        mPendingIntent = mActivity.createPendingResult(1, mIntent,
+                PendingIntent.FLAG_MUTABLE | PendingIntent.FLAG_ALLOW_UNSAFE_IMPLICIT_INTENT);
+
+        // creating a mutable implicit PendingResult works fine
+        mPendingIntent = mActivity.createPendingResult(1, mIntent,
+                PendingIntent.FLAG_MUTABLE);
     }
 
     public void testCancel() throws CanceledException {
