@@ -39,6 +39,7 @@ import android.util.Log;
 import android.view.KeyEvent;
 
 import androidx.test.core.app.ActivityScenario;
+import androidx.test.filters.FlakyTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.uiautomator.By;
 import androidx.test.uiautomator.UiDevice;
@@ -59,6 +60,7 @@ import java.util.concurrent.CountDownLatch;
  *     atest CtsWindowManagerDeviceTestCases:AnrTests
  */
 @Presubmit
+@FlakyTest(bugId = 280027157)
 @android.server.wm.annotation.Group3
 public class AnrTests extends ActivityManagerTestBase {
     private static final String TAG = "AnrTests";
