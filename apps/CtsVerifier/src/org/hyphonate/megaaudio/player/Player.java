@@ -42,17 +42,29 @@ public abstract class Player extends StreamBase {
     /*
      * Audio Source
      */
+    /**
+     * The AudioSource object providing audio data to play.
+     */
+    protected AudioSource mAudioSource;
+
     protected AudioSourceProvider mSourceProvider;
 
+    /** <code>true</code> if currently playing audio data */
+    protected boolean mPlaying;
+
     /**
-     * @return The AudioSouce object associated with this player
+     * @return The AudioSource object providing audio for this Player.
      */
-    public abstract AudioSource getAudioSource();
+    public AudioSource getAudioSource() {
+        return mAudioSource;
+    }
 
     //
     // Status
     //
-    public abstract boolean isPlaying();
+    public boolean isPlaying() {
+        return mPlaying;
+    }
 
     /*
      * Channel utils
@@ -106,7 +118,6 @@ public abstract class Player extends StreamBase {
     //
     // BufferCallback Stuff
     //
-
     /**
      * Defines an interface for buffer callback objects
      */

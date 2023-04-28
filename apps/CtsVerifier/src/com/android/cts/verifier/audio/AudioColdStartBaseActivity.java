@@ -17,7 +17,6 @@
 package com.android.cts.verifier.audio;
 
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.RadioButton;
@@ -40,7 +39,7 @@ public abstract class AudioColdStartBaseActivity
     // Audio Attributes
     protected static final int NUM_CHANNELS = 2;
     protected int mSampleRate;
-    protected int mNumBufferFrames;
+    protected int mNumExchangeFrames;
 
     protected int mAudioApi = BuilderBase.TYPE_OBOE;
 
@@ -84,7 +83,7 @@ public abstract class AudioColdStartBaseActivity
     // UI
     //
     void showAttributes() {
-        mAttributesTxt.setText("" + mSampleRate + " Hz " + mNumBufferFrames + " Frames");
+        mAttributesTxt.setText("" + mSampleRate + " Hz " + mNumExchangeFrames + " Frames");
     }
 
     void showOpenTime() {
@@ -125,6 +124,8 @@ public abstract class AudioColdStartBaseActivity
 
         // MegaAudio Initialization
         StreamBase.setup(this);
+        mSampleRate = StreamBase.getSystemSampleRate();
+        mNumExchangeFrames = StreamBase.getNumBurstFrames(mAudioApi);
 
         ((RadioButton) findViewById(R.id.audioJavaApiBtn)).setOnClickListener(this);
         RadioButton nativeApiRB = findViewById(R.id.audioNativeApiBtn);
@@ -166,11 +167,13 @@ public abstract class AudioColdStartBaseActivity
             updateTestStateButtons();
             clearResults();
             mAudioApi = BuilderBase.TYPE_JAVA;
+            mNumExchangeFrames = StreamBase.getNumBurstFrames(mAudioApi);
         } else if (id == R.id.audioNativeApiBtn) {
             stopAudioTest();
             updateTestStateButtons();
             clearResults();
             mAudioApi = BuilderBase.TYPE_OBOE;
+            mNumExchangeFrames = StreamBase.getNumBurstFrames(mAudioApi);
         } else if (id == R.id.coldstart_start_btn) {
             startAudioTest();
 

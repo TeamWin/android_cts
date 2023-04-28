@@ -53,39 +53,6 @@ public:
     //
     // State
     //
-    /**
-     * Initializes the audio stream as specified, but does not start the stream. Specifically,
-     * concrete subclasses should do whatever initialization and resource allocation required
-     * such that the stream can be started (in startStream()) as quickly as possible.
-     *
-     * The expectation is that this method will be synchronous in concrete subclasses.
-     *
-     * @param channelCount  the number of channels in the audio data
-     * @param sampleRate the desired playback sample rate
-     * @param performanceMode an Oboe PerformanceMode constant
-     * @param sharingMode and Oboe SharingMode constant
-     * @param routeDeviceId the device id of the device to route the audio to.
-     * @return ERROR_NONE if successful, otherwise an error code
-     *
-     * @deprecated
-     */
-    virtual Result setupStream(int32_t channelCount, int32_t sampleRate,
-                        int32_t performanceMode, int32_t sharingMode, int32_t routeDeviceId) = 0;
-    /**
-     * Initializes the audio stream as specified, but does not start the stream. Specifically,
-     * concrete subclasses should do whatever initialization and resource allocation required
-     * such that the stream can be started (in startStream()) as quickly as possible.
-     *
-     * The expectation is that this method will be synchronous in concrete subclasses.
-     *
-     * @param channelCount  the number of channels in the audio data
-     * @param sampleRate the desired playback sample rate
-     * @param routeDeviceId the device id of the device to route the audio to.
-     * @return ERROR_NONE if successful, otherwise an error code
-     *
-     * @deprecated
-     */
-    virtual Result setupStream(int32_t channelCount, int32_t sampleRate, int32_t routeDeviceId) = 0;
 
     /**
      * Deinitializes the stream.

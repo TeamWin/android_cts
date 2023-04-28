@@ -18,14 +18,12 @@ package com.android.cts.verifier.audio;
 
 import android.graphics.Color;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
 import com.android.compatibility.common.util.CddTest;
 import com.android.cts.verifier.R;
-import com.android.cts.verifier.audio.audiolib.AudioSystemParams;
 import com.android.cts.verifier.audio.audiolib.WaveScopeView;
 
 import org.hyphonate.megaaudio.common.BuilderBase;
@@ -63,11 +61,8 @@ public class USBAudioPeripheralRecordActivity extends USBAudioPeripheralActivity
             return false;
         }
 
-        AudioSystemParams audioSystemParams = new AudioSystemParams();
-        audioSystemParams.init(this);
-
-        int systemSampleRate = audioSystemParams.getSystemSampleRate();
-        int numBufferFrames = audioSystemParams.getSystemBufferFrames();
+        int systemSampleRate = StreamBase.getSystemSampleRate();
+        int numBufferFrames = StreamBase.getNumBurstFrames(BuilderBase.TYPE_NONE);
 
         mDuplexManager = new DuplexAudioManager(
                 withLoopback ? new SinAudioSourceProvider() : null,
