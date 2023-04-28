@@ -203,15 +203,15 @@ class SessionTest : PackageInstallerTestBase() {
         val sessionParam = PackageInstaller.SessionParams(MODE_FULL_INSTALL)
         val sessionId = pi.createSession(sessionParam)
         val session = pi.openSession(sessionId)
-        writeSession(session, TEST_APK_NAME)
 
-        // resolvedBaseCodePath is populated only after the session is committed.
+        // resolvedBaseCodePath is populated after at least one file is written.
         var sessionInfo: PackageInstaller.SessionInfo? = null
         SystemUtil.runWithShellPermissionIdentity({
             sessionInfo = pi.getSessionInfo(sessionId)
         }, Manifest.permission.READ_INSTALLED_SESSION_PATHS)
         assertNull(sessionInfo!!.resolvedBaseApkPath)
 
+        writeSession(session, TEST_APK_NAME)
         commitSession(session)
 
         SystemUtil.runWithShellPermissionIdentity({
