@@ -37,7 +37,7 @@ import org.junit.Test;
 /**
  * CTS tests for {@link SharedConnectivitySettingsState}.
  */
-@SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE, codeName = "UpsideDownCake")
+@SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
 @NonMainlineTest
 public class SharedConnectivitySettingsStateTest {
     private static final boolean INSTANT_TETHER_STATE = true;

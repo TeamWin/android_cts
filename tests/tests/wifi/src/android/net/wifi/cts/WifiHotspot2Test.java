@@ -491,7 +491,7 @@ public class WifiHotspot2Test extends WifiJUnit3TestBase {
         assertEquals(TEST_SERVER_URI, osuProvider.getServerUri());
     }
 
-    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE, codeName = "UpsideDownCake")
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
     public void testSetMinimumTlsVersion() throws Exception {
         if (!WifiFeature.isWifiSupported(getContext())) {
             // skip the test if WiFi is not supported

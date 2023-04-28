@@ -37,7 +37,7 @@ import org.junit.Test;
 /**
  * CTS tests for {@link NetworkProviderInfo}.
  */
-@SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE, codeName = "UpsideDownCake")
+@SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
 @NonMainlineTest
 public class NetworkProviderInfoTest {
 

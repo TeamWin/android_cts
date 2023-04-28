@@ -45,7 +45,7 @@ import java.util.Arrays;
 /**
  * CTS tests for {@link HotspotNetworkConnectionStatus}.
  */
-@SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE, codeName = "UpsideDownCake")
+@SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
 @NonMainlineTest
 public class HotspotNetworkConnectionStatusTest {
     private static final long DEVICE_ID = 11L;
