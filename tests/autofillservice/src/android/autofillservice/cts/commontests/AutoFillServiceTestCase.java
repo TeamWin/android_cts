@@ -33,6 +33,8 @@ import android.autofillservice.cts.activities.AbstractAutoFillActivity;
 import android.autofillservice.cts.activities.AugmentedAuthActivity;
 import android.autofillservice.cts.activities.AuthenticationActivity;
 import android.autofillservice.cts.activities.LoginActivity;
+import android.autofillservice.cts.activities.LoginImportantForCredentialManagerActivity;
+import android.autofillservice.cts.activities.LoginMixedImportantForCredentialManagerActivity;
 import android.autofillservice.cts.activities.PreSimpleSaveActivity;
 import android.autofillservice.cts.activities.SimpleSaveActivity;
 import android.autofillservice.cts.testcore.AutofillActivityTestRule;
@@ -227,6 +229,26 @@ public final class AutoFillServiceTestCase {
             mContext.startActivity(intent);
             mUiBot.assertShownByRelativeId(Helper.ID_USERNAME_LABEL);
             return LoginActivity.getCurrentActivity();
+        }
+
+        protected LoginImportantForCredentialManagerActivity
+                    startLoginImportantForCredentialManagerActivity() throws Exception {
+            final Intent intent =
+                    new Intent(mContext, LoginImportantForCredentialManagerActivity.class)
+                        .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            mContext.startActivity(intent);
+            mUiBot.assertShownByRelativeId(Helper.ID_USERNAME_LABEL);
+            return LoginImportantForCredentialManagerActivity.getCurrentActivity();
+        }
+
+        protected LoginMixedImportantForCredentialManagerActivity
+                startLoginMixedImportantForCredentialManagerActivity() throws Exception {
+            final Intent intent =
+                    new Intent(mContext, LoginMixedImportantForCredentialManagerActivity.class)
+                        .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            mContext.startActivity(intent);
+            mUiBot.assertShownByRelativeId(Helper.ID_USERNAME_LABEL);
+            return LoginMixedImportantForCredentialManagerActivity.getCurrentActivity();
         }
     }
 
