@@ -77,9 +77,10 @@ import java.util.List;
 public class LoginActivityTest extends AutoFillServiceTestCase.ManualActivityLaunch {
 
     @After
-    public void resetReplierIdMode() {
-        Log.d("LoginActivityTest", "resetReplierIdMode()");
+    public void disablePcc() {
+        Log.d("LoginActivityTest", "@After: disablePcc()");
         sReplier.setIdMode(IdMode.RESOURCE_ID);
+        disablePccDetectionFeature(sContext);
     }
 
     @Test

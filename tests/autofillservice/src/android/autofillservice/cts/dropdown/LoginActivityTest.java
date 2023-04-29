@@ -126,6 +126,7 @@ import androidx.test.uiautomator.UiObject2;
 
 import com.android.compatibility.common.util.RetryableException;
 
+import org.junit.After;
 import org.junit.Test;
 
 import java.util.concurrent.CountDownLatch;
@@ -139,6 +140,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class LoginActivityTest extends LoginActivityCommonTestCase {
 
     private static final String TAG = "LoginActivityTest";
+
+    @After
+    public void disablePcc() {
+        Log.d(TAG, "@After: disablePcc()");
+        disablePccDetectionFeature(sContext);
+    }
 
     @Test
     @AppModeFull(reason = "testAutoFillOneDataset() is enough")

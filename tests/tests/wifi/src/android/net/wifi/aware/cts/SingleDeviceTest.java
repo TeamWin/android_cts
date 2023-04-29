@@ -1038,7 +1038,7 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
     /**
      * Validate successful publish with a suspendable session when device supports suspension.
      */
-    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE, codeName = "UpsideDownCake")
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
     public void testPublishSuccessWithSuspendableSession() {
         if (!TestUtils.shouldTestWifiAware(getContext())) {
             return;
@@ -1083,7 +1083,7 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
      * Validate failure to publish with a suspendable session when device doesn't support
      * suspension.
      */
-    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE, codeName = "UpsideDownCake")
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
     public void testPublishFailureWithSuspendableSession() {
         if (!TestUtils.shouldTestWifiAware(getContext())) {
             return;
@@ -1115,7 +1115,7 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
     /**
      * Validate successful suspend/resume with a publish session.
      */
-    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE, codeName = "UpsideDownCake")
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
     public void testSuspendResumeSuccessWithPublishSession() {
         if (!TestUtils.shouldTestWifiAware(getContext())) {
             return;
@@ -1337,7 +1337,7 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
     /**
      * Validate successful subscribe with a suspendable session when device supports suspension.
      */
-    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE, codeName = "UpsideDownCake")
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
     public void testSubscribeSuccessWithSuspendableSession() {
         if (!TestUtils.shouldTestWifiAware(getContext())) {
             return;
@@ -1383,7 +1383,7 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
      * Validate failure to subscribe with a suspendable session when device doesn't support
      * suspension.
      */
-    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE, codeName = "UpsideDownCake")
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
     public void testSubscribeFailureWithSuspendableSession() {
         if (!TestUtils.shouldTestWifiAware(getContext())) {
             return;
@@ -1416,7 +1416,7 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
     /**
      * Validate successful suspend/resume with a subscribe session.
      */
-    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE, codeName = "UpsideDownCake")
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
     public void testSuspendResumeSuccessWithSubscribeSession() {
         if (!TestUtils.shouldTestWifiAware(getContext())) {
             return;

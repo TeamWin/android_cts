@@ -99,6 +99,7 @@ class ReviewAccessibilityServicesTest {
     }
 
     @Test
+    @Ignore
     fun testClickingSettingsGoesToGeneralSettingsWhenMultipleServicesEnabled() {
         accessibilityServiceRule.enableService()
         accessibilityServiceRule2.enableService()

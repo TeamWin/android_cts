@@ -39,6 +39,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.time.Duration;
+import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -646,4 +647,85 @@ public class SatelliteManagerTest extends SatelliteManagerTestBase {
                 () -> sSatelliteManager.requestTimeForNextSatelliteVisibility(
                         getContext().getMainExecutor(), receiver));
     }
+
+
+    @Test
+    public void testSatelliteDatagramDemoMode() {
+        if (!shouldTestSatellite()) return;
+
+        if (!sIsSatelliteSupported) {
+            Log.d(TAG, "Satellite is not supported on the device");
+            return;
+        }
+
+        grantSatellitePermission();
+
+        if (!isSatelliteProvisioned()) {
+            Log.d(TAG, "Satellite is not provisioned yet");
+            return;
+        }
+
+        boolean originalEnabledState = isSatelliteEnabled();
+        boolean originalDemoModeState = isSatelliteDemoModeEnabled();
+        SatelliteStateCallbackTest stateCallback = new SatelliteStateCallbackTest();
+        sSatelliteManager.registerForSatelliteModemStateChanged(
+                getContext().getMainExecutor(), stateCallback);
+
+        // request enable satellite with demo mode on
+        if (isSatelliteEnabled()) {
+            requestSatelliteEnabled(false);
+            assertTrue(stateCallback.waitUntilResult(1));
+        }
+        requestSatelliteEnabledForDemoMode(true);
+        assertTrue(stateCallback.waitUntilResult(1));
+
+        assertTrue(isSatelliteEnabled());
+
+        // Test send satellite datagram for demo mode
+        LinkedBlockingQueue<Integer> resultListener = new LinkedBlockingQueue<>(1);
+        String mText = "This is a test datagram message";
+        SatelliteDatagram datagram = new SatelliteDatagram(mText.getBytes());
+        sSatelliteManager.sendSatelliteDatagram(
+                SatelliteManager.DATAGRAM_TYPE_SOS_MESSAGE, datagram, true,
+                getContext().getMainExecutor(), resultListener::offer);
+
+        Integer errorCode;
+        try {
+            errorCode = resultListener.poll(TIMEOUT, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException ex) {
+            fail("testSatelliteDatagramDemoMode: Got InterruptedException in waiting"
+                    + " for the sendSatelliteDatagram result code");
+            return;
+        }
+        assertNotNull(errorCode);
+        Log.d(TAG, "testSatelliteDatagramDemoMode: sendSatelliteDatagram errorCode="
+                + errorCode);
+
+        sSatelliteManager.sendSatelliteDatagram(
+                SatelliteManager.DATAGRAM_TYPE_SOS_MESSAGE, datagram, true,
+                getContext().getMainExecutor(), resultListener::offer);
+
+        // Test poll pending satellite datagram for demo mode
+        SatelliteDatagramCallbackTest datagramCallback = new SatelliteDatagramCallbackTest();
+        assertTrue(SatelliteManager.SATELLITE_ERROR_NONE
+                == sSatelliteManager.registerForSatelliteDatagram(getContext().getMainExecutor(),
+                datagramCallback));
+
+        sSatelliteManager.pollPendingSatelliteDatagrams(getContext().getMainExecutor(),
+                resultListener::offer);
+        assertTrue(datagramCallback.waitUntilResult(1));
+        assertTrue(Arrays.equals(
+                datagramCallback.mDatagram.getSatelliteDatagram(), mText.getBytes()));
+        sSatelliteManager.unregisterForSatelliteDatagram(datagramCallback);
+
+        // Restore original modem enabled state.
+        if (originalEnabledState != isSatelliteEnabled()
+                || originalDemoModeState != isSatelliteDemoModeEnabled()) {
+            requestSatelliteEnabledForDemoMode(originalEnabledState);
+            assertTrue(stateCallback.waitUntilResult(1));
+        }
+        sSatelliteManager.unregisterForSatelliteModemStateChanged(stateCallback);
+        revokeSatellitePermission();
+    }
+
 }

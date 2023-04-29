@@ -211,7 +211,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 /**
  * A Junit rule which exposes methods for efficiently changing and querying device state.
@@ -367,6 +366,9 @@ public final class DeviceState extends HarrierRule {
         try {
             Log.d(LOG_TAG, "Preparing state for test " + testName);
 
+            if (mOriginalSwitchedUser == null) {
+                mOriginalSwitchedUser = TestApis.users().current();
+            }
             testApps().snapshot();
             Tags.clearTags();
             Tags.addTag(Tags.USES_DEVICESTATE);
@@ -2468,26 +2470,13 @@ public final class DeviceState extends HarrierRule {
 
     private UserReference additionalUserOrNull() {
         // TODO: Cache additional user at start of test
-        boolean skipFirstSecondaryUser = false;
-        if (TestApis.users().isHeadlessSystemUserMode()) {
-            skipFirstSecondaryUser = true;
-        }
-
-        for (UserReference secondaryUser :
-                TestApis.users()
-                        .findUsersOfType(TestApis.users().supportedType(SECONDARY_USER_TYPE_NAME))
-                        .stream()
-                        .sorted(Comparator.comparing(UserReference::id))
-                        .collect(Collectors.toList())) {
-            if (skipFirstSecondaryUser) {
-                skipFirstSecondaryUser = false;
-                continue;
-            }
-
-            return secondaryUser;
-        }
-
-        return null;
+        return TestApis.users()
+                .findUsersOfType(TestApis.users().supportedType(SECONDARY_USER_TYPE_NAME))
+                .stream()
+                .sorted(Comparator.comparing(UserReference::id))
+                .skip(TestApis.users().isHeadlessSystemUserMode() ? 1 : 0)
+                .findFirst()
+                .orElse(null);
     }
 
     private void teardownNonShareableState() {
@@ -2620,9 +2609,17 @@ public final class DeviceState extends HarrierRule {
 
         mUsersSetPasswords.clear();
 
+        UserReference ephemeralUser = null;
+        UserReference currentUser = TestApis.users().current();
         for (UserReference user : mCreatedUsers) {
             try {
-                user.remove();
+                if (user.equals(currentUser)) {
+                    // user will be removed after switching to mOriginalSwitchedUser below.
+                    user.removeWhenPossible();
+                    ephemeralUser = user;
+                } else {
+                    user.remove();
+                }
             } catch (NeneException e) {
                 if (user.exists()) {
                     // Otherwise it's probably just already removed
@@ -2656,6 +2653,15 @@ public final class DeviceState extends HarrierRule {
                 mOriginalSwitchedUser.switchTo();
             }
             mOriginalSwitchedUser = null;
+
+            // wait for ephemeral user to be removed after being switched away
+            if (ephemeralUser != null) {
+                Poll.forValue("Ephemeral user exists", ephemeralUser::exists)
+                        .toBeEqualTo(false)
+                        .timeout(Duration.ofMinutes(1))
+                        .errorOnFail()
+                        .await();
+            }
         }
 
         for (TestAppInstance installedTestApp : mInstalledTestApps) {

@@ -123,7 +123,7 @@ public class ImageDecoderTest {
                 new Record(R.drawable.color_wheel, 128, 128, "image/x-ico", false, true, sSRGB),
                 new Record(R.raw.sample_1mp, 600, 338, "image/x-adobe-dng", false, false, sSRGB)
         }));
-        if (MediaUtils.hasDecoder(MediaFormat.MIMETYPE_VIDEO_HEVC)) {
+        if (ImageDecoder.isMimeTypeSupported("image/heif")) {
             // HEIF support is optional when HEVC decoder is not supported.
             records.add(new Record(R.raw.heifwriter_input, 1920, 1080, "image/heif", false, false,
                                    sSRGB));
@@ -2785,7 +2785,6 @@ public class ImageDecoderTest {
         }
 
         for (String mimeType : new String[] {
-                "image/heic",
                 "image/vnd.wap.wbmp",
                 "image/x-sony-arw",
                 "image/x-canon-cr2",
@@ -2800,6 +2799,9 @@ public class ImageDecoderTest {
         }) {
             assertTrue(mimeType, ImageDecoder.isMimeTypeSupported(mimeType));
         }
+
+        assertEquals("image/heic", ImageDecoder.isMimeTypeSupported("image/heic"),
+                MediaUtils.hasDecoder(MediaFormat.MIMETYPE_VIDEO_HEVC));
 
         assertFalse(ImageDecoder.isMimeTypeSupported("image/x-does-not-exist"));
     }

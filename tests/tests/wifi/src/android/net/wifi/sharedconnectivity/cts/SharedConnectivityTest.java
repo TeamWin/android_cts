@@ -55,7 +55,7 @@ import java.util.concurrent.TimeUnit;
  * Testing is done on these classes in their bound state.
  */
 @RunWith(AndroidJUnit4.class)
-@SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE, codeName = "UpsideDownCake")
+@SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
 @NonMainlineTest
 public class SharedConnectivityTest {
     private static final String TAG = "SharedConnectivityTest";

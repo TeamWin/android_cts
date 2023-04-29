@@ -1264,20 +1264,12 @@ public final class MockIme extends InputMethodService {
         stylesBuilder.addStyle(InlineSuggestionUi.newStyleBuilder().build());
         Bundle styles = stylesBuilder.build();
 
-        final boolean supportedClientInlineSuggestions;
-        final boolean supportedServiceInlineSuggestions;
         final boolean supportedInlineSuggestions;
         if (mInlineSuggestionsExtras != null) {
             styles.putAll(mInlineSuggestionsExtras);
-            supportedClientInlineSuggestions =
-                    mInlineSuggestionsExtras.getBoolean("ClientSuggestions", true);
-            supportedServiceInlineSuggestions =
-                    mInlineSuggestionsExtras.getBoolean("ServiceSuggestions", true);
             supportedInlineSuggestions =
                     mInlineSuggestionsExtras.getBoolean("InlineSuggestions", true);
         } else {
-            supportedClientInlineSuggestions = true;
-            supportedServiceInlineSuggestions = true;
             supportedInlineSuggestions = true;
         }
 
@@ -1298,8 +1290,6 @@ public final class MockIme extends InputMethodService {
             final InlineSuggestionsRequest.Builder builder =
                     new InlineSuggestionsRequest.Builder(presentationSpecs)
                             .setInlineTooltipPresentationSpec(tooltipSpec)
-                            .setClientSupported(supportedClientInlineSuggestions)
-                            .setServiceSupported(supportedServiceInlineSuggestions)
                             .setMaxSuggestionCount(6);
             if (mInlineSuggestionsExtras != null) {
                 builder.setExtras(mInlineSuggestionsExtras.deepCopy());

@@ -28,10 +28,12 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnCancelListener;
 import android.content.pm.PackageManager;
+import android.content.res.Resources;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
@@ -60,7 +62,7 @@ import java.util.stream.IntStream;
  * </ol>
  */
 public class PassFailButtons {
-    private static final String TAG = PassFailButtons.class.getSimpleName();
+    private static final String INFO_TAG = "CtsVerifierInstructions";
 
     private static final int INFO_DIALOG_ID = 1337;
 
@@ -554,6 +556,12 @@ public class PassFailButtons {
         args.putInt(INFO_DIALOG_MESSAGE_ID, messageId);
         args.putInt(INFO_DIALOG_VIEW_ID, viewId);
         activity.showDialog(INFO_DIALOG_ID, args);
+
+        // Also log it
+        Resources resources = activity.getResources();
+        CharSequence title = resources.getText(titleId);
+        CharSequence message = resources.getText(messageId);
+        Log.i(INFO_TAG, title + ": " + message);
     }
 
     protected static void showReportLogWarningDialog(final android.app.Activity activity) {

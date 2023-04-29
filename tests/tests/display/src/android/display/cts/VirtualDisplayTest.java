@@ -52,11 +52,14 @@ import android.view.Surface;
 import android.view.ViewGroup.LayoutParams;
 import android.widget.ImageView;
 
-import androidx.test.InstrumentationRegistry;
-import androidx.test.runner.AndroidJUnit4;
+
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.AdoptShellPermissionsRule;
+import com.android.compatibility.common.util.DisplayStateManager;
 import com.android.compatibility.common.util.SettingsStateKeeperRule;
+import com.android.compatibility.common.util.StateKeeperRule;
 
 import org.junit.After;
 import org.junit.Before;
@@ -104,20 +107,27 @@ public class VirtualDisplayTest {
     private HandlerThread mCheckThread;
     private Handler mCheckHandler;
 
-    @Rule
+    @Rule(order = 0)
     public AdoptShellPermissionsRule mAdoptShellPermissionsRule = new AdoptShellPermissionsRule(
             InstrumentationRegistry.getInstrumentation().getUiAutomation(),
             Manifest.permission.WRITE_SECURE_SETTINGS);
 
     @ClassRule
     public static final SettingsStateKeeperRule mAreUserDisabledHdrFormatsAllowedSettingsKeeper =
-            new SettingsStateKeeperRule(InstrumentationRegistry.getTargetContext(),
+            new SettingsStateKeeperRule(
+                    InstrumentationRegistry.getInstrumentation().getTargetContext(),
                     Settings.Global.ARE_USER_DISABLED_HDR_FORMATS_ALLOWED);
 
     @ClassRule
     public static final SettingsStateKeeperRule mUserDisabledHdrFormatsSettingsKeeper =
-            new SettingsStateKeeperRule(InstrumentationRegistry.getTargetContext(),
+            new SettingsStateKeeperRule(
+                    InstrumentationRegistry.getInstrumentation().getTargetContext(),
                     Settings.Global.USER_DISABLED_HDR_FORMATS);
+
+    @Rule(order = 1)
+    public StateKeeperRule<DisplayStateManager.DisplayState> mDisplayManagerStateKeeper =
+            new StateKeeperRule<>(new DisplayStateManager(
+                    InstrumentationRegistry.getInstrumentation().getTargetContext()));
 
     @Before
     public void setUp() throws Exception {

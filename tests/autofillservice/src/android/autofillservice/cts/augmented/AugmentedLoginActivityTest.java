@@ -97,7 +97,7 @@ public class AugmentedLoginActivityTest
         enableService();
         enableAugmentedService();
 
-        AugmentedHelper.resetAugmentedService();
+        AugmentedHelper.resetAugmentedService(sContext);
         waitUntilDisconnected();
     }
 

@@ -50,7 +50,7 @@ import java.util.Arrays;
  */
 
 @RunWith(AndroidJUnit4.class)
-@SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE, codeName = "UpsideDownCake")
+@SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
 @NonMainlineTest
 public class HotspotNetworkTest {
     private static final long DEVICE_ID = 11L;

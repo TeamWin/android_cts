@@ -59,7 +59,7 @@ public class ManualAuthenticationActivity extends Activity {
                             (id) -> Helper.findNodeByResourceId(structure, id));
                 } else if (sDataset != null) {
                     result = sDataset.asDatasetWithNodeResolver(
-                            (id) -> Helper.findNodeByResourceId(structure, id));
+                        (id) -> Helper.findNodeByResourceId(structure, id));
                 } else {
                     throw new IllegalStateException("no dataset or response");
                 }

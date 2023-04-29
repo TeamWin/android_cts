@@ -138,7 +138,7 @@ java_import {
 android_library {
     name: "cts-verifier-framework",
 
-    sdk_version: "current",
+    sdk_version: "test_current",
     min_sdk_version: "29",
     resource_dirs: ["res"],
     srcs: [

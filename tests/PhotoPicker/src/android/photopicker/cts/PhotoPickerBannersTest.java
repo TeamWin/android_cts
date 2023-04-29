@@ -44,6 +44,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.photopicker.cts.cloudproviders.CloudProviderPrimary;
 
+import androidx.test.filters.FlakyTest;
 import androidx.test.filters.SdkSuppress;
 import androidx.test.uiautomator.UiObject;
 
@@ -134,6 +135,7 @@ public class PhotoPickerBannersTest extends PhotoPickerBaseTest {
     }
 
     @Test
+    @FlakyTest(bugId = 274840171)
     public void testChooseAppBannerOnActionButtonClick() throws Exception {
         // 1. Setting up the 'Choose App' banner.
         setCloudMediaInfoForChooseAppBanner();

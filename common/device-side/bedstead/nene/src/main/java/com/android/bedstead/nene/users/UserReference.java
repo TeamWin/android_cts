@@ -181,6 +181,32 @@ public final class UserReference implements AutoCloseable {
     }
 
     /**
+     * Remove the user from device when it is next possible.
+     *
+     * <p>If the user is the current foreground user, removal is deferred until the user is switched
+     * away. Otherwise, it'll be removed immediately.
+     *
+     * <p>If the user does not exist, or setting the user ephemeral fails for any other reason, a
+     * {@link NeneException} will be thrown.
+     */
+    @Experimental
+    public void removeWhenPossible() {
+        try {
+            // Expected success strings are:
+            // ("Success: user %d removed\n", userId)
+            // ("Success: user %d set as ephemeral\n", userId)
+            // ("Success: user %d is already being removed\n", userId)
+            ShellCommand.builder("pm remove-user")
+                    .addOperand("--set-ephemeral-if-in-use")
+                    .addOperand(mId)
+                    .validate(ShellCommandUtils::startsWithSuccess)
+                    .execute();
+        } catch (AdbException e) {
+            throw new NeneException("Could not remove or mark ephemeral user " + this, e);
+        }
+    }
+
+    /**
      * Starts the user in the background.
      *
      * <p>After calling this command, the user will be running unlocked, but not

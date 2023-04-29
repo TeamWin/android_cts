@@ -64,6 +64,7 @@ import com.android.cts.install.lib.Install;
 import com.android.cts.install.lib.InstallUtils;
 import com.android.cts.install.lib.TestApp;
 import com.android.cts.install.lib.Uninstall;
+import com.android.modules.utils.build.SdkLevel;
 
 import com.google.common.io.ByteStreams;
 
@@ -167,15 +168,20 @@ public class TranscodeTestUtils {
         assertThat(numBytesWritten).isEqualTo(byteCount);
     }
 
-    public static void enableTranscodingForPackage(String packageName) {
-        getUiAutomation().adoptShellPermissionIdentity(WRITE_ALLOWLISTED_DEVICE_CONFIG);
-        try {
-            final String newPropertyValue = packageName + ",0";
-            DeviceConfig.setProperty(NAMESPACE_STORAGE_NATIVE_BOOT,
-                    TRANSCODE_COMPAT_MANIFEST_DEVICE_CONFIG_PROPERTY_NAME, newPropertyValue,
-                    /* makeDefault */ false);
-        } finally {
-            getUiAutomation().dropShellPermissionIdentity();
+    public static void enableTranscodingForPackage(String packageName) throws Exception {
+        if (SdkLevel.isAtLeastU()) {
+            getUiAutomation().adoptShellPermissionIdentity(WRITE_ALLOWLISTED_DEVICE_CONFIG);
+            try {
+                final String newPropertyValue = packageName + ",0";
+                DeviceConfig.setProperty(NAMESPACE_STORAGE_NATIVE_BOOT,
+                        TRANSCODE_COMPAT_MANIFEST_DEVICE_CONFIG_PROPERTY_NAME, newPropertyValue,
+                        /* makeDefault */ false);
+            } finally {
+                getUiAutomation().dropShellPermissionIdentity();
+            }
+        } else {
+            executeShellCommand("device_config put storage_native_boot transcode_compat_manifest "
+                    + packageName + ",0");
         }
         SystemClock.sleep(1000);
     }
@@ -195,13 +201,18 @@ public class TranscodeTestUtils {
         executeShellCommand(command);
     }
 
-    public static void disableTranscodingForAllPackages() {
-        getUiAutomation().adoptShellPermissionIdentity(WRITE_ALLOWLISTED_DEVICE_CONFIG);
-        try {
-            DeviceConfig.deleteProperty(NAMESPACE_STORAGE_NATIVE_BOOT,
-                    TRANSCODE_COMPAT_MANIFEST_DEVICE_CONFIG_PROPERTY_NAME);
-        } finally {
-            getUiAutomation().dropShellPermissionIdentity();
+    public static void disableTranscodingForAllPackages() throws Exception {
+        if (SdkLevel.isAtLeastU()) {
+            getUiAutomation().adoptShellPermissionIdentity(WRITE_ALLOWLISTED_DEVICE_CONFIG);
+            try {
+                DeviceConfig.deleteProperty(NAMESPACE_STORAGE_NATIVE_BOOT,
+                        TRANSCODE_COMPAT_MANIFEST_DEVICE_CONFIG_PROPERTY_NAME);
+            } finally {
+                getUiAutomation().dropShellPermissionIdentity();
+            }
+        } else {
+            executeShellCommand("device_config delete storage_native_boot "
+                    + "transcode_compat_manifest");
         }
         SystemClock.sleep(1000);
     }

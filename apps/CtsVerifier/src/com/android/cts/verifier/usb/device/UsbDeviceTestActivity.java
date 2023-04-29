@@ -197,7 +197,7 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
                 }
             }
         };
-        registerReceiver(mUsbDeviceConnectionReceiver, filter);
+        registerReceiver(mUsbDeviceConnectionReceiver, filter, Context.RECEIVER_EXPORTED);
     }
 
     /**
