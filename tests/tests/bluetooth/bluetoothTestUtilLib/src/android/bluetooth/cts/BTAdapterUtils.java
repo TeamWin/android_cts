@@ -27,8 +27,6 @@ import android.content.IntentFilter;
 import android.util.Log;
 import android.util.SparseIntArray;
 
-import androidx.test.platform.app.InstrumentationRegistry;
-
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
@@ -244,19 +242,23 @@ public class BTAdapterUtils {
             return true;
         }
 
-        Set<String> permissionsAdopted = getPermissionsAdoptedAsShellUid();
+        Set<String> permissionsAdopted = TestUtils.getAdoptedShellPermissions();
+        String[] permissionArray = permissionsAdopted.toArray(String[]::new);
+
         sBluetoothAdapterLock.lock();
         try {
             if (DBG) {
                 Log.d(TAG, "Enabling Bluetooth adapter");
             }
-            adoptPermissionAsShellUid(BLUETOOTH_CONNECT, BLUETOOTH_PRIVILEGED);
+            TestUtils.dropPermissionAsShellUid();
+            TestUtils.adoptPermissionAsShellUid(BLUETOOTH_CONNECT, BLUETOOTH_PRIVILEGED);
             bluetoothAdapter.enable();
             return waitForAdapterStateLocked(BluetoothAdapter.STATE_ON, bluetoothAdapter);
         } catch (InterruptedException e) {
             Log.w(TAG, "enableAdapter(): interrupted", e);
         } finally {
-            adoptPermissionAsShellUid(permissionsAdopted.toArray(new String[0]));
+            TestUtils.dropPermissionAsShellUid();
+            TestUtils.adoptPermissionAsShellUid(permissionArray);
             sBluetoothAdapterLock.unlock();
         }
         return false;
@@ -266,31 +268,7 @@ public class BTAdapterUtils {
      * Disable the Bluetooth Adapter. Return true if it is already disabled or is disabled.
      */
     public static boolean disableAdapter(BluetoothAdapter bluetoothAdapter, Context context) {
-        if (!sAdapterVarsInitialized) {
-            initAdapterStateVariables(context);
-        }
-
-        if (bluetoothAdapter.getState() == BluetoothAdapter.STATE_OFF) {
-            return true;
-        }
-
-        if (DBG) {
-            Log.d(TAG, "Disabling Bluetooth adapter");
-        }
-
-        Set<String> permissionsAdopted = getPermissionsAdoptedAsShellUid();
-        sBluetoothAdapterLock.lock();
-        try {
-            adoptPermissionAsShellUid(BLUETOOTH_CONNECT, BLUETOOTH_PRIVILEGED);
-            bluetoothAdapter.disable();
-            return waitForAdapterStateLocked(BluetoothAdapter.STATE_OFF, bluetoothAdapter);
-        } catch (InterruptedException e) {
-            Log.w(TAG, "disableAdapter(): interrupted", e);
-        } finally {
-            adoptPermissionAsShellUid(permissionsAdopted.toArray(new String[0]));
-            sBluetoothAdapterLock.unlock();
-        }
-        return false;
+        return disableAdapter(bluetoothAdapter, true, context);
     }
 
     /**
@@ -308,40 +286,26 @@ public class BTAdapterUtils {
             return true;
         }
 
-        Set<String> permissionsAdopted = getPermissionsAdoptedAsShellUid();
+        Set<String> permissionsAdopted = TestUtils.getAdoptedShellPermissions();
+        String[] permissionArray = permissionsAdopted.toArray(String[]::new);
+
         sBluetoothAdapterLock.lock();
         try {
             if (DBG) {
                 Log.d(TAG, "Disabling Bluetooth adapter, persist=" + persist);
             }
-            adoptPermissionAsShellUid(BLUETOOTH_CONNECT, BLUETOOTH_PRIVILEGED);
+            TestUtils.dropPermissionAsShellUid();
+            TestUtils.adoptPermissionAsShellUid(BLUETOOTH_CONNECT, BLUETOOTH_PRIVILEGED);
             bluetoothAdapter.disable(persist);
             return waitForAdapterStateLocked(BluetoothAdapter.STATE_OFF, bluetoothAdapter);
         } catch (InterruptedException e) {
             Log.w(TAG, "disableAdapter(persist=" + persist + "): interrupted", e);
         } finally {
-            adoptPermissionAsShellUid(permissionsAdopted.toArray(new String[0]));
+            TestUtils.dropPermissionAsShellUid();
+            TestUtils.adoptPermissionAsShellUid(permissionArray);
             sBluetoothAdapterLock.unlock();
         }
         return false;
     }
-
-    /**
-     * Adopt shell UID's permission via {@link android.app.UiAutomation}
-     * @param permission permission to adopt
-     */
-    private static void adoptPermissionAsShellUid(String... permission) {
-        InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                .adoptShellPermissionIdentity(permission);
-    }
-
-    /**
-     * Gets all the permissions adopted as the shell UID
-     *
-     * @return a {@link java.util.Set} of the adopted shell permissions
-     */
-    private static Set<String> getPermissionsAdoptedAsShellUid() {
-        return InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                .getAdoptedShellPermissions();
-    }
 }
+
