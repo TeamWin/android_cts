@@ -664,6 +664,34 @@ public final class EventLogHelperTest {
     }
 
     @Test
+    public void testWriteCarUserManagerStartUserReq() {
+        EventLogHelper.writeCarUserManagerStartUserReq(101, 102, -1);
+
+        assertLogMessage("car_user_mgr_start_user_req", "[101,102,-1]");
+    }
+
+    @Test
+    public void testWriteCarUserManagerStartUserResp() {
+        EventLogHelper.writeCarUserManagerStartUserResp(101, 102, 3, 14);
+
+        assertLogMessage("car_user_mgr_start_user_resp", "[101,102,3,14]");
+    }
+
+    @Test
+    public void testWriteCarUserManagerStopUserReq() {
+        EventLogHelper.writeCarUserManagerStopUserReq(101, 102);
+
+        assertLogMessage("car_user_mgr_stop_user_req", "[101,102]");
+    }
+
+    @Test
+    public void testWriteCarUserManagerStopUserResp() {
+        EventLogHelper.writeCarUserManagerStopUserResp(101, 102, 3);
+
+        assertLogMessage("car_user_mgr_stop_user_resp", "[101,102,3]");
+    }
+
+    @Test
     public void testWriteCarUserManagerNotifyLifecycleListener() {
         EventLogHelper.writeCarUserManagerNotifyLifecycleListener(101, 102, 103, 104);
 
