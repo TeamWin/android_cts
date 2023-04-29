@@ -41,6 +41,8 @@ android_test_import {
     apk: "unaligned_Q.apk",
     presigned: true,
     preprocessed: true,
+    // So the build system doesn't check that this apk is aligned
+    skip_preprocessed_apk_checks: true,
     test_suites: [
         "cts",
         "general-tests",
@@ -52,6 +54,8 @@ android_test_import {
     apk: "unaligned_R.apk",
     presigned: true,
     preprocessed: true,
+    // So the build system doesn't check that this apk is aligned
+    skip_preprocessed_apk_checks: true,
     test_suites: [
         "cts",
         "general-tests",
