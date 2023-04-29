@@ -26,6 +26,7 @@ import static org.junit.Assert.assertTrue;
 
 import android.alarmmanager.alarmtestapp.cts.TestAlarmReceiver;
 import android.alarmmanager.alarmtestapp.cts.TestAlarmScheduler;
+import android.alarmmanager.alarmtestapp.cts.common.FgsTester;
 import android.alarmmanager.util.AlarmManagerDeviceConfigHelper;
 import android.alarmmanager.util.Utils;
 import android.app.AlarmManager;
@@ -84,11 +85,13 @@ public class BackgroundRestrictedAlarmsTest {
             new DeviceConfigStateHelper(DeviceConfig.NAMESPACE_TARE);
 
     private volatile int mAlarmCount;
+    private volatile boolean mFgsResult = false;
 
     private final BroadcastReceiver mAlarmStateReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             mAlarmCount = intent.getIntExtra(TestAlarmReceiver.EXTRA_ALARM_COUNT, 1);
+            mFgsResult = intent.getBooleanExtra(FgsTester.EXTRA_FGS_START_RESULT, false);
             Log.d(TAG, "Received action " + intent.getAction()
                     + " elapsed: " + SystemClock.elapsedRealtime());
 
@@ -128,9 +131,10 @@ public class BackgroundRestrictedAlarmsTest {
     private void scheduleAlarmClock(long triggerRTC) {
         AlarmManager.AlarmClockInfo alarmInfo = new AlarmManager.AlarmClockInfo(triggerRTC, null);
 
-        final Intent setAlarmClockIntent = new Intent(TestAlarmScheduler.ACTION_SET_ALARM_CLOCK);
-        setAlarmClockIntent.setComponent(mAlarmScheduler);
-        setAlarmClockIntent.putExtra(TestAlarmScheduler.EXTRA_ALARM_CLOCK_INFO, alarmInfo);
+        final Intent setAlarmClockIntent = new Intent(TestAlarmScheduler.ACTION_SET_ALARM_CLOCK)
+                .setComponent(mAlarmScheduler)
+                .putExtra(TestAlarmScheduler.EXTRA_TEST_FGS, true)
+                .putExtra(TestAlarmScheduler.EXTRA_ALARM_CLOCK_INFO, alarmInfo);
         mContext.sendBroadcast(setAlarmClockIntent);
     }
 
@@ -193,6 +197,7 @@ public class BackgroundRestrictedAlarmsTest {
         Thread.sleep(waitInterval);
         assertTrue("AlarmClock did not go off as scheduled when under restrictions",
                 waitForAlarms(1, DEFAULT_WAIT));
+        assertTrue("Fgs start wasn't successful from AlarmClock", mFgsResult);
     }
 
     @After
