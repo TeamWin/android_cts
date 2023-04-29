@@ -198,6 +198,8 @@ public final class RecognitionServiceMicIndicatorTest {
         boolean hasPreInstalledRecognizer = hasPreInstalledRecognizer(
                 getComponentPackageNameFromString(mOriginalVoiceRecognizer));
         assumeTrue("No preinstalled recognizer.", hasPreInstalledRecognizer);
+        // TODO(b/279146568): remove the next line after test is fixed for auto
+        assumeFalse(isCar());
 
         // verify that the trusted app can blame the calling app mic access
         testVoiceRecognitionServiceBlameCallingApp(/* trustVoiceService */ true);
