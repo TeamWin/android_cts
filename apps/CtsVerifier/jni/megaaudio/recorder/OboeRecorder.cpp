@@ -34,7 +34,8 @@ OboeRecorder::OboeRecorder(AudioSink* sink, int32_t subtype)
 // State
 //
 StreamBase::Result OboeRecorder::setupStream(int32_t channelCount, int32_t sampleRate,
-                        int32_t performanceMode, int32_t sharingMode, int32_t routeDeviceId)
+                        int32_t performanceMode, int32_t sharingMode, int32_t routeDeviceId,
+                        int32_t inputPreset)
 {
     //TODO much of this could be pulled up into OboeStream.
 
@@ -57,7 +58,6 @@ StreamBase::Result OboeRecorder::setupStream(int32_t channelCount, int32_t sampl
             builder.setInputPreset((enum InputPreset)mInputPreset);
         }
         builder.setPerformanceMode((PerformanceMode) performanceMode);
-        // builder.setPerformanceMode(PerformanceMode::None);
         builder.setSharingMode((SharingMode) sharingMode);
         builder.setSampleRateConversionQuality(SampleRateConversionQuality::None);
         builder.setDirection(Direction::Input);
@@ -85,12 +85,6 @@ StreamBase::Result OboeRecorder::setupStream(int32_t channelCount, int32_t sampl
     }
 
     return OboeErrorToMegaAudioError(result);
-}
-
-StreamBase::Result OboeRecorder::setupStream(
-                    int32_t channelCount, int32_t sampleRate, int32_t routeDeviceId) {
-    return setupStream(channelCount, sampleRate, (int32_t) PerformanceMode::LowLatency,
-        (int32_t) SharingMode::Exclusive, routeDeviceId);
 }
 
 StreamBase::Result OboeRecorder::startStream() {
@@ -131,9 +125,10 @@ Java_org_hyphonate_megaaudio_recorder_OboeRecorder_setInputPresetN(
 JNIEXPORT jint JNICALL
 Java_org_hyphonate_megaaudio_recorder_OboeRecorder_setupStreamN(
         JNIEnv *env, jobject thiz, jlong native_recorder, jint channel_count, jint sample_rate,
-        jint performanceMode, jint sharingMode, jint route_device_id) {
+        jint performanceMode, jint sharingMode, jint route_device_id, jint input_preset) {
     return ((OboeRecorder*)native_recorder)->setupStream(
-            channel_count, sample_rate, performanceMode, sharingMode, route_device_id);
+            channel_count, sample_rate, performanceMode, sharingMode, route_device_id,
+            input_preset);
 }
 
 JNIEXPORT jint JNICALL

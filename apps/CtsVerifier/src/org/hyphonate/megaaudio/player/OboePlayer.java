@@ -18,22 +18,18 @@ package org.hyphonate.megaaudio.player;
 import android.media.AudioTimestamp;
 import android.util.Log;
 
-import org.hyphonate.megaaudio.common.BuilderBase;
-
 public class OboePlayer extends Player {
     @SuppressWarnings("unused")
     private static final String TAG = OboePlayer.class.getSimpleName();
     @SuppressWarnings("unused")
-    private static final boolean LOG = false;
-
-    boolean mPlaying;
+    private static final boolean LOG = true;
 
     private int mPlayerSubtype;
+
     private long mNativePlayer;
 
-    private AudioSource mAudioSource;
-
-    public OboePlayer(AudioSourceProvider sourceProvider, int playerSubtype) {
+    public OboePlayer(PlayerBuilder builder, AudioSourceProvider sourceProvider,
+                      int playerSubtype) {
         super(sourceProvider);
 
         mPlayerSubtype = playerSubtype;
@@ -42,10 +38,13 @@ public class OboePlayer extends Player {
             mAudioSource = nativeAudioSource;
             mNativePlayer = allocNativePlayer(nativeAudioSource.getNativeObject(), mPlayerSubtype);
         } else {
+            // No native source provided, so wrap a Java source in a native provider wrapper
             mAudioSource = mSourceProvider.getJavaSource();
             mNativePlayer = allocNativePlayer(
                     JavaSourceProxy.allocNativeSource(mAudioSource), mPlayerSubtype);
         }
+
+        setupStream(builder);
     }
 
     public int getNumBufferFrames() {
@@ -57,36 +56,25 @@ public class OboePlayer extends Player {
         return getRoutedDeviceIdN(mNativePlayer);
     }
 
-    @Override
-    public AudioSource getAudioSource() {
-        return mAudioSource;
-    }
-
-    @Override
-    public boolean isPlaying() {
-        return mPlaying;
-    }
-
-    @Override
-    public int setupStream(int channelCount, int sampleRate,
-                           int performanceMode, int sharingMode, int numBufferFrames) {
+    private int setupStream(PlayerBuilder builder) {
+        mChannelCount = builder.getChannelCount();
+        mSampleRate = builder.getSampleRate();
+        mNumExchangeFrames = builder.getNumExchangeFrames();
+        mPerformanceMode = builder.getPerformanceMode();
+        mSharingMode = builder.getSharingMode();
+        int routeDeviceId = builder.getRouteDeviceId();
         if (LOG) {
-            Log.i(TAG, "setupStream(chans:" + channelCount + ", rate:" + sampleRate
-                    + ", frames:" + numBufferFrames + ")");
+            Log.i(TAG, "setupStream()");
+            Log.i(TAG, "  chans:" + mChannelCount);
+            Log.i(TAG, "  rate: " + mSampleRate);
+            Log.i(TAG, "  frames: " + mNumExchangeFrames);
+            Log.i(TAG, "  perf mode: " + mPerformanceMode);
+            Log.i(TAG, "  route device: " + routeDeviceId);
+            Log.i(TAG, "  sharing mode: " + mSharingMode);
         }
-
-        mChannelCount = channelCount;
-        mSampleRate = sampleRate;
         return setupStreamN(
-                mNativePlayer, channelCount, sampleRate,
-                performanceMode, sharingMode,
-                mRouteDevice == null ? -1 : mRouteDevice.getId());
-    }
-
-    @Override
-    public int setupStream(int channelCount, int sampleRate, int numBufferFrames) {
-        return setupStream(channelCount, sampleRate, BuilderBase.PERFORMANCE_MODE_LOWLATENCY,
-                BuilderBase.SHARING_MODE_EXCLUSIVE, numBufferFrames);
+                mNativePlayer, mChannelCount, mSampleRate, mPerformanceMode, mSharingMode,
+                routeDeviceId);
     }
 
     @Override
@@ -101,7 +89,10 @@ public class OboePlayer extends Player {
 
     @Override
     public int startStream() {
-        return startStreamN(mNativePlayer, mPlayerSubtype);
+        int retVal = startStreamN(mNativePlayer, mPlayerSubtype);
+        // TODO - Need Java constants defined for the C++ StreamBase.Result enum
+        mPlaying = retVal == 0;
+        return retVal;
     }
 
     @Override

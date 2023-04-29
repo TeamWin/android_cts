@@ -29,6 +29,8 @@ import android.car.CarRemoteDeviceManager;
 import android.car.CarRemoteDeviceManager.StateCallback;
 import android.car.test.ApiCheckerRule;
 import android.content.pm.PackageInfo;
+import android.content.pm.Signature;
+import android.content.pm.SigningInfo;
 import android.os.UserHandle;
 import android.platform.test.annotations.AppModeFull;
 import android.test.suitebuilder.annotation.SmallTest;
@@ -45,6 +47,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 @SmallTest
@@ -137,7 +140,9 @@ public final class CarRemoteDeviceManagerTest extends AbstractCarTestCase {
             // TODO(b/257118327): update this test for multi-SoC.
             if (packageInfo != null) {
                 assertThat(packageInfo.packageName).isEqualTo(myPackageInfo.packageName);
-                assertThat(packageInfo.signingInfo).isEqualTo(myPackageInfo.signingInfo);
+                // SigningInfo doesn't override equals() method, so use a custom equals() method.
+                assertThat(signingInfoEquals(packageInfo.signingInfo,
+                        myPackageInfo.signingInfo)).isTrue();
                 assertThat(packageInfo.getLongVersionCode())
                         .isEqualTo(myPackageInfo.getLongVersionCode());
             }
@@ -178,5 +183,17 @@ public final class CarRemoteDeviceManagerTest extends AbstractCarTestCase {
             }
         }
         return activePeerZones;
+    }
+
+    private static boolean signingInfoEquals(SigningInfo info1, SigningInfo info2) {
+        if (info1 == info2) {
+            return true;
+        }
+        if (info1 == null || info2 == null) {
+            return false;
+        }
+        Signature[] signatures1 = info1.getSigningCertificateHistory();
+        Signature[] signatures2 = info1.getSigningCertificateHistory();
+        return Arrays.equals(signatures1, signatures2);
     }
 }

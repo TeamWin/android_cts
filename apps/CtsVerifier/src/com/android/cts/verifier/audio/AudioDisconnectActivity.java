@@ -28,7 +28,6 @@ import android.widget.TextView;
 
 import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
-import com.android.cts.verifier.audio.audiolib.AudioSystemParams;
 
 // MegaAudio
 import org.hyphonate.megaaudio.common.BuilderBase;
@@ -64,7 +63,8 @@ public class AudioDisconnectActivity
     private OboeRecorder mRecorder;
     private StreamBase  mStream;
 
-    private int mNumBufferFrames;
+    private int mNumExchangeFrames;
+    private int mSystemSampleRate;
 
     // UI
     private TextView mHasPortQueryText;
@@ -206,36 +206,36 @@ public class AudioDisconnectActivity
         // Player
         // mTestConfigs.add(new TestConfiguration(true, false, 41000, 2));
         mTestConfigs.add(new TestConfiguration(TestConfiguration.IO_OUTPUT,
-                48000, 2,
+                mSystemSampleRate, 2,
                 TestConfiguration.OPTION_LOWLATENCY));
         mTestConfigs.add(new TestConfiguration(TestConfiguration.IO_OUTPUT,
-                48000, 2,
+                mSystemSampleRate, 2,
                 TestConfiguration.OPTION_LOWLATENCY
                         | TestConfiguration.OPTION_MMAP));
         mTestConfigs.add(new TestConfiguration(TestConfiguration.IO_OUTPUT,
-                48000, 2,
+                mSystemSampleRate, 2,
                 TestConfiguration.OPTION_LOWLATENCY
                         | TestConfiguration.OPTION_MMAP
                         | TestConfiguration.OPTION_EXCLUSIVE));
         mTestConfigs.add(new TestConfiguration(TestConfiguration.IO_OUTPUT,
-                48000, 2,
+                mSystemSampleRate, 2,
                 TestConfiguration.OPTION_NONE));
 
         // Recorder
         mTestConfigs.add(new TestConfiguration(TestConfiguration.IO_INPUT,
-                48000, 1,
+                mSystemSampleRate, 1,
                 TestConfiguration.OPTION_LOWLATENCY));
         mTestConfigs.add(new TestConfiguration(TestConfiguration.IO_INPUT,
-                48000, 1,
+                mSystemSampleRate, 1,
                 TestConfiguration.OPTION_LOWLATENCY
                         | TestConfiguration.OPTION_MMAP));
         mTestConfigs.add(new TestConfiguration(TestConfiguration.IO_INPUT,
-                48000, 1,
+                mSystemSampleRate, 1,
                 TestConfiguration.OPTION_LOWLATENCY
                         | TestConfiguration.OPTION_MMAP
                         | TestConfiguration.OPTION_EXCLUSIVE));
         mTestConfigs.add(new TestConfiguration(TestConfiguration.IO_INPUT,
-                48000, 1,
+                mSystemSampleRate, 1,
                 TestConfiguration.OPTION_NONE));
     }
 
@@ -504,6 +504,10 @@ public class AudioDisconnectActivity
         setPassFailButtonClickListeners();
         getPassButton().setEnabled(false);
 
+        StreamBase.setup(this);
+        mSystemSampleRate = StreamBase.getSystemSampleRate();
+        mNumExchangeFrames = StreamBase.getNumBurstFrames(BuilderBase.TYPE_NONE);
+
         setTestConfigs();
 
         enableTestButtons(false, false);
@@ -526,69 +530,63 @@ public class AudioDisconnectActivity
     // PassFailButtons Overrides
     //
     private boolean startAudio(TestConfiguration config) {
+        Log.i(TAG, "startAudio()...");
         if (mIsAudioRunning) {
             stopAudio();
         }
-
-        AudioSystemParams audioSystemParams = new AudioSystemParams();
-        audioSystemParams.init(this);
-
-        mNumBufferFrames = audioSystemParams.getSystemBurstFrames();
 
         boolean wasMMapEnabled = Globals.isMMapEnabled();
         Globals.setMMapEnabled(config.isMMap());
         if (config.mDirection == TestConfiguration.IO_OUTPUT) {
             AudioSourceProvider sourceProvider = new SilenceAudioSourceProvider();
             try {
-                mPlayer = (OboePlayer)
-                        ((new PlayerBuilder())
-                                .setPlayerType(BuilderBase.TYPE_OBOE)
-                                .setSourceProvider(sourceProvider)
-                                .build());
-                if (mPlayer.setupStream(config.mNumChannels, config.mSampleRate,
-                        config.isLowLatency()
-                                ? BuilderBase.PERFORMANCE_MODE_LOWLATENCY
-                                : BuilderBase.PERFORMANCE_MODE_NONE,
-                        config.isExclusive()
+                PlayerBuilder playerBuilder = new PlayerBuilder();
+                playerBuilder.setPerformanceMode(config.isLowLatency()
+                        ? BuilderBase.PERFORMANCE_MODE_LOWLATENCY
+                        : BuilderBase.PERFORMANCE_MODE_NONE);
+                playerBuilder.setSharingMode(config.isExclusive()
                                 ? BuilderBase.SHARING_MODE_EXCLUSIVE
-                                : BuilderBase.SHARING_MODE_SHARED,
-                        mNumBufferFrames) == StreamBase.OK
-                        && mPlayer.startStream() == StreamBase.OK) {
-                    mIsAudioRunning = true;
-                    mStream = mPlayer;
-                }
+                                : BuilderBase.SHARING_MODE_SHARED);
+                playerBuilder.setChannelCount(config.mNumChannels);
+                playerBuilder.setSampleRate(config.mSampleRate);
+                playerBuilder.setSourceProvider(sourceProvider);
+                playerBuilder.setPlayerType(BuilderBase.TYPE_OBOE);
+                mPlayer = (OboePlayer) playerBuilder.build();
+                mPlayer.startStream();
+                mIsAudioRunning = true;
+                mStream = mPlayer;
             } catch (PlayerBuilder.BadStateException badStateException) {
                 Log.e(TAG, "BadStateException: " + badStateException);
-                //            mLatencyTxt.setText("Can't Start Player.");
                 mIsAudioRunning = false;
             }
         } else {
             AudioSinkProvider sinkProvider = new NopAudioSinkProvider();
             try {
-                mRecorder = (OboeRecorder) ((new RecorderBuilder())
-                        .setRecorderType(BuilderBase.TYPE_OBOE)
-                        .setAudioSinkProvider(sinkProvider)
-                        .build());
-                if (mRecorder.setupStream(config.mNumChannels, config.mSampleRate,
-                        config.isLowLatency()
-                                ? BuilderBase.PERFORMANCE_MODE_LOWLATENCY
-                                : BuilderBase.PERFORMANCE_MODE_NONE,
-                        config.isExclusive()
-                                ? BuilderBase.SHARING_MODE_EXCLUSIVE
-                                : BuilderBase.SHARING_MODE_SHARED,
-                        mNumBufferFrames) == StreamBase.OK
-                        && mRecorder.startStream() == StreamBase.OK) {
-                    mIsAudioRunning = true;
-                    mStream = mRecorder;
-                }
+                RecorderBuilder recorderBuilder = new RecorderBuilder();
+                recorderBuilder.setRecorderType(BuilderBase.TYPE_OBOE);
+                recorderBuilder.setAudioSinkProvider(sinkProvider);
+                recorderBuilder.setChannelCount(config.mNumChannels);
+                recorderBuilder.setSampleRate(config.mSampleRate);
+                recorderBuilder.setChannelCount(config.mNumChannels);
+                recorderBuilder.setNumExchangeFrames(mNumExchangeFrames);
+                recorderBuilder.setPerformanceMode(config.isLowLatency()
+                        ? BuilderBase.PERFORMANCE_MODE_LOWLATENCY
+                        : BuilderBase.PERFORMANCE_MODE_NONE);
+                recorderBuilder.setSharingMode(config.isExclusive()
+                        ? BuilderBase.SHARING_MODE_EXCLUSIVE
+                        : BuilderBase.SHARING_MODE_SHARED);
+                mRecorder = (OboeRecorder) recorderBuilder.build();
+                mRecorder.startStream();
+                mIsAudioRunning = true;
+                mStream = mRecorder;
             } catch (RecorderBuilder.BadStateException badStateException) {
                 Log.e(TAG, "BadStateException: " + badStateException);
-                //            mLatencyTxt.setText("Can't Start Player.");
                 mIsAudioRunning = false;
             }
         }
         Globals.setMMapEnabled(wasMMapEnabled);
 
+        Log.i(TAG, "  mIsAudioRunning: " + mIsAudioRunning);
         return mIsAudioRunning;
     }
 

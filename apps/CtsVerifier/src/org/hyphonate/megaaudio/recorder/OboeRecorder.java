@@ -17,23 +17,23 @@ package org.hyphonate.megaaudio.recorder;
 
 import android.util.Log;
 
-import org.hyphonate.megaaudio.common.BuilderBase;
-
 public class OboeRecorder extends Recorder {
     @SuppressWarnings("unused")
     private static final String TAG = OboeRecorder.class.getSimpleName();
     @SuppressWarnings("unused")
-    private static final boolean LOG = false;
+    private static final boolean LOG = true;
 
     private int mRecorderSubtype;
     private long mNativeRecorder;
 
-    public OboeRecorder(AudioSinkProvider sinkProvider, int subType) {
+    public OboeRecorder(RecorderBuilder builder, AudioSinkProvider sinkProvider, int subType) {
         super(sinkProvider);
 
         mRecorderSubtype = subType;
         mNativeRecorder = allocNativeRecorder(
                 sinkProvider.allocNativeSink().getNativeObject(), mRecorderSubtype);
+
+        setupStream(builder);
     }
 
     //
@@ -44,41 +44,27 @@ public class OboeRecorder extends Recorder {
     }
 
     @Override
-    public void setInputPreset(int preset) {
-        setInputPresetN(mNativeRecorder, preset);
-    }
-
-    @Override
     public int getRoutedDeviceId() { return getRoutedDeviceIdN(mNativeRecorder); }
 
-    //
-    // State
-    //
-    @Override
-    public boolean isRecording() {
-        return isRecordingN(mNativeRecorder);
-    }
+    private int setupStream(RecorderBuilder builder) {
+        mChannelCount = builder.getChannelCount();
+        mSampleRate = builder.getSampleRate();
+        mNumExchangeFrames = builder.getNumExchangeFrames();
+        mSharingMode = builder.getSharingMode();
+        mPerformanceMode = builder.getPerformanceMode();
+        mInputPreset = builder.getInputPreset();
 
-    @Override
-    public int setupStream(int channelCount, int sampleRate,
-                           int performanceMode, int sharingMode, int numBufferFrames) {
         if (LOG) {
-            Log.i(TAG, "setupStream(chans:" + channelCount + ", rate:" + sampleRate
-                    + ", frames:" + numBufferFrames + ")");
+            Log.i(TAG, "setupStream()");
+            Log.i(TAG, "  chans:" + mChannelCount);
+            Log.i(TAG, "  rate: " + mSampleRate);
+            Log.i(TAG, "  frames: " + mNumExchangeFrames);
+            Log.i(TAG, "  perf mode: " + mPerformanceMode);
+            Log.i(TAG, "  route device: " + builder.getRouteDeviceId());
+            Log.i(TAG, "  preset: " + mInputPreset);
         }
-        mChannelCount = channelCount;
-        mSampleRate = sampleRate;
-        return setupStreamN(mNativeRecorder, channelCount, sampleRate,
-                performanceMode, sharingMode,
-                mRouteDevice == null ? -1 : mRouteDevice.getId());
-    }
-
-    @Override
-    public int setupStream(int channelCount, int sampleRate, int numBufferFrames) {
-        return setupStream(channelCount, sampleRate,
-                BuilderBase.PERFORMANCE_MODE_LOWLATENCY,
-                BuilderBase.SHARING_MODE_EXCLUSIVE,
-                numBufferFrames);
+        return setupStreamN(mNativeRecorder, mChannelCount, mSampleRate, mPerformanceMode,
+                mSharingMode, builder.getRouteDeviceId(), mInputPreset);
     }
 
     @Override
@@ -92,11 +78,15 @@ public class OboeRecorder extends Recorder {
 
     @Override
     public int startStream() {
-        return startStreamN(mNativeRecorder, mRecorderSubtype);
+        int retVal = startStreamN(mNativeRecorder, mRecorderSubtype);
+        // TODO - Need Java constants defined for the C++ StreamBase.Result enum
+        mRecording = retVal == 0;
+        return retVal;
     }
 
     @Override
     public int stopStream() {
+        mRecording = false;
         return stopN(mNativeRecorder);
     }
 
@@ -116,15 +106,14 @@ public class OboeRecorder extends Recorder {
 
     private native long allocNativeRecorder(long nativeSink, int recorderSubtype);
 
-    private native boolean isRecordingN(long nativeRecorder);
-
     private native int getBufferFrameCountN(long nativeRecorder);
     private native void setInputPresetN(long nativeRecorder, int inputPreset);
 
     private native int getRoutedDeviceIdN(long nativeRecorder);
 
-    private native int setupStreamN(long nativeRecorder, int channelCount,
-                       int sampleRate, int performanceMode, int sharingMode, int routeDeviceId);
+    private native int setupStreamN(long nativeRecorder, int channelCount, int sampleRate,
+                                    int performanceMode, int sharingMode, int routeDeviceId,
+                                    int inputPreset);
     private native int teardownStreamN(long nativeRecorder);
 
     private native int startStreamN(long nativeRecorder, int recorderSubtype);
