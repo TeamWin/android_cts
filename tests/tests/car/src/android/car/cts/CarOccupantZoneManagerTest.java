@@ -122,14 +122,13 @@ public final class CarOccupantZoneManagerTest extends AbstractCarTestCase {
 
     @Test
     @ApiTest(apis = {"android.car.CarOccupantZoneManager#getUserForOccupant(OccupantZoneInfo)"})
-    public void testDriverUserIdMustBeCurrentUser() {
-        assumeDriverZone();
-
+    public void testUserMustBeUserInTheirOccupantZone() {
         int myUid = Process.myUid();
-        assertWithMessage("Driver user id must correspond to current user id (Process.myUid: %s)",
+        assertWithMessage("User in occupant zone must correspond to user id (Process.myUid: %s)",
                 myUid).that(
                 UserHandle.getUserId(myUid)).isEqualTo(
-                mCarOccupantZoneManager.getUserForOccupant(mDriverZoneInfo));
+                mCarOccupantZoneManager.getUserForOccupant(
+                        mCarOccupantZoneManager.getMyOccupantZone()));
     }
 
     @Test
