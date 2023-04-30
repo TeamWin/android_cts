@@ -28,7 +28,8 @@ public class WorkDirBase {
     private static final String MEDIA_PATH_INSTR_ARG_KEY = "media-path";
 
     private static final File getTopDir() {
-        Assert.assertEquals(Environment.getExternalStorageState(), Environment.MEDIA_MOUNTED);
+        Assert.assertEquals("Missing external storage, is this running in instant mode?",
+                        Environment.MEDIA_MOUNTED, Environment.getExternalStorageState());
         return Environment.getExternalStorageDirectory();
     }
 
