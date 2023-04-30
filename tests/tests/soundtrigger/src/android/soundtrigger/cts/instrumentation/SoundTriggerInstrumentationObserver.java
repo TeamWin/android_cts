@@ -18,6 +18,7 @@ package android.soundtrigger.cts.instrumentation;
 
 import static com.google.common.truth.Truth.assertThat;
 
+
 import android.media.soundtrigger.SoundTriggerInstrumentation;
 import android.media.soundtrigger.SoundTriggerInstrumentation.GlobalCallback;
 import android.media.soundtrigger.SoundTriggerInstrumentation.ModelCallback;
@@ -33,6 +34,9 @@ import androidx.annotation.NonNull;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
+
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 /**
  * Supporting class to observe and attach to the SoundTrigger HAL via
@@ -77,6 +81,7 @@ public class SoundTriggerInstrumentationObserver implements AutoCloseable {
         @NonNull
         private SettableFuture<Void> mOnModelUnloaded = SettableFuture.create();
         private final ModelSession mModelSession;
+        private final Executor mModelSessionExecutor = Executors.newSingleThreadExecutor();
 
         private final RecognitionCallback mRecognitionCallback = () -> {
             Log.d(TAG, "RecognitionCallback.onRecognitionStopped");
@@ -89,7 +94,8 @@ public class SoundTriggerInstrumentationObserver implements AutoCloseable {
             @Override
             public void onRecognitionStarted(@NonNull RecognitionSession recognitionSession) {
                 Log.d(TAG, "ModelCallback.onRecognitionStarted");
-                recognitionSession.setRecognitionCallback(Runnable::run, mRecognitionCallback);
+                recognitionSession.setRecognitionCallback(mModelSessionExecutor,
+                        mRecognitionCallback);
                 synchronized (mModelSessionLock) {
                     mOnRecognitionStarted.set(recognitionSession);
                 }
@@ -106,7 +112,7 @@ public class SoundTriggerInstrumentationObserver implements AutoCloseable {
 
         private ModelSessionObserver(ModelSession modelSession) {
             mModelSession = modelSession;
-            modelSession.setModelCallback(Runnable::run, mModelCallback);
+            modelSession.setModelCallback(mModelSessionExecutor, mModelCallback);
         }
 
         public ModelSession getModelSession() {
@@ -193,6 +199,7 @@ public class SoundTriggerInstrumentationObserver implements AutoCloseable {
      * Observer class exposing {@link ListenableFuture}'s on the {@link GlobalCallback} interface
      */
     public static class GlobalCallbackObserver implements AutoCloseable {
+        private final Executor mGlobalCallbackExecutor = Executors.newSingleThreadExecutor();
         private final Object mGlobalObserverLock = new Object();
         @GuardedBy("mGlobalObserverLock")
         @NonNull
@@ -241,7 +248,7 @@ public class SoundTriggerInstrumentationObserver implements AutoCloseable {
         private void attach() {
             Log.d(TAG, "attach SoundTriggerInstrumentation");
             mInstrumentation = SoundTriggerManager.attachInstrumentation(
-                    Runnable::run, mGlobalCallback);
+                    mGlobalCallbackExecutor, mGlobalCallback);
         }
 
         /**
