@@ -677,6 +677,7 @@ public class SatelliteManagerTest extends SatelliteManagerTestBase {
             assertTrue(stateCallback.waitUntilResult(1));
         }
         requestSatelliteEnabledForDemoMode(true);
+        sSatelliteManager.onDeviceAlignedWithSatellite(true);
         assertTrue(stateCallback.waitUntilResult(1));
 
         assertTrue(isSatelliteEnabled());
@@ -725,6 +726,7 @@ public class SatelliteManagerTest extends SatelliteManagerTestBase {
             assertTrue(stateCallback.waitUntilResult(1));
         }
         sSatelliteManager.unregisterForSatelliteModemStateChanged(stateCallback);
+        sSatelliteManager.onDeviceAlignedWithSatellite(false);
         revokeSatellitePermission();
     }
 
