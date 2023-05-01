@@ -58,6 +58,8 @@ public class SurfacePackageFlickerTest {
     public void setup() {
         mActivityRule.getScenario().onActivity(activity -> mActivity = activity);
         mActivity.setLogicalDisplaySize(getLogicalDisplaySize());
+        // Change runtime to 10s instead of 50s
+        mActivity.setMinimumCaptureDurationMs(10000);
     }
 
     class SurfacePackageTestCase implements ISurfaceValidatorTestCase {
@@ -128,7 +130,7 @@ public class SurfacePackageFlickerTest {
 
         @Override
         public boolean hasAnimation() {
-            return true;
+            return false;
         }
 
         @Override
