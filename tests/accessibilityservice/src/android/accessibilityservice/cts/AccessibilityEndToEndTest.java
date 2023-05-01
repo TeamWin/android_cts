@@ -32,6 +32,7 @@ import static android.accessibilityservice.cts.utils.RunOnMainUtils.getOnMain;
 import static android.view.accessibility.AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUSED;
 import static android.view.accessibility.AccessibilityEvent.TYPE_VIEW_CLICKED;
 import static android.view.accessibility.AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS;
+import static android.view.accessibility.AccessibilityNodeInfo.ACTION_ARGUMENT_SCROLL_AMOUNT_FLOAT;
 import static android.view.accessibility.AccessibilityNodeInfo.AccessibilityAction.ACTION_HIDE_TOOLTIP;
 import static android.view.accessibility.AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_IN_DIRECTION;
 import static android.view.accessibility.AccessibilityNodeInfo.AccessibilityAction.ACTION_SHOW_TOOLTIP;
@@ -79,6 +80,7 @@ import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.graphics.Rect;
 import android.graphics.Region;
+import android.os.Bundle;
 import android.os.Parcel;
 import android.os.Process;
 import android.os.SystemClock;
@@ -772,6 +774,34 @@ public class AccessibilityEndToEndTest extends StsExtraBusinessLogicTestCase {
         assertThat(receivedInfo.getActionList()).contains(ACTION_SCROLL_IN_DIRECTION);
 
         parcel.recycle();
+    }
+
+    @MediumTest
+    @Test
+    @ApiTest(apis = {
+            "android.view.accessibility.AccessibilityNodeInfo#ACTION_ARGUMENT_SCROLL_AMOUNT_FLOAT"})
+    public void testActionArgumentScrollAmountFloat() throws Exception {
+        class MyView extends View {
+            MyView(Context context) {
+                super(context);
+            }
+
+            @Override
+            public boolean performAccessibilityAction(int action, Bundle args) {
+                final float scrollAmount = args.getFloat(ACTION_ARGUMENT_SCROLL_AMOUNT_FLOAT, -1F);
+                return scrollAmount < 0 ? false : true;
+            }
+        }
+        Bundle bundle = new Bundle();
+        bundle.putFloat(ACTION_ARGUMENT_SCROLL_AMOUNT_FLOAT, -1);
+        MyView myView = new MyView(getContext());
+        assertThat(myView.performAccessibilityAction(
+                AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_FORWARD.getId(),
+                bundle)).isFalse();
+        bundle.putFloat(ACTION_ARGUMENT_SCROLL_AMOUNT_FLOAT, 1);
+        assertThat(myView.performAccessibilityAction(
+                AccessibilityNodeInfo.AccessibilityAction.ACTION_SCROLL_FORWARD.getId(),
+                bundle)).isTrue();
     }
 
     @MediumTest
