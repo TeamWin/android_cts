@@ -31,12 +31,14 @@ import android.database.sqlite.SQLiteCursorDriver;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteDatabase.CursorFactory;
 import android.database.sqlite.SQLiteDebug;
+import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteGlobal;
 import android.database.sqlite.SQLiteQuery;
 import android.database.sqlite.SQLiteStatement;
 import android.database.sqlite.SQLiteTransactionListener;
 import android.icu.text.Collator;
 import android.icu.util.ULocale;
+import android.os.SystemClock;
 import android.test.AndroidTestCase;
 import android.test.MoreAsserts;
 import android.test.suitebuilder.annotation.LargeTest;
@@ -46,8 +48,11 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.Phaser;
 import java.util.concurrent.Semaphore;
 import java.util.function.BinaryOperator;
 import java.util.function.UnaryOperator;
@@ -2006,10 +2011,61 @@ public class SQLiteDatabaseTest extends AndroidTestCase {
     }
 
     /**
-     * This test verifies that a deferred transaction can be started, and it is really deferred.
-     * A deferred transaction does not start until the database is accessed.
+     * Count the number of rows in the database <count> times.  The answer must match <expected>
+     * every time.  Any errors are reported back to the main thread through the <errors>
+     * array. The ticker forces the database reads to be interleaved with database operations from
+     * the sibling threads.
      */
-    public void testDeferredTransaction() throws Exception {
+    private void concurrentReadOnlyReader(SQLiteDatabase database, int count, long expected,
+            List<Throwable> errors, Phaser ticker) {
+        mDatabase.beginTransactionReadOnly();
+        try {
+            for (int i = count; i > 0; i--) {
+                ticker.arriveAndAwaitAdvance();
+                long r = DatabaseUtils.longForQuery(database, "SELECT count(*) from t1", null);
+                if (r != expected) {
+                    // The type of the exception is not important.  Only the message matters.
+                    throw new RuntimeException(
+                        String.format("concurrentRead expected %d, got %d", expected, r));
+                }
+            }
+            mDatabase.setTransactionSuccessful();
+        } catch (Throwable t) {
+            errors.add(t);
+        } finally {
+            mDatabase.endTransaction();
+            ticker.arriveAndDeregister();
+        }
+    }
+
+    /**
+     * Insert a new row <count> times.  Any errors are reported back to the main thread through
+     * the <errors> array. The ticker forces the database reads to be interleaved with database
+     * operations from the sibling threads.
+     */
+    private void concurrentImmediateWriter(SQLiteDatabase database, int count,
+            List<Throwable> errors, Phaser ticker) {
+        mDatabase.beginTransaction();
+        try {
+            int n = 100;
+            for (int i = count; i > 0; i--) {
+                ticker.arriveAndAwaitAdvance();
+                mDatabase.execSQL(String.format("INSERT INTO t1 (i) VALUES (%d)", n++));
+            }
+            mDatabase.setTransactionSuccessful();
+        } catch (Throwable t) {
+            errors.add(t);
+        } finally {
+            mDatabase.endTransaction();
+            ticker.arriveAndDeregister();
+        }
+    }
+
+    /**
+     * This test verifies that a read-only transaction can be started, and it is deferred.  A
+     * deferred transaction does not take a database locks until the database is accessed.
+     */
+    public void testReadOnlyTransaction() throws Exception {
         // Enable WAL.
         assertFalse(mDatabase.isWriteAheadLoggingEnabled());
         assertTrue(mDatabase.enableWriteAheadLogging());
@@ -2019,68 +2075,111 @@ public class SQLiteDatabaseTest extends AndroidTestCase {
 
         // Create the t1 table and put some data in it.
         mDatabase.beginTransaction();
-        mDatabase.execSQL("CREATE TABLE t1 (i int);");
-        mDatabase.execSQL("INSERT INTO t1 (i) VALUES (2)");
-        mDatabase.execSQL("INSERT INTO t1 (i) VALUES (3)");
-        mDatabase.setTransactionSuccessful();
-        mDatabase.endTransaction();
+        try {
+            mDatabase.execSQL("CREATE TABLE t1 (i int);");
+            mDatabase.execSQL("INSERT INTO t1 (i) VALUES (2)");
+            mDatabase.execSQL("INSERT INTO t1 (i) VALUES (3)");
+            mDatabase.setTransactionSuccessful();
+        } finally {
+            mDatabase.endTransaction();
+        }
 
-        final List<Throwable> errors = new ArrayList<>();
+        // Threads install errors in this array.
+        final List<Throwable> errors = Collections.synchronizedList(new ArrayList<Throwable>());
 
-        // Start a deferred transaction.  Other transactions should be able to proceed until the
-        // first time this transaction touches the database.
-        mDatabase.beginTransactionDeferred();
+        // This forces the read and write threads to execute in a lock-step, round-robin fashion.
+        Phaser ticker = new Phaser(3);
 
-        // Launch a second thread to read the database.
-        Thread readThread = new Thread(
-                () -> {
-                    try {
-                        DatabaseUtils.longForQuery(mDatabase, "SELECT count(*) from t1", null);
-                    } catch (Throwable t) {
-                        Log.e(TAG, "ReadThread failed", t);
-                        errors.add(t);
-                    }
-                });
-        readThread.start();
-        readThread.join(500L);
-        assertFalse("ReadThread did not complete", readThread.isAlive());
+        // Create three threads that will perform transactions.  One thread is a writer and two
+        // are readers.  The intent is that the readers begin before the writer commits, so the
+        // readers always see a database with two rows.
+        Thread readerA = new Thread(() -> {
+              concurrentReadOnlyReader(mDatabase, 4, 2, errors, ticker);
+        });
+        Thread readerB = new Thread(() -> {
+              concurrentReadOnlyReader(mDatabase, 4, 2, errors, ticker);
+        });
+        Thread writerC = new Thread(() -> {
+              concurrentImmediateWriter(mDatabase, 4, errors, ticker);
+        });
 
-        DatabaseUtils.longForQuery(mDatabase, "SELECT count(*) from t1", null);
-        mDatabase.setTransactionSuccessful();
-        mDatabase.endTransaction();
+        readerA.start();
+        readerB.start();
+        writerC.start();
+
+        // All three threads should have completed.  Give the total set 1s.  The 10ms delay for
+        // the second and third threads is just a small, positive number.
+        readerA.join(1000);
+        assertFalse(readerA.isAlive());
+        readerB.join(10);
+        assertFalse(readerB.isAlive());
+        writerC.join(10);
+        assertFalse(writerC.isAlive());
+
+        // The writer added 4 rows to the database.
+        long r = DatabaseUtils.longForQuery(mDatabase, "SELECT count(*) from t1", null);
+        assertEquals(6, r);
 
         assertTrue("ReadThread failed with errors: " + errors, errors.isEmpty());
     }
 
-    public void testTransactionWithListenerDeferred() {
+    public void testTransactionWithListenerReadOnly() {
         mDatabase.execSQL("CREATE TABLE test (num INTEGER);");
         mDatabase.execSQL("INSERT INTO test (num) VALUES (0)");
 
         assertEquals(mTransactionListenerOnBeginCalled, false);
         assertEquals(mTransactionListenerOnCommitCalled, false);
         assertEquals(mTransactionListenerOnRollbackCalled, false);
-        mDatabase.beginTransactionWithListenerDeferred(new TestSQLiteTransactionListener());
+        mDatabase.beginTransactionWithListenerReadOnly(new TestSQLiteTransactionListener());
 
-        // Assert that the transaction has started
-        assertEquals(mTransactionListenerOnBeginCalled, true);
-        assertEquals(mTransactionListenerOnCommitCalled, false);
-        assertEquals(mTransactionListenerOnRollbackCalled, false);
+        try {
 
-        setNum(1);
+            // Assert that the transaction has started
+            assertEquals(mTransactionListenerOnBeginCalled, true);
+            assertEquals(mTransactionListenerOnCommitCalled, false);
+            assertEquals(mTransactionListenerOnRollbackCalled, false);
 
-        // State shouldn't have changed
-        assertEquals(mTransactionListenerOnBeginCalled, true);
-        assertEquals(mTransactionListenerOnCommitCalled, false);
-        assertEquals(mTransactionListenerOnRollbackCalled, false);
+            assertNum(0);
 
-        // commit the transaction
-        mDatabase.setTransactionSuccessful();
-        mDatabase.endTransaction();
+            // State shouldn't have changed
+            assertEquals(mTransactionListenerOnBeginCalled, true);
+            assertEquals(mTransactionListenerOnCommitCalled, false);
+            assertEquals(mTransactionListenerOnRollbackCalled, false);
+
+            // commit the transaction
+            mDatabase.setTransactionSuccessful();
+        } finally {
+            mDatabase.endTransaction();
+        }
 
         // the listener should have been told that commit was called
         assertEquals(mTransactionListenerOnBeginCalled, true);
         assertEquals(mTransactionListenerOnCommitCalled, true);
         assertEquals(mTransactionListenerOnRollbackCalled, false);
+    }
+
+    public void testTransactionReadOnlyIsReadOnly() {
+        mDatabase.execSQL("CREATE TABLE test (num INTEGER);");
+        mDatabase.execSQL("INSERT INTO test (num) VALUES (0)");
+        mDatabase.beginTransactionReadOnly();
+        try {
+            try {
+                setNum(1);
+                fail("write operations are not permitted");
+            } catch (AssertionError e) {
+                // Let the failure pass through
+                throw e;
+            } catch (SQLiteException e) {
+                // This test is somewhat fragile as it depends on the text of the exception thrown
+                // from the SQLite APIs.
+                if (!e.getMessage().contains("connection is read-only")) {
+                    throw e;
+                }
+                // The test passes because this exception was expected.
+            }
+        } finally {
+            mDatabase.endTransaction();
+        }
     }
 
     public void testSqliteLibraryVersion() {
