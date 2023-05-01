@@ -52,6 +52,8 @@ class MockSatelliteServiceManager {
             "cmd phone set-satellite-listening-timeout-duration -t ";
     private static final String SET_SATELLITE_POINTING_UI_CLASS_NAME_CMD =
             "cmd phone set-satellite-pointing-ui-class-name";
+    private static final String SET_SATELLITE_DEVICE_ALIGN_TIMEOUT_DURATION_CMD =
+            "cmd phone set-satellite-device-aligned-timeout-duration -t ";
     private static final long TIMEOUT = 5000;
 
     private MockSatelliteService mSatelliteService;
@@ -563,6 +565,19 @@ class MockSatelliteServiceManager {
             return "true".equals(result);
         } catch (Exception e) {
             loge("setSatelliteListeningTimeoutDuration: e=" + e);
+            return false;
+        }
+    }
+
+    boolean setSatelliteDeviceAlignedTimeoutDuration(long timeoutMillis) {
+        try {
+            String result =
+                    TelephonyUtils.executeShellCommand(mInstrumentation,
+                            SET_SATELLITE_DEVICE_ALIGN_TIMEOUT_DURATION_CMD + timeoutMillis);
+            logd("setDeviceAlignedTimeoutDuration: result = " + result);
+            return "true".equals(result);
+        } catch (Exception e) {
+            loge("setDeviceAlignedTimeoutDuration: e=" + e);
             return false;
         }
     }
