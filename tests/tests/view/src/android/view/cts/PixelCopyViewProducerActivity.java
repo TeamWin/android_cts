@@ -69,7 +69,7 @@ public class PixelCopyViewProducerActivity extends Activity implements OnDrawLis
         mContent = new ColoredGrid(this);
         setContentView(mContent);
         View view = this.getWindow().getDecorView();
-        view.setSystemUiVisibility(View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
+        getWindow().setDecorFitsSystemWindows(false);
         mContent.getViewTreeObserver().addOnDrawListener(this);
         mContent.setOnApplyWindowInsetsListener(this);
     }
