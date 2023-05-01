@@ -547,12 +547,9 @@ public class SipDelegateManagerTest {
         assertEquals(2, sUpdatedStateSize);
         // Destroying delegate 1 will transfer all feature tags over to delegate 2
         destroySipDelegate(manager, transportImpl, delegateConn1, delegate1);
-        delegateConn2.setOperationCountDownLatch(1);
-        delegateConn2.waitForCountDown(/*ImsUtils.TEST_TIMEOUT_MS*/1000);
-        //delegate : 1, dialog confirmed : 1
-        assertEquals(1, sUpdatedStateSize);
-        // This internally triggers the destruction of the internal delegate2 and then recreation
-        // of another delegate with the new feature set that it supports.
+        // If one delegate is destroyed in multiple delegates,
+        // it internally triggers the destruction of the remaining delegates
+        // and then the recreation of another delegate with the new feature set that it supports.
         verifySipDelegateDestroyed(transportImpl, delegate2);
         delegateConn2.setOperationCountDownLatch(1);
         delegateConn2.waitForCountDown(/*ImsUtils.TEST_TIMEOUT_MS*/1000);
