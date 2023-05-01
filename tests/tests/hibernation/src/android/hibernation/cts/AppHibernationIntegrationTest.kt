@@ -327,6 +327,7 @@ class AppHibernationIntegrationTest {
             val uri = Uri.fromParts("package", APK_PACKAGE_NAME_S_APP, null /* fragment */)
             intent.data = uri
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
             context.startActivity(intent)
 
             waitForIdle()
