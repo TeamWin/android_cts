@@ -54,7 +54,7 @@ public class SatelliteManagerTestBase {
     protected static String TAG = "SatelliteManagerTestBase";
 
     protected static final String TOKEN = "TEST_TOKEN";
-    protected static final long TIMEOUT = 1000;
+    protected static final long TIMEOUT = 2000;
     protected static SatelliteManager sSatelliteManager;
 
     protected static void beforeAllTestsBase() {
