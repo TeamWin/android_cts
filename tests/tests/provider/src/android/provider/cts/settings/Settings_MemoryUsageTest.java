@@ -21,6 +21,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.testng.Assert.expectThrows;
 
 import android.content.ContentResolver;
+import android.os.Process;
 import android.os.SystemClock;
 import android.provider.Settings;
 
@@ -37,6 +38,8 @@ import org.junit.runner.RunWith;
 @RunWith(AndroidJUnit4.class)
 public class Settings_MemoryUsageTest {
     private static final String STRING_SETTING = Settings.System.RINGTONE;
+    private static final int sUserId = Process.myUserHandle().getIdentifier();
+
     private ContentResolver mContentResolver;
     private String mOldSettingValue;
 
@@ -44,7 +47,8 @@ public class Settings_MemoryUsageTest {
     public void setUp() throws Exception {
         final String packageName = InstrumentationRegistry.getTargetContext().getPackageName();
         InstrumentationRegistry.getInstrumentation().getUiAutomation().executeShellCommand(
-                "appops set " + packageName + " android:write_settings allow");
+                "appops set --user " + sUserId + " " + packageName
+                        + " android:write_settings allow");
         // Wait a beat to persist the change
         SystemClock.sleep(500);
         mContentResolver = InstrumentationRegistry.getTargetContext().getContentResolver();
