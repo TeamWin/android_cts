@@ -177,6 +177,8 @@ class SafetyLabelChangesJobServiceTest : BaseUsePermissionTest() {
     fun runNotificationJob_whenLocationSharingUpdatesForLocationGrantedApps_showsNotification() {
         installPackageViaSession(APP_APK_NAME_31, createAppMetadataWithNoSharing())
         waitForBroadcasts()
+        // TODO(b/279455955): Investigate why this is necessary and remove if possible.
+        Thread.sleep(500)
         installPackageViaSession(APP_APK_NAME_31, createAppMetadataWithLocationSharingNoAds())
         waitForBroadcasts()
         grantLocationPermission(APP_PACKAGE_NAME)
