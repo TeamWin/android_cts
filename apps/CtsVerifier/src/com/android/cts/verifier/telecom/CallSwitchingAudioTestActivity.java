@@ -73,7 +73,6 @@ public class CallSwitchingAudioTestActivity extends PassFailButtons.Activity {
         void onShowIncomingCallUi(CtsConnection connection) {
             Log.d(TAG, "onShowIncomingCallUi");
             super.onShowIncomingCallUi(connection);
-            startActivity(new Intent(getApplicationContext(), CallSwitchingInCallUi.class));
             connection.onAnswer(0);
         }
 
@@ -134,16 +133,9 @@ public class CallSwitchingAudioTestActivity extends PassFailButtons.Activity {
         mStep6Status.setImageResource(R.drawable.fs_indeterminate);
     }
 
-    private void checkButton(Button button) {
-        if (button == null) {
-            finish();
-        }
-    }
-
     private void defineTestButtonActions() {
         // ----- step 1a --------
         // Give the tester a button that allows them to change the default
-        checkButton(mNavigateToCallAccountSettings);
         mNavigateToCallAccountSettings.setOnClickListener(v -> {
             Intent intent = new Intent(TelecomManager.ACTION_CHANGE_PHONE_ACCOUNTS);
             startActivity(intent);
@@ -152,7 +144,6 @@ public class CallSwitchingAudioTestActivity extends PassFailButtons.Activity {
         // verify the test start state:
         //   1. SM PA registered and enabled
         //   2. SIM based account is the default
-        checkButton(mConfirmNoSimCallAudioIssues);
         mConfirmStartState.setOnClickListener(v -> {
             PhoneAccountUtils.registerTestSelfManagedPhoneAccount(this);
             if (isSelfManagedTestAccountEnabled() && isDefaultOutgoingAccountIsSimBased()) {
@@ -169,7 +160,6 @@ public class CallSwitchingAudioTestActivity extends PassFailButtons.Activity {
         });
         // ----- step 2 ---------
         // initiate a self-managed call on a separate thread
-        checkButton(mInitSelfManagedCall);
         mInitSelfManagedCall.setOnClickListener(v -> {
             (new AsyncTask<Void, Void, Throwable>() {
                 @Override
@@ -185,7 +175,6 @@ public class CallSwitchingAudioTestActivity extends PassFailButtons.Activity {
         });
         // ----- step 3 --------
         // Have the tester verify the self-managed call is playing audio while double checking.
-        checkButton(mConfirmSelfManagedCallAudio);
         mConfirmSelfManagedCallAudio.setOnClickListener(v -> {
             if (confirmIncomingCall()) {
                 mStep3Status.setImageResource(R.drawable.fs_good);
@@ -195,7 +184,6 @@ public class CallSwitchingAudioTestActivity extends PassFailButtons.Activity {
         });
         // ----- step 4 -----
         // Have the tester place a SIM call
-        checkButton(mPlaceSimCall);
         mPlaceSimCall.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -204,7 +192,6 @@ public class CallSwitchingAudioTestActivity extends PassFailButtons.Activity {
         });
         // --- step 5 ---
         // Have the tester verify sim call audio
-        checkButton(mConfirmNoSimCallAudioIssues);
         mConfirmNoSimCallAudioIssues.setOnClickListener(v -> {
             // unHold-the self-managed call
             mSelfManagedConnection.onUnhold();
@@ -213,7 +200,6 @@ public class CallSwitchingAudioTestActivity extends PassFailButtons.Activity {
         });
         // --- step 6
         // Have the tester verify self-managed call audio resumes
-        checkButton(mConfirmNoSelfManagedCallAudioIssues);
         mConfirmNoSelfManagedCallAudioIssues.setOnClickListener(v -> {
             // clean up test
             mSelfManagedConnection.onDisconnect();
