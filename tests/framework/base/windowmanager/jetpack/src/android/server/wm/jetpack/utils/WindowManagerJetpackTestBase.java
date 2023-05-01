@@ -162,14 +162,25 @@ public class WindowManagerJetpackTestBase {
         context.startActivity(intent);
     }
 
+
+    public static void startActivityOnDisplaySingleTop(@NonNull Context context,
+            int displayId, @NonNull ComponentName activityComponent, @NonNull Bundle extras) {
+        startActivityOnDisplaySingleTop(
+                context, displayId, activityComponent, extras, false /* fullscreen */);
+    }
+
     /**
      * Start an activity using a component name on the specified display with
      * {@link FLAG_ACTIVITY_SINGLE_TOP}. Can be used for activities from a different UIDs.
      */
     public static void startActivityOnDisplaySingleTop(@NonNull Context context,
-            int displayId, @NonNull ComponentName activityComponent, @NonNull Bundle extras) {
+            int displayId, @NonNull ComponentName activityComponent, @NonNull Bundle extras,
+            boolean fullscreen) {
         final ActivityOptions options = ActivityOptions.makeBasic();
         options.setLaunchDisplayId(displayId);
+        if (fullscreen) {
+            options.setLaunchWindowingMode(WINDOWING_MODE_FULLSCREEN);
+        }
 
         Intent intent = new Intent()
                 .addFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_SINGLE_TOP)

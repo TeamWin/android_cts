@@ -166,7 +166,7 @@ public class ActivityEmbeddingPolicyTests extends ActivityManagerTestBase {
         try {
             // Start an activity that will attempt to embed TestActivityKnownEmbeddingCerts
             startActivityOnDisplaySingleTop(mContext, DEFAULT_DISPLAY, SIGNED_EMBEDDING_ACTIVITY,
-                    Bundle.EMPTY);
+                    Bundle.EMPTY, true /* fullscreen */);
             mWmState.waitForActivityState(SIGNED_EMBEDDING_ACTIVITY,
                     WindowManagerState.STATE_RESUMED);
             mWmState.waitForAppTransitionIdleOnDisplay(DEFAULT_DISPLAY);
