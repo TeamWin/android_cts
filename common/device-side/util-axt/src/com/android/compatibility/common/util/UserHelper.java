@@ -70,9 +70,9 @@ public final class UserHelper {
     public UserHelper(Context context) {
         mUser = Objects.requireNonNull(context).getUser();
         UserManager userManager = context.getSystemService(UserManager.class);
-        boolean isForeground = userManager.isUserForeground();
-        boolean isProfile = userManager.isProfile();
         if (SdkLevel.isAtLeastU()) {
+            boolean isForeground = userManager.isUserForeground();
+            boolean isProfile = userManager.isProfile();
             mDisplayId = userManager.getMainDisplayIdAssignedToUser();
             mVisibleBackgroundUsersSupported = userManager
                     .isVisibleBackgroundUsersSupported();
@@ -100,8 +100,7 @@ public final class UserHelper {
             mVisibleBackgroundUsersSupported = false;
             mIsVisibleBackgroundUser = false;
             if (DEBUG) {
-                Log.d(TAG, "Pre-UDC constructor: mUser=" + mUser + ", isForeground=" + isForeground
-                        + ", isProfile=" + isProfile + ", mDisplayId=" + mDisplayId
+                Log.d(TAG, "Pre-UDC constructor: mUser=" + mUser + ", mDisplayId=" + mDisplayId
                         + ", mVisibleBackgroundUsersSupported=" + mVisibleBackgroundUsersSupported);
             }
         }
