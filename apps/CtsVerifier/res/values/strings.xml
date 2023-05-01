@@ -6358,13 +6358,7 @@ Follow the instructions on the screen to measure the frequency response for the 
     <string name="telecom_audio_call_test">Telecom Call Audio Test</string>
     <string name="telecom_audio_call_test_info">This test verifies that there are no audio
         issues when starting a sim call while in an active self-managed call. Note, this test
-        an active sim with service.
-    </string>
-    <string name="tel_audio_call_test_in_call_ui_label">call audio test InCallUi</string>
-    <string name="tel_audio_call_test_in_call_ui_instructions_text">
-        The self-managed call is now active. There should be audio playing to simulate a call.
-        Hold your ear to the phone and determine if you can hear audio playing.  Return to the
-        test by clicking "Go back to test" below.
+        requires the device under test to have an active sim with service.
     </string>
     <string name="telecom_status_image_description"> The image represents the status of the step
     in the test. The start state is indeterminate which is a question mark image. If the test step
@@ -6373,11 +6367,12 @@ Follow the instructions on the screen to measure the frequency response for the 
     <string name="tel_as1_instructions">set default outgoing phone account to a SIM based account
     </string>
     <string name="tel_as2_instructions">
-        Click the button below to initiate a self-managed call. You should be segued over
-        to a InCall-UI screen and hear an audio clip.
+        Click the button below to initiate a self-managed call. Once clicked, you should hear an
+        audio clip looping in whichever audio route is active (e.g. earpiece).
     </string>
     <string name="tel_as3_instructions">Click the button below to confirm the audio from the
-        self-managed call is audible
+        self-managed call is audible. Hearing the audio means the self-managed call was created
+        successfully.
     </string>
     <string name="tel_as4_instructions">Now, enter a valid phone number and start an active sim
         based call. Ensure call audio is working both ways and end the sim call.

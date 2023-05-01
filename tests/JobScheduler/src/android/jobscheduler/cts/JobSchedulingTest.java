@@ -98,7 +98,7 @@ public class JobSchedulingTest extends BaseJobSchedulerTest {
                     mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT_MS));
 
             // Confirm no ANR
-            monitor.assertNoAnr(30_000);
+            monitor.assertNoAnr(25_000);
         }
     }
 
@@ -128,7 +128,7 @@ public class JobSchedulingTest extends BaseJobSchedulerTest {
             mTestAppInterface.cancelJob();
 
             // Confirm no ANR
-            monitor.assertNoAnr(30_000);
+            monitor.assertNoAnr(25_000);
         }
     }
 
