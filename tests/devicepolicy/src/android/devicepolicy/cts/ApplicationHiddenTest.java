@@ -25,7 +25,6 @@ import static org.testng.Assert.assertThrows;
 
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.pm.PackageManager;
 import android.stats.devicepolicy.EventId;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
@@ -119,6 +118,14 @@ public class ApplicationHiddenTest {
     @CanSetPolicyTest(policy = ApplicationHiddenSystemOnly.class)
     @EnsureTestAppInstalled
     public void isApplicationHidden_notSystemApp_throwsException() {
+        assertThrows(SecurityException.class, () -> sDeviceState.dpc().devicePolicyManager()
+                .isApplicationHidden(sDeviceState.dpc().componentName(),
+                        sDeviceState.testApp().packageName()));
+    }
+
+    @CannotSetPolicyTest(policy = ApplicationHidden.class)
+    @EnsureTestAppInstalled
+    public void isApplicationHidden_notPermitted_throwsException() {
         assertThrows(SecurityException.class, () -> sDeviceState.dpc().devicePolicyManager()
                 .isApplicationHidden(sDeviceState.dpc().componentName(),
                         sDeviceState.testApp().packageName()));
