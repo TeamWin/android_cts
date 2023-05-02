@@ -93,7 +93,7 @@ public class Utils {
     public static final int EXTRA_HOTWORD_DETECTION_SERVICE_SEND_CUSTOM_INIT_STATUS = 4;
     public static final int EXTRA_HOTWORD_DETECTION_SERVICE_ENABLE_AUDIO_EGRESS = 5;
     public static final int EXTRA_HOTWORD_DETECTION_SERVICE_CLEAR_SOFTWARE_DETECTION_JOB = 6;
-    public static final int EXTRA_HOTWORD_DETECTION_SERVICE_No_NEED_ACTION_DURING_DETECTION = 7;
+    public static final int EXTRA_HOTWORD_DETECTION_SERVICE_NO_NEED_ACTION_DURING_DETECTION = 7;
     // test scenario to verify the HotwordDetectionService was created after a given time
     // This can be used to verify the service was restarted or recreated.
     public static final int EXTRA_HOTWORD_DETECTION_SERVICE_SEND_SUCCESS_IF_CREATED_AFTER = 8;
