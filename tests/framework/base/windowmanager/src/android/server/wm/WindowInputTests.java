@@ -766,36 +766,31 @@ public class WindowInputTests {
 
         final long downTime = SystemClock.uptimeMillis();
         final MotionEvent eventDown = MotionEvent.obtain(
-                downTime, downTime, MotionEvent.ACTION_DOWN, testPoint.x, testPoint.y, 1);
+                downTime, downTime, MotionEvent.ACTION_DOWN, testPoint.x, testPoint.y,
+                /*metaState=*/0);
         mInstrumentation.sendPointerSync(eventDown);
 
         final ExecutorService executor = Executors.newSingleThreadExecutor();
         boolean[] securityExceptionCaught = new boolean[1];
         Exception[] illegalArgumentException = new Exception[1];
         executor.execute(() -> {
-            try {
-                mInstrumentation.sendPointerSync(eventDown);
-            } catch (IllegalArgumentException e) {
-                // InputManagerService throws IllegalArgumentException when input target mismatch.
-                // Store the exception, and raise test failure later to avoid cts thread crash.
-                illegalArgumentException[0] = e;
-                return;
-            }
             for (int i = 0; i < 20; i++) {
                 final long eventTime = SystemClock.uptimeMillis();
                 final MotionEvent eventMove = MotionEvent.obtain(
-                        downTime, eventTime, MotionEvent.ACTION_MOVE, testPoint.x, testPoint.y, 1);
+                        downTime, eventTime, MotionEvent.ACTION_MOVE, testPoint.x, testPoint.y,
+                        /*metaState=*/0);
                 try {
                     mInstrumentation.sendPointerSync(eventMove);
                 } catch (SecurityException e) {
                     securityExceptionCaught[0] = true;
                     return;
                 } catch (IllegalArgumentException e) {
+                    // InputManagerService throws this exception when input target does not match.
+                    // Store the exception, and raise test failure later to avoid cts thread crash.
                     illegalArgumentException[0] = e;
                     return;
                 }
             }
-
         });
 
         // Launch another activity, should not crash the process.
