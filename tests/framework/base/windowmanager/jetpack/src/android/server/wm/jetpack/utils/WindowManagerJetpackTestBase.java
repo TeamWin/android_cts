@@ -22,6 +22,7 @@ import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP;
 import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
 import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
+import static android.content.pm.PackageManager.FEATURE_PICTURE_IN_PICTURE;
 import static android.content.pm.PackageManager.FEATURE_SCREEN_LANDSCAPE;
 import static android.content.pm.PackageManager.FEATURE_SCREEN_PORTRAIT;
 import static android.content.res.Configuration.ORIENTATION_LANDSCAPE;
@@ -119,6 +120,10 @@ public class WindowManagerJetpackTestBase {
         final boolean supportsLandscape = hasDeviceFeature(FEATURE_SCREEN_LANDSCAPE);
         final boolean supportsPortrait = hasDeviceFeature(FEATURE_SCREEN_PORTRAIT);
         return (supportsLandscape && supportsPortrait) || (!supportsLandscape && !supportsPortrait);
+    }
+
+    protected boolean supportsPip() {
+        return hasDeviceFeature(FEATURE_PICTURE_IN_PICTURE);
     }
 
     public <T extends Activity> T startActivityNewTask(@NonNull Class<T> activityClass) {
