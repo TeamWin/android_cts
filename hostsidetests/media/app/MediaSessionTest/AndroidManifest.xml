@@ -20,7 +20,9 @@
 
     <uses-sdk android:minSdkVersion="26"/>
 
-    <application android:testOnly="true">
+    <!-- android:debuggable flag is needed to override compat changes in user builds. -->
+    <application android:testOnly="true"
+         android:debuggable="true">
         <uses-library android:name="android.test.runner"/>
 
         <service android:name=".MediaSessionManagerTest"
