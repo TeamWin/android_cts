@@ -335,6 +335,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
         return false;
     }
 
+    @AppModeFull(reason = "ACTION_VOLUME_CHANGED is not sent to Instant apps (no FLAG_RECEIVER_VISIBLE_TO_INSTANT_APPS)")
     public void testVolumeChangedIntent() throws Exception {
         final MyBlockingIntentReceiver receiver =
                 new MyBlockingIntentReceiver(AudioManager.ACTION_VOLUME_CHANGED);
