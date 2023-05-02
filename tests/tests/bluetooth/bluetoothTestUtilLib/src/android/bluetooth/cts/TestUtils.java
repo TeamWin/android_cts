@@ -36,6 +36,7 @@ import androidx.test.platform.app.InstrumentationRegistry;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
@@ -136,6 +137,14 @@ public class TestUtils {
     public static void dropPermissionAsShellUid() {
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
                 .dropShellPermissionIdentity();
+    }
+
+    /**
+     * @return permissions adopted from Shell
+     */
+    public static Set<String> getAdoptedShellPermissions() {
+        return InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .getAdoptedShellPermissions();
     }
 
     /**
@@ -248,7 +257,7 @@ public class TestUtils {
         private final int mProfileId;
         private final BluetoothAdapter mAdapter;
         private final Context mContext;
-        BluetoothCtsServiceConnector(String logTag, int profileId, BluetoothAdapter adapter,
+        public BluetoothCtsServiceConnector(String logTag, int profileId, BluetoothAdapter adapter,
                 Context context) {
             mLogTag = logTag;
             mProfileId = profileId;
