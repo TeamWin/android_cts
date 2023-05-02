@@ -432,7 +432,8 @@ public class TelephonyManagerTest {
         }
 
         void waitForIntent() throws Exception {
-            mLatch.await(5000, TimeUnit.MILLISECONDS);
+            // Extend to wait up to 10 seconds to receive CountryChanged Intent.
+            mLatch.await(10000, TimeUnit.MILLISECONDS);
         }
     }
 
@@ -5787,7 +5788,10 @@ public class TelephonyManagerTest {
             synchronized (mLock) {
                 if (mRadioPowerState != desiredState) {
                     try {
-                        mLock.wait(5000);
+                        // Since SST sets waiting time up to 10 seconds for the power off radio,
+                        // the RadioStateIntent timer extends the wait time up to 10 seconds
+                        // here as well.
+                        mLock.wait(10000);
                     } catch (Exception e) {
                         fail(e.getMessage());
                     }
