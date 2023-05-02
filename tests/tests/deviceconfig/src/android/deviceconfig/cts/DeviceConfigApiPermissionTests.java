@@ -20,6 +20,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
+import android.os.Binder;
 import android.provider.DeviceConfig;
 import android.provider.DeviceConfig.OnPropertiesChangedListener;
 import android.provider.DeviceConfig.Properties;
@@ -151,6 +152,8 @@ public final class DeviceConfigApiPermissionTests {
      */
     @Test
     public void testDeviceConfigWithAllPermissions() {
+        final long prevIdentity = Binder.clearCallingIdentity();
+
         StringBuilder violations = new StringBuilder();
 
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
@@ -175,6 +178,8 @@ public final class DeviceConfigApiPermissionTests {
         if (violations.length() > 0) {
             fail(violations.toString());
         }
+
+        Binder.restoreCallingIdentity(prevIdentity);
     }
 
     /**
