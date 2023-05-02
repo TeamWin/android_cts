@@ -70,6 +70,9 @@ import java.util.TreeSet;
 @AppModeFull(reason = "This test test platform properties, not capabilities of an apps")
 @RunWith(AndroidJUnit4.class)
 public class PrivappPermissionsTest {
+
+    private static final boolean DEBUG = false;
+
     private static final String TAG = "PrivappPermissionsTest";
 
     private static final String PLATFORM_PACKAGE_NAME = "android";
@@ -149,25 +152,28 @@ public class PrivappPermissionsTest {
 
                 Set<String> whitelist = getPrivAppPermissions(packageName);
                 Set<String> denylist = getPrivAppDenyPermissions(packageName);
-                String msg = "Application " + packageName + "\n"
-                        + "  Factory requested permissions:\n"
-                        + getPrintableSet("    ", factoryRequestedPrivPermissions)
-                        + "  Granted:\n"
-                        + getPrintableSet("    ", granted)
-                        + "  Removed:\n"
-                        + getPrintableSet("    ", removed)
-                        + "  Whitelisted:\n"
-                        + getPrintableSet("    ", whitelist)
-                        + "  Denylisted:\n"
-                        + getPrintableSet("    ", denylist)
-                        + "  Factory not granted:\n"
-                        + getPrintableSet("    ", factoryNotGranted);
 
-                for (String line : msg.split("\n")) {
-                    Log.i(TAG, line);
+                if (DEBUG) {
+                    String msg = "Application " + packageName + "\n"
+                            + "  Factory requested permissions:\n"
+                            + getPrintableSet("    ", factoryRequestedPrivPermissions)
+                            + "  Granted:\n"
+                            + getPrintableSet("    ", granted)
+                            + "  Removed:\n"
+                            + getPrintableSet("    ", removed)
+                            + "  Whitelisted:\n"
+                            + getPrintableSet("    ", whitelist)
+                            + "  Denylisted:\n"
+                            + getPrintableSet("    ", denylist)
+                            + "  Factory not granted:\n"
+                            + getPrintableSet("    ", factoryNotGranted);
 
-                    // Prevent log from truncating output
-                    Thread.sleep(10);
+                    for (String line : msg.split("\n")) {
+                        Log.i(TAG, line);
+
+                        // Prevent log from truncating output
+                        Thread.sleep(10);
+                    }
                 }
 
                 Set<String> grantedNotInWhitelist = difference(granted, whitelist);
