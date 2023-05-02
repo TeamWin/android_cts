@@ -22,6 +22,7 @@ import static com.android.bedstead.nene.permissions.CommonPermissions.BACKUP;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assume.assumeFalse;
 import static org.testng.Assert.assertThrows;
 
 import android.app.backup.BackupManager;
@@ -39,6 +40,7 @@ import com.android.bedstead.harrier.policies.Backup;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.utils.Poll;
 
+import org.junit.Assume;
 import org.junit.ClassRule;
 import org.junit.Ignore;
 import org.junit.Rule;
@@ -72,6 +74,10 @@ public final class BackupTest {
     @Postsubmit(reason = "new test")
     @EnsureHasPermission(BACKUP)
     public void setBackupServiceEnabled_true_setsBackupServiceEnabled() {
+        assumeFalse("Logic is special cased on headless system user",
+                TestApis.users().instrumented().type()
+                        .name().equals("android.os.usertype.system.HEADLESS"));
+
         try {
             sDeviceState.dpc().devicePolicyManager().setBackupServiceEnabled(
                     sDeviceState.dpc().componentName(), true);
