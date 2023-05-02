@@ -30,6 +30,7 @@ import static android.voiceinteraction.cts.testcore.Helper.MANAGE_VOICE_KEYPHRAS
 import static android.voiceinteraction.cts.testcore.Helper.createKeyphraseRecognitionExtraList;
 import static android.voiceinteraction.cts.testcore.Helper.createKeyprhaseArray;
 import static android.voiceinteraction.cts.testcore.Helper.waitForFutureDoneAndAssertSuccessful;
+import static android.voiceinteraction.cts.testcore.Helper.waitForVoidFutureAndAssertSuccessful;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
@@ -44,18 +45,22 @@ import android.hardware.soundtrigger.SoundTrigger;
 import android.media.soundtrigger.SoundTriggerInstrumentation;
 import android.media.soundtrigger.SoundTriggerInstrumentation.RecognitionSession;
 import android.os.BatterySaverPolicyConfig;
+import android.os.PersistableBundle;
 import android.os.PowerManager;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.service.voice.AlwaysOnHotwordDetector;
 import android.service.voice.HotwordDetectionService;
 import android.soundtrigger.cts.instrumentation.SoundTriggerInstrumentationObserver;
+import android.soundtrigger.cts.instrumentation.SoundTriggerInstrumentationObserver.ModelSessionObserver;
 import android.util.Log;
+import android.voiceinteraction.common.Utils;
 import android.voiceinteraction.cts.services.CtsBasicVoiceInteractionService;
 import android.voiceinteraction.cts.testcore.Helper;
 import android.voiceinteraction.cts.testcore.VoiceInteractionServiceConnectedClassRule;
 import android.voiceinteraction.cts.testcore.VoiceInteractionServiceOverrideEnrollmentRule;
 
+import androidx.annotation.Nullable;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import com.android.compatibility.common.util.ApiTest;
@@ -117,10 +122,15 @@ public class AlwaysOnHotwordDetectorTest {
                 .getUiAutomation()
                 .adoptShellPermissionIdentity(
                         RECORD_AUDIO, CAPTURE_AUDIO_HOTWORD, MANAGE_HOTWORD_DETECTION,
-                        SOUND_TRIGGER_RUN_IN_BATTERY_SAVER);
+                        SOUND_TRIGGER_RUN_IN_BATTERY_SAVER, DEVICE_POWER, POWER_SAVER);
     }
 
     private void createAndEnrollAlwaysOnHotwordDetector() throws InterruptedException {
+        createAndEnrollAlwaysOnHotwordDetector(null);
+    }
+
+    private void createAndEnrollAlwaysOnHotwordDetector(@Nullable PersistableBundle options)
+            throws InterruptedException {
         mAlwaysOnHotwordDetector = null;
         // Wait onAvailabilityChanged() callback called following AOHD creation.
         getService().initAvailabilityChangeLatch();
@@ -135,7 +145,7 @@ public class AlwaysOnHotwordDetectorTest {
 
         // Create alwaysOnHotwordDetector and wait onHotwordDetectionServiceInitialized() callback
         getService().createAlwaysOnHotwordDetectorWithOnFailureCallback(
-                        /* useExecutor= */ true, /* mainThread= */ true);
+                /* useExecutor= */ true, /* mainThread= */ true, options);
 
         getService().waitSandboxedDetectionServiceInitializedCalledOrException();
         // Verify that detector creation didn't throw
@@ -166,8 +176,7 @@ public class AlwaysOnHotwordDetectorTest {
     public void setup() {
         // Hook up SoundTriggerInstrumentation to inject/observe STHAL operations.
         // Requires MANAGE_SOUND_TRIGGER
-        runWithShellPermissionIdentity(() ->
-                mInstrumentationObserver.attachInstrumentation());
+        runWithShellPermissionIdentity(mInstrumentationObserver::attachInstrumentation);
     }
 
     @After
@@ -190,6 +199,15 @@ public class AlwaysOnHotwordDetectorTest {
         getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
     }
 
+    @ApiTest(apis = {
+            "android.media.voice.KeyphraseModelManager#updateKeyphraseSoundModel",
+            "android.service.voice.VoiceInteractionService#createAlwaysOnHotwordDetector",
+            "android.service.voice.AlwaysOnHotwordDetector#startRecognition",
+            "android.service.voice.AlwaysOnHotwordDetector.Callback#onAvailabilityChanged",
+            "android.service.voice.AlwaysOnHotwordDetector.Callback#onDetected",
+            "android.service.voice.AlwaysOnHotwordDetector"
+                    + ".Callback#onHotwordDetectionServiceInitialized",
+    })
     @Test
     public void testStartRecognition_success() throws Exception {
         createAndEnrollAlwaysOnHotwordDetector();
@@ -211,6 +229,16 @@ public class AlwaysOnHotwordDetectorTest {
         Helper.verifyDetectedResult(detectResult, Helper.DETECTED_RESULT);
     }
 
+    @ApiTest(apis = {
+            "android.media.voice.KeyphraseModelManager#updateKeyphraseSoundModel",
+            "android.service.voice.VoiceInteractionService#createAlwaysOnHotwordDetector",
+            "android.service.voice.AlwaysOnHotwordDetector#startRecognition",
+            "android.service.voice.AlwaysOnHotwordDetector.Callback#onAvailabilityChanged",
+            "android.service.voice.AlwaysOnHotwordDetector.Callback#onDetected",
+            "android.service.voice.AlwaysOnHotwordDetector.Callback#onError",
+            "android.service.voice.AlwaysOnHotwordDetector"
+                    + ".Callback#onHotwordDetectionServiceInitialized",
+    })
     @Test
     public void testHalIsDead_onFailureReceived() throws Exception {
         createAndEnrollAlwaysOnHotwordDetector();
@@ -230,6 +258,18 @@ public class AlwaysOnHotwordDetectorTest {
         assertThat(failure.getErrorCode()).isEqualTo(ERROR_CODE_MODULE_DIED);
     }
 
+    @ApiTest(apis = {
+            "android.media.voice.KeyphraseModelManager#updateKeyphraseSoundModel",
+            "android.service.voice.VoiceInteractionService#createAlwaysOnHotwordDetector",
+            "android.service.voice.AlwaysOnHotwordDetector#startRecognition",
+            "android.service.voice.AlwaysOnHotwordDetector.Callback#onAvailabilityChanged",
+            "android.service.voice.AlwaysOnHotwordDetector.Callback#onDetected",
+            "android.service.voice.AlwaysOnHotwordDetector.Callback#onError",
+            "android.service.voice.AlwaysOnHotwordDetector"
+                    + ".Callback#onHotwordDetectionServiceInitialized",
+            "android.service.voice.AlwaysOnHotwordDetector.Callback#onRecognitionPaused",
+            "android.service.voice.AlwaysOnHotwordDetector.Callback#onRecognitionResumed",
+    })
     @Test
     public void testRecognitionResumedFailed_onFailureReceived() throws Exception {
         createAndEnrollAlwaysOnHotwordDetector();
@@ -260,8 +300,17 @@ public class AlwaysOnHotwordDetectorTest {
         instrumentation.setResourceContention(false);
     }
 
-    @ApiTest(apis = {"AlwaysOnHotwordDetector.Callback#onRecognitionPaused",
-            "AlwaysOnHotwordDetector.Callback#onRecognitionResumed"})
+    @ApiTest(apis = {
+            "android.media.voice.KeyphraseModelManager#updateKeyphraseSoundModel",
+            "android.service.voice.AlwaysOnHotwordDetector#startRecognition",
+            "android.service.voice.AlwaysOnHotwordDetector.Callback#onAvailabilityChanged",
+            "android.service.voice.AlwaysOnHotwordDetector.Callback#onDetected",
+            "android.service.voice.AlwaysOnHotwordDetector"
+                    + ".Callback#onHotwordDetectionServiceInitialized",
+            "android.service.voice.AlwaysOnHotwordDetector.Callback#onRecognitionPaused",
+            "android.service.voice.AlwaysOnHotwordDetector.Callback#onRecognitionResumed",
+            "android.service.voice.VoiceInteractionService#createAlwaysOnHotwordDetector",
+    })
     @Test
     public void testAbortRecognitionAndOnResourceAvailable_recognitionPausedAndResumed()
             throws Exception {
@@ -294,6 +343,16 @@ public class AlwaysOnHotwordDetectorTest {
         getService().waitOnRecognitionResumedCalled();
     }
 
+    @ApiTest(apis = {
+            "android.media.voice.KeyphraseModelManager#updateKeyphraseSoundModel",
+            "android.service.voice.AlwaysOnHotwordDetector#startRecognition",
+            "android.service.voice.AlwaysOnHotwordDetector.Callback#onAvailabilityChanged",
+            "android.service.voice.AlwaysOnHotwordDetector.Callback#onDetected",
+            "android.service.voice.AlwaysOnHotwordDetector"
+                    + ".Callback#onHotwordDetectionServiceInitialized",
+            "android.service.voice.AlwaysOnHotwordDetector.Callback#onRecognitionPaused",
+            "android.service.voice.VoiceInteractionService#createAlwaysOnHotwordDetector",
+    })
     @Test
     public void testStartRecognitionNoFlagBatterySaverAllEnabled_noRecognitionPaused()
             throws Exception {
@@ -324,6 +383,17 @@ public class AlwaysOnHotwordDetectorTest {
         }
     }
 
+    @ApiTest(apis = {
+            "android.media.voice.KeyphraseModelManager#updateKeyphraseSoundModel",
+            "android.service.voice.AlwaysOnHotwordDetector#startRecognition",
+            "android.service.voice.AlwaysOnHotwordDetector.Callback#onAvailabilityChanged",
+            "android.service.voice.AlwaysOnHotwordDetector.Callback#onDetected",
+            "android.service.voice.AlwaysOnHotwordDetector"
+                    + ".Callback#onHotwordDetectionServiceInitialized",
+            "android.service.voice.AlwaysOnHotwordDetector.Callback#onRecognitionPaused",
+            "android.service.voice.AlwaysOnHotwordDetector.Callback#onRecognitionResumed",
+            "android.service.voice.VoiceInteractionService#createAlwaysOnHotwordDetector",
+    })
     @Test
     public void testStartRecognitionNoFlagBatterySaverCriticalOnly_recognitionPaused()
             throws Exception {
@@ -360,6 +430,17 @@ public class AlwaysOnHotwordDetectorTest {
         }
     }
 
+    @ApiTest(apis = {
+            "android.media.voice.KeyphraseModelManager#updateKeyphraseSoundModel",
+            "android.service.voice.AlwaysOnHotwordDetector#startRecognition",
+            "android.service.voice.AlwaysOnHotwordDetector.Callback#onAvailabilityChanged",
+            "android.service.voice.AlwaysOnHotwordDetector.Callback#onDetected",
+            "android.service.voice.AlwaysOnHotwordDetector"
+                    + ".Callback#onHotwordDetectionServiceInitialized",
+            "android.service.voice.AlwaysOnHotwordDetector.Callback#onRecognitionPaused",
+            "android.service.voice.AlwaysOnHotwordDetector.Callback#onRecognitionResumed",
+            "android.service.voice.VoiceInteractionService#createAlwaysOnHotwordDetector",
+    })
     @Test
     public void testStartRecognitionNoFlagBatterySaverAllDisabled_recognitionPaused()
             throws Exception {
@@ -396,6 +477,16 @@ public class AlwaysOnHotwordDetectorTest {
         }
     }
 
+    @ApiTest(apis = {
+            "android.media.voice.KeyphraseModelManager#updateKeyphraseSoundModel",
+            "android.service.voice.AlwaysOnHotwordDetector#startRecognition",
+            "android.service.voice.AlwaysOnHotwordDetector.Callback#onAvailabilityChanged",
+            "android.service.voice.AlwaysOnHotwordDetector.Callback#onDetected",
+            "android.service.voice.AlwaysOnHotwordDetector"
+                    + ".Callback#onHotwordDetectionServiceInitialized",
+            "android.service.voice.AlwaysOnHotwordDetector.Callback#onRecognitionPaused",
+            "android.service.voice.VoiceInteractionService#createAlwaysOnHotwordDetector",
+    })
     @Test
     public void testStartRecognitionWithFlagBatterySaverAllEnabled_noRecognitionPaused()
             throws Exception {
@@ -427,6 +518,16 @@ public class AlwaysOnHotwordDetectorTest {
         }
     }
 
+    @ApiTest(apis = {
+            "android.media.voice.KeyphraseModelManager#updateKeyphraseSoundModel",
+            "android.service.voice.AlwaysOnHotwordDetector#startRecognition",
+            "android.service.voice.AlwaysOnHotwordDetector.Callback#onAvailabilityChanged",
+            "android.service.voice.AlwaysOnHotwordDetector.Callback#onDetected",
+            "android.service.voice.AlwaysOnHotwordDetector"
+                    + ".Callback#onHotwordDetectionServiceInitialized",
+            "android.service.voice.AlwaysOnHotwordDetector.Callback#onRecognitionPaused",
+            "android.service.voice.VoiceInteractionService#createAlwaysOnHotwordDetector",
+    })
     @Test
     public void testStartRecognitionWithFlagBatterySaverCriticalOnly_noRecognitionPaused()
             throws Exception {
@@ -459,6 +560,17 @@ public class AlwaysOnHotwordDetectorTest {
         }
     }
 
+    @ApiTest(apis = {
+            "android.media.voice.KeyphraseModelManager#updateKeyphraseSoundModel",
+            "android.service.voice.AlwaysOnHotwordDetector#startRecognition",
+            "android.service.voice.AlwaysOnHotwordDetector.Callback#onAvailabilityChanged",
+            "android.service.voice.AlwaysOnHotwordDetector.Callback#onDetected",
+            "android.service.voice.AlwaysOnHotwordDetector"
+                    + ".Callback#onHotwordDetectionServiceInitialized",
+            "android.service.voice.AlwaysOnHotwordDetector.Callback#onRecognitionPaused",
+            "android.service.voice.AlwaysOnHotwordDetector.Callback#onRecognitionResumed",
+            "android.service.voice.VoiceInteractionService#createAlwaysOnHotwordDetector",
+    })
     @Test
     public void testStartRecognitionWithFlagBatterySaverAllDisabled_recognitionPaused()
             throws Exception {
@@ -497,6 +609,14 @@ public class AlwaysOnHotwordDetectorTest {
         }
     }
 
+    @ApiTest(apis = {
+            "android.media.voice.KeyphraseModelManager#updateKeyphraseSoundModel",
+            "android.service.voice.AlwaysOnHotwordDetector#destroy",
+            "android.service.voice.AlwaysOnHotwordDetector.Callback#onAvailabilityChanged",
+            "android.service.voice.AlwaysOnHotwordDetector"
+                    + ".Callback#onHotwordDetectionServiceInitialized",
+            "android.service.voice.VoiceInteractionService#createAlwaysOnHotwordDetector",
+    })
     @Test
     public void testAfterDestroy_detectorIsInvalid() throws Exception {
         createAndEnrollAlwaysOnHotwordDetector();
@@ -523,8 +643,122 @@ public class AlwaysOnHotwordDetectorTest {
                 new BatterySaverPolicyConfig.Builder(powerManager.getFullPowerSavePolicy())
                         .setSoundTriggerMode(mode)
                         .build();
-        runWithShellPermissionIdentity(
-                () -> powerManager.setFullPowerSavePolicy(newFullPolicyConfig), DEVICE_POWER,
-                POWER_SAVER);
+        powerManager.setFullPowerSavePolicy(newFullPolicyConfig);
+    }
+
+    @ApiTest(apis = {
+            "android.media.voice.KeyphraseModelManager#updateKeyphraseSoundModel",
+            "android.service.voice.AlwaysOnHotwordDetector#destroy",
+            "android.service.voice.AlwaysOnHotwordDetector.Callback#onAvailabilityChanged",
+            "android.service.voice.AlwaysOnHotwordDetector"
+                    + ".Callback#onHotwordDetectionServiceInitialized",
+            "android.service.voice.VoiceInteractionService#createAlwaysOnHotwordDetector",
+    })
+    @Test
+    public void testDestroy_halModelUnloadedAndClientDetached() throws Exception {
+        createAndEnrollAlwaysOnHotwordDetector();
+        // Grab permissions for more than a single call since we get callbacks
+        adoptSoundTriggerPermissions();
+
+        mAlwaysOnHotwordDetector.startRecognition(0, new byte[]{1, 2, 3, 4, 5});
+        assertThat(waitForFutureDoneAndAssertSuccessful(
+                mInstrumentationObserver.getOnRecognitionStartedFuture())).isNotNull();
+
+        ModelSessionObserver modelSessionObserver = waitForFutureDoneAndAssertSuccessful(
+                mInstrumentationObserver.getGlobalCallbackObserver().getOnModelLoadedFuture());
+        assertThat(modelSessionObserver).isNotNull();
+
+        // destroy detector to trigger a client detach
+        mAlwaysOnHotwordDetector.destroy();
+
+        waitForVoidFutureAndAssertSuccessful(modelSessionObserver.getOnRecognitionStoppedFuture());
+        waitForVoidFutureAndAssertSuccessful(modelSessionObserver.getOnModelUnloadedFuture());
+        waitForVoidFutureAndAssertSuccessful(
+                mInstrumentationObserver.getGlobalCallbackObserver().getOnClientDetachedFuture());
+    }
+
+    @ApiTest(apis = {
+            "android.media.voice.KeyphraseModelManager#updateKeyphraseSoundModel",
+            "android.service.voice.VoiceInteractionService#createAlwaysOnHotwordDetector",
+            "android.service.voice.AlwaysOnHotwordDetector#destroy",
+            "android.service.voice.AlwaysOnHotwordDetector.Callback#onAvailabilityChanged",
+            "android.service.voice.AlwaysOnHotwordDetector"
+                    + ".Callback#onHotwordDetectionServiceInitialized",
+    })
+    @Test
+    public void testDestroy_clientDetachedWhenNoModelLoaded() throws Exception {
+        createAndEnrollAlwaysOnHotwordDetector();
+        // Grab permissions for more than a single call since we get callbacks
+        adoptSoundTriggerPermissions();
+
+        waitForVoidFutureAndAssertSuccessful(
+                mInstrumentationObserver.getGlobalCallbackObserver().getOnClientAttachedFuture());
+
+        // destroy detector to trigger a client detach
+        mAlwaysOnHotwordDetector.destroy();
+
+        waitForVoidFutureAndAssertSuccessful(
+                mInstrumentationObserver.getGlobalCallbackObserver().getOnClientDetachedFuture());
+    }
+
+    @ApiTest(apis = {
+            "android.media.voice.KeyphraseModelManager#updateKeyphraseSoundModel",
+            "android.service.voice.AlwaysOnHotwordDetector#destroy",
+            "android.service.voice.AlwaysOnHotwordDetector.Callback#onAvailabilityChanged",
+            "android.service.voice.AlwaysOnHotwordDetector"
+                    + ".Callback#onHotwordDetectionServiceInitialized",
+            "android.service.voice.VoiceInteractionService#createAlwaysOnHotwordDetector",
+    })
+    @Test
+    public void testDestroy_doubleCallsAreNoop() throws Exception {
+        createAndEnrollAlwaysOnHotwordDetector();
+        // Grab permissions for more than a single call since we get callbacks
+        adoptSoundTriggerPermissions();
+        waitForVoidFutureAndAssertSuccessful(
+                mInstrumentationObserver.getGlobalCallbackObserver().getOnClientAttachedFuture());
+
+        // destroy detector to trigger a client detach
+        mAlwaysOnHotwordDetector.destroy();
+
+        waitForVoidFutureAndAssertSuccessful(
+                mInstrumentationObserver.getGlobalCallbackObserver().getOnClientDetachedFuture());
+        mInstrumentationObserver.getGlobalCallbackObserver().resetOnClientAttachedFuture();
+        mInstrumentationObserver.getGlobalCallbackObserver().resetOnClientDetachedFuture();
+
+        // 2nd destroy does nothing to HAL
+        mAlwaysOnHotwordDetector.destroy();
+
+        // Verify that the client attach/detach futures were never completed after the second
+        // destroy. It is okay to not wait for this as the destroy call is synchronous.
+        assertThat(mInstrumentationObserver.getGlobalCallbackObserver()
+                        .getOnClientAttachedFuture().isDone()).isFalse();
+        assertThat(mInstrumentationObserver.getGlobalCallbackObserver()
+                        .getOnClientDetachedFuture().isDone()).isFalse();
+    }
+
+    @ApiTest(apis = {
+            "android.media.voice.KeyphraseModelManager#updateKeyphraseSoundModel",
+            "android.service.voice.AlwaysOnHotwordDetector#startRecognition",
+            "android.service.voice.AlwaysOnHotwordDetector.Callback#onAvailabilityChanged",
+            "android.service.voice.AlwaysOnHotwordDetector.Callback#onDetected",
+            "android.service.voice.AlwaysOnHotwordDetector"
+                    + ".Callback#onHotwordDetectionServiceInitialized",
+            "android.service.voice.VoiceInteractionService#createAlwaysOnHotwordDetector",
+    })
+    @Test
+    public void testDestroy_destroyAndRecreateCreatesNewHotwordDetectionService() throws Exception {
+        createAndEnrollAlwaysOnHotwordDetector();
+        // Grab permissions for more than a single call since we get callbacks
+        adoptSoundTriggerPermissions();
+
+        mAlwaysOnHotwordDetector.destroy();
+
+        PersistableBundle options = new PersistableBundle();
+        options.putInt(Helper.KEY_TEST_SCENARIO,
+                Utils.EXTRA_HOTWORD_DETECTION_SERVICE_SEND_SUCCESS_IF_CREATED_AFTER);
+        options.putLong(Utils.KEY_TIMESTAMP_MILLIS, SystemClock.elapsedRealtime());
+        // create call verifies initialize success.
+        // This means the HotwordDetectionService was recreated between AOHD destroy and create.
+        createAndEnrollAlwaysOnHotwordDetector(options);
     }
 }

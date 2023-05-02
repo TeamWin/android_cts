@@ -28,6 +28,7 @@ import static com.android.compatibility.common.util.PollingCheck.waitFor;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
 import android.app.Activity;
 import android.app.PictureInPictureParams;
@@ -244,6 +245,8 @@ public class SplitAttributesCalculatorTest extends ActivityEmbeddingTestBase {
     /** Verify the calculator function is called when the activity leaves PIP.  */
     @Test
     public void testSplitAttributesCalculatorInvocation_pip() throws InterruptedException {
+        assumeTrue(supportsPip());
+
         final String tag = "testSplitAttributesCalculatorInvocation_screenRotation";
         final InvocationVerifier verifier = new InvocationVerifier(tag);
 

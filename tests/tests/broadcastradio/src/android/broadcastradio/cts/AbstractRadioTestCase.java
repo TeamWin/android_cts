@@ -33,12 +33,13 @@ import android.content.pm.PackageManager;
 import android.hardware.radio.RadioManager;
 import android.hardware.radio.RadioTuner;
 
-import androidx.test.InstrumentationRegistry;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.SafeCleanerRule;
 
 import com.google.common.truth.Expect;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.mockito.Mock;
@@ -56,7 +57,7 @@ abstract class AbstractRadioTestCase {
     protected static final int TUNE_CALLBACK_TIMEOUT_MS = 30_000;
     protected static final int PROGRAM_LIST_COMPLETE_TIMEOUT_MS = 60_000;
 
-    private final Context mContext = InstrumentationRegistry.getContext();
+    private Context mContext;
 
     protected RadioManager mRadioManager;
     protected RadioTuner mRadioTuner;
@@ -82,20 +83,26 @@ abstract class AbstractRadioTestCase {
 
     @Before
     public void setup() {
+        InstrumentationRegistry.getInstrumentation()
+                .getUiAutomation()
+                .adoptShellPermissionIdentity(Manifest.permission.ACCESS_BROADCAST_RADIO);
+
+        mContext = InstrumentationRegistry.getInstrumentation().getContext();
         PackageManager packageManager = mContext.getPackageManager();
         boolean isRadioSupported = packageManager.hasSystemFeature(
                 PackageManager.FEATURE_BROADCAST_RADIO);
 
         assumeTrue("Radio supported", isRadioSupported);
 
-        int res = mContext.checkCallingOrSelfPermission(Manifest.permission.ACCESS_BROADCAST_RADIO);
-
-        assertWithMessage("ACCESS_BROADCAST_RADIO permission granted")
-                .that(res).isEqualTo(PackageManager.PERMISSION_GRANTED);
-
         mRadioManager = mContext.getSystemService(RadioManager.class);
 
-        assume().withMessage("Radio manager exists").that(mRadioManager).isNotNull();
+        assertWithMessage("Radio manager exists").that(mRadioManager).isNotNull();
+    }
+
+    @After
+    public void cleanUp() {
+        InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .dropShellPermissionIdentity();
     }
 
     protected void resetCallback() {

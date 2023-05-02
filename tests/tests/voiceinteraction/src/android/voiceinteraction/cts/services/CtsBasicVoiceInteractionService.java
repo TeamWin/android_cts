@@ -360,6 +360,16 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
      */
     public void createAlwaysOnHotwordDetectorWithOnFailureCallback(boolean useExecutor,
             boolean runOnMainThread) {
+        createAlwaysOnHotwordDetectorWithOnFailureCallback(useExecutor, runOnMainThread,
+                null /* options */);
+    }
+
+    /**
+     * Create an AlwaysOnHotwordDetector with onFailure callback. The onFailure provides the error
+     * code, error message and suggested action the assistant application should take.
+     */
+    public void createAlwaysOnHotwordDetectorWithOnFailureCallback(boolean useExecutor,
+            boolean runOnMainThread, @Nullable PersistableBundle options) {
         Log.i(TAG, "createAlwaysOnHotwordDetectorWithOnFailureCallback");
         mServiceTriggerLatch = new CountDownLatch(1);
 
@@ -470,7 +480,8 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
 
         final Handler handler = runOnMainThread ? new Handler(Looper.getMainLooper()) : mHandler;
         handler.post(() -> runWithShellPermissionIdentity(() -> {
-            mAlwaysOnHotwordDetector = callCreateAlwaysOnHotwordDetector(callback, useExecutor);
+            mAlwaysOnHotwordDetector = callCreateAlwaysOnHotwordDetector(callback, useExecutor,
+                    options);
         }, MANAGE_HOTWORD_DETECTION, RECORD_AUDIO, CAPTURE_AUDIO_HOTWORD));
     }
 

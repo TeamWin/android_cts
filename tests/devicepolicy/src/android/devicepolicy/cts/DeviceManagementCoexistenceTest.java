@@ -78,6 +78,7 @@ import android.os.UserHandle;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
+import com.android.bedstead.harrier.UserType;
 import com.android.bedstead.harrier.annotations.AfterClass;
 import com.android.bedstead.harrier.annotations.EnsureHasAccountAuthenticator;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
@@ -152,8 +153,8 @@ public final class DeviceManagementCoexistenceTest {
     }
 
     @Test
-    @EnsureHasDevicePolicyManagerRoleHolder
-    @EnsureHasDeviceOwner
+    @EnsureHasDevicePolicyManagerRoleHolder(onUser = UserType.SYSTEM_USER)
+    @EnsureHasDeviceOwner(isPrimary = true)
     @Postsubmit(reason = "new test")
     public void getDevicePolicyState_autoTimezoneSet_returnsPolicy() {
         boolean originalValue = sDeviceState.dpc().devicePolicyManager()
@@ -174,8 +175,8 @@ public final class DeviceManagementCoexistenceTest {
     }
 
     @Test
-    @EnsureHasDevicePolicyManagerRoleHolder
-    @EnsureHasDeviceOwner
+    @EnsureHasDevicePolicyManagerRoleHolder(onUser = UserType.SYSTEM_USER)
+    @EnsureHasDeviceOwner(isPrimary = true)
     @Postsubmit(reason = "new test")
     @Ignore("b/278710449")
     public void getDevicePolicyState_permissionGrantStateSet_returnsPolicy() {
@@ -205,8 +206,8 @@ public final class DeviceManagementCoexistenceTest {
     }
 
     @Test
-    @EnsureHasDevicePolicyManagerRoleHolder
-    @EnsureHasDeviceOwner
+    @EnsureHasDevicePolicyManagerRoleHolder(onUser = UserType.SYSTEM_USER)
+    @EnsureHasDeviceOwner(isPrimary = true)
     @Postsubmit(reason = "new test")
     public void getDevicePolicyState_lockTaskPolicySet_returnsPolicy() {
         String[] originalLockTaskPackages = sDeviceState.dpc().devicePolicyManager()
@@ -232,8 +233,8 @@ public final class DeviceManagementCoexistenceTest {
     }
 
     @Test
-    @EnsureHasDevicePolicyManagerRoleHolder
-    @EnsureHasDeviceOwner
+    @EnsureHasDevicePolicyManagerRoleHolder(onUser = UserType.SYSTEM_USER)
+    @EnsureHasDeviceOwner(isPrimary = true)
     @Postsubmit(reason = "new test")
     public void getDevicePolicyState_userControlDisabledPackagesSet_returnsPolicy() {
         List<String> originalDisabledPackages =
@@ -258,8 +259,8 @@ public final class DeviceManagementCoexistenceTest {
     }
 
     @Test
-    @EnsureHasDevicePolicyManagerRoleHolder
-    @EnsureHasDeviceOwner
+    @EnsureHasDevicePolicyManagerRoleHolder(onUser = UserType.SYSTEM_USER)
+    @EnsureHasDeviceOwner(isPrimary = true)
     @Postsubmit(reason = "new test")
     public void getDevicePolicyState_uninstallBlockedSet_returnsPolicy() {
         try {
@@ -282,8 +283,8 @@ public final class DeviceManagementCoexistenceTest {
     }
 
     @Test
-    @EnsureHasDevicePolicyManagerRoleHolder
-    @EnsureHasDeviceOwner
+    @EnsureHasDevicePolicyManagerRoleHolder(onUser = UserType.SYSTEM_USER)
+    @EnsureHasDeviceOwner(isPrimary = true)
     @Postsubmit(reason = "new test")
     public void getDevicePolicyState_persistentPreferredActivitySet_returnsPolicy() {
         try {
@@ -309,8 +310,8 @@ public final class DeviceManagementCoexistenceTest {
     }
 
     @Test
-    @EnsureHasDevicePolicyManagerRoleHolder
-    @EnsureHasDeviceOwner
+    @EnsureHasDevicePolicyManagerRoleHolder(onUser = UserType.SYSTEM_USER)
+    @EnsureHasDeviceOwner(isPrimary = true)
     @Postsubmit(reason = "new test")
     public void getDevicePolicyState_appRestrictionsSet_returnsPolicy() {
         Bundle originalApplicationRestrictions =
@@ -352,8 +353,8 @@ public final class DeviceManagementCoexistenceTest {
             + "and primary user profile owner tests, password reset token would have been disabled "
             + "for the primary user, disabling this test until this gets fixed.")
     @Test
-    @EnsureHasDevicePolicyManagerRoleHolder
-    @EnsureHasDeviceOwner
+    @EnsureHasDevicePolicyManagerRoleHolder(onUser = UserType.SYSTEM_USER)
+    @EnsureHasDeviceOwner(isPrimary = true)
     @Postsubmit(reason = "new test")
     public void getDevicePolicyState_resetPasswordTokenSet_returnsPolicy() {
         try {
@@ -379,8 +380,8 @@ public final class DeviceManagementCoexistenceTest {
     }
 
     @Test
-    @EnsureHasDevicePolicyManagerRoleHolder
-    @EnsureHasDeviceOwner
+    @EnsureHasDevicePolicyManagerRoleHolder(onUser = UserType.SYSTEM_USER)
+    @EnsureHasDeviceOwner(isPrimary = true)
     @Postsubmit(reason = "new test")
     public void getDevicePolicyState_addUserRestriction_returnsPolicy() {
         boolean hasRestrictionOriginally = sDeviceState.dpc()
@@ -405,8 +406,8 @@ public final class DeviceManagementCoexistenceTest {
     }
 
     @Test
-    @EnsureHasDevicePolicyManagerRoleHolder
-    @EnsureHasDeviceOwner
+    @EnsureHasDevicePolicyManagerRoleHolder(onUser = UserType.SYSTEM_USER)
+    @EnsureHasDeviceOwner(isPrimary = true)
     @Postsubmit(reason = "new test")
     @Ignore("addUserRestrictionGlobally is no longer callable from DPCs, should change it to a "
             + "permission based test.")
@@ -433,8 +434,8 @@ public final class DeviceManagementCoexistenceTest {
     }
 
     @Test
-    @EnsureHasDevicePolicyManagerRoleHolder
-    @EnsureHasDeviceOwner
+    @EnsureHasDevicePolicyManagerRoleHolder(onUser = UserType.SYSTEM_USER)
+    @EnsureHasDeviceOwner(isPrimary = true)
     @Postsubmit(reason = "new test")
     public void getDevicePolicyState_setKeyguardDisabledFeatures_returnsPolicy() {
         try {
@@ -454,8 +455,8 @@ public final class DeviceManagementCoexistenceTest {
     }
 
     @Test
-    @EnsureHasDevicePolicyManagerRoleHolder
-    @EnsureHasDeviceOwner
+    @EnsureHasDevicePolicyManagerRoleHolder(onUser = UserType.SYSTEM_USER)
+    @EnsureHasDeviceOwner(isPrimary = true)
     @Postsubmit(reason = "new test")
     @EnsureHasAccountAuthenticator
     public void getDevicePolicyState_setAccountManagementDisabled_returnsPolicy() {
@@ -479,8 +480,8 @@ public final class DeviceManagementCoexistenceTest {
     }
 
     @Test
-    @EnsureHasDevicePolicyManagerRoleHolder
-    @EnsureHasDeviceOwner
+    @EnsureHasDevicePolicyManagerRoleHolder(onUser = UserType.SYSTEM_USER)
+    @EnsureHasDeviceOwner(isPrimary = true)
     @Postsubmit(reason = "new test")
     public void getDevicePolicyState_setPermittedInputMethods_returnsPolicy() {
         try {
@@ -500,8 +501,8 @@ public final class DeviceManagementCoexistenceTest {
     }
 
     @Test
-    @EnsureHasDevicePolicyManagerRoleHolder
-    @EnsureHasDeviceOwner
+    @EnsureHasDevicePolicyManagerRoleHolder(onUser = UserType.SYSTEM_USER)
+    @EnsureHasDeviceOwner(isPrimary = true)
     @Postsubmit(reason = "new test")
     public void getDevicePolicyState_autoTimezone_returnsCorrectResolutionMechanism() {
         boolean originalValue = sDeviceState.dpc().devicePolicyManager()
@@ -524,8 +525,8 @@ public final class DeviceManagementCoexistenceTest {
     }
 
     @Test
-    @EnsureHasDevicePolicyManagerRoleHolder
-    @EnsureHasDeviceOwner
+    @EnsureHasDevicePolicyManagerRoleHolder(onUser = UserType.SYSTEM_USER)
+    @EnsureHasDeviceOwner(isPrimary = true)
     @Postsubmit(reason = "new test")
     @Ignore("b/278710449")
     public void getDevicePolicyState_permissionGrantState_returnsCorrectResolutionMechanism() {
@@ -558,8 +559,8 @@ public final class DeviceManagementCoexistenceTest {
     }
 
     @Test
-    @EnsureHasDevicePolicyManagerRoleHolder
-    @EnsureHasDeviceOwner
+    @EnsureHasDevicePolicyManagerRoleHolder(onUser = UserType.SYSTEM_USER)
+    @EnsureHasDeviceOwner(isPrimary = true)
     @Postsubmit(reason = "new test")
     public void getDevicePolicyState_lockTaskPolicy_returnsCorrectResolutionMechanism() {
         String[] originalLockTaskPackages = sDeviceState.dpc().devicePolicyManager()
@@ -584,8 +585,8 @@ public final class DeviceManagementCoexistenceTest {
     }
 
     @Test
-    @EnsureHasDevicePolicyManagerRoleHolder
-    @EnsureHasDeviceOwner
+    @EnsureHasDevicePolicyManagerRoleHolder(onUser = UserType.SYSTEM_USER)
+    @EnsureHasDeviceOwner(isPrimary = true)
     @Postsubmit(reason = "new test")
     public void getDevicePolicyState_userControlDisabledPackages_returnsCorrectResolutionMechanism() {
         List<String> originalDisabledPackages =
@@ -610,8 +611,8 @@ public final class DeviceManagementCoexistenceTest {
     }
 
     @Test
-    @EnsureHasDevicePolicyManagerRoleHolder
-    @EnsureHasDeviceOwner
+    @EnsureHasDevicePolicyManagerRoleHolder(onUser = UserType.SYSTEM_USER)
+    @EnsureHasDeviceOwner(isPrimary = true)
     @Postsubmit(reason = "new test")
     public void getDevicePolicyState_uninstallBlocked_returnsCorrectResolutionMechanism() {
         try {
@@ -636,8 +637,8 @@ public final class DeviceManagementCoexistenceTest {
     }
 
     @Test
-    @EnsureHasDevicePolicyManagerRoleHolder
-    @EnsureHasDeviceOwner
+    @EnsureHasDevicePolicyManagerRoleHolder(onUser = UserType.SYSTEM_USER)
+    @EnsureHasDeviceOwner(isPrimary = true)
     @Postsubmit(reason = "new test")
     public void getDevicePolicyState_persistentPreferredActivity_returnsCorrectResolutionMechanism() {
         try {
@@ -666,8 +667,8 @@ public final class DeviceManagementCoexistenceTest {
     }
 
     @Test
-    @EnsureHasDevicePolicyManagerRoleHolder
-    @EnsureHasDeviceOwner
+    @EnsureHasDevicePolicyManagerRoleHolder(onUser = UserType.SYSTEM_USER)
+    @EnsureHasDeviceOwner(isPrimary = true)
     @Postsubmit(reason = "new test")
     public void getDevicePolicyState_addUserRestriction_returnsCorrectResolutionMechanism() {
         boolean hasRestrictionOriginally = sDeviceState.dpc()
@@ -693,8 +694,8 @@ public final class DeviceManagementCoexistenceTest {
     }
 
     @Test
-    @EnsureHasDevicePolicyManagerRoleHolder
-    @EnsureHasDeviceOwner
+    @EnsureHasDevicePolicyManagerRoleHolder(onUser = UserType.SYSTEM_USER)
+    @EnsureHasDeviceOwner(isPrimary = true)
     @Postsubmit(reason = "new test")
     public void getDevicePolicyState_setKeyguardDisabledFeatures_returnsCorrectResolutionMechanism() {
         try {
@@ -714,8 +715,8 @@ public final class DeviceManagementCoexistenceTest {
     }
 
     @Test
-    @EnsureHasDevicePolicyManagerRoleHolder
-    @EnsureHasDeviceOwner
+    @EnsureHasDevicePolicyManagerRoleHolder(onUser = UserType.SYSTEM_USER)
+    @EnsureHasDeviceOwner(isPrimary = true)
     @Postsubmit(reason = "new test")
     @EnsureHasAccountAuthenticator
     public void getDevicePolicyState_setAccountManagementDisabled_returnsCorrectResolutionMechanism() {
@@ -741,8 +742,8 @@ public final class DeviceManagementCoexistenceTest {
     }
 
     @Test
-    @EnsureHasDevicePolicyManagerRoleHolder
-    @EnsureHasDeviceOwner
+    @EnsureHasDevicePolicyManagerRoleHolder(onUser = UserType.SYSTEM_USER)
+    @EnsureHasDeviceOwner(isPrimary = true)
     @Postsubmit(reason = "new test")
     public void getDevicePolicyState_setPermittedInputMethods_returnsCorrectResolutionMechanism() {
         try {
@@ -762,7 +763,7 @@ public final class DeviceManagementCoexistenceTest {
     }
 
     @Test
-    @EnsureHasDeviceOwner
+    @EnsureHasDeviceOwner(isPrimary = true)
     @Postsubmit(reason = "new test")
     public void policyUpdateReceiver_autoTimezoneSet_receivedPolicySetBroadcast() {
         boolean originalValue = sDeviceState.dpc().devicePolicyManager()
@@ -781,7 +782,7 @@ public final class DeviceManagementCoexistenceTest {
     }
 
     @Test
-    @EnsureHasDeviceOwner
+    @EnsureHasDeviceOwner(isPrimary = true)
     @Postsubmit(reason = "new test")
     @Ignore("b/278710449")
     public void policyUpdateReceiver_permissionGrantStateSet_receivedPolicySetBroadcast() {
@@ -808,7 +809,7 @@ public final class DeviceManagementCoexistenceTest {
     }
 
     @Test
-    @EnsureHasDeviceOwner
+    @EnsureHasDeviceOwner(isPrimary = true)
     @Postsubmit(reason = "new test")
     public void policyUpdateReceiver_lockTaskPolicySet_receivedPolicySetBroadcast() {
         String[] originalLockTaskPackages = sDeviceState.dpc().devicePolicyManager()
@@ -827,7 +828,7 @@ public final class DeviceManagementCoexistenceTest {
     }
 
     @Test
-    @EnsureHasDeviceOwner
+    @EnsureHasDeviceOwner(isPrimary = true)
     @Postsubmit(reason = "new test")
     public void policyUpdateReceiver_userControlDisabledPackagesSet_receivedPolicySetBroadcast() {
         List<String> originalDisabledPackages =
@@ -850,7 +851,7 @@ public final class DeviceManagementCoexistenceTest {
     }
 
     @Test
-    @EnsureHasDeviceOwner
+    @EnsureHasDeviceOwner(isPrimary = true)
     @Postsubmit(reason = "new test")
     public void policyUpdateReceiver_uninstallBlockedSet_receivedPolicySetBroadcast() {
         Bundle bundle = new Bundle();
@@ -872,8 +873,8 @@ public final class DeviceManagementCoexistenceTest {
     }
 
     @Test
-    @EnsureHasDevicePolicyManagerRoleHolder
-    @EnsureHasDeviceOwner
+    @EnsureHasDevicePolicyManagerRoleHolder(onUser = UserType.SYSTEM_USER)
+    @EnsureHasDeviceOwner(isPrimary = true)
     @Postsubmit(reason = "new test")
     @Ignore("figure out why it's failing")
     public void policyUpdateReceiver_persistentPreferredActivitySet_receivedPolicySetBroadcast() {
@@ -897,8 +898,8 @@ public final class DeviceManagementCoexistenceTest {
     }
 
     @Test
-    @EnsureHasDevicePolicyManagerRoleHolder
-    @EnsureHasDeviceOwner
+    @EnsureHasDevicePolicyManagerRoleHolder(onUser = UserType.SYSTEM_USER)
+    @EnsureHasDeviceOwner(isPrimary = true)
     @Postsubmit(reason = "new test")
     public void policyUpdateReceiver_addUserRestriction_receivedPolicySetBroadcast() {
         boolean hasRestrictionOriginally = sDeviceState.dpc()
@@ -919,8 +920,8 @@ public final class DeviceManagementCoexistenceTest {
     }
 
     @Test
-    @EnsureHasDevicePolicyManagerRoleHolder
-    @EnsureHasDeviceOwner
+    @EnsureHasDevicePolicyManagerRoleHolder(onUser = UserType.SYSTEM_USER)
+    @EnsureHasDeviceOwner(isPrimary = true)
     @Postsubmit(reason = "new test")
     @Ignore("addUserRestrictionGlobally is no longer callable from DPCs, should change it to a "
             + "permission based test.")
@@ -943,8 +944,8 @@ public final class DeviceManagementCoexistenceTest {
     }
 
     @Test
-    @EnsureHasDevicePolicyManagerRoleHolder
-    @EnsureHasDeviceOwner
+    @EnsureHasDevicePolicyManagerRoleHolder(onUser = UserType.SYSTEM_USER)
+    @EnsureHasDeviceOwner(isPrimary = true)
     @Postsubmit(reason = "new test")
     public void devicePolicyState_getPoliciesForAllUsers_returnsPolicies() {
         boolean originalAutoTimeZoneValue = sDeviceState.dpc().devicePolicyManager()
@@ -987,8 +988,8 @@ public final class DeviceManagementCoexistenceTest {
     }
 
     @Test
-    @EnsureHasDevicePolicyManagerRoleHolder
-    @EnsureHasDeviceOwner
+    @EnsureHasDevicePolicyManagerRoleHolder(onUser = UserType.SYSTEM_USER)
+    @EnsureHasDeviceOwner(isPrimary = true)
     @Postsubmit(reason = "new test")
     public void policyUpdateReceiver_setKeyguardDisabledFeatures_receivedPolicySetBroadcast() {
         try {
@@ -1006,8 +1007,8 @@ public final class DeviceManagementCoexistenceTest {
     }
 
     @Test
-    @EnsureHasDevicePolicyManagerRoleHolder
-    @EnsureHasDeviceOwner
+    @EnsureHasDevicePolicyManagerRoleHolder(onUser = UserType.SYSTEM_USER)
+    @EnsureHasDeviceOwner(isPrimary = true)
     @Postsubmit(reason = "new test")
     @EnsureHasAccountAuthenticator
     public void policyUpdateReceiver_setAccountManagementDisabled_receivedPolicySetBroadcast() {
@@ -1029,8 +1030,8 @@ public final class DeviceManagementCoexistenceTest {
 
     @Ignore("b/277071699: add test API to trigger reloading from disk")
     @Test
-    @EnsureHasDevicePolicyManagerRoleHolder
-    @EnsureHasDeviceOwner
+    @EnsureHasDevicePolicyManagerRoleHolder(onUser = UserType.SYSTEM_USER)
+    @EnsureHasDeviceOwner(isPrimary = true)
     @Postsubmit(reason = "new test")
     public void autoTimezoneSet_serialisation_loadsPolicy() {
         try {
@@ -1054,8 +1055,8 @@ public final class DeviceManagementCoexistenceTest {
 
     @Ignore("b/277071699: add test API to trigger reloading from disk")
     @Test
-    @EnsureHasDevicePolicyManagerRoleHolder
-    @EnsureHasDeviceOwner
+    @EnsureHasDevicePolicyManagerRoleHolder(onUser = UserType.SYSTEM_USER)
+    @EnsureHasDeviceOwner(isPrimary = true)
     @Postsubmit(reason = "new test")
     public void permissionGrantStateSet_serialisation_loadsPolicy() {
         try {
@@ -1086,8 +1087,8 @@ public final class DeviceManagementCoexistenceTest {
 
     @Ignore("b/277071699: add test API to trigger reloading from disk")
     @Test
-    @EnsureHasDevicePolicyManagerRoleHolder
-    @EnsureHasDeviceOwner
+    @EnsureHasDevicePolicyManagerRoleHolder(onUser = UserType.SYSTEM_USER)
+    @EnsureHasDeviceOwner(isPrimary = true)
     @Postsubmit(reason = "new test")
     public void lockTaskPolicySet_serialisation_loadsPolicy() {
         try {
@@ -1117,8 +1118,8 @@ public final class DeviceManagementCoexistenceTest {
 
     @Ignore("b/277071699: add test API to trigger reloading from disk")
     @Test
-    @EnsureHasDevicePolicyManagerRoleHolder
-    @EnsureHasDeviceOwner
+    @EnsureHasDevicePolicyManagerRoleHolder(onUser = UserType.SYSTEM_USER)
+    @EnsureHasDeviceOwner(isPrimary = true)
     @Postsubmit(reason = "new test")
     public void userControlDisabledPackagesSet_serialisation_loadsPolicy() {
         try {
@@ -1145,8 +1146,8 @@ public final class DeviceManagementCoexistenceTest {
 
     @Ignore("b/277071699: add test API to trigger reloading from disk")
     @Test
-    @EnsureHasDevicePolicyManagerRoleHolder
-    @EnsureHasDeviceOwner
+    @EnsureHasDevicePolicyManagerRoleHolder(onUser = UserType.SYSTEM_USER)
+    @EnsureHasDeviceOwner(isPrimary = true)
     @Postsubmit(reason = "new test")
     public void uninstallBlockedSet_serialisation_loadsPolicy() {
         try {
@@ -1174,8 +1175,8 @@ public final class DeviceManagementCoexistenceTest {
 
     @Ignore("b/277071699: add test API to trigger reloading from disk")
     @Test
-    @EnsureHasDevicePolicyManagerRoleHolder
-    @EnsureHasDeviceOwner
+    @EnsureHasDevicePolicyManagerRoleHolder(onUser = UserType.SYSTEM_USER)
+    @EnsureHasDeviceOwner(isPrimary = true)
     @Postsubmit(reason = "new test")
     public void persistentPreferredActivitySet_serialisation_loadsPolicy() {
         try {
@@ -1206,8 +1207,8 @@ public final class DeviceManagementCoexistenceTest {
 
     @Ignore("b/277071699: add test API to trigger reloading from disk")
     @Test
-    @EnsureHasDevicePolicyManagerRoleHolder
-    @EnsureHasDeviceOwner
+    @EnsureHasDevicePolicyManagerRoleHolder(onUser = UserType.SYSTEM_USER)
+    @EnsureHasDeviceOwner(isPrimary = true)
     @Postsubmit(reason = "new test")
     public void appRestrictionsSet_serialisation_loadsPolicy() {
         Bundle bundle = BundleUtils.createBundle(
@@ -1249,8 +1250,8 @@ public final class DeviceManagementCoexistenceTest {
             "and primary user profile owner tests, password reset token would have been " +
             "disabled for the primary user, disabling this test until this gets fixed.")
     @Test
-    @EnsureHasDevicePolicyManagerRoleHolder
-    @EnsureHasDeviceOwner
+    @EnsureHasDevicePolicyManagerRoleHolder(onUser = UserType.SYSTEM_USER)
+    @EnsureHasDeviceOwner(isPrimary = true)
     @Postsubmit(reason = "new test")
     public void resetPasswordTokenSet_serialisation_loadsPolicy() {
         try {
@@ -1282,8 +1283,8 @@ public final class DeviceManagementCoexistenceTest {
 
     @Ignore("b/277071699: add test API to trigger reloading from disk")
     @Test
-    @EnsureHasDevicePolicyManagerRoleHolder
-    @EnsureHasDeviceOwner
+    @EnsureHasDevicePolicyManagerRoleHolder(onUser = UserType.SYSTEM_USER)
+    @EnsureHasDeviceOwner(isPrimary = true)
     @Postsubmit(reason = "new test")
     public void addUserRestriction_serialisation_loadsPolicy() {
         try {
@@ -1310,8 +1311,8 @@ public final class DeviceManagementCoexistenceTest {
     @Ignore("b/277071699: add test API to trigger reloading from disk, also DPCs are no longer "
             + "allowed to call addUserRestrictionGlobally")
     @Test
-    @EnsureHasDevicePolicyManagerRoleHolder
-    @EnsureHasDeviceOwner
+    @EnsureHasDevicePolicyManagerRoleHolder(onUser = UserType.SYSTEM_USER)
+    @EnsureHasDeviceOwner(isPrimary = true)
     @Postsubmit(reason = "new test")
     public void addUserRestrictionGlobally_serialisation_loadsPolicy() {
         try {
@@ -1337,8 +1338,8 @@ public final class DeviceManagementCoexistenceTest {
 
     @Ignore("b/277071699: add test API to trigger reloading from disk")
     @Test
-    @EnsureHasDevicePolicyManagerRoleHolder
-    @EnsureHasDeviceOwner
+    @EnsureHasDevicePolicyManagerRoleHolder(onUser = UserType.SYSTEM_USER)
+    @EnsureHasDeviceOwner(isPrimary = true)
     @Postsubmit(reason = "new test")
     public void setKeyguardDisabledFeatures_serialisation_loadsPolicy() {
         try {
@@ -1363,8 +1364,8 @@ public final class DeviceManagementCoexistenceTest {
 
     @Ignore("b/277071699: add test API to trigger reloading from disk")
     @Test
-    @EnsureHasDevicePolicyManagerRoleHolder
-    @EnsureHasDeviceOwner
+    @EnsureHasDevicePolicyManagerRoleHolder(onUser = UserType.SYSTEM_USER)
+    @EnsureHasDeviceOwner(isPrimary = true)
     @Postsubmit(reason = "new test")
     @EnsureHasAccountAuthenticator
     public void setAccountManagementDisabled_serialisation_loadsPolicy() {
@@ -1392,7 +1393,7 @@ public final class DeviceManagementCoexistenceTest {
     }
 
     @Test
-    @EnsureHasDevicePolicyManagerRoleHolder
+    @EnsureHasDevicePolicyManagerRoleHolder(onUser = UserType.SYSTEM_USER)
     @EnsureHasDeviceOwner
     @Postsubmit(reason = "new test")
     @Ignore
@@ -1419,7 +1420,7 @@ public final class DeviceManagementCoexistenceTest {
 
     @Ignore("b/277071699: add test API to trigger reloading from disk")
     @Test
-    @EnsureHasDevicePolicyManagerRoleHolder
+    @EnsureHasDevicePolicyManagerRoleHolder(onUser = UserType.SYSTEM_USER)
     @EnsureHasDeviceOwner
     @Postsubmit(reason = "new test")
     @EnsureHasAccountAuthenticator
@@ -1602,7 +1603,7 @@ public final class DeviceManagementCoexistenceTest {
     @Test
     @EnsureHasDeviceOwner(isPrimary = true)
     @Postsubmit(reason = "new test")
-    @EnsureHasDevicePolicyManagerRoleHolder
+    @EnsureHasDevicePolicyManagerRoleHolder(onUser = UserType.SYSTEM_USER)
     @EnsureHasPermission(value = Manifest.permission.FORCE_STOP_PACKAGES)
     @EnsureHasAccountAuthenticator
     public void multiplePoliciesSet_dpcRemoved_removesPolicies() throws Exception {

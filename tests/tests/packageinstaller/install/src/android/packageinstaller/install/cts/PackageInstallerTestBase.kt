@@ -86,6 +86,7 @@ open class PackageInstallerTestBase {
         const val INSTALL_REQUEST_UPDATE_OWNERSHIP = 0x02000000
 
         val context: Context = InstrumentationRegistry.getTargetContext()
+        val testUserId: Int = context.user.identifier
     }
 
     @get:Rule
@@ -362,7 +363,7 @@ open class PackageInstallerTestBase {
      * Sets the given secure setting to the provided value.
      */
     fun setSecureSetting(secureSetting: String, value: Int) {
-        uiDevice.executeShellCommand("settings put secure $secureSetting $value")
+        uiDevice.executeShellCommand("settings put --user $testUserId secure $secureSetting $value")
     }
 
     fun setSecureFrp(secureFrp: Boolean) {
@@ -393,6 +394,7 @@ open class PackageInstallerTestBase {
     }
 
     fun installPackage(apkName: String, extraArgs: String = "") {
+        Log.d(TAG, "installPackage(): apkName=$apkName, extraArgs='$extraArgs'")
         uiDevice.executeShellCommand("pm install $extraArgs " +
                 File(TEST_APK_LOCATION, apkName).canonicalPath)
     }
