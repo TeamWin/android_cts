@@ -20,7 +20,7 @@ import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.launchA
 
 import static com.google.common.truth.Truth.assertThat;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assume.assumeTrue;
 
 import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
@@ -41,7 +41,6 @@ import android.graphics.Rect;
 import android.hardware.display.DisplayManager;
 import android.os.Binder;
 import android.platform.test.annotations.Presubmit;
-import android.text.TextUtils;
 import android.util.SparseArray;
 import android.view.Display;
 import android.view.SurfaceControl;
@@ -66,6 +65,7 @@ import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
 
 import java.util.List;
+import java.util.function.Function;
 
 // Test that an AccessibilityService can display an accessibility overlay
 @RunWith(AndroidJUnit4.class)
@@ -112,38 +112,55 @@ public class AccessibilityOverlayTest {
     @Test
     public void testA11yServiceShowsOverlay_shouldAppear() throws Exception {
         final String overlayTitle = "Overlay title";
-        sUiAutomation.executeAndWaitForEvent(() -> mService.runOnServiceSync(() -> {
-            addOverlayWindow(mService, overlayTitle);
-        }), (event) -> findOverlayWindow(Display.DEFAULT_DISPLAY) != null, AsyncUtils.DEFAULT_TIMEOUT_MS);
+        sUiAutomation.executeAndWaitForEvent(
+                () -> mService.runOnServiceSync(() -> {
+                    addOverlayWindow(mService, overlayTitle);
+                }),
+                (event) -> findOverlayWindow(Display.DEFAULT_DISPLAY) != null,
+                AsyncUtils.DEFAULT_TIMEOUT_MS);
 
-        assertTrue(TextUtils.equals(findOverlayWindow(Display.DEFAULT_DISPLAY).getTitle(), overlayTitle));
+        assertThat(findOverlayWindow(Display.DEFAULT_DISPLAY).getTitle().toString())
+                .isEqualTo(overlayTitle);
     }
 
     @Test
     public void testA11yServiceShowsOverlayOnVirtualDisplay_shouldAppear() throws Exception {
-        assumeTrue("Device does not support activities on secondary displays",
-                sInstrumentation.getContext().getPackageManager().hasSystemFeature(
-                        PackageManager.FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS));
-        try (final DisplayUtils.VirtualDisplaySession displaySession =
-                     new DisplayUtils.VirtualDisplaySession()) {
-            final Display newDisplay = displaySession.createDisplayWithDefaultDisplayMetricsAndWait(
-                    mService, false);
-            final int displayId = newDisplay.getDisplayId();
-            final String overlayTitle = "Overlay title on virtualDisplay";
+        addOverlayToVirtualDisplayAndCheck(
+                display -> mService.createDisplayContext(display), /* expectException= */ false);
+    }
 
-            // Create an initial activity window on the virtual display to ensure that
-            // AccessibilityWindowManager is tracking windows for the display.
-            launchActivityOnSpecifiedDisplayAndWaitForItToBeOnscreen(sInstrumentation,
-                    sUiAutomation,
-                    AccessibilityWindowQueryActivity.class,
-                    displayId);
+    @Test
+    public void testA11yServiceShowOverlay_withDerivedWindowContext_shouldAppear()
+            throws Exception {
+        addOverlayToVirtualDisplayAndCheck(
+                display ->
+                        mService.createDisplayContext(display)
+                                .createWindowContext(
+                                        WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
+                                        /* options= */null),
+                /* expectException= */ false);
+    }
 
-            sUiAutomation.executeAndWaitForEvent(() -> mService.runOnServiceSync(() -> {
-                addOverlayWindow(mService.createDisplayContext(newDisplay), overlayTitle);
-            }), (event) -> findOverlayWindow(displayId) != null, AsyncUtils.DEFAULT_TIMEOUT_MS);
+    @Test
+    public void testA11yServiceShowOverlay_withDerivedWindowContextWithDisplay_shouldAppear()
+            throws Exception {
+        addOverlayToVirtualDisplayAndCheck(
+                display -> mService.createWindowContext(
+                        display,
+                        WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
+                        /* options= */ null),
+                /* expectException= */ false);
+    }
 
-            assertTrue(TextUtils.equals(findOverlayWindow(displayId).getTitle(), overlayTitle));
-        }
+    @Test
+    public void testA11yServiceShowOverlay_withDerivedWindowContextWithTypeMismatch_throwException()
+            throws Exception {
+        addOverlayToVirtualDisplayAndCheck(
+                display -> mService.createWindowContext(
+                        display,
+                        WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+                        /* options= */ null),
+                /* expectException= */ true);
     }
 
     @Test
@@ -337,5 +354,43 @@ public class AccessibilityOverlayTest {
             }
         }
         return null;
+    }
+
+    private void addOverlayToVirtualDisplayAndCheck(
+            Function<Display, Context> createContext, boolean expectException) throws Exception {
+        assumeTrue("Device does not support activities on secondary displays",
+                sInstrumentation.getContext().getPackageManager().hasSystemFeature(
+                        PackageManager.FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS));
+
+        try (DisplayUtils.VirtualDisplaySession displaySession =
+                     new DisplayUtils.VirtualDisplaySession()) {
+            final Display newDisplay =
+                    displaySession.createDisplayWithDefaultDisplayMetricsAndWait(
+                            mService, /* isPrivate= */false);
+            final int displayId = newDisplay.getDisplayId();
+            final String overlayTitle = "Overlay title on virtualDisplay";
+
+            // Create an initial activity window on the virtual display to ensure that
+            // AccessibilityWindowManager is tracking windows for the display.
+            launchActivityOnSpecifiedDisplayAndWaitForItToBeOnscreen(sInstrumentation,
+                    sUiAutomation,
+                    AccessibilityWindowQueryActivity.class,
+                    displayId);
+
+            if (expectException) {
+                assertThrows(
+                        IllegalArgumentException.class,
+                        () -> addOverlayWindow(createContext.apply(newDisplay), overlayTitle));
+                assertThat(findOverlayWindow(displayId)).isNull();
+            } else {
+                sUiAutomation.executeAndWaitForEvent(
+                        () -> mService.runOnServiceSync(() ->
+                                addOverlayWindow(createContext.apply(newDisplay), overlayTitle)),
+                        (event) -> findOverlayWindow(displayId) != null,
+                        AsyncUtils.DEFAULT_TIMEOUT_MS);
+
+                assertThat(findOverlayWindow(displayId).getTitle()).isEqualTo(overlayTitle);
+            }
+        }
     }
 }
