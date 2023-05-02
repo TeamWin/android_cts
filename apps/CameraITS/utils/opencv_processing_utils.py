@@ -64,6 +64,7 @@ RGB_GRAY_WEIGHTS = (0.299, 0.587, 0.114)  # RGB to Gray conversion matrix
 SCALE_RFOV_IN_WFOV_BOX = 0.67
 SCALE_TELE_IN_WFOV_BOX = 0.5
 SCALE_TELE_IN_RFOV_BOX = 0.67
+SCALE_TELE40_IN_WFOV_BOX = 0.33
 SCALE_TELE40_IN_RFOV_BOX = 0.5
 SCALE_TELE25_IN_RFOV_BOX = 0.33
 
@@ -177,10 +178,13 @@ def calc_chart_scaling(chart_distance, camera_fov):
       math.isclose(
           chart_distance, CHART_DISTANCE_WFOV, rel_tol=CHART_SCALE_RTOL)):
     chart_scaling = SCALE_RFOV_IN_WFOV_BOX
-  elif (camera_fov <= FOV_THRESH_TELE and
+  elif (FOV_THRESH_TELE40 < camera_fov <= FOV_THRESH_TELE and
         math.isclose(
             chart_distance, CHART_DISTANCE_WFOV, rel_tol=CHART_SCALE_RTOL)):
     chart_scaling = SCALE_TELE_IN_WFOV_BOX
+  elif (camera_fov <= FOV_THRESH_TELE40 and
+        math.isclose(chart_distance, CHART_DISTANCE_WFOV, rel_tol=CHART_SCALE_RTOL)):
+    chart_scaling = SCALE_TELE40_IN_WFOV_BOX
   elif (camera_fov <= FOV_THRESH_TELE25 and
         (math.isclose(
             chart_distance, CHART_DISTANCE_RFOV, rel_tol=CHART_SCALE_RTOL) or

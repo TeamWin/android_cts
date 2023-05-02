@@ -1676,7 +1676,7 @@ class ItsSession(object):
         chart_scaling,
         opencv_processing_utils.SCALE_TELE25_IN_RFOV_BOX,
         abs_tol=SCALING_TO_FILE_ATOL):
-      file_name = f'{scene}_{opencv_processing_utils.SCALE_TELE25_IN_RFOV_BOX}s_scaled.png'
+      file_name = f'{scene}_{opencv_processing_utils.SCALE_TELE25_IN_RFOV_BOX}x_scaled.png'
     elif math.isclose(
         chart_scaling,
         opencv_processing_utils.SCALE_TELE40_IN_RFOV_BOX,
