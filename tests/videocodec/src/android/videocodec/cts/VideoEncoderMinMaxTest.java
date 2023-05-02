@@ -23,6 +23,7 @@ import static android.mediav2.common.cts.CodecTestBase.ComponentClass.HARDWARE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
 import android.media.MediaCodecInfo;
 import android.media.MediaFormat;
@@ -217,20 +218,24 @@ public class VideoEncoderMinMaxTest extends VideoEncoderValidationTestBase {
         return cfgObjects;
     }
 
-    private static List<Object> getMinMaxRangeCfgObjects(Object codecName, Object mediaType,
-            Object cfgObject) throws CloneNotSupportedException {
-        for (MediaCodecInfo codecInfo : MEDIA_CODEC_LIST_REGULAR.getCodecInfos()) {
-            if (codecName.equals(codecInfo.getName())) {
-                for (String type : codecInfo.getSupportedTypes()) {
+    private static MediaCodecInfo getCodecInfo(String codecName, String mediaType) {
+        for (MediaCodecInfo info : MEDIA_CODEC_LIST_REGULAR.getCodecInfos()) {
+            if (info.getName().equals(codecName)) {
+                for (String type : info.getSupportedTypes()) {
                     if (mediaType.equals(type)) {
-                        MediaCodecInfo.CodecCapabilities caps =
-                                codecInfo.getCapabilitiesForType(type);
-                        return applyMinMaxRanges(caps.getVideoCapabilities(), cfgObject);
+                        return info;
                     }
                 }
             }
         }
         return null;
+    }
+
+    private static List<Object> getMinMaxRangeCfgObjects(Object codecName, Object mediaType,
+            Object cfgObject) throws CloneNotSupportedException {
+        MediaCodecInfo info = getCodecInfo((String) codecName, (String) mediaType);
+        MediaCodecInfo.CodecCapabilities caps = info.getCapabilitiesForType((String) mediaType);
+        return applyMinMaxRanges(caps.getVideoCapabilities(), cfgObject);
     }
 
     private static Collection<Object[]> updateParamList(Collection<Object[]> paramList)
@@ -286,6 +291,11 @@ public class VideoEncoderMinMaxTest extends VideoEncoderValidationTestBase {
     @Test
     public void testMinMaxSupport() throws IOException, InterruptedException {
         MediaFormat format = mEncCfgParams[0].getFormat();
+        MediaCodecInfo info = getCodecInfo(mCodecName, mMediaType);
+        assumeTrue(mCodecName + " does not support bitrate mode : " + bitRateModeToString(
+                        mEncCfgParams[0].mBitRateMode),
+                info.getCapabilitiesForType(mMediaType).getEncoderCapabilities()
+                        .isBitrateModeSupported(mEncCfgParams[0].mBitRateMode));
         ArrayList<MediaFormat> formats = new ArrayList<>();
         formats.add(format);
         assertTrue("Encoder: " + mCodecName + " doesn't support format: " + format,
