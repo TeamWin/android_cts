@@ -35,5 +35,5 @@ android_test {
         "automotive-general-tests",
     ],
     min_sdk_version: "28",
-    certificate: "platform",
+    sdk_version: "test_current",
 }

@@ -17,8 +17,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="android.broadcastradio.cts">
 
-    <uses-permission android:name="android.permission.ACCESS_BROADCAST_RADIO"/>
-
     <application>
         <uses-library android:name="android.test.runner" />
         <activity android:name="CtsBroadcastRadioActivity"
@@ -33,7 +31,5 @@
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
         android:targetPackage="android.broadcastradio.cts"
         android:label="CTS tests for Broadcast Radio">
-        <meta-data android:name="listener"
-            android:value="com.android.cts.runner.CtsTestRunListener" />
     </instrumentation>
 </manifest>
