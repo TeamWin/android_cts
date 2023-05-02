@@ -41,6 +41,7 @@ import android.server.wm.NestedShellPermission;
 import android.server.wm.TestTaskOrganizer;
 import android.server.wm.WindowManagerStateHelper;
 import android.test.ActivityInstrumentationTestCase2;
+import android.util.ArrayMap;
 import android.util.ArraySet;
 import android.util.Log;
 import android.view.InputDevice;
@@ -51,6 +52,7 @@ import androidx.test.InstrumentationRegistry;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.Executor;
@@ -69,7 +71,7 @@ public class CameraEvictionTest extends ActivityInstrumentationTestCase2<CameraC
     private static final int WAIT_TIME = 2000; // Time to wait for process to launch (ms).
     private static final int UI_TIMEOUT = 10000; // Time to wait for UI event before timeout (ms).
     // Time to wait for onCameraAccessPrioritiesChanged (ms).
-    private static final int CAMERA_ACCESS_TIMEOUT = 1000;
+    private static final int CAMERA_ACCESS_TIMEOUT = 2000;
 
     // CACHED_APP_MAX_ADJ - FG oom score
     private static final int CACHED_APP_VS_FG_OOM_DELTA = 999;
@@ -378,6 +380,22 @@ public class CameraEvictionTest extends ActivityInstrumentationTestCase2<CameraC
     }
 
     /**
+     * Return a Map of eventTag -> number of times encountered
+     */
+    private Map<Integer, Integer> getEventTagCountMap(List<ErrorLoggingService.LogEvent> events) {
+        ArrayMap<Integer, Integer> eventTagCountMap = new ArrayMap<>();
+        for (ErrorLoggingService.LogEvent e : events) {
+            int eventTag = e.getEvent();
+            if (!eventTagCountMap.containsKey(eventTag)) {
+                eventTagCountMap.put(eventTag, 1);
+            } else {
+                eventTagCountMap.put(eventTag, eventTagCountMap.get(eventTag) + 1);
+            }
+        }
+        return eventTagCountMap;
+    }
+
+    /**
      * Test camera availability access callback in split window mode.
      */
     @AppModeFull(reason = "TestTaskOrganizer.putTaskInSplitPrimary, .putTaskInSplitSecondary")
@@ -404,26 +422,60 @@ public class CameraEvictionTest extends ActivityInstrumentationTestCase2<CameraC
                 TestConstants.EVENT_CAMERA_CONNECT);
         assertNotNull("Camera device not setup in remote process!", allEvents);
 
-        Rect firstBounds = mTaskOrganizer.getPrimaryTaskBounds();
-        Rect secondBounds = mTaskOrganizer.getSecondaryTaskBounds();
-        boolean activityResumed = false;
+        int activityResumed = 0;
         boolean cameraConnected = false;
+        boolean activityPaused = false;
 
-        for (ErrorLoggingService.LogEvent e : allEvents) {
-            int eventTag = e.getEvent();
+        Map<Integer, Integer> eventTagCountMap = getEventTagCountMap(allEvents);
+        for (int eventTag : eventTagCountMap.keySet()) {
             if (eventTag == TestConstants.EVENT_ACTIVITY_RESUMED) {
-                activityResumed = true;
-            } else if (eventTag == TestConstants.EVENT_CAMERA_CONNECT) {
-                cameraConnected = true;
+                activityResumed += eventTagCountMap.get(eventTag);
             }
         }
-        assertTrue("Remote activity never resumed!", activityResumed);
+        activityPaused = eventTagCountMap.containsKey(TestConstants.EVENT_ACTIVITY_PAUSED);
+        cameraConnected = eventTagCountMap.containsKey(TestConstants.EVENT_CAMERA_CONNECT);
+        assertTrue("Remote activity never resumed!", activityResumed > 0);
         assertTrue("Camera device not setup in remote process!", cameraConnected);
+
+        Rect firstBounds = mTaskOrganizer.getPrimaryTaskBounds();
+        Rect secondBounds = mTaskOrganizer.getSecondaryTaskBounds();
 
         Log.v(TAG, "Split bounds: (" + firstBounds.left + ", " + firstBounds.top + ", "
                 + firstBounds.right + ", " + firstBounds.bottom + "), ("
                 + secondBounds.left + ", " + secondBounds.top + ", "
                 + secondBounds.right + ", " + secondBounds.bottom + ")");
+
+        // Both the remote activity and the in-process activity will go through a pause-resume cycle
+        // which we're not interested in testing. Wait until the end of it before expecting
+        // onCameraAccessPrioritiesChanged events.
+        if (!activityPaused) {
+            allEvents = mErrorServiceConnection.getLog(SETUP_TIMEOUT,
+                    TestConstants.EVENT_ACTIVITY_PAUSED);
+            assertNotNull("Remote activity not paused!", allEvents);
+            eventTagCountMap = getEventTagCountMap(allEvents);
+            for (int eventTag : eventTagCountMap.keySet()) {
+                if (eventTag == TestConstants.EVENT_ACTIVITY_RESUMED) {
+                    activityResumed += eventTagCountMap.get(eventTag);
+                }
+            }
+            activityPaused = eventTagCountMap.containsKey(TestConstants.EVENT_ACTIVITY_PAUSED);
+        }
+
+        assertTrue(activityPaused);
+
+        if (activityResumed < 2) {
+            allEvents = mErrorServiceConnection.getLog(SETUP_TIMEOUT,
+                    TestConstants.EVENT_ACTIVITY_RESUMED);
+            assertNotNull("Remote activity not resumed after pause!", allEvents);
+            eventTagCountMap = getEventTagCountMap(allEvents);
+            for (int eventTag : eventTagCountMap.keySet()) {
+                if (eventTag == TestConstants.EVENT_ACTIVITY_RESUMED) {
+                    activityResumed += eventTagCountMap.get(eventTag);
+                }
+            }
+        }
+
+        assertEquals(2, activityResumed);
 
         Set<Integer> expectedEventsPrimary = new ArraySet<>();
         expectedEventsPrimary.add(TestConstants.EVENT_CAMERA_ACCESS_PRIORITIES_CHANGED);
@@ -434,13 +486,40 @@ public class CameraEvictionTest extends ActivityInstrumentationTestCase2<CameraC
         expectedEventsSecondary.add(TestConstants.EVENT_ACTIVITY_TOP_RESUMED_TRUE);
 
         // Priorities are also expected to change when a second activity only gains or loses focus
-        // while running in split screen mode
+        // while running in split screen mode.
         injectTapEvent(firstBounds.centerX(), firstBounds.centerY());
         allEvents = mErrorServiceConnection.getLog(CAMERA_ACCESS_TIMEOUT, expectedEventsPrimary);
-        injectTapEvent(secondBounds.centerX(), secondBounds.centerY());
-        allEvents = mErrorServiceConnection.getLog(CAMERA_ACCESS_TIMEOUT, expectedEventsSecondary);
-        injectTapEvent(firstBounds.centerX(), firstBounds.centerY());
-        allEvents = mErrorServiceConnection.getLog(CAMERA_ACCESS_TIMEOUT, expectedEventsPrimary);
+
+        // Run many iterations to make sure there are no negatives. Limit this to 15 seconds.
+        long begin = System.currentTimeMillis();
+        final int maxIterations = 100;
+        final long timeLimitMs = 15000;
+        for (int i = 0; i < maxIterations && System.currentTimeMillis() - begin < timeLimitMs;
+                i++) {
+            injectTapEvent(secondBounds.centerX(), secondBounds.centerY());
+            allEvents = mErrorServiceConnection.getLog(CAMERA_ACCESS_TIMEOUT,
+                    expectedEventsSecondary);
+            assertNotNull(allEvents);
+            eventTagCountMap = getEventTagCountMap(allEvents);
+            assertTrue(eventTagCountMap.containsKey(
+                    TestConstants.EVENT_CAMERA_ACCESS_PRIORITIES_CHANGED));
+            assertTrue(eventTagCountMap.containsKey(
+                    TestConstants.EVENT_ACTIVITY_TOP_RESUMED_TRUE));
+            assertFalse(eventTagCountMap.containsKey(
+                    TestConstants.EVENT_ACTIVITY_TOP_RESUMED_FALSE));
+
+            injectTapEvent(firstBounds.centerX(), firstBounds.centerY());
+            allEvents = mErrorServiceConnection.getLog(CAMERA_ACCESS_TIMEOUT,
+                    expectedEventsPrimary);
+            assertNotNull(allEvents);
+            eventTagCountMap = getEventTagCountMap(allEvents);
+            assertTrue(eventTagCountMap.containsKey(
+                    TestConstants.EVENT_CAMERA_ACCESS_PRIORITIES_CHANGED));
+            assertTrue(eventTagCountMap.containsKey(
+                    TestConstants.EVENT_ACTIVITY_TOP_RESUMED_FALSE));
+            assertFalse(eventTagCountMap.containsKey(
+                    TestConstants.EVENT_ACTIVITY_TOP_RESUMED_TRUE));
+        }
     }
 
     /**
@@ -734,6 +813,7 @@ public class CameraEvictionTest extends ActivityInstrumentationTestCase2<CameraC
             Intent activityIntent = new Intent(a, klass);
             activityIntent.putExtra(TestConstants.EXTRA_IGNORE_CAMERA_ACCESS, true);
             activityIntent.putExtra(TestConstants.EXTRA_IGNORE_TOP_ACTIVITY_RESUMED, true);
+            activityIntent.putExtra(TestConstants.EXTRA_IGNORE_ACTIVITY_PAUSED, true);
             a.startActivity(activityIntent);
             Thread.sleep(WAIT_TIME);
         }
