@@ -126,12 +126,11 @@ public class BaseMultiUserTest implements IDeviceTest {
             try {
                 return Integer.parseInt(output.substring(output.lastIndexOf(" ")).trim());
             } catch (NumberFormatException e) {
-                CLog.e("Failed to parse result: %s", output);
+                throw new IllegalStateException("Failed to parse result: " + output);
             }
-        } else {
-            CLog.e("Failed to create user: %s", output);
         }
-        throw new IllegalStateException();
+
+        throw new IllegalStateException("Failed to create user: " + output);
     }
 
     protected int createGuestUser() throws Exception {
