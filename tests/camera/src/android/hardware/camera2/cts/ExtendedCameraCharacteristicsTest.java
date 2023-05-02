@@ -45,6 +45,7 @@ import android.hardware.Camera;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraCharacteristics.Key;
 import android.hardware.camera2.CameraDevice;
+import android.hardware.camera2.CameraExtensionCharacteristics;
 import android.hardware.camera2.CameraMetadata;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
@@ -61,6 +62,8 @@ import android.hardware.cts.helpers.CameraUtils;
 import android.media.CamcorderProfile;
 import android.media.ImageReader;
 import android.mediapc.cts.common.PerformanceClassEvaluator;
+import android.mediapc.cts.common.PerformanceClassEvaluator.CameraExtensionRequirement;
+import android.mediapc.cts.common.PerformanceClassEvaluator.DynamicRangeTenBitsRequirement;
 import android.mediapc.cts.common.RequiredMeasurement;
 import android.mediapc.cts.common.Requirement;
 import android.mediapc.cts.common.RequirementConstants;
@@ -79,10 +82,16 @@ import android.view.Surface;
 import android.view.WindowManager;
 import android.view.WindowMetrics;
 
+import androidx.camera.core.CameraSelector;
+import androidx.camera.extensions.ExtensionMode;
+import androidx.camera.extensions.ExtensionsManager;
+import androidx.camera.lifecycle.ProcessCameraProvider;
 import androidx.test.rule.ActivityTestRule;
 
 import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.CddTest;
+
+import com.google.common.util.concurrent.ListenableFuture;
 
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
@@ -100,6 +109,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.BiPredicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -139,6 +151,7 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
     private static final int MAX_NUM_IMAGES = 5;
     private static final long PREVIEW_RUN_MS = 500;
     private static final long FRAME_DURATION_30FPS_NSEC = (long) 1e9 / 30;
+    private static final long WAIT_TIMEOUT_IN_MS = 10_000;
 
     private static final long MIN_UHR_SENSOR_RESOLUTION = 24000000;
     /*
@@ -169,6 +182,8 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
             CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_PRIVATE_REPROCESSING;
     private static final int CONSTRAINED_HIGH_SPEED =
             CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_CONSTRAINED_HIGH_SPEED_VIDEO;
+    private static final int DYNAMIC_RANGE_TEN_BIT =
+            CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_DYNAMIC_RANGE_TEN_BIT;
     private static final int MONOCHROME =
             CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_MONOCHROME;
     private static final int HIGH_SPEED_FPS_LOWER_MIN = 30;
@@ -3184,6 +3199,36 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
     }
 
     /**
+     * Check the CameraX Night extension requirement
+     */
+    private ExtensionsManager getCameraXExtensionManager() throws Exception {
+        // Obtain an instance of a process camera provider
+        final ListenableFuture<ProcessCameraProvider> cameraProviderFuture =
+                ProcessCameraProvider.getInstance(mContext);
+        ProcessCameraProvider cameraProvider = null;
+        try {
+            cameraProvider = cameraProviderFuture.get(WAIT_TIMEOUT_IN_MS, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException | ExecutionException | TimeoutException e) {
+            throw new AssertionError("Provider future failed to complete", e);
+        }
+        assertNotNull("CameraProviderManager isn't available", cameraProvider);
+
+        // Obtain an instance of the extension manager
+        final ListenableFuture<ExtensionsManager> extensionsManagerFuture =
+                ExtensionsManager.getInstanceAsync(mContext, cameraProvider);
+        ExtensionsManager extensionsManager = null;
+        try {
+            extensionsManager = extensionsManagerFuture.get(
+                    WAIT_TIMEOUT_IN_MS, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException | ExecutionException | TimeoutException e) {
+            throw new AssertionError("ExtensionManager future failed to complete", e);
+        }
+        assertNotNull("ExtensionManager isn't available", extensionsManager);
+
+        return extensionsManager;
+    }
+
+    /**
      * Check camera characteristics for Performance class requirements as specified
      * in CDD camera section 7.5
      */
@@ -3492,6 +3537,96 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
             }
         }
         return false;
+    }
+
+    /**
+     * Check camera characteristics for Android 14 Performance class requirements
+     * as specified in CDD camera section 7.5
+     */
+    @Test
+    @AppModeFull(reason = "Media Performance class test not applicable to instant apps")
+    @CddTest(requirements = {
+            "2.2.7.2/7.5/H-1-15",
+            "2.2.7.2/7.5/H-1-16"})
+    public void testCameraUPerfClassCharacteristics() throws Exception {
+        if (mAdoptShellPerm) {
+            // Skip test for system camera. Performance class is only applicable for public camera
+            // ids.
+            return;
+        }
+        PerformanceClassEvaluator pce = new PerformanceClassEvaluator(this.mTestName);
+        CameraExtensionRequirement cameraExtensionReq = pce.addR7_5__H_1_15();
+        DynamicRangeTenBitsRequirement dynamicRangeTenBitsReq = pce.addR7_5__H_1_16();
+
+        String primaryRearId = CameraTestUtils.getPrimaryRearCamera(mCameraManager,
+                mCameraIdsUnderTest);
+        String primaryFrontId = CameraTestUtils.getPrimaryFrontCamera(mCameraManager,
+                mCameraIdsUnderTest);
+
+        // H-1-15
+        verifyExtensionForCamera(primaryRearId, CameraExtensionRequirement.PRIMARY_REAR_CAMERA,
+                cameraExtensionReq);
+        verifyExtensionForCamera(primaryFrontId, CameraExtensionRequirement.PRIMARY_FRONT_CAMERA,
+                cameraExtensionReq);
+
+        // H-1-16
+        verifyDynamicRangeTenBits(primaryRearId,
+                DynamicRangeTenBitsRequirement.PRIMARY_REAR_CAMERA, dynamicRangeTenBitsReq);
+        verifyDynamicRangeTenBits(primaryFrontId,
+                DynamicRangeTenBitsRequirement.PRIMARY_FRONT_CAMERA, dynamicRangeTenBitsReq);
+
+        pce.submitAndCheck();
+    }
+
+    /**
+     * Verify camera2 and CameraX extension requirements for a camera id
+     */
+    private void verifyExtensionForCamera(String cameraId, int facing,
+            PerformanceClassEvaluator.CameraExtensionRequirement req) throws Exception {
+        if (cameraId == null) {
+            req.setCamera2NightExtensionSupported(facing, false);
+            req.setCameraXNightExtensionSupported(facing, false);
+            return;
+        }
+
+        ExtensionsManager extensionsManager = getCameraXExtensionManager();
+        CameraExtensionCharacteristics extensionChars =
+                mCameraManager.getCameraExtensionCharacteristics(cameraId);
+        StaticMetadata staticInfo = mAllStaticInfo.get(cameraId);
+
+        List<Integer> supportedExtensions = extensionChars.getSupportedExtensions();
+        boolean nightExtensionSupported = supportedExtensions.contains(
+                CameraExtensionCharacteristics.EXTENSION_NIGHT);
+        req.setCamera2NightExtensionSupported(facing, nightExtensionSupported);
+
+        CameraSelector selector;
+        if (facing == CameraExtensionRequirement.PRIMARY_REAR_CAMERA) {
+            selector = CameraSelector.DEFAULT_BACK_CAMERA;
+        } else if (facing == CameraExtensionRequirement.PRIMARY_FRONT_CAMERA) {
+            selector = CameraSelector.DEFAULT_FRONT_CAMERA;
+        } else {
+            return;
+        }
+        req.setCameraXNightExtensionSupported(facing,
+                extensionsManager.isExtensionAvailable(
+                        selector, ExtensionMode.NIGHT));
+    }
+
+    /**
+     * Verify dynamic range ten bits requirement for a camera id
+     */
+    private void verifyDynamicRangeTenBits(String cameraId, int facing,
+            PerformanceClassEvaluator.DynamicRangeTenBitsRequirement req) throws Exception {
+        if (cameraId == null) {
+            req.setDynamicRangeTenBitsSupported(facing, false);
+            return;
+        }
+
+        StaticMetadata staticInfo = mAllStaticInfo.get(cameraId);
+        boolean dynamicRangeTenBitsSupported =
+                staticInfo.isCapabilitySupported(DYNAMIC_RANGE_TEN_BIT);
+
+        req.setDynamicRangeTenBitsSupported(facing, dynamicRangeTenBitsSupported);
     }
 
     /**

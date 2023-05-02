@@ -4114,6 +4114,37 @@ public class CameraTestUtils extends Assert {
     }
 
     /**
+     * Get the primary rear facing camera from an ID list
+     */
+    public static String getPrimaryRearCamera(CameraManager manager, String[] cameraIds)
+            throws Exception {
+        return getPrimaryCamera(manager, cameraIds, CameraCharacteristics.LENS_FACING_BACK);
+    }
+
+    /**
+     * Get the primary front facing camera from an ID list
+     */
+    public static String getPrimaryFrontCamera(CameraManager manager, String[] cameraIds)
+            throws Exception {
+        return getPrimaryCamera(manager, cameraIds, CameraCharacteristics.LENS_FACING_FRONT);
+    }
+
+    private static String getPrimaryCamera(CameraManager manager,
+            String[] cameraIds, Integer facing) throws Exception {
+        if (cameraIds == null) {
+            return null;
+        }
+
+        for (String id : cameraIds) {
+            if (isPrimaryCamera(manager, id, facing)) {
+                return id;
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Check whether a camera Id is a primary rear facing camera
      */
     public static boolean isPrimaryRearFacingCamera(CameraManager manager, String cameraId)
