@@ -62,6 +62,7 @@ class InstallConstraintsTest {
     }
 
     private val instr: Instrumentation = InstrumentationRegistry.getInstrumentation()
+    private val testUserId: Int = instr.targetContext.user.identifier
 
     @Before
     fun setUp() {
@@ -457,7 +458,8 @@ class InstallConstraintsTest {
 
     private fun startActivity(packageName: String, className: String) =
         // The -W option waits for the activity launch to complete
-        SystemUtil.runShellCommandOrThrow("am start-activity -W -n $packageName/$className")
+        SystemUtil.runShellCommandOrThrow(
+                "am start-activity --user $testUserId -W -n $packageName/$className")
 
     private fun getPackageImportance(packageName: String) =
         instr.context.getSystemService(ActivityManager::class.java)!!
