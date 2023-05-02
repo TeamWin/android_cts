@@ -411,7 +411,6 @@ public class SpatializerTest extends CtsAndroidTestCase {
                 .adoptShellPermissionIdentity("android.permission.MODIFY_DEFAULT_AUDIO_EFFECTS");
         try {
             spat.setEnabled(false);
-            getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
             assertEquals("Spatializer not reported as disabled", false, spat.isEnabled());
             Boolean enabled = stateListener.getEnabled();
             assertNotNull("Spatializer state listener wasn't called", enabled);
@@ -420,6 +419,7 @@ public class SpatializerTest extends CtsAndroidTestCase {
         } finally {
             // restore state
             spat.setEnabled(true);
+            getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
             spat.removeOnSpatializerStateChangedListener(stateListener);
             assertEquals("Spatializer state cannot be restored", true, spat.isEnabled());
         }
