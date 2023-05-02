@@ -32,6 +32,7 @@ import static android.view.cts.util.ASurfaceControlTestUtils.nSurfaceTransaction
 import static android.view.cts.util.ASurfaceControlTestUtils.nSurfaceTransaction_delete;
 import static android.view.cts.util.ASurfaceControlTestUtils.nSurfaceTransaction_fromJava;
 import static android.view.cts.util.ASurfaceControlTestUtils.nSurfaceTransaction_releaseBuffer;
+import static android.view.cts.util.ASurfaceControlTestUtils.nSurfaceTransaction_setBuffer;
 import static android.view.cts.util.ASurfaceControlTestUtils.nSurfaceTransaction_setDamageRegion;
 import static android.view.cts.util.ASurfaceControlTestUtils.nSurfaceTransaction_setDataSpace;
 import static android.view.cts.util.ASurfaceControlTestUtils.nSurfaceTransaction_setDesiredPresentTime;
@@ -228,6 +229,21 @@ public class ASurfaceControlTest {
             return buffer;
         }
 
+        public void setNullBuffer(long surfaceControl) {
+            long surfaceTransaction = createSurfaceTransaction();
+            nSurfaceTransaction_setBuffer(surfaceControl, surfaceTransaction, 0 /* buffer */);
+            TimedTransactionListener onCommitCallback = new TimedTransactionListener();
+            nSurfaceTransaction_setOnCommitCallback(surfaceTransaction, onCommitCallback);
+            applyAndDeleteSurfaceTransaction(surfaceTransaction);
+            try {
+                onCommitCallback.mLatch.await(1, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+            }
+            if (onCommitCallback.mLatch.getCount() > 0) {
+                Log.e(TAG, "Failed to wait for commit callback");
+            }
+        }
+
         public void setQuadrantBuffer(long surfaceControl, long surfaceTransaction, int width,
                 int height, int colorTopLeft, int colorTopRight, int colorBottomRight,
                 int colorBottomLeft) {
@@ -418,6 +434,26 @@ public class ASurfaceControlTest {
                     }
                 },
                 new PixelChecker(Color.RED) { //10000
+                    @Override
+                    public boolean checkPixels(int pixelCount, int width, int height) {
+                        return pixelCount > 9000 && pixelCount < 11000;
+                    }
+                });
+    }
+
+    @Test
+    public void testSurfaceTransaction_setNullBuffer() {
+        verifyTest(
+                new BasicSurfaceHolderCallback() {
+                    @Override
+                    public void surfaceCreated(SurfaceHolder holder) {
+                        long surfaceControl = createFromWindow(holder.getSurface());
+                        setSolidBuffer(surfaceControl, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT,
+                                Color.RED);
+                        setNullBuffer(surfaceControl);
+                    }
+                },
+                new PixelChecker(Color.YELLOW) { //10000
                     @Override
                     public boolean checkPixels(int pixelCount, int width, int height) {
                         return pixelCount > 9000 && pixelCount < 11000;
