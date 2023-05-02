@@ -45,7 +45,8 @@ public class VirtualKeyboardLayoutTest extends VirtualDeviceTestCase {
     @Override
     void onSetUp() {
         Settings.Global.putString(
-                mTestActivity.getContentResolver(), "settings_new_keyboard_ui", "true");
+                mInstrumentation.getTargetContext().getContentResolver(),
+                "settings_new_keyboard_ui", "true");
         mInputManager = mInstrumentation.getTargetContext().getSystemService(InputManager.class);
         mInputDeviceListener = createInputDeviceListener();
         mInputManager.registerInputDeviceListener(
@@ -66,7 +67,8 @@ public class VirtualKeyboardLayoutTest extends VirtualDeviceTestCase {
 
     @Override
     void onTearDown() {
-        Settings.Global.putString(mTestActivity.getContentResolver(), "settings_new_keyboard_ui",
+        Settings.Global.putString(mInstrumentation.getTargetContext().getContentResolver(),
+                "settings_new_keyboard_ui",
                 "");
         if (mInputManager != null) {
             mInputManager.unregisterInputDeviceListener(mInputDeviceListener);
@@ -137,6 +139,61 @@ public class VirtualKeyboardLayoutTest extends VirtualDeviceTestCase {
                             KeyEvent.KEYCODE_Z
                     },
                     "swiss german");
+        }
+    }
+
+    @Test
+    public void createVirtualKeyboard_layoutSelected_differentLayoutType() {
+        // Creates a virtual keyboard with English(QWERTY) layout
+        try (VirtualKeyboard virtualKeyboard = createVirtualKeyboard("en-Latn-US", "qwerty")) {
+            PollingCheck.waitFor(
+                    () -> isCorrectlyConfigured(KeyEvent.KEYCODE_Q, KeyEvent.KEYCODE_Q),
+                    "Waiting for English(QWERTY) keyboard to be configured correctly took too "
+                            + "long");
+            assertKeyMappings(
+                    new int[]{
+                            KeyEvent.KEYCODE_Q,
+                            KeyEvent.KEYCODE_W,
+                            KeyEvent.KEYCODE_E,
+                            KeyEvent.KEYCODE_R,
+                            KeyEvent.KEYCODE_T,
+                            KeyEvent.KEYCODE_Y
+                    },
+                    new int[]{
+                            KeyEvent.KEYCODE_Q,
+                            KeyEvent.KEYCODE_W,
+                            KeyEvent.KEYCODE_E,
+                            KeyEvent.KEYCODE_R,
+                            KeyEvent.KEYCODE_T,
+                            KeyEvent.KEYCODE_Y
+                    },
+                    "English(QWERTY)");
+        }
+
+        // Creates a Virtual keyboard with English(Dvorak) layout
+        try (VirtualKeyboard virtualKeyboard = createVirtualKeyboard("en-Latn-US", "dvorak")) {
+            PollingCheck.waitFor(
+                    () -> isCorrectlyConfigured(KeyEvent.KEYCODE_Q, KeyEvent.KEYCODE_APOSTROPHE),
+                    "Waiting for English(Dvorak) keyboard to be configured correctly took too "
+                            + "long");
+            assertKeyMappings(
+                    new int[]{
+                            KeyEvent.KEYCODE_Q,
+                            KeyEvent.KEYCODE_W,
+                            KeyEvent.KEYCODE_E,
+                            KeyEvent.KEYCODE_R,
+                            KeyEvent.KEYCODE_T,
+                            KeyEvent.KEYCODE_Y
+                    },
+                    new int[]{
+                            KeyEvent.KEYCODE_APOSTROPHE,
+                            KeyEvent.KEYCODE_COMMA,
+                            KeyEvent.KEYCODE_E,
+                            KeyEvent.KEYCODE_P,
+                            KeyEvent.KEYCODE_Y,
+                            KeyEvent.KEYCODE_F
+                    },
+                    "English(Dvorak)");
         }
     }
 
