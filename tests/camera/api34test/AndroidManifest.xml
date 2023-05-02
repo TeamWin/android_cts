@@ -19,8 +19,7 @@
     package="android.camera.cts.api34test">
 
     <uses-permission android:name="android.permission.CAMERA" />
-    <!-- TODO: change this to 34 -->
-    <uses-sdk android:targetSdkVersion="10000" />
+    <uses-sdk android:targetSdkVersion="34" />
 
     <application android:largeHeap="true">
         <uses-library android:name="android.test.runner" />
