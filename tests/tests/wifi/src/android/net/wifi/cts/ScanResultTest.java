@@ -381,8 +381,10 @@ public class ScanResultTest extends WifiJUnit3TestBase {
         synchronized (mMySync) {
             for (int i = 0; i < SCAN_REQUEST_THROTTLE_MAX_IN_TIME_WINDOW_FG_APPS; ++i) {
                 mWifiManager.startScan();
+                // TODO(b/277663385): Increased timeout until cuttlefish's mac80211_hwsim uses more
+                // than 1 channel.
                 assertTrue("Iteration #" + i,
-                        waitForBroadcast(SCAN_WAIT_MSEC, STATE_SCAN_RESULTS_AVAILABLE));
+                        waitForBroadcast(SCAN_WAIT_MSEC * 2, STATE_SCAN_RESULTS_AVAILABLE));
             }
 
             mWifiManager.startScan();
