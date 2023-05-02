@@ -35,6 +35,7 @@ import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assume.assumeTrue;
+import static org.testng.Assert.assertThrows;
 
 import android.app.KeyguardManager;
 import android.app.admin.RemoteDevicePolicyManager;
@@ -47,6 +48,7 @@ import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.RequireDoesNotHaveFeature;
 import com.android.bedstead.harrier.annotations.RequireFeature;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
+import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.CoexistenceFlagsOn;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
 import com.android.bedstead.harrier.policies.PasswordComplexity;
@@ -1057,6 +1059,41 @@ public final class ResetPasswordWithTokenTest { // bunch of headless failures - 
                         sDeviceState.dpc().componentName()))
                 .isEqualTo(valueBefore);
     }
+
+    @CannotSetPolicyTest(policy = ResetPasswordWithToken.class)
+    @Postsubmit(reason = "new test")
+    public void setResetPasswordToken_notPermitted_throwsSecurityException() {
+        assertThrows(SecurityException.class,
+                () -> sDeviceState.dpc().devicePolicyManager().setResetPasswordToken(
+                        sDeviceState.dpc().componentName(), TOKEN));
+    }
+
+    @CannotSetPolicyTest(policy = ResetPasswordWithToken.class)
+    @Postsubmit(reason = "new test")
+    public void resetPasswordWithToken_notPermitted_throwsSecurityException() {
+        assertThrows(SecurityException.class,
+                () -> sDeviceState.dpc().devicePolicyManager().resetPasswordWithToken(
+                        sDeviceState.dpc().componentName(), NOT_COMPLEX_PASSWORD, TOKEN, 0));
+    }
+
+    @CannotSetPolicyTest(policy = ResetPasswordWithToken.class)
+    @Postsubmit(reason = "new test")
+    public void clearResetPasswordToken_notPermitted_throwsSecurityException() {
+        assertThrows(SecurityException.class,
+                () -> sDeviceState.dpc().devicePolicyManager().clearResetPasswordToken(
+                        sDeviceState.dpc().componentName()));
+    }
+
+    @CannotSetPolicyTest(policy = ResetPasswordWithToken.class)
+    @Postsubmit(reason = "new test")
+    public void isResetPasswordTokenActive_notPermitted_throwsSecurityException() {
+        assertThrows(SecurityException.class,
+                () -> sDeviceState.dpc().devicePolicyManager().isResetPasswordTokenActive(
+                        sDeviceState.dpc().componentName()));
+    }
+
+
+
 
     private void assertPasswordSucceeds(String password) {
         assertThat(sDeviceState.dpc().devicePolicyManager().resetPasswordWithToken(
