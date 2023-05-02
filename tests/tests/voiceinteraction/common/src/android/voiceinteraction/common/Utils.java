@@ -94,6 +94,9 @@ public class Utils {
     public static final int EXTRA_HOTWORD_DETECTION_SERVICE_ENABLE_AUDIO_EGRESS = 5;
     public static final int EXTRA_HOTWORD_DETECTION_SERVICE_CLEAR_SOFTWARE_DETECTION_JOB = 6;
     public static final int EXTRA_HOTWORD_DETECTION_SERVICE_No_NEED_ACTION_DURING_DETECTION = 7;
+    // test scenario to verify the HotwordDetectionService was created after a given time
+    // This can be used to verify the service was restarted or recreated.
+    public static final int EXTRA_HOTWORD_DETECTION_SERVICE_SEND_SUCCESS_IF_CREATED_AFTER = 8;
 
     /** Indicate to start a new activity for testing. */
     public static final int ACTIVITY_NEW = 0;
@@ -188,6 +191,7 @@ public class Utils {
      */
     public static final String KEY_AUDIO_EGRESS_USE_ILLEGAL_COPY_BUFFER_SIZE =
             "useIllegalCopyBufferSize";
+    public static final String KEY_TIMESTAMP_MILLIS = "timestamp_millis";
 
     public static final String VOICE_INTERACTION_KEY_CALLBACK = "callback";
     public static final String VOICE_INTERACTION_KEY_CONTROL = "control";

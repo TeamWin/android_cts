@@ -28,6 +28,7 @@ import android.os.ParcelFileDescriptor;
 import android.os.PersistableBundle;
 import android.os.Process;
 import android.os.SharedMemory;
+import android.os.SystemClock;
 import android.service.voice.AlwaysOnHotwordDetector;
 import android.service.voice.HotwordDetectedResult;
 import android.service.voice.HotwordDetectionService;
@@ -89,6 +90,7 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
     private boolean mStopDetectionCalled;
     @GuardedBy("mLock")
     private int mDetectionDelayMs = 0;
+    private long mServiceCreatedTimeMillis = -1;
 
     @GuardedBy("mLock")
     @Nullable
@@ -109,6 +111,7 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
     public void onCreate() {
         super.onCreate();
         mHandler = Handler.createAsync(Looper.getMainLooper());
+        mServiceCreatedTimeMillis = SystemClock.elapsedRealtime();
         Log.d(TAG, "onCreate");
     }
 
@@ -340,6 +343,19 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
                             == Utils.EXTRA_HOTWORD_DETECTION_SERVICE_SEND_CUSTOM_INIT_STATUS) {
                         Log.d(TAG, "send custom initialization status");
                         statusCallback.accept(options.getInt(Utils.KEY_INITIALIZATION_STATUS, -1));
+                        return;
+                    } else if (options.getInt(Utils.KEY_TEST_SCENARIO, -1)
+                            == Utils.EXTRA_HOTWORD_DETECTION_SERVICE_SEND_SUCCESS_IF_CREATED_AFTER) {
+                        // verify that the HotwordDetectionService was created after the timestamp
+                        // passed in via the options parameter
+                        long optionsTimestampMillis = options.getLong(Utils.KEY_TIMESTAMP_MILLIS,
+                                -1);
+                        Log.d(TAG, "send initialization success if created after: "
+                                + optionsTimestampMillis
+                                + ", onCreate timestamp=" + mServiceCreatedTimeMillis);
+                        statusCallback.accept((mServiceCreatedTimeMillis > optionsTimestampMillis)
+                                ? SandboxedDetectionInitializer.INITIALIZATION_STATUS_SUCCESS
+                                : SandboxedDetectionInitializer.getMaxCustomInitializationStatus());
                         return;
                     }
                 }
