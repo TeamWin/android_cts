@@ -117,7 +117,7 @@ public class AlwaysOnHotwordDetectorTest {
                 .getUiAutomation()
                 .adoptShellPermissionIdentity(
                         RECORD_AUDIO, CAPTURE_AUDIO_HOTWORD, MANAGE_HOTWORD_DETECTION,
-                        SOUND_TRIGGER_RUN_IN_BATTERY_SAVER);
+                        SOUND_TRIGGER_RUN_IN_BATTERY_SAVER, DEVICE_POWER, POWER_SAVER);
     }
 
     private void createAndEnrollAlwaysOnHotwordDetector() throws InterruptedException {
@@ -523,8 +523,6 @@ public class AlwaysOnHotwordDetectorTest {
                 new BatterySaverPolicyConfig.Builder(powerManager.getFullPowerSavePolicy())
                         .setSoundTriggerMode(mode)
                         .build();
-        runWithShellPermissionIdentity(
-                () -> powerManager.setFullPowerSavePolicy(newFullPolicyConfig), DEVICE_POWER,
-                POWER_SAVER);
+        powerManager.setFullPowerSavePolicy(newFullPolicyConfig);
     }
 }
