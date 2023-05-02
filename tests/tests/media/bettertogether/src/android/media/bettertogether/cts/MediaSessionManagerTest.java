@@ -840,11 +840,13 @@ public class MediaSessionManagerTest {
         MediaSession.Token mSessionToken;
 
         MediaKeyEventDispatchedListener() {
-            mCountDownLatch = new CountDownLatch(1);
+            resetCountDownLatch();
         }
 
         void resetCountDownLatch() {
-            mCountDownLatch = new CountDownLatch(1);
+            // Initial count reflects that we expect 2 events when we dispatch a key event. One for
+            // key down and one for key up.
+            mCountDownLatch = new CountDownLatch(2);
         }
 
         @Override
