@@ -39,6 +39,7 @@ import android.text.style.ClickableSpan
 import android.view.View
 import androidx.test.uiautomator.By
 import androidx.test.uiautomator.BySelector
+import androidx.test.uiautomator.StaleObjectException
 import androidx.test.uiautomator.UiObjectNotFoundException
 import androidx.test.uiautomator.UiScrollable
 import androidx.test.uiautomator.UiSelector
@@ -299,10 +300,18 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
         uninstallPackage(APP_PACKAGE_NAME, requireSuccess = false)
     }
 
-    protected fun clearTargetSdkWarning(timeoutMillis: Long = TIMEOUT_MILLIS) =
-        waitFindObjectOrNull(By.res("android:id/button1"), timeoutMillis)?.click()?.also {
+    protected fun clearTargetSdkWarning(timeoutMillis: Long = TIMEOUT_MILLIS) {
+        waitForIdle()
+        waitFindObjectOrNull(By.res("android:id/button1"), timeoutMillis)?.let {
+            try {
+                it.click()
+            } catch (e: StaleObjectException) {
+                // Click sometimes fails with StaleObjectException (b/280430717).
+                e.printStackTrace()
+            }
             waitForIdle()
         }
+    }
 
     protected fun clickPermissionReviewContinue() {
         if (isAutomotive || isWatch) {
