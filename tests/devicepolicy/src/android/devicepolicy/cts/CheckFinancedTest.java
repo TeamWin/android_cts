@@ -34,6 +34,7 @@ import android.app.admin.DevicePolicyManager;
 import android.app.role.RoleManager;
 import android.content.Context;
 import android.os.UserHandle;
+import android.util.Log;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
@@ -45,6 +46,7 @@ import com.android.bedstead.harrier.annotations.enterprise.CoexistenceFlagsOn;
 import com.android.bedstead.harrier.policies.CheckFinance;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.permissions.PermissionContextImpl;
+import com.android.bedstead.nene.users.UserReference;
 import com.android.bedstead.testapp.TestApp;
 import com.android.bedstead.testapp.TestAppInstance;
 import com.android.compatibility.common.util.SystemUtil;
@@ -174,7 +176,7 @@ public class CheckFinancedTest {
                 sRoleManager.clearRoleHoldersAsUser(
                         ROLE_FINANCED_DEVICE_KIOSK,
                         MANAGE_HOLDERS_FLAG_DONT_KILL_APP,
-                        UserHandle.SYSTEM,
+                        TestApis.users().instrumented().userHandle(),
                         sContext.getMainExecutor(),
                         originalRoleClearedFuture::complete
                 );
@@ -199,7 +201,7 @@ public class CheckFinancedTest {
                     ROLE_FINANCED_DEVICE_KIOSK,
                     packageName,
                     MANAGE_HOLDERS_FLAG_DONT_KILL_APP,
-                    UserHandle.SYSTEM,
+                    TestApis.users().instrumented().userHandle(),
                     sContext.getMainExecutor(),
                     newRoleSetFuture::complete
             );
@@ -224,7 +226,7 @@ public class CheckFinancedTest {
             sRoleManager.clearRoleHoldersAsUser(
                     ROLE_FINANCED_DEVICE_KIOSK,
                     MANAGE_HOLDERS_FLAG_DONT_KILL_APP,
-                    UserHandle.SYSTEM,
+                    TestApis.users().instrumented().userHandle(),
                     sContext.getMainExecutor(),
                     testRoleClearedFuture::complete
             );
@@ -241,7 +243,7 @@ public class CheckFinancedTest {
                     ROLE_FINANCED_DEVICE_KIOSK,
                     mOriginalRoleHolderPackage,
                     MANAGE_HOLDERS_FLAG_DONT_KILL_APP,
-                    UserHandle.SYSTEM,
+                    TestApis.users().instrumented().userHandle(),
                     sContext.getMainExecutor(),
                     roleUpdateFuture::complete
             );

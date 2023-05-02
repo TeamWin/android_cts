@@ -495,9 +495,12 @@ public final class Users {
     @SuppressWarnings("NewApi")
     public boolean isHeadlessSystemUserMode() {
         if (Versions.meetsMinimumSdkVersionRequirement(S)) {
-            return UserManager.isHeadlessSystemUserMode();
+            boolean value = UserManager.isHeadlessSystemUserMode();
+            Log.d(LOG_TAG, "isHeadlessSystemUserMode: " + value);
+            return value;
         }
 
+        Log.d(LOG_TAG, "isHeadlessSystemUserMode pre-S: false");
         return false;
     }
 

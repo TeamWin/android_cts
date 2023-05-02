@@ -661,7 +661,7 @@ public final class PermissionGrantTest {
                     () -> sNotInstalledTestApp.pkg().hasPermission(GRANTABLE_PERMISSION))
                     .toBeEqualTo(true)
                     .errorOnFail()
-                    .await();
+                     .await();
         } finally {
             sDeviceState.dpc().devicePolicyManager().setPermissionPolicy(
                     sDeviceState.dpc().componentName(), PERMISSION_POLICY_PROMPT);
