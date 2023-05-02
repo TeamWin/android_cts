@@ -400,7 +400,7 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
                 return;
             }
             if (options.getInt(Utils.KEY_TEST_SCENARIO, -1)
-                    == Utils.EXTRA_HOTWORD_DETECTION_SERVICE_No_NEED_ACTION_DURING_DETECTION) {
+                    == Utils.EXTRA_HOTWORD_DETECTION_SERVICE_NO_NEED_ACTION_DURING_DETECTION) {
                 Log.d(TAG, "options : Test no need action during detection");
                 mIsNoNeedActionDuringDetection = true;
                 return;
