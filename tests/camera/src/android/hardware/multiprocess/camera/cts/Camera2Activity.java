@@ -25,6 +25,7 @@ import android.hardware.camera2.CameraManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.os.Process;
 import android.util.Log;
 import android.view.WindowMetrics;
 
@@ -45,10 +46,11 @@ public class Camera2Activity extends Activity {
     HandlerThread mCameraHandlerThread;
     boolean mIgnoreCameraAccess = false;
     boolean mIgnoreTopActivityResumed = false;
+    boolean mIgnoreActivityPaused = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        Log.i(TAG, "onCreate called.");
+        Log.i(TAG, "onCreate called: uid " + Process.myUid() + ".");
         super.onCreate(savedInstanceState);
 
         Intent intent = getIntent();
@@ -56,6 +58,8 @@ public class Camera2Activity extends Activity {
                 TestConstants.EXTRA_IGNORE_CAMERA_ACCESS, false);
         mIgnoreTopActivityResumed = intent.getBooleanExtra(
                 TestConstants.EXTRA_IGNORE_TOP_ACTIVITY_RESUMED, false);
+        mIgnoreActivityPaused = intent.getBooleanExtra(
+                TestConstants.EXTRA_IGNORE_ACTIVITY_PAUSED, false);
 
         mCameraHandlerThread = new HandlerThread("CameraHandlerThread");
         mCameraHandlerThread.start();
@@ -68,6 +72,10 @@ public class Camera2Activity extends Activity {
     protected void onPause() {
         Log.i(TAG, "onPause called.");
         super.onPause();
+
+        if (!mIgnoreActivityPaused) {
+            mErrorServiceConnection.logAsync(TestConstants.EVENT_ACTIVITY_PAUSED, "");
+        }
     }
 
     @Override
