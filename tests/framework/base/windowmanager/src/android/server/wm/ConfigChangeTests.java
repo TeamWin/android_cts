@@ -265,6 +265,7 @@ public class ConfigChangeTests extends ActivityManagerTestBase {
                     "relaunch or config changed",
                     countSpec(ActivityCallback.ON_DESTROY, CountSpec.EQUALS, relaunch ? 1 : 0),
                     countSpec(ActivityCallback.ON_CREATE, CountSpec.EQUALS, relaunch ? 1 : 0),
+                    countSpec(ActivityCallback.ON_RESUME, CountSpec.EQUALS, relaunch ? 1 : 0),
                     countSpec(ActivityCallback.ON_CONFIGURATION_CHANGED,
                             CountSpec.GREATER_THAN_OR_EQUALS, relaunch ? 0 : 1));
 
