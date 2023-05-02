@@ -52,7 +52,7 @@ public class PackageInstallationSessionReportedStatsTestsHelper {
         try {
             uiAutomation.adoptShellPermissionIdentity(Manifest.permission.QUERY_USERS);
             for (String userId : userIds) {
-                results.add(UserManager.getUserTypeForStatsd(
+                results.add(UserInfoUtil.getUserTypeForStatsd(
                         userManager.getUserInfo(Integer.parseInt(userId)).userType));
             }
         } finally {
