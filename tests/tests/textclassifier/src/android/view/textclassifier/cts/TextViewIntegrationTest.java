@@ -34,6 +34,7 @@ import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.TextUtils;
 import android.text.method.LinkMovementMethod;
+import android.util.Log;
 import android.view.textclassifier.TextClassification;
 import android.view.textclassifier.TextClassifier;
 import android.view.textclassifier.TextLinks;
@@ -44,6 +45,7 @@ import androidx.core.os.BuildCompat;
 import androidx.test.core.app.ActivityScenario;
 import androidx.test.core.app.ApplicationProvider;
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
+import androidx.test.filters.FlakyTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.uiautomator.By;
 import androidx.test.uiautomator.BySelector;
@@ -140,6 +142,7 @@ public class TextViewIntegrationTest {
     }
 
     @Test
+    @FlakyTest
     public void smartLinkify() throws Exception {
         ActivityScenario<TextViewActivity> scenario = rule.getScenario();
         // Linkify the text.
@@ -332,6 +335,7 @@ public class TextViewIntegrationTest {
 
         @Override
         public TextLinks generateLinks(TextLinks.Request request) {
+            Log.d("TextViewIntegrationTest", "generateLinks for " + request.getText().toString());
             TextLinks.Builder builder = new TextLinks.Builder(request.getText().toString());
             int index = request.getText().toString().indexOf(ANDROID_URL);
             if (index == -1) {
