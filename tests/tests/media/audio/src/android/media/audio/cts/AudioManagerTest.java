@@ -565,6 +565,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
         getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
     }
 
+    @AppModeFull(reason = "Instant apps cannot hold android.permission.WRITE_SETTINGS")
     public void testSetEncodedSurroundMode() throws Exception {
         getInstrumentation().getUiAutomation().adoptShellPermissionIdentity(
                 Manifest.permission.WRITE_SETTINGS);
