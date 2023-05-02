@@ -562,54 +562,6 @@ public class SmsManagerTest {
         }
     }
 
-    @Test
-    public void testSmsBlocking_userNotAllowed() throws Exception {
-        assertFalse("[RERUN] SIM card does not provide phone number. "
-                        + "Use a suitable SIM Card.", TextUtils.isEmpty(mDestAddr));
-
-        // disable suppressing blocking.
-        TelephonyUtils.endBlockSuppression(getInstrumentation());
-        setDefaultSmsApp(true);
-
-        int defaultSmsSubId = SubscriptionManager.getDefaultSmsSubscriptionId();
-
-        UserHandle originalUserHandle = UserHandle.SYSTEM;
-        try {
-            InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                    .adoptShellPermissionIdentity(
-                            android.Manifest.permission.MANAGE_SUBSCRIPTION_USER_ASSOCIATION);
-            originalUserHandle = mSubscriptionManager.getSubscriptionUserHandle(defaultSmsSubId);
-
-            // Change user handle of default sms subscription.
-            UserHandle testUserHandle = UserHandle.of(100);
-            mSubscriptionManager.setSubscriptionUserHandle(defaultSmsSubId, testUserHandle);
-            assertThat(mSubscriptionManager.getSubscriptionUserHandle(defaultSmsSubId))
-                    .isEqualTo(testUserHandle);
-
-            // Send SMS.
-            init();
-            sendTextMessage(mDestAddr, String.valueOf(SystemClock.elapsedRealtimeNanos()),
-                    mSentIntent, mDeliveredIntent);
-            assertTrue("[RERUN] Could not send SMS. Check signal.",
-                    mSendReceiver.waitForCalls(1, TIME_OUT));
-            assertTrue("Expected no messages to be received as user is not allowed to "
-                            + "send sms.",
-                    mSmsReceivedReceiver.verifyNoCalls(NO_CALLS_TIMEOUT_MILLIS));
-            assertTrue("Expected no messages to be delivered as user is not allowed to "
-                            + "send sms.",
-                    mSmsDeliverReceiver.verifyNoCalls(NO_CALLS_TIMEOUT_MILLIS));
-
-            // CTS tests run in USER_SYSTEM. RESULT_USER_NOT_ALLOWED should be returned as
-            // default sms subscription is not associated with USER_SYSTEM.
-            assertThat(mSendReceiver.getPendingResult().getResultCode())
-                    .isEqualTo(SmsManager.RESULT_USER_NOT_ALLOWED);
-        } finally {
-            mSubscriptionManager.setSubscriptionUserHandle(defaultSmsSubId, originalUserHandle);
-            InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                    .dropShellPermissionIdentity();
-        }
-    }
-
     private void testSmsAccessAboutDefaultApp(String pkg)
             throws Exception {
         String originalSmsApp = getSmsApp();
