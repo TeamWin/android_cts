@@ -21,6 +21,7 @@ import static android.app.AppOpsManager.MODE_IGNORED;
 import static android.app.AppOpsManager.OPSTR_RUN_ANY_IN_BACKGROUND;
 import static android.app.AppOpsManager.OPSTR_SCHEDULE_EXACT_ALARM;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -85,15 +86,17 @@ public class BackgroundRestrictedAlarmsTest {
             new DeviceConfigStateHelper(DeviceConfig.NAMESPACE_TARE);
 
     private volatile int mAlarmCount;
-    private volatile boolean mFgsResult = false;
+    private volatile String mFgsResult;
 
     private final BroadcastReceiver mAlarmStateReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             mAlarmCount = intent.getIntExtra(TestAlarmReceiver.EXTRA_ALARM_COUNT, 1);
-            mFgsResult = intent.getBooleanExtra(FgsTester.EXTRA_FGS_START_RESULT, false);
-            Log.d(TAG, "Received action " + intent.getAction()
-                    + " elapsed: " + SystemClock.elapsedRealtime());
+            mFgsResult = intent.getStringExtra(FgsTester.EXTRA_FGS_START_RESULT);
+            Log.d(TAG, "Received Action: " + intent.getAction()
+                    + ", alarmCount: " + mAlarmCount
+                    + ", fgsResult " + mFgsResult
+                    + " at elapsed: " + SystemClock.elapsedRealtime());
 
         }
     };
@@ -197,7 +200,7 @@ public class BackgroundRestrictedAlarmsTest {
         Thread.sleep(waitInterval);
         assertTrue("AlarmClock did not go off as scheduled when under restrictions",
                 waitForAlarms(1, DEFAULT_WAIT));
-        assertTrue("Fgs start wasn't successful from AlarmClock", mFgsResult);
+        assertEquals("Fgs start wasn't successful from AlarmClock", "", mFgsResult);
     }
 
     @After
