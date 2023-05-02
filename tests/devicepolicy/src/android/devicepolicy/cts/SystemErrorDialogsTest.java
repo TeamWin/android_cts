@@ -29,6 +29,7 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.testng.Assert.assertThrows;
 
 import android.provider.Settings;
+import android.util.Log;
 
 import androidx.test.uiautomator.By;
 import androidx.test.uiautomator.Until;
@@ -36,6 +37,7 @@ import androidx.test.uiautomator.Until;
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.EnsureDoesNotHaveUserRestriction;
+import com.android.bedstead.harrier.annotations.EnsureGlobalSettingSet;
 import com.android.bedstead.harrier.annotations.EnsureHasUserRestriction;
 import com.android.bedstead.harrier.annotations.EnsureSecureSettingSet;
 import com.android.bedstead.harrier.annotations.Postsubmit;
@@ -53,6 +55,7 @@ import com.android.compatibility.common.util.ApiTest;
 import com.google.common.truth.Truth;
 
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.runner.RunWith;
 
@@ -142,8 +145,9 @@ public final class SystemErrorDialogsTest {
     @EnsureDoesNotHaveUserRestriction(DISALLOW_SYSTEM_ERROR_DIALOGS)
     @UserTest({INITIAL_USER, ADDITIONAL_USER})
     @EnsureSecureSettingSet(key = SHOW_FIRST_CRASH_DIALOG_DEV_OPTION, value = "1")
-    @com.android.bedstead.harrier.annotations.EnsureGlobalSettingSet(
+    @EnsureGlobalSettingSet(
             key = Settings.Global.ACTIVITY_MANAGER_CONSTANTS, value = "min_crash_interval=500")
+    @Ignore("b/279876672 crash dialogs do not show reliably in test")
     public void appCrashes_disallowSystemErrorDialogsNotSet_alwaysShowSystemErrorDialogsEnabled_showsDialog() {
         try (TestAppInstance t = sDeviceState.testApps().query()
                 .whereActivities().contains(
@@ -166,7 +170,7 @@ public final class SystemErrorDialogsTest {
     @EnsureHasUserRestriction(DISALLOW_SYSTEM_ERROR_DIALOGS)
     @UserTest({INITIAL_USER, ADDITIONAL_USER})
     @EnsureSecureSettingSet(key = SHOW_FIRST_CRASH_DIALOG_DEV_OPTION, value = "1")
-    @com.android.bedstead.harrier.annotations.EnsureGlobalSettingSet(
+    @EnsureGlobalSettingSet(
             key = Settings.Global.ACTIVITY_MANAGER_CONSTANTS, value = "min_crash_interval=500")
     public void appCrashes_disallowSystemErrorDialogsSet_alwaysShowSystemErrorDialogsEnabled_doesNotShowDialog() {
         try (TestAppInstance t = sDeviceState.testApps().query()

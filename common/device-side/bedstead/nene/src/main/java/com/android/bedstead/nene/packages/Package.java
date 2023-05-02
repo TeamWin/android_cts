@@ -572,6 +572,7 @@ public final class Package {
                         .getPackageManager()
                         .getPackageInfo(mPackageName, /* flags= */ flags);
             } catch (PackageManager.NameNotFoundException e) {
+                Log.e(LOG_TAG, "Could not find package " + this + " on user " + user, e);
                 return null;
             }
         }
