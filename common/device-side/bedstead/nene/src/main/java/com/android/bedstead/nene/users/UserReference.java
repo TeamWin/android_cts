@@ -900,7 +900,7 @@ public final class UserReference implements AutoCloseable {
 
     @Override
     public String toString() {
-        return "User{id=" + id() + "}";
+        return "User{id=" + id() + ", name=" + name() + "}";
     }
 
     /**
