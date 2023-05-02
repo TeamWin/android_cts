@@ -539,32 +539,6 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
     }
 
     @Test
-    public void testPendingIntentBroadcastActivity_appBIsForegroundAndFeatureOff_isNotBlocked() {
-        enableDefaultRescindBalPrivilegesFromPendingIntentSender(false);
-        // Start AppB foreground activity
-        Intent intent = new Intent();
-        intent.setComponent(APP_B.FOREGROUND_ACTIVITY);
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        mContext.startActivity(intent);
-        boolean result = waitForActivityFocused(APP_B.FOREGROUND_ACTIVITY);
-        assertTrue("Not able to start foreground Activity", result);
-        assertTaskStackHasComponents(APP_B.FOREGROUND_ACTIVITY, APP_B.FOREGROUND_ACTIVITY);
-
-        // Send pendingIntent from AppA to AppB, and the AppB launch the pending intent to start
-        // activity in App A
-        sendPendingIntentActivity(APP_A, APP_B);
-        result = waitForActivityFocused(APP_A.BACKGROUND_ACTIVITY);
-        assertTrue("Not able to launch background activity", result);
-        assertTaskStackHasComponents(APP_A.BACKGROUND_ACTIVITY, APP_A.BACKGROUND_ACTIVITY);
-        assertTaskStackHasComponents(APP_B.FOREGROUND_ACTIVITY, APP_B.FOREGROUND_ACTIVITY);
-    }
-
-    private void enableDefaultRescindBalPrivilegesFromPendingIntentSender(boolean enable) {
-        mDeviceConfig.set(ENABLE_DEFAULT_RESCIND_BAL_PRIVILEGES_FROM_PENDING_INTENT_SENDER,
-                String.valueOf(enable));
-    }
-
-    @Test
     public void testPendingIntentBroadcastActivity_appBIsForegroundAndSdk33_isNotBlocked() {
         // Start AppB foreground activity
         Intent intent = new Intent();
