@@ -133,6 +133,12 @@ public final class ListQueryHelper<E extends Queryable, F>
     }
 
     @Override
+    public E containsExactly(F... objects) {
+        size().isEqualTo(objects.length);
+        return contains(objects);
+    }
+
+    @Override
     public boolean isEmptyQuery() {
         for (Query q : mContainsByQuery) {
             if (!Queryable.isEmptyQuery(q)) {
@@ -226,12 +232,18 @@ public final class ListQueryHelper<E extends Queryable, F>
     public String describeQuery(String fieldName) {
         List<String> queryStrings = new ArrayList<>();
         queryStrings.add(mSizeQuery.describeQuery(fieldName + ".size"));
-        if (!mContainsByQuery.isEmpty() && !mContainsByType.isEmpty()) {
-            queryStrings.add(fieldName + " contains matches of ["
-                    + mContainsByQuery.stream().map(t -> "{" + t.describeQuery("")
-                    + "}").collect(Collectors.joining(", ")) + "]"
-                    + mContainsByType.stream().map(t -> "{" + t.toString()
-                    + "}").collect(Collectors.joining(", ")) + "]");
+        if (!mContainsByType.isEmpty()) {
+            if (!mContainsByQuery.isEmpty()) {
+                queryStrings.add(fieldName + " contains matches of ["
+                        + mContainsByQuery.stream().map(t -> "{" + t.describeQuery("")
+                        + "}").collect(Collectors.joining(", ")) + "]"
+                        + mContainsByType.stream().map(t -> "{" + t.toString()
+                        + "}").collect(Collectors.joining(", ")) + "]");
+            } else {
+                queryStrings.add(fieldName + " contains matches of ["
+                        + mContainsByType.stream().map(t -> "{" + t.toString()
+                        + "}").collect(Collectors.joining(", ")) + "]");
+            }
         }
         if (!mDoesNotContainByQuery.isEmpty() && !mDoesNotContainByType.isEmpty()) {
             queryStrings.add(fieldName + " does not contain anything matching any of ["

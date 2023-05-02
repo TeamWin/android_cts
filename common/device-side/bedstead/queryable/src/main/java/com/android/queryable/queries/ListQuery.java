@@ -76,4 +76,9 @@ public interface ListQuery<E extends Queryable, F> extends Query<List<F>> {
      * {@link #contains(Query[])}.
      */
     <H extends Collection<F>> E doesNotContainAny(H... collections);
+
+    /**
+     * Used to query whether a list contains exactly certain objects only.
+     */
+    E containsExactly(F... objects);
 }
