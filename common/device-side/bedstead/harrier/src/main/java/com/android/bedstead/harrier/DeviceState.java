@@ -3038,22 +3038,27 @@ public final class DeviceState extends HarrierRule {
             // (except for the first 1 if headless and always the system user)
             int allowedNonTestUsers = TestApis.users().isHeadlessSystemUserMode() ? 1 : 0;
 
-            for (UserReference u : TestApis.users().all()) {
+            UserReference instrumented = TestApis.users().instrumented();
+
+            for (UserReference u : TestApis.users().all().stream()
+                    .sorted(Comparator.comparing(u -> u.equals(instrumented)).reversed())
+                    .toList()) {
                 if (u.isSystem()) {
                     continue;
                 }
                 if (u.isForTesting()) {
                     continue;
                 }
+
                 if (allowedNonTestUsers > 0) {
                     allowedNonTestUsers--;
                     continue;
                 }
 
-                if (u.equals(TestApis.users().instrumented())) {
+                if (u.equals(instrumented)) {
                     throw new IllegalStateException(
                             "Cannot set Device Owner when running on a "
-                                    + "non-for-testing secondary user");
+                                    + "non-for-testing secondary user (" + u + ")");
                 }
 
                 try {
