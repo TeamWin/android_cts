@@ -65,7 +65,7 @@ public abstract class BaseVoiceInteractionService extends VoiceInteractionServic
     // TODO: rename to mHotwordDetectionServiceInitializedLatch, keep this name until the
     //  refactor done. The original tests use trigger in many places. To make the mapping asier,
     //  keep the current name now.
-    public CountDownLatch mServiceTriggerLatch = null;
+    public CountDownLatch mDetectorInitializedLatch = null;
 
     VisualQueryDetector mVisualQueryDetector = null;
     HotwordDetector mSoftwareHotwordDetector = null;
@@ -250,7 +250,7 @@ public abstract class BaseVoiceInteractionService extends VoiceInteractionServic
      * Clear the non-static state of this class
      */
     public void resetState() {
-        mServiceTriggerLatch = null;
+        mDetectorInitializedLatch = null;
         mVisualQueryDetector = null;
         mSoftwareHotwordDetector = null;
         mAlwaysOnHotwordDetector = null;
@@ -361,7 +361,7 @@ public abstract class BaseVoiceInteractionService extends VoiceInteractionServic
     /**
      * Returns the {@link Executor} of the detector callback
      */
-    private static Executor getDetectorCallbackExecutor() {
+    public static Executor getDetectorCallbackExecutor() {
         return Executors.newSingleThreadExecutor();
     }
 
@@ -427,16 +427,16 @@ public abstract class BaseVoiceInteractionService extends VoiceInteractionServic
     public void waitCreateAlwaysOnHotwordDetectorNoHotwordDetectionServiceReady()
             throws InterruptedException {
         Log.d(mTag, "waitCreateAlwaysOnHotwordDetectorNoHotwordDetectionServiceReady(), latch="
-                + mServiceTriggerLatch);
-        if (mServiceTriggerLatch == null
-                || !mServiceTriggerLatch.await(WAIT_TIMEOUT_IN_MS,
+                + mDetectorInitializedLatch);
+        if (mDetectorInitializedLatch == null
+                || !mDetectorInitializedLatch.await(WAIT_TIMEOUT_IN_MS,
                 TimeUnit.MILLISECONDS)) {
             Log.w(mTag, "waitCreateAlwaysOnHotwordDetectorNoHotwordDetectionServiceReady()");
-            mServiceTriggerLatch = null;
+            mDetectorInitializedLatch = null;
             throw new AssertionError(
                     "CreateAlwaysOnHotwordDetectorNoHotwordDetectionService is not ready");
         }
-        mServiceTriggerLatch = null;
+        mDetectorInitializedLatch = null;
     }
 
     /**
@@ -446,15 +446,15 @@ public abstract class BaseVoiceInteractionService extends VoiceInteractionServic
     public void waitSandboxedDetectionServiceInitializedCalledOrException()
             throws InterruptedException {
         Log.d(mTag, "waitSandboxedDetectionServiceInitializedCalledOrException(), latch="
-                + mServiceTriggerLatch);
-        if (mServiceTriggerLatch == null
-                || !mServiceTriggerLatch.await(WAIT_TIMEOUT_IN_MS,
+                + mDetectorInitializedLatch);
+        if (mDetectorInitializedLatch == null
+                || !mDetectorInitializedLatch.await(WAIT_TIMEOUT_IN_MS,
                 TimeUnit.MILLISECONDS)) {
             Log.w(mTag, "waitAndGetSandboxedServiceInitializedResult()");
-            mServiceTriggerLatch = null;
+            mDetectorInitializedLatch = null;
             throw new AssertionError("Sandboxed detection service initialized fail.");
         }
-        mServiceTriggerLatch = null;
+        mDetectorInitializedLatch = null;
     }
 
     private void resetDetectorCreationExceptions() {
@@ -539,8 +539,8 @@ public abstract class BaseVoiceInteractionService extends VoiceInteractionServic
                 mIsCreateDetectorSecurityExceptionThrow = true;
             }
             Log.w(mTag, "callCreateAlwaysOnHotwordDetector() exception: ", e);
-            if (mServiceTriggerLatch != null) {
-                mServiceTriggerLatch.countDown();
+            if (mDetectorInitializedLatch != null) {
+                mDetectorInitializedLatch.countDown();
             }
         } finally {
             setTestModuleForAlwaysOnHotwordDetectorEnabled(false);
@@ -587,8 +587,8 @@ public abstract class BaseVoiceInteractionService extends VoiceInteractionServic
                 mIsCreateDetectorSecurityExceptionThrow = true;
             }
             Log.w(mTag, "callCreateAlwaysOnHotwordDetector() exception: ", e);
-            if (mServiceTriggerLatch != null) {
-                mServiceTriggerLatch.countDown();
+            if (mDetectorInitializedLatch != null) {
+                mDetectorInitializedLatch.countDown();
             }
         } finally {
             setTestModuleForAlwaysOnHotwordDetectorEnabled(false);
@@ -624,8 +624,8 @@ public abstract class BaseVoiceInteractionService extends VoiceInteractionServic
                 mIsCreateDetectorSecurityExceptionThrow = true;
             }
             Log.w(mTag, "callCreateSoftwareHotwordDetector() exception: " + e);
-            if (mServiceTriggerLatch != null) {
-                mServiceTriggerLatch.countDown();
+            if (mDetectorInitializedLatch != null) {
+                mDetectorInitializedLatch.countDown();
             }
         }
         return null;
@@ -645,8 +645,8 @@ public abstract class BaseVoiceInteractionService extends VoiceInteractionServic
                 mIsCreateDetectorSecurityExceptionThrow = true;
             }
             Log.w(mTag, "callCreateVisualQueryDetector() exception: " + e);
-            if (mServiceTriggerLatch != null) {
-                mServiceTriggerLatch.countDown();
+            if (mDetectorInitializedLatch != null) {
+                mDetectorInitializedLatch.countDown();
             }
         }
         return null;

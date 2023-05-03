@@ -48,7 +48,7 @@ public class CtsMainVoiceInteractionService extends BaseVoiceInteractionService 
      * doesn't define a HotwordDetectionService.
      */
     public void createAlwaysOnHotwordDetector() {
-        mServiceTriggerLatch = new CountDownLatch(1);
+        mDetectorInitializedLatch = new CountDownLatch(1);
         mHandler.post(() -> runWithShellPermissionIdentity(() -> {
             callCreateAlwaysOnHotwordDetector(mNoOpHotwordDetectorCallback);
         }, MANAGE_HOTWORD_DETECTION, CAPTURE_AUDIO_HOTWORD, RECORD_AUDIO));
@@ -59,7 +59,7 @@ public class CtsMainVoiceInteractionService extends BaseVoiceInteractionService 
      * doesn't define a VisualQueryDetector.
      */
     public void createVisualQueryDetector() {
-        mServiceTriggerLatch = new CountDownLatch(1);
+        mDetectorInitializedLatch = new CountDownLatch(1);
         mHandler.post(() -> runWithShellPermissionIdentity(() -> {
             callCreateVisualQueryDetector(mNoOpVisualQueryDetectorCallback);
         }, MANAGE_HOTWORD_DETECTION));

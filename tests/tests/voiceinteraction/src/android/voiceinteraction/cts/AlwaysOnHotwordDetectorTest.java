@@ -54,8 +54,8 @@ import android.os.PowerManager;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.service.voice.AlwaysOnHotwordDetector;
-import android.service.voice.HotwordDetectionService;
 import android.service.voice.HotwordRejectedResult;
+import android.service.voice.SandboxedDetectionInitializer;
 import android.soundtrigger.cts.instrumentation.SoundTriggerInstrumentationObserver;
 import android.soundtrigger.cts.instrumentation.SoundTriggerInstrumentationObserver.ModelSessionObserver;
 import android.util.Log;
@@ -168,7 +168,7 @@ public class AlwaysOnHotwordDetectorTest {
 
         // verify callback result
         assertThat(getService().getSandboxedDetectionServiceInitializedResult())
-                .isEqualTo(HotwordDetectionService.INITIALIZATION_STATUS_SUCCESS);
+                .isEqualTo(SandboxedDetectionInitializer.INITIALIZATION_STATUS_SUCCESS);
 
         // The AlwaysOnHotwordDetector should be created correctly
         mAlwaysOnHotwordDetector = getService().getAlwaysOnHotwordDetector();
