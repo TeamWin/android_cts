@@ -22,6 +22,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.Intent.ACTION_AUTO_REVOKE_PERMISSIONS
 import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
+import android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK
 import android.content.pm.PackageManager
 import android.content.pm.PackageManager.PERMISSION_DENIED
 import android.content.pm.PackageManager.PERMISSION_GRANTED
@@ -643,7 +644,8 @@ class AutoRevokeTest {
     private fun goToPermissions(packageName: String = supportedAppPackageName) {
         context.startActivity(Intent(ACTION_AUTO_REVOKE_PERMISSIONS)
                 .setData(Uri.fromParts("package", packageName, null))
-                .addFlags(FLAG_ACTIVITY_NEW_TASK))
+                .addFlags(FLAG_ACTIVITY_NEW_TASK)
+                .addFlags(FLAG_ACTIVITY_CLEAR_TASK))
 
         waitForIdle()
 
