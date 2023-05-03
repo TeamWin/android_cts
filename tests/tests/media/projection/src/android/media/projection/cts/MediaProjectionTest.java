@@ -16,6 +16,7 @@
 package android.media.projection.cts;
 
 import static android.hardware.display.DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR;
+import static android.server.wm.BuildUtils.HW_TIMEOUT_MULTIPLIER;
 
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
 
@@ -68,7 +69,6 @@ import java.util.concurrent.TimeUnit;
 @NonMainlineTest
 public class MediaProjectionTest {
     private static final String TAG = "MediaProjectionTest";
-    private static final int STOP_TIMEOUT_MS = 1000;
     private static final int RECORDING_WIDTH = 500;
     private static final int RECORDING_HEIGHT = 700;
     private static final int RECORDING_DENSITY = 200;
@@ -84,6 +84,7 @@ public class MediaProjectionTest {
     private ImageReader mImageReader;
     private VirtualDisplay mVirtualDisplay;
     private Context mContext;
+    private int mTimeoutMs;
 
     @Before
     public void setUp() {
@@ -95,6 +96,7 @@ public class MediaProjectionTest {
                     new UserHandle(ActivityManager.getCurrentUser()));
         });
         mProjectionManager = mContext.getSystemService(MediaProjectionManager.class);
+        mTimeoutMs = 1000 * HW_TIMEOUT_MULTIPLIER;
     }
 
     @After
@@ -136,8 +138,8 @@ public class MediaProjectionTest {
         mMediaProjection.registerCallback(mCallback, new Handler(Looper.getMainLooper()));
         mMediaProjection.stop();
 
-        assertTrue("Could not stop the MediaProjection in " + STOP_TIMEOUT_MS + "ms",
-                latch.await(STOP_TIMEOUT_MS, TimeUnit.MILLISECONDS));
+        assertTrue("Could not stop the MediaProjection in " + mTimeoutMs + "ms",
+                latch.await(mTimeoutMs, TimeUnit.MILLISECONDS));
 
         assertFalse(Settings.canDrawOverlays(mContext));
     }
@@ -172,8 +174,8 @@ public class MediaProjectionTest {
 
         createVirtualDisplay();
         mMediaProjection.stop();
-        assertFalse("Callback is not invoked after " + STOP_TIMEOUT_MS + " ms if unregistere",
-                latch.await(STOP_TIMEOUT_MS, TimeUnit.MILLISECONDS));
+        assertFalse("Callback is not invoked after " + mTimeoutMs + " ms if unregistere",
+                latch.await(mTimeoutMs, TimeUnit.MILLISECONDS));
     }
 
     @ApiTest(apis = {
@@ -196,8 +198,8 @@ public class MediaProjectionTest {
         createVirtualDisplay();
         mMediaProjection.stop();
 
-        assertTrue("Could not stop the MediaProjection in " + STOP_TIMEOUT_MS + "ms",
-                latch.await(STOP_TIMEOUT_MS, TimeUnit.MILLISECONDS));
+        assertTrue("Could not stop the MediaProjection in " + mTimeoutMs + "ms",
+                latch.await(mTimeoutMs, TimeUnit.MILLISECONDS));
     }
 
     @ApiTest(apis = "android.media.projection.MediaProjection.Callback#onCapturedContentResize")
@@ -249,8 +251,8 @@ public class MediaProjectionTest {
         mMediaProjection.registerCallback(mCallback, new Handler(Looper.getMainLooper()));
         createVirtualDisplay();
         assertTrue("Did not get callback after starting recording on the MediaProjection in "
-                        + STOP_TIMEOUT_MS + "ms",
-                latch.await(STOP_TIMEOUT_MS, TimeUnit.MILLISECONDS));
+                        + mTimeoutMs + "ms",
+                latch.await(mTimeoutMs, TimeUnit.MILLISECONDS));
     }
 
     private void startMediaProjection() throws Exception {
