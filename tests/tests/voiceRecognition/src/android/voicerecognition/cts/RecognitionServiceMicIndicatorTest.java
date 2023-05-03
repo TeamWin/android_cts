@@ -48,7 +48,6 @@ import com.android.compatibility.common.util.SettingsStateChangerRule;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -192,7 +191,6 @@ public final class RecognitionServiceMicIndicatorTest {
         testVoiceRecognitionServiceBlameCallingApp(/* trustVoiceService */ false);
     }
 
-    @Ignore("b/266789512")
     @Test
     public void testTrustedRecognitionServiceCanBlameCallingApp() throws Throwable {
         // We treat trusted if the current voice recognizer is also a preinstalled app. This is a
