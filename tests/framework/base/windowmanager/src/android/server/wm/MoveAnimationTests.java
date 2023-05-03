@@ -21,6 +21,8 @@ import android.graphics.Color;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.Handler;
+import android.provider.Settings;
+import android.server.wm.settings.SettingsSession;
 import android.view.Display;
 import android.view.Gravity;
 import android.view.View;
@@ -28,7 +30,9 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 
+import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.TestRule;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
@@ -48,6 +52,16 @@ import static org.junit.Assert.assertTrue;
  *     atest CtsWindowManagerDeviceTestCases:MoveAnimationTests
  */
 public class MoveAnimationTests extends WindowManagerTestBase {
+
+    /**
+     * All tests in this class run with window animation scaling set to 20.0f
+     */
+    @ClassRule
+    public static final TestRule sWindowAnimationRule = SettingsSession.overrideForTest(
+            Settings.Global.getUriFor(Settings.Global.WINDOW_ANIMATION_SCALE),
+            Settings.Global::getFloat,
+            Settings.Global::putFloat,
+            20.0f);
 
     /**
      * Activity with a theme setting {@code windowIsFloating} as {@code true} to get the default
