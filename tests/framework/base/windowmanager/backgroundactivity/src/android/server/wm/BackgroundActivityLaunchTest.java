@@ -19,6 +19,7 @@ package android.server.wm;
 import static android.Manifest.permission.INTERACT_ACROSS_USERS;
 import static android.app.AppOpsManager.MODE_ALLOWED;
 import static android.app.AppOpsManager.MODE_ERRORED;
+import static android.server.wm.BuildUtils.HW_TIMEOUT_MULTIPLIER;
 import static android.server.wm.ShellCommandHelper.executeShellCommand;
 import static android.server.wm.UiDeviceUtils.pressHomeButton;
 import static android.server.wm.WindowManagerState.STATE_INITIALIZING;
@@ -53,7 +54,6 @@ import android.content.pm.ResolveInfo;
 import android.content.pm.UserInfo;
 import android.os.IBinder;
 import android.os.ResultReceiver;
-import android.os.SystemProperties;
 import android.os.UserHandle;
 import android.os.UserManager;
 import android.platform.test.annotations.Presubmit;
@@ -588,9 +588,7 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
         // timeout. Before the timeout, the start would be allowed because app B (the PI sender) was
         // in the foreground during PI send, so app A (the PI creator) would have
         // (10s * hw_multiplier) to start background activity starts.
-        assertPendingIntentBroadcastTimeoutTest(APP_A, APP_B,
-                12000 * SystemProperties.getInt("ro.hw_timeout_multiplier", 1),
-                false);
+        assertPendingIntentBroadcastTimeoutTest(APP_A, APP_B, 12000 * HW_TIMEOUT_MULTIPLIER, false);
     }
 
     @Test
