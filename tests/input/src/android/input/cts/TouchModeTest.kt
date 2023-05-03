@@ -193,13 +193,11 @@ class TouchModeTest {
                 targetContext.resources.getBoolean(targetContext.resources.getIdentifier(
                         "config_perDisplayFocusEnabled", "bool", "android")))
 
-        if (displayManager.displays.size < 2) {
-            createVirtualDisplay(0)
-        }
-        injectMotionEventOnMainDisplay()
+        var secondaryDisplayId = findOrCreateSecondaryDisplay()
 
+        injectMotionEventOnMainDisplay()
         assertThat(isInTouchMode()).isTrue()
-        assertSecondaryDisplayTouchModeState(/* inTouch= */ true)
+        assertSecondaryDisplayTouchModeState(secondaryDisplayId, /* inTouch= */ true)
     }
 
     /**
@@ -216,13 +214,11 @@ class TouchModeTest {
                 targetContext.resources.getBoolean(targetContext.resources.getIdentifier(
                         "config_perDisplayFocusEnabled", "bool", "android")))
 
-        if (displayManager.displays.size < 2) {
-            createVirtualDisplay(0)
-        }
-        injectMotionEventOnMainDisplay()
+        var secondaryDisplayId = findOrCreateSecondaryDisplay()
 
+        injectMotionEventOnMainDisplay()
         assertThat(isInTouchMode()).isTrue()
-        assertSecondaryDisplayTouchModeState(/* isInTouch= */ false,
+        assertSecondaryDisplayTouchModeState(secondaryDisplayId, /* isInTouch= */ false,
                 /* delayBeforeChecking= */ true)
     }
 
@@ -237,15 +233,29 @@ class TouchModeTest {
     @Test
     fun testTouchModeUpdate_DisplayHasOwnFocus() {
         assumeTrue(isRunningActivitiesOnSecondaryDisplaysSupported())
-        createVirtualDisplay(VIRTUAL_DISPLAY_FLAG_OWN_FOCUS or VIRTUAL_DISPLAY_FLAG_TRUSTED)
+        var secondaryDisplayId = createVirtualDisplay(
+                VIRTUAL_DISPLAY_FLAG_OWN_FOCUS or VIRTUAL_DISPLAY_FLAG_TRUSTED)
         injectMotionEventOnMainDisplay()
 
         assertThat(isInTouchMode()).isTrue()
-        assertSecondaryDisplayTouchModeState(/* isInTouch= */ false,
+        assertSecondaryDisplayTouchModeState(secondaryDisplayId, /* isInTouch= */ false,
                 /* delayBeforeChecking= */ true)
     }
 
+    private fun findOrCreateSecondaryDisplay(): Int {
+        // Pick a random secondary external display if there is any.
+        // A virtual display is only created if the device only has a single (default) display.
+        var display = Arrays.stream(displayManager.displays).filter { d ->
+            d.displayId != Display.DEFAULT_DISPLAY && d.type == Display.TYPE_EXTERNAL
+        }.findFirst()
+        if (display.isEmpty) {
+            return createVirtualDisplay(/*flags=*/ 0)
+        }
+        return display.get().displayId
+    }
+
     private fun assertSecondaryDisplayTouchModeState(
+            displayId: Int,
             isInTouch: Boolean,
             delayBeforeChecking: Boolean = false
     ) {
@@ -253,14 +263,14 @@ class TouchModeTest {
             SystemClock.sleep(TOUCH_MODE_PROPAGATION_TIMEOUT_MILLIS)
         }
         PollingCheck.waitFor(TOUCH_MODE_PROPAGATION_TIMEOUT_MILLIS) {
-            isSecondaryDisplayInTouchMode() == isInTouch
+            isSecondaryDisplayInTouchMode(displayId) == isInTouch
         }
-        assertThat(isSecondaryDisplayInTouchMode()).isEqualTo(isInTouch)
+        assertThat(isSecondaryDisplayInTouchMode(displayId)).isEqualTo(isInTouch)
     }
 
-    private fun isSecondaryDisplayInTouchMode(): Boolean {
+    private fun isSecondaryDisplayInTouchMode(displayId: Int): Boolean {
         if (secondScenario == null) {
-            launchSecondScenarioActivity()
+            launchSecondScenarioActivity(displayId)
         }
         val scenario = secondScenario
         var inTouch: Boolean? = null
@@ -274,19 +284,9 @@ class TouchModeTest {
         return inTouch == true
     }
 
-    private fun launchSecondScenarioActivity() {
-        // Pick a random external display if there's no virtual one.
-        // A virtual display is only created if the device only has a single (default) display.
-        var displayId: Int? = virtualDisplay?.display?.displayId
-        if (displayId == 0) {
-            val secondaryDisplay = Arrays.stream(displayManager.displays).filter { d ->
-                d.displayId != Display.DEFAULT_DISPLAY && d.type == Display.TYPE_EXTERNAL
-            }.findFirst()
-            displayId = secondaryDisplay.get().displayId
-        }
-
+    private fun launchSecondScenarioActivity(displayId: Int) {
         // Launch activity on the picked display
-        val bundle = ActivityOptions.makeBasic().setLaunchDisplayId(displayId!!).toBundle()
+        val bundle = ActivityOptions.makeBasic().setLaunchDisplayId(displayId).toBundle()
         SystemUtil.runWithShellPermissionIdentity({
             secondScenario = ActivityScenario.launch(Activity::class.java, bundle)
         }, Manifest.permission.INTERNAL_SYSTEM_WINDOW)
@@ -301,7 +301,7 @@ class TouchModeTest {
         instrumentation.uiAutomation.injectInputEvent(event, /* sync= */ true)
     }
 
-    private fun createVirtualDisplay(flags: Int) {
+    private fun createVirtualDisplay(flags: Int): Int {
         val displayCreated = CountDownLatch(1)
         displayManager.registerDisplayListener(object : DisplayManager.DisplayListener {
             override fun onDisplayAdded(displayId: Int) {}
@@ -319,6 +319,7 @@ class TouchModeTest {
         assertThat(displayCreated.await(5, TimeUnit.SECONDS)).isTrue()
         assertThat(virtualDisplay).isNotNull()
         instrumentation.setInTouchMode(false)
+        return virtualDisplay!!.display.displayId
     }
 
     companion object {
