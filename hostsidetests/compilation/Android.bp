@@ -28,9 +28,7 @@ java_test_host {
         ":AppUsingOtherApp",
         ":CtsCompilationApp",
     ],
-    // tag this module as a cts test artifact
     test_suites: [
-        "cts",
         "general-tests",
     ],
     libs: [
