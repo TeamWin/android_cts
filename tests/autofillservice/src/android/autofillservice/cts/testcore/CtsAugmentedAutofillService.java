@@ -132,19 +132,19 @@ public class CtsAugmentedAutofillService extends AugmentedAutofillService {
             return;
         }
 
-        sServiceWatcher.mService = this;
-        sServiceWatcher.mCreated.countDown();
-
-        Log.d(TAG, "Whitelisting " + Helper.MY_PACKAGE + " for augmented autofill");
-
         final AutofillManager afm = getApplication().getSystemService(AutofillManager.class);
         if (afm == null) {
+            Log.e(TAG, "No AutofillManager on application context on onConnected()");
             addException("No AutofillManager on application context on onConnected()");
             return;
         }
+        Log.d(TAG, "Set allowlist with " + Helper.MY_PACKAGE + " for augmented autofill");
         final ArraySet<String> packages = new ArraySet<>(1);
         packages.add(Helper.MY_PACKAGE);
         afm.setAugmentedAutofillWhitelist(packages, /* activities= */ null);
+
+        sServiceWatcher.mService = this;
+        sServiceWatcher.mCreated.countDown();
     }
 
     @Override
