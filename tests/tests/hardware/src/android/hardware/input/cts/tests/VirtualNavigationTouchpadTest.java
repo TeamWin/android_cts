@@ -25,6 +25,7 @@ import android.hardware.input.VirtualNavigationTouchpad;
 import android.hardware.input.VirtualNavigationTouchpadConfig;
 import android.hardware.input.VirtualTouchEvent;
 import android.os.SystemClock;
+import android.platform.test.annotations.FlakyTest;
 import android.view.InputDevice;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
@@ -166,6 +167,9 @@ public class VirtualNavigationTouchpadTest extends VirtualDeviceTestCase {
                 createKeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_DPAD_CENTER)));
     }
 
+    @FlakyTest(detail = "The test does not reliably simulate a fling action, only way to reliably"
+            + "do it is when uinput supports custom timestamps for virtual input events.",
+            bugId = 277040837)
     @Test
     public void sendFlingUp_motionEventNotConsumed_getsConvertedToDpadUp() {
         setConsumeGenericMotionEvents(false);
@@ -177,6 +181,9 @@ public class VirtualNavigationTouchpadTest extends VirtualDeviceTestCase {
                         createKeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_DPAD_UP)));
     }
 
+    @FlakyTest(detail = "The test does not reliably simulate a fling action, only way to reliably"
+            + "do it is when uinput supports custom timestamps for virtual input events.",
+            bugId = 277040837)
     @Test
     public void sendFlingDown_motionEventNotConsumed_getsConvertedToDpadDown() {
         setConsumeGenericMotionEvents(false);
@@ -188,6 +195,9 @@ public class VirtualNavigationTouchpadTest extends VirtualDeviceTestCase {
                         createKeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_DPAD_DOWN)));
     }
 
+    @FlakyTest(detail = "The test does not reliably simulate a fling action, only way to reliably"
+            + "do it is when uinput supports custom timestamps for virtual input events.",
+            bugId = 277040837)
     @Test
     public void sendFlingRight_motionEventNotConsumed_getsConvertedToDpadRight() {
         setConsumeGenericMotionEvents(false);
@@ -199,6 +209,9 @@ public class VirtualNavigationTouchpadTest extends VirtualDeviceTestCase {
                         createKeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_DPAD_RIGHT)));
     }
 
+    @FlakyTest(detail = "The test does not reliably simulate a fling action, only way to reliably"
+            + "do it is when uinput supports custom timestamps for virtual input events.",
+            bugId = 277040837)
     @Test
     public void sendFlingLeft_motionEventNotConsumed_getsConvertedToDpadLeft() {
         setConsumeGenericMotionEvents(false);
