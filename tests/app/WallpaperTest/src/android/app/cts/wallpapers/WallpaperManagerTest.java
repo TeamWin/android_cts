@@ -85,6 +85,7 @@ import org.mockito.MockitoAnnotations;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -1370,6 +1371,99 @@ public class WallpaperManagerTest {
         });
     }
 
+    @Test
+    public void setDimAmount_lockScreenUnset_singleEngine_notifiesColorsChangedHomeOnly() {
+        assumeFalse(mWallpaperManager.isLockscreenLiveWallpaperEnabled());
+        ensureCleanState();
+
+        final CountDownLatch latch = new CountDownLatch(1);
+        WallpaperManager.OnColorsChangedListener counter = (colors, whichWp) -> latch.countDown();
+        final LinkedList<Integer> receivedFlags = new LinkedList<>();
+        WallpaperManager.OnColorsChangedListener listener = (colors, whichWp) -> receivedFlags.add(
+                whichWp);
+        mWallpaperManager.addOnColorsChangedListener(listener, mHandler);
+        mWallpaperManager.addOnColorsChangedListener(counter, mHandler);
+        final float initialDim = mWallpaperManager.getWallpaperDimAmount();
+
+        try {
+            runWithShellPermissionIdentity(() -> {
+                mWallpaperManager.setWallpaperDimAmount(0.5f);
+            });
+            boolean latchSuccess = latch.await(30, TimeUnit.SECONDS);
+            assertWithMessage("Registered listener not invoked").that(latchSuccess).isTrue();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        } finally {
+            mWallpaperManager.setWallpaperDimAmount(initialDim);
+        }
+
+        assertThat(receivedFlags).containsExactly(FLAG_SYSTEM);
+        mWallpaperManager.removeOnColorsChangedListener(listener);
+        mWallpaperManager.removeOnColorsChangedListener(counter);
+    }
+
+    @Test
+    public void setDimAmount_lockScreenUnset_multiEngine_notifiesColorsChangedBothTogether() {
+        assumeTrue(mWallpaperManager.isLockscreenLiveWallpaperEnabled());
+        ensureCleanState();
+
+        final CountDownLatch latch = new CountDownLatch(1);
+        WallpaperManager.OnColorsChangedListener counter = (colors, whichWp) -> latch.countDown();
+        final LinkedList<Integer> receivedFlags = new LinkedList<>();
+        WallpaperManager.OnColorsChangedListener listener = (colors, whichWp) -> receivedFlags.add(
+                whichWp);
+        mWallpaperManager.addOnColorsChangedListener(listener, mHandler);
+        mWallpaperManager.addOnColorsChangedListener(counter, mHandler);
+        final float initialDim = mWallpaperManager.getWallpaperDimAmount();
+
+        try {
+            runWithShellPermissionIdentity(() -> {
+                mWallpaperManager.setWallpaperDimAmount(0.5f);
+            });
+            boolean latchSuccess = latch.await(5, TimeUnit.SECONDS);
+            assertWithMessage("Registered listener not invoked").that(latchSuccess).isTrue();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        } finally {
+            mWallpaperManager.setWallpaperDimAmount(initialDim);
+        }
+
+        assertThat(receivedFlags).containsExactly(FLAG_SYSTEM | FLAG_LOCK);
+        mWallpaperManager.removeOnColorsChangedListener(listener);
+        mWallpaperManager.removeOnColorsChangedListener(counter);
+    }
+
+    @Test
+    public void setDimAmount_lockScreenSet_notifiesColorsChangedBothSeparately() {
+        ensureCleanState(FLAG_LOCK);
+        ensureCleanState(FLAG_SYSTEM);
+
+        final CountDownLatch latch = new CountDownLatch(2);
+        WallpaperManager.OnColorsChangedListener counter = (colors, whichWp) -> latch.countDown();
+        final LinkedList<Integer> receivedFlags = new LinkedList<>();
+        WallpaperManager.OnColorsChangedListener listener = (colors, whichWp) -> receivedFlags.add(
+                whichWp);
+        mWallpaperManager.addOnColorsChangedListener(listener, mHandler);
+        final float initialDim = mWallpaperManager.getWallpaperDimAmount();
+
+        mWallpaperManager.addOnColorsChangedListener(counter, mHandler);
+        try {
+            runWithShellPermissionIdentity(() -> {
+                mWallpaperManager.setWallpaperDimAmount(0.5f);
+            });
+            boolean latchSuccess = latch.await(5, TimeUnit.SECONDS);
+            assertWithMessage("Registered listener not invoked").that(latchSuccess).isTrue();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        } finally {
+            mWallpaperManager.setWallpaperDimAmount(initialDim);
+        }
+
+        assertThat(receivedFlags).containsExactly(FLAG_SYSTEM, FLAG_LOCK);
+        mWallpaperManager.removeOnColorsChangedListener(listener);
+        mWallpaperManager.removeOnColorsChangedListener(counter);
+    }
+
     private void assertWallpapersMatching(WallpaperWindowsTestUtils.WallpaperWindowsHelper windows,
             List<String> expectedWallpaperPackageNames) {
 
@@ -1527,19 +1621,25 @@ public class WallpaperManagerTest {
         mWallpaperManager.removeOnColorsChangedListener(counter);
     }
 
-    /**
-     * Helper method to make sure a wallpaper is set for both FLAG_SYSTEM and FLAG_LOCK
-     * and its callbacks were already called. Necessary to cleanup previous tests states.
-     *
-     * This is necessary to avoid race conditions between tests
-     */
     private void ensureCleanState() {
+        ensureCleanState(FLAG_SYSTEM | FLAG_LOCK);
+    }
+
+    /**
+     * Helper method to make sure that a) wallpaper is set for the destination(s) specified by
+     * `flags`, and b) wallpaper callbacks related to setting the wallpaper have completed. This is
+     * necessary before testing further callback interactions. Previously this was also necessary to
+     * avoid race conditions between tests; not sure if that's still true as of April 2023.
+     */
+    private void ensureCleanState(int flags) {
         Bitmap bmp = Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888);
         // We expect 3 events to happen when we change a wallpaper:
         // • Wallpaper changed
         // • System colors are known
         // • Lock colors are known
-        final int expectedEvents = 3;
+        int expectedEvents = 1;
+        if ((flags & FLAG_SYSTEM) != 0) expectedEvents++;
+        if ((flags & FLAG_LOCK) != 0) expectedEvents++;
         mCountDownLatch = new CountDownLatch(expectedEvents);
         if (DEBUG) {
             Log.d(TAG, "Started latch expecting: " + mCountDownLatch.getCount());
@@ -1559,7 +1659,12 @@ public class WallpaperManagerTest {
         mWallpaperManager.addOnColorsChangedListener(callback, mHandler);
 
         try {
-            mWallpaperManager.setBitmap(bmp);
+            if (flags == (FLAG_SYSTEM | FLAG_LOCK)) {
+                mWallpaperManager.setBitmap(bmp);
+            } else {
+                mWallpaperManager.setBitmap(bmp, /* visibleCropHint= */
+                        null, /* allowBackup= */true, flags);
+            }
 
             // Wait for up to 10 sec since this is an async call.
             // Will pass as soon as the expected callbacks are executed.
