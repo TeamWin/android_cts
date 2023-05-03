@@ -151,6 +151,7 @@ import android.hardware.display.AmbientDisplayConfiguration;
 import android.hardware.display.DisplayManager;
 import android.os.Bundle;
 import android.os.PowerManager;
+import android.os.Process;
 import android.os.RemoteCallback;
 import android.os.SystemClock;
 import android.os.SystemProperties;
@@ -304,8 +305,8 @@ public abstract class ActivityManagerTestBase {
     private static String getAmStartCmdInternal(final String activityName,
             final CliIntentExtra... extras) {
         return appendKeyValuePairs(
-                new StringBuilder("am start -n ").append(activityName),
-                extras);
+                new StringBuilder("am start --user ").append(Process.myUserHandle().getIdentifier())
+                        .append(" -n ").append(activityName), extras);
     }
 
     private static String appendKeyValuePairs(
