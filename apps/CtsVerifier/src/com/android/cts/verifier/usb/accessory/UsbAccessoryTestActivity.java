@@ -108,6 +108,11 @@ public class UsbAccessoryTestActivity extends PassFailButtons.Activity implement
     }
 
     @Override
+    public boolean requiresReportLog() {
+        return true;
+    }
+
+    @Override
     public void onAttached(UsbAccessory accessory) {
         mStatus.setText(R.string.usb_accessory_test_step2);
         mProgress.setVisibility(View.VISIBLE);
