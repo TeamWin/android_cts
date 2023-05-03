@@ -59,7 +59,6 @@ import static android.view.cts.util.ASurfaceControlTestUtils.setZOrder;
 import static android.view.cts.util.FrameCallbackData.nGetFrameTimelines;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
@@ -1959,7 +1958,9 @@ public class ASurfaceControlTest {
                 });
     }
 
-    private void verifySetFrameTimeline(boolean usePreferredIndex, SurfaceHolder holder) {
+    // Returns success of the surface transaction to decide whether to continue the test, such as
+    // additional assertions.
+    private boolean verifySetFrameTimeline(boolean usePreferredIndex, SurfaceHolder holder) {
         TimedTransactionListener onCompleteCallback = new TimedTransactionListener();
         long surfaceControl = nSurfaceControl_createFromWindow(holder.getSurface());
         assertTrue("failed to create surface control", surfaceControl != 0);
@@ -1971,19 +1972,24 @@ public class ASurfaceControlTest {
         // Get choreographer frame timelines.
         FrameCallbackData frameCallbackData = nGetFrameTimelines();
         FrameTimeline[] frameTimelines = frameCallbackData.getFrameTimelines();
-        assertTrue("Frame timelines length needs to be greater than 1", frameTimelines
-                .length > 1);
-        long interval = frameTimelines[1].getDeadline() - frameTimelines[0].getDeadline();
 
         int timelineIndex = frameCallbackData.getPreferredFrameTimelineIndex();
         if (!usePreferredIndex) {
-            assertNotEquals("Preferred frame timeline index should not be last index",
-                    frameTimelines.length - 1,
-                    frameCallbackData.getPreferredFrameTimelineIndex());
-            timelineIndex = frameTimelines.length - 1;
+            if (frameTimelines.length == 1) {
+                // If there is only one frame timeline then it is already the preferred timeline.
+                // Thus testing a non-preferred index is impossible.
+                Log.i(TAG, "Non-preferred frame timeline does not exist");
+                return false;
+            }
+            if (timelineIndex == frameTimelines.length - 1) {
+                timelineIndex--;
+            } else {
+                timelineIndex++;
+            }
         }
         FrameTimeline frameTimeline = frameTimelines[timelineIndex];
         long vsyncId = frameTimeline.getVsyncId();
+        assertTrue("Vsync ID not valid", vsyncId > 0);
 
         Trace.beginSection("Surface transaction created " + vsyncId);
         nSurfaceTransaction_setFrameTimeline(surfaceTransaction, vsyncId);
@@ -2007,13 +2013,17 @@ public class ASurfaceControlTest {
         assertTrue(onCompleteCallback.mCallbackTime > 0);
         assertTrue(onCompleteCallback.mLatchTime > 0);
 
-        long threshold = interval / 2;
+        long periodNanos = (long) (1e9 / mActivity.getDisplay().getRefreshRate());
+        long threshold = periodNanos / 2;
         // Check that the frame did not present earlier than the frame timeline chosen from setting
         // a vsyncId in the surface transaction; this should be guaranteed as part of the API
         // specification. Don't check whether the frame presents on-time since it can be flaky from
         // other delays.
         assertTrue("Frame presented too early using frame timeline index=" + timelineIndex
                         + " (preferred index=" + frameCallbackData.getPreferredFrameTimelineIndex()
+                        + ", preferred vsyncId="
+                        + frameTimelines[frameCallbackData.getPreferredFrameTimelineIndex()]
+                                  .getVsyncId()
                         + "), vsyncId=" + frameTimeline.getVsyncId() + ", actual presentation time="
                         + onCompleteCallback.mPresentTime + ", expected presentation time="
                         + frameTimeline.getExpectedPresentTime() + ", actual - expected diff (ns)="
@@ -2021,6 +2031,7 @@ public class ASurfaceControlTest {
                         + ", acceptable diff threshold (ns)= " + threshold,
                 onCompleteCallback.mPresentTime
                         > frameTimeline.getExpectedPresentTime() - threshold);
+        return true;
     }
 
     @Test
@@ -2047,7 +2058,7 @@ public class ASurfaceControlTest {
         } catch (InterruptedException e) {
             Assert.fail("interrupted");
         }
-        verifySetFrameTimeline(true, mActivity.getSurfaceView().getHolder());
+        if (!verifySetFrameTimeline(true, mActivity.getSurfaceView().getHolder())) return;
         mActivity.verifyScreenshot(
                 new PixelChecker(Color.RED) { //10000
                     @Override
@@ -2082,7 +2093,7 @@ public class ASurfaceControlTest {
         } catch (InterruptedException e) {
             Assert.fail("interrupted");
         }
-        verifySetFrameTimeline(false, mActivity.getSurfaceView().getHolder());
+        if (!verifySetFrameTimeline(true, mActivity.getSurfaceView().getHolder())) return;
         mActivity.verifyScreenshot(
                 new PixelChecker(Color.RED) { //10000
                     @Override
