@@ -53,6 +53,7 @@ public class DelayFillTest extends AutoFillServiceTestCase.AutoActivityLaunch<Lo
         };
     }
 
+    @FlakyTest(bugId = 271521636)
     @Test
     public void testDelayedFill() throws Exception {
         // Set service.
@@ -143,7 +144,7 @@ public class DelayFillTest extends AutoFillServiceTestCase.AutoActivityLaunch<Lo
         mUiBot.assertDatasets("placeholder");
     }
 
-    @FlakyTest(bugId = 276895614) // TODO: Try to reduce flakes
+    @FlakyTest(bugId = 271521636)
     @Test
     public void testPreventSendingDelayedFillIntentTwice() throws Exception {
         // Set service.
