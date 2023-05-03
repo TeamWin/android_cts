@@ -385,7 +385,8 @@ public class ChoreographerTest {
             HashSet<Long> pastVsyncIds = new HashSet();
             for (Choreographer.FrameTimeline frameTimeline : frameData.getFrameTimelines()) {
                 long vsyncId = frameTimeline.getVsyncId();
-                assertTrue("Invalid vsync ID", vsyncId > 0);
+                assertTrue("Invalid vsync ID " + vsyncId + " on index " + pastVsyncIds.size(),
+                        vsyncId > 0);
                 assertTrue("Vsync ID should be unique", !pastVsyncIds.contains(vsyncId));
                 pastVsyncIds.add(vsyncId);
             }
