@@ -26,6 +26,7 @@ import android.os.Handler
 import android.os.Looper
 import android.os.ResultReceiver
 import androidx.test.filters.SdkSuppress
+import androidx.test.rule.ActivityTestRule
 import androidx.test.runner.AndroidJUnit4
 import androidx.test.uiautomator.By
 import java.util.concurrent.LinkedBlockingQueue
@@ -34,6 +35,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assume
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -49,6 +51,9 @@ class PermissionReviewTest : BaseUsePermissionTest() {
     fun installApp22CalendarOnly() {
         installPackage(APP_APK_PATH_22_CALENDAR_ONLY)
     }
+
+    @get:Rule
+    val activityRule = ActivityTestRule(StartForFutureActivity::class.java, false, false)
 
     @Test
     fun testDenyCalendarDuringReview() {
