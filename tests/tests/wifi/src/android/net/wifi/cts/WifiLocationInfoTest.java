@@ -163,7 +163,7 @@ public class WifiLocationInfoTest extends WifiJUnit4TestBase {
         InstrumentationRegistry.getInstrumentation().getUiAutomation().executeShellCommand(""
                 + "wm dismiss-keyguard");
         // Since the screen on/off intent is ordered, they will not be sent right now.
-        Thread.sleep(2_000);
+        Thread.sleep(5_000);
     }
 
     private void turnScreenOff() throws Exception {
@@ -171,19 +171,17 @@ public class WifiLocationInfoTest extends WifiJUnit4TestBase {
         InstrumentationRegistry.getInstrumentation().getUiAutomation().executeShellCommand(
                 "input keyevent KEYCODE_SLEEP");
         // Since the screen on/off intent is ordered, they will not be sent right now.
-        Thread.sleep(2_000);
+        Thread.sleep(5_000);
     }
 
     private void installApp(String apk) throws InterruptedException {
         String installResult = SystemUtil.runShellCommand("pm install -r -d " + apk);
-        Thread.sleep(10_000);
         assertThat(installResult.trim()).isEqualTo("Success");
     }
 
     private void uninstallApp(String pkg) throws InterruptedException {
         String uninstallResult = SystemUtil.runShellCommand(
                 "pm uninstall " + pkg);
-        Thread.sleep(10_000);
         assertThat(uninstallResult.trim()).isEqualTo("Success");
     }
 
