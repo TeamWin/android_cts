@@ -16,6 +16,7 @@
 
 package com.android.cts.verifier.usb.mtp;
 
+import static android.content.Context.RECEIVER_EXPORTED;
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertNotNull;
 import static junit.framework.Assert.assertTrue;
@@ -257,7 +258,7 @@ public class MtpHostTestActivity extends PassFailButtons.Activity implements Han
                     latch.countDown();
                 }
             };
-            registerReceiver(mReceiver, new IntentFilter(ACTION_PERMISSION_GRANTED));
+            registerReceiver(mReceiver, new IntentFilter(ACTION_PERMISSION_GRANTED),RECEIVER_EXPORTED);
             mUsbManager.requestPermission(
                     mUsbDevice,
                     PendingIntent.getBroadcast(
