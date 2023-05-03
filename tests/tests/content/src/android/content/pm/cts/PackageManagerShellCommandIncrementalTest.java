@@ -218,6 +218,21 @@ public class PackageManagerShellCommandIncrementalTest {
                         f -> Arrays.stream(validValues).anyMatch(f::equals)));
     }
 
+    @Test
+    public void testBug270117845Fixed() throws Exception {
+        // first ensure the IncFS is up and running, e.g. if it's a module
+        installPackage(TEST_APK);
+        assertTrue(isAppInstalled(TEST_APP_PACKAGE));
+
+        // the bug is fixed when the specific marker feature is present
+        final String[] validValues = {"bugfix_inode_eviction"};
+        final String features = executeShellCommand("ls /sys/fs/incremental-fs/features/");
+        assertTrue(
+                "Missing required IncFS features [" + TextUtils.join(",", validValues) + "]",
+                Arrays.stream(features.split("\\s+")).anyMatch(
+                        f -> Arrays.stream(validValues).anyMatch(f::equals)));
+    }
+
     @LargeTest
     @Test
     public void testSpaceAllocatedForPackage() throws Exception {
