@@ -129,7 +129,7 @@ public class AppEnumerationTestsBase {
                 sResponseHandler);
         intent.putExtra(EXTRA_REMOTE_CALLBACK, callback);
         if (waitForReady) {
-            AmUtils.waitForBroadcastIdle();
+            AmUtils.waitForBroadcastBarrier();
             startAndWaitForCommandReady(intent);
         } else {
             final ActivityOptions options = ActivityOptions.makeBasic();
