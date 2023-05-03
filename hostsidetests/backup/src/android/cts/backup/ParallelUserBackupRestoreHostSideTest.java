@@ -95,7 +95,8 @@ public class ParallelUserBackupRestoreHostSideTest extends BaseMultiUserBackupHo
      * <p>For backup:
      *
      * <ol>
-     *   <li>Execute "adb shell bmgr backupnow --all" for both users concurrently.
+     *   <li>Execute "adb shell bmgr backupnow android com.android.providers.settings
+     *       com.android.wallpaperbackup" for both users concurrently.
      *   <li>Verify that both backups complete within the timeout.
      *   <li>Verify that the shell result is "Backup finished with result: Success" for each backup.
      * </ol>
@@ -103,7 +104,8 @@ public class ParallelUserBackupRestoreHostSideTest extends BaseMultiUserBackupHo
      * For restore:
      *
      * <ol>
-     *   <li>Execute "adb shell bmgr restore [local transport token]" for both users concurrently.
+     *   <li>Execute "adb shell bmgr restore [local transport token] android
+     *   com.android.providers.settings com.android.wallpaperbackup" for both users concurrently.
      *   <li>Verify that both restores complete within the timeout.
      *   <li>Verify that the shell result is "restoreFinished: 0" for each restore.
      * </ol>
@@ -155,7 +157,9 @@ public class ParallelUserBackupRestoreHostSideTest extends BaseMultiUserBackupHo
             try {
                 String output =
                         mBackupUtils.getShellCommandOutput(
-                                String.format("bmgr --user %d backupnow --all", userId));
+                                String.format("bmgr --user %d backupnow android "
+                                + "com.android.providers.settings "
+                                + "com.android.wallpaperbackup", userId));
                 backupLatch.countDown();
                 return output;
             } catch (IOException e) {
@@ -176,7 +180,9 @@ public class ParallelUserBackupRestoreHostSideTest extends BaseMultiUserBackupHo
                 String output =
                         mBackupUtils.getShellCommandOutput(
                                 String.format(
-                                        "bmgr --user %d restore %s",
+                                        "bmgr --user %d restore %s android "
+                                        + "com.android.providers.settings "
+                                        + "com.android.wallpaperbackup",
                                         userId, BackupUtils.LOCAL_TRANSPORT_TOKEN));
                 restoreLatch.countDown();
                 return output;
