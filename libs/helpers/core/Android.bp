@@ -23,8 +23,8 @@ java_library {
     srcs: ["src/**/*.java"],
 
     static_libs: [
+        "androidx.test.uiautomator_uiautomator",
         "app-helpers-core",
-        "ub-uiautomator",
         "compatibility-device-util-axt",
     ],
 
