@@ -301,6 +301,14 @@ class NightExtensionTest(its_base_test.ItsBaseTest):
       props = cam.override_with_hidden_physical_camera_props(props)
       test_name = os.path.join(self.log_path, _NAME)
 
+      # Determine camera supported extensions
+      supported_extensions = cam.get_supported_extensions(self.camera_id)
+      logging.debug('Supported extensions: %s', supported_extensions)
+
+      # Check SKIP conditions
+      camera_properties_utils.skip_unless(
+          _EXTENSION_NIGHT in supported_extensions)
+
       tablet_name_unencoded = self.tablet.adb.shell(
           ['getprop', 'ro.build.product']
       )
@@ -317,14 +325,6 @@ class NightExtensionTest(its_base_test.ItsBaseTest):
       its_session_utils.load_scene(
           cam, props, self.scene, self.tablet, self.chart_distance,
           log_path=self.log_path)
-
-      # Determine camera supported extensions
-      supported_extensions = cam.get_supported_extensions(self.camera_id)
-      logging.debug('Supported extensions: %s', supported_extensions)
-
-      # Check SKIP conditions
-      camera_properties_utils.skip_unless(
-          _EXTENSION_NIGHT in supported_extensions)
 
       # Establish connection with lighting controller
       arduino_serial_port = lighting_control_utils.lighting_control(
