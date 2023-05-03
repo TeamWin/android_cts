@@ -28,6 +28,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.os.SystemProperties;
 import android.provider.Settings;
 import android.util.FeatureFlagUtils;
 import android.util.Log;
@@ -62,9 +63,15 @@ public class SettingsMultiPaneDeepLinkTest {
                 .getTargetContext();
         boolean isFlagEnabled =
                 FeatureFlagUtils.isEnabled(targetContext, "settings_support_large_screen");
-        boolean isSplitSupported = SplitController.getInstance(targetContext).isSplitSupported();
-        mIsSplitSupported = isFlagEnabled && isSplitSupported;
+        final boolean shouldEnableLargeScreenOptimization =
+                SystemProperties.getBoolean("persist.settings.large_screen_opt.enabled", true);
+        boolean isSplitSupported = SplitController.getInstance(targetContext)
+                .getSplitSupportStatus() == SplitController.SplitSupportStatus.SPLIT_AVAILABLE;
+        mIsSplitSupported = isFlagEnabled && isSplitSupported
+                && shouldEnableLargeScreenOptimization;
         Log.d(TAG, "isFlagEnabled : " + isFlagEnabled);
+        Log.d(TAG, "shouldEnableLargeScreenOptimization: "
+                + shouldEnableLargeScreenOptimization);
         Log.d(TAG, "isSplitSupported : " + isSplitSupported);
         Log.d(TAG, "mIsSplitSupported : " + mIsSplitSupported);
         mDeepLinkIntentResolveInfo = InstrumentationRegistry.getInstrumentation().getContext()
