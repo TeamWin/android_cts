@@ -1014,6 +1014,8 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
                         GROUP_CLIENT_IP_PROVISIONING_MODE_IPV6_LINK_LOCAL)
                 .build();
         mWifiP2pManager.connect(mWifiP2pChannel, config, mActionListener);
+        assertTrue(waitForServiceResponse(mMyResponse));
+        assertFalse(mMyResponse.success);
     }
 
     public void testP2pSetVendorElements() {
