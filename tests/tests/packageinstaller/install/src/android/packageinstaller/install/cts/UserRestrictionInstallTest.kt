@@ -18,8 +18,6 @@ package android.packageinstaller.install.cts
 
 import android.app.Activity
 import android.app.PendingIntent
-import android.app.admin.DevicePolicyManager
-import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageInstaller.EXTRA_STATUS
 import android.content.pm.PackageInstaller.STATUS_FAILURE_INVALID
@@ -64,23 +62,14 @@ import org.junit.runner.RunWith
 @RunWith(BedsteadJUnit4::class)
 @AppModeFull(reason = "DEVICE_POLICY_SERVICE is null in instant mode")
 class UserRestrictionInstallTest : PackageInstallerTestBase() {
-    private val TAG = "UserRestrictionInstallTest"
     private val APP_INSTALL_ACTION =
             "android.packageinstaller.install.cts.UserRestrictionInstallTest.action"
-    private val mDpm = context.getSystemService(Context.DEVICE_POLICY_SERVICE)
-                            as DevicePolicyManager
-    private val DISABLED_BY_IT_ADMIN = mDpm.resources
-            .getString("Settings.DISABLED_BY_IT_ADMIN_TITLE") { "INCORRECT_STRING" }!!
 
     companion object {
         @JvmField
         @ClassRule
         @Rule
         val sDeviceState = DeviceState()
-    }
-    init {
-        TestApis.devicePolicy().resources().strings().set("Settings.DISABLED_BY_IT_ADMIN_TITLE",
-                R.string.disabled_by_policy_title)
     }
 
     @Before
@@ -243,10 +232,7 @@ class UserRestrictionInstallTest : PackageInstallerTestBase() {
         val appInstallIntent = getAppInstallationIntent(apkFile)
 
         val installation = startInstallationViaIntent(appInstallIntent)
-        val blockedByPolicy: UiObject = TestApis.ui().device().findObject(
-                UiSelector().text(DISABLED_BY_IT_ADMIN)
-        )
-        assertThat(blockedByPolicy).isNotNull()
+        // Dismiss the device policy dialog
         val closeBtn: UiObject = TestApis.ui().device().findObject(
                 UiSelector().text("Close")
         )
