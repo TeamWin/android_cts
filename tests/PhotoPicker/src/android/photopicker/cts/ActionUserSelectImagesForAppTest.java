@@ -26,7 +26,6 @@ import static android.photopicker.cts.PhotoPickerCloudUtils.initCloudProviderWit
 import static android.photopicker.cts.PhotoPickerCloudUtils.isCloudMediaEnabled;
 import static android.photopicker.cts.PhotoPickerCloudUtils.selectAndAddPickerMedia;
 import static android.photopicker.cts.PickerProviderMediaGenerator.getMediaGenerator;
-import static android.photopicker.cts.PickerProviderMediaGenerator.setCloudProvider;
 import static android.photopicker.cts.util.PhotoPickerFilesUtils.createImagesAndGetUris;
 
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
@@ -61,6 +60,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -72,30 +72,35 @@ public class ActionUserSelectImagesForAppTest extends PhotoPickerBaseTest {
     private static boolean sCloudMediaPreviouslyEnabled;
     @Nullable
     private static String sPreviouslyAllowedCloudProviders;
+    @Nullable
+    private static String sPreviouslySetCloudProvider;
 
     @BeforeClass
-    public static void setUpClass() {
+    public static void setUpClass() throws IOException {
         // Store the current Cloud-Media feature configs which we will override during the test,
         // and will need to restore after the test finished.
         sCloudMediaPreviouslyEnabled = isCloudMediaEnabled();
         if (sCloudMediaPreviouslyEnabled) {
             sPreviouslyAllowedCloudProviders = getAllowedProvidersDeviceConfig();
         }
+        sPreviouslySetCloudProvider = getCurrentCloudProvider();
 
         // Override the allowed cloud providers config to enable the banners
         // (this is a self-instrumenting test, so "target" package name and "own" package name are
         // same: android.photopicker.cts).
         enableCloudMediaAndSetAllowedCloudProviders(sTargetPackageName);
+
     }
 
     @AfterClass
-    public static void tearDownClass() {
+    public static void tearDownClass() throws Exception {
         // Restore Cloud-Media feature configs.
         if (sCloudMediaPreviouslyEnabled) {
             enableCloudMediaAndSetAllowedCloudProviders(sPreviouslyAllowedCloudProviders);
         } else {
             disableCloudMediaAndClearAllowedCloudProviders();
         }
+        setCloudProvider(sPreviouslySetCloudProvider);
     }
 
     @After
@@ -212,7 +217,7 @@ public class ActionUserSelectImagesForAppTest extends PhotoPickerBaseTest {
                 PhotoPickerFilesUtils.deleteMedia(uri, mContext);
             }
             uriList.clear();
-            setCloudProvider(mContext, null);
+            setCloudProvider(null);
         }
     }
 
