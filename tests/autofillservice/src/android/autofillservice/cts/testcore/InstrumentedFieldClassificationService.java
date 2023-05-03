@@ -188,6 +188,8 @@ public class InstrumentedFieldClassificationService extends FieldClassificationS
      * on behalf of a unit test method.
      */
     public static final class Replier {
+        private final BlockingQueue<CannedFieldClassificationResponse> mResponses =
+                new LinkedBlockingQueue<>();
         private final BlockingQueue<FieldClassificationRequest> mFieldClassificationRequests =
                 new LinkedBlockingQueue<>();
 
@@ -206,9 +208,26 @@ public class InstrumentedFieldClassificationService extends FieldClassificationS
         public void onClassificationRequest(AssistStructure assistStructure,
                 CancellationSignal cancellationSignal,
                 OutcomeReceiver<FieldClassificationResponse, Exception> outcomeReceiver) {
-            Helper.offer(mFieldClassificationRequests, new FieldClassificationRequest(
-                    assistStructure, cancellationSignal, outcomeReceiver),
-                    CONNECTION_TIMEOUT.ms());
+            try {
+                CannedFieldClassificationResponse response = null;
+                try {
+                    response = mResponses.poll(CONNECTION_TIMEOUT.ms(), TimeUnit.MILLISECONDS);
+                } catch (InterruptedException e) {
+                    Log.w(TAG, "Interrupted getting CannedResponse: " + e);
+                    Thread.currentThread().interrupt();
+                    return;
+                }
+                FieldClassificationResponse classificationResponse = response.asResponse(
+                        (id) -> Helper.findNodeByResourceId(assistStructure, id));
+
+                Log.v(TAG, "onClassificationRequest: FieldClassificationResponse = "
+                        + classificationResponse);
+                outcomeReceiver.onResult(classificationResponse);
+            } finally {
+                Helper.offer(mFieldClassificationRequests, new FieldClassificationRequest(
+                        assistStructure, cancellationSignal, outcomeReceiver),
+                        CONNECTION_TIMEOUT.ms());
+            }
         }
 
         /**
@@ -241,6 +260,10 @@ public class InstrumentedFieldClassificationService extends FieldClassificationS
 
             throw new AssertionError(mFieldClassificationRequests.size()
                 + " unhandled field classification requests: " + mFieldClassificationRequests);
+        }
+
+        public void addResponse(CannedFieldClassificationResponse response) {
+            mResponses.add(response);
         }
 
         /**
