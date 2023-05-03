@@ -61,6 +61,7 @@ import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.FlakyTest;
 import android.platform.test.annotations.Presubmit;
 import android.util.ArraySet;
+import android.util.Log;
 import android.view.View;
 import android.view.autofill.AutofillId;
 import android.view.autofill.AutofillManager;
@@ -76,6 +77,8 @@ import java.util.Set;
 
 public class AugmentedLoginActivityTest
         extends AugmentedAutofillAutoActivityLaunchTestCase<AugmentedLoginActivity> {
+
+    private static final String TAG = "AugmentedLoginActivityTest";
 
     protected AugmentedLoginActivity mActivity;
 
@@ -1189,6 +1192,7 @@ public class AugmentedLoginActivityTest
         final AutofillManager mgr = mActivity.getAutofillManager();
         final ArraySet<ComponentName> components = new ArraySet<>();
         components.add(new ComponentName(Helper.MY_PACKAGE, "some.activity"));
+        Log.d(TAG, "setAugmentedAutofillWhitelist: " + components);
         mgr.setAugmentedAutofillWhitelist(null, components);
 
         // Set expectations
