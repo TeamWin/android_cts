@@ -19,6 +19,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.leanbackjank.app.IntentKeys;
 import android.os.SystemClock;
+import android.os.SystemProperties;
 
 import androidx.test.jank.GfxMonitor;
 import androidx.test.jank.JankTest;
@@ -42,12 +43,18 @@ public class CtsDeviceLeanback extends CtsJankTestBase {
     private final static String CLASS = JAVA_PACKAGE + ".MainActivity";
 
     private boolean shouldSkip() {
-	PackageManager packageManager =
+        PackageManager packageManager =
                 getInstrumentation().getTargetContext().getPackageManager();
         if (!packageManager.hasSystemFeature(
                 PackageManager.FEATURE_LEANBACK)) {
             return true;
         }
+
+        // Emulator is not a performant device, and can't succeed at this test.
+        if (SystemProperties.get("ro.build.characteristics").equals("emulator")) {
+            return true;
+        }
+
         return false;
     }
 
