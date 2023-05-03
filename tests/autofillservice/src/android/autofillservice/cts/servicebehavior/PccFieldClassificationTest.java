@@ -15,27 +15,513 @@
  */
 package android.autofillservice.cts.servicebehavior;
 
+import static android.autofillservice.cts.testcore.Helper.ID_PASSWORD;
+import static android.autofillservice.cts.testcore.Helper.ID_USERNAME;
+import static android.autofillservice.cts.testcore.Helper.assertHasFlags;
+import static android.autofillservice.cts.testcore.Helper.disableFillDialogFeature;
+import static android.autofillservice.cts.testcore.Helper.disablePccDetectionFeature;
+import static android.autofillservice.cts.testcore.Helper.enableFillDialogFeature;
 import static android.autofillservice.cts.testcore.Helper.enablePccDetectionFeature;
+import static android.autofillservice.cts.testcore.Helper.isImeShowing;
+import static android.autofillservice.cts.testcore.Helper.preferPccDetectionOverProvider;
+import static android.service.autofill.FillRequest.FLAG_SUPPORTS_FILL_DIALOG;
 
+import static com.google.common.truth.Truth.assertThat;
+
+import android.autofillservice.cts.activities.LoginActivity;
 import android.autofillservice.cts.commontests.FieldClassificationServiceManualActivityLaunchTestCase;
+import android.autofillservice.cts.testcore.CannedFieldClassificationResponse;
+import android.autofillservice.cts.testcore.CannedFillResponse;
+import android.autofillservice.cts.testcore.IdMode;
+import android.autofillservice.cts.testcore.InstrumentedAutoFillService;
 import android.platform.test.annotations.AppModeFull;
 
+import androidx.test.uiautomator.UiObject2;
+
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
+
+import java.util.Set;
 
 @AppModeFull
 public class PccFieldClassificationTest extends
         FieldClassificationServiceManualActivityLaunchTestCase {
 
+    public static final String DROPDOWN_PRESENTATION = "Dropdown Presentation";
+    public static final String DROPDOWN_PRESENTATION2 = "Dropdown Presentation2";
+    public static final String DIALOG_PRESENTATION = "Dialog Presentation";
+
+    /*
+      Ideally, autofill hints should be taken directly from HintConstants defined in androidx
+      library at https://developer.android.com/reference/androidx/autofill/HintConstants.
+
+      There are 2 options
+
+      First is to refactor our test infra so that we can specify which datasets are for hints,
+      which are for autofill ids and which ones are for both. We can also consider using helper
+      utilities to bring it close to actual Dataset, instead of using CannedDataset. This may
+      require some refactoring.
+
+      Second is to use activities with their resources naming in such a way that it doesn't
+      conflict with the hints name. Since, we want to support PCC testing across existing tests
+      which use same naming for some hints (eg: username, password), this may require refactoring.
+      This approach isn't ideal since test writer needs to keep this in mind.
+
+      For now, we just use autofill hints name with "hint_" prefix, but actual services shouldn't
+       do this.
+     */
+    public static final String AUTOFILL_HINT_PASSWORD = "hint_password";
+    public static final String AUTOFILL_HINT_USERNAME = "hint_username";
+    public static final String AUTOFILL_HINT_NEW_PASSWORD = "hint_new_password";
+
+    @Before
+    public void setup() throws Exception    {
+        enableService();
+        enablePccDetectionFeature(sContext, AUTOFILL_HINT_USERNAME, AUTOFILL_HINT_PASSWORD,
+                AUTOFILL_HINT_NEW_PASSWORD);
+        enablePccDetectionService();
+        sReplier.setIdMode(IdMode.PCC_ID);
+    }
+
+    @After
+    public void destroy() {
+        sReplier.setIdMode(IdMode.RESOURCE_ID);
+        disablePccDetectionFeature(sContext);
+    }
+
     @Test
     public void testFieldClassificationRequestIsSentWhenScreenEntered() throws Exception {
-        enableService();
-        enablePccDetectionFeature(sContext, "username");
-        enablePccDetectionService();
+
+        sClassificationReplier.addResponse(new CannedFieldClassificationResponse.Builder()
+                .addFieldClassification(
+                        new CannedFieldClassificationResponse.CannedFieldClassification(
+                                ID_PASSWORD, Set.of(AUTOFILL_HINT_PASSWORD)))
+                .build());
 
         startLoginActivity();
-
+        mUiBot.waitForIdleSync();
         sClassificationReplier.getNextFieldClassificationRequest();
         sClassificationReplier.assertNoUnhandledFieldClassificationRequests();
     }
+
+    @Test
+    public void testFieldClassification_withFillDialog() throws Exception {
+
+        // Enable feature and test service
+        enableFillDialogFeature(sContext);
+        enableService();
+
+        sClassificationReplier.addResponse(new CannedFieldClassificationResponse.Builder()
+                .addFieldClassification(
+                        new CannedFieldClassificationResponse.CannedFieldClassification(
+                                ID_PASSWORD, Set.of(AUTOFILL_HINT_PASSWORD)))
+                .build());
+
+        // Set response with a dataset > fill dialog should have two buttons
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .addDataset(new CannedFillResponse.CannedDataset.Builder()
+                        .setField(ID_USERNAME, "dude")
+                        .setField(ID_PASSWORD, "sweet")
+                        .setPresentation(createPresentation(DROPDOWN_PRESENTATION))
+                        .setDialogPresentation(createPresentation(DIALOG_PRESENTATION))
+                        .build())
+                .setDialogHeader(createPresentation("Dialog Header"))
+                .setDialogTriggerIds(ID_PASSWORD)
+                .build());
+
+        // Start activity and autofill
+        LoginActivity activity = startLoginActivity();
+        mUiBot.waitForIdleSync();
+
+
+        // Assert FieldClassification request was sent
+        sClassificationReplier.getNextFieldClassificationRequest();
+        sClassificationReplier.assertNoUnhandledFieldClassificationRequests();
+
+        // Check onFillRequest has the flag: FLAG_SUPPORTS_FILL_DIALOG
+        final InstrumentedAutoFillService.FillRequest fillRequest =
+                sReplier.getNextFillRequest();
+        assertHasFlags(fillRequest.flags, FLAG_SUPPORTS_FILL_DIALOG);
+        // assert that request contains hints
+        assertFillRequestHints(fillRequest);
+        sReplier.assertNoUnhandledFillRequests();
+        mUiBot.waitForIdleSync();
+
+        // Click on password field to trigger fill dialog
+        mUiBot.selectByRelativeId(ID_PASSWORD);
+        mUiBot.waitForIdleSync();
+
+        // Verify IME is not shown
+        assertThat(isImeShowing(activity.getRootWindowInsets())).isFalse();
+
+        // Verify the content of fill dialog, and then select dataset in fill dialog
+        mUiBot.assertFillDialogHeader("Dialog Header");
+        mUiBot.assertFillDialogRejectButton();
+        mUiBot.assertFillDialogAcceptButton();
+        final UiObject2 picker = mUiBot.assertFillDialogDatasets(DIALOG_PRESENTATION);
+
+        // Set expected value, then select dataset
+        activity.expectAutoFill("dude", "sweet");
+        mUiBot.selectDataset(picker, DIALOG_PRESENTATION);
+
+        // Check the results.
+        activity.assertAutoFilled();
+    }
+
+    @Test
+    public void testFieldClassification_withDropdownDialog() throws Exception {
+
+        // Enable feature and test service
+        disableFillDialogFeature(sContext);
+        enableService();
+
+        sClassificationReplier.addResponse(new CannedFieldClassificationResponse.Builder()
+                .addFieldClassification(
+                        new CannedFieldClassificationResponse.CannedFieldClassification(
+                                ID_PASSWORD, Set.of(AUTOFILL_HINT_PASSWORD)))
+                .build());
+
+        // Set response with a dataset > fill dialog should have two buttons
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .addDataset(new CannedFillResponse.CannedDataset.Builder()
+                        .setField(ID_USERNAME, "dude")
+                        .setField(ID_PASSWORD, "sweet")
+                        .setPresentation(createPresentation(DROPDOWN_PRESENTATION))
+                        .build())
+                .build());
+
+        // Start activity and autofill
+        LoginActivity activity = startLoginActivity();
+        mUiBot.waitForIdleSync();
+
+        // Set expected value
+        activity.expectAutoFill("dude", "sweet");
+
+        // Assert FieldClassification request was sent
+        sClassificationReplier.getNextFieldClassificationRequest();
+
+        // Click on password field to trigger fill dialog
+        mUiBot.selectByRelativeId(ID_PASSWORD);
+        mUiBot.waitForIdleSync();
+
+        final InstrumentedAutoFillService.FillRequest fillRequest =
+                sReplier.getNextFillRequest();
+        // assert that request contains hints
+        assertFillRequestHints(fillRequest);
+        mUiBot.waitForIdleSync();
+
+
+        // Auto-fill it.
+        final UiObject2 picker = mUiBot.assertDatasetsWithBorders(
+                null /* expectedHeader */, null /* expectedFooter */, DROPDOWN_PRESENTATION);
+        mUiBot.selectDataset(picker, DROPDOWN_PRESENTATION);
+
+        // Check the results.
+        activity.assertAutoFilled();
+
+        sClassificationReplier.assertNoUnhandledFieldClassificationRequests();
+        sReplier.assertNoUnhandledFillRequests();
+    }
+
+    @Test
+    public void testFieldClassification_mergeResultsFromPccAndProvider_sameDataset()
+            throws Exception {
+
+        // Enable feature and test service
+        disableFillDialogFeature(sContext);
+        enableService();
+
+        sClassificationReplier.addResponse(new CannedFieldClassificationResponse.Builder()
+                .addFieldClassification(
+                        new CannedFieldClassificationResponse.CannedFieldClassification(
+                                ID_PASSWORD, Set.of(AUTOFILL_HINT_PASSWORD)))
+                .build());
+
+        // Set response with a dataset > fill dialog should have two buttons
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .addDataset(new CannedFillResponse.CannedDataset.Builder()
+                        .setField(ID_USERNAME, "dude")
+                        .setField(AUTOFILL_HINT_PASSWORD, "sweet")
+                        .setPresentation(createPresentation(DROPDOWN_PRESENTATION))
+                        .build())
+                .build());
+
+        // Start activity and autofill
+        LoginActivity activity = startLoginActivity();
+        mUiBot.waitForIdleSync();
+
+        // Assert FieldClassification request was sent
+        sClassificationReplier.getNextFieldClassificationRequest();
+
+        // Set expected value
+        activity.expectPasswordAutoFill("sweet");
+
+        // Click on password field to trigger autofill
+        mUiBot.selectByRelativeId(ID_PASSWORD);
+        mUiBot.waitForIdleSync();
+
+        final InstrumentedAutoFillService.FillRequest fillRequest =
+                sReplier.getNextFillRequest();
+        // assert that request contains hints
+        assertFillRequestHints(fillRequest);
+        mUiBot.waitForIdleSync();
+
+
+        // Auto-fill it.
+        UiObject2 picker = mUiBot.assertDatasetsWithBorders(
+                null /* expectedHeader */, null /* expectedFooter */, DROPDOWN_PRESENTATION);
+        mUiBot.selectDataset(picker, DROPDOWN_PRESENTATION);
+
+        // Check the results.
+        activity.assertAutoFilled();
+
+
+        // Set expected value
+        activity.expectAutoFill("dude");
+
+        // Click on username field to see presentation from previous autofill request.
+        mUiBot.selectByRelativeId(ID_USERNAME);
+        mUiBot.waitForIdleSync();
+
+
+        // Auto-fill it.
+        picker = mUiBot.assertDatasetsWithBorders(
+                null /* expectedHeader */, null /* expectedFooter */, DROPDOWN_PRESENTATION);
+        mUiBot.selectDataset(picker, DROPDOWN_PRESENTATION);
+
+        // Check the results.
+        activity.assertAutoFilled();
+
+        sClassificationReplier.assertNoUnhandledFieldClassificationRequests();
+        sReplier.assertNoUnhandledFillRequests();
+    }
+
+    @Test
+    public void testFieldClassification_mergeResultsFromPccAndProvider_separateDataset()
+            throws Exception {
+
+        // Enable feature and test service
+        disableFillDialogFeature(sContext);
+        enableService();
+
+        sClassificationReplier.addResponse(new CannedFieldClassificationResponse.Builder()
+                .addFieldClassification(
+                        new CannedFieldClassificationResponse.CannedFieldClassification(
+                                ID_USERNAME, Set.of(AUTOFILL_HINT_USERNAME)))
+                .addFieldClassification(
+                        new CannedFieldClassificationResponse.CannedFieldClassification(
+                                ID_PASSWORD, Set.of(AUTOFILL_HINT_PASSWORD)))
+                .build());
+
+        // Set response with a dataset > fill dialog should have two buttons
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .addDataset(new CannedFillResponse.CannedDataset.Builder()
+                        .setField(ID_USERNAME, "dude")
+                        .setPresentation(createPresentation(DROPDOWN_PRESENTATION))
+                        .build())
+                .addDataset(new CannedFillResponse.CannedDataset.Builder()
+                        .setField(AUTOFILL_HINT_PASSWORD, "sweet")
+                        .setPresentation(createPresentation(DROPDOWN_PRESENTATION2))
+                        .build())
+                .build());
+
+        // Start activity and autofill
+        LoginActivity activity = startLoginActivity();
+        mUiBot.waitForIdleSync();
+
+        // Assert FieldClassification request was sent
+        sClassificationReplier.getNextFieldClassificationRequest();
+
+        // Set expected value for password only
+        activity.expectPasswordAutoFill("sweet");
+
+        // Click on password field to trigger autofill
+        mUiBot.selectByRelativeId(ID_PASSWORD);
+        mUiBot.waitForIdleSync();
+
+        final InstrumentedAutoFillService.FillRequest fillRequest =
+                sReplier.getNextFillRequest();
+        // assert that request contains hints
+        assertFillRequestHints(fillRequest);
+        mUiBot.waitForIdleSync();
+
+
+        // Auto-fill it.
+        UiObject2 picker = mUiBot.assertDatasetsWithBorders(
+                null /* expectedHeader */, null /* expectedFooter */, DROPDOWN_PRESENTATION2);
+        mUiBot.selectDataset(picker, DROPDOWN_PRESENTATION2);
+
+        // Check the results.
+        activity.assertAutoFilled();
+
+
+        // Set expected value for username
+        activity.expectAutoFill("dude");
+
+        // Click on username field to see presentation from previous autofill request.
+        mUiBot.selectByRelativeId(ID_USERNAME);
+        mUiBot.waitForIdleSync();
+
+
+        // Auto-fill it.
+        picker = mUiBot.assertDatasetsWithBorders(
+                null /* expectedHeader */, null /* expectedFooter */, DROPDOWN_PRESENTATION);
+        mUiBot.selectDataset(picker, DROPDOWN_PRESENTATION);
+
+        // Check the results.
+        activity.assertAutoFilled();
+
+        sClassificationReplier.assertNoUnhandledFieldClassificationRequests();
+        sReplier.assertNoUnhandledFillRequests();
+    }
+
+    @Test
+    public void testFieldClassification_preferPccDetection_sameDetection() throws Exception {
+
+        // Enable feature and test service
+        disableFillDialogFeature(sContext);
+        preferPccDetectionOverProvider(sContext, true);
+        enableService();
+
+        sClassificationReplier.addResponse(new CannedFieldClassificationResponse.Builder()
+                .addFieldClassification(
+                        new CannedFieldClassificationResponse.CannedFieldClassification(
+                                ID_USERNAME, Set.of(AUTOFILL_HINT_USERNAME)))
+                .addFieldClassification(
+                        new CannedFieldClassificationResponse.CannedFieldClassification(
+                                ID_PASSWORD, Set.of(AUTOFILL_HINT_PASSWORD)))
+                .build());
+
+        // Set response with a dataset > fill dialog should have two buttons
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .addDataset(new CannedFillResponse.CannedDataset.Builder()
+                        .setField(ID_USERNAME, "username")
+                        .setField(ID_PASSWORD, "password")
+                        .setPresentation(createPresentation(DROPDOWN_PRESENTATION))
+                        .build())
+                .addDataset(new CannedFillResponse.CannedDataset.Builder()
+                        .setField(AUTOFILL_HINT_USERNAME, "hint_username")
+                        .setField(AUTOFILL_HINT_PASSWORD, "hint_password")
+                        .setPresentation(createPresentation(DROPDOWN_PRESENTATION2))
+                        .build())
+                .build());
+
+        // Start activity and autofill
+        LoginActivity activity = startLoginActivity();
+        mUiBot.waitForIdleSync();
+
+        // Assert FieldClassification request was sent
+        sClassificationReplier.getNextFieldClassificationRequest();
+
+        // Set expected value
+        activity.expectAutoFill("hint_username", "hint_password");
+
+        // Click on password field to trigger autofill
+        mUiBot.selectByRelativeId(ID_PASSWORD);
+        mUiBot.waitForIdleSync();
+
+        final InstrumentedAutoFillService.FillRequest fillRequest =
+                sReplier.getNextFillRequest();
+        // assert that request contains hints
+        assertFillRequestHints(fillRequest);
+        mUiBot.waitForIdleSync();
+
+        // Auto-fill it.
+        final UiObject2 picker = mUiBot.assertDatasetsWithBorders(
+                null /* expectedHeader */, null /* expectedFooter */, DROPDOWN_PRESENTATION2);
+        mUiBot.selectDataset(picker, DROPDOWN_PRESENTATION2);
+
+        // Check the results.
+        activity.assertAutoFilled();
+
+        sClassificationReplier.assertNoUnhandledFieldClassificationRequests();
+        sReplier.assertNoUnhandledFillRequests();
+
+        sClassificationReplier.assertNoUnhandledFieldClassificationRequests();
+        sReplier.assertNoUnhandledFillRequests();
+    }
+
+    @Test
+    public void testFieldClassification_noDetectionFromProvider() throws Exception {
+        preferPccDetectionOverProvider(sContext, false);
+        testNoDetectionFromProvider();
+    }
+
+    @Test
+    public void testFieldClassification_noDetectionFromProvider_preferPcc() throws Exception {
+        preferPccDetectionOverProvider(sContext, true);
+        testNoDetectionFromProvider();
+    }
+
+    private void testNoDetectionFromProvider() throws Exception {
+
+        // Enable feature and test service
+        disableFillDialogFeature(sContext);
+        enableService();
+
+        sClassificationReplier.addResponse(new CannedFieldClassificationResponse.Builder()
+                .addFieldClassification(
+                        new CannedFieldClassificationResponse.CannedFieldClassification(
+                                ID_USERNAME, Set.of(AUTOFILL_HINT_USERNAME)))
+                .addFieldClassification(
+                        new CannedFieldClassificationResponse.CannedFieldClassification(
+                                ID_PASSWORD, Set.of(AUTOFILL_HINT_PASSWORD)))
+                .build());
+
+        // Set response with a dataset > fill dialog should have two buttons
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .addDataset(new CannedFillResponse.CannedDataset.Builder()
+                        .setField(AUTOFILL_HINT_USERNAME, "hint_username")
+                        .setField(AUTOFILL_HINT_PASSWORD, "hint_password")
+                        .setPresentation(createPresentation(DROPDOWN_PRESENTATION))
+                        .build())
+                .build());
+
+        // Start activity and autofill
+        LoginActivity activity = startLoginActivity();
+        mUiBot.waitForIdleSync();
+
+        // Assert FieldClassification request was sent
+        sClassificationReplier.getNextFieldClassificationRequest();
+
+        // Set expected value
+        activity.expectAutoFill("hint_username", "hint_password");
+
+        // Click on password field to trigger autofill
+        mUiBot.selectByRelativeId(ID_PASSWORD);
+        mUiBot.waitForIdleSync();
+
+        final InstrumentedAutoFillService.FillRequest fillRequest =
+                sReplier.getNextFillRequest();
+        // assert that request contains hints
+        assertFillRequestHints(fillRequest);
+        mUiBot.waitForIdleSync();
+
+        // Auto-fill it.
+        final UiObject2 picker = mUiBot.assertDatasetsWithBorders(
+                null /* expectedHeader */, null /* expectedFooter */, DROPDOWN_PRESENTATION);
+        mUiBot.selectDataset(picker, DROPDOWN_PRESENTATION);
+
+        // Check the results.
+        activity.assertAutoFilled();
+
+        sClassificationReplier.assertNoUnhandledFieldClassificationRequests();
+        sReplier.assertNoUnhandledFillRequests();
+
+        sClassificationReplier.assertNoUnhandledFieldClassificationRequests();
+        sReplier.assertNoUnhandledFillRequests();
+    }
+
+    /**
+     * Asserts that the fill request contains hints
+     */
+    private void assertFillRequestHints(InstrumentedAutoFillService.FillRequest fillRequest) {
+        assertThat(fillRequest.hints.size()).isEqualTo(3);
+        assertThat(fillRequest.hints.get(0)).isEqualTo(AUTOFILL_HINT_USERNAME);
+        assertThat(fillRequest.hints.get(1)).isEqualTo(AUTOFILL_HINT_PASSWORD);
+        assertThat(fillRequest.hints.get(2)).isEqualTo(AUTOFILL_HINT_NEW_PASSWORD);
+    }
+
 }
 

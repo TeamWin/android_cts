@@ -714,7 +714,8 @@ public class InstrumentedAutoFillService extends AutofillService {
                         break;
                     case PCC_ID:
                         // TODO: SaveInfo undetermined for PCC
-                        fillResponse = response.asPccFillResponse(contexts);
+                        fillResponse = response.asPccFillResponse(contexts,
+                                (id) -> Helper.findNodeByResourceId(contexts, id));
                         break;
                     default:
                         throw new IllegalStateException("Unknown id mode: " + mIdMode);
