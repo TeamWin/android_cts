@@ -59,7 +59,7 @@ import java.util.regex.Pattern;
  * <p>Typical usage:
  *
  * <pre class="prettyprint">
- * InstrumentedAutoFillService.setFillResponse(new CannedFillResponse.Builder()
+ * InstrumentedAutoFillService.getReplier().addResponse(new CannedFillResponse.Builder()
  *               .addDataset(new CannedDataset.Builder("dataset_name")
  *                   .setField("resource_id1", AutofillValue.forText("value1"))
  *                   .setField("resource_id2", AutofillValue.forText("value2"))
@@ -215,14 +215,20 @@ public final class CannedFillResponse {
         };
     }
 
-    public FillResponse asPccFillResponse(@Nullable List<FillContext> contexts) {
-        return asFillResponseWithAutofillId(contexts,
-            (stringId) -> {
-                return null;
-            },
-            (cannedDataset) -> {
-                return cannedDataset.asDatasetForPcc();
-            });
+    public FillResponse asPccFillResponse(@Nullable List<FillContext> contexts,
+            @NonNull Function<String, ViewNode> nodeResolver) {
+        final Function<String, AutofillId> autofillPccResolver =
+                (id)-> {
+                    ViewNode node = nodeResolver.apply(id);
+                    if (node == null) {
+                        return null;
+                    }
+                    return node.getAutofillId();
+                };
+        return asFillResponseWithAutofillId(
+                contexts,
+                autofillPccResolver,
+                (cannedDataset) -> cannedDataset.asDatasetForPcc(autofillPccResolver));
     }
 
     /**
@@ -749,7 +755,7 @@ public final class CannedFillResponse {
             });
         }
 
-        public Dataset asDatasetForPcc() {
+        public Dataset asDatasetForPcc(Function<String, AutofillId> autofillIdResolver) {
             final Presentations.Builder presentationsBuilder = new Presentations.Builder();
             if (mPresentation != null) {
                 presentationsBuilder.setMenuPresentation(mPresentation);
@@ -809,7 +815,14 @@ public final class CannedFillResponse {
                     if (filter != null) {
                         fieldBuilder.setFilter(filter.second);
                     }
-                    builder.setField(id, fieldBuilder.build());
+
+                    final AutofillId autofillId = autofillIdResolver.apply(id);
+                    if (autofillId == null) {
+                        // Treat the id as autofill hints
+                        builder.setField(id, fieldBuilder.build());
+                    } else {
+                        builder.setField(autofillId, fieldBuilder.build());
+                    }
                 }
             }
             builder.setId(mId).setAuthentication(mAuthentication);
