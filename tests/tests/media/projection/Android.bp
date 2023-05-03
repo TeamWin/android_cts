@@ -28,6 +28,7 @@ android_test {
     static_libs: [
         "ctstestrunner-axt",
         "cts-media-common",
+        "cts-wm-util",
         "junit",
         "junit-params",
         "testng",
