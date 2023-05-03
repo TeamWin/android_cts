@@ -14,7 +14,6 @@
      limitations under the License.
 -->
 <configuration description="Config for CTS Compilation Test">
-    <option name="test-suite-tag" value="cts" />
     <option name="config-descriptor:metadata" key="component" value="art" />
     <option name="config-descriptor:metadata" key="parameter" value="multi_abi" />
     <option name="config-descriptor:metadata" key="parameter" value="not_instant_app" />
