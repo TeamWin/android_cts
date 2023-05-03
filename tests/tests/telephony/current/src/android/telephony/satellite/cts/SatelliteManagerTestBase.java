@@ -28,6 +28,7 @@ import android.annotation.Nullable;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.OutcomeReceiver;
+import android.provider.Settings;
 import android.telephony.Rlog;
 import android.telephony.TelephonyManager;
 import android.telephony.satellite.PointingInfo;
@@ -639,6 +640,8 @@ public class SatelliteManagerTestBase {
         }
         assertNotNull(errorCode);
         assertEquals(SatelliteManager.SATELLITE_ERROR_NONE, (long) errorCode);
+
+        assertSatelliteEnabledInSettings(enabled);
     }
 
 
@@ -655,6 +658,8 @@ public class SatelliteManagerTestBase {
         }
         assertNotNull(errorCode);
         assertEquals(SatelliteManager.SATELLITE_ERROR_NONE, (long) errorCode);
+
+        assertSatelliteEnabledInSettings(enabled);
     }
 
     protected static void requestSatelliteEnabled(boolean enabled, boolean demoEnabled,
@@ -720,5 +725,17 @@ public class SatelliteManagerTestBase {
 
     protected static void loge(@NonNull String log) {
         Rlog.e(TAG, log);
+    }
+
+    private static void assertSatelliteEnabledInSettings(boolean enabled) {
+        int satelliteModeEnabled = Settings.Global.getInt(getContext().getContentResolver(),
+                Settings.Global.SATELLITE_MODE_ENABLED, 0);
+        if (enabled) {
+            assertEquals(satelliteModeEnabled, 1);
+        } else {
+            assertEquals(satelliteModeEnabled, 0);
+        }
+        logd("requestSatelliteEnabled: " + enabled
+                + " : satelliteModeEnabled from settings: " + satelliteModeEnabled);
     }
 }
