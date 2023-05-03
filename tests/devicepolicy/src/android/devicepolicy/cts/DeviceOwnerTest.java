@@ -24,14 +24,14 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertThrows;
 
 import android.app.admin.DevicePolicyManager;
+import android.content.ComponentName;
 import android.content.Context;
-import android.util.Log;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.UserType;
+import com.android.bedstead.harrier.annotations.EnsureCanAddUser;
 import com.android.bedstead.harrier.annotations.EnsureHasAccount;
-import com.android.bedstead.harrier.annotations.EnsureHasAccountAuthenticator;
 import com.android.bedstead.harrier.annotations.EnsureHasAdditionalUser;
 import com.android.bedstead.harrier.annotations.EnsureHasNoAccounts;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
@@ -42,15 +42,19 @@ import com.android.bedstead.harrier.annotations.UserTest;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDeviceOwner;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDpc;
 import com.android.bedstead.nene.TestApis;
-import com.android.bedstead.nene.accounts.AccountReference;
 import com.android.bedstead.nene.devicepolicy.DeviceOwner;
 import com.android.bedstead.nene.exceptions.AdbException;
+import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.packages.ComponentReference;
+import com.android.bedstead.nene.users.UserReference;
 import com.android.bedstead.nene.utils.Poll;
 import com.android.bedstead.nene.utils.ShellCommand;
 import com.android.bedstead.nene.utils.ShellCommandUtils;
+import com.android.bedstead.remotedpc.RemoteDpc;
 import com.android.bedstead.testapp.TestApp;
 import com.android.bedstead.testapp.TestAppInstance;
+import com.android.compatibility.common.util.ApiTest;
+import com.android.compatibility.common.util.BlockingBroadcastReceiver;
 
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -79,6 +83,10 @@ public final class DeviceOwnerTest {
             .whereTestOnly().isFalse()
             .get();
 
+    private static final TestApp sRemoteDpcTestApp = sDeviceState.testApps().query()
+            .wherePackageName().isEqualTo(RemoteDpc.REMOTE_DPC_APP_PACKAGE_NAME_OR_PREFIX)
+            .get();
+
     private static final ComponentReference NOT_TEST_ONLY_DPC_COMPONENT =
             NOT_TEST_ONLY_DPC.pkg().component(
                     NOT_TEST_ONLY_DPC.packageName() + ".DeviceAdminReceiver");
@@ -92,6 +100,10 @@ public final class DeviceOwnerTest {
             "android.account.DEVICE_OR_PROFILE_OWNER_ALLOWED";
     private static final String FEATURE_DISALLOW =
             "android.account.DEVICE_OR_PROFILE_OWNER_DISALLOWED";
+
+    private static final String SET_DEVICE_OWNER_EXCEPTION_MSG =
+            "Not allowed to set the device owner because there are already several users on the "
+                    + "device.";
 
     @Test
     @Postsubmit(reason = "new test")
@@ -201,8 +213,8 @@ public final class DeviceOwnerTest {
             // After attempting and failing to set the device owner, it will remain as an active
             // admin for a short while
             Poll.forValue("Active admins",
-                    () -> TestApis.devicePolicy().getActiveAdmins(
-                            TestApis.users().system()))
+                            () -> TestApis.devicePolicy().getActiveAdmins(
+                                    TestApis.users().system()))
                     .toMeet(i -> !i.contains(TEST_ONLY_DPC_COMPONENT))
                     .errorOnFail("Expected active admins to not contain DPC")
                     .await();
@@ -233,8 +245,8 @@ public final class DeviceOwnerTest {
             // After attempting and failing to set the device owner, it will remain as an active
             // admin for a short while
             Poll.forValue("Active admins",
-                    () -> TestApis.devicePolicy().getActiveAdmins(
-                            TestApis.users().system()))
+                            () -> TestApis.devicePolicy().getActiveAdmins(
+                                    TestApis.users().system()))
                     .toMeet(i -> !i.contains(TEST_ONLY_DPC_COMPONENT))
                     .errorOnFail("Expected active admins to not contain DPC")
                     .await();
@@ -265,8 +277,8 @@ public final class DeviceOwnerTest {
             // After attempting and failing to set the device owner, it will remain as an active
             // admin for a short while
             Poll.forValue("Active admins",
-                    () -> TestApis.devicePolicy().getActiveAdmins(
-                            TestApis.users().system()))
+                            () -> TestApis.devicePolicy().getActiveAdmins(
+                                    TestApis.users().system()))
                     .toMeet(i -> !i.contains(TEST_ONLY_DPC_COMPONENT))
                     .errorOnFail("Expected active admins to not contain DPC")
                     .await();
@@ -323,11 +335,60 @@ public final class DeviceOwnerTest {
             // After attempting and failing to set the device owner, it will remain as an active
             // admin for a short while
             Poll.forValue("Active admins",
-                    () -> TestApis.devicePolicy().getActiveAdmins(
-                            TestApis.users().system()))
+                            () -> TestApis.devicePolicy().getActiveAdmins(
+                                    TestApis.users().system()))
                     .toMeet(i -> !i.contains(NOT_TEST_ONLY_DPC_COMPONENT))
                     .errorOnFail("Expected active admins to not contain DPC")
                     .await();
+        }
+    }
+
+    @ApiTest(apis = "android.app.admin.DevicePolicyManager.ACTION_DEVICE_OWNER_CHANGED")
+    @EnsureHasNoDpc
+    @Postsubmit(reason = "new test")
+    @Test
+    public void setDeviceOwner_receivesOwnerChangedBroadcast() {
+        try (BlockingBroadcastReceiver broadcastReceiver =
+                     sDeviceState.registerBroadcastReceiver(
+                             DevicePolicyManager.ACTION_DEVICE_OWNER_CHANGED)) {
+            RemoteDpc.setAsDeviceOwner();
+
+            broadcastReceiver.awaitForBroadcastOrFail();
+        } finally {
+            DeviceOwner deviceOwner = TestApis.devicePolicy().getDeviceOwner();
+            if (deviceOwner != null) {
+                deviceOwner.remove();
+            }
+        }
+    }
+
+    @EnsureHasNoDpc
+    @EnsureCanAddUser
+    @Postsubmit(reason = "new test")
+    @Test
+    public void setDeviceOwner_hasSecondaryUser_throwsException() {
+        try (UserReference secondaryUser =
+                     TestApis.users().createUser().forTesting(false).create()) {
+            try {
+                assertThrows("Error setting device owner.",
+                        NeneException.class, () -> RemoteDpc.setAsDeviceOwner());
+            } finally {
+                DeviceOwner deviceOwner = TestApis.devicePolicy().getDeviceOwner();
+                if (deviceOwner != null) {
+                    deviceOwner.remove();
+                }
+            }
+        }
+    }
+
+    @ApiTest(apis = "android.app.admin.DevicePolicyManager#isProvisioningAllowed")
+    @Postsubmit(reason = "new test")
+    @Test
+    public void isProvisioningAllowed_forManagedDevice_setupWizardIsComplete_returnsFalse() {
+        TestApis.users().instrumented().setSetupComplete(true);
+        try (TestAppInstance testApp = sRemoteDpcTestApp.install()) {
+            assertThat(sDevicePolicyManager.isProvisioningAllowed(
+                    DevicePolicyManager.ACTION_PROVISION_MANAGED_DEVICE)).isFalse();
         }
     }
 }
