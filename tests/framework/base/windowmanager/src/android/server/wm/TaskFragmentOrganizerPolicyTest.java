@@ -53,6 +53,7 @@ import android.window.TaskOrganizer;
 import android.window.WindowContainerToken;
 import android.window.WindowContainerTransaction;
 
+import androidx.test.filters.FlakyTest;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.ApiTest;
@@ -802,6 +803,7 @@ public class TaskFragmentOrganizerPolicyTest extends ActivityManagerTestBase {
     /**
      * Verifies that the TaskFragment hierarchy ops should still work while in lock task mode.
      */
+    @FlakyTest(bugId = 280026111)
     @Test
     public void testApplyHierarchyOpsInLockTaskMode() {
         // Start an activity
