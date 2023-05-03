@@ -50,6 +50,7 @@ import android.autofillservice.cts.testcore.InstrumentedAutoFillService.SaveRequ
 import android.autofillservice.cts.testcore.MyAutofillCallback;
 import android.graphics.Rect;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.FlakyTest;
 import android.platform.test.annotations.Presubmit;
 import android.service.autofill.SaveInfo;
 import android.text.InputType;
@@ -130,7 +131,7 @@ public class VirtualContainerActivityTest
         autofillTest(false);
     }
 
-    @Presubmit
+    @FlakyTest(bugId = 276895614)
     @Test
     public void testAutofill_appContext() throws Exception {
         mActivity.mCustomView.setAutofillManager(mActivity.getApplicationContext());
