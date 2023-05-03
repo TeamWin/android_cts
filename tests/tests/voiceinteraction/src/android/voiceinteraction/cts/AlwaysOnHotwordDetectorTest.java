@@ -761,4 +761,35 @@ public class AlwaysOnHotwordDetectorTest {
         // This means the HotwordDetectionService was recreated between AOHD destroy and create.
         createAndEnrollAlwaysOnHotwordDetector(options);
     }
+
+    @ApiTest(apis = {
+            "android.media.voice.KeyphraseModelManager#updateKeyphraseSoundModel",
+            "android.service.voice.AlwaysOnHotwordDetector#startRecognition",
+            "android.service.voice.AlwaysOnHotwordDetector.Callback#onAvailabilityChanged",
+            "android.service.voice.AlwaysOnHotwordDetector.Callback#onDetected",
+            "android.service.voice.AlwaysOnHotwordDetector"
+                    + ".Callback#onHotwordDetectionServiceInitialized",
+            "android.service.voice.VoiceInteractionService#createAlwaysOnHotwordDetector",
+    })
+    @Test
+    public void testOnDetected_timestampIsAfterRecognitionStarted() throws Exception {
+        createAndEnrollAlwaysOnHotwordDetector();
+        // Grab permissions for more than a single call since we get callbacks
+        adoptSoundTriggerPermissions();
+        // Start recognition
+        mAlwaysOnHotwordDetector.startRecognition(0, new byte[]{1, 2, 3, 4, 5});
+        RecognitionSession recognitionSession = waitForFutureDoneAndAssertSuccessful(
+                mInstrumentationObserver.getOnRecognitionStartedFuture());
+        assertThat(recognitionSession).isNotNull();
+
+        getService().initDetectRejectLatch();
+        long timestampCheckpoint = SystemClock.elapsedRealtime();
+        recognitionSession.triggerRecognitionEvent(new byte[]{0x11, 0x22},
+                createKeyphraseRecognitionExtraList());
+        getService().waitOnDetectOrRejectCalled();
+        AlwaysOnHotwordDetector.EventPayload detectResult =
+                getService().getHotwordServiceOnDetectedResult();
+
+        assertThat(detectResult.getHalEventReceivedMillis()).isGreaterThan(timestampCheckpoint);
+    }
 }
