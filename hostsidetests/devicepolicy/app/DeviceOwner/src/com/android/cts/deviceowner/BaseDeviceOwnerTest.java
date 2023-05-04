@@ -17,6 +17,7 @@ package com.android.cts.deviceowner;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import android.annotation.Nullable;
 import android.annotation.UserIdInt;
 import android.app.ActivityManager;
 import android.app.Instrumentation;
@@ -51,9 +52,9 @@ public abstract class BaseDeviceOwnerTest extends AndroidTestCase {
     private static final String TAG = BaseDeviceOwnerTest.class.getSimpleName();
 
     protected DevicePolicyManager mDevicePolicyManager;
-    protected WifiManager mWifiManager;
+    @Nullable protected WifiManager mWifiManager;
     protected WifiManager mCurrentUserWifiManager;
-    protected WifiConfigCreator mWifiConfigCreator;
+    @Nullable protected WifiConfigCreator mWifiConfigCreator;
     protected Instrumentation mInstrumentation;
     protected UiDevice mDevice;
     protected boolean mHasSecureLockScreen;
@@ -77,8 +78,8 @@ public abstract class BaseDeviceOwnerTest extends AndroidTestCase {
         mWifiManager = TestAppSystemServiceFactory.getWifiManager(mContext,
                 BasicAdminReceiver.class);
         mCurrentUserWifiManager = mContext.getSystemService(WifiManager.class);
-        mWifiConfigCreator = new WifiConfigCreator(mContext, mWifiManager);
-
+        mWifiConfigCreator = mWifiManager == null ? null : new WifiConfigCreator(mContext,
+                mWifiManager);
         mHasSecureLockScreen = mContext.getPackageManager().hasSystemFeature(
                 PackageManager.FEATURE_SECURE_LOCK_SCREEN);
         mHasTelephonyFeature = mContext.getPackageManager().hasSystemFeature(
