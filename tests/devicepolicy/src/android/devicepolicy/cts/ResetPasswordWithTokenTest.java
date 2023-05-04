@@ -30,6 +30,7 @@ import static android.content.pm.PackageManager.FEATURE_AUTOMOTIVE;
 import static android.content.pm.PackageManager.FEATURE_SECURE_LOCK_SCREEN;
 
 import static com.android.bedstead.metricsrecorder.truth.MetricQueryBuilderSubject.assertThat;
+import static com.android.bedstead.nene.users.UserType.MANAGED_PROFILE_TYPE_NAME;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
@@ -1152,7 +1153,7 @@ public final class ResetPasswordWithTokenTest { // bunch of headless failures - 
 
     // Password token is disabled for the primary user, allow failure.
     private static boolean allowFailure(SecurityException e) {
-        return !sDeviceState.dpc().devicePolicyManager().isManagedProfile(sDeviceState.dpc().componentName())
+        return sDeviceState.dpc().user().type().name().equals(MANAGED_PROFILE_TYPE_NAME)
                 && e.getMessage().equals("Escrow token is disabled on the current user");
     }
 }

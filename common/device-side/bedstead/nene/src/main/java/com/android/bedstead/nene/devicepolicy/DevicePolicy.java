@@ -28,6 +28,7 @@ import static com.android.bedstead.nene.permissions.CommonPermissions.FORCE_DEVI
 import static com.android.bedstead.nene.permissions.CommonPermissions.MANAGE_DEVICE_ADMINS;
 import static com.android.bedstead.nene.permissions.CommonPermissions.MANAGE_PROFILE_AND_DEVICE_OWNERS;
 import static com.android.bedstead.nene.permissions.CommonPermissions.MANAGE_ROLE_HOLDERS;
+import static com.android.bedstead.nene.permissions.CommonPermissions.QUERY_ADMIN_POLICY;
 
 import android.annotation.TargetApi;
 import android.app.admin.DevicePolicyManager;
@@ -811,6 +812,14 @@ public final class DevicePolicy {
     @Experimental
     private boolean isAffiliated(UserReference user) {
         return devicePolicyManager(user).isAffiliatedUser();
+    }
+
+    @Experimental
+    public List<String> getPermittedInputMethods() {
+        // TODO: Enable cross-user
+        try (PermissionContext p = TestApis.permissions().withPermission(QUERY_ADMIN_POLICY)) {
+            return sDevicePolicyManager.getPermittedInputMethodsForCurrentUser();
+        }
     }
 
     /**

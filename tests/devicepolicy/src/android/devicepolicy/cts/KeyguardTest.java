@@ -47,7 +47,6 @@ import com.android.bedstead.harrier.policies.KeyguardDisableSecureCamera;
 import com.android.bedstead.harrier.policies.KeyguardDisableSecureNotifications;
 import com.android.bedstead.harrier.policies.KeyguardDisableTrustAgents;
 import com.android.bedstead.harrier.policies.KeyguardDisableUnredactedNotifications;
-import com.android.bedstead.harrier.policies.KeyguardDisableWidgetsAll;
 import com.android.bedstead.harrier.policies.TrustAgentConfiguration;
 import com.android.bedstead.nene.TestApis;
 import com.android.compatibility.common.util.ApiTest;
@@ -78,70 +77,6 @@ public final class KeyguardTest {
     private static final String VERY_LONG_STRING =
             new String(new char[100000]).replace('\0', 'A');
 
-    @CannotSetPolicyTest(policy = KeyguardDisableWidgetsAll.class)
-    @Postsubmit(reason = "New test")
-    @ApiTest(apis = {
-            "android.app.admin.DevicePolicyManager#setKeyguardDisabledFeatures",
-            "android.app.admin.DevicePolicyManager#KEYGUARD_DISABLE_WIDGETS_ALL"
-    })
-    public void setKeyguardDisabledFeatures_disableWidgetsAll_notPermitted_throwsException() {
-        assertThrows(SecurityException.class, () -> sDeviceState.dpc()
-                .devicePolicyManager().setKeyguardDisabledFeatures(
-                        sDeviceState.dpc().componentName(), KEYGUARD_DISABLE_WIDGETS_ALL));
-    }
-
-    @PolicyAppliesTest(policy = KeyguardDisableWidgetsAll.class)
-    @Postsubmit(reason = "New test")
-    @ApiTest(apis = {
-            "android.app.admin.DevicePolicyManager#setKeyguardDisabledFeatures",
-            "android.app.admin.DevicePolicyManager#getKeyguardDisabledFeatures",
-            "android.app.admin.DevicePolicyManager#KEYGUARD_DISABLE_WIDGETS_ALL"
-    })
-    public void setKeyguardDisabledFeatures_disableWidgetsAll_featureIsSet() {
-        if (TestApis.users().instrumented().isProfile()) {
-            throw new AssumptionViolatedException("Not relevant for non-work profiles");
-        }
-        int originalFeatures = sDeviceState.dpc().devicePolicyManager().getKeyguardDisabledFeatures(
-                sDeviceState.dpc().componentName());
-
-        try {
-            sDeviceState.dpc().devicePolicyManager().setKeyguardDisabledFeatures(
-                    sDeviceState.dpc().componentName(), KEYGUARD_DISABLE_WIDGETS_ALL);
-
-            assertThat(TestApis.devicePolicy().getKeyguardDisabledFeatures()).isEqualTo(
-                    KEYGUARD_DISABLE_WIDGETS_ALL);
-        } finally {
-            sDeviceState.dpc().devicePolicyManager().setKeyguardDisabledFeatures(
-                    sDeviceState.dpc().componentName(), originalFeatures);
-        }
-    }
-
-    @PolicyDoesNotApplyTest(policy = KeyguardDisableWidgetsAll.class)
-    @Postsubmit(reason = "New test")
-    @ApiTest(apis = {
-            "android.app.admin.DevicePolicyManager#setKeyguardDisabledFeatures",
-            "android.app.admin.DevicePolicyManager#getKeyguardDisabledFeatures",
-            "android.app.admin.DevicePolicyManager#KEYGUARD_DISABLE_WIDGETS_ALL"
-    })
-    public void setKeyguardDisabledFeatures_disableWidgetsAll_doesNotApply_featureIsNotSet() {
-        if (TestApis.users().instrumented().isProfile()) {
-            throw new AssumptionViolatedException("Not relevant for non-work profiles");
-        }
-        int originalFeatures = sDeviceState.dpc().devicePolicyManager().getKeyguardDisabledFeatures(
-                sDeviceState.dpc().componentName());
-
-        try {
-            sDeviceState.dpc().devicePolicyManager().setKeyguardDisabledFeatures(
-                    sDeviceState.dpc().componentName(), KEYGUARD_DISABLE_WIDGETS_ALL);
-
-            assertThat(TestApis.devicePolicy().getKeyguardDisabledFeatures()).isNotEqualTo(
-                    KEYGUARD_DISABLE_WIDGETS_ALL);
-        } finally {
-            sDeviceState.dpc().devicePolicyManager().setKeyguardDisabledFeatures(
-                    sDeviceState.dpc().componentName(), originalFeatures);
-        }
-    }
-
     @CannotSetPolicyTest(policy = KeyguardDisableSecureCamera.class)
     @Postsubmit(reason = "New test")
     @ApiTest(apis = {
@@ -162,9 +97,6 @@ public final class KeyguardTest {
             "android.app.admin.DevicePolicyManager#KEYGUARD_DISABLE_SECURE_CAMERA"
     })
     public void setKeyguardDisabledFeatures_disableSecureCamera_featureIsSet() {
-        if (TestApis.users().instrumented().isProfile()) {
-            throw new AssumptionViolatedException("Not relevant for non-work profiles");
-        }
         int originalFeatures = sDeviceState.dpc().devicePolicyManager().getKeyguardDisabledFeatures(
                 sDeviceState.dpc().componentName());
 
@@ -188,9 +120,6 @@ public final class KeyguardTest {
             "android.app.admin.DevicePolicyManager#KEYGUARD_DISABLE_SECURE_CAMERA"
     })
     public void setKeyguardDisabledFeatures_disableSecureCamera_doesNotApply_featureIsNotSet() {
-        if (TestApis.users().instrumented().isProfile()) {
-            throw new AssumptionViolatedException("Not relevant for non-work profiles");
-        }
         int originalFeatures = sDeviceState.dpc().devicePolicyManager().getKeyguardDisabledFeatures(
                 sDeviceState.dpc().componentName());
 
@@ -226,9 +155,6 @@ public final class KeyguardTest {
             "android.app.admin.DevicePolicyManager#KEYGUARD_DISABLE_SECURE_NOTIFICATIONS"
     })
     public void setKeyguardDisabledFeatures_disableSecureNotifications_featureIsSet() {
-        if (TestApis.users().instrumented().isProfile()) {
-            throw new AssumptionViolatedException("Not relevant for non-work profiles");
-        }
         int originalFeatures = sDeviceState.dpc().devicePolicyManager().getKeyguardDisabledFeatures(
                 sDeviceState.dpc().componentName());
 
@@ -252,9 +178,6 @@ public final class KeyguardTest {
             "android.app.admin.DevicePolicyManager#KEYGUARD_DISABLE_SECURE_NOTIFICATIONS"
     })
     public void setKeyguardDisabledFeatures_disableSecureNotifications_doesNotApply_featureIsNotSet() {
-        if (TestApis.users().instrumented().isProfile()) {
-            throw new AssumptionViolatedException("Not relevant for non-work profiles");
-        }
         int originalFeatures = sDeviceState.dpc().devicePolicyManager().getKeyguardDisabledFeatures(
                 sDeviceState.dpc().componentName());
 
@@ -290,9 +213,6 @@ public final class KeyguardTest {
             "android.app.admin.DevicePolicyManager#KEYGUARD_DISABLE_TRUST_AGENTS"
     })
     public void setKeyguardDisabledFeatures_disableTrustAgents_featureIsSet() {
-        if (TestApis.users().instrumented().isProfile()) {
-            throw new AssumptionViolatedException("Not relevant for non-work profiles");
-        }
         int originalFeatures = sDeviceState.dpc().devicePolicyManager().getKeyguardDisabledFeatures(
                 sDeviceState.dpc().componentName());
 
@@ -316,9 +236,6 @@ public final class KeyguardTest {
             "android.app.admin.DevicePolicyManager#KEYGUARD_DISABLE_TRUST_AGENTS"
     })
     public void setKeyguardDisabledFeatures_disableTrustAgents_doesNotApply_featureIsNotSet() {
-        if (TestApis.users().instrumented().isProfile()) {
-            throw new AssumptionViolatedException("Not relevant for non-work profiles");
-        }
         int originalFeatures = sDeviceState.dpc().devicePolicyManager().getKeyguardDisabledFeatures(
                 sDeviceState.dpc().componentName());
 
@@ -354,9 +271,6 @@ public final class KeyguardTest {
             "android.app.admin.DevicePolicyManager#KEYGUARD_DISABLE_UNREDACTED_NOTIFICATIONS"
     })
     public void setKeyguardDisabledFeatures_disableUnredactedNotifications_featureIsSet() {
-        if (TestApis.users().instrumented().isProfile()) {
-            throw new AssumptionViolatedException("Not relevant for non-work profiles");
-        }
         int originalFeatures = sDeviceState.dpc().devicePolicyManager().getKeyguardDisabledFeatures(
                 sDeviceState.dpc().componentName());
 
@@ -380,9 +294,6 @@ public final class KeyguardTest {
             "android.app.admin.DevicePolicyManager#KEYGUARD_DISABLE_UNREDACTED_NOTIFICATIONS"
     })
     public void setKeyguardDisabledFeatures_disableUnredactedNotifications_doesNotApply_featureIsNotSet() {
-        if (TestApis.users().instrumented().isProfile()) {
-            throw new AssumptionViolatedException("Not relevant for non-work profiles");
-        }
         int originalFeatures = sDeviceState.dpc().devicePolicyManager().getKeyguardDisabledFeatures(
                 sDeviceState.dpc().componentName());
 
@@ -418,9 +329,6 @@ public final class KeyguardTest {
             "android.app.admin.DevicePolicyManager#KEYGUARD_DISABLE_FINGERPRINT"
     })
     public void setKeyguardDisabledFeatures_disableFingerprint_featureIsSet() {
-        if (TestApis.users().instrumented().isProfile()) {
-            throw new AssumptionViolatedException("Not relevant for non-work profiles");
-        }
         int originalFeatures = sDeviceState.dpc().devicePolicyManager().getKeyguardDisabledFeatures(
                 sDeviceState.dpc().componentName());
 
@@ -444,9 +352,6 @@ public final class KeyguardTest {
             "android.app.admin.DevicePolicyManager#KEYGUARD_DISABLE_FINGERPRINT"
     })
     public void setKeyguardDisabledFeatures_disableFingerprint_doesNotApply_featureIsNotSet() {
-        if (TestApis.users().instrumented().isProfile()) {
-            throw new AssumptionViolatedException("Not relevant for non-work profiles");
-        }
         int originalFeatures = sDeviceState.dpc().devicePolicyManager().getKeyguardDisabledFeatures(
                 sDeviceState.dpc().componentName());
 
@@ -482,9 +387,6 @@ public final class KeyguardTest {
             "android.app.admin.DevicePolicyManager#KEYGUARD_DISABLE_FACE"
     })
     public void setKeyguardDisabledFeatures_disableFace_featureIsSet() {
-        if (TestApis.users().instrumented().isProfile()) {
-            throw new AssumptionViolatedException("Not relevant for non-work profiles");
-        }
         int originalFeatures = sDeviceState.dpc().devicePolicyManager().getKeyguardDisabledFeatures(
                 sDeviceState.dpc().componentName());
 
@@ -508,9 +410,6 @@ public final class KeyguardTest {
             "android.app.admin.DevicePolicyManager#KEYGUARD_DISABLE_FACE"
     })
     public void setKeyguardDisabledFeatures_disableFace_doesNotApply_featureIsNotSet() {
-        if (TestApis.users().instrumented().isProfile()) {
-            throw new AssumptionViolatedException("Not relevant for non-work profiles");
-        }
         int originalFeatures = sDeviceState.dpc().devicePolicyManager().getKeyguardDisabledFeatures(
                 sDeviceState.dpc().componentName());
 
@@ -546,9 +445,6 @@ public final class KeyguardTest {
             "android.app.admin.DevicePolicyManager#KEYGUARD_DISABLE_IRIS"
     })
     public void setKeyguardDisabledFeatures_disableIris_featureIsSet() {
-        if (TestApis.users().instrumented().isProfile()) {
-            throw new AssumptionViolatedException("Not relevant for non-work profiles");
-        }
         int originalFeatures = sDeviceState.dpc().devicePolicyManager().getKeyguardDisabledFeatures(
                 sDeviceState.dpc().componentName());
 
@@ -575,9 +471,6 @@ public final class KeyguardTest {
             "android.app.admin.DevicePolicyManager#KEYGUARD_DISABLE_IRIS"
     })
     public void setKeyguardDisabledFeatures_disableIris_doesNotApply_featureIsNotSet() {
-        if (TestApis.users().instrumented().isProfile()) {
-            throw new AssumptionViolatedException("Not relevant for non-work profiles");
-        }
         int originalFeatures = sDeviceState.dpc().devicePolicyManager().getKeyguardDisabledFeatures(
                 sDeviceState.dpc().componentName());
 

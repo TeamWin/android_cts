@@ -80,7 +80,7 @@ public class CheckFinancedTest {
     @CanSetPolicyTest(policy = CheckFinance.class)
     public void isDeviceFinanced_isNotFinanced_returnsFalse()
             throws ExecutionException, InterruptedException {
-        try (TestAppInstance testApp = sTestApp.install(UserHandle.SYSTEM)) {
+        try (TestAppInstance testApp = sTestApp.install()) {
             clearFinancedDeviceKioskRole();
             assertThat(sDeviceState.dpc().devicePolicyManager().isDeviceFinanced()).isFalse();
         } finally {
@@ -91,7 +91,7 @@ public class CheckFinancedTest {
     @CanSetPolicyTest(policy = CheckFinance.class)
     public void isDeviceFinanced_isFinanced_returnsTrue()
             throws ExecutionException, InterruptedException {
-        try (TestAppInstance testApp = sTestApp.install(UserHandle.SYSTEM)) {
+        try (TestAppInstance testApp = sTestApp.install()) {
             setUpFinancedDeviceKioskRole(testApp.packageName());
             assertThat(sDeviceState.dpc().devicePolicyManager().isDeviceFinanced()).isTrue();
         } finally {
@@ -151,7 +151,7 @@ public class CheckFinancedTest {
     @CanSetPolicyTest(policy = CheckFinance.class)
     public void deviceFinancingStateChanged_roleAdded_ReceivesBroadcast()
             throws ExecutionException, InterruptedException {
-        try (TestAppInstance testApp = sTestApp.install(UserHandle.SYSTEM)) {
+        try (TestAppInstance testApp = sTestApp.install()) {
             setUpFinancedDeviceKioskRole(testApp.packageName());
 
             assertThat(sDeviceState.dpc().events().broadcastReceived()
@@ -197,14 +197,6 @@ public class CheckFinancedTest {
         clearFinancedDeviceKioskRole();
 
         SystemUtil.runWithShellPermissionIdentity(() -> {
-            sRoleManager.addRoleHolderAsUser(
-                    ROLE_FINANCED_DEVICE_KIOSK,
-                    packageName,
-                    MANAGE_HOLDERS_FLAG_DONT_KILL_APP,
-                    TestApis.users().instrumented().userHandle(),
-                    sContext.getMainExecutor(),
-                    newRoleSetFuture::complete
-            );
             sRoleManager.addRoleHolderAsUser(
                     ROLE_FINANCED_DEVICE_KIOSK,
                     packageName,
