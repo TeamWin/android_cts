@@ -77,6 +77,12 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
     private static final String SET_INACTIVE = "SetInactive";
     private static final String DISCONNECT = "Disconnect";
 
+    // CallControlCallback
+    private static final String ON_SET_ACTIVE = "OnSetActive";
+    private static final String ON_ANSWER = "OnAnswer";
+    private static final String ON_SET_INACTIVE = "OnSetInactive";
+    private static final String ON_DISCONNECT = "OnDisconnect";
+
     // Fail messages
     private static final String FAIL_MSG_CALL_CONTROL_NULL =
             "onResult: callControl object is null";
@@ -102,6 +108,12 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
         private final String mCallId;
         private String mTelecomCallId = "";
         CallControl mCallControl;
+        public boolean completionResponse = Boolean.TRUE;
+
+        // callback verifiers
+        public boolean mWasOnSetActiveCalled = false;
+        public boolean mWasOnSetInactiveCalled = false;
+        public boolean mWasOnAnswerCalled = false;
         public boolean mWasOnDisconnectCalled = false;
 
         TelecomCtsVoipCall(String id) {
@@ -125,27 +137,30 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
             @Override
             public void onSetActive(@NonNull Consumer<Boolean> wasCompleted) {
                 Log.i(TAG, String.format("onSetActive: callId=[%s]", mCallId));
-                wasCompleted.accept(Boolean.TRUE);
+                mWasOnSetActiveCalled = true;
+                wasCompleted.accept(completionResponse);
             }
 
             @Override
             public void onSetInactive(@NonNull Consumer<Boolean> wasCompleted) {
                 Log.i(TAG, String.format("onSetInactive: callId=[%s]", mCallId));
-                wasCompleted.accept(Boolean.TRUE);
+                mWasOnSetInactiveCalled = true;
+                wasCompleted.accept(completionResponse);
             }
 
             @Override
             public void onAnswer(int videoState, @NonNull Consumer<Boolean> wasCompleted) {
                 Log.i(TAG, String.format("onAnswer: callId=[%s]", mCallId));
-                wasCompleted.accept(Boolean.TRUE);
+                mWasOnAnswerCalled = true;
+                wasCompleted.accept(completionResponse);
             }
 
             @Override
             public void onDisconnect(@NonNull DisconnectCause cause,
                     @NonNull Consumer<Boolean> wasCompleted) {
                 Log.i(TAG, String.format("onDisconnect: callId=[%s]", mCallId));
-                wasCompleted.accept(Boolean.TRUE);
                 mWasOnDisconnectCalled = true;
+                wasCompleted.accept(completionResponse);
             }
 
             @Override
@@ -154,7 +169,15 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
             }
         };
 
+        public void setClientResponse(boolean willComplete) {
+            completionResponse = willComplete;
+        }
+
         public void resetAllCallbackVerifiers() {
+            completionResponse = Boolean.TRUE;
+            mWasOnSetActiveCalled = false;
+            mWasOnSetInactiveCalled = false;
+            mWasOnAnswerCalled = false;
             mWasOnDisconnectCalled = false;
         }
     }
@@ -544,6 +567,64 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
         }
     }
 
+    /**
+     * Ensure when a client rejects CallControlCallback#onAnswer, the call is disconnected.
+     */
+    @CddTest(requirements = "7.4.1.2/C-12-1,7.4.1.2/C-12-2")
+    @ApiTest(apis = {"android.telecom.TelecomManager#addCall",
+            "android.telecom.CallControlCallback#onAnswer"})
+    public void testAddIncomingCallOnAnswer_RejectCallback() {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+        try {
+            cleanup();
+            startCallWithAttributesAndVerify(mIncomingCallAttributes, mCall1);
+            assertNumCalls(getInCallService(), 1);
+            Call call = getLastAddedCall();
+            // reject the next CallControlCallback
+            mCall1.setClientResponse(Boolean.FALSE);
+            call.answer(VideoProfile.STATE_AUDIO_ONLY);
+            // assert the CallControlCallback#onAnswer was called
+            verifyCallControlCallback(ON_ANSWER, mCall1,
+                    "onAnswer CallControlCallback was never called");
+            assertNumCalls(getInCallService(), 0);
+        } finally {
+            cleanup();
+        }
+    }
+
+    /**
+     * Ensure when a client rejects CallControlCallback#onSetActive, the call is still in an
+     * inactive state.
+     */
+    @CddTest(requirements = "7.4.1.2/C-12-1,7.4.1.2/C-12-2")
+    @ApiTest(apis = {"android.telecom.TelecomManager#addCall",
+            "android.telecom.CallControlCallback#onSetActive"})
+    public void testOngoingCall_RejectSetActiveCallback() {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+        try {
+            cleanup();
+            startCallWithAttributesAndVerify(mOutgoingCallAttributes, mCall1);
+            assertNumCalls(getInCallService(), 1);
+            // set the call active and then place on hold/inactive
+            callControlAction(SET_ACTIVE, mCall1);
+            callControlAction(SET_INACTIVE, mCall1);
+            // reject the next CallControlCallback
+            mCall1.setClientResponse(Boolean.FALSE);
+            Call call = getLastAddedCall();
+            call.unhold(); // calls CallControlCallback#onSetActive
+            // assert CallControlCallback#onSetActive was called
+            verifyCallControlCallback(ON_SET_ACTIVE, mCall1,
+                    "onSetActive CallControlCallback was never called");
+            assertCallState(call, Call.STATE_HOLDING);
+        } finally {
+            cleanup();
+        }
+    }
+
 
     /**
      * Test two transactional sequential calls transition to the correct states.
@@ -792,7 +873,7 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
             List<CallEndpoint> endpoints = mCall1.mEvents.getAvailableEndpoints();
 
             // if another endpoint is available, request a switch
-            if ( endpoints != null && endpoints.size() > 1) {
+            if (endpoints != null && endpoints.size() > 1) {
                 // verify there is at least one endpoint that is non-null
                 verifyCallEndpointIsNotNull(mCall1);
                 int startingEndpointType = mCall1.mEvents
@@ -995,6 +1076,36 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
         conn.setActive();
         assertConnectionState(conn, Connection.STATE_ACTIVE);
         return conn;
+    }
+
+    public void verifyCallControlCallback(String callback, TelecomCtsVoipCall call,
+            String errorMessage) {
+        waitUntilConditionIsTrueOrTimeout(
+                new Condition() {
+                    @Override
+                    public Object expected() {
+                        return true;
+                    }
+
+                    @Override
+                    public Object actual() {
+                        switch (callback){
+                            case ON_SET_ACTIVE:
+                                return call.mWasOnSetActiveCalled;
+                            case ON_SET_INACTIVE:
+                                return call.mWasOnSetInactiveCalled;
+                            case ON_ANSWER:
+                                return call.mWasOnAnswerCalled;
+                            case ON_DISCONNECT:
+                                return call.mWasOnDisconnectCalled;
+                            default:
+                                throw new IllegalArgumentException(
+                                        "verifyCallControlCallback: undefined callback "
+                                                + callback);
+                        }
+                    }
+                },
+                WAIT_FOR_STATE_CHANGE_TIMEOUT_MS, errorMessage);
     }
 
     private void cleanup() {
