@@ -46,6 +46,7 @@ import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.utils.Poll;
 import com.android.compatibility.common.util.ApiTest;
 
+import org.junit.Assume;
 import org.junit.ClassRule;
 import org.junit.Ignore;
 import org.junit.Rule;
@@ -96,6 +97,8 @@ public class LockTest {
     @PolicyAppliesTest(policy = LockNow.class)
     @ApiTest(apis = "android.app.admin.DevicePolicyManager#lockNow")
     public void lockNow_noPasswordSet_turnsScreenOff() throws Exception {
+        Assume.assumeFalse("LockNow on profile won't turn off screen",
+                sDeviceState.dpc().user().isProfile());
         sDeviceState.dpc().devicePolicyManager().lockNow();
 
         Poll.forValue("isScreenOn", () -> TestApis.device().isScreenOn())

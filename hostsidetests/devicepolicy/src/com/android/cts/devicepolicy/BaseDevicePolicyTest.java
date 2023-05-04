@@ -226,7 +226,7 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
         }
 
         if (!isHeadlessSystemUserMode()) {
-            mDeviceOwnerUserId = mPrimaryUserId = getPrimaryUser();
+            mDeviceOwnerUserId = mPrimaryUserId = getMainUser();
         } else {
             // For headless system user, all tests will be executed on current user
             // and therefore, initial user is set as primary user for test purpose.
@@ -818,8 +818,15 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
         return commandOutput;
     }
 
-    protected int getPrimaryUser() throws DeviceNotAvailableException {
-        return getDevice().getPrimaryUserId();
+    protected int getMainUser() throws DeviceNotAvailableException {
+        Integer user = getDevice().getMainUserId();
+        if (user == null) {
+            user = getDevice().getPrimaryUserId();
+            if (user == null) {
+                user = 0;
+            }
+        }
+        return user;
     }
 
     protected int getCurrentUser() throws DeviceNotAvailableException {

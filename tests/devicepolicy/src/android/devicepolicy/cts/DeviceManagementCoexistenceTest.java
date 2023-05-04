@@ -1394,7 +1394,7 @@ public final class DeviceManagementCoexistenceTest {
 
     @Test
     @EnsureHasDevicePolicyManagerRoleHolder(onUser = UserType.SYSTEM_USER)
-    @EnsureHasDeviceOwner
+    @EnsureHasDeviceOwner(isPrimary = true)
     @Postsubmit(reason = "new test")
     @Ignore
     public void setPermittedInputMethods_serialisation_loadsPolicy() {
@@ -1421,7 +1421,7 @@ public final class DeviceManagementCoexistenceTest {
     @Ignore("b/277071699: add test API to trigger reloading from disk")
     @Test
     @EnsureHasDevicePolicyManagerRoleHolder(onUser = UserType.SYSTEM_USER)
-    @EnsureHasDeviceOwner
+    @EnsureHasDeviceOwner(isPrimary = true)
     @Postsubmit(reason = "new test")
     @EnsureHasAccountAuthenticator
     public void multiplePoliciesSet_serialisation_loadsPolicies() {
