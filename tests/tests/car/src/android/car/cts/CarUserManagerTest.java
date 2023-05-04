@@ -38,7 +38,6 @@ import static org.junit.Assert.assertThrows;
 
 import static java.lang.Math.max;
 
-import android.app.ActivityManager;
 import android.car.CarOccupantZoneManager;
 import android.car.SyncResultCallback;
 import android.car.test.ApiCheckerRule;
@@ -54,6 +53,7 @@ import android.car.user.UserRemovalResult;
 import android.car.user.UserStartRequest;
 import android.car.user.UserStopRequest;
 import android.os.Bundle;
+import android.os.Process;
 import android.os.UserHandle;
 import android.os.UserManager;
 import android.util.Log;
@@ -420,8 +420,7 @@ public final class CarUserManagerTest extends AbstractCarTestCase {
     @ApiTest(apis = {"android.car.user.CarUserManager#isValidUser(UserHandle)"})
     @EnsureHasPermission({CREATE_USERS, INTERACT_ACROSS_USERS})
     public void testIsValidUserExists() {
-        assertThat(mCarUserManager.isValidUser(
-                UserHandle.of(ActivityManager.getCurrentUser()))).isTrue();
+        assertThat(mCarUserManager.isValidUser(Process.myUserHandle())).isTrue();
     }
 
     @Test
