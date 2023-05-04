@@ -16,7 +16,6 @@
 
 package android.appsecurity.cts;
 
-import com.android.tradefed.util.RunUtil;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -32,11 +31,11 @@ import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 import com.android.tradefed.util.AbiUtils;
+import com.android.tradefed.util.RunUtil;
 
 import org.junit.After;
 import org.junit.Assume;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -91,6 +90,8 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
             "com.android.cts.mediastorageapp28", MEDIA_CLAZZ);
     private static final Config MEDIA_29 = new Config("CtsMediaStorageApp29.apk",
             "com.android.cts.mediastorageapp29", MEDIA_CLAZZ);
+    private static final Config MEDIA_31 = new Config("CtsMediaStorageApp31.apk",
+            "com.android.cts.mediastorageapp31", MEDIA_CLAZZ);
 
     private static final String PERM_ACCESS_MEDIA_LOCATION =
             "android.permission.ACCESS_MEDIA_LOCATION";
@@ -102,6 +103,8 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
             "android.permission.READ_MEDIA_AUDIO";
     private static final String PERM_READ_MEDIA_VIDEO =
             "android.permission.READ_MEDIA_VIDEO";
+    private static final String PERM_READ_MEDIA_VISUAL_USER_SELECTED =
+            "android.permission.READ_MEDIA_VISUAL_USER_SELECTED";
     private static final String PERM_WRITE_EXTERNAL_STORAGE =
             "android.permission.WRITE_EXTERNAL_STORAGE";
 
@@ -408,7 +411,8 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
 
             // Verify they can't access other users' content using media provider
             runDeviceTests(MULTIUSER_PKG, MULTIUSER_CLASS, "testMediaProviderUserIsolation", owner);
-            runDeviceTests(MULTIUSER_PKG, MULTIUSER_CLASS, "testMediaProviderUserIsolation", secondary);
+            runDeviceTests(
+                    MULTIUSER_PKG, MULTIUSER_CLASS, "testMediaProviderUserIsolation", secondary);
         } finally {
             getDevice().uninstallPackage(MULTIUSER_PKG);
         }
@@ -963,7 +967,6 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
      * @throws Exception
      */
     @Test
-    @Ignore
     public void testCreateRequest_withNoAML_showConfirmDialog() throws Exception {
         installPackage(MEDIA.apk);
 
@@ -995,6 +998,47 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
     }
 
     /**
+     * If the app is granted {@link android.Manifest.permission#MANAGE_MEDIA}, {@link
+     * android.Manifest.permission#READ_EXTERNAL_STORAGE}, without {@link
+     * android.Manifest.permission#ACCESS_MEDIA_LOCATION}, when it calls
+     * MediaStore#createTrashRequest or MediaStore#createDeleteRequest, The system will NOT show the
+     * user confirmation dialog. When it calls MediaStore#createWriteRequest, the system will show
+     * the user confirmation dialog. This tests pre-SDK level 33 behavior.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testCreateRequest_withNoAML_showConfirmDialog31() throws Exception {
+        installPackage(MEDIA_31.apk);
+
+        int user = getDevice().getCurrentUser();
+        // grant permissions
+        updatePermissions(MEDIA_31.pkg, user, new String[] {
+                PERM_READ_MEDIA_IMAGES,
+                PERM_READ_MEDIA_VIDEO,
+                PERM_READ_MEDIA_AUDIO,
+                PERM_READ_EXTERNAL_STORAGE,
+        }, true);
+        // revoke permission
+        updatePermissions(MEDIA_31.pkg, user, new String[] {
+                PERM_ACCESS_MEDIA_LOCATION,
+        }, false);
+
+        // grant the app ops permission
+        updateAppOp(MEDIA_31.pkg, user, APP_OPS_MANAGE_MEDIA, true);
+
+        // show confirm dialog in requestWrite
+        runDeviceTests(MEDIA_31.pkg, MEDIA_31.clazz,
+                "testMediaEscalation_RequestWrite_showConfirmDialog", user);
+
+        // not show confirm dialog in requestTrash and requestDelete
+        runDeviceTests(MEDIA_31.pkg, MEDIA_31.clazz,
+                "testMediaEscalation_RequestTrash_notShowConfirmDialog", user);
+        runDeviceTests(MEDIA_31.pkg, MEDIA_31.clazz,
+                "testMediaEscalation_RequestDelete_notShowConfirmDialog", user);
+    }
+
+    /**
      * If the app is granted {@link android.Manifest.permission#MANAGE_MEDIA},
      * {@link android.Manifest.permission#READ_EXTERNAL_STORAGE}, and
      * {@link android.Manifest.permission#ACCESS_MEDIA_LOCATION},
@@ -1015,6 +1059,7 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
                 PERM_READ_MEDIA_AUDIO,
                 PERM_READ_EXTERNAL_STORAGE,
                 PERM_ACCESS_MEDIA_LOCATION,
+                PERM_READ_MEDIA_VISUAL_USER_SELECTED,
         }, true);
 
         // revoke the app ops permission
