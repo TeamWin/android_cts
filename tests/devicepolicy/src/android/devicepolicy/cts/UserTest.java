@@ -16,9 +16,13 @@
 
 package android.devicepolicy.cts;
 
+import static android.os.UserManager.SWITCHABILITY_STATUS_USER_SWITCH_DISALLOWED;
+
 import static com.android.bedstead.nene.permissions.CommonPermissions.CREATE_USERS;
+import static com.android.bedstead.nene.permissions.CommonPermissions.INTERACT_ACROSS_USERS;
 import static com.android.bedstead.nene.types.OptionalBoolean.ANY;
 import static com.android.bedstead.nene.userrestrictions.CommonUserRestrictions.DISALLOW_REMOVE_USER;
+import static com.android.bedstead.nene.userrestrictions.CommonUserRestrictions.DISALLOW_USER_SWITCH;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -34,18 +38,21 @@ import com.android.bedstead.harrier.annotations.EnsureHasAdditionalUser;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.EnsureHasUserRestriction;
 import com.android.bedstead.harrier.annotations.Postsubmit;
+import com.android.bedstead.harrier.annotations.RequireRunOnInitialUser;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyDoesNotApplyTest;
 import com.android.bedstead.harrier.annotations.RequireRunOnSystemUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnAdditionalUser;
 import com.android.bedstead.harrier.policies.DisallowRemoveUser;
+import com.android.bedstead.harrier.policies.DisallowUserSwitch;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.types.OptionalBoolean;
 import com.android.bedstead.nene.users.UserReference;
 import com.android.compatibility.common.util.ApiTest;
 
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -143,5 +150,70 @@ public final class UserTest {
         boolean result = sLocalUserManager.removeUser(TestApis.users().instrumented().userHandle());
 
         assertThat(result).isFalse();
+    }
+
+    @CannotSetPolicyTest(policy = DisallowUserSwitch.class, includeNonDeviceAdminStates = false)
+    @Postsubmit(reason = "new test")
+    @ApiTest(apis = "android.os.UserManager#DISALLOW_USER_SWITCH")
+    public void setUserRestriction_disallowUserSwitch_cannotSet_throwsException() {
+        assertThrows(SecurityException.class,
+                () -> sDeviceState.dpc().devicePolicyManager().addUserRestriction(
+                        sDeviceState.dpc().componentName(), DISALLOW_USER_SWITCH));
+    }
+
+    @PolicyAppliesTest(policy = DisallowUserSwitch.class)
+    @Postsubmit(reason = "new test")
+    @ApiTest(apis = "android.os.UserManager#DISALLOW_USER_SWITCH")
+    public void setUserRestriction_disallowUserSwitch_isSet() {
+        try {
+            sDeviceState.dpc().devicePolicyManager().addUserRestriction(
+                    sDeviceState.dpc().componentName(), DISALLOW_USER_SWITCH);
+
+            assertThat(TestApis.devicePolicy().userRestrictions().isSet(DISALLOW_USER_SWITCH))
+                    .isTrue();
+        } finally {
+            sDeviceState.dpc().devicePolicyManager().clearUserRestriction(
+                    sDeviceState.dpc().componentName(), DISALLOW_USER_SWITCH);
+        }
+    }
+
+    @PolicyDoesNotApplyTest(policy = DisallowUserSwitch.class)
+    @Postsubmit(reason = "new test")
+    @ApiTest(apis = "android.os.UserManager#DISALLOW_USER_SWITCH")
+    public void setUserRestriction_disallowUserSwitch_isNotSet() {
+        try {
+            sDeviceState.dpc().devicePolicyManager().addUserRestriction(
+                    sDeviceState.dpc().componentName(), DISALLOW_USER_SWITCH);
+
+            assertThat(TestApis.devicePolicy().userRestrictions().isSet(DISALLOW_USER_SWITCH))
+                    .isFalse();
+        } finally {
+
+            sDeviceState.dpc().devicePolicyManager().clearUserRestriction(
+                    sDeviceState.dpc().componentName(), DISALLOW_USER_SWITCH);
+        }
+    }
+
+    @EnsureDoesNotHaveUserRestriction(value = DISALLOW_USER_SWITCH, onUser = UserType.ADMIN_USER)
+    @Test
+    @Postsubmit(reason = "new test")
+    @ApiTest(apis = "android.os.UserManager#DISALLOW_USER_SWITCH")
+    @EnsureHasPermission(INTERACT_ACROSS_USERS)
+    @RequireRunOnInitialUser
+    public void getUserSwitchability_disallowUserSwitchIsNotSet_isNotDisallowed() throws Exception {
+        assertThat(sLocalUserManager.getUserSwitchability())
+                .isNotEqualTo(SWITCHABILITY_STATUS_USER_SWITCH_DISALLOWED);
+    }
+
+    @EnsureDoesNotHaveUserRestriction(value = DISALLOW_USER_SWITCH, onUser = UserType.ADMIN_USER)
+    @Test
+    @Postsubmit(reason = "new test")
+    @ApiTest(apis = "android.os.UserManager#DISALLOW_USER_SWITCH")
+    @EnsureHasPermission(INTERACT_ACROSS_USERS)
+    @RequireRunOnInitialUser
+    @Ignore("b/280385735")
+    public void getUserSwitchability_disallowUserSwitchIsSet_isDisallowed() throws Exception {
+        assertThat(sLocalUserManager.getUserSwitchability())
+                .isEqualTo(SWITCHABILITY_STATUS_USER_SWITCH_DISALLOWED);
     }
 }

@@ -40,7 +40,7 @@ public final class ProfileOwnerTest extends BaseDevicePolicyTest {
     public void setUp() throws Exception {
         super.setUp();
 
-        mUserId = isHeadlessSystemUserMode() ? getCurrentUser() : getPrimaryUser();
+        mUserId = isHeadlessSystemUserMode() ? getCurrentUser() : getMainUser();
 
 
         installAppAsUser(PROFILE_OWNER_APK, mUserId);

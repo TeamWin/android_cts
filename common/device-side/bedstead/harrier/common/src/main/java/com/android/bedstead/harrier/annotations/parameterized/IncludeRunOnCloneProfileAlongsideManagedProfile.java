@@ -17,12 +17,8 @@
 package com.android.bedstead.harrier.annotations.parameterized;
 
 import static com.android.bedstead.harrier.annotations.AnnotationRunPrecedence.EARLY;
-import static com.android.bedstead.nene.flags.CommonFlags.DevicePolicyManager.ENABLE_DEVICE_POLICY_ENGINE_FLAG;
-import static com.android.bedstead.nene.flags.CommonFlags.DevicePolicyManager.PERMISSION_BASED_ACCESS_EXPERIMENT_FLAG;
-import static com.android.bedstead.nene.flags.CommonFlags.NAMESPACE_DEVICE_POLICY_MANAGER;
 
 import com.android.bedstead.harrier.annotations.AnnotationRunPrecedence;
-import com.android.bedstead.harrier.annotations.EnsureFeatureFlagEnabled;
 import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
 import com.android.bedstead.harrier.annotations.RequireRunOnCloneProfile;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDelegate;
@@ -34,16 +30,15 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Parameterize a test so that it runs on the clone profile of a user which also has a work profile
- * and .dpc() relates to the parent instance of the dpc in the profile.
+ * Parameterize a test so that it runs on the clone profile of a user which also has a work profile.
  */
 @Target({ElementType.METHOD, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @ParameterizedAnnotation
 @RequireRunOnCloneProfile
-@EnsureHasWorkProfile(dpcIsPrimary = true, useParentInstanceOfDpc = true, dpcKey = "dpc")
+@EnsureHasWorkProfile(dpcIsPrimary = true, dpcKey = "dpc")
 @EnsureHasNoDelegate
-public @interface IncludeRunOnCloneProfileAlongsideManagedProfileUsingParentInstance {
+public @interface IncludeRunOnCloneProfileAlongsideManagedProfile {
     /**
      * Weight sets the order that annotations will be resolved.
      *

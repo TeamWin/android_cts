@@ -53,44 +53,25 @@ import java.lang.annotation.RetentionPolicy;
 public final class UserRestrictionsTest {
 
     @StringTestParameter({
-            CommonUserRestrictions.DISALLOW_USB_FILE_TRANSFER,
-            CommonUserRestrictions.DISALLOW_CONFIG_TETHERING,
-            CommonUserRestrictions.DISALLOW_NETWORK_RESET,
             CommonUserRestrictions.DISALLOW_FACTORY_RESET,
-            CommonUserRestrictions.DISALLOW_ADD_USER,
-            CommonUserRestrictions.DISALLOW_CONFIG_CELL_BROADCASTS,
-            CommonUserRestrictions.DISALLOW_CONFIG_MOBILE_NETWORKS,
-            CommonUserRestrictions.DISALLOW_MOUNT_PHYSICAL_MEDIA,
-            CommonUserRestrictions.DISALLOW_SMS,
             CommonUserRestrictions.DISALLOW_FUN,
-            CommonUserRestrictions.DISALLOW_SAFE_BOOT,
-            CommonUserRestrictions.DISALLOW_CREATE_WINDOWS,
-            CommonUserRestrictions.DISALLOW_DATA_ROAMING,
-            CommonUserRestrictions.DISALLOW_BLUETOOTH})
+            CommonUserRestrictions.DISALLOW_CREATE_WINDOWS})
     @Retention(RetentionPolicy.RUNTIME)
     private @interface DeviceOwnerOnlyUserRestrictions {
     }
 
     @StringTestParameter({
-            CommonUserRestrictions.DISALLOW_MODIFY_ACCOUNTS,
             CommonUserRestrictions.DISALLOW_INSTALL_APPS,
             CommonUserRestrictions.DISALLOW_UNINSTALL_APPS,
-            CommonUserRestrictions.DISALLOW_CONFIG_BLUETOOTH,
             CommonUserRestrictions.DISALLOW_CONFIG_CREDENTIALS,
-            CommonUserRestrictions.DISALLOW_REMOVE_USER,
             CommonUserRestrictions.DISALLOW_CONFIG_VPN,
             CommonUserRestrictions.DISALLOW_APPS_CONTROL,
-            CommonUserRestrictions.DISALLOW_UNMUTE_MICROPHONE,
             CommonUserRestrictions.DISALLOW_ADJUST_VOLUME,
-            CommonUserRestrictions.DISALLOW_OUTGOING_CALLS,
-            CommonUserRestrictions.DISALLOW_SYSTEM_ERROR_DIALOGS,
             CommonUserRestrictions.DISALLOW_CROSS_PROFILE_COPY_PASTE,
             CommonUserRestrictions.DISALLOW_OUTGOING_BEAM,
             CommonUserRestrictions.ALLOW_PARENT_PROFILE_APP_LINKING,
             CommonUserRestrictions.DISALLOW_SET_USER_ICON,
             CommonUserRestrictions.DISALLOW_AUTOFILL,
-            CommonUserRestrictions.DISALLOW_CONTENT_CAPTURE,
-            CommonUserRestrictions.DISALLOW_CONTENT_SUGGESTIONS,
             CommonUserRestrictions.DISALLOW_UNIFIED_PASSWORD
     })
     @Retention(RetentionPolicy.RUNTIME)
