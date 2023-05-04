@@ -27,6 +27,7 @@ import static android.app.admin.DevicePolicyIdentifiers.PERMISSION_GRANT_POLICY;
 import static android.app.admin.DevicePolicyIdentifiers.PERMITTED_INPUT_METHODS_POLICY;
 import static android.app.admin.DevicePolicyIdentifiers.PERSISTENT_PREFERRED_ACTIVITY_POLICY;
 import static android.app.admin.DevicePolicyIdentifiers.RESET_PASSWORD_TOKEN_POLICY;
+import static android.app.admin.DevicePolicyIdentifiers.SCREEN_CAPTURE_DISABLED_POLICY;
 import static android.app.admin.DevicePolicyIdentifiers.USER_CONTROL_DISABLED_PACKAGES_POLICY;
 import static android.app.admin.DevicePolicyIdentifiers.getIdentifierForUserRestriction;
 import static android.app.admin.DevicePolicyManager.KEYGUARD_DISABLE_FEATURES_NONE;
@@ -156,6 +157,7 @@ public final class DeviceManagementCoexistenceTest {
     @EnsureHasDevicePolicyManagerRoleHolder(onUser = UserType.SYSTEM_USER)
     @EnsureHasDeviceOwner(isPrimary = true)
     @Postsubmit(reason = "new test")
+    @Ignore("b/273496614: enable once we enable unicorn APIs")
     public void getDevicePolicyState_autoTimezoneSet_returnsPolicy() {
         boolean originalValue = sDeviceState.dpc().devicePolicyManager()
                 .getAutoTimeZoneEnabled(sDeviceState.dpc().componentName());
@@ -313,6 +315,7 @@ public final class DeviceManagementCoexistenceTest {
     @EnsureHasDevicePolicyManagerRoleHolder(onUser = UserType.SYSTEM_USER)
     @EnsureHasDeviceOwner(isPrimary = true)
     @Postsubmit(reason = "new test")
+    @Ignore("b/273496614: enable once we enable unicorn APIs")
     public void getDevicePolicyState_appRestrictionsSet_returnsPolicy() {
         Bundle originalApplicationRestrictions =
                 sDeviceState.dpc().devicePolicyManager()
@@ -437,6 +440,7 @@ public final class DeviceManagementCoexistenceTest {
     @EnsureHasDevicePolicyManagerRoleHolder(onUser = UserType.SYSTEM_USER)
     @EnsureHasDeviceOwner(isPrimary = true)
     @Postsubmit(reason = "new test")
+    @Ignore("b/273496614: enable once we enable unicorn APIs")
     public void getDevicePolicyState_setKeyguardDisabledFeatures_returnsPolicy() {
         try {
             sDeviceState.dpc().devicePolicyManager().setKeyguardDisabledFeatures(
@@ -504,6 +508,28 @@ public final class DeviceManagementCoexistenceTest {
     @EnsureHasDevicePolicyManagerRoleHolder(onUser = UserType.SYSTEM_USER)
     @EnsureHasDeviceOwner(isPrimary = true)
     @Postsubmit(reason = "new test")
+    public void getDevicePolicyState_setScreenCaptureDisabled_returnsPolicy() {
+        try {
+            sDeviceState.dpc().devicePolicyManager().setScreenCaptureDisabled(
+                    sDeviceState.dpc().componentName(), true);
+
+            PolicyState<Boolean> policyState = getBooleanPolicyState(
+                    new NoArgsPolicyKey(SCREEN_CAPTURE_DISABLED_POLICY),
+                    UserHandle.ALL);
+
+            assertThat(policyState.getCurrentResolvedPolicy()).isTrue();
+        } finally {
+            sDeviceState.dpc().devicePolicyManager().setScreenCaptureDisabled(
+                    sDeviceState.dpc().componentName(), false);
+        }
+    }
+
+
+    @Test
+    @EnsureHasDevicePolicyManagerRoleHolder(onUser = UserType.SYSTEM_USER)
+    @EnsureHasDeviceOwner(isPrimary = true)
+    @Postsubmit(reason = "new test")
+    @Ignore("b/273496614: enable once we enable unicorn APIs")
     public void getDevicePolicyState_autoTimezone_returnsCorrectResolutionMechanism() {
         boolean originalValue = sDeviceState.dpc().devicePolicyManager()
                 .getAutoTimeZoneEnabled(sDeviceState.dpc().componentName());
@@ -697,6 +723,7 @@ public final class DeviceManagementCoexistenceTest {
     @EnsureHasDevicePolicyManagerRoleHolder(onUser = UserType.SYSTEM_USER)
     @EnsureHasDeviceOwner(isPrimary = true)
     @Postsubmit(reason = "new test")
+    @Ignore("b/273496614: enable once we enable unicorn APIs")
     public void getDevicePolicyState_setKeyguardDisabledFeatures_returnsCorrectResolutionMechanism() {
         try {
             sDeviceState.dpc().devicePolicyManager().setKeyguardDisabledFeatures(
@@ -763,8 +790,30 @@ public final class DeviceManagementCoexistenceTest {
     }
 
     @Test
+    @EnsureHasDevicePolicyManagerRoleHolder(onUser = UserType.SYSTEM_USER)
     @EnsureHasDeviceOwner(isPrimary = true)
     @Postsubmit(reason = "new test")
+    public void getDevicePolicyState_setScreenCaptureDisabled_returnsCorrectResolutionMechanism() {
+        try {
+            sDeviceState.dpc().devicePolicyManager().setScreenCaptureDisabled(
+                    sDeviceState.dpc().componentName(), true);
+
+            PolicyState<Boolean> policyState = getBooleanPolicyState(
+                    new NoArgsPolicyKey(SCREEN_CAPTURE_DISABLED_POLICY),
+                    UserHandle.ALL);
+
+            assertThat(getMostRestrictiveBooleanMechanism(policyState)
+                    .getMostToLeastRestrictiveValues()).isEqualTo(TRUE_MORE_RESTRICTIVE);
+        } finally {
+            sDeviceState.dpc().devicePolicyManager().setScreenCaptureDisabled(
+                    sDeviceState.dpc().componentName(), false);
+        }
+    }
+
+    @Test
+    @EnsureHasDeviceOwner(isPrimary = true)
+    @Postsubmit(reason = "new test")
+    @Ignore("b/273496614: enable once we enable unicorn APIs")
     public void policyUpdateReceiver_autoTimezoneSet_receivedPolicySetBroadcast() {
         boolean originalValue = sDeviceState.dpc().devicePolicyManager()
                 .getAutoTimeZoneEnabled(sDeviceState.dpc().componentName());
@@ -964,15 +1013,17 @@ public final class DeviceManagementCoexistenceTest {
                 Map<UserHandle, Map<PolicyKey, PolicyState<?>>> policies =
                         state.getPoliciesForAllUsers();
 
-                PolicyState<Boolean> autoTimezonePolicy =
-                        (PolicyState<Boolean>) (policies.get(UserHandle.ALL)
-                                .get(new NoArgsPolicyKey(AUTO_TIMEZONE_POLICY)));
+                // TODO(b/273496614): enable once we enable unicorn APIs")
+//                PolicyState<Boolean> autoTimezonePolicy =
+//                        (PolicyState<Boolean>) (policies.get(UserHandle.ALL)
+//                                .get(new NoArgsPolicyKey(AUTO_TIMEZONE_POLICY)));
                 PolicyState<Boolean> userRestrictionPolicy =
                         (PolicyState<Boolean>) (policies.get(sDeviceState.dpc().user().userHandle())
                                 .get(new UserRestrictionPolicyKey(
                                         getIdentifierForUserRestriction(LOCAL_USER_RESTRICTION),
                                         LOCAL_USER_RESTRICTION)));
-                assertThat(autoTimezonePolicy.getCurrentResolvedPolicy()).isTrue();
+                // TODO(b/273496614): enable once we enable unicorn APIs")
+//                assertThat(autoTimezonePolicy.getCurrentResolvedPolicy()).isTrue();
                 assertThat(userRestrictionPolicy.getCurrentResolvedPolicy()).isTrue();
             } catch (ClassCastException e) {
                 fail("Returned policy is not of type Boolean: " + e);
@@ -991,6 +1042,7 @@ public final class DeviceManagementCoexistenceTest {
     @EnsureHasDevicePolicyManagerRoleHolder(onUser = UserType.SYSTEM_USER)
     @EnsureHasDeviceOwner(isPrimary = true)
     @Postsubmit(reason = "new test")
+    @Ignore("b/273496614: enable once we enable unicorn APIs")
     public void policyUpdateReceiver_setKeyguardDisabledFeatures_receivedPolicySetBroadcast() {
         try {
             sDeviceState.dpc().devicePolicyManager().setKeyguardDisabledFeatures(
@@ -1418,6 +1470,31 @@ public final class DeviceManagementCoexistenceTest {
         }
     }
 
+    @Test
+    @EnsureHasDevicePolicyManagerRoleHolder(onUser = UserType.SYSTEM_USER)
+    @EnsureHasDeviceOwner(isPrimary = true)
+    @Postsubmit(reason = "new test")
+    @Ignore
+    public void setScreenCaptureDisabled_serialisation_loadsPolicy() {
+        try {
+            sDeviceState.dpc().devicePolicyManager().setScreenCaptureDisabled(
+                    sDeviceState.dpc().componentName(), true);
+
+            // TODO(b/277071699): Add test API to trigger reloading from disk. Currently I've tested
+            //  this locally by triggering the loading in DPM#getDevicePolicyState in my local
+            //  build.
+
+            PolicyState<Boolean> policyState = getBooleanPolicyState(
+                    new NoArgsPolicyKey(SCREEN_CAPTURE_DISABLED_POLICY),
+                    UserHandle.ALL);
+
+            assertThat(policyState.getCurrentResolvedPolicy()).isTrue();
+        } finally {
+            sDeviceState.dpc().devicePolicyManager().setScreenCaptureDisabled(
+                    sDeviceState.dpc().componentName(), false);
+        }
+    }
+
     @Ignore("b/277071699: add test API to trigger reloading from disk")
     @Test
     @EnsureHasDevicePolicyManagerRoleHolder(onUser = UserType.SYSTEM_USER)
@@ -1528,7 +1605,8 @@ public final class DeviceManagementCoexistenceTest {
                             sDeviceState.accounts().accountType()),
                     sDeviceState.dpc().user().userHandle());
             // Asserting policies loaded correctly
-            assertThat(autoTimezonePolicy.getCurrentResolvedPolicy()).isTrue();
+            // TODO(b/273496614): enable once we enable unicorn APIs")
+//            assertThat(autoTimezonePolicy.getCurrentResolvedPolicy()).isTrue();
             // TODO(b/278710449): uncomment once bug is fixed
 //            assertThat(permissionGrantStatePolicy.getCurrentResolvedPolicy()).isEqualTo(
 //                    PERMISSION_GRANT_STATE_GRANTED);
@@ -1550,20 +1628,22 @@ public final class DeviceManagementCoexistenceTest {
             assertThat(token).isNotEqualTo(0);
             assertThat(userRestrictionPolicy.getCurrentResolvedPolicy()).isTrue();
 //            assertThat(globalUserRestrictionPolicy.getCurrentResolvedPolicy()).isTrue();
-            assertThat(keyguardDisabledPolicy.getCurrentResolvedPolicy()).isEqualTo(
-                    KEYGUARD_DISABLED_FEATURE);
+            // TODO(b/273496614): enable once we enable unicorn APIs")
+//            assertThat(keyguardDisabledPolicy.getCurrentResolvedPolicy()).isEqualTo(
+//                    KEYGUARD_DISABLED_FEATURE);
             assertThat(persistentPreferredActivityPolicy.getCurrentResolvedPolicy()).isEqualTo(
                     sDeviceState.dpc().componentName());
+            // TODO(b/273496614): enable once we enable unicorn APIs")
             // app restrictions is a non-coexistable policy, so should not have a resolved policy.
-            assertThat(applicationRestrictionsPolicy.getCurrentResolvedPolicy()).isNull();
-            Bundle returnedBundle = applicationRestrictionsPolicy.getPoliciesSetByAdmins().get(
-                    new EnforcingAdmin(sDeviceState.dpc().packageName(),
-                            DpcAuthority.DPC_AUTHORITY,
-                            sDeviceState.dpc().user().userHandle()));
-            assertThat(returnedBundle).isNotNull();
-            BundleUtils.assertEqualToBundle(
-                    "appRestrictionsSet_serialisation_loadsPolicy",
-                    returnedBundle);
+//            assertThat(applicationRestrictionsPolicy.getCurrentResolvedPolicy()).isNull();
+//            Bundle returnedBundle = applicationRestrictionsPolicy.getPoliciesSetByAdmins().get(
+//                    new EnforcingAdmin(sDeviceState.dpc().packageName(),
+//                            DpcAuthority.DPC_AUTHORITY,
+//                            sDeviceState.dpc().user().userHandle()));
+//            assertThat(returnedBundle).isNotNull();
+//            BundleUtils.assertEqualToBundle(
+//                    "appRestrictionsSet_serialisation_loadsPolicy",
+//                    returnedBundle);
             assertThat(accountManagementDisabledPolicy.getCurrentResolvedPolicy()).isTrue();
 
         } finally {
