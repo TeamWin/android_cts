@@ -124,6 +124,10 @@ class YuvJpegAllTest(its_base_test.ItsBaseTest):
       debug = self.debug_mode
       name_with_log_path = os.path.join(log_path, _NAME)
 
+      # Check SKIP conditions
+      camera_properties_utils.skip_unless(
+          camera_properties_utils.linear_tonemap(props))
+
       # Load chart for scene
       its_session_utils.load_scene(
           cam, props, self.scene, self.tablet,

@@ -100,6 +100,7 @@ class YuvPlusRawTest(its_base_test.ItsBaseTest):
       # check SKIP conditions
       camera_properties_utils.skip_unless(
           camera_properties_utils.raw_output(props) and
+          camera_properties_utils.linear_tonemap(props) and
           not camera_properties_utils.mono_camera(props))
 
       # Load chart for scene
