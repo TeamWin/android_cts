@@ -130,70 +130,6 @@ public class ResourceManagerStubActivity extends Activity {
         }
     }
 
-    public void doTestReclaimResource(String mimeType, int width, int height)
-            throws InterruptedException {
-        mType1 = ResourceManagerTestActivityBase.TYPE_NONSECURE;
-        mType2 = ResourceManagerTestActivityBase.TYPE_NONSECURE;
-        mWaitForReclaim = true;
-        Thread thread = new Thread() {
-            @Override
-            public void run() {
-                try {
-                    Context context = getApplicationContext();
-                    Intent intent1 = new Intent(context, ResourceManagerTestActivity1.class);
-                    intent1.putExtra("test-type", mType1);
-                    intent1.putExtra("wait-for-reclaim", mWaitForReclaim);
-                    intent1.putExtra("mime", mimeType);
-                    intent1.putExtra("width", width);
-                    intent1.putExtra("height", height);
-                    startActivityForResult(intent1, mRequestCodes[0]);
-                    // wait for ResourceManagerTestActivity1 to launch and allocate all codecs.
-                    Thread.sleep(5000);
-
-                    Intent intent2 = new Intent(context, ResourceManagerTestActivity2.class);
-                    intent2.putExtra("test-type", mType2);
-                    intent2.putExtra("mime", mimeType);
-                    intent2.putExtra("width", width);
-                    intent2.putExtra("height", height);
-                    startActivityForResult(intent2, mRequestCodes[1]);
-
-                    synchronized (mFinishEvent) {
-                        mFinishEvent.wait();
-                    }
-                } catch (Exception e) {
-                    Log.d(TAG, "testReclaimResource got exception " + e.toString());
-                }
-            }
-        };
-        thread.start();
-        thread.join(20000 /* millis */);
-        System.gc();
-        // give the gc a chance to release test activities.
-        Thread.sleep(5000);
-
-        boolean result = true;
-        for (int i = 0; i < mResults.length; ++i) {
-            if (!mResults[i]) {
-                Log.e(TAG, "Result from activity " + i + " is a fail.");
-                result = false;
-                break;
-            }
-        }
-        if (!result) {
-            String failMessage = "The potential reasons for the failure:\n";
-            StringBuilder reasons = new StringBuilder();
-            reasons.append(ERROR_INSUFFICIENT_RESOURCES);
-            if (mType1 != mType2) {
-                reasons.append(ERROR_SUPPORTS_SECURE_WITH_NON_SECURE_CODEC);
-            }
-            if (mType1 == ResourceManagerTestActivityBase.TYPE_MIX &&
-                    mType2 == ResourceManagerTestActivityBase.TYPE_SECURE) {
-                reasons.append(ERROR_SUPPORTS_MULTIPLE_SECURE_CODECS);
-            }
-            Assert.assertTrue(failMessage + reasons.toString(), result);
-        }
-    }
-
     public void testVideoCodecReclaim(boolean highResolution, String mimeType)
             throws InterruptedException {
         Thread thread = new Thread() {
@@ -230,9 +166,9 @@ public class ResourceManagerStubActivity extends Activity {
         };
 
         thread.start();
-        Log.e(TAG, "Started and waiting for Activities");
+        Log.i(TAG, "Started and waiting for Activities");
         thread.join();
-        Log.e(TAG, "Activities completed");
+        Log.i(TAG, "Activities completed");
         System.gc();
         // give the gc a chance to release test activities.
         Thread.sleep(5000);
