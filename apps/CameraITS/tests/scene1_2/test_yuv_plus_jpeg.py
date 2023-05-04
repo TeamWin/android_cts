@@ -66,6 +66,10 @@ class YuvPlusJpegTest(its_base_test.ItsBaseTest):
       props = cam.override_with_hidden_physical_camera_props(props)
       log_path = self.log_path
 
+      # Check SKIP conditions
+      camera_properties_utils.skip_unless(
+          camera_properties_utils.linear_tonemap(props))
+
       # Load chart for scene
       its_session_utils.load_scene(
           cam, props, self.scene, self.tablet,
