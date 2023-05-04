@@ -235,9 +235,15 @@ public class ProxyVoiceInteractionService extends VoiceInteractionService {
                 IProxyDetectorCallback clientDetectorCallback, VoiceInteractionService service,
                 Handler handler) {
             return create(clientDetectorCallback,
-                    frameworkCallback -> service.createAlwaysOnHotwordDetector(keyphrase, locale,
-                            options,
-                            sharedMemory, frameworkCallback), handler);
+                    frameworkCallback -> {
+                            service.setTestModuleForAlwaysOnHotwordDetectorEnabled(true);
+                            try {
+                                return service.createAlwaysOnHotwordDetector(keyphrase, locale,
+                                        options, sharedMemory, frameworkCallback);
+                            } finally {
+                                service.setTestModuleForAlwaysOnHotwordDetectorEnabled(false);
+                            }
+                        }, handler);
         }
 
         static AlwaysOnHotwordDetectorAdapter createWithoutTrustedProcess(String keyphrase,
@@ -245,8 +251,15 @@ public class ProxyVoiceInteractionService extends VoiceInteractionService {
                 IProxyDetectorCallback clientDetectorCallback, VoiceInteractionService service,
                 Handler handler) {
             return create(clientDetectorCallback,
-                    detectorCallback -> service.createAlwaysOnHotwordDetector(keyphrase, locale,
-                            detectorCallback), handler);
+                    detectorCallback -> {
+                            service.setTestModuleForAlwaysOnHotwordDetectorEnabled(true);
+                            try {
+                                return service.createAlwaysOnHotwordDetector(
+                                        keyphrase, locale, detectorCallback);
+                            } finally {
+                                service.setTestModuleForAlwaysOnHotwordDetectorEnabled(false);
+                            }
+                    }, handler);
         }
 
 
