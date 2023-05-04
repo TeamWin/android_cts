@@ -869,6 +869,29 @@ public class AccessibilityEndToEndTest extends StsExtraBusinessLogicTestCase {
 
     @MediumTest
     @Test
+    @ApiTest(apis = {"android.view.accessibility.AccessibilityNodeInfo"
+            + "#isImportantForAccessibility"})
+    public void testDelegate_ImportantForAccessibility() throws Exception {
+        final View delegateView = mActivity.findViewById(R.id.autoImportantLinearLayout);
+        sInstrumentation.runOnMainSync(() ->
+                delegateView.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_AUTO));
+
+        final AccessibilityNodeInfo autoImportantLinearLayoutNode =
+                sUiAutomation.getRootInActiveWindow().findAccessibilityNodeInfosByViewId(
+                        mActivity.getResources().getResourceName(
+                                R.id.autoImportantLinearLayout)).get(0);
+
+        assertThat(autoImportantLinearLayoutNode.isImportantForAccessibility()).isFalse();
+
+        sInstrumentation.runOnMainSync(() -> delegateView.setAccessibilityDelegate(
+                new View.AccessibilityDelegate()));
+
+        autoImportantLinearLayoutNode.refresh();
+        assertThat(autoImportantLinearLayoutNode.isImportantForAccessibility()).isTrue();
+    }
+
+    @MediumTest
+    @Test
     @ApiTest(apis = {"android.view.accessibility.AccessibilityNodeInfo#performAction"})
     public void testA11yActionTriggerMotionEventActionOutside() throws Exception {
         final View.OnTouchListener listener = mock(View.OnTouchListener.class);
