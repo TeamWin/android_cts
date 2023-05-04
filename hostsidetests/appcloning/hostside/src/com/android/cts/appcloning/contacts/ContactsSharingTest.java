@@ -16,12 +16,6 @@
 
 package com.android.cts.appcloning.contacts;
 
-import static com.android.cts.appcloning.contacts.ContactsShellCommandHelper.ColumnBindings;
-import static com.android.cts.appcloning.contacts.ContactsShellCommandHelper.getDeleteContactCommand;
-import static com.android.cts.appcloning.contacts.ContactsShellCommandHelper.getInsertTestContactCommand;
-import static com.android.cts.appcloning.contacts.ContactsShellCommandHelper.getQueryTestContactsCommand;
-
-
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertTrue;
@@ -30,7 +24,6 @@ import static org.junit.Assume.assumeTrue;
 import android.platform.test.annotations.AppModeFull;
 
 import com.android.cts.appcloning.AppCloningBaseHostTest;
-import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.invoker.TestInformation;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BeforeClassWithInfo;
@@ -40,9 +33,7 @@ import org.junit.AfterClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -66,24 +57,22 @@ public class ContactsSharingTest extends AppCloningBaseHostTest {
 
     private static final String CONTACTS_PROVIDER_PACKAGE_NAME = "com.android.providers.contacts";
     private static final String OWNER_USER_ID = "0";
-
-    private static final String RAW_CONTACTS_ENDPOINT = "raw_contacts";
-    private static final String TEST_ACCOUNT_NAME = "test@test.com";
     private static final String TEST_ACCOUNT_TYPE = "test.com";
-    private static final String TEST_CUSTOM_RINGTONE = "custom_1";
-    private static final String ACCOUNT_NAME_COLUMN = "account_name";
-    private static final String ACCOUNT_TYPE_COLUMN = "account_type";
-    private static final String CUSTOM_RINGTONE_COLUMN = "custom_ringtone";
+    private static TestContactsDataManager sTestContactsDataManager;
+    private static TestContactsDataManager.TestRawContact sTestRawContactDetails;
 
     @BeforeClassWithInfo
     public static void beforeClassWithDevice(TestInformation testInfo) throws Exception {
         assertThat(testInfo.getDevice()).isNotNull();
         assumeTrue(isAtLeastU(testInfo.getDevice()));
+        sTestContactsDataManager = new TestContactsDataManager(testInfo.getDevice());
         // TODO(b/253449368) Run the tests only if the device supports app-cloning. This would
         //  require adding the app-cloning building blocks config and using it in framework code.
         AppCloningBaseHostTest.baseHostSetup(testInfo.getDevice());
         waitForBroadcastIdle();
-        setupTestContacts();
+        sTestRawContactDetails =
+                sTestContactsDataManager.insertRawContactForTestAccount(OWNER_USER_ID,
+                        TEST_ACCOUNT_TYPE);
         switchAppCloningBuildingBlocksFlag(true);
     }
 
@@ -92,34 +81,12 @@ public class ContactsSharingTest extends AppCloningBaseHostTest {
         switchAppCloningBuildingBlocksFlag(false);
         AppCloningBaseHostTest.baseHostTeardown();
         if (doesDeviceSupportContactSharing()) {
-            cleanupTestContacts();
+            sTestContactsDataManager.cleanupTestContacts(OWNER_USER_ID, TEST_ACCOUNT_TYPE);
         }
     }
 
     private static boolean doesDeviceSupportContactSharing() throws Exception {
         return isAppCloningSupportedOnDevice() && isAtLeastU(sDevice);
-    }
-
-    private static void setupTestContacts() throws Exception {
-        // Insert a test raw contact through primary CP2
-        sDevice.executeShellCommand(getInsertTestContactCommand(RAW_CONTACTS_ENDPOINT,
-                getTestRawContactContentValues(TEST_ACCOUNT_TYPE), OWNER_USER_ID));
-    }
-
-    private static void cleanupTestContacts() throws DeviceNotAvailableException {
-        // Delete the test contact inserted earlier through primary CP2
-        sDevice.executeShellCommand(getDeleteContactCommand(RAW_CONTACTS_ENDPOINT,
-                "\"" + ACCOUNT_TYPE_COLUMN + "='" + TEST_ACCOUNT_TYPE + "'\"",
-                OWNER_USER_ID));
-        assertTestContactsAreCleanedUp();
-    }
-
-    private static void assertTestContactsAreCleanedUp() throws DeviceNotAvailableException {
-        String queryResult =
-                sDevice.executeShellCommand(getQueryTestContactsCommand(RAW_CONTACTS_ENDPOINT,
-                "\"" + ACCOUNT_TYPE_COLUMN + "='" + TEST_ACCOUNT_TYPE + "'\"",
-                OWNER_USER_ID));
-        assertThat(queryResult).isEqualTo("No result found.\n");
     }
 
     /**
@@ -129,17 +96,6 @@ public class ContactsSharingTest extends AppCloningBaseHostTest {
     private static void switchAppCloningBuildingBlocksFlag(boolean value) throws Exception {
         setFeatureFlagValue("app_cloning", "enable_app_cloning_building_blocks",
                 String.valueOf(value));
-    }
-
-    private static List<ColumnBindings> getTestRawContactContentValues(String testAccountType) {
-        List<ColumnBindings> testContactBindings = new ArrayList<>();
-        testContactBindings.add(new ColumnBindings(ACCOUNT_NAME_COLUMN, TEST_ACCOUNT_NAME,
-                ColumnBindings.Type.STRING));
-        testContactBindings.add(new ColumnBindings(ACCOUNT_TYPE_COLUMN, testAccountType,
-                ColumnBindings.Type.STRING));
-        testContactBindings.add(new ColumnBindings(CUSTOM_RINGTONE_COLUMN, TEST_CUSTOM_RINGTONE,
-                ColumnBindings.Type.STRING));
-        return testContactBindings;
     }
 
     @Test
@@ -264,9 +220,9 @@ public class ContactsSharingTest extends AppCloningBaseHostTest {
         installPackage(LAUNCHABLE_CLONE_PROFILE_APP, "--user " + Integer.valueOf(sCloneUserId));
 
         Map<String, String> args = new HashMap<>();
-        args.put("test_contact_account_type", TEST_ACCOUNT_TYPE);
-        args.put("test_contact_account_name", TEST_ACCOUNT_NAME);
-        args.put("test_contact_custom_ringtone", TEST_CUSTOM_RINGTONE);
+        args.put("test_contact_account_type", sTestRawContactDetails.accountType);
+        args.put("test_contact_account_name", sTestRawContactDetails.accountName);
+        args.put("test_contact_custom_ringtone", sTestRawContactDetails.customRingtone);
 
         // Check that contact updates through cloned apps are blocked
         runDeviceTestAsUser(CLONE_LAUNCHABLE_APP_CONTACTS_SHARING_TEST,
@@ -287,7 +243,7 @@ public class ContactsSharingTest extends AppCloningBaseHostTest {
         installPackage(LAUNCHABLE_CLONE_PROFILE_APP, "--user " + Integer.valueOf(sCloneUserId));
 
         Map<String, String> args = new HashMap<>();
-        args.put("test_contact_account_type", TEST_ACCOUNT_TYPE);
+        args.put("test_contact_account_type", sTestRawContactDetails.accountType);
 
         // Check that contact deletes through cloned apps are blocked
         runDeviceTestAsUser(CLONE_LAUNCHABLE_APP_CONTACTS_SHARING_TEST,
@@ -322,9 +278,9 @@ public class ContactsSharingTest extends AppCloningBaseHostTest {
             throws Exception {
         installPackage(LAUNCHABLE_CLONE_PROFILE_APP, "--user " + Integer.valueOf(sCloneUserId));
         Map<String, String> args = new HashMap<>();
-        args.put("test_contact_account_type", TEST_ACCOUNT_TYPE);
-        args.put("test_contact_account_name", TEST_ACCOUNT_NAME);
-        args.put("test_contact_custom_ringtone", TEST_CUSTOM_RINGTONE);
+        args.put("test_contact_account_type", sTestRawContactDetails.accountType);
+        args.put("test_contact_account_name", sTestRawContactDetails.accountName);
+        args.put("test_contact_custom_ringtone", sTestRawContactDetails.customRingtone);
 
         // Check that cross-profile reads are allowed for cloned app with a launch-able activity
         runDeviceTestAsUser(CLONE_LAUNCHABLE_APP_CONTACTS_SHARING_TEST,
