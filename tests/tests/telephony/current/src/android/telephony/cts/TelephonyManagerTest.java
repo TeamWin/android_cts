@@ -1665,13 +1665,64 @@ public class TelephonyManagerTest {
             mLock.wait(TOLERANCE);
         }
 
-        assertEquals(mServiceState, mTelephonyManager.getServiceState());
-        assertServiceStateSanitization(mServiceState, mTelephonyManager.getServiceState(
-                TelephonyManager.INCLUDE_LOCATION_DATA_NONE));
-        assertServiceStateFineLocationSanitization(mServiceState,
-                mTelephonyManager.getServiceState(TelephonyManager.INCLUDE_LOCATION_DATA_COARSE));
-        assertEquals(mServiceState, mTelephonyManager.getServiceState(
-                TelephonyManager.INCLUDE_LOCATION_DATA_FINE));
+        // Service state changes frequently and there can be a mismatch between the current service
+        // state from TelephonyManager and the slightly delayed one from the listener.
+        // Retry all assertions multiple times to prevent flaky test failures.
+        int retries = 5;
+        for (int i = 0; i < retries; i++) {
+            try {
+                assertEquals(mServiceState, mTelephonyManager.getServiceState());
+                // Exit if the assertion passes without an exception
+                break;
+            } catch (AssertionError e) {
+                if (i == retries - 1) {
+                    throw(e);
+                }
+            }
+            waitForMs(100);
+        }
+        for (int i = 0; i < retries; i++) {
+            try {
+                assertServiceStateSanitization(mServiceState,
+                        mTelephonyManager.getServiceState(
+                                TelephonyManager.INCLUDE_LOCATION_DATA_NONE));
+                // Exit if the assertion passes without an exception
+                break;
+            } catch (AssertionError e) {
+                if (i == retries - 1) {
+                    throw(e);
+                }
+            }
+            waitForMs(100);
+        }
+        for (int i = 0; i < retries; i++) {
+            try {
+                assertServiceStateFineLocationSanitization(mServiceState,
+                        mTelephonyManager.getServiceState(
+                                TelephonyManager.INCLUDE_LOCATION_DATA_COARSE));
+                // Exit if the assertion passes without an exception
+                break;
+            } catch (AssertionError e) {
+                if (i == retries - 1) {
+                    throw(e);
+                }
+            }
+            waitForMs(100);
+        }
+        for (int i = 0; i < retries; i++) {
+            try {
+                assertEquals(mServiceState,
+                        mTelephonyManager.getServiceState(
+                                TelephonyManager.INCLUDE_LOCATION_DATA_FINE));
+                // Exit if the assertion passes without an exception
+                break;
+            } catch (AssertionError e) {
+                if (i == retries - 1) {
+                    throw(e);
+                }
+            }
+            waitForMs(100);
+        }
 
         NetworkRegistrationInfo regInfo = mServiceState.getNetworkRegistrationInfo(
                 NetworkRegistrationInfo.DOMAIN_PS, AccessNetworkConstants.TRANSPORT_TYPE_WWAN);
