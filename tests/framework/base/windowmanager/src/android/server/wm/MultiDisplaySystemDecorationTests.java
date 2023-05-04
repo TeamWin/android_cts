@@ -145,6 +145,8 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
      */
     @Test
     public void testWallpaperShowOnSecondaryDisplays()  {
+        assumeTrue(supportsWallpaper());
+
         final ChangeWallpaperSession wallpaperSession = createManagedChangeWallpaperSession();
 
         final DisplayContent untrustedDisplay = createManagedExternalDisplaySession()
@@ -588,6 +590,8 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
      */
     @Test
     public void testHideImeWhenImeTargetOnEmbeddedVirtualDisplay() throws Exception {
+        assumeTrue(MSG_NO_MOCK_IME, supportsInstallableIme());
+
         final VirtualDisplaySession session = createManagedVirtualDisplaySession();
         final MockImeSession imeSession = createManagedMockImeSession(this);
         final TestActivitySession<ImeTestActivity> imeActivitySession =
