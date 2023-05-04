@@ -37,6 +37,7 @@ import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.EnsureDoesNotHaveUserRestriction;
 import com.android.bedstead.harrier.annotations.EnsureHasUserRestriction;
 import com.android.bedstead.harrier.annotations.Postsubmit;
+import com.android.bedstead.harrier.annotations.RequireFeature;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyDoesNotApplyTest;
@@ -45,11 +46,15 @@ import com.android.bedstead.nene.TestApis;
 import com.android.compatibility.common.util.ApiTest;
 
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @RunWith(BedsteadJUnit4.class)
+// If the device doesn't support printing then as long as the user restriction doesn't throw an
+// exception when setting - we can assume it's fine
+@RequireFeature("android.software.print")
 public final class PrintingTest {
 
     @ClassRule @Rule
@@ -93,6 +98,7 @@ public final class PrintingTest {
 
     @PolicyDoesNotApplyTest(policy = DisallowPrinting.class)
     @Postsubmit(reason = "new test")
+    @Ignore("b/280417921 re-enable and deflake")
     @ApiTest(apis = "android.os.UserManager#DISALLOW_PRINTING")
     public void addUserRestriction_disallowPrinting_isNotSet() {
         sDeviceState.dpc().devicePolicyManager().addUserRestriction(

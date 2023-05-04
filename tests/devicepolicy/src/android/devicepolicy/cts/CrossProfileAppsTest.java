@@ -56,6 +56,7 @@ import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.CrossUserTest;
 import com.android.bedstead.harrier.annotations.EnsureDoesNotHavePermission;
+import com.android.bedstead.harrier.annotations.EnsureHasNoProfile;
 import com.android.bedstead.harrier.annotations.EnsureHasNoWorkProfile;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
@@ -704,7 +705,7 @@ public final class CrossProfileAppsTest {
     }
 
     @Test
-    @EnsureHasNoWorkProfile
+    @EnsureHasNoProfile
     @RequireRunOnInitialUser
     public void canRequestInteractAcrossProfiles_noOtherProfiles_returnsFalse()
             throws Exception {
@@ -883,7 +884,7 @@ public final class CrossProfileAppsTest {
 
     @Test
     @RequireRunOnInitialUser
-    @EnsureHasNoWorkProfile
+    @EnsureHasNoProfile
     public void createRequestInteractAcrossProfilesIntent_canNotRequest_throwsException() {
         try (TestAppInstance primaryApp = sCrossProfileTestApp.install()) {
             assertThrows(SecurityException.class,

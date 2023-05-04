@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +14,9 @@
  * limitations under the License.
  */
 
-package com.android.bedstead.harrier.annotations.parameterized;
+package com.android.bedstead.harrier.annotations;
 
-import static com.android.bedstead.harrier.annotations.AnnotationRunPrecedence.EARLY;
-
-import com.android.bedstead.harrier.annotations.AnnotationRunPrecedence;
-import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
-import com.android.bedstead.harrier.annotations.RequireRunOnCloneProfile;
-import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDelegate;
-import com.android.bedstead.harrier.annotations.meta.ParameterizedAnnotation;
+import static com.android.bedstead.harrier.annotations.AnnotationRunPrecedence.MIDDLE;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -30,19 +24,17 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Parameterize a test so that it runs on the clone profile of a user which also has
- * an organization-owned work profile and .dpc() relates to the parent instance of the dpc in the profile.
+ * Mark that a test method should run on a user which does not have any profiles.
+ *
+ * <p>Your test configuration may be configured so that this test is only run on a user with no
+ * profiles. Otherwise, you can use {@code DeviceState} to ensure that the device enters
+ * the correct state for the method.
  */
-@Target({ElementType.METHOD, ElementType.TYPE})
+@Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
-@ParameterizedAnnotation(shadows=IncludeRunOnCloneProfileAlongsideManagedProfileUsingParentInstance.class)
-@RequireRunOnCloneProfile
-@EnsureHasWorkProfile(dpcIsPrimary = true,
-        useParentInstanceOfDpc = true,
-        isOrganizationOwned = true,
-        dpcKey = "dpc")
-@EnsureHasNoDelegate
-public @interface IncludeRunOnCloneProfileAlongsideOrganizationOwnedProfileUsingParentInstance {
+@EnsureHasNoWorkProfile
+@EnsureHasNoCloneProfile
+public @interface EnsureHasNoProfile {
     /**
      * Weight sets the order that annotations will be resolved.
      *
@@ -53,5 +45,5 @@ public @interface IncludeRunOnCloneProfileAlongsideOrganizationOwnedProfileUsing
      *
      * <p>Weight can be set to a {@link AnnotationRunPrecedence} constant, or to any {@link int}.
      */
-    int weight() default EARLY;
+    int weight() default MIDDLE;
 }
