@@ -1,8 +1,14 @@
 {
   "presubmit": [
-    {
-      "name": "CtsHibernationTestCases"
-    }
+      {
+          "name": "CtsHibernationTestCases",
+          "options": [
+              // TODO(b/280519694): This test is flaky GSI builds
+              {
+                  "exclude-filter": "android.hibernation.cts.AutoRevokeTest#testPermissionEventCleanupService_scrubsEvents"
+              }
+          ]
+      }
   ],
   "mainline-presubmit": [
       {
