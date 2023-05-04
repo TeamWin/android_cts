@@ -57,13 +57,17 @@ public class AppCloningBaseHostTest extends BaseHostTestCase {
                 "");
         assertThat(sCloneUserId).isNotEmpty();
 
-        CommandResult out = sDevice.executeShellV2Command("am start-user -w " + sCloneUserId);
+        startUserAndWait(sCloneUserId);
+    }
+
+    protected static void startUserAndWait(String userId) throws DeviceNotAvailableException {
+        CommandResult out = sDevice.executeShellV2Command("am start-user -w " + userId);
         assertThat(isSuccessful(out)).isTrue();
     }
 
     protected static void waitForBroadcastIdle() throws DeviceNotAvailableException {
         CommandResult out = sDevice.executeShellV2Command(
-                "am wait-for-broadcast-idle", 120, TimeUnit.SECONDS);
+                "am wait-for-broadcast-idle", 240, TimeUnit.SECONDS);
         assertThat(isSuccessful(out)).isTrue();
         if (!out.getStdout().contains("All broadcast queues are idle!")) {
             LogUtil.CLog.e("Output from 'am wait-for-broadcast-idle': %s", out);
@@ -71,8 +75,8 @@ public class AppCloningBaseHostTest extends BaseHostTestCase {
         }
     }
 
-    protected static void removeCloneUser() throws Exception {
-        sDevice.executeShellCommand("pm remove-user " + sCloneUserId);
+    protected static void removeUser(String userId) throws Exception {
+        sDevice.executeShellCommand("pm remove-user " + userId);
     }
 
     protected static void createSDCardVirtualDisk() throws Exception {
@@ -111,12 +115,27 @@ public class AppCloningBaseHostTest extends BaseHostTestCase {
     public static void baseHostTeardown() throws Exception {
         if (!isAppCloningSupportedOnDevice()) return;
 
-        removeCloneUser();
+        removeUser(sCloneUserId);
     }
 
     public static boolean isAppCloningSupportedOnDevice() throws Exception {
         return supportsMultipleUsers() && !isHeadlessSystemUserMode() && isAtLeastS()
                 && !usesSdcardFs();
+    }
+
+    protected static void assumeHasDeviceFeature(String feature)
+            throws DeviceNotAvailableException {
+        assumeTrue("device doesn't have " + feature, sDevice.hasFeature(feature));
+    }
+
+    protected static boolean supportsMoreThanTwoUsers() throws DeviceNotAvailableException {
+        return sDevice.getMaxNumberOfUsersSupported() > 2
+                && sDevice.getMaxNumberOfRunningUsersSupported() > 2;
+    }
+
+    protected static boolean doesDeviceHaveFeature(String feature)
+            throws DeviceNotAvailableException {
+        return sDevice.hasFeature(feature);
     }
 
     protected CommandResult runContentProviderCommand(String commandType, String userId,
