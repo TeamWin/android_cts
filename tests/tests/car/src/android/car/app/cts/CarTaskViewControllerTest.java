@@ -48,7 +48,6 @@ import android.widget.FrameLayout;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.test.InstrumentationRegistry;
-import androidx.test.filters.FlakyTest;
 
 import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.PollingCheck;
@@ -178,7 +177,6 @@ public class CarTaskViewControllerTest {
 
     @Test
     @ApiTest(apis = {"android.car.app.ControlledRemoteCarTaskViewCallback#onTaskViewReleased()"})
-    @FlakyTest(bugId = 274956283)
     public void multipleControlledCarTaskView_released_whenHostDestroyed() throws Exception {
         // Arrange
         CarTaskViewTestHolder taskViewCallback =
@@ -272,7 +270,7 @@ public class CarTaskViewControllerTest {
 
         // Act
         EmbeddedTestActivity1.sInstance.finishAndRemoveTask();
-        PollingCheck.waitFor(() -> taskViewHolder.mCurrentTask == null,
+        PollingCheck.waitFor(() -> taskViewHolder.mNumTimesOnTaskVanished == 1,
                 "onTaskVanished not received");
 
         // Assert
@@ -309,16 +307,18 @@ public class CarTaskViewControllerTest {
                                 .addFlags(FLAG_ACTIVITY_NEW_TASK), /* option */ null);
         PollingCheck.waitFor(() -> mHostActivity.mIsInStoppedState);
         // Finish the temporary activity to bring the host back to the top of the wm stack.
-        temporaryActivity.finish();
+        temporaryActivity.finishAndRemoveTask();
 
         // Assert
         PollingCheck.waitFor(() -> !mHostActivity.mIsInStoppedState);
-        PollingCheck.waitFor(() -> taskViewCallback.mCurrentTask.isVisible());
+        PollingCheck.waitFor(() -> taskViewCallback.mCurrentTask.isVisible(),
+                "TaskView task is invsibible");
         assertThat(taskViewCallback.mCurrentTask.baseActivity.getClassName())
                 .isEqualTo(EmbeddedTestActivity1.class.getName());
         assertThat(taskViewCallback.mCurrentTask.isVisible()).isTrue();
 
-        PollingCheck.waitFor(() -> taskViewCallback2.mCurrentTask.isVisible());
+        PollingCheck.waitFor(() -> taskViewCallback2.mCurrentTask.isVisible(),
+                "TaskView2 task is invisible");
         assertThat(taskViewCallback2.mCurrentTask.baseActivity.getClassName())
                 .isEqualTo(EmbeddedTestActivity2.class.getName());
         assertThat(taskViewCallback2.mCurrentTask.isVisible()).isTrue();
@@ -337,7 +337,6 @@ public class CarTaskViewControllerTest {
     }
 
     @Test
-    @FlakyTest(bugId = 274956283)
     public void remoteCarTaskView_receivesTouchInput() throws Exception {
         // Arrange
         CarTaskViewTestHolder carTaskViewHolder =
@@ -354,10 +353,10 @@ public class CarTaskViewControllerTest {
                 "Embedded activity didn't receive the touch event.");
 
         // Assert
-        assertThat(EmbeddedTestActivity1.sInstance.mLastReceivedTouchEvent.getX()).isEqualTo(p.x);
-        // The Y coordinate depends on the status bar height and there is no good way to get that.
-        assertThat(EmbeddedTestActivity1.sInstance.mLastReceivedTouchEvent.getAction())
-                .isEqualTo(MotionEvent.ACTION_UP);
+        assertThat(EmbeddedTestActivity1.sInstance.mLastReceivedTouchEvent.getRawX())
+                .isEqualTo(p.x);
+        assertThat(EmbeddedTestActivity1.sInstance.mLastReceivedTouchEvent.getRawY())
+                .isEqualTo(p.y);
     }
 
     private static void injectTapEventByShell(int x, int y) {
@@ -383,8 +382,10 @@ public class CarTaskViewControllerTest {
             FrameLayout parent = mHostActivity.findViewById(parentId);
             parent.addView(taskViewCallback.mTaskView);
         });
-        PollingCheck.waitFor(() -> taskViewCallback.mTaskViewInitialized);
-        PollingCheck.waitFor(() -> taskViewCallback.mCurrentTask != null);
+        PollingCheck.waitFor(() -> taskViewCallback.mTaskViewInitialized,
+                "TaskView not initialized");
+        PollingCheck.waitFor(() -> taskViewCallback.mCurrentTask != null,
+                "onTaskAppeared not called");
         return taskViewCallback;
     }
 
@@ -499,6 +500,7 @@ public class CarTaskViewControllerTest {
         private boolean mTaskViewReleased = false;
         private ActivityManager.RunningTaskInfo mCurrentTask;
         private ControlledRemoteCarTaskView mTaskView;
+        private int mNumTimesOnTaskVanished = 0;
 
         @Override
         public void onTaskViewCreated(@NonNull ControlledRemoteCarTaskView taskView) {
@@ -529,6 +531,7 @@ public class CarTaskViewControllerTest {
         @Override
         public void onTaskVanished(@NonNull ActivityManager.RunningTaskInfo taskInfo) {
             mCurrentTask = null;
+            mNumTimesOnTaskVanished++;
         }
     }
 
