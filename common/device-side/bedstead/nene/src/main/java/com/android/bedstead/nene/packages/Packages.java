@@ -391,9 +391,9 @@ public final class Packages {
                 return null;
             }
 
-            if (!Versions.meetsMinimumSdkVersionRequirement(Build.VERSION_CODES.S)) {
-                // Until we can skip verification without adb we'll fall back to adb
-                return installPreS(user, apkFile);
+            if (true || !Versions.meetsMinimumSdkVersionRequirement(Build.VERSION_CODES.S)) {
+                // We can't make use of -r when using SessionParams
+                return installUsingAdb(user, apkFile);
             }
 
             // This is not inside the try because if the install is unsuccessful we don't want to
@@ -467,7 +467,7 @@ public final class Packages {
     }
 
     @Nullable
-    private Package installPreS(UserReference user, byte[] apkFile) {
+    private Package installUsingAdb(UserReference user, byte[] apkFile) {
         // This is not in the try because if the install fails we don't want to await the broadcast
         BlockingBroadcastReceiver broadcastReceiver =
                 registerPackageInstalledBroadcastReceiver(user);

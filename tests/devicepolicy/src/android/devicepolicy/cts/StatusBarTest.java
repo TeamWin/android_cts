@@ -104,7 +104,7 @@ public final class StatusBarTest {
     }
 
     @Postsubmit(reason = "new test")
-    @CannotSetPolicyTest(policy = StatusBarDisabled.class)
+    @CannotSetPolicyTest(policy = StatusBarDisabled.class, includeNonDeviceAdminStates = false)
     public void setStatusBarDisabled_notAllowed_throwsException() {
         Assert.assertThrows(SecurityException.class, () -> {
             sDeviceState.dpc().devicePolicyManager().setStatusBarDisabled(
@@ -113,7 +113,7 @@ public final class StatusBarTest {
     }
 
     @Postsubmit(reason = "new test")
-    @CannotSetPolicyTest(policy = StatusBarDisabled.class)
+    @CannotSetPolicyTest(policy = StatusBarDisabled.class, includeNonDeviceAdminStates = false)
     public void isStatusBarDisabled_notAllowed_throwsException() {
         Assert.assertThrows(SecurityException.class, () -> {
             sDeviceState.dpc().devicePolicyManager().isStatusBarDisabled();

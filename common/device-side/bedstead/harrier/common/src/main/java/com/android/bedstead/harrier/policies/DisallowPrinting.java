@@ -16,9 +16,14 @@
 
 package com.android.bedstead.harrier.policies;
 
+import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIED_BY_AFFILIATED_PROFILE_OWNER_PROFILE;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIED_BY_DEVICE_OWNER;
+import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIED_BY_ORGANIZATION_OWNED_PROFILE_OWNER_PROFILE;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIED_BY_PROFILE_OWNER;
+import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIED_BY_PROFILE_OWNER_USER;
+import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIED_BY_UNAFFILIATED_PROFILE_OWNER_PROFILE;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIES_TO_OWN_USER;
+import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIES_TO_PARENT;
 import static com.android.bedstead.nene.permissions.CommonPermissions.MANAGE_DEVICE_POLICY_PRINTING;
 
 import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy;
@@ -27,7 +32,7 @@ import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy;
  * Policy related to setting {@code DISALLOW_PRINTING}
  */
 @EnterprisePolicy(
-        dpc = {APPLIED_BY_PROFILE_OWNER | APPLIED_BY_DEVICE_OWNER | APPLIES_TO_OWN_USER},
+        dpc = {APPLIED_BY_PROFILE_OWNER | APPLIED_BY_DEVICE_OWNER | APPLIES_TO_OWN_USER | APPLIES_TO_PARENT},
         permissions = @EnterprisePolicy.Permission(
                 appliedWith = MANAGE_DEVICE_POLICY_PRINTING, appliesTo = APPLIES_TO_OWN_USER))
 public final class DisallowPrinting {
