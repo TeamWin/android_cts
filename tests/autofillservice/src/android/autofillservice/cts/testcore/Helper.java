@@ -1674,30 +1674,6 @@ public final class Helper {
     }
 
     /**
-     * Enable the main credential manager feature.
-     * If this is off, any underlying changes for autofill-credentialManager integrations are off.
-     */
-    public static void enableCredentialManagerFeature(@NonNull Context context) {
-        setCredentialManagerFeature(context, true);
-    }
-
-    /**
-     * Enable ignoring credential manager important views for autofill feature
-     */
-    public static void ignoreCredentialManagerViews(@NonNull Context context) {
-        setDeviceConfig(context,
-                AutofillFeatureFlags.DEVICE_CONFIG_AUTOFILL_CREDENTIAL_MANAGER_IGNORE_VIEWS, true);
-    }
-
-    /**
-     * Enable Credential Manager related autofill changes
-     */
-    public static void setCredentialManagerFeature(@NonNull Context context, boolean enabled) {
-        setDeviceConfig(context,
-                AutofillFeatureFlags.DEVICE_CONFIG_AUTOFILL_CREDENTIAL_MANAGER_ENABLED, enabled);
-    }
-
-    /**
      * Set device config to set flag values.
      */
     public static void setDeviceConfig(
@@ -1718,6 +1694,16 @@ public final class Helper {
     }
 
     /**
+     * Enable fill dialog feature
+     */
+    public static void disableFillDialogFeature(@NonNull Context context) {
+        DeviceConfigStateManager deviceConfigStateManager =
+                new DeviceConfigStateManager(context, DeviceConfig.NAMESPACE_AUTOFILL,
+                        AutofillFeatureFlags.DEVICE_CONFIG_AUTOFILL_DIALOG_ENABLED);
+        setDeviceConfig(deviceConfigStateManager, "false");
+    }
+
+    /**
      * Enable PCC Detection Feature Hints
      */
     public static void enablePccDetectionFeature(@NonNull Context context, String...types) {
@@ -1730,6 +1716,16 @@ public final class Helper {
                 new DeviceConfigStateManager(context, DeviceConfig.NAMESPACE_AUTOFILL,
                         AutofillFeatureFlags.DEVICE_CONFIG_AUTOFILL_PCC_CLASSIFICATION_ENABLED);
         setDeviceConfig(deviceConfigStateManager2, "true");
+    }
+
+    /**
+     * Enable PCC Detection Feature Hints
+     */
+    public static void preferPccDetectionOverProvider(@NonNull Context context, boolean preferPcc) {
+        DeviceConfigStateManager deviceConfigStateManager =
+                new DeviceConfigStateManager(context, DeviceConfig.NAMESPACE_AUTOFILL,
+                        "prefer_provider_over_pcc");
+        setDeviceConfig(deviceConfigStateManager, String.valueOf(!preferPcc));
     }
 
     /**

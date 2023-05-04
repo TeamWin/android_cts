@@ -44,11 +44,13 @@ import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
 import com.android.bedstead.harrier.policies.AccountManagement;
+import com.android.bedstead.harrier.policies.DisallowModifyAccounts;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.accounts.AccountReference;
 import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.remotedpc.RemotePolicyManager;
 
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -77,7 +79,9 @@ public final class AccountManagementTest {
         mAccountManager = sContext.getSystemService(AccountManager.class);
     }
 
-    @PolicyAppliesTest(policy = AccountManagement.class)
+    // TODO: Fill out PolicyApplies and PolicyDoesNotApply tests
+
+    @CanSetPolicyTest(policy = AccountManagement.class)
     public void getAccountTypesWithManagementDisabled_emptyByDefault() {
         assertThat(mDpm.getAccountTypesWithManagementDisabled()).isEmpty();
     }
@@ -105,7 +109,7 @@ public final class AccountManagementTest {
                         sDeviceState.accounts().accountType(), /* disabled= */ false));
     }
 
-    @PolicyAppliesTest(policy = AccountManagement.class)
+    @CanSetPolicyTest(policy = AccountManagement.class)
     public void setAccountManagementDisabled_disableAccountType_works() {
         try {
             mDpm.setAccountManagementDisabled(
@@ -119,7 +123,7 @@ public final class AccountManagementTest {
         }
     }
 
-    @PolicyAppliesTest(policy = AccountManagement.class)
+    @CanSetPolicyTest(policy = AccountManagement.class)
     public void setAccountManagementDisabled_addSameAccountTypeTwice_presentOnlyOnce() {
         try {
             mDpm.setAccountManagementDisabled(
@@ -152,6 +156,8 @@ public final class AccountManagementTest {
     // Not passing for permission based caller as AccountManagerService is special casing DO/PO
     public void addAccount_fromDpcWithAccountManagementDisabled_accountAdded()
             throws Exception {
+        Assume.assumeTrue("Only makes sense on DPC user",
+                TestApis.users().instrumented().equals(sDeviceState.dpc().user()));
         try {
             mDpm.setAccountManagementDisabled(
                     mAdmin, sDeviceState.accounts().accountType(), /* disabled= */ true);
@@ -172,8 +178,10 @@ public final class AccountManagementTest {
         }
     }
 
+    // TODO: Rewrite DISALLOW_MODIFY_ACCOUNTS tests using new user restriction test structure
+
     @Postsubmit(reason = "new test")
-    @CanSetPolicyTest(policy = AccountManagement.class)
+    @CanSetPolicyTest(policy = DisallowModifyAccounts.class)
     // Not passing for permission based caller as AccountManagerService is special casing DO/PO
     public void addAccount_fromDpcWithDisallowModifyAccountsRestriction_accountAdded()
             throws Exception {
@@ -195,7 +203,7 @@ public final class AccountManagementTest {
     }
 
     @Postsubmit(reason = "new test")
-    @CanSetPolicyTest(policy = AccountManagement.class)
+    @CanSetPolicyTest(policy = DisallowModifyAccounts.class)
     // Not passing for permission based caller as AccountManagerService is special casing DO/PO
     public void removeAccount_fromDpcWithDisallowModifyAccountsRestriction_accountRemoved()
             throws Exception {
@@ -223,7 +231,7 @@ public final class AccountManagementTest {
         }
     }
 
-    @CanSetPolicyTest(policy = AccountManagement.class)
+    @PolicyAppliesTest(policy = DisallowModifyAccounts.class)
     public void addAccount_withDisallowModifyAccountsRestriction_throwsException() {
         try {
             mDpm.addUserRestriction(mAdmin, UserManager.DISALLOW_MODIFY_ACCOUNTS);
@@ -243,7 +251,7 @@ public final class AccountManagementTest {
     }
 
     @Postsubmit(reason = "new test")
-    @CanSetPolicyTest(policy = AccountManagement.class)
+    @CanSetPolicyTest(policy = DisallowModifyAccounts.class)
     public void removeAccount_withDisallowModifyAccountsRestriction_throwsException()
             throws Exception {
         AccountReference account = null;
@@ -263,7 +271,7 @@ public final class AccountManagementTest {
         }
     }
 
-    @CanSetPolicyTest(policy = AccountManagement.class)
+    @PolicyAppliesTest(policy = AccountManagement.class)
     public void addAccount_withAccountManagementDisabled_throwsException() {
         try {
             mDpm.setAccountManagementDisabled(mAdmin,

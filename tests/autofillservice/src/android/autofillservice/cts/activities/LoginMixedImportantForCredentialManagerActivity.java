@@ -13,30 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package android.autofillservice.cts.activities;
 
-package com.android.bedstead.nene.logcat;
+import android.autofillservice.cts.R;
+import android.os.Bundle;
 
-import com.android.bedstead.nene.TestApis;
-import com.android.bedstead.nene.utils.Poll;
+/**
+ * Same as {@link LoginActivity}, with username field important for credential manager, while
+ * password field is not.
+ */
+public class LoginMixedImportantForCredentialManagerActivity extends LoginActivity {
 
-import java.util.function.Predicate;
-
-public final class BlockingLogcatListener implements AutoCloseable {
-
-    private final Predicate<String> mFilter;
-
-    BlockingLogcatListener(Predicate<String> filter) {
-        mFilter = filter;
-    }
-
-    public void awaitMatch() {
-        Poll.forValue("matching lines", () -> TestApis.logcat().dump(mFilter))
-                .toMeet(s -> !s.isBlank())
-                .await();
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
     }
 
     @Override
-    public void close() {
-        awaitMatch();
+    protected int getContentView() {
+        return R.layout.login_activity_important_for_credential_manager;
     }
 }

@@ -503,11 +503,15 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
     public void testJpegR() throws Exception {
         for (String id : mCameraIdsUnderTest) {
             try {
-                Log.v(TAG, "Testing Jpeg/R capture for Camera " + id);
-                if (!mAllStaticInfo.get(id).isCapabilitySupported(CameraCharacteristics
-                        .REQUEST_AVAILABLE_CAPABILITIES_DYNAMIC_RANGE_TEN_BIT)) {
+                if (!mAllStaticInfo.get(id).isJpegRSupported()) {
+                    Log.i(TAG, "Camera " + id + " does not support Jpeg/R, skipping");
                     continue;
                 }
+                Log.v(TAG, "Testing Jpeg/R capture for Camera " + id);
+
+                assertTrue(mAllStaticInfo.get(id).isCapabilitySupported(CameraCharacteristics
+                        .REQUEST_AVAILABLE_CAPABILITIES_DYNAMIC_RANGE_TEN_BIT));
+
                 openDevice(id);
                 BufferFormatTestParam params = new BufferFormatTestParam(
                         ImageFormat.JPEG_R, /*repeating*/false);
@@ -522,6 +526,11 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
     public void testJpegRDisplayP3() throws Exception {
         for (String id : mCameraIdsUnderTest) {
             try {
+                if (!mAllStaticInfo.get(id).isJpegRSupported()) {
+                    Log.i(TAG, "Camera " + id + " does not support Jpeg/R, skipping");
+                    continue;
+                }
+
                 if (!mAllStaticInfo.get(id).isCapabilitySupported(CameraCharacteristics
                         .REQUEST_AVAILABLE_CAPABILITIES_COLOR_SPACE_PROFILES)) {
                     continue;

@@ -50,6 +50,7 @@ import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyDoesNotApplyTest;
 import com.android.bedstead.harrier.policies.DefaultSmsApplication;
+import com.android.bedstead.harrier.policies.DefaultSmsApplicationSystemOnly;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.remotedpc.RemotePolicyManager;
 import com.android.bedstead.testapp.TestApp;
@@ -89,6 +90,8 @@ public final class DefaultSmsApplicationTest {
         mTelephonyManager = sContext.getSystemService(TelephonyManager.class);
         mRoleManager = sContext.getSystemService(RoleManager.class);
     }
+
+    // TODO: Add tests for SetDefaultSmsApplicationSystemOnly
 
     // TODO(b/198588696): Add support is @RequireSmsCapable and @RequireNotSmsCapable
     @Postsubmit(reason = "new test")
@@ -158,7 +161,7 @@ public final class DefaultSmsApplicationTest {
     @Postsubmit(reason = "new test")
     @RequireFeatureFlagNotEnabled(namespace = NAMESPACE_DEVICE_POLICY_MANAGER,
             key = PERMISSION_BASED_ACCESS_EXPERIMENT_FLAG)
-    @CanSetPolicyTest(policy = DefaultSmsApplication.class)
+    @CanSetPolicyTest(policy = {DefaultSmsApplication.class, DefaultSmsApplicationSystemOnly.class})
     public void setDefaultSmsApplication_nullAdmin_throwsException() {
         try (TestAppInstance smsApp = sSmsApp.install()) {
 
@@ -185,7 +188,9 @@ public final class DefaultSmsApplicationTest {
 
     @Postsubmit(reason = "new test")
     // We don't include non device admin states as passing a null admin is a NullPointerException
-    @CannotSetPolicyTest(policy = DefaultSmsApplication.class, includeNonDeviceAdminStates = false)
+    @CannotSetPolicyTest(policy = {
+            DefaultSmsApplication.class, DefaultSmsApplicationSystemOnly.class},
+            includeNonDeviceAdminStates = false)
     public void setDefaultSmsApplication_invalidAdmin_throwsException() {
         try (TestAppInstance smsApp = sSmsApp.install()) {
 

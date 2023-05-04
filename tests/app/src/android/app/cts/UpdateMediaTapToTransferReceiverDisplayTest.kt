@@ -44,7 +44,6 @@ import org.junit.runner.RunWith
  * These tests are for [StatusBarManager.updateMediaTapToTransferReceiverDisplay].
  */
 @RunWith(AndroidJUnit4::class)
-@Ignore("b/278264380")
 class UpdateMediaTapToTransferReceiverDisplayTest {
     @Rule
     fun permissionsRule() = AdoptShellPermissionsRule(
@@ -99,6 +98,7 @@ class UpdateMediaTapToTransferReceiverDisplayTest {
     }
 
     @Test
+    @Ignore("b/278264380")
     fun closeToSender_displaysChip() {
         statusBarManager.updateMediaTapToTransferReceiverDisplay(
             StatusBarManager.MEDIA_TRANSFER_RECEIVER_STATE_CLOSE_TO_SENDER,
@@ -114,6 +114,7 @@ class UpdateMediaTapToTransferReceiverDisplayTest {
     }
 
     @Test
+    @Ignore("b/278264380")
     fun farFromSender_hidesChip() {
         // First, make sure we display the chip
         statusBarManager.updateMediaTapToTransferReceiverDisplay(
@@ -143,6 +144,7 @@ class UpdateMediaTapToTransferReceiverDisplayTest {
     }
 
     @Test
+    @Ignore("b/278264380")
     fun transferToReceiverSucceeded_hidesChip() {
         // First, make sure we display the chip
         statusBarManager.updateMediaTapToTransferReceiverDisplay(
@@ -172,6 +174,7 @@ class UpdateMediaTapToTransferReceiverDisplayTest {
     }
 
     @Test
+    @Ignore("b/278264380")
     fun transferToReceiverFailed_hidesChip() {
         // First, make sure we display the chip
         statusBarManager.updateMediaTapToTransferReceiverDisplay(

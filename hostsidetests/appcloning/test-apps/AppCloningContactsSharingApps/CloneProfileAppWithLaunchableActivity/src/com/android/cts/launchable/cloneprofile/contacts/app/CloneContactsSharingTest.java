@@ -32,6 +32,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.RemoteException;
 import android.provider.ContactsContract;
+import android.provider.ContactsContract.CommonDataKinds.Phone;
 
 import androidx.test.InstrumentationRegistry;
 
@@ -122,6 +123,17 @@ public class CloneContactsSharingTest {
         }
     }
 
+    private Cursor queryContactsForTestAccount(Uri uri, String[] projection, String accountType) {
+        String selection = ContactsContract.RawContacts.ACCOUNT_TYPE + " = ?";
+        String[] selectionArgs = new String[] {
+                accountType
+        };
+        return mContentResolver.query(
+                uri, projection, selection, selectionArgs,
+                /* sortOrder */ null
+        );
+    }
+
     /**
      * Return the projected columns for all the raw contacts associated with the given account type
      * @param accountType account type that identifies all test raw_contacts
@@ -134,14 +146,8 @@ public class CloneContactsSharingTest {
                     ContactsContract.RawContacts._ID,
             };
         }
-        String selection = ContactsContract.RawContacts.ACCOUNT_TYPE + " = ?";
-        String[] selectionArgs = new String[] {
-                accountType
-        };
-        return mContentResolver.query(
-                ContactsContract.RawContacts.CONTENT_URI, projection, selection, selectionArgs,
-                /* sortOrder */null
-        );
+        return queryContactsForTestAccount(ContactsContract.RawContacts.CONTENT_URI, projection,
+                accountType);
     }
 
     private Cursor getAllDataTableIds() {
@@ -414,5 +420,43 @@ public class CloneContactsSharingTest {
         assertContactsNotSyncable(testAccount);
 
         mAccountManager.removeAccountExplicitly(testAccount);
+    }
+
+    @Test
+    public void testAccessManagedProfileContacts_contactReadSuccessfully() {
+        String testContactAccountType =
+                getTestArgumentValueForGivenKey("test_contact_account_type");
+        String testContactAccountName =
+                getTestArgumentValueForGivenKey("test_contact_account_name");
+        String testContactPhoneNumber =
+                getTestArgumentValueForGivenKey("test_contact_phone_number");
+
+        String[] projection = new String[] {
+                ContactsContract.RawContacts.ACCOUNT_TYPE,
+                ContactsContract.RawContacts.ACCOUNT_NAME,
+                Phone.NUMBER,
+                Phone.RAW_CONTACT_ID
+        };
+
+        Cursor cursor = queryContactsForTestAccount(Phone.ENTERPRISE_CONTENT_URI, projection,
+                testContactAccountType);
+
+        // Assert that the resulting cursor should contain only the raw contact that was inserted
+        // and passed from the host side test.
+        assertThat(cursor).isNotNull();
+        assertThat(cursor.getCount()).isEqualTo(1);
+        cursor.moveToFirst();
+        assertThat(cursor.getString(
+                        cursor.getColumnIndex(
+                                ContactsContract.RawContacts.ACCOUNT_NAME)))
+                .isEqualTo(testContactAccountName);
+        assertThat(cursor.getString(
+                cursor.getColumnIndex(
+                        ContactsContract.RawContacts.ACCOUNT_TYPE)))
+                .isEqualTo(testContactAccountType);
+        assertThat(cursor.getString(
+                cursor.getColumnIndex(
+                        Phone.NUMBER)))
+                .isEqualTo(testContactPhoneNumber);
     }
 }

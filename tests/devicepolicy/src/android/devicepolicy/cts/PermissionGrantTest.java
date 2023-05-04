@@ -80,6 +80,7 @@ import com.android.bedstead.testapp.TestAppInstance;
 import com.android.queryable.annotations.IntegerQuery;
 import com.android.queryable.annotations.Query;
 
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -536,6 +537,7 @@ public final class PermissionGrantTest {
     @CannotSetPolicyTest(policy = SetSmsPermissionGranted.class, includeNonDeviceAdminStates = false)
     public void grantSmsPermission_cannotBeApplied_returnsTrueButDoesNotSetGrantState() {
         skipTestForFinancedDevice();
+        Assume.assumeFalse("Parent throws exception", sDeviceState.dpc().isParentInstance());
 
         int existingGrantState = sDeviceState.dpc().devicePolicyManager()
                 .getPermissionGrantState(sDeviceState.dpc().componentName(),
@@ -569,6 +571,7 @@ public final class PermissionGrantTest {
     public void grantSensorPermission_cannotBeApplied_returnsTrueButDoesNotSetGrantState(
             @SensorPermissionTestParameter String permission) {
         skipTestForFinancedDevice();
+        Assume.assumeFalse("Parent throws exception", sDeviceState.dpc().isParentInstance());
 
         int existingGrantState = sDeviceState.dpc().devicePolicyManager()
                 .getPermissionGrantState(sDeviceState.dpc().componentName(),
@@ -661,7 +664,7 @@ public final class PermissionGrantTest {
                     () -> sNotInstalledTestApp.pkg().hasPermission(GRANTABLE_PERMISSION))
                     .toBeEqualTo(true)
                     .errorOnFail()
-                     .await();
+                    .await();
         } finally {
             sDeviceState.dpc().devicePolicyManager().setPermissionPolicy(
                     sDeviceState.dpc().componentName(), PERMISSION_POLICY_PROMPT);

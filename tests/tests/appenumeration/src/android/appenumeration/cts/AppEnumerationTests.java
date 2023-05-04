@@ -384,7 +384,7 @@ public class AppEnumerationTests extends AppEnumerationTestsBase {
         // update the package; shouldn't be visible
         installPackage(QUERIES_NOTHING_RECEIVES_NON_PERSISTABLE_URI_APK);
         // Wait until the updating is done
-        AmUtils.waitForBroadcastIdle();
+        AmUtils.waitForBroadcastBarrier();
         assertNotVisible(QUERIES_NOTHING_RECEIVES_NON_PERSISTABLE_URI, QUERIES_NOTHING_PERM);
     }
 
@@ -410,7 +410,7 @@ public class AppEnumerationTests extends AppEnumerationTestsBase {
         // update the package; should be still visible
         installPackage(QUERIES_NOTHING_RECEIVES_PERSISTABLE_URI_APK);
         // Wait until the updating is done
-        AmUtils.waitForBroadcastIdle();
+        AmUtils.waitForBroadcastBarrier();
         assertVisible(QUERIES_NOTHING_RECEIVES_PERSISTABLE_URI, QUERIES_NOTHING_PERM);
     }
 
