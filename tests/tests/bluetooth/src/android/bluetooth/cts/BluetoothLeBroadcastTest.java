@@ -229,8 +229,6 @@ public class BluetoothLeBroadcastTest {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothLeBroadcast);
 
-        assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
-
         // Verify if asserts as Broadcaster is not connection-oriented profile
         assertThrows(UnsupportedOperationException.class,
                 () -> mBluetoothLeBroadcast.getConnectedDevices());
@@ -240,8 +238,6 @@ public class BluetoothLeBroadcastTest {
     public void testGetDevicesMatchingConnectionStates() {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothLeBroadcast);
-
-        assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
 
         // Verify if asserts as Broadcaster is not connection-oriented profile
         assertThrows(UnsupportedOperationException.class,
@@ -452,8 +448,6 @@ public class BluetoothLeBroadcastTest {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothLeBroadcast);
 
-        assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
-
         BluetoothLeAudioContentMetadata.Builder contentMetadataBuilder =
                 new BluetoothLeAudioContentMetadata.Builder();
         byte[] broadcastCode = {1, 2, 3, 4, 5, 6};
@@ -465,8 +459,6 @@ public class BluetoothLeBroadcastTest {
     public void testStartBroadcastWithoutPrivilegedPermission() {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothLeBroadcast);
-
-        assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
 
         BluetoothLeAudioContentMetadata.Builder contentMetadataBuilder =
                 new BluetoothLeAudioContentMetadata.Builder();
@@ -488,7 +480,6 @@ public class BluetoothLeBroadcastTest {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothLeBroadcast);
 
-        assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
         BluetoothLeBroadcastSettings.Builder broadcastSettingsBuilder =
                 new BluetoothLeBroadcastSettings.Builder();
         BluetoothLeBroadcastSubgroupSettings[] subgroupSettings =
@@ -507,8 +498,6 @@ public class BluetoothLeBroadcastTest {
     public void testStartBroadcastGroupWithoutPrivilegedPermission() {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothLeBroadcast);
-
-        assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
 
         BluetoothLeBroadcastSettings.Builder broadcastSettingsBuilder =
                 new BluetoothLeBroadcastSettings.Builder();
@@ -536,8 +525,6 @@ public class BluetoothLeBroadcastTest {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothLeBroadcast);
 
-        assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
-
         BluetoothLeAudioContentMetadata.Builder contentMetadataBuilder =
                 new BluetoothLeAudioContentMetadata.Builder();
         mBluetoothLeBroadcast.updateBroadcast(1, contentMetadataBuilder.build());
@@ -548,8 +535,6 @@ public class BluetoothLeBroadcastTest {
     public void testUpdateBroadcastWithoutPrivilegedPermission() {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothLeBroadcast);
-
-        assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
 
         BluetoothLeAudioContentMetadata.Builder contentMetadataBuilder =
                 new BluetoothLeAudioContentMetadata.Builder();
@@ -569,8 +554,6 @@ public class BluetoothLeBroadcastTest {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothLeBroadcast);
 
-        assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
-
         BluetoothLeBroadcastSettings.Builder broadcastSettingsBuilder =
                 new BluetoothLeBroadcastSettings.Builder();
         BluetoothLeBroadcastSubgroupSettings[] subgroupSettings =
@@ -589,8 +572,6 @@ public class BluetoothLeBroadcastTest {
     public void testUpdateBroadcastGroupWithoutPrivilegedPermission() {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothLeBroadcast);
-
-        assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
 
         BluetoothLeBroadcastSettings.Builder broadcastSettingsBuilder =
                 new BluetoothLeBroadcastSettings.Builder();
@@ -617,8 +598,6 @@ public class BluetoothLeBroadcastTest {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothLeBroadcast);
 
-        assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
-
         mBluetoothLeBroadcast.stopBroadcast(1);
     }
 
@@ -627,8 +606,6 @@ public class BluetoothLeBroadcastTest {
     public void testStopBroadcastWithoutPrivilegedPermission() {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothLeBroadcast);
-
-        assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
 
         TestUtils.dropPermissionAsShellUid();
         TestUtils.adoptPermissionAsShellUid(BLUETOOTH_CONNECT);
@@ -645,8 +622,6 @@ public class BluetoothLeBroadcastTest {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothLeBroadcast);
 
-        assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
-
         assertFalse(mBluetoothLeBroadcast.isPlaying(1));
     }
 
@@ -655,8 +630,6 @@ public class BluetoothLeBroadcastTest {
     public void testIsPlayingWithoutPrivilegedPermission() {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothLeBroadcast);
-
-        assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
 
         TestUtils.dropPermissionAsShellUid();
         TestUtils.adoptPermissionAsShellUid(BLUETOOTH_CONNECT);
@@ -686,8 +659,6 @@ public class BluetoothLeBroadcastTest {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothLeBroadcast);
 
-        assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
-
         TestUtils.dropPermissionAsShellUid();
         TestUtils.adoptPermissionAsShellUid(BLUETOOTH_CONNECT);
 
@@ -703,8 +674,6 @@ public class BluetoothLeBroadcastTest {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothLeBroadcast);
 
-        assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
-
         assertEquals(1, mBluetoothLeBroadcast.getMaximumNumberOfBroadcasts());
     }
 
@@ -713,8 +682,6 @@ public class BluetoothLeBroadcastTest {
     public void testGetMaximumNumberOfBroadcastsWithoutPrivilegedPermission() {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothLeBroadcast);
-
-        assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
 
         TestUtils.dropPermissionAsShellUid();
         TestUtils.adoptPermissionAsShellUid(BLUETOOTH_CONNECT);
@@ -731,8 +698,6 @@ public class BluetoothLeBroadcastTest {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothLeBroadcast);
 
-        assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
-
         assertEquals(1, mBluetoothLeBroadcast.getMaximumStreamsPerBroadcast());
     }
 
@@ -741,8 +706,6 @@ public class BluetoothLeBroadcastTest {
     public void testGetMaximumStreamsPerBroadcastWithoutPrivilegedPermission() {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothLeBroadcast);
-
-        assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
 
         TestUtils.dropPermissionAsShellUid();
         TestUtils.adoptPermissionAsShellUid(BLUETOOTH_CONNECT);
@@ -759,8 +722,6 @@ public class BluetoothLeBroadcastTest {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothLeBroadcast);
 
-        assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
-
         assertEquals(1, mBluetoothLeBroadcast.getMaximumSubgroupsPerBroadcast());
     }
 
@@ -769,8 +730,6 @@ public class BluetoothLeBroadcastTest {
     public void testGetMaximumSubgroupsPerBroadcastWithoutPrivilegedPermission() {
         assertTrue(waitForProfileConnect());
         assertNotNull(mBluetoothLeBroadcast);
-
-        assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
 
         TestUtils.dropPermissionAsShellUid();
         TestUtils.adoptPermissionAsShellUid(BLUETOOTH_CONNECT);
