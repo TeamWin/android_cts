@@ -434,7 +434,7 @@ public class LoginActivityTest extends LoginActivityCommonTestCase {
         sReplier.addResponse(builder.build());
 
         // Trigger auto-fill.
-        requestFocusOnUsernameNoWindowChange();
+        requestFocusOnUsername();
 
         final FillRequest request = sReplier.getNextFillRequest();
         assertThat(request.hints.size()).isEqualTo(3);
@@ -464,7 +464,7 @@ public class LoginActivityTest extends LoginActivityCommonTestCase {
         sReplier.addResponse(builder.build());
 
         // Trigger auto-fill.
-        requestFocusOnUsernameNoWindowChange();
+        requestFocusOnUsername();
 
         final FillRequest request = sReplier.getNextFillRequest();
         assertThat(request.hints.size()).isEqualTo(1);
@@ -472,7 +472,6 @@ public class LoginActivityTest extends LoginActivityCommonTestCase {
 
         disablePccDetectionFeature(sContext);
         sReplier.setIdMode(IdMode.RESOURCE_ID);
-
     }
 
     private void autofillOneDatasetTest(BorderType borderType) throws Exception {
