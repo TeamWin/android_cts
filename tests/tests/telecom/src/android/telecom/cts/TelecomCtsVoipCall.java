@@ -18,6 +18,7 @@ package android.telecom.cts;
 
 import android.os.Bundle;
 import android.os.OutcomeReceiver;
+import android.os.ParcelUuid;
 import android.telecom.CallControl;
 import android.telecom.CallControlCallback;
 import android.telecom.CallEndpoint;
@@ -44,8 +45,8 @@ public class TelecomCtsVoipCall {
         mEvents.mCallId = id;
     }
 
-    public String getTelecomCallId() {
-        return mTelecomCallId;
+    public ParcelUuid getTelecomCallId() {
+        return mCallControl.getCallId();
     }
 
     public void onAddCallControl(@NonNull CallControl callControl) {
