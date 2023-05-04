@@ -50,6 +50,7 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 
+import android.app.WallpaperManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.pm.PackageManager;
@@ -662,9 +663,14 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
         return hasDeviceFeature(FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS);
     }
 
-    /** Checks if the device supports wallpaper for multi-display. */
+    /** Checks if the device supports live wallpaper for multi-display. */
     protected boolean supportsLiveWallpaper() {
         return hasDeviceFeature(PackageManager.FEATURE_LIVE_WALLPAPER);
+    }
+
+    /** Checks if the device supports wallpaper. */
+    protected boolean supportsWallpaper() {
+        return WallpaperManager.getInstance(mContext).isWallpaperSupported();
     }
 
     /** @see ObjectTracker#manage(AutoCloseable) */
