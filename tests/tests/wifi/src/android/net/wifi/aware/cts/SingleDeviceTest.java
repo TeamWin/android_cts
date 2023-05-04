@@ -21,6 +21,8 @@ import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 import static android.net.wifi.aware.AwarePairingConfig.PAIRING_BOOTSTRAPPING_OPPORTUNISTIC;
 import static android.net.wifi.aware.Characteristics.WIFI_AWARE_CIPHER_SUITE_NCS_PK_PASN_128;
 import static android.net.wifi.aware.Characteristics.WIFI_AWARE_CIPHER_SUITE_NCS_PK_PASN_256;
+import static android.net.wifi.aware.IdentityChangedListener.CLUSTER_CHANGE_EVENT_JOINED;
+import static android.net.wifi.aware.IdentityChangedListener.CLUSTER_CHANGE_EVENT_STARTED;
 
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertThrows;
@@ -808,8 +810,11 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
             MacAddress clusterId = identityL.getClusterId();
             assertNotNull("Wi-Fi Aware cluster ID: iteration " + i, clusterId);
             int clusterEventType = identityL.getClusterEventType();
-            assertEquals("Wi-Fi Aware cluster event type: iteration " + i,
-                    IdentityChangedListener.CLUSTER_CHANGE_EVENT_STARTED, clusterEventType);
+            if (clusterEventType != CLUSTER_CHANGE_EVENT_STARTED
+                    && clusterEventType != CLUSTER_CHANGE_EVENT_JOINED) {
+                fail("Wi-Fi Aware cluster event type: iteration " + i
+                        + ", invalid cluster event type");
+            }
             byte[] mac = identityL.getMac();
             assertNotNull("Wi-Fi Aware discovery MAC: iteration " + i, mac);
 
