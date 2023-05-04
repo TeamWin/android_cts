@@ -26,6 +26,7 @@ import static android.app.admin.DevicePolicyIdentifiers.PACKAGE_UNINSTALL_BLOCKE
 import static android.app.admin.DevicePolicyIdentifiers.PERMISSION_GRANT_POLICY;
 import static android.app.admin.DevicePolicyIdentifiers.PERMITTED_INPUT_METHODS_POLICY;
 import static android.app.admin.DevicePolicyIdentifiers.PERSISTENT_PREFERRED_ACTIVITY_POLICY;
+import static android.app.admin.DevicePolicyIdentifiers.PERSONAL_APPS_SUSPENDED_POLICY;
 import static android.app.admin.DevicePolicyIdentifiers.RESET_PASSWORD_TOKEN_POLICY;
 import static android.app.admin.DevicePolicyIdentifiers.SCREEN_CAPTURE_DISABLED_POLICY;
 import static android.app.admin.DevicePolicyIdentifiers.USER_CONTROL_DISABLED_PACKAGES_POLICY;
@@ -87,6 +88,7 @@ import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.enterprise.CoexistenceFlagsOn;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDeviceOwner;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDevicePolicyManagerRoleHolder;
+import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.inputmethods.InputMethod;
 import com.android.bedstead.nene.packages.Package;
@@ -524,6 +526,25 @@ public final class DeviceManagementCoexistenceTest {
         }
     }
 
+    @Test
+    @EnsureHasDevicePolicyManagerRoleHolder(onUser = UserType.SYSTEM_USER)
+    @EnsureHasWorkProfile(isOrganizationOwned = true, dpcIsPrimary = true)
+    @Postsubmit(reason = "new test")
+    public void getDevicePolicyState_setPersonalAppsSuspended_returnsPolicy() {
+        try {
+            sDeviceState.dpc().devicePolicyManager().setPersonalAppsSuspended(
+                    sDeviceState.dpc().componentName(), true);
+
+            PolicyState<Boolean> policyState = getBooleanPolicyState(
+                    new NoArgsPolicyKey(PERSONAL_APPS_SUSPENDED_POLICY),
+                    sDeviceState.dpc().user().parent().userHandle());
+
+            assertThat(policyState.getCurrentResolvedPolicy()).isTrue();
+        } finally {
+            sDeviceState.dpc().devicePolicyManager().setPersonalAppsSuspended(
+                    sDeviceState.dpc().componentName(), false);
+        }
+    }
 
     @Test
     @EnsureHasDevicePolicyManagerRoleHolder(onUser = UserType.SYSTEM_USER)
@@ -806,6 +827,27 @@ public final class DeviceManagementCoexistenceTest {
                     .getMostToLeastRestrictiveValues()).isEqualTo(TRUE_MORE_RESTRICTIVE);
         } finally {
             sDeviceState.dpc().devicePolicyManager().setScreenCaptureDisabled(
+                    sDeviceState.dpc().componentName(), false);
+        }
+    }
+
+    @Test
+    @EnsureHasDevicePolicyManagerRoleHolder(onUser = UserType.SYSTEM_USER)
+    @EnsureHasWorkProfile(isOrganizationOwned = true, dpcIsPrimary = true)
+    @Postsubmit(reason = "new test")
+    public void getDevicePolicyState_setPersonalAppsSuspended_returnsCorrectResolutionMechanism() {
+        try {
+            sDeviceState.dpc().devicePolicyManager().setPersonalAppsSuspended(
+                    sDeviceState.dpc().componentName(), true);
+
+            PolicyState<Boolean> policyState = getBooleanPolicyState(
+                    new NoArgsPolicyKey(PERSONAL_APPS_SUSPENDED_POLICY),
+                    sDeviceState.dpc().user().parent().userHandle());
+
+            assertThat(getMostRecentBooleanMechanism(policyState))
+                    .isEqualTo(MostRecent.MOST_RECENT);
+        } finally {
+            sDeviceState.dpc().devicePolicyManager().setPersonalAppsSuspended(
                     sDeviceState.dpc().componentName(), false);
         }
     }
@@ -1495,6 +1537,31 @@ public final class DeviceManagementCoexistenceTest {
         }
     }
 
+    @Test
+    @EnsureHasDevicePolicyManagerRoleHolder(onUser = UserType.SYSTEM_USER)
+    @EnsureHasWorkProfile(isOrganizationOwned = true, dpcIsPrimary = true)
+    @Postsubmit(reason = "new test")
+    @Ignore
+    public void setPersonalAppsSuspended_serialisation_loadsPolicy() {
+        try {
+            sDeviceState.dpc().devicePolicyManager().setPersonalAppsSuspended(
+                    sDeviceState.dpc().componentName(), true);
+
+            // TODO(b/277071699): Add test API to trigger reloading from disk. Currently I've tested
+            //  this locally by triggering the loading in DPM#getDevicePolicyState in my local
+            //  build.
+
+            PolicyState<Boolean> policyState = getBooleanPolicyState(
+                    new NoArgsPolicyKey(PERSONAL_APPS_SUSPENDED_POLICY),
+                    sDeviceState.dpc().user().parent().userHandle());
+
+            assertThat(policyState.getCurrentResolvedPolicy()).isTrue();
+        } finally {
+            sDeviceState.dpc().devicePolicyManager().setPersonalAppsSuspended(
+                    sDeviceState.dpc().componentName(), false);
+        }
+    }
+
     @Ignore("b/277071699: add test API to trigger reloading from disk")
     @Test
     @EnsureHasDevicePolicyManagerRoleHolder(onUser = UserType.SYSTEM_USER)
@@ -1901,6 +1968,16 @@ public final class DeviceManagementCoexistenceTest {
             return (MostRecent<Set<String>>) policyState.getResolutionMechanism();
         } catch (ClassCastException e) {
             fail("Returned resolution mechanism is not of type MostRecent<Set<String>>: " + e);
+            return null;
+        }
+    }
+
+    private MostRecent<Boolean> getMostRecentBooleanMechanism(
+            PolicyState<Boolean> policyState) {
+        try {
+            return (MostRecent<Boolean>) policyState.getResolutionMechanism();
+        } catch (ClassCastException e) {
+            fail("Returned resolution mechanism is not of type MostRecent<Boolean>: " + e);
             return null;
         }
     }
