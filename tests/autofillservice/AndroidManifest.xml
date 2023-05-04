@@ -61,6 +61,7 @@
         <activity android:name=".activities.LoginNotImportantForAutofillWrappedActivityContextActivity"/>
         <activity android:name=".activities.LoginNotImportantForAutofillWrappedApplicationContextActivity"/>
         <activity android:name=".activities.LoginImportantForCredentialManagerActivity"/>
+        <activity android:name=".activities.LoginMixedImportantForCredentialManagerActivity"/>
         <activity android:name=".activities.WelcomeActivity"
              android:taskAffinity=".WelcomeActivity"/>
         <activity android:name=".activities.ViewActionActivity"
