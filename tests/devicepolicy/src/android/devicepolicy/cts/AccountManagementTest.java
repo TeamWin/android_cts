@@ -99,16 +99,6 @@ public final class AccountManagementTest {
                         || (exception instanceof SecurityException));
     }
 
-    @CanSetPolicyTest(policy = AccountManagement.class, singleTestOnly = true)
-    @RequireFeatureFlagNotEnabled(namespace = NAMESPACE_DEVICE_POLICY_MANAGER,
-            key = PERMISSION_BASED_ACCESS_EXPERIMENT_FLAG)
-    public void setAccountTypesWithManagementDisabled_nullAdmin_throwsException() {
-        assertThrows(NullPointerException.class, () ->
-                mDpm.setAccountManagementDisabled(
-                        /* admin= */ null,
-                        sDeviceState.accounts().accountType(), /* disabled= */ false));
-    }
-
     @CanSetPolicyTest(policy = AccountManagement.class)
     public void setAccountManagementDisabled_disableAccountType_works() {
         try {
