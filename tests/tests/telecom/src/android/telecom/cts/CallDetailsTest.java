@@ -97,73 +97,87 @@ public class CallDetailsTest extends BaseTelecomTestWithMockServices {
 
     @Override
     protected void setUp() throws Exception {
+        boolean isSetUpComplete = false;
         super.setUp();
         if (mShouldTestTelecom) {
-            PhoneAccount account = setupConnectionService(
-                    new MockConnectionService() {
-                        @Override
-                        public Connection onCreateOutgoingConnection(
-                                PhoneAccountHandle connectionManagerPhoneAccount,
-                                ConnectionRequest request) {
-                            Connection connection = super.onCreateOutgoingConnection(
-                                    connectionManagerPhoneAccount,
-                                    request);
-                            mConnection = (MockConnection) connection;
-                            // Modify the connection object created with local values.
-                            connection.setConnectionCapabilities(CONNECTION_CAPABILITIES);
-                            connection.setConnectionProperties(CONNECTION_PROPERTIES);
-                            connection.setCallerDisplayName(
-                                    CALLER_DISPLAY_NAME,
-                                    CALLER_DISPLAY_NAME_PRESENTATION);
-                            connection.setExtras(mExtras);
-                            mStatusHints = new StatusHints(
-                                    "CTS test",
-                                    Icon.createWithResource(
-                                            getInstrumentation().getContext(),
-                                            R.drawable.ic_phone_24dp),
-                                            null);
-                            connection.setStatusHints(mStatusHints);
-                            lock.release();
-                            return connection;
-                        }
-                    }, FLAG_REGISTER | FLAG_ENABLE);
-
-            // Make sure there is another phone account.
-            mTelecomManager.registerPhoneAccount(TestUtils.TEST_PHONE_ACCOUNT_2);
-            TestUtils.enablePhoneAccount(
-                    getInstrumentation(), TestUtils.TEST_PHONE_ACCOUNT_HANDLE_2);
-
-            // Add photo URI to calling number
-            ContentResolver resolver = getInstrumentation().getTargetContext().getContentResolver();
             try {
-                mContactUri = insertContactWithPhoto(
-                        resolver, getTestNumber().toString());
-            } catch (Exception e) {
-                assertTrue("Failed to insert test contact into ContactsProvider", false);
+                PhoneAccount account = setupConnectionService(
+                        new MockConnectionService() {
+                            @Override
+                            public Connection onCreateOutgoingConnection(
+                                    PhoneAccountHandle connectionManagerPhoneAccount,
+                                    ConnectionRequest request) {
+                                Connection connection = super.onCreateOutgoingConnection(
+                                        connectionManagerPhoneAccount,
+                                        request);
+                                mConnection = (MockConnection) connection;
+                                // Modify the connection object created with local values.
+                                connection.setConnectionCapabilities(CONNECTION_CAPABILITIES);
+                                connection.setConnectionProperties(CONNECTION_PROPERTIES);
+                                connection.setCallerDisplayName(
+                                        CALLER_DISPLAY_NAME,
+                                        CALLER_DISPLAY_NAME_PRESENTATION);
+                                connection.setExtras(mExtras);
+                                mStatusHints = new StatusHints(
+                                        "CTS test",
+                                        Icon.createWithResource(
+                                                getInstrumentation().getContext(),
+                                                R.drawable.ic_phone_24dp),
+                                        null);
+                                connection.setStatusHints(mStatusHints);
+                                lock.release();
+                                return connection;
+                            }
+                        }, FLAG_REGISTER | FLAG_ENABLE);
+
+                // Make sure there is another phone account.
+                mTelecomManager.registerPhoneAccount(TestUtils.TEST_PHONE_ACCOUNT_2);
+                TestUtils.enablePhoneAccount(
+                        getInstrumentation(), TestUtils.TEST_PHONE_ACCOUNT_HANDLE_2);
+
+                // Add photo URI to calling number
+                ContentResolver resolver =
+                        getInstrumentation().getTargetContext().getContentResolver();
+                try {
+                    mContactUri = insertContactWithPhoto(
+                            resolver, getTestNumber().toString());
+                } catch (Exception e) {
+                    assertTrue("Failed to insert test contact into ContactsProvider", false);
+                }
+
+                /** Place a call as a part of the setup before we test the various
+                 *  Call details.
+                 */
+                Bundle bundle = new Bundle();
+                bundle.putParcelable(TestUtils.EXTRA_PHONE_NUMBER, getTestNumber());
+                placeAndVerifyCall(bundle);
+                verifyConnectionForOutgoingCall();
+
+                mInCallService = mInCallCallbacks.getService();
+                mCall = mInCallService.getLastCall();
+
+                assertCallState(mCall, Call.STATE_DIALING);
+                isSetUpComplete = true;
+            } finally {
+                // Force tearDown if setUp errors out to ensure unused listeners are cleaned up.
+                if (!isSetUpComplete) {
+                    tearDown();
+                }
             }
-
-            /** Place a call as a part of the setup before we test the various
-             *  Call details.
-             */
-            Bundle bundle = new Bundle();
-            bundle.putParcelable(TestUtils.EXTRA_PHONE_NUMBER, getTestNumber());
-            placeAndVerifyCall(bundle);
-            verifyConnectionForOutgoingCall();
-
-            mInCallService = mInCallCallbacks.getService();
-            mCall = mInCallService.getLastCall();
-
-            assertCallState(mCall, Call.STATE_DIALING);
         }
     }
 
     @Override
     protected void tearDown() throws Exception {
-        if (mShouldTestTelecom) {
-            ContentResolver resolver = getInstrumentation().getTargetContext().getContentResolver();
-            TestUtils.deleteContact(resolver, mContactUri);
+        try {
+            if (mShouldTestTelecom && mContactUri != null) {
+                ContentResolver resolver =
+                        getInstrumentation().getTargetContext().getContentResolver();
+                TestUtils.deleteContact(resolver, mContactUri);
+            }
+        } finally {
+            super.tearDown();
         }
-        super.tearDown();
     }
 
     /**

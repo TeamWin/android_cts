@@ -188,26 +188,30 @@ public class SelfManagedConnectionTest extends BaseTelecomTestWithMockServices {
 
     @Override
     protected void tearDown() throws Exception {
-        if (mShouldTestTelecom) {
-            disableAndVerifyCarMode(mCarModeIncallServiceControlOne,
-                    Configuration.UI_MODE_TYPE_NORMAL);
-            disableAndVerifyCarMode(mCarModeIncallServiceControlTwo,
-                    Configuration.UI_MODE_TYPE_NORMAL);
+        try {
+            if (mShouldTestTelecom) {
+                disableAndVerifyCarMode(mCarModeIncallServiceControlOne,
+                        Configuration.UI_MODE_TYPE_NORMAL);
+                disableAndVerifyCarMode(mCarModeIncallServiceControlTwo,
+                        Configuration.UI_MODE_TYPE_NORMAL);
 
-            disconnectAllCallsAndVerify(mCarModeIncallServiceControlOne);
-            disconnectAllCallsAndVerify(mCarModeIncallServiceControlTwo);
+                disconnectAllCallsAndVerify(mCarModeIncallServiceControlOne);
+                disconnectAllCallsAndVerify(mCarModeIncallServiceControlTwo);
 
-            CtsSelfManagedConnectionService connectionService =
-                    CtsSelfManagedConnectionService.getConnectionService();
-            if (connectionService != null) {
-                connectionService.tearDown();
-                mTelecomManager.unregisterPhoneAccount(TestUtils.TEST_SELF_MANAGED_HANDLE_4);
-                if(mRoleManager.isRoleAvailable(RoleManager.ROLE_DIALER)) {
-                    assertTrue(setDefaultDialer(mDefaultDialer));
+                CtsSelfManagedConnectionService connectionService =
+                        CtsSelfManagedConnectionService.getConnectionService();
+                if (connectionService != null) {
+                    connectionService.tearDown();
+                    mTelecomManager.unregisterPhoneAccount(TestUtils.TEST_SELF_MANAGED_HANDLE_4);
+                    if (mRoleManager.isRoleAvailable(RoleManager.ROLE_DIALER)) {
+                        assertTrue(setDefaultDialer(mDefaultDialer));
+                    }
                 }
             }
+        } finally {
+            // Force tearDown if setUp errors out to ensure unused listeners are cleaned up.
+            super.tearDown();
         }
-        super.tearDown();
     }
 
     /**

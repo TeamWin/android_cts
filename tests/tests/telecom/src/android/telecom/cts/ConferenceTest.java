@@ -67,14 +67,23 @@ public class ConferenceTest extends BaseTelecomTestWithMockServices {
 
     @Override
     protected void setUp() throws Exception {
+        boolean isSetUpComplete = false;
         super.setUp();
         if (mShouldTestTelecom) {
-            addOutgoingCalls();
-            addConferenceCall(mCall1, mCall2);
-            mConferenceVerificationObject = verifyConferenceForOutgoingCall();
-            // Use vanilla conference object so that the CTS coverage tool detects the usage.
-            mConferenceObject = mConferenceVerificationObject;
-            verifyConferenceObject(mConferenceObject, mConnection1, mConnection2);
+            try {
+                addOutgoingCalls();
+                addConferenceCall(mCall1, mCall2);
+                mConferenceVerificationObject = verifyConferenceForOutgoingCall();
+                // Use vanilla conference object so that the CTS coverage tool detects the usage.
+                mConferenceObject = mConferenceVerificationObject;
+                verifyConferenceObject(mConferenceObject, mConnection1, mConnection2);
+                isSetUpComplete = true;
+            } finally {
+                // Force tearDown if setUp errors out to ensure unused listeners are cleaned up.
+                if (!isSetUpComplete) {
+                    tearDown();
+                }
+            }
         }
     }
 
