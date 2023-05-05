@@ -160,9 +160,6 @@ public class PermissionPolicyTest {
             }
             declaredPermissionsMap.putAll(carServiceBuiltInPermissionsMap);
         }
-        if (sContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH)) {
-            expectedPermissions.addAll(loadExpectedPermissions(R.raw.wear_android_manifest));
-        }
 
         for (ExpectedPermissionInfo expectedPermission : expectedPermissions) {
             String expectedPermissionName = expectedPermission.name;
