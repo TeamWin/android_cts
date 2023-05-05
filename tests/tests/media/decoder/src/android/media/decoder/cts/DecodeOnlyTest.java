@@ -17,6 +17,7 @@
 package android.media.decoder.cts;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import android.media.AudioAttributes;
@@ -55,6 +56,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
 @MediaHeavyPresubmitTest
 @AppModeFull(reason = "There should be no instant apps specific behavior related to decoders")
@@ -73,9 +75,6 @@ public class DecodeOnlyTest extends MediaTestBase {
     private static final String MIME_VIDEO_PREFIX = "video/";
     private static final String MIME_AUDIO_PREFIX = "audio/";
     private static final long EOS_TIMESTAMP_TUNNEL_MODE = Long.MAX_VALUE;
-    // arbitrary seek offset, none of the three videos in this test suit have this as a valid
-    // key frame so using this offset should guarantee at least 1 DECODE_ONLY frame will be produced
-    private static final int SEEK_OFFSET = 2873000;
 
     @Before
     @Override
@@ -95,20 +94,38 @@ public class DecodeOnlyTest extends MediaTestBase {
      */
     @Test
     @ApiTest(apis = {"android.media.MediaCodec#BUFFER_FLAG_DECODE_ONLY"})
-    public void testTunneledPerfectSeekAvc() throws Exception {
-        testTunneledPerfectSeek(AVC_VIDEO);
+    public void testTunneledPerfectSeekInitialPeekOnAvc() throws Exception {
+        testTunneledPerfectSeek(AVC_VIDEO, true);
     }
 
     @Test
     @ApiTest(apis = {"android.media.MediaCodec#BUFFER_FLAG_DECODE_ONLY"})
-    public void testTunneledPerfectSeekVp9() throws Exception {
-        testTunneledPerfectSeek(VP9_VIDEO);
+    public void testTunneledPerfectSeekInitialPeekOnVp9() throws Exception {
+        testTunneledPerfectSeek(VP9_VIDEO, true);
     }
 
     @Test
     @ApiTest(apis = {"android.media.MediaCodec#BUFFER_FLAG_DECODE_ONLY"})
-    public void testTunneledPerfectSeekHevc() throws Exception {
-        testTunneledPerfectSeek(HEVC_VIDEO);
+    public void testTunneledPerfectSeekInitialPeekOnHevc() throws Exception {
+        testTunneledPerfectSeek(HEVC_VIDEO, true);
+    }
+
+    @Test
+    @ApiTest(apis = {"android.media.MediaCodec#BUFFER_FLAG_DECODE_ONLY"})
+    public void testTunneledPerfectSeekInitialPeekOffAvc() throws Exception {
+        testTunneledPerfectSeek(AVC_VIDEO, false);
+    }
+
+    @Test
+    @ApiTest(apis = {"android.media.MediaCodec#BUFFER_FLAG_DECODE_ONLY"})
+    public void testTunneledPerfectSeekInitialPeekOffVp9() throws Exception {
+        testTunneledPerfectSeek(VP9_VIDEO, false);
+    }
+
+    @Test
+    @ApiTest(apis = {"android.media.MediaCodec#BUFFER_FLAG_DECODE_ONLY"})
+    public void testTunneledPerfectSeekInitialPeekOffHevc() throws Exception {
+        testTunneledPerfectSeek(HEVC_VIDEO, false);
     }
 
     /**
@@ -365,7 +382,7 @@ public class DecodeOnlyTest extends MediaTestBase {
         assertEquals(expectedPresentationTimes, renderedPresentationTimes);
     }
 
-    private void testTunneledPerfectSeek(String fileName) throws Exception {
+    private void testTunneledPerfectSeek(String fileName, boolean initialPeek) throws Exception {
         Preconditions.assertTestFileExists(MEDIA_DIR_STRING + fileName);
 
         // generate the audio session id needed for tunnel mode playback
@@ -407,12 +424,10 @@ public class DecodeOnlyTest extends MediaTestBase {
         // audio track used by audio codec
         AudioTrack audioTrack = createAudioTrack(audioFormat, audioSessionId);
 
-        long seekTime = videoExtractor.getSampleTime() + SEEK_OFFSET;
-
-        // seek to the desired frame timestamp
-        setKeyTunnelPeek(videoCodec);
-        videoExtractor.seekTo(seekTime, MediaExtractor.SEEK_TO_PREVIOUS_SYNC);
-        audioExtractor.seekTo(seekTime, MediaExtractor.SEEK_TO_PREVIOUS_SYNC);
+        // Frames at 2s of each file are not key frame
+        AtomicLong seekTime = new AtomicLong(2000 * 1000);
+        videoExtractor.seekTo(seekTime.get(), MediaExtractor.SEEK_TO_PREVIOUS_SYNC);
+        audioExtractor.seekTo(seekTime.get(), MediaExtractor.SEEK_TO_PREVIOUS_SYNC);
 
         List<Long> expectedPresentationTimes = new ArrayList<>();
         AtomicBoolean done = new AtomicBoolean(false);
@@ -434,7 +449,7 @@ public class DecodeOnlyTest extends MediaTestBase {
                     if (sampleSize < 0) {
                         flags = MediaCodec.BUFFER_FLAG_END_OF_STREAM;
                         sampleSize = 0;
-                    } else if (presentationTime < seekTime) {
+                    } else if (presentationTime < seekTime.get()) {
                         flags = MediaCodec.BUFFER_FLAG_DECODE_ONLY;
                         hasDecodeOnlyFrames.set(true);
                     } else {
@@ -467,6 +482,63 @@ public class DecodeOnlyTest extends MediaTestBase {
         audioCodec.setCallback(new AudioCallback(audioCodec, audioExtractor, audioTrack, done));
 
         List<Long> renderedPresentationTimes = new ArrayList<>();
+        // play for 500ms
+        videoCodec.setOnFrameRenderedListener((codec, presentationTimeUs, nanoTime) -> {
+            renderedPresentationTimes.add(presentationTimeUs);
+            if (presentationTimeUs >= seekTime.get() + 500 * 1000) {
+                done.set(true);
+            }
+        }, new Handler(Looper.getMainLooper()));
+
+        if (initialPeek) {
+            setKeyTunnelPeek(videoCodec);
+        }
+
+        // start media playback
+        videoCodec.start();
+        audioCodec.start();
+
+        // Wait for a few frames to be decoded, and verify that when peek is on the first
+        // non-decode-only frame is rendered, and it is not rendered when peek is off.
+        Thread.sleep(500);
+        if (initialPeek) {
+            assertFalse(renderedPresentationTimes.isEmpty());
+            assertEquals(seekTime.get(), (long) renderedPresentationTimes.get(0));
+        } else {
+            assertTrue(renderedPresentationTimes.isEmpty());
+        }
+
+        assertTrue("No DECODE_ONLY frames have been produced, "
+                        + "try changing the offset for the seek. To do this, find a timestamp "
+                        + "that falls between two sync frames to ensure that there will "
+                        + "be a few DECODE_ONLY frames. For example \"ffprobe -show_frames $video\""
+                        + " can be used to list all the frames of a certain video and will show"
+                        + " info about key frames and their timestamps.",
+                hasDecodeOnlyFrames.get());
+
+        // Run the playback to verify that frame at seek time is also rendered when peek is off.
+        audioTrack.play();
+        while (!done.get()) {
+            Thread.sleep(100);
+        }
+        if (!initialPeek) {
+            assertFalse(renderedPresentationTimes.isEmpty());
+            assertEquals(seekTime.get(), (long) renderedPresentationTimes.get(0));
+        }
+
+        audioTrack.pause();
+        // Just be safe that pause may take some time.
+        Thread.sleep(500);
+        videoCodec.flush();
+        audioCodec.flush();
+
+        setKeyTunnelPeek(videoCodec);
+        // Frames at 7s of each file are not key frame, and there is non-zero key frame before it
+        seekTime.set(7000 * 1000);
+        videoExtractor.seekTo(seekTime.get(), MediaExtractor.SEEK_TO_PREVIOUS_SYNC);
+        audioExtractor.seekTo(seekTime.get(), MediaExtractor.SEEK_TO_PREVIOUS_SYNC);
+        expectedPresentationTimes.clear();
+        renderedPresentationTimes.clear();
 
         // a listener on rendered frames, if it is the last frame (EOS), then set the boolean to
         // true and exit the loop below, else add the frame to renderedPresentationTimes
@@ -480,7 +552,8 @@ public class DecodeOnlyTest extends MediaTestBase {
             }
         }, new Handler(Looper.getMainLooper()));
 
-        // start media playback
+        // Restart media playback
+        done.set(false);
         videoCodec.start();
         audioCodec.start();
         audioTrack.play();
@@ -492,17 +565,10 @@ public class DecodeOnlyTest extends MediaTestBase {
 
         audioTrack.stop();
         audioTrack.release();
-
         Collections.sort(expectedPresentationTimes);
         Collections.sort(renderedPresentationTimes);
-        assertTrue("No DECODE_ONLY frames have been produced, "
-                        + "try changing the offset for the seek. To do this, find a timestamp "
-                        + "that falls between two sync frames to ensure that there will "
-                        + "be a few DECODE_ONLY frames. For example \"ffprobe -show_frames $video\""
-                        + " can be used to list all the frames of a certain video and will show"
-                        + " info about key frames and their timestamps.",
-                hasDecodeOnlyFrames.get());
         assertEquals(expectedPresentationTimes, renderedPresentationTimes);
+        assertEquals(seekTime.get(), (long) renderedPresentationTimes.get(0));
     }
 
     private void setKeyTunnelPeek(MediaCodec videoCodec) {
