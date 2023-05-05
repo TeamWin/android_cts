@@ -539,7 +539,7 @@ public class AudioLoopbackLatencyActivity extends PassFailButtons.Activity {
 
     private void recordRouteResults(int routeIndex) {
         if (mTestSpecs[routeIndex].mTestRun) {
-            CtsVerifierReportLog reportLog = getReportLog();
+            CtsVerifierReportLog reportLog = newReportLog();
 
             int audioLevel = mAudioLevelSeekbar.getProgress();
             reportLog.addValue(
