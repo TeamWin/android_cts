@@ -39,13 +39,13 @@ import android.platform.test.annotations.AppModeFull;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SdkSuppress;
 
+import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.Preconditions;
 
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -61,6 +61,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 // BUFFER_FLAG_DECODE_ONLY was added in Android U.
 @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE, codeName = "UpsideDownCake")
 @RunWith(AndroidJUnit4.class)
+@ApiTest(apis = {"android.media.MediaCodec#BUFFER_FLAG_DECODE_ONLY"})
 public class DecodeOnlyTest extends MediaTestBase {
     private static final String MEDIA_DIR_STRING = WorkDir.getMediaDirString();
     private static final String HEVC_VIDEO =
@@ -93,19 +94,19 @@ public class DecodeOnlyTest extends MediaTestBase {
      * frame we seeked to
      */
     @Test
-    @Ignore("FLAG_DROP_FRAME is not implemented")
+    @ApiTest(apis = {"android.media.MediaCodec#BUFFER_FLAG_DECODE_ONLY"})
     public void testTunneledPerfectSeekAvc() throws Exception {
         testTunneledPerfectSeek(AVC_VIDEO);
     }
 
     @Test
-    @Ignore("FLAG_DROP_FRAME is not implemented")
+    @ApiTest(apis = {"android.media.MediaCodec#BUFFER_FLAG_DECODE_ONLY"})
     public void testTunneledPerfectSeekVp9() throws Exception {
         testTunneledPerfectSeek(VP9_VIDEO);
     }
 
     @Test
-    @Ignore("FLAG_DROP_FRAME is not implemented")
+    @ApiTest(apis = {"android.media.MediaCodec#BUFFER_FLAG_DECODE_ONLY"})
     public void testTunneledPerfectSeekHevc() throws Exception {
         testTunneledPerfectSeek(HEVC_VIDEO);
     }
@@ -114,34 +115,37 @@ public class DecodeOnlyTest extends MediaTestBase {
      * In trick play, we expect to receive/render the non DECODE_ONLY frames only
      */
     @Test
-    @Ignore("FLAG_DROP_FRAME is not implemented")
+    @ApiTest(apis = {"android.media.MediaCodec#BUFFER_FLAG_DECODE_ONLY"})
     public void testTunneledTrickPlayHevc() throws Exception {
         testTunneledTrickPlay(HEVC_VIDEO);
     }
 
     @Test
-    @Ignore("FLAG_DROP_FRAME is not implemented")
+    @ApiTest(apis = {"android.media.MediaCodec#BUFFER_FLAG_DECODE_ONLY"})
     public void testTunneledTrickPlayAvc() throws Exception {
         testTunneledTrickPlay(AVC_VIDEO);
     }
 
     @Test
-    @Ignore("FLAG_DROP_FRAME is not implemented")
+    @ApiTest(apis = {"android.media.MediaCodec#BUFFER_FLAG_DECODE_ONLY"})
     public void testTunneledTrickPlayVp9() throws Exception {
         testTunneledTrickPlay(VP9_VIDEO);
     }
 
     @Test
+    @ApiTest(apis = {"android.media.MediaCodec#BUFFER_FLAG_DECODE_ONLY"})
     public void testNonTunneledTrickPlayHevc() throws Exception {
         testNonTunneledTrickPlay(HEVC_VIDEO);
     }
 
     @Test
+    @ApiTest(apis = {"android.media.MediaCodec#BUFFER_FLAG_DECODE_ONLY"})
     public void testNonTunneledTrickPlayAvc() throws Exception {
         testNonTunneledTrickPlay(AVC_VIDEO);
     }
 
     @Test
+    @ApiTest(apis = {"android.media.MediaCodec#BUFFER_FLAG_DECODE_ONLY"})
     public void testNonTunneledTrickPlayVp9() throws Exception {
         testNonTunneledTrickPlay(VP9_VIDEO);
     }
