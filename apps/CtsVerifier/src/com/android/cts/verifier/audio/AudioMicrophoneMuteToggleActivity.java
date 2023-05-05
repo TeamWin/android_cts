@@ -16,6 +16,9 @@
 
 package com.android.cts.verifier.audio;
 
+import static com.android.cts.verifier.TestListActivity.sCurrentDisplayMode;
+import static com.android.cts.verifier.TestListAdapter.setTestNameSuffix;
+
 import android.media.MediaRecorder;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -50,6 +53,7 @@ public class AudioMicrophoneMuteToggleActivity extends PassFailButtons.Activity 
     private int mRecordRate = 0;
 
     // keys for report log
+    private static final String SECTION_MIC_MUTE_TOGGLE = "audio_mic_mute_toggle";
     private static final String KEY_REC_RATE = "rec_rate";
     private static final String KEY_AUDIO_SOURCE = "audio_source";
 
@@ -142,6 +146,21 @@ public class AudioMicrophoneMuteToggleActivity extends PassFailButtons.Activity 
             }
         });
 
+    }
+
+    @Override
+    public boolean requiresReportLog() {
+        return true;
+    }
+
+    @Override
+    public String getReportFileName() {
+        return PassFailButtons.AUDIO_TESTS_REPORT_LOG_NAME;
+    }
+
+    @Override
+    public final String getReportSectionName() {
+        return setTestNameSuffix(sCurrentDisplayMode, SECTION_MIC_MUTE_TOGGLE);
     }
 
     @Override
