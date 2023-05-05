@@ -51,6 +51,7 @@ public class CrossProfileIntentFilterTest extends AppCloningDeviceTestBase {
         mPackageManager = mContext.getPackageManager();
 
         assumeTrue(SdkLevel.isAtLeastU());
+        assumeTrue(isHardwareSupported());
     }
 
 
@@ -101,6 +102,15 @@ public class CrossProfileIntentFilterTest extends AppCloningDeviceTestBase {
         } finally {
             removeUser(userId);
         }
+    }
+
+    private boolean isHardwareSupported() {
+        // Clone profiles are not supported on all form factors, only on handheld devices.
+        PackageManager pm = mPackageManager;
+        return !pm.hasSystemFeature(pm.FEATURE_EMBEDDED)
+                && !pm.hasSystemFeature(pm.FEATURE_WATCH)
+                && !pm.hasSystemFeature(pm.FEATURE_LEANBACK)
+                && !pm.hasSystemFeature(pm.FEATURE_AUTOMOTIVE);
     }
 
 }
