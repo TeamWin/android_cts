@@ -1383,7 +1383,8 @@ public class WallpaperManagerTest {
                 whichWp);
         mWallpaperManager.addOnColorsChangedListener(listener, mHandler);
         mWallpaperManager.addOnColorsChangedListener(counter, mHandler);
-        final float initialDim = mWallpaperManager.getWallpaperDimAmount();
+        final float initialDim = runWithShellPermissionIdentity(
+                mWallpaperManager::getWallpaperDimAmount);
 
         try {
             runWithShellPermissionIdentity(() -> {
@@ -1394,7 +1395,8 @@ public class WallpaperManagerTest {
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         } finally {
-            mWallpaperManager.setWallpaperDimAmount(initialDim);
+            runWithShellPermissionIdentity(() ->
+                    mWallpaperManager.setWallpaperDimAmount(initialDim));
         }
 
         assertThat(receivedFlags).containsExactly(FLAG_SYSTEM);
@@ -1414,7 +1416,8 @@ public class WallpaperManagerTest {
                 whichWp);
         mWallpaperManager.addOnColorsChangedListener(listener, mHandler);
         mWallpaperManager.addOnColorsChangedListener(counter, mHandler);
-        final float initialDim = mWallpaperManager.getWallpaperDimAmount();
+        final float initialDim = runWithShellPermissionIdentity(
+                mWallpaperManager::getWallpaperDimAmount);
 
         try {
             runWithShellPermissionIdentity(() -> {
@@ -1425,7 +1428,8 @@ public class WallpaperManagerTest {
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         } finally {
-            mWallpaperManager.setWallpaperDimAmount(initialDim);
+            runWithShellPermissionIdentity(() ->
+                    mWallpaperManager.setWallpaperDimAmount(initialDim));
         }
 
         assertThat(receivedFlags).containsExactly(FLAG_SYSTEM | FLAG_LOCK);
@@ -1444,7 +1448,8 @@ public class WallpaperManagerTest {
         WallpaperManager.OnColorsChangedListener listener = (colors, whichWp) -> receivedFlags.add(
                 whichWp);
         mWallpaperManager.addOnColorsChangedListener(listener, mHandler);
-        final float initialDim = mWallpaperManager.getWallpaperDimAmount();
+        final float initialDim = runWithShellPermissionIdentity(
+                mWallpaperManager::getWallpaperDimAmount);
 
         mWallpaperManager.addOnColorsChangedListener(counter, mHandler);
         try {
@@ -1456,7 +1461,8 @@ public class WallpaperManagerTest {
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         } finally {
-            mWallpaperManager.setWallpaperDimAmount(initialDim);
+            runWithShellPermissionIdentity(() ->
+                    mWallpaperManager.setWallpaperDimAmount(initialDim));
         }
 
         assertThat(receivedFlags).containsExactly(FLAG_SYSTEM, FLAG_LOCK);
