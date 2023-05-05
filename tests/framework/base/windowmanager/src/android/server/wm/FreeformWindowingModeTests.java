@@ -177,9 +177,11 @@ public class FreeformWindowingModeTests extends MultiDisplayTestBase {
                 WINDOWING_MODE_FREEFORM, ACTIVITY_TYPE_STANDARD);
 
         mBroadcastActionTrigger.doAction(ACTION_REQUEST_FULLSCREEN);
+        mWmState.waitForAppTransitionIdleOnDisplay(displayId);
         assertTrue(waitForEnterFullscreen(MULTI_WINDOW_FULLSCREEN_ACTIVITY));
 
         mBroadcastActionTrigger.doAction(ACTION_RESTORE_FREEFORM);
+        mWmState.waitForAppTransitionIdleOnDisplay(displayId);
         assertTrue(waitForExitFullscreen(MULTI_WINDOW_FULLSCREEN_ACTIVITY));
     }
 
