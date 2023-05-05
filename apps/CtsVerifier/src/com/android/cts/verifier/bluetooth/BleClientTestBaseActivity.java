@@ -16,6 +16,8 @@
 
 package com.android.cts.verifier.bluetooth;
 
+import static android.content.Context.RECEIVER_EXPORTED;
+
 import static com.android.compatibility.common.util.ShellIdentityUtils.invokeWithShellPermissions;
 
 import android.app.AlertDialog;
@@ -32,7 +34,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
 import android.widget.ListView;
-
 
 import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
@@ -143,7 +144,7 @@ public class BleClientTestBaseActivity extends PassFailButtons.Activity {
         filter.addAction(BleClientService.BLE_BLUETOOTH_MISMATCH_INSECURE);
         filter.addAction(BleClientService.BLE_CLIENT_ERROR);
 
-        registerReceiver(mBroadcast, filter);
+        registerReceiver(mBroadcast, filter, RECEIVER_EXPORTED);
     }
 
     @Override
@@ -481,7 +482,7 @@ public class BleClientTestBaseActivity extends PassFailButtons.Activity {
 
             if (!mIsSwitching) {
                 IntentFilter filter = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
-                registerReceiver(this, filter);
+                registerReceiver(this, filter, RECEIVER_EXPORTED);
                 mIsSwitching = true;
                 mHandler.postDelayed(new Runnable() {
                     @Override
