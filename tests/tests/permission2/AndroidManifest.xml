@@ -35,6 +35,9 @@
     <!-- needs read phone numbers to get current phone number for R+ -->
     <uses-permission android:name="android.permission.READ_PHONE_NUMBERS"/>
 
+    <!-- needs read phone status to get current phone subscription info for R+ -->
+    <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
+
     <!--  need app that has WRITE_SETTINGS but not WRITE_SECURE_SETTINGS -->
     <uses-permission android:name="android.permission.WRITE_SETTINGS"/>
 
