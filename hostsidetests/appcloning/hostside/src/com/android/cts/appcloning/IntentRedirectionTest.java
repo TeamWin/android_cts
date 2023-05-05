@@ -24,9 +24,9 @@ import android.platform.test.annotations.AppModeFull;
 
 import com.android.tradefed.invoker.TestInformation;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
+import com.android.tradefed.testtype.junit4.AfterClassWithInfo;
 import com.android.tradefed.testtype.junit4.BeforeClassWithInfo;
 
-import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -55,15 +55,24 @@ public class IntentRedirectionTest extends AppCloningBaseHostTest {
     @BeforeClassWithInfo
     public static void beforeClassWithDevice(TestInformation testInfo) throws Exception {
         assertThat(testInfo.getDevice()).isNotNull();
+
+        // Check if device qualifies the criteria to run the tests
+        AppCloningBaseHostTest.setDevice(testInfo.getDevice());
         assumeTrue(isAtLeastU(testInfo.getDevice()));
+        assumeTrue("App cloning building block config is disabled on the device",
+                isAppCloningBuildingBlockConfigEnabled(testInfo.getDevice()));
+
         AppCloningBaseHostTest.baseHostSetup(testInfo.getDevice());
         switchOnAppCloningBuildingBlocksFlag();
     }
 
-    @AfterClass
-    public static void afterClass() throws Exception {
-        switchOffAppCloningBuildingBlocksFlag();
-        AppCloningBaseHostTest.baseHostTeardown();
+    @AfterClassWithInfo
+    public static void afterClass(TestInformation testInfo) throws Exception {
+        if (isAtLeastU(testInfo.getDevice())
+                && isAppCloningBuildingBlockConfigEnabled(testInfo.getDevice())) {
+            switchOffAppCloningBuildingBlocksFlag();
+            AppCloningBaseHostTest.baseHostTeardown();
+        }
     }
 
     @Before

@@ -26,10 +26,10 @@ import android.platform.test.annotations.AppModeFull;
 import com.android.cts.appcloning.AppCloningBaseHostTest;
 import com.android.tradefed.invoker.TestInformation;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
+import com.android.tradefed.testtype.junit4.AfterClassWithInfo;
 import com.android.tradefed.testtype.junit4.BeforeClassWithInfo;
 import com.android.tradefed.util.CommandResult;
 
-import org.junit.AfterClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -64,29 +64,37 @@ public class ContactsSharingTest extends AppCloningBaseHostTest {
     @BeforeClassWithInfo
     public static void beforeClassWithDevice(TestInformation testInfo) throws Exception {
         assertThat(testInfo.getDevice()).isNotNull();
+        AppCloningBaseHostTest.setDevice(testInfo.getDevice());
+
+        // Check if device qualifies the criteria to run the tests
         assumeTrue(isAtLeastU(testInfo.getDevice()));
-        sTestContactsDataManager = new TestContactsDataManager(testInfo.getDevice());
-        // TODO(b/253449368) Run the tests only if the device supports app-cloning. This would
-        //  require adding the app-cloning building blocks config and using it in framework code.
+        assumeTrue("App cloning building block config is disabled on the device",
+                isAppCloningBuildingBlockConfigEnabled(testInfo.getDevice()));
+
         AppCloningBaseHostTest.baseHostSetup(testInfo.getDevice());
         waitForBroadcastIdle();
+
+        sTestContactsDataManager = new TestContactsDataManager(testInfo.getDevice());
         sTestRawContactDetails =
                 sTestContactsDataManager.insertRawContactForTestAccount(OWNER_USER_ID,
                         TEST_ACCOUNT_TYPE);
         switchAppCloningBuildingBlocksFlag(true);
     }
 
-    @AfterClass
-    public static void afterClass() throws Exception {
-        switchAppCloningBuildingBlocksFlag(false);
-        AppCloningBaseHostTest.baseHostTeardown();
-        if (doesDeviceSupportContactSharing()) {
+    @AfterClassWithInfo
+    public static void afterClass(TestInformation testInfo) throws Exception {
+        if (doesDeviceSupportContactSharing(testInfo)) {
+            switchAppCloningBuildingBlocksFlag(false);
+            AppCloningBaseHostTest.baseHostTeardown();
             sTestContactsDataManager.cleanupTestContacts(OWNER_USER_ID, TEST_ACCOUNT_TYPE);
         }
     }
 
-    private static boolean doesDeviceSupportContactSharing() throws Exception {
-        return isAppCloningSupportedOnDevice() && isAtLeastU(sDevice);
+    private static boolean doesDeviceSupportContactSharing(TestInformation testInfo)
+            throws Exception {
+        return isAtLeastU(testInfo.getDevice())
+                && isAppCloningBuildingBlockConfigEnabled(testInfo.getDevice())
+                && isAppCloningSupportedOnDevice();
     }
 
     /**
