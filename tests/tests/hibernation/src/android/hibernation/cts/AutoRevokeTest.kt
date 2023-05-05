@@ -593,7 +593,15 @@ class AutoRevokeTest {
 
     private fun clickUninstallIcon() {
         val rowSelector = By.text(supportedAppPackageName)
-        val rowItem = waitFindObject(rowSelector).parent.parent
+
+        val rowItem = if (isAutomotiveDevice()) {
+            val rowItemSelector = By.res("com.android.permissioncontroller:" +
+                    "id/car_ui_first_action_container")
+                    .hasDescendant(rowSelector)
+            waitFindObject(rowItemSelector).parent
+        } else {
+            waitFindObject(rowSelector).parent.parent
+        }
 
         val uninstallSelector = if (isAutomotiveDevice()) {
             By.res("com.android.permissioncontroller:id/car_ui_secondary_action")
