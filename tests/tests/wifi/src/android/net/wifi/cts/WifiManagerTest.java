@@ -6561,6 +6561,51 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
     }
 
     /**
+     * Tests {@link WifiManager#getMaxMloAssociationLinkCount(Executor, Consumer)} and
+     * {@link WifiManager#getMaxMloStrLinkCount(Executor, Consumer)}.
+     */
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+    public void testMloCapabilities() throws Exception {
+        // Skip the test if Wifi is not supported.
+        if (!WifiFeature.isWifiSupported(getContext())) return;
+        // Need elevated permission.
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        uiAutomation.adoptShellPermissionIdentity();
+        AtomicInteger linkCount = new AtomicInteger();
+        Consumer<Integer> getListener = new Consumer<Integer>() {
+            @Override
+            public void accept(Integer value) {
+                synchronized (mLock) {
+                    linkCount.set(value);
+                    mLock.notify();
+                }
+            }
+        };
+
+        // Test that invalid inputs trigger an exception.
+        assertThrows("null executor should trigger exception", NullPointerException.class,
+                () -> mWifiManager.getMaxMloAssociationLinkCount(null, getListener));
+        assertThrows("null listener should trigger exception", NullPointerException.class,
+                () -> mWifiManager.getMaxMloAssociationLinkCount(mExecutor, null));
+        assertThrows("null executor should trigger exception", NullPointerException.class,
+                () -> mWifiManager.getMaxMloStrLinkCount(null, getListener));
+        assertThrows("null listener should trigger exception", NullPointerException.class,
+                () -> mWifiManager.getMaxMloStrLinkCount(mExecutor, null));
+
+        linkCount.set(Integer.MIN_VALUE);
+        mWifiManager.getMaxMloStrLinkCount(mExecutor, getListener);
+        PollingCheck.check("getMaxMloStrLinkCount failed", TEST_WAIT_DURATION_MS,
+                () -> (linkCount.get() >= -1));
+
+        linkCount.set(Integer.MIN_VALUE);
+        mWifiManager.getMaxMloAssociationLinkCount(mExecutor, getListener);
+        PollingCheck.check("getMaxMloAssociationLinkCount failed", TEST_WAIT_DURATION_MS,
+                () -> (linkCount.get() >= -1));
+
+        // Drop the permission.
+        uiAutomation.dropShellPermissionIdentity();
+    }
+    /**
      * Tests {@link WifiManager#setLinkMode} and {@link WifiManager#getLinkMode} works
      */
     public void testMloMode() {
