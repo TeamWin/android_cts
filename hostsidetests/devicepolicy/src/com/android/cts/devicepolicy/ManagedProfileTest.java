@@ -21,11 +21,9 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import android.platform.test.annotations.FlakyTest;
 import android.platform.test.annotations.LargeTest;
 import android.stats.devicepolicy.EventId;
 
-import com.android.cts.devicepolicy.DeviceAdminFeaturesCheckerRule.DoesNotRequireFeature;
 import com.android.cts.devicepolicy.metrics.DevicePolicyEventWrapper;
 import com.android.ddmlib.Log.LogLevel;
 import com.android.tradefed.device.DeviceNotAvailableException;
@@ -33,7 +31,6 @@ import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.util.RunInterruptedException;
 import com.android.tradefed.util.RunUtil;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.HashMap;
@@ -55,27 +52,6 @@ public final class ManagedProfileTest extends BaseManagedProfileTest {
         runDeviceTestsAsUser(
                 MANAGED_PROFILE_PKG, MANAGED_PROFILE_PKG + ".ManagedProfileSetupTest",
                 mProfileUserId);
-    }
-
-    @DoesNotRequireFeature
-    @Test
-    public void testMaxOneManagedProfile() throws Exception {
-        int newUserId = -1;
-        try {
-            newUserId = createManagedProfile(mParentUserId);
-        } catch (AssertionError expected) {
-        }
-        if (newUserId > 0) {
-            removeUser(newUserId);
-            if (mFeaturesCheckerRule.hasRequiredFeatures()) {
-                // Exception is Android TV which can create multiple managed profiles
-                if (!isTv()) {
-                    fail("Device must allow creating only one managed profile");
-                }
-            } else {
-                fail("Device must not allow creating a managed profile");
-            }
-        }
     }
 
     /**
@@ -191,23 +167,6 @@ public final class ManagedProfileTest extends BaseManagedProfileTest {
     public void testDevicePolicyManagerParentSupport() throws Exception {
         runDeviceTestsAsUser(
                 MANAGED_PROFILE_PKG, ".DevicePolicyManagerParentSupportTest", mProfileUserId);
-    }
-
-    @Test
-    public void testBluetoothContactSharingDisabled() throws Exception {
-        assertMetricsLogged(getDevice(), () -> {
-            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
-                    "testSetBluetoothContactSharingDisabled_setterAndGetter", mProfileUserId);
-        }, new DevicePolicyEventWrapper
-                    .Builder(EventId.SET_BLUETOOTH_CONTACT_SHARING_DISABLED_VALUE)
-                    .setAdminPackageName(MANAGED_PROFILE_PKG)
-                    .setBoolean(false)
-                    .build(),
-            new DevicePolicyEventWrapper
-                    .Builder(EventId.SET_BLUETOOTH_CONTACT_SHARING_DISABLED_VALUE)
-                    .setAdminPackageName(MANAGED_PROFILE_PKG)
-                    .setBoolean(true)
-                    .build());
     }
 
     @Test
@@ -394,15 +353,6 @@ public final class ManagedProfileTest extends BaseManagedProfileTest {
         }, new DevicePolicyEventWrapper.Builder(EventId.SET_PROFILE_NAME_VALUE)
                 .setAdminPackageName(MANAGED_PROFILE_PKG)
                 .build());
-    }
-
-    @Test
-    public void userManagerIsManagedProfileReturnsCorrectValues() throws Exception {
-        runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".UserManagerTest",
-                "testIsManagedProfileReturnsTrue", mProfileUserId);
-
-        runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".UserManagerTest",
-                "testIsManagedProfileReturnsFalse", mPrimaryUserId);
     }
 
     @Test

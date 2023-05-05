@@ -828,4 +828,22 @@ public final class DevicePolicy {
             sDevicePolicyManager.calculateHasIncompatibleAccounts();
         }
     }
+
+    /**
+     * Determine whether Bluetooth devices cannot access contacts on the instrumented user.
+     *
+     * See {@code DevicePolicyManager#getBluetoothContactSharingDisabled(UserHandle)}
+     */
+    public boolean getBluetoothContactSharingDisabled() {
+        return getBluetoothContactSharingDisabled(TestApis.users().instrumented());
+    }
+
+    /**
+     * Determine whether Bluetooth devices cannot access contacts on {@code user}.
+     *
+     * See {@code DevicePolicyManager#getBluetoothContactSharingDisabled(UserHandle)}
+     */
+    public boolean getBluetoothContactSharingDisabled(UserReference user) {
+        return sDevicePolicyManager.getBluetoothContactSharingDisabled(user.userHandle());
+    }
 }
