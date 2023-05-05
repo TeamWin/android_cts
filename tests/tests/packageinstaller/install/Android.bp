@@ -34,6 +34,9 @@ android_test {
         "androidx.legacy_legacy-support-v4",
         "platform-test-annotations",
         "truth-prebuilt",
+        "Nene",
+        "Harrier",
+        "kotlin-test",
     ],
 
     test_suites: [
