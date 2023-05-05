@@ -5281,21 +5281,6 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="tv_start_test">Start Test</string>
     <string name="tv_done">Done</string>
 
-    <!-- Audio Capabilities test -->
-    <string name="tv_audio_capabilities_test">Audio Capabilities Test</string>
-    <string name="tv_audio_capabilities_test_info">This test checks if AudioDeviceInfo and
-    AudioTrack#isDirectPlaybackSupported APIs correctly report the Audio capabilities
-    of the connected audio devices.</string>
-    <string name="tv_audio_capabilities_no_receiver_connected">Disconnect all receivers or
-    soundbars which are connected. </string>
-    <string name="tv_audio_capabilities_receiver_connected">Connect a receiver or
-    soundbar which can play Dolby Atmos. </string>
-    <string name="tv_audio_capabilities_atmos_supported">Does your Android TV device support Dolby
-    Atmos (either passthrough or decode)?  </string>
-    <string name="tv_audio_capabilities_skip_test"> This test is only applicable to OTT and STB
-        devices. Is your device a soundbar or panel TV?
-    </string>
-
     <!-- Hotplug Test -->
     <string name="tv_hotplug_test">Hotplug Test</string>
     <string name="tv_hotplug_test_info">This test checks whether DisplayManager responds correctly
