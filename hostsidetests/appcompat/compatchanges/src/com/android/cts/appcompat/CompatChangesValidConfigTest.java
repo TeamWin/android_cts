@@ -29,7 +29,6 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -39,6 +38,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 public final class CompatChangesValidConfigTest extends CompatChangeGatingTestCase {
 
     private static final long RESTRICT_STORAGE_ACCESS_FRAMEWORK = 141600225L;
+    private static final long ENFORCE_INTENTS_TO_MATCH_INTENT_FILTERS = 161252188;
     private static final String FEATURE_WATCH = "android.hardware.type.watch";
 
     private static final Set<String> OVERRIDES_ALLOWLIST = ImmutableSet.of(
@@ -121,12 +121,13 @@ public final class CompatChangesValidConfigTest extends CompatChangeGatingTestCa
 
         // RESTRICT_STORAGE_ACCESS_FRAMEWORK not supported on wear
         if (getDevice().hasFeature(FEATURE_WATCH)) {
-            for (Iterator<Change> it = changes.iterator(); it.hasNext();) {
-                if (it.next().changeId == RESTRICT_STORAGE_ACCESS_FRAMEWORK) {
-                    it.remove();
-                }
-            }
+            changes.removeIf(c -> c.changeId == RESTRICT_STORAGE_ACCESS_FRAMEWORK);
         }
+
+        // Exclude ENFORCE_INTENTS_TO_MATCH_INTENT_FILTERS
+        // This feature is disabled retroactively in T, see b/274147456
+        changes.removeIf(c -> c.changeId == ENFORCE_INTENTS_TO_MATCH_INTENT_FILTERS);
+
         return changes;
     }
 
