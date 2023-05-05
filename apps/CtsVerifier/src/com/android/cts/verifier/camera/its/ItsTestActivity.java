@@ -738,7 +738,7 @@ public class ItsTestActivity extends DialogTestListActivity {
         } else {
             Log.d(TAG, "register ITS result receiver");
             IntentFilter filter = new IntentFilter(ACTION_ITS_RESULT);
-            registerReceiver(mResultsReceiver, filter);
+            registerReceiver(mResultsReceiver, filter, Context.RECEIVER_EXPORTED);
             mReceiverRegistered = true;
         }
     }
