@@ -323,7 +323,8 @@ public class AudioTrackOffloadTest extends CtsAndroidTestCase {
 
     private boolean isGaplessOffloadPlaybackSupported(AudioFormat audioFormat) {
         int directSupport = AudioManager.getDirectPlaybackSupport(audioFormat, DEFAULT_ATTR);
-        return (directSupport & AudioManager.DIRECT_PLAYBACK_OFFLOAD_GAPLESS_SUPPORTED) != 0;
+        return (directSupport & AudioManager.DIRECT_PLAYBACK_OFFLOAD_GAPLESS_SUPPORTED)
+                == AudioManager.DIRECT_PLAYBACK_OFFLOAD_GAPLESS_SUPPORTED;
     }
 
 
