@@ -16,6 +16,8 @@
 
 package com.android.bedstead.nene.flags;
 
+import static android.os.Build.VERSION_CODES.UPSIDE_DOWN_CAKE;
+
 import static com.android.bedstead.nene.permissions.CommonPermissions.READ_DEVICE_CONFIG;
 import static com.android.bedstead.nene.permissions.CommonPermissions.WRITE_ALLOWLISTED_DEVICE_CONFIG;
 
@@ -84,9 +86,11 @@ public final class Flags {
      * replaced by a bulk update.
      */
     public void set(String namespace, String key, @Nullable String value) {
-        try (PermissionContext p = TestApis.permissions()
-                .withPermission(WRITE_ALLOWLISTED_DEVICE_CONFIG)) {
-            DeviceConfig.setProperty(namespace, key, value, /* makeDefault= */ false);
+        if (Versions.meetsMinimumSdkVersionRequirement(UPSIDE_DOWN_CAKE)) {
+            try (PermissionContext p = TestApis.permissions()
+                    .withPermission(WRITE_ALLOWLISTED_DEVICE_CONFIG)) {
+                DeviceConfig.setProperty(namespace, key, value, /* makeDefault= */ false);
+            }
         }
     }
 
