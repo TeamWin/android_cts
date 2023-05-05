@@ -16,6 +16,9 @@
 
 package com.android.cts.verifier.audio;
 
+import static com.android.cts.verifier.TestListActivity.sCurrentDisplayMode;
+import static com.android.cts.verifier.TestListAdapter.setTestNameSuffix;
+
 import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
@@ -677,6 +680,13 @@ public class AudioFrequencyMicActivity extends AudioFrequencyActivity implements
     /**
      * Store test results in log
      */
+    private static final String SECTION_AUDIOFREQUENCYMIC =
+            "audio_frequency_mic";
+    @Override
+    public final String getReportSectionName() {
+        return setTestNameSuffix(sCurrentDisplayMode, SECTION_AUDIOFREQUENCYMIC);
+    }
+
     private void storeTestResults(Results results) {
         String channelLabel = "channel_" + results.mLabel;
 

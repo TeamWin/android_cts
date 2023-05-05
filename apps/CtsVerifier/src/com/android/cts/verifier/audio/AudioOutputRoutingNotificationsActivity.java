@@ -162,8 +162,14 @@ public class AudioOutputRoutingNotificationsActivity extends AudioWiredDeviceBas
         }
     }
 
-    protected void storeTestResults() {
-        super.storeTestResults();
+    @Override
+    public final String getReportSectionName() {
+        return setTestNameSuffix(sCurrentDisplayMode, SECTION_OUTPUT_ROUTING);
+    }
+
+    @Override
+    public void recordTestResults() {
+        super.recordTestResults();
 
         CtsVerifierReportLog reportLog = getReportLog();
         reportLog.addValue(
@@ -171,6 +177,8 @@ public class AudioOutputRoutingNotificationsActivity extends AudioWiredDeviceBas
                 mRoutingNotificationReceived ? 1 : 0,
                 ResultType.NEUTRAL,
                 ResultUnit.NONE);
+
+        reportLog.submit();
     }
 
     @Override
@@ -214,11 +222,6 @@ public class AudioOutputRoutingNotificationsActivity extends AudioWiredDeviceBas
                 R.string.audio_output_routingnotification_instructions, -1);
         setPassFailButtonClickListeners();
         getPassButton().setEnabled(false);
-    }
-
-    @Override
-    public final String getReportSectionName() {
-        return setTestNameSuffix(sCurrentDisplayMode, SECTION_OUTPUT_ROUTING);
     }
 
     @Override
