@@ -331,22 +331,37 @@ public class AlwaysOnHotwordDetectorTest {
                 mInstrumentationObserver.getOnRecognitionStartedFuture());
         assertThat(recognitionSession).isNotNull();
 
+        ModelSessionObserver modelSession = mInstrumentationObserver
+                .getGlobalCallbackObserver().getOnModelLoadedFuture().get();
+
+        modelSession.resetOnRecognitionStartedFuture();
         getService().initOnRecognitionPausedLatch();
-        // Prevent unexpected start recognition
-        // TODO (b/275079746) - after fix, ensure that we don't have
-        // an unexpected start recognition, or an onError following
-        // an abort recognition.
+        // Induce a recognition pause
+        recognitionSession.triggerAbortRecognition();
+        getService().waitOnRecognitionPausedCalled();
+        // Check that STService didn't attempt to start immediately on receiving abort
+        assertThat(modelSession.getOnRecognitionStartedFuture().isDone()).isFalse();
+
+        getService().initOnRecognitionResumedLatch();
+        instrumentation.triggerOnResourcesAvailable();
+        getService().waitOnRecognitionResumedCalled();
+        recognitionSession = waitForFutureDoneAndAssertSuccessful(
+                modelSession.getOnRecognitionStartedFuture());
+
+        // Same flow, but ensure we don't get an onError by setting contention
+        getService().initOnRecognitionPausedLatch();
         instrumentation.setResourceContention(true);
         // Induce a recognition pause
         recognitionSession.triggerAbortRecognition();
-        // Unexpected onError will be received here as well
         getService().waitOnRecognitionPausedCalled();
-
+        modelSession.resetOnRecognitionStartedFuture();
         getService().initOnRecognitionResumedLatch();
         // This will trigger resources available
         instrumentation.setResourceContention(false);
-        // mInstrumentation.triggerOnResourcesAvailable();
         getService().waitOnRecognitionResumedCalled();
+        assertThat(getService().getSoundTriggerFailure()).isNull();
+        recognitionSession = waitForFutureDoneAndAssertSuccessful(
+                modelSession.getOnRecognitionStartedFuture());
     }
 
     @ApiTest(apis = {
