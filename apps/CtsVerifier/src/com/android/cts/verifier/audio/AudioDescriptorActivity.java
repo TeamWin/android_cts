@@ -16,6 +16,9 @@
 
 package com.android.cts.verifier.audio;
 
+import static com.android.cts.verifier.TestListActivity.sCurrentDisplayMode;
+import static com.android.cts.verifier.TestListAdapter.setTestNameSuffix;
+
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.media.AudioDescriptor;
@@ -53,6 +56,7 @@ public class AudioDescriptorActivity extends PassFailButtons.Activity {
     private static final String TAG = "AudioDescriptorActivity";
 
     // ReportLog Schema
+    private static final String SECTION_AUDIODESCRIPTOR = "audio_descriptors_activity";
     private static final String KEY_CLAIMS_HDMI = "claims_hdmi";
     private static final String KEY_HAL_VERSION = "audio_hal_version";
     private static final String KEY_AUDIO_DESCRIPTOR = "audio_descriptor";
@@ -124,6 +128,21 @@ public class AudioDescriptorActivity extends PassFailButtons.Activity {
         setPassFailButtonClickListeners();
         detectHalVersion();
         displayTestResult();
+    }
+
+    @Override
+    public boolean requiresReportLog() {
+        return true;
+    }
+
+    @Override
+    public String getReportFileName() {
+        return PassFailButtons.AUDIO_TESTS_REPORT_LOG_NAME;
+    }
+
+    @Override
+    public final String getReportSectionName() {
+        return setTestNameSuffix(sCurrentDisplayMode, SECTION_AUDIODESCRIPTOR);
     }
 
     @Override

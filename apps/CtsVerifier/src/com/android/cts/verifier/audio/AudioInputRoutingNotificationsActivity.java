@@ -157,8 +157,14 @@ public class AudioInputRoutingNotificationsActivity extends AudioWiredDeviceBase
         }
     }
 
-    protected void storeTestResults() {
-        super.storeTestResults();
+    @Override
+    public final String getReportSectionName() {
+        return setTestNameSuffix(sCurrentDisplayMode, SECTION_INPUT_ROUTING);
+    }
+
+    @Override
+    public void recordTestResults() {
+        super.recordTestResults();
 
         CtsVerifierReportLog reportLog = getReportLog();
         reportLog.addValue(
@@ -166,6 +172,8 @@ public class AudioInputRoutingNotificationsActivity extends AudioWiredDeviceBase
                 mRoutingNotificationReceived ? 1 : 0,
                 ResultType.NEUTRAL,
                 ResultUnit.NONE);
+
+        reportLog.submit();
     }
 
     @Override
@@ -212,8 +220,4 @@ public class AudioInputRoutingNotificationsActivity extends AudioWiredDeviceBase
                 R.string.audio_input_routingnotification_instructions, -1);
     }
 
-    @Override
-    public final String getReportSectionName() {
-        return setTestNameSuffix(sCurrentDisplayMode, SECTION_INPUT_ROUTING);
-    }
 }
