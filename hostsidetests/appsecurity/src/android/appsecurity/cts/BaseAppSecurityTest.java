@@ -97,6 +97,7 @@ public abstract class BaseAppSecurityTest extends BaseHostJUnit4Test {
             super(getDevice(), getBuild(), getAbi(), grantPermissions);
             addArg(instant ? "--instant" : "");
             addArg("--force-queryable");
+            addArg("--bypass-low-target-sdk-block");
         }
     }
 }
