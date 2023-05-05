@@ -19,6 +19,7 @@ package com.android.cts.appcloning;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
@@ -142,6 +143,16 @@ public class AppCloningBaseHostTest extends BaseHostTestCase {
     protected static boolean doesDeviceHaveFeature(String feature)
             throws DeviceNotAvailableException {
         return sDevice.hasFeature(feature);
+    }
+
+    protected static boolean isAppCloningBuildingBlockConfigEnabled(ITestDevice testDevice)
+            throws DeviceNotAvailableException {
+        String buildingBlocksConfigIdentifier =
+                "android:bool/config_enableAppCloningBuildingBlocks";
+        CommandResult commandResult = testDevice.executeShellV2Command(String.format(
+                "cmd overlay lookup android %s", buildingBlocksConfigIdentifier));
+        assertTrue(isSuccessful(commandResult));
+        return Boolean.parseBoolean(commandResult.getStdout().trim());
     }
 
     protected CommandResult runContentProviderCommand(String commandType, String userId,
