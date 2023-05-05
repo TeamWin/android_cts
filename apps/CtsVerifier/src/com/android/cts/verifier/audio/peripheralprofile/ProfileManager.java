@@ -50,7 +50,7 @@ public class ProfileManager {
                 "<InputDevInfo ChanCounts=\"1,2\" ChanPosMasks=\"12,16\" ChanIndexMasks=\"1,3\" Encodings=\"22,4\" SampleRates=\"44100,48000,88200,96000\"/>" +
             "</PeripheralProfile>" +
             "<PeripheralProfile ProfileName=\"AudioBox 44VSL\" ProfileDescription=\"Presonus AudioBox 44VSL\" ProductName=\"USB-Audio - AudioBox 44 VSL\">" +
-                "<OutputDevInfo ChanCounts=\"2,3,4\" ChanPosMasks=\"12\" ChanIndexMasks=\"3,7,15\" Encodings=\"21,22,4\" SampleRates=\"44100,48000,88200,96000\" />" +
+                "<OutputDevInfo ChanCounts=\"2,3,4\" ChanPosMasks=\"12,204\" ChanIndexMasks=\"3,7,15\" Encodings=\"21,22,4\" SampleRates=\"44100,48000,88200,96000\" />" +
                 "<InputDevInfo ChanCounts=\"1,2,3,4\" ChanPosMasks=\"12,16\" ChanIndexMasks=\"1,3,7,15\" Encodings=\"21,22,4\" SampleRates=\"44100,48000,88200,96000\" />" +
             "</PeripheralProfile>" +
             "<PeripheralProfile ProfileName=\"AudioBox 22VSL\" ProfileDescription=\"Presonus AudioBox 22VSL\" ProductName=\"USB-Audio - AudioBox 22 VSL\">" +
