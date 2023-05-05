@@ -50,7 +50,6 @@ import static android.content.pm.PackageManager.FEATURE_VR_MODE_HIGH_PERFORMANCE
 import static android.content.pm.PackageManager.FEATURE_WATCH;
 import static android.content.pm.PackageManager.MATCH_DEFAULT_ONLY;
 import static android.os.UserHandle.USER_ALL;
-import static android.os.UserHandle.USER_SYSTEM;
 import static android.provider.Settings.Secure.IMMERSIVE_MODE_CONFIRMATIONS;
 import static android.server.wm.ActivityLauncher.KEY_ACTIVITY_TYPE;
 import static android.server.wm.ActivityLauncher.KEY_DISPLAY_ID;
@@ -1603,13 +1602,14 @@ public abstract class ActivityManagerTestBase {
                         SystemUtil.runWithShellPermissionIdentity(() -> {
                             // disable current doze settings
                             mConfig.disableDozeSettings(true /* shouldDisableNonUserConfigurable */,
-                                    USER_SYSTEM);
+                                    android.os.Process.myUserHandle().getIdentifier());
                         });
                         base.evaluate();
                     } finally {
                         SystemUtil.runWithShellPermissionIdentity(() -> {
                             // restore doze settings
-                            mConfig.restoreDozeSettings(USER_SYSTEM);
+                            mConfig.restoreDozeSettings(
+                                    android.os.Process.myUserHandle().getIdentifier());
                         });
                     }
                 }
