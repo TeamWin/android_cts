@@ -459,4 +459,23 @@ public class CloneContactsSharingTest {
                         Phone.NUMBER)))
                 .isEqualTo(testContactPhoneNumber);
     }
+
+    /**
+     * Checks that the cross-profile contact reads for managed-profile contacts are blocked
+     */
+    @Test
+    public void testAccessManagedProfileContacts_contactsReadBlocked() {
+        String testContactAccountType =
+                getTestArgumentValueForGivenKey("test_contact_account_type");
+
+        String[] projection = new String[] {
+                Phone.NUMBER,
+                Phone.RAW_CONTACT_ID
+        };
+
+        Cursor cursor = queryContactsForTestAccount(Phone.ENTERPRISE_CONTENT_URI, projection,
+                testContactAccountType);
+        assertThat(cursor).isNotNull();
+        assertThat(cursor.getCount()).isEqualTo(0);
+    }
 }
