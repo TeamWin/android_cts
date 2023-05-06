@@ -6568,9 +6568,6 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
     public void testMloCapabilities() throws Exception {
         // Skip the test if Wifi is not supported.
         if (!WifiFeature.isWifiSupported(getContext())) return;
-        // Need elevated permission.
-        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
-        uiAutomation.adoptShellPermissionIdentity();
         AtomicInteger linkCount = new AtomicInteger();
         Consumer<Integer> getListener = new Consumer<Integer>() {
             @Override
@@ -6582,38 +6579,41 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             }
         };
 
-        // Test that invalid inputs trigger an exception.
-        assertThrows("null executor should trigger exception", NullPointerException.class,
-                () -> mWifiManager.getMaxMloAssociationLinkCount(null, getListener));
-        assertThrows("null listener should trigger exception", NullPointerException.class,
-                () -> mWifiManager.getMaxMloAssociationLinkCount(mExecutor, null));
-        assertThrows("null executor should trigger exception", NullPointerException.class,
-                () -> mWifiManager.getMaxMloStrLinkCount(null, getListener));
-        assertThrows("null listener should trigger exception", NullPointerException.class,
-                () -> mWifiManager.getMaxMloStrLinkCount(mExecutor, null));
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        try {
+            uiAutomation.adoptShellPermissionIdentity();
+            // Test that invalid inputs trigger an exception.
+            assertThrows("null executor should trigger exception", NullPointerException.class,
+                    () -> mWifiManager.getMaxMloAssociationLinkCount(null, getListener));
+            assertThrows("null listener should trigger exception", NullPointerException.class,
+                    () -> mWifiManager.getMaxMloAssociationLinkCount(mExecutor, null));
+            assertThrows("null executor should trigger exception", NullPointerException.class,
+                    () -> mWifiManager.getMaxMloStrLinkCount(null, getListener));
+            assertThrows("null listener should trigger exception", NullPointerException.class,
+                    () -> mWifiManager.getMaxMloStrLinkCount(mExecutor, null));
 
-        linkCount.set(Integer.MIN_VALUE);
-        mWifiManager.getMaxMloStrLinkCount(mExecutor, getListener);
-        PollingCheck.check("getMaxMloStrLinkCount failed", TEST_WAIT_DURATION_MS,
-                () -> (linkCount.get() >= -1));
+            linkCount.set(Integer.MIN_VALUE);
+            mWifiManager.getMaxMloStrLinkCount(mExecutor, getListener);
+            PollingCheck.check("getMaxMloStrLinkCount failed", TEST_WAIT_DURATION_MS,
+                    () -> (linkCount.get() >= -1));
 
-        linkCount.set(Integer.MIN_VALUE);
-        mWifiManager.getMaxMloAssociationLinkCount(mExecutor, getListener);
-        PollingCheck.check("getMaxMloAssociationLinkCount failed", TEST_WAIT_DURATION_MS,
-                () -> (linkCount.get() >= -1));
-
-        // Drop the permission.
-        uiAutomation.dropShellPermissionIdentity();
+            linkCount.set(Integer.MIN_VALUE);
+            mWifiManager.getMaxMloAssociationLinkCount(mExecutor, getListener);
+            PollingCheck.check("getMaxMloAssociationLinkCount failed", TEST_WAIT_DURATION_MS,
+                    () -> (linkCount.get() >= -1));
+        } catch (Exception e) {
+            fail("Unexpected exception " + e);
+        } finally {
+            uiAutomation.dropShellPermissionIdentity();
+        }
     }
     /**
      * Tests {@link WifiManager#setLinkMode} and {@link WifiManager#getLinkMode} works
      */
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
     public void testMloMode() {
         // Skip the test if Wifi is not supported.
         if (!WifiFeature.isWifiSupported(getContext())) return;
-        // Need elevated permission.
-        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
-        uiAutomation.adoptShellPermissionIdentity();
         // Get listener.
         AtomicInteger getMode = new AtomicInteger();
         Consumer<Integer> getListener = new Consumer<Integer>() {
@@ -6651,8 +6651,11 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
                 () -> mWifiManager.setMloMode(-1, mExecutor, setListener));
         assertThrows("Invalid mode", IllegalArgumentException.class,
                 () -> mWifiManager.setMloMode(1000, mExecutor, setListener));
+
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         // Test set if supported.
         try {
+            uiAutomation.adoptShellPermissionIdentity();
             // Check getMloMode() returns values in range.
             mWifiManager.getMloMode(mExecutor, getListener);
             assertThat(getMode.get()).isIn(Range.closed(WifiManager.MLO_MODE_DEFAULT,
@@ -6681,11 +6684,46 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
                 mWifiManager.getMloMode(mExecutor, getListener);
                 assertTrue(getMode.get() == WifiManager.MLO_MODE_DEFAULT);
             }
-        } catch (UnsupportedOperationException e) {
-            // Skip the set method if not supported.
+        } catch (Exception e) {
+            fail("Unexpected exception " + e);
+        } finally {
+            uiAutomation.dropShellPermissionIdentity();
         }
-        // Drop the permission.
-        uiAutomation.dropShellPermissionIdentity();
+    }
+
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+    public void testGetSupportedSimultaneousBandCombinations() {
+        // Skip the test if Wifi is not supported.
+        if (!WifiFeature.isWifiSupported(getContext())) return;
+        AtomicInteger nEntries = new AtomicInteger();
+        Consumer<List<int[]>> getListener = new Consumer<List<int[]>>() {
+            @Override
+            public void accept(List<int[]> bands) {
+                synchronized (mLock) {
+                    nEntries.set(bands.size());
+                    mLock.notify();
+                }
+            }
+        };
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        try {
+            uiAutomation.adoptShellPermissionIdentity();
+
+            assertThrows("null executor should trigger exception", NullPointerException.class,
+                    () -> mWifiManager.getSupportedSimultaneousBandCombinations(null, getListener));
+            assertThrows("null listener should trigger exception", NullPointerException.class,
+                    () -> mWifiManager.getSupportedSimultaneousBandCombinations(mExecutor, null));
+
+            nEntries.set(-1);
+            mWifiManager.getSupportedSimultaneousBandCombinations(mExecutor, getListener);
+            PollingCheck.check("getSupportedSimultaneousBandCombinations failed",
+                    TEST_WAIT_DURATION_MS,
+                    () -> (nEntries.get() > -1));
+        } catch (Exception e) {
+            fail("Unexpected exception " + e);
+        } finally {
+            uiAutomation.dropShellPermissionIdentity();
+        }
     }
 
     /**
