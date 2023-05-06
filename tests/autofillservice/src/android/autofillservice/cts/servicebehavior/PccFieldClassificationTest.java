@@ -15,8 +15,11 @@
  */
 package android.autofillservice.cts.servicebehavior;
 
+import static android.app.Activity.RESULT_CANCELED;
+import static android.app.Activity.RESULT_OK;
 import static android.autofillservice.cts.testcore.Helper.ID_PASSWORD;
 import static android.autofillservice.cts.testcore.Helper.ID_USERNAME;
+import static android.autofillservice.cts.testcore.Helper.UNUSED_AUTOFILL_VALUE;
 import static android.autofillservice.cts.testcore.Helper.assertHasFlags;
 import static android.autofillservice.cts.testcore.Helper.disableFillDialogFeature;
 import static android.autofillservice.cts.testcore.Helper.disablePccDetectionFeature;
@@ -28,13 +31,19 @@ import static android.service.autofill.FillRequest.FLAG_SUPPORTS_FILL_DIALOG;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import android.autofillservice.cts.activities.AuthenticationActivity;
 import android.autofillservice.cts.activities.LoginActivity;
 import android.autofillservice.cts.commontests.FieldClassificationServiceManualActivityLaunchTestCase;
 import android.autofillservice.cts.testcore.CannedFieldClassificationResponse;
 import android.autofillservice.cts.testcore.CannedFillResponse;
 import android.autofillservice.cts.testcore.IdMode;
 import android.autofillservice.cts.testcore.InstrumentedAutoFillService;
+import android.autofillservice.cts.testcore.MyAutofillCallback;
+import android.content.IntentSender;
+import android.os.Bundle;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.Presubmit;
+import android.view.View;
 
 import androidx.test.uiautomator.UiObject2;
 
@@ -43,6 +52,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Set;
+import java.util.concurrent.TimeoutException;
 
 @AppModeFull
 public class PccFieldClassificationTest extends
@@ -511,6 +521,241 @@ public class PccFieldClassificationTest extends
 
         sClassificationReplier.assertNoUnhandledFieldClassificationRequests();
         sReplier.assertNoUnhandledFillRequests();
+    }
+
+    @Test
+    public void testDatasetAuthTwoFields() throws Exception {
+        datasetAuthTwoFields(false);
+    }
+
+    @Test
+    @AppModeFull(reason = "testDatasetAuthTwoFields() is enough")
+    public void testDatasetAuthTwoFieldsUserCancelsFirstAttempt() throws Exception {
+        datasetAuthTwoFields(true);
+    }
+
+    private void datasetAuthTwoFields(boolean cancelFirstAttempt) throws Exception {
+        // Set service.
+        disableFillDialogFeature(sContext);
+
+        sClassificationReplier.addResponse(new CannedFieldClassificationResponse.Builder()
+                .addFieldClassification(
+                        new CannedFieldClassificationResponse.CannedFieldClassification(
+                                ID_USERNAME, Set.of(AUTOFILL_HINT_USERNAME)))
+                .addFieldClassification(
+                        new CannedFieldClassificationResponse.CannedFieldClassification(
+                                ID_PASSWORD, Set.of(AUTOFILL_HINT_PASSWORD)))
+                .build());
+
+        // Prepare the authenticated response
+        final IntentSender authentication = AuthenticationActivity.createSender(mContext, 1,
+                new CannedFillResponse.CannedDataset.Builder()
+                        .setField(AUTOFILL_HINT_USERNAME, "dude")
+                        .setField(AUTOFILL_HINT_PASSWORD, "sweet")
+                        .build());
+
+        // Configure the service behavior
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .addDataset(new CannedFillResponse.CannedDataset.Builder()
+                        .setField(AUTOFILL_HINT_USERNAME, UNUSED_AUTOFILL_VALUE)
+                        .setField(AUTOFILL_HINT_PASSWORD, UNUSED_AUTOFILL_VALUE)
+                        .setPresentation(createPresentation("Tap to auth dataset"))
+                        .setAuthentication(authentication)
+                        .build())
+                .build());
+
+        // Start activity and autofill
+        LoginActivity activity = startLoginActivity();
+        final MyAutofillCallback callback = activity.registerCallback();
+        mUiBot.waitForIdleSync();
+
+        // Assert FieldClassification request was sent
+        sClassificationReplier.getNextFieldClassificationRequest();
+
+        // Set expectation for the activity
+        activity.expectAutoFill("dude", "sweet");
+
+        // Trigger auto-fill.
+
+        // Click on password field to trigger autofill
+        requestFocusOnUsername(activity);
+
+        // Wait for onFill() before proceeding.
+        sReplier.getNextFillRequest();
+        final View username = activity.getUsername();
+        callback.assertUiShownEvent(username);
+        mUiBot.assertDatasets("Tap to auth dataset");
+
+        // Make sure UI is show on 2nd field as well
+        final View password = activity.getPassword();
+        // Click on password field to trigger autofill
+        requestFocusOnPassword(activity);
+
+        callback.assertUiHiddenEvent(username);
+        callback.assertUiShownEvent(password);
+        mUiBot.assertDatasets("Tap to auth dataset");
+
+        // Now tap on 1st field to show it again...
+        requestFocusOnUsername(activity);
+        callback.assertUiHiddenEvent(password);
+        callback.assertUiShownEvent(username);
+        mUiBot.assertDatasets("Tap to auth dataset");
+
+        if (cancelFirstAttempt) {
+            // Trigger the auth dialog, but emulate cancel.
+            AuthenticationActivity.setResultCode(RESULT_CANCELED);
+            mUiBot.selectDataset("Tap to auth dataset");
+            callback.assertUiHiddenEvent(username);
+            callback.assertUiShownEvent(username);
+            mUiBot.assertDatasets("Tap to auth dataset");
+
+            // Make sure it's still shown on other fields...
+            requestFocusOnPassword(activity);
+            callback.assertUiHiddenEvent(username);
+            callback.assertUiShownEvent(password);
+            mUiBot.assertDatasets("Tap to auth dataset");
+
+            // Tap on 1st field to show it again...
+            requestFocusOnUsername(activity);
+            callback.assertUiHiddenEvent(password);
+            callback.assertUiShownEvent(username);
+        }
+
+        // ...and select it this time
+        AuthenticationActivity.setResultCode(RESULT_OK);
+        mUiBot.selectDataset("Tap to auth dataset");
+        callback.assertUiHiddenEvent(username);
+        mUiBot.assertNoDatasets();
+
+        // Check the results.
+        activity.assertAutoFilled();
+    }
+
+    @Presubmit
+    @Test
+    public void testFillResponseAuthBothFields() throws Exception {
+        fillResponseAuthBothFields(false);
+    }
+
+    @Test
+    @AppModeFull(reason = "testFillResponseAuthBothFields() is enough")
+    public void testFillResponseAuthBothFieldsUserCancelsFirstAttempt() throws Exception {
+        fillResponseAuthBothFields(true);
+    }
+
+    private void fillResponseAuthBothFields(boolean cancelFirstAttempt) throws Exception {
+
+        sClassificationReplier.addResponse(new CannedFieldClassificationResponse.Builder()
+                .addFieldClassification(
+                        new CannedFieldClassificationResponse.CannedFieldClassification(
+                                ID_USERNAME, Set.of(AUTOFILL_HINT_USERNAME)))
+                .addFieldClassification(
+                        new CannedFieldClassificationResponse.CannedFieldClassification(
+                                ID_PASSWORD, Set.of(AUTOFILL_HINT_PASSWORD)))
+                .build());
+
+        // Prepare the authenticated response
+        final Bundle clientState = new Bundle();
+        clientState.putString("numbers", "4815162342");
+        final IntentSender authentication = AuthenticationActivity.createSender(mContext, 1,
+                new CannedFillResponse.Builder().addDataset(
+                                new CannedFillResponse.CannedDataset.Builder()
+                                        .setField(AUTOFILL_HINT_USERNAME, "dude")
+                                        .setField(AUTOFILL_HINT_PASSWORD, "sweet")
+                                        .setId("name")
+                                        .setPresentation(createPresentation("Dataset"))
+                                        .build())
+                        .setExtras(clientState).build());
+
+        // Configure the service behavior
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setAuthentication(authentication, ID_USERNAME, ID_PASSWORD)
+                .setPresentation(createPresentation("Tap to auth response"))
+                .setExtras(clientState)
+                .build());
+
+        // Start activity and autofill
+        LoginActivity activity = startLoginActivity();
+        final MyAutofillCallback callback = activity.registerCallback();
+        mUiBot.waitForIdleSync();
+
+        // Set expectation for the activity
+        activity.expectAutoFill("dude", "sweet");
+
+        // Trigger auto-fill.
+        requestFocusOnUsername(activity);
+
+        // Wait for onFill() before proceeding.
+        sReplier.getNextFillRequest();
+        final View username = activity.getUsername();
+        callback.assertUiShownEvent(username);
+        mUiBot.assertDatasets("Tap to auth response");
+
+        // Make sure UI is show on 2nd field as well
+        final View password = activity.getPassword();
+        requestFocusOnPassword(activity);
+        callback.assertUiHiddenEvent(username);
+        callback.assertUiShownEvent(password);
+        mUiBot.assertDatasets("Tap to auth response");
+
+        // Now tap on 1st field to show it again...
+//        requestFocusOnUsername(activity); // maybe hidden by the suggestions from the first one
+
+        requestFocusOnUsername(activity);
+        callback.assertUiHiddenEvent(password);
+        callback.assertUiShownEvent(username);
+
+        if (cancelFirstAttempt) {
+            // Trigger the auth dialog, but emulate cancel.
+            AuthenticationActivity.setResultCode(RESULT_CANCELED);
+            mUiBot.selectDataset("Tap to auth response");
+            callback.assertUiHiddenEvent(username);
+            callback.assertUiShownEvent(username);
+            mUiBot.assertDatasets("Tap to auth response");
+
+            // Make sure it's still shown on other fields...
+            requestFocusOnPassword(activity);
+            callback.assertUiHiddenEvent(username);
+            callback.assertUiShownEvent(password);
+            mUiBot.assertDatasets("Tap to auth response");
+
+            // Tap on 1st field to show it again...
+            requestFocusOnUsername(activity);
+            callback.assertUiHiddenEvent(password);
+            callback.assertUiShownEvent(username);
+        }
+
+        // ...and select it this time
+        AuthenticationActivity.setResultCode(RESULT_OK);
+        mUiBot.selectDataset("Tap to auth response");
+        callback.assertUiHiddenEvent(username);
+        callback.assertUiShownEvent(username);
+        final UiObject2 picker = mUiBot.assertDatasets("Dataset");
+        mUiBot.selectDataset(picker, "Dataset");
+        callback.assertUiHiddenEvent(username);
+        mUiBot.assertNoDatasets();
+
+        // Check the results.
+        activity.assertAutoFilled();
+
+        final Bundle data = AuthenticationActivity.getData();
+        assertThat(data).isNotNull();
+        final String extraValue = data.getString("numbers");
+        assertThat(extraValue).isEqualTo("4815162342");
+    }
+
+    /**
+     * Requests focus on username and expect Window event happens.
+     */
+    protected void requestFocusOnUsername(LoginActivity activity) throws TimeoutException {
+        mUiBot.waitForWindowChange(() -> activity.onUsername(View::requestFocus));
+    }
+
+    /**
+     * Requests focus on password and expect Window event happens.
+     */
+    protected void requestFocusOnPassword(LoginActivity activity) throws TimeoutException {
+        mUiBot.waitForWindowChange(() -> activity.onPassword(View::requestFocus));
     }
 
     /**
