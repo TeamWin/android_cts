@@ -19,6 +19,7 @@ package com.android.cts.appcloning;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
@@ -40,6 +41,11 @@ public class AppCloningBaseHostTest extends BaseHostTestCase {
     protected static final String APP_A = "CtsAppCloningTestApp.apk";
 
     private static final String TEST_CLASS_A = APP_A_PACKAGE + ".AppCloningDeviceTest";
+
+    private static final String FEATURE_WATCH = "android.hardware.type.watch";
+    private static final String FEATURE_EMBEDDED = "android.hardware.type.embedded";
+    private static final String FEATURE_LEANBACK = "android.software.leanback"; // TV
+    private static final String FEATURE_AUTOMOTIVE = "android.hardware.type.automotive";
     private static final long DEFAULT_INSTRUMENTATION_TIMEOUT_MS = 600_000; // 10min
 
     protected static final String MEDIA_PROVIDER_URL = "content://media";
@@ -104,6 +110,7 @@ public class AppCloningBaseHostTest extends BaseHostTestCase {
     public static void baseHostSetup(ITestDevice device) throws Exception {
         setDevice(device);
 
+        assumeTrue("Hardware type doesn't support clone profiles", isHardwareSupported());
         assumeTrue("Device doesn't support multiple users", supportsMultipleUsers());
         assumeFalse("Device is in headless system user mode", isHeadlessSystemUserMode());
         assumeTrue(isAtLeastS());
@@ -120,7 +127,7 @@ public class AppCloningBaseHostTest extends BaseHostTestCase {
 
     public static boolean isAppCloningSupportedOnDevice() throws Exception {
         return supportsMultipleUsers() && !isHeadlessSystemUserMode() && isAtLeastS()
-                && !usesSdcardFs();
+                && !usesSdcardFs() && isHardwareSupported();
     }
 
     protected static void assumeHasDeviceFeature(String feature)
@@ -136,6 +143,16 @@ public class AppCloningBaseHostTest extends BaseHostTestCase {
     protected static boolean doesDeviceHaveFeature(String feature)
             throws DeviceNotAvailableException {
         return sDevice.hasFeature(feature);
+    }
+
+    protected static boolean isAppCloningBuildingBlockConfigEnabled(ITestDevice testDevice)
+            throws DeviceNotAvailableException {
+        String buildingBlocksConfigIdentifier =
+                "android:bool/config_enableAppCloningBuildingBlocks";
+        CommandResult commandResult = testDevice.executeShellV2Command(String.format(
+                "cmd overlay lookup android %s", buildingBlocksConfigIdentifier));
+        assertTrue(isSuccessful(commandResult));
+        return Boolean.parseBoolean(commandResult.getStdout().trim());
     }
 
     protected CommandResult runContentProviderCommand(String commandType, String userId,
@@ -190,5 +207,13 @@ public class AppCloningBaseHostTest extends BaseHostTestCase {
     protected static void setFeatureFlagValue(String namespace, String flag, String value)
             throws DeviceNotAvailableException {
         sDevice.executeShellCommand("device_config put " + namespace + " " + flag + " " + value);
+    }
+
+    protected static boolean isHardwareSupported() throws DeviceNotAvailableException {
+        // Clone profiles are not supported on all form factors, only on handheld devices.
+        return !sDevice.hasFeature(FEATURE_EMBEDDED)
+                && !sDevice.hasFeature(FEATURE_WATCH)
+                && !sDevice.hasFeature(FEATURE_LEANBACK)
+                && !sDevice.hasFeature(FEATURE_AUTOMOTIVE);
     }
 }

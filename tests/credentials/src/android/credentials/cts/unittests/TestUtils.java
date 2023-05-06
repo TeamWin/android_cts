@@ -54,9 +54,8 @@ public class TestUtils {
     }
 
     public static void assertEquals(CredentialDescription a, CredentialDescription b) {
-        assertThat(a.getType()).isEqualTo(b.getType());
-        assertThat(a.getSupportedElementKeys()).isEqualTo(b.getSupportedElementKeys());
-        assertThat(a.getCredentialEntries()).isEqualTo(b.getCredentialEntries());
+        assertThat(a).isEqualTo(b);
+        assertThat(a.getCredentialEntries()).hasSize(b.getCredentialEntries().size());
     }
 
     public static void assertEquals(Slice a, Slice b) {

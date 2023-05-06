@@ -42,6 +42,9 @@ import android.car.hardware.property.CarPropertyManager.GetPropertyCallback;
 import android.car.hardware.property.CarPropertyManager.GetPropertyRequest;
 import android.car.hardware.property.CarPropertyManager.GetPropertyResult;
 import android.car.hardware.property.CarPropertyManager.PropertyAsyncError;
+import android.car.hardware.property.CarPropertyManager.SetPropertyCallback;
+import android.car.hardware.property.CarPropertyManager.SetPropertyRequest;
+import android.car.hardware.property.CarPropertyManager.SetPropertyResult;
 import android.car.hardware.property.ErrorState;
 import android.car.hardware.property.PropertyNotAvailableAndRetryException;
 import android.car.hardware.property.PropertyNotAvailableErrorCode;
@@ -504,7 +507,7 @@ public class VehiclePropertyVerifier<T> {
                 turnOnHvacPowerIfHvacPowerDependent();
                 storeCurrentValues();
                 verifyCarPropertyValueSetter();
-                // TODO(b/266000988): verifySetProeprtiesAsync(...)
+                verifySetPropertiesAsync();
 
                 if (turnOffHvacPowerIfHvacPowerDependent()) {
                     verifySetNotAvailable();
@@ -2060,7 +2063,7 @@ public class VehiclePropertyVerifier<T> {
         return Arrays.equals(i1, i2);
     }
 
-    private class CarPropertyCallback implements GetPropertyCallback {
+    private class TestGetPropertyCallback implements GetPropertyCallback {
         private final CountDownLatch mCountDownLatch;
         private final int mGetPropertyResultsCount;
         private final Object mLock = new Object();
@@ -2107,9 +2110,63 @@ public class VehiclePropertyVerifier<T> {
             }
         }
 
-        CarPropertyCallback(int getPropertyResultsCount) {
+        TestGetPropertyCallback(int getPropertyResultsCount) {
             mCountDownLatch = new CountDownLatch(getPropertyResultsCount);
             mGetPropertyResultsCount = getPropertyResultsCount;
+        }
+    }
+
+    private class TestSetPropertyCallback implements SetPropertyCallback {
+        private final CountDownLatch mCountDownLatch;
+        private final int mSetPropertyResultsCount;
+        private final Object mLock = new Object();
+        @GuardedBy("mLock")
+        private final List<SetPropertyResult> mSetPropertyResults = new ArrayList<>();
+        @GuardedBy("mLock")
+        private final List<PropertyAsyncError> mPropertyAsyncErrors = new ArrayList<>();
+
+        public void waitForResults() {
+            try {
+                assertWithMessage("Received " + (mSetPropertyResultsCount
+                        - mCountDownLatch.getCount()) + " onSuccess(s), expected "
+                        + mSetPropertyResultsCount + " onSuccess(s)").that(mCountDownLatch.await(
+                        5, TimeUnit.SECONDS)).isTrue();
+            } catch (InterruptedException e) {
+                assertWithMessage("Waiting for onSuccess threw an exception: " + e
+                ).fail();
+            }
+        }
+        public List<SetPropertyResult> getSetPropertyResults() {
+            synchronized (mLock) {
+                return mSetPropertyResults;
+            }
+        }
+
+        public List<PropertyAsyncError> getPropertyAsyncErrors() {
+            synchronized (mLock) {
+                return mPropertyAsyncErrors;
+            }
+        }
+
+        @Override
+        public void onSuccess(SetPropertyResult setPropertyResult) {
+            synchronized (mLock) {
+                mSetPropertyResults.add(setPropertyResult);
+                mCountDownLatch.countDown();
+            }
+        }
+
+        @Override
+        public void onFailure(PropertyAsyncError propertyAsyncError) {
+            synchronized (mLock) {
+                mPropertyAsyncErrors.add(propertyAsyncError);
+                mCountDownLatch.countDown();
+            }
+        }
+
+        TestSetPropertyCallback(int setPropertyResultsCount) {
+            mCountDownLatch = new CountDownLatch(setPropertyResultsCount);
+            mSetPropertyResultsCount = setPropertyResultsCount;
         }
     }
 
@@ -2130,13 +2187,14 @@ public class VehiclePropertyVerifier<T> {
             getPropertyRequests.add(getPropertyRequest);
         }
 
-        CarPropertyCallback carPropertyCallback = new CarPropertyCallback(
+        TestGetPropertyCallback testGetPropertyCallback = new TestGetPropertyCallback(
                 requestIdToAreaIdMap.size());
         mCarPropertyManager.getPropertiesAsync(getPropertyRequests, /* cancellationSignal: */ null,
-                /* callbackExecutor: */ null, carPropertyCallback);
-        carPropertyCallback.waitForResults();
+                /* callbackExecutor: */ null, testGetPropertyCallback);
+        testGetPropertyCallback.waitForResults();
 
-        for (GetPropertyResult<?> getPropertyResult : carPropertyCallback.getGetPropertyResults()) {
+        for (GetPropertyResult<?> getPropertyResult :
+                testGetPropertyCallback.getGetPropertyResults()) {
             int requestId = getPropertyResult.getRequestId();
             int propertyId = getPropertyResult.getPropertyId();
             if (requestIdToAreaIdMap.indexOfKey(requestId) < 0) {
@@ -2155,7 +2213,8 @@ public class VehiclePropertyVerifier<T> {
             }
         }
 
-        for (PropertyAsyncError propertyAsyncError : carPropertyCallback.getPropertyAsyncErrors()) {
+        for (PropertyAsyncError propertyAsyncError :
+                testGetPropertyCallback.getPropertyAsyncErrors()) {
             int requestId = propertyAsyncError.getRequestId();
             if (requestIdToAreaIdMap.indexOfKey(requestId) < 0) {
                 assertWithMessage(
@@ -2173,7 +2232,7 @@ public class VehiclePropertyVerifier<T> {
         GetPropertyRequest getPropertyRequest = mCarPropertyManager.generateGetPropertyRequest(
                     mPropertyId, carPropertyConfig.getAreaIds()[0]);
         getPropertyRequests.add(getPropertyRequest);
-        CarPropertyCallback carPropertyCallback = new CarPropertyCallback(
+        TestGetPropertyCallback testGetPropertyCallback = new TestGetPropertyCallback(
                 /* getPropertyResultsCount: */ 1);
         assertThrows(
                 mPropertyName
@@ -2182,7 +2241,88 @@ public class VehiclePropertyVerifier<T> {
                 IllegalArgumentException.class,
                 () -> mCarPropertyManager.getPropertiesAsync(getPropertyRequests,
                         /* cancellationSignal: */ null, /* callbackExecutor: */ null,
-                        carPropertyCallback));
+                        testGetPropertyCallback));
+    }
+
+    private void verifySetPropertiesAsync() {
+        CarPropertyConfig<T> carPropertyConfig = getCarPropertyConfig();
+        if (carPropertyConfig.getAccess() == CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_READ) {
+            verifySetPropertiesAsyncFails();
+            return;
+        }
+
+        List<SetPropertyRequest<?>> setPropertyRequests = new ArrayList<>();
+        SparseIntArray requestIdToAreaIdMap = new SparseIntArray();
+        for (int areaId : carPropertyConfig.getAreaIds()) {
+            Collection<T> possibleValues = getPossibleValues(areaId);
+            if (possibleValues == null || possibleValues.size() == 0) {
+                continue;
+            }
+            for (T possibleValue : possibleValues) {
+                SetPropertyRequest setPropertyRequest =
+                        mCarPropertyManager.generateSetPropertyRequest(mPropertyId, areaId,
+                                possibleValue);
+                if (carPropertyConfig.getAccess()
+                        == CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_WRITE) {
+                    setPropertyRequest.setWaitForPropertyUpdate(false);
+                }
+                requestIdToAreaIdMap.put(setPropertyRequest.getRequestId(), areaId);
+                setPropertyRequests.add(setPropertyRequest);
+            }
+        }
+
+        TestSetPropertyCallback testSetPropertyCallback = new TestSetPropertyCallback(
+                requestIdToAreaIdMap.size());
+        mCarPropertyManager.setPropertiesAsync(setPropertyRequests, /* cancellationSignal: */ null,
+                /* callbackExecutor: */ null, testSetPropertyCallback);
+        testSetPropertyCallback.waitForResults();
+
+        for (SetPropertyResult setPropertyResult :
+                testSetPropertyCallback.getSetPropertyResults()) {
+            int requestId = setPropertyResult.getRequestId();
+            if (requestIdToAreaIdMap.indexOfKey(requestId) < 0) {
+                assertWithMessage(
+                        "setPropertiesAsync received SetPropertyResult with unknown requestId: "
+                                + setPropertyResult).fail();
+            }
+            assertThat(setPropertyResult.getPropertyId()).isEqualTo(mPropertyId);
+            assertThat(setPropertyResult.getAreaId()).isEqualTo(
+                    requestIdToAreaIdMap.get(requestId));
+            assertThat(setPropertyResult.getUpdateTimestampNanos()).isAtLeast(0);
+            assertThat(setPropertyResult.getUpdateTimestampNanos()).isLessThan(
+                    SystemClock.elapsedRealtimeNanos());
+        }
+
+        for (PropertyAsyncError propertyAsyncError :
+                testSetPropertyCallback.getPropertyAsyncErrors()) {
+            int requestId = propertyAsyncError.getRequestId();
+            if (requestIdToAreaIdMap.indexOfKey(requestId) < 0) {
+                assertWithMessage("setPropertiesAsync received PropertyAsyncError with unknown "
+                        + "requestId: " + propertyAsyncError).fail();
+            }
+            assertWithMessage("Received PropertyAsyncError when testing setPropertiesAsync: "
+                    + propertyAsyncError).fail();
+        }
+    }
+
+    private void verifySetPropertiesAsyncFails() {
+        CarPropertyConfig<T> carPropertyConfig = getCarPropertyConfig();
+        List<SetPropertyRequest<?>> setPropertyRequests = new ArrayList<>();
+        SetPropertyRequest setPropertyRequest = mCarPropertyManager.generateSetPropertyRequest(
+                mPropertyId,
+                carPropertyConfig.getAreaIds()[0],
+                getDefaultValue(carPropertyConfig.getPropertyType()));
+        setPropertyRequests.add(setPropertyRequest);
+        TestSetPropertyCallback testSetPropertyCallback = new TestSetPropertyCallback(
+                /* setPropertyResultsCount: */ 1);
+        assertThrows(
+                mPropertyName
+                        + " is a read_only property so setPropertiesAsync should throw an"
+                        + " IllegalArgumentException.",
+                IllegalArgumentException.class,
+                () -> mCarPropertyManager.setPropertiesAsync(setPropertyRequests,
+                        /* cancellationSignal: */ null, /* callbackExecutor: */ null,
+                        testSetPropertyCallback));
     }
 
     private static <U> CarPropertyValue<U> setPropertyAndWaitForChange(
