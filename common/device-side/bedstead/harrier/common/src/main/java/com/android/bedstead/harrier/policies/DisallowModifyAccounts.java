@@ -20,7 +20,6 @@ import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePoli
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIED_BY_PROFILE_OWNER;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIES_TO_OWN_USER;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.CANNOT_BE_APPLIED_BY_ROLE_HOLDER;
-import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.INHERITABLE;
 import static com.android.bedstead.nene.permissions.CommonPermissions.MANAGE_DEVICE_POLICY_ACCOUNT_MANAGEMENT;
 
 import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy;
@@ -29,7 +28,7 @@ import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy;
  * Policy for disallow modify accounts user restriction.
  */
 @EnterprisePolicy(dpc = APPLIED_BY_DEVICE_OWNER | APPLIED_BY_PROFILE_OWNER | APPLIES_TO_OWN_USER
-        | CANNOT_BE_APPLIED_BY_ROLE_HOLDER | INHERITABLE,
+        | CANNOT_BE_APPLIED_BY_ROLE_HOLDER,
         permissions = @EnterprisePolicy.Permission(
                 appliedWith = MANAGE_DEVICE_POLICY_ACCOUNT_MANAGEMENT,
                 appliesTo = APPLIES_TO_OWN_USER))
