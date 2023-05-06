@@ -46,6 +46,11 @@ public final class InputMethodManagerServiceProxyTest {
     public static final String NULL_AUTOFILL_SUGGESTIONS_CONTROLLER =
             "com.android.server.inputmethod.NullAutofillSuggestionsController";
 
+    private static final Pattern CREATE_USER_OUTPUT_REGEX =
+            Pattern.compile("Success: created user id (\\d+)");
+
+    private static final long START_USER_PROPAGATION_TIMEOUT_MILLIS = 5000L;
+
     private final Context mContext = InstrumentationRegistry.getInstrumentation().getContext();
 
     private UserManager mUserManager;
@@ -67,6 +72,45 @@ public final class InputMethodManagerServiceProxyTest {
     }
 
     @Test
+    public void testCarImmsLifecycle() {
+        int userId = UserHandle.USER_NULL;
+        try {
+            userId = createRandomUser();
+            assertThat(containsCarImmsForUser(userId)).isFalse();
+            assertWithMessage("User started").that(
+                    ShellUtils.runShellCommand("am start-user -w %d",
+                            userId)).contains("Success: user started");
+            assertThat(containsCarImmsForUser(userId)).isTrue();
+        } finally {
+            stopAndRemoveUser(userId);
+            assertThat(containsCarImmsForUser(userId)).isFalse();
+        }
+    }
+
+    private static int createRandomUser() {
+        // `pm create-user` is expected to return a string like `Success: created user id NN`
+        // where NN represents a two digits user id.
+        String shellOut = ShellUtils.runShellCommand("pm create-user testUser");
+        Matcher matcher = CREATE_USER_OUTPUT_REGEX.matcher(shellOut);
+        assertThat(matcher.matches()).isTrue();
+        assertThat(matcher.groupCount()).isEqualTo(1);
+        return Integer.parseInt(matcher.group(1));
+    }
+
+    private static void stopAndRemoveUser(int userId) {
+        ShellUtils.runShellCommand("am stop-user -w -f %d", userId);
+        assertWithMessage("User removed").that(
+                ShellUtils.runShellCommand("pm remove-user -w %d",
+                        userId)).contains("Success: removed user");
+    }
+
+    private static boolean containsCarImmsForUser(int userId) {
+        String dump = ShellUtils.runShellCommand("dumpsys input_method");
+        SparseArray<String> carImms = parseServiceConfigDump(dump);
+        return carImms.contains(userId);
+    }
+
+    @Test
     public void testAutofillIsDisabledForSystemUser() {
         String dump = ShellUtils.runShellCommand("dumpsys input_method");
         SparseArray<String> configs = parseServiceConfigDump(dump);
@@ -77,7 +121,7 @@ public final class InputMethodManagerServiceProxyTest {
                 NULL_AUTOFILL_SUGGESTIONS_CONTROLLER);
     }
 
-    private SparseArray<String> parseServiceConfigDump(String dump) {
+    private static SparseArray<String> parseServiceConfigDump(String dump) {
         Pattern dumpPattern = Pattern.compile("\\*\\*mServicesForUser\\*\\*(.+?)\\*\\*",
                 Pattern.DOTALL);
         Matcher dumpMatcher = dumpPattern.matcher(dump);
