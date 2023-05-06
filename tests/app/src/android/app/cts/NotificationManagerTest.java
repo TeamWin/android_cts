@@ -2220,7 +2220,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
 
         // wait for the activity to launch and finish
         mContext.startActivity(activityIntent);
-        Thread.sleep(500);
+        Thread.sleep(mActivityManager.isLowRamDevice() ? 1000 : 500);
 
         List<NotificationChannel> channels =
                 mContext.createPackageContextAsUser(TEST_APP, /* flags= */ 0, mContext.getUser())
@@ -2819,6 +2819,9 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
 
             assertNotificationCancelled(7, true);
             assertEquals(background8Uri, getNotificationBackgroundImageUri(8));
+            if (mActivityManager.isLowRamDevice()) {
+                Thread.sleep(500);
+            }
             assertInaccessible(background7Uri);
             assertAccessible(background8Uri);
 
@@ -2828,6 +2831,9 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
             assertNotificationCancelled(7, true);
             assertNotificationCancelled(8, true);
             assertInaccessible(background7Uri);
+            if (mActivityManager.isLowRamDevice()) {
+                Thread.sleep(500);
+            }
             assertInaccessible(background8Uri);
 
         } finally {
