@@ -25,6 +25,7 @@ import static android.autofillservice.cts.testcore.Helper.enablePccDetectionFeat
 import static android.autofillservice.cts.testcore.Helper.findAutofillIdByResourceId;
 import static android.autofillservice.cts.testcore.Helper.findNodeByResourceId;
 import static android.autofillservice.cts.testcore.Helper.getContext;
+import static android.autofillservice.cts.testcore.Helper.isPccFieldClassificationSet;
 import static android.autofillservice.cts.testcore.InstrumentedAutoFillServiceInlineEnabled.SERVICE_NAME;
 import static android.autofillservice.cts.testcore.Timeouts.MOCK_IME_TIMEOUT_MS;
 import static android.view.View.AUTOFILL_HINT_USERNAME;
@@ -65,6 +66,7 @@ import com.android.cts.mockime.ImeEventStream;
 import com.android.cts.mockime.MockImeSession;
 
 import org.junit.After;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.rules.TestRule;
 
@@ -640,6 +642,7 @@ public class InlineLoginActivityTest extends LoginActivityCommonTestCase {
     }
 
     @Test
+    @Ignore("b/281726966")
     public void testAutofill_pccDatasets() throws Exception {
         // Set service.
         enableService();
@@ -664,13 +667,16 @@ public class InlineLoginActivityTest extends LoginActivityCommonTestCase {
         mUiBot.waitForIdleSync();
 
         final InstrumentedAutoFillService.FillRequest request = sReplier.getNextFillRequest();
-        assertThat(request.hints.size()).isEqualTo(1);
-        assertThat(request.hints.get(0)).isEqualTo("username");
+        if (isPccFieldClassificationSet(sContext)) {
+            assertThat(request.hints.size()).isEqualTo(1);
+            assertThat(request.hints.get(0)).isEqualTo("username");
+        }
         disablePccDetectionFeature(sContext);
         sReplier.setIdMode(IdMode.RESOURCE_ID);
     }
 
     @Test
+    @Ignore("b/281726966")
     public void autofillPccDatasetTest_setForAllHints() throws Exception {
         // Set service.
         enableService();
@@ -694,7 +700,9 @@ public class InlineLoginActivityTest extends LoginActivityCommonTestCase {
         mUiBot.waitForIdleSync();
 
         final InstrumentedAutoFillService.FillRequest request = sReplier.getNextFillRequest();
-        assertThat(request.hints.size()).isEqualTo(3);
+        if (isPccFieldClassificationSet(sContext)) {
+            assertThat(request.hints.size()).isEqualTo(3);
+        }
 
         disablePccDetectionFeature(sContext);
         sReplier.setIdMode(IdMode.RESOURCE_ID);
