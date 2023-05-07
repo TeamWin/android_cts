@@ -16,6 +16,8 @@
 
 package android.view.accessibility.cts;
 
+import static android.view.accessibility.AccessibilityNodeInfo.CollectionInfo.UNDEFINED;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
@@ -49,11 +51,13 @@ public class AccessibilityNodeInfo_CollectionInfoTest  {
 
         c = CollectionInfo.obtain(0, 1, true);
         assertNotNull(c);
-        verifyCollectionInfo(c, 0, 1, true, CollectionInfo.SELECTION_MODE_NONE);
+        verifyCollectionInfo(c, 0, 1, true, CollectionInfo.SELECTION_MODE_NONE,
+                UNDEFINED, UNDEFINED);
 
         c = CollectionInfo.obtain(1, 2, true, CollectionInfo.SELECTION_MODE_MULTIPLE);
         assertNotNull(c);
-        verifyCollectionInfo(c, 1, 2, true, CollectionInfo.SELECTION_MODE_MULTIPLE);
+        verifyCollectionInfo(c, 1, 2, true, CollectionInfo.SELECTION_MODE_MULTIPLE,
+                UNDEFINED, UNDEFINED);
     }
 
     @SmallTest
@@ -62,20 +66,43 @@ public class AccessibilityNodeInfo_CollectionInfoTest  {
         CollectionInfo c;
 
         c = new CollectionInfo(0, 1, true);
-        verifyCollectionInfo(c, 0, 1, true, CollectionInfo.SELECTION_MODE_NONE);
+        verifyCollectionInfo(c, 0, 1, true, CollectionInfo.SELECTION_MODE_NONE,
+                UNDEFINED, UNDEFINED);
 
         c = new CollectionInfo(1, 2, true, CollectionInfo.SELECTION_MODE_MULTIPLE);
-        verifyCollectionInfo(c, 1, 2, true, CollectionInfo.SELECTION_MODE_MULTIPLE);
+        verifyCollectionInfo(c, 1, 2, true, CollectionInfo.SELECTION_MODE_MULTIPLE,
+                UNDEFINED, UNDEFINED);
+
+        // Test default values.
+        c = new CollectionInfo.Builder()
+                .setSelectionMode(CollectionInfo.SELECTION_MODE_MULTIPLE)
+                .build();
+        verifyCollectionInfo(c, 0, 0, false, CollectionInfo.SELECTION_MODE_MULTIPLE, UNDEFINED,
+                UNDEFINED);
+
+        c = new CollectionInfo.Builder()
+                .setRowCount(1)
+                .setColumnCount(2)
+                .setHierarchical(true)
+                .setSelectionMode(CollectionInfo.SELECTION_MODE_MULTIPLE)
+                .setItemCount(10)
+                .setImportantForAccessibilityItemCount(3)
+                .build();
+        verifyCollectionInfo(c, 1, 2, true, CollectionInfo.SELECTION_MODE_MULTIPLE, 10, 3);
     }
 
     /**
      * Verifies all properties of the <code>info</code> with input expected values.
      */
     public static void verifyCollectionInfo(CollectionInfo info, int rowCount, int columnCount,
-            boolean hierarchical, int selectionMode) {
+            boolean hierarchical, int selectionMode, int itemCount,
+            int numItemsUnimportantForAccessibility) {
         assertEquals(rowCount, info.getRowCount());
         assertEquals(columnCount, info.getColumnCount());
         assertSame(hierarchical, info.isHierarchical());
         assertEquals(selectionMode, info.getSelectionMode());
+        assertEquals(itemCount, info.getItemCount());
+        assertEquals(numItemsUnimportantForAccessibility,
+                info.getImportantForAccessibilityItemCount());
     }
 }
