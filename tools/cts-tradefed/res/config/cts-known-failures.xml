@@ -324,4 +324,10 @@
     <option name="compatibility:exclude-filter" value="CtsGameManagerTestCases[instant] android.gamemanager.cts.GameManagerTest#testSetGameStatePerformanceMode" />
     <option name="compatibility:exclude-filter" value="CtsGameManagerTestCases[instant] android.gamemanager.cts.GameManagerTest#testSetGameStatePerformanceMode_withParams" />
     <option name="compatibility:exclude-filter" value="CtsGameManagerTestCases[instant] android.gamemanager.cts.GameManagerTest#testSetGameStateStandardMode" />
+
+    <!-- b/279072130 -->
+    <option name="compatibility:exclude-filter" value="CtsPhotoPickerTest[run-on-clone-profile]" />
+    <option name="compatibility:exclude-filter" value="CtsDevicePolicyTestCases[run-on-clone-profile]" />
+    <option name="compatibility:exclude-filter" value="CtsOsTestCases[run-on-clone-profile]" />
+    <option name="compatibility:exclude-filter" value="CtsMultiUserTestCases[run-on-clone-profile]" />
 </configuration>
