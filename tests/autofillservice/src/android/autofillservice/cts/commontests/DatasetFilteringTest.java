@@ -540,6 +540,7 @@ public abstract class DatasetFilteringTest extends AbstractLoginActivityTestCase
     @Test
     @AppModeFull(reason = "testFilter_usingKeyboard() is enough")
     public void testFilter_mixPlainAndRegex_usingKeyboard() throws Exception {
+        mUiBot.assumeMinimumResolution(500);
         final String plain = "Plain";
         final String regexPlain = "RegexPlain";
         final String authRegex = "AuthRegex";

@@ -135,8 +135,9 @@ public abstract class CustomDescriptionWithLinkTestCase<A extends AbstractAutoFi
      */
     @Test
     public final void testTapLink_tapBack_thenStartOverByTouchOutsideAndFocus()
-            throws Exception {
-        tapLinkThenTapBackThenStartOverTest(PostSaveLinkTappedAction.TOUCH_OUTSIDE, false);
+              throws Exception {
+      mUiBot.assumeMinimumResolution(500);
+      tapLinkThenTapBackThenStartOverTest(PostSaveLinkTappedAction.TOUCH_OUTSIDE, false);
     }
 
     /**
@@ -148,7 +149,8 @@ public abstract class CustomDescriptionWithLinkTestCase<A extends AbstractAutoFi
     @Test
     public void testTapLink_tapBack_thenStartOverByTouchOutsideAndManualRequest()
             throws Exception {
-        tapLinkThenTapBackThenStartOverTest(PostSaveLinkTappedAction.TOUCH_OUTSIDE, true);
+      mUiBot.assumeMinimumResolution(500);
+      tapLinkThenTapBackThenStartOverTest(PostSaveLinkTappedAction.TOUCH_OUTSIDE, true);
     }
 
     /**
