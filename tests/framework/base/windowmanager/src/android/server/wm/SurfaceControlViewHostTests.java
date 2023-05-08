@@ -1183,7 +1183,10 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
         });
         // TODO(b/279051608): Add touchable regions in WindowInfo test so we can make sure the
         // touchable regions for the host have been set before proceeding.
-        waitForWindowVisible(mSurfaceView);
+        assertTrue("Failed to wait for host window to be visible",
+                waitForWindowVisible(mSurfaceView));
+        assertTrue("Failed to wait for embedded window to be visible",
+                waitForWindowVisible(mTestService.getWindowToken()));
         mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSurfaceView);
 
         int retryCount = 0;
@@ -1211,7 +1214,11 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
         });
         // TODO(b/279051608): Add touchable regions in WindowInfo test so we can make sure the
         // touchable regions for the host have been set before proceeding.
-        waitForWindowVisible(mSurfaceView);
+        assertTrue("Failed to wait for host window to be visible",
+                waitForWindowVisible(mSurfaceView));
+        assertTrue("Failed to wait for embedded window to be visible",
+                waitForWindowVisible(mTestService.getWindowToken()));
+
         mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSurfaceView);
 
         assertFalse(mTestService.getViewIsTouched());

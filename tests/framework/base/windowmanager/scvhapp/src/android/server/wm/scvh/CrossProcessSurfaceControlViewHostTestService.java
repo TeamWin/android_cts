@@ -16,6 +16,10 @@
 
 package android.server.wm.scvh;
 
+import static android.server.wm.BuildUtils.HW_TIMEOUT_MULTIPLIER;
+
+import static org.junit.Assert.assertTrue;
+
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
@@ -35,7 +39,6 @@ import androidx.annotation.Nullable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-
 public class CrossProcessSurfaceControlViewHostTestService extends Service {
     private final ICrossProcessSurfaceControlViewHostTestService mBinder = new ServiceImpl();
     private Handler mHandler;
@@ -43,6 +46,8 @@ public class CrossProcessSurfaceControlViewHostTestService extends Service {
     class MotionRecordingView extends View {
         boolean mGotEvent = false;
         boolean mGotObscuredEvent = false;
+
+        private CountDownLatch mReceivedTouchLatch = new CountDownLatch(1);
 
         MotionRecordingView(Context c) {
             super(c);
@@ -56,6 +61,7 @@ public class CrossProcessSurfaceControlViewHostTestService extends Service {
                     mGotObscuredEvent = true;
                 }
             }
+            mReceivedTouchLatch.countDown();
             return true;
         }
 
@@ -71,13 +77,14 @@ public class CrossProcessSurfaceControlViewHostTestService extends Service {
             }
         }
 
-        void reset() {
-            synchronized (this) {
-                mGotEvent = false;
-                mGotObscuredEvent = false;
+        void waitOnEvent() {
+            try {
+                mReceivedTouchLatch.await(HW_TIMEOUT_MULTIPLIER * 5L, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
             }
         }
     }
+
     @Override
     public void onCreate() {
         mHandler = new Handler(Looper.getMainLooper());
@@ -99,22 +106,19 @@ public class CrossProcessSurfaceControlViewHostTestService extends Service {
 
     SurfaceControlViewHost.SurfacePackage createSurfacePackage(IBinder hostInputToken) {
         mView = new MotionRecordingView(this);
-        mSurfaceControlViewHost = new SurfaceControlViewHost(this, getDefaultDisplay(), hostInputToken);
+        mSurfaceControlViewHost = new SurfaceControlViewHost(this, getDefaultDisplay(),
+                hostInputToken);
         mSurfaceControlViewHost.setView(mView, 100, 100);
         return mSurfaceControlViewHost.getSurfacePackage();
     }
 
     private class ServiceImpl extends ICrossProcessSurfaceControlViewHostTestService.Stub {
-        private final CrossProcessSurfaceControlViewHostTestService mService =
-            CrossProcessSurfaceControlViewHostTestService.this;
-
         private void drainHandler() {
             final CountDownLatch latch = new CountDownLatch(1);
-            mHandler.post(() -> {
-                latch.countDown();
-            });
+            mHandler.post(latch::countDown);
             try {
-                latch.await(1, TimeUnit.SECONDS);
+                assertTrue("Failed to wait for handler to drain",
+                        latch.await(HW_TIMEOUT_MULTIPLIER * 1L, TimeUnit.SECONDS));
             } catch (Exception e) {
             }
         }
@@ -128,7 +132,8 @@ public class CrossProcessSurfaceControlViewHostTestService extends Service {
                 mView.invalidate();
             });
             try {
-                latch.await(1, TimeUnit.SECONDS);
+                assertTrue("Failed to wait for frame to draw",
+                        latch.await(HW_TIMEOUT_MULTIPLIER * 1L, TimeUnit.SECONDS));
             } catch (Exception e) {
                 return null;
             }
@@ -138,18 +143,13 @@ public class CrossProcessSurfaceControlViewHostTestService extends Service {
         @Override
         public boolean getViewIsTouched() {
             drainHandler();
+            mView.waitOnEvent();
             return mView.gotEvent();
         }
 
         @Override
         public boolean getViewIsTouchedAndObscured() {
             return getViewIsTouched() && mView.gotObscuredTouch();
-        }
-
-        @Override
-        public void resetViewIsTouched() {
-            drainHandler();
-            mView.reset();
         }
 
         @Override
