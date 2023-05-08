@@ -37,12 +37,14 @@ public class BuildHostTests extends BaseHostJUnit4Test {
     private static final String RO_DEBUGGABLE = "ro.debuggable";
     private static final String RO_SECURE = "ro.secure";
     private static final String RO_BUILD_TYPE = " ro.build.type";
+    private static final String EXPECTED_BUILD_VARIANT = "user";
 
     @Test
     @RestrictedBuildTest
     public void testIsSecureUserBuild() throws DeviceNotAvailableException {
-        assertEquals("Must be a user build", getDevice().getProperty(RO_BUILD_TYPE), "user");
-        assertEquals("Must be a non-debuggable build", getDevice().getProperty(RO_DEBUGGABLE), "0");
-        assertEquals("Must be a secure build", getDevice().getProperty(RO_SECURE), "1");
+        assertEquals("Must be a user build", EXPECTED_BUILD_VARIANT,
+                getDevice().getProperty(RO_BUILD_TYPE));
+        assertEquals("Must be a non-debuggable build", "0", getDevice().getProperty(RO_DEBUGGABLE));
+        assertEquals("Must be a secure build", "1", getDevice().getProperty(RO_SECURE));
     }
 }
