@@ -5291,6 +5291,29 @@ public class ImsServiceTest {
 
         triggerFrameworkConnectToCarrierImsService();
 
+        ImsManager imsManager = getContext().getSystemService(ImsManager.class);
+        if (imsManager == null) {
+            fail("Cannot find IMS service");
+        }
+
+        LinkedBlockingQueue<Integer> stateQueue = new LinkedBlockingQueue<>();
+        ImsStateCallback stateCallback = buildImsStateCallback(stateQueue);
+
+        ImsMmTelManager mmTelManager = null;
+        final UiAutomation automan = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        try {
+            automan.adoptShellPermissionIdentity();
+            mmTelManager = imsManager.getImsMmTelManager(sTestSub);
+            mmTelManager.registerImsStateCallback(getContext().getMainExecutor(), stateCallback);
+        } finally {
+            automan.dropShellPermissionIdentity();
+        }
+
+        // expects FEATURE_MMTEL STATE_READY
+        assertEquals(FEATURE_STATE_READY, waitForIntResult(stateQueue));
+
+        mmTelManager.unregisterImsStateCallback(stateCallback);
+
         // Start de-registered
         ImsReasonInfo reasonInfo = new ImsReasonInfo(ImsReasonInfo.CODE_LOCAL_NETWORK_NO_SERVICE,
                 ImsReasonInfo.CODE_UNSPECIFIED, "");
@@ -5306,11 +5329,8 @@ public class ImsServiceTest {
             }
         };
 
-        final UiAutomation automan = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         try {
             automan.adoptShellPermissionIdentity();
-            ImsManager imsManager = getContext().getSystemService(ImsManager.class);
-            ImsMmTelManager mmTelManager = imsManager.getImsMmTelManager(sTestSub);
             mmTelManager.registerImsRegistrationCallback(getContext().getMainExecutor(), callback);
         } finally {
             automan.dropShellPermissionIdentity();
@@ -5329,6 +5349,13 @@ public class ImsServiceTest {
         receivedInfo = waitForResult(mDeregQueue);
         assertNotNull(receivedInfo);
         assertEquals(reasonInfo, receivedInfo);
+
+        try {
+            automan.adoptShellPermissionIdentity();
+            mmTelManager.unregisterImsRegistrationCallback(callback);
+        } finally {
+            automan.dropShellPermissionIdentity();
+        }
     }
 
     @Ignore("RegistrationManager.RegistrationCallback#onUnregistered(ImsReasonInfo,int,int)"
