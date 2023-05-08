@@ -151,7 +151,8 @@ public class TileServiceRequestVerifierActivity extends InteractiveVerifierActiv
                     next();
                 }
             };
-            mContext.registerReceiver(br, new IntentFilter(ACTION_REMOVE_PACKAGE));
+            mContext.registerReceiver(br, new IntentFilter(ACTION_REMOVE_PACKAGE),
+                    Context.RECEIVER_EXPORTED);
             return br;
         }
 
