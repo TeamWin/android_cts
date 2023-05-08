@@ -159,6 +159,8 @@ public final class PreCreateUsersHostTest extends CarHostJUnit4TestCase {
         deletePreCreatedUsers();
         requiresExtraUsers(2);
 
+        waitUntilUserPermissionsIsReady(-1);
+
         // Create a normal reference user
         int referenceUserId = isGuest
                 ? createGuestUser("PreCreatedUsersTest_Reference_Guest")
