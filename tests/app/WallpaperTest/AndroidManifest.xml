@@ -72,7 +72,8 @@
         </service>
 
         <activity android:name=".WallpaperTestActivity"
-                  android:theme="@style/Theme.Transparent">
+                  android:theme="@style/Theme.Transparent"
+                  android:showWhenLocked="true">
         </activity>
 
     </application>
