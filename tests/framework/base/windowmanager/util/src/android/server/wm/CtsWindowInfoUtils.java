@@ -142,6 +142,12 @@ public class CtsWindowInfoUtils {
                 view::getWindowToken);
     }
 
+    public static boolean waitForWindowVisible(@NonNull IBinder windowToken)
+            throws InterruptedException {
+        return waitForWindowInfo(windowInfo -> true, HW_TIMEOUT_MULTIPLIER * 5L, TimeUnit.SECONDS,
+                () -> windowToken);
+    }
+
     /**
      * Calls {@link CtsWindowInfoUtils#waitForWindowOnTop(int, TimeUnit, Supplier)}. Adopts
      * required permissions and waits five seconds before timing out.

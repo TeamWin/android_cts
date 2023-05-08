@@ -37,6 +37,7 @@ import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.Test;
 
+import java.util.Arrays;
 import java.util.Locale;
 import java.util.Scanner;
 
@@ -97,12 +98,11 @@ public class HdrCapabilitiesAtomTests {
         Display display = displayManager.getDisplay(Display.DEFAULT_DISPLAY);
         Display.Mode[] supportedModes = display.getSupportedModes();
 
-        int modesThatSupportDv = 0;
-        for (Display.Mode mode : supportedModes) {
-            if (mode.getSupportedHdrTypes()[0] == HDR_TYPE_DOLBY_VISION) {
-                modesThatSupportDv++;
-            }
-        }
+        long modesThatSupportDv = Arrays.stream(supportedModes)
+                .filter(mode -> Arrays.stream(mode.getSupportedHdrTypes())
+                        .anyMatch(hdrType -> hdrType == HDR_TYPE_DOLBY_VISION))
+                .count();
+
         boolean has4k30Issue = modesThatSupportDv != 0
                 && modesThatSupportDv < supportedModes.length;
 
