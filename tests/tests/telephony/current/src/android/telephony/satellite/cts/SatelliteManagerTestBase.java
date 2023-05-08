@@ -246,6 +246,11 @@ public class SatelliteManagerTestBase {
             return true;
         }
 
+        public void clearPointingInfo() {
+            mPointingInfo = null;
+            mPositionChangeSemaphore.drainPermits();
+        }
+
         public void clearSendDatagramStateChanges() {
             synchronized (mSendDatagramStateChangesLock) {
                 logd("clearSendDatagramStateChanges");
