@@ -271,7 +271,7 @@ public class MultiCodecPerfTestBase {
 
     public int getRequiredMinConcurrentInstances720p(boolean hasVP9) throws IOException {
         // Below T, VP9 requires 60 fps at 720p and minimum of 2 instances
-        if (!Utils.isTPerfClass() && hasVP9) {
+        if (Utils.isBeforeTPerfClass() && hasVP9) {
             return REQUIRED_MIN_CONCURRENT_INSTANCES_FOR_VP9;
         }
         return REQUIRED_MIN_CONCURRENT_INSTANCES;
