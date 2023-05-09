@@ -19,6 +19,7 @@ package android.devicepolicy.cts;
 import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
 import static android.Manifest.permission.PROVISION_DEMO_DEVICE;
 import static android.app.admin.DevicePolicyManager.ACTION_MANAGED_PROFILE_PROVISIONED;
+import static android.app.admin.DevicePolicyManager.ACTION_PROVISION_MANAGED_PROFILE;
 import static android.app.admin.DevicePolicyManager.EXTRA_PROVISIONING_ACCOUNT_TO_MIGRATE;
 import static android.app.admin.DevicePolicyManager.EXTRA_PROVISIONING_ADMIN_EXTRAS_BUNDLE;
 import static android.app.admin.DevicePolicyManager.EXTRA_PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME;
@@ -38,12 +39,12 @@ import static android.app.admin.DevicePolicyManager.PROVISIONING_TRIGGER_NFC;
 import static android.app.admin.DevicePolicyManager.STATE_USER_SETUP_FINALIZED;
 import static android.app.admin.ProvisioningException.ERROR_PRE_CONDITION_FAILED;
 import static android.content.Intent.EXTRA_USER;
-import static android.content.pm.PackageManager.FEATURE_DEVICE_ADMIN;
-import static android.content.pm.PackageManager.FEATURE_MANAGED_USERS;
 import static android.nfc.NfcAdapter.ACTION_NDEF_DISCOVERED;
 import static android.nfc.NfcAdapter.EXTRA_NDEF_MESSAGES;
 
 import static com.android.bedstead.nene.appops.AppOpsMode.ALLOWED;
+import static com.android.bedstead.nene.packages.CommonPackages.FEATURE_DEVICE_ADMIN;
+import static com.android.bedstead.nene.packages.CommonPackages.FEATURE_MANAGED_USERS;
 import static com.android.bedstead.nene.permissions.CommonPermissions.INTERACT_ACROSS_PROFILES;
 import static com.android.bedstead.nene.permissions.CommonPermissions.INTERACT_ACROSS_USERS;
 import static com.android.bedstead.nene.permissions.CommonPermissions.MANAGE_PROFILE_AND_DEVICE_OWNERS;
@@ -73,6 +74,7 @@ import android.os.Bundle;
 import android.os.Parcelable;
 import android.os.PersistableBundle;
 import android.os.UserHandle;
+import android.os.UserManager;
 import android.provider.Settings;
 
 import com.android.bedstead.deviceadminapp.DeviceAdminApp;
@@ -84,6 +86,7 @@ import com.android.bedstead.harrier.annotations.EnsureHasAdditionalUser;
 import com.android.bedstead.harrier.annotations.EnsureHasNoWorkProfile;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.EnsureHasSecondaryUser;
+import com.android.bedstead.harrier.annotations.EnsureHasUserRestriction;
 import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
 import com.android.bedstead.harrier.annotations.EnsureIsNotDemoDevice;
 import com.android.bedstead.harrier.annotations.PermissionTest;
@@ -409,7 +412,7 @@ public final class ProvisioningTest {
                             .filter(Package::isInstalled)
                             .collect(Collectors.toSet());
 
-            for(Package crossProfilePackage : defaultPackages) {
+            for (Package crossProfilePackage : defaultPackages) {
                 assertWithMessage("Checking crossprofilepackage : "
                         + crossProfilePackage + " on parent").that(
                         crossProfilePackage.appOps()
@@ -508,7 +511,8 @@ public final class ProvisioningTest {
         try (TestAppInstance testApp = sNoHeadlessSupportTestApp.install()) {
             FullyManagedDeviceProvisioningParams params =
                     new FullyManagedDeviceProvisioningParams.Builder(
-                            new ComponentName(testApp.packageName(), testApp.packageName() + ".DeviceAdminReceiver"),
+                            new ComponentName(testApp.packageName(),
+                                    testApp.packageName() + ".DeviceAdminReceiver"),
                             DEVICE_OWNER_NAME)
                             .build();
 
@@ -1474,6 +1478,51 @@ public final class ProvisioningTest {
                     .isEqualTo(ACCOUNT_WITH_EXISTING_TYPE);
 
         }
+    }
+
+    @Test
+    @EnsureHasNoDpc
+    @RequireFeature(FEATURE_MANAGED_USERS)
+    @ApiTest(apis = "android.app.admin.DevicePolicyManager#isProvisioningAllowed")
+    public void isProvisioningAllowed_hasManagedUsersFeature_returnsTrue() {
+        assertThat(sDevicePolicyManager
+                .isProvisioningAllowed(ACTION_PROVISION_MANAGED_PROFILE)).isTrue();
+    }
+
+    @Test
+    @RequireFeature(FEATURE_MANAGED_USERS)
+    @EnsureHasProfileOwner
+    @ApiTest(apis = "android.app.admin.DevicePolicyManager#isProvisioningAllowed")
+    public void isProvisioningAllowed_userIsManaged_returnsFalse() {
+        assertThat(sDevicePolicyManager
+                .isProvisioningAllowed(ACTION_PROVISION_MANAGED_PROFILE)).isFalse();
+    }
+
+    @Test
+    @RequireFeature(FEATURE_MANAGED_USERS)
+    @EnsureHasWorkProfile(dpcIsPrimary = true)
+    @ApiTest(apis = "android.app.admin.DevicePolicyManager#isProvisioningAllowed")
+    public void isProvisioningAllowed_profileIsManaged_returnsFalse() {
+        assertThat(sDevicePolicyManager
+                .isProvisioningAllowed(ACTION_PROVISION_MANAGED_PROFILE)).isFalse();
+    }
+
+    @Test
+    @EnsureHasUserRestriction(DISALLOW_ADD_MANAGED_PROFILE)
+    @RequireFeature(FEATURE_MANAGED_USERS)
+    @ApiTest(apis = "android.app.admin.DevicePolicyManager#isProvisioningAllowed")
+    public void isProvisioningAllowed_disallowAddManagedProfile_returnsFalse() {
+        assertThat(sDevicePolicyManager
+                .isProvisioningAllowed(ACTION_PROVISION_MANAGED_PROFILE)).isFalse();
+    }
+
+    @Test
+    @EnsureHasNoDpc
+    @RequireDoesNotHaveFeature(FEATURE_MANAGED_USERS)
+    @ApiTest(apis = "android.app.admin.DevicePolicyManager#isProvisioningAllowed")
+    public void isProvisioningAllowed_doesNotHaveManagedUsersFeature_returnsFalse() {
+        assertThat(sDevicePolicyManager
+                .isProvisioningAllowed(ACTION_PROVISION_MANAGED_PROFILE)).isFalse();
     }
 
     private Intent createNfcIntentFromMap(Map<String, String> input)
