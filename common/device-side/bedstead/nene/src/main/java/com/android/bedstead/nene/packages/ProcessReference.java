@@ -75,17 +75,23 @@ public final class ProcessReference {
      */
     public void kill() {
         int pid = pid();
+
+        // Disable and re-enable kills the process
+        mPackage.disable();
+        mPackage.enable();
+
+
 //        // Removing a permission kills the process, so we can grant then remove an arbitrary
 //        // permission
-        String permission = getGrantablePermission();
-
-        if (mPackage.hasPermission(mUser, permission)) {
-            mPackage.denyPermission(mUser, permission);
-            mPackage.grantPermission(mUser, permission);
-        } else {
-            mPackage.grantPermission(mUser, permission);
-            mPackage.denyPermission(mUser, permission);
-        }
+//        String permission = getGrantablePermission();
+//
+//        if (mPackage.hasPermission(mUser, permission)) {
+//            mPackage.denyPermission(mUser, permission);
+//            mPackage.grantPermission(mUser, permission);
+//        } else {
+//            mPackage.grantPermission(mUser, permission);
+//            mPackage.denyPermission(mUser, permission);
+//        }
 
         Poll.forValue("pid", () -> {
             ProcessReference other = mPackage.runningProcess(mUser);
