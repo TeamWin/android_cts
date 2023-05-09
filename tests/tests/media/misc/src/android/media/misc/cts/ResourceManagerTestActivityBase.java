@@ -36,6 +36,7 @@ public class ResourceManagerTestActivityBase extends Activity {
     private static final int FRAME_RATE = 10;
     // 10 seconds between I-frames
     private static final int IFRAME_INTERVAL = 10;
+    protected static final int MAX_INSTANCES = 32;
 
     private int mWidth = 0;
     private int mHeight = 0;
