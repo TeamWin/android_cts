@@ -16,7 +16,12 @@
 
 package android.devicepolicy.cts;
 
+import static android.app.admin.DevicePolicyIdentifiers.USER_CONTROL_DISABLED_PACKAGES_POLICY;
+
 import static com.android.bedstead.metricsrecorder.truth.MetricQueryBuilderSubject.assertThat;
+import static com.android.bedstead.nene.flags.CommonFlags.DevicePolicyManager.ENABLE_DEVICE_POLICY_ENGINE_FLAG;
+import static com.android.bedstead.nene.flags.CommonFlags.NAMESPACE_DEVICE_POLICY_MANAGER;
+import static com.android.bedstead.nene.permissions.CommonPermissions.MANAGE_PROFILE_AND_DEVICE_OWNERS;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
@@ -25,6 +30,10 @@ import static org.testng.Assert.assertThrows;
 
 import android.Manifest.permission;
 import android.app.ActivityManager;
+import android.app.admin.DevicePolicyManager;
+import android.app.admin.NoArgsPolicyKey;
+import android.app.admin.PolicyState;
+import android.devicepolicy.cts.utils.PolicyEngineUtils;
 import android.stats.devicepolicy.EventId;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
@@ -42,15 +51,18 @@ import com.android.bedstead.nene.packages.Package;
 import com.android.bedstead.nene.utils.Poll;
 import com.android.bedstead.testapp.TestApp;
 import com.android.bedstead.testapp.TestAppInstance;
+import com.android.compatibility.common.util.ApiTest;
 
 import org.junit.Assume;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.runner.RunWith;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 @RunWith(BedsteadJUnit4.class)
 public final class UserControlDisabledPackagesTest {
@@ -64,6 +76,10 @@ public final class UserControlDisabledPackagesTest {
 
     private static final ActivityManager sActivityManager =
             TestApis.context().instrumentedContext().getSystemService(ActivityManager.class);
+
+    private static final DevicePolicyManager sLocalDevicePolicyManager =
+            TestApis.context().instrumentedContext()
+                    .getSystemService(DevicePolicyManager.class);
 
     private static final String PACKAGE_NAME = "com.android.foo.bar.baz";
 
@@ -101,7 +117,7 @@ public final class UserControlDisabledPackagesTest {
         }
     }
 
-    @PolicyAppliesTest(policy = UserControlDisabledPackages.class)
+    @CanSetPolicyTest(policy = UserControlDisabledPackages.class)
     @Postsubmit(reason = "b/181993922 automatically marked flaky")
     public void setUserControlDisabledPackages_toOneProtectedPackage() {
         List<String> originalDisabledPackages =
@@ -121,15 +137,15 @@ public final class UserControlDisabledPackagesTest {
         }
     }
 
-    @PolicyAppliesTest(policy = UserControlDisabledPackages.class)
+    @CanSetPolicyTest(policy = UserControlDisabledPackages.class)
     @Postsubmit(reason = "b/181993922 automatically marked flaky")
     public void setUserControlDisabledPackages_toEmptyProtectedPackages() {
         List<String> originalDisabledPackages =
                 sDeviceState.dpc().devicePolicyManager().getUserControlDisabledPackages(
                         sDeviceState.dpc().componentName());
 
-        sDeviceState.dpc().devicePolicyManager().setUserControlDisabledPackages(sDeviceState.dpc().componentName(),
-                Collections.emptyList());
+        sDeviceState.dpc().devicePolicyManager().setUserControlDisabledPackages(
+                sDeviceState.dpc().componentName(), Collections.emptyList());
         try {
             assertThat(
                     sDeviceState.dpc().devicePolicyManager().getUserControlDisabledPackages(
@@ -149,7 +165,7 @@ public final class UserControlDisabledPackagesTest {
                         Collections.emptyList()));
     }
 
-    @PolicyAppliesTest(policy = UserControlDisabledPackages.class)
+    @CanSetPolicyTest(policy = UserControlDisabledPackages.class)
     @Postsubmit(reason = "b/181993922 automatically marked flaky")
     public void
     getUserControlDisabledPackages_noProtectedPackagesSet_returnsEmptyProtectedPackages() {
@@ -231,6 +247,39 @@ public final class UserControlDisabledPackagesTest {
             sDeviceState.dpc().devicePolicyManager().setUserControlDisabledPackages(
                     sDeviceState.dpc().componentName(),
                     originalDisabledPackages);
+        }
+    }
+
+    @PolicyAppliesTest(policy = UserControlDisabledPackages.class)
+    @Postsubmit(reason = "b/181993922 automatically marked flaky")
+    @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
+    @ApiTest(apis = {"android.app.admin.DevicePolicyManager#setUserControlDisabledPackages",
+            "android.app.admin.DevicePolicyManager#getUserControlDisabledPackages"})
+    public void setUserControlDisabledPackages_policyMigration_works() {
+        TestApis.flags().set(
+                NAMESPACE_DEVICE_POLICY_MANAGER, ENABLE_DEVICE_POLICY_ENGINE_FLAG, "false");
+        try {
+            sDeviceState.dpc().devicePolicyManager().setUserControlDisabledPackages(
+                    sDeviceState.dpc().componentName(), Arrays.asList(PACKAGE_NAME));
+
+            sLocalDevicePolicyManager.triggerDevicePolicyEngineMigration(true);
+            TestApis.flags().set(
+                    NAMESPACE_DEVICE_POLICY_MANAGER, ENABLE_DEVICE_POLICY_ENGINE_FLAG, "true");
+
+            PolicyState<Set<String>> policyState = PolicyEngineUtils.getStringSetPolicyState(
+                    new NoArgsPolicyKey(USER_CONTROL_DISABLED_PACKAGES_POLICY),
+                    TestApis.users().instrumented().userHandle());
+            assertThat(policyState.getCurrentResolvedPolicy()).containsExactly(
+                    PACKAGE_NAME);
+            assertThat(sDeviceState.dpc().devicePolicyManager().getUserControlDisabledPackages(
+                    sDeviceState.dpc().componentName()))
+                    .containsExactly(PACKAGE_NAME);
+        } finally {
+            sDeviceState.dpc().devicePolicyManager().setUserControlDisabledPackages(
+                    sDeviceState.dpc().componentName(),
+                    new ArrayList<>());
+            TestApis.flags().set(
+                    NAMESPACE_DEVICE_POLICY_MANAGER, ENABLE_DEVICE_POLICY_ENGINE_FLAG, null);
         }
     }
 
