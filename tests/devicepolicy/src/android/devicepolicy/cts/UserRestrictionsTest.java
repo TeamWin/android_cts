@@ -21,8 +21,6 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assume.assumeFalse;
 import static org.testng.Assert.assertThrows;
 
-import android.content.Context;
-
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.Postsubmit;
@@ -49,7 +47,6 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
 @RunWith(BedsteadJUnit4.class)
-@com.android.bedstead.harrier.annotations.enterprise.CoexistenceFlagsOn
 public final class UserRestrictionsTest {
 
     @StringTestParameter({

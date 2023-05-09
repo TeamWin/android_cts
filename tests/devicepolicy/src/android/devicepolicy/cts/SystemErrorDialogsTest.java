@@ -20,7 +20,6 @@ import static android.provider.Settings.Secure.SHOW_FIRST_CRASH_DIALOG_DEV_OPTIO
 
 import static com.android.bedstead.harrier.UserType.ADDITIONAL_USER;
 import static com.android.bedstead.harrier.UserType.INITIAL_USER;
-import static com.android.bedstead.harrier.annotations.AnnotationRunPrecedence.LAST;
 import static com.android.bedstead.nene.userrestrictions.CommonUserRestrictions.DISALLOW_SYSTEM_ERROR_DIALOGS;
 import static com.android.queryable.queries.ActivityQuery.activity;
 
@@ -29,7 +28,6 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.testng.Assert.assertThrows;
 
 import android.provider.Settings;
-import android.util.Log;
 
 import androidx.test.uiautomator.By;
 import androidx.test.uiautomator.Until;
@@ -41,11 +39,9 @@ import com.android.bedstead.harrier.annotations.EnsureGlobalSettingSet;
 import com.android.bedstead.harrier.annotations.EnsureHasUserRestriction;
 import com.android.bedstead.harrier.annotations.EnsureSecureSettingSet;
 import com.android.bedstead.harrier.annotations.Postsubmit;
-import com.android.bedstead.harrier.annotations.RequireNotHeadlessSystemUserMode;
 import com.android.bedstead.harrier.annotations.UserTest;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
-import com.android.bedstead.harrier.annotations.enterprise.CoexistenceFlagsOn;
 import com.android.bedstead.harrier.policies.DisallowSystemErrorDialogs;
 import com.android.bedstead.harrier.policies.DisallowSystemErrorDialogsPermissionBased;
 import com.android.bedstead.nene.TestApis;
@@ -82,7 +78,6 @@ public final class SystemErrorDialogsTest {
     @ApiTest(apis = "android.os.UserManager#DISALLOW_SYSTEM_ERROR_DIALOGS")
     // TODO: Add restriction for target U+
     // TODO: Test that this is actually global
-    @CoexistenceFlagsOn(weight = LAST)
     public void addUserRestriction_disallowSystemErrorDialogs_isSet() {
         try {
             sDeviceState.dpc().devicePolicyManager().addUserRestriction(
@@ -103,7 +98,6 @@ public final class SystemErrorDialogsTest {
     @ApiTest(apis = "android.os.UserManager#DISALLOW_SYSTEM_ERROR_DIALOGS")
     // TODO: Add restriction for target U+
     // TODO: Test that this is actually global
-    @CoexistenceFlagsOn(weight = LAST)
     public void addUserRestrictionGlobally_disallowSystemErrorDialogs_isSet() {
         try {
             sDeviceState.dpc().devicePolicyManager().addUserRestrictionGlobally(
@@ -123,7 +117,6 @@ public final class SystemErrorDialogsTest {
     @ApiTest(apis = "android.os.UserManager#DISALLOW_SYSTEM_ERROR_DIALOGS")
     // TODO: Add restriction for target U+
     // TODO: Test that this is actually global
-    @CoexistenceFlagsOn(weight = LAST)
     public void clearUserRestriction_disallowSystemErrorDialogs_isNotSet() {
         try {
             sDeviceState.dpc().devicePolicyManager().addUserRestriction(

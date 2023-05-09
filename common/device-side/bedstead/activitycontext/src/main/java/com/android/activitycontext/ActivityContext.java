@@ -243,7 +243,9 @@ public class ActivityContext extends Activity {
         try {
             Assume.assumeTrue(
                     "Requires user to be switched to but instrumented user cannot be switched to",
-                    TestApis.users().instrumented().canBeSwitchedTo());
+                    TestApis.users().instrumented().canBeSwitchedTo() ||
+                            (TestApis.users().instrumented().isProfile()
+                                    && TestApis.users().instrumented().parent().canBeSwitchedTo()));
             Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
 
             if (!instrumentation.getContext().getPackageName().equals(

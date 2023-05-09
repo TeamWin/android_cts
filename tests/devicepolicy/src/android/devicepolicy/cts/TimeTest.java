@@ -34,7 +34,6 @@ import com.android.bedstead.harrier.annotations.EnsureHasUserRestriction;
 import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
-import com.android.bedstead.harrier.annotations.enterprise.CoexistenceFlagsOn;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyDoesNotApplyTest;
 import com.android.bedstead.harrier.policies.AutoTimeRequired;
@@ -55,7 +54,6 @@ import org.junit.runner.RunWith;
 import java.util.TimeZone;
 
 @RunWith(BedsteadJUnit4.class)
-@CoexistenceFlagsOn
 public final class TimeTest {
 
     private static final long MILLIS_SINCE_EPOCH = 1660000000000l;

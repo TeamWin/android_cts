@@ -43,7 +43,6 @@ import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.RequireFeature;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
-import com.android.bedstead.harrier.annotations.enterprise.CoexistenceFlagsOn;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyDoesNotApplyTest;
 import com.android.bedstead.harrier.policies.DisallowCamera;
@@ -65,7 +64,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 @RequireFeature(FEATURE_CAMERA)
 @RunWith(BedsteadJUnit4.class)
-@CoexistenceFlagsOn
 public final class CameraTest {
     @ClassRule
     @Rule
