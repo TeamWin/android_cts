@@ -1210,11 +1210,10 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
         File upperCaseFile = new File(getDownloadDir(), "CACHE_CONSISTENCY_FOR_CASE_INSENSITIVITY");
         File lowerCaseFile = new File(getDownloadDir(), "cache_consistency_for_case_insensitivity");
 
-        try {
-            ParcelFileDescriptor upperCasePfd =
+        try (ParcelFileDescriptor upperCasePfd =
                     ParcelFileDescriptor.open(upperCaseFile, MODE_READ_WRITE | MODE_CREATE);
-            ParcelFileDescriptor lowerCasePfd =
-                    ParcelFileDescriptor.open(lowerCaseFile, MODE_READ_WRITE | MODE_CREATE);
+             ParcelFileDescriptor lowerCasePfd =
+                    ParcelFileDescriptor.open(lowerCaseFile, MODE_READ_WRITE | MODE_CREATE)) {
 
             assertRWR(upperCasePfd, lowerCasePfd);
             assertRWR(lowerCasePfd, upperCasePfd);
