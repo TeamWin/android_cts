@@ -18,6 +18,8 @@ package android.cts.backup;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assert.assertNull;
+
 import android.platform.test.annotations.AppModeFull;
 
 import com.android.compatibility.common.util.BackupUtils;
@@ -28,11 +30,15 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.io.IOException;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/** Test verifying that {@link BackupManager#setAutoRestore(boolean)} setting is respected. */
+/**
+ * Test verifying that {@link BackupManagerService#setAutoRestoreForUser(int, boolean)} setting is
+ * respected.
+ */
 @RunWith(DeviceJUnit4ClassRunner.class)
 @AppModeFull
 public class AutoRestoreHostSideTest extends BaseBackupHostSideTest {
@@ -51,23 +57,20 @@ public class AutoRestoreHostSideTest extends BaseBackupHostSideTest {
         mBackupUtils = getBackupUtils();
         mWasAutoRestoreEnabled = Optional.of(isAutoRestoreEnabled());
 
-        installPackage(APK);
+        installPackageAsUser(APK, mDefaultBackupUserId);
     }
 
     @After
     public void tearDown() throws Exception {
         if (mWasAutoRestoreEnabled.isPresent()) {
-            mBackupUtils.executeShellCommandSync(
-                    "bmgr autorestore " + (mWasAutoRestoreEnabled.get() ? "true" : "false"));
-            uninstallPackage(PACKAGE);
+            setAutoRestore(mWasAutoRestoreEnabled.get());
+            assertNull(uninstallPackageAsUser(PACKAGE, mDefaultBackupUserId));
 
             mWasAutoRestoreEnabled = Optional.empty();
         }
     }
 
     /**
-     *
-     *
      * <ol>
      *   <li>Enable auto restore
      *   <li>Write dummy values to shared preferences
@@ -78,7 +81,7 @@ public class AutoRestoreHostSideTest extends BaseBackupHostSideTest {
      */
     @Test
     public void testSetAutoRestore_autoRestoresDataWhenEnabled() throws Exception {
-        runDeviceProcedure("enableAutoRestore");
+        setAutoRestore(/*enabled=*/ true);
 
         populateSharedPrefs();
 
@@ -88,8 +91,6 @@ public class AutoRestoreHostSideTest extends BaseBackupHostSideTest {
     }
 
     /**
-     *
-     *
      * <ol>
      *   <li>Disable auto restore
      *   <li>Write dummy values to shared preferences
@@ -100,7 +101,7 @@ public class AutoRestoreHostSideTest extends BaseBackupHostSideTest {
      */
     @Test
     public void testSetAutoRestore_dontAutoRestoresDataWhenDisabled() throws Exception {
-        runDeviceProcedure("disableAutoRestore");
+        setAutoRestore(/*enabled=*/ false);
 
         populateSharedPrefs();
 
@@ -115,13 +116,14 @@ public class AutoRestoreHostSideTest extends BaseBackupHostSideTest {
     }
 
     private void backupAndReinstallPackage() throws Exception {
-        mBackupUtils.backupNowAndAssertSuccess(PACKAGE);
-        uninstallPackage(PACKAGE);
-        installPackage(APK);
+        mBackupUtils.backupNowForUserAndAssertSuccess(PACKAGE, mDefaultBackupUserId);
+        assertNull(uninstallPackageAsUser(PACKAGE, mDefaultBackupUserId));
+        installPackageAsUser(APK, mDefaultBackupUserId);
     }
 
     private boolean isAutoRestoreEnabled() throws Exception {
-        String output = mBackupUtils.executeShellCommandAndReturnOutput("dumpsys backup");
+        String output = mBackupUtils.executeShellCommandAndReturnOutput(
+                "dumpsys backup --user " + mDefaultBackupUserId);
         Pattern pattern = Pattern.compile("Auto-restore is (enabled|disabled)");
         Matcher matcher = pattern.matcher(output.trim());
 
@@ -130,7 +132,13 @@ public class AutoRestoreHostSideTest extends BaseBackupHostSideTest {
         return "enabled".equals(matcher.group(1));
     }
 
+    private void setAutoRestore(boolean enabled) throws IOException {
+        mBackupUtils.executeShellCommandSync(
+                mBmgrCommand + "autorestore " + (enabled ? "true"
+                        : "false"));
+    }
+
     private void runDeviceProcedure(String testName) throws Exception {
-        runDeviceTests(PACKAGE, CLASS, testName);
+        checkDeviceTestAsUser(PACKAGE, CLASS, testName, mDefaultBackupUserId);
     }
 }

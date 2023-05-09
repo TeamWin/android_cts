@@ -30,8 +30,8 @@ public class BackupTransportHostSideTest extends BaseBackupHostSideTest {
 
     @Test
     public void testBackupTransport() throws Exception {
-        installPackage(APK);
-        assertTrue(runDeviceTests(PACKAGE, CLASS));
-        uninstallPackage(PACKAGE);
+        installPackageAsUser(APK, mDefaultBackupUserId);
+        assertTrue(runDeviceTests(PACKAGE, CLASS, mDefaultBackupUserId, null));
+        uninstallPackageAsUser(PACKAGE, mDefaultBackupUserId);
     }
 }
