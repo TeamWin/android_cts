@@ -51,4 +51,23 @@ public final class Broadcasts {
                     .executeOrThrowNeneException("Error waiting for broadcast idle");
         }
     }
+
+    /**
+     * Wait for all broadcasts with the specified intent action that are currently scheduled
+     * to be dispatched.
+     *
+     * <p>This should be used very infrequently and only when you know why it is needed. A
+     * descriptive reason should be included.
+     */
+    @Experimental
+    public void waitForBroadcastDispatch(String broadcastAction, String reason) {
+        if (Versions.meetsMinimumSdkVersionRequirement(Versions.U)) {
+            ShellCommand.builder("am")
+                    .addOperand("wait-for-broadcast-dispatch")
+                    .addOption("-a", broadcastAction)
+                    .executeOrThrowNeneException("Error waiting for broadcast barrier");
+        } else {
+            waitForBroadcastBarrier(reason);
+        }
+    }
 }
