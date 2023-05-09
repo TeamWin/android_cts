@@ -25,5 +25,6 @@ android_test_helper_app {
         "cts",
         "general-tests",
     ],
-    sdk_version: "current",
+    min_sdk_version: "31",
+    sdk_version: "test_current",
 }

@@ -44,7 +44,7 @@ public class FullBackupQuotaTest extends BaseBackupCtsTest {
         createTestFileOfSize(BACKUP_APP_NAME, LOCAL_TRANSPORT_EXCEEDING_FILE_SIZE);
 
         // Request backup and wait for quota exceeded event in logcat
-        getBackupUtils().backupNowSync(BACKUP_APP_NAME);
+        getBackupUtils().backupNowForUserSync(BACKUP_APP_NAME, mDefaultBackupUserId);
         waitForLogcat(TIMEOUT_SECONDS,separator,
             "Quota exceeded!");
     }
@@ -64,7 +64,7 @@ public class FullBackupQuotaTest extends BaseBackupCtsTest {
         } catch (InterruptedException e) {}
 
         String separator = markLogcat();
-        getBackupUtils().backupNowSync(BACKUP_APP_NAME);
+        getBackupUtils().backupNowForUserSync(BACKUP_APP_NAME, mDefaultBackupUserId);
         waitForLogcat(TIMEOUT_SECONDS,separator,
             "quota is " + LOCAL_TRANSPORT_BACKUP_QUOTA);
     }

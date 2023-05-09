@@ -16,6 +16,8 @@
 
 package android.cts.backup;
 
+import static org.junit.Assert.assertNull;
+
 import android.platform.test.annotations.AppModeFull;
 
 import com.android.compatibility.common.util.BackupUtils;
@@ -78,7 +80,7 @@ public class ProfileKeyValueBackupRestoreHostSideTest extends BaseMultiUserBacku
                 clearBackupDataInTransportForUser(
                         KEY_VALUE_TEST_PACKAGE, mTransport, profileUserId);
             }
-            uninstallPackageAsUser(KEY_VALUE_TEST_PACKAGE, profileUserId);
+            assertNull(uninstallPackageAsUser(KEY_VALUE_TEST_PACKAGE, profileUserId));
             mDevice.removeUser(profileUserId);
             mProfileUserId = Optional.empty();
         }
@@ -102,9 +104,9 @@ public class ProfileKeyValueBackupRestoreHostSideTest extends BaseMultiUserBacku
         checkDeviceTest("assertSharedPrefsIsEmpty");
         checkDeviceTest("writeSharedPrefsAndAssertSuccess");
 
-        mBackupUtils.backupNowAndAssertSuccessForUser(KEY_VALUE_TEST_PACKAGE, profileUserId);
+        mBackupUtils.backupNowForUserAndAssertSuccess(KEY_VALUE_TEST_PACKAGE, profileUserId);
 
-        uninstallPackageAsUser(KEY_VALUE_TEST_PACKAGE, profileUserId);
+        assertNull(uninstallPackageAsUser(KEY_VALUE_TEST_PACKAGE, profileUserId));
 
         installPackageAsUser(KEY_VALUE_APK, profileUserId);
 
@@ -134,9 +136,9 @@ public class ProfileKeyValueBackupRestoreHostSideTest extends BaseMultiUserBacku
         checkDeviceTest("assertSharedPrefsIsEmpty");
         checkDeviceTest("writeSharedPrefsAndAssertSuccess");
 
-        mBackupUtils.backupNowAndAssertSuccessForUser(KEY_VALUE_TEST_PACKAGE, profileUserId);
+        mBackupUtils.backupNowForUserAndAssertSuccess(KEY_VALUE_TEST_PACKAGE, profileUserId);
 
-        uninstallPackageAsUser(KEY_VALUE_TEST_PACKAGE, profileUserId);
+        assertNull(uninstallPackageAsUser(KEY_VALUE_TEST_PACKAGE, profileUserId));
 
         installPackageAsUser(KEY_VALUE_APK, mParentUserId);
         String mark = mLogcatInspector.mark(TAG);
@@ -151,7 +153,7 @@ public class ProfileKeyValueBackupRestoreHostSideTest extends BaseMultiUserBacku
                 RESTORECOMPLETE_LOG);
 
         checkDeviceTest("assertSharedPrefsRestored");
-        uninstallPackageAsUser(KEY_VALUE_TEST_PACKAGE, mParentUserId);
+        assertNull(uninstallPackageAsUser(KEY_VALUE_TEST_PACKAGE, mParentUserId));
     }
 
     /**
@@ -177,15 +179,15 @@ public class ProfileKeyValueBackupRestoreHostSideTest extends BaseMultiUserBacku
         checkDeviceTest("assertSharedPrefsIsEmpty");
         checkDeviceTest("writeSharedPrefsAndAssertSuccess");
 
-        mBackupUtils.backupNowAndAssertSuccessForUser(KEY_VALUE_TEST_PACKAGE, profileUserId);
+        mBackupUtils.backupNowForUserAndAssertSuccess(KEY_VALUE_TEST_PACKAGE, profileUserId);
 
-        uninstallPackageAsUser(KEY_VALUE_TEST_PACKAGE, profileUserId);
+        assertNull(uninstallPackageAsUser(KEY_VALUE_TEST_PACKAGE, profileUserId));
 
         installPackageAsUser(KEY_VALUE_APK, mParentUserId);
         installExistingPackageAsUserWaitTillComplete(KEY_VALUE_TEST_PACKAGE, profileUserId);
 
         checkDeviceTest("assertSharedPrefsRestored");
-        uninstallPackageAsUser(KEY_VALUE_TEST_PACKAGE, mParentUserId);
+        assertNull(uninstallPackageAsUser(KEY_VALUE_TEST_PACKAGE, mParentUserId));
     }
 
     private void checkDeviceTest(String methodName) throws DeviceNotAvailableException {

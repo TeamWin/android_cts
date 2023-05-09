@@ -21,7 +21,6 @@ import static org.junit.Assert.assertNull;
 import android.platform.test.annotations.AppModeFull;
 
 import com.android.tradefed.device.DeviceNotAvailableException;
-import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
 import org.junit.After;
@@ -90,10 +89,10 @@ public class SuccessNotificationHostSideTest extends BaseBackupHostSideTest {
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        installPackage(KEY_VALUE_BACKUP_APP_APK);
-        installPackage(FULL_BACKUP_APP_APK);
+        installPackageAsUser(KEY_VALUE_BACKUP_APP_APK, mDefaultBackupUserId);
+        installPackageAsUser(FULL_BACKUP_APP_APK, mDefaultBackupUserId);
 
-        installPackage(SUCCESS_NOTIFICATION_APP_APK);
+        installPackageAsUser(SUCCESS_NOTIFICATION_APP_APK, mDefaultBackupUserId);
         checkDeviceTest("clearBackupSuccessNotificationsReceived");
         addBackupFinishedNotificationReceiver();
     }
@@ -101,28 +100,29 @@ public class SuccessNotificationHostSideTest extends BaseBackupHostSideTest {
     @After
     public void tearDown() throws Exception {
         restoreBackupFinishedNotificationReceivers();
-        assertNull(uninstallPackage(SUCCESS_NOTIFICATION_APP_PACKAGE));
+        assertNull(uninstallPackageAsUser(SUCCESS_NOTIFICATION_APP_PACKAGE, mDefaultBackupUserId));
 
         // Clear backup data and uninstall the package (in that order!)
         clearBackupDataInLocalTransport(KEY_VALUE_BACKUP_APP_PACKAGE);
-        assertNull(uninstallPackage(KEY_VALUE_BACKUP_APP_PACKAGE));
+        assertNull(uninstallPackageAsUser(KEY_VALUE_BACKUP_APP_PACKAGE, mDefaultBackupUserId));
 
         clearBackupDataInLocalTransport(FULL_BACKUP_APP_PACKAGE);
-        assertNull(uninstallPackage(FULL_BACKUP_APP_PACKAGE));
+        assertNull(uninstallPackageAsUser(FULL_BACKUP_APP_PACKAGE, mDefaultBackupUserId));
     }
 
     /**
      * Test that the observer app is notified when a key/value backup succeeds.
      *
      * Test logic:
-     *   1. Change a test app's data, trigger a key/value backup and wait for it to complete.
-     *   2. Verify that the observer app was informed about the backup.
+     * 1. Change a test app's data, trigger a key/value backup and wait for it to complete.
+     * 2. Verify that the observer app was informed about the backup.
      */
     @Test
     public void testSuccessNotificationForKeyValueBackup() throws Exception {
-        checkDeviceTest(KEY_VALUE_BACKUP_APP_PACKAGE, KEY_VALUE_BACKUP_DEVICE_TEST_NAME,
-                "saveSharedPreferencesAndNotifyBackupManager");
-        getBackupUtils().backupNowAndAssertSuccess(KEY_VALUE_BACKUP_APP_PACKAGE);
+        checkDeviceTestAsUser(KEY_VALUE_BACKUP_APP_PACKAGE, KEY_VALUE_BACKUP_DEVICE_TEST_NAME,
+                "saveSharedPreferencesAndNotifyBackupManager", mDefaultBackupUserId);
+        getBackupUtils().backupNowForUserAndAssertSuccess(KEY_VALUE_BACKUP_APP_PACKAGE,
+                mDefaultBackupUserId);
 
         checkDeviceTest("verifyBackupSuccessNotificationReceivedForKeyValueApp");
     }
@@ -131,13 +131,15 @@ public class SuccessNotificationHostSideTest extends BaseBackupHostSideTest {
      * Test that the observer app is notified when a full backup succeeds.
      *
      * Test logic:
-     *   1. Change a test app's data, trigger a full backup and wait for it to complete.
-     *   2. Verify that the observer app was informed about the backup.
+     * 1. Change a test app's data, trigger a full backup and wait for it to complete.
+     * 2. Verify that the observer app was informed about the backup.
      */
     @Test
     public void testSuccessNotificationForFullBackup() throws Exception {
-        checkDeviceTest(FULL_BACKUP_APP_PACKAGE, FULL_BACKUP_DEVICE_TEST_CLASS_NAME, "createFiles");
-        getBackupUtils().backupNowAndAssertSuccess(FULL_BACKUP_APP_PACKAGE);
+        checkDeviceTestAsUser(FULL_BACKUP_APP_PACKAGE, FULL_BACKUP_DEVICE_TEST_CLASS_NAME,
+                "createFiles", mDefaultBackupUserId);
+        getBackupUtils().backupNowForUserAndAssertSuccess(FULL_BACKUP_APP_PACKAGE,
+                mDefaultBackupUserId);
 
         checkDeviceTest("verifyBackupSuccessNotificationReceivedForFullBackupApp");
     }
@@ -150,7 +152,7 @@ public class SuccessNotificationHostSideTest extends BaseBackupHostSideTest {
     private void addBackupFinishedNotificationReceiver()
             throws DeviceNotAvailableException {
         mOriginalBackupManagerConstants = getDevice().executeShellCommand(String.format(
-                "settings get secure %s", BACKUP_MANAGER_CONSTANTS_PREF)).trim();
+                "settings get --user 0 secure %s", BACKUP_MANAGER_CONSTANTS_PREF)).trim();
         if ("null".equals(mOriginalBackupManagerConstants)) {
             mOriginalBackupManagerConstants = null;
         }
@@ -206,12 +208,13 @@ public class SuccessNotificationHostSideTest extends BaseBackupHostSideTest {
 
     private void setBackupManagerConstants(String backupManagerConstants)
             throws DeviceNotAvailableException {
-        getDevice().executeShellCommand(String.format("settings put secure %s %s",
+        getDevice().executeShellCommand(String.format("settings put --user 0 secure %s %s",
                 BACKUP_MANAGER_CONSTANTS_PREF, backupManagerConstants));
     }
 
     private void checkDeviceTest(String methodName) throws DeviceNotAvailableException {
-        checkDeviceTest(SUCCESS_NOTIFICATION_APP_PACKAGE, SUCCESS_NOTIFICATION_DEVICE_TEST_NAME,
-                methodName);
+        checkDeviceTestAsUser(SUCCESS_NOTIFICATION_APP_PACKAGE,
+                SUCCESS_NOTIFICATION_DEVICE_TEST_NAME,
+                methodName, mDefaultBackupUserId);
     }
 }
