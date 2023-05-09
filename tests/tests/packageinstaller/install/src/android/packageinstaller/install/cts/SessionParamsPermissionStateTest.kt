@@ -22,6 +22,7 @@ import android.content.pm.PackageInstaller.SessionParams.PERMISSION_STATE_DEFAUL
 import android.content.pm.PackageInstaller.SessionParams.PERMISSION_STATE_DENIED
 import android.content.pm.PackageInstaller.SessionParams.PERMISSION_STATE_GRANTED
 import android.content.pm.PackageManager
+import android.content.pm.PermissionInfo
 import android.Manifest
 import android.content.AttributionSource
 import android.permission.PermissionManager
@@ -50,11 +51,9 @@ class SessionParamsPermissionStateTest : PackageInstallerTestBase() {
         private val permissionManager = context.getSystemService(PermissionManager::class.java)!!
 
         private val isFsiDefaultGranted by lazy {
-            // b/277104139: The default is temporarily set to false in Beta.
-            //context.packageManager
-            //    .getPermissionInfo(Manifest.permission.USE_FULL_SCREEN_INTENT, 0)
-            //    .protection == PermissionInfo.PROTECTION_NORMAL
-            false
+            context.packageManager
+                .getPermissionInfo(Manifest.permission.USE_FULL_SCREEN_INTENT, 0)
+                .protection == PermissionInfo.PROTECTION_NORMAL
         }
 
         @JvmStatic
