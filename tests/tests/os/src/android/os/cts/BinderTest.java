@@ -30,6 +30,7 @@ import android.os.IInterface;
 import android.os.Parcel;
 import android.os.Process;
 import android.os.RemoteException;
+import android.platform.test.annotations.AppModeFull;
 
 import com.android.compatibility.common.util.ApiTest;
 
@@ -347,6 +348,7 @@ public class BinderTest extends ActivityTestsBase {
     /**
      * Tests whether onBinderDied passes in the correct IBinder that died
      */
+    @AppModeFull(reason = "Instant apps cannot hold KILL_BACKGROUND_PROCESSES permission")
     @ApiTest(apis = {"android.os.IBinder.DeathRecipient#binderDied(IBinder)"})
     public void testBinderDiedWho() {
         final ConditionVariable connected = new ConditionVariable();
