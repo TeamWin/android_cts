@@ -83,12 +83,9 @@ import android.os.UserHandle;
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.UserType;
-import com.android.bedstead.harrier.annotations.AfterClass;
 import com.android.bedstead.harrier.annotations.EnsureHasAccountAuthenticator;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
-import com.android.bedstead.harrier.annotations.EnsureTestAppInstalled;
 import com.android.bedstead.harrier.annotations.Postsubmit;
-import com.android.bedstead.harrier.annotations.enterprise.CoexistenceFlagsOn;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDeviceOwner;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDevicePolicyManagerRoleHolder;
 import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
@@ -98,8 +95,6 @@ import com.android.bedstead.nene.packages.Package;
 import com.android.bedstead.nene.utils.Poll;
 import com.android.bedstead.testapp.TestApp;
 import com.android.bedstead.testapp.TestAppInstance;
-import com.android.queryable.annotations.Query;
-import com.android.queryable.queries.ActivityQuery;
 
 import org.junit.ClassRule;
 import org.junit.Ignore;
@@ -116,7 +111,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @RunWith(BedsteadJUnit4.class)
-@CoexistenceFlagsOn
 public final class DeviceManagementCoexistenceTest {
     @ClassRule
     @Rule

@@ -439,11 +439,7 @@ public final class Policy {
             }
             Annotation[] existingAnnotations = annotation.annotationType().getAnnotations();
             Annotation[] newAnnotations = Arrays.copyOf(existingAnnotations,
-                    existingAnnotations.length + 3);
-            newAnnotations[newAnnotations.length - 3] = requireFeatureFlagEnabled(
-                    NAMESPACE_DEVICE_POLICY_MANAGER, ENABLE_DEVICE_POLICY_ENGINE_FLAG);
-            newAnnotations[newAnnotations.length - 2] = requireFeatureFlagEnabled(
-                    NAMESPACE_DEVICE_POLICY_MANAGER, PERMISSION_BASED_ACCESS_EXPERIMENT_FLAG);
+                    existingAnnotations.length + 1);
             newAnnotations[newAnnotations.length - 1] = ensureHasDevicePolicyManagerRoleHolder(
                     roleHolderUser, /* isPrimary= */ true);
             return Set.of(annotation,
@@ -549,9 +545,10 @@ public final class Policy {
                     ensureFeatureFlagEnabled(
                             NAMESPACE_DEVICE_POLICY_MANAGER, PERMISSION_BASED_ACCESS_EXPERIMENT_FLAG)
             };
-            annotations.add(
-                    new DynamicParameterizedAnnotation(
-                            "Permission_" + formatPermissionForTestName(permission.appliedWith()), withPermissionAnnotations));
+            // TODO(281651179): Re-enable
+//            annotations.add(
+//                    new DynamicParameterizedAnnotation(
+//                            "Permission_" + formatPermissionForTestName(permission.appliedWith()), withPermissionAnnotations));
         }
 
         removeShadowingAnnotations(annotations);
@@ -686,13 +683,9 @@ public final class Policy {
                 }
             } else {
                 Annotation[] newAnnotations = Arrays.copyOf(existingAnnotations,
-                        existingAnnotations.length + 4);
-                newAnnotations[newAnnotations.length - 4] = ensureHasDelegate(
+                        existingAnnotations.length + 2);
+                newAnnotations[newAnnotations.length - 2] = ensureHasDelegate(
                         EnsureHasDelegate.AdminType.PRIMARY, scopes, /* isPrimary= */ true);
-                newAnnotations[newAnnotations.length - 3] = ensureFeatureFlagEnabled(
-                        NAMESPACE_DEVICE_POLICY_MANAGER, ENABLE_DEVICE_POLICY_ENGINE_FLAG);
-                newAnnotations[newAnnotations.length - 2] = ensureFeatureFlagEnabled(
-                        NAMESPACE_DEVICE_POLICY_MANAGER, PERMISSION_BASED_ACCESS_EXPERIMENT_FLAG);
                 newAnnotations[newAnnotations.length - 1] = ensureTestAppDoesNotHavePermission(
                         DELEGATE_KEY, validPermissions, FailureMode.SKIP);
                 annotations.add(
@@ -764,14 +757,11 @@ public final class Policy {
                             /* isPrimary= */ true),
                     ensureTestAppHasPermission(
                             DELEGATE_KEY, new String[]{permission.appliedWith()}, FailureMode.SKIP),
-                    ensureFeatureFlagEnabled(
-                            NAMESPACE_DEVICE_POLICY_MANAGER, ENABLE_DEVICE_POLICY_ENGINE_FLAG),
-                    ensureFeatureFlagEnabled(
-                            NAMESPACE_DEVICE_POLICY_MANAGER, PERMISSION_BASED_ACCESS_EXPERIMENT_FLAG)
             };
-            annotations.add(
-                    new DynamicParameterizedAnnotation(
-                            "Permission_" + formatPermissionForTestName(permission.appliedWith()), withPermissionAnnotations));
+            // TODO(281651179): Re-enable
+//            annotations.add(
+//                    new DynamicParameterizedAnnotation(
+//                            "Permission_" + formatPermissionForTestName(permission.appliedWith()), withPermissionAnnotations));
         }
 
         removeShadowingAnnotations(annotations);

@@ -16,10 +16,7 @@
 
 package android.devicepolicy.cts;
 
-import static android.os.Build.VERSION_CODES.UPSIDE_DOWN_CAKE;
-
 import static com.android.bedstead.nene.userrestrictions.CommonUserRestrictions.DISALLOW_CONFIG_DEFAULT_APPS;
-import static com.android.bedstead.nene.userrestrictions.CommonUserRestrictions.DISALLOW_FUN;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -28,17 +25,12 @@ import static org.testng.Assert.assertThrows;
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.Postsubmit;
-import com.android.bedstead.harrier.annotations.enterprise.AdditionalQueryParameters;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
-import com.android.bedstead.harrier.annotations.enterprise.CoexistenceFlagsOn;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
 import com.android.bedstead.harrier.policies.DisallowConfigDefaultApps;
-import com.android.bedstead.harrier.policies.DisallowFun;
 import com.android.bedstead.nene.TestApis;
 import com.android.compatibility.common.util.ApiTest;
-import com.android.queryable.annotations.IntegerQuery;
-import com.android.queryable.annotations.Query;
 
 import org.junit.ClassRule;
 import org.junit.Ignore;
@@ -46,7 +38,6 @@ import org.junit.Rule;
 import org.junit.runner.RunWith;
 
 @RunWith(BedsteadJUnit4.class)
-@CoexistenceFlagsOn
 public final class DefaultApplicationsTest {
 
     @ClassRule @Rule
