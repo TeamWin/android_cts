@@ -92,6 +92,9 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
     private static final Pattern ZONE_CONFIG_PATTERN = Pattern.compile(
             "CarAudioZoneConfig\\((.*?):(\\d?)\\) of zone (\\d?) isDefault\\? (.*?)");
 
+    private static final Pattern PRIMARY_ZONE_MEDIA_REQUEST_APPROVERS_PATTERN =
+            Pattern.compile("Media request callbacks\\[(\\d+)\\]:");
+
     @Rule
     public final PermissionsCheckerRule mPermissionsCheckerRule = new PermissionsCheckerRule();
 
@@ -541,6 +544,7 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
             + "#requestMediaAudioOnPrimaryZone(OccupantZoneInfo,"
             + "Executor, MediaAudioRequestStatusCallback)"})
     public void requestMediaAudioOnPrimaryZone_withoutApprover() throws Exception {
+        assumeNoPrimaryZoneAudioMediaApprovers();
         int passengerAudioZoneId = assumePassengerWithValidAudioZone();
         OccupantZoneInfo info =
                 mCarOccupantZoneManager.getOccupantForAudioZoneId(passengerAudioZoneId);
@@ -1262,6 +1266,18 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
         injectVolumeUpKeyEvent();
         assertWithMessage("Car volume group event for unregistered callback")
             .that(mEventCallback.receivedVolumeGroupEvents()).isFalse();
+    }
+
+    private int getNumberOfPrimaryZoneAudioMediaCallbacks() {
+        Matcher matchCount = PRIMARY_ZONE_MEDIA_REQUEST_APPROVERS_PATTERN
+                .matcher(mCarAudioServiceDump);
+        assertWithMessage("No Car Audio Media in dump").that(matchCount.find()).isTrue();
+        return Integer.parseInt(matchCount.group(1));
+    }
+
+    private void assumeNoPrimaryZoneAudioMediaApprovers() {
+        assumeTrue("Primary zone audio media approvers must be empty",
+                getNumberOfPrimaryZoneAudioMediaCallbacks() == 0);
     }
 
     private void assumeDynamicRoutingIsEnabled() {
