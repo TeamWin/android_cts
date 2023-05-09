@@ -567,6 +567,12 @@ public final class Package {
 
     @Nullable
     private PackageInfo packageInfoForUser(UserReference user, int flags) {
+        if (TestApis.packages().instrumented().isInstantApp()
+                || !Versions.meetsMinimumSdkVersionRequirement(S)) {
+            // Can't call API's directly
+            return packageInfoForUserPreS(user, flags);
+        }
+
         if (user.equals(TestApis.users().instrumented())) {
             try {
                 return TestApis.context().instrumentedContext()
@@ -576,10 +582,6 @@ public final class Package {
                 Log.e(LOG_TAG, "Could not find package " + this + " on user " + user, e);
                 return null;
             }
-        }
-
-        if (!Versions.meetsMinimumSdkVersionRequirement(S)) {
-            return packageInfoForUserPreS(user, flags);
         }
 
         if (Permissions.sIgnorePermissions.get()) {

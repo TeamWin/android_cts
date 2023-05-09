@@ -22,6 +22,7 @@ import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePoli
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIED_BY_PROFILE_OWNER;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIES_GLOBALLY;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIES_TO_OWN_USER;
+import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.INHERITABLE;
 import static com.android.bedstead.nene.permissions.CommonPermissions.MANAGE_DEVICE_POLICY_BLUETOOTH;
 
 import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy;
@@ -33,7 +34,7 @@ import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy;
         dpc = {APPLIED_BY_PROFILE_OWNER
                 | APPLIED_BY_PARENT_INSTANCE_OF_ORGANIZATIONAL_OWNED_PROFILE_OWNER_PROFILE
                 | APPLIED_BY_AFFILIATED_PROFILE_OWNER
-                | APPLIES_TO_OWN_USER,
+                | APPLIES_TO_OWN_USER | INHERITABLE,
         APPLIED_BY_DEVICE_OWNER | APPLIES_GLOBALLY},
         permissions = @EnterprisePolicy.Permission(
                 appliedWith = MANAGE_DEVICE_POLICY_BLUETOOTH, appliesTo = APPLIES_TO_OWN_USER))
