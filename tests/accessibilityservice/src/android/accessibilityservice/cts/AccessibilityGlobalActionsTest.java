@@ -32,6 +32,7 @@ import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.Presubmit;
 
 import androidx.test.filters.MediumTest;
+import androidx.test.filters.LargeTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
@@ -118,7 +119,7 @@ public class AccessibilityGlobalActionsTest {
         waitForIdle();
     }
 
-    @MediumTest
+    @LargeTest
     @Test
     public void testPerformGlobalActionRecents() throws Exception {
         // Perform the action.
@@ -168,15 +169,19 @@ public class AccessibilityGlobalActionsTest {
         waitForIdle();
     }
 
-    @MediumTest
+    @LargeTest
     @Test
     public void testPerformActionScreenshot() throws Exception {
         // Action should succeed
         assertTrue(sUiAutomation.performGlobalAction(
                 AccessibilityService.GLOBAL_ACTION_TAKE_SCREENSHOT));
         // Ideally should verify that we actually have a screenshot, but it's also possible
-        // for the screenshot to fail
-        waitForIdle();
+        // for the screenshot to fail.
+
+        // Attempt to close any screenshot UI, by both waiting and hoping it closes
+        // automatically, and by sending the CLOSE_SYSTEM_DIALOG broadcast.
+        // See b/281590053 for more details.
+        SystemClock.sleep(10000);
         execShellCommand(sUiAutomation, AM_BROADCAST_CLOSE_SYSTEM_DIALOG_COMMAND);
     }
 
