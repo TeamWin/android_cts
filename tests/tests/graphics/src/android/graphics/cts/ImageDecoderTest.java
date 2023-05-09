@@ -2015,7 +2015,10 @@ public class ImageDecoderTest {
                 if (resId == R.drawable.png_test) {
                     // We do not support 565 in HARDWARE, so no RAM savings
                     // are possible.
-                    assertEquals(normalByteCount, byteCount);
+                    // Provide a little wiggle room to allow for gralloc allocation size
+                    // variances
+                    assertTrue(byteCount < (normalByteCount * 1.1));
+                    assertTrue(byteCount >= (normalByteCount * 0.9));
                 } else { // R.raw.f16
                     // This image defaults to F16. MEMORY_POLICY_LOW_RAM
                     // forces "test" to decode to 8888.
