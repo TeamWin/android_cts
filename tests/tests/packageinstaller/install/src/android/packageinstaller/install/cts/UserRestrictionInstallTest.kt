@@ -46,6 +46,7 @@ import com.android.bedstead.nene.userrestrictions.CommonUserRestrictions.DISALLO
 import com.android.bedstead.nene.userrestrictions.CommonUserRestrictions.DISALLOW_INSTALL_APPS
 import com.android.bedstead.nene.users.UserReference
 import com.android.bedstead.nene.utils.ShellCommand
+import com.android.compatibility.common.util.ApiTest
 import com.android.compatibility.common.util.BlockingBroadcastReceiver
 import com.google.common.truth.Truth.assertThat
 import com.google.common.truth.Truth.assertWithMessage
@@ -84,6 +85,7 @@ class UserRestrictionInstallTest : PackageInstallerTestBase() {
     }
 
     @Test
+    @ApiTest(apis = ["android.os.UserManager#DISALLOW_DEBUGGING_FEATURES"])
     @DevicePolicyRelevant
     @EnsureHasWorkProfile
     @EnsureHasUserRestriction(value = DISALLOW_DEBUGGING_FEATURES, onUser = UserType.WORK_PROFILE)
@@ -105,6 +107,7 @@ class UserRestrictionInstallTest : PackageInstallerTestBase() {
     }
 
     @Test
+    @ApiTest(apis = ["android.os.UserManager#DISALLOW_DEBUGGING_FEATURES"])
     @DevicePolicyRelevant
     @EnsureHasWorkProfile
     @EnsureHasUserRestriction(value = DISALLOW_DEBUGGING_FEATURES, onUser = UserType.WORK_PROFILE)
@@ -121,6 +124,7 @@ class UserRestrictionInstallTest : PackageInstallerTestBase() {
     }
 
     @Test
+    @ApiTest(apis = ["android.os.UserManager#DISALLOW_DEBUGGING_FEATURES"])
     @DevicePolicyRelevant
     @EnsureHasWorkProfile
     @EnsureHasUserRestriction(value = DISALLOW_DEBUGGING_FEATURES, onUser = UserType.WORK_PROFILE)
@@ -141,6 +145,7 @@ class UserRestrictionInstallTest : PackageInstallerTestBase() {
     }
 
     @Test
+    @ApiTest(apis = ["android.os.UserManager#DISALLOW_DEBUGGING_FEATURES"])
     @DevicePolicyRelevant
     @EnsureHasUserRestriction(value = DISALLOW_DEBUGGING_FEATURES, onUser = UserType.WORK_PROFILE)
     @EnsureDoesNotHaveUserRestriction(value = DISALLOW_INSTALL_APPS, onUser = UserType.WORK_PROFILE)
@@ -159,6 +164,7 @@ class UserRestrictionInstallTest : PackageInstallerTestBase() {
     }
 
     @Test
+    @ApiTest(apis = ["android.os.UserManager#DISALLOW_INSTALL_APPS"])
     @DevicePolicyRelevant
     @EnsureHasWorkProfile
     @EnsureHasUserRestriction(value = DISALLOW_INSTALL_APPS, onUser = UserType.WORK_PROFILE)
@@ -185,6 +191,7 @@ class UserRestrictionInstallTest : PackageInstallerTestBase() {
     }
 
     @Test
+    @ApiTest(apis = ["android.os.UserManager#DISALLOW_INSTALL_APPS"])
     @DevicePolicyRelevant
     @EnsureHasWorkProfile
     @EnsureHasUserRestriction(value = DISALLOW_INSTALL_APPS, onUser = UserType.WORK_PROFILE)
@@ -206,6 +213,7 @@ class UserRestrictionInstallTest : PackageInstallerTestBase() {
     }
 
     @Test
+    @ApiTest(apis = ["android.os.UserManager#DISALLOW_INSTALL_APPS"])
     @DevicePolicyRelevant
     @EnsureHasWorkProfile
     @EnsureHasUserRestriction(value = DISALLOW_INSTALL_APPS, onUser = UserType.WORK_PROFILE)
@@ -220,6 +228,7 @@ class UserRestrictionInstallTest : PackageInstallerTestBase() {
     }
 
     @Test
+    @ApiTest(apis = ["android.os.UserManager#DISALLOW_INSTALL_APPS"])
     @DevicePolicyRelevant
     @EnsureHasUserRestriction(value = DISALLOW_INSTALL_APPS, onUser = UserType.WORK_PROFILE)
     @EnsureDoesNotHaveUserRestriction(value = DISALLOW_DEBUGGING_FEATURES,
@@ -244,6 +253,8 @@ class UserRestrictionInstallTest : PackageInstallerTestBase() {
     }
 
     @Test
+    @ApiTest(apis = ["android.os.UserManager#DISALLOW_DEBUGGING_FEATURES",
+        "android.os.UserManager#DISALLOW_INSTALL_APPS"])
     @DevicePolicyRelevant
     @EnsureHasWorkProfile
     @EnsureDoesNotHaveUserRestriction(value = DISALLOW_DEBUGGING_FEATURES,
