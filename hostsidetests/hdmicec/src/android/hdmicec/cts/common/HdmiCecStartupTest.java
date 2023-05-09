@@ -20,6 +20,7 @@ import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.hdmicec.cts.BaseHdmiCecCtsTest;
 import android.hdmicec.cts.CecOperand;
+import android.hdmicec.cts.HdmiCecConstants;
 
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -68,6 +69,14 @@ public final class HdmiCecStartupTest extends BaseHdmiCecCtsTest {
                         CecOperand.REQUEST_ACTIVE_SOURCE, CecOperand.GIVE_PHYSICAL_ADDRESS,
                         CecOperand.REPORT_POWER_STATUS, CecOperand.GIVE_SYSTEM_AUDIO_MODE_STATUS));
         allowedMessages.addAll(expectedMessages);
+
+        String deviceType = device.getProperty(HdmiCecConstants.HDMI_DEVICE_TYPE_PROPERTY);
+        boolean isAudioSystem = deviceType.contains(
+                Integer.toString(HdmiCecConstants.CEC_DEVICE_TYPE_AUDIO_SYSTEM));
+        if (isAudioSystem) {
+            allowedMessages.addAll(new ArrayList<>(
+                Arrays.asList(CecOperand.SET_SYSTEM_AUDIO_MODE, CecOperand.INITIATE_ARC)));
+        }
 
         device.reboot();
         /* Monitor CEC messages for 20s after reboot */
