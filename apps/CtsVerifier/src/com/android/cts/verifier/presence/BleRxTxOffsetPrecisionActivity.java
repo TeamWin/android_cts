@@ -119,6 +119,11 @@ public class BleRxTxOffsetPrecisionActivity extends PassFailButtons.Activity {
         mStopAdvertisingButton.setOnClickListener(v -> stopTest());
     }
 
+    @Override
+    public boolean requiresReportLog() {
+        return true;
+    }
+
     private void startTestAsDut() {
         if (!checkBluetoothEnabled()) {
             return;
@@ -152,6 +157,7 @@ public class BleRxTxOffsetPrecisionActivity extends PassFailButtons.Activity {
             mReferenceDeviceName = referenceDeviceName;
             mRssiMedianFromReferenceDevice = rssiMedian;
             if (resultList.size() >= 1000) {
+                mDeviceFoundTextView.setText(getString(R.string.result_pending_presence));
                 Log.i(TAG, "Data collection complete");
                 if (mRssiMedianFromReferenceDevice == 0) {
                     Log.i(TAG, "Awaiting rssi median from reference device");
