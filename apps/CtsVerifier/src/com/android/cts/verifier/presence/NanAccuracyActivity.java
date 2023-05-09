@@ -107,6 +107,7 @@ public class NanAccuracyActivity extends PassFailButtons.Activity {
         mServiceIdInfoTextView = findViewById(R.id.service_id_info);
         mServiceIdInputEditText = findViewById(R.id.service_id_input);
         mTestDistanceRadioGroup = findViewById(R.id.test_distance_radio_group);
+        mTestResult = new TestResult();
         DeviceFeatureChecker.checkFeatureSupported(this, getPassButton(),
                 PackageManager.FEATURE_WIFI_AWARE);
         DeviceFeatureChecker.checkFeatureSupported(this, getPassButton(),
@@ -116,7 +117,6 @@ public class NanAccuracyActivity extends PassFailButtons.Activity {
         Handler handler = new Handler(Looper.getMainLooper());
         mWifiAwarePeer = new WifiAwarePeer(this, handler);
         mReceivedSamples = new HashMap<>();
-        mTestResult = new TestResult();
         setUpActivity();
         mReferenceDeviceCheckbox.setOnCheckedChangeListener(
                 (buttonView, isChecked) -> setUpActivity());
@@ -130,6 +130,11 @@ public class NanAccuracyActivity extends PassFailButtons.Activity {
                 (group, checkedId) -> updateCurrentTestDistance());
         mServiceIdInfoTextView.setVisibility(View.GONE);
         updateCurrentTestDistance();
+    }
+
+    @Override
+    public boolean requiresReportLog() {
+        return true;
     }
 
     private void setUpActivity() {
@@ -262,9 +267,11 @@ public class NanAccuracyActivity extends PassFailButtons.Activity {
 
     @Override
     public void recordTestResults() {
-        getReportLog().addValue(KEY_REFERENCE_DEVICE, mReferenceDeviceName,
-                ResultType.NEUTRAL, ResultUnit.NONE);
-        getReportLog().submit();
+        if (mTestResult.isAllPassed()) {
+            getReportLog().addValue(KEY_REFERENCE_DEVICE, mReferenceDeviceName,
+                    ResultType.NEUTRAL, ResultUnit.NONE);
+            getReportLog().submit();
+        }
     }
 
     enum TestDistance {
