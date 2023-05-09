@@ -110,6 +110,11 @@ public class BleRssiPrecisionActivity extends PassFailButtons.Activity {
         mStopAdvertisingButton.setOnClickListener(v -> stopAdvertising());
     }
 
+    @Override
+    public boolean requiresReportLog() {
+        return true;
+    }
+
     private void startTest() {
         if (!checkBluetoothEnabled()) {
             return;
@@ -147,6 +152,7 @@ public class BleRssiPrecisionActivity extends PassFailButtons.Activity {
                 mBleScanner.stopScanning();
                 mStartTestButton.setEnabled(true);
                 mStopTestButton.setEnabled(false);
+                mIsReferenceDeviceCheckbox.setEnabled(true);
                 computeTestResults(resultList);
             }
         });
@@ -193,7 +199,8 @@ public class BleRssiPrecisionActivity extends PassFailButtons.Activity {
             packetDeviceName = DEVICE_NAME;
         }
         mBleAdvertiser.startAdvertising(
-                new BleAdvertisingPacket(packetDeviceName, randomAdvertiserDeviceId, (byte)0).toBytes());
+                new BleAdvertisingPacket(packetDeviceName, randomAdvertiserDeviceId,
+                        (byte) 0).toBytes());
         mStartAdvertisingButton.setEnabled(false);
         mStopAdvertisingButton.setEnabled(true);
     }
