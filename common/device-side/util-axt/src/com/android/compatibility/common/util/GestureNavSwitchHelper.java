@@ -23,11 +23,11 @@ import android.content.res.Resources;
 import android.graphics.Insets;
 import android.graphics.Rect;
 import android.os.SystemClock;
-import android.support.test.uiautomator.UiDevice;
 import android.view.WindowInsets;
 import android.view.WindowManager;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.uiautomator.UiDevice;
 
 import java.io.IOException;
 
