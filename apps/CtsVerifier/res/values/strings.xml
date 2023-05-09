@@ -1958,8 +1958,8 @@
     <string name="wifi_test_info">
         The Wi-Fi tests requires an open or PSK access point in the environment along with the DUT.
         \nPlease perform a network settings reset between each test to reset platform\'s internal state which
-        might interfere with the test flow.\nNavigate to \"Settings -> System -> Reset Options -> Reset Wi-Fi,
-        mobile &amp; Bluetooth\" to perform a network settings reset.
+        might interfere with the test flow.\nNavigate to \"Settings -> System -> Reset Options -> Reset Bluetooth
+        &amp; Wi-Fi\" to perform a network settings reset.
     </string>
     <string name="wifi_location_not_enabled">Wi-Fi / Location Mode is not enabled</string>
     <string name="wifi_location_not_enabled_message">These tests require Wi-Fi and Location Mode to be enabled.
