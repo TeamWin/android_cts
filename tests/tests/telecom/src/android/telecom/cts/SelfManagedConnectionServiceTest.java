@@ -1577,6 +1577,9 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
                 }
             }, WAIT_FOR_STATE_CHANGE_TIMEOUT_MS);
 
+            // wait for the CallAudioManager to process the CallAudioRoute update
+            waitOnAllHandlers(getInstrumentation());
+
             currentEndpointCounter.clearArgs();
             connection.requestCallEndpointChange(currentEndpoint, executor,
                     new OutcomeReceiver<>() {
