@@ -5435,7 +5435,7 @@ You should be prompted to select credentials; choose the ones you just installed
 
     <string name="audio_uap_buttons_test">USB Audio Peripheral Buttons Test</string>
     <string name="uapButtonTestInstructions">Connect the USB Audio headset with buttons
-        and press each transport/media button in turn.</string>
+        and press each button on the headset to verify recognition.</string>
 
      <string name="uapNotificationsTestInfo">
          This test verifies that the correct notifications and Intents are sent when a USB audio
@@ -5919,7 +5919,7 @@ Follow the instructions on the screen to measure the frequency response for the 
     <string name="analog_headset_pass_noheadset">"PASS (No headset port available)"</string>
     <string name="analog_headset_pass">PASS</string>
     <string name="analog_headset_port_detected">"Analog port detected"</string>
-    <string name="analog_headset_press_buttons">Press headset buttons to verify recognition</string>
+    <string name="analog_headset_press_buttons">Press each button on the headset verify recognition</string>
     <string name="analog_headset_no_buttons">No buttons detected</string>
     <string name="analog_headset_headset_connected">Headset connected</string>
     <string name="analog_headset_no_headset">No Headset - Connect headset to 3.5mm analog jack</string>
