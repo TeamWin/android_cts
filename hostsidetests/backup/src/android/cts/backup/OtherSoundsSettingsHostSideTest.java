@@ -21,7 +21,6 @@ import static org.junit.Assert.assertNull;
 import android.platform.test.annotations.AppModeFull;
 
 import com.android.tradefed.device.DeviceNotAvailableException;
-import com.android.tradefed.log.LogUtil;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
 import org.junit.After;
@@ -53,14 +52,14 @@ public class OtherSoundsSettingsHostSideTest extends BaseBackupHostSideTest {
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        installPackage(APP_APK);
+        installPackageAsUser(APP_APK, mDefaultBackupUserId);
     }
 
     @After
     public void tearDown() throws Exception {
         // Clear backup data and uninstall the package (in that order!)
         clearBackupDataInLocalTransport(APP_PACKAGE);
-        assertNull(uninstallPackage(APP_PACKAGE));
+        assertNull(uninstallPackageAsUser(APP_PACKAGE, mDefaultBackupUserId));
     }
 
     /**

@@ -16,14 +16,19 @@
 
 package android.backup.cts;
 
+import android.Manifest;
 import android.app.Instrumentation;
+import android.app.UiAutomation;
 import android.content.pm.PackageManager;
 import android.os.ParcelFileDescriptor;
+import android.os.UserHandle;
+import android.os.UserManager;
 import android.platform.test.annotations.AppModeFull;
 import android.test.InstrumentationTestCase;
 
 import com.android.compatibility.common.util.BackupUtils;
 import com.android.compatibility.common.util.LogcatInspector;
+import com.android.modules.utils.build.SdkLevel;
 
 import java.io.InputStream;
 
@@ -52,6 +57,8 @@ public class BaseBackupCtsTest extends InstrumentationTestCase {
                 }
             };
 
+    protected int mDefaultBackupUserId;
+
     @Override
     protected void setUp() throws Exception {
         super.setUp();
@@ -59,12 +66,27 @@ public class BaseBackupCtsTest extends InstrumentationTestCase {
         mIsBackupSupported =
                 packageManager != null
                         && packageManager.hasSystemFeature(PackageManager.FEATURE_BACKUP);
+        final UiAutomation uiAutomation = getInstrumentation().getUiAutomation();
+        try {
+            uiAutomation.adoptShellPermissionIdentity(Manifest.permission.QUERY_USERS);
+            UserHandle mainUser = null;
+            if (SdkLevel.isAtLeastU()) {
+                mainUser = getInstrumentation().getContext().getSystemService(
+                        UserManager.class).getMainUser();
+            }
+            mDefaultBackupUserId =
+                    mainUser == null ? UserHandle.USER_SYSTEM : mainUser.getIdentifier();
+        } finally {
+            uiAutomation.dropShellPermissionIdentity();
+        }
 
         if (mIsBackupSupported) {
-            assertTrue("Backup not enabled", mBackupUtils.isBackupEnabled());
-            assertTrue("LocalTransport not selected", mBackupUtils.isLocalTransportSelected());
+            assertTrue("Backup not enabled for user - " + mDefaultBackupUserId,
+                    mBackupUtils.isBackupEnabledForUser(mDefaultBackupUserId));
+            assertTrue("LocalTransport not selected for user - " + mDefaultBackupUserId,
+                    mBackupUtils.isLocalTransportSelectedForUser(mDefaultBackupUserId));
             getBackupUtils()
-                    .executeShellCommandSync("setprop log.tag." + APP_LOG_TAG +" VERBOSE");
+                    .executeShellCommandSync("setprop log.tag." + APP_LOG_TAG + " VERBOSE");
         }
     }
 

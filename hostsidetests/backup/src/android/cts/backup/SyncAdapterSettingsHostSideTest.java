@@ -21,7 +21,6 @@ import static org.junit.Assert.assertNull;
 import android.platform.test.annotations.AppModeFull;
 
 import com.android.tradefed.device.DeviceNotAvailableException;
-import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
 import org.junit.After;
@@ -56,7 +55,8 @@ public class SyncAdapterSettingsHostSideTest extends BaseBackupHostSideTest {
     @Before
     @Override
     public void setUp() throws Exception {
-        installPackage(APP_APK);
+        super.setUp();
+        installPackageAsUser(APP_APK, mDefaultBackupUserId);
     }
 
     @After
@@ -64,7 +64,7 @@ public class SyncAdapterSettingsHostSideTest extends BaseBackupHostSideTest {
         // Clear backup data and uninstall the package (in that order!)
         // BackupManagerService won't let us wipe the data if package is uninstalled
         clearBackupDataInLocalTransport(ANDROID_PACKAGE);
-        assertNull(uninstallPackage(APP_PACKAGE));
+        assertNull(uninstallPackageAsUser(APP_PACKAGE, mDefaultBackupUserId));
     }
 
     /**
@@ -111,6 +111,6 @@ public class SyncAdapterSettingsHostSideTest extends BaseBackupHostSideTest {
     }
 
     private void checkDeviceTest(String methodName) throws DeviceNotAvailableException {
-        checkDeviceTest(APP_PACKAGE, TEST_CLASS, methodName);
+        checkDeviceTestAsUser(APP_PACKAGE, TEST_CLASS, methodName, mDefaultBackupUserId);
     }
 }

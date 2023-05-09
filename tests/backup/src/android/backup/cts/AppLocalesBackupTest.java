@@ -127,7 +127,8 @@ public class AppLocalesBackupTest extends BaseBackupCtsTest {
 
         resetAppLocales();
 
-        getBackupUtils().restoreAndAssertSuccess(RESTORE_TOKEN, SYSTEM_PACKAGE);
+        getBackupUtils().restoreForUserAndAssertSuccess(RESTORE_TOKEN, SYSTEM_PACKAGE,
+                mDefaultBackupUserId);
 
         assertLocalesForApp(TEST_APP_PACKAGE_1, DEFAULT_LOCALES_1);
         assertLocalesForApp(TEST_APP_PACKAGE_2, DEFAULT_LOCALES_2);
@@ -148,7 +149,8 @@ public class AppLocalesBackupTest extends BaseBackupCtsTest {
         setApplicationLocalesAndVerify(TEST_APP_PACKAGE_1, newLocales);
         setApplicationLocalesAndVerify(TEST_APP_PACKAGE_2, EMPTY_LOCALES);
 
-        getBackupUtils().restoreAndAssertSuccess(RESTORE_TOKEN, SYSTEM_PACKAGE);
+        getBackupUtils().restoreForUserAndAssertSuccess(RESTORE_TOKEN, SYSTEM_PACKAGE,
+                mDefaultBackupUserId);
 
         // Should restore only for app_2.
         assertLocalesForApp(TEST_APP_PACKAGE_1, newLocales);
@@ -172,7 +174,8 @@ public class AppLocalesBackupTest extends BaseBackupCtsTest {
 
         uninstall(TEST_APP_PACKAGE_2);
 
-        getBackupUtils().restoreAndAssertSuccess(RESTORE_TOKEN, SYSTEM_PACKAGE);
+        getBackupUtils().restoreForUserAndAssertSuccess(RESTORE_TOKEN, SYSTEM_PACKAGE,
+                mDefaultBackupUserId);
 
         // Locales for App1 should be restored immediately since that's present already.
         assertLocalesForApp(TEST_APP_PACKAGE_1, DEFAULT_LOCALES_1);
@@ -224,13 +227,14 @@ public class AppLocalesBackupTest extends BaseBackupCtsTest {
         // be removed from the backup.
         uninstall(TEST_APP_PACKAGE_2);
         setApplicationLocalesAndVerify(TEST_APP_PACKAGE_1, DEFAULT_LOCALES_1);
-        getBackupUtils().backupNowAndAssertSuccess(SYSTEM_PACKAGE);
+        getBackupUtils().backupNowForUserAndAssertSuccess(SYSTEM_PACKAGE, mDefaultBackupUserId);
 
         install(TEST_APP_APK_2);
         // Remove app1's locales so that it can be restored.
         setApplicationLocalesAndVerify(TEST_APP_PACKAGE_1, EMPTY_LOCALES);
 
-        getBackupUtils().restoreAndAssertSuccess(RESTORE_TOKEN, SYSTEM_PACKAGE);
+        getBackupUtils().restoreForUserAndAssertSuccess(RESTORE_TOKEN, SYSTEM_PACKAGE,
+                mDefaultBackupUserId);
 
         // Restores only app1's locales because app2's data is no longer present in the backup.
         assertLocalesForApp(TEST_APP_PACKAGE_1, DEFAULT_LOCALES_1);
@@ -252,7 +256,8 @@ public class AppLocalesBackupTest extends BaseBackupCtsTest {
 
         uninstall(TEST_APP_PACKAGE_2);
 
-        getBackupUtils().restoreAndAssertSuccess(RESTORE_TOKEN, SYSTEM_PACKAGE);
+        getBackupUtils().restoreForUserAndAssertSuccess(RESTORE_TOKEN, SYSTEM_PACKAGE,
+                mDefaultBackupUserId);
 
         // Locales for App1 should be restored immediately since that's present already.
         assertLocalesForApp(TEST_APP_PACKAGE_1, DEFAULT_LOCALES_1);
@@ -297,7 +302,7 @@ public class AppLocalesBackupTest extends BaseBackupCtsTest {
             assertTrue(System.currentTimeMillis() >= afterRetentionPeriodMillis);
 
             // Run the backup pass now.
-            getBackupUtils().backupNowAndAssertSuccess(SYSTEM_PACKAGE);
+            getBackupUtils().backupNowForUserAndAssertSuccess(SYSTEM_PACKAGE, mDefaultBackupUserId);
         } finally {
 
             // Now do our best to return the device to its original state.
@@ -350,7 +355,8 @@ public class AppLocalesBackupTest extends BaseBackupCtsTest {
         uninstall(TEST_APP_PACKAGE_1);
         uninstall(TEST_APP_PACKAGE_2);
 
-        getBackupUtils().restoreAndAssertSuccess(RESTORE_TOKEN, SYSTEM_PACKAGE);
+        getBackupUtils().restoreForUserAndAssertSuccess(RESTORE_TOKEN, SYSTEM_PACKAGE,
+                mDefaultBackupUserId);
 
 
         DeviceConfigShellHelper deviceConfigShellHelper = new DeviceConfigShellHelper(
@@ -470,24 +476,24 @@ public class AppLocalesBackupTest extends BaseBackupCtsTest {
     }
 
     private LocaleList getApplicationLocales(String packageName) throws Exception {
-        return callWithShellPermissionIdentity(() ->
-                        mLocaleManager.getApplicationLocales(packageName),
-                Manifest.permission.READ_APP_SPECIFIC_LOCALES);
+        return callWithShellPermissionIdentity(
+                () -> mLocaleManager.getApplicationLocales(packageName));
     }
 
     private void install(String apk) {
-        ShellUtils.runShellCommand("pm install -r " + apk);
+        ShellUtils.runShellCommand("pm install -r --user " + mDefaultBackupUserId + " " + apk);
     }
 
     private void uninstall(String packageName) {
-        ShellUtils.runShellCommand("pm uninstall " + packageName);
+        ShellUtils.runShellCommand(
+                "pm uninstall --user " + mDefaultBackupUserId + " " + packageName);
     }
 
     private void setAndBackupDefaultAppLocales() throws Exception {
         setApplicationLocalesAndVerify(TEST_APP_PACKAGE_1, DEFAULT_LOCALES_1);
         setApplicationLocalesAndVerify(TEST_APP_PACKAGE_2, DEFAULT_LOCALES_2);
         // Backup the data for SYSTEM_PACKAGE which includes app-locales.
-        getBackupUtils().backupNowAndAssertSuccess(SYSTEM_PACKAGE);
+        getBackupUtils().backupNowForUserAndAssertSuccess(SYSTEM_PACKAGE, mDefaultBackupUserId);
     }
 
     private void resetAppLocales() throws Exception {

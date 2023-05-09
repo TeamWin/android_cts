@@ -16,9 +16,10 @@
 
 package android.cts.backup;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assume.assumeTrue;
 
 import android.platform.test.annotations.AppModeFull;
 
@@ -27,11 +28,11 @@ import com.android.compatibility.common.util.LogcatInspector;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.log.LogUtil.CLog;
+import com.android.tradefed.targetprep.TargetSetupError;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.ITestInformationReceiver;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
-import org.junit.After;
 import org.junit.AssumptionViolatedException;
 import org.junit.Before;
 import org.junit.Rule;
@@ -59,6 +60,8 @@ public abstract class BaseBackupHostSideTest extends BaseHostJUnit4Test {
     protected static final String LOCAL_TRANSPORT =
             "com.android.localtransport/.LocalTransport";
 
+    private static final int SYSTEM_USER_ID = 0;
+
     @Rule
     public final RequiredFeatureRule mBackupRequiredRule = new RequiredFeatureRule(this,
             FEATURE_BACKUP);
@@ -77,11 +80,24 @@ public abstract class BaseBackupHostSideTest extends BaseHostJUnit4Test {
         }
     };
 
+    protected int mDefaultBackupUserId;
+
+    protected String mBmgrCommand;
+
+    protected static final String LOGCAT_BUFFER_SIZE_GET_COMMAND =
+            "logcat -g | grep -E -o '[0-9]*([[:space:]]KiB|[[:space:]]MiB)' | head -1";
+    protected static final String LOGCAT_BUFFER_SIZE_SET_COMMAND = "logcat -G ";
+    protected static final String LOGCAT_MAX_BUFFER_SIZE = "16MiB";
+
     @Before
     public void setUp() throws Exception {
+        mDefaultBackupUserId = getDevice().getMainUserId() == null ? SYSTEM_USER_ID
+                : getDevice().getMainUserId();
+        mBmgrCommand = "bmgr --user " + mDefaultBackupUserId + " ";
         // Check that the backup wasn't disabled and the transport wasn't switched unexpectedly.
-        assertTrue("Backup was unexpectedly disabled during the module test run",
-                getBackupUtils().isBackupEnabled());
+        assertTrue("Backup was unexpectedly disabled during the module test run for user - "
+                        + mDefaultBackupUserId,
+                getBackupUtils().isBackupEnabledForUser(mDefaultBackupUserId));
         assertEquals("LocalTransport should be selected at this point", LOCAL_TRANSPORT,
                 getCurrentTransport());
         mBackupUtils.wakeAndUnlockDevice();
@@ -108,12 +124,12 @@ public abstract class BaseBackupHostSideTest extends BaseHostJUnit4Test {
         assertTrue("Device test failed: " + testName, result);
     }
 
-    protected void startActivityInPackageAndWait(String packageName, String className)
+    /** Run device side test as user {@code userId}. */
+    void checkDeviceTestAsUser(String packageName, String className, String testName, int userId)
             throws DeviceNotAvailableException {
-        getDevice().executeShellCommand(String.format(
-                "am start -W -a android.intent.action.MAIN -n %s/%s.%s", packageName,
-                packageName,
-                className));
+        boolean result = runDeviceTests(getDevice(), packageName, className, testName, userId,
+                null);
+        assertThat(result).isTrue();
     }
 
     /**
@@ -124,24 +140,24 @@ public abstract class BaseBackupHostSideTest extends BaseHostJUnit4Test {
     protected void clearBackupDataInLocalTransport(String packageName)
             throws DeviceNotAvailableException {
         getDevice().executeShellCommand(
-                String.format("bmgr wipe %s %s", LOCAL_TRANSPORT, packageName));
+                String.format(mBmgrCommand + "wipe %s %s", LOCAL_TRANSPORT, packageName));
     }
 
-    /**
-     * Clears package data
-     */
-    protected void clearPackageData(String packageName) throws DeviceNotAvailableException {
-        getDevice().executeShellCommand(String.format("pm clear %s", packageName));
+    /** Clears data of {@code packageName} for user {@code userId}. */
+    void clearPackageDataAsUser(String packageName, int userId) throws DeviceNotAvailableException {
+        getDevice().executeShellCommand(
+                String.format("pm clear --user %d %s", userId, packageName));
     }
 
     protected String getCurrentTransport() throws DeviceNotAvailableException {
-        String output = getDevice().executeShellCommand("bmgr list transports");
+        String output = getDevice().executeShellCommand(mBmgrCommand + "list transports");
         Pattern pattern = Pattern.compile("\\* (.*)");
         Matcher matcher = pattern.matcher(output);
         if (matcher.find()) {
             return matcher.group(1);
         } else {
-            throw new RuntimeException("non-parsable output setting bmgr transport: " + output);
+            throw new RuntimeException(
+                    "non-parsable output setting for - " + mBmgrCommand + "transport: " + output);
         }
     }
 
@@ -161,6 +177,18 @@ public abstract class BaseBackupHostSideTest extends BaseHostJUnit4Test {
 
     protected void disableFakeEncryptionOnTransport() throws Exception {
         setLocalTransportParameters("fake_encryption_flag=false");
+    }
+
+    /** Installs {@code apk} for user {@code userId} and allows replacements and downgrades. */
+    protected void installPackageAsUser(String apk, int userId)
+            throws DeviceNotAvailableException, TargetSetupError {
+        installPackageAsUser(apk, false, userId, "-r", "-d");
+    }
+
+    /** Uninstalls {@code packageName} for user {@code userId}. */
+    protected String uninstallPackageAsUser(String packageName, int userId)
+            throws DeviceNotAvailableException {
+        return getDevice().uninstallPackageForUser(packageName, userId);
     }
 
     static InputStream executeDeviceShellCommand(
@@ -201,7 +229,7 @@ public abstract class BaseBackupHostSideTest extends BaseHostJUnit4Test {
 
                     if (!hasFeature) {
                         CLog.d("skipping %s#%s"
-                                + " because device does not have feature '%s'",
+                                        + " because device does not have feature '%s'",
                                 description.getClassName(), description.getMethodName(), mFeature);
                         throw new AssumptionViolatedException("Device does not have feature '"
                                 + mFeature + "'");

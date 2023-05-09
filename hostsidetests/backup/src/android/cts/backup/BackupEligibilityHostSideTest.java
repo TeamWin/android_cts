@@ -68,8 +68,10 @@ public class BackupEligibilityHostSideTest extends BaseBackupHostSideTest {
     /** The name of the APK of the app that has allowBackup=false in the manifest */
     private static final String ALLOWBACKUP_FALSE_APP_APK = "BackupNotAllowedApp.apk";
 
-    /** The name of the APK of the app that doesn't have allowBackup in the manifest
-     * (same as allowBackup=true by default) */
+    /**
+     * The name of the APK of the app that doesn't have allowBackup in the manifest
+     * (same as allowBackup=true by default)
+     */
     private static final String ALLOWBACKUP_APP_APK = "BackupAllowedApp.apk";
 
     /** The name of the APK of the app that has {@code debuggable=false} in the manifest. */
@@ -82,7 +84,7 @@ public class BackupEligibilityHostSideTest extends BaseBackupHostSideTest {
     public void tearDown() throws Exception {
         // Clear backup data and uninstall the package (in that order!)
         clearBackupDataInLocalTransport(BACKUP_ELIGIBILITY_APP_NAME);
-        assertNull(uninstallPackage(BACKUP_ELIGIBILITY_APP_NAME));
+        assertNull(uninstallPackageAsUser(BACKUP_ELIGIBILITY_APP_NAME, mDefaultBackupUserId));
     }
 
     /**
@@ -96,16 +98,17 @@ public class BackupEligibilityHostSideTest extends BaseBackupHostSideTest {
      */
     @Test
     public void testAllowBackup_False() throws Exception {
-        installPackage(ALLOWBACKUP_FALSE_APP_APK, "-d", "-r");
+        installPackageAsUser(ALLOWBACKUP_FALSE_APP_APK, mDefaultBackupUserId);
 
         // Generate the files that are going to be backed up.
         checkBackupEligibilityDeviceTest("createFiles");
 
-        getBackupUtils().backupNowAndAssertBackupNotAllowed(BACKUP_ELIGIBILITY_APP_NAME);
+        getBackupUtils().backupNowForUserAndAssertBackupNotAllowed(BACKUP_ELIGIBILITY_APP_NAME,
+                mDefaultBackupUserId);
 
-        assertNull(uninstallPackage(BACKUP_ELIGIBILITY_APP_NAME));
+        assertNull(uninstallPackageAsUser(BACKUP_ELIGIBILITY_APP_NAME, mDefaultBackupUserId));
 
-        installPackage(ALLOWBACKUP_FALSE_APP_APK, "-d", "-r");
+        installPackageAsUser(ALLOWBACKUP_FALSE_APP_APK, mDefaultBackupUserId);
 
         checkBackupEligibilityDeviceTest("checkNoFilesExist");
     }
@@ -121,17 +124,18 @@ public class BackupEligibilityHostSideTest extends BaseBackupHostSideTest {
      */
     @Test
     public void testAllowBackup_True() throws Exception {
-        installPackage(ALLOWBACKUP_APP_APK, "-d", "-r");
+        installPackageAsUser(ALLOWBACKUP_APP_APK, mDefaultBackupUserId);
 
         // Generate the files that are going to be backed up.
         checkBackupEligibilityDeviceTest("createFiles");
 
         // Do a backup
-        getBackupUtils().backupNowAndAssertSuccess(BACKUP_ELIGIBILITY_APP_NAME);
+        getBackupUtils().backupNowForUserAndAssertSuccess(BACKUP_ELIGIBILITY_APP_NAME,
+                mDefaultBackupUserId);
 
-        assertNull(uninstallPackage(BACKUP_ELIGIBILITY_APP_NAME));
+        assertNull(uninstallPackageAsUser(BACKUP_ELIGIBILITY_APP_NAME, mDefaultBackupUserId));
 
-        installPackage(ALLOWBACKUP_APP_APK, "-d", "-r");
+        installPackageAsUser(ALLOWBACKUP_APP_APK, mDefaultBackupUserId);
 
         checkBackupEligibilityDeviceTest("checkAllFilesExist");
     }
@@ -148,7 +152,7 @@ public class BackupEligibilityHostSideTest extends BaseBackupHostSideTest {
      */
     @Test
     public void testAdbBackup_offForNonDebuggableApp() throws Exception {
-        installPackage(DEBUGGABLE_FALSE_APP_APK, "-d", "-r");
+        installPackageAsUser(DEBUGGABLE_FALSE_APP_APK, mDefaultBackupUserId);
 
         runAdbBackupAndRestore();
 
@@ -167,7 +171,7 @@ public class BackupEligibilityHostSideTest extends BaseBackupHostSideTest {
      */
     @Test
     public void testAdbBackup_onForDebuggableApp() throws Exception {
-        installPackage(DEBUGGABLE_TRUE_APP_APK, "-d", "-r");
+        installPackageAsUser(DEBUGGABLE_TRUE_APP_APK, mDefaultBackupUserId);
 
         runAdbBackupAndRestore();
 
@@ -175,7 +179,7 @@ public class BackupEligibilityHostSideTest extends BaseBackupHostSideTest {
     }
 
     private void runAdbBackupAndRestore() throws Exception {
-        installPackage(ADB_BACKUP_APP_APK, "-d", "-r");
+        installPackageAsUser(ADB_BACKUP_APP_APK, mDefaultBackupUserId);
 
         File tempDir = null;
         try {
@@ -185,15 +189,17 @@ public class BackupEligibilityHostSideTest extends BaseBackupHostSideTest {
             // Create a temp dir on the host for adb backup output.
             tempDir = FileUtil.createTempDir(TEMP_DIR);
             String backupFileName = new File(tempDir, ADB_BACKUP_FILE).getAbsolutePath();
-            runAdbCommand("backup", "-f", backupFileName, BACKUP_ELIGIBILITY_APP_NAME);
+            runAdbCommand("backup", "-user", Integer.toString(mDefaultBackupUserId), "-f",
+                    backupFileName, BACKUP_ELIGIBILITY_APP_NAME);
 
             checkBackupEligibilityDeviceTest("deleteFilesAndAssertNoneExist");
-            runAdbCommand("restore", backupFileName);
+            runAdbCommand("restore", backupFileName, "-user",
+                    Integer.toString(mDefaultBackupUserId));
         } finally {
             if (tempDir != null) {
                 FileUtil.recursiveDelete(tempDir);
             }
-            assertNull(uninstallPackage(ADB_BACKUP_APP_NAME));
+            assertNull(uninstallPackageAsUser(ADB_BACKUP_APP_NAME, mDefaultBackupUserId));
         }
     }
 
@@ -230,6 +236,6 @@ public class BackupEligibilityHostSideTest extends BaseBackupHostSideTest {
 
     private void runDeviceSideProcedure(String packageName, String className,
             String procedureName) throws Exception {
-        checkDeviceTest(packageName, className, procedureName);
+        checkDeviceTestAsUser(packageName, className, procedureName, mDefaultBackupUserId);
     }
 }
