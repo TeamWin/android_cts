@@ -140,6 +140,10 @@ public class MediaProjectionActivity extends Activity {
 
     /** The permission dialog will be auto-opened by the activity - find it and accept */
     public void dismissPermissionDialog() {
+        // Ensure the device is initialized before interacting with any UI elements.
+        final UiDevice uiDevice = UiDevice.getInstance(
+                InstrumentationRegistry.getInstrumentation());
+
         // Scroll down the dialog; on a device with a small screen the buttons may be below the
         // warning text.
         final boolean isWatch = getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH);
@@ -157,8 +161,6 @@ public class MediaProjectionActivity extends Activity {
             }
         }
 
-        final UiDevice uiDevice = UiDevice.getInstance(
-                InstrumentationRegistry.getInstrumentation());
         UiObject2 acceptButton = uiDevice.wait(Until.findObject(By.res(ACCEPT_RESOURCE_ID)),
                 PERMISSION_DIALOG_WAIT_MS);
         if (acceptButton != null) {
