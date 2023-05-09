@@ -1061,7 +1061,7 @@ public final class ResetPasswordWithTokenTest { // bunch of headless failures - 
                 .isEqualTo(valueBefore);
     }
 
-    @CannotSetPolicyTest(policy = ResetPasswordWithToken.class)
+    @CannotSetPolicyTest(policy = ResetPasswordWithToken.class, includeNonDeviceAdminStates = false)
     @Postsubmit(reason = "new test")
     public void setResetPasswordToken_notPermitted_throwsSecurityException() {
         assertThrows(SecurityException.class,
@@ -1069,7 +1069,7 @@ public final class ResetPasswordWithTokenTest { // bunch of headless failures - 
                         sDeviceState.dpc().componentName(), TOKEN));
     }
 
-    @CannotSetPolicyTest(policy = ResetPasswordWithToken.class)
+    @CannotSetPolicyTest(policy = ResetPasswordWithToken.class, includeNonDeviceAdminStates = false)
     @Postsubmit(reason = "new test")
     public void resetPasswordWithToken_notPermitted_throwsSecurityException() {
         assertThrows(SecurityException.class,
@@ -1077,7 +1077,7 @@ public final class ResetPasswordWithTokenTest { // bunch of headless failures - 
                         sDeviceState.dpc().componentName(), NOT_COMPLEX_PASSWORD, TOKEN, 0));
     }
 
-    @CannotSetPolicyTest(policy = ResetPasswordWithToken.class)
+    @CannotSetPolicyTest(policy = ResetPasswordWithToken.class, includeNonDeviceAdminStates = false)
     @Postsubmit(reason = "new test")
     public void clearResetPasswordToken_notPermitted_throwsSecurityException() {
         assertThrows(SecurityException.class,
@@ -1085,16 +1085,13 @@ public final class ResetPasswordWithTokenTest { // bunch of headless failures - 
                         sDeviceState.dpc().componentName()));
     }
 
-    @CannotSetPolicyTest(policy = ResetPasswordWithToken.class)
+    @CannotSetPolicyTest(policy = ResetPasswordWithToken.class, includeNonDeviceAdminStates = false)
     @Postsubmit(reason = "new test")
     public void isResetPasswordTokenActive_notPermitted_throwsSecurityException() {
         assertThrows(SecurityException.class,
                 () -> sDeviceState.dpc().devicePolicyManager().isResetPasswordTokenActive(
                         sDeviceState.dpc().componentName()));
     }
-
-
-
 
     private void assertPasswordSucceeds(String password) {
         assertThat(sDeviceState.dpc().devicePolicyManager().resetPasswordWithToken(

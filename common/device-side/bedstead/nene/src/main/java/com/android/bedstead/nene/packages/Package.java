@@ -67,6 +67,7 @@ import com.android.bedstead.nene.roles.RoleContext;
 import com.android.bedstead.nene.users.UserReference;
 import com.android.bedstead.nene.utils.Poll;
 import com.android.bedstead.nene.utils.ShellCommand;
+import com.android.bedstead.nene.utils.ShellCommandUtils;
 import com.android.bedstead.nene.utils.Versions;
 import com.android.compatibility.common.util.BlockingBroadcastReceiver;
 import com.android.compatibility.common.util.BlockingCallback.DefaultBlockingCallback;
@@ -1084,5 +1085,13 @@ public final class Package {
     @Experimental
     public boolean isRoleHolder(String role) {
         return TestApis.roles().getRoleHolders(role).contains(this.mPackageName);
+    }
+
+    @Experimental
+    public void clearStorage() {
+        ShellCommand.builder("pm clear")
+                .addOperand(mPackageName)
+                .validate(ShellCommandUtils::startsWithSuccess)
+                .executeOrThrowNeneException("Error clearing storage for " + this);
     }
 }

@@ -75,8 +75,12 @@ public final class SupportMessageTest {
 
     @After
     public void tearDown() {
-        mDevicePolicyManager.setShortSupportMessage(mAdmin, /* charSequence= */ null);
-        mDevicePolicyManager.setLongSupportMessage(mAdmin, /* charSequence= */ null);
+        try {
+            mDevicePolicyManager.setShortSupportMessage(mAdmin, /* charSequence= */ null);
+            mDevicePolicyManager.setLongSupportMessage(mAdmin, /* charSequence= */ null);
+        } catch (SecurityException e) {
+            // Expected when testing lack-of-permission
+        }
     }
 
     @PolicyAppliesTest(policy = SupportMessage.class)

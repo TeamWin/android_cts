@@ -32,6 +32,6 @@ public final class IsEducationDisplayedBelowWorkTabOrFolderStepAutomation implem
     public Boolean automate() throws Exception {
         return TestApis.ui().device().findObject(
                 new UiSelector().text("Work apps are badged and visible to your IT admin")
-                .className(TextView.class)).exists();
+                .className(TextView.class)).waitForExists(10000);
     }
 }
