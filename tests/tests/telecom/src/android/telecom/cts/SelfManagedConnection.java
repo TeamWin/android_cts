@@ -22,6 +22,7 @@ import android.telecom.CallEndpoint;
 import android.telecom.Connection;
 import android.telecom.DisconnectCause;
 import android.telecom.cts.TestUtils.InvokeCounter;
+import android.util.Log;
 
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -30,7 +31,7 @@ import java.util.concurrent.CountDownLatch;
  * CTS Test self-managed {@link Connection} implementation.
  */
 public class SelfManagedConnection extends Connection {
-
+    private static final String TAG = SelfManagedConnection.class.getSimpleName();
     InvokeCounter mCallAudioRouteInvokeCounter = new InvokeCounter("onCallAudioStateChanged");
     InvokeCounter mOnShowIncomingUiInvokeCounter = new InvokeCounter(
             "onShowIncomingUiInvokeCounter");
@@ -134,6 +135,7 @@ public class SelfManagedConnection extends Connection {
 
     @Override
     public void onCallEndpointChanged(CallEndpoint endpoint) {
+        Log.i(TAG, String.format("onCallEndpointChanged: endpoint=[%s]", endpoint));
         mCallEndpointInvokeCounter.invoke(endpoint);
     }
 
