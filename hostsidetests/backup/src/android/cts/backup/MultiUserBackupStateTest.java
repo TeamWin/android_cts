@@ -21,9 +21,8 @@ import static org.junit.Assert.assertTrue;
 import android.platform.test.annotations.AppModeFull;
 
 import com.android.compatibility.common.util.CommonTestUtils;
-import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
-
 import com.android.tradefed.log.LogUtil.CLog;
+import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
 import org.junit.After;
 import org.junit.Before;
@@ -41,12 +40,6 @@ public class MultiUserBackupStateTest extends BaseMultiUserBackupHostSideTest {
     private static final int BACKUP_DEACTIVATION_TIMEOUT_SECONDS = 60;
 
     private Optional<Integer> mProfileUserId = Optional.empty();
-
-    /**
-     * User ID for the system user.
-     * The value is from the UserHandle class.
-     */
-    protected static final int USER_SYSTEM = 0;
 
     /** Create the profile and start it. */
     @Before
@@ -96,7 +89,7 @@ public class MultiUserBackupStateTest extends BaseMultiUserBackupHostSideTest {
     }
 
     private void removeUser(int userId) throws Exception  {
-        if (getDevice().listUsers().contains(userId) && userId != USER_SYSTEM) {
+        if (getDevice().listUsers().contains(userId) && userId != mDefaultBackupUserId) {
             // Don't log output, as tests sometimes set no debug user restriction, which
             // causes this to fail, we should still continue and remove the user.
             CLog.d("Stopping and removing user " + userId);

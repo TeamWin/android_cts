@@ -24,22 +24,14 @@ import android.platform.test.annotations.AppModeFull;
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.compatibility.common.util.BackupUtils;
 import com.android.tradefed.device.DeviceNotAvailableException;
-import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.DeviceParameterizedRunner;
-import com.android.tradefed.util.FileUtil;
-import com.android.tradefed.util.RunUtil;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.List;
+import java.io.FileNotFoundException;
 import java.util.Optional;
 
 import junitparams.Parameters;
@@ -73,22 +65,28 @@ public class RestoreSessionHostSideTest extends BaseBackupHostSideTest {
         return new Boolean[][]{{NON_INCREMENTAL}, {INCREMENTAL}};
     }
 
+    private CompatibilityBuildHelper mBuildHelper;
+
     /** Switch to local transport. */
     @Before
     public void setUp() throws Exception {
+        super.setUp();
         mBackupUtils = getBackupUtils();
-        mOldTransport = Optional.of(setBackupTransport(mBackupUtils.getLocalTransportName()));
-        installPackage(MAIN_TEST_APK);
+        mOldTransport = Optional.of(
+                mBackupUtils.setBackupTransportForUser(mBackupUtils.getLocalTransportName(),
+                        mDefaultBackupUserId));
+        installPackageAsUser(MAIN_TEST_APK, mDefaultBackupUserId);
+        mBuildHelper = new CompatibilityBuildHelper(getBuild());
     }
 
     /** Restore transport settings to original values. */
     @After
     public void tearDown() throws Exception {
         if (mOldTransport.isPresent()) {
-            setBackupTransport(mOldTransport.get());
+            mBackupUtils.setBackupTransportForUser(mOldTransport.get(), mDefaultBackupUserId);
             mOldTransport = Optional.empty();
 
-            uninstallPackage(MAIN_TEST_APK);
+            uninstallPackageAsUser(MAIN_TEST_APK, mDefaultBackupUserId);
         }
     }
 
@@ -129,8 +127,6 @@ public class RestoreSessionHostSideTest extends BaseBackupHostSideTest {
     }
 
     /**
-     *
-     *
      * <ol>
      *   <li>Install 3 test packages on the device
      *   <li>Write test values to shared preferences for each package
@@ -150,15 +146,17 @@ public class RestoreSessionHostSideTest extends BaseBackupHostSideTest {
         checkRestoreSessionDeviceTestForAllApps("testCheckSharedPrefsExist");
 
         // Backup all test packages.
-        mBackupUtils.backupNowAndAssertSuccess(getPackageNameForTestApp(1));
-        mBackupUtils.backupNowAndAssertSuccess(getPackageNameForTestApp(2));
+        mBackupUtils.backupNowForUserAndAssertSuccess(getPackageNameForTestApp(1),
+                mDefaultBackupUserId);
+        mBackupUtils.backupNowForUserAndAssertSuccess(getPackageNameForTestApp(2),
+                mDefaultBackupUserId);
 
         // Clear shared preferences for all test packages.
         checkRestoreSessionDeviceTestForAllApps("testClearSharedPrefs");
         checkRestoreSessionDeviceTestForAllApps("testCheckSharedPrefsDontExist");
 
-        runRestoreSessionDeviceTestAndAssertSuccess(
-                MAIN_TEST_APP_PKG, DEVICE_MAIN_TEST_CLASS_NAME, deviceTestName);
+        checkDeviceTestAsUser(MAIN_TEST_APP_PKG, DEVICE_MAIN_TEST_CLASS_NAME, deviceTestName,
+                mDefaultBackupUserId);
 
         // Check that shared prefs are only restored (and restored correctly) for the packages
         // that need to be restored.
@@ -170,8 +168,8 @@ public class RestoreSessionHostSideTest extends BaseBackupHostSideTest {
             }
         }
 
-        uninstallPackage(getPackageNameForTestApp(1));
-        uninstallPackage(getPackageNameForTestApp(2));
+        uninstallPackageAsUser(getPackageNameForTestApp(1), mDefaultBackupUserId);
+        uninstallPackageAsUser(getPackageNameForTestApp(2), mDefaultBackupUserId);
     }
 
     /** Run the given device test for all test apps. */
@@ -186,15 +184,8 @@ public class RestoreSessionHostSideTest extends BaseBackupHostSideTest {
     private void checkRestoreSessionDeviceTest(int testAppNumber, String testName)
             throws DeviceNotAvailableException {
         String packageName = getPackageNameForTestApp(testAppNumber);
-        runRestoreSessionDeviceTestAndAssertSuccess(
-                packageName, packageName + ".RestoreSessionAppTest", testName);
-    }
-
-    private void runRestoreSessionDeviceTestAndAssertSuccess(
-            String packageName, String fullClassName, String testName)
-            throws DeviceNotAvailableException {
-        boolean result = runDeviceTests(packageName, fullClassName, testName);
-        assertTrue("Device test failed: " + testName, result);
+        checkDeviceTestAsUser(packageName, packageName + ".RestoreSessionAppTest", testName,
+                mDefaultBackupUserId);
     }
 
     private String getPackageNameForTestApp(int appNumber) {
@@ -205,44 +196,32 @@ public class RestoreSessionHostSideTest extends BaseBackupHostSideTest {
         return TEST_APP_APK_PREFIX + appNumber + ".apk";
     }
 
-    private String setBackupTransport(String transport) throws IOException {
-        return mBackupUtils.setBackupTransportForUser(transport, USER_SYSTEM);
-    }
-
     private void installPackage(String apkFileName, boolean incremental) throws Exception {
         if (!incremental) {
-            super.installPackage(apkFileName);
+            installPackageAsUser(apkFileName, mDefaultBackupUserId);
             return;
         }
 
         assumeTrue(hasIncrementalFeature());
-        String result = installWithAdb(apkFileName);
-        assumeTrue(result, !result.contains("Unknown option --incremental"));
+        installPackageIncremental(apkFileName);
+    }
+
+    private void installPackageIncremental(String apkFileName)
+            throws FileNotFoundException, DeviceNotAvailableException {
+        // adb install-incremental doesn't take userId as a param. We'll use pm to perform
+        // incremental install
+        String deviceLocalPath = "/data/local/tmp/";
+        getDevice().executeAdbCommand("push", getFilePathFromBuildInfo(apkFileName),
+                deviceLocalPath);
+        String result = getDevice().executeShellCommand(
+                String.format("pm install-incremental --user %s %s", mDefaultBackupUserId,
+                        deviceLocalPath + apkFileName));
         assertTrue(result, result.contains("Success"));
     }
 
-    private String installWithAdb(String apkFileName) throws Exception {
-        final long DEFAULT_TEST_TIMEOUT_MS = 60 * 1000L;
-
-        CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(getBuild());
-
-        List<String> adbCmd = new ArrayList<>();
-        adbCmd.add("adb");
-        adbCmd.add("-s");
-        adbCmd.add(getDevice().getSerialNumber());
-        adbCmd.add("install");
-        adbCmd.add("--incremental");
-        adbCmd.add(buildHelper.getTestFile(apkFileName).getAbsolutePath());
-
-        // Using runUtil instead of executeAdbCommand() because the latter doesn't provide the
-        // option to get stderr or redirect stderr to stdout.
-        File outFile = FileUtil.createTempFile("stdoutredirect", ".txt");
-        OutputStream stdout = new FileOutputStream(outFile);
-        RunUtil runUtil = new RunUtil();
-        runUtil.setRedirectStderrToStdout(true);
-        runUtil.runTimedCmd(DEFAULT_TEST_TIMEOUT_MS, stdout, /* stderr= */ null,
-                adbCmd.toArray(new String[adbCmd.size()]));
-        return FileUtil.readStringFromFile(outFile);
+    private String getFilePathFromBuildInfo(String filename)
+            throws FileNotFoundException {
+        return mBuildHelper.getTestFile(filename).getAbsolutePath();
     }
 
     private boolean hasIncrementalFeature() throws Exception {

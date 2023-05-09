@@ -62,8 +62,10 @@ public class BackupPreparer implements ITargetCleaner {
 
     private static final String LOCAL_TRANSPORT =
             "com.android.localtransport/.LocalTransport";
-    private final int USER_SYSTEM = 0;
 
+    private String mBmgrCommand;
+
+    private int mDefaultBackupUserId;
     private boolean mIsBackupSupported;
     private boolean mWasBackupEnabled;
     private String mOldTransport;
@@ -76,6 +78,8 @@ public class BackupPreparer implements ITargetCleaner {
         mDevice = device;
         mBackupUtils = BackupHostSideUtils.createBackupUtils(mDevice);
         mIsBackupSupported = mDevice.hasFeature("feature:" + FEATURE_BACKUP);
+        mDefaultBackupUserId = BackupHostSideUtils.getDefaultBackupUserId(mDevice);
+        mBmgrCommand = "bmgr --user " + mDefaultBackupUserId + " ";
 
         // In case the device was just rebooted, wait for the broadcast queue to get idle to avoid
         // any interference from services doing backup clean up on reboot.
@@ -83,9 +87,9 @@ public class BackupPreparer implements ITargetCleaner {
 
         if (mIsBackupSupported) {
             BackupHostSideUtils.checkSetupComplete(mDevice);
-            if (!isBackupActiveForSysytemUser()) {
-                throw new TargetSetupError("Cannot run test as backup is not active for system "
-                        + "user", device.getDeviceDescriptor());
+            if (!isBackupActiveForUser(mDefaultBackupUserId)) {
+                throw new TargetSetupError("Cannot run test as backup is not active for "
+                        + "default user - " + mDefaultBackupUserId, device.getDeviceDescriptor());
             }
 
             // Enable backup and select local backup transport
@@ -101,7 +105,7 @@ public class BackupPreparer implements ITargetCleaner {
                     CLog.d("Old transport : %s", mOldTransport);
                 }
                 try {
-                    mBackupUtils.waitForBackupInitialization();
+                    mBackupUtils.waitForBackupInitialization(mDefaultBackupUserId);
                 } catch (IOException e) {
                     throw new TargetSetupError("Backup not initialized", e);
                 }
@@ -142,15 +146,15 @@ public class BackupPreparer implements ITargetCleaner {
 
     private boolean hasBackupTransport(String transport, boolean logIfFail)
             throws DeviceNotAvailableException, TargetSetupError {
-        String output = mDevice.executeShellCommand("bmgr list transports");
+        String output = mDevice.executeShellCommand(mBmgrCommand + "list transports");
         for (String t : output.split(" ")) {
             if (transport.equals(t.trim())) {
                 return true;
             }
         }
         if (logIfFail) {
-            throw new TargetSetupError(
-                    transport + " not available. bmgr list transports: " + output,
+            throw new TargetSetupError(/*reason=*/
+                    transport + " not available. " + mBmgrCommand + "list transports: " + output,
                     mDevice.getDeviceDescriptor());
         }
         return false;
@@ -183,28 +187,30 @@ public class BackupPreparer implements ITargetCleaner {
     // Copied over from BackupQuotaTest
     private boolean enableBackup(boolean enable) throws DeviceNotAvailableException {
         boolean previouslyEnabled;
-        String output = mDevice.executeShellCommand("bmgr enabled");
+        String output = mDevice.executeShellCommand(mBmgrCommand + "enabled");
         Pattern pattern = Pattern.compile("^Backup Manager currently (enabled|disabled)$");
         Matcher matcher = pattern.matcher(output.trim());
         if (matcher.find()) {
             previouslyEnabled = "enabled".equals(matcher.group(1));
         } else {
-            throw new RuntimeException("non-parsable output setting bmgr enabled: " + output);
+            throw new RuntimeException(
+                    "non-parsable output setting " + mBmgrCommand + "enabled: " + output);
         }
 
-        mDevice.executeShellCommand("bmgr enable " + enable);
+        mDevice.executeShellCommand(mBmgrCommand + "enable " + enable);
         return previouslyEnabled;
     }
 
     // Copied over from BackupQuotaTest
     private String setBackupTransport(String transport) throws DeviceNotAvailableException {
-        String output = mDevice.executeShellCommand("bmgr transport " + transport);
+        String output = mDevice.executeShellCommand(mBmgrCommand + "transport " + transport);
         Pattern pattern = Pattern.compile("\\(formerly (.*)\\)$");
         Matcher matcher = pattern.matcher(output);
         if (matcher.find()) {
             return matcher.group(1);
         } else {
-            throw new RuntimeException("non-parsable output setting bmgr transport: " + output);
+            throw new RuntimeException(
+                    "non-parsable output setting for - " + mBmgrCommand + "transport: " + output);
         }
     }
 
@@ -221,16 +227,16 @@ public class BackupPreparer implements ITargetCleaner {
             CLog.d("Output from 'am wait-for-broadcast-idle': %s", output);
             if (!output.contains("All broadcast queues are idle!")) {
                 // the call most likely failed we should fail the test
-                throw new TargetSetupError("'am wait-for-broadcase-idle' did not complete.",
+                throw new TargetSetupError("'am wait-for-broadcast-idle' did not complete.",
                         mDevice.getDeviceDescriptor());
                 // TODO: consider adding a reboot or recovery before failing if necessary
             }
         }
     }
 
-    private boolean isBackupActiveForSysytemUser() {
+    private boolean isBackupActiveForUser(int userId) {
         try {
-            return mBackupUtils.isBackupActivatedForUser(USER_SYSTEM);
+            return mBackupUtils.isBackupActivatedForUser(userId);
         } catch (IOException e) {
             throw new RuntimeException("Failed to check backup activation status");
         }
