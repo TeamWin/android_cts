@@ -161,4 +161,10 @@ public class CarrierCapability {
                     "310950",   // AT&T Mobility
                     "311180"    // AT&T Mobility
             );
+
+    // List of carrier-id that does not support loop back messages
+    public static final List<Integer> UNSUPPORT_LOOP_BACK_MESSAGES =
+            Arrays.asList(
+                    1           // "T-Mobile - US"
+            );
 }
