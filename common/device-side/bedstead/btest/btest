@@ -232,6 +232,7 @@ class CloneProfileState:
     def enter(self, device_state):
         debug(self.args, "[Test] Entering state " + self.name())
         user = self._get_or_create_clone_profile(device_state)
+        debug(self.args, "[Test] clone is " + str(user))
         self.user_id = user["id"]
         execute_shell_command("Test", self.args, ["adb", "shell", "am", "switch-user", str(user["parent"])])
         execute_shell_command("Test", self.args, ["adb", "shell", "am", "start-user ", str(self.user_id)])
@@ -619,6 +620,7 @@ class Test:
             self.exclude_annotations.append("com.android.interactive.annotations.Interactive")
 
     def run(self):
+        execute_shell_command("Test", self.args, ["adb", "shell", "am", "start-user ", str(self.state.get_user())])
         command = "adb shell am instrument --user " + str(self.state.get_user())
 
         # Use the formatted output
@@ -986,7 +988,7 @@ def get_users(args):
         type = user_row.split("type=", 2)[1].split(",", 2)[0]
         flags = user_row.split("flags=", 2)[1].split(" ", 2)[0].split("|")
         parent = None
-        if "MANAGED_PROFILE" in flags:
+        if "PROFILE" in flags:
             parent = int(user_row.split("parentId=", 2)[1].split(")", 2)[0])
         user = {"id": id, "flags": flags, "type": type, "parent": parent}
         users[user["id"]] = user

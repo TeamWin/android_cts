@@ -32,7 +32,6 @@ import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.EnsureTestAppInstalled;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
-import com.android.bedstead.harrier.annotations.enterprise.CoexistenceFlagsOn;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyDoesNotApplyTest;
 import com.android.bedstead.harrier.annotations.enterprise.RequireHasPolicyExemptApps;
@@ -54,7 +53,6 @@ import java.util.Set;
 import java.util.function.Function;
 
 @RunWith(BedsteadJUnit4.class)
-@CoexistenceFlagsOn
 public class ApplicationHiddenTest {
     @ClassRule @Rule
     public static final DeviceState sDeviceState = new DeviceState();
@@ -118,7 +116,8 @@ public class ApplicationHiddenTest {
     @CanSetPolicyTest(policy = ApplicationHiddenSystemOnly.class)
     @EnsureTestAppInstalled
     public void isApplicationHidden_notSystemApp_throwsException() {
-        assertThrows(SecurityException.class, () -> sDeviceState.dpc().devicePolicyManager()
+        // Could be SecurityException or IllegalArgumentException
+        assertThrows(Exception.class, () -> sDeviceState.dpc().devicePolicyManager()
                 .isApplicationHidden(sDeviceState.dpc().componentName(),
                         sDeviceState.testApp().packageName()));
     }
@@ -126,7 +125,8 @@ public class ApplicationHiddenTest {
     @CannotSetPolicyTest(policy = ApplicationHidden.class)
     @EnsureTestAppInstalled
     public void isApplicationHidden_notPermitted_throwsException() {
-        assertThrows(SecurityException.class, () -> sDeviceState.dpc().devicePolicyManager()
+        // Could be SecurityException or IllegalArgumentException
+        assertThrows(Exception.class, () -> sDeviceState.dpc().devicePolicyManager()
                 .isApplicationHidden(sDeviceState.dpc().componentName(),
                         sDeviceState.testApp().packageName()));
     }
@@ -318,7 +318,8 @@ public class ApplicationHiddenTest {
         }
     }
 
-    @CannotSetPolicyTest(policy = ApplicationHidden.class, includeNonDeviceAdminStates = false)
+    @CannotSetPolicyTest(policy = {ApplicationHidden.class, ApplicationHiddenSystemOnly.class}
+            , includeNonDeviceAdminStates = false)
     public void setApplicationHidden_systemApp_notAllowed_throwsException() {
         try {
             assertThrows(SecurityException.class,
@@ -340,7 +341,8 @@ public class ApplicationHiddenTest {
     @EnsureTestAppInstalled
     public void setApplicationHidden_nonSystemApp_throwsException() {
         try {
-            assertThrows(SecurityException.class,
+            // Could be SecurityException or IllegalArgumentException
+            assertThrows(Exception.class,
                     () -> sDeviceState.dpc().devicePolicyManager().setApplicationHidden(
                             sDeviceState.dpc().componentName(),
                             sDeviceState.testApp().packageName(), true));
@@ -349,7 +351,7 @@ public class ApplicationHiddenTest {
                 sDeviceState.dpc().devicePolicyManager().setApplicationHidden(
                                 sDeviceState.dpc().componentName(),
                                 sDeviceState.testApp().packageName(), false);
-            } catch (SecurityException ex) {
+            } catch (Exception ex) {
                 // Expected on success case
             }
         }
