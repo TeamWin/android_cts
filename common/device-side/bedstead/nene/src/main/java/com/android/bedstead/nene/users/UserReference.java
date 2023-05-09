@@ -28,6 +28,7 @@ import static android.os.Build.VERSION_CODES.UPSIDE_DOWN_CAKE;
 
 import static com.android.bedstead.nene.permissions.CommonPermissions.MANAGE_PROFILE_AND_DEVICE_OWNERS;
 import static com.android.bedstead.nene.permissions.CommonPermissions.MODIFY_QUIET_MODE;
+import static com.android.bedstead.nene.permissions.CommonPermissions.QUERY_USERS;
 import static com.android.bedstead.nene.users.Users.users;
 
 import android.annotation.TargetApi;
@@ -522,7 +523,8 @@ public final class UserReference implements AutoCloseable {
             if (!Versions.meetsMinimumSdkVersionRequirement(S)) {
                 mUserType = adbUser().type();
             } else {
-                try (PermissionContext p = TestApis.permissions().withPermission(CREATE_USERS)) {
+                try (PermissionContext p = TestApis.permissions()
+                        .withPermission(CREATE_USERS, QUERY_USERS)) {
                     String userTypeName = mUserManager.getUserType();
                     if (userTypeName.equals("")) {
                         throw new NeneException("User does not exist " + this);

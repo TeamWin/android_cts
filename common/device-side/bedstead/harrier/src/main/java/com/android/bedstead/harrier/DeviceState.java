@@ -4235,9 +4235,7 @@ public final class DeviceState extends HarrierRule {
     }
 
     private void requireSystemServiceAvailable(Class<?> serviceClass, FailureMode failureMode) {
-        Object service = mContext.getSystemService(serviceClass);
-
         checkFailOrSkip("Requires " + serviceClass + " to be available",
-                service != null, failureMode);
+                TestApis.services().serviceIsAvailable(serviceClass), failureMode);
     }
 }

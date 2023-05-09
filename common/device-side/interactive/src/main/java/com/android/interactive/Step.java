@@ -37,8 +37,11 @@ import com.android.bedstead.harrier.exceptions.RestartTestException;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.permissions.PermissionContext;
 import com.android.bedstead.nene.utils.Poll;
+import com.android.interactive.annotations.CacheableStep;
 
 import java.time.Duration;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -80,6 +83,8 @@ public abstract class Step<E> {
     private Optional<E> mValue = Optional.empty();
     private boolean mFailed = false;
 
+    private static Map<Class<? extends Step<?>>, Object> sStepCache = new HashMap<>();
+
     /**
      * Executes a step.
      *
@@ -94,6 +99,11 @@ public abstract class Step<E> {
             throw new AssertionError("Error preparing step", e);
         }
 
+        // Check if is cached...
+        if (sStepCache.containsKey(stepClass)) {
+            return (E) sStepCache.get(stepClass);
+        }
+
         if (!sForceManual.get()
                 && TestApis.instrumentation().arguments().getBoolean(
                         "ENABLE_AUTOMATION", true)) {
@@ -106,6 +116,11 @@ public abstract class Step<E> {
 
                     // If it reaches this point then it has passed
                     Log.i(LOG_TAG, "Succeeded with automatic resolution of " + step);
+
+                    boolean stepIsCacheable = stepClass.getAnnotationsByType(CacheableStep.class).length > 0;
+                    if (stepIsCacheable) {
+                        sStepCache.put(stepClass, returnValue);
+                    }
                     return returnValue;
                 } catch (Exception t) {
                     Log.e(LOG_TAG, "Error attempting automation of " + step, t);
@@ -173,12 +188,19 @@ public abstract class Step<E> {
                 E value = valueOptional.get();
 
                 // After the test has been marked passed, we validate ourselves
-                return Poll.forValue("validated", () -> step.validate(value))
+                E returnValue = Poll.forValue("validated", () -> step.validate(value))
                         .toMeet(Optional::isPresent)
                         .errorOnFail("Step did not pass validation.")
                         .timeout(MAX_STEP_DURATION)
                         .await()
                         .get();
+
+                boolean stepIsCacheable = stepClass.getAnnotationsByType(CacheableStep.class).length > 0;
+                if (stepIsCacheable) {
+                    sStepCache.put(stepClass, returnValue);
+                }
+
+                return returnValue;
             } finally {
                 step.close();
             }

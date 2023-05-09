@@ -683,4 +683,12 @@ public final class Packages {
     public boolean getVerifyAdbInstalls() {
         return TestApis.settings().global().getInt(PACKAGE_VERIFIER_INCLUDE_ADB, 1) == 1;
     }
+
+    /**
+     * Get the Launcher package.
+     */
+    @Experimental
+    public Package launcher() {
+        return find(TestApis.ui().device().getLauncherPackageName());
+    }
 }

@@ -91,6 +91,13 @@ public final class Automator {
             UserReference systemUser = TestApis.users().system();
             File apk = new File(mContext.getCacheDir(), "InteractiveAutomation.apk");
 
+            if (apk.exists()) {
+                // We want to avoid caching the automations - TODO: This should probably be
+                //  controlled by a flag and when the flag is off we don't attempt to copy over
+                // again at all
+                apk.delete();
+            }
+
             if (TestApis.users().instrumented().equals(systemUser)) {
                 // Just need to copy to internal
 
@@ -104,6 +111,7 @@ public final class Automator {
                     copy(is, os);
                 } catch (IOException e) {
                     // Handle error
+                    Log.e("Interactive.Automator", "Error reading automation file", e);
                 }
 
                 return apk;
