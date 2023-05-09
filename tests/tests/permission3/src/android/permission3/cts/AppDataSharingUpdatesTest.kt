@@ -32,6 +32,7 @@ import android.permission3.cts.AppMetadata.createAppMetadataWithLocationSharingN
 import android.permission3.cts.AppMetadata.createAppMetadataWithNoSharing
 import android.provider.DeviceConfig
 import android.safetylabel.SafetyLabelConstants.SAFETY_LABEL_CHANGE_NOTIFICATIONS_ENABLED
+import android.util.Log
 import androidx.test.filters.SdkSuppress
 import androidx.test.uiautomator.By
 import com.android.compatibility.common.util.DeviceConfigStateChangerRule
@@ -258,7 +259,7 @@ class AppDataSharingUpdatesTest : BaseUsePermissionTest() {
             click(By.textContains(LEARN_ABOUT_DATA_SHARING))
             waitForIdle()
 
-            eventually { assertHelpCenterLinkClickSuccessful() }
+            eventually({assertHelpCenterLinkClickSuccessful()}, HELP_CENTER_TIMEOUT_MILLIS)
         } finally {
             pressBack()
             pressBack()
@@ -500,15 +501,21 @@ class AppDataSharingUpdatesTest : BaseUsePermissionTest() {
 
     private fun assertHelpCenterLinkClickSuccessful() {
         runWithShellPermissionIdentity {
-            val runningTasks = activityManager!!.getRunningTasks(1)
+            val runningTasks = activityManager!!.getRunningTasks(5)
 
+            Log.v(TAG, "# running tasks: ${runningTasks.size}")
             assertFalse("Expected runningTasks to not be empty", runningTasks.isEmpty())
+
+            runningTasks.forEachIndexed { index, runningTaskInfo ->
+                Log.v(TAG, "task $index ${runningTaskInfo.baseIntent}")
+            }
 
             val taskInfo = runningTasks[0]
             val observedIntentAction = taskInfo.baseIntent.action
             val observedIntentDataString = taskInfo.baseIntent.dataString
             val observedIntentScheme: String? = taskInfo.baseIntent.scheme
 
+            Log.v(TAG, "task base intent: ${taskInfo.baseIntent}")
             assertEquals("Unexpected intent action", Intent.ACTION_VIEW, observedIntentAction)
 
             val expectedUrl = getPermissionControllerResString(HELP_CENTER_URL_ID)!!
@@ -526,6 +533,9 @@ class AppDataSharingUpdatesTest : BaseUsePermissionTest() {
 
     /** Companion object for [AppDataSharingUpdatesTest]. */
     companion object {
+        private val TAG = AppDataSharingUpdatesTest::class.java.simpleName
+
         private const val HELP_CENTER_URL_ID = "data_sharing_help_center_link"
+        private const val HELP_CENTER_TIMEOUT_MILLIS: Long = 20000
     }
 }
