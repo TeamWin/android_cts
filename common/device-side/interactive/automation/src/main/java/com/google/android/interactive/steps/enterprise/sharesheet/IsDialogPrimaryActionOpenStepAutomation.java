@@ -25,15 +25,15 @@ import com.android.interactive.Automation;
 import com.android.interactive.annotations.AutomationFor;
 
 @AutomationFor("com.google.android.interactive.steps.enterprise.sharesheet"
-        + ".IsMiniResolverDialogSecondaryActionCancelStep")
-public final class IsMiniResolverDialogSecondaryActionCancelStepAutomation implements
+        + ".IsDialogPrimaryActionOpenStep")
+public final class IsDialogPrimaryActionOpenStepAutomation implements
         Automation<Boolean> {
     @Override
     public Boolean automate() throws Exception {
         UiDevice device = TestApis.ui().device();
-        device.wait(Until.findObject(By.res("android:id/use_same_profile_browser")), 2000);
+        device.wait(Until.findObject(By.res("android:id/button_open")), 2000);
         String resolverTitle = device.findObject(
-                By.res("android:id/use_same_profile_browser")).getText();
-        return resolverTitle.equals("Cancel");
+                By.res("android:id/button_open")).getText();
+        return resolverTitle.equals("Open");
     }
 }
