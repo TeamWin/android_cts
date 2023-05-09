@@ -16,7 +16,6 @@
 
 package android.devicepolicy.cts;
 
-import static com.android.bedstead.nene.userrestrictions.CommonUserRestrictions.DISALLOW_CREATE_WINDOWS;
 import static com.android.bedstead.nene.userrestrictions.CommonUserRestrictions.DISALLOW_FUN;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -28,9 +27,7 @@ import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
-import com.android.bedstead.harrier.annotations.enterprise.CoexistenceFlagsOn;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
-import com.android.bedstead.harrier.policies.DisallowCreateWindows;
 import com.android.bedstead.harrier.policies.DisallowFun;
 import com.android.bedstead.nene.TestApis;
 import com.android.compatibility.common.util.ApiTest;
@@ -41,7 +38,6 @@ import org.junit.Rule;
 import org.junit.runner.RunWith;
 
 @RunWith(BedsteadJUnit4.class)
-@CoexistenceFlagsOn
 public final class FunTest {
 
     @ClassRule @Rule

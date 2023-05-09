@@ -22,6 +22,7 @@ import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePoli
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIED_BY_PARENT_INSTANCE_OF_PROFILE_OWNER_PROFILE;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIED_BY_PROFILE_OWNER;
 import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIES_TO_OWN_USER;
+import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.CANNOT_BE_APPLIED_BY_ROLE_HOLDER;
 import static com.android.bedstead.nene.permissions.CommonPermissions.MANAGE_DEVICE_POLICY_LOCK_CREDENTIALS;
 
 import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy;
@@ -33,8 +34,8 @@ import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy;
  * {@code DevicePolicyManager#setRequiredStrongAuthTimeout()}
  */
 @EnterprisePolicy(dpc = APPLIED_BY_DEVICE_OWNER | APPLIED_BY_FINANCED_DEVICE_OWNER | APPLIED_BY_PROFILE_OWNER
-        | APPLIED_BY_PARENT_INSTANCE_OF_PROFILE_OWNER_PROFILE | APPLIED_BY_DPM_ROLE_HOLDER
-        | APPLIES_TO_OWN_USER,
+        | APPLIED_BY_PARENT_INSTANCE_OF_PROFILE_OWNER_PROFILE // | APPLIED_BY_DPM_ROLE_HOLDER
+        | APPLIES_TO_OWN_USER | CANNOT_BE_APPLIED_BY_ROLE_HOLDER,
         permissions = @EnterprisePolicy.Permission(
                 appliedWith = MANAGE_DEVICE_POLICY_LOCK_CREDENTIALS, appliesTo = APPLIES_TO_OWN_USER))
 public final class StrongAuthTimeout {

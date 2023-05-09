@@ -1576,7 +1576,7 @@ public final class DeviceState extends HarrierRule {
                                 + "switchedToUser=ANY");
             } else {
                 throw new IllegalStateException(
-                        "Not permitted to switch to user " + instrumentedUser);
+                        "Not permitted to switch to user " + instrumentedUser + "(" + instrumentedUser.getSwitchToUserError() + ")");
             }
         }
 
@@ -2733,7 +2733,7 @@ public final class DeviceState extends HarrierRule {
     }
 
     private UserReference createUser(com.android.bedstead.nene.users.UserType userType) {
-        ensureDoesNotHaveUserRestriction(UserManager.DISALLOW_ADD_USER, TestApis.users().system());
+        ensureDoesNotHaveUserRestriction(UserManager.DISALLOW_ADD_USER, UserType.ANY);
         ensureCanAddUser();
         try {
             UserReference user = TestApis.users().createUser()

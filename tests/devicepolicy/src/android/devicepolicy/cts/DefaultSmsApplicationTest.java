@@ -20,7 +20,6 @@ package android.devicepolicy.cts;
 import static android.provider.DeviceConfig.NAMESPACE_DEVICE_POLICY_MANAGER;
 import static android.provider.DeviceConfig.NAMESPACE_TELEPHONY;
 
-import static com.android.bedstead.nene.flags.CommonFlags.DevicePolicyManager.PERMISSION_BASED_ACCESS_EXPERIMENT_FLAG;
 import static com.android.bedstead.nene.permissions.CommonPermissions.INTERACT_ACROSS_USERS;
 import static com.android.queryable.queries.ActivityQuery.activity;
 import static com.android.queryable.queries.IntentFilterQuery.intentFilter;
@@ -45,7 +44,6 @@ import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.EnsureFeatureFlagEnabled;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.Postsubmit;
-import com.android.bedstead.harrier.annotations.RequireFeatureFlagNotEnabled;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyDoesNotApplyTest;
@@ -159,8 +157,6 @@ public final class DefaultSmsApplicationTest {
     }
 
     @Postsubmit(reason = "new test")
-    @RequireFeatureFlagNotEnabled(namespace = NAMESPACE_DEVICE_POLICY_MANAGER,
-            key = PERMISSION_BASED_ACCESS_EXPERIMENT_FLAG)
     @CanSetPolicyTest(policy = {DefaultSmsApplication.class, DefaultSmsApplicationSystemOnly.class})
     public void setDefaultSmsApplication_nullAdmin_throwsException() {
         try (TestAppInstance smsApp = sSmsApp.install()) {

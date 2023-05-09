@@ -50,7 +50,6 @@ import com.android.bedstead.harrier.annotations.RequireDoesNotHaveFeature;
 import com.android.bedstead.harrier.annotations.RequireFeature;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
-import com.android.bedstead.harrier.annotations.enterprise.CoexistenceFlagsOn;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
 import com.android.bedstead.harrier.policies.PasswordComplexity;
 import com.android.bedstead.harrier.policies.PasswordQuality;
@@ -65,7 +64,6 @@ import org.junit.runner.RunWith;
 // TODO(b/191640667): Parameterize the length limit tests with multiple limits
 @RunWith(BedsteadJUnit4.class)
 @RequireFeature(FEATURE_SECURE_LOCK_SCREEN)
-@CoexistenceFlagsOn
 public final class ResetPasswordWithTokenTest { // bunch of headless failures - check again after password fixes
 
     private static final String NOT_COMPLEX_PASSWORD = "1234";
