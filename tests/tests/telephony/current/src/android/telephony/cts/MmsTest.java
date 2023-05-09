@@ -18,6 +18,7 @@ package android.telephony.cts;
 
 import static androidx.test.InstrumentationRegistry.getContext;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
@@ -260,6 +261,10 @@ public class MmsTest {
             return;
         }
 
+        String selfNumber = mTelephonyManager.getLine1Number();
+        assertFalse("[RERUN] SIM card does not provide phone number. Use a suitable SIM Card.",
+                TextUtils.isEmpty(selfNumber));
+
         Log.i(TAG, "testSendMmsMessage");
 
         final Context context = getContext();
@@ -276,8 +281,6 @@ public class MmsTest {
         // Create local provider file for sending PDU
         final String fileName = "send." + String.valueOf(Math.abs(mRandom.nextLong())) + ".dat";
         final File sendFile = new File(context.getCacheDir(), fileName);
-        final String selfNumber = getSimNumber(context);
-        assertTrue(!TextUtils.isEmpty(selfNumber));
         final byte[] pdu = buildPdu(context, selfNumber, SUBJECT, MESSAGE_BODY);
         assertNotNull(pdu);
         assertTrue(writePdu(sendFile, pdu));
@@ -300,6 +303,13 @@ public class MmsTest {
         }
         assertTrue(mSentReceiver.waitForSuccess(SENT_TIMEOUT));
         assertTrue(mSentReceiver.getResultCode() == expectedErrorResultCode);
+
+        if (expectedErrorResultCode == Activity.RESULT_OK) {
+            int carrierId = mTelephonyManager.getSimCarrierId();
+            assertFalse("[RERUN] Carrier [carrier-id: " + carrierId + "] does not support "
+                            + "loop back messages. Use another carrier.",
+                    CarrierCapability.UNSUPPORT_LOOP_BACK_MESSAGES.contains(carrierId));
+        }
 
         if (defaultSmsApp && expectedErrorResultCode == Activity.RESULT_OK) {
             // Default SMS App should receive android.provider.Telephony.WAP_PUSH_DELIVER
@@ -403,12 +413,6 @@ public class MmsTest {
         smilPart.setContentType(ContentType.APP_SMIL.getBytes());
         smilPart.setData(smil.getBytes());
         pb.addPart(0, smilPart);
-    }
-
-    private static String getSimNumber(Context context) {
-        final TelephonyManager telephonyManager = (TelephonyManager) context.getSystemService(
-                Context.TELEPHONY_SERVICE);
-        return telephonyManager.getLine1Number();
     }
 
     private static boolean shouldParseContentDisposition() {
