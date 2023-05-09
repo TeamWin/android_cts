@@ -28,6 +28,7 @@ import static android.net.wifi.WifiManager.COEX_RESTRICTION_SOFTAP;
 import static android.net.wifi.WifiManager.COEX_RESTRICTION_WIFI_AWARE;
 import static android.net.wifi.WifiManager.COEX_RESTRICTION_WIFI_DIRECT;
 import static android.net.wifi.WifiScanner.WIFI_BAND_24_GHZ;
+import static android.os.Process.myUid;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
@@ -6758,6 +6759,114 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             fail("Unexpected exception " + e);
         } finally {
             uiAutomation.dropShellPermissionIdentity();
+        }
+    }
+
+    static class TestWifiLowLatencyLockListener implements WifiManager.WifiLowLatencyLockListener {
+        private boolean mIsActivated = false;
+        private int[] mOwnerUids = null;
+        private int[] mActiveUids = null;
+
+        public void clear() {
+            mIsActivated = false;
+            mOwnerUids = null;
+            mActiveUids = null;
+        }
+
+        @Override
+        public void onActivated(boolean activated) {
+            mIsActivated = activated;
+        }
+
+        @Override
+        public void onOwnershipChanged(@NonNull int[] ownerUids) {
+            mOwnerUids = ownerUids;
+        }
+
+        @Override
+        public void onActiveUsersChanged(@NonNull int[] activeUids) {
+            mActiveUids = activeUids;
+        }
+
+        public boolean isActivated() {
+            return mIsActivated;
+        }
+
+        public boolean isLockOwned(int myUid) {
+            if (mOwnerUids == null) return false;
+            for (int uid : mOwnerUids) {
+                if (uid == myUid) return true;
+            }
+            return false;
+        }
+
+        public boolean isActiveLockUser(int myUid) {
+            if (mActiveUids == null) return false;
+            for (int uid : mActiveUids) {
+                if (uid == myUid) return true;
+            }
+            return false;
+        }
+    }
+
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU)
+    public void testWifiLowLatencyLockListener() throws Exception {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported or low latency mode is not supported.
+            return;
+        }
+
+        TestWifiLowLatencyLockListener testListener = new TestWifiLowLatencyLockListener();
+        // Verify permission check
+        assertThrows(SecurityException.class,
+                () -> mWifiManager.addWifiLowLatencyLockListener(mExecutor, testListener));
+
+        // Disable wifi
+        setWifiEnabled(false);
+        waitForDisconnection();
+
+        WifiLock wifiLowLatencyLock = mWifiManager.createWifiLock(
+                WifiManager.WIFI_MODE_FULL_LOW_LATENCY,
+                TAG);
+
+        try {
+            // Register listener then enable wifi
+            ShellIdentityUtils.invokeWithShellPermissions(
+                    () -> mWifiManager.addWifiLowLatencyLockListener(mExecutor, testListener));
+            setWifiEnabled(true);
+
+            // Trigger a scan & wait for connection to one of the saved networks.
+            mWifiManager.startScan();
+            waitForConnection();
+
+            // TODO: b/281356259 - Move this to a foreground activity.
+            ShellIdentityUtils.invokeWithShellPermissions(() -> wifiLowLatencyLock.acquire());
+
+            if (mWifiManager.isLowLatencyModeSupported()) {
+                PollingCheck.check("Lock is not activated!", 1_000,
+                        () -> testListener.isActivated());
+            }
+
+            PollingCheck.check("Lock is not owned!", 1_000,
+                    () -> testListener.isLockOwned(myUid()));
+
+            if (mWifiManager.isLowLatencyModeSupported()) {
+                PollingCheck.check("Not an active Lock user!", 1_000,
+                        () -> testListener.isActiveLockUser(myUid()));
+            }
+
+            ShellIdentityUtils.invokeWithShellPermissions(() -> wifiLowLatencyLock.release());
+
+            // Note: The lock cannot be tested for deactivation after release because other
+            // applications can still keep it active.
+
+            PollingCheck.check("Still owns the Lock after release!", 1_000,
+                    () -> !testListener.isLockOwned(myUid()));
+        } catch (Exception e) {
+            fail("Unexpected exception " + e);
+        } finally {
+            testListener.clear();
+            mWifiManager.removeWifiLowLatencyLockListener(testListener);
         }
     }
 }
