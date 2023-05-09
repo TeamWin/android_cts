@@ -21,7 +21,6 @@ import android.app.UiAutomation;
 import android.content.Context;
 import android.graphics.Point;
 import android.os.SystemClock;
-import android.support.test.uiautomator.UiDevice;
 import android.util.Log;
 import android.util.SparseArray;
 import android.view.InputDevice;
@@ -33,6 +32,7 @@ import android.view.ViewTreeObserver;
 
 import androidx.annotation.Nullable;
 import androidx.test.rule.ActivityTestRule;
+import androidx.test.uiautomator.UiDevice;
 
 import java.util.Objects;
 
