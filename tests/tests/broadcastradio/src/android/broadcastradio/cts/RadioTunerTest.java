@@ -21,16 +21,6 @@ import static com.google.common.truth.TruthJUnit.assume;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.after;
-import static org.mockito.Mockito.atMost;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.timeout;
-import static org.mockito.Mockito.verify;
 
 import android.hardware.radio.ProgramList;
 import android.hardware.radio.ProgramSelector;
@@ -43,8 +33,9 @@ import com.android.compatibility.common.util.ApiTest;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Mockito;
+
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /**
  * CTS test for broadcast radio.
@@ -56,19 +47,19 @@ public final class RadioTunerTest extends AbstractRadioTestCase {
 
     @Test
     @ApiTest(apis = {"android.hardware.radio.RadioTuner#close"})
-    public void close_twice() {
+    public void close_twice() throws Exception {
         openAmFmTuner();
 
         mRadioTuner.close();
         mRadioTuner.close();
 
-        verify(mCallback, never()).onError(anyInt());
+        mExpect.withMessage("Error callbacks").that(mCallback.errorCount).isEqualTo(0);
     }
 
     @Test
     @ApiTest(apis = {"android.hardware.radio.RadioTuner#cancel",
             "android.hardware.radio.RadioTuner#close"})
-    public void cancel_afterTunerCloses_returnsInvalidOperationStatus() {
+    public void cancel_afterTunerCloses_returnsInvalidOperationStatus() throws Exception {
         openAmFmTuner();
         mRadioTuner.close();
 
@@ -80,7 +71,7 @@ public final class RadioTunerTest extends AbstractRadioTestCase {
 
     @Test
     @ApiTest(apis = {"android.hardware.radio.RadioTuner#getMute"})
-    public void getMute_returnsFalse() {
+    public void getMute_returnsFalse() throws Exception {
         openAmFmTuner();
 
         boolean isMuted = mRadioTuner.getMute();
@@ -91,7 +82,7 @@ public final class RadioTunerTest extends AbstractRadioTestCase {
     @Test
     @ApiTest(apis = {"android.hardware.radio.RadioTuner#getMute",
             "android.hardware.radio.RadioTuner#setMute"})
-    public void setMute_withTrue_MuteSucceeds() {
+    public void setMute_withTrue_MuteSucceeds() throws Exception {
         openAmFmTuner();
 
         int result = mRadioTuner.setMute(true);
@@ -105,7 +96,7 @@ public final class RadioTunerTest extends AbstractRadioTestCase {
     @Test
     @ApiTest(apis = {"android.hardware.radio.RadioTuner#getMute",
             "android.hardware.radio.RadioTuner#setMute"})
-    public void setMute_withFalse_MuteSucceeds() {
+    public void setMute_withFalse_MuteSucceeds() throws Exception {
         openAmFmTuner();
         mRadioTuner.setMute(true);
 
@@ -119,7 +110,7 @@ public final class RadioTunerTest extends AbstractRadioTestCase {
 
     @Test
     @ApiTest(apis = {"android.hardware.radio.RadioTuner#setMute"})
-    public void setMute_withTunerWithoutAudio_returnsError() {
+    public void setMute_withTunerWithoutAudio_returnsError() throws Exception {
         openAmFmTuner(/* withAudio= */ false);
 
         int result = mRadioTuner.setMute(false);
@@ -130,7 +121,7 @@ public final class RadioTunerTest extends AbstractRadioTestCase {
 
     @Test
     @ApiTest(apis = {"android.hardware.radio.RadioTuner#getMute"})
-    public void isMuted_withTunerWithoutAudio_returnsTrue() {
+    public void isMuted_withTunerWithoutAudio_returnsTrue() throws Exception {
         openAmFmTuner(/* withAudio= */ false);
 
         boolean isMuted = mRadioTuner.getMute();
@@ -139,170 +130,134 @@ public final class RadioTunerTest extends AbstractRadioTestCase {
     }
 
     @Test
-    @ApiTest(apis = {"android.hardware.radio.RadioTuner#step",
-            "android.hardware.radio.RadioTuner.Callback#onProgramInfoChanged"})
-    public void step_withDownDirection() {
+    @ApiTest(apis = {"android.hardware.radio.RadioTuner#step"})
+    public void step_withDownDirection() throws Exception {
         openAmFmTuner();
 
         int stepResult = mRadioTuner.step(RadioTuner.DIRECTION_DOWN, /* skipSubChannel= */ true);
 
+        mExpect.withMessage("Program info callback invoked for step operation with down direction")
+                .that(mCallback.waitForProgramInfoChangeCallback(TUNE_CALLBACK_TIMEOUT_MS))
+                .isTrue();
         mExpect.withMessage("Result of step operation with down direction")
                 .that(stepResult).isEqualTo(RadioManager.STATUS_OK);
-        verify(mCallback, timeout(TUNE_CALLBACK_TIMEOUT_MS)).onProgramInfoChanged(any());
     }
 
     @Test
     @ApiTest(apis = {"android.hardware.radio.RadioTuner#step",
             "android.hardware.radio.RadioTuner.Callback#onProgramInfoChanged"})
-    public void step_withUpDirection() {
+    public void step_withUpDirection() throws Exception {
         openAmFmTuner();
 
         int stepResult = mRadioTuner.step(RadioTuner.DIRECTION_UP, /* skipSubChannel= */ false);
 
+        mExpect.withMessage("Program info callback for step operation with up direction")
+                .that(mCallback.waitForProgramInfoChangeCallback(TUNE_CALLBACK_TIMEOUT_MS))
+                .isTrue();
         mExpect.withMessage("Result of step operation with up direction")
                 .that(stepResult).isEqualTo(RadioManager.STATUS_OK);
-        verify(mCallback, timeout(TUNE_CALLBACK_TIMEOUT_MS)).onProgramInfoChanged(any());
     }
 
     @Test
     @ApiTest(apis = {"android.hardware.radio.RadioTuner#step",
             "android.hardware.radio.RadioTuner.Callback#onProgramInfoChanged"})
-    public void step_withMultipleTimes() {
+    public void step_withMultipleTimes() throws Exception {
         openAmFmTuner();
 
         for (int index = 0; index < 10; index++) {
             int stepResult =
                     mRadioTuner.step(RadioTuner.DIRECTION_DOWN, /* skipSubChannel= */ true);
 
+            mExpect.withMessage("Program info callback for step operation at iteration %s",
+                    index).that(mCallback.waitForProgramInfoChangeCallback(
+                            TUNE_CALLBACK_TIMEOUT_MS)).isTrue();
             mExpect.withMessage("Result of step operation at iteration %s", index)
                     .that(stepResult).isEqualTo(RadioManager.STATUS_OK);
-            verify(mCallback, timeout(TUNE_CALLBACK_TIMEOUT_MS)).onProgramInfoChanged(any());
 
-            resetCallback();
+            assertNoTunerFailureAndResetCallback("step");
         }
     }
 
     @Test
-    @ApiTest(apis = {"android.hardware.radio.RadioTuner#seek",
-            "android.hardware.radio.RadioTuner.Callback#onProgramInfoChanged"})
-    public void seek_onProgramInfoChangedInvoked() {
+    @ApiTest(apis = {"android.hardware.radio.RadioTuner#seek"})
+    public void seek_onProgramInfoChangedInvoked() throws Exception {
         openAmFmTuner();
 
         int seekResult = mRadioTuner.seek(RadioTuner.DIRECTION_UP, /* skipSubChannel= */ true);
 
+        mExpect.withMessage("Program info callback for seek operation")
+                .that(mCallback.waitForProgramInfoChangeCallback(TUNE_CALLBACK_TIMEOUT_MS))
+                .isTrue();
         mExpect.withMessage("Result of seek operation")
                 .that(seekResult).isEqualTo(RadioManager.STATUS_OK);
-        verify(mCallback, timeout(TUNE_CALLBACK_TIMEOUT_MS)).onProgramInfoChanged(any());
     }
 
     @Test
     @ApiTest(apis = {
-            "android.hardware.radio.RadioTuner#tune(android.hardware.radio.ProgramSelector)",
-            "android.hardware.radio.RadioTuner.Callback#onProgramInfoChanged"})
-    public void tune_withFmSelector_onProgramInfoChangedInvoked() {
+            "android.hardware.radio.RadioTuner#tune(android.hardware.radio.ProgramSelector)"})
+    public void tune_withFmSelector_onProgramInfoChangedInvoked() throws Exception {
         openAmFmTuner();
         int freq = mFmBandConfig.getLowerLimit() + mFmBandConfig.getSpacing();
         ProgramSelector sel = ProgramSelector.createAmFmSelector(RadioManager.BAND_FM, freq,
                 /* subChannel= */ 0);
-        ArgumentCaptor<RadioManager.ProgramInfo> infoCaptor =
-                ArgumentCaptor.forClass(RadioManager.ProgramInfo.class);
 
         mRadioTuner.tune(sel);
 
-        verify(mCallback, timeout(TUNE_CALLBACK_TIMEOUT_MS))
-                .onProgramInfoChanged(infoCaptor.capture());
+        mExpect.withMessage("Program info callback for tune operation")
+                .that(mCallback.waitForProgramInfoChangeCallback(TUNE_CALLBACK_TIMEOUT_MS))
+                .isTrue();
         mExpect.withMessage("Program selector tuned to")
-                .that(infoCaptor.getValue().getSelector()).isEqualTo(sel);
+                .that(mCallback.currentProgramInfo.getSelector()).isEqualTo(sel);
     }
 
     @Test
     @ApiTest(apis = {"android.hardware.radio.RadioTuner#cancel"})
-    public void cancel_afterNoOperations() {
+    public void cancel_afterNoOperations() throws Exception {
         openAmFmTuner();
 
         int cancelResult = mRadioTuner.cancel();
 
+        mCallback.waitForProgramInfoChangeCallback(CANCEL_TIMEOUT_MS);
         mExpect.withMessage("Result of cancel operation after no operations")
                 .that(cancelResult).isEqualTo(RadioManager.STATUS_OK);
-        verify(mCallback, after(CANCEL_TIMEOUT_MS).never())
-                .onTuneFailed(eq(RadioTuner.TUNER_RESULT_CANCELED), any());
+        mExpect.withMessage("Tuner failure of cancel operation after no operations")
+                .that(mCallback.tunerFailureResult).isNotEqualTo(RadioTuner.TUNER_RESULT_CANCELED);
     }
 
     @Test
     @ApiTest(apis = {"android.hardware.radio.RadioTuner#step",
             "android.hardware.radio.RadioTuner#cancel"})
-    public void cancel_afterStepCompletes() {
+    public void cancel_afterStepCompletes() throws Exception {
         openAmFmTuner();
         int stepResult = mRadioTuner.step(RadioTuner.DIRECTION_DOWN, /* skipSubChannel= */ false);
         mExpect.withMessage("Result of step operation")
                 .that(stepResult).isEqualTo(RadioManager.STATUS_OK);
-        verify(mCallback, timeout(TUNE_CALLBACK_TIMEOUT_MS)).onProgramInfoChanged(any());
+        mExpect.withMessage("Program info callback before cancellation")
+                .that(mCallback.waitForProgramInfoChangeCallback(TUNE_CALLBACK_TIMEOUT_MS))
+                .isTrue();
 
         int cancelResult = mRadioTuner.cancel();
 
+        mCallback.waitForProgramInfoChangeCallback(CANCEL_TIMEOUT_MS);
         mExpect.withMessage("Result of cancel operation after step completed")
                 .that(cancelResult).isEqualTo(RadioManager.STATUS_OK);
-    }
-
-    @Test
-    @ApiTest(apis = {
-            "android.hardware.radio.RadioTuner#tune(android.hardware.radio.ProgramSelector)",
-            "android.hardware.radio.RadioTuner#cancel"})
-    public void cancel_whenTune() {
-        openAmFmTuner();
-        int freq = mFmBandConfig.getLowerLimit() + mFmBandConfig.getSpacing();
-        ProgramSelector sel = ProgramSelector.createAmFmSelector(RadioManager.BAND_FM, freq,
-                /* subChannel= */ 0);
-
-        // There is a possible race condition between tune and cancel commands - the tune may finish
-        // before cancel command is issued. Thus we accept both outcomes in this test.
-        mRadioTuner.tune(sel);
-        int cancelResult = mRadioTuner.cancel();
-
-        mExpect.withMessage("Result of cancel operation after seek")
-                .that(cancelResult).isEqualTo(RadioManager.STATUS_OK);
-        verify(mCallback, after(CANCEL_TIMEOUT_MS).atMost(1))
-                .onTuneFailed(eq(RadioTuner.TUNER_RESULT_CANCELED), eq(sel));
-        verify(mCallback, atMost(1)).onProgramInfoChanged(any());
-
-        Mockito.reset(mCallback);
-    }
-
-    @Test
-    @ApiTest(apis = {"android.hardware.radio.RadioTuner#seek",
-            "android.hardware.radio.RadioTuner#cancel"})
-    public void cancel_whenSeek() {
-        openAmFmTuner();
-
-        // There is a possible race condition between seek and cancel commands - the seek may finish
-        // before cancel command is issued. Thus we accept both outcomes in this test.
-        int seekResult = mRadioTuner.seek(RadioTuner.DIRECTION_DOWN, /* skipSubChannel= */ true);
-        int cancelResult = mRadioTuner.cancel();
-
-        mExpect.withMessage("Result of seek operation")
-                .that(seekResult).isEqualTo(RadioManager.STATUS_OK);
-        mExpect.withMessage("Result of cancel operation after seek")
-                .that(cancelResult).isEqualTo(RadioManager.STATUS_OK);
-        verify(mCallback, after(CANCEL_TIMEOUT_MS).atMost(1))
-                .onTuneFailed(eq(RadioTuner.TUNER_RESULT_CANCELED), any());
-        verify(mCallback, atMost(1)).onProgramInfoChanged(any());
-
-        Mockito.reset(mCallback);
+        mExpect.withMessage("Tuner failure of cancel operation after step completed")
+                .that(mCallback.tunerFailureResult).isNotEqualTo(RadioTuner.TUNER_RESULT_CANCELED);
     }
 
     @Test
     @ApiTest(apis = {"android.hardware.radio.RadioTuner#getDynamicProgramList"})
-    public void getDynamicProgramList_programListUpdated() {
+    public void getDynamicProgramList_programListUpdated() throws Exception {
         openAmFmTuner();
-        ProgramList.OnCompleteListener completeListener =
-                mock(ProgramList.OnCompleteListener.class);
+        TestOnCompleteListener completeListener = new TestOnCompleteListener();
 
         ProgramList list = mRadioTuner.getDynamicProgramList(/* filter= */ null);
         assume().withMessage("Dynamic program list supported").that(list).isNotNull();
         try {
             list.addOnCompleteListener(completeListener);
 
-            verify(completeListener, timeout(PROGRAM_LIST_COMPLETE_TIMEOUT_MS)).onComplete();
+            mExpect.withMessage("List update completion").that(completeListener.waitForCallback())
+                    .isTrue();
         } finally {
             list.close();
         }
@@ -311,7 +266,7 @@ public final class RadioTunerTest extends AbstractRadioTestCase {
     @Test
     @ApiTest(apis = {"android.hardware.radio.RadioTuner#isConfigFlagSupported",
             "android.hardware.radio.RadioTuner#isConfigFlagSet"})
-    public void isConfigFlagSet_forTunerNotSupported_throwsException() {
+    public void isConfigFlagSet_forTunerNotSupported_throwsException() throws Exception {
         openAmFmTuner();
         boolean isSupported = mRadioTuner.isConfigFlagSupported(TEST_CONFIG_FLAG);
         assumeFalse("Config flag supported", isSupported);
@@ -323,7 +278,7 @@ public final class RadioTunerTest extends AbstractRadioTestCase {
     @Test
     @ApiTest(apis = {"android.hardware.radio.RadioTuner#setConfigFlag",
             "android.hardware.radio.RadioTuner#setConfigFlag"})
-    public void setConfigFlag_forTunerNotSupported_throwsException() {
+    public void setConfigFlag_forTunerNotSupported_throwsException() throws Exception {
         openAmFmTuner();
         boolean isSupported = mRadioTuner.isConfigFlagSupported(TEST_CONFIG_FLAG);
         assumeFalse("Config flag supported", isSupported);
@@ -335,9 +290,8 @@ public final class RadioTunerTest extends AbstractRadioTestCase {
     @Test
     @ApiTest(apis = {"android.hardware.radio.RadioTuner#setConfigFlag",
             "android.hardware.radio.RadioTuner#setConfigFlag",
-            "android.hardware.radio.RadioTuner#isConfigFlagSet",
-            "android.hardware.radio.RadioTuner.Callback#onConfigFlagUpdated"})
-    public void setConfigFlag_withTrue_succeeds() {
+            "android.hardware.radio.RadioTuner#isConfigFlagSet"})
+    public void setConfigFlag_withTrue_succeeds() throws Exception {
         openAmFmTuner();
         boolean isSupported = mRadioTuner.isConfigFlagSupported(TEST_CONFIG_FLAG);
         assumeTrue("Config flag supported", isSupported);
@@ -346,15 +300,15 @@ public final class RadioTunerTest extends AbstractRadioTestCase {
 
         mExpect.withMessage("Config flag with true value")
                 .that(mRadioTuner.isConfigFlagSet(TEST_CONFIG_FLAG)).isTrue();
-        verify(mCallback, never()).onConfigFlagUpdated(anyInt(), anyBoolean());
+        mExpect.withMessage("Config flag callback count when setting true config flag value")
+                .that(mCallback.configFlagCount).isEqualTo(0);
     }
 
     @Test
     @ApiTest(apis = {"android.hardware.radio.RadioTuner#setConfigFlag",
             "android.hardware.radio.RadioTuner#setConfigFlag",
-            "android.hardware.radio.RadioTuner#isConfigFlagSet",
-            "android.hardware.radio.RadioTuner.Callback#onConfigFlagUpdated"})
-    public void setConfigFlag_withFalse_succeeds() {
+            "android.hardware.radio.RadioTuner#isConfigFlagSet"})
+    public void setConfigFlag_withFalse_succeeds() throws Exception {
         openAmFmTuner();
         boolean isSupported = mRadioTuner.isConfigFlagSupported(TEST_CONFIG_FLAG);
         assumeTrue("Config flag supported", isSupported);
@@ -363,6 +317,22 @@ public final class RadioTunerTest extends AbstractRadioTestCase {
 
         mExpect.withMessage("Config flag with false value")
                 .that(mRadioTuner.isConfigFlagSet(TEST_CONFIG_FLAG)).isFalse();
-        verify(mCallback, never()).onConfigFlagUpdated(anyInt(), anyBoolean());
+        mExpect.withMessage("Config flag callback count when setting false config flag value")
+                .that(mCallback.configFlagCount).isEqualTo(0);
+    }
+
+    private static final class TestOnCompleteListener implements ProgramList.OnCompleteListener {
+
+        private final CountDownLatch mOnCompleteLatch = new CountDownLatch(1);
+
+        public boolean waitForCallback() throws InterruptedException {
+            return mOnCompleteLatch.await(PROGRAM_LIST_COMPLETE_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+        }
+
+        @Override
+        public void onComplete() {
+            mOnCompleteLatch.countDown();
+        }
+
     }
 }
