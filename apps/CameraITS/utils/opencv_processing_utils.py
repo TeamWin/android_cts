@@ -311,6 +311,16 @@ class Chart(object):
     logging.debug('Template height: %dpixels', template.shape[0])
     chart_pixel_h = self._height * focal_l / (self._distance * pixel_pitch)
     scale_factor = template.shape[0] / chart_pixel_h
+    if rotation == 90 or rotation == 270:
+      # With the landscape to portrait override turned on, the width and height
+      # of the active array, normally w x h, will be h x (w * (h/w)^2). Reduce
+      # the applied scaling by the same factor to compensate for this, because
+      # the chart will take up more of the scene. Assume w > h, since this is
+      # meant for landscape sensors.
+      rotate_physical_aspect = (
+          props['android.sensor.info.physicalSize']['height'] /
+          props['android.sensor.info.physicalSize']['width'])
+      scale_factor *= rotate_physical_aspect ** 2
     logging.debug('Chart/image scale factor = %.2f', scale_factor)
     return template, img_3a, scale_factor
 
