@@ -100,6 +100,7 @@ import android.telephony.PinResult;
 import android.telephony.PreciseCallState;
 import android.telephony.RadioAccessFamily;
 import android.telephony.RadioAccessSpecifier;
+import android.telephony.Rlog;
 import android.telephony.ServiceState;
 import android.telephony.SignalStrength;
 import android.telephony.SignalStrengthUpdateRequest;
@@ -135,10 +136,14 @@ import com.android.compatibility.common.util.ShellIdentityUtils;
 import com.android.compatibility.common.util.TestThread;
 import com.android.internal.telephony.uicc.IccUtils;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.junit.internal.runners.statements.Fail;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -197,6 +202,8 @@ public class TelephonyManagerTest {
     private static final int WAIT_FOR_CONDITION = 3000;
     private static final int TOLERANCE = 1000;
     private static final int TIMEOUT_FOR_NETWORK_OPS = TOLERANCE * 180;
+
+    private static final int TIMEOUT_FOR_CARRIER_STATUS_FILE_CHECK = TOLERANCE * 180;
     private PhoneStateListener mListener;
     private static ConnectivityManager mCm;
     private static final String TAG = "TelephonyManagerTest";
@@ -366,6 +373,11 @@ public class TelephonyManagerTest {
     private Map<Integer, Long> mAllowedNetworkTypesList = new HashMap<>();
 
     private final CountryChangedReceiver mCountryChangedReceiver = new CountryChangedReceiver();
+
+    private static final String CARRIER_RESTRICTION_OPERATOR_DETAILS = "{\"com.vzw.hss"
+            + ".myverizon\":{\"carrierId\":1839,"
+    + "\"callerSHA1Id\":[\"C58EE7871896786F8BF70EBDB137DE10074043E9\","
+    + "\"AE23A03436DF07B0CD70FE881CDA2EC1D21215D7B7B0CC68E67B67F5DF89526A\"]}}";
 
     private class CarrierPrivilegeChangeMonitor implements AutoCloseable {
         // CarrierPrivilegesCallback will be triggered upon registration. Filter the first callback
@@ -6280,6 +6292,63 @@ public class TelephonyManagerTest {
                 Log.i(TAG, "testLastKnownCountryIso: turning radio back on");
                 turnRadioOn(callback, TelephonyManager.RADIO_POWER_REASON_USER);
             }
+        }
+    }
+
+    private static class CarrierInfo {
+        final private int mCallerCarrierId;
+        final private List<String> mSHAIdList;
+
+        public CarrierInfo(int carrierId, List<String> SHAIds) {
+            mCallerCarrierId = carrierId;
+            mSHAIdList = SHAIds;
+        }
+
+        public int getCallerCarrierId() {
+            return mCallerCarrierId;
+        }
+
+        public List<String> getSHAIdList() {
+            return mSHAIdList;
+        }
+    }
+
+    private static final String CALLER_SHA_1_ID = "callerSHA1Id";
+    private static final String CALLER_CARRIER_ID = "carrierId";
+    private CarrierInfo parseJsonForCallerInfo(String callerPackage, JSONObject dataJson) {
+        try {
+            if (dataJson != null && callerPackage != null) {
+                JSONObject callerJSON = dataJson.getJSONObject(callerPackage.trim());
+                JSONArray callerJSONArray = callerJSON.getJSONArray(CALLER_SHA_1_ID);
+                int carrierId = callerJSON.getInt(CALLER_CARRIER_ID);
+                List<String> appSignatures = new ArrayList<>();
+                for (int index = 0; index < callerJSONArray.length(); index++) {
+                    appSignatures.add((String) callerJSONArray.get(index));
+                }
+                return new CarrierInfo(carrierId, appSignatures);
+            }
+        } catch (JSONException ex) {
+            Log.e(TAG, "getCallerSignatureInfo: JSONException = " + ex);
+        }
+        return null;
+    }
+
+    @Test
+    public void testCarrierRestrictionStatusAllowList() throws JSONException {
+        JSONObject testJson = new JSONObject(CARRIER_RESTRICTION_OPERATOR_DETAILS);
+        Set<String> testPkgSet = testJson.keySet();
+        testPkgSet.remove("_comment");
+        for (String srcPkg : testPkgSet) {
+            final CarrierInfo testCarrierInfo = parseJsonForCallerInfo(srcPkg, testJson);
+            List<String> shaIdList = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                    mTelephonyManager, (tm) -> tm.getShaIdFromAllowList(srcPkg,
+                            testCarrierInfo.mCallerCarrierId));
+
+            if (shaIdList == null || shaIdList.isEmpty()) {
+                Log.d(TAG, "shaIdList is empty");
+                fail();
+            }
+            assertTrue(shaIdList.equals(testCarrierInfo.getSHAIdList()));
         }
     }
 }
