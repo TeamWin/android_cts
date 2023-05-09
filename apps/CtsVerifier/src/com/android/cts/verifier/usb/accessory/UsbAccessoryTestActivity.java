@@ -33,12 +33,13 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import android.util.Log;
 import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
@@ -104,7 +105,7 @@ public class UsbAccessoryTestActivity extends PassFailButtons.Activity implement
             }
         };
 
-        registerReceiver(mUsbAccessoryHandshakeReceiver, filter);
+        registerReceiver(mUsbAccessoryHandshakeReceiver, filter, Context.RECEIVER_EXPORTED);
     }
 
     @Override

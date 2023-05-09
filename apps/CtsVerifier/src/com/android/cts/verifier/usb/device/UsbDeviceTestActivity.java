@@ -1667,8 +1667,8 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
             }
         };
 
-        registerReceiver(mUsbDeviceAttachedReceiver, filter);
-        registerReceiver(mUsbDevicePermissionReceiver, filter);
+        registerReceiver(mUsbDeviceAttachedReceiver, filter, Context.RECEIVER_EXPORTED);
+        registerReceiver(mUsbDevicePermissionReceiver, filter, Context.RECEIVER_EXPORTED);
 
         try {
             mAttachedThreadFinished.get(mAttachedConfirmTime, TimeUnit.MILLISECONDS);
