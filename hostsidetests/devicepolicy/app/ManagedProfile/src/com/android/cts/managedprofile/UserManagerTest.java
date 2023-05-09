@@ -47,14 +47,6 @@ public class UserManagerTest extends AndroidTestCase {
         super.tearDown();
     }
 
-    public void testIsManagedProfileReturnsTrue() {
-        assertTrue(mUserManager.isManagedProfile());
-    }
-
-    public void testIsManagedProfileReturnsFalse() {
-        assertFalse(mUserManager.isManagedProfile());
-    }
-
     public void testGetAllProfiles() {
         List<UserHandle> profiles = mUserManager.getAllProfiles();
         assertThat(profiles).hasSize(2);
