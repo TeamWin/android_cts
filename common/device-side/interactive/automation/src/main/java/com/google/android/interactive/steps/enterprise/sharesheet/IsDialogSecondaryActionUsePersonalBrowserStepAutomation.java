@@ -25,8 +25,8 @@ import com.android.interactive.Automation;
 import com.android.interactive.annotations.AutomationFor;
 
 @AutomationFor("com.google.android.interactive.steps.enterprise.sharesheet"
-        + ".IsMiniResolverDialogSecondaryActionUseWorkBrowserStep")
-public final class IsMiniResolverDialogSecondaryActionUseWorkBrowserStepAutomation implements
+        + ".IsDialogSecondaryActionUsePersonalBrowserStep")
+public final class IsDialogSecondaryActionUsePersonalBrowserStepAutomation implements
         Automation<Boolean> {
     @Override
     public Boolean automate() throws Exception {
@@ -34,6 +34,6 @@ public final class IsMiniResolverDialogSecondaryActionUseWorkBrowserStepAutomati
         device.wait(Until.findObject(By.res("android:id/use_same_profile_browser")), 2000);
         String resolverTitle = device.findObject(
                 By.res("android:id/use_same_profile_browser")).getText();
-        return resolverTitle.equals("Use work browser");
+        return resolverTitle.equals("Use personal browser");
     }
 }

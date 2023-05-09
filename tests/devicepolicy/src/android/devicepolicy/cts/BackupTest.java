@@ -33,6 +33,7 @@ import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.RequireFeature;
+import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyDoesNotApplyTest;
@@ -143,5 +144,21 @@ public final class BackupTest {
             sDeviceState.dpc().devicePolicyManager().setBackupServiceEnabled(
                     sDeviceState.dpc().componentName(), true);
         });
+    }
+
+    @CannotSetPolicyTest(policy = Backup.class, includeNonDeviceAdminStates = false)
+    @Postsubmit(reason = "new test")
+    public void isBackupServiceEnabled_cannotSetPolicy_throwsException() {
+        assertThrows(SecurityException.class, () -> {
+            sDeviceState.dpc().devicePolicyManager().isBackupServiceEnabled(
+                    sDeviceState.dpc().componentName());
+        });
+    }
+
+    @CanSetPolicyTest(policy = Backup.class)
+    @Postsubmit(reason = "new test")
+    public void isBackupServiceEnabled_canSetPolicy_doesNotThrow() {
+        sDeviceState.dpc().devicePolicyManager().isBackupServiceEnabled(
+                sDeviceState.dpc().componentName());
     }
 }

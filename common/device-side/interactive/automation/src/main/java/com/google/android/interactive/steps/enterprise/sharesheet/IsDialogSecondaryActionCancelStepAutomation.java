@@ -22,20 +22,18 @@ import androidx.test.uiautomator.Until;
 
 import com.android.bedstead.nene.TestApis;
 import com.android.interactive.Automation;
-import com.android.interactive.Nothing;
 import com.android.interactive.annotations.AutomationFor;
 
 @AutomationFor("com.google.android.interactive.steps.enterprise.sharesheet"
-        + ".SelectProceedMiniResolverStep")
-public final class SelectProceedMiniResolverStepAutomation
-        implements Automation<Nothing> {
+        + ".IsDialogSecondaryActionCancelStep")
+public final class IsDialogSecondaryActionCancelStepAutomation implements
+        Automation<Boolean> {
     @Override
-    public Nothing automate() throws Exception {
+    public Boolean automate() throws Exception {
         UiDevice device = TestApis.ui().device();
-        device.wait(Until.findObject(By.res("android:id/button_open")), 2000);
-        device.findObject(
-                By.res("android:id/button_open")).click();
-        device.waitForIdle();
-        return Nothing.NOTHING;
+        device.wait(Until.findObject(By.res("android:id/use_same_profile_browser")), 2000);
+        String resolverTitle = device.findObject(
+                By.res("android:id/use_same_profile_browser")).getText();
+        return resolverTitle.equals("Cancel");
     }
 }

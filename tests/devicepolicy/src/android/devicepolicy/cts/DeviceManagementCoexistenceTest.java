@@ -43,6 +43,8 @@ import static android.app.admin.TargetUser.LOCAL_USER_ID;
 import static android.os.UserManager.DISALLOW_MODIFY_ACCOUNTS;
 import static android.os.UserManager.DISALLOW_WIFI_DIRECT;
 
+import static com.android.queryable.queries.ActivityQuery.activity;
+
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.fail;
@@ -84,6 +86,7 @@ import com.android.bedstead.harrier.UserType;
 import com.android.bedstead.harrier.annotations.AfterClass;
 import com.android.bedstead.harrier.annotations.EnsureHasAccountAuthenticator;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
+import com.android.bedstead.harrier.annotations.EnsureTestAppInstalled;
 import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.enterprise.CoexistenceFlagsOn;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDeviceOwner;
@@ -95,6 +98,8 @@ import com.android.bedstead.nene.packages.Package;
 import com.android.bedstead.nene.utils.Poll;
 import com.android.bedstead.testapp.TestApp;
 import com.android.bedstead.testapp.TestAppInstance;
+import com.android.queryable.annotations.Query;
+import com.android.queryable.queries.ActivityQuery;
 
 import org.junit.ClassRule;
 import org.junit.Ignore;
@@ -146,14 +151,10 @@ public final class DeviceManagementCoexistenceTest {
         NON_SYSTEM_INPUT_METHOD_PACKAGES.add("packageName");
     }
 
-    private static final TestApp sTestApp = sDeviceState.testApps().any();
-
-    private static TestAppInstance sTestAppInstance = sTestApp.install();
-
-    @AfterClass
-    public static void teardownClass() {
-        sTestAppInstance.uninstall();
-    }
+    private static final TestApp sTestApp = sDeviceState.testApps().query()
+            .whereActivities().contains(
+                    activity().where().exported().isTrue()
+            ).get();
 
     @Test
     @EnsureHasDevicePolicyManagerRoleHolder(onUser = UserType.SYSTEM_USER)
@@ -1754,81 +1755,83 @@ public final class DeviceManagementCoexistenceTest {
     @EnsureHasPermission(value = Manifest.permission.FORCE_STOP_PACKAGES)
     @EnsureHasAccountAuthenticator
     public void multiplePoliciesSet_dpcRemoved_removesPolicies() throws Exception {
-        // Set policies
-        sDeviceState.dpc().devicePolicyManager()
-                .setLockTaskPackages(
-                        sDeviceState.dpc().componentName(), new String[]{PACKAGE_NAME});
-        sDeviceState.dpc().devicePolicyManager()
-                .setLockTaskFeatures(sDeviceState.dpc().componentName(), LOCK_TASK_FEATURES);
-        sDeviceState.dpc().devicePolicyManager().setUserControlDisabledPackages(
-                sDeviceState.dpc().componentName(),
-                Arrays.asList(sTestApp.packageName()));
-        sDeviceState.dpc().devicePolicyManager().setUninstallBlocked(
-                sDeviceState.dpc().componentName(),
-                sTestApp.packageName(), /* uninstallBlocked= */ true);
-        sDeviceState.dpc().devicePolicyManager().addUserRestriction(
-                sDeviceState.dpc().componentName(), LOCAL_USER_RESTRICTION);
-        IntentFilter intentFilter = new IntentFilter(Intent.ACTION_MAIN);
-        sDeviceState.dpc().devicePolicyManager().addPersistentPreferredActivity(
-                sDeviceState.dpc().componentName(),
-                intentFilter,
-                sDeviceState.dpc().componentName());
-        sDeviceState.dpc().devicePolicyManager().setAccountManagementDisabled(
-                sDeviceState.dpc().componentName(), sDeviceState.accounts().accountType(),
-                /* disabled= */ true);
+        try (TestAppInstance mTestApp = sTestApp.install()) {
+            // Set policies
+            sDeviceState.dpc().devicePolicyManager()
+                    .setLockTaskPackages(
+                            sDeviceState.dpc().componentName(), new String[]{PACKAGE_NAME});
+            sDeviceState.dpc().devicePolicyManager()
+                    .setLockTaskFeatures(sDeviceState.dpc().componentName(), LOCK_TASK_FEATURES);
+            sDeviceState.dpc().devicePolicyManager().setUserControlDisabledPackages(
+                    sDeviceState.dpc().componentName(),
+                    Arrays.asList(sTestApp.packageName()));
+            sDeviceState.dpc().devicePolicyManager().setUninstallBlocked(
+                    sDeviceState.dpc().componentName(),
+                    sTestApp.packageName(), /* uninstallBlocked= */ true);
+            sDeviceState.dpc().devicePolicyManager().addUserRestriction(
+                    sDeviceState.dpc().componentName(), LOCAL_USER_RESTRICTION);
+            IntentFilter intentFilter = new IntentFilter(Intent.ACTION_MAIN);
+            sDeviceState.dpc().devicePolicyManager().addPersistentPreferredActivity(
+                    sDeviceState.dpc().componentName(),
+                    intentFilter,
+                    sDeviceState.dpc().componentName());
+            sDeviceState.dpc().devicePolicyManager().setAccountManagementDisabled(
+                    sDeviceState.dpc().componentName(), sDeviceState.accounts().accountType(),
+                    /* disabled= */ true);
 
 
-       // Remove DPC
-        sDeviceState.dpc().devicePolicyManager().clearDeviceOwnerApp(
-                sDeviceState.dpc().packageName());
+            // Remove DPC
+            sDeviceState.dpc().devicePolicyManager().clearDeviceOwnerApp(
+                    sDeviceState.dpc().packageName());
 
-        // Get policies from policy engine
-        PolicyState<LockTaskPolicy> lockTaskPolicy = getLockTaskPolicyState(
-                new NoArgsPolicyKey(LOCK_TASK_POLICY),
-                sDeviceState.dpc().user().userHandle());
-        PolicyState<Set<String>> userControlDisabledPackagesPolicy = getStringSetPolicyState(
-                new NoArgsPolicyKey(USER_CONTROL_DISABLED_PACKAGES_POLICY),
-                UserHandle.ALL);
-        PolicyState<Boolean> packageUninstallBlockedPolicy = getBooleanPolicyState(
-                new PackagePolicyKey(
-                        PACKAGE_UNINSTALL_BLOCKED_POLICY,
-                        sTestApp.packageName()),
-                sDeviceState.dpc().user().userHandle());
-        PolicyState<Boolean> userRestrictionPolicy = getBooleanPolicyState(
-                new UserRestrictionPolicyKey(
-                        getIdentifierForUserRestriction(LOCAL_USER_RESTRICTION),
-                        LOCAL_USER_RESTRICTION),
-                sDeviceState.dpc().user().userHandle());
-        PolicyState<ComponentName> persistentPreferredActivityPolicy =
-                getComponentNamePolicyState(
-                        new IntentFilterPolicyKey(
-                                PERSISTENT_PREFERRED_ACTIVITY_POLICY,
-                                intentFilter),
-                        sDeviceState.dpc().user().userHandle());
-        PolicyState<Boolean> accountManagementDisabledPolicy = getBooleanPolicyState(
-                new AccountTypePolicyKey(
-                        ACCOUNT_MANAGEMENT_DISABLED_POLICY,
-                        sDeviceState.accounts().accountType()),
-                sDeviceState.dpc().user().userHandle());
-        // Assert policies removed from policy engine
-        assertThat(lockTaskPolicy).isNull();
-        assertThat(userControlDisabledPackagesPolicy).isNull();
-        assertThat(packageUninstallBlockedPolicy).isNull();
-        assertThat(userRestrictionPolicy).isNull();
-        assertThat(persistentPreferredActivityPolicy).isNull();
-        assertThat(accountManagementDisabledPolicy).isNull();
-        // Assert policies not enforced
-        assertThat(TestApis.context().instrumentedContext()
-                .getSystemService(DevicePolicyManager.class)
-                .isLockTaskPermitted(PACKAGE_NAME)).isFalse();
-        sTestAppInstance.activities().any().start();
-        int processIdBeforeStopping = sTestAppInstance.process().pid();
-        TestApis.context().instrumentedContext().getSystemService(ActivityManager.class)
-                .forceStopPackage(sTestAppInstance.packageName());
-        assertPackageStopped(
-                sTestApp.pkg(), processIdBeforeStopping);
-        assertThat(TestApis.devicePolicy().userRestrictions().isSet(LOCAL_USER_RESTRICTION))
-                .isFalse();
+            // Get policies from policy engine
+            PolicyState<LockTaskPolicy> lockTaskPolicy = getLockTaskPolicyState(
+                    new NoArgsPolicyKey(LOCK_TASK_POLICY),
+                    sDeviceState.dpc().user().userHandle());
+            PolicyState<Set<String>> userControlDisabledPackagesPolicy = getStringSetPolicyState(
+                    new NoArgsPolicyKey(USER_CONTROL_DISABLED_PACKAGES_POLICY),
+                    UserHandle.ALL);
+            PolicyState<Boolean> packageUninstallBlockedPolicy = getBooleanPolicyState(
+                    new PackagePolicyKey(
+                            PACKAGE_UNINSTALL_BLOCKED_POLICY,
+                            sTestApp.packageName()),
+                    sDeviceState.dpc().user().userHandle());
+            PolicyState<Boolean> userRestrictionPolicy = getBooleanPolicyState(
+                    new UserRestrictionPolicyKey(
+                            getIdentifierForUserRestriction(LOCAL_USER_RESTRICTION),
+                            LOCAL_USER_RESTRICTION),
+                    sDeviceState.dpc().user().userHandle());
+            PolicyState<ComponentName> persistentPreferredActivityPolicy =
+                    getComponentNamePolicyState(
+                            new IntentFilterPolicyKey(
+                                    PERSISTENT_PREFERRED_ACTIVITY_POLICY,
+                                    intentFilter),
+                            sDeviceState.dpc().user().userHandle());
+            PolicyState<Boolean> accountManagementDisabledPolicy = getBooleanPolicyState(
+                    new AccountTypePolicyKey(
+                            ACCOUNT_MANAGEMENT_DISABLED_POLICY,
+                            sDeviceState.accounts().accountType()),
+                    sDeviceState.dpc().user().userHandle());
+            // Assert policies removed from policy engine
+            assertThat(lockTaskPolicy).isNull();
+            assertThat(userControlDisabledPackagesPolicy).isNull();
+            assertThat(packageUninstallBlockedPolicy).isNull();
+            assertThat(userRestrictionPolicy).isNull();
+            assertThat(persistentPreferredActivityPolicy).isNull();
+            assertThat(accountManagementDisabledPolicy).isNull();
+            // Assert policies not enforced
+            assertThat(TestApis.context().instrumentedContext()
+                    .getSystemService(DevicePolicyManager.class)
+                    .isLockTaskPermitted(PACKAGE_NAME)).isFalse();
+            mTestApp.activities().query().whereActivity().exported().isTrue().get().start();
+            int processIdBeforeStopping = mTestApp.process().pid();
+            TestApis.context().instrumentedContext().getSystemService(ActivityManager.class)
+                    .forceStopPackage(mTestApp.packageName());
+            assertPackageStopped(
+                    sTestApp.pkg(), processIdBeforeStopping);
+            assertThat(TestApis.devicePolicy().userRestrictions().isSet(LOCAL_USER_RESTRICTION))
+                    .isFalse();
+        }
     }
 
     private void assertPackageStopped(Package pkg, int processIdBeforeStopping) throws Exception {

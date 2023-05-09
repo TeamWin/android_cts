@@ -24,16 +24,19 @@ import com.android.bedstead.nene.TestApis;
 import com.android.interactive.Automation;
 import com.android.interactive.annotations.AutomationFor;
 
+import java.util.Locale;
+
 @AutomationFor("com.google.android.interactive.steps.enterprise.sharesheet"
-        + ".IsMiniResolverDialogSecondaryActionUsePersonalBrowserStep")
-public final class IsMiniResolverDialogSecondaryActionUsePersonalBrowserStepAutomation implements
-        Automation<Boolean> {
+        + ".DoesDialogShowPersonalProfileMLCTestAppStep")
+public final class DoesDialogShowPersonalProfileMLCTestAppStepAutomation
+        implements Automation<Boolean> {
     @Override
     public Boolean automate() throws Exception {
         UiDevice device = TestApis.ui().device();
-        device.wait(Until.findObject(By.res("android:id/use_same_profile_browser")), 2000);
+        device.wait(Until.findObject(By.res("android:id/open_cross_profile")), 2000);
         String resolverTitle = device.findObject(
-                By.res("android:id/use_same_profile_browser")).getText();
-        return resolverTitle.equals("Use personal browser");
+                By.res("android:id/open_cross_profile")).getText().toLowerCase(Locale.getDefault());
+        return resolverTitle.contains("open") && resolverTitle.contains("mlctestapp")
+                && resolverTitle.contains("personal");
     }
 }

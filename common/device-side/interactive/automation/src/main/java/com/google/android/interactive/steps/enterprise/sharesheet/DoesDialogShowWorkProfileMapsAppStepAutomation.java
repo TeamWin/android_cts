@@ -27,16 +27,16 @@ import com.android.interactive.annotations.AutomationFor;
 import java.util.Locale;
 
 @AutomationFor("com.google.android.interactive.steps.enterprise.sharesheet"
-        + ".DoesMiniResolverDialogClearlyShowWorkProfileMLCTestAppStep")
-public final class DoesMiniResolverDialogClearlyShowWorkProfileMLCTestAppStepAutomation
-        implements Automation<Boolean> {
+        + ".DoesDialogShowWorkProfileMapsAppStep")
+public final class DoesDialogShowWorkProfileMapsAppStepAutomation implements
+        Automation<Boolean> {
     @Override
     public Boolean automate() throws Exception {
         UiDevice device = TestApis.ui().device();
         device.wait(Until.findObject(By.res("android:id/open_cross_profile")), 2000);
         String resolverTitle = device.findObject(
                 By.res("android:id/open_cross_profile")).getText().toLowerCase(Locale.getDefault());
-        return resolverTitle.contains("open") && resolverTitle.contains("mlctestapp")
+        return resolverTitle.contains("open") && resolverTitle.contains("maps")
                 && resolverTitle.contains("work");
     }
 }

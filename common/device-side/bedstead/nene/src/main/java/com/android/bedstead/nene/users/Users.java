@@ -19,6 +19,7 @@ package com.android.bedstead.nene.users;
 import static android.Manifest.permission.CREATE_USERS;
 import static android.Manifest.permission.INTERACT_ACROSS_USERS;
 import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
+import static android.Manifest.permission.QUERY_USERS;
 import static android.app.ActivityManager.STOP_USER_ON_SWITCH_DEFAULT;
 import static android.app.ActivityManager.STOP_USER_ON_SWITCH_FALSE;
 import static android.app.ActivityManager.STOP_USER_ON_SWITCH_TRUE;
@@ -565,7 +566,8 @@ public final class Users {
                     /* excludePreCreated= */ false).stream();
         }
 
-        try (PermissionContext p = TestApis.permissions().withPermission(CREATE_USERS)) {
+        try (PermissionContext p =
+                     TestApis.permissions().withPermission(CREATE_USERS, QUERY_USERS)) {
             return sUserManager.getUsers(
                     /* excludePartial= */ false,
                     /* excludeDying= */ true,

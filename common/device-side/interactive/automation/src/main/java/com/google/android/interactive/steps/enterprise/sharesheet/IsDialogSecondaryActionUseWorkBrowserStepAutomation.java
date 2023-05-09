@@ -14,20 +14,26 @@
  * limitations under the License.
  */
 
-package com.google.android.interactive.steps.enterprise.systemui;
+package com.google.android.interactive.steps.enterprise.sharesheet;
 
+import androidx.test.uiautomator.By;
+import androidx.test.uiautomator.UiDevice;
+import androidx.test.uiautomator.Until;
+
+import com.android.bedstead.nene.TestApis;
 import com.android.interactive.Automation;
 import com.android.interactive.annotations.AutomationFor;
 
-import com.google.android.interactive.helpers.QuickSettingsHelper;
-
-/** Automation for IsThereQuickSettingsTileLabeledUpdatedStringWithWorkIconStep */
-@AutomationFor("com.google.android.interactive.steps.enterprise.systemui"
-        + ".IsThereQuickSettingsTileLabeledUpdatedStringWithWorkIconStep")
-public class IsThereQuickSettingsTileLabeledUpdatedStringWithWorkIconStepAutomation implements
+@AutomationFor("com.google.android.interactive.steps.enterprise.sharesheet"
+        + ".IsDialogSecondaryActionUseWorkBrowserStep")
+public final class IsDialogSecondaryActionUseWorkBrowserStepAutomation implements
         Automation<Boolean> {
     @Override
     public Boolean automate() throws Exception {
-        return QuickSettingsHelper.findTileWithLabel("UPDATED STRING") != null;
+        UiDevice device = TestApis.ui().device();
+        device.wait(Until.findObject(By.res("android:id/use_same_profile_browser")), 2000);
+        String resolverTitle = device.findObject(
+                By.res("android:id/use_same_profile_browser")).getText();
+        return resolverTitle.equals("Use work browser");
     }
 }
