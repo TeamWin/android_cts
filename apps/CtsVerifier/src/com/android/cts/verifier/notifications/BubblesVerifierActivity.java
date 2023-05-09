@@ -23,6 +23,7 @@ import static android.content.Intent.ACTION_VIEW;
 import static android.content.pm.PackageManager.FEATURE_INPUT_METHODS;
 import static android.content.pm.PackageManager.FEATURE_SCREEN_LANDSCAPE;
 import static android.content.pm.PackageManager.FEATURE_SCREEN_PORTRAIT;
+import static android.content.pm.PackageManager.FEATURE_SENSOR_ACCELEROMETER;
 import static android.view.View.GONE;
 import static android.view.View.INVISIBLE;
 import static android.view.View.VISIBLE;
@@ -201,7 +202,8 @@ public class BubblesVerifierActivity extends PassFailButtons.Activity {
             //
             // Check if devices do not support rotation
             if (getPackageManager().hasSystemFeature(FEATURE_SCREEN_LANDSCAPE) &&
-                getPackageManager().hasSystemFeature(FEATURE_SCREEN_PORTRAIT))
+                getPackageManager().hasSystemFeature(FEATURE_SCREEN_PORTRAIT) &&
+                getPackageManager().hasSystemFeature(FEATURE_SENSOR_ACCELEROMETER))
             {
                 mTests.add(new PortraitAndLandscape());
             }
