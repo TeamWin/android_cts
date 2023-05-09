@@ -92,7 +92,7 @@ public class AudioOutColdStartLatencyActivity
     }
 
     private boolean calcTestResult() {
-        boolean pass = mColdStartlatencyMS <= LATENCY_MS_MUST;
+        boolean pass = mColdStartlatencyMS <= 0 ? false : mColdStartlatencyMS <= LATENCY_MS_MUST;
         getPassButton().setEnabled(pass);
         return pass;
     }
@@ -105,7 +105,6 @@ public class AudioOutColdStartLatencyActivity
         double coldStartLatency = frame0Time - mPreOpenTime;
 
         mColdStartlatencyMS = nanosToMs(coldStartLatency);
-
         return mColdStartlatencyMS;
     }
 
@@ -118,10 +117,10 @@ public class AudioOutColdStartLatencyActivity
                         @Override
                         public void run() {
                             calcColdStartLatency(mPullTimestamp);
-                            stopAudioTest();
+                            stopAudio();
+                            calcTestResult();
                             updateTestStateButtons();
                             showColdStartLatency();
-                            calcTestResult();
                         }
                     });
 
@@ -159,7 +158,7 @@ public class AudioOutColdStartLatencyActivity
     // Audio Streaming
     //
     @Override
-    boolean startAudioTest() {
+    boolean runAudioTest() {
         try {
             mPreOpenTime = System.nanoTime();
             PlayerBuilder builder = new PlayerBuilder();
@@ -189,7 +188,7 @@ public class AudioOutColdStartLatencyActivity
     }
 
     @Override
-    void stopAudioTest() {
+    void stopAudio() {
         if (!mIsTestRunning) {
             return;
         }

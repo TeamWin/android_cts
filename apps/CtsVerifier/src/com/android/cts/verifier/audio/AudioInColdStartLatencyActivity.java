@@ -69,7 +69,7 @@ public class AudioInColdStartLatencyActivity
     }
 
     boolean calcTestResult() {
-        boolean pass = mColdStartlatencyMS <= LATENCY_MS_MUST;
+        boolean pass = mColdStartlatencyMS <= 0 ? false : mColdStartlatencyMS <= LATENCY_MS_MUST;
         getPassButton().setEnabled(pass);
         return pass;
     }
@@ -82,10 +82,6 @@ public class AudioInColdStartLatencyActivity
     void showInResults() {
         calcTestResult();
         showColdStartLatency();
-    }
-
-    protected void stopAudio() {
-        stopAudioTest();
     }
 
     @Override
@@ -102,7 +98,7 @@ public class AudioInColdStartLatencyActivity
     // Audio Streaming
     //
     @Override
-    boolean startAudioTest() {
+    boolean runAudioTest() {
         mPreviousCallbackTime = 0;
         mAccumulatedTime = 0;
         mNumCallbacks = 0;
@@ -141,7 +137,7 @@ public class AudioInColdStartLatencyActivity
     }
 
     @Override
-    void stopAudioTest() {
+    void stopAudio() {
         if (!mIsTestRunning) {
             return;
         }
@@ -153,10 +149,6 @@ public class AudioInColdStartLatencyActivity
 
         mStartBtn.setEnabled(true);
         mStopBtn.setEnabled(false);
-
-        calcColdStartLatency();
-
-        showInResults();
     }
 
     // Callback for Recorder
@@ -188,7 +180,10 @@ public class AudioInColdStartLatencyActivity
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            stopAudioTest();
+                            stopAudio();
+                            updateTestStateButtons();
+                            calcColdStartLatency();
+                            showInResults();
                         }
                     });
                 }

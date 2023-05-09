@@ -99,7 +99,9 @@ public abstract class AudioColdStartBaseActivity
     void showColdStartLatency() {
         mLatencyTxt.setText("Latency: " + mColdStartlatencyMS);
 
-        if (mColdStartlatencyMS <= getRecommendedTimeMS()) {
+        if (mColdStartlatencyMS < 0) {
+            mResultsTxt.setText("Invalid cold start latency.");
+        } else if (mColdStartlatencyMS <= getRecommendedTimeMS()) {
             mResultsTxt.setText("PASS. Meets RECOMMENDED latency of "
                     + getRecommendedTimeMS() + "ms");
         } else if (mColdStartlatencyMS <= getRequiredTimeMS()) {
@@ -132,9 +134,9 @@ public abstract class AudioColdStartBaseActivity
         nativeApiRB.setChecked(true);
         nativeApiRB.setOnClickListener(this);
 
-        mStartBtn = (Button) findViewById(R.id.coldstart_start_btn);
+        mStartBtn = (Button) findViewById(R.id.coldstart_run_btn);
         mStartBtn.setOnClickListener(this);
-        mStopBtn = (Button) findViewById(R.id.coldstart_stop_btn);
+        mStopBtn = (Button) findViewById(R.id.coldstart_cancel_btn);
         mStopBtn.setOnClickListener(this);
         mStopBtn.setEnabled(false);
 
@@ -148,8 +150,19 @@ public abstract class AudioColdStartBaseActivity
     abstract int getRequiredTimeMS();
     abstract int getRecommendedTimeMS();
 
-    abstract boolean startAudioTest();
-    abstract void stopAudioTest();
+    abstract boolean runAudioTest();
+    abstract void stopAudio();
+    void cancelTest() {
+        stopAudio();
+        updateTestStateButtons();
+
+        mOpenTimeTxt.setText("");
+        mStartTimeTxt.setText("");
+        mLatencyTxt.setText("");
+        mResultsTxt.setText("");
+
+        getPassButton().setEnabled(false);
+    }
 
     protected void updateTestStateButtons() {
         mStartBtn.setEnabled(!mIsTestRunning);
@@ -163,29 +176,27 @@ public abstract class AudioColdStartBaseActivity
     public void onClick(View v) {
         int id = v.getId();
         if (id == R.id.audioJavaApiBtn) {
-            stopAudioTest();
+            stopAudio();
             updateTestStateButtons();
             clearResults();
             mAudioApi = BuilderBase.TYPE_JAVA;
             mNumExchangeFrames = StreamBase.getNumBurstFrames(mAudioApi);
         } else if (id == R.id.audioNativeApiBtn) {
-            stopAudioTest();
+            stopAudio();
             updateTestStateButtons();
             clearResults();
             mAudioApi = BuilderBase.TYPE_OBOE;
             mNumExchangeFrames = StreamBase.getNumBurstFrames(mAudioApi);
-        } else if (id == R.id.coldstart_start_btn) {
-            startAudioTest();
+        } else if (id == R.id.coldstart_run_btn) {
+            runAudioTest();
 
             showAttributes();
             showOpenTime();
             showStartTime();
 
             updateTestStateButtons();
-        } else if (id == R.id.coldstart_stop_btn) {
-            stopAudioTest();
-
-            updateTestStateButtons();
+        } else if (id == R.id.coldstart_cancel_btn) {
+            cancelTest();
         }
     }
 }
