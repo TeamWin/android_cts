@@ -27,6 +27,7 @@ import com.android.compatibility.common.util.CommonTestUtils;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.log.LogUtil.CLog;
+import com.android.tradefed.targetprep.TargetSetupError;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
 import org.junit.After;
@@ -76,8 +77,10 @@ public abstract class BaseMultiUserBackupHostSideTest extends BaseBackupHostSide
         int currentUserId = mDevice.getCurrentUser();
         mInitialUser = Optional.of(currentUserId);
 
-        if (currentUserId != mDefaultBackupUserId) {
-            mDevice.switchUser(mDefaultBackupUserId);
+        // Switch to primary user.
+        int primaryUserId = mDevice.getPrimaryUserId();
+        if (currentUserId != primaryUserId) {
+            mDevice.switchUser(primaryUserId);
         }
     }
 
@@ -171,6 +174,23 @@ public abstract class BaseMultiUserBackupHostSideTest extends BaseBackupHostSide
                 String.format("bmgr --user %d wipe %s %s", userId, transport, packageName));
     }
 
+    /** Clears data of {@code packageName} for user {@code userId}. */
+    void clearPackageDataAsUser(String packageName, int userId) throws DeviceNotAvailableException {
+        mDevice.executeShellCommand(String.format("pm clear --user %d %s", userId, packageName));
+    }
+
+    /** Installs {@code apk} for user {@code userId} and allows replacements and downgrades. */
+    void installPackageAsUser(String apk, int userId)
+            throws DeviceNotAvailableException, TargetSetupError {
+        installPackageAsUser(apk, false, userId, "-r", "-d");
+    }
+
+    /** Uninstalls {@code packageName} for user {@code userId}. */
+    void uninstallPackageAsUser(String packageName, int userId) throws DeviceNotAvailableException {
+        mDevice.executeShellCommand(
+                String.format("pm uninstall --user %d %s", userId, packageName));
+    }
+
     /**
      * Installs existing {@code packageName} for user {@code userId}. This fires off asynchronous
      * restore and returns before the restore operation has finished.
@@ -190,5 +210,12 @@ public abstract class BaseMultiUserBackupHostSideTest extends BaseBackupHostSide
             throws DeviceNotAvailableException {
         mDevice.executeShellCommand(
                 String.format("pm install-existing --user %d --wait %s", userId, packageName));
+    }
+
+    /** Run device side test as user {@code userId}. */
+    void checkDeviceTestAsUser(String packageName, String className, String testName, int userId)
+            throws DeviceNotAvailableException {
+        boolean result = runDeviceTests(mDevice, packageName, className, testName, userId, null);
+        assertThat(result).isTrue();
     }
 }

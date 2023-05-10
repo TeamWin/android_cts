@@ -16,8 +16,6 @@
 
 package android.cts.backup;
 
-import static org.junit.Assert.assertNull;
-
 import android.platform.test.annotations.AppModeFull;
 
 import com.android.compatibility.common.util.BackupUtils;
@@ -72,7 +70,7 @@ public class ProfileFullBackupRestoreHostSideTest extends BaseMultiUserBackupHos
                 clearBackupDataInTransportForUser(
                         FULL_BACKUP_TEST_PACKAGE, mTransport, profileUserId);
             }
-            assertNull(uninstallPackageAsUser(FULL_BACKUP_TEST_PACKAGE, profileUserId));
+            uninstallPackageAsUser(FULL_BACKUP_TEST_PACKAGE, profileUserId);
             mDevice.removeUser(profileUserId);
             mProfileUserId = Optional.empty();
         }
@@ -96,11 +94,11 @@ public class ProfileFullBackupRestoreHostSideTest extends BaseMultiUserBackupHos
         checkDeviceTest("assertFilesDontExist");
         checkDeviceTest("writeFilesAndAssertSuccess");
 
-        mBackupUtils.backupNowForUserAndAssertSuccess(FULL_BACKUP_TEST_PACKAGE, profileUserId);
+        mBackupUtils.backupNowAndAssertSuccessForUser(FULL_BACKUP_TEST_PACKAGE, profileUserId);
 
         checkDeviceTest("clearFilesAndAssertSuccess");
 
-        mBackupUtils.restoreForUserAndAssertSuccess(
+        mBackupUtils.restoreAndAssertSuccessForUser(
                 BackupUtils.LOCAL_TRANSPORT_TOKEN, FULL_BACKUP_TEST_PACKAGE, profileUserId);
 
         checkDeviceTest("assertFilesRestored");
@@ -123,11 +121,11 @@ public class ProfileFullBackupRestoreHostSideTest extends BaseMultiUserBackupHos
         checkDeviceTest("assertFilesDontExist");
         checkDeviceTest("writeFilesAndAssertSuccess");
 
-        mBackupUtils.backupNowForUserAndAssertSuccess(FULL_BACKUP_TEST_PACKAGE, profileUserId);
+        mBackupUtils.backupNowAndAssertSuccessForUser(FULL_BACKUP_TEST_PACKAGE, profileUserId);
 
         checkDeviceTest("clearFilesAndAssertSuccess");
 
-        assertNull(uninstallPackageAsUser(FULL_BACKUP_TEST_PACKAGE, profileUserId));
+        uninstallPackageAsUser(FULL_BACKUP_TEST_PACKAGE, profileUserId);
 
         installPackageAsUser(FULL_BACKUP_APK, profileUserId);
 

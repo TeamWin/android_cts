@@ -23,6 +23,7 @@ import static org.junit.Assert.assertNull;
 import android.platform.test.annotations.AppModeFull;
 
 import com.android.tradefed.device.DeviceNotAvailableException;
+import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
 import org.junit.After;
@@ -65,22 +66,21 @@ public class KeyValueBackupRestoreHostSideTest extends BaseBackupHostSideTest {
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        installPackageAsUser(KEY_VALUE_RESTORE_APP_APK, mDefaultBackupUserId);
-        clearPackageDataAsUser(KEY_VALUE_RESTORE_APP_PACKAGE, mDefaultBackupUserId);
+        installPackage(KEY_VALUE_RESTORE_APP_APK);
+        clearPackageData(KEY_VALUE_RESTORE_APP_PACKAGE);
 
-        installPackageAsUser(SHARED_PREFERENCES_RESTORE_APP_APK, mDefaultBackupUserId);
-        clearPackageDataAsUser(SHARED_PREFERENCES_RESTORE_APP_APK, mDefaultBackupUserId);
+        installPackage(SHARED_PREFERENCES_RESTORE_APP_APK);
+        clearPackageData(SHARED_PREFERENCES_RESTORE_APP_APK);
     }
 
     @After
     public void tearDown() throws Exception {
         // Clear backup data and uninstall the package (in that order!)
         clearBackupDataInLocalTransport(KEY_VALUE_RESTORE_APP_PACKAGE);
-        assertNull(uninstallPackageAsUser(KEY_VALUE_RESTORE_APP_PACKAGE, mDefaultBackupUserId));
+        assertNull(uninstallPackage(KEY_VALUE_RESTORE_APP_PACKAGE));
 
         clearBackupDataInLocalTransport(SHARED_PREFERENCES_RESTORE_APP_PACKAGE);
-        assertNull(uninstallPackageAsUser(SHARED_PREFERENCES_RESTORE_APP_PACKAGE,
-                mDefaultBackupUserId));
+        assertNull(uninstallPackage(SHARED_PREFERENCES_RESTORE_APP_PACKAGE));
     }
 
     /**
@@ -100,12 +100,11 @@ public class KeyValueBackupRestoreHostSideTest extends BaseBackupHostSideTest {
 
         checkDeviceTest("saveSharedPreferencesAndNotifyBackupManager");
 
-        getBackupUtils().backupNowForUserAndAssertSuccess(KEY_VALUE_RESTORE_APP_PACKAGE,
-                mDefaultBackupUserId);
+        getBackupUtils().backupNowAndAssertSuccess(KEY_VALUE_RESTORE_APP_PACKAGE);
 
-        assertNull(uninstallPackageAsUser(KEY_VALUE_RESTORE_APP_PACKAGE, mDefaultBackupUserId));
+        assertNull(uninstallPackage(KEY_VALUE_RESTORE_APP_PACKAGE));
 
-        installPackageAsUser(KEY_VALUE_RESTORE_APP_APK, mDefaultBackupUserId);
+        installPackage(KEY_VALUE_RESTORE_APP_APK);
 
         // Shared preference should be restored
         checkDeviceTest("checkSharedPreferencesAreRestored");
@@ -138,21 +137,19 @@ public class KeyValueBackupRestoreHostSideTest extends BaseBackupHostSideTest {
     public void testSharedPreferencesRestore() throws Exception {
         checkDeviceTest("launchSharedPrefActivity");
 
-        getBackupUtils().backupNowForUserAndAssertSuccess(SHARED_PREFERENCES_RESTORE_APP_PACKAGE,
-                mDefaultBackupUserId);
+        getBackupUtils().backupNowAndAssertSuccess(SHARED_PREFERENCES_RESTORE_APP_PACKAGE);
 
         checkDeviceTest("updateSharedPrefActivity");
 
-        getBackupUtils().restoreForUserAndAssertSuccess(LOCAL_TRANSPORT_TOKEN,
-                SHARED_PREFERENCES_RESTORE_APP_PACKAGE, mDefaultBackupUserId);
+        getBackupUtils().restoreAndAssertSuccess(LOCAL_TRANSPORT_TOKEN,
+                SHARED_PREFERENCES_RESTORE_APP_PACKAGE);
 
         checkDeviceTest("checkSharedPrefActivity");
     }
 
     private void checkDeviceTest(String methodName)
             throws DeviceNotAvailableException {
-        super.checkDeviceTestAsUser(KEY_VALUE_RESTORE_APP_PACKAGE,
-                KEY_VALUE_RESTORE_DEVICE_TEST_NAME,
-                methodName, mDefaultBackupUserId);
+        super.checkDeviceTest(KEY_VALUE_RESTORE_APP_PACKAGE, KEY_VALUE_RESTORE_DEVICE_TEST_NAME,
+                methodName);
     }
 }
