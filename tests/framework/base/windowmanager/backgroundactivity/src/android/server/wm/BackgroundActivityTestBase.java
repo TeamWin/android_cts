@@ -38,7 +38,6 @@ import android.util.Log;
 import androidx.annotation.CallSuper;
 
 import com.android.compatibility.common.util.AppOpsUtils;
-import com.android.compatibility.common.util.DeviceConfigStateHelper;
 
 import org.junit.After;
 import org.junit.Before;
@@ -74,24 +73,8 @@ public abstract class BackgroundActivityTestBase extends ActivityManagerTestBase
 
     // TODO(b/258792202): Cleanup with feature flag
     static final String NAMESPACE_WINDOW_MANAGER = "window_manager";
-    static final String ENABLE_DEFAULT_RESCIND_BAL_PRIVILEGES_FROM_PENDING_INTENT_SENDER =
-            "DefaultRescindBalPrivilegesFromPendingIntentSender__"
-                    + "enable_default_rescind_bal_privileges_from_pending_intent_sender";
-    final DeviceConfigStateHelper mDeviceConfig =
-            new DeviceConfigStateHelper(NAMESPACE_WINDOW_MANAGER);
 
     ServiceConnection mBalServiceConnection;
-
-    @Before
-    public void enableFeatureFlags() {
-        mDeviceConfig.set(
-                ENABLE_DEFAULT_RESCIND_BAL_PRIVILEGES_FROM_PENDING_INTENT_SENDER, "true");
-    }
-
-    @After
-    public void disableFeatureFlags() throws Exception {
-        mDeviceConfig.close();
-    }
 
     @Override
     @Before
