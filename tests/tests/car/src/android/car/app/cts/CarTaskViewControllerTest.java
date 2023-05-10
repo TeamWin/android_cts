@@ -111,7 +111,10 @@ public class CarTaskViewControllerTest {
 
     @After
     public void tearDown() {
-        mHostActivity.finishAndRemoveTask();
+        if (mHostActivity != null) {
+            mHostActivity.finishAndRemoveTask();
+            mHostActivity = null;
+        }
         if (EmbeddedTestActivity1.sInstance != null) {
             EmbeddedTestActivity1.sInstance.finishAndRemoveTask();
             EmbeddedTestActivity1.sInstance = null;
