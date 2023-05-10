@@ -24,6 +24,7 @@ import static junit.framework.Assert.fail;
 import static org.junit.Assert.assertTrue;
 
 import android.app.Instrumentation;
+import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.window.BackEvent;
 import android.window.OnBackAnimationCallback;
@@ -158,6 +159,45 @@ public class OnBackInvokedCallbackGestureTest extends ActivityManagerTestBase {
         List<BackEvent> events = mTracker.mProgressEvents;
         assertTrue(events.size() > 0);
         assertTrue(events.get(events.size() - 1).getProgress() == 0);
+    }
+
+    @Test
+    @CddTest(requirements = { "7.2.3/H-0-5,H-0-6" })
+    public void invokesCallbackInButtonsNav_invoked() throws InterruptedException {
+        long downTime = TouchHelper.injectKeyActionDown(KeyEvent.KEYCODE_BACK,
+                /* longpress = */ false,
+                /* sync = */ true);
+
+        assertInvoked(mTracker.mStartLatch);
+        assertNotInvoked(mTracker.mProgressLatch);
+        assertNotInvoked(mTracker.mInvokeLatch);
+        assertNotInvoked(mTracker.mCancelLatch);
+
+        TouchHelper.injectKeyActionUp(KeyEvent.KEYCODE_BACK,
+                /* downTime = */ downTime,
+                /* cancelled = */ false,
+                /* sync = */ true);
+
+        assertInvoked(mTracker.mInvokeLatch);
+        assertNotInvoked(mTracker.mProgressLatch);
+        assertNotInvoked(mTracker.mCancelLatch);
+    }
+
+    @Test
+    @CddTest(requirements = { "7.2.3/H-0-7" })
+    public void invokesCallbackInButtonsNav_cancelled() throws InterruptedException {
+        long downTime = TouchHelper.injectKeyActionDown(KeyEvent.KEYCODE_BACK,
+                /* longpress = */ false,
+                /* sync = */ true);
+
+        TouchHelper.injectKeyActionUp(KeyEvent.KEYCODE_BACK,
+                /* downTime = */ downTime,
+                /* cancelled = */ true,
+                /* sync = */ true);
+
+        assertInvoked(mTracker.mCancelLatch);
+        assertNotInvoked(mTracker.mProgressLatch);
+        assertNotInvoked(mTracker.mInvokeLatch);
     }
 
     @Test
