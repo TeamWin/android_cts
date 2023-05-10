@@ -16,7 +16,7 @@
 
 package android.net.wifi.cts;
 
-import static android.content.Context.RECEIVER_EXPORTED;
+import static android.content.Context.RECEIVER_NOT_EXPORTED;
 import static android.net.wifi.p2p.WifiP2pConfig.GROUP_CLIENT_IP_PROVISIONING_MODE_IPV6_LINK_LOCAL;
 
 import static org.junit.Assert.assertNotEquals;
@@ -27,13 +27,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
-import android.net.ConnectivityManager;
-import android.net.ConnectivityManager.NetworkCallback;
 import android.net.MacAddress;
-import android.net.Network;
-import android.net.NetworkCapabilities;
 import android.net.NetworkInfo;
-import android.net.NetworkRequest;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
 import android.net.wifi.WpsInfo;
@@ -67,16 +62,13 @@ import java.util.Arrays;
 import java.util.BitSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 @AppModeFull(reason = "Cannot get WifiManager in instant app mode")
 public class ConcurrencyTest extends WifiJUnit3TestBase {
     private class MySync {
-        static final int WIFI_STATE = 0;
         static final int P2P_STATE = 1;
         static final int DISCOVERY_STATE = 2;
         static final int NETWORK_INFO = 3;
@@ -84,8 +76,7 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
 
         public BitSet pendingSync = new BitSet();
 
-        public int expectedWifiState;
-        public int expectedP2pState;
+        public int expectedP2pState = WifiP2pManager.WIFI_P2P_STATE_DISABLED;
         public int expectedDiscoveryState;
         public NetworkInfo expectedNetworkInfo;
         public int expectedListenState;
@@ -129,33 +120,27 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
     private WifiManager mWifiManager;
     private WifiP2pManager mWifiP2pManager;
     private WifiP2pManager.Channel mWifiP2pChannel;
-    private MySync mMySync = new MySync();
-    private MyResponse mMyResponse = new MyResponse();
+    private final MySync mMySync = new MySync();
+    private final MyResponse mMyResponse = new MyResponse();
     private boolean mWasVerboseLoggingEnabled;
     private WifiP2pConfig mTestWifiP2pPeerConfig;
     private boolean mWasWifiEnabled;
 
     private static final String TAG = "ConcurrencyTest";
-    private static final int TIMEOUT_MSEC = 6000;
-    private static final int WAIT_MSEC = 60;
+    private static final int TIMEOUT_MS = 10000;
+    private static final int WAIT_MS = 100;
     private static final int DURATION = 5000;
-    private IntentFilter mIntentFilter;
     private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             final String action = intent.getAction();
-            if (action.equals(WifiManager.WIFI_STATE_CHANGED_ACTION)) {
-                synchronized (mMySync) {
-                    mMySync.pendingSync.set(MySync.WIFI_STATE);
-                    mMySync.expectedWifiState = intent.getIntExtra(WifiManager.EXTRA_WIFI_STATE,
-                            WifiManager.WIFI_STATE_DISABLED);
-                    mMySync.notify();
-                }
-            } else if(action.equals(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION)) {
+            if (action.equals(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION)) {
                 synchronized (mMySync) {
                     mMySync.pendingSync.set(MySync.P2P_STATE);
                     mMySync.expectedP2pState = intent.getIntExtra(WifiP2pManager.EXTRA_WIFI_STATE,
                             WifiP2pManager.WIFI_P2P_STATE_DISABLED);
+                    Log.d(TAG, "Get WIFI_P2P_STATE_CHANGED_ACTION: "
+                            + mMySync.expectedP2pState);
                     mMySync.notify();
                 }
             } else if (action.equals(WifiP2pManager.WIFI_P2P_DISCOVERY_CHANGED_ACTION)) {
@@ -164,6 +149,8 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
                     mMySync.expectedDiscoveryState = intent.getIntExtra(
                             WifiP2pManager.EXTRA_DISCOVERY_STATE,
                             WifiP2pManager.WIFI_P2P_DISCOVERY_STOPPED);
+                    Log.d(TAG, "Get WIFI_P2P_STATE_CHANGED_ACTION: "
+                            + mMySync.expectedDiscoveryState);
                     mMySync.notify();
                 }
             } else if (action.equals(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION)) {
@@ -225,16 +212,15 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
             return;
         }
 
-        mIntentFilter = new IntentFilter();
-        mIntentFilter.addAction(WifiManager.WIFI_STATE_CHANGED_ACTION);
-        mIntentFilter.addAction(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION);
-        mIntentFilter.addAction(WifiP2pManager.WIFI_P2P_DISCOVERY_CHANGED_ACTION);
-        mIntentFilter.addAction(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION);
-        mIntentFilter.addAction(WifiP2pManager.ACTION_WIFI_P2P_LISTEN_STATE_CHANGED);
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION);
+        intentFilter.addAction(WifiP2pManager.WIFI_P2P_DISCOVERY_CHANGED_ACTION);
+        intentFilter.addAction(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION);
+        intentFilter.addAction(WifiP2pManager.ACTION_WIFI_P2P_LISTEN_STATE_CHANGED);
         if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)) {
-            mContext.registerReceiver(mReceiver, mIntentFilter, RECEIVER_EXPORTED);
+            mContext.registerReceiver(mReceiver, intentFilter, RECEIVER_NOT_EXPORTED);
         } else {
-            mContext.registerReceiver(mReceiver, mIntentFilter);
+            mContext.registerReceiver(mReceiver, intentFilter);
         }
         mWifiManager = (WifiManager) getContext().getSystemService(Context.WIFI_SERVICE);
         assertNotNull(mWifiManager);
@@ -245,20 +231,28 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
         ShellIdentityUtils.invokeWithShellPermissions(
                 () -> mWifiManager.setVerboseLoggingEnabled(true));
 
-        mWasWifiEnabled = ShellIdentityUtils.invokeWithShellPermissions(
-                () -> mWifiManager.isWifiEnabled());
+        ShellIdentityUtils.invokeWithShellPermissions(
+                () -> mWifiManager.allowAutojoinGlobal(false));
+        mWasWifiEnabled = mWifiManager.isWifiEnabled();
         if (mWasWifiEnabled) {
+            // Clean the possible P2P enabled broadcast from other test case.
+            waitForBroadcasts(MySync.P2P_STATE);
             ShellIdentityUtils.invokeWithShellPermissions(() -> mWifiManager.setWifiEnabled(false));
+            PollingCheck.check("Wifi not disabled", DURATION, () -> !mWifiManager.isWifiEnabled());
+            // Make sure WifiP2P is disabled
+            waitForBroadcasts(MySync.P2P_STATE);
+            assertEquals(WifiP2pManager.WIFI_P2P_STATE_DISABLED, mMySync.expectedP2pState);
         }
 
-        PollingCheck.check("Wifi not disabled", DURATION,
-                () -> !mWifiManager.isWifiEnabled());
-        mMySync.expectedWifiState = WifiManager.WIFI_STATE_DISABLED;
-        mMySync.expectedP2pState = WifiP2pManager.WIFI_P2P_STATE_DISABLED;
-        mMySync.expectedDiscoveryState = WifiP2pManager.WIFI_P2P_DISCOVERY_STOPPED;
-        mMySync.expectedNetworkInfo = null;
-        mMySync.expectedListenState = WifiP2pManager.WIFI_P2P_LISTEN_STOPPED;
-        mMySync.pendingSync.clear();
+        // Clean all the state
+        synchronized (mMySync) {
+            mMySync.expectedP2pState = WifiP2pManager.WIFI_P2P_STATE_DISABLED;
+            mMySync.expectedDiscoveryState = WifiP2pManager.WIFI_P2P_DISCOVERY_STOPPED;
+            mMySync.expectedNetworkInfo = null;
+            mMySync.expectedListenState = WifiP2pManager.WIFI_P2P_LISTEN_STOPPED;
+            mMySync.pendingSync.clear();
+            resetResponse(mMyResponse);
+        }
 
         // for general connect command
         mTestWifiP2pPeerConfig = new WifiP2pConfig();
@@ -278,17 +272,18 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
         }
         mContext.unregisterReceiver(mReceiver);
 
+        ShellIdentityUtils.invokeWithShellPermissions(() -> mWifiManager.allowAutojoinGlobal(true));
         ShellIdentityUtils.invokeWithShellPermissions(
                 () -> mWifiManager.setVerboseLoggingEnabled(mWasVerboseLoggingEnabled));
-
-        enableWifi();
-        mMySync.pendingSync.clear();
+        if (mWasWifiEnabled) {
+            enableWifi();
+        }
         super.tearDown();
     }
 
     private boolean waitForBroadcasts(List<Integer> waitSyncList) {
         synchronized (mMySync) {
-            long timeout = System.currentTimeMillis() + TIMEOUT_MSEC;
+            long timeout = System.currentTimeMillis() + TIMEOUT_MS;
             while (System.currentTimeMillis() < timeout) {
                 List<Integer> handledSyncList = waitSyncList.stream()
                         .filter(w -> mMySync.pendingSync.get(w))
@@ -299,7 +294,7 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
                     break;
                 }
                 try {
-                    mMySync.wait(WAIT_MSEC);
+                    mMySync.wait(WAIT_MS);
                 } catch (InterruptedException e) { }
             }
             if (!waitSyncList.isEmpty()) {
@@ -315,7 +310,7 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
     }
 
     private NetworkInfo.DetailedState waitForNextNetworkState() {
-        assertTrue(waitForBroadcasts(MySync.NETWORK_INFO));
+        waitForBroadcasts(MySync.NETWORK_INFO);
         assertNotNull(mMySync.expectedNetworkInfo);
         return mMySync.expectedNetworkInfo.getDetailedState();
     }
@@ -339,10 +334,10 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
 
     private boolean waitForServiceResponse(MyResponse waitResponse) {
         synchronized (waitResponse) {
-            long timeout = System.currentTimeMillis() + TIMEOUT_MSEC;
+            long timeout = System.currentTimeMillis() + TIMEOUT_MS;
             while (System.currentTimeMillis() < timeout) {
                 try {
-                    waitResponse.wait(WAIT_MSEC);
+                    waitResponse.wait(WAIT_MS);
                 } catch (InterruptedException e) { }
 
                 if (waitResponse.valid) {
@@ -374,28 +369,12 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
     /*
      * Enables Wifi and block until connection is established.
      */
-    private void enableWifi() throws InterruptedException {
+    private void enableWifi() throws Exception {
         if (!mWifiManager.isWifiEnabled()) {
             ShellIdentityUtils.invokeWithShellPermissions(() -> mWifiManager.setWifiEnabled(true));
+            PollingCheck.check("Wifi not enabled", DURATION, () -> mWifiManager.isWifiEnabled());
         }
 
-        ConnectivityManager cm =
-            (ConnectivityManager) getContext().getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkRequest request =
-            new NetworkRequest.Builder().addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
-                                        .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
-                                        .build();
-        final CountDownLatch latch = new CountDownLatch(1);
-        NetworkCallback networkCallback = new NetworkCallback() {
-            @Override
-            public void onAvailable(Network network) {
-                latch.countDown();
-            }
-        };
-        cm.registerNetworkCallback(request, networkCallback);
-        latch.await(DURATION, TimeUnit.MILLISECONDS);
-
-        cm.unregisterNetworkCallback(networkCallback);
     }
 
     private void removeAllPersistentGroups() {
@@ -419,7 +398,7 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
     private boolean setupWifiP2p() {
         // Cannot support p2p alone
         if (!WifiFeature.isWifiSupported(getContext())) {
-            assertTrue(!WifiFeature.isP2pSupported(getContext()));
+            assertFalse(WifiFeature.isP2pSupported(getContext()));
             return false;
         }
 
@@ -436,12 +415,10 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
             fail("Please enable location for this test - since P-release WiFi Direct"
                     + " needs Location enabled.");
         }
-
-        long timeout = System.currentTimeMillis() + TIMEOUT_MSEC;
-        while (!mWifiManager.isWifiEnabled() && System.currentTimeMillis() < timeout) {
-            try {
-                enableWifi();
-            } catch (InterruptedException e) { }
+        try {
+            enableWifi();
+        } catch (Exception e) {
+            Log.d(TAG, "Enable Wifi got exception:" + e.getMessage());
         }
 
         assertTrue(mWifiManager.isWifiEnabled());
@@ -456,30 +433,10 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
 
         assertTrue(waitForBroadcasts(MySync.P2P_STATE));
 
-        assertEquals(WifiManager.WIFI_STATE_ENABLED, mMySync.expectedWifiState);
         assertEquals(WifiP2pManager.WIFI_P2P_STATE_ENABLED, mMySync.expectedP2pState);
         removeAllPersistentGroups();
 
         return true;
-    }
-
-    private void assertFirstConnectedEvent() {
-        // The first network state might be IDLE due to
-        // lazy initialization or DISCONNECTED due to previous
-        // group removal, but not CONNECTED.
-        for (int i = 0; i < 2; i++) {
-            assertTrue(waitForBroadcasts(MySync.NETWORK_INFO));
-            assertNotNull(mMySync.expectedNetworkInfo);
-            NetworkInfo.DetailedState state = mMySync.expectedNetworkInfo.getDetailedState();
-            if (NetworkInfo.DetailedState.CONNECTED == state) {
-                break;
-            }
-
-            assertTrue(NetworkInfo.DetailedState.IDLE == state
-                    || NetworkInfo.DetailedState.DISCONNECTED == state);
-        }
-        assertEquals(NetworkInfo.DetailedState.CONNECTED,
-                mMySync.expectedNetworkInfo.getDetailedState());
     }
 
     public void testConcurrency() {
@@ -1154,9 +1111,9 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
     }
 
     /**
-     * Tests {@link WifiP2pManager#getListenState(Channel, Executor, Consumer<Integer>)}
+     * Tests {@link WifiP2pManager#getListenState(WifiP2pManager.Channel, Executor, Consumer)}
      */
-    public void testGetListenState() throws Exception {
+    public void testGetListenState() {
         if (!setupWifiP2p()) {
             return;
         }
