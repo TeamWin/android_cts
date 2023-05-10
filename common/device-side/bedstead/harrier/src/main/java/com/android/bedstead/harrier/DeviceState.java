@@ -332,20 +332,9 @@ public final class DeviceState extends HarrierRule {
                     }
                 });
 
+                Throwable t;
                 try {
-                    Throwable t = future.get(MAX_TEST_DURATION.getSeconds(), TimeUnit.SECONDS);
-                    if (t != null) {
-                        if (t.getStackTrace().length > 0) {
-                            if (t.getStackTrace()[0].getMethodName().equals("createExceptionOrNull")) {
-                                SystemServerException s = TestApis.logcat().findSystemServerException(t);
-                                if (s != null) {
-                                    throw s;
-                                }
-                            }
-                        }
-
-                        throw t;
-                    }
+                    t = future.get(MAX_TEST_DURATION.getSeconds(), TimeUnit.SECONDS);
                 } catch (TimeoutException e) {
                     StackTraceElement[] stack = mTestThread.getStackTrace();
                     future.cancel(true);
@@ -355,6 +344,18 @@ public final class DeviceState extends HarrierRule {
                                     + " after " + MAX_TEST_DURATION);
                     assertionError.setStackTrace(stack);
                     throw assertionError;
+                }
+                if (t != null) {
+                    if (t.getStackTrace().length > 0) {
+                        if (t.getStackTrace()[0].getMethodName().equals("createExceptionOrNull")) {
+                            SystemServerException s = TestApis.logcat().findSystemServerException(t);
+                            if (s != null) {
+                                throw s;
+                            }
+                        }
+                    }
+
+                    throw t;
                 }
             }
         };
@@ -1576,7 +1577,7 @@ public final class DeviceState extends HarrierRule {
                                 + "switchedToUser=ANY");
             } else {
                 throw new IllegalStateException(
-                        "Not permitted to switch to user " + instrumentedUser);
+                        "Not permitted to switch to user " + instrumentedUser + "(" + instrumentedUser.getSwitchToUserError() + ")");
             }
         }
 
@@ -2733,7 +2734,7 @@ public final class DeviceState extends HarrierRule {
     }
 
     private UserReference createUser(com.android.bedstead.nene.users.UserType userType) {
-        ensureDoesNotHaveUserRestriction(UserManager.DISALLOW_ADD_USER, TestApis.users().system());
+        ensureDoesNotHaveUserRestriction(UserManager.DISALLOW_ADD_USER, UserType.ANY);
         ensureCanAddUser();
         try {
             UserReference user = TestApis.users().createUser()
@@ -4229,9 +4230,7 @@ public final class DeviceState extends HarrierRule {
     }
 
     private void requireSystemServiceAvailable(Class<?> serviceClass, FailureMode failureMode) {
-        Object service = mContext.getSystemService(serviceClass);
-
         checkFailOrSkip("Requires " + serviceClass + " to be available",
-                service != null, failureMode);
+                TestApis.services().serviceIsAvailable(serviceClass), failureMode);
     }
 }

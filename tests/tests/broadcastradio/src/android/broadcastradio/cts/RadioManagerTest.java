@@ -16,7 +16,6 @@
 
 package android.broadcastradio.cts;
 
-import static com.google.common.truth.Truth.assertWithMessage;
 import static com.google.common.truth.TruthJUnit.assume;
 
 import android.hardware.radio.RadioManager;
@@ -44,9 +43,9 @@ public final class RadioManagerTest extends AbstractRadioTestCase {
 
         int status = mRadioManager.listModules(modules);
 
-        assertWithMessage("Result of listing modules")
+        mExpect.withMessage("Result of listing modules")
                 .that(status).isEqualTo(RadioManager.STATUS_OK);
-        assertWithMessage("Modules in radio manager").that(modules).isNotEmpty();
+        mExpect.withMessage("Modules in radio manager").that(modules).isNotEmpty();
     }
 
     @Test
@@ -59,7 +58,7 @@ public final class RadioManagerTest extends AbstractRadioTestCase {
         mRadioTuner = mRadioManager.openTuner(mModule.getId(), mFmBandConfig,
                 /* withAudio= */ true, mCallback, /* handler= */ null);
 
-        assertWithMessage("Radio tuner opened").that(mRadioTuner).isNotNull();
+        mExpect.withMessage("Radio tuner opened").that(mRadioTuner).isNotNull();
     }
 
     @Test
@@ -70,13 +69,13 @@ public final class RadioManagerTest extends AbstractRadioTestCase {
         assume().withMessage("AM/FM radio module exists").that(mModule).isNotNull();
         mRadioTuner = mRadioManager.openTuner(mModule.getId(), mFmBandConfig,
                 /* withAudio= */ true, mCallback, /* handler= */ null);
-        assertWithMessage("Radio tuner opened").that(mRadioTuner).isNotNull();
-        resetCallback();
+        mExpect.withMessage("Radio tuner opened").that(mRadioTuner).isNotNull();
+        assertNoTunerFailureAndResetCallback("opening tuner after closing");
 
         mRadioTuner.close();
         mRadioTuner = mRadioManager.openTuner(mModule.getId(), mFmBandConfig,
                 /* withAudio= */ true, mCallback, /* handler= */ null);
 
-        assertWithMessage("Radio tuner opened").that(mRadioTuner).isNotNull();
+        mExpect.withMessage("Radio tuner opened").that(mRadioTuner).isNotNull();
     }
 }

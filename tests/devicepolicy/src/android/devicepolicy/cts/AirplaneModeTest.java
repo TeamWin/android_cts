@@ -34,7 +34,6 @@ import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.enterprise.AdditionalQueryParameters;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
-import com.android.bedstead.harrier.annotations.enterprise.CoexistenceFlagsOn;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
 import com.android.bedstead.harrier.policies.DisallowAirplaneMode;
 import com.android.bedstead.harrier.policies.DisallowAirplaneModePermissionBased;
@@ -50,13 +49,11 @@ import com.android.queryable.annotations.IntegerQuery;
 import com.android.queryable.annotations.Query;
 
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @RunWith(BedsteadJUnit4.class)
-@CoexistenceFlagsOn
 public final class AirplaneModeTest {
 
     @ClassRule @Rule
@@ -91,7 +88,6 @@ public final class AirplaneModeTest {
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.os.UserManager#DISALLOW_AIRPLANE_MODE")
     // TODO: Add restriction for permission based targeting U+
-    @CoexistenceFlagsOn
     @AdditionalQueryParameters(
             forTestApp = "dpc",
             query = @Query(targetSdkVersion =

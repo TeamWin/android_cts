@@ -24,16 +24,19 @@ import com.android.bedstead.nene.TestApis;
 import com.android.interactive.Automation;
 import com.android.interactive.annotations.AutomationFor;
 
+import java.util.Locale;
+
 @AutomationFor("com.google.android.interactive.steps.enterprise.sharesheet"
-        + ".IsMiniResolverDialogPrimaryActionProceedStep")
-public final class IsMiniResolverDialogPrimaryActionProceedStepAutomation implements
-        Automation<Boolean> {
+        + ".DoesDialogShowWorkProfileMLCTestAppStep")
+public final class DoesDialogShowWorkProfileMLCTestAppStepAutomation
+        implements Automation<Boolean> {
     @Override
     public Boolean automate() throws Exception {
         UiDevice device = TestApis.ui().device();
-        device.wait(Until.findObject(By.res("android:id/button_open")), 2000);
+        device.wait(Until.findObject(By.res("android:id/open_cross_profile")), 2000);
         String resolverTitle = device.findObject(
-                By.res("android:id/button_open")).getText();
-        return resolverTitle.equals("Open");
+                By.res("android:id/open_cross_profile")).getText().toLowerCase(Locale.getDefault());
+        return resolverTitle.contains("open") && resolverTitle.contains("mlctestapp")
+                && resolverTitle.contains("work");
     }
 }

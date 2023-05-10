@@ -50,7 +50,6 @@ import com.android.bedstead.harrier.annotations.RequireDoesNotHaveFeature;
 import com.android.bedstead.harrier.annotations.RequireFeature;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
-import com.android.bedstead.harrier.annotations.enterprise.CoexistenceFlagsOn;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
 import com.android.bedstead.harrier.policies.PasswordComplexity;
 import com.android.bedstead.harrier.policies.PasswordQuality;
@@ -65,7 +64,6 @@ import org.junit.runner.RunWith;
 // TODO(b/191640667): Parameterize the length limit tests with multiple limits
 @RunWith(BedsteadJUnit4.class)
 @RequireFeature(FEATURE_SECURE_LOCK_SCREEN)
-@CoexistenceFlagsOn
 public final class ResetPasswordWithTokenTest { // bunch of headless failures - check again after password fixes
 
     private static final String NOT_COMPLEX_PASSWORD = "1234";
@@ -1061,7 +1059,7 @@ public final class ResetPasswordWithTokenTest { // bunch of headless failures - 
                 .isEqualTo(valueBefore);
     }
 
-    @CannotSetPolicyTest(policy = ResetPasswordWithToken.class)
+    @CannotSetPolicyTest(policy = ResetPasswordWithToken.class, includeNonDeviceAdminStates = false)
     @Postsubmit(reason = "new test")
     public void setResetPasswordToken_notPermitted_throwsSecurityException() {
         assertThrows(SecurityException.class,
@@ -1069,7 +1067,7 @@ public final class ResetPasswordWithTokenTest { // bunch of headless failures - 
                         sDeviceState.dpc().componentName(), TOKEN));
     }
 
-    @CannotSetPolicyTest(policy = ResetPasswordWithToken.class)
+    @CannotSetPolicyTest(policy = ResetPasswordWithToken.class, includeNonDeviceAdminStates = false)
     @Postsubmit(reason = "new test")
     public void resetPasswordWithToken_notPermitted_throwsSecurityException() {
         assertThrows(SecurityException.class,
@@ -1077,7 +1075,7 @@ public final class ResetPasswordWithTokenTest { // bunch of headless failures - 
                         sDeviceState.dpc().componentName(), NOT_COMPLEX_PASSWORD, TOKEN, 0));
     }
 
-    @CannotSetPolicyTest(policy = ResetPasswordWithToken.class)
+    @CannotSetPolicyTest(policy = ResetPasswordWithToken.class, includeNonDeviceAdminStates = false)
     @Postsubmit(reason = "new test")
     public void clearResetPasswordToken_notPermitted_throwsSecurityException() {
         assertThrows(SecurityException.class,
@@ -1085,16 +1083,13 @@ public final class ResetPasswordWithTokenTest { // bunch of headless failures - 
                         sDeviceState.dpc().componentName()));
     }
 
-    @CannotSetPolicyTest(policy = ResetPasswordWithToken.class)
+    @CannotSetPolicyTest(policy = ResetPasswordWithToken.class, includeNonDeviceAdminStates = false)
     @Postsubmit(reason = "new test")
     public void isResetPasswordTokenActive_notPermitted_throwsSecurityException() {
         assertThrows(SecurityException.class,
                 () -> sDeviceState.dpc().devicePolicyManager().isResetPasswordTokenActive(
                         sDeviceState.dpc().componentName()));
     }
-
-
-
 
     private void assertPasswordSucceeds(String password) {
         assertThat(sDeviceState.dpc().devicePolicyManager().resetPasswordWithToken(

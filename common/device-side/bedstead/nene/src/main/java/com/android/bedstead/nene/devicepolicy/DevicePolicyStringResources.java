@@ -79,7 +79,8 @@ public final class DevicePolicyStringResources {
                 UPDATE_DEVICE_MANAGEMENT_RESOURCES)) {
             sResourcesManager.setStrings(resources);
         }
-        TestApis.broadcasts().waitForBroadcastBarrier(
+        TestApis.broadcasts().waitForBroadcastDispatch(
+                DevicePolicyManager.ACTION_DEVICE_POLICY_RESOURCE_UPDATED,
                 "Ensure updated strings have propagated before continuing test");
     }
 
@@ -98,7 +99,8 @@ public final class DevicePolicyStringResources {
                 UPDATE_DEVICE_MANAGEMENT_RESOURCES)) {
             sResourcesManager.resetStrings(resourceIds);
         }
-        TestApis.broadcasts().waitForBroadcastBarrier(
+        TestApis.broadcasts().waitForBroadcastDispatch(
+                DevicePolicyManager.ACTION_DEVICE_POLICY_RESOURCE_UPDATED,
                 "Ensure updated strings have propagated before continuing test");
     }
 

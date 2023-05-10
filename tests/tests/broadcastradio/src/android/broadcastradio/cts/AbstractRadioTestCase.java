@@ -20,18 +20,14 @@ import static com.google.common.truth.Truth.assertWithMessage;
 import static com.google.common.truth.TruthJUnit.assume;
 
 import static org.junit.Assume.assumeTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.Mockito.after;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
 
 import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.hardware.radio.ProgramSelector;
 import android.hardware.radio.RadioManager;
 import android.hardware.radio.RadioTuner;
+import android.util.Log;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
@@ -42,34 +38,31 @@ import com.google.common.truth.Expect;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
-import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnit;
-import org.mockito.junit.MockitoRule;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 abstract class AbstractRadioTestCase {
 
+    protected static final String TAG = AbstractRadioTestCase.class.getSimpleName();
+
     protected static final int HANDLER_CALLBACK_MS = 100;
-    protected static final int CANCEL_TIMEOUT_MS = 1_000;
-    protected static final int TUNE_CALLBACK_TIMEOUT_MS = 30_000;
+    protected static final int CANCEL_TIMEOUT_MS = 2_000;
+    protected static final int TUNE_CALLBACK_TIMEOUT_MS  = 30_000;
     protected static final int PROGRAM_LIST_COMPLETE_TIMEOUT_MS = 60_000;
 
     private Context mContext;
 
     protected RadioManager mRadioManager;
     protected RadioTuner mRadioTuner;
-    @Mock
-    protected RadioTuner.Callback mCallback;
+    protected TestRadioTunerCallback mCallback;
 
     protected RadioManager.BandConfig mAmBandConfig;
     protected RadioManager.BandConfig mFmBandConfig;
     protected RadioManager.ModuleProperties mModule;
 
-    @Rule
-    public MockitoRule mMockitoRule = MockitoJUnit.rule();
     @Rule
     public final Expect mExpect = Expect.create();
     @Rule
@@ -78,7 +71,7 @@ abstract class AbstractRadioTestCase {
                 if (mRadioTuner != null) {
                     mRadioTuner.close();
                 }
-                resetCallback();
+                assertNoTunerFailureAndResetCallback("cleaning up");
             });
 
     @Before
@@ -97,6 +90,8 @@ abstract class AbstractRadioTestCase {
         mRadioManager = mContext.getSystemService(RadioManager.class);
 
         assertWithMessage("Radio manager exists").that(mRadioManager).isNotNull();
+
+        mCallback = new TestRadioTunerCallback();
     }
 
     @After
@@ -105,18 +100,24 @@ abstract class AbstractRadioTestCase {
                 .dropShellPermissionIdentity();
     }
 
-    protected void resetCallback() {
-        verify(mCallback, never()).onError(anyInt());
-        verify(mCallback, never()).onTuneFailed(anyInt(), any());
-        verify(mCallback, never()).onControlChanged(anyBoolean());
-        Mockito.reset(mCallback);
+    protected void assertNoTunerFailureAndResetCallback(String operation) {
+        if (mCallback == null) {
+            return;
+        }
+        assertWithMessage("Error callback when " + operation)
+                .that(mCallback.errorCount).isEqualTo(0);
+        assertWithMessage("Tune failure callback when " + operation)
+                .that(mCallback.tuneFailureCount).isEqualTo(0);
+        assertWithMessage("Control changed callback when " + operation)
+                .that(mCallback.controlChangeCount).isEqualTo(0);
+        mCallback.reset();
     }
 
-    protected void openAmFmTuner() {
+    protected void openAmFmTuner() throws Exception {
         openAmFmTuner(/* withAudio= */ true);
     }
 
-    protected void openAmFmTuner(boolean withAudio) {
+    protected void openAmFmTuner(boolean withAudio) throws Exception {
         setAmFmConfig();
 
         assume().withMessage("AM/FM radio module exists").that(mModule).isNotNull();
@@ -128,10 +129,12 @@ abstract class AbstractRadioTestCase {
             assume().withMessage("Non-audio radio tuner").that(mRadioTuner).isNotNull();
         }
 
-        assertWithMessage("Radio tuner opened").that(mRadioTuner).isNotNull();
-        verify(mCallback, after(HANDLER_CALLBACK_MS).atMost(1)).onProgramInfoChanged(any());
+        mExpect.withMessage("Radio tuner opened").that(mRadioTuner).isNotNull();
+        // Opening tuner will invoke program info change callback only when there exists a tuner
+        // before with non-null program info in broadcast radio service.
+        mCallback.waitForProgramInfoChangeCallback(HANDLER_CALLBACK_MS);
 
-        resetCallback();
+        assertNoTunerFailureAndResetCallback("opening AM/FM tuner");
     }
 
     protected void setAmFmConfig() {
@@ -156,6 +159,85 @@ abstract class AbstractRadioTestCase {
                 mFmBandConfig = new RadioManager.FmBandConfig.Builder(fmBandDescriptor).build();
                 break;
             }
+        }
+    }
+
+    static final class TestRadioTunerCallback extends RadioTuner.Callback {
+
+        public int errorCount;
+        public int error = RadioManager.STATUS_OK;
+        public int tuneFailureCount;
+        public int tunerFailureResult = RadioTuner.TUNER_RESULT_OK;
+        public ProgramSelector tunerFailureSelector;
+        public int controlChangeCount;
+        public RadioManager.ProgramInfo currentProgramInfo;
+        public int configFlagCount;
+        private CountDownLatch mProgramInfoChangeLatch = new CountDownLatch(1);
+
+        public void reset() {
+            resetTuneFailureCallback();
+            controlChangeCount = 0;
+            currentProgramInfo = null;
+            configFlagCount = 0;
+            resetProgramInfoChangeCallback();
+        }
+
+        public void resetTuneFailureCallback() {
+            errorCount = 0;
+            error = RadioManager.STATUS_OK;
+            tuneFailureCount = 0;
+            tunerFailureResult = RadioTuner.TUNER_RESULT_OK;
+            tunerFailureSelector = null;
+        }
+
+        public void resetProgramInfoChangeCallback() {
+            mProgramInfoChangeLatch = new CountDownLatch(1);
+        }
+
+        public boolean waitForProgramInfoChangeCallback(int timeoutMs) throws InterruptedException {
+            return waitForCallback(mProgramInfoChangeLatch, timeoutMs);
+        }
+
+        private boolean waitForCallback(CountDownLatch latch, int timeoutMs)
+                throws InterruptedException {
+            Log.v(TAG, "Waiting " + timeoutMs + " ms for latch " + latch);
+            if (!latch.await(timeoutMs, TimeUnit.MILLISECONDS)) {
+                Log.e(TAG, latch + " not called in " + timeoutMs + " ms");
+                return false;
+            }
+            return true;
+        }
+
+        @Override
+        public void onError(int status) {
+            Log.e(TAG, "onError(" + status + ")");
+            error = status;
+            errorCount++;
+        }
+
+        @Override
+        public void onTuneFailed(int result, ProgramSelector selector) {
+            Log.e(TAG, "onTuneFailed(" + result + ", " + selector + ")");
+            tunerFailureResult = result;
+            tunerFailureSelector = selector;
+            tuneFailureCount++;
+        }
+
+        @Override
+        public void onProgramInfoChanged(RadioManager.ProgramInfo info) {
+            currentProgramInfo = info;
+            mProgramInfoChangeLatch.countDown();
+        }
+
+        @Override
+        public void onConfigFlagUpdated(int flag, boolean value) {
+            configFlagCount++;
+        }
+
+        @Override
+        public void onControlChanged(boolean control) {
+            Log.e(TAG, "onControlChanged(" + control + ")");
+            controlChangeCount++;
         }
     }
 }

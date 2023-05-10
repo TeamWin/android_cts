@@ -41,7 +41,6 @@ import com.android.bedstead.harrier.annotations.EnsureWifiEnabled;
 import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
-import com.android.bedstead.harrier.annotations.enterprise.CoexistenceFlagsOn;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyDoesNotApplyTest;
 import com.android.bedstead.harrier.policies.DisallowAddWifiConfig;
@@ -75,7 +74,6 @@ import org.junit.runner.RunWith;
 import java.util.Set;
 
 @RunWith(BedsteadJUnit4.class)
-@CoexistenceFlagsOn
 public final class WifiTest {
 
     @ClassRule @Rule

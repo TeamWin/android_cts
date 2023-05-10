@@ -1,6 +1,16 @@
 {
   "presubmit": [
     {
+      "name": "CtsSoundTriggerTestCases",
+      "options": [
+        {
+          "exclude-annotation": "androidx.test.filters.FlakyTest"
+        }
+      ]
+    }
+  ],
+  "postsubmit": [
+    {
       "name": "CtsSoundTriggerTestCases"
     }
   ]

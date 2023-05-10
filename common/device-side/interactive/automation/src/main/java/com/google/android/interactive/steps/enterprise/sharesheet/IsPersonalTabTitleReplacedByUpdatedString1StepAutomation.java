@@ -25,8 +25,7 @@ import com.android.interactive.Automation;
 import com.android.interactive.annotations.AutomationFor;
 
 @AutomationFor("com.google.android.interactive.steps.enterprise.sharesheet.IsPersonalTabTitleReplacedByUpdatedString1Step")
-
-public class IsPersonalTabTitleReplacedByUpdatedString1StepAutomation implements Automation<Boolean> {
+public final class IsPersonalTabTitleReplacedByUpdatedString1StepAutomation implements Automation<Boolean> {
     @Override
     public Boolean automate() throws Exception {
         return TestApis.ui().device().findObject(

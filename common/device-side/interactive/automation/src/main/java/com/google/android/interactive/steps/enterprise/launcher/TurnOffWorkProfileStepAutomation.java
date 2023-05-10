@@ -32,7 +32,8 @@ public final class TurnOffWorkProfileStepAutomation implements Automation<Nothin
     @Override
     public Nothing automate() throws Exception {
         TestApis.ui().device().findObject(
-                new UiSelector().text("Pause work apps").className(Button.class)).click();
+                new UiSelector().resourceId("com.google.android.apps.nexuslauncher:id/pause_text"))
+                .click();
 
         return NOTHING;
     }

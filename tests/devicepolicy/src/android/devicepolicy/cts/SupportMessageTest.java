@@ -16,9 +16,6 @@
 
 package android.devicepolicy.cts;
 
-import static com.android.bedstead.nene.flags.CommonFlags.DevicePolicyManager.PERMISSION_BASED_ACCESS_EXPERIMENT_FLAG;
-import static com.android.bedstead.nene.flags.CommonFlags.NAMESPACE_DEVICE_POLICY_MANAGER;
-
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertThrows;
@@ -30,7 +27,6 @@ import android.stats.devicepolicy.EventId;
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.Postsubmit;
-import com.android.bedstead.harrier.annotations.RequireFeatureFlagNotEnabled;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
 import com.android.bedstead.harrier.policies.SupportMessage;
@@ -75,8 +71,12 @@ public final class SupportMessageTest {
 
     @After
     public void tearDown() {
-        mDevicePolicyManager.setShortSupportMessage(mAdmin, /* charSequence= */ null);
-        mDevicePolicyManager.setLongSupportMessage(mAdmin, /* charSequence= */ null);
+        try {
+            mDevicePolicyManager.setShortSupportMessage(mAdmin, /* charSequence= */ null);
+            mDevicePolicyManager.setLongSupportMessage(mAdmin, /* charSequence= */ null);
+        } catch (SecurityException e) {
+            // Expected when testing lack-of-permission
+        }
     }
 
     @PolicyAppliesTest(policy = SupportMessage.class)
@@ -136,8 +136,6 @@ public final class SupportMessageTest {
 
     @PolicyAppliesTest(policy = SupportMessage.class)
     @Postsubmit(reason = "new test")
-    @RequireFeatureFlagNotEnabled(namespace = NAMESPACE_DEVICE_POLICY_MANAGER,
-            key = PERMISSION_BASED_ACCESS_EXPERIMENT_FLAG)
     public void setShortSupportMessage_nullAdmin_throwsNullPointerException() {
         assertThrows(NullPointerException.class, () ->
                 mDevicePolicyManager.setShortSupportMessage(
@@ -146,8 +144,6 @@ public final class SupportMessageTest {
 
     @PolicyAppliesTest(policy = SupportMessage.class)
     @Postsubmit(reason = "new test")
-    @RequireFeatureFlagNotEnabled(namespace = NAMESPACE_DEVICE_POLICY_MANAGER,
-            key = PERMISSION_BASED_ACCESS_EXPERIMENT_FLAG)
     public void setLongSupportMessage_nullAdmin_throwsNullPointerException() {
         assertThrows(NullPointerException.class, () ->
                 mDevicePolicyManager.setLongSupportMessage(
@@ -156,8 +152,6 @@ public final class SupportMessageTest {
 
     @PolicyAppliesTest(policy = SupportMessage.class)
     @Postsubmit(reason = "new test")
-    @RequireFeatureFlagNotEnabled(namespace = NAMESPACE_DEVICE_POLICY_MANAGER,
-            key = PERMISSION_BASED_ACCESS_EXPERIMENT_FLAG)
     public void getShortSupportMessage_nullAdmin_throwsNullPointerException() {
         assertThrows(NullPointerException.class, () ->
                 mDevicePolicyManager.getShortSupportMessage(
@@ -166,8 +160,6 @@ public final class SupportMessageTest {
 
     @PolicyAppliesTest(policy = SupportMessage.class)
     @Postsubmit(reason = "new test")
-    @RequireFeatureFlagNotEnabled(namespace = NAMESPACE_DEVICE_POLICY_MANAGER,
-            key = PERMISSION_BASED_ACCESS_EXPERIMENT_FLAG)
     public void getLongSupportMessage_nullAdmin_throwsNullPointerException() {
         assertThrows(NullPointerException.class, () ->
                 mDevicePolicyManager.getLongSupportMessage(/* componentName= */ null));

@@ -28,6 +28,7 @@ import static android.os.Build.VERSION_CODES.UPSIDE_DOWN_CAKE;
 
 import static com.android.bedstead.nene.permissions.CommonPermissions.MANAGE_PROFILE_AND_DEVICE_OWNERS;
 import static com.android.bedstead.nene.permissions.CommonPermissions.MODIFY_QUIET_MODE;
+import static com.android.bedstead.nene.permissions.CommonPermissions.QUERY_USERS;
 import static com.android.bedstead.nene.users.Users.users;
 
 import android.annotation.TargetApi;
@@ -148,10 +149,14 @@ public final class UserReference implements AutoCloseable {
     /**
      * Remove the user from the device.
      *
-     * <p>If the user does not exist, or the removal fails for any other reason, a
-     * {@link NeneException} will be thrown.
+     * <p>If the user does not exist then nothing will happen. If the removal fails for any other
+     * reason, a {@link NeneException} will be thrown.
      */
     public void remove() {
+        if (!exists()) {
+            return;
+        }
+
         ProfileOwner profileOwner = TestApis.devicePolicy().getProfileOwner(this);
         if (profileOwner != null && profileOwner.isOrganizationOwned()) {
             profileOwner.remove();
@@ -365,10 +370,14 @@ public final class UserReference implements AutoCloseable {
                     throw new NeneException(error);
                 }
 
+                if (!exists()) {
+                    throw new NeneException("Tried to switch to user " + this + " but does not exist");
+                }
+
                 // TODO(273229540): It might take a while to fail - we should stream from the
                 // start of the call
-                throw new NeneException("Error switching user to " + this
-                        + ". Relevant logcat: " + TestApis.logcat().dump(
+                throw new NeneException("Error switching user to " + this +
+                        ". Relevant logcat: " + TestApis.logcat().dump(
                                 (line) -> line.contains("Cannot switch")));
             }
 
@@ -519,7 +528,8 @@ public final class UserReference implements AutoCloseable {
             if (!Versions.meetsMinimumSdkVersionRequirement(S)) {
                 mUserType = adbUser().type();
             } else {
-                try (PermissionContext p = TestApis.permissions().withPermission(CREATE_USERS)) {
+                try (PermissionContext p = TestApis.permissions()
+                        .withPermission(CREATE_USERS, QUERY_USERS)) {
                     String userTypeName = mUserManager.getUserType();
                     if (userTypeName.equals("")) {
                         throw new NeneException("User does not exist " + this);
@@ -567,7 +577,8 @@ public final class UserReference implements AutoCloseable {
             } else {
                 try (PermissionContext p =
                              TestApis.permissions().withPermission(INTERACT_ACROSS_USERS)) {
-                    UserHandle parentHandle = mUserManager.getProfileParent(userHandle());
+                    UserHandle u = userHandle();
+                    UserHandle parentHandle = mUserManager.getProfileParent(u);
                     if (parentHandle == null) {
                         if (!exists()) {
                             throw new NeneException("User does not exist " + this);
@@ -922,10 +933,19 @@ public final class UserReference implements AutoCloseable {
         return true;
     }
 
-    private String getSwitchToUserError() {
+    /**
+     * Get the reason this user cannot be switched to. Null if none.
+     */
+    public String getSwitchToUserError() {
         if (TestApis.users().isHeadlessSystemUserMode() && equals(TestApis.users().system())) {
             return "Cannot switch to system user on HSUM devices";
         }
+
+        UserInfo userInfo = userInfo();
+        if (!userInfo.supportsSwitchTo()) {
+            return "supportsSwitchTo=false(partial=" + userInfo.partial + ", isEnabled=" + userInfo.isEnabled() + ", preCreated=" + userInfo.preCreated + ", isFull=" + userInfo.isFull() + ")";
+        }
+
         return null;
     }
 }

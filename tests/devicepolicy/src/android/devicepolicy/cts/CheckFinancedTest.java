@@ -33,20 +33,16 @@ import static org.testng.Assert.assertThrows;
 import android.app.admin.DevicePolicyManager;
 import android.app.role.RoleManager;
 import android.content.Context;
-import android.os.UserHandle;
 import android.util.Log;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
-import com.android.bedstead.harrier.annotations.AnnotationRunPrecedence;
 import com.android.bedstead.harrier.annotations.EnsureDoesNotHavePermission;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
-import com.android.bedstead.harrier.annotations.enterprise.CoexistenceFlagsOn;
 import com.android.bedstead.harrier.policies.CheckFinance;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.permissions.PermissionContextImpl;
-import com.android.bedstead.nene.users.UserReference;
 import com.android.bedstead.testapp.TestApp;
 import com.android.bedstead.testapp.TestAppInstance;
 import com.android.compatibility.common.util.SystemUtil;
@@ -147,7 +143,6 @@ public class CheckFinancedTest {
                 sDevicePolicyManager.getFinancedDeviceKioskRoleHolder());
     }
 
-    @CoexistenceFlagsOn(weight = AnnotationRunPrecedence.LAST)
     @CanSetPolicyTest(policy = CheckFinance.class)
     public void deviceFinancingStateChanged_roleAdded_ReceivesBroadcast()
             throws ExecutionException, InterruptedException {
@@ -192,23 +187,10 @@ public class CheckFinancedTest {
     // annotation.
     private void setUpFinancedDeviceKioskRole(String packageName)
             throws ExecutionException, InterruptedException {
-        CompletableFuture<Boolean> newRoleSetFuture = new CompletableFuture<>();
-
         clearFinancedDeviceKioskRole();
 
-        SystemUtil.runWithShellPermissionIdentity(() -> {
-            sRoleManager.addRoleHolderAsUser(
-                    ROLE_FINANCED_DEVICE_KIOSK,
-                    packageName,
-                    MANAGE_HOLDERS_FLAG_DONT_KILL_APP,
-                    TestApis.users().instrumented().userHandle(),
-                    sContext.getMainExecutor(),
-                    newRoleSetFuture::complete
-            );
-        });
-
-        // Wait for this future in the test's thread for synchronous behavior.
-        newRoleSetFuture.get();
+        TestApis.packages().find(packageName)
+                .setAsRoleHolder(ROLE_FINANCED_DEVICE_KIOSK);
     }
 
     private void resetFinancedDevicesKioskRole() throws ExecutionException, InterruptedException {
