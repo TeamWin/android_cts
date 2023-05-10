@@ -23,6 +23,12 @@ import static android.telecom.cts.TestUtils.WAIT_FOR_STATE_CHANGE_TIMEOUT_MS;
 
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
 
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.app.Person;
+import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.OutcomeReceiver;
@@ -70,7 +76,10 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
     private static final String TEST_NAME_2 = "Mike Tyson";
     private static final Uri TEST_URI_2 = Uri.parse("tel:456-TEST");
     private static final String TEL_CLEAN_STUCK_CALLS_CMD = "telecom cleanup-stuck-calls";
-
+    private static final String CALL_CHANNEL_ID = "t_test_call_channel";
+    private static final String CALL_CHANNEL_NAME = "Transactional Test Call Channel";
+    private static final String FAKE_INTENT_ACTION = "action new t-call";
+    private static final int NOTIFICATION_ID = 2;
     // CallControl
     private static final String SET_ACTIVE = "SetActive";
     private static final String ANSWER = "Answer";
@@ -108,7 +117,7 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
         private final String mCallId;
         private String mTelecomCallId = "";
         CallControl mCallControl;
-        public boolean completionResponse = Boolean.TRUE;
+        public boolean mCompletionResponse = Boolean.TRUE;
 
         // callback verifiers
         public boolean mWasOnSetActiveCalled = false;
@@ -138,21 +147,21 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
             public void onSetActive(@NonNull Consumer<Boolean> wasCompleted) {
                 Log.i(TAG, String.format("onSetActive: callId=[%s]", mCallId));
                 mWasOnSetActiveCalled = true;
-                wasCompleted.accept(completionResponse);
+                wasCompleted.accept(mCompletionResponse);
             }
 
             @Override
             public void onSetInactive(@NonNull Consumer<Boolean> wasCompleted) {
                 Log.i(TAG, String.format("onSetInactive: callId=[%s]", mCallId));
                 mWasOnSetInactiveCalled = true;
-                wasCompleted.accept(completionResponse);
+                wasCompleted.accept(mCompletionResponse);
             }
 
             @Override
             public void onAnswer(int videoState, @NonNull Consumer<Boolean> wasCompleted) {
                 Log.i(TAG, String.format("onAnswer: callId=[%s]", mCallId));
                 mWasOnAnswerCalled = true;
-                wasCompleted.accept(completionResponse);
+                wasCompleted.accept(mCompletionResponse);
             }
 
             @Override
@@ -160,7 +169,7 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
                     @NonNull Consumer<Boolean> wasCompleted) {
                 Log.i(TAG, String.format("onDisconnect: callId=[%s]", mCallId));
                 mWasOnDisconnectCalled = true;
-                wasCompleted.accept(completionResponse);
+                wasCompleted.accept(mCompletionResponse);
             }
 
             @Override
@@ -170,15 +179,16 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
         };
 
         public void setClientResponse(boolean willComplete) {
-            completionResponse = willComplete;
+            mCompletionResponse = willComplete;
         }
 
         public void resetAllCallbackVerifiers() {
-            completionResponse = Boolean.TRUE;
+            mCompletionResponse = Boolean.TRUE;
             mWasOnSetActiveCalled = false;
             mWasOnSetInactiveCalled = false;
             mWasOnAnswerCalled = false;
             mWasOnDisconnectCalled = false;
+            mEvents.resetAllCallbackVerifiers();
         }
     }
 
@@ -208,20 +218,25 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
 
     private final TelecomCtsVoipCall mCall1 = new TelecomCtsVoipCall(OUTGOING_CALL_ID);
     private final TelecomCtsVoipCall mCall2 = new TelecomCtsVoipCall(INCOMING_CALL_ID);
+    private NotificationManager mNotificationManager;
 
     @Override
     public void setUp() throws Exception {
         super.setUp();
         if (!mShouldTestTelecom) return;
+        mNotificationManager =  mContext.getSystemService(NotificationManager.class);
         NewOutgoingCallBroadcastReceiver.reset();
         setupConnectionService(null, FLAG_REGISTER | FLAG_ENABLE);
         mTelecomManager.registerPhoneAccount(ACCOUNT);
+        configureNotificationChannel();
         cleanup();
     }
 
     @Override
     public void tearDown() throws Exception {
+        Log.i(TAG, "tearDown");
         cleanup();
+        mNotificationManager.deleteNotificationChannel(CALL_CHANNEL_ID); // tear down channel
         super.tearDown();
     }
 
@@ -580,7 +595,6 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
         try {
             cleanup();
             startCallWithAttributesAndVerify(mIncomingCallAttributes, mCall1);
-            assertNumCalls(getInCallService(), 1);
             Call call = getLastAddedCall();
             // reject the next CallControlCallback
             mCall1.setClientResponse(Boolean.FALSE);
@@ -588,7 +602,8 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
             // assert the CallControlCallback#onAnswer was called
             verifyCallControlCallback(ON_ANSWER, mCall1,
                     "onAnswer CallControlCallback was never called");
-            assertNumCalls(getInCallService(), 0);
+            assertNumCalls_OrICSUnbound(getInCallService(), 0); // If the ICS is already
+            // unbound, this is another signal that all calls have disconnected.
         } finally {
             cleanup();
         }
@@ -608,7 +623,6 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
         try {
             cleanup();
             startCallWithAttributesAndVerify(mOutgoingCallAttributes, mCall1);
-            assertNumCalls(getInCallService(), 1);
             // set the call active and then place on hold/inactive
             callControlAction(SET_ACTIVE, mCall1);
             callControlAction(SET_INACTIVE, mCall1);
@@ -620,6 +634,7 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
             verifyCallControlCallback(ON_SET_ACTIVE, mCall1,
                     "onSetActive CallControlCallback was never called");
             assertCallState(call, Call.STATE_HOLDING);
+            callControlAction(DISCONNECT, mCall1);
         } finally {
             cleanup();
         }
@@ -997,7 +1012,7 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
     public String startCallWithAttributesAndVerify(CallAttributes attributes,
             TelecomCtsVoipCall call) {
         final CountDownLatch latch = new CountDownLatch(1);
-
+        postCallNotification(); // required in order to maintain foreground service delegation
         mTelecomManager.addCall(attributes, Runnable::run, new OutcomeReceiver<>() {
             @Override
             public void onResult(CallControl callControl) {
@@ -1069,9 +1084,24 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
     @NonNull
     private Call getLastAddedCall() {
         waitOnInCallService();
-        Call lastCall = getInCallService().getLastCall();
-        assertNotNull(lastCall);
-        return lastCall;
+        waitOnCallToBeAdded();
+        return getInCallService().getLastCall();
+    }
+
+    // Due to timing issues, we need to wait for the MockInCall service to add the call to its call
+    // list. This reduces flake.
+    public void waitOnCallToBeAdded() {
+        waitUntilConditionIsTrueOrTimeout(new Condition() {
+            @Override
+            public Object expected() {
+                return true;
+            }
+
+            @Override
+            public Object actual() {
+                return getInCallService().getLastCall() != null;
+            }
+        }, WAIT_FOR_STATE_CHANGE_TIMEOUT_MS, "MockInCallService failed to get non-null Call");
     }
 
     @NonNull
@@ -1121,20 +1151,71 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
                     }
                 },
                 WAIT_FOR_STATE_CHANGE_TIMEOUT_MS, errorMessage);
+        // The call should go back to completing transactions, otherwise the call can go into a
+        // state where it rejects all CallControlCallbacks which is most likely unwanted
+        call.setClientResponse(Boolean.TRUE);
     }
 
     private void cleanup() {
         Log.i(TAG, "cleanup: method running");
         try {
+            // clear the posted notification
+            mNotificationManager.cancel(NOTIFICATION_ID);
+            // ensure the call objects default to completing transactions
+            mCall1.resetAllCallbackVerifiers();
+            mCall2.resetAllCallbackVerifiers();
+            // if the CallControl object is still available, we should send the signal to disconnect
+            // because its possible the InCallService is already unbound.
+            safelyDisconnect(mCall1);
+            safelyDisconnect(mCall2);
+            // It's possible that they MockInCallService either has not bound yet or is already
+            // unbond. Therefore, the block below might not run.
             if (mInCallCallbacks.getService() != null) {
                 mInCallCallbacks.getService().disconnectAllCalls();
                 mInCallCallbacks.getService().clearCallList();
             }
+            // In the event the ICS was not able to disconnect any stuck calls, the last hope is to
+            // run the telecom cleanup command.
             TestUtils.executeShellCommand(getInstrumentation(), TEL_CLEAN_STUCK_CALLS_CMD);
-            mCall1.resetAllCallbackVerifiers();
-            mCall2.resetAllCallbackVerifiers();
         } catch (Exception e) {
             Log.i(TAG, FAIL_MSG_DURING_CLEANUP);
         }
+    }
+
+    // send the client side signal to disconnect the call if the call control object is available
+    private void safelyDisconnect(TelecomCtsVoipCall call) {
+        if (call != null && call.mCallControl != null) {
+            call.mCallControl.disconnect(new DisconnectCause(DisconnectCause.LOCAL), Runnable::run,
+                    new OutcomeReceiver<Void, CallException>() {
+                        @Override
+                        public void onResult(Void result) {
+                            // pass through
+                        }
+                    });
+        }
+    }
+
+    // necessary step in order to start posting notifications
+    private void configureNotificationChannel() {
+        NotificationChannel callsChannel = new NotificationChannel(
+                CALL_CHANNEL_ID,
+                CALL_CHANNEL_NAME,
+                NotificationManager.IMPORTANCE_DEFAULT);
+        mNotificationManager.createNotificationChannel(callsChannel);
+    }
+
+    // Starting in Android U, Telecom is expecting VoIP clients to post a notification in order to
+    // grant Foreground Service Delegation. Failing to do so can cause unwanted behavior like
+    // suppressing audio.
+    private void postCallNotification() {
+        Person person = new Person.Builder().setName(TEST_NAME_1).build();
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(mContext, 0,
+                new Intent(FAKE_INTENT_ACTION), PendingIntent.FLAG_IMMUTABLE);
+        Notification callNot = new Notification.Builder(mContext, CALL_CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_phone_24dp)
+                .setStyle(Notification.CallStyle.forOngoingCall(person, pendingIntent))
+                .setFullScreenIntent(pendingIntent, true)
+                .build();
+        mNotificationManager.notify(NOTIFICATION_ID, callNot);
     }
 }
