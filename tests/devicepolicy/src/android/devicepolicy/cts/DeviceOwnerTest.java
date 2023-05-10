@@ -24,6 +24,7 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertThrows;
 
 import android.app.admin.DevicePolicyManager;
+import android.app.admin.RemoteDevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
 
@@ -390,5 +391,16 @@ public final class DeviceOwnerTest {
             assertThat(sDevicePolicyManager.isProvisioningAllowed(
                     DevicePolicyManager.ACTION_PROVISION_MANAGED_DEVICE)).isFalse();
         }
+    }
+
+    @EnsureHasDeviceOwner
+    @Test
+    public void clearDeviceOwnerApp_escrowTokenExists_success() {
+        RemoteDevicePolicyManager dpm = sDeviceState.dpc().devicePolicyManager();
+        assertThat(dpm.setResetPasswordToken(sDeviceState.dpc().componentName(), new byte[32]))
+                .isTrue();
+        // clearDeviceOwnerApp should not throw, and isDeviceOwnerApp should return false afterwards
+        dpm.clearDeviceOwnerApp(sDeviceState.dpc().packageName());
+        assertThat(dpm.isDeviceOwnerApp(sDeviceState.dpc().packageName())).isFalse();
     }
 }
