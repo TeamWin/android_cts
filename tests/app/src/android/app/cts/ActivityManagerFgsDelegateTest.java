@@ -38,6 +38,7 @@ import android.media.session.MediaSessionManager;
 import android.os.Bundle;
 import android.os.RemoteCallback;
 import android.os.SystemClock;
+import android.os.UserHandle;
 import android.permission.cts.PermissionUtils;
 
 import androidx.test.InstrumentationRegistry;
@@ -256,7 +257,9 @@ public class ActivityManagerFgsDelegateTest {
     private void setForegroundServiceDelegate(String packageName, boolean isStart)
             throws Exception {
         CtsAppTestUtils.executeShellCmd(mInstrumentation,
-                "am set-foreground-service-delegate --user 0 " + packageName
+                "am set-foreground-service-delegate --user "
+                + UserHandle.getUserId(android.os.Process.myUid())
+                + " " + packageName
                 + (isStart ? " start" : " stop"));
     }
 
