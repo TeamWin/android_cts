@@ -126,10 +126,19 @@ public class CaptureContentForNotesVerifierActivity extends PassFailButtons.Test
         setInfoResources(R.string.ccfn_tests, R.string.ccfn_tests_info, 0);
         setPassFailButtonClickListeners();
 
+        ArrayTestListAdapter adapter = new ArrayTestListAdapter(this);
+        setTestListAdapter(adapter);
+        adapter.registerDataSetObserver(new DataSetObserver() {
+            @Override
+            public void onChanged() {
+                updatePassButton();
+            }
+        });
+
         if (isNotesRoleAvailable()) {
             // If the notes role is available, disable the pass button and setup tests.
             getPassButton().setEnabled(false);
-            setUpTests();
+            addTestsToAdapter(adapter);
         } else {
             // Notes role is unavailable, let the verifier skip this test altogether.
             getPassButton().setEnabled(true);
@@ -173,19 +182,6 @@ public class CaptureContentForNotesVerifierActivity extends PassFailButtons.Test
                 .setMessage(msgId)
                 .setPositiveButton(android.R.string.ok, /* listener= */ null)
                 .show();
-    }
-
-    /** A helper method to set up tests. */
-    private void setUpTests() {
-        ArrayTestListAdapter adapter = new ArrayTestListAdapter(this);
-        addTestsToAdapter(adapter);
-        adapter.registerDataSetObserver(new DataSetObserver() {
-            @Override
-            public void onChanged() {
-                updatePassButton();
-            }
-        });
-        setTestListAdapter(adapter);
     }
 
     /** Adds the tests from {@link #TEST_INFOS} into the {@link ArrayTestListAdapter}. */
