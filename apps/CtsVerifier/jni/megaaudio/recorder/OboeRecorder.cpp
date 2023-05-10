@@ -48,6 +48,7 @@ StreamBase::Result OboeRecorder::setupStream(int32_t channelCount, int32_t sampl
         mChannelCount = channelCount;
         mSampleRate = sampleRate;
         mRouteDeviceId = routeDeviceId;
+        mInputPreset = inputPreset;
 
         // Create an audio stream
         AudioStreamBuilder builder;
