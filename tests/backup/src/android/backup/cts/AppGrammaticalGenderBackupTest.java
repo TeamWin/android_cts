@@ -46,8 +46,7 @@ public class AppGrammaticalGenderBackupTest extends BaseBackupCtsTest {
     private GrammaticalInflectionManager mGrammaticalInflectionManager;
 
     @Before
-    public void setUp() throws Exception {
-        super.setUp();
+    public void setUp() {
         final Context context = InstrumentationRegistry.getContext();
         mGrammaticalInflectionManager = context.getSystemService(
                 GrammaticalInflectionManager.class);
@@ -55,7 +54,7 @@ public class AppGrammaticalGenderBackupTest extends BaseBackupCtsTest {
 
     /** Test installed app set gender before restoring */
     public void testBackupRestore_setGenderBeforeRestoring_doesNotRestore()
-            throws IOException, InterruptedException {
+            throws IOException {
         if (!isBackupSupported()) {
             return;
         }
@@ -63,8 +62,7 @@ public class AppGrammaticalGenderBackupTest extends BaseBackupCtsTest {
         // fake the behavior that user set the gender before restoring
         setGrammaticalGender(Configuration.GRAMMATICAL_GENDER_FEMININE);
 
-        mBackupUtils.restoreForUserAndAssertSuccess(RESTORE_TOKEN, SYSTEM_PACKAGE,
-                mDefaultBackupUserId);
+        mBackupUtils.restoreAndAssertSuccess(RESTORE_TOKEN, SYSTEM_PACKAGE);
 
         // verify that device won't be restored
         assertEquals(Configuration.GRAMMATICAL_GENDER_FEMININE,
@@ -77,7 +75,7 @@ public class AppGrammaticalGenderBackupTest extends BaseBackupCtsTest {
 
     private void setAndBackupAppGender(int gender) throws IOException {
         mGrammaticalInflectionManager.setRequestedApplicationGrammaticalGender(gender);
-        mBackupUtils.backupNowForUserAndAssertSuccess(SYSTEM_PACKAGE, mDefaultBackupUserId);
+        mBackupUtils.backupNowAndAssertSuccess(SYSTEM_PACKAGE);
     }
 
     private static InputStream executeInstrumentationShellCommand(
