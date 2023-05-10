@@ -116,7 +116,7 @@ public class DecoderRenderTest extends MediaTestBase {
         // simulate a device in its normal steady-state (less chances for dropped frames). This
         // avoids problems, for example, with GPU shaders being compiled when rendering the first
         // video frame after boot which can cause subsequent frames to be delayed and dropped.
-        preplayOneVideoFrame(fileName);
+        primeVideoPipeline(fileName);
 
         MediaExtractor videoExtractor = createMediaExtractor(fileName);
         int videoTrackIndex = getFirstVideoTrack(videoExtractor);
@@ -215,7 +215,7 @@ public class DecoderRenderTest extends MediaTestBase {
         assertEquals(List.of(releasedFrames.size()), skippedFrames);
     }
 
-    private void preplayOneVideoFrame(String fileName) throws Exception {
+    private void primeVideoPipeline(String fileName) throws Exception {
         MediaExtractor videoExtractor = createMediaExtractor(fileName);
         int videoTrackIndex = getFirstVideoTrack(videoExtractor);
         videoExtractor.selectTrack(videoTrackIndex);
@@ -224,22 +224,44 @@ public class DecoderRenderTest extends MediaTestBase {
         assumeFalse("No video codec found for " + fileName, videoCodec == null);
         videoCodec.configure(videoFormat, getActivity().getSurfaceHolder().getSurface(), null, 0);
         videoCodec.start();
-        int inputBufferId = videoCodec.dequeueInputBuffer(-1);
-        ByteBuffer inputBuffer = videoCodec.getInputBuffer(inputBufferId);
-        int sampleSize = videoExtractor.readSampleData(inputBuffer, 0);
-        long presentationTime = videoExtractor.getSampleTime();
-        int flags = videoExtractor.getSampleFlags();
-        videoCodec.queueInputBuffer(inputBufferId, 0, sampleSize, presentationTime, flags);
+        long dequeueTimeOutUs = 5000;
+        boolean sawInputEos = false;
+        int tries = 50;
         MediaCodec.BufferInfo bufferInfo = new MediaCodec.BufferInfo();
-        int outputBufferId;
-        do {
-            outputBufferId = videoCodec.dequeueOutputBuffer(bufferInfo, -1);
-        } while (outputBufferId == MediaCodec.INFO_TRY_AGAIN_LATER
-                 || outputBufferId == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED
-                 || outputBufferId == MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED);
-        videoCodec.releaseOutputBuffer(outputBufferId, true);
+        while (tries > 0) {
+            int ipBufferId = -1;
+            if (!sawInputEos) {
+                ipBufferId = videoCodec.dequeueInputBuffer(dequeueTimeOutUs);
+                if (ipBufferId != -1) {
+                    ByteBuffer inputBuffer = videoCodec.getInputBuffer(ipBufferId);
+                    int sampleSize = videoExtractor.readSampleData(inputBuffer, 0);
+                    long presentationTime = videoExtractor.getSampleTime();
+                    int extractorFlags = videoExtractor.getSampleFlags();
+                    int flags = 0;
+                    if ((extractorFlags & MediaExtractor.SAMPLE_FLAG_SYNC) != 0) {
+                        flags |= MediaCodec.BUFFER_FLAG_KEY_FRAME;
+                    }
+                    if ((extractorFlags & MediaExtractor.SAMPLE_FLAG_PARTIAL_FRAME) != 0) {
+                        flags |= MediaCodec.BUFFER_FLAG_PARTIAL_FRAME;
+                    }
+                    boolean hasMoreSamples = videoExtractor.advance();
+                    if (!hasMoreSamples) {
+                        flags |= MediaCodec.BUFFER_FLAG_END_OF_STREAM;
+                        sawInputEos = true;
+                    }
+                    videoCodec.queueInputBuffer(ipBufferId, 0, sampleSize, presentationTime, flags);
+                }
+            }
+            int outputBufferId = videoCodec.dequeueOutputBuffer(bufferInfo, dequeueTimeOutUs);
+            if (outputBufferId >= 0) {
+                videoCodec.releaseOutputBuffer(outputBufferId, true);
+                break;
+            }
+            if (ipBufferId == -1) tries--;
+        }
         videoCodec.stop();
         videoCodec.release();
         videoExtractor.release();
+        assertTrue("Timed out from waiting on OutputBuffer ", tries != 0);
     }
 }
