@@ -108,6 +108,9 @@
     <!-- b/259733096 Performance tests are disabled in GSI builds -->
     <option name="compatibility:exclude-filter" value="CtsVideoTestCases android.video.cts.CodecEncoderPerformanceTest" />
 
+    <!-- b/279554698 Performance tests are disabled in GSI builds -->
+    <option name="compatibility:exclude-filter" value="CtsVideoTestCases android.video.cts.VideoEncoderDecoderTest#testPerf" />
+
     <!-- b/203177211 -->
     <option name="compatibility:exclude-filter" value="CtsAppSecurityHostTestCases android.appsecurity.cts.ListeningPortsTest#testNoRemotelyAccessibleListeningUdpPorts" />
 
