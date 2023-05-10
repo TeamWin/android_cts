@@ -327,7 +327,7 @@ public final class UserManagerTest {
             assertThat(cloneUserManager.isProfile()).isTrue();
             assertThat(cloneUserManager.isUserOfType(UserManager.USER_TYPE_PROFILE_CLONE)).isTrue();
 
-            final List<UserInfo> list = mUserManager.getUsers(true, true, true);
+            final List<UserInfo> list = mUserManager.getAliveUsers();
             final UserHandle finalUserHandle = userHandle;
             final List<UserInfo> cloneUsers = list.stream().filter(
                     user -> (user.id == finalUserHandle.getIdentifier()
@@ -961,7 +961,7 @@ public final class UserManagerTest {
     @Nullable
     private UserInfo getUser(int id) {
         try (PermissionContext p = TestApis.permissions().withPermission(CREATE_USERS)) {
-            return  mUserManager.getUsers(false, false, false)
+            return  mUserManager.getUsers()
                     .stream().filter(user -> user.id == id).findFirst()
                     .orElse(null);
         }

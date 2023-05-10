@@ -670,10 +670,7 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
         // MANAGE_USERS.
         UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         uiAutomation.adoptShellPermissionIdentity(Manifest.permission.CREATE_USERS);
-        List<UserInfo> userList = mContext.getSystemService(UserManager.class)
-                .getUsers(/* excludePartial= */ true,
-                        /* excludeDying= */ true,
-                        /* excludePreCreated= */ true);
+        List<UserInfo> userList = mContext.getSystemService(UserManager.class).getAliveUsers();
         uiAutomation.dropShellPermissionIdentity();
         return userList;
     }
