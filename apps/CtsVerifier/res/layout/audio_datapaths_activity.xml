@@ -89,12 +89,10 @@
             android:layout_height="wrap_content"
             android:id="@+id/audio_datapaths_routes"/>
 
-        <TextView
+        <WebView
+            android:id="@+id/audio_datapaths_results"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textSize="20sp"
-            android:textStyle="bold"
-            android:id="@+id/audio_datapaths_results"/>
+            android:layout_height="fill_parent"/>
 
         <include layout="@layout/pass_fail_buttons" />
     </LinearLayout>
