@@ -62,7 +62,7 @@ public class InstrumentedFieldClassificationService extends FieldClassificationS
     private final CountDownLatch mConnectedLatch = new CountDownLatch(1);
     private final CountDownLatch mDisconnectedLatch = new CountDownLatch(1);
 
-    private static ServiceWatcher sServiceWatcher;
+    private static volatile ServiceWatcher sServiceWatcher;
 
     static {
         Log.i(TAG, "Starting thread " + sMyThread);
