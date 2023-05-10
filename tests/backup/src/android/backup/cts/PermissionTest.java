@@ -37,7 +37,6 @@ import static com.android.compatibility.common.util.SystemUtil.runWithShellPermi
 
 import android.app.AppOpsManager;
 import android.content.Context;
-import android.content.pm.PackageManager;
 import android.os.ParcelFileDescriptor;
 import android.platform.test.annotations.AppModeFull;
 
@@ -46,7 +45,6 @@ import androidx.test.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.BackupUtils;
 import com.android.compatibility.common.util.ShellUtils;
-import com.android.modules.utils.build.SdkLevel;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -74,20 +72,20 @@ public class PermissionTest extends BaseBackupCtsTest {
     private static final Context sContext = InstrumentationRegistry.getTargetContext();
     private static final long TIMEOUT_MILLIS = 10000;
 
-    private BackupUtils mBackupUtils = new BackupUtils() {
-        @Override
-        protected InputStream executeShellCommand(String command) throws IOException {
-            ParcelFileDescriptor pfd = getInstrumentation().getUiAutomation().executeShellCommand(
-                    command);
-            return new ParcelFileDescriptor.AutoCloseInputStream(pfd);
-        }
-    };
+    private BackupUtils mBackupUtils =
+            new BackupUtils() {
+                @Override
+                protected InputStream executeShellCommand(String command) throws IOException {
+                    ParcelFileDescriptor pfd =
+                            getInstrumentation().getUiAutomation().executeShellCommand(command);
+                    return new ParcelFileDescriptor.AutoCloseInputStream(pfd);
+                }
+            };
 
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        assertEquals("context.getUserId() != default backup user id!",
-                sContext.getUserId(), mDefaultBackupUserId);
+
         resetApp(APP);
         resetApp(APP22);
     }
@@ -101,10 +99,9 @@ public class PermissionTest extends BaseBackupCtsTest {
         }
         grantPermission(APP, ACCESS_FINE_LOCATION);
 
-        mBackupUtils.backupNowForUserAndAssertSuccess(ANDROID_PACKAGE, mDefaultBackupUserId);
+        mBackupUtils.backupNowAndAssertSuccess(ANDROID_PACKAGE);
         resetApp(APP);
-        mBackupUtils.restoreForUserAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE,
-                mDefaultBackupUserId);
+        mBackupUtils.restoreAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE);
 
         eventually(() -> {
             assertEquals(PERMISSION_GRANTED, checkPermission(APP, ACCESS_FINE_LOCATION));
@@ -121,10 +118,9 @@ public class PermissionTest extends BaseBackupCtsTest {
         }
         setAppOp(APP22, READ_CONTACTS, MODE_IGNORED);
 
-        mBackupUtils.backupNowForUserAndAssertSuccess(ANDROID_PACKAGE, mDefaultBackupUserId);
+        mBackupUtils.backupNowAndAssertSuccess(ANDROID_PACKAGE);
         resetApp(APP22);
-        mBackupUtils.restoreForUserAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE,
-                mDefaultBackupUserId);
+        mBackupUtils.restoreAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE);
 
         eventually(() -> {
             assertEquals(MODE_IGNORED, getAppOp(APP22, READ_CONTACTS));
@@ -147,10 +143,9 @@ public class PermissionTest extends BaseBackupCtsTest {
         setFlag(APP, ACCESS_FINE_LOCATION, FLAG_PERMISSION_USER_SET);
         setFlag(APP, ACCESS_BACKGROUND_LOCATION, FLAG_PERMISSION_USER_SET);
 
-        mBackupUtils.backupNowForUserAndAssertSuccess(ANDROID_PACKAGE, mDefaultBackupUserId);
+        mBackupUtils.backupNowAndAssertSuccess(ANDROID_PACKAGE);
         resetApp(APP);
-        mBackupUtils.restoreForUserAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE,
-                mDefaultBackupUserId);
+        mBackupUtils.restoreAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE);
 
         eventually(() -> {
             // Wait until marker is set
@@ -171,10 +166,9 @@ public class PermissionTest extends BaseBackupCtsTest {
         }
         setAppOp(APP22, ACCESS_FINE_LOCATION, MODE_IGNORED);
 
-        mBackupUtils.backupNowForUserAndAssertSuccess(ANDROID_PACKAGE, mDefaultBackupUserId);
+        mBackupUtils.backupNowAndAssertSuccess(ANDROID_PACKAGE);
         resetApp(APP22);
-        mBackupUtils.restoreForUserAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE,
-                mDefaultBackupUserId);
+        mBackupUtils.restoreAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE);
 
         eventually(() -> assertEquals(MODE_IGNORED, getAppOp(APP22, ACCESS_FINE_LOCATION)));
     }
@@ -192,10 +186,9 @@ public class PermissionTest extends BaseBackupCtsTest {
         // are even backed up
         setFlag(APP, ACCESS_BACKGROUND_LOCATION, FLAG_PERMISSION_USER_SET);
 
-        mBackupUtils.backupNowForUserAndAssertSuccess(ANDROID_PACKAGE, mDefaultBackupUserId);
+        mBackupUtils.backupNowAndAssertSuccess(ANDROID_PACKAGE);
         resetApp(APP);
-        mBackupUtils.restoreForUserAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE,
-                mDefaultBackupUserId);
+        mBackupUtils.restoreAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE);
 
         eventually(() -> {
             assertEquals(PERMISSION_GRANTED, checkPermission(APP, ACCESS_FINE_LOCATION));
@@ -233,10 +226,9 @@ public class PermissionTest extends BaseBackupCtsTest {
         grantPermission(APP, ACCESS_FINE_LOCATION);
         grantPermission(APP, ACCESS_BACKGROUND_LOCATION);
 
-        mBackupUtils.backupNowForUserAndAssertSuccess(ANDROID_PACKAGE, mDefaultBackupUserId);
+        mBackupUtils.backupNowAndAssertSuccess(ANDROID_PACKAGE);
         resetApp(APP);
-        mBackupUtils.restoreForUserAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE,
-                mDefaultBackupUserId);
+        mBackupUtils.restoreAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE);
 
         eventually(() -> {
             assertEquals(PERMISSION_GRANTED, checkPermission(APP, ACCESS_FINE_LOCATION));
@@ -255,10 +247,9 @@ public class PermissionTest extends BaseBackupCtsTest {
         // Set a marker
         setAppOp(APP22, WRITE_CONTACTS, MODE_IGNORED);
 
-        mBackupUtils.backupNowForUserAndAssertSuccess(ANDROID_PACKAGE, mDefaultBackupUserId);
+        mBackupUtils.backupNowAndAssertSuccess(ANDROID_PACKAGE);
         resetApp(APP22);
-        mBackupUtils.restoreForUserAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE,
-                mDefaultBackupUserId);
+        mBackupUtils.restoreAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE);
 
         eventually(() -> {
             // Wait for marker
@@ -277,10 +268,9 @@ public class PermissionTest extends BaseBackupCtsTest {
         }
         clearFlag(APP22, WRITE_CONTACTS, FLAG_PERMISSION_REVIEW_REQUIRED);
 
-        mBackupUtils.backupNowForUserAndAssertSuccess(ANDROID_PACKAGE, mDefaultBackupUserId);
+        mBackupUtils.backupNowAndAssertSuccess(ANDROID_PACKAGE);
         resetApp(APP22);
-        mBackupUtils.restoreForUserAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE,
-                mDefaultBackupUserId);
+        mBackupUtils.restoreAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE);
 
         eventually(() -> assertFalse(
                 isFlagSet(APP22, WRITE_CONTACTS, FLAG_PERMISSION_REVIEW_REQUIRED)));
@@ -295,10 +285,9 @@ public class PermissionTest extends BaseBackupCtsTest {
         }
         setFlag(APP, WRITE_CONTACTS, FLAG_PERMISSION_USER_SET);
 
-        mBackupUtils.backupNowForUserAndAssertSuccess(ANDROID_PACKAGE, mDefaultBackupUserId);
+        mBackupUtils.backupNowAndAssertSuccess(ANDROID_PACKAGE);
         resetApp(APP);
-        mBackupUtils.restoreForUserAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE,
-                mDefaultBackupUserId);
+        mBackupUtils.restoreAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE);
 
         eventually(() -> assertTrue(isFlagSet(APP, WRITE_CONTACTS, FLAG_PERMISSION_USER_SET)));
     }
@@ -312,10 +301,9 @@ public class PermissionTest extends BaseBackupCtsTest {
         }
         setFlag(APP, WRITE_CONTACTS, FLAG_PERMISSION_USER_FIXED);
 
-        mBackupUtils.backupNowForUserAndAssertSuccess(ANDROID_PACKAGE, mDefaultBackupUserId);
+        mBackupUtils.backupNowAndAssertSuccess(ANDROID_PACKAGE);
         resetApp(APP);
-        mBackupUtils.restoreForUserAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE,
-                mDefaultBackupUserId);
+        mBackupUtils.restoreAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE);
 
         eventually(() -> assertTrue(isFlagSet(APP, WRITE_CONTACTS, FLAG_PERMISSION_USER_FIXED)));
     }
@@ -329,10 +317,9 @@ public class PermissionTest extends BaseBackupCtsTest {
         }
         setFlag(APP, WRITE_CONTACTS, FLAG_PERMISSION_USER_FIXED);
 
-        mBackupUtils.backupNowForUserAndAssertSuccess(ANDROID_PACKAGE, mDefaultBackupUserId);
+        mBackupUtils.backupNowAndAssertSuccess(ANDROID_PACKAGE);
         resetApp(APP);
-        mBackupUtils.restoreForUserAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE,
-                mDefaultBackupUserId);
+        mBackupUtils.restoreAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE);
 
         eventually(() -> assertEquals(PERMISSION_DENIED, checkPermission(APP, WRITE_CONTACTS)));
     }
@@ -348,14 +335,13 @@ public class PermissionTest extends BaseBackupCtsTest {
 
         setAppOp(APP22, READ_CONTACTS, MODE_IGNORED);
 
-        mBackupUtils.backupNowForUserAndAssertSuccess(ANDROID_PACKAGE, mDefaultBackupUserId);
+        mBackupUtils.backupNowAndAssertSuccess(ANDROID_PACKAGE);
 
         uninstall(APP);
         uninstall(APP22);
 
         try {
-            mBackupUtils.restoreForUserAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE,
-                    mDefaultBackupUserId);
+            mBackupUtils.restoreAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE);
 
             install(APP_APK);
 
@@ -372,18 +358,16 @@ public class PermissionTest extends BaseBackupCtsTest {
     }
 
     private void install(String apk) {
-        ShellUtils.runShellCommand("pm install -r --user " + mDefaultBackupUserId + " " + apk);
+        ShellUtils.runShellCommand("pm install -r " + apk);
     }
 
     private void uninstall(String packageName) {
-        ShellUtils.runShellCommand(
-                "pm uninstall --user " + mDefaultBackupUserId + " " + packageName);
+        ShellUtils.runShellCommand("pm uninstall " + packageName);
     }
 
     private void resetApp(String packageName) {
-        ShellUtils.runShellCommand("pm clear --user " + mDefaultBackupUserId + " " + packageName);
-        ShellUtils.runShellCommand(
-                "appops reset --user " + mDefaultBackupUserId + " " + packageName);
+        ShellUtils.runShellCommand("pm clear " + packageName);
+        ShellUtils.runShellCommand("appops reset " + packageName);
     }
 
     /**
@@ -415,14 +399,14 @@ public class PermissionTest extends BaseBackupCtsTest {
 
     private void setFlag(String app, String permission, int flag) {
         runWithShellPermissionIdentity(
-                () -> sContext.getPackageManager().updatePermissionFlags(permission, app, flag,
-                        flag, sContext.getUser()));
+                () -> sContext.getPackageManager().updatePermissionFlags(permission, app,
+                        flag, flag, sContext.getUser()));
     }
 
     private void clearFlag(String app, String permission, int flag) {
         runWithShellPermissionIdentity(
-                () -> sContext.getPackageManager().updatePermissionFlags(permission, app, flag, 0,
-                        sContext.getUser()));
+                () -> sContext.getPackageManager().updatePermissionFlags(permission, app,
+                        flag, 0, sContext.getUser()));
     }
 
     private boolean isFlagSet(String app, String permission, int flag) {
@@ -440,36 +424,18 @@ public class PermissionTest extends BaseBackupCtsTest {
     }
 
     private void setAppOp(String app, String permission, int mode) {
-        if (SdkLevel.isAtLeastU()) {
-            runWithShellPermissionIdentity(
-                    () -> sContext.getSystemService(AppOpsManager.class).setUidMode(
-                            permissionToOp(permission),
-                            sContext.getPackageManager().getPackageUidAsUser(app,
-                                    PackageManager.PackageInfoFlags.of(0),
-                                    mDefaultBackupUserId), mode));
-        } else {
-            runWithShellPermissionIdentity(
-                    () -> sContext.getSystemService(AppOpsManager.class).setUidMode(
-                            permissionToOp(permission),
-                            sContext.getPackageManager().getPackageUid(app, 0), mode));
-        }
+        runWithShellPermissionIdentity(
+                () -> sContext.getSystemService(AppOpsManager.class).setUidMode(
+                        permissionToOp(permission),
+                        sContext.getPackageManager().getPackageUid(app, 0), mode));
     }
 
     private int getAppOp(String app, String permission) {
         try {
-            if (SdkLevel.isAtLeastU()) {
-                return callWithShellPermissionIdentity(
-                        () -> sContext.getSystemService(AppOpsManager.class).unsafeCheckOpRaw(
-                                permissionToOp(permission),
-                                sContext.getPackageManager().getPackageUidAsUser(app,
-                                        PackageManager.PackageInfoFlags.of(0),
-                                        mDefaultBackupUserId), app));
-            } else {
-                return callWithShellPermissionIdentity(
-                        () -> sContext.getSystemService(AppOpsManager.class).unsafeCheckOpRaw(
-                                permissionToOp(permission),
-                                sContext.getPackageManager().getPackageUid(app, 0), app));
-            }
+            return callWithShellPermissionIdentity(
+                    () -> sContext.getSystemService(AppOpsManager.class).unsafeCheckOpRaw(
+                            permissionToOp(permission),
+                            sContext.getPackageManager().getPackageUid(app, 0), app));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

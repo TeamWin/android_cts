@@ -136,8 +136,7 @@ public class AgentBindingTest extends BaseBackupCtsTest {
      * backup / restore.
      */
     private void runBackupAndAssertAgentError(String packageName) throws IOException {
-        Scanner in = new Scanner(
-                getBackupUtils().getBackupNowForUserOutput(packageName, mDefaultBackupUserId));
+        Scanner in = new Scanner(getBackupUtils().getBackupNowOutput(packageName));
         boolean found = false;
         while (in.hasNextLine()) {
             String line = in.nextLine();
