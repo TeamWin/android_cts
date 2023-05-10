@@ -84,6 +84,24 @@ public class KnownNetworkTest {
         assertThat(fromParcel).isEqualTo(network);
         assertThat(fromParcel.hashCode()).isEqualTo(network.hashCode());
     }
+    @Test
+    public void parcelOperation_noNetworkProviderInfo() {
+        KnownNetwork network = buildKnownNetworkBuilder().setNetworkProviderInfo(null)
+                .setNetworkSource(NETWORK_SOURCE_CLOUD_SELF).build();
+
+        Parcel parcelW = Parcel.obtain();
+        network.writeToParcel(parcelW, 0);
+        byte[] bytes = parcelW.marshall();
+        parcelW.recycle();
+
+        Parcel parcelR = Parcel.obtain();
+        parcelR.unmarshall(bytes, 0, bytes.length);
+        parcelR.setDataPosition(0);
+        KnownNetwork fromParcel = KnownNetwork.CREATOR.createFromParcel(parcelR);
+
+        assertThat(fromParcel).isEqualTo(network);
+        assertThat(fromParcel.hashCode()).isEqualTo(network.hashCode());
+    }
 
     @Test
     public void equalsOperation() {
@@ -112,6 +130,8 @@ public class KnownNetworkTest {
     @Test
     public void testGetMethods() {
         KnownNetwork network = buildKnownNetworkBuilder().build();
+        KnownNetwork network1 = buildKnownNetworkBuilder().setNetworkProviderInfo(null)
+                .setNetworkSource(NETWORK_SOURCE_CLOUD_SELF).build();
         ArraySet<Integer> securityTypes = new ArraySet<>();
         Arrays.stream(SECURITY_TYPES).forEach(securityTypes::add);
 
@@ -120,12 +140,23 @@ public class KnownNetworkTest {
         assertThat(network.getSecurityTypes()).containsExactlyElementsIn(securityTypes);
         assertThat(network.getNetworkProviderInfo()).isEqualTo(NETWORK_PROVIDER_INFO);
         assertThat(network.getExtras().getInt(BUNDLE_KEY)).isEqualTo(BUNDLE_VALUE);
+        assertThat(network1.getNetworkProviderInfo()).isNull();
     }
 
     @Test
     public void hashCodeCalculation() {
         KnownNetwork network1 = buildKnownNetworkBuilder().build();
         KnownNetwork network2 = buildKnownNetworkBuilder().build();
+
+        assertThat(network1.hashCode()).isEqualTo(network2.hashCode());
+    }
+
+    @Test
+    public void hashCodeCalculation_noNetworkProviderInfo() {
+        KnownNetwork network1 = buildKnownNetworkBuilder().setNetworkProviderInfo(null)
+                .setNetworkSource(NETWORK_SOURCE_CLOUD_SELF).build();
+        KnownNetwork network2 = buildKnownNetworkBuilder().setNetworkProviderInfo(null)
+                .setNetworkSource(NETWORK_SOURCE_CLOUD_SELF).build();
 
         assertThat(network1.hashCode()).isEqualTo(network2.hashCode());
     }
