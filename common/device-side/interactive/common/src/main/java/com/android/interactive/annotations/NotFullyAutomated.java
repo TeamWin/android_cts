@@ -16,10 +16,17 @@
 
 package com.android.interactive.annotations;
 
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
 /**
  * Annotation to mark either that a Step can not be automated, or that a test makes use of steps
  * which cannot be automated.
  */
+@Target({ElementType.METHOD, ElementType.TYPE})
+@Retention(RetentionPolicy.RUNTIME)
 public @interface NotFullyAutomated {
     String reason();
 }
