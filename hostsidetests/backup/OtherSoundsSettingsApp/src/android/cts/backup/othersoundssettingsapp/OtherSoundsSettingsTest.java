@@ -27,8 +27,6 @@ import android.app.UiAutomation;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.os.ParcelFileDescriptor;
-import android.os.UserHandle;
-import android.os.UserManager;
 import android.os.Vibrator;
 import android.platform.test.annotations.AppModeFull;
 import android.provider.Settings;
@@ -63,16 +61,10 @@ public class OtherSoundsSettingsTest {
     private BackupUtils mBackupUtils;
     private Map<String, Integer> mOriginalSettingValues;
     private UiAutomation mUiAutomation;
-    private int mDefaultBackupUserId;
 
     @Before
     public void setUp() throws Exception {
         mContentResolver = getInstrumentation().getTargetContext().getContentResolver();
-        mUiAutomation = getInstrumentation().getUiAutomation();
-        mUiAutomation.adoptShellPermissionIdentity();
-        UserHandle mainUser = getInstrumentation().getTargetContext().getSystemService(
-                UserManager.class).getMainUser();
-        mDefaultBackupUserId = mainUser == null ? UserHandle.USER_SYSTEM : mainUser.getIdentifier();
         mBackupUtils =
                 new BackupUtils() {
                     @Override
@@ -83,6 +75,8 @@ public class OtherSoundsSettingsTest {
                     }
                 };
         mOriginalSettingValues = new HashMap<>();
+        mUiAutomation = getInstrumentation().getUiAutomation();
+        mUiAutomation.adoptShellPermissionIdentity();
     }
 
     @After
@@ -106,14 +100,13 @@ public class OtherSoundsSettingsTest {
         int originalValue = prepareSystemSetting(Settings.System.DTMF_TONE_WHEN_DIALING);
         assertTrue("Dial pad tones does not exist.", originalValue != -1);
 
-        mBackupUtils.backupNowForUserAndAssertSuccess(SETTINGS_PACKAGE_NAME, mDefaultBackupUserId);
+        mBackupUtils.backupNowAndAssertSuccess(SETTINGS_PACKAGE_NAME);
 
         boolean ret = setSystemSetting(Settings.System.DTMF_TONE_WHEN_DIALING,
                 1 - originalValue);
         assertTrue("Toggle Dial pad tones fail.", ret);
 
-        mBackupUtils.restoreForUserAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, SETTINGS_PACKAGE_NAME,
-                mDefaultBackupUserId);
+        mBackupUtils.restoreAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, SETTINGS_PACKAGE_NAME);
 
         int restoreValue =
                 Settings.System.getInt(
@@ -136,14 +129,13 @@ public class OtherSoundsSettingsTest {
         int originalValue = prepareSystemSetting(Settings.System.SOUND_EFFECTS_ENABLED);
         assertTrue("Touch sounds does not exist.", originalValue != -1);
 
-        mBackupUtils.backupNowForUserAndAssertSuccess(SETTINGS_PACKAGE_NAME, mDefaultBackupUserId);
+        mBackupUtils.backupNowAndAssertSuccess(SETTINGS_PACKAGE_NAME);
 
         boolean ret = setSystemSetting(Settings.System.SOUND_EFFECTS_ENABLED,
                 1 - originalValue);
         assertTrue("Toggle Touch sounds fail.", ret);
 
-        mBackupUtils.restoreForUserAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, SETTINGS_PACKAGE_NAME,
-                mDefaultBackupUserId);
+        mBackupUtils.restoreAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, SETTINGS_PACKAGE_NAME);
 
         int restoreValue =
                 Settings.System.getInt(
@@ -174,14 +166,13 @@ public class OtherSoundsSettingsTest {
         int originalValue = prepareSystemSetting(Settings.System.HAPTIC_FEEDBACK_ENABLED);
         assertTrue("Touch vibration does not exist.", originalValue != -1);
 
-        mBackupUtils.backupNowForUserAndAssertSuccess(SETTINGS_PACKAGE_NAME, mDefaultBackupUserId);
+        mBackupUtils.backupNowAndAssertSuccess(SETTINGS_PACKAGE_NAME);
 
         boolean ret = setSystemSetting(Settings.System.HAPTIC_FEEDBACK_ENABLED,
                 1 - originalValue);
         assertTrue("Toggle Touch vibration fail.", ret);
 
-        mBackupUtils.restoreForUserAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, SETTINGS_PACKAGE_NAME,
-                mDefaultBackupUserId);
+        mBackupUtils.restoreAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, SETTINGS_PACKAGE_NAME);
 
         int restoreValue =
                 Settings.System.getInt(

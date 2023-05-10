@@ -21,6 +21,7 @@ import static org.junit.Assert.assertNull;
 import android.platform.test.annotations.AppModeFull;
 
 import com.android.tradefed.device.DeviceNotAvailableException;
+import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.targetprep.TargetSetupError;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
@@ -61,7 +62,7 @@ public class RestoreAnyVersionHostSideTest extends BaseBackupHostSideTest {
     public void tearDown() throws Exception {
         // Clear backup data and uninstall the package (in that order!)
         clearBackupDataInLocalTransport(RESTORE_ANY_VERSION_APP_PACKAGE);
-        assertNull(uninstallPackageAsUser(RESTORE_ANY_VERSION_APP_PACKAGE, mDefaultBackupUserId));
+        assertNull(uninstallPackage(RESTORE_ANY_VERSION_APP_PACKAGE));
     }
 
     /**
@@ -75,10 +76,9 @@ public class RestoreAnyVersionHostSideTest extends BaseBackupHostSideTest {
         saveSharedPreferenceValue();
         checkRestoreAnyVersionDeviceTest("checkSharedPrefIsNew");
 
-        getBackupUtils().backupNowForUserAndAssertSuccess(RESTORE_ANY_VERSION_APP_PACKAGE,
-                mDefaultBackupUserId);
+        getBackupUtils().backupNowAndAssertSuccess(RESTORE_ANY_VERSION_APP_PACKAGE);
 
-        assertNull(uninstallPackageAsUser(RESTORE_ANY_VERSION_APP_PACKAGE, mDefaultBackupUserId));
+        assertNull(uninstallPackage(RESTORE_ANY_VERSION_APP_PACKAGE));
 
         installNoRestoreAnyVersionApp();
 
@@ -97,10 +97,9 @@ public class RestoreAnyVersionHostSideTest extends BaseBackupHostSideTest {
         saveSharedPreferenceValue();
         checkRestoreAnyVersionDeviceTest("checkSharedPrefIsNew");
 
-        getBackupUtils().backupNowForUserAndAssertSuccess(RESTORE_ANY_VERSION_APP_PACKAGE,
-                mDefaultBackupUserId);
+        getBackupUtils().backupNowAndAssertSuccess(RESTORE_ANY_VERSION_APP_PACKAGE);
 
-        assertNull(uninstallPackageAsUser(RESTORE_ANY_VERSION_APP_PACKAGE, mDefaultBackupUserId));
+        assertNull(uninstallPackage(RESTORE_ANY_VERSION_APP_PACKAGE));
 
         installRestoreAnyVersionApp();
 
@@ -119,45 +118,44 @@ public class RestoreAnyVersionHostSideTest extends BaseBackupHostSideTest {
         saveSharedPreferenceValue();
         checkRestoreAnyVersionDeviceTest("checkSharedPrefIsOld");
 
-        getBackupUtils().backupNowForUserAndAssertSuccess(RESTORE_ANY_VERSION_APP_PACKAGE,
-                mDefaultBackupUserId);
+        getBackupUtils().backupNowAndAssertSuccess(RESTORE_ANY_VERSION_APP_PACKAGE);
 
-        assertNull(uninstallPackageAsUser(RESTORE_ANY_VERSION_APP_PACKAGE, mDefaultBackupUserId));
+        assertNull(uninstallPackage(RESTORE_ANY_VERSION_APP_PACKAGE));
 
         installNewVersionApp();
 
         checkRestoreAnyVersionDeviceTest("checkSharedPrefIsOld");
     }
 
-    private void saveSharedPreferenceValue() throws DeviceNotAvailableException {
+    private void saveSharedPreferenceValue () throws DeviceNotAvailableException {
         checkRestoreAnyVersionDeviceTest("checkSharedPrefIsEmpty");
         checkRestoreAnyVersionDeviceTest("saveSharedPrefValue");
     }
 
     private void installRestoreAnyVersionApp()
             throws DeviceNotAvailableException, TargetSetupError {
-        installPackageAsUser(RESTORE_ANY_VERSION_APP_APK, mDefaultBackupUserId);
+        installPackage(RESTORE_ANY_VERSION_APP_APK, "-d", "-r");
 
         checkRestoreAnyVersionDeviceTest("checkAppVersionIsOld");
     }
 
     private void installNoRestoreAnyVersionApp()
             throws DeviceNotAvailableException, TargetSetupError {
-        installPackageAsUser(NO_RESTORE_ANY_VERSION_APK, mDefaultBackupUserId);
+        installPackage(NO_RESTORE_ANY_VERSION_APK, "-d", "-r");
 
         checkRestoreAnyVersionDeviceTest("checkAppVersionIsOld");
     }
 
     private void installNewVersionApp()
             throws DeviceNotAvailableException, TargetSetupError {
-        installPackageAsUser(RESTORE_ANY_VERSION_UPDATE_APK, mDefaultBackupUserId);
+        installPackage(RESTORE_ANY_VERSION_UPDATE_APK, "-d", "-r");
 
         checkRestoreAnyVersionDeviceTest("checkAppVersionIsNew");
     }
 
     private void checkRestoreAnyVersionDeviceTest(String methodName)
             throws DeviceNotAvailableException {
-        checkDeviceTestAsUser(RESTORE_ANY_VERSION_APP_PACKAGE, RESTORE_ANY_VERSION_DEVICE_TEST_NAME,
-                methodName, mDefaultBackupUserId);
+        checkDeviceTest(RESTORE_ANY_VERSION_APP_PACKAGE, RESTORE_ANY_VERSION_DEVICE_TEST_NAME,
+                methodName);
     }
 }

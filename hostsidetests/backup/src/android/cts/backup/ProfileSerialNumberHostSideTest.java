@@ -16,8 +16,6 @@
 
 package android.cts.backup;
 
-import static org.junit.Assert.assertNull;
-
 import android.platform.test.annotations.AppModeFull;
 
 import com.android.tradefed.device.DeviceNotAvailableException;
@@ -64,7 +62,7 @@ public class ProfileSerialNumberHostSideTest extends BaseMultiUserBackupHostSide
     public void tearDown() throws Exception {
         if (mProfileUserId.isPresent()) {
             int profileUserId = mProfileUserId.get();
-            assertNull(uninstallPackageAsUser(TEST_PACKAGE, profileUserId));
+            uninstallPackageAsUser(TEST_PACKAGE, profileUserId);
             mDevice.removeUser(profileUserId);
             mProfileUserId = Optional.empty();
         }

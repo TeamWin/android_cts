@@ -20,8 +20,11 @@ import static com.android.compatibility.common.util.BackupUtils.LOCAL_TRANSPORT_
 
 import android.platform.test.annotations.AppModeFull;
 
+import com.android.compatibility.common.util.BackupUtils;
 import com.android.tradefed.device.DeviceNotAvailableException;
+import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
+import com.android.tradefed.log.LogUtil.CLog;
 
 import org.junit.After;
 import org.junit.Before;
@@ -67,7 +70,6 @@ public class FullbackupRulesHostSideTest extends BaseBackupHostSideTest {
 
     @Before
     public void setUp() throws Exception {
-        super.setUp();
         originalLocalTransportParameters = getLocalTransportParameters();
         mOriginalFeatureFlagValue = getDevice().executeShellCommand("settings get global "
                 + BACKUP_ELIGIBILITY_RULES_FEATURE_FLAG);
@@ -78,7 +80,7 @@ public class FullbackupRulesHostSideTest extends BaseBackupHostSideTest {
     public void tearDown() throws Exception {
         setLocalTransportParameters(originalLocalTransportParameters);
         setFeatureFlagValue(mOriginalFeatureFlagValue);
-        uninstallPackageAsUser(INCLUDE_EXCLUDE_TESTS_APP_NAME, mDefaultBackupUserId);
+        uninstallPackage(INCLUDE_EXCLUDE_TESTS_APP_NAME);
     }
 
     private void setFeatureFlagValue(String value) throws Exception {
@@ -93,16 +95,14 @@ public class FullbackupRulesHostSideTest extends BaseBackupHostSideTest {
                 "createFiles");
 
         // Do a backup
-        getBackupUtils().backupNowForUserAndAssertSuccess(FULLBACKUP_TESTS_APP_NAME,
-                mDefaultBackupUserId);
+        getBackupUtils().backupNowAndAssertSuccess(FULLBACKUP_TESTS_APP_NAME);
 
         // Delete the files
         checkDeviceTest(FULLBACKUP_TESTS_APP_NAME, FULLBACKUP_DEVICE_TEST_CLASS_NAME,
                 "deleteFilesAfterBackup");
 
         // Do a restore
-        getBackupUtils().restoreForUserAndAssertSuccess(LOCAL_TRANSPORT_TOKEN,
-                FULLBACKUP_TESTS_APP_NAME, mDefaultBackupUserId);
+        getBackupUtils().restoreAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, FULLBACKUP_TESTS_APP_NAME);
 
         // Check that the right files were restored
         checkDeviceTest(FULLBACKUP_TESTS_APP_NAME, FULLBACKUP_DEVICE_TEST_CLASS_NAME,
@@ -111,7 +111,7 @@ public class FullbackupRulesHostSideTest extends BaseBackupHostSideTest {
 
     @Test
     public void testFullBackupContentIncludeExcludeRules() throws Exception {
-        installPackageAsUser(FULL_BACKUP_CONTENT_APP_APK, mDefaultBackupUserId);
+        installPackage(FULL_BACKUP_CONTENT_APP_APK);
 
         // Generate test data and run a backup and restore pass.
         runBackupAndRestoreOnTestData(INCLUDE_EXCLUDE_DEVICE_TEST_CLASS_NAME);
@@ -123,7 +123,7 @@ public class FullbackupRulesHostSideTest extends BaseBackupHostSideTest {
 
     @Test
     public void testDataExtractionRulesIncludeExcludeRules() throws Exception {
-        installPackageAsUser(DATA_EXTRACTION_RULES_APP_APK, mDefaultBackupUserId);
+        installPackage(DATA_EXTRACTION_RULES_APP_APK);
 
         // Generate test data and run a backup and restore pass.
         runBackupAndRestoreOnTestData(INCLUDE_EXCLUDE_DEVICE_TEST_CLASS_NAME);
@@ -142,7 +142,7 @@ public class FullbackupRulesHostSideTest extends BaseBackupHostSideTest {
      */
     @Test
     public void testBackup_onlyBackupDataExtractionRulesAreApplied() throws Exception {
-        installPackageAsUser(DATA_EXTRACTION_RULES_APPLICABILITY_APP_APK, mDefaultBackupUserId);
+        installPackage(DATA_EXTRACTION_RULES_APPLICABILITY_APP_APK);
 
         // Generate test data and run a backup and restore pass.
         runBackupAndRestoreOnTestData(DATA_EXTRACTION_RULES_APPLICABILITY_DEVICE_TEST_CLASS_NAME);
@@ -163,7 +163,7 @@ public class FullbackupRulesHostSideTest extends BaseBackupHostSideTest {
     public void testDeviceTransfer_onlyDeviceTransferDataExtractionRulesAreApplied()
             throws Exception {
         setLocalTransportParameters("is_device_transfer=true");
-        installPackageAsUser(DATA_EXTRACTION_RULES_APPLICABILITY_APP_APK, mDefaultBackupUserId);
+        installPackage(DATA_EXTRACTION_RULES_APPLICABILITY_APP_APK);
 
         // Generate test data and run a backup and restore pass.
         runBackupAndRestoreOnTestData(DATA_EXTRACTION_RULES_APPLICABILITY_DEVICE_TEST_CLASS_NAME);
@@ -177,7 +177,7 @@ public class FullbackupRulesHostSideTest extends BaseBackupHostSideTest {
     public void testDisableIfNoEncryptionCapabilities_encryptedTransport_doesBackUp()
             throws Exception {
         setLocalTransportParameters("is_encrypted=true");
-        installPackageAsUser(ENCRYPTION_ATTRIBUTE_APP_APK, mDefaultBackupUserId);
+        installPackage(ENCRYPTION_ATTRIBUTE_APP_APK);
 
         // Generate test data and run a backup and restore pass.
         runBackupAndRestoreOnTestData(INCLUDE_EXCLUDE_DEVICE_TEST_CLASS_NAME);
@@ -191,7 +191,7 @@ public class FullbackupRulesHostSideTest extends BaseBackupHostSideTest {
     public void testDisableIfNoEncryptionCapabilities_unencryptedTransport_doesNotBackUp()
             throws Exception {
         setLocalTransportParameters("is_encrypted=false");
-        installPackageAsUser(ENCRYPTION_ATTRIBUTE_APP_APK, mDefaultBackupUserId);
+        installPackage(ENCRYPTION_ATTRIBUTE_APP_APK);
 
         // Generate test data and run a backup and restore pass.
         runBackupAndRestoreOnTestData(INCLUDE_EXCLUDE_DEVICE_TEST_CLASS_NAME);
@@ -204,7 +204,7 @@ public class FullbackupRulesHostSideTest extends BaseBackupHostSideTest {
     @Test
     public void testRequireFakeEncryptionFlag_includesFileIfFakeEncryptionEnabled()
             throws Exception {
-        installPackageAsUser(FULL_BACKUP_CONTENT_APP_APK, mDefaultBackupUserId);
+        installPackage(FULL_BACKUP_CONTENT_APP_APK);
 
         enableFakeEncryptionOnTransport();
 
@@ -213,8 +213,7 @@ public class FullbackupRulesHostSideTest extends BaseBackupHostSideTest {
                 "createFiles");
 
         // Do a backup
-        getBackupUtils().backupNowForUserAndAssertSuccess(INCLUDE_EXCLUDE_TESTS_APP_NAME,
-                mDefaultBackupUserId);
+        getBackupUtils().backupNowAndAssertSuccess(INCLUDE_EXCLUDE_TESTS_APP_NAME);
 
         // Delete the files
         checkDeviceTest(INCLUDE_EXCLUDE_TESTS_APP_NAME, INCLUDE_EXCLUDE_DEVICE_TEST_CLASS_NAME,
@@ -222,8 +221,7 @@ public class FullbackupRulesHostSideTest extends BaseBackupHostSideTest {
 
         // Do a restore
         getBackupUtils()
-                .restoreForUserAndAssertSuccess(LOCAL_TRANSPORT_TOKEN,
-                        INCLUDE_EXCLUDE_TESTS_APP_NAME, mDefaultBackupUserId);
+                .restoreAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, INCLUDE_EXCLUDE_TESTS_APP_NAME);
 
         // Check that the client-side encryption files were restored
         checkDeviceTest(INCLUDE_EXCLUDE_TESTS_APP_NAME, INCLUDE_EXCLUDE_DEVICE_TEST_CLASS_NAME,
@@ -233,7 +231,7 @@ public class FullbackupRulesHostSideTest extends BaseBackupHostSideTest {
     @Test
     public void testRequireFakeEncryptionFlag_excludesFileIfFakeEncryptionDisabled()
             throws Exception {
-        installPackageAsUser(FULL_BACKUP_CONTENT_APP_APK, mDefaultBackupUserId);
+        installPackage(FULL_BACKUP_CONTENT_APP_APK);
 
         disableFakeEncryptionOnTransport();
 
@@ -242,8 +240,7 @@ public class FullbackupRulesHostSideTest extends BaseBackupHostSideTest {
                 "createFiles");
 
         // Do a backup
-        getBackupUtils().backupNowForUserAndAssertSuccess(INCLUDE_EXCLUDE_TESTS_APP_NAME,
-                mDefaultBackupUserId);
+        getBackupUtils().backupNowAndAssertSuccess(INCLUDE_EXCLUDE_TESTS_APP_NAME);
 
         // Delete the files
         checkDeviceTest(INCLUDE_EXCLUDE_TESTS_APP_NAME, INCLUDE_EXCLUDE_DEVICE_TEST_CLASS_NAME,
@@ -251,8 +248,7 @@ public class FullbackupRulesHostSideTest extends BaseBackupHostSideTest {
 
         // Do a restore
         getBackupUtils()
-                .restoreForUserAndAssertSuccess(LOCAL_TRANSPORT_TOKEN,
-                        INCLUDE_EXCLUDE_TESTS_APP_NAME, mDefaultBackupUserId);
+                .restoreAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, INCLUDE_EXCLUDE_TESTS_APP_NAME);
 
         // Check that the client-side encryption files were not restored
         checkDeviceTest(INCLUDE_EXCLUDE_TESTS_APP_NAME, INCLUDE_EXCLUDE_DEVICE_TEST_CLASS_NAME,
@@ -270,7 +266,7 @@ public class FullbackupRulesHostSideTest extends BaseBackupHostSideTest {
         checkFullBackupRulesDeviceTest(deviceSideTestName, "createFiles");
 
         // Do a backup
-        getBackupUtils().backupNowForUserSync(INCLUDE_EXCLUDE_TESTS_APP_NAME, mDefaultBackupUserId);
+        getBackupUtils().backupNowSync(INCLUDE_EXCLUDE_TESTS_APP_NAME);
 
         // Delete the files
         checkFullBackupRulesDeviceTest(deviceSideTestName,
@@ -278,8 +274,7 @@ public class FullbackupRulesHostSideTest extends BaseBackupHostSideTest {
 
         // Do a restore
         getBackupUtils()
-                .restoreForUserAndAssertSuccess(LOCAL_TRANSPORT_TOKEN,
-                        INCLUDE_EXCLUDE_TESTS_APP_NAME, mDefaultBackupUserId);
+                .restoreAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, INCLUDE_EXCLUDE_TESTS_APP_NAME);
     }
 
     private void checkFullBackupRulesDeviceTest(String className, String testName)
