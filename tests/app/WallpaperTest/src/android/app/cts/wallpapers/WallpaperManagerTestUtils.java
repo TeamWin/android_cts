@@ -307,7 +307,7 @@ public class WallpaperManagerTestUtils {
     public static void goToState(WallpaperManager wallpaperManager, WallpaperState state)
             throws IOException {
         WallpaperChange change1 = new WallpaperChange(
-                state.mHomeWallpaper, FLAG_SYSTEM | FLAG_LOCK);
+                state.mHomeWallpaper, FLAG_SYSTEM | (state.mSingleEngine ? FLAG_LOCK : 0));
         performChange(wallpaperManager, change1);
 
         WallpaperChange change2 = new WallpaperChange(state.mLockWallpaper, FLAG_LOCK);
@@ -335,6 +335,9 @@ public class WallpaperManagerTestUtils {
                 new WallpaperState(TestWallpaper.STATIC1, TestWallpaper.LIVE1, false)
         );
     }
+
+    public static final WallpaperState LIVE_STATIC_DIFFERENT_WALLPAPERS = new WallpaperState(
+            TestWallpaper.LIVE1, TestWallpaper.STATIC1, false);
 
     public static final WallpaperState TWO_DIFFERENT_LIVE_WALLPAPERS = new WallpaperState(
             TestWallpaper.LIVE1, TestWallpaper.LIVE3, false);
