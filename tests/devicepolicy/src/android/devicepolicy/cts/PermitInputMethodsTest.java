@@ -16,7 +16,12 @@
 
 package android.devicepolicy.cts;
 
+import static android.app.admin.DevicePolicyIdentifiers.PERMITTED_INPUT_METHODS_POLICY;
+
+import static com.android.bedstead.nene.flags.CommonFlags.DevicePolicyManager.ENABLE_DEVICE_POLICY_ENGINE_FLAG;
+import static com.android.bedstead.nene.flags.CommonFlags.NAMESPACE_DEVICE_POLICY_MANAGER;
 import static com.android.bedstead.nene.permissions.CommonPermissions.INTERACT_ACROSS_USERS_FULL;
+import static com.android.bedstead.nene.permissions.CommonPermissions.MANAGE_PROFILE_AND_DEVICE_OWNERS;
 import static com.android.bedstead.nene.permissions.CommonPermissions.QUERY_ADMIN_POLICY;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -25,6 +30,9 @@ import static org.junit.Assume.assumeFalse;
 import static org.testng.Assert.assertThrows;
 
 import android.app.admin.DevicePolicyManager;
+import android.app.admin.NoArgsPolicyKey;
+import android.app.admin.PolicyState;
+import android.devicepolicy.cts.utils.PolicyEngineUtils;
 import android.util.Log;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
@@ -39,6 +47,7 @@ import com.android.bedstead.harrier.policies.PermittedInputMethods;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.inputmethods.InputMethod;
 import com.android.bedstead.nene.packages.Package;
+import com.android.compatibility.common.util.ApiTest;
 
 import org.junit.After;
 import org.junit.ClassRule;
@@ -171,5 +180,50 @@ public final class PermitInputMethodsTest {
         assertThrows(IllegalArgumentException.class, () ->
                 sDeviceState.dpc().devicePolicyManager().setPermittedInputMethods(
                         sDeviceState.dpc().componentName(), badMethods));
+    }
+
+    @PolicyAppliesTest(policy = PermittedInputMethods.class)
+    @Postsubmit(reason = "new test")
+    @EnsureHasPermission({INTERACT_ACROSS_USERS_FULL, QUERY_ADMIN_POLICY,
+            MANAGE_PROFILE_AND_DEVICE_OWNERS})
+    @ApiTest(apis = {"android.app.admin.DevicePolicyManager#setPermittedInputMethods",
+            "android.app.admin.DevicePolicyManager#getPermittedInputMethods"})
+    public void setPermittedInputMethods_policyMigration_works() {
+        try {
+            assumeFalse("A system input method is required",
+                    SYSTEM_INPUT_METHODS_PACKAGES.isEmpty());
+
+            TestApis.flags().set(
+                    NAMESPACE_DEVICE_POLICY_MANAGER, ENABLE_DEVICE_POLICY_ENGINE_FLAG, "false");
+            List<String> enabledNonSystemImes = NON_SYSTEM_INPUT_METHOD_PACKAGES;
+            Set<String> permittedPlusSystem = new HashSet<>();
+            permittedPlusSystem.addAll(SYSTEM_INPUT_METHODS_PACKAGES);
+            permittedPlusSystem.addAll(enabledNonSystemImes);
+            sDeviceState.dpc().devicePolicyManager().setPermittedInputMethods(
+                    sDeviceState.dpc().componentName(), /* packageNames= */ enabledNonSystemImes);
+
+            sLocalDevicePolicyManager.triggerDevicePolicyEngineMigration(true);
+            TestApis.flags().set(
+                    NAMESPACE_DEVICE_POLICY_MANAGER, ENABLE_DEVICE_POLICY_ENGINE_FLAG, "true");
+
+            PolicyState<Set<String>> policyState = PolicyEngineUtils.getStringSetPolicyState(
+                    new NoArgsPolicyKey(PERMITTED_INPUT_METHODS_POLICY),
+                    TestApis.users().instrumented().userHandle());
+            assertThat(sDeviceState.dpc().devicePolicyManager()
+                    .getPermittedInputMethods(sDeviceState.dpc().componentName()))
+                    .containsExactlyElementsIn(enabledNonSystemImes);
+            assertThat(sLocalDevicePolicyManager.getPermittedInputMethods())
+                    .containsExactlyElementsIn(permittedPlusSystem);
+            assertThat(sLocalDevicePolicyManager.getPermittedInputMethodsForCurrentUser())
+                    .containsExactlyElementsIn(permittedPlusSystem);
+            assertThat(policyState.getCurrentResolvedPolicy())
+                    .containsExactlyElementsIn(enabledNonSystemImes);
+
+        } finally {
+            sDeviceState.dpc().devicePolicyManager().setPermittedInputMethods(
+                    sDeviceState.dpc().componentName(), /* packageNames= */ null);
+            TestApis.flags().set(
+                    NAMESPACE_DEVICE_POLICY_MANAGER, ENABLE_DEVICE_POLICY_ENGINE_FLAG, null);
+        }
     }
 }
