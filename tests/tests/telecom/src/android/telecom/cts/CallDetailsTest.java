@@ -942,6 +942,16 @@ public class CallDetailsTest extends BaseTelecomTestWithMockServices {
         assertEquals(Connection.EVENT_CALL_REMOTELY_UNHELD, event);
         assertNull(extras);
         mOnConnectionEventCounter.reset();
+
+        TestParcelable testParcelable = createTestParcelable();
+        testBundle = createTestBundle(testParcelable);
+        mConnection.sendConnectionEvent(OTT_TEST_EVENT_NAME, testBundle);
+        mOnConnectionEventCounter.waitForCount(1, WAIT_FOR_STATE_CHANGE_TIMEOUT_MS);
+        event = (String) (mOnConnectionEventCounter.getArgs(0)[1]);
+        extras = (Bundle) (mOnConnectionEventCounter.getArgs(0)[2]);
+        assertEquals(OTT_TEST_EVENT_NAME, event);
+        verifyTestBundle(extras, testParcelable);
+        mOnConnectionEventCounter.reset();
     }
 
     /**
@@ -985,6 +995,16 @@ public class CallDetailsTest extends BaseTelecomTestWithMockServices {
         assertNotNull(extras);
         assertTrue(extras.containsKey(TEST_EXTRA_KEY));
         assertEquals(TEST_SUBJECT, extras.getString(TEST_EXTRA_KEY));
+
+        // Also send a more complicated Bundle as a Call Event
+        TestParcelable testParcelable = createTestParcelable();
+        testBundle = createTestBundle(testParcelable);
+        mCall.sendCallEvent(OTT_TEST_EVENT_NAME, testBundle);
+        counter.waitForCount(2, WAIT_FOR_STATE_CHANGE_TIMEOUT_MS);
+        event = (String) (counter.getArgs(1)[0]);
+        extras = (Bundle) (counter.getArgs(1)[1]);
+        assertEquals(OTT_TEST_EVENT_NAME, event);
+        verifyTestBundle(extras, testParcelable);
     }
 
     /**

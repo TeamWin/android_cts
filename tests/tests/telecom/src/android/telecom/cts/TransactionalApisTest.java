@@ -46,6 +46,7 @@ import android.telecom.PhoneAccountHandle;
 import android.telecom.TelecomManager;
 import android.telecom.VideoProfile;
 import android.util.Log;
+import android.util.Pair;
 
 import androidx.annotation.NonNull;
 
@@ -818,19 +819,15 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
             cleanup();
             startCallWithAttributesAndVerify(mOutgoingCallAttributes, mCall1);
             callControlAction(SET_ACTIVE, mCall1);
-            // send a random event
-            Bundle extrasToSend = new Bundle();
-            extrasToSend.putParcelable(TelecomManager.EXTRA_INCOMING_CALL_ADDRESS, TEST_URI_1);
-            mCall1.mCallControl.sendEvent(Connection.EVENT_CALL_HOLD_FAILED,  extrasToSend);
+            TestParcelable originalParcelable = createTestParcelable();
+            mCall1.mCallControl.sendEvent(OTT_TEST_EVENT_NAME,
+                    createTestBundle(originalParcelable));
             // verify the event was received
             mOnConnectionEventCounter.waitForCount(1, WAIT_FOR_STATE_CHANGE_TIMEOUT_MS);
             String event = (String) (mOnConnectionEventCounter.getArgs(0)[1]);
             Bundle extras = (Bundle) (mOnConnectionEventCounter.getArgs(0)[2]);
-            assertEquals(Connection.EVENT_CALL_HOLD_FAILED, event);
-            assertNotNull(extras);
-            assertEquals(
-                    extras.getParcelable(TelecomManager.EXTRA_INCOMING_CALL_ADDRESS, Uri.class),
-                    TEST_URI_1);
+            assertEquals(OTT_TEST_EVENT_NAME, event);
+            verifyTestBundle(extras, originalParcelable);
             mOnConnectionEventCounter.reset();
             // disconnect
             callControlAction(DISCONNECT, mCall1);
@@ -853,11 +850,13 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
         }
         try {
             cleanup();
-            assertFalse(mCall1.mEvents.mWasOnEventCalled);
+            assertNull(mCall1.mEvents.mLastEventReceived);
             startCallWithAttributesAndVerify(mOutgoingCallAttributes, mCall1);
             assertNumCalls(getInCallService(), 1);
             // simulate an InCallService sending a call event
-            getLastAddedCall().sendCallEvent(Connection.EVENT_CALL_HOLD_FAILED, new Bundle());
+            TestParcelable originalParcelable = createTestParcelable();
+            Bundle testBundle = createTestBundle(originalParcelable);
+            getLastAddedCall().sendCallEvent(OTT_TEST_EVENT_NAME, testBundle);
             // wait for the onEvent to be called
             waitUntilConditionIsTrueOrTimeout(
                     new Condition() {
@@ -868,10 +867,16 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
 
                         @Override
                         public Object actual() {
-                            return mCall1.mEvents.mWasOnEventCalled;
+                            Pair<String, Bundle> lastEvent = mCall1.mEvents.mLastEventReceived;
+                            if ((lastEvent != null
+                                    && OTT_TEST_EVENT_NAME.equals(lastEvent.first))) {
+                                verifyTestBundle(lastEvent.second, originalParcelable);
+                                return true;
+                            }
+                            return false;
                         }
                     },
-                    WAIT_FOR_STATE_CHANGE_TIMEOUT_MS, "onEvent was never called");
+                    WAIT_FOR_STATE_CHANGE_TIMEOUT_MS, "onEvent was not called with correct Bundle");
 
         } finally {
             cleanup();
