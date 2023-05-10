@@ -29,6 +29,7 @@ import android.jobscheduler.cts.jobtestapp.TestFgsService;
 import android.jobscheduler.cts.jobtestapp.TestJobSchedulerReceiver;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.LargeTest;
 import androidx.test.runner.AndroidJUnit4;
 import androidx.test.uiautomator.UiDevice;
 
@@ -100,6 +101,7 @@ public class UserInitiatedJobTest {
 
     /** Test that UIJs for the TOP app start immediately and there is no limit on the number. */
     @Test
+    @LargeTest
     public void testTopUiUnlimited() throws Exception {
         final int standardConcurrency = 64;
         final int numUijs = standardConcurrency + 1;

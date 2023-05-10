@@ -31,6 +31,7 @@ import android.jobscheduler.cts.jobtestapp.TestJobSchedulerReceiver;
 import android.service.notification.StatusBarNotification;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.LargeTest;
 
 import com.android.compatibility.common.util.AnrMonitor;
 
@@ -240,6 +241,7 @@ public class NotificationTest extends BaseJobSchedulerTest {
     /**
      * Test that no ANR happens if the app is required to show a notification and it provides one.
      */
+    @LargeTest
     public void testNotification_userInitiated_noAnrWhenProvided() throws Exception {
         mNetworkingHelper.setAllNetworksEnabled(true);
         try (TestAppInterface testAppInterface = new TestAppInterface(mContext, JOB_ID);
@@ -270,6 +272,7 @@ public class NotificationTest extends BaseJobSchedulerTest {
      * Test that no ANR happens if the app is not required to show a notification
      * and it doesn't provide one.
      */
+    @LargeTest
     public void testNotification_regular_noAnrWhenNotProvided() throws Exception {
         try (TestAppInterface testAppInterface = new TestAppInterface(mContext, JOB_ID);
              AnrMonitor monitor = AnrMonitor.start(InstrumentationRegistry.getInstrumentation(),
