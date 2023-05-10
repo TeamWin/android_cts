@@ -44,10 +44,10 @@ public class UserManagerHostTest extends BaseMultiUserTest {
         assumeNewUsersCanBeAdded(2);
 
         final int userId1 = getDevice().createUser("test_user_1");
-        assertSwitchToNewUser(userId1);
+        assertSwitchToUser(userId1);
 
         final int userId2 = getDevice().createUser("test_user_2");
-        assertSwitchToNewUser(userId2);
+        assertSwitchToUser(userId2);
         assertPreviousUserIs(userId1);
 
         getDevice().reboot();
