@@ -16,6 +16,7 @@
 package android.host.multiuser;
 
 import static com.google.common.truth.Truth.assertWithMessage;
+
 import static org.junit.Assume.assumeTrue;
 
 import android.platform.test.annotations.LargeTest;
@@ -57,8 +58,8 @@ public class EphemeralTest extends BaseMultiUserTest {
     public void testSwitchAndRemoveEphemeralUser() throws Exception {
         final int ephemeralUserId = createEphemeralUser();
 
-        assertSwitchToNewUser(ephemeralUserId);
-        assertSwitchToUser(ephemeralUserId, mInitialUserId);
+        assertSwitchToUser(ephemeralUserId);
+        assertSwitchToUser(mInitialUserId);
         waitForUserRemove(ephemeralUserId);
         assertUserNotPresent(ephemeralUserId);
     }
@@ -69,7 +70,7 @@ public class EphemeralTest extends BaseMultiUserTest {
     public void testRebootAndRemoveEphemeralUser() throws Exception {
         final int ephemeralUserId = createEphemeralUser();
 
-        assertSwitchToNewUser(ephemeralUserId);
+        assertSwitchToUser(ephemeralUserId);
         getDevice().reboot();
         assertUserNotPresent(ephemeralUserId);
     }
@@ -81,7 +82,7 @@ public class EphemeralTest extends BaseMultiUserTest {
     @Test
     public void testRebootAndRemoveEphemeralUser_withAccount() throws Exception {
         final int ephemeralUserId = createEphemeralUser();
-        assertSwitchToNewUser(ephemeralUserId);
+        assertSwitchToUser(ephemeralUserId);
 
         installPackageAsUser(
                 TEST_APP_PKG_APK, /* grantPermissions= */true, ephemeralUserId, /* options= */"-t");
@@ -132,11 +133,11 @@ public class EphemeralTest extends BaseMultiUserTest {
             throws Exception {
         final int userId = createUser();
 
-        assertSwitchToNewUser(userId);
+        assertSwitchToUser(userId);
         executeRemoveUserWhenPossible(userId, /* expectedResult= */ REMOVE_RESULT_DEFERRED);
         assertUserEphemeral(userId);
 
-        assertSwitchToUser(userId, mInitialUserId);
+        assertSwitchToUser(mInitialUserId);
         waitForUserRemove(userId);
         assertUserNotPresent(userId);
     }
@@ -154,7 +155,7 @@ public class EphemeralTest extends BaseMultiUserTest {
             throws Exception {
         final int userId = createUser();
 
-        assertSwitchToNewUser(userId);
+        assertSwitchToUser(userId);
         executeRemoveUserWhenPossible(userId, /* expectedResult= */ REMOVE_RESULT_DEFERRED);
         assertUserEphemeral(userId);
 
