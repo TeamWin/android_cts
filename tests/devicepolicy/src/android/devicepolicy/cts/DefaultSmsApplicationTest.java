@@ -44,6 +44,7 @@ import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.EnsureFeatureFlagEnabled;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.Postsubmit;
+import com.android.bedstead.harrier.annotations.RequireNotHeadlessSystemUserMode;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyDoesNotApplyTest;
@@ -98,6 +99,7 @@ public final class DefaultSmsApplicationTest {
             "enable_work_profile_telephony")
     @EnsureFeatureFlagEnabled(namespace = NAMESPACE_TELEPHONY, key =
             "enable_work_profile_telephony")
+    @RequireNotHeadlessSystemUserMode(reason = "b/279731298")
     public void setDefaultSmsApplication_works() {
         //TODO(b/273529454): replace with EnsureTelephonyEnabledInUser annotation
         if (mDpm.isOrganizationOwnedDeviceWithManagedProfile()) {
