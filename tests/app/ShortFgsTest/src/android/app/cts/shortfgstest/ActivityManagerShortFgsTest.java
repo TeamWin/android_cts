@@ -47,6 +47,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.PowerExemptionManager;
 import android.os.SystemClock;
+import android.os.UserHandle;
 import android.platform.test.annotations.Presubmit;
 import android.provider.DeviceConfig;
 import android.util.Log;
@@ -374,7 +375,9 @@ public class ActivityManagerShortFgsTest {
     }
 
     public static void untempAllowlistPackage(String packageName) {
-        SystemUtil.runShellCommand("cmd deviceidle tempwhitelist -r " + packageName);
+        SystemUtil.runShellCommand("cmd deviceidle tempwhitelist -r "
+                + " -u " + UserHandle.getUserId(android.os.Process.myUid())
+                + " " + packageName);
     }
 
     /**
