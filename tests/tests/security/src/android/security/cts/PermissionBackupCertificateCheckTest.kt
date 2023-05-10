@@ -15,10 +15,18 @@
  */
 package android.security.cts
 
-import android.Manifest.permission.*
+import android.Manifest.permission.ACCESS_BACKGROUND_LOCATION
+import android.Manifest.permission.ACCESS_FINE_LOCATION
+import android.Manifest.permission.READ_CONTACTS
+import android.Manifest.permission.WRITE_CONTACTS
 import android.app.AppOpsManager
-import android.content.pm.PackageManager.*
+import android.content.pm.PackageManager.FEATURE_BACKUP
+import android.content.pm.PackageManager.FLAG_PERMISSION_USER_SET
+import android.content.pm.PackageManager.PERMISSION_DENIED
+import android.content.pm.PackageManager.PERMISSION_GRANTED
 import android.os.ParcelFileDescriptor
+import android.os.UserHandle
+import android.os.UserManager
 import android.permission.cts.PermissionUtils.grantPermission
 import android.platform.test.annotations.AppModeFull
 import android.platform.test.annotations.AsbSecurityTest
@@ -62,6 +70,8 @@ class PermissionBackupCertificateCheckTest : StsExtraBusinessLogicTestCase() {
 
     private var isBackupSupported = false
 
+    private var defaultBackupUserId: Int = 0
+
     private val targetContext = InstrumentationRegistry.getTargetContext()
 
     @Before
@@ -70,9 +80,19 @@ class PermissionBackupCertificateCheckTest : StsExtraBusinessLogicTestCase() {
         isBackupSupported =
             (packageManager != null && packageManager.hasSystemFeature(FEATURE_BACKUP))
 
+        val mainUser: UserHandle? = BusinessLogicTestCase.getInstrumentation().context
+            .getSystemService(UserManager::class.java)?.mainUser
+        defaultBackupUserId = mainUser?.identifier ?: UserHandle.USER_SYSTEM
+
         if (isBackupSupported) {
-            assertTrue("Backup not enabled", backupUtils.isBackupEnabled)
-            assertTrue("LocalTransport not selected", backupUtils.isLocalTransportSelected)
+            assertTrue(
+                "Backup not enabled",
+                backupUtils.isBackupEnabledForUser(defaultBackupUserId)
+            )
+            assertTrue(
+                "LocalTransport not selected",
+                backupUtils.isLocalTransportSelectedForUser(defaultBackupUserId)
+            )
             backupUtils.executeShellCommandSync("setprop log.tag.$APP_LOG_TAG VERBOSE")
         }
     }
@@ -97,10 +117,13 @@ class PermissionBackupCertificateCheckTest : StsExtraBusinessLogicTestCase() {
         }
         grantPermission(APP, ACCESS_FINE_LOCATION)
 
-        backupUtils.backupNowAndAssertSuccess(ANDROID_PACKAGE)
+        backupUtils.backupNowForUserAndAssertSuccess(ANDROID_PACKAGE, defaultBackupUserId)
         uninstallIfInstalled(APP)
         install(APP_APK_CERT_1_DUP)
-        backupUtils.restoreAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE)
+        backupUtils.restoreForUserAndAssertSuccess(
+            LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE,
+            defaultBackupUserId
+        )
 
         eventually {
             assertEquals(PERMISSION_GRANTED, checkPermission(APP, ACCESS_FINE_LOCATION))
@@ -121,10 +144,13 @@ class PermissionBackupCertificateCheckTest : StsExtraBusinessLogicTestCase() {
         }
         grantPermission(APP, ACCESS_FINE_LOCATION)
 
-        backupUtils.backupNowAndAssertSuccess(ANDROID_PACKAGE)
+        backupUtils.backupNowForUserAndAssertSuccess(ANDROID_PACKAGE, defaultBackupUserId)
         uninstallIfInstalled(APP)
         install(APP_APK_CERT_3)
-        backupUtils.restoreAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE)
+        backupUtils.restoreForUserAndAssertSuccess(
+            LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE,
+            defaultBackupUserId
+        )
 
         eventually {
             assertEquals(PERMISSION_DENIED, checkPermission(APP, ACCESS_FINE_LOCATION))
@@ -145,10 +171,13 @@ class PermissionBackupCertificateCheckTest : StsExtraBusinessLogicTestCase() {
         }
         grantPermission(APP, ACCESS_FINE_LOCATION)
 
-        backupUtils.backupNowAndAssertSuccess(ANDROID_PACKAGE)
+        backupUtils.backupNowForUserAndAssertSuccess(ANDROID_PACKAGE, defaultBackupUserId)
         uninstallIfInstalled(APP)
         install(APP_APK_CERT_4_HISTORY_1_2_4)
-        backupUtils.restoreAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE)
+        backupUtils.restoreForUserAndAssertSuccess(
+            LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE,
+            defaultBackupUserId
+        )
 
         eventually {
             assertEquals(PERMISSION_GRANTED, checkPermission(APP, ACCESS_FINE_LOCATION))
@@ -169,10 +198,13 @@ class PermissionBackupCertificateCheckTest : StsExtraBusinessLogicTestCase() {
         }
         grantPermission(APP, ACCESS_FINE_LOCATION)
 
-        backupUtils.backupNowAndAssertSuccess(ANDROID_PACKAGE)
+        backupUtils.backupNowForUserAndAssertSuccess(ANDROID_PACKAGE, defaultBackupUserId)
         uninstallIfInstalled(APP)
         install(APP_APK_CERT_4_HISTORY_1_2_4)
-        backupUtils.restoreAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE)
+        backupUtils.restoreForUserAndAssertSuccess(
+            LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE,
+            defaultBackupUserId
+        )
 
         eventually {
             assertEquals(PERMISSION_GRANTED, checkPermission(APP, ACCESS_FINE_LOCATION))
@@ -193,10 +225,13 @@ class PermissionBackupCertificateCheckTest : StsExtraBusinessLogicTestCase() {
         }
         grantPermission(APP, ACCESS_FINE_LOCATION)
 
-        backupUtils.backupNowAndAssertSuccess(ANDROID_PACKAGE)
+        backupUtils.backupNowForUserAndAssertSuccess(ANDROID_PACKAGE, defaultBackupUserId)
         uninstallIfInstalled(APP)
         install(APP_APK_CERT_2)
-        backupUtils.restoreAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE)
+        backupUtils.restoreForUserAndAssertSuccess(
+            LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE,
+            defaultBackupUserId
+        )
 
         eventually {
             assertEquals(PERMISSION_GRANTED, checkPermission(APP, ACCESS_FINE_LOCATION))
@@ -217,10 +252,13 @@ class PermissionBackupCertificateCheckTest : StsExtraBusinessLogicTestCase() {
         }
         grantPermission(APP, ACCESS_FINE_LOCATION)
 
-        backupUtils.backupNowAndAssertSuccess(ANDROID_PACKAGE)
+        backupUtils.backupNowForUserAndAssertSuccess(ANDROID_PACKAGE, defaultBackupUserId)
         uninstallIfInstalled(APP)
         install(APP_APK_CERT_1)
-        backupUtils.restoreAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE)
+        backupUtils.restoreForUserAndAssertSuccess(
+            LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE,
+            defaultBackupUserId
+        )
 
         eventually {
             assertEquals(PERMISSION_GRANTED, checkPermission(APP, ACCESS_FINE_LOCATION))
@@ -242,10 +280,13 @@ class PermissionBackupCertificateCheckTest : StsExtraBusinessLogicTestCase() {
         }
         grantPermission(APP, ACCESS_FINE_LOCATION)
 
-        backupUtils.backupNowAndAssertSuccess(ANDROID_PACKAGE)
+        backupUtils.backupNowForUserAndAssertSuccess(ANDROID_PACKAGE, defaultBackupUserId)
         uninstallIfInstalled(APP)
         install(APP_APK_CERT_4_HISTORY_1_2_4)
-        backupUtils.restoreAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE)
+        backupUtils.restoreForUserAndAssertSuccess(
+            LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE,
+            defaultBackupUserId
+        )
 
         eventually {
             assertEquals(PERMISSION_GRANTED, checkPermission(APP, ACCESS_FINE_LOCATION))
@@ -267,10 +308,13 @@ class PermissionBackupCertificateCheckTest : StsExtraBusinessLogicTestCase() {
         }
         grantPermission(APP, ACCESS_FINE_LOCATION)
 
-        backupUtils.backupNowAndAssertSuccess(ANDROID_PACKAGE)
+        backupUtils.backupNowForUserAndAssertSuccess(ANDROID_PACKAGE, defaultBackupUserId)
         uninstallIfInstalled(APP)
         install(APP_APK_CERT_4)
-        backupUtils.restoreAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE)
+        backupUtils.restoreForUserAndAssertSuccess(
+            LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE,
+            defaultBackupUserId
+        )
 
         eventually {
             assertEquals(PERMISSION_GRANTED, checkPermission(APP, ACCESS_FINE_LOCATION))
@@ -291,10 +335,13 @@ class PermissionBackupCertificateCheckTest : StsExtraBusinessLogicTestCase() {
         }
         grantPermission(APP, ACCESS_FINE_LOCATION)
 
-        backupUtils.backupNowAndAssertSuccess(ANDROID_PACKAGE)
+        backupUtils.backupNowForUserAndAssertSuccess(ANDROID_PACKAGE, defaultBackupUserId)
         uninstallIfInstalled(APP)
         install(APP_APK_CERT_3)
-        backupUtils.restoreAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE)
+        backupUtils.restoreForUserAndAssertSuccess(
+            LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE,
+            defaultBackupUserId
+        )
 
         eventually {
             assertEquals(PERMISSION_DENIED, checkPermission(APP, ACCESS_FINE_LOCATION))
@@ -315,10 +362,13 @@ class PermissionBackupCertificateCheckTest : StsExtraBusinessLogicTestCase() {
         }
         grantPermission(APP, ACCESS_FINE_LOCATION)
 
-        backupUtils.backupNowAndAssertSuccess(ANDROID_PACKAGE)
+        backupUtils.backupNowForUserAndAssertSuccess(ANDROID_PACKAGE, defaultBackupUserId)
         uninstallIfInstalled(APP)
         install(APP_APK_CERT_4_HISTORY_1_2_4)
-        backupUtils.restoreAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE)
+        backupUtils.restoreForUserAndAssertSuccess(
+            LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE,
+            defaultBackupUserId
+        )
 
         eventually {
             assertEquals(PERMISSION_DENIED, checkPermission(APP, ACCESS_FINE_LOCATION))
@@ -339,10 +389,13 @@ class PermissionBackupCertificateCheckTest : StsExtraBusinessLogicTestCase() {
         }
         grantPermission(APP, ACCESS_FINE_LOCATION)
 
-        backupUtils.backupNowAndAssertSuccess(ANDROID_PACKAGE)
+        backupUtils.backupNowForUserAndAssertSuccess(ANDROID_PACKAGE, defaultBackupUserId)
         uninstallIfInstalled(APP)
         install(APP_APK_CERT_1_2_DUP)
-        backupUtils.restoreAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE)
+        backupUtils.restoreForUserAndAssertSuccess(
+            LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE,
+            defaultBackupUserId
+        )
 
         eventually {
             assertEquals(PERMISSION_GRANTED, checkPermission(APP, ACCESS_FINE_LOCATION))
@@ -363,10 +416,13 @@ class PermissionBackupCertificateCheckTest : StsExtraBusinessLogicTestCase() {
         }
         grantPermission(APP, ACCESS_FINE_LOCATION)
 
-        backupUtils.backupNowAndAssertSuccess(ANDROID_PACKAGE)
+        backupUtils.backupNowForUserAndAssertSuccess(ANDROID_PACKAGE, defaultBackupUserId)
         uninstallIfInstalled(APP)
         install(APP_APK_CERT_3_4)
-        backupUtils.restoreAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE)
+        backupUtils.restoreForUserAndAssertSuccess(
+            LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE,
+            defaultBackupUserId
+        )
 
         eventually {
             assertEquals(PERMISSION_DENIED, checkPermission(APP, ACCESS_FINE_LOCATION))
@@ -388,10 +444,13 @@ class PermissionBackupCertificateCheckTest : StsExtraBusinessLogicTestCase() {
         }
         grantPermission(APP, ACCESS_FINE_LOCATION)
 
-        backupUtils.backupNowAndAssertSuccess(ANDROID_PACKAGE)
+        backupUtils.backupNowForUserAndAssertSuccess(ANDROID_PACKAGE, defaultBackupUserId)
         uninstallIfInstalled(APP)
         install(APP_APK_CERT_1_2_3)
-        backupUtils.restoreAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE)
+        backupUtils.restoreForUserAndAssertSuccess(
+            LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE,
+            defaultBackupUserId
+        )
 
         eventually {
             assertEquals(PERMISSION_DENIED, checkPermission(APP, ACCESS_FINE_LOCATION))
@@ -413,10 +472,13 @@ class PermissionBackupCertificateCheckTest : StsExtraBusinessLogicTestCase() {
         }
         grantPermission(APP, ACCESS_FINE_LOCATION)
 
-        backupUtils.backupNowAndAssertSuccess(ANDROID_PACKAGE)
+        backupUtils.backupNowForUserAndAssertSuccess(ANDROID_PACKAGE, defaultBackupUserId)
         uninstallIfInstalled(APP)
         install(APP_APK_CERT_1_2_3)
-        backupUtils.restoreAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE)
+        backupUtils.restoreForUserAndAssertSuccess(
+            LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE,
+            defaultBackupUserId
+        )
 
         eventually {
             assertEquals(PERMISSION_DENIED, checkPermission(APP, ACCESS_FINE_LOCATION))
@@ -438,10 +500,13 @@ class PermissionBackupCertificateCheckTest : StsExtraBusinessLogicTestCase() {
         }
         grantPermission(APP, ACCESS_FINE_LOCATION)
 
-        backupUtils.backupNowAndAssertSuccess(ANDROID_PACKAGE)
+        backupUtils.backupNowForUserAndAssertSuccess(ANDROID_PACKAGE, defaultBackupUserId)
         uninstallIfInstalled(APP)
         install(APP_APK_CERT_1_2)
-        backupUtils.restoreAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE)
+        backupUtils.restoreForUserAndAssertSuccess(
+            LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE,
+            defaultBackupUserId
+        )
 
         eventually {
             assertEquals(PERMISSION_DENIED, checkPermission(APP, ACCESS_FINE_LOCATION))
@@ -468,10 +533,13 @@ class PermissionBackupCertificateCheckTest : StsExtraBusinessLogicTestCase() {
         setFlag(APP, ACCESS_FINE_LOCATION, FLAG_PERMISSION_USER_SET)
         setFlag(APP, ACCESS_BACKGROUND_LOCATION, FLAG_PERMISSION_USER_SET)
 
-        backupUtils.backupNowAndAssertSuccess(ANDROID_PACKAGE)
+        backupUtils.backupNowForUserAndAssertSuccess(ANDROID_PACKAGE, defaultBackupUserId)
         uninstallIfInstalled(APP)
         install(APP_APK_CERT_4_HISTORY_1_2_4)
-        backupUtils.restoreAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE)
+        backupUtils.restoreForUserAndAssertSuccess(
+            LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE,
+            defaultBackupUserId
+        )
 
         eventually {
 
@@ -503,10 +571,13 @@ class PermissionBackupCertificateCheckTest : StsExtraBusinessLogicTestCase() {
         setFlag(APP, ACCESS_FINE_LOCATION, FLAG_PERMISSION_USER_SET)
         setFlag(APP, ACCESS_BACKGROUND_LOCATION, FLAG_PERMISSION_USER_SET)
 
-        backupUtils.backupNowAndAssertSuccess(ANDROID_PACKAGE)
+        backupUtils.backupNowForUserAndAssertSuccess(ANDROID_PACKAGE, defaultBackupUserId)
         uninstallIfInstalled(APP)
         install(APP_APK_CERT_2)
-        backupUtils.restoreAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE)
+        backupUtils.restoreForUserAndAssertSuccess(
+            LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE,
+            defaultBackupUserId
+        )
 
         eventually {
 
@@ -534,10 +605,13 @@ class PermissionBackupCertificateCheckTest : StsExtraBusinessLogicTestCase() {
         // to ensure that permissions are backed up.
         setFlag(APP, ACCESS_BACKGROUND_LOCATION, FLAG_PERMISSION_USER_SET)
 
-        backupUtils.backupNowAndAssertSuccess(ANDROID_PACKAGE)
+        backupUtils.backupNowForUserAndAssertSuccess(ANDROID_PACKAGE, defaultBackupUserId)
         uninstallIfInstalled(APP)
         install(APP_APK_CERT_4_HISTORY_1_2_4)
-        backupUtils.restoreAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE)
+        backupUtils.restoreForUserAndAssertSuccess(
+            LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE,
+            defaultBackupUserId
+        )
 
         eventually {
             assertEquals(PERMISSION_GRANTED, checkPermission(APP, ACCESS_FINE_LOCATION))
@@ -562,10 +636,13 @@ class PermissionBackupCertificateCheckTest : StsExtraBusinessLogicTestCase() {
         // to ensure that permissions are backed up.
         setFlag(APP, ACCESS_BACKGROUND_LOCATION, FLAG_PERMISSION_USER_SET)
 
-        backupUtils.backupNowAndAssertSuccess(ANDROID_PACKAGE)
+        backupUtils.backupNowForUserAndAssertSuccess(ANDROID_PACKAGE, defaultBackupUserId)
         uninstallIfInstalled(APP)
         install(APP_APK_CERT_2)
-        backupUtils.restoreAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE)
+        backupUtils.restoreForUserAndAssertSuccess(
+            LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE,
+            defaultBackupUserId
+        )
 
         eventually {
             assertEquals(PERMISSION_DENIED, checkPermission(APP, ACCESS_FINE_LOCATION))
@@ -588,10 +665,13 @@ class PermissionBackupCertificateCheckTest : StsExtraBusinessLogicTestCase() {
         grantPermission(APP, ACCESS_FINE_LOCATION)
         grantPermission(APP, ACCESS_BACKGROUND_LOCATION)
 
-        backupUtils.backupNowAndAssertSuccess(ANDROID_PACKAGE)
+        backupUtils.backupNowForUserAndAssertSuccess(ANDROID_PACKAGE, defaultBackupUserId)
         uninstallIfInstalled(APP)
         install(APP_APK_CERT_4_HISTORY_1_2_4)
-        backupUtils.restoreAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE)
+        backupUtils.restoreForUserAndAssertSuccess(
+            LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE,
+            defaultBackupUserId
+        )
 
         eventually {
             assertEquals(PERMISSION_GRANTED, checkPermission(APP, ACCESS_FINE_LOCATION))
@@ -615,10 +695,13 @@ class PermissionBackupCertificateCheckTest : StsExtraBusinessLogicTestCase() {
         grantPermission(APP, ACCESS_FINE_LOCATION)
         grantPermission(APP, ACCESS_BACKGROUND_LOCATION)
 
-        backupUtils.backupNowAndAssertSuccess(ANDROID_PACKAGE)
+        backupUtils.backupNowForUserAndAssertSuccess(ANDROID_PACKAGE, defaultBackupUserId)
         uninstallIfInstalled(APP)
         install(APP_APK_CERT_2)
-        backupUtils.restoreAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE)
+        backupUtils.restoreForUserAndAssertSuccess(
+            LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE,
+            defaultBackupUserId
+        )
 
         eventually {
             assertEquals(PERMISSION_DENIED, checkPermission(APP, ACCESS_FINE_LOCATION))
@@ -640,10 +723,13 @@ class PermissionBackupCertificateCheckTest : StsExtraBusinessLogicTestCase() {
         }
         setFlag(APP, WRITE_CONTACTS, FLAG_PERMISSION_USER_SET)
 
-        backupUtils.backupNowAndAssertSuccess(ANDROID_PACKAGE)
+        backupUtils.backupNowForUserAndAssertSuccess(ANDROID_PACKAGE, defaultBackupUserId)
         uninstallIfInstalled(APP)
         install(APP_APK_CERT_4_HISTORY_1_2_4)
-        backupUtils.restoreAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE)
+        backupUtils.restoreForUserAndAssertSuccess(
+            LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE,
+            defaultBackupUserId
+        )
 
         eventually { assertTrue(isFlagSet(APP, WRITE_CONTACTS, FLAG_PERMISSION_USER_SET)) }
     }
@@ -661,10 +747,13 @@ class PermissionBackupCertificateCheckTest : StsExtraBusinessLogicTestCase() {
         }
         setFlag(APP, WRITE_CONTACTS, FLAG_PERMISSION_USER_SET)
 
-        backupUtils.backupNowAndAssertSuccess(ANDROID_PACKAGE)
+        backupUtils.backupNowForUserAndAssertSuccess(ANDROID_PACKAGE, defaultBackupUserId)
         uninstallIfInstalled(APP)
         install(APP_APK_CERT_2)
-        backupUtils.restoreAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE)
+        backupUtils.restoreForUserAndAssertSuccess(
+            LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE,
+            defaultBackupUserId
+        )
 
         eventually { assertFalse(isFlagSet(APP, WRITE_CONTACTS, FLAG_PERMISSION_USER_SET)) }
     }
@@ -682,9 +771,12 @@ class PermissionBackupCertificateCheckTest : StsExtraBusinessLogicTestCase() {
         }
         grantPermission(APP, ACCESS_FINE_LOCATION)
 
-        backupUtils.backupNowAndAssertSuccess(ANDROID_PACKAGE)
+        backupUtils.backupNowForUserAndAssertSuccess(ANDROID_PACKAGE, defaultBackupUserId)
         uninstallIfInstalled(APP)
-        backupUtils.restoreAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE)
+        backupUtils.restoreForUserAndAssertSuccess(
+            LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE,
+            defaultBackupUserId
+        )
         install(APP_APK_CERT_4_HISTORY_1_2_4)
 
         eventually { assertEquals(PERMISSION_GRANTED, checkPermission(APP, ACCESS_FINE_LOCATION)) }
@@ -704,9 +796,12 @@ class PermissionBackupCertificateCheckTest : StsExtraBusinessLogicTestCase() {
         }
         grantPermission(APP, ACCESS_FINE_LOCATION)
 
-        backupUtils.backupNowAndAssertSuccess(ANDROID_PACKAGE)
+        backupUtils.backupNowForUserAndAssertSuccess(ANDROID_PACKAGE, defaultBackupUserId)
         uninstallIfInstalled(APP)
-        backupUtils.restoreAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE)
+        backupUtils.restoreForUserAndAssertSuccess(
+            LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE,
+            defaultBackupUserId
+        )
         install(APP_APK_CERT_4_HISTORY_1_2_4)
 
         eventually { assertEquals(PERMISSION_DENIED, checkPermission(APP, ACCESS_FINE_LOCATION)) }
@@ -724,14 +819,16 @@ class PermissionBackupCertificateCheckTest : StsExtraBusinessLogicTestCase() {
     private fun setFlag(app: String, permission: String, flag: Int) {
         runWithShellPermissionIdentity {
             targetContext.packageManager.updatePermissionFlags(
-                permission, app, flag, flag, targetContext.user)
+                permission, app, flag, flag, targetContext.user
+            )
         }
     }
 
     private fun clearFlag(app: String, permission: String, flag: Int) {
         runWithShellPermissionIdentity {
             targetContext.packageManager.updatePermissionFlags(
-                permission, app, flag, 0, targetContext.user)
+                permission, app, flag, 0, targetContext.user
+            )
         }
     }
 
@@ -757,7 +854,8 @@ class PermissionBackupCertificateCheckTest : StsExtraBusinessLogicTestCase() {
                     .unsafeCheckOpRaw(
                         AppOpsManager.permissionToOp(permission)!!,
                         targetContext.packageManager.getPackageUid(app, 0),
-                        app)
+                        app
+                    )
             }
         } catch (e: Exception) {
             throw RuntimeException(e)
@@ -767,6 +865,7 @@ class PermissionBackupCertificateCheckTest : StsExtraBusinessLogicTestCase() {
     companion object {
         /** The name of the package of the apps under test */
         private const val APP = "android.security.permissionbackup"
+
         /** The apk of the packages */
         private const val APK_PATH = "/data/local/tmp/cts/security/"
         private const val APP_APK_CERT_1 = "${APK_PATH}CtsPermissionBackupAppCert1.apk"
@@ -781,6 +880,7 @@ class PermissionBackupCertificateCheckTest : StsExtraBusinessLogicTestCase() {
         private const val APP_APK_CERT_4_HISTORY_1_2_4 =
             "${APK_PATH}CtsPermissionBackupAppCert4History124.apk"
         private const val APP_LOG_TAG = "PermissionBackupApp"
+
         /** The name of the package for backup */
         private const val ANDROID_PACKAGE = "android"
         private const val TIMEOUT_MILLIS: Long = 10000

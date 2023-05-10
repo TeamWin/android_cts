@@ -24,10 +24,11 @@ android_test_helper_app {
         "platform-test-annotations",
     ],
     srcs: ["src/**/*.java"],
+    min_sdk_version: "31",
+    sdk_version: "test_current",
     // tag this module as a cts test artifact
     test_suites: [
         "cts",
         "general-tests",
     ],
-    sdk_version: "current",
 }

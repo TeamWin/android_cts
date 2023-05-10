@@ -24,10 +24,13 @@ import static org.junit.Assert.assertTrue;
 import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.app.Instrumentation;
+import android.app.UiAutomation;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
+import android.os.UserHandle;
+import android.os.UserManager;
 import android.platform.test.annotations.AppModeFull;
 
 import androidx.test.InstrumentationRegistry;
@@ -36,6 +39,7 @@ import androidx.test.runner.AndroidJUnit4;
 import com.android.compatibility.common.util.BackupUtils;
 import com.android.compatibility.common.util.TestUtils;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -62,6 +66,8 @@ public class SyncAdapterSettingsTest {
 
     private Context mContext;
     private Account mAccount;
+    private int mDefaultBackupUserId;
+    private UiAutomation mUiAutomation;
     private BackupUtils mBackupUtils =
             new BackupUtils() {
                 @Override
@@ -77,7 +83,16 @@ public class SyncAdapterSettingsTest {
     public void setUp() {
         Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
         mContext = instrumentation.getTargetContext();
+        mUiAutomation = instrumentation.getUiAutomation();
+        mUiAutomation.adoptShellPermissionIdentity();
+        UserHandle mainUser = mContext.getSystemService(UserManager.class).getMainUser();
+        mDefaultBackupUserId = mainUser == null ? UserHandle.USER_SYSTEM : mainUser.getIdentifier();
         mAccount = getAccount();
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        mUiAutomation.dropShellPermissionIdentity();
     }
 
     /**
@@ -92,9 +107,10 @@ public class SyncAdapterSettingsTest {
     public void testMasterSyncAutomatically_whenOn_isRestored() throws Exception {
         ContentResolver.setMasterSyncAutomatically(true);
 
-        mBackupUtils.backupNowAndAssertSuccess(ANDROID_PACKAGE);
+        mBackupUtils.backupNowForUserAndAssertSuccess(ANDROID_PACKAGE, mDefaultBackupUserId);
         ContentResolver.setMasterSyncAutomatically(false);
-        mBackupUtils.restoreAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE);
+        mBackupUtils.restoreForUserAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE,
+                mDefaultBackupUserId);
 
         assertTrue(ContentResolver.getMasterSyncAutomatically());
     }
@@ -111,9 +127,10 @@ public class SyncAdapterSettingsTest {
     public void testMasterSyncAutomatically_whenOff_isRestored() throws Exception {
         ContentResolver.setMasterSyncAutomatically(false);
 
-        mBackupUtils.backupNowAndAssertSuccess(ANDROID_PACKAGE);
+        mBackupUtils.backupNowForUserAndAssertSuccess(ANDROID_PACKAGE, mDefaultBackupUserId);
         ContentResolver.setMasterSyncAutomatically(true);
-        mBackupUtils.restoreAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE);
+        mBackupUtils.restoreForUserAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE,
+                mDefaultBackupUserId);
 
         assertFalse(ContentResolver.getMasterSyncAutomatically());
     }
@@ -136,9 +153,10 @@ public class SyncAdapterSettingsTest {
         initSettings(/* masterSyncAutomatically= */true, /* syncAutomatically= */
                 true, /* isSyncable= */1);
 
-        mBackupUtils.backupNowAndAssertSuccess(ANDROID_PACKAGE);
+        mBackupUtils.backupNowForUserAndAssertSuccess(ANDROID_PACKAGE, mDefaultBackupUserId);
         setSyncAutomaticallyAndIsSyncable(false, 0);
-        mBackupUtils.restoreAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE);
+        mBackupUtils.restoreForUserAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE,
+                mDefaultBackupUserId);
 
         assertSettings(/* syncAutomatically= */true, /* isSyncable= */0);
         removeAccount(mContext);
@@ -162,9 +180,10 @@ public class SyncAdapterSettingsTest {
         initSettings(/* masterSyncAutomatically= */true, /* syncAutomatically= */
                 false, /* isSyncable= */0);
 
-        mBackupUtils.backupNowAndAssertSuccess(ANDROID_PACKAGE);
+        mBackupUtils.backupNowForUserAndAssertSuccess(ANDROID_PACKAGE, mDefaultBackupUserId);
         setSyncAutomaticallyAndIsSyncable(true, 1);
-        mBackupUtils.restoreAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE);
+        mBackupUtils.restoreForUserAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE,
+                mDefaultBackupUserId);
 
         assertSettings(/* syncAutomatically= */false, /* isSyncable= */0);
         removeAccount(mContext);
@@ -191,9 +210,10 @@ public class SyncAdapterSettingsTest {
         initSettings(/* masterSyncAutomatically= */true, /* syncAutomatically= */
                 false, /* isSyncable= */1);
 
-        mBackupUtils.backupNowAndAssertSuccess(ANDROID_PACKAGE);
+        mBackupUtils.backupNowForUserAndAssertSuccess(ANDROID_PACKAGE, mDefaultBackupUserId);
         setSyncAutomaticallyAndIsSyncable(true, 0);
-        mBackupUtils.restoreAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE);
+        mBackupUtils.restoreForUserAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE,
+                mDefaultBackupUserId);
 
         assertSettings(/* syncAutomatically= */false, /* isSyncable= */1);
         removeAccount(mContext);

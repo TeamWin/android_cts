@@ -61,10 +61,6 @@ public class ProfileScheduledJobHostSideTest extends BaseMultiUserBackupHostSide
     private static final int TIMEOUT_FOR_FULL_BACKUP_SECONDS = 5 * 60; // 5 minutes.
 
     private static final String JOB_SCHEDULER_RUN_COMMAND = "cmd jobscheduler run -f android";
-    private static final String LOGCAT_BUFFER_SIZE_GET_COMMAND =
-            "logcat -g | grep -E -o '[0-9]*([[:space:]]KiB|[[:space:]]MiB)' | head -1";
-    private static final String LOGCAT_BUFFER_SIZE_SET_COMMAND = "logcat -G ";
-    private static final String LOGCAT_MAX_BUFFER_SIZE = "16MiB";
 
     private final BackupUtils mBackupUtils = getBackupUtils();
     private ITestDevice mDevice;
@@ -177,7 +173,7 @@ public class ProfileScheduledJobHostSideTest extends BaseMultiUserBackupHostSide
         // Install a new eligible full backup app and run a backup pass for @pm@ as we cannot
         // perform a full backup pass before @pm@ is backed up.
         installPackageAsUser(FULL_BACKUP_APK, profileUserId);
-        mBackupUtils.backupNowAndAssertSuccessForUser(PACKAGE_MANAGER_SENTINEL, profileUserId);
+        mBackupUtils.backupNowForUserAndAssertSuccess(PACKAGE_MANAGER_SENTINEL, profileUserId);
 
         String previousBufferSize = mBackupUtils.executeShellCommandAndReturnOutput(
                 LOGCAT_BUFFER_SIZE_GET_COMMAND);
