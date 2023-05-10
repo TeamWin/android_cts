@@ -170,8 +170,10 @@ public class VideoEncoderTest extends CodecEncoderTestBase {
                 {MediaFormat.MIMETYPE_VIDEO_VP9, 20000000, 3840, 2160, 30,
                         COLOR_FormatYUV420Flexible, CODEC_HW_RECOMMENDED},
 
-                {MediaFormat.MIMETYPE_VIDEO_HEVC, 1600000, 720, 480, 30,
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, 1000000, 512, 512, 30,
                         COLOR_FormatYUV420Flexible, CODEC_ANY},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, 1600000, 720, 480, 30,
+                        COLOR_FormatYUV420Flexible, CODEC_HW_RECOMMENDED},
                 {MediaFormat.MIMETYPE_VIDEO_HEVC, 4000000, 1280, 720, 30,
                         COLOR_FormatYUV420Flexible, CODEC_HW_RECOMMENDED},
                 {MediaFormat.MIMETYPE_VIDEO_HEVC, 5000000, 1920, 1080, 30,
