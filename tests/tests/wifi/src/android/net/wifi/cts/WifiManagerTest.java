@@ -6774,7 +6774,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         }
 
         @Override
-        public void onActivated(boolean activated) {
+        public void onActivatedStateChanged(boolean activated) {
             mIsActivated = activated;
         }
 
