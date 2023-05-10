@@ -17,6 +17,7 @@
 package android.devicepolicy.cts;
 
 import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
+import static android.content.pm.PackageManager.FEATURE_TELEPHONY;
 import static android.provider.DeviceConfig.NAMESPACE_DEVICE_POLICY_MANAGER;
 import static android.provider.DeviceConfig.NAMESPACE_TELEPHONY;
 
@@ -37,6 +38,7 @@ import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.EnsureFeatureFlagEnabled;
 import com.android.bedstead.harrier.annotations.Postsubmit;
+import com.android.bedstead.harrier.annotations.RequireFeature;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDpc;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
@@ -54,6 +56,7 @@ import org.junit.runner.RunWith;
 
 import java.util.List;
 
+@RequireFeature(FEATURE_TELEPHONY)
 @RunWith(BedsteadJUnit4.class)
 public final class ManagedSubscriptionsPolicyTest {
     @ClassRule
