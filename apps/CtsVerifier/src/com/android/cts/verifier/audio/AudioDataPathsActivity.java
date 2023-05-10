@@ -26,6 +26,7 @@ import android.media.AudioManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.webkit.WebView;
 import android.widget.TextView;
 
 import com.android.compatibility.common.util.ResultType;
@@ -77,9 +78,11 @@ public class AudioDataPathsActivity
     View mStopBtn;
 
     TextView mRoutesTx;
-    TextView mResultsTx;
+    WebView mResultsView;
 
     private WaveScopeView mWaveView = null;
+
+    HtmlFormatter mHtmlFormatter = new HtmlFormatter();
 
     // Test Manager
     TestManager mTestManager = new TestManager();
@@ -95,6 +98,60 @@ public class AudioDataPathsActivity
     private DuplexAudioManager mDuplexAudioManager;
 
     AppCallback mAnalysisCallbackHandler;
+
+    class HtmlFormatter {
+        StringBuilder mSB = new StringBuilder();
+
+        HtmlFormatter clear() {
+            mSB = new StringBuilder();
+            return this;
+        }
+
+        HtmlFormatter openDocument() {
+            mSB.append("<!DOCTYPE html><html lang=\"en-US\"><body>");
+            return this;
+        }
+
+        HtmlFormatter closeDocument() {
+            mSB.append("</body>");
+            return this;
+        }
+
+        HtmlFormatter openParagraph() {
+            mSB.append("<p>");
+            return this;
+        }
+
+        HtmlFormatter closeParagraph() {
+            mSB.append("</p>");
+            return this;
+        }
+
+        HtmlFormatter insertBreak() {
+            mSB.append("<br>");
+            return this;
+        }
+
+        HtmlFormatter openTextColor(String color) {
+            mSB.append("<font color=\"" + color + "\">");
+            return this;
+        }
+
+        HtmlFormatter closeTextColor() {
+            mSB.append("</font>");
+            return this;
+        }
+
+        HtmlFormatter appendText(String text) {
+            mSB.append(text);
+            return this;
+        }
+
+        @Override
+        public String toString() {
+            return mSB.toString();
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -122,7 +179,8 @@ public class AudioDataPathsActivity
         mStopBtn.setEnabled(false);
 
         mRoutesTx = (TextView) findViewById(R.id.audio_datapaths_routes);
-        mResultsTx = (TextView) findViewById(R.id.audio_datapaths_results);
+
+        mResultsView = (WebView) findViewById(R.id.audio_datapaths_results);
 
         mWaveView = (WaveScopeView) findViewById(R.id.uap_recordWaveView);
         mWaveView.setBackgroundColor(Color.DKGRAY);
@@ -452,7 +510,7 @@ public class AudioDataPathsActivity
             for (TestSpec testSpec : mTestSpecs) {
                 sb.append("\n");
                 if (testStep == mTestStep) {
-                    sb.append("[");
+                    sb.append(">>>");
                 }
                 sb.append(testSpec.getDescription());
 
@@ -460,7 +518,7 @@ public class AudioDataPathsActivity
                     sb.append(" *");
                 }
                 if (testStep == mTestStep) {
-                    sb.append("]");
+                    sb.append("<<<");
                 }
 
                 testStep++;
@@ -469,9 +527,7 @@ public class AudioDataPathsActivity
 
             int numValidSpecs = countValidTestSpecs();
             if (numValidSpecs == 0) {
-                enableTestButtons(false, false);
-                mResultsTx.setText(getResources().getString(R.string.audio_datapaths_noio));
-                getPassButton().setEnabled(true);
+                completeTest();
             }
         }
 
@@ -529,7 +585,10 @@ public class AudioDataPathsActivity
         private static final int MS_PER_SEC = 1000;
         private static final int TEST_TIME_IN_SECONDS = 2;
         public void startTest() {
-            mResultsTx.setText("\nResults:");
+            mRoutesTx.setVisibility(View.VISIBLE);
+            mWaveView.setVisibility(View.VISIBLE);
+
+            mResultsView.setVisibility(View.GONE);
 
             if (mTestStep == TESTSTEP_NONE) {
                 (mTimer = new Timer()).scheduleAtFixedRate(new TimerTask() {
@@ -552,13 +611,32 @@ public class AudioDataPathsActivity
         }
 
         public void completeTest() {
-            Log.i(TAG, "completeTest()");
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
                     enableTestButtons(true, false);
 
-                    calculateTestPass();
+                    mRoutesTx.setVisibility(View.GONE);
+                    mWaveView.setVisibility(View.GONE);
+
+                    mResultsView.setVisibility(View.VISIBLE);
+
+                    mHtmlFormatter.clear();
+                    mHtmlFormatter.openDocument();
+                    if (countValidTestSpecs() == 0) {
+                        mRoutesTx.setVisibility(View.VISIBLE);
+                        getPassButton().setEnabled(true);
+                        mHtmlFormatter.openParagraph()
+                                 .appendText("No valid test specs.")
+                                 .closeParagraph();
+                    } else {
+                        calculateTestPass();
+
+                        mTestManager.generateReport(mHtmlFormatter);
+                    }
+                    mHtmlFormatter.closeDocument();
+                    mResultsView.loadData(mHtmlFormatter.toString(),
+                            "text/html; charset=utf-8", "utf-8");
                 }
             });
         }
@@ -578,30 +656,17 @@ public class AudioDataPathsActivity
 
                     recordTestStatus();
 
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            displayTestDevices();
-
-                            String currentResultsText = mResultsTx.getText().toString();
-                            String newResultsText = getString(
-                                    R.string.audio_datapaths_results,
-                                    currentResultsText,
-                                    testSpec.getDescription(),
-                                    String.format(Locale.getDefault(),
-                                            "[mag:%f, maxMag:%f, phase:%f, jitter:%f]",
-                                            mMagnitudes[localTestStep],
-                                            mMaxMagnitudes[localTestStep],
-                                            mPhases[localTestStep],
-                                            mPhaseJitters[localTestStep]));
-                            mResultsTx.setText(newResultsText);
-                        }
-                    });
                 }
             }
 
-            Log.i(TAG, "[run tests...]");
             while (++mTestStep < mTestSpecs.size()) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        displayTestDevices();
+                    }
+                });
+
                 int localTestStep = mTestStep;
                 mMaxMagnitudes[localTestStep] = 0.0;
 
@@ -618,6 +683,32 @@ public class AudioDataPathsActivity
                 stopTest();
                 completeTest();
             }
+        }
+
+        HtmlFormatter generateReport(HtmlFormatter htmlFormatter) {
+            int testIndex = 0;
+            for (TestSpec spec : mTestSpecs) {
+                Locale locale = Locale.getDefault();
+                String magString = String.format(locale, "mag:%.4f", mMagnitudes[testIndex]);
+                String maxMagString = String.format(locale, "max:%.4f", mMaxMagnitudes[testIndex]);
+                String phaseString = String.format(locale, "phs:%.4f", mPhases[testIndex]);
+                String phaseJitterString =
+                        String.format(locale, "jit:%.4f", mPhaseJitters[testIndex]);
+                htmlFormatter.openParagraph()
+                        .appendText(spec.mDescription)
+                        .insertBreak()
+                        .openTextColor("red")
+                        .appendText(magString + " ")
+                        .closeTextColor()
+                        .appendText(maxMagString + " ")
+                        .appendText(phaseString + " ")
+                        .appendText(phaseJitterString + " ")
+                        .closeParagraph();
+
+                testIndex++;
+            }
+
+            return htmlFormatter;
         }
     }
 
