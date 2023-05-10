@@ -362,6 +362,7 @@ public class Settings_ConfigTest {
      */
     @Test
     public void testSetSyncDisabledMode() {
+        Settings.Config.setSyncDisabledMode(SYNC_DISABLED_MODE_NONE);
         assertEquals(SYNC_DISABLED_MODE_NONE, Settings.Config.getSyncDisabledMode());
         Settings.Config.setSyncDisabledMode(RESET_MODE_PACKAGE_DEFAULTS);
         assertEquals(RESET_MODE_PACKAGE_DEFAULTS, Settings.Config.getSyncDisabledMode());
