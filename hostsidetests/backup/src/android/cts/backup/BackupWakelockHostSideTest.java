@@ -21,9 +21,13 @@ import static android.cts.backup.KeyValueBackupRestoreHostSideTest.KEY_VALUE_RES
 import static android.cts.backup.KeyValueBackupRestoreHostSideTest.KEY_VALUE_RESTORE_DEVICE_TEST_NAME;
 
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
 import android.platform.test.annotations.AppModeFull;
 
+import com.android.tradefed.device.DeviceNotAvailableException;
+import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
 import org.junit.After;
@@ -42,8 +46,8 @@ public class BackupWakelockHostSideTest extends BaseBackupHostSideTest {
     private static final String LOGCAT_FILTER =
             "BackupManagerService:* PerformBackupTask:* KeyValueBackupTask:* PFTBT:* "
                     + TAG + ":* *:S";
-    private String mWakelockAcquiredLog;
-    private String mWakelockReleasedLog;
+    private static final String WAKELOCK_ACQUIRED_LOG = "Acquired wakelock:*backup*-0";
+    private static final String WAKELOCK_RELEASED_LOG = "Released wakelock:*backup*-0";
     private static final String KEY_VALUE_START = "Beginning backup of ";
     private static final String KEY_VALUE_SUCCESS_LOG = "K/V backup pass finished";
     private static final String RESTOREATINSTALL_LOG =
@@ -55,18 +59,14 @@ public class BackupWakelockHostSideTest extends BaseBackupHostSideTest {
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        installPackageAsUser(KEY_VALUE_RESTORE_APP_APK, mDefaultBackupUserId);
-        clearPackageDataAsUser(KEY_VALUE_RESTORE_APP_PACKAGE, mDefaultBackupUserId);
-        mWakelockAcquiredLog = "Acquired wakelock:*backup*-" + Integer.toString(
-                mDefaultBackupUserId);
-        mWakelockReleasedLog = "Released wakelock:*backup*-" + Integer.toString(
-                mDefaultBackupUserId);
+        installPackage(KEY_VALUE_RESTORE_APP_APK);
+        clearPackageData(KEY_VALUE_RESTORE_APP_PACKAGE);
     }
 
     @After
     public void tearDown() throws Exception {
         clearBackupDataInLocalTransport(KEY_VALUE_RESTORE_APP_PACKAGE);
-        assertNull(uninstallPackageAsUser(KEY_VALUE_RESTORE_APP_PACKAGE, mDefaultBackupUserId));
+        assertNull(uninstallPackage(KEY_VALUE_RESTORE_APP_PACKAGE));
     }
 
     /**
@@ -81,8 +81,8 @@ public class BackupWakelockHostSideTest extends BaseBackupHostSideTest {
         runDeviceSideProcedure("requestBackup");
 
         mLogcatInspector.assertLogcatContainsInOrder(LOGCAT_FILTER, TIMEOUT_SECS, startLog,
-                mWakelockAcquiredLog, KEY_VALUE_START, KEY_VALUE_SUCCESS_LOG,
-                mWakelockReleasedLog);
+                WAKELOCK_ACQUIRED_LOG, KEY_VALUE_START, KEY_VALUE_SUCCESS_LOG,
+                WAKELOCK_RELEASED_LOG);
     }
 
     /**
@@ -93,18 +93,19 @@ public class BackupWakelockHostSideTest extends BaseBackupHostSideTest {
     public void testRestoreAtInstall_forKeyValue_acquiresAndReleasesWakelock() throws Exception {
         runDeviceSideProcedure("saveSharedPreferencesAndNotifyBackupManager");
         runDeviceSideProcedure("requestBackup");
-        assertNull(uninstallPackageAsUser(KEY_VALUE_RESTORE_APP_PACKAGE, mDefaultBackupUserId));
+        assertNull(uninstallPackage(KEY_VALUE_RESTORE_APP_PACKAGE));
 
         String startLog = mLogcatInspector.mark(TAG);
-        installPackageAsUser(KEY_VALUE_RESTORE_APP_APK, mDefaultBackupUserId);
+        installPackage(KEY_VALUE_RESTORE_APP_APK);
 
         mLogcatInspector.assertLogcatContainsInOrder(LOGCAT_FILTER, TIMEOUT_SECS, startLog,
-                RESTOREATINSTALL_LOG, mWakelockAcquiredLog, RESTORECOMPLETE_LOG,
-                mWakelockReleasedLog);
+                RESTOREATINSTALL_LOG, WAKELOCK_ACQUIRED_LOG, RESTORECOMPLETE_LOG,
+                WAKELOCK_RELEASED_LOG);
     }
 
     private void runDeviceSideProcedure(String procedure) throws Exception {
-        checkDeviceTestAsUser(KEY_VALUE_RESTORE_APP_PACKAGE, KEY_VALUE_RESTORE_DEVICE_TEST_NAME,
-                procedure, mDefaultBackupUserId);
+        assertTrue("Device-side procedure failed: " + procedure,
+                runDeviceTests(KEY_VALUE_RESTORE_APP_PACKAGE, KEY_VALUE_RESTORE_DEVICE_TEST_NAME,
+                        procedure));
     }
 }

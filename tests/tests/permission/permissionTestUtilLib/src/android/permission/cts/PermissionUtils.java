@@ -47,7 +47,6 @@ import android.app.UiAutomation;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
 import android.content.pm.PermissionInfo;
 import android.content.pm.ResolveInfo;
 import android.os.Build;
@@ -86,22 +85,15 @@ public class PermissionUtils {
      * Get the state of an app-op.
      *
      * @param packageName The package the app-op belongs to
-     * @param permission  The permission the app-op belongs to
+     * @param permission The permission the app-op belongs to
+     *
      * @return The mode the op is on
      */
     public static int getAppOp(@NonNull String packageName, @NonNull String permission)
             throws Exception {
-        if (SdkLevel.isAtLeastU()) {
-            return sContext.getSystemService(AppOpsManager.class).unsafeCheckOpRaw(
-                    permissionToOp(permission),
-                    sContext.getPackageManager().getPackageUidAsUser(packageName,
-                            PackageManager.PackageInfoFlags.of(0), sContext.getUserId()),
-                    packageName);
-        } else {
-            return sContext.getSystemService(AppOpsManager.class).unsafeCheckOpRaw(
-                    permissionToOp(permission),
-                    sContext.getPackageManager().getPackageUid(packageName, 0), packageName);
-        }
+        return sContext.getSystemService(AppOpsManager.class).unsafeCheckOpRaw(
+                        permissionToOp(permission),
+                        sContext.getPackageManager().getPackageUid(packageName, 0), packageName);
     }
 
     /**
@@ -132,8 +124,8 @@ public class PermissionUtils {
      * Set a new state for an app-op (using the permission-name)
      *
      * @param packageName The package the app-op belongs to
-     * @param permission  The permission the app-op belongs to
-     * @param mode        The new mode
+     * @param permission The permission the app-op belongs to
+     * @param mode The new mode
      */
     public static void setAppOp(@NonNull String packageName, @NonNull String permission, int mode) {
         setAppOpByName(packageName, permissionToOp(permission), mode);
@@ -143,23 +135,14 @@ public class PermissionUtils {
      * Set a new state for an app-op (using the app-op-name)
      *
      * @param packageName The package the app-op belongs to
-     * @param op          The name of the op
-     * @param mode        The new mode
+     * @param op The name of the op
+     * @param mode The new mode
      */
     public static void setAppOpByName(@NonNull String packageName, @NonNull String op, int mode) {
-        if (SdkLevel.isAtLeastU()) {
-            runWithShellPermissionIdentity(
-                    () -> sContext.getSystemService(AppOpsManager.class).setUidMode(op,
-                            sContext.getPackageManager().getPackageUidAsUser(packageName,
-                                    PackageManager.PackageInfoFlags.of(0), sContext.getUserId()),
-                            mode),
-                    MANAGE_APP_OPS_MODES);
-        } else {
-            runWithShellPermissionIdentity(
-                    () -> sContext.getSystemService(AppOpsManager.class).setUidMode(op,
-                            sContext.getPackageManager().getPackageUid(packageName, 0), mode),
-                    MANAGE_APP_OPS_MODES);
-        }
+        runWithShellPermissionIdentity(
+                () -> sContext.getSystemService(AppOpsManager.class).setUidMode(op,
+                        sContext.getPackageManager().getPackageUid(packageName, 0), mode),
+                MANAGE_APP_OPS_MODES);
     }
 
     /**
@@ -168,21 +151,15 @@ public class PermissionUtils {
      * <p>Users should use {@link #isGranted} instead.
      *
      * @param packageName The package that might have the permission granted
-     * @param permission  The permission that might be granted
+     * @param permission The permission that might be granted
+     *
      * @return {@code true} iff the permission is granted
      */
     public static boolean isPermissionGranted(@NonNull String packageName,
             @NonNull String permission) throws Exception {
-        if (SdkLevel.isAtLeastU()) {
-            return sContext.checkPermission(permission, Process.myPid(),
-                    sContext.getPackageManager().getPackageUidAsUser(packageName,
-                            PackageManager.PackageInfoFlags.of(0), sContext.getUserId()))
-                    == PERMISSION_GRANTED;
-        } else {
-            return sContext.checkPermission(permission, Process.myPid(),
-                    sContext.getPackageManager().getPackageUid(packageName, 0))
-                    == PERMISSION_GRANTED;
-        }
+        return sContext.checkPermission(permission, Process.myPid(),
+                sContext.getPackageManager().getPackageUid(packageName, 0))
+                == PERMISSION_GRANTED;
     }
 
     /**
@@ -193,7 +170,8 @@ public class PermissionUtils {
      * other background permission
      *
      * @param packageName The package that might have the permission granted
-     * @param permission  The permission that might be granted
+     * @param permission The permission that might be granted
+     *
      * @return {@code true} iff the permission is granted
      */
     public static boolean isGranted(@NonNull String packageName, @NonNull String permission)
@@ -220,7 +198,7 @@ public class PermissionUtils {
      * other background permission
      *
      * @param packageName The app that should have the permission granted
-     * @param permission  The permission to grant
+     * @param permission The permission to grant
      */
     public static void grantPermission(@NonNull String packageName, @NonNull String permission)
             throws Exception {
@@ -256,7 +234,7 @@ public class PermissionUtils {
      * other background permission
      *
      * @param packageName The app that should have the permission revoked
-     * @param permission  The permission to revoke
+     * @param permission The permission to revoke
      */
     public static void revokePermission(@NonNull String packageName, @NonNull String permission)
             throws Exception {
@@ -288,7 +266,8 @@ public class PermissionUtils {
      * Get the flags of a permission.
      *
      * @param packageName Package the permission belongs to
-     * @param permission  Name of the permission
+     * @param permission Name of the permission
+     *
      * @return Permission flags
      */
     public static int getPermissionFlags(@NonNull String packageName, @NonNull String permission) {
@@ -306,9 +285,9 @@ public class PermissionUtils {
      * Set the flags of a permission.
      *
      * @param packageName Package the permission belongs to
-     * @param permission  Name of the permission
-     * @param mask        Mask of permissions to set
-     * @param flags       Permissions to set
+     * @param permission Name of the permission
+     * @param mask Mask of permissions to set
+     * @param flags Permissions to set
      */
     public static void setPermissionFlags(@NonNull String packageName, @NonNull String permission,
             int mask, int flags) {
@@ -322,6 +301,7 @@ public class PermissionUtils {
      * Get all permissions an app requests. This includes the split permissions.
      *
      * @param packageName The package that requests the permissions.
+     *
      * @return The permissions requested by the app
      */
     public static @NonNull List<String> getPermissions(@NonNull String packageName)
@@ -336,6 +316,7 @@ public class PermissionUtils {
      * Get all runtime permissions that an app requests. This includes the split permissions.
      *
      * @param packageName The package that requests the permissions.
+     *
      * @return The runtime permissions requested by the app
      */
     public static @NonNull List<String> getRuntimePermissions(@NonNull String packageName)

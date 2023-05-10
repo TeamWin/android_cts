@@ -40,15 +40,14 @@ public class PreservedSettingsRestoreHostSideTest extends BaseBackupHostSideTest
 
     @Before
     public void setUp() throws Exception {
-        super.setUp();
-        installPackageAsUser(TEST_APP_APK, mDefaultBackupUserId);
+        installPackage(TEST_APP_APK);
         runDeviceSideProcedure("setupDevice");
     }
 
     @After
     public void tearDown() throws Exception {
         runDeviceSideProcedure("cleanupDevice");
-        uninstallPackageAsUser(TEST_APP_PACKAGE, mDefaultBackupUserId);
+        uninstallPackage(TEST_APP_PACKAGE);
     }
 
     /**
@@ -63,16 +62,15 @@ public class PreservedSettingsRestoreHostSideTest extends BaseBackupHostSideTest
      */
     @Test
     public void testModifiedSettingsArePreserved() throws Exception {
-        getBackupUtils().backupNowForUserAndAssertSuccess(SETTINGS_PACKAGE, mDefaultBackupUserId);
+        getBackupUtils().backupNowAndAssertSuccess(SETTINGS_PACKAGE);
 
         runDeviceSideProcedure("modifySettings");
-        getBackupUtils().restoreForUserAndAssertSuccess("1", SETTINGS_PACKAGE,
-                mDefaultBackupUserId);
+        getBackupUtils().restoreAndAssertSuccess("1", SETTINGS_PACKAGE);
 
         runDeviceSideProcedure("testOnlyOverrideableSettingsAreOverridden");
     }
 
     private void runDeviceSideProcedure(String procedure) throws Exception {
-        checkDeviceTestAsUser(TEST_APP_PACKAGE, TEST_APP_CLASS, procedure, mDefaultBackupUserId);
+        runDeviceTests(TEST_APP_PACKAGE, TEST_APP_CLASS, procedure);
     }
 }
