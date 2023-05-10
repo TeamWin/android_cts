@@ -17,6 +17,7 @@
 package android.media.decoder.cts;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
@@ -900,6 +901,8 @@ public class AdaptivePlaybackTest extends MediaTestBase {
         private final static String TAG = "AdaptiveDecoder";
         final long kTimeOutUs = 5000;
         final long kCSDTimeOutUs = 1000000;
+        // Sufficiently large number of frames to expect actual render on surface
+        static final int RENDERED_FRAMES_THRESHOLD  = 32;
         MediaCodec mCodec;
         ByteBuffer[] mInputBuffers;
         ByteBuffer[] mOutputBuffers;
@@ -920,6 +923,7 @@ public class AdaptivePlaybackTest extends MediaTestBase {
         // Save the timestamps of the first frame of each sequence.
         // Note: this is the only time output format change could happen.
         ArrayList<Long> mFirstQueueTimestamps;
+        Object mRenderLock = new Object();
 
         public Decoder(String codecName) {
             MediaCodec codec = null;
@@ -952,7 +956,10 @@ public class AdaptivePlaybackTest extends MediaTestBase {
             }
             assert nanoTime > mLastRenderNanoTime;
             mLastRenderNanoTime = nanoTime;
-            ++mFramesNotifiedRendered;
+            synchronized (mRenderLock) {
+                ++mFramesNotifiedRendered;
+                mRenderLock.notifyAll();
+            }
             assert nanoTime > System.nanoTime() - NSECS_IN_1SEC;
         }
 
@@ -1006,13 +1013,27 @@ public class AdaptivePlaybackTest extends MediaTestBase {
 
         public void stop() {
             Log.i(TAG, "stop");
-            mCodec.stop();
-            // if we have queued 32 frames or more, at least one should have been notified
-            // to have rendered.
-            if (mRenderedTimeStamps.size() > 32 && mFramesNotifiedRendered == 0) {
-                fail("rendered " + mRenderedTimeStamps.size() +
-                        " frames, but none have been notified.");
+            if (mRenderedTimeStamps.size() > RENDERED_FRAMES_THRESHOLD) {
+                synchronized (mRenderLock) {
+                    long untilMs = System.currentTimeMillis() + 1000;
+                    while (mFramesNotifiedRendered == 0) {
+                        long nowMs = System.currentTimeMillis();
+                        if (nowMs >= untilMs) {
+                            break;
+                        }
+                        try {
+                            mRenderLock.wait(untilMs - nowMs);
+                        } catch (InterruptedException e) {
+                            break;
+                        }
+                    }
+                    Log.i(TAG, "waited for " + (System.currentTimeMillis() + 1000 - untilMs)
+                            + "ms for rendering");
+                }
+                assertFalse("rendered " + mRenderedTimeStamps.size()
+                        + " frames, but none have been notified.", mFramesNotifiedRendered == 0);
             }
+            mCodec.stop();
         }
 
         public void flush() {
