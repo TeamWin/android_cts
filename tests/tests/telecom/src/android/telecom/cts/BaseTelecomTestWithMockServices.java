@@ -1331,6 +1331,22 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
     );
     }
 
+    void assertNumCalls_OrICSUnbound(final MockInCallService inCallService, final int numCalls) {
+        waitUntilConditionIsTrueOrTimeout(new Condition() {
+            @Override
+            public Object expected() {
+                return true;
+            }
+
+            @Override
+            public Object actual() {
+                return inCallService == null || numCalls == inCallService.getCallCount();
+            }
+        }, WAIT_FOR_STATE_CHANGE_TIMEOUT_MS, "InCallService should contain " + numCalls
+                        + " calls or the ICS should be unbound (meaning the call is destroyed)."
+        );
+    }
+
     void assertNumConferenceCalls(final MockInCallService inCallService, final int numCalls) {
         waitUntilConditionIsTrueOrTimeout(new Condition() {
             @Override
