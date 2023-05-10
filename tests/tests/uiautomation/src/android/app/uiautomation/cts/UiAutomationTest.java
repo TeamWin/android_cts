@@ -39,7 +39,6 @@ import android.graphics.Bitmap;
 import android.os.Process;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
-import android.platform.test.annotations.Presubmit;
 import android.provider.Settings;
 import android.view.FrameStats;
 import android.view.KeyEvent;
@@ -51,6 +50,7 @@ import android.view.accessibility.AccessibilityNodeInfo;
 import android.widget.ListView;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.FlakyTest;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
@@ -199,6 +199,7 @@ public final class UiAutomationTest {
     }
 
     @Test
+    @FlakyTest(bugId = 281697280)
     public void testWindowContentFrameStats() throws Exception {
         mUiAutomation = getInstrumentation().getUiAutomation();
         final int windowId = startActivitySync();
@@ -245,7 +246,6 @@ public final class UiAutomationTest {
         }
     }
 
-    @Presubmit
     @Test
     public void testWindowAnimationFrameStatsDoesNotCrash() {
         mUiAutomation = getInstrumentation().getUiAutomation();
@@ -257,7 +257,6 @@ public final class UiAutomationTest {
         assertThat(stats.getFrameCount()).isEqualTo(0);
     }
 
-    @Presubmit
     @Test
     public void testUsingUiAutomationAfterDestroy_shouldThrowException() {
         mUiAutomation = getInstrumentation().getUiAutomation();
