@@ -1135,6 +1135,7 @@ public final class DeviceConfigApiTests {
      */
     @Test
     public void testSetSyncDisabledMode() {
+        DeviceConfig.setSyncDisabledMode(SYNC_DISABLED_MODE_NONE);
         assertEquals(SYNC_DISABLED_MODE_NONE, DeviceConfig.getSyncDisabledMode());
         DeviceConfig.setSyncDisabledMode(RESET_MODE_PACKAGE_DEFAULTS);
         assertEquals(RESET_MODE_PACKAGE_DEFAULTS, DeviceConfig.getSyncDisabledMode());
