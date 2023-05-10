@@ -79,12 +79,11 @@ import android.os.Bundle;
 import android.os.ResultReceiver;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
-import android.provider.DeviceConfig;
-import android.provider.Settings;
-import android.support.test.uiautomator.UiDevice;
+import android.server.wm.WindowManagerStateHelper;
 import android.util.DisplayMetrics;
 import android.view.Display;
 import android.view.MotionEvent;
+import android.view.WindowManager;
 import android.virtualdevice.cts.common.FakeAssociationRule;
 import android.virtualdevice.cts.util.VirtualDeviceTestUtils;
 
@@ -93,15 +92,12 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.AdoptShellPermissionsRule;
-import com.android.compatibility.common.util.SystemUtil;
 import com.android.compatibility.common.util.Timeout;
 
 import com.google.common.util.concurrent.SettableFuture;
 
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -109,7 +105,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 @RunWith(AndroidJUnit4.class)
@@ -152,30 +147,7 @@ public class StreamedAppClipboardTest {
     private VirtualDeviceTestUtils.OnReceiveResultListener mOnReceiveResultListener;
     private ResultReceiver mResultReceiver;
 
-    // Used to keep track of the overridden DeviceConfig value for VirtualDevice clipboard silos,
-    // so we can restore it after the test.
-    private String mOriginalVDSilosDeviceFlagValue;
-
-
-    @BeforeClass
-    public static void setUpClass() {
-        // Disable Toasts shown on clipboard access to avoid a crash in sysui that happens when a
-        // VirtualDisplay with a Toast about to be shown is closed. (b/265325338)
-        SystemUtil.runWithShellPermissionIdentity(()-> {
-            Context context = InstrumentationRegistry.getInstrumentation().getContext();
-            Settings.Secure.putInt(context.getContentResolver(),
-                    Settings.Secure.CLIPBOARD_SHOW_ACCESS_NOTIFICATIONS, 0);
-            UiDevice.getInstance(InstrumentationRegistry.getInstrumentation()).waitForIdle();
-        }, WRITE_SECURE_SETTINGS);
-    }
-
-    @AfterClass
-    public static void tearDownClass() {
-        SystemUtil.runWithShellPermissionIdentity(() -> {
-            Context context = InstrumentationRegistry.getInstrumentation().getContext();
-            Settings.Secure.resetToDefaults(context.getContentResolver(), null);
-        }, WRITE_SECURE_SETTINGS);
-    }
+    private final WindowManagerStateHelper mWmState = new WindowManagerStateHelper();
 
     @Before
     public void setUp() throws Exception {
@@ -188,26 +160,6 @@ public class StreamedAppClipboardTest {
         // TODO(b/261155110): Re-enable tests once freeform mode is supported in Virtual Display.
         assumeFalse("Skipping test: VirtualDisplay window policy doesn't support freeform.",
                 packageManager.hasSystemFeature(FEATURE_FREEFORM_WINDOW_MANAGEMENT));
-
-        mOriginalVDSilosDeviceFlagValue = DeviceConfig.getProperty(DeviceConfig.NAMESPACE_CLIPBOARD,
-                ClipboardManager.DEVICE_CONFIG_ALLOW_VIRTUALDEVICE_SILOS);
-        SettableFuture<Void> flagBecameSet = SettableFuture.create();
-        DeviceConfig.OnPropertiesChangedListener deviceConfigListener = (properties) -> {
-            if (properties.getBoolean(
-                    ClipboardManager.DEVICE_CONFIG_ALLOW_VIRTUALDEVICE_SILOS, false)) {
-                flagBecameSet.set(null);
-            }
-        };
-        DeviceConfig.addOnPropertiesChangedListener(DeviceConfig.NAMESPACE_CLIPBOARD,
-                Executors.newSingleThreadExecutor(), deviceConfigListener);
-        DeviceConfig.setProperty(DeviceConfig.NAMESPACE_CLIPBOARD,
-                ClipboardManager.DEVICE_CONFIG_ALLOW_VIRTUALDEVICE_SILOS, "true",
-                /* makeDefault= */ false);
-
-        // Wait for the DeviceConfig change to be broadcasted, so we can be sure that
-        // ClipboardService is using the updated value.
-        flagBecameSet.get(EVENT_TIMEOUT_MS, TimeUnit.MILLISECONDS);
-        DeviceConfig.removeOnPropertiesChangedListener(deviceConfigListener);
 
         mVirtualDeviceManager = mContext.getSystemService(VirtualDeviceManager.class);
         mVirtualDevice =
@@ -230,9 +182,8 @@ public class StreamedAppClipboardTest {
 
     @After
     public void tearDown() {
-        DeviceConfig.setProperty(DeviceConfig.NAMESPACE_CLIPBOARD,
-                ClipboardManager.DEVICE_CONFIG_ALLOW_VIRTUALDEVICE_SILOS,
-                mOriginalVDSilosDeviceFlagValue, /* makeDefault= */ false);
+        // Avoid crash in sysui showing toasts on closed VirtualDisplay (b/265325338).
+        waitForNoToasts();
         if (mVirtualDisplay != null) {
             mVirtualDisplay.release();
         }
@@ -321,7 +272,9 @@ public class StreamedAppClipboardTest {
                 eq(RESULT_CODE_CLIP_LISTENER_READY), any());
 
         ClipData clipToSet = ClipData.newPlainText("some label", "Hello World");
+        waitForNoToasts();
         deviceClipboard.setPrimaryClip(clipToSet);
+        waitForToastToAppearAndDisappear();
 
         ArgumentCaptor<Bundle> bundle = ArgumentCaptor.forClass(Bundle.class);
         verify(mOnReceiveResultListener, timeout(EVENT_TIMEOUT_MS)).onReceiveResult(
@@ -419,8 +372,10 @@ public class StreamedAppClipboardTest {
                         CLIPBOARD_TEST_ACTIVITY_2)
                 .putExtra(EXTRA_RESULT_RECEIVER, createResultReceiver(secondResultReceiver));
 
+        waitForNoToasts();
         launchAndAwaitActivityOnVirtualDisplay(secondAppIntent);
         tapOnDisplay(mVirtualDisplay.getDisplay());
+        waitForToastToAppearAndDisappear();
 
         // Make sure that the second activity now running on top of the VirtualDisplay reads the
         // value which was set by the first activity.
@@ -635,6 +590,7 @@ public class StreamedAppClipboardTest {
             verify(secondDeviceClipboardListener,
                     timeout(EVENT_TIMEOUT_MS).atLeastOnce()).onPrimaryClipChanged();
             assertThat(secondDeviceClipboard.hasPrimaryClip()).isTrue();
+            waitForNoToasts();
             readClip = secondDeviceClipboard.getPrimaryClip();
             assertThat(readClip.getItemCount()).isEqualTo(1);
             assertThat(readClip.getDescription().getLabel().toString()).isEqualTo(
@@ -650,6 +606,36 @@ public class StreamedAppClipboardTest {
             secondDevice.close();
             reader.close();
         }
+    }
+
+    @Test
+    public void virtualDeviceOwner_noAccessToasts() {
+        ClipboardManager deviceClipboard = mVirtualDevice.createContext().getSystemService(
+                ClipboardManager.class);
+
+        ClipboardManager.OnPrimaryClipChangedListener deviceClipboardListener =
+                mock(ClipboardManager.OnPrimaryClipChangedListener.class);
+        deviceClipboard.addPrimaryClipChangedListener(deviceClipboardListener);
+
+        ClipData clipToSet = ClipData.newPlainText("some label", "Hello World");
+        final Intent intent = new Intent(ACTION_SET_CLIP)
+                .setComponent(CLIPBOARD_TEST_ACTIVITY)
+                .putExtra(EXTRA_SET_CLIP_DATA, clipToSet);
+        launchAndAwaitActivityOnVirtualDisplay(intent);
+        tapOnDisplay(mVirtualDisplay.getDisplay());
+
+        // We use atLeastOnce for onPrimaryClipChanged because it can fire more than once as
+        // text classification results on the clipboard content become available.
+        verify(deviceClipboardListener,
+                timeout(EVENT_TIMEOUT_MS).atLeastOnce()).onPrimaryClipChanged();
+        assertThat(deviceClipboard.hasPrimaryClip()).isTrue();
+        waitForNoToasts();
+        ClipData clipData = deviceClipboard.getPrimaryClip();
+
+        // Since we set the DEVICE_CONFIG_SHOW_ACCESS_NOTIFICATIONS_FOR_VD_OWNER flag to false
+        // above, there should be no Toast windows.
+        mWmState.computeState();
+        assertThat(mWmState.getMatchingWindowType(WindowManager.LayoutParams.TYPE_TOAST)).isEmpty();
     }
 
     /**
@@ -693,6 +679,26 @@ public class StreamedAppClipboardTest {
             throw new RuntimeException(e);
         }
         virtualDevice.removeActivityListener(activityListener);
+    }
+
+    private void waitForNoToasts() {
+        assertThat(mWmState.waitFor(state -> state.getMatchingWindowType(
+                WindowManager.LayoutParams.TYPE_TOAST).isEmpty(), "No Toasts")).isTrue();
+    }
+
+    private void waitForToastToAppearAndDisappear() {
+        boolean observedToast = false;
+        // The default timeout for mWmState.waitFor is a little low so we try
+        // a few times.
+        for (int i = 0; i < 3; i++) {
+            if (mWmState.waitFor(state -> state.getMatchingWindowType(
+                    WindowManager.LayoutParams.TYPE_TOAST).size() > 0, "Toast appears")) {
+                observedToast = true;
+                break;
+            }
+        }
+        assertThat(observedToast).isTrue();
+        waitForNoToasts();
     }
 
     /**
