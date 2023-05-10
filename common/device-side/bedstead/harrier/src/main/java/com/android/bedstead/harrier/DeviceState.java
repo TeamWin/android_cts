@@ -337,20 +337,9 @@ public final class DeviceState extends HarrierRule {
                     }
                 });
 
+                Throwable t;
                 try {
-                    Throwable t = future.get(MAX_TEST_DURATION.getSeconds(), TimeUnit.SECONDS);
-                    if (t != null) {
-                        if (t.getStackTrace().length > 0) {
-                            if (t.getStackTrace()[0].getMethodName().equals("createExceptionOrNull")) {
-                                SystemServerException s = TestApis.logcat().findSystemServerException(t);
-                                if (s != null) {
-                                    throw s;
-                                }
-                            }
-                        }
-
-                        throw t;
-                    }
+                    t = future.get(MAX_TEST_DURATION.getSeconds(), TimeUnit.SECONDS);
                 } catch (TimeoutException e) {
                     StackTraceElement[] stack = mTestThread.getStackTrace();
                     future.cancel(true);
@@ -360,6 +349,18 @@ public final class DeviceState extends HarrierRule {
                                     + " after " + MAX_TEST_DURATION);
                     assertionError.setStackTrace(stack);
                     throw assertionError;
+                }
+                if (t != null) {
+                    if (t.getStackTrace().length > 0) {
+                        if (t.getStackTrace()[0].getMethodName().equals("createExceptionOrNull")) {
+                            SystemServerException s = TestApis.logcat().findSystemServerException(t);
+                            if (s != null) {
+                                throw s;
+                            }
+                        }
+                    }
+
+                    throw t;
                 }
             }
         };
