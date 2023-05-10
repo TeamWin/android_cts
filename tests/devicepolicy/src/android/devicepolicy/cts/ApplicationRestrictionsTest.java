@@ -20,8 +20,6 @@ import static android.content.Intent.ACTION_APPLICATION_RESTRICTIONS_CHANGED;
 import static android.provider.DeviceConfig.NAMESPACE_DEVICE_POLICY_MANAGER;
 
 import static com.android.bedstead.metricsrecorder.truth.MetricQueryBuilderSubject.assertThat;
-import static com.android.bedstead.nene.flags.CommonFlags.DevicePolicyManager.ENABLE_DEVICE_POLICY_ENGINE_FLAG;
-import static com.android.bedstead.nene.flags.CommonFlags.DevicePolicyManager.PERMISSION_BASED_ACCESS_EXPERIMENT_FLAG;
 import static com.android.eventlib.truth.EventLogsSubject.assertThat;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -38,10 +36,8 @@ import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.EnsureFeatureFlagEnabled;
 import com.android.bedstead.harrier.annotations.Postsubmit;
-import com.android.bedstead.harrier.annotations.RequireFeatureFlagNotEnabled;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
-import com.android.bedstead.harrier.annotations.enterprise.CoexistenceFlagsOn;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyDoesNotApplyTest;
 import com.android.bedstead.harrier.policies.ApplicationRestrictions;
@@ -255,8 +251,6 @@ public final class ApplicationRestrictionsTest {
     }
 
     @Postsubmit(reason = "New test")
-    @RequireFeatureFlagNotEnabled(namespace = NAMESPACE_DEVICE_POLICY_MANAGER,
-            key = PERMISSION_BASED_ACCESS_EXPERIMENT_FLAG)
     @CanSetPolicyTest(policy = ApplicationRestrictions.class, singleTestOnly = true)
     public void setApplicationRestrictions_nullComponent_throwsException() {
         Bundle bundle = BundleUtils.createBundle(
@@ -371,8 +365,6 @@ public final class ApplicationRestrictionsTest {
                         sDeviceState.dpc().componentName(), "/../blah", bundle));
     }
 
-    @EnsureFeatureFlagEnabled(namespace = NAMESPACE_DEVICE_POLICY_MANAGER, key =
-            ENABLE_DEVICE_POLICY_ENGINE_FLAG)
     @Postsubmit(reason = "New test")
     @CanSetPolicyTest(policy = ApplicationRestrictions.class)
     public void getApplicationRestrictionsPerAdmin_restrictionsSetForOneAdmin_returnsApplicationRestrictions() {

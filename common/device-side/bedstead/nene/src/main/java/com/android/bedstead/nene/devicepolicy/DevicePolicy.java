@@ -63,6 +63,7 @@ import com.android.bedstead.nene.utils.Versions;
 
 import java.lang.reflect.InvocationTargetException;
 import java.time.Duration;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -854,5 +855,25 @@ public final class DevicePolicy {
      */
     public boolean getBluetoothContactSharingDisabled(UserReference user) {
         return sDevicePolicyManager.getBluetoothContactSharingDisabled(user.userHandle());
+    }
+
+    /** See {@link DevicePolicyManager#getPermittedAccessibilityServices} */
+    @Experimental
+    public Set<Package> getPermittedAccessibilityServices() {
+        return getPermittedAccessibilityServices(TestApis.users().instrumented());
+    }
+
+    /** See {@link DevicePolicyManager#getPermittedAccessibilityServices} */
+    @Experimental
+    public Set<Package> getPermittedAccessibilityServices(UserReference user) {
+        try (PermissionContext p = TestApis.permissions().withPermission(INTERACT_ACROSS_USERS, QUERY_ADMIN_POLICY)) {
+            List<String> services = sDevicePolicyManager.getPermittedAccessibilityServices(user.id());
+            if (services == null) {
+                return null;
+            }
+            return services.stream()
+                    .map(packageName -> TestApis.packages().find(packageName))
+                    .collect(Collectors.toSet());
+        }
     }
 }
