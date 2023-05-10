@@ -245,9 +245,13 @@ class TextViewFontScalingTest {
     companion object {
         /**
          * Tolerance for comparing expected float lineHeight to the integer one returned by
-         * getLineHeight(). It is over half to account for integer rounding.
+         * getLineHeight(). It is pretty lenient to account for integer rounding when text size is
+         * loaded from an attribute. (When loading an SP resource from an attribute for textSize,
+         * it is rounded to the nearest pixel, which can throw off calculations quite a lot. Not
+         * enough to make much of a difference to the user, but enough to need a wide tolerance in
+         * tests. See b/279456702 for more details.)
          */
-        const val TOLERANCE = 0.6f
+        const val TOLERANCE = 5f
 
         private fun verifyLineHeightIsIntendedProportions(
             lineHeightSp: Float,
