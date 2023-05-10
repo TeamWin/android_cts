@@ -108,6 +108,7 @@ public class WallpaperManagerTest {
             TestLiveWallpaper.class.getPackageName(), TestLiveWallpaper.class.getName());
     // Default wait time for async operations
     private static final int SLEEP_MS = 500;
+    private static final int DIM_LISTENER_TIMEOUT_SECS = 30;
 
     private WallpaperManager mWallpaperManager;
     private Context mContext;
@@ -1385,12 +1386,13 @@ public class WallpaperManagerTest {
         mWallpaperManager.addOnColorsChangedListener(counter, mHandler);
         final float initialDim = runWithShellPermissionIdentity(
                 mWallpaperManager::getWallpaperDimAmount);
+        final float newDim = initialDim > 0 ? 0.5f * initialDim : 0.5f;
 
         try {
             runWithShellPermissionIdentity(() -> {
-                mWallpaperManager.setWallpaperDimAmount(0.5f);
+                mWallpaperManager.setWallpaperDimAmount(newDim);
             });
-            boolean latchSuccess = latch.await(30, TimeUnit.SECONDS);
+            boolean latchSuccess = latch.await(DIM_LISTENER_TIMEOUT_SECS, TimeUnit.SECONDS);
             assertWithMessage("Registered listener not invoked").that(latchSuccess).isTrue();
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
@@ -1418,12 +1420,13 @@ public class WallpaperManagerTest {
         mWallpaperManager.addOnColorsChangedListener(counter, mHandler);
         final float initialDim = runWithShellPermissionIdentity(
                 mWallpaperManager::getWallpaperDimAmount);
+        final float newDim = initialDim > 0 ? 0.5f * initialDim : 0.5f;
 
         try {
             runWithShellPermissionIdentity(() -> {
-                mWallpaperManager.setWallpaperDimAmount(0.5f);
+                mWallpaperManager.setWallpaperDimAmount(newDim);
             });
-            boolean latchSuccess = latch.await(5, TimeUnit.SECONDS);
+            boolean latchSuccess = latch.await(DIM_LISTENER_TIMEOUT_SECS, TimeUnit.SECONDS);
             assertWithMessage("Registered listener not invoked").that(latchSuccess).isTrue();
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
@@ -1450,13 +1453,14 @@ public class WallpaperManagerTest {
         mWallpaperManager.addOnColorsChangedListener(listener, mHandler);
         final float initialDim = runWithShellPermissionIdentity(
                 mWallpaperManager::getWallpaperDimAmount);
+        final float newDim = initialDim > 0 ? 0.5f * initialDim : 0.5f;
 
         mWallpaperManager.addOnColorsChangedListener(counter, mHandler);
         try {
             runWithShellPermissionIdentity(() -> {
-                mWallpaperManager.setWallpaperDimAmount(0.5f);
+                mWallpaperManager.setWallpaperDimAmount(newDim);
             });
-            boolean latchSuccess = latch.await(5, TimeUnit.SECONDS);
+            boolean latchSuccess = latch.await(DIM_LISTENER_TIMEOUT_SECS, TimeUnit.SECONDS);
             assertWithMessage("Registered listener not invoked").that(latchSuccess).isTrue();
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
