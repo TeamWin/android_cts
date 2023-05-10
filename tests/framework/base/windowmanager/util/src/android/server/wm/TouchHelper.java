@@ -25,6 +25,7 @@ import android.content.Context;
 import android.graphics.Rect;
 import android.os.SystemClock;
 import android.view.InputDevice;
+import android.view.KeyCharacterMap;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
@@ -152,19 +153,36 @@ public class TouchHelper {
     }
 
     public static void injectKey(int keyCode, boolean longPress, boolean sync) {
+        final long downTime = injectKeyActionDown(keyCode, longPress, sync);
+        injectKeyActionUp(keyCode, downTime, /* cancelled = */ false, sync);
+    }
+
+    public static long injectKeyActionDown(int keyCode, boolean longPress, boolean sync) {
         final long downTime = SystemClock.uptimeMillis();
         int repeatCount = 0;
-        KeyEvent downEvent =
+        final KeyEvent downEvent =
                 new KeyEvent(downTime, downTime, KeyEvent.ACTION_DOWN, keyCode, repeatCount);
         getInstrumentation().getUiAutomation().injectInputEvent(downEvent, sync);
         if (longPress) {
             repeatCount += 1;
-            KeyEvent repeatEvent = new KeyEvent(downTime, SystemClock.uptimeMillis(),
+            final KeyEvent repeatEvent = new KeyEvent(downTime, SystemClock.uptimeMillis(),
                     KeyEvent.ACTION_DOWN, keyCode, repeatCount);
             getInstrumentation().getUiAutomation().injectInputEvent(repeatEvent, sync);
         }
-        KeyEvent upEvent = new KeyEvent(downTime, SystemClock.uptimeMillis(),
-                KeyEvent.ACTION_UP, keyCode, 0 /* repeatCount */);
+        return downTime;
+    }
+
+    public static void injectKeyActionUp(int keyCode, long downTime, boolean cancelled,
+            boolean sync) {
+        final int flags;
+        if (cancelled) {
+            flags = KeyEvent.FLAG_CANCELED;
+        } else {
+            flags = 0;
+        }
+        final KeyEvent upEvent = new KeyEvent(downTime, SystemClock.uptimeMillis(),
+                KeyEvent.ACTION_UP, keyCode, /* repeatCount = */ 0, /* metaState= */ 0,
+                KeyCharacterMap.VIRTUAL_KEYBOARD, /* scancode= */ 0, flags);
         getInstrumentation().getUiAutomation().injectInputEvent(upEvent, sync);
     }
 
