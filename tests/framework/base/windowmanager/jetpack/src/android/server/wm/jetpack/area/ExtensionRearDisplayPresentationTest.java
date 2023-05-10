@@ -24,7 +24,6 @@ import static android.view.Display.DEFAULT_DISPLAY;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 import static androidx.window.extensions.area.WindowAreaComponent.SESSION_STATE_ACTIVE;
-import static androidx.window.extensions.area.WindowAreaComponent.SESSION_STATE_CONTENT_INVISIBLE;
 import static androidx.window.extensions.area.WindowAreaComponent.SESSION_STATE_CONTENT_VISIBLE;
 import static androidx.window.extensions.area.WindowAreaComponent.SESSION_STATE_INACTIVE;
 
@@ -99,7 +98,7 @@ public class ExtensionRearDisplayPresentationTest extends WindowManagerJetpackTe
     private static final List<@WindowAreaComponent.WindowAreaSessionState Integer>
             SESSION_LIFECYCLE_VALUES = new ArrayList<>(
             Arrays.asList(SESSION_STATE_ACTIVE, SESSION_STATE_CONTENT_VISIBLE,
-                    SESSION_STATE_CONTENT_INVISIBLE, SESSION_STATE_INACTIVE));
+                    SESSION_STATE_ACTIVE, SESSION_STATE_INACTIVE));
 
     private TestRearDisplayActivity mActivity;
     private int[] mFoldedDeviceStates;
