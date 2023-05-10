@@ -802,7 +802,22 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
         try {
             cleanup();
             startCallWithAttributesAndVerify(mOutgoingCallAttributes, mCall1);
-            mCall1.mCallControl.sendEvent(Connection.EVENT_CALL_HOLD_FAILED, new Bundle());
+            callControlAction(SET_ACTIVE, mCall1);
+            // send a random event
+            Bundle extrasToSend = new Bundle();
+            extrasToSend.putParcelable(TelecomManager.EXTRA_INCOMING_CALL_ADDRESS, TEST_URI_1);
+            mCall1.mCallControl.sendEvent(Connection.EVENT_CALL_HOLD_FAILED,  extrasToSend);
+            // verify the event was received
+            mOnConnectionEventCounter.waitForCount(1, WAIT_FOR_STATE_CHANGE_TIMEOUT_MS);
+            String event = (String) (mOnConnectionEventCounter.getArgs(0)[1]);
+            Bundle extras = (Bundle) (mOnConnectionEventCounter.getArgs(0)[2]);
+            assertEquals(Connection.EVENT_CALL_HOLD_FAILED, event);
+            assertNotNull(extras);
+            assertEquals(
+                    extras.getParcelable(TelecomManager.EXTRA_INCOMING_CALL_ADDRESS, Uri.class),
+                    TEST_URI_1);
+            mOnConnectionEventCounter.reset();
+            // disconnect
             callControlAction(DISCONNECT, mCall1);
         } finally {
             cleanup();
