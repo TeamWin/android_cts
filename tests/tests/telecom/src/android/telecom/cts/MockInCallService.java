@@ -182,6 +182,8 @@ public class MockInCallService extends InCallService {
 
         @Override
         public void onConnectionEvent(Call call, String event, Bundle extras) {
+            Log.i(LOG_TAG, String.format("onConnectionEvent: call=[%s], event=[%s]",
+                    call, event));
             super.onConnectionEvent(call, event, extras);
             if (getCallbacks() != null) {
                 getCallbacks().onConnectionEvent(call, event, extras);
