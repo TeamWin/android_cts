@@ -21,3 +21,8 @@ per-file src/android/provider/cts/settings/* = file:platform/frameworks/base:/pa
 # Bug component: 151185 = per-file src/android/provider/cts/contacts/*
 per-file src/android/provider/cts/BlockedNumber* =  file:../telecom/OWNERS
 per-file src/android/provider/cts/contacts/* = file:../telecom/OWNERS
+
+# Device Config ownership
+# Bug component: 326016 = per-file src/android/provider/cts/settings/Settings_ConfigTest.java
+
+per-file src/android/provider/cts/settings/Settings_ConfigTest.java = file:../deviceconfig/OWNERS
