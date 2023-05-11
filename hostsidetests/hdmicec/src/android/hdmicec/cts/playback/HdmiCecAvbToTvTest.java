@@ -16,7 +16,7 @@
 
 package android.hdmicec.cts.playback;
 
-import android.hdmicec.cts.BaseHdmiCecAbsoluteVolumeControlTest;
+import android.hdmicec.cts.BaseHdmiCecAbsoluteVolumeBehaviorTest;
 import android.hdmicec.cts.BaseHdmiCecCtsTest;
 import android.hdmicec.cts.HdmiCecConstants;
 
@@ -27,17 +27,17 @@ import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
 
 /**
- * Tests for Absolute Volume Control where the DUT is a Playback device and the
+ * Tests for absolute volume behavior where the DUT is a Playback device and the
  * System Audio device is a TV.
  */
 @RunWith(DeviceJUnit4ClassRunner.class)
-public class HdmiCecAvcToTvTest extends BaseHdmiCecAbsoluteVolumeControlTest {
+public class HdmiCecAvbToTvTest extends BaseHdmiCecAbsoluteVolumeBehaviorTest {
 
     /**
      * No need to pass in client parameters because the client is started as TV as long as the
      * DUT is not a TV.
      */
-    public HdmiCecAvcToTvTest() {
+    public HdmiCecAvbToTvTest() {
         super(HdmiCecConstants.CEC_DEVICE_TYPE_PLAYBACK_DEVICE);
     }
 
