@@ -9,3 +9,16 @@ per-file src/android/car/cts/utils/VehiclePropertyVerifier.java = shanyu@google.
 # Audio related CTS files
 per-file src/android/car/cts/CarAudioManagerTest.java = oscarazu@google.com
 per-file src/android/car/cts/CarAudioFocusTest.java = oscarazu@google.com
+
+# IME related CTS files
+per-file src/android/car/view/inputmethod/cts/* = kanant@google.com, ycheo@google.com
+
+# Display related CTS files
+per-file src/android/car/view/cts/* = ycheo@google.com, gauravbhola@google.com
+
+# MultiUserMultiDisplay policy related CTS files
+per-file src/android/car/server/wm/cts/* = ycheo@google.com, gauravbhola@google.com, kanant@google.com
+
+# ActivityManager and TaskView related CTS files
+per-file src/android/car/app/cts/* = ycheo@google.com, gauravbhola@google.com, kanant@google.com
+
