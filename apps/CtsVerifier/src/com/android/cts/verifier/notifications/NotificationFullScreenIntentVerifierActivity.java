@@ -122,8 +122,8 @@ public class NotificationFullScreenIntentVerifierActivity extends InteractiveVer
         tests.add(new SetGlobalVisibilityPublicStep());
         tests.add(new SetChannelLockscreenVisibilityPublicStep());
 
-        // Grant permission for Full Screen Intent
-        tests.add(new GrantFsiPermissionStep());
+        // Deny permission for Full Screen Intent
+        tests.add(new DenyFsiPermissionStep());
 
         // NOW TESTING: Screen unlocked FSI HUN with permission, should show sticky HUN for 60s
         tests.add(new ScreenUnlockedFsiHunTest());
