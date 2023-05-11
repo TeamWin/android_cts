@@ -231,8 +231,6 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
         ShellIdentityUtils.invokeWithShellPermissions(
                 () -> mWifiManager.setVerboseLoggingEnabled(true));
 
-        ShellIdentityUtils.invokeWithShellPermissions(
-                () -> mWifiManager.allowAutojoinGlobal(false));
         mWasWifiEnabled = mWifiManager.isWifiEnabled();
         if (mWasWifiEnabled) {
             // Clean the possible P2P enabled broadcast from other test case.
@@ -271,8 +269,6 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
             removeAllPersistentGroups();
         }
         mContext.unregisterReceiver(mReceiver);
-
-        ShellIdentityUtils.invokeWithShellPermissions(() -> mWifiManager.allowAutojoinGlobal(true));
         ShellIdentityUtils.invokeWithShellPermissions(
                 () -> mWifiManager.setVerboseLoggingEnabled(mWasVerboseLoggingEnabled));
         if (mWasWifiEnabled) {
@@ -373,6 +369,8 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
         if (!mWifiManager.isWifiEnabled()) {
             ShellIdentityUtils.invokeWithShellPermissions(() -> mWifiManager.setWifiEnabled(true));
             PollingCheck.check("Wifi not enabled", DURATION, () -> mWifiManager.isWifiEnabled());
+            PollingCheck.check("Wifi not connected", DURATION,
+                    () -> mWifiManager.getConnectionInfo().getNetworkId() != -1);
         }
 
     }
