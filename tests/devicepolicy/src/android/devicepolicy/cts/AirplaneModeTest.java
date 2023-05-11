@@ -17,7 +17,6 @@
 package android.devicepolicy.cts;
 
 import static android.os.Build.VERSION_CODES.UPSIDE_DOWN_CAKE;
-
 import static android.provider.Settings.Global.AIRPLANE_MODE_ON;
 
 import static com.android.bedstead.nene.userrestrictions.CommonUserRestrictions.DISALLOW_AIRPLANE_MODE;
