@@ -32,10 +32,8 @@ import static com.android.bedstead.nene.permissions.CommonPermissions.QUERY_USER
 import static com.android.bedstead.nene.users.Users.users;
 
 import android.annotation.TargetApi;
-import android.app.ActivityManager;
 import android.app.KeyguardManager;
 import android.app.admin.DevicePolicyManager;
-import android.content.Intent;
 import android.content.pm.UserInfo;
 import android.os.Build;
 import android.os.UserHandle;
@@ -339,68 +337,44 @@ public final class UserReference implements AutoCloseable {
             return this;
         }
 
-        // This is created outside of the try because we don't want to wait for the broadcast
-        // on versions less than R
-        BlockingBroadcastReceiver broadcastReceiver =
-                new BlockingBroadcastReceiver(TestApis.context().instrumentedContext(),
-                        Intent.ACTION_USER_FOREGROUND,
-                        (intent) ->((UserHandle)
-                                intent.getParcelableExtra(Intent.EXTRA_USER))
-                                .getIdentifier() == mId);
-
+        boolean isSdkVersionMinimum_R = Versions.meetsMinimumSdkVersionRequirement(R);
         try {
-            if (Versions.meetsMinimumSdkVersionRequirement(R)) {
-                try (PermissionContext p =
-                             TestApis.permissions().withPermission(INTERACT_ACROSS_USERS_FULL)) {
-                    broadcastReceiver.registerForAllUsers();
-                }
+            ShellCommand.builder("am switch-user")
+                    .addOperand(isSdkVersionMinimum_R ? "-w" : "")
+                    .addOperand(mId)
+                    .withTimeout(Duration.ofMinutes(1))
+                    .allowEmptyOutput(true)
+                    .validate(String::isEmpty)
+                    .execute();
+        } catch (AdbException e) {
+            String error = getSwitchToUserError();
+            if (error != null) {
+                throw new NeneException(error);
             }
-
-            ActivityManager am = TestApis.context().instrumentedContext().getSystemService(
-                    ActivityManager.class);
-
-            boolean switched = false;
-            try (PermissionContext p = TestApis.permissions().withPermission(CREATE_USERS)) {
-                switched = am.switchUser(userHandle());
+            if (!exists()) {
+                throw new NeneException("Tried to switch to user " + this + " but does not exist");
             }
+            // TODO(273229540): It might take a while to fail - we should stream from the
+            // start of the call
+            throw new NeneException("Error switching user to " + this + ". Relevant logcat: "
+                    + TestApis.logcat().dump((line) -> line.contains("Cannot switch")));
+        }
+        if (isSdkVersionMinimum_R) {
+            Poll.forValue("current user", () -> TestApis.users().current())
+                    .toBeEqualTo(this)
+                    .await();
 
-            if (!switched) {
-                String error = getSwitchToUserError();
-                if (error != null) {
-                    throw new NeneException(error);
-                }
-
-                if (!exists()) {
-                    throw new NeneException("Tried to switch to user " + this + " but does not exist");
-                }
-
-                // TODO(273229540): It might take a while to fail - we should stream from the
-                // start of the call
-                throw new NeneException("Error switching user to " + this +
-                        ". Relevant logcat: " + TestApis.logcat().dump(
-                                (line) -> line.contains("Cannot switch")));
+            if (!TestApis.users().current().equals(this)) {
+                throw new NeneException("Error switching user to " + this
+                        + " (current user is " + TestApis.users().current() + "). Relevant logcat: "
+                        + TestApis.logcat().dump((line) -> line.contains("ActivityManager")));
             }
-
-            if (Versions.meetsMinimumSdkVersionRequirement(R)) {
-                broadcastReceiver.awaitForBroadcast();
-
-                Poll.forValue("current user", () -> TestApis.users().current())
-                        .toBeEqualTo(this)
-                        .await();
-
-                if (!TestApis.users().current().equals(this)) {
-                    throw new NeneException("Error switching user to " + this
-                            + " (current user is " + TestApis.users().current() + "). Relevant logcat: " + TestApis.logcat().dump(
-                            (line) -> line.contains("ActivityManager")));
-                }
-            } else {
+        } else {
+            try {
                 Thread.sleep(20000);
+            } catch (InterruptedException e) {
+                Log.e(LOG_TAG, "Interrupted while switching user", e);
             }
-
-        } catch (InterruptedException e) {
-            Log.e(LOG_TAG, "Interrupted while switching user", e);
-        } finally {
-            broadcastReceiver.unregisterQuietly();
         }
 
         return this;
