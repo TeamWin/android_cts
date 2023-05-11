@@ -13,6 +13,12 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
+
+<!--
+    Please remember to update cts-on-aosp-include.xml when
+    this file is modified. See comments there for details.
+-->
+
 <configuration description="Excluded tests from cts-on-aosp">
     <!-- Tell all AndroidJUnitTests to exclude certain annotations -->
     <option name="compatibility:test-arg" value="com.android.tradefed.testtype.AndroidJUnitTest:exclude-annotation:android.platform.test.annotations.RestrictedBuildTest" />
@@ -37,10 +43,6 @@
     <option name="compatibility:exclude-filter" value="CtsUsageStatsTestCases android.app.usage.cts.NetworkUsageStatsTest#testTagDetails" />
     <option name="compatibility:exclude-filter" value="CtsUsageStatsTestCases android.app.usage.cts.NetworkUsageStatsTest#testUidDetails" />
     <option name="compatibility:exclude-filter" value="CtsUsageStatsTestCases android.app.usage.cts.NetworkUsageStatsTest#testUserSummary" />
-
-    <!-- Exclude not applicable testcases-->
-    <option name="compatibility:exclude-filter" value="CtsSignatureTestCases" />
-    <option name="compatibility:exclude-filter" value="CtsOsTestCases android.os.cts.AutoRevokeTeandroid.os.cts.AutoRevokeTestst" />
 
     <!--
         Exclude testcases failing on Pixel devices
@@ -93,9 +95,6 @@
     <!-- b/110385515: Flaky due to a particular SIM card requirement (excluded) -->
     <option name="compatibility:exclude-filter" value="CtsNetTestCases android.net.cts.ConnectivityManagerTest#testOpenConnection" />
     <option name="compatibility:exclude-filter" value="CtsWifiTestCases android.net.wifi.rtt.cts.WifiRttTest#testRangingToTestAp" />
-
-    <!-- b/110417203: Flaky tests -->
-    <option name="compatibility:exclude-filter" value="CtsUsageStatsTestCases android.app.usage.cts.NetworkUsageStatsTest#testUidTagStateDetails" />
 
     <!-- b/111101428: CtsOsTestCases irrelevant test cases -->
     <option name="compatibility:exclude-filter" value="CtsOsTestCases android.os.cts.BuildTest#testIsSecureUserBuild" />
