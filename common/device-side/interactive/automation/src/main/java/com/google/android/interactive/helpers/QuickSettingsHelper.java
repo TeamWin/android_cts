@@ -19,6 +19,7 @@ package com.google.android.interactive.helpers;
 import android.util.Log;
 
 import androidx.test.uiautomator.By;
+import androidx.test.uiautomator.Direction;
 import androidx.test.uiautomator.UiDevice;
 import androidx.test.uiautomator.UiObject2;
 import androidx.test.uiautomator.Until;
@@ -48,11 +49,13 @@ public final class QuickSettingsHelper {
         UiObject2 count = device.wait(
                 Until.findObject(By.res("com.android.systemui:id/footer_page_indicator")), 5000);
         int num = count.getChildren().size();
+        UiObject2 quickSettings = device.findObject(By.res("com.android.systemui:id/qs_pager"));
+        if (quickSettings == null) {
+            throw new IllegalStateException("Could not find the quick settings pager");
+        }
+
         for (int i = 0; i < num; i++) {
-            device.swipe(device.getDisplayWidth() - (device.getDisplayWidth() * 1 / 8) ,
-                    device.getDisplayHeight() / 4,
-                    device.getDisplayWidth() * 1 / 8,
-                    device.getDisplayHeight() / 4, 10);
+            quickSettings.swipe(Direction.LEFT, 1f);
             UiObject2 tile = device.findObject(By.text(label));
             if (tile != null) {
                 return tile;
