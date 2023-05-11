@@ -33,7 +33,6 @@ import android.accessibilityservice.cts.activities.AccessibilityCacheActivity;
 import android.app.Instrumentation;
 import android.app.UiAutomation;
 import android.platform.test.annotations.AppModeFull;
-import android.platform.test.annotations.FlakyTest;
 import android.platform.test.annotations.Presubmit;
 import android.text.TextUtils;
 import android.view.accessibility.AccessibilityNodeInfo;
@@ -244,7 +243,6 @@ public class AccessibilityCacheTest {
      * exception.
      */
     @Test
-    @FlakyTest
     public void testRequest_withMultiplePrefetchingStrategies_throwsException() {
         // Subtree is FrameLayout with TextView and LinearLayout children.
         // The LinearLayout has a TextView child.

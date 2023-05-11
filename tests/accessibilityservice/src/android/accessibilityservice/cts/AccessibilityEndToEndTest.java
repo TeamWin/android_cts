@@ -86,7 +86,6 @@ import android.os.Process;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.AsbSecurityTest;
-import android.platform.test.annotations.FlakyTest;
 import android.platform.test.annotations.Presubmit;
 import android.provider.Settings;
 import android.text.TextUtils;
@@ -1100,7 +1099,6 @@ public class AccessibilityEndToEndTest extends StsExtraBusinessLogicTestCase {
     @Test
     @ApiTest(apis = {"android.view.View#onHoverEvent",
             "android.view.accessibility.AccessibilityManager#sendAccessibilityEvent"})
-    @FlakyTest
     public void testTouchDelegateCoverParentWithEbt_HoverChildAndBack_FocusTargetAgain()
             throws Throwable {
         mActivity.waitForEnterAnimationComplete();

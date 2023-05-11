@@ -50,7 +50,6 @@ import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.Region;
 import android.platform.test.annotations.AppModeFull;
-import android.platform.test.annotations.FlakyTest;
 import android.platform.test.annotations.Presubmit;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -244,7 +243,6 @@ public class AccessibilityMagnificationTest {
     }
 
     @Test
-    @FlakyTest
     public void testSetConfigWithDefaultModeAndCenter_expectedConfig() throws Exception {
         final MagnificationController controller = mService.getMagnificationController();
         final Rect bounds = controller.getMagnificationRegion().getBounds();
@@ -284,7 +282,6 @@ public class AccessibilityMagnificationTest {
     }
 
     @Test
-    @FlakyTest
     public void testSetConfigWithActivatedFalse_expectedConfig() throws Exception {
         final MagnificationController controller = mService.getMagnificationController();
         final Rect bounds = controller.getMagnificationRegion().getBounds();
