@@ -89,7 +89,7 @@ public class EmergencyCallOnSimCallManagerTest extends BaseTelecomTestWithMockSe
     @Override
     protected void tearDown() throws Exception {
         try {
-            if (mShouldTestTelecom || !TestUtils.hasTelephonyFeature(mContext)) {
+            if (mShouldTestTelecom && TestUtils.hasTelephonyFeature(mContext)) {
                 mTelecomManager.unregisterPhoneAccount(TEST_SIM_CALL_MANAGER_PHONE_ACCOUNT_HANDLE);
             }
         } finally {
