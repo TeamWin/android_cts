@@ -284,6 +284,26 @@
             <meta-data android:name="android.accessibilityservice"
                        android:resource="@xml/stub_proxy_concurrent_service"/>
         </service>
+        <service android:name=".StubA11yToolAccessibilityService"
+             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
+             android:exported="true">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService"/>
+            </intent-filter>
+
+            <meta-data android:name="android.accessibilityservice"
+                 android:resource="@xml/stub_a11ytool_service"/>
+        </service>
+        <service android:name=".StubNonA11yToolAccessibilityService"
+             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
+             android:exported="true">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService"/>
+            </intent-filter>
+
+            <meta-data android:name="android.accessibilityservice"
+                 android:resource="@xml/stub_nona11ytool_service"/>
+        </service>
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
