@@ -559,9 +559,8 @@ public class AccessibilityDisplayProxyTest {
             final Button button = mProxiedVirtualDisplayActivity.findViewById(R.id.button);
             mProxiedVirtualDisplayActivity.runOnUiThread(() -> button.performClick());
             assertThrows(AssertionError.class, () ->
-                    waitOn(service.mWaitObject, ()-> service.mReceivedEvent.get(),
-                            TIMEOUT_MS,
-                    "Expected event was not received within " + TIMEOUT_MS + " ms"));
+                    service.waitOnEvent(TIMEOUT_MS,
+                            "Expected event was not received within " + TIMEOUT_MS + " ms"));
         } finally {
             service.disableSelfAndRemove();
         }
@@ -830,7 +829,7 @@ public class AccessibilityDisplayProxyTest {
                     mNonProxiedConcurrentActivity.getDisplayId());
             sUiAutomation.injectInputEventToInputFilter(downEvent);
 
-            waitOn(service.mWaitObject, ()-> service.mReceivedEvent.get(), TIMEOUT_MS,
+            service.waitOnEvent(TIMEOUT_MS,
                     "Expected event was not received within " + TIMEOUT_MS + " ms");
         } finally {
             service.disableSelfAndRemove();
