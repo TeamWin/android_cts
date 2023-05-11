@@ -57,7 +57,6 @@ import android.app.UiAutomation;
 import android.content.pm.PackageManager;
 import android.graphics.PointF;
 import android.platform.test.annotations.AppModeFull;
-import android.platform.test.annotations.FlakyTest;
 import android.platform.test.annotations.Presubmit;
 import android.provider.Settings;
 import android.util.DisplayMetrics;
@@ -241,7 +240,6 @@ public class TouchInteractionControllerTest {
     /** Test whether we can initiate a drag. */
     @Test
     @AppModeFull
-    @FlakyTest
     public void testTwoFingerDrag_sendsTouchEvents() {
         if (!mHasTouchscreen || !mScreenBigEnough) return;
         assertBasicConsistency();
@@ -322,7 +320,6 @@ public class TouchInteractionControllerTest {
      */
     @Test
     @AppModeFull
-    @FlakyTest
     public void testPerformClickAccessibilityFocus_performsClick() {
         if (!mHasTouchscreen || !mScreenBigEnough) return;
         assertBasicConsistency();
