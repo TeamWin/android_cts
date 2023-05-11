@@ -25,22 +25,22 @@ import org.junit.Before;
 import org.junit.Test;
 
 /**
- * Abstract base class for tests for Absolute Volume Control (AVC). Subclasses must call
+ * Abstract base class for tests for absolute volume behavior (AVB). Subclasses must call
  * this class's constructor to specify the device type of the DUT and the System Audio device.
- * The three valid pairs of (DUT type, System Audio device type) for AVC are as follows:
+ * The three valid pairs of (DUT type, System Audio device type) for AVB are as follows:
  * (Playback, TV); (Playback, Audio System); (TV, Audio System).
  *
  * Currently, it is only feasible to test the case where the DUT is a playback device and the
  * System Audio device is a TV. This is because the CEC adapter responds <Feature Abort> to
  * <Set Audio Volume Level> when it is started as an Audio System.
  */
-public abstract class BaseHdmiCecAbsoluteVolumeControlTest extends BaseHdmiCecCtsTest {
+public abstract class BaseHdmiCecAbsoluteVolumeBehaviorTest extends BaseHdmiCecCtsTest {
 
     /**
      * Constructor. The test device type and client params (determining the client's device type)
      * passed in here determine the behavior of the tests.
      */
-    public BaseHdmiCecAbsoluteVolumeControlTest(@HdmiCecConstants.CecDeviceType int testDeviceType,
+    public BaseHdmiCecAbsoluteVolumeBehaviorTest(@HdmiCecConstants.CecDeviceType int testDeviceType,
             String... clientParams) {
         super(testDeviceType, clientParams);
     }
@@ -61,8 +61,8 @@ public abstract class BaseHdmiCecAbsoluteVolumeControlTest extends BaseHdmiCecCt
     public void setUp() throws Exception {
         super.setUp();
 
-        // This setting must be enabled to use AVC. Start with it disabled to ensure that we can
-        // control when the AVC initiation process starts.
+        // This setting must be enabled to use AVB. Start with it disabled to ensure that we can
+        // control when the AVB initiation process starts.
         setSettingsValue(HdmiCecConstants.SETTING_VOLUME_CONTROL_ENABLED,
                 HdmiCecConstants.VOLUME_CONTROL_DISABLED);
 
@@ -77,7 +77,7 @@ public abstract class BaseHdmiCecAbsoluteVolumeControlTest extends BaseHdmiCecCt
             simulateCecSinkConnected(getDevice(), getTargetLogicalAddress());
         }
 
-        // Full volume behavior is a prerequisite for AVC. However, we cannot control this
+        // Full volume behavior is a prerequisite for AVB. However, we cannot control this
         // condition from CTS tests or shell due to missing permissions. Therefore, we run these
         // tests only if it is already true.
         assumeTrue(isFullVolumeDevice(getAudioOutputDevice()));
@@ -86,12 +86,12 @@ public abstract class BaseHdmiCecAbsoluteVolumeControlTest extends BaseHdmiCecCt
     /**
      * Requires the device to be able to adopt CEC 2.0 so that it sends <Give Features>.
      *
-     * Tests that the DUT enables and disables AVC in response to changes in the System Audio
+     * Tests that the DUT enables and disables AVB in response to changes in the System Audio
      * device's support for <Set Audio Volume Level>. In this test, this support status is
      * communicated through <Report Features> messages.
      */
     @Test
-    public void testEnableDisableAvc_cec20_triggeredByReportFeatures() throws Exception {
+    public void testEnableDisableAvb_cec20_triggeredByReportFeatures() throws Exception {
         // Enable CEC 2.0
         setCec20();
 
@@ -102,7 +102,7 @@ public abstract class BaseHdmiCecAbsoluteVolumeControlTest extends BaseHdmiCecCt
         // Enable System Audio Mode if the System Audio device is an Audio System
         enableSystemAudioModeIfApplicable();
 
-        // Since CEC 2.0 is enabled, DUT should also use <Give Features> to query AVC support
+        // Since CEC 2.0 is enabled, DUT should also use <Give Features> to query AVB support
         hdmiCecClient.checkExpectedOutput(hdmiCecClient.getSelfDevice(),
                 CecOperand.GIVE_FEATURES);
         hdmiCecClient.checkExpectedOutput(hdmiCecClient.getSelfDevice(),
@@ -114,57 +114,57 @@ public abstract class BaseHdmiCecAbsoluteVolumeControlTest extends BaseHdmiCecCt
         // DUT queries audio status
         hdmiCecClient.checkExpectedOutput(hdmiCecClient.getSelfDevice(),
                 CecOperand.GIVE_AUDIO_STATUS);
-        checkAbsoluteVolumeControlStatus(false);
+        checkAbsoluteVolumeBehaviorStatus(false);
 
         // DUT receives audio status
         hdmiCecClient.sendCecMessage(hdmiCecClient.getSelfDevice(), CecOperand.REPORT_AUDIO_STATUS,
                 CecMessage.formatParams(50));
-        checkAbsoluteVolumeControlStatus(true);
+        checkAbsoluteVolumeBehaviorStatus(true);
 
         // System Audio device reports no support for <Set Audio Volume Level>
         sendReportFeatures(false);
-        checkAbsoluteVolumeControlStatus(false);
+        checkAbsoluteVolumeBehaviorStatus(false);
     }
 
     /**
-     * Tests that the DUT enables and disables AVC in response to changes in the System Audio
+     * Tests that the DUT enables and disables AVB in response to changes in the System Audio
      * device's support for <Set Audio Volume Level>. In this test, this support status is
      * communicated through (the lack of) <Feature Abort> responses to <Set Audio Volume Level>.
      */
     @Test
-    public void testEnableDisableAvc_triggeredByAvcSupportChanged() throws Exception {
+    public void testEnableDisableAvb_triggeredByAvbSupportChanged() throws Exception {
         setSettingsValue(HdmiCecConstants.SETTING_VOLUME_CONTROL_ENABLED,
                 HdmiCecConstants.VOLUME_CONTROL_ENABLED);
 
         enableSystemAudioModeIfApplicable();
 
-        // DUT queries AVC support by sending <Set Audio Volume Level>
+        // DUT queries AVB support by sending <Set Audio Volume Level>
         hdmiCecClient.checkExpectedOutput(hdmiCecClient.getSelfDevice(),
                 CecOperand.SET_AUDIO_VOLUME_LEVEL);
 
         // System Audio device does not respond with <Feature Abort>. DUT queries audio status
         hdmiCecClient.checkExpectedOutput(hdmiCecClient.getSelfDevice(),
                 CecOperand.GIVE_AUDIO_STATUS);
-        checkAbsoluteVolumeControlStatus(false);
+        checkAbsoluteVolumeBehaviorStatus(false);
 
         // DUT receives audio status
         hdmiCecClient.sendCecMessage(hdmiCecClient.getSelfDevice(), CecOperand.REPORT_AUDIO_STATUS,
                 CecMessage.formatParams(50));
-        checkAbsoluteVolumeControlStatus(true);
+        checkAbsoluteVolumeBehaviorStatus(true);
 
         // System Audio device responds to <Set Audio Volume Level> with
         // <Feature Abort>[Unrecognized opcode]
         hdmiCecClient.sendCecMessage(hdmiCecClient.getSelfDevice(), CecOperand.FEATURE_ABORT,
                 CecMessage.formatParams(CecOperand.SET_AUDIO_VOLUME_LEVEL + "00"));
-        checkAbsoluteVolumeControlStatus(false);
+        checkAbsoluteVolumeBehaviorStatus(false);
     }
 
     /**
-     * Tests that the DUT enables and disables AVC in response to CEC volume control being
+     * Tests that the DUT enables and disables AVB in response to CEC volume control being
      * enabled or disabled.
      */
     @Test
-    public void testEnableAndDisableAVC_triggeredByVolumeControlSettingChange() throws Exception {
+    public void testEnableAndDisableAvb_triggeredByVolumeControlSettingChange() throws Exception {
         enableSystemAudioModeIfApplicable();
 
         // System audio device reports support for <Set Audio Volume Level>
@@ -177,27 +177,27 @@ public abstract class BaseHdmiCecAbsoluteVolumeControlTest extends BaseHdmiCecCt
         // DUT queries audio status
         hdmiCecClient.checkExpectedOutput(hdmiCecClient.getSelfDevice(),
                 CecOperand.GIVE_AUDIO_STATUS);
-        checkAbsoluteVolumeControlStatus(false);
+        checkAbsoluteVolumeBehaviorStatus(false);
 
         // DUT receives audio status
         hdmiCecClient.sendCecMessage(hdmiCecClient.getSelfDevice(), CecOperand.REPORT_AUDIO_STATUS,
                 CecMessage.formatParams(50));
-        checkAbsoluteVolumeControlStatus(true);
+        checkAbsoluteVolumeBehaviorStatus(true);
 
         // CEC volume control is disabled on the DUT
         setSettingsValue(HdmiCecConstants.SETTING_VOLUME_CONTROL_ENABLED,
                 HdmiCecConstants.VOLUME_CONTROL_DISABLED);
-        checkAbsoluteVolumeControlStatus(false);
+        checkAbsoluteVolumeBehaviorStatus(false);
     }
 
     /**
-     * Tests that the DUT enables and disables AVC in response to System Audio mode being
+     * Tests that the DUT enables and disables AVB in response to System Audio mode being
      * enabled or disabled.
      *
      * Only valid when the System Audio device is an Audio System.
      */
     @Test
-    public void testEnableDisableAvc_triggeredBySystemAudioModeChange() throws Exception {
+    public void testEnableDisableAvb_triggeredBySystemAudioModeChange() throws Exception {
         assumeTrue("Skipping this test for this setup because the System Audio device "
                         + "is not an Audio System.",
                 hdmiCecClient.getSelfDevice().getDeviceType()
@@ -216,25 +216,25 @@ public abstract class BaseHdmiCecAbsoluteVolumeControlTest extends BaseHdmiCecCt
         // DUT queries audio status
         hdmiCecClient.checkExpectedOutput(hdmiCecClient.getSelfDevice(),
                 CecOperand.GIVE_AUDIO_STATUS);
-        checkAbsoluteVolumeControlStatus(false);
+        checkAbsoluteVolumeBehaviorStatus(false);
 
         // DUT receives audio status
         hdmiCecClient.sendCecMessage(hdmiCecClient.getSelfDevice(), CecOperand.REPORT_AUDIO_STATUS,
                 CecMessage.formatParams(50));
-        checkAbsoluteVolumeControlStatus(true);
+        checkAbsoluteVolumeBehaviorStatus(true);
 
         // System Audio Mode is disabled
         broadcastSystemAudioModeMessage(false);
-        checkAbsoluteVolumeControlStatus(false);
+        checkAbsoluteVolumeBehaviorStatus(false);
     }
 
     /**
-     * Tests that the DUT sends the correct CEC messages when AVC is enabled and Android
+     * Tests that the DUT sends the correct CEC messages when AVB is enabled and Android
      * initiates volume changes.
      */
     @Test
     public void testOutgoingVolumeUpdates() throws Exception {
-        // Enable AVC
+        // Enable AVB
         setSettingsValue(HdmiCecConstants.SETTING_VOLUME_CONTROL_ENABLED,
                 HdmiCecConstants.VOLUME_CONTROL_ENABLED);
         enableSystemAudioModeIfApplicable();
@@ -243,7 +243,7 @@ public abstract class BaseHdmiCecAbsoluteVolumeControlTest extends BaseHdmiCecCt
                 CecOperand.GIVE_AUDIO_STATUS);
         hdmiCecClient.sendCecMessage(hdmiCecClient.getSelfDevice(), CecOperand.REPORT_AUDIO_STATUS,
                 CecMessage.formatParams(50));
-        checkAbsoluteVolumeControlStatus(true);
+        checkAbsoluteVolumeBehaviorStatus(true);
 
         // Calling AudioManager#setStreamVolume should cause the DUT to send
         // <Set Audio Volume Level> with the new volume level as a parameter
@@ -271,7 +271,7 @@ public abstract class BaseHdmiCecAbsoluteVolumeControlTest extends BaseHdmiCecCt
      */
     @Test
     public void testIncomingVolumeUpdates() throws Exception {
-        // Enable AVC
+        // Enable AVB
         setSettingsValue(HdmiCecConstants.SETTING_VOLUME_CONTROL_ENABLED,
                 HdmiCecConstants.VOLUME_CONTROL_ENABLED);
         enableSystemAudioModeIfApplicable();
@@ -280,7 +280,7 @@ public abstract class BaseHdmiCecAbsoluteVolumeControlTest extends BaseHdmiCecCt
                 CecOperand.GIVE_AUDIO_STATUS);
         hdmiCecClient.sendCecMessage(hdmiCecClient.getSelfDevice(), CecOperand.REPORT_AUDIO_STATUS,
                 CecMessage.formatParams(50)); // Volume 50, mute off
-        checkAbsoluteVolumeControlStatus(true);
+        checkAbsoluteVolumeBehaviorStatus(true);
 
         // Volume and mute status should match the initial <Report Audio Status>
         assertApproximateDeviceVolumeAndMute(50, false);
@@ -332,23 +332,24 @@ public abstract class BaseHdmiCecAbsoluteVolumeControlTest extends BaseHdmiCecCt
     }
 
     /**
-     * Checks that the status of Absolute Volume Control on the DUT to match the expected status.
+     * Checks that the status of absolute volume behavior on the DUT to match the expected status.
      * Waits and rechecks a limited number of times if the status does not currently match.
      */
-    private void checkAbsoluteVolumeControlStatus(boolean enabledStatus) throws Exception {
+    private void checkAbsoluteVolumeBehaviorStatus(boolean enabledStatus) throws Exception {
         String expectedStatus = enabledStatus ? "enabled" : "disabled";
-        waitForCondition(() -> getAbsoluteVolumeControlStatus() == enabledStatus,
-                "Absolute Volume Control was not " + expectedStatus + " when expected");
+        waitForCondition(() -> getAbsoluteVolumeBehaviorStatus() == enabledStatus,
+                "Absolute volume behavior was not " + expectedStatus + " when expected");
     }
 
     /**
-     * Returns the state of Absolute Volume Control on the DUT. This is determined by the
+     * Returns the state of absolute volume behavior on the DUT. This is determined by the
      * volume behavior of the audio output device being used for HDMI audio.
      */
-    private boolean getAbsoluteVolumeControlStatus() throws Exception {
+    private boolean getAbsoluteVolumeBehaviorStatus() throws Exception {
         return getDevice()
-                .executeShellCommand("dumpsys hdmi_control | grep mIsAbsoluteVolumeControlEnabled:")
-                .replace("mIsAbsoluteVolumeControlEnabled:", "").trim()
+                .executeShellCommand(
+                        "dumpsys hdmi_control | grep mIsAbsoluteVolumeBehaviorEnabled:")
+                .replace("mIsAbsoluteVolumeBehaviorEnabled:", "").trim()
                 .equals("true");
     }
 
