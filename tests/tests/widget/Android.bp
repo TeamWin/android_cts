@@ -35,7 +35,6 @@ android_test {
         "androidx.test.uiautomator_uiautomator",
         "androidx.test.espresso.core",
         "cts-wm-util",
-        "Harrier",
     ],
 
     libs: ["android.test.runner"],
