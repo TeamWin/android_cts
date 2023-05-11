@@ -29,7 +29,14 @@
                 <action android:name="com.android.testapp.UNIQUE_ACTIVITY_ACTION" />
             </intent-filter>
         </activity>
-
+        <activity android:name="android.testapp.TestSchemeActivity" android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="test" />
+            </intent-filter>
+        </activity>
         <service
             android:name=".TestSystemCredentialProviderService"
             android:enabled="true"
