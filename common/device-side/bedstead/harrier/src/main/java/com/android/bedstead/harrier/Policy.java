@@ -56,9 +56,6 @@ import static com.android.bedstead.nene.devicepolicy.CommonDevicePolicy.DELEGATI
 import static com.android.bedstead.nene.devicepolicy.CommonDevicePolicy.DELEGATION_PACKAGE_ACCESS;
 import static com.android.bedstead.nene.devicepolicy.CommonDevicePolicy.DELEGATION_PERMISSION_GRANT;
 import static com.android.bedstead.nene.devicepolicy.CommonDevicePolicy.DELEGATION_SECURITY_LOGGING;
-import static com.android.bedstead.nene.flags.CommonFlags.DevicePolicyManager.ENABLE_DEVICE_POLICY_ENGINE_FLAG;
-import static com.android.bedstead.nene.flags.CommonFlags.DevicePolicyManager.PERMISSION_BASED_ACCESS_EXPERIMENT_FLAG;
-import static com.android.bedstead.nene.flags.CommonFlags.NAMESPACE_DEVICE_POLICY_MANAGER;
 import static com.android.bedstead.testapp.TestAppQueryBuilder.queryBuilder;
 
 import com.android.bedstead.harrier.annotations.EnsureFeatureFlagEnabled;
@@ -539,11 +536,7 @@ public final class Policy {
                                     .toAnnotation(),
                             UserType.INSTRUMENTED_USER, /* isPrimary= */ true),
                     ensureTestAppHasPermission(DELEGATE_KEY,
-                            new String[]{permission.appliedWith()}, FailureMode.SKIP),
-                    ensureFeatureFlagEnabled(
-                            NAMESPACE_DEVICE_POLICY_MANAGER, ENABLE_DEVICE_POLICY_ENGINE_FLAG),
-                    ensureFeatureFlagEnabled(
-                            NAMESPACE_DEVICE_POLICY_MANAGER, PERMISSION_BASED_ACCESS_EXPERIMENT_FLAG)
+                            new String[]{permission.appliedWith()}, FailureMode.SKIP)
             };
             // TODO(281651179): Re-enable
 //            annotations.add(
