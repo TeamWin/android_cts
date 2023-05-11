@@ -50,6 +50,7 @@ import android.telephony.TelephonyManager;
 import androidx.annotation.Nullable;
 import androidx.test.filters.SmallTest;
 
+import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.SystemUtil;
 
@@ -101,6 +102,8 @@ public class ServiceStateTest {
      * Verifies that the ServiceStateTable CONTENT_URI and AUTHORITY is valid.
      */
     @Test
+    @ApiTest(apis = {"android.provider.Telephony.ServiceStateTable#AUTHORITY",
+            "android.provider.Telephony.ServiceStateTable#AUTHORCONTENT_URI"})
     public void testUriAndAuthority() {
         Uri uri = Telephony.ServiceStateTable.CONTENT_URI;
         assertThat(uri).isEqualTo(Uri.parse("content://service-state/"));
@@ -114,6 +117,7 @@ public class ServiceStateTest {
      * This test case requires an active subscription.
      */
     @Test
+    @ApiTest(apis = {"android.provider.Telephony.ServiceStateTable#VOICE_REG_STATE"})
     public void testGetVoiceRegState_query() {
         if (!isSubscriptionActive(mSubId)) {
             return;
@@ -134,6 +138,7 @@ public class ServiceStateTest {
      * notification.
      */
     @Test
+    @ApiTest(apis = {"android.provider.Telephony.ServiceStateTable#VOICE_REG_STATE"})
     public void testGetVoiceRegState_noChangeObserved() throws Exception {
         ServiceState oldSS = new ServiceState();
         oldSS.setStateOutOfService();
@@ -154,6 +159,7 @@ public class ServiceStateTest {
      * Verifies that when voice reg state changed, the observer should receive the notification.
      */
     @Test
+    @ApiTest(apis = {"android.provider.Telephony.ServiceStateTable#VOICE_REG_STATE"})
     public void testGetVoiceRegState_changeObserved() throws Exception {
         ServiceState oldSS = new ServiceState();
         oldSS.setStateOutOfService();
@@ -172,6 +178,7 @@ public class ServiceStateTest {
      * This test case requires an active subscription.
      */
     @Test
+    @ApiTest(apis = {"android.provider.Telephony.ServiceStateTable#DATA_NETWORK_TYPE"})
     public void testGetDataNetworkType_query() {
         if (!isSubscriptionActive(mSubId)) {
             return;
@@ -193,6 +200,7 @@ public class ServiceStateTest {
      * notification.
      */
     @Test
+    @ApiTest(apis = {"android.provider.Telephony.ServiceStateTable#DATA_NETWORK_TYPE"})
     public void testDataNetworkType_noChangeObserved() throws Exception {
         ServiceState oldSS = new ServiceState();
         oldSS.setStateOutOfService();
@@ -217,6 +225,7 @@ public class ServiceStateTest {
      * Verifies that when data network type changed, the observer should receive the notification.
      */
     @Test
+    @ApiTest(apis = {"android.provider.Telephony.ServiceStateTable#DATA_NETWORK_TYPE"})
     public void testDataNetworkType_changeObserved() throws Exception {
         // While we don't have a method to directly set dataNetworkType, we emulate a ServiceState
         // change that will trigger the change of dataNetworkType, according to the logic in
@@ -244,6 +253,7 @@ public class ServiceStateTest {
      * This test case requires an active subscription.
      */
     @Test
+    @ApiTest(apis = {"android.provider.Telephony.ServiceStateTable#DUPLEX_MODE"})
     public void testGetDuplexMode_query() {
         if (!isSubscriptionActive(mSubId)) {
             return;
@@ -265,6 +275,7 @@ public class ServiceStateTest {
      * notification (duplex mode is a poll-only field).
      */
     @Test
+    @ApiTest(apis = {"android.provider.Telephony.ServiceStateTable#DUPLEX_MODE"})
     public void testGetDuplexMode_noChangeObserved() throws Exception {
         ServiceState oldSS = new ServiceState();
         oldSS.setStateOutOfService();
@@ -290,6 +301,7 @@ public class ServiceStateTest {
      * This test case requires an active subscription.
      */
     @Test
+    @ApiTest(apis = {"android.provider.Telephony.ServiceStateTable#DATA_REG_STATE"})
     public void testGetDataRegState_query() {
         if (!isSubscriptionActive(mSubId)) {
             return;
@@ -311,6 +323,7 @@ public class ServiceStateTest {
      * notification.
      */
     @Test
+    @ApiTest(apis = {"android.provider.Telephony.ServiceStateTable#DATA_REG_STATE"})
     public void testGetDataRegState_noChangeObserved() throws Exception {
         ServiceState oldSS = new ServiceState();
         oldSS.setStateOutOfService();
@@ -331,6 +344,7 @@ public class ServiceStateTest {
      * Verifies that when data reg state changed, the observer should receive the notification.
      */
     @Test
+    @ApiTest(apis = {"android.provider.Telephony.ServiceStateTable#DATA_REG_STATE"})
     public void testGetDataRegState_changeObserved() throws Exception {
         ServiceState oldSS = new ServiceState();
         oldSS.setStateOutOfService();
