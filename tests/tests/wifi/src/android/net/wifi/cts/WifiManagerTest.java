@@ -2435,7 +2435,8 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         for (PackageInfo pi : holding) {
             if (!allowedPackages.contains(pi.packageName)) {
                 fail("The NETWORK_SETUP_WIZARD permission must not be held by " + pi.packageName
-                    + " and must be revoked for security reasons [" + validPkg + "]");
+                    + " and must be revoked for security reasons"
+                    + " | validPkg=" + validPkg);
             }
         }
     }
