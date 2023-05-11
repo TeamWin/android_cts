@@ -31,6 +31,7 @@ import android.app.ForegroundServiceTypePolicy.ForegroundServiceTypePolicyInfo;
 import android.app.Instrumentation;
 import android.app.cts.android.app.cts.tools.WatchUidRunner;
 import android.app.fgstesthelper.LocalForegroundServiceBase;
+import android.app.role.RoleManager;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -503,11 +504,14 @@ public final class ActivityManagerForegroundServiceTypeTest {
         final String mName;
         final boolean mIsAppOps;
         final SpecialPermissionOp mSpecialOp;
+        final boolean mIsRole;
 
-        TestPermissionInfo(String name, boolean isAppOps, SpecialPermissionOp specialOp) {
+        TestPermissionInfo(String name, boolean isAppOps, SpecialPermissionOp specialOp,
+                boolean isRole) {
             mName = name;
             mIsAppOps = isAppOps;
             mSpecialOp = specialOp;
+            mIsRole = isRole;
         }
     }
 
@@ -531,6 +535,7 @@ public final class ActivityManagerForegroundServiceTypeTest {
     private TestPermissionInfo[] triagePermissions(String[] permissions) {
         final ArrayList<TestPermissionInfo> perms = new ArrayList<>();
         if (permissions != null) {
+            final RoleManager rm = mTargetContext.getSystemService(RoleManager.class);
             for (String perm : permissions) {
                 PermissionInfo pi = null;
                 try {
@@ -539,13 +544,16 @@ public final class ActivityManagerForegroundServiceTypeTest {
                     // It could be an appop.
                 }
                 if (pi != null) {
-                    perms.add(new TestPermissionInfo(perm, false, null));
+                    perms.add(new TestPermissionInfo(perm, false, null, false));
                 } else if (sSpecialPermissionOps.containsKey(perm)) {
-                    perms.add(new TestPermissionInfo(perm, false, sSpecialPermissionOps.get(perm)));
+                    perms.add(new TestPermissionInfo(perm, false, sSpecialPermissionOps.get(perm),
+                            true));
+                } else if (rm.isRoleAvailable(perm)) {
+                    perms.add(new TestPermissionInfo(perm, false, null, true));
                 } else {
                     try {
                         AppOpsManager.strOpToOp(perm);
-                        perms.add(new TestPermissionInfo(perm, true, null));
+                        perms.add(new TestPermissionInfo(perm, true, null, false));
                     } catch (IllegalArgumentException e) {
                         // We don't support other type of permissions in CTS tests here.
                     }
@@ -561,11 +569,11 @@ public final class ActivityManagerForegroundServiceTypeTest {
             return;
         }
         final String[] regularPermissions = Arrays.stream(permissions)
-                .filter(p -> !p.mIsAppOps && p.mSpecialOp == null)
+                .filter(p -> !p.mIsAppOps && p.mSpecialOp == null && !p.mIsRole)
                 .map(p -> p.mName)
                 .toArray(String[]::new);
         final String[] appops = ArrayUtils.concat(String.class, Arrays.stream(permissions)
-                .filter(p -> p.mIsAppOps && p.mSpecialOp == null)
+                .filter(p -> p.mIsAppOps && p.mSpecialOp == null && !p.mIsRole)
                 .map(p -> p.mName)
                 .toArray(String[]::new),
                 Arrays.stream(permissions)
@@ -576,6 +584,10 @@ public final class ActivityManagerForegroundServiceTypeTest {
                 .filter(p-> p.mSpecialOp != null)
                 .map(p -> p.mSpecialOp)
                 .toArray(SpecialPermissionOp[]::new);
+        final String[] roles = Arrays.stream(permissions)
+                .filter(p-> p.mIsRole && p.mSpecialOp == null && !p.mIsAppOps)
+                .map(p -> p.mName)
+                .toArray(String[]::new);
         if (!ArrayUtils.isEmpty(regularPermissions)) {
             mInstrumentation.getUiAutomation().adoptShellPermissionIdentity(regularPermissions);
         }
@@ -590,6 +602,11 @@ public final class ActivityManagerForegroundServiceTypeTest {
                 op.grantPermission(packageName);
             }
         }
+        if (!ArrayUtils.isEmpty(roles)) {
+            for (String role: roles) {
+                executeShellCommand("cmd role add-role-holder " + role + " " + packageName);
+            }
+        }
     }
 
     private void resetPermissions(TestPermissionInfo[] permissions, String packageName)
@@ -601,9 +618,18 @@ public final class ActivityManagerForegroundServiceTypeTest {
                     .filter(p-> p.mSpecialOp != null)
                     .map(p -> p.mSpecialOp)
                     .toArray(SpecialPermissionOp[]::new);
+            final String[] roles = Arrays.stream(permissions)
+                    .filter(p-> p.mIsRole && p.mSpecialOp == null && !p.mIsAppOps)
+                    .map(p -> p.mName)
+                    .toArray(String[]::new);
             if (!ArrayUtils.isEmpty(specialOps)) {
                 for (SpecialPermissionOp op : specialOps) {
                     op.revokePermission(packageName);
+                }
+            }
+            if (!ArrayUtils.isEmpty(roles)) {
+                for (String role: roles) {
+                    executeShellCommand("cmd role remove-role-holder " + role + " " + packageName);
                 }
             }
         }
