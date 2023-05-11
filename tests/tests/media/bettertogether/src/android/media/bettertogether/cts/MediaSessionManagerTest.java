@@ -82,7 +82,8 @@ public class MediaSessionManagerTest {
     private MediaSessionManager mSessionManager;
 
     private static boolean sIsAtLeastS = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S);
-    private static boolean sIsAtLeastT = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.TIRAMISU);
+    private static boolean sIsAtLeastU = ApiLevelUtil.isAtLeast(
+            Build.VERSION_CODES.UPSIDE_DOWN_CAKE);
 
     private Instrumentation getInstrumentation() {
         return InstrumentationRegistry.getInstrumentation();
@@ -180,7 +181,7 @@ public class MediaSessionManagerTest {
         assertThat(keyEventSessionListener.mCountDownLatch
                 .await(TIMEOUT_MS, TimeUnit.MILLISECONDS)).isTrue();
         assertThat(keyEventSessionListener.mSessionToken).isNull();
-        if (ApiLevelUtil.isAfter(Build.VERSION_CODES.TIRAMISU)) {
+        if (sIsAtLeastU) {
             assertThat(keyEventSessionListener.mPackageName).isEmpty();
         }
 
@@ -288,13 +289,7 @@ public class MediaSessionManagerTest {
                 NullPointerException.class,
                 () -> mSessionManager.addOnActiveSessionsChangedListener(null, null));
 
-        MediaSessionManager.OnActiveSessionsChangedListener listener =
-                new MediaSessionManager.OnActiveSessionsChangedListener() {
-                    @Override
-                    public void onActiveSessionsChanged(List<MediaController> controllers) {
-
-                    }
-        };
+        MediaSessionManager.OnActiveSessionsChangedListener listener = controllers -> {};
 
         assertThrows("Expected security exception for call to addOnActiveSessionsChangedListener",
                 SecurityException.class,
@@ -429,7 +424,7 @@ public class MediaSessionManagerTest {
 
         MediaSession session = null;
         try {
-            session = new MediaSession(context , TAG);
+            session = new MediaSession(context, TAG);
             MediaSessionCallback callback = new MediaSessionCallback(5, session);
             session.setFlags(MediaSession.FLAG_HANDLES_MEDIA_BUTTONS
                     | MediaSession.FLAG_HANDLES_TRANSPORT_CONTROLS);
@@ -498,6 +493,8 @@ public class MediaSessionManagerTest {
             assertThat(listContainsToken(listener.mTokens, currentToken)).isTrue();
             assertThat(listContainsToken(mSessionManager.getSession2Tokens(), currentToken))
                     .isTrue();
+        } finally {
+            removeHandler(handler);
         }
     }
 
@@ -547,6 +544,8 @@ public class MediaSessionManagerTest {
                     .isTrue();
             assertThat(listContainsToken(mSessionManager.getSession2Tokens(), session2Token))
                     .isFalse();
+        } finally {
+            removeHandler(handler);
         }
     }
 
@@ -577,6 +576,8 @@ public class MediaSessionManagerTest {
             assertThat(listener1.mCountDownLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS))
                     .isFalse();
             assertThat(listener2.mCountDownLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)).isTrue();
+        } finally {
+            removeHandler(handler);
         }
     }
 
@@ -602,6 +603,7 @@ public class MediaSessionManagerTest {
             if (session != null) {
                 session.release();
             }
+            removeHandler(handler);
         }
     }
 
@@ -821,7 +823,7 @@ public class MediaSessionManagerTest {
         @Override
         public void onMediaKeyEventSessionChanged(String packageName,
                 MediaSession.Token sessionToken) {
-            if (ApiLevelUtil.isAfter(Build.VERSION_CODES.TIRAMISU)) {
+            if (sIsAtLeastU) {
                 assertWithMessage("The package name cannot be null.")
                         .that(packageName)
                         .isNotNull();
