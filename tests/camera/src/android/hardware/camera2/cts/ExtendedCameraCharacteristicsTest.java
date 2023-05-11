@@ -42,13 +42,16 @@ import android.graphics.ImageFormat;
 import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
+import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraCharacteristics.Key;
 import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraExtensionCharacteristics;
 import android.hardware.camera2.CameraMetadata;
+import android.hardware.camera2.CaptureFailure;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
+import android.hardware.camera2.TotalCaptureResult;
 import android.hardware.camera2.cts.helpers.StaticMetadata;
 import android.hardware.camera2.cts.testcases.Camera2AndroidTestCase;
 import android.hardware.camera2.params.BlackLevelPattern;
@@ -56,10 +59,13 @@ import android.hardware.camera2.params.ColorSpaceProfiles;
 import android.hardware.camera2.params.ColorSpaceTransform;
 import android.hardware.camera2.params.DeviceStateSensorOrientationMap;
 import android.hardware.camera2.params.DynamicRangeProfiles;
+import android.hardware.camera2.params.OutputConfiguration;
 import android.hardware.camera2.params.RecommendedStreamConfigurationMap;
+import android.hardware.camera2.params.SessionConfiguration;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.hardware.cts.helpers.CameraUtils;
 import android.media.CamcorderProfile;
+import android.media.Image;
 import android.media.ImageReader;
 import android.mediapc.cts.common.PerformanceClassEvaluator;
 import android.mediapc.cts.common.PerformanceClassEvaluator.CameraExtensionRequirement;
@@ -95,6 +101,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
+import static org.mockito.Mockito.*;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -115,6 +122,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.BiPredicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
 
 /**
  * Extended tests for static camera characteristics.
@@ -152,6 +160,8 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
     private static final long PREVIEW_RUN_MS = 500;
     private static final long FRAME_DURATION_30FPS_NSEC = (long) 1e9 / 30;
     private static final long WAIT_TIMEOUT_IN_MS = 10_000;
+    private static final int CONFIGURE_TIMEOUT = 5000; // ms
+    private static final int CAPTURE_TIMEOUT = 1500; // ms
 
     private static final long MIN_UHR_SENSOR_RESOLUTION = 24000000;
     /*
@@ -457,6 +467,124 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
                         fail("Size " + s + " not found in PRIVATE format");
                     }
                 }
+            }
+        }
+    }
+
+    /**
+     * Check JPEG size overrides for devices claiming S Performance class requirement via
+     * Version.MEDIA_PERFORMANCE_CLASS
+     */
+    @Test
+    public void testSPerfClassJpegSizes() throws Exception {
+        final boolean isAtLeastSPerfClass =
+                (Build.VERSION.MEDIA_PERFORMANCE_CLASS >= Build.VERSION_CODES.S);
+        if (!isAtLeastSPerfClass) {
+            return;
+        }
+
+        for (int i = 0; i < mCameraIdsUnderTest.length; i++) {
+            testSPerfClassJpegSizesByCamera(mCameraIdsUnderTest[i]);
+        }
+    }
+
+    // Verify primary camera devices's supported JPEG sizes are at least 1080p.
+    private void testSPerfClassJpegSizesByCamera(String cameraId) throws Exception {
+        boolean isPrimaryRear = CameraTestUtils.isPrimaryRearFacingCamera(
+                mCameraManager, cameraId);
+        boolean isPrimaryFront = CameraTestUtils.isPrimaryFrontFacingCamera(
+                mCameraManager, cameraId);
+        if (!isPrimaryRear && !isPrimaryFront) {
+            return;
+        }
+
+        CameraCharacteristics c = mCameraManager.getCameraCharacteristics(cameraId);
+        StaticMetadata staticInfo =
+                new StaticMetadata(c, StaticMetadata.CheckLevel.ASSERT, mCollector);
+
+        Size[] jpegSizes = staticInfo.getJpegOutputSizesChecked();
+        assertTrue("Primary cameras must support JPEG formats",
+                jpegSizes != null && jpegSizes.length > 0);
+        for (Size jpegSize : jpegSizes) {
+            mCollector.expectTrue(
+                    "Primary camera's JPEG size must be at least 1080p, but is "
+                    + jpegSize, jpegSize.getWidth() * jpegSize.getHeight()
+                        >= FULLHD.getWidth() * FULLHD.getHeight());
+        }
+
+        CameraDevice camera = null;
+        ImageReader jpegTarget = null;
+        Image image = null;
+        try {
+            camera = CameraTestUtils.openCamera(mCameraManager, cameraId,
+                    /*listener*/null, mHandler);
+
+            List<OutputConfiguration> outputConfigs = new ArrayList<>();
+            CameraTestUtils.SimpleImageReaderListener imageListener =
+                    new CameraTestUtils.SimpleImageReaderListener();
+            jpegTarget = CameraTestUtils.makeImageReader(VGA,
+                    ImageFormat.JPEG, 1 /*maxNumImages*/, imageListener, mHandler);
+            Surface jpegSurface = jpegTarget.getSurface();
+            outputConfigs.add(new OutputConfiguration(jpegSurface));
+
+            // isSessionConfigurationSupported will return true for JPEG sizes smaller
+            // than 1080P, due to framework rouding up to closest supported size (1080p).
+            CameraTestUtils.SessionConfigSupport sessionConfigSupport =
+                    CameraTestUtils.isSessionConfigSupported(
+                            camera, mHandler, outputConfigs, /*inputConfig*/ null,
+                            SessionConfiguration.SESSION_REGULAR, true/*defaultSupport*/);
+            mCollector.expectTrue("isSessionConfiguration fails with error",
+                    !sessionConfigSupport.error);
+            mCollector.expectTrue("isSessionConfiguration returns false for JPEG < 1080p",
+                    sessionConfigSupport.configSupported);
+
+            // Session creation for JPEG sizes smaller than 1080p will succeed, and the
+            // result JPEG image dimension is rounded up to closest supported size (1080p).
+            CaptureRequest.Builder request =
+                    camera.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
+            request.addTarget(jpegSurface);
+
+            CameraCaptureSession.StateCallback sessionListener =
+                    mock(CameraCaptureSession.StateCallback.class);
+            CameraCaptureSession session = CameraTestUtils.configureCameraSessionWithConfig(
+                    camera, outputConfigs, sessionListener, mHandler);
+
+            verify(sessionListener, timeout(CONFIGURE_TIMEOUT).atLeastOnce())
+                    .onConfigured(any(CameraCaptureSession.class));
+            verify(sessionListener, timeout(CONFIGURE_TIMEOUT).atLeastOnce())
+                    .onReady(any(CameraCaptureSession.class));
+            verify(sessionListener, never()).onConfigureFailed(any(CameraCaptureSession.class));
+            verify(sessionListener, never()).onActive(any(CameraCaptureSession.class));
+            verify(sessionListener, never()).onClosed(any(CameraCaptureSession.class));
+
+            CameraCaptureSession.CaptureCallback captureListener =
+                    mock(CameraCaptureSession.CaptureCallback.class);
+            session.capture(request.build(), captureListener, mHandler);
+
+            verify(captureListener, timeout(CAPTURE_TIMEOUT).atLeastOnce())
+                    .onCaptureCompleted(any(CameraCaptureSession.class),
+                            any(CaptureRequest.class), any(TotalCaptureResult.class));
+            verify(captureListener, never()).onCaptureFailed(any(CameraCaptureSession.class),
+                    any(CaptureRequest.class), any(CaptureFailure.class));
+
+            image = imageListener.getImage(CAPTURE_TIMEOUT);
+            assertNotNull("Image must be valid", image);
+            assertEquals("Image format isn't JPEG", image.getFormat(), ImageFormat.JPEG);
+
+            byte[] data = CameraTestUtils.getDataFromImage(image);
+            assertTrue("Invalid image data", data != null && data.length > 0);
+
+            CameraTestUtils.validateJpegData(data, FULLHD.getWidth(), FULLHD.getHeight(),
+                    null /*filePath*/);
+        } finally {
+            if (camera != null) {
+                camera.close();
+            }
+            if (jpegTarget != null) {
+                jpegTarget.close();
+            }
+            if (image != null) {
+                image.close();
             }
         }
     }
