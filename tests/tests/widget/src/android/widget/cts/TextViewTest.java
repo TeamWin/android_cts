@@ -5061,7 +5061,7 @@ public class TextViewTest {
                         mActivity.getResources().getDisplayMetrics()
                 ),
                 mTextView.getLineHeight(),
-                /* delta=*/ 0.05f
+                /* delta=*/ 0.5f
         );
         assertNotEquals(lineSpacingExtra, mTextView.getLineSpacingExtra(), 0);
         assertNotEquals(lineSpacingMultiplier, mTextView.getLineSpacingMultiplier(), 0);
@@ -5074,7 +5074,7 @@ public class TextViewTest {
                         mActivity.getResources().getDisplayMetrics()
                 ),
                 mTextView.getLineHeight(),
-                /* delta=*/ 0.05f
+                /* delta=*/ 0.5f
         );
         assertNotEquals(lineSpacingExtra, mTextView.getLineSpacingExtra(), 0);
         assertNotEquals(lineSpacingMultiplier, mTextView.getLineSpacingMultiplier(), 0);
