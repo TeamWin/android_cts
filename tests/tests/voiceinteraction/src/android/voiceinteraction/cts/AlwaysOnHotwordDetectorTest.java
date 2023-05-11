@@ -994,6 +994,54 @@ public class AlwaysOnHotwordDetectorTest {
         Helper.verifyDetectedResult(detectResult, Helper.DETECTED_RESULT);
     }
 
+    @Test
+    public void testRecognitionNotRequested_afterResumeFailed() throws Exception {
+        createAndEnrollAlwaysOnHotwordDetector();
+        // Grab permissions for more than a single call since we get callbacks
+        adoptSoundTriggerPermissions();
+
+        SoundTriggerInstrumentation instrumentation =
+                mInstrumentationObserver.getGlobalCallbackObserver().getInstrumentation();
+
+        final var modelSessionFuture = mInstrumentationObserver.getGlobalCallbackObserver()
+                .getOnModelLoadedFuture();
+
+        final var firstRecogSessionFuture = Futures.transformAsync(modelSessionFuture,
+                ModelSessionObserver::getOnRecognitionStartedFuture, Runnable::run);
+
+
+        mAlwaysOnHotwordDetector.startRecognition(0, new byte[]{1, 2, 3, 4, 5});
+        final var modelSession = waitForFutureDoneAndAssertSuccessful(modelSessionFuture);
+        assertThat(modelSession).isNotNull();
+        final var firstRecogSession = waitForFutureDoneAndAssertSuccessful(
+                firstRecogSessionFuture);
+        assertThat(firstRecogSession).isNotNull();
+
+        modelSession.resetOnRecognitionStartedFuture();
+        final var secondRecogSessionFuture = modelSession.getOnRecognitionStartedFuture();
+
+        instrumentation.setResourceContention(true);
+
+        getService().initOnRecognitionPausedLatch();
+        // Induce a recognition pause
+        firstRecogSession.triggerAbortRecognition();
+        getService().waitOnRecognitionPausedCalled();
+
+        getService().initOnFailureLatch();
+        // Framework will attempt to resume recognition, but will fail due to set contention
+        instrumentation.triggerOnResourcesAvailable();
+        getService().waitOnFailureCalled();
+        var failure = getService().getSoundTriggerFailure();
+        assertThat(failure.getErrorCode()).isEqualTo(ERROR_CODE_RECOGNITION_RESUME_FAILED);
+        assertThat(secondRecogSessionFuture.isDone()).isFalse();
+        // Triggers available callback, and start will now succeed
+        instrumentation.setResourceContention(false);
+        // We should now be in the not requested state
+        assertThrows(TimeoutException.class, () -> secondRecogSessionFuture.get(
+                    WAIT_EXPECTED_NO_CALL_TIMEOUT_IN_MS,
+                    TimeUnit.MILLISECONDS));
+    }
+
     private static void setSoundTriggerPowerSaveMode(PowerManager powerManager, int mode) {
         final BatterySaverPolicyConfig newFullPolicyConfig =
                 new BatterySaverPolicyConfig.Builder(powerManager.getFullPowerSavePolicy())
