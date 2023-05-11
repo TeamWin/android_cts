@@ -29,8 +29,8 @@ import static android.service.voice.SoundTriggerFailure.ERROR_CODE_MODULE_DIED;
 import static android.service.voice.SoundTriggerFailure.ERROR_CODE_RECOGNITION_RESUME_FAILED;
 import static android.voiceinteraction.cts.testcore.Helper.CTS_SERVICE_PACKAGE;
 import static android.voiceinteraction.cts.testcore.Helper.MANAGE_VOICE_KEYPHRASES;
+import static android.voiceinteraction.cts.testcore.Helper.createKeyphraseArray;
 import static android.voiceinteraction.cts.testcore.Helper.createKeyphraseRecognitionExtraList;
-import static android.voiceinteraction.cts.testcore.Helper.createKeyprhaseArray;
 import static android.voiceinteraction.cts.testcore.Helper.waitForFutureDoneAndAssertSuccessful;
 import static android.voiceinteraction.cts.testcore.Helper.waitForVoidFutureAndAssertSuccessful;
 
@@ -72,8 +72,8 @@ import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.BatteryUtils;
 import com.android.compatibility.common.util.RequiredFeatureRule;
 
-import com.google.common.util.concurrent.SettableFuture;
 import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.SettableFuture;
 
 import org.junit.After;
 import org.junit.Before;
@@ -101,7 +101,7 @@ public class AlwaysOnHotwordDetectorTest {
     private static final int WAIT_EXPECTED_NO_CALL_TIMEOUT_IN_MS = 750;
 
     private static final Context sContext = getInstrumentation().getTargetContext();
-    private static final SoundTrigger.Keyphrase[] KEYPHRASE_ARRAY = createKeyprhaseArray(sContext);
+    private static final SoundTrigger.Keyphrase[] KEYPHRASE_ARRAY = createKeyphraseArray(sContext);
 
     private final SoundTriggerInstrumentationObserver mInstrumentationObserver =
             new SoundTriggerInstrumentationObserver();
