@@ -435,7 +435,7 @@ public final class UserReference implements AutoCloseable {
                 if (mName == null || mName.equals("")) {
                     if (!exists()) {
                         mName = null;
-                        throw new NeneException("User does not exist " + this);
+                        throw new NeneException("User does not exist with id " + id());
                     }
                 }
             }

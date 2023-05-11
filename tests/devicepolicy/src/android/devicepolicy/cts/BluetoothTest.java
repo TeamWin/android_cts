@@ -437,6 +437,9 @@ public final class BluetoothTest {
     @CannotSetPolicyTest(policy = DisallowBluetooth.class)
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.os.UserManager#DISALLOW_BLUETOOTH")
+    @RequireNotHeadlessSystemUserMode(reason =
+            "This is special cased so it's only usable by profile owner on 'main' user"
+                    + "- we need to simplify this state")
     public void addUserRestriction_disallowBluetooth_cannotSet_throwsException() {
         assertThrows(SecurityException.class,
                 () -> sDeviceState.dpc().devicePolicyManager().addUserRestriction(
@@ -459,6 +462,9 @@ public final class BluetoothTest {
             forTestApp = "dpc",
             query = @Query(targetSdkVersion = @IntegerQuery(isLessThan = UPSIDE_DOWN_CAKE))
     )
+    @RequireNotHeadlessSystemUserMode(reason =
+            "This is special cased so it's only usable by profile owner on 'main' user"
+                    + "- we need to simplify this state")
     public void addUserRestriction_preU_disallowBluetooth_cannotSet_throwsException() {
         assertThrows(SecurityException.class,
                 () -> sDeviceState.dpc().devicePolicyManager().addUserRestriction(

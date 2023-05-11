@@ -127,6 +127,7 @@ public final class Package {
                     .validate(
                             (output) -> output.contains("installed for user"))
                     .execute();
+
             return this;
         } catch (AdbException e) {
             throw new NeneException("Could not install-existing package " + this, e);
@@ -1060,8 +1061,16 @@ public final class Package {
      */
     @Experimental
     public int getAppStandbyBucket() {
+        return getAppStandbyBucket(TestApis.users().instrumented());
+    }
+
+    /**
+     * Get the app standby bucket of the package.
+     */
+    @Experimental
+    public int getAppStandbyBucket(UserReference user) {
         try {
-            return ShellCommand.builder("am get-standby-bucket")
+            return ShellCommand.builderForUser(user, "am get-standby-bucket")
                 .addOperand(mPackageName)
                 .executeAndParseOutput(o -> Integer.parseInt(o.trim()));
         } catch (AdbException e) {
