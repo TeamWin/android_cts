@@ -24,10 +24,10 @@ import com.android.interactive.Automation;
 import com.android.interactive.annotations.AutomationFor;
 
 @AutomationFor("com.google.android.interactive.steps.enterprise.launcher"
-        + ".IsSmsShortcutWorkBadgedStep")
-public class IsSmsShortcutWorkBadgedStepAutomation implements Automation<Boolean> {
+        + ".IsSmsAppShortcutWorkBadgedStep")
+public class IsSmsAppShortcutWorkBadgedStepAutomation implements Automation<Boolean> {
     @Override
     public Boolean automate() throws Exception {
-        return TestApis.ui().device().findObject(By.desc("Work Messages")) != null;
+        return TestApis.ui().device().findObject(By.desc("Work SmsApp")) != null;
     }
 }
