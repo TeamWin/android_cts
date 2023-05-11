@@ -56,7 +56,11 @@ class InstallInfoTest : PackageInstallerTestBase() {
 
     @Test
     fun testInstallInfoOfClusterPackage() {
-        val apk = File(context.filesDir.canonicalPath)
+        // Copy the test APK to an unique folder.
+        val clusterDir = File(context.filesDir, "testInstallInfoOfClusterPackage")
+        File(TEST_APK_LOCATION, TEST_APK_NAME).copyTo(
+                target = File(clusterDir, TEST_APK_NAME), overwrite = true)
+        val apk = File(clusterDir.canonicalPath)
         val installInfo = pi.readInstallInfo(apk, 0)
 
         // The test APKs do not include native binaries or dex metadata. Thus, the total size of
