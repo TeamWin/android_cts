@@ -34,7 +34,6 @@ import static android.app.admin.DevicePolicyManager.PERMISSION_POLICY_AUTO_DENY;
 import static android.app.admin.DevicePolicyManager.PERMISSION_POLICY_AUTO_GRANT;
 import static android.app.admin.DevicePolicyManager.PERMISSION_POLICY_PROMPT;
 
-import static com.android.bedstead.nene.flags.CommonFlags.NAMESPACE_DEVICE_POLICY_MANAGER;
 import static com.android.bedstead.nene.utils.Versions.U;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -43,8 +42,6 @@ import static com.google.common.truth.Truth.assertWithMessage;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 import static org.testng.Assert.assertThrows;
-
-import android.util.Log;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
@@ -80,6 +77,7 @@ import com.android.queryable.annotations.Query;
 import org.junit.Assume;
 import org.junit.Before;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -594,6 +592,7 @@ public final class PermissionGrantTest {
             query = @Query(targetSdkVersion =
             @IntegerQuery(isGreaterThanOrEqualTo = U))
     )
+    @Ignore("b/273496614 - Reenable once the unicorn APIs are unflagged.")
     @CannotSetPolicyTest(policy = SetSensorPermissionGranted.class)
     public void grantSensorPermission_cannotBeApplied_throwsSecurityException(
             @SensorPermissionTestParameter String permission) {

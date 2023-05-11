@@ -25,8 +25,8 @@ import static android.content.pm.PackageManager.FEATURE_DEVICE_ADMIN;
 import static com.android.bedstead.metricsrecorder.truth.MetricQueryBuilderSubject.assertThat;
 import static com.android.bedstead.nene.appops.AppOpsMode.ALLOWED;
 import static com.android.bedstead.nene.appops.AppOpsMode.DEFAULT;
-import static com.android.bedstead.nene.appops.CommonAppOps.OPSTR_SYSTEM_EXEMPT_FROM_SUSPENSION;
 import static com.android.bedstead.nene.appops.CommonAppOps.OPSTR_SYSTEM_EXEMPT_FROM_POWER_RESTRICTIONS;
+import static com.android.bedstead.nene.appops.CommonAppOps.OPSTR_SYSTEM_EXEMPT_FROM_SUSPENSION;
 import static com.android.bedstead.nene.permissions.CommonPermissions.MANAGE_DEVICE_POLICY_APP_EXEMPTIONS;
 import static com.android.queryable.queries.ActivityQuery.activity;
 
@@ -365,7 +365,6 @@ public class ApplicationExemptionsTest {
     }
 
     @Test
-    @EnsureHasDevicePolicyManagerRoleHolder
     @EnsureHasDeviceOwner(isPrimary = true)
     @Postsubmit(reason = "new test")
     @RequireRunOnSystemUser
@@ -374,10 +373,16 @@ public class ApplicationExemptionsTest {
             throws NameNotFoundException {
         try (TestAppInstance testApp = sTestApp.install()) {
             sDeviceState.dpc().devicePolicyManager().setPackagesSuspended(
-                    sDeviceState.dpc().componentName(), new String[]{sTestApp.packageName()}, true);
+                    sDeviceState.dpc().componentName(),
+                    new String[]{sTestApp.packageName()}, true);
 
             assertThat(sDeviceState.dpc().devicePolicyManager().isPackageSuspended(
-                    sDeviceState.dpc().componentName(), sTestApp.packageName())).isEqualTo(true);
+                    sDeviceState.dpc().componentName(),
+                    sTestApp.packageName())).isEqualTo(true);
+        } finally {
+            sDeviceState.dpc().devicePolicyManager().setPackagesSuspended(
+                    sDeviceState.dpc().componentName(),
+                    new String[]{sTestApp.packageName()}, false);
         }
     }
 
@@ -403,7 +408,7 @@ public class ApplicationExemptionsTest {
 
             assertThat(sDeviceState.dpc().devicePolicyManager().isPackageSuspended(
                     sDeviceState.dpc().componentName(),
-                    sTestApp.packageName())).isEqualTo(false);
+                sTestApp.packageName())).isEqualTo(false);
         }
     }
 }
