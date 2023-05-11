@@ -30,6 +30,8 @@ class PermissionTest30 : BaseUsePermissionTest() {
 
     @Test
     fun testCantRequestFgAndBgAtOnce() {
+        // TODO(b/280542662): This delay is a temporary mitigation for an intermittent failure
+        Thread.sleep(500)
         installPackage(APP_APK_PATH_30_WITH_BACKGROUND)
         assertAppHasPermission(ACCESS_FINE_LOCATION, false)
         assertAppHasPermission(ACCESS_BACKGROUND_LOCATION, false)
