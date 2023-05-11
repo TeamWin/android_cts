@@ -121,6 +121,10 @@ public class UserInitiatedJobTest {
         }
     }
 
+    /**
+     * Test that UI jobs can be scheduled when the app is in a state to start an Activity
+     * from the background.
+     */
     @Test
     public void testSchedulingBal() throws Exception {
         try (TestNotificationListener.NotificationHelper notificationHelper =
@@ -140,6 +144,7 @@ public class UserInitiatedJobTest {
         }
     }
 
+    /** Test that UI jobs can't be scheduled directly from the background. */
     @Test
     public void testSchedulingBg() throws Exception {
         // Close the activity and turn the screen off so the app isn't considered TOP.
@@ -152,6 +157,7 @@ public class UserInitiatedJobTest {
                 .awaitJobScheduleResult(DEFAULT_WAIT_TIMEOUT_MS, JobScheduler.RESULT_FAILURE));
     }
 
+    /** Test that UI jobs can't be scheduled directly from EJs. */
     @Test
     public void testSchedulingEj() throws Exception {
         // Close the activity and turn the screen off so the app isn't considered TOP.
@@ -176,6 +182,7 @@ public class UserInitiatedJobTest {
                 jobIdUij, DEFAULT_WAIT_TIMEOUT_MS, JobScheduler.RESULT_FAILURE));
     }
 
+    /** Test that UI jobs can be scheduled directly from an FGS that was started in TOP state. */
     @Test
     public void testSchedulingFgs_approved() throws Exception {
         ScreenUtils.setScreenOn(true);
@@ -192,6 +199,7 @@ public class UserInitiatedJobTest {
                 .awaitJobScheduleResult(DEFAULT_WAIT_TIMEOUT_MS, JobScheduler.RESULT_SUCCESS));
     }
 
+    /** Test that UI jobs can't be scheduled directly from an FGS started from the background. */
     @Test
     public void testSchedulingFgs_disapproved() throws Exception {
         mTestAppInterface.closeActivity(true);
@@ -209,6 +217,7 @@ public class UserInitiatedJobTest {
                 .awaitJobScheduleResult(DEFAULT_WAIT_TIMEOUT_MS, JobScheduler.RESULT_FAILURE));
     }
 
+    /** Test that UI jobs can be scheduled directly from the TOP state. */
     @Test
     public void testSchedulingTop() throws Exception {
         ScreenUtils.setScreenOn(true);
@@ -218,5 +227,41 @@ public class UserInitiatedJobTest {
                 Map.of(TestJobSchedulerReceiver.EXTRA_REQUIRED_NETWORK_TYPE, NETWORK_TYPE_ANY));
         assertTrue(mTestAppInterface
                 .awaitJobScheduleResult(DEFAULT_WAIT_TIMEOUT_MS, JobScheduler.RESULT_SUCCESS));
+    }
+
+    /** Test that UI jobs can't be scheduled directly from other UIJs. */
+    @Test
+    public void testSchedulingUij() throws Exception {
+        try (TestNotificationListener.NotificationHelper notificationHelper =
+                     new TestNotificationListener.NotificationHelper(
+                             mContext, TestAppInterface.TEST_APP_PACKAGE)) {
+            int firstJobId = JOB_ID;
+            int secondJobId = firstJobId + 1;
+            // Close the activity so the app isn't considered TOP.
+            mTestAppInterface.closeActivity(true);
+            mTestAppInterface.postUiInitiatingNotification(
+                    Map.of(TestJobSchedulerReceiver.EXTRA_AS_USER_INITIATED, true),
+                    Map.of(
+                            TestJobSchedulerReceiver.EXTRA_REQUIRED_NETWORK_TYPE, NETWORK_TYPE_ANY,
+                            TestJobSchedulerReceiver.EXTRA_JOB_ID_KEY, firstJobId)
+            );
+
+            // Clicking on the notification should put the app into a BAL approved state.
+            notificationHelper.clickNotification();
+
+            assertTrue(mTestAppInterface.awaitJobScheduleResult(firstJobId,
+                    DEFAULT_WAIT_TIMEOUT_MS, JobScheduler.RESULT_SUCCESS));
+
+            Thread.sleep(10000); // Wait a bit so that BAL allowance disappears.
+
+            mTestAppInterface.scheduleJob(
+                    Map.of(TestJobSchedulerReceiver.EXTRA_AS_USER_INITIATED, true),
+                    Map.of(
+                            TestJobSchedulerReceiver.EXTRA_REQUIRED_NETWORK_TYPE, NETWORK_TYPE_ANY,
+                            TestJobSchedulerReceiver.EXTRA_JOB_ID_KEY, secondJobId)
+            );
+            assertTrue(mTestAppInterface.awaitJobScheduleResult(secondJobId,
+                    DEFAULT_WAIT_TIMEOUT_MS, JobScheduler.RESULT_FAILURE));
+        }
     }
 }
