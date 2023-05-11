@@ -23,6 +23,8 @@ import static android.app.role.RoleManager.ROLE_FINANCED_DEVICE_KIOSK;
 
 import static com.android.bedstead.nene.TestApis.context;
 import static com.android.bedstead.nene.TestApis.permissions;
+import static com.android.bedstead.nene.flags.CommonFlags.DevicePolicyManager.ENABLE_DEVICE_POLICY_ENGINE_FLAG;
+import static com.android.bedstead.nene.flags.CommonFlags.NAMESPACE_DEVICE_POLICY_MANAGER;
 import static com.android.bedstead.nene.permissions.CommonPermissions.MANAGE_PROFILE_AND_DEVICE_OWNERS;
 import static com.android.eventlib.truth.EventLogsSubject.assertThat;
 
@@ -33,11 +35,11 @@ import static org.testng.Assert.assertThrows;
 import android.app.admin.DevicePolicyManager;
 import android.app.role.RoleManager;
 import android.content.Context;
-import android.util.Log;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.EnsureDoesNotHavePermission;
+import com.android.bedstead.harrier.annotations.RequireFeatureFlagEnabled;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
 import com.android.bedstead.harrier.policies.CheckFinance;
@@ -144,6 +146,9 @@ public class CheckFinancedTest {
     }
 
     @CanSetPolicyTest(policy = CheckFinance.class)
+    @RequireFeatureFlagEnabled(
+            namespace = NAMESPACE_DEVICE_POLICY_MANAGER,
+            key = ENABLE_DEVICE_POLICY_ENGINE_FLAG)
     public void deviceFinancingStateChanged_roleAdded_ReceivesBroadcast()
             throws ExecutionException, InterruptedException {
         try (TestAppInstance testApp = sTestApp.install()) {
