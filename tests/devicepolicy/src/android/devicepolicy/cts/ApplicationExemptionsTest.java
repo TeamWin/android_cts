@@ -25,9 +25,8 @@ import static android.content.pm.PackageManager.FEATURE_DEVICE_ADMIN;
 import static com.android.bedstead.metricsrecorder.truth.MetricQueryBuilderSubject.assertThat;
 import static com.android.bedstead.nene.appops.AppOpsMode.ALLOWED;
 import static com.android.bedstead.nene.appops.AppOpsMode.DEFAULT;
-import static com.android.bedstead.nene.appops.CommonAppOps.OPSTR_SYSTEM_EXEMPT_FROM_SUSPENSION;
 import static com.android.bedstead.nene.appops.CommonAppOps.OPSTR_SYSTEM_EXEMPT_FROM_POWER_RESTRICTIONS;
-import static com.android.bedstead.nene.flags.CommonFlags.NAMESPACE_DEVICE_POLICY_MANAGER;
+import static com.android.bedstead.nene.appops.CommonAppOps.OPSTR_SYSTEM_EXEMPT_FROM_SUSPENSION;
 import static com.android.bedstead.nene.permissions.CommonPermissions.MANAGE_DEVICE_POLICY_APP_EXEMPTIONS;
 import static com.android.queryable.queries.ActivityQuery.activity;
 
@@ -42,16 +41,15 @@ import android.content.Intent;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.stats.devicepolicy.EventId;
 import android.util.ArrayMap;
-import android.util.Log;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.EnsureDoesNotHavePermission;
-import com.android.bedstead.harrier.annotations.EnsureFeatureFlagEnabled;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.IntTestParameter;
 import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.RequireFeature;
+import com.android.bedstead.harrier.annotations.RequireRunOnSystemUser;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDeviceOwner;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDevicePolicyManagerRoleHolder;
@@ -367,19 +365,24 @@ public class ApplicationExemptionsTest {
     }
 
     @Test
-    @EnsureHasDevicePolicyManagerRoleHolder
     @EnsureHasDeviceOwner(isPrimary = true)
     @Postsubmit(reason = "new test")
+    @RequireRunOnSystemUser
     @ApiTest(apis = {"android.app.admin.DevicePolicyManager#setApplicationExemption"})
     public void setApplicationExemptions_noExemption_testAppCanBeSuspended()
             throws NameNotFoundException {
-
         try (TestAppInstance testApp = sTestApp.install()) {
             sDeviceState.dpc().devicePolicyManager().setPackagesSuspended(
-                    sDeviceState.dpc().componentName(), new String[]{sTestApp.packageName()}, true);
+                    sDeviceState.dpc().componentName(),
+                    new String[]{sTestApp.packageName()}, true);
 
             assertThat(sDeviceState.dpc().devicePolicyManager().isPackageSuspended(
-                    sDeviceState.dpc().componentName(), sTestApp.packageName())).isEqualTo(true);
+                    sDeviceState.dpc().componentName(),
+                    sTestApp.packageName())).isEqualTo(true);
+        } finally {
+            sDeviceState.dpc().devicePolicyManager().setPackagesSuspended(
+                    sDeviceState.dpc().componentName(),
+                    new String[]{sTestApp.packageName()}, false);
         }
     }
 
@@ -405,7 +408,7 @@ public class ApplicationExemptionsTest {
 
             assertThat(sDeviceState.dpc().devicePolicyManager().isPackageSuspended(
                     sDeviceState.dpc().componentName(),
-                    sTestApp.packageName())).isEqualTo(false);
+                sTestApp.packageName())).isEqualTo(false);
         }
     }
 }

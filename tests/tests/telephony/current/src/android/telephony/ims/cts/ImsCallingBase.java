@@ -371,7 +371,9 @@ public class ImsCallingBase {
     }
 
     public void isCallActive(Call call, TestImsCallSessionImpl callsession) {
-        assertTrue(callingTestLatchCountdown(LATCH_IS_CALL_ACTIVE, WAIT_FOR_CALL_STATE));
+        if (call.getDetails().getState() != Call.STATE_ACTIVE) {
+            assertTrue(callingTestLatchCountdown(LATCH_IS_CALL_ACTIVE, WAIT_FOR_CALL_STATE));
+        }
         assertNotNull("Unable to get callSession, its null", callsession);
 
         waitUntilConditionIsTrueOrTimeout(

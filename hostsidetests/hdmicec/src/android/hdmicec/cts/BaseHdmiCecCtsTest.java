@@ -618,15 +618,21 @@ public class BaseHdmiCecCtsTest extends BaseHostJUnit4Test {
                 .replace("mIsCecAvailable:", "").trim().equals("true");
     }
 
+    boolean isCecEnabled(ITestDevice device) throws Exception {
+        return device.executeShellCommand("dumpsys hdmi_control | grep hdmi_cec_enabled")
+                .trim().startsWith("hdmi_cec_enabled (int): 1");
+    }
+
     /**
-     * Returns whether an audio output device is using full volume behavior by checking if it is in
-     * the "mFullVolumeDevices" line in audio dumpsys. Example: "mFullVolumeDevices=0x400,0x40001".
+     * Checks whether an audio output device is in the list output by an ADB shell command.
+     * Intended for checking a device's volume behavior by looking at whether it appears in
+     * a certain line of the audio dumpsys.
      */
-    public boolean isFullVolumeDevice(int audioOutputDevice) throws Exception {
-        String[] splitLine = getDevice().executeShellCommand(
-                "dumpsys audio | grep mFullVolumeDevices").split("=");
+    private boolean isAudioOutputDeviceInList(int audioOutputDevice,
+            String deviceListAdbShellCommand) throws Exception {
+        String[] splitLine = getDevice().executeShellCommand(deviceListAdbShellCommand).split("=");
         if (splitLine.length < 2) {
-            // No full volume devices
+            // No devices are in the list
             return false;
         }
         String[] deviceStrings = splitLine[1].trim().split(",");
@@ -640,5 +646,31 @@ public class BaseHdmiCecCtsTest extends BaseHostJUnit4Test {
             }
         }
         return false;
+    }
+
+    /**
+     * Returns whether a given audio output device is currently using full volume behavior
+     */
+    public boolean isFullVolumeDevice(int audioOutputDevice) throws Exception {
+        return isAudioOutputDeviceInList(audioOutputDevice,
+                "dumpsys audio | grep mFullVolumeDevices");
+    }
+
+    /**
+     * Returns whether a given audio output device is currently using absolute volume behavior
+     */
+    public boolean isAbsoluteVolumeDevice(int audioOutputDevice) throws Exception {
+        // Need to explicitly exclude the line for adjust-only absolute volume devices
+        return isAudioOutputDeviceInList(audioOutputDevice,
+                "dumpsys audio | grep 'absolute volume devices' | grep -v 'adjust-only'");
+    }
+
+    /**
+     * Returns whether a given audio output device is currently using adjust-only absolute volume
+     * behavior
+     */
+    public boolean isAdjustOnlyAbsoluteVolumeDevice(int audioOutputDevice) throws Exception {
+        return isAudioOutputDeviceInList(audioOutputDevice,
+                "dumpsys audio | grep 'adjust-only absolute volume devices'");
     }
 }

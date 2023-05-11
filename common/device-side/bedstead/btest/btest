@@ -304,6 +304,11 @@ supported_modules = {
         "runner": "androidx.test.runner.AndroidJUnitRunner",
         "states": [RUN_ON_SYSTEM_USER, RUN_ON_WORK_PROFILE, RUN_ON_SECONDARY_USER, RUN_ON_ADDITIONAL_USER, RUN_ON_CLONE_PROFILE]
     },
+    "GtsInteractiveAudioTestCases": {
+        "package": "com.google.android.audio.gts",
+        "runner": "androidx.test.runner.AndroidJUnitRunner",
+        "states": [RUN_ON_SYSTEM_USER, RUN_ON_WORK_PROFILE, RUN_ON_SECONDARY_USER, RUN_ON_ADDITIONAL_USER, RUN_ON_CLONE_PROFILE]
+    },
     "CtsMultiUserTestCases": {
         "package": "android.multiuser.cts",
         "runner": "androidx.test.runner.AndroidJUnitRunner",

@@ -28,6 +28,7 @@ import android.jobscheduler.cts.jobtestapp.TestJobSchedulerReceiver;
 import android.os.SystemClock;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.LargeTest;
 import androidx.test.runner.AndroidJUnit4;
 import androidx.test.uiautomator.UiDevice;
 
@@ -88,6 +89,7 @@ public class ExpeditedJobTest {
 
     /** Test that EJs for the TOP app start immediately and there is no limit on the number. */
     @Test
+    @LargeTest
     public void testTopEJUnlimited() throws Exception {
         final int standardConcurrency = 64;
         final int numEjs = standardConcurrency + 1;

@@ -73,7 +73,8 @@ public final class KeyguardTest {
     private static final String VERY_LONG_STRING =
             new String(new char[100000]).replace('\0', 'A');
 
-    @CannotSetPolicyTest(policy = KeyguardDisableSecureCamera.class, includeNonDeviceAdminStates = false)
+    @CannotSetPolicyTest(policy = KeyguardDisableSecureCamera.class,
+            includeNonDeviceAdminStates = false)
     @Postsubmit(reason = "New test")
     @ApiTest(apis = {
             "android.app.admin.DevicePolicyManager#setKeyguardDisabledFeatures",
@@ -131,7 +132,8 @@ public final class KeyguardTest {
         }
     }
 
-    @CannotSetPolicyTest(policy = KeyguardDisableSecureNotifications.class, includeNonDeviceAdminStates = false)
+    @CannotSetPolicyTest(policy = KeyguardDisableSecureNotifications.class,
+            includeNonDeviceAdminStates = false)
     @Postsubmit(reason = "New test")
     @ApiTest(apis = {
             "android.app.admin.DevicePolicyManager#setKeyguardDisabledFeatures",
@@ -189,7 +191,8 @@ public final class KeyguardTest {
         }
     }
 
-    @CannotSetPolicyTest(policy = KeyguardDisableTrustAgents.class, includeNonDeviceAdminStates = false)
+    @CannotSetPolicyTest(policy = KeyguardDisableTrustAgents.class,
+            includeNonDeviceAdminStates = false)
     @Postsubmit(reason = "New test")
     @ApiTest(apis = {
             "android.app.admin.DevicePolicyManager#setKeyguardDisabledFeatures",
@@ -247,7 +250,8 @@ public final class KeyguardTest {
         }
     }
 
-    @CannotSetPolicyTest(policy = KeyguardDisableUnredactedNotifications.class, includeNonDeviceAdminStates = false)
+    @CannotSetPolicyTest(policy = KeyguardDisableUnredactedNotifications.class,
+            includeNonDeviceAdminStates = false)
     @Postsubmit(reason = "New test")
     @ApiTest(apis = {
             "android.app.admin.DevicePolicyManager#setKeyguardDisabledFeatures",
@@ -363,7 +367,8 @@ public final class KeyguardTest {
         }
     }
 
-    @CannotSetPolicyTest(policy = KeyguardDisableFace.class, includeNonDeviceAdminStates = false)
+    @CannotSetPolicyTest(policy = KeyguardDisableFace.class,
+            includeNonDeviceAdminStates = false)
     @Postsubmit(reason = "New test")
     @ApiTest(apis = {
             "android.app.admin.DevicePolicyManager#setKeyguardDisabledFeatures",
@@ -421,7 +426,8 @@ public final class KeyguardTest {
         }
     }
 
-    @CannotSetPolicyTest(policy = KeyguardDisableIris.class, includeNonDeviceAdminStates = false)
+    @CannotSetPolicyTest(policy = KeyguardDisableIris.class,
+            includeNonDeviceAdminStates = false)
     @Postsubmit(reason = "New test")
     @ApiTest(apis = {
             "android.app.admin.DevicePolicyManager#setKeyguardDisabledFeatures",
@@ -482,7 +488,8 @@ public final class KeyguardTest {
         }
     }
 
-    @CannotSetPolicyTest(policy = TrustAgentConfiguration.class, includeNonDeviceAdminStates = false)
+    @CannotSetPolicyTest(policy = TrustAgentConfiguration.class,
+            includeNonDeviceAdminStates = false)
     @Postsubmit(reason = "New test")
     @ApiTest(apis = "android.app.admin.DevicePolicyManager#setTrustAgentConfiguration")
     public void setTrustAgentConfiguration_notPermitted_throwsException() {
