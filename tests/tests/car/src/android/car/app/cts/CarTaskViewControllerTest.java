@@ -29,6 +29,7 @@ import android.app.ActivityManager;
 import android.app.Instrumentation;
 import android.app.UiAutomation;
 import android.car.Car;
+import android.car.annotation.ApiRequirements;
 import android.car.app.CarActivityManager;
 import android.car.app.CarTaskViewController;
 import android.car.app.CarTaskViewControllerCallback;
@@ -36,6 +37,7 @@ import android.car.app.ControlledRemoteCarTaskView;
 import android.car.app.ControlledRemoteCarTaskViewCallback;
 import android.car.app.ControlledRemoteCarTaskViewConfig;
 import android.car.cts.R;
+import android.car.test.ApiCheckerRule;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -50,11 +52,13 @@ import androidx.annotation.Nullable;
 import androidx.test.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.ApiTest;
+import com.android.compatibility.common.util.NonApiTest;
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.ShellUtils;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -76,6 +80,8 @@ public class CarTaskViewControllerTest {
     private final ComponentName mTestActivity =
             new ComponentName(mTargetContext, TestActivity.class);
     private final UiAutomation mUiAutomation = mInstrumentation.getUiAutomation();
+    @Rule
+    private final ApiCheckerRule mApiCheckerRule = new ApiCheckerRule.Builder().build();
 
     private TestCarTaskViewControllerCallback mCallback;
     private TestActivity mHostActivity;
@@ -127,14 +133,11 @@ public class CarTaskViewControllerTest {
 
     @Test
     @ApiTest(apis = {
-            "android.car.app.ControlledRemoteCarTaskViewConfig.Builder()",
-            "android.car.app.ControlledRemoteCarTaskViewConfig.Builder#setActivityIntent(Intent)",
-            "android.car.app.ControlledRemoteCarTaskViewCallback#",
-            "android.car.app.ControlledRemoteCarTaskViewCallback#onTaskAppeared(ActivityManager"
-                    + ".RunningTaskInfo)",
-            "android.car.app.ControlledRemoteCarTaskViewCallback#onTaskViewCreated(android.car"
-                    + ".app.ControlledRemoteCarTaskView)",
-            "android.car.app.ControlledRemoteCarTaskViewCallback#onTaskViewInitialized()"})
+            "android.car.app.ControlledRemoteCarTaskViewConfig$Builder#setActivityIntent(Intent)",
+            "android.car.app.ControlledRemoteCarTaskViewCallback#onTaskAppeared(RunningTaskInfo)",
+            "android.car.app.ControlledRemoteCarTaskViewCallback#onTaskViewCreated"
+                    + "(ControlledRemoteCarTaskView)",
+            "android.car.app.ControlledRemoteCarTaskViewCallback#onTaskViewInitialized"})
     public void createControlledRemoteCarTaskView_startsTheTask() {
         // Act
         CarTaskViewTestHolder taskViewHolder =
@@ -148,8 +151,8 @@ public class CarTaskViewControllerTest {
 
     @Test
     @ApiTest(apis = {
-            "android.car.app.ControlledRemoteCarTaskView#isInitialized()",
-            "android.car.app.ControlledRemoteCarTaskView#getTaskInfo()"})
+            "android.car.app.ControlledRemoteCarTaskView#isInitialized",
+            "android.car.app.ControlledRemoteCarTaskView#getTaskInfo"})
     public void createMultipleControlledRemoteCarTaskView_startsTheTask() {
         // Act
         CarTaskViewTestHolder taskViewCallback =
@@ -179,7 +182,7 @@ public class CarTaskViewControllerTest {
     }
 
     @Test
-    @ApiTest(apis = {"android.car.app.ControlledRemoteCarTaskViewCallback#onTaskViewReleased()"})
+    @ApiTest(apis = {"android.car.app.ControlledRemoteCarTaskViewCallback#onTaskViewReleased"})
     public void multipleControlledCarTaskView_released_whenHostDestroyed() throws Exception {
         // Arrange
         CarTaskViewTestHolder taskViewCallback =
@@ -206,7 +209,7 @@ public class CarTaskViewControllerTest {
     }
 
     @Test
-    @ApiTest(apis = {"android.car.app.ControlledRemoteCarTaskView#release()"})
+    @ApiTest(apis = {"android.car.app.ControlledRemoteCarTaskView#release"})
     public void releaseControlledCarTaskView_releasesTaskView() throws Exception {
         // Arrange
         CarTaskViewTestHolder taskViewCallback =
@@ -232,8 +235,7 @@ public class CarTaskViewControllerTest {
 
     @Test
     @ApiTest(apis = {
-            "android.car.app.ControlledRemoteCarTaskViewCallback#onTaskVanished(ActivityManager"
-                    + ".RunningTaskInfo)"})
+            "android.car.app.ControlledRemoteCarTaskViewCallback#onTaskVanished(RunningTaskInfo)"})
     public void controlledRemoteCarTaskView_autoRestartDisabled_doesNotRestartTask_whenKilled()
             throws Exception {
         // Arrange
@@ -257,6 +259,8 @@ public class CarTaskViewControllerTest {
     }
 
     @Test
+    @ApiTest(apis = {
+            "android.car.app.ControlledRemoteCarTaskViewCallback#onTaskAppeared(RunningTaskInfo)"})
     public void controlledRemoteCarTaskView_autoRestartEnabled_restartsTheTask_whenKilled()
             throws Exception {
         // Arrange
@@ -286,8 +290,8 @@ public class CarTaskViewControllerTest {
     }
 
     @Test
-    @ApiTest(apis = {"android.car.app.CarTaskViewController#showEmbeddedTasks()",
-            "android.car.app.ControlledRemoteCarTaskView#showEmbeddedTask()"})
+    @ApiTest(apis = {"android.car.app.CarTaskViewController#showEmbeddedTasks",
+            "android.car.app.ControlledRemoteCarTaskView#showEmbeddedTask"})
     public void multipleControlledRemoteCarTaskView_bringsEmbeddedTaskToTop_whenActivityResumed() {
         // Arrange
         CarTaskViewTestHolder taskViewCallback =
@@ -340,6 +344,9 @@ public class CarTaskViewControllerTest {
     }
 
     @Test
+    @NonApiTest(exemptionReasons = {}, justification = "No CDD Requirement")
+    @ApiRequirements(minCarVersion = ApiRequirements.CarVersion.UPSIDE_DOWN_CAKE_0,
+            minPlatformVersion = ApiRequirements.PlatformVersion.UPSIDE_DOWN_CAKE_0)
     public void remoteCarTaskView_receivesTouchInput() throws Exception {
         // Arrange
         CarTaskViewTestHolder carTaskViewHolder =
