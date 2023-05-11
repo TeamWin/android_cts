@@ -29,6 +29,7 @@ import static android.voiceinteraction.cts.testcore.Helper.waitForFutureDoneAndA
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
+import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -142,6 +143,34 @@ public class HotwordDetectionServiceMultipleDetectorTest {
 
     @Test
     @RequiresDevice
+    public void  testVoiceInteractionService_createMultipleDetectorRestartSuccess()
+            throws Throwable {
+        // initialize variables
+        AlwaysOnHotwordDetector alwaysOnHotwordDetector = null;
+        VisualQueryDetector visualQueryDetector = null;
+        try {
+            // Assertion is done in the private method.
+            alwaysOnHotwordDetector = createAlwaysOnHotwordDetector();
+            visualQueryDetector = createVisualQueryDetector();
+            mService.initOnVisualQueryDetectionServiceRestartedLatch();
+            mService.initOnHotwordDetectionServiceRestartedLatch();
+            // force re-start by shell command
+            runShellCommand("cmd voiceinteraction restart-detection");
+            // wait onHotwordDetectionServiceRestarted() called
+            mService.waitOnVisualQueryDetectionServiceRestartedCalled();
+            mService.waitOnHotwordDetectionServiceRestartedCalled();
+        } finally {
+            if (alwaysOnHotwordDetector != null) {
+                alwaysOnHotwordDetector.destroy();
+            }
+            if (visualQueryDetector != null) {
+                visualQueryDetector.destroy();
+            }
+        }
+    }
+
+    @Test
+    @RequiresDevice
     public void testHotwordDetectionServiceMultipleDetectors_detectHotwordDSPThenVisualQuery()
             throws Throwable {
 
@@ -208,6 +237,59 @@ public class HotwordDetectionServiceMultipleDetectorTest {
             final AlwaysOnHotwordDetector finalAlwaysOnHotwordDetector = alwaysOnHotwordDetector;
             final VisualQueryDetector finalVisualQueryDetector = visualQueryDetector;
 
+            // Update HotwordDetectionService options to enable Audio egress
+            runWithShellPermissionIdentity(() -> {
+                PersistableBundle options = Helper.createFakePersistableBundleData();
+                // Scenario for hotword detection service
+                options.putInt(Helper.KEY_TEST_SCENARIO,
+                        Utils.EXTRA_HOTWORD_DETECTION_SERVICE_ENABLE_AUDIO_EGRESS);
+                // Scenario for visual query detection service
+                options.putInt(MainVisualQueryDetectionService.KEY_VQDS_TEST_SCENARIO,
+                        MainVisualQueryDetectionService.SCENARIO_ATTENTION_QUERY_FINISHED_LEAVE);
+                finalAlwaysOnHotwordDetector.updateState(
+                        options,
+                        Helper.createFakeSharedMemoryData());
+                finalVisualQueryDetector.updateState(options, Helper.createFakeSharedMemoryData());
+            }, MANAGE_HOTWORD_DETECTION);
+
+            // For visual query detection
+            verifyVisualQueryOnDetectSuccess(visualQueryDetector);
+
+            // For hotword detection
+            verifyHotwordOnDetectFromDspSuccess(alwaysOnHotwordDetector);
+        } finally {
+            // destroy detector
+            visualQueryDetector.destroy();
+            alwaysOnHotwordDetector.destroy();
+            // Drop identity adopted.
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .dropShellPermissionIdentity();
+        }
+    }
+
+    @Test
+    @RequiresDevice
+    public void testHotwordDetectionServiceMultipleDetectors_restart_detectVisualQueryThenHotword()
+            throws Throwable {
+
+        // initialize variables
+        AlwaysOnHotwordDetector alwaysOnHotwordDetector = null;
+        VisualQueryDetector visualQueryDetector = null;
+
+        try {
+            // Assertion is done in the private method.
+            alwaysOnHotwordDetector = createAlwaysOnHotwordDetector();
+            visualQueryDetector = createVisualQueryDetector();
+            mService.initOnVisualQueryDetectionServiceRestartedLatch();
+            mService.initOnHotwordDetectionServiceRestartedLatch();
+            // force re-start by shell command
+            runShellCommand("cmd voiceinteraction restart-detection");
+            // wait onHotwordDetectionServiceRestarted() called
+            mService.waitOnVisualQueryDetectionServiceRestartedCalled();
+            mService.waitOnHotwordDetectionServiceRestartedCalled();
+            // local variables in lambda expression needs to be final
+            final AlwaysOnHotwordDetector finalAlwaysOnHotwordDetector = alwaysOnHotwordDetector;
+            final VisualQueryDetector finalVisualQueryDetector = visualQueryDetector;
             // Update HotwordDetectionService options to enable Audio egress
             runWithShellPermissionIdentity(() -> {
                 PersistableBundle options = Helper.createFakePersistableBundleData();
