@@ -881,13 +881,14 @@ public class CameraManagerTest extends Camera2ParameterizedTestCase {
      * Test that the physical camera available/unavailable callback behavior is consistent
      * between:
      *
-     * - No camera is open, and
-     * - camera opens, close camera, expect callback
+     * - No camera is open,
+     * - After camera is opened, and
+     * - After camera is closed,
      */
     @Test
     public void testPhysicalCameraAvailabilityConsistency() throws Throwable {
         CameraTestUtils.testPhysicalCameraAvailabilityConsistencyHelper(mCameraIdsUnderTest,
-                mCameraManager, mHandler, false /*expectInitialCallbackAfterOpen*/);
+                mCameraManager, mHandler, true /*expectInitialCallbackAfterOpen*/);
     }
 
     // Verify no LEGACY-level devices appear on devices first launched in the Q release or newer
