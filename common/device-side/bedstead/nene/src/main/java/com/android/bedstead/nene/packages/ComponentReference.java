@@ -114,7 +114,7 @@ public class ComponentReference {
      */
     public ComponentReference disable(UserReference user) {
         try {
-            ShellCommand.builderForUser(user, "pm disable-user")
+            ShellCommand.builderForUser(user, "pm disable")
                     .addOperand(mPackage.packageName() + "/" + mClassName)
                     .validate(o -> o.contains("new state"))
                     .execute();
