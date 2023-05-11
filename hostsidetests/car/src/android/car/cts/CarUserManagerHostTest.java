@@ -53,13 +53,13 @@ public final class CarUserManagerHostTest extends CarHostJUnit4TestCase {
 
     @Test
     public void testSwitchUserUxRestrictionFailure() throws Exception {
-        executeCommand("emulate-driving-state drive");
+        executeCommand("cmd car_service emulate-driving-state drive");
 
         int newUserid = createFullUser("CarUserManagerHostTest_User");
 
         switchUser(newUserid, STATUS_UX_RESTRICTION_FAILURE);
 
-        executeCommand("emulate-driving-state park");
+        executeCommand("cmd car_service emulate-driving-state park");
     }
 
     @Test
