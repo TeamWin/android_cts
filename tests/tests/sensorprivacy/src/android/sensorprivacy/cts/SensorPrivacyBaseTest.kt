@@ -100,8 +100,6 @@ abstract class SensorPrivacyBaseTest(
     open fun init() {
         oldState = isSensorPrivacyEnabled()
         setSensor(false)
-        Assume.assumeTrue(spm.supportsSensorToggle(sensor))
-        Assume.assumeTrue(spm.supportsSensorToggle(TOGGLE_TYPE_SOFTWARE, sensor))
         uiDevice.wakeUp()
         runShellCommandOrThrow("wm dismiss-keyguard")
         uiDevice.waitForIdle()
@@ -116,6 +114,7 @@ abstract class SensorPrivacyBaseTest(
 
     @Test
     fun testSetSensor() {
+        assumeSensorToggleSupport()
         setSensor(true)
         assertTrue(isSensorPrivacyEnabled())
 
@@ -125,6 +124,7 @@ abstract class SensorPrivacyBaseTest(
 
     @Test
     fun testSensorPrivacy_softwareToggle() {
+        assumeSensorToggleSupport()
         setSensor(true)
         assertTrue(isToggleSensorPrivacyEnabled(TOGGLE_TYPE_SOFTWARE))
 
@@ -134,6 +134,7 @@ abstract class SensorPrivacyBaseTest(
 
     @Test
     fun testSensorPrivacy_hardwareToggle() {
+        assumeSensorToggleSupport()
         // Default value should be false weather HW toggles
         // are supported or not
         assertFalse(isToggleSensorPrivacyEnabled(TOGGLE_TYPE_HARDWARE))
@@ -141,6 +142,7 @@ abstract class SensorPrivacyBaseTest(
 
     @Test
     fun testSensorPrivacy_comboToggle() {
+        assumeSensorToggleSupport()
         setSensor(sensor, true)
         assertTrue(isCombinedSensorPrivacyEnabled())
 
@@ -150,16 +152,19 @@ abstract class SensorPrivacyBaseTest(
 
     @Test
     fun testDialog() {
+        assumeSensorToggleSupport()
         testDialog(delayedActivity = false, delayedActivityNewTask = false)
     }
 
     @Test
     fun testDialog_remainsOnTop() {
+        assumeSensorToggleSupport()
         testDialog(delayedActivity = true, delayedActivityNewTask = false)
     }
 
     @Test
     fun testDialog_remainsOnTop_newTask() {
+        assumeSensorToggleSupport()
         testDialog(delayedActivity = true, delayedActivityNewTask = true)
     }
 
@@ -187,6 +192,7 @@ abstract class SensorPrivacyBaseTest(
 
     @Test
     fun testListener() {
+        assumeSensorToggleSupport()
         val executor = Executors.newSingleThreadExecutor()
         setSensor(false)
         val latchEnabled = CountDownLatch(1)
@@ -223,6 +229,7 @@ abstract class SensorPrivacyBaseTest(
 
     @Test
     fun testToggleListener() {
+        assumeSensorToggleSupport()
         val executor = Executors.newSingleThreadExecutor()
         setSensor(false)
         val latchEnabled = CountDownLatch(1)
@@ -272,6 +279,7 @@ abstract class SensorPrivacyBaseTest(
 
     @Test
     fun testToggleListener_defaultExecutor() {
+        assumeSensorToggleSupport()
         setSensor(false)
         val latchEnabled = CountDownLatch(1)
         var listenerSensorEnabled = object : OnSensorPrivacyChangedListener {
@@ -317,6 +325,7 @@ abstract class SensorPrivacyBaseTest(
     @Test
     @AppModeFull(reason = "Instant apps can't manage keyguard")
     fun testCantChangeWhenLocked() {
+        assumeSensorToggleSupport()
         Assume.assumeTrue(packageManager
                 .hasSystemFeature(PackageManager.FEATURE_SECURE_LOCK_SCREEN))
 
@@ -367,6 +376,7 @@ abstract class SensorPrivacyBaseTest(
     @Test
     @AppModeFull(reason = "Uses secondary app, instant apps have no visibility")
     fun testOpNotRunningWhileSensorPrivacyEnabled() {
+        assumeSensorToggleSupport()
         setSensor(false)
         val before = System.currentTimeMillis()
         startTestApp()
@@ -385,6 +395,7 @@ abstract class SensorPrivacyBaseTest(
     @Test
     @AppModeFull(reason = "Uses secondary app, instant apps have no visibility")
     fun testOpStartsRunningAfterStartedWithSensoryPrivacyEnabled() {
+        assumeSensorToggleSupport()
         setSensor(true)
         // Retry camera connection because external cameras are disconnected
         // if sensor privacy is enabled (b/182204067)
@@ -401,6 +412,7 @@ abstract class SensorPrivacyBaseTest(
     @Test
     @AppModeFull(reason = "Uses secondary app, instant apps have no visibility")
     fun testOpGetsRecordedAfterStartedWithSensorPrivacyEnabled() {
+        assumeSensorToggleSupport()
         setSensor(true)
         // Retry camera connection because external cameras are disconnected
         // if sensor privacy is enabled (b/182204067)
@@ -422,6 +434,7 @@ abstract class SensorPrivacyBaseTest(
     @Test
     @AppModeFull(reason = "Uses secondary app, instant apps have no visibility")
     fun testOpLastAccessUpdatesAfterToggleSensorPrivacy() {
+        assumeSensorToggleSupport()
         setSensor(false)
         val before = System.currentTimeMillis()
         startTestApp()
@@ -453,6 +466,7 @@ abstract class SensorPrivacyBaseTest(
     @Test
     @AppModeFull(reason = "Uses secondary app, instant apps have no visibility")
     fun testOpFinishedWhileToggleOn() {
+        assumeSensorToggleSupport()
         setSensor(false)
         startTestApp()
         eventually {
@@ -473,12 +487,27 @@ abstract class SensorPrivacyBaseTest(
     @Test
     @AsbSecurityTest(cveBugId = [199550934])
     fun testTapjacking() {
+        assumeSensorToggleSupport()
         setSensor(true)
         startTestOverlayApp(false)
         assertNotNull("Dialog never showed",
                 UiAutomatorUtils.waitFindObject(By.res(getDialogPositiveButtonId())))
         val view = UiAutomatorUtils.waitFindObjectOrNull(By.text("This Should Be Hidden"), 10_000)
         assertNull("Overlay should not have shown.", view)
+    }
+
+    @Test
+    @AppModeFull(reason = "Uses secondary app, instant apps have no visibility")
+    fun testCantEnablePrivacyIfNotSupported() {
+        Assume.assumeFalse(spm.supportsSensorToggle(sensor))
+        Assume.assumeFalse(spm.supportsSensorToggle(TOGGLE_TYPE_SOFTWARE, sensor))
+        setSensor(true)
+        assertFalse(isSensorPrivacyEnabled())
+    }
+
+    private fun assumeSensorToggleSupport() {
+        Assume.assumeTrue(spm.supportsSensorToggle(sensor))
+        Assume.assumeTrue(spm.supportsSensorToggle(TOGGLE_TYPE_SOFTWARE, sensor))
     }
 
     private fun startTestApp() {
