@@ -161,8 +161,10 @@ public class NetworkingHelper {
         if (!mHasEthernet) return false;
         Network[] networks = mConnectivityManager.getAllNetworks();
         for (Network network : networks) {
-            if (mConnectivityManager.getNetworkCapabilities(network)
-                    .hasTransport(TRANSPORT_ETHERNET)) {
+            NetworkCapabilities networkCapabilities =
+                    mConnectivityManager.getNetworkCapabilities(network);
+            if (networkCapabilities != null
+                    && networkCapabilities.hasTransport(TRANSPORT_ETHERNET)) {
                 return true;
             }
         }
@@ -240,7 +242,9 @@ public class NetworkingHelper {
                     if (on) {
                         Network[] networks = mConnectivityManager.getAllNetworks();
                         for (Network network : networks) {
-                            if (mConnectivityManager.getNetworkCapabilities(network)
+                            NetworkCapabilities networkCapabilities =
+                                    mConnectivityManager.getNetworkCapabilities(network);
+                            if (networkCapabilities != null && networkCapabilities
                                     .hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)) {
                                 return false;
                             }
