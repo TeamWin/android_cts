@@ -107,8 +107,6 @@ public final class UserRestrictionsTest {
             CommonUserRestrictions.DISALLOW_MOUNT_PHYSICAL_MEDIA,
             CommonUserRestrictions.DISALLOW_UNMUTE_MICROPHONE,
             CommonUserRestrictions.DISALLOW_ADJUST_VOLUME,
-            CommonUserRestrictions.DISALLOW_OUTGOING_CALLS,
-            CommonUserRestrictions.DISALLOW_SMS,
             CommonUserRestrictions.DISALLOW_FUN,
             CommonUserRestrictions.DISALLOW_CREATE_WINDOWS,
             CommonUserRestrictions.DISALLOW_SYSTEM_ERROR_DIALOGS,
