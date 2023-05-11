@@ -45,6 +45,7 @@ import android.util.DisplayMetrics;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.RequiresDevice;
 
+import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.MediaUtils;
 
 import org.junit.Test;
@@ -372,6 +373,7 @@ public class AImageDecoderTest {
 
     @Test
     @RequiresDevice
+    @CddTest(requirements = {"5.1.5/C-0-7"})
     @Parameters(method = "getBitMapFormatsUnpremul")
     public void testDecode10BitAvif(int bitmapFormat, boolean unpremul) throws IOException {
         assumeTrue("AVIF is not supported on this device, skip this test.",
