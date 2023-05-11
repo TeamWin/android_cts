@@ -77,8 +77,8 @@ public final class ProcessReference {
         int pid = pid();
 
         // Disable and re-enable kills the process
-        mPackage.disable();
-        mPackage.enable();
+        mPackage.disable(user());
+        mPackage.enable(user());
 
 
 //        // Removing a permission kills the process, so we can grant then remove an arbitrary
