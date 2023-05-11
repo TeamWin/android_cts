@@ -115,46 +115,48 @@ public class EncoderProfileLevelTestBase extends CodecEncoderTestBase {
 
     private static int getMinLevelHEVC(int width, int height, int frameRate, int bitrate) {
         class LevelLimitHEVC {
-            private LevelLimitHEVC(int level, int frameRate, long samples, int bitrate) {
+            private LevelLimitHEVC(int level, long pixelsPerSec, long pixelsPerFrame, int bitrate) {
                 this.mLevel = level;
-                this.mFrameRate = frameRate;
-                this.mSamples = samples;
+                this.mPixelsPerSec = pixelsPerSec;
+                this.mPixelsPerFrame = pixelsPerFrame;
                 this.mBitrate = bitrate;
             }
 
             private final int mLevel;
-            private final int mFrameRate;
-            private final long mSamples;
+            private final long mPixelsPerSec;
+            private final long mPixelsPerFrame;
             private final int mBitrate;
         }
         LevelLimitHEVC[] limitsHEVC = {
-                new LevelLimitHEVC(HEVCMainTierLevel1, 15, 36864, 128000),
-                new LevelLimitHEVC(HEVCMainTierLevel2, 30, 122880, 1500000),
-                new LevelLimitHEVC(HEVCMainTierLevel21, 30, 245760, 3000000),
-                new LevelLimitHEVC(HEVCMainTierLevel3, 30, 552960, 6000000),
-                new LevelLimitHEVC(HEVCMainTierLevel31, 30, 983040, 10000000),
-                new LevelLimitHEVC(HEVCMainTierLevel4, 30, 2228224, 12000000),
-                new LevelLimitHEVC(HEVCHighTierLevel4, 30, 2228224, 30000000),
-                new LevelLimitHEVC(HEVCMainTierLevel41, 60, 2228224, 20000000),
-                new LevelLimitHEVC(HEVCHighTierLevel41, 60, 2228224, 50000000),
-                new LevelLimitHEVC(HEVCMainTierLevel5, 30, 8912896, 25000000),
-                new LevelLimitHEVC(HEVCHighTierLevel5, 30, 8912896, 100000000),
-                new LevelLimitHEVC(HEVCMainTierLevel51, 60, 8912896, 40000000),
-                new LevelLimitHEVC(HEVCHighTierLevel51, 60, 8912896, 160000000),
-                new LevelLimitHEVC(HEVCMainTierLevel52, 120, 8912896, 60000000),
-                new LevelLimitHEVC(HEVCHighTierLevel52, 120, 8912896, 240000000),
-                new LevelLimitHEVC(HEVCMainTierLevel6, 30, 35651584, 60000000),
-                new LevelLimitHEVC(HEVCHighTierLevel6, 30, 35651584, 240000000),
-                new LevelLimitHEVC(HEVCMainTierLevel61, 60, 35651584, 120000000),
-                new LevelLimitHEVC(HEVCHighTierLevel61, 60, 35651584, 480000000),
-                new LevelLimitHEVC(HEVCMainTierLevel62, 120, 35651584, 240000000),
-                new LevelLimitHEVC(HEVCHighTierLevel62, 120, 35651584, 800000000),
+                new LevelLimitHEVC(HEVCMainTierLevel1, 552960, 36864, 128000),
+                new LevelLimitHEVC(HEVCMainTierLevel2, 3686400, 122880, 1500000),
+                new LevelLimitHEVC(HEVCMainTierLevel21, 7372800, 245760, 3000000),
+                new LevelLimitHEVC(HEVCMainTierLevel3, 16588800, 552960, 6000000),
+                new LevelLimitHEVC(HEVCMainTierLevel31, 33177600, 983040, 10000000),
+                new LevelLimitHEVC(HEVCMainTierLevel4, 66846720, 2228224, 12000000),
+                new LevelLimitHEVC(HEVCHighTierLevel4, 66846720, 2228224, 30000000),
+                new LevelLimitHEVC(HEVCMainTierLevel41, 133693440, 2228224, 20000000),
+                new LevelLimitHEVC(HEVCHighTierLevel41, 133693440, 2228224, 50000000),
+                new LevelLimitHEVC(HEVCMainTierLevel5, 267386880, 8912896, 25000000),
+                new LevelLimitHEVC(HEVCHighTierLevel5, 267386880, 8912896, 100000000),
+                new LevelLimitHEVC(HEVCMainTierLevel51, 534773760, 8912896, 40000000),
+                new LevelLimitHEVC(HEVCHighTierLevel51, 534773760, 8912896, 160000000),
+                new LevelLimitHEVC(HEVCMainTierLevel52, 1069547520, 8912896, 60000000),
+                new LevelLimitHEVC(HEVCHighTierLevel52, 1069547520, 8912896, 240000000),
+                new LevelLimitHEVC(HEVCMainTierLevel6, 1069547520, 35651584, 60000000),
+                new LevelLimitHEVC(HEVCHighTierLevel6, 1069547520, 35651584, 240000000),
+                new LevelLimitHEVC(HEVCMainTierLevel61, 2139095040, 35651584, 120000000),
+                new LevelLimitHEVC(HEVCHighTierLevel61, 2139095040, 35651584, 480000000),
+                new LevelLimitHEVC(HEVCMainTierLevel62, 4278190080L, 35651584, 240000000),
+                new LevelLimitHEVC(HEVCHighTierLevel62, 4278190080L, 35651584, 800000000),
         };
         int blockSize = 8;
         int blocks = divUp(width, blockSize) * divUp(height, blockSize);
-        int samples = blocks * blockSize * blockSize;
+        long pixelsPerFrame = blocks * blockSize * blockSize;
+        long pixelsPerSec = pixelsPerFrame * frameRate;
         for (LevelLimitHEVC levelLimitsHEVC : limitsHEVC) {
-            if (samples <= levelLimitsHEVC.mSamples && frameRate <= levelLimitsHEVC.mFrameRate
+            if (pixelsPerFrame <= levelLimitsHEVC.mPixelsPerFrame
+                    && pixelsPerSec <= levelLimitsHEVC.mPixelsPerSec
                     && bitrate <= levelLimitsHEVC.mBitrate) {
                 return levelLimitsHEVC.mLevel;
             }
@@ -165,10 +167,10 @@ public class EncoderProfileLevelTestBase extends CodecEncoderTestBase {
 
     private static int getMinLevelH263(int width, int height, int frameRate, int bitrate) {
         class LevelLimitH263 {
-            private LevelLimitH263(int level, long sampleRate, int width, int height, int frameRate,
-                    int bitrate) {
+            private LevelLimitH263(int level, long pixelsPerSec, int width, int height,
+                    int frameRate, int bitrate) {
                 this.mLevel = level;
-                this.mSampleRate = sampleRate;
+                this.mPixelsPerSec = pixelsPerSec;
                 this.mWidth = width;
                 this.mHeight = height;
                 this.mFrameRate = frameRate;
@@ -176,7 +178,7 @@ public class EncoderProfileLevelTestBase extends CodecEncoderTestBase {
             }
 
             private final int mLevel;
-            private final long mSampleRate;
+            private final long mPixelsPerSec;
             private final int mWidth;
             private final int mHeight;
             private final int mFrameRate;
@@ -195,9 +197,9 @@ public class EncoderProfileLevelTestBase extends CodecEncoderTestBase {
         int blockSize = 16;
         int mbs = divUp(width, blockSize) * divUp(height, blockSize);
         int size = mbs * blockSize * blockSize;
-        int sampleRate = size * frameRate;
+        int pixelsPerSec = size * frameRate;
         for (LevelLimitH263 levelLimitsH263 : limitsH263) {
-            if (sampleRate <= levelLimitsH263.mSampleRate && height <= levelLimitsH263.mHeight
+            if (pixelsPerSec <= levelLimitsH263.mPixelsPerSec && height <= levelLimitsH263.mHeight
                     && width <= levelLimitsH263.mWidth && frameRate <= levelLimitsH263.mFrameRate
                     && bitrate <= levelLimitsH263.mBitrate) {
                 return levelLimitsH263.mLevel;
@@ -209,16 +211,16 @@ public class EncoderProfileLevelTestBase extends CodecEncoderTestBase {
 
     private static int getMinLevelVP9(int width, int height, int frameRate, int bitrate) {
         class LevelLimitVP9 {
-            private LevelLimitVP9(int level, long sampleRate, int size, int maxWH, int bitrate) {
+            private LevelLimitVP9(int level, long pixelsPerSec, int size, int maxWH, int bitrate) {
                 this.mLevel = level;
-                this.mSampleRate = sampleRate;
+                this.mPixelsPerSec = pixelsPerSec;
                 this.mSize = size;
                 this.mMaxWH = maxWH;
                 this.mBitrate = bitrate;
             }
 
             private final int mLevel;
-            private final long mSampleRate;
+            private final long mPixelsPerSec;
             private final int mSize;
             private final int mMaxWH;
             private final int mBitrate;
@@ -239,13 +241,11 @@ public class EncoderProfileLevelTestBase extends CodecEncoderTestBase {
                 new LevelLimitVP9(VP9Level61, 2353004544L, 35651584, 16832, 240000000),
                 new LevelLimitVP9(VP9Level62, 4706009088L, 35651584, 16832, 480000000),
         };
-        int blockSize = 8;
-        int blocks = divUp(width, blockSize) * divUp(height, blockSize);
-        int size = blocks * blockSize * blockSize;
-        int sampleRate = size * frameRate;
+        int size = width * height;
+        int pixelsPerSec = size * frameRate;
         int maxWH = Math.max(width, height);
         for (LevelLimitVP9 levelLimitsVP9 : limitsVP9) {
-            if (sampleRate <= levelLimitsVP9.mSampleRate && size <= levelLimitsVP9.mSize
+            if (pixelsPerSec <= levelLimitsVP9.mPixelsPerSec && size <= levelLimitsVP9.mSize
                     && maxWH <= levelLimitsVP9.mMaxWH && bitrate <= levelLimitsVP9.mBitrate) {
                 return levelLimitsVP9.mLevel;
             }
@@ -256,10 +256,10 @@ public class EncoderProfileLevelTestBase extends CodecEncoderTestBase {
 
     private static int getMinLevelMPEG2(int width, int height, int frameRate, int bitrate) {
         class LevelLimitMPEG2 {
-            private LevelLimitMPEG2(int level, long sampleRate, int width, int height,
+            private LevelLimitMPEG2(int level, long pixelsPerSec, int width, int height,
                     int frameRate, int bitrate) {
                 this.mLevel = level;
-                this.mSampleRate = sampleRate;
+                this.mPixelsPerSec = pixelsPerSec;
                 this.mWidth = width;
                 this.mHeight = height;
                 this.mFrameRate = frameRate;
@@ -267,7 +267,7 @@ public class EncoderProfileLevelTestBase extends CodecEncoderTestBase {
             }
 
             private final int mLevel;
-            private final long mSampleRate;
+            private final long mPixelsPerSec;
             private final int mWidth;
             private final int mHeight;
             private final int mFrameRate;
@@ -284,9 +284,9 @@ public class EncoderProfileLevelTestBase extends CodecEncoderTestBase {
         int blockSize = 16;
         int mbs = divUp(width, blockSize) * divUp(height, blockSize);
         int size = mbs * blockSize * blockSize;
-        int sampleRate = size * frameRate;
+        int pixelsPerSec = size * frameRate;
         for (LevelLimitMPEG2 levelLimitsMPEG2 : limitsMPEG2) {
-            if (sampleRate <= levelLimitsMPEG2.mSampleRate && width <= levelLimitsMPEG2.mWidth
+            if (pixelsPerSec <= levelLimitsMPEG2.mPixelsPerSec && width <= levelLimitsMPEG2.mWidth
                     && height <= levelLimitsMPEG2.mHeight
                     && frameRate <= levelLimitsMPEG2.mFrameRate
                     && bitrate <= levelLimitsMPEG2.mBitrate) {
@@ -300,11 +300,11 @@ public class EncoderProfileLevelTestBase extends CodecEncoderTestBase {
     private static int getMinLevelMPEG4(int width, int height, int frameRate, int bitrate,
             int profile) {
         class LevelLimitMPEG4 {
-            private LevelLimitMPEG4(int profile, int level, long sampleRate, int width, int height,
-                    int frameRate, int bitrate) {
+            private LevelLimitMPEG4(int profile, int level, long pixelsPerSec, int width,
+                    int height, int frameRate, int bitrate) {
                 this.mProfile = profile;
                 this.mLevel = level;
-                this.mSampleRate = sampleRate;
+                this.mPixelsPerSec = pixelsPerSec;
                 this.mWidth = width;
                 this.mHeight = height;
                 this.mFrameRate = frameRate;
@@ -313,7 +313,7 @@ public class EncoderProfileLevelTestBase extends CodecEncoderTestBase {
 
             private final int mProfile;
             private final int mLevel;
-            private final long mSampleRate;
+            private final long mPixelsPerSec;
             private final int mWidth;
             private final int mHeight;
             private final int mFrameRate;
@@ -348,13 +348,14 @@ public class EncoderProfileLevelTestBase extends CodecEncoderTestBase {
         int blockSize = 16;
         int mbs = divUp(width, blockSize) * divUp(height, blockSize);
         int size = mbs * blockSize * blockSize;
-        int sampleRate = size * frameRate;
+        int pixelsPerSec = size * frameRate;
         if (profile != MPEG4ProfileAdvancedSimple && profile != MPEG4ProfileSimple) {
             throw new RuntimeException("Unrecognized profile " + profile + " for "
                     + MediaFormat.MIMETYPE_VIDEO_MPEG4);
         }
         for (LevelLimitMPEG4 levelLimitsMPEG4 : limitsMPEG4) {
-            if (profile == levelLimitsMPEG4.mProfile && sampleRate <= levelLimitsMPEG4.mSampleRate
+            if (profile == levelLimitsMPEG4.mProfile
+                    && pixelsPerSec <= levelLimitsMPEG4.mPixelsPerSec
                     && width <= levelLimitsMPEG4.mWidth && height <= levelLimitsMPEG4.mHeight
                     && frameRate <= levelLimitsMPEG4.mFrameRate
                     && bitrate <= levelLimitsMPEG4.mBitrate) {
@@ -367,13 +368,13 @@ public class EncoderProfileLevelTestBase extends CodecEncoderTestBase {
 
     private static int getMinLevelAV1(int width, int height, int frameRate, int bitrate) {
         class LevelLimitAV1 {
-            private LevelLimitAV1(int level, int size, int width, int height, long sampleRate,
+            private LevelLimitAV1(int level, int size, int width, int height, long pixelsPerSec,
                     int bitrate) {
                 this.mLevel = level;
                 this.mSize = size;
                 this.mWidth = width;
                 this.mHeight = height;
-                this.mSampleRate = sampleRate;
+                this.mPixelsPerSec = pixelsPerSec;
                 this.mBitrate = bitrate;
             }
 
@@ -381,7 +382,7 @@ public class EncoderProfileLevelTestBase extends CodecEncoderTestBase {
             private final int mSize;
             private final int mWidth;
             private final int mHeight;
-            private final long mSampleRate;
+            private final long mPixelsPerSec;
             private final int mBitrate;
         }
         // taking bitrate from main profile, will also be supported by high profile
@@ -390,30 +391,29 @@ public class EncoderProfileLevelTestBase extends CodecEncoderTestBase {
                 new LevelLimitAV1(AV1Level21, 278784, 2816, 1584, 8363520, 3000000),
                 new LevelLimitAV1(AV1Level3, 665856, 4352, 2448, 19975680, 6000000),
                 new LevelLimitAV1(AV1Level31, 1065024, 5504, 3096, 31950720, 10000000),
-                new LevelLimitAV1(AV1Level4, 2359296, 6144, 3456, 70778880, 12000000),
-                new LevelLimitAV1(AV1Level41, 2359296, 6144, 3456, 141557760, 20000000),
-                new LevelLimitAV1(AV1Level5, 8912896, 8192, 4352, 267386880, 30000000),
-                new LevelLimitAV1(AV1Level51, 8912896, 8192, 4352, 534773760, 40000000),
-                new LevelLimitAV1(AV1Level52, 8912896, 8192, 4352, 1069547520, 60000000),
-                new LevelLimitAV1(AV1Level53, 8912896, 8192, 4352, 1069547520, 60000000),
-                new LevelLimitAV1(AV1Level6, 35651584, 16384, 8704, 1069547520, 60000000),
-                new LevelLimitAV1(AV1Level61, 35651584, 16384, 8704, 2139095040, 100000000),
-                new LevelLimitAV1(AV1Level62, 35651584, 16384, 8704, 4278190080L, 160000000),
-                new LevelLimitAV1(AV1Level63, 35651584, 16384, 8704, 4278190080L, 160000000),
+                new LevelLimitAV1(AV1Level4, 2359296, 6144, 3456, 70778880, 30000000),
+                new LevelLimitAV1(AV1Level41, 2359296, 6144, 3456, 141557760, 50000000),
+                new LevelLimitAV1(AV1Level5, 8912896, 8192, 4352, 267386880, 100000000),
+                new LevelLimitAV1(AV1Level51, 8912896, 8192, 4352, 534773760, 160000000),
+                new LevelLimitAV1(AV1Level52, 8912896, 8192, 4352, 1069547520, 240000000),
+                new LevelLimitAV1(AV1Level53, 8912896, 8192, 4352, 1069547520, 240000000),
+                new LevelLimitAV1(AV1Level6, 35651584, 16384, 8704, 1069547520, 240000000),
+                new LevelLimitAV1(AV1Level61, 35651584, 16384, 8704, 2139095040, 480000000),
+                new LevelLimitAV1(AV1Level62, 35651584, 16384, 8704, 4278190080L, 800000000),
+                new LevelLimitAV1(AV1Level63, 35651584, 16384, 8704, 4278190080L, 800000000),
         };
-        int blockSize = 8;
-        int blocks = divUp(width, blockSize) * divUp(height, blockSize);
-        int size = blocks * blockSize * blockSize;
-        int sampleRate = size * frameRate;
+        int size = width * height;
+        long pixelsPerSec = (long) size * frameRate;
         for (LevelLimitAV1 levelLimitsAV1 : limitsAV1) {
             if (size <= levelLimitsAV1.mSize && width <= levelLimitsAV1.mWidth
-                    && height <= levelLimitsAV1.mHeight && sampleRate <= levelLimitsAV1.mSampleRate
+                    && height <= levelLimitsAV1.mHeight
+                    && pixelsPerSec <= levelLimitsAV1.mPixelsPerSec
                     && bitrate <= levelLimitsAV1.mBitrate) {
                 return levelLimitsAV1.mLevel;
             }
         }
         // if none of the levels suffice or high profile, select the highest level
-        return AV1Level73;
+        return AV1Level63;
     }
 
     protected BitStreamUtils.ParserBase mParser;
