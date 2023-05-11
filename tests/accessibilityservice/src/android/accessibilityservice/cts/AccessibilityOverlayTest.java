@@ -19,6 +19,7 @@ package android.accessibilityservice.cts;
 import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.launchActivityOnSpecifiedDisplayAndWaitForItToBeOnscreen;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assume.assumeTrue;
@@ -41,6 +42,8 @@ import android.graphics.Rect;
 import android.hardware.display.DisplayManager;
 import android.os.Binder;
 import android.platform.test.annotations.Presubmit;
+import android.server.wm.CtsWindowInfoUtils;
+import android.text.TextUtils;
 import android.util.SparseArray;
 import android.view.Display;
 import android.view.SurfaceControl;
@@ -50,6 +53,7 @@ import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.accessibility.AccessibilityWindowInfo;
 import android.widget.Button;
 import android.widget.FrameLayout;
+import android.window.WindowInfosListenerForTest;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
@@ -65,7 +69,9 @@ import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 // Test that an AccessibilityService can display an accessibility overlay
 @RunWith(AndroidJUnit4.class)
@@ -200,6 +206,7 @@ public class AccessibilityOverlayTest {
                 (event) ->
                         ActivityLaunchUtils.findWindowByTitle(sUiAutomation, overlayTitle) != null,
                 AsyncUtils.DEFAULT_TIMEOUT_MS);
+        checkTrustedOverlayExists(overlayTitle);
         // Remove the overlay.
         sUiAutomation.executeAndWaitForEvent(
                 () ->
@@ -306,6 +313,8 @@ public class AccessibilityOverlayTest {
                     },
                     AsyncUtils.DEFAULT_TIMEOUT_MS);
 
+            checkTrustedOverlayExists(overlayTitle);
+
             // Remove the overlay.
             sUiAutomation.executeAndWaitForEvent(
                     () ->
@@ -324,6 +333,22 @@ public class AccessibilityOverlayTest {
             if (activity != null) {
                 activity.finish();
             }
+        }
+    }
+
+    private void checkTrustedOverlayExists(String overlayTitle) throws Exception {
+        try {
+            sUiAutomation.adoptShellPermissionIdentity(
+                    android.Manifest.permission.ACCESS_SURFACE_FLINGER);
+            Predicate<List<WindowInfosListenerForTest.WindowInfo>> windowPredicate =
+                    windows -> windows.stream().anyMatch(
+                            window -> window.name.contains(overlayTitle)
+                                    && window.isTrustedOverlay);
+            assertWithMessage("Expected to find trusted overlay window").that(
+                    CtsWindowInfoUtils.waitForWindowInfos(windowPredicate,
+                            AsyncUtils.DEFAULT_TIMEOUT_MS, TimeUnit.MILLISECONDS)).isTrue();
+        } finally {
+            sUiAutomation.dropShellPermissionIdentity();
         }
     }
 
