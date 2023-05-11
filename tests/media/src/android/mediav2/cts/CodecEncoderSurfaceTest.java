@@ -23,9 +23,12 @@ import static android.mediav2.common.cts.CodecEncoderTestBase.ACCEPTABLE_WIRELES
 import static android.mediav2.common.cts.CodecEncoderTestBase.colorFormatToString;
 import static android.mediav2.common.cts.CodecEncoderTestBase.getMuxerFormatForMediaType;
 import static android.mediav2.common.cts.CodecEncoderTestBase.getTempFilePath;
+import static android.mediav2.common.cts.CodecTestBase.VNDK_IS_BEFORE_U;
 import static android.mediav2.common.cts.CodecTestBase.hasSupportForColorFormat;
+import static android.mediav2.common.cts.CodecTestBase.isDefaultCodec;
 import static android.mediav2.common.cts.CodecTestBase.isHardwareAcceleratedCodec;
 import static android.mediav2.common.cts.CodecTestBase.isSoftwareCodec;
+import static android.mediav2.common.cts.CodecTestBase.isVendorCodec;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -252,7 +255,7 @@ public class CodecEncoderSurfaceTest {
     }
 
     @Parameterized.Parameters(name = "{index}_{0}_{1}_{2}_{3}_{9}")
-    public static Collection<Object[]> input() {
+    public static Collection<Object[]> input() throws IOException {
         final boolean isEncoder = true;
         final boolean needAudio = false;
         final boolean needVideo = true;
@@ -378,7 +381,29 @@ public class CodecEncoderSurfaceTest {
                 argsList.add(testArg);
             }
         }
-        return CodecTestBase.prepareParamList(argsList, isEncoder, needAudio, needVideo, true);
+
+        final List<Object[]> expandedArgsList =
+                CodecTestBase.prepareParamList(argsList, isEncoder, needAudio, needVideo, true);
+
+        // Prior to Android U, this test was using the first decoder for a given mediaType.
+        // In Android U, this was updated to test the encoders with all decoders for the
+        // given mediaType. There are some vendor encoders in older versions of Android
+        // which do not work as expected with the surface from s/w decoder.
+        // If the device is has vendor partition older than Android U, limit the tests
+        // to first decoder like it was being done prior to Androd U
+        final List<Object[]> finalArgsList = new ArrayList<>();
+        for (Object[] arg : expandedArgsList) {
+            String encoderName = (String) arg[0];
+            String decoderName = (String) arg[2];
+            String decoderMediaType = (String) arg[3];
+            if (VNDK_IS_BEFORE_U && isVendorCodec(encoderName)) {
+                if (!isDefaultCodec(decoderName, decoderMediaType, /* isEncoder */false)) {
+                    continue;
+                }
+            }
+            finalArgsList.add(arg);
+        }
+        return finalArgsList;
     }
 
     private boolean hasSeenError() {
