@@ -67,18 +67,16 @@ import androidx.test.filters.LargeTest;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
-import com.android.bedstead.harrier.DeviceState;
-import com.android.bedstead.harrier.annotations.RequireRunNotOnVisibleBackgroundNonProfileUser;
 import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.SystemUtil;
 import com.android.compatibility.common.util.TestUtils;
+import com.android.compatibility.common.util.UserHelper;
 
 import junit.framework.Assert;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -123,21 +121,17 @@ public class ToastTest {
     private ConditionVariable mToastShown;
     private ConditionVariable mToastHidden;
     private NotificationManager mNotificationManager;
+    private UserHelper mUserHelper;
 
     @Rule
     public ActivityTestRule<CtsActivity> mActivityRule =
             new ActivityTestRule<>(CtsActivity.class);
     private UiAutomation mUiAutomation;
 
-    // TODO(b/255426725): only used due on @RequireRunNotOnVisibleBackgroundNonProfileUser tests -
-    // remove it - and the Harrier dependency on Android.bp - when A11Y supports it
-    @ClassRule
-    @Rule
-    public static final DeviceState sDeviceState = new DeviceState();
-
     @Before
     public void setup() {
         mContext = getInstrumentation().getContext();
+        mUserHelper = new UserHelper(mContext);
         mUiAutomation = getInstrumentation().getUiAutomation();
         mLayoutListener = () -> mLayoutDone = true;
         mNotificationManager =
@@ -480,10 +474,15 @@ public class ToastTest {
         assertTrue(longDuration > shortDuration);
     }
 
-    // TODO(b/255426725): remove @Require... when A11Y supports it
-    @RequireRunNotOnVisibleBackgroundNonProfileUser
+    // TODO(b/255426725): remove method, callers, and mUserHelper when A11Y supports it
+    private void requireRunNotOnVisibleBackgroundNonProfileUser() {
+        assumeFalse("Not supported on visible background user",
+                mUserHelper.isVisibleBackgroundUser());
+    }
+
     @Test
     public void testAccessDuration_whenCustomToastAndWithA11yTimeoutEnabled() throws Throwable {
+        requireRunNotOnVisibleBackgroundNonProfileUser();
         makeCustomToast();
         final Runnable showToast = () -> {
             mToast.setDuration(Toast.LENGTH_SHORT);
@@ -513,10 +512,9 @@ public class ToastTest {
         }
     }
 
-    // TODO(b/255426725): remove @Require... when A11Y supports it
-    @RequireRunNotOnVisibleBackgroundNonProfileUser
     @Test
     public void testAccessDuration_whenTextToastAndWithA11yTimeoutEnabled() throws Throwable {
+        requireRunNotOnVisibleBackgroundNonProfileUser();
         makeTextToast();
         final Runnable showToast = () -> {
             mToast.setDuration(Toast.LENGTH_SHORT);
