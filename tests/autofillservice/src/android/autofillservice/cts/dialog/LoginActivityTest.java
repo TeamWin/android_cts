@@ -29,6 +29,7 @@ import static android.autofillservice.cts.testcore.Helper.disablePccDetectionFea
 import static android.autofillservice.cts.testcore.Helper.enableFillDialogFeature;
 import static android.autofillservice.cts.testcore.Helper.enablePccDetectionFeature;
 import static android.autofillservice.cts.testcore.Helper.isImeShowing;
+import static android.autofillservice.cts.testcore.Helper.isPccFieldClassificationSet;
 import static android.autofillservice.cts.testcore.Helper.setFillDialogHints;
 import static android.service.autofill.FillRequest.FLAG_SUPPORTS_FILL_DIALOG;
 import static android.view.View.AUTOFILL_HINT_USERNAME;
@@ -97,8 +98,10 @@ public class LoginActivityTest extends AutoFillServiceTestCase.ManualActivityLau
 
         // Check onFillRequest has hints populated
         final FillRequest request = sReplier.getNextFillRequest();
-        assertThat(request.hints.size()).isEqualTo(1);
-        assertThat(request.hints.get(0)).isEqualTo("username");
+        if (isPccFieldClassificationSet(sContext)) {
+            assertThat(request.hints.size()).isEqualTo(1);
+            assertThat(request.hints.get(0)).isEqualTo("username");
+        }
         mUiBot.waitForIdleSync();
         disablePccDetectionFeature(sContext);
         sReplier.setIdMode(IdMode.RESOURCE_ID);
@@ -131,8 +134,10 @@ public class LoginActivityTest extends AutoFillServiceTestCase.ManualActivityLau
 
         // Check onFillRequest has the flag: FLAG_SEND_ALL_USER_DATA
         final FillRequest request = sReplier.getNextFillRequest();
-        assertThat(request.hints.size()).isEqualTo(3);
-        assertThat(request.hints.get(0)).isEqualTo("username");
+        if (isPccFieldClassificationSet(sContext)) {
+            assertThat(request.hints.size()).isEqualTo(3);
+            assertThat(request.hints.get(0)).isEqualTo("username");
+        }
         mUiBot.waitForIdleSync();
         disablePccDetectionFeature(sContext);
         sReplier.setIdMode(IdMode.RESOURCE_ID);
