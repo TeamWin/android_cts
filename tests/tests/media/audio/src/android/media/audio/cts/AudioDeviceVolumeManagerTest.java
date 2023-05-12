@@ -20,6 +20,8 @@ import static org.junit.Assert.assertThrows;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.pm.PackageManager;
+import android.content.res.Resources;
 import android.media.AudioDeviceAttributes;
 import android.media.AudioDeviceInfo;
 import android.media.AudioDeviceVolumeManager;
@@ -38,6 +40,10 @@ public class AudioDeviceVolumeManagerTest extends CtsAndroidTestCase {
 
     private static final String TAG = "AudioDeviceVolumeManagerTest";
     private AudioDeviceVolumeManager mADVmgr;
+    private boolean mUseFixedVolume;
+    private boolean mIsTelevision;
+    private boolean mIsSingleVolume;
+    private boolean mSkipRingerTests;
 
     private static final AudioDeviceAttributes BT_DEV = new AudioDeviceAttributes(
             AudioDeviceAttributes.ROLE_OUTPUT, AudioDeviceInfo.TYPE_BLUETOOTH_A2DP, "bla");
@@ -55,6 +61,15 @@ public class AudioDeviceVolumeManagerTest extends CtsAndroidTestCase {
                         Manifest.permission.STATUS_BAR_SERVICE);
         mADVmgr = (AudioDeviceVolumeManager) getContext().getSystemService(
                 Context.AUDIO_DEVICE_VOLUME_SERVICE);
+        mUseFixedVolume = getContext().getResources().getBoolean(
+                Resources.getSystem().getIdentifier("config_useFixedVolume", "bool", "android"));
+        PackageManager packageManager = getContext().getPackageManager();
+        mIsTelevision = packageManager != null
+                && (packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK)
+                || packageManager.hasSystemFeature(PackageManager.FEATURE_TELEVISION));
+        mIsSingleVolume = getContext().getResources().getBoolean(
+                Resources.getSystem().getIdentifier("config_single_volume", "bool", "android"));
+        mSkipRingerTests = mUseFixedVolume || mIsTelevision || mIsSingleVolume;
     }
 
     @Override
@@ -102,6 +117,9 @@ public class AudioDeviceVolumeManagerTest extends CtsAndroidTestCase {
     @ApiTest(apis = {"android.media.AudioDeviceVolumeManager#setDeviceVolume",
             "android.media.AudioDeviceVolumeManager#getDeviceVolume"})
     public void testSetGetVolume() throws Exception {
+        if (mSkipRingerTests) {
+            return;
+        }
         AudioManager am = getContext().getSystemService(AudioManager.class);
         final int minIndex = am.getStreamMinVolume(AudioManager.STREAM_MUSIC);
         final int maxIndex = am.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
