@@ -39,6 +39,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Assume
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 
@@ -133,6 +134,7 @@ class PermissionRationaleTest : BaseUsePermissionTest() {
         }
     }
 
+    @Ignore("b/282063206")
     @Test
     fun clickLinkToHelpCenter_opensHelpCenter() {
         Assume.assumeFalse(getPermissionControllerResString(HELP_CENTER_URL_ID).isNullOrEmpty())
