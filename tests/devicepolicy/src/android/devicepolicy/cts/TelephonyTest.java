@@ -47,6 +47,7 @@ import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.EnsureDoesNotHaveUserRestriction;
 import com.android.bedstead.harrier.annotations.EnsureHasUserRestriction;
 import com.android.bedstead.harrier.annotations.Postsubmit;
+import com.android.bedstead.harrier.annotations.RequireDoesNotHaveFeature;
 import com.android.bedstead.harrier.annotations.RequireRunOnWorkProfile;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
@@ -65,6 +66,7 @@ import com.android.compatibility.common.util.ApiTest;
 import com.android.interactive.annotations.Interactive;
 
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -213,6 +215,7 @@ public final class TelephonyTest {
     @PolicyAppliesTest(policy = DisallowOutgoingCalls.class)
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.os.UserManager#DISALLOW_OUTGOING_CALLS")
+    @Ignore // this test is unclear because DISALLOW_OUTGOING_CALLS is default on secondary users
     public void setUserRestriction_disallowOutgoingCalls_isSet() {
         try {
             sDeviceState.dpc().devicePolicyManager().addUserRestriction(
@@ -229,6 +232,7 @@ public final class TelephonyTest {
     @PolicyDoesNotApplyTest(policy = DisallowOutgoingCalls.class)
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.os.UserManager#DISALLOW_OUTGOING_CALLS")
+    @Ignore // this test is unclear because DISALLOW_OUTGOING_CALLS is default on secondary users
     public void setUserRestriction_disallowOutgoingCalls_isNotSet() {
         try {
             sDeviceState.dpc().devicePolicyManager().addUserRestriction(
@@ -273,6 +277,7 @@ public final class TelephonyTest {
     @PolicyAppliesTest(policy = DisallowSms.class)
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.os.UserManager#DISALLOW_SMS")
+    @Ignore // this test is unclear because DISALLOW_OUTGOING_CALLS is default on secondary users
     public void setUserRestriction_disallowSms_isSet() {
         try {
             sDeviceState.dpc().devicePolicyManager().addUserRestriction(
@@ -289,6 +294,7 @@ public final class TelephonyTest {
     @PolicyDoesNotApplyTest(policy = DisallowSms.class)
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.os.UserManager#DISALLOW_SMS")
+    @Ignore // this test is unclear because DISALLOW_OUTGOING_CALLS is default on secondary users
     public void setUserRestriction_disallowSms_isNotSet() {
         try {
             sDeviceState.dpc().devicePolicyManager().addUserRestriction(

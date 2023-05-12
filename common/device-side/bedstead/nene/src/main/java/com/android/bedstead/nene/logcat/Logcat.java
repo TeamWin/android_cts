@@ -22,10 +22,12 @@ import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.annotations.Experimental;
 import com.android.bedstead.nene.exceptions.AdbException;
 import com.android.bedstead.nene.exceptions.NeneException;
+import com.android.bedstead.nene.utils.Retry;
 import com.android.bedstead.nene.utils.ShellCommand;
 import com.android.bedstead.nene.utils.ShellCommandUtils;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -49,10 +51,18 @@ public final class Logcat {
     /** Clear the logcat buffer. */
     @Experimental
     public void clear() {
-        ShellCommand.builder("logcat")
-                .addOperand("-c")
-                .validate(String::isEmpty)
-                .executeOrThrowNeneException("Error clearing logcat buffer");
+        try {
+            Retry.logic(() ->
+                            ShellCommand.builder("logcat")
+                                    .addOperand("-c")
+                                    .validate(String::isEmpty)
+                                    .executeOrThrowNeneException("Error clearing logcat buffer"))
+                    .timeout(Duration.ofSeconds(10))
+                    .run();
+        } catch (Throwable e) {
+            // Clearing is best effort - don't disrupt the test because we can't
+            Log.e(LOG_TAG, "Error clearing logcat", e);
+        }
     }
 
     /**
