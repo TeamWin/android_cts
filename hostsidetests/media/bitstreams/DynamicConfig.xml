@@ -41199,6 +41199,6 @@
     <value>mime=video/x-vnd.on2.vp9,size=25612,width=96,height=96,frame-rate=,profile=,level=,bitrate=,package=full</value>
   </entry>
   <entry key="media_files_url">
-    <value>https://storage.googleapis.com/android_media/cts/hostsidetests/media/bitstreams/CtsMediaBitstreamsTestCases-1.0.zip</value>
+    <value>https://dl.google.com/android/xts/cts/hostsidetests/media/bitstreams/CtsMediaBitstreamsTestCases-1.0.zip</value>
   </entry>
 </dynamicConfig>
