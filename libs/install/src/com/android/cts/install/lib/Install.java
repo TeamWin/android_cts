@@ -272,7 +272,12 @@ public class Install {
             if (mInstallFlags != 0) {
                 InstallUtils.mutateInstallFlags(params, mInstallFlags);
             }
-            return InstallUtils.getPackageInstaller().createSession(params);
+            PackageInstaller installer = InstallUtils.getPackageInstaller();
+            if (installer == null) {
+                // installer may be null, eg. instant app
+                throw new IllegalStateException("PackageInstaller not found");
+            }
+            return installer.createSession(params);
         } finally {
             if ((mIsStaged || isApex) && mBypassStagedInstallerCheck) {
                 SystemUtil.runShellCommandForNoOutput("pm bypass-staged-installer-check false");
