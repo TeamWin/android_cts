@@ -50,7 +50,7 @@ android_library {
         "TestApp_TestApps",
         "TestApp_JavaProtos",
         "QueryableCommonAndroid",
-        "auto_value_annotations"
+        "auto_value_annotations",
     ],
     manifest: "src/library/main/AndroidManifest.xml",
     min_sdk_version: "29",
@@ -58,7 +58,7 @@ android_library {
     plugins: [
         "ConnectedAppsSDK_Processor",
         "TestApp_Processor",
-        "auto_annotation_plugin"
+        "auto_annotation_plugin",
     ],
 }
 
@@ -248,6 +248,7 @@ android_test_helper_app {
     defaults: ["mts-target-sdk-version-current"],
     manifest: "manifests/DevicePolicyManagementRoleHolderManifest.xml",
     additional_manifests: ["CommonManifest.xml"],
+    resource_dirs: ["src/testapps/main/res/device_admin"],
     min_sdk_version: "29",
     sdk_version: "test_current",
 }

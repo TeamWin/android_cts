@@ -84,8 +84,9 @@
     <uses-permission android:name="android.permission.MANAGE_DEVICE_POLICY_MICROPHONE" />
     <uses-permission android:name="android.permission.MANAGE_DEVICE_POLICY_USB_FILE_TRANSFER" />
 
-    <application>
-        <!-- Don't allow this test app to be returned by queries unless filtered by package name -->
+    <application
+        android:label="DevicePolicyManagerRoleHolder" android:testOnly="true">
+    <!-- Don't allow this test app to be returned by queries unless filtered by package name -->
         <meta-data android:name="testapp-package-query-only" android:value="true" />
 
         <activity android:name=".provision_managed_device_from_trusted_source" android:exported="true" android:permission="android.permission.LAUNCH_DEVICE_MANAGER_SETUP">
@@ -118,6 +119,18 @@
         <receiver android:name=".FinancedDeviceStateReceiver" android:exported="true">
             <intent-filter>
                 <action android:name="android.app.admin.action.DEVICE_FINANCING_STATE_CHANGED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Ideally it's not required for role holder to act as a dpc, but its required for
+        some of our ManagedSubscriptionsPolicy test, adding this receiver only for this reason.-->
+        <receiver android:name=".DeviceAdminReceiver"
+            android:permission="android.permission.BIND_DEVICE_ADMIN"
+            android:exported="true">
+            <meta-data android:name="android.app.device_admin"
+                android:resource="@xml/device_admin"/>
+            <intent-filter>
+                <action android:name="android.app.action.DEVICE_ADMIN_ENABLED"/>
             </intent-filter>
         </receiver>
 
