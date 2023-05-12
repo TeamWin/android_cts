@@ -16,19 +16,38 @@
 
 package android.devicepolicy.cts;
 
+import static android.app.admin.DevicePolicyIdentifiers.PERSISTENT_PREFERRED_ACTIVITY_POLICY;
+import static android.app.admin.TargetUser.LOCAL_USER_ID;
+import static android.devicepolicy.cts.utils.PolicyEngineUtils.FINANCED_DEVICE_CONTROLLER_ROLE;
+
+import static com.android.bedstead.harrier.annotations.enterprise.MostImportantCoexistenceTest.LESS_IMPORTANT;
+import static com.android.bedstead.harrier.annotations.enterprise.MostImportantCoexistenceTest.MORE_IMPORTANT;
 import static com.android.queryable.queries.ActivityQuery.activity;
 import static com.android.queryable.queries.IntentFilterQuery.intentFilter;
 
+import static com.google.common.truth.Truth.assertThat;
+
+import android.app.admin.DpcAuthority;
+import android.app.admin.IntentFilterPolicyKey;
+import android.app.admin.PolicyState;
+import android.app.admin.PolicyUpdateReceiver;
+import android.app.admin.PolicyUpdateResult;
+import android.app.admin.RoleAuthority;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.devicepolicy.cts.utils.PolicyEngineUtils;
+import android.devicepolicy.cts.utils.PolicySetResultUtils;
+import android.os.Bundle;
 import android.stats.devicepolicy.EventId;
-import android.util.Log;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.Postsubmit;
+import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
+import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDeviceOwner;
+import com.android.bedstead.harrier.annotations.enterprise.MostImportantCoexistenceTest;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
 import com.android.bedstead.harrier.policies.PersistentPreferredActivities;
 import com.android.bedstead.metricsrecorder.EnterpriseMetricsRecorder;
@@ -42,9 +61,14 @@ import com.android.compatibility.common.util.ApiTest;
 import com.android.queryable.info.ActivityInfo;
 
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Rule;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.testng.Assert;
+
+import java.util.List;
+import java.util.Set;
 
 @RunWith(BedsteadJUnit4.class)
 public final class PersistentPreferredActivitiesTest {
@@ -223,6 +247,394 @@ public final class PersistentPreferredActivitiesTest {
                     .toBeEqualTo(true)
                     .errorOnFail()
                     .await();
+        }
+    }
+
+    @Test
+    @Postsubmit(reason = "new test")
+    @ApiTest(apis = {"android.app.admin.DevicePolicyManager#addPersistentPreferredActivity",
+            "android.app.admin.DevicePolicyManager#clearPackagePersistentPreferredActivities",
+            "android.app.admin.DevicePolicyManager#getDevicePolicyState"})
+    @PolicyAppliesTest(policy = PersistentPreferredActivities.class)
+    public void getDevicePolicyState_addPersistentPreferredActivity_returnsPolicy() {
+        try (TestAppInstance testAppInstance = sTestAppWithMultipleActivities.install()) {
+            try {
+                ComponentName componentName = new ComponentName(
+                        testAppInstance.packageName(), PREFERRED_ACTIVITY.className());
+                IntentFilter intentFilter = new IntentFilter(TEST_ACTION);
+                intentFilter.addCategory(Intent.CATEGORY_DEFAULT);
+                sDeviceState.dpc().devicePolicyManager()
+                        .addPersistentPreferredActivity(
+                                sDeviceState.dpc().componentName(),
+                                intentFilter,
+                                componentName);
+
+                PolicyState<ComponentName> policyState =
+                        PolicyEngineUtils.getComponentNamePolicyState(
+                                new IntentFilterPolicyKey(
+                                        PERSISTENT_PREFERRED_ACTIVITY_POLICY,
+                                        intentFilter),
+                                TestApis.users().instrumented().userHandle());
+
+                assertThat(policyState.getCurrentResolvedPolicy()).isEqualTo(componentName);
+            } finally {
+                sDeviceState.dpc().devicePolicyManager()
+                        .clearPackagePersistentPreferredActivities(
+                                sDeviceState.dpc().componentName(),
+                                testAppInstance.packageName());
+            }
+        }
+    }
+
+    @Test
+    @Postsubmit(reason = "new test")
+    @ApiTest(apis = {"android.app.admin.DevicePolicyManager#addPersistentPreferredActivity"})
+    // TODO: enable after adding the broadcast receiver to relevant test apps.
+//    @PolicyAppliesTest(policy = PersistentPreferredActivities.class)
+    @EnsureHasDeviceOwner(isPrimary = true)
+    @Ignore("figure out why it's failing")
+    public void policyUpdateReceiver_addPersistentPreferredActivity_receivedPolicySetBroadcast() {
+        try (TestAppInstance testAppInstance = sTestAppWithMultipleActivities.install()) {
+            try {
+                IntentFilter intentFilter = new IntentFilter(TEST_ACTION);
+                intentFilter.addCategory(Intent.CATEGORY_DEFAULT);
+                Bundle bundle = new Bundle();
+                bundle.putParcelable(PolicyUpdateReceiver.EXTRA_INTENT_FILTER, intentFilter);
+                sDeviceState.dpc().devicePolicyManager()
+                        .addPersistentPreferredActivity(
+                                sDeviceState.dpc().componentName(),
+                                intentFilter,
+                                new ComponentName(
+                                        testAppInstance.packageName(),
+                                        PREFERRED_ACTIVITY.className()));
+
+                PolicySetResultUtils.assertPolicySetResultReceived(sDeviceState,
+                        PERSISTENT_PREFERRED_ACTIVITY_POLICY,
+                        PolicyUpdateResult.RESULT_POLICY_SET, LOCAL_USER_ID, bundle);
+
+            } finally {
+                sDeviceState.dpc().devicePolicyManager()
+                        .clearPackagePersistentPreferredActivities(
+                                sDeviceState.dpc().componentName(),
+                                testAppInstance.packageName());
+            }
+        }
+    }
+
+    @Test
+    @Postsubmit(reason = "new test")
+    @ApiTest(apis = {"android.app.admin.DevicePolicyManager#addPersistentPreferredActivity",
+            "android.app.admin.DevicePolicyManager#clearPackagePersistentPreferredActivities",
+            "android.app.admin.DevicePolicyManager#getDevicePolicyState"})
+    @CanSetPolicyTest(policy = PersistentPreferredActivities.class, singleTestOnly = true)
+    public void getDevicePolicyState_addPersistentPreferredActivity_returnsCorrectResolutionMechanism() {
+        try (TestAppInstance testAppInstance = sTestAppWithMultipleActivities.install()) {
+            try {
+                IntentFilter intentFilter = new IntentFilter(TEST_ACTION);
+                intentFilter.addCategory(Intent.CATEGORY_DEFAULT);
+                sDeviceState.dpc().devicePolicyManager()
+                        .addPersistentPreferredActivity(
+                                sDeviceState.dpc().componentName(),
+                                intentFilter,
+                                new ComponentName(
+                                        testAppInstance.packageName(),
+                                        PREFERRED_ACTIVITY.className()));
+
+                PolicyState<ComponentName> policyState =
+                        PolicyEngineUtils.getComponentNamePolicyState(
+                                new IntentFilterPolicyKey(
+                                        PERSISTENT_PREFERRED_ACTIVITY_POLICY,
+                                        intentFilter),
+                                TestApis.users().instrumented().userHandle());
+
+                assertThat(PolicyEngineUtils.getTopPriorityMechanism(policyState)
+                        .getHighestToLowestPriorityAuthorities()).isEqualTo(
+                        List.of(
+                                new RoleAuthority(Set.of(FINANCED_DEVICE_CONTROLLER_ROLE)),
+                                DpcAuthority.DPC_AUTHORITY));
+
+            } finally {
+                sDeviceState.dpc().devicePolicyManager()
+                        .clearPackagePersistentPreferredActivities(
+                                sDeviceState.dpc().componentName(),
+                                testAppInstance.packageName());
+            }
+        }
+    }
+
+    @ApiTest(apis = {"android.app.admin.DevicePolicyManager#addPersistentPreferredActivity",
+            "android.app.admin.DevicePolicyManager#clearPackagePersistentPreferredActivities"})
+    @MostImportantCoexistenceTest(policy = PersistentPreferredActivities.class)
+    public void addPersistentPreferredActivity_sameValues_applied() {
+        try (TestAppInstance testAppInstance = sTestAppWithMultipleActivities.install()) {
+            try {
+                ComponentName componentName = new ComponentName(
+                        testAppInstance.packageName(), PREFERRED_ACTIVITY.className());
+                IntentFilter intentFilter = new IntentFilter(TEST_ACTION);
+                intentFilter.addCategory(Intent.CATEGORY_DEFAULT);
+                sDeviceState.testApp(MORE_IMPORTANT).devicePolicyManager()
+                        .addPersistentPreferredActivity(
+                                /* admin= */ null,
+                                intentFilter,
+                                componentName);
+                sDeviceState.testApp(LESS_IMPORTANT).devicePolicyManager()
+                        .addPersistentPreferredActivity(
+                                /* admin= */ null,
+                                intentFilter,
+                                componentName);
+
+                PolicyState<ComponentName> policyState =
+                        PolicyEngineUtils.getComponentNamePolicyState(
+                                new IntentFilterPolicyKey(
+                                        PERSISTENT_PREFERRED_ACTIVITY_POLICY,
+                                        intentFilter),
+                                TestApis.users().instrumented().userHandle());
+                assertThat(policyState.getCurrentResolvedPolicy()).isEqualTo(componentName);
+
+            } finally {
+                sDeviceState.testApp(MORE_IMPORTANT).devicePolicyManager()
+                        .clearPackagePersistentPreferredActivities(
+                                /* admin= */ null,
+                                testAppInstance.packageName());
+                sDeviceState.testApp(LESS_IMPORTANT).devicePolicyManager()
+                        .clearPackagePersistentPreferredActivities(
+                                /* admin= */ null,
+                                testAppInstance.packageName());
+            }
+        }
+    }
+
+    @ApiTest(apis = {"android.app.admin.DevicePolicyManager#addPersistentPreferredActivity",
+            "android.app.admin.DevicePolicyManager#clearPackagePersistentPreferredActivities"})
+    @MostImportantCoexistenceTest(policy = PersistentPreferredActivities.class)
+    public void addPersistentPreferredActivity_differentValues_moreImportantApplied() {
+        try (TestAppInstance testAppInstance = sTestAppWithMultipleActivities.install()) {
+            try {
+                ComponentName firstComponentName = new ComponentName(
+                        testAppInstance.packageName(), PREFERRED_ACTIVITY.className());
+                ComponentName secondComponentName = new ComponentName(
+                        testAppInstance.packageName(), UNPREFERRED_ACTIVITY.className());
+                IntentFilter intentFilter = new IntentFilter(TEST_ACTION);
+                intentFilter.addCategory(Intent.CATEGORY_DEFAULT);
+                sDeviceState.testApp(MORE_IMPORTANT).devicePolicyManager()
+                        .addPersistentPreferredActivity(
+                                /* admin= */ null,
+                                intentFilter,
+                                firstComponentName);
+                sDeviceState.testApp(LESS_IMPORTANT).devicePolicyManager()
+                        .addPersistentPreferredActivity(
+                                /* admin= */ null,
+                                intentFilter,
+                                secondComponentName);
+
+                PolicyState<ComponentName> policyState =
+                        PolicyEngineUtils.getComponentNamePolicyState(
+                                new IntentFilterPolicyKey(
+                                        PERSISTENT_PREFERRED_ACTIVITY_POLICY,
+                                        intentFilter),
+                                TestApis.users().instrumented().userHandle());
+                assertThat(policyState.getCurrentResolvedPolicy()).isEqualTo(firstComponentName);
+
+            } finally {
+                sDeviceState.testApp(MORE_IMPORTANT).devicePolicyManager()
+                        .clearPackagePersistentPreferredActivities(
+                                /* admin= */ null,
+                                testAppInstance.packageName());
+                sDeviceState.testApp(LESS_IMPORTANT).devicePolicyManager()
+                        .clearPackagePersistentPreferredActivities(
+                                /* admin= */ null,
+                                testAppInstance.packageName());
+            }
+        }
+    }
+
+    @ApiTest(apis = {"android.app.admin.DevicePolicyManager#addPersistentPreferredActivity",
+            "android.app.admin.DevicePolicyManager#clearPackagePersistentPreferredActivities"})
+    @MostImportantCoexistenceTest(policy = PersistentPreferredActivities.class)
+    public void addPersistentPreferredActivity_differentValuesReverseOrder_moreImportantApplied() {
+        try (TestAppInstance testAppInstance = sTestAppWithMultipleActivities.install()) {
+            try {
+                ComponentName firstComponentName = new ComponentName(
+                        testAppInstance.packageName(), PREFERRED_ACTIVITY.className());
+                ComponentName secondComponentName = new ComponentName(
+                        testAppInstance.packageName(), UNPREFERRED_ACTIVITY.className());
+                IntentFilter intentFilter = new IntentFilter(TEST_ACTION);
+                intentFilter.addCategory(Intent.CATEGORY_DEFAULT);
+                sDeviceState.testApp(LESS_IMPORTANT).devicePolicyManager()
+                        .addPersistentPreferredActivity(
+                                /* admin= */ null,
+                                intentFilter,
+                                secondComponentName);
+                sDeviceState.testApp(MORE_IMPORTANT).devicePolicyManager()
+                        .addPersistentPreferredActivity(
+                                /* admin= */ null,
+                                intentFilter,
+                                firstComponentName);
+
+                PolicyState<ComponentName> policyState =
+                        PolicyEngineUtils.getComponentNamePolicyState(
+                                new IntentFilterPolicyKey(
+                                        PERSISTENT_PREFERRED_ACTIVITY_POLICY,
+                                        intentFilter),
+                                TestApis.users().instrumented().userHandle());
+                assertThat(policyState.getCurrentResolvedPolicy()).isEqualTo(firstComponentName);
+
+            } finally {
+                sDeviceState.testApp(MORE_IMPORTANT).devicePolicyManager()
+                        .clearPackagePersistentPreferredActivities(
+                                /* admin= */ null,
+                                testAppInstance.packageName());
+                sDeviceState.testApp(LESS_IMPORTANT).devicePolicyManager()
+                        .clearPackagePersistentPreferredActivities(
+                                /* admin= */ null,
+                                testAppInstance.packageName());
+            }
+        }
+    }
+
+    @ApiTest(apis = {"android.app.admin.DevicePolicyManager#addPersistentPreferredActivity",
+            "android.app.admin.DevicePolicyManager#clearPackagePersistentPreferredActivities"})
+    @MostImportantCoexistenceTest(policy = PersistentPreferredActivities.class)
+    public void addPersistentPreferredActivity_bothSetThenBothReset_nothingApplied() {
+        try (TestAppInstance testAppInstance = sTestAppWithMultipleActivities.install()) {
+            try {
+                ComponentName firstComponentName = new ComponentName(
+                        testAppInstance.packageName(), PREFERRED_ACTIVITY.className());
+                ComponentName secondComponentName = new ComponentName(
+                        testAppInstance.packageName(), UNPREFERRED_ACTIVITY.className());
+                IntentFilter intentFilter = new IntentFilter(TEST_ACTION);
+                intentFilter.addCategory(Intent.CATEGORY_DEFAULT);
+                sDeviceState.testApp(LESS_IMPORTANT).devicePolicyManager()
+                        .addPersistentPreferredActivity(
+                                /* admin= */ null,
+                                intentFilter,
+                                secondComponentName);
+                sDeviceState.testApp(MORE_IMPORTANT).devicePolicyManager()
+                        .addPersistentPreferredActivity(
+                                /* admin= */ null,
+                                intentFilter,
+                                firstComponentName);
+                sDeviceState.testApp(MORE_IMPORTANT).devicePolicyManager()
+                        .clearPackagePersistentPreferredActivities(
+                                /* admin= */ null,
+                                testAppInstance.packageName());
+                sDeviceState.testApp(LESS_IMPORTANT).devicePolicyManager()
+                        .clearPackagePersistentPreferredActivities(
+                                /* admin= */ null,
+                                testAppInstance.packageName());
+
+                PolicyState<ComponentName> policyState =
+                        PolicyEngineUtils.getComponentNamePolicyState(
+                                new IntentFilterPolicyKey(
+                                        PERSISTENT_PREFERRED_ACTIVITY_POLICY,
+                                        intentFilter),
+                                TestApis.users().instrumented().userHandle());
+                assertThat(policyState).isNull();
+
+            } finally {
+                sDeviceState.testApp(MORE_IMPORTANT).devicePolicyManager()
+                        .clearPackagePersistentPreferredActivities(
+                                /* admin= */ null,
+                                testAppInstance.packageName());
+                sDeviceState.testApp(LESS_IMPORTANT).devicePolicyManager()
+                        .clearPackagePersistentPreferredActivities(
+                                /* admin= */ null,
+                                testAppInstance.packageName());
+            }
+        }
+    }
+
+    @ApiTest(apis = {"android.app.admin.DevicePolicyManager#addPersistentPreferredActivity",
+            "android.app.admin.DevicePolicyManager#clearPackagePersistentPreferredActivities"})
+    @MostImportantCoexistenceTest(policy = PersistentPreferredActivities.class)
+    public void addPersistentPreferredActivity_bothSetThenMoreImportantResets_lessImportantApplied() {
+        try (TestAppInstance testAppInstance = sTestAppWithMultipleActivities.install()) {
+            try {
+                ComponentName firstComponentName = new ComponentName(
+                        testAppInstance.packageName(), PREFERRED_ACTIVITY.className());
+                ComponentName secondComponentName = new ComponentName(
+                        testAppInstance.packageName(), UNPREFERRED_ACTIVITY.className());
+                IntentFilter intentFilter = new IntentFilter(TEST_ACTION);
+                intentFilter.addCategory(Intent.CATEGORY_DEFAULT);
+                sDeviceState.testApp(MORE_IMPORTANT).devicePolicyManager()
+                        .addPersistentPreferredActivity(
+                                /* admin= */ null,
+                                intentFilter,
+                                firstComponentName);
+                sDeviceState.testApp(LESS_IMPORTANT).devicePolicyManager()
+                        .addPersistentPreferredActivity(
+                                /* admin= */ null,
+                                intentFilter,
+                                secondComponentName);
+                sDeviceState.testApp(MORE_IMPORTANT).devicePolicyManager()
+                        .clearPackagePersistentPreferredActivities(
+                                /* admin= */ null,
+                                testAppInstance.packageName());
+
+                PolicyState<ComponentName> policyState =
+                        PolicyEngineUtils.getComponentNamePolicyState(
+                                new IntentFilterPolicyKey(
+                                        PERSISTENT_PREFERRED_ACTIVITY_POLICY,
+                                        intentFilter),
+                                TestApis.users().instrumented().userHandle());
+                assertThat(policyState.getCurrentResolvedPolicy()).isEqualTo(secondComponentName);
+
+            } finally {
+                sDeviceState.testApp(MORE_IMPORTANT).devicePolicyManager()
+                        .clearPackagePersistentPreferredActivities(
+                                /* admin= */ null,
+                                testAppInstance.packageName());
+                sDeviceState.testApp(LESS_IMPORTANT).devicePolicyManager()
+                        .clearPackagePersistentPreferredActivities(
+                                /* admin= */ null,
+                                testAppInstance.packageName());
+            }
+        }
+    }
+
+    @ApiTest(apis = {"android.app.admin.DevicePolicyManager#addPersistentPreferredActivity",
+            "android.app.admin.DevicePolicyManager#clearPackagePersistentPreferredActivities"})
+    @MostImportantCoexistenceTest(policy = PersistentPreferredActivities.class)
+    public void addPersistentPreferredActivity_bothSetSameValueThenMoreImportantResets_lessImportantApplied() {
+        try (TestAppInstance testAppInstance = sTestAppWithMultipleActivities.install()) {
+            try {
+                ComponentName componentName = new ComponentName(
+                        testAppInstance.packageName(), PREFERRED_ACTIVITY.className());
+                IntentFilter intentFilter = new IntentFilter(TEST_ACTION);
+                intentFilter.addCategory(Intent.CATEGORY_DEFAULT);
+                sDeviceState.testApp(MORE_IMPORTANT).devicePolicyManager()
+                        .addPersistentPreferredActivity(
+                                /* admin= */ null,
+                                intentFilter,
+                                componentName);
+                sDeviceState.testApp(LESS_IMPORTANT).devicePolicyManager()
+                        .addPersistentPreferredActivity(
+                                /* admin= */ null,
+                                intentFilter,
+                                componentName);
+                sDeviceState.testApp(MORE_IMPORTANT).devicePolicyManager()
+                        .clearPackagePersistentPreferredActivities(
+                                /* admin= */ null,
+                                testAppInstance.packageName());
+
+                PolicyState<ComponentName> policyState =
+                        PolicyEngineUtils.getComponentNamePolicyState(
+                                new IntentFilterPolicyKey(
+                                        PERSISTENT_PREFERRED_ACTIVITY_POLICY,
+                                        intentFilter),
+                                TestApis.users().instrumented().userHandle());
+                assertThat(policyState.getCurrentResolvedPolicy()).isEqualTo(componentName);
+
+            } finally {
+                sDeviceState.testApp(MORE_IMPORTANT).devicePolicyManager()
+                        .clearPackagePersistentPreferredActivities(
+                                /* admin= */ null,
+                                testAppInstance.packageName());
+                sDeviceState.testApp(LESS_IMPORTANT).devicePolicyManager()
+                        .clearPackagePersistentPreferredActivities(
+                                /* admin= */ null,
+                                testAppInstance.packageName());
+            }
         }
     }
 
