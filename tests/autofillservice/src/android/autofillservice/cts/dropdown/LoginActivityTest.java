@@ -45,6 +45,7 @@ import static android.autofillservice.cts.testcore.Helper.findAutofillIdByResour
 import static android.autofillservice.cts.testcore.Helper.findNodeByResourceId;
 import static android.autofillservice.cts.testcore.Helper.getActivityTitle;
 import static android.autofillservice.cts.testcore.Helper.isAutofillWindowFullScreen;
+import static android.autofillservice.cts.testcore.Helper.isPccFieldClassificationSet;
 import static android.autofillservice.cts.testcore.Helper.setUserComplete;
 import static android.autofillservice.cts.testcore.InstrumentedAutoFillService.SERVICE_CLASS;
 import static android.autofillservice.cts.testcore.InstrumentedAutoFillService.SERVICE_PACKAGE;
@@ -437,7 +438,9 @@ public class LoginActivityTest extends LoginActivityCommonTestCase {
         requestFocusOnUsername();
 
         final FillRequest request = sReplier.getNextFillRequest();
-        assertThat(request.hints.size()).isEqualTo(3);
+        if (isPccFieldClassificationSet(sContext)) {
+            assertThat(request.hints.size()).isEqualTo(3);
+        }
 
         disablePccDetectionFeature(sContext);
         sReplier.setIdMode(IdMode.RESOURCE_ID);
@@ -467,8 +470,10 @@ public class LoginActivityTest extends LoginActivityCommonTestCase {
         requestFocusOnUsername();
 
         final FillRequest request = sReplier.getNextFillRequest();
-        assertThat(request.hints.size()).isEqualTo(1);
-        assertThat(request.hints.get(0)).isEqualTo("username");
+        if (isPccFieldClassificationSet(sContext)) {
+            assertThat(request.hints.size()).isEqualTo(1);
+            assertThat(request.hints.get(0)).isEqualTo("username");
+        }
 
         disablePccDetectionFeature(sContext);
         sReplier.setIdMode(IdMode.RESOURCE_ID);
