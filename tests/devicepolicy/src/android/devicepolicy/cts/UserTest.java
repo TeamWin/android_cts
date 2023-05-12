@@ -38,21 +38,19 @@ import com.android.bedstead.harrier.annotations.EnsureHasAdditionalUser;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.EnsureHasUserRestriction;
 import com.android.bedstead.harrier.annotations.Postsubmit;
+import com.android.bedstead.harrier.annotations.RequireRunOnAdditionalUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnInitialUser;
+import com.android.bedstead.harrier.annotations.RequireRunOnSystemUser;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyDoesNotApplyTest;
-import com.android.bedstead.harrier.annotations.RequireRunOnSystemUser;
-import com.android.bedstead.harrier.annotations.RequireRunOnAdditionalUser;
 import com.android.bedstead.harrier.policies.DisallowRemoveUser;
 import com.android.bedstead.harrier.policies.DisallowUserSwitch;
 import com.android.bedstead.nene.TestApis;
-import com.android.bedstead.nene.types.OptionalBoolean;
 import com.android.bedstead.nene.users.UserReference;
 import com.android.compatibility.common.util.ApiTest;
 
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -205,13 +203,12 @@ public final class UserTest {
                 .isNotEqualTo(SWITCHABILITY_STATUS_USER_SWITCH_DISALLOWED);
     }
 
-    @EnsureDoesNotHaveUserRestriction(value = DISALLOW_USER_SWITCH, onUser = UserType.ADMIN_USER)
+    @EnsureHasUserRestriction(value = DISALLOW_USER_SWITCH, onUser = UserType.ADMIN_USER)
     @Test
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.os.UserManager#DISALLOW_USER_SWITCH")
     @EnsureHasPermission(INTERACT_ACROSS_USERS)
     @RequireRunOnInitialUser
-    @Ignore("b/280385735")
     public void getUserSwitchability_disallowUserSwitchIsSet_isDisallowed() throws Exception {
         assertThat(sLocalUserManager.getUserSwitchability())
                 .isEqualTo(SWITCHABILITY_STATUS_USER_SWITCH_DISALLOWED);
