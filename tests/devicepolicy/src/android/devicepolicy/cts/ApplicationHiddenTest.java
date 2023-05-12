@@ -22,6 +22,8 @@ import static android.content.Intent.ACTION_PACKAGE_ADDED;
 import static android.content.Intent.ACTION_PACKAGE_REMOVED;
 import static android.devicepolicy.cts.utils.PolicyEngineUtils.TRUE_MORE_RESTRICTIVE;
 
+import static com.android.bedstead.harrier.annotations.enterprise.MostImportantCoexistenceTest.LESS_IMPORTANT;
+import static com.android.bedstead.harrier.annotations.enterprise.MostImportantCoexistenceTest.MORE_IMPORTANT;
 import static com.android.bedstead.harrier.annotations.enterprise.MostRestrictiveCoexistenceTest.DPC_1;
 import static com.android.bedstead.harrier.annotations.enterprise.MostRestrictiveCoexistenceTest.DPC_2;
 
@@ -37,6 +39,7 @@ import android.content.IntentFilter;
 import android.devicepolicy.cts.utils.PolicyEngineUtils;
 import android.devicepolicy.cts.utils.PolicySetResultUtils;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.stats.devicepolicy.EventId;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
@@ -46,6 +49,7 @@ import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDeviceOwner;
+import com.android.bedstead.harrier.annotations.enterprise.MostImportantCoexistenceTest;
 import com.android.bedstead.harrier.annotations.enterprise.MostRestrictiveCoexistenceTest;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyDoesNotApplyTest;
@@ -452,6 +456,7 @@ public class ApplicationHiddenTest {
                     false);
         }
     }
+
     @Test
     @Postsubmit(reason = "new test")
     @ApiTest(apis = {"android.app.admin.DevicePolicyManager#setApplicationHidden",
@@ -702,6 +707,145 @@ public class ApplicationHiddenTest {
                     /* componentName= */ null,
                     SYSTEM_PACKAGE.packageName(),
                     /* applicationHidden= */ false);
+        }
+    }
+
+    @ApiTest(apis = {"android.app.admin.DevicePolicyManager#setApplicationHidden",
+            "android.app.admin.DevicePolicyManager#isApplicationHidden"})
+    @MostImportantCoexistenceTest(policy = ApplicationHidden.class)
+    public void setApplicationHidden_setByDPCAndPermission_DPCRemoved_stillEnforced() {
+        try {
+            sDeviceState.testApp(MORE_IMPORTANT).devicePolicyManager().setApplicationHidden(
+                    /* componentName= */ null,
+                    SYSTEM_PACKAGE.packageName(),
+                    /* applicationHidden= */ true);
+            sDeviceState.testApp(LESS_IMPORTANT).devicePolicyManager().setApplicationHidden(
+                    /* componentName= */ null,
+                    SYSTEM_PACKAGE.packageName(),
+                    /* applicationHidden= */ true);
+
+            // Remove DPC
+            sDeviceState.dpc().devicePolicyManager().clearDeviceOwnerApp(
+                    sDeviceState.dpc().packageName());
+
+            assertThat(sDeviceState.testApp(LESS_IMPORTANT).devicePolicyManager()
+                    .isApplicationHidden(
+                            /* componentName= */ null, SYSTEM_PACKAGE.packageName())).isTrue();
+            PolicyState<Boolean> policyState = PolicyEngineUtils.getBooleanPolicyState(
+                    new PackagePolicyKey(
+                            APPLICATION_HIDDEN_POLICY, SYSTEM_PACKAGE.packageName()),
+                    TestApis.users().instrumented().userHandle());
+            assertThat(policyState.getCurrentResolvedPolicy()).isTrue();
+            assertThat(TestApis.packages().find(SYSTEM_PACKAGE.packageName()).installedOnUser())
+                    .isFalse();
+
+        } finally {
+            try {
+                sDeviceState.testApp(LESS_IMPORTANT).devicePolicyManager().setApplicationHidden(
+                        /* componentName= */ null,
+                        SYSTEM_PACKAGE.packageName(),
+                        /* applicationHidden= */ false);
+            } catch (Exception e) {
+                // expected if app was uninstalled
+            }
+            try {
+                sDeviceState.testApp(MORE_IMPORTANT).devicePolicyManager().setApplicationHidden(
+                        /* componentName= */ null,
+                        SYSTEM_PACKAGE.packageName(),
+                        /* applicationHidden= */ false);
+            } catch (Exception e) {
+                // expected if app was uninstalled
+            }
+        }
+    }
+
+    @ApiTest(apis = {"android.app.admin.DevicePolicyManager#setApplicationHidden",
+            "android.app.admin.DevicePolicyManager#isApplicationHidden"})
+    @MostImportantCoexistenceTest(policy = ApplicationHidden.class)
+    public void setApplicationHidden_setByPermission_appRemoved_notEnforced() {
+        try {
+            sDeviceState.testApp(LESS_IMPORTANT).devicePolicyManager().setApplicationHidden(
+                    /* componentName= */ null,
+                    SYSTEM_PACKAGE.packageName(),
+                    /* applicationHidden= */ true);
+
+            // uninstall app
+            sDeviceState.testApp(LESS_IMPORTANT).uninstall();
+            SystemClock.sleep(500);
+
+            assertThat(sDeviceState.testApp(MORE_IMPORTANT).devicePolicyManager()
+                    .isApplicationHidden(
+                            /* componentName= */ null, SYSTEM_PACKAGE.packageName())).isFalse();
+            PolicyState<Boolean> policyState = PolicyEngineUtils.getBooleanPolicyState(
+                    new PackagePolicyKey(
+                            APPLICATION_HIDDEN_POLICY, SYSTEM_PACKAGE.packageName()),
+                    TestApis.users().instrumented().userHandle());
+            if (policyState != null) {
+                assertThat(policyState.getCurrentResolvedPolicy()).isFalse();
+            }
+            assertThat(TestApis.packages().find(SYSTEM_PACKAGE.packageName()).installedOnUser())
+                    .isTrue();
+
+        } finally {
+            try {
+                sDeviceState.testApp(LESS_IMPORTANT).devicePolicyManager().setApplicationHidden(
+                        /* componentName= */ null,
+                        SYSTEM_PACKAGE.packageName(),
+                        /* applicationHidden= */ false);
+            } catch (Exception e) {
+                // expected if app was uninstalled
+            }
+            try {
+                sDeviceState.testApp(MORE_IMPORTANT).devicePolicyManager().setApplicationHidden(
+                        /* componentName= */ null,
+                        SYSTEM_PACKAGE.packageName(),
+                        /* applicationHidden= */ false);
+            } catch (Exception e) {
+                // expected if app was uninstalled
+            }
+        }
+    }
+
+    @CanSetPolicyTest(policy = {ApplicationHidden.class})
+    @Ignore // Currently failing for admins as well, but also longer applicable for non-admins -
+    // need to add a permission/exemption
+    public void setApplicationHidden_deviceAdmin_notAddedToDevicePolicyState() {
+        try {
+            sDeviceState.dpc().devicePolicyManager().setApplicationHidden(
+                    sDeviceState.dpc().componentName(), sDeviceState.dpcOnly().packageName(),
+                    true);
+
+            PolicyState<Boolean> policyState = PolicyEngineUtils.getBooleanPolicyState(
+                    new PackagePolicyKey(
+                            APPLICATION_HIDDEN_POLICY, sDeviceState.dpcOnly().packageName()),
+                    TestApis.users().instrumented().userHandle());
+
+            assertThat(policyState).isNull();
+        } finally {
+            sDeviceState.dpc().devicePolicyManager().setApplicationHidden(
+                    sDeviceState.dpc().componentName(), sDeviceState.dpcOnly().packageName(),
+                    false);
+        }
+    }
+
+    @CanSetPolicyTest(policy = {ApplicationHidden.class})
+    @Ignore
+    public void setApplicationHidden_notInstalledPackage_notAddedToDevicePolicyState() {
+        try {
+            sDeviceState.dpc().devicePolicyManager().setApplicationHidden(
+                    sDeviceState.dpc().componentName(), NON_EXISTING_PACKAGE.packageName(),
+                    true);
+
+            PolicyState<Boolean> policyState = PolicyEngineUtils.getBooleanPolicyState(
+                    new PackagePolicyKey(
+                            APPLICATION_HIDDEN_POLICY, NON_EXISTING_PACKAGE.packageName()),
+                    TestApis.users().instrumented().userHandle());
+
+            assertThat(policyState).isNull();
+        } finally {
+            sDeviceState.dpc().devicePolicyManager().setApplicationHidden(
+                    sDeviceState.dpc().componentName(), NON_EXISTING_PACKAGE.packageName(),
+                    false);
         }
     }
 
