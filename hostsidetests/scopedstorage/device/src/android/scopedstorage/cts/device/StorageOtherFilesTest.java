@@ -40,9 +40,11 @@ import static android.scopedstorage.cts.lib.TestUtils.pollForPermission;
 import static android.scopedstorage.cts.lib.TestUtils.revokeAccessMediaLocation;
 
 import android.Manifest;
+import android.app.Instrumentation;
 import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
@@ -54,6 +56,8 @@ import androidx.test.core.app.ApplicationProvider;
 import androidx.test.filters.SdkSuppress;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import org.junit.Assume;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -71,7 +75,10 @@ public class StorageOtherFilesTest {
     protected static final String TAG = "MediaProviderOtherFilePermissionTest";
     private static final String THIS_PACKAGE_NAME =
             ApplicationProvider.getApplicationContext().getPackageName();
+    private static final Instrumentation sInstrumentation =
+            InstrumentationRegistry.getInstrumentation();
     private static final ContentResolver sContentResolver = getContentResolver();
+
     @ClassRule
     public static final OtherAppFilesRule sFilesRule = new OtherAppFilesRule(sContentResolver);
 
@@ -81,12 +88,21 @@ public class StorageOtherFilesTest {
     private static final File VIDEO_FILE_READABLE = sFilesRule.getVideoFile1();
     private static final File VIDEO_FILE_NO_ACCESS = sFilesRule.getVideoFile2();
 
-
     // Cannot be static as the underlying resource isn't
     private final Uri mImageUriReadable = sFilesRule.getImageUri1();
     private final Uri mImageUriNoAccess = sFilesRule.getImageUri2();
     private final Uri mVideoUriReadable = sFilesRule.getVideoUri1();
     private final Uri mVideoUriNoAccess = sFilesRule.getVideoUri2();
+
+    static boolean isHardwareSupported() {
+        PackageManager pm = sInstrumentation.getContext().getPackageManager();
+
+        // Do not run tests on Watches, TVs, Auto or devices without UI.
+        return !pm.hasSystemFeature(pm.FEATURE_EMBEDDED)
+                && !pm.hasSystemFeature(pm.FEATURE_WATCH)
+                && !pm.hasSystemFeature(pm.FEATURE_LEANBACK)
+                && !pm.hasSystemFeature(pm.FEATURE_AUTOMOTIVE);
+    }
 
     @BeforeClass
     public static void init() throws Exception {
@@ -96,16 +112,22 @@ public class StorageOtherFilesTest {
         grantReadAccess(VIDEO_FILE_READABLE);
     }
 
+    @Before
+    public void setUp() throws Exception {
+        // Ensure tests are only run on supported hardware.
+        Assume.assumeTrue(isHardwareSupported());
+    }
+
     @Test
     public void other_listMediaFiles() throws Exception {
         Set<File> expectedValues = Set.of(IMAGE_FILE_READABLE, VIDEO_FILE_READABLE);
         Set<File> notExpected = Set.of(IMAGE_FILE_NO_ACCESS, VIDEO_FILE_NO_ACCESS);
         // File access
-        assertFileAccess_listFiles(IMAGE_FILE_READABLE.getParentFile(), expectedValues,
-                notExpected);
+        assertFileAccess_listFiles(
+                IMAGE_FILE_READABLE.getParentFile(), expectedValues, notExpected);
         // Query DCIM
-        assertResolver_listFiles(Environment.DIRECTORY_DCIM, expectedValues, notExpected,
-                sContentResolver);
+        assertResolver_listFiles(
+                Environment.DIRECTORY_DCIM, expectedValues, notExpected, sContentResolver);
     }
 
     @Test
@@ -133,30 +155,33 @@ public class StorageOtherFilesTest {
     @Test
     public void other_createWriteRequest() throws Exception {
         doEscalation(
-                MediaStore.createWriteRequest(sContentResolver, Collections.singletonList(
-                        mImageUriReadable)));
+                MediaStore.createWriteRequest(
+                        sContentResolver, Collections.singletonList(mImageUriReadable)));
         assertResolver_readWrite(mImageUriReadable, sContentResolver);
         assertResolver_noReadNoWrite(mImageUriNoAccess, sContentResolver);
 
-        InstrumentationRegistry.getInstrumentation().getContext().revokeUriPermission(
-                mImageUriReadable,
-                Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+        sInstrumentation
+                .getContext()
+                .revokeUriPermission(mImageUriReadable, Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
         assertResolver_noWrite(mImageUriReadable, sContentResolver);
     }
 
     @Test
     public void other_createFavoriteRequest() throws Exception {
-        doEscalation(MediaStore.createFavoriteRequest(sContentResolver, Arrays.asList(
-                        mImageUriReadable,
-                        mImageUriNoAccess),
-                true));
+        doEscalation(
+                MediaStore.createFavoriteRequest(
+                        sContentResolver,
+                        Arrays.asList(mImageUriReadable, mImageUriNoAccess),
+                        true));
         assertResolver_uriIsFavorite(mImageUriReadable, sContentResolver);
         // We still don't have access to uri 2 to be able to check if it is favorite
         assertResolver_noReadNoWrite(mImageUriNoAccess, sContentResolver);
 
-        doEscalation(MediaStore.createFavoriteRequest(sContentResolver,
-                Arrays.asList(mImageUriReadable, mImageUriNoAccess),
-                false));
+        doEscalation(
+                MediaStore.createFavoriteRequest(
+                        sContentResolver,
+                        Arrays.asList(mImageUriReadable, mImageUriNoAccess),
+                        false));
         assertResolver_uriIsNotFavorite(mImageUriReadable, sContentResolver);
         assertResolver_noReadNoWrite(mImageUriNoAccess, sContentResolver);
     }
@@ -171,8 +196,8 @@ public class StorageOtherFilesTest {
             grantReadAccess(fileToBeDeleted1);
 
             doEscalation(
-                    MediaStore.createDeleteRequest(sContentResolver,
-                            Arrays.asList(uriToBeDeleted1, uriToBeDeleted2)));
+                    MediaStore.createDeleteRequest(
+                            sContentResolver, Arrays.asList(uriToBeDeleted1, uriToBeDeleted2)));
             assertResolver_uriDoesNotExist(uriToBeDeleted1, sContentResolver);
             assertResolver_uriDoesNotExist(uriToBeDeleted2, sContentResolver);
         } finally {
@@ -183,8 +208,8 @@ public class StorageOtherFilesTest {
 
     @Test
     public void other_accessLocationMetadata() throws Exception {
-        HashMap<String, String> originalExif = getExifMetadataFromRawResource(
-                RESOURCE_ID_WITH_METADATA);
+        HashMap<String, String> originalExif =
+                getExifMetadataFromRawResource(RESOURCE_ID_WITH_METADATA);
 
         pollForPermission(Manifest.permission.ACCESS_MEDIA_LOCATION, true);
         assertExifMetadataMatch(getExifMetadataFromFile(IMAGE_FILE_READABLE), originalExif);
@@ -194,14 +219,18 @@ public class StorageOtherFilesTest {
         assertExifMetadataMismatch(getExifMetadataFromFile(IMAGE_FILE_READABLE), originalExif);
     }
 
-
     private static void grantReadAccess(File imageFile) throws IOException {
         final String pickerUri1 = buildPhotopickerUriWithStringEscaping(imageFile);
-        String adbCommand = "content call "
-                + " --method grant_media_read_for_package"
-                + " --uri content://media/external/file"
-                + " --extra uri:s:" + pickerUri1
-                + " --extra " + Intent.EXTRA_PACKAGE_NAME + ":s:" + THIS_PACKAGE_NAME;
+        String adbCommand =
+                "content call "
+                        + " --method grant_media_read_for_package"
+                        + " --uri content://media/external/file"
+                        + " --extra uri:s:"
+                        + pickerUri1
+                        + " --extra "
+                        + Intent.EXTRA_PACKAGE_NAME
+                        + ":s:"
+                        + THIS_PACKAGE_NAME;
         TestUtils.executeShellCommand(adbCommand);
     }
 
@@ -218,14 +247,15 @@ public class StorageOtherFilesTest {
 
         // We are forced to build the URI string this way due to various layers of string escaping
         // we are hitting when using uris in adb shell commands from tests.
-        return "content\\://" + MediaStore.AUTHORITY
-                + Uri.EMPTY.buildUpon()
-                .appendPath("picker") // PickerUriResolver.PICKER_SEGMENT
-                .appendPath(String.valueOf(UserHandle.myUserId()))
-                .appendPath("com.android.providers.media.photopicker")//
-                .appendPath(MediaStore.AUTHORITY)
-                .appendPath(Long.toString(fileId))
-                .build();
+        return "content\\://"
+                + MediaStore.AUTHORITY
+                + Uri.EMPTY
+                        .buildUpon()
+                        .appendPath("picker") // PickerUriResolver.PICKER_SEGMENT
+                        .appendPath(String.valueOf(UserHandle.myUserId()))
+                        .appendPath("com.android.providers.media.photopicker") //
+                        .appendPath(MediaStore.AUTHORITY)
+                        .appendPath(Long.toString(fileId))
+                        .build();
     }
-
 }
