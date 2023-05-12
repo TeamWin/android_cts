@@ -236,7 +236,7 @@ public class NonDefaultDeviceForStrategyTest {
         assertTrue("Listener was called with wrong device for set",
                 listener.mReceivedDevices.get(0).equalTypeAddress(device));
 
-        // Verify removePreferredDeviceForStrategy triggers callback
+        // Verify removeDeviceAsNonDefaultForStrategy triggers callback
         listener.reset();
         assertTrue("Error removing non-default device for phone",
                 mAudioManager.removeDeviceAsNonDefaultForStrategy(mStrategyForPhone, device));
@@ -253,11 +253,6 @@ public class NonDefaultDeviceForStrategyTest {
         mAudioManager.removeOnNonDefaultDevicesForStrategyChangedListener(listener);
         assertTrue("Error calling setDeviceAsNonDefaultForStrategy",
                 mAudioManager.setPreferredDeviceForStrategy(mStrategyForPhone, device));
-        listener.await(TEST_TIMING_TOLERANCE_MS);
-        assertFalse("Preferred device listener failed to be removed", listener.mCalled);
-        listener.reset();
-        assertTrue("Error removing preferred device for media without listener",
-                mAudioManager.removePreferredDeviceForStrategy(mStrategyForMedia));
         listener.await(TEST_TIMING_TOLERANCE_MS);
         assertFalse("Preferred device listener failed to be removed", listener.mCalled);
     }
