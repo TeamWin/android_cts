@@ -18,7 +18,6 @@ package com.android.bedstead.nene.utils;
 
 import static android.os.Build.VERSION.CODENAME;
 
-import static com.android.compatibility.common.util.VersionCodes.CUR_DEVELOPMENT;
 import static com.android.compatibility.common.util.VersionCodes.R;
 
 import android.os.Build;
