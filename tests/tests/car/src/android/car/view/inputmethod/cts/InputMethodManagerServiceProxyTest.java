@@ -105,15 +105,13 @@ public final class InputMethodManagerServiceProxyTest {
     }
 
     private static boolean containsCarImmsForUser(int userId) {
-        String dump = ShellUtils.runShellCommand("dumpsys input_method");
-        SparseArray<String> carImms = parseServiceConfigDump(dump);
+        SparseArray<String> carImms = parseServiceConfigDump();
         return carImms.contains(userId);
     }
 
     @Test
     public void testAutofillIsDisabledForSystemUser() {
-        String dump = ShellUtils.runShellCommand("dumpsys input_method");
-        SparseArray<String> configs = parseServiceConfigDump(dump);
+        SparseArray<String> configs = parseServiceConfigDump();
         assertWithMessage("A dedicated IMMS must be initialized for USER_SYSTEM")
                 .that(configs.contains(UserHandle.USER_SYSTEM)).isTrue();
         assertWithMessage("USER_SYSTEM's IMMS must be set with null autofill")
@@ -121,7 +119,8 @@ public final class InputMethodManagerServiceProxyTest {
                 NULL_AUTOFILL_SUGGESTIONS_CONTROLLER);
     }
 
-    private static SparseArray<String> parseServiceConfigDump(String dump) {
+    private static SparseArray<String> parseServiceConfigDump() {
+        String dump = ShellUtils.runShellCommand("dumpsys input_method --brief");
         Pattern dumpPattern = Pattern.compile("\\*\\*mServicesForUser\\*\\*(.+?)\\*\\*",
                 Pattern.DOTALL);
         Matcher dumpMatcher = dumpPattern.matcher(dump);
