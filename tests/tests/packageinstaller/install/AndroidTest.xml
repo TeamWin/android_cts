@@ -41,7 +41,6 @@
         <option name="push" value="CtsEmptyTestAppV2.apk->/data/local/tmp/cts/packageinstaller/CtsEmptyTestAppV2.apk" />
         <option name="push" value="CtsEmptyTestApp_pl.apk->/data/local/tmp/cts/packageinstaller/CtsEmptyTestApp_pl.apk" />
         <option name="push" value="CtsEmptyInstallerApp.apk->/data/local/tmp/cts/packageinstaller/CtsEmptyInstallerApp.apk" />
-        <option name="push" value="CtsEmptyTestApp_NotAllowUpdateOwnership.apk->/data/local/tmp/cts/packageinstaller/CtsEmptyTestApp_NotAllowUpdateOwnership.apk" />
         <option name="push" value="CtsEmptyTestApp_FullScreenIntent.apk->/data/local/tmp/cts/packageinstaller/CtsEmptyTestApp_FullScreenIntent.apk" />
     </target_preparer>
 
