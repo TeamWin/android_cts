@@ -81,7 +81,7 @@ public class CarTaskViewControllerTest {
             new ComponentName(mTargetContext, TestActivity.class);
     private final UiAutomation mUiAutomation = mInstrumentation.getUiAutomation();
     @Rule
-    private final ApiCheckerRule mApiCheckerRule = new ApiCheckerRule.Builder().build();
+    public final ApiCheckerRule mApiCheckerRule = new ApiCheckerRule.Builder().build();
 
     private TestCarTaskViewControllerCallback mCallback;
     private TestActivity mHostActivity;
