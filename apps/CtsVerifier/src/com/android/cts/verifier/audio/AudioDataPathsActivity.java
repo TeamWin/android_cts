@@ -205,14 +205,14 @@ public class AudioDataPathsActivity
         mStopBtn.setEnabled(stopEnabled);
     }
 
-    private void startTest() {
+    private void startTest(int api) {
         if (mDuplexAudioManager == null) {
             mDuplexAudioManager = new DuplexAudioManager(null, null);
         }
 
         enableTestButtons(false, true);
 
-        mTestManager.startTest();
+        mTestManager.startTest(api);
     }
 
     private void stopTest() {
@@ -249,6 +249,8 @@ public class AudioDataPathsActivity
 
         String mDescription = "";
 
+        TestResults[] mTestResults;
+
         TestSpec(int outDeviceType, int outSampleRate, int outChannelCount,
                  int inDeviceType, int inSampleRate, int inChannelCount) {
             mOutDeviceType = outDeviceType;
@@ -259,6 +261,8 @@ public class AudioDataPathsActivity
             mInDeviceType = inDeviceType;
             mInChannelCount = inChannelCount;
             mInSampleRate = inSampleRate;
+
+            mTestResults = new TestResults[NUM_TEST_APIS];
         }
 
         String getOutDeviceName() {
@@ -289,6 +293,160 @@ public class AudioDataPathsActivity
         boolean isValid() {
             return mInDeviceInfo != null && mOutDeviceInfo != null;
         }
+
+        void setTestResults(int api, TestResults results) {
+            mTestResults[api] = results;
+        }
+
+        // ReportLog Schema
+        private static final String KEY_TESTDESCRIPTION = "test_description";
+        // Output Specification
+        private static final String KEY_OUT_DEVICE_TYPE = "out_device_type";
+        private static final String KEY_OUT_DEVICE_NAME = "out_device_name";
+        private static final String KEY_OUT_DEVICE_RATE = "out_device_rate";
+        private static final String KEY_OUT_DEVICE_CHANS = "out_device_chans";
+
+        // Input Specification
+        private static final String KEY_IN_DEVICE_TYPE = "in_device_type";
+        private static final String KEY_IN_DEVICE_NAME = "in_device_name";
+        private static final String KEY_IN_DEVICE_RATE = "in_device_rate";
+        private static final String KEY_IN_DEVICE_CHANS = "in_device_chans";
+        private static final String KEY_IN_PRESET = "in_preset";
+
+        void generateReportLog(int api) {
+            if (!isValid() || mTestResults[api] == null) {
+                return;
+            }
+
+            CtsVerifierReportLog reportLog = newReportLog();
+
+            // Description
+            reportLog.addValue(
+                    KEY_TESTDESCRIPTION,
+                    getDescription(),
+                    ResultType.NEUTRAL,
+                    ResultUnit.NONE);
+
+            // Output Specification
+            reportLog.addValue(
+                    KEY_OUT_DEVICE_NAME,
+                    getOutDeviceName(),
+                    ResultType.NEUTRAL,
+                    ResultUnit.NONE);
+
+            reportLog.addValue(
+                    KEY_OUT_DEVICE_TYPE,
+                    mOutDeviceType,
+                    ResultType.NEUTRAL,
+                    ResultUnit.NONE);
+
+            reportLog.addValue(
+                    KEY_OUT_DEVICE_RATE,
+                    mOutSampleRate,
+                    ResultType.NEUTRAL,
+                    ResultUnit.NONE);
+
+            reportLog.addValue(
+                    KEY_OUT_DEVICE_CHANS,
+                    mOutChannelCount,
+                    ResultType.NEUTRAL,
+                    ResultUnit.NONE);
+
+            // Input Specifications
+            reportLog.addValue(
+                    KEY_IN_DEVICE_NAME,
+                    getInDeviceName(),
+                    ResultType.NEUTRAL,
+                    ResultUnit.NONE);
+
+            reportLog.addValue(
+                    KEY_IN_DEVICE_TYPE,
+                    mInDeviceType,
+                    ResultType.NEUTRAL,
+                    ResultUnit.NONE);
+
+            reportLog.addValue(
+                    KEY_IN_DEVICE_RATE,
+                    mInSampleRate,
+                    ResultType.NEUTRAL,
+                    ResultUnit.NONE);
+
+            reportLog.addValue(
+                    KEY_IN_DEVICE_CHANS,
+                    mInChannelCount,
+                    ResultType.NEUTRAL,
+                    ResultUnit.NONE);
+
+            reportLog.addValue(
+                    KEY_IN_PRESET,
+                    mInputPreset,
+                    ResultType.NEUTRAL,
+                    ResultUnit.NONE);
+
+            // Results
+            mTestResults[api].generateReportLog(reportLog);
+
+            reportLog.submit();
+        }
+    }
+
+    /*
+     * TestResults
+     */
+    class TestResults {
+        int mApi;
+        double mMagnitude;
+        double mMaxMagnitude;
+        double mPhase;
+        double mPhaseJitter;
+
+        TestResults(int api, double magnitude, double maxMagnitude, double phase,
+                    double phaseJitter) {
+            mApi = api;
+            mMagnitude = magnitude;
+            mMaxMagnitude = maxMagnitude;
+            mPhase = phase;
+            mPhaseJitter = phaseJitter;
+        }
+
+        // ReportLog Schema
+        private static final String KEY_TESTAPI = "test_api";
+        private static final String KEY_MAXMAGNITUDE = "max_magnitude";
+        private static final String KEY_MAGNITUDE = "magnitude";
+        private static final String KEY_PHASEOFFSET = "phase_offset";
+        private static final String KEY_PHASEJITTER = "phase_jitter";
+
+        void generateReportLog(CtsVerifierReportLog reportLog) {
+            reportLog.addValue(
+                    KEY_TESTAPI,
+                    mApi,
+                    ResultType.NEUTRAL,
+                    ResultUnit.NONE);
+
+            reportLog.addValue(
+                    KEY_MAGNITUDE,
+                    mMagnitude,
+                    ResultType.NEUTRAL,
+                    ResultUnit.NONE);
+
+            reportLog.addValue(
+                    KEY_MAXMAGNITUDE,
+                    mMaxMagnitude,
+                    ResultType.NEUTRAL,
+                    ResultUnit.NONE);
+
+            reportLog.addValue(
+                    KEY_PHASEOFFSET,
+                    mPhase,
+                    ResultType.NEUTRAL,
+                    ResultUnit.NONE);
+
+            reportLog.addValue(
+                    KEY_PHASEJITTER,
+                    mPhaseJitter,
+                    ResultType.NEUTRAL,
+                    ResultUnit.NONE);
+        }
     }
 
     /*
@@ -298,10 +456,7 @@ public class AudioDataPathsActivity
         // Audio Device Type ID -> TestProfile
         ArrayList<TestSpec> mTestSpecs = new ArrayList<TestSpec>();
 
-        double[] mMagnitudes;
-        double[] mMaxMagnitudes;
-        double[] mPhases;
-        double[] mPhaseJitters;
+        int mApi;
 
         private int    mPhaseCount;
 
@@ -449,12 +604,6 @@ public class AudioDataPathsActivity
 
             validateTestDevices();
             displayTestDevices();
-
-            int numTestSpecs = mTestSpecs.size();
-            mMagnitudes = new double[numTestSpecs];
-            mMaxMagnitudes = new double[numTestSpecs];
-            mPhases = new double[numTestSpecs];
-            mPhaseJitters = new double[numTestSpecs];
         }
 
         public void validateTestDevices() {
@@ -514,9 +663,10 @@ public class AudioDataPathsActivity
                 }
                 sb.append(testSpec.getDescription());
 
-                if (testSpec.isValid()) {
+                if (testSpec.isValid() && testStep != mTestStep) {
                     sb.append(" *");
                 }
+
                 if (testStep == mTestStep) {
                     sb.append("<<<");
                 }
@@ -584,11 +734,13 @@ public class AudioDataPathsActivity
 
         private static final int MS_PER_SEC = 1000;
         private static final int TEST_TIME_IN_SECONDS = 2;
-        public void startTest() {
+        public void startTest(int api) {
             mRoutesTx.setVisibility(View.VISIBLE);
             mWaveView.setVisibility(View.VISIBLE);
 
             mResultsView.setVisibility(View.GONE);
+
+            mApi = api;
 
             if (mTestStep == TESTSTEP_NONE) {
                 (mTimer = new Timer()).scheduleAtFixedRate(new TimerTask() {
@@ -649,13 +801,11 @@ public class AudioDataPathsActivity
                 TestSpec testSpec = mTestSpecs.get(mTestStep);
                 AudioDeviceInfo devInfo = testSpec.mOutDeviceInfo;
                 if (devInfo != null) {
-                    mMagnitudes[localTestStep] = mAnalyzer.getMagnitude();
-                    mMaxMagnitudes[localTestStep] = mAnalyzer.getMaxMagnitude();
-                    mPhases[localTestStep] = mAnalyzer.getPhaseOffset();
-                    mPhaseJitters[localTestStep] = mAnalyzer.getPhaseJitter();
-
-                    recordTestStatus();
-
+                    testSpec.setTestResults(mApi, new TestResults(mApi,
+                            mAnalyzer.getMagnitude(),
+                            mAnalyzer.getMaxMagnitude(),
+                            mAnalyzer.getPhaseOffset(),
+                            mAnalyzer.getPhaseJitter()));
                 }
             }
 
@@ -667,10 +817,7 @@ public class AudioDataPathsActivity
                     }
                 });
 
-                int localTestStep = mTestStep;
-                mMaxMagnitudes[localTestStep] = 0.0;
-
-                TestSpec testSpec = mTestSpecs.get(localTestStep);
+                TestSpec testSpec = mTestSpecs.get(mTestStep);
                 if (runTest(testSpec)) {
                     break;
                 } else {
@@ -686,29 +833,36 @@ public class AudioDataPathsActivity
         }
 
         HtmlFormatter generateReport(HtmlFormatter htmlFormatter) {
-            int testIndex = 0;
             for (TestSpec spec : mTestSpecs) {
-                Locale locale = Locale.getDefault();
-                String magString = String.format(locale, "mag:%.4f", mMagnitudes[testIndex]);
-                String maxMagString = String.format(locale, "max:%.4f", mMaxMagnitudes[testIndex]);
-                String phaseString = String.format(locale, "phs:%.4f", mPhases[testIndex]);
-                String phaseJitterString =
-                        String.format(locale, "jit:%.4f", mPhaseJitters[testIndex]);
-                htmlFormatter.openParagraph()
-                        .appendText(spec.mDescription)
-                        .insertBreak()
-                        .openTextColor("red")
-                        .appendText(magString + " ")
-                        .closeTextColor()
-                        .appendText(maxMagString + " ")
-                        .appendText(phaseString + " ")
-                        .appendText(phaseJitterString + " ")
-                        .closeParagraph();
-
-                testIndex++;
+                if (spec.isValid()) {
+                    TestResults results = spec.mTestResults[mApi];
+                    Locale locale = Locale.getDefault();
+                    String magString = String.format(locale, "mag:%.4f", results.mMagnitude);
+                    String maxMagString = String.format(locale, "max:%.4f", results.mMaxMagnitude);
+                    String phaseString = String.format(locale, "phs:%.4f", results.mPhase);
+                    String phaseJitterString =
+                            String.format(locale, "jit:%.4f", results.mPhaseJitter);
+                    htmlFormatter.openParagraph()
+                            .appendText(spec.mDescription)
+                            .insertBreak()
+                            .appendText(magString + " ")
+                            .appendText(maxMagString + " ")
+                            .appendText(phaseString + " ")
+                            .appendText(phaseJitterString + " ")
+                            .closeParagraph();
+                }
             }
 
             return htmlFormatter;
+        }
+
+        void generateReportLog() {
+            int testIndex = 0;
+            for (TestSpec spec : mTestSpecs) {
+                for (int api = TEST_API_NATIVE; api < NUM_TEST_APIS; api++) {
+                    spec.generateReportLog(api);
+                }
+            }
         }
     }
 
@@ -730,152 +884,18 @@ public class AudioDataPathsActivity
         return setTestNameSuffix(sCurrentDisplayMode, SECTION_AUDIO_DATAPATHS);
     }
 
+
+    @Override
+    public void recordTestResults() {
+        mTestManager.generateReportLog();
+    }
+
     //
     // AudioMultiApiActivity Overrides
     //
     @Override
     public void onApiChange(int api) {
         stopTest();
-    }
-
-    // ReportLog Schema
-    // Test General
-    private static final String KEY_TESTSTEP = "test_step";
-    private static final String KEY_TESTDESCRIPTION = "test_description";
-    private static final String KEY_TESTAPI = "test_api";
-
-    // Output Specification
-    private static final String KEY_OUT_DEVICE_TYPE = "out_device_type";
-    private static final String KEY_OUT_DEVICE_NAME = "out_device_name";
-    private static final String KEY_OUT_DEVICE_RATE = "out_device_rate";
-    private static final String KEY_OUT_DEVICE_CHANS = "out_device_chans";
-
-    // Input Specification
-    private static final String KEY_IN_DEVICE_TYPE = "in_device_type";
-    private static final String KEY_IN_DEVICE_NAME = "in_device_name";
-    private static final String KEY_IN_DEVICE_RATE  = "in_device_rate";
-    private static final String KEY_IN_DEVICE_CHANS  = "in_device_chans";
-    private static final String KEY_IN_PRESET  = "in_preset";
-
-    // Analysis
-    private static final String KEY_MAXMAGNITUDE = "max_magnitude";
-    private static final String KEY_MAGNITUDE = "magnitude";
-    private static final String KEY_PHASEOFFSET = "phase_offset";
-    private static final String KEY_PHASEJITTER = "phase_jitter";
-
-    private void recordTestStatus() {
-        CtsVerifierReportLog reportLog = getReportLog();
-
-        // Test General
-        reportLog.addValue(
-                KEY_TESTAPI,
-                mActiveTestAPI,
-                ResultType.NEUTRAL,
-                ResultUnit.NONE);
-
-        // Test Phase ID
-        reportLog.addValue(
-                KEY_TESTSTEP,
-                mTestManager.mTestStep,
-                ResultType.NEUTRAL,
-                ResultUnit.NONE);
-
-        TestSpec testSpec = mTestManager.getActiveTestSpec();
-        // Description
-        reportLog.addValue(
-                KEY_TESTDESCRIPTION,
-                testSpec.getDescription(),
-                ResultType.NEUTRAL,
-                ResultUnit.NONE);
-
-        // Output Specification
-        reportLog.addValue(
-                KEY_OUT_DEVICE_NAME,
-                testSpec.getOutDeviceName(),
-                ResultType.NEUTRAL,
-                ResultUnit.NONE);
-
-        reportLog.addValue(
-                KEY_OUT_DEVICE_TYPE,
-                testSpec.mOutDeviceType,
-                ResultType.NEUTRAL,
-                ResultUnit.NONE);
-
-        reportLog.addValue(
-                KEY_OUT_DEVICE_RATE,
-                testSpec.mOutSampleRate,
-                ResultType.NEUTRAL,
-                ResultUnit.NONE);
-
-        reportLog.addValue(
-                KEY_OUT_DEVICE_CHANS,
-                testSpec.mOutChannelCount,
-                ResultType.NEUTRAL,
-                ResultUnit.NONE);
-
-        // Input Specifications
-        reportLog.addValue(
-                KEY_IN_DEVICE_NAME,
-                testSpec.getInDeviceName(),
-                ResultType.NEUTRAL,
-                ResultUnit.NONE);
-
-        reportLog.addValue(
-                KEY_IN_DEVICE_TYPE,
-                testSpec.mInDeviceType,
-                ResultType.NEUTRAL,
-                ResultUnit.NONE);
-
-        reportLog.addValue(
-                KEY_IN_DEVICE_RATE,
-                testSpec.mInSampleRate,
-                ResultType.NEUTRAL,
-                ResultUnit.NONE);
-
-        reportLog.addValue(
-                KEY_IN_DEVICE_CHANS,
-                testSpec.mInChannelCount,
-                ResultType.NEUTRAL,
-                ResultUnit.NONE);
-
-        reportLog.addValue(
-                KEY_IN_PRESET,
-                testSpec.mInputPreset,
-                ResultType.NEUTRAL,
-                ResultUnit.NONE);
-
-        // Analysis
-        reportLog.addValue(
-                KEY_MAGNITUDE,
-                mAnalyzer.getMagnitude(),
-                ResultType.NEUTRAL,
-                ResultUnit.NONE);
-
-        reportLog.addValue(
-                KEY_MAXMAGNITUDE,
-                mAnalyzer.getMaxMagnitude(),
-                ResultType.NEUTRAL,
-                ResultUnit.NONE);
-
-        reportLog.addValue(
-                KEY_PHASEOFFSET,
-                mAnalyzer.getPhaseOffset(),
-                ResultType.NEUTRAL,
-                ResultUnit.NONE);
-
-        reportLog.addValue(
-                KEY_PHASEJITTER,
-                mAnalyzer.getPhaseJitter(),
-                ResultType.NEUTRAL,
-                ResultUnit.NONE);
-
-        reportLog.submit();
-    }
-
-    @Override
-    public void setTestResultAndFinish(boolean passed) {
-        recordTestStatus();
-        super.setTestResultAndFinish(passed);
     }
 
     //
@@ -885,7 +905,7 @@ public class AudioDataPathsActivity
     public void onClick(View view) {
         int id = view.getId();
         if (id == R.id.audio_datapaths_start) {
-            startTest();
+            startTest(mActiveTestAPI);
         } else if (id == R.id.audio_datapaths_stop) {
             stopTest();
         } else if (id == R.id.audioJavaApiBtn || id == R.id.audioNativeApiBtn) {
