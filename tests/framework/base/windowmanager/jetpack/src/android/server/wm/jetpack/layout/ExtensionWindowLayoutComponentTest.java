@@ -87,7 +87,8 @@ import java.util.stream.Collectors;
 
 /**
  * Tests for the {@link androidx.window.extensions.layout.WindowLayoutComponent} implementation
- * provided on the device (and only if one is available).
+ * provided on the device (and only if one is available). This class applies
+ * {@link SetRequestedOrientationRule} so that screen rotation is not blocked.
  *
  * Build/Install/Run:
  *     atest CtsWindowManagerJetpackTestCases:ExtensionWindowLayoutComponentTest
