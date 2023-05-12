@@ -67,6 +67,7 @@ genrule {
         " -a com.android.cts.deviceinfo.SensorDeviceInfo " +
         " -a com.android.cts.deviceinfo.VulkanDeviceInfo " +
         " -a com.android.compatibility.common.deviceinfo.AppStandbyDeviceInfo " +
+        " -a com.android.compatibility.common.deviceinfo.BiometricsDeviceInfo " +
         " -a com.android.compatibility.common.deviceinfo.DeviceIdleDeviceInfo " +
         " -a com.android.compatibility.common.deviceinfo.ClientIdDeviceInfo " +
         " -a com.android.compatibility.common.deviceinfo.ConfigurationDeviceInfo " +
