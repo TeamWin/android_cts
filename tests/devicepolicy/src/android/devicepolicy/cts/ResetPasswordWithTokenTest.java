@@ -56,6 +56,8 @@ import com.android.bedstead.harrier.policies.PasswordQuality;
 import com.android.bedstead.harrier.policies.ResetPasswordWithToken;
 import com.android.bedstead.metricsrecorder.EnterpriseMetricsRecorder;
 import com.android.bedstead.nene.TestApis;
+import com.android.bedstead.nene.exceptions.NeneException;
+import com.android.bedstead.nene.utils.Assert;
 
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -64,15 +66,15 @@ import org.junit.runner.RunWith;
 // TODO(b/191640667): Parameterize the length limit tests with multiple limits
 @RunWith(BedsteadJUnit4.class)
 @RequireFeature(FEATURE_SECURE_LOCK_SCREEN)
-public final class ResetPasswordWithTokenTest { // bunch of headless failures - check again after password fixes
+public final class ResetPasswordWithTokenTest {
 
-    private static final String NOT_COMPLEX_PASSWORD = "1234";
-    private static final String VALID_PASSWORD = NOT_COMPLEX_PASSWORD;
-    private static final String NUMERIC_PASSWORD_LENGTH_3 = "123";
-    private static final String NUMERIC_PASSWORD_REPEATING_LENGTH_4 = "4444";
-    private static final String NUMERIC_PASSWORD_RANDOM_LENGTH_4 = "3829";
-    private static final String NUMERIC_PASSWORD_LENGTH_4 = NOT_COMPLEX_PASSWORD;
-    private static final String NUMERIC_PASSWORD_LENGTH_6 = "264828";
+    private static final String NOT_COMPLEX_PIN = "1234";
+    private static final String VALID_PIN = NOT_COMPLEX_PIN;
+    private static final String NUMERIC_PIN_LENGTH_3 = "123";
+    private static final String NUMERIC_PIN_REPEATING_LENGTH_4 = "4444";
+    private static final String NUMERIC_PIN_RANDOM_LENGTH_4 = "3829";
+    private static final String NUMERIC_PIN_LENGTH_4 = NOT_COMPLEX_PIN;
+    private static final String NUMERIC_PIN_LENGTH_6 = "264828";
     private static final String ALPHABETIC_PASSWORD_LENGTH_4 = "abcd";
     private static final String ALPHABETIC_PASSWORD_ALL_UPPERCASE_LENGTH_4 = "ABCD";
     private static final String ALPHANUMERIC_PASSWORD_LENGTH_4 = "12ab";
@@ -115,7 +117,7 @@ public final class ResetPasswordWithTokenTest { // bunch of headless failures - 
         assumeTrue(RESET_PASSWORD_TOKEN_DISABLED, canSetResetPasswordToken(TOKEN));
         try {
             assertThat(sDeviceState.dpc().devicePolicyManager().resetPasswordWithToken(
-                    sDeviceState.dpc().componentName(), VALID_PASSWORD, TOKEN, /* flags = */ 0)).isTrue();
+                    sDeviceState.dpc().componentName(), VALID_PIN, TOKEN, /* flags = */ 0)).isTrue();
         } finally {
             removePasswordAndToken(TOKEN);
         }
@@ -126,7 +128,7 @@ public final class ResetPasswordWithTokenTest { // bunch of headless failures - 
     public void resetPasswordWithToken_badToken_failure() {
         assumeTrue(RESET_PASSWORD_TOKEN_DISABLED, canSetResetPasswordToken(TOKEN));
         assertThat(sDeviceState.dpc().devicePolicyManager().resetPasswordWithToken(
-                sDeviceState.dpc().componentName(), VALID_PASSWORD, BAD_TOKEN, /* flags = */ 0)).isFalse();
+                sDeviceState.dpc().componentName(), VALID_PIN, BAD_TOKEN, /* flags = */ 0)).isFalse();
     }
 
     @Postsubmit(reason = "new test")
@@ -146,7 +148,7 @@ public final class ResetPasswordWithTokenTest { // bunch of headless failures - 
         assumeTrue(RESET_PASSWORD_TOKEN_DISABLED, canSetResetPasswordToken(TOKEN));
         try {
             sDeviceState.dpc().devicePolicyManager().resetPasswordWithToken(
-                    sDeviceState.dpc().componentName(), VALID_PASSWORD, TOKEN, /* flags = */ 0);
+                    sDeviceState.dpc().componentName(), VALID_PIN, TOKEN, /* flags = */ 0);
 
             // Device is secure when a password is set
             assertThat(sLocalKeyguardManager.isDeviceSecure()).isTrue();
@@ -175,7 +177,7 @@ public final class ResetPasswordWithTokenTest { // bunch of headless failures - 
 
             // Password cannot be set as it does not satisfy the password restriction
             assertThat(sDeviceState.dpc().devicePolicyManager().resetPasswordWithToken(
-                    sDeviceState.dpc().componentName(), NOT_COMPLEX_PASSWORD, TOKEN, /* flags = */ 0)).isFalse();
+                    sDeviceState.dpc().componentName(), NOT_COMPLEX_PIN, TOKEN, /* flags = */ 0)).isFalse();
         } finally {
             removeAllPasswordRestrictions();
             removePasswordAndToken(TOKEN);
@@ -216,7 +218,7 @@ public final class ResetPasswordWithTokenTest { // bunch of headless failures - 
         assumeTrue(RESET_PASSWORD_TOKEN_DISABLED, canSetResetPasswordToken(TOKEN));
         try (EnterpriseMetricsRecorder metrics = EnterpriseMetricsRecorder.create()) {
             sDeviceState.dpc().devicePolicyManager().resetPasswordWithToken(
-                    sDeviceState.dpc().componentName(), VALID_PASSWORD, TOKEN, /* flags = */ 0);
+                    sDeviceState.dpc().componentName(), VALID_PIN, TOKEN, /* flags = */ 0);
 
             assertThat(metrics.query()
                     .whereType().isEqualTo(EventId.RESET_PASSWORD_WITH_TOKEN_VALUE)
@@ -232,10 +234,9 @@ public final class ResetPasswordWithTokenTest { // bunch of headless failures - 
     // setPasswordQuality is unsupported on automotive
     @RequireDoesNotHaveFeature(FEATURE_AUTOMOTIVE)
     public void isActivePasswordSufficient_passwordDoesNotSatisfyRestriction_false() {
-        assumeTrue(RESET_PASSWORD_TOKEN_DISABLED, canSetResetPasswordToken(TOKEN));
         try {
-            sDeviceState.dpc().devicePolicyManager().resetPasswordWithToken(
-                    sDeviceState.dpc().componentName(), NOT_COMPLEX_PASSWORD, TOKEN, /* flags = */ 0);
+            TestApis.users().instrumented().setPin(NOT_COMPLEX_PIN);
+
             // Add complex password restriction
             sDeviceState.dpc().devicePolicyManager().setPasswordQuality(
                     sDeviceState.dpc().componentName(), PASSWORD_QUALITY_COMPLEX);
@@ -252,7 +253,7 @@ public final class ResetPasswordWithTokenTest { // bunch of headless failures - 
                     .isActivePasswordSufficient()).isFalse();
         } finally {
             removeAllPasswordRestrictions();
-            removePasswordAndToken(TOKEN);
+            TestApis.users().instrumented().clearPin();
         }
     }
 
@@ -261,10 +262,8 @@ public final class ResetPasswordWithTokenTest { // bunch of headless failures - 
     // setPasswordQuality is unsupported on automotive
     @RequireDoesNotHaveFeature(FEATURE_AUTOMOTIVE)
     public void isActivePasswordSufficient_passwordSatisfiesRestriction_true() {
-        assumeTrue(RESET_PASSWORD_TOKEN_DISABLED, canSetResetPasswordToken(TOKEN));
         try {
-            sDeviceState.dpc().devicePolicyManager().resetPasswordWithToken(sDeviceState.dpc().componentName(),
-                    COMPLEX_PASSWORD_WITH_SYMBOL_LENGTH_7, TOKEN, /* flags = */ 0);
+            TestApis.users().instrumented().setPassword(COMPLEX_PASSWORD_WITH_SYMBOL_LENGTH_7);
             // Add complex password restriction
             sDeviceState.dpc().devicePolicyManager().setPasswordQuality(
                     sDeviceState.dpc().componentName(), PASSWORD_QUALITY_COMPLEX);
@@ -281,9 +280,11 @@ public final class ResetPasswordWithTokenTest { // bunch of headless failures - 
                     .isActivePasswordSufficient()).isTrue();
         } finally {
             removeAllPasswordRestrictions();
-            removePasswordAndToken(TOKEN);
+            TestApis.users().instrumented().clearPassword();
         }
     }
+    // TODO(281954641): Remove RESET_PASSWORD_TOKEN stuff where it's not needed (probably move
+    //  these tests to a new class)
 
     @Postsubmit(reason = "new test")
     @PolicyAppliesTest(policy = PasswordQuality.class)
@@ -343,10 +344,10 @@ public final class ResetPasswordWithTokenTest { // bunch of headless failures - 
             sDeviceState.dpc().devicePolicyManager().setPasswordQuality(
                     sDeviceState.dpc().componentName(), PASSWORD_QUALITY_SOMETHING);
 
-            assertPasswordSucceeds(NUMERIC_PASSWORD_LENGTH_4);
+            assertPasswordSucceeds(NUMERIC_PIN_LENGTH_4);
             assertPasswordSucceeds(ALPHABETIC_PASSWORD_LENGTH_4);
             assertPasswordSucceeds(ALPHANUMERIC_PASSWORD_LENGTH_4);
-            assertPasswordFails(NUMERIC_PASSWORD_LENGTH_3); // Password too short
+            assertPasswordFails(NUMERIC_PIN_LENGTH_3); // Password too short
             assertPasswordFails(/* password = */ null);
         } finally {
             removeAllPasswordRestrictions();
@@ -364,10 +365,10 @@ public final class ResetPasswordWithTokenTest { // bunch of headless failures - 
             sDeviceState.dpc().devicePolicyManager().setPasswordQuality(
                     sDeviceState.dpc().componentName(), PASSWORD_QUALITY_NUMERIC);
 
-            assertPasswordSucceeds(NUMERIC_PASSWORD_LENGTH_4);
+            assertPasswordSucceeds(NUMERIC_PIN_LENGTH_4);
             assertPasswordSucceeds(ALPHANUMERIC_PASSWORD_LENGTH_4);
             assertPasswordSucceeds(ALPHABETIC_PASSWORD_LENGTH_4);
-            assertPasswordFails(NUMERIC_PASSWORD_LENGTH_3); // Password too short
+            assertPasswordFails(NUMERIC_PIN_LENGTH_3); // Password too short
         } finally {
             removeAllPasswordRestrictions();
             removePasswordAndToken(TOKEN);
@@ -386,7 +387,7 @@ public final class ResetPasswordWithTokenTest { // bunch of headless failures - 
 
             assertPasswordSucceeds(ALPHABETIC_PASSWORD_LENGTH_4);
             assertPasswordSucceeds(ALPHANUMERIC_PASSWORD_LENGTH_4);
-            assertPasswordFails(NUMERIC_PASSWORD_LENGTH_4);
+            assertPasswordFails(NUMERIC_PIN_LENGTH_4);
         } finally {
             removeAllPasswordRestrictions();
             removePasswordAndToken(TOKEN);
@@ -404,7 +405,7 @@ public final class ResetPasswordWithTokenTest { // bunch of headless failures - 
                     sDeviceState.dpc().componentName(), PASSWORD_QUALITY_ALPHANUMERIC);
 
             assertPasswordSucceeds(ALPHANUMERIC_PASSWORD_LENGTH_4);
-            assertPasswordFails(NUMERIC_PASSWORD_LENGTH_4);
+            assertPasswordFails(NUMERIC_PIN_LENGTH_4);
             assertPasswordFails(ALPHABETIC_PASSWORD_LENGTH_4);
         } finally {
             removeAllPasswordRestrictions();
@@ -431,7 +432,7 @@ public final class ResetPasswordWithTokenTest { // bunch of headless failures - 
 
             assertPasswordSucceeds(ALPHANUMERIC_PASSWORD_LENGTH_4);
             assertPasswordSucceeds(ALPHABETIC_PASSWORD_LENGTH_4);
-            assertPasswordFails(NUMERIC_PASSWORD_LENGTH_3); // Password too short
+            assertPasswordFails(NUMERIC_PIN_LENGTH_3); // Password too short
         } finally {
             removeAllPasswordRestrictions();
             removePasswordAndToken(TOKEN);
@@ -616,7 +617,7 @@ public final class ResetPasswordWithTokenTest { // bunch of headless failures - 
                     /* minUpperCase */ 0);
 
             assertPasswordSucceeds(ALPHANUMERIC_PASSWORD_LENGTH_4);
-            assertPasswordFails(NUMERIC_PASSWORD_LENGTH_4);
+            assertPasswordFails(NUMERIC_PIN_LENGTH_4);
         } finally {
             removeAllPasswordRestrictions();
             removePasswordAndToken(TOKEN);
@@ -807,7 +808,6 @@ public final class ResetPasswordWithTokenTest { // bunch of headless failures - 
     @Postsubmit(reason = "new test")
     @CanSetPolicyTest(policy = PasswordComplexity.class)
     public void setRequiredPasswordComplexity_success() {
-        assumeTrue(RESET_PASSWORD_TOKEN_DISABLED, canSetResetPasswordToken(TOKEN));
         try {
             sDeviceState.dpc().devicePolicyManager().setRequiredPasswordComplexity(
                     PASSWORD_COMPLEXITY_MEDIUM);
@@ -822,95 +822,92 @@ public final class ResetPasswordWithTokenTest { // bunch of headless failures - 
     @Postsubmit(reason = "new test")
     @PolicyAppliesTest(policy = PasswordComplexity.class)
     public void setRequiredPasswordComplexity_low_passwordThatMeetsLowPasswordBandRequired() {
-        assumeTrue(RESET_PASSWORD_TOKEN_DISABLED, canSetResetPasswordToken(TOKEN));
         try {
             sDeviceState.dpc().devicePolicyManager().setRequiredPasswordComplexity(
                     PASSWORD_COMPLEXITY_LOW);
 
-            assertPasswordSucceeds(NUMERIC_PASSWORD_LENGTH_4);
-            assertPasswordFails(NUMERIC_PASSWORD_LENGTH_3); // Password too short
+            TestApis.users().instrumented().setPin(NUMERIC_PIN_LENGTH_4);
+            assertCannotSetPassword(NUMERIC_PIN_LENGTH_3);
         } finally {
             removeAllPasswordRestrictions();
-            removePasswordAndToken(TOKEN);
+            TestApis.users().instrumented().clearPin();
         }
     }
 
     @Postsubmit(reason = "new test")
     @PolicyAppliesTest(policy = PasswordComplexity.class)
     public void setRequiredPasswordComplexity_medium_passwordThatMeetsMediumPasswordBandRequired() {
-        assumeTrue(RESET_PASSWORD_TOKEN_DISABLED, canSetResetPasswordToken(TOKEN));
         try {
             sDeviceState.dpc().devicePolicyManager().setRequiredPasswordComplexity(
                     PASSWORD_COMPLEXITY_MEDIUM);
 
-            assertPasswordSucceeds(ALPHANUMERIC_PASSWORD_LENGTH_4);
-            assertPasswordSucceeds(NUMERIC_PASSWORD_RANDOM_LENGTH_4);
-            assertPasswordFails(NUMERIC_PASSWORD_REPEATING_LENGTH_4);
+            TestApis.users().instrumented().setPassword(ALPHANUMERIC_PASSWORD_LENGTH_4);
+            TestApis.users().instrumented().setPin(NUMERIC_PIN_RANDOM_LENGTH_4);
+
+            assertCannotSetPassword(NUMERIC_PIN_REPEATING_LENGTH_4);
         } finally {
             removeAllPasswordRestrictions();
-            removePasswordAndToken(TOKEN);
+            TestApis.users().instrumented().clearPin();
         }
     }
 
+    // TODO: Add assertions for specific failure reasons (e.g. "sequence too long") - I believe
+    // currently these reasons might not be accurate...
     @Postsubmit(reason = "new test")
     @PolicyAppliesTest(policy = PasswordComplexity.class)
     public void setRequiredPasswordComplexity_high_passwordThatMeetsHighPasswordBandRequired() {
-        assumeTrue(RESET_PASSWORD_TOKEN_DISABLED, canSetResetPasswordToken(TOKEN));
         try {
             sDeviceState.dpc().devicePolicyManager().setRequiredPasswordComplexity(
                     PASSWORD_COMPLEXITY_HIGH);
 
-            assertPasswordSucceeds(ALPHANUMERIC_PASSWORD_LENGTH_8);
-            assertPasswordFails(NUMERIC_PASSWORD_LENGTH_6);
-            assertPasswordFails(ALPHABETIC_PASSWORD_LENGTH_4);
+            TestApis.users().instrumented().setPassword(ALPHANUMERIC_PASSWORD_LENGTH_8);
+            assertCannotSetPassword(NUMERIC_PIN_LENGTH_6);
+            assertCannotSetPassword(ALPHABETIC_PASSWORD_LENGTH_4);
         } finally {
             removeAllPasswordRestrictions();
-            removePasswordAndToken(TOKEN);
+            TestApis.users().instrumented().clearPassword();
         }
     }
 
     @Postsubmit(reason = "new test")
     @PolicyAppliesTest(policy = PasswordComplexity.class)
     public void getPasswordComplexity_passwordThatMeetsLowPasswordBand_lowPasswordComplexity() {
-        assumeTrue(RESET_PASSWORD_TOKEN_DISABLED, canSetResetPasswordToken(TOKEN));
         try {
             // Set password that meets low password band
-            assertPasswordSucceeds(NUMERIC_PASSWORD_LENGTH_4);
+            TestApis.users().instrumented().setPin(NUMERIC_PIN_LENGTH_4);
 
             assertThat(sDeviceState.dpc().devicePolicyManager().getPasswordComplexity())
                     .isEqualTo(PASSWORD_COMPLEXITY_LOW);
         } finally {
-            removePasswordAndToken(TOKEN);
+            TestApis.users().instrumented().clearPin();
         }
     }
 
     @Postsubmit(reason = "new test")
     @PolicyAppliesTest(policy = PasswordComplexity.class)
     public void getPasswordComplexity_passwordThatMeetsMediumPasswordBand_mediumPasswordComplexity() {
-        assumeTrue(RESET_PASSWORD_TOKEN_DISABLED, canSetResetPasswordToken(TOKEN));
         try {
             // Set password that meets medium password band
-            assertPasswordSucceeds(NUMERIC_PASSWORD_LENGTH_6);
+            TestApis.users().instrumented().setPin(NUMERIC_PIN_LENGTH_6);
 
             assertThat(sDeviceState.dpc().devicePolicyManager().getPasswordComplexity())
                     .isEqualTo(PASSWORD_COMPLEXITY_MEDIUM);
         } finally {
-            removePasswordAndToken(TOKEN);
+            TestApis.users().instrumented().clearPin();
         }
     }
 
     @Postsubmit(reason = "new test")
     @PolicyAppliesTest(policy = PasswordComplexity.class)
     public void getPasswordComplexity_passwordThatMeetsHighPasswordBand_highPasswordComplexity() {
-        assumeTrue(RESET_PASSWORD_TOKEN_DISABLED, canSetResetPasswordToken(TOKEN));
         try {
             // Set password that meets high password band
-            assertPasswordSucceeds(ALPHANUMERIC_PASSWORD_LENGTH_8);
+            TestApis.users().instrumented().setPassword(ALPHANUMERIC_PASSWORD_LENGTH_8);
 
             assertThat(sDeviceState.dpc().devicePolicyManager().getPasswordComplexity())
                     .isEqualTo(PASSWORD_COMPLEXITY_HIGH);
         } finally {
-            removePasswordAndToken(TOKEN);
+            TestApis.users().instrumented().clearPassword();
         }
     }
 
@@ -924,7 +921,7 @@ public final class ResetPasswordWithTokenTest { // bunch of headless failures - 
             assertThat(sDeviceState.dpc().devicePolicyManager().isResetPasswordTokenActive(
                     sDeviceState.dpc().componentName())).isFalse();
             assertThat(sDeviceState.dpc().devicePolicyManager().resetPasswordWithToken(
-                    sDeviceState.dpc().componentName(), VALID_PASSWORD, TOKEN, /* flags = */ 0)).isFalse();
+                    sDeviceState.dpc().componentName(), VALID_PIN, TOKEN, /* flags = */ 0)).isFalse();
         } finally {
             removePasswordAndToken(TOKEN);
         }
@@ -1072,7 +1069,7 @@ public final class ResetPasswordWithTokenTest { // bunch of headless failures - 
     public void resetPasswordWithToken_notPermitted_throwsSecurityException() {
         assertThrows(SecurityException.class,
                 () -> sDeviceState.dpc().devicePolicyManager().resetPasswordWithToken(
-                        sDeviceState.dpc().componentName(), NOT_COMPLEX_PASSWORD, TOKEN, 0));
+                        sDeviceState.dpc().componentName(), NOT_COMPLEX_PIN, TOKEN, 0));
     }
 
     @CannotSetPolicyTest(policy = ResetPasswordWithToken.class, includeNonDeviceAdminStates = false)
@@ -1103,10 +1100,21 @@ public final class ResetPasswordWithTokenTest { // bunch of headless failures - 
     }
 
     private void removeAllPasswordRestrictions() {
-        sDeviceState.dpc().devicePolicyManager().setPasswordQuality(
-                sDeviceState.dpc().componentName(), PASSWORD_QUALITY_UNSPECIFIED);
-        sDeviceState.dpc().devicePolicyManager().setRequiredPasswordComplexity(
-                PASSWORD_COMPLEXITY_NONE);
+        try {
+            sDeviceState.dpc().devicePolicyManager().setPasswordQuality(
+                    sDeviceState.dpc().componentName(), PASSWORD_QUALITY_UNSPECIFIED);
+        } catch (SecurityException e) {
+            if (
+                    e.getMessage().contains(
+                            "may not apply password quality requirements device-wide")) {
+                // Fine as this is expected for profile owners acting on parent
+            } else {
+                throw e;
+            }
+        } finally {
+            sDeviceState.dpc().devicePolicyManager().setRequiredPasswordComplexity(
+                    PASSWORD_COMPLEXITY_NONE);
+        }
     }
 
     private void setComplexPasswordRestrictions(int minLength, int minSymbols, int minNonLetter,
@@ -1148,7 +1156,13 @@ public final class ResetPasswordWithTokenTest { // bunch of headless failures - 
 
     // Password token is disabled for the primary user, allow failure.
     private static boolean allowFailure(SecurityException e) {
-        return sDeviceState.dpc().user().type().name().equals(MANAGED_PROFILE_TYPE_NAME)
-                && e.getMessage().equals("Escrow token is disabled on the current user");
+        return !sDeviceState.dpc().user().type().name().equals(MANAGED_PROFILE_TYPE_NAME)
+                && e.getMessage().contains("Escrow token is disabled on the current user");
+    }
+
+    private void assertCannotSetPassword(String password) {
+        NeneException ex = Assert.assertThrows(NeneException.class,
+                () -> TestApis.users().instrumented().setPassword(password));
+        assertThat(ex).hasMessageThat().contains("doesn't satisfy admin policies");
     }
 }
