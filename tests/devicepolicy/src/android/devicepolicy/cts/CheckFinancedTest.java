@@ -45,6 +45,7 @@ import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
 import com.android.bedstead.harrier.policies.CheckFinance;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.permissions.PermissionContextImpl;
+import com.android.bedstead.nene.utils.Poll;
 import com.android.bedstead.testapp.TestApp;
 import com.android.bedstead.testapp.TestAppInstance;
 import com.android.compatibility.common.util.SystemUtil;
@@ -91,7 +92,11 @@ public class CheckFinancedTest {
             throws ExecutionException, InterruptedException {
         try (TestAppInstance testApp = sTestApp.install()) {
             setUpFinancedDeviceKioskRole(testApp.packageName());
-            assertThat(sDeviceState.dpc().devicePolicyManager().isDeviceFinanced()).isTrue();
+
+            Poll.forValue("isDeviceFinanced",
+                            () -> sDeviceState.dpc().devicePolicyManager().isDeviceFinanced())
+                    .errorOnFail()
+                    .await();
         } finally {
             resetFinancedDevicesKioskRole();
         }
