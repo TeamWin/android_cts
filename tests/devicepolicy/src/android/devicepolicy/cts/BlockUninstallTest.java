@@ -20,6 +20,8 @@ import static android.app.admin.DevicePolicyIdentifiers.PACKAGE_UNINSTALL_BLOCKE
 import static android.app.admin.TargetUser.LOCAL_USER_ID;
 import static android.devicepolicy.cts.utils.PolicyEngineUtils.TRUE_MORE_RESTRICTIVE;
 
+import static com.android.bedstead.harrier.annotations.enterprise.MostImportantCoexistenceTest.LESS_IMPORTANT;
+import static com.android.bedstead.harrier.annotations.enterprise.MostImportantCoexistenceTest.MORE_IMPORTANT;
 import static com.android.bedstead.harrier.annotations.enterprise.MostRestrictiveCoexistenceTest.DPC_1;
 import static com.android.bedstead.harrier.annotations.enterprise.MostRestrictiveCoexistenceTest.DPC_2;
 import static com.android.bedstead.metricsrecorder.truth.MetricQueryBuilderSubject.assertThat;
@@ -36,6 +38,7 @@ import android.app.admin.PolicyUpdateResult;
 import android.devicepolicy.cts.utils.PolicyEngineUtils;
 import android.devicepolicy.cts.utils.PolicySetResultUtils;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.stats.devicepolicy.EventId;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
@@ -46,6 +49,7 @@ import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDeviceOwner;
+import com.android.bedstead.harrier.annotations.enterprise.MostImportantCoexistenceTest;
 import com.android.bedstead.harrier.annotations.enterprise.MostRestrictiveCoexistenceTest;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyDoesNotApplyTest;
@@ -440,6 +444,101 @@ public class BlockUninstallTest {
                     /* componentName= */ null,
                     sTestApp.packageName(),
                     /* uninstallBlocked= */ false);
+        }
+    }
+
+    @ApiTest(apis = {"android.app.admin.DevicePolicyManager#setUninstallBlocked",
+            "android.app.admin.DevicePolicyManager#isUninstallBlocked"})
+    @MostImportantCoexistenceTest(policy = BlockUninstall.class)
+    public void setUninstallBlocked_setByDPCAndPermission_DPCRemoved_stillEnforced() {
+        try {
+            sDeviceState.testApp(MORE_IMPORTANT).devicePolicyManager().setUninstallBlocked(
+                    /* componentName= */ null,
+                    sTestApp.packageName(),
+                    /* uninstallBlocked= */ true);
+            sDeviceState.testApp(LESS_IMPORTANT).devicePolicyManager().setUninstallBlocked(
+                    /* componentName= */ null,
+                    sTestApp.packageName(),
+                    /* uninstallBlocked= */ true);
+
+            // Remove DPC
+            sDeviceState.dpc().devicePolicyManager().clearDeviceOwnerApp(
+                    sDeviceState.dpc().packageName());
+
+            assertThat(sDeviceState.testApp(LESS_IMPORTANT).devicePolicyManager()
+                    .isUninstallBlocked(
+                            /* componentName= */ null, sTestApp.packageName())).isTrue();
+            PolicyState<Boolean> policyState = PolicyEngineUtils.getBooleanPolicyState(
+                    new PackagePolicyKey(
+                            PACKAGE_UNINSTALL_BLOCKED_POLICY, sTestApp.packageName()),
+                    TestApis.users().instrumented().userHandle());
+            assertThat(policyState.getCurrentResolvedPolicy()).isTrue();
+            assertThat(sLocalDevicePolicyManager.isUninstallBlocked(/* admin= */ null,
+                    sTestApp.packageName())).isTrue();
+        } finally {
+            try {
+                sDeviceState.testApp(LESS_IMPORTANT).devicePolicyManager().setUninstallBlocked(
+                        /* componentName= */ null,
+                        sTestApp.packageName(),
+                        /* uninstallBlocked= */ false);
+            } catch (Exception e) {
+                // expected if app was uninstalled
+            }
+            try {
+                sDeviceState.testApp(MORE_IMPORTANT).devicePolicyManager().setUninstallBlocked(
+                        /* componentName= */ null,
+                        sTestApp.packageName(),
+                        /* uninstallBlocked= */ false);
+            } catch (Exception e) {
+                // expected if app was uninstalled
+            }
+        }
+    }
+
+    @ApiTest(apis = {"android.app.admin.DevicePolicyManager#setUninstallBlocked",
+            "android.app.admin.DevicePolicyManager#isUninstallBlocked"})
+    @MostImportantCoexistenceTest(policy = BlockUninstall.class)
+    public void setUninstallBlocked_setByPermission_appRemoved_notEnforced() {
+        try {
+            sDeviceState.testApp(LESS_IMPORTANT).devicePolicyManager().setUninstallBlocked(
+                    /* componentName= */ null,
+                    sTestApp.packageName(),
+                    /* uninstallBlocked= */ true);
+
+            // uninstall app
+            sDeviceState.testApp(LESS_IMPORTANT).uninstall();
+            SystemClock.sleep(500);
+
+            assertThat(sDeviceState.testApp(MORE_IMPORTANT).devicePolicyManager()
+                    .isUninstallBlocked(
+                            /* componentName= */ null, sTestApp.packageName())).isFalse();
+            PolicyState<Boolean> policyState = PolicyEngineUtils.getBooleanPolicyState(
+                    new PackagePolicyKey(
+                            PACKAGE_UNINSTALL_BLOCKED_POLICY, sTestApp.packageName()),
+                    TestApis.users().instrumented().userHandle());
+            if (policyState != null) {
+                assertThat(policyState.getCurrentResolvedPolicy()).isFalse();
+            }
+            assertThat(sLocalDevicePolicyManager.isUninstallBlocked(/* admin= */ null,
+                    sTestApp.packageName())).isFalse();
+
+        } finally {
+            try {
+                sDeviceState.testApp(LESS_IMPORTANT).devicePolicyManager().setUninstallBlocked(
+                        /* componentName= */ null,
+                        sTestApp.packageName(),
+                        /* uninstallBlocked= */ false);
+            } catch (Exception e) {
+                // expected if app was uninstalled
+            }
+            try {
+                sDeviceState.testApp(MORE_IMPORTANT).devicePolicyManager().setUninstallBlocked(
+                        /* componentName= */ null,
+                        sTestApp.packageName(),
+                        /* uninstallBlocked= */ false);
+            } catch (Exception e) {
+                // expected if app was uninstalled
+            }
         }
     }
 }
