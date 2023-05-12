@@ -630,17 +630,34 @@ public final class UserReference implements AutoCloseable {
     /**
      * Set a specific type of lock credential for the user.
      */
-    private void setLockCredential(String lockType, String lockCredential) {
+    private void setLockCredential(
+            String lockType, String lockCredential, String existingCredential) {
         String lockTypeSentenceCase = Character.toUpperCase(lockType.charAt(0))
                 + lockType.substring(1);
         try {
-            ShellCommand.builder("cmd lock_settings")
+            ShellCommand.Builder commandBuilder = ShellCommand.builder("cmd lock_settings")
                     .addOperand("set-" + lockType)
-                    .addOption("--user", mId)
-                    .addOperand(lockCredential)
+                    .addOption("--user", mId);
+
+            if (existingCredential != null) {
+                commandBuilder.addOption("--old", existingCredential);
+            } else if (mLockCredential != null) {
+                commandBuilder.addOption("--old", mLockCredential);
+            }
+
+            commandBuilder.addOperand(lockCredential)
                     .validate(s -> s.startsWith(lockTypeSentenceCase + " set to"))
                     .execute();
         } catch (AdbException e) {
+            if (e.output().contains("null or empty")) {
+                throw new NeneException("Error attempting to set lock credential when there is "
+                        + "already one set. Use the version which takes the existing credential");
+            }
+
+            if (e.output().contains("doesn't satisfy admin policies")) {
+                throw new NeneException(e.output().strip(), e);
+            }
+
             throw new NeneException("Error setting " + lockType, e);
         }
         mLockCredential = lockCredential;
@@ -651,21 +668,48 @@ public final class UserReference implements AutoCloseable {
      * Set a password for the user.
      */
     public void setPassword(String password) {
-        setLockCredential(TYPE_PASSWORD, password);
+        setPassword(password, /* existingCredential= */ null);
+    }
+
+    /**
+     * Set a password for the user.
+     *
+     * <p>If the existing credential was set using TestApis, you do not need to provide it.
+     */
+    public void setPassword(String password, String existingCredential) {
+        setLockCredential(TYPE_PASSWORD, password, existingCredential);
     }
 
     /**
      * Set a pin for the user.
      */
     public void setPin(String pin) {
-        setLockCredential(TYPE_PIN, pin);
+        setPin(pin, /* existingCredential=*/ null);
+    }
+
+    /**
+     * Set a pin for the user.
+     *
+     * <p>If the existing credential was set using TestApis, you do not need to provide it.
+     */
+    public void setPin(String pin, String existingCredential) {
+        setLockCredential(TYPE_PIN, pin, existingCredential);
     }
 
     /**
      * Set a pattern for the user.
      */
     public void setPattern(String pattern) {
-        setLockCredential(TYPE_PATTERN, pattern);
+        setPattern(pattern, /* existingCredential= */ null);
+    }
+
+    /**
+     * Set a pattern for the user.
+     *
+     * <p>If the existing credential was set using TestApis, you do not need to provide it.
+     */
+    public void setPattern(String pattern, String existingCredential) {
+        setLockCredential(TYPE_PATTERN, pattern, existingCredential);
     }
 
     /**
@@ -739,6 +783,9 @@ public final class UserReference implements AutoCloseable {
                 mLockCredential = null;
                 mLockType = null;
                 return;
+            }
+            if (e.output().contains("doesn't satisfy admin policies")) {
+                throw new NeneException(e.output().strip(), e);
             }
             throw new NeneException("Error clearing lock credential", e);
         }
