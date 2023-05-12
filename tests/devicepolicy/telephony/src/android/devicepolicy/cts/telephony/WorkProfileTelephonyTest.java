@@ -36,6 +36,7 @@ import static com.android.queryable.queries.IntentFilterQuery.intentFilter;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
@@ -62,6 +63,7 @@ import android.telecom.PhoneAccountHandle;
 import android.telecom.TelecomManager;
 import android.telephony.SmsManager;
 import android.telephony.TelephonyManager;
+import android.text.TextUtils;
 
 import com.android.activitycontext.ActivityContext;
 import com.android.bedstead.harrier.BedsteadJUnit4;
@@ -144,7 +146,7 @@ public final class WorkProfileTelephonyTest {
     @CddTest(requirements = {"7.4.1.4/C-3-1"})
     public void sendTextMessage_fromWorkProfile_allManagedSubscriptions_smsSentSuccessfully() {
         assumeSmsCapableDevice();
-        assertSimCardPresent();
+        assertValidSimCardPresent();
         String previousDefaultSmsPackage = Telephony.Sms.getDefaultSmsPackage(sContext);
         RemoteDevicePolicyManager dpm = sDeviceState.profileOwner(
                 WORK_PROFILE).devicePolicyManager();
@@ -187,7 +189,7 @@ public final class WorkProfileTelephonyTest {
     public void sendTextMessage_fromPersonalProfile_allManagedSubscriptions_errorUserNotAllowed()
             throws ExecutionException, InterruptedException {
         assumeSmsCapableDevice();
-        assertSimCardPresent();
+        assertValidSimCardPresent();
         String previousDefaultSmsPackage = Telephony.Sms.getDefaultSmsPackage(sContext);
         RemoteDevicePolicyManager dpm = sDeviceState.profileOwner(
                 WORK_PROFILE).devicePolicyManager();
@@ -238,7 +240,7 @@ public final class WorkProfileTelephonyTest {
     @CddTest(requirements = {"7.4.1.4/C-3-1"})
     public void allManagedSubscriptions_accessWorkMessageFromPersonalProfile_fails() {
         assumeSmsCapableDevice();
-        assertSimCardPresent();
+        assertValidSimCardPresent();
         String previousDefaultSmsPackage = Telephony.Sms.getDefaultSmsPackage(sContext);
         RemoteDevicePolicyManager dpm = sDeviceState.profileOwner(
                 WORK_PROFILE).devicePolicyManager();
@@ -339,7 +341,7 @@ public final class WorkProfileTelephonyTest {
     @Test
     public void placeCall_fromWorkProfile_allManagedSubscriptions_works() throws Exception {
         assumeCallCapableDevice();
-        assertSimCardPresent();
+        assertValidSimCardPresent();
         sDeviceState.profileOwner(WORK_PROFILE).devicePolicyManager().setManagedSubscriptionsPolicy(
                 new ManagedSubscriptionsPolicy(
                         ManagedSubscriptionsPolicy.TYPE_ALL_MANAGED_SUBSCRIPTIONS));
@@ -374,7 +376,7 @@ public final class WorkProfileTelephonyTest {
     @CddTest(requirements = {"7.4.1.4/C-1-1", "7.4.1.4/C-3-2"})
     public void placeCall_fromPersonalProfile_allManagedSubscriptions_fails() throws Exception {
         assumeCallCapableDevice();
-        assertSimCardPresent();
+        assertValidSimCardPresent();
         sDeviceState.profileOwner(WORK_PROFILE).devicePolicyManager().setManagedSubscriptionsPolicy(
                 new ManagedSubscriptionsPolicy(
                         ManagedSubscriptionsPolicy.TYPE_ALL_MANAGED_SUBSCRIPTIONS));
@@ -409,7 +411,7 @@ public final class WorkProfileTelephonyTest {
     public void getCallCapablePhoneAccounts_fromWorkProfile_allManagedSubscriptions_notEmpty()
             throws Exception {
         assumeCallCapableDevice();
-        assertSimCardPresent();
+        assertValidSimCardPresent();
         sDeviceState.profileOwner(WORK_PROFILE).devicePolicyManager().setManagedSubscriptionsPolicy(
                 new ManagedSubscriptionsPolicy(
                         ManagedSubscriptionsPolicy.TYPE_ALL_MANAGED_SUBSCRIPTIONS));
@@ -440,7 +442,7 @@ public final class WorkProfileTelephonyTest {
     public void getCallCapablePhoneAccounts_fromPersonalProfile_allManagedSubscriptions_emptyList()
             throws Exception {
         assumeCallCapableDevice();
-        assertSimCardPresent();
+        assertValidSimCardPresent();
         sDeviceState.profileOwner(WORK_PROFILE).devicePolicyManager().setManagedSubscriptionsPolicy(
                 new ManagedSubscriptionsPolicy(
                         ManagedSubscriptionsPolicy.TYPE_ALL_MANAGED_SUBSCRIPTIONS));
@@ -470,7 +472,7 @@ public final class WorkProfileTelephonyTest {
     @CddTest(requirements = {"7.4.1.4/C-2-1"})
     public void allManagedSubscriptions_accessWorkCallLogFromWorkProfile_works() throws Exception {
         assumeCallCapableDevice();
-        assertSimCardPresent();
+        assertValidSimCardPresent();
         sDeviceState.profileOwner(WORK_PROFILE).devicePolicyManager().setManagedSubscriptionsPolicy(
                 new ManagedSubscriptionsPolicy(
                         ManagedSubscriptionsPolicy.TYPE_ALL_MANAGED_SUBSCRIPTIONS));
@@ -512,7 +514,7 @@ public final class WorkProfileTelephonyTest {
     public void allManagedSubscriptions_accessWorkCallLogFromPersonalProfile_fails()
             throws Exception {
         assumeCallCapableDevice();
-        assertSimCardPresent();
+        assertValidSimCardPresent();
         sDeviceState.profileOwner(WORK_PROFILE).devicePolicyManager().setManagedSubscriptionsPolicy(
                 new ManagedSubscriptionsPolicy(
                         ManagedSubscriptionsPolicy.TYPE_ALL_MANAGED_SUBSCRIPTIONS));
@@ -573,9 +575,10 @@ public final class WorkProfileTelephonyTest {
                 && mRoleManager.isRoleAvailable(RoleManager.ROLE_DIALER)));
     }
 
-    private void assertSimCardPresent() {
+    private void assertValidSimCardPresent() {
         assertTrue("[RERUN] This test requires SIM card to be present", isSimCardPresent());
-
+        assertFalse("[RERUN] SIM card does not provide phone number. Use a suitable SIM Card.",
+                TextUtils.isEmpty(mDestinationNumber));
     }
 
     private boolean isSimCardPresent() {
