@@ -28,6 +28,7 @@ DEVICE_INFO_PERMISSIONS += \
   android.permission.WRITE_EXTERNAL_STORAGE
 DEVICE_INFO_ACTIVITIES += \
   $(DEVICE_INFO_PACKAGE).AppStandbyDeviceInfo \
+  $(DEVICE_INFO_PACKAGE).BiometricsDeviceInfo \
   $(DEVICE_INFO_PACKAGE).ClientIdDeviceInfo \
   $(DEVICE_INFO_PACKAGE).ConfigurationDeviceInfo \
   $(DEVICE_INFO_PACKAGE).ConnectivityDeviceInfo \
