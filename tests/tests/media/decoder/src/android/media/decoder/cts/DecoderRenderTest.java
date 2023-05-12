@@ -112,10 +112,11 @@ public class DecoderRenderTest extends MediaTestBase {
     // TODO(b/234833109): Run this test against a variety of video files and codecs.
     private void onFrameRendered_indicatesAllFramesRendered(String fileName, Surface surface)
             throws Exception {
-        // TODO(b/268212517): Preplay one video frame to prime the video and graphics pipeline to
+        // TODO(b/268212517): Preplay some video to prime the video and graphics pipeline to
         // simulate a device in its normal steady-state (less chances for dropped frames). This
         // avoids problems, for example, with GPU shaders being compiled when rendering the first
         // video frame after boot which can cause subsequent frames to be delayed and dropped.
+        //
         primeVideoPipeline(fileName);
 
         MediaExtractor videoExtractor = createMediaExtractor(fileName);
@@ -215,6 +216,14 @@ public class DecoderRenderTest extends MediaTestBase {
         assertEquals(List.of(releasedFrames.size()), skippedFrames);
     }
 
+    // prime the video pipeline by pushing frames at the decoder until a decoded frame
+    // comes back from the codec. This ensures that the full pipeline has been activated
+    // at least once, avoiding some timing and system-settling issues if the test is
+    // run immediately after boot (which happens when we're running test suites).
+    // TODO(b/268212517)
+    //
+    // The expectation is that this enqueues only a few input frames before output
+    // starts arriving.
     private void primeVideoPipeline(String fileName) throws Exception {
         MediaExtractor videoExtractor = createMediaExtractor(fileName);
         int videoTrackIndex = getFirstVideoTrack(videoExtractor);
