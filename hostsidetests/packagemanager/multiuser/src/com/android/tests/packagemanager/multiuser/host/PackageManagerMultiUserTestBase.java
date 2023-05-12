@@ -99,8 +99,8 @@ public class PackageManagerMultiUserTestBase extends BaseHostJUnit4Test {
 
         // Extract the id of the new user.
         String[] tokens = commandOutput.split("\\s+");
-        assertTrue(tokens.length > 0);
-        assertEquals("Success:", tokens[0]);
+        assertTrue(commandOutput, tokens.length > 0);
+        assertEquals(commandOutput, "Success:", tokens[0]);
         int userId = Integer.parseInt(tokens[tokens.length - 1]);
         mCreatedUsers.add(userId);
 
