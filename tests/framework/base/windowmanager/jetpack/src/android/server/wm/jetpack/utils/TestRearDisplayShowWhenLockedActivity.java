@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 The Android Open Source Project
+ * Copyright (C) 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,24 +17,13 @@
 package android.server.wm.jetpack.utils;
 
 import android.app.Activity;
-import android.content.res.Configuration;
+import android.os.Bundle;
 
-import androidx.annotation.NonNull;
-
-public class TestRearDisplayActivity extends Activity {
-
-    public boolean mConfigurationChanged;
-    public boolean onStopInvoked;
+public class TestRearDisplayShowWhenLockedActivity extends Activity {
 
     @Override
-    public void onConfigurationChanged(@NonNull Configuration newConfig) {
-        super.onConfigurationChanged(newConfig);
-        mConfigurationChanged = true;
-    }
-
-    @Override
-    public void onStop() {
-        super.onStop();
-        onStopInvoked = true;
+    public void onCreate(Bundle bundle) {
+        super.onCreate(bundle);
+        setShowWhenLocked(true);
     }
 }
