@@ -55,6 +55,7 @@ import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.permissions.PermissionContext;
 import com.android.bedstead.nene.users.UserReference;
 import com.android.bedstead.nene.utils.BlockingIntentSender;
+import com.android.bedstead.nene.utils.Poll;
 import com.android.bedstead.nene.utils.ShellCommand;
 import com.android.bedstead.nene.utils.ShellCommandUtils;
 import com.android.bedstead.nene.utils.UndoableContext;
@@ -66,6 +67,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
@@ -279,6 +281,8 @@ public final class Packages {
                     registerPackageInstalledBroadcastReceiver(user);
 
             try {
+                Collection<Package> beforePackages = TestApis.packages().installedForUser(user);
+
                 // Expected output "Success"
                 ShellCommand.builderForUser(user, "pm install")
                         .addOperand("-r") // Reinstall automatically
@@ -287,7 +291,21 @@ public final class Packages {
                         .validate(ShellCommandUtils::startsWithSuccess)
                         .execute();
 
-                return waitForPackageAddedBroadcast(broadcastReceiver);
+                Package installedPackage = Poll.forValue("newly installed packages", () -> {
+                    Set<Package> packages = new HashSet<>(
+                            TestApis.packages().installedForUser(user));
+                    packages.removeAll(beforePackages);
+                    if (packages.isEmpty()) {
+                        return null;
+                    }
+                    return packages.iterator().next();
+                }).toNotBeNull()
+                        .timeout(Duration.ofSeconds(10))
+                        .await();
+                if (installedPackage == null) {
+                    installedPackage = waitForPackageAddedBroadcast(broadcastReceiver);
+                }
+                return installedPackage;
             } catch (AdbException e) {
                 throw new NeneException("Could not install " + apkFile + " for user " + user, e);
             } finally {
@@ -296,31 +314,6 @@ public final class Packages {
                 }
             }
         }
-    }
-
-    @Nullable
-    private Package waitForPackageAddedBroadcast(BlockingBroadcastReceiver broadcastReceiver) {
-        if (broadcastReceiver == null) {
-            // On Android versions prior to R we can't block on a broadcast for package installation
-            try {
-                Thread.sleep(20000);
-            } catch (InterruptedException e) {
-                Log.e(LOG_TAG, "Interrupted waiting for package installation", e);
-            }
-
-            return null;
-        }
-
-        Intent intent = broadcastReceiver.awaitForBroadcast();
-        if (intent == null) {
-            throw new NeneException(
-                    "Did not receive ACTION_PACKAGE_ADDED broadcast after installing package.");
-        }
-        // TODO(scottjonathan): Could this be flaky? what if something is added elsewhere at
-        //  the same time...
-        String installedPackageName = intent.getDataString().split(":", 2)[1];
-
-        return TestApis.packages().find(installedPackageName);
     }
 
     // TODO: Move this somewhere reusable (in utils)
@@ -474,6 +467,8 @@ public final class Packages {
 
         // We should install using stdin with the byte array
         try {
+            Collection<Package> beforePackages = TestApis.packages().installedForUser(user);
+
             ShellCommand.builderForUser(user, "pm install")
                     .addOperand("-t") // Allow installing test apks
                     .addOperand("-r") // Replace existing apps
@@ -481,7 +476,23 @@ public final class Packages {
                     .writeToStdIn(apkFile)
                     .validate(ShellCommandUtils::startsWithSuccess)
                     .execute();
-            return waitForPackageAddedBroadcast(broadcastReceiver);
+
+            Package installedPackage = Poll.forValue("newly installed packages", () -> {
+                        Set<Package> packages = new HashSet<>(
+                                TestApis.packages().installedForUser(user));
+                        packages.removeAll(beforePackages);
+                        if (packages.isEmpty()) {
+                            return null;
+                        }
+                        return packages.iterator().next();
+                    }).toNotBeNull()
+                    .timeout(Duration.ofSeconds(10))
+                    .await();
+
+            if (installedPackage == null) {
+                installedPackage = waitForPackageAddedBroadcast(broadcastReceiver);
+            }
+            return installedPackage;
         } catch (AdbException e) {
             throw new NeneException("Error installing package", e);
         } finally {
@@ -489,6 +500,31 @@ public final class Packages {
                 broadcastReceiver.unregisterQuietly();
             }
         }
+    }
+
+    @Nullable
+    private Package waitForPackageAddedBroadcast(BlockingBroadcastReceiver broadcastReceiver) {
+        if (broadcastReceiver == null) {
+            // On Android versions prior to R we can't block on a broadcast for package installation
+            try {
+                Thread.sleep(20000);
+            } catch (InterruptedException e) {
+                Log.e(LOG_TAG, "Interrupted waiting for package installation", e);
+            }
+
+            return null;
+        }
+
+        Intent intent = broadcastReceiver.awaitForBroadcast();
+        if (intent == null) {
+            throw new NeneException(
+                    "Did not receive ACTION_PACKAGE_ADDED broadcast after installing package.");
+        }
+        // TODO(scottjonathan): Could this be flaky? what if something is added elsewhere at
+        //  the same time...
+        String installedPackageName = intent.getDataString().split(":", 2)[1];
+
+        return TestApis.packages().find(installedPackageName);
     }
 
     /**

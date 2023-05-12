@@ -28,6 +28,7 @@ import static com.android.bedstead.harrier.annotations.enterprise.MostRestrictiv
 import static com.android.bedstead.harrier.annotations.enterprise.MostRestrictiveCoexistenceTest.DPC_2;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.testng.Assert.assertThrows;
 
@@ -41,6 +42,7 @@ import android.devicepolicy.cts.utils.PolicySetResultUtils;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.stats.devicepolicy.EventId;
+import android.util.Log;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
@@ -77,6 +79,8 @@ import java.util.function.Function;
 public class ApplicationHiddenTest {
     @ClassRule @Rule
     public static final DeviceState sDeviceState = new DeviceState();
+
+    private static final String LOG_TAG = ApplicationHiddenTest.class.getName();
 
     private static final Package SYSTEM_PACKAGE =
             TestApis.packages().find("com.android.keychain");
@@ -328,13 +332,21 @@ public class ApplicationHiddenTest {
         Set<String> policyExemptApps = TestApis.devicePolicy().getPolicyExemptApps();
 
         for (String packageName : policyExemptApps) {
+            if (!TestApis.packages().find(packageName).installedOnUser()) {
+                Log.i(LOG_TAG, "Skipping " + packageName + " as not installed on user");
+                continue;
+            }
             try {
                 boolean result = sDeviceState.dpc().devicePolicyManager().setApplicationHidden(
                         sDeviceState.dpc().componentName(), packageName,
                         true);
 
-                assertThat(result).isFalse();
-                assertThat(TestApis.packages().find(packageName).installedOnUser()).isTrue();
+                assertWithMessage(
+                        "Should return false when trying to hide policy exempt app " + packageName)
+                        .that(result).isFalse();
+                assertWithMessage(
+                        "Policy exempt app " + packageName + " should appear as installed")
+                        .that(TestApis.packages().find(packageName).installedOnUser()).isTrue();
             } finally {
                 sDeviceState.dpc().devicePolicyManager().setApplicationHidden(
                         sDeviceState.dpc().componentName(), packageName,

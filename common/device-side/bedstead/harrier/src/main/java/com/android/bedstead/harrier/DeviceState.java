@@ -4219,7 +4219,7 @@ public final class DeviceState extends HarrierRule {
         }
 
         if (TestApis.devicePolicy().userRestrictions(onUser).isSet(restriction)) {
-            throw new NeneException("Error removing user restriction " + restriction + ". "
+            throw new AssumptionViolatedException("Error removing user restriction " + restriction + ". "
                     + "It's possible this is set by the system and cannot be removed");
         }
 
