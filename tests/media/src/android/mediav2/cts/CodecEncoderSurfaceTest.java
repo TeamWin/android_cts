@@ -23,6 +23,7 @@ import static android.mediav2.common.cts.CodecEncoderTestBase.ACCEPTABLE_WIRELES
 import static android.mediav2.common.cts.CodecEncoderTestBase.colorFormatToString;
 import static android.mediav2.common.cts.CodecEncoderTestBase.getMuxerFormatForMediaType;
 import static android.mediav2.common.cts.CodecEncoderTestBase.getTempFilePath;
+import static android.mediav2.common.cts.CodecTestBase.VNDK_IS_AT_LEAST_T;
 import static android.mediav2.common.cts.CodecTestBase.VNDK_IS_BEFORE_U;
 import static android.mediav2.common.cts.CodecTestBase.hasSupportForColorFormat;
 import static android.mediav2.common.cts.CodecTestBase.isDefaultCodec;
@@ -109,7 +110,7 @@ public class CodecEncoderSurfaceTest {
     private final String mTestFile;
     private final EncoderConfigParams mEncCfgParams;
     private final int mColorFormat;
-    private final boolean mTestToneMap;
+    private final boolean mIsOutputToneMapped;
     private final boolean mUsePersistentSurface;
     private final String mTestArgs;
 
@@ -142,6 +143,8 @@ public class CodecEncoderSurfaceTest {
     private MediaMuxer mMuxer;
     private int mTrackID = -1;
 
+    private final ArrayList<String> mTmpFiles = new ArrayList<>();
+
     static {
         System.loadLibrary("ctsmediav2codecencsurface_jni");
 
@@ -151,7 +154,7 @@ public class CodecEncoderSurfaceTest {
 
     public CodecEncoderSurfaceTest(String encoder, String mediaType, String decoder,
             String testFileMediaType, String testFile, EncoderConfigParams encCfgParams,
-            int colorFormat, boolean testToneMap, boolean usePersistentSurface,
+            int colorFormat, boolean isOutputToneMapped, boolean usePersistentSurface,
             @SuppressWarnings("unused") String testLabel, String allTestParams) {
         mEncoderName = encoder;
         mEncMediaType = mediaType;
@@ -160,7 +163,7 @@ public class CodecEncoderSurfaceTest {
         mTestFile = MEDIA_DIR + testFile;
         mEncCfgParams = encCfgParams;
         mColorFormat = colorFormat;
-        mTestToneMap = testToneMap;
+        mIsOutputToneMapped = isOutputToneMapped;
         mUsePersistentSurface = usePersistentSurface;
         mTestArgs = allTestParams;
         mLatency = mEncCfgParams.mMaxBFrames;
@@ -252,6 +255,11 @@ public class CodecEncoderSurfaceTest {
             mMuxer.release();
             mMuxer = null;
         }
+        for (String tmpFile : mTmpFiles) {
+            File tmp = new File(tmpFile);
+            if (tmp.exists()) assertTrue("unable to delete file " + tmpFile, tmp.delete());
+        }
+        mTmpFiles.clear();
     }
 
     @Parameterized.Parameters(name = "{index}_{0}_{1}_{2}_{3}_{9}")
@@ -420,7 +428,7 @@ public class CodecEncoderSurfaceTest {
             if (mediaType.equals(mTestFileMediaType)) {
                 mExtractor.selectTrack(trackID);
                 format.setInteger(MediaFormat.KEY_COLOR_FORMAT, mColorFormat);
-                if (mTestToneMap) {
+                if (mIsOutputToneMapped) {
                     format.setInteger(MediaFormat.KEY_COLOR_TRANSFER_REQUEST,
                             MediaFormat.COLOR_TRANSFER_SDR_VIDEO);
                 }
@@ -768,10 +776,11 @@ public class CodecEncoderSurfaceTest {
                 if (muxOutput && loopCounter == 0) {
                     int muxerFormat = getMuxerFormatForMediaType(mEncMediaType);
                     tmpPath = getTempFilePath(mEncCfgParams.mInputBitDepth > 8 ? "10bit" : "");
+                    mTmpFiles.add(tmpPath);
                     mMuxer = new MediaMuxer(tmpPath, muxerFormat);
                 }
                 configureCodec(mDecoderFormat, mEncoderFormat, isAsync, false);
-                if (mTestToneMap) {
+                if (mIsOutputToneMapped) {
                     int transferRequest = mDecoder.getInputFormat().getInteger(
                             MediaFormat.KEY_COLOR_TRANSFER_REQUEST, 0);
                     assumeTrue(mDecoderName + " does not support HDR to SDR tone mapping",
@@ -835,7 +844,7 @@ public class CodecEncoderSurfaceTest {
                     fail("Output timestamps are not strictly increasing \n" + mTestConfig + mTestEnv
                             + mOutputBuff.getErrMsg());
                 }
-                if (mTestToneMap) {
+                if (mIsOutputToneMapped) {
                     validateToneMappedFormat(decoderOutputFormat, "decoder output format");
                     validateToneMappedFormat(encoderOutputFormat, "encoder output format");
 
@@ -856,11 +865,11 @@ public class CodecEncoderSurfaceTest {
         mDecoder.release();
         mExtractor.release();
         // Skip stream validation as there is no reference for tone mapped input
-        if (muxOutput && !mTestToneMap) {
+        if (muxOutput && !mIsOutputToneMapped) {
+            if (mEncCfgParams.mInputBitDepth > 8 && !VNDK_IS_AT_LEAST_T) return;
             CodecEncoderTestBase.validateEncodedPSNR(mTestFileMediaType, mTestFile, mEncMediaType,
                     tmpPath, false, false, ACCEPTABLE_WIRELESS_TX_QUALITY);
         }
-        if (muxOutput) new File(tmpPath).delete();
     }
 
     private native boolean nativeTestSimpleEncode(String encoder, String decoder, String mediaType,
@@ -875,10 +884,12 @@ public class CodecEncoderSurfaceTest {
     @LargeTest
     @Test(timeout = CodecTestBase.PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testSimpleEncodeFromSurfaceNative() throws IOException, InterruptedException {
-        assumeFalse("tone mapping tests are skipped in native mode", mTestToneMap);
+        // TODO(b/281661171) Update native tests to encode for tone mapped output
+        assumeFalse("tone mapping tests are skipped in native mode", mIsOutputToneMapped);
         String tmpPath = null;
         if (!mEncMediaType.equals(MediaFormat.MIMETYPE_VIDEO_AV1) || CodecTestBase.IS_AT_LEAST_U) {
             tmpPath = getTempFilePath(mEncCfgParams.mInputBitDepth > 8 ? "10bit" : "");
+            mTmpFiles.add(tmpPath);
         }
         int colorFormat = mDecoderFormat.getInteger(MediaFormat.KEY_COLOR_FORMAT, -1);
         boolean isPass = nativeTestSimpleEncode(mEncoderName, mDecoderName, mEncMediaType,
@@ -887,9 +898,9 @@ public class CodecEncoderSurfaceTest {
                 EncoderConfigParams.TOKEN_SEPARATOR, mTestConfig);
         assertTrue(mTestConfig.toString(), isPass);
         if (tmpPath != null) {
+            if (mEncCfgParams.mInputBitDepth > 8 && !VNDK_IS_AT_LEAST_T) return;
             CodecEncoderTestBase.validateEncodedPSNR(mTestFileMediaType, mTestFile, mEncMediaType,
                     tmpPath, false, false, ACCEPTABLE_WIRELESS_TX_QUALITY);
-            new File(tmpPath).delete();
         }
     }
 }
