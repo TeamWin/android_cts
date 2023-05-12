@@ -113,13 +113,10 @@ public final class WorkProfileTelephonyTest {
             sDeviceState.testApps().query().whereActivities().contains(
                     activity().where().intentFilters().contains(
                             intentFilter().where().actions().contains(Intent.ACTION_DIAL))).get();
-    private static final ComponentReference SWITCH_TO_MANAGED_PROFILE_DIALOG_FOR_CALL_COMPONENT =
-            TestApis.packages().component(new ComponentName("com.android.systemui",
-                    "com.android.systemui.telephony.ui.activity"
-                            + ".SwitchToManagedProfileForCallActivity"));
-    private static final ComponentReference SWITCH_TO_MANAGED_PROFILE_DIALOG_FOR_SMS_COMPONENT =
-            TestApis.packages().component(new ComponentName("com.android.phone",
-                    "com.android.phone" + ".ErrorDialogActivity"));
+
+    private static final ComponentReference INTENT_FORWARDER_COMPONENT =
+            TestApis.packages().component(new ComponentName(
+                    "android", "com.android.internal.app.IntentForwarderActivity"));
     private static final String SMS_SENT_INTENT_ACTION = "TEST_SMS_SENT_ACTION";
     private static final Context sContext = TestApis.context().instrumentedContext();
     private static final String ENABLE_WORK_PROFILE_TELEPHONY_FLAG =
@@ -236,9 +233,8 @@ public final class WorkProfileTelephonyTest {
             assertThat(smsApp.events().broadcastReceived().whereIntent().action().isEqualTo(
                     SMS_SENT_INTENT_ACTION).whereResultCode().isEqualTo(
                     SmsManager.RESULT_USER_NOT_ALLOWED)).eventOccurred();
-            Poll.forValue("Foreground activity",
-                    () -> TestApis.activities().foregroundActivity()).toBeEqualTo(
-                    SWITCH_TO_MANAGED_PROFILE_DIALOG_FOR_SMS_COMPONENT).errorOnFail().await();
+            Poll.forValue("Foreground activity", () -> TestApis.activities().foregroundActivity())
+                    .toBeEqualTo(INTENT_FORWARDER_COMPONENT).errorOnFail().await();
         } finally {
             sDeviceState.profileOwner(
                     WORK_PROFILE).devicePolicyManager().setManagedSubscriptionsPolicy(
@@ -424,7 +420,7 @@ public final class WorkProfileTelephonyTest {
 
             Poll.forValue("Foreground activity",
                     () -> TestApis.activities().foregroundActivity()).toBeEqualTo(
-                    SWITCH_TO_MANAGED_PROFILE_DIALOG_FOR_CALL_COMPONENT).errorOnFail().await();
+                    INTENT_FORWARDER_COMPONENT).errorOnFail().await();
         } finally {
             sDeviceState.profileOwner(
                     WORK_PROFILE).devicePolicyManager().setManagedSubscriptionsPolicy(
