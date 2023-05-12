@@ -80,10 +80,15 @@ public class TestUtils {
             case BluetoothProfile.HEADSET_CLIENT:
                 return BluetoothProperties.isProfileHfpHfEnabled().orElse(false);
             case BluetoothProfile.HEARING_AID:
-                if (!isBleSupported(InstrumentationRegistry.getInstrumentation().getContext())) {
+                Context context = InstrumentationRegistry.getInstrumentation().getContext();
+                if (!isBleSupported(context)) {
                     return false;
                 }
-                return BluetoothProperties.isProfileAshaCentralEnabled().orElse(true);
+                boolean default_value = true;
+                if (isAutomotive(context) || isWatch(context) || isTv(context)) {
+                    default_value = false;
+                }
+                return BluetoothProperties.isProfileAshaCentralEnabled().orElse(default_value);
             case BluetoothProfile.HID_DEVICE:
                 return BluetoothProperties.isProfileHidDeviceEnabled().orElse(false);
             case BluetoothProfile.HID_HOST:
@@ -229,6 +234,35 @@ public class TestUtils {
      */
     public static boolean isBleSupported(Context context) {
         return context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE);
+    }
+
+    /**
+     * Check if this is an automotive device
+     * @param context current device context
+     * @return true if this Android device is an automotive device, false otherwise
+     */
+    public static boolean isAutomotive(Context context) {
+        return context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE);
+    }
+
+    /**
+     * Check if this is a watch device
+     * @param context current device context
+     * @return true if this Android device is a watch device, false otherwise
+     */
+    public static boolean isWatch(Context context) {
+        return context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH);
+    }
+
+    /**
+     * Check if this is a TV device
+     * @param context current device context
+     * @return true if this Android device is a TV device, false otherwise
+     */
+    public static boolean isTv(Context context) {
+        PackageManager pm = context.getPackageManager();
+        return pm.hasSystemFeature(PackageManager.FEATURE_TELEVISION)
+                || pm.hasSystemFeature(PackageManager.FEATURE_LEANBACK);
     }
 
     /**
