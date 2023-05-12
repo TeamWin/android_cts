@@ -21,6 +21,7 @@ import android.widget.TextView;
 import androidx.test.uiautomator.UiSelector;
 
 import com.android.bedstead.nene.TestApis;
+import com.android.bedstead.nene.utils.Poll;
 import com.android.interactive.Automation;
 import com.android.interactive.annotations.AutomationFor;
 
@@ -28,7 +29,11 @@ import com.android.interactive.annotations.AutomationFor;
 public class DoesTheSelectedTabContainAMessageSayingPersonalAppsStepAutomation implements Automation<Boolean> {
     @Override
     public Boolean automate() throws Exception {
-        return TestApis.ui().device().findObject(
-                new UiSelector().text("No personal apps").className(TextView.class)).exists();
+        return Poll.forValue("isNoPersonalAppsTextPresent",
+                        () -> TestApis.ui().device().findObject(
+                                new UiSelector().text("No personal apps").className(
+                                        TextView.class)).exists())
+                .toBeEqualTo(true)
+                .await();
     }
 }
