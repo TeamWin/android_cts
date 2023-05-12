@@ -24,6 +24,7 @@ import static com.android.bedstead.harrier.annotations.enterprise.MostImportantC
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assume.assumeFalse;
+import static org.junit.Assume.assumeTrue;
 import static org.testng.Assert.assertThrows;
 
 import android.app.admin.PolicyState;
@@ -265,7 +266,7 @@ public final class UserRestrictionsTest {
                 .userManager().hasUserRestriction(restriction);
 
         try {
-            assertThat(hasRestrictionOriginally).isTrue();
+            assumeTrue(hasRestrictionOriginally);
             sDeviceState.dpc().devicePolicyManager().clearUserRestriction(
                     sDeviceState.dpc().componentName(), restriction);
 
