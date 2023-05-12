@@ -18,6 +18,7 @@ package android.net.wifi.cts;
 
 import static android.content.Context.RECEIVER_NOT_EXPORTED;
 import static android.net.wifi.p2p.WifiP2pConfig.GROUP_CLIENT_IP_PROVISIONING_MODE_IPV6_LINK_LOCAL;
+import static android.os.Process.myUid;
 
 import static org.junit.Assert.assertNotEquals;
 
@@ -46,8 +47,10 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerExecutor;
 import android.os.HandlerThread;
+import android.os.WorkSource;
 import android.platform.test.annotations.AppModeFull;
 import android.provider.Settings;
+import android.support.test.uiautomator.UiDevice;
 import android.util.Log;
 
 import androidx.test.filters.SdkSuppress;
@@ -125,6 +128,10 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
     private boolean mWasVerboseLoggingEnabled;
     private WifiP2pConfig mTestWifiP2pPeerConfig;
     private boolean mWasWifiEnabled;
+    private UiDevice mUiDevice;
+    private TestHelper mTestHelper;
+    private boolean mWasScanThrottleEnabled;
+
 
     private static final String TAG = "ConcurrencyTest";
     private static final int TIMEOUT_MS = 10000;
@@ -212,6 +219,10 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
             return;
         }
 
+        mUiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
+        mTestHelper = new TestHelper(mContext, mUiDevice);
+        mTestHelper.turnScreenOn();
+
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION);
         intentFilter.addAction(WifiP2pManager.WIFI_P2P_DISCOVERY_CHANGED_ACTION);
@@ -230,6 +241,10 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
                 () -> mWifiManager.isVerboseLoggingEnabled());
         ShellIdentityUtils.invokeWithShellPermissions(
                 () -> mWifiManager.setVerboseLoggingEnabled(true));
+        mWasScanThrottleEnabled = ShellIdentityUtils.invokeWithShellPermissions(
+                () -> mWifiManager.isScanThrottleEnabled());
+        ShellIdentityUtils.invokeWithShellPermissions(
+                () -> mWifiManager.setScanThrottleEnabled(false));
 
         mWasWifiEnabled = mWifiManager.isWifiEnabled();
         if (mWasWifiEnabled) {
@@ -271,9 +286,12 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
         mContext.unregisterReceiver(mReceiver);
         ShellIdentityUtils.invokeWithShellPermissions(
                 () -> mWifiManager.setVerboseLoggingEnabled(mWasVerboseLoggingEnabled));
+        ShellIdentityUtils.invokeWithShellPermissions(
+                () -> mWifiManager.setScanThrottleEnabled(mWasScanThrottleEnabled));
         if (mWasWifiEnabled) {
             enableWifi();
         }
+        mTestHelper.turnScreenOff();
         super.tearDown();
     }
 
@@ -369,10 +387,11 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
         if (!mWifiManager.isWifiEnabled()) {
             ShellIdentityUtils.invokeWithShellPermissions(() -> mWifiManager.setWifiEnabled(true));
             PollingCheck.check("Wifi not enabled", DURATION, () -> mWifiManager.isWifiEnabled());
+            ShellIdentityUtils.invokeWithShellPermissions(
+                    () -> mWifiManager.startScan(new WorkSource(myUid())));
             PollingCheck.check("Wifi not connected", DURATION,
                     () -> mWifiManager.getConnectionInfo().getNetworkId() != -1);
         }
-
     }
 
     private void removeAllPersistentGroups() {
