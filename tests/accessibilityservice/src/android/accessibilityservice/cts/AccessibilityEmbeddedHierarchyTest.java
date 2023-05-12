@@ -19,9 +19,8 @@ package android.accessibilityservice.cts;
 import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.launchActivityAndWaitForItToBeOnscreen;
 import static android.accessibilityservice.cts.utils.AsyncUtils.DEFAULT_TIMEOUT_MS;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
 import android.accessibilityservice.AccessibilityServiceInfo;
@@ -33,6 +32,7 @@ import android.graphics.Rect;
 import android.hardware.display.DisplayManager;
 import android.os.Bundle;
 import android.platform.test.annotations.Presubmit;
+import android.server.wm.CtsWindowInfoUtils;
 import android.util.DisplayMetrics;
 import android.view.Display;
 import android.view.SurfaceControlViewHost;
@@ -74,10 +74,10 @@ public class AccessibilityEmbeddedHierarchyTest {
     private final ActivityTestRule<AccessibilityEmbeddedHierarchyActivity> mActivityRule =
             new ActivityTestRule<>(AccessibilityEmbeddedHierarchyActivity.class, false, false);
 
-    private static final String HOST_VIEW_RESOURCE_NAME =
+    private static final String HOST_PARENT_RESOURCE_NAME =
             "android.accessibilityservice.cts:id/host_surfaceview";
     private static final String EMBEDDED_VIEW_RESOURCE_NAME =
-            "android.accessibilityservice.cts:id/embedded_button";
+            "android.accessibilityservice.cts:id/embedded_editText";
 
     private final AccessibilityDumpOnFailureRule mDumpOnFailureRule =
             new AccessibilityDumpOnFailureRule();
@@ -114,7 +114,31 @@ public class AccessibilityEmbeddedHierarchyTest {
     public void testEmbeddedViewCanBeFound() {
         final AccessibilityNodeInfo target =
                 findEmbeddedAccessibilityNodeInfo(sUiAutomation.getRootInActiveWindow());
-        assertNotNull(target);
+        assertThat(target).isNotNull();
+    }
+
+    @Test
+    public void testEmbeddedView_PerformActionTransfersWindowInputFocus() {
+        final View hostView = mActivity.mInputFocusableView;
+        final View embeddedView = mActivity.mViewHost.getView();
+        final AccessibilityNodeInfo embeddedNode =
+                findEmbeddedAccessibilityNodeInfo(sUiAutomation.getRootInActiveWindow());
+        assertThat(hostView.isFocusable()).isTrue();
+        assertThat(embeddedView.isFocusable()).isTrue();
+
+        // Start by ensuring the host-side view has window input focus.
+        hostView.performClick();
+        assertThat(CtsWindowInfoUtils.waitForWindowFocus(hostView, true)).isTrue();
+        assertThat(embeddedView.hasWindowFocus()).isFalse();
+
+        // ACTION_ACCESSIBILITY_FOCUS should not transfer window input focus.
+        embeddedNode.performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS);
+        assertThat(CtsWindowInfoUtils.waitForWindowFocus(embeddedView, true)).isFalse();
+
+        // Other actions like ACTION_CLICK should transfer window input focus.
+        embeddedNode.performAction(AccessibilityNodeInfo.ACTION_CLICK);
+        assertThat(CtsWindowInfoUtils.waitForWindowFocus(embeddedView, true)).isTrue();
+        assertThat(hostView.hasWindowFocus()).isFalse();
     }
 
     @Test
@@ -122,7 +146,7 @@ public class AccessibilityEmbeddedHierarchyTest {
         final AccessibilityNodeInfo target =
                 findEmbeddedAccessibilityNodeInfo(sUiAutomation.getRootInActiveWindow());
         final AccessibilityNodeInfo parent = target.getParent();
-        assertTrue(HOST_VIEW_RESOURCE_NAME.equals(parent.getViewIdResourceName()));
+        assertThat(parent.getViewIdResourceName()).isEqualTo(HOST_PARENT_RESOURCE_NAME);
     }
 
     @Test
@@ -136,10 +160,11 @@ public class AccessibilityEmbeddedHierarchyTest {
         parent.getBoundsInScreen(hostViewBoundsInScreen);
         target.getBoundsInScreen(embeddedViewBoundsInScreen);
 
-        assertTrue("hostViewBoundsInScreen" + hostViewBoundsInScreen.toShortString()
+        assertWithMessage(
+                "hostViewBoundsInScreen" + hostViewBoundsInScreen.toShortString()
                         + " doesn't contain embeddedViewBoundsInScreen"
-                        + embeddedViewBoundsInScreen.toShortString(),
-                hostViewBoundsInScreen.contains(embeddedViewBoundsInScreen));
+                        + embeddedViewBoundsInScreen.toShortString()).that(
+                hostViewBoundsInScreen.contains(embeddedViewBoundsInScreen)).isTrue();
     }
 
     @Test
@@ -161,30 +186,32 @@ public class AccessibilityEmbeddedHierarchyTest {
         target.getBoundsInScreen(newEmbeddedViewBoundsInScreen);
         parent.getBoundsInScreen(hostViewBoundsInScreen);
 
-        assertTrue("hostViewBoundsInScreen" + hostViewBoundsInScreen.toShortString()
+        assertWithMessage(
+                "hostViewBoundsInScreen" + hostViewBoundsInScreen.toShortString()
                         + " doesn't contain newEmbeddedViewBoundsInScreen"
-                        + newEmbeddedViewBoundsInScreen.toShortString(),
-                hostViewBoundsInScreen.contains(newEmbeddedViewBoundsInScreen));
-        assertFalse("newEmbeddedViewBoundsInScreen" + newEmbeddedViewBoundsInScreen.toShortString()
+                        + newEmbeddedViewBoundsInScreen.toShortString()).that(
+                hostViewBoundsInScreen.contains(newEmbeddedViewBoundsInScreen)).isTrue();
+        assertWithMessage(
+                "newEmbeddedViewBoundsInScreen" + newEmbeddedViewBoundsInScreen.toShortString()
                         + " shouldn't be the same with oldEmbeddedViewBoundsInScreen"
-                        + oldEmbeddedViewBoundsInScreen.toShortString(),
-                newEmbeddedViewBoundsInScreen.equals(oldEmbeddedViewBoundsInScreen));
+                        + oldEmbeddedViewBoundsInScreen.toShortString()).that(
+                newEmbeddedViewBoundsInScreen.equals(oldEmbeddedViewBoundsInScreen)).isFalse();
     }
 
     @Test
     public void testEmbeddedViewIsInvisibleAfterMovingOutOfScreen() throws TimeoutException {
         final AccessibilityNodeInfo target =
                 findEmbeddedAccessibilityNodeInfo(sUiAutomation.getRootInActiveWindow());
-        assertTrue("Embedded view should be visible at beginning.",
-                target.isVisibleToUser());
+        assertWithMessage("Embedded view should be visible at beginning.").that(
+                target.isVisibleToUser()).isTrue();
 
         // Move Host SurfaceView out of screen
         final Point screenSize = getScreenSize();
         mActivity.requestNewLayoutForTest(screenSize.x, screenSize.y);
 
         target.refresh();
-        assertFalse("Embedded view should be invisible after moving out of screen.",
-                target.isVisibleToUser());
+        assertWithMessage("Embedded view should be invisible after moving out of screen.").that(
+                target.isVisibleToUser()).isFalse();
     }
 
     private AccessibilityNodeInfo findEmbeddedAccessibilityNodeInfo(AccessibilityNodeInfo root) {
@@ -225,6 +252,7 @@ public class AccessibilityEmbeddedHierarchyTest {
         private static final int DEFAULT_HEIGHT = 150;
 
         private SurfaceView mSurfaceView;
+        private View mInputFocusableView;
         private SurfaceControlViewHost mViewHost;
 
         @Override
@@ -233,6 +261,7 @@ public class AccessibilityEmbeddedHierarchyTest {
             setContentView(R.layout.accessibility_embedded_hierarchy_test_host_side);
             mSurfaceView = findViewById(R.id.host_surfaceview);
             mSurfaceView.getHolder().addCallback(this);
+            mInputFocusableView = findViewById(R.id.host_editText);
         }
 
         @Override
@@ -260,8 +289,8 @@ public class AccessibilityEmbeddedHierarchyTest {
 
         public void waitForEmbeddedHierarchy() {
             try {
-                assertTrue("timed out waiting for embedded hierarchy to init.",
-                        mCountDownLatch.await(3, TimeUnit.SECONDS));
+                assertWithMessage("timed out waiting for embedded hierarchy to init.").that(
+                        mCountDownLatch.await(3, TimeUnit.SECONDS)).isTrue();
             } catch (InterruptedException e) {
                 throw new AssertionError(e);
             }
