@@ -1262,7 +1262,7 @@ public final class DeviceState extends HarrierRule {
             }
 
             if (annotation instanceof MostImportantCoexistenceTest) {
-                mTestApps.put(MostImportantCoexistenceTest.MORE_IMPORTANT, dpmRoleHolder());
+                mTestApps.put(MostImportantCoexistenceTest.MORE_IMPORTANT, deviceOwner());
 
                 MostImportantCoexistenceTest mostImportantCoexistenceTestAnnotation =
                         (MostImportantCoexistenceTest) annotation;
