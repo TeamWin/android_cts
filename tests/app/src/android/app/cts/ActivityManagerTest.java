@@ -87,6 +87,7 @@ import android.content.pm.ResolveInfo;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.os.Binder;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -121,6 +122,7 @@ import androidx.test.uiautomator.UiDevice;
 import com.android.compatibility.common.util.AmMonitor;
 import com.android.compatibility.common.util.AmUtils;
 import com.android.compatibility.common.util.AppStandbyUtils;
+import com.android.compatibility.common.util.PropertyUtil;
 import com.android.compatibility.common.util.ShellIdentityUtils;
 import com.android.compatibility.common.util.UserHelper;
 
@@ -538,16 +540,19 @@ public final class ActivityManagerTest {
     @FlakyTest(detail = "Known fail on cuttleshish b/275888802 and other devices b/255817314.")
     @Test
     public void testGetMemoryInfo() {
-        ActivityManager.MemoryInfo outInfo = new ActivityManager.MemoryInfo();
-        mActivityManager.getMemoryInfo(outInfo);
-        assertTrue(
+        // Advertised memory is required when VSR API is V.
+        if (PropertyUtil.getVsrApiLevel() > Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            ActivityManager.MemoryInfo outInfo = new ActivityManager.MemoryInfo();
+            mActivityManager.getMemoryInfo(outInfo);
+            assertTrue(
                 String.format("lowmemory (%s) == (%d <= %d)",
                 outInfo.lowMemory, outInfo.availMem, outInfo.threshold),
                 outInfo.lowMemory == (outInfo.availMem <= outInfo.threshold));
-        assertTrue(
+            assertTrue(
                 String.format("totalMem (%d) <= advertisedMem (%d)",
                 outInfo.totalMem, outInfo.advertisedMem),
                 outInfo.totalMem <= outInfo.advertisedMem);
+        }
     }
 
     @Test
