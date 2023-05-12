@@ -337,7 +337,11 @@ public class SoundTriggerInstrumentationObserver implements AutoCloseable {
                 mOnClientDetached.cancel(true /* mayInterruptIfRunning */);
             }
             if (mInstrumentation != null) {
-                mInstrumentation.triggerRestart();
+                try {
+                    mInstrumentation.triggerRestart();
+                } catch (IllegalStateException e) {
+                    Log.i(TAG, "Closing before instrumentation registration", e);
+                }
                 mInstrumentation = null;
             }
         }
