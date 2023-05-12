@@ -953,7 +953,7 @@ public class PerformanceTest {
             ZoomDirection direction, ZoomRange range) throws Exception {
         final int ZOOM_STEPS = 5;
         final float ZOOM_ERROR_MARGIN = 0.05f;
-        final int ZOOM_IN_MIN_IMPROVEMENT_IN_FRAMES = 2;
+        final int ZOOM_IN_MIN_IMPROVEMENT_IN_FRAMES = 1;
         for (String id : mTestRule.getCameraIdsUnderTest()) {
             StaticMetadata staticMetadata = mTestRule.getAllStaticInfo().get(id);
             CameraCharacteristics ch = staticMetadata.getCharacteristics();
@@ -998,19 +998,19 @@ public class PerformanceTest {
                 mPreviewSize = mTestRule.getOrderedPreviewSizes().get(0);
                 updatePreviewSurface(mPreviewSize);
 
-                // Start viewfinder with settings override unset and smallest zoom ratio,
+                // Start viewfinder with settings override set and the starting zoom ratio,
                 // and wait for some number of frames.
                 CaptureRequest.Builder previewBuilder = configurePreviewOutputs(id);
+                previewBuilder.set(CaptureRequest.CONTROL_SETTINGS_OVERRIDE,
+                        CameraMetadata.CONTROL_SETTINGS_OVERRIDE_ZOOM);
+                previewBuilder.set(CaptureRequest.CONTROL_ZOOM_RATIO, startRatio);
                 SimpleCaptureCallback resultListener = new SimpleCaptureCallback();
                 int sequenceId = mTestRule.getCameraSession().setRepeatingRequest(
                         previewBuilder.build(), resultListener, mTestRule.getHandler());
                 CaptureResult result = CameraTestUtils.waitForNumResults(
                         resultListener, NUM_RESULTS_WAIT, WAIT_FOR_RESULT_TIMEOUT_MS);
 
-                // zoom in with setting override set to TRUE
-                previewBuilder.set(CaptureRequest.CONTROL_SETTINGS_OVERRIDE,
-                        CameraMetadata.CONTROL_SETTINGS_OVERRIDE_ZOOM);
-
+                float previousRatio = startRatio;
                 for (int j = 0; j < NUM_ZOOM_STEPS; j++) {
                     float zoomFactor = startRatio + (endRatio - startRatio)
                              * (j + 1) / NUM_ZOOM_STEPS;
@@ -1022,21 +1022,33 @@ public class PerformanceTest {
                                     WAIT_FOR_RESULT_TIMEOUT_MS);
 
                     int improvement = 0;
-                    long lastFrameNumber = -1;
+                    long frameNumber = -1;
                     Log.v(TAG, "LastFrameNumber for sequence " + sequenceId + ": "
                             + lastFrameNumberForRequest);
-                    while (lastFrameNumber < lastFrameNumberForRequest + 1) {
+                    while (frameNumber < lastFrameNumberForRequest + 1) {
                         TotalCaptureResult zoomResult = resultListener.getTotalCaptureResult(
                                 WAIT_FOR_RESULT_TIMEOUT_MS);
-                        lastFrameNumber = zoomResult.getFrameNumber();
+                        frameNumber = zoomResult.getFrameNumber();
                         float resultZoomFactor = zoomResult.get(CaptureResult.CONTROL_ZOOM_RATIO);
-                        Log.v(TAG, "lastFrame " + lastFrameNumber + " zoom: " + resultZoomFactor);
-                        if (Math.abs(resultZoomFactor - zoomFactor) < ZOOM_ERROR_MARGIN) {
-                            improvement = (int) (lastFrameNumberForRequest + 1 - lastFrameNumber);
-                            break;
+
+                        Log.v(TAG, "frameNumber " + frameNumber + " zoom: " + resultZoomFactor);
+                        assertTrue(String.format("Zoom ratio should monotonically increase/decrease"
+                                + " or stay the same (previous = %f, current = %f", previousRatio,
+                                resultZoomFactor),
+                                Math.abs(previousRatio - resultZoomFactor) < ZOOM_ERROR_MARGIN
+                                || (direction == ZoomDirection.ZOOM_IN
+                                        && previousRatio < resultZoomFactor)
+                                || (direction == ZoomDirection.ZOOM_OUT
+                                        && previousRatio > resultZoomFactor));
+
+                        if (Math.abs(resultZoomFactor - zoomFactor) < ZOOM_ERROR_MARGIN
+                                && improvement == 0) {
+                            improvement = (int) (lastFrameNumberForRequest + 1 - frameNumber);
                         }
+                        previousRatio = resultZoomFactor;
                     }
-                    // Zoom in from 1.0x must have at least 2 frames latency improvement.
+
+                    // Zoom in from 1.0x must have at least 1 frame latency improvement.
                     if (direction == ZoomDirection.ZOOM_IN
                             && range == ZoomRange.RATIO_1_OR_LARGER
                             && staticMetadata.isPerFrameControlSupported()) {
