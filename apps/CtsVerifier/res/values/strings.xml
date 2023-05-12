@@ -2459,14 +2459,12 @@
     <string name="nd_test_info">This test checks if Notifications can only be
         dismissed, when it is allowed.</string>
     <string name="nd_notif_title">NotifDismissTest</string>
-    <string name="nd_notif_public_version_title">NotifDismissTest: REDACTED</string>
-    <string name="nd_notif_private_version_title">NotifDismissTest: EXPOSED</string>
     <string name="dismiss_notif_from_the_shade">Open the shade while the device is unlocked and find the NotifDismissTest notification.\n
         Swipe it to either side to dismiss it.\n
-        Fail the test if it could\'t be dismissed.</string>
+        Pass the test if it can be dismissed.</string>
     <string name="dismiss_notif_from_the_ls">Lock the screen and find the NotifDismissTest notification.\n
         Swipe it to either side to dismiss it.\n
-        Fail the test if it couldn\'t be dismissed from the lock screen.</string>
+        Pass the test if it can be dismissed from the lock screen.</string>
     <string name="non_dismissable_notif_from_the_ls">Lock the screen and find the NotifDismissTest notification.\n
         Try to dismiss it. Verify that it is non-dismissible.\n
         Fail the test if it could be dismissed from the lock screen.</string>
