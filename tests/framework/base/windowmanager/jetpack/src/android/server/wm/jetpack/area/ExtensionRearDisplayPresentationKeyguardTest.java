@@ -104,6 +104,7 @@ public class ExtensionRearDisplayPresentationKeyguardTest
         mRearDisplayPresentationState = getInstrumentation().getTargetContext().getResources()
                 .getInteger(Resources.getSystem().getIdentifier(
                         "config_deviceStateConcurrentRearDisplay", "integer", "android"));
+        assumeTrue(mRearDisplayPresentationState != -1);
 
         mWindowAreaComponent =
                 (WindowAreaComponent) mWindowManagerJetpackTestRule.getExtensionComponent();
