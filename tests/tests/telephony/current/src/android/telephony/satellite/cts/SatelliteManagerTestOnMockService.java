@@ -1419,6 +1419,64 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
     }
 
     @Test
+    public void testSatelliteModeRadios_noRadiosSensitiveToSatelliteMode() {
+        if (!shouldTestSatellite()) return;
+
+        logd("testSatelliteModeRadios_noRadiosSensitiveToSatelliteMode: start");
+        InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .adoptShellPermissionIdentity(Manifest.permission.SATELLITE_COMMUNICATION,
+                        Manifest.permission.WRITE_SECURE_SETTINGS);
+        assertTrue(isSatelliteProvisioned());
+
+        SatelliteStateCallbackTest stateCallback = new SatelliteStateCallbackTest();
+        sSatelliteManager.registerForSatelliteModemStateChanged(
+                getContext().getMainExecutor(), stateCallback);
+        assertTrue(stateCallback.waitUntilResult(1));
+
+        boolean originalEnabledState = isSatelliteEnabled();
+        if (originalEnabledState) {
+            requestSatelliteEnabled(false);
+            assertTrue(stateCallback.waitUntilResult(1));
+            assertSatelliteEnabledInSettings(false);
+        }
+
+        // Get satellite mode radios
+        String originalSatelliteModeRadios =  Settings.Global.getString(
+                getContext().getContentResolver(), Settings.Global.SATELLITE_MODE_RADIOS);
+        logd("originalSatelliteModeRadios: " + originalSatelliteModeRadios);
+
+        try {
+            mTestSatelliteModeRadios = "";
+            Settings.Global.putString(getContext().getContentResolver(),
+                    Settings.Global.SATELLITE_MODE_RADIOS, mTestSatelliteModeRadios);
+            logd("test satelliteModeRadios: " + mTestSatelliteModeRadios);
+
+            // Enable Satellite and check whether all radios are disabled
+            requestSatelliteEnabled(true);
+            assertTrue(stateCallback.waitUntilResult(1));
+            assertSatelliteEnabledInSettings(true);
+            assertTrue(areAllRadiosDisabled());
+            assertTrue(areAllRadiosResetToInitialState());
+
+            // Disable satellite and check whether all radios are set to their initial state
+            requestSatelliteEnabled(false);
+            assertTrue(stateCallback.waitUntilResult(1));
+            assertSatelliteEnabledInSettings(false);
+            assertTrue(areAllRadiosResetToInitialState());
+        } finally {
+            // Restore original satellite mode radios
+            logd("restore original satellite mode radios");
+            Settings.Global.putString(getContext().getContentResolver(),
+                    Settings.Global.SATELLITE_MODE_RADIOS, originalSatelliteModeRadios);
+            requestSatelliteEnabled(originalEnabledState);
+            assertTrue(stateCallback.waitUntilResult(1));
+            sSatelliteManager.unregisterForSatelliteModemStateChanged(stateCallback);
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .dropShellPermissionIdentity();
+        }
+    }
+
+    @Test
     public void testSatelliteModeRadiosWithAirplaneMode() throws Exception {
         if (!shouldTestSatellite()) return;
 
@@ -1483,11 +1541,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
             // Disable airplane mode, check whether all radios are set to their initial state
             connectivityManager.setAirplaneMode(false);
             callback.waitForRadioStateIntent(TelephonyManager.RADIO_POWER_ON);
-            Object lock = new Object();
-            synchronized (lock) {
-                lock.wait(TIMEOUT);
-                assertTrue(areAllRadiosResetToInitialState());
-            }
+            assertTrue(areAllRadiosResetToInitialState());
         } finally {
             // Restore original satellite mode radios
             logd("restore original satellite mode radios and original airplane mode");
@@ -2549,33 +2603,32 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
     }
 
     private void identifyRadiosSensitiveToSatelliteMode() {
-        mUwbManager = getContext().getSystemService(UwbManager.class);
-        NfcManager nfcManager = getContext().getSystemService(NfcManager.class);
-        mNfcAdapter = nfcManager.getDefaultAdapter();
-        mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-        mWifiManager = getContext().getSystemService(WifiManager.class);
-
         PackageManager packageManager = getContext().getPackageManager();
         List<String> satelliteModeRadiosList = new ArrayList<>();
+
         if (packageManager.hasSystemFeature(PackageManager.FEATURE_WIFI)) {
             satelliteModeRadiosList.add(Settings.Global.RADIO_WIFI);
+            mWifiManager = getContext().getSystemService(WifiManager.class);
             mWifiInitState = mWifiManager.isWifiEnabled();
         }
 
-        /*if (packageManager.hasSystemFeature(PackageManager.FEATURE_BLUETOOTH)) {
+        if (packageManager.hasSystemFeature(PackageManager.FEATURE_BLUETOOTH)) {
             satelliteModeRadiosList.add(Settings.Global.RADIO_BLUETOOTH);
+            mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
             mBTInitState = mBluetoothAdapter.isEnabled();
         }
 
         if (packageManager.hasSystemFeature(PackageManager.FEATURE_NFC)) {
             satelliteModeRadiosList.add(Settings.Global.RADIO_NFC);
+            mNfcAdapter = NfcAdapter.getNfcAdapter(getContext().getApplicationContext());
             mNfcInitState = mNfcAdapter.isEnabled();
         }
 
         if (packageManager.hasSystemFeature(PackageManager.FEATURE_UWB)) {
             satelliteModeRadiosList.add(Settings.Global.RADIO_UWB);
+            mUwbManager = getContext().getSystemService(UwbManager.class);
             mUwbInitState = mUwbManager.isUwbEnabled();
-        }*/
+        }
 
         mTestSatelliteModeRadios = String.join(",", satelliteModeRadiosList);
     }
@@ -2590,7 +2643,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
             assertFalse(mWifiManager.isWifiEnabled());
         }
 
-        /*if (isRadioSatelliteModeSensitive(Settings.Global.RADIO_UWB)) {
+        if (isRadioSatelliteModeSensitive(Settings.Global.RADIO_UWB)) {
             assertFalse(mUwbManager.isUwbEnabled());
         }
 
@@ -2600,47 +2653,55 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
 
         if (isRadioSatelliteModeSensitive(Settings.Global.RADIO_BLUETOOTH)) {
             assertFalse(mBluetoothAdapter.isEnabled());
-        }*/
+        }
 
         return true;
     }
 
     private boolean areAllRadiosResetToInitialState() {
-        logd("areAllRadiosResetToInitialState");
-        if (isRadioSatelliteModeSensitive(Settings.Global.RADIO_WIFI)) {
-            if (mWifiInitState) {
-                assertTrue(mWifiManager.isWifiEnabled());
-            } else {
-                assertFalse(mWifiManager.isWifiEnabled());
+        Object lock = new Object();
+        synchronized (lock) {
+            try {
+                lock.wait(TIMEOUT);
+            } catch (InterruptedException e) {
+                // Ignore
+                logd("InterruptedException e:" + e);
             }
+
+            logd("areAllRadiosResetToInitialState");
+            if (isRadioSatelliteModeSensitive(Settings.Global.RADIO_WIFI)) {
+                if (mWifiInitState) {
+                    assertTrue(mWifiManager.isWifiEnabled());
+                } else {
+                    assertFalse(mWifiManager.isWifiEnabled());
+                }
+            }
+
+            if (isRadioSatelliteModeSensitive(Settings.Global.RADIO_BLUETOOTH)) {
+                if (mBTInitState) {
+                    assertTrue(mBluetoothAdapter.isEnabled());
+                } else {
+                    assertFalse(mBluetoothAdapter.isEnabled());
+                }
+            }
+
+            if (isRadioSatelliteModeSensitive(Settings.Global.RADIO_NFC)) {
+                if (mNfcInitState) {
+                    assertTrue(mNfcAdapter.isEnabled());
+                } else {
+                    assertFalse(mNfcAdapter.isEnabled());
+                }
+            }
+
+            if (isRadioSatelliteModeSensitive(Settings.Global.RADIO_UWB)) {
+                if (mUwbInitState) {
+                    assertTrue(mUwbManager.isUwbEnabled());
+                } else {
+                    assertFalse(mUwbManager.isUwbEnabled());
+                }
+            }
+
+            return true;
         }
-
-        /*if (isRadioSatelliteModeSensitive(Settings.Global.RADIO_BLUETOOTH)) {
-            if (mBTInitState) {
-                assertTrue(mBluetoothAdapter.isEnabled());
-            } else {
-                assertFalse(mBluetoothAdapter.isEnabled());
-            }
-        }
-
-        if (isRadioSatelliteModeSensitive(Settings.Global.RADIO_NFC)) {
-            if (mNfcInitState) {
-                assertTrue(mNfcAdapter.isEnabled());
-            } else {
-                assertFalse(mNfcAdapter.isEnabled());
-            }
-        }
-
-
-
-        if (isRadioSatelliteModeSensitive(Settings.Global.RADIO_UWB)) {
-            if (mUwbInitState) {
-                assertTrue(mUwbManager.isUwbEnabled());
-            } else {
-                assertFalse(mUwbManager.isUwbEnabled());
-            }
-        }*/
-
-        return true;
     }
 }
