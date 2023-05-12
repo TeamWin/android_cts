@@ -16,6 +16,7 @@
 
 package android.companion.cts.uiautomation
 
+import android.Manifest.permission.MANAGE_COMPANION_DEVICES
 import android.Manifest.permission.READ_DEVICE_CONFIG
 import android.annotation.CallSuper
 import android.app.Activity.RESULT_CANCELED
@@ -43,7 +44,6 @@ import java.util.concurrent.atomic.AtomicReference
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
-import kotlin.time.Duration.Companion.seconds
 import libcore.util.EmptyArray
 import org.junit.Assume.assumeTrue
 import org.junit.Test
@@ -58,7 +58,7 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class SystemDataTransferTest : UiAutomationTestBase(null, null) {
     companion object {
-        private const val SYSTEM_DATA_TRANSFER_TIMEOUT = 10_000L // 10 seconds
+        private const val SYSTEM_DATA_TRANSFER_TIMEOUT = 10L // 10 seconds
     }
 
     @CallSuper
@@ -67,12 +67,16 @@ class SystemDataTransferTest : UiAutomationTestBase(null, null) {
         assumeTrue(withShellPermissionIdentity(READ_DEVICE_CONFIG) {
             FeatureUtils.isPermSyncEnabled()
         })
-        cdm.enableSecureTransport(false)
+        withShellPermissionIdentity(MANAGE_COMPANION_DEVICES) {
+            cdm.enableSecureTransport(false)
+        }
     }
 
     @CallSuper
     override fun tearDown() {
-        cdm.enableSecureTransport(true)
+        withShellPermissionIdentity(MANAGE_COMPANION_DEVICES) {
+            cdm.enableSecureTransport(true)
+        }
         super.tearDown()
     }
 
