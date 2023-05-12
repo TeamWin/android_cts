@@ -2101,6 +2101,49 @@ public class UsageStatsTest {
 
     @AppModeFull(reason = "No usage events access in instant apps")
     @Test
+    public void testReportChooserSelection() throws Exception {
+        // attempt to report an event with a null package, should fail.
+        try {
+            mUsageStatsManager.reportChooserSelection(null, 0,
+                    "text/plain", null, "android.intent.action.SEND");
+            fail("Able to report a chooser selection with a null package");
+        } catch (IllegalArgumentException expected) { }
+
+        // attempt to report an event with a non-existent package, should fail.
+        long startTime = System.currentTimeMillis();
+        mUsageStatsManager.reportChooserSelection("android.app.usage.cts.nonexistent.pkg", 0,
+                "text/plain", null, "android.intent.action.SEND");
+        UsageEvents events = mUsageStatsManager.queryEvents(
+                startTime - 1000, System.currentTimeMillis() + 1000);
+        while (events.hasNextEvent()) {
+            final Event event = new Event();
+            events.getNextEvent(event);
+            if (event.mEventType == Event.CHOOSER_ACTION) {
+                fail("Able to report a chooser action event with a non-existent package.");
+            }
+        }
+
+        // report an event with valid args - event should be found.
+        startTime = System.currentTimeMillis();
+        mUsageStatsManager.reportChooserSelection(TEST_APP_PKG, 0,
+                "text/plain", null, "android.intent.action.SEND");
+        Thread.sleep(500); // wait a little for the event to report via the handler.
+        events = mUsageStatsManager.queryEvents(
+                startTime - 1000, System.currentTimeMillis() + 1000);
+        boolean foundEvent = false;
+        while (events.hasNextEvent()) {
+            final Event event = new Event();
+            events.getNextEvent(event);
+            if (event.mEventType == Event.CHOOSER_ACTION) {
+                foundEvent = true;
+                break;
+            }
+        }
+        assertTrue("Couldn't find the reported chooser action event.", foundEvent);
+    }
+
+    @AppModeFull(reason = "No usage events access in instant apps")
+    @Test
     public void testLocusIdEventsVisibility() throws Exception {
         final long startTime = System.currentTimeMillis();
         startAndDestroyActivityWithLocus();
