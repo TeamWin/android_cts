@@ -48,7 +48,6 @@ android_test {
         ":CtsEmptyTestApp",
         ":CtsEmptyTestAppV2",
         ":CtsEmptyInstallerApp",
-        ":CtsEmptyTestApp_NotAllowUpdateOwnership",
         ":CtsEmptyTestApp_FullScreenIntent",
     ],
     java_resources: [

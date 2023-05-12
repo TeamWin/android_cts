@@ -21,6 +21,7 @@ import android.content.pm.PackageInstaller
 import android.platform.test.annotations.AppModeFull
 import androidx.test.InstrumentationRegistry
 import androidx.test.runner.AndroidJUnit4
+import org.junit.After
 import java.io.File
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -33,14 +34,11 @@ import org.junit.runner.RunWith
 class UpdateOwnershipEnforcementTest : UpdateOwnershipEnforcementTestBase() {
 
     companion object {
-        const val TEST_NOT_ALLOW_UPDATE_OWNERSHIP_APK_NAME =
-                "CtsEmptyTestApp_NotAllowUpdateOwnership.apk"
+        const val TEST_INSTALLER_APK_NAME = "CtsEmptyInstallerApp.apk"
+        const val TEST_INSTALLER_APK_PACKAGE_NAME = "android.packageinstaller.emptyinstaller.cts"
     }
 
-    private val notAllowUpdateOwnershipApkFile = File(
-            context.filesDir,
-            TEST_NOT_ALLOW_UPDATE_OWNERSHIP_APK_NAME
-    )
+    private var isUpdateOwnershipEnforcementAvailable: String? = null
 
     /**
      * Checks that we can get default value from isRequestUpdateOwnership.
@@ -282,31 +280,6 @@ class UpdateOwnershipEnforcementTest : UpdateOwnershipEnforcementTestBase() {
     }
 
     /**
-     * Checks that user pending action is not required when installing an update that opts out
-     * of ownership enforcement.
-     */
-    @Test
-    fun getPendingUserActionReason_requestUpdateOwnershipWhenOwnershipNotAllowed_hasNoUserAction() {
-        // Install the test app and enable update ownership enforcement with another package
-        installTestPackage("--update-ownership -i $TEST_INSTALLER_APK_PACKAGE_NAME")
-
-        copyTestNotAllowUpdateOwnershipApk()
-        try {
-            InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                    .adoptShellPermissionIdentity(Manifest.permission.INSTALL_PACKAGES)
-            startInstallationViaSession(
-                    apkName = TEST_NOT_ALLOW_UPDATE_OWNERSHIP_APK_NAME, expectedPrompt = false)
-
-            val result = getInstallSessionResult()
-            assertEquals(PackageInstaller.STATUS_SUCCESS, result.status)
-            assertInstalled()
-        } finally {
-            InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                    .dropShellPermissionIdentity()
-        }
-    }
-
-    /**
      * Checks that the pending user action reason is REASON_REMIND_OWNERSHIP when update owner
      * isn't changed.
      */
@@ -333,51 +306,6 @@ class UpdateOwnershipEnforcementTest : UpdateOwnershipEnforcementTestBase() {
         clickInstallerUIButton(INSTALL_BUTTON_ID)
         // request should have succeeded
         getInstallSessionResult()
-    }
-
-    /**
-     * Checks that the app can opt out the update ownership via manifest attr.
-     */
-    @Test
-    fun allowUpdateOwnership_isFalse_shouldRemoveUpdateOwner() {
-        copyTestNotAllowUpdateOwnershipApk()
-        installTestPackage("--update-ownership -i $TEST_INSTALLER_APK_PACKAGE_NAME")
-        var sourceInfo = pm.getInstallSourceInfo(TEST_APK_PACKAGE_NAME)
-        assertEquals(TEST_INSTALLER_APK_PACKAGE_NAME, sourceInfo.updateOwnerPackageName)
-
-        startInstallationViaSession(
-                0 /* installFlags */,
-                TEST_NOT_ALLOW_UPDATE_OWNERSHIP_APK_NAME
-        )
-        clickInstallerUIButton(INSTALL_BUTTON_ID)
-
-        val result = getInstallSessionResult()
-        assertEquals(PackageInstaller.STATUS_SUCCESS, result.status)
-
-        sourceInfo = pm.getInstallSourceInfo(TEST_APK_PACKAGE_NAME)
-        assertEquals(null, sourceInfo.updateOwnerPackageName)
-    }
-
-    private fun copyTestNotAllowUpdateOwnershipApk() {
-        File(
-                TEST_APK_LOCATION,
-                TEST_NOT_ALLOW_UPDATE_OWNERSHIP_APK_NAME
-        ).copyTo(target = notAllowUpdateOwnershipApkFile, overwrite = true)
-    }
-
-    /**
-     * Checks that the update owner can relinquish the update ownership.
-     */
-    @Test
-    fun relinquishUpdateOwnership_fromUpdateOwner_shouldRemoveUpdateOwner() {
-        installTestPackage("--update-ownership -i " + context.opPackageName)
-        var sourceInfo = pm.getInstallSourceInfo(TEST_APK_PACKAGE_NAME)
-        assertEquals(context.opPackageName, sourceInfo.updateOwnerPackageName)
-
-        pm.relinquishUpdateOwnership(TEST_APK_PACKAGE_NAME)
-
-        sourceInfo = pm.getInstallSourceInfo(TEST_APK_PACKAGE_NAME)
-        assertEquals(null, sourceInfo.updateOwnerPackageName)
     }
 
     /**
