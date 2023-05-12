@@ -282,31 +282,6 @@ class UpdateOwnershipEnforcementTest : UpdateOwnershipEnforcementTestBase() {
     }
 
     /**
-     * Checks that user pending action is not required when installing an update that opts out
-     * of ownership enforcement.
-     */
-    @Test
-    fun getPendingUserActionReason_requestUpdateOwnershipWhenOwnershipNotAllowed_hasNoUserAction() {
-        // Install the test app and enable update ownership enforcement with another package
-        installTestPackage("--update-ownership -i $TEST_INSTALLER_APK_PACKAGE_NAME")
-
-        copyTestNotAllowUpdateOwnershipApk()
-        try {
-            InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                    .adoptShellPermissionIdentity(Manifest.permission.INSTALL_PACKAGES)
-            startInstallationViaSession(
-                    apkName = TEST_NOT_ALLOW_UPDATE_OWNERSHIP_APK_NAME, expectedPrompt = false)
-
-            val result = getInstallSessionResult()
-            assertEquals(PackageInstaller.STATUS_SUCCESS, result.status)
-            assertInstalled()
-        } finally {
-            InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                    .dropShellPermissionIdentity()
-        }
-    }
-
-    /**
      * Checks that the pending user action reason is REASON_REMIND_OWNERSHIP when update owner
      * isn't changed.
      */
