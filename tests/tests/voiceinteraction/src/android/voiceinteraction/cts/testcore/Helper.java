@@ -216,12 +216,12 @@ public final class Helper {
     /**
      * Returns the array of {@link SoundTrigger.Keyphrase} that is used for testing.
      */
-    public static SoundTrigger.Keyphrase[] createKeyprhaseArray(Context context) {
-        return new SoundTrigger.Keyphrase[] {new SoundTrigger.Keyphrase(DEFAULT_PHRASE_ID,
+    public static SoundTrigger.Keyphrase[] createKeyphraseArray(Context context) {
+        return new SoundTrigger.Keyphrase[]{new SoundTrigger.Keyphrase(DEFAULT_PHRASE_ID,
                 SoundTrigger.RECOGNITION_MODE_VOICE_TRIGGER,
                 KEYPHRASE_LOCALE,
                 KEYPHRASE_TEXT,
-                new int[] {context.getUserId()}
+                new int[]{context.getUserId()}
         )};
     }
 
