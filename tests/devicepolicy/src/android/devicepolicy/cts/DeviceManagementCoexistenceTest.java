@@ -18,6 +18,7 @@ package android.devicepolicy.cts;
 
 import static android.Manifest.permission.READ_CALENDAR;
 import static android.app.admin.DevicePolicyIdentifiers.ACCOUNT_MANAGEMENT_DISABLED_POLICY;
+import static android.app.admin.DevicePolicyIdentifiers.APPLICATION_HIDDEN_POLICY;
 import static android.app.admin.DevicePolicyIdentifiers.APPLICATION_RESTRICTIONS_POLICY;
 import static android.app.admin.DevicePolicyIdentifiers.AUTO_TIMEZONE_POLICY;
 import static android.app.admin.DevicePolicyIdentifiers.KEYGUARD_DISABLED_FEATURES_POLICY;
@@ -76,6 +77,7 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.devicepolicy.cts.utils.BundleUtils;
+import android.devicepolicy.cts.utils.PolicyEngineUtils;
 import android.devicepolicy.cts.utils.PolicySetResultUtils;
 import android.os.Bundle;
 import android.os.UserHandle;
@@ -1319,6 +1321,10 @@ public final class DeviceManagementCoexistenceTest {
             sDeviceState.dpc().devicePolicyManager().setAccountManagementDisabled(
                     sDeviceState.dpc().componentName(), sDeviceState.accounts().accountType(),
                     /* disabled= */ true);
+            sDeviceState.dpc().devicePolicyManager().setApplicationHidden(
+                    sDeviceState.dpc().componentName(),
+                    SYSTEM_PACKAGE.packageName(),
+                    /* applicationHidden= */ true);
 
 
             // Remove DPC
@@ -1372,6 +1378,14 @@ public final class DeviceManagementCoexistenceTest {
                     sTestApp.pkg(), processIdBeforeStopping);
             assertThat(TestApis.devicePolicy().userRestrictions().isSet(LOCAL_USER_RESTRICTION))
                     .isFalse();
+
+            PolicyState<Boolean> policyState = PolicyEngineUtils.getBooleanPolicyState(
+                    new PackagePolicyKey(
+                            APPLICATION_HIDDEN_POLICY, SYSTEM_PACKAGE.packageName()),
+                    TestApis.users().instrumented().userHandle());
+            if (policyState != null) {
+                assertThat(policyState.getCurrentResolvedPolicy()).isFalse();
+            }
         }
     }
 

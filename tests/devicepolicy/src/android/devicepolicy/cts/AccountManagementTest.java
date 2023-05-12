@@ -21,6 +21,8 @@ import static android.app.admin.TargetUser.LOCAL_USER_ID;
 import static android.devicepolicy.cts.utils.PolicyEngineUtils.TRUE_MORE_RESTRICTIVE;
 import static android.os.UserManager.DISALLOW_MODIFY_ACCOUNTS;
 
+import static com.android.bedstead.harrier.annotations.enterprise.MostImportantCoexistenceTest.LESS_IMPORTANT;
+import static com.android.bedstead.harrier.annotations.enterprise.MostImportantCoexistenceTest.MORE_IMPORTANT;
 import static com.android.bedstead.harrier.annotations.enterprise.MostRestrictiveCoexistenceTest.DPC_1;
 import static com.android.bedstead.harrier.annotations.enterprise.MostRestrictiveCoexistenceTest.DPC_2;
 import static com.android.bedstead.nene.flags.CommonFlags.DevicePolicyManager.ENABLE_DEVICE_POLICY_ENGINE_FLAG;
@@ -53,6 +55,7 @@ import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDeviceOwner;
+import com.android.bedstead.harrier.annotations.enterprise.MostImportantCoexistenceTest;
 import com.android.bedstead.harrier.annotations.enterprise.MostRestrictiveCoexistenceTest;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
 import com.android.bedstead.harrier.policies.AccountManagement;
@@ -642,6 +645,79 @@ public final class AccountManagementTest {
                     /* disabled= */ false);
             TestApis.flags().set(
                     NAMESPACE_DEVICE_POLICY_MANAGER, ENABLE_DEVICE_POLICY_ENGINE_FLAG, null);
+        }
+    }
+
+    @ApiTest(apis = {"android.app.admin.DevicePolicyManager#setAccountManagementDisabled",
+            "android.app.admin.DevicePolicyManager#getAccountTypesWithManagementDisabled"})
+    @MostImportantCoexistenceTest(policy = AccountManagement.class)
+    public void setAccountManagementDisabled_setByDPCAndPermission_DPCRemoved_stillEnforced() {
+        try {
+            sDeviceState.testApp(MORE_IMPORTANT).devicePolicyManager().setAccountManagementDisabled(
+                    /* componentName= */ null, sDeviceState.accounts().accountType(),
+                    /* disabled= */ true);
+            sDeviceState.testApp(LESS_IMPORTANT).devicePolicyManager().setAccountManagementDisabled(
+                    /* componentName= */ null, sDeviceState.accounts().accountType(),
+                    /* disabled= */ true);
+
+            // Remove DPC
+            sDeviceState.dpc().devicePolicyManager().clearDeviceOwnerApp(
+                    sDeviceState.dpc().packageName());
+
+            assertThat(sDeviceState.testApp(LESS_IMPORTANT).devicePolicyManager()
+                    .getAccountTypesWithManagementDisabled()).asList().contains(
+                    sDeviceState.accounts().accountType());
+            PolicyState<Boolean> policyState = PolicyEngineUtils.getBooleanPolicyState(
+                    new AccountTypePolicyKey(
+                            ACCOUNT_MANAGEMENT_DISABLED_POLICY,
+                            sDeviceState.accounts().accountType()),
+                    TestApis.users().instrumented().userHandle());
+            assertThat(policyState.getCurrentResolvedPolicy()).isTrue();
+            assertThrows(Exception.class, () ->
+                    sDeviceState.accounts().addAccount().add());
+
+        } finally {
+            sDeviceState.testApp(LESS_IMPORTANT).devicePolicyManager().setAccountManagementDisabled(
+                    /* componentName= */ null, sDeviceState.accounts().accountType(),
+                    /* disabled= */ false);
+        }
+    }
+
+    @ApiTest(apis = {"android.app.admin.DevicePolicyManager#setAccountManagementDisabled",
+            "android.app.admin.DevicePolicyManager#getAccountTypesWithManagementDisabled"})
+    @MostImportantCoexistenceTest(policy = AccountManagement.class)
+    public void setAccountManagementDisabled_setByPermission_appRemoved_notEnforced() {
+        try {
+            sDeviceState.testApp(LESS_IMPORTANT).devicePolicyManager().setAccountManagementDisabled(
+                    /* componentName= */ null, sDeviceState.accounts().accountType(),
+                    /* disabled= */ true);
+
+            // uninstall app
+            sDeviceState.testApp(LESS_IMPORTANT).uninstall();
+
+            assertThat(sDeviceState.testApp(MORE_IMPORTANT).devicePolicyManager()
+                    .getAccountTypesWithManagementDisabled()).asList().doesNotContain(
+                    sDeviceState.accounts().accountType());
+            PolicyState<Boolean> policyState = PolicyEngineUtils.getBooleanPolicyState(
+                    new AccountTypePolicyKey(
+                            ACCOUNT_MANAGEMENT_DISABLED_POLICY,
+                            sDeviceState.accounts().accountType()),
+                    TestApis.users().instrumented().userHandle());
+            assertThat(policyState).isNull();
+            AccountReference account = sDeviceState.accounts().addAccount().add();
+            if (account != null) {
+                account.remove();
+            }
+
+        } finally {
+            try {
+                sDeviceState.testApp(
+                        LESS_IMPORTANT).devicePolicyManager().setAccountManagementDisabled(
+                        /* componentName= */ null, sDeviceState.accounts().accountType(),
+                        /* disabled= */ false);
+            } catch (Exception e) {
+                // expected if app was uninstalled
+            }
         }
     }
 }

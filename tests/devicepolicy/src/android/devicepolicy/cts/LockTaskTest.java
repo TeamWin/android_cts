@@ -62,6 +62,7 @@ import android.content.pm.ResolveInfo;
 import android.devicepolicy.cts.utils.PolicyEngineUtils;
 import android.devicepolicy.cts.utils.PolicySetResultUtils;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.stats.devicepolicy.EventId;
 import android.telecom.TelecomManager;
 
@@ -1459,6 +1460,95 @@ public final class LockTaskTest {
             sDeviceState.testApp(LESS_IMPORTANT).devicePolicyManager().setLockTaskFeatures(
                     /* componentName= */ null,
                     LOCK_TASK_FEATURE_NONE);
+        }
+    }
+
+    @ApiTest(apis = {"android.app.admin.DevicePolicyManager#setLockTaskPackages",
+            "android.app.admin.DevicePolicyManager#isLockTaskPermitted"})
+    @MostImportantCoexistenceTest(policy = LockTask.class)
+    public void setLockTaskPackages_setByDPCAndPermission_DPCRemoved_stillEnforced() {
+        try {
+            sDeviceState.testApp(MORE_IMPORTANT).devicePolicyManager().setLockTaskPackages(
+                    /* componentName= */ null,
+                    new String[]{sTestApp.packageName()});
+            sDeviceState.testApp(LESS_IMPORTANT).devicePolicyManager().setLockTaskPackages(
+                    /* componentName= */ null,
+                    new String[]{sSecondTestApp.packageName()});
+
+            // Remove DPC
+            sDeviceState.dpc().devicePolicyManager().clearDeviceOwnerApp(
+                    sDeviceState.dpc().packageName());
+
+            PolicyState<LockTaskPolicy> policyState = PolicyEngineUtils.getLockTaskPolicyState(
+                    new NoArgsPolicyKey(LOCK_TASK_POLICY),
+                    TestApis.users().instrumented().userHandle());
+            assertThat(policyState.getCurrentResolvedPolicy().getPackages())
+                    .containsExactly(sSecondTestApp.packageName());
+            assertThat(sLocalDevicePolicyManager.isLockTaskPermitted(sTestApp.packageName()))
+                    .isFalse();
+            assertThat(sLocalDevicePolicyManager.isLockTaskPermitted(sSecondTestApp.packageName()))
+                    .isTrue();
+
+        } finally {
+            try {
+                sDeviceState.testApp(MORE_IMPORTANT).devicePolicyManager().setLockTaskPackages(
+                        /* componentName= */ null, new String[]{});
+                sDeviceState.testApp(MORE_IMPORTANT).devicePolicyManager().setLockTaskFeatures(
+                        /* componentName= */ null,
+                        LOCK_TASK_FEATURE_NONE);
+            } catch (Exception e) {
+                // expected if app was uninstalled
+            }
+            try {
+                sDeviceState.testApp(LESS_IMPORTANT).devicePolicyManager().setLockTaskPackages(
+                        /* componentName= */ null, new String[]{});
+                sDeviceState.testApp(LESS_IMPORTANT).devicePolicyManager().setLockTaskFeatures(
+                        /* componentName= */ null,
+                        LOCK_TASK_FEATURE_NONE);
+            } catch (Exception e) {
+                // expected if app was uninstalled
+            }
+        }
+    }
+
+    @ApiTest(apis = {"android.app.admin.DevicePolicyManager#setLockTaskPackages",
+            "android.app.admin.DevicePolicyManager#isLockTaskPermitted"})
+    @MostImportantCoexistenceTest(policy = LockTask.class)
+    public void setLockTaskPackages_setByPermission_appRemoved_notEnforced() {
+        try {
+            sDeviceState.testApp(LESS_IMPORTANT).devicePolicyManager().setLockTaskPackages(
+                    /* componentName= */ null,
+                    new String[]{sTestApp.packageName()});
+
+            // uninstall app
+            sDeviceState.testApp(LESS_IMPORTANT).uninstall();
+            SystemClock.sleep(500);
+
+            PolicyState<LockTaskPolicy> policyState = PolicyEngineUtils.getLockTaskPolicyState(
+                    new NoArgsPolicyKey(LOCK_TASK_POLICY),
+                    TestApis.users().instrumented().userHandle());
+            assertThat(policyState).isNull();
+            assertThat(sLocalDevicePolicyManager.isLockTaskPermitted(sTestApp.packageName()))
+                    .isFalse();
+        } finally {
+            try {
+                sDeviceState.testApp(MORE_IMPORTANT).devicePolicyManager().setLockTaskPackages(
+                        /* componentName= */ null, new String[]{});
+                sDeviceState.testApp(MORE_IMPORTANT).devicePolicyManager().setLockTaskFeatures(
+                        /* componentName= */ null,
+                        LOCK_TASK_FEATURE_NONE);
+            } catch (Exception e) {
+                // expected if app was uninstalled
+            }
+            try {
+                sDeviceState.testApp(LESS_IMPORTANT).devicePolicyManager().setLockTaskPackages(
+                        /* componentName= */ null, new String[]{});
+                sDeviceState.testApp(LESS_IMPORTANT).devicePolicyManager().setLockTaskFeatures(
+                        /* componentName= */ null,
+                        LOCK_TASK_FEATURE_NONE);
+            } catch (Exception e) {
+                // expected if app was uninstalled
+            }
         }
     }
 
