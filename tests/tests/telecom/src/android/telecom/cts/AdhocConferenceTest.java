@@ -75,7 +75,8 @@ public class AdhocConferenceTest extends BaseTelecomTestWithMockServices {
     }
 
     public void testStartConferenceFailed() {
-        if (!mShouldTestTelecom) {
+        if (!mShouldTestTelecom || !TestUtils.hasTelephonyFeature(mContext)) {
+            //skip if telephony feature is missing since we are placing an emergency call
             return;
         }
         List<Uri> participants = new ArrayList<>();
