@@ -126,6 +126,7 @@ import com.android.compatibility.common.util.UserHelper;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -2244,6 +2245,8 @@ public final class ActivityManagerTest {
     }
 
     @Test
+    @Ignore("b/279787820: This is an internal API "
+            + "that must be one way and thus cannot be verified.")
     public void testNoteForegroundResourceUse() {
         // Testing the method without permissions
         try {
