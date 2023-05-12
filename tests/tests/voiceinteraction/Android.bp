@@ -27,6 +27,7 @@ android_test {
         "compatibility-device-util-axt",
         "androidx.test.ext.junit",
         "testng",
+        "platform-compat-test-rules",
     ],
     aidl: {
         local_include_dirs: [
@@ -53,6 +54,8 @@ android_test {
         "general-tests",
     ],
     sdk_version: "test_current",
+    // platform APIs required for CoreCompatChangeRule
+    platform_apis: true,
     data: [
         ":CtsNoRecognitionVoiceInteractionService",
         ":CtsVoiceInteractionApp",
