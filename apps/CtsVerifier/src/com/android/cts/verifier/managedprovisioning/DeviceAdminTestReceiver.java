@@ -39,6 +39,7 @@ import android.util.Log;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.android.bedstead.dpmwrapper.DeviceOwnerHelper;
+import com.android.bedstead.dpmwrapper.TestAppSystemServiceFactory;
 import com.android.compatibility.common.util.enterprise.DeviceAdminReceiverUtils;
 import com.android.cts.verifier.R;
 
@@ -87,8 +88,18 @@ public class DeviceAdminTestReceiver extends DeviceAdminReceiver {
         if (ACTION_DEVICE_ADMIN_ENABLED.equals(action) && UserManager.isHeadlessSystemUserMode()) {
             Set<String> ids = new HashSet<>(1);
             ids.add(DeviceAdminTestReceiver.AFFILIATION_ID);
+            ComponentName admin = getWho(context);
             Log.i(TAG, "Setting affiliation ids to " + ids);
-            dpm.setAffiliationIds(getWho(context), ids);
+            dpm.setAffiliationIds(admin, ids);
+            if (!context.getUser().isSystem()) {
+                // For non-system user, also set the affiliation IDs for DO to make sure that PO is
+                // affiliated. For system user, DO affiliation ids are already set above, so no need
+                // to set them again.
+                Log.i(TAG, "Also setting the affiliation ids for device owner");
+                DevicePolicyManager doDpm = TestAppSystemServiceFactory.getDevicePolicyManager(
+                        context, getClass(), /* forDeviceOwner= */ true);
+                doDpm.setAffiliationIds(admin, ids);
+            }
             Log.i(TAG, "Is affiliated: " + dpm.isAffiliatedUser());
         }
 
