@@ -1268,7 +1268,7 @@ public class ContextTest extends AndroidTestCase {
 
         assertEquals(intent.getAction(),
                 mContext.registerReceiver(stickyReceiver, new IntentFilter(MOCK_STICKY_ACTION),
-                        Context.RECEIVER_EXPORTED).getAction());
+                        Context.RECEIVER_NOT_EXPORTED).getAction());
 
         synchronized (mLockObj) {
             mLockObj.wait(BROADCAST_TIMEOUT);
@@ -1952,79 +1952,41 @@ public class ContextTest extends AndroidTestCase {
                 receiver.hasReceivedBroadCast());
     }
 
-    @androidx.test.filters.Suppress
-    // TODO(b/244351792): Remove when platform supports delivering sticky broadcasts from system
-    //  UID to unexported receivers.
     public void testRegisterReceiverForSystemBroadcast_notExported_stickyBroadcastReceived()
             throws InterruptedException {
+        if (!mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WIFI)) {
+            return;
+        }
         final WifiManager wifiManager = mContext.getSystemService(WifiManager.class);
         boolean wifiInitiallyOn = wifiManager.isWifiEnabled();
-
-        ResultReceiver resultReceiver = new ResultReceiver();
-        registerBroadcastReceiver(resultReceiver,
-                new IntentFilter(WifiManager.WIFI_STATE_CHANGED_ACTION));
-
-        Intent intent = new Intent(WifiManager.WIFI_STATE_CHANGED_ACTION);
-        TestBroadcastReceiver stickyReceiver = new TestBroadcastReceiver();
-
-        SystemUtil.runShellCommand("cmd wifi set-wifi-enabled disabled");
-        Thread.sleep(1000);
-
+        // Cycle Wifi to force the WIFI_STATE_CHANGED_ACTION sticky broadcast
+        if (wifiInitiallyOn) {
+            SystemUtil.runShellCommand("cmd wifi set-wifi-enabled disabled");
+            Thread.sleep(1000);
+        }
         SystemUtil.runShellCommand("cmd wifi set-wifi-enabled enabled");
         Thread.sleep(1000);
 
-        SystemUtil.runShellCommand("cmd wifi set-wifi-enabled disabled");
-        Thread.sleep(BROADCAST_TIMEOUT);
-
-        assertEquals(intent.getAction(),
-                mContext.registerReceiver(stickyReceiver,
-                        new IntentFilter(WifiManager.WIFI_STATE_CHANGED_ACTION),
-                        Context.RECEIVER_NOT_EXPORTED).getAction());
-
-        synchronized (mLockObj) {
-            mLockObj.wait(BROADCAST_TIMEOUT);
+        try {
+            TestBroadcastReceiver stickyReceiver = new TestBroadcastReceiver();
+            // A receiver registered for sticky broadcasts with the RECEIVER_NOT_EXPORTED flag
+            // should still receive back a sticky broadcast sent from the system UID.
+            assertEquals(WifiManager.WIFI_STATE_CHANGED_ACTION,
+                    mContext.registerReceiver(stickyReceiver,
+                            new IntentFilter(WifiManager.WIFI_STATE_CHANGED_ACTION),
+                            Context.RECEIVER_NOT_EXPORTED).getAction());
+            synchronized (mLockObj) {
+                mLockObj.wait(BROADCAST_TIMEOUT);
+            }
+            assertTrue("Sticky broadcast not delivered to unexported receiver",
+                    stickyReceiver.hadReceivedBroadCast());
+        } finally {
+            if (wifiInitiallyOn) {
+                SystemUtil.runShellCommand("cmd wifi set-wifi-enabled enabled");
+            } else {
+                SystemUtil.runShellCommand("cmd wifi set-wifi-enabled disabled");
+            }
         }
-
-        //reset wifi
-        if (wifiInitiallyOn) {
-            SystemUtil.runShellCommand("cmd wifi set-wifi-enabled enabled");
-        }
-
-        assertTrue("broadcast wasn't sent", resultReceiver.hasReceivedBroadCast());
-        assertTrue("Receiver didn't make any response.", stickyReceiver.hadReceivedBroadCast());
-    }
-
-    @androidx.test.filters.Suppress
-    // TODO(b/244351792): Remove when platform supports delivering sticky broadcasts from system
-    //  UID to unexported receivers.
-    public void testRegisterReceiver_notExported_stickyBroadcastNotReceived()
-            throws InterruptedException {
-        final WifiManager wifiManager = mContext.getSystemService(WifiManager.class);
-        boolean wifiInitiallyOn = wifiManager.isWifiEnabled();
-
-        ResultReceiver resultReceiver = new ResultReceiver();
-
-        Intent intent = new Intent(MOCK_STICKY_ACTION);
-        TestBroadcastReceiver stickyReceiver = new TestBroadcastReceiver();
-
-        mContext.sendStickyBroadcast(intent);
-
-        waitForReceiveBroadCast(resultReceiver);
-
-        assertNull("No broadcast message should be delivered",
-                mContext.registerReceiver(stickyReceiver, new IntentFilter(MOCK_STICKY_ACTION),
-                        Context.RECEIVER_NOT_EXPORTED).getAction());
-
-        synchronized (mLockObj) {
-            mLockObj.wait(BROADCAST_TIMEOUT);
-        }
-
-        //reset wifi
-        if (wifiInitiallyOn) {
-            SystemUtil.runShellCommand("cmd wifi set-wifi-enabled enabled");
-        }
-
-        assertFalse("Receiver didn't make any response.", stickyReceiver.hadReceivedBroadCast());
     }
 
     public void testEnforceCallingOrSelfUriPermission() {
