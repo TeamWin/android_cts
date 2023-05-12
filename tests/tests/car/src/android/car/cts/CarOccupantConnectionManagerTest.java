@@ -141,11 +141,6 @@ public final class CarOccupantConnectionManagerTest extends AbstractCarTestCase 
             }
 
             @Override
-            public void onRejected(@NonNull OccupantZoneInfo receiverZone,
-                    int rejectionReason) {
-            }
-
-            @Override
             public void onFailed(@NonNull OccupantZoneInfo receiverZone,
                     int connectionError) {
             }
@@ -195,8 +190,8 @@ public final class CarOccupantConnectionManagerTest extends AbstractCarTestCase 
         TestReceiverService receiverService = bindToLocalReceiverServiceAndWait();
 
         boolean[] onConnectedInvoked = new boolean[1];
-        boolean[] onRejectedInvoked = new boolean[1];
-        int[] rejectionReasons = new int[1];
+        boolean[] onFailedInvoked = new boolean[1];
+        int[] connectionErrors = new int[1];
         ConnectionRequestCallback connectionRequestCallback = new ConnectionRequestCallback() {
             @Override
             public void onConnected(@NonNull OccupantZoneInfo receiverZone) {
@@ -204,15 +199,10 @@ public final class CarOccupantConnectionManagerTest extends AbstractCarTestCase 
             }
 
             @Override
-            public void onRejected(@NonNull OccupantZoneInfo receiverZone,
-                    int rejectionReason) {
-                onRejectedInvoked[0] = true;
-                rejectionReasons[0] = rejectionReason;
-            }
-
-            @Override
             public void onFailed(@NonNull OccupantZoneInfo receiverZone,
                     int connectionError) {
+                onFailedInvoked[0] = true;
+                connectionErrors[0] = connectionError;
             }
 
             @Override
@@ -225,18 +215,18 @@ public final class CarOccupantConnectionManagerTest extends AbstractCarTestCase 
         mOccupantConnectionManager.requestConnection(mActivePeerZone, mExecutor,
                 connectionRequestCallback);
         PollingCheck.waitFor(CALLBACK_TIMEOUT_MS,
-                () -> !onConnectedInvoked[0] && onRejectedInvoked[0]
-                        && rejectionReasons[0] == TestReceiverService.REJECTION_REASON);
+                () -> !onConnectedInvoked[0] && onFailedInvoked[0]
+                        && connectionErrors[0] == TestReceiverService.REJECTION_REASON);
         Log.v(TAG, "Sender's first request is rejected");
 
         // The receiver service will accept the second request.
         Log.v(TAG, "Sender requests another connection");
         onConnectedInvoked[0] = false;
-        onRejectedInvoked[0] = false;
+        onFailedInvoked[0] = false;
         mOccupantConnectionManager.requestConnection(mActivePeerZone, mExecutor,
                 connectionRequestCallback);
         PollingCheck.waitFor(CALLBACK_TIMEOUT_MS,
-                () -> onConnectedInvoked[0] && !onRejectedInvoked[0]);
+                () -> onConnectedInvoked[0] && !onFailedInvoked[0]);
         Log.v(TAG, "Sender's second request is accepted");
 
         assertWithMessage("It should be connected to %s", mActivePeerZone)
@@ -352,8 +342,11 @@ public final class CarOccupantConnectionManagerTest extends AbstractCarTestCase 
                     }
 
                     @Override
-                    public void onRejected(@NonNull OccupantZoneInfo receiverZone,
-                            int rejectionReason) {
+                    public void onFailed(@NonNull OccupantZoneInfo receiverZone,
+                            int connectionError) {
+                        if (connectionError != REJECTION_REASON) {
+                            return;
+                        }
                         // We foresee that the other receiver service would reject the first
                         // request. This is fine, because it will accept the second request.
                         Log.v(TAG, "Receiver service requests another connection to the"
@@ -361,11 +354,6 @@ public final class CarOccupantConnectionManagerTest extends AbstractCarTestCase 
                         mOccupantConnectionManager.requestConnection(receiverZone,
                                 TestReceiverService.this.getMainExecutor(),
                                 mConnectionRequestCallback);
-                    }
-
-                    @Override
-                    public void onFailed(@NonNull OccupantZoneInfo receiverZone,
-                            int connectionError) {
                     }
 
                     @Override
@@ -400,7 +388,7 @@ public final class CarOccupantConnectionManagerTest extends AbstractCarTestCase 
         }
 
         @Override
-        public void onConnectionInitiated(OccupantZoneInfo senderZone, int senderAppState) {
+        public void onConnectionInitiated(OccupantZoneInfo senderZone) {
             // Wait a while to allow some time for the sender to cancel the request.
             try {
                 Thread.sleep(WAIT_BEFORE_RESPOND_TO_REQUEST_MS);
