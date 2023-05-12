@@ -65,25 +65,36 @@ public class EmergencyCallOnSimCallManagerTest extends BaseTelecomTestWithMockSe
 
     @Override
     public void setUp() throws Exception {
+        boolean isSetUpComplete = false;
         super.setUp();
         NewOutgoingCallBroadcastReceiver.reset();
         if (!mShouldTestTelecom  || !TestUtils.hasTelephonyFeature(mContext)) return;
 
-        setupConnectionService(null, FLAG_REGISTER | FLAG_ENABLE);
+        try {
+            setupConnectionService(null, FLAG_REGISTER | FLAG_ENABLE);
 
-        mTelecomManager.registerPhoneAccount(TEST_SIM_CALL_MANAGER_ACCOUNT);
-        TestUtils.enablePhoneAccount(getInstrumentation(),
-                TEST_SIM_CALL_MANAGER_PHONE_ACCOUNT_HANDLE);
-        assertPhoneAccountEnabled(TEST_SIM_CALL_MANAGER_PHONE_ACCOUNT_HANDLE);
-
+            mTelecomManager.registerPhoneAccount(TEST_SIM_CALL_MANAGER_ACCOUNT);
+            TestUtils.enablePhoneAccount(getInstrumentation(),
+                    TEST_SIM_CALL_MANAGER_PHONE_ACCOUNT_HANDLE);
+            assertPhoneAccountEnabled(TEST_SIM_CALL_MANAGER_PHONE_ACCOUNT_HANDLE);
+            isSetUpComplete = true;
+        } finally {
+            // Force tearDown if setUp errors out to ensure unused listeners are cleaned up.
+            if (!isSetUpComplete) {
+                tearDown();
+            }
+        }
     }
 
     @Override
     protected void tearDown() throws Exception {
-        if (mShouldTestTelecom  && TestUtils.hasTelephonyFeature(mContext)) {
-            mTelecomManager.unregisterPhoneAccount(TEST_SIM_CALL_MANAGER_PHONE_ACCOUNT_HANDLE);
+        try {
+            if (mShouldTestTelecom && TestUtils.hasTelephonyFeature(mContext)) {
+                mTelecomManager.unregisterPhoneAccount(TEST_SIM_CALL_MANAGER_PHONE_ACCOUNT_HANDLE);
+            }
+        } finally {
+            super.tearDown();
         }
-        super.tearDown();
     }
 
     public void testQueryLocationException() {
