@@ -1760,6 +1760,11 @@ public final class Helper {
         deviceConfigStateManager.set(value);
     }
 
+    public static boolean isPccFieldClassificationSet(@NonNull Context context) {
+        return Boolean.valueOf(runShellCommand(
+                "cmd autofill get field-detection-service-enabled " + context.getUserId()));
+    }
+
     /**
      * Whether IME is showing
      */
