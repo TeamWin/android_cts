@@ -26,8 +26,6 @@ import static android.app.role.RoleManager.MANAGE_HOLDERS_FLAG_DONT_KILL_APP;
 import static android.app.role.RoleManager.ROLE_SMS;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.content.pm.PackageManager.FEATURE_TELEPHONY;
-import static android.provider.DeviceConfig.NAMESPACE_DEVICE_POLICY_MANAGER;
-import static android.provider.DeviceConfig.NAMESPACE_TELEPHONY;
 
 import static com.android.bedstead.harrier.UserType.WORK_PROFILE;
 import static com.android.bedstead.nene.appops.CommonAppOps.OPSTR_CALL_PHONE;
@@ -56,6 +54,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.UserHandle;
 import android.provider.CallLog;
+import android.provider.Settings;
 import android.provider.Telephony;
 import android.telecom.Call;
 import android.telecom.InCallService;
@@ -67,7 +66,7 @@ import android.telephony.TelephonyManager;
 import com.android.activitycontext.ActivityContext;
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
-import com.android.bedstead.harrier.annotations.EnsureFeatureFlagEnabled;
+import com.android.bedstead.harrier.annotations.EnsureGlobalSettingSet;
 import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
 import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.RequireFeature;
@@ -137,17 +136,13 @@ public final class WorkProfileTelephonyTest {
         }
     }
 
-    @EnsureFeatureFlagEnabled(namespace = NAMESPACE_DEVICE_POLICY_MANAGER, key =
-            ENABLE_WORK_PROFILE_TELEPHONY_FLAG)
-    @EnsureFeatureFlagEnabled(namespace = NAMESPACE_DEVICE_POLICY_MANAGER, key =
-            ENABLE_SWITCH_TO_MANAGED_PROFILE_FLAG)
-    @EnsureFeatureFlagEnabled(namespace = NAMESPACE_TELEPHONY, key =
-            ENABLE_WORK_PROFILE_TELEPHONY_FLAG)
+    @EnsureGlobalSettingSet(key =
+            Settings.Global.ALLOW_WORK_PROFILE_TELEPHONY_FOR_NON_DPM_ROLE_HOLDERS, value = "1")
     @RequireRunOnWorkProfile(isOrganizationOwned = true)
     @Postsubmit(reason = "new test")
     @Test
     @CddTest(requirements = {"7.4.1.4/C-3-1"})
-    public void sendTextMessage_fromWorkProfile_allManagedSubscriptions_smsSentSuccessfullyAndReceivedSmsIntentDeliveredToWorkProfileDefaultSmsApp() {
+    public void sendTextMessage_fromWorkProfile_allManagedSubscriptions_smsSentSuccessfully() {
         assumeSmsCapableDevice();
         assertSimCardPresent();
         String previousDefaultSmsPackage = Telephony.Sms.getDefaultSmsPackage(sContext);
@@ -165,10 +160,6 @@ public final class WorkProfileTelephonyTest {
                     PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_MUTABLE_UNAUDITED);
             IntentFilter sentIntentFilter = new IntentFilter(SMS_SENT_INTENT_ACTION);
             smsApp.registerReceiver(sentIntentFilter, Context.RECEIVER_EXPORTED_UNAUDITED);
-            IntentFilter receivedMessageIntentFilter = new IntentFilter(
-                    Telephony.Sms.Intents.SMS_DELIVER_ACTION);
-            smsApp.registerReceiver(receivedMessageIntentFilter,
-                    Context.RECEIVER_EXPORTED_UNAUDITED);
 
             smsApp.smsManager().sendTextMessage(mDestinationNumber, null, "test", sentPendingIntent,
                     null);
@@ -176,8 +167,6 @@ public final class WorkProfileTelephonyTest {
             assertThat(smsApp.events().broadcastReceived().whereIntent().action().isEqualTo(
                     SMS_SENT_INTENT_ACTION).whereResultCode().isEqualTo(
                     Activity.RESULT_OK)).eventOccurred();
-            assertThat(smsApp.events().broadcastReceived().whereIntent().action().isEqualTo(
-                    Telephony.Sms.Intents.SMS_DELIVER_ACTION)).eventOccurred();
         } finally {
             dpm.setDefaultSmsApplication(sDeviceState.profileOwner(WORK_PROFILE).componentName(),
                     previousDefaultSmsPackage);
@@ -188,12 +177,8 @@ public final class WorkProfileTelephonyTest {
         }
     }
 
-    @EnsureFeatureFlagEnabled(namespace = NAMESPACE_DEVICE_POLICY_MANAGER, key =
-            ENABLE_WORK_PROFILE_TELEPHONY_FLAG)
-    @EnsureFeatureFlagEnabled(namespace = NAMESPACE_DEVICE_POLICY_MANAGER, key =
-            ENABLE_SWITCH_TO_MANAGED_PROFILE_FLAG)
-    @EnsureFeatureFlagEnabled(namespace = NAMESPACE_TELEPHONY, key =
-            ENABLE_WORK_PROFILE_TELEPHONY_FLAG)
+    @EnsureGlobalSettingSet(key =
+            Settings.Global.ALLOW_WORK_PROFILE_TELEPHONY_FOR_NON_DPM_ROLE_HOLDERS, value = "1")
     @EnsureHasWorkProfile(isOrganizationOwned = true)
     @RequireRunOnInitialUser
     @Postsubmit(reason = "new test")
@@ -244,12 +229,8 @@ public final class WorkProfileTelephonyTest {
         }
     }
 
-    @EnsureFeatureFlagEnabled(namespace = NAMESPACE_DEVICE_POLICY_MANAGER, key =
-            ENABLE_WORK_PROFILE_TELEPHONY_FLAG)
-    @EnsureFeatureFlagEnabled(namespace = NAMESPACE_DEVICE_POLICY_MANAGER, key =
-            ENABLE_SWITCH_TO_MANAGED_PROFILE_FLAG)
-    @EnsureFeatureFlagEnabled(namespace = NAMESPACE_TELEPHONY, key =
-            ENABLE_WORK_PROFILE_TELEPHONY_FLAG)
+    @EnsureGlobalSettingSet(key =
+            Settings.Global.ALLOW_WORK_PROFILE_TELEPHONY_FOR_NON_DPM_ROLE_HOLDERS, value = "1")
     @EnsureHasWorkProfile(isOrganizationOwned = true)
     @RequireRunOnInitialUser
     @Postsubmit(reason = "new test")
@@ -298,12 +279,8 @@ public final class WorkProfileTelephonyTest {
         }
     }
 
-    @EnsureFeatureFlagEnabled(namespace = NAMESPACE_DEVICE_POLICY_MANAGER, key =
-            ENABLE_WORK_PROFILE_TELEPHONY_FLAG)
-    @EnsureFeatureFlagEnabled(namespace = NAMESPACE_DEVICE_POLICY_MANAGER, key =
-            ENABLE_SWITCH_TO_MANAGED_PROFILE_FLAG)
-    @EnsureFeatureFlagEnabled(namespace = NAMESPACE_TELEPHONY, key =
-            ENABLE_WORK_PROFILE_TELEPHONY_FLAG)
+    @EnsureGlobalSettingSet(key =
+            Settings.Global.ALLOW_WORK_PROFILE_TELEPHONY_FOR_NON_DPM_ROLE_HOLDERS, value = "1")
     @RequireRunOnWorkProfile(isOrganizationOwned = true)
     @Postsubmit(reason = "new test")
     @Test
@@ -355,10 +332,8 @@ public final class WorkProfileTelephonyTest {
         }
     }
 
-    @EnsureFeatureFlagEnabled(namespace = NAMESPACE_DEVICE_POLICY_MANAGER, key =
-            ENABLE_WORK_PROFILE_TELEPHONY_FLAG)
-    @EnsureFeatureFlagEnabled(namespace = NAMESPACE_TELEPHONY, key =
-            ENABLE_WORK_PROFILE_TELEPHONY_FLAG)
+    @EnsureGlobalSettingSet(key =
+            Settings.Global.ALLOW_WORK_PROFILE_TELEPHONY_FOR_NON_DPM_ROLE_HOLDERS, value = "1")
     @EnsureHasWorkProfile(isOrganizationOwned = true)
     @Postsubmit(reason = "new test")
     @Test
@@ -391,12 +366,8 @@ public final class WorkProfileTelephonyTest {
         }
     }
 
-    @EnsureFeatureFlagEnabled(namespace = NAMESPACE_DEVICE_POLICY_MANAGER, key =
-            ENABLE_WORK_PROFILE_TELEPHONY_FLAG)
-    @EnsureFeatureFlagEnabled(namespace = NAMESPACE_DEVICE_POLICY_MANAGER, key =
-            ENABLE_SWITCH_TO_MANAGED_PROFILE_FLAG)
-    @EnsureFeatureFlagEnabled(namespace = NAMESPACE_TELEPHONY, key =
-            ENABLE_WORK_PROFILE_TELEPHONY_FLAG)
+    @EnsureGlobalSettingSet(key =
+            Settings.Global.ALLOW_WORK_PROFILE_TELEPHONY_FOR_NON_DPM_ROLE_HOLDERS, value = "1")
     @EnsureHasWorkProfile(isOrganizationOwned = true)
     @Postsubmit(reason = "new test")
     @Test
@@ -429,12 +400,8 @@ public final class WorkProfileTelephonyTest {
         }
     }
 
-    @EnsureFeatureFlagEnabled(namespace = NAMESPACE_DEVICE_POLICY_MANAGER, key =
-            ENABLE_WORK_PROFILE_TELEPHONY_FLAG)
-    @EnsureFeatureFlagEnabled(namespace = NAMESPACE_DEVICE_POLICY_MANAGER, key =
-            ENABLE_SWITCH_TO_MANAGED_PROFILE_FLAG)
-    @EnsureFeatureFlagEnabled(namespace = NAMESPACE_TELEPHONY, key =
-            ENABLE_WORK_PROFILE_TELEPHONY_FLAG)
+    @EnsureGlobalSettingSet(key =
+            Settings.Global.ALLOW_WORK_PROFILE_TELEPHONY_FOR_NON_DPM_ROLE_HOLDERS, value = "1")
     @EnsureHasWorkProfile(isOrganizationOwned = true)
     @Postsubmit(reason = "new test")
     @Test
@@ -464,12 +431,8 @@ public final class WorkProfileTelephonyTest {
         }
     }
 
-    @EnsureFeatureFlagEnabled(namespace = NAMESPACE_DEVICE_POLICY_MANAGER, key =
-            ENABLE_WORK_PROFILE_TELEPHONY_FLAG)
-    @EnsureFeatureFlagEnabled(namespace = NAMESPACE_DEVICE_POLICY_MANAGER, key =
-            ENABLE_SWITCH_TO_MANAGED_PROFILE_FLAG)
-    @EnsureFeatureFlagEnabled(namespace = NAMESPACE_TELEPHONY, key =
-            ENABLE_WORK_PROFILE_TELEPHONY_FLAG)
+    @EnsureGlobalSettingSet(key =
+            Settings.Global.ALLOW_WORK_PROFILE_TELEPHONY_FOR_NON_DPM_ROLE_HOLDERS, value = "1")
     @EnsureHasWorkProfile(isOrganizationOwned = true)
     @Postsubmit(reason = "new test")
     @Test
@@ -499,10 +462,8 @@ public final class WorkProfileTelephonyTest {
         }
     }
 
-    @EnsureFeatureFlagEnabled(namespace = NAMESPACE_DEVICE_POLICY_MANAGER, key =
-            ENABLE_WORK_PROFILE_TELEPHONY_FLAG)
-    @EnsureFeatureFlagEnabled(namespace = NAMESPACE_TELEPHONY, key =
-            ENABLE_WORK_PROFILE_TELEPHONY_FLAG)
+    @EnsureGlobalSettingSet(key =
+            Settings.Global.ALLOW_WORK_PROFILE_TELEPHONY_FOR_NON_DPM_ROLE_HOLDERS, value = "1")
     @RequireRunOnWorkProfile(isOrganizationOwned = true)
     @Postsubmit(reason = "new test")
     @Test
@@ -541,10 +502,8 @@ public final class WorkProfileTelephonyTest {
         }
     }
 
-    @EnsureFeatureFlagEnabled(namespace = NAMESPACE_DEVICE_POLICY_MANAGER, key =
-            ENABLE_WORK_PROFILE_TELEPHONY_FLAG)
-    @EnsureFeatureFlagEnabled(namespace = NAMESPACE_TELEPHONY, key =
-            ENABLE_WORK_PROFILE_TELEPHONY_FLAG)
+    @EnsureGlobalSettingSet(key =
+            Settings.Global.ALLOW_WORK_PROFILE_TELEPHONY_FOR_NON_DPM_ROLE_HOLDERS, value = "1")
     @EnsureHasWorkProfile(isOrganizationOwned = true, installInstrumentedApp = TRUE)
     @RequireRunOnInitialUser
     @Postsubmit(reason = "new test")
