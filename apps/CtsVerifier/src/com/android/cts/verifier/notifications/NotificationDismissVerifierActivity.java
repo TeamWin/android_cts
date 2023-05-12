@@ -140,34 +140,29 @@ public class NotificationDismissVerifierActivity extends InteractiveVerifierActi
     }
 
     private void sendOngoingNotification() {
-        String tag = UUID.randomUUID().toString();
-        long when = System.currentTimeMillis();
-        Log.d(TAG, "Sending: tag=" + tag + " when=" + when + " ongoing=true");
-
-        Notification ongoingNotif = new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
-                .setContentTitle(getString(R.string.nd_notif_title))
-                .setSmallIcon(R.drawable.ic_stat_alice)
-                .setWhen(when)
-                .setOngoing(true)
-                .build();
-        mNm.notify(tag, NOTIFICATION_ID, ongoingNotif);
+        sendNotification(true /* ongoing */);
     }
 
-    private void sendNotificationWithPublicVersion() {
+    private void sendRegularNotification() {
+        sendNotification(false /* ongoing */);
+    }
+
+    private void sendNotification(boolean ongoing) {
         String tag = UUID.randomUUID().toString();
         long when = System.currentTimeMillis();
-        Log.d(TAG, "Sending: tag=" + tag + " when=" + when);
+        Log.d(TAG, "Sending: tag=" + tag + " when=" + when + " ongoing=" + ongoing);
 
         Notification publicVersion = new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
-                .setContentTitle(getString(R.string.nd_notif_public_version_title))
+                .setContentTitle(getString(R.string.nd_notif_title))
                 .setSmallIcon(R.drawable.ic_stat_alice)
                 .setWhen(when)
                 .build();
         Notification privateVersion = new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
-                .setContentTitle(getString(R.string.nd_notif_private_version_title))
+                .setContentTitle(getString(R.string.nd_notif_title))
                 .setSmallIcon(R.drawable.ic_stat_alice)
                 .setWhen(when)
                 .setPublicVersion(publicVersion)
+                .setOngoing(ongoing)
                 .build();
 
         mNm.notify(tag, NOTIFICATION_ID, privateVersion);
@@ -251,7 +246,7 @@ public class NotificationDismissVerifierActivity extends InteractiveVerifierActi
 
         @Override
         protected void sendNotification() {
-            sendNotificationWithPublicVersion();
+            sendRegularNotification();
         }
     }
 
@@ -262,7 +257,7 @@ public class NotificationDismissVerifierActivity extends InteractiveVerifierActi
 
         @Override
         protected void sendNotification() {
-            sendNotificationWithPublicVersion();
+            sendRegularNotification();
         }
     }
 
