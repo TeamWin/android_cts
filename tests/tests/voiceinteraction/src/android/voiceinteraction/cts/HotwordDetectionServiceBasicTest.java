@@ -186,7 +186,7 @@ public class HotwordDetectionServiceBasicTest {
         // Check the test can get the service
         Objects.requireNonNull(mService);
 
-        mKeyphraseArray = Helper.createKeyprhaseArray(mService);
+        mKeyphraseArray = Helper.createKeyphraseArray(mService);
 
         // Hook up SoundTriggerInjection to inject/observe STHAL operations.
         // Requires MANAGE_SOUND_TRIGGER
