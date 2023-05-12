@@ -768,6 +768,87 @@ public class AudioManagerTest extends InstrumentationTestCase {
         }
     }
 
+    /**
+     * Test that in RINGER_MODE_VIBRATE we observe:
+     * ADJUST_UNMUTE NOTIFICATION -> no change (no mode change, NOTIF still muted)
+     * ADJUST_UNMUTE NOTIFICATION + FLAG_ALLOW_RINGER_MODES -> MODE_NORMAL
+     * @throws Exception
+     */
+    public void testAdjustUnmuteNotificationInVibrate() throws Exception {
+        if (mSkipRingerTests) {
+            return;
+        }
+        // set mode to VIBRATE
+        Utils.toggleNotificationPolicyAccess(
+                mContext.getPackageName(), getInstrumentation(), true);
+        mAudioManager.setRingerMode(RINGER_MODE_VIBRATE);
+        assertEquals(RINGER_MODE_VIBRATE, mAudioManager.getRingerMode());
+        Utils.toggleNotificationPolicyAccess(
+                mContext.getPackageName(), getInstrumentation(), false);
+
+        // verify expected muting from the VIBRATE mode
+        assertStreamMuted(STREAM_RING, true,
+                "RING not muted in MODE_VIBRATE");
+        assertStreamMuted(STREAM_NOTIFICATION, true,
+                "NOTIFICATION not muted in MODE_VIBRATE");
+
+        // unmute NOTIFICATION
+        mAudioManager.adjustStreamVolume(STREAM_NOTIFICATION, AudioManager.ADJUST_UNMUTE, 0);
+        // verify it had no effect
+        assertStreamMuted(STREAM_NOTIFICATION, true, "NOTIFICATION did unmute");
+        // unmuting NOTIFICATION should not have exited RINGER_MODE_VIBRATE
+        assertEquals(RINGER_MODE_VIBRATE, mAudioManager.getRingerMode());
+
+        // unmute NOTIFICATION with FLAG_ALLOW_RINGER_MODES
+        mAudioManager.adjustStreamVolume(STREAM_NOTIFICATION,
+                AudioManager.ADJUST_UNMUTE, AudioManager.FLAG_ALLOW_RINGER_MODES);
+        // verify it unmuted NOTIFICATION and RING
+        assertStreamMuted(STREAM_NOTIFICATION, false,
+                "NOTIFICATION (+FLAG_ALLOW_RINGER_MODES) didn't unmute");
+        assertStreamMuted(STREAM_RING, false, "RING didn't unmute");
+        // unmuting NOTIFICATION w/ FLAG_ALLOW_RINGER_MODES should have exited RINGER_MODE_VIBRATE
+        assertEquals(RINGER_MODE_NORMAL, mAudioManager.getRingerMode());
+    }
+
+    /**
+     * Test that in RINGER_MODE_SILENT we observe:
+     * ADJUST_UNMUTE NOTIFICATION -> no change (no mode change, NOTIF still muted)
+     *
+     * Note that in SILENT we cannot test ADJUST_UNMUTE NOTIFICATION + FLAG_ALLOW_RINGER_MODES
+     * because it depends on VolumePolicy.volumeUpToExitSilent.
+     * TODO add test API to query VolumePolicy, expected in MODE_SILENT:
+     * ADJUST_UNMUTE NOTIFICATION + FLAG_ALLOW_RINGER_MODE ->
+     *                            no change if VolumePolicy.volumeUpToExitSilent false (default?)
+     * ADJUST_UNMUTE NOTIFICATION + FLAG_ALLOW_RINGER_MODE ->
+     *                            MODE_NORMAL if VolumePolicy.volumeUpToExitSilent true
+     * @throws Exception
+     */
+    public void testAdjustUnmuteNotificationInSilent() throws Exception {
+        if (mSkipRingerTests) {
+            return;
+        }
+        // set mode to SILENT
+        Utils.toggleNotificationPolicyAccess(
+                mContext.getPackageName(), getInstrumentation(), true);
+        mAudioManager.setRingerMode(RINGER_MODE_SILENT);
+        assertEquals(RINGER_MODE_SILENT, mAudioManager.getRingerMode());
+        Utils.toggleNotificationPolicyAccess(
+                mContext.getPackageName(), getInstrumentation(), false);
+
+        // verify expected muting from the SILENT mode
+        assertStreamMuted(STREAM_RING, true,
+                "RING not muted in MODE_SILENT");
+        assertStreamMuted(STREAM_NOTIFICATION, true,
+                "NOTIFICATION not muted in MODE_SILENT");
+
+        // unmute NOTIFICATION
+        mAudioManager.adjustStreamVolume(STREAM_NOTIFICATION, AudioManager.ADJUST_UNMUTE, 0);
+        // verify it had no effect
+        assertStreamMuted(STREAM_NOTIFICATION, true, "NOTIFICATION did unmute");
+        // unmuting NOTIFICATION should not have exited RINGER_MODE_SILENT
+        assertEquals(RINGER_MODE_SILENT, mAudioManager.getRingerMode());
+    }
+
     public void testSetRingerModePolicyAccess() throws Exception {
         if (mSkipRingerTests) {
             return;
