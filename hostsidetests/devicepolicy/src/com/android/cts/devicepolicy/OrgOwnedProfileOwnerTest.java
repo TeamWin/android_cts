@@ -547,9 +547,7 @@ public final class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
 
         try {
             toggleQuietMode(true);
-            waitForUserStopped(mUserId);
             toggleQuietMode(false);
-            waitForUserUnlock(mUserId);
             // Ensure the DPC has handled the broadcast
             waitForBroadcastIdle();
             runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".PersonalAppsSuspensionTest",
@@ -578,9 +576,7 @@ public final class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
 
         try {
             toggleQuietMode(true);
-            waitForUserStopped(mUserId);
             toggleQuietMode(false);
-            waitForUserUnlock(mUserId);
             // Ensure the DPC has handled the broadcast
             waitForBroadcastIdle();
             runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".PersonalAppsSuspensionTest",
@@ -691,6 +687,16 @@ public final class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
     private void toggleQuietMode(boolean quietModeEnable) throws Exception {
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".PersonalAppsSuspensionTest",
                 quietModeEnable ? "testEnableQuietMode" : "testDisableQuietMode", mPrimaryUserId);
+
+        boolean keepProfilesRunning = executeShellCommand("dumpsys device_policy")
+                .contains("Keep profiles running: true");
+        if (!keepProfilesRunning) {
+            if (quietModeEnable) {
+                waitForUserStopped(mUserId);
+            } else {
+                waitForUserUnlock(mUserId);
+            }
+        }
     }
 
     private void setAndStartLauncher(String component) throws Exception {
