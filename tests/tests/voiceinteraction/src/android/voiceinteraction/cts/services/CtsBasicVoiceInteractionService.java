@@ -32,11 +32,13 @@ import android.os.HandlerThread;
 import android.os.Looper;
 import android.os.PersistableBundle;
 import android.service.voice.AlwaysOnHotwordDetector;
+import android.service.voice.HotwordDetectionService;
 import android.service.voice.HotwordDetectionServiceFailure;
 import android.service.voice.HotwordDetector;
 import android.service.voice.HotwordRejectedResult;
 import android.service.voice.SandboxedDetectionInitializer;
 import android.service.voice.SoundTriggerFailure;
+import android.service.voice.VisualQueryDetectionService;
 import android.service.voice.VisualQueryDetectionServiceFailure;
 import android.service.voice.VisualQueryDetector;
 import android.service.voice.VoiceInteractionService;
@@ -141,7 +143,7 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
     public void createAlwaysOnHotwordDetectorNoHotwordDetectionService(boolean useExecutor,
             boolean runOnMainThread) {
         Log.i(TAG, "createAlwaysOnHotwordDetectorNoHotwordDetectionService");
-        mServiceTriggerLatch = new CountDownLatch(1);
+        mDetectorInitializedLatch = new CountDownLatch(1);
 
         AlwaysOnHotwordDetector.Callback callback = new AlwaysOnHotwordDetector.Callback() {
             @Override
@@ -194,8 +196,8 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
         handler.post(() -> runWithShellPermissionIdentity(() -> {
             mAlwaysOnHotwordDetector = callCreateAlwaysOnHotwordDetectorNoHotwordDetectionService(
                     callback, useExecutor);
-            if (mServiceTriggerLatch != null) {
-                mServiceTriggerLatch.countDown();
+            if (mDetectorInitializedLatch != null) {
+                mDetectorInitializedLatch.countDown();
             }
         }, MANAGE_HOTWORD_DETECTION, RECORD_AUDIO, CAPTURE_AUDIO_HOTWORD));
     }
@@ -226,7 +228,7 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
     public void createAlwaysOnHotwordDetector(boolean useExecutor, boolean runOnMainThread,
             @Nullable PersistableBundle options) {
         Log.i(TAG, "createAlwaysOnHotwordDetector!!!!");
-        mServiceTriggerLatch = new CountDownLatch(1);
+        mDetectorInitializedLatch = new CountDownLatch(1);
 
         final AlwaysOnHotwordDetector.Callback callback = new AlwaysOnHotwordDetector.Callback() {
             @Override
@@ -285,8 +287,8 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
                 Log.i(TAG, "onHotwordDetectionServiceInitialized status = " + status);
                 mInitializedStatus = status;
                 setIsDetectorCallbackRunningOnMainThread(isRunningOnMainThread());
-                if (mServiceTriggerLatch != null) {
-                    mServiceTriggerLatch.countDown();
+                if (mDetectorInitializedLatch != null) {
+                    mDetectorInitializedLatch.countDown();
                 }
             }
 
@@ -311,7 +313,7 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
      * Create an AlwaysOnHotwordDetector but doesn't hold MANAGE_HOTWORD_DETECTION
      */
     public void createAlwaysOnHotwordDetectorWithoutManageHotwordDetectionPermission() {
-        mServiceTriggerLatch = new CountDownLatch(1);
+        mDetectorInitializedLatch = new CountDownLatch(1);
         mHandler.post(() -> runWithShellPermissionIdentity(
                 () -> callCreateAlwaysOnHotwordDetector(mNoOpHotwordDetectorCallback),
                 RECORD_AUDIO, CAPTURE_AUDIO_HOTWORD
@@ -322,7 +324,7 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
      * Create a SoftwareHotwordDetector but doesn't hold MANAGE_HOTWORD_DETECTION
      */
     public void createSoftwareHotwordDetectorWithoutManageHotwordDetectionPermission() {
-        mServiceTriggerLatch = new CountDownLatch(1);
+        mDetectorInitializedLatch = new CountDownLatch(1);
         mHandler.post(() -> runWithShellPermissionIdentity(
                 () -> callCreateSoftwareHotwordDetector(mNoOpSoftwareDetectorCallback,
                         /* useExecutor= */ false), CAPTURE_AUDIO_HOTWORD));
@@ -334,7 +336,7 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
      * API call to the system to do BIND_HOTWORD_DETECTION_SERVICE permission checking.
      */
     public void createSoftwareHotwordDetectorHoldBindHotwordDetectionPermission() {
-        mServiceTriggerLatch = new CountDownLatch(1);
+        mDetectorInitializedLatch = new CountDownLatch(1);
         mHandler.post(() -> runWithShellPermissionIdentity(
                 () -> callCreateSoftwareHotwordDetector(mNoOpSoftwareDetectorCallback,
                         /* useExecutor= */ false), MANAGE_HOTWORD_DETECTION,
@@ -347,7 +349,7 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
      * API call to the system to do BIND_HOTWORD_DETECTION_SERVICE permission checking.
      */
     public void createAlwaysOnHotwordDetectorHoldBindHotwordDetectionPermission() {
-        mServiceTriggerLatch = new CountDownLatch(1);
+        mDetectorInitializedLatch = new CountDownLatch(1);
         mHandler.post(() -> runWithShellPermissionIdentity(
                 () -> callCreateAlwaysOnHotwordDetector(mNoOpHotwordDetectorCallback),
                 RECORD_AUDIO, CAPTURE_AUDIO_HOTWORD, MANAGE_HOTWORD_DETECTION,
@@ -371,9 +373,21 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
     public void createAlwaysOnHotwordDetectorWithOnFailureCallback(boolean useExecutor,
             boolean runOnMainThread, @Nullable PersistableBundle options) {
         Log.i(TAG, "createAlwaysOnHotwordDetectorWithOnFailureCallback");
-        mServiceTriggerLatch = new CountDownLatch(1);
+        mDetectorInitializedLatch = new CountDownLatch(1);
 
-        final AlwaysOnHotwordDetector.Callback callback = new AlwaysOnHotwordDetector.Callback() {
+        final Handler handler = runOnMainThread ? new Handler(Looper.getMainLooper()) : mHandler;
+        handler.post(() -> runWithShellPermissionIdentity(() -> {
+            mAlwaysOnHotwordDetector = callCreateAlwaysOnHotwordDetector(
+                    createAlwaysOnHotwordDetectorCallbackWithListeners(), useExecutor,
+                    options);
+        }, MANAGE_HOTWORD_DETECTION, RECORD_AUDIO, CAPTURE_AUDIO_HOTWORD));
+    }
+
+    /**
+     * Creates a callback which is set up to listen and log all events.
+     */
+    public AlwaysOnHotwordDetector.Callback createAlwaysOnHotwordDetectorCallbackWithListeners() {
+        return new AlwaysOnHotwordDetector.Callback() {
             @Override
             public void onAvailabilityChanged(int status) {
                 Log.i(TAG, "onAvailabilityChanged(" + status + ")");
@@ -463,8 +477,8 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
                 Log.i(TAG, "onHotwordDetectionServiceInitialized status = " + status);
                 mInitializedStatus = status;
                 setIsDetectorCallbackRunningOnMainThread(isRunningOnMainThread());
-                if (mServiceTriggerLatch != null) {
-                    mServiceTriggerLatch.countDown();
+                if (mDetectorInitializedLatch != null) {
+                    mDetectorInitializedLatch.countDown();
                 }
             }
 
@@ -477,12 +491,6 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
                 }
             }
         };
-
-        final Handler handler = runOnMainThread ? new Handler(Looper.getMainLooper()) : mHandler;
-        handler.post(() -> runWithShellPermissionIdentity(() -> {
-            mAlwaysOnHotwordDetector = callCreateAlwaysOnHotwordDetector(callback, useExecutor,
-                    options);
-        }, MANAGE_HOTWORD_DETECTION, RECORD_AUDIO, CAPTURE_AUDIO_HOTWORD));
     }
 
     /**
@@ -510,7 +518,7 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
      */
     public void createSoftwareHotwordDetector(boolean useExecutor, boolean runOnMainThread,
             @Nullable PersistableBundle options) {
-        mServiceTriggerLatch = new CountDownLatch(1);
+        mDetectorInitializedLatch = new CountDownLatch(1);
 
         final HotwordDetector.Callback callback = new HotwordDetector.Callback() {
             @Override
@@ -558,8 +566,8 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
                 Log.i(TAG, "onHotwordDetectionServiceInitialized status = " + status);
                 mInitializedStatus = status;
                 setIsDetectorCallbackRunningOnMainThread(isRunningOnMainThread());
-                if (mServiceTriggerLatch != null) {
-                    mServiceTriggerLatch.countDown();
+                if (mDetectorInitializedLatch != null) {
+                    mDetectorInitializedLatch.countDown();
                 }
             }
 
@@ -586,7 +594,7 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
      */
     public void createSoftwareHotwordDetectorWithOnFailureCallback(boolean useExecutor,
             boolean runOnMainThread) {
-        mServiceTriggerLatch = new CountDownLatch(1);
+        mDetectorInitializedLatch = new CountDownLatch(1);
 
         final HotwordDetector.Callback callback = new HotwordDetector.Callback() {
             @Override
@@ -650,8 +658,8 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
                 Log.i(TAG, "onHotwordDetectionServiceInitialized status = " + status);
                 mInitializedStatus = status;
                 setIsDetectorCallbackRunningOnMainThread(isRunningOnMainThread());
-                if (mServiceTriggerLatch != null) {
-                    mServiceTriggerLatch.countDown();
+                if (mDetectorInitializedLatch != null) {
+                    mDetectorInitializedLatch.countDown();
                 }
             }
 
@@ -675,7 +683,7 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
      * Create a VisualQueryDetector but doesn't hold MANAGE_HOTWORD_DETECTION
      */
     public void createVisualQueryDetectorWithoutManageHotwordDetectionPermission() {
-        mServiceTriggerLatch = new CountDownLatch(1);
+        mDetectorInitializedLatch = new CountDownLatch(1);
         mHandler.post(() -> runWithShellPermissionIdentity(
                 () -> callCreateVisualQueryDetector(mNoOpVisualQueryDetectorCallback)));
     }
@@ -685,14 +693,14 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
      * BIND_VISUAL_QUERY_DETECTION_SERVICE.
      */
     public void createVisualQueryDetectorHoldBindVisualQueryDetectionPermission() {
-        mServiceTriggerLatch = new CountDownLatch(1);
+        mDetectorInitializedLatch = new CountDownLatch(1);
         mHandler.post(() -> runWithShellPermissionIdentity(
                 () -> callCreateVisualQueryDetector(mNoOpVisualQueryDetectorCallback),
                 BIND_VISUAL_QUERY_DETECTION_SERVICE));
     }
 
     public void createVisualQueryDetector() {
-        mServiceTriggerLatch = new CountDownLatch(1);
+        mDetectorInitializedLatch = new CountDownLatch(1);
         mHandler.post(() -> runWithShellPermissionIdentity(() -> {
             VisualQueryDetector.Callback callback = new VisualQueryDetector.Callback() {
                 @Override
@@ -731,8 +739,8 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
                         return;
                     }
                     mInitializedStatus = status;
-                    if (mServiceTriggerLatch != null) {
-                        mServiceTriggerLatch.countDown();
+                    if (mDetectorInitializedLatch != null) {
+                        mDetectorInitializedLatch.countDown();
                     }
                 }
 
@@ -759,6 +767,26 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
             };
             mVisualQueryDetector = callCreateVisualQueryDetector(callback);
         }, MANAGE_HOTWORD_DETECTION));
+    }
+
+    /**
+     * Create a CountDownLatch that is used to wait for a HotwordDetector to be fully initialized
+     * after calling create.
+     *
+     * <p>For detector create requests which do not use an isolated service like
+     * {@link HotwordDetectionService} or {@link VisualQueryDetectionService}, this latch
+     * is counted down as soon as the create detector API returns.
+     *
+     * <p>For detector create requests which use {@link HotwordDetectionService}, this latch is
+     * counted down when {@link HotwordDetector.Callback#onHotwordDetectionServiceInitialized} is
+     * received.
+     *
+     * <p>For detector create requests which use {@link VisualQueryDetectionService}, this latch is
+     * counted down when
+     * {@link VisualQueryDetector.Callback#onVisualQueryDetectionServiceInitialized} is received.
+     */
+    public void initDetectorInitializedLatch() {
+        mDetectorInitializedLatch = new CountDownLatch(1);
     }
 
     /**
@@ -806,6 +834,10 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
      */
     public void initOnFailureLatch() {
         mOnFailureLatch = new CountDownLatch(1);
+    }
+
+    public boolean isOnFailureLatchOpen() {
+        return mOnFailureLatch != null && mOnFailureLatch.getCount() > 0;
     }
 
     /**
