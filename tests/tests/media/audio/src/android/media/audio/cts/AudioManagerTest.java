@@ -770,8 +770,12 @@ public class AudioManagerTest extends InstrumentationTestCase {
 
     /**
      * Test that in RINGER_MODE_VIBRATE we observe:
-     * ADJUST_UNMUTE NOTIFICATION -> no change (no mode change, NOTIF still muted)
-     * ADJUST_UNMUTE NOTIFICATION + FLAG_ALLOW_RINGER_MODES -> MODE_NORMAL
+     * if NOTIFICATION & RING are not aliased:
+     *   ADJUST_UNMUTE NOTIFICATION -> no change (no mode change, NOTIF still muted)
+     *   ADJUST_UNMUTE NOTIFICATION + FLAG_ALLOW_RINGER_MODES -> MODE_NORMAL
+     * if NOTIFICATION & RING are aliased:
+     *   ADJUST_UNMUTE NOTIFICATION -> MODE_NORMAL
+     *   ADJUST_UNMUTE NOTIFICATION + FLAG_ALLOW_RINGER_MODES -> MODE_NORMAL
      * @throws Exception
      */
     public void testAdjustUnmuteNotificationInVibrate() throws Exception {
@@ -786,28 +790,61 @@ public class AudioManagerTest extends InstrumentationTestCase {
         Utils.toggleNotificationPolicyAccess(
                 mContext.getPackageName(), getInstrumentation(), false);
 
+        getInstrumentation().getUiAutomation()
+                .adoptShellPermissionIdentity(Manifest.permission.MODIFY_AUDIO_SETTINGS_PRIVILEGED);
+        final int notifiAliasedStream = mAudioManager.getStreamTypeAlias(STREAM_NOTIFICATION);
+        getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
+
         // verify expected muting from the VIBRATE mode
         assertStreamMuted(STREAM_RING, true,
                 "RING not muted in MODE_VIBRATE");
         assertStreamMuted(STREAM_NOTIFICATION, true,
                 "NOTIFICATION not muted in MODE_VIBRATE");
 
-        // unmute NOTIFICATION
-        mAudioManager.adjustStreamVolume(STREAM_NOTIFICATION, AudioManager.ADJUST_UNMUTE, 0);
-        // verify it had no effect
-        assertStreamMuted(STREAM_NOTIFICATION, true, "NOTIFICATION did unmute");
-        // unmuting NOTIFICATION should not have exited RINGER_MODE_VIBRATE
-        assertEquals(RINGER_MODE_VIBRATE, mAudioManager.getRingerMode());
+        if (notifiAliasedStream == STREAM_NOTIFICATION) {
+            Log.i(TAG, "testAdjustUnmuteNotificationInVibrate: NOTIF independent");
+            // unmute NOTIFICATION
+            mAudioManager.adjustStreamVolume(STREAM_NOTIFICATION, AudioManager.ADJUST_UNMUTE, 0);
+            // verify it had no effect
+            assertStreamMuted(STREAM_NOTIFICATION, true, "NOTIFICATION did unmute");
+            // unmuting NOTIFICATION should not have exited RINGER_MODE_VIBRATE
+            assertEquals(RINGER_MODE_VIBRATE, mAudioManager.getRingerMode());
 
-        // unmute NOTIFICATION with FLAG_ALLOW_RINGER_MODES
-        mAudioManager.adjustStreamVolume(STREAM_NOTIFICATION,
-                AudioManager.ADJUST_UNMUTE, AudioManager.FLAG_ALLOW_RINGER_MODES);
-        // verify it unmuted NOTIFICATION and RING
-        assertStreamMuted(STREAM_NOTIFICATION, false,
-                "NOTIFICATION (+FLAG_ALLOW_RINGER_MODES) didn't unmute");
-        assertStreamMuted(STREAM_RING, false, "RING didn't unmute");
-        // unmuting NOTIFICATION w/ FLAG_ALLOW_RINGER_MODES should have exited RINGER_MODE_VIBRATE
-        assertEquals(RINGER_MODE_NORMAL, mAudioManager.getRingerMode());
+            // unmute NOTIFICATION with FLAG_ALLOW_RINGER_MODES
+            mAudioManager.adjustStreamVolume(STREAM_NOTIFICATION,
+                    AudioManager.ADJUST_UNMUTE, AudioManager.FLAG_ALLOW_RINGER_MODES);
+            // verify it unmuted NOTIFICATION and RING
+            assertStreamMuted(STREAM_NOTIFICATION, false,
+                    "NOTIFICATION (+FLAG_ALLOW_RINGER_MODES) didn't unmute");
+            assertStreamMuted(STREAM_RING, false, "RING didn't unmute");
+            // unmuting NOTIFICATION w/ FLAG_ALLOW_RINGER_MODES should have exited MODE_VIBRATE
+            assertEquals(RINGER_MODE_NORMAL, mAudioManager.getRingerMode());
+        } else if (notifiAliasedStream == STREAM_RING) {
+            Log.i(TAG, "testAdjustUnmuteNotificationInVibrate: NOTIF/RING aliased");
+            // unmute NOTIFICATION (should be just like unmuting RING)
+            mAudioManager.adjustStreamVolume(STREAM_NOTIFICATION, AudioManager.ADJUST_UNMUTE, 0);
+            // verify it unmuted both RING and NOTIFICATION
+            assertStreamMuted(STREAM_NOTIFICATION, false, "NOTIFICATION didn't unmute");
+            assertStreamMuted(STREAM_RING, false, "RING didn't unmute");
+            // unmuting NOTIFICATION should have exited RINGER_MODE_VIBRATE
+            assertEquals(RINGER_MODE_NORMAL, mAudioManager.getRingerMode());
+
+            // test again with FLAG_ALLOW_RINGER_MODES
+            Utils.toggleNotificationPolicyAccess(
+                    mContext.getPackageName(), getInstrumentation(), true);
+            mAudioManager.setRingerMode(RINGER_MODE_VIBRATE);
+            assertEquals(RINGER_MODE_VIBRATE, mAudioManager.getRingerMode());
+            Utils.toggleNotificationPolicyAccess(
+                    mContext.getPackageName(), getInstrumentation(), false);
+            // unmute NOTIFICATION (should be just like unmuting RING)
+            mAudioManager.adjustStreamVolume(STREAM_NOTIFICATION,
+                    AudioManager.ADJUST_UNMUTE, AudioManager.FLAG_ALLOW_RINGER_MODES);
+            // verify it unmuted both RING and NOTIFICATION
+            assertStreamMuted(STREAM_NOTIFICATION, false, "NOTIFICATION didn't unmute");
+            assertStreamMuted(STREAM_RING, false, "RING didn't unmute");
+            // unmuting NOTIFICATION should have exited RINGER_MODE_VIBRATE
+            assertEquals(RINGER_MODE_NORMAL, mAudioManager.getRingerMode());
+        }
     }
 
     /**
