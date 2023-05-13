@@ -372,6 +372,18 @@ public final class AutoFillServiceTestCase {
                         AutofillFeatureFlags.DEVICE_CONFIG_AUTOFILL_PCC_FEATURE_PROVIDER_HINTS,
                         ""))
 
+
+                //
+                // AFAA should be off by default
+                .around(new DeviceConfigStateChangerRule(sContext, DeviceConfig.NAMESPACE_AUTOFILL,
+                            AutofillFeatureFlags.
+                                DEVICE_CONFIG_TRIGGER_FILL_REQUEST_ON_UNIMPORTANT_VIEW,
+                            Boolean.toString(false)))
+
+                .around(new DeviceConfigStateChangerRule(sContext, DeviceConfig.NAMESPACE_AUTOFILL,
+                            "trigger_fill_request_on_filtered_important_views",
+                            Boolean.toString(false)))
+
                 //
                 // Finally, let subclasses add their own rules (like ActivityTestRule)
                 .around(getMainTestRule());
