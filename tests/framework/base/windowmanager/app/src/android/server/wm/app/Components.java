@@ -278,9 +278,6 @@ public class Components extends ComponentsBase {
     public static final ComponentName OVERLAY_TEST_SERVICE =
             component("OverlayTestService");
 
-    public static final ComponentName BACKGROUND_IMAGE_ACTIVITY =
-            component("BackgroundImageActivity");
-
     public static final ComponentName BLUR_ACTIVITY =
             component("BlurActivity");
 
