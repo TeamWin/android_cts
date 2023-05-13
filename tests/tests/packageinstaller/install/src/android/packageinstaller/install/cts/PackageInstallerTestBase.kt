@@ -45,6 +45,7 @@ import android.util.Log
 import androidx.core.content.FileProvider
 import androidx.test.InstrumentationRegistry
 import androidx.test.rule.ActivityTestRule
+import com.android.compatibility.common.util.DisableAnimationRule
 import com.android.compatibility.common.util.FutureResultActivity
 import com.android.compatibility.common.util.SystemUtil
 import java.io.File
@@ -88,6 +89,9 @@ open class PackageInstallerTestBase {
         val context: Context = InstrumentationRegistry.getTargetContext()
         val testUserId: Int = context.user.identifier
     }
+
+    @get:Rule
+    val disableAnimationsRule = DisableAnimationRule()
 
     @get:Rule
     val installDialogStarter = ActivityTestRule(FutureResultActivity::class.java)
