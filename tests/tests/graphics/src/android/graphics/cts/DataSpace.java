@@ -15,6 +15,11 @@
  */
 package android.graphics.cts;
 
+import static org.junit.Assert.assertNotNull;
+
+import android.graphics.ColorSpace;
+import android.graphics.ColorSpace.Named;
+
 /**
  *  Helper class for ADataSpace.
  */
@@ -28,6 +33,44 @@ final class DataSpace {
     public static final int ADATASPACE_SCRGB = 411107328;
     public static final int ADATASPACE_SRGB_LINEAR = 138477568;
     public static final int ADATASPACE_SCRGB_LINEAR = 406913024;
+    public static final int ADATASPACE_DISPLAY_P3 = 143261696;
     public static final int ADATASPACE_BT2020 = 147193856;
+    public static final int ADATASPACE_ADOBE_RGB = 151715840;
+    public static final int ADATASPACE_DCI_P3 = 155844608;
     public static final int ADATASPACE_BT709 = 281083904;
+
+    public static int fromColorSpace(ColorSpace cs) {
+        assertNotNull(cs);
+        if (cs == ColorSpace.get(Named.DISPLAY_P3)) {
+            return ADATASPACE_DISPLAY_P3;
+        }
+        if (cs == ColorSpace.get(Named.BT2020)) {
+            return ADATASPACE_BT2020;
+        }
+        if (cs == ColorSpace.get(Named.ADOBE_RGB)) {
+            return ADATASPACE_ADOBE_RGB;
+        }
+        if (cs == ColorSpace.get(Named.BT709)) {
+            return ADATASPACE_BT709;
+        }
+        if (cs == ColorSpace.get(Named.DCI_P3)) {
+            return ADATASPACE_DCI_P3;
+        }
+
+        if (cs == ColorSpace.get(Named.SRGB)) {
+            return ADATASPACE_SRGB;
+        }
+        if (cs == ColorSpace.get(Named.EXTENDED_SRGB)) {
+            return ADATASPACE_SCRGB;
+        }
+
+        if (cs == ColorSpace.get(Named.LINEAR_SRGB)) {
+            return ADATASPACE_SRGB_LINEAR;
+        }
+        if (cs == ColorSpace.get(Named.LINEAR_EXTENDED_SRGB)) {
+            return ADATASPACE_SCRGB_LINEAR;
+        }
+
+        return ADATASPACE_UNKNOWN;
+    }
 }

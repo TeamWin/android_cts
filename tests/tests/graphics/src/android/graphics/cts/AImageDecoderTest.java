@@ -35,9 +35,9 @@ import android.graphics.ColorSpace.Named;
 import android.graphics.ImageDecoder;
 import android.graphics.Rect;
 import android.graphics.drawable.cts.AnimatedImageDrawableTest;
-import android.media.MediaFormat;
 import android.net.Uri;
 import android.os.ParcelFileDescriptor;
+import android.media.MediaFormat;
 import android.system.ErrnoException;
 import android.system.Os;
 import android.util.DisplayMetrics;
@@ -143,8 +143,7 @@ public class AImageDecoderTest {
         if (cs == null) {
             return DataSpace.ADATASPACE_UNKNOWN;
         }
-
-        return cs.getDataSpace();
+        return DataSpace.fromColorSpace(cs);
     }
 
     @Test
@@ -1014,7 +1013,7 @@ public class AImageDecoderTest {
 
             String mimeType = uri.toString().contains("webp") ? "image/webp" : "image/jpeg";
             nTestInfo(aimagedecoder, 100, 80, mimeType, false,
-                    bm.getColorSpace().getDataSpace());
+                    DataSpace.fromColorSpace(bm.getColorSpace()));
         } catch (FileNotFoundException e) {
             e.printStackTrace();
             fail("Could not open " + uri + " to check info");
@@ -1110,7 +1109,7 @@ public class AImageDecoderTest {
         File file = createCompressedBitmap(width, height, colorSpace, format);
         assertNotNull(file);
 
-        int dataSpace = colorSpace.getDataSpace();
+        int dataSpace = DataSpace.fromColorSpace(colorSpace);
 
         try (ParcelFileDescriptor pfd = ParcelFileDescriptor.open(file,
                 ParcelFileDescriptor.MODE_READ_ONLY)) {
@@ -1139,7 +1138,7 @@ public class AImageDecoderTest {
     @Test
     @Parameters(method = "rgbColorSpaces")
     public void testSetDataSpace(ColorSpace colorSpace) {
-        int dataSpace = colorSpace.getDataSpace();
+        int dataSpace = DataSpace.fromColorSpace(colorSpace);
         if (dataSpace == DataSpace.ADATASPACE_UNKNOWN) {
             // AImageDecoder cannot decode to these ADATASPACEs
             return;
