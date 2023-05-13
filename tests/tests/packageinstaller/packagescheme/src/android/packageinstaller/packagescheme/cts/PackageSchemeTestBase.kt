@@ -92,7 +92,8 @@ open class PackageSchemeTestBase {
 
         fun makeIntentSender(sessionId: Int) = PendingIntent.getBroadcast(
             mContext, sessionId,
-            Intent(RECEIVER_ACTION).setPackage(mContext.packageName),
+            Intent(RECEIVER_ACTION).setPackage(mContext.packageName)
+                    .addFlags(Intent.FLAG_RECEIVER_FOREGROUND),
             PendingIntent.FLAG_UPDATE_CURRENT
                 or PendingIntent.FLAG_MUTABLE_UNAUDITED
         ).intentSender

@@ -192,7 +192,8 @@ public class BasePackageInstallTest extends InstrumentationTestCase {
                 Context.RECEIVER_EXPORTED);
 
         // Create a PendingIntent and use it to generate the IntentSender
-        Intent broadcastIntent = new Intent(action).setPackage(mContext.getPackageName());
+        Intent broadcastIntent = new Intent(action).setPackage(mContext.getPackageName())
+                .addFlags(Intent.FLAG_RECEIVER_FOREGROUND);;
         PendingIntent pendingIntent = PendingIntent.getBroadcast(
                 mContext,
                 sessionId,
