@@ -16,10 +16,11 @@
 
 package android.widget.cts;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertEquals;
 
 import android.app.Activity;
 import android.app.Instrumentation;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 
@@ -29,6 +30,7 @@ import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.CtsKeyEventUtil;
+import com.android.compatibility.common.util.PollingCheck;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -44,6 +46,7 @@ import java.util.List;
 @MediumTest
 @RunWith(AndroidJUnit4.class)
 public class BackwardNavigationTest {
+    private static final String TAG = BackwardNavigationTest.class.getSimpleName();
     private Instrumentation mInstrumentation;
     private CtsKeyEventUtil mCtsKeyEventUtil;
     private Activity mActivity;
@@ -68,13 +71,25 @@ public class BackwardNavigationTest {
 
     @Test
     public void testBackwardNavigation() throws Throwable {
+        // Focus on the first button.
+        mActivityRule.runOnUiThread(() -> {
+            mOrderedButton1.requestFocus();
+
+            assertEquals("mOrderedButton1 should be focused", mActivity.getCurrentFocus(),
+                    mOrderedButton1);
+        });
+
         // Press TAB to go through all the focusable Views.
-        mActivityRule.runOnUiThread(() -> mOrderedButton1.requestFocus());
-        mInstrumentation.waitForIdleSync();
-        View focusedView = mActivity.getCurrentFocus();
+        View focusedView = mOrderedButton1;
         do {
             mFocusedViews.add(focusedView);
+            Log.v(TAG, "View " + focusedView + " is focused in order");
             mCtsKeyEventUtil.sendKeyDownUp(mInstrumentation, mRoot, KeyEvent.KEYCODE_TAB);
+            final View lastFocuseView = focusedView;
+
+            PollingCheck.waitFor(() -> mActivity.getCurrentFocus() != lastFocuseView,
+                    "The focus should change after pressing TAB");
+
             focusedView = mActivity.getCurrentFocus();
         } while (focusedView != mOrderedButton1);
 
@@ -82,7 +97,11 @@ public class BackwardNavigationTest {
         for (int i = mFocusedViews.size() - 1; i >= 0; i--) {
             mCtsKeyEventUtil.sendKeyWhileHoldingModifier(mInstrumentation, mRoot,
                     KeyEvent.KEYCODE_TAB, KeyEvent.KEYCODE_SHIFT_LEFT);
-            assertTrue(mFocusedViews.get(i).hasFocus());
+            final int index = i;
+
+            PollingCheck.waitFor(() -> mFocusedViews.get(index).hasFocus(),
+                    "Expected focused view " + mFocusedViews.get(index)
+                            + ", actual focused view " + mActivity.getCurrentFocus());
         }
     }
 }
