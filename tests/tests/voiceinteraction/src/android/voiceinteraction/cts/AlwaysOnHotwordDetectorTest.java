@@ -160,11 +160,18 @@ public class AlwaysOnHotwordDetectorTest {
                                 new UUID(7, 5), /* data= */ null, KEYPHRASE_ARRAY)),
                 MANAGE_VOICE_KEYPHRASES);
 
-        // Create alwaysOnHotwordDetector and wait onHotwordDetectionServiceInitialized() callback
+        // Create alwaysOnHotwordDetector
         getService().createAlwaysOnHotwordDetectorWithOnFailureCallback(
                 /* useExecutor= */ true, /* mainThread= */ true, options);
-
-        getService().waitSandboxedDetectionServiceInitializedCalledOrException();
+        try {
+            // Wait onHotwordDetectionServiceInitialized() callback
+            getService().waitSandboxedDetectionServiceInitializedCalledOrException();
+        } finally {
+            // Get the AlwaysOnHotwordDetector instance even if there is an error happened to avoid
+            // that we don't destroy the detector in tearDown method. It may be null here. We will
+            // check the status below.
+            mAlwaysOnHotwordDetector = getService().getAlwaysOnHotwordDetector();
+        }
         // Verify that detector creation didn't throw
         assertThat(getService().isCreateDetectorIllegalStateExceptionThrow()).isFalse();
         assertThat(getService().isCreateDetectorSecurityExceptionThrow()).isFalse();
@@ -173,14 +180,13 @@ public class AlwaysOnHotwordDetectorTest {
         assertThat(getService().getSandboxedDetectionServiceInitializedResult())
                 .isEqualTo(SandboxedDetectionInitializer.INITIALIZATION_STATUS_SUCCESS);
 
-        // The AlwaysOnHotwordDetector should be created correctly
-        mAlwaysOnHotwordDetector = getService().getAlwaysOnHotwordDetector();
         assertThat(mAlwaysOnHotwordDetector).isNotNull();
 
         // verify we have entered the ENROLLED state
         getService().waitAvailabilityChangedCalled();
         assertThat(getService().getHotwordDetectionServiceAvailabilityResult())
                 .isEqualTo(AlwaysOnHotwordDetector.STATE_KEYPHRASE_ENROLLED);
+
     }
 
     @BeforeClass
