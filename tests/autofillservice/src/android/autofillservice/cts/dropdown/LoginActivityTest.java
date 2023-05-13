@@ -446,6 +446,7 @@ public class LoginActivityTest extends LoginActivityCommonTestCase {
         sReplier.setIdMode(IdMode.RESOURCE_ID);
     }
 
+    @FlakyTest(bugId = 281726966)
     @Test
     public void autofillPccDatasetTest() throws Exception {
         // Set service.
