@@ -623,10 +623,6 @@
              android:launchMode="singleTop"
              android:exported="true"/>
         <activity android:name=".HideOverlayWindowsActivity" android:exported="true"/>
-        <activity android:name=".BackgroundImageActivity"
-             android:theme="@style/BackgroundImage"
-             android:colorMode="wideColorGamut"
-             android:exported="true"/>
         <activity android:name=".BlurActivity"
              android:exported="true"
              android:colorMode="wideColorGamut"

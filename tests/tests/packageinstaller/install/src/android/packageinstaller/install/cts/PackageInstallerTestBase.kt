@@ -45,6 +45,7 @@ import android.util.Log
 import androidx.core.content.FileProvider
 import androidx.test.InstrumentationRegistry
 import androidx.test.rule.ActivityTestRule
+import com.android.compatibility.common.util.DisableAnimationRule
 import com.android.compatibility.common.util.FutureResultActivity
 import com.android.compatibility.common.util.SystemUtil
 import java.io.File
@@ -88,6 +89,9 @@ open class PackageInstallerTestBase {
         val context: Context = InstrumentationRegistry.getTargetContext()
         val testUserId: Int = context.user.identifier
     }
+
+    @get:Rule
+    val disableAnimationsRule = DisableAnimationRule()
 
     @get:Rule
     val installDialogStarter = ActivityTestRule(FutureResultActivity::class.java)
@@ -219,7 +223,9 @@ open class PackageInstallerTestBase {
             session: Session,
             expectedPrompt: Boolean = true
     ): CompletableFuture<Int> {
-        var intent = Intent(INSTALL_ACTION_CB).setPackage(context.getPackageName())
+        var intent = Intent(INSTALL_ACTION_CB)
+                .setPackage(context.getPackageName())
+                .addFlags(Intent.FLAG_RECEIVER_FOREGROUND)
         val pendingIntent = PendingIntent.getBroadcast(
                 context, 0 /* requestCode */, intent, FLAG_UPDATE_CURRENT or FLAG_MUTABLE)
 

@@ -107,6 +107,8 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
 
     private boolean mIsNoNeedActionDuringDetection;
 
+    private boolean mCheckAudioDataIsNotZero;
+
     @Override
     public void onCreate() {
         super.onCreate();
@@ -405,6 +407,12 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
                 mIsNoNeedActionDuringDetection = true;
                 return;
             }
+            if (options.getInt(Utils.KEY_TEST_SCENARIO, -1)
+                    == Utils.EXTRA_HOTWORD_DETECTION_SERVICE_CAN_READ_AUDIO_DATA_IS_NOT_ZERO) {
+                Log.d(TAG, "options : Test can read audio, and data is not zero");
+                mCheckAudioDataIsNotZero = true;
+                return;
+            }
 
             String fakeData = options.getString(KEY_FAKE_DATA);
             if (!TextUtils.equals(fakeData, VALUE_FAKE_DATA)) {
@@ -489,14 +497,18 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
             if (Utils.isVirtualDevice()) {
                 return true;
             }
-            for (byte b : buffer) {
-                // TODO: Maybe check that some portion of the bytes are non-zero.
-                if (b != 0) {
-                    return true;
+            if (mCheckAudioDataIsNotZero) {
+                for (byte b : buffer) {
+                    // TODO: Maybe check that some portion of the bytes are non-zero.
+                    if (b != 0) {
+                        return true;
+                    }
                 }
+                Log.d(TAG, "All data are zero");
+                return false;
             }
-            Log.d(TAG, "All data are zero");
-            return false;
+
+            return true;
         } finally {
             record.release();
         }

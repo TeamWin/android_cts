@@ -16,6 +16,8 @@
 
 package android.media.cts;
 
+import static org.junit.Assume.assumeFalse;
+
 import android.media.MediaCodec;
 import android.opengl.EGL14;
 import android.opengl.EGLConfig;
@@ -102,8 +104,14 @@ public class InputSurface implements InputSurfaceInterface {
         };
         int[] numConfigs = new int[1];
         if (!EGL14.eglChooseConfig(mEGLDisplay, configAttribList, 0, mConfigs, 0, mConfigs.length,
-                numConfigs, 0)) {
-            throw new RuntimeException("unable to find RGB888+recordable ES2 EGL config");
+                numConfigs, 0) || numConfigs[0] == 0) {
+            String message = "Unable to find EGL config supporting renderable-type:ES2 "
+                    + "surface-type:pbuffer r:" + eglColorSize + " g:" + eglColorSize
+                    + " b:" + eglColorSize + " a:" + eglAlphaSize + ".";
+            // When eglChooseConfig fails for RGBA10102, skip high bit depth testing as it is not
+            // mandatory for devices to support this configuration.
+            assumeFalse(message + " Skipping the test for high bit depth case", useHighBitDepth);
+            throw new RuntimeException(message);
         }
 
         // Configure context for OpenGL ES 2.0.
