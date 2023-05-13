@@ -48,13 +48,6 @@
         <item name="android:windowSplashscreenContent">@drawable/red</item>
         <item name="android:windowSplashScreenBackground">@drawable/blue</item>
     </style>
-
-    <style name="BackgroundImage" parent="@android:style/Theme.NoTitleBar.Fullscreen">
-        <item name="android:windowNoTitle">true</item>
-        <item name="android:windowLayoutInDisplayCutoutMode">always</item>
-        <item name="android:windowSoftInputMode">stateHidden</item>
-    </style>
-
     <style name="TranslucentDialog" parent="@android:style/Theme.Material.Dialog">
         <item name="android:windowIsTranslucent">true</item>
         <item name="android:windowBackground">@android:color/transparent</item>
