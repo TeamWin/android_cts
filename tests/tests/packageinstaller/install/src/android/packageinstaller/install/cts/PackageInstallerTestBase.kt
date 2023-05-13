@@ -223,7 +223,9 @@ open class PackageInstallerTestBase {
             session: Session,
             expectedPrompt: Boolean = true
     ): CompletableFuture<Int> {
-        var intent = Intent(INSTALL_ACTION_CB).setPackage(context.getPackageName())
+        var intent = Intent(INSTALL_ACTION_CB)
+                .setPackage(context.getPackageName())
+                .addFlags(Intent.FLAG_RECEIVER_FOREGROUND)
         val pendingIntent = PendingIntent.getBroadcast(
                 context, 0 /* requestCode */, intent, FLAG_UPDATE_CURRENT or FLAG_MUTABLE)
 
