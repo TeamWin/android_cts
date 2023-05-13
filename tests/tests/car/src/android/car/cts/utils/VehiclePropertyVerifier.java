@@ -426,6 +426,15 @@ public class VehiclePropertyVerifier<T> {
                 verifyCarPropertyValueCallback();
                 verifyGetPropertiesAsync();
             }, readPermission);
+
+            if (disableAdasFeatureIfAdasStateProperty()) {
+                runWithShellPermissionIdentity(() -> {
+                    verifyAdasPropertyDisabled();
+                }, ImmutableSet.<String>builder()
+                        .add(readPermission)
+                        .addAll(mDependentOnPropertyPermissions)
+                        .build().toArray(new String[0]));
+            }
         } finally {
             // Restore all property values even if test fails.
             runWithShellPermissionIdentity(() -> {
@@ -1020,7 +1029,13 @@ public class VehiclePropertyVerifier<T> {
             verifySetNotAvailable();
             return;
         }
-        for (int areaId : getCarPropertyConfig().getAreaIds()) {
+
+        CarPropertyConfig<T> carPropertyConfig = getCarPropertyConfig();
+        if (carPropertyConfig.getAccess() == CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_WRITE) {
+            return;
+        }
+
+        for (int areaId : carPropertyConfig.getAreaIds()) {
             Integer adasState = mCarPropertyManager.getIntProperty(mPropertyId, areaId);
             assertWithMessage(
                             "When ADAS feature is disabled, "
