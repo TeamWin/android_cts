@@ -97,6 +97,8 @@ public class Utils {
     // test scenario to verify the HotwordDetectionService was created after a given time
     // This can be used to verify the service was restarted or recreated.
     public static final int EXTRA_HOTWORD_DETECTION_SERVICE_SEND_SUCCESS_IF_CREATED_AFTER = 8;
+    // Check the HotwordDetectionService can read audio and the data is not zero
+    public static final int EXTRA_HOTWORD_DETECTION_SERVICE_CAN_READ_AUDIO_DATA_IS_NOT_ZERO = 9;
 
     /** Indicate to start a new activity for testing. */
     public static final int ACTIVITY_NEW = 0;
@@ -369,7 +371,7 @@ public class Utils {
 
     public static final void addErrorResult(final Bundle testinfo, final String msg) {
         testinfo.getStringArrayList(testinfo.getString(Utils.TESTCASE_TYPE))
-            .add(TEST_ERROR + " " + msg);
+                .add(TEST_ERROR + " " + msg);
     }
 
     public static boolean await(CountDownLatch latch) {
