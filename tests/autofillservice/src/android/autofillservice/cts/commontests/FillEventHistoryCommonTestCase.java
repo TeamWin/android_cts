@@ -59,6 +59,7 @@ import android.content.Intent;
 import android.content.IntentSender;
 import android.os.Bundle;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.FlakyTest;
 import android.platform.test.annotations.Presubmit;
 import android.service.autofill.FillEventHistory;
 import android.service.autofill.FillEventHistory.Event;
@@ -428,6 +429,7 @@ public abstract class FillEventHistoryCommonTestCase extends AbstractLoginActivi
      *        activity A.
      * </ol>
      */
+    @FlakyTest(bugId = 281726966)
     @Test
     public void testEventsFromPreviousSessionIsDiscarded() throws Exception {
         enableService();
