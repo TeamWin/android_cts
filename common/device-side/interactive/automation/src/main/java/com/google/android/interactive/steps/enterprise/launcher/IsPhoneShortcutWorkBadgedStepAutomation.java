@@ -20,6 +20,7 @@ package com.google.android.interactive.steps.enterprise.launcher;
 import androidx.test.uiautomator.By;
 
 import com.android.bedstead.nene.TestApis;
+import com.android.bedstead.nene.utils.Poll;
 import com.android.interactive.Automation;
 import com.android.interactive.annotations.AutomationFor;
 
@@ -28,6 +29,9 @@ import com.android.interactive.annotations.AutomationFor;
 public class IsPhoneShortcutWorkBadgedStepAutomation implements Automation<Boolean> {
     @Override
     public Boolean automate() throws Exception {
-        return TestApis.ui().device().findObject(By.desc("Work Phone")) != null;
+        return Poll.forValue("isPhoneShortcutWorkBadgedStep",
+                        () -> TestApis.ui().device().findObject(By.desc("Work Phone")))
+                .toNotBeNull()
+                .await() != null;
     }
 }

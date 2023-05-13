@@ -147,7 +147,7 @@ public class WifiLocationInfoTest extends WifiJUnit4TestBase {
                 () -> mWifiManager.setScanThrottleEnabled(mWasScanThrottleEnabled));
         ShellIdentityUtils.invokeWithShellPermissions(
                 () -> mWifiManager.setVerboseLoggingEnabled(mWasVerboseLoggingEnabled));
-        if (mLock.isHeld()) {
+        if (mLock != null && mLock.isHeld()) {
             mLock.release();
         }
     }

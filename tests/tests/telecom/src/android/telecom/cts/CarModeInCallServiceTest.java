@@ -50,31 +50,42 @@ public class CarModeInCallServiceTest extends BaseTelecomTestWithMockServices {
 
     @Override
     protected void setUp() throws Exception {
+        boolean isSetUpComplete = false;
         super.setUp();
-        if (!mShouldTestTelecom) {
+        if (!mShouldTestTelecom || TestUtils.hasAutomotiveFeature()) {
+            //all the tests here are assuming a non-auto device since
+            //expected value from uiModemanger is UI_MODE_TYPE_NORMAL
+            //In the future, we can add new testcases for auto, but skip for now
             return;
         }
-
         if (mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH)) {
             return;
         }
 
-        InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                .adoptShellPermissionIdentity("android.permission.ENTER_CAR_MODE_PRIORITIZED",
-                        "android.permission.CONTROL_INCALL_EXPERIENCE",
-                        "android.permission.TOGGLE_AUTOMOTIVE_PROJECTION");
+        try {
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .adoptShellPermissionIdentity("android.permission.ENTER_CAR_MODE_PRIORITIZED",
+                            "android.permission.CONTROL_INCALL_EXPERIENCE",
+                            "android.permission.TOGGLE_AUTOMOTIVE_PROJECTION");
 
-        mCarModeIncallServiceControlOne = getControlBinder(CARMODE_APP1_PACKAGE);
-        mCarModeIncallServiceControlTwo = getControlBinder(CARMODE_APP2_PACKAGE);
-        // Ensure we start the test without automotive projection set.
-        releaseAutomotiveProjection(mCarModeIncallServiceControlOne);
-        releaseAutomotiveProjection(mCarModeIncallServiceControlTwo);
-        setupConnectionService(null, FLAG_REGISTER | FLAG_ENABLE);
+            mCarModeIncallServiceControlOne = getControlBinder(CARMODE_APP1_PACKAGE);
+            mCarModeIncallServiceControlTwo = getControlBinder(CARMODE_APP2_PACKAGE);
+            // Ensure we start the test without automotive projection set.
+            releaseAutomotiveProjection(mCarModeIncallServiceControlOne);
+            releaseAutomotiveProjection(mCarModeIncallServiceControlTwo);
+            setupConnectionService(null, FLAG_REGISTER | FLAG_ENABLE);
 
-        final UiModeManager uiModeManager = mContext.getSystemService(UiModeManager.class);
-        assertEquals("Device must not be in car mode at start of test.",
-                Configuration.UI_MODE_TYPE_NORMAL, uiModeManager.getCurrentModeType());
-        mInCallCallbacks.resetLock();
+            final UiModeManager uiModeManager = mContext.getSystemService(UiModeManager.class);
+            assertEquals("Device must not be in car mode at start of test.",
+                    Configuration.UI_MODE_TYPE_NORMAL, uiModeManager.getCurrentModeType());
+            mInCallCallbacks.resetLock();
+            isSetUpComplete = true;
+        } finally {
+            // Force tearDown if setUp errors out to ensure unused listeners are cleaned up.
+            if (!isSetUpComplete) {
+                tearDown();
+            }
+        }
     }
 
     @Override
@@ -82,7 +93,7 @@ public class CarModeInCallServiceTest extends BaseTelecomTestWithMockServices {
         try {
             if (mShouldTestTelecom
                     && !mContext.getPackageManager().hasSystemFeature(
-                    PackageManager.FEATURE_WATCH)) {
+                    PackageManager.FEATURE_WATCH) && !TestUtils.hasAutomotiveFeature()) {
                 disableAndVerifyCarMode(mCarModeIncallServiceControlOne,
                         Configuration.UI_MODE_TYPE_NORMAL);
                 disableAndVerifyCarMode(mCarModeIncallServiceControlTwo,

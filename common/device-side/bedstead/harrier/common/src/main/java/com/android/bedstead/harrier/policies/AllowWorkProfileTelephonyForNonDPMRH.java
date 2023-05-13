@@ -13,10 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.camera.cts.api34test;
 
-import android.app.Activity;
+package com.android.bedstead.harrier.policies;
 
-// Stub activity used to start the app
-public class Api34TestActivity extends Activity {
+import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIED_BY_DPM_ROLE_HOLDER;
+import static com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPLIES_GLOBALLY;
+
+import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy;
+
+/**
+ * Policy related to setting {@code ALLOW_WORK_PROFILE_TELEPHONY_FOR_NON_DPM_ROLE_HOLDERS}
+ */
+@EnterprisePolicy(dpc = APPLIED_BY_DPM_ROLE_HOLDER | APPLIES_GLOBALLY)
+public class AllowWorkProfileTelephonyForNonDPMRH {
+
 }

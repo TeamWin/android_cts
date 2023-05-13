@@ -36,15 +36,20 @@ import static org.testng.Assert.assertThrows;
 import android.app.admin.PolicyUpdateResult;
 import android.content.Context;
 import android.devicepolicy.cts.utils.PolicySetResultUtils;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.UserManager;
 import android.telephony.TelephonyManager;
+import android.telephony.data.ApnSetting;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.EnsureDoesNotHaveUserRestriction;
 import com.android.bedstead.harrier.annotations.EnsureHasUserRestriction;
 import com.android.bedstead.harrier.annotations.Postsubmit;
+import com.android.bedstead.harrier.annotations.RequireDoesNotHaveFeature;
+import com.android.bedstead.harrier.annotations.RequireRunOnWorkProfile;
+import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyDoesNotApplyTest;
@@ -55,14 +60,20 @@ import com.android.bedstead.harrier.policies.DisallowDataRoaming;
 import com.android.bedstead.harrier.policies.DisallowOutgoingCalls;
 import com.android.bedstead.harrier.policies.DisallowSms;
 import com.android.bedstead.harrier.policies.DisallowUltraWidebandRadio;
+import com.android.bedstead.harrier.policies.OverrideApn;
 import com.android.bedstead.nene.TestApis;
 import com.android.compatibility.common.util.ApiTest;
 import com.android.interactive.annotations.Interactive;
 
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.List;
 
 @RunWith(BedsteadJUnit4.class)
 public final class TelephonyTest {
@@ -204,6 +215,7 @@ public final class TelephonyTest {
     @PolicyAppliesTest(policy = DisallowOutgoingCalls.class)
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.os.UserManager#DISALLOW_OUTGOING_CALLS")
+    @Ignore // this test is unclear because DISALLOW_OUTGOING_CALLS is default on secondary users
     public void setUserRestriction_disallowOutgoingCalls_isSet() {
         try {
             sDeviceState.dpc().devicePolicyManager().addUserRestriction(
@@ -220,6 +232,7 @@ public final class TelephonyTest {
     @PolicyDoesNotApplyTest(policy = DisallowOutgoingCalls.class)
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.os.UserManager#DISALLOW_OUTGOING_CALLS")
+    @Ignore // this test is unclear because DISALLOW_OUTGOING_CALLS is default on secondary users
     public void setUserRestriction_disallowOutgoingCalls_isNotSet() {
         try {
             sDeviceState.dpc().devicePolicyManager().addUserRestriction(
@@ -264,6 +277,7 @@ public final class TelephonyTest {
     @PolicyAppliesTest(policy = DisallowSms.class)
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.os.UserManager#DISALLOW_SMS")
+    @Ignore // this test is unclear because DISALLOW_OUTGOING_CALLS is default on secondary users
     public void setUserRestriction_disallowSms_isSet() {
         try {
             sDeviceState.dpc().devicePolicyManager().addUserRestriction(
@@ -280,6 +294,7 @@ public final class TelephonyTest {
     @PolicyDoesNotApplyTest(policy = DisallowSms.class)
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.os.UserManager#DISALLOW_SMS")
+    @Ignore // this test is unclear because DISALLOW_OUTGOING_CALLS is default on secondary users
     public void setUserRestriction_disallowSms_isNotSet() {
         try {
             sDeviceState.dpc().devicePolicyManager().addUserRestriction(
@@ -537,6 +552,123 @@ public final class TelephonyTest {
         // TODO: Test
     }
 
+        private static final String TEST_APN_NAME = "testEnterpriseApnName";
+    private static final String UPDATE_APN_NAME = "updateEnterpriseApnName";
+    private static final String TEST_ENTRY_NAME = "testEnterpriseEntryName";
+    private static final String UPDATE_ETNRY_NAME = "updateEnterpriseEntryName";
+    private static final String TEST_OPERATOR_NUMERIC = "123456789";
+    private static final int TEST_PROXY_PORT = 123;
+    private static final String TEST_PROXY_ADDRESS = "123.123.123.123";
+    private static final Uri TEST_MMSC = Uri.parse("http://www.google.com");
+    private static final String TEST_USER_NAME = "testUser";
+    private static final String TEST_PASSWORD = "testPassword";
+    private static final int TEST_AUTH_TYPE = ApnSetting.AUTH_TYPE_CHAP;
+    private static final int TEST_APN_TYPE_BITMASK = ApnSetting.TYPE_ENTERPRISE;
+    private static final int TEST_APN_TYPE_BITMASK_WRONG = ApnSetting.TYPE_DEFAULT;
+    private static final int TEST_PROTOCOL = ApnSetting.PROTOCOL_IPV4V6;
+    private static final int TEST_NETWORK_TYPE_BITMASK = TelephonyManager.NETWORK_TYPE_CDMA;
+    private static final int TEST_MVNO_TYPE = ApnSetting.MVNO_TYPE_GID;
+    private static final boolean TEST_ENABLED = true;
+    private static final int TEST_CARRIER_ID = 100;
+    private static final int UPDATE_CARRIER_ID = 101;
+
+    private static final ApnSetting TEST_APN_FULL = new ApnSetting.Builder()
+            .setApnName(TEST_APN_NAME)
+            .setEntryName(TEST_ENTRY_NAME)
+            .setOperatorNumeric(TEST_OPERATOR_NUMERIC)
+            .setProxyAddress(TEST_PROXY_ADDRESS)
+            .setProxyPort(TEST_PROXY_PORT)
+            .setMmsc(TEST_MMSC)
+            .setMmsProxyAddress(TEST_PROXY_ADDRESS)
+            .setMmsProxyPort(TEST_PROXY_PORT)
+            .setUser(TEST_USER_NAME)
+            .setPassword(TEST_PASSWORD)
+            .setAuthType(TEST_AUTH_TYPE)
+            .setApnTypeBitmask(TEST_APN_TYPE_BITMASK)
+            .setProtocol(TEST_PROTOCOL)
+            .setRoamingProtocol(TEST_PROTOCOL)
+            .setNetworkTypeBitmask(TEST_NETWORK_TYPE_BITMASK)
+            .setMvnoType(TEST_MVNO_TYPE)
+            .setCarrierEnabled(TEST_ENABLED)
+            .setCarrierId(TEST_CARRIER_ID)
+            .build();
+
+    private static final ApnSetting UPDATE_APN = new ApnSetting.Builder()
+            .setApnName(UPDATE_APN_NAME)
+            .setEntryName(UPDATE_ETNRY_NAME)
+            .setOperatorNumeric(TEST_OPERATOR_NUMERIC)
+            .setProxyAddress(TEST_PROXY_ADDRESS)
+            .setProxyPort(TEST_PROXY_PORT)
+            .setMmsc(TEST_MMSC)
+            .setMmsProxyAddress(TEST_PROXY_ADDRESS)
+            .setMmsProxyPort(TEST_PROXY_PORT)
+            .setUser(TEST_USER_NAME)
+            .setPassword(TEST_PASSWORD)
+            .setAuthType(TEST_AUTH_TYPE)
+            .setApnTypeBitmask(TEST_APN_TYPE_BITMASK)
+            .setProtocol(TEST_PROTOCOL)
+            .setRoamingProtocol(TEST_PROTOCOL)
+            .setNetworkTypeBitmask(TEST_NETWORK_TYPE_BITMASK)
+            .setMvnoType(TEST_MVNO_TYPE)
+            .setCarrierEnabled(TEST_ENABLED)
+            .setCarrierId(UPDATE_CARRIER_ID)
+            .build();
+
+    private static InetAddress getProxyInetAddress(String proxyAddress) throws Exception {
+        return InetAddress.getByName(proxyAddress);
+    }
+
+    @ApiTest(apis = {"android.app.admin.DevicePolicyManager#addOverrideApn",
+            "android.app.admin.DevicePolicyManager#getOverrideApn"})
+    @CanSetPolicyTest(policy = OverrideApn.class)
+    @Test
+    public void addOverrideApn_overrideApnIsAdded() throws Exception {
+        int insertedId = 0;
+        try {
+            insertedId = sDeviceState.dpc().devicePolicyManager().addOverrideApn(
+                    sDeviceState.dpc().componentName(), TEST_APN_FULL);
+            List<ApnSetting> apnList = sDeviceState.dpc().devicePolicyManager()
+                    .getOverrideApns(sDeviceState.dpc().componentName());
+
+            assertThat(insertedId).isNotEqualTo(0);
+            assertThat(apnList).hasSize(1);
+            ApnSetting receivedApn = apnList.get(0);
+            assertApnSettingEqual(receivedApn, TEST_APN_FULL);
+        } finally {
+            if (insertedId != 0) {
+                sDeviceState.dpc().devicePolicyManager()
+                        .removeOverrideApn(sDeviceState.dpc().componentName(), insertedId);
+            }
+        }
+    }
+
+    @ApiTest(apis = "android.app.admin.DevicePolicyManager#updateOverrideApn")
+    @CanSetPolicyTest(policy = OverrideApn.class)
+    @Test
+    public void updateOverrideApn_isUpdated() throws Exception {
+        int insertedId = 0;
+        try {
+            insertedId = sDeviceState.dpc().devicePolicyManager().addOverrideApn(
+                    sDeviceState.dpc().componentName(), TEST_APN_FULL);
+            boolean result = sDeviceState.dpc().devicePolicyManager().updateOverrideApn(
+                    sDeviceState.dpc().componentName(), insertedId, UPDATE_APN);
+            List<ApnSetting> apnList = sDeviceState.dpc().devicePolicyManager()
+                    .getOverrideApns(sDeviceState.dpc().componentName());
+
+            assertThat(result).isTrue();
+            ApnSetting receivedApn = apnList.get(0);
+            assertApnSettingEqual(receivedApn, UPDATE_APN);
+        } finally {
+            if (insertedId != 0) {
+                sDeviceState.dpc().devicePolicyManager()
+                        .removeOverrideApn(sDeviceState.dpc().componentName(), insertedId);
+            }
+        }
+    }
+
+    // TODO: Migrate the remaining parts of DeviceOwnerTest#testOverrideApn and
+    //  add @CannotSetPolicyTests and ideally @PolicyAppliesTest and @PolicyDoesNotApplyTest
+
     private boolean isTelephonyCapableOfSettingNetworkTypes() {
         TelephonyManager tm = sContext.getSystemService(TelephonyManager.class);
         try {
@@ -546,5 +678,28 @@ public final class TelephonyTest {
         } catch (IllegalArgumentException e) {
             return false;
         }
+    }
+
+    private void assertApnSettingEqual(ApnSetting setting1, ApnSetting setting2) throws Exception {
+        assertThat(setting1.getOperatorNumeric()).isEqualTo(setting2.getOperatorNumeric());
+        assertThat(setting1.getEntryName()).isEqualTo(setting2.getEntryName());
+        assertThat(setting1.getProxyAddress()).isEqualTo(
+                getProxyInetAddress(setting2.getProxyAddressAsString()));
+        assertThat(setting1.getProxyAddressAsString()).isEqualTo(setting2.getProxyAddressAsString());
+        assertThat(setting1.getProxyPort()).isEqualTo(setting2.getProxyPort());
+        assertThat(setting1.getMmsc()).isEqualTo(setting2.getMmsc());
+        assertThat(setting1.getMmsProxyAddress()).isEqualTo(
+                getProxyInetAddress(setting2.getProxyAddressAsString()));
+        assertThat(setting1.getMmsProxyAddressAsString()).isEqualTo(setting2.getMmsProxyAddressAsString());
+        assertThat(setting1.getMmsProxyPort()).isEqualTo(setting2.getMmsProxyPort());
+        assertThat(setting1.getUser()).isEqualTo(setting2.getUser());
+        assertThat(setting1.getPassword()).isEqualTo(setting2.getPassword());
+        assertThat(setting1.getAuthType()).isEqualTo(setting2.getAuthType());
+        assertThat(setting1.getProtocol()).isEqualTo(setting2.getProtocol());
+        assertThat(setting1.getRoamingProtocol()).isEqualTo(setting2.getRoamingProtocol());
+        assertThat(setting1.isEnabled()).isEqualTo(setting2.isEnabled());
+        assertThat(setting1.getMvnoType()).isEqualTo(setting2.getMvnoType());
+        assertThat(setting1.getNetworkTypeBitmask()).isEqualTo(setting2.getNetworkTypeBitmask());
+        assertThat(setting1.getCarrierId()).isEqualTo(setting2.getCarrierId());
     }
 }

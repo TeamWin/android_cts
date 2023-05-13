@@ -16,37 +16,9 @@
 
 package android.accessibilityservice.cts;
 
-import android.accessibility.cts.common.InstrumentedAccessibilityService;
-import android.app.UiAutomation;
-import android.view.accessibility.AccessibilityEvent;
-
-import androidx.annotation.NonNull;
-
-import java.util.concurrent.atomic.AtomicBoolean;
-
 /**
  * A stub accessibility service to enable when an
  * {@link android.view.accessibility.AccessibilityDisplayProxy} is registered.
  */
-public class StubProxyConcurrentAccessibilityService extends InstrumentedAccessibilityService {
-    AtomicBoolean mReceivedEvent = new AtomicBoolean();
-    Object mWaitObject = new Object();
-    UiAutomation.AccessibilityEventFilter mEventFilter;
-
-    @Override
-    public void onAccessibilityEvent(@NonNull AccessibilityEvent event) {
-        if (mEventFilter != null) {
-            if (mEventFilter.accept(event)) {
-                synchronized (mWaitObject) {
-                    mReceivedEvent.set(true);
-                    mWaitObject.notifyAll();
-                }
-            }
-        }
-    }
-
-    public void setEventFilter(@NonNull UiAutomation.AccessibilityEventFilter filter) {
-        mEventFilter = filter;
-    }
-
-}
+public class StubProxyConcurrentAccessibilityService extends
+        StubEventCapturingAccessibilityService {}

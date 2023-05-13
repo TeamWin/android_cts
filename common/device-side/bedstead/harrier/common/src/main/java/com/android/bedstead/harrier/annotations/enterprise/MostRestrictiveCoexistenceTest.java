@@ -16,15 +16,12 @@
 
 package com.android.bedstead.harrier.annotations.enterprise;
 
-import static com.android.bedstead.harrier.UserType.INSTRUMENTED_USER;
 import static com.android.bedstead.harrier.annotations.AnnotationRunPrecedence.LATE;
-import static com.android.bedstead.harrier.annotations.enterprise.EnsureHasDeviceOwner.DO_PO_WEIGHT;
 
-import com.android.bedstead.harrier.UserType;
 import com.android.bedstead.harrier.annotations.AnnotationRunPrecedence;
-import com.android.bedstead.harrier.annotations.EnsureHasNoWorkProfile;
-import com.android.bedstead.harrier.annotations.EnsureTestAppHasPermission;
 import com.android.bedstead.harrier.annotations.EnsureTestAppInstalled;
+import com.android.queryable.annotations.Query;
+import com.android.queryable.annotations.StringQuery;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -42,8 +39,12 @@ import java.lang.annotation.Target;
  */
 @Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
-@EnsureTestAppInstalled(key = MostRestrictiveCoexistenceTest.DPC_1)
-@EnsureTestAppInstalled(key = MostRestrictiveCoexistenceTest.DPC_2)
+@EnsureTestAppInstalled(key = MostRestrictiveCoexistenceTest.DPC_1,
+        query = @Query(packageName = @StringQuery(
+                isEqualTo = "com.android.bedstead.testapp.NotEmptyTestApp")))
+@EnsureTestAppInstalled(key = MostRestrictiveCoexistenceTest.DPC_2,
+        query = @Query(packageName = @StringQuery(
+                isEqualTo = "com.android.bedstead.testapp.TestOnlyDeviceAdminTestApp")))
 // TODO: We need to expose the permission in the annotation and apply it in devicestate...
 public @interface MostRestrictiveCoexistenceTest {
 

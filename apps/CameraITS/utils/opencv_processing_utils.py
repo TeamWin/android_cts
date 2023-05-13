@@ -17,6 +17,7 @@
 import logging
 import math
 import os
+import pathlib
 import cv2
 import numpy
 
@@ -50,6 +51,7 @@ CV2_LINE_THICKNESS = 3  # line thickness for drawing on images
 CV2_RED = (255, 0, 0)  # color in cv2 to draw lines
 
 CV2_HOME_DIRECTORY = os.path.dirname(cv2.__file__)
+CV2_ALTERNATE_DIRECTORY = pathlib.Path(CV2_HOME_DIRECTORY).parents[3]
 HAARCASCADE_FILE_NAME = 'haarcascade_frontalface_default.xml'
 
 FOV_THRESH_TELE25 = 25
@@ -116,16 +118,15 @@ def binarize_image(img_gray):
 
 def _load_opencv_haarcascade_file():
   """Return Haar Cascade file for face detection."""
-  for path, _, files in os.walk(CV2_HOME_DIRECTORY):
-    if HAARCASCADE_FILE_NAME in files:
-      haarcascade_file = os.path.join(path, HAARCASCADE_FILE_NAME)
-      break
-  if os.path.isfile(haarcascade_file):
-    logging.debug('Haar Cascade file location: %s', haarcascade_file)
-    return haarcascade_file
-  else:
-    raise error_util.CameraItsError('haarcascade_frontalface_default.xml file '
-                                    f'must be in {haarcascade_file}')
+  for cv2_directory in (CV2_HOME_DIRECTORY, CV2_ALTERNATE_DIRECTORY,):
+    for path, _, files in os.walk(cv2_directory):
+      if HAARCASCADE_FILE_NAME in files:
+        haarcascade_file = os.path.join(path, HAARCASCADE_FILE_NAME)
+        logging.debug('Haar Cascade file location: %s', haarcascade_file)
+        return haarcascade_file
+  raise error_util.CameraItsError('haarcascade_frontalface_default.xml was '
+                                  f'not found in {CV2_HOME_DIRECTORY} '
+                                  f'or {CV2_ALTERNATE_DIRECTORY}')
 
 
 def find_opencv_faces(img, scale_factor, min_neighbors):

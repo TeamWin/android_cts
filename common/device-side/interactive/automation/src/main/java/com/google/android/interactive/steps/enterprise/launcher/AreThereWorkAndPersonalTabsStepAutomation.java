@@ -22,18 +22,27 @@ import android.widget.Button;
 import androidx.test.uiautomator.UiSelector;
 
 import com.android.bedstead.nene.TestApis;
+import com.android.bedstead.nene.utils.Poll;
 import com.android.interactive.Automation;
 import com.android.interactive.annotations.AutomationFor;
 
-@AutomationFor("com.google.android.interactive.steps.enterprise.launcher.AreThereWorkAndPersonalTabsStep")
+@AutomationFor("com.google.android.interactive.steps.enterprise.launcher"
+        + ".AreThereWorkAndPersonalTabsStep")
 public final class AreThereWorkAndPersonalTabsStepAutomation implements Automation<Boolean> {
 
     @Override
     public Boolean automate() throws Exception {
-        boolean personalTabExists = TestApis.ui().device().findObject(
-                new UiSelector().text("Personal").className(Button.class)).exists();
-        boolean workTabExists = TestApis.ui().device().findObject(
-                new UiSelector().text("Work").className(Button.class)).exists();
+        boolean personalTabExists = Poll.forValue("doesPersonalTabButtonExist",
+                        () -> TestApis.ui().device().findObject(
+                                new UiSelector().text("Personal").className(
+                                        Button.class)).exists())
+                .toBeEqualTo(true)
+                .await();
+        boolean workTabExists = Poll.forValue("doesWorkTabButtonExist",
+                        () -> TestApis.ui().device().findObject(
+                                new UiSelector().text("Work").className(Button.class)).exists())
+                .toBeEqualTo(true)
+                .await();
 
         Log.i("InteractiveAutomation", "Work tab exists: "
                 + workTabExists + ", Personal tab exists: " + personalTabExists);

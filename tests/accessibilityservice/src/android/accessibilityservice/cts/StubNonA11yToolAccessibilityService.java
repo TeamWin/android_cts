@@ -14,20 +14,7 @@
  * limitations under the License.
  */
 
+package android.accessibilityservice.cts;
 
-package com.google.android.interactive.steps.enterprise.launcher;
-
-import androidx.test.uiautomator.By;
-
-import com.android.bedstead.nene.TestApis;
-import com.android.interactive.Automation;
-import com.android.interactive.annotations.AutomationFor;
-
-@AutomationFor("com.google.android.interactive.steps.enterprise.launcher"
-        + ".IsSmsShortcutWorkBadgedStep")
-public class IsSmsShortcutWorkBadgedStepAutomation implements Automation<Boolean> {
-    @Override
-    public Boolean automate() throws Exception {
-        return TestApis.ui().device().findObject(By.desc("Work Messages")) != null;
-    }
-}
+/** Stub accessibility service with isAccessibilityTool=false. */
+public class StubNonA11yToolAccessibilityService extends StubEventCapturingAccessibilityService {}

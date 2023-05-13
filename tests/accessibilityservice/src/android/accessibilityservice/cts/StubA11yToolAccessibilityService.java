@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.camera.cts.api31test;
 
-import android.app.Activity;
+package android.accessibilityservice.cts;
 
-// Stub activity used to start the app
-public class SPerfClassTestActivity extends Activity {
-}
+/** Stub accessibility service with isAccessibilityTool=true. */
+public class StubA11yToolAccessibilityService extends StubEventCapturingAccessibilityService {}

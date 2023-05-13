@@ -20,6 +20,9 @@ import static com.android.bedstead.harrier.annotations.enterprise.EnsureHasDevic
 
 import com.android.bedstead.harrier.annotations.AnnotationRunPrecedence;
 import com.android.bedstead.harrier.annotations.EnsureTestAppInstalled;
+import com.android.queryable.annotations.IntegerQuery;
+import com.android.queryable.annotations.Query;
+import com.android.queryable.annotations.StringQuery;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -37,8 +40,11 @@ import java.lang.annotation.Target;
  */
 @Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
-@EnsureHasDevicePolicyManagerRoleHolder // This will be the MORE_IMPORTANT, setup by DeviceState
-@EnsureTestAppInstalled(key = MostImportantCoexistenceTest.LESS_IMPORTANT)
+@EnsureHasDeviceOwner // This will be the MORE_IMPORTANT, setup by DeviceState
+@EnsureTestAppInstalled(key = MostImportantCoexistenceTest.LESS_IMPORTANT,
+        query = @Query(packageName = @StringQuery(
+                isEqualTo = "com.android.bedstead.testapp.NotEmptyTestApp"),
+                targetSdkVersion = @IntegerQuery(isGreaterThanOrEqualTo = 34)))
 public @interface MostImportantCoexistenceTest {
 
     String MORE_IMPORTANT = "more_important";
