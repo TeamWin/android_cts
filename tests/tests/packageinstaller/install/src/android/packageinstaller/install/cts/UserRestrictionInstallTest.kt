@@ -333,6 +333,7 @@ class UserRestrictionInstallTest : PackageInstallerTestBase() {
         receiver.register()
 
         val intent = Intent(APP_INSTALL_ACTION).setPackage(context.packageName)
+                .addFlags(Intent.FLAG_RECEIVER_FOREGROUND)
         val pendingIntent = PendingIntent.getBroadcast(
                 context, 0 /* requestCode */, intent,
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE)
