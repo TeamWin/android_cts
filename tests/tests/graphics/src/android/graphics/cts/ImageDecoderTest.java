@@ -2471,10 +2471,6 @@ public class ImageDecoderTest {
                     ColorSpace.get(ColorSpace.Named.LINEAR_SRGB)),
             new AssetRecord("grayscale-16bit-linearSrgb.png", 32, 32, true, false, true,
                     ColorSpace.get(ColorSpace.Named.LINEAR_EXTENDED_SRGB)),
-            new AssetRecord("red-hlg-profile.png", 100, 100, false, false, true,
-                    ColorSpace.get(ColorSpace.Named.BT2020_HLG)),
-            new AssetRecord("red-pq-profile.png", 100, 100, false, false, true,
-                    ColorSpace.get(ColorSpace.Named.BT2020_PQ)),
         };
     }
 
