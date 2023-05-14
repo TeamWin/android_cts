@@ -137,6 +137,7 @@ public class ActivityManagerFgsBgStartTest {
     private Context mTargetContext;
 
     private int mOrigDeviceDemoMode = 0;
+    private boolean mOrigFgsTypeStartPermissionEnforcement;
 
     @Before
     public void setUp() throws Exception {
@@ -150,6 +151,7 @@ public class ActivityManagerFgsBgStartTest {
             // other BG-FGS-launch exemptions.
             allowBgActivityStart(PACKAGE_NAMES[i], false);
         }
+        mOrigFgsTypeStartPermissionEnforcement = toggleBgFgsTypeStartPermissionEnforcement(false);
         CtsAppTestUtils.turnScreenOn(mInstrumentation, mContext);
         cleanupResiduals();
         enableFgsRestriction(true, true, null);
@@ -164,6 +166,7 @@ public class ActivityManagerFgsBgStartTest {
             CtsAppTestUtils.makeUidIdle(mInstrumentation, PACKAGE_NAMES[i]);
             allowBgActivityStart(PACKAGE_NAMES[i], true);
         }
+        toggleBgFgsTypeStartPermissionEnforcement(mOrigFgsTypeStartPermissionEnforcement);
         cleanupResiduals();
         enableFgsRestriction(true, true, null);
         for (String packageName : PACKAGE_NAMES) {
@@ -183,6 +186,20 @@ public class ActivityManagerFgsBgStartTest {
         // Make sure we are in Home screen
         mInstrumentation.getUiAutomation().performGlobalAction(
                 AccessibilityService.GLOBAL_ACTION_HOME);
+    }
+
+    static boolean toggleBgFgsTypeStartPermissionEnforcement(Boolean enforce) {
+        final String namespaceActivityManager = "activity_manager";
+        final String keygFgsTypeStartPermissionEnforcement = "fgs_type_fg_perm_enforcement_flag";
+        final boolean[] origValue = new boolean[1];
+
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            origValue[0] = DeviceConfig.getBoolean(namespaceActivityManager,
+                    keygFgsTypeStartPermissionEnforcement, true);
+            DeviceConfig.setProperty(namespaceActivityManager,
+                    keygFgsTypeStartPermissionEnforcement, enforce.toString(), false);
+        });
+        return origValue[0];
     }
 
     /**
@@ -206,6 +223,10 @@ public class ActivityManagerFgsBgStartTest {
             bundle.putInt(LocalForegroundServiceLocation.EXTRA_FOREGROUND_SERVICE_TYPE,
                     ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION
                     | ServiceInfo.FOREGROUND_SERVICE_TYPE_CAMERA
+                    | ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE);
+            final Bundle bundle2 = new Bundle();
+            bundle2.putInt(LocalForegroundServiceLocation.EXTRA_FOREGROUND_SERVICE_TYPE,
+                    ServiceInfo.FOREGROUND_SERVICE_TYPE_CAMERA
                     | ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE);
             // start FGSL.
             enableFgsRestriction(false, true, null);
@@ -231,7 +252,7 @@ public class ActivityManagerFgsBgStartTest {
             // APP1 is in FGS state,
             CommandReceiver.sendCommand(mContext,
                     CommandReceiver.COMMAND_START_FOREGROUND_SERVICE,
-                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, bundle);
+                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, bundle2);
             // start FGSL in app1, it won't get location capability.
             CommandReceiver.sendCommand(mContext,
                     CommandReceiver.COMMAND_START_FOREGROUND_SERVICE_LOCATION,
@@ -1588,6 +1609,9 @@ public class ActivityManagerFgsBgStartTest {
             waiter.prepare(ACTION_START_FGS_RESULT);
             extras = LocalForegroundService.newCommand(
                     LocalForegroundService.COMMAND_START_FOREGROUND);
+            extras.putInt(LocalForegroundServiceLocation.EXTRA_FOREGROUND_SERVICE_TYPE,
+                    ServiceInfo.FOREGROUND_SERVICE_TYPE_CAMERA
+                    | ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE);
             CommandReceiver.sendCommand(mContext, CommandReceiver.COMMAND_START_SERVICE,
                     PACKAGE_NAME_APP2, PACKAGE_NAME_APP1, 0, extras);
             waiter.doWait(WAITFOR_MSEC);
