@@ -165,6 +165,11 @@ class UpdateOwnershipEnforcementMultiUserTest : UpdateOwnershipEnforcementTestBa
         uiDevice.executeShellCommand(
                 "pm install-existing --wait --user ${otherUser.id()} " + context.opPackageName
         )
+        // The command would only hang if the package was installed for the user before.
+        // Second call will guarantee the buggy codepath to be triggered.
+        uiDevice.executeShellCommand(
+                "pm install-existing --wait --user ${otherUser.id()} " + context.opPackageName
+        )
         installTestPackage(
                 "--user ${otherUser.id()} --update-ownership -i " + context.opPackageName
         )
