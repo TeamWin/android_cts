@@ -45,6 +45,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.pm.ServiceInfo;
 import android.os.Binder;
 import android.os.Bundle;
 import android.os.Handler;
@@ -740,6 +741,8 @@ public class ServiceTest extends ActivityTestsBase {
         mExternalService.setComponent(ComponentName.unflattenFromString(EXTERNAL_SERVICE_COMPONENT));
         mLocalForegroundService = new Intent(mContext, LocalForegroundService.class);
         mLocalPhoneCallService = new Intent(mContext, LocalPhoneCallService.class);
+        mLocalPhoneCallService.putExtra(LocalForegroundService.EXTRA_FOREGROUND_SERVICE_TYPE,
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_PHONE_CALL);
         mLocalDeniedService = new Intent(mContext, LocalDeniedService.class);
         mLocalGrantedService = new Intent(mContext, LocalGrantedService.class);
         mLocalService_ApplicationHasPermission = new Intent(
