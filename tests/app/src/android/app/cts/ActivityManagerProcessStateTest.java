@@ -28,6 +28,7 @@ import static android.app.ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREG
 import static android.app.ActivityManager.RunningAppProcessInfo.IMPORTANCE_GONE;
 import static android.app.ActivityManager.RunningAppProcessInfo.IMPORTANCE_VISIBLE;
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
+import static android.app.cts.ActivityManagerFgsBgStartTest.toggleBgFgsTypeStartPermissionEnforcement;
 import static android.app.stubs.LocalForegroundService.ACTION_START_FGS_RESULT;
 import static android.app.stubs.LocalForegroundServiceSticky.ACTION_RESTART_FGS_STICKY_RESULT;
 
@@ -1857,6 +1858,12 @@ public class ActivityManagerProcessStateTest {
     public void testFgsLocationBind() throws Exception {
         setupWatchers(3);
 
+        Bundle bundle = new Bundle();
+        bundle.putInt(LocalForegroundServiceLocation.EXTRA_FOREGROUND_SERVICE_TYPE,
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_CAMERA
+                | ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE);
+        final boolean origFgTypePermissionEnforceValue =
+                toggleBgFgsTypeStartPermissionEnforcement(false);
         try {
             // Put Package1 in TOP state, now it gets all capability (because the TOP process
             // gets all while-in-use permission (not from FGSL).
@@ -1870,10 +1877,9 @@ public class ActivityManagerProcessStateTest {
             // Start a FGS
             CommandReceiver.sendCommand(mContext,
                     CommandReceiver.COMMAND_START_FOREGROUND_SERVICE,
-                    mAppInfo[0].packageName, mAppInfo[0].packageName, 0, null);
+                    mAppInfo[0].packageName, mAppInfo[0].packageName, 0, bundle);
 
             // Start a FGSL
-            Bundle bundle = new Bundle();
             bundle.putInt(LocalForegroundServiceLocation.EXTRA_FOREGROUND_SERVICE_TYPE,
                     ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION
                     | ServiceInfo.FOREGROUND_SERVICE_TYPE_CAMERA
@@ -1940,6 +1946,7 @@ public class ActivityManagerProcessStateTest {
                     WatchUidRunner.STATE_CACHED_EMPTY,
                     new Integer(PROCESS_CAPABILITY_NONE));
         } finally {
+            toggleBgFgsTypeStartPermissionEnforcement(origFgTypePermissionEnforceValue);
             // Clean up: unbind services to avoid from interferences with other tests
             CommandReceiver.sendCommand(mContext, CommandReceiver.COMMAND_UNBIND_SERVICE,
                     mAppInfo[0].packageName, mAppInfo[1].packageName, 0, null);
@@ -2389,6 +2396,8 @@ public class ActivityManagerProcessStateTest {
                 WAITFOR_MSEC, PROCESS_CAPABILITY_ALL);
         AmMonitor monitor = new AmMonitor(mInstrumentation,
                 new String[]{AmMonitor.WAIT_FOR_EARLY_ANR, AmMonitor.WAIT_FOR_ANR});
+        final boolean origFgTypePermissionEnforceValue =
+                toggleBgFgsTypeStartPermissionEnforcement(false);
         try {
             // Start an activity in app1 to put app1 in TOP state, so the FGS it started can have
             // while-in-use capabilities.
@@ -2401,7 +2410,11 @@ public class ActivityManagerProcessStateTest {
 
             WaitForBroadcast waiter = new WaitForBroadcast(mInstrumentation.getTargetContext());
             waiter.prepare(ACTION_START_FGS_RESULT);
-            Bundle extras = new Bundle();
+            final Bundle extras = new Bundle();
+            extras.putInt(LocalForegroundServiceLocation.EXTRA_FOREGROUND_SERVICE_TYPE,
+                    ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION
+                    | ServiceInfo.FOREGROUND_SERVICE_TYPE_CAMERA
+                    | ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE);
             extras.putInt(LocalForegroundServiceSticky.STICKY_FLAG, stickyFlag);
             CommandReceiver.sendCommand(mContext,
                     CommandReceiver.COMMAND_START_FOREGROUND_SERVICE_STICKY,
@@ -2430,6 +2443,7 @@ public class ActivityManagerProcessStateTest {
             monitor.sendCommand(AmMonitor.CMD_KILL);
             checkKillResult.accept(uid1Watcher, waiter);
         } finally {
+            toggleBgFgsTypeStartPermissionEnforcement(origFgTypePermissionEnforceValue);
             final ActivityManager am = mContext.getSystemService(ActivityManager.class);
             SystemUtil.runWithShellPermissionIdentity(() -> {
                 am.forceStopPackage(PACKAGE_NAME_APP1);
@@ -2448,6 +2462,13 @@ public class ActivityManagerProcessStateTest {
     public void testFgsDefaultCapabilityNone() throws Exception {
         setupWatchers(2);
 
+        final Bundle bundle = new Bundle();
+        bundle.putInt(LocalForegroundServiceLocation.EXTRA_FOREGROUND_SERVICE_TYPE,
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_CAMERA
+                | ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE);
+        final boolean origFgTypePermissionEnforceValue =
+                toggleBgFgsTypeStartPermissionEnforcement(false);
+
         try {
             // Put Package1 in TOP state.
             CommandReceiver.sendCommand(mContext,
@@ -2460,7 +2481,7 @@ public class ActivityManagerProcessStateTest {
             // Start a FGS from TOP state.
             CommandReceiver.sendCommand(mContext,
                     CommandReceiver.COMMAND_START_FOREGROUND_SERVICE,
-                    mAppInfo[0].packageName, mAppInfo[0].packageName, 0, null);
+                    mAppInfo[0].packageName, mAppInfo[0].packageName, 0, bundle);
 
             // Stop the activity.
             CommandReceiver.sendCommand(mContext,
@@ -2492,6 +2513,7 @@ public class ActivityManagerProcessStateTest {
                     WatchUidRunner.STATE_CACHED_EMPTY,
                     new Integer(PROCESS_CAPABILITY_NONE));
         } finally {
+            toggleBgFgsTypeStartPermissionEnforcement(origFgTypePermissionEnforceValue);
             // Clean up: unbind services to avoid from interferences with other tests
             CommandReceiver.sendCommand(mContext, CommandReceiver.COMMAND_UNBIND_SERVICE,
                     mAppInfo[0].packageName, mAppInfo[1].packageName, 0, null);
