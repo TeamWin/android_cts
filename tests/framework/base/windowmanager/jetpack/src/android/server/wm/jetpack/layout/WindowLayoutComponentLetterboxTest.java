@@ -23,12 +23,15 @@ import static android.server.wm.jetpack.utils.ExtensionUtil.getExtensionWindowLa
 import android.server.wm.jetpack.utils.TestActivity;
 import android.server.wm.jetpack.utils.TestLetterboxLandscapeActivity;
 import android.server.wm.jetpack.utils.TestLetterboxPortraitActivity;
+import android.server.wm.jetpack.utils.WindowExtensionTestRule;
 import android.server.wm.jetpack.utils.WindowManagerJetpackTestBase;
 
+import androidx.window.extensions.layout.WindowLayoutComponent;
 import androidx.window.extensions.layout.WindowLayoutInfo;
 
 import com.android.compatibility.common.util.ApiTest;
 
+import org.junit.Rule;
 import org.junit.Test;
 
 /**
@@ -38,6 +41,10 @@ import org.junit.Test;
  *     atest CtsWindowManagerJetpackTestCases:WindowLayoutComponentLetterboxTest
  */
 public class WindowLayoutComponentLetterboxTest extends WindowManagerJetpackTestBase {
+
+    @Rule
+    public final WindowExtensionTestRule mWindowExtensionTestRule =
+            new WindowExtensionTestRule(WindowLayoutComponent.class);
 
     @ApiTest(apis = {"androidx.window.extensions.layout.WindowLayoutInfo#getDisplayFeatures"})
     @Test
