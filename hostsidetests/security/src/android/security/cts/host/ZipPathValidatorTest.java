@@ -90,4 +90,20 @@ public class ZipPathValidatorTest extends CompatChangeGatingTestCase {
                 /* enabledChanges */ ImmutableSet.of(),
                 /* disabledChanges */ ImmutableSet.of(VALIDATE_ZIP_PATH_FOR_PATH_TRAVERSAL));
     }
+
+    public void testLoadingApksWillNotCallZipPathValidator_changeEnabled() throws Exception {
+        runDeviceCompatTest(TEST_PKG,
+                ".ZipPathValidatorTest",
+                "loadingApksWillNotCallZipPathValidator_changeEnabledOrDisabled",
+                /* enabledChanges */ ImmutableSet.of(VALIDATE_ZIP_PATH_FOR_PATH_TRAVERSAL),
+                /* disabledChanges */ ImmutableSet.of());
+    }
+
+    public void testLoadingApksWillNotCallZipPathValidator_changeDisabled() throws Exception {
+        runDeviceCompatTest(TEST_PKG,
+                ".ZipPathValidatorTest",
+                "loadingApksWillNotCallZipPathValidator_changeEnabledOrDisabled",
+                /* enabledChanges */ ImmutableSet.of(),
+                /* disabledChanges */ ImmutableSet.of(VALIDATE_ZIP_PATH_FOR_PATH_TRAVERSAL));
+    }
 }
