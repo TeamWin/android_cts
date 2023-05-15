@@ -120,6 +120,7 @@ public class BasePackageInstallTest extends InstrumentationTestCase {
         if (mSession != null) {
             mSession.abandon();
         }
+        forceUninstall();
 
         super.tearDown();
     }
