@@ -21,6 +21,7 @@ import android.accessibility.cts.common.InstrumentedAccessibilityServiceTestRule
 import android.app.UiAutomation
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.platform.test.annotations.AppModeFull
 import android.platform.test.rule.ScreenRecordRule
 import androidx.test.platform.app.InstrumentationRegistry
@@ -35,6 +36,8 @@ import com.android.compatibility.common.util.UiAutomatorUtils2.waitFindObjectOrN
 import java.util.regex.Pattern
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assume
+import org.junit.Before
 import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
@@ -67,6 +70,14 @@ class ReviewAccessibilityServicesTest {
     init {
         Configurator.getInstance().uiAutomationFlags =
             UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES
+    }
+
+    @Before
+    fun assumeNotAutoTvOrWear() {
+        Assume.assumeFalse(context.packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK))
+        Assume.assumeFalse(
+            context.packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE))
+        Assume.assumeFalse(context.packageManager.hasSystemFeature(PackageManager.FEATURE_WATCH))
     }
 
     @After
