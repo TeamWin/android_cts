@@ -43,13 +43,12 @@ import android.app.NotificationChannel;
 import android.app.NotificationChannelGroup;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
-import android.app.cts.android.app.cts.tools.FutureServiceConnection;
-import android.app.cts.android.app.cts.tools.NotificationHelper.SEARCH_TYPE;
+import android.app.stubs.shared.FutureServiceConnection;
 import android.app.role.RoleManager;
 import android.app.stubs.GetResultActivity;
 import android.app.stubs.R;
-import android.app.stubs.TestNotificationAssistant;
-import android.app.stubs.TestNotificationListener;
+import android.app.stubs.shared.NotificationHelper.SEARCH_TYPE;
+import android.app.stubs.shared.TestNotificationListener;
 import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.content.Context;
@@ -91,7 +90,6 @@ import com.android.compatibility.common.util.SystemUtil;
 import com.android.compatibility.common.util.ThrowingSupplier;
 import com.android.test.notificationlistener.INLSControlService;
 import com.android.test.notificationlistener.INotificationUriAccessService;
-
 
 import com.google.common.base.Preconditions;
 
@@ -818,10 +816,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
     }
 
     public void testSuspendPackage() throws Exception {
-        toggleListenerAccess(true);
-        Thread.sleep(500); // wait for listener to be allowed
-
-        mListener = TestNotificationListener.getInstance();
+        mListener = mNotificationHelper.enableListener(STUB_PACKAGE_NAME);
         assertNotNull(mListener);
 
         sendNotification(1, R.drawable.black);
@@ -859,10 +854,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
     }
 
     public void testSuspendedPackageSendsNotification() throws Exception {
-        toggleListenerAccess(true);
-        Thread.sleep(500); // wait for listener to be allowed
-
-        mListener = TestNotificationListener.getInstance();
+        mListener = mNotificationHelper.enableListener(STUB_PACKAGE_NAME);
         assertNotNull(mListener);
 
         // suspend package, post notification while package is suspended, see notification
@@ -909,10 +901,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         assertEquals(1, Settings.Secure.getInt(
                 mContext.getContentResolver(), Settings.Secure.NOTIFICATION_BADGING));
 
-        toggleListenerAccess(true);
-        Thread.sleep(500); // wait for listener to be allowed
-
-        mListener = TestNotificationListener.getInstance();
+        mListener = mNotificationHelper.enableListener(STUB_PACKAGE_NAME);
         assertNotNull(mListener);
         try {
             sendNotification(1, R.drawable.black);
@@ -951,10 +940,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
     }
 
     public void testKeyChannelGroupOverrideImportanceExplanation_ranking() throws Exception {
-        toggleListenerAccess(true);
-        Thread.sleep(500); // wait for listener to be allowed
-
-        mListener = TestNotificationListener.getInstance();
+        mListener = mNotificationHelper.enableListener(STUB_PACKAGE_NAME);
         assertNotNull(mListener);
 
         final int notificationId = 1;
@@ -1403,10 +1389,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         mInstrumentation.waitForIdleSync();
         activity.clearResult();
 
-        toggleListenerAccess(true);
-        Thread.sleep(500); // wait for listener to be allowed
-
-        mListener = TestNotificationListener.getInstance();
+        mListener = mNotificationHelper.enableListener(STUB_PACKAGE_NAME);
         assertNotNull(mListener);
 
         // grant this test permission to post
@@ -1563,8 +1546,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
             // pass
         }
 
-        toggleListenerAccess(true);
-        Thread.sleep(500);
+        mNotificationHelper.enableListener(STUB_PACKAGE_NAME);
         // no exception this time
         mNotificationManager.shouldHideSilentStatusBarIcons();
     }
@@ -1606,10 +1588,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         Uri background8Uri = Uri.parse(
                 "content://com.android.test.notificationprovider.provider/background8.png");
 
-        toggleListenerAccess(true);
-        Thread.sleep(500); // wait for listener to be allowed
-
-        mListener = TestNotificationListener.getInstance();
+        mListener = mNotificationHelper.enableListener(STUB_PACKAGE_NAME);
         assertNotNull(mListener);
 
         try {
@@ -1664,10 +1643,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
             // Don't have access the notification yet, but we can test the URI
             assertInaccessible(background7Uri);
 
-            toggleListenerAccess(true);
-            Thread.sleep(500); // wait for listener to be allowed
-
-            mListener = TestNotificationListener.getInstance();
+            mListener = mNotificationHelper.enableListener(STUB_PACKAGE_NAME);
             assertNotNull(mListener);
 
             assertEquals(background7Uri, getNotificationBackgroundImageUri(7));
@@ -1684,8 +1660,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         Uri background7Uri = Uri.parse(
                 "content://com.android.test.notificationprovider.provider/background7.png");
 
-        toggleListenerAccess(true);
-        Thread.sleep(500); // wait for listener to be allowed
+        mListener = mNotificationHelper.enableListener(STUB_PACKAGE_NAME);
 
         try {
             // Post #7
@@ -1698,7 +1673,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
             assertAccessible(background7Uri);
 
             // Remove the listener to ensure permissions get revoked
-            toggleListenerAccess(false);
+            mNotificationHelper.disableListener(STUB_PACKAGE_NAME);
             Thread.sleep(500); // wait for listener to be disabled
 
             assertInaccessible(background7Uri);
@@ -1772,9 +1747,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         assertFalse(mNotificationUriAccessService.isFileUriAccessible(background7Uri));
 
         // Give the test app access to notifications, and get that listener
-        toggleListenerAccess(true);
-        Thread.sleep(500); // wait for listener to be allowed
-        mListener = TestNotificationListener.getInstance();
+        mListener = mNotificationHelper.enableListener(STUB_PACKAGE_NAME);
         assertNotNull(mListener);
 
         try {
@@ -1788,7 +1761,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
                 assertTrue(mNotificationUriAccessService.isFileUriAccessible(background7Uri));
 
                 // Remove the listener to ensure permissions get revoked
-                toggleListenerAccess(false);
+                mNotificationHelper.disableListener(STUB_PACKAGE_NAME);
                 Thread.sleep(500); // wait for listener to be disabled
 
                 // Ensure that revoking listener access to this one app does not effect the other.
@@ -1823,9 +1796,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         Thread.sleep(500);
 
         // Give the test app access to notifications, and get that listener
-        toggleListenerAccess(true);
-        Thread.sleep(500); // wait for listener to be allowed
-        mListener = TestNotificationListener.getInstance();
+        mListener = mNotificationHelper.enableListener(STUB_PACKAGE_NAME);
         assertNotNull(mListener);
 
         try {
@@ -1898,10 +1869,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
     }
 
     public void testNotificationListener_setNotificationsShown() throws Exception {
-        toggleListenerAccess(true);
-        Thread.sleep(500); // wait for listener to be allowed
-
-        mListener = TestNotificationListener.getInstance();
+        mListener = mNotificationHelper.enableListener(STUB_PACKAGE_NAME);
         assertNotNull(mListener);
         final int notificationId1 = 1003;
         final int notificationId2 = 1004;
@@ -1916,7 +1884,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
                 null, notificationId2, SEARCH_TYPE.LISTENER);
         mListener.setNotificationsShown(new String[]{sbn1.getKey()});
 
-        toggleListenerAccess(false);
+        mNotificationHelper.disableListener(STUB_PACKAGE_NAME);
         Thread.sleep(500); // wait for listener to be disallowed
         try {
             mListener.setNotificationsShown(new String[]{sbn2.getKey()});
@@ -1927,10 +1895,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
     }
 
     public void testNotificationListener_getNotificationChannels() throws Exception {
-        toggleListenerAccess(true);
-        Thread.sleep(500); // wait for listener to be allowed
-
-        mListener = TestNotificationListener.getInstance();
+        mListener = mNotificationHelper.enableListener(STUB_PACKAGE_NAME);
         assertNotNull(mListener);
 
         try {
@@ -1942,10 +1907,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
     }
 
     public void testNotificationListener_getNotificationChannelGroups() throws Exception {
-        toggleListenerAccess(true);
-        Thread.sleep(500); // wait for listener to be allowed
-
-        mListener = TestNotificationListener.getInstance();
+        mListener = mNotificationHelper.enableListener(STUB_PACKAGE_NAME);
         assertNotNull(mListener);
         try {
             mListener.getNotificationChannelGroups(mContext.getPackageName(), UserHandle.CURRENT);
@@ -1956,10 +1918,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
     }
 
     public void testNotificationListener_updateNotificationChannel() throws Exception {
-        toggleListenerAccess(true);
-        Thread.sleep(500); // wait for listener to be allowed
-
-        mListener = TestNotificationListener.getInstance();
+        mListener = mNotificationHelper.enableListener(STUB_PACKAGE_NAME);
         assertNotNull(mListener);
 
         NotificationChannel channel = new NotificationChannel(
@@ -1975,10 +1934,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
     }
 
     public void testNotificationListener_getActiveNotifications() throws Exception {
-        toggleListenerAccess(true);
-        Thread.sleep(500); // wait for listener to be allowed
-
-        mListener = TestNotificationListener.getInstance();
+        mListener = mNotificationHelper.enableListener(STUB_PACKAGE_NAME);
         assertNotNull(mListener);
         final int notificationId1 = 1001;
         final int notificationId2 = 1002;
@@ -2004,10 +1960,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
 
 
     public void testNotificationListener_getCurrentRanking() throws Exception {
-        toggleListenerAccess(true);
-        Thread.sleep(500); // wait for listener to be allowed
-
-        mListener = TestNotificationListener.getInstance();
+        mListener = mNotificationHelper.enableListener(STUB_PACKAGE_NAME);
         assertNotNull(mListener);
 
         sendNotification(1, R.drawable.black);
@@ -2017,10 +1970,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
     }
 
     public void testNotificationListener_cancelNotifications() throws Exception {
-        toggleListenerAccess(true);
-        Thread.sleep(500); // wait for listener to be allowed
-
-        mListener = TestNotificationListener.getInstance();
+        mListener = mNotificationHelper.enableListener(STUB_PACKAGE_NAME);
         assertNotNull(mListener);
         final int notificationId = 1006;
 
@@ -2048,10 +1998,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
     }
 
     public void testNotificationAssistant_cancelNotifications() throws Exception {
-        toggleAssistantAccess(true);
-        Thread.sleep(500); // wait for assistant to be allowed
-
-        mAssistant = TestNotificationAssistant.getInstance();
+        mAssistant = mNotificationHelper.enableAssistant(STUB_PACKAGE_NAME);
         assertNotNull(mAssistant);
         final int notificationId = 1006;
 
@@ -2148,10 +2095,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
     }
 
     public void testConversationRankingFields() throws Exception {
-        toggleListenerAccess(true);
-        Thread.sleep(500); // wait for listener to be allowed
-
-        mListener = TestNotificationListener.getInstance();
+        mListener = mNotificationHelper.enableListener(STUB_PACKAGE_NAME);
         assertNotNull(mListener);
 
         createDynamicShortcut();
@@ -2429,7 +2373,8 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
 
     public void testGrantRevokeNotificationManagerApis_works() {
         SystemUtil.runWithShellPermissionIdentity(() -> {
-            ComponentName componentName = TestNotificationListener.getComponentName();
+            ComponentName componentName =
+                    new ComponentName(STUB_PACKAGE_NAME, TestNotificationListener.class.getName());
             mNotificationManager.setNotificationListenerAccessGranted(
                     componentName, true, true);
 
@@ -2605,10 +2550,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
     }
 
     public void testIsAmbient() throws Exception {
-        toggleListenerAccess(true);
-        Thread.sleep(500); // wait for listener to be allowed
-
-        mListener = TestNotificationListener.getInstance();
+        mListener = mNotificationHelper.enableListener(STUB_PACKAGE_NAME);
         assertNotNull(mListener);
 
         NotificationChannel lowChannel = new NotificationChannel(
@@ -2646,10 +2588,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
     }
 
     public void testFlagForegroundServiceNeedsRealFgs() throws Exception {
-        toggleListenerAccess(true);
-        Thread.sleep(500); // wait for listener to be allowed
-
-        mListener = TestNotificationListener.getInstance();
+        mListener = mNotificationHelper.enableListener(STUB_PACKAGE_NAME);
         assertNotNull(mListener);
 
         final Notification n =
@@ -2666,10 +2605,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
     }
 
     public void testFlagUserInitiatedJobNeedsRealUij() throws Exception {
-        toggleListenerAccess(true);
-        Thread.sleep(500); // wait for listener to be allowed
-
-        mListener = TestNotificationListener.getInstance();
+        mListener = mNotificationHelper.enableListener(STUB_PACKAGE_NAME);
         assertNotNull(mListener);
 
         final Notification n =

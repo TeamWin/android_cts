@@ -40,13 +40,12 @@ import android.app.Instrumentation;
 import android.app.KeyguardManager;
 import android.app.Notification;
 import android.app.PendingIntent;
-import android.app.cts.android.app.cts.tools.NotificationHelper;
-import android.app.cts.android.app.cts.tools.NotificationHelper.SEARCH_TYPE;
+import android.app.stubs.shared.NotificationHelper.SEARCH_TYPE;
 import android.app.stubs.BubbledActivity;
 import android.app.stubs.BubblesTestService;
 import android.app.stubs.R;
 import android.app.stubs.SendBubbleActivity;
-import android.app.stubs.TestNotificationListener;
+import android.app.stubs.shared.TestNotificationListener;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -99,7 +98,7 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
 
         // ensure listener access isn't allowed before test runs (other tests could put
         // TestListener in an unexpected state)
-        toggleListenerAccess(false);
+        mNotificationHelper.disableListener(STUB_PACKAGE_NAME);
 
         // delay between tests so notifications aren't dropped by the rate limiter
         sleep();
@@ -180,42 +179,11 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
      * in this method.
      */
     private void verifyNotificationBubbleState(int id, boolean shouldBeBubble) {
-        boolean notificationFound = false;
-        boolean bubbleStateMatches = false;
-        try {
-            // Wait up to 5 seconds for the notification
-            for (int i = 0; i < 50; i++) {
-                // FLAG_BUBBLE relies on notification being posted, wait for notification listener
-                Thread.sleep(100);
-                for (StatusBarNotification sbn : mListener.mPosted) {
-                    if (sbn.getId() == id) {
-                        notificationFound = true;
-                        boolean isBubble = (sbn.getNotification().flags & FLAG_BUBBLE) != 0;
-                        if (isBubble == shouldBeBubble) {
-                            bubbleStateMatches = true;
-                            break;
-                        }
-                    }
-                }
-            }
-        } catch (InterruptedException ignored) {
-        }
-
-        if (bubbleStateMatches) {
-            // pass
-            return;
-        }
-
-        String failure;
-        if (notificationFound) {
-            failure = shouldBeBubble
-                    ? "Notification with id= " + id + " wasn't a bubble"
-                    : "Notification with id= " + id + " was a bubble and shouldn't be";
-        } else {
-            failure = "Couldn't find posted notification with id=" + id;
-        }
-        Log.e(TAG, failure + " listener=" + mListener);
-        fail(failure);
+        StatusBarNotification sbn =
+                mNotificationHelper.findPostedNotification(null, id, SEARCH_TYPE.POSTED);
+        assertNotNull("Cannot find notification id=" + id, sbn);
+        assertEquals("Unexpected bubble state for id=" + id + ", expected " + shouldBeBubble,
+                shouldBeBubble, ((sbn.getNotification().flags & FLAG_BUBBLE) != 0));
     }
 
     private void setBubblesGlobal(boolean enabled) {
@@ -230,7 +198,7 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
         String command = " cmd notification set_bubbles " + pkg
                 + " " + Integer.toString(pref)
                 + " " + userId;
-        runCommand(command, InstrumentationRegistry.getInstrumentation());
+        mNotificationHelper.runCommand(command, InstrumentationRegistry.getInstrumentation());
     }
 
     private void setBubblesChannelAllowed(boolean allowed) throws Exception {
@@ -240,7 +208,7 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
                 + " " + NOTIFICATION_CHANNEL_ID
                 + " " + allowed
                 + " " + userId;
-        runCommand(command, InstrumentationRegistry.getInstrumentation());
+        mNotificationHelper.runCommand(command, InstrumentationRegistry.getInstrumentation());
     }
 
     private void allowAllNotificationsToBubble() throws Exception {
@@ -367,10 +335,7 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
         assertEquals(1, Settings.Secure.getInt(
                 mContext.getContentResolver(), Settings.Secure.NOTIFICATION_BUBBLES));
 
-        toggleListenerAccess(true);
-        sleep(); // wait for listener to be allowed
-
-        mListener = TestNotificationListener.getInstance();
+        mListener = mNotificationHelper.enableListener(STUB_PACKAGE_NAME);
         assertNotNull(mListener);
 
         sendNotification(1, R.drawable.black);
@@ -947,11 +912,10 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
 
             // notif gets posted with update, so wait
             verifyNotificationBubbleState(notifId, true /* shouldBeBubble */);
-            mListener.resetData();
 
             // Bubble should have suppressed flag
             StatusBarNotification sbn = mNotificationHelper.findPostedNotification(null, notifId,
-                    SEARCH_TYPE.LISTENER);
+                    SEARCH_TYPE.POSTED);
             assertTrue(sbn.getNotification().getBubbleMetadata().isBubbleSuppressable());
             assertTrue(sbn.getNotification().getBubbleMetadata().isBubbleSuppressed());
         } finally {
@@ -1115,35 +1079,30 @@ public class NotificationManagerBubbleTest extends BaseNotificationManagerTest {
                     true /* suppressBubble */);
 
             verifyNotificationBubbleState(notifId, true);
-            mListener.resetData();
-
             StatusBarNotification sbn = mNotificationHelper.findPostedNotification(null, notifId,
-                    SEARCH_TYPE.LISTENER);
+                    SEARCH_TYPE.POSTED);
             assertTrue(sbn.getNotification().getBubbleMetadata().isBubbleSuppressable());
             assertFalse(sbn.getNotification().getBubbleMetadata().isBubbleSuppressed());
+            mListener.resetData();
 
             // Launch same activity as whats in the bubble
             BubbledActivity activity = startBubbleActivity(notifId);
 
             // It should have the locusId
-            assertEquals(new LocusId(String.valueOf(notifId)),
-                    activity.getLocusId());
+            assertEquals(new LocusId(String.valueOf(notifId)), activity.getLocusId());
 
             // notif gets posted with update, so wait
             verifyNotificationBubbleState(notifId, true /* shouldBeBubble */);
-            mListener.resetData();
-
             // Bubble should have suppressed flag
             sbn = mNotificationHelper.findPostedNotification(null, notifId, SEARCH_TYPE.LISTENER);
             assertTrue(sbn.getNotification().getBubbleMetadata().isBubbleSuppressable());
             assertTrue(sbn.getNotification().getBubbleMetadata().isBubbleSuppressed());
+            mListener.resetData();
 
             activity.finish();
 
             // notif gets posted with update, so wait
             verifyNotificationBubbleState(notifId, true /* shouldBeBubble */);
-            mListener.resetData();
-
             sbn = mNotificationHelper.findPostedNotification(null, notifId, SEARCH_TYPE.LISTENER);
             assertTrue(sbn.getNotification().getBubbleMetadata().isBubbleSuppressable());
             assertFalse(sbn.getNotification().getBubbleMetadata().isBubbleSuppressed());

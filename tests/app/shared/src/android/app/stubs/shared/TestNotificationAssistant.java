@@ -14,16 +14,19 @@
  * limitations under the License.
  */
 
-package android.app.stubs;
+package android.app.stubs.shared;
 
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.ComponentName;
 import android.os.Bundle;
+import android.os.ConditionVariable;
 import android.service.notification.Adjustment;
 import android.service.notification.NotificationAssistantService;
 import android.service.notification.StatusBarNotification;
+import android.util.Log;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,32 +34,34 @@ import java.util.Map;
 public class TestNotificationAssistant extends NotificationAssistantService {
     public static final String TAG = "TestNotificationAssistant";
     public static final String PKG = "android.app.stubs";
+    private static final long CONNECTION_TIMEOUT_MS = 1000;
 
     private static TestNotificationAssistant sNotificationAssistantInstance = null;
     boolean mIsConnected;
-    boolean mIsPanelOpen = false;
-    public List<String> mCurrentCapabilities;
-    boolean mNotificationVisible = false;
-    int mNotificationId = 1357;
-    int mNotificationSeenCount = 0;
-    int mNotificationClickCount = 0;
-    int mNotificationRank = -1;
-    int mNotificationFeedback = 0;
-    String mSnoozedKey;
-    String mSnoozedUntilContext;
+    public List<String> mCurrentCapabilities = new ArrayList<>();
+    public boolean mIsPanelOpen = false;
+    public String mSnoozedKey;
+    public String mSnoozedUntilContext;
+    public boolean mNotificationVisible = false;
+    public int mNotificationId = 1357;
+    public int mNotificationSeenCount = 0;
+    public int mNotificationClickCount = 0;
+    public int mNotificationRank = -1;
+    public int mNotificationFeedback = 0;
     private NotificationManager mNotificationManager;
 
     public Map<String, Integer> mRemoved = new HashMap<>();
 
-    public static String getId() {
-        return String.format("%s/%s", TestNotificationAssistant.class.getPackage().getName(),
-                TestNotificationAssistant.class.getName());
-    }
-
-    public static ComponentName getComponentName() {
-        return new ComponentName(TestNotificationAssistant.class.getPackage().getName(),
-                TestNotificationAssistant.class.getName());
-    }
+    /**
+     * This controls whether there is a listener connected or not. Depending on the method, if the
+     * caller tries to use a listener after it has disconnected, NMS can throw a SecurityException.
+     *
+     * There is no race between onListenerConnected() and onListenerDisconnected() because they are
+     * called in the same thread. The value that getInstance() sees is guaranteed to be the value
+     * that was set by onListenerConnected() because of the happens-before established by the
+     * condition variable.
+     */
+    private static final ConditionVariable INSTANCE_AVAILABLE = new ConditionVariable(false);
 
     @Override
     public void onCreate() {
@@ -64,20 +69,40 @@ public class TestNotificationAssistant extends NotificationAssistantService {
         mNotificationManager = getSystemService(NotificationManager.class);
     }
 
+    public void resetData() {
+        mIsPanelOpen = false;
+        mCurrentCapabilities.clear();
+        mNotificationVisible = false;
+        mNotificationSeenCount = 0;
+        mNotificationClickCount = 0;
+        mNotificationRank = -1;
+        mNotificationFeedback = 0;
+        mSnoozedKey = null;
+        mSnoozedUntilContext = null;
+        mRemoved.clear();
+    }
+
     @Override
     public void onListenerConnected() {
         super.onListenerConnected();
         sNotificationAssistantInstance = this;
+        INSTANCE_AVAILABLE.open();
         mIsConnected = true;
+        mCurrentCapabilities = mNotificationManager.getAllowedAssistantAdjustments();
     }
 
     @Override
     public void onListenerDisconnected() {
+        INSTANCE_AVAILABLE.close();
+        sNotificationAssistantInstance = null;
         mIsConnected = false;
     }
 
     public static TestNotificationAssistant getInstance() {
-        return sNotificationAssistantInstance;
+        if (INSTANCE_AVAILABLE.block(CONNECTION_TIMEOUT_MS)) {
+            return sNotificationAssistantInstance;
+        }
+        return null;
     }
 
     @Override
@@ -109,14 +134,13 @@ public class TestNotificationAssistant extends NotificationAssistantService {
         mCurrentCapabilities = mNotificationManager.getAllowedAssistantAdjustments();
     }
 
-    void resetNotificationVisibilityCounts() {
+    public void resetNotificationVisibilityCounts() {
         mNotificationSeenCount = 0;
     }
 
     @Override
     public void onNotificationVisibilityChanged(String key, boolean isVisible) {
-        if (key.contains(TestNotificationAssistant.class.getPackage().getName()
-                + "|" + mNotificationId)) {
+        if (key.contains(getPackageName() + "|" + mNotificationId)) {
             mNotificationVisible = isVisible;
         }
     }
@@ -136,7 +160,7 @@ public class TestNotificationAssistant extends NotificationAssistantService {
         mIsPanelOpen = true;
     }
 
-    void resetNotificationClickCount() {
+    public void resetNotificationClickCount() {
         mNotificationClickCount = 0;
     }
 
@@ -148,6 +172,19 @@ public class TestNotificationAssistant extends NotificationAssistantService {
     @Override
     public void onNotificationFeedbackReceived(String key, RankingMap rankingMap, Bundle feedback) {
         mNotificationFeedback = feedback.getInt(FEEDBACK_RATING, 0);
+    }
+
+    @Override
+    public void onNotificationPosted(StatusBarNotification sbn) {
+
+    }
+
+    @Override
+    public void onNotificationRemoved(StatusBarNotification sbn) {
+        if (sbn == null) {
+            return;
+        }
+        mRemoved.put(sbn.getKey(), -1);
     }
 
     @Override
