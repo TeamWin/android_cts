@@ -38,6 +38,7 @@ import android.support.test.uiautomator.Until
 import androidx.core.content.FileProvider
 import androidx.test.InstrumentationRegistry
 import androidx.test.rule.ActivityTestRule
+import com.android.compatibility.common.util.DisableAnimationRule
 import com.android.compatibility.common.util.FutureResultActivity
 import java.io.File
 import java.util.concurrent.CompletableFuture
@@ -66,6 +67,9 @@ open class PackageInstallerTestBase {
     companion object {
         const val TEST_APK_NAME = "CtsEmptyTestApp.apk"
     }
+
+    @get:Rule
+    val disableAnimationsRule = DisableAnimationRule()
 
     @get:Rule
     val installDialogStarter = ActivityTestRule(FutureResultActivity::class.java)
