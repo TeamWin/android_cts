@@ -1845,9 +1845,8 @@ public class PackageManagerShellCommandTest {
             commandResult = executeShellCommand("pm remove-user " + matcher.group(1));
             assertEquals("Success: removed user\n", commandResult);
         } finally {
-            if (!oldPropertyValue.isEmpty()) {
-                setSystemProperty(UserManager.DEV_CREATE_OVERRIDE_PROPERTY, oldPropertyValue);
-            }
+            setSystemProperty(UserManager.DEV_CREATE_OVERRIDE_PROPERTY,
+                    oldPropertyValue.isEmpty() ? "invalid" : oldPropertyValue);
         }
     }
 
