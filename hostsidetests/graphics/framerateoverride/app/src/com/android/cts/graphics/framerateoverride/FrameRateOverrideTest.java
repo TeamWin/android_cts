@@ -21,6 +21,7 @@ import android.app.compat.CompatChanges;
 import android.hardware.display.DisplayManager;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.SystemProperties;
 import android.support.test.uiautomator.UiDevice;
 import android.sysprop.SurfaceFlingerProperties;
 import android.util.Log;
@@ -127,6 +128,13 @@ public final class FrameRateOverrideTest {
         });
     }
 
+    // The TV emulator is not expected to be a performant device,
+    // so backpressure tests will always fail.
+    private boolean isTvEmulator() {
+        return SystemProperties.get("ro.build.characteristics").equals("emulator")
+            && SystemProperties.get("ro.product.system.name").equals("atv_generic");
+    }
+
     // Find refresh rates with the same resolution.
     private List<Display.Mode> getModesToTest() {
         List<Display.Mode> modesWithSameResolution = new ArrayList<>();
@@ -206,6 +214,11 @@ public final class FrameRateOverrideTest {
     @Test
     public void testAppBackpressure()
             throws InterruptedException, IOException {
+        if (isTvEmulator()) {
+            Log.i(TAG, "**** Skipping Backpressure ****");
+            return;
+        }
+
         Log.i(TAG, "**** Starting Backpressure Test ****");
         FrameRateOverrideTestActivity activity = mActivityRule.getActivity();
         testAppFrameRateOverride(activity.new BackpressureFrameRateObserver());
@@ -280,6 +293,11 @@ public final class FrameRateOverrideTest {
     @Test
     public void testGlobalBackpressure()
             throws InterruptedException, IOException {
+        if (isTvEmulator()) {
+            Log.i(TAG, "**** Skipping Backpressure ****");
+            return;
+        }
+
         Log.i(TAG, "**** Starting Global Override Backpressure Test ****");
         FrameRateOverrideTestActivity activity = mActivityRule.getActivity();
         testGlobalFrameRateOverride(activity.new BackpressureFrameRateObserver());
@@ -353,6 +371,11 @@ public final class FrameRateOverrideTest {
      */
     @Test
     public void testGameModeBackpressure() throws InterruptedException, IOException {
+        if (isTvEmulator()) {
+            Log.i(TAG, "**** Skipping Backpressure ****");
+            return;
+        }
+
         Log.i(TAG, "**** Starting Game Mode Backpressure Test ****");
         FrameRateOverrideTestActivity activity = mActivityRule.getActivity();
         testGameModeFrameRateOverride(activity.new BackpressureFrameRateObserver());
