@@ -132,7 +132,7 @@ public class ContextTest extends AndroidTestCase {
     private ArrayList<BroadcastReceiver> mRegisteredReceiverList;
 
     private boolean mWallpaperChanged;
-    private BitmapDrawable mOriginalWallpaper;
+    private BitmapDrawable mOriginalWallpaper = null;
     private volatile IBinderPermissionTestService mBinderPermissionTestService;
     private ServiceConnection mBinderPermissionTestConnection;
 
@@ -154,14 +154,11 @@ public class ContextTest extends AndroidTestCase {
         mLockObj = new Object();
 
         mRegisteredReceiverList = new ArrayList<BroadcastReceiver>();
-        SystemUtil.runWithShellPermissionIdentity(
-                () -> mOriginalWallpaper = (BitmapDrawable) mContext.getWallpaper(),
-                READ_WALLPAPER_INTERNAL);
     }
 
     @Override
     protected void tearDown() throws Exception {
-        if (mWallpaperChanged) {
+        if (mOriginalWallpaper != null && mWallpaperChanged) {
             mContext.setWallpaper(mOriginalWallpaper.getBitmap());
         }
 
@@ -920,6 +917,10 @@ public class ContextTest extends AndroidTestCase {
 
     public void testAccessWallpaper() throws IOException, InterruptedException {
         if (!isWallpaperSupported()) return;
+
+        SystemUtil.runWithShellPermissionIdentity(
+                () -> mOriginalWallpaper = (BitmapDrawable) mContext.getWallpaper(),
+                READ_WALLPAPER_INTERNAL);
 
         // set Wallpaper by context#setWallpaper(Bitmap)
         Bitmap bitmap = Bitmap.createBitmap(20, 30, Bitmap.Config.RGB_565);
