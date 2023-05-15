@@ -40,6 +40,8 @@ public class PackageManagerMultiUserTestBase extends BaseHostJUnit4Test {
     private static final String TEST_CLASS = ".PackageManagerMultiUserTest";
     private static final long DEFAULT_TIMEOUT = 10 * 60 * 1000L;
 
+    private static final String DEV_CREATE_OVERRIDE_PROPERTY = "debug.user.creation_override";
+
     private List<Integer> mCreatedUsers;
     protected int mUserId;
 
@@ -92,20 +94,27 @@ public class PackageManagerMultiUserTestBase extends BaseHostJUnit4Test {
     }
 
     protected int createUser() throws Exception {
-        String command = "pm create-user TestUser_" + System.currentTimeMillis();
-        LogUtil.CLog.d("Starting command " + command);
-        String commandOutput = getDevice().executeShellCommand(command);
-        LogUtil.CLog.d("Output for command " + command + ": " + commandOutput);
+        final String oldPropertyValue = getSystemProperty(DEV_CREATE_OVERRIDE_PROPERTY);
+        setSystemProperty(DEV_CREATE_OVERRIDE_PROPERTY, "1");
+        try {
+            String command = "pm create-user TestUser_" + System.currentTimeMillis();
+            LogUtil.CLog.d("Starting command " + command);
+            String commandOutput = getDevice().executeShellCommand(command);
+            LogUtil.CLog.d("Output for command " + command + ": " + commandOutput);
 
-        // Extract the id of the new user.
-        String[] tokens = commandOutput.split("\\s+");
-        assertTrue(commandOutput, tokens.length > 0);
-        assertEquals(commandOutput, "Success:", tokens[0]);
-        int userId = Integer.parseInt(tokens[tokens.length - 1]);
-        mCreatedUsers.add(userId);
+            // Extract the id of the new user.
+            String[] tokens = commandOutput.split("\\s+");
+            assertTrue(commandOutput, tokens.length > 0);
+            assertEquals(commandOutput, "Success:", tokens[0]);
+            int userId = Integer.parseInt(tokens[tokens.length - 1]);
+            mCreatedUsers.add(userId);
 
-        setupUser(userId);
-        return userId;
+            setupUser(userId);
+            return userId;
+        } finally {
+            setSystemProperty(DEV_CREATE_OVERRIDE_PROPERTY,
+                    oldPropertyValue.isEmpty() ? "invalid" : oldPropertyValue);
+        }
     }
 
     protected void setupUser(int userId) throws Exception {
@@ -128,5 +137,13 @@ public class PackageManagerMultiUserTestBase extends BaseHostJUnit4Test {
 
     protected boolean isPackageInstalledForUser(String pkgName, int userId) throws Exception {
         return getDevice().isPackageInstalled(pkgName, String.valueOf(userId));
+    }
+
+    private void setSystemProperty(String name, String value) throws Exception {
+        assertEquals("", getDevice().executeShellCommand("setprop " + name + " " + value));
+    }
+
+    private String getSystemProperty(String prop) throws Exception {
+        return getDevice().executeShellCommand("getprop " + prop).replace("\n", "");
     }
 }
