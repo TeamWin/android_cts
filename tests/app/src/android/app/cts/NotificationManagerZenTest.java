@@ -48,11 +48,11 @@ import android.app.AutomaticZenRule;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
-import android.app.cts.android.app.cts.tools.NotificationHelper.SEARCH_TYPE;
+import android.app.stubs.shared.NotificationHelper.SEARCH_TYPE;
 import android.app.stubs.AutomaticZenRuleActivity;
 import android.app.stubs.GetResultActivity;
 import android.app.stubs.R;
-import android.app.stubs.TestNotificationListener;
+import android.app.stubs.shared.TestNotificationListener;
 import android.content.ComponentName;
 import android.content.ContentProviderOperation;
 import android.content.Intent;
@@ -123,8 +123,7 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
         super.setUp();
         PermissionUtils.grantPermission(mContext.getPackageName(), POST_NOTIFICATIONS);
 
-        toggleListenerAccess(true);
-        mListener = TestNotificationListener.getInstance();
+        mListener = mNotificationHelper.enableListener(STUB_PACKAGE_NAME);
         assertNotNull(mListener);
 
         createChannels();
@@ -168,7 +167,7 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
         }
 
         mListener.resetData();
-        toggleListenerAccess(false);
+        mNotificationHelper.disableListener(STUB_PACKAGE_NAME);
 
         deleteChannels();
 
@@ -582,10 +581,7 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
     }
 
     public void testGetSuppressedVisualEffectsOff_ranking() throws Exception {
-        toggleListenerAccess(true);
-        Thread.sleep(500); // wait for listener to be allowed
-
-        mListener = TestNotificationListener.getInstance();
+        mListener = mNotificationHelper.enableListener(STUB_PACKAGE_NAME);
         assertNotNull(mListener);
 
         final int notificationId = 1;
@@ -610,10 +606,7 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
         final int originalFilter = mNotificationManager.getCurrentInterruptionFilter();
         NotificationManager.Policy origPolicy = mNotificationManager.getNotificationPolicy();
         try {
-            toggleListenerAccess(true);
-            Thread.sleep(500); // wait for listener to be allowed
-
-            mListener = TestNotificationListener.getInstance();
+            mListener = mNotificationHelper.enableListener(STUB_PACKAGE_NAME);
             assertNotNull(mListener);
 
             toggleNotificationPolicyAccess(mContext.getPackageName(),
@@ -1458,9 +1451,7 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
     }
 
     public void testRepeatCallers_repeatCallNotIntercepted_contactAfterPhone() throws Exception {
-        toggleListenerAccess(true);
-        Thread.sleep(500); // wait for listener to be allowed
-        mListener = TestNotificationListener.getInstance();
+        mListener = mNotificationHelper.enableListener(STUB_PACKAGE_NAME);
         assertNotNull(mListener);
 
         // if a call is recorded with just phone number info (not a contact's uri), which may

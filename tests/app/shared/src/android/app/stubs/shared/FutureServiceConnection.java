@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.app.cts.android.app.cts.tools;
+package android.app.stubs.shared;
 
 import android.content.ComponentName;
 import android.content.ServiceConnection;
