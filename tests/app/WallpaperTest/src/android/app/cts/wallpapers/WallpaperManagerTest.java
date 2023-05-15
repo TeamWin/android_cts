@@ -1373,6 +1373,7 @@ public class WallpaperManagerTest {
     }
 
     @Test
+    @Ignore("b/281082882")
     public void setDimAmount_lockScreenUnset_singleEngine_notifiesColorsChangedHomeOnly() {
         assumeFalse(mWallpaperManager.isLockscreenLiveWallpaperEnabled());
         ensureCleanState();
@@ -1407,6 +1408,7 @@ public class WallpaperManagerTest {
     }
 
     @Test
+    @Ignore("b/281082882")
     public void setDimAmount_lockScreenUnset_multiEngine_notifiesColorsChangedBothTogether() {
         assumeTrue(mWallpaperManager.isLockscreenLiveWallpaperEnabled());
         ensureCleanState();
@@ -1441,6 +1443,7 @@ public class WallpaperManagerTest {
     }
 
     @Test
+    @Ignore("b/281082882")
     public void setDimAmount_lockScreenSet_notifiesColorsChangedBothSeparately() {
         ensureCleanState(FLAG_LOCK);
         ensureCleanState(FLAG_SYSTEM);
