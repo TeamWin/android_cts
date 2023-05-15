@@ -29,6 +29,7 @@ android_test_helper_app {
     static_libs: [
         "ctstestrunner-axt",
         "truth-prebuilt",
+        "mockito-target-minus-junit4",
     ],
 
     // Tag this module as a cts test artifact
@@ -37,4 +38,5 @@ android_test_helper_app {
         "vts",
         "general-tests",
     ],
+    java_resource_dirs: ["resources/"],
 }
