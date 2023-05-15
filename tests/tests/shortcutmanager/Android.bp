@@ -66,6 +66,7 @@ android_test_helper_app {
         "android.content.pm.cts.shortcutmanager.packages.launcher1",
     ],
     manifest: "packages/launchermanifest/AndroidManifest.xml",
+    additional_manifests: ["packages/launchermanifest/AndroidManifest_launcher1.xml"],
 }
 
 //-----------------------------------------------------------
@@ -86,6 +87,7 @@ android_test_helper_app {
         "android.content.pm.cts.shortcutmanager.packages.launcher2",
     ],
     manifest: "packages/launchermanifest/AndroidManifest.xml",
+    additional_manifests: ["packages/launchermanifest/AndroidManifest_launcher2.xml"],
 }
 
 //-----------------------------------------------------------
@@ -106,6 +108,7 @@ android_test_helper_app {
         "android.content.pm.cts.shortcutmanager.packages.launcher3",
     ],
     manifest: "packages/launchermanifest/AndroidManifest.xml",
+    additional_manifests: ["packages/launchermanifest/AndroidManifest_launcher3.xml"],
 }
 
 android_test_helper_app {
@@ -125,6 +128,7 @@ android_test_helper_app {
         "android.content.pm.cts.shortcutmanager.packages.launcher4",
     ],
     manifest: "packages/launchermanifest_nonshared/AndroidManifest.xml",
+    additional_manifests: ["packages/launchermanifest_nonshared/AndroidManifest_launcher4.xml"],
 }
 
 android_test_helper_app {
@@ -144,6 +148,7 @@ android_test_helper_app {
         "android.content.pm.cts.shortcutmanager.packages.package1",
     ],
     manifest: "packages/packagemanifest/AndroidManifest.xml",
+    additional_manifests: ["packages/packagemanifest/AndroidManifest_package1.xml"],
     resource_dirs: ["packages/packagemanifest/res"],
 }
 
@@ -165,6 +170,7 @@ android_test_helper_app {
         "android.content.pm.cts.shortcutmanager.packages.package2",
     ],
     manifest: "packages/packagemanifest/AndroidManifest.xml",
+    additional_manifests: ["packages/packagemanifest/AndroidManifest_package2.xml"],
     resource_dirs: ["packages/packagemanifest/res"],
 }
 
@@ -186,6 +192,7 @@ android_test_helper_app {
         "android.content.pm.cts.shortcutmanager.packages.package3",
     ],
     manifest: "packages/packagemanifest/AndroidManifest.xml",
+    additional_manifests: ["packages/packagemanifest/AndroidManifest_package3.xml"],
     resource_dirs: ["packages/packagemanifest/res"],
 }
 
@@ -206,6 +213,7 @@ android_test_helper_app {
         "android.content.pm.cts.shortcutmanager.packages.package4",
     ],
     manifest: "packages/packagemanifest_nonshared/AndroidManifest.xml",
+    additional_manifests: ["packages/packagemanifest_nonshared/AndroidManifest_package4.xml"],
 }
 
 android_test_helper_app {
