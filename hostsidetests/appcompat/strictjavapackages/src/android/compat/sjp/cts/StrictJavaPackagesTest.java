@@ -1019,7 +1019,8 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
      */
     @Test
     public void testNoKotlinFilesInClasspaths() throws Exception {
-        assumeTrue(mDeviceSdkLevel.isDeviceAtLeastT());
+        // This test was not in CTS until U.
+        assumeTrue(mDeviceSdkLevel.isDeviceAtLeastU());
         ImmutableList<String> kotlinFiles =
                 Stream.of(sBootclasspathJars.stream(),
                         sSystemserverclasspathJars.stream(),
