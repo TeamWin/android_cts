@@ -42,6 +42,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
+import com.android.compatibility.common.util.CddTest;
 
 import org.junit.After;
 import org.junit.Assume;
@@ -137,6 +138,7 @@ public class BluetoothCsipSetCoordinatorTest {
         TestUtils.dropPermissionAsShellUid();
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
     public void testCloseProfileProxy() {
         assertTrue(waitForProfileConnect());
@@ -149,6 +151,7 @@ public class BluetoothCsipSetCoordinatorTest {
         assertFalse(mIsProfileReady);
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
     public void testGetConnectedDevices() {
         assertTrue(waitForProfileConnect());
@@ -161,6 +164,7 @@ public class BluetoothCsipSetCoordinatorTest {
         assertTrue(connectedDevices.isEmpty());
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
     public void testGetDevicesMatchingConnectionStates() {
         assertTrue(waitForProfileConnect());
@@ -174,6 +178,7 @@ public class BluetoothCsipSetCoordinatorTest {
         assertTrue(connectedDevices.isEmpty());
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
     public void testGetConnectionState() {
         assertTrue(waitForProfileConnect());
@@ -185,6 +190,7 @@ public class BluetoothCsipSetCoordinatorTest {
         assertEquals(BluetoothProfile.STATE_DISCONNECTED, state);
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
     public void testGetGroupUuidMapByDevice() {
         assertTrue(waitForProfileConnect());
@@ -206,6 +212,7 @@ public class BluetoothCsipSetCoordinatorTest {
         assertTrue(result.isEmpty());
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
     public void testLockUnlockGroup() {
         assertTrue(waitForProfileConnect());
@@ -246,6 +253,7 @@ public class BluetoothCsipSetCoordinatorTest {
         }
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
     public void testTestLockCallback() {
         assertTrue(waitForProfileConnect());
@@ -260,6 +268,7 @@ public class BluetoothCsipSetCoordinatorTest {
         assertTrue(mGroupLockCallbackCalled);
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
     public void testGetAllGroupIds() {
         assertTrue(waitForProfileConnect());

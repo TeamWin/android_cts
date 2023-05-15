@@ -26,6 +26,8 @@ import android.test.suitebuilder.annotation.SmallTest;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.CddTest;
+
 import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
@@ -52,6 +54,7 @@ public class AdvertiseCallbackTest {
                 InstrumentationRegistry.getInstrumentation().getTargetContext()));
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @SmallTest
     @Test
     public void testAdvertiseSuccess() {
@@ -59,6 +62,7 @@ public class AdvertiseCallbackTest {
         mMockAdvertiser.startAdvertise(mAdvertiseCallback);
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @SmallTest
     @Test
     public void testAdvertiseFailure() {

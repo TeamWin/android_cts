@@ -34,6 +34,8 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.CddTest;
+
 import org.junit.After;
 import org.junit.Assume;
 import org.junit.Before;
@@ -72,6 +74,7 @@ public class TransportBlockFilterTest {
         mAdapter = null;
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
     public void testEmptyTransportBlockFilterFromBuilder() {
         TransportBlockFilter filter = new TransportBlockFilter.Builder(
@@ -84,6 +87,7 @@ public class TransportBlockFilterTest {
         assertNull(filter.getWifiNanHash());
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
     public void testCreateTransportBlockFilterFromBuilder() {
         TransportBlockFilter filter = new TransportBlockFilter.Builder(
@@ -99,6 +103,7 @@ public class TransportBlockFilterTest {
         assertNotNull(filter.toString());
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
     public void testCreateWifiNanTransportBlockFilterFromBuilder() {
         TransportBlockFilter filter = new TransportBlockFilter.Builder(
@@ -114,6 +119,7 @@ public class TransportBlockFilterTest {
         assertNotNull(filter.toString());
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
     public void testCannotSetWifiNanHashForWrongOrgId() {
         TransportBlockFilter.Builder builder = new TransportBlockFilter.Builder(
@@ -123,6 +129,7 @@ public class TransportBlockFilterTest {
                 () -> builder.setWifiNanHash(TEST_VALID_WIFI_NAN_HASH));
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
     public void testSetTransportDataNonWifiNan() {
         TransportBlockFilter.Builder builder = new TransportBlockFilter.Builder(
@@ -138,6 +145,7 @@ public class TransportBlockFilterTest {
                 () -> builder.setTransportData(TEST_TRANSPORT_DATA, TEST_TRANSPORT_DATA_MASK_LONG));
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
     public void testSetTransportDataWifiNan() {
         TransportBlockFilter.Builder builder = new TransportBlockFilter.Builder(

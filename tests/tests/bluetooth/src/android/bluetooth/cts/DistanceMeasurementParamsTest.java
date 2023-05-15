@@ -38,6 +38,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
+import com.android.compatibility.common.util.CddTest;
 
 import org.junit.After;
 import org.junit.Assume;
@@ -71,6 +72,7 @@ public class DistanceMeasurementParamsTest {
         mAdapter = null;
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
     public void testCreateFromParcel() {
         final Parcel parcel = Parcel.obtain();
@@ -87,6 +89,7 @@ public class DistanceMeasurementParamsTest {
         }
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
     public void testDefaultParameters() {
         DistanceMeasurementParams params = new DistanceMeasurementParams.Builder(mDevice).build();
@@ -96,12 +99,14 @@ public class DistanceMeasurementParamsTest {
         assertEquals(DISTANCE_MEASUREMENT_METHOD_RSSI, params.getMethodId());
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
     public void testSetGetDevice() {
         DistanceMeasurementParams params = new DistanceMeasurementParams.Builder(mDevice).build();
         assertEquals(mDevice, params.getDevice());
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
     public void testSetGetDurationSeconds() {
         DistanceMeasurementParams params = new DistanceMeasurementParams.Builder(mDevice)
@@ -109,6 +114,7 @@ public class DistanceMeasurementParamsTest {
         assertEquals(120, params.getDurationSeconds());
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
     public void testSetGetFrequency() {
         DistanceMeasurementParams params = new DistanceMeasurementParams.Builder(mDevice)
@@ -116,13 +122,13 @@ public class DistanceMeasurementParamsTest {
         assertEquals(REPORT_FREQUENCY_HIGH, params.getFrequency());
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
     public void testSetGetMethodId() {
         DistanceMeasurementParams params = new DistanceMeasurementParams.Builder(mDevice)
                 .setMethodId(DISTANCE_MEASUREMENT_METHOD_RSSI).build();
         assertEquals(DISTANCE_MEASUREMENT_METHOD_RSSI, params.getMethodId());
     }
-
 
     private void assertParamsEquals(DistanceMeasurementParams p, DistanceMeasurementParams other) {
         if (p == null && other == null) {

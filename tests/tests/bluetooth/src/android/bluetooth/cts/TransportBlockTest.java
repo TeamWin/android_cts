@@ -26,6 +26,8 @@ import android.test.suitebuilder.annotation.SmallTest;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.CddTest;
+
 import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
@@ -50,6 +52,7 @@ public class TransportBlockTest {
         Assume.assumeTrue(TestUtils.isBleSupported(mContext));
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @SmallTest
     @Test
     public void testInit() {
@@ -63,6 +66,7 @@ public class TransportBlockTest {
         assertEquals(data, dataFromParcel);
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @SmallTest
     @Test
     public void testInitEmpty() {
@@ -75,6 +79,7 @@ public class TransportBlockTest {
         assertEquals(data, dataFromParcel);
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @SmallTest
     @Test
     public void testTotalBytes() {
@@ -90,6 +95,7 @@ public class TransportBlockTest {
         assertEquals(data, dataFromParcel);
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @SmallTest
     @Test
     public void testGetValues() {
@@ -110,6 +116,7 @@ public class TransportBlockTest {
         assertEquals(data, dataFromParcel);
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @SmallTest
     @Test
     public void testToByteArray() {

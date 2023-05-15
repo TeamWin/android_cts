@@ -34,6 +34,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
+import com.android.compatibility.common.util.CddTest;
 
 import org.junit.After;
 import org.junit.Assume;
@@ -66,6 +67,7 @@ public class DistanceMeasurementMethodTest {
         mAdapter = null;
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
     public void testCreateFromParcel() {
         final Parcel parcel = Parcel.obtain();
@@ -84,6 +86,7 @@ public class DistanceMeasurementMethodTest {
         }
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
     public void testSetGetId() {
         DistanceMeasurementMethod method = new DistanceMeasurementMethod
@@ -92,6 +95,7 @@ public class DistanceMeasurementMethodTest {
                 method.getId(), 0.0);
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
     public void testIsAzimuthAngleSupported() {
         DistanceMeasurementMethod method = new DistanceMeasurementMethod
@@ -101,6 +105,7 @@ public class DistanceMeasurementMethodTest {
         assertEquals(true, method.isAzimuthAngleSupported());
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
     public void testIsAltitudeAngleSupported() {
         DistanceMeasurementMethod method = new DistanceMeasurementMethod
@@ -110,6 +115,7 @@ public class DistanceMeasurementMethodTest {
         assertEquals(true, method.isAltitudeAngleSupported());
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
     public void testHashCode() {
         DistanceMeasurementMethod method = new DistanceMeasurementMethod

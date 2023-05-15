@@ -23,6 +23,8 @@ import android.bluetooth.BluetoothGattCharacteristic;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.CddTest;
+
 import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
@@ -43,6 +45,7 @@ public class BluetoothGattCharacteristicTest {
         mBluetoothGattCharacteristic = new BluetoothGattCharacteristic(TEST_UUID, 0x0A, 0x11);
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
     public void test_getInstanceId() {
         assertEquals(mBluetoothGattCharacteristic.getInstanceId(), 0);

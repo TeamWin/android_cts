@@ -48,6 +48,8 @@ import androidx.annotation.NonNull;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.CddTest;
+
 import org.junit.After;
 import org.junit.Assume;
 import org.junit.Before;
@@ -101,6 +103,7 @@ public class SystemBluetoothTest {
     /**
      * Test enable/disable silence mode and check whether the device is in correct state.
      */
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
     public void testSilenceMode() {
         assertTrue(BTAdapterUtils.enableAdapter(mAdapter, mContext));
@@ -118,6 +121,7 @@ public class SystemBluetoothTest {
      * also test whether OnMetadataChangedListener would callback correct values when
      * metadata is changed..
      */
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
     public void testSetGetMetadata() {
         assertTrue(BTAdapterUtils.enableAdapter(mAdapter, mContext));
@@ -144,6 +148,7 @@ public class SystemBluetoothTest {
         assertTrue(adapter.removeOnMetadataChangedListener(device, listener));
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
     public void testDiscoveryEndMillis() {
         assertTrue(BTAdapterUtils.enableAdapter(mAdapter, mContext));
@@ -169,6 +174,7 @@ public class SystemBluetoothTest {
      * Tests whether the static function BluetoothUuid#containsAnyUuid properly identifies whether
      * the ParcelUuid arrays have at least one common element.
      */
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
     public void testContainsAnyUuid() {
         assertTrue(BTAdapterUtils.enableAdapter(mAdapter, mContext));
@@ -193,6 +199,7 @@ public class SystemBluetoothTest {
         assertTrue(BluetoothUuid.containsAnyUuid(deviceBUuids, deviceBUuids));
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
     public void testParseUuidFrom() {
         byte[] uuid16 = new byte[]{0x0B, 0x11};
@@ -206,6 +213,7 @@ public class SystemBluetoothTest {
         assertEquals(BluetoothUuid.HFP_AG, BluetoothUuid.parseUuidFrom(uuid128));
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
     public void testCanBondWithoutDialog() {
         assertTrue(BTAdapterUtils.enableAdapter(mAdapter, mContext));
@@ -215,6 +223,7 @@ public class SystemBluetoothTest {
         assertFalse(testDevice.canBondWithoutDialog());
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
     public void testBleOnlyMode() {
         Assume.assumeTrue(TestUtils.isBleSupported(mContext));
@@ -242,6 +251,7 @@ public class SystemBluetoothTest {
                 originalScanAlwaysAvailableValue);
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
     public void testSetGetOwnAddressType() {
         Assume.assumeTrue(TestUtils.isBleSupported(mContext));
@@ -281,6 +291,7 @@ public class SystemBluetoothTest {
                 settingsBuilder.build().getOwnAddressType());
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
     public void testGetSupportedProfiles() {
         assertTrue(BTAdapterUtils.enableAdapter(mAdapter, mContext));
@@ -289,6 +300,7 @@ public class SystemBluetoothTest {
         assertNotNull(profiles);
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
     public void testEnableNoAutoConnect() {
         // Assert that when Bluetooth is already enabled, the method immediately returns true
@@ -302,6 +314,7 @@ public class SystemBluetoothTest {
                 mContext.getContentResolver(), Settings.Global.BLUETOOTH_ON, -1) == 0);
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
     public void testDisableBluetoothPersistFalse() {
         assertTrue(BTAdapterUtils.enableAdapter(mAdapter, mContext));
@@ -309,6 +322,7 @@ public class SystemBluetoothTest {
         assertFalse(isBluetoothPersistedOff());
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
     public void testDisableBluetoothPersistTrue() {
         assertTrue(BTAdapterUtils.enableAdapter(mAdapter, mContext));
@@ -316,6 +330,7 @@ public class SystemBluetoothTest {
         assertTrue(isBluetoothPersistedOff());
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
     public void testSetLowLatencyAudioAllowed() {
         BluetoothDevice device = mAdapter.getRemoteDevice("00:11:22:AA:BB:CC");
@@ -329,6 +344,7 @@ public class SystemBluetoothTest {
         assertTrue(device.setLowLatencyAudioAllowed(false));
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
     public void testGenerateLocalOobData() {
         Executor executor = new Executor() {
@@ -364,6 +380,7 @@ public class SystemBluetoothTest {
         mAdapter.generateLocalOobData(BluetoothDevice.TRANSPORT_BREDR, executor, callback);
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
     public void testSetScanMode() {
         assertEquals(BluetoothStatusCodes.ERROR_BLUETOOTH_NOT_ENABLED,

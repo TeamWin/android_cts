@@ -29,6 +29,8 @@ import android.test.suitebuilder.annotation.SmallTest;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.CddTest;
+
 import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
@@ -58,6 +60,7 @@ public class ScanResultTest {
     /**
      * Test read and write parcel of ScanResult
      */
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @SmallTest
     @Test
     public void testScanResultParceling() {
@@ -77,6 +80,7 @@ public class ScanResultTest {
         TestUtils.assertArrayEquals(SCAN_RECORD, resultFromParcel.getScanRecord().getBytes());
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @SmallTest
     @Test
     public void testDescribeContents() {
@@ -87,6 +91,7 @@ public class ScanResultTest {
         assertEquals(0, result.describeContents());
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @SmallTest
     @Test
     public void testConstructor() {

@@ -30,6 +30,8 @@ import android.content.pm.PackageManager;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.CddTest;
+
 import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
@@ -47,6 +49,7 @@ public class OobDataTest {
                 mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH));
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
     public void testClassicBuilder() {
         byte[] defaultRandomizerHash = new byte[OobData.RANDOMIZER_OCTETS];
@@ -118,6 +121,7 @@ public class OobDataTest {
         assertArrayEquals(deviceName, classicData.getDeviceName());
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
     public void testLEBuilder() {
         Assume.assumeTrue(TestUtils.isBleSupported(mContext));
@@ -194,6 +198,7 @@ public class OobDataTest {
         assertEquals(OobData.LE_FLAG_BREDR_NOT_SUPPORTED, leData.getLeFlags());
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
     public void testToString() {
         Assume.assumeTrue(TestUtils.isBleSupported(mContext));

@@ -38,6 +38,8 @@ import android.util.SparseArray;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.CddTest;
+
 import org.junit.After;
 import org.junit.Assume;
 import org.junit.Before;
@@ -116,6 +118,7 @@ public class BluetoothLeScanTest {
     /**
      * Basic test case for BLE scans. Checks BLE scan timestamp is within correct range.
      */
+    @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @MediumTest
     @Test
     public void testBasicBleScan() {
@@ -131,6 +134,7 @@ public class BluetoothLeScanTest {
      * Test of scan filters. Ensures only beacons matching certain type of scan filters were
      * reported.
      */
+    @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @MediumTest
     @Test
     public void testScanFilter() {
@@ -155,7 +159,7 @@ public class BluetoothLeScanTest {
         }
     }
 
-
+    @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @MediumTest
     @Test
     public void testScanFromSourceWithoutFilters() {
@@ -176,6 +180,7 @@ public class BluetoothLeScanTest {
 
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @MediumTest
     @Test
     public void testScanFromSourceWithFilters() {
@@ -235,7 +240,9 @@ public class BluetoothLeScanTest {
 //     * it fails when it obtains results from GmsCore explicit scan.
 //     * TODO(b/70865144): re-enable this test.
 //     */
+//    @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
 //    @MediumTest
+//    @Test
 //    public void testOpportunisticScan() {
 //        ScanSettings opportunisticScanSettings = new ScanSettings.Builder()
 //                .setScanMode(ScanSettings.SCAN_MODE_OPPORTUNISTIC)
@@ -282,6 +289,7 @@ public class BluetoothLeScanTest {
     /**
      * Test case for BLE Batch scan.
      */
+    @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @MediumTest
     @Test
     public void testBatchScan() {
@@ -312,6 +320,7 @@ public class BluetoothLeScanTest {
     /**
      * Test case for starting a scan with a PendingIntent.
      */
+    @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @MediumTest
     @Test
     public void testStartScanPendingIntent_nullnull() throws Exception {
@@ -331,6 +340,7 @@ public class BluetoothLeScanTest {
     /**
      * Test case for starting a scan with a PendingIntent.
      */
+    @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @MediumTest
     @Test
     public void testStartScanPendingIntent() throws Exception {
