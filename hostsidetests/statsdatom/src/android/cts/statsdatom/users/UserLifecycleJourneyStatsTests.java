@@ -53,7 +53,8 @@ public class UserLifecycleJourneyStatsTests extends UserStatsTests<UserLifecycle
             int userId = removeGuestUser(userName, true);
             List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
             assertExpectedEvents(data, getDevice().getCurrentUser(),
-                    userId, "USER_REMOVE_FULL_GUEST");
+                    userId, "USER_REMOVE_FULL_GUEST",
+                    "USER_LIFECYCLE_FULL_GUEST");
         }
     }
 
@@ -81,7 +82,8 @@ public class UserLifecycleJourneyStatsTests extends UserStatsTests<UserLifecycle
             int userId = removeGuestUser(userName, false);
             List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
             assertExpectedEvents(data, getDevice().getCurrentUser(),
-                    userId, "USER_REMOVE_FULL_SECONDARY");
+                    userId, "USER_REMOVE_FULL_SECONDARY",
+                    "USER_LIFECYCLE_FULL_SECONDARY");
         }
     }
 
@@ -94,8 +96,8 @@ public class UserLifecycleJourneyStatsTests extends UserStatsTests<UserLifecycle
 //    }
 
     protected void assertExpectedEvents(List<EventMetricData> data, int originalId, int targetId,
-            String eventName) {
-        List<String> expectedData = prepareUserExpectedEvents(eventName);
+            String ... eventNames) {
+        List<String> expectedData = prepareUserExpectedEvents(eventNames);
         for (int i = 0; i < data.size(); i++) {
             UserLifecycleJourneyReported atom = getAtom(data.get(i));
             String expectedName = atom.getJourney() + "_" + atom.getUserType();
@@ -109,9 +111,11 @@ public class UserLifecycleJourneyStatsTests extends UserStatsTests<UserLifecycle
         assertThat(expectedData).isEmpty();
     }
 
-    private List<String> prepareUserExpectedEvents(String event) {
+    private List<String> prepareUserExpectedEvents(String ... events) {
         List<String> expectedData = new ArrayList<>();
-        expectedData.add(event);
+        for (String event : events) {
+            expectedData.add(event);
+        }
         return expectedData;
     }
 
