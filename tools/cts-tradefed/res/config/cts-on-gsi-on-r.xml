@@ -51,4 +51,12 @@
     <option name="compatibility:exclude-filter" value="CtsMediaMiscTestCases android.media.misc.cts.ResourceManagerTest#testAVCVideoCodecReclaimHighResolution" />
     <option name="compatibility:exclude-filter" value="CtsMediaMiscTestCases android.media.misc.cts.ResourceManagerTest#testHEVCVideoCodecReclaimHighResolution" />
 
+    <!-- CtsIdentityTestCases: b/282102975: excluding tests to be disabled. -->
+    <option name="compatibility:exclude-filter" value="CtsIdentityTestCases android.security.identity.cts.AttestationTest" />
+    <option name="compatibility:exclude-filter" value="CtsIdentityTestCases android.security.identity.cts.DynamicAuthTest" />
+    <option name="compatibility:exclude-filter" value="CtsIdentityTestCases android.security.identity.cts.EphemeralKeyTest" />
+    <option name="compatibility:exclude-filter" value="CtsIdentityTestCases android.security.identity.cts.ProvisioningTest" />
+    <option name="compatibility:exclude-filter" value="CtsIdentityTestCases android.security.identity.cts.ReaderAuthTest" />
+    <option name="compatibility:exclude-filter" value="CtsIdentityTestCases android.security.identity.cts.UserAuthTest" />
+
 </configuration>
