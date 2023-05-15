@@ -16,8 +16,11 @@
 
 package com.android.cts.appcloning.intentredirectiontest.app;
 
+import static androidx.test.InstrumentationRegistry.getInstrumentation;
+
 import static com.google.common.truth.Truth.assertThat;
 
+import android.app.UiAutomation;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -34,6 +37,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -45,13 +49,16 @@ public class IntentRedirectionAppTest {
     private static final String TAG = "IntentRedirectionAppTest";
     private Context mContext;
     private PackageManager mPackageManager;
+    private UiAutomation mUiAutomation;
 
     private static final String CLONE_APP_PACKAGE = "com.android.cts.appcloning.cloneprofile.app";
     private static final String OWNER_APP_PACKAGE = "com.android.cts.appcloning.ownerprofile.app";
+    private static final String QUERY_CLONED_APPS = "android.permission.QUERY_CLONED_APPS";
 
     @Before
     public void setUp() throws Exception {
-        mContext = InstrumentationRegistry.getContext();
+        mUiAutomation = getInstrumentation().getUiAutomation();
+        mContext = getInstrumentation().getContext();
         mPackageManager = mContext.getPackageManager();
     }
 
@@ -70,6 +77,9 @@ public class IntentRedirectionAppTest {
         boolean isMatchCloneProfileFlagSet =
                 Boolean.valueOf(getTestArgumentValueForGivenKey(
                         "match_clone_profile_flag"));
+        boolean shouldGrantQueryClonedAppsPermission =
+                Boolean.valueOf(getTestArgumentValueForGivenKey(
+                        "grant_query_cloned_apps_permission"));
 
         Log.d(TAG, "test for intent : " + intentAction);
         Intent intent = buildIntentForTest(intentAction);
@@ -78,8 +88,21 @@ public class IntentRedirectionAppTest {
         if (isMatchCloneProfileFlagSet) {
             queryFlag |= PackageManager.MATCH_CLONE_PROFILE;
         }
-        List<ResolveInfo> resolveInfos = mPackageManager.queryIntentActivities(intent,
-                queryFlag);
+
+        if (shouldGrantQueryClonedAppsPermission) {
+            mUiAutomation.adoptShellPermissionIdentity(QUERY_CLONED_APPS);
+        }
+
+        List<ResolveInfo> resolveInfos = new ArrayList<>();
+
+        try {
+            resolveInfos = mPackageManager.queryIntentActivities(intent,
+                    queryFlag);
+        } finally {
+            if (shouldGrantQueryClonedAppsPermission) {
+                mUiAutomation.dropShellPermissionIdentity();
+            }
+        }
 
         Log.i(TAG, "resolveInfos : " + resolveInfos);
         boolean isCloneAppPresent = false;
