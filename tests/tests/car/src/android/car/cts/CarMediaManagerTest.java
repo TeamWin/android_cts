@@ -20,6 +20,7 @@ import static android.car.media.CarMediaManager.MEDIA_SOURCE_MODE_BROWSE;
 import static android.car.media.CarMediaManager.MEDIA_SOURCE_MODE_PLAYBACK;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assume.assumeTrue;
 
@@ -29,6 +30,7 @@ import android.car.media.CarMediaManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.os.Build;
+import android.util.Log;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
@@ -40,10 +42,15 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 public class CarMediaManagerTest {
 
-    private static final String PACKAGE = "com.google.android.car.ats";
+    private static final String TAG = CarMediaManagerTest.class.getSimpleName();
+
+    private static final long TIMEOUT = 3L;
+    private static final String PACKAGE = "android.car.cts";
     private static final ComponentName FAKE_0 = ComponentName.createRelative(PACKAGE, ".fake0");
     private static final ComponentName FAKE_1 = ComponentName.createRelative(PACKAGE, ".fake1");
     private static final ComponentName FAKE_2 = ComponentName.createRelative(PACKAGE, ".fake2");
@@ -53,8 +60,8 @@ public class CarMediaManagerTest {
     private final Context mInstrumentationContext =
             InstrumentationRegistry.getInstrumentation().getContext();
 
-    private final MediaSourceTracker mPlaybackTracker = new MediaSourceTracker();
-    private final MediaSourceTracker mBrowseTracker = new MediaSourceTracker();
+    private MediaSourceTracker mPlaybackTracker;
+    private MediaSourceTracker mBrowseTracker;
 
     private CarMediaManager mCarMediaManager;
     private boolean mSavedIndependentPlaybackConfig;
@@ -77,11 +84,19 @@ public class CarMediaManagerTest {
         return mCarMediaManager.getLastMediaSources(mode).subList(0, n);
     }
 
+    private void initMediaSourceTrackers(int expectedCount) {
+        mPlaybackTracker = new MediaSourceTracker(expectedCount);
+        mBrowseTracker = new MediaSourceTracker(expectedCount);
+
+        // Register browse and playback listeners.
+        mCarMediaManager.addMediaSourceListener(mPlaybackTracker, MEDIA_SOURCE_MODE_PLAYBACK);
+        mCarMediaManager.addMediaSourceListener(mBrowseTracker, MEDIA_SOURCE_MODE_BROWSE);
+    }
+
     @Before
     public void setUp() {
         Car car = Car.createCar(mInstrumentationContext);
-        mUiAutomation.adoptShellPermissionIdentity(
-                "android.permission.MEDIA_CONTENT_CONTROL");
+        mUiAutomation.adoptShellPermissionIdentity("android.permission.MEDIA_CONTENT_CONTROL");
 
         mCarMediaManager = (CarMediaManager) car.getCarManager(Car.CAR_MEDIA_SERVICE);
         assertThat(mCarMediaManager).isNotNull();
@@ -98,14 +113,19 @@ public class CarMediaManagerTest {
         // Set a consistent starting source in each mode.
         mCarMediaManager.setMediaSource(FAKE_0, MEDIA_SOURCE_MODE_BROWSE);
         mCarMediaManager.setMediaSource(FAKE_0, MEDIA_SOURCE_MODE_PLAYBACK);
-
-        // Register browse and playback listeners needed by most tests.
-        mCarMediaManager.addMediaSourceListener(mPlaybackTracker, MEDIA_SOURCE_MODE_PLAYBACK);
-        mCarMediaManager.addMediaSourceListener(mBrowseTracker, MEDIA_SOURCE_MODE_BROWSE);
     }
 
     @After
     public void tearDown() {
+        // Unregister browse and playback listeners.
+        if (mPlaybackTracker != null) {
+            mCarMediaManager.removeMediaSourceListener(
+                    mPlaybackTracker, MEDIA_SOURCE_MODE_PLAYBACK);
+        }
+        if (mBrowseTracker != null) {
+            mCarMediaManager.removeMediaSourceListener(mBrowseTracker, MEDIA_SOURCE_MODE_BROWSE);
+        }
+
         // Restore the state of the CarMediaManager to what it was before the test.
         mCarMediaManager.setIndependentPlaybackConfig(mSavedIndependentPlaybackConfig);
         mCarMediaManager.setMediaSource(mSavedPlaybackSource, MEDIA_SOURCE_MODE_PLAYBACK);
@@ -128,6 +148,7 @@ public class CarMediaManagerTest {
     public void testDependentPlaybackConfig() {
         ignoreOnAndroidPreR();
         mCarMediaManager.setIndependentPlaybackConfig(false);
+        initMediaSourceTrackers(/*expectedCount= */ 2);
 
         // Set a browse media source and verify it becomes the current browse and playback source.
         mCarMediaManager.setMediaSource(FAKE_1, MEDIA_SOURCE_MODE_BROWSE);
@@ -139,21 +160,25 @@ public class CarMediaManagerTest {
         assertThat(getSource(MEDIA_SOURCE_MODE_BROWSE)).isEqualTo(FAKE_2);
         assertThat(getSource(MEDIA_SOURCE_MODE_PLAYBACK)).isEqualTo(FAKE_2);
 
+        waitUntilAllChangesReceived();
+
         // Verify that both listeners were notified of each source.
-        assertThat(mBrowseTracker.mSources).containsExactlyElementsIn(FAKE_1_THEN_FAKE_2);
-        assertThat(mPlaybackTracker.mSources).containsExactlyElementsIn(FAKE_1_THEN_FAKE_2);
+        assertThat(mBrowseTracker.mSources).containsExactlyElementsIn(FAKE_1_THEN_FAKE_2).inOrder();
+        assertThat(mPlaybackTracker.mSources)
+                .containsExactlyElementsIn(FAKE_1_THEN_FAKE_2).inOrder();
 
         // Verify that the history for each mode contains each source in reverse order.
         List<ComponentName> browsedSources = getRecentSources(MEDIA_SOURCE_MODE_BROWSE, 2);
         List<ComponentName> playbackSources = getRecentSources(MEDIA_SOURCE_MODE_PLAYBACK, 2);
-        assertThat(browsedSources).containsExactlyElementsIn(FAKE_2_THEN_FAKE_1);
-        assertThat(playbackSources).containsExactlyElementsIn(FAKE_2_THEN_FAKE_1);
+        assertThat(browsedSources).containsExactlyElementsIn(FAKE_2_THEN_FAKE_1).inOrder();
+        assertThat(playbackSources).containsExactlyElementsIn(FAKE_2_THEN_FAKE_1).inOrder();
     }
 
     @Test
     public void testIndependentPlaybackConfig() {
         ignoreOnAndroidPreR();
         mCarMediaManager.setIndependentPlaybackConfig(true);
+        initMediaSourceTrackers(/*expectedCount= */ 1);
 
         // Set a browse media source and verify it only becomes the current browse source.
         mCarMediaManager.setMediaSource(FAKE_1, MEDIA_SOURCE_MODE_BROWSE);
@@ -164,6 +189,8 @@ public class CarMediaManagerTest {
         mCarMediaManager.setMediaSource(FAKE_2, MEDIA_SOURCE_MODE_PLAYBACK);
         assertThat(getSource(MEDIA_SOURCE_MODE_BROWSE)).isEqualTo(FAKE_1);
         assertThat(getSource(MEDIA_SOURCE_MODE_PLAYBACK)).isEqualTo(FAKE_2);
+
+        waitUntilAllChangesReceived();
 
         // Verify that both listeners were notified of each source.
         assertThat(mBrowseTracker.mSources).containsExactly(FAKE_1);
@@ -176,15 +203,36 @@ public class CarMediaManagerTest {
         assertThat(playbackSources).containsExactly(FAKE_2);
     }
 
+    private void waitUntilAllChangesReceived() {
+        boolean result = false;
+        try {
+            result = mPlaybackTracker.await() && mBrowseTracker.await();
+        } catch (InterruptedException e) {
+            Log.e(TAG, "Interrupted while waiting until all changes are received.", e);
+            // The assert below will fail the test in case of an exception.
+        }
+        assertWithMessage("All expected changes have been received").that(result).isTrue();
+    }
 
     /** Helper that stores all the callback values in an array. */
     private static class MediaSourceTracker implements CarMediaManager.MediaSourceChangedListener {
 
-        private final ArrayList<ComponentName> mSources = new ArrayList<>(4);
+        private final ArrayList<ComponentName> mSources;
+        private final CountDownLatch mCountDownLatch;
+
+        MediaSourceTracker(int expectedCount) {
+            mSources = new ArrayList<>(expectedCount);
+            mCountDownLatch = new CountDownLatch(expectedCount);
+        }
+
+        public boolean await() throws InterruptedException {
+            return mCountDownLatch.await(TIMEOUT, TimeUnit.SECONDS);
+        }
 
         @Override
         public void onMediaSourceChanged(ComponentName componentName) {
             mSources.add(componentName);
+            mCountDownLatch.countDown();
         }
     }
 }
