@@ -290,7 +290,7 @@ public class GainmapTest {
     }
 
     @Test
-    public void testCompressA8() throws Exception {
+    public void testCompressA8ByImageDecoder() throws Exception {
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
         assertTrue(sScalingRedA8.compress(Bitmap.CompressFormat.JPEG, 100, stream));
         byte[] data = stream.toByteArray();
@@ -298,6 +298,43 @@ public class GainmapTest {
                 ImageDecoder.createSource(data), (decoder, info, src) -> {
                 decoder.setAllocator(ImageDecoder.ALLOCATOR_SOFTWARE);
             });
+        assertTrue(result.hasGainmap());
+        Bitmap gainmapImage = result.getGainmap().getGainmapContents();
+        assertEquals(Bitmap.Config.ALPHA_8, gainmapImage.getConfig());
+        Bitmap sourceImage = sScalingRedA8.getGainmap().getGainmapContents();
+        for (int x = 0; x < 4; x++) {
+            Color expected = sourceImage.getColor(x, 0);
+            Color got = gainmapImage.getColor(x, 0);
+            assertArrayEquals("Differed at x=" + x,
+                    expected.getComponents(), got.getComponents(), 0.05f);
+        }
+    }
+
+    @Test
+    public void testCompressA8ByBitmapRegionDecoder() throws Exception {
+        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+        assertTrue(sScalingRedA8.compress(Bitmap.CompressFormat.JPEG, 100, stream));
+        byte[] data = stream.toByteArray();
+        BitmapRegionDecoder decoder = BitmapRegionDecoder.newInstance(data, 0, data.length);
+        Bitmap region = decoder.decodeRegion(new Rect(0, 0, 4, 1), null);
+        assertTrue(region.hasGainmap());
+        Bitmap gainmapImage = region.getGainmap().getGainmapContents();
+        assertEquals(Bitmap.Config.ALPHA_8, gainmapImage.getConfig());
+        Bitmap sourceImage = sScalingRedA8.getGainmap().getGainmapContents();
+        for (int x = 0; x < 4; x++) {
+            Color expected = sourceImage.getColor(x, 0);
+            Color got = gainmapImage.getColor(x, 0);
+            assertArrayEquals("Differed at x=" + x,
+                    expected.getComponents(), got.getComponents(), 0.05f);
+        }
+    }
+
+    @Test
+    public void testCompressA8ByBitmapFactory() throws Exception {
+        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+        assertTrue(sScalingRedA8.compress(Bitmap.CompressFormat.JPEG, 100, stream));
+        byte[] data = stream.toByteArray();
+        Bitmap result = BitmapFactory.decodeByteArray(data, 0, data.length);
         assertTrue(result.hasGainmap());
         Bitmap gainmapImage = result.getGainmap().getGainmapContents();
         assertEquals(Bitmap.Config.ALPHA_8, gainmapImage.getConfig());

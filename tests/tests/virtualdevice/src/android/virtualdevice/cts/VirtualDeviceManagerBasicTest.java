@@ -37,6 +37,7 @@ import static com.google.common.truth.Truth.assertWithMessage;
 import static com.google.common.util.concurrent.Uninterruptibles.tryAcquireUninterruptibly;
 
 import static org.junit.Assert.assertThrows;
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 import android.annotation.Nullable;
@@ -207,6 +208,11 @@ public class VirtualDeviceManagerBasicTest {
     @Test
     public void createVirtualDevice_removeAssociation_shouldCloseVirtualDevice()
             throws InterruptedException {
+        // TODO(b/282629983): Re-enable test for Automotive once CDM Listener supports more users.
+        assumeFalse("Skipping test: not supported on automotive",
+                getApplicationContext().getPackageManager()
+                        .hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE));
+
         CountDownLatch latch = new CountDownLatch(1);
 
         // Create device with a display and ensure it is all set up
