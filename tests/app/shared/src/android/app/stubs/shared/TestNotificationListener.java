@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.app.stubs;
+package android.app.stubs.shared;
 
 import android.content.ComponentName;
 import android.os.ConditionVariable;
@@ -51,16 +51,6 @@ public class TestNotificationListener extends NotificationListenerService {
     private static final ConditionVariable INSTANCE_AVAILABLE = new ConditionVariable(false);
     private static TestNotificationListener sNotificationListenerInstance = null;
     boolean isConnected;
-
-    public static String getId() {
-        return String.format("%s/%s", TestNotificationListener.class.getPackage().getName(),
-                TestNotificationListener.class.getName());
-    }
-
-    public static ComponentName getComponentName() {
-        return new ComponentName(TestNotificationListener.class.getPackage().getName(),
-                TestNotificationListener.class.getName());
-    }
 
     @Override
     public void onCreate() {
@@ -108,6 +98,19 @@ public class TestNotificationListener extends NotificationListenerService {
     }
 
     @Override
+    public void onNotificationPosted(StatusBarNotification sbn) {
+        if (sbn == null || !mTestPackages.contains(sbn.getPackageName())) {
+            Log.d(TAG, "onNotificationPosted: skipping handling sbn=" + sbn + " testPackages="
+                    + listToString(mTestPackages));
+            return;
+        } else {
+            Log.d(TAG, "onNotificationPosted: sbn=" + sbn + " testPackages=" + listToString(
+                    mTestPackages));
+        }
+        mPosted.add(sbn);
+    }
+
+    @Override
     public void onNotificationPosted(StatusBarNotification sbn, RankingMap rankingMap) {
         if (sbn == null || !mTestPackages.contains(sbn.getPackageName())) {
             Log.d(TAG, "onNotificationPosted: skipping handling sbn=" + sbn + " testPackages="
@@ -123,6 +126,20 @@ public class TestNotificationListener extends NotificationListenerService {
     }
 
     @Override
+    public void onNotificationRemoved(StatusBarNotification sbn) {
+        if (sbn == null || !mTestPackages.contains(sbn.getPackageName())) {
+            Log.d(TAG, "onNotificationRemoved: skipping handling sbn=" + sbn + " testPackages="
+                    + listToString(mTestPackages));
+            return;
+        } else {
+            Log.d(TAG, "onNotificationRemoved: sbn=" + sbn
+                    + " testPackages=" + listToString(mTestPackages));
+        }
+        mPosted.remove(sbn);
+        mRemoved.put(sbn.getKey(), -1 );
+    }
+
+    @Override
     public void onNotificationRemoved(StatusBarNotification sbn, RankingMap rankingMap,
             int reason) {
         if (sbn == null || !mTestPackages.contains(sbn.getPackageName())) {
@@ -135,6 +152,7 @@ public class TestNotificationListener extends NotificationListenerService {
         }
         mRankingMap = rankingMap;
         updateInterceptedRecords(rankingMap);
+        mPosted.remove(sbn);
         mRemoved.put(sbn.getKey(), reason);
     }
 

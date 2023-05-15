@@ -33,7 +33,6 @@ import static android.os.PowerExemptionManager.TEMPORARY_ALLOW_LIST_TYPE_NONE;
 
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
 
-import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertNotNull;
 import static junit.framework.Assert.assertNull;
 import static junit.framework.Assert.assertTrue;
@@ -44,13 +43,13 @@ import android.app.ActivityManager;
 import android.app.BroadcastOptions;
 import android.app.ForegroundServiceStartNotAllowedException;
 import android.app.Instrumentation;
-import android.app.NotificationManager;
 import android.app.cts.android.app.cts.tools.WaitForBroadcast;
 import android.app.cts.android.app.cts.tools.WatchUidRunner;
 import android.app.stubs.CommandReceiver;
 import android.app.stubs.LocalForegroundService;
 import android.app.stubs.LocalForegroundServiceLocation;
-import android.app.stubs.TestNotificationListener;
+import android.app.stubs.shared.NotificationHelper;
+import android.app.stubs.shared.TestNotificationListener;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -2379,13 +2378,14 @@ public class ActivityManagerFgsBgStartTest {
 
     @Test
     public void testStartMediaPlaybackFromBg() throws Exception {
+        NotificationHelper notificationHelper = new NotificationHelper(mContext);
         ApplicationInfo app1Info = mContext.getPackageManager().getApplicationInfo(
                 PACKAGE_NAME_APP1, 0);
         WatchUidRunner uidWatcher = new WatchUidRunner(mInstrumentation, app1Info.uid,
                 WAITFOR_MSEC);
         // Grant notification listener access in order to query
         // MediaSessionManager.getActiveSessions().
-        toggleNotificationListenerAccess(true);
+        notificationHelper.enableListener(STUB_PACKAGE_NAME);
         try {
             // Enable the FGS background startForeground() restriction.
             enableFgsRestriction(true, true, null);
@@ -2405,7 +2405,7 @@ public class ActivityManagerFgsBgStartTest {
             final MediaSessionManager mediaSessionManager = mTargetContext.getSystemService(
                     MediaSessionManager.class);
             final List<MediaController> mediaControllers = mediaSessionManager.getActiveSessions(
-                    TestNotificationListener.getComponentName());
+                    new ComponentName(STUB_PACKAGE_NAME, TestNotificationListener.class.getName()));
             final MediaController controller = findMediaControllerForPkg(mediaControllers,
                     PACKAGE_NAME_APP1);
             // Send "play" command and verify that the app moves to FGS state.
@@ -2418,7 +2418,7 @@ public class ActivityManagerFgsBgStartTest {
 
             controller.getTransportControls().stop();
         } finally {
-            toggleNotificationListenerAccess(false);
+            notificationHelper.disableListener(STUB_PACKAGE_NAME);
             uidWatcher.finish();
             //DEFAULT_MEDIA_SESSION_CALLBACK_FGS_WHILE_IN_USE_TEMP_ALLOW_DURATION_MS = 10000ms
             SystemClock.sleep(10000);
@@ -2433,17 +2433,6 @@ public class ActivityManagerFgsBgStartTest {
             }
         }
         return null;
-    }
-
-    private void toggleNotificationListenerAccess(boolean on) throws Exception {
-        final String cmd = "cmd notification " + (on ? "allow_listener " : "disallow_listener ")
-                + TestNotificationListener.getId();
-        CtsAppTestUtils.executeShellCmd(mInstrumentation, cmd);
-
-        final NotificationManager nm = mContext.getSystemService(NotificationManager.class);
-        final ComponentName listenerComponent = TestNotificationListener.getComponentName();
-        assertEquals(listenerComponent + " has incorrect listener access",
-                on, nm.isNotificationListenerAccessGranted(listenerComponent));
     }
 
     /**
