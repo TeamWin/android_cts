@@ -21,8 +21,6 @@ import static com.android.app.cts.broadcasts.Common.ORDERED_BROADCAST_RESULT_DAT
 
 import static com.google.common.truth.Truth.assertThat;
 
-import android.content.BroadcastReceiver;
-import android.content.Context;
 import android.content.Intent;
 
 import com.android.app.cts.broadcasts.Common;
@@ -30,10 +28,6 @@ import com.android.compatibility.common.util.AmUtils;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.TimeUnit;
 
 @RunWith(BroadcastsTestRunner.class)
 public class BroadcastsTest extends BaseBroadcastTest {
@@ -103,16 +97,4 @@ public class BroadcastsTest extends BaseBroadcastTest {
         }
     }
 
-    private class ResultReceiver extends BroadcastReceiver {
-        private BlockingQueue<String> mResultData = new ArrayBlockingQueue<>(1);
-
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            mResultData.offer(getResultData());
-        }
-
-        public String getResult() throws Exception {
-            return mResultData.poll(BROADCAST_RECEIVE_TIMEOUT_MS, TimeUnit.MILLISECONDS);
-        }
-    }
 }
