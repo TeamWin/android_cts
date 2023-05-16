@@ -119,7 +119,8 @@ public class PackageInstallerTest extends StsExtraBusinessLogicTestCase {
     @Test
     @AsbSecurityTest(cveBugId = 138650665)
     public void verificationCanNotBeDisabledByInstaller() throws Exception {
-        Install.single(TEST_APP).addInstallFlags(
+        // Enable the verifier, and check that INSTALL_DISABLE_VERIFICATION flag takes no effect
+        Install.single(TEST_APP).enableVerifier().addInstallFlags(
                 0x00080000 /* PackageManager.INSTALL_DISABLE_VERIFICATION */).commit();
         String packageName = PackageVerificationsBroadcastReceiver.packages.poll(30,
                 TimeUnit.SECONDS);
