@@ -1840,7 +1840,11 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
     private String installApkFromBuild(String apkName) throws Exception {
         CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mCtsBuild);
         File apk = buildHelper.getTestFile(apkName);
-        return getDevice().installPackage(apk, true, INSTALL_ARG_FORCE_QUERYABLE);
+        try {
+            return getDevice().installPackage(apk, true, INSTALL_ARG_FORCE_QUERYABLE);
+        } finally {
+            getDevice().deleteFile("/data/local/tmp/" + apk.getName());
+        }
     }
 
     private String installPackageFromResource(String apkFilenameInResources, boolean ephemeral)
@@ -1859,6 +1863,7 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
             }
         } finally {
             cleanUpFile(apkFile);
+            getDevice().deleteFile("/data/local/tmp/" + apkFile.getName());
         }
     }
 
@@ -1866,15 +1871,18 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
             throws IOException, DeviceNotAvailableException {
         File apkFile = null;
         File v4SignatureFile = null;
+        String remoteApkFilePath = null, remoteV4SignaturePath = null;
         try {
             apkFile = getFileFromResource(apkFilenameInResources);
             v4SignatureFile = getFileFromResource(apkFilenameInResources + ".idsig");
-            String remoteApkFilePath = pushFileToRemote(apkFile);
-            pushFileToRemote(v4SignatureFile);
+            remoteApkFilePath = pushFileToRemote(apkFile);
+            remoteV4SignaturePath = pushFileToRemote(v4SignatureFile);
             return installV4Package(remoteApkFilePath);
         } finally {
             cleanUpFile(apkFile);
             cleanUpFile(v4SignatureFile);
+            getDevice().deleteFile(remoteApkFilePath);
+            getDevice().deleteFile(remoteV4SignaturePath);
         }
     }
 
@@ -1884,8 +1892,13 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
         File apkFile = buildHelper.getTestFile(apkName);
         File v4SignatureFile = buildHelper.getTestFile(apkName + ".idsig");
         String remoteApkFilePath = pushFileToRemote(apkFile);
-        pushFileToRemote(v4SignatureFile);
-        return installV4Package(remoteApkFilePath);
+        String remoteV4SignaturePath = pushFileToRemote(v4SignatureFile);
+        try {
+            return installV4Package(remoteApkFilePath);
+        } finally {
+            getDevice().deleteFile(remoteApkFilePath);
+            getDevice().deleteFile(remoteV4SignaturePath);
+        }
     }
 
     private String pushFileToRemote(File localFile) throws DeviceNotAvailableException {
