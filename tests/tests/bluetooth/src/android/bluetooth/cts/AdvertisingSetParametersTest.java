@@ -38,6 +38,8 @@ import android.os.Parcel;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.CddTest;
+
 import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
@@ -52,6 +54,7 @@ public class AdvertisingSetParametersTest {
                 InstrumentationRegistry.getInstrumentation().getTargetContext()));
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
     public void testCreateFromParcel() {
         final Parcel parcel = Parcel.obtain();
@@ -67,6 +70,7 @@ public class AdvertisingSetParametersTest {
         }
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
     public void testDefaultParameters() {
         AdvertisingSetParameters params = new AdvertisingSetParameters.Builder().build();
@@ -83,6 +87,7 @@ public class AdvertisingSetParametersTest {
         assertEquals(TX_POWER_MEDIUM, params.getTxPowerLevel());
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
     public void testIsConnectable() {
         AdvertisingSetParameters params = new AdvertisingSetParameters.Builder()
@@ -91,6 +96,7 @@ public class AdvertisingSetParametersTest {
         assertTrue(params.isConnectable());
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
     public void testIsDiscoverable() {
         AdvertisingSetParameters params = new AdvertisingSetParameters.Builder()
@@ -100,6 +106,7 @@ public class AdvertisingSetParametersTest {
     }
 
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
     public void testIsScannable() {
         AdvertisingSetParameters params = new AdvertisingSetParameters.Builder()
@@ -108,6 +115,7 @@ public class AdvertisingSetParametersTest {
         assertTrue(params.isScannable());
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
     public void testIsLegacyMode() {
         AdvertisingSetParameters params = new AdvertisingSetParameters.Builder()
@@ -116,6 +124,7 @@ public class AdvertisingSetParametersTest {
         assertTrue(params.isLegacy());
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
     public void testIncludeTxPower() {
         AdvertisingSetParameters params = new AdvertisingSetParameters.Builder()
@@ -124,6 +133,7 @@ public class AdvertisingSetParametersTest {
         assertTrue(params.includeTxPower());
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
     public void testSetPrimaryPhyWithInvalidValue() {
         try {
@@ -135,6 +145,7 @@ public class AdvertisingSetParametersTest {
         }
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
     public void testSetPrimaryPhyWithLE1M() {
         AdvertisingSetParameters params = new AdvertisingSetParameters.Builder()
@@ -143,6 +154,7 @@ public class AdvertisingSetParametersTest {
         assertEquals(PHY_LE_1M, params.getPrimaryPhy());
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
     public void testSetPrimaryPhyWithLECoded() {
         AdvertisingSetParameters params = new AdvertisingSetParameters.Builder()
@@ -151,6 +163,7 @@ public class AdvertisingSetParametersTest {
         assertEquals(PHY_LE_CODED, params.getPrimaryPhy());
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
     public void testSetSecondaryPhyWithInvalidValue() {
         int INVALID_SECONDARY_PHY = -1;
@@ -163,6 +176,7 @@ public class AdvertisingSetParametersTest {
         }
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
     public void testSetSecondaryPhyWithLE1M() {
         AdvertisingSetParameters params = new AdvertisingSetParameters.Builder()
@@ -171,6 +185,7 @@ public class AdvertisingSetParametersTest {
         assertEquals(PHY_LE_1M, params.getSecondaryPhy());
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
     public void testSetSecondaryPhyWithLE2M() {
         AdvertisingSetParameters params = new AdvertisingSetParameters.Builder()
@@ -179,6 +194,7 @@ public class AdvertisingSetParametersTest {
         assertEquals(PHY_LE_2M, params.getSecondaryPhy());
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
     public void testSetSecondaryPhyWithLECoded() {
         AdvertisingSetParameters params = new AdvertisingSetParameters.Builder()
@@ -187,6 +203,7 @@ public class AdvertisingSetParametersTest {
         assertEquals(PHY_LE_CODED, params.getSecondaryPhy());
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
     public void testIntervalWithInvalidValues() {
         int[] invalidValues = {INTERVAL_MIN - 1, INTERVAL_MAX + 1};
@@ -201,6 +218,7 @@ public class AdvertisingSetParametersTest {
         }
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
     public void testInterval() {
         AdvertisingSetParameters params = new AdvertisingSetParameters.Builder()
@@ -209,6 +227,7 @@ public class AdvertisingSetParametersTest {
         assertEquals(INTERVAL_MEDIUM, params.getInterval());
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
     public void testTxPowerLevelWithInvalidValues() {
         int[] invalidValues = { TX_POWER_MIN - 1, TX_POWER_MAX + 1 };
@@ -223,6 +242,7 @@ public class AdvertisingSetParametersTest {
         }
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
     public void testTxPowerLevel() {
         AdvertisingSetParameters params = new AdvertisingSetParameters.Builder()
@@ -231,6 +251,7 @@ public class AdvertisingSetParametersTest {
         assertEquals(TX_POWER_MEDIUM, params.getTxPowerLevel());
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
     public void testIsAnonymous() {
         AdvertisingSetParameters params =
@@ -238,6 +259,7 @@ public class AdvertisingSetParametersTest {
         assertTrue(params.isAnonymous());
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
     public void testDescribeContents() {
         AdvertisingSetParameters params = new AdvertisingSetParameters.Builder().build();

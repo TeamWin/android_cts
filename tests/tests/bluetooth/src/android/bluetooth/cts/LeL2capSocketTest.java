@@ -29,6 +29,7 @@ import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
+import com.android.compatibility.common.util.CddTest;
 
 import org.junit.After;
 import org.junit.Assume;
@@ -71,6 +72,7 @@ public class LeL2capSocketTest {
             .dropShellPermissionIdentity();
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @SmallTest
     @Test
     public void testOpenInsecureLeL2capServerSocketOnce() {
@@ -84,6 +86,7 @@ public class LeL2capSocketTest {
         }
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @SmallTest
     @Test
     public void testOpenInsecureLeL2capServerSocketRepeatedly() {
@@ -100,6 +103,7 @@ public class LeL2capSocketTest {
         }
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @SmallTest
     @Test
     public void testOpenSecureLeL2capServerSocketOnce() {
@@ -113,6 +117,7 @@ public class LeL2capSocketTest {
         }
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @SmallTest
     @Test
     public void testOpenSecureLeL2capServerSocketRepeatedly() {

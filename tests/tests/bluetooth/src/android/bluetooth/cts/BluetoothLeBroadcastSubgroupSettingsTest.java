@@ -32,6 +32,8 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.CddTest;
+
 import org.junit.After;
 import org.junit.Assume;
 import org.junit.Before;
@@ -88,6 +90,7 @@ public class BluetoothLeBroadcastSubgroupSettingsTest {
         TestUtils.dropPermissionAsShellUid();
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
     public void testCreateBroadcastSubgroupSettingsFromBuilder() {
         BluetoothLeAudioContentMetadata contentMetadata =
@@ -103,6 +106,7 @@ public class BluetoothLeBroadcastSubgroupSettingsTest {
         assertEquals(contentMetadata, settings.getContentMetadata());
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
     public void testCreateBroadcastSubgroupFromCopy() {
         BluetoothLeAudioContentMetadata contentMetadata =
