@@ -24,6 +24,7 @@ import static org.junit.Assert.assertNull;
 
 import android.app.ActivityManager;
 import android.app.AppGlobals;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -53,6 +54,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -352,6 +354,19 @@ abstract class BaseBroadcastTest {
                 mContext.unbindService(this);
             }
             mCommandReceiver = null;
+        }
+    }
+
+    static class ResultReceiver extends BroadcastReceiver {
+        private final BlockingQueue<String> mResultData = new ArrayBlockingQueue<>(1);
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            mResultData.offer(getResultData());
+        }
+
+        public String getResult() throws Exception {
+            return mResultData.poll(BROADCAST_RECEIVE_TIMEOUT_MS, TimeUnit.MILLISECONDS);
         }
     }
 }
