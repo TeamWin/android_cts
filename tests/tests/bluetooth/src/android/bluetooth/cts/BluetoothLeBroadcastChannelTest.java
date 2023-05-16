@@ -35,6 +35,7 @@ import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
+import com.android.compatibility.common.util.CddTest;
 
 import org.junit.After;
 import org.junit.Assume;
@@ -95,6 +96,7 @@ public class BluetoothLeBroadcastChannelTest {
         TestUtils.dropPermissionAsShellUid();
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
     public void testCreateBroadcastChannelFromBuilder() {
         BluetoothLeAudioCodecConfigMetadata codecMetadata =
@@ -118,6 +120,7 @@ public class BluetoothLeBroadcastChannelTest {
         assertEquals(codecMetadata, channel.getCodecMetadata());
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
     public void testCreateBroadcastChannelFromCopy() {
         BluetoothLeAudioCodecConfigMetadata codecMetadata =
