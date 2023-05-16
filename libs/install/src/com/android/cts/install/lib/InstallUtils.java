@@ -142,7 +142,8 @@ public class InstallUtils {
         int status = result.getIntExtra(PackageInstaller.EXTRA_STATUS,
                 PackageInstaller.STATUS_FAILURE);
         if (status == PackageInstaller.STATUS_PENDING_USER_ACTION) {
-            throw new AssertionError("PENDING USER ACTION");
+            Intent intent = result.getParcelableExtra(Intent.EXTRA_INTENT);
+            throw new AssertionError("PENDING USER ACTION: " + intent);
         } else if (status != PackageInstaller.STATUS_SUCCESS) {
             String message = result.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE);
             throw new AssertionError(message == null ? "UNKNOWN FAILURE" : message);
