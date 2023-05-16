@@ -654,6 +654,8 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
      */
     @Test
     public void testAppOrientationWhenRotating() throws Exception {
+        assumeFalse("Skipping test: square size may not have configuration change",
+                isCloseToSquareDisplay());
         assumeTrue("Skipping test: no rotation support", supportsRotation());
 
         // TODO(b/209920544) remove assumeFalse after issue fix.
