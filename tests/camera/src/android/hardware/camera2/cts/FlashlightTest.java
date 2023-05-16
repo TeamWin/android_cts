@@ -24,7 +24,9 @@ import android.hardware.camera2.cts.testcases.Camera2AndroidTestCase;
 import android.hardware.camera2.cts.helpers.StaticMetadata;
 import android.hardware.camera2.cts.helpers.StaticMetadata.CheckLevel;
 import android.util.Log;
+import android.os.Build;
 import android.os.SystemClock;
+import com.android.compatibility.common.util.PropertyUtil;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -310,13 +312,15 @@ public class FlashlightTest extends Camera2AndroidTestCase {
                 openDevice(idToOpen);
 
                 try {
-                    // Opening a camera device shouldn't result in
-                    // onTorchModeChanged() being called. The number of
-                    // invocations should remain at 1 for both ON and OFF.
-                    verify(torchListener, timeout(TORCH_TIMEOUT_MS).times(1)).
-                            onTorchModeChanged(id, false);
-                    verify(torchListener, after(TORCH_TIMEOUT_MS).times(1)).
-                            onTorchModeChanged(id, true);
+                    if (PropertyUtil.getVendorApiLevel() > Build.VERSION_CODES.TIRAMISU) {
+                        // Opening a camera device shouldn't result in
+                        // onTorchModeChanged() being called. The number of
+                        // invocations should remain at 1 for both ON and OFF.
+                        verify(torchListener, timeout(TORCH_TIMEOUT_MS).times(1)).
+                                onTorchModeChanged(id, false);
+                        verify(torchListener, after(TORCH_TIMEOUT_MS).times(1)).
+                                onTorchModeChanged(id, true);
+                    }
 
                     // if id == idToOpen, this will trigger OFF.
                     // this may trigger OFF for any other id in mFlashCameraIdList.
