@@ -35,6 +35,7 @@ import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
+import com.android.compatibility.common.util.CddTest;
 
 import org.junit.After;
 import org.junit.Assume;
@@ -61,7 +62,6 @@ public class BluetoothLeAudioContentMetadataTest {
     };
 
     private Context mContext;
-    private boolean mHasBluetoothLe;
     private BluetoothAdapter mAdapter;
     private boolean mIsBroadcastSourceSupported;
     private boolean mIsBroadcastAssistantSupported;
@@ -102,6 +102,7 @@ public class BluetoothLeAudioContentMetadataTest {
         TestUtils.dropPermissionAsShellUid();
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
     public void testCreateContentMetadataFromBuilder() {
         BluetoothLeAudioContentMetadata contentMetadata =
@@ -121,6 +122,7 @@ public class BluetoothLeAudioContentMetadataTest {
                 contentMetadataStrippedLanguage.getRawMetadata());
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
     public void testCreateContentMetadataFromCopy() {
         BluetoothLeAudioContentMetadata contentMetadata =
@@ -133,6 +135,7 @@ public class BluetoothLeAudioContentMetadataTest {
         assertArrayEquals(TEST_METADATA_BYTES, contentMetadataCopy.getRawMetadata());
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
     public void testCreateContentMetadataFromBytes() {
         BluetoothLeAudioContentMetadata contentMetadata =

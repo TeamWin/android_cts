@@ -42,6 +42,7 @@ import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
+import com.android.compatibility.common.util.CddTest;
 
 import org.junit.After;
 import org.junit.Assume;
@@ -65,7 +66,6 @@ public class BluetoothHapClientTest {
     private static final int PROXY_CONNECTION_TIMEOUT_MS = 500;  // ms timeout for Proxy Connect
 
     private Context mContext;
-    private boolean mHasBluetooth;
     private BluetoothAdapter mAdapter;
 
     private BluetoothHapClient mBluetoothHapClient;
@@ -120,6 +120,7 @@ public class BluetoothHapClientTest {
         TestUtils.dropPermissionAsShellUid();
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
     public void test_closeProfileProxy() {
         assertTrue(waitForProfileConnect());
@@ -131,6 +132,7 @@ public class BluetoothHapClientTest {
         assertFalse(mIsProfileReady);
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
     public void testGetConnectedDevices() {
         assertTrue(waitForProfileConnect());
@@ -143,6 +145,7 @@ public class BluetoothHapClientTest {
         assertTrue(connectedDevices.isEmpty());
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
     public void testGetDevicesMatchingConnectionStates() {
         assertTrue(waitForProfileConnect());
@@ -156,6 +159,7 @@ public class BluetoothHapClientTest {
         assertTrue(connectedDevices.isEmpty());
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
     public void testGetConnectionState() {
         assertTrue(waitForProfileConnect());
@@ -174,6 +178,7 @@ public class BluetoothHapClientTest {
                 mBluetoothHapClient.getConnectionState(testDevice));
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
     public void testGetActivePresetIndex() {
         assertTrue(waitForProfileConnect());
@@ -187,6 +192,7 @@ public class BluetoothHapClientTest {
         assertNull(mBluetoothHapClient.getActivePresetInfo(testDevice));
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
     public void testSelectPreset() {
         assertTrue(waitForProfileConnect());
@@ -199,6 +205,7 @@ public class BluetoothHapClientTest {
         mBluetoothHapClient.selectPreset(testDevice, 1);
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
     public void testSelectPresetForGroup() {
         assertTrue(waitForProfileConnect());
@@ -209,6 +216,7 @@ public class BluetoothHapClientTest {
         mBluetoothHapClient.selectPresetForGroup(1, 1);
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
     public void testGetAllPresetInfo() {
         assertTrue(waitForProfileConnect());
@@ -223,6 +231,7 @@ public class BluetoothHapClientTest {
         assertTrue(presets.isEmpty());
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
     public void testSetPresetName() {
         assertTrue(waitForProfileConnect());
@@ -235,6 +244,7 @@ public class BluetoothHapClientTest {
         mBluetoothHapClient.setPresetName(testDevice, 1 , "New Name");
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
     public void testSetPresetNameForGroup() {
         assertTrue(waitForProfileConnect());
@@ -245,6 +255,7 @@ public class BluetoothHapClientTest {
         mBluetoothHapClient.setPresetNameForGroup(1, 1 , "New Name");
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
     public void testSetGetConnectionPolicy() {
         assertTrue(waitForProfileConnect());
@@ -268,6 +279,7 @@ public class BluetoothHapClientTest {
         TestUtils.adoptPermissionAsShellUid(BLUETOOTH_CONNECT, BLUETOOTH_PRIVILEGED);
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
     public void testRegisterUnregisterCallback() {
         assertTrue(waitForProfileConnect());
@@ -316,6 +328,7 @@ public class BluetoothHapClientTest {
                 () -> mBluetoothHapClient.registerCallback(executor, callback));
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
     public void testRegisterCallbackNoPermission() {
         TestUtils.dropPermissionAsShellUid();
@@ -354,6 +367,7 @@ public class BluetoothHapClientTest {
         TestUtils.adoptPermissionAsShellUid(BLUETOOTH_CONNECT, BLUETOOTH_PRIVILEGED);
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
     public void testCallbackCalls() {
         assertTrue(waitForProfileConnect());
@@ -421,6 +435,7 @@ public class BluetoothHapClientTest {
         }
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
     public void testGetHearingAidType() {
         assertTrue(waitForProfileConnect());
@@ -434,6 +449,7 @@ public class BluetoothHapClientTest {
         assertEquals(0x00, mBluetoothHapClient.getHearingAidType(testDevice));
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
     public void testSupportsSynchronizedPresets() {
         assertTrue(waitForProfileConnect());
@@ -447,6 +463,7 @@ public class BluetoothHapClientTest {
         assertFalse(mBluetoothHapClient.supportsSynchronizedPresets(testDevice));
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
     public void testSupportsIndependentPresets() {
         assertTrue(waitForProfileConnect());
@@ -460,6 +477,7 @@ public class BluetoothHapClientTest {
         assertFalse(mBluetoothHapClient.supportsIndependentPresets(testDevice));
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
     public void testSupportsDynamicPresets() {
         assertTrue(waitForProfileConnect());
@@ -473,6 +491,7 @@ public class BluetoothHapClientTest {
         assertFalse(mBluetoothHapClient.supportsDynamicPresets(testDevice));
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
     public void testSupportsWritablePresets() {
         assertTrue(waitForProfileConnect());
