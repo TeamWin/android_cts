@@ -16,6 +16,7 @@
 
 package android.server.wm;
 
+import static android.Manifest.permission.ACCESS_SURFACE_FLINGER;
 import static android.app.AppOpsManager.MODE_ALLOWED;
 import static android.app.AppOpsManager.OPSTR_SYSTEM_ALERT_WINDOW;
 import static android.server.wm.UiDeviceUtils.pressUnlockButton;
@@ -87,6 +88,7 @@ import org.junit.rules.TestName;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Presubmit
@@ -948,6 +950,22 @@ public class WindowUntrustedTouchTest {
                         && state.isWindowSurfaceShown(activity))) {
             fail("Activity from app " + packageName + " did not appear on time");
         }
+
+        // We need to make sure that InputFlinger has populated window info with correct bounds
+        // before proceeding.
+        // Note that com.android.server.wm.WindowState computes InputWindowHandle's name by
+        // concatenating its hash and title.
+        WindowManagerState.WindowState focusedWindowState = mWmState.getWindowState(component);
+        Rect expectedBounds = mWmState.getActivity(component).getBounds();
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            if (!CtsWindowInfoUtils.waitForWindowInfos(windows -> windows.stream().anyMatch(w ->
+                    w.name.contains(focusedWindowState.getToken())
+                            && w.name.contains(focusedWindowState.getName())
+                            && w.bounds.equals(expectedBounds)), 3, TimeUnit.SECONDS)) {
+                fail("Window " + focusedWindowState.getName() + " did not appear in InputFlinger "
+                        + "with an expected bounds " + expectedBounds);
+            }
+        }, ACCESS_SURFACE_FLINGER);
     }
 
     private void removeActivityOverlays() {
