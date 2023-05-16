@@ -20,8 +20,6 @@ import static android.app.Notification.CATEGORY_CALL;
 import static android.app.NotificationManager.IMPORTANCE_DEFAULT;
 import static android.app.NotificationManager.INTERRUPTION_FILTER_ALL;
 
-import static org.junit.Assert.assertNotEquals;
-
 import android.app.ActivityManager;
 import android.app.Instrumentation;
 import android.app.Notification;
@@ -31,15 +29,14 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Person;
 import android.app.UiAutomation;
-import android.app.cts.android.app.cts.tools.NotificationHelper;
-import android.app.cts.android.app.cts.tools.NotificationHelper.SEARCH_TYPE;
 import android.app.role.RoleManager;
 import android.app.stubs.BubbledActivity;
 import android.app.stubs.R;
-import android.app.stubs.TestNotificationAssistant;
-import android.app.stubs.TestNotificationListener;
+import android.app.stubs.shared.NotificationHelper;
+import android.app.stubs.shared.NotificationHelper.SEARCH_TYPE;
+import android.app.stubs.shared.TestNotificationAssistant;
+import android.app.stubs.shared.TestNotificationListener;
 import android.content.ComponentName;
-import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ShortcutInfo;
@@ -70,6 +67,7 @@ import java.util.Set;
 /* Base class for NotificationManager tests. Handles some of the common set up logic for tests. */
 public abstract class BaseNotificationManagerTest extends AndroidTestCase {
 
+    static final String STUB_PACKAGE_NAME = "android.app.stubs";
     protected static final String NOTIFICATION_CHANNEL_ID = "NotificationManagerTest";
     protected static final String SHARE_SHORTCUT_CATEGORY =
             "android.app.stubs.SHARE_SHORTCUT_CATEGORY";
@@ -92,42 +90,11 @@ public abstract class BaseNotificationManagerTest extends AndroidTestCase {
     protected Instrumentation mInstrumentation;
     protected NotificationHelper mNotificationHelper;
 
-    public static void toggleListenerAccess(Context context, boolean on) throws IOException {
-        String command = " cmd notification " + (on ? "allow_listener " : "disallow_listener ")
-                + TestNotificationListener.getId();
-
-        runCommand(command, InstrumentationRegistry.getInstrumentation());
-
-        final NotificationManager nm = context.getSystemService(NotificationManager.class);
-        final ComponentName listenerComponent = TestNotificationListener.getComponentName();
-        assertEquals(listenerComponent + " has incorrect listener access",
-                on, nm.isNotificationListenerAccessGranted(listenerComponent));
-    }
-
-    @SuppressWarnings("StatementWithEmptyBody")
-    protected static void runCommand(String command, Instrumentation instrumentation)
-            throws IOException {
-        UiAutomation uiAutomation = instrumentation.getUiAutomation();
-        // Execute command
-        try (ParcelFileDescriptor fd = uiAutomation.executeShellCommand(command)) {
-            assertNotNull("Failed to execute shell command: " + command, fd);
-            // Wait for the command to finish by reading until EOF
-            try (InputStream in = new FileInputStream(fd.getFileDescriptor())) {
-                byte[] buffer = new byte[4096];
-                while (in.read(buffer) > 0) {
-                    // discard output
-                }
-            } catch (IOException e) {
-                throw new IOException("Could not read stdout of command: " + command, e);
-            }
-        }
-    }
-
     @Override
     protected void setUp() throws Exception {
         super.setUp();
         mNotificationManager = mContext.getSystemService(NotificationManager.class);
-        mNotificationHelper = new NotificationHelper(mContext, () -> mListener);
+        mNotificationHelper = new NotificationHelper(mContext);
         // clear the deck so that our getActiveNotifications results are predictable
         mNotificationManager.cancelAll();
 
@@ -144,8 +111,8 @@ public abstract class BaseNotificationManagerTest extends AndroidTestCase {
 
         // ensure listener access isn't allowed before test runs (other tests could put
         // TestListener in an unexpected state)
-        toggleListenerAccess(false);
-        toggleAssistantAccess(false);
+        mNotificationHelper.disableListener(STUB_PACKAGE_NAME);
+        mNotificationHelper.disableAssistant(STUB_PACKAGE_NAME);
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
         toggleNotificationPolicyAccess(mContext.getPackageName(), mInstrumentation, true);
         mNotificationManager.setInterruptionFilter(INTERRUPTION_FILTER_ALL);
@@ -180,7 +147,8 @@ public abstract class BaseNotificationManagerTest extends AndroidTestCase {
         // Unsuspend package if it was suspended in the test
         suspendPackage(mContext.getPackageName(), mInstrumentation, false);
 
-        toggleListenerAccess(false);
+        mNotificationHelper.disableListener(STUB_PACKAGE_NAME);
+        mNotificationHelper.disableAssistant(STUB_PACKAGE_NAME);
         toggleNotificationPolicyAccess(mContext.getPackageName(), mInstrumentation, false);
 
         List<NotificationChannelGroup> groups = mNotificationManager.getNotificationChannelGroups();
@@ -192,11 +160,10 @@ public abstract class BaseNotificationManagerTest extends AndroidTestCase {
 
     protected void setUpNotifListener() {
         try {
-            toggleListenerAccess(true);
-            mListener = TestNotificationListener.getInstance();
+            mListener = mNotificationHelper.enableListener(STUB_PACKAGE_NAME);
             assertNotNull(mListener);
             mListener.resetData();
-        } catch (IOException e) {
+        } catch (Exception e) {
         }
     }
 
@@ -204,34 +171,7 @@ public abstract class BaseNotificationManagerTest extends AndroidTestCase {
             throws IOException {
         String command = " cmd notification " + (on ? "allow_listener " : "disallow_listener ")
                 + listenerComponent.flattenToString();
-        runCommand(command, InstrumentationRegistry.getInstrumentation());
-    }
-
-    protected void toggleListenerAccess(boolean on) throws IOException {
-        toggleListenerAccess(mContext, on);
-    }
-
-    protected void toggleAssistantAccess(boolean on) throws IOException {
-        final ComponentName assistantComponent = TestNotificationAssistant.getComponentName();
-
-        InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                .adoptShellPermissionIdentity("android.permission.STATUS_BAR_SERVICE",
-                    "android.permission.REQUEST_NOTIFICATION_ASSISTANT_SERVICE");
-        mNotificationManager.setNotificationAssistantAccessGranted(assistantComponent, on);
-
-        assertTrue(assistantComponent + " has not been " + (on ? "allowed" : "disallowed"),
-                mNotificationManager.isNotificationAssistantAccessGranted(assistantComponent)
-                        == on);
-        if (on) {
-            assertEquals(assistantComponent,
-                    mNotificationManager.getAllowedNotificationAssistant());
-        } else {
-            assertNotEquals(assistantComponent,
-                    mNotificationManager.getAllowedNotificationAssistant());
-        }
-
-        InstrumentationRegistry.getInstrumentation()
-                .getUiAutomation().dropShellPermissionIdentity();
+        mNotificationHelper.runCommand(command, InstrumentationRegistry.getInstrumentation());
     }
 
     protected void assertExpectedDndState(int expectedState) {
@@ -367,7 +307,7 @@ public abstract class BaseNotificationManagerTest extends AndroidTestCase {
         String command = "cmd activity fgs-notification-rate-limit "
                 + (enable ? "enable" : "disable");
 
-        runCommand(command, InstrumentationRegistry.getInstrumentation());
+       mNotificationHelper. runCommand(command, InstrumentationRegistry.getInstrumentation());
     }
 
     protected void suspendPackage(String packageName,
@@ -376,7 +316,7 @@ public abstract class BaseNotificationManagerTest extends AndroidTestCase {
         String command = " cmd package " + (suspend ? "suspend " : "unsuspend ")
                 + "--user " + userId + " " + packageName;
 
-        runCommand(command, instrumentation);
+        mNotificationHelper.runCommand(command, instrumentation);
         AmUtils.waitForBroadcastBarrier();
     }
 
@@ -385,7 +325,7 @@ public abstract class BaseNotificationManagerTest extends AndroidTestCase {
 
         String command = " cmd notification " + (on ? "allow_dnd " : "disallow_dnd ") + packageName;
 
-        runCommand(command, instrumentation);
+        mNotificationHelper.runCommand(command, instrumentation);
         AmUtils.waitForBroadcastBarrier();
 
         NotificationManager nm = mContext.getSystemService(NotificationManager.class);

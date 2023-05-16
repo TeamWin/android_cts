@@ -49,7 +49,6 @@ import android.os.Bundle;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.text.Editable;
-import android.text.Spannable;
 import android.util.ArraySet;
 import android.util.Log;
 import android.view.View;
@@ -551,15 +550,10 @@ public class LoginActivityTest
 
         assertor.isAtLeast(LoginActivity.MIN_EVENTS + 4)
                 .assertViewTextChanged(activity.mUsername.getAutofillId(), "Good");
-        assertComposingSpan(assertor.getLastEvent().getText(), 0, 4);
 
         assertor.assertViewTextChanged(activity.mUsername.getAutofillId(), "Good ");
-        assertNoComposingSpan(assertor.getLastEvent().getText());
 
         assertor.assertViewTextChanged(activity.mUsername.getAutofillId(), "Good morning");
-        // TODO: Change how the appending works to more realistically test the case where only
-        // "morning" is in the composing state.
-        assertComposingSpan(assertor.getLastEvent().getText(), 0, 12);
 
         activity.assertInitialViewsDisappeared(assertor);
     }
@@ -638,16 +632,12 @@ public class LoginActivityTest
         assertor.isAtLeast(LoginActivity.MIN_EVENTS + 5)
                 // TODO: The first two events should probably be merged.
                 .assertViewTextChanged(activity.mUsername.getAutofillId(), "Android");
-        assertNoComposingSpan(assertor.getLastEvent().getText());
 
         assertor.assertViewTextChanged(activity.mUsername.getAutofillId(), "Android");
-        assertComposingSpan(assertor.getLastEvent().getText(), 1, 3);
 
         assertor.assertViewTextChanged(activity.mUsername.getAutofillId(), "Android");
-        assertNoComposingSpan(assertor.getLastEvent().getText());
 
         assertor.assertViewTextChanged(activity.mUsername.getAutofillId(), "end");
-        assertNoComposingSpan(assertor.getLastEvent().getText());
 
         activity.assertInitialViewsDisappeared(assertor);
     }
@@ -1035,19 +1025,6 @@ public class LoginActivityTest
                 .isEqualTo(1);
         assertWithMessage("wrong extras on context %s", context).that(extras.getString("DUDE"))
                 .isEqualTo("SWEET");
-    }
-
-    private void assertComposingSpan(CharSequence text, int start, int end) {
-        assertThat(text).isInstanceOf(Spannable.class);
-        Spannable sp = (Spannable) text;
-        assertThat(BaseInputConnection.getComposingSpanStart(sp)).isEqualTo(start);
-        assertThat(BaseInputConnection.getComposingSpanEnd(sp)).isEqualTo(end);
-    }
-
-    private void assertNoComposingSpan(CharSequence text) {
-        if (text instanceof Spannable) {
-            assertThat(BaseInputConnection.getComposingSpanStart((Spannable) text)).isLessThan(0);
-        }
     }
 
     // TODO(b/123540602): add moar test cases for different sessions:

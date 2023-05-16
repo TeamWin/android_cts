@@ -25,7 +25,7 @@ import android.util.Log;
 import com.android.compatibility.common.util.CommonTestUtils;
 import com.android.compatibility.common.util.SystemUtil;
 
-class CtsAppTestUtils {
+public class CtsAppTestUtils {
     private static final String TAG = CtsAppTestUtils.class.getName();
 
     public static String executeShellCmd(Instrumentation instrumentation, String cmd)

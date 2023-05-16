@@ -20,6 +20,7 @@ import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
 import static com.android.internal.telephony.SmsConstants.ENCODING_8BIT;
 
+import static org.junit.Assert.assertFalse;
 import static junit.framework.Assert.assertNotNull;
 
 import static org.junit.Assert.assertEquals;
@@ -112,6 +113,8 @@ public class VisualVoicemailServiceTest {
         assertNotNull(mPhoneAccountHandle);
         mPhoneNumber = telecomManager.getLine1Number(mPhoneAccountHandle);
         assertNotNull(mPhoneNumber, "Tests require a line1 number for the active SIM.");
+        assertFalse("[RERUN] SIM card does not provide phone number. Use a suitable SIM Card.",
+                TextUtils.isEmpty(mPhoneNumber));
 
         mTelephonyManager = mContext.getSystemService(TelephonyManager.class)
                 .createForPhoneAccountHandle(mPhoneAccountHandle);
@@ -442,6 +445,10 @@ public class VisualVoicemailServiceTest {
     private VisualVoicemailSms getSmsFromText(VisualVoicemailSmsFilterSettings settings,
             String text,
             boolean expectVvmSms) {
+        int carrierId = mTelephonyManager.getSimCarrierId();
+        assertFalse("[RERUN] Carrier [carrier-id: " + carrierId + "] does not support "
+                        + "loop back messages. Use another carrier.",
+                CarrierCapability.UNSUPPORT_LOOP_BACK_MESSAGES.contains(carrierId));
 
         mTelephonyManager.setVisualVoicemailSmsFilterSettings(settings);
 

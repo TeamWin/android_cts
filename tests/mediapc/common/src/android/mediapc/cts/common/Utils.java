@@ -136,6 +136,10 @@ public class Utils {
         return sPc == Build.VERSION_CODES.TIRAMISU;
     }
 
+    public static boolean isBeforeTPerfClass() {
+        return sPc < Build.VERSION_CODES.TIRAMISU;
+    }
+
     public static boolean isUPerfClass() {
         return sPc == Build.VERSION_CODES.UPSIDE_DOWN_CAKE;
     }
@@ -213,6 +217,14 @@ public class Utils {
                 && meetsAvcCodecPreconditions(/* isEncoder */ false);
     }
 
+    private static boolean meetsMemoryPrecondition() {
+        if (isBeforeTPerfClass()) {
+            return TOTAL_MEMORY_MB >= MIN_MEMORY_PERF_CLASS_CANDIDATE_MB;
+        } else {
+            return TOTAL_MEMORY_MB >= MIN_MEMORY_PERF_CLASS_T_MB;
+        }
+    }
+
     public static int getPerfClass() {
         return sPc;
     }
@@ -230,7 +242,7 @@ public class Utils {
         // If device doesn't advertise performance class, check if this can be ruled out as a
         // candidate for performance class tests.
         if (!isHandheld()
-                || TOTAL_MEMORY_MB < MIN_MEMORY_PERF_CLASS_CANDIDATE_MB
+                || !meetsMemoryPrecondition()
                 || DISPLAY_DPI < MIN_DISPLAY_CANDIDATE_DPI
                 || DISPLAY_LONG_PIXELS < MIN_DISPLAY_LONG_CANDIDATE_PIXELS
                 || DISPLAY_SHORT_PIXELS < MIN_DISPLAY_SHORT_CANDIDATE_PIXELS
