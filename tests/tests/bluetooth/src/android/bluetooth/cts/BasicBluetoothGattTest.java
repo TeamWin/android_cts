@@ -32,6 +32,8 @@ import android.util.Log;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.CddTest;
+
 import org.junit.After;
 import org.junit.Assume;
 import org.junit.Before;
@@ -89,6 +91,7 @@ public class BasicBluetoothGattTest {
             .dropShellPermissionIdentity();
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
     public void testGetServices() throws Exception {
         // getServices() returns an empty list if service discovery has not yet been performed.
@@ -97,29 +100,34 @@ public class BasicBluetoothGattTest {
         assertTrue(services.isEmpty());
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
     public void testConnect() throws Exception {
         mBluetoothGatt.connect();
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
     public void testSetPreferredPhy() throws Exception {
         mBluetoothGatt.setPreferredPhy(BluetoothDevice.PHY_LE_1M, BluetoothDevice.PHY_LE_1M,
                 BluetoothDevice.PHY_OPTION_NO_PREFERRED);
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
     public void testGetConnectedDevices() {
         assertThrows(UnsupportedOperationException.class,
                 () -> mBluetoothGatt.getConnectedDevices());
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
     public void testGetConnectionState() {
         assertThrows(UnsupportedOperationException.class,
                 () -> mBluetoothGatt.getConnectionState(null));
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
     public void testGetDevicesMatchingConnectionStates() {
         assertThrows(UnsupportedOperationException.class,
