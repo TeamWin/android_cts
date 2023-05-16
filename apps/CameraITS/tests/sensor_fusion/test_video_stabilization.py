@@ -71,6 +71,13 @@ def _collect_data(cam, tablet_device, video_profile, video_quality, rot_rig):
   props = cam.get_camera_properties()
   props = cam.override_with_hidden_physical_camera_props(props)
 
+  serial_port = None
+  if rot_rig['cntl'].lower() == sensor_fusion_utils.ARDUINO_STRING.lower():
+    # identify port
+    serial_port = sensor_fusion_utils.serial_port_def(
+        sensor_fusion_utils.ARDUINO_STRING)
+    # send test cmd to Arduino until cmd returns properly
+    sensor_fusion_utils.establish_serial_comm(serial_port)
   # Start camera vibration
   if tablet_device:
     servo_speed = _TABLET_SERVO_SPEED
@@ -80,8 +87,7 @@ def _collect_data(cam, tablet_device, video_profile, video_quality, rot_rig):
   p = multiprocessing.Process(
       target=sensor_fusion_utils.rotation_rig,
       args=(rot_rig['cntl'], rot_rig['ch'], _NUM_ROTATIONS,
-            _ARDUINO_ANGLES, servo_speed, _ARDUINO_MOVE_TIME,))
-
+            _ARDUINO_ANGLES, servo_speed, _ARDUINO_MOVE_TIME, serial_port))
   p.start()
 
   cam.start_sensor_events()
