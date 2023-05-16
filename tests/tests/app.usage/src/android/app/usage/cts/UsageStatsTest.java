@@ -2123,6 +2123,38 @@ public class UsageStatsTest {
             }
         }
 
+        // attempt to report an event with a null/empty contentType, should fail.
+        startTime = System.currentTimeMillis();
+        mUsageStatsManager.reportChooserSelection(TEST_APP_PKG, 0,
+                null, null, "android.intent.action.SEND");
+        mUsageStatsManager.reportChooserSelection(TEST_APP_PKG, 0,
+                " ", null, "android.intent.action.SEND");
+        events = mUsageStatsManager.queryEvents(
+                startTime - 1000, System.currentTimeMillis() + 1000);
+        while (events.hasNextEvent()) {
+            final Event event = new Event();
+            events.getNextEvent(event);
+            if (event.mEventType == Event.CHOOSER_ACTION) {
+                fail("Able to report a chooser action event with a null/empty contentType.");
+            }
+        }
+
+        // attempt to report an event with a null/empty action, should fail.
+        startTime = System.currentTimeMillis();
+        mUsageStatsManager.reportChooserSelection(TEST_APP_PKG, 0,
+                "text/plain", null, null);
+        mUsageStatsManager.reportChooserSelection(TEST_APP_PKG, 0,
+                "text/plain", null, " ");
+        events = mUsageStatsManager.queryEvents(
+                startTime - 1000, System.currentTimeMillis() + 1000);
+        while (events.hasNextEvent()) {
+            final Event event = new Event();
+            events.getNextEvent(event);
+            if (event.mEventType == Event.CHOOSER_ACTION) {
+                fail("Able to report a chooser action event with a null/empty action.");
+            }
+        }
+
         // report an event with valid args - event should be found.
         startTime = System.currentTimeMillis();
         mUsageStatsManager.reportChooserSelection(TEST_APP_PKG, 0,
