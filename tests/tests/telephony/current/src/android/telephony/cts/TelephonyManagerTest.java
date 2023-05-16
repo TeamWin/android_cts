@@ -370,8 +370,6 @@ public class TelephonyManagerTest {
     private boolean mIsAllowedNetworkTypeChanged;
     private Map<Integer, Long> mAllowedNetworkTypesList = new HashMap<>();
 
-    private final CountryChangedReceiver mCountryChangedReceiver = new CountryChangedReceiver();
-
     private static final String CARRIER_RESTRICTION_OPERATOR_DETAILS = "{\"com.vzw.hss"
             + ".myverizon\":{\"carrierId\":1839,"
     + "\"callerSHA1Id\":[\"C58EE7871896786F8BF70EBDB137DE10074043E9\","
@@ -480,9 +478,6 @@ public class TelephonyManagerTest {
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
                 .adoptShellPermissionIdentity(android.Manifest.permission.READ_PHONE_STATE);
         saveAllowedNetworkTypesForAllReasons();
-        getContext().registerReceiver(mCountryChangedReceiver,
-                new IntentFilter(TelephonyManager.ACTION_NETWORK_COUNTRY_CHANGED),
-                Context.RECEIVER_EXPORTED);
 
         // Wait previously queued broadcasts to complete before starting the test
         AmUtils.waitForBroadcastBarrier();
@@ -6246,6 +6241,12 @@ public class TelephonyManagerTest {
     public void testLastKnownCountryIso() {
         assumeTrue(hasFeature(PackageManager.FEATURE_TELEPHONY_RADIO_ACCESS));
 
+        CountryChangedReceiver countryChangedReceiver = new CountryChangedReceiver();
+
+        getContext().registerReceiver(countryChangedReceiver,
+                new IntentFilter(TelephonyManager.ACTION_NETWORK_COUNTRY_CHANGED),
+                Context.RECEIVER_EXPORTED);
+
         ServiceStateRadioStateListener callback = new ServiceStateRadioStateListener(
                 mTelephonyManager.getServiceState(), mTelephonyManager.getRadioPowerState());
         ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
@@ -6271,10 +6272,10 @@ public class TelephonyManagerTest {
                     + "turning radio off due to testing last known country ...");
             turnRadioOff(callback, TelephonyManager.RADIO_POWER_REASON_USER);
             try {
-                mCountryChangedReceiver.waitForIntent();
-                assertThat(mCountryChangedReceiver.getExtras().getString(
+                countryChangedReceiver.waitForIntent();
+                assertThat(countryChangedReceiver.getExtras().getString(
                         TelephonyManager.EXTRA_NETWORK_COUNTRY)).isEmpty();
-                assertThat(mCountryChangedReceiver.getExtras().getString(
+                assertThat(countryChangedReceiver.getExtras().getString(
                         TelephonyManager.EXTRA_LAST_KNOWN_NETWORK_COUNTRY)).isEqualTo(countryCode);
                 Log.i(TAG, "testLastKnownCountryIso: country code \"" + countryCode
                         + "\" matched.");
@@ -6291,6 +6292,7 @@ public class TelephonyManagerTest {
                 Log.i(TAG, "testLastKnownCountryIso: turning radio back on");
                 turnRadioOn(callback, TelephonyManager.RADIO_POWER_REASON_USER);
             }
+            getContext().unregisterReceiver(countryChangedReceiver);
         }
     }
 
