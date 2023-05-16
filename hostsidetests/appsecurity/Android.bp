@@ -71,6 +71,8 @@ java_test_host {
 
     // Prebuilts of all ABIs.
     data: [
+        ":CtsSignatureQueryService",
+        ":CtsSignatureQueryServiceTest",
         ":CtsApkVerityTestPrebuiltFiles",
         ":CtsExternalStorageApp",
         ":CtsReadExternalStorageApp",
