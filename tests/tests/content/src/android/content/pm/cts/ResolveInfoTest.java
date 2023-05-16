@@ -16,9 +16,11 @@
 
 package android.content.pm.cts;
 
+import static org.junit.Assert.assertThrows;
 
 import android.content.ComponentName;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.os.Parcel;
@@ -48,6 +50,22 @@ public class ResolveInfoTest extends AndroidTestCase {
         assertTrue(resolveInfo.getIconResource() != 0);
         assertNotNull(resolveInfo.toString());
         assertEquals(0, resolveInfo.describeContents());
+    }
+
+    public final void testLoadLabel_noNonLocalizedLabelAndNullPM_throwsNPE() {
+        final ResolveInfo resolveInfo = new ResolveInfo();
+        resolveInfo.activityInfo = new ActivityInfo();
+
+        assertThrows("Should throw NullPointerException", NullPointerException.class,
+                () -> resolveInfo.loadLabel(null));
+    }
+
+    public final void testLoadLabel_hasNonLocalizedLabelAndNullPM_correctResult() {
+        final ResolveInfo resolveInfo = new ResolveInfo();
+        final String expectedResult = "none";
+        resolveInfo.nonLocalizedLabel = expectedResult;
+
+        assertEquals(expectedResult, resolveInfo.loadLabel(null));
     }
 
     public final void testDump() {
