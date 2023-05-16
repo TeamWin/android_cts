@@ -61,7 +61,13 @@ def _collect_data(cam, tablet_device, video_size, rot_rig):
   """
 
   logging.debug('Starting sensor event collection')
-
+  serial_port = None
+  if rot_rig['cntl'].lower() == sensor_fusion_utils.ARDUINO_STRING.lower():
+    # identify port
+    serial_port = sensor_fusion_utils.serial_port_def(
+        sensor_fusion_utils.ARDUINO_STRING)
+    # send test cmd to Arduino until cmd returns properly
+    sensor_fusion_utils.establish_serial_comm(serial_port)
   # Start camera vibration
   if tablet_device:
     servo_speed = _TABLET_SERVO_SPEED
@@ -76,6 +82,7 @@ def _collect_data(cam, tablet_device, video_size, rot_rig):
           _ARDUINO_ANGLES,
           servo_speed,
           _ARDUINO_MOVE_TIME,
+          serial_port,
       ),
   )
   p.start()
