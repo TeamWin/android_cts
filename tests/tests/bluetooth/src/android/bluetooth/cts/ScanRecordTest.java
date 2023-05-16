@@ -27,6 +27,7 @@ import android.test.suitebuilder.annotation.SmallTest;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.CddTest;
 import com.android.internal.util.ArrayUtils;
 
 import org.junit.Assume;
@@ -42,6 +43,7 @@ import org.junit.runner.RunWith;
 @RunWith(AndroidJUnit4.class)
 public class ScanRecordTest {
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @SmallTest
     @Test
     public void testParser() {
