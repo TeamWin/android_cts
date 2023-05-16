@@ -1294,6 +1294,9 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
             Rect parentBounds = null;
             Rect popupBounds = null;
             for (WindowInfo windowInfo : windowInfos) {
+                if (!windowInfo.isVisible) {
+                    continue;
+                }
                 if (windowInfo.windowToken == parentWindowToken) {
                     parentBounds = windowInfo.bounds;
                 } else if (windowInfo.windowToken == popupWindowToken) {

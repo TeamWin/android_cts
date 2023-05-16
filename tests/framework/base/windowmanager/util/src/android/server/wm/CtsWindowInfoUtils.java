@@ -95,7 +95,7 @@ public class CtsWindowInfoUtils {
     }
 
     /**
-     * Calls the provided predicate each time window information changes if a
+     * Calls the provided predicate each time window information changes if a visible
      * window is found that matches the supplied window token.
      *
      * <p>
@@ -124,6 +124,9 @@ public class CtsWindowInfoUtils {
             }
 
             for (var windowInfo : windowInfos) {
+                if (!windowInfo.isVisible) {
+                    continue;
+                }
                 if (windowInfo.windowToken == windowToken) {
                     return predicate.test(windowInfo);
                 }
@@ -219,7 +222,7 @@ public class CtsWindowInfoUtils {
                         targetWindowInfo = windowInfo;
                         break;
                     }
-                    if (windowInfo.isTrustedOverlay) {
+                    if (windowInfo.isTrustedOverlay || !windowInfo.isVisible) {
                         continue;
                     }
                     aboveWindowInfos.add(windowInfo);
