@@ -38,6 +38,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
+import com.android.compatibility.common.util.CddTest;
 
 import org.junit.After;
 import org.junit.Assume;
@@ -87,6 +88,7 @@ public class DistanceMeasurementManagerTest {
         mAdapter = null;
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
     public void testStartMeasurementSession() {
         DistanceMeasurementParams params = new DistanceMeasurementParams.Builder(mDevice)
@@ -99,6 +101,7 @@ public class DistanceMeasurementManagerTest {
         signal.cancel();
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
     public void testGetSupportedMethods() {
         List<DistanceMeasurementMethod> list = mDistanceMeasurementManager.getSupportedMethods();
