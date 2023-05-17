@@ -307,7 +307,7 @@
                   android:label="HandleConfigurationActivity"
                   android:rotationAnimation="jumpcut"
                   android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize"
-                  android:theme="@android:style/Theme.Material.Dialog.NoActionBar"
+                  android:theme="@android:style/Theme.Material.NoActionBar"
                   android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
