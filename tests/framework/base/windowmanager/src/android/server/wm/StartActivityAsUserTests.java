@@ -33,6 +33,7 @@ import android.os.RemoteCallback;
 import android.os.UserHandle;
 import android.os.UserManager;
 import android.platform.test.annotations.Presubmit;
+import android.util.Log;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
@@ -58,7 +59,10 @@ public class StartActivityAsUserTests {
     private final ActivityManager mAm = mContext.getSystemService(ActivityManager.class);
 
     private static int sSecondUserId;
+    private static boolean sCloneProfileSupported = true;
+
     private WindowManagerStateHelper mAmWmState = new WindowManagerStateHelper();
+    private static final String TAG = StartActivityAsUserTests.class.getSimpleName();
 
     @BeforeClass
     public static void createSecondUser() {
@@ -70,7 +74,16 @@ public class StartActivityAsUserTests {
         final String output = runShellCommand(
                 "pm create-user --user-type android.os.usertype.profile.CLONE --profileOf "
                         + context.getUserId() + " user2");
-        sSecondUserId = Integer.parseInt(output.substring(output.lastIndexOf(" ")).trim());
+
+        try {
+            sSecondUserId = Integer.parseInt(output.substring(output.lastIndexOf(" ")).trim());
+        } catch (StringIndexOutOfBoundsException |  NumberFormatException e) {
+            // AAOS does not support clone profile creation. This causes a parsing exception
+            // TODO (b/282975911)
+            Log.e(TAG, "Failed to create user of type android.os.usertype.profile.CLONE");
+            sCloneProfileSupported = false;
+        }
+
         if (sSecondUserId == 0) {
             return;
         }
@@ -91,6 +104,7 @@ public class StartActivityAsUserTests {
     @Before
     public void checkMultipleUsersNotSupportedOrSecondUserCreated() {
         assumeTrue(SUPPORTS_MULTIPLE_USERS);
+        assumeTrue(sCloneProfileSupported);
         assertThat(sSecondUserId).isNotEqualTo(0);
     }
 
