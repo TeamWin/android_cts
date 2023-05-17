@@ -415,6 +415,7 @@ public class LoginActivityTest extends LoginActivityCommonTestCase {
         BOTH
     }
 
+    @FlakyTest(bugId = 281726966)
     @Test
     public void autofillPccDatasetTest_setForAllHints() throws Exception {
         // Set service.
