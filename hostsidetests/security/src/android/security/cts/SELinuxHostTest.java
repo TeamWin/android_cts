@@ -39,6 +39,7 @@ import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 import com.android.tradefed.util.FileUtil;
 
 import org.json.JSONObject;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -98,7 +99,7 @@ public class SELinuxHostTest extends BaseHostJUnit4Test {
     private static final Map<ITestDevice, File> cachedDeviceVintfJson = new HashMap<>(1);
     private static final Map<ITestDevice, File> cachedDeviceSystemPolicy = new HashMap<>(1);
 
-    private File sepolicyAnalyze;
+    private File mSepolicyAnalyze;
     private File checkSeapp;
     private File checkFc;
     private File aospSeappFile;
@@ -126,7 +127,8 @@ public class SELinuxHostTest extends BaseHostJUnit4Test {
 
     public static File copyResourceToTempFile(String resName) throws IOException {
         InputStream is = SELinuxHostTest.class.getResourceAsStream(resName);
-        File tempFile = File.createTempFile("SELinuxHostTest", ".tmp");
+        String tempFileName = "SELinuxHostTest" + resName.replace("/", "_");
+        File tempFile = File.createTempFile(tempFileName, ".tmp");
         FileOutputStream os = new FileOutputStream(tempFile);
         byte[] buf = new byte[1024];
         int len;
@@ -160,8 +162,8 @@ public class SELinuxHostTest extends BaseHostJUnit4Test {
         assumeSecurityModelCompat();
 
         CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mBuild);
-        sepolicyAnalyze = copyResourceToTempFile("/sepolicy-analyze");
-        sepolicyAnalyze.setExecutable(true);
+        mSepolicyAnalyze = copyResourceToTempFile("/sepolicy-analyze");
+        mSepolicyAnalyze.setExecutable(true);
 
         devicePolicyFile = getDevicePolicyFile(mDevice);
         if (isSepolicySplit(mDevice)) {
@@ -177,6 +179,11 @@ public class SELinuxHostTest extends BaseHostJUnit4Test {
             deviceVendorFcFile = getDeviceFile(mDevice, cachedDeviceVendorFcFiles,
                     "/vendor_file_contexts", "vendor_file_contexts");
         }
+    }
+
+    @After
+    public void cleanUp() throws Exception {
+        mSepolicyAnalyze.delete();
     }
 
     private void assumeSecurityModelCompat() throws Exception {
@@ -244,11 +251,11 @@ public class SELinuxHostTest extends BaseHostJUnit4Test {
         assertTrue(device.pullFile("/system/etc/selinux/plat_sepolicy.cil", systemSepolicyCilFile));
 
         ProcessBuilder pb = new ProcessBuilder(
-            secilc.getAbsolutePath(),
-            "-m", "-M", "true", "-c", "30",
-            "-o", builtPolicyFile.getAbsolutePath(),
-	    "-f", fileContextsFile.getAbsolutePath(),
-            systemSepolicyCilFile.getAbsolutePath());
+                secilc.getAbsolutePath(),
+                "-m", "-M", "true", "-c", "30",
+                "-o", builtPolicyFile.getAbsolutePath(),
+                "-f", fileContextsFile.getAbsolutePath(),
+                systemSepolicyCilFile.getAbsolutePath());
         pb.redirectOutput(ProcessBuilder.Redirect.PIPE);
         pb.redirectErrorStream(true);
         Process p = pb.start();
@@ -418,7 +425,7 @@ public class SELinuxHostTest extends BaseHostJUnit4Test {
     public void testAllDomainsEnforcing() throws Exception {
 
         /* run sepolicy-analyze permissive check on policy file */
-        ProcessBuilder pb = new ProcessBuilder(sepolicyAnalyze.getAbsolutePath(),
+        ProcessBuilder pb = new ProcessBuilder(mSepolicyAnalyze.getAbsolutePath(),
                 devicePolicyFile.getAbsolutePath(), "permissive");
         pb.redirectOutput(ProcessBuilder.Redirect.PIPE);
         pb.redirectErrorStream(true);
@@ -469,7 +476,7 @@ public class SELinuxHostTest extends BaseHostJUnit4Test {
             String attribute) throws Exception {
         ProcessBuilder pb =
                 new ProcessBuilder(
-                        sepolicyAnalyze.getAbsolutePath(),
+                        mSepolicyAnalyze.getAbsolutePath(),
                         devicePolicyFile.getAbsolutePath(),
                         "attribute",
                         attribute);
@@ -581,10 +588,10 @@ public class SELinuxHostTest extends BaseHostJUnit4Test {
         deviceVendorSeappFile.deleteOnExit();
         if (mDevice.pullFile("/system/etc/selinux/plat_seapp_contexts", devicePlatSeappFile)) {
             mDevice.pullFile("/vendor/etc/selinux/vendor_seapp_contexts", deviceVendorSeappFile);
-        }else {
+        } else {
             mDevice.pullFile("/plat_seapp_contexts", devicePlatSeappFile);
             mDevice.pullFile("/vendor_seapp_contexts", deviceVendorSeappFile);
-	}
+        }
 
         /* retrieve the checkseapp executable from jar */
         checkSeapp = copyResourceToTempFile("/checkseapp");
@@ -891,6 +898,8 @@ public class SELinuxHostTest extends BaseHostJUnit4Test {
             errorString.append("\n");
         }
         assertTrue(errorString.toString(), errorString.length() == 0);
+
+        sepolicyTests.delete();
     }
 
     /**
@@ -993,7 +1002,7 @@ public class SELinuxHostTest extends BaseHostJUnit4Test {
     public void testNoBooleans() throws Exception {
 
         /* run sepolicy-analyze booleans check on policy file */
-        ProcessBuilder pb = new ProcessBuilder(sepolicyAnalyze.getAbsolutePath(),
+        ProcessBuilder pb = new ProcessBuilder(mSepolicyAnalyze.getAbsolutePath(),
                 devicePolicyFile.getAbsolutePath(), "booleans");
         pb.redirectOutput(ProcessBuilder.Redirect.PIPE);
         pb.redirectErrorStream(true);
