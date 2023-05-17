@@ -53,6 +53,8 @@ public class Install {
     private boolean mBypassStagedInstallerCheck = true;
     private long mTimeoutMillis = TimeUnit.MINUTES.toMillis(5);
 
+    private boolean mDisableVerifier = true;
+
     private Install(boolean isMultiPackage, TestApp... testApps) {
         mIsMultiPackage = isMultiPackage;
         mTestApps = testApps;
@@ -188,6 +190,14 @@ public class Install {
     }
 
     /**
+     * Enable verifier for testing purpose. The default is to disable the verifier.
+     */
+    public Install enableVerifier() {
+        mDisableVerifier = false;
+        return this;
+    }
+
+    /**
      * Commits the install.
      *
      * @return the session id of the install session, if the session is successful.
@@ -247,7 +257,7 @@ public class Install {
         if (isApex && mBypassAllowedApexUpdateCheck) {
             SystemUtil.runShellCommandForNoOutput("pm bypass-allowed-apex-update-check true");
         }
-        if (ApiLevelUtil.isAfter(Build.VERSION_CODES.TIRAMISU)) {
+        if (mDisableVerifier && ApiLevelUtil.isAfter(Build.VERSION_CODES.TIRAMISU)) {
             // This command is only available in U and later
             SystemUtil.runShellCommandForNoOutput("pm disable-verification-for-uid "
                     + android.os.Process.myUid());
