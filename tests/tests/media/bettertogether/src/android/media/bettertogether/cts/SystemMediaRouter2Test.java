@@ -19,6 +19,7 @@ package android.media.bettertogether.cts;
 import static android.content.Context.AUDIO_SERVICE;
 import static android.media.MediaRoute2Info.FEATURE_LIVE_AUDIO;
 import static android.media.MediaRoute2Info.PLAYBACK_VOLUME_VARIABLE;
+import static android.media.MediaRoute2ProviderService.REASON_REJECTED;
 import static android.media.bettertogether.cts.StubMediaRoute2ProviderService.FEATURE_SAMPLE;
 import static android.media.bettertogether.cts.StubMediaRoute2ProviderService.FEATURE_SPECIAL;
 import static android.media.bettertogether.cts.StubMediaRoute2ProviderService.ROUTE_ID1;
@@ -26,6 +27,7 @@ import static android.media.bettertogether.cts.StubMediaRoute2ProviderService.RO
 import static android.media.bettertogether.cts.StubMediaRoute2ProviderService.ROUTE_ID3_SESSION_CREATION_FAILED;
 import static android.media.bettertogether.cts.StubMediaRoute2ProviderService.ROUTE_ID4_TO_SELECT_AND_DESELECT;
 import static android.media.bettertogether.cts.StubMediaRoute2ProviderService.ROUTE_ID5_TO_TRANSFER_TO;
+import static android.media.bettertogether.cts.StubMediaRoute2ProviderService.ROUTE_ID6_REJECT_SET_VOLUME;
 import static android.media.bettertogether.cts.StubMediaRoute2ProviderService.ROUTE_ID_VARIABLE_VOLUME;
 import static android.media.bettertogether.cts.StubMediaRoute2ProviderService.ROUTE_NAME2;
 
@@ -381,6 +383,49 @@ public class SystemMediaRouter2Test {
 
         mSystemRouter2ForCts.setRouteVolume(routeToChangeVolume, targetVolume);
         assertThat(changedLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)).isTrue();
+    }
+
+    @Test
+    public void setRouteVolume_withSpecialRoute_rejectsRequest() throws Exception {
+        mAppRouter2.registerRouteCallback(mExecutor, mAppRouterPlaceHolderCallback,
+                new RouteDiscoveryPreference.Builder(FEATURES_ALL, true).build());
+
+        waitAndGetRoutes(FEATURE_SAMPLE);
+
+        MediaRoute2Info routeToChangeVolume = null;
+        for (MediaRoute2Info route : mSystemRouter2ForCts.getAllRoutes()) {
+            if (TextUtils.equals(ROUTE_ID6_REJECT_SET_VOLUME, route.getOriginalId())) {
+                routeToChangeVolume = route;
+                break;
+            }
+        }
+        assertThat(routeToChangeVolume).isNotNull();
+
+        int targetVolume = routeToChangeVolume.getVolume() + 1;
+        CountDownLatch changedLatch = new CountDownLatch(1);
+        int expectedFailureReason = REASON_REJECTED;
+        TransferCallback transferCallback = new TransferCallback() {
+            @Override
+            public void onRequestFailed(int reason) {
+                if (reason == expectedFailureReason) {
+                    changedLatch.countDown();
+                }
+            }
+        };
+
+        mTransferCallbacks.add(transferCallback);
+        mSystemRouter2ForCts.registerTransferCallback(mExecutor, transferCallback);
+
+        mSystemRouter2ForCts.setRouteVolume(routeToChangeVolume, targetVolume);
+        assertThat(changedLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)).isTrue();
+
+        // Assert the route volume did not change.
+        MediaRoute2Info updatedTargetRoute = mSystemRouter2ForCts.getAllRoutes().stream()
+                .filter(r -> TextUtils.equals(r.getOriginalId(), ROUTE_ID6_REJECT_SET_VOLUME))
+                .findAny()
+                .orElse(null);
+        assertThat(updatedTargetRoute).isNotNull();
+        assertThat(updatedTargetRoute.getVolume()).isEqualTo(routeToChangeVolume.getVolume());
     }
 
     @Test

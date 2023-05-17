@@ -59,6 +59,9 @@ public class StubMediaRoute2ProviderService extends MediaRoute2ProviderService {
     public static final String ROUTE_ID_SPECIAL_FEATURE = "route_special_feature";
     public static final String ROUTE_NAME_SPECIAL_FEATURE = "Special Feature Route";
 
+    public static final String ROUTE_ID6_REJECT_SET_VOLUME = "route_id6_reject_set_volume";
+    public static final String ROUTE_NAME_6 = "Sample Route 6 - Reject Set Route Volume";
+
     public static final int INITIAL_VOLUME = 30;
     public static final int VOLUME_MAX = 100;
     public static final int SESSION_VOLUME_MAX = 50;
@@ -110,6 +113,13 @@ public class StubMediaRoute2ProviderService extends MediaRoute2ProviderService {
                 ROUTE_ID5_TO_TRANSFER_TO, ROUTE_NAME5)
                 .addFeature(FEATURE_SAMPLE)
                 .build();
+        MediaRoute2Info route6 = new MediaRoute2Info.Builder(
+                ROUTE_ID6_REJECT_SET_VOLUME, ROUTE_NAME_6)
+                .setVolumeHandling(PLAYBACK_VOLUME_VARIABLE)
+                .setVolume(INITIAL_VOLUME)
+                .setVolumeMax(VOLUME_MAX)
+                .addFeature(FEATURE_SAMPLE)
+                .build();
         MediaRoute2Info routeSpecial =
                 new MediaRoute2Info.Builder(ROUTE_ID_SPECIAL_FEATURE, ROUTE_NAME_SPECIAL_FEATURE)
                         .addFeature(FEATURE_SAMPLE)
@@ -133,6 +143,7 @@ public class StubMediaRoute2ProviderService extends MediaRoute2ProviderService {
         mRoutes.put(route3.getId(), route3);
         mRoutes.put(route4.getId(), route4);
         mRoutes.put(route5.getId(), route5);
+        mRoutes.put(route6.getId(), route6);
         mRoutes.put(routeSpecial.getId(), routeSpecial);
         mRoutes.put(fixedVolumeRoute.getId(), fixedVolumeRoute);
         mRoutes.put(variableVolumeRoute.getId(), variableVolumeRoute);
@@ -186,6 +197,12 @@ public class StubMediaRoute2ProviderService extends MediaRoute2ProviderService {
         if (route == null) {
             return;
         }
+
+        if (TextUtils.equals(route.getOriginalId(), ROUTE_ID6_REJECT_SET_VOLUME)) {
+            notifyRequestFailed(requestId, REASON_REJECTED);
+            return;
+        }
+
         volume = Math.max(0, Math.min(volume, route.getVolumeMax()));
         mRoutes.put(routeId, new MediaRoute2Info.Builder(route)
                 .setVolume(volume)
