@@ -232,36 +232,34 @@ public class UserInitiatedJobTest {
     /** Test that UI jobs can't be scheduled directly from other UIJs. */
     @Test
     public void testSchedulingUij() throws Exception {
-        try (TestNotificationListener.NotificationHelper notificationHelper =
-                     new TestNotificationListener.NotificationHelper(
-                             mContext, TestAppInterface.TEST_APP_PACKAGE)) {
-            int firstJobId = JOB_ID;
-            int secondJobId = firstJobId + 1;
-            // Close the activity so the app isn't considered TOP.
-            mTestAppInterface.closeActivity(true);
-            mTestAppInterface.postUiInitiatingNotification(
-                    Map.of(TestJobSchedulerReceiver.EXTRA_AS_USER_INITIATED, true),
-                    Map.of(
-                            TestJobSchedulerReceiver.EXTRA_REQUIRED_NETWORK_TYPE, NETWORK_TYPE_ANY,
-                            TestJobSchedulerReceiver.EXTRA_JOB_ID_KEY, firstJobId)
-            );
+        int firstJobId = JOB_ID;
+        int secondJobId = firstJobId + 1;
 
-            // Clicking on the notification should put the app into a BAL approved state.
-            notificationHelper.clickNotification();
+        ScreenUtils.setScreenOn(true);
+        mTestAppInterface.startAndKeepTestActivity(true);
+        mTestAppInterface.scheduleJob(
+                Map.of(TestJobSchedulerReceiver.EXTRA_AS_USER_INITIATED, true),
+                Map.of(
+                        TestJobSchedulerReceiver.EXTRA_REQUIRED_NETWORK_TYPE, NETWORK_TYPE_ANY,
+                        TestJobSchedulerReceiver.EXTRA_JOB_ID_KEY, firstJobId
+                )
+        );
+        // Close the activity so the app is no longer considered TOP.
+        mTestAppInterface.closeActivity(true);
 
-            assertTrue(mTestAppInterface.awaitJobScheduleResult(firstJobId,
-                    DEFAULT_WAIT_TIMEOUT_MS, JobScheduler.RESULT_SUCCESS));
+        assertTrue(mTestAppInterface.awaitJobScheduleResult(firstJobId,
+                DEFAULT_WAIT_TIMEOUT_MS, JobScheduler.RESULT_SUCCESS));
 
-            Thread.sleep(10000); // Wait a bit so that BAL allowance disappears.
+        Thread.sleep(10000); // Wait a bit so that BAL allowance disappears.
 
-            mTestAppInterface.scheduleJob(
-                    Map.of(TestJobSchedulerReceiver.EXTRA_AS_USER_INITIATED, true),
-                    Map.of(
-                            TestJobSchedulerReceiver.EXTRA_REQUIRED_NETWORK_TYPE, NETWORK_TYPE_ANY,
-                            TestJobSchedulerReceiver.EXTRA_JOB_ID_KEY, secondJobId)
-            );
-            assertTrue(mTestAppInterface.awaitJobScheduleResult(secondJobId,
-                    DEFAULT_WAIT_TIMEOUT_MS, JobScheduler.RESULT_FAILURE));
-        }
+        mTestAppInterface.scheduleJob(
+                Map.of(TestJobSchedulerReceiver.EXTRA_AS_USER_INITIATED, true),
+                Map.of(
+                        TestJobSchedulerReceiver.EXTRA_REQUIRED_NETWORK_TYPE, NETWORK_TYPE_ANY,
+                        TestJobSchedulerReceiver.EXTRA_JOB_ID_KEY, secondJobId
+                )
+        );
+        assertTrue(mTestAppInterface.awaitJobScheduleResult(secondJobId,
+                DEFAULT_WAIT_TIMEOUT_MS, JobScheduler.RESULT_FAILURE));
     }
 }
