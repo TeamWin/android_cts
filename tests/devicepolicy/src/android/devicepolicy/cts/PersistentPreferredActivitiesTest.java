@@ -287,6 +287,7 @@ public final class PersistentPreferredActivitiesTest {
         }
     }
 
+    @Ignore("b/283078332 use polling instead of sleep for uninstalling")
     @Test
     @Postsubmit(reason = "new test")
     @ApiTest(apis = {"android.app.admin.DevicePolicyManager#addPersistentPreferredActivity",
