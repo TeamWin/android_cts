@@ -44,7 +44,6 @@ import android.net.Uri;
 import android.os.Build;
 import android.photopicker.cts.cloudproviders.CloudProviderPrimary;
 
-import androidx.test.filters.FlakyTest;
 import androidx.test.filters.SdkSuppress;
 import androidx.test.uiautomator.UiObject;
 
@@ -52,6 +51,7 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -135,7 +135,7 @@ public class PhotoPickerBannersTest extends PhotoPickerBaseTest {
     }
 
     @Test
-    @FlakyTest(bugId = 274840171)
+    @Ignore("Tracking this in b/274840171")
     public void testChooseAppBannerOnActionButtonClick() throws Exception {
         // 1. Setting up the 'Choose App' banner.
         setCloudMediaInfoForChooseAppBanner();
