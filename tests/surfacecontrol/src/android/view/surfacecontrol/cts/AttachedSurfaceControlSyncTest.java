@@ -251,8 +251,8 @@ public class AttachedSurfaceControlSyncTest {
             mParent.removeAllViews();
         }
 
-        public int getNumFramesRequired() {
-            return 1;
+        public boolean hasAnimation() {
+            return false;
         }
     }
 

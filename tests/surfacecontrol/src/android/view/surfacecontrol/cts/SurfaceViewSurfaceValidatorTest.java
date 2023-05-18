@@ -25,6 +25,7 @@ import android.view.Gravity;
 import android.view.SurfaceControl;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.view.cts.surfacevalidator.AnimationFactory;
 import android.view.cts.surfacevalidator.CapturedActivity;
 import android.view.cts.surfacevalidator.PixelChecker;
 import android.view.cts.surfacevalidator.SurfaceControlTestCase;
@@ -95,18 +96,17 @@ public class SurfaceViewSurfaceValidatorTest {
                     return pixelCount == 0;
                 }
             };
-        SurfaceControlTestCase t = new SurfaceControlTestCase(psc,
+        SurfaceControlTestCase t = new SurfaceControlTestCase(psc, null,
                 pixelChecker, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT,
-                DEFAULT_BUFFER_WIDTH, DEFAULT_BUFFER_HEIGHT, true /* singleFrameOnly */);
+                DEFAULT_BUFFER_WIDTH, DEFAULT_BUFFER_HEIGHT);
         mActivity.verifyTest(t, mName);
     }
 
     class TwoSurfaceViewTest extends SurfaceControlTestCase {
-        TwoSurfaceViewTest(ParentSurfaceConsumer psc, PixelChecker pixelChecker,
-                int layoutWidth, int layoutHeight, int bufferWidth, int bufferHeight,
-                boolean singleFrameOnly) {
-            super(psc, pixelChecker, layoutWidth, layoutHeight, bufferWidth, bufferHeight,
-                    singleFrameOnly);
+        TwoSurfaceViewTest(ParentSurfaceConsumer psc,
+                AnimationFactory animationFactory, PixelChecker pixelChecker,
+                int layoutWidth, int layoutHeight, int bufferWidth, int bufferHeight) {
+            super(psc, animationFactory, pixelChecker, layoutWidth, layoutHeight, bufferWidth, bufferHeight);
         }
         @Override
         public void start(Context context, FrameLayout parent) {
@@ -134,9 +134,9 @@ public class SurfaceViewSurfaceValidatorTest {
                     return pixelCount == 0;
                 }
             };
-        TwoSurfaceViewTest t = new TwoSurfaceViewTest(psc, pixelChecker, DEFAULT_LAYOUT_WIDTH,
-                DEFAULT_LAYOUT_HEIGHT, DEFAULT_BUFFER_WIDTH, DEFAULT_BUFFER_HEIGHT,
-                true /* singleFrameOnly */);
+        TwoSurfaceViewTest t = new TwoSurfaceViewTest(psc, null,
+                pixelChecker, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT,
+                DEFAULT_BUFFER_WIDTH, DEFAULT_BUFFER_HEIGHT);
         mActivity.verifyTest(t, mName);
     }
 }
