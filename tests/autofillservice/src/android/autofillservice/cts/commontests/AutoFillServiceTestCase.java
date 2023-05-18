@@ -25,6 +25,8 @@ import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentat
 
 import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
 
+import static org.junit.Assume.assumeFalse;
+
 import android.app.PendingIntent;
 import android.autofillservice.cts.R;
 import android.autofillservice.cts.activities.AbstractAutoFillActivity;
@@ -487,6 +489,8 @@ public final class AutoFillServiceTestCase {
 
             // Collapse notifications.
             runShellCommand("cmd statusbar collapse");
+
+            assumeFalse("Device is half-folded", Helper.isDeviceHalfFolded(mContext));
 
             // Set orientation as portrait, otherwise some tests might fail due to elements not
             // fitting in, IME orientation, etc...
