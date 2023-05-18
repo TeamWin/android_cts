@@ -16,7 +16,6 @@
 package android.view.surfacecontrol.cts;
 
 import static android.server.wm.ActivityManagerTestBase.createFullscreenActivityScenarioRule;
-import static android.server.wm.BuildUtils.HW_TIMEOUT_MULTIPLIER;
 import static android.server.wm.WindowManagerState.getLogicalDisplaySize;
 
 import android.content.Context;
@@ -40,11 +39,12 @@ import org.junit.Test;
 import org.junit.rules.TestName;
 
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 public class SurfacePackageFlickerTest {
     private static final int DEFAULT_LAYOUT_WIDTH = 100;
     private static final int DEFAULT_LAYOUT_HEIGHT = 100;
+    private static final int DEFAULT_BUFFER_WIDTH = 640;
+    private static final int DEFAULT_BUFFER_HEIGHT = 480;
 
     @Rule
     public final ActivityScenarioRule<CapturedActivity> mActivityRule =
@@ -58,6 +58,8 @@ public class SurfacePackageFlickerTest {
     public void setup() {
         mActivityRule.getScenario().onActivity(activity -> mActivity = activity);
         mActivity.setLogicalDisplaySize(getLogicalDisplaySize());
+        // Change runtime to 10s instead of 50s
+        mActivity.setMinimumCaptureDurationMs(10000);
     }
 
     class SurfacePackageTestCase implements ISurfaceValidatorTestCase {
@@ -111,11 +113,10 @@ public class SurfacePackageFlickerTest {
             });
         }
 
-        public boolean waitForReady() {
+        public void waitForReady() {
             try {
-                return mFirstDrawLatch.await(5L * HW_TIMEOUT_MULTIPLIER, TimeUnit.SECONDS);
+                mFirstDrawLatch.await();
             } catch (Exception e) {
-                return false;
                 // Oh well
             }
         }
@@ -125,6 +126,11 @@ public class SurfacePackageFlickerTest {
             mSurfaceControlViewHost.release();
             mParent.removeAllViews();
             mSurfaceControlViewHost = null;
+        }
+
+        @Override
+        public boolean hasAnimation() {
+            return false;
         }
 
         @Override
