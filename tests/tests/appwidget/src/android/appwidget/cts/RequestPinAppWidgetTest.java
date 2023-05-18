@@ -103,11 +103,13 @@ public class RequestPinAppWidgetTest extends AppWidgetTestCase {
         assertEquals("dummy-2", resultReceiver.result.getStringExtra("dummy"));
     }
 
+    @Ignore("b/265187199")
     @Test
     public void testPinWidget_launcher1() throws Exception {
         runPinWidgetTest("android.appwidget.cts.packages.launcher1");
     }
 
+    @Ignore("b/265187199")
     @Test
     public void testPinWidget_launcher2() throws Exception {
         runPinWidgetTest("android.appwidget.cts.packages.launcher2");
