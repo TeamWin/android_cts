@@ -52,6 +52,8 @@ NOT_YET_MANDATED = {
     'scene5': [],
     'scene6': [['test_zoom', 30]],
     'sensor_fusion': [],
+    'scene_hdr': [],
+    'scene_night': [],
 }
 
 logging.getLogger('matplotlib.font_manager').disabled = True
