@@ -355,9 +355,7 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
         }
 
         // DISALLOW_DATA_ROAMING
-        // TODO(b/189282625): replace FEATURE_WATCH with a more specific feature
-        if (!packageManager.hasSystemFeature(PackageManager.FEATURE_WATCH)
-                && packageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+        if (FeatureUtil.isDataRoamingSupported(this)) {
             adapter.add(createInteractiveTestItem(this, DISALLOW_DATA_ROAMING_ID,
                     R.string.device_owner_disallow_data_roaming,
                     R.string.device_owner_disallow_data_roaming_info,
@@ -413,7 +411,7 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
         }
 
         // DISALLOW_USB_FILE_TRANSFER
-        if (FeatureUtil.isUsbFileTransferSupported(this) && !Utils.isTV(this)) {
+        if (FeatureUtil.isUsbFileTransferSupported(this)) {
             adapter.add(createInteractiveTestItem(this, DISALLOW_USB_FILE_TRANSFER_ID,
                     R.string.device_owner_disallow_usb_file_transfer_test,
                     R.string.device_owner_disallow_usb_file_transfer_test_info,
@@ -430,7 +428,7 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
         }
 
         // DISABLE_STATUS_BAR_TEST
-        if (isStatusBarEnabled()) {
+        if (FeatureUtil.isStatusBarSupported(this)) {
             adapter.add(createInteractiveTestItem(this, DISABLE_STATUS_BAR_TEST_ID,
                     R.string.device_owner_disable_statusbar_test,
                     R.string.device_owner_disable_statusbar_test_info,
@@ -450,9 +448,8 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
 
         // Without PIN/Password watches don't have any lockscreen, so this policy isn't applicable
         // setKeyguardDisabled
-        if (FeatureUtil.isKeyguardShownWhenUserDoesntHaveCredentials(this) &&
-                Utils.isLockscreenSupported(this) &&
-                !packageManager.hasSystemFeature(PackageManager.FEATURE_WATCH)) {
+        if (FeatureUtil.isKeyguardShownWhenUserDoesntHaveCredentials(this)
+                && Utils.isLockscreenSupported(this)) {
             adapter.add(createInteractiveTestItem(this, DISABLE_KEYGUARD_TEST_ID,
                     R.string.device_owner_disable_keyguard_test,
                     R.string.device_owner_disable_keyguard_test_info,
@@ -471,8 +468,7 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
         }
 
         // setLockTaskFeatures
-        // TODO(b/189282625): replace FEATURE_WATCH with a more specific feature
-        if (!packageManager.hasSystemFeature(PackageManager.FEATURE_WATCH) && !Utils.isTV(this)) {
+        if (FeatureUtil.isLockTaskSupported(this)) {
             final Intent lockTaskUiTestIntent = new Intent(this, LockTaskUiTestActivity.class);
             lockTaskUiTestIntent.putExtra(LockTaskUiTestActivity.EXTRA_TEST_ID,
                     LOCK_TASK_UI_TEST_ID);
@@ -622,7 +618,8 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
                                 createDisableNetworkLoggingIntent())}));
 
         // Customize lock screen message
-        if (isSwipeToUnlockSupported() && Utils.isLockscreenSupported(this)) {
+        if (FeatureUtil.isSwipeToUnlockSupported(this)
+                && Utils.isLockscreenSupported(this)) {
             adapter.add(TestListItem.newTest(this,
                     R.string.device_owner_customize_lockscreen_message,
                     LockscreenMessageTestActivity.class.getName(),
@@ -787,16 +784,6 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
                 .putExtra(CommandReceiverActivity.EXTRA_VALUE, level);
     }
 
-    private boolean isStatusBarEnabled() {
-        // Watches don't support the status bar so this is an ok proxy, but this is not the most
-        // general test for that. TODO: add a test API to do a real check for status bar support.
-        return !getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH)
-                && !isTelevision();
-    }
-
-    private boolean isSwipeToUnlockSupported() {
-        return !isAutomotive();
-    }
 
     private boolean isAutomotive() {
         return FeatureUtil.isAutomotive(this);
