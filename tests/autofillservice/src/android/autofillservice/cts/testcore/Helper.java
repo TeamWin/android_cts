@@ -907,6 +907,22 @@ public final class Helper {
     }
 
     /**
+     * Checks if PCC is enabled for the device
+     */
+    public static boolean isPccSupported(Context context) {
+        final PackageManager packageManager = context.getPackageManager();
+        if (packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
+            Log.v(TAG, "isPccSupported(): is auto");
+            return false;
+        }
+        if (packageManager.hasSystemFeature(PackageManager.FEATURE_PC)) {
+            Log.v(TAG, "isPccSupported(): is PC");
+            return false;
+        }
+        return true;
+    }
+
+    /**
      * Checks if screen orientation can be changed.
      */
     public static boolean isRotationSupported(Context context) {

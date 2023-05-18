@@ -330,7 +330,7 @@ public class DelayFillTest extends AutoFillServiceTestCase.AutoActivityLaunch<Lo
         mActivity.getAutofillManager().requestAutofill(mActivity.getUsername());
 
         // Wait for fill response to be processed
-        mUiBot.waitForIdle();
+        sleep();
 
         // Wait for second fill request to be processed
         FillRequest fillRequest2 = sReplier.getNextFillRequest();
@@ -342,6 +342,9 @@ public class DelayFillTest extends AutoFillServiceTestCase.AutoActivityLaunch<Lo
         assertThrows(SendIntentException.class, () ->
                 fillRequest.delayFillIntentSender
                         .sendIntent(getContext(), 0, intent, null, null, null));
+
+        // Wait for fill response to be processed
+        sleep();
 
         // Dataset of second response should still be shown
         mUiBot.assertDatasets("placeholder2");
