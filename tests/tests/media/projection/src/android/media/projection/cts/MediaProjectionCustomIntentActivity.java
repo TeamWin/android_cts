@@ -16,6 +16,7 @@
 
 package android.media.projection.cts;
 
+import android.content.ComponentName;
 import android.content.Intent;
 import android.media.cts.MediaProjectionActivity;
 import android.os.Bundle;
@@ -25,6 +26,7 @@ import java.util.Optional;
 public class MediaProjectionCustomIntentActivity extends MediaProjectionActivity {
     private static final String TAG = "MediaProjectionCustomIntentActivity";
     public static final String EXTRA_SCREEN_CAPTURE_INTENT = "extra_screen_capture_intent";
+    public static final String EXTRA_FGS_CLASS = "extra_fgs_class";
     private Optional<Intent> mProvidedScreenCaptureIntent;
 
     @Override
@@ -43,5 +45,12 @@ public class MediaProjectionCustomIntentActivity extends MediaProjectionActivity
             mProvidedScreenCaptureIntent = Optional.empty();
         }
         super.onCreate(savedInstanceState);
+    }
+
+    @Override
+    public ComponentName getForegroundServiceComponentName() {
+        final String cls = getIntent().getStringExtra(EXTRA_FGS_CLASS);
+        return cls != null ? new ComponentName(this, cls)
+                : super.getForegroundServiceComponentName();
     }
 }
