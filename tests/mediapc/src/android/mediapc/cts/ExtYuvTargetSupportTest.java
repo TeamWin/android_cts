@@ -94,9 +94,10 @@ public class ExtYuvTargetSupportTest {
         int eglColorSize = useHighBitDepth ? 10 : 8;
         int eglAlphaSize = useHighBitDepth ? 2 : 0;
         int[] attribList = {
-                EGL14.EGL_RED_SIZE, 8,
-                EGL14.EGL_GREEN_SIZE, 8,
-                EGL14.EGL_BLUE_SIZE, 8,
+                EGL14.EGL_RED_SIZE, eglColorSize,
+                EGL14.EGL_GREEN_SIZE, eglColorSize,
+                EGL14.EGL_BLUE_SIZE, eglColorSize,
+                EGL14.EGL_ALPHA_SIZE, eglAlphaSize,
                 EGL14.EGL_RENDERABLE_TYPE, EGL14.EGL_OPENGL_ES2_BIT,
                 EGL14.EGL_SURFACE_TYPE, EGL14.EGL_PBUFFER_BIT,
                 EGL14.EGL_NONE
