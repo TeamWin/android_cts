@@ -20,12 +20,15 @@ import static android.Manifest.permission.ACCESS_BACKGROUND_LOCATION;
 import static android.Manifest.permission.ACCESS_COARSE_LOCATION;
 import static android.Manifest.permission.READ_CALL_LOG;
 import static android.Manifest.permission.READ_CONTACTS;
+import static android.Manifest.permission.SYSTEM_ALERT_WINDOW;
+import static android.content.pm.PackageManager.FLAG_PERMISSION_GRANTED_BY_ROLE;
 import static android.content.pm.PackageManager.FLAG_PERMISSION_REVIEW_REQUIRED;
 import static android.content.pm.PackageManager.FLAG_PERMISSION_REVOKED_COMPAT;
 import static android.content.pm.PackageManager.FLAG_PERMISSION_REVOKE_WHEN_REQUESTED;
 import static android.content.pm.PackageManager.FLAG_PERMISSION_USER_FIXED;
 import static android.content.pm.PackageManager.FLAG_PERMISSION_USER_SET;
 import static android.permission.cts.PermissionUtils.clearAppState;
+import static android.permission.cts.PermissionUtils.getAllPermissionFlags;
 import static android.permission.cts.PermissionUtils.getPermissionFlags;
 import static android.permission.cts.PermissionUtils.install;
 import static android.permission.cts.PermissionUtils.isGranted;
@@ -39,6 +42,7 @@ import static org.junit.Assert.assertFalse;
 
 import android.os.Build;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.AsbSecurityTest;
 
 import androidx.test.filters.SdkSuppress;
 import androidx.test.runner.AndroidJUnit4;
@@ -55,8 +59,10 @@ import org.junit.runner.RunWith;
 @AppModeFull(reason = "Cannot read permission flags of other app.")
 @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE, codeName = "UpsideDownCake")
 public class PermissionFlagsTest {
-    /** The package name of all apps used in the test */
+    /** The package name of most apps used in the test */
     private static final String APP_PKG = "android.permission.cts.appthatrequestpermission";
+    private static final String APP_SYSTEM_ALERT_WINDOW_PKG =
+            "android.permission3.cts.usesystemalertwindowpermission";
 
     private static final String TMP_DIR = "/data/local/tmp/cts/permissions/";
     private static final String APK_CONTACTS_15 =
@@ -65,11 +71,14 @@ public class PermissionFlagsTest {
             TMP_DIR + "CtsAppThatRequestsLocationPermission22.apk";
     private static final String APK_LOCATION_28 =
             TMP_DIR + "CtsAppThatRequestsLocationPermission28.apk";
+    private static final String APK_SYSTEM_ALERT_WINDOW_23 =
+            TMP_DIR + "CtsAppThatRequestsSystemAlertWindow23.apk";
 
     @After
     @Before
     public void uninstallTestApp() {
         uninstallApp(APP_PKG);
+        uninstallApp(APP_SYSTEM_ALERT_WINDOW_PKG);
     }
 
     @Test
@@ -223,5 +232,21 @@ public class PermissionFlagsTest {
                 & FLAG_PERMISSION_REVOKED_COMPAT);
         assertEquals(0,getPermissionFlags(APP_PKG, ACCESS_BACKGROUND_LOCATION)
                 & FLAG_PERMISSION_REVOKED_COMPAT);
+    }
+
+    @AsbSecurityTest(cveBugId = 283006437)
+    @Test
+    public void nonRuntimePermissionFlagsPreservedAfterReinstall() throws Exception {
+        install(APK_SYSTEM_ALERT_WINDOW_23);
+
+        int flags = FLAG_PERMISSION_USER_SET | FLAG_PERMISSION_GRANTED_BY_ROLE;
+        setPermissionFlags(APP_SYSTEM_ALERT_WINDOW_PKG, SYSTEM_ALERT_WINDOW, flags, flags);
+        assertEquals(flags, getAllPermissionFlags(APP_SYSTEM_ALERT_WINDOW_PKG, SYSTEM_ALERT_WINDOW)
+                & flags);
+
+        install(APK_SYSTEM_ALERT_WINDOW_23);
+
+        assertEquals(flags, getAllPermissionFlags(APP_SYSTEM_ALERT_WINDOW_PKG, SYSTEM_ALERT_WINDOW)
+                & flags);
     }
 }
