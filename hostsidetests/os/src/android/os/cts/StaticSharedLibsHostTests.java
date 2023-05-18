@@ -16,7 +16,6 @@
 
 package android.os.cts;
 
-import com.android.tradefed.util.RunUtil;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
@@ -39,6 +38,7 @@ import com.android.tradefed.testtype.DeviceTestCase;
 import com.android.tradefed.testtype.IBuildReceiver;
 import com.android.tradefed.util.CommandResult;
 import com.android.tradefed.util.CommandStatus;
+import com.android.tradefed.util.RunUtil;
 
 import java.io.FileNotFoundException;
 import java.util.Arrays;
@@ -750,6 +750,32 @@ public class StaticSharedLibsHostTests extends DeviceTestCase implements IBuildR
 
     @LargeTest
     @AppModeFull
+    public void testPruneUnusedStaticSharedLibrariesWithMultiUser_reboot_fullMode()
+            throws Exception {
+        doTestPruneUnusedStaticSharedLibrariesWithMultiUser_reboot();
+    }
+
+    @LargeTest
+    @AppModeInstant
+    public void testPruneUnusedStaticSharedLibrariesWithMultiUser_reboot_instantMode()
+            throws Exception {
+        mInstantMode = true;
+        doTestPruneUnusedStaticSharedLibrariesWithMultiUser_reboot();
+    }
+
+    private void doTestPruneUnusedStaticSharedLibrariesWithMultiUser_reboot() throws Exception {
+        int userId = -1;
+        try {
+            userId = createAndStartSecondUser();
+            assertThat(userId).isNotEqualTo(-1);
+            doTestPruneUnusedStaticSharedLibraries_reboot();
+        } finally {
+            stopAndRemoveUser(userId);
+        }
+    }
+
+    @LargeTest
+    @AppModeFull
     public void testPruneUnusedStaticSharedLibraries_reboot_fullMode()
             throws Exception {
         doTestPruneUnusedStaticSharedLibraries_reboot();
@@ -971,5 +997,21 @@ public class StaticSharedLibsHostTests extends DeviceTestCase implements IBuildR
         if (res.getStatus() != CommandStatus.SUCCESS) {
             fail("Failed to execute shell command: " + cmd);
         }
+    }
+
+    private int createAndStartSecondUser() throws Exception {
+        String output = getDevice().executeShellCommand("pm create-user SecondUser");
+        assertThat(output.startsWith("Success")).isTrue();
+        int userId = Integer.parseInt(output.substring(output.lastIndexOf(" ")).trim());
+        output = getDevice().executeShellCommand("am start-user -w " + userId);
+        assertThat(output.startsWith("Error")).isFalse();
+        output = getDevice().executeShellCommand("am get-started-user-state " + userId);
+        assertThat(output.contains("RUNNING_UNLOCKED")).isTrue();
+        return userId;
+    }
+
+    private void stopAndRemoveUser(int userId) throws Exception {
+        getDevice().executeShellCommand("am stop-user -w -f " + userId);
+        getDevice().executeShellCommand("pm remove-user " + userId);
     }
 }
