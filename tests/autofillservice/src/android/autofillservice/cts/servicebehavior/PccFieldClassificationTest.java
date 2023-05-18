@@ -31,11 +31,14 @@ import static android.service.autofill.FillRequest.FLAG_SUPPORTS_FILL_DIALOG;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assume.assumeTrue;
+
 import android.autofillservice.cts.activities.AuthenticationActivity;
 import android.autofillservice.cts.activities.LoginActivity;
 import android.autofillservice.cts.commontests.FieldClassificationServiceManualActivityLaunchTestCase;
 import android.autofillservice.cts.testcore.CannedFieldClassificationResponse;
 import android.autofillservice.cts.testcore.CannedFillResponse;
+import android.autofillservice.cts.testcore.Helper;
 import android.autofillservice.cts.testcore.IdMode;
 import android.autofillservice.cts.testcore.InstrumentedAutoFillService;
 import android.autofillservice.cts.testcore.MyAutofillCallback;
@@ -86,7 +89,9 @@ public class PccFieldClassificationTest extends
     public static final String AUTOFILL_HINT_NEW_PASSWORD = "hint_new_password";
 
     @Before
-    public void setup() throws Exception    {
+    public void setup() throws Exception {
+        assumeTrue("PCC is enabled", Helper.isPccSupported(mContext));
+
         enableService();
         enablePccDetectionFeature(sContext, AUTOFILL_HINT_USERNAME, AUTOFILL_HINT_PASSWORD,
                 AUTOFILL_HINT_NEW_PASSWORD);
