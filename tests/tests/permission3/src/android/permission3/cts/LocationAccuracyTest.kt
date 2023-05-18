@@ -132,6 +132,21 @@ class LocationAccuracyTest : BaseUsePermissionTest() {
         assertAppHasPermission(ACCESS_BACKGROUND_LOCATION, false)
     }
 
+    @Test
+    fun testPreSAppsAutograntFineIfCoarseGranted() {
+        installPackage(APP_APK_PATH_30)
+        assertAppHasPermission(ACCESS_COARSE_LOCATION, false)
+        requestAppPermissionsAndAssertResult(
+            ACCESS_COARSE_LOCATION to true
+        ) {
+            clickPermissionRequestAllowForegroundButton()
+        }
+        assertAppHasPermission(ACCESS_FINE_LOCATION, false)
+        requestAppPermissionsAndAssertResult(
+            ACCESS_FINE_LOCATION to true
+        ) { }
+    }
+
     private fun clickPreciseLocationRadioButton() {
         click(By.res(LOCATION_ACCURACY_PRECISE_RADIO_BUTTON))
     }
