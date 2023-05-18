@@ -19,6 +19,8 @@ package android.app.usage.cts;
 import static android.Manifest.permission.POST_NOTIFICATIONS;
 import static android.Manifest.permission.REVOKE_POST_NOTIFICATIONS_WITHOUT_KILL;
 import static android.Manifest.permission.REVOKE_RUNTIME_PERMISSIONS;
+import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
+import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
 import static android.app.usage.UsageStatsManager.STANDBY_BUCKET_FREQUENT;
 import static android.app.usage.UsageStatsManager.STANDBY_BUCKET_NEVER;
 import static android.app.usage.UsageStatsManager.STANDBY_BUCKET_RARE;
@@ -37,6 +39,7 @@ import static org.junit.Assume.assumeTrue;
 import android.Manifest;
 import android.app.Activity;
 import android.app.ActivityManager;
+import android.app.ActivityOptions;
 import android.app.AppOpsManager;
 import android.app.KeyguardManager;
 import android.app.Notification;
@@ -287,10 +290,16 @@ public class UsageStatsTest {
     }
 
     private void launchSubActivity(Class<? extends Activity> clazz) {
+        launchSubActivity(clazz, WINDOWING_MODE_UNDEFINED);
+    }
+
+    private void launchSubActivity(Class<? extends Activity> clazz, int windowingMode) {
         final Intent intent = new Intent(Intent.ACTION_MAIN);
         intent.setClassName(mTargetPackage, clazz.getName());
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
-        mContext.startActivity(intent);
+        final ActivityOptions options = ActivityOptions.makeBasic();
+        options.setLaunchWindowingMode(windowingMode);
+        mContext.startActivity(intent, options.toBundle());
         mUiDevice.wait(Until.hasObject(By.clazz(clazz)), TIMEOUT);
     }
 
@@ -302,7 +311,13 @@ public class UsageStatsTest {
     }
 
     private void launchTestActivity(String pkgName, String className) {
-        mContext.startActivity(createTestActivityIntent(pkgName, className));
+        launchTestActivity(pkgName, className, WINDOWING_MODE_UNDEFINED);
+    }
+
+    private void launchTestActivity(String pkgName, String className, int windowingMode) {
+        final ActivityOptions options = ActivityOptions.makeBasic();
+        options.setLaunchWindowingMode(windowingMode);
+        mContext.startActivity(createTestActivityIntent(pkgName, className), options.toBundle());
         mUiDevice.wait(Until.hasObject(By.clazz(pkgName, className)), TIMEOUT);
     }
 
@@ -588,37 +603,29 @@ public class UsageStatsTest {
         // Activity will be paused as the activities we launch might be placed on a different
         // TaskDisplayArea. Starting an activity and finishing it immediately will update the last
         // background package of the UsageStatsService regardless of the HOME Activity state.
-        launchTestActivity(TEST_APP_PKG, TEST_APP_CLASS_FINISH_SELF_ON_RESUME);
-        launchSubActivity(Activities.ActivityOne.class);
-        launchSubActivity(Activities.ActivityTwo.class);
+        // To ensure that the test is not affected by the display windowing mode, all activities are
+        // forced to launch in fullscreen mode in this test.
+        launchTestActivity(TEST_APP_PKG, TEST_APP_CLASS_FINISH_SELF_ON_RESUME,
+                WINDOWING_MODE_FULLSCREEN);
+        launchSubActivity(Activities.ActivityOne.class, WINDOWING_MODE_FULLSCREEN);
+        launchSubActivity(Activities.ActivityTwo.class, WINDOWING_MODE_FULLSCREEN);
         endTime = System.currentTimeMillis();
         events = mUsageStatsManager.queryAndAggregateUsageStats(
                 startTime, endTime);
         stats = events.get(mTargetPackage);
         assertEquals(startingCount + 1, stats.getAppLaunchCount());
-        mUiDevice.pressHome();
 
-        launchTestActivity(TEST_APP_PKG, TEST_APP_CLASS_FINISH_SELF_ON_RESUME);
-        launchSubActivity(Activities.ActivityOne.class);
-        launchSubActivity(Activities.ActivityTwo.class);
-        launchSubActivity(Activities.ActivityThree.class);
+        launchTestActivity(TEST_APP_PKG, TEST_APP_CLASS_FINISH_SELF_ON_RESUME,
+                WINDOWING_MODE_FULLSCREEN);
+        launchSubActivity(Activities.ActivityOne.class, WINDOWING_MODE_FULLSCREEN);
+        launchSubActivity(Activities.ActivityTwo.class, WINDOWING_MODE_FULLSCREEN);
+        launchSubActivity(Activities.ActivityThree.class, WINDOWING_MODE_FULLSCREEN);
         endTime = System.currentTimeMillis();
         events = mUsageStatsManager.queryAndAggregateUsageStats(
                 startTime, endTime);
         stats = events.get(mTargetPackage);
 
-        // generally applicable to single screen devices
-        int expectedUsageStatsIncrement = 2;
-        // devices that handle Apps in a multi windowing mode are unlikely to behave as defined by
-        // the single screen expectations; For example, Launcher may always be visible;
-        // consequently, the expected lifecycle will not be triggered, thus resulting in improper
-        // UsageStats values as expected for a single screen environment
-        if (Activities.startedActivities.size() > 0 &&
-                Activities.startedActivities.valueAt(0).isInMultiWindowMode()) {
-            expectedUsageStatsIncrement = 1;
-        }
-
-        assertEquals(startingCount + expectedUsageStatsIncrement, stats.getAppLaunchCount());
+        assertEquals(startingCount + 2, stats.getAppLaunchCount());
     }
 
     @AppModeFull(reason = "No usage events access in instant apps")
