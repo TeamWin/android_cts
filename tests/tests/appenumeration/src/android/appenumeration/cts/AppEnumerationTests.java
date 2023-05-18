@@ -560,6 +560,9 @@ public class AppEnumerationTests extends AppEnumerationTestsBase {
 
     @Test
     public void whenStartedViaIntentSender_canSeeCaller() throws Exception {
+        uninstallPackage(QUERIES_NOTHING);
+        installPackage(QUERIES_NOTHING_APK);
+
         // let's first make sure that the target cannot see the caller.
         assertNotVisible(QUERIES_NOTHING, QUERIES_NOTHING_Q);
         // now let's start the target via pending intent and make sure that it can see the caller
