@@ -50,7 +50,6 @@ public class BroadcastFreezerTest extends BaseBroadcastTest {
     // Test delaying freezer via BroadcastOptions
     @Test
     public void testBroadcastOptions_appFreezingDelayed() throws Exception {
-        assumeTrue(isModernBroadcastQueueEnabled());
         assumeTrue(isAppFreezerEnabled());
 
         TestServiceConnection connection = bindToHelperService(HELPER_PKG1);
