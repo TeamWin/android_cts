@@ -73,18 +73,10 @@ public final class PowerPolicyGroups {
             String line = defStrs.get(i);
             if (line.contains(groupDefDelimiter)) {
                 // this is policy group definition
-                String[] groupDef = line.split(groupDefDelimiter);
-                if (groupDef.length < 2) {
-                    throw new IllegalArgumentException(
-                            "malformatted policy group def str: " + line);
-                }
-                String policyName = groupDef[0];
-                String stateName = groupDef[1];
-
-                if (Objects.equals("WaitForVHAL", stateName)) {
-                    waitForVHALPolicy = policyName;
-                } else if (Objects.equals("On", stateName)) {
-                    onPolicy = policyName;
+                if (line.contains("WaitForVHAL")) {
+                    waitForVHALPolicy = parsePolicyGroupDef("WaitForVHAL", line);
+                } else if (line.contains("On")) {
+                    onPolicy = parsePolicyGroupDef("On", line);
                 } else {
                     LogUtil.CLog.d("Policy group is ignored: " + line);
                 }
