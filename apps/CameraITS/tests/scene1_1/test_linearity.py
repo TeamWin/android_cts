@@ -118,16 +118,23 @@ class LinearityTest(its_base_test.ItsBaseTest):
       pylab.xlabel('sensitivity(ISO)')
       pylab.ylabel('RGB avg [0, 1]')
       matplotlib.pyplot.savefig(f'{name_with_log_path}_plot_means.png')
-
+      channel_color = ''
       # Assert plot curves are linear w/ + slope by examining polyfit residual
       for means in [r_means, g_means, b_means]:
+        if means == r_means:
+          channel_color = 'Red'
+        elif means == g_means:
+          channel_color = 'Green'
+        else:
+          channel_color = 'Blue'
         line, residuals, _, _, _ = np.polyfit(
             range(len(sensitivities)), means, 1, full=True)
         logging.debug('Line: m=%f, b=%f, resid=%f',
                       line[0], line[1], residuals[0])
         if residuals[0] > _RESIDUAL_THRESH:
           raise AssertionError(
-              'residual: {residuals[0]:.5f}, THRESH: {RESIDUAL_THRESH}')
+              f'residual: {residuals[0]:.5f}, THRESH: {_RESIDUAL_THRESH},'
+              f' color: {channel_color}')
         if line[0] <= 0:
           raise AssertionError(f'slope {line[0]:.6f} <=  0!')
 
