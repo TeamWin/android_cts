@@ -90,9 +90,51 @@ public final class FeatureUtil {
      * Checks whether the device supports file transfer.
      */
     public static boolean isUsbFileTransferSupported(Context context) {
-        return !isWatchOrAutomotive(context);
+        return !isWatchOrAutomotive(context) && !isTelevision(context);
     }
 
+    /**
+     * Checks if VPN Config is supported.
+     */
+    public static boolean isVpnConfigSupported(Context context) {
+        return !isWatch(context);
+    }
+
+    /**
+     * Checks if Disabling Keyguard is supported.
+     */
+    public static boolean isDisableKeyguardSupported(Context context) {
+        return !isWatch(context);
+    }
+
+    /**
+     * Checks if Lock Task is supported.
+     */
+    public static boolean isLockTaskSupported(Context context) {
+        return !isWatch(context) && !isTelevision(context);
+    }
+
+    /**
+     * Checks if Status Bar is supported.
+     */
+    public static boolean isStatusBarSupported(Context context) {
+        return !isWatch(context) && !isTelevision(context);
+    }
+
+    /**
+     * Checks if Data Roaming is supported.
+     */
+    public static boolean isDataRoamingSupported(Context context) {
+        PackageManager pm = context.getPackageManager();
+        return pm.hasSystemFeature(PackageManager.FEATURE_TELEPHONY) && !isWatch(context);
+    }
+
+    /**
+     * Checks is Swipe To Unlock is supported.
+     */
+    public static boolean isSwipeToUnlockSupported(Context context) {
+        return !isAutomotive(context);
+    }
     /**
      * Checks whether the device is watch .
      */
@@ -116,6 +158,14 @@ public final class FeatureUtil {
     public static boolean isAutomotive(Context context) {
         PackageManager pm = context.getPackageManager();
         return pm.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE);
+    }
+
+    /**
+     * Checks whether the device is a TV
+     */
+    public static boolean isTelevision(Context context) {
+        PackageManager pm = context.getPackageManager();
+        return pm.hasSystemFeature(PackageManager.FEATURE_LEANBACK);
     }
 
     /**
