@@ -91,8 +91,8 @@ public class DeviceAdminTestReceiver extends DeviceAdminReceiver {
             ComponentName admin = getWho(context);
             Log.i(TAG, "Setting affiliation ids to " + ids);
             dpm.setAffiliationIds(admin, ids);
-            if (!context.getUser().isSystem()) {
-                // For non-system user, also set the affiliation IDs for DO to make sure that PO is
+            if (dpm.isProfileOwnerApp(context.getPackageName()) && !dpm.isEphemeralUser(admin)) {
+                // For profile owner, also set the affiliation IDs for DO to make sure that PO is
                 // affiliated. For system user, DO affiliation ids are already set above, so no need
                 // to set them again.
                 Log.i(TAG, "Also setting the affiliation ids for device owner");
