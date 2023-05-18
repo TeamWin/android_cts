@@ -957,12 +957,28 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                     for (CarPropertyConfig<?> carPropertyConfig :
                             mCarPropertyManager.getPropertyList()) {
                         assertWithMessage(
-                                "%s",
-                                VehiclePropertyIds.toString(
-                                        carPropertyConfig.getPropertyId()))
+                                "%s found in CarPropertyManager#getPropertyList() but was not "
+                                        + "expected to be exposed through %s",
+                                VehiclePropertyIds.toString(carPropertyConfig.getPropertyId()),
+                                Arrays.toString(requiredPermissions))
                                 .that(carPropertyConfig.getPropertyId())
                                 .isIn(expectedProperties);
                     }
+                },
+                requiredPermissions);
+    }
+
+    private void verifyNoPropertiesExposedWhenCertainPermissionsGranted(
+            String... requiredPermissions) {
+        runWithShellPermissionIdentity(
+                () -> {
+                    assertWithMessage(
+                            "CarPropertyManager#getPropertyList() excepted to be empty when %s "
+                                    + "is/are granted but got %s",
+                                    Arrays.toString(requiredPermissions),
+                                    mCarPropertyManager.getPropertyList().toString())
+                            .that(mCarPropertyManager.getPropertyList())
+                            .isEmpty();
                 },
                 requiredPermissions);
     }
@@ -6854,9 +6870,11 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                             continue;
                         }
                         assertWithMessage(
-                                "%s",
-                                VehiclePropertyIds.toString(
-                                        carPropertyConfig.getPropertyId()))
+                                "%s found in CarPropertyManager#getPropertyList() but was not "
+                                        + "expected to be exposed by %s and %s",
+                                VehiclePropertyIds.toString(carPropertyConfig.getPropertyId()),
+                                Car.PERMISSION_CONTROL_DISPLAY_UNITS,
+                                Car.PERMISSION_VENDOR_EXTENSION)
                                 .that(carPropertyConfig.getPropertyId())
                                 .isIn(PERMISSION_CONTROL_DISPLAY_UNITS_VENDOR_EXTENSION_PROPERTIES);
                     }
@@ -6933,6 +6951,36 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
         verifyExpectedPropertiesWhenPermissionsGranted(
                 PERMISSION_ACCESS_FINE_LOCATION_PROPERTIES,
                 ACCESS_FINE_LOCATION);
+    }
+
+    @Test
+    public void testPermissionCarPowerGranted() {
+        verifyNoPropertiesExposedWhenCertainPermissionsGranted(
+                Car.PERMISSION_CAR_POWER);
+    }
+
+    @Test
+    public void testPermissionVmsPublisherGranted() {
+        verifyNoPropertiesExposedWhenCertainPermissionsGranted(
+                Car.PERMISSION_VMS_PUBLISHER);
+    }
+
+    @Test
+    public void testPermissionVmsSubscriberGranted() {
+        verifyNoPropertiesExposedWhenCertainPermissionsGranted(
+                Car.PERMISSION_VMS_SUBSCRIBER);
+    }
+
+    @Test
+    public void testPermissionCarDiagnosticReadAllGranted() {
+        verifyNoPropertiesExposedWhenCertainPermissionsGranted(
+                Car.PERMISSION_CAR_DIAGNOSTIC_READ_ALL);
+    }
+
+    @Test
+    public void testPermissionCarDiagnosticClearGranted() {
+        verifyNoPropertiesExposedWhenCertainPermissionsGranted(
+                Car.PERMISSION_CAR_DIAGNOSTIC_CLEAR);
     }
 
     private <T> @Nullable CarPropertyManager.SetPropertyRequest<T> addSetPropertyRequest(
