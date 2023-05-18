@@ -1456,7 +1456,12 @@ public abstract class ActivityManagerTestBase {
 
     /** Checks whether the display dimension is close to square. */
     protected boolean isCloseToSquareDisplay() {
-        final Resources resources = mContext.getResources();
+        return isCloseToSquareDisplay(mContext);
+    }
+
+    /** Checks whether the display dimension is close to square. */
+    public static boolean isCloseToSquareDisplay(Context context) {
+        final Resources resources = context.getResources();
         final float closeToSquareMaxAspectRatio;
         try {
             closeToSquareMaxAspectRatio = resources.getFloat(resources.getIdentifier(
@@ -1466,7 +1471,8 @@ public abstract class ActivityManagerTestBase {
             return false;
         }
         final DisplayMetrics displayMetrics = new DisplayMetrics();
-        mDm.getDisplay(DEFAULT_DISPLAY).getRealMetrics(displayMetrics);
+        context.getSystemService(DisplayManager.class).getDisplay(DEFAULT_DISPLAY)
+                .getRealMetrics(displayMetrics);
         final int w = displayMetrics.widthPixels;
         final int h = displayMetrics.heightPixels;
         final float aspectRatio = Math.max(w, h) / (float) Math.min(w, h);
