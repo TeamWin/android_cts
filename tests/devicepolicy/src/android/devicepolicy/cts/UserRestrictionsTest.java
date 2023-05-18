@@ -52,6 +52,7 @@ import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.BlockingBroadcastReceiver;
 
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -374,6 +375,7 @@ public final class UserRestrictionsTest {
 
     @ApiTest(apis = {"android.app.admin.DevicePolicyManager#addUserRestriction"})
     @MostImportantCoexistenceTest(policy = UserRestrictions.class)
+    @Ignore("test used for local verification only")
     public void addUserRestriction_setByDPCAndPermission_DPCRemoved_stillEnforced() {
         try {
             sDeviceState.testApp(MORE_IMPORTANT).devicePolicyManager().addUserRestriction(
@@ -416,6 +418,7 @@ public final class UserRestrictionsTest {
 
     @ApiTest(apis = {"android.app.admin.DevicePolicyManager#addUserRestriction"})
     @MostImportantCoexistenceTest(policy = UserRestrictions.class)
+    @Ignore("test used for local verification only")
     public void addUserRestriction_setByPermission_appRemoved_notEnforced() {
         try {
             sDeviceState.testApp(LESS_IMPORTANT).devicePolicyManager().addUserRestriction(
