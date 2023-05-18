@@ -70,6 +70,7 @@ import android.permission.PermissionManager;
 import android.permission.cts.PermissionUtils;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.AppModeInstant;
+import android.platform.test.annotations.AsbSecurityTest;
 import android.provider.Settings;
 import android.server.wm.WindowManagerState;
 import android.server.wm.WindowManagerStateHelper;
@@ -91,6 +92,7 @@ import com.android.compatibility.common.util.BatteryUtils;
 import com.android.compatibility.common.util.DeviceConfigStateHelper;
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.SystemUtil;
+import com.android.sts.common.util.StsExtraBusinessLogicTestCase;
 
 import org.junit.After;
 import org.junit.Before;
@@ -128,7 +130,7 @@ import java.util.function.Supplier;
  * - Proper eviction of old data.
  */
 @RunWith(UsageStatsTestRunner.class)
-public class UsageStatsTest {
+public class UsageStatsTest extends StsExtraBusinessLogicTestCase {
     private static final boolean DEBUG = false;
     static final String TAG = "UsageStatsTest";
 
@@ -2108,6 +2110,7 @@ public class UsageStatsTest {
 
     @AppModeFull(reason = "No usage events access in instant apps")
     @Test
+    @AsbSecurityTest(cveBugId = 229633537)
     public void testReportChooserSelection() throws Exception {
         // attempt to report an event with a null package, should fail.
         try {
