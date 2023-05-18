@@ -28,6 +28,7 @@ android_test {
         "junit",
         "permission-test-util-lib",
         "androidx.test.uiautomator_uiautomator",
+        "sts-device-util",
     ],
     libs: [
         "android.test.base",
@@ -43,6 +44,7 @@ android_test {
     test_suites: [
         "cts",
         "general-tests",
+        "sts",
     ],
     data: [
         ":CtsUsageStatsTestApp1",
