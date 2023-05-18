@@ -60,7 +60,7 @@ public class NfcFCardEmulationTest {
 
     @After
     public void tearDown() throws Exception {
-        assumeTrue(supportsHardware());
+        if (!supportsHardware()) return;
         NfcFCardEmulation instance = NfcFCardEmulation.getInstance(mAdapter);
         FieldSetter.setField(instance,
                 instance.getClass().getDeclaredField("sService"), mOldService);

@@ -64,7 +64,7 @@ public class CardEmulationTest {
 
     @After
     public void tearDown() throws Exception {
-        assumeTrue(supportsHardware());
+        if (!supportsHardware()) return;
         CardEmulation instance = CardEmulation.getInstance(mAdapter);
         FieldSetter.setField(instance,
                 instance.getClass().getDeclaredField("sService"), mOldService);
