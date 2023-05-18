@@ -10,7 +10,6 @@ import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.DeadObjectException;
-import android.telecom.TelecomManager;
 import android.telecom.cts.api29incallservice.CtsApi29InCallService;
 import android.telecom.cts.api29incallservice.ICtsApi29InCallServiceControl;
 import android.util.Pair;
@@ -98,6 +97,9 @@ public class NonUiInCallServiceTest extends BaseTelecomTestWithMockServices {
         if (!mShouldTestTelecom) {
             return;
         }
+        final Uri testAddress = Uri.fromParts("tel", "6505551213", null);
+        SelfManagedConnection connection = null;
+
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
                 .adoptShellPermissionIdentity(
                         "android.permission.CONTROL_INCALL_EXPERIENCE",
@@ -124,10 +126,10 @@ public class NonUiInCallServiceTest extends BaseTelecomTestWithMockServices {
                     PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP);
             ICtsApi29InCallServiceControl controlInterface = setUpControl();
 
-            Bundle extras = new Bundle();
-            extras.putParcelable(TelecomManager.EXTRA_PHONE_ACCOUNT_HANDLE,
-                    TestUtils.TEST_SELF_MANAGED_HANDLE_2);
-            mTelecomManager.placeCall(Uri.fromParts("tel", "6505551213", null), extras);
+            TestUtils.placeOutgoingCall(getInstrumentation(), mTelecomManager,
+                    TestUtils.TEST_SELF_MANAGED_HANDLE_2, testAddress);
+            connection = TestUtils.waitForAndGetConnection(testAddress);
+
             if (!CtsSelfManagedConnectionService.waitForBinding()) {
                 fail("Could not bind to Self-Managed ConnectionService");
             }
@@ -150,7 +152,13 @@ public class NonUiInCallServiceTest extends BaseTelecomTestWithMockServices {
                 //expected
             }
             tearDownControl();
+            if (connection != null) {
+                connection.disconnectAndDestroy();
+            }
         } finally {
+            if (connection != null) {
+                connection.disconnectAndDestroy();
+            }
             // Re-enable Bluetooth to make sure the ICS it has is not running.
             bluetoothManager.getAdapter().enable();
 
