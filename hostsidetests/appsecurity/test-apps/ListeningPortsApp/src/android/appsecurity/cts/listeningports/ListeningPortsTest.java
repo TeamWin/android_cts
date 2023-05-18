@@ -95,6 +95,22 @@ public class ListeningPortsTest extends AndroidTestCase {
         EXCEPTION_PATTERNS.add("0.0.0.0:68");
     }
 
+    private static final List<String> OEM_EXCEPTION_PATTERNS = new ArrayList<String>();
+
+    static {
+        // PTP vendor OEM service
+        OEM_EXCEPTION_PATTERNS.add("0.0.0.0:319");
+        OEM_EXCEPTION_PATTERNS.add("0.0.0.0:320");
+    }
+
+    private static boolean isOemUid(int uid) {
+        return (uid >= 2900 && uid <= 2999) || (uid >= 5000 && uid <= 5999);
+    }
+
+    private boolean isTv() {
+        return getContext().getPackageManager().hasSystemFeature(PackageManager.FEATURE_LEANBACK);
+    }
+
     /**
      * Remotely accessible ports (loopback==false) are often used by
      * attackers to gain unauthorized access to computers systems without
@@ -113,6 +129,8 @@ public class ListeningPortsTest extends AndroidTestCase {
         final boolean isTcp = Boolean.valueOf(testArgs.getString(IS_TCP_PARAM));
         final boolean loopback = Boolean.valueOf(testArgs.getString(LOOPBACK_PARAM));
 
+        final boolean tv = isTv();
+
         String errors = "";
         List<ParsedProcEntry> entries = ParsedProcEntry.parse(procFileContents);
         for (ParsedProcEntry entry : entries) {
@@ -122,6 +140,7 @@ public class ListeningPortsTest extends AndroidTestCase {
 
             if (isPortListening(entry.state, isTcp)
                     && !(isException(addrPort) || isException(addrUid) || isException(addrPortUid))
+                    && !(tv && isOemUid(entry.uid) && isOemException(addrPort))
                     && (!entry.localAddress.isLoopbackAddress() ^ loopback)) {
                 if (isTcp && !isTcpConnectable(entry.localAddress, entry.port)) {
                     continue;
@@ -188,6 +207,10 @@ public class ListeningPortsTest extends AndroidTestCase {
 
     private static boolean isException(String localAddress) {
         return isPatternMatch(EXCEPTION_PATTERNS, localAddress);
+    }
+
+    private static boolean isOemException(String localAddress) {
+        return isPatternMatch(OEM_EXCEPTION_PATTERNS, localAddress);
     }
 
     private static boolean isPatternMatch(List<String> patterns, String input) {
