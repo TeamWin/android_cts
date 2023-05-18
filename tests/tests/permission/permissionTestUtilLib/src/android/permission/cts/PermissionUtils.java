@@ -263,6 +263,26 @@ public class PermissionUtils {
     }
 
     /**
+     * Get all the flags of a permission.
+     *
+     * @param packageName Package the permission belongs to
+     * @param permission Name of the permission
+     *
+     * @return Permission flags
+     */
+    public static int getAllPermissionFlags(@NonNull String packageName,
+            @NonNull String permission) {
+        try {
+            return callWithShellPermissionIdentity(
+                    () -> sContext.getPackageManager().getPermissionFlags(permission, packageName,
+                            UserHandle.getUserHandleForUid(Process.myUid())),
+                    GRANT_RUNTIME_PERMISSIONS);
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    /**
      * Get the flags of a permission.
      *
      * @param packageName Package the permission belongs to
@@ -271,14 +291,7 @@ public class PermissionUtils {
      * @return Permission flags
      */
     public static int getPermissionFlags(@NonNull String packageName, @NonNull String permission) {
-        try {
-            return callWithShellPermissionIdentity(
-                    () -> sContext.getPackageManager().getPermissionFlags(permission, packageName,
-                            UserHandle.getUserHandleForUid(Process.myUid())) & TESTED_FLAGS,
-                    GRANT_RUNTIME_PERMISSIONS);
-        } catch (Exception e) {
-            throw new IllegalStateException(e);
-        }
+        return getAllPermissionFlags(packageName, permission) & TESTED_FLAGS;
     }
 
     /**
