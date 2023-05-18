@@ -30,6 +30,7 @@ import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 
 import android.graphics.Paint.FontMetricsInt;
+import android.graphics.text.LineBreakConfig;
 import android.text.DynamicLayout;
 import android.text.Layout;
 import android.text.SpannableStringBuilder;
@@ -454,6 +455,18 @@ public class DynamicLayoutTest {
         final DynamicLayout layout = builder.build();
         assertEquals(1.0f, layout.getSpacingAdd(), 0.0f);
         assertEquals(2.0f, layout.getSpacingMultiplier(), 0.0f);
+    }
+
+    @Test
+    public void testBuilder_setLineBreakConfig() {
+        final DynamicLayout.Builder builder = DynamicLayout.Builder.obtain(MULTLINE_CHAR_SEQUENCE,
+                mDefaultPaint, DEFAULT_OUTER_WIDTH);
+        LineBreakConfig.Builder lbcBuilder = new LineBreakConfig.Builder();
+        LineBreakConfig lbc = lbcBuilder.setLineBreakStyle(LineBreakConfig.LINE_BREAK_STYLE_STRICT)
+                .setLineBreakWordStyle(LineBreakConfig.LINE_BREAK_WORD_STYLE_PHRASE).build();
+        builder.setLineBreakConfig(lbc);
+        final DynamicLayout layout = builder.build();
+        assertEquals(lbc, layout.getLineBreakConfig());
     }
 
     @Test
