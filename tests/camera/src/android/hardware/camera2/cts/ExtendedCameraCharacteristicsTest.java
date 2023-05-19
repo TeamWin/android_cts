@@ -3836,7 +3836,7 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
             assertTrue("android.lens.poseTranslation and android.lens.poseRotation must exist " +
                     "together or not at all",
                     (translation != null) == (rotation != null));
-            if (translation == null && rotation != null) {
+            if (translation == null && rotation == null) {
                 // Cameras without android.lens.poseTranslation and anroid.lens.poseRotation are
                 // exempt from this test case.
                 continue;
