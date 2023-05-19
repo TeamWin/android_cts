@@ -1914,7 +1914,8 @@ public class PinnedStackTests extends ActivityManagerTestBase {
     private void waitForEnterPip(ComponentName activityName) {
         mWmState.waitForWithAmState(wmState -> {
             Task task = wmState.getTaskByActivity(activityName);
-            return task != null && task.getWindowingMode() == WINDOWING_MODE_PINNED;
+            return task != null
+                    && task.getActivity(activityName).getWindowingMode() == WINDOWING_MODE_PINNED;
         }, "checking task windowing mode");
     }
 
