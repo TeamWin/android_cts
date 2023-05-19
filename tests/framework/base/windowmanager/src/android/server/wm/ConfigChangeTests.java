@@ -234,7 +234,13 @@ public class ConfigChangeTests extends ActivityManagerTestBase {
             separateTestJournal();
             rotationSession.set(rotation);
             mWmState.computeState(activityName);
-            assertRelaunchOrConfigChanged(activityName, numRelaunch, numConfigChange);
+            // The configuration could be changed more than expected due to TaskBar recreation.
+            new ActivityLifecycleCounts(activityName).assertCountWithRetry(
+                    "relaunch or config changed",
+                    countSpec(ActivityCallback.ON_DESTROY, CountSpec.EQUALS, numRelaunch),
+                    countSpec(ActivityCallback.ON_CREATE, CountSpec.EQUALS, numRelaunch),
+                    countSpec(ActivityCallback.ON_CONFIGURATION_CHANGED,
+                            CountSpec.GREATER_THAN_OR_EQUALS, numConfigChange));
         }
     }
 
