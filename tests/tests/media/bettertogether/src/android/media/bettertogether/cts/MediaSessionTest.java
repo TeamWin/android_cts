@@ -26,6 +26,7 @@ import static android.media.bettertogether.cts.MediaSessionTestService.STEP_SET_
 import static android.media.bettertogether.cts.MediaSessionTestService.TEST_SERIES_OF_SET_QUEUE;
 import static android.media.bettertogether.cts.MediaSessionTestService.TEST_SET_QUEUE;
 import static android.media.cts.Utils.compareRemoteUserInfo;
+import static android.os.UserManager.USER_TYPE_PROFILE_CLONE;
 
 import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
 
@@ -133,13 +134,28 @@ public class MediaSessionTest {
 
     private void createCloneProfile() {
         Assume.assumeTrue(SUPPORTS_MULTIPLE_USERS);
+
+        InstrumentationRegistry
+            .getInstrumentation().getUiAutomation().adoptShellPermissionIdentity();
+        UserManager userManager = mContext.getSystemService(UserManager.class);
+        boolean isCloneProfileEnabled = userManager.isUserTypeEnabled(USER_TYPE_PROFILE_CLONE);
+        InstrumentationRegistry
+            .getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
+        Assume.assumeTrue(isCloneProfileEnabled);
+
         final Context context = InstrumentationRegistry.getInstrumentation().getContext();
         final String output = runShellCommand(
                 "pm create-user --user-type android.os.usertype.profile.CLONE --profileOf "
-                        + context.getUserId() + " user2");
+                + context.getUserId() + " user2");
 
-        mCloneProfileId = Optional.of(
-                Integer.parseInt(output.substring(output.lastIndexOf(" ")).trim()));
+        // On a successful run the output will be like
+        // Success: created user id 11
+        // Hence we use the last index of " " to fetch the cloned profile id.
+        int userIdIndex = output.lastIndexOf(" ");
+        if (userIdIndex != -1) {
+            mCloneProfileId = Optional.of(
+                Integer.parseInt(output.substring(userIdIndex).trim()));
+        }
     }
 
     private void removeCloneProfile() {
