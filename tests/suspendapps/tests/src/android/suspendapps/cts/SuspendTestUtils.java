@@ -27,7 +27,6 @@ import static android.suspendapps.cts.Constants.TEST_PACKAGE_ARRAY;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import android.Manifest;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -43,7 +42,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.test.InstrumentationRegistry;
 
-import com.android.compatibility.common.util.ShellIdentityUtils;
 import com.android.compatibility.common.util.SystemUtil;
 import com.android.internal.util.ArrayUtils;
 import com.android.suspendapps.suspendtestapp.SuspendTestActivity;
@@ -171,9 +169,7 @@ public class SuspendTestUtils {
         if (extras != null) {
             testActivity.putExtras(extras);
         }
-        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(getContext(),
-                it -> it.startActivity(testActivity),
-                Manifest.permission.START_ACTIVITIES_FROM_BACKGROUND);
+        getContext().startActivity(testActivity);
     }
 
     static PersistableBundle createExtras(String keyPrefix, long lval, String sval,
