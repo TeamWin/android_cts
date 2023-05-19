@@ -440,8 +440,9 @@ public class RestrictedPermissionsTest {
             }
 
             final Intent intent = new Intent(action);
+            intent.setPackage("android.permissionpolicy.cts");
             final IntentSender intentSender = PendingIntent.getBroadcast(getContext(),
-                    1, intent, PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_IMMUTABLE)
+                    1, intent, PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_MUTABLE)
                     .getIntentSender();
 
             // Commit as shell to avoid confirm UI
