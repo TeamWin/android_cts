@@ -27,6 +27,9 @@ import android.annotation.NonNull;
 import android.annotation.Nullable;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.database.ContentObserver;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.OutcomeReceiver;
 import android.provider.Settings;
 import android.telephony.Rlog;
@@ -40,6 +43,7 @@ import android.telephony.satellite.SatelliteManager;
 import android.telephony.satellite.SatelliteProvisionStateCallback;
 import android.telephony.satellite.SatelliteStateCallback;
 import android.telephony.satellite.SatelliteTransmissionUpdateCallback;
+import android.text.TextUtils;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
@@ -60,6 +64,7 @@ public class SatelliteManagerTestBase {
 
     protected static final String TOKEN = "TEST_TOKEN";
     protected static final long TIMEOUT = 2000;
+    protected static final long EXTERNAL_DEPENDENT_TIMEOUT = 10000;
     protected static SatelliteManager sSatelliteManager;
     protected static TelephonyManager sTelephonyManager = null;
 
@@ -382,6 +387,7 @@ public class SatelliteManagerTestBase {
         private List<Integer> mModemStates = new ArrayList<>();
         private final Object mModemStatesLock = new Object();
         private final Semaphore mSemaphore = new Semaphore(0);
+        private final Semaphore mModemOffSemaphore = new Semaphore(0);
 
         @Override
         public void onSatelliteModemStateChanged(int state) {
@@ -394,6 +400,15 @@ public class SatelliteManagerTestBase {
                 mSemaphore.release();
             } catch (Exception ex) {
                 Log.e(TAG, "onSatelliteModemStateChanged: Got exception, ex=" + ex);
+            }
+
+            if (state == SatelliteManager.SATELLITE_MODEM_STATE_OFF) {
+                try {
+                    mModemOffSemaphore.release();
+                } catch (Exception ex) {
+                    Log.e(TAG, "onSatelliteModemStateChanged: Got exception in "
+                            + "releasing mModemOffSemaphore, ex=" + ex);
+                }
             }
         }
 
@@ -412,11 +427,25 @@ public class SatelliteManagerTestBase {
             return true;
         }
 
+        public boolean waitUntilModemOff() {
+            try {
+                if (!mModemOffSemaphore.tryAcquire(TIMEOUT, TimeUnit.MILLISECONDS)) {
+                    Log.e(TAG, "Timeout to receive satellite modem off event");
+                    return false;
+                }
+            } catch (Exception ex) {
+                Log.e(TAG, "Waiting for satellite modem off event: Got exception=" + ex);
+                return false;
+            }
+            return true;
+        }
+
         public void clearModemStates() {
             synchronized (mModemStatesLock) {
                 Log.d(TAG, "onSatelliteModemStateChanged: clearModemStates");
                 mModemStates.clear();
                 mSemaphore.drainPermits();
+                mModemOffSemaphore.drainPermits();
             }
         }
 
@@ -512,12 +541,101 @@ public class SatelliteManagerTestBase {
                     try {
                         logd("mRadioPowerState: " + mRadioPowerState
                                 + " desiredState:" + desiredState);
-                        mLock.wait(10000);
+                        mLock.wait(EXTERNAL_DEPENDENT_TIMEOUT);
                     } catch (Exception e) {
                         fail(e.getMessage());
                     }
                 }
             }
+        }
+    }
+
+    protected static class SatelliteModeRadiosUpdater extends ContentObserver implements
+            AutoCloseable {
+        private final Context mContext;
+        private final Semaphore mSemaphore = new Semaphore(0);
+        private String mExpectedSatelliteModeRadios = "";
+        private final Object mLock = new Object();
+
+        public SatelliteModeRadiosUpdater(Context context) {
+            super(new Handler(Looper.getMainLooper()));
+            mContext = context;
+            mContext.getContentResolver().registerContentObserver(
+                    Settings.Global.getUriFor(Settings.Global.SATELLITE_MODE_RADIOS), false, this);
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .adoptShellPermissionIdentity(Manifest.permission.SATELLITE_COMMUNICATION,
+                            Manifest.permission.WRITE_SECURE_SETTINGS,
+                            Manifest.permission.NETWORK_SETTINGS,
+                            Manifest.permission.ACCESS_FINE_LOCATION,
+                            Manifest.permission.READ_PRIVILEGED_PHONE_STATE,
+                            Manifest.permission.UWB_PRIVILEGED);
+        }
+
+        @Override
+        public void onChange(boolean selfChange) {
+            String newSatelliteModeRadios = Settings.Global.getString(
+                    mContext.getContentResolver(), Settings.Global.SATELLITE_MODE_RADIOS);
+            synchronized (mLock) {
+                if (TextUtils.equals(mExpectedSatelliteModeRadios, newSatelliteModeRadios)) {
+                    logd("SatelliteModeRadiosUpdater: onChange, newSatelliteModeRadios="
+                            + newSatelliteModeRadios);
+                    try {
+                        mSemaphore.release();
+                    } catch (Exception ex) {
+                        loge("SatelliteModeRadiosUpdater: onChange, ex=" + ex);
+                    }
+                }
+            }
+        }
+
+        @Override
+        public void close() throws Exception {
+            mContext.getContentResolver().unregisterContentObserver(this);
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .dropShellPermissionIdentity();
+        }
+
+        public boolean setSatelliteModeRadios(String expectedSatelliteModeRadios) {
+            logd("setSatelliteModeRadios: expectedSatelliteModeRadios="
+                    + expectedSatelliteModeRadios);
+            String originalSatelliteModeRadios =  Settings.Global.getString(
+                    mContext.getContentResolver(), Settings.Global.SATELLITE_MODE_RADIOS);
+            if (TextUtils.equals(expectedSatelliteModeRadios, originalSatelliteModeRadios)) {
+                logd("setSatelliteModeRadios: satellite radios mode is already as expected");
+                return true;
+            }
+
+            setExpectedSatelliteModeRadios(expectedSatelliteModeRadios);
+            clearSemaphorePermits();
+            Settings.Global.putString(mContext.getContentResolver(),
+                    Settings.Global.SATELLITE_MODE_RADIOS, expectedSatelliteModeRadios);
+            return waitForModeChanged();
+        }
+
+        private void clearSemaphorePermits() {
+            mSemaphore.drainPermits();
+        }
+
+        private boolean waitForModeChanged() {
+            logd("SatelliteModeRadiosUpdater: waitForModeChanged start");
+            try {
+                if (!mSemaphore.tryAcquire(EXTERNAL_DEPENDENT_TIMEOUT, TimeUnit.MILLISECONDS)) {
+                    loge("SatelliteModeRadiosUpdater: Timeout to wait for mode changed");
+                    return false;
+                }
+            } catch (InterruptedException e) {
+                loge("SatelliteModeRadiosUpdater: waitForModeChanged, e=" + e);
+                return false;
+            }
+            return true;
+        }
+
+        private void setExpectedSatelliteModeRadios(String expectedSatelliteModeRadios) {
+            synchronized (mLock) {
+                mExpectedSatelliteModeRadios = expectedSatelliteModeRadios;
+            }
+            logd("SatelliteModeRadiosUpdater: mExpectedSatelliteModeRadios="
+                    + mExpectedSatelliteModeRadios);
         }
     }
 
@@ -689,6 +807,21 @@ public class SatelliteManagerTestBase {
         Integer errorCode;
         try {
             errorCode = error.poll(TIMEOUT, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException ex) {
+            fail("requestSatelliteEnabled failed with ex=" + ex);
+            return;
+        }
+        assertNotNull(errorCode);
+        assertEquals(SatelliteManager.SATELLITE_ERROR_NONE, (long) errorCode);
+    }
+
+    protected static void requestSatelliteEnabled(boolean enabled, long timeoutMillis) {
+        LinkedBlockingQueue<Integer> error = new LinkedBlockingQueue<>(1);
+        sSatelliteManager.requestSatelliteEnabled(
+                enabled, false, getContext().getMainExecutor(), error::offer);
+        Integer errorCode;
+        try {
+            errorCode = error.poll(timeoutMillis, TimeUnit.MILLISECONDS);
         } catch (InterruptedException ex) {
             fail("requestSatelliteEnabled failed with ex=" + ex);
             return;
