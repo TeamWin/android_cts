@@ -35,7 +35,6 @@ import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
 import android.net.wifi.WifiManager;
 import android.nfc.NfcAdapter;
-import android.nfc.NfcManager;
 import android.os.Build;
 import android.os.CancellationSignal;
 import android.os.OutcomeReceiver;
@@ -1390,6 +1389,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
 
         try {
             identifyRadiosSensitiveToSatelliteMode();
+            mTestSatelliteModeRadios = "";
             Settings.Global.putString(getContext().getContentResolver(),
                     Settings.Global.SATELLITE_MODE_RADIOS, mTestSatelliteModeRadios);
             logd("test satelliteModeRadios: " + mTestSatelliteModeRadios);
@@ -1516,6 +1516,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
 
         try {
             identifyRadiosSensitiveToSatelliteMode();
+            mTestSatelliteModeRadios = "";
             Settings.Global.putString(getContext().getContentResolver(),
                             Settings.Global.SATELLITE_MODE_RADIOS, mTestSatelliteModeRadios);
             logd("test satelliteModeRadios: " + mTestSatelliteModeRadios);
