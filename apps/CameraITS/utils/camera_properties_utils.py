@@ -635,7 +635,7 @@ def tonemap_mode(props, mode):
     Return:
         Boolean.
     """
-    return 'android.edge.availableToneMapModes' in props and mode in props[
+    return 'android.tonemap.availableToneMapModes' in props and mode in props[
         'android.tonemap.availableToneMapModes']
 
 
