@@ -93,7 +93,6 @@ public class ASurfaceControlBackPressureTest {
     public void setup() {
         mActivity = mActivityRule.getActivity();
         mActivity.setLogicalDisplaySize(getLogicalDisplaySize());
-        mActivity.setMinimumCaptureDurationMs(1000);
         assumeFalse(mActivity.isOnWatch());
     }
 
@@ -243,11 +242,10 @@ public class ASurfaceControlBackPressureTest {
             }
         };
 
-        mActivity.verifyTest(new SurfaceControlTestCase(callback, null /* animation factory */,
-                        PixelChecker,
+        mActivity.verifyTest(new SurfaceControlTestCase(callback, PixelChecker,
                         DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT,
                         DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT,
-                        true /* checkSurfaceViewBoundsOnly */),
+                        true /* checkSurfaceViewBoundsOnly */, false /* singleFrameOnly */),
                 mName);
     }
 
@@ -276,11 +274,10 @@ public class ASurfaceControlBackPressureTest {
         };
 
         CapturedActivity.TestResult result = mActivity.runTest(new SurfaceControlTestCase(callback,
-                null /* animation factory */,
                 PixelChecker,
                 DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT,
                 DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT,
-                true /* checkSurfaceViewBoundsOnly */));
+                true /* checkSurfaceViewBoundsOnly */, false /* singleFrameOnly */));
 
         assertTrue(result.passFrames > 0);
 
