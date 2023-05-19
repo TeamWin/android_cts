@@ -27,6 +27,7 @@ import android.hardware.camera2.CameraManager
 import android.os.Build
 import android.os.Process
 import android.os.SystemClock
+import android.os.SystemProperties
 import android.permission.PermissionManager
 import android.platform.test.annotations.AsbSecurityTest
 import android.provider.DeviceConfig
@@ -85,6 +86,8 @@ private const val TIMEOUT_MILLIS: Long = 20000
 private const val TV_MIC_INDICATOR_WINDOW_TITLE = "MicrophoneCaptureIndicator"
 private const val MIC_LABEL_NAME = "microphone_toggle_label_qs"
 private const val CAMERA_LABEL_NAME = "camera_toggle_label_qs"
+private val HOTWORD_DETECTION_SERVICE_REQUIRED =
+        SystemProperties.getBoolean("ro.hotword.detection_service_required", false)
 
 @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S, codeName = "S")
 class CameraMicIndicatorsPermissionTest : StsExtraBusinessLogicTestCase {
@@ -242,6 +245,8 @@ class CameraMicIndicatorsPermissionTest : StsExtraBusinessLogicTestCase {
     @Test
     @CddTest(requirement = "9.8.2/H-4-1,T-4-1,A-1-1")
     fun testHotwordIndicatorBehavior() {
+        // TODO(b/283429128): remove assumption once leaky indicators issue fixed
+        assumeTrue(HOTWORD_DETECTION_SERVICE_REQUIRED)
         changeSafetyCenterFlag(false.toString())
         testCameraAndMicIndicator(useMic = false, useCamera = false, useHotword = true)
     }
@@ -287,6 +292,7 @@ class CameraMicIndicatorsPermissionTest : StsExtraBusinessLogicTestCase {
     fun testSafetyCenterHotwordIndicatorBehavior() {
         assumeFalse(isTv)
         assumeFalse(isCar)
+        assumeTrue(HOTWORD_DETECTION_SERVICE_REQUIRED)
         changeSafetyCenterFlag(true.toString())
         assumeSafetyCenterEnabled()
         testCameraAndMicIndicator(
@@ -378,7 +384,7 @@ class CameraMicIndicatorsPermissionTest : StsExtraBusinessLogicTestCase {
         } else if (isCar) {
             assertCarIndicatorsShown(useMic, useCamera, useHotword, chainUsage)
         } else {
-            val micInUse = if (SdkLevel.isAtLeastU()) {
+            val micInUse = if (SdkLevel.isAtLeastU() && HOTWORD_DETECTION_SERVICE_REQUIRED) {
                 useMic || useHotword
             } else {
                 useMic
