@@ -17,7 +17,11 @@ package android.packageinstaller.install.cts
 
 import android.Manifest
 import android.app.Activity.RESULT_CANCELED
+import android.app.PendingIntent
+import android.app.PendingIntent.FLAG_IMMUTABLE
+import android.app.PendingIntent.FLAG_UPDATE_CURRENT
 import android.app.UiAutomation
+import android.content.Intent
 import android.content.pm.ApplicationInfo.CATEGORY_MAPS
 import android.content.pm.ApplicationInfo.CATEGORY_UNDEFINED
 import android.content.pm.PackageInstaller
@@ -49,6 +53,21 @@ class SessionTest : PackageInstallerTestBase() {
 
     private val uiAutomation: UiAutomation =
             InstrumentationRegistry.getInstrumentation().getUiAutomation()
+
+    /**
+     * Check the session should not pass the status receiver from an immutable PendingIntent
+     */
+    @Test(expected = IllegalArgumentException::class)
+    fun sessionWithImmutablePendingIntent() {
+        val sessionParam = PackageInstaller.SessionParams(MODE_FULL_INSTALL)
+        val sessionId = pi.createSession(sessionParam)
+        try {
+            val session = pi.openSession(sessionId)
+            commitSessionWithImmutablePendingIntent(session)
+        } finally {
+            pi.abandonSession(sessionId)
+        }
+    }
 
     /**
      * Check that we can install an app via a package-installer session
@@ -257,5 +276,12 @@ class SessionTest : PackageInstallerTestBase() {
         } finally {
             uiAutomation.dropShellPermissionIdentity()
         }
+    }
+
+    private fun commitSessionWithImmutablePendingIntent(session: PackageInstaller.Session) {
+        var intent = Intent(INSTALL_ACTION_CB).setPackage(context.getPackageName())
+        val pendingIntent = PendingIntent.getBroadcast(
+                        context, 0 /* requestCode */, intent, FLAG_UPDATE_CURRENT or FLAG_IMMUTABLE)
+        session.commit(pendingIntent.intentSender)
     }
 }
