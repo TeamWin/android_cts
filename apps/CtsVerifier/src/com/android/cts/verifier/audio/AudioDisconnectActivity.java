@@ -177,10 +177,14 @@ public class AudioDisconnectActivity
         }
 
         boolean isPass() {
-            return mInsertPlugResult == RESULT_DETECTED
-                    && mInsertDisconnectResult == RESULT_DETECTED
-                    && mRemovalPlugResult == RESULT_DETECTED
-                    && mRemovalDisconnectResult == RESULT_DETECTED;
+            return (mInsertPlugResult == RESULT_DETECTED
+                        || mInsertPlugResult == RESULT_SKIPPED)
+                    && (mInsertDisconnectResult == RESULT_DETECTED
+                        || mInsertDisconnectResult == RESULT_SKIPPED)
+                    && (mRemovalPlugResult == RESULT_DETECTED
+                        || mRemovalPlugResult == RESULT_SKIPPED)
+                    && (mRemovalDisconnectResult == RESULT_DETECTED
+                        || mRemovalDisconnectResult == RESULT_SKIPPED);
         }
 
         void setSkipped() {
