@@ -3561,9 +3561,9 @@ public final class DeviceState extends HarrierRule {
             return;
         }
 
-        // There are no users to switch to so we'll create one
-        ensureHasUser(SECONDARY_USER_TYPE_NAME,
-                /* installInstrumentedApp= */ OptionalBoolean.ANY,
+        // There are no users to switch to so we'll create one.
+        // In HSUM, an additional user needs to be created to switch from the existing user.
+        ensureHasAdditionalUser(/* installInstrumentedApp= */ OptionalBoolean.ANY,
                 /* switchedToUser= */ OptionalBoolean.TRUE);
     }
 
