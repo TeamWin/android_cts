@@ -80,6 +80,8 @@ public class ActivityManagerMemoryClassTest
             expectedMemorySizeForWatch.put(DisplayMetrics.DENSITY_560, 112);
             expectedMemorySizeForWatch.put(DisplayMetrics.DENSITY_600, 138);
             expectedMemorySizeForWatch.put(DisplayMetrics.DENSITY_XXXHIGH, 154);
+            // Backport of DENSITY_520 from Android 14 to android13-tests-dev
+            expectedMemorySizeForWatch.put(520, 112);
         }
 
         static {
@@ -105,6 +107,8 @@ public class ActivityManagerMemoryClassTest
             expectedMemorySizeForSmallNormalScreen.put(DisplayMetrics.DENSITY_560, 192);
             expectedMemorySizeForSmallNormalScreen.put(DisplayMetrics.DENSITY_600, 228);
             expectedMemorySizeForSmallNormalScreen.put(DisplayMetrics.DENSITY_XXXHIGH, 256);
+            // Backport of DENSITY_520 from Android 14 to android13-tests-dev
+            expectedMemorySizeForSmallNormalScreen.put(520, 192);
         }
 
         static {
@@ -130,6 +134,8 @@ public class ActivityManagerMemoryClassTest
             expectedMemorySizeForLargeScreen.put(DisplayMetrics.DENSITY_560, 384);
             expectedMemorySizeForLargeScreen.put(DisplayMetrics.DENSITY_600, 448);
             expectedMemorySizeForLargeScreen.put(DisplayMetrics.DENSITY_XXXHIGH, 512);
+            // Backport of DENSITY_520 from Android 14 to android13-tests-dev
+            expectedMemorySizeForSmallNormalScreen.put(520, 192);
         }
 
         static {
@@ -155,6 +161,8 @@ public class ActivityManagerMemoryClassTest
             expectedMemorySizeForXLargeScreen.put(DisplayMetrics.DENSITY_560, 576);
             expectedMemorySizeForXLargeScreen.put(DisplayMetrics.DENSITY_600, 672);
             expectedMemorySizeForXLargeScreen.put(DisplayMetrics.DENSITY_XXXHIGH, 768);
+            // Backport of DENSITY_520 from Android 14 to android13-tests-dev
+            expectedMemorySizeForXLargeScreen.put(520, 576);
         }
 
         public static Integer getExpectedMemorySize(
