@@ -26,6 +26,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
@@ -75,7 +76,7 @@ import java.util.concurrent.locks.ReentrantLock;
 public class BluetoothLeBroadcastTest {
     private static final String TAG = BluetoothLeBroadcastTest.class.getSimpleName();
 
-    private static final int BROADCAST_STARTED_TIMEOUT_MS = 500;
+    private static final int BROADCAST_CALLBACK_TIMEOUT_MS = 500;
     private static final int PROXY_CONNECTION_TIMEOUT_MS = 500;  // ms timeout for Proxy Connect
 
     private static final String TEST_MAC_ADDRESS = "00:11:22:33:44:55";
@@ -482,11 +483,15 @@ public class BluetoothLeBroadcastTest {
         mBluetoothLeBroadcast.registerCallback(mExecutor, mCallback);
 
         mBluetoothLeBroadcast.startBroadcast(contentMetadataBuilder.build(), broadcastCode);
-        verify(mCallback, timeout(BROADCAST_STARTED_TIMEOUT_MS))
+        verify(mCallback, timeout(BROADCAST_CALLBACK_TIMEOUT_MS))
                 .onBroadcastStarted(eq(BluetoothStatusCodes.REASON_LOCAL_APP_REQUEST),
                         mBroadcastId.capture());
 
         mBluetoothLeBroadcast.stopBroadcast(mBroadcastId.getValue());
+        verify(mCallback, timeout(BROADCAST_CALLBACK_TIMEOUT_MS))
+                .onBroadcastStopped(eq(BluetoothStatusCodes.REASON_LOCAL_APP_REQUEST),
+                        anyInt());
+
         mBluetoothLeBroadcast.unregisterCallback(mCallback);
     }
 
@@ -534,10 +539,13 @@ public class BluetoothLeBroadcastTest {
         mBluetoothLeBroadcast.registerCallback(mExecutor, mCallback);
 
         mBluetoothLeBroadcast.startBroadcast(broadcastSettingsBuilder.build());
-        verify(mCallback, timeout(BROADCAST_STARTED_TIMEOUT_MS))
+        verify(mCallback, timeout(BROADCAST_CALLBACK_TIMEOUT_MS))
                 .onBroadcastStarted(eq(BluetoothStatusCodes.REASON_LOCAL_APP_REQUEST),
                         mBroadcastId.capture());
         mBluetoothLeBroadcast.stopBroadcast(mBroadcastId.getValue());
+        verify(mCallback, timeout(BROADCAST_CALLBACK_TIMEOUT_MS))
+                .onBroadcastStopped(eq(BluetoothStatusCodes.REASON_LOCAL_APP_REQUEST),
+                        anyInt());
         mBluetoothLeBroadcast.unregisterCallback(mCallback);
     }
 
