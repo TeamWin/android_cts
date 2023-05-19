@@ -246,6 +246,9 @@ TEST_P(AAudioInputStreamCallbackTest, testRecording) {
     if (framesPerDataCallback != AAUDIO_UNSPECIFIED) {
         ASSERT_EQ(framesPerDataCallback, streamFramesPerDataCallback);
     }
+    const int32_t framesPerBurst = AAudioStream_getFramesPerBurst(stream());
+    const int32_t callbackCountsPerBurst = streamFramesPerDataCallback == AAUDIO_UNSPECIFIED ? 1
+            : (framesPerBurst + streamFramesPerDataCallback - 1) / streamFramesPerDataCallback;
 
     // Try both methods of stopping a stream.
     const int kNumMethods = 2;
@@ -277,7 +280,13 @@ TEST_P(AAudioInputStreamCallbackTest, testRecording) {
         int32_t oldCallbackCount = mCbData->callbackCount;
         EXPECT_GE(oldCallbackCount, kExpectedCallbackCount);
         usleep(kExtremelyHighCallbackPeriodMillis * MICROS_PER_MILLISECOND);
-        EXPECT_EQ(oldCallbackCount, mCbData->callbackCount); // expect not advancing
+        if ((AAudioExtensions::getInstance().isMMapUsed(mHelper->stream()))) {
+            EXPECT_EQ(oldCallbackCount, mCbData->callbackCount); // expect not advancing
+        } else {
+            // Allow requesting at most one burst size data from callback after stopping
+            EXPECT_GE(mCbData->callbackCount, oldCallbackCount);
+            EXPECT_LE(mCbData->callbackCount, oldCallbackCount + callbackCountsPerBurst);
+        }
 
         if (streamFramesPerDataCallback != AAUDIO_UNSPECIFIED) {
             ASSERT_EQ(streamFramesPerDataCallback, mCbData->actualFramesPerCallback);
@@ -395,6 +404,9 @@ TEST_P(AAudioOutputStreamCallbackTest, testPlayback) {
     if (framesPerDataCallback != AAUDIO_UNSPECIFIED) {
         ASSERT_EQ(framesPerDataCallback, streamFramesPerDataCallback);
     }
+    const int32_t framesPerBurst = AAudioStream_getFramesPerBurst(stream());
+    const int32_t callbackCountsPerBurst = streamFramesPerDataCallback == AAUDIO_UNSPECIFIED ? 1
+                : (framesPerBurst + streamFramesPerDataCallback - 1) / streamFramesPerDataCallback;
 
     // Try all 3 methods of stopping/pausing a stream.
     constexpr int kNumMethods = 3;
@@ -429,7 +441,13 @@ TEST_P(AAudioOutputStreamCallbackTest, testPlayback) {
         int32_t oldCallbackCount = mCbData->callbackCount;
         EXPECT_GE(oldCallbackCount, kExpectedCallbackCount);
         usleep(kExtremelyHighCallbackPeriodMillis * MICROS_PER_MILLISECOND);
-        EXPECT_EQ(oldCallbackCount, mCbData->callbackCount); // expect not advancing
+        if (AAudioExtensions::getInstance().isMMapUsed(mHelper->stream())) {
+            EXPECT_EQ(oldCallbackCount, mCbData->callbackCount); // expect not advancing
+        } else {
+            // Allow requesting at most one burst size data from callback after stopping
+            EXPECT_GE(mCbData->callbackCount, oldCallbackCount);
+            EXPECT_LE(mCbData->callbackCount, oldCallbackCount + callbackCountsPerBurst);
+        }
 
         if (streamFramesPerDataCallback != AAUDIO_UNSPECIFIED) {
             ASSERT_EQ(streamFramesPerDataCallback, mCbData->actualFramesPerCallback);
