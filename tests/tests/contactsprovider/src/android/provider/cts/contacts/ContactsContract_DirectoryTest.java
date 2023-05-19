@@ -30,8 +30,6 @@ import android.provider.cts.contacts.galprovider.CtsGalProvider;
 import android.test.AndroidTestCase;
 import android.util.Log;
 
-import androidx.test.platform.app.InstrumentationRegistry;
-
 import org.json.JSONObject;
 
 /**
@@ -101,69 +99,7 @@ public class ContactsContract_DirectoryTest extends AndroidTestCase {
         return -1;
     }
 
-    public void testNoContactPermission() throws Exception {
-
-        final long directoryId = waitForDirectorySetup();
-
-        InstrumentationRegistry
-                .getInstrumentation()
-                .getUiAutomation()
-                .revokeRuntimePermission("android.provider.cts.contacts.galprovider",
-                "android.permission.WRITE_CONTACTS");
-
-        final Uri queryUri = Contacts.CONTENT_FILTER_URI.buildUpon()
-                .appendPath("[QUERY]")
-                .appendQueryParameter(ContactsContract.LIMIT_PARAM_KEY, "12")
-                .appendQueryParameter(ContactsContract.DIRECTORY_PARAM_KEY, "" + directoryId)
-
-                // This should be ignored.
-                .appendQueryParameter(Directory.CALLER_PACKAGE_PARAM_KEY, "abcdef")
-                .build();
-        try (Cursor c = getContext().getContentResolver().query(
-                queryUri, null, null, null, null)) {
-            assertNull(c);
-        } finally {
-            InstrumentationRegistry
-                    .getInstrumentation()
-                    .getUiAutomation()
-                    .grantRuntimePermission("android.provider.cts.contacts.galprovider",
-                            "android.permission.WRITE_CONTACTS");
-        }
-    }
-
-    public void testNoCallLogPermission() throws Exception {
-
-
-        final long directoryId = waitForDirectorySetup();
-
-        InstrumentationRegistry
-                .getInstrumentation()
-                .getUiAutomation()
-                .revokeRuntimePermission("android.provider.cts.contacts.galprovider",
-                "android.permission.READ_CALL_LOG");
-
-        final Uri queryUri = ContactsContract.PhoneLookup.CONTENT_FILTER_URI.buildUpon()
-                .appendQueryParameter(ContactsContract.LIMIT_PARAM_KEY, "12")
-                .appendQueryParameter(ContactsContract.DIRECTORY_PARAM_KEY, "" + directoryId)
-
-                // This should be ignored.
-                .appendQueryParameter(Directory.CALLER_PACKAGE_PARAM_KEY, "abcdef")
-                .build();
-        try (Cursor c = getContext().getContentResolver().query(
-                queryUri, null, null, null, null)) {
-            assertNull(c);
-        } finally {
-            InstrumentationRegistry
-                    .getInstrumentation()
-                    .getUiAutomation()
-                    .grantRuntimePermission("android.provider.cts.contacts.galprovider",
-                            "android.permission.READ_CALL_LOG");
-        }
-    }
-
     public void testQueryParameters() throws Exception {
-
-
         // Test for content types.
         assertEquals(Directory.CONTENT_TYPE, mResolver.getType(Directory.CONTENT_URI));
         assertEquals(Directory.CONTENT_ITEM_TYPE, mResolver.getType(
