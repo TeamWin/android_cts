@@ -542,69 +542,30 @@ public class NotificationAssistantServiceTest {
         setUpListeners();
         turnScreenOn();
         mUi.adoptShellPermissionIdentity("android.permission.EXPAND_STATUS_BAR");
+        try {
+            // Initialize as closed
+            mStatusBarManager.collapsePanels();
+            Thread.sleep(SLEEP_TIME);
 
-        sendConversationNotification(mNotificationAssistantService.mNotificationId);
-        mHelper.findPostedNotification(null, mNotificationAssistantService.mNotificationId,
-                NotificationHelper.SEARCH_TYPE.POSTED);
+            sendConversationNotification(mNotificationAssistantService.mNotificationId);
+            mHelper.findPostedNotification(null, mNotificationAssistantService.mNotificationId,
+                    NotificationHelper.SEARCH_TYPE.POSTED);
+            assertEquals(0, mNotificationAssistantService.mNotificationSeenCount);
 
-        // Initialize as closed
-        mStatusBarManager.collapsePanels();
-        Thread.sleep(SLEEP_TIME * 2);
+            mStatusBarManager.expandNotificationsPanel();
+            Thread.sleep(SLEEP_TIME);
+            assertTrue(mNotificationAssistantService.mNotificationVisible);
+            assertTrue(mNotificationAssistantService.mIsPanelOpen);
+            assertTrue(mNotificationAssistantService.mNotificationSeenCount > 0);
 
-        mStatusBarManager.expandNotificationsPanel();
-        Thread.sleep(SLEEP_TIME * 2);
-        assertTrue(mNotificationAssistantService.mNotificationVisible);
-
-        mStatusBarManager.collapsePanels();
-        Thread.sleep(SLEEP_TIME * 2);
-        assertFalse(mNotificationAssistantService.mNotificationVisible);
-
-        mUi.dropShellPermissionIdentity();
-    }
-
-    @Test
-    public void testOnNotificationsSeen() throws Exception {
-        assumeFalse("Status bar service not supported", isWatch() || isTelevision());
-        setUpListeners();
-        turnScreenOn();
-        mUi.adoptShellPermissionIdentity("android.permission.EXPAND_STATUS_BAR");
-
-        mNotificationAssistantService.resetNotificationVisibilityCounts();
-
-        // Initialize as closed
-        mStatusBarManager.collapsePanels();
-
-        sendNotification(1, null, ICON_ID);
-        assertEquals(0, mNotificationAssistantService.mNotificationSeenCount);
-
-        mStatusBarManager.expandNotificationsPanel();
-        Thread.sleep(SLEEP_TIME * 2);
-        assertTrue(mNotificationAssistantService.mNotificationSeenCount > 0);
-
-        mStatusBarManager.collapsePanels();
-        mUi.dropShellPermissionIdentity();
-    }
-
-    @Test
-    public void testOnPanelRevealedAndHidden() throws Exception {
-        assumeFalse("Status bar service not supported", isWatch() || isTelevision());
-        setUpListeners();
-        turnScreenOn();
-        mUi.adoptShellPermissionIdentity("android.permission.EXPAND_STATUS_BAR");
-
-        // Initialize as closed
-        mStatusBarManager.collapsePanels();
-        assertFalse(mNotificationAssistantService.mIsPanelOpen);
-
-        mStatusBarManager.expandNotificationsPanel();
-        Thread.sleep(SLEEP_TIME * 2);
-        assertTrue(mNotificationAssistantService.mIsPanelOpen);
-
-        mStatusBarManager.collapsePanels();
-        Thread.sleep(SLEEP_TIME * 2);
-        assertFalse(mNotificationAssistantService.mIsPanelOpen);
-
-        mUi.dropShellPermissionIdentity();
+            mStatusBarManager.collapsePanels();
+            Thread.sleep(SLEEP_TIME);
+            assertFalse(mNotificationAssistantService.mNotificationVisible);
+            assertFalse(mNotificationAssistantService.mIsPanelOpen);
+            assertTrue(mNotificationAssistantService.mNotificationSeenCount > 0);
+        } finally {
+            mUi.dropShellPermissionIdentity();
+        }
     }
 
     @Test
