@@ -34,7 +34,7 @@ import java.util.Map;
 public class TestNotificationAssistant extends NotificationAssistantService {
     public static final String TAG = "TestNotificationAssistant";
     public static final String PKG = "android.app.stubs";
-    private static final long CONNECTION_TIMEOUT_MS = 1000;
+    private static final long CONNECTION_TIMEOUT_MS = 5000;
 
     private static TestNotificationAssistant sNotificationAssistantInstance = null;
     boolean mIsConnected;
@@ -87,6 +87,7 @@ public class TestNotificationAssistant extends NotificationAssistantService {
         super.onListenerConnected();
         sNotificationAssistantInstance = this;
         INSTANCE_AVAILABLE.open();
+        Log.d(TAG, "TestNotificationAssistant connected");
         mIsConnected = true;
         mCurrentCapabilities = mNotificationManager.getAllowedAssistantAdjustments();
     }
@@ -94,6 +95,7 @@ public class TestNotificationAssistant extends NotificationAssistantService {
     @Override
     public void onListenerDisconnected() {
         INSTANCE_AVAILABLE.close();
+        Log.d(TAG, "TestNotificationAssistant disconnected");
         sNotificationAssistantInstance = null;
         mIsConnected = false;
     }
