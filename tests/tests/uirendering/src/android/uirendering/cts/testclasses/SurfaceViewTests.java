@@ -52,6 +52,7 @@ import androidx.test.filters.LargeTest;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.SynchronousPixelCopy;
+import com.android.compatibility.common.util.WidgetTestUtils;
 
 import org.junit.Assert;
 import org.junit.Rule;
@@ -139,7 +140,7 @@ public class SurfaceViewTests extends ActivityTestBase {
                 new SurfaceControl.Transaction().reparent(stub, null)
                         .addTransactionCommittedListener(Runnable::run, latch::countDown));
         getActivity().waitForRedraw();
-        latch.await(5, TimeUnit.SECONDS);
+        assertTrue(latch.await(5, TimeUnit.SECONDS));
     }
 
     @FlakyTest(bugId = 244426304)
@@ -620,13 +621,13 @@ public class SurfaceViewTests extends ActivityTestBase {
         try {
             TestPositionInfo testInfo = activity.enqueueRenderSpecAndWait(
                     R.layout.frame_layout, null, initializer, true, false);
-            latch.await(5, TimeUnit.SECONDS);
+            assertTrue(latch.await(5, TimeUnit.SECONDS));
 
             BitmapAsserter asserter =
                     new BitmapAsserter(this.getClass().getSimpleName(), name.getMethodName());
 
             // Layout the SurfaceView way offscreen which would cause it to get quick rejected.
-            activity.runOnUiThread(() -> {
+            WidgetTestUtils.runOnMainAndDrawSync(surfaceViewGreen, () -> {
                 surfaceViewGreen.layout(
                         width * 2,
                         height * 2,

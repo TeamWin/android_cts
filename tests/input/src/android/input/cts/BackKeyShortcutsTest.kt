@@ -80,12 +80,12 @@ class BackKeyShortcutsTest {
 
     private fun assertReceivedEventsCorrectlyMapped(numEvents: Int, expectedKeyCode: Int) {
         for (i in 1..numEvents) {
-            val lastInputEvent: KeyEvent = activity.getInputEvent() as KeyEvent
-            assertNotNull("Event number $i is null!", lastInputEvent)
+            val lastInputEvent = activity.getInputEvent() as? KeyEvent
+            assertNotNull("Failed to receive key event number $i", lastInputEvent)
             assertEquals(
                     "Key code should be " + KeyEvent.keyCodeToString(expectedKeyCode),
                     expectedKeyCode,
-                    lastInputEvent.keyCode
+                    lastInputEvent!!.keyCode
             )
         }
         activity.assertNoEvents()

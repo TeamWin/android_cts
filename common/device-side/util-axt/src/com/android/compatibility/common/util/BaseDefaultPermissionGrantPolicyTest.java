@@ -105,6 +105,7 @@ public abstract class BaseDefaultPermissionGrantPolicyTest extends BusinessLogic
 
         // Ignore CTS infrastructure
         packagesToVerify.remove("android.tradefed.contentprovider");
+        packagesToVerify.remove("androidx.test.services");
 
         SparseArray<UidState> pregrantUidStates = new SparseArray<>();
 

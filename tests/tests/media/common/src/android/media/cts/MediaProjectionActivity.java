@@ -19,14 +19,12 @@ package android.media.cts;
 import static org.junit.Assert.assertTrue;
 
 import android.app.Activity;
+import android.content.ComponentName;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.media.projection.MediaProjection;
 import android.media.projection.MediaProjectionManager;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
-import android.os.Messenger;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject2;
@@ -88,18 +86,16 @@ public class MediaProjectionActivity extends Activity {
      * passing a messenger object to send signal back when the foreground service is up.
      */
     private void startMediaProjectionService() {
-        final Messenger messenger = new Messenger(new Handler(Looper.getMainLooper(), msg -> {
-            switch (msg.what) {
-                case LocalMediaProjectionService.MSG_START_FOREGROUND_DONE:
-                    createMediaProjection();
-                    return true;
-            }
-            Log.e(TAG, "Unknown message from the LocalMediaProjectionService: " + msg.what);
-            return false;
-        }));
-        final Intent intent = new Intent(this, LocalMediaProjectionService.class)
-                .putExtra(LocalMediaProjectionService.EXTRA_MESSENGER, messenger);
-        startForegroundService(intent);
+        ForegroundServiceUtil.requestStartForegroundService(this,
+                getForegroundServiceComponentName(),
+                this::createMediaProjection, null);
+    }
+
+    /**
+     * @return The component name of the foreground service for this test.
+     */
+    public ComponentName getForegroundServiceComponentName() {
+        return new ComponentName(this, LocalMediaProjectionService.class);
     }
 
     @Override

@@ -39,6 +39,7 @@ import android.support.test.uiautomator.Until
 import android.util.Log
 import androidx.test.InstrumentationRegistry
 import com.android.compatibility.common.util.ExceptionUtils.wrappingExceptions
+import com.android.compatibility.common.util.FeatureUtil
 import com.android.compatibility.common.util.SystemUtil.eventually
 import com.android.compatibility.common.util.SystemUtil.runShellCommandOrThrow
 import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
@@ -67,6 +68,7 @@ const val ACTION_SET_UP_HIBERNATION =
 
 const val SYSUI_PKG_NAME = "com.android.systemui"
 const val NOTIF_LIST_ID = "com.android.systemui:id/notification_stack_scroller"
+const val NOTIF_LIST_ID_AUTOMOTIVE = "com.android.systemui:id/notifications"
 const val CLEAR_ALL_BUTTON_ID = "dismiss_text"
 // Time to find a notification. Unlikely, but in cases with a lot of notifications, it may take
 // time to find the notification we're looking for
@@ -323,7 +325,12 @@ private fun waitFindNotification(selector: BySelector, timeoutMs: Long):
     while (view == null && start + timeoutMs > System.currentTimeMillis()) {
         view = uiDevice.wait(Until.findObject(selector), VIEW_WAIT_TIMEOUT)
         if (view == null) {
-            val notificationList = UiScrollable(UiSelector().resourceId(NOTIF_LIST_ID))
+            val notificationListId = if (FeatureUtil.isAutomotive()) {
+                NOTIF_LIST_ID_AUTOMOTIVE
+            } else {
+                NOTIF_LIST_ID
+            }
+            val notificationList = UiScrollable(UiSelector().resourceId(notificationListId))
             wrappingExceptions({ cause: Throwable? -> UiDumpUtils.wrapWithUiDump(cause) }) {
                 Assert.assertTrue("Notification list view not found",
                     notificationList.waitForExists(VIEW_WAIT_TIMEOUT))

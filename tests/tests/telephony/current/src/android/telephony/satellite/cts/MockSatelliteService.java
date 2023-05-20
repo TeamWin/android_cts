@@ -168,20 +168,23 @@ public class MockSatelliteService extends SatelliteImplBase {
             return;
         }
 
+        if (mShouldRespondTelephony.get()) {
+            runWithExecutor(() -> errorCallback.accept(SatelliteError.ERROR_NONE));
+        }
         if (enabled) {
             updateSatelliteModemState(SatelliteModemState.SATELLITE_MODEM_STATE_LISTENING);
         } else {
             updateSatelliteModemState(SatelliteModemState.SATELLITE_MODEM_STATE_IDLE);
-        }
-        if (mShouldRespondTelephony.get()) {
-            runWithExecutor(() -> errorCallback.accept(SatelliteError.ERROR_NONE));
         }
     }
 
     @Override
     public void requestSatelliteEnabled(boolean enableSatellite, boolean enableDemoMode,
             @NonNull IIntegerConsumer errorCallback) {
-        logd("requestSatelliteEnabled: mErrorCode=" + mErrorCode);
+        logd("requestSatelliteEnabled: mErrorCode=" + mErrorCode
+                + ", enableSatellite=" + enableSatellite
+                + ", enableDemoMode=" + enableDemoMode
+                + ", mShouldRespondTelephony=" + mShouldRespondTelephony.get());
         if (mErrorCode != SatelliteError.ERROR_NONE) {
             if (mShouldRespondTelephony.get()) {
                 runWithExecutor(() -> errorCallback.accept(mErrorCode));
@@ -198,18 +201,18 @@ public class MockSatelliteService extends SatelliteImplBase {
 
     private void enableSatellite(@NonNull IIntegerConsumer errorCallback) {
         mIsEnabled = true;
-        updateSatelliteModemState(SatelliteModemState.SATELLITE_MODEM_STATE_IDLE);
         if (mShouldRespondTelephony.get()) {
             runWithExecutor(() -> errorCallback.accept(SatelliteError.ERROR_NONE));
         }
+        updateSatelliteModemState(SatelliteModemState.SATELLITE_MODEM_STATE_IDLE);
     }
 
     private void disableSatellite(@NonNull IIntegerConsumer errorCallback) {
         mIsEnabled = false;
-        updateSatelliteModemState(SatelliteModemState.SATELLITE_MODEM_STATE_OFF);
         if (mShouldRespondTelephony.get()) {
             runWithExecutor(() -> errorCallback.accept(SatelliteError.ERROR_NONE));
         }
+        updateSatelliteModemState(SatelliteModemState.SATELLITE_MODEM_STATE_OFF);
     }
 
     @Override
@@ -557,6 +560,7 @@ public class MockSatelliteService extends SatelliteImplBase {
         if (modemState == mModemState) {
             return;
         }
+        logd("updateSatelliteModemState modemState=" + modemState);
         mRemoteListeners.values().forEach(listener -> runWithExecutor(() ->
                 listener.onSatelliteModemStateChanged(modemState)));
         mModemState = modemState;

@@ -41,7 +41,7 @@ public final class MediaControlsHelper {
     private static final int SCROLL_SPEED = 1000;
     private static final int WAIT_TIME_MILLIS = 5000;
 
-    private static final String SESSION_TITLE = "Title";
+    private static final String SESSION_TITLE = "GTS-Interactive App";
 
     /**
      *  Opens Quick settings and find media controls under test.
