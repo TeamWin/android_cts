@@ -48,7 +48,7 @@ public class AbiOverrideTest extends DeviceTestCase implements IBuildReceiver {
     /**
      * The class name of the main activity in the APK.
      */
-    private static final String APK_NAME="CtsAbiOverrideTestApp.apk";
+    private static final String APK_NAME = "CtsAbiOverrideTestApp.apk";
 
     /**
      * The command to launch the main activity.
@@ -87,7 +87,7 @@ public class AbiOverrideTest extends DeviceTestCase implements IBuildReceiver {
         ITestDevice device = getDevice();
         //skip this test for 64bit only system
         String prop32bit = device.getProperty("ro.product.cpu.abilist32");
-        if (prop32bit == null || prop32bit.trim().isEmpty()){
+        if (prop32bit == null || prop32bit.trim().isEmpty()) {
             return;
         }
         // Clear logcat.
@@ -101,7 +101,7 @@ public class AbiOverrideTest extends DeviceTestCase implements IBuildReceiver {
         Scanner in = new Scanner(logs);
         while (in.hasNextLine()) {
             String line = in.nextLine();
-            if(line.startsWith("I/"+CLASS)) {
+            if (line.startsWith("I/" + CLASS)) {
                 testString = line.split(":")[1].trim();
             }
         }
