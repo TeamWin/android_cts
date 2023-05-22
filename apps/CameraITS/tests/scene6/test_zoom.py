@@ -24,7 +24,6 @@ import its_base_test
 import its_session_utils
 from mobly import test_runner
 import numpy as np
-import opencv_processing_utils
 import zoom_capture_utils
 
 _CIRCLE_COLOR = 0  # [0: black, 255: white]
@@ -117,27 +116,12 @@ class ZoomTest(its_base_test.ItsBaseTest):
           cap_fl = cap['metadata']['android.lens.focalLength']
           radius_tol, offset_tol = test_tols[cap_fl]
 
-          # convert [0, 1] image to [0, 255] and cast as uint8
-          img = image_processing_utils.convert_image_to_uint8(img)
-
           # Find the center circle in img
-          try:
-            circle = opencv_processing_utils.find_center_circle(
-                img, img_name, _CIRCLE_COLOR, circle_ar_rtol=_CIRCLE_AR_RTOL,
-                circlish_rtol=_CIRCLISH_RTOL,
-                min_area=_MIN_AREA_RATIO * size[0] * size[1] * z * z,
-                min_circle_pts=_MIN_CIRCLE_PTS, debug=debug)
-            if opencv_processing_utils.is_circle_cropped(circle, size):
-              logging.debug('zoom %.2f is too large! Skip further captures', z)
-              break
-          except AssertionError as e:
-            if z/z_list[0] >= zoom_capture_utils.ZOOM_MAX_THRESH:
-              break
-            else:
-              raise AssertionError(
-                  'No circle detected for zoom ratio <= '
-                  f'{zoom_capture_utils.ZOOM_MAX_THRESH}. '
-                  'Take pictures according to instructions carefully!') from e
+          circle = zoom_capture_utils.get_center_circle(img, img_name, size, z,
+                                                        z_list[0], debug)
+          # Zoom is too large to find center circle
+          if circle is None:
+            break
           test_data[i] = {'z': z, 'circle': circle, 'r_tol': radius_tol,
                           'o_tol': offset_tol, 'fl': cap_fl}
 

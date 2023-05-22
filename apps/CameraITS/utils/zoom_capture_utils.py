@@ -19,7 +19,14 @@ import math
 
 import camera_properties_utils
 import capture_request_utils
+import image_processing_utils
+import opencv_processing_utils
 
+_CIRCLE_COLOR = 0  # [0: black, 255: white]
+_CIRCLE_AR_RTOL = 0.15  # contour width vs height (aspect ratio)
+_CIRCLISH_RTOL = 0.05  # contour area vs ideal circle area pi*((w+h)/4)**2
+_MIN_AREA_RATIO = 0.00015  # based on 2000/(4000x3000) pixels
+_MIN_CIRCLE_PTS = 25
 _MIN_FOCUS_DIST_TOL = 0.80  # allow charts a little closer than min
 _OFFSET_ATOL = 10  # number of pixels
 _OFFSET_RTOL_MIN_FD = 0.30
@@ -27,6 +34,7 @@ _RADIUS_RTOL_MIN_FD = 0.15
 OFFSET_RTOL = 0.15
 RADIUS_RTOL = 0.10
 ZOOM_MAX_THRESH = 10.0
+
 
 def get_test_tols_and_cap_size(cam, props, chart_distance, debug):
   """Determine the tolerance per camera based on test rig and camera params.
@@ -81,6 +89,47 @@ def get_test_tols_and_cap_size(cam, props, chart_distance, debug):
     logging.debug('common_fmt: %s', max(common_sizes))
 
   return test_tols, max(common_sizes)
+
+
+def get_center_circle(img, img_name, size, zoom_ratio, min_zoom_ratio, debug):
+  """Find circle closest to image center for scene with multiple circles.
+      If circle is not found due to zoom ratio being larger than ZOOM_MAX_THRESH or the circle
+      being cropped, None is returned.
+
+  Args:
+    img: numpy img array with pixel values in [0,255].
+    img_name: str file name for saved image
+    size: width, height of the image
+    zoom_ratio: zoom_ratio for the particular capture
+    min_zoom_ratio: min_zoom_ratio supported by the camera device
+    debug: boolean to save extra data
+
+  Returns:
+    circle: [center_x, center_y, radius] if found, else None
+  """
+  # convert [0, 1] image to [0, 255] and cast as uint8
+  img = image_processing_utils.convert_image_to_uint8(img)
+
+  # Find the center circle in img
+  try:
+    circle = opencv_processing_utils.find_center_circle(
+        img, img_name, _CIRCLE_COLOR, circle_ar_rtol=_CIRCLE_AR_RTOL,
+        circlish_rtol=_CIRCLISH_RTOL,
+        min_area=_MIN_AREA_RATIO * size[0] * size[1] * zoom_ratio * zoom_ratio,
+        min_circle_pts=_MIN_CIRCLE_PTS, debug=debug)
+    if opencv_processing_utils.is_circle_cropped(circle, size):
+      logging.debug('zoom %.2f is too large! Skip further captures', zoom_ratio)
+      return None
+  except AssertionError as e:
+    if zoom_ratio / min_zoom_ratio >= ZOOM_MAX_THRESH:
+      return None
+    else:
+      raise AssertionError(
+          'No circle detected for zoom ratio <= '
+          f'{ZOOM_MAX_THRESH}. '
+          'Take pictures according to instructions carefully!') from e
+  return circle
+
 
 def verify_zoom_results(test_data, size, z_max, z_min):
   """Verify that the output images' zoom level reflects the correct zoom ratios.
