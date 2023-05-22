@@ -22,6 +22,8 @@ import cv2
 import image_processing_utils
 import its_base_test
 import its_session_utils
+import zoom_capture_utils
+
 from mobly import test_runner
 import numpy as np
 
@@ -83,6 +85,15 @@ class InSensorZoomTest(its_base_test.ItsBaseTest):
         # Dump zoomed in RAW image
         img_name = f'rgb_zoomed_raw_{round(z,2)}.jpg'
         image_processing_utils.write_image(rgb_zoomed_raw, img_name)
+        size_raw = [cap_zoomed_raw['width'], cap_zoomed_raw['height']]
+        # Find the center circle in img
+        circle = zoom_capture_utils.get_center_circle(rgb_zoomed_raw, img_name,
+                                                      size_raw, z, z_list[0],
+                                                      debug=True)
+        # Zoom is too large to find center circle, break out
+        if circle is None:
+          break
+
         meta = cap_zoomed_raw['metadata']
         result_raw_crop_region = meta['android.scaler.rawCropRegion']
         rl = result_raw_crop_region['left']
