@@ -1926,7 +1926,7 @@ public class ViewTest {
 
         view.setParent(mMockParent);
         view.setOnLongClickListener(listener);
-        mMockParent.reset();
+        view.reset();
 
         assertTrue(view.performLongClick());
         assertTrue(view.hasCalledPerformHapticFeedback());
@@ -1949,7 +1949,31 @@ public class ViewTest {
 
         view.setParent(mMockParent);
         view.setOnLongClickListener(listener);
-        mMockParent.reset();
+        view.reset();
+
+        assertTrue(view.performLongClick());
+        assertFalse(view.hasCalledPerformHapticFeedback());
+    }
+
+    @Test
+    public void testPerformLongClick_withListenerRemovedOnLongClick_upholdDefaultHapticOverride() {
+        final MockView view = new MockView(mActivity);
+        View.OnLongClickListener listener = new OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                view.setOnLongClickListener(null);
+                return true;
+            }
+
+            @Override
+            public boolean onLongClickUseDefaultHapticFeedback(View v) {
+                return false;
+            }
+        };
+
+        view.setParent(mMockParent);
+        view.setOnLongClickListener(listener);
+        view.reset();
 
         assertTrue(view.performLongClick());
         assertFalse(view.hasCalledPerformHapticFeedback());
