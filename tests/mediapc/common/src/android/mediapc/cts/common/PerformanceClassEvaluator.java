@@ -1753,6 +1753,117 @@ public class PerformanceClassEvaluator {
         }
     }
 
+    public static class CameraExtensionRequirement extends Requirement {
+        private static final String TAG =
+                CameraExtensionRequirement.class.getSimpleName();
+
+        public static int PRIMARY_REAR_CAMERA = 0;
+        public static int PRIMARY_FRONT_CAMERA = 1;
+
+        private CameraExtensionRequirement(String id, RequiredMeasurement<?> ... reqs) {
+            super(id, reqs);
+        }
+
+        public void setCamera2NightExtensionSupported(int camera, boolean supported) {
+            if (camera == PRIMARY_REAR_CAMERA) {
+                this.setMeasuredValue(RequirementConstants.REAR_CAMERA2_EXTENSION_NIGHT_SUPPORTED,
+                        supported);
+            } else if (camera == PRIMARY_FRONT_CAMERA) {
+                this.setMeasuredValue(RequirementConstants.FRONT_CAMERA2_EXTENSION_NIGHT_SUPPORTED,
+                        supported);
+            }
+        }
+
+        public void setCameraXNightExtensionSupported(int camera, boolean supported) {
+            if (camera == PRIMARY_REAR_CAMERA) {
+                this.setMeasuredValue(RequirementConstants.REAR_CAMERAX_EXTENSION_NIGHT_SUPPORTED,
+                        supported);
+            } else if (camera == PRIMARY_FRONT_CAMERA) {
+                this.setMeasuredValue(RequirementConstants.FRONT_CAMERAX_EXTENSION_NIGHT_SUPPORTED,
+                        supported);
+            }
+        }
+
+        /**
+         * [2.2.7.2/7.5/H-1-15] MUST support Night mode extensions via both CameraX and
+         * Camera2 extensions for primary cameras.
+         */
+        public static CameraExtensionRequirement createCameraExtensionReq() {
+            RequiredMeasurement<Boolean> rearCamera2NightRequirement = RequiredMeasurement
+                .<Boolean>builder()
+                .setId(RequirementConstants.REAR_CAMERA2_EXTENSION_NIGHT_SUPPORTED)
+                .setPredicate(RequirementConstants.BOOLEAN_EQ)
+                .addRequiredValue(Build.VERSION_CODES.UPSIDE_DOWN_CAKE, true)
+                .build();
+            RequiredMeasurement<Boolean> frontCamera2NightRequirement = RequiredMeasurement
+                .<Boolean>builder()
+                .setId(RequirementConstants.FRONT_CAMERA2_EXTENSION_NIGHT_SUPPORTED)
+                .setPredicate(RequirementConstants.BOOLEAN_EQ)
+                .addRequiredValue(Build.VERSION_CODES.UPSIDE_DOWN_CAKE, true)
+                .build();
+
+            RequiredMeasurement<Boolean> rearCameraXNightRequirement = RequiredMeasurement
+                .<Boolean>builder()
+                .setId(RequirementConstants.REAR_CAMERAX_EXTENSION_NIGHT_SUPPORTED)
+                .setPredicate(RequirementConstants.BOOLEAN_EQ)
+                .addRequiredValue(Build.VERSION_CODES.UPSIDE_DOWN_CAKE, true)
+                .build();
+            RequiredMeasurement<Boolean> frontCameraXNightRequirement = RequiredMeasurement
+                .<Boolean>builder()
+                .setId(RequirementConstants.FRONT_CAMERAX_EXTENSION_NIGHT_SUPPORTED)
+                .setPredicate(RequirementConstants.BOOLEAN_EQ)
+                .addRequiredValue(Build.VERSION_CODES.UPSIDE_DOWN_CAKE, true)
+                .build();
+
+            return new CameraExtensionRequirement(RequirementConstants.R7_5__H_1_15,
+                    rearCamera2NightRequirement, frontCamera2NightRequirement,
+                    rearCameraXNightRequirement, frontCameraXNightRequirement);
+        }
+    }
+
+    public static class DynamicRangeTenBitsRequirement extends Requirement {
+        private static final String TAG =
+                DynamicRangeTenBitsRequirement.class.getSimpleName();
+
+        public static int PRIMARY_REAR_CAMERA = 0;
+        public static int PRIMARY_FRONT_CAMERA = 1;
+
+        private DynamicRangeTenBitsRequirement(String id, RequiredMeasurement<?> ... reqs) {
+            super(id, reqs);
+        }
+
+        public void setDynamicRangeTenBitsSupported(int camera, boolean supported) {
+            if (camera == PRIMARY_REAR_CAMERA) {
+                this.setMeasuredValue(RequirementConstants.REAR_CAMERA_DYNAMIC_TENBITS_SUPPORTED,
+                    supported);
+            } else if (camera == PRIMARY_FRONT_CAMERA) {
+                this.setMeasuredValue(RequirementConstants.FRONT_CAMERA_DYNAMIC_TENBITS_SUPPORTED,
+                    supported);
+            }
+        }
+
+        /**
+         * [2.2.7.2/7.5/H-1-16] MUST support DYNAMIC_RANGE_TEN_BIT capability for
+         * the primary cameras.
+         */
+        public static DynamicRangeTenBitsRequirement createDynamicRangeTenBitsReq() {
+            RequiredMeasurement<Boolean> rearDynamicRangeTenBitsRequirement = RequiredMeasurement
+                .<Boolean>builder()
+                .setId(RequirementConstants.REAR_CAMERA_DYNAMIC_TENBITS_SUPPORTED)
+                .setPredicate(RequirementConstants.BOOLEAN_EQ)
+                .addRequiredValue(Build.VERSION_CODES.UPSIDE_DOWN_CAKE, true)
+                .build();
+            RequiredMeasurement<Boolean> frontDynamicRangeTenBitsRequirement = RequiredMeasurement
+                .<Boolean>builder()
+                .setId(RequirementConstants.FRONT_CAMERA_DYNAMIC_TENBITS_SUPPORTED)
+                .setPredicate(RequirementConstants.BOOLEAN_EQ)
+                .addRequiredValue(Build.VERSION_CODES.UPSIDE_DOWN_CAKE, true)
+                .build();
+            return new DynamicRangeTenBitsRequirement(RequirementConstants.R7_5__H_1_16,
+                    rearDynamicRangeTenBitsRequirement, frontDynamicRangeTenBitsRequirement);
+        }
+    }
+
     public static class AudioTap2ToneLatencyRequirement extends Requirement {
         private static final String TAG = AudioTap2ToneLatencyRequirement.class.getSimpleName();
 
@@ -2101,6 +2212,14 @@ public class PerformanceClassEvaluator {
 
     public StreamUseCaseRequirement addR7_5__H_1_14() {
         return this.addRequirement(StreamUseCaseRequirement.createStreamUseCaseReq());
+    }
+
+    public CameraExtensionRequirement addR7_5__H_1_15() {
+        return this.addRequirement(CameraExtensionRequirement.createCameraExtensionReq());
+    }
+
+    public DynamicRangeTenBitsRequirement addR7_5__H_1_16() {
+        return this.addRequirement(DynamicRangeTenBitsRequirement.createDynamicRangeTenBitsReq());
     }
 
     public AudioTap2ToneLatencyRequirement addR5_6__H_1_1() {
