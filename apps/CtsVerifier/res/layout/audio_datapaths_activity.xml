@@ -91,6 +91,7 @@
 
         <WebView
             android:id="@+id/audio_datapaths_results"
+            android:hardwareAccelerated="false"
             android:layout_width="match_parent"
             android:layout_height="fill_parent"/>
 
