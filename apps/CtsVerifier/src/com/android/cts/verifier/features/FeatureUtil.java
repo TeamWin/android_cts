@@ -140,7 +140,16 @@ public final class FeatureUtil {
      * Checks whether the device supports managed secondary users.
      */
     public static boolean supportManagedSecondaryUsers(Context context) {
-        return (context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_MANAGED_USERS)
+        PackageManager pm = context.getPackageManager();
+
+        // TODO(b/283140235): Remove this check once splitscreen_multitasking device supports
+        //  FEATURE_MANAGED_USERS
+        if (pm.hasSystemFeature(PackageManager.FEATURE_CAR_SPLITSCREEN_MULTITASKING)
+                && isAutomotive(context)) {
+            return false;
+        }
+
+        return (pm.hasSystemFeature(PackageManager.FEATURE_MANAGED_USERS)
                 || UserManager.isHeadlessSystemUserMode()) && UserManager.supportsMultipleUsers();
     }
 
