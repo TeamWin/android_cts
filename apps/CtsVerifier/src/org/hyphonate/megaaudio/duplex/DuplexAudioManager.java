@@ -108,7 +108,13 @@ public class DuplexAudioManager {
         mRecorderSampleRate = sampleRate;
     }
 
-    public void setInputPreset(int preset) { mInputPreset = preset; }
+    /**
+     * Specifies the input preset to use for the recorder.
+     * @param preset
+     */
+    public void setInputPreset(int preset) {
+        mInputPreset = preset;
+    }
 
     public int setupStreams(int playerType, int recorderType) {
         // Recorder
