@@ -378,6 +378,10 @@ public class DecodeOnlyTest extends MediaTestBase {
         }
         audioTrack.stop();
         audioTrack.release();
+        videoCodec.stop();
+        videoCodec.release();
+        audioCodec.stop();
+        audioCodec.release();
 
         Collections.sort(expectedPresentationTimes);
         Collections.sort(renderedPresentationTimes);
