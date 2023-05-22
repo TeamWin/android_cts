@@ -31,6 +31,7 @@ import static org.junit.Assume.assumeTrue;
 
 import android.Manifest;
 import android.bluetooth.BluetoothAdapter;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
 import android.net.wifi.WifiManager;
@@ -104,10 +105,8 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
                         SatelliteManager.DEVICE_HOLD_POSITION_LANDSCAPE_LEFT));
     }
 
-    UwbManager mUwbManager = null;
-    NfcAdapter mNfcAdapter = null;
-    BluetoothAdapter mBluetoothAdapter = null;
-    WifiManager mWifiManager = null;
+    BTWifiNFCStateReceiver mBTWifiNFCSateReceiver = null;
+    UwbAdapterStateCallback mUwbAdapterStateCallback = null;
     private String mTestSatelliteModeRadios = null;
     boolean mBTInitState = false;
     boolean mWifiInitState = false;
@@ -1344,7 +1343,8 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         logd("testSatelliteModeRadios: start");
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
                 .adoptShellPermissionIdentity(Manifest.permission.SATELLITE_COMMUNICATION,
-                        Manifest.permission.WRITE_SECURE_SETTINGS);
+                        Manifest.permission.WRITE_SECURE_SETTINGS,
+                        Manifest.permission.UWB_PRIVILEGED);
         assertTrue(isSatelliteProvisioned());
 
         SatelliteStateCallbackTest stateCallback = new SatelliteStateCallbackTest();
@@ -1381,6 +1381,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
             assertTrue(areAllRadiosDisabled());
 
             // Disable satellite and check whether all radios are set to their initial state
+            setRadioExpectedState();
             requestSatelliteEnabled(false);
             assertTrue(stateCallback.waitUntilResult(1));
             assertSatelliteEnabledInSettings(false);
@@ -1391,6 +1392,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
             assertTrue(satelliteRadiosModeUpdater.setSatelliteModeRadios(
                     originalSatelliteModeRadios));
             sSatelliteManager.unregisterForSatelliteModemStateChanged(stateCallback);
+            unregisterSatelliteModeRadios();
             InstrumentationRegistry.getInstrumentation().getUiAutomation()
                     .dropShellPermissionIdentity();
         }
@@ -1403,7 +1405,8 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         logd("testSatelliteModeRadios_noRadiosSensitiveToSatelliteMode: start");
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
                 .adoptShellPermissionIdentity(Manifest.permission.SATELLITE_COMMUNICATION,
-                        Manifest.permission.WRITE_SECURE_SETTINGS);
+                        Manifest.permission.WRITE_SECURE_SETTINGS,
+                        Manifest.permission.UWB_PRIVILEGED);
         assertTrue(isSatelliteProvisioned());
 
         SatelliteStateCallbackTest stateCallback = new SatelliteStateCallbackTest();
@@ -1433,6 +1436,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
             assertTrue(satelliteRadiosModeUpdater.setSatelliteModeRadios(mTestSatelliteModeRadios));
 
             // Enable Satellite and check whether all radios are disabled
+            setRadioExpectedState();
             requestSatelliteEnabled(true, EXTERNAL_DEPENDENT_TIMEOUT);
             assertTrue(stateCallback.waitUntilResult(1));
             assertSatelliteEnabledInSettings(true);
@@ -1440,6 +1444,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
             assertTrue(areAllRadiosResetToInitialState());
 
             // Disable satellite and check whether all radios are set to their initial state
+            setRadioExpectedState();
             stateCallback.clearModemStates();
             requestSatelliteEnabled(false);
             assertTrue(stateCallback.waitUntilModemOff());
@@ -1467,7 +1472,8 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
                         Manifest.permission.WRITE_SECURE_SETTINGS,
                         Manifest.permission.NETWORK_SETTINGS,
                         Manifest.permission.ACCESS_FINE_LOCATION,
-                        Manifest.permission.READ_PRIVILEGED_PHONE_STATE);
+                        Manifest.permission.READ_PRIVILEGED_PHONE_STATE,
+                        Manifest.permission.UWB_PRIVILEGED);
         assertTrue(isSatelliteProvisioned());
 
         ServiceStateRadioStateListener callback = new ServiceStateRadioStateListener(
@@ -1524,6 +1530,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
             assertTrue(areAllRadiosDisabled());
 
             // Disable airplane mode, check whether all radios are set to their initial state
+            setRadioExpectedState();
             connectivityManager.setAirplaneMode(false);
             callback.waitForRadioStateIntent(TelephonyManager.RADIO_POWER_ON);
             assertTrue(areAllRadiosResetToInitialState());
@@ -1537,6 +1544,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
                     originalSatelliteModeRadios));
             sTelephonyManager.unregisterTelephonyCallback(callback);
             sSatelliteManager.unregisterForSatelliteModemStateChanged(stateCallback);
+            unregisterSatelliteModeRadios();
             InstrumentationRegistry.getInstrumentation().getUiAutomation()
                     .dropShellPermissionIdentity();
         }
@@ -2597,29 +2605,38 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
     private void identifyRadiosSensitiveToSatelliteMode() {
         PackageManager packageManager = getContext().getPackageManager();
         List<String> satelliteModeRadiosList = new ArrayList<>();
+        mBTWifiNFCSateReceiver = new BTWifiNFCStateReceiver();
+        mUwbAdapterStateCallback = new UwbAdapterStateCallback();
+        IntentFilter radioStateIntentFilter = new IntentFilter();
 
         if (packageManager.hasSystemFeature(PackageManager.FEATURE_WIFI)) {
             satelliteModeRadiosList.add(Settings.Global.RADIO_WIFI);
             mWifiManager = getContext().getSystemService(WifiManager.class);
             mWifiInitState = mWifiManager.isWifiEnabled();
+            radioStateIntentFilter.addAction(WifiManager.WIFI_STATE_CHANGED_ACTION);
         }
 
         if (packageManager.hasSystemFeature(PackageManager.FEATURE_BLUETOOTH)) {
             satelliteModeRadiosList.add(Settings.Global.RADIO_BLUETOOTH);
             mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
             mBTInitState = mBluetoothAdapter.isEnabled();
+            radioStateIntentFilter.addAction(BluetoothAdapter.ACTION_STATE_CHANGED);
         }
 
         if (packageManager.hasSystemFeature(PackageManager.FEATURE_NFC)) {
             satelliteModeRadiosList.add(Settings.Global.RADIO_NFC);
             mNfcAdapter = NfcAdapter.getNfcAdapter(getContext().getApplicationContext());
             mNfcInitState = mNfcAdapter.isEnabled();
+            radioStateIntentFilter.addAction(NfcAdapter.ACTION_ADAPTER_STATE_CHANGED);
         }
+        getContext().registerReceiver(mBTWifiNFCSateReceiver, radioStateIntentFilter);
 
         if (packageManager.hasSystemFeature(PackageManager.FEATURE_UWB)) {
             satelliteModeRadiosList.add(Settings.Global.RADIO_UWB);
             mUwbManager = getContext().getSystemService(UwbManager.class);
             mUwbInitState = mUwbManager.isUwbEnabled();
+            mUwbManager.registerAdapterStateCallback(getContext().getMainExecutor(),
+                    mUwbAdapterStateCallback);
         }
 
         mTestSatelliteModeRadios = String.join(",", satelliteModeRadiosList);
@@ -2651,49 +2668,49 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
     }
 
     private boolean areAllRadiosResetToInitialState() {
-        Object lock = new Object();
-        synchronized (lock) {
-            try {
-                lock.wait(TIMEOUT);
-            } catch (InterruptedException e) {
-                // Ignore
-                logd("InterruptedException e:" + e);
-            }
+        logd("areAllRadiosResetToInitialState");
 
-            logd("areAllRadiosResetToInitialState");
-            if (isRadioSatelliteModeSensitive(Settings.Global.RADIO_WIFI)) {
-                if (mWifiInitState) {
-                    assertTrue(mWifiManager.isWifiEnabled());
-                } else {
-                    assertFalse(mWifiManager.isWifiEnabled());
-                }
-            }
+        if (mBTWifiNFCSateReceiver != null
+                && isRadioSatelliteModeSensitive(Settings.Global.RADIO_WIFI)) {
+            assertTrue(mBTWifiNFCSateReceiver.waitUntilOnWifiStateChanged());
+        }
 
-            if (isRadioSatelliteModeSensitive(Settings.Global.RADIO_BLUETOOTH)) {
-                if (mBTInitState) {
-                    assertTrue(mBluetoothAdapter.isEnabled());
-                } else {
-                    assertFalse(mBluetoothAdapter.isEnabled());
-                }
-            }
+        if (mBTWifiNFCSateReceiver != null
+                && isRadioSatelliteModeSensitive(Settings.Global.RADIO_NFC)) {
+            assertTrue(mBTWifiNFCSateReceiver.waitUntilOnNfcStateChanged());
+        }
 
-            if (isRadioSatelliteModeSensitive(Settings.Global.RADIO_NFC)) {
-                if (mNfcInitState) {
-                    assertTrue(mNfcAdapter.isEnabled());
-                } else {
-                    assertFalse(mNfcAdapter.isEnabled());
-                }
-            }
+        if (mUwbAdapterStateCallback != null
+                && isRadioSatelliteModeSensitive(Settings.Global.RADIO_UWB)) {
+            assertTrue(mUwbAdapterStateCallback.waitUntilOnUwbStateChanged());
+        }
 
-            if (isRadioSatelliteModeSensitive(Settings.Global.RADIO_UWB)) {
-                if (mUwbInitState) {
-                    assertTrue(mUwbManager.isUwbEnabled());
-                } else {
-                    assertFalse(mUwbManager.isUwbEnabled());
-                }
-            }
+        if (mBTWifiNFCSateReceiver != null
+                && isRadioSatelliteModeSensitive(Settings.Global.RADIO_BLUETOOTH)) {
+            assertTrue(mBTWifiNFCSateReceiver.waitUntilOnBTStateChanged());
+        }
 
-            return true;
+        return true;
+    }
+
+    private void setRadioExpectedState() {
+        // Set expected state of all radios to their initial states
+        if (mBTWifiNFCSateReceiver != null) {
+            mBTWifiNFCSateReceiver.setBTExpectedState(mBTInitState);
+            mBTWifiNFCSateReceiver.setWifiExpectedState(mWifiInitState);
+            mBTWifiNFCSateReceiver.setNfcExpectedState(mNfcInitState);
+        }
+
+        if (mUwbAdapterStateCallback != null) {
+            mUwbAdapterStateCallback.setUwbExpectedState(mUwbInitState);
+        }
+    }
+
+    private void unregisterSatelliteModeRadios() {
+        getContext().unregisterReceiver(mBTWifiNFCSateReceiver);
+
+        if (isRadioSatelliteModeSensitive(Settings.Global.RADIO_UWB)) {
+            mUwbManager.unregisterAdapterStateCallback(mUwbAdapterStateCallback);
         }
     }
 
