@@ -42,7 +42,9 @@ public class WaveScopeView extends View {
     private int mNumFrames = 0;
 
     private boolean mDisplayBufferSize = true;
-    private boolean mDisplayMaxMagnitudes = true;
+    private boolean mDisplayMaxMagnitudes = false;
+    private boolean mDisplayPersistentMaxMagnitude = true;
+    private float mPersistentMaxMagnitude;
 
     private float[] mPointsBuffer;
 
@@ -68,6 +70,17 @@ public class WaveScopeView extends View {
 
     public void setDisplayMaxMagnitudes(boolean display) {
         mDisplayMaxMagnitudes = display;
+    }
+
+    public void setDisplayPersistentMaxMagnitude(boolean display) {
+        mDisplayPersistentMaxMagnitude = display;
+    }
+
+    /**
+     * Clears persistent max magnitude so a new value can be calculated.
+     */
+    public void resetPersistentMaxMagnitude() {
+        mPersistentMaxMagnitude = 0.0f;
     }
 
     public void setPCM16Buff(short[] smpl16Buff, int numChans, int numFrames) {
@@ -256,6 +269,22 @@ public class WaveScopeView extends View {
             }
             mPaint.setColor(mTraceColor);
             cvs.drawLines(mPointsBuffer, mPaint);
+        }
+
+        if (mDisplayPersistentMaxMagnitude) {
+            smplIndex = chanIndex;
+            for (int frame = 0; frame < numFrames; frame++) {
+                if (samples[smplIndex] > mPersistentMaxMagnitude) {
+                    mPersistentMaxMagnitude = samples[smplIndex];
+                } else if (-samples[smplIndex] > mPersistentMaxMagnitude) {
+                    mPersistentMaxMagnitude = -samples[smplIndex];
+                }
+
+                Y = mDisplayFontSize + (chanIndex * (getHeight() / mNumChannels));
+                mPaint.setColor(mTextColor);
+                mPaint.setTextSize(mDisplayFontSize);
+                cvs.drawText("" + mPersistentMaxMagnitude, 0, Y, mPaint);
+            }
         }
     }
 
