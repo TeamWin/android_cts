@@ -156,8 +156,10 @@ public final class MediaDeviceInfo extends DeviceInfo {
 
                     store.addResult("max_channel_count",
                                 audioCapabilities.getMaxInputChannelCount());
-                    store.addResult("min_channel_count",
-                                audioCapabilities.getMinInputChannelCount());
+                    if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S)) {
+                        store.addResult("min_channel_count",
+                                    audioCapabilities.getMinInputChannelCount());
+                    }
                 }
                 store.endGroup();
             }
