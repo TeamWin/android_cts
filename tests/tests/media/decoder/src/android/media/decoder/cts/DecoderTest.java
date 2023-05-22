@@ -33,6 +33,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import android.app.ActivityManager;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.AssetFileDescriptor;
@@ -3329,12 +3330,19 @@ public class DecoderTest extends MediaTestBase {
         assertTrue("MediaCodecPlayer.prepare() failed!", mMediaCodecPlayer.prepare());
         mMediaCodecPlayer.startCodec();
 
+        // When video codecs are started, large chunks of contiguous physical memory need to be
+        // allocated, which, on low-RAM devices, can trigger high CPU usage for moving memory
+        // around to create contiguous space for the video decoder. This can cause an increase in
+        // startup time for playback.
+        ActivityManager activityManager = mContext.getSystemService(ActivityManager.class);
+        long firstFrameRenderedTimeoutSeconds = activityManager.isLowRamDevice() ? 3 : 1;
+
         mMediaCodecPlayer.play();
         sleepUntil(() ->
                 mMediaCodecPlayer.getCurrentPosition() > CodecState.UNINITIALIZED_TIMESTAMP
                 && mMediaCodecPlayer.getTimestamp() != null
                 && mMediaCodecPlayer.getTimestamp().framePosition > 0,
-                Duration.ofSeconds(1));
+                Duration.ofSeconds(firstFrameRenderedTimeoutSeconds));
         assertNotEquals("onFrameRendered was not called",
                 mMediaCodecPlayer.getVideoTimeUs(), CodecState.UNINITIALIZED_TIMESTAMP);
         assertNotEquals("Audio timestamp is null", mMediaCodecPlayer.getTimestamp(), null);
@@ -3344,8 +3352,6 @@ public class DecoderTest extends MediaTestBase {
         final long durationMs = mMediaCodecPlayer.getDuration();
         final long timeOutMs = System.currentTimeMillis() + durationMs + 5 * 1000; // add 5 sec
         while (!mMediaCodecPlayer.isEnded()) {
-            // Log.d(TAG, "currentPosition: " + mMediaCodecPlayer.getCurrentPosition()
-            //         + "  duration: " + mMediaCodecPlayer.getDuration());
             assertTrue("Tunneled video playback timeout exceeded",
                     timeOutMs > System.currentTimeMillis());
             Thread.sleep(SLEEP_TIME_MS);
