@@ -90,7 +90,7 @@
             </intent-filter>
         </activity>
 
-        <activity android:name="android.server.wm.SurfaceControlViewHostTests$TestActivity"
+        <activity android:name="android.view.surfacecontrol.cts.TestActivity"
                   android:exported="true"
                   android:theme="@android:style/Theme.NoTitleBar.Fullscreen" />
 
