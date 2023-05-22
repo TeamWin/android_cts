@@ -26,11 +26,11 @@ java_test_host {
         "general-tests",
         "sts",
     ],
+    static_libs: ["sts-host-util"],
     // Must match the package name in CtsTestCaseList.mk
     libs: [
         "compatibility-host-util",
         "cts-tradefed",
-        "sts-host-util",
         "tradefed",
     ],
     data: [
