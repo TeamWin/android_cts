@@ -18,6 +18,8 @@ import logging
 import os.path
 from mobly import test_runner
 
+import numpy as np
+
 import its_base_test
 import camera_properties_utils
 import capture_request_utils
@@ -26,13 +28,16 @@ import its_session_utils
 
 _MAX_IMG_SIZE = (1920, 1080)
 _NAME = os.path.splitext(os.path.basename(__file__))[0]
+_SENSOR_CALIBRATION_XFORM_ATOL = 0.1
+_UNITY_MATRIX = np.array([1, 0, 0,
+                          0, 1, 0,
+                          0, 0, 1])
 
 
 class YuvPlusDngTest(its_base_test.ItsBaseTest):
   """Test capturing a single frame as both DNG and YUV outputs."""
 
   def test_yuv_plus_dng(self):
-    logging.debug('Starting %s', _NAME)
     with its_session_utils.ItsSession(
         device_id=self.dut.serial,
         camera_id=self.camera_id,
@@ -72,7 +77,29 @@ class YuvPlusDngTest(its_base_test.ItsBaseTest):
       with open(f'{name_with_log_path}.dng', 'wb') as f:
         f.write(cap_dng['data'])
 
-      # No specific pass/fail check; test assumed to succeed if it completes.
+      # Transform/Matrix check: note value can return None
+      first_api_level = its_session_utils.get_first_api_level(self.dut.serial)
+      e_msg = ''
+      if first_api_level >= its_session_utils.ANDROID15_API_LEVEL:
+        for i in (1, 2):
+          if props.get(f'android.sensor.calibrationTransform{i}'):
+            calibration_xform = props[f'android.sensor.calibrationTransform{i}']
+            logging.debug('Rational Cal Transform%d: %s',
+                          i, str(calibration_xform))
+            calibration_xform = capture_request_utils.rational_to_float(
+                calibration_xform)
+            logging.debug('Float Cal Transform%d: %s',
+                          i, str(calibration_xform))
+            if not np.allclose(calibration_xform, _UNITY_MATRIX,
+                               atol=_SENSOR_CALIBRATION_XFORM_ATOL):
+              e_msg += (
+                  f'SENSOR_CALIBRATION_TRANSFORM{i} {calibration_xform} !~= '
+                  f'{_UNITY_MATRIX}, ATOL: {_SENSOR_CALIBRATION_XFORM_ATOL}\n'
+              )
+          else:
+            logging.debug('Check skipped: no SENSOR_CALIBRATION_TRANSFORM%d', i)
+      if e_msg:
+        raise AssertionError(e_msg)
 
 if __name__ == '__main__':
   test_runner.main()
