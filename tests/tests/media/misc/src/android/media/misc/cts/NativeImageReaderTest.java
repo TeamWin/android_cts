@@ -55,7 +55,7 @@ public class NativeImageReaderTest extends AndroidTestCase {
         assertTrue("Surface created is invalid.", surface.isValid());
     }
 
-    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+    @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
     public void testSucceedsWithHardwareBufferFormatAndDataSpace() {
         assertTrue(
                 "Native test failed, see log for details",

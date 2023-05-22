@@ -537,21 +537,24 @@ testSucceedsWithHardwareBufferFormatAndDataSpaceNative(JNIEnv* /*env*/, jclass /
     static constexpr uint32_t kTestHardwareBufferFormat = AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM;
     static constexpr int kTestImageCount = 8;
 
-    if (__builtin_available(android __ANDROID_API_T__, *)) {
+    if (__builtin_available(android __ANDROID_API_U__, *)) {
         AImageReader* outReader = nullptr;
         media_status_t ret = AImageReader_newWithDataSpace(kTestImageWidth, kTestImageHeight,
                 kTestImageUsage, kTestImageCount, kTestHardwareBufferFormat, kTestDataSpace,
                 &outReader);
 
         if (ret != AMEDIA_OK || outReader == nullptr) {
-            ALOGE("AImageReader_newWithUsage failed with format: %" PRId32 ", usage: %" PRId64 ".",
-                  kTestImageFormat, kTestImageUsage);
+            ALOGE("AImageReader_newWithDataSpace failed with usage: %" PRId64
+                  ",hardwareBufferFormat: %" PRId32 ", dataspace: %d.",
+                  kTestImageUsage, kTestHardwareBufferFormat, kTestDataSpace);
             return false;
         }
         AImageReader_delete(outReader);
+        return true;
     }
 
-    return true;
+    ALOGE("NDK API AImagReader_newWithDataSpace is not supported before U!");
+    return false;
 }
 
 extern "C" jboolean Java_android_media_misc_cts_NativeImageReaderTest_\
