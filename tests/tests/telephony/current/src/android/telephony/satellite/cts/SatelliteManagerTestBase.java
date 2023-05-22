@@ -25,9 +25,14 @@ import static org.junit.Assert.fail;
 import android.Manifest;
 import android.annotation.NonNull;
 import android.annotation.Nullable;
+import android.bluetooth.BluetoothAdapter;
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.ContentObserver;
+import android.net.wifi.WifiManager;
+import android.nfc.NfcAdapter;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.OutcomeReceiver;
@@ -45,6 +50,7 @@ import android.telephony.satellite.SatelliteStateCallback;
 import android.telephony.satellite.SatelliteTransmissionUpdateCallback;
 import android.text.TextUtils;
 import android.util.Log;
+import android.uwb.UwbManager;
 
 import androidx.test.InstrumentationRegistry;
 
@@ -65,8 +71,14 @@ public class SatelliteManagerTestBase {
     protected static final String TOKEN = "TEST_TOKEN";
     protected static final long TIMEOUT = 2000;
     protected static final long EXTERNAL_DEPENDENT_TIMEOUT = 10000;
+
     protected static SatelliteManager sSatelliteManager;
     protected static TelephonyManager sTelephonyManager = null;
+
+    protected UwbManager mUwbManager = null;
+    protected NfcAdapter mNfcAdapter = null;
+    protected BluetoothAdapter mBluetoothAdapter = null;
+    protected WifiManager mWifiManager = null;
 
     protected static void beforeAllTestsBase() {
         sSatelliteManager = getContext().getSystemService(SatelliteManager.class);
@@ -923,6 +935,232 @@ public class SatelliteManagerTestBase {
                 tm -> tm.clearRadioPowerOffForReason(TelephonyManager.RADIO_POWER_REASON_USER),
                 android.Manifest.permission.MODIFY_PHONE_STATE);
         callback.waitForRadioStateIntent(TelephonyManager.RADIO_POWER_ON);
+    }
+
+    protected class UwbAdapterStateCallback implements UwbManager.AdapterStateCallback {
+        private final Semaphore mUwbSemaphore = new Semaphore(0);
+        private final Object mUwbExpectedStateLock = new Object();
+        private boolean mUwbExpectedState = false;
+
+        public String toString(int state) {
+            switch (state) {
+                case UwbManager.AdapterStateCallback.STATE_DISABLED:
+                    return "Disabled";
+
+                case UwbManager.AdapterStateCallback.STATE_ENABLED_INACTIVE:
+                    return "Inactive";
+
+                case UwbManager.AdapterStateCallback.STATE_ENABLED_ACTIVE:
+                    return "Active";
+
+                default:
+                    return "";
+            }
+        }
+
+        @Override
+        public void onStateChanged(int state, int reason) {
+            logd("UwbAdapterStateCallback onStateChanged() called, state = " + toString(state));
+            logd("Adapter state changed reason " + String.valueOf(reason));
+
+            synchronized (mUwbExpectedStateLock) {
+                if (mUwbExpectedState == mUwbManager.isUwbEnabled()) {
+                    try {
+                        mUwbSemaphore.release();
+                    } catch (Exception e) {
+                        loge("UwbAdapterStateCallback onStateChanged(): Got exception, ex=" + e);
+                    }
+                }
+            }
+        }
+
+        public boolean waitUntilOnUwbStateChanged() {
+            synchronized (mUwbExpectedStateLock) {
+                if (mUwbExpectedState == mUwbManager.isUwbEnabled()) {
+                    return true;
+                }
+            }
+
+            try {
+                if (!mUwbSemaphore.tryAcquire(EXTERNAL_DEPENDENT_TIMEOUT,
+                        TimeUnit.MILLISECONDS)) {
+                    loge("UwbAdapterStateCallback Timeout to receive "
+                            + "onStateChanged() callback");
+                    return false;
+                }
+            } catch (Exception ex) {
+                loge("UwbAdapterStateCallback waitUntilOnUwbStateChanged: Got exception=" + ex);
+                return false;
+            }
+            return true;
+        }
+
+        public void setUwbExpectedState(boolean expectedState) {
+            synchronized (mUwbExpectedStateLock) {
+                mUwbExpectedState = expectedState;
+                mUwbSemaphore.drainPermits();
+            }
+        }
+    }
+
+    protected class BTWifiNFCStateReceiver extends BroadcastReceiver {
+        private final Semaphore mBTSemaphore = new Semaphore(0);
+        private final Object mBTExpectedStateLock = new Object();
+        private boolean mBTExpectedState = false;
+
+        private final Semaphore mNfcSemaphore = new Semaphore(0);
+        private final Object mNfcExpectedStateLock = new Object();
+        private boolean mNfcExpectedState = false;
+
+        private final Semaphore mWifiSemaphore = new Semaphore(0);
+        private final Object mWifiExpectedStateLock = new Object();
+        private boolean mWifiExpectedState = false;
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            final String action = intent.getAction();
+            if (action == null) {
+                logd("BTWifiNFCStateReceiver NULL action for intent " + intent);
+                return;
+            }
+            logd("BTWifiNFCStateReceiver onReceive: action = " + action);
+
+            switch (action) {
+                case BluetoothAdapter.ACTION_STATE_CHANGED:
+                    int btState = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE,
+                            BluetoothAdapter.ERROR);
+                    logd("Bluetooth state updated to " + btState);
+
+                    synchronized (mBTExpectedStateLock) {
+                        if (mBTExpectedState == mBluetoothAdapter.isEnabled()) {
+                            try {
+                                mBTSemaphore.release();
+                            } catch (Exception e) {
+                                loge("BTWifiNFCStateReceiver onReceive(): Got exception, ex=" + e);
+                            }
+                        }
+                    }
+                    break;
+
+                case NfcAdapter.ACTION_ADAPTER_STATE_CHANGED:
+                    int nfcState = intent.getIntExtra(NfcAdapter.EXTRA_ADAPTER_STATE, -1);
+                    logd("Nfc state updated to " + nfcState);
+
+                    synchronized (mNfcExpectedStateLock) {
+                        if (mNfcExpectedState == mNfcAdapter.isEnabled()) {
+                            try {
+                                mNfcSemaphore.release();
+                            } catch (Exception e) {
+                                loge("BTWifiNFCStateReceiver onReceive(): Got exception, ex=" + e);
+                            }
+                        }
+                    }
+                    break;
+
+                case WifiManager.WIFI_STATE_CHANGED_ACTION:
+                    int wifiState = intent.getIntExtra(WifiManager.EXTRA_WIFI_STATE,
+                            WifiManager.WIFI_STATE_UNKNOWN);
+                    logd("Wifi state updated to " + wifiState);
+
+                    synchronized (mWifiExpectedStateLock) {
+                        if (mWifiExpectedState == mWifiManager.isWifiEnabled()) {
+                            try {
+                                mWifiSemaphore.release();
+                            } catch (Exception e) {
+                                loge("BTWifiNFCStateReceiver onReceive(): Got exception, ex=" + e);
+                            }
+                        }
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        public boolean waitUntilOnBTStateChanged() {
+            logd("waitUntilOnBTStateChanged");
+            synchronized (mBTExpectedStateLock) {
+                if (mBTExpectedState == mBluetoothAdapter.isEnabled()) {
+                    return true;
+                }
+            }
+
+            try {
+                if (!mBTSemaphore.tryAcquire(EXTERNAL_DEPENDENT_TIMEOUT,
+                        TimeUnit.MILLISECONDS)) {
+                    loge("BTWifiNFCStateReceiver waitUntilOnBTStateChanged: "
+                            + "Timeout to receive onStateChanged() callback");
+                    return false;
+                }
+            } catch (Exception ex) {
+                loge("BTWifiNFCStateReceiver waitUntilOnBTStateChanged: Got exception=" + ex);
+                return false;
+            }
+            return true;
+        }
+
+        public boolean waitUntilOnNfcStateChanged() {
+            synchronized (mNfcExpectedStateLock) {
+                if (mNfcExpectedState == mNfcAdapter.isEnabled()) {
+                    return true;
+                }
+            }
+
+            try {
+                if (!mNfcSemaphore.tryAcquire(EXTERNAL_DEPENDENT_TIMEOUT,
+                        TimeUnit.MILLISECONDS)) {
+                    loge("BTWifiNFCStateReceiver waitUntilOnNfcStateChanged: "
+                            + "Timeout to receive onStateChanged() callback");
+                    return false;
+                }
+            } catch (Exception ex) {
+                loge("BTWifiNFCStateReceiver waitUntilOnNfcStateChanged: Got exception=" + ex);
+                return false;
+            }
+            return true;
+        }
+
+        public boolean waitUntilOnWifiStateChanged() {
+            synchronized (mWifiExpectedStateLock) {
+                if (mWifiExpectedState == mWifiManager.isWifiEnabled()) {
+                    return true;
+                }
+            }
+
+            try {
+                if (!mWifiSemaphore.tryAcquire(EXTERNAL_DEPENDENT_TIMEOUT,
+                        TimeUnit.MILLISECONDS)) {
+                    loge("BTWifiNFCStateReceiver waitUntilOnWifiStateChanged: "
+                            + "Timeout to receive onStateChanged() callback");
+                    return false;
+                }
+            } catch (Exception ex) {
+                loge("BTWifiNFCStateReceiver waitUntilOnWifiStateChanged: Got exception=" + ex);
+                return false;
+            }
+            return true;
+        }
+
+        public void setBTExpectedState(boolean expectedState) {
+            synchronized (mBTExpectedStateLock) {
+                mBTExpectedState = expectedState;
+                mBTSemaphore.drainPermits();
+            }
+        }
+
+        public void setWifiExpectedState(boolean expectedState) {
+            synchronized (mWifiExpectedStateLock) {
+                mWifiExpectedState = expectedState;
+                mWifiSemaphore.drainPermits();
+            }
+        }
+
+        public void setNfcExpectedState(boolean expectedState) {
+            synchronized (mNfcExpectedStateLock) {
+                mNfcExpectedState = expectedState;
+                mNfcSemaphore.drainPermits();
+            }
+        }
     }
 
     protected static void logd(@NonNull String log) {
