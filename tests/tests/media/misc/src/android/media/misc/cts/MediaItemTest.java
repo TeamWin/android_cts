@@ -15,23 +15,34 @@
  */
 package android.media.misc.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import android.media.MediaDescription;
 import android.media.browse.MediaBrowser.MediaItem;
 import android.media.cts.NonMediaMainlineTest;
 import android.os.Parcel;
-import android.test.AndroidTestCase;
 import android.text.TextUtils;
+
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 /**
  * Test {@link android.media.browse.MediaBrowser.MediaItem}.
  */
 @NonMediaMainlineTest
-public class MediaItemTest extends AndroidTestCase {
+@RunWith(AndroidJUnit4.class)
+public class MediaItemTest {
     private static final String DESCRIPTION = "test_description";
     private static final String MEDIA_ID = "test_media_id";
     private static final String TITLE = "test_title";
     private static final String SUBTITLE = "test_subtitle";
 
+    @Test
     public void testBrowsableMediaItem() {
         MediaDescription description = new MediaDescription.Builder()
                 .setDescription(DESCRIPTION).setMediaId(MEDIA_ID)
@@ -58,6 +69,7 @@ public class MediaItemTest extends AndroidTestCase {
         p.recycle();
     }
 
+    @Test
     public void testPlayableMediaItem() {
         MediaDescription description = new MediaDescription.Builder()
                 .setDescription(DESCRIPTION).setMediaId(MEDIA_ID)
