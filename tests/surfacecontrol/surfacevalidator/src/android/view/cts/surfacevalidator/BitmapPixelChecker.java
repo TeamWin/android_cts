@@ -16,10 +16,27 @@
 
 package android.view.cts.surfacevalidator;
 
+import static android.view.WindowInsets.Type.displayCutout;
+import static android.view.WindowInsets.Type.systemBars;
+
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
+import android.app.Activity;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.graphics.Insets;
 import android.graphics.Rect;
+import android.os.Environment;
 import android.util.Log;
+
+import androidx.test.platform.app.InstrumentationRegistry;
+
+import org.junit.rules.TestName;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 
 public class BitmapPixelChecker {
     private static final String TAG = "BitmapPixelChecker";
@@ -61,5 +78,71 @@ public class BitmapPixelChecker {
 
     public PixelColor getExpectedColor(int x, int y) {
         return mPixelColor;
+    }
+
+    public static void validateScreenshot(TestName testName, Activity activity,
+            BitmapPixelChecker pixelChecker, int expectedMatchingPixels) {
+        Bitmap screenshot =
+                InstrumentationRegistry.getInstrumentation().getUiAutomation().takeScreenshot(
+                        activity.getWindow());
+        assertNotNull("Failed to generate a screenshot", screenshot);
+        Bitmap swBitmap = screenshot.copy(Bitmap.Config.ARGB_8888, false);
+        screenshot.recycle();
+
+        Rect insets = getInsets(activity);
+
+        int width = swBitmap.getWidth();
+        int height = swBitmap.getHeight();
+
+        // Exclude insets in case the device doesn't support hiding insets.
+        Rect bounds = new Rect(insets.left, insets.top, width - insets.right,
+                height - insets.bottom);
+        Log.d(TAG, "Checking bounds " + bounds);
+        int numMatchingPixels = pixelChecker.getNumMatchingPixels(swBitmap, bounds);
+        boolean numMatches = expectedMatchingPixels == numMatchingPixels;
+        if (!numMatches) {
+            saveFailureCaptures(swBitmap, activity.getClass(), testName);
+        }
+        assertTrue("Expected " + expectedMatchingPixels + " received " + numMatchingPixels
+                + " matching pixels in bitmap(" + width + "," + height + ")", numMatches);
+
+        swBitmap.recycle();
+    }
+
+    private static void saveFailureCaptures(Bitmap failFrame, Class<?> clazz, TestName name) {
+        String directoryName = Environment.getExternalStorageDirectory()
+                + "/" + clazz.getSimpleName()
+                + "/" + name.getMethodName();
+        File testDirectory = new File(directoryName);
+        if (testDirectory.exists()) {
+            String[] children = testDirectory.list();
+            if (children != null) {
+                for (String file : children) {
+                    new File(testDirectory, file).delete();
+                }
+            }
+        } else {
+            testDirectory.mkdirs();
+        }
+
+        String bitmapName = "frame.png";
+        Log.d(TAG, "Saving file : " + bitmapName + " in directory : " + directoryName);
+
+        File file = new File(directoryName, bitmapName);
+        try (FileOutputStream fileStream = new FileOutputStream(file)) {
+            failFrame.compress(Bitmap.CompressFormat.PNG, 85, fileStream);
+            fileStream.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static Rect getInsets(Activity activity) {
+        Insets insets = activity.getWindow()
+                .getDecorView()
+                .getRootWindowInsets()
+                .getInsets(displayCutout() | systemBars());
+
+        return new Rect(insets.left, insets.top, insets.right, insets.bottom);
     }
 }
