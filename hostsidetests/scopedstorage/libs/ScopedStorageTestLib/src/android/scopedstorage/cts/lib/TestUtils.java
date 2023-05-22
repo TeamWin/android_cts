@@ -1670,15 +1670,34 @@ public class TestUtils {
 
     public static File[] getDefaultTopLevelDirs() {
         if (BuildCompat.isAtLeastS()) {
-            return new File[]{getAlarmsDir(), getAndroidDir(), getAudiobooksDir(), getDcimDir(),
-                    getDocumentsDir(), getDownloadDir(), getMusicDir(), getMoviesDir(),
-                    getNotificationsDir(), getPicturesDir(), getPodcastsDir(), getRecordingsDir(),
-                    getRingtonesDir()};
+            return new File[] {
+                getAlarmsDir(),
+                getAudiobooksDir(),
+                getDcimDir(),
+                getDocumentsDir(),
+                getDownloadDir(),
+                getMusicDir(),
+                getMoviesDir(),
+                getNotificationsDir(),
+                getPicturesDir(),
+                getPodcastsDir(),
+                getRecordingsDir(),
+                getRingtonesDir()
+            };
         }
-        return new File[]{getAlarmsDir(), getAndroidDir(), getAudiobooksDir(), getDcimDir(),
-                getDocumentsDir(), getDownloadDir(), getMusicDir(), getMoviesDir(),
-                getNotificationsDir(), getPicturesDir(), getPodcastsDir(),
-                getRingtonesDir()};
+        return new File[] {
+            getAlarmsDir(),
+            getAudiobooksDir(),
+            getDcimDir(),
+            getDocumentsDir(),
+            getDownloadDir(),
+            getMusicDir(),
+            getMoviesDir(),
+            getNotificationsDir(),
+            getPicturesDir(),
+            getPodcastsDir(),
+            getRingtonesDir()
+        };
     }
 
     private static void assertInputStreamContent(InputStream in, byte[] expectedContent)
