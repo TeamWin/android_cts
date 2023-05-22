@@ -31,14 +31,22 @@ import android.provider.DeviceConfig;
 import com.android.app.cts.broadcasts.Common;
 import com.android.app.cts.broadcasts.ICommandReceiver;
 import com.android.compatibility.common.util.AmUtils;
-import com.android.compatibility.common.util.DeviceConfigStateHelper;
+import com.android.compatibility.common.util.DeviceConfigStateChangerRule;
 import com.android.compatibility.common.util.SystemUtil;
 
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @RunWith(BroadcastsTestRunner.class)
 public class BroadcastFreezerTest extends BaseBroadcastTest {
+
+    @ClassRule
+    public static final DeviceConfigStateChangerRule sFreezerTimeoutRule =
+            new DeviceConfigStateChangerRule(getContext(),
+                    DeviceConfig.NAMESPACE_ACTIVITY_MANAGER_NATIVE_BOOT,
+                    KEY_FREEZE_DEBOUNCE_TIMEOUT,
+                    String.valueOf(SHORT_FREEZER_TIMEOUT_MS));
 
     // How much to delay freezing by.
     // Should be greater than SHORT_FREEZER_TIMEOUT_MS + ERROR_MARGIN_MS
@@ -53,11 +61,7 @@ public class BroadcastFreezerTest extends BaseBroadcastTest {
         assumeTrue(isAppFreezerEnabled());
 
         TestServiceConnection connection = bindToHelperService(HELPER_PKG1);
-        try (DeviceConfigStateHelper deviceConfigStateHelper = new DeviceConfigStateHelper(
-                DeviceConfig.NAMESPACE_ACTIVITY_MANAGER_NATIVE_BOOT)) {
-            deviceConfigStateHelper.set(KEY_FREEZE_DEBOUNCE_TIMEOUT,
-                    String.valueOf(SHORT_FREEZER_TIMEOUT_MS));
-
+        try {
             final Intent intent = new Intent(Common.ORDERED_BROADCAST_ACTION)
                     .putExtra(TEST_EXTRA1, TEST_VALUE1)
                     .setPackage(HELPER_PKG1);
