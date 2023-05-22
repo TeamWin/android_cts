@@ -172,29 +172,44 @@ public class MediaMetadataRetrieverTest {
         return ds;
     }
 
+    private static class WrappedDataSource extends MediaDataSource {
+        private final MediaDataSource mBackingMediaDataSource;
+        private boolean mFinished = false;
+
+        WrappedDataSource(MediaDataSource backingMediaDataSource) {
+            mBackingMediaDataSource = backingMediaDataSource;
+        }
+
+        @Override
+        public int readAt(long position, byte[] buffer, int offset, int size)
+                throws IOException {
+            return mBackingMediaDataSource.readAt(position, buffer, offset, size);
+        }
+
+        @Override
+        public long getSize() throws IOException {
+            return mBackingMediaDataSource.getSize();
+        }
+
+        @Override
+        public void close() throws IOException {
+            mBackingMediaDataSource.close();
+            if (!mFinished) {
+                throw new IOException();
+            }
+        }
+
+        public void finish() {
+            mFinished = true;
+        }
+    }
+
     @Test
     public void testExceptionWhileClosingMediaDataSource() throws IOException {
         MediaDataSource backingMediaDataSource =
                 TestMediaDataSource.fromAssetFd(
                         getAssetFileDescriptorFor("audio_with_metadata.mp3"));
-        MediaDataSource mediaDataSource = new MediaDataSource() {
-            @Override
-            public int readAt(long position, byte[] buffer, int offset, int size)
-                    throws IOException {
-                return backingMediaDataSource.readAt(position, buffer, offset, size);
-            }
-
-            @Override
-            public long getSize() throws IOException {
-                return backingMediaDataSource.getSize();
-            }
-
-            @Override
-            public void close() throws IOException {
-                backingMediaDataSource.close();
-                throw new IOException();
-            }
-        };
+        WrappedDataSource mediaDataSource = new WrappedDataSource(backingMediaDataSource);
         mRetriever.setDataSource(mediaDataSource);
         try {
             mRetriever.release();
@@ -202,6 +217,10 @@ public class MediaMetadataRetrieverTest {
         } catch (IOException e) {
             // Expected.
         }
+        // MediaDataSource implements Closeable interface, so the finalizer will
+        // try to close the object. If close() always throws an exception, the
+        // finalizer will bring down the test.
+        mediaDataSource.finish();
     }
 
     @Test
