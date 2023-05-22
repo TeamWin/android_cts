@@ -147,6 +147,11 @@ public class AudioMicrophoneMuteToggleActivity extends PassFailButtons.Activity 
     }
 
     @Override
+    public boolean requiresReportLog() {
+        return true;
+    }
+
+    @Override
     public void recordTestResults() {
         CtsVerifierReportLog reportLog = getReportLog();
 
