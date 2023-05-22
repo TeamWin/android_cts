@@ -23,10 +23,12 @@ import static android.server.wm.app.Components.TURN_SCREEN_ON_ACTIVITY;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 import android.content.ContentResolver;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.os.PowerManager;
 import android.os.SystemClock;
@@ -56,6 +58,8 @@ public class KeepScreenOnTests extends MultiDisplayTestBase {
                 Settings.Global.getInt(mContentResolver, STAY_ON_WHILE_PLUGGED_IN);
         Settings.Global.putInt(mContentResolver, STAY_ON_WHILE_PLUGGED_IN, 0);
         mPowerManager = mContext.getSystemService(PowerManager.class);
+        assumeFalse("Automotive main display is always on - skipping test",
+                mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE));
     }
 
     @After
