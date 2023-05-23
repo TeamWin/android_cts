@@ -350,7 +350,6 @@ void UsageTest::SetUp() {
 
 TEST_P(UsageTest, checkAttributes) {
     checkAttributes();
-    usleep(500 * 1000); // wait for previous stream to completely close
 }
 
 INSTANTIATE_TEST_CASE_P(AAudioTestAttributes, UsageTest,
