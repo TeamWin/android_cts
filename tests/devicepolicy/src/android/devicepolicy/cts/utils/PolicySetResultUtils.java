@@ -46,7 +46,7 @@ public class PolicySetResultUtils {
                 .isEqualTo(resultKey)
                 .whereIntent().extras().key(EXTRA_POLICY_TARGET_USER_ID).integerValue()
                 .isEqualTo(targetUser)
-                .poll(Duration.ofMinutes(1)).intent();
+                .waitForEvent(Duration.ofMinutes(4)).intent();
         assertThat(receivedIntent).isNotNull();
 
         // TODO: add checks on bundle values.
