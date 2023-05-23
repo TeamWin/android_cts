@@ -37,6 +37,7 @@ import android.media.cts.TestArgs;
 import android.opengl.GLES20;
 import android.opengl.GLES30;
 import android.os.Build;
+import android.platform.test.annotations.PlatinumTest;
 import android.util.Log;
 
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -74,6 +75,7 @@ import java.util.List;
  * no longer exercising the code in the way we expect it to be used (and the code
  * gets a bit unwieldy).
  */
+@PlatinumTest(focusArea = "media")
 @RunWith(Parameterized.class)
 public class DecodeEditEncodeTest {
     private static final String TAG = "DecodeEditEncode";
