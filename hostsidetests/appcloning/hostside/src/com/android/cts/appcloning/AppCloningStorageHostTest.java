@@ -18,6 +18,8 @@ package com.android.cts.appcloning;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assume.assumeTrue;
+
 import com.android.tradefed.invoker.TestInformation;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BeforeClassWithInfo;
@@ -48,6 +50,7 @@ public class AppCloningStorageHostTest extends AppCloningBaseHostTest {
 
     @Test
     public void testVerifyStatsExternalForClonedUser() throws Exception {
+        assumeTrue(isAtLeastU(sDevice));
         installPackage(APK_STATS, "--user all");
         runDeviceTestAsUser(PKG_STATS, CLASS_STATS, "testVerifyStatsExternal",
                 Integer.parseInt(sCloneUserId), new HashMap<>());

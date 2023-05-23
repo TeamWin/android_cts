@@ -37,4 +37,6 @@ android_test_helper_app {
     dex_preopt: {
         enabled: false,
     },
+    target_sdk_version: "34",
+    min_sdk_version: "34",
 }
