@@ -19,8 +19,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           package="com.android.bedstead.testapp.MLCTestApp">
 
-    <application android:label="MLCTestApp">
-        <meta-data android:name="test-metadata-key" android:value="test-metadata-value" />
+    <application android:label="MLCTestApp" android:icon="@drawable/ic_launcher">
+        <meta-data android:name="test-metadata-key" android:value="test-metadata-value"/>
 
 
         <activity android:name="android.testapp.CrossProfileSharingActivity"
