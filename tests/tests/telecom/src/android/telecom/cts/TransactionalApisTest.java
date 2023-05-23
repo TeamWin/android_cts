@@ -236,8 +236,10 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
     @Override
     public void tearDown() throws Exception {
         Log.i(TAG, "tearDown");
-        cleanup();
-        mNotificationManager.deleteNotificationChannel(CALL_CHANNEL_ID); // tear down channel
+        if (mShouldTestTelecom) {
+            cleanup();
+            mNotificationManager.deleteNotificationChannel(CALL_CHANNEL_ID); // tear down channel
+        }
         super.tearDown();
     }
 
