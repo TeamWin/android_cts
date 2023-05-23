@@ -117,6 +117,7 @@ abstract class DomainVerificationIntentTestBase(
         )
 
         val intent = Intent(Intent.ACTION_VIEW, Uri.parse("http://$domain"))
+            .addFlags(Intent.FLAG_DEBUG_LOG_RESOLUTION)
             .applyIntentVariant(intentVariant)
 
         // Pass MATCH_DEFAULT_ONLY to mirror startActivity resolution
