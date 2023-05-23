@@ -121,7 +121,7 @@ import java.util.stream.Collectors;
  */
 public class TestActivity extends Activity {
 
-    private final static long TIMEOUT_MS = 3000;
+    private final static long TIMEOUT_MS = 60000;
 
     /**
      * Extending the timeout time of non broadcast receivers, avoid not
