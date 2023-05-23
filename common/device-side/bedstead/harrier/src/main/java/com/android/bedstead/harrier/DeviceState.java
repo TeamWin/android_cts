@@ -270,10 +270,37 @@ public final class DeviceState extends HarrierRule {
             Duration.ofMillis(
                     Long.parseLong(TestApis.instrumentation().arguments().getString(
                             "timeout_msec", "600000")) - 2000);
+
+    // We allow overriding the limit on a class-by-class basis
+    private final Duration mMaxTestDuration;
+
     private final ExecutorService mTestExecutor = Executors.newSingleThreadExecutor();
     private Thread mTestThread;
 
-    public DeviceState() {
+    public static final class Builder {
+
+        private Duration mMaxTestDuration = MAX_TEST_DURATION;
+
+        private Builder() {
+
+        }
+
+        public Builder maxTestDuration(Duration maxTestDuration) {
+            mMaxTestDuration = maxTestDuration;
+            return this;
+        }
+
+        public DeviceState build() {
+            return new DeviceState(mMaxTestDuration);
+        }
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public DeviceState(Duration maxTestDuration) {
+        mMaxTestDuration = maxTestDuration;
         Future<Thread> testThreadFuture = mTestExecutor.submit(Thread::currentThread);
 
         mSkipTestTeardown = TestApis.instrumentation().arguments().getBoolean(
@@ -302,6 +329,10 @@ public final class DeviceState extends HarrierRule {
             throw new AssertionError(
                     "Error setting up DeviceState. Interrupted getting test thread", e);
         }
+    }
+
+    public DeviceState() {
+        this(MAX_TEST_DURATION);
     }
 
     @Override
@@ -339,7 +370,7 @@ public final class DeviceState extends HarrierRule {
 
                 Throwable t;
                 try {
-                    t = future.get(MAX_TEST_DURATION.getSeconds(), TimeUnit.SECONDS);
+                    t = future.get(mMaxTestDuration.getSeconds(), TimeUnit.SECONDS);
                 } catch (TimeoutException e) {
                     StackTraceElement[] stack = mTestThread.getStackTrace();
                     future.cancel(true);
