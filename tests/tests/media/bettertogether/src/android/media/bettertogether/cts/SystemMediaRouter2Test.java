@@ -41,10 +41,12 @@ import android.media.MediaRoute2Info;
 import android.media.MediaRouter2;
 import android.media.MediaRouter2.ControllerCallback;
 import android.media.MediaRouter2.RouteCallback;
+import android.media.MediaRouter2.RouteListingPreferenceCallback;
 import android.media.MediaRouter2.RoutingController;
 import android.media.MediaRouter2.TransferCallback;
 import android.media.MediaRouter2Manager;
 import android.media.RouteDiscoveryPreference;
+import android.media.RouteListingPreference;
 import android.media.RoutingSessionInfo;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.LargeTest;
@@ -56,8 +58,11 @@ import androidx.test.platform.app.InstrumentationRegistry;
 import com.android.compatibility.common.util.NonMainlineTest;
 import com.android.compatibility.common.util.PollingCheck;
 
+import com.google.common.truth.Expect;
+
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -66,6 +71,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -77,6 +83,8 @@ import java.util.concurrent.TimeUnit;
 @NonMainlineTest
 public class SystemMediaRouter2Test {
     private static final String TAG = "SystemMR2Test";
+
+    @Rule public final Expect expect = Expect.create();
 
     UiAutomation mUiAutomation;
     Context mContext;
@@ -166,6 +174,9 @@ public class SystemMediaRouter2Test {
         releaseAllSessions();
         // unregister callbacks
         clearCallbacks();
+
+        // Clearing RouteListingPreference.
+        mAppRouter2.setRouteListingPreference(null);
 
         mUiAutomation.dropShellPermissionIdentity();
     }
@@ -345,6 +356,76 @@ public class SystemMediaRouter2Test {
 
         mService.removeRoute(ROUTE_ID2);
         assertThat(removedLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)).isTrue();
+    }
+
+    @Test
+    public void setRouteListingPreference_callsOnRouteListingPreferenceChanged()
+            throws InterruptedException {
+        RouteListingPreference.Item item =
+                new RouteListingPreference.Item.Builder(ROUTE_ID1).build();
+        RouteListingPreference testPreference =
+                new RouteListingPreference.Builder()
+                        .setItems(List.of(item))
+                        .build();
+
+        assertThat(mAppRouter2.getRouteListingPreference()).isNull();
+        assertThat(mSystemRouter2ForCts.getRouteListingPreference()).isNull();
+
+        CountDownLatch preferenceChangedLatch = new CountDownLatch(1);
+        RouteListingPreferenceCallback routeListingPreferenceCallback =
+                new RouteListingPreferenceCallback() {
+                    @Override
+                    public void onRouteListingPreferenceChanged(RouteListingPreference preference) {
+                        if (Objects.equals(preference, testPreference)) {
+                            preferenceChangedLatch.countDown();
+                        }
+                    }
+                };
+        try {
+            mSystemRouter2ForCts.registerRouteListingPreferenceCallback(
+                    mExecutor, routeListingPreferenceCallback);
+
+            mAppRouter2.setRouteListingPreference(testPreference);
+            assertThat(preferenceChangedLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)).isTrue();
+        } finally {
+            mSystemRouter2ForCts.unregisterRouteListingPreferenceCallback(
+                    routeListingPreferenceCallback);
+        }
+    }
+
+    @Test
+    public void getRouteListingPreference_returnsLastSetPreference() throws InterruptedException {
+        RouteListingPreference.Item item =
+                new RouteListingPreference.Item.Builder(ROUTE_ID1).build();
+        RouteListingPreference testPreference =
+                new RouteListingPreference.Builder()
+                        .setItems(Collections.singletonList(item))
+                        .build();
+
+        assertThat(mAppRouter2.getRouteListingPreference()).isNull();
+        assertThat(mSystemRouter2ForCts.getRouteListingPreference()).isNull();
+
+        CountDownLatch preferenceChangedLatch = new CountDownLatch(1);
+        RouteListingPreferenceCallback routeListingPreferenceCallback =
+                new RouteListingPreferenceCallback() {
+                    @Override
+                    public void onRouteListingPreferenceChanged(RouteListingPreference preference) {
+                        if (Objects.equals(preference, testPreference)) {
+                            preferenceChangedLatch.countDown();
+                        }
+                    }
+                };
+        try {
+            mSystemRouter2ForCts.registerRouteListingPreferenceCallback(
+                    mExecutor, routeListingPreferenceCallback);
+
+            mAppRouter2.setRouteListingPreference(testPreference);
+            expect.that(preferenceChangedLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)).isTrue();
+            assertThat(mSystemRouter2ForCts.getRouteListingPreference()).isEqualTo(testPreference);
+        } finally {
+            mSystemRouter2ForCts.unregisterRouteListingPreferenceCallback(
+                    routeListingPreferenceCallback);
+        }
     }
 
     @Test

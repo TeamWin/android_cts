@@ -81,6 +81,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -150,6 +151,8 @@ public class MediaRouter2Test {
     @After
     public void tearDown() throws Exception {
         mRouter2.unregisterRouteCallback(mRouterDummyCallback);
+        // Clearing RouteListingPreference.
+        mRouter2.setRouteListingPreference(null);
         MediaRouter2TestActivity.finishActivity();
         if (mService != null) {
             mService.clear();
@@ -1156,6 +1159,46 @@ public class MediaRouter2Test {
                 () ->
                         setRouteListingPreferenceWithComponentName(
                                 new ComponentName(mContext, PlaceholderService.class)));
+    }
+
+    @Test
+    public void setRouteListingPreference_callsOnRouteListingPreferenceChanged()
+            throws InterruptedException {
+        assertThat(mRouter2.getRouteListingPreference()).isNull();
+
+        RouteListingPreference testPreference = new RouteListingPreference.Builder().build();
+        CountDownLatch preferenceChangedLatch = new CountDownLatch(1);
+        MediaRouter2.RouteListingPreferenceCallback callback =
+                new MediaRouter2.RouteListingPreferenceCallback() {
+                    @Override
+                    public void onRouteListingPreferenceChanged(RouteListingPreference preference) {
+                        if (Objects.equals(preference, testPreference)) {
+                            preferenceChangedLatch.countDown();
+                        }
+                    }
+                };
+
+        try {
+            mRouter2.registerRouteListingPreferenceCallback(mExecutor, callback);
+
+            mRouter2.setRouteListingPreference(testPreference);
+            assertThat(preferenceChangedLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)).isTrue();
+        } finally {
+            mRouter2.unregisterRouteListingPreferenceCallback(callback);
+        }
+    }
+
+    @Test
+    public void getRouteListingPreference_returnsLastSetPreference() {
+        RouteListingPreference testPreference = new RouteListingPreference.Builder().build();
+
+        mRouter2.setRouteListingPreference(testPreference);
+        assertThat(mRouter2.getRouteListingPreference()).isEqualTo(testPreference);
+    }
+
+    @Test
+    public void getRouteListingPreference_withNoSetPreference_returnsNull() {
+        assertThat(mRouter2.getRouteListingPreference()).isNull();
     }
 
     private void setRouteListingPreferenceWithComponentName(ComponentName componentName) {
