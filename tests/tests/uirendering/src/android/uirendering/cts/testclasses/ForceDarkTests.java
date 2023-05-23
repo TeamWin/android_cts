@@ -16,6 +16,7 @@
 
 package android.uirendering.cts.testclasses;
 
+import android.Manifest;
 import android.app.UiModeManager;
 import android.content.Context;
 import android.graphics.Color;
@@ -51,14 +52,19 @@ public class ForceDarkTests extends ActivityTestBase {
                 InstrumentationRegistry.getContext().getSystemService(Context.UI_MODE_SERVICE);
         sPreviousUiMode = uiManager.getNightMode();
         if (sPreviousUiMode != UiModeManager.MODE_NIGHT_YES) {
-            SystemUtil.runShellCommand("service call uimode 4 i32 2");
+            SystemUtil.runWithShellPermissionIdentity(
+                    () -> uiManager.setNightMode(UiModeManager.MODE_NIGHT_YES),
+                    Manifest.permission.MODIFY_DAY_NIGHT_MODE);
         }
     }
 
     @AfterClass
     public static void restoreForceDarkSetting() {
+        UiModeManager uiManager = (UiModeManager)
+                InstrumentationRegistry.getContext().getSystemService(Context.UI_MODE_SERVICE);
         if (sPreviousUiMode != UiModeManager.MODE_NIGHT_YES) {
-            SystemUtil.runShellCommand("service call uimode 4 i32 " + sPreviousUiMode);
+            SystemUtil.runWithShellPermissionIdentity(() -> uiManager.setNightMode(sPreviousUiMode),
+                    Manifest.permission.MODIFY_DAY_NIGHT_MODE);
         }
     }
 
