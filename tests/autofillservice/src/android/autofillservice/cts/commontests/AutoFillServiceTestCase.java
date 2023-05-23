@@ -468,7 +468,8 @@ public final class AutoFillServiceTestCase {
             // Collapse notifications.
             runShellCommand("cmd statusbar collapse");
 
-            assumeFalse("Device is half-folded", Helper.isDeviceHalfFolded(mContext));
+            assumeFalse("Device is half-folded",
+                    Helper.isDeviceInState(mContext, Helper.DeviceStateEnum.HALF_FOLDED));
 
             // Set orientation as portrait, otherwise some tests might fail due to elements not
             // fitting in, IME orientation, etc...

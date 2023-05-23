@@ -168,6 +168,8 @@ public class AugmentedLoginActivityTest
     @Test
     @AppModeFull(reason = "testAutoFill_mainServiceReturnedNull_augmentedAutofillOneField enough")
     public void testAutoFill_neitherServiceCanAutofill_thenManualRequest() throws Exception {
+        assumeTrue("Device state is not REAR_DISPLAY",
+                !Helper.isDeviceInState(mContext, Helper.DeviceStateEnum.REAR_DISPLAY));
         // Set services
         enableService();
         enableAugmentedService();
@@ -742,6 +744,8 @@ public class AugmentedLoginActivityTest
     @AppModeFull(reason = "testAutoFill_mainServiceReturnedNull_augmentedAutofillOneField enough")
     public void testAugmentedAutoFill_rotateDevice() throws Exception {
         assumeTrue("Rotation is supported", Helper.isRotationSupported(mContext));
+        assumeTrue("Device state is not REAR_DISPLAY",
+                !Helper.isDeviceInState(mContext, Helper.DeviceStateEnum.REAR_DISPLAY));
 
         // Set services
         enableService();
