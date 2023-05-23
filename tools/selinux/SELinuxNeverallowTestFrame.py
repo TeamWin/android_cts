@@ -156,7 +156,7 @@ src_method = """
 
         /* run sepolicy-analyze neverallow check on policy file using given neverallow rules */
         ProcessBuilder pb = new ProcessBuilder(sepolicyAnalyze.getAbsolutePath(),
-                policyFile.getAbsolutePath(), "neverallow", "-w", "-n",
+                policyFile.getAbsolutePath(), "neverallow", "-n",
                 neverallowRule);
         pb.redirectOutput(ProcessBuilder.Redirect.PIPE);
         pb.redirectErrorStream(true);
