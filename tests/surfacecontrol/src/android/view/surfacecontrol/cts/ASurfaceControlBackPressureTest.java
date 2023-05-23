@@ -16,7 +16,6 @@
 
 package android.view.surfacecontrol.cts;
 
-import static android.server.wm.WindowManagerState.getLogicalDisplaySize;
 import static android.view.cts.util.ASurfaceControlTestUtils.TransactionCompleteListener;
 import static android.view.cts.util.ASurfaceControlTestUtils.applyAndDeleteSurfaceTransaction;
 import static android.view.cts.util.ASurfaceControlTestUtils.nSurfaceControl_createFromWindow;
@@ -92,7 +91,6 @@ public class ASurfaceControlBackPressureTest {
     @Before
     public void setup() {
         mActivity = mActivityRule.getActivity();
-        mActivity.setLogicalDisplaySize(getLogicalDisplaySize());
         assumeFalse(mActivity.isOnWatch());
     }
 

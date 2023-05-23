@@ -33,6 +33,8 @@ import android.util.SparseArray;
 import android.view.Surface;
 
 
+import androidx.annotation.Nullable;
+
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -84,8 +86,7 @@ public class SurfacePixelValidator2 {
 
                     int totalFramesSeen;
                     boolean success = mPixelChecker.validatePlane(plane, mFrameNumber++,
-                            mBoundsToCheck,
-                            mWidth, mHeight);
+                            mBoundsToCheck, mWidth, mHeight);
                     if (success) {
                         mResultSuccessFrames++;
                     } else {
@@ -120,8 +121,8 @@ public class SurfacePixelValidator2 {
                 }
             };
 
-    public SurfacePixelValidator2(Point size, Rect boundsToCheck, PixelChecker pixelChecker,
-            int requiredNumFrames) {
+    public SurfacePixelValidator2(Point size, @Nullable Rect boundsToCheck,
+            PixelChecker pixelChecker, int requiredNumFrames) {
         mWidth = size.x;
         mHeight = size.y;
 
@@ -129,7 +130,14 @@ public class SurfacePixelValidator2 {
         mWorkerThread.start();
 
         mPixelChecker = pixelChecker;
-        mBoundsToCheck = new Rect(boundsToCheck);
+        if (boundsToCheck == null) {
+            mBoundsToCheck = new Rect(0, 0, mWidth, mHeight);
+        } else {
+            mBoundsToCheck = new Rect(boundsToCheck);
+        }
+
+        Log.d(TAG, "boundsToCheck=" + mBoundsToCheck + " size=" + mWidth + "x" + mHeight);
+
         mRequiredNumFrames = requiredNumFrames;
         mHandler = new Handler(mWorkerThread.getLooper());
 

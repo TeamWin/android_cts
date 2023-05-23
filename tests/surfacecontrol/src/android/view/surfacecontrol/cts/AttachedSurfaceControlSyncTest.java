@@ -15,8 +15,6 @@
  */
 package android.view.surfacecontrol.cts;
 
-import static android.server.wm.WindowManagerState.getLogicalDisplaySize;
-
 import android.animation.ObjectAnimator;
 import android.animation.PropertyValuesHolder;
 import android.animation.ValueAnimator;
@@ -166,7 +164,7 @@ public class AttachedSurfaceControlSyncTest {
     }
 
     private static final AnimationFactory sTranslateAnimationFactory = view -> {
-        Property<View, Integer> translationX = new IntProperty<View>("translationX") {
+        Property<View, Integer> translationX = new IntProperty<>("translationX") {
             @Override
             public void setValue(View object, int value) {
                 object.setTranslationX(value);
@@ -198,7 +196,6 @@ public class AttachedSurfaceControlSyncTest {
     @Before
     public void setup() {
         mActivity = mActivityRule.getActivity();
-        mActivity.setLogicalDisplaySize(getLogicalDisplaySize());
     }
 
     /** Draws a moving 10x10 green rectangle with hole punch, make sure we don't get any sync errors */
