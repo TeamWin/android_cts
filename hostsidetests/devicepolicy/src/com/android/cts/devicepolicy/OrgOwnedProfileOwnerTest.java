@@ -346,11 +346,6 @@ public final class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
     }
 
     @Test
-    public void testAdminConfiguredNetworks() throws Exception {
-        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".AdminConfiguredNetworksTest", mUserId);
-    }
-
-    @Test
     public void testSetKeyguardDisabledFeatures() throws Exception {
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".KeyguardDisabledFeaturesTest",
                 "testSetKeyguardDisabledFeatures_onParent", mUserId);
@@ -435,20 +430,6 @@ public final class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
         // Active IME should not be suspended.
         assertCanStartPersonalApp(TEST_IME_PKG, true);
         setPersonalAppsSuspended(false);
-    }
-
-    @Test
-    public void testCanRestrictAccountManagementOnParentProfile() throws Exception {
-        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".AccountManagementParentTest",
-                "testSetAccountManagementDisabledOnParent", mUserId);
-        installAppAsUser(DEVICE_ADMIN_APK, mPrimaryUserId);
-        try {
-            runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".AccountManagementParentTest",
-                    "testAccountManagementDisabled", mPrimaryUserId);
-        } finally {
-            runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".AccountManagementParentTest",
-                    "testEnableAccountManagement", mUserId);
-        }
     }
 
     @Test

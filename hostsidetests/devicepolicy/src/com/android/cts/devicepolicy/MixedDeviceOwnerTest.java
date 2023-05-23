@@ -152,11 +152,6 @@ public final class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
     }
 
     @Test
-    public void testAdminConfiguredNetworks() throws Exception {
-        executeDeviceTestClass(".AdminConfiguredNetworksTest");
-    }
-
-    @Test
     public void testLockScreenInfo() throws Exception {
         executeDeviceTestClass(".LockScreenInfoTest");
 
