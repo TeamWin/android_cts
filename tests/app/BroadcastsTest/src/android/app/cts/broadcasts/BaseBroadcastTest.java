@@ -86,7 +86,7 @@ abstract class BaseBroadcastTest {
 
     @Before
     public void setUp() {
-        mContext = InstrumentationRegistry.getInstrumentation().getContext();
+        mContext = getContext();
         mAm = mContext.getSystemService(ActivityManager.class);
         AmUtils.waitForBroadcastBarrier();
     }
@@ -114,6 +114,10 @@ abstract class BaseBroadcastTest {
                 connection.unbind();
             }
         }
+    }
+
+    protected static Context getContext() {
+        return InstrumentationRegistry.getInstrumentation().getContext();
     }
 
     protected void forceDelayBroadcasts(String targetPackage) {

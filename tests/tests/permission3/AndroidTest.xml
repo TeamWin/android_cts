@@ -75,6 +75,8 @@
     <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
         <option name="run-command" value="appops set android.permission3.cts REQUEST_INSTALL_PACKAGES allow" />
         <option name="run-command" value="am wait-for-broadcast-barrier"  />
+        <!-- ensure user setup is completed -->
+        <option name="run-command" value="settings put secure user_setup_complete 1" />
     </target_preparer>
 
     <metrics_collector class="com.android.tradefed.device.metric.FilePullerLogCollector">

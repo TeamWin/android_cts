@@ -28,8 +28,9 @@ import android.provider.DeviceConfig;
 
 import com.android.app.cts.broadcasts.ICommandReceiver;
 import com.android.compatibility.common.util.AmUtils;
-import com.android.compatibility.common.util.DeviceConfigStateHelper;
+import com.android.compatibility.common.util.DeviceConfigStateChangerRule;
 
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -38,17 +39,20 @@ import java.util.List;
 @RunWith(BroadcastsTestRunner.class)
 public class BroadcastDeferralTest extends BaseBroadcastTest {
 
+    @ClassRule
+    public static final DeviceConfigStateChangerRule sFreezerTimeoutRule =
+            new DeviceConfigStateChangerRule(getContext(),
+                    DeviceConfig.NAMESPACE_ACTIVITY_MANAGER_NATIVE_BOOT,
+                    KEY_FREEZE_DEBOUNCE_TIMEOUT,
+                    String.valueOf(SHORT_FREEZER_TIMEOUT_MS));
+
     @Test
     public void testFgBroadcastDeliveryToFrozenApp_withDeferUntilActive() throws Exception {
         assumeTrue(isModernBroadcastQueueEnabled());
         assumeTrue(isAppFreezerEnabled());
 
         final TestServiceConnection connection1 = bindToHelperService(HELPER_PKG1);
-        try (DeviceConfigStateHelper deviceConfigStateHelper = new DeviceConfigStateHelper(
-                DeviceConfig.NAMESPACE_ACTIVITY_MANAGER_NATIVE_BOOT)) {
-            deviceConfigStateHelper.set(KEY_FREEZE_DEBOUNCE_TIMEOUT,
-                    String.valueOf(SHORT_FREEZER_TIMEOUT_MS));
-
+        try {
             final Intent intent = new Intent(TEST_ACTION1)
                     .addFlags(Intent.FLAG_RECEIVER_FOREGROUND)
                     .putExtra(TEST_EXTRA1, TEST_VALUE1)
@@ -118,11 +122,7 @@ public class BroadcastDeferralTest extends BaseBroadcastTest {
         final TestServiceConnection connection1 = bindToHelperService(HELPER_PKG1);
         ICommandReceiver cmdReceiver1;
         ICommandReceiver cmdReceiver2;
-        try (DeviceConfigStateHelper deviceConfigStateHelper = new DeviceConfigStateHelper(
-                DeviceConfig.NAMESPACE_ACTIVITY_MANAGER_NATIVE_BOOT)) {
-            deviceConfigStateHelper.set(KEY_FREEZE_DEBOUNCE_TIMEOUT,
-                    String.valueOf(SHORT_FREEZER_TIMEOUT_MS));
-
+        try {
             final Intent intent = new Intent(TEST_ACTION1)
                     .addFlags(Intent.FLAG_RECEIVER_FOREGROUND)
                     .putExtra(TEST_EXTRA1, TEST_VALUE1)

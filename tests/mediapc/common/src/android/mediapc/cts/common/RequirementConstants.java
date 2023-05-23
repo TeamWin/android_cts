@@ -98,7 +98,7 @@ public class RequirementConstants {
     public static final String PHYSICAL_MEMORY = "physical_memory_mb";
     public static final String CODEC_INIT_LATENCY = "codec_initialization_latency_ms";
     public static final String AV1_DEC_REQ = "av1_decoder_requirement_boolean";
-    public static final String AVIF_DEC_REQ = "AVIF_image_decoder";
+    public static final String AVIF_DEC_REQ = "avif_image_decoder_boolean";
     public static final String RGBA_1010102_COLOR_FORMAT_REQ = "rgba_1010102_color_format";
     public static final String NUM_4k_HW_DEC = "number_4k_hw_decoders";
     public static final String NUM_4k_HW_ENC = "number_4k_hw_encoders";
@@ -107,7 +107,7 @@ public class RequirementConstants {
         "number_crypto_hw_secure_all_support";
     public static final String FILESYSTEM_IO_RATE = "filesystem_io_rate_mbps";
 
-    public static final String EXT_YUV_EXTENSION = "EXT_YUV_target";
+    public static final String EXT_YUV_EXTENSION = "ext_yuv_target_supported";
 
     public static final String PRIMARY_CAMERA_AVAILABLE = "primary_camera_available";
     public static final String PRIMARY_CAMERA_RESOLUTION = "primary_camera_resolution";

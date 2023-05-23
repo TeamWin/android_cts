@@ -2452,8 +2452,6 @@ public class ActivityManagerFgsBgStartTest {
                                 Boolean.toString(enable), false);
                     }
             );
-            // Sleep 2 seconds to allow the device config change to be applied.
-            SystemClock.sleep(2000);
         } else {
             CtsAppTestUtils.executeShellCmd(mInstrumentation,
                     "am compat " + (enable ? "enable" : "disable")
