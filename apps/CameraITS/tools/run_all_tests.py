@@ -456,26 +456,33 @@ def main():
     subprocess.call(['chmod', 'g+rx', topdir])
   except OSError as e:
     logging.info(repr(e))
-  logging.info('Saving output files to: %s', topdir)
 
   scenes = []
   camera_id_combos = []
-  # Override camera & scenes with cmd line values if available
+  testbed_index = None
+  # Override camera, scenes and testbed with cmd line values if available
   for s in list(sys.argv[1:]):
     if 'scenes=' in s:
       scenes = s.split('=')[1].split(',')
     elif 'camera=' in s:
       camera_id_combos = s.split('=')[1].split(',')
+    elif 'testbed_index=' in s:
+      testbed_index = int(s.split('=')[1])
 
   # Read config file and extract relevant TestBed
   config_file_contents = get_config_file_contents()
-  for i in config_file_contents['TestBeds']:
-    if scenes == ['sensor_fusion']:
-      if TEST_KEY_SENSOR_FUSION not in i['Name'].lower():
-        config_file_contents['TestBeds'].remove(i)
-    else:
-      if TEST_KEY_SENSOR_FUSION in i['Name'].lower():
-        config_file_contents['TestBeds'].remove(i)
+  if testbed_index is None:
+    for i in config_file_contents['TestBeds']:
+      if scenes == ['sensor_fusion']:
+        if TEST_KEY_SENSOR_FUSION not in i['Name'].lower():
+          config_file_contents['TestBeds'].remove(i)
+      else:
+        if TEST_KEY_SENSOR_FUSION in i['Name'].lower():
+          config_file_contents['TestBeds'].remove(i)
+  else:
+    config_file_contents = {
+        'TestBeds': [config_file_contents['TestBeds'][testbed_index]]
+    }
 
   # Get test parameters from config file
   test_params_content = get_test_params(config_file_contents)
@@ -505,6 +512,7 @@ def main():
         device_id, _FRONT_CAMERA_ID)
 
   config_file_test_key = config_file_contents['TestBeds'][0]['Name'].lower()
+  logging.info('Saving %s output files to: %s', config_file_test_key, topdir)
   if TEST_KEY_TABLET in config_file_test_key:
     tablet_id = get_device_serial_number('tablet', config_file_contents)
     tablet_name_cmd = f'adb -s {tablet_id} shell getprop ro.build.product'
@@ -738,13 +746,15 @@ def main():
             print('Turn lights OFF in rig and press <ENTER> to continue.')
 
           # pylint: disable=subprocess-run-check
-          with open(MOBLY_TEST_SUMMARY_TXT_FILE, 'w') as fp:
+          with open(
+              os.path.join(topdir, MOBLY_TEST_SUMMARY_TXT_FILE), 'w') as fp:
             output = subprocess.run(cmd, stdout=fp)
           # pylint: enable=subprocess-run-check
 
           # Parse mobly logs to determine SKIP, NOT_YET_MANDATED, and
           # socket FAILs.
-          with open(MOBLY_TEST_SUMMARY_TXT_FILE, 'r') as file:
+          with open(
+              os.path.join(topdir, MOBLY_TEST_SUMMARY_TXT_FILE), 'r') as file:
             test_code = output.returncode
             test_skipped = False
             test_not_yet_mandated = False
@@ -788,8 +798,11 @@ def main():
               else:
                 num_fail += 1
                 break
-            os.remove(MOBLY_TEST_SUMMARY_TXT_FILE)
-        logging.info('%s %s/%s', return_string, s, test)
+            os.remove(os.path.join(topdir, MOBLY_TEST_SUMMARY_TXT_FILE))
+        status_prefix = ''
+        if testbed_index is not None:
+          status_prefix = config_file_test_key + ':'
+        logging.info('%s%s %s/%s', status_prefix, return_string, s, test)
         test_name = test.split('/')[-1].split('.')[0]
         results[s]['TEST_STATUS'].append({
             'test': test_name,
