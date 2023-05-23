@@ -19,10 +19,13 @@ package android.permission3.cts
 import android.Manifest.permission.ACCESS_COARSE_LOCATION
 import android.os.Build
 import android.provider.DeviceConfig
+import android.provider.Settings
+import android.provider.Settings.Secure.USER_SETUP_COMPLETE
 import androidx.test.filters.SdkSuppress
 import androidx.test.uiautomator.By
 import com.android.compatibility.common.util.DeviceConfigStateChangerRule
 import com.android.modules.utils.build.SdkLevel
+import com.google.common.truth.Truth
 import org.junit.Assume
 import org.junit.Before
 import org.junit.Rule
@@ -43,6 +46,13 @@ class AppPermissionTest : BaseUsePermissionTest() {
     Assume.assumeFalse(isAutomotive)
     Assume.assumeFalse(isTv)
     Assume.assumeFalse(isWatch)
+
+    val userSetupComplete =
+        Settings.Secure.getInt(context.contentResolver, USER_SETUP_COMPLETE, 0) == 1
+
+    Truth.assertWithMessage("User setup must be complete before running this test")
+        .that(userSetupComplete)
+        .isTrue()
   }
 
   @Test
