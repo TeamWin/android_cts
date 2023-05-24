@@ -452,6 +452,19 @@ public class SatelliteManagerTestBase {
             return true;
         }
 
+        public boolean waitUntilModemOff(long timeoutMillis) {
+            try {
+                if (!mModemOffSemaphore.tryAcquire(timeoutMillis, TimeUnit.MILLISECONDS)) {
+                    Log.e(TAG, "Timeout to receive satellite modem off event");
+                    return false;
+                }
+            } catch (Exception ex) {
+                Log.e(TAG, "Waiting for satellite modem off event: Got exception=" + ex);
+                return false;
+            }
+            return true;
+        }
+
         public void clearModemStates() {
             synchronized (mModemStatesLock) {
                 Log.d(TAG, "onSatelliteModemStateChanged: clearModemStates");
@@ -1181,5 +1194,17 @@ public class SatelliteManagerTestBase {
         }
         logd("requestSatelliteEnabled: " + enabled
                 + " : satelliteModeEnabled from settings: " + satelliteModeEnabled);
+    }
+
+    protected static void waitFor(long timeoutMillis) {
+        Object delayTimeout = new Object();
+        synchronized (delayTimeout) {
+            try {
+                delayTimeout.wait(timeoutMillis);
+            } catch (InterruptedException ex) {
+                // Ignore the exception
+                logd("waitFor: delayTimeout ex=" + ex);
+            }
+        }
     }
 }

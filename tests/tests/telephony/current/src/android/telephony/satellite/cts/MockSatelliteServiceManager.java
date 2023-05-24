@@ -31,6 +31,9 @@ import android.telephony.cts.util.TelephonyUtils;
 import android.telephony.satellite.stub.PointingInfo;
 import android.telephony.satellite.stub.SatelliteDatagram;
 import android.telephony.satellite.stub.SatelliteError;
+import android.text.TextUtils;
+
+import com.android.internal.R;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -77,6 +80,7 @@ class MockSatelliteServiceManager {
     private final Semaphore mMockPointingUiActivitySemaphore = new Semaphore(0);
     private final MockPointingUiActivityStatusReceiver mMockPointingUiActivityStatusReceiver =
             new MockPointingUiActivityStatusReceiver(mMockPointingUiActivitySemaphore);
+    private final boolean mIsSatelliteServicePackageConfigured;
 
     @NonNull
     private final ILocalSatelliteListener mSatelliteListener =
@@ -210,6 +214,7 @@ class MockSatelliteServiceManager {
 
     MockSatelliteServiceManager(Instrumentation instrumentation) {
         mInstrumentation = instrumentation;
+        mIsSatelliteServicePackageConfigured = !TextUtils.isEmpty(getSatelliteServicePackageName());
     }
 
     boolean connectSatelliteService() {
@@ -324,6 +329,10 @@ class MockSatelliteServiceManager {
         }
         unregisterForMockPointingUiActivityStatus();
         return true;
+    }
+
+    boolean isSatelliteServicePackageConfigured() {
+        return mIsSatelliteServicePackageConfigured;
     }
 
     Boolean getSentIsEmergency(int index) {
@@ -700,5 +709,10 @@ class MockSatelliteServiceManager {
                 }
             }
         }
+    }
+
+    private String getSatelliteServicePackageName() {
+        return TextUtils.emptyIfNull(mInstrumentation.getContext().getResources().getString(
+                R.string.config_satellite_service_package));
     }
 }
