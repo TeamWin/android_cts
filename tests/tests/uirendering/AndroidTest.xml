@@ -30,6 +30,10 @@
         <option name="runtime-hint" value="11m55s" />
         <option name="runner" value="android.uirendering.cts.runner.UiRenderingRunner" />
     </test>
+    <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
+        <!-- disable DeprecatedAbi warning -->
+        <option name="run-command" value="setprop debug.wm.disable_deprecated_abi_dialog 1" />
+    </target_preparer>
 
     <!-- Collect the dumped files for debugging -->
     <metrics_collector class="com.android.tradefed.device.metric.FilePullerLogCollector">
