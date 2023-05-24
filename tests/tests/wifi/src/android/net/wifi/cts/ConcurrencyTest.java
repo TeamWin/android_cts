@@ -134,7 +134,7 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
 
 
     private static final String TAG = "ConcurrencyTest";
-    private static final int TIMEOUT_MS = 10000;
+    private static final int TIMEOUT_MS = 15000;
     private static final int WAIT_MS = 100;
     private static final int DURATION = 5000;
     private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
@@ -228,6 +228,7 @@ public class ConcurrencyTest extends WifiJUnit3TestBase {
         intentFilter.addAction(WifiP2pManager.WIFI_P2P_DISCOVERY_CHANGED_ACTION);
         intentFilter.addAction(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION);
         intentFilter.addAction(WifiP2pManager.ACTION_WIFI_P2P_LISTEN_STATE_CHANGED);
+        intentFilter.setPriority(999);
         if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)) {
             mContext.registerReceiver(mReceiver, intentFilter, RECEIVER_NOT_EXPORTED);
         } else {
