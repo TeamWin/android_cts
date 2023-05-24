@@ -539,10 +539,12 @@ public class SatelliteManagerTestBase {
         private final Object mLock = new Object();
         ServiceState mServiceState;
         int mRadioPowerState;
+        int mDesireRadioPowerState;
 
         ServiceStateRadioStateListener(ServiceState serviceState, int radioPowerState) {
             mServiceState = serviceState;
             mRadioPowerState = radioPowerState;
+            mDesireRadioPowerState = radioPowerState;
         }
 
         @Override
@@ -552,20 +554,21 @@ public class SatelliteManagerTestBase {
 
         @Override
         public void onRadioPowerStateChanged(int radioState) {
+            Log.d(TAG, "onRadioPowerStateChanged to " + radioState);
             synchronized (mLock) {
-                logd("onRadioPowerStateChanged radioState: " + radioState);
                 mRadioPowerState = radioState;
-                mLock.notify();
+                if (radioState == mDesireRadioPowerState) {
+                    mLock.notify();
+                }
             }
         }
 
-        public void waitForRadioStateIntent(int desiredState) {
-            logd("waitForRadioStateIntent");
+        public void waitForRadioStateIntent(int desiredRadioState) {
+            Log.d(TAG, "waitForRadioStateIntent: desiredRadioState=" + desiredRadioState);
             synchronized (mLock) {
-                if (mRadioPowerState != desiredState) {
+                if (mRadioPowerState != desiredRadioState) {
+                    mDesireRadioPowerState = desiredRadioState;
                     try {
-                        logd("mRadioPowerState: " + mRadioPowerState
-                                + " desiredState:" + desiredState);
                         mLock.wait(EXTERNAL_DEPENDENT_TIMEOUT);
                     } catch (Exception e) {
                         fail(e.getMessage());
