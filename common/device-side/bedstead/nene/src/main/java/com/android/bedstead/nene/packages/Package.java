@@ -964,7 +964,8 @@ public final class Package {
 
             boolean success = blockingCallback.await();
             if (!success) {
-                fail("Could not set role holder of " + role + ".");
+                fail("Could not set role holder of " + role + "." + " Relevant logcat: "
+                        + TestApis.logcat().dump((line) -> line.contains(role)));
             }
 
             return new RoleContext(role, this, user);
