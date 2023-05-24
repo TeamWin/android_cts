@@ -42,6 +42,8 @@ import android.os.Looper;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.CddTest;
+
 import org.junit.After;
 import org.junit.Assume;
 import org.junit.Before;
@@ -104,6 +106,7 @@ public class BluetoothLeAdvertiserTest {
         }
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
     public void test_startAdvertisingSetWithCallbackAndHandler() throws InterruptedException {
         mAdvertiser.startAdvertisingSet(ADVERTISING_SET_PARAMETERS, null, null, null, null,
@@ -113,6 +116,7 @@ public class BluetoothLeAdvertiserTest {
         assertNotNull(mCallback.mAdvertisingSet);
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
     public void test_startAdvertisingSetWithDurationAndCallback() throws InterruptedException {
         mAdvertiser.startAdvertisingSet(ADVERTISING_SET_PARAMETERS, null, null, null, null,
@@ -122,6 +126,7 @@ public class BluetoothLeAdvertiserTest {
         assertNotNull(mCallback.mAdvertisingSet);
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
     public void test_startAdvertisingSetWithDurationCallbackAndHandler()
             throws InterruptedException {
@@ -132,6 +137,7 @@ public class BluetoothLeAdvertiserTest {
         assertNotNull(mCallback.mAdvertisingSet);
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
     public void test_startAdvertisingSetWithDurationCallbackGattServerAndHandler()
             throws InterruptedException {
@@ -153,6 +159,7 @@ public class BluetoothLeAdvertiserTest {
         assertNotNull(mCallback.mAdvertisingSet);
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
     public void test_getAdvertisingSetId() throws InterruptedException {
         mAdvertiser.startAdvertisingSet(ADVERTISING_SET_PARAMETERS, null, null, null, null, 0, 0,

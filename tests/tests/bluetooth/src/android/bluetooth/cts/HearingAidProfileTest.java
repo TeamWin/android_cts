@@ -45,6 +45,8 @@ import android.util.Log;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.CddTest;
+
 import org.junit.After;
 import org.junit.Assume;
 import org.junit.Before;
@@ -132,6 +134,7 @@ public class HearingAidProfileTest {
         }
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
     public void test_closeProfileProxy() {
         assertTrue(waitForProfileConnect());
@@ -146,6 +149,7 @@ public class HearingAidProfileTest {
     /**
      * Basic test case to make sure that Hearing Aid Profile Proxy can connect.
      */
+    @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @MediumTest
     @Test
     public void test_getProxyServiceConnect() {
@@ -157,6 +161,7 @@ public class HearingAidProfileTest {
     /**
      * Basic test case to make sure that a fictional device is disconnected.
      */
+    @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @MediumTest
     @Test
     public void test_getConnectionState() {
@@ -177,6 +182,7 @@ public class HearingAidProfileTest {
      * Basic test case to make sure that a fictional device throw a SecurityException when setting
      * volume.
      */
+    @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @MediumTest
     @Test
     public void test_setVolume() {
@@ -191,6 +197,7 @@ public class HearingAidProfileTest {
     /**
      * Basic test case to make sure that a fictional device is unknown side.
      */
+    @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @MediumTest
     @Test
     public void test_getDeviceSide() {
@@ -210,6 +217,7 @@ public class HearingAidProfileTest {
     /**
      * Basic test case to make sure that a fictional device is unknown mode.
      */
+    @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @MediumTest
     @Test
     public void test_getDeviceMode() {
@@ -230,6 +238,7 @@ public class HearingAidProfileTest {
      * Basic test case to make sure that a fictional device's ASHA Advertisement Service Data
      * is null.
      */
+    @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @MediumTest
     @Test
     public void test_getAdvertisementServiceData() {
@@ -251,6 +260,7 @@ public class HearingAidProfileTest {
      * Basic test case to make sure that a fictional device's ASHA Advertisement Service Data's mode
      * is unknown.
      */
+    @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @MediumTest
     @Test
     public void test_getAdvertisementDeviceMode() {
@@ -270,6 +280,7 @@ public class HearingAidProfileTest {
      * Basic test case to make sure that a fictional device's ASHA Advertisement Service Data's side
      * is unknown.
      */
+    @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @MediumTest
     @Test
     public void test_getAdvertisementDeviceSide() {
@@ -289,6 +300,7 @@ public class HearingAidProfileTest {
      * Basic test case to make sure that a fictional device's truncated HiSyncId is the
      * expected value.
      */
+    @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @MediumTest
     @Test
     public void test_getTruncatedHiSyncId() {
@@ -309,6 +321,7 @@ public class HearingAidProfileTest {
      * Basic test case to make sure that a fictional device's ASHA Advertisement Service Data's CSIP
      * is not supported.
      */
+    @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @MediumTest
     @Test
     public void test_isCsipSupported() {
@@ -329,6 +342,7 @@ public class HearingAidProfileTest {
      * Basic test case to make sure that a fictional device's ASHA Advertisement Service Data's CSIP
      * is not supported.
      */
+    @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @MediumTest
     @Test
     public void test_isLikelyPairOfBluetoothHearingAid() {
@@ -357,6 +371,7 @@ public class HearingAidProfileTest {
     /**
      * Basic test case to get the list of connected Hearing Aid devices.
      */
+    @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @MediumTest
     @Test
     public void test_getConnectedDevices() {
@@ -378,6 +393,7 @@ public class HearingAidProfileTest {
      * Basic test case to get the list of matching Hearing Aid devices for each of the 4 connection
      * states.
      */
+    @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @MediumTest
     @Test
     public void test_getDevicesMatchingConnectionStates() {
@@ -400,6 +416,7 @@ public class HearingAidProfileTest {
      * Test case to make sure that if the connection changed intent is called, the parameters and
      * device are correct.
      */
+    @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @MediumTest
     @Test
     public void test_getConnectionStateChangedIntent() {

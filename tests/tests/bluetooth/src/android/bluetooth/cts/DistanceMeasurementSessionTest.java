@@ -35,6 +35,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
+import com.android.compatibility.common.util.CddTest;
 
 import org.junit.After;
 import org.junit.Assume;
@@ -76,6 +77,7 @@ public class DistanceMeasurementSessionTest {
         mAdapter = null;
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
     public void testCallbackMethods() {
         mTestcallback.onStarted(null);
