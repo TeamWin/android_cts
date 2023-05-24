@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.server.wm.scvh;
+package android.view.cts.surfacevalidator;
 
 import android.os.IBinder;
 import android.view.SurfaceControlViewHost.SurfacePackage;

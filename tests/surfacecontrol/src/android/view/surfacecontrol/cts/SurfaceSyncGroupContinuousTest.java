@@ -14,10 +14,12 @@
  * limitations under the License.
  */
 
-package android.server.wm.scvh;
+package android.view.surfacecontrol.cts;
+
 
 import android.platform.test.annotations.Presubmit;
 import android.view.cts.surfacevalidator.CapturedActivity;
+import android.view.cts.surfacevalidator.SyncValidatorSCVHTestCase;
 
 import androidx.test.rule.ActivityTestRule;
 
