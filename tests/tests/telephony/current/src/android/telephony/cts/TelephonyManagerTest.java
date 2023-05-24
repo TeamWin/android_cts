@@ -5821,10 +5821,12 @@ public class TelephonyManagerTest {
         private final Object mLock = new Object();
         ServiceState mServiceState;
         int mRadioPowerState;
+        int mDesireRadioPowerState;
 
         ServiceStateRadioStateListener(ServiceState serviceState, int radioPowerState) {
             mServiceState = serviceState;
             mRadioPowerState = radioPowerState;
+            mDesireRadioPowerState = radioPowerState;
         }
 
         @Override
@@ -5837,13 +5839,17 @@ public class TelephonyManagerTest {
             Log.d(TAG, "onRadioPowerStateChanged to " + radioState);
             synchronized (mLock) {
                 mRadioPowerState = radioState;
-                mLock.notify();
+                if (radioState == mDesireRadioPowerState) {
+                    mLock.notify();
+                }
             }
         }
 
-        private void waitForRadioStateIntent(int desiredState) {
+        public void waitForRadioStateIntent(int desiredRadioState) {
+            Log.d(TAG, "waitForRadioStateIntent: desiredRadioState=" + desiredRadioState);
             synchronized (mLock) {
-                if (mRadioPowerState != desiredState) {
+                if (mRadioPowerState != desiredRadioState) {
+                    mDesireRadioPowerState = desiredRadioState;
                     try {
                         // Since SST sets waiting time up to 10 seconds for the power off radio,
                         // the RadioStateIntent timer extends the wait time up to 10 seconds
@@ -5872,12 +5878,12 @@ public class TelephonyManagerTest {
                 Log.i(TAG, "testSetVoiceServiceStateOverride: turning radio off to force OOS");
                 ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
                         tm -> tm.setRadioPower(false), permission.MODIFY_PHONE_STATE);
+                callback.waitForRadioStateIntent(TelephonyManager.RADIO_POWER_OFF);
                 turnedRadioOff = true;
                 // Wait up to 20s until ServiceState reflects the power change,
                 // but this should only take a little over 10s in reality.
                 int retry = 0;
-                while ((callback.mRadioPowerState != TelephonyManager.RADIO_POWER_OFF
-                        || callback.mServiceState.getState() == ServiceState.STATE_IN_SERVICE)
+                while ((callback.mServiceState.getState() == ServiceState.STATE_IN_SERVICE)
                         && retry < 10) {
                     retry++;
                     waitForMs(2000);
@@ -5939,14 +5945,15 @@ public class TelephonyManagerTest {
                         permission.BIND_TELECOM_CONNECTION_SERVICE);
             }
             if (turnedRadioOff) {
-                // Turn the radio back on and wait for ServiceState to become stable again so we
+                // Turn the radio back on and wait for ServiceState to become stable again, so we
                 // don't cause flakes in other tests
                 Log.i(TAG, "testSetVoiceServiceStateOverride: turning radio back on");
                 ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
                         tm -> tm.setRadioPower(true), permission.MODIFY_PHONE_STATE);
+                callback.waitForRadioStateIntent(TelephonyManager.RADIO_POWER_ON);
+
                 int retry = 0;
-                while ((callback.mRadioPowerState != TelephonyManager.RADIO_POWER_ON
-                        || callback.mServiceState.getState() != ServiceState.STATE_IN_SERVICE)
+                while ((callback.mServiceState.getState() != ServiceState.STATE_IN_SERVICE)
                         && retry < 10) {
                     retry++;
                     waitForMs(1000);
