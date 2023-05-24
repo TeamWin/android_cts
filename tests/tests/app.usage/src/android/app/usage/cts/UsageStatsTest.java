@@ -238,9 +238,14 @@ public class UsageStatsTest extends StsExtraBusinessLogicTestCase {
             setUsageSourceSetting(mCachedUsageSourceSetting);
         }
         // Force stop test package to avoid any running test code from carrying over to the next run
-        SystemUtil.runWithShellPermissionIdentity(() -> mAm.forceStopPackage(TEST_APP_PKG));
-        SystemUtil.runWithShellPermissionIdentity(() -> mAm.forceStopPackage(TEST_APP2_PKG));
-        mUiDevice.pressHome();
+        if (mAm != null) {
+            SystemUtil.runWithShellPermissionIdentity(() -> mAm.forceStopPackage(TEST_APP_PKG));
+            SystemUtil.runWithShellPermissionIdentity(() -> mAm.forceStopPackage(TEST_APP2_PKG));
+        }
+
+        if (mUiDevice != null) {
+            mUiDevice.pressHome();
+        }
         // Destroy the other user if created
         if (mOtherUser != 0) {
             stopUser(mOtherUser, true, true);
@@ -249,13 +254,15 @@ public class UsageStatsTest extends StsExtraBusinessLogicTestCase {
         }
         // Use test API to prevent PermissionManager from killing the test process when revoking
         // permission.
-        SystemUtil.runWithShellPermissionIdentity(
-                () -> mContext.getSystemService(PermissionManager.class)
-                        .revokePostNotificationPermissionWithoutKillForTest(
-                                mTargetPackage,
-                                Process.myUserHandle().getIdentifier()),
-                REVOKE_POST_NOTIFICATIONS_WITHOUT_KILL,
-                REVOKE_RUNTIME_PERMISSIONS);
+        if (mContext != null && mTargetPackage != null) {
+            SystemUtil.runWithShellPermissionIdentity(
+                    () -> mContext.getSystemService(PermissionManager.class)
+                            .revokePostNotificationPermissionWithoutKillForTest(
+                                    mTargetPackage,
+                                    Process.myUserHandle().getIdentifier()),
+                    REVOKE_POST_NOTIFICATIONS_WITHOUT_KILL,
+                    REVOKE_RUNTIME_PERMISSIONS);
+        }
     }
 
     private static void assertLessThan(long left, long right) {
