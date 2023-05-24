@@ -431,7 +431,7 @@ def is_device_folded(device_id):
   """
   cmd = (f'adb -s {device_id} shell cmd device_state state')
   result = subprocess.getoutput(cmd)
-  if 'CLOSED' in result:
+  if 'CLOSE' in result:
     return True
   return False
 
@@ -579,8 +579,11 @@ def main():
       device_state = 'folded' if device_folded else 'opened'
 
     testing_folded_front_camera = (testing_foldable_device and
-                                   device_folded and
                                    _FRONT_CAMERA_ID in camera_id)
+    if testing_folded_front_camera:
+      if not device_folded:
+        raise AssertionError(
+            'Device should be folded while testing folded scene.')
 
     # Raise an assertion error if there is any camera unavailable in
     # current device state. Usually scenes with suffix 'folded' will
