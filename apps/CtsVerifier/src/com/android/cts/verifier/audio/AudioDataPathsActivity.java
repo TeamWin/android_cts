@@ -427,8 +427,6 @@ public class AudioDataPathsActivity
         // ReportLog Schema
         private static final String KEY_TESTAPI = "test_api";
         private static final String KEY_MAXMAGNITUDE = "max_magnitude";
-        private static final String KEY_MAGNITUDE = "magnitude";
-        private static final String KEY_PHASEOFFSET = "phase_offset";
         private static final String KEY_PHASEJITTER = "phase_jitter";
 
         void generateReportLog(CtsVerifierReportLog reportLog) {
@@ -439,20 +437,8 @@ public class AudioDataPathsActivity
                     ResultUnit.NONE);
 
             reportLog.addValue(
-                    KEY_MAGNITUDE,
-                    mMagnitude,
-                    ResultType.NEUTRAL,
-                    ResultUnit.NONE);
-
-            reportLog.addValue(
                     KEY_MAXMAGNITUDE,
                     mMaxMagnitude,
-                    ResultType.NEUTRAL,
-                    ResultUnit.NONE);
-
-            reportLog.addValue(
-                    KEY_PHASEOFFSET,
-                    mPhase,
                     ResultType.NEUTRAL,
                     ResultUnit.NONE);
 
