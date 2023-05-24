@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.hardware.input.cts.tests
+package com.android.cts.input
 
 import com.android.compatibility.common.util.SystemUtil
 import org.junit.AssumptionViolatedException
@@ -31,7 +31,7 @@ import org.junit.runner.Description
  */
 class DebugInputRule : TestWatcher() {
 
-    companion object {
+    private companion object {
         // The list of log tags to enable when additional debugging of the input pipeline is
         // required. These are a special set of log tags that can be dynamically toggled on
         // debuggable builds.
