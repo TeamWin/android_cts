@@ -51,6 +51,10 @@ public class SessionCommitBroadcastTest extends BasePackageInstallTest {
     @Override
     protected void setUp() throws Exception {
         super.setUp();
+        final String myPackageName = mContext.getPackageName();
+        final int myUid = mPackageManager.getApplicationInfo(myPackageName, 0).uid;
+        assertTrue("Test package:" + myPackageName + " (uid:" + myUid + ") is not an admin",
+                mDevicePolicyManager.isDeviceOwnerApp(myPackageName));
         mDefaultLauncher = ComponentName.unflattenFromString(getDefaultLauncher());
         mThisAppLauncher = new ComponentName(mContext, LauncherActivity.class);
         mReceiver = new SessionCommitReceiver();
