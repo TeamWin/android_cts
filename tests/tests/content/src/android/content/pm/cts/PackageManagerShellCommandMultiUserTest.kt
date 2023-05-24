@@ -46,10 +46,12 @@ import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.ClassRule
-import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.TestRule
+import org.junit.runner.Description
 import org.junit.runner.RunWith
+import org.junit.runners.model.Statement
 
 @EnsureHasSecondaryUser
 @RunWith(BedsteadJUnit4::class)
@@ -62,13 +64,31 @@ class PackageManagerShellCommandMultiUserTest {
         private const val TEST_HW5 = PackageManagerShellCommandTest.TEST_HW5
 
         @JvmField
-        @ClassRule
+        @ClassRule(order = 0)
         @Rule
         val deviceState = DeviceState()
 
         @JvmField
-        @ClassRule
+        @ClassRule(order = 1)
         var mAbandonSessionsRule = AbandonAllPackageSessionsRule()
+
+        @JvmField
+        @ClassRule(order = 2)
+        var mBroadcastBarrierRule = object : TestRule {
+            override fun apply(base: Statement, description: Description): Statement {
+                return object : Statement() {
+                    override fun evaluate() {
+                        if (description.isSuite()) {
+                            // Run "wait-for-broadcast-idle" to clear any
+                            // pending broadcasts in the System so that they do not have any
+                            // impact on the tests.
+                            SystemUtil.runShellCommand("am wait-for-broadcast-idle")
+                        }
+                        base.evaluate()
+                    }
+                }
+            }
+        }
 
         private val context: Context = InstrumentationRegistry.getContext()
         private val uiAutomation: UiAutomation =
@@ -211,7 +231,6 @@ class PackageManagerShellCommandMultiUserTest {
     }
 
     @Test
-    @Ignore("b/254763137")
     fun testPackageFullyRemovedBroadcastAfterUninstall(
         @StringTestParameter(
             "install",
