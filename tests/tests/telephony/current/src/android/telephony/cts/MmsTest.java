@@ -17,12 +17,14 @@
 package android.telephony.cts;
 
 import static androidx.test.InstrumentationRegistry.getContext;
+import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
+import android.Manifest;
 import android.app.Activity;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
@@ -34,6 +36,7 @@ import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.SystemClock;
 import android.telephony.SmsManager;
+import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
 import android.telephony.cts.util.DefaultSmsAppHelper;
 import android.text.TextUtils;
@@ -261,7 +264,17 @@ public class MmsTest {
             return;
         }
 
-        String selfNumber = mTelephonyManager.getLine1Number();
+        String selfNumber;
+        getInstrumentation().getUiAutomation()
+                .adoptShellPermissionIdentity(Manifest.permission.READ_PRIVILEGED_PHONE_STATE);
+        try {
+            int subId = mTelephonyManager.getSubscriptionId();
+            SubscriptionManager subscriptionManager = getContext()
+                    .getSystemService(SubscriptionManager.class);
+            selfNumber = subscriptionManager.getPhoneNumber(subId);
+        } finally {
+            getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
+        }
         assertFalse("[RERUN] SIM card does not provide phone number. Use a suitable SIM Card.",
                 TextUtils.isEmpty(selfNumber));
 
