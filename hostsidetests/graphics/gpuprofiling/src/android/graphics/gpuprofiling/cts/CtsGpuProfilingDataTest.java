@@ -242,8 +242,14 @@ public class CtsGpuProfilingDataTest extends BaseHostJUnit4Test {
                     }
                 }
             }
+
+            traceResult.delete();
+            CommandResult deleteTraceStatus = getDevice()
+                    .executeShellV2Command("rm -f " + TRACE_FILE_PATH);
+            Assert.assertEquals(CommandStatus.SUCCESS, deleteTraceStatus.getStatus());
         }
 
+        configFile.delete();
         Assert.assertTrue(
                 "Trace does not contain valid GPU counter values.", foundValidGpuCounterEvent);
     }
