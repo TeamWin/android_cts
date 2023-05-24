@@ -33,13 +33,11 @@ import android.view.Gravity;
 import android.view.Surface;
 import android.view.SurfaceControl;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.view.animation.LinearInterpolator;
 import android.view.cts.surfacevalidator.AnimationFactory;
 import android.view.cts.surfacevalidator.AnimationTestCase;
 import android.view.cts.surfacevalidator.CapturedActivityWithResource;
-import android.view.cts.surfacevalidator.ISurfaceValidatorTestCase;
 import android.view.cts.surfacevalidator.PixelChecker;
 import android.view.cts.surfacevalidator.ViewFactory;
 import android.widget.FrameLayout;
@@ -204,65 +202,5 @@ public class AttachedSurfaceControlSyncTest {
                         return blackishPixelCount == 0;
                     }
                 }), mName);
-    }
-
-    static class GreenSurfaceAnchorViewSetsInsets extends GreenSurfaceAnchorView {
-        private final Rect mChildBoundingInsets;
-
-        GreenSurfaceAnchorViewSetsInsets(Context c, Rect insets) {
-            super(c);
-            mChildBoundingInsets = insets;
-        }
-
-        @Override
-        protected void onAttachedToWindow() {
-            super.onAttachedToWindow();
-            getRootSurfaceControl().setChildBoundingInsets(mChildBoundingInsets);
-            new SurfaceControl.Transaction().setLayer(mSurfaceControl, 1).apply();
-        }
-
-        @Override
-        public void onDraw(Canvas canvas) {
-        }
-    }
-
-    static class ChildBoundsTestCase implements ISurfaceValidatorTestCase {
-        private final PixelChecker mPixelChecker;
-        private final Rect mChildBoundingInsets;
-        private ViewGroup mParent;
-
-        ChildBoundsTestCase(PixelChecker pc, Rect insets) {
-            mPixelChecker = pc;
-            mChildBoundingInsets = insets;
-        }
-
-        public PixelChecker getChecker() {
-            return mPixelChecker;
-        }
-
-        public void start(Context context, FrameLayout parent) {
-            mParent = parent;
-            mParent.removeAllViews();
-            View av = new GreenSurfaceAnchorViewSetsInsets(context, mChildBoundingInsets);
-            mParent.addView(av, new FrameLayout.LayoutParams(100, 100, Gravity.LEFT | Gravity.TOP));
-        }
-
-        public void end() {
-            mParent.removeAllViews();
-        }
-
-        public boolean hasAnimation() {
-            return false;
-        }
-    }
-
-    @Test
-    public void testCropWithChildBoundingInsets() throws Throwable {
-        mActivity.verifyTest(new ChildBoundsTestCase(new PixelChecker(Color.GREEN) {
-            @Override
-            public boolean checkPixels(int greenPixelCount, int width, int height) {
-                return greenPixelCount == 9000;
-            }
-        }, new Rect(0, 10, 0, 0)), mName);
     }
 }

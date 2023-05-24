@@ -25,14 +25,12 @@ java_test_host {
         "src/**/*.java",
         "src/**/*.kt",
     ],
-
     libs: [
         "cts-tradefed",
         "tradefed",
         "compatibility-host-util",
         "truth-prebuilt",
         "hamcrest-library",
-        "sts-host-util",
     ],
 
     static_libs: [
@@ -40,6 +38,7 @@ java_test_host {
         "CtsPkgInstallerConstants",
         "cts-host-utils",
         "cts-statsd-atom-host-test-utils",
+        "sts-host-util",
     ],
 
     java_resource_dirs: ["res"],

@@ -42,6 +42,7 @@ import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
+import com.android.compatibility.common.util.CddTest;
 
 import org.junit.After;
 import org.junit.Assume;
@@ -120,6 +121,7 @@ public class BluetoothLeBroadcastMetadataTest {
         TestUtils.dropPermissionAsShellUid();
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2", "7.4.3/C-9-1"})
     @Test
     public void testCreateMetadataFromBuilder() {
         BluetoothDevice testDevice =
@@ -167,6 +169,7 @@ public class BluetoothLeBroadcastMetadataTest {
         assertThrows(IllegalArgumentException.class, builder::build);
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2", "7.4.3/C-9-1"})
     @Test
     public void testCreateMetadataFromCopy() {
         BluetoothDevice testDevice =

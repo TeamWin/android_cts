@@ -70,6 +70,7 @@ import com.android.bedstead.harrier.annotations.EnsureHasAdditionalUser;
 import com.android.bedstead.harrier.annotations.EnsureHasNoAdditionalUser;
 import com.android.bedstead.harrier.annotations.EnsureHasNoWorkProfile;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
+import com.android.bedstead.harrier.annotations.EnsureHasSecondaryUser;
 import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
 import com.android.bedstead.harrier.annotations.RequireFeature;
 import com.android.bedstead.harrier.annotations.RequireHeadlessSystemUserMode;
@@ -284,18 +285,19 @@ public final class UserManagerTest {
 
     @Test
     @ApiTest(apis = {"android.os.UserManager#isUserRunning"})
-    @RequireRunOnSecondaryUser(switchedToUser = FALSE)
+    @EnsureHasSecondaryUser(switchedToUser = FALSE)
     @EnsureHasPermission(INTERACT_ACROSS_USERS) // needed to call isUserRunning()
     public void testIsUserRunning_stoppedSecondaryUser() {
-        UserReference user = TestApis.users().instrumented();
-        Log.d(TAG, "Stopping  user " + user + " (called from " + sContext.getUser() + ")");
-        user.stop();
+        Log.d(TAG, "Stopping  user " + sDeviceState.secondaryUser()
+                + " (called from " + sContext.getUser() + ")");
+        sDeviceState.secondaryUser().stop();
 
-        Context context = getContextForUser(user.userHandle().getIdentifier());
-        UserManager um = context.getSystemService(UserManager.class);
+        UserManager um =
+                TestApis.context().instrumentedContext().getSystemService(UserManager.class);
 
         assertWithMessage("isUserRunning() for stopped secondary user (id=%s)",
-                user.id()).that(um.isUserRunning(user.userHandle())).isFalse();
+                sDeviceState.secondaryUser().id())
+                .that(um.isUserRunning(sDeviceState.secondaryUser().userHandle())).isFalse();
     }
 
     @Test

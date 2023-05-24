@@ -27,6 +27,8 @@ import android.os.Parcel;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.CddTest;
+
 import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
@@ -45,6 +47,7 @@ public class PeriodicAdvertisingParametersTest {
                 InstrumentationRegistry.getInstrumentation().getContext()));
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
     public void testCreateFromParcel() {
         final Parcel parcel = Parcel.obtain();
@@ -61,6 +64,7 @@ public class PeriodicAdvertisingParametersTest {
         }
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
     public void testDefaultParameters() {
         PeriodicAdvertisingParameters params = new PeriodicAdvertisingParameters.Builder().build();
@@ -68,6 +72,7 @@ public class PeriodicAdvertisingParametersTest {
         assertEquals(INTERVAL_MAX, params.getInterval());
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
     public void testIncludeTxPower() {
         PeriodicAdvertisingParameters params =
@@ -75,6 +80,7 @@ public class PeriodicAdvertisingParametersTest {
         assertTrue(params.getIncludeTxPower());
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
     public void testIntervalWithInvalidValues() {
         int[] invalidValues = { INTERVAL_MIN - 1, INTERVAL_MAX + 1 };
@@ -88,6 +94,7 @@ public class PeriodicAdvertisingParametersTest {
         }
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
     public void testInterval() {
         PeriodicAdvertisingParameters params =
@@ -95,6 +102,7 @@ public class PeriodicAdvertisingParametersTest {
         assertEquals(INTERVAL_MIN, params.getInterval());
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
     public void testDescribeContents() {
         PeriodicAdvertisingParameters params = new PeriodicAdvertisingParameters.Builder().build();

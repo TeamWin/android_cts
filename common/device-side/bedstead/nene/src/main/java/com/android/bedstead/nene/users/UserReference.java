@@ -357,7 +357,7 @@ public final class UserReference implements AutoCloseable {
             // TODO(273229540): It might take a while to fail - we should stream from the
             // start of the call
             throw new NeneException("Error switching user to " + this + ". Relevant logcat: "
-                    + TestApis.logcat().dump((line) -> line.contains("Cannot switch")));
+                    + TestApis.logcat().dump((line) -> line.contains("Cannot switch")), e);
         }
         if (isSdkVersionMinimum_R) {
             Poll.forValue("current user", () -> TestApis.users().current())

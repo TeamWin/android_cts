@@ -208,6 +208,7 @@ public class DevicePolicyManagementRoleHolderTest {
     @EnsureHasNoDpc
     @RequireMultiUserSupport
     @EnsureHasNoAccounts(onUser = ANY)
+    @EnsureCanAddUser
     public void shouldAllowBypassingDevicePolicyManagementRoleQualification_withNonTestUsers_returnsFalse()
             throws Exception {
         TestApis.devicePolicy().resetShouldAllowBypassingDevicePolicyManagementRoleQualificationState();
@@ -228,6 +229,7 @@ public class DevicePolicyManagementRoleHolderTest {
     @EnsureHasNoDpc
     @RequireMultiUserSupport
     @EnsureHasNoAccounts(onUser = ANY)
+    @EnsureCanAddUser
     public void shouldAllowBypassingDevicePolicyManagementRoleQualification_withTestUsers_returnsTrue()
             throws Exception {
         TestApis.devicePolicy().resetShouldAllowBypassingDevicePolicyManagementRoleQualificationState();

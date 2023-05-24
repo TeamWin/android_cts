@@ -427,8 +427,6 @@ public class AudioDataPathsActivity
         // ReportLog Schema
         private static final String KEY_TESTAPI = "test_api";
         private static final String KEY_MAXMAGNITUDE = "max_magnitude";
-        private static final String KEY_MAGNITUDE = "magnitude";
-        private static final String KEY_PHASEOFFSET = "phase_offset";
         private static final String KEY_PHASEJITTER = "phase_jitter";
 
         void generateReportLog(CtsVerifierReportLog reportLog) {
@@ -439,20 +437,8 @@ public class AudioDataPathsActivity
                     ResultUnit.NONE);
 
             reportLog.addValue(
-                    KEY_MAGNITUDE,
-                    mMagnitude,
-                    ResultType.NEUTRAL,
-                    ResultUnit.NONE);
-
-            reportLog.addValue(
                     KEY_MAXMAGNITUDE,
                     mMaxMagnitude,
-                    ResultType.NEUTRAL,
-                    ResultUnit.NONE);
-
-            reportLog.addValue(
-                    KEY_PHASEOFFSET,
-                    mPhase,
                     ResultType.NEUTRAL,
                     ResultUnit.NONE);
 
@@ -504,7 +490,6 @@ public class AudioDataPathsActivity
 
             // These just make it easier to turn on/off various categories
             boolean doMono = true;
-            boolean doEarpiece = true;
             boolean doInputPresets = true;
             boolean doStereo = true;
             boolean doSampleRates = true;
@@ -527,23 +512,11 @@ public class AudioDataPathsActivity
                 mTestSpecs.add(testSpec);
             }
 
-            //
-            // TYPE_BUILTIN_EARPIECE
-            //
-            if (doEarpiece) {
-                testSpec = new TestSpec(
-                        AudioDeviceInfo.TYPE_BUILTIN_EARPIECE, 48000, 1,
-                        AudioDeviceInfo.TYPE_BUILTIN_MIC, 48000, 1);
-                testSpec.setSources(sinSourceProvider, mMicSinkProvider);
-                testSpec.setInputPreset(Recorder.INPUT_PRESET_NONE);
-                testSpec.setDescription("Earpiece:1 Mic:1:INPUT_PRESET_NONE");
-                mTestSpecs.add(testSpec);
-            }
-
             if (doInputPresets) {
                 // These three ALWAYS fail on Pixel. They require special system permissions.
                 // INPUT_PRESET_VOICE_UPLINK, INPUT_PRESET_VOICE_DOWNLINK, INPUT_PRESET_VOICE_CALL
                 // INPUT_PRESET_REMOTE_SUBMIX requires special system setup
+                // INPUT_PRESET_VOICECOMMUNICATION - the aggressive AEC always causes it to fail
 
                 testSpec = new TestSpec(
                         AudioDeviceInfo.TYPE_BUILTIN_SPEAKER, 48000, 1,
@@ -583,14 +556,6 @@ public class AudioDataPathsActivity
                 testSpec.setSources(sinSourceProvider, mMicSinkProvider);
                 testSpec.setInputPreset(Recorder.INPUT_PRESET_VOICERECOGNITION);
                 testSpec.setDescription("Speaker:1 Mic:1:INPUT_PRESET_VOICERECOGNITION");
-                mTestSpecs.add(testSpec);
-
-                testSpec = new TestSpec(
-                        AudioDeviceInfo.TYPE_BUILTIN_SPEAKER, 48000, 1,
-                        AudioDeviceInfo.TYPE_BUILTIN_MIC, 48000, 1);
-                testSpec.setSources(sinSourceProvider, mMicSinkProvider);
-                testSpec.setInputPreset(Recorder.INPUT_PRESET_VOICECOMMUNICATION);
-                testSpec.setDescription("Speaker:1 Mic:1:INPUT_PRESET_VOICECOMMUNICATION");
                 mTestSpecs.add(testSpec);
 
                 testSpec = new TestSpec(

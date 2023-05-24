@@ -108,6 +108,8 @@ public class DuplicateIdActivityTest
     @Test
     public void testDoNotRestoreDuplicateAutofillIds() throws Exception {
         assumeTrue("Rotation is supported", Helper.isRotationSupported(mContext));
+        assumeTrue("Device state is not REAR_DISPLAY",
+                !Helper.isDeviceInState(mContext, Helper.DeviceStateEnum.REAR_DISPLAY));
 
         enableService();
 

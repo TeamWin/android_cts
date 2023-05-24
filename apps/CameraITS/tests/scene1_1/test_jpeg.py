@@ -68,6 +68,10 @@ class JpegTest(its_base_test.ItsBaseTest):
 
       sync_latency = camera_properties_utils.sync_latency(props)
 
+      # Check SKIP conditions
+      camera_properties_utils.skip_unless(
+          camera_properties_utils.linear_tonemap(props))
+
       # Load chart for scene
       its_session_utils.load_scene(
           cam, props, self.scene, self.tablet,
