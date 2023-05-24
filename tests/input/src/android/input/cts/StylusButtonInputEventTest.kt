@@ -21,9 +21,9 @@ import android.graphics.Point
 import android.input.cts.VirtualDisplayActivityScenarioRule.Companion.HEIGHT
 import android.input.cts.VirtualDisplayActivityScenarioRule.Companion.WIDTH
 import android.util.Size
-import android.view.InputDevice
 import android.view.InputDevice.SOURCE_KEYBOARD
 import android.view.InputDevice.SOURCE_STYLUS
+import android.view.InputDevice.SOURCE_TOUCHSCREEN
 import android.view.KeyEvent
 import android.view.MotionEvent
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -32,6 +32,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.android.compatibility.common.util.PollingCheck
 import com.android.compatibility.common.util.SystemUtil
 import com.android.cts.input.UinputDevice
+import com.android.cts.input.UinputTouchDevice
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -104,21 +105,20 @@ class StylusButtonInputEventTest {
                 instrumentation,
                 R.raw.test_bluetooth_stylus_register,
                 SOURCE_KEYBOARD or SOURCE_STYLUS
-            )
-            .use { bluetoothStylus ->
-                for (button in LINUX_TO_ANDROID_KEYCODE_MAP.entries.iterator()) {
-                    bluetoothStylus.injectEvents(
+        ).use { bluetoothStylus ->
+            for (button in LINUX_TO_ANDROID_KEYCODE_MAP.entries.iterator()) {
+                bluetoothStylus.injectEvents(
                         makeEvents(EV_KEY, button.key, KEY_DOWN, EV_SYN, SYN_REPORT, 0)
-                    )
-                    // The stylus button is expected to be sent to the status bar as a system key on
-                    // the down press.
-                    assertReceivedSystemKey(button.value)
+                )
+                // The stylus button is expected to be sent to the status bar as a system key on
+                // the down press.
+                assertReceivedSystemKey(button.value)
 
-                    bluetoothStylus.injectEvents(
+                bluetoothStylus.injectEvents(
                         makeEvents(EV_KEY, button.key, KEY_UP, EV_SYN, SYN_REPORT, 0)
-                    )
-                }
+                )
             }
+        }
     }
 
     @Test
@@ -128,21 +128,20 @@ class StylusButtonInputEventTest {
                 instrumentation,
                 R.raw.test_bluetooth_stylus_register,
                 SOURCE_KEYBOARD or SOURCE_STYLUS
-            )
-            .use { bluetoothStylus ->
-                for (button in LINUX_TO_ANDROID_KEYCODE_MAP.entries.iterator()) {
-                    bluetoothStylus.injectEvents(
+        ).use { bluetoothStylus ->
+            for (button in LINUX_TO_ANDROID_KEYCODE_MAP.entries.iterator()) {
+                bluetoothStylus.injectEvents(
                         makeEvents(EV_KEY, button.key, KEY_DOWN, EV_SYN, SYN_REPORT, 0)
-                    )
-                    bluetoothStylus.injectEvents(
+                )
+                bluetoothStylus.injectEvents(
                         makeEvents(EV_KEY, button.key, KEY_UP, EV_SYN, SYN_REPORT, 0)
-                    )
+                )
 
-                    // Stylus buttons should not be sent to the status bar as a system key when
-                    // stylus buttons are disabled.
-                    assertNoSystemKey()
-                }
+                // Stylus buttons should not be sent to the status bar as a system key when
+                // stylus buttons are disabled.
+                assertNoSystemKey()
             }
+        }
     }
 
     @Test
@@ -152,52 +151,52 @@ class StylusButtonInputEventTest {
                 instrumentation,
                 virtualDisplayRule.virtualDisplay.display,
                 Size(WIDTH, HEIGHT),
-                R.raw.test_capacitive_stylus_register
-            )
-            .use { uinputStylus ->
-                val pointer = Point(100, 100)
-                for (button in LINUX_KEYCODE_TO_MOTIONEVENT_BUTTON.entries.iterator()) {
-                    pointer.offset(1, 1)
+                R.raw.test_capacitive_stylus_register,
+                SOURCE_TOUCHSCREEN,
+        ).use { uinputStylus ->
+            val pointer = Point(100, 100)
+            for (button in LINUX_KEYCODE_TO_MOTIONEVENT_BUTTON.entries.iterator()) {
+                pointer.offset(1, 1)
 
-                    uinputStylus.sendBtnTouch(true)
-                    uinputStylus.sendBtn(button.key, true)
-                    uinputStylus.sendDown(0, pointer, UinputTouchDevice.MT_TOOL_PEN)
+                uinputStylus.sendBtnTouch(true)
+                uinputStylus.sendBtn(button.key, true)
+                uinputStylus.sendDown(0, pointer, UinputTouchDevice.MT_TOOL_PEN)
 
-                    assertNextMotionEventEquals(
+                assertNextMotionEventEquals(
                         MotionEvent.ACTION_DOWN,
                         MotionEvent.TOOL_TYPE_STYLUS,
                         button.value,
                         0,
-                        InputDevice.SOURCE_STYLUS,
-                    )
-                    assertNextMotionEventEquals(
+                        SOURCE_STYLUS,
+                )
+                assertNextMotionEventEquals(
                         MotionEvent.ACTION_BUTTON_PRESS,
                         MotionEvent.TOOL_TYPE_STYLUS,
                         button.value,
                         button.value,
-                        InputDevice.SOURCE_STYLUS,
-                    )
+                        SOURCE_STYLUS,
+                )
 
-                    uinputStylus.sendBtnTouch(false)
-                    uinputStylus.sendBtn(button.key, false)
-                    uinputStylus.sendUp(0)
+                uinputStylus.sendBtnTouch(false)
+                uinputStylus.sendBtn(button.key, false)
+                uinputStylus.sendUp(0)
 
-                    assertNextMotionEventEquals(
+                assertNextMotionEventEquals(
                         MotionEvent.ACTION_BUTTON_RELEASE,
                         MotionEvent.TOOL_TYPE_STYLUS,
                         0,
                         button.value,
-                        InputDevice.SOURCE_STYLUS,
-                    )
-                    assertNextMotionEventEquals(
+                        SOURCE_STYLUS,
+                )
+                assertNextMotionEventEquals(
                         MotionEvent.ACTION_UP,
                         MotionEvent.TOOL_TYPE_STYLUS,
                         0,
                         0,
-                        InputDevice.SOURCE_STYLUS,
-                    )
-                }
+                        SOURCE_STYLUS,
+                )
             }
+        }
     }
 
     @Test
@@ -207,43 +206,43 @@ class StylusButtonInputEventTest {
                 instrumentation,
                 virtualDisplayRule.virtualDisplay.display,
                 Size(WIDTH, HEIGHT),
-                R.raw.test_capacitive_stylus_register
-            )
-            .use { uinputStylus ->
-                val pointer = Point(100, 100)
-                for (button in LINUX_KEYCODE_TO_MOTIONEVENT_BUTTON.entries.iterator()) {
-                    pointer.offset(1, 1)
+                R.raw.test_capacitive_stylus_register,
+                SOURCE_TOUCHSCREEN,
+        ).use { uinputStylus ->
+            val pointer = Point(100, 100)
+            for (button in LINUX_KEYCODE_TO_MOTIONEVENT_BUTTON.entries.iterator()) {
+                pointer.offset(1, 1)
 
-                    uinputStylus.sendBtnTouch(true)
-                    uinputStylus.sendBtn(button.key, true)
-                    uinputStylus.sendDown(0, pointer, UinputTouchDevice.MT_TOOL_PEN)
+                uinputStylus.sendBtnTouch(true)
+                uinputStylus.sendBtn(button.key, true)
+                uinputStylus.sendDown(0, pointer, UinputTouchDevice.MT_TOOL_PEN)
 
-                    assertNextMotionEventEquals(
+                assertNextMotionEventEquals(
                         MotionEvent.ACTION_DOWN,
                         MotionEvent.TOOL_TYPE_STYLUS,
                         0,
                         0,
-                        InputDevice.SOURCE_STYLUS,
-                    )
+                        SOURCE_STYLUS,
+                )
 
-                    uinputStylus.sendBtnTouch(false)
-                    uinputStylus.sendBtn(button.key, false)
-                    uinputStylus.sendUp(0)
+                uinputStylus.sendBtnTouch(false)
+                uinputStylus.sendBtn(button.key, false)
+                uinputStylus.sendUp(0)
 
-                    assertNextMotionEventEquals(
+                assertNextMotionEventEquals(
                         MotionEvent.ACTION_UP,
                         MotionEvent.TOOL_TYPE_STYLUS,
                         0,
                         0,
-                        InputDevice.SOURCE_STYLUS,
-                    )
-                }
+                        SOURCE_STYLUS,
+                )
             }
+        }
     }
 
     private fun assertReceivedSystemKey(keycode: Int) {
         SystemUtil.runWithShellPermissionIdentity {
-            PollingCheck.waitFor { statusBarManager.getLastSystemKey() == keycode }
+            PollingCheck.waitFor { statusBarManager.lastSystemKey == keycode }
         }
     }
 
@@ -251,7 +250,7 @@ class StylusButtonInputEventTest {
         // Wait for the system to process the event.
         Thread.sleep(100)
         SystemUtil.runWithShellPermissionIdentity {
-            assertEquals(INITIAL_SYSTEM_KEY, statusBarManager.getLastSystemKey())
+            assertEquals(INITIAL_SYSTEM_KEY, statusBarManager.lastSystemKey)
         }
     }
 

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.input.cts
+package com.android.cts.input
 
 import android.app.Instrumentation
 import android.content.Context
@@ -22,18 +22,20 @@ import android.graphics.Point
 import android.hardware.input.InputManager
 import android.util.Size
 import android.view.Display
-import android.view.InputDevice
 import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
-import com.android.cts.input.UinputDevice
 import org.json.JSONArray
 import org.json.JSONObject
 
+/**
+ * Helper class for configuring and interacting with a [UinputDevice] that uses the evdev
+ * multitouch protocol.
+ */
 class UinputTouchDevice(
     instrumentation: Instrumentation,
     display: Display,
     size: Size,
-    private val rawResource: Int = R.raw.test_touchscreen_register,
-    private val source: Int = InputDevice.SOURCE_TOUCHSCREEN,
+    private val rawResource: Int,
+    private val source: Int,
 ) :
     AutoCloseable {
 
@@ -104,10 +106,10 @@ class UinputTouchDevice(
         for (i in 0 until absInfo.length()) {
             val item = absInfo.getJSONObject(i)
             if (item.get("code") == ABS_MT_POSITION_X) {
-                item.getJSONObject("info").put("maximum", size.getWidth() - 1)
+                item.getJSONObject("info").put("maximum", size.width - 1)
             }
             if (item.get("code") == ABS_MT_POSITION_Y) {
-                item.getJSONObject("info").put("maximum", size.getHeight() - 1)
+                item.getJSONObject("info").put("maximum", size.height - 1)
             }
         }
 
