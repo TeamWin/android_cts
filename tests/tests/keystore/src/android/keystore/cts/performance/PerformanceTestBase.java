@@ -62,7 +62,9 @@ public class PerformanceTestBase {
         ArrayList<PerformanceTestResult> results = new ArrayList<>();
         results.ensureCapacity(measurables.length);
         for (Measurable measurable : measurables) {
-            DeviceReportLog reportLog = new DeviceReportLog(REPORT_LOG_NAME, "performance_test");
+            DeviceReportLog reportLog =
+                    new DeviceReportLog(
+                            REPORT_LOG_NAME, "performance_test", TestUtils.getFilesDir());
             PerformanceTestResult result = measure(measurable);
 
             reportLog.addValue(
