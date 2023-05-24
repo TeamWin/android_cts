@@ -152,7 +152,7 @@ class StylusButtonInputEventTest {
                 virtualDisplayRule.virtualDisplay.display,
                 Size(WIDTH, HEIGHT),
                 R.raw.test_capacitive_stylus_register,
-                SOURCE_TOUCHSCREEN,
+                SOURCE_TOUCHSCREEN or SOURCE_STYLUS,
         ).use { uinputStylus ->
             val pointer = Point(100, 100)
             for (button in LINUX_KEYCODE_TO_MOTIONEVENT_BUTTON.entries.iterator()) {
@@ -207,7 +207,7 @@ class StylusButtonInputEventTest {
                 virtualDisplayRule.virtualDisplay.display,
                 Size(WIDTH, HEIGHT),
                 R.raw.test_capacitive_stylus_register,
-                SOURCE_TOUCHSCREEN,
+                SOURCE_TOUCHSCREEN or SOURCE_STYLUS,
         ).use { uinputStylus ->
             val pointer = Point(100, 100)
             for (button in LINUX_KEYCODE_TO_MOTIONEVENT_BUTTON.entries.iterator()) {
