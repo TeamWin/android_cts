@@ -29,6 +29,8 @@ import android.test.suitebuilder.annotation.SmallTest;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.CddTest;
+
 import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
@@ -46,6 +48,7 @@ public class AdvertiseSettingsTest {
                 InstrumentationRegistry.getInstrumentation().getTargetContext()));
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @SmallTest
     @Test
     public void testDefaultSettings() {
@@ -56,6 +59,7 @@ public class AdvertiseSettingsTest {
         assertTrue(settings.isConnectable());
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @SmallTest
     @Test
     public void testDescribeContents() {
@@ -63,6 +67,7 @@ public class AdvertiseSettingsTest {
         assertEquals(0, settings.describeContents());
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @SmallTest
     @Test
     public void testReadWriteParcel() {
@@ -88,6 +93,7 @@ public class AdvertiseSettingsTest {
         assertEquals(AdvertisingSetParameters.ADDRESS_TYPE_DEFAULT, settings.getOwnAddressType());
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @SmallTest
     @Test
     public void testIllegalTimeout() {

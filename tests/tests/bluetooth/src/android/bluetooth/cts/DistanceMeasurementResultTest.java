@@ -35,6 +35,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
+import com.android.compatibility.common.util.CddTest;
 
 import org.junit.After;
 import org.junit.Assume;
@@ -65,6 +66,7 @@ public class DistanceMeasurementResultTest {
         mAdapter = null;
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
     public void testCreateFromParcel() {
         final Parcel parcel = Parcel.obtain();
@@ -83,6 +85,7 @@ public class DistanceMeasurementResultTest {
         }
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
     public void testSetGetResultMeters() {
         DistanceMeasurementResult result = new DistanceMeasurementResult.Builder(121.0, 120.0)
@@ -90,6 +93,7 @@ public class DistanceMeasurementResultTest {
         assertEquals(121.0, result.getResultMeters(), 0.0);
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
     public void testSetGetErrorMeters() {
         DistanceMeasurementResult result = new DistanceMeasurementResult.Builder(121.0, 120.0)
@@ -97,6 +101,7 @@ public class DistanceMeasurementResultTest {
         assertEquals(120.0, result.getErrorMeters(), 0.0);
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
     public void testSetGetAzimuthAngle() {
         DistanceMeasurementResult result = new DistanceMeasurementResult.Builder(121.0, 120.0)
@@ -104,6 +109,7 @@ public class DistanceMeasurementResultTest {
         assertEquals(60.0, result.getAzimuthAngle(), 0.0);
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
     public void testSetGetErrorAzimuthAngle() {
         DistanceMeasurementResult result = new DistanceMeasurementResult.Builder(121.0, 120.0)
@@ -111,6 +117,7 @@ public class DistanceMeasurementResultTest {
         assertEquals(60.0, result.getErrorAzimuthAngle(), 0.0);
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
     public void testSetGetAltitudeAngle() {
         DistanceMeasurementResult result = new DistanceMeasurementResult.Builder(121.0, 120.0)
@@ -118,6 +125,7 @@ public class DistanceMeasurementResultTest {
         assertEquals(60.0, result.getAltitudeAngle(), 0.0);
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
     public void testSetGetErrorAltitudeAngle() {
         DistanceMeasurementResult result = new DistanceMeasurementResult.Builder(121.0, 120.0)
@@ -125,6 +133,7 @@ public class DistanceMeasurementResultTest {
         assertEquals(60.0, result.getErrorAltitudeAngle(), 0.0);
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1"})
     @Test
     public void testIllegalArgument() {
         assertThrows(IllegalArgumentException.class,

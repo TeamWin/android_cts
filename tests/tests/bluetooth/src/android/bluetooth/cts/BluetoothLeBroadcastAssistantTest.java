@@ -49,6 +49,7 @@ import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
+import com.android.compatibility.common.util.CddTest;
 
 import org.junit.After;
 import org.junit.Assume;
@@ -146,6 +147,7 @@ public class BluetoothLeBroadcastAssistantTest {
         TestUtils.dropPermissionAsShellUid();
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
     public void testCloseProfileProxy() {
         assertTrue(waitForProfileConnect());
@@ -158,6 +160,7 @@ public class BluetoothLeBroadcastAssistantTest {
         assertFalse(mIsProfileReady);
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
     public void testAddSource() {
         assertTrue(waitForProfileConnect());
@@ -225,6 +228,7 @@ public class BluetoothLeBroadcastAssistantTest {
         mBluetoothLeBroadcastAssistant.unregisterCallback(mCallbacks);
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
     public void testGetAllSources() {
         assertTrue(waitForProfileConnect());
@@ -245,6 +249,7 @@ public class BluetoothLeBroadcastAssistantTest {
         assertTrue(mBluetoothLeBroadcastAssistant.getAllSources(testDevice).isEmpty());
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
     public void testSetConnectionPolicy() {
         assertTrue(waitForProfileConnect());
@@ -266,6 +271,7 @@ public class BluetoothLeBroadcastAssistantTest {
                 mBluetoothLeBroadcastAssistant.getConnectionPolicy(testDevice));
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
     public void testGetMaximumSourceCapacity() {
         assertTrue(waitForProfileConnect());
@@ -282,6 +288,7 @@ public class BluetoothLeBroadcastAssistantTest {
                 () -> mBluetoothLeBroadcastAssistant.getMaximumSourceCapacity(null));
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
     public void testIsSearchInProgress() {
         assertTrue(waitForProfileConnect());
@@ -291,6 +298,7 @@ public class BluetoothLeBroadcastAssistantTest {
         assertFalse(mBluetoothLeBroadcastAssistant.isSearchInProgress());
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
     public void testModifySource() {
         assertTrue(waitForProfileConnect());
@@ -340,6 +348,7 @@ public class BluetoothLeBroadcastAssistantTest {
                 testDevice, 0, BluetoothStatusCodes.ERROR_REMOTE_LINK_ERROR);
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
     public void testRegisterCallback() {
         assertTrue(waitForProfileConnect());
@@ -405,6 +414,7 @@ public class BluetoothLeBroadcastAssistantTest {
         mBluetoothLeBroadcastAssistant.unregisterCallback(callback);
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
     public void testStartSearchingForSources() {
         assertTrue(waitForProfileConnect());
@@ -440,6 +450,7 @@ public class BluetoothLeBroadcastAssistantTest {
         mBluetoothLeBroadcastAssistant.unregisterCallback(mCallbacks);
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
     public void testGetConnectedDevices() {
         assertTrue(waitForProfileConnect());
@@ -459,6 +470,7 @@ public class BluetoothLeBroadcastAssistantTest {
         assertTrue(connectedDevices.isEmpty());
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
     public void testGetDevicesMatchingConnectionStates() {
         assertTrue(waitForProfileConnect());
@@ -484,6 +496,7 @@ public class BluetoothLeBroadcastAssistantTest {
         assertTrue(connectedDevices.isEmpty());
     }
 
+    @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
     public void testGetConnectionState() {
         assertTrue(waitForProfileConnect());
