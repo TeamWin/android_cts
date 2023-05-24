@@ -122,11 +122,28 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         beforeAllTestsBase();
         enforceMockModemDeveloperSetting();
 
+        grantSatellitePermission();
+
         sMockSatelliteServiceManager = new MockSatelliteServiceManager(
                 InstrumentationRegistry.getInstrumentation());
         assertTrue(sMockSatelliteServiceManager.connectSatelliteService());
 
-        grantSatellitePermission();
+        SatelliteStateCallbackTest callback = new SatelliteStateCallbackTest();
+        int count = 0;
+        while (sSatelliteManager.registerForSatelliteModemStateChanged(
+                getContext().getMainExecutor(), callback) != SatelliteManager.SATELLITE_ERROR_NONE
+                && count < 10) {
+            count++;
+            waitFor(500);
+        }
+        assertTrue(callback.waitUntilResult(1));
+        if (callback.modemState == SatelliteManager.SATELLITE_MODEM_STATE_OFF) {
+            waitFor(1000);
+        } else {
+            assertTrue(callback.waitUntilModemOff(EXTERNAL_DEPENDENT_TIMEOUT));
+        }
+        sSatelliteManager.unregisterForSatelliteModemStateChanged(callback);
+
         assertTrue(isSatelliteSupported());
         if (!isSatelliteProvisioned()) {
             logd("Provision satellite");
@@ -152,9 +169,24 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         logd("afterAllTests");
         if (!shouldTestSatelliteWithMockService()) return;
 
+        grantSatellitePermission();
+
+        SatelliteStateCallbackTest callback = new SatelliteStateCallbackTest();
+        long registerResult = sSatelliteManager.registerForSatelliteModemStateChanged(
+                getContext().getMainExecutor(), callback);
+        assertEquals(SatelliteManager.SATELLITE_ERROR_NONE, registerResult);
+        assertTrue(callback.waitUntilResult(1));
+
         assertTrue(sMockSatelliteServiceManager.restoreSatelliteServicePackageName());
-        sMockSatelliteServiceManager = null;
+        if (sMockSatelliteServiceManager.isSatelliteServicePackageConfigured()) {
+            assertTrue(callback.waitUntilModemOff(EXTERNAL_DEPENDENT_TIMEOUT));
+        } else {
+            waitFor(1000);
+        }
+        sSatelliteManager.unregisterForSatelliteModemStateChanged(callback);
         afterAllTestsBase();
+        sMockSatelliteServiceManager = null;
+        revokeSatellitePermission();
     }
 
     @Before
@@ -208,6 +240,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
 
         grantSatellitePermission();
         if (isSatelliteEnabled()) {
+            logd("Disable satellite");
             SatelliteStateCallbackTest callback = new SatelliteStateCallbackTest();
             long registerResult = sSatelliteManager.registerForSatelliteModemStateChanged(
                     getContext().getMainExecutor(), callback);
@@ -225,7 +258,6 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         sMockSatelliteServiceManager.clearMockPointingUiActivityStatusChanges();
         sMockSatelliteServiceManager.clearListeningEnabledList();
         revokeSatellitePermission();
-        waitFor(500);
     }
 
     @Test
@@ -417,7 +449,6 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
             assertEquals(SatelliteManager.SATELLITE_MODEM_STATE_OFF, callback.modemState);
         }
 
-        waitFor(500);
         requestSatelliteEnabled(true, true, SatelliteManager.SATELLITE_ERROR_NONE);
         assertTrue(callback.waitUntilResult(1));
         assertEquals(SatelliteManager.SATELLITE_MODEM_STATE_IDLE, callback.modemState);
@@ -564,7 +595,6 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
                             SatelliteManager.SATELLITE_DATAGRAM_TRANSFER_STATE_IDLE,
                             0, SatelliteManager.SATELLITE_ERROR_NONE));
             stopTransmissionUpdates(transmissionUpdateCallback);
-            waitFor(500);
 
             logd("testSendSatelliteDatagram_success: Enable satellite");
             requestSatelliteEnabled(true);
@@ -936,7 +966,6 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
                             SatelliteManager.SATELLITE_DATAGRAM_TRANSFER_STATE_IDLE,
                             0, SatelliteManager.SATELLITE_ERROR_NONE));
             stopTransmissionUpdates(transmissionUpdateCallback);
-            waitFor(500);
 
             logd("testReceiveSatelliteDatagram: Enable satellite");
             requestSatelliteEnabled(true);
@@ -1190,7 +1219,6 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
                             SatelliteManager.SATELLITE_DATAGRAM_TRANSFER_STATE_IDLE,
                             0, SatelliteManager.SATELLITE_ERROR_NONE));
             stopTransmissionUpdates(transmissionUpdateCallback);
-            waitFor(500);
 
             logd("testSendSatelliteDatagram_DemoMode_success: Enable satellite");
             stateCallback.clearModemStates();
@@ -1267,7 +1295,6 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
             requestSatelliteEnabled(false);
             assertTrue(stateCallback.waitUntilModemOff());
             stateCallback.clearModemStates();
-            waitFor(500);
         }
         requestSatelliteEnabledForDemoMode(true);
         assertTrue(stateCallback.waitUntilResult(1));
@@ -1358,7 +1385,6 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
             assertTrue(stateCallback.waitUntilModemOff());
             assertSatelliteEnabledInSettings(false);
             stateCallback.clearModemStates();
-            waitFor(500);
         }
 
         // Get satellite mode radios
@@ -1420,7 +1446,6 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
             assertTrue(stateCallback.waitUntilModemOff());
             assertSatelliteEnabledInSettings(false);
             stateCallback.clearModemStates();
-            waitFor(500);
         }
 
         // Get satellite mode radios
@@ -1490,7 +1515,6 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
             assertTrue(stateCallback.waitUntilModemOff());
             assertFalse(isSatelliteEnabled());
             stateCallback.clearModemStates();
-            waitFor(500);
         }
 
         ConnectivityManager connectivityManager =
@@ -1568,7 +1592,6 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
             requestSatelliteEnabled(false);
             assertTrue(stateCallback.waitUntilModemOff());
             stateCallback.clearModemStates();
-            waitFor(500);
         }
         requestSatelliteEnabledForDemoMode(true);
         assertTrue(stateCallback.waitUntilResult(1));
@@ -1783,7 +1806,6 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
             requestSatelliteEnabled(false);
             assertTrue(stateCallback.waitUntilModemOff());
             stateCallback.clearModemStates();
-            waitFor(500);
         }
         requestSatelliteEnabledForDemoMode(true);
         assertTrue(stateCallback.waitUntilResult(1));
@@ -2711,18 +2733,6 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
 
         if (isRadioSatelliteModeSensitive(Settings.Global.RADIO_UWB)) {
             mUwbManager.unregisterAdapterStateCallback(mUwbAdapterStateCallback);
-        }
-    }
-
-    private void waitFor(long timeoutMillis) {
-        Object delayTimeout = new Object();
-        synchronized (delayTimeout) {
-            try {
-                delayTimeout.wait(timeoutMillis);
-            } catch (InterruptedException ex) {
-                // Ignore the exception
-                logd("waitFor: delayTimeout ex=" + ex);
-            }
         }
     }
 }
