@@ -200,19 +200,17 @@ public class JobParametersTest extends BaseJobSchedulerTest {
 
         // In automotive device, always-on screen and endless battery charging are assumed.
         if (BatteryUtils.hasBattery() && !isAutomotiveDevice()) {
-            BatteryUtils.runDumpsysBatterySetLevel(100);
-            BatteryUtils.runDumpsysBatteryUnplug();
+            setBatteryState(false, 100);
             verifyStopReason(new JobInfo.Builder(JOB_ID, kJobServiceComponent)
                             .setRequiresBatteryNotLow(true).build(),
                     JobParameters.STOP_REASON_CONSTRAINT_BATTERY_NOT_LOW,
-                    () -> BatteryUtils.runDumpsysBatterySetLevel(5));
+                    () -> setBatteryState(false, 5));
 
-            BatteryUtils.runDumpsysBatterySetPluggedIn(true);
-            BatteryUtils.runDumpsysBatterySetLevel(100);
+            setBatteryState(true, 100);
             verifyStopReason(new JobInfo.Builder(JOB_ID, kJobServiceComponent)
                             .setRequiresCharging(true).build(),
                     JobParameters.STOP_REASON_CONSTRAINT_CHARGING,
-                    BatteryUtils::runDumpsysBatteryUnplug);
+                    () -> setBatteryState(false, 100));
         }
 
         setStorageStateLow(false);
