@@ -40,6 +40,7 @@ import android.net.Uri;
 import android.os.Parcel;
 import android.os.PatternMatcher;
 import android.platform.test.annotations.AppModeSdkSandbox;
+import android.platform.test.annotations.PlatinumTest;
 import android.provider.Contacts.People;
 import android.test.AndroidTestCase;
 import android.util.Printer;
@@ -64,6 +65,7 @@ import java.util.Set;
 import java.util.function.Predicate;
 
 @AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
+@PlatinumTest(focusArea = "pm")
 public class IntentFilterTest extends AndroidTestCase {
 
     private IntentFilter mIntentFilter;
