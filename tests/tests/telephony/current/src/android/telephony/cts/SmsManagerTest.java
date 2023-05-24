@@ -22,8 +22,6 @@ import static androidx.test.InstrumentationRegistry.getInstrumentation;
 import static com.android.compatibility.common.util.BlockedNumberUtil.deleteBlockedNumber;
 import static com.android.compatibility.common.util.BlockedNumberUtil.insertBlockedNumber;
 
-import static com.google.common.truth.Truth.assertThat;
-
 import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.Matchers.emptyString;
 import static org.hamcrest.Matchers.equalTo;
@@ -58,8 +56,6 @@ import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
 import android.os.RemoteCallback;
 import android.os.SystemClock;
-import android.os.UserHandle;
-import android.provider.DeviceConfig;
 import android.provider.Telephony;
 import android.telephony.SmsCbMessage;
 import android.telephony.SmsManager;
@@ -157,8 +153,11 @@ public class SmsManagerTest {
         mContext = getContext();
         mTelephonyManager = mContext.getSystemService(TelephonyManager.class);
         mSubscriptionManager = mContext.getSystemService(SubscriptionManager.class);
-        mDestAddr = mTelephonyManager.getLine1Number();
         mText = "This is a test message";
+
+        executeWithShellPermissionIdentity(() -> {
+            mDestAddr = mSubscriptionManager.getPhoneNumber(mTelephonyManager.getSubscriptionId());
+        });
 
         // exclude the networks that don't support SMS delivery report
         String mccmnc = mTelephonyManager.getSimOperator();
