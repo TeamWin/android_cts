@@ -378,6 +378,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         mIntentFilter.addAction(WifiManager.RSSI_CHANGED_ACTION);
         mIntentFilter.addAction(WifiManager.NETWORK_IDS_CHANGED_ACTION);
         mIntentFilter.addAction(WifiManager.ACTION_PICK_WIFI_NETWORK);
+        mIntentFilter.setPriority(999);
 
         if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)) {
             mContext.registerReceiver(mReceiver, mIntentFilter, RECEIVER_EXPORTED);
@@ -6125,8 +6126,8 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
 
             // Disable and re-enable Wifi to avoid reconnect to the secondary candidate
             mWifiManager.setWifiEnabled(false);
-            mWifiManager.setWifiEnabled(true);
             waitForDisconnection();
+            mWifiManager.setWifiEnabled(true);
             // Now trigger scan and ensure that the device does not connect to any networks.
             mWifiManager.startScan();
             ensureNotConnected();
