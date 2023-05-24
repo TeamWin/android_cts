@@ -22,6 +22,7 @@
     <option name="config-descriptor:metadata" key="parameter" value="secondary_user" />
     <option name="config-descriptor:metadata" key="parameter" value="no_foldable_states" />
     <option name="config-descriptor:metadata" key="parameter" value="run_on_sdk_sandbox" />
+    <option name="config-descriptor:metadata" key="parameter" value="multiuser" />
 
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
         <option name="cleanup-apks" value="true" />
@@ -45,6 +46,8 @@
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.suspendapps.cts" />
         <option name="runtime-hint" value="30s" />
+        <option name="exclude-annotation" value="com.android.bedstead.harrier.annotations.RequireRunOnWorkProfile" />
+        <option name="exclude-annotation" value="com.android.bedstead.harrier.annotations.RequireRunOnSecondaryUser" />
     </test>
 
 </configuration>

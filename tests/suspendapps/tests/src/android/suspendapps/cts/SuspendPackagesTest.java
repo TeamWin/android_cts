@@ -36,6 +36,7 @@ import static org.junit.Assume.assumeTrue;
 
 import android.Manifest;
 import android.app.AppOpsManager;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.LauncherApps;
@@ -50,13 +51,18 @@ import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.LargeTest;
-import androidx.test.runner.AndroidJUnit4;
 
+import com.android.bedstead.harrier.BedsteadJUnit4;
+import com.android.bedstead.harrier.DeviceState;
+import com.android.bedstead.nene.TestApis;
 import com.android.compatibility.common.util.FeatureUtil;
 import com.android.compatibility.common.util.SystemUtil;
+import com.android.suspendapps.testdeviceadmin.TestDeviceAdmin;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -65,7 +71,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-@RunWith(AndroidJUnit4.class)
+@RunWith(BedsteadJUnit4.class)
 @LargeTest
 public class SuspendPackagesTest {
 
@@ -76,9 +82,13 @@ public class SuspendPackagesTest {
     private AppOpsManager mAppOpsManager;
     private TestAppInterface mTestAppInterface;
 
+    @ClassRule
+    @Rule
+    public static final DeviceState sDeviceState = new DeviceState();
+
     private void addAndAssertDeviceOwner() {
-        SystemUtil.runShellCommand("dpm set-device-owner --user 0 " + DEVICE_ADMIN_COMPONENT,
-                output -> output.startsWith("Success"));
+        TestApis.devicePolicy().setDeviceOwner(new ComponentName(DEVICE_ADMIN_PACKAGE,
+                TestDeviceAdmin.class.getName()));
     }
 
     private void addAndAssertDeviceAdmin() {
