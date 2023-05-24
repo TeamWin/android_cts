@@ -166,6 +166,8 @@ public class SessionLifecycleTest extends AutoFillServiceTestCase.ManualActivity
     @Test
     public void testDatasetAuthResponseWhileAutofilledAppIsLifecycled() throws Exception {
         assumeTrue("Rotation is supported", Helper.isRotationSupported(mContext));
+        assumeTrue("Device state is not REAR_DISPLAY",
+                !Helper.isDeviceInState(mContext, Helper.DeviceStateEnum.REAR_DISPLAY));
         final ActivityManager activityManager = (ActivityManager) getContext()
                 .getSystemService(Context.ACTIVITY_SERVICE);
         assumeFalse(activityManager.isLowRamDevice());
