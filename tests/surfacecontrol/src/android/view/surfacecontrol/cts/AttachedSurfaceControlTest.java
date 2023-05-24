@@ -111,6 +111,11 @@ public class AttachedSurfaceControlTest {
 
     @Before
     public void setup() {
+        mOrientationSession = new IgnoreOrientationRequestSession(false /* enable */);
+        mWmState = new WindowManagerStateHelper();
+    }
+
+    private void supportRotationCheck() {
         PackageManager pm =
                 InstrumentationRegistry.getInstrumentation().getContext().getPackageManager();
         boolean supportsRotation = pm.hasSystemFeature(PackageManager.FEATURE_SCREEN_PORTRAIT)
@@ -118,8 +123,6 @@ public class AttachedSurfaceControlTest {
         final boolean isFixedToUserRotation =
                 "enabled".equals(SystemUtil.runShellCommand(FIXED_TO_USER_ROTATION_COMMAND).trim());
         Assume.assumeTrue(supportsRotation && !isFixedToUserRotation);
-        mOrientationSession = new IgnoreOrientationRequestSession(false /* enable */);
-        mWmState = new WindowManagerStateHelper();
     }
 
     @After
@@ -131,6 +134,8 @@ public class AttachedSurfaceControlTest {
 
     @Test
     public void testOnBufferTransformHintChangedListener() throws InterruptedException {
+        supportRotationCheck();
+
         final int[] transformHintResult = new int[2];
         final CountDownLatch[] firstCallback = new CountDownLatch[1];
         final CountDownLatch[] secondCallback = new CountDownLatch[1];
@@ -199,6 +204,8 @@ public class AttachedSurfaceControlTest {
 
     @Test
     public void testOnBufferTransformHintChangesFromLandToSea() throws InterruptedException {
+        supportRotationCheck();
+
         final int[] transformHintResult = new int[2];
         final CountDownLatch[] firstCallback = new CountDownLatch[1];
         final CountDownLatch[] secondCallback = new CountDownLatch[1];
