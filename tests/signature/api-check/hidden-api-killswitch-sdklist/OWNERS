@@ -1,2 +1,2 @@
 # Bug component: 610774
-include ../hidden-api-blacklist-current-api/OWNERS
+include ../../HIDDEN_API_OWNERS
