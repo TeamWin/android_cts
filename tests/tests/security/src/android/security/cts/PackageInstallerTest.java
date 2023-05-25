@@ -20,6 +20,7 @@ import static android.content.Intent.EXTRA_REMOTE_CALLBACK;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.ActivityManager;
 import android.app.Instrumentation;
 import android.app.Instrumentation.ActivityMonitor;
 import android.app.Service;
@@ -69,7 +70,8 @@ public class PackageInstallerTest extends StsExtraBusinessLogicTestCase {
     private static final String ACTION_COMMIT_WITH_FG_SERVICE_INTENT_SENDER = TEST_APP_NAME
             + ".action.COMMIT_WITH_FG_SERVICE_INTENT_SENDER";
 
-    static final long DEFAULT_TIMEOUT_MS = TimeUnit.SECONDS.toMillis(15);
+    static final long DEFAULT_TIMEOUT_MS = isLowRamDevice()
+            ? TimeUnit.SECONDS.toMillis(60) : TimeUnit.SECONDS.toMillis(15);
 
     private static final TestApp TEST_APP = new TestApp(
             "PackageInstallerTestApp", TEST_APP_NAME, 1, /*isApex*/ false,
@@ -111,7 +113,7 @@ public class PackageInstallerTest extends StsExtraBusinessLogicTestCase {
 
     @After
     public void tearDown() throws Exception {
-        Uninstall.packages(TestApp.A);
+        Uninstall.packages(TestApp.A, TEST_APP_NAME);
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
                 .dropShellPermissionIdentity();
     }
@@ -205,6 +207,11 @@ public class PackageInstallerTest extends StsExtraBusinessLogicTestCase {
             throw Objects.requireNonNull(bundle.getSerializable(KEY_ERROR, Exception.class));
         }
         return bundle;
+    }
+
+    private static boolean isLowRamDevice() {
+        return InstrumentationRegistry.getInstrumentation().getContext()
+                .getSystemService(ActivityManager.class).isLowRamDevice();
     }
 
     // An activity to receive status of a committed session
