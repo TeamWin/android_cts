@@ -19,7 +19,6 @@ package android.photopicker.cts;
 import static android.Manifest.permission.READ_DEVICE_CONFIG;
 import static android.Manifest.permission.WRITE_ALLOWLISTED_DEVICE_CONFIG;
 import static android.Manifest.permission.WRITE_DEVICE_CONFIG;
-import static android.photopicker.cts.PickerProviderMediaGenerator.setCloudProvider;
 import static android.photopicker.cts.PickerProviderMediaGenerator.syncCloudProvider;
 import static android.photopicker.cts.util.PhotoPickerUiUtils.findAddButton;
 import static android.photopicker.cts.util.PhotoPickerUiUtils.findItemList;
@@ -87,7 +86,7 @@ public class PhotoPickerCloudUtils {
     public static void initCloudProviderWithImage(
             Context context, PickerProviderMediaGenerator.MediaGenerator mediaGenerator,
             String authority, Pair<String, String>... mediaPairs) throws Exception {
-        setCloudProvider(context, authority);
+        PhotoPickerBaseTest.setCloudProvider(authority);
         assertThat(MediaStore.isCurrentCloudMediaProviderAuthority(context.getContentResolver(),
                 authority)).isTrue();
 
