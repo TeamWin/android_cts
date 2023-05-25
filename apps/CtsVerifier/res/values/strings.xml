@@ -2518,7 +2518,10 @@
         Fsi Notif Content Fsi Notif Content Fsi Notif Content</string>
     <string name="fsi_grant_permission">Please toggle on the full screen intents permission for CTSVerifier.</string>
     <string name="fsi_deny_permission">Please toggle off the full screen intents permission for CTSVerifier</string>
-    <string name="fsi_sticky_hun">There should be a Heads Up Notification on the screen.\n
+    <string name="fsi_sticky_hun">There should be a sticky Heads Up Notification on the screen.\n
+        It would not be automatically cleared out.\n
+        Fail the test if it doesn\'t show or disappears within 60s.</string>
+    <string name="fsi_sticky_hun_60s">There should be a Heads Up Notification on the screen.\n
         It would show for 60s.\n
         Fail the test if it doesn\'t show or disappears within 60s.</string>
     <string name="np_start_channel_settings">Launch Channel Settings</string>
