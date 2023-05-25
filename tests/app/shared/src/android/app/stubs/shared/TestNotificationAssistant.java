@@ -86,10 +86,10 @@ public class TestNotificationAssistant extends NotificationAssistantService {
     public void onListenerConnected() {
         super.onListenerConnected();
         sNotificationAssistantInstance = this;
+        mCurrentCapabilities = mNotificationManager.getAllowedAssistantAdjustments();
         INSTANCE_AVAILABLE.open();
         Log.d(TAG, "TestNotificationAssistant connected");
         mIsConnected = true;
-        mCurrentCapabilities = mNotificationManager.getAllowedAssistantAdjustments();
     }
 
     @Override
