@@ -561,8 +561,10 @@ def main():
   if testbed_index is None and num_testbeds is not None:
     raise ValueError(
         'testbed_index must be specified if num_testbeds is specified.')
-  if testbed_index >= num_testbeds:
-    raise ValueError(
+  if (testbed_index is not None and num_testbeds is not None and
+      testbed_index >= num_testbeds):
+    raise ValueError('testbed_index must be less than num_testbeds. '
+                     'testbed_index starts at 0.')
 
   # Read config file and extract relevant TestBed
   config_file_contents = get_config_file_contents()
