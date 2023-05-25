@@ -18,6 +18,8 @@
      package="android.content.pm.cts.shortcutmanager"
      android:sharedUserId="android.content.pm.cts.shortcutmanager.packages">
 
+    <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS" />
+
     <queries>
         <package android:name="android.content.pm.cts.shortcutmanager.throttling" />
         <package android:name="android.content.pm.cts.shortcutmanager.packages.package4" />
