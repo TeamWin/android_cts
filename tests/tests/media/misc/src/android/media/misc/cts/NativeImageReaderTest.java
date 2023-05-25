@@ -22,7 +22,7 @@ import android.test.AndroidTestCase;
 import android.util.Log;
 import android.view.Surface;
 
-import androidx.annotation.RequiresApi;
+import androidx.test.filters.SdkSuppress;
 
 /**
  * Verification test for AImageReader.
@@ -55,7 +55,7 @@ public class NativeImageReaderTest extends AndroidTestCase {
         assertTrue("Surface created is invalid.", surface.isValid());
     }
 
-    @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
     public void testSucceedsWithHardwareBufferFormatAndDataSpace() {
         assertTrue(
                 "Native test failed, see log for details",
