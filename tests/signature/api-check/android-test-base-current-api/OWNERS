@@ -1,4 +1,2 @@
-# Bug component: 24949
-paulduffin@google.com
-jiyong@google.com
-tnorbye@google.com
+# Bug component: 819107
+include ../../API_SIGNATURE_OWNERS
