@@ -38,7 +38,6 @@ import android.hardware.camera2.TotalCaptureResult;
 import android.hardware.camera2.cts.helpers.StaticMetadata;
 import android.hardware.camera2.cts.rs.BitmapUtils;
 import android.hardware.camera2.cts.rs.RawConverter;
-import android.hardware.camera2.cts.rs.RenderScriptSingleton;
 import android.hardware.camera2.cts.testcases.Camera2AndroidTestCase;
 import android.hardware.camera2.params.InputConfiguration;
 import android.location.Location;
@@ -133,18 +132,6 @@ public class DngCreatorTest extends Camera2AndroidTestCase {
         Image jpeg;
         Image raw;
         Bitmap rawBitmap;
-    }
-
-    @Override
-    public void setUp() throws Exception {
-        super.setUp();
-        RenderScriptSingleton.setContext(mContext);
-    }
-
-    @Override
-    public void tearDown() throws Exception {
-        RenderScriptSingleton.clearContext();
-        super.tearDown();
     }
 
     /**
@@ -533,7 +520,7 @@ public class DngCreatorTest extends Camera2AndroidTestCase {
                 raw.getPlanes()[0].getBuffer().get(rawPlane);
                 raw.getPlanes()[0].getBuffer().rewind();
 
-                RawConverter.convertToSRGB(RenderScriptSingleton.getRS(), raw.getWidth(),
+                RawConverter.convertToSRGB(raw.getWidth(),
                         raw.getHeight(), raw.getPlanes()[0].getRowStride(), rawPlane,
                         data.characteristics, /*captureREsult*/data.raw.second, /*offsetX*/ 0,
                         /*offsetY*/ 0, /*out*/ rawBitmap);
@@ -617,7 +604,7 @@ public class DngCreatorTest extends Camera2AndroidTestCase {
                 raw.getPlanes()[0].getBuffer().get(rawPlane);
                 raw.getPlanes()[0].getBuffer().rewind();
 
-                RawConverter.convertToSRGB(RenderScriptSingleton.getRS(), raw.getWidth(),
+                RawConverter.convertToSRGB(raw.getWidth(),
                         raw.getHeight(), raw.getPlanes()[0].getRowStride(), rawPlane,
                         data.characteristics, data.imagePair.second, /*offsetX*/ 0, /*offsetY*/ 0,
                         /*out*/ rawBitmap);
