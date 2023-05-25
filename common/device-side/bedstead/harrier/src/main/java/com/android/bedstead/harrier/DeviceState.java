@@ -2301,6 +2301,13 @@ public final class DeviceState extends HarrierRule {
                 failureMode);
     }
 
+    private void ensureCanAddProfile(
+            com.android.bedstead.nene.users.UserType userType, FailureMode failureMode) {
+        checkFailOrSkip("the device cannot add more profiles of type " + userType,
+                TestApis.users().getRemainingCreatableProfileCount(userType) > 0,
+                failureMode);
+    }
+
     /**
      * Create and register a {@link BlockingBroadcastReceiver} which will be unregistered after the
      * test has run.
@@ -2746,6 +2753,7 @@ public final class DeviceState extends HarrierRule {
     private UserReference createProfile(
             com.android.bedstead.nene.users.UserType profileType, UserReference parent) {
         ensureCanAddUser();
+        ensureCanAddProfile(profileType, FailureMode.SKIP);
 
         if (profileType.name().equals("android.os.usertype.profile.CLONE")) {
             // Special case - we can't create a clone profile if this is set
