@@ -235,16 +235,17 @@ public class ASurfaceControlBackPressureTest {
             }
         };
 
-        MultiFramePixelChecker pixelChecker = new MultiFramePixelChecker(colors) {
+        MultiFramePixelChecker PixelChecker = new MultiFramePixelChecker(colors) {
             @Override
             public boolean checkPixels(int pixelCount, int width, int height) {
                 return pixelCount > 2000 && pixelCount < 3000;
             }
         };
 
-        mActivity.verifyTest(new SurfaceControlTestCase(callback, pixelChecker,
+        mActivity.verifyTest(new SurfaceControlTestCase(callback, PixelChecker,
                         DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT,
-                        DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT),
+                        DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT,
+                        true /* checkSurfaceViewBoundsOnly */, false /* singleFrameOnly */),
                 mName);
     }
 
@@ -265,7 +266,7 @@ public class ASurfaceControlBackPressureTest {
             }
         };
 
-        MultiFramePixelChecker pixelChecker = new MultiFramePixelChecker(colors) {
+        MultiFramePixelChecker PixelChecker = new MultiFramePixelChecker(colors) {
             @Override
             public boolean checkPixels(int pixelCount, int width, int height) {
                 return pixelCount > 2000 && pixelCount < 3000;
@@ -273,9 +274,10 @@ public class ASurfaceControlBackPressureTest {
         };
 
         CapturedActivity.TestResult result = mActivity.runTest(new SurfaceControlTestCase(callback,
-                pixelChecker,
+                PixelChecker,
                 DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT,
-                DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT));
+                DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT,
+                true /* checkSurfaceViewBoundsOnly */, false /* singleFrameOnly */));
 
         assertTrue(result.passFrames > 0);
 

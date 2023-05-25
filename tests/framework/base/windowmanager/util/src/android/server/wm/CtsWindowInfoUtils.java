@@ -83,31 +83,12 @@ public class CtsWindowInfoUtils {
             }
         };
 
-        var waitForWindow = new ThrowingRunnable() {
-            @Override
-            public void run() throws InterruptedException {
-                var listener = new WindowInfosListenerForTest();
-                try {
-                    listener.addWindowInfosListener(checkPredicate);
-                    latch.await(timeout, unit);
-                } finally {
-                    listener.removeWindowInfosListener(checkPredicate);
-                }
-            }
-        };
-
-        Set<String> shellPermissions =
-                InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                        .getAdoptedShellPermissions();
-        if (shellPermissions.isEmpty()) {
-            SystemUtil.runWithShellPermissionIdentity(waitForWindow,
-                    Manifest.permission.ACCESS_SURFACE_FLINGER);
-        } else if (shellPermissions.contains(Manifest.permission.ACCESS_SURFACE_FLINGER)) {
-            waitForWindow.run();
-        } else {
-            throw new IllegalStateException(
-                    "waitForWindowOnTop called with adopted shell permissions that don't include "
-                            + "ACCESS_SURFACE_FLINGER");
+        var listener = new WindowInfosListenerForTest();
+        try {
+            listener.addWindowInfosListener(checkPredicate);
+            latch.await(timeout, unit);
+        } finally {
+            listener.removeWindowInfosListener(checkPredicate);
         }
 
         return satisfied.get();
