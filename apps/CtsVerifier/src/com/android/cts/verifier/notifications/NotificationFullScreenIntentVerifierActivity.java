@@ -122,11 +122,12 @@ public class NotificationFullScreenIntentVerifierActivity extends InteractiveVer
         tests.add(new SetGlobalVisibilityPublicStep());
         tests.add(new SetChannelLockscreenVisibilityPublicStep());
 
-        // Deny permission for Full Screen Intent
-        tests.add(new DenyFsiPermissionStep());
+        // Grant permission for Full Screen Intent
+        tests.add(new GrantFsiPermissionStep());
 
-        // NOW TESTING: Screen unlocked FSI HUN with permission, should show sticky HUN for 60s
-        tests.add(new ScreenUnlockedFsiHunTest());
+        // NOW TESTING: Screen unlocked FSI HUN with permission, should show sticky HUN for
+        // at least 60s
+        tests.add(new ScreenUnlockedFsiHunWithPermissionTest());
 
         // NOW TESTING: lockscreen FSI HUN with FSI permission, should launch FSI
         tests.add(new LockScreenFsiWithPermissionTestStep());
@@ -148,7 +149,7 @@ public class NotificationFullScreenIntentVerifierActivity extends InteractiveVer
         tests.add(new DenyFsiPermissionStep());
 
         // NOW TESTING: Screen unlocked FSI without permission, should show sticky HUN for 60s
-        tests.add(new ScreenUnlockedFsiHunTest());
+        tests.add(new ScreenUnlockedFsiHunWithoutPermissionTest());
 
         // NOW TESTING: lockscreen FSI HUN without FSI permission,
         // HUN shows up first in list, expanded with pill buttons
@@ -571,10 +572,24 @@ public class NotificationFullScreenIntentVerifierActivity extends InteractiveVer
         protected abstract void sendNotification();
     }
 
-    private class ScreenUnlockedFsiHunTest extends FullScreenIntentNotificationBaseTest {
+    private class ScreenUnlockedFsiHunWithPermissionTest
+            extends FullScreenIntentNotificationBaseTest {
 
-        ScreenUnlockedFsiHunTest() {
+        ScreenUnlockedFsiHunWithPermissionTest() {
             super(R.string.fsi_sticky_hun);
+        }
+
+        @Override
+        protected void sendNotification() {
+            sendFullScreenIntentHeadsUpNotification();
+        }
+    }
+
+    private class ScreenUnlockedFsiHunWithoutPermissionTest
+            extends FullScreenIntentNotificationBaseTest {
+
+        ScreenUnlockedFsiHunWithoutPermissionTest() {
+            super(R.string.fsi_sticky_hun_60s);
         }
 
         @Override
