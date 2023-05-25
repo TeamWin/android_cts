@@ -22,6 +22,7 @@ import android.companion.cts.common.sleepFor
 import android.platform.test.annotations.AppModeFull
 import kotlin.test.assertContains
 import kotlin.test.assertFalse
+import kotlin.test.fail
 import kotlin.time.Duration.Companion.seconds
 import org.junit.Assume.assumeFalse
 import org.junit.Test
@@ -70,7 +71,7 @@ class AssociationRevokedTest : AssociationRevokedTestBase() {
             packageName, "Not a holder of $DEVICE_PROFILE_WATCH")
 
         // The test app should not crash after disassociate the watch profile device.
-        confirmationUi.waitUntilAppAppeared()
+        assertAppStillRunning(packageName)
     }
 
     @Test
@@ -118,4 +119,9 @@ class AssociationRevokedTest : AssociationRevokedTestBase() {
 
     private fun forceKillApp(packageName: String) =
         runShellCommand("am force-stop $packageName")
+
+    private fun assertAppStillRunning(packageName: String) {
+        val output = runShellCommand("pidof $packageName")
+        if (output.isEmpty()) fail("$packageName is still running.")
+    }
 }

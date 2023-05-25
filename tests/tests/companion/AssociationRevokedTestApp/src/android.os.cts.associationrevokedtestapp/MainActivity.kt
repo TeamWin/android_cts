@@ -40,8 +40,8 @@ class MainActivity : Activity() {
         super.onCreate(savedInstanceState)
     }
 
-    override fun onStart() {
-        super.onStart()
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
 
         var associationRequest = AssociationRequest.Builder().apply {
             setSingleDevice(true)
@@ -59,11 +59,9 @@ class MainActivity : Activity() {
                 }
 
                 override fun onAssociationCreated(associationInfo: AssociationInfo) {
-                    toast("Association created")
                 }
 
                 override fun onFailure(errorMessage: CharSequence?) {
-                    toast("error: $errorMessage")
                 }
             })
     }
