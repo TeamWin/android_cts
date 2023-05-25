@@ -62,7 +62,7 @@ public class MissedCallTest extends BaseTelecomTestWithMockServices {
     }
 
     public void testMissedCall_NotifyDialer() throws Exception {
-        if (!mShouldTestTelecom) {
+        if (!mShouldTestTelecom || !TestUtils.hasTelephonyFeature(mContext)) {
             return;
         }
         setupConnectionService(null, FLAG_REGISTER | FLAG_ENABLE);

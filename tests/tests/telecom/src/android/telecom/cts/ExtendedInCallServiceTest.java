@@ -393,13 +393,17 @@ public class ExtendedInCallServiceTest extends BaseTelecomTestWithMockServices {
             cleanupCalls();
             // Set device back to normal
             manager.disableCarMode(0);
-            // Make sure the UI mode has been set back
-            assertUiMode(Configuration.UI_MODE_TYPE_NORMAL);
+            if (!TestUtils.hasAutomotiveFeature()) {
+                // Make sure the UI mode has been set back
+                assertUiMode(Configuration.UI_MODE_TYPE_NORMAL);
+            } else {
+                assertUiMode(Configuration.UI_MODE_TYPE_CAR);
+            }
         }
     }
 
     public void testIncomingCallFromBlockedNumber_IsRejected() throws Exception {
-        if (!mShouldTestTelecom) {
+        if (!mShouldTestTelecom || !TestUtils.hasTelephonyFeature(mContext)) {
             return;
         }
 
