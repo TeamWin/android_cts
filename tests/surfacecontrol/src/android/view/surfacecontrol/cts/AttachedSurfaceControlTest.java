@@ -24,7 +24,6 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
 
-import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.content.pm.ActivityInfo;
@@ -45,10 +44,8 @@ import android.widget.FrameLayout;
 
 import androidx.lifecycle.Lifecycle;
 import androidx.test.core.app.ActivityScenario;
-import androidx.test.filters.LargeTest;
-import androidx.test.filters.RequiresDevice;
+import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
-import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.SystemUtil;
 
@@ -59,16 +56,12 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
-import org.junit.runner.RunWith;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.function.IntConsumer;
 
-@RunWith(AndroidJUnit4.class)
-@LargeTest
-@SuppressLint("RtlHardcoded")
-@RequiresDevice
+@SmallTest
 public class AttachedSurfaceControlTest {
     private static final String TAG = "AttachedSurfaceControlTest";
     private static final String FIXED_TO_USER_ROTATION_COMMAND =

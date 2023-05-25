@@ -20,7 +20,6 @@ import static android.server.wm.WindowManagerState.getLogicalDisplaySize;
 import android.animation.ObjectAnimator;
 import android.animation.PropertyValuesHolder;
 import android.animation.ValueAnimator;
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -42,21 +41,15 @@ import android.view.cts.surfacevalidator.PixelChecker;
 import android.view.cts.surfacevalidator.ViewFactory;
 import android.widget.FrameLayout;
 
-import androidx.test.filters.LargeTest;
-import androidx.test.filters.RequiresDevice;
+import androidx.test.filters.SmallTest;
 import androidx.test.rule.ActivityTestRule;
-import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
-import org.junit.runner.RunWith;
 
-@RunWith(AndroidJUnit4.class)
-@LargeTest
-@SuppressLint("RtlHardcoded")
-@RequiresDevice
+@SmallTest
 public class AttachedSurfaceControlSyncTest {
     private static final String TAG = "AttachedSurfaceControlSyncTests";
 
@@ -77,7 +70,7 @@ public class AttachedSurfaceControlSyncTest {
         return a;
     }
 
-    static class GreenSurfaceAnchorView extends View {
+    private static class GreenSurfaceAnchorView extends View {
         SurfaceControl mSurfaceControl;
         final Surface mSurface;
         final int[] mLocation = new int[2];
