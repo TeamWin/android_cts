@@ -40,9 +40,14 @@ RDBG_FLAG=$(getRemoteDbgFlag)
 
 # get OS
 HOST=`uname`
-if [ "$HOST" == "Linux" ]; then
+HOST_ARCH=`uname -sm`
+if [ "$HOST_ARCH" == "Linux x86_64" ]; then
     OS="linux-x86"
-elif [ "$HOST" == "Darwin" ]; then
+elif [ "$HOST_ARCH" == "Linux aarch64" ]; then
+    OS="linux-arm64"
+    # Bundled java is for linux-x86 so use host JDK on linux-arm64
+    JAVA_BINARY=java
+elif [ "$HOST_ARCH" == "Darwin x86_64" ]; then
     OS="darwin-x86"
     # Bundled java is for linux so use host JDK on Darwin
     JAVA_BINARY=java
