@@ -81,7 +81,7 @@ private const val SAFETY_CENTER_ITEM_ID = "com.android.permissioncontroller:id/p
 private const val INDICATORS_FLAG = "camera_mic_icons_enabled"
 private const val PERMISSION_INDICATORS_NOT_PRESENT = 162547999L
 private const val IDLE_TIMEOUT_MILLIS: Long = 1000
-private const val UNEXPECTED_TIMEOUT_MILLIS = 1000
+private const val UNEXPECTED_TIMEOUT_MILLIS = 1000L
 private const val TIMEOUT_MILLIS: Long = 20000
 private const val TV_MIC_INDICATOR_WINDOW_TITLE = "MicrophoneCaptureIndicator"
 private const val MIC_LABEL_NAME = "microphone_toggle_label_qs"
@@ -181,6 +181,7 @@ class CameraMicIndicatorsPermissionTest : StsExtraBusinessLogicTestCase {
     @After
     fun tearDown() {
         uninstall()
+        assertIndicatorsShown(false, false, false)
         if (!wasEnabled) {
             setIndicatorsEnabledStateIfNeeded(false)
         }
@@ -197,7 +198,6 @@ class CameraMicIndicatorsPermissionTest : StsExtraBusinessLogicTestCase {
         }
         pressHome()
         pressHome()
-        Thread.sleep(DELAY_MILLIS)
     }
 
     private fun openApp(
@@ -342,13 +342,10 @@ class CameraMicIndicatorsPermissionTest : StsExtraBusinessLogicTestCase {
                 runWithShellPermissionIdentity {
                     val ret = permissionManager.checkPermissionForStartDataDelivery(
                         Manifest.permission.RECORD_AUDIO, chainAttribution!!, "")
-                    Assert.assertEquals(PermissionManager.PERMISSION_GRANTED, ret)
+                    assertEquals(PermissionManager.PERMISSION_GRANTED, ret)
                 }
             }
 
-            if (!isTv && !isCar) {
-                uiDevice.openQuickSettings()
-            }
             assertIndicatorsShown(useMic, useCamera, useHotword, chainUsage,
                 safetyCenterEnabled)
 
@@ -366,8 +363,10 @@ class CameraMicIndicatorsPermissionTest : StsExtraBusinessLogicTestCase {
             }
         } finally {
             if (chainAttribution != null) {
-                permissionManager.finishDataDelivery(Manifest.permission.RECORD_AUDIO,
-                chainAttribution!!)
+                runWithShellPermissionIdentity {
+                    permissionManager.finishDataDelivery(Manifest.permission.RECORD_AUDIO,
+                        chainAttribution)
+                }
             }
         }
     }
@@ -384,6 +383,7 @@ class CameraMicIndicatorsPermissionTest : StsExtraBusinessLogicTestCase {
         } else if (isCar) {
             assertCarIndicatorsShown(useMic, useCamera, useHotword, chainUsage)
         } else {
+            uiDevice.openQuickSettings()
             val micInUse = if (SdkLevel.isAtLeastU() && HOTWORD_DETECTION_SERVICE_REQUIRED) {
                 useMic || useHotword
             } else {
@@ -391,20 +391,23 @@ class CameraMicIndicatorsPermissionTest : StsExtraBusinessLogicTestCase {
             }
             assertPrivacyChipAndIndicatorsPresent(micInUse, useCamera, chainUsage,
                 safetyCenterEnabled)
+            uiDevice.pressBack()
         }
     }
 
     private fun assertTvIndicatorsShown(useMic: Boolean, useCamera: Boolean, useHotword: Boolean) {
         if (useMic || useHotword || (!useMic && !useCamera && !useHotword)) {
-            val found = WindowManagerStateHelper()
-                .waitFor("Waiting for the mic indicator window to come up") {
-                    it.containsWindow(TV_MIC_INDICATOR_WINDOW_TITLE) &&
-                    it.isWindowVisible(TV_MIC_INDICATOR_WINDOW_TITLE)
+            eventually {
+                val found = WindowManagerStateHelper()
+                    .waitFor("Waiting for the mic indicator window to come up") {
+                        it.containsWindow(TV_MIC_INDICATOR_WINDOW_TITLE) &&
+                                it.isWindowVisible(TV_MIC_INDICATOR_WINDOW_TITLE)
+                    }
+                if (useMic) {
+                    assertTrue("Did not find chip", found)
+                } else {
+                    assertFalse("Found chip, but did not expect to", found)
                 }
-            if (useMic) {
-                assertTrue("Did not find chip", found)
-            } else {
-                assertFalse("Found chip, but did not expect to", found)
             }
         }
         if (useCamera) {
@@ -485,8 +488,11 @@ class CameraMicIndicatorsPermissionTest : StsExtraBusinessLogicTestCase {
                 privacyChip.click()
             }
         } else {
-            val privacyChip = UiAutomatorUtils2.waitFindObjectOrNull(By.res(PRIVACY_CHIP_ID))
-            assertNull("Expected not to find view with id $PRIVACY_CHIP_ID", privacyChip)
+            eventually {
+                val privacyChip = UiAutomatorUtils2
+                    .waitFindObjectOrNull(By.res(PRIVACY_CHIP_ID), UNEXPECTED_TIMEOUT_MILLIS)
+                assertNull("Expected not to find view with id $PRIVACY_CHIP_ID", privacyChip)
+            }
             return
         }
 
