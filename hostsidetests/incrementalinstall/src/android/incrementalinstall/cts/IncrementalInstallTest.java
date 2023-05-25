@@ -30,6 +30,7 @@ import static org.junit.Assume.assumeTrue;
 
 import android.incrementalinstall.common.Consts;
 import android.platform.test.annotations.LargeTest;
+import android.platform.test.annotations.PlatinumTest;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.ddmlib.Log;
@@ -62,6 +63,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
+@PlatinumTest(focusArea = "pm")
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class IncrementalInstallTest extends BaseHostJUnit4Test {
 
