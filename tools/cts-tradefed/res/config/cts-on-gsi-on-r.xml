@@ -67,4 +67,11 @@
     <option name="compatibility:exclude-filter" value="CtsIdentityTestCases android.security.identity.cts.ReaderAuthTest" />
     <option name="compatibility:exclude-filter" value="CtsIdentityTestCases android.security.identity.cts.UserAuthTest" />
 
+    <!-- CtsKeystoreTestCases: b/262010816  -->
+    <option name="compatibility:exclude-filter" value="CtsKeystoreTestCases android.keystore.cts.ECDSASignatureTest" />
+    <!-- CtsKeystoreTestCases: b/264546541 -->
+    <option name="compatibility:exclude-filter" value="CtsKeystoreTestCases android.keystore.cts.NoAttestKeyTest" />
+    <!-- CtsMediaMiscTestCases: b/261813452 -->
+    <option name="compatibility:exclude-filter" value="CtsMediaMiscTestCases android.media.misc.cts.HeifWriterTest" />
+
 </configuration>
