@@ -98,6 +98,7 @@ import com.android.bedstead.nene.permissions.PermissionContext;
 import com.android.bedstead.nene.utils.Poll;
 import com.android.bedstead.testapp.TestApp;
 import com.android.bedstead.testapp.TestAppInstance;
+import com.android.compatibility.common.util.ApiTest;
 
 import org.junit.ClassRule;
 import org.junit.Ignore;
@@ -286,6 +287,7 @@ public final class DeviceManagementCoexistenceTest {
     @EnsureHasDevicePolicyManagerRoleHolder(onUser = UserType.SYSTEM_USER)
     @EnsureHasDeviceOwner(isPrimary = true)
     @Postsubmit(reason = "new test")
+    @ApiTest(apis = "android.app.admin.DevicePolicyManager#getDevicePolicyState")
     public void getDevicePolicyState_addUserRestriction_returnsPolicy() {
         boolean hasRestrictionOriginally = sDeviceState.dpc()
                 .userManager().hasUserRestriction(LOCAL_USER_RESTRICTION);
@@ -362,6 +364,7 @@ public final class DeviceManagementCoexistenceTest {
     @EnsureHasDevicePolicyManagerRoleHolder(onUser = UserType.SYSTEM_USER)
     @EnsureHasWorkProfile(isOrganizationOwned = true, dpcIsPrimary = true)
     @Postsubmit(reason = "new test")
+    @ApiTest(apis = "android.app.admin.DevicePolicyManager#getDevicePolicyState")
     public void getDevicePolicyState_setPersonalAppsSuspended_returnsPolicy() {
         try {
             sDeviceState.dpc().devicePolicyManager().setPersonalAppsSuspended(
@@ -441,6 +444,7 @@ public final class DeviceManagementCoexistenceTest {
     @EnsureHasDevicePolicyManagerRoleHolder(onUser = UserType.SYSTEM_USER)
     @EnsureHasDeviceOwner(isPrimary = true)
     @Postsubmit(reason = "new test")
+    @ApiTest(apis = "android.app.admin.DevicePolicyManager#getDevicePolicyState")
     public void getDevicePolicyState_addUserRestriction_returnsCorrectResolutionMechanism() {
         boolean hasRestrictionOriginally = sDeviceState.dpc()
                 .userManager().hasUserRestriction(LOCAL_USER_RESTRICTION);
@@ -490,6 +494,7 @@ public final class DeviceManagementCoexistenceTest {
     @EnsureHasDevicePolicyManagerRoleHolder(onUser = UserType.SYSTEM_USER)
     @EnsureHasWorkProfile(isOrganizationOwned = true, dpcIsPrimary = true)
     @Postsubmit(reason = "new test")
+    @ApiTest(apis = "android.app.admin.DevicePolicyManager#getDevicePolicyState")
     public void getDevicePolicyState_setPersonalAppsSuspended_returnsCorrectResolutionMechanism() {
         try {
             sDeviceState.dpc().devicePolicyManager().setPersonalAppsSuspended(
@@ -558,6 +563,7 @@ public final class DeviceManagementCoexistenceTest {
     @EnsureHasDevicePolicyManagerRoleHolder(onUser = UserType.SYSTEM_USER)
     @EnsureHasDeviceOwner(isPrimary = true)
     @Postsubmit(reason = "new test")
+    @ApiTest(apis = "android.app.admin.PolicyUpdateReceiver#ACTION_DEVICE_POLICY_SET_RESULT")
     public void policyUpdateReceiver_addUserRestriction_receivedPolicySetBroadcast() {
         boolean hasRestrictionOriginally = sDeviceState.dpc()
                 .userManager().hasUserRestriction(LOCAL_USER_RESTRICTION);
@@ -604,6 +610,7 @@ public final class DeviceManagementCoexistenceTest {
     @EnsureHasDevicePolicyManagerRoleHolder(onUser = UserType.SYSTEM_USER)
     @EnsureHasDeviceOwner(isPrimary = true)
     @Postsubmit(reason = "new test")
+    @ApiTest(apis = "android.app.admin.DevicePolicyManager#getDevicePolicyState")
     public void devicePolicyState_getPoliciesForAllUsers_returnsPolicies() {
         boolean originalAutoTimeZoneValue = sDeviceState.dpc().devicePolicyManager()
                 .getAutoTimeZoneEnabled(sDeviceState.dpc().componentName());
@@ -1297,6 +1304,7 @@ public final class DeviceManagementCoexistenceTest {
     @EnsureHasDevicePolicyManagerRoleHolder(onUser = UserType.SYSTEM_USER)
     @EnsureHasPermission(value = Manifest.permission.FORCE_STOP_PACKAGES)
     @EnsureHasAccountAuthenticator
+    @ApiTest(apis = "android.app.admin.DevicePolicyManager#clearDeviceOwnerApp")
     public void multiplePoliciesSet_dpcRemoved_removesPolicies() throws Exception {
         try (TestAppInstance mTestApp = sTestApp.install()) {
             // Set policies
