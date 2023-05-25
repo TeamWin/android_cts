@@ -492,6 +492,14 @@ public final class Users {
         }
     }
 
+    /** See {@link UserManager#getRemainingCreatableProfileCount(String)} */
+    @Experimental
+    public int getRemainingCreatableProfileCount(UserType userType) {
+        try (PermissionContext p = TestApis.permissions().withPermission(CREATE_USERS)) {
+            return sUserManager.getRemainingCreatableProfileCount(userType.name());
+        }
+    }
+
     /** See {@link UserManager#isHeadlessSystemUserMode()}. */
     @SuppressWarnings("NewApi")
     public boolean isHeadlessSystemUserMode() {
