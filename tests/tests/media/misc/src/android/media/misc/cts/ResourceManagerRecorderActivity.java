@@ -75,7 +75,7 @@ public class ResourceManagerRecorderActivity extends MediaStubActivity {
         if (extras != null) {
             mHighResolution = extras.getBoolean("high-resolution", mHighResolution);
             mMime = extras.getString("mime", mMime);
-            if (mMime == MediaFormat.MIMETYPE_VIDEO_HEVC) {
+            if (mMime.equals(MediaFormat.MIMETYPE_VIDEO_HEVC)) {
                 mVideoEncoderType = MediaRecorder.VideoEncoder.HEVC;
             }
         }
