@@ -61,7 +61,7 @@ def create_ev_comp_changes(props):
   range_max = ev_compensation_range[1]
   ev_per_step = capture_request_utils.rational_to_float(
       props['android.control.aeCompensationStep'])
-  logging.debug('ev_step_size_in_stops: %d', ev_per_step)
+  logging.debug('ev_step_size_in_stops: %.3f', ev_per_step)
   steps_per_ev = int(round(1.0 / ev_per_step))
   ev_steps = range(range_min, range_max + 1, steps_per_ev)
   ev_shifts = [pow(2, step * ev_per_step) for step in ev_steps]
