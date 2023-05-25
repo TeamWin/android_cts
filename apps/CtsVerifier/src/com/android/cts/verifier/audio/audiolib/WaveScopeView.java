@@ -43,7 +43,7 @@ public class WaveScopeView extends View {
 
     private boolean mDisplayBufferSize = true;
     private boolean mDisplayMaxMagnitudes = false;
-    private boolean mDisplayPersistentMaxMagnitude = true;
+    private boolean mDisplayPersistentMaxMagnitude = false;
     private float mPersistentMaxMagnitude;
 
     private float[] mPointsBuffer;
