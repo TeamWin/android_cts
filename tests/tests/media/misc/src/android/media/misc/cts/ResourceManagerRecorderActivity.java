@@ -26,6 +26,7 @@ import android.media.cts.MediaStubActivity;
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
+import android.view.Surface;
 
 import static org.junit.Assert.assertTrue;
 
@@ -244,9 +245,17 @@ public class ResourceManagerRecorderActivity extends MediaStubActivity {
         });
         mMediaRecorder.setOnErrorListener(new OnErrorListener() {
             public void onError(MediaRecorder mr, int what, int extra) {
-                Log.v(TAG, "onError(" + what + ", " + extra + ")");
+                Log.e(TAG, "onError(" + what + ", " + extra + ")");
             }
         });
+
+        // Make sure the preview surface is available for recording.
+        Surface previewSurface = getSurface(getSurfaceHolder());
+        if (previewSurface == null) {
+            Log.e(TAG, "Failed to get the Surface");
+            finishWithResult(RESULT_CANCELED);
+        }
+
         mMediaRecorder.setCamera(camera);
         mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
         mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.DEFAULT);
@@ -255,7 +264,7 @@ public class ResourceManagerRecorderActivity extends MediaStubActivity {
         mMediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.DEFAULT);
         mMediaRecorder.setVideoFrameRate(frameRate);
         mMediaRecorder.setVideoSize(mVideoWidth, mVideoHeight);
-        mMediaRecorder.setPreviewDisplay(getSurfaceHolder().getSurface());
+        mMediaRecorder.setPreviewDisplay(previewSurface);
         mMediaRecorder.setOutputFile(fileName);
         mMediaRecorder.setLocation(LATITUDE, LONGITUDE);
 
