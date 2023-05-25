@@ -52,6 +52,7 @@ import android.car.media.PrimaryZoneMediaAudioRequestCallback;
 import android.car.media.SwitchAudioZoneConfigCallback;
 import android.car.test.PermissionsCheckerRule;
 import android.car.test.PermissionsCheckerRule.EnsureHasPermission;
+import android.media.AudioDeviceInfo;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
@@ -783,6 +784,103 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
 
         assertWithMessage("Exception for getting usage for volume group in invalid zone")
                 .that(exception).hasMessageThat().contains("Invalid audio zone Id");
+    }
+
+    @Test
+    @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_SETTINGS)
+    @ApiTest(apis = {"android.car.media.CarAudioManager#getOutputDeviceForUsage(int, int)"})
+    public void getOutputDeviceForUsage_withoutDynamicRouting_throws() {
+        assumeDynamicRoutingIsDisabled();
+
+        IllegalStateException exception = assertThrows(IllegalStateException.class,
+                () -> mCarAudioManager.getOutputDeviceForUsage(PRIMARY_AUDIO_ZONE, USAGE_MEDIA));
+
+        assertWithMessage("Exception for getting media output device with dynamic routing disabled")
+                .that(exception).hasMessageThat().contains("Dynamic routing");
+    }
+
+    @Test
+    @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_SETTINGS)
+    @ApiTest(apis = {"android.car.media.CarAudioManager#getOutputDeviceForUsage(int, int)"})
+    public void getOutputDeviceForUsage_withInvalidZoneId_throws() {
+        assumeDynamicRoutingIsEnabled();
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> mCarAudioManager.getOutputDeviceForUsage(INVALID_AUDIO_ZONE, USAGE_MEDIA));
+
+        assertWithMessage("Exception for getting invalid zone media output device")
+                .that(exception).hasMessageThat().contains("Invalid audio zone Id");
+    }
+
+    @Test
+    @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_SETTINGS)
+    @ApiTest(apis = {"android.car.media.CarAudioManager#getOutputDeviceForUsage(int, int)"})
+    public void getOutputDeviceForUsage_withInvalidUsage_throws() {
+        assumeDynamicRoutingIsEnabled();
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> mCarAudioManager.getOutputDeviceForUsage(PRIMARY_AUDIO_ZONE, USAGE_INVALID));
+
+        assertWithMessage("Invalid usage output device exception")
+                .that(exception).hasMessageThat().contains("Invalid audio attribute");
+    }
+
+    @Test
+    @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_SETTINGS)
+    @ApiTest(apis = {"android.car.media.CarAudioManager#getOutputDeviceForUsage(int, int)"})
+    public void getOutputDeviceForUsage_succeeds() {
+        assumeDynamicRoutingIsEnabled();
+
+        AudioDeviceInfo deviceInfo = mCarAudioManager.getOutputDeviceForUsage(PRIMARY_AUDIO_ZONE,
+                USAGE_MEDIA);
+
+        assertWithMessage("Device for media in primary zone")
+                .that(deviceInfo).isNotNull();
+        assertWithMessage("Sink device for media in primary zone")
+                .that(deviceInfo.isSink()).isTrue();
+    }
+
+    @Test
+    @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_SETTINGS)
+    @ApiTest(apis = {"android.car.media.CarAudioManager#getInputDevicesForZoneId(int)"})
+    public void getInputDevicesForZoneId_withoutDynamicRouting_throws() {
+        assumeDynamicRoutingIsDisabled();
+
+        IllegalStateException exception = assertThrows(IllegalStateException.class,
+                () -> mCarAudioManager.getInputDevicesForZoneId(PRIMARY_AUDIO_ZONE));
+
+        assertWithMessage("Exception for getting input devices with dynamic routing disabled")
+                .that(exception).hasMessageThat().contains("Dynamic routing");
+    }
+
+    @Test
+    @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_SETTINGS)
+    @ApiTest(apis = {"android.car.media.CarAudioManager#getInputDevicesForZoneId(int)"})
+    public void getInputDevicesForZoneId_withInvalidZoneId_throws() {
+        assumeDynamicRoutingIsEnabled();
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> mCarAudioManager.getInputDevicesForZoneId(INVALID_AUDIO_ZONE));
+
+        assertWithMessage("Exception for getting input devices with invalid volume group id")
+                .that(exception).hasMessageThat().contains("Invalid audio zone Id");
+    }
+
+    @Test
+    @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_SETTINGS)
+    @ApiTest(apis = {"android.car.media.CarAudioManager#getInputDevicesForZoneId(int)"})
+    public void getInputDevicesForZoneId_succeeds() {
+        assumeDynamicRoutingIsEnabled();
+
+        List<AudioDeviceInfo> audioDeviceInfos = mCarAudioManager.getInputDevicesForZoneId(
+                PRIMARY_AUDIO_ZONE);
+
+        assertWithMessage("Input devices for primary zone")
+                .that(audioDeviceInfos).isNotNull();
+        for (int i = 0; i < audioDeviceInfos.size(); i++) {
+            assertWithMessage("Source device %s in primary zone", audioDeviceInfos.get(i)
+                    .getAddress()).that(audioDeviceInfos.get(i).isSource()).isTrue();
+        }
     }
 
     @Test
