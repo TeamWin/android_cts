@@ -20,17 +20,8 @@ import android.graphics.Bitmap;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraMetadata;
 import android.hardware.camera2.CaptureResult;
-import android.hardware.camera2.cts.ScriptC_raw_converter;
 import android.hardware.camera2.params.ColorSpaceTransform;
 import android.hardware.camera2.params.LensShadingMap;
-import android.renderscript.Allocation;
-import android.renderscript.Element;
-import android.renderscript.Float3;
-import android.renderscript.Float4;
-import android.renderscript.Int4;
-import android.renderscript.Matrix3f;
-import android.renderscript.RenderScript;
-import android.renderscript.Type;
 import android.util.Log;
 import android.util.Rational;
 import android.util.SparseIntArray;
@@ -207,6 +198,598 @@ public class RawConverter {
         }
     }
 
+    // Port of RAW16 converter from renderscript to Java.
+    // Comments copied verbatim from raw_converter.rscript
+
+    // This file includes a conversion kernel for RGGB, GRBG, GBRG, and BGGR Bayer patterns.
+    // Applying this script also will apply black-level subtraction, rescaling, clipping,
+    // tonemapping, and color space transforms along with the Bayer demosaic.
+    // See RawConverter.java for more information.
+    static class ConverterKernel {
+
+        // RAW16 buffer of dimensions (raw image stride) * (raw image height)
+        byte[] mInput;
+
+        // Whitelevel of sensor
+        int mWhiteLevel;
+
+        // X offset into inputRawBuffer
+        int mOffsetX;
+
+        // Y offset into inputRawBuffer
+        int mOffsetY;
+
+        // Width of raw buffer
+        int mInputWidth;
+
+        // Height of raw buffer
+        int mInputHeight;
+
+        // Stride of raw buffer
+        int mInputStride;
+
+        // Coefficients for a polynomial tonemapping curve
+        float[/*4*/] mToneMapCoeffs;
+
+        // Does gainmap exist?
+        boolean mHasGainMap;
+
+        // Gainmap to apply to linearized raw sensor data.
+        float[] mGainMap;
+
+        // The width of the gain map
+        int mGainMapWidth;
+
+        // The height of the gain map
+        int mGainMapHeight;
+
+        // Is monochrome camera?
+        boolean mIsMonochrome;
+
+        // Color transform from sensor to a wide-gamut colorspace
+        float[/*9*/] mSensorToIntermediate;
+
+        // Color transform from wide-gamut colorspace to sRGB
+        float[/*9*/] mIntermediateToSRGB;
+
+        // The camera neutral
+        float[/*3*/] mNeutralPoint;
+
+        // The Color Filter Arrangement pattern used
+        int mCfaPattern;
+
+        // Blacklevel to subtract for each channel, given in CFA order
+        int[/*4*/] mBlackLevel;
+
+        ConverterKernel() { }
+
+        void set_inputRawBuffer(byte[] input) {
+            mInput = input;
+        }
+
+        void set_whiteLevel(int whiteLevel) {
+            mWhiteLevel = whiteLevel;
+        }
+
+        void set_offsetX(int offsetX) {
+            mOffsetX = offsetX;
+        }
+
+        void set_offsetY(int offsetY) {
+            mOffsetY = offsetY;
+        }
+
+        void set_rawWidth(int inputWidth) {
+            mInputWidth = inputWidth;
+        }
+
+        void set_rawHeight(int inputHeight) {
+            mInputHeight = inputHeight;
+        }
+
+        void set_rawStride(int inputStride) {
+            mInputStride = inputStride;
+        }
+
+        void set_toneMapCoeffs(float[/*4*/] toneMapCoeffs) {
+            mToneMapCoeffs = toneMapCoeffs;
+        }
+
+        void set_hasGainMap(boolean hasGainMap) {
+            mHasGainMap = hasGainMap;
+        }
+
+        void set_gainMapWidth(int gainMapWidth) {
+            mGainMapWidth = gainMapWidth;
+        }
+
+        void set_gainMapHeight(int gainMapHeight) {
+            mGainMapHeight = gainMapHeight;
+        }
+
+        void set_gainMap(float[] gainMap) {
+            if (gainMap.length != mGainMapWidth * mGainMapHeight * 4) {
+                throw new IllegalArgumentException("Invalid float array of length " + gainMap.length
+                    + ", must be correct size for gainMap of dimensions "
+                    + mGainMapWidth + "x" + mGainMapHeight);
+            }
+            mGainMap = gainMap;
+        }
+
+        void set_isMonochrome(boolean isMonochrome) {
+            mIsMonochrome = isMonochrome;
+        }
+
+        void set_sensorToIntermediate(float[/*9*/] sensorToIntermediate) {
+            mSensorToIntermediate = sensorToIntermediate;
+        }
+
+        void set_intermediateToSRGB(float[/*9*/] intermediateToSRGB) {
+            mIntermediateToSRGB = intermediateToSRGB;
+        }
+
+        void set_neutralPoint(float[/*3*/] neutralPoint) {
+            mNeutralPoint = neutralPoint;
+        }
+
+        void set_cfaPattern(int cfaPattern) {
+            mCfaPattern = cfaPattern;
+        }
+
+        void set_blackLevelPattern(int[/*4*/] blackLevelPattern) {
+            mBlackLevel = blackLevelPattern;
+        }
+
+        private float getGain(int x, int y, int d) {
+            return mGainMap[y * mGainMapWidth * 4 + x * 4 + d];
+        }
+
+        // Interpolate gain map to find per-channel gains at a given pixel
+        private float[/*4*/] getGain(int x, int y) {
+            float interpX = (((float) x) / mInputWidth) * mGainMapWidth;
+            float interpY = (((float) y) / mInputHeight) * mGainMapHeight;
+            int gX = (int) interpX;
+            int gY = (int) interpY;
+            int gXNext = (gX + 1 < mGainMapWidth) ? gX + 1 : gX;
+            int gYNext = (gY + 1 < mGainMapHeight) ? gY + 1 : gY;
+
+            float fracX = interpX - (float) gX;
+            float fracY = interpY - (float) gY;
+            float invFracX = 1.f - fracX;
+            float invFracY = 1.f - fracY;
+
+            float[/*4*/] gain = new float[4];
+
+            for (int d = 0; d < 4; d++) {
+                float tl = getGain(gX, gY, d);
+                float tr = getGain(gXNext, gY, d);
+                float bl = getGain(gX, gYNext, d);
+                float br = getGain(gXNext, gYNext, d);
+
+                gain[d] = tl * invFracX * invFracY
+                        + tr * fracX * invFracY
+                        + bl * invFracX * fracY
+                        + br * fracX * fracY;
+            }
+
+            return gain;
+        }
+
+        // Apply gamma correction using sRGB gamma curve
+        static float gammaEncode(float x) {
+            return x <= 0.0031308f ? x * 12.92f : 1.055f * (float) Math.pow(x, 0.4166667f) - 0.055f;
+        }
+
+        // Apply gamma correction to each color channel in RGB pixel
+        static float[/*3*/] gammaCorrectPixel(float[/*3*/] rgb) {
+            rgb[0] = gammaEncode(rgb[0]);
+            rgb[1] = gammaEncode(rgb[1]);
+            rgb[2] = gammaEncode(rgb[2]);
+            return rgb;
+        }
+
+        static float clamp(float v, float l, float u) {
+            return (float) Math.min(Math.max(l, v), u);
+        }
+
+        static float[/*3*/] matrixMultiply(float[/*9*/] m, float[/*3*/] v) {
+            float x = m[0] * v[0] + m[1] * v[1] + m[2] * v[2];
+            float y = m[3] * v[0] + m[4] * v[1] + m[5] * v[2];
+            float z = m[6] * v[0] + m[7] * v[1] + m[8] * v[2];
+            v[0] = x; v[1] = y; v[2] = z;
+            return v;
+        }
+
+        // Apply a colorspace transform to the intermediate colorspace, apply
+        // a tonemapping curve, apply a colorspace transform to a final colorspace,
+        // and apply a gamma correction curve.
+        private float[/*3*/] applyColorspace(float[/*3*/] pRGB) {
+            pRGB[0] = clamp(pRGB[0], 0.f, mNeutralPoint[0]);
+            pRGB[1] = clamp(pRGB[1], 0.f, mNeutralPoint[1]);
+            pRGB[2] = clamp(pRGB[2], 0.f, mNeutralPoint[2]);
+
+            matrixMultiply(mSensorToIntermediate, pRGB);
+            tonemap(pRGB);
+            matrixMultiply(mIntermediateToSRGB, pRGB);
+
+            pRGB[0] = clamp(pRGB[0], 0.f, 1.f);
+            pRGB[1] = clamp(pRGB[1], 0.f, 1.f);
+            pRGB[2] = clamp(pRGB[2], 0.f, 1.f);
+
+            return gammaCorrectPixel(pRGB);
+        }
+
+        // Apply polynomial tonemapping curve to each color channel in RGB pixel.
+        // This attempts to apply tonemapping without changing the hue of each pixel,
+        // i.e.:
+        //
+        // For some RGB values:
+        // M = max(R, G, B)
+        // m = min(R, G, B)
+        // m' = mid(R, G, B)
+        // chroma = M - m
+        // H = m' - m / chroma
+        //
+        // The relationship H=H' should be preserved, where H and H' are calculated from
+        // the RGB and RGB' value at this pixel before and after this tonemapping
+        // operation has been applied, respectively.
+        private float[/*3*/] tonemap(float[/*3*/] rgb) {
+            rgb[0] = clamp(rgb[0], 0.f, 1.f);
+            rgb[1] = clamp(rgb[1], 0.f, 1.f);
+            rgb[2] = clamp(rgb[2], 0.f, 1.f);
+
+            float tmp;
+            int permutation = 0;
+
+            // Sort the RGB channels by value
+            if (rgb[2] < rgb[1]) {
+                tmp = rgb[2];
+                rgb[2] = rgb[1];
+                rgb[1] = tmp;
+                permutation |= 1;
+            }
+            if (rgb[1] < rgb[0]) {
+                tmp = rgb[1];
+                rgb[1] = rgb[0];
+                rgb[0] = tmp;
+                permutation |= 2;
+            }
+            if (rgb[2] < rgb[1]) {
+                tmp = rgb[2];
+                rgb[2] = rgb[1];
+                rgb[1] = tmp;
+                permutation |= 4;
+            }
+
+            float min = rgb[0];
+            float max = rgb[2];
+
+            // Apply tonemapping curve to min, max RGB channel values
+            min = (float) Math.pow(min, 3.f) * mToneMapCoeffs[0]
+                + (float) Math.pow(min, 2.f) * mToneMapCoeffs[1]
+                + (float) /*Math.pow(min, 1.f)*/min * mToneMapCoeffs[2]
+                + (float) /*Math.pow(min, 0.f)*/1.0 * mToneMapCoeffs[3];
+
+            max = (float) Math.pow(max, 3.f) * mToneMapCoeffs[0]
+                + (float) Math.pow(max, 2.f) * mToneMapCoeffs[1]
+                + (float) /*Math.pow(max, 1.f)*/max * mToneMapCoeffs[2]
+                + (float) /*Math.pow(max, 0.f)*/1.0 * mToneMapCoeffs[3];
+
+            // Rescale middle value
+            float newMid;
+            if (rgb[2] == rgb[0]) {
+                newMid = max;
+            } else {
+                newMid = min + (max - min) * (rgb[1] - rgb[0]) / (rgb[2] - rgb[0]);
+            }
+
+            switch (permutation) {
+                // b >= g >= r
+                case 0 : {
+                    rgb[0] = min;
+                    rgb[1] = newMid;
+                    rgb[2] = max;
+                    break;
+                }
+                // g >= b >= r
+                case 1 : {
+                    rgb[0] = min;
+                    rgb[2] = newMid;
+                    rgb[1] = max;
+                    break;
+                }
+                // b >= r >= g
+                case 2 : {
+                    rgb[1] = min;
+                    rgb[0] = newMid;
+                    rgb[2] = max;
+                    break;
+                }
+                // g >= r >= b
+                case 3 : {
+                    rgb[2] = min;
+                    rgb[0] = newMid;
+                    rgb[1] = max;
+                    break;
+                }
+                // r >= b >= g
+                case 6 : {
+                    rgb[1] = min;
+                    rgb[2] = newMid;
+                    rgb[0] = max;
+                    break;
+                }
+                // r >= g >= b
+                case 7 : {
+                    rgb[2] = min;
+                    rgb[1] = newMid;
+                    rgb[0] = max;
+                    break;
+                }
+                case 4 : // impossible
+                case 5 : // impossible
+                default : {
+                    rgb[0] = 0.f;
+                    rgb[1] = 0.f;
+                    rgb[2] = 0.f;
+                    throw new IllegalStateException("RawConverter: Logic error in tonemap.");
+                }
+            }
+
+            rgb[0] = clamp(rgb[0], 0.f, 1.f);
+            rgb[1] = clamp(rgb[1], 0.f, 1.f);
+            rgb[2] = clamp(rgb[2], 0.f, 1.f);
+
+            return rgb;
+        }
+
+        private float getInput(int x, int y) {
+            // 16-bit raw pixels (big endian)
+            return (Byte.toUnsignedInt(mInput[y * mInputStride + 2 * x + 1]) << 8)
+                + Byte.toUnsignedInt(mInput[y * mInputStride + 2 * x]);
+        }
+
+        // Load a 3x3 patch of pixels into the output.
+        private void load3x3(int x, int y, /*out*/float[/*9*/] outputArray) {
+            outputArray[0] = getInput(x - 1, y - 1);
+            outputArray[1] = getInput(x, y - 1);
+            outputArray[2] = getInput(x + 1, y - 1);
+            outputArray[3] = getInput(x - 1, y);
+            outputArray[4] = getInput(x, y);
+            outputArray[5] = getInput(x + 1, y);
+            outputArray[6] = getInput(x - 1, y + 1);
+            outputArray[7] = getInput(x, y + 1);
+            outputArray[8] = getInput(x + 1, y + 1);
+        }
+
+        // Blacklevel subtract, and normalize each pixel in the outputArray, and apply the
+        // gain map.
+        void linearizeAndGainmap(int x, int y, /*inout*/float[/*9*/] outputArray) {
+            int kk = 0;
+            for (int j = y - 1; j <= y + 1; j++) {
+                for (int i = x - 1; i <= x + 1; i++) {
+                    int index = (i & 1) | ((j & 1) << 1);  // bits [0,1] are blacklevel offset
+                    index |= (mCfaPattern << 2);  // bits [2,3] are cfa
+                    float bl = 0.f;
+                    float g = 1.f;
+                    float[/*4*/] gains = new float[]{1.f, 1.f, 1.f, 1.f};
+                    if (mHasGainMap) {
+                        gains = getGain(i, j);
+                    }
+                    switch (index) {
+                        // RGGB
+                        case 0 : {
+                            bl = mBlackLevel[0];
+                            g = gains[0];
+                            break;
+                        }
+                        case 1 : {
+                            bl = mBlackLevel[1];
+                            g = gains[1];
+                            break;
+                        }
+                        case 2 : {
+                            bl = mBlackLevel[2];
+                            g = gains[2];
+                            break;
+                        }
+                        case 3 : {
+                            bl = mBlackLevel[3];
+                            g = gains[3];
+                            break;
+                        }
+                        // GRBG
+                        case 4 : {
+                            bl = mBlackLevel[0];
+                            g = gains[1];
+                            break;
+                        }
+                        case 5 : {
+                            bl = mBlackLevel[1];
+                            g = gains[0];
+                            break;
+                        }
+                        case 6 : {
+                            bl = mBlackLevel[2];
+                            g = gains[3];
+                            break;
+                        }
+                        case 7 : {
+                            bl = mBlackLevel[3];
+                            g = gains[2];
+                            break;
+                        }
+                        // GBRG
+                        case 8 : {
+                            bl = mBlackLevel[0];
+                            g = gains[1];
+                            break;
+                        }
+                        case 9 : {
+                            bl = mBlackLevel[1];
+                            g = gains[3];
+                            break;
+                        }
+                        case 10 : {
+                            bl = mBlackLevel[2];
+                            g = gains[0];
+                            break;
+                        }
+                        case 11 : {
+                            bl = mBlackLevel[3];
+                            g = gains[2];
+                            break;
+                        }
+                        // BGGR
+                        case 12 : {
+                            bl = mBlackLevel[0];
+                            g = gains[3];
+                            break;
+                        }
+                        case 13 : {
+                            bl = mBlackLevel[1];
+                            g = gains[1];
+                            break;
+                        }
+                        case 14 : {
+                            bl = mBlackLevel[2];
+                            g = gains[2];
+                            break;
+                        }
+                        case 15 : {
+                            bl = mBlackLevel[3];
+                            g = gains[0];
+                            break;
+                        }
+                    }
+                    outputArray[kk] = clamp(g * (outputArray[kk] - bl) / (mWhiteLevel - bl), 0, 1);
+                    kk++;
+                }
+            }
+        }
+
+        // Apply bilinear-interpolation to demosaic
+        static float[/*3*/] demosaic(int x, int y, int cfa, float[/*9*/] inputArray) {
+            int index = (x & 1) | ((y & 1) << 1);
+            index |= (cfa << 2);
+
+            float[/*3*/] pRGB = new float[3];
+            switch (index) {
+                case 0 :
+                case 5 :
+                case 10 :
+                case 15 : { // Red centered
+                    // B G B
+                    // G R G
+                    // B G B
+                    pRGB[0] = inputArray[4];
+                    pRGB[1] = (inputArray[1] + inputArray[3] + inputArray[5] + inputArray[7]) / 4;
+                    pRGB[2] = (inputArray[0] + inputArray[2] + inputArray[6] + inputArray[8]) / 4;
+                    break;
+                }
+                case 1 :
+                case 4 :
+                case 11 :
+                case 14 : { // Green centered w/ horizontally adjacent Red
+                    // G B G
+                    // R G R
+                    // G B G
+                    pRGB[0] = (inputArray[3] + inputArray[5]) / 2;
+                    pRGB[1] = inputArray[4];
+                    pRGB[2] = (inputArray[1] + inputArray[7]) / 2;
+                    break;
+                }
+                case 2 :
+                case 7 :
+                case 8 :
+                case 13 : { // Green centered w/ horizontally adjacent Blue
+                    // G R G
+                    // B G B
+                    // G R G
+                    pRGB[0] = (inputArray[1] + inputArray[7]) / 2;
+                    pRGB[1] = inputArray[4];
+                    pRGB[2] = (inputArray[3] + inputArray[5]) / 2;
+                    break;
+                }
+                case 3 :
+                case 6 :
+                case 9 :
+                case 12 : { // Blue centered
+                    // R G R
+                    // G B G
+                    // R G R
+                    pRGB[0] = (inputArray[0] + inputArray[2] + inputArray[6] + inputArray[8]) / 4;
+                    pRGB[1] = (inputArray[1] + inputArray[3] + inputArray[5] + inputArray[7]) / 4;
+                    pRGB[2] = inputArray[4];
+                    break;
+                }
+            }
+
+            return pRGB;
+        }
+
+        static int packColorTo8888(float[/*3*/] pRGB) {
+            int a = 255;
+            int r = (int) (pRGB[0] * 255);
+            int g = (int) (pRGB[1] * 255);
+            int b = (int) (pRGB[2] * 255);
+            int color = ((a & 0xff) << 24) | ((r & 0xff) << 16) | ((g & 0xff) << 8) | (b & 0xff);
+            return color;
+        }
+
+        // Full RAW->ARGB bitmap conversion kernel
+        int convert_RAW_To_ARGB(int x, int y) {
+            float[/*3*/] pRGB;
+            int xP = x + mOffsetX;
+            int yP = y + mOffsetY;
+            if (xP == 0) xP = 1;
+            if (yP == 0) yP = 1;
+            if (xP == mInputWidth - 1) xP = mInputWidth - 2;
+            if (yP == mInputHeight - 1) yP = mInputHeight  - 2;
+
+            if (mIsMonochrome) {
+                float pixel = getInput(x, y);
+
+                // Apply linearization and gain map
+                float[/*4*/] gains = new float[]{1.f, 1.f, 1.f, 1.f};
+                if (mHasGainMap) {
+                    gains = getGain(xP, yP);
+                }
+                float bl = mBlackLevel[0];
+                float g = gains[0];
+                pixel = clamp(g * (pixel - bl) / (mWhiteLevel - bl), 0.f, 1.f);
+
+                // Use same Y value for R, G, and B.
+                pRGB = new float[3];
+                pRGB[0] = pRGB[1] = pRGB[2] = pixel;
+
+                // apply tonemap and gamma correction
+                tonemap(pRGB);
+                gammaCorrectPixel(pRGB);
+            } else {
+                float[] patch = new float[9];
+                // TODO: Once ScriptGroup and RS kernels have been updated to allow for iteration
+                // over 3x3 pixel patches, this can be optimized to avoid re-applying the
+                // pre-demosaic steps for each pixel, potentially achieving a 9x speedup here.
+                load3x3(xP, yP, /*out*/ patch);
+                linearizeAndGainmap(xP, yP, /*inout*/patch);
+                pRGB = demosaic(xP, yP, mCfaPattern, patch);
+                applyColorspace(pRGB);
+            }
+
+            return packColorTo8888(pRGB);
+        }
+
+        void forEach_convert_RAW_To_ARGB(Bitmap argbOutput) {
+            for (int j = 0; j < mInputHeight; j++) {
+                for (int i = 0; i < mInputWidth; i++) {
+                    argbOutput.setPixel(i, j, convert_RAW_To_ARGB(i, j));
+                }
+            }
+        }
+
+    }
+
     /**
      * Convert a RAW16 buffer into an sRGB buffer, and write the result into a bitmap.
      *
@@ -259,7 +842,6 @@ public class RawConverter {
      * <p> Arguments given here are assumed to come from the values for the corresponding
      * {@link CameraCharacteristics.Key}s defined for the camera that produced this RAW16 buffer.
      * </p>
-     * @param rs a {@link RenderScript} context to use.
      * @param inputWidth width of the input RAW16 image in pixels.
      * @param inputHeight height of the input RAW16 image in pixels.
      * @param inputStride stride of the input RAW16 image in bytes.
@@ -275,7 +857,7 @@ public class RawConverter {
      *                   the dimensions and offset of the output rectangle contained in the RAW
      *                   image to be rendered.
      */
-    public static void convertToSRGB(RenderScript rs, int inputWidth, int inputHeight,
+    public static void convertToSRGB(int inputWidth, int inputHeight,
             int inputStride, byte[] rawImageInput, CameraCharacteristics staticMetadata,
             CaptureResult dynamicMetadata, int outputOffsetX, int outputOffsetY,
             /*out*/Bitmap argbOutput) {
@@ -294,7 +876,7 @@ public class RawConverter {
         if (!isMono) {
             dngBayerMetadata = new DngBayerMetadata(staticMetadata, dynamicMetadata);
         }
-        convertToSRGB(rs, inputWidth, inputHeight, inputStride, cfa, blackLevelPattern,
+        convertToSRGB(inputWidth, inputHeight, inputStride, cfa, blackLevelPattern,
                 whiteLevel, rawImageInput, dngBayerMetadata,
                 shadingMap, outputOffsetX, outputOffsetY, argbOutput);
     }
@@ -304,13 +886,13 @@ public class RawConverter {
      *
      * @see #convertToSRGB
      */
-    private static void convertToSRGB(RenderScript rs, int inputWidth, int inputHeight,
+    private static void convertToSRGB(int inputWidth, int inputHeight,
             int inputStride, int cfa, int[] blackLevelPattern, int whiteLevel, byte[] rawImageInput,
             DngBayerMetadata dngBayerMetadata, LensShadingMap lensShadingMap,
             int outputOffsetX, int outputOffsetY, /*out*/Bitmap argbOutput) {
 
         // Validate arguments
-        if (argbOutput == null || rs == null || rawImageInput == null) {
+        if (argbOutput == null || rawImageInput == null) {
             throw new IllegalArgumentException("Null argument to convertToSRGB");
         }
         if (argbOutput.getConfig() != Bitmap.Config.ARGB_8888) {
@@ -344,14 +926,6 @@ public class RawConverter {
             Log.d(TAG, "CFA: " + cfa);
             Log.d(TAG, "BlackLevelPattern: " + Arrays.toString(blackLevelPattern));
             Log.d(TAG, "WhiteLevel: " + whiteLevel);
-        }
-
-        Allocation gainMap = null;
-        if (lensShadingMap != null) {
-            float[] lsm = new float[lensShadingMap.getGainFactorCount()];
-            lensShadingMap.copyGainFactors(/*inout*/lsm, /*offset*/0);
-            gainMap = createFloat4Allocation(rs, lsm, lensShadingMap.getColumnCount(),
-                    lensShadingMap.getRowCount());
         }
 
         float[] sensorToProPhoto = new float[9];
@@ -420,73 +994,37 @@ public class RawConverter {
             multiply(sXYZtoRGBBradford, sProPhotoToXYZ, /*out*/proPhotoToSRGB);
         }
 
-        Allocation output = Allocation.createFromBitmap(rs, argbOutput);
-
-        // Setup input allocation (16-bit raw pixels)
-        Type.Builder typeBuilder = new Type.Builder(rs, Element.U16(rs));
-        typeBuilder.setX((inputStride / 2));
-        typeBuilder.setY(inputHeight);
-        Type inputType = typeBuilder.create();
-        Allocation input = Allocation.createTyped(rs, inputType);
-        input.copyFromUnchecked(rawImageInput);
-
-        // Setup RS kernel globals
-        ScriptC_raw_converter converterKernel = new ScriptC_raw_converter(rs);
-        converterKernel.set_inputRawBuffer(input);
+        ConverterKernel converterKernel = new ConverterKernel();
+        converterKernel.set_inputRawBuffer(rawImageInput);
         converterKernel.set_whiteLevel(whiteLevel);
         converterKernel.set_offsetX(outputOffsetX);
         converterKernel.set_offsetY(outputOffsetY);
         converterKernel.set_rawHeight(inputHeight);
         converterKernel.set_rawWidth(inputWidth);
-        converterKernel.set_toneMapCoeffs(new Float4(DEFAULT_ACR3_TONEMAP_CURVE_COEFFS[0],
-                DEFAULT_ACR3_TONEMAP_CURVE_COEFFS[1], DEFAULT_ACR3_TONEMAP_CURVE_COEFFS[2],
-                DEFAULT_ACR3_TONEMAP_CURVE_COEFFS[3]));
-        converterKernel.set_hasGainMap(gainMap != null);
-        if (gainMap != null) {
-            converterKernel.set_gainMap(gainMap);
+        converterKernel.set_rawStride(inputStride);
+        converterKernel.set_toneMapCoeffs(DEFAULT_ACR3_TONEMAP_CURVE_COEFFS);
+        converterKernel.set_hasGainMap(lensShadingMap != null);
+        if (lensShadingMap != null) {
+            float[] gainMap = new float[lensShadingMap.getGainFactorCount()];
+            lensShadingMap.copyGainFactors(/*inout*/gainMap, /*offset*/0);
             converterKernel.set_gainMapWidth(lensShadingMap.getColumnCount());
             converterKernel.set_gainMapHeight(lensShadingMap.getRowCount());
+            converterKernel.set_gainMap(gainMap);
         }
 
         converterKernel.set_isMonochrome(dngBayerMetadata == null);
         if (dngBayerMetadata != null) {
-            converterKernel.set_sensorToIntermediate(new Matrix3f(transpose(sensorToProPhoto)));
-            converterKernel.set_intermediateToSRGB(new Matrix3f(transpose(proPhotoToSRGB)));
+            converterKernel.set_sensorToIntermediate(sensorToProPhoto);
+            converterKernel.set_intermediateToSRGB(proPhotoToSRGB);
             converterKernel.set_neutralPoint(
-                    new Float3(dngBayerMetadata.neutralColorPoint[0].floatValue(),
+                    new float[]{dngBayerMetadata.neutralColorPoint[0].floatValue(),
                     dngBayerMetadata.neutralColorPoint[1].floatValue(),
-                    dngBayerMetadata.neutralColorPoint[2].floatValue()));
+                    dngBayerMetadata.neutralColorPoint[2].floatValue()});
         }
 
         converterKernel.set_cfaPattern(cfa);
-        converterKernel.set_blackLevelPattern(new Int4(blackLevelPattern[0],
-                blackLevelPattern[1], blackLevelPattern[2], blackLevelPattern[3]));
-        converterKernel.forEach_convert_RAW_To_ARGB(output);
-        output.copyTo(argbOutput);  // Force RS sync with bitmap (does not do an extra copy).
-    }
-
-    /**
-     * Create a float-backed renderscript {@link Allocation} with the given dimensions, containing
-     * the contents of the given float array.
-     *
-     * @param rs a {@link RenderScript} context to use.
-     * @param fArray the float array to copy into the {@link Allocation}.
-     * @param width the width of the {@link Allocation}.
-     * @param height the height of the {@link Allocation}.
-     * @return an {@link Allocation} containing the given floats.
-     */
-    private static Allocation createFloat4Allocation(RenderScript rs, float[] fArray,
-                                                    int width, int height) {
-        if (fArray.length != width * height * 4) {
-            throw new IllegalArgumentException("Invalid float array of length " + fArray.length +
-                    ", must be correct size for Allocation of dimensions " + width + "x" + height);
-        }
-        Type.Builder builder = new Type.Builder(rs, Element.F32_4(rs));
-        builder.setX(width);
-        builder.setY(height);
-        Allocation fAlloc = Allocation.createTyped(rs, builder.create());
-        fAlloc.copyFrom(fArray);
-        return fAlloc;
+        converterKernel.set_blackLevelPattern(blackLevelPattern);
+        converterKernel.forEach_convert_RAW_To_ARGB(argbOutput);
     }
 
     /**
