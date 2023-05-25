@@ -20,6 +20,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import android.app.ActivityManager;
 import android.media.AudioAttributes;
 import android.media.AudioFormat;
 import android.media.AudioManager;
@@ -257,6 +258,9 @@ public class DecodeOnlyTest extends MediaTestBase {
             Thread.sleep(100);
         }
 
+        videoCodec.stop();
+        videoCodec.release();
+
         Collections.sort(expectedPresentationTimes);
         assertEquals(expectedPresentationTimes, receivedPresentationTimes);
     }
@@ -395,7 +399,8 @@ public class DecodeOnlyTest extends MediaTestBase {
         } while (!supplier.get() && System.currentTimeMillis() < deadLineMs);
     }
 
-    private void testTunneledPerfectSeek(String fileName, boolean initialPeek) throws Exception {
+    private void testTunneledPerfectSeek(String fileName,
+            final boolean initialPeek) throws Exception {
         Preconditions.assertTestFileExists(MEDIA_DIR_STRING + fileName);
 
         // generate the audio session id needed for tunnel mode playback
@@ -439,9 +444,7 @@ public class DecodeOnlyTest extends MediaTestBase {
 
         // Frames at 2s of each file are not key frame
         AtomicLong seekTime = new AtomicLong(2000 * 1000);
-        if (initialPeek) {
-            setKeyTunnelPeek(videoCodec, 1);
-        }
+        boolean isPeeking = setKeyTunnelPeek(videoCodec, initialPeek ? 1 : 0);
         videoExtractor.seekTo(seekTime.get(), MediaExtractor.SEEK_TO_PREVIOUS_SYNC);
         audioExtractor.seekTo(seekTime.get(), MediaExtractor.SEEK_TO_PREVIOUS_SYNC);
 
@@ -515,17 +518,26 @@ public class DecodeOnlyTest extends MediaTestBase {
         // start media playback
         videoCodec.start();
         audioCodec.start();
-        // Sleep until the first tunnel frame is ready
-        final int waitForFrameReadyMs = 150;
-        sleepUntil(firstTunnelFrameReady::get, Duration.ofMillis(waitForFrameReadyMs));
-        assertTrue(String.format("onFirstTunnelFrameReady not called within %d milliseconds",
-                waitForFrameReadyMs), firstTunnelFrameReady.get());
-        if (initialPeek) {
+
+        // When video codecs are started, large chunks of contiguous physical memory need to be
+        // allocated, which, on low-RAM devices, can trigger high CPU usage for moving memory
+        // around to create contiguous space for the video decoder. This can cause an increase in
+        // startup time for playback.
+        ActivityManager activityManager = mContext.getSystemService(ActivityManager.class);
+        final int firstFrameReadyTimeoutSeconds = activityManager.isLowRamDevice() ? 3 : 1;
+        sleepUntil(firstTunnelFrameReady::get, Duration.ofSeconds(firstFrameReadyTimeoutSeconds));
+        assertTrue(String.format("onFirstTunnelFrameReady not called within %d seconds",
+                firstFrameReadyTimeoutSeconds), firstTunnelFrameReady.get());
+
+        final int waitForRenderingMs = 1000;
+        // Sleep for 1s here to ensure that either (1) when peek is on, high-latency display
+        // pipelines have enough time to render the first frame, or (2) when peek is off, the
+        // frame isn't rendered after long time.
+        Thread.sleep(waitForRenderingMs);
+        if (isPeeking) {
             assertEquals(1, renderedPresentationTimes.size());
             assertEquals(seekTime.get(), (long) renderedPresentationTimes.get(0));
         } else {
-            // Sleep for 1s here to ensure that the frame isn't rendered after long time.
-            Thread.sleep(1000);
             assertTrue(renderedPresentationTimes.isEmpty());
         }
 
@@ -542,7 +554,7 @@ public class DecodeOnlyTest extends MediaTestBase {
         while (!done.get()) {
             Thread.sleep(100);
         }
-        if (!initialPeek) {
+        if (!isPeeking) {
             assertFalse(renderedPresentationTimes.isEmpty());
             assertEquals(seekTime.get(), (long) renderedPresentationTimes.get(0));
         }
@@ -552,6 +564,8 @@ public class DecodeOnlyTest extends MediaTestBase {
         Thread.sleep(500);
         videoCodec.flush();
         audioCodec.flush();
+        // Set peek on when it was off, and set it off when it was on.
+        isPeeking = setKeyTunnelPeek(videoCodec, isPeeking ? 0 : 1);
 
         // Frames at 7s of each file are not key frame, and there is non-zero key frame before it
         seekTime.set(7000 * 1000);
@@ -575,25 +589,31 @@ public class DecodeOnlyTest extends MediaTestBase {
         // Restart media playback
         done.set(false);
         firstTunnelFrameReady.set(false);
-        // Disable peek
-        setKeyTunnelPeek(videoCodec, 0);
-
         videoCodec.start();
         audioCodec.start();
-        sleepUntil(firstTunnelFrameReady::get, Duration.ofMillis(waitForFrameReadyMs));
+        sleepUntil(firstTunnelFrameReady::get, Duration.ofSeconds(firstFrameReadyTimeoutSeconds));
         assertTrue(String.format("onFirstTunnelFrameReady not called within %d milliseconds",
-                waitForFrameReadyMs), firstTunnelFrameReady.get());
+                firstFrameReadyTimeoutSeconds), firstTunnelFrameReady.get());
 
-        // Sleep for 1s here to ensure that the frame isn't rendered after long time.
-        Thread.sleep(1000);
-        assertTrue(renderedPresentationTimes.isEmpty());
+        // Sleep for 1s here to ensure that either (1) when peek is on, high-latency display
+        // pipelines have enough time to render the first frame, or (2) when peek is off, the
+        // frame isn't rendered after long time.
+        Thread.sleep(waitForRenderingMs);
+        if (isPeeking) {
+            assertEquals(1, renderedPresentationTimes.size());
+            assertEquals(seekTime.get(), (long) renderedPresentationTimes.get(0));
+        } else {
+            assertTrue(renderedPresentationTimes.isEmpty());
+        }
 
-        // First frame should be rendered immediately after setting peek on.
-        setKeyTunnelPeek(videoCodec, 1);
-        // This is long due to high-latency display pipelines on TV devices.
-        Thread.sleep(1000);
-        assertEquals(1, renderedPresentationTimes.size());
-        assertEquals(seekTime.get(), (long) renderedPresentationTimes.get(0));
+        if (!isPeeking) {
+            // First frame should be rendered immediately after setting peek on.
+            isPeeking = setKeyTunnelPeek(videoCodec, 1);
+            // This is long due to high-latency display pipelines on TV devices.
+            Thread.sleep(waitForRenderingMs);
+            assertEquals(1, renderedPresentationTimes.size());
+            assertEquals(seekTime.get(), (long) renderedPresentationTimes.get(0));
+        }
 
         audioTrack.play();
         // keep looping until the codec receives the EOS frame
@@ -603,6 +623,10 @@ public class DecodeOnlyTest extends MediaTestBase {
 
         audioTrack.stop();
         audioTrack.release();
+        videoCodec.stop();
+        videoCodec.release();
+        audioCodec.stop();
+        audioCodec.release();
         Collections.sort(expectedPresentationTimes);
         Collections.sort(renderedPresentationTimes);
         assertEquals(expectedPresentationTimes, renderedPresentationTimes);
@@ -610,10 +634,11 @@ public class DecodeOnlyTest extends MediaTestBase {
     }
 
     // 1 is on, 0 is off.
-    private void setKeyTunnelPeek(MediaCodec videoCodec, int value) {
+    private boolean setKeyTunnelPeek(MediaCodec videoCodec, int value) {
         Bundle parameters = new Bundle();
         parameters.putInt(MediaCodec.PARAMETER_KEY_TUNNEL_PEEK, value);
         videoCodec.setParameters(parameters);
+        return value != 0;
     }
 
 
