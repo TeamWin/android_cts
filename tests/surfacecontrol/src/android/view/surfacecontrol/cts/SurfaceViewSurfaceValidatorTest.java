@@ -16,79 +16,56 @@
 package android.view.surfacecontrol.cts;
 
 import static android.server.wm.ActivityManagerTestBase.createFullscreenActivityScenarioRule;
-import static android.server.wm.BuildUtils.HW_TIMEOUT_MULTIPLIER;
-import static android.view.cts.surfacevalidator.BitmapPixelChecker.validateScreenshot;
-
-import static org.junit.Assert.assertTrue;
+import static android.server.wm.WindowManagerState.getLogicalDisplaySize;
 
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.server.wm.CtsWindowInfoUtils;
 import android.view.Gravity;
 import android.view.SurfaceControl;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
-import android.view.ViewGroup;
-import android.view.ViewTreeObserver;
-import android.view.cts.surfacevalidator.BitmapPixelChecker;
+import android.view.cts.surfacevalidator.CapturedActivity;
+import android.view.cts.surfacevalidator.PixelChecker;
+import android.view.cts.surfacevalidator.SurfaceControlTestCase;
 import android.widget.FrameLayout;
 
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
 
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-
 public class SurfaceViewSurfaceValidatorTest {
     private static final int DEFAULT_LAYOUT_WIDTH = 100;
     private static final int DEFAULT_LAYOUT_HEIGHT = 100;
-
-    private static final long WAIT_TIMEOUT_S = 5L * HW_TIMEOUT_MULTIPLIER;
+    private static final int DEFAULT_BUFFER_WIDTH = 640;
+    private static final int DEFAULT_BUFFER_HEIGHT = 480;
 
     @Rule
-    public final ActivityScenarioRule<TestActivity> mActivityRule =
-                createFullscreenActivityScenarioRule(TestActivity.class);
+    public final ActivityScenarioRule<CapturedActivity> mActivityRule =
+                createFullscreenActivityScenarioRule(CapturedActivity.class);
 
     @Rule
     public TestName mName = new TestName();
-    private TestActivity mActivity;
-
-    private ViewGroup mRootView;
+    private CapturedActivity mActivity;
 
     @Before
     public void setup() {
         mActivityRule.getScenario().onActivity(activity -> mActivity = activity);
+        mActivity.setLogicalDisplaySize(getLogicalDisplaySize());
     }
 
-    @After
-    public void tearDown() {
-        mActivity.runOnUiThread(() -> {
-            if (mRootView != null) {
-                mRootView.removeAllViews();
-            }
-        });
-    }
+    class SurfaceFiller implements SurfaceHolder.Callback {
+        SurfaceView mSurfaceView;
 
-    private static class SurfaceFiller implements SurfaceHolder.Callback {
-        final SurfaceView mSurfaceView;
-        private final CountDownLatch mCountDownLatch;
-
-        SurfaceFiller(Context c, CountDownLatch countDownLatch) {
+        SurfaceFiller(Context c) {
             mSurfaceView = new SurfaceView(c);
             mSurfaceView.getHolder().addCallback(this);
-            mCountDownLatch = countDownLatch;
         }
 
         public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-            SurfaceControl.Transaction t = new SurfaceControl.Transaction();
-            t.addTransactionCommittedListener(Runnable::run, mCountDownLatch::countDown);
-            mSurfaceView.applyTransactionToFrame(t);
             Canvas canvas = holder.lockHardwareCanvas();
             canvas.drawColor(Color.GREEN);
             holder.unlockCanvasAndPost(canvas);
@@ -106,79 +83,60 @@ public class SurfaceViewSurfaceValidatorTest {
      */
     @Test
     public void testOnTopHasNoBackground() throws Throwable {
-        // Wait for a frame that contains the SurfaceView to be sent to SF
-        CountDownLatch readyLatch = new CountDownLatch(1);
-        mActivity.runOnUiThread(() -> addSurfaceView(readyLatch));
-
-        assertTrue("Failed to wait for content to be added",
-                readyLatch.await(WAIT_TIMEOUT_S, TimeUnit.SECONDS));
-        assertTrue("Failed to wait for content to become visible",
-                CtsWindowInfoUtils.waitForWindowVisible(mRootView));
-
-        BitmapPixelChecker pixelChecker = new BitmapPixelChecker(Color.BLACK,
-                false /* logWhenNoMatch */);
-        validateScreenshot(mName, mActivity, pixelChecker, 0 /* expectedMatchingPixels */);
+        SurfaceControlTestCase.ParentSurfaceConsumer psc =
+            new SurfaceControlTestCase.ParentSurfaceConsumer () {
+                    @Override
+                    public void addChildren(SurfaceControl parent) {
+                    }
+            };
+        PixelChecker pixelChecker = new PixelChecker(Color.BLACK) {
+                @Override
+                public boolean checkPixels(int pixelCount, int width, int height) {
+                    return pixelCount == 0;
+                }
+            };
+        SurfaceControlTestCase t = new SurfaceControlTestCase(psc,
+                pixelChecker, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT,
+                DEFAULT_BUFFER_WIDTH, DEFAULT_BUFFER_HEIGHT, true /* singleFrameOnly */);
+        mActivity.verifyTest(t, mName);
     }
+
+    class TwoSurfaceViewTest extends SurfaceControlTestCase {
+        TwoSurfaceViewTest(ParentSurfaceConsumer psc, PixelChecker pixelChecker,
+                int layoutWidth, int layoutHeight, int bufferWidth, int bufferHeight,
+                boolean singleFrameOnly) {
+            super(psc, pixelChecker, layoutWidth, layoutHeight, bufferWidth, bufferHeight,
+                    singleFrameOnly);
+        }
+        @Override
+        public void start(Context context, FrameLayout parent) {
+            super.start(context, parent);
+            SurfaceFiller sc = new SurfaceFiller(mActivity);
+            parent.addView(sc.mSurfaceView,
+                    new FrameLayout.LayoutParams(DEFAULT_LAYOUT_WIDTH,
+                            DEFAULT_LAYOUT_HEIGHT, Gravity.LEFT | Gravity.TOP));
+        }
+    };
 
     // Here we add a second translucent surface view and verify that the background
     // is behind all SurfaceView (e.g. the first is not obscured)
     @Test
     public void testBackgroundIsBehindAllSurfaceView() throws Throwable {
-        // Wait for 2 things before proceeding with the test
-        // 1. Frame to be drawn for main window that includes the SurfaceView.
-        // 2. Submit buffer for second SurfaceView
-        CountDownLatch readyLatch = new CountDownLatch(2);
-        mActivity.runOnUiThread(() -> {
-            addSurfaceView(readyLatch);
-            SurfaceFiller sc = new SurfaceFiller(mActivity, readyLatch);
-            mRootView.addView(sc.mSurfaceView,
-                    new FrameLayout.LayoutParams(DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT,
-                            Gravity.LEFT | Gravity.TOP));
-        });
-        assertTrue("Failed to wait for content to be added",
-                readyLatch.await(WAIT_TIMEOUT_S, TimeUnit.SECONDS));
-
-        assertTrue("Failed to wait for content to become visible",
-                CtsWindowInfoUtils.waitForWindowVisible(mRootView));
-
-        BitmapPixelChecker pixelChecker = new BitmapPixelChecker(Color.BLACK,
-                false /* logWhenNoMatch */);
-        validateScreenshot(mName, mActivity, pixelChecker, 0 /* expectedMatchingPixels */);
-    }
-
-    private void addSurfaceView(CountDownLatch countDownLatch) {
-        SurfaceView surfaceView = new SurfaceView(mActivity);
-        surfaceView.setZOrderOnTop(true);
-        mRootView = new FrameLayout(mActivity);
-        mRootView.setBackgroundColor(Color.RED);
-        mRootView.addView(surfaceView,
-                new FrameLayout.LayoutParams(DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT,
-                        Gravity.LEFT | Gravity.TOP));
-        FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(
-                FrameLayout.LayoutParams.MATCH_PARENT,
-                FrameLayout.LayoutParams.MATCH_PARENT);
-        mActivity.setContentView(mRootView, layoutParams);
-
-        Runnable runnable = () -> {
-            SurfaceControl.Transaction t = new SurfaceControl.Transaction();
-            t.addTransactionCommittedListener(Runnable::run, countDownLatch::countDown);
-            mRootView.getRootSurfaceControl().applyTransactionOnDraw(t);
-        };
-
-        if (mRootView.isAttachedToWindow()) {
-            runnable.run();
-        } else {
-            mRootView.getViewTreeObserver().addOnWindowAttachListener(
-                    new ViewTreeObserver.OnWindowAttachListener() {
-                        @Override
-                        public void onWindowAttached() {
-                            runnable.run();
-                        }
-
-                        @Override
-                        public void onWindowDetached() {
-                        }
-                    });
-        }
+        SurfaceControlTestCase.ParentSurfaceConsumer psc =
+            new SurfaceControlTestCase.ParentSurfaceConsumer () {
+                    @Override
+                    public void addChildren(SurfaceControl parent) {
+                    }
+            };
+        PixelChecker pixelChecker = new PixelChecker(Color.BLACK) {
+                @Override
+                public boolean checkPixels(int pixelCount, int width, int height) {
+                    return pixelCount == 0;
+                }
+            };
+        TwoSurfaceViewTest t = new TwoSurfaceViewTest(psc, pixelChecker, DEFAULT_LAYOUT_WIDTH,
+                DEFAULT_LAYOUT_HEIGHT, DEFAULT_BUFFER_WIDTH, DEFAULT_BUFFER_HEIGHT,
+                true /* singleFrameOnly */);
+        mActivity.verifyTest(t, mName);
     }
 }
