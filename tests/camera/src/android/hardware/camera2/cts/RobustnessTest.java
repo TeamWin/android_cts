@@ -489,11 +489,12 @@ public class RobustnessTest extends Camera2AndroidTestCase {
                 mCollector.addMessage("SCALER_RAW_CROP_REGION should not be null " +
                         "when CROPPED_RAW stream use case is used.");
             }
-            if (!preCorrectionActiveArrayRect.contains(rawCropRegion)) {
-                mCollector.addMessage("RAW_CROP_REGION should be within pre correction active " +
-                        "array region, RAW_CROP_REGION is " + rawCropRegion.flattenToString() +
-                        " pre correction active array is " +
-                        preCorrectionActiveArrayRect.flattenToString());
+            if (!(preCorrectionActiveArrayRect.width() >= rawCropRegion.width()
+                    && preCorrectionActiveArrayRect.height() >= rawCropRegion.height())) {
+                mCollector.addMessage("RAW_CROP_REGION dimensions should be <= pre correction"
+                        + " array dimensions. SCALER_RAW_CROP_REGION : "
+                        + rawCropRegion.flattenToString() + " pre correction active array is "
+                        + preCorrectionActiveArrayRect.flattenToString());
             }
         }
     }
