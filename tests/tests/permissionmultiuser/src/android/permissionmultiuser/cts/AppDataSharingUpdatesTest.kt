@@ -234,7 +234,6 @@ class AppDataSharingUpdatesTest {
             "The developers of these apps provided info about their data sharing practices" +
                 " to an app store. They may update it over time.\n\nData sharing" +
                 " practices may vary based on your app version, use, region, and age."
-        private const val LEARN_ABOUT_DATA_SHARING = "Learn about data sharing"
         private const val LOCATION_PACKAGE_NAME_SUBSTRING = "android.permissionmultiuser"
         private const val PROPERTY_DATA_SHARING_UPDATE_PERIOD_MILLIS =
             "data_sharing_update_period_millis"
@@ -409,7 +408,6 @@ class AppDataSharingUpdatesTest {
             findView(By.textContains(DATA_SHARING_UPDATES_SUBTITLE), true)
             findView(By.textContains(UPDATES_IN_LAST_30_DAYS), true)
             findView(By.textContains(DATA_SHARING_UPDATES_FOOTER_MESSAGE), true)
-            findView(By.textContains(LEARN_ABOUT_DATA_SHARING), true)
         }
 
         private fun assertNoUpdatesPresent() {
@@ -419,7 +417,6 @@ class AppDataSharingUpdatesTest {
             findView(By.textContains(LOCATION_PACKAGE_NAME_SUBSTRING), false)
             findView(By.textContains(UPDATES_IN_LAST_30_DAYS), false)
             findView(By.textContains(DATA_SHARING_UPDATES_FOOTER_MESSAGE), true)
-            findView(By.textContains(LEARN_ABOUT_DATA_SHARING), true)
         }
 
         private fun grantLocationPermission(packageName: String) {
