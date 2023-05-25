@@ -23,6 +23,7 @@ java_test_host {
     defaults: ["cts_defaults"],
     srcs: [
         "src/**/*.java",
+        ":CtsSecurityHostTestCases_LocalGeneratedSources",
     ],
     // tag this module as a cts test artifact
     test_suites: [
@@ -33,7 +34,6 @@ java_test_host {
         "cts-tradefed",
         "tradefed",
         "compatibility-host-util",
-        "cts-host-utils",
     ],
     java_resources: [
         ":plat_seapp_contexts",
@@ -60,6 +60,19 @@ java_test_host {
     target_required: ["CtsDeviceInfo"],
 }
 
+genrule {
+    name: "CtsSecurityHostTestCases_LocalGeneratedSources",
+    tools: [
+        "SELinuxNeverallowTestGen",
+        "soong_zip",
+    ],
+    srcs: [":general_sepolicy.conf"],
+    out: ["SELinuxNeverallowRulesTest.srcjar"],
+    cmd: "mkdir -p $(genDir)/android/cts/security && " +
+        "$(location SELinuxNeverallowTestGen) $(in) $(genDir)/android/cts/security/SELinuxNeverallowRulesTest.java && " +
+        "$(location soong_zip) -jar -o $(out) -C $(genDir) -D $(genDir)",
+}
+
 java_genrule_host {
     name: "CtsSecurityHostTestCases_StaticLibs",
     tools: [
@@ -77,7 +90,6 @@ java_genrule_host {
     tool_files: [
         ":apex_sepolicy-33.cil",
         ":apex_sepolicy-33.decompiled.cil",
-        ":general_sepolicy.conf",
     ],
     out: ["CtsSecurityHostTestCases_StaticLibs.jar"],
     cmd: "$(location soong_zip) -jar -o $(location CtsSecurityHostTestCases_StaticLibs.jar) -j " +
@@ -91,6 +103,5 @@ java_genrule_host {
         "-f $(location sepolicy_tests) " +
         "-f $(location treble_sepolicy_tests) " +
         "-f $(location :apex_sepolicy-33.cil) " +
-        "-f $(location :apex_sepolicy-33.decompiled.cil) " +
-        "-f $(location :general_sepolicy.conf)",
+        "-f $(location :apex_sepolicy-33.decompiled.cil)",
 }
