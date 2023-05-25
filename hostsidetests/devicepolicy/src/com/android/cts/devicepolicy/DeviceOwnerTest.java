@@ -579,6 +579,11 @@ public final class DeviceOwnerTest extends BaseDeviceOwnerTest {
 
     @Test
     public void testDisallowFactoryReset() throws Exception {
+        if (isHeadlessSystemUserMode()) {
+            // Need to access dpm.getPolicyExemptApps() which is a TestApi.
+            allowTestApiAccess(DEVICE_OWNER_PKG);
+        }
+
         int adminVersion = 24;
         // NOTE: the restriction must be set on primary user as it will launch SetPolicyActivity,
         // but the admin must be installed on USER_SYSTEM, otherwise wipeData() on headless system
