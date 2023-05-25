@@ -19,6 +19,7 @@ package android.devicepolicy.cts.telephony;
 import static android.Manifest.permission.CALL_PHONE;
 import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
 import static android.Manifest.permission.READ_CALL_LOG;
+import static android.Manifest.permission.READ_PHONE_NUMBERS;
 import static android.Manifest.permission.READ_PHONE_STATE;
 import static android.Manifest.permission.READ_SMS;
 import static android.Manifest.permission.WRITE_CALL_LOG;
@@ -61,7 +62,9 @@ import android.telecom.Call;
 import android.telecom.InCallService;
 import android.telecom.PhoneAccountHandle;
 import android.telecom.TelecomManager;
+import android.telephony.PhoneNumberUtils;
 import android.telephony.SmsManager;
+import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 
@@ -133,8 +136,13 @@ public final class WorkProfileTelephonyTest {
     public void setUp() {
         mTelephonyManager = sContext.getSystemService(TelephonyManager.class);
         mRoleManager = sContext.getSystemService(RoleManager.class);
-        try (PermissionContext p = TestApis.permissions().withPermission(READ_PHONE_STATE)) {
-            mDestinationNumber = mTelephonyManager.getLine1Number();
+
+        try (PermissionContext p = TestApis.permissions().withPermission(READ_PHONE_NUMBERS)) {
+            SubscriptionManager subscriptionManager = sContext.getSystemService(
+                    SubscriptionManager.class);
+            mDestinationNumber = PhoneNumberUtils.formatNumberToE164(
+                    subscriptionManager.getPhoneNumber(SubscriptionManager.DEFAULT_SUBSCRIPTION_ID),
+                    mTelephonyManager.getSimCountryIso());
         }
     }
 

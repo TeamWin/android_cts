@@ -103,6 +103,10 @@ public class AppCloningDeviceTest {
         return getTestArgumentValueForGivenKey("publicSdCardVol");
     }
 
+    private String getContentOwner() {
+        return getTestArgumentValueForGivenKey("contentOwner");
+    }
+
     @Test
     public void testMediaStoreManager_verifyCrossUserImagesInSharedStorage() throws Exception {
         // This method will be called only after writing images in owner and clone profile
@@ -212,6 +216,67 @@ public class AppCloningDeviceTest {
 
         assertThat(MediaStoreWriteOperation.createImageFileToMediaStore(mContext,
                 getImageNameToBeDisplayed(), bitmap, imageCollection)).isTrue();
+    }
+
+    @Test
+    public void testMediaStoreManager_writeImageToContentOwnerSharedStorage()
+            throws Exception {
+        String imageNameToBeCreated = getImageNameToBeCreated();
+        String contentOwner = getContentOwner();
+
+        int color = 0x00000000;
+        if (imageNameToBeCreated.equalsIgnoreCase("owner_profile_image")) {
+            // Green represents owner profile image
+            color = Color.GREEN;
+        }
+
+        Bitmap bitmap = createImage(1000, 1000, color);
+
+        /*
+           1. Find all media files on the primary external storage device
+           2. Build.VERSION_CODES.Q = 29
+        */
+        Uri imageCollection = (Build.VERSION.SDK_INT >= ANDROID_Q)
+                ? MediaStore.Images.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY) :
+                MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+        // Add contentOwner to the uri, so that it becomes content://10@media/external/images/media/
+        Uri.Builder builder = imageCollection.buildUpon();
+        builder.encodedAuthority("" + contentOwner + "@" + imageCollection.getEncodedAuthority());
+        imageCollection = builder.build();
+
+        assertThat(MediaStoreWriteOperation.createImageFileToMediaStore(mContext,
+                getImageNameToBeDisplayed(), bitmap, imageCollection)).isTrue();
+    }
+
+    @Test
+    public void testMediaStoreManager_verifyClonedUserImageSavedInOwnerUserOnly() throws Exception {
+        // This method will be called only after writing images in owner and clone profile
+        String imageNameToBeVerifiedInOwnerProfile = getImageNameToBeVerifiedInOwnerProfile();
+        Uri collection = MediaStore.Images.Media.getContentUri(MediaStore.VOLUME_EXTERNAL);
+
+        List<Image> imageList = MediaStoreReadOperation.getImageFilesFromMediaStore(mContext,
+                collection);
+        boolean verifiedImageInOwnerProfile = false;
+        boolean verifiedImageInClonedProfile = false;
+
+        for (Image image: imageList) {
+            // Eg: Data: /storage/emulated/<user_id>/Pictures/<imageName>.jpg
+            // user_id will be 0 for owner
+            if (!verifiedImageInOwnerProfile && image.getData().contains("/emulated/0/")
+                    && image.getDisplayName().startsWith(imageNameToBeVerifiedInOwnerProfile)) {
+                verifiedImageInOwnerProfile = true;
+                continue;
+            }
+            // user_id will be <clonedUserId> for clonedOwner storage
+            if (!verifiedImageInClonedProfile && image.getData().contains("/emulated/"
+                    + getCloneUserId() + "/")
+                    && image.getDisplayName().startsWith(imageNameToBeVerifiedInOwnerProfile)) {
+                verifiedImageInClonedProfile = true;
+            }
+        }
+
+        assertThat(verifiedImageInOwnerProfile).isTrue();
+        assertThat(verifiedImageInClonedProfile).isFalse();
     }
 
     /**
