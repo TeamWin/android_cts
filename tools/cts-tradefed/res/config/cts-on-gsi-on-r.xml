@@ -74,4 +74,7 @@
     <!-- CtsMediaMiscTestCases: b/261813452 -->
     <option name="compatibility:exclude-filter" value="CtsMediaMiscTestCases android.media.misc.cts.HeifWriterTest" />
 
+    <!-- CtsVideoCodecTestCases: b/276746681 -->
+    <option name="compatibility:exclude-filter" value="CtsVideoCodecTestCases android.videocodec.cts.VideoEncoderMinMaxTest" />
+
 </configuration>
