@@ -42,8 +42,10 @@ import android.media.soundtrigger.SoundTriggerManager;
 import android.platform.test.annotations.AppModeFull;
 import android.service.voice.AlwaysOnHotwordDetector;
 import android.service.voice.SandboxedDetectionInitializer;
+import android.os.Build;
 import android.util.Log;
 import android.voiceinteraction.cts.services.CtsBasicVoiceInteractionService;
+import android.voiceinteraction.cts.testcore.AssumptionCheckerRule;
 import android.voiceinteraction.cts.testcore.Helper;
 import android.voiceinteraction.cts.testcore.VoiceInteractionServiceConnectedClassRule;
 import android.voiceinteraction.cts.testcore.VoiceInteractionServiceOverrideEnrollmentRule;
@@ -99,15 +101,22 @@ public class AlwaysOnHotwordDetectorNoDspTest {
     private static final Context sContext = getInstrumentation().getTargetContext();
     private static final SoundTrigger.Keyphrase[] KEYPHRASE_ARRAY = createKeyphraseArray(sContext);
 
-    @Rule
+    @Rule(order = 0)
     public RequiredFeatureRule REQUIRES_MIC_RULE = new RequiredFeatureRule(FEATURE_MICROPHONE);
 
-    @Rule
+    // Our method of overriding compat changes relies on userdebug
+    // TODO(b/284369268)
+    @Rule(order = 1)
+    public AssumptionCheckerRule checkUserDebugRule = new AssumptionCheckerRule(
+            Build::isDebuggable, "Overriding compat change below targetSdk requires userdebug");
+
+    @Rule(order = 2)
     public VoiceInteractionServiceOverrideEnrollmentRule mEnrollOverrideRule =
             new VoiceInteractionServiceOverrideEnrollmentRule(getService());
 
-    @Rule
+    @Rule(order = 3)
     public TestRule compatChangeRule = new PlatformCompatChangeRule();
+
 
     @ClassRule
     public static final VoiceInteractionServiceConnectedClassRule sServiceRule =
@@ -132,6 +141,7 @@ public class AlwaysOnHotwordDetectorNoDspTest {
                         "android.permission.LOG_COMPAT_CHANGE",
                         "android.permission.READ_COMPAT_CHANGE_CONFIG");
     }
+
 
     @Before
     public void setup() {
