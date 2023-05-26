@@ -1387,6 +1387,8 @@ public class ActivityManagerProcessStateTest {
 
             // Now go to home, leaving the app.  It should be put in the heavy weight state.
             mTargetContext.startActivity(homeIntent);
+            final WindowManagerStateHelper wms = new WindowManagerStateHelper();
+            wms.waitForHomeActivityVisible();
 
             final int expectedImportance =
                     (mContext.getApplicationInfo().targetSdkVersion >= Build.VERSION_CODES.O)
@@ -1397,14 +1399,14 @@ public class ActivityManagerProcessStateTest {
             assertEquals(expectedImportance,
                     am.getPackageImportance(CANT_SAVE_STATE_1_PACKAGE_NAME));
 
-            uidWatcher.expect(WatchUidRunner.CMD_CACHED, null);
-            uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_HEAVY_WEIGHT);
+            uidWatcher.waitFor(WatchUidRunner.CMD_CACHED, null);
+            uidWatcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_HEAVY_WEIGHT);
 
             // While in background, should go in to normal idle state.
             // Force app to go idle now
             cmd = "am make-uid-idle " + CANT_SAVE_STATE_1_PACKAGE_NAME;
             result = SystemUtil.runShellCommand(mInstrumentation, cmd);
-            uidWatcher.expect(WatchUidRunner.CMD_IDLE, null);
+            uidWatcher.waitFor(WatchUidRunner.CMD_IDLE, null);
 
             // Switch back to heavy-weight app to see if it correctly returns to foreground.
             startActivity(mTargetContext, activityIntent);
@@ -1516,6 +1518,8 @@ public class ActivityManagerProcessStateTest {
 
             // Now go to home, leaving the app.  It should be put in the heavy weight state.
             mTargetContext.startActivity(homeIntent);
+            final WindowManagerStateHelper wms = new WindowManagerStateHelper();
+            wms.waitForHomeActivityVisible();
 
             // Wait for process to go down to background heavy-weight.
             uid1Watcher.expect(WatchUidRunner.CMD_CACHED, null);
@@ -1547,7 +1551,7 @@ public class ActivityManagerProcessStateTest {
             device.waitForIdle();
 
             // The original app should now become cached.
-            uid1Watcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_RECENT);
+            uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_RECENT);
 
             // And the new app should start.
             uid2Watcher.waitFor(WatchUidRunner.CMD_ACTIVE, null);
@@ -1584,7 +1588,7 @@ public class ActivityManagerProcessStateTest {
             device.waitForIdle();
 
             // The second app should now become cached.
-            uid2Watcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_RECENT);
+            uid2Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_RECENT);
 
             // And the first app should start.
             uid1Watcher.waitFor(WatchUidRunner.CMD_ACTIVE, null);
