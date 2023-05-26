@@ -77,10 +77,12 @@ public class LoginActivityTest extends AutoFillServiceTestCase.ManualActivityLau
     @Test
     public void testPccRequest() throws Exception {
         // Enable feature and test service
-        enableService();
         enablePccDetectionFeature(sContext, "username");
         enableFillDialogFeature(sContext);
         sReplier.setIdMode(IdMode.PCC_ID);
+        enableService();
+
+        boolean isPccEnabled = isPccFieldClassificationSet(sContext);
 
         // Set response with a dataset > fill dialog should have two buttons
         final CannedFillResponse.Builder builder = new CannedFillResponse.Builder()
@@ -101,7 +103,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase.ManualActivityLau
 
         // Check onFillRequest has hints populated
         final FillRequest request = sReplier.getNextFillRequest();
-        if (isPccFieldClassificationSet(sContext)) {
+        if (isPccEnabled) {
             assertThat(request.hints.size()).isEqualTo(1);
             assertThat(request.hints.get(0)).isEqualTo("username");
         }
@@ -114,10 +116,12 @@ public class LoginActivityTest extends AutoFillServiceTestCase.ManualActivityLau
     @Test
     public void testPccRequest_setForAllHints() throws Exception {
         // Set service.
-        enableService();
         enablePccDetectionFeature(sContext, "username", "password", "new_password");
         enableFillDialogFeature(sContext);
         sReplier.setIdMode(IdMode.PCC_ID);
+        enableService();
+
+        boolean isPccEnabled = isPccFieldClassificationSet(sContext);
 
         final CannedFillResponse.Builder builder = new CannedFillResponse.Builder()
                 .addDataset(new CannedDataset.Builder()
@@ -137,7 +141,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase.ManualActivityLau
 
         // Check onFillRequest has the flag: FLAG_SEND_ALL_USER_DATA
         final FillRequest request = sReplier.getNextFillRequest();
-        if (isPccFieldClassificationSet(sContext)) {
+        if (isPccEnabled) {
             assertThat(request.hints.size()).isEqualTo(3);
             assertThat(request.hints.get(0)).isEqualTo("username");
         }
