@@ -409,6 +409,30 @@ public final class PreferentialNetworkServiceTest {
     }
 
     @CanSetPolicyTest(policy = PreferentialNetworkService.class)
+    public void setPrefentialNetworkServiceConfigs_overlappingUids_throwsException() {
+        UserHandle user = UserHandle.of(sContext.getUserId());
+        final int currentUid = user.getUid(/* appId */ 0);
+        PreferentialNetworkServiceConfig slice1Config =
+                (new PreferentialNetworkServiceConfig.Builder())
+                        .setEnabled(true)
+                        .setNetworkId(PreferentialNetworkServiceConfig.PREFERENTIAL_NETWORK_ID_1)
+                        .setIncludedUids(new int[]{currentUid})
+                        .build();
+        PreferentialNetworkServiceConfig slice2Config =
+                (new PreferentialNetworkServiceConfig.Builder())
+                        .setEnabled(true)
+                        .setNetworkId(PreferentialNetworkServiceConfig.PREFERENTIAL_NETWORK_ID_2)
+                        .setIncludedUids(new int[]{currentUid})
+                        .build();
+        assertThrows(IllegalArgumentException.class,
+                () -> sDeviceState.dpc().devicePolicyManager()
+                        .setPreferentialNetworkServiceConfigs(
+                                List.of(slice1Config, slice2Config)));
+        assertThat(sDeviceState.dpc().devicePolicyManager()
+            .getPreferentialNetworkServiceConfigs().get(0).isEnabled()).isFalse();
+    }
+
+    @CanSetPolicyTest(policy = PreferentialNetworkService.class)
     public void setPreferentialNetworkServiceConfigs_default_isNotSet() {
         sDeviceState.dpc().devicePolicyManager().setPreferentialNetworkServiceConfigs(
                 List.of(PreferentialNetworkServiceConfig.DEFAULT));
