@@ -870,7 +870,8 @@ public class WindowUntrustedTouchTest {
     private void waitForNoToastOverlays(String message) {
         if (!mWmState.waitFor("no toast windows",
                 state -> state.getMatchingWindowType(LayoutParams.TYPE_TOAST).isEmpty())) {
-            fail(message);
+            fail(message + " Still visible toasts: " + mWmState.getMatchingWindowType(
+                    LayoutParams.TYPE_TOAST));
         }
     }
 
