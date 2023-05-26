@@ -16,9 +16,12 @@
 
 package com.android.cts.verifier.controls;
 
+import android.app.ActivityTaskManager;
 import android.database.DataSetObserver;
 import android.os.Bundle;
+import android.widget.TextView;
 
+import com.android.cts.verifier.ArrayTestListAdapter;
 import com.android.cts.verifier.ManifestTestListAdapter;
 import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
@@ -30,22 +33,32 @@ public class ControlsPanelVerifierTestList extends PassFailButtons.TestListActiv
 
         setContentView(R.layout.pass_fail_list);
         setPassFailButtonClickListeners();
-        getPassButton().setEnabled(false);
 
-        ManifestTestListAdapter adapter = new ManifestTestListAdapter(this, getClass().getName());
-        setTestListAdapter(adapter);
+        if (ActivityTaskManager.supportsMultiWindow(this)) {
 
-        adapter.registerDataSetObserver(new DataSetObserver() {
-            @Override
-            public void onChanged() {
-                updatePassButton();
-            }
+            getPassButton().setEnabled(false);
 
-            @Override
-            public void onInvalidated() {
-                updatePassButton();
-            }
-        });
+            ManifestTestListAdapter adapter = new ManifestTestListAdapter(this,
+                    getClass().getName());
+            setTestListAdapter(adapter);
+
+            adapter.registerDataSetObserver(new DataSetObserver() {
+                @Override
+                public void onChanged() {
+                    updatePassButton();
+                }
+
+                @Override
+                public void onInvalidated() {
+                    updatePassButton();
+                }
+            });
+        } else {
+            TextView text = findViewById(android.R.id.empty);
+            text.setText(R.string.controls_panel_not_supported);
+            setTestListAdapter(new ArrayTestListAdapter(this));
+            updatePassButton();
+        }
     }
 
 }
