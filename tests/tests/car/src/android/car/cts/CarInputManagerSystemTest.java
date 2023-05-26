@@ -22,6 +22,7 @@ import static com.android.compatibility.common.util.SystemUtil.eventually;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.Instrumentation;
@@ -31,21 +32,19 @@ import android.car.input.CarInputManager;
 import android.content.Context;
 import android.os.Build;
 import android.os.SystemClock;
+import android.os.UserManager;
 import android.support.test.uiautomator.UiDevice;
 import android.view.KeyEvent;
 
 import androidx.test.InstrumentationRegistry;
-import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
-@RunWith(AndroidJUnit4.class)
-public class CarInputManagerSystemTest {
+public final class CarInputManagerSystemTest {
 
     private static final long MAX_WAIT_TIMEOUT_MS = 5_000;
 
@@ -54,11 +53,13 @@ public class CarInputManagerSystemTest {
     private UiAutomation mUiAutomation;
     private UiDevice mDevice;
     private CarInputManager mCarInputManager;
+    private UserManager mUserManager;
 
     @Before
     public void setUp() {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
         mContext = mInstrumentation.getContext();
+        mUserManager = mContext.getSystemService(UserManager.class);
 
         mDevice = UiDevice.getInstance(mInstrumentation);
         mUiAutomation = mInstrumentation.getUiAutomation();
@@ -80,6 +81,10 @@ public class CarInputManagerSystemTest {
         assumeTrue("Test requires at least Android 12 to run",
                 ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S));
         assumeTrue("This test expects the device to be awake", mDevice.isScreenOn());
+
+        // TODO(b/284220186): Remove this assumption check on this bug is fixed.
+        assumeFalse("This test is disabled on multi-user/multi-display devices",
+                mUserManager.isVisibleBackgroundUsersSupported());
 
         injectKey(KeyEvent.KEYCODE_SLEEP);
         waitUntilScreenOnIs(false);
