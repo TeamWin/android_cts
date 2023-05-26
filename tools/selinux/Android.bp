@@ -17,6 +17,17 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
+python_library_host {
+    name: "SELinuxNeverallowTestFrame",
+    srcs: ["SELinuxNeverallowTestFrame.py"],
+}
+
+python_binary_host {
+    name: "SELinuxNeverallowTestGen",
+    srcs: ["SELinuxNeverallowTestGen.py"],
+    libs: ["SELinuxNeverallowTestFrame"],
+}
+
 sh_test_host {
     name: "seamendc-test",
     src: "seamendc-test.sh",
