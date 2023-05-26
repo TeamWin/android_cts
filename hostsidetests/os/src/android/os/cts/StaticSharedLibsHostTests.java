@@ -26,10 +26,12 @@ import android.platform.test.annotations.Presubmit;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.compatibility.common.util.PollingCheck;
+import com.android.ddmlib.Log;
 import com.android.ddmlib.testrunner.RemoteAndroidTestRunner;
 import com.android.ddmlib.testrunner.TestResult.TestStatus;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.device.DeviceNotAvailableException;
+import com.android.tradefed.log.LogUtil;
 import com.android.tradefed.result.CollectingTestListener;
 import com.android.tradefed.result.TestDescription;
 import com.android.tradefed.result.TestResult;
@@ -752,6 +754,13 @@ public class StaticSharedLibsHostTests extends DeviceTestCase implements IBuildR
     @AppModeFull
     public void testPruneUnusedStaticSharedLibrariesWithMultiUser_reboot_fullMode()
             throws Exception {
+        // This really should be a assumeTrue(getDevice().getMaxNumberOfUsersSupported() > 1), but
+        // JUnit3 doesn't support assumptions framework.
+        // TODO: change to assumeTrue after migrating tests to JUnit4.
+        if (!(getDevice().getMaxNumberOfUsersSupported() > 1)) {
+            LogUtil.CLog.logAndDisplay(Log.LogLevel.INFO, "The device does not support multi-user");
+            return;
+        }
         doTestPruneUnusedStaticSharedLibrariesWithMultiUser_reboot();
     }
 
@@ -759,6 +768,13 @@ public class StaticSharedLibsHostTests extends DeviceTestCase implements IBuildR
     @AppModeInstant
     public void testPruneUnusedStaticSharedLibrariesWithMultiUser_reboot_instantMode()
             throws Exception {
+        // This really should be a assumeTrue(getDevice().getMaxNumberOfUsersSupported() > 1), but
+        // JUnit3 doesn't support assumptions framework.
+        // TODO: change to assumeTrue after migrating tests to JUnit4.
+        if (!(getDevice().getMaxNumberOfUsersSupported() > 1)) {
+            LogUtil.CLog.logAndDisplay(Log.LogLevel.INFO, "The device does not support multi-user");
+            return;
+        }
         mInstantMode = true;
         doTestPruneUnusedStaticSharedLibrariesWithMultiUser_reboot();
     }
