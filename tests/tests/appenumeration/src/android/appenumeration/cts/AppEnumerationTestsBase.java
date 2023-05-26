@@ -74,7 +74,7 @@ public class AppEnumerationTestsBase {
     static Context sContext;
     static PackageManager sPm;
 
-    static final long DEFAULT_TIMEOUT_MS = TimeUnit.SECONDS.toMillis(60);
+    static final long DEFAULT_TIMEOUT_MS = TimeUnit.SECONDS.toMillis(15);
 
     @Rule
     public TestName name = new TestName();
