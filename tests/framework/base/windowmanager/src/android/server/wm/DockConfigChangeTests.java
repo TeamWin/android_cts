@@ -21,6 +21,7 @@ import static android.content.res.Configuration.UI_MODE_TYPE_MASK;
 import static android.content.res.Configuration.UI_MODE_TYPE_NORMAL;
 import static android.server.wm.app.Components.TEST_ACTIVITY;
 import static android.server.wm.deskresources.Components.DESK_RESOURCES_ACTIVITY;
+import static android.view.Surface.ROTATION_270;
 
 import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
 
@@ -45,6 +46,11 @@ public class DockConfigChangeTests extends ActivityManagerTestBase {
         // Test only applies to behavior when the config_skipActivityRelaunchWhenDocking flag is
         // enabled.
         assumeTrue(getConfigSkipRelaunchOnDock());
+
+        // Set rotation to 270 first, since docking forces rotation to 270, causing an extra config
+        // change.
+        RotationSession rotationSession = createManagedRotationSession();
+        rotationSession.set(ROTATION_270, /*waitDeviceRotation=*/ true);
 
         launchActivity(TEST_ACTIVITY);
         waitAndAssertResumedActivity(TEST_ACTIVITY, "Activity must be resumed");
@@ -73,6 +79,11 @@ public class DockConfigChangeTests extends ActivityManagerTestBase {
         // Test only applies to behavior when the config_skipActivityRelaunchWhenDocking flag is
         // enabled.
         assumeTrue(getConfigSkipRelaunchOnDock());
+
+        // Set rotation to 270 first, since docking forces rotation to 270, causing an extra config
+        // change.
+        RotationSession rotationSession = createManagedRotationSession();
+        rotationSession.set(ROTATION_270, /*waitDeviceRotation=*/ true);
 
         launchActivity(DESK_RESOURCES_ACTIVITY);
         waitAndAssertResumedActivity(DESK_RESOURCES_ACTIVITY, "Activity must be resumed");
