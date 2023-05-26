@@ -178,7 +178,7 @@ public class OutgoingCallTest extends BaseTelecomTestWithMockServices {
     }
 
     public void testPhoneStateListenerInvokedOnOutgoingEmergencyCall() throws Throwable {
-        if (!mShouldTestTelecom) {
+        if (!mShouldTestTelecom  || !TestUtils.hasTelephonyFeature(mContext)) {
             return;
         }
         TestUtils.setSystemDialerOverride(getInstrumentation());

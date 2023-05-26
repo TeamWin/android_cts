@@ -613,7 +613,7 @@ public class ExtendedInCallServiceTest extends BaseTelecomTestWithMockServices {
     }
 
     public void testCanAddCall_CanAddForExistingActiveCall() {
-        if (!mShouldTestTelecom) {
+        if (!mShouldTestTelecom  || !TestUtils.hasTelephonyFeature(mContext)) {
             return;
         }
 
@@ -631,6 +631,28 @@ public class ExtendedInCallServiceTest extends BaseTelecomTestWithMockServices {
 
         assertCanAddCall(inCallService, true,
                 "Should be able to add call with only one active call");
+    }
+
+    public void testCanAddCall_CanAddForExistingActiveCallWithoutHoldCapability() {
+        if (!mShouldTestTelecom  || !TestUtils.hasTelephonyFeature(mContext)) {
+            return;
+        }
+
+        placeAndVerifyCall();
+        final MockConnection connection = verifyConnectionForOutgoingCall();
+        final int capabilities = connection.getConnectionCapabilities();
+        connection.setConnectionCapabilities(capabilities & ~Connection.CAPABILITY_SUPPORT_HOLD);
+        connection.setConnectionCapabilities(capabilities & ~Connection.CAPABILITY_HOLD);
+
+        final MockInCallService inCallService = mInCallCallbacks.getService();
+
+        final Call call = inCallService.getLastCall();
+        assertCallState(call, Call.STATE_DIALING);
+        connection.setActive();
+        assertCallState(call, Call.STATE_ACTIVE);
+
+        assertCanAddCall(inCallService, true,
+                "Should be able to add call with only one active call without hold capability");
     }
 
     public void testCanAddCall_CannotAddIfTooManyCalls() {
