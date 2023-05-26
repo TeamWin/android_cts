@@ -25,6 +25,8 @@ import static org.junit.Assume.assumeTrue;
 import android.Manifest;
 import android.platform.test.annotations.Presubmit;
 
+import com.android.compatibility.common.util.ApiTest;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -39,6 +41,8 @@ import java.util.concurrent.TimeUnit;
  * <p>Build/Install/Run: atest CtsWindowManagerDeviceTestCases:ActivityCaptureCallbackTests
  */
 @Presubmit
+@ApiTest(apis = {"android.app.Activity#registerScreenCaptureCallback",
+        "android.app.Activity#unregisterScreenCaptureCallback"})
 public class ActivityCaptureCallbackTests extends WindowManagerTestBase {
     private PrimaryActivity mPrimaryActivity;
 
