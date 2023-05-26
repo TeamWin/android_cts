@@ -64,6 +64,10 @@ android_test {
         "EmbmsMiddlewareTestApp/**/I*.aidl",
         "LocationAccessingApp/**/*.java",
         "LocationAccessingApp/**/I*.aidl",
+        "MockSatelliteGatewayServiceApp/**/*.java",
+        "MockSatelliteGatewayServiceApp/**/I*.aidl",
+        "MockSatelliteServiceApp/**/*.java",
+        "MockSatelliteServiceApp/**/I*.aidl",
         "TestExternalImsServiceApp/**/*.java",
         "TestExternalImsServiceApp/**/I*.aidl",
         "src/android/telephony/satellite/cts/I*.aidl",
@@ -71,6 +75,8 @@ android_test {
     aidl: {
         local_include_dirs: [
             "EmbmsMiddlewareTestApp/aidl/",
+            "MockSatelliteGatewayServiceApp/aidl/",
+            "MockSatelliteServiceApp/aidl/",
             "TestExternalImsServiceApp/aidl/",
             "src/android/telephony/satellite/cts",
         ],
@@ -90,6 +96,8 @@ android_test {
         ":TestSmsApp22",
         ":LocationAccessingApp",
         ":LocationAccessingAppSdk28",
+        ":MockSatelliteGatewayServiceApp",
+        ":MockSatelliteServiceApp",
         ":TestFinancialSmsApp",
         ":TestSmsRetrieverApp",
         ":TestSmsApp",

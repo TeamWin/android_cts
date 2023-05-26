@@ -307,8 +307,7 @@
          android:label="CTS tests of android.telephony">
     </instrumentation>
 
-    <!-- Make sure the cts can connect to CarrierMessagingServices. This is needed for
-        CarrierMessagingServiceWrapperTest. -->
+    <!-- Make sure the cts can connect to the test services -->
     <queries>
         <intent>
             <action android:name="android.service.carrier.CarrierMessagingService" />
@@ -323,5 +322,7 @@
         <package android:name="android.telephony.cts.sms" />
         <package android:name="android.telephony.cts.sms23" />
         <package android:name="android.telephony.cts.externalimsservice" />
+        <package android:name="android.telephony.cts.externalsatellitegatewayservice" />
+        <package android:name="android.telephony.cts.externalsatelliteservice" />
     </queries>
 </manifest>

@@ -80,8 +80,6 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
     private static final long TEST_SATELLITE_DEVICE_ALIGN_FOREVER_TIMEOUT_MILLIS = 100000;
 
     private static MockSatelliteServiceManager sMockSatelliteServiceManager;
-    private static boolean sOriginalIsSatelliteEnabled = false;
-    private static boolean sOriginalIsSatelliteProvisioned = false;
 
     /** SatelliteCapabilities constant indicating that the radio technology is proprietary. */
     private static final Set<Integer> SUPPORTED_RADIO_TECHNOLOGIES;
@@ -2112,6 +2110,94 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         sSatelliteManager.stopSatelliteTransmissionUpdates(transmissionUpdateCallback,
                 getContext().getMainExecutor(), resultListener::offer);
         sSatelliteManager.unregisterForSatelliteDatagram(satelliteDatagramCallback);
+        revokeSatellitePermission();
+    }
+
+    @Test
+    public void testRebindToSatelliteService() {
+        if (!shouldTestSatelliteWithMockService()) return;
+
+        grantSatellitePermission();
+        assertTrue(isSatelliteSupported());
+
+        assertTrue(sMockSatelliteServiceManager.connectExternalSatelliteService());
+        assertTrue(sMockSatelliteServiceManager.waitForRemoteSatelliteServiceConnected(1));
+
+        // Forcefully stop the external satellite service.
+        assertTrue(sMockSatelliteServiceManager.stopExternalSatelliteService());
+        assertTrue(sMockSatelliteServiceManager
+                .waitForExternalSatelliteServiceDisconnected(1));
+
+        // Reconnect CTS to the external satellite service.
+        assertTrue(sMockSatelliteServiceManager.setupExternalSatelliteService());
+        // Telephony should rebind to the external satellite service after the binding died.
+        assertTrue(sMockSatelliteServiceManager.waitForRemoteSatelliteServiceConnected(1));
+
+        // Restore original binding states
+        SatelliteStateCallbackTest callback = new SatelliteStateCallbackTest();
+        long registerResult = sSatelliteManager.registerForSatelliteModemStateChanged(
+                getContext().getMainExecutor(), callback);
+        assertEquals(SatelliteManager.SATELLITE_ERROR_NONE, registerResult);
+        assertTrue(callback.waitUntilResult(1));
+
+        callback.clearModemStates();
+        sMockSatelliteServiceManager.resetSatelliteService();
+        assertTrue(sMockSatelliteServiceManager.connectSatelliteService());
+        assertTrue(callback.waitUntilModemOff(EXTERNAL_DEPENDENT_TIMEOUT));
+        callback.clearModemStates();
+
+        requestSatelliteEnabled(true);
+        assertTrue(callback.waitUntilResult(1));
+        assertEquals(SatelliteManager.SATELLITE_MODEM_STATE_IDLE, callback.modemState);
+        assertTrue(isSatelliteEnabled());
+
+        assertTrue(sMockSatelliteServiceManager.stopExternalSatelliteService());
+        assertTrue(sMockSatelliteServiceManager
+                .waitForExternalSatelliteServiceDisconnected(1));
+
+        revokeSatellitePermission();
+    }
+
+    @Test
+    public void testRebindToSatelliteGatewayService() {
+        if (!shouldTestSatelliteWithMockService()) return;
+
+        grantSatellitePermission();
+        assertTrue(isSatelliteProvisioned());
+
+        SatelliteStateCallbackTest callback = new SatelliteStateCallbackTest();
+        long registerResult = sSatelliteManager.registerForSatelliteModemStateChanged(
+                getContext().getMainExecutor(), callback);
+        assertEquals(SatelliteManager.SATELLITE_ERROR_NONE, registerResult);
+        assertTrue(callback.waitUntilResult(1));
+
+        if (isSatelliteEnabled()) {
+            requestSatelliteEnabled(false);
+            assertTrue(callback.waitUntilResult(1));
+            assertEquals(SatelliteManager.SATELLITE_MODEM_STATE_OFF, callback.modemState);
+            assertFalse(isSatelliteEnabled());
+        }
+
+        assertTrue(sMockSatelliteServiceManager.connectExternalSatelliteGatewayService());
+        requestSatelliteEnabled(true);
+        assertTrue(callback.waitUntilResult(1));
+        assertEquals(SatelliteManager.SATELLITE_MODEM_STATE_IDLE, callback.modemState);
+        assertTrue(isSatelliteEnabled());
+        assertTrue(sMockSatelliteServiceManager.waitForRemoteSatelliteGatewayServiceConnected(1));
+
+        // Forcefully stop the external satellite gateway service.
+        assertTrue(sMockSatelliteServiceManager.stopExternalSatelliteGatewayService());
+        assertTrue(sMockSatelliteServiceManager
+                .waitForExternalSatelliteGatewayServiceDisconnected(1));
+
+        // Reconnect CTS to the external satellite gateway service.
+        assertTrue(sMockSatelliteServiceManager.setupExternalSatelliteGatewayService());
+        // Telephony should rebind to the external satellite gateway service after the binding died.
+        assertTrue(sMockSatelliteServiceManager.waitForRemoteSatelliteGatewayServiceConnected(1));
+
+        sSatelliteManager.unregisterForSatelliteModemStateChanged(callback);
+        assertTrue(sMockSatelliteServiceManager.restoreSatelliteGatewayServicePackageName());
+
         revokeSatellitePermission();
     }
 
