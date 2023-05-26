@@ -7002,6 +7002,7 @@ Follow the instructions on the screen to measure the frequency response for the 
 
     <!-- Strings for ControlsPanelVerifierActivity -->
     <string name="controls_panel_test">Controls Panel tests</string>
+    <string name="controls_panel_not_supported">This feature is not supported in this device due to multi-window not being supported. Pass this test.</string>
     <string name="controls_panel_install_test">0. Install helper app</string>
     <string name="controls_panel_install_test_info">This test helps install the helper app that will be used for all subsequent tests in this group.</string>
     <string name="controls_panel_install_test_instructions">You should have received a helper app apk with this CTS
