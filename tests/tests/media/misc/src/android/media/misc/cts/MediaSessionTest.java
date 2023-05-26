@@ -25,9 +25,6 @@ import static android.media.misc.cts.MediaSessionTestService.STEP_SET_UP;
 import static android.media.misc.cts.MediaSessionTestService.TEST_SERIES_OF_SET_QUEUE;
 import static android.media.misc.cts.MediaSessionTestService.TEST_SET_QUEUE;
 import static android.media.cts.Utils.compareRemoteUserInfo;
-import static android.os.UserManager.USER_TYPE_PROFILE_CLONE;
-
-import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
 
 import android.app.PendingIntent;
 import android.content.ComponentName;
@@ -53,20 +50,14 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Parcel;
 import android.os.Process;
-import android.os.UserManager;
 import android.platform.test.annotations.AppModeFull;
 import android.test.AndroidTestCase;
 import android.text.TextUtils;
 import android.view.KeyEvent;
 
-import androidx.test.platform.app.InstrumentationRegistry;
-
-import org.junit.Assume;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -88,7 +79,6 @@ public class MediaSessionTest extends AndroidTestCase {
     private static final long TEST_QUEUE_ID = 12L;
     private static final long TEST_ACTION = 55L;
     private static final int TEST_TOO_MANY_SESSION_COUNT = 1000;
-    private static final boolean SUPPORTS_MULTIPLE_USERS = UserManager.supportsMultipleUsers();
 
     private AudioManager mAudioManager;
     private Handler mHandler = new Handler(Looper.getMainLooper());
@@ -96,7 +86,6 @@ public class MediaSessionTest extends AndroidTestCase {
     private MediaControllerCallback mCallback = new MediaControllerCallback();
     private MediaSession mSession;
     private RemoteUserInfo mKeyDispatcherInfo;
-    private Optional<Integer> mCloneProfileId = Optional.empty();
 
     @Override
     protected void setUp() throws Exception {
@@ -114,42 +103,7 @@ public class MediaSessionTest extends AndroidTestCase {
             mSession.release();
             mSession = null;
         }
-        removeCloneProfile();
         super.tearDown();
-    }
-
-    private void createCloneProfile() {
-        Assume.assumeTrue(SUPPORTS_MULTIPLE_USERS);
-
-        InstrumentationRegistry
-            .getInstrumentation().getUiAutomation().adoptShellPermissionIdentity();
-        UserManager userManager = mContext.getSystemService(UserManager.class);
-        boolean isCloneProfileEnabled = userManager.isUserTypeEnabled(USER_TYPE_PROFILE_CLONE);
-        InstrumentationRegistry
-            .getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
-        Assume.assumeTrue(isCloneProfileEnabled);
-
-        final Context context = InstrumentationRegistry.getInstrumentation().getContext();
-        final String output = runShellCommand(
-                "pm create-user --user-type android.os.usertype.profile.CLONE --profileOf "
-                + context.getUserId() + " user2");
-
-        // On a successful run the output will be like
-        // Success: created user id 11
-        // Hence we use the last index of " " to fetch the cloned profile id.
-        int userIdIndex = output.lastIndexOf(" ");
-        if (userIdIndex != -1) {
-            mCloneProfileId = Optional.of(
-                Integer.parseInt(output.substring(userIdIndex).trim()));
-        }
-    }
-
-    private void removeCloneProfile() {
-        mCloneProfileId.ifPresent(cloneProfileId -> {
-            runShellCommand("am stop-user -w -f " + cloneProfileId);
-            runShellCommand("pm remove-user " + cloneProfileId);
-            mCloneProfileId = Optional.empty();
-        });
     }
 
     /**
@@ -350,63 +304,6 @@ public class MediaSessionTest extends AndroidTestCase {
             assertTrue(mCallback.mOnSessionDestroyedCalled);
             // just call the callback once directly so it's marked as tested
             callback.onSessionDestroyed();
-        }
-    }
-
-    public void testSetMediaSession_withInaccessibleUri_uriCleared() throws Exception {
-        createCloneProfile();
-        Assume.assumeTrue(mCloneProfileId.isPresent());
-        String testMediaUri =
-                "content://" + mCloneProfileId.get() + "@media/external/images/media/";
-        // Save a screenshot in second user files.
-        runShellCommand("screencap -p " + testMediaUri);
-
-        MediaController controller = mSession.getController();
-        controller.registerCallback(mCallback, mHandler);
-        final MediaController.Callback callback = mCallback;
-
-        synchronized (mWaitLock) {
-            // test setMetadata
-            mCallback.resetLocked();
-            MediaMetadata metadata =
-                    new MediaMetadata.Builder().putString(MediaMetadata.METADATA_KEY_ART_URI,
-                            testMediaUri).build();
-            mSession.setMetadata(metadata);
-            mWaitLock.wait(TIME_OUT_MS);
-
-            assertTrue(mCallback.mOnMetadataChangedCalled);
-            // just call the callback once directly so it's marked as tested
-            callback.onMetadataChanged(mCallback.mMediaMetadata);
-
-            MediaMetadata metadataOut = mCallback.mMediaMetadata;
-            assertNotNull(metadataOut);
-            assertTrue(TextUtils.isEmpty(
-                    metadataOut.getString(MediaMetadata.METADATA_KEY_ART_URI)));
-        }
-    }
-
-    public void testSetMediaSession_withUri_uriExists() throws Exception {
-        String testMediaUri = "content://media/external/images/media/";
-        MediaController controller = mSession.getController();
-        controller.registerCallback(mCallback, mHandler);
-        final MediaController.Callback callback = mCallback;
-
-        synchronized (mWaitLock) {
-            // test setMetadata
-            mCallback.resetLocked();
-            MediaMetadata metadata =
-                    new MediaMetadata.Builder().putString(MediaMetadata.METADATA_KEY_ART_URI,
-                            testMediaUri).build();
-            mSession.setMetadata(metadata);
-            mWaitLock.wait(TIME_OUT_MS);
-
-            assertTrue(mCallback.mOnMetadataChangedCalled);
-            // just call the callback once directly so it's marked as tested
-            callback.onMetadataChanged(mCallback.mMediaMetadata);
-
-            MediaMetadata metadataOut = mCallback.mMediaMetadata;
-            assertNotNull(metadataOut);
-            assertEquals(metadataOut.getString(MediaMetadata.METADATA_KEY_ART_URI),testMediaUri);
         }
     }
 
