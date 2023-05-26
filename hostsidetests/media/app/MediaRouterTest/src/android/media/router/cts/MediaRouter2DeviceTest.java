@@ -36,6 +36,7 @@ import static android.media.cts.MediaRouterTestConstants.ROUTE_ID_APP_3_ROUTE_2;
 import static android.media.cts.MediaRouterTestConstants.ROUTE_ID_APP_3_ROUTE_3;
 import static android.media.cts.MediaRouterTestConstants.ROUTE_ID_APP_3_ROUTE_4;
 import static android.media.cts.MediaRouterTestConstants.ROUTE_ID_APP_3_ROUTE_5;
+import static android.media.cts.MediaRouterTestConstants.ROUTE_ID_SELF_SCAN_ONLY;
 import static android.media.cts.MediaRouterTestConstants.ROUTE_NAME_4;
 import static android.media.cts.MediaRouterTestConstants.ROUTE_NAME_5;
 
@@ -69,6 +70,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -123,7 +125,7 @@ public class MediaRouter2DeviceTest {
 
     @ApiTest(apis = {"android.media.RouteDiscoveryPreference, android.media.MediaRouter2"})
     @Test
-    public void deduplicationIds_propagateAcrossApps() {
+    public void deduplicationIds_propagateAcrossApps() throws TimeoutException {
         RouteDiscoveryPreference preference =
                 new RouteDiscoveryPreference.Builder(
                                 List.of(FEATURE_SAMPLE), /* activeScan= */ true)
@@ -161,7 +163,7 @@ public class MediaRouter2DeviceTest {
 
     @ApiTest(apis = {"android.media.RouteDiscoveryPreference, android.media.MediaRouter2"})
     @Test
-    public void deviceType_propagatesAcrossApps() {
+    public void deviceType_propagatesAcrossApps() throws TimeoutException {
         RouteDiscoveryPreference preference =
                 new RouteDiscoveryPreference.Builder(
                                 List.of(FEATURE_SAMPLE), /* activeScan= */ true)
@@ -299,7 +301,7 @@ public class MediaRouter2DeviceTest {
 
     @ApiTest(apis = {"android.media.RouteDiscoveryPreference, android.media.MediaRouter2"})
     @Test
-    public void visibilityAndAllowedPackages_propagateAcrossApps() {
+    public void visibilityAndAllowedPackages_propagateAcrossApps() throws TimeoutException {
         RouteDiscoveryPreference preference =
                 new RouteDiscoveryPreference.Builder(
                                 List.of(FEATURE_SAMPLE), /* activeScan= */ true)
@@ -328,7 +330,7 @@ public class MediaRouter2DeviceTest {
     }
 
     @Test
-    public void getRoutes_returnsDefaultDevice() {
+    public void getRoutes_returnsDefaultDevice() throws TimeoutException {
         assertThat(
                         waitForAndGetRoutes(
                                         SYSTEM_ROUTE_DISCOVERY_PREFERENCE,
@@ -339,7 +341,7 @@ public class MediaRouter2DeviceTest {
     }
 
     @Test
-    public void getRoutes_returnDeviceRoute() {
+    public void getRoutes_returnDeviceRoute() throws TimeoutException {
         assertThat(
                         waitForAndGetRoutes(
                                         SYSTEM_ROUTE_DISCOVERY_PREFERENCE,
@@ -349,6 +351,22 @@ public class MediaRouter2DeviceTest {
                 .containsExactly(MediaRoute2Info.ROUTE_ID_DEVICE);
     }
 
+    @ApiTest(apis = {"android.media.MediaRouter2"})
+    @Test
+    public void selfScanOnlyProvider_notScannedByAnotherApp() {
+        RouteDiscoveryPreference preference =
+                new RouteDiscoveryPreference.Builder(
+                                List.of(FEATURE_SAMPLE), /* activeScan= */ true)
+                        .build();
+
+        assertThrows(
+                TimeoutException.class,
+                () ->
+                        waitForAndGetRoutes(
+                                preference,
+                                /* expectedRouteIds= */ Set.of(ROUTE_ID_SELF_SCAN_ONLY)));
+    }
+
     /**
      * Returns the next route list received via {@link MediaRouter2.RouteCallback#onRoutesUpdated}
      * that includes all the given {@code expectedRouteIds}.
@@ -356,7 +374,8 @@ public class MediaRouter2DeviceTest {
      * <p>Will only wait for up to {@link #ROUTE_UPDATE_MAX_WAIT_MS}.
      */
     private Map<String, MediaRoute2Info> waitForAndGetRoutes(
-            RouteDiscoveryPreference preference, Set<String> expectedRouteIds) {
+            RouteDiscoveryPreference preference, Set<String> expectedRouteIds)
+            throws TimeoutException {
         ConditionVariable condition = new ConditionVariable();
         MediaRouter2.RouteCallback routeCallback =
                 new MediaRouter2.RouteCallback() {
@@ -379,8 +398,12 @@ public class MediaRouter2DeviceTest {
                         .map(MediaRoute2Info::getOriginalId)
                         .collect(Collectors.toSet());
         try {
-            if (!currentRoutes.containsAll(expectedRouteIds)) {
-                Truth.assertThat(condition.block(ROUTE_UPDATE_MAX_WAIT_MS)).isTrue();
+            if (!currentRoutes.containsAll(expectedRouteIds)
+                    && !condition.block(ROUTE_UPDATE_MAX_WAIT_MS)) {
+                throw new TimeoutException(
+                        "Failed to get expected routes after "
+                                + ROUTE_UPDATE_MAX_WAIT_MS
+                                + " milliseconds.");
             }
             return mRouter2.getRoutes().stream()
                     .collect(Collectors.toMap(MediaRoute2Info::getOriginalId, Function.identity()));
