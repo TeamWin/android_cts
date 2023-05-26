@@ -44,6 +44,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.media.AudioManager;
 import android.media.MediaRoute2Info;
+import android.media.MediaRoute2ProviderService;
 import android.media.MediaRouter2;
 import android.media.MediaRouter2.ControllerCallback;
 import android.media.MediaRouter2.OnGetControllerHintsListener;
@@ -54,6 +55,7 @@ import android.media.RouteDiscoveryPreference;
 import android.media.RouteListingPreference;
 import android.media.RoutingSessionInfo;
 import android.os.Bundle;
+import android.os.ConditionVariable;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.LargeTest;
 import android.text.TextUtils;
@@ -212,6 +214,30 @@ public class MediaRouter2Test {
         // Tests null callback
         assertThrows(NullPointerException.class,
                 () -> mRouter2.unregisterTransferCallback(null));
+    }
+
+    @Test
+    public void activeScanRouteListingPreference_scansOnSelfScanProvider() {
+        RouteDiscoveryPreference activeScanRouteDiscoveryPreference =
+                new RouteDiscoveryPreference.Builder(
+                                List.of("placeholder_feature"), /* activeScan= */ true)
+                        .build();
+        RouteCallback routeCallback = new RouteCallback() {};
+        ConditionVariable conditionVariable = new ConditionVariable();
+        PlaceholderService.setOnBindCallback(
+                action -> {
+                    if (MediaRoute2ProviderService.SERVICE_INTERFACE.equals(action)) {
+                        conditionVariable.open();
+                    }
+                });
+        try {
+            mRouter2.registerRouteCallback(
+                    Runnable::run, routeCallback, activeScanRouteDiscoveryPreference);
+            assertThat(conditionVariable.block(WAIT_MS)).isTrue();
+        } finally {
+            PlaceholderService.setOnBindCallback(action -> {});
+            mRouter2.unregisterRouteCallback(routeCallback);
+        }
     }
 
     @Test

@@ -24,14 +24,34 @@ import android.os.IBinder;
 
 import androidx.annotation.Nullable;
 
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
+
 /**
- * Service to test checks in {@link MediaRouter2#setRouteListingPreference} when it comes to {@link
- * RouteListingPreference#getLinkedItemComponentName()}.
+ * Placeholder service to support {@link MediaRouter2Test}.
+ *
+ * <p>Provides support for testing checks in {@link MediaRouter2#setRouteListingPreference} when it
+ * comes to {@link RouteListingPreference#getLinkedItemComponentName()}, and {@link
+ * android.media.MediaRoute2ProviderService#CATEGORY_SELF_SCAN_ONLY}.
  */
 public class PlaceholderService extends Service {
+
+    /**
+     * Invoked whenever there's a bind request to this service, passing the intent action as
+     * parameter.
+     */
+    private static final AtomicReference<Consumer<String>> sOnBindCallback =
+            new AtomicReference<>(action -> {});
+
+    /** Sets a callback for whenever {@link #onBind} is invoked. */
+    public static void setOnBindCallback(Consumer<String> callback) {
+        sOnBindCallback.set(callback);
+    }
+
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
+        sOnBindCallback.get().accept(intent.getAction());
         return null;
     }
 }
