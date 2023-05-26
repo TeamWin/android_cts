@@ -42,6 +42,7 @@ import static com.android.compatibility.common.util.SystemUtil.runWithShellPermi
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertThrows;
+import static org.junit.Assume.assumeTrue;
 
 import android.app.AppOpsManager;
 import android.content.Context;
@@ -952,6 +953,10 @@ public class AlwaysOnHotwordDetectorTest {
 
     @Test
     public void testAppOpsLostReacquired_recognitionPausedResumed() throws Exception {
+        // We use the privacy sensor toggle to revoke appops, and not all devices support it
+        // Changing runtime permissions using the shell doesn't fire callbacks (b/280692605)
+        assumeTrue(sContext.getSystemService(SensorPrivacyManager.class).supportsSensorToggle(
+                    SensorPrivacyManager.Sensors.MICROPHONE));
         createAndEnrollAlwaysOnHotwordDetector();
         // Grab permissions for more than a single call since we get callbacks
         adoptSoundTriggerPermissions();
