@@ -23,6 +23,7 @@ import static android.media.cts.MediaRouterTestConstants.MEDIA_ROUTER_PROVIDER_2
 import static android.media.cts.MediaRouterTestConstants.MEDIA_ROUTER_PROVIDER_2_PACKAGE;
 import static android.media.cts.MediaRouterTestConstants.MEDIA_ROUTER_PROVIDER_3_APK;
 import static android.media.cts.MediaRouterTestConstants.MEDIA_ROUTER_PROVIDER_3_PACKAGE;
+import static android.media.cts.MediaRouterTestConstants.MEDIA_ROUTER_PROVIDER_SELF_SCAN_ONLY_APK;
 import static android.media.cts.MediaRouterTestConstants.MEDIA_ROUTER_TEST_APK;
 import static android.media.cts.MediaRouterTestConstants.MEDIA_ROUTER_TEST_PACKAGE;
 
@@ -56,6 +57,7 @@ public class MediaRouter2HostSideTest extends BaseHostJUnit4Test {
         installTestApp(testInfo, MEDIA_ROUTER_PROVIDER_1_APK);
         installTestApp(testInfo, MEDIA_ROUTER_PROVIDER_2_APK);
         installTestApp(testInfo, MEDIA_ROUTER_PROVIDER_3_APK);
+        installTestApp(testInfo, MEDIA_ROUTER_PROVIDER_SELF_SCAN_ONLY_APK);
         installTestApp(testInfo, MEDIA_ROUTER_TEST_APK);
     }
 
@@ -65,6 +67,7 @@ public class MediaRouter2HostSideTest extends BaseHostJUnit4Test {
         device.uninstallPackage(MEDIA_ROUTER_PROVIDER_1_PACKAGE);
         device.uninstallPackage(MEDIA_ROUTER_PROVIDER_2_PACKAGE);
         device.uninstallPackage(MEDIA_ROUTER_PROVIDER_3_PACKAGE);
+        device.uninstallPackage(MEDIA_ROUTER_PROVIDER_SELF_SCAN_ONLY_APK);
         device.uninstallPackage(MEDIA_ROUTER_TEST_PACKAGE);
     }
 
@@ -173,6 +176,17 @@ public class MediaRouter2HostSideTest extends BaseHostJUnit4Test {
                 MEDIA_ROUTER_TEST_PACKAGE,
                 DEVICE_SIDE_TEST_CLASS,
                 "getRoutes_returnsDefaultDevice");
+    }
+
+    @ApiTest(apis = {"android.media.MediaRouter2"})
+    @AppModeFull
+    @RequiresDevice
+    @Test
+    public void selfScanOnlyProvider_notScannedByAnotherApp() throws Exception {
+        runDeviceTests(
+                MEDIA_ROUTER_TEST_PACKAGE,
+                DEVICE_SIDE_TEST_CLASS,
+                "selfScanOnlyProvider_notScannedByAnotherApp");
     }
 
     private void setPermissionEnabled(String packageName, String permission, boolean enabled)
