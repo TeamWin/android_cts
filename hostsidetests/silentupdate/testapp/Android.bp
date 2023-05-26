@@ -38,9 +38,7 @@ android_test_helper_app {
         "mdpi-v4",
     ],
     test_suites: [
-        "cts",
         "general-tests",
-        "mts",
     ],
     java_resources: [
         ":SilentInstallCurrent",
