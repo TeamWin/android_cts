@@ -34,14 +34,13 @@ import android.view.View;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.test.ext.junit.rules.ActivityScenarioRule;
+import androidx.test.core.app.ActivityScenario;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.PollingCheck;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Rule;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -84,22 +83,18 @@ public abstract class InputTestCase {
         mInputListener = new InputListener();
     }
 
-    @Rule
-    public ActivityScenarioRule<InputCtsActivity> mActivityRule =
-            new ActivityScenarioRule<>(InputCtsActivity.class);
+    private ActivityScenario<InputCtsActivity> mActivityRule;
 
     @Before
     public void setUp() throws Exception {
         onBeforeLaunchActivity();
-
-        mActivityRule.getScenario().launch(InputCtsActivity.class, getActivityOptions())
+        mActivityRule = ActivityScenario.launch(InputCtsActivity.class, getActivityOptions())
                 .onActivity(activity -> mTestActivity = activity);
         mTestActivity.clearUnhandleKeyCode();
         mTestActivity.setInputCallback(mInputListener);
         mDecorView = mTestActivity.getWindow().getDecorView();
 
         onSetUp();
-
         PollingCheck.waitFor(mTestActivity::hasWindowFocus);
         assertTrue(mCurrentTestCase + ": Activity window must have focus",
                 mTestActivity.hasWindowFocus());
@@ -110,6 +105,7 @@ public abstract class InputTestCase {
     @After
     public void tearDown() throws Exception {
         onTearDown();
+        mActivityRule.close();
     }
 
     /** Optional setup logic performed before the test activity is launched. */
