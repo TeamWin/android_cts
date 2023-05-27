@@ -91,7 +91,9 @@
         <service android:name="android.media.bettertogether.cts.PlaceholderService"
                  android:exported="false">
             <intent-filter>
+                <action android:name="android.media.MediaRoute2ProviderService" />
                 <action android:name="android.media.action.TRANSFER_MEDIA"/>
+                <category android:name="android.media.MediaRoute2ProviderService.SELF_SCAN_ONLY" />
             </intent-filter>
         </service>
     </application>

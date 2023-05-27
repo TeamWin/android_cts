@@ -54,6 +54,7 @@ import android.service.notification.Adjustment;
 import android.service.notification.NotificationAssistantService;
 import android.service.notification.NotificationListenerService;
 import android.service.notification.StatusBarNotification;
+import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
@@ -409,6 +410,7 @@ public class NotificationAssistantServiceTest {
     public void testGetAllowedAssistantAdjustments() throws Exception {
         mNotificationAssistantService = mHelper.enableAssistant(PKG);
         assertNotNull(mNotificationAssistantService.mCurrentCapabilities);
+        Log.d(TAG, "capabilities at start: " + mNotificationAssistantService.mCurrentCapabilities);
 
         mUi.adoptShellPermissionIdentity("android.permission.STATUS_BAR_SERVICE");
         assertTrue(

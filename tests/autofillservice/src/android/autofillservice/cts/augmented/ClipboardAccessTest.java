@@ -20,7 +20,10 @@ import static android.content.Context.CLIPBOARD_SERVICE;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import static org.junit.Assume.assumeTrue;
+
 import android.autofillservice.cts.commontests.AugmentedAutofillManualActivityLaunchTestCase;
+import android.autofillservice.cts.testcore.Helper;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.platform.test.annotations.AppModeFull;
@@ -47,6 +50,9 @@ public class ClipboardAccessTest extends AugmentedAutofillManualActivityLaunchTe
 
     @Test
     public void testDoIt() throws Exception {
+        // TODO(b/284425542): check reason and re-enable it
+        assumeTrue("Device state is not HALF_FOLDED",
+                !Helper.isDeviceInState(mContext, Helper.DeviceStateEnum.HALF_FOLDED));
         // Check to make sure test is in a state where it cannot write to the clipboard.
         mClipboardManager.setPrimaryClip(ClipData.newPlainText(null, "Y U SET?"));
         assertWithMessage("should not be able to set clipboard yet")

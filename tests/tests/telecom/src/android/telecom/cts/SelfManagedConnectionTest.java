@@ -291,7 +291,7 @@ public class SelfManagedConnectionTest extends BaseTelecomTestWithMockServices {
     }
 
     public void testEnterCarMode() throws Exception {
-        if (!mShouldTestTelecom) {
+        if (!mShouldTestTelecom || !TestUtils.hasTelephonyFeature(mContext)) {
             return;
         }
         TestServiceConnection controlConn = setUpControl(CAR_MODE_CONTROL,
@@ -590,7 +590,7 @@ public class SelfManagedConnectionTest extends BaseTelecomTestWithMockServices {
      */
 
     public void testChangeCarModeApp() throws Exception {
-        if (!mShouldTestTelecom) {
+        if (!mShouldTestTelecom || !TestUtils.hasTelephonyFeature(mContext)) {
             return;
         }
         TestServiceConnection controlConn1 = setUpControl(CAR_MODE_CONTROL, CAR_DIALER_1);
@@ -624,7 +624,7 @@ public class SelfManagedConnectionTest extends BaseTelecomTestWithMockServices {
     }
 
     public void testExitCarMode() throws Exception {
-        if (!mShouldTestTelecom) {
+        if (!mShouldTestTelecom || !TestUtils.hasTelephonyFeature(mContext)) {
             return;
         }
         TestServiceConnection controlConn = setUpControl(CAR_MODE_CONTROL, CAR_DIALER_1);

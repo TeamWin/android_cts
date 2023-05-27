@@ -84,7 +84,7 @@ public class NullBindingCallScreeningServiceTest extends BaseTelecomTestWithMock
     }
 
     public void testNullBindingOnOutgoingCall() throws Exception {
-        if (!mShouldTestTelecom) {
+        if (!mShouldTestTelecom  || !TestUtils.hasTelephonyFeature(mContext)) {
             return;
         }
         Uri testNumber = createRandomTestNumber();
