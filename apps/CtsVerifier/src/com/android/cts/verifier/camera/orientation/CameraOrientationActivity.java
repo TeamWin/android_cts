@@ -155,8 +155,6 @@ implements OnClickListener, SurfaceHolder.Callback {
                 + Integer.toString(NUM_ORIENTATIONS)
                 + ": "
                 + mPreviewOrientations.get(mNextPreviewOrientation) + "\u00b0"
-                + " "
-                + getString(R.string.co_orientation_direction_label)
                 );
 
         TextView instructionLabel =
