@@ -58,6 +58,15 @@ public class Components extends ComponentsBase {
         }
     }
 
+    /** Action constants for {@link #LAUNCH_INTO_PIP_ACTIVITY}. */
+    public static class LaunchIntoPipActivityAction {
+        public final String LAUNCH_INTO_PIP;
+
+        public LaunchIntoPipActivityAction(String packageName) {
+            LAUNCH_INTO_PIP = packageName + ".ACTION_LAUNCH_INTO_PIP";
+        }
+    }
+
     /** Extra key constants for {@link #FOREGROUND_ACTIVITY}. */
     public static class ForegroundActivityExtra {
         public final String LAUNCH_BACKGROUND_ACTIVITY =
@@ -111,6 +120,7 @@ public class Components extends ComponentsBase {
     public final ComponentName BACKGROUND_ACTIVITY_TEST_SERVICE;
     public final ComponentName ACTIVITY_START_SERVICE;
     public final ComponentName PIP_ACTIVITY;
+    public final ComponentName LAUNCH_INTO_PIP_ACTIVITY;
     public final ComponentName RELAUNCHING_ACTIVITY;
     public final ComponentName VIRTUAL_DISPLAY_ACTIVITY;
     public final ComponentName WIDGET_CONFIG_TEST_ACTIVITY;
@@ -120,6 +130,8 @@ public class Components extends ComponentsBase {
     public final ForegroundActivityExtra FOREGROUND_ACTIVITY_EXTRA = new ForegroundActivityExtra();
 
     public final ForegroundEmbeddedActivityAction FOREGROUND_EMBEDDING_ACTIVITY_ACTIONS;
+
+    public final LaunchIntoPipActivityAction LAUNCH_INTO_PIP_ACTIONS;
 
     public final SendPendingIntentReceiverExtra SEND_PENDING_INTENT_RECEIVER_EXTRA =
             new SendPendingIntentReceiverExtra();
@@ -147,6 +159,8 @@ public class Components extends ComponentsBase {
                 component(APP_PACKAGE_NAME, "BackgroundActivityTestService");
         PIP_ACTIVITY =
                 component(APP_PACKAGE_NAME, "PipActivity");
+        LAUNCH_INTO_PIP_ACTIVITY =
+                component(APP_PACKAGE_NAME, "LaunchIntoPipActivity");
         RELAUNCHING_ACTIVITY =
                 component(APP_PACKAGE_NAME, "RelaunchingActivity");
         VIRTUAL_DISPLAY_ACTIVITY =
@@ -161,7 +175,7 @@ public class Components extends ComponentsBase {
         FOREGROUND_ACTIVITY_ACTIONS = new ForegroundActivityAction(APP_PACKAGE_NAME);
         FOREGROUND_EMBEDDING_ACTIVITY_ACTIONS =
                 new ForegroundEmbeddedActivityAction(APP_PACKAGE_NAME);
-
+        LAUNCH_INTO_PIP_ACTIONS = new LaunchIntoPipActivityAction(APP_PACKAGE_NAME);
     }
 
     private ComponentName component(String packageName, String className) {
