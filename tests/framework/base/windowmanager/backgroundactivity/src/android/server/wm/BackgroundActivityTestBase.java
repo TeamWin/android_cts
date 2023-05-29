@@ -17,6 +17,8 @@
 package android.server.wm;
 
 import static android.app.AppOpsManager.MODE_ERRORED;
+import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
+import static android.app.WindowConfiguration.WINDOWING_MODE_PINNED;
 import static android.server.wm.ComponentNameUtils.getActivityName;
 import static android.server.wm.backgroundactivity.common.CommonComponents.COMMON_FOREGROUND_ACTIVITY_EXTRAS;
 
@@ -135,6 +137,10 @@ public abstract class BackgroundActivityTestBase extends ActivityManagerTestBase
         return waitForActivityFocused(ACTIVITY_FOCUS_TIMEOUT_MS, componentName);
     }
 
+    void assertPinnedStackDoesNotExist() {
+        mWmState.assertDoesNotContainStack("Must not contain pinned stack.",
+                WINDOWING_MODE_PINNED, ACTIVITY_TYPE_STANDARD);
+    }
     void assertTaskStackIsEmpty(ComponentName sourceComponent) {
         Task task = mWmState.getTaskByActivity(sourceComponent);
         assertWithMessage("task for %s", sourceComponent.flattenToShortString()).that(task)
