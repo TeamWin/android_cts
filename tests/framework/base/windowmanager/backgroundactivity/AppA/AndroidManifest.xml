@@ -63,6 +63,8 @@
         <activity android:name=".PipActivity"
                   android:exported="true"
                   android:supportsPictureInPicture="true"/>
+        <activity android:name=".LaunchIntoPipActivity"
+                    android:exported="true"/>
         <activity android:name=".VirtualDisplayActivity"
                   android:exported="true"/>
         <activity android:name=".WidgetConfigTestActivity"
