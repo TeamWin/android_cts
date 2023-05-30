@@ -18,6 +18,8 @@ package android.server.wm;
 
 import static android.app.AppOpsManager.MODE_ALLOWED;
 import static android.app.AppOpsManager.MODE_ERRORED;
+import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
+import static android.app.WindowConfiguration.WINDOWING_MODE_PINNED;
 import static android.server.wm.UiDeviceUtils.pressHomeButton;
 import static android.server.wm.WindowManagerState.STATE_INITIALIZING;
 import static android.server.wm.backgroundactivity.appa.Components.APP_A_BACKGROUND_ACTIVITY;
@@ -29,6 +31,7 @@ import static android.server.wm.backgroundactivity.appa.Components.APP_A_SIMPLE_
 import static android.server.wm.backgroundactivity.appa.Components.APP_A_START_ACTIVITY_RECEIVER;
 import static android.server.wm.backgroundactivity.appa.Components.ForegroundActivity.ACTION_FINISH_ACTIVITY;
 import static android.server.wm.backgroundactivity.appa.Components.ForegroundActivity.ACTION_LAUNCH_BACKGROUND_ACTIVITIES;
+import static android.server.wm.backgroundactivity.appa.Components.ForegroundActivity.ACTION_LAUNCH_INTO_PIP;
 import static android.server.wm.backgroundactivity.appa.Components.ForegroundActivity.LAUNCH_BACKGROUND_ACTIVITY_EXTRA;
 import static android.server.wm.backgroundactivity.appa.Components.ForegroundActivity.LAUNCH_INTENTS_EXTRA;
 import static android.server.wm.backgroundactivity.appa.Components.ForegroundActivity.LAUNCH_SECOND_BACKGROUND_ACTIVITY_EXTRA;
@@ -71,6 +74,7 @@ import android.os.IBinder;
 import android.os.ResultReceiver;
 import android.os.SystemProperties;
 import android.os.UserManager;
+import android.platform.test.annotations.AsbSecurityTest;
 import android.platform.test.annotations.Presubmit;
 import android.platform.test.annotations.SystemUserOnly;
 import android.server.wm.backgroundactivity.appa.IBackgroundActivityTestService;
@@ -125,6 +129,9 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
     public static final ComponentName APP_A_PIP_ACTIVITY =
             new ComponentName(TEST_PACKAGE_APP_A,
                     "android.server.wm.backgroundactivity.appa.PipActivity");
+    public static final ComponentName APP_A_LAUNCH_INTO_PIP_ACTIVITY =
+            new ComponentName(TEST_PACKAGE_APP_A,
+                    "android.server.wm.backgroundactivity.appa.LaunchIntoPipActivity");
     public static final ComponentName APP_A_VIRTUAL_DISPLAY_ACTIVITY =
             new ComponentName(TEST_PACKAGE_APP_A,
                     "android.server.wm.backgroundactivity.appa.VirtualDisplayActivity");
@@ -664,6 +671,29 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
         assertActivityNotResumed();
     }
 
+    @Test
+    @AsbSecurityTest(cveBugId = 271576718)
+    public void testPipCannotStartFromBackground() throws Exception {
+        Intent intent = new Intent();
+        intent.setComponent(APP_A_LAUNCH_INTO_PIP_ACTIVITY);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        mContext.startActivity(intent);
+
+        boolean result = waitForActivityFocused(APP_A_LAUNCH_INTO_PIP_ACTIVITY);
+        assertTrue("Should not able to launch background activity", result);
+
+        pressHomeAndWaitHomeResumed();
+        result = waitForActivityFocused(APP_A_LAUNCH_INTO_PIP_ACTIVITY);
+        assertFalse("Activity should be in background", result);
+
+        Intent broadcast = new Intent(ACTION_LAUNCH_INTO_PIP);
+        mContext.sendBroadcast(broadcast);
+        result = waitForActivityFocused(APP_A_BACKGROUND_ACTIVITY);
+        assertFalse("Should not able to launch LaunchIntoPip activity", result);
+
+        assertPinnedStackDoesNotExist();
+    }
+
     // Check that a presentation on a virtual display won't allow BAL after pressing home.
     @Test
     public void testVirtualDisplayCannotStartAfterHomeButton() throws Exception {
@@ -879,6 +909,11 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
         } else {
             assertTaskStack(null, APP_A_BACKGROUND_ACTIVITY);
         }
+    }
+
+    private void assertPinnedStackDoesNotExist() {
+        mWmState.assertDoesNotContainStack("Must not contain pinned stack.",
+                WINDOWING_MODE_PINNED, ACTIVITY_TYPE_STANDARD);
     }
 
     private boolean waitForActivityFocused(ComponentName componentName) {

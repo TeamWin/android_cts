@@ -54,6 +54,9 @@ public class Components extends ComponentsBase {
                 Components.class.getPackage().getName() + ".ACTION_LAUNCH_BACKGROUND_ACTIVITIES";
         public static final String ACTION_FINISH_ACTIVITY =
                 Components.class.getPackage().getName() + ".ACTION_FINISH_ACTIVITY";
+
+        public static final String ACTION_LAUNCH_INTO_PIP =
+                Components.class.getPackage().getName() + ".ACTION_LAUNCH_INTO_PIP";
     }
 
     /** Extra key constants for {@link #APP_A_SEND_PENDING_INTENT_RECEIVER} */
