@@ -43,7 +43,7 @@
     <option name="compatibility:exclude-filter" value="CtsAppWidgetTestCases" />
     <option name="compatibility:exclude-filter" value="CtsCallLogTestCases" />
     <option name="compatibility:exclude-filter" value="CtsFragmentTestCases" />
-    <option name="compatibility:exclude-filter" value="CtsPermission3TestCases" />
+    <option name="compatibility:exclude-filter" value="CtsPermissionUiTestCases" />
     <option name="compatibility:exclude-filter" value="CtsTransitionTestCases" />
     <option name="compatibility:exclude-filter" value="CtsRoleTestCases" />
     <option name="compatibility:exclude-filter" value="CtsPermissionPolicyTestCases" />
