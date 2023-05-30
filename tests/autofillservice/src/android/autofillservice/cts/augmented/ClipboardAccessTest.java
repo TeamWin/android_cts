@@ -16,14 +16,9 @@
 
 package android.autofillservice.cts.augmented;
 
-import static android.content.Context.CLIPBOARD_SERVICE;
-
 import static com.google.common.truth.Truth.assertWithMessage;
 
-import static org.junit.Assume.assumeTrue;
-
 import android.autofillservice.cts.commontests.AugmentedAutofillManualActivityLaunchTestCase;
-import android.autofillservice.cts.testcore.Helper;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.platform.test.annotations.AppModeFull;
@@ -39,20 +34,19 @@ public class ClipboardAccessTest extends AugmentedAutofillManualActivityLaunchTe
 
     @Before
     public void prepareClipboardManager() {
-        mClipboardManager = (ClipboardManager) sContext.getSystemService(CLIPBOARD_SERVICE);
+        mClipboardManager = getClipboardManager();
         mClipboardManager.clearPrimaryClip();
     }
 
     @After
     public void cleanYourself() {
-        mClipboardManager.clearPrimaryClip();
+        // This test extends AutoFillServiceTestCase.ManualActivityLaunch, the @Before may not be
+        // executed, mClipboardManager will not be set.
+        getClipboardManager().clearPrimaryClip();
     }
 
     @Test
     public void testDoIt() throws Exception {
-        // TODO(b/284425542): check reason and re-enable it
-        assumeTrue("Device state is not HALF_FOLDED",
-                !Helper.isDeviceInState(mContext, Helper.DeviceStateEnum.HALF_FOLDED));
         // Check to make sure test is in a state where it cannot write to the clipboard.
         mClipboardManager.setPrimaryClip(ClipData.newPlainText(null, "Y U SET?"));
         assertWithMessage("should not be able to set clipboard yet")
@@ -63,5 +57,9 @@ public class ClipboardAccessTest extends AugmentedAutofillManualActivityLaunchTe
         mClipboardManager.setPrimaryClip(ClipData.newPlainText(null, "YES, WE CAN!"));
         assertWithMessage("should be able to set clipboard now").that(mClipboardManager.getText())
                 .isEqualTo("YES, WE CAN!");
+    }
+
+    private ClipboardManager getClipboardManager() {
+        return sContext.getSystemService(ClipboardManager.class);
     }
 }
