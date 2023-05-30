@@ -138,7 +138,8 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
         tests.add(new IsEnabledTest());
         tests.add(new ServiceStartedTest());
         tests.add(new NotificationReceivedTest());
-        if (!isAutomotive) {
+        /* TODO(b/284478205): Reenable or remove along with NLS meta-data in manifest. */
+        /* if (!isAutomotive) {
             tests.add(new SendUserToChangeFilter());
             tests.add(new AskIfFilterChanged());
             tests.add(new NotificationTypeFilterTest());
@@ -147,7 +148,7 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
             tests.add(new NotificationAppFilterTest());
             tests.add(new ResetAppFilter());
             tests.add(new AskIfReadyToProceed());
-        }
+        } */
         tests.add(new LongMessageTest());
         tests.add(new DataIntactTest());
         tests.add(new AudiblyAlertedTest());
