@@ -22,6 +22,7 @@ import static org.junit.Assume.assumeTrue;
 
 import android.platform.test.annotations.AppModeFull;
 
+import com.android.compatibility.common.util.CddTest;
 import com.android.tradefed.invoker.TestInformation;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.AfterClassWithInfo;
@@ -40,6 +41,7 @@ import java.util.Map;
  */
 @RunWith(DeviceJUnit4ClassRunner.class)
 @AppModeFull
+@CddTest(requirements = {"9.5/C-4-1"})
 public class IntentRedirectionTest extends AppCloningBaseHostTest {
     private static final String CLONE_PROFILE_APP = "CtsAppCloningIntentRedirectionCloneProfileApp."
             + "apk";

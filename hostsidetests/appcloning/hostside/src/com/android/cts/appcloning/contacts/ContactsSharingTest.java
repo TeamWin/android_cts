@@ -23,6 +23,7 @@ import static org.junit.Assume.assumeTrue;
 
 import android.platform.test.annotations.AppModeFull;
 
+import com.android.compatibility.common.util.CddTest;
 import com.android.cts.appcloning.AppCloningBaseHostTest;
 import com.android.tradefed.invoker.TestInformation;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -131,6 +132,7 @@ public class ContactsSharingTest extends AppCloningBaseHostTest {
      * contacts should be present in the clone contacts provider.
      */
     @Test
+    @CddTest(requirements = {"9.5/C-4-3"})
     public void testCloneContactsProviderInsert_rawContacts_noContactsInsertedInBothProviders()
             throws Exception {
         // Install the device side test APKs
@@ -162,6 +164,7 @@ public class ContactsSharingTest extends AppCloningBaseHostTest {
      * contacts should be present in the clone contacts provider.
      */
     @Test
+    @CddTest(requirements = {"9.5/C-4-3"})
     public void testCloneContactsProviderBulkInsert_rawContacts_noContactsInsertedInBothProviders()
             throws Exception {
         // Install the device side test APKs
@@ -194,6 +197,7 @@ public class ContactsSharingTest extends AppCloningBaseHostTest {
      * design no contacts should be present in the clone contacts provider.
      */
     @Test
+    @CddTest(requirements = {"9.5/C-4-3"})
     public void testCloneContactsProviderApplyBatch_rawContacts_noContactsInsertedInBothProviders()
             throws Exception {
         // Install the device side test APKs
@@ -222,6 +226,7 @@ public class ContactsSharingTest extends AppCloningBaseHostTest {
      * that no contacts are actually updated through the operation.
      */
     @Test
+    @CddTest(requirements = {"9.5/C-4-3"})
     public void testCloneContactsProviderUpdates_rawContactsUpdate_doesNotUpdateActually()
             throws Exception {
         // Install the device side test APK
@@ -245,6 +250,7 @@ public class ContactsSharingTest extends AppCloningBaseHostTest {
      * that no contacts are actually updated through the operation.
      */
     @Test
+    @CddTest(requirements = {"9.5/C-4-3"})
     public void testCloneContactsProviderDeletes_rawContactsDelete_doesNotDeleteActually()
             throws Exception {
         // Install the device side test APK
@@ -265,6 +271,7 @@ public class ContactsSharingTest extends AppCloningBaseHostTest {
      * for that account.
      */
     @Test
+    @CddTest(requirements = {"9.5/C-4-4"})
     public void testCloneAccountsContactsSync_syncsAreDisabled() throws Exception {
         installPackage(LAUNCHABLE_CLONE_PROFILE_APP, "--user " + Integer.valueOf(sCloneUserId));
         Map<String, String> args = new HashMap<>();
@@ -282,6 +289,7 @@ public class ContactsSharingTest extends AppCloningBaseHostTest {
      * with a launcher activity by redirecting the requests to the primary contacts provider.
      */
     @Test
+    @CddTest(requirements = {"9.5/C-4-5"})
     public void testReadsForClonedAppWithLauncherActivity_rawContactReads_redirectsToPrimary()
             throws Exception {
         installPackage(LAUNCHABLE_CLONE_PROFILE_APP, "--user " + Integer.valueOf(sCloneUserId));
@@ -303,6 +311,7 @@ public class ContactsSharingTest extends AppCloningBaseHostTest {
      * without a launcher activity
      */
     @Test
+    @CddTest(requirements = {"9.5/C-4-5"})
     public void testClonedAppWithoutLauncherActivityReads_rawContactReads_emptyResponse()
             throws Exception {
         installPackage(NOT_LAUNCHABLE_CLONE_PROFILE_APP, "--user "
