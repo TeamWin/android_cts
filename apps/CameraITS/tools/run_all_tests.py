@@ -676,11 +676,8 @@ def main():
       device_state = 'folded' if device_folded else 'opened'
 
     testing_folded_front_camera = (testing_foldable_device and
+                                   device_folded and
                                    _FRONT_CAMERA_ID in camera_id)
-    if testing_folded_front_camera:
-      if not device_folded:
-        raise AssertionError(
-            'Device should be folded while testing folded scene.')
 
     # Raise an assertion error if there is any camera unavailable in
     # current device state. Usually scenes with suffix 'folded' will
@@ -694,16 +691,16 @@ def main():
     if (testing_folded_front_camera and camera_id not in unav_cameras
         and not folded_prompted):
       folded_prompted = True
-      input('\nYou are testing a foldable device in folded state.'
-            'Please make sure the device is folded and press <ENTER>'
+      input('\nYou are testing a foldable device in folded state. '
+            'Please make sure the device is folded and press <ENTER> '
             'after positioning properly.\n')
 
     if (testing_foldable_device and
         not device_folded and _FRONT_CAMERA_ID in camera_id and
         camera_id not in unav_cameras and not opened_prompted):
       opened_prompted = True
-      input('\nYou are testing a foldable device in opened state.'
-            'Please make sure the device is unfolded and press <ENTER>'
+      input('\nYou are testing a foldable device in opened state. '
+            'Please make sure the device is unfolded and press <ENTER> '
             'after positioning properly.\n')
 
     # Run through all scenes if user does not supply one and config file doesn't
@@ -778,6 +775,7 @@ def main():
       if 'folded' in s:
         testing_scene = s.split('_folded')[0]
       test_params_content['scene'] = testing_scene
+      test_params_content['scene_with_suffix'] = s
 
       if auto_scene_switch:
         # Copy scene images onto the tablet
