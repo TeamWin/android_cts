@@ -373,6 +373,18 @@ class PhotoPickerPermissionTest : BaseUsePermissionTest() {
         }
     }
 
+    @Test
+    fun testAMLNotGrantedIfNotRequested() {
+        installPackage(APP_APK_PATH_LATEST)
+        requestAppPermissionsAndAssertResult(READ_MEDIA_IMAGES to false,
+            READ_MEDIA_VISUAL_USER_SELECTED to true) {
+            click(By.res(SELECT_BUTTON))
+            clickImageOrVideo()
+            clickAllow()
+        }
+        assertAppHasPermission(ACCESS_MEDIA_LOCATION, false)
+    }
+
     private fun clickImageOrVideo() {
         click(By.res(PhotoPickerUtils.getImageOrVideoResId(context)))
     }
