@@ -1832,21 +1832,35 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
     private void assertAccessible(Uri uri)
             throws IOException {
         ContentResolver contentResolver = mContext.getContentResolver();
-        try (AssetFileDescriptor fd = contentResolver.openAssetFile(uri, "r", null)) {
-            assertNotNull(fd);
-        } catch (SecurityException e) {
-            throw new AssertionError("URI should be accessible: " + uri, e);
+        for (int tries = 3; tries-- > 0; ) {
+            try (AssetFileDescriptor fd = contentResolver.openAssetFile(uri, "r", null)) {
+                if (fd != null) {
+                    return;
+                }
+            } catch (SecurityException e) {
+            }
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException ex) {
+            }
         }
+        fail("Uri " + uri + "is not accessible");
     }
 
     private void assertInaccessible(Uri uri)
             throws IOException {
         ContentResolver contentResolver = mContext.getContentResolver();
-        try (AssetFileDescriptor fd = contentResolver.openAssetFile(uri, "r", null)) {
-            fail("URI should be inaccessible: " + uri);
-        } catch (SecurityException e) {
-            // pass
+        for (int tries = 3; tries-- > 0; ) {
+            try (AssetFileDescriptor fd = contentResolver.openAssetFile(uri, "r", null)) {
+            } catch (SecurityException e) {
+               return;
+            }
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException ex) {
+            }
         }
+        fail("Uri " + uri + "is still accessible");
     }
 
     @NonNull
