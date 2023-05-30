@@ -18,6 +18,7 @@ package android.car.cts;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
 import org.junit.Test;
@@ -28,11 +29,14 @@ import java.util.Objects;
 
 @RunWith(DeviceJUnit4ClassRunner.class)
 public final class CarUserManagerHostTest extends CarHostJUnit4TestCase {
+    private static final String TAG = CarUserManagerHostTest.class.getSimpleName();
     private static final String STATUS_SUCCESSFUL = "STATUS_SUCCESSFUL";
     private static final String STATUS_INVALID_REQUEST = "STATUS_INVALID_REQUEST";
     private static final String STATUS_OK_USER_ALREADY_IN_FOREGROUND =
             "STATUS_OK_USER_ALREADY_IN_FOREGROUND";
     private static final String STATUS_UX_RESTRICTION_FAILURE = "STATUS_UX_RESTRICTION_FAILURE";
+    private static final long TEST_WAIT_MS = 500;
+    private static final long TEST_TIMEOUT_MS = 10_000;
 
     @Test
     public void testSwitchUserExists() throws Exception {
@@ -54,9 +58,10 @@ public final class CarUserManagerHostTest extends CarHostJUnit4TestCase {
     @Test
     public void testSwitchUserUxRestrictionFailure() throws Exception {
         executeCommand("cmd car_service emulate-driving-state drive");
+        assertWithMessage("Waiting for driving state change").that(
+                waitForDrivingStateChanged("Current Driving State: 2", TEST_TIMEOUT_MS)).isTrue();
 
         int newUserid = createFullUser("CarUserManagerHostTest_User");
-
         switchUser(newUserid, STATUS_UX_RESTRICTION_FAILURE);
 
         executeCommand("cmd car_service emulate-driving-state park");
@@ -93,5 +98,26 @@ public final class CarUserManagerHostTest extends CarHostJUnit4TestCase {
                 .mapToInt((userInfo) -> userInfo.id)
                 .max()
                 .orElse(0) + 1;
+    }
+
+    private boolean waitForDrivingStateChanged(String expected, long timeout) {
+        long start = System.currentTimeMillis();
+        while (start + timeout > System.currentTimeMillis()) {
+            try {
+                String result = executeCommand(
+                        "dumpsys car_service --services CarDrivingStateService");
+                if (result.contains(expected)) {
+                    return true;
+                }
+                Thread.sleep(TEST_WAIT_MS);
+            } catch (InterruptedException e) {
+                CLog.e(TAG, "Test interrupted: " + e);
+                return false;
+            } catch (Exception e) {
+                CLog.e(TAG, "executeCommand failed: " + e);
+                return false;
+            }
+        }
+        return false;
     }
 }
