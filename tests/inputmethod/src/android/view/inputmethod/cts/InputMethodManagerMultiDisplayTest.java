@@ -29,6 +29,7 @@ import static org.junit.Assume.assumeTrue;
 
 import android.content.ComponentName;
 import android.hardware.display.DisplayManager;
+import android.os.RemoteException;
 import android.platform.test.annotations.AppModeFull;
 import android.server.wm.MultiDisplayTestBase;
 import android.server.wm.WindowManagerState;
@@ -81,9 +82,10 @@ public class InputMethodManagerMultiDisplayTest extends MultiDisplayTestBase {
     }
 
     @Test
-    public void testShowInputMethodAndSubtypeEnablerOnSingleDisplay() {
+    public void testShowInputMethodAndSubtypeEnablerOnSingleDisplay() throws RemoteException {
         assumeFalse(isCar());
         final UiDevice uiDevice = UiDevice.getInstance(mInstrumentation);
+        uiDevice.setOrientationNatural();
 
         mImManager.showInputMethodAndSubtypeEnabler(MOCK_IME_ID);
         // Check if new activity was started with subtype settings
