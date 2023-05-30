@@ -3095,7 +3095,7 @@ public final class DeviceState extends HarrierRule {
 
             for (UserReference u : TestApis.users().all().stream()
                     .sorted(Comparator.comparing(u -> u.equals(instrumented)).reversed())
-                    .toList()) {
+                    .collect(Collectors.toList())) {
                 if (u.isSystem()) {
                     continue;
                 }
