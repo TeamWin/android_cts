@@ -25,6 +25,7 @@ java_test_host {
         "cts-tradefed",
         "tradefed",
         "testng",
+        "compatibility-host-util",
     ],
     static_libs: ["modules-utils-build-testing"],
     // tag this module as a cts test artifact
