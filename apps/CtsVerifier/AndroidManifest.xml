@@ -3491,10 +3491,11 @@
             <intent-filter>
                 <action android:name="android.service.notification.NotificationListenerService" />
             </intent-filter>
-            <meta-data android:name="android.service.notification.default_filter_types"
+            <!-- TODO(b/284478205): Reenable or remove along with NLS filter test cases. -->
+            <!-- <meta-data android:name="android.service.notification.default_filter_types"
                        android:value="alerting|silent" />
             <meta-data android:name="android.service.notification.disabled_filter_types"
-                       android:value="ongoing" />
+                       android:value="ongoing" /> -->
         </service>
 
         <service android:name=".notifications.MockAssistant"
