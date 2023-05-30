@@ -16,8 +16,6 @@
 
 package android.devicepolicy.cts;
 
-import static android.app.admin.DevicePolicyManager.PASSWORD_COMPLEXITY_HIGH;
-import static android.app.admin.DevicePolicyManager.PASSWORD_COMPLEXITY_LOW;
 import static android.app.admin.DevicePolicyManager.PASSWORD_COMPLEXITY_MEDIUM;
 import static android.app.admin.DevicePolicyManager.PASSWORD_COMPLEXITY_NONE;
 import static android.app.admin.DevicePolicyManager.PASSWORD_QUALITY_ALPHABETIC;
@@ -51,13 +49,10 @@ import com.android.bedstead.harrier.annotations.RequireFeature;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
-import com.android.bedstead.harrier.policies.PasswordComplexity;
 import com.android.bedstead.harrier.policies.PasswordQuality;
 import com.android.bedstead.harrier.policies.ResetPasswordWithToken;
 import com.android.bedstead.metricsrecorder.EnterpriseMetricsRecorder;
 import com.android.bedstead.nene.TestApis;
-import com.android.bedstead.nene.exceptions.NeneException;
-import com.android.bedstead.nene.utils.Assert;
 
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -806,112 +801,6 @@ public final class ResetPasswordWithTokenTest {
     }
 
     @Postsubmit(reason = "new test")
-    @CanSetPolicyTest(policy = PasswordComplexity.class)
-    public void setRequiredPasswordComplexity_success() {
-        try {
-            sDeviceState.dpc().devicePolicyManager().setRequiredPasswordComplexity(
-                    PASSWORD_COMPLEXITY_MEDIUM);
-
-            assertThat(sDeviceState.dpc().devicePolicyManager().getRequiredPasswordComplexity())
-                    .isEqualTo(PASSWORD_COMPLEXITY_MEDIUM);
-        } finally {
-            removeAllPasswordRestrictions();
-        }
-    }
-
-    @Postsubmit(reason = "new test")
-    @PolicyAppliesTest(policy = PasswordComplexity.class)
-    public void setRequiredPasswordComplexity_low_passwordThatMeetsLowPasswordBandRequired() {
-        try {
-            sDeviceState.dpc().devicePolicyManager().setRequiredPasswordComplexity(
-                    PASSWORD_COMPLEXITY_LOW);
-
-            TestApis.users().instrumented().setPin(NUMERIC_PIN_LENGTH_4);
-            assertCannotSetPassword(NUMERIC_PIN_LENGTH_3);
-        } finally {
-            removeAllPasswordRestrictions();
-            TestApis.users().instrumented().clearPin();
-        }
-    }
-
-    @Postsubmit(reason = "new test")
-    @PolicyAppliesTest(policy = PasswordComplexity.class)
-    public void setRequiredPasswordComplexity_medium_passwordThatMeetsMediumPasswordBandRequired() {
-        try {
-            sDeviceState.dpc().devicePolicyManager().setRequiredPasswordComplexity(
-                    PASSWORD_COMPLEXITY_MEDIUM);
-
-            TestApis.users().instrumented().setPassword(ALPHANUMERIC_PASSWORD_LENGTH_4);
-            TestApis.users().instrumented().setPin(NUMERIC_PIN_RANDOM_LENGTH_4);
-
-            assertCannotSetPassword(NUMERIC_PIN_REPEATING_LENGTH_4);
-        } finally {
-            removeAllPasswordRestrictions();
-            TestApis.users().instrumented().clearPin();
-        }
-    }
-
-    // TODO: Add assertions for specific failure reasons (e.g. "sequence too long") - I believe
-    // currently these reasons might not be accurate...
-    @Postsubmit(reason = "new test")
-    @PolicyAppliesTest(policy = PasswordComplexity.class)
-    public void setRequiredPasswordComplexity_high_passwordThatMeetsHighPasswordBandRequired() {
-        try {
-            sDeviceState.dpc().devicePolicyManager().setRequiredPasswordComplexity(
-                    PASSWORD_COMPLEXITY_HIGH);
-
-            TestApis.users().instrumented().setPassword(ALPHANUMERIC_PASSWORD_LENGTH_8);
-            assertCannotSetPassword(NUMERIC_PIN_LENGTH_6);
-            assertCannotSetPassword(ALPHABETIC_PASSWORD_LENGTH_4);
-        } finally {
-            removeAllPasswordRestrictions();
-            TestApis.users().instrumented().clearPassword();
-        }
-    }
-
-    @Postsubmit(reason = "new test")
-    @PolicyAppliesTest(policy = PasswordComplexity.class)
-    public void getPasswordComplexity_passwordThatMeetsLowPasswordBand_lowPasswordComplexity() {
-        try {
-            // Set password that meets low password band
-            TestApis.users().instrumented().setPin(NUMERIC_PIN_LENGTH_4);
-
-            assertThat(sDeviceState.dpc().devicePolicyManager().getPasswordComplexity())
-                    .isEqualTo(PASSWORD_COMPLEXITY_LOW);
-        } finally {
-            TestApis.users().instrumented().clearPin();
-        }
-    }
-
-    @Postsubmit(reason = "new test")
-    @PolicyAppliesTest(policy = PasswordComplexity.class)
-    public void getPasswordComplexity_passwordThatMeetsMediumPasswordBand_mediumPasswordComplexity() {
-        try {
-            // Set password that meets medium password band
-            TestApis.users().instrumented().setPin(NUMERIC_PIN_LENGTH_6);
-
-            assertThat(sDeviceState.dpc().devicePolicyManager().getPasswordComplexity())
-                    .isEqualTo(PASSWORD_COMPLEXITY_MEDIUM);
-        } finally {
-            TestApis.users().instrumented().clearPin();
-        }
-    }
-
-    @Postsubmit(reason = "new test")
-    @PolicyAppliesTest(policy = PasswordComplexity.class)
-    public void getPasswordComplexity_passwordThatMeetsHighPasswordBand_highPasswordComplexity() {
-        try {
-            // Set password that meets high password band
-            TestApis.users().instrumented().setPassword(ALPHANUMERIC_PASSWORD_LENGTH_8);
-
-            assertThat(sDeviceState.dpc().devicePolicyManager().getPasswordComplexity())
-                    .isEqualTo(PASSWORD_COMPLEXITY_HIGH);
-        } finally {
-            TestApis.users().instrumented().clearPassword();
-        }
-    }
-
-    @Postsubmit(reason = "new test")
     @PolicyAppliesTest(policy = ResetPasswordWithToken.class)
     public void clearResetPasswordToken_passwordTokenIsResetAndUnableToSetNewPassword() {
         assumeTrue(RESET_PASSWORD_TOKEN_DISABLED, canSetResetPasswordToken(TOKEN));
@@ -1158,11 +1047,5 @@ public final class ResetPasswordWithTokenTest {
     private static boolean allowFailure(SecurityException e) {
         return !sDeviceState.dpc().user().type().name().equals(MANAGED_PROFILE_TYPE_NAME)
                 && e.getMessage().contains("Escrow token is disabled on the current user");
-    }
-
-    private void assertCannotSetPassword(String password) {
-        NeneException ex = Assert.assertThrows(NeneException.class,
-                () -> TestApis.users().instrumented().setPassword(password));
-        assertThat(ex).hasMessageThat().contains("doesn't satisfy admin policies");
     }
 }
