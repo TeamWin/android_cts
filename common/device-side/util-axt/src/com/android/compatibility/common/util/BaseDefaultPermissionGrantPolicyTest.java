@@ -345,11 +345,13 @@ public abstract class BaseDefaultPermissionGrantPolicyTest extends BusinessLogic
             return;
         }
         if (!packageInfo.applicationInfo.isSystemApp()) {
-            if (isCnBuild() && exception.hasNonBrandSha256()) {
-                // Due to CN app removability requirement, allow non-system app pregrant exceptions,
-                // as long as they specify a hash (b/121209050)
+            if (exception.hasNonBrandSha256()) {
+                // Due to CN app removability requirement (b/121209050) and EU DMA requirement
+                // (b/248964397), allow non-system app pregrant exceptions as long as they specify a
+                // hash.
             } else {
-                Log.w(LOG_TAG, "Cannot pregrant permissions to non-system package:" + packageName);
+                Log.w(LOG_TAG, "Cannot pregrant permissions to non-system package without cert"
+                        + " digest: " + packageName);
                 return;
             }
         }

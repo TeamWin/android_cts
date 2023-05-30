@@ -448,6 +448,10 @@ public class VirtualSensorTest {
 
     @Test
     public void directConnection_hardwareBuffer_throwsException() {
+        // Skip this test if hardware buffer direct channel is generally not supported on the device
+        assumeTrue(mSensorManager.getSensorList(Sensor.TYPE_ALL).stream().anyMatch(
+                s -> s.isDirectChannelTypeSupported(TYPE_HARDWARE_BUFFER)));
+
         mVirtualSensor = setUpVirtualSensor(
                 new VirtualSensorConfig.Builder(TYPE_ACCELEROMETER, VIRTUAL_SENSOR_NAME).build());
 

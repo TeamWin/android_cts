@@ -682,17 +682,24 @@ public class StreamedAppClipboardTest {
     }
 
     private void waitForNoToasts() {
-        assertThat(mWmState.waitFor(state -> state.getMatchingWindowType(
-                WindowManager.LayoutParams.TYPE_TOAST).isEmpty(), "No Toasts")).isTrue();
+        boolean observedToast = true;
+        // The default timeout for mWmState.waitFor is a little low so we try a few times.
+        for (int i = 0; i < 3; i++) {
+            if (mWmState.waitFor(state -> state.getMatchingWindowType(
+                    WindowManager.LayoutParams.TYPE_TOAST).isEmpty(), "No Toast appears")) {
+                observedToast = false;
+                break;
+            }
+        }
+        assertThat(observedToast).isFalse();
     }
 
     private void waitForToastToAppearAndDisappear() {
         boolean observedToast = false;
-        // The default timeout for mWmState.waitFor is a little low so we try
-        // a few times.
+        // The default timeout for mWmState.waitFor is a little low so we try a few times.
         for (int i = 0; i < 3; i++) {
-            if (mWmState.waitFor(state -> state.getMatchingWindowType(
-                    WindowManager.LayoutParams.TYPE_TOAST).size() > 0, "Toast appears")) {
+            if (mWmState.waitFor(state -> !state.getMatchingWindowType(
+                    WindowManager.LayoutParams.TYPE_TOAST).isEmpty(), "Toast appears")) {
                 observedToast = true;
                 break;
             }

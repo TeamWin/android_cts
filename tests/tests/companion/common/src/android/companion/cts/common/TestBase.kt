@@ -20,6 +20,8 @@ import android.Manifest
 import android.annotation.CallSuper
 import android.app.Instrumentation
 import android.app.UiAutomation
+import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothManager
 import android.companion.AssociationInfo
 import android.companion.AssociationRequest
 import android.companion.CompanionDeviceManager
@@ -73,8 +75,13 @@ abstract class TestBase {
     }
 
     private val locationManager = context.getSystemService(LocationManager::class.java)!!
+    private val bluetoothManager = context.getSystemService(BluetoothManager::class.java)!!
+    private val bluetoothAdapter: BluetoothAdapter = bluetoothManager.adapter
+
     // CDM discovery requires location is enabled, enable the location if it was disabled.
     private var locationWasEnabled: Boolean = false
+    // CDM discovery requires bluetooth is enabled, enable the location if it was disabled.
+    private var bluetoothWasEnabled: Boolean = false
     private var userHandle: UserHandle = Process.myUserHandle()
 
     @Before
@@ -91,7 +98,8 @@ abstract class TestBase {
         assertValidCompanionDeviceServicesUnbind()
         // Enable location if it was disabled.
         enableLocation()
-
+        // Enable bluetooth if it was disabled.
+        enableBluetooth()
         setUp()
     }
 
@@ -105,6 +113,8 @@ abstract class TestBase {
         withShellPermissionIdentity { cdm.disassociateAll() }
         // Disable the location if it was disabled.
         disableLocation()
+        // Disable the bluetooth if it was disabled.
+        disableBluetooth()
     }
 
     @CallSuper
@@ -174,6 +184,25 @@ abstract class TestBase {
         if (!locationWasEnabled) {
             withShellPermissionIdentity {
                 locationManager.setLocationEnabledForUser(false, userHandle)
+            }
+        }
+    }
+
+    private fun enableBluetooth() {
+        bluetoothWasEnabled = bluetoothAdapter.isEnabled
+        if (!bluetoothWasEnabled) {
+            runShellCommand("svc bluetooth enable")
+            waitFor(timeout = 1.seconds, interval = 100.milliseconds) {
+                bluetoothAdapter.isEnabled
+            }
+        }
+    }
+
+    private fun disableBluetooth() {
+        if (!bluetoothWasEnabled) {
+            runShellCommand("svc bluetooth disable")
+            waitFor(timeout = 1.seconds, interval = 100.milliseconds) {
+                !bluetoothAdapter.isEnabled
             }
         }
     }
