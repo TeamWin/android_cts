@@ -65,11 +65,15 @@ public class CtsWindowInfoUtils {
      * @param predicate The predicate tested each time window infos change.
      * @param timeout   The amount of time to wait for the predicate to be satisfied.
      * @param unit      The units associated with timeout.
+     * @param uiAutomation Pass in a uiAutomation to use. If null is passed in, the default will
+     *                     be used. Passing non null is only needed if the test has a custom version
+     *                     of uiAutomtation since retrieving a uiAutomation could overwrite it.
      * @return True if the provided predicate is true for any invocation before
      * the timeout is reached. False otherwise.
      */
     public static boolean waitForWindowInfos(@NonNull Predicate<List<WindowInfo>> predicate,
-            long timeout, @NonNull TimeUnit unit) throws InterruptedException {
+            long timeout, @NonNull TimeUnit unit, @Nullable UiAutomation uiAutomation)
+            throws InterruptedException {
         var latch = new CountDownLatch(1);
         var satisfied = new AtomicBoolean();
 
@@ -83,15 +87,51 @@ public class CtsWindowInfoUtils {
             }
         };
 
-        var listener = new WindowInfosListenerForTest();
-        try {
-            listener.addWindowInfosListener(checkPredicate);
-            latch.await(timeout, unit);
-        } finally {
-            listener.removeWindowInfosListener(checkPredicate);
+        var waitForWindow = new ThrowingRunnable() {
+            @Override
+            public void run() throws InterruptedException {
+                var listener = new WindowInfosListenerForTest();
+                try {
+                    listener.addWindowInfosListener(checkPredicate);
+                    latch.await(timeout, unit);
+                } finally {
+                    listener.removeWindowInfosListener(checkPredicate);
+                }
+            }
+        };
+
+        if (uiAutomation == null) {
+            uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        }
+        Set<String> shellPermissions = uiAutomation.getAdoptedShellPermissions();
+        if (shellPermissions.isEmpty()) {
+            SystemUtil.runWithShellPermissionIdentity(uiAutomation, waitForWindow,
+                    Manifest.permission.ACCESS_SURFACE_FLINGER);
+        } else if (shellPermissions.contains(Manifest.permission.ACCESS_SURFACE_FLINGER)) {
+            waitForWindow.run();
+        } else {
+            throw new IllegalStateException(
+                    "waitForWindowOnTop called with adopted shell permissions that don't include "
+                            + "ACCESS_SURFACE_FLINGER");
         }
 
         return satisfied.get();
+    }
+
+    /**
+     * Same as {@link #waitForWindowInfos(Predicate, long, TimeUnit, UiAutomation)}, but passes in
+     * a null uiAutomation object. This should be used in most cases unless there's a custom
+     * uiAutomation object used in the test.
+     *
+     * @param predicate The predicate tested each time window infos change.
+     * @param timeout   The amount of time to wait for the predicate to be satisfied.
+     * @param unit      The units associated with timeout.
+     * @return True if the provided predicate is true for any invocation before
+     * the timeout is reached. False otherwise.
+     */
+    public static boolean waitForWindowInfos(@NonNull Predicate<List<WindowInfo>> predicate,
+            long timeout, @NonNull TimeUnit unit) throws InterruptedException {
+        return waitForWindowInfos(predicate, timeout, unit, null /* uiAutomation */);
     }
 
     /**

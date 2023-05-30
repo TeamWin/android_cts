@@ -18,7 +18,6 @@ package android.view.cts.surfacevalidator;
 import android.content.Context;
 import android.graphics.Rect;
 import android.view.Gravity;
-import android.view.SurfaceControl;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
@@ -28,63 +27,20 @@ public class SurfaceControlTestCase implements ISurfaceValidatorTestCase {
     private final SurfaceViewFactory mViewFactory;
     private final FrameLayout.LayoutParams mLayoutParams;
     private final PixelChecker mPixelChecker;
-    private final boolean mCheckSurfaceViewBoundsOnly;
     protected View mSurfaceView;
     private final int mBufferWidth;
     private final int mBufferHeight;
 
     private FrameLayout mParent;
 
-    private final boolean mSingleFrameOnly;
-
-    public abstract static class ParentSurfaceConsumer {
-        public abstract void addChildren(SurfaceControl parent);
-    };
-
-    private static class ParentSurfaceHolder implements SurfaceHolder.Callback {
-        ParentSurfaceConsumer mPsc;
-        SurfaceView mSurfaceView;
-
-        ParentSurfaceHolder(ParentSurfaceConsumer psc) {
-            mPsc = psc;
-        }
-
-        public void surfaceCreated(SurfaceHolder holder) {
-            mPsc.addChildren(mSurfaceView.getSurfaceControl());
-        }
-        public void surfaceDestroyed(SurfaceHolder holder) {
-        }
-        public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-        }
-    };
-
     public SurfaceControlTestCase(SurfaceHolder.Callback callback, PixelChecker pixelChecker,
-            int layoutWidth, int layoutHeight, int bufferWidth, int bufferHeight,
-            boolean checkSurfaceViewBoundsOnly, boolean singleFrameOnly) {
+            int layoutWidth, int layoutHeight, int bufferWidth, int bufferHeight) {
         mViewFactory = new SurfaceViewFactory(callback);
         mLayoutParams =
                 new FrameLayout.LayoutParams(layoutWidth, layoutHeight, Gravity.LEFT | Gravity.TOP);
         mPixelChecker = pixelChecker;
         mBufferWidth = bufferWidth;
         mBufferHeight = bufferHeight;
-        mCheckSurfaceViewBoundsOnly = checkSurfaceViewBoundsOnly;
-        mSingleFrameOnly = singleFrameOnly;
-    }
-
-    @Override
-    public int getNumFramesRequired() {
-        if (mSingleFrameOnly) {
-            return 1;
-        }
-
-        return 100;
-    }
-
-    public SurfaceControlTestCase(ParentSurfaceConsumer psc, PixelChecker pixelChecker,
-            int layoutWidth, int layoutHeight, int bufferWidth, int bufferHeight,
-            boolean singleFrameOnly) {
-        this(new ParentSurfaceHolder(psc), pixelChecker, layoutWidth, layoutHeight, bufferWidth,
-                bufferHeight, false /* checkSurfaceViewBoundsOnly*/, singleFrameOnly);
     }
 
     public PixelChecker getChecker() {
@@ -93,10 +49,6 @@ public class SurfaceControlTestCase implements ISurfaceValidatorTestCase {
 
     public void start(Context context, FrameLayout parent) {
         View view = mViewFactory.createView(context);
-        if (mViewFactory.mCallback instanceof ParentSurfaceHolder) {
-            ParentSurfaceHolder psh = (ParentSurfaceHolder) mViewFactory.mCallback;
-            psh.mSurfaceView = (SurfaceView) view;
-        }
         mSurfaceView = view;
         mParent = parent;
         mParent.addView(view, mLayoutParams);
@@ -108,7 +60,7 @@ public class SurfaceControlTestCase implements ISurfaceValidatorTestCase {
 
     @Override
     public Rect getBoundsToCheck(FrameLayout parent) {
-        View boundsView = mCheckSurfaceViewBoundsOnly ? mSurfaceView : parent;
+        View boundsView = mSurfaceView;
         Rect boundsToCheck = new Rect(0, 0, boundsView.getWidth(), boundsView.getHeight());
         int[] topLeft = new int[2];
         boundsView.getLocationOnScreen(topLeft);
@@ -117,7 +69,7 @@ public class SurfaceControlTestCase implements ISurfaceValidatorTestCase {
     }
 
     private class SurfaceViewFactory implements ViewFactory {
-        private SurfaceHolder.Callback mCallback;
+        private final SurfaceHolder.Callback mCallback;
 
         SurfaceViewFactory(SurfaceHolder.Callback callback) {
             mCallback = callback;
@@ -125,10 +77,6 @@ public class SurfaceControlTestCase implements ISurfaceValidatorTestCase {
 
         public View createView(Context context) {
             SurfaceView surfaceView = new SurfaceView(context);
-            if (mCallback instanceof ParentSurfaceHolder) {
-                surfaceView.setZOrderOnTop(true);
-            }
-
             // prevent transparent region optimization, which is invalid for a SurfaceView moving
             // around
             surfaceView.setWillNotDraw(false);
