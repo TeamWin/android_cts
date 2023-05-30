@@ -16,6 +16,7 @@
 
 package android.server.wm;
 
+import static android.server.wm.BuildUtils.HW_TIMEOUT_MULTIPLIER;
 import static android.server.wm.CtsWindowInfoUtils.tapOnWindow;
 import static android.server.wm.CtsWindowInfoUtils.tapOnWindowCenter;
 import static android.server.wm.CtsWindowInfoUtils.waitForWindowFocus;
@@ -24,14 +25,18 @@ import static android.server.wm.CtsWindowInfoUtils.waitForWindowInfos;
 import static android.server.wm.CtsWindowInfoUtils.waitForWindowVisible;
 import static android.server.wm.MockImeHelper.createManagedMockImeSession;
 import static android.view.SurfaceControlViewHost.SurfacePackage;
+import static android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON;
 import static android.view.WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
 import static android.view.WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE;
+
+import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
 import static com.android.cts.mockime.ImeEventStreamTestUtils.editorMatcher;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -40,6 +45,7 @@ import static org.junit.Assume.assumeTrue;
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.Instrumentation;
+import android.app.KeyguardManager;
 import android.app.UiAutomation;
 import android.content.ComponentName;
 import android.content.Context;
@@ -53,6 +59,7 @@ import android.graphics.PixelFormat;
 import android.graphics.Rect;
 import android.graphics.Region;
 import android.os.Binder;
+import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.os.SystemClock;
@@ -75,6 +82,7 @@ import android.widget.FrameLayout;
 import android.widget.PopupWindow;
 import android.window.WindowInfosListenerForTest.WindowInfo;
 
+import androidx.annotation.Nullable;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
 
@@ -104,7 +112,21 @@ import java.util.function.Predicate;
 @Presubmit
 public class SurfaceControlViewHostTests extends ActivityManagerTestBase implements SurfaceHolder.Callback {
 
-    public static class TestActivity extends Activity {}
+    public static class TestActivity extends Activity {
+        @Override
+        protected void onCreate(@Nullable Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            KeyguardManager keyguardManager = getSystemService(KeyguardManager.class);
+            if (keyguardManager.isKeyguardLocked()) {
+                keyguardManager.requestDismissKeyguard(this, null);
+            }
+        }
+    }
+
+    private static final long WAIT_TIMEOUT_S = 5L * HW_TIMEOUT_MULTIPLIER;
+
+    private static final ComponentName TEST_ACTIVITY = new ComponentName(
+            getInstrumentation().getContext(), TestActivity.class);
 
     private final ActivityTestRule<TestActivity> mActivityRule = new ActivityTestRule<>(
             TestActivity.class);
@@ -1484,5 +1506,107 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
             }
         }
         assertTrue(mHostGotEvent);
+    }
+
+    @Test
+    public void testKeepScreenOn() throws Throwable {
+        mEmbeddedView = new Button(mActivity);
+        addSurfaceView(DEFAULT_SURFACE_VIEW_WIDTH, DEFAULT_SURFACE_VIEW_HEIGHT);
+        mInstrumentation.waitForIdleSync();
+        waitUntilEmbeddedViewDrawn();
+
+        mWmState.computeState();
+        WindowManagerState.WindowState windowState = mWmState.getWindowState(TEST_ACTIVITY);
+        // Assert the KEEP_SCREEN_ON flag is not set on the main window yet.
+        assertNotEquals(FLAG_KEEP_SCREEN_ON, (windowState.getFlags() & FLAG_KEEP_SCREEN_ON));
+
+        final CountDownLatch countDownLatch = new CountDownLatch(2);
+        mActivityRule.runOnUiThread(() -> {
+            mEmbeddedView.setKeepScreenOn(true);
+            mEmbeddedView.getViewTreeObserver().addOnDrawListener(countDownLatch::countDown);
+            mSurfaceView.getViewTreeObserver().addOnDrawListener(countDownLatch::countDown);
+        });
+        countDownLatch.await(WAIT_TIMEOUT_S, TimeUnit.SECONDS);
+
+        mWmState.computeState();
+        windowState = mWmState.getWindowState(TEST_ACTIVITY);
+        // Assert the KEEP_SCREEN_ON flag is now set on the main window.
+        assertEquals(FLAG_KEEP_SCREEN_ON, (windowState.getFlags() & FLAG_KEEP_SCREEN_ON));
+
+        final CountDownLatch countDownLatch2 = new CountDownLatch(2);
+        mActivityRule.runOnUiThread(() -> {
+            mEmbeddedView.setKeepScreenOn(false);
+            mEmbeddedView.getViewTreeObserver().addOnDrawListener(countDownLatch2::countDown);
+            mSurfaceView.getViewTreeObserver().addOnDrawListener(countDownLatch2::countDown);
+        });
+        countDownLatch.await(WAIT_TIMEOUT_S, TimeUnit.SECONDS);
+
+        mWmState.computeState();
+        windowState = mWmState.getWindowState(TEST_ACTIVITY);
+        // Assert the KEEP_SCREEN_ON flag is removed from the main window.
+        assertNotEquals(FLAG_KEEP_SCREEN_ON, (windowState.getFlags() & FLAG_KEEP_SCREEN_ON));
+    }
+
+    @Test
+    public void testKeepScreenOnCrossProcess() throws Throwable {
+        mTestService = getService();
+        assertNotNull(mTestService);
+
+        addSurfaceView(DEFAULT_SURFACE_VIEW_WIDTH, DEFAULT_SURFACE_VIEW_HEIGHT);
+        mSvCreatedLatch.await(5, TimeUnit.SECONDS);
+
+        mWmState.computeState();
+        WindowManagerState.WindowState windowState = mWmState.getWindowState(TEST_ACTIVITY);
+        // Assert the KEEP_SCREEN_ON flag is not set on the main window yet.
+        assertNotEquals(FLAG_KEEP_SCREEN_ON, (windowState.getFlags() & FLAG_KEEP_SCREEN_ON));
+
+        final CountDownLatch countDownLatch = new CountDownLatch(1);
+        mActivityRule.runOnUiThread(() -> mSurfaceView.getViewTreeObserver().addOnDrawListener(
+                countDownLatch::countDown));
+        mTestService.setKeepScreenOnFlag(true);
+        countDownLatch.await(WAIT_TIMEOUT_S, TimeUnit.SECONDS);
+
+        mWmState.computeState();
+        windowState = mWmState.getWindowState(TEST_ACTIVITY);
+        // Assert the KEEP_SCREEN_ON flag is now set on the main window.
+        assertEquals(FLAG_KEEP_SCREEN_ON, (windowState.getFlags() & FLAG_KEEP_SCREEN_ON));
+
+        final CountDownLatch countDownLatch2 = new CountDownLatch(1);
+        mActivityRule.runOnUiThread(() -> mSurfaceView.getViewTreeObserver().addOnDrawListener(
+                countDownLatch2::countDown));
+        mTestService.setKeepScreenOnFlag(false);
+        countDownLatch.await(WAIT_TIMEOUT_S, TimeUnit.SECONDS);
+
+        mWmState.computeState();
+        windowState = mWmState.getWindowState(TEST_ACTIVITY);
+        // Assert the KEEP_SCREEN_ON flag is removed from the main window.
+        assertNotEquals(FLAG_KEEP_SCREEN_ON, (windowState.getFlags() & FLAG_KEEP_SCREEN_ON));
+    }
+
+    @Test
+    public void testKeepScreenOnAfterDetachSCVH() throws Throwable {
+        mEmbeddedView = new Button(mActivity);
+        mEmbeddedView.setKeepScreenOn(true);
+        addSurfaceView(DEFAULT_SURFACE_VIEW_WIDTH, DEFAULT_SURFACE_VIEW_HEIGHT);
+        mInstrumentation.waitForIdleSync();
+        waitUntilEmbeddedViewDrawn();
+
+        mWmState.computeState();
+        WindowManagerState.WindowState windowState = mWmState.getWindowState(TEST_ACTIVITY);
+        // Assert the KEEP_SCREEN_ON flag is not set on the main window yet.
+        assertEquals(FLAG_KEEP_SCREEN_ON, (windowState.getFlags() & FLAG_KEEP_SCREEN_ON));
+
+        // Remove the SurfaceView from main window.
+        final CountDownLatch countDownLatch = new CountDownLatch(1);
+        mActivityRule.runOnUiThread(() -> {
+            mViewParent.removeView(mSurfaceView);
+            mSurfaceView.getViewTreeObserver().addOnDrawListener(countDownLatch::countDown);
+        });
+        countDownLatch.await(WAIT_TIMEOUT_S, TimeUnit.SECONDS);
+
+        mWmState.computeState();
+        windowState = mWmState.getWindowState(TEST_ACTIVITY);
+        // Assert the KEEP_SCREEN_ON flag is removed from the main window.
+        assertNotEquals(FLAG_KEEP_SCREEN_ON, (windowState.getFlags() & FLAG_KEEP_SCREEN_ON));
     }
 }

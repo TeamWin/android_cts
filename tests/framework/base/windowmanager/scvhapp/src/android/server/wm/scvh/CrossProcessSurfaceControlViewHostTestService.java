@@ -28,6 +28,7 @@ import android.os.IBinder;
 import android.os.Looper;
 import android.server.wm.CtsWindowInfoUtils;
 import android.server.wm.shared.ICrossProcessSurfaceControlViewHostTestService;
+import android.util.Log;
 import android.view.Display;
 import android.view.MotionEvent;
 import android.view.SurfaceControlViewHost;
@@ -40,6 +41,9 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 public class CrossProcessSurfaceControlViewHostTestService extends Service {
+    private static final long WAIT_TIMEOUT_S = HW_TIMEOUT_MULTIPLIER * 5L;
+    private static final String TAG = "CrossProcessSurfaceControlViewHostTestService";
+
     private final ICrossProcessSurfaceControlViewHostTestService mBinder = new ServiceImpl();
     private Handler mHandler;
 
@@ -79,7 +83,7 @@ public class CrossProcessSurfaceControlViewHostTestService extends Service {
 
         void waitOnEvent() {
             try {
-                mReceivedTouchLatch.await(HW_TIMEOUT_MULTIPLIER * 5L, TimeUnit.SECONDS);
+                mReceivedTouchLatch.await(WAIT_TIMEOUT_S, TimeUnit.SECONDS);
             } catch (InterruptedException e) {
             }
         }
@@ -162,5 +166,19 @@ public class CrossProcessSurfaceControlViewHostTestService extends Service {
             return CtsWindowInfoUtils.waitForWindowFocus(mView, waitForFocus);
         }
 
+        @Override
+        public void setKeepScreenOnFlag(boolean keepScreenOn) {
+            CountDownLatch countDownLatch = new CountDownLatch(1);
+            mHandler.post(() -> {
+                mView.setKeepScreenOn(keepScreenOn);
+                mView.getViewTreeObserver().addOnDrawListener(countDownLatch::countDown);
+            });
+
+            try {
+                countDownLatch.await(WAIT_TIMEOUT_S, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                Log.e(TAG, "Failed to set keep screen on flag");
+            }
+        }
     }
 }

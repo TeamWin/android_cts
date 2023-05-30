@@ -2146,6 +2146,7 @@ public class WindowManagerState {
         private List<Rect> mKeepClearRects;
         private List<Rect> mUnrestrictedKeepClearRects;
         private List<InsetsSource> mMergedLocalInsetsSources;
+        private int mFlags;
 
         WindowState(WindowStateProto proto) {
             super(proto.windowContainer);
@@ -2153,6 +2154,7 @@ public class WindowManagerState {
             mStackId = proto.stackId;
             if (proto.attributes != null) {
                 mType = proto.attributes.type;
+                mFlags = proto.attributes.flags;
             }
             WindowStateAnimatorProto animatorProto = proto.animator;
             if (animatorProto != null) {
@@ -2280,6 +2282,10 @@ public class WindowManagerState {
 
         List<InsetsSource> getMergedLocalInsetsSources() {
             return mMergedLocalInsetsSources;
+        }
+
+        int getFlags() {
+            return mFlags;
         }
 
         private String getWindowTypeSuffix(int windowType) {

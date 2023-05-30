@@ -25,4 +25,5 @@ interface ICrossProcessSurfaceControlViewHostTestService {
     boolean getViewIsTouchedAndObscured();
     IBinder getWindowToken();
     boolean waitForFocus(boolean waitForFocus);
+    void setKeepScreenOnFlag(boolean keepScreenOn);
 }
