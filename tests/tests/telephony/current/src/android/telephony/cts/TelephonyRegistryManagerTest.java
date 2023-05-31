@@ -270,6 +270,8 @@ public class TelephonyRegistryManagerTest {
         int testValue = TelephonyManager.DATA_ACTIVITY_DORMANT;
         ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyRegistryMgr,
                 (trm) -> trm.notifyDataActivityChanged(
+                        SubscriptionManager.getSlotIndex(
+                                SubscriptionManager.getDefaultSubscriptionId()),
                         SubscriptionManager.getDefaultSubscriptionId(),
                         testValue));
 
