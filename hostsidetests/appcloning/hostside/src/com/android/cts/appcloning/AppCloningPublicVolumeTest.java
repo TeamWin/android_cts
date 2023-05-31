@@ -21,6 +21,7 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assume.assumeTrue;
 
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.LargeTest;
 
 import com.android.tradefed.invoker.TestInformation;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -38,6 +39,7 @@ import java.util.Map;
  */
 @RunWith(DeviceJUnit4ClassRunner.class)
 @AppModeFull
+@LargeTest
 public class AppCloningPublicVolumeTest extends AppCloningBaseHostTest{
 
     private static final String IMAGE_NAME_TO_BE_CREATED_KEY = "imageNameToBeCreated";
