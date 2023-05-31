@@ -30,6 +30,7 @@ import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Insets;
 import android.graphics.Rect;
 import android.server.wm.IgnoreOrientationRequestSession;
 import android.server.wm.WindowManagerStateHelper;
@@ -314,17 +315,12 @@ public class AttachedSurfaceControlTest {
             final Activity[] activity = new Activity[1];
             scenario.onActivity(a -> {
                 activity[0] = a;
-                FrameLayout parentLayout = new FrameLayout(a);
-                FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(
-                        FrameLayout.LayoutParams.MATCH_PARENT,
-                        FrameLayout.LayoutParams.MATCH_PARENT);
-
+                FrameLayout parentLayout = a.getParentLayout();
                 GreenAnchorViewWithInsets anchorView = new GreenAnchorViewWithInsets(a,
                         new Rect(0, 10, 0, 0));
                 parentLayout.addView(anchorView,
                         new FrameLayout.LayoutParams(100, 100, Gravity.LEFT | Gravity.TOP));
 
-                a.setContentView(parentLayout, layoutParams);
                 view[0] = anchorView;
                 countDownLatch.countDown();
             });
@@ -332,8 +328,11 @@ public class AttachedSurfaceControlTest {
                     countDownLatch.await(WAIT_TIMEOUT_S, TimeUnit.SECONDS));
 
             view[0].waitForDrawn();
-            validateScreenshot(mName, activity[0], new BitmapPixelChecker(Color.GREEN),
-                    9000 /* expectedMatchingPixels */);
+            // Do not include system insets because the child SC is not layed out in the system
+            // insets
+            validateScreenshot(mName, activity[0],
+                    new BitmapPixelChecker(Color.GREEN, new Rect(0, 10, 100, 100)),
+                    9000 /* expectedMatchingPixels */, Insets.NONE);
         }
     }
 }

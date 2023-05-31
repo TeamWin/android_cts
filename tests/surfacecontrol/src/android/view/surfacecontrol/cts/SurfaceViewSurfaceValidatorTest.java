@@ -17,6 +17,7 @@ package android.view.surfacecontrol.cts;
 
 import static android.server.wm.ActivityManagerTestBase.createFullscreenActivityScenarioRule;
 import static android.server.wm.BuildUtils.HW_TIMEOUT_MULTIPLIER;
+import static android.view.cts.surfacevalidator.BitmapPixelChecker.getInsets;
 import static android.view.cts.surfacevalidator.BitmapPixelChecker.validateScreenshot;
 
 import static org.junit.Assert.assertTrue;
@@ -24,6 +25,7 @@ import static org.junit.Assert.assertTrue;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Rect;
 import android.server.wm.CtsWindowInfoUtils;
 import android.view.Gravity;
 import android.view.SurfaceControl;
@@ -116,8 +118,9 @@ public class SurfaceViewSurfaceValidatorTest {
                 CtsWindowInfoUtils.waitForWindowVisible(mRootView));
 
         BitmapPixelChecker pixelChecker = new BitmapPixelChecker(Color.BLACK,
-                false /* logWhenNoMatch */);
-        validateScreenshot(mName, mActivity, pixelChecker, 0 /* expectedMatchingPixels */);
+                new Rect() /* boundsToLog */);
+        validateScreenshot(mName, mActivity, pixelChecker, 0 /* expectedMatchingPixels */,
+                getInsets(mActivity));
     }
 
     // Here we add a second translucent surface view and verify that the background
@@ -142,8 +145,9 @@ public class SurfaceViewSurfaceValidatorTest {
                 CtsWindowInfoUtils.waitForWindowVisible(mRootView));
 
         BitmapPixelChecker pixelChecker = new BitmapPixelChecker(Color.BLACK,
-                false /* logWhenNoMatch */);
-        validateScreenshot(mName, mActivity, pixelChecker, 0 /* expectedMatchingPixels */);
+                new Rect() /* boundsToLog */);
+        validateScreenshot(mName, mActivity, pixelChecker, 0 /* expectedMatchingPixels */,
+                getInsets(mActivity));
     }
 
     private void addSurfaceView(CountDownLatch countDownLatch) {
