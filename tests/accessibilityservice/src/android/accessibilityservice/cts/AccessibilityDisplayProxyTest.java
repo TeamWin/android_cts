@@ -41,6 +41,7 @@ import static android.accessibilityservice.cts.utils.MultiProcessUtils.SEPARATE_
 import static android.accessibilityservice.cts.utils.MultiProcessUtils.TOUCH_EXPLORATION_STATE;
 import static android.accessibilityservice.cts.utils.WindowCreationUtils.TOP_WINDOW_TITLE;
 import static android.app.UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES;
+import static android.companion.AssociationRequest.DEVICE_PROFILE_APP_STREAMING;
 import static android.content.pm.PackageManager.FEATURE_FREEFORM_WINDOW_MANAGEMENT;
 import static android.view.accessibility.AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUSED;
 import static android.view.accessibility.AccessibilityEvent.TYPE_VIEW_CLICKED;
@@ -83,6 +84,7 @@ import android.app.Instrumentation;
 import android.app.PendingIntent;
 import android.app.RemoteAction;
 import android.app.UiAutomation;
+import android.app.role.RoleManager;
 import android.companion.virtual.VirtualDeviceManager;
 import android.companion.virtual.VirtualDeviceParams;
 import android.content.BroadcastReceiver;
@@ -141,12 +143,14 @@ import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 
 /** Ensure AccessibilityDisplayProxy APIs work.
  *
@@ -203,11 +207,13 @@ public class AccessibilityDisplayProxyTest {
 
     private static final float MIN_SCREEN_WIDTH_MM = 40.0f;
     private static final int TEST_SYSTEM_ACTION_ID = 1000;
+    public static final String INSTRUMENTED_STREAM_ROLE_PACKAGE_NAME =
+            "android.accessibilityservice.cts";
 
     private static Instrumentation sInstrumentation;
     private static UiAutomation sUiAutomation;
     private static String sEnabledServices;
-
+    private static RoleManager sRoleManager;
     // The manager representing the app registering/unregistering the proxy.
     private AccessibilityManager mA11yManager;
 
@@ -276,6 +282,8 @@ public class AccessibilityDisplayProxyTest {
         final AccessibilityServiceInfo info = sUiAutomation.getServiceInfo();
         info.flags |= AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS;
         sUiAutomation.setServiceInfo(info);
+        sRoleManager = sInstrumentation.getContext().getSystemService(RoleManager.class);
+        runWithShellPermissionIdentity(() -> sRoleManager.setBypassingRoleQualification(true));
     }
 
     @AfterClass
@@ -283,6 +291,7 @@ public class AccessibilityDisplayProxyTest {
         ShellCommandBuilder.create(sInstrumentation)
                 .putSecureSetting(Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES, sEnabledServices)
                 .run();
+        runWithShellPermissionIdentity(() -> sRoleManager.setBypassingRoleQualification(false));
     }
 
     @Before
@@ -311,6 +320,7 @@ public class AccessibilityDisplayProxyTest {
                 mProxiedVirtualDisplayActivity);
         mProxyActivityA11yManager =
                 mProxiedVirtualDisplayActivity.getSystemService(AccessibilityManager.class);
+        addAppStreamingRole();
     }
 
     @After
@@ -337,14 +347,24 @@ public class AccessibilityDisplayProxyTest {
             mNonProxiedConcurrentActivity.runOnUiThread(
                     () -> mNonProxiedConcurrentActivity.finish());
         }
+        removeAppStreamingRole();
     }
 
     @Test
     @ApiTest(apis = {"android.view.accessibility.AccessibilityManager#registerDisplayProxy"})
     public void testRegisterDisplayProxy_withPermission_successfullyRegisters() {
+        removeAppStreamingRole();
         runWithShellPermissionIdentity(sUiAutomation,
                 () -> assertThat(mA11yManager.registerDisplayProxy(mA11yProxy)).isTrue(),
                 CREATE_VIRTUAL_DEVICE, MANAGE_ACCESSIBILITY);
+    }
+
+    @Test
+    @ApiTest(apis = {"android.view.accessibility.AccessibilityManager#registerDisplayProxy"})
+    public void testRegisterDisplayProxy_withStreamingRole_successfullyRegisters() {
+        runWithShellPermissionIdentity(sUiAutomation,
+                () -> assertThat(mA11yManager.registerDisplayProxy(mA11yProxy)).isTrue(),
+                CREATE_VIRTUAL_DEVICE);
     }
 
     @Test
@@ -356,7 +376,8 @@ public class AccessibilityDisplayProxyTest {
 
     @Test
     @ApiTest(apis = {"android.view.accessibility.AccessibilityManager#registerDisplayProxy"})
-    public void testRegisterDisplayProxy_withoutA11yPermission_throwsSecurityException() {
+    public void testRegisterDisplayProxy_withoutA11yPermissionOrRole_throwsSecurityException() {
+        removeAppStreamingRole();
         runWithShellPermissionIdentity(sUiAutomation,
                 () -> assertThrows(SecurityException.class, () ->
                 mA11yManager.registerDisplayProxy(mA11yProxy)), CREATE_VIRTUAL_DEVICE);
@@ -383,16 +404,38 @@ public class AccessibilityDisplayProxyTest {
 
     @Test
     @ApiTest(apis = {"android.view.accessibility.AccessibilityManager#registerDisplayProxy"})
-    public void testRegisterAccessibilityProxy_withDefaultDisplay_throwsIllegalArgException() {
+    public void testRegisterAccessibilityProxy_withDefaultDisplay_throwsSecurityException() {
         final MyA11yProxy invalidProxy = new MyA11yProxy(
                 Display.DEFAULT_DISPLAY, Executors.newSingleThreadExecutor(), new ArrayList<>());
         try {
             runWithShellPermissionIdentity(sUiAutomation, () ->
-                    assertThrows(IllegalArgumentException.class, () ->
+                    assertThrows(SecurityException.class, () ->
                     mA11yManager.registerDisplayProxy(invalidProxy)));
         } finally {
             runWithShellPermissionIdentity(sUiAutomation, () ->
                     mA11yManager.unregisterDisplayProxy(invalidProxy));
+        }
+    }
+
+    @Test
+    @ApiTest(apis = {"android.view.accessibility.AccessibilityManager#registerDisplayProxy"})
+    public void testRegisterAccessibilityProxy_withNonDeviceDisplay_throwsSecurityException() {
+        try (DisplayUtils.VirtualDisplaySession displaySession =
+                     new DisplayUtils.VirtualDisplaySession()) {
+            final int virtualDisplayId =
+                    displaySession.createDisplayWithDefaultDisplayMetricsAndWait(
+                            sInstrumentation.getContext(), false).getDisplayId();
+
+            final MyA11yProxy invalidProxy = new MyA11yProxy(
+                    virtualDisplayId, Executors.newSingleThreadExecutor(), new ArrayList<>());
+            try {
+                runWithShellPermissionIdentity(sUiAutomation, () ->
+                        assertThrows(SecurityException.class, () ->
+                                mA11yManager.registerDisplayProxy(invalidProxy)));
+            } finally {
+                runWithShellPermissionIdentity(sUiAutomation, () ->
+                        mA11yManager.unregisterDisplayProxy(invalidProxy));
+            }
         }
     }
 
@@ -406,7 +449,8 @@ public class AccessibilityDisplayProxyTest {
 
     @Test
     @ApiTest(apis = {"android.view.accessibility.AccessibilityManager#unregisterDisplayProxy"})
-    public void testUnregisterDisplayProxy_withoutA11yPermission_throwsSecurityException() {
+    public void testUnregisterDisplayProxy_withoutA11yPermissionOrRole_throwsSecurityException() {
+        removeAppStreamingRole();
         runWithShellPermissionIdentity(sUiAutomation,
                 () -> assertThrows(SecurityException.class, () ->
                         mA11yManager.unregisterDisplayProxy(mA11yProxy)), CREATE_VIRTUAL_DEVICE);
@@ -415,10 +459,20 @@ public class AccessibilityDisplayProxyTest {
     @Test
     @ApiTest(apis = {"android.view.accessibility.AccessibilityManager#unregisterDisplayProxy"})
     public void testUnregisterDisplayProxy_withPermission_successfullyUnregisters() {
+        removeAppStreamingRole();
         runWithShellPermissionIdentity(sUiAutomation, () -> {
             assertThat(mA11yManager.registerDisplayProxy(mA11yProxy)).isTrue();
             assertThat(mA11yManager.unregisterDisplayProxy(mA11yProxy)).isTrue();
-        });
+        }, CREATE_VIRTUAL_DEVICE, MANAGE_ACCESSIBILITY);
+    }
+
+    @Test
+    @ApiTest(apis = {"android.view.accessibility.AccessibilityManager#registerDisplayProxy"})
+    public void testUnregisterAccessibilityProxy_withStreamingRole_successfullyUnRegisters() {
+        runWithShellPermissionIdentity(sUiAutomation, () -> {
+            assertThat(mA11yManager.registerDisplayProxy(mA11yProxy)).isTrue();
+            assertThat(mA11yManager.unregisterDisplayProxy(mA11yProxy)).isTrue();
+        }, CREATE_VIRTUAL_DEVICE);
     }
 
     @Test
@@ -1533,6 +1587,42 @@ public class AccessibilityDisplayProxyTest {
             assertThat(mProxyActivityA11yManager.isTouchExplorationEnabled()).isTrue();
         } finally {
             mProxyActivityA11yManager.removeTouchExplorationStateChangeListener(listener);
+        }
+    }
+
+    private static void addAppStreamingRole() {
+        runWithShellPermissionIdentity(
+                () -> {
+                    CallbackFuture future = new CallbackFuture();
+                    sRoleManager.addRoleHolderAsUser(
+                            DEVICE_PROFILE_APP_STREAMING,
+                            INSTRUMENTED_STREAM_ROLE_PACKAGE_NAME, 0,
+                            android.os.Process.myUserHandle(),
+                            sInstrumentation.getContext().getMainExecutor(), future);
+                    assertThat(future.get(TIMEOUT_MS, TimeUnit.MILLISECONDS)).isTrue();
+                });
+    }
+
+    private static void removeAppStreamingRole() {
+        runWithShellPermissionIdentity(
+                () -> {
+                    CallbackFuture future = new CallbackFuture();
+                    runWithShellPermissionIdentity(() ->
+                            sRoleManager.removeRoleHolderAsUser(
+                                    DEVICE_PROFILE_APP_STREAMING,
+                                    INSTRUMENTED_STREAM_ROLE_PACKAGE_NAME, 0,
+                                    android.os.Process.myUserHandle(),
+                                    sInstrumentation.getContext().getMainExecutor(), future));
+                    assertThat(future.get(TIMEOUT_MS, TimeUnit.MILLISECONDS)).isTrue();
+                });
+    }
+
+    private static class CallbackFuture extends CompletableFuture<Boolean>
+            implements Consumer<Boolean> {
+
+        @Override
+        public void accept(Boolean successful) {
+            complete(successful);
         }
     }
 

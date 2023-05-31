@@ -105,6 +105,8 @@
 
     <!-- Remove additional apps if installed -->
     <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
+        <!-- disable DeprecatedAbi warning -->
+        <option name="run-command" value="setprop debug.wm.disable_deprecated_abi_dialog 1" />
         <option name="teardown-command" value="pm uninstall android.permission.cts.appthatrequestpermission" />
         <option name="teardown-command" value="pm uninstall android.permission.cts.appthatrequestnopermission" />
         <option name="teardown-command" value="pm uninstall android.permission.cts.revokepermissionwhenremoved.AdversarialPermissionDefinerApp" />

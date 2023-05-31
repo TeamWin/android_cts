@@ -22,6 +22,7 @@ import static com.google.common.truth.Truth.assertWithMessage;
 import static org.junit.Assume.assumeTrue;
 
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.LargeTest;
 
 import com.android.cts.appcloning.AppCloningBaseHostTest;
 import com.android.tradefed.device.DeviceNotAvailableException;
@@ -40,6 +41,7 @@ import java.util.Map;
 
 @RunWith(DeviceJUnit4ClassRunner.class)
 @AppModeFull
+@LargeTest
 public class ManagedProfileContactsAccessTest extends AppCloningBaseHostTest  {
 
     private static final String LAUNCHABLE_CLONE_PROFILE_APP =

@@ -63,6 +63,11 @@
         <option name="push" value="CtsProcessOutgoingCalls.apk->/data/local/tmp/cts/permissions2/CtsProcessOutgoingCalls.apk" />
     </target_preparer>
 
+    <!-- disable DeprecatedAbi warning -->
+    <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
+        <option name="run-command" value="setprop debug.wm.disable_deprecated_abi_dialog 1" />
+    </target_preparer>
+
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.permissionpolicy.cts" />
         <option name="runtime-hint" value="2m" />

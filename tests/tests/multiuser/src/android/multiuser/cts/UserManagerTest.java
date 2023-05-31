@@ -285,19 +285,19 @@ public final class UserManagerTest {
 
     @Test
     @ApiTest(apis = {"android.os.UserManager#isUserRunning"})
-    @EnsureHasSecondaryUser(switchedToUser = FALSE)
+    @EnsureHasAdditionalUser(switchedToUser = FALSE)
     @EnsureHasPermission(INTERACT_ACROSS_USERS) // needed to call isUserRunning()
     public void testIsUserRunning_stoppedSecondaryUser() {
-        Log.d(TAG, "Stopping  user " + sDeviceState.secondaryUser()
+        Log.d(TAG, "Stopping  user " + sDeviceState.additionalUser()
                 + " (called from " + sContext.getUser() + ")");
-        sDeviceState.secondaryUser().stop();
+        sDeviceState.additionalUser().stop();
 
         UserManager um =
                 TestApis.context().instrumentedContext().getSystemService(UserManager.class);
 
         assertWithMessage("isUserRunning() for stopped secondary user (id=%s)",
-                sDeviceState.secondaryUser().id())
-                .that(um.isUserRunning(sDeviceState.secondaryUser().userHandle())).isFalse();
+                sDeviceState.additionalUser().id())
+                .that(um.isUserRunning(sDeviceState.additionalUser().userHandle())).isFalse();
     }
 
     @Test

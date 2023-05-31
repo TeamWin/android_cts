@@ -35,4 +35,8 @@
         <!-- test-timeout unit is ms, value = 60 min -->
         <option name="test-timeout" value="3600000" />
     </test>
+    <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
+        <!-- TODO(b/285142506): Remove once underlying issue is fixed -->
+        <option name="run-command" value="setprop debug.wm.disable_deprecated_abi_dialog 1" />
+    </target_preparer>
 </configuration>
