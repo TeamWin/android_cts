@@ -26,6 +26,6 @@
     </target_preparer>
     <test class="com.android.compatibility.common.tradefed.testtype.JarHostTest" >
         <option name="jar" value="CtsCompilationTestCases.jar" />
-        <option name="runtime-hint" value="14m" />
+        <option name="include-annotation" value="android.compilation.cts.annotation.CtsTestCase" />
     </test>
 </configuration>

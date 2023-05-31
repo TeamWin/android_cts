@@ -16,8 +16,8 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-java_test_host {
-    name: "CtsCompilationTestCases",
+java_defaults {
+    name: "CompilationTestCases_defaults",
     srcs: ["src/**/*.java"],
     data: [
         ":StatusCheckerApp",
@@ -28,11 +28,6 @@ java_test_host {
         ":AppUsingOtherApp",
         ":CtsCompilationApp",
     ],
-    // tag this module as a cts test artifact
-    test_suites: [
-        "cts",
-        "general-tests",
-    ],
     libs: [
         "cts-tradefed",
         "tradefed",
@@ -40,4 +35,24 @@ java_test_host {
         "guava",
         "truth-prebuilt",
     ],
+}
+
+java_test_host {
+    name: "CtsCompilationTestCases",
+    defaults: ["CompilationTestCases_defaults"],
+    // tag this module as a cts test artifact
+    test_suites: [
+        "cts",
+        "general-tests",
+    ],
+    test_config: "CtsCompilationTestCases.xml",
+}
+
+java_test_host {
+    name: "CompilationTestCases",
+    defaults: ["CompilationTestCases_defaults"],
+    test_suites: [
+        "general-tests",
+    ],
+    test_config: "CompilationTestCases.xml",
 }
