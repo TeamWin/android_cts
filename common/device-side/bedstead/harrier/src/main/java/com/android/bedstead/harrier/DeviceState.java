@@ -44,6 +44,7 @@ import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.ActivityManager;
+import android.app.admin.DevicePolicyManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -1260,7 +1261,8 @@ public final class DeviceState extends HarrierRule {
             if (annotation instanceof EnsureHasNoAccounts) {
                 EnsureHasNoAccounts ensureHasNoAccountsAnnotation =
                         (EnsureHasNoAccounts) annotation;
-                ensureHasNoAccounts(ensureHasNoAccountsAnnotation.onUser());
+                ensureHasNoAccounts(ensureHasNoAccountsAnnotation.onUser(),
+                        ensureHasNoAccountsAnnotation.failureMode());
                 continue;
             }
 
@@ -2820,7 +2822,7 @@ public final class DeviceState extends HarrierRule {
             ensureCanGetPermission(INTERACT_ACROSS_USERS_FULL);
         }
 
-        ensureHasNoAccounts(UserType.ANY);
+        ensureHasNoAccounts(UserType.ANY, FailureMode.FAIL);
         ensureTestAppInstalled(RemoteDevicePolicyManagerRoleHolder.sTestApp, user);
         TestApis.devicePolicy().setDevicePolicyManagementRoleHolder(
                 RemoteDevicePolicyManagerRoleHolder.sTestApp.pkg(), user);
@@ -3120,10 +3122,10 @@ public final class DeviceState extends HarrierRule {
             }
 
             if (Versions.meetsMinimumSdkVersionRequirement(Versions.U)) {
-                ensureHasNoAccounts(UserType.ANY);
+                ensureHasNoAccounts(UserType.ANY, FailureMode.FAIL);
             } else {
                 // Prior to U this only checked the system user
-                ensureHasNoAccounts(UserType.SYSTEM_USER);
+                ensureHasNoAccounts(UserType.SYSTEM_USER, FailureMode.FAIL);
             }
             ensureHasNoProfileOwner(userReference);
 
@@ -3237,7 +3239,7 @@ public final class DeviceState extends HarrierRule {
                 mChangedProfileOwners.put(user, currentProfileOwner);
             }
 
-            ensureHasNoAccounts(user);
+            ensureHasNoAccounts(user, FailureMode.FAIL);
 
             if (resolvedDpcTestApp != null) {
                 mProfileOwners.put(user,
@@ -3250,10 +3252,10 @@ public final class DeviceState extends HarrierRule {
         }
 
         if (Versions.meetsMinimumSdkVersionRequirement(Versions.U)) {
-            ensureHasNoAccounts(user);
+            ensureHasNoAccounts(user, FailureMode.FAIL);
         } else {
             // Prior to U this incorrectly checked the system user
-            ensureHasNoAccounts(UserType.SYSTEM_USER);
+            ensureHasNoAccounts(UserType.SYSTEM_USER, FailureMode.FAIL);
         }
 
         if (isPrimary) {
@@ -4030,15 +4032,15 @@ public final class DeviceState extends HarrierRule {
         }
     }
 
-    private void ensureHasNoAccounts(UserType userType) {
+    private void ensureHasNoAccounts(UserType userType, FailureMode failureMode) {
         if (userType == UserType.ANY) {
-            TestApis.users().all().forEach(this::ensureHasNoAccounts);
+            TestApis.users().all().forEach(user -> ensureHasNoAccounts(user, failureMode));
         } else {
-            ensureHasNoAccounts(resolveUserTypeToUser(userType));
+            ensureHasNoAccounts(resolveUserTypeToUser(userType), failureMode);
         }
     }
 
-    private void ensureHasNoAccounts(UserReference user) {
+    private void ensureHasNoAccounts(UserReference user, FailureMode failureMode) {
         if (REMOTE_ACCOUNT_AUTHENTICATOR_TEST_APP.pkg().installedOnUser(user)) {
             user.start(); // The user has to be started to remove accounts
 
@@ -4046,9 +4048,14 @@ public final class DeviceState extends HarrierRule {
                     .forEach(AccountReference::remove);
         }
 
-        if (!TestApis.accounts().all(user).isEmpty()) {
-            throw new NeneException("Expected no accounts on user " + user
-                    + " but there was some that could not be removed");
+        Set<AccountReference> nonPreCreatedAccounts = TestApis.accounts().all(user)
+                .stream().filter(accountReference -> accountReference.hasFeature(
+                        DevicePolicyManager.ACCOUNT_FEATURE_DEVICE_OR_PROFILE_OWNER_ALLOWED))
+                .collect(Collectors.toSet());
+
+        if (!nonPreCreatedAccounts.isEmpty()) {
+            failOrSkip("Expected no user created accounts on user " + user
+                    + " but there was some that could not be removed", failureMode);
         }
 
         TestApis.devicePolicy().calculateHasIncompatibleAccounts();
