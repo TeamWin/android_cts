@@ -383,16 +383,38 @@ public class AccessibilityDisplayProxyTest {
 
     @Test
     @ApiTest(apis = {"android.view.accessibility.AccessibilityManager#registerDisplayProxy"})
-    public void testRegisterAccessibilityProxy_withDefaultDisplay_throwsIllegalArgException() {
+    public void testRegisterAccessibilityProxy_withDefaultDisplay_throwsSecurityException() {
         final MyA11yProxy invalidProxy = new MyA11yProxy(
                 Display.DEFAULT_DISPLAY, Executors.newSingleThreadExecutor(), new ArrayList<>());
         try {
             runWithShellPermissionIdentity(sUiAutomation, () ->
-                    assertThrows(IllegalArgumentException.class, () ->
+                    assertThrows(SecurityException.class, () ->
                     mA11yManager.registerDisplayProxy(invalidProxy)));
         } finally {
             runWithShellPermissionIdentity(sUiAutomation, () ->
                     mA11yManager.unregisterDisplayProxy(invalidProxy));
+        }
+    }
+
+    @Test
+    @ApiTest(apis = {"android.view.accessibility.AccessibilityManager#registerDisplayProxy"})
+    public void testRegisterAccessibilityProxy_withNonDeviceDisplay_throwsSecurityException() {
+        try (DisplayUtils.VirtualDisplaySession displaySession =
+                     new DisplayUtils.VirtualDisplaySession()) {
+            final int virtualDisplayId =
+                    displaySession.createDisplayWithDefaultDisplayMetricsAndWait(
+                            sInstrumentation.getContext(), false).getDisplayId();
+
+            final MyA11yProxy invalidProxy = new MyA11yProxy(
+                    virtualDisplayId, Executors.newSingleThreadExecutor(), new ArrayList<>());
+            try {
+                runWithShellPermissionIdentity(sUiAutomation, () ->
+                        assertThrows(SecurityException.class, () ->
+                                mA11yManager.registerDisplayProxy(invalidProxy)));
+            } finally {
+                runWithShellPermissionIdentity(sUiAutomation, () ->
+                        mA11yManager.unregisterDisplayProxy(invalidProxy));
+            }
         }
     }
 
