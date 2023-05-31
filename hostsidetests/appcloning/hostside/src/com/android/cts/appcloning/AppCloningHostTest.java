@@ -22,6 +22,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.LargeTest;
 
 import com.android.tradefed.invoker.TestInformation;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -90,6 +91,7 @@ public class AppCloningHostTest extends AppCloningBaseHostTest {
     }
 
     @Test
+    @LargeTest
     public void testCreateCloneUserFile() throws Exception {
         // When we use ITestDevice APIs, they take care of setting up the TradefedContentProvider.
         // TradefedContentProvider has INTERACT_ACROSS_USERS permission which allows it to access
@@ -128,6 +130,7 @@ public class AppCloningHostTest extends AppCloningBaseHostTest {
      * @throws Exception
      */
     @Test
+    @LargeTest
     public void testRemoveClonedProfileMediaProviderCleanup() throws Exception {
         assumeTrue(isAtLeastT());
 
@@ -247,6 +250,7 @@ public class AppCloningHostTest extends AppCloningBaseHostTest {
     }
 
     @Test
+    @LargeTest
     public void testDeletionOfPrimaryApp_deleteAppWithParentPropertyTrue_deletesCloneApp()
             throws Exception {
         assumeTrue(isAtLeastU(sDevice));
