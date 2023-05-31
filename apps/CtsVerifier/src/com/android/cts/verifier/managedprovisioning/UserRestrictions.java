@@ -349,8 +349,9 @@ public class UserRestrictions {
             case UserManager.DISALLOW_UNINSTALL_APPS:
                 return !pm.hasSystemFeature(PackageManager.FEATURE_WATCH);
             case UserManager.DISALLOW_CELLULAR_2G:
-                return tm.isRadioInterfaceCapabilitySupported(
-                    TelephonyManager.CAPABILITY_USES_ALLOWED_NETWORK_TYPES_BITMASK);
+                return pm.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)
+                        && tm.isRadioInterfaceCapabilitySupported(
+                        TelephonyManager.CAPABILITY_USES_ALLOWED_NETWORK_TYPES_BITMASK);
             default:
                 return true;
         }
