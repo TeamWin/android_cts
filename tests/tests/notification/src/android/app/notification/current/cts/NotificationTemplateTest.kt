@@ -40,6 +40,11 @@ import kotlin.test.assertFailsWith
 
 class NotificationTemplateTest : NotificationTemplateTestBase() {
 
+    override fun setUp() {
+        assertThat(mContext.applicationInfo.targetSdkVersion).isGreaterThan(30)
+        super.setUp()
+    }
+
     fun testWideIcon_inCollapsedState_cappedTo16By9() {
         val icon = createBitmap(200, 100)
         val views = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
