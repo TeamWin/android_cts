@@ -20,6 +20,8 @@ import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assume.assumeTrue;
 
+import android.platform.test.annotations.LargeTest;
+
 import com.android.tradefed.invoker.TestInformation;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BeforeClassWithInfo;
@@ -31,6 +33,7 @@ import org.junit.runner.RunWith;
 import java.util.HashMap;
 
 @RunWith(DeviceJUnit4ClassRunner.class)
+@LargeTest
 public class AppCloningStorageHostTest extends AppCloningBaseHostTest {
 
     private static final String PKG_STATS = "com.android.cts.storagestatsapp";
