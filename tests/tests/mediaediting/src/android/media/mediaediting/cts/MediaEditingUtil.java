@@ -21,9 +21,11 @@ import static androidx.media3.common.util.Assertions.checkStateNotNull;
 
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
+
 import androidx.annotation.Nullable;
 import androidx.media3.common.Format;
 import androidx.media3.common.MimeTypes;
+
 import java.io.IOException;
 
 /** Utilities for Media Editing tests. */
@@ -39,6 +41,21 @@ public final class MediaEditingUtil {
   public static final String MP4_ASSET_H264_WITH_INCREASING_TIMESTAMPS_642W_642H_3S_URI_STRING =
     "bbb_642x642_1mbps_30fps_avc.mp4";
 
+  public static final String MKV_ASSET_H264_340W_280H_10BIT =
+      "cosmat_340x280_24fps_crf22_avc_10bit.mkv";
+
+  public static final String MKV_ASSET_H264_520W_390H_10BIT =
+      "cosmat_520x390_24fps_crf22_avc_10bit.mkv";
+
+  public static final String MKV_ASSET_H264_640W_360H_10BIT =
+      "cosmat_640x360_24fps_crf22_avc_10bit_nob.mkv";
+
+  public static final String MKV_ASSET_H264_800W_640H_10BIT =
+      "cosmat_800x640_24fps_crf22_avc_10bit_nob.mkv";
+
+  public static final String MKV_ASSET_H264_1280W_720H_10BIT =
+      "cosmat_1280x720_24fps_crf22_avc_10bit_nob.mkv";
+
   public static final String MP4_ASSET_HEVC_WITH_INCREASING_TIMESTAMPS_URI_STRING =
     "bbb_1920x1080_hevc_main_l40.mp4";
 
@@ -47,6 +64,21 @@ public final class MediaEditingUtil {
 
   public static final String MP4_ASSET_HEVC_WITH_INCREASING_TIMESTAMPS_642W_642H_3S_URI_STRING =
     "bbb_642x642_768kbps_30fps_hevc.mp4";
+
+  public static final String MKV_ASSET_HEVC_340W_280H_5S_10BIT =
+      "cosmat_340x280_24fps_crf22_hevc_10bit.mkv";
+
+  public static final String MKV_ASSET_HEVC_520W_390H_5S_10BIT =
+      "cosmat_520x390_24fps_crf22_hevc_10bit.mkv";
+
+  public static final String MKV_ASSET_HEVC_640W_360H_5S_10BIT =
+      "cosmat_640x360_24fps_crf22_hevc_10bit_nob.mkv";
+
+  public static final String MKV_ASSET_HEVC_800W_640H_5S_10BIT =
+      "cosmat_800x640_24fps_crf22_hevc_10bit_nob.mkv";
+
+  public static final String MKV_ASSET_HEVC_1280W_720H_5S_10BIT =
+      "cosmat_1280x720_24fps_crf22_hevc_10bit_nob.mkv";
 
   public static Format getMuxedWidthHeight(String filePath) throws IOException {
     MediaExtractor mediaExtractor = new MediaExtractor();
@@ -73,5 +105,22 @@ public final class MediaEditingUtil {
         .setHeight(mediaFormat.getInteger(MediaFormat.KEY_HEIGHT))
         .setRotationDegrees(rotationDegree)
         .build();
+  }
+
+  public static int getMuxedOutputProfile(String filePath) throws IOException {
+    MediaExtractor mediaExtractor = new MediaExtractor();
+    mediaExtractor.setDataSource(filePath);
+    @Nullable MediaFormat mediaFormat = null;
+    for (int i = 0; i < mediaExtractor.getTrackCount(); i++) {
+      if (MimeTypes.isVideo(mediaExtractor.getTrackFormat(i).getString(MediaFormat.KEY_MIME))) {
+        mediaFormat = mediaExtractor.getTrackFormat(i);
+        mediaExtractor.selectTrack(i);
+        break;
+      }
+    }
+
+    checkStateNotNull(mediaFormat);
+    checkState(mediaFormat.containsKey(MediaFormat.KEY_PROFILE));
+    return mediaFormat.getInteger(MediaFormat.KEY_PROFILE, -1);
   }
 }

@@ -6,11 +6,15 @@ The tests are organized into following testcases
 | TranscodeQualityTest   | Transcode input and validate output using ssim |
 | VideoResolutionTest    | Transform resolution of input videos and validate output resolution |
 | TransformReverseTransformIdentityTest | Test verify that quality shouldn't be reduced too much when scaling/resizing and then reversing the operation. |
+| TransformHdrToSdrToneMapTest | Test transform HDR to SDR ToneMapping for given input and verify that ouput shouldn't have HDR profile. |
 
 
 ## List of tests and helper classes imported from [androidx.media3.transformer](https://github.com/androidx/media/tree/release/libraries/transformer when it was at commit https://github.com/androidx/media/commit/2ff5dab0039c44d767dc831fec92724254e5e0aa)and changes done in them.
 
 ### AndroidTestUtil.java
+No Change.
+
+### FileUtil.java
 No Change.
 
 ### MssimCalculator.java
@@ -40,3 +44,6 @@ Test transform resolution of input videos and validate the output resolution.
 
 ### TransformReverseTransformIdentityTest.java
 Test verify that quality shouldn't be reduced too much when scaling/resizing and then reversing the operation.
+
+### TransformHdrToSdrToneMapTest.java
+Test transform HDR to SDR ToneMapping for given input and verify that ouput shouldn't have HDR profile.
