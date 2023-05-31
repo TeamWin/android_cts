@@ -14,6 +14,7 @@ per-file src/android/car/cts/CarAudioFocusTest.java = oscarazu@google.com
 per-file src/android/car/view/inputmethod/cts/* = kanant@google.com, ycheo@google.com
 
 # Input related CTS files
+per-file src/android/car/cts/CarInputManagerSystemTest.java = kanant@google.com, ycheo@google.com
 per-file src/android/car/cts/CarInputTest.java = kanant@google.com, ycheo@google.com
 
 # Display related CTS files
