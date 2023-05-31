@@ -219,7 +219,6 @@ public final class PolicyTransparencyTestListActivity extends PassFailButtons.Te
 
     private void setSupportMsgButtonClickListeners() {
         findViewById(R.id.short_msg_button).setOnClickListener(this);
-        findViewById(R.id.long_msg_button).setOnClickListener(this);
     }
 
     @Override
@@ -228,11 +227,6 @@ public final class PolicyTransparencyTestListActivity extends PassFailButtons.Te
             final Intent intent = new Intent(SetSupportMessageActivity.ACTION_SET_SUPPORT_MSG);
             intent.putExtra(SetSupportMessageActivity.EXTRA_SUPPORT_MSG_TYPE,
                     SetSupportMessageActivity.TYPE_SHORT_MSG);
-            startActivity(intent);
-        } else if (view.getId() == R.id.long_msg_button) {
-            final Intent intent = new Intent(SetSupportMessageActivity.ACTION_SET_SUPPORT_MSG);
-            intent.putExtra(SetSupportMessageActivity.EXTRA_SUPPORT_MSG_TYPE,
-                    SetSupportMessageActivity.TYPE_LONG_MSG);
             startActivity(intent);
         }
     }
