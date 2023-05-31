@@ -91,7 +91,7 @@ public class AppCloningBaseHostTest extends BaseHostTestCase {
         String existingPublicVolume = getPublicVolumeExcluding(null);
         sDevice.executeShellCommand("sm set-force-adoptable on");
         sDevice.executeShellCommand("sm set-virtual-disk true");
-        eventually(AppCloningBaseHostTest::partitionDisks, 15000,
+        eventually(AppCloningBaseHostTest::partitionDisks, 60000,
                 "Could not create public volume in time");
         // Need to do a short wait, to allow the newly created volume to mount.
         Thread.sleep(2000);
