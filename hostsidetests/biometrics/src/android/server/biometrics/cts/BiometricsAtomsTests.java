@@ -184,8 +184,10 @@ public class BiometricsAtomsTests extends BiometricDeviceTestCase {
 
             // TODO(b/253318030): No API beyond bp (doesn't allow convenience) - need new test API
             if (sensorInfo.hasWeakOrGreaterFaceSensor()) {
-                assertThat(authAtoms).hasSize(1);
+                assertThat(authAtoms).hasSize(2);
                 assertAuthenticateAtomData(authAtoms.get(0));
+                // TODO(b/283843162): Session info may not be available at BP dismission
+                //assertAuthenticateAtomData(authAtoms.get(1));
 
                 final List<AtomsProto.BiometricAcquired> acquiredAtoms =
                         filterAcquiredAtoms(data, modality);
@@ -193,6 +195,7 @@ public class BiometricsAtomsTests extends BiometricDeviceTestCase {
                         acquiredAtoms, modality, authAtoms.get(0).getSessionId());
             } else {
                 assertThat(authAtoms).isEmpty();
+                CLog.i("Skipping test - BP does not allow convenience sensor");
             }
         } else {
             CLog.w("Skipping test - no AIDL biometrics on device");

@@ -65,17 +65,15 @@ public class BiometricsAtomsHostSideTests {
     private static final String TAG = "BiometricsAtomsHostSideTests";
 
     private static final long WAIT_MS = 2000;
-    private static final String SYSUI_PACKAGE = "com.android.systemui";
-    private static final BySelector VIEW_BIOMETRIC_PROMPT =
-            By.res(SYSUI_PACKAGE, "biometric_scrollview");
-    private static final BySelector VIEW_BIOMETRIC_PROMPT_CONFIRM =
-            By.res("com.android.systemui", "button_confirm");
+    private static final String VIEW_BIOMETRIC_PROMPT_ID = "biometric_scrollview";
+    private static final String  VIEW_BIOMETRIC_PROMPT_CONFIRM_ID = "button_confirm";
 
     private Instrumentation mInstrumentation;
     private UiDevice mDevice;
     private int mUserId;
     private BiometricManager mBiometricManager;
     private List<SensorProperties> mSensorProperties;
+    private String mUiPackage;
 
     @Before
     public void setup() {
@@ -87,6 +85,7 @@ public class BiometricsAtomsHostSideTests {
         mBiometricManager = mInstrumentation.getContext().getSystemService(BiometricManager.class);
         // ignore the legacy HIDL interface for all tests
         mSensorProperties = filterSensorProperties(mBiometricManager.getSensorProperties());
+        mUiPackage = mBiometricManager.getUiPackage();
 
         assumeTrue(!mSensorProperties.isEmpty());
 
@@ -178,7 +177,7 @@ public class BiometricsAtomsHostSideTests {
                 prompt.authenticate(new CancellationSignal(), executor, callback);
 
                 Utils.waitForBusySensor(sensorId);
-                mDevice.wait(Until.hasObject(VIEW_BIOMETRIC_PROMPT), WAIT_MS);
+                mDevice.wait(Until.hasObject(getBySelector(VIEW_BIOMETRIC_PROMPT_ID)), WAIT_MS);
 
                 for (int code : getAcquiredCodesForAuthenticate(sensorId)) {
                     session.notifyAcquired(mUserId, code);
@@ -189,17 +188,26 @@ public class BiometricsAtomsHostSideTests {
                 Utils.waitForIdleService();
 
                 // The framework may require confirmation even if not requested by the API
-                final UiObject2 confirmButton = mDevice.findObject(VIEW_BIOMETRIC_PROMPT_CONFIRM);
+                final UiObject2 confirmButton = findView(VIEW_BIOMETRIC_PROMPT_CONFIRM_ID);
                 if (confirmButton != null) {
+                    Log.d(TAG, "click confirmButton");
                     confirmButton.click();
                 }
-                mDevice.wait(Until.gone(VIEW_BIOMETRIC_PROMPT), WAIT_MS);
+                mDevice.wait(Until.gone(getBySelector(VIEW_BIOMETRIC_PROMPT_ID)), WAIT_MS);
                 callback.awaitResult();
 
                 assertThat(callback.isAuthenticatedWithResult()).isTrue();
             }
         }
         mInstrumentation.waitForIdleSync();
+    }
+
+    private BySelector getBySelector(String id) {
+        return By.res(mUiPackage, id);
+    }
+
+    private UiObject2 findView(String id) throws Exception {
+        return mDevice.findObject(getBySelector(id));
     }
 
     private static List<Integer> getAcquiredCodesForEnroll(int sensorId) throws Exception {
