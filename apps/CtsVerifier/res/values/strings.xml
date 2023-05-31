@@ -4424,7 +4424,7 @@ You should be prompted to select credentials; choose the ones you just installed
     <!-- Strings used for policy transparency test -->
     <string name="device_profile_owner_policy_transparency_test">Policy transparency test</string>
     <string name="device_profile_owner_policy_transparency_test_info">
-        This test checks that if an admin has enforced a policy, we let the user know about this.\nSet the short and long support messages before proceeding with the tests.
+        This test checks that if an admin has enforced a policy, we let the user know about this.\nSet the short support message before proceeding with the tests.
     </string>
     <string name="policy_transparency_open_settings_label">Open settings</string>
     <string name="policy_transparency_short_support_msg_label">Set short support message</string>
