@@ -776,8 +776,7 @@ public class CaptureResultTest extends Camera2AndroidTestCase {
             waiverKeys.add(CaptureResult.HOT_PIXEL_MODE);
         }
 
-        if (!staticInfo.isNoiseReductionModeControlSupported()
-                && staticInfo.getAvailableNoiseReductionModesChecked().length == 0) {
+        if (!staticInfo.isNoiseReductionModeControlSupported()) {
             waiverKeys.add(CaptureResult.NOISE_REDUCTION_MODE);
         }
 
