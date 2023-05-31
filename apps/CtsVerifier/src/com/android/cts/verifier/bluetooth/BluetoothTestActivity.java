@@ -18,6 +18,7 @@ package com.android.cts.verifier.bluetooth;
 
 import android.bluetooth.BluetoothAdapter;
 import android.os.Bundle;
+import android.sysprop.BluetoothProperties;
 import android.widget.Toast;
 
 import com.android.cts.verifier.ManifestTestListAdapter;
@@ -77,6 +78,11 @@ public class BluetoothTestActivity extends PassFailButtons.TestListActivity {
                   "com.android.cts.verifier.bluetooth.BleCocSecureServerTestListActivity");
             disabledTestArray.add(
                   "com.android.cts.verifier.bluetooth.BleCocInsecureServerTestListActivity");
+        }
+
+        if (!BluetoothProperties.isProfileHidDeviceEnabled().orElse(false)) {
+            disabledTestArray.add(
+                  "com.android.cts.verifier.bluetooth.HidDeviceActivity");
         }
         setTestListAdapter(new ManifestTestListAdapter(this, getClass().getName(),
                 disabledTestArray.toArray(new String[disabledTestArray.size()])));
