@@ -48,6 +48,8 @@
 
     <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
         <option name="run-command" value="appops set android.permissionmultiuser.cts REQUEST_INSTALL_PACKAGES allow" />
+        <!-- disable DeprecatedAbi warning -->
+        <option name="run-command" value="setprop debug.wm.disable_deprecated_abi_dialog 1" />
         <option name="run-command" value="am wait-for-broadcast-barrier"  />
     </target_preparer>
 
