@@ -55,6 +55,7 @@ import android.util.Size;
 import android.view.Surface;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.rule.ActivityTestRule;
 
 import com.android.compatibility.common.util.DeviceReportLog;
 import com.android.compatibility.common.util.ResultType;
@@ -123,6 +124,20 @@ public class PerformanceTest {
 
     @Rule
     public final Camera2AndroidTestRule mTestRule = new Camera2AndroidTestRule(mContext);
+
+    // b/284352937: Display an activity with SurfaceView so that camera's effect on refresh
+    // rate takes precedence.
+    //
+    // - If no activity is displayed, home screen would vote for a completely different refresh
+    // rate. Some examples are 24hz and 144hz. These doesn't reflect the actual refresh rate
+    // when camera runs with a SurfaceView.
+    // - The testSurfaceViewJitterReduction needs to read timestamps for each output image. If
+    // we directly connect camera to SurfaceView, we won't have access to timestamps.
+    //
+    // So the solution is to create an activity with SurfaceView, but not connect it to camera.
+    @Rule
+    public ActivityTestRule<Camera2SurfaceViewCtsActivity> mActivityRule =
+            new ActivityTestRule<>(Camera2SurfaceViewCtsActivity.class);
 
     /**
      * Test camera launch KPI: the time duration between a camera device is
