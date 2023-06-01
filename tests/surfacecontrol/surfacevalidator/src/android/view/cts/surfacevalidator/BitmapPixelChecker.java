@@ -41,31 +41,35 @@ import java.io.IOException;
 public class BitmapPixelChecker {
     private static final String TAG = "BitmapPixelChecker";
     private final PixelColor mPixelColor;
-    private final boolean mLogWhenNoMatch;
+    private final Rect mBoundToLog;
 
     public BitmapPixelChecker(int color) {
-        this(color, true);
+        this(color, null);
     }
 
-    public BitmapPixelChecker(int color, boolean logWhenNoMatch) {
+    public BitmapPixelChecker(int color, Rect boundsToLog) {
         mPixelColor = new PixelColor(color);
-        mLogWhenNoMatch = logWhenNoMatch;
+        mBoundToLog = boundsToLog;
     }
 
     public int getNumMatchingPixels(Bitmap bitmap, Rect bounds) {
+        Rect boundsToLog = mBoundToLog;
+        if (boundsToLog == null) {
+            boundsToLog = new Rect(bounds);
+        }
+
         int numMatchingPixels = 0;
         int numErrorsLogged = 0;
         for (int x = bounds.left; x < bounds.right; x++) {
             for (int y = bounds.top; y < bounds.bottom; y++) {
                 int color = bitmap.getPixel(x, y);
-                if (getExpectedColor(x, y).matchesColor(color)) {
+                if (mPixelColor.matchesColor(color)) {
                     numMatchingPixels++;
-                } else if (mLogWhenNoMatch && numErrorsLogged < 100) {
+                } else if (boundsToLog.contains(x, y) && numErrorsLogged < 100) {
                     // We don't want to spam the logcat with errors if something is really
                     // broken. Only log the first 100 errors.
-                    PixelColor expected = getExpectedColor(x, y);
-                    int expectedColor = Color.argb(expected.mAlpha, expected.mRed,
-                            expected.mGreen, expected.mBlue);
+                    int expectedColor = Color.argb(mPixelColor.mAlpha, mPixelColor.mRed,
+                            mPixelColor.mGreen, mPixelColor.mBlue);
                     Log.e(TAG, String.format(
                             "Failed to match (%d, %d) color=0x%08X expected=0x%08X", x, y,
                             color, expectedColor));
@@ -76,12 +80,14 @@ public class BitmapPixelChecker {
         return numMatchingPixels;
     }
 
-    public PixelColor getExpectedColor(int x, int y) {
-        return mPixelColor;
+    private void applyInsetsToLogBounds(Insets insets) {
+        if (mBoundToLog != null && !mBoundToLog.isEmpty()) {
+            mBoundToLog.inset(insets);
+        }
     }
 
     public static void validateScreenshot(TestName testName, Activity activity,
-            BitmapPixelChecker pixelChecker, int expectedMatchingPixels) {
+            BitmapPixelChecker pixelChecker, int expectedMatchingPixels, Insets insets) {
         Bitmap screenshot =
                 InstrumentationRegistry.getInstrumentation().getUiAutomation().takeScreenshot(
                         activity.getWindow());
@@ -89,15 +95,14 @@ public class BitmapPixelChecker {
         Bitmap swBitmap = screenshot.copy(Bitmap.Config.ARGB_8888, false);
         screenshot.recycle();
 
-        Rect insets = getInsets(activity);
-
         int width = swBitmap.getWidth();
         int height = swBitmap.getHeight();
 
         // Exclude insets in case the device doesn't support hiding insets.
-        Rect bounds = new Rect(insets.left, insets.top, width - insets.right,
-                height - insets.bottom);
-        Log.d(TAG, "Checking bounds " + bounds);
+        Rect bounds = new Rect(0, 0, width, height);
+        bounds.inset(insets);
+        pixelChecker.applyInsetsToLogBounds(insets);
+        Log.d(TAG, "Checking bounds " + bounds + " boundsToLog=" + pixelChecker.mBoundToLog);
         int numMatchingPixels = pixelChecker.getNumMatchingPixels(swBitmap, bounds);
         boolean numMatches = expectedMatchingPixels == numMatchingPixels;
         if (!numMatches) {
@@ -137,12 +142,10 @@ public class BitmapPixelChecker {
         }
     }
 
-    private static Rect getInsets(Activity activity) {
-        Insets insets = activity.getWindow()
+    public static Insets getInsets(Activity activity) {
+        return activity.getWindow()
                 .getDecorView()
                 .getRootWindowInsets()
                 .getInsets(displayCutout() | systemBars());
-
-        return new Rect(insets.left, insets.top, insets.right, insets.bottom);
     }
 }
