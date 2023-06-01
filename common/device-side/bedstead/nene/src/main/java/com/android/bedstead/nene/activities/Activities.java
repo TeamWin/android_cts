@@ -88,10 +88,18 @@ public final class Activities {
                     TestApis.context().instrumentedContext().getSystemService(
                             ActivityManager.class);
             return activityManager.getRunningTasks(100).stream()
-                    .filter(r -> r.getDisplayId() == Display.DEFAULT_DISPLAY)
+                    .filter(r -> getDisplayId(r) == Display.DEFAULT_DISPLAY)
                     .map(r -> new ComponentReference(r.topActivity))
                     .collect(Collectors.toList());
         }
+    }
+
+    private int getDisplayId(ActivityManager.RunningTaskInfo task) {
+        if (Versions.meetsMinimumSdkVersionRequirement(Versions.U)) {
+            return task.getDisplayId();
+        }
+
+        return Display.DEFAULT_DISPLAY;
     }
 
     /**
