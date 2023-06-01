@@ -22,7 +22,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
+import java.util.Base64;
 import java.util.List;
 
 public class DeviceInfoStore extends InfoStore {
@@ -256,5 +256,15 @@ public class DeviceInfoStore extends InfoStore {
             mJsonWriter.value(checkString(value));
         }
         mJsonWriter.endArray();
+    }
+
+    /**
+     * Adds some bytes to the InfoStore
+     */
+    @Override
+    public void addBytesResult(String name, byte[] bytes) throws IOException {
+        checkName(name);
+        mJsonWriter.name(name);
+        mJsonWriter.value(Base64.getEncoder().encodeToString(bytes));
     }
 }
