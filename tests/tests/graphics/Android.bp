@@ -34,6 +34,7 @@ android_test {
         "hamcrest-library",
         "junit",
         "junit-params",
+        "SurfaceFlingerProperties",
         "testng",
         "androidx.core_core",
     ],
