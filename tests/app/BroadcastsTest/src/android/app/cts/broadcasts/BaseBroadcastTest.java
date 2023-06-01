@@ -104,16 +104,12 @@ abstract class BaseBroadcastTest {
 
     @After
     public void tearDown() throws Exception {
-        for (String pkg : new String[] {HELPER_PKG1, HELPER_PKG2}) {
-            forceDelayBroadcasts(pkg, 0);
-            final TestServiceConnection connection = bindToHelperService(pkg);
-            try {
-                final ICommandReceiver cmdReceiver = connection.getCommandReceiver();
-                cmdReceiver.tearDown();
-            } finally {
-                connection.unbind();
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            for (String pkg : new String[] {HELPER_PKG1, HELPER_PKG2}) {
+                mAm.forceDelayBroadcastDelivery(pkg, 0);
+                mAm.forceStopPackage(pkg);
             }
-        }
+        });
     }
 
     protected static Context getContext() {
