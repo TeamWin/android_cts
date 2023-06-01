@@ -101,6 +101,7 @@ android_test {
         ":CtsDeviceServicesTestApp30",
         ":CtsDeviceServicesTestSecondApp",
         ":CtsDeviceServicesTestThirdApp",
+        ":CtsDeviceDeprecatedAbiApp",
         ":CtsDeviceDeprecatedSdkApp",
         ":CtsDeviceDeskResourcesApp",
         ":CtsDeviceDisplaySizeApp",
