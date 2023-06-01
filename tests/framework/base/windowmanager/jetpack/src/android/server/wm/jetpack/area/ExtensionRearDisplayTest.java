@@ -235,7 +235,8 @@ public class ExtensionRearDisplayTest extends WindowManagerJetpackTestBase imple
 
         // Reset configuration property to be able to verify that rear display was disabled.
         resetActivityConfigurationChangeValues(mActivity);
-        mWindowAreaComponent.endRearDisplaySession();
+        DeviceStateUtils.runWithControlDeviceStatePermission(() ->
+                mWindowAreaComponent.endRearDisplaySession());
         waitAndAssert(() -> WindowAreaComponent.SESSION_STATE_INACTIVE == mWindowAreaSessionState);
         // To verify that the rear display is enabled, check a configuration change occurred
         waitAndAssert(() -> mActivity.mConfigurationChanged);

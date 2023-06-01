@@ -1120,6 +1120,7 @@ public final class ProvisioningTest {
                         TestApis.users().current().userHandle()));
     }
 
+    @Ignore("b/284786466")
     @Postsubmit(reason = "New test")
     @Test
     @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)

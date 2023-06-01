@@ -1,4 +1,4 @@
-// Copyright (C) 2020 The Android Open Source Project
+// Copyright (C) 2022 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,23 +16,38 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-java_test_host {
-    name: "CtsFrameRateOverrideTestCases",
-    defaults: ["cts_defaults"],
-    srcs: ["src/**/*.java"],
-    libs: [
-        "cts-tradefed",
-        "tradefed",
-        "guava",
+cc_test_library {
+    name: "libtest_deprecated_abi_libs",
+    gtest: false,
+    srcs: ["jni/*.cpp"],
+    cflags: [
+        "-Wall",
+        "-Werror",
+        "-Wno-unused-parameter",
     ],
-    static_libs: ["CompatChangeGatingTestBase"],
-    // tag this module as a cts test artifact
+    header_libs: ["jni_headers"],
+    shared_libs: ["liblog"],
+    sdk_version: "current",
+}
+
+android_test {
+    name: "CtsDeviceDeprecatedAbiApp",
+    defaults: ["cts_support_defaults"],
+
+    compile_multilib: "32",
+
+    static_libs: ["cts-wm-app-base"],
+
+    srcs: ["src/**/*.java"],
+
     test_suites: [
         "cts",
         "general-tests",
+        "sts",
     ],
-    data: [
-        ":CtsHostsideFrameRateOverrideTestsApp",
+
+    jni_libs: [
+        "libtest_deprecated_abi_libs",
     ],
-    java_resources: [":cts-global-compat-config"],
+    sdk_version: "current",
 }
