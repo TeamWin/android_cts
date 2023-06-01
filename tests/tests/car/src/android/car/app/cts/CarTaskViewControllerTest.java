@@ -17,6 +17,7 @@
 package android.car.app.cts;
 
 
+import static android.content.Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS;
 import static android.content.Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 
@@ -142,11 +143,16 @@ public class CarTaskViewControllerTest {
         // Act
         CarTaskViewTestHolder taskViewHolder =
                 createControlledTaskView(/* parentId= */ R.id.top_container,
-                        EmbeddedTestActivity1.createLaunchIntent(mTargetContext));
+                        EmbeddedTestActivity1.createLaunchIntent(mTargetContext)
+                                .addFlags(FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS));
 
         // Assert
         assertThat(taskViewHolder.mCurrentTask.baseActivity.getClassName())
                 .isEqualTo(EmbeddedTestActivity1.class.getName());
+        // To check if ControlledRemoteCarTaskView can preserve FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS.
+        assertThat(taskViewHolder.mCurrentTask.baseIntent.getFlags()
+                & FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
+                .isEqualTo(FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS);
     }
 
     @Test
