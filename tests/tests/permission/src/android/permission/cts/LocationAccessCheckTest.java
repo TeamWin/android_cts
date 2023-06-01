@@ -64,6 +64,7 @@ import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.AsbSecurityTest;
 import android.platform.test.annotations.FlakyTest;
 import android.platform.test.annotations.SystemUserOnly;
+import android.platform.test.rule.ScreenRecordRule;
 import android.provider.DeviceConfig;
 import android.provider.Settings;
 import android.service.notification.StatusBarNotification;
@@ -96,7 +97,9 @@ import java.util.concurrent.CountDownLatch;
 @RunWith(AndroidJUnit4.class)
 @AppModeFull(reason = "Cannot set system settings as instant app. Also we never show a location "
         + "access check notification for instant apps.")
+@ScreenRecordRule.ScreenRecord
 public class LocationAccessCheckTest {
+
     private static final String LOG_TAG = LocationAccessCheckTest.class.getSimpleName();
 
     private static final String TEST_APP_PKG = "android.permission.cts.appthataccesseslocation";
@@ -155,6 +158,9 @@ public class LocationAccessCheckTest {
         assumeFalse(ModuleDetector.moduleIsPlayManaged(
                 sContext.getPackageManager(), MainlineModule.PERMISSION_CONTROLLER));
     }
+
+    @Rule
+    public final ScreenRecordRule mScreenRecordRule = new ScreenRecordRule(false, false);
 
     // Override location access check flag
     @Rule
