@@ -113,7 +113,9 @@ public class TextToSpeechTest {
 
     @After
     public void tearDown() {
-        mAudioManager.unregisterAudioPlaybackCallback(mSpeechPlaybackObserver);
+        if (mAudioManager != null) {
+            mAudioManager.unregisterAudioPlaybackCallback(mSpeechPlaybackObserver);
+        }
     }
 
     @Test
