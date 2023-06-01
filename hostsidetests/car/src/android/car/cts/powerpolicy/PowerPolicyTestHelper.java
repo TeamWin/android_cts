@@ -21,6 +21,7 @@ import static com.google.common.truth.Truth.assertWithMessage;
 
 import com.android.tradefed.log.LogUtil.CLog;
 
+import java.util.ArrayList;
 import java.util.Set;
 
 public final class PowerPolicyTestHelper {
@@ -51,8 +52,9 @@ public final class PowerPolicyTestHelper {
     }
 
     public void checkCurrentState(int expected) {
-        assertWithMessage(CURRENT_STATE_ASSERT_MSG)
-                .that(expected == mFrameCpms.getCurrentState()).isTrue();
+        String msg = CURRENT_STATE_ASSERT_MSG + "\nmFrameCpms:\n" + mFrameCpms;
+        assertWithMessage(msg)
+                .that(mFrameCpms.getCurrentState()).isEqualTo(expected);
     }
 
     public void checkCurrentPolicy(String expectedPolicyId) {
@@ -119,7 +121,12 @@ public final class PowerPolicyTestHelper {
     }
 
     public void checkTotalRegisteredPolicies(int totalNum) {
-        assertWithMessage(TOTAL_REGISTERED_POLICIES_ASSERT_MSG)
+        ArrayList<PowerPolicyDef> policies = mSystemCpms.getRegisteredPolicies();
+        String assertMsg = "registered policies: \n";
+        for (int i = 0; i < policies.size(); i++) {
+            assertMsg += policies.get(i).toString() + "\n";
+        }
+        assertWithMessage(assertMsg)
                 .that(mSystemCpms.getRegisteredPolicies().size()).isEqualTo(totalNum);
     }
 
@@ -134,13 +141,13 @@ public final class PowerPolicyTestHelper {
         if (expected == null) {
             expected = "null";
         }
-        assertWithMessage("checkCurrentPolicyGroupId")
-                .that(expected.equals(mFrameCpms.getCurrentPolicyGroupId())).isTrue();
+        assertWithMessage(/* messageToPrepend = */ "Current policy group ID").that(
+                mFrameCpms.getCurrentPolicyGroupId()).isEqualTo(expected);
     }
 
     public void checkPowerPolicyGroups(PowerPolicyGroups expected) {
-        assertWithMessage("checkPowerPolicyGroups")
-                .that(expected.equals(mFrameCpms.getPowerPolicyGroups())).isTrue();
+        assertWithMessage(/* messageToPrepend = */ "Power policy groups").that(
+                mFrameCpms.getPowerPolicyGroups()).isEqualTo(expected);
     }
 
     public int getNumberOfRegisteredPolicies() {

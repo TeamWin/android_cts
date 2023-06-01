@@ -16,6 +16,10 @@
 
 package android.car.cts.powerpolicy;
 
+import com.android.car.power.CarPowerDumpProto.PolicyReaderProto;
+import com.android.car.power.CarPowerDumpProto.PolicyReaderProto.IdToPolicyGroup;
+import com.android.car.power.CarPowerDumpProto.PolicyReaderProto.IdToPolicyGroup.PolicyGroup;
+import com.android.car.power.CarPowerDumpProto.PolicyReaderProto.IdToPolicyGroup.PolicyGroup.StateToDefaultPolicy;
 import com.android.tradefed.log.LogUtil;
 
 import java.util.ArrayList;
@@ -95,6 +99,39 @@ public final class PowerPolicyGroups {
         // If group wasn't saved (indicated by non-null values of policies), save it
         if (groupId != null && (waitForVHALPolicy != null || onPolicy != null)) {
             policyGroups.add(groupId, waitForVHALPolicy, onPolicy);
+        }
+        return policyGroups;
+    }
+
+    static PowerPolicyGroups parseProto(PolicyReaderProto policyReaderProto)
+            throws Exception {
+        PowerPolicyGroups policyGroups = new PowerPolicyGroups();
+        int numPolicyGroups = policyReaderProto.getPowerPolicyGroupMappingsCount();
+        for (int i = 0; i < numPolicyGroups; i++) {
+            IdToPolicyGroup policyGroupMapping = policyReaderProto.getPowerPolicyGroupMappings(i);
+            String policyGroupId = policyGroupMapping.getPolicyGroupId();
+            PolicyGroup policyGroup = policyGroupMapping.getPolicyGroup();
+            int numPolicies = policyGroup.getDefaultPolicyMappingsCount();
+            String waitForVhalPolicy = null;
+            String onPolicy = null;
+            for (int j = 0; j < numPolicies; j++) {
+                StateToDefaultPolicy policyMapping = policyGroup.getDefaultPolicyMappings(j);
+                String state = policyMapping.getState();
+                String policyId = policyMapping.getDefaultPolicyId();
+                if (state.equals("WaitForVHAL") && waitForVhalPolicy == null) {
+                    waitForVhalPolicy = policyId;
+                } else if (state.equals("On") && onPolicy == null) {
+                    onPolicy = policyId;
+                } else {
+                    String errMsg = "Incorrect power policy groups format\nPolicy reader proto:\n"
+                            + "state: " + state + "\npolicyId: " + policyId
+                            + "\nwaitForVHAL policy: " + waitForVhalPolicy + "\non policy: "
+                            + onPolicy;
+                    LogUtil.CLog.e(errMsg);
+                    throw new IllegalArgumentException(errMsg);
+                }
+            }
+            policyGroups.add(policyGroupId, waitForVhalPolicy, onPolicy);
         }
         return policyGroups;
     }

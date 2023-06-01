@@ -25,6 +25,7 @@ java_test_host {
         "app/src/android/car/cts/app/PowerPolicyTestCommandStatus.java",
         "app/src/android/car/cts/app/PowerPolicyTestCommandType.java",
         ":cartelemetryservice-proto-srcs",
+        ":car-service-dump-proto-srcs",
     ],
     proto: {
         type: "lite",

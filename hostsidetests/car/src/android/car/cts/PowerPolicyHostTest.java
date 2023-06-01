@@ -30,7 +30,9 @@ import android.car.cts.powerpolicy.PowerPolicyTestResult;
 import android.car.cts.powerpolicy.SilentModeInfo;
 import android.car.cts.powerpolicy.SystemInfoParser;
 
+import com.android.car.power.CarPowerDumpProto;
 import com.android.compatibility.common.util.CommonTestUtils;
+import com.android.compatibility.common.util.ProtoUtils;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
@@ -128,7 +130,7 @@ public final class PowerPolicyHostTest extends CarHostJUnit4TestCase {
         String teststep;
         PowerPolicyTestHelper testHelper;
 
-        teststep = "check the inital power policies";
+        teststep = "check the initial power policies";
         testHelper = getTestHelper(testcase, stepNo++, teststep);
         testHelper.checkCurrentState(PowerPolicyConstants.CarPowerState.ON);
         // power policy can be different from system_power_policy_all_on, save it to check
@@ -194,6 +196,13 @@ public final class PowerPolicyHostTest extends CarHostJUnit4TestCase {
         // add respect to user setting test case here to utilize a single device reboot
         testPowerPolicyAndComponentUserSetting();
 
+        // add power policy group test here to utilize added test1 and test2 policies
+        teststep = "check default power policy group";
+        PowerPolicyGroups emptyGroups = new PowerPolicyGroups();
+        testHelper = getTestHelper(testcase, stepNo++, teststep);
+        testHelper.checkCurrentPolicyGroupId("");
+        testHelper.checkPowerPolicyGroups(emptyGroups);
+
         teststep = "define power policy group";
         definePowerPolicyGroup(PowerPolicyGroups.TestSet.POLICY_GROUP_DEF1.toShellCommandString());
         definePowerPolicyGroup(PowerPolicyGroups.TestSet.POLICY_GROUP_DEF2.toShellCommandString());
@@ -241,8 +250,9 @@ public final class PowerPolicyHostTest extends CarHostJUnit4TestCase {
     }
 
     private CpmsFrameworkLayerStateInfo getCpmsFrameworkLayerStateInfo() throws Exception {
-        return executeAndParseCommand(new SystemInfoParser<CpmsFrameworkLayerStateInfo>(
-                CpmsFrameworkLayerStateInfo.class), CpmsFrameworkLayerStateInfo.COMMAND);
+        CarPowerDumpProto proto = ProtoUtils.getProto(
+                getDevice(), CarPowerDumpProto.parser(), CpmsFrameworkLayerStateInfo.COMMAND);
+        return CpmsFrameworkLayerStateInfo.parseProto(proto);
     }
 
     private CpmsSystemLayerStateInfo getCpmsSystemLayerStateInfo() throws Exception {
