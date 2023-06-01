@@ -74,7 +74,7 @@ class SessionTest : PackageInstallerTestBase() {
      */
     @Test
     fun confirmInstallation() {
-        val installation = startInstallationViaSession()
+        val installation = startInstallationViaSession(needFuture = true)!!
         clickInstallerUIButton(INSTALL_BUTTON_ID)
 
         // Install should have succeeded
@@ -96,8 +96,9 @@ class SessionTest : PackageInstallerTestBase() {
     fun confirmMultiPackageInstallation() {
         val installation = startInstallationViaMultiPackageSession(
                 installFlags = 0,
-                TEST_APK_NAME
-        )
+                TEST_APK_NAME,
+                needFuture = true
+        )!!
         clickInstallerUIButton(INSTALL_BUTTON_ID)
 
         // Install should have succeeded
@@ -165,7 +166,7 @@ class SessionTest : PackageInstallerTestBase() {
      */
     @Test
     fun cancelInstallation() {
-        val installation = startInstallationViaSession()
+        val installation = startInstallationViaSession(needFuture = true)!!
         clickInstallerUIButton(CANCEL_BUTTON_ID)
 
         // Install should have been aborted
