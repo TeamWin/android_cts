@@ -877,8 +877,6 @@ public class AudioDataPathsActivity
                     mRoutesTx.setVisibility(View.GONE);
                     mWaveView.setVisibility(View.GONE);
 
-                    mResultsView.setVisibility(View.VISIBLE);
-
                     mHtmlFormatter.clear();
                     mHtmlFormatter.openDocument();
                     boolean allPassed = calculateTestPass(mActiveTestAPI);
@@ -899,6 +897,7 @@ public class AudioDataPathsActivity
 
                     mResultsView.loadData(mHtmlFormatter.toString(),
                             "text/html; charset=utf-8", "utf-8");
+                    mResultsView.setVisibility(View.VISIBLE);
                 }
             });
         }
