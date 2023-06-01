@@ -65,6 +65,7 @@ import android.car.hardware.property.LaneCenteringAssistState;
 import android.car.hardware.property.LaneDepartureWarningState;
 import android.car.hardware.property.LaneKeepAssistState;
 import android.car.hardware.property.LocationCharacterization;
+import android.car.hardware.property.PropertyNotAvailableException;
 import android.car.hardware.property.TrailerState;
 import android.car.hardware.property.VehicleElectronicTollCollectionCardStatus;
 import android.car.hardware.property.VehicleElectronicTollCollectionCardType;
@@ -111,6 +112,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 @SmallTest
@@ -285,6 +287,13 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                             CruiseControlCommand.INCREASE_TARGET_TIME_GAP,
                             CruiseControlCommand.DECREASE_TARGET_TIME_GAP)
                     .build();
+    private static final ImmutableSet<Integer>
+            CRUISE_CONTROL_COMMANDS_UNAVAILABLE_STATES_ON_STANDARD_CRUISE_CONTROL =
+                    ImmutableSet.<Integer>builder()
+                            .add(
+                                    CruiseControlCommand.INCREASE_TARGET_TIME_GAP,
+                                    CruiseControlCommand.DECREASE_TARGET_TIME_GAP)
+                            .build();
     private static final ImmutableSet<Integer> HANDS_ON_DETECTION_DRIVER_STATES =
             ImmutableSet.<Integer>builder()
                     .add(
@@ -1095,7 +1104,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
              getCruiseControlEnabledVerifier(),
              getCruiseControlTypeVerifier(),
              getCruiseControlStateVerifier(),
-             getCruiseControlCommandVerifier(),
+             getCruiseControlCommandVerifier_OnAdaptiveCruiseControl(),
              getCruiseControlTargetSpeedVerifier(),
              getAdaptiveCruiseControlTargetTimeGapVerifier(),
              getAdaptiveCruiseControlLeadVehicleMeasuredDistanceVerifier(),
@@ -1368,7 +1377,58 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
         verifyEnumValuesAreDistinct(CRUISE_CONTROL_STATES, ERROR_STATES);
     }
 
-    private VehiclePropertyVerifier<Integer> getCruiseControlCommandVerifier() {
+    private boolean standardCruiseControlChecker(boolean requireStandard) {
+        VehiclePropertyVerifier<Integer> verifier = getCruiseControlTypeVerifier();
+        verifier.enableAdasFeatureIfAdasStateProperty();
+        AtomicBoolean isMetStandardConditionCheck = new AtomicBoolean(false);
+        runWithShellPermissionIdentity(
+                () -> {
+                    try {
+                        boolean ccEnabledValue = mCarPropertyManager
+                                .getBooleanProperty(VehiclePropertyIds.CRUISE_CONTROL_ENABLED,
+                                        /* areaId */ 0);
+                        if (!ccEnabledValue) {
+                            Log.w(TAG, "Expected CRUISE_CONTROL_ENABLED to be set to true but got "
+                                    + "false instead.");
+                            return;
+                        }
+                    } catch (Exception e) {
+                        Log.e(TAG, "Failed to assert that CRUISE_CONTROL_ENABLED is true. Caught "
+                                + "the following exception: " + e);
+                        return;
+                    }
+                    try {
+                        int ccTypeValue = mCarPropertyManager.getIntProperty(
+                                VehiclePropertyIds.CRUISE_CONTROL_TYPE, /* areaId */ 0);
+                        boolean ccTypeCondition =
+                                ((ccTypeValue == CruiseControlType.STANDARD) == requireStandard);
+                        if (!ccTypeCondition) {
+                            if (requireStandard) {
+                                Log.w(TAG, "Expected CRUISE_CONTROL_TYPE to be set to STANDARD but "
+                                        + "got the following value instead: " + ccTypeValue);
+                            } else {
+                                Log.w(TAG, "Expected CRUISE_CONTROL_TYPE to be set to not "
+                                        + "STANDARD but got the following value instead: "
+                                        + ccTypeValue);
+                            }
+                            return;
+                        }
+                    } catch (Exception e) {
+                        Log.e(TAG, "Failed to assert that CRUISE_CONTROL_TYPE value. Caught the "
+                                + "following exception: " + e);
+                        return;
+                    }
+                    isMetStandardConditionCheck.set(true);
+                },
+                Car.PERMISSION_READ_ADAS_SETTINGS,
+                Car.PERMISSION_READ_ADAS_STATES
+        );
+        verifier.disableAdasFeatureIfAdasStateProperty();
+        return isMetStandardConditionCheck.get();
+    }
+
+    private VehiclePropertyVerifier<Integer>
+            getCruiseControlCommandVerifier_OnAdaptiveCruiseControl() {
         return VehiclePropertyVerifier.newBuilder(
                         VehiclePropertyIds.CRUISE_CONTROL_COMMAND,
                         CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_WRITE,
@@ -1383,9 +1443,44 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                 .build();
     }
 
+    private VehiclePropertyVerifier<Integer>
+            getCruiseControlCommandVerifier_OnStandardCruiseControl() {
+        return VehiclePropertyVerifier.newBuilder(
+                        VehiclePropertyIds.CRUISE_CONTROL_COMMAND,
+                        CarPropertyConfig.VEHICLE_PROPERTY_ACCESS_WRITE,
+                        VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL,
+                        CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
+                        Integer.class, mCarPropertyManager)
+                .setAllPossibleEnumValues(CRUISE_CONTROL_COMMANDS)
+                .setAllPossibleUnavailableValues(
+                        CRUISE_CONTROL_COMMANDS_UNAVAILABLE_STATES_ON_STANDARD_CRUISE_CONTROL)
+                .setDependentOnProperty(VehiclePropertyIds.CRUISE_CONTROL_ENABLED,
+                        ImmutableSet.of(Car.PERMISSION_READ_ADAS_SETTINGS,
+                                Car.PERMISSION_CONTROL_ADAS_SETTINGS))
+                .addWritePermission(Car.PERMISSION_CONTROL_ADAS_STATES)
+                .build();
+    }
+
     @Test
-    public void testCruiseControlCommandIfSupported() {
-        getCruiseControlCommandVerifier().verify();
+    public void testCruiseControlCommandIfSupported_OnACC() {
+        // Dependent on CRUISE_CONTROL_TYPE being ADAPTIVE. Testing functionality of this property
+        // when CRUISE_CONTROL_TYPE is STANDARD is done in
+        // testCruiseControlCommandIfSupported_OnStandardCruiseControl
+        assumeTrue("Cruise control is not enabled or cannot be set/enabled or is set to standard, "
+                + "skip testCruiseControlCommandIfSupported_OnACC which tests non-standard CC "
+                + "behavior", standardCruiseControlChecker(false));
+        getCruiseControlCommandVerifier_OnAdaptiveCruiseControl().verify();
+    }
+
+    @Test
+    public void testCruiseControlCommandIfSupported_OnStandardCC() {
+        // Dependent on CRUISE_CONTROL_TYPE being STANDARD. Testing functionality of this property
+        // when CRUISE_CONTROL_TYPE is not STANDARD is done in
+        // testCruiseControlCommandIfSupported_OnAdaptiveCruiseControl
+        assumeTrue("Cruise control is not enabled or cannot be set/enabled or is not set to "
+                + "standard, skip testCruiseControlCommandIfSupported_OnStandardCC which tests "
+                + "standard CC behavior", standardCruiseControlChecker(true));
+        getCruiseControlCommandVerifier_OnStandardCruiseControl().verify();
     }
 
     private VehiclePropertyVerifier<Float> getCruiseControlTargetSpeedVerifier() {
@@ -1448,6 +1543,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                                         .isLessThan(configArray.get(i + 1));
                             }
                         })
+                .verifySetterWithConfigArrayValues()
                 .setDependentOnProperty(VehiclePropertyIds.CRUISE_CONTROL_ENABLED,
                         ImmutableSet.of(Car.PERMISSION_READ_ADAS_SETTINGS,
                                 Car.PERMISSION_CONTROL_ADAS_SETTINGS))
@@ -1457,8 +1553,25 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     }
 
     @Test
-    public void testAdaptiveCruiseControlTargetTimeGapIfSupported() {
+    public void testAdaptiveCruiseControlTargetTimeGapIfSupported_OnACC() {
+        // Dependent on CRUISE_CONTROL_TYPE being ADAPTIVE. Testing functionality of this property
+        // when CRUISE_CONTROL_TYPE is STANDARD is done in
+        // testAdaptiveCruiseControlTargetTimeGapIfSupported_OnStandardCruiseControl
+        assumeTrue("Cruise control is not enabled or cannot be set/enabled or is set to standard, "
+                + "skip testAdaptiveCruiseControlTargetTimeGapIfSupported_OnACC which tests "
+                + "non-standard CC behavior", standardCruiseControlChecker(false));
         getAdaptiveCruiseControlTargetTimeGapVerifier().verify();
+    }
+
+    @Test
+    public void testAdaptiveCruiseControlTargetTimeGapIfSupported_OnStandardCC() {
+        // Dependent on CRUISE_CONTROL_TYPE being STANDARD. Testing functionality of this property
+        // when CRUISE_CONTROL_TYPE is not STANDARD is done in
+        // testAdaptiveCruiseControlTargetTimeGapIfSupported_OnAdaptiveCruiseControl
+        assumeTrue("Cruise control is not enabled or cannot be set/enabled or is not set to "
+                + "standard, skip testAdaptiveCruiseControlTargetTimeGapIfSupported_OnStandardCC "
+                + "which tests standard CC behavior", standardCruiseControlChecker(true));
+        getAdaptiveCruiseControlTargetTimeGapVerifier().verify(PropertyNotAvailableException.class);
     }
 
     private VehiclePropertyVerifier<Integer>
@@ -1479,8 +1592,27 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     }
 
     @Test
-    public void testAdaptiveCruiseControlLeadVehicleMeasuredDistanceIfSupported() {
+    public void testAdaptiveCruiseControlLeadVehicleMeasuredDistanceIfSupported_OnACC() {
+        // Dependent on CRUISE_CONTROL_TYPE being ADAPTIVE. Testing functionality of this property
+        // when CRUISE_CONTROL_TYPE is STANDARD is done in
+        // testAdaptiveCruiseControlLeadVehicleMeasuredDistanceIfSupported_OnStandardCruiseControl
+        assumeTrue("Cruise control is not enabled or cannot be set/enabled or is set to standard, "
+                + "skip testAdaptiveCruiseControlLeadVehicleMeasuredDistanceIfSupported_OnACC "
+                + "which tests non-standard CC behavior", standardCruiseControlChecker(false));
         getAdaptiveCruiseControlLeadVehicleMeasuredDistanceVerifier().verify();
+    }
+
+    @Test
+    public void testAdaptiveCruiseControlLeadVehicleMeasuredDistanceIfSupported_OnStandardCC() {
+        // Dependent on CRUISE_CONTROL_TYPE being STANDARD. Testing functionality of this property
+        // when CRUISE_CONTROL_TYPE is not STANDARD is done in
+        // testAdaptiveCruiseControlLeadVehicleMeasuredDistanceIfSupported_OnAdaptiveCruiseControl
+        assumeTrue("Cruise control is not enabled or cannot be set/enabled or is not set to "
+                + "standard, skip "
+                + "testAdaptiveCruiseControlLeadVehicleMeasuredDistanceIfSupported_OnStandardCC "
+                + "which tests standard CC behavior", standardCruiseControlChecker(true));
+        getAdaptiveCruiseControlLeadVehicleMeasuredDistanceVerifier()
+                .verify(PropertyNotAvailableException.class);
     }
 
     private VehiclePropertyVerifier<Boolean> getHandsOnDetectionEnabledVerifier() {
