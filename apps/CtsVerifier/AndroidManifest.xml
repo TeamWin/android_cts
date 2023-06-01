@@ -4610,6 +4610,8 @@
                 android:name="com.android.cts.verifier.sensors.DeviceSuspendTestActivity"
                 android:label="@string/snsr_device_suspend_test"
                 android:exported="true"
+                android:turnScreenOn="true"
+                android:showWhenLocked="true"
                 android:screenOrientation="nosensor" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
