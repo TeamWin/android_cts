@@ -18,45 +18,51 @@ import logging
 import math
 import os
 import pickle
-
+import camera_properties_utils
+import capture_request_utils
+import error_util
+import image_processing_utils
+from matplotlib import pylab
 import matplotlib.pyplot as plt
 from matplotlib.ticker import NullLocator
 from matplotlib.ticker import ScalarFormatter
+import noise_model_utils
 import numpy as np
 
-import camera_properties_utils
-import capture_request_utils
-
-
-_BAYER_COLOR_PLANE = ('red', 'green_r', 'blue', 'green_b')
 _LINEAR_FIT_NUM_SAMPLES = 100  # Number of samples to plot for the linear fit
 _PLOT_AXIS_TICKS = 5  # Number of ticks to display on the plot axis
+_FIG_DPI = 100  # Read noise plots dpi.
+# Valid raw format for capturing read noise images.
+_VALID_RAW_FORMATS = ('raw', 'raw10', 'rawQuadBayer', 'raw10QuadBayer')
 
 
-def create_and_save_csv_from_results(rn_data, iso_low, iso_high, cmap, file):
-  """Creates a .csv file for the read noise results.
+def save_read_noise_data_as_csv(read_noise_data, iso_low, iso_high, file,
+                                color_channels_names):
+  """Creates and saves a CSV file containing read noise data.
 
   Args:
-    rn_data:        Read noise data object from capture_read_noise_for_iso_range
-    iso_low:        int; minimum iso value to include
-    iso_high:       int; maximum iso value to include
-    cmap:           str; string containing each color symbol
-    file:           str; path to csv where this will be created
+    read_noise_data: A list of lists of dictionaries, where each dictionary
+      contains read noise data for a single color channel.
+    iso_low: The minimum ISO sensitivity to include in the CSV file.
+    iso_high: The maximum ISO sensitivity to include in the CSV file.
+    file: The path to the CSV file to create.
+    color_channels_names: A list of color channels to include in the CSV file.
   """
   with open(file, 'w+') as f:
     writer = csv.writer(f)
 
-    results = list(filter(
-        lambda x: x[0]['iso'] >= iso_low and x[0]['iso'] <= iso_high, rn_data
-    ))
-
-    color_channels = range(len(cmap))
+    results = list(
+        filter(
+            lambda x: x[0]['iso'] >= iso_low and x[0]['iso'] <= iso_high,
+            read_noise_data,
+        )
+    )
 
     # Create headers for csv file
     headers = ['iso', 'iso^2']
-    headers.extend([f'mean_{cmap[i]}' for i in color_channels])
-    headers.extend([f'var_{cmap[i]}' for i in color_channels])
-    headers.extend([f'norm_var_{cmap[i]}' for i in color_channels])
+    headers.extend([f'mean_{color}' for color in color_channels_names])
+    headers.extend([f'var_{color}' for color in color_channels_names])
+    headers.extend([f'norm_var_{color}' for color in color_channels_names])
 
     writer.writerow(headers)
 
@@ -64,9 +70,9 @@ def create_and_save_csv_from_results(rn_data, iso_low, iso_high, cmap, file):
     for data_row in results:
       row = [data_row[0]['iso']]
       row.append(data_row[0]['iso']**2)
-      row.extend([data_row[i]['mean'] for i in color_channels])
-      row.extend([data_row[i]['var'] for i in color_channels])
-      row.extend([data_row[i]['norm_var'] for i in color_channels])
+      row.extend([stats['mean'] for stats in data_row])
+      row.extend([stats['var'] for stats in data_row])
+      row.extend([stats['norm_var'] for stats in data_row])
 
       writer.writerow(row)
 
@@ -76,122 +82,173 @@ def create_and_save_csv_from_results(rn_data, iso_low, iso_high, cmap, file):
     coeff_headers = ['', 'offset_coefficient_a', 'offset_coefficient_b']
     writer.writerow(coeff_headers)
 
-    coeff_a, coeff_b = get_read_noise_coefficients(results)
-    for i in range(len(cmap)):
-      writer.writerow([cmap[i], coeff_a[i], coeff_b[i]])
+    offset_a, offset_b = get_read_noise_coefficients(results, iso_low, iso_high)
+    for i in range(len(color_channels_names)):
+      writer.writerow([color_channels_names[i], offset_a[i], offset_b[i]])
 
 
-def create_read_noise_plots_from_results(rn_data, iso_low, iso_high, cmap,
-                                         file):
-  """Plot the read noise data for the given ISO range.
+def plot_read_noise_data(read_noise_data, iso_low, iso_high, file_path,
+                         color_channel_names, plot_colors):
+  """Plots the read noise data for the given ISO range.
 
   Args:
-    rn_data:        Read noise data object from capture_read_noise_for_iso_range
-    iso_low:        int; minimum iso value to include
-    iso_high:       int; maximum iso value to include
-    cmap:           str; string containing the Bayer format
-    file:           str; file path for the plot image
+      read_noise_data: Quad Bayer read noise data object.
+      iso_low: The minimum iso value to include.
+      iso_high: The maximum iso value to include.
+      file_path: File path for the plot image.
+      color_channel_names: The name list of each color channel.
+      plot_colors: The color list for plotting.
   """
-  # Get a list of color names and plot color arrangements for the given cmap.
-  # This will be used for chart labels and color schemes
-  bayer_color_list = []
-  plot_colors = ''
-  if cmap.lower() == 'grbg':
-    bayer_color_list = ['GR', 'R', 'B', 'GB']
-    plot_colors = 'grby'
-  elif cmap.lower() == 'rggb':
-    bayer_color_list = ['R', 'GR', 'GB', 'B']
-    plot_colors = 'rgyb'
-  elif cmap.lower() == 'bggr':
-    bayer_color_list = ['B', 'GB', 'GR', 'R']
-    plot_colors = 'bygr'
-  elif cmap.lower() == 'gbrg':
-    bayer_color_list = ['GB', 'B', 'R', 'GR']
-    plot_colors = 'ybrg'
-  else:
-    raise AssertionError('cmap parameter does not match any known Bayer format')
-
-  # Create the figure for plotting the read noise to ISO^2 curve
-  fig = plt.figure(figsize=(11, 11))
+  num_channels = len(color_channel_names)
+  is_quad_bayer = num_channels == noise_model_utils.NUM_QUAD_BAYER_CHANNELS
+  # Create the figure for plotting the read noise to ISO^2 curve.
+  fig, ((R, Gr), (Gb, B)) = plt.subplots(2, 2, figsize=(22, 22))
+  subplots = [R, Gr, Gb, B]
+  fig.gca()
   fig.suptitle('Read Noise to ISO^2', x=0.54, y=0.99)
 
-  iso_range = fig.add_subplot(111)
+  # Get the ISO values for the current range.
+  filtered_data = list(
+      filter(
+          lambda x: x[0]['iso'] >= iso_low and x[0]['iso'] <= iso_high,
+          read_noise_data,
+      )
+  )
 
-  iso_range.set_xlabel('ISO^2')
-  iso_range.set_ylabel('Read Noise')
-
-  # Get the ISO values for the current range
-  current_range = list(filter(
-      lambda x: x[0]['iso'] >= iso_low and x[0]['iso'] <= iso_high, rn_data
-  ))
-
-  # Get X-axis values (ISO^2) for current_range
-  iso_sq = [data[0]['iso']**2 for data in current_range]
+  # Get X-axis values (ISO^2) for current_range.
+  iso_sq = [data[0]['iso']**2 for data in filtered_data]
 
   # Get X-axis values for the calculated linear fit for the read noise
   iso_sq_values = np.linspace(iso_low**2, iso_high**2, _LINEAR_FIT_NUM_SAMPLES)
 
   # Get the line fit coeff for plotting the linear fit of read noise to iso^2
-  coeff_a, coeff_b = get_read_noise_coefficients(current_range)
+  coeff_a, coeff_b = get_read_noise_coefficients(
+      filtered_data, iso_low, iso_high
+  )
 
   # Plot the read noise to iso^2 data
-  for pidx in range(len(bayer_color_list)):
-    norm_vars = [data[pidx]['norm_var'] for data in current_range]
+  for pidx, color_channel in enumerate(color_channel_names):
+    norm_vars = [data[pidx]['norm_var'] for data in filtered_data]
 
     # Plot the measured read noise to ISO^2 values
-    iso_range.plot(iso_sq, norm_vars, plot_colors[pidx]+'o',
-                   label=f'{bayer_color_list[pidx]}', alpha=0.3)
+    if is_quad_bayer:
+      subplot = subplots[pidx // 4]
+    else:
+      subplot = subplots[pidx]
+
+    subplot.plot(
+        iso_sq,
+        norm_vars,
+        color=plot_colors[pidx],
+        marker='o',
+        markeredgecolor=plot_colors[pidx],
+        linestyle='None',
+        label=color_channel,
+        alpha=0.3,
+    )
 
     # Plot the line fit calculated from the read noise values
-    iso_range.plot(iso_sq_values, coeff_a[pidx]*iso_sq_values + coeff_b[pidx],
-                   color=plot_colors[pidx])
+    subplot.plot(
+        iso_sq_values,
+        coeff_a[pidx] * iso_sq_values + coeff_b[pidx],
+        color=plot_colors[pidx],
+        )
 
   # Create a numpy array containing all normalized variance values for the
   # current range, this will be used for labelling the X-axis
   y_values = np.array(
-      [[color['norm_var'] for color in x] for x in current_range])
+      [[color['norm_var'] for color in x] for x in filtered_data]
+  )
 
   x_ticks = np.linspace(iso_low**2, iso_high**2, _PLOT_AXIS_TICKS)
   y_ticks = np.linspace(np.min(y_values), np.max(y_values), _PLOT_AXIS_TICKS)
 
-  iso_range.set_xticks(x_ticks)
-  iso_range.xaxis.set_minor_locator(NullLocator())
-  iso_range.xaxis.set_major_formatter(ScalarFormatter())
+  for i, subplot in enumerate(subplots):
+    subplot.set_title(noise_model_utils.BAYER_COLORS[i])
+    subplot.set_xlabel('ISO^2')
+    subplot.set_ylabel('Read Noise')
 
-  iso_range.set_yticks(y_ticks)
-  iso_range.yaxis.set_minor_locator(NullLocator())
-  iso_range.yaxis.set_major_formatter(ScalarFormatter())
+    subplot.set_xticks(x_ticks)
+    subplot.xaxis.set_minor_locator(NullLocator())
+    subplot.xaxis.set_major_formatter(ScalarFormatter())
 
-  iso_range.legend()
+    subplot.set_yticks(y_ticks)
+    subplot.yaxis.set_minor_locator(NullLocator())
+    subplot.yaxis.set_major_formatter(ScalarFormatter())
 
-  fig.savefig(file)
+    subplot.legend()
+    pylab.tight_layout()
+
+  fig.savefig(file_path, dpi=_FIG_DPI)
 
 
-def _generate_image_data_bayer(img, iso, white_level, cmap):
-  """Generates read noise data for a given image.
-
-  Each element in the list corresponds to each color channel, and each dict
-  contains information relevant to the read noise calculation.
+def subsample(image, num_channels=4):
+  """Subsamples the image to separate its color channels.
 
   Args:
-    img:          np.array; image for the given iso
-    iso:          float; iso value which the
-    white_level:  int; white level value for the sensor
-    cmap:         str; color map of the sensor
+    image:        2-D numpy array of raw image.
+    num_channels: The number of channels in the image.
+
   Returns:
-    list(dict)    list containing information for each color channel
+    3-D numpy image with each channel separated.
+  """
+  if num_channels not in noise_model_utils.VALID_NUM_CHANNELS:
+    raise error_util.CameraItsError(
+        f'Invalid number of channels {num_channels}, which should be in '
+        f'{noise_model_utils.VALID_NUM_CHANNELS}.'
+    )
+
+  size_h, size_v = image.shape[1], image.shape[0]
+
+  # Subsample step size, which is the horizontal or vertical pixel interval
+  # between two adjacent pixels of the same channel.
+  stride = int(np.sqrt(num_channels))
+  subsample_img = lambda img, i, h, v, s: img[i // s: v: s, i % s: h: s]
+  channel_img = np.empty((
+      image.shape[0] // stride,
+      image.shape[1] // stride,
+      num_channels,
+  ))
+
+  for i in range(num_channels):
+    sub_img = subsample_img(image, i, size_h, size_v, stride)
+    channel_img[:, :, i] = sub_img
+
+  return channel_img
+
+
+def _generate_read_noise_stats(img, iso, white_level, cfa_order):
+  """Generates read noise data for a given image.
+
+    The read noise data of each channel is added in the order of cfa_order.
+    As a result, the read noise data channels are reordered as the following.
+    (1) For standard Bayer: R, Gr, Gb, B.
+    (2) For quad Bayer: R0, R1, R2, R3,
+                        Gr0, Gr1, Gr2, Gr3,
+                        Gb0, Gb1, Gb2, Gb3,
+                        B0, B1, B2, B3.
+
+  Args:
+    img: The input image.
+    iso: The ISO sensitivity used to capture the image.
+    white_level: The white level of the image.
+    cfa_order: The color filter arrangement (CFA) order of the image.
+
+  Returns:
+    A list of dictionaries, where each dictionary contains information for a
+    single color channel in the image.
   """
   result = []
 
-  color_channel_img = np.empty((len(_BAYER_COLOR_PLANE),
-                                int(img.shape[0]/2),
-                                int(img.shape[1]/2)))
+  num_channels = len(cfa_order)
+  channel_img = subsample(img, num_channels)
 
-  # Create a dict of read noise values for each color channel in the image
-  for i, color_plane in enumerate(_BAYER_COLOR_PLANE):
-    color_channel_img[i] = _subsample(img, color_plane, cmap)
-    var = np.var(color_channel_img[i])
-    mean = np.mean(color_channel_img[i])
+  # Create a list of dictionaries of read noise stats for each color channel
+  # in the image.
+  # The stats is reordered according to the color filter arrangement order.
+  for ch in cfa_order:
+    mean = np.mean(channel_img[:, :, ch])
+    var = np.var(channel_img[:, :, ch])
     norm_var = var / ((white_level - mean)**2)
     result.append({
         'iso': iso,
@@ -203,142 +260,164 @@ def _generate_image_data_bayer(img, iso, white_level, cmap):
   return result
 
 
-def _subsample(img, color_plane, cmap):
-  """Subsample image array based on color_plane.
+def get_read_noise_coefficients(read_noise_data, iso_low=0, iso_high=1000000):
+  """Calculates read noise coefficients that best fit the read noise data.
 
   Args:
-      img:            2-D numpy array of image
-      color_plane:    string; color to extract
-      cmap:           list; color map of the sensor
+    read_noise_data: Read noise data object.
+    iso_low: The lower bound of the ISO range to consider.
+    iso_high: The upper bound of the ISO range to consider.
+
   Returns:
-      img_subsample:  2-D numpy subarray of image with only color plane
+    A tuple of two numpy arrays, where the first array contains read noise
+    coefficient a and the second array contains read noise coefficient b.
   """
-  subsample_img_2x = lambda img, x, h, v: img[int(x / 2):v:2, x % 2:h:2]
-  size_h = img.shape[1]
-  size_v = img.shape[0]
-  if color_plane == 'red':
-    cmap_index = cmap.index('R')
-  elif color_plane == 'blue':
-    cmap_index = cmap.index('B')
-  elif color_plane == 'green_r':
-    color_plane_map_index = {
-        'GRBG': 0,
-        'RGGB': 1,
-        'BGGR': 2,
-        'GBRG': 3
-    }
-    cmap_index = color_plane_map_index[cmap]
-  elif color_plane == 'green_b':
-    color_plane_map_index = {
-        'GBRG': 0,
-        'BGGR': 1,
-        'RGGB': 2,
-        'GRBG': 3
-    }
-    cmap_index = color_plane_map_index[cmap]
-  else:
-    logging.error('Wrong color_plane entered!')
-    return None
-
-  return subsample_img_2x(img, cmap_index, size_h, size_v)
-
-
-def get_read_noise_coefficients(rn_data, iso_low=0, iso_high=1000000):
-  """Calculate the read noise coefficients from the read noise data.
-
-  Args:
-    rn_data:       Read noise data object from capture_read_noise_for_iso_range
-    iso_low:        int; minimum iso value to include
-    iso_high:       int; maximum iso value to include
-  Returns:
-    (list, list)   Offset coefficients for the linear fit to read noise data
-  """
-  # Filter the values by the given ISO range
-  iso_range = list(filter(
-      lambda x: x[0]['iso'] >= iso_low and x[0]['iso'] <= iso_high, rn_data
-  ))
+  # Filter the values by the given ISO range.
+  read_noise_data_filtered = list(
+      filter(
+          lambda x: x[0]['iso'] >= iso_low and x[0]['iso'] <= iso_high,
+          read_noise_data,
+      )
+  )
 
   read_noise_coefficients_a = []
   read_noise_coefficients_b = []
 
   # Get ISO^2 values used for X-axis in polyfit
-  iso_sq = [data[0]['iso']**2 for data in iso_range]
+  iso_sq = [data[0]['iso'] ** 2 for data in read_noise_data_filtered]
 
   # Find the linear equation coefficients for each color channel
-  for i in range(len(iso_range[0])):
-    norm_var = [data[i]['norm_var'] for data in iso_range]
-
+  num_channels = len(read_noise_data_filtered[0])
+  for i in range(num_channels):
+    norm_var = [data[i]['norm_var'] for data in read_noise_data_filtered]
     coeffs = np.polyfit(iso_sq, norm_var, 1)
 
     read_noise_coefficients_a.append(coeffs[0])
     read_noise_coefficients_b.append(coeffs[1])
 
+  read_noise_coefficients_a = np.asarray(read_noise_coefficients_a)
+  read_noise_coefficients_b = np.asarray(read_noise_coefficients_b)
   return read_noise_coefficients_a, read_noise_coefficients_b
 
 
-def capture_read_noise_for_iso_range(cam, low_iso, high_iso, steps, cmap,
-                                     dest_file):
+def capture_read_noise_for_iso_range(cam, camera_name, raw_format, low_iso,
+                                     high_iso, steps_per_stop, dest_file):
   """Captures read noise data at the lowest advertised exposure value.
 
+  This function captures a series of images at different ISO sensitivities,
+  starting at `low_iso` and ending at `high_iso`. The number of steps between
+  each ISO sensitivity is equal to `steps`. Then read noise stats data is
+  computed. Finally, stats data of color channels are reordered into the
+  canonical order before saving it to `dest_file`.
+
   Args:
-    cam:         ItsSession; camera for the current ItsSession
-    low_iso:     int; lowest iso value in range
-    high_iso:    int; highest iso value in range
-    steps:       int; steps to take per stop
-    cmap:        str; color map of the sensor
-    dest_file:   str; path where the results should be saved
+    cam:             Camera for the current ItsSession.
+    camera_name:     Camera name (camera_id and hidden_physical_id).
+    raw_format:      The format of read noise image.
+    low_iso:         The lowest iso value in range.
+    high_iso:        The highest iso value in range.
+    steps_per_stop:  Steps to take per stop.
+    dest_file:       The path where read noise stats should be saved.
+
   Returns:
-    list(list(dict))  Read noise results for each frame
+    Read noise stats list for each sensitivity.
   """
+  if raw_format not in _VALID_RAW_FORMATS:
+    supported_formats_str = ', '.join(_VALID_RAW_FORMATS)
+    raise error_util.CameraItsError(
+        f'Invalid raw format {raw_format}. '
+        f'Current supported raw formats: {supported_formats_str}.'
+    )
+
   props = cam.get_camera_properties()
   props = cam.override_with_hidden_physical_camera_props(props)
+
+  format_check_result = False
+  if raw_format in ('raw', 'rawQuadBayer'):
+    format_check_result = camera_properties_utils.raw16(props)
+  elif raw_format in ('raw10', 'raw10QuadBayer'):
+    format_check_result = camera_properties_utils.raw10(props)
+
   camera_properties_utils.skip_unless(
-      camera_properties_utils.raw16(props) and
+      format_check_result and
       camera_properties_utils.manual_sensor(props) and
       camera_properties_utils.read_3a(props) and
       camera_properties_utils.per_frame_control(props))
-
   min_exposure_ns, _ = props['android.sensor.info.exposureTimeRange']
   min_fd = props['android.lens.info.minimumFocusDistance']
   white_level = props['android.sensor.info.whiteLevel']
-
+  is_quad_bayer = 'QuadBayer' in raw_format
+  cfa_order = image_processing_utils.get_canonical_cfa_order(
+      props, is_quad_bayer
+  )
+  pre_iso_cap = None
   iso = low_iso
-
-  results = []
-
+  iso_multiplier = math.pow(2, 1.0 / steps_per_stop)
+  stats_list = []
   # This operation can last a very long time, if it happens to fail halfway
   # through, this section of code will allow us to pick up where we left off
   if os.path.exists(dest_file):
-    # If there already exists a results file, retrieve them
+    # If there already exists a read noise stats file, retrieve them.
     with open(dest_file, 'rb') as f:
-      results = pickle.load(f)
-    # Set the starting iso to the last iso of results
-    iso = results[-1][0]['iso']
-    iso *= math.pow(2, 1.0/steps)
+      stats_list = pickle.load(f)
+    # Set the starting iso to the last iso of read noise stats.
+    pre_iso_cap = stats_list[-1][0]['iso']
+    iso = noise_model_utils.get_next_iso(pre_iso_cap, high_iso, iso_multiplier)
 
-  while int(round(iso)) <= high_iso:
-    iso_int = int(iso)
-    req = capture_request_utils.manual_capture_request(iso_int, min_exposure_ns)
+  if round(iso) <= high_iso:
+    # Wait until camera is repositioned for read noise data collection.
+    input(
+        f'\nPress <ENTER> after concealing camera {camera_name} '
+        'in complete darkness.\n'
+    )
+
+  fmt = {'format': raw_format}
+  logging.info('Capturing read noise images with format %s.', raw_format)
+  while round(iso) <= high_iso:
+    req = capture_request_utils.manual_capture_request(
+        round(iso), min_exposure_ns
+    )
     req['android.lens.focusDistance'] = min_fd
-    fmt = {'format': 'raw'}
     cap = cam.do_capture(req, fmt)
+    iso_cap = cap['metadata']['android.sensor.sensitivity']
+
+    # Different iso values may result in captures with the same iso_cap value,
+    # so skip this capture if it's redundant.
+    if iso_cap == pre_iso_cap:
+      logging.info(
+          'Skip current capture because of the same iso %d with the previous'
+          ' capture.',
+          iso_cap,
+      )
+      iso = noise_model_utils.get_next_iso(iso, high_iso, iso_multiplier)
+      continue
+
+    pre_iso_cap = iso_cap
     w = cap['width']
     h = cap['height']
 
-    img = np.ndarray(shape=(h*w,), dtype='<u2', buffer=cap['data'][0:w*h*2])
-    img = img.astype(dtype=np.uint16).reshape(h, w)
+    if raw_format in ('raw10', 'raw10QuadBayer'):
+      img = image_processing_utils.unpack_raw10_image(
+          cap['data'].reshape(h, w * 5 // 4)
+      )
+    elif raw_format in ('raw', 'rawQuadBayer'):
+      img = np.ndarray(
+          shape=(h * w,), dtype='<u2', buffer=cap['data'][0: w * h * 2]
+      )
+      img = img.astype(dtype=np.uint16).reshape(h, w)
 
-    # Add values to results, organized as a dictionary
-    results.append(_generate_image_data_bayer(img, iso, white_level, cmap))
+    # Add reordered read noise stats to read noise stats list.
+    stats = _generate_read_noise_stats(img, iso_cap, white_level, cfa_order)
+    stats_list.append(stats)
 
-    logging.info('iso: %.2f, mean: %.2f, var: %.2f, min: %d, max: %d', iso,
+    logging.info('iso: %.2f, mean: %.2f, var: %.2f, min: %d, max: %d', iso_cap,
                  np.mean(img), np.var(img), np.min(img), np.max(img))
 
     with open(dest_file, 'wb+') as f:
-      pickle.dump(results, f)
+      pickle.dump(stats_list, f)
 
-    iso *= math.pow(2, 1.0/steps)
+    iso = noise_model_utils.get_next_iso(iso, high_iso, iso_multiplier)
 
-  logging.info('Results pickled into file %s', dest_file)
+  logging.info('Read noise stats pickled into file %s.', dest_file)
 
-  return results
+  return stats_list
