@@ -66,6 +66,7 @@ import java.util.List;
  * Photo Picker Device only tests for common flows.
  */
 @RunWith(AndroidJUnit4.class)
+@Ignore("Ignored in Android T because this changed between T and U")
 public class CloudPhotoPickerTest extends PhotoPickerBaseTest {
     private final List<Uri> mUriList = new ArrayList<>();
     private MediaGenerator mCloudPrimaryMediaGenerator;
