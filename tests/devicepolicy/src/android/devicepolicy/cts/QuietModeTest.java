@@ -50,11 +50,13 @@ import androidx.test.uiautomator.Until;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
+import com.android.bedstead.harrier.UserType;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
 import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.RequireRunOnWorkProfile;
 import com.android.bedstead.harrier.annotations.StringTestParameter;
+import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDevicePolicyManagerRoleHolder;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.appops.AppOpsMode;
 import com.android.bedstead.nene.location.LocationProvider;
@@ -331,7 +333,6 @@ public class QuietModeTest {
         UserReference workProfile = sDeviceState.workProfile();
         Package permController = Package.of(UNSUSPENDABLE_PKG_NAME);
 
-
         String[] pkgs = new String[]{permController.packageName()};
 
         workProfile.setQuietMode(true);
@@ -346,6 +347,49 @@ public class QuietModeTest {
 
         assertWithMessage("Unsuspendable package still suspended after leaving quiet mode")
                 .that(permController.isSuspended(workProfile)).isFalse();
+    }
+
+    /** Verifies that profile owner package gets suspended in quiet mode */
+    @Postsubmit(reason = "new test")
+    @RequireRunOnWorkProfile
+    @Test
+    public void quietMode_dpcPackageGetsSuspended() throws Exception {
+        ensureKeepProfilesRunningEnabled();
+
+        UserReference workProfile = sDeviceState.workProfile();
+        Package dpcPackage = Package.of(sDeviceState.dpc().packageName());
+
+        workProfile.setQuietMode(true);
+        try {
+            assertWithMessage("Profile owner package was not suspended in quiet mode")
+                    .that(dpcPackage.isSuspended(workProfile)).isTrue();
+        } finally {
+            workProfile.setQuietMode(false);
+        }
+
+        assertWithMessage("Unsuspendable package still suspended after leaving quiet mode")
+                .that(dpcPackage.isSuspended(workProfile)).isFalse();
+    }
+
+    /** Verifies that profile owner package gets suspended in quiet mode */
+    @Postsubmit(reason = "new test")
+    @RequireRunOnWorkProfile
+    @EnsureHasDevicePolicyManagerRoleHolder(onUser = UserType.WORK_PROFILE)
+    @Test
+    public void quietMode_mgmtRoleHolderPackageNotSuspended() throws Exception {
+        ensureKeepProfilesRunningEnabled();
+
+        UserReference workProfile = sDeviceState.workProfile();
+        Package roleHolderPackage = Package.of(sDeviceState.dpmRoleHolder().packageName());
+
+        workProfile.setQuietMode(true);
+        try {
+
+            assertWithMessage("Mgmt role holder package was suspended by admin in quiet mode")
+                    .that(roleHolderPackage.isSuspended(workProfile)).isFalse();
+        } finally {
+            workProfile.setQuietMode(false);
+        }
     }
 
     /** Verifies that admin cannot unsuspend unsuspendable package while in quiet mode. */
