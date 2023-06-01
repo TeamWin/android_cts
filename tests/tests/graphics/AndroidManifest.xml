@@ -22,7 +22,9 @@
     <uses-permission android:name="android.permission.CAMERA"/>
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD"/>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
-    <application>
+    <!--Set application app category to "game" for FrameRateOverrideTest cases-->
+    <application
+        android:appCategory="game">
         <uses-library android:name="android.test.runner"/>
 
         <activity android:name="android.graphics.cts.CameraGpuCtsActivity"
@@ -32,6 +34,16 @@
         <activity android:name="android.graphics.cts.FrameRateCtsActivity"
              android:label="FrameRateCtsActivity"
              android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST"/>
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name="android.graphics.cts.FrameRateOverrideCtsActivity"
+            android:label="FrameRateOverrideCtsActivity"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST"/>
@@ -55,7 +67,6 @@
         <activity android:name="android.graphics.drawable.cts.DrawableStubActivity"
              android:theme="@style/WhiteBackgroundNoWindowAnimation"
              android:screenOrientation="locked"/>
-
         <activity android:name="android.graphics.cts.EmptyActivity"
                   android:label="Empty Activity"
                   android:exported="true">
