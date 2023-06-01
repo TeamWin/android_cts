@@ -1014,6 +1014,88 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
         }
     }
 
+    /**
+     * Inject stylus handwriting event on an editor and verify stylus source is detected with
+     * {@link InputMethodService#onUpdateEditorToolType(int)} on next startInput().
+     */
+    @Test
+    public void testOnViewClicked_withStylusHandwriting() throws Exception {
+        try (MockImeSession imeSession = MockImeSession.create(
+                InstrumentationRegistry.getInstrumentation().getContext(),
+                InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+                new ImeSettings.Builder())) {
+            final ImeEventStream stream = imeSession.openEventStream();
+
+            addVirtualStylusIdForTestSession();
+
+            final String focusedMarker = getTestMarker();
+            final String unFocusedMarker = getTestMarker();
+            final Pair<EditText, EditText> pair =
+                    launchTestActivity(focusedMarker, unFocusedMarker);
+            final EditText focusedEditText = pair.first;
+            final EditText unfocusedEditText = pair.second;
+
+            expectEvent(stream, editorMatcher("onStartInput", focusedMarker), TIMEOUT);
+            notExpectEvent(
+                    stream,
+                    editorMatcher("onStartInputView", focusedMarker),
+                    NOT_EXPECT_TIMEOUT);
+
+            // Finger tap on editor and verify onUpdateEditorToolType
+            TestUtils.injectFingerEventOnViewCenter(focusedEditText, MotionEvent.ACTION_DOWN);
+            MotionEvent upEvent =
+                    TestUtils.injectFingerEventOnViewCenter(focusedEditText, MotionEvent.ACTION_UP);
+            int toolTypeFinger = upEvent.getToolType(upEvent.getActionIndex());
+            assertEquals(
+                    "tool type finger must match", MotionEvent.TOOL_TYPE_FINGER, toolTypeFinger);
+            expectEvent(
+                    stream,
+                    onUpdateEditorToolTypeMatcher(toolTypeFinger),
+                    TIMEOUT);
+
+            // Start handwriting on same focused editor
+            final int touchSlop = getTouchSlop();
+            int startX = focusedEditText.getWidth() / 2;
+            int startY = focusedEditText.getHeight() / 2;
+            int endX = startX + 2 * touchSlop;
+            int endY = startY + 2 * touchSlop;
+            final int number = 5;
+            TestUtils.injectStylusDownEvent(focusedEditText, startX, startY);
+            TestUtils.injectStylusMoveEvents(focusedEditText, startX, startY,
+                    endX, endY, number);
+            // Handwriting should start.
+            expectEvent(
+                    stream,
+                    editorMatcher("onStartStylusHandwriting", focusedMarker),
+                    TIMEOUT);
+            TestUtils.injectStylusUpEvent(focusedEditText, endX, endY);
+            imeSession.callFinishStylusHandwriting();
+            expectEvent(
+                    stream,
+                    editorMatcher("onFinishStylusHandwriting", focusedMarker),
+                    TIMEOUT_1_S);
+
+            addVirtualStylusIdForTestSession();
+            // Now start handwriting on unfocused editor and verify toolType is available in
+            // EditorInfo
+            startX = unfocusedEditText.getWidth() / 2;
+            startY = unfocusedEditText.getHeight() / 2;
+            endX = startX + 2 * touchSlop;
+            endY = startY + 2 * touchSlop;
+
+            TestUtils.injectStylusDownEvent(unfocusedEditText, startX, startY);
+            TestUtils.injectStylusMoveEvents(unfocusedEditText, startX, startY,
+                    endX, endY, number);
+            expectEvent(stream, editorMatcher("onStartInput", unFocusedMarker), TIMEOUT);
+
+            // toolType should be updated on next stylus handwriting start
+            expectEvent(stream, onStartStylusHandwritingMatcher(
+                    MotionEvent.TOOL_TYPE_STYLUS, unFocusedMarker), TIMEOUT);
+
+            TestUtils.injectStylusUpEvent(unfocusedEditText, endX, endY);
+        }
+    }
+
     private static Predicate<ImeEvent> onStartInputMatcher(int toolType, String marker) {
         Predicate<ImeEvent> matcher = event -> {
             if (!TextUtils.equals("onStartInput", event.getEventName())) {
@@ -1025,6 +1107,21 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
         };
         return withDescription(
                 "onStartInput(initialToolType=" + toolType + ",marker=" + marker + ")", matcher);
+    }
+
+    private static Predicate<ImeEvent> onStartStylusHandwritingMatcher(
+            int toolType, String marker) {
+        Predicate<ImeEvent> matcher = event -> {
+            if (!TextUtils.equals("onStartStylusHandwriting", event.getEventName())) {
+                return false;
+            }
+            EditorInfo info = event.getArguments().getParcelable("editorInfo");
+            return info.getInitialToolType() == toolType
+                    && TextUtils.equals(marker, info.privateImeOptions);
+        };
+        return withDescription(
+                "onStartStylusHandwriting(initialToolType=" + toolType
+                        + ", marker=" + marker + ")", matcher);
     }
 
     private static Predicate<ImeEvent> onUpdateEditorToolTypeMatcher(int expectedToolType) {
