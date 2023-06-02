@@ -1,7 +1,7 @@
 # animation & tranistion
 # Bug template url: https://b.corp.google.com/issues/new?component=316275&template=1018192 = per-file *Transition*, SplashscreenTests.java
 # foldables
-# Bug template url: https://b.corp.google.com/issues/new?component=943781&template=1502790 = per-file *WindowContext*, *WindowMetrics*
+# Bug template url: https://b.corp.google.com/issues/new?component=316125&template=1018199 = per-file *WindowContext*, *WindowMetrics*
 # insets & cutout
 # Bug template url: https://b.corp.google.com/issues/new?component=339570&template=1037597 = per-file *Inset*, *Cutout*, *RoundedCorner*, ForceRelayoutTest.java
 # shell
