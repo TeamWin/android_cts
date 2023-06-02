@@ -17,7 +17,7 @@
     <option name="test-suite-tag" value="cts" />
     <option name="config-descriptor:metadata" key="component" value="framework"/>
     <option name="config-descriptor:metadata" key="parameter" value="not_instant_app" />
-    <option name="config-descriptor:metadata" key="parameter" value="not_multi_abi" />
+    <option name="config-descriptor:metadata" key="parameter" value="multi_abi" />
     <option name="config-descriptor:metadata" key="parameter" value="secondary_user" />
     <option name="config-descriptor:metadata" key="parameter" value="run_on_sdk_sandbox" />
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
@@ -84,6 +84,8 @@
         <option name="run-command" value="locksettings set-disabled false" />
         <!-- ensure user setup is completed -->
         <option name="run-command" value="settings put secure user_setup_complete 1" />
+        <!-- disable DeprecatedAbi warning -->
+        <option name="run-command" value="setprop debug.wm.disable_deprecated_abi_dialog 1" />
     </target_preparer>
 
     <test class="com.android.tradefed.testtype.AndroidJUnitTest">
@@ -97,4 +99,9 @@
         <option name="collect-on-run-ended-only" value="true" />
     </metrics_collector>
 
+    <!-- Needed for DeprecatedAbiTest -->
+    <target_preparer class="com.android.tradefed.targetprep.PushFilePreparer">
+        <option name="cleanup" value="true" />
+        <option name="push-file" key="CtsDeviceDeprecatedAbiApp.apk" value="/data/local/tmp/cts/CtsDeviceDeprecatedAbiApp.apk" />
+    </target_preparer>
 </configuration>
