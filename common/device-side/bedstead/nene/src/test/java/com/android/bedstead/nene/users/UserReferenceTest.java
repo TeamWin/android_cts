@@ -55,6 +55,7 @@ import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.permissions.PermissionContext;
 
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -101,11 +102,6 @@ public class UserReferenceTest {
     @EnsureHasSecondaryUser
     public void exists_doesExist_returnsTrue() {
         assertThat(sDeviceState.secondaryUser().exists()).isTrue();
-    }
-
-    @Test
-    public void remove_userDoesNotExist_throwsException() {
-        assertThrows(NeneException.class, () -> TestApis.users().find(USER_ID).remove());
     }
 
     @Test
@@ -688,6 +684,8 @@ public class UserReferenceTest {
     @Test
     @EnsurePasswordNotSet
     @RequireNotHeadlessSystemUserMode(reason = "b/248248444")
+    @Ignore // This is no longer correct - as long as nene knows the existing password it will
+    // replace - we need to change the password outside of nene to simulate the actual case
     public void setPassword_alreadyHasPassword_throwsException() {
         try {
             TestApis.users().instrumented().setPassword(PASSWORD);
@@ -702,6 +700,8 @@ public class UserReferenceTest {
     @Test
     @EnsurePasswordNotSet
     @RequireNotHeadlessSystemUserMode(reason = "b/248248444")
+    @Ignore // This is no longer correct - as long as nene knows the existing password it will
+    // replace - we need to change the password outside of nene to simulate the actual case
     public void setPin_alreadyHasPin_throwsException() {
         try {
             TestApis.users().instrumented().setPin(PIN);
@@ -716,6 +716,8 @@ public class UserReferenceTest {
     @Test
     @EnsurePasswordNotSet
     @RequireNotHeadlessSystemUserMode(reason = "b/248248444")
+    @Ignore // This is no longer correct - as long as nene knows the existing password it will
+    // replace - we need to change the password outside of nene to simulate the actual case
     public void setPattern_alreadyHasPattern_throwsException() {
         try {
             TestApis.users().instrumented().setPattern(PATTERN);

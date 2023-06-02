@@ -44,12 +44,7 @@ public class ByodFlowTestHelper {
      * Clean up things. This has to be working even it is called multiple times.
      */
     public void tearDown() {
-        if (!UserManager.isHeadlessSystemUserMode()) {
-            // TODO(b/177554984): figure out how to use it on headless system user mode - right now,
-            // it removes the current user on teardown
-            Log.i(TAG, "tearDown(): not deleting managed profile on headless system user mode");
-            Utils.requestDeleteManagedProfile(mContext);
-        }
+        Utils.requestDeleteManagedProfile(mContext);
         setComponentsEnabledState(PackageManager.COMPONENT_ENABLED_STATE_DEFAULT);
     }
 
