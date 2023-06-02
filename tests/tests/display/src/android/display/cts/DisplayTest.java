@@ -21,6 +21,8 @@ import static android.view.Display.DEFAULT_DISPLAY;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -335,6 +337,13 @@ public class DisplayTest extends TestBase {
         }
         assertTrue(hasDefaultDisplay);
         assertTrue(hasSecondaryDisplay);
+    }
+
+    @Test
+    public void getDisplaysWithInvalidCategory_returnsEmptyArray() {
+        Display[] displays = mDisplayManager.getDisplays("InvalidDisplayCategory");
+
+        assertThat(displays).isEmpty();
     }
 
     /**
