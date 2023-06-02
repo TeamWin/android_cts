@@ -1978,7 +1978,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         assertNotNull(mListener);
 
         sendNotification(1, R.drawable.black);
-        Thread.sleep(500); // wait for notification listener to receive notification
+        mNotificationHelper.findPostedNotification(null, 1, SEARCH_TYPE.POSTED);
 
         assertEquals(mListener.mRankingMap, mListener.getCurrentRanking());
     }
