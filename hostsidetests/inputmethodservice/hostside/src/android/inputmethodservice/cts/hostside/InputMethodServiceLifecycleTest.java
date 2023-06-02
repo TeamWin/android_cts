@@ -39,6 +39,7 @@ import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.AppModeInstant;
 
 import com.android.compatibility.common.util.FeatureUtil;
+import com.android.tradefed.log.LogUtil;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 import com.android.tradefed.testtype.junit4.DeviceTestRunOptions;
@@ -47,6 +48,7 @@ import com.android.tradefed.util.RunUtil;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.function.ThrowingRunnable;
 import org.junit.runner.RunWith;
 
 import java.util.concurrent.TimeUnit;
@@ -487,19 +489,21 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
     }
 
     private void testImeVisibilityAfterImeSwitching(boolean instant) throws Exception {
-        sendTestStartEvent(DeviceTestConstants.TEST_SWITCH_IME1_TO_IME2);
-        installPossibleInstantPackage(
-                EditTextAppConstants.APK, EditTextAppConstants.PACKAGE, instant);
-        installImePackageSync(Ime1Constants.APK, Ime1Constants.IME_ID);
-        installImePackageSync(Ime2Constants.APK, Ime2Constants.IME_ID);
-        shell(ShellCommandUtils.waitForBroadcastBarrier());
-        shell(ShellCommandUtils.enableIme(Ime1Constants.IME_ID));
-        shell(ShellCommandUtils.enableIme(Ime2Constants.IME_ID));
-        waitUntilImesAreEnabled(Ime1Constants.IME_ID, Ime2Constants.IME_ID);
-        shell(ShellCommandUtils.setCurrentImeSync(Ime1Constants.IME_ID));
+        runWithRetries(3, () -> {
+            sendTestStartEvent(DeviceTestConstants.TEST_SWITCH_IME1_TO_IME2);
+            installPossibleInstantPackage(
+                    EditTextAppConstants.APK, EditTextAppConstants.PACKAGE, instant);
+            installImePackageSync(Ime1Constants.APK, Ime1Constants.IME_ID);
+            installImePackageSync(Ime2Constants.APK, Ime2Constants.IME_ID);
+            shell(ShellCommandUtils.waitForBroadcastBarrier());
+            shell(ShellCommandUtils.enableIme(Ime1Constants.IME_ID));
+            shell(ShellCommandUtils.enableIme(Ime2Constants.IME_ID));
+            waitUntilImesAreEnabled(Ime1Constants.IME_ID, Ime2Constants.IME_ID);
+            shell(ShellCommandUtils.setCurrentImeSync(Ime1Constants.IME_ID));
 
-        assertTrue(runDeviceTestMethod(
-                DeviceTestConstants.TEST_IME_VISIBILITY_AFTER_IME_SWITCHING));
+            assertTrue(runDeviceTestMethod(
+                    DeviceTestConstants.TEST_IME_VISIBILITY_AFTER_IME_SWITCHING));
+        });
     }
 
     /**
@@ -633,6 +637,35 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
     private void waitUntilImesAreEnabled(String... imeIds) throws Exception {
         waitUntilImesAreAvailableOrEnabled(true, imeIds);
     }
+
+    /**
+     * Call a function multiple times consecutively, if assertion in it fails first.
+     *
+     * <p>Retry running a provided action multiple times, if an {@link AssertionError} is thrown in
+     * a previous run. Only throws the error when the action failed at all previous consecutive
+     * runs. Other types of exceptions are not suppressed.</p>
+     *
+     * @param maxTries maximal amount of attempt that should be performed before throwing the
+     * {@link AssertionError}, if applicable
+     * @param action the action to perform
+     */
+    private static void runWithRetries(int maxTries, ThrowingRunnable action) throws Exception {
+        for (int attempt = 1; true; attempt++) {
+            try {
+                action.run();
+                return;
+            } catch (AssertionError e) {
+                if (attempt < maxTries) {
+                    LogUtil.CLog.i("Attempt " + attempt + " failed; retrying", e);
+                } else {
+                    throw e;
+                }
+            } catch (Throwable e) {
+                throw new Exception(e);
+            }
+        }
+    }
+
 
     private void waitUntilImesAreAvailableOrEnabled(
             boolean shouldBeEnabled, String... imeIds) throws Exception {
