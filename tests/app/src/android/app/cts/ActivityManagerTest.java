@@ -912,6 +912,14 @@ public final class ActivityManagerTest {
         assertTrue(timeReceiver.mTimeUsed != 0);
     }
 
+    /**
+     * Checks whether the device is automotive
+     */
+    private static boolean isAutomotive(Context context) {
+        PackageManager pm = context.getPackageManager();
+        return pm.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE);
+    }
+
     @Test
     public void testHomeVisibilityListener() throws Exception {
         assumeFalse("With platforms that have no home screen, no need to test", noHomeScreen());
@@ -928,8 +936,19 @@ public final class ActivityManagerTest {
                 (am) -> am.addHomeVisibilityListener(Runnable::run, homeVisibilityListener));
 
         try {
-            // Make sure we got the first notification that the home screen is visible.
-            assertTrue(currentHomeScreenVisibility.poll(WAIT_TIME, TimeUnit.MILLISECONDS));
+            PackageManager pm = mTargetContext.getPackageManager();
+            // In multi-task mode with split screen there can be more than one application that is
+            // visible and to user. An activity with category HOME might not be visible when HOME
+            // intent is fired.
+            // Hence, when in PackageManager.FEATURE_CAR_SPLITSCREEN_MULTITASKING mode
+            // do not check that HOME is visible.
+            if (!pm.hasSystemFeature(/* PackageManager.FEATURE_CAR_SPLITSCREEN_MULTITASKING */
+                    "android.software.car.splitscreen_multitasking")
+                    || !isAutomotive(mTargetContext)) {
+                // Make sure we got the first notification that the home screen is visible.
+                assertTrue(currentHomeScreenVisibility.poll(WAIT_TIME, TimeUnit.MILLISECONDS));
+            }
+
             // Launch a basic activity to obscure the home screen.
             Intent intent = new Intent(Intent.ACTION_MAIN);
             intent.setClassName(SIMPLE_PACKAGE_NAME, SIMPLE_PACKAGE_NAME + SIMPLE_ACTIVITY);
