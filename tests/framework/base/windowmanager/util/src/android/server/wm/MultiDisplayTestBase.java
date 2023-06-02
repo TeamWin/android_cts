@@ -20,7 +20,6 @@ import static android.content.pm.ActivityInfo.CONFIG_SCREEN_SIZE;
 import static android.content.pm.PackageManager.FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS;
 import static android.server.wm.ShellCommandHelper.executeShellCommand;
 import static android.server.wm.UiDeviceUtils.pressSleepButton;
-import static android.server.wm.UiDeviceUtils.pressWakeupButton;
 import static android.server.wm.app.Components.VIRTUAL_DISPLAY_ACTIVITY;
 import static android.server.wm.app.Components.VirtualDisplayActivity.COMMAND_CREATE_DISPLAY;
 import static android.server.wm.app.Components.VirtualDisplayActivity.COMMAND_DESTROY_DISPLAY;
@@ -793,7 +792,7 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
         }
     }
 
-    public static class PrimaryDisplayStateSession implements AutoCloseable {
+    public class PrimaryDisplayStateSession implements AutoCloseable {
 
         void turnScreenOff() {
             setPrimaryDisplayState(false);
@@ -807,7 +806,7 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
         /** Turns the primary display on/off by pressing the power key */
         private void setPrimaryDisplayState(boolean wantOn) {
             if (wantOn) {
-                pressWakeupButton();
+                wakeUpAndUnlock(mContext);
             } else {
                 pressSleepButton();
             }
