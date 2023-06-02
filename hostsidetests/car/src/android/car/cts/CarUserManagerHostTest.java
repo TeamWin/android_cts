@@ -35,7 +35,7 @@ public final class CarUserManagerHostTest extends CarHostJUnit4TestCase {
     private static final String STATUS_OK_USER_ALREADY_IN_FOREGROUND =
             "STATUS_OK_USER_ALREADY_IN_FOREGROUND";
     private static final String STATUS_UX_RESTRICTION_FAILURE = "STATUS_UX_RESTRICTION_FAILURE";
-    private static final long TEST_WAIT_MS = 500;
+    private static final long TEST_WAIT_MS = 50;
     private static final long TEST_TIMEOUT_MS = 10_000;
 
     @Test
