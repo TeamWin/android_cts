@@ -32,6 +32,7 @@ import com.android.tradefed.testtype.junit4.BeforeClassWithInfo;
 import com.android.tradefed.testtype.junit4.DeviceTestRunOptions;
 import com.android.tradefed.util.CommandResult;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -44,6 +45,7 @@ import javax.annotation.Nonnull;
 @AppModeFull
 public class AppCloningMediaProviderHostTest extends BaseHostTestCase{
 
+    protected static ITestDevice sDevice = null;
     protected static final String DEVICE_TEST_APP_PACKAGE = "android.scopedstorage.cts";
     protected static final String DEVICE_TEST_APP = "AppCloningDeviceTest.apk";
     private static final String DEVICE_TEST_CLASS = DEVICE_TEST_APP_PACKAGE
@@ -58,6 +60,8 @@ public class AppCloningMediaProviderHostTest extends BaseHostTestCase{
     private static final String FILE_TO_BE_CREATED = "fileToBeCreated";
     private static final String FILE_EXPECTED_TO_BE_PRESENT = "fileExpectedToBePresent";
     private static final String FILE_NOT_EXPECTED_TO_BE_PRESENT = "fileNotExpectedToBePresent";
+
+    private static final String USER_ID_FOR_PATH = "userIdForPath";
     /**
      * Provide different name to Files being created, on each execution of the test, so that
      * flakiness from previously existing files can be avoided.
@@ -66,7 +70,7 @@ public class AppCloningMediaProviderHostTest extends BaseHostTestCase{
     private static String sCloneUserId;
     @BeforeClassWithInfo
     public static void beforeClassWithDevice(TestInformation testInfo) throws Exception {
-        final ITestDevice sDevice = testInfo.getDevice();
+        sDevice = testInfo.getDevice();
         assertThat(sDevice).isNotNull();
 
         assumeTrue("Device doesn't support multiple users", supportsMultipleUsers(sDevice));
@@ -92,6 +96,10 @@ public class AppCloningMediaProviderHostTest extends BaseHostTestCase{
         // Check that the clone user directories have been created
         eventually(() -> sDevice.doesFileExist(sCloneUserStoragePath, mCloneUserIdInt),
                 CLONE_PROFILE_DIRECTORY_CREATION_TIMEOUT_MS);
+    }
+
+    @Before
+    public void beforeTest() {
         sNonce = String.valueOf(System.nanoTime());
     }
 
@@ -101,6 +109,35 @@ public class AppCloningMediaProviderHostTest extends BaseHostTestCase{
         if (!supportsMultipleUsers(device) || isHeadlessSystemUserMode(device)
                 || !isAtLeastS(device) || usesSdcardFs(device)) return;
         testInfo.getDevice().executeShellCommand("pm remove-user " + sCloneUserId);
+    }
+
+    @Test
+    public void testInsertCrossUserFilesInDirectoryViaMediaProvider() throws Exception {
+        // Only run on U+
+        assumeTrue(isAtLeastU(sDevice));
+
+        // Install the Device Test App in both the user spaces.
+        installPackage(DEVICE_TEST_APP, "--user all");
+        // Install the Scoped Storage Test App in both the user spaces.
+        installPackage(SCOPED_STORAGE_TEST_APP_B_APK, "--user all");
+
+        int currentUserId = getCurrentUserId();
+
+        // We add the file in DCIM directory of clone from owner user's app.
+        final String fileNameClonedUser = "tmpFileToPushClonedUser" + sNonce + ".png";
+        Map<String, String> ownerArgs = new HashMap<>();
+        ownerArgs.put(USER_ID_FOR_PATH, sCloneUserId);
+        ownerArgs.put(FILE_TO_BE_CREATED, fileNameClonedUser);
+        runDeviceTestAsUserInPkgA("testInsertFilesInDirectoryViaMediaProviderWithPathSpecified",
+                currentUserId, ownerArgs);
+
+        // We add the file in DCIM directory of owner from cloned user's app.
+        final String fileNameOwnerUser = "tmpFileToPushOwnerUser" + sNonce + ".png";
+        Map<String, String> cloneArgs = new HashMap<>();
+        cloneArgs.put(USER_ID_FOR_PATH, String.valueOf(currentUserId));
+        cloneArgs.put(FILE_TO_BE_CREATED, fileNameOwnerUser);
+        runDeviceTestAsUserInPkgA("testInsertFilesInDirectoryViaMediaProviderWithPathSpecified",
+                Integer.parseInt(sCloneUserId), cloneArgs);
     }
 
     @Test

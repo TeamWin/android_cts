@@ -18,6 +18,7 @@ package android.scopedstorage.cts;
 
 import static android.scopedstorage.cts.lib.TestUtils.canOpenFileAs;
 import static android.scopedstorage.cts.lib.TestUtils.createFileAs;
+import static android.scopedstorage.cts.lib.TestUtils.fileExistsAs;
 import static android.scopedstorage.cts.lib.TestUtils.listAs;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -58,6 +59,19 @@ public class AppCloningDeviceTest {
     }
 
     @Test
+    public void testInsertFilesInDirectoryViaMediaProviderWithPathSpecified() throws Exception {
+        String dirPath = String.format(EXTERNAL_STORAGE_DCIM_PATH,
+                Integer.parseInt(getUserIdForPath()));
+        final File dir = new File(dirPath);
+        assertThat(dir.exists()).isTrue();
+        final File file = new File(dir, getFileToBeCreatedName());
+        assertThat(createFileAs(APP_B_NO_PERMS, file.getPath())).isTrue();
+        assertThat(fileExistsAs(APP_B_NO_PERMS, file)).isTrue();
+        assertThat(canOpenFileAs(APP_B_NO_PERMS, file, true)).isTrue();
+        assertThat(listAs(APP_B_NO_PERMS, dir.getPath())).contains(file.getName());
+    }
+
+    @Test
     public void testGetFilesInDirectoryViaMediaProviderRespectsUserId() throws Exception {
         String dirPath = String.format(EXTERNAL_STORAGE_DCIM_PATH,
                 Integer.parseInt(getCurrentUserId()));
@@ -73,6 +87,10 @@ public class AppCloningDeviceTest {
         final Bundle testArguments = InstrumentationRegistry.getArguments();
         String testArgumentValue = testArguments.getString(testArgumentKey, EMPTY_STRING);
         return testArgumentValue;
+    }
+
+    private String getUserIdForPath() {
+        return getTestArgumentValueForGivenKey("userIdForPath");
     }
 
     private String getCurrentUserId() {

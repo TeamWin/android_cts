@@ -54,6 +54,10 @@ abstract class BaseHostTestCase extends BaseHostJUnit4Test {
         return device.getApiLevel() >= 31 /* BUILD.VERSION_CODES.S */;
     }
 
+    protected static boolean isAtLeastU(ITestDevice device) throws DeviceNotAvailableException {
+        return device.getApiLevel() >= 34;
+    }
+
     protected static void eventually(ThrowingRunnable r, long timeoutMillis) {
         long start = System.currentTimeMillis();
 
