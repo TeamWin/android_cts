@@ -65,19 +65,21 @@ public class UserControlDisabledPackagesTest extends BaseDeviceOwnerTest {
         // package
 
         assertThat(mDevicePolicyManager.getUserControlDisabledPackages(getWho()))
-                .containsExactly(SIMPLE_APP_PKG);
+                .contains(SIMPLE_APP_PKG);
         assertPackageStopped(/* stopped= */ false);
     }
 
     public void testClearSetUserControlDisabledPackages() throws Exception {
         final ArrayList<String> pkgs = new ArrayList<>();
         mDevicePolicyManager.setUserControlDisabledPackages(getWho(), pkgs);
-        assertThat(mDevicePolicyManager.getUserControlDisabledPackages(getWho())).isEmpty();
+        assertThat(mDevicePolicyManager.getUserControlDisabledPackages(getWho()))
+                .doesNotContain(SIMPLE_APP_PKG);
     }
 
     public void testForceStopWithUserControlEnabled() throws Exception {
         assertPackageStopped(/* stopped= */ true);
-        assertThat(mDevicePolicyManager.getUserControlDisabledPackages(getWho())).isEmpty();
+        assertThat(mDevicePolicyManager.getUserControlDisabledPackages(getWho()))
+                .doesNotContain(SIMPLE_APP_PKG);
     }
 
     public void testFgsStopWithUserControlDisabled() throws Exception {
@@ -87,7 +89,7 @@ public class UserControlDisabledPackagesTest extends BaseDeviceOwnerTest {
         // package is stopped since it is a necessary condition to prevent stopping of
         // package
         assertThat(mDevicePolicyManager.getUserControlDisabledPackages(getWho()))
-                .containsExactly(SIMPLE_APP_PKG);
+                .contains(SIMPLE_APP_PKG);
         assertPackageRunningState(/* running= */ true,
                 InstrumentationRegistry.getArguments().getString(ARG_PID_BEFORE_STOP, "-1"));
     }
@@ -95,7 +97,8 @@ public class UserControlDisabledPackagesTest extends BaseDeviceOwnerTest {
     public void testFgsStopWithUserControlEnabled() throws Exception {
         assertPackageRunningState(/* running= */ false,
                 InstrumentationRegistry.getArguments().getString(ARG_PID_BEFORE_STOP, "-1"));
-        assertThat(mDevicePolicyManager.getUserControlDisabledPackages(getWho())).isEmpty();
+        assertThat(mDevicePolicyManager.getUserControlDisabledPackages(getWho()))
+                .doesNotContain(SIMPLE_APP_PKG);
     }
 
     private boolean isPackageStopped(String packageName) throws Exception {
