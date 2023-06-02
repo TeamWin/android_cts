@@ -93,6 +93,12 @@ public class ValidateTestsAbi {
          * Data apk used by SimpleperfTestCases
          */
         APK_EXCEPTIONS.add("base");
+
+        /**
+         * This module tests that packages with only 32-bit native libraries will receive a
+         * warning message when running on devices that support both 32-bit and 64-bit ABIs.
+         */
+        APK_EXCEPTIONS.add("CtsDeviceDeprecatedAbiApp");
     }
 
     private static final Set<String> BINARY_EXCEPTIONS = new HashSet<>();
