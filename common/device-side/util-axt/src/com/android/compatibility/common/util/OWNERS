@@ -8,4 +8,4 @@ per-file ReadElf.java = enh@google.com
 per-file ShellUtils.java = felipeal@google.com
 per-file *Settings*.java = felipeal@google.com
 per-file User*Helper*.java = felipeal@google.com
-per-file *StateManager*.java = felipeal@google.com
+per-file *State*er*.java = felipeal@google.com
