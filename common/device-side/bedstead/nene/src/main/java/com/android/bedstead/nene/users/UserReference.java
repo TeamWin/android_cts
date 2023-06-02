@@ -532,10 +532,12 @@ public final class UserReference implements AutoCloseable {
 
     /**
      * {@code true} if this user is a profile of another user.
+     *
+     * <p>A non-existing user will return false
      */
     @Experimental
     public boolean isProfile() {
-        return parent() != null;
+        return exists() && parent() != null;
     }
 
     /**
@@ -932,7 +934,12 @@ public final class UserReference implements AutoCloseable {
 
     @Override
     public String toString() {
-        return "User{id=" + id() + ", name=" + name() + "}";
+        try {
+            return "User{id=" + id() + ", name=" + name() + "}";
+        } catch (NeneException e) {
+            // If the user does not exist we won't be able to get a name
+            return "User{id=" + id() + "}";
+        }
     }
 
     /**
