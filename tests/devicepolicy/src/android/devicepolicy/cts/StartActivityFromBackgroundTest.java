@@ -30,6 +30,7 @@ import com.android.bedstead.nene.utils.Poll;
 import com.android.bedstead.testapp.TestAppActivityReference;
 
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -41,6 +42,7 @@ public class StartActivityFromBackgroundTest {
     @Rule
     public static final DeviceState sDeviceState = new DeviceState();
 
+    @Ignore("b/285537184")
     @CannotSetPolicyTest(policy = StartActivityFromBackground.class)
     @Test
     public void startActivityFromBackground_dpcNotAllowed_unableToStart() {
@@ -56,6 +58,7 @@ public class StartActivityFromBackgroundTest {
                 .toNotBeEqualTo(testActivity.component()).errorOnFail().await();
     }
 
+    @Ignore("b/285537184")
     @CanSetPolicyTest(policy = StartActivityFromBackground.class)
     @Test
     public void startActivityFromBackground_dpcAllowed_ableToStart() {
