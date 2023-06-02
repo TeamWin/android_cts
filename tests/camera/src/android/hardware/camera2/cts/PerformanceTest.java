@@ -1084,6 +1084,7 @@ public class PerformanceTest {
                         ResultType.HIGHER_BETTER, ResultUnit.FRAMES);
             } finally {
                 mTestRule.closeDefaultImageReader();
+                mTestRule.closeDevice(id);
                 closePreviewSurface();
             }
             mReportLog.submit(mInstrumentation);
