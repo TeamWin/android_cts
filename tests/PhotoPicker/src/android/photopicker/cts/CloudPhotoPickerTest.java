@@ -66,7 +66,6 @@ import java.util.List;
  * Photo Picker Device only tests for common flows.
  */
 @RunWith(AndroidJUnit4.class)
-@Ignore("Ignored in Android T because this changed between T and U")
 public class CloudPhotoPickerTest extends PhotoPickerBaseTest {
     private final List<Uri> mUriList = new ArrayList<>();
     private MediaGenerator mCloudPrimaryMediaGenerator;
@@ -115,6 +114,7 @@ public class CloudPhotoPickerTest extends PhotoPickerBaseTest {
     }
 
     @Test
+    @Ignore("Ignored in Android T because this changed between T and U")
     public void testCloudOnlySync() throws Exception {
         initPrimaryCloudProviderWithImage(Pair.create(null, CLOUD_ID1));
 
@@ -125,6 +125,7 @@ public class CloudPhotoPickerTest extends PhotoPickerBaseTest {
     }
 
     @Test
+    @Ignore("Ignored in Android T because this changed between T and U")
     public void testCloudPlusLocalSyncWithoutDedupe() throws Exception {
         createImages(1, mContext.getUserId(), mUriList);
         initPrimaryCloudProviderWithImage(Pair.create(null, CLOUD_ID1));
@@ -136,6 +137,7 @@ public class CloudPhotoPickerTest extends PhotoPickerBaseTest {
     }
 
     @Test
+    @Ignore("Ignored in Android T because this changed between T and U")
     public void testCloudPlusLocalSyncWithDedupe() throws Exception {
         createImages(1, mContext.getUserId(), mUriList);
         initPrimaryCloudProviderWithImage(Pair.create(mUriList.get(0).getLastPathSegment(),
@@ -148,6 +150,7 @@ public class CloudPhotoPickerTest extends PhotoPickerBaseTest {
     }
 
     @Test
+    @Ignore("Ignored in Android T because this changed between T and U")
     public void testDeleteCloudMedia() throws Exception {
         initPrimaryCloudProviderWithImage(Pair.create(null, CLOUD_ID1),
                 Pair.create(null, CLOUD_ID2));
@@ -168,6 +171,7 @@ public class CloudPhotoPickerTest extends PhotoPickerBaseTest {
     }
 
     @Test
+    @Ignore("Ignored in Android T because this changed between T and U")
     public void testVersionChange() throws Exception {
         initPrimaryCloudProviderWithImage(Pair.create(null, CLOUD_ID1),
                 Pair.create(null, CLOUD_ID2));
@@ -196,6 +200,7 @@ public class CloudPhotoPickerTest extends PhotoPickerBaseTest {
     }
 
     @Test
+    @Ignore("Ignored in Android T because this changed between T and U")
     public void testSupportedProviders() throws Exception {
         assertThat(MediaStore.isSupportedCloudMediaProviderAuthority(mContext.getContentResolver(),
                         CloudProviderPrimary.AUTHORITY)).isTrue();
@@ -209,6 +214,7 @@ public class CloudPhotoPickerTest extends PhotoPickerBaseTest {
     }
 
     @Test
+    @Ignore("Ignored in Android T because this changed between T and U")
     public void testProviderSwitchSuccess() throws Exception {
         setCloudProvider(mContext, CloudProviderPrimary.AUTHORITY);
         assertThat(MediaStore.isCurrentCloudMediaProviderAuthority(mContext.getContentResolver(),
@@ -235,6 +241,7 @@ public class CloudPhotoPickerTest extends PhotoPickerBaseTest {
     }
 
     @Test
+    @Ignore("Ignored in Android T because this changed between T and U")
     public void testProviderSwitchFailure() throws Exception {
         setCloudProvider(mContext, CloudProviderNoIntentFilter.AUTHORITY);
         assertThat(MediaStore.isCurrentCloudMediaProviderAuthority(mContext.getContentResolver(),
@@ -246,6 +253,7 @@ public class CloudPhotoPickerTest extends PhotoPickerBaseTest {
     }
 
     @Test
+    @Ignore("Ignored in Android T because this changed between T and U")
     public void testUriAccessWithValidProjection() throws Exception {
         initPrimaryCloudProviderWithImage(Pair.create(null, CLOUD_ID1));
 
@@ -298,6 +306,7 @@ public class CloudPhotoPickerTest extends PhotoPickerBaseTest {
     }
 
     @Test
+    @Ignore("Ignored in Android T because this changed between T and U")
     public void testCloudEventNotification() throws Exception {
         // Create a placeholder local image to ensure that the picker UI is never empty.
         // The PhotoPickerUiUtils#findItemList needs to select an item and it times out if the
@@ -345,6 +354,7 @@ public class CloudPhotoPickerTest extends PhotoPickerBaseTest {
 
     @Test
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU)
+    @Ignore("Ignored in Android T because this changed between T and U")
     public void testStorageManagerKnowsCloudProvider() {
         final StorageManager storageManager = mContext.getSystemService(StorageManager.class);
 
