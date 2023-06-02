@@ -2121,6 +2121,7 @@ public final class DeviceState extends HarrierRule {
 
                 // DO + work profile isn't a valid state
                 ensureHasNoDeviceOwner();
+                ensureDoesNotHaveUserRestriction(DISALLOW_ADD_MANAGED_PROFILE, forUserReference);
             }
 
             profile = createProfile(resolvedUserType, forUserReference);
