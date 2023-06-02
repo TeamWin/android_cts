@@ -99,6 +99,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.Executor;
@@ -3358,6 +3359,30 @@ public class CameraTestUtils extends Assert {
             verifyJpegExifExtraTags(exif, expectedSize, captureResult, staticInfo, allStaticInfo,
                     collector, expectedExifData);
         }
+    }
+
+    public static Optional<Long> getSurfaceUsage(Surface s) {
+        if (s == null || !s.isValid()) {
+            Log.e(TAG, "Invalid Surface!");
+            return Optional.empty();
+        }
+
+        long usage = 0;
+        ImageWriter writer = ImageWriter.newInstance(s, /*maxImages*/1, ImageFormat.YUV_420_888);
+        try {
+            Image img = writer.dequeueInputImage();
+            if (img != null) {
+                usage = img.getHardwareBuffer().getUsage();
+                img.close();
+            } else {
+                Log.e(TAG, "Unable to dequeue ImageWriter buffer!");
+                return Optional.empty();
+            }
+        } finally {
+            writer.close();
+        }
+
+        return Optional.of(usage);
     }
 
     /**
