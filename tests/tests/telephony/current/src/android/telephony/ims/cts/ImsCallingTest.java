@@ -1129,9 +1129,7 @@ public class ImsCallingTest extends ImsCallingBase {
 
         sServiceConnector.getCarrierService().getMmTelFeature()
                 .setCallAudioHandler(MmTelFeature.AUDIO_HANDLER_ANDROID);
-        sServiceConnector.getCarrierService().getMmTelFeature()
-                .getTerminalBasedCallWaitingLatch().await(WAIT_UPDATE_TIMEOUT_MS,
-                        TimeUnit.MILLISECONDS);
+        TimeUnit.MILLISECONDS.sleep(WAIT_UPDATE_TIMEOUT_MS);
 
         assertNotEquals(AudioManager.MODE_NORMAL, mAudioManager.getMode());
         assertEquals(AudioManager.MODE_IN_COMMUNICATION, mAudioManager.getMode());
@@ -1154,9 +1152,7 @@ public class ImsCallingTest extends ImsCallingBase {
 
         sServiceConnector.getCarrierService().getMmTelFeature()
                 .setCallAudioHandler(MmTelFeature.AUDIO_HANDLER_BASEBAND);
-        sServiceConnector.getCarrierService().getMmTelFeature()
-                .getTerminalBasedCallWaitingLatch().await(WAIT_UPDATE_TIMEOUT_MS,
-                        TimeUnit.MILLISECONDS);
+        TimeUnit.MILLISECONDS.sleep(WAIT_UPDATE_TIMEOUT_MS);
 
         assertNotEquals(AudioManager.MODE_NORMAL, mAudioManager.getMode());
         assertEquals(AudioManager.MODE_IN_CALL, mAudioManager.getMode());
