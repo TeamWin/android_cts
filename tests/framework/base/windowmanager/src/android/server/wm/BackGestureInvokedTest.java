@@ -31,11 +31,13 @@ import static org.junit.Assert.assertTrue;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.ComponentName;
+import android.content.Context;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.platform.test.annotations.Presubmit;
 import android.view.Gravity;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
@@ -218,7 +220,11 @@ public class BackGestureInvokedTest extends ActivityManagerTestBase {
             final LinearLayout layout = new LinearLayout(this);
             layout.setOrientation(LinearLayout.VERTICAL);
             layout.addView(mEditText);
-            mEditText.requestFocus();
+            if (mEditText.requestFocus()) {
+                InputMethodManager imm = (InputMethodManager)
+                        getSystemService(Context.INPUT_METHOD_SERVICE);
+                imm.showSoftInput(mEditText, InputMethodManager.SHOW_IMPLICIT);
+            }
             setContentView(layout);
         }
     }
