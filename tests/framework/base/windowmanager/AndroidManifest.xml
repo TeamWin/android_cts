@@ -542,6 +542,18 @@
              android:theme="@style/BackgroundImage"
              android:colorMode="wideColorGamut"
              android:exported="true"/>
+        <activity android:name="android.server.wm.BlurTests$BlurActivity"
+             android:exported="true"
+             android:colorMode="wideColorGamut"
+             android:theme="@style/TranslucentDialog"/>
+        <activity android:name="android.server.wm.BlurTests$BlurAttributesActivity"
+             android:exported="true"
+             android:colorMode="wideColorGamut"
+             android:theme="@style/BlurryDialog"/>
+        <activity android:name="android.server.wm.BlurTests$BadBlurActivity"
+             android:exported="true"
+             android:colorMode="wideColorGamut"
+             android:theme="@style/BadBlurryDialog"/>
 
         <!-- Overrides the activity declaration in AndroidX test library to remove the starting
              animation. -->
