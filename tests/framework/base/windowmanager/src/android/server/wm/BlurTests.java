@@ -537,6 +537,8 @@ public class BlurTests extends WindowManagerTestBase {
     }
 
     private void waitForActivityIdle(Activity activity) {
+        // This helps with the test flakiness
+        getInstrumentation().runOnMainSync(() -> {});
         UiDevice.getInstance(getInstrumentation()).waitForIdle();
         getInstrumentation().getUiAutomation().syncInputTransactions();
         mWmState.computeState(activity.getComponentName());
@@ -556,7 +558,6 @@ public class BlurTests extends WindowManagerTestBase {
         if (blurEnabledListener != null) {
             Mockito.verify(blurEnabledListener, timeout(BROADCAST_WAIT_TIMEOUT))
                 .accept(!disable);
-            getInstrumentation().runOnMainSync(() -> {});
         } else {
             PollingCheck.waitFor(BROADCAST_WAIT_TIMEOUT, () -> {
                 return disable != mContext.getSystemService(WindowManager.class)
