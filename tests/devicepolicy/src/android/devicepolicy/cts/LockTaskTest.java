@@ -424,7 +424,7 @@ public final class LockTaskTest {
         assertThrows(SecurityException.class, () ->
                 sDeviceState.dpc().devicePolicyManager().setLockTaskFeatures(
                         sDeviceState.dpc().componentName(),
-                        LOCK_TASK_FEATURE_BLOCK_ACTIVITY_START_IN_TASK));
+                        LOCK_TASK_FEATURE_OVERVIEW | LOCK_TASK_FEATURE_HOME));
     }
 
     @CannotSetPolicyTest(policy = LockTaskFinance.class)
