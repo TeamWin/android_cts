@@ -75,6 +75,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.HashMap;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -2185,9 +2186,11 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
         assertNotNull("Recording surface must be non-null!", mRecordingSurface);
 
         if (useIntermediateSurface) {
+            Optional<Long> usage = getSurfaceUsage(mRecordingSurface);
             mIntermediateReader = ImageReader.newInstance(
                     mVideoSize.getWidth(), mVideoSize.getHeight(),
-                    ImageFormat.PRIVATE, /*maxImages*/3, HardwareBuffer.USAGE_VIDEO_ENCODE);
+                    ImageFormat.PRIVATE, /*maxImages*/3,
+                    usage.orElse(HardwareBuffer.USAGE_VIDEO_ENCODE));
 
             mIntermediateSurface = mIntermediateReader.getSurface();
             mIntermediateWriter = ImageWriter.newInstance(mRecordingSurface, /*maxImages*/3,
