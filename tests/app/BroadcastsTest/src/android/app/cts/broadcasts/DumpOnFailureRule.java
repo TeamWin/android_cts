@@ -15,6 +15,8 @@
  */
 package android.app.cts.broadcasts;
 
+import static android.app.cts.broadcasts.BaseBroadcastTest.HELPER_PKG2;
+
 import static com.android.app.cts.broadcasts.Common.TAG;
 
 import android.os.Environment;
@@ -55,6 +57,7 @@ public class DumpOnFailureRule extends OnFailureRule {
         Log.i(TAG, "Dumping debug info for " + description + ": " + dumpFile.getPath());
         try (FileOutputStream out = new FileOutputStream(dumpFile)) {
             dumpCommandOutput(out, "dumpsys activity broadcasts");
+            dumpCommandOutput(out, "dumpsys activity processes " + HELPER_PKG2);
         } catch (FileNotFoundException e) {
             Log.e(TAG, "Error opening file: " + dumpFile, e);
         } catch (IOException e) {
