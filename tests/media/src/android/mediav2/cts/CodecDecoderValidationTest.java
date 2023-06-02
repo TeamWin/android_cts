@@ -318,6 +318,7 @@ public class CodecDecoderValidationTest extends CodecDecoderTestBase {
                         null, -1.0f, -1L, 48000, 6, -1, -1, CODEC_ALL},
 
                 // vorbis
+                //TODO(b/285072724) Review the following once CDD specifies vorbis requirements
                 {MEDIA_TYPE_VORBIS, new String[]{"audio/bbb_1ch_8kHz_q10_vorbis.ogg"},
                         null, -1.0f, -1L, 8000, 1, -1, -1, CODEC_ALL},
                 {MEDIA_TYPE_VORBIS, new String[]{"audio/bbb_1ch_12kHz_q10_vorbis.ogg"},
@@ -343,9 +344,11 @@ public class CodecDecoderValidationTest extends CodecDecoderTestBase {
                 {MEDIA_TYPE_VORBIS, new String[]{"audio/bbb_2ch_48kHz_q10_vorbis.ogg"},
                         null, -1.0f, -1L, 48000, 2, -1, -1, CODEC_ALL},
                 {MEDIA_TYPE_VORBIS, new String[]{"audio/highres_1ch_96kHz_q10_vorbis.ogg"},
-                        null, -1.0f, -1L, 96000, 1, -1, -1, CODEC_ALL},
+                        null, -1.0f, -1L, 96000, 1, -1, -1,
+                        MediaUtils.isWatch() ? CODEC_OPTIONAL : CODEC_ALL},
                 {MEDIA_TYPE_VORBIS, new String[]{"audio/highres_2ch_96kHz_q10_vorbis.ogg"},
-                        null, -1.0f, -1L, 96000, 2, -1, -1, CODEC_ALL},
+                        null, -1.0f, -1L, 96000, 2, -1, -1,
+                        MediaUtils.isWatch() ? CODEC_OPTIONAL : CODEC_ALL},
 
                 // flac
                 {MEDIA_TYPE_FLAC, new String[]{"audio/bbb_1ch_8kHz_lvl4_flac.mka"},
