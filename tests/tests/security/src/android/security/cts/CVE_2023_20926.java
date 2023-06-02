@@ -47,7 +47,7 @@ public class CVE_2023_20926 extends StsExtraBusinessLogicTestCase {
 
     @AsbSecurityTest(cveBugId = 253043058)
     @Test
-    public void testPocCVE_2022_20497() {
+    public void testPocCVE_2023_20926() {
         Instrumentation instrumentation = null;
         MediaRecorder mediaRecorder = null;
         try {
@@ -65,17 +65,22 @@ public class CVE_2023_20926 extends StsExtraBusinessLogicTestCase {
                 mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.DEFAULT);
                 mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.DEFAULT);
                 mediaRecorder.setOutputFile(
-                        new File(getContext().getFilesDir(), "CVE-2022-20497.output").getPath());
+                        new File(getContext().getFilesDir(), "CVE-2023-20926.output").getPath());
                 mediaRecorder.prepare();
                 mediaRecorder.start();
 
                 // Expand statusbar and detect the vulnerability by clicking the vulnerable icon
                 context.getSystemService(StatusBarManager.class).expandNotificationsPanel();
                 uiDevice.findObject(By.res("com.android.systemui", "icons_container")).click();
-                assertFalse(uiDevice.wait(Until.hasObject(
-                        By.text(Pattern.compile(String.format(".*%s.*", context.getPackageName()),
-                                Pattern.CASE_INSENSITIVE))),
-                        5000));
+                assertFalse(
+                        uiDevice.wait(
+                                Until.hasObject(
+                                        By.text(
+                                                Pattern.compile(
+                                                        String.format(
+                                                                ".*%s.*", context.getPackageName()),
+                                                        Pattern.CASE_INSENSITIVE))),
+                                5000));
             }
         } catch (Exception e) {
             assumeNoException(e);
