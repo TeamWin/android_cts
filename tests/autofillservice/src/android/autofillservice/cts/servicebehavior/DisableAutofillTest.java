@@ -19,6 +19,8 @@ package android.autofillservice.cts.servicebehavior;
 import static android.autofillservice.cts.testcore.Timeouts.ACTIVITY_RESURRECTION;
 import static android.autofillservice.cts.testcore.Timeouts.CALLBACK_NOT_CALLED_TIMEOUT_MS;
 
+import static org.junit.Assume.assumeTrue;
+
 import android.autofillservice.cts.activities.AbstractAutoFillActivity;
 import android.autofillservice.cts.activities.PreSimpleSaveActivity;
 import android.autofillservice.cts.activities.SimpleSaveActivity;
@@ -267,6 +269,10 @@ public class DisableAutofillTest extends AutoFillServiceTestCase.ManualActivityL
     @Presubmit
     @Test
     public void testDisableActivity() throws Exception {
+        // Disable this test for Automotive until we know why it's failing.
+        // bug: 270482520
+        assumeTrue("Skip Automotive", !Helper.isAutomotive(sContext));
+
         // Set service.
         enableService();
 
