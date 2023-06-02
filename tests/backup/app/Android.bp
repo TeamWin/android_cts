@@ -31,7 +31,6 @@ android_test_helper_app {
         "ctstestrunner-axt",
     ],
     test_suites: [
-        "cts",
         "general-tests",
         "mts-permission",
     ],
@@ -55,7 +54,6 @@ android_test_helper_app {
         "ctstestrunner-axt",
     ],
     test_suites: [
-        "cts",
         "general-tests",
         "mts-permission",
     ],
@@ -79,7 +77,6 @@ android_test_helper_app {
         "ctstestrunner-axt",
     ],
     test_suites: [
-        "cts",
         "general-tests",
         "mts-permission",
     ],
@@ -101,7 +98,6 @@ android_test_helper_app {
     ],
     // Tag this module as a cts test artifact
     test_suites: [
-        "cts",
         "general-tests",
         "mts-permission",
     ],
@@ -125,7 +121,6 @@ android_test_helper_app {
     ],
     // Tag this module as a cts test artifact
     test_suites: [
-        "cts",
         "general-tests",
         "mts",
     ],
@@ -150,7 +145,6 @@ android_test_helper_app {
     ],
     // Tag this module as a cts test artifact
     test_suites: [
-        "cts",
         "general-tests",
         "mts",
     ],
@@ -176,7 +170,6 @@ android_test_helper_app {
     ],
     // Tag this module as a cts test artifact
     test_suites: [
-        "cts",
         "general-tests",
         "mts",
     ],
