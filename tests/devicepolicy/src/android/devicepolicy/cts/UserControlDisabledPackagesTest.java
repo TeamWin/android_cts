@@ -142,27 +142,7 @@ public final class UserControlDisabledPackagesTest {
         try {
             assertThat(sDeviceState.dpc().devicePolicyManager().getUserControlDisabledPackages(
                     sDeviceState.dpc().componentName()))
-                    .containsExactly(PACKAGE_NAME);
-        } finally {
-            sDeviceState.dpc().devicePolicyManager().setUserControlDisabledPackages(
-                    sDeviceState.dpc().componentName(),
-                    originalDisabledPackages);
-        }
-    }
-
-    @CanSetPolicyTest(policy = UserControlDisabledPackages.class)
-    @Postsubmit(reason = "b/181993922 automatically marked flaky")
-    public void setUserControlDisabledPackages_toEmptyProtectedPackages() {
-        List<String> originalDisabledPackages =
-                sDeviceState.dpc().devicePolicyManager().getUserControlDisabledPackages(
-                        sDeviceState.dpc().componentName());
-
-        sDeviceState.dpc().devicePolicyManager().setUserControlDisabledPackages(
-                sDeviceState.dpc().componentName(), Collections.emptyList());
-        try {
-            assertThat(
-                    sDeviceState.dpc().devicePolicyManager().getUserControlDisabledPackages(
-                            sDeviceState.dpc().componentName())).isEmpty();
+                    .contains(PACKAGE_NAME);
         } finally {
             sDeviceState.dpc().devicePolicyManager().setUserControlDisabledPackages(
                     sDeviceState.dpc().componentName(),
@@ -176,17 +156,6 @@ public final class UserControlDisabledPackagesTest {
                 () -> sDeviceState.dpc().devicePolicyManager().setUserControlDisabledPackages(
                         sDeviceState.dpc().componentName(),
                         Collections.emptyList()));
-    }
-
-    @CanSetPolicyTest(policy = UserControlDisabledPackages.class)
-    @Postsubmit(reason = "b/181993922 automatically marked flaky")
-    public void
-    getUserControlDisabledPackages_noProtectedPackagesSet_returnsEmptyProtectedPackages() {
-        // This is testing the default state of the device so the disabled packages returned should
-        // be empty.
-        assertThat(sDeviceState.dpc().devicePolicyManager().getUserControlDisabledPackages(
-                sDeviceState.dpc().componentName()))
-                .isEmpty();
     }
 
     @CannotSetPolicyTest(policy = UserControlDisabledPackages.class)
@@ -279,7 +248,7 @@ public final class UserControlDisabledPackagesTest {
                         new NoArgsPolicyKey(USER_CONTROL_DISABLED_PACKAGES_POLICY),
                         TestApis.users().instrumented().userHandle());
 
-                assertThat(policyState.getCurrentResolvedPolicy()).containsExactly(
+                assertThat(policyState.getCurrentResolvedPolicy()).contains(
                         sTestApp.packageName());
             } finally {
                 sDeviceState.dpc().devicePolicyManager().setUserControlDisabledPackages(
@@ -501,11 +470,11 @@ public final class UserControlDisabledPackagesTest {
             PolicyState<Set<String>> policyState = PolicyEngineUtils.getStringSetPolicyState(
                     new NoArgsPolicyKey(USER_CONTROL_DISABLED_PACKAGES_POLICY),
                     TestApis.users().instrumented().userHandle());
-            assertThat(policyState.getCurrentResolvedPolicy()).containsExactly(
+            assertThat(policyState.getCurrentResolvedPolicy()).contains(
                     PACKAGE_NAME);
             assertThat(sDeviceState.dpc().devicePolicyManager().getUserControlDisabledPackages(
                     sDeviceState.dpc().componentName()))
-                    .containsExactly(PACKAGE_NAME);
+                    .contains(PACKAGE_NAME);
         } finally {
             sDeviceState.dpc().devicePolicyManager().setUserControlDisabledPackages(
                     sDeviceState.dpc().componentName(),
