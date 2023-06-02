@@ -40,4 +40,5 @@ android_test {
         "general-tests",
     ],
     min_sdk_version: "20",
+    target_sdk_version: "20",
 }
