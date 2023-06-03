@@ -100,22 +100,25 @@ public class LegacyNotificationManager20Test {
         final int notificationId = 1;
 
         sendNotification(notificationId, R.drawable.icon_black);
+        Thread.sleep(500); // wait for notification listener to receive notification
+
         StatusBarNotification sbn = mHelper.findPostedNotification(
-                null, notificationId, NotificationHelper.SEARCH_TYPE.LISTENER);
+                null, notificationId, NotificationHelper.SEARCH_TYPE.APP);
 
         mListener.cancelNotification(sbn.getPackageName(), sbn.getTag(), sbn.getId());
         if (mContext.getApplicationInfo().targetSdkVersion < Build.VERSION_CODES.LOLLIPOP) {
             assertTrue(mHelper.isNotificationGone(
-                    notificationId, NotificationHelper.SEARCH_TYPE.LISTENER));
+                    notificationId, NotificationHelper.SEARCH_TYPE.APP));
         }
 
         sendNotification(notificationId, R.drawable.icon_black);
+        Thread.sleep(500); // wait for notification listener to receive notification
+
         sbn = mHelper.findPostedNotification(
-                null, notificationId, NotificationHelper.SEARCH_TYPE.LISTENER);
+                null, notificationId, NotificationHelper.SEARCH_TYPE.APP);
 
         mListener.cancelNotifications(new String[]{ sbn.getKey() });
-        assertTrue(mHelper.isNotificationGone(
-                notificationId, NotificationHelper.SEARCH_TYPE.LISTENER));
+        assertTrue(mHelper.isNotificationGone(notificationId, NotificationHelper.SEARCH_TYPE.APP));
     }
 
     private void sendNotification(final int id, final int icon) throws Exception {
