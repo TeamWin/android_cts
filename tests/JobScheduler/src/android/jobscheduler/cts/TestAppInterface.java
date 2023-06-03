@@ -101,7 +101,7 @@ class TestAppInterface implements AutoCloseable {
         stopFgs();
         mContext.unregisterReceiver(mReceiver);
         AppOpsUtils.reset(TEST_APP_PACKAGE);
-        SystemUtil.runShellCommand("am compat --reset-all" + TEST_APP_PACKAGE);
+        SystemUtil.runShellCommand("am compat --reset-all " + TEST_APP_PACKAGE);
         mTestJobStates.clear();
         forceStopApp(); // Clean up as much internal/temporary system state as possible
     }
