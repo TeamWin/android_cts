@@ -5907,6 +5907,9 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             // skip the test if WiFi is not supported
             return;
         }
+        if (PropertyUtil.getVsrApiLevel() < Build.VERSION_CODES.S) {
+            return;
+        }
         PackageManager packageManager = mContext.getPackageManager();
         assertTrue("Passpoint must be supported",
                 packageManager.hasSystemFeature(PackageManager.FEATURE_WIFI_PASSPOINT));
