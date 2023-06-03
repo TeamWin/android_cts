@@ -386,6 +386,10 @@ public final class AutoFillServiceTestCase {
                             "trigger_fill_request_on_filtered_important_views",
                             Boolean.toString(false)))
 
+                .around(new DeviceConfigStateChangerRule(sContext, DeviceConfig.NAMESPACE_AUTOFILL,
+                            "include_all_autofill_type_not_none_views_in_assist_structure",
+                            Boolean.toString(false)))
+
                 //
                 // Finally, let subclasses add their own rules (like ActivityTestRule)
                 .around(getMainTestRule());

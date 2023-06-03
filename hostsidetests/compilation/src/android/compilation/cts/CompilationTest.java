@@ -29,6 +29,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.regex.Pattern;
+
 /**
  * Compilation tests that don't require root access.
  */
@@ -36,6 +38,8 @@ import org.junit.runner.RunWith;
 @CtsTestCase
 public class CompilationTest extends BaseHostJUnit4Test {
     private static final String STATUS_CHECKER_PKG = "android.compilation.cts.statuscheckerapp";
+    private static final String STATUS_CHECKER_CLASS =
+            "android.compilation.cts.statuscheckerapp.StatusCheckerAppTest";
     private static final String TEST_APP_PKG = "android.compilation.cts";
     private static final String TEST_APP_APK_RES = "/CtsCompilationApp.apk";
     private static final String TEST_APP_DM_RES = "/CtsCompilationApp.dm";
@@ -54,12 +58,10 @@ public class CompilationTest extends BaseHostJUnit4Test {
 
     @Test
     public void testCompile() throws Exception {
-        var options =
-                new DeviceTestRunOptions(STATUS_CHECKER_PKG)
-                        .setTestClassName(
-                                "android.compilation.cts.statuscheckerapp.StatusCheckerAppTest")
-                        .setTestMethodName("checkStatus")
-                        .setDisableHiddenApiCheck(true);
+        var options = new DeviceTestRunOptions(STATUS_CHECKER_PKG)
+                              .setTestClassName(STATUS_CHECKER_CLASS)
+                              .setTestMethodName("checkStatus")
+                              .setDisableHiddenApiCheck(true);
 
         mUtils.assertCommandSucceeds("pm compile -m speed -f " + STATUS_CHECKER_PKG);
         options.addInstrumentationArg("compiler-filter", "speed")
@@ -117,5 +119,41 @@ public class CompilationTest extends BaseHostJUnit4Test {
         dump = mUtils.assertCommandSucceeds("dumpsys package " + TEST_APP_PKG);
         assertThat(dump).doesNotContain("[status=verify]");
         assertThat(dump).contains("[status=speed-profile]");
+    }
+
+    @Test
+    public void testCompileSecondaryDex() throws Exception {
+        var options = new DeviceTestRunOptions(STATUS_CHECKER_PKG)
+                              .setTestClassName(STATUS_CHECKER_CLASS)
+                              .setTestMethodName("createAndLoadSecondaryDex");
+        assertThat(runDeviceTests(options)).isTrue();
+
+        // Verify that the secondary dex file is recorded.
+        String dump = mUtils.assertCommandSucceeds("dumpsys package " + STATUS_CHECKER_PKG);
+        checkDexoptStatus(dump, "secondary\\.jar", ".*");
+
+        mUtils.assertCommandSucceeds(
+                "pm compile --secondary-dex -m speed -f " + STATUS_CHECKER_PKG);
+        dump = mUtils.assertCommandSucceeds("dumpsys package " + STATUS_CHECKER_PKG);
+        checkDexoptStatus(dump, "secondary\\.jar", "speed");
+
+        mUtils.assertCommandSucceeds(
+                "pm compile --secondary-dex -m verify -f " + STATUS_CHECKER_PKG);
+        dump = mUtils.assertCommandSucceeds("dumpsys package " + STATUS_CHECKER_PKG);
+        checkDexoptStatus(dump, "secondary\\.jar", "verify");
+
+        mUtils.assertCommandSucceeds("pm delete-dexopt " + STATUS_CHECKER_PKG);
+        dump = mUtils.assertCommandSucceeds("dumpsys package " + STATUS_CHECKER_PKG);
+        checkDexoptStatus(dump, "secondary\\.jar", "run-from-apk");
+    }
+
+    private void checkDexoptStatus(String dump, String dexfilePattern, String statusPattern) {
+        // Matches the dump output typically being:
+        //     /data/user/0/android.compilation.cts.statuscheckerapp/secondary.jar
+        //       x86_64: [status=speed] [reason=cmdline] [primary-abi]
+        // The pattern is intentionally minimized to be as forward compatible as possible.
+        // TODO(b/283447251): Use a machine-readable format.
+        assertThat(dump).containsMatch(Pattern.compile(String.format(
+                "\\b(%s)\\b[^\\n]*\\n[^\\n]*\\[status=(%s)\\]", dexfilePattern, statusPattern)));
     }
 }
