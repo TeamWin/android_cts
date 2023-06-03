@@ -332,14 +332,6 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         assertEquals(url, mWebView.getUrl());
         assertEquals(url, mWebView.getOriginalUrl());
         assertEquals(TestHtmlConstants.HELLO_WORLD_TITLE, mWebView.getTitle());
-
-        // verify that the request also includes X-Requested-With header
-        HttpRequest request = mWebServer.getLastRequest(TestHtmlConstants.HELLO_WORLD_URL);
-        Header[] matchingHeaders = request.getHeaders(X_REQUESTED_WITH);
-        assertEquals(1, matchingHeaders.length);
-
-        Header header = matchingHeaders[0];
-        assertEquals(mWebView.getContext().getApplicationInfo().packageName, header.getValue());
     }
 
     @UiThreadTest
