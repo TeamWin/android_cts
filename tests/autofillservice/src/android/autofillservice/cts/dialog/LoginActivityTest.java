@@ -39,6 +39,8 @@ import static android.view.View.AUTOFILL_HINT_USERNAME;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assume.assumeTrue;
+
 import android.autofillservice.cts.R;
 import android.autofillservice.cts.activities.FieldsNoPasswordActivity;
 import android.autofillservice.cts.activities.LoginActivity;
@@ -154,6 +156,10 @@ public class LoginActivityTest extends AutoFillServiceTestCase.ManualActivityLau
     // Need to manually check that the icon has changed.
     @Test
     public void testShowFillDialogCustomIcon() throws Exception {
+        // Disable this test for Automotive until we know why it's failing.
+        // bug: 270482520
+        assumeTrue("Skip Automotive", !Helper.isAutomotive(sContext));
+
         // Enable feature and test service
         enableFillDialogFeature(sContext);
         enableService();

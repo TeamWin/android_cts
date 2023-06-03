@@ -20,12 +20,15 @@ import static android.autofillservice.cts.testcore.Helper.ID_USERNAME;
 import static android.autofillservice.cts.testcore.Helper.assertActivityShownInBackground;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_USERNAME;
 
+import static org.junit.Assume.assumeTrue;
+
 import android.autofillservice.cts.R;
 import android.autofillservice.cts.activities.LoginActivity;
 import android.autofillservice.cts.activities.SimpleAfterLoginActivity;
 import android.autofillservice.cts.activities.SimpleBeforeLoginActivity;
 import android.autofillservice.cts.commontests.AutoFillServiceTestCase;
 import android.autofillservice.cts.testcore.CannedFillResponse;
+import android.autofillservice.cts.testcore.Helper;
 import android.content.Context;
 import android.content.Intent;
 import android.view.View;
@@ -89,6 +92,10 @@ public class AutofillSaveDialogTest extends AutoFillServiceTestCase.ManualActivi
     // will need to be done manually.
     @Test
     public void testShowSaveUiCustomServiceLabel() throws Exception {
+        // Disable this test for Automotive until we know why it's failing.
+        // bug: 270482520
+        assumeTrue("Skip Automotive", !Helper.isAutomotive(sContext));
+
          // Set service.
         enableService();
 

@@ -926,6 +926,14 @@ public final class Helper {
     }
 
     /**
+     * Returns if devices is Automotive device
+     */
+    public static boolean isAutomotive(Context context) {
+        final PackageManager packageManager = context.getPackageManager();
+        return packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE);
+    }
+
+    /**
      * Checks if screen orientation can be changed.
      */
     public static boolean isRotationSupported(Context context) {
