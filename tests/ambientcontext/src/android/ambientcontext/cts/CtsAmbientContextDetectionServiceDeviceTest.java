@@ -25,6 +25,7 @@ import static org.junit.Assume.assumeTrue;
 
 import android.app.ambientcontext.AmbientContextEvent;
 import android.app.ambientcontext.AmbientContextManager;
+import android.content.Context;
 import android.os.Build.VERSION;
 import android.os.Build.VERSION_CODES;
 import android.platform.test.annotations.AppModeFull;
@@ -34,6 +35,7 @@ import android.text.TextUtils;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import com.android.compatibility.common.util.DeviceConfigStateChangerRule;
+import com.android.compatibility.common.util.RequiredServiceRule;
 
 import org.junit.After;
 import org.junit.Before;
@@ -46,14 +48,16 @@ import java.util.List;
 
 
 /**
- * This suite of test ensures that AmbientContextService behaves correctly when properly
+ * This suite of test ensures that AmbientContextManagerService behaves correctly when properly
  * bound to an AmbientContextDetectionService implementation.
  */
 @RunWith(AndroidJUnit4.class)
 @AppModeFull(
         reason = "PM will not recognize CtsTestAmbientContextDetectionService in instantMode.")
 public class CtsAmbientContextDetectionServiceDeviceTest {
-
+    @Rule
+    public final RequiredServiceRule mRequiredServiceRule =
+            new RequiredServiceRule(Context.AMBIENT_CONTEXT_SERVICE);
     private static final String NAMESPACE_ambient_context = "ambient_context";
     private static final String KEY_SERVICE_ENABLED = "service_enabled";
     private static final String FAKE_APP_PACKAGE = "foo.bar.baz";
