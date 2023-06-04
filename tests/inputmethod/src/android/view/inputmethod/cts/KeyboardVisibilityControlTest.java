@@ -119,6 +119,7 @@ import com.android.cts.mockime.MockImeSession;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.function.ThrowingRunnable;
 import org.junit.runner.RunWith;
 
 import java.io.IOException;
@@ -1545,6 +1546,101 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
                     dialogRef.get().dismiss();
                 }
             }
+        }
+    }
+
+    /**
+     * A regression Test for Bug 283342812
+     *
+     * 1. Open primary activity.
+     * 2. Open second activity with 2 editText views from the first activity in split screen.
+     * 3. Focus the 1st editor and invoke {@link WindowInsetsController#show} to make IME visible.
+     * 4. Press the back key to make IME invisible.
+     * 5. Focus the 2nd editor and invoke {@link WindowInsetsController#show} to make IME visible.
+     * 6. Finish the primary activity to exit split screen mode.
+     * 7. Test step 3-5 again to ensure it passes after exiting split screen mode.
+     */
+    @Test
+    public void testIMEVisibleInSplitScreenWithWindowInsetsApi() throws Throwable {
+        assumeTrue(TestUtils.supportsSplitScreenMultiWindow());
+
+        try (MockImeSession imeSession = MockImeSession.create(
+                mInstrumentation.getContext(),
+                mInstrumentation.getUiAutomation(),
+                new ImeSettings.Builder())) {
+            final ImeEventStream stream = imeSession.openEventStream();
+            final TestActivity splitPrimaryActivity = TestActivity.startSync(LinearLayout::new);
+
+            // Launch another test activity in split-screen with 2 editor views
+            final AtomicReference<EditText> editText1Ref = new AtomicReference<>();
+            final AtomicReference<EditText> editText2Ref = new AtomicReference<>();
+            final String editText1Marker = getTestMarker();
+            final String editText2Marker = getTestMarker();
+            final TestActivity testActivity2 = new TestActivity.Starter()
+                    .asMultipleTask()
+                    .withAdditionalFlags(Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT)
+                    .startSync(splitPrimaryActivity, activity -> {
+                        LinearLayout layout = new LinearLayout(activity);
+                        activity.getWindow().setSoftInputMode(SOFT_INPUT_STATE_ALWAYS_HIDDEN);
+
+                        final EditText editText1 = new EditText(activity);
+                        editText1.setHint("This is editText1");
+                        editText1.setPrivateImeOptions(editText1Marker);
+                        editText1Ref.set(editText1);
+
+                        final EditText editText2 = new EditText(activity);
+                        editText2.setHint("This is editText2");
+                        editText2.setPrivateImeOptions(editText2Marker);
+                        editText2Ref.set(editText2);
+
+                        layout.addView(editText1);
+                        layout.addView(editText2);
+                        return layout;
+                    }, TestActivity2.class);
+
+            notExpectEvent(stream, event -> "onStartInputView".equals(event.getEventName()),
+                    NOT_EXPECT_TIMEOUT);
+            expectImeInvisible(TIMEOUT);
+
+            // Tap on the test activity to change focus
+            mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation,
+                    null, testActivity2.getWindow().getDecorView());
+
+            ThrowingRunnable testProcedureForTestActivity2 = () -> {
+                // Focus the 1st editor and show the IME with WindowInsets API.
+                testActivity2.runOnUiThread(() -> {
+                    editText1Ref.get().requestFocus();
+                    editText1Ref.get()
+                            .getWindowInsetsController().show(WindowInsets.Type.ime());
+                });
+                expectEvent(stream, editorMatcher("onStartInputView", editText1Marker), TIMEOUT);
+                expectImeVisible(TIMEOUT);
+
+                // Press the back key to make the IME invisible.
+                mInstrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK);
+                expectEvent(stream, onFinishInputViewMatcher(false), TIMEOUT);
+                expectImeInvisible(TIMEOUT);
+
+                // Focus the 2nd editor and show the IME with WindowInsets API.
+                testActivity2.runOnUiThread(() -> {
+                    editText2Ref.get().requestFocus();
+                    editText2Ref.get()
+                            .getWindowInsetsController().show(WindowInsets.Type.ime());
+                });
+                expectEvent(stream, editorMatcher("onStartInputView", editText2Marker), TIMEOUT);
+                expectImeVisible(TIMEOUT);
+            };
+            testProcedureForTestActivity2.run();
+
+            // Finish the primary activity to exit split-screen mode.
+            splitPrimaryActivity.runOnUiThread(splitPrimaryActivity::finish);
+            TestUtils.waitOnMainUntil(() -> {
+                final View decorView = testActivity2.getWindow().getDecorView();
+                return decorView.hasWindowFocus() && decorView.getVisibility() == VISIBLE;
+            }, TIMEOUT, "Activity should visible & focused when exiting split-screen mode");
+
+            // Rerun the test procedure to ensure it passes after exiting split-screen mode.
+            testProcedureForTestActivity2.run();
         }
     }
 
