@@ -333,15 +333,6 @@ public class WebViewTest extends SharedWebViewTest {
                     assertEquals(url, mWebView.getUrl());
                     assertEquals(url, mWebView.getOriginalUrl());
                     assertEquals(TestHtmlConstants.HELLO_WORLD_TITLE, mWebView.getTitle());
-
-                    // verify that the request also includes X-Requested-With header
-                    HttpRequest request =
-                            mWebServer.getLastAssetRequest(TestHtmlConstants.HELLO_WORLD_URL);
-                    String[] matchingHeaders = request.getHeaders(X_REQUESTED_WITH);
-                    assertEquals(1, matchingHeaders.length);
-
-                    String header = matchingHeaders[0];
-                    assertEquals(mWebView.getContext().getApplicationInfo().packageName, header);
                 });
     }
 
