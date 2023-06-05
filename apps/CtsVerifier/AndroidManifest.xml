@@ -3507,6 +3507,7 @@
             </intent-filter>
         </service>
 
+        <!-- (b/285905698) Re-enable the test after investigation on black window issue is done
         <activity android:name=".notifications.ShortcutThrottlingResetActivity"
             android:label="@string/shortcut_reset_test"
                   android:exported="true"
@@ -3522,6 +3523,7 @@
                        android:value="multi_display_mode" />
             <meta-data android:name="CddTest" android:value="3.8.1/C-4-1" />
         </activity>
+        -->
 
         <activity android:name=".qstiles.TileServiceVerifierActivity"
                   android:exported="true"
