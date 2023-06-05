@@ -46,6 +46,7 @@ import android.app.Activity;
 import android.app.Instrumentation;
 import android.app.UiAutomation;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.Region;
@@ -1225,7 +1226,10 @@ public class AccessibilityMagnificationTest {
     }
 
     private static boolean isWindowModeSupported(Context context) {
-        return context.getPackageManager().hasSystemFeature(FEATURE_WINDOW_MAGNIFICATION);
+        PackageManager pm = context.getPackageManager();
+        // TODO(b/285201744): remove automotive check
+        boolean isAuto = pm.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE);
+        return pm.hasSystemFeature(FEATURE_WINDOW_MAGNIFICATION) && !isAuto;
     }
 
     private static MagnificationConfig.Builder obtainConfigBuilder(MagnificationConfig config) {
