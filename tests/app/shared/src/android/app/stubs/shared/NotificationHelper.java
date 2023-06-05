@@ -107,9 +107,9 @@ public class NotificationHelper {
     public boolean isNotificationGone(int id, SEARCH_TYPE searchType) {
         // notification is a bit asynchronous so it may take a few ms to appear in
         // getActiveNotifications()
-        // we will check for it for up to 300ms before giving up
+        // we will check for it for up to MAX_WAIT_TIME ms before giving up.
         boolean found = false;
-        for (int tries = 3; tries-- > 0; ) {
+        for (long totalWait = 0; totalWait < MAX_WAIT_TIME; totalWait += SHORT_WAIT_TIME) {
             // Need reset flag.
             found = false;
             for (StatusBarNotification sbn : getActiveNotifications(searchType)) {
@@ -121,7 +121,7 @@ public class NotificationHelper {
             }
             if (!found) break;
             try {
-                Thread.sleep(100);
+                Thread.sleep(SHORT_WAIT_TIME);
             } catch (InterruptedException ex) {
                 // pass
             }
@@ -133,12 +133,12 @@ public class NotificationHelper {
      * Checks whether the NLS has received a removal event for this notification
      */
     public boolean isNotificationGone(String key) {
-        for (int tries = 3; tries-- > 0; ) {
+        for (long totalWait = 0; totalWait < MAX_WAIT_TIME; totalWait += SHORT_WAIT_TIME) {
             if (mNotificationListener.mRemoved.containsKey(key)) {
                 return true;
             }
             try {
-                Thread.sleep(100);
+                Thread.sleep(SHORT_WAIT_TIME);
             } catch (InterruptedException ex) {
                 // pass
             }
