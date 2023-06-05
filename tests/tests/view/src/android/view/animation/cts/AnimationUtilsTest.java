@@ -111,4 +111,15 @@ public class AnimationUtilsTest {
         }
         assertTrue(time2 > time1);
     }
+
+    @Test
+    public void testGetExpectedPresentationTimeNanos() {
+        long vsyncMillis = 1349311227921L;
+        long expectedPresentationTimeNanos = 255073580723571L;
+        AnimationUtils.lockAnimationClock(vsyncMillis, expectedPresentationTimeNanos);
+        assertEquals(AnimationUtils.currentAnimationTimeMillis(), vsyncMillis);
+        assertEquals(AnimationUtils.getExpectedPresentationTimeNanos(),
+                expectedPresentationTimeNanos);
+        AnimationUtils.unlockAnimationClock();
+    }
 }
