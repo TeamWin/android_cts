@@ -20,6 +20,7 @@ import static android.os.cts.batterysaving.common.Values.getRandomInt;
 
 import static com.android.compatibility.common.util.AmUtils.runKill;
 import static com.android.compatibility.common.util.AmUtils.runMakeUidIdle;
+import static com.android.compatibility.common.util.BatteryUtils.assumeBatterySaverFeature;
 import static com.android.compatibility.common.util.BatteryUtils.enableBatterySaver;
 import static com.android.compatibility.common.util.BatteryUtils.runDumpsysBatteryUnplug;
 import static com.android.compatibility.common.util.TestUtils.waitUntil;
@@ -55,6 +56,7 @@ public class BatterySaverBgServiceTest extends BatterySavingTestBase {
      */
     @Test
     public void testBgServiceThrottled() throws Exception {
+        assumeBatterySaverFeature();
 
         final String targetPackage = APP_25_PACKAGE;
 

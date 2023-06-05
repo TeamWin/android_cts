@@ -98,7 +98,8 @@ public class CtsSyncManagerTest {
 
         BatteryUtils.runDumpsysBatteryUnplug();
         BatteryUtils.enableAdaptiveBatterySaver(false);
-        BatteryUtils.enableBatterySaver(false);
+        // Don't wait so tests can also run for devices without battery saver.
+        BatteryUtils.enableBatterySaver(false, false);
 
         AmUtils.setStandbyBucket(APP1_PACKAGE, UsageStatsManager.STANDBY_BUCKET_ACTIVE);
 

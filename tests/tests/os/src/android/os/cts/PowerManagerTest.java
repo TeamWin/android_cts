@@ -102,8 +102,12 @@ public class PowerManagerTest extends AndroidTestCase {
     }
 
     public void testPowerManager_getPowerSaveMode() {
+        PowerManager manager = BatteryUtils.getPowerManager();
+        if (!manager.isBatterySaverSupported()) {
+            return;
+        }
+
         SystemUtil.runWithShellPermissionIdentity(() -> {
-            PowerManager manager = BatteryUtils.getPowerManager();
             ContentResolver resolver = getContext().getContentResolver();
 
             // Verify we can change it to percentage.
@@ -121,8 +125,12 @@ public class PowerManagerTest extends AndroidTestCase {
     }
 
     public void testPowerManager_setDynamicPowerSavings() {
+        PowerManager manager = BatteryUtils.getPowerManager();
+        if (!manager.isBatterySaverSupported()) {
+            return;
+        }
+
         SystemUtil.runWithShellPermissionIdentity(() -> {
-            PowerManager manager = BatteryUtils.getPowerManager();
             ContentResolver resolver = getContext().getContentResolver();
 
             // Verify settings are actually updated.
@@ -141,6 +149,9 @@ public class PowerManagerTest extends AndroidTestCase {
     @LargeTest
     public void testPowerManager_batteryDischargePrediction() throws Exception {
         final PowerManager manager = BatteryUtils.getPowerManager();
+        if (!manager.isBatterySaverSupported()) {
+            return;
+        }
 
         if (!BatteryUtils.hasBattery()) {
             assertNull(manager.getBatteryDischargePrediction());
