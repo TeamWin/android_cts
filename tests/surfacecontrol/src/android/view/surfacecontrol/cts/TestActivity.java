@@ -16,11 +16,13 @@
 
 package android.view.surfacecontrol.cts;
 
+import static android.view.WindowInsets.Type.displayCutout;
+import static android.view.WindowInsets.Type.systemBars;
 import static android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS;
 
 import android.app.Activity;
+import android.graphics.Color;
 import android.os.Bundle;
-import android.view.WindowInsets;
 import android.view.WindowInsetsController;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
@@ -28,22 +30,29 @@ import android.widget.FrameLayout;
 import androidx.annotation.Nullable;
 
 public class TestActivity extends Activity {
+    private static final int sTypeMask = systemBars() | displayCutout();
+    private FrameLayout mParentLayout;
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        FrameLayout parentLayout = new FrameLayout(this);
+        mParentLayout = new FrameLayout(this);
+        mParentLayout.setBackgroundColor(Color.YELLOW);
         FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT,
                 FrameLayout.LayoutParams.MATCH_PARENT);
-        setContentView(parentLayout, layoutParams);
+        setContentView(mParentLayout, layoutParams);
 
         WindowInsetsController windowInsetsController = getWindow().getInsetsController();
-        windowInsetsController.hide(
-                WindowInsets.Type.navigationBars() | WindowInsets.Type.statusBars());
+        windowInsetsController.hide(sTypeMask);
         WindowManager.LayoutParams params = getWindow().getAttributes();
         params.layoutInDisplayCutoutMode = LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS;
         getWindow().setAttributes(params);
         getWindow().setDecorFitsSystemWindows(false);
+    }
+
+    public FrameLayout getParentLayout() {
+        return mParentLayout;
     }
 }
