@@ -25,6 +25,9 @@
 # Bug component: 46626 = per-file *Documents*
 # Bug component: 46626 = per-file ScopedDirectoryAccessTest.java
 
+# OTA bug component
+# Bug component: 330599 = per-file ResumeOnRebootHostTest.java
+
 patb@google.com
 per-file AccessSerialNumberTest.java = ashfall@google.com
 per-file ApexSignatureVerificationTest.java = dariofreni@google.com
