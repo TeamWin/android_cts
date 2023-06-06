@@ -16,6 +16,9 @@
 
 package com.android.cts.appcloning;
 
+
+import static org.junit.Assert.assertNotNull;
+
 import com.android.modules.utils.build.testing.DeviceSdkLevel;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
@@ -38,6 +41,7 @@ abstract class BaseHostTestCase extends BaseHostJUnit4Test {
     private int mCurrentUserId = NativeDevice.INVALID_USER_ID;
     private static final String ERROR_MESSAGE_TAG = "[ERROR]";
     protected static ITestDevice sDevice = null;
+    private static final String MEDIA_PROVIDER_MODULE_NAME = "android.providers.media.module";
 
     protected static void setDevice(ITestDevice device) {
         sDevice = device;
@@ -191,6 +195,35 @@ abstract class BaseHostTestCase extends BaseHostJUnit4Test {
             //ignored
         }
         return false;
+    }
+
+    protected String getMediaProviderProcess(String userId) throws Exception {
+        String processUserPrefix = "u" + userId;
+        List<String> mediaProcessList = splitMultiLineOutput(sDevice
+                .executeShellCommand("ps -A -o user,name,pid | grep -i "
+                        + MEDIA_PROVIDER_MODULE_NAME));
+        // Media Process list will be something like:
+        // u0_a246      com.google.android.providers.media.module 21403
+        // u10_a246     com.google.android.providers.media.module 25576
+        for (String mediaProcess : mediaProcessList) {
+            if (mediaProcess.startsWith(processUserPrefix)) {
+                //u0_a246      com.google.android.providers.media.module 21403
+                String[] splits = mediaProcess.split(" ");
+                //Return the last snippet, that is 21403
+                return splits[splits.length - 1];
+            }
+        }
+        return null;
+    }
+
+    protected boolean isUserVolumeMounted(String userId) throws Exception {
+        String mountStatus = sDevice
+                .executeShellCommand("dumpsys mount | grep mountUserId=" + userId);
+        // Mount Status will be something like:
+        // type=EMULATED diskId=null partGuid= mountFlags=PRIMARY|VISIBLE_FOR_WRITE mountUserId=11
+        // state=MOUNTED
+        assertNotNull("No Volumes Found for user " + userId, mountStatus);
+        return mountStatus.contains("state=MOUNTED");
     }
 
     private static List<String> splitMultiLineOutput(String input) throws Exception {

@@ -18,6 +18,7 @@ package com.android.cts.appcloning;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
@@ -49,6 +50,8 @@ public class AppCloningHostTest extends AppCloningBaseHostTest {
     private static final int CLONE_PROFILE_DIRECTORY_CREATION_TIMEOUT_MS = 20000;
     private static final int CLONE_PROFILE_MEDIA_PROVIDER_OPERATION_TIMEOUT_MS = 30000;
     private static final int CONTENT_PROVIDER_SETUP_TIMEOUT_MS = 50000;
+
+    private static final int USER_VOLUME_REMOUNT_TIMEOUT_MS = 30000;
 
     private static final String IMAGE_NAME_TO_BE_CREATED_KEY = "imageNameToBeCreated";
     private static final String IMAGE_NAME_TO_BE_DISPLAYED_KEY = "imageNameToBeDisplayed";
@@ -318,6 +321,28 @@ public class AppCloningHostTest extends AppCloningBaseHostTest {
 
         runDeviceTestAsUserInPkgA("testMediaStoreManager_verifyClonedUserImageSavedInOwnerUserOnly",
                 currentUserId, args);
+    }
+
+    // This test should be run with only user 0 as the currentUserId.
+    @Test
+    @LargeTest
+    public void testKillingMediaProviderDoesNotAffectVolumeMounts() throws Exception {
+        assumeTrue(isAtLeastU(sDevice));
+        int currentUserId = getCurrentUserId();
+
+        // Find MP process corresponding to user 0.
+        String mediaProviderProcess = getMediaProviderProcess(String.valueOf(currentUserId));
+        assertNotNull("No Media Provider Process Found for " + currentUserId, mediaProviderProcess);
+
+        // Kill the MP process.
+        CommandResult result = executeShellV2Command("kill " + mediaProviderProcess);
+        assertTrue(isSuccessful(result));
+
+        // Assert that User 0 and Clone User volumes are still mounted after MP process was killed.
+        eventually(() -> {
+            assertTrue(isUserVolumeMounted(String.valueOf(currentUserId)));
+            assertTrue(isUserVolumeMounted(sCloneUserId));
+        }, USER_VOLUME_REMOUNT_TIMEOUT_MS);
     }
 
     private String getPackageInUser(String pkgName, int userId) throws Exception {
