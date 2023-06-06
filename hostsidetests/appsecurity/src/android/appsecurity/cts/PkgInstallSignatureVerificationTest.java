@@ -1935,6 +1935,11 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
     private void cleanUpFile(File file) {
         if (file != null && file.exists()) {
             file.delete();
+            // Delete the parent dir as well which is a temp dir
+            File parent = file.getParentFile();
+            if (parent.exists()) {
+                parent.delete();
+            }
         }
     }
 

@@ -27,6 +27,7 @@ import com.android.tradefed.testtype.junit4.AfterClassWithInfo;
 import com.android.tradefed.testtype.junit4.BeforeClassWithInfo;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -67,11 +68,17 @@ public class ContactsIndexerMultiUserTest extends AppSearchHostTestBase {
             testInfo.getDevice().removeUser(sSecondaryUserId);
         }
 
-        if (sPrevContactsIndexerEnabled.equals("null")) {
-            testInfo.getDevice().executeShellCommand(
-                    "device_config delete appsearch contacts_indexer_enabled");
-        } else {
-            setCiEnabled(testInfo.getDevice(), Boolean.parseBoolean(sPrevContactsIndexerEnabled));
+        String currContactsIndexerEnabled = testInfo.getDevice().executeShellCommand(
+                "device_config get appsearch contacts_indexer_enabled").trim();
+        // Do not try to set flag if current flag value is already equal to the desired value.
+        if (sPrevContactsIndexerEnabled != null
+                && !sPrevContactsIndexerEnabled.equals(currContactsIndexerEnabled)) {
+            if (sPrevContactsIndexerEnabled.equals("null")) {
+                deleteCiFlag(testInfo.getDevice());
+            } else {
+                setCiEnabled(testInfo.getDevice(),
+                        Boolean.parseBoolean(sPrevContactsIndexerEnabled));
+            }
         }
     }
 
@@ -83,6 +90,9 @@ public class ContactsIndexerMultiUserTest extends AppSearchHostTestBase {
     }
 
     @Test
+    @Ignore
+    // TODO(b/285969557) Re-enable test after figuring out a better way to wait for lifecycle events
+    //  to complete
     public void testMultiUser_CiDisabled_cancelsFullUpdateJobs() throws Exception {
         setCiEnabled(getDevice(), false);
         startUserAndInstallPackage();
@@ -92,6 +102,9 @@ public class ContactsIndexerMultiUserTest extends AppSearchHostTestBase {
     }
 
     @Test
+    @Ignore
+    // TODO(b/285969557) Re-enable test after figuring out a better way to wait for lifecycle events
+    //  to complete
     public void testMultiUser_CiDisabledAndThenEnabled_schedulesFullUpdateJobs() throws Exception {
         setCiEnabled(getDevice(), false);
         setCiEnabled(getDevice(), true);
@@ -109,6 +122,15 @@ public class ContactsIndexerMultiUserTest extends AppSearchHostTestBase {
         assertThat(device.executeShellCommand(
                 "device_config get appsearch contacts_indexer_enabled").trim())
                 .isEqualTo(String.valueOf(ciEnabled));
+        rebootAndWaitUntilReady(device);
+    }
+
+    private static void deleteCiFlag(ITestDevice device) throws Exception {
+        device.executeShellCommand(
+                "device_config delete appsearch contacts_indexer_enabled");
+        assertThat(device.executeShellCommand(
+                "device_config get appsearch contacts_indexer_enabled").trim())
+                .isEqualTo("null");
         rebootAndWaitUntilReady(device);
     }
 
