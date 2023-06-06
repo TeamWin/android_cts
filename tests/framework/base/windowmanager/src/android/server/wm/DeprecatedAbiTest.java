@@ -56,6 +56,8 @@ public class DeprecatedAbiTest extends ActivityManagerTestBase {
 
     @Before
     public void setUp() {
+        SystemUtil.runShellCommand("input keyevent KEYCODE_WAKEUP");
+        SystemUtil.runShellCommand("wm dismiss-keyguard");
         SystemUtil.runShellCommand("setprop debug.wm.disable_deprecated_abi_dialog 0");
     }
 
