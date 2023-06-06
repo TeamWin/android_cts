@@ -305,6 +305,11 @@ public class AudioDataPathsActivity
         }
 
         boolean hasPassed(int api) {
+            if (!isValid()) {
+                // unrun tests can be considered "passed"
+                return true;
+            }
+
             if (hasRun(api)) {
                 return mTestResults[api].mMaxMagnitude >= mMinPassMagnitude
                         && mTestResults[api].mPhaseJitter <= mMaxPassJitter;
