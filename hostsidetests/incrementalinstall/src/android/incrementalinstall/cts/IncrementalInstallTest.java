@@ -57,6 +57,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -255,7 +256,9 @@ public class IncrementalInstallTest extends BaseHostJUnit4Test {
                 TEST_APP_V1_VERSION);
         validateAppLaunch(TEST_APP_PACKAGE_NAME, ON_CREATE_COMPONENT);
         // Reboot!
-        getDevice().reboot();
+        getDevice().rebootUntilOnline();
+        assertTrue("Timed out waiting for device to boot",
+                getDevice().waitForBootComplete(Duration.ofMinutes(2).toMillis()));
         // Adb cannot add a split to an existing install, so we'll use pm to install just the
         // dynamic code split.
         String deviceLocalPath = "/data/local/tmp/";
