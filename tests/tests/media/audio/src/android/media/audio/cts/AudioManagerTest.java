@@ -779,7 +779,13 @@ public class AudioManagerTest extends InstrumentationTestCase {
      * @throws Exception
      */
     public void testAdjustUnmuteNotificationInVibrate() throws Exception {
+        Log.i(TAG, "starting testAdjustUnmuteNotificationInVibrate");
         if (mSkipRingerTests) {
+            Log.i(TAG, "skipping testAdjustUnmuteNotificationInVibrate");
+            return;
+        }
+        if (!mHasVibrator) {
+            Log.i(TAG, "skipping testAdjustUnmuteNotificationInVibrate, no vibrator");
             return;
         }
         // set mode to VIBRATE
