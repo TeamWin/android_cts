@@ -17,6 +17,7 @@
 package android.graphics.cts
 
 import android.R
+import android.app.UiModeManager
 import android.content.Context
 import android.graphics.Color
 import android.provider.Settings
@@ -27,12 +28,15 @@ import androidx.core.graphics.ColorUtils
 import androidx.test.platform.app.InstrumentationRegistry.getInstrumentation
 import com.android.compatibility.common.util.CddTest
 import com.android.compatibility.common.util.FeatureUtil
+import com.android.compatibility.common.util.SystemUtil.runShellCommand
 import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
 import com.google.common.truth.Truth.assertWithMessage
 import java.io.Serializable
 import java.util.Arrays
 import java.util.Locale
+import org.junit.AfterClass
 import org.junit.Assert
+import org.junit.BeforeClass
 import org.junit.FixMethodOrder
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -635,6 +639,26 @@ class SystemPaletteTest(
     companion object {
         private const val TAG = "SystemPaletteTest"
         private const val DEBUG = true
+
+        private var initialContrast: Float = 0f
+
+        @BeforeClass
+        fun setUp() {
+            initialContrast = getInstrumentation()
+                    .targetContext
+                    .getSystemService(UiModeManager::class.java)
+                    .contrast
+            putContrastInSettings(0f)
+        }
+
+        @AfterClass
+        fun tearDown() {
+            putContrastInSettings(initialContrast)
+        }
+
+        private fun putContrastInSettings(contrast: Float) {
+            runShellCommand("settings put secure contrast_level $contrast")
+        }
 
         @Parameterized.Parameters(name = "Palette {1} with color {0}")
         @JvmStatic
