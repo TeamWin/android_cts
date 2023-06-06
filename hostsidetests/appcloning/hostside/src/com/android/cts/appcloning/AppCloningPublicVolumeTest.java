@@ -66,7 +66,7 @@ public class AppCloningPublicVolumeTest extends AppCloningBaseHostTest{
 
     @Test
     public void testCrossUserMediaAccessInPublicSdCard() throws Exception {
-        assumeTrue(isAtLeastT());
+        assumeTrue(isAtLeastU(sDevice));
 
         // Install the app in both the user spaces
         installPackage(APP_A, "--user all");
