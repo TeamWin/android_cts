@@ -165,8 +165,8 @@ open class PackageInstallerTestBase {
             ?: SessionResult(null /* status */, null /* preapproval */, "Fail to poll result")
     }
 
-    protected fun startInstallationViaSessionNoPrompt(): CompletableFuture<Int> {
-        return startInstallationViaSession(
+    protected fun startInstallationViaSessionNoPrompt() {
+        startInstallationViaSession(
                 0 /* installFlags */,
                 TEST_APK_NAME,
                 null /* packageSource */,
@@ -174,9 +174,8 @@ open class PackageInstallerTestBase {
         )
     }
 
-    protected fun startInstallationViaSessionWithPackageSource(packageSource: Int?):
-            CompletableFuture<Int> {
-        return startInstallationViaSession(0 /* installFlags */, TEST_APK_NAME, packageSource)
+    protected fun startInstallationViaSessionWithPackageSource(packageSource: Int?) {
+        startInstallationViaSession(0 /* installFlags */, TEST_APK_NAME, packageSource)
     }
 
     protected fun createSession(
@@ -221,21 +220,28 @@ open class PackageInstallerTestBase {
 
     protected fun commitSession(
             session: Session,
-            expectedPrompt: Boolean = true
-    ): CompletableFuture<Int> {
+            expectedPrompt: Boolean = true,
+            needFuture: Boolean = false
+    ): CompletableFuture<Int>? {
         var intent = Intent(INSTALL_ACTION_CB)
                 .setPackage(context.getPackageName())
                 .addFlags(Intent.FLAG_RECEIVER_FOREGROUND)
         val pendingIntent = PendingIntent.getBroadcast(
                 context, 0 /* requestCode */, intent, FLAG_UPDATE_CURRENT or FLAG_MUTABLE)
 
+        var dialog: CompletableFuture<Int>? = null
+
         if (!expectedPrompt) {
             session.commit(pendingIntent.intentSender)
-            return CompletableFuture<Int>()
+            return dialog
         }
 
         // Commit session
-        val dialog = FutureResultActivity.doAndAwaitStart {
+        if (needFuture) {
+            dialog = FutureResultActivity.doAndAwaitStart {
+                session.commit(pendingIntent.intentSender)
+            }
+        } else {
             session.commit(pendingIntent.intentSender)
         }
 
@@ -278,33 +284,35 @@ open class PackageInstallerTestBase {
         apkName: String = TEST_APK_NAME,
         packageSource: Int? = null,
         expectedPrompt: Boolean = true,
+        needFuture: Boolean = false,
         paramsBlock: (PackageInstaller.SessionParams) -> Unit = {}
-    ): CompletableFuture<Int> {
+    ): CompletableFuture<Int>? {
         val (_, session) = createSession(installFlags, false, packageSource, paramsBlock)
         writeSession(session, apkName)
-        return commitSession(session, expectedPrompt)
+        return commitSession(session, expectedPrompt, needFuture)
     }
 
     protected fun writeAndCommitSession(
             apkName: String,
             session: Session,
             expectedPrompt: Boolean = true
-    ): CompletableFuture<Int> {
+    ) {
         writeSession(session, apkName)
-        return commitSession(session, expectedPrompt)
+        commitSession(session, expectedPrompt)
     }
 
     protected fun startInstallationViaMultiPackageSession(
         installFlags: Int,
-        vararg apkNames: String
-    ): CompletableFuture<Int> {
+        vararg apkNames: String,
+        needFuture: Boolean = false
+    ): CompletableFuture<Int>? {
         val (sessionId, session) = createSession(installFlags, true, null)
         for (apkName in apkNames) {
             val (childSessionId, childSession) = createSession(installFlags, false, null)
             writeSession(childSession, apkName)
             session.addChildSessionId(childSessionId)
         }
-        return commitSession(session)
+        return commitSession(session, needFuture = needFuture)
     }
 
     /**
