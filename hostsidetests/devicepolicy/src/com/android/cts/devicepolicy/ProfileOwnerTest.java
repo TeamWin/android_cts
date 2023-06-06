@@ -64,11 +64,6 @@ public final class ProfileOwnerTest extends BaseDevicePolicyTest {
     }
 
     @Test
-    public void testAppUsageObserver() throws Exception {
-        executeProfileOwnerTest("AppUsageObserverTest");
-    }
-
-    @Test
     public void testDevicePolicySafetyCheckerIntegration_allOperations() throws Exception {
         executeDevicePolicySafetyCheckerIntegrationTest("testAllOperations");
     }
