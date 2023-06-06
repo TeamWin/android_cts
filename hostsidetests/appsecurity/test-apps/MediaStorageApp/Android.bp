@@ -31,7 +31,6 @@ android_test_helper_app {
     srcs: ["src/**/*.java"],
     asset_dirs: ["assets"],
     test_suites: [
-        "cts",
         "general-tests",
     ],
 }
@@ -51,7 +50,6 @@ android_test_helper_app {
     srcs: ["src/**/*.java"],
     asset_dirs: ["assets"],
     test_suites: [
-        "cts",
         "general-tests",
     ],
     manifest: "AndroidManifest28.xml",
@@ -72,7 +70,6 @@ android_test_helper_app {
     srcs: ["src/**/*.java"],
     asset_dirs: ["assets"],
     test_suites: [
-        "cts",
         "general-tests",
     ],
     manifest: "AndroidManifest29.xml",
@@ -93,7 +90,6 @@ android_test_helper_app {
     srcs: ["src/**/*.java"],
     asset_dirs: ["assets"],
     test_suites: [
-        "cts",
         "general-tests",
     ],
     manifest: "AndroidManifest31.xml",
