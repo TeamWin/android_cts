@@ -419,12 +419,20 @@ public class AccessibilityDisplayProxyTest {
 
     @Test
     @ApiTest(apis = {"android.view.accessibility.AccessibilityManager#registerDisplayProxy"})
-    public void testRegisterAccessibilityProxy_withNonDeviceDisplay_throwsSecurityException() {
+    public void testRegisterAccessibilityProxy_withNonDeviceDisplay_throwsSecurityException()
+            throws Exception {
         try (DisplayUtils.VirtualDisplaySession displaySession =
                      new DisplayUtils.VirtualDisplaySession()) {
             final int virtualDisplayId =
                     displaySession.createDisplayWithDefaultDisplayMetricsAndWait(
                             sInstrumentation.getContext(), false).getDisplayId();
+            // Launches an activity on virtual display to guarantee the display is tracked by
+            // accessibility.
+            final Activity activityOnVirtualDisplay =
+                    launchActivityOnSpecifiedDisplayAndWaitForItToBeOnscreen(sInstrumentation,
+                            sUiAutomation,
+                            NonProxyActivity.class,
+                            virtualDisplayId);
 
             final MyA11yProxy invalidProxy = new MyA11yProxy(
                     virtualDisplayId, Executors.newSingleThreadExecutor(), new ArrayList<>());
@@ -435,6 +443,9 @@ public class AccessibilityDisplayProxyTest {
             } finally {
                 runWithShellPermissionIdentity(sUiAutomation, () ->
                         mA11yManager.unregisterDisplayProxy(invalidProxy));
+                if (activityOnVirtualDisplay != null) {
+                    activityOnVirtualDisplay.finish();
+                }
             }
         }
     }
