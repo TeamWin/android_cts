@@ -1974,12 +1974,9 @@ public class TextViewHandwritingGestureTest {
     }
 
     private void assertGestureInsertModeHighlightRange(int start, int end) {
-        final TypedValue typedValue = new TypedValue();
-        mEditText.getContext().getTheme()
-                .resolveAttribute(android.R.attr.colorPrimary, typedValue, true);
-        final int colorPrimary = typedValue.data;
-        final int expectedColor = ColorUtils.setAlphaComponent(colorPrimary,
-                (int) (0.12f * Color.alpha(colorPrimary)));
+        final int textColor = mEditText.getTextColors().getDefaultColor();
+        final int expectedColor =
+                ColorUtils.setAlphaComponent(textColor, (int) (0.2f * Color.alpha(textColor)));
 
         assertGestureHighlightRange(start, end, expectedColor);
     }
