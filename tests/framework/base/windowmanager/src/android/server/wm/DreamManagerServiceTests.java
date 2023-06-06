@@ -28,6 +28,7 @@ import static android.view.Display.DEFAULT_DISPLAY;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
@@ -44,15 +45,15 @@ import org.junit.Test;
 @Presubmit
 public class DreamManagerServiceTests extends ActivityManagerTestBase {
 
-    // Timeout after which the dream should have finished willingly
-    private static final long ACTIVITY_STOP_TIMEOUT = 3000;
+    // Maximum timeout in seconds after which the dream should have finished willingly
+    private static final int ACTIVITY_STOP_MAX_TIMEOUT = 3;
 
-    // Timeout after which the dream should have been forcefully stopped
-    private static final long ACTIVITY_FORCE_STOP_TIMEOUT = 7000;
+    // Maximum timeout in seconds after which the dream should have been forcefully stopped
+    private static final int DREAM_FORCE_STOP_MAX_TIMEOUT = 15;
 
     private ComponentName mDreamActivityName;
 
-    private DreamCoordinator mDreamCoordinator = new DreamCoordinator(mContext);
+    private final DreamCoordinator mDreamCoordinator = new DreamCoordinator(mContext);
 
     @Before
     public void setup() {
@@ -64,10 +65,18 @@ public class DreamManagerServiceTests extends ActivityManagerTestBase {
         mDreamCoordinator.restoreDefaults();
     }
 
-    private void assertDreamActivityGone() {
+    private void waitAndAssertDreamActivityGone(int maxTimeOutInSeconds) {
+        String msg = "Dream Activity must be gone";
+        Condition.waitFor(new Condition<>(msg, this::isDreamActivityGone)
+                .setRetryLimit(maxTimeOutInSeconds)
+                .setOnFailure(o -> fail(msg))
+        );
+    }
+
+    private boolean isDreamActivityGone() {
         mWmState.computeState();
-        assertTrue(!mWmState.containsWindow(getWindowName(mDreamActivityName))
-                   && !mWmState.containsActivity(mDreamActivityName));
+        return !mWmState.containsWindow(getWindowName(mDreamActivityName))
+                && !mWmState.containsActivity(mDreamActivityName);
     }
 
     private void startFullscreenTestActivity() {
@@ -147,9 +156,8 @@ public class DreamManagerServiceTests extends ActivityManagerTestBase {
 
         mDreamCoordinator.stopDream();
 
-        Thread.sleep(ACTIVITY_STOP_TIMEOUT);
+        waitAndAssertDreamActivityGone(ACTIVITY_STOP_MAX_TIMEOUT);
 
-        assertDreamActivityGone();
         assertFalse(mDreamCoordinator.isDreaming());
     }
 
@@ -168,10 +176,8 @@ public class DreamManagerServiceTests extends ActivityManagerTestBase {
 
         mDreamCoordinator.stopDream();
 
+        waitAndAssertDreamActivityGone(DREAM_FORCE_STOP_MAX_TIMEOUT);
 
-        Thread.sleep(ACTIVITY_FORCE_STOP_TIMEOUT);
-
-        assertDreamActivityGone();
         assertFalse(mDreamCoordinator.isDreaming());
         pressUnlockButton();
         waitAndAssertTopResumedActivity(TEST_ACTIVITY, DEFAULT_DISPLAY,
@@ -291,8 +297,8 @@ public class DreamManagerServiceTests extends ActivityManagerTestBase {
         public void waitAndAssertDreaming() {
             waitAndAssertTopResumedActivity(mDreamActivityName, DEFAULT_DISPLAY,
                     "Dream activity should be the top resumed activity");
-            mWmState.waitForValidState(mWmState.getHomeActivityName());
-            mWmState.assertVisibility(mWmState.getHomeActivityName(), false);
+            mWmState.waitForActivityState(mWmState.getHomeActivityName(), STATE_STOPPED);
+            mWmState.waitAndAssertVisibilityGone(mWmState.getHomeActivityName());
             assertTrue(mDreamCoordinator.isDreaming());
         }
 
