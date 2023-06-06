@@ -17,6 +17,7 @@
 package android.media.misc.cts;
 
 import android.hardware.Camera;
+import android.media.MediaCodecList;
 import android.media.MediaFormat;
 import android.media.MediaMetadataRetriever;
 import android.media.MediaRecorder;
@@ -211,6 +212,18 @@ public class ResourceManagerRecorderActivity extends MediaStubActivity {
         return true;
     }
 
+    // Checks whether the device supports any encoder with given
+    // configuration.
+    private static boolean isEncoderSupported(String mime, int width, int height) {
+        MediaCodecList mcl = new MediaCodecList(MediaCodecList.ALL_CODECS);
+        MediaFormat format = MediaFormat.createVideoFormat(mime, width, height);
+        if (mcl.findEncoderForFormat(format) == null) {
+            return false;
+        }
+
+        return true;
+    }
+
     // Open camera#0, start recording and validate the recorded video.
     private void recordVideoUsingCamera() throws Exception {
         int nCamera = Camera.getNumberOfCameras();
@@ -222,13 +235,24 @@ public class ResourceManagerRecorderActivity extends MediaStubActivity {
             int cameraId = 0;
             mCamera = Camera.open(cameraId);
             setSupportedResolution(mCamera);
-            recordVideoUsingCamera(mCamera, mOutputPath, durMs);
+            // Make sure the device supports the encoder at given configuration before start
+            // recording.
+            if (isEncoderSupported(mMime, mVideoWidth, mVideoHeight)) {
+                recordVideoUsingCamera(mCamera, mOutputPath, durMs);
+            } else {
+                // We are skipping the test.
+                Log.w(TAG, "The device doesn't support the encoder wth configuration("
+                        + mMime + "," + mVideoWidth + "x" + mVideoHeight
+                        + ") required for the Recording");
+                mSuccess = true;
+            }
             mCamera.release();
             mCamera = null;
-            mSuccess = checkLocationInFile(mOutputPath);
+            if (!mSuccess) {
+                mSuccess = checkLocationInFile(mOutputPath);
+            }
         }
     }
-
 
     // Set up the MediaRecorder and record for durMs milliseconds
     private void recordVideoUsingCamera(Camera camera, String fileName, int durMs)
