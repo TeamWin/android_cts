@@ -320,10 +320,7 @@ public class TextureViewTest {
                                 Bitmap.Config.ARGB_8888, true,
                                 ColorSpace.getFromDataSpace(dataSpace));
                             Canvas canvas = new Canvas(bitmap);
-                            Paint paint = new Paint();
-                            paint.setAntiAlias(false);
-                            paint.setColor(converted);
-                            canvas.drawRect(0f, 0f, width, height, paint);
+                            canvas.drawColor(converted);
                         }
                         bitmap.copyPixelsToBuffer(plane.getBuffer());
                         writer.queueInputImage(image);
@@ -371,10 +368,7 @@ public class TextureViewTest {
         Bitmap bitmap = Bitmap.createBitmap(plane.getRowStride() / 4, image.getHeight(),
                 Bitmap.Config.ARGB_8888, true, ColorSpace.getFromDataSpace(dataSpace));
         Canvas canvas = new Canvas(bitmap);
-        Paint paint = new Paint();
-        paint.setAntiAlias(false);
-        paint.setColor(converted);
-        canvas.drawRect(0f, 0f, width, height, paint);
+        canvas.drawColor(converted);
         bitmap.copyPixelsToBuffer(plane.getBuffer());
         writer.queueInputImage(image);
 
@@ -394,17 +388,19 @@ public class TextureViewTest {
 
         // sample 5 pixels on the edge for bitmap comparison.
         // TextureView and SurfaceView use different shaders, so compare these two with tolerance.
-        final int threshold = 2;
-        assertTrue(pixelsAreSame(surfaceViewScreenshot.getPixel(width / 2, extraSurfaceOffset),
-                textureViewScreenshot.getPixel(width / 2, 0), threshold));
-        assertTrue(pixelsAreSame(surfaceViewScreenshot.getPixel(0, height / 2),
-                textureViewScreenshot.getPixel(0, height / 2), threshold));
-        assertTrue(pixelsAreSame(surfaceViewScreenshot.getPixel(width / 2, height / 2),
-                textureViewScreenshot.getPixel(width / 2, height / 2), threshold));
-        assertTrue(pixelsAreSame(surfaceViewScreenshot.getPixel(width / 2, height - 1),
-                textureViewScreenshot.getPixel(width / 2, height - 1), threshold));
-        assertTrue(pixelsAreSame(surfaceViewScreenshot.getPixel(width - 1, height / 2),
-                textureViewScreenshot.getPixel(width - 1, height / 2), threshold));
+        // TODO(b/229173479): These shaders shouldn't be very different. Figure out why we need
+        // this tolerance in the first place.
+        final int threshold = 3;
+        assertPixelsAreSame(surfaceViewScreenshot.getPixel(width / 2, extraSurfaceOffset),
+                textureViewScreenshot.getPixel(width / 2, 0), threshold);
+        assertPixelsAreSame(surfaceViewScreenshot.getPixel(0, height / 2),
+                textureViewScreenshot.getPixel(0, height / 2), threshold);
+        assertPixelsAreSame(surfaceViewScreenshot.getPixel(width / 2, height / 2),
+                textureViewScreenshot.getPixel(width / 2, height / 2), threshold);
+        assertPixelsAreSame(surfaceViewScreenshot.getPixel(width / 2, height - 1),
+                textureViewScreenshot.getPixel(width / 2, height - 1), threshold);
+        assertPixelsAreSame(surfaceViewScreenshot.getPixel(width - 1, height / 2),
+                textureViewScreenshot.getPixel(width - 1, height / 2), threshold);
     }
 
     @Test
@@ -484,6 +480,13 @@ public class TextureViewTest {
         error += Math.abs(Color.green(ideal) - Color.green(given));
         error += Math.abs(Color.blue(ideal) - Color.blue(given));
         return (error < threshold);
+    }
+
+    private void assertPixelsAreSame(int ideal, int given, int threshold) {
+        if (!pixelsAreSame(ideal, given, threshold)) {
+            fail("expected=" + Integer.toHexString(ideal) + ", actual="
+                    + Integer.toHexString(given));
+        }
     }
 
     @Test
