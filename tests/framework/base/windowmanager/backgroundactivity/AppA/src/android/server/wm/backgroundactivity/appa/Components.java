@@ -125,6 +125,7 @@ public class Components extends ComponentsBase {
     public final ComponentName VIRTUAL_DISPLAY_ACTIVITY;
     public final ComponentName WIDGET_CONFIG_TEST_ACTIVITY;
     public final ComponentName WIDGET_PROVIDER;
+    public final ComponentName START_NEXT_MATCHING_ACTIVITY;
 
     public final ForegroundActivityAction FOREGROUND_ACTIVITY_ACTIONS;
     public final ForegroundActivityExtra FOREGROUND_ACTIVITY_EXTRA = new ForegroundActivityExtra();
@@ -171,6 +172,8 @@ public class Components extends ComponentsBase {
                 component(APP_PACKAGE_NAME, "WidgetProvider");
         ACTIVITY_START_SERVICE =
                 component(APP_PACKAGE_NAME, "ActivityStarterService");
+        START_NEXT_MATCHING_ACTIVITY =
+                component(APP_PACKAGE_NAME, "StartNextMatchingActivity");
 
         FOREGROUND_ACTIVITY_ACTIONS = new ForegroundActivityAction(APP_PACKAGE_NAME);
         FOREGROUND_EMBEDDING_ACTIVITY_ACTIONS =

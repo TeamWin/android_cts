@@ -133,6 +133,20 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
     }
 
     @Test
+    public void testBackgroundActivityBlockedInStartNextMatchingActivity() throws TimeoutException {
+        EventReceiver receiver = new EventReceiver(
+                Event.APP_A_LAUNCHER_MOVING_TO_BACKGROUND_ACTIVITY);
+        Intent intent = new Intent("StartNextMatchingActivityAction");
+        intent.setComponent(APP_A.START_NEXT_MATCHING_ACTIVITY);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.putExtra(EVENT_NOTIFIER_EXTRA, receiver.getNotifier());
+        mContext.startActivity(intent);
+        receiver.waitForEventOrThrow(ACTIVITY_START_TIMEOUT_MS);
+        boolean result = waitForActivityFocused(APP_A.BACKGROUND_ACTIVITY);
+        assertFalse("Should not able to launch background activity", result);
+    }
+
+    @Test
     public void testStartBgActivity_usingStartActivitiesFromBackgroundPermission()
             throws Exception {
         // Disable SAW app op for shell, since that can also allow starting activities from bg.
