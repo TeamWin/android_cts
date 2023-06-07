@@ -38,6 +38,7 @@ _NAME = os.path.splitext(os.path.basename(__file__))[0]
 _NUM_ROTATIONS = 24
 _START_FRAME = 30  # give 3A some frames to warm up
 _TABLET_SERVO_SPEED = 20
+_TEST_REQUIRED_MPC = 33
 _VIDEO_DELAY_TIME = 5.5  # seconds
 _VIDEO_DURATION = 5.5  # seconds
 _PREVIEW_STABILIZATION_FACTOR = 0.7  # 70% of gyro movement allowed
@@ -136,12 +137,17 @@ class PreviewStabilizationTest(its_base_test.ItsBaseTest):
           'android.control.availableVideoStabilizationModes'
       ]
 
-      camera_properties_utils.skip_unless(
-          supported_stabilization_modes is not None
-          and _PREVIEW_STABILIZATION_MODE_PREVIEW
-          in supported_stabilization_modes,
-          'Preview Stabilization not supported',
-      )
+      # Check media performance class
+      should_run = (supported_stabilization_modes is not None and
+                    _PREVIEW_STABILIZATION_MODE_PREVIEW in
+                    supported_stabilization_modes)
+      media_performance_class = its_session_utils.get_media_performance_class(
+          self.dut.serial)
+      if media_performance_class >= _TEST_REQUIRED_MPC and not should_run:
+        its_session_utils.raise_mpc_assertion_error(
+            _TEST_REQUIRED_MPC, _NAME, media_performance_class)
+
+      camera_properties_utils.skip_unless(should_run)
 
       # Calculate camera FoV and convert from string to float
       camera_fov = float(cam.calc_camera_fov(props))
