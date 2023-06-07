@@ -767,5 +767,7 @@ public class ItsTestActivity extends DialogTestListActivity {
         setContentView(R.layout.its_main);
         setInfoResources(R.string.camera_its_test, R.string.camera_its_test_info, -1);
         setPassFailButtonClickListeners();
+        // Changing folded state can incorrectly enable pass button
+        ItsTestActivity.this.getPassButton().setEnabled(false);
     }
 }
