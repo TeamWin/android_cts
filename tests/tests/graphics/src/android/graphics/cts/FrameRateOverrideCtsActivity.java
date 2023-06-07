@@ -16,6 +16,7 @@
 
 package android.graphics.cts;
 
+import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertTrue;
 
 import android.app.Activity;
@@ -194,8 +195,8 @@ public class FrameRateOverrideCtsActivity extends Activity {
 
     // Waits until our SurfaceHolder has a surface and the activity is resumed.
     private void waitForPreconditions() throws InterruptedException {
-        assertTrue(
-                "Activity was unexpectedly destroyed", !isDestroyed());
+        assertNotSame("Activity was unexpectedly destroyed", mActivityState,
+                ActivityState.DESTROYED);
         if (mSurface == null || mActivityState != ActivityState.RUNNING) {
             Log.i(TAG, String.format(
                     "Waiting for preconditions. Have surface? %b. Activity resumed? %b.",
@@ -210,14 +211,16 @@ public class FrameRateOverrideCtsActivity extends Activity {
                     mSurface != null, mActivityState == ActivityState.RUNNING),
                     timeRemainingMillis > 0);
             mLock.wait(timeRemainingMillis);
-            assertTrue("Activity was unexpectedly destroyed", !isDestroyed());
+            assertNotSame("Activity was unexpectedly destroyed", mActivityState,
+                    ActivityState.DESTROYED);
             nowNanos = System.nanoTime();
         }
     }
 
     // Returns true if we encounter a precondition violation, false otherwise.
     private boolean waitForPreconditionViolation() throws InterruptedException {
-        assertTrue("Activity was unexpectedly destroyed", !isDestroyed());
+        assertNotSame("Activity was unexpectedly destroyed", mActivityState,
+                ActivityState.DESTROYED);
         long nowNanos = System.nanoTime();
         long endTimeNanos = nowNanos + PRECONDITION_VIOLATION_WAIT_TIMEOUT_NANOSECONDS;
         while (mSurface != null && mActivityState == ActivityState.RUNNING) {
@@ -226,7 +229,8 @@ public class FrameRateOverrideCtsActivity extends Activity {
                 break;
             }
             mLock.wait(timeRemainingMillis);
-            assertTrue("Activity was unexpectedly destroyed", !isDestroyed());
+            assertNotSame("Activity was unexpectedly destroyed", mActivityState,
+                    ActivityState.DESTROYED);
             nowNanos = System.nanoTime();
         }
         return mSurface == null || mActivityState != ActivityState.RUNNING;
