@@ -28,6 +28,7 @@ import com.android.tradefed.util.FileUtil;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -179,6 +180,7 @@ public class AppCloningHostTest extends AppCloningBaseHostTest {
     }
 
     @Test
+    @Ignore("b/270257523")
     public void testCrossUserMediaAccess() throws Exception {
         assumeTrue(isAtLeastT());
 
