@@ -2353,7 +2353,7 @@ public class ASurfaceControlTest {
                         nSurfaceTransaction_setDataSpace(surfaceControl, surfaceTransaction,
                                 extendedDataspace);
                         nSurfaceTransaction_setExtendedRangeBrightness(surfaceControl,
-                                surfaceTransaction, 1.f, 3.f);
+                                surfaceTransaction, 3.f, 3.f);
                         nSurfaceTransaction_apply(surfaceTransaction);
                         nSurfaceTransaction_delete(surfaceTransaction);
                     }
@@ -2383,7 +2383,7 @@ public class ASurfaceControlTest {
                             nSurfaceTransaction_setDataSpace(surfaceControl, surfaceTransaction,
                                     extendedDataspace);
                             nSurfaceTransaction_setExtendedRangeBrightness(surfaceControl,
-                                    surfaceTransaction, 2.f, 3.f);
+                                    surfaceTransaction, 3.f, 3.f);
                             nSurfaceTransaction_apply(surfaceTransaction);
                             nSurfaceTransaction_delete(surfaceTransaction);
                         }
