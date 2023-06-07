@@ -38,6 +38,7 @@ _FD_MODE_OFF, _FD_MODE_SIMPLE, _FD_MODE_FULL = 0, 1, 2
 _NAME = os.path.splitext(os.path.basename(__file__))[0]
 _NUM_TEST_FRAMES = 20
 _NUM_FACES = 3
+_TEST_REQUIRED_MPC = 34
 _W, _H = 640, 480
 
 
@@ -194,9 +195,16 @@ class NumFacesTest(its_base_test.ItsBaseTest):
           cam, props, self.scene, self.tablet, self.chart_distance,
           log_path=self.log_path)
 
+      # Check media performance class
+      should_run = camera_properties_utils.face_detect(props)
+      media_performance_class = its_session_utils.get_media_performance_class(
+          self.dut.serial)
+      if media_performance_class >= _TEST_REQUIRED_MPC and not should_run:
+        its_session_utils.raise_mpc_assertion_error(
+            _TEST_REQUIRED_MPC, _NAME, media_performance_class)
+
       # Check skip conditions
-      camera_properties_utils.skip_unless(
-          camera_properties_utils.face_detect(props))
+      camera_properties_utils.skip_unless(should_run)
       mono_camera = camera_properties_utils.mono_camera(props)
       fd_modes = props['android.statistics.info.availableFaceDetectModes']
       a = props['android.sensor.info.activeArraySize']
