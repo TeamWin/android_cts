@@ -142,6 +142,49 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
             new ComponentName(TRAMPOLINE_APP_API_32,
                     "com.android.test.notificationtrampoline.NotificationTrampolineTestService");
 
+    private static final String PRESSURE_APP_00 =
+            "com.android.test.NotificationPressure00";
+    private static final String PRESSURE_APP_01 =
+            "com.android.test.NotificationPressure01";
+    private static final String PRESSURE_APP_02 =
+            "com.android.test.NotificationPressure02";
+    private static final String PRESSURE_APP_03 =
+            "com.android.test.NotificationPressure03";
+    private static final String PRESSURE_APP_04 =
+            "com.android.test.NotificationPressure04";
+    private static final String PRESSURE_APP_05 =
+            "com.android.test.NotificationPressure05";
+    private static final String PRESSURE_APP_06 =
+            "com.android.test.NotificationPressure06";
+    private static final String PRESSURE_APP_07 =
+            "com.android.test.NotificationPressure07";
+    private static final String PRESSURE_APP_08 =
+            "com.android.test.NotificationPressure08";
+    private static final String PRESSURE_APP_09 =
+            "com.android.test.NotificationPressure09";
+
+    private static final ComponentName PRESSURE_SERVICE_00 = new ComponentName(PRESSURE_APP_00,
+            "com.android.test.notificationtrampoline.NotificationTrampolineTestService");
+    private static final ComponentName PRESSURE_SERVICE_01 = new ComponentName(PRESSURE_APP_01,
+            "com.android.test.notificationtrampoline.NotificationTrampolineTestService");
+    private static final ComponentName PRESSURE_SERVICE_02 = new ComponentName(PRESSURE_APP_02,
+            "com.android.test.notificationtrampoline.NotificationTrampolineTestService");
+    private static final ComponentName PRESSURE_SERVICE_03 = new ComponentName(PRESSURE_APP_03,
+            "com.android.test.notificationtrampoline.NotificationTrampolineTestService");
+    private static final ComponentName PRESSURE_SERVICE_04 = new ComponentName(PRESSURE_APP_04,
+            "com.android.test.notificationtrampoline.NotificationTrampolineTestService");
+    private static final ComponentName PRESSURE_SERVICE_05 = new ComponentName(PRESSURE_APP_05,
+            "com.android.test.notificationtrampoline.NotificationTrampolineTestService");
+    private static final ComponentName PRESSURE_SERVICE_06 = new ComponentName(PRESSURE_APP_06,
+            "com.android.test.notificationtrampoline.NotificationTrampolineTestService");
+    private static final ComponentName PRESSURE_SERVICE_07 = new ComponentName(PRESSURE_APP_07,
+            "com.android.test.notificationtrampoline.NotificationTrampolineTestService");
+    private static final ComponentName PRESSURE_SERVICE_08 = new ComponentName(PRESSURE_APP_08,
+            "com.android.test.notificationtrampoline.NotificationTrampolineTestService");
+    private static final ComponentName PRESSURE_SERVICE_09 = new ComponentName(PRESSURE_APP_09,
+            "com.android.test.notificationtrampoline.NotificationTrampolineTestService");
+
+
     private static final ComponentName URI_ACCESS_SERVICE = new ComponentName(
             "com.android.test.notificationlistener",
             "com.android.test.notificationlistener.NotificationUriAccessService");
@@ -182,6 +225,16 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         PermissionUtils.grantPermission(TRAMPOLINE_APP_API_30, POST_NOTIFICATIONS);
         PermissionUtils.grantPermission(TRAMPOLINE_APP_API_32, POST_NOTIFICATIONS);
         PermissionUtils.grantPermission(NOTIFICATIONPROVIDER, POST_NOTIFICATIONS);
+        PermissionUtils.grantPermission(PRESSURE_APP_00, POST_NOTIFICATIONS);
+        PermissionUtils.grantPermission(PRESSURE_APP_01, POST_NOTIFICATIONS);
+        PermissionUtils.grantPermission(PRESSURE_APP_02, POST_NOTIFICATIONS);
+        PermissionUtils.grantPermission(PRESSURE_APP_03, POST_NOTIFICATIONS);
+        PermissionUtils.grantPermission(PRESSURE_APP_04, POST_NOTIFICATIONS);
+        PermissionUtils.grantPermission(PRESSURE_APP_05, POST_NOTIFICATIONS);
+        PermissionUtils.grantPermission(PRESSURE_APP_06, POST_NOTIFICATIONS);
+        PermissionUtils.grantPermission(PRESSURE_APP_07, POST_NOTIFICATIONS);
+        PermissionUtils.grantPermission(PRESSURE_APP_08, POST_NOTIFICATIONS);
+        PermissionUtils.grantPermission(PRESSURE_APP_09, POST_NOTIFICATIONS);
 
         // This will leave a set of channels on the device with each test run.
         mId = UUID.randomUUID().toString();
@@ -223,6 +276,16 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         PermissionUtils.revokePermission(TEST_APP, POST_NOTIFICATIONS);
         PermissionUtils.revokePermission(TRAMPOLINE_APP, POST_NOTIFICATIONS);
         PermissionUtils.revokePermission(NOTIFICATIONPROVIDER, POST_NOTIFICATIONS);
+        PermissionUtils.revokePermission(PRESSURE_APP_00, POST_NOTIFICATIONS);
+        PermissionUtils.revokePermission(PRESSURE_APP_01, POST_NOTIFICATIONS);
+        PermissionUtils.revokePermission(PRESSURE_APP_02, POST_NOTIFICATIONS);
+        PermissionUtils.revokePermission(PRESSURE_APP_03, POST_NOTIFICATIONS);
+        PermissionUtils.revokePermission(PRESSURE_APP_04, POST_NOTIFICATIONS);
+        PermissionUtils.revokePermission(PRESSURE_APP_05, POST_NOTIFICATIONS);
+        PermissionUtils.revokePermission(PRESSURE_APP_06, POST_NOTIFICATIONS);
+        PermissionUtils.revokePermission(PRESSURE_APP_07, POST_NOTIFICATIONS);
+        PermissionUtils.revokePermission(PRESSURE_APP_08, POST_NOTIFICATIONS);
+        PermissionUtils.revokePermission(PRESSURE_APP_09, POST_NOTIFICATIONS);
     }
 
     private PendingIntent getPendingIntent() {
@@ -878,6 +941,124 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         }
 
         mListener.resetData();
+    }
+
+    public FutureServiceConnection bindServiceConnection(ComponentName component) {
+        Log.d("TestNotificationListener", "binding service: " + component.getPackageName());
+        Intent intent = new Intent();
+        intent.setComponent(component);
+        FutureServiceConnection service_connection = new FutureServiceConnection();
+        assertTrue(mContext.bindService(intent, service_connection, Context.BIND_AUTO_CREATE));
+        return service_connection;
+    }
+
+    public void sendMessage(FutureServiceConnection serviceConnection,
+            int notificationId, Handler callback) throws Exception {
+        Messenger service = new Messenger(serviceConnection.get(TIMEOUT_MS));
+        service.send(Message.obtain(null, MESSAGE_SERVICE_NOTIFICATION, notificationId, -1,
+                new Messenger(callback)));
+    }
+
+    // Tests that, given a significant amount of Notification pressure from 500 notifications
+    // posted in rapid succession, NotificationListeners don't experience binder errors.
+    public void testRankingUpdateSentWithPressure() throws Exception {
+        int notificationsPerApp = 50;
+        int totalNotificationsSent = notificationsPerApp * 10 /* number of apps */;
+
+        // Start the service connections for the 10 services.
+        FutureServiceConnection pressureService00 = bindServiceConnection(PRESSURE_SERVICE_00);
+        FutureServiceConnection pressureService01 = bindServiceConnection(PRESSURE_SERVICE_01);
+        FutureServiceConnection pressureService02 = bindServiceConnection(PRESSURE_SERVICE_02);
+        FutureServiceConnection pressureService03 = bindServiceConnection(PRESSURE_SERVICE_03);
+        FutureServiceConnection pressureService04 = bindServiceConnection(PRESSURE_SERVICE_04);
+        FutureServiceConnection pressureService05 = bindServiceConnection(PRESSURE_SERVICE_05);
+        FutureServiceConnection pressureService06 = bindServiceConnection(PRESSURE_SERVICE_06);
+        FutureServiceConnection pressureService07 = bindServiceConnection(PRESSURE_SERVICE_07);
+        FutureServiceConnection pressureService08 = bindServiceConnection(PRESSURE_SERVICE_08);
+        FutureServiceConnection pressureService09 = bindServiceConnection(PRESSURE_SERVICE_09);
+
+        deactivateGracePeriod();
+        setUpNotifListener();
+        CountDownLatch notificationPostedLatch =
+                mListener.setPostedCountDown(totalNotificationsSent);
+        CountDownLatch notificationRankingUpdateLatch =
+                mListener.setRankingUpdateCountDown(totalNotificationsSent);
+        CountDownLatch notificationRemovedLatch =
+                mListener.setRemovedCountDown(totalNotificationsSent);
+
+        mListener.addTestPackage(PRESSURE_APP_00);
+        mListener.addTestPackage(PRESSURE_APP_01);
+        mListener.addTestPackage(PRESSURE_APP_02);
+        mListener.addTestPackage(PRESSURE_APP_03);
+        mListener.addTestPackage(PRESSURE_APP_04);
+        mListener.addTestPackage(PRESSURE_APP_05);
+        mListener.addTestPackage(PRESSURE_APP_06);
+        mListener.addTestPackage(PRESSURE_APP_07);
+        mListener.addTestPackage(PRESSURE_APP_08);
+        mListener.addTestPackage(PRESSURE_APP_09);
+
+        // For 10 different apps, send notificationsPerApp notifications each, and ensure that
+        // none are dropped.
+        EventCallback callback = new EventCallback();
+        int notificationId = 6500;
+        boolean notificationsReceived = false;
+        boolean notificationRankingUpdates = false;
+        boolean notificationsRemoved = false;
+        for (int i = 0; i < notificationsPerApp; i++) {
+            sendMessage(pressureService00, notificationId++, callback);
+            sendMessage(pressureService01, notificationId++, callback);
+            sendMessage(pressureService02, notificationId++, callback);
+            sendMessage(pressureService03, notificationId++, callback);
+            sendMessage(pressureService04, notificationId++, callback);
+            sendMessage(pressureService05, notificationId++, callback);
+            sendMessage(pressureService06, notificationId++, callback);
+            sendMessage(pressureService07, notificationId++, callback);
+            sendMessage(pressureService08, notificationId++, callback);
+            sendMessage(pressureService09, notificationId++, callback);
+        }
+
+        try {
+            notificationsReceived = notificationPostedLatch.await(50000, TimeUnit.MILLISECONDS);
+            notificationRankingUpdates = notificationRankingUpdateLatch.await(5000,
+                    TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            Log.d(TAG, e.toString());
+            fail("Interrupted before notifications received or ranking updates received.");
+        }
+
+        // Clean up.
+        mContext.unbindService(pressureService00);
+        mContext.unbindService(pressureService01);
+        mContext.unbindService(pressureService02);
+        mContext.unbindService(pressureService03);
+        mContext.unbindService(pressureService04);
+        mContext.unbindService(pressureService05);
+        mContext.unbindService(pressureService06);
+        mContext.unbindService(pressureService07);
+        mContext.unbindService(pressureService08);
+        mContext.unbindService(pressureService09);
+
+        try {
+            notificationsRemoved = notificationRemovedLatch.await(50000, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            Log.d(TAG, e.toString());
+            fail("Interrupted before all notifications removed.");
+        }
+
+        assertTrue(notificationsReceived);
+        assertTrue(notificationRankingUpdates);
+        assertTrue(notificationsRemoved);
+
+        mListener.removeTestPackage(PRESSURE_APP_00);
+        mListener.removeTestPackage(PRESSURE_APP_01);
+        mListener.removeTestPackage(PRESSURE_APP_02);
+        mListener.removeTestPackage(PRESSURE_APP_03);
+        mListener.removeTestPackage(PRESSURE_APP_04);
+        mListener.removeTestPackage(PRESSURE_APP_05);
+        mListener.removeTestPackage(PRESSURE_APP_06);
+        mListener.removeTestPackage(PRESSURE_APP_07);
+        mListener.removeTestPackage(PRESSURE_APP_08);
+        mListener.removeTestPackage(PRESSURE_APP_09);
     }
 
     public void testSuspendedPackageSendsNotification() throws Exception {
