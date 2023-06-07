@@ -68,6 +68,7 @@ _TAG_STR = 'tag'
 _CAMERA_ID_STR = 'cameraId'
 _USE_CASE_CROPPED_RAW = 6
 
+
 def validate_tablet_brightness(tablet_name, brightness):
   """Ensures tablet brightness is set according to documentation.
 
@@ -794,7 +795,7 @@ class ItsSession(object):
     return [int(x) for x in str(data['strValue'][1:-1]).split(', ') if x]
 
   def get_display_size(self):
-    """ Get the display size of the screen.
+    """Get the display size of the screen.
 
     Returns:
       The size of the display resolution in pixels.
@@ -813,7 +814,7 @@ class ItsSession(object):
     return data['strValue'].split('x')
 
   def get_max_camcorder_profile_size(self, camera_id):
-    """ Get the maximum camcorder profile size for this camera device.
+    """Get the maximum camcorder profile size for this camera device.
 
     Args:
       camera_id: int; device id
@@ -1818,6 +1819,73 @@ class ItsSession(object):
           'Failed to measure camera 1080p jpeg capture latency')
     return float(data[_STR_VALUE])
 
+  def _camera_id_to_props(self):
+    """Return the properties of each camera ID."""
+    unparsed_ids = self.get_camera_ids().get('cameraIdArray', [])
+    parsed_ids = parse_camera_ids(unparsed_ids)
+    id_to_props = {}
+    for unparsed_id, id_combo in zip(unparsed_ids, parsed_ids):
+      if id_combo.sub_id is None:
+        props = self.get_camera_properties_by_id(id_combo.id)
+      else:
+        props = self.get_camera_properties_by_id(id_combo.sub_id)
+      id_to_props[unparsed_id] = props
+    if not id_to_props:
+      raise AssertionError('No camera IDs were found.')
+    return id_to_props
+
+  def has_ultrawide_camera(self, facing):
+    """Return if device has an ultrawide camera facing the same direction.
+
+    Args:
+      facing: constant describing the direction the camera device lens faces.
+
+    Returns:
+      True if the device has an ultrawide camera facing in that direction.
+    """
+    camera_ids = self.get_camera_ids()
+    primary_rear_camera_id = camera_ids.get('primaryRearCameraId', '')
+    primary_front_camera_id = camera_ids.get('primaryFrontCameraId', '')
+    if facing == camera_properties_utils.LENS_FACING_BACK:
+      primary_camera_id = primary_rear_camera_id
+    elif facing == camera_properties_utils.LENS_FACING_FRONT:
+      primary_camera_id = primary_front_camera_id
+    else:
+      raise NotImplementedError('Cameras not facing either front or back '
+                                'are currently unsupported.')
+    id_to_props = self._camera_id_to_props()
+    fov_and_facing = collections.namedtuple('FovAndFacing', ['fov', 'facing'])
+    id_to_fov_facing = {
+        unparsed_id: fov_and_facing(
+            self.calc_camera_fov(props), props['android.lens.facing']
+        )
+        for unparsed_id, props in id_to_props.items()
+    }
+    logging.debug('IDs to (FOVs, facing): %s', id_to_fov_facing)
+    primary_camera_fov, primary_camera_facing = id_to_fov_facing[
+        primary_camera_id]
+    for unparsed_id, fov_facing_combo in id_to_fov_facing.items():
+      if (float(fov_facing_combo.fov) > float(primary_camera_fov) and
+          fov_facing_combo.facing == primary_camera_facing and
+          unparsed_id != primary_camera_id):
+        logging.debug('Ultrawide camera found with ID %s and FoV %.3f. '
+                      'Primary camera has ID %s and FoV: %.3f.',
+                      unparsed_id, float(fov_facing_combo.fov),
+                      primary_camera_id, float(primary_camera_fov))
+        return True
+    return False
+
+  def get_facing_to_ids(self):
+    """Returns mapping from lens facing to list of corresponding camera IDs."""
+    id_to_props = self._camera_id_to_props()
+    facing_to_ids = collections.defaultdict(list)
+    for unparsed_id, props in id_to_props.items():
+      facing_to_ids[props['android.lens.facing']].append(unparsed_id)
+    for ids in facing_to_ids.values():
+      ids.sort()
+    logging.debug('Facing to camera IDs: %s', facing_to_ids)
+    return facing_to_ids
+
 
 def parse_camera_ids(ids):
   """Parse the string of camera IDs into array of CameraIdCombo tuples.
@@ -1990,3 +2058,22 @@ def get_vendor_api_level(device_id):
     logging.error('No vendor_api_level. Setting to build version.')
     vendor_api_level = get_build_sdk_version(device_id)
   return vendor_api_level
+
+
+def get_media_performance_class(device_id):
+  """Return the int value for the media performance class of the device."""
+  cmd = (f'adb -s {device_id} shell '
+         'getprop ro.odm.build.media_performance_class')
+  try:
+    media_performance_class = int(
+        subprocess.check_output(cmd.split()).rstrip())
+    logging.debug('Media performance class: %d', media_performance_class)
+  except (subprocess.CalledProcessError, ValueError):
+    logging.debug('No media performance class. Setting to 0.')
+    media_performance_class = 0
+  return media_performance_class
+
+
+def raise_mpc_assertion_error(required_mpc, test_name, found_mpc):
+  raise AssertionError(f'With MPC >= {required_mpc}, {test_name} must be run. '
+                       f'Found MPC: {found_mpc}')

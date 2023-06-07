@@ -1332,6 +1332,8 @@ public class ItsService extends Service implements SensorEventListener {
                 array.put(id);
             }
             obj.put("cameraIdArray", array);
+            obj.put("primaryRearCameraId", mItsCameraIdList.mPrimaryRearCameraId);
+            obj.put("primaryFrontCameraId", mItsCameraIdList.mPrimaryFrontCameraId);
             mSocketRunnableObj.sendResponse("cameraIds", obj);
         } catch (org.json.JSONException e) {
             throw new ItsException("JSON error: ", e);

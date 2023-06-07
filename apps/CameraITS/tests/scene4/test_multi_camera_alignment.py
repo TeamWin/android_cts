@@ -44,6 +44,7 @@ _MM_TO_UM = 1E3
 _NAME = os.path.splitext(os.path.basename(__file__))[0]
 _REFERENCE_GYRO = 1
 _REFERENCE_UNDEFINED = 2
+_TEST_REQUIRED_MPC = 33
 _TRANS_MATRIX_REF = np.array([0, 0, 0])  # translation matrix for ref cam is 000
 
 
@@ -373,12 +374,29 @@ class MultiCameraAlignmentTest(its_base_test.ItsBaseTest):
       name_with_log_path = os.path.join(self.log_path, _NAME)
       chart_distance = self.chart_distance * _CM_TO_M
 
+      # check media performance class
+      should_run = (camera_properties_utils.read_3a(props) and
+                    camera_properties_utils.per_frame_control(props) and
+                    camera_properties_utils.logical_multi_camera(props) and
+                    camera_properties_utils.backward_compatible(props))
+      media_performance_class = its_session_utils.get_media_performance_class(
+          self.dut.serial)
+      cameras_facing_same_direction = cam.get_facing_to_ids().get(
+          props['android.lens.facing'], [])
+      has_multiple_same_facing_cameras = len(cameras_facing_same_direction) > 1
+
+      if (media_performance_class >= _TEST_REQUIRED_MPC and
+          not should_run and
+          cam.is_primary_camera() and
+          has_multiple_same_facing_cameras):
+        logging.error('Found multiple camera IDs %s facing in the same '
+                      'direction as primary camera %s.',
+                      cameras_facing_same_direction, self.camera_id)
+        its_session_utils.raise_mpc_assertion_error(
+            _TEST_REQUIRED_MPC, _NAME, media_performance_class)
+
       # check SKIP conditions
-      camera_properties_utils.skip_unless(
-          camera_properties_utils.read_3a(props) and
-          camera_properties_utils.per_frame_control(props) and
-          camera_properties_utils.logical_multi_camera(props) and
-          camera_properties_utils.backward_compatible(props))
+      camera_properties_utils.skip_unless(should_run)
 
       # load chart for scene
       its_session_utils.load_scene(
