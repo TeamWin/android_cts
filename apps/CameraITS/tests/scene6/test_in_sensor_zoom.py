@@ -110,7 +110,7 @@ class InSensorZoomTest(its_base_test.ItsBaseTest):
                                f' != active array AR, region size: {rw} x {rh} '
                                f' active array size: {aw} x {ah}')
         # Crop the full FoV RAW to result_raw_crop_region
-        rgb_full_cropped = rgb_full_img[rl:rl+rw:, rt:rt+rh:, ::]
+        rgb_full_cropped = rgb_full_img[rt:rt+rh:, rl:rl+rw:, ::]
 
         # Downscale the zoomed-in RAW image returned by the camera sub-system
         rgb_zoomed_downscale = cv2.resize(
