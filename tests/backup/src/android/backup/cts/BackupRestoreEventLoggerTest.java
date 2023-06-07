@@ -48,13 +48,15 @@ public class BackupRestoreEventLoggerTest extends BaseBackupCtsTest {
     private static final int SUCCESS_COUNT = 1;
     private static final int FAIL_COUNT = 2;
 
-    private final TestBackupManagerMonitor mMonitor = new TestBackupManagerMonitor();
+    private final TestBackupManagerMonitor mBackupMonitor = new TestBackupManagerMonitor();
+    private final TestBackupManagerMonitor mRestoreMonitor = new TestBackupManagerMonitor();
 
     private UiAutomation mUiAutomation;
     private BackupManager mBackupManager;
     private BackupObserver mBackupObserver;
     private RestoreObserver mRestoreObserver;
     private CountDownLatch mOperationLatch;
+    private RestoreSession mRestoreSession;
 
     @Override
     public void setUp() throws Exception {
@@ -72,46 +74,46 @@ public class BackupRestoreEventLoggerTest extends BaseBackupCtsTest {
 
     @Override
     public void tearDown() throws Exception {
-      mUiAutomation.dropShellPermissionIdentity();
 
-      super.tearDown();
+        if (mRestoreSession != null){
+            mRestoreSession.endRestoreSession();
+        }
+        mUiAutomation.dropShellPermissionIdentity();
+
+        super.tearDown();
     }
 
-    public void testRequestBackup_logsSentToMonitor() throws Exception {
+    public void testBackupRestoreRoundTrip_logsSentToMonitor() throws Exception {
         // Ensure the app is not in stopped state.
         createTestFileOfSize(BACKUP_APP_PACKAGE, /* size */ 1);
-        mOperationLatch = new CountDownLatch(/* count */ 1);
 
+        // Run a backup.
+        mOperationLatch = new CountDownLatch(/* count */ 1);
         mBackupManager.requestBackup(new String[] { BACKUP_APP_PACKAGE },
-                /* observer */ mBackupObserver, mMonitor, /* flags */ 0);
-
-        boolean operationFinished = mOperationLatch.await(OPERATION_TIMEOUT_SECONDS,
+                /* observer */ mBackupObserver, mBackupMonitor, /* flags */ 0);
+        boolean backupFinished = mOperationLatch.await(OPERATION_TIMEOUT_SECONDS,
                 TimeUnit.SECONDS);
-        assertThat(operationFinished).isTrue();
-        assertLoggingResultsAreCorrect();
-    }
 
-    public void testRequestRestore_logsSentToMonitor() throws Exception {
+        // Run a restore.
         mOperationLatch = new CountDownLatch(/* count */ 1);
-        RestoreSession restoreSession = mBackupManager.beginRestoreSession();
-
-        restoreSession.restorePackage(BACKUP_APP_PACKAGE, mRestoreObserver, mMonitor);
-
-        boolean operationFinished = mOperationLatch.await(OPERATION_TIMEOUT_SECONDS,
+        mRestoreSession = mBackupManager.beginRestoreSession();
+        mRestoreSession.restorePackage(BACKUP_APP_PACKAGE, mRestoreObserver, mRestoreMonitor);
+        boolean restoreFinished = mOperationLatch.await(OPERATION_TIMEOUT_SECONDS,
                 TimeUnit.SECONDS);
-        assertThat(operationFinished).isTrue();
-        assertLoggingResultsAreCorrect();
 
-        // Clean up restore session
-        restoreSession.endRestoreSession();
+
+        assertThat(backupFinished).isTrue();
+        assertThat(restoreFinished).isTrue();
+        assertLoggingResultsAreCorrect(mBackupMonitor);
+        assertLoggingResultsAreCorrect(mRestoreMonitor);
     }
 
     /**
      * Assert the logging results are consistent with what is logged in LoggingFullBackupAgent.java.
      */
-    private void assertLoggingResultsAreCorrect() {
-        assertThat(mMonitor.mAgentBundle).isNotNull();
-        List<DataTypeResult> dataTypeList = mMonitor.mAgentBundle.getParcelableArrayList(
+    private void assertLoggingResultsAreCorrect(TestBackupManagerMonitor monitor) {
+        assertThat(monitor.mAgentBundle).isNotNull();
+        List<DataTypeResult> dataTypeList = monitor.mAgentBundle.getParcelableArrayList(
                 BackupManagerMonitor.EXTRA_LOG_AGENT_LOGGING_RESULTS,
                 DataTypeResult.class);
         assertThat(dataTypeList.size()).isEqualTo(/* expected */ 1);
