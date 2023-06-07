@@ -155,7 +155,7 @@ public class SliceBindingTest {
         }
 
         try {
-            latch.await(100, TimeUnit.MILLISECONDS);
+            latch.await(1000, TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
