@@ -27,6 +27,7 @@ import static android.car.media.CarAudioManager.INVALID_REQUEST_ID;
 import static android.car.media.CarAudioManager.PRIMARY_AUDIO_ZONE;
 import static android.car.test.mocks.JavaMockitoHelper.await;
 import static android.car.test.mocks.JavaMockitoHelper.silentAwait;
+import static android.media.AudioAttributes.USAGE_MEDIA;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
@@ -97,6 +98,13 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
     private static final Pattern PRIMARY_ZONE_MEDIA_REQUEST_APPROVERS_PATTERN =
             Pattern.compile("Media request callbacks\\[(\\d+)\\]:");
 
+    private static final int USAGE_INVALID = -1;
+    private static final int VOLUME_FLAGS = 0;
+    private static final int INVALID_VOLUME_GROUP_ID = -1;
+    private static final int LEGACY_ZONE_ID = 0;
+    private static final int LEGACY_VOLUME_GROUP_ID = 0;
+    private static final int LEGACY_GROUP_VOLUME_COUNT = 3;
+
     @Rule
     public final PermissionsCheckerRule mPermissionsCheckerRule = new PermissionsCheckerRule();
 
@@ -106,6 +114,7 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
     private CarAudioManager mCarAudioManager;
     private SyncCarVolumeCallback mCallback;
     private int mZoneId = -1;
+    private int mConfigId = -1;
     private int mVolumeGroupId = -1;
     private CarOccupantZoneManager mCarOccupantZoneManager;
     private TestPrimaryZoneMediaAudioRequestStatusCallback mRequestCallback;
@@ -285,33 +294,6 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
             .that(mCallback.groupId).isEqualTo(mVolumeGroupId);
     }
 
-    private void readFirstZoneAndVolumeGroup() {
-        Matcher matchZone = ZONE_PATTERN.matcher(mCarAudioServiceDump);
-        assertWithMessage("No CarAudioZone in dump").that(matchZone.find()).isTrue();
-        mZoneId = Integer.parseInt(matchZone.group(1));
-        int currentConfigId = Integer.parseInt(matchZone.group(3));
-        readFirstVolumeGroup(mZoneId, currentConfigId);
-    }
-
-    private void readFirstVolumeGroup(int zoneId, int currentConfigId) {
-        Matcher matchGroup = VOLUME_GROUP_PATTERN.matcher(mCarAudioServiceDump);
-        boolean findVolumeGroup = false;
-        while (matchGroup.find()) {
-            if (Integer.parseInt(matchGroup.group(3)) == zoneId
-                    && Integer.parseInt(matchGroup.group(4)) == currentConfigId) {
-                mVolumeGroupId = Integer.parseInt(matchGroup.group(1));
-                findVolumeGroup = true;
-                break;
-            }
-        }
-        assertWithMessage("No CarVolumeGroup in dump").that(findVolumeGroup).isTrue();
-    }
-
-    private void setVolumeGroupMute(int zoneId, int groupId, boolean mute) {
-        ShellUtils.runShellCommand("cmd car_service set-mute-car-volume-group %d %d %s",
-            zoneId, groupId, mute ? "mute" : "unmute");
-    }
-
     @Test
     @ApiTest(apis = {
             "android.car.media.CarAudioManager#unregisterCarVolumeCallback(CarVolumeCallback)"})
@@ -478,6 +460,329 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
 
         assertWithMessage("Car volume group audio attributes without permission exception")
                 .that(exception).hasMessageThat().contains(PERMISSION_CAR_CONTROL_AUDIO_VOLUME);
+    }
+
+    @Test
+    @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_VOLUME)
+    @ApiTest(apis = {"android.car.media.CarAudioManager#getGroupMaxVolume(int)",
+            "android.car.media.CarAudioManager#getGroupMinVolume(int)",
+            "android.car.media.CarAudioManager#getGroupVolume(int)"})
+    public void getGroupVolume() {
+        if (mCarAudioManager.isAudioFeatureEnabled(AUDIO_FEATURE_DYNAMIC_ROUTING)) {
+            assumePrimaryZone();
+        } else {
+            mVolumeGroupId = LEGACY_VOLUME_GROUP_ID;
+        }
+        int maxIndex = mCarAudioManager.getGroupMaxVolume(mVolumeGroupId);
+        int minIndex = mCarAudioManager.getGroupMinVolume(mVolumeGroupId);
+
+        int currentIndex = mCarAudioManager.getGroupVolume(mVolumeGroupId);
+
+        assertWithMessage("Current maximum volume for primary zone")
+                .that(currentIndex).isAtMost(maxIndex);
+        assertWithMessage("Current minimum volume for primary zone")
+                .that(currentIndex).isAtLeast(minIndex);
+    }
+
+    @Test
+    @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_VOLUME)
+    @ApiTest(apis = {"android.car.media.CarAudioManager#getGroupMaxVolume(int, int)",
+            "android.car.media.CarAudioManager#getGroupMinVolume(int, int)",
+            "android.car.media.CarAudioManager#getGroupVolume(int, int)"})
+    public void getGroupVolume_withZoneId() {
+        if (mCarAudioManager.isAudioFeatureEnabled(AUDIO_FEATURE_DYNAMIC_ROUTING)) {
+            readFirstZoneAndVolumeGroup();
+        } else {
+            mZoneId = LEGACY_ZONE_ID;
+            mVolumeGroupId = LEGACY_VOLUME_GROUP_ID;
+        }
+        int maxIndex = mCarAudioManager.getGroupMaxVolume(mZoneId, mVolumeGroupId);
+        int minIndex = mCarAudioManager.getGroupMinVolume(mZoneId, mVolumeGroupId);
+
+        int currentIndex = mCarAudioManager.getGroupVolume(mZoneId, mVolumeGroupId);
+
+        assertWithMessage("Current maximum volume for zone %s volume group %s", mZoneId,
+                mVolumeGroupId).that(currentIndex).isAtMost(maxIndex);
+        assertWithMessage("Current minimum volume for zone %s volume group %s", mZoneId,
+                mVolumeGroupId).that(currentIndex).isAtLeast(minIndex);
+    }
+
+    @Test
+    @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_VOLUME)
+    @ApiTest(apis = {"android.car.media.CarAudioManager#setGroupVolume(int, int, int)"})
+    public void setGroupVolume_toMax_succeeds() {
+        assumeDynamicRoutingIsEnabled();
+        assumePrimaryZone();
+        int prevIndex = mCarAudioManager.getGroupVolume(mZoneId, mVolumeGroupId);
+        int maxIndex = mCarAudioManager.getGroupMaxVolume(mVolumeGroupId);
+
+        mCarAudioManager.setGroupVolume(mVolumeGroupId, maxIndex, VOLUME_FLAGS);
+
+        try {
+            assertWithMessage("Current volume after setting to max for primary zone volume group"
+                    + " %s", mVolumeGroupId).that(mCarAudioManager.getGroupVolume(mVolumeGroupId))
+                    .isEqualTo(maxIndex);
+        } finally {
+            mCarAudioManager.setGroupVolume(mZoneId, mVolumeGroupId, prevIndex, VOLUME_FLAGS);
+        }
+    }
+
+    @Test
+    @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_VOLUME)
+    @ApiTest(apis = {"android.car.media.CarAudioManager#setGroupVolume(int, int, int)"})
+    public void setGroupVolume_toMin_succeeds() {
+        assumeDynamicRoutingIsEnabled();
+        assumePrimaryZone();
+        int prevIndex = mCarAudioManager.getGroupVolume(mZoneId, mVolumeGroupId);
+        int minIndex = mCarAudioManager.getGroupMinVolume(mVolumeGroupId);
+
+        mCarAudioManager.setGroupVolume(mVolumeGroupId, minIndex, VOLUME_FLAGS);
+
+        try {
+            assertWithMessage("Current volume after setting to min for primary zone volume group"
+                    + " %s", mVolumeGroupId).that(mCarAudioManager.getGroupVolume(mVolumeGroupId))
+                    .isEqualTo(minIndex);
+        } finally {
+            mCarAudioManager.setGroupVolume(mZoneId, mVolumeGroupId, prevIndex, VOLUME_FLAGS);
+        }
+    }
+
+    @Test
+    @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_VOLUME)
+    @ApiTest(apis = {"android.car.media.CarAudioManager#setGroupVolume(int, int, int, int)"})
+    public void setGroupVolume_withZone_toMax_succeeds() {
+        assumeDynamicRoutingIsEnabled();
+        readFirstZoneAndVolumeGroup();
+        int prevIndex = mCarAudioManager.getGroupVolume(mZoneId, mVolumeGroupId);
+        int maxIndex = mCarAudioManager.getGroupMaxVolume(mZoneId, mVolumeGroupId);
+
+        mCarAudioManager.setGroupVolume(mZoneId, mVolumeGroupId, maxIndex, VOLUME_FLAGS);
+
+        try {
+            assertWithMessage("Current volume after setting to max for zone %s volume group %s",
+                    mZoneId, mVolumeGroupId).that(mCarAudioManager.getGroupVolume(mZoneId,
+                    mVolumeGroupId)).isEqualTo(maxIndex);
+        } finally {
+            mCarAudioManager.setGroupVolume(mZoneId, mVolumeGroupId, prevIndex, VOLUME_FLAGS);
+        }
+    }
+
+    @Test
+    @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_VOLUME)
+    @ApiTest(apis = {"android.car.media.CarAudioManager#setGroupVolume(int, int, int, int)"})
+    public void setGroupVolume_withZone_toMin_succeeds() {
+        assumeDynamicRoutingIsEnabled();
+        readFirstZoneAndVolumeGroup();
+        int prevIndex = mCarAudioManager.getGroupVolume(mZoneId, mVolumeGroupId);
+        int minIndex = mCarAudioManager.getGroupMinVolume(mZoneId, mVolumeGroupId);
+
+        mCarAudioManager.setGroupVolume(mZoneId, mVolumeGroupId, minIndex, VOLUME_FLAGS);
+
+        try {
+            assertWithMessage("Current volume after setting to min for zone %s volume group %s",
+                    mZoneId, mVolumeGroupId).that(mCarAudioManager.getGroupVolume(mZoneId,
+                    mVolumeGroupId)).isEqualTo(minIndex);
+        } finally {
+            mCarAudioManager.setGroupVolume(mZoneId, mVolumeGroupId, prevIndex, VOLUME_FLAGS);
+        }
+    }
+
+    @Test
+    @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_VOLUME)
+    @ApiTest(apis = {"android.car.media.CarAudioManager#setGroupVolume(int, int, int, int)"})
+    public void setGroupVolume_aboveMax_throwsException() {
+        assumeDynamicRoutingIsEnabled();
+        readFirstZoneAndVolumeGroup();
+        int maxIndex = mCarAudioManager.getGroupMaxVolume(mZoneId, mVolumeGroupId);
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> mCarAudioManager.setGroupVolume(mZoneId, mVolumeGroupId, maxIndex + 1,
+                        VOLUME_FLAGS));
+
+        assertWithMessage("Exception for setting volume above max")
+                .that(exception).hasMessageThat().contains("Gain out of range");
+    }
+
+    @Test
+    @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_VOLUME)
+    @ApiTest(apis = {"android.car.media.CarAudioManager#setGroupVolume(int, int, int, int)"})
+    public void setGroupVolume_belowMin_throwsException() {
+        assumeDynamicRoutingIsEnabled();
+        readFirstZoneAndVolumeGroup();
+        int minIndex = mCarAudioManager.getGroupMinVolume(mZoneId, mVolumeGroupId);
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> mCarAudioManager.setGroupVolume(mZoneId, mVolumeGroupId, minIndex - 1,
+                        VOLUME_FLAGS));
+
+        assertWithMessage("Exception for setting volume below min")
+                .that(exception).hasMessageThat().contains("Gain out of range");
+    }
+
+    @Test
+    @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_VOLUME)
+    @ApiTest(apis = {"android.car.media.CarAudioManager#getVolumeGroupCount()"})
+    public void getVolumeGroupCount() {
+        int countExpected;
+        if (mCarAudioManager.isAudioFeatureEnabled(AUDIO_FEATURE_DYNAMIC_ROUTING)) {
+            assumePrimaryZone();
+            countExpected = readVolumeGroupCount(PRIMARY_AUDIO_ZONE, mConfigId);
+        } else {
+            countExpected = LEGACY_GROUP_VOLUME_COUNT;
+        }
+
+        assertWithMessage("Primary zone volume group count")
+                .that(mCarAudioManager.getVolumeGroupCount()).isEqualTo(countExpected);
+    }
+
+    @Test
+    @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_VOLUME)
+    @ApiTest(apis = {"android.car.media.CarAudioManager#getVolumeGroupCount(int)"})
+    public void getVolumeGroupCount_withZoneIdAndDynamicRouting() {
+        int countExpected;
+        if (mCarAudioManager.isAudioFeatureEnabled(AUDIO_FEATURE_DYNAMIC_ROUTING)) {
+            readFirstZoneAndVolumeGroup();
+            countExpected = readVolumeGroupCount(mZoneId, mConfigId);
+        } else {
+            mZoneId = LEGACY_ZONE_ID;
+            countExpected = LEGACY_GROUP_VOLUME_COUNT;
+        }
+
+        assertWithMessage("Zone %s volume group count", mZoneId)
+                .that(mCarAudioManager.getVolumeGroupCount(mZoneId)).isEqualTo(countExpected);
+    }
+
+    @Test
+    @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_VOLUME)
+    @ApiTest(apis = {"android.car.media.CarAudioManager#getVolumeGroupCount(int)"})
+    public void getVolumeGroupCount_withInvalidZoneId_throwsException() {
+        assumeDynamicRoutingIsEnabled();
+        assumePrimaryZone();
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> mCarAudioManager.getVolumeGroupCount(INVALID_AUDIO_ZONE));
+
+        assertWithMessage("Invalid zone volume group count exception").that(exception)
+                .hasMessageThat().contains("Invalid audio zone Id");
+    }
+
+    @Test
+    @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_VOLUME)
+    @ApiTest(apis = {"android.car.media.CarAudioManager#getVolumeGroupIdForUsage(int)"})
+    public void getVolumeGroupIdForUsage_forInvalidUsage_returnsInvalidId() {
+        if (mCarAudioManager.isAudioFeatureEnabled(AUDIO_FEATURE_DYNAMIC_ROUTING)) {
+            assumePrimaryZone();
+        }
+
+        int volumeGroupId = mCarAudioManager.getVolumeGroupIdForUsage(USAGE_INVALID);
+
+        assertWithMessage("Volume group id for invalid usage").that(volumeGroupId)
+                .isEqualTo(INVALID_VOLUME_GROUP_ID);
+    }
+
+    @Test
+    @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_VOLUME)
+    @ApiTest(apis = {"android.car.media.CarAudioManager#getVolumeGroupIdForUsage(int, int)"})
+    public void getVolumeGroupIdForUsage_withInvalidZoneId_throwsException() {
+        assumeDynamicRoutingIsEnabled();
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> mCarAudioManager.getVolumeGroupIdForUsage(INVALID_AUDIO_ZONE, USAGE_MEDIA));
+
+        assertWithMessage("Invalid zone volume group for media usage exception").that(exception)
+                .hasMessageThat().contains("Invalid audio zone Id");
+    }
+
+    @Test
+    @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_VOLUME)
+    @ApiTest(apis = {"android.car.media.CarAudioManager#getVolumeGroupIdForUsage(int)"})
+    public void getVolumeGroupIdForUsage_returnsValidId() {
+        if (mCarAudioManager.isAudioFeatureEnabled(AUDIO_FEATURE_DYNAMIC_ROUTING)) {
+            assumePrimaryZone();
+        }
+
+        int volumeGroupId = mCarAudioManager.getVolumeGroupIdForUsage(USAGE_MEDIA);
+
+        assertWithMessage("Valid volume group id in primary zone")
+                .that(volumeGroupId).isNotEqualTo(INVALID_VOLUME_GROUP_ID);
+    }
+
+    @Test
+    @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_VOLUME)
+    @ApiTest(apis = {"android.car.media.CarAudioManager#getVolumeGroupIdForUsage(int, int)"})
+    public void getVolumeGroupIdForUsage_withZoneId_returnsValidId() {
+        assumeDynamicRoutingIsEnabled();
+        readFirstZoneAndVolumeGroup();
+
+        int volumeGroupId = mCarAudioManager.getVolumeGroupIdForUsage(mZoneId, USAGE_MEDIA);
+
+        assertWithMessage("Valid volume group id for media usage in zone %s", mZoneId)
+                .that(volumeGroupId).isNotEqualTo(INVALID_VOLUME_GROUP_ID);
+    }
+
+    @Test
+    @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_VOLUME)
+    @ApiTest(apis = {"android.car.media.CarAudioManager#getUsagesForVolumeGroupId(int)"})
+    public void getUsagesForVolumeGroupId_returnsAtLeastOneUsage() {
+        assumeDynamicRoutingIsEnabled();
+        assumePrimaryZone();
+
+        int[] usages = mCarAudioManager.getUsagesForVolumeGroupId(mVolumeGroupId);
+
+        assertVolumeGroupIdForUsages(PRIMARY_AUDIO_ZONE, mVolumeGroupId, usages,
+                "with dynamic routing");
+    }
+
+    @Test
+    @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_VOLUME)
+    @ApiTest(apis = {"android.car.media.CarAudioManager#getUsagesForVolumeGroupId(int)"})
+    public void getUsagesForVolumeGroupId_withoutDynamicRouting_returnsAtLeastOneUsage() {
+        assumeDynamicRoutingIsDisabled();
+
+        int[] usages = mCarAudioManager.getUsagesForVolumeGroupId(LEGACY_VOLUME_GROUP_ID);
+
+        assertVolumeGroupIdForUsages(PRIMARY_AUDIO_ZONE, LEGACY_VOLUME_GROUP_ID,
+                usages, "with dynamic routing disabled");
+    }
+
+    @Test
+    @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_VOLUME)
+    @ApiTest(apis = {"android.car.media.CarAudioManager#getUsagesForVolumeGroupId(int)"})
+    public void getUsagesForVolumeGroupId_withZoneId_returnsAtLeastOneUsage() {
+        assumeDynamicRoutingIsEnabled();
+        readFirstZoneAndVolumeGroup();
+
+        int[] usages = mCarAudioManager.getUsagesForVolumeGroupId(mVolumeGroupId);
+
+        assertVolumeGroupIdForUsages(mZoneId, mVolumeGroupId, usages,
+                "with id and dynamic routing");
+    }
+
+    @Test
+    @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_VOLUME)
+    @ApiTest(apis = {"android.car.media.CarAudioManager#getUsagesForVolumeGroupId(int)"})
+    public void getUsagesForVolumeGroupId_withZoneIdWithoutDynamicRouting_returnsAtLeastOneUsage() {
+        assumeDynamicRoutingIsDisabled();
+
+        int[] usages = mCarAudioManager.getUsagesForVolumeGroupId(LEGACY_VOLUME_GROUP_ID);
+
+        assertVolumeGroupIdForUsages(LEGACY_ZONE_ID, LEGACY_VOLUME_GROUP_ID, usages,
+                "with id and with dynamic routing disabled");
+    }
+
+    @Test
+    @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_VOLUME)
+    @ApiTest(apis = {"android.car.media.CarAudioManager#getUsagesForVolumeGroupId(int, int)"})
+    public void getUsagesForVolumeGroupId_withInvalidZone_throwsException() {
+        assumeDynamicRoutingIsEnabled();
+        assumePrimaryZone();
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> mCarAudioManager.getUsagesForVolumeGroupId(INVALID_AUDIO_ZONE,
+                        mVolumeGroupId));
+
+        assertWithMessage("Exception for getting usage for volume group in invalid zone")
+                .that(exception).hasMessageThat().contains("Invalid audio zone Id");
     }
 
     @Test
@@ -1337,6 +1642,11 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
                 mCarAudioManager.isAudioFeatureEnabled(AUDIO_FEATURE_DYNAMIC_ROUTING));
     }
 
+    private void assumeDynamicRoutingIsDisabled() {
+        assumeFalse("Requires dynamic audio routing",
+                mCarAudioManager.isAudioFeatureEnabled(AUDIO_FEATURE_DYNAMIC_ROUTING));
+    }
+
     private void assumeVolumeGroupMutingIsEnabled() {
         assumeTrue("Requires volume group muting",
                 mCarAudioManager.isAudioFeatureEnabled(AUDIO_FEATURE_VOLUME_GROUP_MUTING));
@@ -1386,6 +1696,68 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
 
     private void injectVolumeMuteKeyEvent() {
         injectKeyEvent(KeyEvent.KEYCODE_VOLUME_MUTE);
+    }
+    private void readFirstZoneAndVolumeGroup() {
+        Matcher matchZone = ZONE_PATTERN.matcher(mCarAudioServiceDump);
+        assertWithMessage("No CarAudioZone in dump").that(matchZone.find()).isTrue();
+        mZoneId = Integer.parseInt(matchZone.group(1));
+        mConfigId = Integer.parseInt(matchZone.group(3));
+        readFirstVolumeGroup(mZoneId, mConfigId);
+    }
+
+    private void assumePrimaryZone() {
+        Matcher matchZone = ZONE_PATTERN.matcher(mCarAudioServiceDump);
+        while (matchZone.find()) {
+            if (Integer.parseInt(matchZone.group(1)) == PRIMARY_AUDIO_ZONE) {
+                mZoneId = PRIMARY_AUDIO_ZONE;
+                mConfigId = Integer.parseInt(matchZone.group(3));
+                break;
+            }
+        }
+        assumeTrue("Primary zone exists", mZoneId == PRIMARY_AUDIO_ZONE);
+        readFirstVolumeGroup(mZoneId, mConfigId);
+    }
+
+    private void readFirstVolumeGroup(int zoneId, int currentConfigId) {
+        Matcher matchGroup = VOLUME_GROUP_PATTERN.matcher(mCarAudioServiceDump);
+        boolean findVolumeGroup = false;
+        while (matchGroup.find()) {
+            if (Integer.parseInt(matchGroup.group(3)) == zoneId
+                    && Integer.parseInt(matchGroup.group(4)) == currentConfigId) {
+                mVolumeGroupId = Integer.parseInt(matchGroup.group(1));
+                findVolumeGroup = true;
+                break;
+            }
+        }
+        assertWithMessage("No CarVolumeGroup in dump").that(findVolumeGroup).isTrue();
+    }
+
+    private int readVolumeGroupCount(int zoneId, int currentConfigId) {
+        Matcher matchGroup = VOLUME_GROUP_PATTERN.matcher(mCarAudioServiceDump);
+        int volumeGroupCount = 0;
+        while (matchGroup.find()) {
+            if (Integer.parseInt(matchGroup.group(3)) == zoneId
+                    && Integer.parseInt(matchGroup.group(4)) == currentConfigId) {
+                volumeGroupCount++;
+            }
+        }
+        return volumeGroupCount;
+    }
+
+    private void setVolumeGroupMute(int zoneId, int groupId, boolean mute) {
+        ShellUtils.runShellCommand("cmd car_service set-mute-car-volume-group %d %d %s",
+                zoneId, groupId, mute ? "mute" : "unmute");
+    }
+
+    private void assertVolumeGroupIdForUsages(int zoneId, int volumeGroupId, int[] usages,
+            String message) {
+        assertWithMessage("Usage for volume group %s in zone %s %s", volumeGroupId, zoneId,
+                message).that(usages).isNotEmpty();
+        for (int i = 0; i < usages.length; i++) {
+            assertWithMessage("Usage %s in volume group %s in zone %s %s", usages[i], volumeGroupId,
+                    zoneId, message).that(mCarAudioManager.getVolumeGroupIdForUsage(zoneId,
+                    usages[i])).isEqualTo(volumeGroupId);
+        }
     }
 
     private static final class TestZoneConfigInfo {
