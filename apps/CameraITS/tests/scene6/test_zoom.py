@@ -36,6 +36,7 @@ _MIN_FOCUS_DIST_TOL = 0.80  # allow charts a little closer than min
 _NAME = os.path.splitext(os.path.basename(__file__))[0]
 _NUM_STEPS = 10
 _TEST_FORMATS = ['yuv']  # list so can be appended for newer Android versions
+_TEST_REQUIRED_MPC = 33
 _ZOOM_MIN_THRESH = 2.0
 
 
@@ -62,9 +63,25 @@ class ZoomTest(its_base_test.ItsBaseTest):
       debug = self.debug_mode
 
       z_min, z_max = float(z_range[0]), float(z_range[1])
-      camera_properties_utils.skip_unless(z_max >= z_min * _ZOOM_MIN_THRESH)
       z_list = np.arange(z_min, z_max, float(z_max - z_min) / (_NUM_STEPS - 1))
       z_list = np.append(z_list, z_max)
+
+      # Check media performance class
+      media_performance_class = its_session_utils.get_media_performance_class(
+          self.dut.serial)
+      if (media_performance_class >= _TEST_REQUIRED_MPC and
+          cam.is_primary_camera() and
+          cam.has_ultrawide_camera(facing=props['android.lens.facing']) and
+          int(z_min) >= 1):
+        raise AssertionError(
+            f'With primary camera {self.camera_id}, '
+            f'MPC >= {_TEST_REQUIRED_MPC}, and '
+            'an ultrawide camera facing in the same direction as the primary, '
+            'zoom_ratio minimum must be less than 1.0. '
+            f'Found media performance class {media_performance_class} '
+            f'and minimum zoom {z_min}.')
+
+      camera_properties_utils.skip_unless(z_max >= z_min * _ZOOM_MIN_THRESH)
 
       # set TOLs based on camera and test rig params
       if camera_properties_utils.logical_multi_camera(props):
