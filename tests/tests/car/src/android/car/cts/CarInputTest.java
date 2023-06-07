@@ -536,7 +536,7 @@ public class CarInputTest extends AbstractCarTestCase {
             synchronized (mLock) {
                 countDownLatch = mGroupVolumeChangeLatch;
             }
-            boolean succeed = countDownLatch.await(DEFAULT_WAIT_MS, TimeUnit.SECONDS);
+            boolean succeed = countDownLatch.await(DEFAULT_WAIT_MS, TimeUnit.MILLISECONDS);
             return succeed && this.zoneId == zoneId;
         }
 
@@ -545,7 +545,7 @@ public class CarInputTest extends AbstractCarTestCase {
             synchronized (mLock) {
                 countDownLatch = mGroupMuteChangeLatch;
             }
-            boolean succeed = countDownLatch.await(DEFAULT_WAIT_MS, TimeUnit.SECONDS);
+            boolean succeed = countDownLatch.await(DEFAULT_WAIT_MS, TimeUnit.MILLISECONDS);
             return succeed && this.zoneId == zoneId;
         }
 
