@@ -108,6 +108,29 @@ public class KeyguardTests extends KeyguardTestBase {
     }
 
     /**
+     * Tests whether dismissing keyguard and them immediately starting a showWhenLocked activity
+     * over the top, ends in the right state of keyguard not showing and not occluded.
+     */
+    @Test
+    public void testLaunchShowWhenLockedActivity_whileDismissingKeyguard_unlocksAndShows() {
+        final LockScreenSession lockScreenSession = createManagedLockScreenSession();
+
+        lockScreenSession.gotoKeyguard();
+        launchActivityWithDismissKeyguard(SHOW_WHEN_LOCKED_ACTIVITY);
+
+        mWmState.waitForAppTransitionIdleOnDisplay(DEFAULT_DISPLAY);
+        mWmState.computeState();
+        mWmState.assertKeyguardGone();
+        waitAndAssertResumedActivity(SHOW_WHEN_LOCKED_ACTIVITY);
+
+        UiDeviceUtils.pressBackButton();
+        mWmState.waitForAppTransitionIdleOnDisplay(DEFAULT_DISPLAY);
+        mWmState.computeState();
+        mWmState.assertKeyguardGone();
+        mWmState.assertNotResumedActivity("Exited to home screen", SHOW_WHEN_LOCKED_ACTIVITY);
+    }
+
+    /**
      * Tests whether dialogs from SHOW_WHEN_LOCKED activities are also visible if Keyguard is
      * showing.
      */
@@ -132,18 +155,71 @@ public class KeyguardTests extends KeyguardTestBase {
     @Test
     public void testMultipleShowWhenLockedActivities() {
         final LockScreenSession lockScreenSession = createManagedLockScreenSession();
+
+        // Launch opaque activity
         launchActivity(SHOW_WHEN_LOCKED_ACTIVITY);
         waitAndAssertResumedActivity(SHOW_WHEN_LOCKED_ACTIVITY);
+
+        // Launch translucent activity
         launchActivity(SHOW_WHEN_LOCKED_TRANSLUCENT_ACTIVITY);
         waitAndAssertResumedActivity(SHOW_WHEN_LOCKED_TRANSLUCENT_ACTIVITY);
+
+        // Both should be showing
         mWmState.assertVisibility(SHOW_WHEN_LOCKED_ACTIVITY, true);
         mWmState.assertVisibility(SHOW_WHEN_LOCKED_TRANSLUCENT_ACTIVITY, true);
+
+        // Go to Keyguard by turning the screen off and on
         lockScreenSession.gotoKeyguard(
                 SHOW_WHEN_LOCKED_ACTIVITY, SHOW_WHEN_LOCKED_TRANSLUCENT_ACTIVITY);
+
+        // The activities should both remain visible, and keyguard should be occluded
         mWmState.computeState();
         mWmState.assertVisibility(SHOW_WHEN_LOCKED_ACTIVITY, true);
         mWmState.assertVisibility(SHOW_WHEN_LOCKED_TRANSLUCENT_ACTIVITY, true);
         mWmState.assertKeyguardShowingAndOccluded();
+    }
+
+    /**
+     * Tests whether keyguard stays occluded when going back through more than one SHOW_WHEN_LOCKED
+     * activity in the stack.
+     */
+    @Test
+    public void testMultipleShowWhenLockedActivities_remainOccludedDuringTransition() {
+        final LockScreenSession lockScreenSession = createManagedLockScreenSession();
+
+        lockScreenSession.gotoKeyguard(
+                SHOW_WHEN_LOCKED_ACTIVITY, SHOW_WHEN_LOCKED_TRANSLUCENT_ACTIVITY);
+
+        // Launch three activities in a task over keyguard
+        launchActivity(SHOW_WHEN_LOCKED_ACTIVITY);
+        launchActivity(SHOW_WHEN_LOCKED_TRANSLUCENT_ACTIVITY);
+        launchActivity(SHOW_WHEN_LOCKED_DIALOG_ACTIVITY);
+        waitAndAssertResumedActivity(SHOW_WHEN_LOCKED_DIALOG_ACTIVITY);
+
+        // All should be showing, and keyguard should be occluded
+        mWmState.computeState();
+        mWmState.assertVisibility(SHOW_WHEN_LOCKED_ACTIVITY, true);
+        mWmState.assertVisibility(SHOW_WHEN_LOCKED_TRANSLUCENT_ACTIVITY, true);
+        mWmState.assertVisibility(SHOW_WHEN_LOCKED_DIALOG_ACTIVITY, true);
+        mWmState.assertKeyguardShowingAndOccluded();
+
+        // Go back to the translucent activity
+        mWmState.assertFocusedActivity("Dialog activity focused", SHOW_WHEN_LOCKED_DIALOG_ACTIVITY);
+        UiDeviceUtils.pressBackButton();
+        waitAndAssertResumedActivity(SHOW_WHEN_LOCKED_TRANSLUCENT_ACTIVITY);
+        mWmState.computeState();
+        mWmState.assertKeyguardShowingAndOccluded();
+
+        // Go back again to opaque activity
+        UiDeviceUtils.pressBackButton();
+        waitAndAssertResumedActivity(SHOW_WHEN_LOCKED_ACTIVITY);
+        mWmState.computeState();
+        mWmState.assertKeyguardShowingAndOccluded();
+
+        // Go back to the keyguard
+        UiDeviceUtils.pressBackButton();
+        mWmState.computeState();
+        mWmState.assertKeyguardShowingAndNotOccluded();
     }
 
     /**
