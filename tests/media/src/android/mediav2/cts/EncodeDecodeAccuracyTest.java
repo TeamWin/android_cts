@@ -57,6 +57,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 
 import javax.microedition.khronos.opengles.GL10;
 
@@ -182,7 +183,7 @@ public class EncodeDecodeAccuracyTest extends CodecDecoderTestBase {
     private static EncoderConfigParams getVideoEncoderCfgParams(String mediaType, int width,
             int height, int frameRate, int bitRate, int range, int standard, int transfer,
             int colorFormat, int bitDepth) {
-        return new EncoderConfigParams.Builder(mediaType)
+        EncoderConfigParams.Builder foreman = new EncoderConfigParams.Builder(mediaType)
                 .setWidth(width)
                 .setHeight(height)
                 .setBitRate(bitRate)
@@ -191,8 +192,11 @@ public class EncodeDecodeAccuracyTest extends CodecDecoderTestBase {
                 .setStandard(standard)
                 .setTransfer(transfer)
                 .setColorFormat(colorFormat)
-                .setInputBitDepth(bitDepth)
-                .build();
+                .setInputBitDepth(bitDepth);
+        if (colorFormat == COLOR_FormatSurface && bitDepth == 10) {
+            foreman.setProfile(Objects.requireNonNull(PROFILE_HLG_MAP.get(mediaType))[0]);
+        }
+        return foreman.build();
     }
 
     @Parameterized.Parameters(name = "{index}_{0}_{1}_{3}")
@@ -253,17 +257,18 @@ public class EncodeDecodeAccuracyTest extends CodecDecoderTestBase {
                         MediaFormat.MIMETYPE_VIDEO_VP8, MediaFormat.MIMETYPE_VIDEO_VP9,
                         MediaFormat.MIMETYPE_VIDEO_AV1};
         final List<Object[]> exhaustiveArgsList = new ArrayList<>();
-        for (String mediaType : mediaTypes) {
-            for (Object[] obj : baseArgsList) {
-                final int width = (int) obj[0];
-                final int height = (int) obj[1];
-                final int fps = (int) obj[2];
-                final int br = (int) obj[3];
-                final int range = (int) obj[4];
-                final int std = (int) obj[5];
-                final int tfr = (int) obj[6];
-                final int bd = (boolean) obj[7] ? 10 : 8;
-
+        for (Object[] obj : baseArgsList) {
+            final int width = (int) obj[0];
+            final int height = (int) obj[1];
+            final int fps = (int) obj[2];
+            final int br = (int) obj[3];
+            final int range = (int) obj[4];
+            final int std = (int) obj[5];
+            final int tfr = (int) obj[6];
+            final int bd = (boolean) obj[7] ? 10 : 8;
+            for (String mediaType : mediaTypes) {
+                // the vp8 spec only supports 8 bit
+                if (mediaType.equals(MediaFormat.MIMETYPE_VIDEO_VP8) && bd == 10) continue;
                 Object[] testArgs = new Object[3];
                 testArgs[0] = mediaType;
                 testArgs[1] = getVideoEncoderCfgParams(mediaType, width, height, fps, br, range,
