@@ -153,12 +153,12 @@ public class MultiEncoderPairPerfTest extends MultiCodecPerfTestBase {
             if (height > 1080) {
                 for (int i = 0; i < firstPairInstances1080p; i++) {
                     testList.add(
-                            new Encode(mFirstPair.first, mFirstPair.second, mIsAsync, 1080, 2160,
+                            new Encode(mFirstPair.first, mFirstPair.second, mIsAsync, 1080, 1920,
                                     30, 10000000));
                 }
                 for (int i = 0; i < secondPairInstances1080p; i++) {
                     testList.add(
-                            new Encode(mSecondPair.first, mSecondPair.second, mIsAsync, 1080, 2160,
+                            new Encode(mSecondPair.first, mSecondPair.second, mIsAsync, 1080, 1920,
                                     30, 10000000));
                 }
                 firstPairInstances -= firstPairInstances1080p;
