@@ -133,4 +133,8 @@
 
     <!-- b/285247534 Remove WM Extension tests on GSI -->
     <option name="compatibility:exclude-filter" value="CtsWindowManagerJetpackTestCases android.server.wm.jetpack.SdkAvailabilityTest" />
+
+    <!-- b/284917528 -->
+    <option name="compatibility:exclude-filter" value="MicrodroidHostTestCases" />
+
 </configuration>
