@@ -21,12 +21,11 @@
 # Bug component: 46626 = per-file *Documents*
 # Bug component: 46626 = per-file ScopedDirectoryAccessTest.java
 
-# DocsUI bug component
-# Bug component: 46626 = per-file *Documents*
-# Bug component: 46626 = per-file ScopedDirectoryAccessTest.java
-
 # OTA bug component
-# Bug component: 330599 = per-file ResumeOnRebootHostTest.java
+# Bug component: 330599 = per-file *ResumeOnReboot*
+
+# Security bug component
+# Bug component: 36824 = per-file ListeningPortsTest.java
 
 patb@google.com
 per-file AccessSerialNumberTest.java = ashfall@google.com
@@ -44,6 +43,7 @@ per-file PermissionsHostTest.java = ashfall@google.com
 per-file PkgInstallSignatureVerificationTest.java = cbrubaker@google.com,mpgroover@google.com
 per-file RequestsOnlyCalendarApp22.java = ashfall@google.com
 per-file UseEmbeddedDexTest.java = victorhsieh@google.com
+
 # Package Manager
 per-file ApplicationVisibilityTest.java = chiuwinson@google.com, patb@google.com, schfan@google.com
 per-file BaseInstallMultiple.java =  chiuwinson@google.com, patb@google.com, schfan@google.com
@@ -57,25 +57,33 @@ per-file Pkg* = chiuwinson@google.com, patb@google.com, schfan@google.com
 per-file PrivilegedUpdateTests.java = chiuwinson@google.com, patb@google.com, schfan@google.com
 per-file SharedUserIdTest.java = chiuwinson@google.com, patb@google.com, schfan@google.com
 per-file SplitTests.java = chiuwinson@google.com, patb@google.com, schfan@google.com
+
 # Resources
 per-file CorruptApkTests.java = patb@google.com, zyy@google.com
 per-file OverlayHostTest.java = patb@google.com, zyy@google.com
+
 # test apps
 per-file BasePermissionsTest.java = ashfall@google.com
 per-file RequestsOnlyCalendarApp22.java = ashfall@google.com
 per-file ReviewPermissionHelper = ashfall@google.com
 per-file UsePermission*.java = ashfall@google.com
+
 # CTS shim packages
 per-file CtsShim*.apk = dariofreni@google.com
 per-file CtsShim*.apk = ioffe@google.com
 per-file com.android.apex.cts.shim.*.apex = dariofreni@google.com
 per-file com.android.apex.cts.shim.*.apex = ioffe@google.com
 
+# Storage
 per-file *Adoptable* = file:platform/frameworks/base:/core/java/android/os/storage/OWNERS
 per-file *DirectBoot* = file:platform/frameworks/base:/core/java/android/os/storage/OWNERS
 per-file *Storage* = file:platform/frameworks/base:/core/java/android/os/storage/OWNERS
 per-file *Documents* = file:platform/frameworks/base:/core/java/android/os/storage/OWNERS
 per-file ScopedDirectoryAccessTest.java = file:platform/frameworks/base:/core/java/android/os/storage/OWNERS
 
-per-file *Documents* = file:platform/packages/apps/DocumentsUI:/OWNERS
-per-file ScopedDirectoryAccessTest.java = file:platform/packages/apps/DocumentsUI:/OWNERS
+# OTA
+per-file *ResumeOnReboot* = file:platform/frameworks/base:/core/java/android/service/resumeonreboot/OWNERS
+per-file BootCountTrackerRule.java = file:platform/frameworks/base:/core/java/android/service/resumeonreboot/OWNERS
+
+# FS Verify
+per-file ApkVerityInstallTest.java = file:platform/system/security:/fsverity/OWNERS
