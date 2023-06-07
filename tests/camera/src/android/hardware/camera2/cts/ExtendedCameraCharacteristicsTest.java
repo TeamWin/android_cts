@@ -3309,27 +3309,39 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
          */
         public static PrimaryCameraHwLevelReq createPrimaryCameraHwLevelReq() {
             RequiredMeasurement<Integer> rearCameraHwlLevel = RequiredMeasurement
-                .<Integer>builder()
-                .setId(RequirementConstants.REAR_CAMERA_HWL_LEVEL)
-                .setPredicate(CAM_HW_LEVEL_GTE)
-                .addRequiredValue(Build.VERSION_CODES.R,
-                        CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_FULL)
-                .addRequiredValue(Build.VERSION_CODES.S,
-                        CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_FULL)
-                .addRequiredValue(Build.VERSION_CODES.TIRAMISU,
-                        CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_FULL)
-                .build();
+                    .<Integer>builder()
+                    .setId(RequirementConstants.REAR_CAMERA_HWL_LEVEL)
+                    .setPredicate(CAM_HW_LEVEL_GTE)
+                    .addRequiredValue(
+                            Build.VERSION_CODES.R,
+                            CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_FULL)
+                    .addRequiredValue(
+                            Build.VERSION_CODES.S,
+                            CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_FULL)
+                    .addRequiredValue(
+                            Build.VERSION_CODES.TIRAMISU,
+                            CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_FULL)
+                    .addRequiredValue(
+                            Build.VERSION_CODES.UPSIDE_DOWN_CAKE,
+                            CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_FULL)
+                    .build();
             RequiredMeasurement<Integer> frontCameraHwlLevel = RequiredMeasurement
-                .<Integer>builder()
-                .setId(RequirementConstants.FRONT_CAMERA_HWL_LEVEL)
-                .setPredicate(CAM_HW_LEVEL_GTE)
-                .addRequiredValue(Build.VERSION_CODES.R,
-                        CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_LIMITED)
-                .addRequiredValue(Build.VERSION_CODES.S,
-                        CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_FULL)
-                .addRequiredValue(Build.VERSION_CODES.TIRAMISU,
-                        CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_FULL)
-                .build();
+                    .<Integer>builder()
+                    .setId(RequirementConstants.FRONT_CAMERA_HWL_LEVEL)
+                    .setPredicate(CAM_HW_LEVEL_GTE)
+                    .addRequiredValue(
+                            Build.VERSION_CODES.R,
+                            CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_LIMITED)
+                    .addRequiredValue(
+                            Build.VERSION_CODES.S,
+                            CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_FULL)
+                    .addRequiredValue(
+                            Build.VERSION_CODES.TIRAMISU,
+                            CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_FULL)
+                    .addRequiredValue(
+                            Build.VERSION_CODES.UPSIDE_DOWN_CAKE,
+                            CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_FULL)
+                    .build();
             return new PrimaryCameraHwLevelReq(RequirementConstants.R7_5__H_1_3,
                     rearCameraHwlLevel, frontCameraHwlLevel);
         }
