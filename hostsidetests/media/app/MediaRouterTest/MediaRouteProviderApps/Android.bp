@@ -44,7 +44,6 @@ java_defaults {
     name: "CtsMediaRouterHostSizeTestProviderAppDefaults",
     defaults: ["cts_defaults"],
     test_suites: [
-        "cts",
         "general-tests",
     ],
     srcs: [
