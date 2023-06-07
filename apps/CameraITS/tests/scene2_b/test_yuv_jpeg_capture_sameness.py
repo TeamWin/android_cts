@@ -26,20 +26,22 @@ import its_session_utils
 
 _MAX_IMG_SIZE = (1920, 1080)
 _NAME = os.path.splitext(os.path.basename(__file__))[0]
-_THRESHOLD_MAX_RMS_DIFF_YUV_JPEG = 0.01 # YUV/JPEG bit exactness threshold
-_THRESHOLD_MAX_RMS_DIFF_USE_CASE = 0.1 # Catch swapped color channels
+_TEST_REQUIRED_MPC = 33
+_THRESHOLD_MAX_RMS_DIFF_YUV_JPEG = 0.01  # YUV/JPEG bit exactness threshold
+_THRESHOLD_MAX_RMS_DIFF_USE_CASE = 0.1  # Catch swapped color channels
 _USE_CASE_PREVIEW = 1
 _USE_CASE_STILL_CAPTURE = 2
 _USE_CASE_VIDEO_RECORD = 3
 _USE_CASE_PREVIEW_VIDEO_STILL = 4
 _USE_CASE_VIDEO_CALL = 5
 _USE_CASE_NAME_MAP = {
-  _USE_CASE_PREVIEW : 'preview',
-  _USE_CASE_STILL_CAPTURE : 'still_capture',
-  _USE_CASE_VIDEO_RECORD : 'video_record',
-  _USE_CASE_PREVIEW_VIDEO_STILL : 'preview_video_still',
-  _USE_CASE_VIDEO_CALL : 'video_call'
+    _USE_CASE_PREVIEW: 'preview',
+    _USE_CASE_STILL_CAPTURE: 'still_capture',
+    _USE_CASE_VIDEO_RECORD: 'video_record',
+    _USE_CASE_PREVIEW_VIDEO_STILL: 'preview_video_still',
+    _USE_CASE_VIDEO_CALL: 'video_call'
 }
+
 
 class YuvJpegCaptureSamenessTest(its_base_test.ItsBaseTest):
   """Test capturing a single frame as both YUV and JPEG outputs."""
@@ -54,9 +56,16 @@ class YuvJpegCaptureSamenessTest(its_base_test.ItsBaseTest):
       props = cam.override_with_hidden_physical_camera_props(props)
       log_path = self.log_path
 
+      # check media performance class
+      should_run = camera_properties_utils.stream_use_case(props)
+      media_performance_class = its_session_utils.get_media_performance_class(
+          self.dut.serial)
+      if media_performance_class >= _TEST_REQUIRED_MPC and not should_run:
+        its_session_utils.raise_mpc_assertion_error(
+            _TEST_REQUIRED_MPC, _NAME, media_performance_class)
+
       # check SKIP conditions
-      camera_properties_utils.skip_unless(
-          camera_properties_utils.stream_use_case(props))
+      camera_properties_utils.skip_unless(should_run)
 
       # Load chart for scene
       its_session_utils.load_scene(
@@ -67,7 +76,7 @@ class YuvJpegCaptureSamenessTest(its_base_test.ItsBaseTest):
       max_camcorder_profile_size = cam.get_max_camcorder_profile_size(
           self.camera_id)
       size_bound = min([_MAX_IMG_SIZE, display_size, max_camcorder_profile_size],
-                       key = lambda t: int(t[0])*int(t[1]))
+                       key=lambda t: int(t[0])*int(t[1]))
 
       logging.debug('display_size %s, max_camcorder_profile_size %s, size_bound %s',
                     display_size, max_camcorder_profile_size, size_bound)
@@ -104,13 +113,13 @@ class YuvJpegCaptureSamenessTest(its_base_test.ItsBaseTest):
       # Create requests for all use cases, and make sure they are at least
       # similar enough with the STILL_CAPTURE YUV. For example, the color
       # channels must be valid.
-      num_tests = 0;
-      num_fail = 0;
-      for use_case in _USE_CASE_NAME_MAP.keys():
+      num_tests = 0
+      num_fail = 0
+      for use_case in _USE_CASE_NAME_MAP:
         num_tests += 1
         cam.do_3a()
         fmt_yuv_use_case = {'format': 'yuv', 'width': w, 'height': h,
-                 'useCase': use_case}
+                            'useCase': use_case}
         cap_yuv_use_case = cam.do_capture(req, [fmt_yuv_use_case])
         rgb_yuv_use_case = image_processing_utils.convert_capture_to_rgb_image(
             cap_yuv_use_case, True)
@@ -123,7 +132,7 @@ class YuvJpegCaptureSamenessTest(its_base_test.ItsBaseTest):
         logging.debug('%s', msg)
         if rms_diff >= _THRESHOLD_MAX_RMS_DIFF_USE_CASE:
           logging.error(msg + f', TOL: {_THRESHOLD_MAX_RMS_DIFF_USE_CASE}')
-          num_fail += 1;
+          num_fail += 1
 
       if num_fail > 0:
         raise AssertionError(f'Number of fails: {num_fail} / {num_tests}')

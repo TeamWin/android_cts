@@ -32,6 +32,7 @@ import opencv_processing_utils
 _NAME = os.path.splitext(os.path.basename(__file__))[0]
 _EXTENSION_NIGHT = 4  # CameraExtensionCharacteristics.EXTENSION_NIGHT
 _TAP_COORDINATES = (500, 500)  # Location to tap tablet screen via adb
+_TEST_REQUIRED_MPC = 34
 _MIN_AREA = 0
 _WHITE = 255
 
@@ -305,9 +306,16 @@ class NightExtensionTest(its_base_test.ItsBaseTest):
       supported_extensions = cam.get_supported_extensions(self.camera_id)
       logging.debug('Supported extensions: %s', supported_extensions)
 
+      # Check media performance class
+      should_run = _EXTENSION_NIGHT in supported_extensions
+      media_performance_class = its_session_utils.get_media_performance_class(
+          self.dut.serial)
+      if media_performance_class >= _TEST_REQUIRED_MPC and not should_run:
+        its_session_utils.raise_mpc_assertion_error(
+            _TEST_REQUIRED_MPC, _NAME, media_performance_class)
+
       # Check SKIP conditions
-      camera_properties_utils.skip_unless(
-          _EXTENSION_NIGHT in supported_extensions)
+      camera_properties_utils.skip_unless(should_run)
 
       tablet_name_unencoded = self.tablet.adb.shell(
           ['getprop', 'ro.build.product']
