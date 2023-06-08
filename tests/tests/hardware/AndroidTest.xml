@@ -36,10 +36,6 @@
         <option name="test-timeout" value="3600000" />
     </test>
     <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
-        <!-- TODO(b/285142506): Remove once underlying issue is fixed -->
-        <option name="run-command" value="setprop debug.wm.disable_deprecated_abi_dialog 1" />
-    </target_preparer>
-    <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
         <!-- TODO(b/285554134): Remove once underlying issue is fixed-->
         <option name="run-command" value="wm set-ignore-orientation-request false" />
     </target_preparer>
