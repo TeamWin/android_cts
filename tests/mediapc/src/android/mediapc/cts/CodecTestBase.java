@@ -892,7 +892,13 @@ class Decode extends CodecDecoderTestBase implements Callable<Double> {
 
     @Override
     public Double call() throws Exception {
-        return doDecode();
+        try {
+            return doDecode();
+        } catch (Exception e) {
+            Log.d(LOG_TAG, "Decode Mime: " + mMime + " Decoder: " + mDecoderName
+                    + " Failed due to: " + e);
+            return -1.0;
+        }
     }
 }
 
