@@ -2319,7 +2319,7 @@ public final class DeviceState extends HarrierRule {
     private void ensureCanAddProfile(
             com.android.bedstead.nene.users.UserType userType, FailureMode failureMode) {
         checkFailOrSkip("the device cannot add more profiles of type " + userType,
-                TestApis.users().getRemainingCreatableProfileCount(userType) > 0,
+                TestApis.users().canCreateProfile(userType),
                 failureMode);
     }
 
