@@ -1040,6 +1040,100 @@ public class MediaRecorderTest extends MediaTestBase {
         }
     }
 
+    private int getVideoEncoderFromMimeType(String mimeType) {
+        if (mimeType.equals(MediaFormat.MIMETYPE_VIDEO_AVC)) {
+            return MediaRecorder.VideoEncoder.H264;
+        } else if (mimeType.equals(MediaFormat.MIMETYPE_VIDEO_HEVC)) {
+            return MediaRecorder.VideoEncoder.HEVC;
+        } else if (mimeType.equals(MediaFormat.MIMETYPE_VIDEO_AV1)) {
+            return MediaRecorder.VideoEncoder.AV1;
+        } else {
+            Log.e(TAG, "The codec test for " + mimeType + " is not yet supported");
+            return -1;
+        }
+    }
+
+    private int testCodec(String mediaType, int width, int height, int framerate, int bitrate)
+            throws Exception {
+        int videoEncoder = getVideoEncoderFromMimeType(mediaType);
+        if (videoEncoder == -1) {
+            Log.i(TAG, "Skip the test");
+            return 0;
+        }
+        CodecCapabilities cap = getCapsForPreferredCodecForMediaType(mediaType);
+        if (cap == null) { // not supported
+            return 0;
+        }
+        MediaCodecInfo.VideoCapabilities vCap = cap.getVideoCapabilities();
+        if (!vCap.areSizeAndRateSupported(width, height, framerate)
+                || !vCap.getBitrateRange().contains(bitrate * 1000)) {
+            Log.i(TAG, "Skip the test");
+            return 0;
+        }
+
+        Surface surface = MediaCodec.createPersistentInputSurface();
+        if (surface == null) {
+            return 0;
+        }
+        InputSurface encSurface = new InputSurface(surface);
+        mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE);
+        mMediaRecorder.setInputSurface(encSurface.getSurface());
+        mMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
+        mMediaRecorder.setVideoEncoder(videoEncoder);
+        mMediaRecorder.setOutputFile(mOutFile);
+
+        mMediaRecorder.setVideoSize(width, height);
+        mMediaRecorder.setVideoEncodingBitRate(bitrate * 1000);
+        mMediaRecorder.setVideoFrameRate(framerate);
+        mMediaRecorder.setPreviewDisplay(mActivity.getSurfaceHolder().getSurface());
+        mMediaRecorder.prepare();
+        encSurface.updateSize(width, height);
+        mMediaRecorder.start();
+
+
+        long startNsec = System.nanoTime();
+        long startTimeOffset =  3000 / framerate;
+        for (int i = 0; i < NUM_FRAMES; i++) {
+            encSurface.makeCurrent();
+            generateSurfaceFrame(i, width, height);
+            long time = startNsec
+                    + computePresentationTime(startTimeOffset, i, framerate) * 1000;
+            encSurface.setPresentationTime(time);
+            encSurface.swapBuffers();
+        }
+
+        mMediaRecorder.stop();
+
+        assertTrue(mOutFile.exists());
+        assertTrue(mOutFile.length() > 0);
+
+        mOutFile.delete();
+        if (encSurface != null) {
+            encSurface.release();
+            encSurface = null;
+        }
+        return 1;
+    }
+
+    @Test
+    public void testAV1SDRecording() throws Exception {
+        int testsRun = 0;
+
+        if (!hasAV1()) {
+            MediaUtils.skipTest("no AV1 codecs");
+            return;
+        }
+        try {
+            testsRun += testCodec(MediaFormat.MIMETYPE_VIDEO_AV1, 640, 480, 15, 200);
+        } catch (Exception e) {
+            fail("Fail to record video: " + e.toString());
+        }
+
+        if (testsRun == 0) {
+            MediaUtils.skipTest("VideoCapabilities or surface not found");
+        }
+    }
+
     @Test
     public void testRecordExceedFileSizeLimit() throws Exception {
         if (!hasMicrophone() || !hasCamera() || !hasAmrNb() || !hasH264()) {
@@ -1708,6 +1802,10 @@ public class MediaRecorderTest extends MediaTestBase {
 
     private static boolean hasH264() {
         return MediaUtils.hasEncoder(MediaFormat.MIMETYPE_VIDEO_AVC);
+    }
+
+    private static boolean hasAV1() {
+        return MediaUtils.hasEncoder(MediaFormat.MIMETYPE_VIDEO_AV1);
     }
 
     @Test
