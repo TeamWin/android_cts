@@ -131,6 +131,8 @@ public class RoundedCornerTests extends ActivityManagerTestBase {
             }
             RotationSession rotationSession = createManagedRotationSession();
             rotationSession.set(rotation);
+
+            mInstrumentation.getUiAutomation().syncInputTransactions();
         }
 
         runOnMainSync(() -> activity.addChildWindow(
