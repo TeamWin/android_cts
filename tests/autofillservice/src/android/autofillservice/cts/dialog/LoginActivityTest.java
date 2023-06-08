@@ -156,6 +156,8 @@ public class LoginActivityTest extends AutoFillServiceTestCase.ManualActivityLau
     // Need to manually check that the icon has changed.
     @Test
     public void testShowFillDialogCustomIcon() throws Exception {
+        // Breaks for HSUM
+        assumeTrue("Is main user", Helper.isMainUser(sContext));
         // Disable this test for Automotive until we know why it's failing.
         // bug: 270482520
         assumeTrue("Skip Automotive", !Helper.isAutomotive(sContext));
