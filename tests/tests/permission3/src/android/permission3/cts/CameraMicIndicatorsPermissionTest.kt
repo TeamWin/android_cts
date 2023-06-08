@@ -245,8 +245,6 @@ class CameraMicIndicatorsPermissionTest : StsExtraBusinessLogicTestCase {
     @Test
     @CddTest(requirement = "9.8.2/H-4-1,T-4-1,A-1-1")
     fun testHotwordIndicatorBehavior() {
-        // TODO(b/283429128): remove assumption once leaky indicators issue fixed
-        assumeTrue(HOTWORD_DETECTION_SERVICE_REQUIRED)
         changeSafetyCenterFlag(false.toString())
         testCameraAndMicIndicator(useMic = false, useCamera = false, useHotword = true)
     }
