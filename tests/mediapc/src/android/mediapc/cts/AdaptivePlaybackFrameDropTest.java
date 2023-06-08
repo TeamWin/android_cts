@@ -88,6 +88,7 @@ public class AdaptivePlaybackFrameDropTest extends FrameDropTestBase {
 
         r5_3__H_1_2_R.setFramesDropped(framesDropped);
         r5_3__H_1_2_R.setFrameRate(frameRate);
+        r5_3__H_1_2_R.setTestResolution(1080);
         pce.submitAndCheck();
     }
 
@@ -115,6 +116,7 @@ public class AdaptivePlaybackFrameDropTest extends FrameDropTestBase {
 
         r5_3__H_1_2_ST.setFramesDropped(framesDropped);
         r5_3__H_1_2_ST.setFrameRate(frameRate);
+        r5_3__H_1_2_ST.setTestResolution(1080);
         pce.submitAndCheck();
     }
 
@@ -142,6 +144,7 @@ public class AdaptivePlaybackFrameDropTest extends FrameDropTestBase {
 
         r5_3__H_1_2_U.setFramesDropped(framesDropped);
         r5_3__H_1_2_U.setFrameRate(frameRate);
+        r5_3__H_1_2_U.setTestResolution(2160);
         pce.submitAndCheck();
     }
 }
