@@ -151,35 +151,53 @@ public final class UserReference implements AutoCloseable {
      * reason, a {@link NeneException} will be thrown.
      */
     public void remove() {
+        Log.i(LOG_TAG, "Trying to remove user " + mId);
         if (!exists()) {
+            Log.i(LOG_TAG, "User " + mId + " does not exist or removed already.");
             return;
         }
 
-        ProfileOwner profileOwner = TestApis.devicePolicy().getProfileOwner(this);
-        if (profileOwner != null && profileOwner.isOrganizationOwned()) {
-            profileOwner.remove();
-        }
-
-        if (TestApis.users().instrumented().equals(this)) {
-            throw new NeneException("Cannot remove instrumented user");
-        }
-
         try {
-            // Expected success string is "Success: removed user"
-            ShellCommand.builder("pm remove-user")
-                    .addOperand("-w") // Wait for remove-user to complete
-                    .withTimeout(Duration.ofMinutes(1))
-                    .addOperand(mId)
-                    .validate(ShellCommandUtils::startsWithSuccess)
-                    .execute();
-        } catch (AdbException e) {
-            throw new NeneException("Could not remove user " + this + ". Logcat: "
-                    + TestApis.logcat().dump((l) -> l.contains("UserManagerService")), e);
+            ProfileOwner profileOwner = TestApis.devicePolicy().getProfileOwner(this);
+            if (profileOwner != null && profileOwner.isOrganizationOwned()) {
+                profileOwner.remove();
+            }
+
+            if (TestApis.users().instrumented().equals(this)) {
+                throw new NeneException("Cannot remove instrumented user");
+            }
+
+            try {
+                // Expected success string is "Success: removed user"
+                ShellCommand.builder("pm remove-user")
+                        .addOperand("-w") // Wait for remove-user to complete
+                        .withTimeout(Duration.ofMinutes(1))
+                        .addOperand(mId)
+                        .validate(ShellCommandUtils::startsWithSuccess)
+                        .execute();
+            } catch (AdbException e) {
+                throw new NeneException("Could not remove user " + this + ". Logcat: "
+                        + TestApis.logcat().dump((l) -> l.contains("UserManagerService")), e);
+            }
+            if (exists()) {
+                // This should never happen
+                throw new NeneException("Failed to remove user " + this);
+            }
+        } catch (NeneException e) {
+            // (b/286380557): Flaky behavior when SafetyCenter tries to remove the user: the user
+            // is seen to be removed even though SafetyCenter throws an exception.
+            boolean userExists = exists();
+            Log.i(LOG_TAG,
+                    "Does user " + id() + " still exist after trying to remove: "
+                            + userExists);
+
+            if (userExists) {
+                // A reliable exception, the user was not removed.
+                throw e;
+            }
         }
-        if (exists()) {
-            // This should never happen
-            throw new NeneException("Failed to remove user " + this);
-        }
+        
+        Log.i(LOG_TAG, "Removed user " + mId);
     }
 
     /**
