@@ -103,8 +103,10 @@ public class Settings_ConfigTest {
     private static ContentResolver sContentResolver;
     private static Context sContext;
 
+    private int mInitialSyncDisabledMode;
+
     /**
-     * Get necessary permissions to access Setting.Config API and set up context
+     * Get necessary permissions to access Setting.Config API and set up context and sync mode.
      */
     @Before
     public void setUpContext() throws Exception {
@@ -113,6 +115,8 @@ public class Settings_ConfigTest {
                 MONITOR_DEVICE_CONFIG_ACCESS);
         sContext = InstrumentationRegistry.getContext();
         sContentResolver = sContext.getContentResolver();
+        mInitialSyncDisabledMode = Settings.Config.getSyncDisabledMode();
+        Settings.Config.setSyncDisabledMode(SYNC_DISABLED_MODE_NONE);
     }
 
     /**
@@ -120,9 +124,9 @@ public class Settings_ConfigTest {
      */
     @After
     public void cleanUp() throws Exception {
-        Settings.Config.setSyncDisabledMode(SYNC_DISABLED_MODE_NONE);
         deleteProperties(NAMESPACE1, Arrays.asList(KEY1, KEY2));
         deleteProperties(NAMESPACE2, Arrays.asList(KEY1, KEY2));
+        Settings.Config.setSyncDisabledMode(mInitialSyncDisabledMode);
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
                 .dropShellPermissionIdentity();
     }

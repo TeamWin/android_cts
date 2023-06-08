@@ -106,6 +106,8 @@ public final class DeviceConfigApiTests {
     // then the test would crash - it might be an issue on atest / AndroidJUnit4
     private static String sUnsupportedReason;
 
+    private int mInitialSyncDisabledMode;
+
     /**
      * Get necessary permissions to access and modify properties through DeviceConfig API.
      */
@@ -129,6 +131,12 @@ public final class DeviceConfigApiTests {
         assumeTrue(sUnsupportedReason, isSupported());
     }
 
+    @Before
+    public void setUpSyncDisabledMode() {
+        mInitialSyncDisabledMode = DeviceConfig.getSyncDisabledMode();
+        DeviceConfig.setSyncDisabledMode(SYNC_DISABLED_MODE_NONE);
+    }
+
     /**
      * Nullify properties in DeviceConfig API after completion of every test.
      */
@@ -145,7 +153,7 @@ public final class DeviceConfigApiTests {
         nullifyProperty(NAMESPACE2, KEY1);
         nullifyProperty(NAMESPACE1, KEY2);
         nullifyProperty(NAMESPACE2, KEY2);
-        DeviceConfig.setSyncDisabledMode(SYNC_DISABLED_MODE_NONE);
+        DeviceConfig.setSyncDisabledMode(mInitialSyncDisabledMode);
     }
 
     /**

@@ -28,9 +28,11 @@ import android.provider.DeviceConfig.Properties;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.SystemUtil;
 import com.android.modules.utils.build.SdkLevel;
 
 import org.junit.After;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -54,6 +56,8 @@ public final class DeviceConfigApiPermissionTests {
 
     private static final Executor EXECUTOR = InstrumentationRegistry.getContext().getMainExecutor();
 
+    private int mInitialSyncDisabledMode;
+
     /**
      * Checks that the test runs on UpsideDownCake.
      */
@@ -62,11 +66,20 @@ public final class DeviceConfigApiPermissionTests {
         assumeTrue(SdkLevel.isAtLeastU());
     }
 
-    @After
-    public void dropShellPermissionIdentityAfterTest() {
-        InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                .dropShellPermissionIdentity();
+    @Before
+    public void setUpSyncDisabledMode() {
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            mInitialSyncDisabledMode = DeviceConfig.getSyncDisabledMode();
+            DeviceConfig.setSyncDisabledMode(DeviceConfig.SYNC_DISABLED_MODE_NONE);
+        });
     }
+
+    @After
+    public void restoreSyncDisabledMode() {
+        SystemUtil.runWithShellPermissionIdentity(() ->
+                DeviceConfig.setSyncDisabledMode(mInitialSyncDisabledMode));
+    }
+
     /**
      * Checks that when application does not have READ_DEVICE_CONFIG or WRITE_DEVICE_CONFIG
      * permissions it cannot access any of DeviceConfig API methods
