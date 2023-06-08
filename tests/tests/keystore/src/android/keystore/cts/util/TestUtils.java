@@ -42,6 +42,7 @@ import com.android.internal.util.HexDump;
 import org.junit.Assert;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigInteger;
@@ -91,6 +92,16 @@ public class TestUtils {
     public static final long DAY_IN_MILLIS = 1000 * 60 * 60 * 24;
 
     private TestUtils() {}
+
+    private static Context getContext() {
+        return InstrumentationRegistry.getInstrumentation().getTargetContext();
+    }
+
+    public static File getFilesDir() {
+        Context context = getContext();
+        final String packageName = context.getPackageName();
+        return new File(context.getFilesDir(), packageName);
+    }
 
     static public void assumeStrongBox() {
         PackageManager packageManager =
