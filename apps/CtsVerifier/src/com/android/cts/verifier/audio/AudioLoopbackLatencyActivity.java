@@ -909,7 +909,7 @@ public class AudioLoopbackLatencyActivity extends PassFailButtons.Activity {
             if (proAudio) {
                 sb.append("[Pro Audio]");
             } else if (mediaPerformanceClass != MPC_NONE) {
-                sb.append("[MPC %d]" + mediaPerformanceClass);
+                sb.append("[MPC " + mediaPerformanceClass + "]");
             } else {
                 sb.append("[Basic Audio]");
             }
