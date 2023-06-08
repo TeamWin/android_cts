@@ -58,12 +58,7 @@ public final class BluetoothGattMultiDevicesServer {
         createGattServer(uuid);
 
         var bluetoothLeAdvertiser = mBluetoothAdapter.getBluetoothLeAdvertiser();
-        var params =
-                new AdvertisingSetParameters.Builder()
-                        .setConnectable(true)
-                        .setOwnAddressType(
-                                AdvertisingSetParameters.ADDRESS_TYPE_RANDOM_NON_RESOLVABLE)
-                        .build();
+        var params = new AdvertisingSetParameters.Builder().setConnectable(true).build();
         var data =
                 new AdvertiseData.Builder()
                         .addServiceUuid(new ParcelUuid(UUID.fromString(uuid)))
@@ -77,7 +72,12 @@ public final class BluetoothGattMultiDevicesServer {
         var gattServer = createGattServer(uuid);
 
         var bluetoothLeAdvertiser = mBluetoothAdapter.getBluetoothLeAdvertiser();
-        var params = new AdvertisingSetParameters.Builder().setConnectable(true).build();
+        var params =
+                new AdvertisingSetParameters.Builder()
+                        .setConnectable(true)
+                        .setOwnAddressType(
+                                AdvertisingSetParameters.ADDRESS_TYPE_RANDOM_NON_RESOLVABLE)
+                        .build();
         var data =
                 new AdvertiseData.Builder()
                         .addServiceUuid(new ParcelUuid(UUID.fromString(uuid)))
