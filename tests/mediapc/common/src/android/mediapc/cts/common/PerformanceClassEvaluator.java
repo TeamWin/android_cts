@@ -1868,6 +1868,18 @@ public class PerformanceClassEvaluator {
             this.setMeasuredValue(RequirementConstants.AVIF_DEC_REQ, avifDecoderReqSatisfied);
         }
 
+        public void setAv1EncResolution(int resolution) {
+            this.setMeasuredValue(RequirementConstants.AV1_ENC_RESOLUTION, resolution);
+        }
+
+        public void setAv1EncFps(double fps) {
+            this.setMeasuredValue(RequirementConstants.AV1_ENC_FPS, fps);
+        }
+
+        public void setAv1EncBitrate(int bitrate) {
+            this.setMeasuredValue(RequirementConstants.AV1_ENC_BITRATE, bitrate);
+        }
+
         public void setColorFormatSupportReq(boolean colorFormatSupported) {
             this.setMeasuredValue(RequirementConstants.RGBA_1010102_COLOR_FORMAT_REQ,
                     colorFormatSupported);
@@ -1930,6 +1942,36 @@ public class PerformanceClassEvaluator {
                     .build();
 
             return new VideoCodecRequirement(RequirementConstants.R5_1__H_1_17, requirement);
+        }
+
+        /**
+         * [2.2.7.1/5.1/H-1-19] MUST support AV1 encoder which can encode up to 480p resolution
+         * at 30fps and 1Mbps.
+         */
+        public static VideoCodecRequirement createRAV1EncoderReq() {
+            RequiredMeasurement<Integer> resolution = RequiredMeasurement
+                    .<Integer>builder()
+                    .setId(RequirementConstants.AV1_ENC_RESOLUTION)
+                    .setPredicate(RequirementConstants.INTEGER_GTE)
+                    .addRequiredValue(Build.VERSION_CODES.UPSIDE_DOWN_CAKE, 720 * 480)
+                    .build();
+
+            RequiredMeasurement<Double> fps = RequiredMeasurement
+                    .<Double>builder()
+                    .setId(RequirementConstants.AV1_ENC_FPS)
+                    .setPredicate(RequirementConstants.DOUBLE_GTE)
+                    .addRequiredValue(Build.VERSION_CODES.UPSIDE_DOWN_CAKE, 30.0)
+                    .build();
+
+            RequiredMeasurement<Integer> bitrate = RequiredMeasurement
+                    .<Integer>builder()
+                    .setId(RequirementConstants.AV1_ENC_BITRATE)
+                    .setPredicate(RequirementConstants.INTEGER_GTE)
+                    .addRequiredValue(Build.VERSION_CODES.UPSIDE_DOWN_CAKE, 1)
+                    .build();
+
+            return new VideoCodecRequirement(RequirementConstants.R5_1__H_1_19, resolution, fps,
+                    bitrate);
         }
 
         /**
@@ -2133,6 +2175,12 @@ public class PerformanceClassEvaluator {
     /* Adds requirement 5.1/H-1-17 */
     public VideoCodecRequirement addRAVIFDecoderReq() {
         return this.addRequirement(VideoCodecRequirement.createRAVIFDecoderReq());
+    }
+
+
+    /* Adds requirement 5.1/H-1-19 */
+    public VideoCodecRequirement addRAV1EncoderReq() {
+        return this.addRequirement(VideoCodecRequirement.createRAV1EncoderReq());
     }
 
     public ConcurrentCodecRequirement addR5_1__H_1_19() {
