@@ -25,19 +25,24 @@ import static android.mediapc.cts.CodecTestBase.SELECT_HARDWARE;
 import static android.mediapc.cts.CodecTestBase.SELECT_VIDEO;
 import static android.mediapc.cts.CodecTestBase.getCodecInfo;
 import static android.mediapc.cts.CodecTestBase.getMimesOfAvailableCodecs;
+import static android.mediapc.cts.CodecTestBase.selectCodecs;
 import static android.mediapc.cts.CodecTestBase.selectHardwareCodecs;
 
 import static org.junit.Assert.assertTrue;
 
+import static java.lang.Math.max;
+
 import android.graphics.Bitmap;
 import android.graphics.ImageDecoder;
 import android.media.MediaCodec;
+import android.media.MediaCodecInfo;
 import android.media.MediaCodecInfo.CodecCapabilities;
 import android.media.MediaCodecInfo.VideoCapabilities.PerformancePoint;
 import android.media.MediaFormat;
 import android.mediapc.cts.common.PerformanceClassEvaluator;
 import android.mediapc.cts.common.Utils;
 import android.util.Log;
+import android.util.Range;
 
 import androidx.test.filters.LargeTest;
 import androidx.test.filters.SmallTest;
@@ -193,6 +198,65 @@ public class VideoCodecRequirementsTest {
                 pce.addRAVIFDecoderReq();
         rAVIFDecoderReq.setAVIFDecoderReq(isDecoded);
 
+        pce.submitAndCheck();
+    }
+
+    /**
+     * MUST support AV1 encoder which can encode up to 480p resolution
+     * at 30fps and 1Mbps.
+     */
+    @SmallTest
+    @Test(timeout = CodecTestBase.PER_TEST_TIMEOUT_SMALL_TEST_MS)
+    @CddTest(requirement = "2.2.7.1/5.1/H-1-19")
+    public void testAV1EncoderRequirements() throws Exception {
+        int width = 720;
+        int height = 480;
+        String mediaType = MIMETYPE_VIDEO_AV1;
+        int requiredFps = 30;
+        MediaFormat format = MediaFormat.createVideoFormat(mediaType, width, height);
+        format.setInteger(MediaFormat.KEY_FRAME_RATE, 30);
+        ArrayList<MediaFormat> formats = new ArrayList<>();
+        formats.add(format);
+        ArrayList<String> av1Encoders = selectCodecs(mediaType, formats, null, true);
+        boolean found = false;
+        double fps = 0;
+        for (String codecName : av1Encoders) {
+            MediaCodecInfo info = getCodecInfo(codecName);
+            MediaCodecInfo.VideoCapabilities videoCaps =
+                            info.getCapabilitiesForType(mediaType).getVideoCapabilities();
+            List<PerformancePoint> pps = videoCaps.getSupportedPerformancePoints();
+            if (pps != null && pps.size() > 0) {
+                PerformancePoint PPRes = new PerformancePoint(width, height, requiredFps);
+                for (PerformancePoint pp : pps) {
+                    if (pp.covers(PPRes)) {
+                        fps = max(fps, pp.getMaxFrameRate());
+                        found = true;
+                    }
+                }
+                // found encoder advertising required performance point
+                if (found) {
+                    break;
+                }
+            }
+            // For non-HW accelerated (SW) encoders we have to rely on their published
+            // achievable rates as they do not advertise performance points.
+            // The test relies on getLower() as that is the best approximation for what
+            // can be achieved.
+            Range<Double> reported = videoCaps.getAchievableFrameRatesFor(width, height);
+            if (reported != null && reported.getLower() >= requiredFps) {
+                fps = reported.getLower();
+                found = true;
+            }
+            if (found) {
+                break;
+            }
+        }
+
+        PerformanceClassEvaluator pce = new PerformanceClassEvaluator(this.mTestName);
+        PerformanceClassEvaluator.VideoCodecRequirement rAV1EncoderReq = pce.addRAV1EncoderReq();
+        rAV1EncoderReq.setAv1EncResolution(width * height);
+        rAV1EncoderReq.setAv1EncFps(fps);
+        rAV1EncoderReq.setAv1EncBitrate(1);
         pce.submitAndCheck();
     }
 
