@@ -399,7 +399,13 @@ class Transcode extends CodecTranscoderTestBase implements Callable<Double> {
 
     @Override
     public Double call() throws Exception {
-        return doTranscode();
+        try {
+            return doTranscode();
+        } catch (Exception e) {
+            Log.d(LOG_TAG, "Mime: " + mMime + " Decoder: " + mDecoderName + " Encoder: "
+                    + mEncoderName + " Failed due to: " + e);
+            return -1.0;
+        }
     }
 }
 
