@@ -399,15 +399,17 @@ public class VirtualDeviceManagerBasicTest {
     public void getVirtualDevices_returnsAllVirtualDevices() {
         // Take into account pre-existing VirtualDevices
         List<VirtualDevice> previousVirtualDevices = mVirtualDeviceManager.getVirtualDevices();
+        final int associationId = mFakeAssociationRule.getAssociationInfo().getId();
         mVirtualDevice =
                 mVirtualDeviceManager.createVirtualDevice(
-                        mFakeAssociationRule.getAssociationInfo().getId(),
-                        DEFAULT_VIRTUAL_DEVICE_PARAMS);
+                        associationId, DEFAULT_VIRTUAL_DEVICE_PARAMS);
+        assertThat(mVirtualDevice.getPersistentDeviceId()).isNotNull();
         mAnotherVirtualDevice =
                 mVirtualDeviceManager.createVirtualDevice(
-                        mFakeAssociationRule.getAssociationInfo().getId(),
-                        NAMED_VIRTUAL_DEVICE_PARAMS);
+                        associationId, NAMED_VIRTUAL_DEVICE_PARAMS);
         assertThat(mAnotherVirtualDevice).isNotNull();
+        assertThat(mAnotherVirtualDevice.getPersistentDeviceId())
+                .isEqualTo(mVirtualDevice.getPersistentDeviceId());
 
         List<VirtualDevice> virtualDevices = mVirtualDeviceManager.getVirtualDevices();
         for (VirtualDevice previousVirtualDevice : previousVirtualDevices) {
@@ -417,11 +419,18 @@ public class VirtualDeviceManagerBasicTest {
 
         VirtualDevice device = virtualDevices.get(0);
         assertThat(device.getDeviceId()).isEqualTo(mVirtualDevice.getDeviceId());
+        assertThat(device.getPersistentDeviceId())
+                .isEqualTo(mVirtualDevice.getPersistentDeviceId());
         assertThat(device.getName()).isNull();
 
         VirtualDevice anotherDevice = virtualDevices.get(1);
         assertThat(anotherDevice.getDeviceId()).isEqualTo(mAnotherVirtualDevice.getDeviceId());
+        assertThat(anotherDevice.getPersistentDeviceId())
+                .isEqualTo(mAnotherVirtualDevice.getPersistentDeviceId());
         assertThat(anotherDevice.getName()).isEqualTo(VIRTUAL_DEVICE_NAME);
+
+        // The persistent IDs must be the same as the underlying association is the same.
+        assertThat(device.getPersistentDeviceId()).isEqualTo(anotherDevice.getPersistentDeviceId());
     }
 
     @Test
