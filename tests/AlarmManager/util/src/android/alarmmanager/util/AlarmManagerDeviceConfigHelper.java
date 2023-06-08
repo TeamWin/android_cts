@@ -23,6 +23,7 @@ import static org.junit.Assert.assertTrue;
 import android.provider.DeviceConfig;
 import android.util.Log;
 
+import com.android.compatibility.common.util.DeviceConfigStateHelper;
 import com.android.compatibility.common.util.SystemUtil;
 
 import java.util.Collections;
@@ -87,12 +88,9 @@ public class AlarmManagerDeviceConfigHelper {
 
     public static void commitAndAwaitPropagation(DeviceConfig.Properties propertiesToSet) {
         final int currentVersion = getCurrentConfigVersion();
-        try {
-            assertTrue("setProperties returned false", SystemUtil.callWithShellPermissionIdentity(
-                    () -> DeviceConfig.setProperties(propertiesToSet)));
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        DeviceConfigStateHelper.callWithSyncEnabledWithShellPermissions(() ->
+                assertTrue("setProperties returned false",
+                        DeviceConfig.setProperties(propertiesToSet)));
         try {
             waitUntil("Could not update config within " + UPDATE_TIMEOUT_SECONDS
                             + "s. Current version: " + currentVersion, UPDATE_TIMEOUT_SECONDS,
