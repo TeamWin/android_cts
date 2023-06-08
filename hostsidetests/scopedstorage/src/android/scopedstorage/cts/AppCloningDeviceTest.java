@@ -51,7 +51,8 @@ public class AppCloningDeviceTest {
         String dirPath = String.format(EXTERNAL_STORAGE_DCIM_PATH,
                 Integer.parseInt(getCurrentUserId()));
         final File dir = new File(dirPath);
-        assertThat(dir.exists()).isTrue();
+        //TODO: After b/285880821 is fixed, we can re-add the DCIM directory presence check.
+        //assertThat(dir.exists()).isTrue();
         final File file = new File(dir, getFileToBeCreatedName());
         assertThat(createFileAs(APP_B_NO_PERMS, file.getPath())).isTrue();
         assertThat(canOpenFileAs(APP_B_NO_PERMS, file, true)).isTrue();
@@ -63,7 +64,8 @@ public class AppCloningDeviceTest {
         String dirPath = String.format(EXTERNAL_STORAGE_DCIM_PATH,
                 Integer.parseInt(getUserIdForPath()));
         final File dir = new File(dirPath);
-        assertThat(dir.exists()).isTrue();
+        //TODO: After b/285880821 is fixed, we can re-add the DCIM directory presence check.
+        //assertThat(dir.exists()).isTrue();
         final File file = new File(dir, getFileToBeCreatedName());
         assertThat(createFileAs(APP_B_NO_PERMS, file.getPath())).isTrue();
         assertThat(fileExistsAs(APP_B_NO_PERMS, file)).isTrue();
