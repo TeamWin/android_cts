@@ -22,8 +22,15 @@ import static android.os.Process.myUid;
 import static android.os.Process.myUserHandle;
 import static android.provider.DocumentsContract.Document.FLAG_SUPPORTS_THUMBNAIL;
 
+import static java.util.Objects.requireNonNull;
+
 import android.content.ContentProvider;
 import android.content.ContentValues;
+import android.content.Context;
+import android.content.Intent;
+import android.content.pm.ActivityInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.content.res.AssetFileDescriptor;
 import android.database.Cursor;
 import android.database.MatrixCursor;
@@ -33,6 +40,7 @@ import android.os.ParcelFileDescriptor;
 import android.os.UserHandle;
 import android.provider.DocumentsContract;
 import android.provider.OpenableColumns;
+import android.util.Log;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -41,10 +49,29 @@ import java.util.Set;
 
 public class ImageProvider extends ContentProvider {
 
+    private static final String TAG = "ImageProvider";
+
     private final Set<String> accessedUris = new HashSet<>();
+    private int mChooserUid;
+
+    @SuppressWarnings("deprecation")
+    private static int getChooserUid(Context context) {
+        PackageManager packageManager = context.getPackageManager();
+        Intent shareIntent = Intent.createChooser(new Intent(), null);
+        ResolveInfo chooser = requireNonNull(packageManager.resolveActivity(shareIntent,
+                PackageManager.MATCH_DEFAULT_ONLY));
+        ActivityInfo activityInfo = requireNonNull(chooser.activityInfo);
+        try {
+            return packageManager.getPackageUid(activityInfo.packageName,
+                    PackageManager.MATCH_DEFAULT_ONLY);
+        } catch (PackageManager.NameNotFoundException e) {
+            throw new RuntimeException("Failed to get uid of system chooser", e);
+        }
+    }
 
     @Override
     public boolean onCreate() {
+        mChooserUid = getChooserUid(getContext());
         return true;
     }
 
@@ -117,9 +144,15 @@ public class ImageProvider extends ContentProvider {
     private void maybeRecordUriAccess(Uri uri) {
         UserHandle caller = getCallingUserHandle();
         if (!myUserHandle().equals(caller)) {
+            int callingUid = getCallingUid();
+            if (callingUid != mChooserUid) {
+                Log.w(TAG, "Ignoring cross-user access by package " + getCallingPackage()
+                        + " (uid=" + callingUid + ")");
+                return;
+            }
             accessedUris.add("uri=" + uri.toString()
                     + ", owner_uid=" + myUid()
-                    + ", caller_uid=" + getCallingUid()
+                    + ", caller_uid=" + callingUid
                     + " ('" + getCallingPackage() + "')");
         }
     }
