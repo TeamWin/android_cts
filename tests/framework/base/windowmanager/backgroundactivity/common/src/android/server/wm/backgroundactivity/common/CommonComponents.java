@@ -41,6 +41,7 @@ public class CommonComponents {
             Event.APP_B_START_PENDING_INTENT_BROADCAST_RECEIVED,
             Event.APP_A_START_BACKGROUND_ACTIVITY_BROADCAST_RECEIVED,
             Event.APP_A_START_WIDGET_CONFIG_ACTIVITY,
+            Event.APP_A_LAUNCHER_MOVING_TO_BACKGROUND_ACTIVITY,
     })
     @Retention(RetentionPolicy.SOURCE)
     public @interface Event {
@@ -48,5 +49,6 @@ public class CommonComponents {
         int APP_B_START_PENDING_INTENT_BROADCAST_RECEIVED = 1;
         int APP_A_START_BACKGROUND_ACTIVITY_BROADCAST_RECEIVED = 2;
         int APP_A_START_WIDGET_CONFIG_ACTIVITY = 3;
+        int APP_A_LAUNCHER_MOVING_TO_BACKGROUND_ACTIVITY = 4;
     }
 }
