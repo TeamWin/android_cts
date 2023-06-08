@@ -16,12 +16,16 @@
 
 package android.uirendering.cts.testclasses;
 
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
+
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.ColorSpace;
 import android.graphics.Gainmap;
 import android.graphics.HardwareBufferRenderer;
+import android.graphics.Matrix;
 import android.graphics.Picture;
 import android.graphics.RecordingCanvas;
 import android.graphics.RenderNode;
@@ -190,5 +194,71 @@ public class GainmapTests {
     public void gainmapToPqPictureHardware() {
         Bitmap result = renderTestImageWithHardware(BT2020_PQ, true);
         assertTestImageResult(result);
+    }
+
+    @Test
+    public void createScaledBitmap() {
+        Bitmap result = Bitmap.createScaledBitmap(sTestImage, 20, 12, false);
+        assertEquals(result.getWidth(), 20);
+        assertEquals(result.getHeight(), 12);
+        assertTrue(result.hasGainmap());
+        Bitmap gainmapContents = result.getGainmap().getGainmapContents();
+        assertEquals(gainmapContents.getWidth(), 10);
+        assertEquals(gainmapContents.getHeight(), 6);
+
+        assertChannels(gainmapContents.getColor(0, 0), Color.pack(Color.BLACK), 0f);
+        assertChannels(gainmapContents.getColor(1, 1), Color.pack(Color.BLACK), 0f);
+
+        assertChannels(gainmapContents.getColor(2, 2), Color.pack(0xFF404040), 0f);
+        assertChannels(gainmapContents.getColor(3, 3), Color.pack(0xFF404040), 0f);
+
+        assertChannels(gainmapContents.getColor(4, 2), Color.pack(0xFF808080), 0f);
+        assertChannels(gainmapContents.getColor(5, 3), Color.pack(0xFF808080), 0f);
+
+        assertChannels(gainmapContents.getColor(6, 2), Color.pack(0xFFFFFFFF), 0f);
+        assertChannels(gainmapContents.getColor(7, 3), Color.pack(0xFFFFFFFF), 0f);
+
+        assertChannels(gainmapContents.getColor(8, 4), Color.pack(Color.BLACK), 0f);
+        assertChannels(gainmapContents.getColor(9, 5), Color.pack(Color.BLACK), 0f);
+    }
+
+    @Test
+    public void applyRotation180Matrix() {
+        Matrix m = new Matrix();
+        m.setRotate(180.0f, 5.f, 3.f);
+        Bitmap result = Bitmap.createBitmap(sTestImage, 0, 0, 10, 6, m, false);
+        assertEquals(result.getWidth(), 10);
+        assertEquals(result.getHeight(), 6);
+        assertTrue(result.hasGainmap());
+        Bitmap gainmapContents = result.getGainmap().getGainmapContents();
+        assertEquals(gainmapContents.getWidth(), 5);
+        assertEquals(gainmapContents.getHeight(), 3);
+        assertChannels(gainmapContents.getColor(0, 0), Color.pack(Color.BLACK), 0f);
+        assertChannels(gainmapContents.getColor(0, 1), Color.pack(Color.BLACK), 0f);
+        assertChannels(gainmapContents.getColor(1, 1), Color.pack(0xFFFFFFFF), 0f);
+        assertChannels(gainmapContents.getColor(2, 1), Color.pack(0xFF808080), 0f);
+        assertChannels(gainmapContents.getColor(3, 1), Color.pack(0xFF404040), 0f);
+        assertChannels(gainmapContents.getColor(4, 1), Color.pack(Color.BLACK), 0f);
+        assertChannels(gainmapContents.getColor(4, 2), Color.pack(Color.BLACK), 0f);
+    }
+
+    @Test
+    public void applyRotation90Matrix() {
+        Matrix m = new Matrix();
+        m.setRotate(90.0f, 5.f, 3.f);
+        Bitmap result = Bitmap.createBitmap(sTestImage, 0, 0, 10, 6, m, false);
+        assertEquals(result.getWidth(), 6);
+        assertEquals(result.getHeight(), 10);
+        assertTrue(result.hasGainmap());
+        Bitmap gainmapContents = result.getGainmap().getGainmapContents();
+        assertEquals(gainmapContents.getWidth(), 3);
+        assertEquals(gainmapContents.getHeight(), 5);
+        assertChannels(gainmapContents.getColor(0, 0), Color.pack(Color.BLACK), 0f);
+        assertChannels(gainmapContents.getColor(1, 0), Color.pack(Color.BLACK), 0f);
+        assertChannels(gainmapContents.getColor(1, 1), Color.pack(0xFF404040), 0f);
+        assertChannels(gainmapContents.getColor(1, 2), Color.pack(0xFF808080), 0f);
+        assertChannels(gainmapContents.getColor(1, 3), Color.pack(0xFFFFFFFF), 0f);
+        assertChannels(gainmapContents.getColor(1, 4), Color.pack(Color.BLACK), 0f);
+        assertChannels(gainmapContents.getColor(2, 4), Color.pack(Color.BLACK), 0f);
     }
 }
