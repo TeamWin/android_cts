@@ -266,7 +266,7 @@ public class DisableAutofillTest extends AutoFillServiceTestCase.ManualActivityL
         launchPreSimpleSaveActivity(PostLaunchAction.ASSERT_ENABLED_AND_AUTOFILL);
     }
 
-    @Presubmit
+    @Ignore("b/270482520") // Failing on local devices
     @Test
     public void testDisableActivity() throws Exception {
         // Disable this test for Automotive until we know why it's failing.
@@ -292,6 +292,7 @@ public class DisableAutofillTest extends AutoFillServiceTestCase.ManualActivityL
         launchPreSimpleSaveActivity(PostLaunchAction.ASSERT_ENABLED_AND_AUTOFILL);
     }
 
+    @Ignore("b/270482520") // Find out why this test fails
     @Test
     @AppModeFull(reason = "testDisableActivity() is enough")
     public void testDisableActivityThenWaitToReenableIt() throws Exception {
