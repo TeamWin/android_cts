@@ -101,6 +101,9 @@ public class RequirementConstants {
     public static final String API_JAVA_LATENCY = "java_latency_ms";
     public static final String API_NATIVE_LATENCY = "native_latency_ms";
     public static final String AV1_DEC_REQ = "av1_decoder_requirement_boolean";
+    public static final String AV1_ENC_RESOLUTION = "av1_encoder_resolution";
+    public static final String AV1_ENC_FPS = "av1_encoder_fps";
+    public static final String AV1_ENC_BITRATE = "av1_encoder_bitrate";
     public static final String AVIF_DEC_REQ = "avif_image_decoder_boolean";
 
     public static final String CODEC_INIT_LATENCY = "codec_initialization_latency_ms";
