@@ -24,23 +24,22 @@ import android.security.keystore.KeyProperties;
 
 import androidx.test.runner.AndroidJUnit4;
 
-import junit.framework.TestCase;
-
 import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
+import java.security.KeyStore;
 import java.security.PrivateKey;
-import java.security.Provider;
-import java.security.Security;
-import java.security.Signature;
 import java.util.Arrays;
 import java.util.Date;
 
+import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @RunWith(AndroidJUnit4.class)
 public class KeyInfoTest {
+
+    private static final String KEY_ALIAS = KeyInfoTest.class.getSimpleName();
 
     @Test
     public void testImmutabilityViaGetterReturnValues() throws Exception {
@@ -53,7 +52,7 @@ public class KeyInfoTest {
 
         KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA", "AndroidKeyStore");
         keyPairGenerator.initialize(new KeyGenParameterSpec.Builder(
-                KeyInfoTest.class.getSimpleName(),
+                KEY_ALIAS,
                 KeyProperties.PURPOSE_SIGN | KeyProperties.PURPOSE_ENCRYPT)
                 .setKeySize(1024) // use smaller key size to speed the test up
                 .setKeyValidityStart(keyValidityStartDate)
@@ -121,7 +120,7 @@ public class KeyInfoTest {
 
         KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA", "AndroidKeyStore");
         keyPairGenerator.initialize(new KeyGenParameterSpec.Builder(
-                KeyInfoTest.class.getSimpleName(),
+                KEY_ALIAS,
                 KeyProperties.PURPOSE_SIGN | KeyProperties.PURPOSE_ENCRYPT)
                 .setKeySize(1024) // use smaller key size to speed the test up
                 .setKeyValidityStart(keyValidityStartDate)
@@ -143,5 +142,16 @@ public class KeyInfoTest {
 
         int remainingUsageCount = info.getRemainingUsageCount();
         assertEquals(maxUsageCount, remainingUsageCount);
+    }
+
+    @After
+    public void tearDown() {
+        try {
+            KeyStore ks = KeyStore.getInstance("AndroidKeyStore");
+            ks.load(null);
+            ks.deleteEntry(KEY_ALIAS);
+        } catch (Throwable t) {
+            // Ignore any exception
+        }
     }
 }
