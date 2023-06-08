@@ -362,9 +362,9 @@ public abstract class ActivityManagerTestBase {
                 extras);
     }
 
-    protected static String getAmStartCmdWithDismissKeyguard(
+    protected static String getAmStartCmdWithDismissKeyguardIfInsecure(
             final ComponentName activityName) {
-        return "am start --dismiss-keyguard -n " + getActivityName(activityName);
+        return "am start --dismiss-keyguard-if-insecure -n " + getActivityName(activityName);
     }
 
     protected static String getAmStartCmdWithNoUserAction(final ComponentName activityName,
@@ -919,8 +919,9 @@ public abstract class ActivityManagerTestBase {
         mWmState.waitForValidState(activityName);
     }
 
-    protected void launchActivityWithDismissKeyguard(final ComponentName activityName) {
-        executeShellCommand(getAmStartCmdWithDismissKeyguard(activityName));
+    protected void launchActivityWithDismissKeyguardIfInsecure(
+            final ComponentName activityName) {
+        executeShellCommand(getAmStartCmdWithDismissKeyguardIfInsecure(activityName));
         mWmState.waitForValidState(activityName);
     }
 
