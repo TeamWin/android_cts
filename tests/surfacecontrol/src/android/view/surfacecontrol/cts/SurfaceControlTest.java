@@ -1681,7 +1681,7 @@ public class SurfaceControlTest {
                         new SurfaceControl.Transaction()
                                 .setBuffer(surfaceControl, buffer)
                                 .setDataSpace(surfaceControl, extendedDataspace)
-                                .setExtendedRangeBrightness(surfaceControl, 1.f, 3.f)
+                                .setExtendedRangeBrightness(surfaceControl, 3.f, 3.f)
                                 .apply();
                     }
                 },
@@ -1707,7 +1707,7 @@ public class SurfaceControlTest {
                             new SurfaceControl.Transaction()
                                     .setBuffer(surfaceControl, buffer)
                                     .setDataSpace(surfaceControl, extendedDataspace)
-                                    .setExtendedRangeBrightness(surfaceControl, 2.f, 3.f)
+                                    .setExtendedRangeBrightness(surfaceControl, 3.f, 3.f)
                                     .apply();
                         }
                     },
