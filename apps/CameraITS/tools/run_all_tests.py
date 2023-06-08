@@ -630,7 +630,7 @@ def main():
   testing_flash_with_controller = False
   if (TEST_KEY_TABLET in config_file_test_key or
       'manual' in config_file_test_key):
-    if test_params_content['lighting_cntl'].lower() == 'arduino':
+    if test_params_content.get('lighting_cntl', 'None').lower() == 'arduino':
       testing_flash_with_controller = True
 
   # Prepend 'scene' if not specified at cmd line
