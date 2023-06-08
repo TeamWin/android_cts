@@ -31,7 +31,6 @@ android_test_helper_app {
         "src/**/*.java",
     ],
     test_suites: [
-        "cts",
         "general-tests",
         "sts",
     ],
@@ -56,7 +55,6 @@ android_test_helper_app {
         "src/**/*.java",
     ],
     test_suites: [
-        "cts",
         "general-tests",
         "sts",
     ],

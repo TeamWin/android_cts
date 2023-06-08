@@ -164,8 +164,8 @@ public class AudioTap2ToneActivity
 
         String mediaPerformanceClassString;
         int mpc = Build.VERSION.MEDIA_PERFORMANCE_CLASS;
-        if (mpc == Build.VERSION_CODES.TIRAMISU) {
-            mediaPerformanceClassString = "T";
+        if (mpc >= Build.VERSION_CODES.TIRAMISU) {
+            mediaPerformanceClassString = "T (or greater)";
         } else if (mpc == Build.VERSION_CODES.S)  {
             mediaPerformanceClassString = "S";
         } else if (mpc == Build.VERSION_CODES.R) {
