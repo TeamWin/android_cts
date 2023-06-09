@@ -153,12 +153,12 @@ public class MultiEncoderPairPerfTest extends MultiCodecPerfTestBase {
             if (height > 1080) {
                 for (int i = 0; i < firstPairInstances1080p; i++) {
                     testList.add(
-                            new Encode(mFirstPair.first, mFirstPair.second, mIsAsync, 1080, 2160,
+                            new Encode(mFirstPair.first, mFirstPair.second, mIsAsync, 1080, 1920,
                                     30, 10000000));
                 }
                 for (int i = 0; i < secondPairInstances1080p; i++) {
                     testList.add(
-                            new Encode(mSecondPair.first, mSecondPair.second, mIsAsync, 1080, 2160,
+                            new Encode(mSecondPair.first, mSecondPair.second, mIsAsync, 1080, 1920,
                                     30, 10000000));
                 }
                 firstPairInstances -= firstPairInstances1080p;
@@ -194,7 +194,7 @@ public class MultiEncoderPairPerfTest extends MultiCodecPerfTestBase {
             r5_1__H_1_3.setConcurrentInstances(maxInstances);
             r5_1__H_1_4.setConcurrentFps(achievedFrameRate);
         } else {
-            r5_1__H_1_3 = pce.addR5_1__H_1_3_720p(mMime, mMime, height);
+            r5_1__H_1_3 = pce.addR5_1__H_1_3_720p(mFirstPair.first, mSecondPair.first, height);
             r5_1__H_1_4 = pce.addR5_1__H_1_4_720p();
             r5_1__H_1_3.setConcurrentInstances(maxInstances);
             r5_1__H_1_4.setConcurrentFps(achievedFrameRate);

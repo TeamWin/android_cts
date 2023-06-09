@@ -294,14 +294,19 @@ public class MultiDecoderPairPerfTest extends MultiCodecPerfTestBase {
         } else {
             PerformanceClassEvaluator.ConcurrentCodecRequirement r5_1__H_1_1;
             PerformanceClassEvaluator.ConcurrentCodecRequirement r5_1__H_1_2;
-            if (height >= 1080) {
+            if (height > 1080) {
+                r5_1__H_1_1 = pce.addR5_1__H_1_1_4k();
+                r5_1__H_1_2 = pce.addR5_1__H_1_2_4k();
+                r5_1__H_1_1.setConcurrentInstances(maxInstances);
+                r5_1__H_1_2.setConcurrentFps(achievedFrameRate);
+            } else if (height == 1080) {
                 r5_1__H_1_1 = pce.addR5_1__H_1_1_1080p();
                 r5_1__H_1_2 = pce.addR5_1__H_1_2_1080p();
                 r5_1__H_1_1.setConcurrentInstances(maxInstances);
                 r5_1__H_1_2.setConcurrentFps(achievedFrameRate);
             } else {
-                r5_1__H_1_1 = pce.addR5_1__H_1_1_720p(mMime, mMime, height);
-                r5_1__H_1_2 = pce.addR5_1__H_1_2_720p(mMime, mMime, height);
+                r5_1__H_1_1 = pce.addR5_1__H_1_1_720p(mFirstPair.first, mSecondPair.first, height);
+                r5_1__H_1_2 = pce.addR5_1__H_1_2_720p(mFirstPair.first, mSecondPair.first, height);
                 r5_1__H_1_1.setConcurrentInstances(maxInstances);
                 r5_1__H_1_2.setConcurrentFps(achievedFrameRate);
             }
