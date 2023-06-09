@@ -275,7 +275,6 @@ public class SELinuxHostTest extends BaseHostJUnit4Test {
         return builtPolicyFile;
     }
 
-    // NOTE: cts/tools/selinux depends on this method. Rename/change with caution.
     /**
      * Returns the host-side file containing the SELinux policy of the device under test.
      */
@@ -283,7 +282,6 @@ public class SELinuxHostTest extends BaseHostJUnit4Test {
         return getDeviceFile(device, cachedDevicePolicyFiles, "/sys/fs/selinux/policy", "sepolicy");
     }
 
-    // NOTE: cts/tools/selinux depends on this method. Rename/change with caution.
     /**
      * Returns the host-side file containing the system SELinux policy of the device under test.
      */
@@ -291,7 +289,6 @@ public class SELinuxHostTest extends BaseHostJUnit4Test {
         return buildSystemPolicy(device, cachedDeviceSystemPolicy, "system_sepolicy");
     }
 
-    // NOTE: cts/tools/selinux depends on this method. Rename/change with caution.
     /**
      * Returns the major number of sepolicy version of device's vendor implementation.
      */
@@ -380,7 +377,6 @@ public class SELinuxHostTest extends BaseHostJUnit4Test {
         return getSepolicyVersionFromMajorMinor(version.getTextContent());
     }
 
-    // NOTE: cts/tools/selinux depends on this method. Rename/change with caution.
     /**
      * Returns the major number of sepolicy version of system.
      */
@@ -499,7 +495,6 @@ public class SELinuxHostTest extends BaseHostJUnit4Test {
         }
     }
 
-    // NOTE: cts/tools/selinux depends on this method. Rename/change with caution.
     /**
      * Returns {@code true} if this device is required to be a full Treble device.
      */
@@ -513,7 +508,6 @@ public class SELinuxHostTest extends BaseHostJUnit4Test {
         return isFullTrebleDevice(mDevice);
     }
 
-    // NOTE: cts/tools/selinux depends on this method. Rename/change with caution.
     /**
      * Returns {@code true} if this device is required to enforce compatible property.
      */
@@ -523,7 +517,6 @@ public class SELinuxHostTest extends BaseHostJUnit4Test {
                 device, "ro.actionable_compatible_property.enabled", "true");
     }
 
-    // NOTE: cts/tools/selinux depends on this method. Rename/change with caution.
     /**
      * Returns {@code true} if this device has sepolicy split across different paritions.
      * This is possible even for devices launched at api level higher than 26.
