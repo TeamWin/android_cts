@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package android.security.cts.host;
+package android.security.cts;
 
 import android.compat.cts.CompatChangeGatingTestCase;
 
 import com.google.common.collect.ImmutableSet;
 
-public class ZipPathValidatorTest extends CompatChangeGatingTestCase {
+public class ZipPathValidatorHostTest extends CompatChangeGatingTestCase {
     protected static final String TEST_APK = "CtsZipValidateApp.apk";
     protected static final String TEST_PKG = "android.security.cts";
 
@@ -34,7 +34,7 @@ public class ZipPathValidatorTest extends CompatChangeGatingTestCase {
     public void testNewZipFile_whenZipFileHasDangerousEntriesAndChangeEnabled_throws() throws
             Exception {
         runDeviceCompatTest(TEST_PKG,
-                ".ZipPathValidatorTest",
+                ".ZipPathValidatorDeviceTest",
                 "newZipFile_whenZipFileHasDangerousEntriesAndChangeEnabled_throws",
                 /* enabledChanges */ ImmutableSet.of(VALIDATE_ZIP_PATH_FOR_PATH_TRAVERSAL),
                 /* disabledChanges */ ImmutableSet.of());
@@ -44,7 +44,7 @@ public class ZipPathValidatorTest extends CompatChangeGatingTestCase {
             testZipInputStreamGetNextEntry_whenZipFileHasDangerousEntriesAndChangeEnabled_throws()
                     throws Exception {
         runDeviceCompatTest(TEST_PKG,
-                ".ZipPathValidatorTest",
+                ".ZipPathValidatorDeviceTest",
                 "zipInputStreamGetNextEntry_whenZipFileHasDangerousEntriesAndChangeEnabled_throws",
                 /* enabledChanges */ ImmutableSet.of(VALIDATE_ZIP_PATH_FOR_PATH_TRAVERSAL),
                 /* disabledChanges */ ImmutableSet.of());
@@ -53,7 +53,7 @@ public class ZipPathValidatorTest extends CompatChangeGatingTestCase {
     public void testNewZipFile_whenZipFileHasNormalEntriesAndChangeEnabled_doesNotThrow() throws
             Exception {
         runDeviceCompatTest(TEST_PKG,
-                ".ZipPathValidatorTest",
+                ".ZipPathValidatorDeviceTest",
                 "newZipFile_whenZipFileHasNormalEntriesAndChangeEnabled_doesNotThrow",
                 /* enabledChanges */ ImmutableSet.of(VALIDATE_ZIP_PATH_FOR_PATH_TRAVERSAL),
                 /* disabledChanges */ ImmutableSet.of());
@@ -63,7 +63,7 @@ public class ZipPathValidatorTest extends CompatChangeGatingTestCase {
             testZipInputStreamGetNextEntry_whenZipFileHasNormalEntriesAndChangeEnabled_doesNotThrow()
                     throws Exception {
         runDeviceCompatTest(TEST_PKG,
-                ".ZipPathValidatorTest",
+                ".ZipPathValidatorDeviceTest",
                 "zipInputStreamGetNextEntry_whenZipFileHasNormalEntriesAndChangeEnabled_"
                         + "doesNotThrow",
                 /* enabledChanges */ ImmutableSet.of(VALIDATE_ZIP_PATH_FOR_PATH_TRAVERSAL),
@@ -74,7 +74,7 @@ public class ZipPathValidatorTest extends CompatChangeGatingTestCase {
             testNewZipFile_whenZipFileHasNormalAndDangerousEntriesAndChangeDisabled_doesNotThrow()
                     throws Exception {
         runDeviceCompatTest(TEST_PKG,
-                ".ZipPathValidatorTest",
+                ".ZipPathValidatorDeviceTest",
                 "newZipFile_whenZipFileHasNormalAndDangerousEntriesAndChangeDisabled_doesNotThrow",
                 /* enabledChanges */ ImmutableSet.of(),
                 /* disabledChanges */ ImmutableSet.of(VALIDATE_ZIP_PATH_FOR_PATH_TRAVERSAL));
@@ -84,7 +84,7 @@ public class ZipPathValidatorTest extends CompatChangeGatingTestCase {
             testZipInputStreamGetNextEntry_whenZipFileHasNormalAndDangerousEntriesAndChangeDisabled_doesNotThrow()
                     throws Exception {
         runDeviceCompatTest(TEST_PKG,
-                ".ZipPathValidatorTest",
+                ".ZipPathValidatorDeviceTest",
                 "zipInputStreamGetNextEntry_whenZipFileHasNormalAndDangerousEntriesAnd"
                         + "ChangeDisabled_doesNotThrow",
                 /* enabledChanges */ ImmutableSet.of(),
@@ -93,7 +93,7 @@ public class ZipPathValidatorTest extends CompatChangeGatingTestCase {
 
     public void testLoadingApksWillNotCallZipPathValidator_changeEnabled() throws Exception {
         runDeviceCompatTest(TEST_PKG,
-                ".ZipPathValidatorTest",
+                ".ZipPathValidatorDeviceTest",
                 "loadingApksWillNotCallZipPathValidator_changeEnabledOrDisabled",
                 /* enabledChanges */ ImmutableSet.of(VALIDATE_ZIP_PATH_FOR_PATH_TRAVERSAL),
                 /* disabledChanges */ ImmutableSet.of());
@@ -101,7 +101,7 @@ public class ZipPathValidatorTest extends CompatChangeGatingTestCase {
 
     public void testLoadingApksWillNotCallZipPathValidator_changeDisabled() throws Exception {
         runDeviceCompatTest(TEST_PKG,
-                ".ZipPathValidatorTest",
+                ".ZipPathValidatorDeviceTest",
                 "loadingApksWillNotCallZipPathValidator_changeEnabledOrDisabled",
                 /* enabledChanges */ ImmutableSet.of(),
                 /* disabledChanges */ ImmutableSet.of(VALIDATE_ZIP_PATH_FOR_PATH_TRAVERSAL));
