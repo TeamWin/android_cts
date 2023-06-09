@@ -22,12 +22,9 @@ import android.hdmicec.cts.BaseHdmiCecCtsTest;
 import android.hdmicec.cts.CecMessage;
 import android.hdmicec.cts.CecOperand;
 import android.hdmicec.cts.HdmiCecConstants;
-import android.hdmicec.cts.LogicalAddress;
-import android.hdmicec.cts.RemoteControlPassthrough;
 
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.RuleChain;
@@ -110,32 +107,6 @@ public final class HdmiCecGeneralProtocolTest extends BaseHdmiCecCtsTest {
 
     public void sendMessageAndVerifyNoMessageSentFromDevice(CecOperand message) throws Exception {
         sendMessageAndVerifyNoMessageSentFromDevice(message, "");
-    }
-
-    /**
-     * Test HF4-2-5, HF4-2-6 (CEC 2.0)
-     *
-     * <p>Tests that the device ignores any additional trailing parameters in an otherwise correct
-     * CEC message.
-     *
-     * <p>e.g. If {@code 14:44:01:02 (<UCP>[KEYCODE_DPAD_UP])} is sent to the DUT, the DUT should
-     * ignore the last byte of the parameter and treat it as {@code <UCP>[KEYCODE_DPAD_UP]}
-     */
-    @Test
-    @Ignore("b/259002142, b/264510905")
-    /**
-     * TODO: b/259002142, b/264510905
-     *
-     * 1. implement the behavior that the current test is testing
-     * (i.e. ignore additional parameters in <User Control Pressed> messages)
-     *
-     * 2. implement the tests as they are proposed by the HDMI forum and validate that they are
-     * passing with the current implementation of the behavior
-     */
-    public void cect_hf_ignoreAdditionalParams() throws Exception {
-        setCec20();
-        RemoteControlPassthrough.checkUserControlPressAndReleaseWithAdditionalParams(
-                hdmiCecClient, getDevice(), LogicalAddress.RECORDER_1, getTargetLogicalAddress());
     }
 
     /**
