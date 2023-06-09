@@ -104,14 +104,18 @@ public class BiometricsDeviceInfo extends DeviceInfo {
 
     @Override
     protected void collectDeviceInfo(DeviceInfoStore store) throws Exception {
-        assertTrue("Skipping test for devices not launching with at least Android S",
-                ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S));
+        if (!ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S)) {
+            Log.d(TAG, "Skipping test for devices not launching with at least Android S");
+            return;
+        }
 
         final PackageManager pm = getContext().getPackageManager();
-        assertTrue("Skipping test for devices without biometric features",
-                pm.hasSystemFeature(PackageManager.FEATURE_FINGERPRINT)
-                        || pm.hasSystemFeature(PackageManager.FEATURE_FACE)
-                        || pm.hasSystemFeature(PackageManager.FEATURE_IRIS));
+        if (!(pm.hasSystemFeature(PackageManager.FEATURE_FINGERPRINT)
+                || pm.hasSystemFeature(PackageManager.FEATURE_FACE)
+                || pm.hasSystemFeature(PackageManager.FEATURE_IRIS))) {
+            Log.d(TAG, "Skipping test for devices without biometric features");
+            return;
+        }
 
         final BiometricManager bm = getContext().getSystemService(BiometricManager.class);
         final List<SensorProperties> sensorProperties =
