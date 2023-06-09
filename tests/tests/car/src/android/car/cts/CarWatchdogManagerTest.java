@@ -21,7 +21,9 @@ import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.fail;
 
+import android.app.UiAutomation;
 import android.car.Car;
 import android.car.test.ApiCheckerRule.Builder;
 import android.car.watchdog.CarWatchdogManager;
@@ -31,6 +33,7 @@ import android.car.watchdog.ResourceOveruseStats;
 import android.content.Context;
 import android.os.Build;
 import android.os.Process;
+import android.os.SystemProperties;
 import android.os.UserHandle;
 import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
@@ -40,6 +43,7 @@ import androidx.test.platform.app.InstrumentationRegistry;
 import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.PollingCheck;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -48,11 +52,20 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InterruptedIOException;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 @AppModeFull(reason = "Instant Apps cannot get car related permissions")
 public final class CarWatchdogManagerTest extends AbstractCarTestCase {
     private static final String TAG = CarWatchdogManagerTest.class.getSimpleName();
+    // Critical wait time for watchdog to ping service.
+    private static final int HEALTH_CHECK_CRITICAL_TIMEOUT_MS = 3000;
+    // Emulator must be CTS compliant, but given its slower performance wait for 10
+    // times the critical timeout during health status check. Non-emulator devices
+    // should maintain the same wait time, ensuring performance requirements.
+    private static final int ANR_WAIT_MS =
+            HEALTH_CHECK_CRITICAL_TIMEOUT_MS * (isEmulator() ? 10 : 2);
     // System event performance data collections are extended for at least 30 seconds after
     // receiving the corresponding system event completion notification. During these periods
     // (on <= Android T releases), a custom collection cannot be started. Thus, retry starting
@@ -76,6 +89,8 @@ public final class CarWatchdogManagerTest extends AbstractCarTestCase {
     private final ResourceOveruseStatsPollingCheckCondition
             mResourceOveruseStatsPollingCheckCondition =
             new ResourceOveruseStatsPollingCheckCondition();
+    private final UiAutomation mUiAutomation =
+            InstrumentationRegistry.getInstrumentation().getUiAutomation();
 
     private Context mContext;
     private CarWatchdogManager mCarWatchdogManager;
@@ -90,9 +105,100 @@ public final class CarWatchdogManagerTest extends AbstractCarTestCase {
 
     @Before
     public void setUp() throws Exception {
+        mUiAutomation.adoptShellPermissionIdentity(Car.PERMISSION_USE_CAR_WATCHDOG);
         mContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
         mFile = mContext.getFilesDir();
         mCarWatchdogManager = (CarWatchdogManager) getCar().getCarManager(Car.CAR_WATCHDOG_SERVICE);
+    }
+
+    @After
+    public void tearDown() {
+        mUiAutomation.dropShellPermissionIdentity();
+    }
+
+    @Test
+    public void testCheckHealthStatus() throws Exception {
+        CountDownLatch callSignal = new CountDownLatch(1);
+        CarWatchdogManager.CarWatchdogClientCallback client =
+                new CarWatchdogManager.CarWatchdogClientCallback() {
+                    @Override
+                    public boolean onCheckHealthStatus(int sessionId, int timeout) {
+                        callSignal.countDown();
+                        return true;
+                    }
+
+                    @Override
+                    public void onPrepareProcessTermination() {
+                        fail("Unexpected call to onPrepareProcessTermination");
+                    }
+                };
+
+        mCarWatchdogManager.registerClient(mContext.getMainExecutor(), client,
+                CarWatchdogManager.TIMEOUT_CRITICAL);
+        boolean called = callSignal.await(ANR_WAIT_MS, TimeUnit.MILLISECONDS);
+        mCarWatchdogManager.unregisterClient(client);
+
+        assertWithMessage("onCheckHealthStatus called").that(called).isTrue();
+    }
+
+    @Test
+    public void testThrowsExceptionOnRegisterClientWithNullClient() {
+        assertThrows(NullPointerException.class,
+                () -> mCarWatchdogManager.registerClient(mContext.getMainExecutor(), null,
+                        CarWatchdogManager.TIMEOUT_NORMAL));
+    }
+
+    @Test
+    public void testThrowsExceptionOnRegisterClientWithNullExecutor() {
+        CarWatchdogManager.CarWatchdogClientCallback client =
+                new CarWatchdogManager.CarWatchdogClientCallback() {};
+
+        assertThrows(NullPointerException.class,
+                () -> mCarWatchdogManager.registerClient(null, client,
+                        CarWatchdogManager.TIMEOUT_NORMAL));
+    }
+
+    @Test
+    public void testThrowsExceptionOnUnregisterClientWithNullClient() {
+        assertThrows(NullPointerException.class,
+                () -> mCarWatchdogManager.unregisterClient(null));
+    }
+
+    @Test
+    public void testTellClientAlive() throws Exception {
+        AtomicReference<Integer> actualSessionId = new AtomicReference<>(-1);
+        CarWatchdogManager.CarWatchdogClientCallback client =
+                new CarWatchdogManager.CarWatchdogClientCallback() {
+                    @Override
+                    public boolean onCheckHealthStatus(int sessionId, int timeout) {
+                        synchronized (actualSessionId) {
+                            actualSessionId.set(sessionId);
+                            actualSessionId.notifyAll();
+                        }
+                        return false;
+                    }
+
+                    @Override
+                    public void onPrepareProcessTermination() {
+                        fail("Unexpected call to onPrepareProcessTermination");
+                    }
+                };
+
+        mCarWatchdogManager.registerClient(mContext.getMainExecutor(), client,
+                CarWatchdogManager.TIMEOUT_CRITICAL);
+        synchronized (actualSessionId) {
+            actualSessionId.wait(ANR_WAIT_MS);
+            mCarWatchdogManager.tellClientAlive(client, actualSessionId.get());
+            // Check if onPrepareProcessTermination is called.
+            actualSessionId.wait(HEALTH_CHECK_CRITICAL_TIMEOUT_MS);
+        }
+        mCarWatchdogManager.unregisterClient(client);
+    }
+
+    @Test
+    public void testThrowsExceptionOnTellClientAliveWithNullClient() {
+        assertThrows(NullPointerException.class,
+                () -> mCarWatchdogManager.tellClientAlive(null, -1));
     }
 
     @Test
@@ -244,4 +350,9 @@ public final class CarWatchdogManagerTest extends AbstractCarTestCase {
             mWrittenBytes = writtenBytes;
         }
     };
+
+    private static boolean isEmulator() {
+        return SystemProperties.getBoolean("ro.boot.qemu", false)
+                || SystemProperties.getBoolean("ro.kernel.qemu", false);
+    }
 }
