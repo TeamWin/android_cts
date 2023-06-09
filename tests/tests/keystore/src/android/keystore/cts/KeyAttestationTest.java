@@ -72,6 +72,7 @@ import android.content.pm.PackageManager.NameNotFoundException;
 import android.keystore.cts.Attestation;
 import android.keystore.cts.util.TestUtils;
 import android.os.Build;
+import android.os.SystemProperties;
 import android.platform.test.annotations.RestrictedBuildTest;
 import android.security.KeyStoreException;
 import android.security.keystore.AttestationUtils;
@@ -1457,6 +1458,19 @@ public class KeyAttestationTest {
         }
     }
 
+    private void checkVerifiedBootHash(byte[] verifiedBootHash) {
+        assertNotNull(verifiedBootHash);
+        StringBuilder hexVerifiedBootHash = new StringBuilder(verifiedBootHash.length * 2);
+        for (byte b : verifiedBootHash) {
+            hexVerifiedBootHash.append(String.format("%02x", b));
+        }
+        String bootVbMetaDigest = SystemProperties.get("ro.boot.vbmeta.digest", "");
+        assertEquals(
+                "VerifiedBootHash field of RootOfTrust section does not match with"
+                        + "system property ro.boot.vbmeta.digest",
+                bootVbMetaDigest, hexVerifiedBootHash.toString());
+    }
+
     private void checkRootOfTrust(Attestation attestation, boolean requireLocked) {
         RootOfTrust rootOfTrust = attestation.getRootOfTrust();
         assertNotNull(rootOfTrust);
@@ -1477,6 +1491,7 @@ public class KeyAttestationTest {
             assertNotNull(rootOfTrust.getVerifiedBootHash());
             assertEquals(32, rootOfTrust.getVerifiedBootHash().length);
             checkEntropy(rootOfTrust.getVerifiedBootHash());
+            checkVerifiedBootHash(rootOfTrust.getVerifiedBootHash());
         }
     }
 
