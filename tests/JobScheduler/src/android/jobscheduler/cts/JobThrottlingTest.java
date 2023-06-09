@@ -93,6 +93,7 @@ public class JobThrottlingTest {
     private boolean mDeviceIdleEnabled;
     private boolean mDeviceLightIdleEnabled;
     private boolean mAppStandbyEnabled;
+    private String mInitialActivityManagerConstants;
     private String mInitialDisplayTimeout;
     private String mInitialBatteryStatsConstants;
     private boolean mAutomotiveDevice;
@@ -157,6 +158,13 @@ public class JobThrottlingTest {
         mInitialDisplayTimeout =
                 Settings.System.getString(mContext.getContentResolver(), SCREEN_OFF_TIMEOUT);
         Settings.System.putString(mContext.getContentResolver(), SCREEN_OFF_TIMEOUT, "300000");
+
+        mInitialActivityManagerConstants = Settings.Global.getString(mContext.getContentResolver(),
+                Settings.Global.ACTIVITY_MANAGER_CONSTANTS);
+        // Delete any activity manager constants overrides so that the default transition time
+        // of 60 seconds for UID active to UID idle is used.
+        Settings.Global.putString(mContext.getContentResolver(),
+                Settings.Global.ACTIVITY_MANAGER_CONSTANTS, null);
 
         // In automotive device, always-on screen and endless battery charging are assumed.
         mAutomotiveDevice =
@@ -1349,6 +1357,9 @@ public class JobThrottlingTest {
 
         Settings.System.putString(
                 mContext.getContentResolver(), SCREEN_OFF_TIMEOUT, mInitialDisplayTimeout);
+
+        Settings.Global.putString(mContext.getContentResolver(),
+                Settings.Global.ACTIVITY_MANAGER_CONSTANTS, mInitialActivityManagerConstants);
     }
 
     private void setTestPackageRestricted(boolean restricted) throws Exception {
