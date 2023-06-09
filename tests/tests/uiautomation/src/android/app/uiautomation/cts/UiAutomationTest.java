@@ -53,7 +53,6 @@ import static com.android.compatibility.common.util.TestUtils.waitOn;
 
 
 import androidx.test.InstrumentationRegistry;
-import androidx.test.filters.FlakyTest;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
@@ -205,7 +204,6 @@ public final class UiAutomationTest {
     }
 
     @Test
-    @FlakyTest(bugId = 281697280)
     public void testWindowContentFrameStats() throws Exception {
         mUiAutomation = getInstrumentation().getUiAutomation();
         final int windowId = startActivitySync();
