@@ -39,7 +39,6 @@ import android.view.cts.surfacevalidator.ViewFactory;
 import android.widget.FrameLayout;
 
 import androidx.test.filters.LargeTest;
-import androidx.test.filters.RequiresDevice;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
@@ -52,7 +51,6 @@ import org.junit.runner.RunWith;
 @RunWith(AndroidJUnit4.class)
 @LargeTest
 @SuppressLint("RtlHardcoded")
-@RequiresDevice
 public class SurfaceViewSyncTest {
     private static final String TAG = "SurfaceViewSyncTests";
 
