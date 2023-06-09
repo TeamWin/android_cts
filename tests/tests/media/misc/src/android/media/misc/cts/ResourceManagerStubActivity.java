@@ -106,6 +106,15 @@ public class ResourceManagerStubActivity extends Activity {
         return result;
     }
 
+    private void waitForActivitiesToComplete() throws InterruptedException {
+        // Wait for all the activities to complete.
+        synchronized (mFinishEvent) {
+            while (mNumResults < mResults.length) {
+                mFinishEvent.wait();
+            }
+        }
+    }
+
     public void testReclaimResource(int type1, int type2, boolean highResolutionForActivity1,
             boolean highResolutionForActivity2) throws InterruptedException {
         mType1 = type1;
@@ -133,18 +142,16 @@ public class ResourceManagerStubActivity extends Activity {
                     intent2.putExtra("high-resolution", highResolutionForActivity2);
                     startActivityForResult(intent2, mRequestCodes[1]);
 
-                    synchronized (mFinishEvent) {
-                        mFinishEvent.wait();
-                    }
+                    waitForActivitiesToComplete();
                 } catch (Exception e) {
                     Log.d(TAG, "testReclaimResource got exception " + e.toString());
                 }
             }
         };
         thread.start();
-        thread.join(20000 /* millis */);
-        System.gc();
-        Thread.sleep(5000);  // give the gc a chance to release test activities.
+        Log.i(TAG, "Started and waiting for Activities");
+        thread.join();
+        Log.i(TAG, "Activities completed");
 
         boolean result = processActivityResults();
         if (!result) {
@@ -186,11 +193,7 @@ public class ResourceManagerStubActivity extends Activity {
                     recorder.putExtra("mime", mimeType);
                     startActivityForResult(recorder, mRequestCodes[1]);
 
-                    synchronized (mFinishEvent) {
-                        Log.d(TAG, "Waiting for both actvities to complete");
-                        mFinishEvent.wait();
-                        Log.d(TAG, "Both actvities completed");
-                    }
+                    waitForActivitiesToComplete();
                 } catch (Exception e) {
                     Log.d(TAG, "testVideoCodecReclaim got exception " + e.toString());
                 }
@@ -201,9 +204,53 @@ public class ResourceManagerStubActivity extends Activity {
         Log.i(TAG, "Started and waiting for Activities");
         thread.join();
         Log.i(TAG, "Activities completed");
-        System.gc();
-        // give the gc a chance to release test activities.
-        Thread.sleep(5000);
+
+        boolean result = processActivityResults();
+        if (!result) {
+            String failMessage = "The potential reasons for the failure:\n";
+            StringBuilder reasons = new StringBuilder();
+            reasons.append(ERROR_INSUFFICIENT_RESOURCES);
+            Assert.assertTrue(failMessage + reasons.toString(), result);
+        }
+    }
+
+    public void doTestReclaimResource(String codecName, String mimeType, int width, int height)
+            throws InterruptedException {
+        mWaitForReclaim = true;
+        Thread thread = new Thread() {
+            @Override
+            public void run() {
+                try {
+                    Context context = getApplicationContext();
+                    Intent intent1 = new Intent(context, ResourceManagerTestActivity1.class);
+                    intent1.putExtra("test-type", mType1);
+                    intent1.putExtra("wait-for-reclaim", mWaitForReclaim);
+                    intent1.putExtra("name", codecName);
+                    intent1.putExtra("mime", mimeType);
+                    intent1.putExtra("width", width);
+                    intent1.putExtra("height", height);
+                    startActivityForResult(intent1, mRequestCodes[0]);
+                    Thread.sleep(5000);  // wait for process to launch and allocate all codecs.
+
+                    Intent intent2 = new Intent(context, ResourceManagerTestActivity2.class);
+                    intent2.putExtra("test-type", mType2);
+                    intent2.putExtra("name", codecName);
+                    intent2.putExtra("mime", mimeType);
+                    intent2.putExtra("width", width);
+                    intent2.putExtra("height", height);
+                    startActivityForResult(intent2, mRequestCodes[1]);
+
+                    waitForActivitiesToComplete();
+                } catch (Exception e) {
+                    Log.d(TAG, "doTestReclaimResource got exception " + e.toString());
+                }
+            }
+        };
+
+        thread.start();
+        Log.i(TAG, "Started and waiting for Activities");
+        thread.join();
+        Log.i(TAG, "Activities completed");
 
         boolean result = processActivityResults();
         if (!result) {
