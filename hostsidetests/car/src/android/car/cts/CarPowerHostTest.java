@@ -16,22 +16,21 @@
 
 package android.car.cts;
 
+import com.android.car.power.CarPowerDumpProto;
 import com.android.compatibility.common.util.PollingCheck;
+import com.android.compatibility.common.util.ProtoUtils;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @RunWith(DeviceJUnit4ClassRunner.class)
 public final class CarPowerHostTest extends CarHostJUnit4TestCase {
 
     private static final long TIMEOUT_MS = 5_000;
     private static final String POWER_ON = "ON";
-    private static final String POWER_STATE_PATTERN =
-            "mCurrentState:.*CpmsState=([A-Z_]+)\\(\\d+\\)";
+    private static final String CMD_DUMPSYS_POWER =
+            "dumpsys car_service --services CarPowerManagementService --proto";
 
     @Test
     public void testPowerStateOnAfterBootUp() throws Exception {
@@ -46,19 +45,15 @@ public final class CarPowerHostTest extends CarHostJUnit4TestCase {
         getDevice().waitForDeviceAvailable();
     }
 
+    @SuppressWarnings("LiteProtoToString")
     private String getPowerState() throws Exception {
-        Pattern pattern = Pattern.compile(POWER_STATE_PATTERN);
-        // TODO(b/184862429): Use dumpsys in proto buffer.
-        String cpmsDump =
-                executeCommand("dumpsys car_service --services CarPowerManagementService");
-        String[] lines = cpmsDump.split("\\r?\\n");
-
-        for (String line : lines) {
-            Matcher matcher = pattern.matcher(line);
-            if (matcher.find()) {
-                return matcher.group(1);
-            }
+        CarPowerDumpProto carPowerDump =
+                ProtoUtils.getProto(getDevice(), CarPowerDumpProto.parser(), CMD_DUMPSYS_POWER);
+        boolean hasPowerState = carPowerDump.getCurrentState().hasStateName();
+        if (hasPowerState) {
+            return carPowerDump.getCurrentState().getStateName();
         }
-        throw new IllegalStateException("Power state is not found:\n" + cpmsDump);
+        throw new IllegalStateException("Proto doesn't have current_state.state_name field\n proto:"
+                + carPowerDump.toString());
     }
 }
