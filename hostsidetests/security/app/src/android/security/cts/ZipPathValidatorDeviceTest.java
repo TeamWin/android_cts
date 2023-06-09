@@ -50,7 +50,7 @@ import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 @RunWith(AndroidJUnit4.class)
-public class ZipPathValidatorTest {
+public class ZipPathValidatorDeviceTest {
     @Test
     public void newZipFile_whenZipFileHasDangerousEntriesAndChangeEnabled_throws() throws
             Exception {
@@ -197,7 +197,7 @@ public class ZipPathValidatorTest {
             ZipPathValidator.setCallback(mockZipCallback);
 
             // Put contents resources/test.jar into a temporary file jar
-            ClassLoader pcl = ZipPathValidatorTest.class.getClassLoader();
+            ClassLoader pcl = ZipPathValidatorDeviceTest.class.getClassLoader();
             File jar = File.createTempFile("test", ".jar");
             try (InputStream in = pcl.getResourceAsStream("test.jar");
                  FileOutputStream out = new FileOutputStream(jar)) {
