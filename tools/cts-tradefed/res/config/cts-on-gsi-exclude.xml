@@ -140,4 +140,7 @@
     <!-- b/238155422 -->
     <option name="compatibility:exclude-filter" value="CtsNetTestCases android.net.cts.ConnectivityManagerTest#testSetAirplaneMode" />
 
+    <!-- b/284917528 -->
+    <option name="compatibility:exclude-filter" value="MicrodroidHostTestCases" />
+
 </configuration>
