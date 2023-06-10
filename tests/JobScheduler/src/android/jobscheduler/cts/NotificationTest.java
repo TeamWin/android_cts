@@ -21,19 +21,25 @@ import static android.jobscheduler.cts.TestAppInterface.TEST_APP_PACKAGE;
 
 import static com.android.compatibility.common.util.TestUtils.waitUntil;
 
+import static org.junit.Assert.assertTrue;
+
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.job.JobInfo;
 import android.app.job.JobParameters;
 import android.app.job.JobService;
+import android.content.pm.ApplicationInfo;
+import android.jobscheduler.cts.UserInitiatedJobTest.WatchUidRunner;
 import android.jobscheduler.cts.jobtestapp.TestJobSchedulerReceiver;
+import android.provider.Settings;
 import android.service.notification.StatusBarNotification;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.LargeTest;
 
 import com.android.compatibility.common.util.AnrMonitor;
+import com.android.compatibility.common.util.SystemUtil;
 
 import java.util.Collections;
 import java.util.Map;
@@ -173,6 +179,55 @@ public class NotificationTest extends BaseJobSchedulerTest {
             mTestAppInterface.forceStopApp();
 
             notificationHelper.assertNotificationsRemoved();
+        }
+    }
+
+    public void testNotificationRemovedOnPackageRestriction() throws Exception {
+        String initialActivityManagerConstants = null;
+        try (TestAppInterface testAppInterface = new TestAppInterface(mContext, JOB_ID);
+             TestNotificationListener.NotificationHelper notificationHelper =
+                     new TestNotificationListener.NotificationHelper(
+                             mContext, TestAppInterface.TEST_APP_PACKAGE)) {
+            initialActivityManagerConstants =
+                    Settings.Global.getString(getContext().getContentResolver(),
+                    Settings.Global.ACTIVITY_MANAGER_CONSTANTS);
+            SystemUtil.runShellCommand("am set-deterministic-uid-idle true");
+            // Set background_settle_time to 0 so that the transition from UID active to UID idle
+            // happens quickly.
+            Settings.Global.putString(getContext().getContentResolver(),
+                    Settings.Global.ACTIVITY_MANAGER_CONSTANTS, "background_settle_time=0");
+
+            testAppInterface.setTestPackageRestricted(true);
+            testAppInterface.startAndKeepTestActivity(true);
+            testAppInterface.scheduleJob(
+                    Map.of(TestJobSchedulerReceiver.EXTRA_SET_NOTIFICATION, true),
+                    Map.of(
+                            TestJobSchedulerReceiver.EXTRA_SET_NOTIFICATION_JOB_END_POLICY,
+                            JobService.JOB_END_NOTIFICATION_POLICY_DETACH
+                    ));
+
+            assertTrue("Job did not start after scheduling",
+                    testAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT_MS));
+
+            StatusBarNotification jobNotification = notificationHelper.getNotification();
+            assertNotNull(jobNotification);
+
+            final ApplicationInfo testAppInfo =
+                    mContext.getPackageManager().getApplicationInfo(TEST_APP_PACKAGE, 0);
+            try (WatchUidRunner uidWatcher = new WatchUidRunner(
+                    InstrumentationRegistry.getInstrumentation(), testAppInfo.uid)) {
+                // Close the activity so the app isn't considered TOP.
+                testAppInterface.closeActivity(true);
+                uidWatcher.waitFor(UserInitiatedJobTest.WatchUidRunner.CMD_IDLE);
+                Thread.sleep(1000); // Wait a bit for JS to process.
+            }
+
+            assertTrue(testAppInterface.awaitJobStop(DEFAULT_WAIT_TIMEOUT_MS));
+            notificationHelper.assertNotificationsRemoved();
+        } finally {
+            Settings.Global.putString(getContext().getContentResolver(),
+                    Settings.Global.ACTIVITY_MANAGER_CONSTANTS, initialActivityManagerConstants);
+            SystemUtil.runShellCommand("am set-deterministic-uid-idle false");
         }
     }
 

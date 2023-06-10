@@ -79,6 +79,10 @@ public class BackwardNavigationTest {
                     mOrderedButton1);
         });
 
+        // Wait for the window to gain focus. Otherwise, it can't receive the injected key events.
+        PollingCheck.waitFor(() ->mOrderedButton1.hasWindowFocus(),
+                "The window containing BackwardNavigationCtsActivity should be focused");
+
         // Press TAB to go through all the focusable Views.
         View focusedView = mOrderedButton1;
         do {

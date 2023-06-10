@@ -203,6 +203,11 @@ class TestAppInterface implements AutoCloseable {
                 + " --user " + UserHandle.myUserId() + " " + TEST_APP_PACKAGE);
     }
 
+    void setTestPackageRestricted(boolean restricted) throws Exception {
+        AppOpsUtils.setOpMode(TEST_APP_PACKAGE, "RUN_ANY_IN_BACKGROUND",
+                restricted ? AppOpsManager.MODE_IGNORED : AppOpsManager.MODE_ALLOWED);
+    }
+
     void cancelJob() throws Exception {
         SystemUtil.runShellCommand("cmd jobscheduler cancel"
                 + " -u " + UserHandle.myUserId() + " " + TEST_APP_PACKAGE + " " + mJobId);

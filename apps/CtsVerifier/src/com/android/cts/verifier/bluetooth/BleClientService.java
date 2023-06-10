@@ -228,8 +228,10 @@ public class BleClientService extends Service {
     public static final String EXTRA_ERROR_MESSAGE =
             "com.android.cts.verifier.bluetooth.EXTRA_ERROR_MESSAGE";
 
-    public static final String WRITE_VALUE_512BYTES_FOR_MTU = createTestData(512);
-    public static final String WRITE_VALUE_507BYTES_FOR_RELIABLE_WRITE = createTestData(507);
+    public static final String WRITE_VALUE_512BYTES_FOR_MTU =
+            createTestData("REQUEST_MTU", 512);
+    public static final String WRITE_VALUE_507BYTES_FOR_RELIABLE_WRITE =
+            createTestData("RELIABLE_WRITE", 507);
 
     private static final UUID SERVICE_UUID =
             UUID.fromString("00009999-0000-1000-8000-00805f9b34fb");
@@ -326,6 +328,7 @@ public class BleClientService extends Service {
     private boolean mValidityService;
     private ReliableWriteState mExecReliableWrite;
     private byte[] mBuffer;
+    private boolean mWriteAfterMtuChangeDone = false;
 
     // Handler for communicating task with peer.
     private TestTaskQueue mTaskQueue;
@@ -405,7 +408,18 @@ public class BleClientService extends Service {
                     }
                     break;
                 case BLE_CLIENT_ACTION_REQUEST_MTU_23:
+                    /* Test the long write before changing MTU.
+                     * Starting from Android U, MTU is set to 517, no matter what
+                     * user request. To keep same test scope, send first 512 write
+                     * before MTU change, so it make use of default MTU = 23.
+                     * Later, requestMtu is called twice and test if MTU Exchange will
+                     * execute only once over the air.
+                     */
+                    writeCharacteristic(CHARACTERISTIC_UUID, WRITE_VALUE_512BYTES_FOR_MTU);
+                    break;
                 case BLE_CLIENT_ACTION_REQUEST_MTU_512: // fall through
+                    /* Call it twice to verify single MTU Exchange procedure over the link */
+                    requestMtu();
                     requestMtu();
                     break;
                 case BLE_CLIENT_ACTION_READ_CHARACTERISTIC:
@@ -919,11 +933,15 @@ public class BleClientService extends Service {
     }
 
     private void notifyPhyRead(int txPhy, int rxPhy) {
-        showMessage("Phy read: txPhy=" + txPhy + ", rxPhy=" + rxPhy);
-        Intent intent = new Intent(BLE_PHY_READ);
-        intent.putExtra(EXTRA_TX_PHY_VALUE, txPhy);
-        intent.putExtra(EXTRA_RX_PHY_VALUE, rxPhy);
-        sendBroadcast(intent);
+        if (BLE_CLIENT_ACTION_READ_PHY.equals(mCurrentAction)) {
+            showMessage("Phy read: txPhy=" + txPhy + ", rxPhy=" + rxPhy);
+            Intent intent = new Intent(BLE_PHY_READ);
+            intent.putExtra(EXTRA_TX_PHY_VALUE, txPhy);
+            intent.putExtra(EXTRA_RX_PHY_VALUE, rxPhy);
+            sendBroadcast(intent);
+        } else {
+            Log.d(TAG, "notifyPhyRead arrived without BLE_CLIENT_ACTION_READ_PHY");
+        }
     }
 
     private void notifyPhyReadSkipped() {
@@ -933,11 +951,15 @@ public class BleClientService extends Service {
     }
 
     private void notifyPhyUpdate(int txPhy, int rxPhy) {
-        showMessage("Phy update: txPhy=" + txPhy + ", rxPhy=" + rxPhy);
-        Intent intent = new Intent(BLE_PHY_UPDATE);
-        intent.putExtra(EXTRA_TX_PHY_VALUE, txPhy);
-        intent.putExtra(EXTRA_RX_PHY_VALUE, rxPhy);
-        sendBroadcast(intent);
+        if (BLE_CLIENT_ACTION_SET_PREFERRED_PHY.equals(mCurrentAction)) {
+            showMessage("Phy update: txPhy=" + txPhy + ", rxPhy=" + rxPhy);
+            Intent intent = new Intent(BLE_PHY_UPDATE);
+            intent.putExtra(EXTRA_TX_PHY_VALUE, txPhy);
+            intent.putExtra(EXTRA_RX_PHY_VALUE, rxPhy);
+            sendBroadcast(intent);
+        } else {
+            Log.d(TAG, "notifyPhyUpdate arrived without BLE_CLIENT_ACTION_SET_PREFERRED_PHY");
+        }
     }
 
     private void notifyPhyUpdateSkipped() {
@@ -1116,12 +1138,16 @@ public class BleClientService extends Service {
         @Override
         public void onServicesDiscovered(BluetoothGatt gatt, int status) {
             super.onServicesDiscovered(gatt, status);
-            if (DEBUG) {
-                Log.d(TAG, "onServiceDiscovered");
-            }
-            if ((status == BluetoothGatt.GATT_SUCCESS) && (mBluetoothGatt.getService(SERVICE_UUID)
-                    != null)) {
-                notifyServicesDiscovered();
+            if (BLE_CLIENT_ACTION_BLE_DISCOVER_SERVICE.equals(mCurrentAction)) {
+                if (DEBUG) {
+                    Log.d(TAG, "onServiceDiscovered");
+                }
+                if ((status == BluetoothGatt.GATT_SUCCESS)
+                        && (mBluetoothGatt.getService(SERVICE_UUID) != null)) {
+                    notifyServicesDiscovered();
+                }
+            } else {
+                Log.d(TAG, "onServicesDiscovered without BLE_CLIENT_ACTION_BLE_DISCOVER_SERVICE");
             }
         }
 
@@ -1132,23 +1158,20 @@ public class BleClientService extends Service {
                 Log.d(TAG, "onMtuChanged");
             }
             if (status == BluetoothGatt.GATT_SUCCESS) {
-                // verify MTU size
-                int requestedMtu;
-                if (BLE_CLIENT_ACTION_REQUEST_MTU_23.equals(mCurrentAction)) {
-                    requestedMtu = 23;
-                } else if (BLE_CLIENT_ACTION_REQUEST_MTU_512.equals(mCurrentAction)) {
-                    requestedMtu = 512;
-                } else {
-                    throw new IllegalStateException("unexpected action: " + mCurrentAction);
-                }
-                if (mtu != requestedMtu) {
+                // verify MTU size which now is always equal to max 517
+                int expectedNewMtu = 517;
+                if (mtu != expectedNewMtu) {
                     String msg = String.format(getString(R.string.ble_mtu_mismatch_message),
-                            requestedMtu, mtu);
+                            expectedNewMtu, mtu);
                     showMessage(msg);
                 }
 
-                // test writing characteristic
-                writeCharacteristic(CHARACTERISTIC_UUID, WRITE_VALUE_512BYTES_FOR_MTU);
+                if (BLE_CLIENT_ACTION_REQUEST_MTU_512.equals(mCurrentAction)
+                        && !mWriteAfterMtuChangeDone) {
+                    /* Verify write characteristic on bigger MTU */
+                    writeCharacteristic(CHARACTERISTIC_UUID, WRITE_VALUE_512BYTES_FOR_MTU);
+                    mWriteAfterMtuChangeDone = true;
+                }
             } else {
                 notifyError("Failed to request mtu: " + status);
             }
@@ -1561,9 +1584,9 @@ public class BleClientService extends Service {
         }
     }
 
-    private static String createTestData(int length) {
+    private static String createTestData(String prefix, int length) {
         StringBuilder builder = new StringBuilder();
-        builder.append("REQUEST_MTU");
+        builder.append(prefix);
         int len = length - builder.length();
         for (int i = 0; i < len; ++i) {
             builder.append("" + (i % 10));
