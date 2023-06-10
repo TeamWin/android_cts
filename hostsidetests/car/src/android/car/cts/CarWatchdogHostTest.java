@@ -16,6 +16,8 @@
 
 package android.car.cts;
 
+import static com.android.tradefed.targetprep.UserHelper.RUN_TESTS_AS_USER_KEY;
+
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.cts.statsdatom.lib.ConfigUtils;
@@ -49,7 +51,6 @@ import java.util.regex.Pattern;
 
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class CarWatchdogHostTest extends CarHostJUnit4TestCase {
-    public static final String TAG = CarWatchdogHostTest.class.getSimpleName();
 
     /**
      * CarWatchdog app package.
@@ -144,6 +145,7 @@ public class CarWatchdogHostTest extends CarHostJUnit4TestCase {
 
     private boolean mDidModifyDateTime;
     private long mOriginalForegroundBytes;
+    private int mTestRunningUserId;
 
     @Before
     public void dateSetUp() throws Exception {
@@ -167,6 +169,18 @@ public class CarWatchdogHostTest extends CarHostJUnit4TestCase {
         executeCommand("logcat -c");
         startCustomCollection();
         executeCommand(RESET_RESOURCE_OVERUSE_CMD);
+
+        // The test runs as the current user in most cases. For secondary_user_on_secondary_display
+        // case, we set mTestRunningUserId from RUN_TEST_AS_USER.
+        mTestRunningUserId = getCurrentUserId();
+        if (getDevice().isVisibleBackgroundUsersSupported()) {
+            try {
+                mTestRunningUserId = Integer.parseInt(
+                        getTestInformation().properties().get(RUN_TESTS_AS_USER_KEY));
+            } catch (Exception e) {
+                CLog.e("Failed to parse the userId for " + RUN_TESTS_AS_USER_KEY + " due to " + e);
+            }
+        }
     }
 
     @After
@@ -185,15 +199,16 @@ public class CarWatchdogHostTest extends CarHostJUnit4TestCase {
         uploadStatsdConfig(APP_PKG);
 
         for (int i = 0; i < RECURRING_OVERUSE_COUNT; ++i) {
-            overuseDiskIo(APP_PKG);
-            verifyAtomIoOveruseStatsReported(APP_PKG, /* overuseTimes= */ i + 1);
+            overuseDiskIo(APP_PKG, mTestRunningUserId);
+            verifyAtomIoOveruseStatsReported(APP_PKG, mTestRunningUserId,
+                    /* overuseTimes= */ i + 1);
             ReportUtils.clearReports(getDevice());
         }
 
         executeCommand(APPLY_DISABLE_DISPLAY_POWER_POLICY_CMD);
 
         verifyTestAppsKilled(APP_PKG);
-        verifyAtomKillStatsReported(APP_PKG);
+        verifyAtomKillStatsReported(APP_PKG, mTestRunningUserId);
     }
 
     @Test
@@ -202,16 +217,16 @@ public class CarWatchdogHostTest extends CarHostJUnit4TestCase {
         uploadStatsdConfig(WATCHDOG_APP_PKG);
 
         for (int i = 0; i < RECURRING_OVERUSE_COUNT; i++) {
-            overuseDiskIo(i % 2 == 0 ? WATCHDOG_APP_PKG : WATCHDOG_APP_PKG_2);
+            overuseDiskIo(i % 2 == 0 ? WATCHDOG_APP_PKG : WATCHDOG_APP_PKG_2, mTestRunningUserId);
             verifyAtomIoOveruseStatsReported(i % 2 == 0 ? WATCHDOG_APP_PKG_2 : WATCHDOG_APP_PKG,
-                    /* overuseTimes= */ i + 1);
+                    mTestRunningUserId, /* overuseTimes= */ i + 1);
             ReportUtils.clearReports(getDevice());
         }
 
         executeCommand(APPLY_DISABLE_DISPLAY_POWER_POLICY_CMD);
 
         verifyTestAppsKilled(WATCHDOG_APP_PKG, WATCHDOG_APP_PKG_2);
-        verifyAtomKillStatsReported(WATCHDOG_APP_PKG);
+        verifyAtomKillStatsReported(WATCHDOG_APP_PKG, mTestRunningUserId);
     }
 
     private void uploadStatsdConfig(String packageName) throws Exception {
@@ -225,7 +240,7 @@ public class CarWatchdogHostTest extends CarHostJUnit4TestCase {
         ConfigUtils.uploadConfig(getDevice(), config);
     }
 
-    private void verifyAtomIoOveruseStatsReported(String packageName, int overuseTimes)
+    private void verifyAtomIoOveruseStatsReported(String packageName, int userId, int overuseTimes)
             throws Exception {
         List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
         assertWithMessage("Reported I/O overuse event metrics data").that(data).hasSize(1);
@@ -233,7 +248,7 @@ public class CarWatchdogHostTest extends CarHostJUnit4TestCase {
         CarWatchdogIoOveruseStatsReported atom =
                 data.get(0).getAtom().getCarWatchdogIoOveruseStatsReported();
 
-        int appUid = DeviceUtils.getAppUid(getDevice(), packageName);
+        int appUid = DeviceUtils.getAppUidForUser(getDevice(), packageName, userId);
         assertWithMessage("UID in atom from " + overuseTimes + " overuse").that(atom.getUid())
                 .isEqualTo(appUid);
         assertWithMessage("Atom has I/O overuse stats from " + overuseTimes + " overuse")
@@ -242,7 +257,7 @@ public class CarWatchdogHostTest extends CarHostJUnit4TestCase {
                 "I/O overuse stats atom from " + overuseTimes + " overuse");
     }
 
-    private void verifyAtomKillStatsReported(String packageName)
+    private void verifyAtomKillStatsReported(String packageName, int userId)
             throws Exception {
         List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
         assertWithMessage("Reported kill event metrics data").that(data).hasSize(1);
@@ -250,7 +265,7 @@ public class CarWatchdogHostTest extends CarHostJUnit4TestCase {
         CarWatchdogKillStatsReported atom =
                 data.get(0).getAtom().getCarWatchdogKillStatsReported();
 
-        int appUid = DeviceUtils.getAppUid(getDevice(), packageName);
+        int appUid = DeviceUtils.getAppUidForUser(getDevice(), packageName, userId);
         assertWithMessage("UID in kill stats").that(atom.getUid()).isEqualTo(appUid);
         assertWithMessage("Kill reason from kill stats").that(atom.getKillReason())
                 .isEqualTo(CarWatchdogKillStatsReported.KillReason.KILLED_ON_IO_OVERUSE);
@@ -287,12 +302,12 @@ public class CarWatchdogHostTest extends CarHostJUnit4TestCase {
                 .isAtMost(foregroundWrittenBytes + FIFTY_MEGABYTES);
     }
 
-    private void overuseDiskIo(String packageName) throws Exception {
-        startMainActivity(packageName);
+    private void overuseDiskIo(String packageName, int userId) throws Exception {
+        startMainActivity(packageName, userId);
 
         long remainingBytes = readForegroundBytesFromActivityDump(packageName);
 
-        sendBytesToKillApp(remainingBytes, packageName);
+        sendBytesToKillApp(remainingBytes, packageName, userId);
 
         remainingBytes = readForegroundBytesFromActivityDump(packageName);
 
@@ -356,21 +371,23 @@ public class CarWatchdogHostTest extends CarHostJUnit4TestCase {
         return message;
     }
 
-    private void startMainActivity(String packageName) throws Exception {
-        String result = executeCommand("pm clear %s", packageName);
+    private void startMainActivity(String packageName, int userId) throws Exception {
+        String result = executeCommand("pm clear --user %d %s", userId, packageName);
         assertWithMessage("pm clear").that(result.trim()).isEqualTo("Success");
 
-        executeCommand("am start -W -a android.intent.action.MAIN -n %s/%s", packageName,
-                ACTIVITY_CLASS);
+        executeCommand("am start --user %d -W -a android.intent.action.MAIN -n %s/%s",
+                userId, packageName, ACTIVITY_CLASS);
 
         assertWithMessage("Is %s running?", packageName).that(isPackageRunning(packageName))
                 .isTrue();
     }
 
-    private void sendBytesToKillApp(long remainingBytes, String appPkg) throws Exception {
+    private void sendBytesToKillApp(long remainingBytes, String appPkg, int userId)
+            throws Exception {
         executeCommand(
-                "am start -W -a android.intent.action.MAIN -n %s/%s --el bytes_to_kill %d",
-                appPkg, ACTIVITY_CLASS, remainingBytes);
+                "am start --user %d -W -a android.intent.action.MAIN -n %s/%s"
+                        + " --el bytes_to_kill %d",
+                userId, appPkg, ACTIVITY_CLASS, remainingBytes);
     }
 
     private void checkAndSetDate() throws Exception {
@@ -380,7 +397,7 @@ public class CarWatchdogHostTest extends CarHostJUnit4TestCase {
             return;
         }
         executeCommand("date %s", now.minusHours(1));
-        CLog.d(TAG, "DateTime changed from %s to %s", now, now.minusHours(1));
+        CLog.d("DateTime changed from %s to %s", now, now.minusHours(1));
         mDidModifyDateTime = true;
     }
 
@@ -390,7 +407,7 @@ public class CarWatchdogHostTest extends CarHostJUnit4TestCase {
         }
         LocalDateTime now = LocalDateTime.parse(executeCommand("date +%%FT%%T").trim());
         executeCommand("date %s", now.plusHours(1));
-        CLog.d(TAG, "DateTime changed from %s to %s", now, now.plusHours(1));
+        CLog.d("DateTime changed from %s to %s", now, now.plusHours(1));
     }
 
     private void startCustomCollection() throws Exception {
