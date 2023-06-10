@@ -919,11 +919,15 @@ public class BleClientService extends Service {
     }
 
     private void notifyPhyRead(int txPhy, int rxPhy) {
-        showMessage("Phy read: txPhy=" + txPhy + ", rxPhy=" + rxPhy);
-        Intent intent = new Intent(BLE_PHY_READ);
-        intent.putExtra(EXTRA_TX_PHY_VALUE, txPhy);
-        intent.putExtra(EXTRA_RX_PHY_VALUE, rxPhy);
-        sendBroadcast(intent);
+        if (BLE_CLIENT_ACTION_READ_PHY.equals(mCurrentAction)) {
+            showMessage("Phy read: txPhy=" + txPhy + ", rxPhy=" + rxPhy);
+            Intent intent = new Intent(BLE_PHY_READ);
+            intent.putExtra(EXTRA_TX_PHY_VALUE, txPhy);
+            intent.putExtra(EXTRA_RX_PHY_VALUE, rxPhy);
+            sendBroadcast(intent);
+        } else {
+            Log.d(TAG, "notifyPhyRead arrived without BLE_CLIENT_ACTION_READ_PHY");
+        }
     }
 
     private void notifyPhyReadSkipped() {
@@ -933,11 +937,15 @@ public class BleClientService extends Service {
     }
 
     private void notifyPhyUpdate(int txPhy, int rxPhy) {
-        showMessage("Phy update: txPhy=" + txPhy + ", rxPhy=" + rxPhy);
-        Intent intent = new Intent(BLE_PHY_UPDATE);
-        intent.putExtra(EXTRA_TX_PHY_VALUE, txPhy);
-        intent.putExtra(EXTRA_RX_PHY_VALUE, rxPhy);
-        sendBroadcast(intent);
+        if (BLE_CLIENT_ACTION_SET_PREFERRED_PHY.equals(mCurrentAction)) {
+            showMessage("Phy update: txPhy=" + txPhy + ", rxPhy=" + rxPhy);
+            Intent intent = new Intent(BLE_PHY_UPDATE);
+            intent.putExtra(EXTRA_TX_PHY_VALUE, txPhy);
+            intent.putExtra(EXTRA_RX_PHY_VALUE, rxPhy);
+            sendBroadcast(intent);
+        } else {
+            Log.d(TAG, "notifyPhyUpdate arrived without BLE_CLIENT_ACTION_SET_PREFERRED_PHY");
+        }
     }
 
     private void notifyPhyUpdateSkipped() {
@@ -1116,12 +1124,16 @@ public class BleClientService extends Service {
         @Override
         public void onServicesDiscovered(BluetoothGatt gatt, int status) {
             super.onServicesDiscovered(gatt, status);
-            if (DEBUG) {
-                Log.d(TAG, "onServiceDiscovered");
-            }
-            if ((status == BluetoothGatt.GATT_SUCCESS) && (mBluetoothGatt.getService(SERVICE_UUID)
-                    != null)) {
-                notifyServicesDiscovered();
+            if (BLE_CLIENT_ACTION_BLE_DISCOVER_SERVICE.equals(mCurrentAction)) {
+                if (DEBUG) {
+                    Log.d(TAG, "onServiceDiscovered");
+                }
+                if ((status == BluetoothGatt.GATT_SUCCESS)
+                        && (mBluetoothGatt.getService(SERVICE_UUID) != null)) {
+                    notifyServicesDiscovered();
+                }
+            } else {
+                Log.d(TAG, "onServicesDiscovered without BLE_CLIENT_ACTION_BLE_DISCOVER_SERVICE");
             }
         }
 
