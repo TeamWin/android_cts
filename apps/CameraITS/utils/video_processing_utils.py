@@ -51,11 +51,9 @@ LOWEST_RES_TESTED_AREA = 640*360
 
 
 VIDEO_QUALITY_SIZE = {
-    # 'HIGH' and 'LOW' not included as they are DUT-dependent
+    # '480P', '1080P', HIGH' and 'LOW' are not included as they are DUT-dependent
     '2160P': '3840x2160',
-    '1080P': '1920x1080',
     '720P': '1280x720',
-    '480P': '720x480',
     'VGA': '640x480',
     'CIF': '352x288',
     'QVGA': '320x240',

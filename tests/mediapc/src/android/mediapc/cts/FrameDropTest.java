@@ -83,6 +83,7 @@ public class FrameDropTest extends FrameDropTestBase {
 
         r5_3__H_1_1_R.setFramesDropped(framesDropped);
         r5_3__H_1_1_R.setFrameRate(frameRate);
+        r5_3__H_1_1_R.setTestResolution(1080);
         pce.submitAndCheck();
     }
 
@@ -108,6 +109,7 @@ public class FrameDropTest extends FrameDropTestBase {
 
         r5_3__H_1_1_ST.setFramesDropped(framesDropped);
         r5_3__H_1_1_ST.setFrameRate(frameRate);
+        r5_3__H_1_1_ST.setTestResolution(1080);
         pce.submitAndCheck();
     }
 
@@ -133,6 +135,7 @@ public class FrameDropTest extends FrameDropTestBase {
 
         r5_3__H_1_1_U.setFramesDropped(framesDropped);
         r5_3__H_1_1_U.setFrameRate(frameRate);
+        r5_3__H_1_1_U.setTestResolution(2160);
         pce.submitAndCheck();
     }
 }

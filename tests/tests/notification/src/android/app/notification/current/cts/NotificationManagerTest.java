@@ -1638,13 +1638,13 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         try {
             // Post #7
             performNotificationProviderAction("send-7");
-
-            Thread.sleep(500);
             // Don't have access the notification yet, but we can test the URI
             assertInaccessible(background7Uri);
 
             mListener = mNotificationHelper.enableListener(STUB_PACKAGE_NAME);
             assertNotNull(mListener);
+
+            mNotificationHelper.findPostedNotification(null, 7, SEARCH_TYPE.LISTENER);
 
             assertEquals(background7Uri, getNotificationBackgroundImageUri(7));
             assertAccessible(background7Uri);
@@ -1661,13 +1661,13 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
                 "content://com.android.test.notificationprovider.provider/background7.png");
 
         mListener = mNotificationHelper.enableListener(STUB_PACKAGE_NAME);
+        mListener = TestNotificationListener.getInstance();
+        assertNotNull(mListener);
 
         try {
             // Post #7
             performNotificationProviderAction("send-7");
-
-            mListener = TestNotificationListener.getInstance();
-            assertNotNull(mListener);
+            mNotificationHelper.findPostedNotification(null, 7, SEARCH_TYPE.POSTED);
 
             assertEquals(background7Uri, getNotificationBackgroundImageUri(7));
             assertAccessible(background7Uri);

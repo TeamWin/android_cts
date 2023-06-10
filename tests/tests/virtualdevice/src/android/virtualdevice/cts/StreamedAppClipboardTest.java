@@ -684,7 +684,7 @@ public class StreamedAppClipboardTest {
     private void waitForNoToasts() {
         boolean observedToast = true;
         // The default timeout for mWmState.waitFor is a little low so we try a few times.
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; i < 5; i++) {
             if (mWmState.waitFor(state -> state.getMatchingWindowType(
                     WindowManager.LayoutParams.TYPE_TOAST).isEmpty(), "No Toast appears")) {
                 observedToast = false;
@@ -697,7 +697,7 @@ public class StreamedAppClipboardTest {
     private void waitForToastToAppearAndDisappear() {
         boolean observedToast = false;
         // The default timeout for mWmState.waitFor is a little low so we try a few times.
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; i < 5; i++) {
             if (mWmState.waitFor(state -> !state.getMatchingWindowType(
                     WindowManager.LayoutParams.TYPE_TOAST).isEmpty(), "Toast appears")) {
                 observedToast = true;

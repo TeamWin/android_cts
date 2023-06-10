@@ -362,4 +362,17 @@ public class GainmapTest {
         assertNotNull(gainmapData);
         assertEquals(Bitmap.Config.HARDWARE, gainmapData.getConfig());
     }
+
+    @Test
+    public void testCopyPreservesGainmap() throws Exception {
+        Bitmap bitmap = ImageDecoder.decodeBitmap(
+                ImageDecoder.createSource(sContext.getResources(), R.raw.gainmap),
+                (decoder, info, source) -> decoder.setAllocator(ImageDecoder.ALLOCATOR_SOFTWARE));
+        assertNotNull(bitmap);
+        assertTrue("Missing gainmap", bitmap.hasGainmap());
+
+        Bitmap copy = bitmap.copy(Bitmap.Config.ARGB_8888, true);
+        assertNotNull(copy);
+        assertTrue("Missing gainmap", copy.hasGainmap());
+    }
 }

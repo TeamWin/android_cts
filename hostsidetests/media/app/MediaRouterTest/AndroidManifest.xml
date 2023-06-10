@@ -19,8 +19,6 @@
           package="android.media.router.cts"
           android:targetSandboxVersion="2">
 
-    <!-- See the test's implementation for details on why we need a wake lock. -->
-    <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
     <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
 
@@ -31,6 +29,11 @@
                 <action android:name="android.media.action.TRANSFER_MEDIA"/>
             </intent-filter>
         </activity>
+
+        <activity
+            android:name=".ScreenOnActivity"
+            android:exported="false"
+            android:turnScreenOn="true" />
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
