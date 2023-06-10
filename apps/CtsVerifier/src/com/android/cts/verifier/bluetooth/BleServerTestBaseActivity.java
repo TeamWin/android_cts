@@ -262,6 +262,12 @@ public class BleServerTestBaseActivity extends PassFailButtons.Activity {
                 mTestAdapter.setTestPass(BLE_SERVER_MTU_512BYTES);
                 mAllPassed |= PASS_FLAG_MTU_CHANGE_512BYTES;
                 break;
+            case BleServerService.BLE_MTU_BAD_REQUEST:
+                mTestAdapter.clearTestPass(BLE_SERVER_MTU_23BYTES);
+                mTestAdapter.clearTestPass(BLE_SERVER_MTU_512BYTES);
+                mAllPassed &= ~PASS_FLAG_MTU_CHANGE_23BYTES;
+                mAllPassed &= ~PASS_FLAG_MTU_CHANGE_512BYTES;
+                break;
             case BleServerService.BLE_SERVICE_CHANGED_INDICATION:
                 mTestAdapter.setTestPass(BLE_SERVOCE_CHANGED_INDICATION);
                 mAllPassed |= PASS_FLAG_SERVICE_CHANGED_INDICATION;
