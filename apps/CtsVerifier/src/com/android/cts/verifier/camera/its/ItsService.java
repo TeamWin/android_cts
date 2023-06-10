@@ -1647,6 +1647,7 @@ public class ItsService extends Service implements SensorEventListener {
         bundle.putString("camera-id", cameraId);
         bundle.putString("perf-measure", "on");
         bundle.putString("perf-class-test", "on");
+        bundle.putByte("has-activity", (byte) 1);
         InstrumentationRegistry.registerInstance(mCameraInstrumentation, bundle);
 
         JUnitCore testRunner = new JUnitCore();
