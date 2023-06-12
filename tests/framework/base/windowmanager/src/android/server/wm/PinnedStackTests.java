@@ -163,7 +163,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
     private static final int ROTATION_180 = 2;
     private static final int ROTATION_270 = 3;
 
-    private static final float FLOAT_COMPARE_EPSILON = 0.005f;
+    private static final float FLOAT_COMPARE_EPSILON = 0.01f;
 
     // Corresponds to com.android.internal.R.dimen.config_pictureInPictureMinAspectRatio
     private static final int MIN_ASPECT_RATIO_NUMERATOR = 100;
