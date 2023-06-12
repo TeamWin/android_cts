@@ -216,20 +216,28 @@ public class WindowManagerStateHelper extends WindowManagerState {
                         "Keyguard gone"));
     }
 
-    /** Wait for specific rotation for the default display. Values are Surface#Rotation */
-    public void waitForRotation(int rotation) {
-        waitForWithAmState(state -> state.getRotation() == rotation, "Rotation: " + rotation);
+    /**
+     * Wait for specific rotation for the default display.
+     * @param rotation Surface#Rotation
+     */
+    public boolean waitForRotation(int rotation) {
+        return waitForWithAmState(state -> state.getRotation() == rotation,
+                "Rotation: " + rotation);
     }
 
     /**
      * Wait for specific orientation for the default display.
-     * Values are ActivityInfo.ScreenOrientation
+     * @param screenOrientation ActivityInfo#ScreenOrientation
      */
-    public void waitForLastOrientation(int orientation) {
-        waitForWithAmState(state -> state.getLastOrientation() == orientation,
-                "LastOrientation: " + orientation);
+    public void waitForLastOrientation(int screenOrientation) {
+        waitForWithAmState(state -> state.getLastOrientation() == screenOrientation,
+                "LastOrientation: " + screenOrientation);
     }
 
+    /**
+     * @param message log message
+     * @param screenOrientation ActivityInfo#ScreenOrientation
+     */
     public void waitAndAssertLastOrientation(String message, int screenOrientation) {
         if (screenOrientation != getLastOrientation()) {
             waitForLastOrientation(screenOrientation);
@@ -237,7 +245,9 @@ public class WindowManagerStateHelper extends WindowManagerState {
         assertEquals(message, screenOrientation, getLastOrientation());
     }
 
-    /** Waits for the configuration orientation (landscape or portrait) of the default display. */
+    /** Waits for the configuration orientation (landscape or portrait) of the default display.
+     * @param configOrientation Configuration#Orientation
+     */
     public void waitForDisplayOrientation(int configOrientation) {
         waitForWithAmState(state -> state.getDisplay(DEFAULT_DISPLAY)
                         .mFullConfiguration.orientation == configOrientation,
@@ -246,6 +256,8 @@ public class WindowManagerStateHelper extends WindowManagerState {
 
     /**
      * Wait for the configuration orientation of the Activity.
+     * @param activityName activity
+     * @param configOrientation Configuration#Orientation
      */
     public boolean waitForActivityOrientation(ComponentName activityName, int configOrientation) {
         return waitForWithAmState(amState -> {
