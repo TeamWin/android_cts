@@ -2082,7 +2082,7 @@ public class BroadcastResponseStatsTest {
         final CountDownLatch latch = new CountDownLatch(1);
         intent.putExtra(EXTRA_REMOTE_CALLBACK, new RemoteCallback(result -> latch.countDown()));
         sContext.sendBroadcast(intent, null /* receiverPermission */, options);
-        if (!latch.await(DEFAULT_TIMEOUT_MS, TimeUnit.SECONDS)) {
+        if (!latch.await(DEFAULT_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
             fail("Timed out waiting for the test app to receive the broadcast");
         }
     }
@@ -2182,7 +2182,7 @@ public class BroadcastResponseStatsTest {
         final CountDownLatch latch = new CountDownLatch(1);
         intent.putExtra(EXTRA_REMOTE_CALLBACK, new RemoteCallback(result -> latch.countDown()));
         sContext.startActivity(intent);
-        if (!latch.await(DEFAULT_TIMEOUT_MS, TimeUnit.SECONDS)) {
+        if (!latch.await(DEFAULT_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
             fail("Timed out waiting for the test app activity to be resumed");
         }
     }
