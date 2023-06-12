@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.app.cts;
+package android.app.notification.current.cts;
 
 import android.app.Notification;
 import android.app.Notification.TvExtender;
