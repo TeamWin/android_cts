@@ -119,5 +119,5 @@ for j in $(find ${CTS_ROOT}/android-cts/testcases -name '*.jar'); do
     JAR_PATH=${JAR_PATH}:$j
 done
 
-${JAVA_BINARY} $RDBG_FLAG -Xmx8g -XX:+HeapDumpOnOutOfMemoryError -cp ${JAR_PATH} -DCTS_ROOT=${CTS_ROOT} com.android.compatibility.common.tradefed.command.CompatibilityConsole "$@"
+${JAVA_BINARY} $RDBG_FLAG -Xmx16g -XX:+HeapDumpOnOutOfMemoryError -cp ${JAR_PATH} -DCTS_ROOT=${CTS_ROOT} com.android.compatibility.common.tradefed.command.CompatibilityConsole "$@"
 
