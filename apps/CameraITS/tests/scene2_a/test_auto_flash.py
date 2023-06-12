@@ -143,7 +143,8 @@ class AutoFlashTest(its_base_test.ItsBaseTest):
           logging.debug('Taking capture with auto flash enabled.')
           flash_fired = False
 
-          cap = capture_request_utils.take_captures_with_flash(cam, out_surfaces)
+          cap = capture_request_utils.take_captures_with_flash(
+              cam, out_surfaces)
           y, _, _ = image_processing_utils.convert_capture_to_planes(
               cap, props)
           # Save captured image

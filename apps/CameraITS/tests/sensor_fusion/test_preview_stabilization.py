@@ -24,7 +24,6 @@ import its_base_test
 import camera_properties_utils
 import image_processing_utils
 import its_session_utils
-import opencv_processing_utils
 import sensor_fusion_utils
 import video_processing_utils
 
@@ -149,9 +148,6 @@ class PreviewStabilizationTest(its_base_test.ItsBaseTest):
 
       camera_properties_utils.skip_unless(should_run)
 
-      # Calculate camera FoV and convert from string to float
-      camera_fov = float(cam.calc_camera_fov(props))
-
       # Log ffmpeg version being used
       video_processing_utils.log_ffmpeg_version()
 
@@ -181,7 +177,8 @@ class PreviewStabilizationTest(its_base_test.ItsBaseTest):
       max_cam_gyro_angles = {}
 
       for video_size in supported_preview_sizes:
-        recording_obj = _collect_data(cam, self.tablet_device, video_size, rot_rig)
+        recording_obj = _collect_data(
+            cam, self.tablet_device, video_size, rot_rig)
 
         # Grab the video from the save location on DUT
         self.dut.adb.pull([recording_obj['recordedOutputPath'], log_path])

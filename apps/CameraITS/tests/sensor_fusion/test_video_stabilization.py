@@ -25,7 +25,6 @@ import its_base_test
 import camera_properties_utils
 import image_processing_utils
 import its_session_utils
-import opencv_processing_utils
 import sensor_fusion_utils
 import video_processing_utils
 
@@ -136,9 +135,6 @@ class VideoStabilizationTest(its_base_test.ItsBaseTest):
       camera_properties_utils.skip_unless(
           vendor_api_level >= its_session_utils.ANDROID13_API_LEVEL and
           _VIDEO_STABILIZATION_MODE in supported_stabilization_modes)
-
-      # Calculate camera FoV and convert from string to float
-      camera_fov = float(cam.calc_camera_fov(props))
 
       # Log ffmpeg version being used
       video_processing_utils.log_ffmpeg_version()

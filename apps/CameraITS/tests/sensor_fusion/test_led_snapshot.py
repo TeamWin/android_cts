@@ -139,7 +139,8 @@ class LedSnapshotTest(its_base_test.ItsBaseTest):
   def test_led_snapshot(self):
     test_name = os.path.join(self.log_path, _TEST_NAME)
 
-    with its_session_utils.ItsSession(device_id=self.dut.serial,
+    with its_session_utils.ItsSession(
+        device_id=self.dut.serial,
         camera_id=self.camera_id,
         hidden_physical_id=self.hidden_physical_id) as cam:
       props = cam.get_camera_properties()
