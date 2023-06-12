@@ -34,6 +34,8 @@ import static android.app.NotificationManager.IMPORTANCE_UNSPECIFIED;
 import static android.content.pm.PackageManager.FEATURE_WATCH;
 import static android.service.notification.NotificationListenerService.META_DATA_DEFAULT_AUTOBIND;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.junit.Assert.assertThat;
 
@@ -43,10 +45,10 @@ import android.app.NotificationChannel;
 import android.app.NotificationChannelGroup;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
-import android.app.stubs.shared.FutureServiceConnection;
 import android.app.role.RoleManager;
 import android.app.stubs.GetResultActivity;
 import android.app.stubs.R;
+import android.app.stubs.shared.FutureServiceConnection;
 import android.app.stubs.shared.NotificationHelper.SEARCH_TYPE;
 import android.app.stubs.shared.TestNotificationListener;
 import android.content.ComponentName;
@@ -781,6 +783,21 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
                         + sbn.getKey());
             }
         }
+    }
+
+    public void testNotify_nonexistentChannel_ignored() {
+        mNotificationManager.cancelAll();
+        final int id = 404;
+        final Notification notification =
+                new Notification.Builder(mContext, "non_existent_channel")
+                        .setSmallIcon(R.drawable.black)
+                        .setContentText("This should not be posted!")
+                        .build();
+
+        mNotificationManager.notify(id, notification);
+
+        assertThat(mNotificationHelper.findPostedNotification(null, id, SEARCH_TYPE.APP)).isNull();
+        assertThat(mNotificationManager.getActiveNotifications()).isEmpty();
     }
 
     public void testSuspendPackage_withoutShellPermission() throws Exception {
