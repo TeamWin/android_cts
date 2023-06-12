@@ -119,6 +119,7 @@ class CameraMicIndicatorsPermissionTest : StsExtraBusinessLogicTestCase {
     constructor() : super()
 
     companion object {
+        private const val AUTO_MIC_INDICATOR_DISMISSAL_TIMEOUT_MS = 30_000L
         const val SAFETY_CENTER_ENABLED = "safety_center_is_enabled"
         const val DELAY_MILLIS = 3000L
     }
@@ -181,7 +182,13 @@ class CameraMicIndicatorsPermissionTest : StsExtraBusinessLogicTestCase {
     @After
     fun tearDown() {
         uninstall()
-        assertIndicatorsShown(false, false, false)
+        if (isCar) {
+            // Deselect the indicator since it persists otherwise
+            pressBack()
+        }
+        eventually({
+            assertIndicatorsShown(false, false, false)
+        }, AUTO_MIC_INDICATOR_DISMISSAL_TIMEOUT_MS)
         if (!wasEnabled) {
             setIndicatorsEnabledStateIfNeeded(false)
         }
