@@ -138,9 +138,10 @@ class ParamNoiseReductionTest(its_base_test.ItsBaseTest):
 
     # Draw plot
     pylab.figure(_NAME)
+    pylab.title(f'{_NAME}')
     for j in range(_NUM_COLORS):
       pylab.plot(_NR_MODES_LIST, snrs[j], '-'+'rgb'[j]+'o')
-    pylab.xlabel('Noise Reduction Mode')
+    pylab.xlabel(f'{str(_NR_MODES)[1:-1]}')  # strip '{' '}' off string
     pylab.ylabel('SNR (dB)')
     pylab.xticks(_NR_MODES_LIST)
     matplotlib.pyplot.savefig(f'{name_with_log_path}_plot_SNRs.png')
