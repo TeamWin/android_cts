@@ -42,10 +42,10 @@ _MAX_STR = 'max'
 _MIN_STR = 'min'
 _MIN_AREA_RATIO = 0.00015  # based on 2000/(4000x3000) pixels
 _MIN_CIRCLE_PTS = 25
-_MIN_SIZE = 640*480 # VGA
+_MIN_SIZE = 640*480  # VGA
 _NAME = os.path.splitext(os.path.basename(__file__))[0]
-_OFFSET_TOL = 5 # pixels
-_RADIUS_RTOL = 0.1 # 10% tolerance Video/Preview circle size
+_OFFSET_TOL = 5  # pixels
+_RADIUS_RTOL = 0.1  # 10% tolerance Video/Preview circle size
 _RECORDING_DURATION = 2  # seconds
 _ZOOM_COMP_MAX_THRESH = 1.15
 _ZOOM_MIN_THRESH = 2.0
@@ -170,7 +170,6 @@ class PreviewVideoZoomTest(its_base_test.ItsBaseTest):
         logging.debug('recorded video name: %s', video_file_name)
 
         return video_file_name
-
 
       # Find zoom range
       z_range = props['android.control.zoomRatioRange']
@@ -315,18 +314,18 @@ class PreviewVideoZoomTest(its_base_test.ItsBaseTest):
                     video_radius[_MIN_STR], video_radius[_MAX_STR],
                     circles_offset_x, circles_offset_y)
       if not circles_offset_x or not circles_offset_y:
-        raise AssertionError('Preview and video output do not match!'
-                             ' Preview and video circles offset is too great')
+        raise AssertionError('Preview and video output do not match! '
+                             'Preview and video circles offset is too great')
 
       # check zoom ratio by size of circles before and after zoom
       for radius_ratio in z_idx.values():
         if not math.isclose(radius_ratio, 1, rel_tol=_RADIUS_RTOL):
-          raise AssertionError('Preview and video output do not match!'
-                               ' Radius ratio: %.2f', radius_ratio)
+          raise AssertionError('Preview and video output do not match! '
+                               f'Radius ratio: {radius_ratio:.2f}')
 
       if z_comparison > _ZOOM_COMP_MAX_THRESH:
-        raise AssertionError('Preview and video output do not match!'
-                             ' Zoom ratio difference: %.2f', z_comparison)
+        raise AssertionError('Preview and video output do not match! '
+                             f'Zoom ratio difference: {z_comparison:.2f}')
 
 if __name__ == '__main__':
   test_runner.main()
