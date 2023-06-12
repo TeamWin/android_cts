@@ -93,8 +93,9 @@ def get_test_tols_and_cap_size(cam, props, chart_distance, debug):
 
 def get_center_circle(img, img_name, size, zoom_ratio, min_zoom_ratio, debug):
   """Find circle closest to image center for scene with multiple circles.
-      If circle is not found due to zoom ratio being larger than ZOOM_MAX_THRESH or the circle
-      being cropped, None is returned.
+
+  If circle is not found due to zoom ratio being larger than ZOOM_MAX_THRESH
+  or the circle being cropped, None is returned.
 
   Args:
     img: numpy img array with pixel values in [0,255].
@@ -134,21 +135,22 @@ def get_center_circle(img, img_name, size, zoom_ratio, min_zoom_ratio, debug):
 def verify_zoom_results(test_data, size, z_max, z_min):
   """Verify that the output images' zoom level reflects the correct zoom ratios.
 
-  This test verifies that the center and radius of the circles in the output images
-  reflects the zoom ratios being set. The larger the zoom ratio, the larger the circle.
-  And the distance from the center of the circle to the center of the image is
-  proportional to the zoom ratio as well.
+  This test verifies that the center and radius of the circles in the output
+  images reflects the zoom ratios being set. The larger the zoom ratio, the
+  larger the circle. And the distance from the center of the circle to the
+  center of the image is proportional to the zoom ratio as well.
 
   Args:
-    test_data: dict; the test data containing the detected circles for each zoom value
+    test_data: dict; contains the detected circles for each zoom value
     size: array; the width and height of the images
     z_max: float; the maximum zoom ratio being tested
     z_min: float; the minimum zoom ratio being tested
 
   Returns:
-    whether the test fails or not
+    Boolean whether the test passes (True) or not (False)
   """
   # assert some range is tested before circles get too big
+  test_failed = False
   zoom_max_thresh = ZOOM_MAX_THRESH
   z_max_ratio = z_max / z_min
   if z_max_ratio < ZOOM_MAX_THRESH:
@@ -207,4 +209,6 @@ def verify_zoom_results(test_data, size, z_max, z_min):
                  f'offset rel: {offset_hypot_rel:.4f}, '
                  f'RTOL: {rel_tol}, ATOL: {_OFFSET_ATOL}')
         logging.error(e_msg)
+
+  return not test_failed
 
