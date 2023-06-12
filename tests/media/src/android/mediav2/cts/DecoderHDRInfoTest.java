@@ -32,6 +32,7 @@ import org.junit.runners.Parameterized;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -51,14 +52,47 @@ import java.util.Map;
 public class DecoderHDRInfoTest extends HDRDecoderTestBase {
     private static final String LOG_TAG = DecoderHDRInfoTest.class.getSimpleName();
     private static final String MEDIA_DIR = WorkDir.getMediaDirString();
+    public static final HashMap<Long, String> HDR_DYNAMIC_INFO_HEVC = new HashMap<>();
+    public static final HashMap<Long, String> HDR_DYNAMIC_INCORRECT_INFO_HEVC = new HashMap<>();
+    public static final HashMap<Long, String> HDR_DYNAMIC_INFO_AV1 = new HashMap<>();
+    public static final HashMap<Long, String> HDR_DYNAMIC_INCORRECT_INFO_AV1 = new HashMap<>();
+    public static final HashMap<Long, String> HDR_DYNAMIC_INFO_VP9 = new HashMap<>();
+
     private final String mHDRStaticInfoStream;
     private final String mHDRStaticInfoContainer;
-    private final Map<Integer, String> mHDRDynamicInfoStream;
-    private final Map<Integer, String> mHDRDynamicInfoContainer;
+    private final Map<Long, String> mHDRDynamicInfoStream;
+    private final Map<Long, String> mHDRDynamicInfoContainer;
+
+    static {
+        HDR_DYNAMIC_INFO_HEVC.put(0L, HDR10_INFO_SCENE_A);
+        HDR_DYNAMIC_INFO_HEVC.put(133333L, HDR10_INFO_SCENE_B);
+        HDR_DYNAMIC_INFO_HEVC.put(400000L, HDR10_INFO_SCENE_C);
+        HDR_DYNAMIC_INFO_HEVC.put(733333L, HDR10_INFO_SCENE_D);
+
+        HDR_DYNAMIC_INCORRECT_INFO_HEVC.put(0L, HDR10_INCORRECT_INFO_SCENE_A);
+        HDR_DYNAMIC_INCORRECT_INFO_HEVC.put(133333L, HDR10_INCORRECT_INFO_SCENE_B);
+        HDR_DYNAMIC_INCORRECT_INFO_HEVC.put(400000L, HDR10_INCORRECT_INFO_SCENE_C);
+        HDR_DYNAMIC_INCORRECT_INFO_HEVC.put(733333L, HDR10_INCORRECT_INFO_SCENE_D);
+
+        HDR_DYNAMIC_INFO_AV1.put(0L, HDR10_INFO_SCENE_A);
+        HDR_DYNAMIC_INFO_AV1.put(133000L, HDR10_INFO_SCENE_B);
+        HDR_DYNAMIC_INFO_AV1.put(400000L, HDR10_INFO_SCENE_C);
+        HDR_DYNAMIC_INFO_AV1.put(733000L, HDR10_INFO_SCENE_D);
+
+        HDR_DYNAMIC_INCORRECT_INFO_AV1.put(0L, HDR10_INCORRECT_INFO_SCENE_A);
+        HDR_DYNAMIC_INCORRECT_INFO_AV1.put(133000L, HDR10_INCORRECT_INFO_SCENE_B);
+        HDR_DYNAMIC_INCORRECT_INFO_AV1.put(400000L, HDR10_INCORRECT_INFO_SCENE_C);
+        HDR_DYNAMIC_INCORRECT_INFO_AV1.put(733000L, HDR10_INCORRECT_INFO_SCENE_D);
+
+        HDR_DYNAMIC_INFO_VP9.put(0L, HDR10_INFO_SCENE_A);
+        HDR_DYNAMIC_INFO_VP9.put(200000L, HDR10_INFO_SCENE_B);
+        HDR_DYNAMIC_INFO_VP9.put(400000L, HDR10_INFO_SCENE_C);
+        HDR_DYNAMIC_INFO_VP9.put(640000L, HDR10_INFO_SCENE_D);
+    }
 
     public DecoderHDRInfoTest(String codecName, String mediaType, String testFile,
             String hdrStaticInfoStream, String hdrStaticInfoContainer,
-            Map<Integer, String> hdrDynamicInfoStream, Map<Integer, String> hdrDynamicInfoContainer,
+            Map<Long, String> hdrDynamicInfoStream, Map<Long, String> hdrDynamicInfoContainer,
             String allTestParams) {
         super(codecName, mediaType, MEDIA_DIR + testFile, allTestParams);
         mHDRStaticInfoStream = hdrStaticInfoStream;
@@ -98,15 +132,15 @@ public class DecoderHDRInfoTest extends HDRDecoderTestBase {
                 {MediaFormat.MIMETYPE_VIDEO_AV1, "cosmat_352x288_hdr10_only_container_av1.mkv",
                         null, HDR_STATIC_INFO, null, null},
                 {MediaFormat.MIMETYPE_VIDEO_HEVC, "cosmat_352x288_hdr10plus_hevc.mp4",
-                        null, null, HDR_DYNAMIC_INFO, null},
+                        null, null, HDR_DYNAMIC_INFO_HEVC, null},
                 {MediaFormat.MIMETYPE_VIDEO_HEVC, "cosmat_352x288_hdr10plus_hevc.mp4",
-                        null, null, HDR_DYNAMIC_INFO, HDR_DYNAMIC_INCORRECT_INFO},
+                        null, null, HDR_DYNAMIC_INFO_HEVC, HDR_DYNAMIC_INCORRECT_INFO_HEVC},
                 {MediaFormat.MIMETYPE_VIDEO_AV1, "cosmat_352x288_hdr10plus_av1.mkv",
-                        null, null, HDR_DYNAMIC_INFO, null},
+                        null, null, HDR_DYNAMIC_INFO_AV1, null},
                 {MediaFormat.MIMETYPE_VIDEO_AV1, "cosmat_352x288_hdr10plus_av1.mkv",
-                        null, null, HDR_DYNAMIC_INFO, HDR_DYNAMIC_INCORRECT_INFO},
+                        null, null, HDR_DYNAMIC_INFO_AV1, HDR_DYNAMIC_INCORRECT_INFO_AV1},
                 {MediaFormat.MIMETYPE_VIDEO_VP9, "cosmat_352x288_hdr10_only_container_vp9.mkv",
-                        null, null, null, HDR_DYNAMIC_INFO},
+                        null, null, null, HDR_DYNAMIC_INFO_VP9},
 
         });
         return prepareParamList(exhaustiveArgsList, isEncoder, needAudio, needVideo, false);

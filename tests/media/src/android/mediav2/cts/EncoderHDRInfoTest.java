@@ -37,6 +37,7 @@ import org.junit.runners.Parameterized;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -56,13 +57,21 @@ import java.util.Objects;
 @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
 public class EncoderHDRInfoTest extends HDREncoderTestBase {
     private static final String LOG_TAG = EncoderHDRInfoTest.class.getSimpleName();
+    public static final HashMap<Long, String> HDR_DYNAMIC_INFO = new HashMap<>();
 
     private final String mHDRStaticInfo;
-    private final Map<Integer, String> mHDRDynamicInfo;
+    private final Map<Long, String> mHDRDynamicInfo;
+
+    static {
+        HDR_DYNAMIC_INFO.put(0L, HDR10_INFO_SCENE_A);
+        HDR_DYNAMIC_INFO.put(133333L, HDR10_INFO_SCENE_B);
+        HDR_DYNAMIC_INFO.put(400000L, HDR10_INFO_SCENE_C);
+        HDR_DYNAMIC_INFO.put(733333L, HDR10_INFO_SCENE_D);
+    }
 
     public EncoderHDRInfoTest(String encoderName, String mediaType,
             EncoderConfigParams encCfgParams, @SuppressWarnings("unused") String testLabel,
-            String hdrStaticInfo, Map<Integer, String> hdrDynamicInfo, String allTestParams) {
+            String hdrStaticInfo, Map<Long, String> hdrDynamicInfo, String allTestParams) {
         super(encoderName, mediaType, encCfgParams, allTestParams);
         mHDRStaticInfo = hdrStaticInfo;
         mHDRDynamicInfo = hdrDynamicInfo;
