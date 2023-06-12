@@ -142,10 +142,9 @@ class ZoomTest(its_base_test.ItsBaseTest):
           test_data[i] = {'z': z, 'circle': circle, 'r_tol': radius_tol,
                           'o_tol': offset_tol, 'fl': cap_fl}
 
-          test_failed_for_ratio = zoom_capture_utils.verify_zoom_results(
-              test_data, size, z_max, z_min)
-          if test_failed_for_ratio:
-            test_failed = True
+        if not zoom_capture_utils.verify_zoom_results(
+            test_data, size, z_max, z_min):
+          test_failed = True
 
     if test_failed:
       raise AssertionError(f'{_NAME} failed! Check test_log.DEBUG for errors')
