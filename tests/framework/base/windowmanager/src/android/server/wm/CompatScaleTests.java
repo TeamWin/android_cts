@@ -16,7 +16,6 @@
 
 package android.server.wm;
 
-import static android.server.wm.ShellCommandHelper.executeShellCommand;
 import static android.server.wm.app.Components.UI_SCALING_TEST_ACTIVITY;
 import static android.server.wm.app.Components.UiScalingTestActivity.COMMAND_ADD_SUBVIEW;
 import static android.server.wm.app.Components.UiScalingTestActivity.COMMAND_CLEAR_DEFAULT_VIEW;
@@ -114,23 +113,23 @@ public class CompatScaleTests extends ActivityManagerTestBase {
     }
 
     @Test
-    public void testUpdateResourcesConfiguration() throws Exception {
+    public void testUpdateResourcesConfiguration() {
         // Launch activity with down/up scaling *disabled*
-        try (var session = new ActivitySessionClosable(ACTIVITY_UNDER_TEST)) {
-            runTestUpdateResourcesConfiguration(session.getActivity());
+        try (var session = new BaseActivitySessionCloseable(ACTIVITY_UNDER_TEST)) {
+            runTestUpdateResourcesConfiguration(session.getActivitySession());
         }
 
         try (var scale = new CompatChangeCloseable(mCompatChangeName, PACKAGE_UNDER_TEST)) {
             // Now launch the same activity with downscaling *enabled*
             try (var down = new CompatChangeCloseable("DOWNSCALED", PACKAGE_UNDER_TEST);
-                 var session = new ActivitySessionClosable(ACTIVITY_UNDER_TEST)) {
-                runTestUpdateResourcesConfiguration(session.getActivity());
+                 var session = new BaseActivitySessionCloseable(ACTIVITY_UNDER_TEST)) {
+                runTestUpdateResourcesConfiguration(session.getActivitySession());
             }
 
             // Now launch the same activity with upscaling *enabled*
             try (var up = new CompatChangeCloseable("DOWNSCALED_INVERSE", PACKAGE_UNDER_TEST);
-                 var session = new ActivitySessionClosable(ACTIVITY_UNDER_TEST)) {
-                runTestUpdateResourcesConfiguration(session.getActivity());
+                 var session = new BaseActivitySessionCloseable(ACTIVITY_UNDER_TEST)) {
+                runTestUpdateResourcesConfiguration(session.getActivitySession());
             }
         }
     }
@@ -173,7 +172,7 @@ public class CompatScaleTests extends ActivityManagerTestBase {
     public void test_scalesCorrectly() {
         // Launch activity with down/up scaling *disabled* and get the sizes it reports and its
         // Window state.
-        try (var session = new ActivitySessionClosable(ACTIVITY_UNDER_TEST)) {
+        try (var session = new BaseActivitySessionCloseable(ACTIVITY_UNDER_TEST)) {
             mAppSizesNormal = getActivityReportedSizes();
             mWindowStateNormal = getPackageWindowState();
         }
@@ -182,7 +181,7 @@ public class CompatScaleTests extends ActivityManagerTestBase {
             // Now launch the same activity with downscaling *enabled* and get the sizes it reports
             // and its Window state.
             try (var down = new CompatChangeCloseable("DOWNSCALED", PACKAGE_UNDER_TEST);
-                 var session = new ActivitySessionClosable(ACTIVITY_UNDER_TEST)) {
+                 var session = new BaseActivitySessionCloseable(ACTIVITY_UNDER_TEST)) {
                 mAppSizesDownscaled = getActivityReportedSizes();
                 mWindowStateDownscaled = getPackageWindowState();
             }
@@ -192,7 +191,7 @@ public class CompatScaleTests extends ActivityManagerTestBase {
             // Now launch the same activity with upscaling *enabled* and get the sizes it reports
             // and its Window state.
             try (var up = new CompatChangeCloseable("DOWNSCALED_INVERSE", PACKAGE_UNDER_TEST);
-                 var session = new ActivitySessionClosable(ACTIVITY_UNDER_TEST)) {
+                 var session = new BaseActivitySessionCloseable(ACTIVITY_UNDER_TEST)) {
                 mAppSizesUpscaled = getActivityReportedSizes();
                 mWindowStateUpscaled = getPackageWindowState();
             }
@@ -341,51 +340,5 @@ public class CompatScaleTests extends ActivityManagerTestBase {
         // compare it's against the expected scale (allowing a small delta).
         final double actualScale = ((double) actualValue) / baseValue;
         collector.checkThat(message, actualScale, closeTo(expectedScale, EPSILON_GLOBAL_SCALE));
-    }
-
-    /**
-     * AutoClosable class used for try-with-resources compat change tests, which require a separate
-     * application task to be started.
-     */
-    private static class CompatChangeCloseable implements AutoCloseable {
-        private final String mChangeName;
-        private final String mPackageName;
-
-        CompatChangeCloseable(final String changeName, String packageName) {
-            this.mChangeName = changeName;
-            this.mPackageName = packageName;
-
-            // Enable change
-            executeShellCommand("am compat enable " + changeName + " " + packageName);
-        }
-
-        @Override
-        public void close() {
-            executeShellCommand("am compat disable " + mChangeName + " " + mPackageName);
-        }
-    }
-
-    private class ActivitySessionClosable implements AutoCloseable {
-        private final ComponentName mActivityName;
-        private final CommandSession.ActivitySessionClient mSession;
-        private final CommandSession.ActivitySession mActivity;
-
-        ActivitySessionClosable(final ComponentName activityName) {
-            mActivityName = activityName;
-            mSession = new CommandSession.ActivitySessionClient(mContext);
-            mActivity = mSession.startActivity(getLaunchActivityBuilder()
-                    .setTargetActivity(activityName));
-            mWmState.computeState(new WaitForValidActivityState(activityName));
-        }
-
-        @Override
-        public void close() {
-            mSession.close();
-            mWmState.waitForActivityRemoved(mActivityName);
-        }
-
-        CommandSession.ActivitySession getActivity() {
-            return mActivity;
-        }
     }
 }

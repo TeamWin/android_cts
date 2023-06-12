@@ -29,7 +29,6 @@ import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED;
 import static android.content.res.Configuration.ORIENTATION_LANDSCAPE;
 import static android.content.res.Configuration.ORIENTATION_PORTRAIT;
 import static android.provider.DeviceConfig.NAMESPACE_CONSTRAIN_DISPLAY_APIS;
-import static android.server.wm.ShellCommandHelper.executeShellCommand;
 import static android.server.wm.allowdisplayorientationoverride.Components.ALLOW_DISPLAY_ORIENTATION_OVERRIDE_ACTIVITY;
 import static android.server.wm.alloworientationoverride.Components.ALLOW_ORIENTATION_OVERRIDE_LANDSCAPE_ACTIVITY;
 import static android.server.wm.alloworientationoverride.Components.ALLOW_ORIENTATION_OVERRIDE_RESPONSIVE_ACTIVITY;
@@ -50,7 +49,6 @@ import static android.server.wm.propertycameracompatallowforcerotation.Component
 import static android.server.wm.propertycameracompatallowrefresh.Components.CAMERA_COMPAT_ALLOW_REFRESH_ACTIVITY;
 import static android.server.wm.propertycameracompatenablerefreshviapauseoptin.Components.CAMERA_COMPAT_ENABLE_REFRESH_VIA_PAUSE_OPT_IN_ACTIVITY;
 import static android.server.wm.propertycameracompatenablerefreshviapauseoptout.Components.CAMERA_COMPAT_ENABLE_REFRESH_VIA_PAUSE_OPT_OUT_ACTIVITY;
-import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.Surface.ROTATION_0;
 import static android.view.Surface.ROTATION_90;
 
@@ -62,7 +60,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.Activity;
@@ -82,7 +79,7 @@ import android.os.ConditionVariable;
 import android.platform.test.annotations.Presubmit;
 import android.provider.DeviceConfig;
 import android.provider.DeviceConfig.Properties;
-import android.server.wm.WindowManagerTestBase.FocusableActivity;
+import android.server.wm.app.AbstractLifecycleLogActivity;
 import android.util.Size;
 
 import androidx.annotation.Nullable;
@@ -152,139 +149,133 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
     @Rule
     public TestRule compatChangeRule = new PlatformCompatChangeRule();
 
-    private DisplayMetricsSession mDisplayMetricsSession;
-
     @Before
     @Override
     public void setUp() throws Exception {
         super.setUp();
         enableAndAssumeGestureNavigationMode();
-
-        mDisplayMetricsSession =
-                createManagedDisplayMetricsSession(DEFAULT_DISPLAY);
         createManagedLetterboxAspectRatioSession(FIXED_ORIENTATION_MIN_ASPECT_RATIO);
         createManagedConstrainDisplayApisFlagsSession();
     }
 
     @Test
-    public void testOverrideUndefinedOrientationToPortrait_propertyIsFalse_overrideNotApplied()
-             throws Exception {
+    public void testOverrideUndefinedOrientationToPortrait_propertyIsFalse_overrideNotApplied() {
         try (var compatChange = new CompatChangeCloseable(
                 ActivityInfo.OVERRIDE_UNDEFINED_ORIENTATION_TO_PORTRAIT,
-                ALLOW_ORIENTATION_OVERRIDE_RESPONSIVE_ACTIVITY.getPackageName())) {
-            launchActivity(ALLOW_ORIENTATION_OVERRIDE_RESPONSIVE_ACTIVITY);
-
-            WindowManagerState.Activity activity =
-                    mWmState.getActivity(ALLOW_ORIENTATION_OVERRIDE_RESPONSIVE_ACTIVITY);
-
-            assertEquals(SCREEN_ORIENTATION_UNSPECIFIED, activity.getOverrideOrientation());
+                ALLOW_ORIENTATION_OVERRIDE_RESPONSIVE_ACTIVITY.getPackageName());
+             var session = new ActivitySessionCloseable(
+                     ALLOW_ORIENTATION_OVERRIDE_RESPONSIVE_ACTIVITY)) {
+            waitAssertEquals("expected unspecified orientation",
+                    SCREEN_ORIENTATION_UNSPECIFIED,
+                    () -> session.getActivityState().getOverrideOrientation());
         }
     }
 
     @Test
     @EnableCompatChanges({ActivityInfo.OVERRIDE_UNDEFINED_ORIENTATION_TO_PORTRAIT})
     public void testOverrideUndefinedOrientationToPortrait() {
-        launchActivity(RESPONSIVE_ACTIVITY);
-
-        WindowManagerState.Activity activity =
-                mWmState.getActivity(RESPONSIVE_ACTIVITY);
-
-        assertEquals(SCREEN_ORIENTATION_PORTRAIT, activity.getOverrideOrientation());
+        try (var session = new ActivitySessionCloseable(RESPONSIVE_ACTIVITY)) {
+            waitAssertEquals("expected portrait orientation", SCREEN_ORIENTATION_PORTRAIT,
+                    () -> session.getActivityState().getOverrideOrientation());
+        }
     }
 
     @Test
-    public void testOverrideUndefinedOrientationToNoSensor_propertyIsFalse_overrideNotApplied()
-            throws Exception  {
+    public void testOverrideUndefinedOrientationToNoSensor_propertyIsFalse_overrideNotApplied() {
         try (var compatChange = new CompatChangeCloseable(
                 ActivityInfo.OVERRIDE_UNDEFINED_ORIENTATION_TO_NOSENSOR,
-                ALLOW_ORIENTATION_OVERRIDE_RESPONSIVE_ACTIVITY.getPackageName())) {
-            launchActivity(ALLOW_ORIENTATION_OVERRIDE_RESPONSIVE_ACTIVITY);
-
-            WindowManagerState.Activity activity =
-                    mWmState.getActivity(ALLOW_ORIENTATION_OVERRIDE_RESPONSIVE_ACTIVITY);
-
-            assertEquals(SCREEN_ORIENTATION_UNSPECIFIED, activity.getOverrideOrientation());
+                ALLOW_ORIENTATION_OVERRIDE_RESPONSIVE_ACTIVITY.getPackageName());
+            var session = new ActivitySessionCloseable(
+                    ALLOW_ORIENTATION_OVERRIDE_RESPONSIVE_ACTIVITY)) {
+            waitAssertEquals("expected unspecified orientation",
+                    SCREEN_ORIENTATION_UNSPECIFIED,
+                    () -> session.getActivityState().getOverrideOrientation());
         }
     }
 
     @Test
     @EnableCompatChanges({ActivityInfo.OVERRIDE_UNDEFINED_ORIENTATION_TO_NOSENSOR})
     public void testOverrideUndefinedOrientationToNosensor() {
-        launchActivity(RESPONSIVE_ACTIVITY);
-
-        WindowManagerState.Activity activity = mWmState.getActivity(RESPONSIVE_ACTIVITY);
-
-        assertEquals(SCREEN_ORIENTATION_NOSENSOR, activity.getOverrideOrientation());
+        try (var session = new ActivitySessionCloseable(RESPONSIVE_ACTIVITY)) {
+            waitAssertEquals("expected no-sensor orientation",
+                    SCREEN_ORIENTATION_NOSENSOR,
+                    () -> session.getActivityState().getOverrideOrientation());
+        }
     }
 
     @Test
-    public void testOverrideLandscapeOrientationToReverseLandscape_propertyIsFalse_overrideNotApplied()
-            throws Exception {
+    public void
+            testOverrideLandscapeOrientationToReverseLandscape_propertyIsFalse_overrideNotApply() {
         try (var compatChange = new CompatChangeCloseable(
                 ActivityInfo.OVERRIDE_LANDSCAPE_ORIENTATION_TO_REVERSE_LANDSCAPE,
-                ALLOW_ORIENTATION_OVERRIDE_LANDSCAPE_ACTIVITY.getPackageName())) {
-            launchActivity(ALLOW_ORIENTATION_OVERRIDE_LANDSCAPE_ACTIVITY);
-
-            WindowManagerState.Activity activity =
-                    mWmState.getActivity(ALLOW_ORIENTATION_OVERRIDE_LANDSCAPE_ACTIVITY);
-
-            assertEquals(SCREEN_ORIENTATION_LANDSCAPE, activity.getOverrideOrientation());
+                ALLOW_ORIENTATION_OVERRIDE_LANDSCAPE_ACTIVITY.getPackageName());
+             var session = new ActivitySessionCloseable(
+                     ALLOW_ORIENTATION_OVERRIDE_LANDSCAPE_ACTIVITY)) {
+            waitAssertEquals("expected landscape orientation", SCREEN_ORIENTATION_LANDSCAPE,
+                    () -> session.getActivityState().getOverrideOrientation());
         }
     }
 
     @Test
     @EnableCompatChanges({ActivityInfo.OVERRIDE_LANDSCAPE_ORIENTATION_TO_REVERSE_LANDSCAPE})
     public void testOverrideLandscapeOrientationToReverseLandscape() {
-        launchActivity(NON_RESIZEABLE_LANDSCAPE_ACTIVITY);
-
-        WindowManagerState.Activity activity = mWmState.getActivity(NON_RESIZEABLE_LANDSCAPE_ACTIVITY);
-
-        assertEquals(SCREEN_ORIENTATION_REVERSE_LANDSCAPE, activity.getOverrideOrientation());
-    }
-
-    @Test
-    @EnableCompatChanges({ActivityInfo.OVERRIDE_USE_DISPLAY_LANDSCAPE_NATURAL_ORIENTATION})
-    public void testOverrideUseDisplayLandscapeNaturalOrientation()
-            throws Exception {
-        // Run this test only when natural orientation is landscape
-        Size displaySize = mDisplayMetricsSession.getInitialDisplayMetrics().getSize();
-        assumeTrue(displaySize.getHeight() < displaySize.getWidth());
-
-        // Rotating away from natural orientation (ROTATION_0)
-        final RotationSession rotationSession = createManagedRotationSession();
-        rotationSession.set(ROTATION_90);
-        mWmState.waitForDisplayOrientation(ORIENTATION_PORTRAIT);
-
-        launchActivity(RESPONSIVE_ACTIVITY);
-
-        // Verifying that orientation is overridden
-        assertEquals(mWmState.getRotation(), ROTATION_0);
-    }
-
-    @Test
-    public void testOverrideUseDisplayLandscapeNaturalOrientation_propertyIsFalse_overrideNotApplied()
-            throws Exception {
-        // Run this test only when natural orientation is landscape
-        Size displaySize = mDisplayMetricsSession.getInitialDisplayMetrics().getSize();
-        assumeTrue(displaySize.getHeight() < displaySize.getWidth());
-
-        // Rotating away from natural orientation (ROTATION_0)
-        final RotationSession rotationSession = createManagedRotationSession();
-        rotationSession.set(ROTATION_90);
-        mWmState.waitForDisplayOrientation(ORIENTATION_PORTRAIT);
-
-        try (var compatChange = new CompatChangeCloseable(
-                ActivityInfo.OVERRIDE_USE_DISPLAY_LANDSCAPE_NATURAL_ORIENTATION,
-                ALLOW_DISPLAY_ORIENTATION_OVERRIDE_ACTIVITY.getPackageName())) {
-            launchActivity(ALLOW_DISPLAY_ORIENTATION_OVERRIDE_ACTIVITY);
-
-            // Verifying that orientation not overridden
-            assertEquals(mWmState.getRotation(), ROTATION_90);
+        try (var session = new ActivitySessionCloseable(NON_RESIZEABLE_LANDSCAPE_ACTIVITY)) {
+            waitAssertEquals("expected reverse landscape orientation",
+                    SCREEN_ORIENTATION_REVERSE_LANDSCAPE,
+                    () -> session.getActivityState().getOverrideOrientation());
         }
     }
 
     @Test
-    public void testEnableFakeFocus_propertyIsFalse_overrideNotApplied() throws Exception {
+    @EnableCompatChanges({ActivityInfo.OVERRIDE_USE_DISPLAY_LANDSCAPE_NATURAL_ORIENTATION})
+    public void testOverrideUseDisplayLandscapeNaturalOrientation() {
+        try (var displayMetricsSession = new DisplayMetricsWaitCloseable()) {
+            // Run this test only when natural orientation is landscape
+            Size displaySize = displayMetricsSession.getInitialDisplayMetrics().getSize();
+            assumeTrue(displaySize.getHeight() < displaySize.getWidth());
+        }
+
+        try (var portrait = new DeviceOrientationCloseable(ORIENTATION_PORTRAIT);
+             var session = new ActivitySessionCloseable(RESPONSIVE_ACTIVITY)) {
+            // Verifying that orientation is overridden
+            waitAssertEquals("expected rotation 0",
+                    ROTATION_0, () -> mWmState.getRotation());
+        }
+    }
+
+    @Test
+    public void
+            testOverrideUseDisplayLandscapeNaturalOrientation_propertyIsFalse_overrideNotApplied() {
+        try (var displayMetricsSession = new DisplayMetricsWaitCloseable()) {
+            // Run this test only when natural orientation is landscape
+            Size displaySize = displayMetricsSession.getInitialDisplayMetrics().getSize();
+            assumeTrue(displaySize.getHeight() < displaySize.getWidth());
+        }
+
+        final int originalRotation = mWmState.getRotation();
+
+        try (var portrait = new DeviceOrientationCloseable(ORIENTATION_PORTRAIT);
+             var compatChange = new CompatChangeCloseable(
+                ActivityInfo.OVERRIDE_USE_DISPLAY_LANDSCAPE_NATURAL_ORIENTATION,
+                ALLOW_DISPLAY_ORIENTATION_OVERRIDE_ACTIVITY.getPackageName());
+             var session = new ActivitySessionCloseable(
+                    ALLOW_DISPLAY_ORIENTATION_OVERRIDE_ACTIVITY)) {
+
+            // Verifying that orientation not overridden
+            if (portrait.isRotationApplied()) {
+                // If the screen was rotated away from natural orientation (to portrait)
+                waitAssertEquals("expected rotation 90",
+                        ROTATION_90, () -> mWmState.getRotation());
+            } else {
+                // If the screen was already in portrait (rotated away from natural orientation)
+                waitAssertEquals("expected originalRotation=" + originalRotation,
+                        originalRotation, () -> mWmState.getRotation());
+            }
+        }
+    }
+
+    @Test
+    public void testEnableFakeFocus_propertyIsFalse_overrideNotApplied() {
         assumeTrue("Skipping test: no split multi-window support",
                 supportsSplitScreenMultiWindow());
         assumeTrue("Skipping test: config_isCompatFakeFocusEnabled not enabled",
@@ -292,56 +283,48 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
 
         try (var compatChange = new CompatChangeCloseable(
                 OVERRIDE_ENABLE_COMPAT_FAKE_FOCUS,
-                ENABLE_FAKE_FOCUS_OPT_OUT_LEFT_ACTIVITY.getPackageName())) {
-
-            launchActivitiesInSplitScreen(
-                    getLaunchActivityBuilder().setTargetActivity(
-                            ENABLE_FAKE_FOCUS_OPT_OUT_LEFT_ACTIVITY),
-                    getLaunchActivityBuilder().setTargetActivity(
-                            ENABLE_FAKE_FOCUS_OPT_OUT_RIGHT_ACTIVITY));
-
-            WindowManagerState.Activity activity =
-                    mWmState.getActivity(ENABLE_FAKE_FOCUS_OPT_OUT_LEFT_ACTIVITY);
-
-            assertFalse(activity.getShouldSendCompatFakeFocus());
+                ENABLE_FAKE_FOCUS_OPT_OUT_LEFT_ACTIVITY.getPackageName());
+             var splitScreen = new SplitScreenActivitiesCloseable(
+                     ENABLE_FAKE_FOCUS_OPT_OUT_LEFT_ACTIVITY,
+                     ENABLE_FAKE_FOCUS_OPT_OUT_RIGHT_ACTIVITY)) {
+            waitAssertEquals("expected should not send compat fake focus",
+                    /* expected */ false,
+                    () -> splitScreen.getPrimaryActivity()
+                            .getActivityState().getShouldSendCompatFakeFocus());
         }
     }
 
     @Test
-    public void testEnableFakeFocus_propertyIsTrue_returnsTrue() throws Exception {
+    public void testEnableFakeFocus_propertyIsTrue_returnsTrue() {
         assumeTrue("Skipping test: no split multi-window support",
                 supportsSplitScreenMultiWindow());
         assumeTrue("Skipping test: config_isCompatFakeFocusEnabled not enabled",
                 getFakeFocusEnabledConfig());
 
-        launchActivitiesInSplitScreen(
-                getLaunchActivityBuilder().setTargetActivity(
-                        ENABLE_FAKE_FOCUS_OPT_IN_LEFT_ACTIVITY),
-                getLaunchActivityBuilder().setTargetActivity(
-                        ENABLE_FAKE_FOCUS_OPT_IN_RIGHT_ACTIVITY));
-
-        WindowManagerState.Activity activity =
-                mWmState.getActivity(ENABLE_FAKE_FOCUS_OPT_IN_LEFT_ACTIVITY);
-
-        assertTrue(activity.getShouldSendCompatFakeFocus());
+        try (var splitScreen = new SplitScreenActivitiesCloseable(
+                     ENABLE_FAKE_FOCUS_OPT_IN_LEFT_ACTIVITY,
+                     ENABLE_FAKE_FOCUS_OPT_IN_RIGHT_ACTIVITY)) {
+            waitAssertEquals("expected should send compat fake focus", /* expected */ true,
+                    () -> splitScreen.getPrimaryActivity()
+                            .getActivityState().getShouldSendCompatFakeFocus());
+        }
     }
 
     @Test
     @EnableCompatChanges({OVERRIDE_ENABLE_COMPAT_FAKE_FOCUS})
-    public void testEnableFakeFocus_overrideApplied_returnsTrue() throws Exception {
+    public void testEnableFakeFocus_overrideApplied_returnsTrue() {
         assumeTrue("Skipping test: no split multi-window support",
                 supportsSplitScreenMultiWindow());
         assumeTrue("Skipping test: config_isCompatFakeFocusEnabled not enabled",
                 getFakeFocusEnabledConfig());
 
-        launchActivitiesInSplitScreen(
-                getLaunchActivityBuilder().setTargetActivity(RESIZEABLE_LEFT_ACTIVITY),
-                getLaunchActivityBuilder().setTargetActivity(RESIZEABLE_RIGHT_ACTIVITY));
-
-        WindowManagerState.Activity activity =
-                mWmState.getActivity(RESIZEABLE_LEFT_ACTIVITY);
-
-        assertTrue(activity.getShouldSendCompatFakeFocus());
+        try (var splitScreen = new SplitScreenActivitiesCloseable(
+                     RESIZEABLE_LEFT_ACTIVITY,
+                     RESIZEABLE_RIGHT_ACTIVITY)) {
+            waitAssertEquals("expected should send compat fake focus", /* expected */ true,
+                    () -> splitScreen.getPrimaryActivity()
+                            .getActivityState().getShouldSendCompatFakeFocus());
+        }
     }
 
     boolean getFakeFocusEnabledConfig() {
@@ -352,187 +335,168 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
     }
 
     @Test
-    public void testOverrideIgnoreRequestedOrientation_propertyIsFalse_overrideNotApplied()
-            throws Exception  {
+    public void testOverrideIgnoreRequestedOrientation_propertyIsFalse_overrideNotApplied() {
         assumeTrue("Skipping test: "
                     + "config_letterboxIsPolicyForIgnoringRequestedOrientationEnabled not enabled",
                 isPolicyForIgnoringRequestedOrientationEnabled());
 
         try (var compatChange = new CompatChangeCloseable(
-                ActivityInfo.OVERRIDE_ENABLE_COMPAT_IGNORE_REQUESTED_ORIENTATION,
-                OPT_OUT_CHANGE_ORIENTATION_WHILE_RELAUNCHING_ACTIVITY.getPackageName())) {
-            launchActivity(OPT_OUT_CHANGE_ORIENTATION_WHILE_RELAUNCHING_ACTIVITY);
-
-            WindowManagerState.Activity activity =
-                    mWmState.getActivity(OPT_OUT_CHANGE_ORIENTATION_WHILE_RELAUNCHING_ACTIVITY);
-
-            assertEquals(SCREEN_ORIENTATION_LANDSCAPE, activity.getOverrideOrientation());
+                    ActivityInfo.OVERRIDE_ENABLE_COMPAT_IGNORE_REQUESTED_ORIENTATION,
+                    OPT_OUT_CHANGE_ORIENTATION_WHILE_RELAUNCHING_ACTIVITY.getPackageName());
+             var session = new ActivitySessionCloseable(
+                     OPT_OUT_CHANGE_ORIENTATION_WHILE_RELAUNCHING_ACTIVITY)) {
+            waitAssertEquals("expected landscape orientation",
+                    SCREEN_ORIENTATION_LANDSCAPE,
+                    () -> session.getActivityState().getOverrideOrientation());
         }
     }
 
     @Test
-    public void testOverrideIgnoreRequestedOrientation_isDisabled_propertyIsTrue_overrideApplied()
-            throws Exception  {
+    public void testOverrideIgnoreRequestedOrientation_isDisabled_propertyIsTrue_overrideApplied() {
         assumeTrue("Skipping test: "
                     + "config_letterboxIsPolicyForIgnoringRequestedOrientationEnabled not enabled",
                 isPolicyForIgnoringRequestedOrientationEnabled());
 
-        launchActivity(OPT_IN_CHANGE_ORIENTATION_WHILE_RELAUNCHING_ACTIVITY);
-        WindowManagerState.Activity activity =
-                mWmState.getActivity(OPT_IN_CHANGE_ORIENTATION_WHILE_RELAUNCHING_ACTIVITY);
-
-        assertEquals(SCREEN_ORIENTATION_PORTRAIT, activity.getOverrideOrientation());
+        try (var session = new ActivitySessionCloseable(
+                     OPT_IN_CHANGE_ORIENTATION_WHILE_RELAUNCHING_ACTIVITY)) {
+            waitAssertEquals("expected portrait orientation",
+                    SCREEN_ORIENTATION_PORTRAIT,
+                    () -> session.getActivityState().getOverrideOrientation());
+        }
     }
 
     @Test
     @EnableCompatChanges({ActivityInfo.OVERRIDE_ENABLE_COMPAT_IGNORE_REQUESTED_ORIENTATION})
-    public void testOverrideIgnoreRequestedOrientation()
-            throws Exception {
+    public void testOverrideIgnoreRequestedOrientation() {
         assumeTrue("Skipping test: "
                     + "config_letterboxIsPolicyForIgnoringRequestedOrientationEnabled not enabled",
                 isPolicyForIgnoringRequestedOrientationEnabled());
 
-        launchActivity(NO_PROPERTY_CHANGE_ORIENTATION_WHILE_RELAUNCHING_ACTIVITY);
-
-        WindowManagerState.Activity activity =
-                mWmState.getActivity(NO_PROPERTY_CHANGE_ORIENTATION_WHILE_RELAUNCHING_ACTIVITY);
-
-        assertEquals(SCREEN_ORIENTATION_PORTRAIT, activity.getOverrideOrientation());
+        try (var session = new ActivitySessionCloseable(
+                     NO_PROPERTY_CHANGE_ORIENTATION_WHILE_RELAUNCHING_ACTIVITY)) {
+            waitAssertEquals("expected portrait orientation",
+                    SCREEN_ORIENTATION_PORTRAIT,
+                    () -> session.getActivityState().getOverrideOrientation());
+        }
     }
 
     @Test
-    public void testOptOutPropertyCameraCompatForceRotation_rotationDisabled() throws Exception {
+    public void testOptOutPropertyCameraCompatForceRotation_rotationDisabled() {
         assumeTrue("Skipping test: config_isWindowManagerCameraCompatTreatmentEnabled not enabled",
                 isCameraCompatForceRotationTreatmentConfigEnabled());
 
-        launchActivity(RESIZEABLE_PORTRAIT_ACTIVITY);
+        try (var session = new ActivitySessionCloseable(RESIZEABLE_PORTRAIT_ACTIVITY)) {
+            // Activity without property or override is eligible for force rotation.
+            waitAssertEquals("expected to force rotate for camera compat",
+                    /* expected */ true,
+                    () -> session.getActivityState().getShouldForceRotateForCameraCompat());
+        }
 
-        WindowManagerState.Activity activity =
-                mWmState.getActivity(RESIZEABLE_PORTRAIT_ACTIVITY);
-
-        // Activity without property or override is eligible for force rotation.
-        assertTrue(activity.getShouldForceRotateForCameraCompat());
-
-        launchActivity(CAMERA_COMPAT_ALLOW_FORCE_ROTATION_ACTIVITY);
-
-        activity = mWmState.getActivity(CAMERA_COMPAT_ALLOW_FORCE_ROTATION_ACTIVITY);
-
-        assertFalse(activity.getShouldForceRotateForCameraCompat());
+        try (var session = new ActivitySessionCloseable(
+                     CAMERA_COMPAT_ALLOW_FORCE_ROTATION_ACTIVITY)) {
+            waitAssertEquals("expected to not force rotate for camera compat",
+                    /* expected */ false,
+                    () -> session.getActivityState().getShouldForceRotateForCameraCompat());
+        }
     }
-
 
     @Test
     @EnableCompatChanges({ActivityInfo.OVERRIDE_CAMERA_COMPAT_DISABLE_FORCE_ROTATION})
-    public void testOverrideForCameraCompatForceRotation_rotationDisabled() throws Exception {
+    public void testOverrideForCameraCompatForceRotation_rotationDisabled() {
         assumeTrue("Skipping test: config_isWindowManagerCameraCompatTreatmentEnabled not enabled",
                 isCameraCompatForceRotationTreatmentConfigEnabled());
 
-        launchActivity(RESIZEABLE_PORTRAIT_ACTIVITY);
-
-        WindowManagerState.Activity activity =
-                mWmState.getActivity(RESIZEABLE_PORTRAIT_ACTIVITY);
-
-        assertFalse(activity.getShouldForceRotateForCameraCompat());
+        try (var session = new ActivitySessionCloseable(RESIZEABLE_PORTRAIT_ACTIVITY)) {
+            waitAssertEquals("expected to not force rotate for camera compat",
+                    /* expected */ false,
+                    () -> session.getActivityState().getShouldForceRotateForCameraCompat());
+        }
     }
 
     @Test
-    public void testOptOutPropertyCameraCompatRefresh() throws Exception {
+    public void testOptOutPropertyCameraCompatRefresh() {
         assumeTrue("Skipping test: config_isWindowManagerCameraCompatTreatmentEnabled not enabled",
                 isCameraCompatForceRotationTreatmentConfigEnabled());
 
-        launchActivity(RESIZEABLE_PORTRAIT_ACTIVITY);
+        try (var session = new ActivitySessionCloseable(RESIZEABLE_PORTRAIT_ACTIVITY)) {
+            // Activity without property or override is eligible for refresh.
+            waitAssertEquals("expected to refresh activity for camera compat",
+                    /* expected */ true,
+                    () -> session.getActivityState().getShouldRefreshActivityForCameraCompat());
+        }
 
-        WindowManagerState.Activity activity =
-                mWmState.getActivity(RESIZEABLE_PORTRAIT_ACTIVITY);
-
-        // Activity without property or override is eligible for refresh.
-        assertTrue(activity.getShouldRefreshActivityForCameraCompat());
-
-        launchActivity(CAMERA_COMPAT_ALLOW_REFRESH_ACTIVITY);
-
-        activity = mWmState.getActivity(CAMERA_COMPAT_ALLOW_REFRESH_ACTIVITY);
-
-        assertFalse(activity.getShouldRefreshActivityForCameraCompat());
+        try (var session = new ActivitySessionCloseable(CAMERA_COMPAT_ALLOW_REFRESH_ACTIVITY)) {
+            waitAssertEquals("expected to not refresh activity for camera compat",
+                    /* expected */ false,
+                    () -> session.getActivityState().getShouldRefreshActivityForCameraCompat());
+        }
     }
-
 
     @Test
     @EnableCompatChanges({ActivityInfo.OVERRIDE_CAMERA_COMPAT_DISABLE_REFRESH})
-    public void testOverrideForCameraCompatRefresh() throws Exception {
+    public void testOverrideForCameraCompatRefresh() {
         assumeTrue("Skipping test: config_isWindowManagerCameraCompatTreatmentEnabled not enabled",
                 isCameraCompatForceRotationTreatmentConfigEnabled());
 
-        launchActivity(RESIZEABLE_PORTRAIT_ACTIVITY);
-
-        WindowManagerState.Activity activity =
-                mWmState.getActivity(RESIZEABLE_PORTRAIT_ACTIVITY);
-
-        assertFalse(activity.getShouldRefreshActivityForCameraCompat());
+        try (var session = new ActivitySessionCloseable(RESIZEABLE_PORTRAIT_ACTIVITY)) {
+            waitAssertEquals("expected to not refresh activity for camera compat",
+                    /* expected */ false,
+                    () -> session.getActivityState().getShouldRefreshActivityForCameraCompat());
+        }
     }
 
     @Test
-    public void testOptInPropertyCameraCompatRefreshViaPause() throws Exception {
+    public void testOptInPropertyCameraCompatRefreshViaPause() {
         assumeTrue("Skipping test: config_isWindowManagerCameraCompatTreatmentEnabled not enabled",
                 isCameraCompatForceRotationTreatmentConfigEnabled());
 
-        launchActivity(RESIZEABLE_PORTRAIT_ACTIVITY);
+        try (var session = new ActivitySessionCloseable(RESIZEABLE_PORTRAIT_ACTIVITY)) {
+            // Activity without property or override doesn't refresh via
+            // "resumed -> paused -> resumed".
+            waitAssertEquals("expected to not refresh activity via pause for camera compat",
+                    /* expected */ false,
+                    () -> session.getActivityState()
+                            .getShouldRefreshActivityViaPauseForCameraCompat());
+        }
 
-        WindowManagerState.Activity activity =
-                mWmState.getActivity(RESIZEABLE_PORTRAIT_ACTIVITY);
-
-        // Activity without property or override doesn't refresh via "resumed -> paused -> resumed".
-        assertFalse(activity.getShouldRefreshActivityViaPauseForCameraCompat());
-
-        launchActivity(CAMERA_COMPAT_ENABLE_REFRESH_VIA_PAUSE_OPT_IN_ACTIVITY);
-
-        activity = mWmState.getActivity(CAMERA_COMPAT_ENABLE_REFRESH_VIA_PAUSE_OPT_IN_ACTIVITY);
-
-        assertTrue(activity.getShouldRefreshActivityViaPauseForCameraCompat());
+        try (var session = new ActivitySessionCloseable(
+                CAMERA_COMPAT_ENABLE_REFRESH_VIA_PAUSE_OPT_IN_ACTIVITY)) {
+            waitAssertEquals("expected to Refresh activity via pause for camera compat",
+                    /* expected */ true,
+                    () -> session.getActivityState()
+                            .getShouldRefreshActivityViaPauseForCameraCompat());
+        }
     }
-
 
     @Test
     @EnableCompatChanges({ActivityInfo.OVERRIDE_CAMERA_COMPAT_ENABLE_REFRESH_VIA_PAUSE})
-    public void testOverrideForCameraCompatRefreshViaPause() throws Exception {
+    public void testOverrideForCameraCompatRefreshViaPause() {
         assumeTrue("Skipping test: config_isWindowManagerCameraCompatTreatmentEnabled not enabled",
                 isCameraCompatForceRotationTreatmentConfigEnabled());
 
-        launchActivity(RESIZEABLE_PORTRAIT_ACTIVITY);
-
-        WindowManagerState.Activity activity =
-                mWmState.getActivity(RESIZEABLE_PORTRAIT_ACTIVITY);
-
-        assertTrue(activity.getShouldRefreshActivityViaPauseForCameraCompat());
+        try (var session = new ActivitySessionCloseable(RESIZEABLE_PORTRAIT_ACTIVITY)) {
+            waitAssertEquals("expected to Refresh activity via pause for camera compat",
+                    /* expected */ true,
+                    () -> session.getActivityState()
+                            .getShouldRefreshActivityViaPauseForCameraCompat());
+        }
     }
 
     @Test
-    public void testOptOutPropertyCameraCompatRefreshViaPause() throws Exception {
+    public void testOptOutPropertyCameraCompatRefreshViaPause() {
         assumeTrue("Skipping test: config_isWindowManagerCameraCompatTreatmentEnabled not enabled",
                 isCameraCompatForceRotationTreatmentConfigEnabled());
 
         try (var compatChange = new CompatChangeCloseable(
                 ActivityInfo.OVERRIDE_CAMERA_COMPAT_ENABLE_REFRESH_VIA_PAUSE,
-                CAMERA_COMPAT_ENABLE_REFRESH_VIA_PAUSE_OPT_OUT_ACTIVITY.getPackageName())) {
-            launchActivity(CAMERA_COMPAT_ENABLE_REFRESH_VIA_PAUSE_OPT_OUT_ACTIVITY);
-
-            WindowManagerState.Activity activity =
-                    mWmState.getActivity(CAMERA_COMPAT_ENABLE_REFRESH_VIA_PAUSE_OPT_OUT_ACTIVITY);
-
-            assertFalse(activity.getShouldRefreshActivityViaPauseForCameraCompat());
+                CAMERA_COMPAT_ENABLE_REFRESH_VIA_PAUSE_OPT_OUT_ACTIVITY.getPackageName());
+             var session = new ActivitySessionCloseable(
+                     CAMERA_COMPAT_ENABLE_REFRESH_VIA_PAUSE_OPT_OUT_ACTIVITY)) {
+            waitAssertEquals("expected to not refresh activity via pause for camera compat",
+                    /* expected */ false,
+                    () -> session.getActivityState()
+                            .getShouldRefreshActivityViaPauseForCameraCompat());
         }
-    }
-
-    private boolean isCameraCompatForceRotationTreatmentConfigEnabled() {
-        return getBooleanConfig("config_isWindowManagerCameraCompatTreatmentEnabled");
-    }
-
-    private boolean isPolicyForIgnoringRequestedOrientationEnabled() {
-        return getBooleanConfig("config_letterboxIsPolicyForIgnoringRequestedOrientationEnabled");
-    }
-
-    private boolean getBooleanConfig(String configName) {
-        return mContext.getResources().getBoolean(
-                Resources.getSystem().getIdentifier(configName, "bool", "android"));
     }
 
     /**
@@ -541,9 +505,7 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
      */
     @Test
     public void testSizeCompatForNonResizeableActivity() {
-        runSizeCompatTest(
-                NON_RESIZEABLE_PORTRAIT_ACTIVITY, WINDOWING_MODE_FULLSCREEN,
-                /* inSizeCompatModeAfterResize= */ true);
+        runSizeCompatTest(NON_RESIZEABLE_PORTRAIT_ACTIVITY, /* inSizeCompatModeAfterResize */ true);
     }
 
     /**
@@ -553,9 +515,7 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
     @Test
     @EnableCompatChanges({ActivityInfo.FORCE_RESIZE_APP})
     public void testSizeCompatForNonResizeableActivityForceResizeEnabled() {
-        runSizeCompatTest(
-                NON_RESIZEABLE_PORTRAIT_ACTIVITY, WINDOWING_MODE_FULLSCREEN,
-                /* inSizeCompatModeAfterResize= */ false);
+        runSizeCompatTest(NON_RESIZEABLE_PORTRAIT_ACTIVITY, /*inSizeCompatModeAfterResize */ false);
     }
 
     /**
@@ -564,8 +524,7 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
      */
     @Test
     public void testSizeCompatForResizeableActivity() {
-        runSizeCompatTest(RESIZEABLE_PORTRAIT_ACTIVITY, WINDOWING_MODE_FULLSCREEN,
-                /* inSizeCompatModeAfterResize= */ false);
+        runSizeCompatTest(RESIZEABLE_PORTRAIT_ACTIVITY, /* inSizeCompatModeAfterResize */ false);
     }
 
     /**
@@ -575,8 +534,7 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
     @Test
     public void testSizeCompatForSupportsSizeChangesActivity() {
         runSizeCompatTest(
-                SUPPORTS_SIZE_CHANGES_PORTRAIT_ACTIVITY, WINDOWING_MODE_FULLSCREEN,
-                /* inSizeCompatModeAfterResize= */ false);
+                SUPPORTS_SIZE_CHANGES_PORTRAIT_ACTIVITY, /* inSizeCompatModeAfterResize */ false);
     }
 
     /**
@@ -586,8 +544,7 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
     @Test
     @EnableCompatChanges({ActivityInfo.FORCE_NON_RESIZE_APP})
     public void testSizeCompatForResizeableActivityForceNonResizeEnabled() {
-        runSizeCompatTest(RESIZEABLE_PORTRAIT_ACTIVITY, WINDOWING_MODE_FULLSCREEN,
-                /* inSizeCompatModeAfterResize= */ true);
+        runSizeCompatTest(RESIZEABLE_PORTRAIT_ACTIVITY, /* inSizeCompatModeAfterResize */ true);
     }
 
     /**
@@ -599,8 +556,7 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
     @EnableCompatChanges({ActivityInfo.FORCE_NON_RESIZE_APP})
     public void testSizeCompatForSupportsSizeChangesActivityForceNonResizeEnabled() {
         runSizeCompatTest(
-                SUPPORTS_SIZE_CHANGES_PORTRAIT_ACTIVITY, WINDOWING_MODE_FULLSCREEN,
-                /* inSizeCompatModeAfterResize= */ true);
+                SUPPORTS_SIZE_CHANGES_PORTRAIT_ACTIVITY, /* inSizeCompatModeAfterResize */ true);
     }
 
     /**
@@ -610,9 +566,7 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
     @Test
     public void testSandboxForNonResizableAspectRatioActivity() {
         runSizeCompatModeSandboxTest(NON_RESIZEABLE_LARGE_ASPECT_RATIO_ACTIVITY,
-                /* isSandboxed= */ true);
-        assertSandboxedByBounds(NON_RESIZEABLE_LARGE_ASPECT_RATIO_ACTIVITY, /* isSandboxed= */
-                true);
+                /* isSandboxed */ true, /* inSizeCompatModeAfterResize */ true);
     }
 
      // =================
@@ -631,7 +585,7 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
     @EnableCompatChanges({ActivityInfo.NEVER_SANDBOX_DISPLAY_APIS})
     public void testSandboxForNonResizableAspectRatioActivityNeverSandboxDisplayApisEnabled() {
         runSizeCompatModeSandboxTest(NON_RESIZEABLE_LARGE_ASPECT_RATIO_ACTIVITY,
-                /* isSandboxed= */ false);
+                /* isSandboxed */ false, /* inSizeCompatModeAfterResize */ true);
     }
 
     /**
@@ -645,7 +599,7 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
         // Setting 'never_constrain_display_apis' as well to make sure it is ignored.
         setNeverConstrainDisplayApisFlag("com.android.other::");
         runSizeCompatModeSandboxTest(NON_RESIZEABLE_LARGE_ASPECT_RATIO_ACTIVITY,
-                /* isSandboxed= */ false);
+                /* isSandboxed */ false, /* inSizeCompatModeAfterResize */ true);
     }
 
     /**
@@ -658,7 +612,8 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
         ComponentName activity = NON_RESIZEABLE_LARGE_ASPECT_RATIO_ACTIVITY;
         setNeverConstrainDisplayApisFlag(
                 "com.android.other::," + activity.getPackageName() + "::");
-        runSizeCompatModeSandboxTest(activity, /* isSandboxed= */ false);
+        runSizeCompatModeSandboxTest(activity, /* isSandboxed */ false,
+                /* inSizeCompatModeAfterResize */ true);
     }
 
     /**
@@ -673,7 +628,8 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
         setNeverConstrainDisplayApisFlag(
                 "com.android.other::," + activity.getPackageName() + ":" + String.valueOf(
                         version - 1) + ":" + String.valueOf(version + 1));
-        runSizeCompatModeSandboxTest(activity, /* isSandboxed= */ false);
+        runSizeCompatModeSandboxTest(activity, /* isSandboxed */ false,
+                /* inSizeCompatModeAfterResize */ true);
     }
 
     /**
@@ -688,7 +644,8 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
         setNeverConstrainDisplayApisFlag(
                 "com.android.other::," + activity.getPackageName() + ":" + String.valueOf(
                         version + 1) + ":");
-        runSizeCompatModeSandboxTest(activity, /* isSandboxed= */ true);
+        runSizeCompatModeSandboxTest(activity, /* isSandboxed */ true,
+                /* inSizeCompatModeAfterResize */ true);
     }
 
     /**
@@ -700,7 +657,7 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
     public void testSandboxForNonResizableActivityPackageNotInNeverSandboxDeviceConfigFlag() {
         setNeverConstrainDisplayApisFlag("com.android.other::,com.android.other2::");
         runSizeCompatModeSandboxTest(NON_RESIZEABLE_LARGE_ASPECT_RATIO_ACTIVITY,
-                /* isSandboxed= */ true);
+                /* isSandboxed */ true, /* inSizeCompatModeAfterResize */ true);
     }
 
     /**
@@ -711,7 +668,7 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
     public void testSandboxForNonResizableActivityNeverSandboxDeviceConfigFlagEmpty() {
         setNeverConstrainDisplayApisFlag("");
         runSizeCompatModeSandboxTest(NON_RESIZEABLE_LARGE_ASPECT_RATIO_ACTIVITY,
-                /* isSandboxed= */ true);
+                /* isSandboxed */ true, /* inSizeCompatModeAfterResize */ true);
     }
 
     /**
@@ -724,7 +681,8 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
         ComponentName activity = NON_RESIZEABLE_LARGE_ASPECT_RATIO_ACTIVITY;
         setNeverConstrainDisplayApisFlag(
                 "com.android.other::," + activity.getPackageName() + ":::");
-        runSizeCompatModeSandboxTest(activity, /* isSandboxed= */ true);
+        runSizeCompatModeSandboxTest(activity, /* isSandboxed */ true,
+                /* inSizeCompatModeAfterResize */ true);
     }
 
     /** =================
@@ -746,81 +704,63 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
      * {@link WindowConfiguration#getBounds}
      */
     @Test
-    public void testSandbox_viewApiForLetterboxedActivity() throws Exception {
+    public void testSandbox_viewApiForLetterboxedActivity() {
         // Enable OVERRIDE_SANDBOX_VIEW_BOUNDS_APIS changeId for the test application
-        try (var compatChange = new CompatChangeCloseable(
+        try (var aspectRatio = new DisplayAspectRatioCloseable(ORIENTATION_LANDSCAPE, 2.0f);
+             var compatChange = new CompatChangeCloseable(
                 OVERRIDE_SANDBOX_VIEW_BOUNDS_APIS,
                 TEST_VIEW_SANDBOX_ALLOWED_ACTIVITY.getPackageName());
              var receiver = new BroadcastReceiverCloseable(mContext,
                      ACTION_TEST_VIEW_SANDBOX_ALLOWED_PASSED)) {
-            // Make sure aspect ratio of the screen is correct to enforce letterboxing for
-            // portrait only application
-            syncChangeAspectRatio(2.0f, ORIENTATION_LANDSCAPE);
 
-            // Start activity in a separate task
-            launchActivity(TEST_VIEW_SANDBOX_ALLOWED_ACTIVITY);
+            try (var session = new ActivitySessionCloseable(TEST_VIEW_SANDBOX_ALLOWED_ACTIVITY)) {
+                // Wait for the broadcast action
+                boolean testPassed = receiver
+                        .getBroadcastReceivedVariable(ACTION_TEST_VIEW_SANDBOX_ALLOWED_PASSED)
+                        .block(TEST_VIEW_SANDBOX_ALLOWED_TIMEOUT_MS);
 
-            // Wait for the broadcast action
-            boolean testPassed = receiver
-                    .getBroadcastReceivedVariable(ACTION_TEST_VIEW_SANDBOX_ALLOWED_PASSED)
-                    .block(TEST_VIEW_SANDBOX_ALLOWED_TIMEOUT_MS);
-
-            assertThat(testPassed).isTrue();
+                assertThat(testPassed).isTrue();
+            }
         }
     }
 
     @Test
-    public void testNoSandbox_viewApiForLetterboxedActivity() throws Exception {
+    public void testNoSandbox_viewApiForLetterboxedActivity() {
         // Enable OVERRIDE_SANDBOX_VIEW_BOUNDS_APIS changeId for the test application
-        try (var receiver = new BroadcastReceiverCloseable(mContext,
+        try (var aspectRatio = new DisplayAspectRatioCloseable(ORIENTATION_LANDSCAPE, 2.0f);
+             var receiver = new BroadcastReceiverCloseable(mContext,
                      ACTION_TEST_VIEW_SANDBOX_NOT_ALLOWED_PASSED)) {
-            // Make sure aspect ratio of the screen is correct to enforce letterboxing for
-            // portrait only application
-            syncChangeAspectRatio(2.0f, ORIENTATION_LANDSCAPE);
 
-            // Start activity in a separate task
-            launchActivity(TEST_VIEW_SANDBOX_ALLOWED_ACTIVITY);
+            try (var session = new ActivitySessionCloseable(TEST_VIEW_SANDBOX_ALLOWED_ACTIVITY)) {
+                // Wait for the broadcast action
+                boolean testPassed = receiver
+                        .getBroadcastReceivedVariable(ACTION_TEST_VIEW_SANDBOX_NOT_ALLOWED_PASSED)
+                        .block(TEST_VIEW_SANDBOX_ALLOWED_TIMEOUT_MS);
 
-            // Wait for the broadcast action
-            boolean testPassed = receiver
-                    .getBroadcastReceivedVariable(ACTION_TEST_VIEW_SANDBOX_NOT_ALLOWED_PASSED)
-                    .block(TEST_VIEW_SANDBOX_ALLOWED_TIMEOUT_MS);
-
-            assertThat(testPassed).isTrue();
+                assertThat(testPassed).isTrue();
+            }
         }
     }
 
     @Test
-    public void testNoSandbox_viewApiForLetterboxedActivityOptOut() throws Exception {
+    public void testNoSandbox_viewApiForLetterboxedActivityOptOut() {
         // Enable OVERRIDE_SANDBOX_VIEW_BOUNDS_APIS changeId for the test application
-        try (var compatChange = new CompatChangeCloseable(
+        try (var aspectRatio = new DisplayAspectRatioCloseable(ORIENTATION_LANDSCAPE, 2.0f);
+             var compatChange = new CompatChangeCloseable(
                 OVERRIDE_SANDBOX_VIEW_BOUNDS_APIS,
                 TEST_VIEW_SANDBOX_OPT_OUT_ACTIVITY.getPackageName());
              var receiver = new BroadcastReceiverCloseable(mContext,
                      ACTION_TEST_VIEW_SANDBOX_OPT_OUT_PASSED)) {
-            // Make sure aspect ratio of the screen is correct to enforce letterboxing for
-            // portrait only application
-            syncChangeAspectRatio(2.0f, ORIENTATION_LANDSCAPE);
 
-            // Start activity in a separate task
-            launchActivity(TEST_VIEW_SANDBOX_OPT_OUT_ACTIVITY);
+            try (var session = new ActivitySessionCloseable(TEST_VIEW_SANDBOX_OPT_OUT_ACTIVITY)) {
+                // Wait for the broadcast action
+                boolean testPassed = receiver
+                        .getBroadcastReceivedVariable(ACTION_TEST_VIEW_SANDBOX_OPT_OUT_PASSED)
+                        .block(TEST_VIEW_SANDBOX_OPT_OUT_TIMEOUT_MS);
 
-            // Wait for the broadcast action
-            boolean testPassed = receiver
-                    .getBroadcastReceivedVariable(ACTION_TEST_VIEW_SANDBOX_OPT_OUT_PASSED)
-                    .block(TEST_VIEW_SANDBOX_OPT_OUT_TIMEOUT_MS);
-
-            assertThat(testPassed).isTrue();
+                assertThat(testPassed).isTrue();
+            }
         }
-    }
-
-    private void syncChangeAspectRatio(final float aspectRatio, final int orientation) {
-        Size originalDisplaySize = mDisplayMetricsSession.getInitialDisplayMetrics().getSize();
-        mDisplayMetricsSession.changeAspectRatio(aspectRatio, orientation);
-        mWmState.waitForWithAmState(wmState -> {
-            Size currentDisplaySize = mDisplayMetricsSession.getDisplayMetrics().getSize();
-            return !originalDisplaySize.equals(currentDisplaySize);
-        }, "waiting for display changing aspect ratio");
     }
 
     // =================
@@ -838,7 +778,7 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
     @Test
     @EnableCompatChanges({ActivityInfo.ALWAYS_SANDBOX_DISPLAY_APIS})
     public void testSandboxForResizableActivityAlwaysSandboxDisplayApisEnabled() {
-        runLetterboxSandboxTest(RESIZEABLE_PORTRAIT_ACTIVITY, /* isSandboxed= */ true);
+        runLetterboxSandboxTest(RESIZEABLE_PORTRAIT_ACTIVITY, /* isSandboxed */ true);
     }
 
     /**
@@ -848,7 +788,7 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
     @Test
     public void testSandboxResizableActivityAlwaysSandboxDeviceConfigFlagEmpty() {
         setAlwaysConstrainDisplayApisFlag("");
-        runLetterboxSandboxTest(RESIZEABLE_PORTRAIT_ACTIVITY, /* isSandboxed= */ false);
+        runLetterboxSandboxTest(RESIZEABLE_PORTRAIT_ACTIVITY, /* isSandboxed */ false);
     }
 
     /**
@@ -861,7 +801,7 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
         ComponentName activity = RESIZEABLE_PORTRAIT_ACTIVITY;
         setAlwaysConstrainDisplayApisFlag(
                 "com.android.other::," + activity.getPackageName() + "::");
-        runLetterboxSandboxTest(activity, /* isSandboxed= */ true);
+        runLetterboxSandboxTest(activity, /* isSandboxed */ true);
     }
 
     /**
@@ -872,7 +812,7 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
     @Test
     @EnableCompatChanges({ActivityInfo.OVERRIDE_MIN_ASPECT_RATIO})
     public void testOverrideMinAspectRatioMissingSpecificOverride() {
-        runMinAspectRatioTest(NON_RESIZEABLE_PORTRAIT_ACTIVITY, /* expected= */ 0);
+        runMinAspectRatioTest(NON_RESIZEABLE_PORTRAIT_ACTIVITY, /* expected */ 0);
     }
 
     /**
@@ -882,7 +822,7 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
     @Test
     @EnableCompatChanges({ActivityInfo.OVERRIDE_MIN_ASPECT_RATIO_LARGE})
     public void testOverrideMinAspectRatioMissingGeneralOverride() {
-        runMinAspectRatioTest(NON_RESIZEABLE_PORTRAIT_ACTIVITY, /* expected= */ 0);
+        runMinAspectRatioTest(NON_RESIZEABLE_PORTRAIT_ACTIVITY, /* expected */ 0);
     }
 
     /**
@@ -893,7 +833,7 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
     @EnableCompatChanges({ActivityInfo.OVERRIDE_MIN_ASPECT_RATIO,
             ActivityInfo.OVERRIDE_MIN_ASPECT_RATIO_LARGE})
     public void testOverrideMinAspectRatioForLandscapeActivity() {
-        runMinAspectRatioTest(NON_RESIZEABLE_LANDSCAPE_ACTIVITY, /* expected= */ 0);
+        runMinAspectRatioTest(NON_RESIZEABLE_LANDSCAPE_ACTIVITY, /* expected */ 0);
     }
 
     /**
@@ -905,7 +845,7 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
             ActivityInfo.OVERRIDE_MIN_ASPECT_RATIO_LARGE})
     @DisableCompatChanges({ActivityInfo.OVERRIDE_MIN_ASPECT_RATIO_PORTRAIT_ONLY})
     public void testOverrideMinAspectRatioForNonFixedOrientationActivityPortraitOnlyDisabled() {
-        runMinAspectRatioTest(NON_RESIZEABLE_NON_FIXED_ORIENTATION_ACTIVITY, /* expected= */
+        runMinAspectRatioTest(NON_RESIZEABLE_NON_FIXED_ORIENTATION_ACTIVITY, /* expected */
                 OVERRIDE_MIN_ASPECT_RATIO_LARGE_VALUE);
     }
 
@@ -918,7 +858,7 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
             ActivityInfo.OVERRIDE_MIN_ASPECT_RATIO_LARGE})
     @DisableCompatChanges({ActivityInfo.OVERRIDE_MIN_ASPECT_RATIO_PORTRAIT_ONLY})
     public void testOverrideMinAspectRatioForLandscapeActivityPortraitOnlyDisabled() {
-        runMinAspectRatioTest(NON_RESIZEABLE_LANDSCAPE_ACTIVITY, /* expected= */
+        runMinAspectRatioTest(NON_RESIZEABLE_LANDSCAPE_ACTIVITY, /* expected */
                 OVERRIDE_MIN_ASPECT_RATIO_LARGE_VALUE);
     }
 
@@ -930,7 +870,7 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
     @EnableCompatChanges({ActivityInfo.OVERRIDE_MIN_ASPECT_RATIO,
             ActivityInfo.OVERRIDE_MIN_ASPECT_RATIO_LARGE})
     public void testOverrideMinAspectRatioForNonFixedOrientationActivity() {
-        runMinAspectRatioTest(NON_RESIZEABLE_NON_FIXED_ORIENTATION_ACTIVITY, /* expected= */ 0);
+        runMinAspectRatioTest(NON_RESIZEABLE_NON_FIXED_ORIENTATION_ACTIVITY, /* expected */ 0);
     }
 
     /**
@@ -942,7 +882,7 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
             ActivityInfo.OVERRIDE_MIN_ASPECT_RATIO_LARGE})
     public void testOverrideMinAspectRatioLargeAspectRatio() {
         runMinAspectRatioTest(NON_RESIZEABLE_PORTRAIT_ACTIVITY,
-                /* expected= */ OVERRIDE_MIN_ASPECT_RATIO_LARGE_VALUE);
+                /* expected */ OVERRIDE_MIN_ASPECT_RATIO_LARGE_VALUE);
     }
 
     /**
@@ -954,7 +894,7 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
             ActivityInfo.OVERRIDE_MIN_ASPECT_RATIO_MEDIUM})
     public void testOverrideMinAspectRatioMediumAspectRatio() {
         runMinAspectRatioTest(NON_RESIZEABLE_PORTRAIT_ACTIVITY,
-                /* expected= */ OVERRIDE_MIN_ASPECT_RATIO_MEDIUM_VALUE);
+                /* expected */ OVERRIDE_MIN_ASPECT_RATIO_MEDIUM_VALUE);
     }
 
     /**
@@ -967,7 +907,7 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
             ActivityInfo.OVERRIDE_MIN_ASPECT_RATIO_MEDIUM})
     public void testOverrideMinAspectRatioBothAspectRatios() {
         runMinAspectRatioTest(NON_RESIZEABLE_PORTRAIT_ACTIVITY,
-                /* expected= */ OVERRIDE_MIN_ASPECT_RATIO_LARGE_VALUE);
+                /* expected */ OVERRIDE_MIN_ASPECT_RATIO_LARGE_VALUE);
     }
 
     /**
@@ -979,7 +919,7 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
             ActivityInfo.OVERRIDE_MIN_ASPECT_RATIO_LARGE})
     public void testOverrideMinAspectRatioActivityMinAspectRatioSmallerThanOverride() {
         runMinAspectRatioTest(NON_RESIZEABLE_ASPECT_RATIO_ACTIVITY,
-                /* expected= */ OVERRIDE_MIN_ASPECT_RATIO_LARGE_VALUE);
+                /* expected */ OVERRIDE_MIN_ASPECT_RATIO_LARGE_VALUE);
     }
 
     /**
@@ -991,7 +931,20 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
             ActivityInfo.OVERRIDE_MIN_ASPECT_RATIO_MEDIUM})
     public void testOverrideMinAspectRatioActivityMinAspectRatioLargerThanOverride() {
         runMinAspectRatioTest(NON_RESIZEABLE_ASPECT_RATIO_ACTIVITY,
-                /* expected= */ ACTIVITY_MIN_ASPECT_RATIO);
+                /* expected */ ACTIVITY_MIN_ASPECT_RATIO);
+    }
+
+    private boolean isCameraCompatForceRotationTreatmentConfigEnabled() {
+        return getBooleanConfig("config_isWindowManagerCameraCompatTreatmentEnabled");
+    }
+
+    private boolean isPolicyForIgnoringRequestedOrientationEnabled() {
+        return getBooleanConfig("config_letterboxIsPolicyForIgnoringRequestedOrientationEnabled");
+    }
+
+    private boolean getBooleanConfig(String configName) {
+        return mContext.getResources().getBoolean(
+                Resources.getSystem().getIdentifier(configName, "bool", "android"));
     }
 
     /**
@@ -1000,20 +953,19 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
      * original size.
      *
      * @param activity                    the activity under test.
-     * @param windowingMode               the launch windowing mode for the activity
      * @param inSizeCompatModeAfterResize if the activity should be in size compat mode after
      *                                    resizing the display
      */
-    private void runSizeCompatTest(ComponentName activity, int windowingMode,
-            boolean inSizeCompatModeAfterResize) {
-        mWmState.computeState();
-        WindowManagerState.DisplayContent originalDC = mWmState.getDisplay(DEFAULT_DISPLAY);
+    private void runSizeCompatTest(ComponentName activity, boolean inSizeCompatModeAfterResize) {
+        try (var session = new ActivitySessionCloseable(activity)) {
+            runSizeCompatTestForActivity(activity, /* resizeRatio */ 0.5,
+                    inSizeCompatModeAfterResize);
+        }
 
-        runSizeCompatTest(activity, windowingMode, /* resizeRatio= */ 0.5,
-                inSizeCompatModeAfterResize);
-        waitForRestoreDisplay(originalDC);
-        runSizeCompatTest(activity, windowingMode, /* resizeRatio= */ 2,
-                inSizeCompatModeAfterResize);
+        try (var session = new ActivitySessionCloseable(activity)) {
+            runSizeCompatTestForActivity(activity, /* resizeRatio */ 2,
+                    inSizeCompatModeAfterResize);
+        }
     }
 
     /**
@@ -1021,42 +973,31 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
      * After resizing the display, verifies if activity is in size compat mode or not
      *
      * @param activity                    the activity under test
-     * @param windowingMode               the launch windowing mode for the activity
      * @param resizeRatio                 the ratio to resize the display
      * @param inSizeCompatModeAfterResize if the activity should be in size compat mode after
      *                                    resizing the display
      */
-    private void runSizeCompatTest(ComponentName activity, int windowingMode, double resizeRatio,
-            boolean inSizeCompatModeAfterResize) {
-        launchActivity(activity, windowingMode);
+    private void runSizeCompatTestForActivity(ComponentName activity, final double resizeRatio,
+            final boolean inSizeCompatModeAfterResize) {
 
-        assertSizeCompatMode(activity, /* expectedInSizeCompatMode= */ false);
+        waitAndAssertSizeCompatMode(activity, /* expectedInSizeCompatMode */ false);
 
-        resizeDisplay(activity, resizeRatio);
-
-        assertSizeCompatMode(activity, inSizeCompatModeAfterResize);
-    }
-
-    private void assertSizeCompatMode(ComponentName activity, boolean expectedInSizeCompatMode) {
-        WindowManagerState.Activity activityContainer = mWmState.getActivity(activity);
-        assertNotNull(activityContainer);
-        if (expectedInSizeCompatMode) {
-            assertTrue("The Window must be in size compat mode",
-                    activityContainer.inSizeCompatMode());
-        } else {
-            assertFalse("The Window must not be in size compat mode",
-                    activityContainer.inSizeCompatMode());
+        try (var resized = new DisplaySizeScaleCloseable(resizeRatio, activity)) {
+            assertThat(resized.getInitialDisplayAspectRatio())
+                    .isLessThan(ACTIVITY_LARGE_MIN_ASPECT_RATIO);
+            waitAndAssertSizeCompatMode(activity, inSizeCompatModeAfterResize);
         }
     }
 
-    private void runSizeCompatModeSandboxTest(ComponentName activity,
-            boolean isSandboxed) {
-        runSizeCompatModeSandboxTest(activity, isSandboxed,
-                /* inSizeCompatModeAfterResize= */ true);
+    private void waitAndAssertSizeCompatMode(final ComponentName activity,
+            final boolean expectedInSizeCompatMode) {
+        waitAssertEquals("The window must be inSizeCompatMode==" + expectedInSizeCompatMode,
+                expectedInSizeCompatMode,
+                () -> getActivityWaitState(activity).inSizeCompatMode());
     }
 
     /**
-     * Similar to {@link #runSizeCompatTest(ComponentName, int, boolean)}, but the activity is
+     * Similar to {@link #runSizeCompatTest(ComponentName, boolean)}, but the activity is
      * expected to be in size compat mode after resizing the display.
      *
      * @param activity                    the activity under test
@@ -1070,22 +1011,23 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
      */
     private void runSizeCompatModeSandboxTest(ComponentName activity, boolean isSandboxed,
             boolean inSizeCompatModeAfterResize) {
-        assertThat(getInitialDisplayAspectRatio()).isLessThan(ACTIVITY_LARGE_MIN_ASPECT_RATIO);
+        try (var session = new ActivitySessionCloseable(activity, WINDOWING_MODE_FULLSCREEN)) {
+            runSizeCompatTestForActivity(activity, /* resizeRatio */ 0.5,
+                    inSizeCompatModeAfterResize);
+            assertSandboxedByProvidesMaxBounds(activity, isSandboxed);
+            assertSandboxedByBounds(activity, isSandboxed);
+        }
 
-        mWmState.computeState();
-        WindowManagerState.DisplayContent originalDC = mWmState.getDisplay(DEFAULT_DISPLAY);
-
-        runSizeCompatTest(activity, WINDOWING_MODE_FULLSCREEN, /* resizeRatio= */ 0.5,
-                inSizeCompatModeAfterResize);
-        assertSandboxedByProvidesMaxBounds(activity, isSandboxed);
-        waitForRestoreDisplay(originalDC);
-        runSizeCompatTest(activity, WINDOWING_MODE_FULLSCREEN, /* resizeRatio=*/ 2,
-                inSizeCompatModeAfterResize);
-        assertSandboxedByProvidesMaxBounds(activity, isSandboxed);
+        try (var session = new ActivitySessionCloseable(activity, WINDOWING_MODE_FULLSCREEN)) {
+            runSizeCompatTestForActivity(activity, /* resizeRatio */ 2,
+                    inSizeCompatModeAfterResize);
+            assertSandboxedByProvidesMaxBounds(activity, isSandboxed);
+            assertSandboxedByBounds(activity, isSandboxed);
+        }
     }
 
     /**
-     * Similar to {@link #runSizeCompatModeSandboxTest(ComponentName, boolean)}, but the
+     * Similar to {@link #runSizeCompatModeSandboxTest(ComponentName, boolean, boolean)}, but the
      * activity is put into letterbox mode after resizing the display.
      *
      * @param activityName the activity under test
@@ -1094,30 +1036,18 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
      *                     DisplayArea bounds
      */
     private void runLetterboxSandboxTest(ComponentName activityName, boolean isSandboxed) {
-        assertThat(getInitialDisplayAspectRatio()).isLessThan(ACTIVITY_LARGE_MIN_ASPECT_RATIO);
-        // Initialize display to portrait orientation.
-        final RotationSession rotationSession = createManagedRotationSession();
-        Size originalDisplaySize = mDisplayMetricsSession.getInitialDisplayMetrics().getSize();
-        if (originalDisplaySize.getHeight() < originalDisplaySize.getWidth()) {
-            // Device is landscape
-            rotationSession.set(ROTATION_90);
-        } else if (originalDisplaySize.getHeight() == originalDisplaySize.getWidth()) {
-            // Device is square, so skip this test case (portrait activity will never be
-            // letterboxed)
-            return;
+        try (var aspectRatio = new DisplayAspectRatioCloseable(ORIENTATION_LANDSCAPE, 2.0f)) {
+            assertThat(aspectRatio.getInitialDisplayAspectRatio())
+                    .isLessThan(ACTIVITY_LARGE_MIN_ASPECT_RATIO);
+
+            try (var session = new ActivitySessionCloseable(activityName)) {
+                assertSandboxedByProvidesMaxBounds(activityName, isSandboxed);
+            }
         }
-
-        // Launch portrait activity
-        launchActivity(activityName, WINDOWING_MODE_FULLSCREEN);
-
-        // Change display to landscape should force portrait resizeable activity into letterbox.
-        changeDisplayAspectRatioAndWait(activityName, /* aspectRatio= */ 2);
-        assertSandboxedByProvidesMaxBounds(activityName, isSandboxed);
     }
 
     private void assertSandboxedByBounds(ComponentName activityName, boolean isSandboxed) {
-        mWmState.computeState(new WaitForValidActivityState(activityName));
-        final WindowManagerState.Activity activity = mWmState.getActivity(activityName);
+        final WindowManagerState.Activity activity = getActivityWaitState(activityName);
         assertNotNull(activity);
         final Rect activityBounds = activity.getBounds();
         final Rect maxBounds = activity.getMaxBounds();
@@ -1134,9 +1064,9 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
         }
     }
 
-    private void assertSandboxedByProvidesMaxBounds(ComponentName activityName, boolean isSandboxed) {
-        mWmState.computeState(new WaitForValidActivityState(activityName));
-        final WindowManagerState.Activity activity = mWmState.getActivity(activityName);
+    private void assertSandboxedByProvidesMaxBounds(ComponentName activityName,
+            boolean isSandboxed) {
+        final WindowManagerState.Activity activity = getActivityWaitState(activityName);
         assertNotNull(activity);
         if (isSandboxed) {
             assertTrue(
@@ -1198,7 +1128,7 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
         runWithShellPermission(
                 () -> {
                     DeviceConfig.setProperty(NAMESPACE_CONSTRAIN_DISPLAY_APIS, flagName,
-                            value, /* makeDefault= */ false);
+                            value, /* makeDefault */ false);
                 });
     }
 
@@ -1210,101 +1140,18 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
      * @param expected the expected min aspect ratio in both portrait and landscape displays.
      */
     private void runMinAspectRatioTest(ComponentName activity, float expected) {
-        launchActivity(activity);
-        WindowManagerState.Activity activityContainer = mWmState.getActivity(activity);
-        assertNotNull(activityContainer);
-        assertEquals(expected,
-                activityContainer.getMinAspectRatio(),
-                FLOAT_EQUALITY_DELTA);
-    }
-
-    /**
-     * Restore the display size and ensure configuration changes are complete.
-     */
-    private void restoreDisplay(ComponentName activity) {
-        final Rect originalBounds = mWmState.getActivity(activity).getBounds();
-        mDisplayMetricsSession.restoreDisplayMetrics();
-        // Ensure configuration changes are complete after resizing the display.
-        waitForActivityBoundsChanged(activity, originalBounds);
-    }
-
-    /**
-     * Wait for the display to be restored to the original display content.
-     */
-    private void waitForRestoreDisplay(WindowManagerState.DisplayContent originalDisplayContent) {
-        mWmState.waitForWithAmState(wmState -> {
-            mDisplayMetricsSession.restoreDisplayMetrics();
-            WindowManagerState.DisplayContent dc = mWmState.getDisplay(DEFAULT_DISPLAY);
-            return dc.equals(originalDisplayContent);
-        }, "waiting for display to be restored");
-    }
-
-
-    /**
-     * Resize the display and ensure configuration changes are complete.
-     */
-    private void resizeDisplay(ComponentName activity, double sizeRatio) {
-        Size originalDisplaySize = mDisplayMetricsSession.getInitialDisplayMetrics().getSize();
-        final Rect originalBounds = mWmState.getActivity(activity).getBounds();
-        mDisplayMetricsSession.changeDisplayMetrics(sizeRatio, /* densityRatio= */ 1);
-        mWmState.computeState(new WaitForValidActivityState(activity));
-
-        Size currentDisplaySize = mDisplayMetricsSession.getDisplayMetrics().getSize();
-        assumeFalse("If a display size is capped, resizing may be a no-op",
-                originalDisplaySize.equals(currentDisplaySize));
-
-        // Ensure configuration changes are complete after resizing the display.
-        waitForActivityBoundsChanged(activity, originalBounds);
-    }
-
-    /**
-     * Resize the display to given aspect ratio in landscape orientation, and ensure configuration
-     * changes are complete.
-     */
-    private void changeDisplayAspectRatioAndWait(ComponentName activity, double aspectRatio) {
-        mWmState.computeState(new WaitForValidActivityState(activity));
-        Size originalDisplaySize = mDisplayMetricsSession.getInitialDisplayMetrics().getSize();
-        final Rect originalBounds = mWmState.getActivity(activity).getBounds();
-        mDisplayMetricsSession.changeAspectRatio(aspectRatio,
-                /* orientation= */ ORIENTATION_LANDSCAPE);
-        mWmState.computeState(new WaitForValidActivityState(activity));
-
-        Size currentDisplaySize = mDisplayMetricsSession.getDisplayMetrics().getSize();
-        assumeFalse("If a display size is capped, resizing may be a no-op",
-                originalDisplaySize.equals(currentDisplaySize));
-
-        // Ensure configuration changes are complete after resizing the display.
-        waitForActivityBoundsChanged(activity, originalBounds);
-    }
-
-    /**
-     * Waits until the given activity has updated task bounds.
-     */
-    private void waitForActivityBoundsChanged(ComponentName activityName, Rect priorActivityBounds) {
-        mWmState.waitForWithAmState(wmState -> {
-            WindowManagerState.Activity activity = wmState.getActivity(activityName);
-            return activity != null && !activity.getBounds().equals(priorActivityBounds);
-        }, "checking activity bounds updated");
-    }
-
-    private float getInitialDisplayAspectRatio() {
-        Size size = mDisplayMetricsSession.getInitialDisplayMetrics().getSize();
-        return Math.max(size.getHeight(), size.getWidth())
-                / (float) (Math.min(size.getHeight(), size.getWidth()));
-    }
-
-    private void launchActivity(ComponentName activity) {
-        launchActivity(activity, WINDOWING_MODE_FULLSCREEN);
-    }
-
-    private void launchActivity(ComponentName activity, int windowingMode) {
-        launchActivityOnDisplay(activity, windowingMode, DEFAULT_DISPLAY);
+        try (var session = new ActivitySessionCloseable(activity)) {
+            assertNotNull(session.getActivityState());
+            assertEquals(expected,
+                    session.getActivityState().getMinAspectRatio(),
+                    FLOAT_EQUALITY_DELTA);
+        }
     }
 
     private long getPackageVersion(ComponentName activity) {
         try {
             return mContext.getPackageManager().getPackageInfo(activity.getPackageName(),
-                    /* flags= */ 0).getLongVersionCode();
+                    /* flags */ 0).getLongVersionCode();
         } catch (PackageManager.NameNotFoundException e) {
             throw new RuntimeException(e);
         }
@@ -1314,43 +1161,45 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
         return new ComponentName(getInstrumentation().getContext(), activity);
     }
 
-    public static class ResizeablePortraitActivity extends FocusableActivity {
+    public static class ResizeablePortraitActivity extends AbstractLifecycleLogActivity {
     }
 
-    public static class ResponsiveActivity extends FocusableActivity {
+    public static class ResponsiveActivity extends AbstractLifecycleLogActivity {
     }
 
-    public static class NonResizeablePortraitActivity extends FocusableActivity {
+    public static class NonResizeablePortraitActivity extends AbstractLifecycleLogActivity {
     }
 
-    public static class NonResizeableLandscapeActivity extends FocusableActivity {
+    public static class NonResizeableLandscapeActivity extends AbstractLifecycleLogActivity {
     }
 
-    public static class NonResizeableNonFixedOrientationActivity extends FocusableActivity {
+    public static class NonResizeableNonFixedOrientationActivity extends
+            AbstractLifecycleLogActivity {
     }
 
-    public static class NonResizeableAspectRatioActivity extends FocusableActivity {
+    public static class NonResizeableAspectRatioActivity extends AbstractLifecycleLogActivity {
     }
 
-    public static class NonResizeableLargeAspectRatioActivity extends FocusableActivity {
+    public static class NonResizeableLargeAspectRatioActivity extends AbstractLifecycleLogActivity {
     }
 
-    public static class SupportsSizeChangesPortraitActivity extends FocusableActivity {
+    public static class SupportsSizeChangesPortraitActivity extends AbstractLifecycleLogActivity {
     }
 
-    public static class ResizeableLeftActivity extends FocusableActivity {
+    public static class ResizeableLeftActivity extends AbstractLifecycleLogActivity {
     }
 
-    public static class ResizeableRightActivity extends FocusableActivity {
+    public static class ResizeableRightActivity extends AbstractLifecycleLogActivity {
     }
 
-    public static class NoPropertyChangeOrientationWhileRelaunchingActivity extends Activity {
+    public static class NoPropertyChangeOrientationWhileRelaunchingActivity extends
+            AbstractLifecycleLogActivity {
 
         private static boolean sHasChangeOrientationInOnResume;
 
         @Override
-        protected void onCreate(Bundle savedInstanceState) {
-            super.onStart();
+        protected void onCreate(Bundle instance) {
+            super.onCreate(instance);
             // When OVERRIDE_ENABLE_COMPAT_IGNORE_REQUESTED_ORIENTATION is enabled this request
             // should be ignored if sHasChangeOrientationInOnResume is true.
             setRequestedOrientation(SCREEN_ORIENTATION_LANDSCAPE);
@@ -1364,7 +1213,6 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
                 sHasChangeOrientationInOnResume = true;
             }
         }
-
     }
 
     /**
@@ -1395,30 +1243,8 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
         }
 
         @Override
-        public void close() throws Exception {
+        public void close() {
             mContext.unregisterReceiver(mAppCommunicator);
-        }
-    }
-
-    /**
-     * AutoClosable class used for try-with-resources compat change tests, which require a separate
-     * application task to be started.
-     */
-    private static class CompatChangeCloseable implements AutoCloseable {
-        private final long mChangeId;
-        private final String mPackageName;
-
-        CompatChangeCloseable(final long changeId, String packageName) {
-            this.mChangeId = changeId;
-            this.mPackageName = packageName;
-
-            // Enable change
-            executeShellCommand("am compat enable " + changeId + " " + packageName);
-        }
-
-        @Override
-        public void close() throws Exception {
-            executeShellCommand("am compat disable " + mChangeId + " " + mPackageName);
         }
     }
 }
