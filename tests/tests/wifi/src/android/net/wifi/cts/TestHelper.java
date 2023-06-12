@@ -74,6 +74,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Class to hold helper methods that are repeated across wifi CTS tests.
@@ -792,16 +793,17 @@ public class TestHelper {
         TestLocalOnlyListener localOnlyListener = new TestLocalOnlyListener();
         mWifiManager.addLocalOnlyConnectionFailureListener(Executors.newSingleThreadExecutor(),
                 localOnlyListener);
-
+        AtomicBoolean uiVerified = new AtomicBoolean(false);
         // Fork a thread to handle the UI interactions.
         Thread uiThread = new Thread(() -> {
             try {
                 handleUiInteractions(network, shouldUserReject);
+                uiVerified.set(true);
             } catch (Throwable e /* catch assertions & exceptions */) {
                 try {
                     mConnectivityManager.unregisterNetworkCallback(testNetworkCallback);
                 } catch (IllegalArgumentException ie) { }
-                throw e;
+                Log.e(TAG, "handleUiInteractions failed: " + e);
             }
         });
 
@@ -856,6 +858,7 @@ public class TestHelper {
             } catch (IllegalArgumentException ie) { }
             fail("UI interaction interrupted");
         }
+        assertThat(uiVerified.get()).isTrue();
         mWifiManager.removeLocalOnlyConnectionFailureListener(localOnlyListener);
         return testNetworkCallback;
     }
