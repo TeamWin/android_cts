@@ -53,7 +53,7 @@ import android.os.RemoteException;
 import androidx.test.filters.SdkSuppress;
 import androidx.test.runner.AndroidJUnit4;
 
-import com.android.compatibility.common.util.NonMainlineTest;
+import com.android.modules.utils.build.SdkLevel;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -70,13 +70,8 @@ import java.util.concurrent.Executor;
  */
 @RunWith(AndroidJUnit4.class)
 @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
-@NonMainlineTest
 public class SharedConnectivityManagerTest {
     private static final long DEVICE_ID = 11L;
-    private static final NetworkProviderInfo NETWORK_PROVIDER_INFO =
-            new NetworkProviderInfo.Builder("TEST_NAME", "TEST_MODEL")
-                    .setDeviceType(DEVICE_TYPE_TABLET).setConnectionStrength(2)
-                    .setBatteryPercentage(50).setBatteryCharging(false).build();
     private static final int NETWORK_TYPE = NETWORK_TYPE_CELLULAR;
     private static final String NETWORK_NAME = "TEST_NETWORK";
     private static final String HOTSPOT_SSID = "TEST_SSID";
@@ -89,6 +84,7 @@ public class SharedConnectivityManagerTest {
     private static final String SERVICE_PACKAGE_NAME = "TEST_PACKAGE";
     private static final String SERVICE_INTENT_ACTION = "TEST_INTENT_ACTION";
 
+    private NetworkProviderInfo mNetworkProviderInfo;
 
     @Mock
     Context mContext;
@@ -110,6 +106,18 @@ public class SharedConnectivityManagerTest {
     public void setUp() {
         MockitoAnnotations.initMocks(this);
         setResources(mContext);
+
+        NetworkProviderInfo.Builder builder =
+                new NetworkProviderInfo.Builder("TEST_NAME", "TEST_MODEL")
+                        .setDeviceType(DEVICE_TYPE_TABLET)
+                        .setConnectionStrength(2)
+                        .setBatteryPercentage(50);
+
+        if (SdkLevel.isAtLeastV()) {
+            builder.setBatteryCharging(false);
+        }
+
+        mNetworkProviderInfo = builder.build();
     }
 
     @Test
@@ -564,7 +572,7 @@ public class SharedConnectivityManagerTest {
     private HotspotNetwork buildHotspotNetwork() {
         HotspotNetwork.Builder builder = new HotspotNetwork.Builder()
                 .setDeviceId(DEVICE_ID)
-                .setNetworkProviderInfo(NETWORK_PROVIDER_INFO)
+                .setNetworkProviderInfo(mNetworkProviderInfo)
                 .setHostNetworkType(NETWORK_TYPE)
                 .setNetworkName(NETWORK_NAME)
                 .setHotspotSsid(HOTSPOT_SSID);
@@ -574,7 +582,7 @@ public class SharedConnectivityManagerTest {
 
     private KnownNetwork buildKnownNetwork() {
         KnownNetwork.Builder builder = new KnownNetwork.Builder().setNetworkSource(NETWORK_SOURCE)
-                .setSsid(SSID).setNetworkProviderInfo(NETWORK_PROVIDER_INFO);
+                .setSsid(SSID).setNetworkProviderInfo(mNetworkProviderInfo);
         Arrays.stream(SECURITY_TYPES).forEach(builder::addSecurityType);
         return builder.build();
     }

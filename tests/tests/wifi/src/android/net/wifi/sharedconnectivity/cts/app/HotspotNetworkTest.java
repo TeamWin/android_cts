@@ -38,8 +38,9 @@ import android.util.ArraySet;
 import androidx.test.filters.SdkSuppress;
 import androidx.test.runner.AndroidJUnit4;
 
-import com.android.compatibility.common.util.NonMainlineTest;
+import com.android.modules.utils.build.SdkLevel;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -51,13 +52,8 @@ import java.util.Arrays;
 
 @RunWith(AndroidJUnit4.class)
 @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
-@NonMainlineTest
 public class HotspotNetworkTest {
     private static final long DEVICE_ID = 11L;
-    private static final NetworkProviderInfo NETWORK_PROVIDER_INFO =
-            new NetworkProviderInfo.Builder("TEST_NAME", "TEST_MODEL")
-                    .setDeviceType(DEVICE_TYPE_TABLET).setConnectionStrength(2)
-                    .setBatteryPercentage(50).setBatteryCharging(false).build();
     private static final int NETWORK_TYPE = NETWORK_TYPE_CELLULAR;
     private static final String NETWORK_NAME = "TEST_NETWORK";
     private static final String HOTSPOT_SSID = "TEST_SSID";
@@ -67,15 +63,36 @@ public class HotspotNetworkTest {
     private static final int BUNDLE_VALUE = 1;
 
     private static final long DEVICE_ID_1 = 111L;
-    private static final NetworkProviderInfo NETWORK_PROVIDER_INFO1 =
-            new NetworkProviderInfo.Builder("TEST_NAME", "TEST_MODEL")
-                    .setDeviceType(DEVICE_TYPE_PHONE).setConnectionStrength(2)
-                    .setBatteryPercentage(50).setBatteryCharging(false).build();
     private static final int NETWORK_TYPE_1 = NETWORK_TYPE_WIFI;
     private static final String NETWORK_NAME_1 = "TEST_NETWORK1";
     private static final String HOTSPOT_SSID_1 = "TEST_SSID1";
     private static final String HOTSPOT_BSSID_1 = "TEST _BSSID1";
     private static final int[] HOTSPOT_SECURITY_TYPES_1 = {SECURITY_TYPE_PSK, SECURITY_TYPE_EAP};
+
+    private NetworkProviderInfo mNetworkProviderInfo;
+    private NetworkProviderInfo mNetworkProviderInfo1;
+
+    @Before
+    public void setUp() {
+        NetworkProviderInfo.Builder builder =
+                new NetworkProviderInfo.Builder("TEST_NAME", "TEST_MODEL")
+                        .setDeviceType(DEVICE_TYPE_TABLET)
+                        .setConnectionStrength(2)
+                        .setBatteryPercentage(50);
+        NetworkProviderInfo.Builder builder1 =
+                new NetworkProviderInfo.Builder("TEST_NAME_1", "TEST_MODEL_1")
+                        .setDeviceType(DEVICE_TYPE_PHONE)
+                        .setConnectionStrength(3)
+                        .setBatteryPercentage(33);
+
+        if (SdkLevel.isAtLeastV()) {
+            builder.setBatteryCharging(false);
+            builder1.setBatteryCharging(true);
+        }
+
+        mNetworkProviderInfo = builder.build();
+        mNetworkProviderInfo1 = builder1.build();
+    }
 
     @Test
     public void parcelOperation() {
@@ -104,7 +121,7 @@ public class HotspotNetworkTest {
         HotspotNetwork.Builder builder = buildHotspotNetworkBuilder(true).setDeviceId(DEVICE_ID_1);
         assertThat(builder.build()).isNotEqualTo(network1);
 
-        builder = buildHotspotNetworkBuilder(true).setNetworkProviderInfo(NETWORK_PROVIDER_INFO1);
+        builder = buildHotspotNetworkBuilder(true).setNetworkProviderInfo(mNetworkProviderInfo1);
         assertThat(builder.build()).isNotEqualTo(network1);
 
         builder = buildHotspotNetworkBuilder(true).setHostNetworkType(NETWORK_TYPE_1);
@@ -133,7 +150,7 @@ public class HotspotNetworkTest {
         Arrays.stream(HOTSPOT_SECURITY_TYPES).forEach(securityTypes::add);
 
         assertThat(network.getDeviceId()).isEqualTo(DEVICE_ID);
-        assertThat(network.getNetworkProviderInfo()).isEqualTo(NETWORK_PROVIDER_INFO);
+        assertThat(network.getNetworkProviderInfo()).isEqualTo(mNetworkProviderInfo);
         assertThat(network.getHostNetworkType()).isEqualTo(NETWORK_TYPE);
         assertThat(network.getNetworkName()).isEqualTo(NETWORK_NAME);
         assertThat(network.getHotspotSsid()).isEqualTo(HOTSPOT_SSID);
@@ -153,7 +170,7 @@ public class HotspotNetworkTest {
     @Test
     public void deviceIdNotSet_shouldThrowException() {
         HotspotNetwork.Builder builder = new HotspotNetwork.Builder();
-        builder.setNetworkProviderInfo(NETWORK_PROVIDER_INFO);
+        builder.setNetworkProviderInfo(mNetworkProviderInfo);
 
         Exception e = assertThrows(IllegalArgumentException.class, builder::build);
         assertThat(e.getMessage()).contains("DeviceId must be set");
@@ -162,7 +179,7 @@ public class HotspotNetworkTest {
     @Test
     public void illegalNetworkTypeValueIsSet_shouldThrowException() {
         HotspotNetwork.Builder builder = new HotspotNetwork.Builder();
-        builder.setNetworkProviderInfo(NETWORK_PROVIDER_INFO)
+        builder.setNetworkProviderInfo(mNetworkProviderInfo)
                 .setDeviceId(DEVICE_ID).setHostNetworkType(1000);
 
         Exception e = assertThrows(IllegalArgumentException.class, builder::build);
@@ -172,7 +189,7 @@ public class HotspotNetworkTest {
     @Test
     public void networkNameNotSet_shouldThrowException() {
         HotspotNetwork.Builder builder = new HotspotNetwork.Builder();
-        builder.setNetworkProviderInfo(NETWORK_PROVIDER_INFO)
+        builder.setNetworkProviderInfo(mNetworkProviderInfo)
                 .setDeviceId(DEVICE_ID).setHostNetworkType(NETWORK_TYPE);
 
         Exception e = assertThrows(IllegalArgumentException.class, builder::build);
@@ -196,7 +213,7 @@ public class HotspotNetworkTest {
                 .setExtras(buildBundle());
         Arrays.stream(HOTSPOT_SECURITY_TYPES).forEach(builder::addHotspotSecurityType);
         if (withNetworkProviderInfo) {
-            builder.setNetworkProviderInfo(NETWORK_PROVIDER_INFO);
+            builder.setNetworkProviderInfo(mNetworkProviderInfo);
         }
         return builder;
     }

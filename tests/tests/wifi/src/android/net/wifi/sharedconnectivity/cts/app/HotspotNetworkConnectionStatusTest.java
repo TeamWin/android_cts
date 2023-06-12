@@ -36,8 +36,9 @@ import android.os.Parcel;
 
 import androidx.test.filters.SdkSuppress;
 
-import com.android.compatibility.common.util.NonMainlineTest;
+import com.android.modules.utils.build.SdkLevel;
 
+import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -46,13 +47,8 @@ import java.util.Arrays;
  * CTS tests for {@link HotspotNetworkConnectionStatus}.
  */
 @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
-@NonMainlineTest
 public class HotspotNetworkConnectionStatusTest {
     private static final long DEVICE_ID = 11L;
-    private static final NetworkProviderInfo NETWORK_PROVIDER_INFO =
-            new NetworkProviderInfo.Builder("TEST_NAME", "TEST_MODEL")
-                    .setDeviceType(DEVICE_TYPE_TABLET).setConnectionStrength(2)
-                    .setBatteryPercentage(50).setBatteryCharging(false).build();
     private static final int NETWORK_TYPE = NETWORK_TYPE_CELLULAR;
     private static final String NETWORK_NAME = "TEST_NETWORK";
     private static final String HOTSPOT_SSID = "TEST_SSID";
@@ -61,6 +57,23 @@ public class HotspotNetworkConnectionStatusTest {
     private static final long DEVICE_ID_1 = 111L;
     private static final String BUNDLE_KEY = "INT-KEY";
     private static final int BUNDLE_VALUE = 1;
+
+    private NetworkProviderInfo mNetworkProviderInfo;
+
+    @Before
+    public void setUp() {
+        NetworkProviderInfo.Builder builder =
+                new NetworkProviderInfo.Builder("TEST_NAME", "TEST_MODEL")
+                        .setDeviceType(DEVICE_TYPE_TABLET)
+                        .setConnectionStrength(2)
+                        .setBatteryPercentage(50);
+
+        if (SdkLevel.isAtLeastV()) {
+            builder.setBatteryCharging(false);
+        }
+
+        mNetworkProviderInfo = builder.build();
+    }
 
     @Test
     public void parcelOperation() {
@@ -137,7 +150,7 @@ public class HotspotNetworkConnectionStatusTest {
     private HotspotNetwork.Builder buildHotspotNetworkBuilder() {
         HotspotNetwork.Builder builder = new HotspotNetwork.Builder()
                 .setDeviceId(DEVICE_ID)
-                .setNetworkProviderInfo(NETWORK_PROVIDER_INFO)
+                .setNetworkProviderInfo(mNetworkProviderInfo)
                 .setHostNetworkType(NETWORK_TYPE)
                 .setNetworkName(NETWORK_NAME)
                 .setHotspotSsid(HOTSPOT_SSID)
