@@ -279,10 +279,8 @@ public class DeviceOwnerKeyManagementTest {
             assertThat(new String(teeAttestation.attestationIdMeid.get()))
                     .isEqualTo(expectedMeid);
         }
-        // TODO: Second IMEI parsing is not supported by external library yet,
-        //  hence skipping for now.
-        /* validateSecondImei(new String(teeAttestation.attestationIdSecondImei.get()),
-                expectedSecondImei); */
+        validateSecondImei(new String(teeAttestation.attestationIdSecondImei.get()),
+                expectedSecondImei);
     }
 
     private void validateAttestationRecord(List<Certificate> attestation, byte[] providedChallenge)
