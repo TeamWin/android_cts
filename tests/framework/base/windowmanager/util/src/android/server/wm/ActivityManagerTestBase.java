@@ -49,6 +49,9 @@ import static android.content.pm.PackageManager.FEATURE_TELEVISION;
 import static android.content.pm.PackageManager.FEATURE_VR_MODE_HIGH_PERFORMANCE;
 import static android.content.pm.PackageManager.FEATURE_WATCH;
 import static android.content.pm.PackageManager.MATCH_DEFAULT_ONLY;
+import static android.content.res.Configuration.ORIENTATION_LANDSCAPE;
+import static android.content.res.Configuration.ORIENTATION_PORTRAIT;
+import static android.content.res.Configuration.ORIENTATION_UNDEFINED;
 import static android.os.UserHandle.USER_ALL;
 import static android.provider.Settings.Secure.IMMERSIVE_MODE_CONFIRMATIONS;
 import static android.server.wm.ActivityLauncher.KEY_ACTIVITY_TYPE;
@@ -112,6 +115,8 @@ import static android.server.wm.second.Components.SECOND_ACTIVITY;
 import static android.server.wm.third.Components.THIRD_ACTIVITY;
 import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.Display.INVALID_DISPLAY;
+import static android.view.Surface.ROTATION_0;
+import static android.view.Surface.ROTATION_90;
 import static android.view.WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
 import static android.view.WindowManager.LayoutParams.TYPE_BASE_APPLICATION;
 import static android.window.DisplayAreaOrganizer.FEATURE_UNDEFINED;
@@ -119,9 +124,11 @@ import static android.window.DisplayAreaOrganizer.FEATURE_UNDEFINED;
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 import static java.lang.Integer.toHexString;
@@ -169,6 +176,8 @@ import android.server.wm.settings.SettingsSession;
 import android.util.DisplayMetrics;
 import android.util.EventLog;
 import android.util.EventLog.Event;
+import android.util.Log;
+import android.util.Pair;
 import android.util.Size;
 import android.view.Display;
 import android.view.View;
@@ -204,10 +213,12 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public abstract class ActivityManagerTestBase {
+    private static final String TAG = ActivityManagerTestBase.class.getSimpleName();
     private static final boolean PRETEND_DEVICE_SUPPORTS_PIP = false;
     private static final boolean PRETEND_DEVICE_SUPPORTS_FREEFORM = false;
     private static final String LOG_SEPARATOR = "LOG_SEPARATOR";
@@ -3006,5 +3017,447 @@ public abstract class ActivityManagerTestBase {
                 overrideDensity = null;
             }
         }
+    }
+
+    /**
+     * Either launches activity via {@link CommandSession.ActivitySessionClient} in case it is
+     * a subclass of {@link CommandSession.BasicTestActivity} (then activity can be destroyed
+     * by means of sending the finish command). Otherwise, launches activity via ADB commands
+     * ({@link #launchActivityOnDisplay}), in this case the activity can be destroyed only as part
+     * of the app package with ADB command `am stop-app`. In this case the activity can be destroyed
+     * only if it is defined in another apk, so the test suit is not destroyed, this is detected
+     * when catching {@link ClassNotFoundException} exception.
+     */
+    public class ActivitySessionCloseable implements AutoCloseable {
+        private final ComponentName mActivityName;
+        @Nullable
+        protected CommandSession.ActivitySession mActivity;
+        @Nullable
+        private CommandSession.ActivitySessionClient mSession;
+
+        ActivitySessionCloseable(final ComponentName activityName) {
+            this(activityName, WINDOWING_MODE_FULLSCREEN);
+        }
+
+        ActivitySessionCloseable(final ComponentName activityName, final int windowingMode) {
+            this(activityName, windowingMode, /* forceCommandActivity */ false);
+        }
+
+        /**
+         * @param activityName can be created with
+         *              {@link android.server.wm.component.ComponentsBase#component}.
+         * @param windowingMode {@link WindowConfiguration.WindowingMode}
+         * @param forceCommandActivity sometimes Activity implements
+         *              {@link CommandSession.BasicTestActivity} but is defined in a different apk,
+         *              so can not be verified if it is a subclass of
+         *              {@link CommandSession.BasicTestActivity}. In this case forceCommandActivity
+         *              argument can be used to ensure that this activity is managed as
+         *              {@link CommandSession.BasicTestActivity}.
+         */
+        ActivitySessionCloseable(final ComponentName activityName, final int windowingMode,
+                final boolean forceCommandActivity) {
+            mActivityName = activityName;
+
+            if (forceCommandActivity || isCommandActivity()) {
+                mSession = new CommandSession.ActivitySessionClient(mContext);
+                mActivity = mSession.startActivity(getLaunchActivityBuilder()
+                                .setUseInstrumentation()
+                                .setWaitForLaunched(true)
+                                .setNewTask(true)
+                                .setMultipleTask(true)
+                                .setWindowingMode(windowingMode)
+                                .setTargetActivity(activityName));
+            } else {
+                launchActivityOnDisplay(activityName, windowingMode, DEFAULT_DISPLAY);
+            }
+            mWmState.computeState(new WaitForValidActivityState(activityName));
+        }
+
+        private boolean isAnotherApp() {
+            try {
+                Class.forName(mActivityName.getClassName());
+                return false;
+            } catch (ClassNotFoundException e) {
+                return true;
+            }
+        }
+
+        private boolean isCommandActivity() {
+            try {
+                var c = Class.forName(mActivityName.getClassName());
+                return CommandSession.BasicTestActivity.class.isAssignableFrom(c);
+            } catch (ClassNotFoundException e) {
+                Log.w(TAG, "Class " + mActivityName.getClassName() + " is not found", e);
+                return false;
+            }
+        }
+
+        @Override
+        public void close() {
+            if (mSession != null && mActivity != null) {
+                mActivity.finish();
+                mSession.close();
+                mWmState.waitForActivityRemoved(mActivityName);
+            } else if (isAnotherApp()) {
+                executeShellCommand("am stop-app " + mActivityName.getPackageName());
+                mWmState.waitForActivityRemoved(mActivityName);
+            } else {
+                Log.w(TAG, "No explicit cleanup possible for " + mActivityName);
+            }
+        }
+
+        WindowManagerState.Activity getActivityState() {
+            return getActivityWaitState(mActivityName);
+        }
+
+        /**
+         * Not null only for {@link CommandSession.BasicTestActivity} activities.
+         */
+        @Nullable
+        CommandSession.ActivitySession getActivitySession() {
+            return mActivity;
+        }
+    }
+
+    /**
+     * Same as ActivitySessionCloseable, but with forceCommandActivity = true
+     */
+    public class BaseActivitySessionCloseable extends ActivitySessionCloseable {
+        BaseActivitySessionCloseable(ComponentName activityName) {
+            this(activityName, WINDOWING_MODE_FULLSCREEN);
+        }
+
+        BaseActivitySessionCloseable(final ComponentName activityName, final int windowingMode) {
+            super(activityName, windowingMode, /* forceCommandActivity */true);
+        }
+
+        @Override
+        @NonNull
+        CommandSession.ActivitySession getActivitySession() {
+            assertNotNull(mActivity);
+            return mActivity;
+        }
+    }
+
+    /**
+     * Launches primary and secondary activities in split-screen.
+     */
+    public class SplitScreenActivitiesCloseable implements AutoCloseable {
+        private final ActivitySessionCloseable mPrimarySession;
+        private final ActivitySessionCloseable mSecondarySession;
+
+        SplitScreenActivitiesCloseable(final ComponentName primaryActivityName,
+                final ComponentName secondaryActivityName) {
+            this(primaryActivityName, WINDOWING_MODE_FULLSCREEN,
+                    /* forcePrimaryCommandActivity */ false,
+                    secondaryActivityName, WINDOWING_MODE_FULLSCREEN,
+                    /* forceSecondaryCommandActivity */ false);
+        }
+
+        SplitScreenActivitiesCloseable(final ComponentName primaryActivityName,
+                final int primaryWindowingMode,
+                final boolean forcePrimaryCommandActivity,
+                final ComponentName secondaryActivityName,
+                final int secondaryWindowingMode,
+                final boolean forceSecondaryCommandActivity) {
+            mPrimarySession = new ActivitySessionCloseable(primaryActivityName,
+                    primaryWindowingMode, forcePrimaryCommandActivity);
+            mTaskOrganizer.putTaskInSplitPrimary(
+                    mWmState.getTaskByActivity(primaryActivityName).mTaskId);
+            mSecondarySession = new ActivitySessionCloseable(secondaryActivityName,
+                    secondaryWindowingMode, forceSecondaryCommandActivity);
+            mTaskOrganizer.putTaskInSplitSecondary(
+                    mWmState.getTaskByActivity(secondaryActivityName).mTaskId);
+            mWmState.computeState(new WaitForValidActivityState(primaryActivityName),
+                    new WaitForValidActivityState(secondaryActivityName));
+        }
+
+        @Override
+        public void close() {
+            mPrimarySession.close();
+            mSecondarySession.close();
+        }
+
+        ActivitySessionCloseable getPrimaryActivity() {
+            return mPrimarySession;
+        }
+
+        ActivitySessionCloseable getSecondaryActivity() {
+            return mSecondarySession;
+        }
+
+    }
+
+    /**
+     * Ensures the device is rotated to portrait orientation.
+     */
+    public class DeviceOrientationCloseable implements AutoCloseable {
+        @Nullable
+        private final RotationSession mRotationSession;
+
+        /** Needed to restore the previous orientation in {@link #close} */
+        private final Integer mPreviousRotation;
+
+        /**
+         * @param requestedOrientation values are Configuration#Orientation
+         *          either {@link ORIENTATION_PORTRAIT} or {@link ORIENTATION_LANDSCAPE}
+         */
+        DeviceOrientationCloseable(int requestedOrientation) {
+            // Need to use window to get the size of the screen taking orientation into account.
+            // mWmState.getDisplay(DEFAULT_DISPLAY).mFullConfiguration.orientation
+            // can not be used because returned orientation can be {@link ORIENTATION_UNDEFINED}
+            final Size windowSize = asSize(mWm.getMaximumWindowMetrics().getBounds());
+
+            boolean isRotationRequired = false;
+            if (ORIENTATION_PORTRAIT == requestedOrientation) {
+                isRotationRequired = windowSize.getHeight() < windowSize.getWidth();
+            } else if (ORIENTATION_LANDSCAPE == requestedOrientation) {
+                isRotationRequired = windowSize.getHeight() > windowSize.getWidth();
+            }
+
+            if (isRotationRequired) {
+                mPreviousRotation = mWmState.getRotation();
+                mRotationSession = new RotationSession(mWmState);
+                mRotationSession.set(ROTATION_90);
+                assertTrue("display rotation must be ROTATION_90 now",
+                        mWmState.waitForRotation(ROTATION_90));
+            } else {
+                mRotationSession = null;
+                mPreviousRotation = ROTATION_0;
+            }
+        }
+
+        @Override
+        public void close() {
+            if (mRotationSession != null) {
+                mRotationSession.close();
+                mWmState.waitForRotation(mPreviousRotation);
+            }
+        }
+
+        public boolean isRotationApplied() {
+            return mRotationSession != null;
+        }
+    }
+
+    /**
+     * Makes sure {@link DisplayMetricsSession} is closed with waitFor original display content
+     * is restored.
+     */
+    public class DisplayMetricsWaitCloseable extends DisplayMetricsSession {
+        private final int mDisplayId;
+        private final WindowManagerState.DisplayContent mOriginalDC;
+
+        DisplayMetricsWaitCloseable() {
+            this(DEFAULT_DISPLAY);
+        }
+
+        DisplayMetricsWaitCloseable(int displayId) {
+            super(displayId);
+            mDisplayId = displayId;
+            mOriginalDC = mWmState.getDisplay(displayId);
+        }
+
+        @Override
+        public void restoreDisplayMetrics() {
+            mWmState.waitForWithAmState(wmState -> {
+                super.restoreDisplayMetrics();
+                return mWmState.getDisplay(mDisplayId).equals(mOriginalDC);
+            }, "waiting for display to be restored");
+        }
+    }
+
+    /**
+     * AutoClosable class used for try-with-resources compat change tests, which require a separate
+     * application task to be started.
+     */
+    public static class CompatChangeCloseable implements AutoCloseable {
+        private final String mChangeName;
+        private final String mPackageName;
+
+        CompatChangeCloseable(final Long changeId, String packageName) {
+            this(changeId.toString(), packageName);
+        }
+
+        CompatChangeCloseable(final String changeName, String packageName) {
+            this.mChangeName = changeName;
+            this.mPackageName = packageName;
+
+            // Enable change
+            executeShellCommand("am compat enable " + changeName + " " + packageName);
+        }
+
+        @Override
+        public void close() {
+            executeShellCommand("am compat disable " + mChangeName + " " + mPackageName);
+        }
+    }
+
+    /**
+     * Scales the display size
+     */
+    public class DisplaySizeScaleCloseable extends DisplaySizeCloseable {
+        /**
+         * @param sizeScaleFactor display size scaling factor.
+         * @param activity can be null, the activity which is currently on the screen.
+         */
+        public DisplaySizeScaleCloseable(double sizeScaleFactor, @Nullable ComponentName activity) {
+            super(sizeScaleFactor, /* densityScaleFactor */ 1, ORIENTATION_UNDEFINED,
+                    /* aspectRatio */ -1, asList(activity));
+        }
+    }
+
+    /**
+     * Changes aspectRatio of the display.
+     */
+    public class DisplayAspectRatioCloseable extends DisplaySizeCloseable {
+        /**
+         * @param requestedOrientation orientation.
+         * @param aspectRatio aspect ratio of the screen.
+         */
+        public DisplayAspectRatioCloseable(int requestedOrientation, double aspectRatio) {
+            super(/* sizeScaleFactor */ 1, /* densityScaleFactor */ 1, requestedOrientation,
+                    aspectRatio, /* activities */ List.of());
+        }
+
+        /**
+         * @param requestedOrientation orientation.
+         * @param aspectRatio aspect ratio of the screen.
+         * @param activity the current activity.
+         */
+        public DisplayAspectRatioCloseable(int requestedOrientation, double aspectRatio,
+                @Nullable ComponentName activity) {
+            super(/* sizeScaleFactor */ 1, /* densityScaleFactor */ 1, requestedOrientation,
+                    aspectRatio, asList(activity));
+        }
+    }
+
+    public class DisplaySizeCloseable extends DisplayMetricsWaitCloseable {
+        private List<Pair<ComponentName, Rect>> mOriginalBounds = List.of();
+
+        private static boolean isLandscape(Size s) {
+            return s.getWidth() > s.getHeight();
+        }
+
+        protected static <T> List<T> asList(@Nullable T v) {
+            return (v != null) ? List.of(v) : List.of();
+        }
+
+        /**
+         * @param sizeScaleFactor display size scaling factor.
+         * @param densityScaleFactor density scaling factor.
+         * @param activities can be empty, the activities which are currently on the screen.
+         */
+        public DisplaySizeCloseable(double sizeScaleFactor, double densityScaleFactor,
+                final int requestedOrientation, final double aspectRatio,
+                @NonNull List<ComponentName> activities) {
+            if (sizeScaleFactor != 1 || densityScaleFactor != 1) {
+                mOriginalBounds = activities.stream()
+                        .map(a -> new Pair<>(a, getActivityWaitState(a).getBounds()))
+                        .toList();
+
+                final var origDisplaySize = getDisplayMetrics().getSize();
+
+                changeDisplayMetrics(sizeScaleFactor, densityScaleFactor);
+                waitForDisplaySizeChanged(origDisplaySize, sizeScaleFactor);
+
+                mOriginalBounds.forEach(activityAndBounds -> {
+                    waitForActivityBoundsChanged(activityAndBounds.first, activityAndBounds.second);
+                    mWmState.computeState(new WaitForValidActivityState(activityAndBounds.first));
+                });
+            }
+
+            if (ORIENTATION_UNDEFINED != requestedOrientation && aspectRatio > 0) {
+                final Size maxWindowSize = asSize(mWm.getMaximumWindowMetrics().getBounds());
+                final var origDisplaySize = getDisplayMetrics().getSize();
+
+                var isMatchingOrientation =
+                        isLandscape(origDisplaySize) == isLandscape(maxWindowSize);
+                if (ORIENTATION_LANDSCAPE == requestedOrientation) {
+                    changeAspectRatio(aspectRatio,
+                            isMatchingOrientation ? ORIENTATION_LANDSCAPE : ORIENTATION_PORTRAIT);
+                    waitForDisplaySizeChanged(origDisplaySize, aspectRatio);
+                } else if (ORIENTATION_PORTRAIT == requestedOrientation) {
+                    changeAspectRatio(aspectRatio,
+                            isMatchingOrientation ? ORIENTATION_PORTRAIT : ORIENTATION_LANDSCAPE);
+                    waitForDisplaySizeChanged(origDisplaySize, aspectRatio);
+                }
+            }
+        }
+
+        @Override
+        public void close() {
+            super.close();
+            mOriginalBounds.forEach(activityAndBounds -> {
+                waitForActivityBoundsReset(activityAndBounds.first, activityAndBounds.second);
+                mWmState.computeState(new WaitForValidActivityState(activityAndBounds.first));
+            });
+        }
+
+
+        /**
+         * Waits until the given activity has updated task bounds.
+         */
+        private void waitForActivityBoundsChanged(ComponentName activityName,
+                Rect priorActivityBounds) {
+            mWmState.waitForWithAmState(wmState -> {
+                mWmState.computeState(new WaitForValidActivityState(activityName));
+                WindowManagerState.Activity activity = wmState.getActivity(activityName);
+                return activity != null && !activity.getBounds().equals(priorActivityBounds);
+            }, "checking activity bounds updated");
+        }
+
+        /**
+         * Waits until the given activity has reset task bounds.
+         */
+        private void waitForActivityBoundsReset(ComponentName activityName,
+                Rect priorActivityBounds) {
+            mWmState.waitForWithAmState(wmState -> {
+                mWmState.computeState(new WaitForValidActivityState(activityName));
+                WindowManagerState.Activity activity = wmState.getActivity(activityName);
+                return activity != null && activity.getBounds().equals(priorActivityBounds);
+            }, "checking activity bounds reset");
+        }
+
+        /**
+         * Waits until the display bounds changed.
+         */
+        private void waitForDisplaySizeChanged(final Size originalDisplaySize, final double ratio) {
+            if (!mWmState.waitForWithAmState(wmState ->
+                    !originalDisplaySize.equals(getDisplayMetrics().getSize()),
+                    "waiting for display changing aspect ratio")) {
+
+                final Size currentDisplaySize = getDisplayMetrics().getSize();
+                // Sometimes display size can be capped, making it impossible to scale the size up
+                // b/192406238.
+                if (ratio >= 1f) {
+                    assumeFalse("If a display size is capped, resizing may be a no-op",
+                            originalDisplaySize.equals(currentDisplaySize));
+                } else {
+                    assertNotEquals("Display size must change if sizeRatio < 1f",
+                            originalDisplaySize, currentDisplaySize);
+                }
+            }
+        }
+
+        public float getInitialDisplayAspectRatio() {
+            Size size = getInitialDisplayMetrics().getSize();
+            return Math.max(size.getHeight(), size.getWidth())
+                    / (float) (Math.min(size.getHeight(), size.getWidth()));
+        }
+    }
+
+    public static Size asSize(Rect r) {
+        return new Size(r.width(), r.height());
+    }
+
+    public <T> void waitAssertEquals(final String message, final T expected, Supplier<T> actual) {
+        assertTrue(message, mWmState.waitFor(state -> expected.equals(actual.get()),
+                "wait for correct result"));
+    }
+
+    public WindowManagerState.Activity getActivityWaitState(ComponentName activityName) {
+        mWmState.computeState(new WaitForValidActivityState(activityName));
+        return mWmState.getActivity(activityName);
     }
 }
