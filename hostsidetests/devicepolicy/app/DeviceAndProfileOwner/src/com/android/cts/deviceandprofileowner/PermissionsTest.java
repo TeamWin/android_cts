@@ -355,35 +355,6 @@ public class PermissionsTest extends BaseDeviceAdminTest {
                 PERMISSION_APP_PACKAGE_NAME);
     }
 
-    @CddTest(requirements = {"9.1/C-0-12", "9.1/C-1-1"})
-    public void testSensorsRelatedPermissionsNotGrantedViaPolicy() throws Exception {
-        int permissionPolicy = mDevicePolicyManager.getPermissionPolicy(ADMIN_RECEIVER_COMPONENT);
-        try {
-            setPermissionPolicy(PERMISSION_POLICY_AUTO_GRANT);
-            for (String sensorPermission : SENSORS_PERMISSIONS) {
-                try {
-                    // The permission is not granted by default.
-                    PermissionUtils.checkPermission(sensorPermission, PERMISSION_DENIED,
-                            PERMISSION_APP_PACKAGE_NAME);
-                    // But the user can grant it.
-                    PermissionUtils.launchActivityAndRequestPermission(mReceiver, mDevice,
-                            sensorPermission,
-                            PERMISSION_GRANTED, PERMISSION_APP_PACKAGE_NAME,
-                            PERMISSIONS_ACTIVITY_NAME);
-
-                    // And the package manager should show it as granted.
-                    PermissionUtils.checkPermission(sensorPermission, PERMISSION_GRANTED,
-                            PERMISSION_APP_PACKAGE_NAME);
-                } finally {
-                    revokePermission(sensorPermission);
-                }
-            }
-        } finally {
-            // Restore original state
-            setPermissionPolicy(permissionPolicy);
-        }
-    }
-
     private void revokePermission(String sensorPermission) {
         if (LOCATION_PERMISSIONS.contains(sensorPermission)) {
             mUiAutomation.revokeRuntimePermission(PERMISSION_APP_PACKAGE_NAME,

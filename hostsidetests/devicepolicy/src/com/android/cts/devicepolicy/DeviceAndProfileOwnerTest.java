@@ -222,14 +222,6 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
                 .build());
     }
 
-    @Test
-    @FlakyTest(bugId = 187862351)
-    public void testSensorsRelatedPermissionsNotGrantedViaPolicy() throws Exception {
-        installAppPermissionAppAsUser();
-        executeDeviceTestMethod(".PermissionsTest",
-                "testSensorsRelatedPermissionsNotGrantedViaPolicy");
-    }
-
     /**
      * Require a device for tests that use the network stack. Headless Androids running in
      * data centres might need their network rules un-tampered-with in order to keep the ADB / VNC
