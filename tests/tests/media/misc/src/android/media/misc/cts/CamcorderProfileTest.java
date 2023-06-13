@@ -26,7 +26,6 @@ import static org.junit.Assume.assumeTrue;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.hardware.Camera;
-import android.hardware.Camera.Parameters;
 import android.hardware.Camera.Size;
 import android.hardware.cts.helpers.CameraUtils;
 import android.media.CamcorderProfile;
@@ -424,7 +423,7 @@ public class CamcorderProfileTest {
             assertNotNull("failed to open CameraId " + cameraId, camera);
         }
 
-        final List<Size> videoSizes = getSupportedVideoSizes(camera);
+        final List<Size> videoSizes = CameraUtils.getSupportedVideoSizes(camera);
 
         camera.release();
         camera = null;
@@ -560,17 +559,6 @@ public class CamcorderProfileTest {
                 checkGet(cameraId);
             }
         }
-    }
-
-    private List<Size> getSupportedVideoSizes(Camera camera) {
-        Parameters parameters = camera.getParameters();
-        assertNotNull("Camera did not provide parameters", parameters);
-        List<Size> videoSizes = parameters.getSupportedVideoSizes();
-        if (videoSizes == null) {
-            videoSizes = parameters.getSupportedPreviewSizes();
-            assertNotNull(videoSizes);
-        }
-        return videoSizes;
     }
 
     private boolean isSizeSupported(int width, int height, List<Size> sizes) {
