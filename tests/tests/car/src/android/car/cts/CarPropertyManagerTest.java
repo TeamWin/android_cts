@@ -5303,7 +5303,6 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         Float.class, mCarPropertyManager)
                 .setPossiblyDependentOnHvacPowerOn()
                 .addReadPermission(Car.PERMISSION_CONTROL_CAR_CLIMATE)
-                .addWritePermission(Car.PERMISSION_CONTROL_CAR_CLIMATE)
                 .build()
                 .verify();
     }
@@ -5642,7 +5641,6 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         Integer.class, mCarPropertyManager)
                 .setPossiblyDependentOnHvacPowerOn()
                 .addReadPermission(Car.PERMISSION_CONTROL_CAR_CLIMATE)
-                .addWritePermission(Car.PERMISSION_CONTROL_CAR_CLIMATE)
                 .build()
                 .verify();
     }
