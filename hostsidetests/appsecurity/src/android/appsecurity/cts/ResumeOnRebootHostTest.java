@@ -25,6 +25,8 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
+import android.cts.host.utils.DisableDeviceConfigSyncRule;
+
 import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.HostSideTestUtils;
 import com.android.tradefed.device.DeviceNotAvailableException;
@@ -87,6 +89,10 @@ public class ResumeOnRebootHostTest extends BaseHostJUnit4Test {
     @Rule(order = 1)
     public NormalizeScreenStateRule mNoDozeRule = new NormalizeScreenStateRule(this);
 
+    @Rule(order = 2)
+    public DisableDeviceConfigSyncRule mDisableDeviceConfigSync =
+            new DisableDeviceConfigSyncRule(this);
+
     @Before
     public void setUp() throws Exception {
         assertNotNull(getAbi());
@@ -100,7 +106,6 @@ public class ResumeOnRebootHostTest extends BaseHostJUnit4Test {
                 getDevice().getSetting("global", "verifier_verify_adb_installs");
         getDevice().setSetting("global", "verifier_verify_adb_installs", "0");
         removeTestPackages();
-        deviceDisableDeviceConfigSync();
         deviceSetupServerBasedParameter();
     }
 
@@ -108,7 +113,6 @@ public class ResumeOnRebootHostTest extends BaseHostJUnit4Test {
     public void tearDown() throws Exception {
         removeTestPackages();
         deviceCleanupServerBasedParameter();
-        deviceRestoreDeviceConfigSync();
         if (mOriginalVerifyAdbInstallerSetting != null) {
             getDevice().setSetting(
                     "global", "verifier_verify_adb_installs",
@@ -348,19 +352,6 @@ public class ResumeOnRebootHostTest extends BaseHostJUnit4Test {
             deviceClearLskf();
         }
     }
-
-    private void deviceDisableDeviceConfigSync() throws Exception {
-        getDevice().executeShellCommand("device_config set_sync_disabled_for_tests persistent");
-        String res = getDevice().executeShellCommand("device_config get_sync_disabled_for_tests");
-        if (res == null || !res.contains("persistent")) {
-            CLog.w(TAG, "Could not disable device config for test");
-        }
-    }
-
-    private void deviceRestoreDeviceConfigSync() throws Exception {
-        getDevice().executeShellCommand("device_config set_sync_disabled_for_tests none");
-    }
-
 
     private void deviceSetupServerBasedParameter() throws Exception {
         getDevice().executeShellCommand("device_config put ota server_based_ror_enabled true");
