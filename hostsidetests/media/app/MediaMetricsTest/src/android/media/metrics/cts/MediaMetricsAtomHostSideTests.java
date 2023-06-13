@@ -42,7 +42,7 @@ import android.util.Log;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
-import com.android.compatibility.common.util.SystemUtil;
+import com.android.compatibility.common.util.DeviceConfigStateHelper;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -67,30 +67,23 @@ public class MediaMetricsAtomHostSideTests {
         System.loadLibrary("CtsMediaMetricsHostTestAppJni");
     }
 
-    private static void resetProperties() throws InterruptedException {
+    private final DeviceConfigStateHelper mDeviceConfigStateHelper =
+            new DeviceConfigStateHelper(DeviceConfig.NAMESPACE_MEDIA);
+
+    private void resetProperties() throws InterruptedException {
         // ensure the event/metric is sent.
         Thread.sleep(1000);
         // see DeviceConfig#resetToDefaults(int, String).
-        SystemUtil.runWithShellPermissionIdentity(() -> {
-            DeviceConfig.setProperties(
-                    new DeviceConfig.Properties.Builder(DeviceConfig.NAMESPACE_MEDIA).build());
-        });
+        mDeviceConfigStateHelper.restoreOriginalValues();
         // ensure the property is set.
         Thread.sleep(DEVICE_PROPERTY_PROPAGATION_DELAY_MICROSECONDS);
     }
 
-    private static void turnOnForTesting() throws InterruptedException {
-        SystemUtil.runWithShellPermissionIdentity(() -> {
-            DeviceConfig.setProperty(
-                    DeviceConfig.NAMESPACE_MEDIA,
-                    MEDIA_METRICS_MODE,
-                    MEDIA_METRICS_MODE_ON,
-                    /*makeDefault=*/ false);
-        });
+    private void turnOnForTesting() throws InterruptedException {
+        mDeviceConfigStateHelper.set(MEDIA_METRICS_MODE, MEDIA_METRICS_MODE_ON);
         // ensure the property is set.
         Thread.sleep(DEVICE_PROPERTY_PROPAGATION_DELAY_MICROSECONDS);
     }
-
 
     @Test
     public void testPlaybackStateEvent_default() throws Exception {
@@ -389,14 +382,12 @@ public class MediaMetricsAtomHostSideTests {
 
     @Test
     public void testAppBlocklist() throws Exception {
-        SystemUtil.runWithShellPermissionIdentity(() -> {
-            DeviceConfig.setProperties(
-                    new DeviceConfig.Properties.Builder(DeviceConfig.NAMESPACE_MEDIA)
-                            .setString(MEDIA_METRICS_MODE, MEDIA_METRICS_MODE_BLOCKLIST)
-                            .setString(PLAYER_METRICS_PER_APP_ATTRIBUTION_BLOCKLIST, "")
-                            .setString(PLAYER_METRICS_APP_BLOCKLIST, TEST_PKG)
-                            .build());
-        });
+        mDeviceConfigStateHelper.set(
+                new DeviceConfig.Properties.Builder(DeviceConfig.NAMESPACE_MEDIA)
+                        .setString(MEDIA_METRICS_MODE, MEDIA_METRICS_MODE_BLOCKLIST)
+                        .setString(PLAYER_METRICS_PER_APP_ATTRIBUTION_BLOCKLIST, "")
+                        .setString(PLAYER_METRICS_APP_BLOCKLIST, TEST_PKG)
+                        .build());
         Thread.sleep(DEVICE_PROPERTY_PROPAGATION_DELAY_MICROSECONDS);
         Context context = InstrumentationRegistry.getInstrumentation().getContext();
         MediaMetricsManager manager = context.getSystemService(MediaMetricsManager.class);
@@ -414,14 +405,12 @@ public class MediaMetricsAtomHostSideTests {
 
     @Test
     public void testAttributionBlocklist() throws Exception {
-        SystemUtil.runWithShellPermissionIdentity(() -> {
-            DeviceConfig.setProperties(
-                    new DeviceConfig.Properties.Builder(DeviceConfig.NAMESPACE_MEDIA)
-                            .setString(MEDIA_METRICS_MODE, MEDIA_METRICS_MODE_BLOCKLIST)
-                            .setString(PLAYER_METRICS_PER_APP_ATTRIBUTION_BLOCKLIST, TEST_PKG)
-                            .setString(PLAYER_METRICS_APP_BLOCKLIST, "")
-                            .build());
-        });
+        mDeviceConfigStateHelper.set(
+                new DeviceConfig.Properties.Builder(DeviceConfig.NAMESPACE_MEDIA)
+                        .setString(MEDIA_METRICS_MODE, MEDIA_METRICS_MODE_BLOCKLIST)
+                        .setString(PLAYER_METRICS_PER_APP_ATTRIBUTION_BLOCKLIST, TEST_PKG)
+                        .setString(PLAYER_METRICS_APP_BLOCKLIST, "")
+                        .build());
         Thread.sleep(DEVICE_PROPERTY_PROPAGATION_DELAY_MICROSECONDS);
         Context context = InstrumentationRegistry.getInstrumentation().getContext();
         MediaMetricsManager manager = context.getSystemService(MediaMetricsManager.class);
@@ -453,14 +442,12 @@ public class MediaMetricsAtomHostSideTests {
 
     @Test
     public void testAppAllowlist() throws Exception {
-        SystemUtil.runWithShellPermissionIdentity(() -> {
-            DeviceConfig.setProperties(
-                    new DeviceConfig.Properties.Builder(DeviceConfig.NAMESPACE_MEDIA)
-                            .setString(MEDIA_METRICS_MODE, MEDIA_METRICS_MODE_ALLOWLIST)
-                            .setString(PLAYER_METRICS_PER_APP_ATTRIBUTION_ALLOWLIST, "")
-                            .setString(PLAYER_METRICS_APP_ALLOWLIST, TEST_PKG)
-                            .build());
-        });
+        mDeviceConfigStateHelper.set(
+                new DeviceConfig.Properties.Builder(DeviceConfig.NAMESPACE_MEDIA)
+                        .setString(MEDIA_METRICS_MODE, MEDIA_METRICS_MODE_ALLOWLIST)
+                        .setString(PLAYER_METRICS_PER_APP_ATTRIBUTION_ALLOWLIST, "")
+                        .setString(PLAYER_METRICS_APP_ALLOWLIST, TEST_PKG)
+                        .build());
         Thread.sleep(DEVICE_PROPERTY_PROPAGATION_DELAY_MICROSECONDS);
         Context context = InstrumentationRegistry.getInstrumentation().getContext();
         MediaMetricsManager manager = context.getSystemService(MediaMetricsManager.class);
@@ -478,14 +465,12 @@ public class MediaMetricsAtomHostSideTests {
 
     @Test
     public void testAttributionAllowlist() throws Exception {
-        SystemUtil.runWithShellPermissionIdentity(() -> {
-            DeviceConfig.setProperties(
-                    new DeviceConfig.Properties.Builder(DeviceConfig.NAMESPACE_MEDIA)
-                            .setString(MEDIA_METRICS_MODE, MEDIA_METRICS_MODE_ALLOWLIST)
-                            .setString(PLAYER_METRICS_PER_APP_ATTRIBUTION_ALLOWLIST, TEST_PKG)
-                            .setString(PLAYER_METRICS_APP_ALLOWLIST, "")
-                            .build());
-        });
+        mDeviceConfigStateHelper.set(
+                new DeviceConfig.Properties.Builder(DeviceConfig.NAMESPACE_MEDIA)
+                        .setString(MEDIA_METRICS_MODE, MEDIA_METRICS_MODE_ALLOWLIST)
+                        .setString(PLAYER_METRICS_PER_APP_ATTRIBUTION_ALLOWLIST, TEST_PKG)
+                        .setString(PLAYER_METRICS_APP_ALLOWLIST, "")
+                        .build());
         Thread.sleep(DEVICE_PROPERTY_PROPAGATION_DELAY_MICROSECONDS);
         Context context = InstrumentationRegistry.getInstrumentation().getContext();
         MediaMetricsManager manager = context.getSystemService(MediaMetricsManager.class);
