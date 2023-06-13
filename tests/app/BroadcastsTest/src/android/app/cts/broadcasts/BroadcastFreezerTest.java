@@ -19,12 +19,15 @@ package android.app.cts.broadcasts;
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.BroadcastOptions;
 import android.content.Intent;
+import android.os.Bundle;
 import android.os.PowerExemptionManager;
+import android.os.RemoteException;
 import android.os.SystemClock;
 import android.provider.DeviceConfig;
 
@@ -60,63 +63,96 @@ public class BroadcastFreezerTest extends BaseBroadcastTest {
     public void testBroadcastOptions_appFreezingDelayed() throws Exception {
         assumeTrue(isAppFreezerEnabled());
 
+        final Intent intent = new Intent(Common.ORDERED_BROADCAST_ACTION)
+                .putExtra(TEST_EXTRA1, TEST_VALUE1)
+                .setPackage(HELPER_PKG1);
+        final BroadcastOptions options = BroadcastOptions.makeBasic();
+        options.setTemporaryAppAllowlist(APP_FREEZING_DELAY_MS,
+                PowerExemptionManager.TEMPORARY_ALLOW_LIST_TYPE_APP_FREEZING_DELAYED,
+                PowerExemptionManager.REASON_PUSH_MESSAGING_DEFERRABLE,
+                "Normal Priority");
+        int testPid;
+        long startTimeMs;
         TestServiceConnection connection = bindToHelperService(HELPER_PKG1);
+        ICommandReceiver cmdReceiver;
         try {
-            final Intent intent = new Intent(Common.ORDERED_BROADCAST_ACTION)
-                    .putExtra(TEST_EXTRA1, TEST_VALUE1)
-                    .setPackage(HELPER_PKG1);
-            final BroadcastOptions options = BroadcastOptions.makeBasic();
-            options.setTemporaryAppAllowlist(APP_FREEZING_DELAY_MS,
+            cmdReceiver = connection.getCommandReceiver();
+            testPid = cmdReceiver.getPid();
+            final ResultReceiver resultReceiver = new ResultReceiver();
+
+            SystemUtil.runWithShellPermissionIdentity(() -> {
+                mContext.sendOrderedBroadcast(intent, null, options.toBundle(),
+                        resultReceiver, null, 0, null, null);
+            });
+            AmUtils.waitForBroadcastBarrier();
+            assertThat(resultReceiver.getResult())
+                    .isEqualTo(Common.ORDERED_BROADCAST_RESULT_DATA);
+            // Start the timer
+            startTimeMs = SystemClock.uptimeMillis();
+
+            // Try to override it with a broadcast with a smaller delay. This is to make sure
+            // that a second delay request that's shorter than the first doesn't override
+            // the longer first delay.
+            options.setTemporaryAppAllowlist(SHORT_FREEZER_TIMEOUT_MS,
                     PowerExemptionManager.TEMPORARY_ALLOW_LIST_TYPE_APP_FREEZING_DELAYED,
                     PowerExemptionManager.REASON_PUSH_MESSAGING_DEFERRABLE,
                     "Normal Priority");
-            int testPid = -1;
-            long startTimeMs = 0;
-            ICommandReceiver cmdReceiver;
-            try {
-                cmdReceiver = connection.getCommandReceiver();
-                testPid = cmdReceiver.getPid();
-                final ResultReceiver resultReceiver = new ResultReceiver();
-
-                SystemUtil.runWithShellPermissionIdentity(() -> {
-                    mContext.sendOrderedBroadcast(intent, null, options.toBundle(),
-                            resultReceiver, null, 0, null, null);
-                });
-                AmUtils.waitForBroadcastBarrier();
-                assertThat(resultReceiver.getResult())
-                        .isEqualTo(Common.ORDERED_BROADCAST_RESULT_DATA);
-                // Start the timer
-                startTimeMs = SystemClock.uptimeMillis();
-
-                // Try to override it with a broadcast with a smaller delay. This is to make sure
-                // that a second delay request that's shorter than the first doesn't override
-                // the longer first delay.
-                options.setTemporaryAppAllowlist(SHORT_FREEZER_TIMEOUT_MS,
-                        PowerExemptionManager.TEMPORARY_ALLOW_LIST_TYPE_APP_FREEZING_DELAYED,
-                        PowerExemptionManager.REASON_PUSH_MESSAGING_DEFERRABLE,
-                        "Normal Priority");
-                SystemUtil.runWithShellPermissionIdentity(() -> {
-                    mContext.sendOrderedBroadcast(intent, null, options.toBundle(),
-                            resultReceiver, null, 0, null, null);
-                });
-                AmUtils.waitForBroadcastBarrier();
-                assertThat(resultReceiver.getResult())
-                        .isEqualTo(Common.ORDERED_BROADCAST_RESULT_DATA);
-            } finally {
-                // Unbind service so that the app can be cached
-                connection.unbind();
-            }
-
-            SystemClock.sleep(SHORT_FREEZER_TIMEOUT_MS + ERROR_MARGIN_MS
-                    - (SystemClock.uptimeMillis() - startTimeMs));
-            assertFalse("Should not be frozen in "
-                    + (SHORT_FREEZER_TIMEOUT_MS + ERROR_MARGIN_MS) + "ms",
-                    isProcessFrozen(testPid));
-            SystemClock.sleep(APP_FREEZING_DELAY_MS + ERROR_MARGIN_MS
-                    - (SystemClock.uptimeMillis() - startTimeMs));
-            assertTrue("Unfrozen for longer than expected", isProcessFrozen(testPid));
+            SystemUtil.runWithShellPermissionIdentity(() -> {
+                mContext.sendOrderedBroadcast(intent, null, options.toBundle(),
+                        resultReceiver, null, 0, null, null);
+            });
+            AmUtils.waitForBroadcastBarrier();
+            assertThat(resultReceiver.getResult())
+                    .isEqualTo(Common.ORDERED_BROADCAST_RESULT_DATA);
         } finally {
+            // Unbind service so that the app can be cached
             connection.unbind();
         }
+
+        SystemClock.sleep(SHORT_FREEZER_TIMEOUT_MS + ERROR_MARGIN_MS
+                - (SystemClock.uptimeMillis() - startTimeMs));
+        assertFalse("Should not be frozen in "
+                + (SHORT_FREEZER_TIMEOUT_MS + ERROR_MARGIN_MS) + "ms",
+                isProcessFrozen(testPid));
+        SystemClock.sleep(APP_FREEZING_DELAY_MS + ERROR_MARGIN_MS
+                - (SystemClock.uptimeMillis() - startTimeMs));
+        assertTrue("Unfrozen for longer than expected", isProcessFrozen(testPid));
+    }
+
+    /**
+     * Verify that a broadcast sent to a frozen app with pending sync binder transaction
+     * is delivered as expected.
+     */
+    @Test
+    public void testBroadcastDelivery_syncTxnWhileFrozen() throws Exception {
+        assumeTrue(isAppFreezerEnabled());
+
+        TestServiceConnection connection = bindToHelperService(HELPER_PKG1);
+        ICommandReceiver cmdReceiver;
+        int testPid;
+        try {
+            cmdReceiver = connection.getCommandReceiver();
+            testPid = cmdReceiver.getPid();
+        } finally {
+            // Unbind service so that the app can be cached
+            connection.unbind();
+        }
+
+        SystemClock.sleep(SHORT_FREEZER_TIMEOUT_MS + ERROR_MARGIN_MS);
+        assertTrue("Test app should have been frozen", isProcessFrozen(testPid));
+
+        // Make a sync binder transaction to the frozen app, which should fail since the process
+        // is frozen.
+        assertThrows(RemoteException.class, () -> cmdReceiver.getPid());
+
+        final Intent intent = new Intent(Common.ORDERED_BROADCAST_ACTION)
+                .putExtra(TEST_EXTRA1, TEST_VALUE1)
+                .setPackage(HELPER_PKG1);
+        final ResultReceiver resultReceiver = new ResultReceiver();
+        mContext.sendOrderedBroadcast(intent, null, (Bundle) null,
+                resultReceiver, null, 0, null, null);
+        AmUtils.waitForBroadcastBarrier();
+        assertThat(resultReceiver.getResult())
+                .isEqualTo(Common.ORDERED_BROADCAST_RESULT_DATA);
     }
 }
