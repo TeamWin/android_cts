@@ -27,6 +27,7 @@ import android.view.View;
 import android.view.Window;
 import android.widget.ListView;
 
+import com.android.cts.verifier.TestListActivity.DisplayMode;
 import com.android.cts.verifier.TestListAdapter.TestListItem;
 
 /** {@link ListActivity} that displays a list of manual tests. */
@@ -61,6 +62,12 @@ public abstract class AbstractTestListActivity extends ListActivity {
         Intent intent = item.intent;
         intent.putExtra(TestResult.TEST_START_TIME, mStartTime);
         return item.intent;
+    }
+
+    private void setTestResult(TestResult testResult) {
+        testResult.getHistoryCollection().add(
+                testResult.getName(), mStartTime, mEndTime, mIsAutomated);
+        mAdapter.setTestResult(testResult);
     }
 
     @Override
@@ -107,9 +114,17 @@ public abstract class AbstractTestListActivity extends ListActivity {
                 mEndTime = System.currentTimeMillis();
             }
             TestResult testResult = TestResult.fromActivityResult(resultCode, data);
-            testResult.getHistoryCollection().add(
-                testResult.getName(), mStartTime, mEndTime, mIsAutomated);
-            mAdapter.setTestResult(testResult);
+            // Set the same result in both folded and unfolded mode if the test pass mode is set to
+            // either_mode.
+            TestListItem testListItem = mAdapter.getItemByName(testResult.getName());
+            if (testListItem.passInEitherMode) {
+                setTestResult(TestResult.fromActivityResultWithDisplayMode(
+                        resultCode, data, DisplayMode.FOLDED.toString()));
+                setTestResult(TestResult.fromActivityResultWithDisplayMode(
+                        resultCode, data, DisplayMode.UNFOLDED.toString()));
+            } else {
+                setTestResult(testResult);
+            }
         }
         // Reset end time to avoid keeping same end time in retry.
         mEndTime = 0;
