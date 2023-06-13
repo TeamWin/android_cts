@@ -30,7 +30,7 @@ import android.os.Parcel;
 
 import androidx.test.filters.SdkSuppress;
 
-import com.android.compatibility.common.util.NonMainlineTest;
+import com.android.modules.utils.build.SdkLevel;
 
 import org.junit.Test;
 
@@ -38,7 +38,6 @@ import org.junit.Test;
  * CTS tests for {@link NetworkProviderInfo}.
  */
 @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
-@NonMainlineTest
 public class NetworkProviderInfoTest {
 
     private static final int DEVICE_TYPE = DEVICE_TYPE_PHONE;
@@ -95,9 +94,11 @@ public class NetworkProviderInfoTest {
                 .setBatteryPercentage(BATTERY_PERCENTAGE_1);
         assertThat(builder.build()).isNotEqualTo(info1);
 
-        builder = buildNetworkProviderInfoBuilder()
-                .setBatteryCharging(BATTERY_CHARGING_1);
-        assertThat(builder.build()).isNotEqualTo(info1);
+        if (SdkLevel.isAtLeastV()) {
+            builder = buildNetworkProviderInfoBuilder()
+                    .setBatteryCharging(BATTERY_CHARGING_1);
+            assertThat(builder.build()).isNotEqualTo(info1);
+        }
 
         builder = buildNetworkProviderInfoBuilder()
                 .setConnectionStrength(CONNECTION_STRENGTH_1);
@@ -111,7 +112,9 @@ public class NetworkProviderInfoTest {
         assertThat(info.getDeviceName()).isEqualTo(DEVICE_NAME);
         assertThat(info.getModelName()).isEqualTo(DEVICE_MODEL);
         assertThat(info.getBatteryPercentage()).isEqualTo(BATTERY_PERCENTAGE);
-        assertThat(info.isBatteryCharging()).isEqualTo(BATTERY_CHARGING);
+        if (SdkLevel.isAtLeastV()) {
+            assertThat(info.isBatteryCharging()).isEqualTo(BATTERY_CHARGING);
+        }
         assertThat(info.getConnectionStrength()).isEqualTo(CONNECTION_STRENGTH);
         assertThat(info.getExtras().getInt(BUNDLE_KEY)).isEqualTo(BUNDLE_VALUE);
     }
@@ -180,12 +183,18 @@ public class NetworkProviderInfoTest {
     }
 
     private NetworkProviderInfo.Builder buildNetworkProviderInfoBuilder() {
-        return new NetworkProviderInfo.Builder(DEVICE_NAME, DEVICE_MODEL)
-                .setDeviceType(DEVICE_TYPE)
-                .setBatteryPercentage(BATTERY_PERCENTAGE)
-                .setBatteryCharging(BATTERY_CHARGING)
-                .setConnectionStrength(CONNECTION_STRENGTH)
-                .setExtras(buildBundle());
+        NetworkProviderInfo.Builder builder =
+                        new NetworkProviderInfo.Builder(DEVICE_NAME, DEVICE_MODEL)
+                        .setDeviceType(DEVICE_TYPE)
+                        .setBatteryPercentage(BATTERY_PERCENTAGE)
+                        .setConnectionStrength(CONNECTION_STRENGTH)
+                        .setExtras(buildBundle());
+
+        if (SdkLevel.isAtLeastV()) {
+            builder.setBatteryCharging(BATTERY_CHARGING);
+        }
+
+        return builder;
     }
 
     private Bundle buildBundle() {

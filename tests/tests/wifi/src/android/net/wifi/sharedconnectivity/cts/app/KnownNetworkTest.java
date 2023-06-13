@@ -36,8 +36,9 @@ import android.util.ArraySet;
 
 import androidx.test.filters.SdkSuppress;
 
-import com.android.compatibility.common.util.NonMainlineTest;
+import com.android.modules.utils.build.SdkLevel;
 
+import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -46,26 +47,42 @@ import java.util.Arrays;
  * CTS tests for {@link KnownNetwork}.
  */
 @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
-@NonMainlineTest
 public class KnownNetworkTest {
 
     private static final int NETWORK_SOURCE = NETWORK_SOURCE_NEARBY_SELF;
     private static final String SSID = "TEST_SSID";
     private static final int[] SECURITY_TYPES = {SECURITY_TYPE_WEP};
-    private static final NetworkProviderInfo NETWORK_PROVIDER_INFO =
-            new NetworkProviderInfo.Builder("TEST_NAME", "TEST_MODEL")
-                    .setDeviceType(DEVICE_TYPE_TABLET).setConnectionStrength(2)
-                    .setBatteryPercentage(50).setBatteryCharging(false).build();
     private static final String BUNDLE_KEY = "INT-KEY";
     private static final int BUNDLE_VALUE = 1;
 
     private static final int NETWORK_SOURCE_1 = NETWORK_SOURCE_CLOUD_SELF;
     private static final String SSID_1 = "TEST_SSID1";
     private static final int[] SECURITY_TYPES_1 = {SECURITY_TYPE_PSK};
-    private static final NetworkProviderInfo NETWORK_PROVIDER_INFO1 =
-            new NetworkProviderInfo.Builder("TEST_NAME_1", "TEST_MODEL_1")
-                    .setDeviceType(DEVICE_TYPE_PHONE).setConnectionStrength(3)
-                    .setBatteryPercentage(33).setBatteryCharging(true).build();
+
+    private NetworkProviderInfo mNetworkProviderInfo;
+    private NetworkProviderInfo mNetworkProviderInfo1;
+
+    @Before
+    public void setUp() {
+        NetworkProviderInfo.Builder builder =
+                new NetworkProviderInfo.Builder("TEST_NAME", "TEST_MODEL")
+                        .setDeviceType(DEVICE_TYPE_TABLET)
+                        .setConnectionStrength(2)
+                        .setBatteryPercentage(50);
+        NetworkProviderInfo.Builder builder1 =
+                new NetworkProviderInfo.Builder("TEST_NAME_1", "TEST_MODEL_1")
+                        .setDeviceType(DEVICE_TYPE_PHONE)
+                        .setConnectionStrength(3)
+                        .setBatteryPercentage(33);
+
+        if (SdkLevel.isAtLeastV()) {
+            builder.setBatteryCharging(false);
+            builder1.setBatteryCharging(true);
+        }
+
+        mNetworkProviderInfo = builder.build();
+        mNetworkProviderInfo1 = builder1.build();
+    }
 
     @Test
     public void parcelOperation() {
@@ -120,7 +137,7 @@ public class KnownNetworkTest {
         Arrays.stream(SECURITY_TYPES_1).forEach(builder::addSecurityType);
         assertThat(builder.build()).isNotEqualTo(network1);
 
-        builder = buildKnownNetworkBuilder().setNetworkProviderInfo(NETWORK_PROVIDER_INFO1);
+        builder = buildKnownNetworkBuilder().setNetworkProviderInfo(mNetworkProviderInfo1);
         assertThat(builder.build()).isNotEqualTo(network1);
     }
 
@@ -138,7 +155,7 @@ public class KnownNetworkTest {
         assertThat(network.getNetworkSource()).isEqualTo(NETWORK_SOURCE);
         assertThat(network.getSsid()).isEqualTo(SSID);
         assertThat(network.getSecurityTypes()).containsExactlyElementsIn(securityTypes);
-        assertThat(network.getNetworkProviderInfo()).isEqualTo(NETWORK_PROVIDER_INFO);
+        assertThat(network.getNetworkProviderInfo()).isEqualTo(mNetworkProviderInfo);
         assertThat(network.getExtras().getInt(BUNDLE_KEY)).isEqualTo(BUNDLE_VALUE);
         assertThat(network1.getNetworkProviderInfo()).isNull();
     }
@@ -200,7 +217,7 @@ public class KnownNetworkTest {
 
     private KnownNetwork.Builder buildKnownNetworkBuilder() {
         KnownNetwork.Builder builder = new KnownNetwork.Builder().setNetworkSource(NETWORK_SOURCE)
-                .setSsid(SSID).setNetworkProviderInfo(NETWORK_PROVIDER_INFO)
+                .setSsid(SSID).setNetworkProviderInfo(mNetworkProviderInfo)
                 .setExtras(buildBundle());
         Arrays.stream(SECURITY_TYPES).forEach(builder::addSecurityType);
         return builder;
