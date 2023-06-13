@@ -5258,6 +5258,28 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
     }
 
     /**
+     * Verify the invalid and valid usages of {@code WifiManager#setPnoScanEnabled}.
+     */
+    public void testSetPnoScanEnabled() throws Exception {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if Wi-Fi is not supported
+            return;
+        }
+
+        // Test caller with no permission triggers SecurityException.
+        assertThrows("No permission should trigger SecurityException", SecurityException.class,
+                () -> mWifiManager.setPnoScanEnabled(true, false));
+
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        try {
+            uiAutomation.adoptShellPermissionIdentity();
+            mWifiManager.setPnoScanEnabled(true, false);
+        } finally {
+            uiAutomation.dropShellPermissionIdentity();
+        }
+    }
+
+    /**
      * Tests {@link WifiManager#isWapiSupported()} does not crash.
      */
     public void testIsWapiSupported() throws Exception {
