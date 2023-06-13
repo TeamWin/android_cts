@@ -1985,7 +1985,7 @@ public class PerformanceClassEvaluator {
         }
 
         /**
-         * [2.2.7.1/5.1/H-1-19] MUST support AV1 encoder which can encode up to 480p resolution
+         * [2.2.7.1/5.1/H-1-18] MUST support AV1 encoder which can encode up to 480p resolution
          * at 30fps and 1Mbps.
          */
         public static VideoCodecRequirement createRAV1EncoderReq() {
@@ -2010,7 +2010,7 @@ public class PerformanceClassEvaluator {
                     .addRequiredValue(Build.VERSION_CODES.UPSIDE_DOWN_CAKE, 1)
                     .build();
 
-            return new VideoCodecRequirement(RequirementConstants.R5_1__H_1_19, resolution, fps,
+            return new VideoCodecRequirement(RequirementConstants.R5_1__H_1_18, resolution, fps,
                     bitrate);
         }
 
@@ -2217,8 +2217,7 @@ public class PerformanceClassEvaluator {
         return this.addRequirement(VideoCodecRequirement.createRAVIFDecoderReq());
     }
 
-
-    /* Adds requirement 5.1/H-1-19 */
+    /* Adds requirement 5.1/H-1-18 */
     public VideoCodecRequirement addRAV1EncoderReq() {
         return this.addRequirement(VideoCodecRequirement.createRAV1EncoderReq());
     }

@@ -47,6 +47,7 @@ public class RequirementConstants {
     public static final String R5_1__H_1_15 = "r5_1__h_1_15"; // 5.1/H-1-16
     public static final String R5_1__H_1_16 = "r5_1__h_1_16"; // 5.1/H-1-16
     public static final String R5_1__H_1_17 = "r5_1__h_1_17"; // 5.1/H-1-17
+    public static final String R5_1__H_1_18 = "r5_1__h_1_18"; // 5.1/H-1-18
     public static final String R5_1__H_1_19 = "r5_1__h_1_19"; // 5.1/H-1-19
 
     public static final String R5_3__H_1_1 = "r5_3__h_1_1"; // 5.3/H-1-1
@@ -101,9 +102,9 @@ public class RequirementConstants {
     public static final String API_JAVA_LATENCY = "java_latency_ms";
     public static final String API_NATIVE_LATENCY = "native_latency_ms";
     public static final String AV1_DEC_REQ = "av1_decoder_requirement_boolean";
-    public static final String AV1_ENC_RESOLUTION = "av1_encoder_resolution";
-    public static final String AV1_ENC_FPS = "av1_encoder_fps";
     public static final String AV1_ENC_BITRATE = "av1_encoder_bitrate";
+    public static final String AV1_ENC_FPS = "av1_encoder_fps";
+    public static final String AV1_ENC_RESOLUTION = "av1_encoder_resolution";
     public static final String AVIF_DEC_REQ = "avif_image_decoder_boolean";
 
     public static final String CODEC_INIT_LATENCY = "codec_initialization_latency_ms";
@@ -157,8 +158,8 @@ public class RequirementConstants {
     public static final String REAR_CAMERA_240FPS_SUPPORTED = "rear_camera_240fps_supported";
     public static final String REAR_CAMERA_DYNAMIC_TENBITS_SUPPORTED =
             "rear_camera_dynamic_tenbits_supported";
-    public static final String REAR_CAMERA_LATENCY = "rear_camera_latency";
     public static final String REAR_CAMERA_HWL_LEVEL = "rear_primary_camera_hwl_level";
+    public static final String REAR_CAMERA_LATENCY = "rear_camera_latency";
     public static final String REAR_CAMERA_LOGICAL_MULTI_CAMERA_REQ_MET =
             "rear_camera_logical_multi_camera_req_met";
     public static final String REAR_CAMERA_PREVIEW_STABILIZATION_SUPPORTED =
