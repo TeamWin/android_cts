@@ -1520,26 +1520,27 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
         // Assert the KEEP_SCREEN_ON flag is not set on the main window yet.
         assertNotEquals(FLAG_KEEP_SCREEN_ON, (windowState.getFlags() & FLAG_KEEP_SCREEN_ON));
 
-        final CountDownLatch countDownLatch = new CountDownLatch(2);
+        final CountDownLatch keepScreenOnSetLatch = new CountDownLatch(2);
         mActivityRule.runOnUiThread(() -> {
             mEmbeddedView.setKeepScreenOn(true);
-            mEmbeddedView.getViewTreeObserver().addOnDrawListener(countDownLatch::countDown);
-            mSurfaceView.getViewTreeObserver().addOnDrawListener(countDownLatch::countDown);
+            mEmbeddedView.getViewTreeObserver().addOnDrawListener(keepScreenOnSetLatch::countDown);
+            mSurfaceView.getViewTreeObserver().addOnDrawListener(keepScreenOnSetLatch::countDown);
         });
-        countDownLatch.await(WAIT_TIMEOUT_S, TimeUnit.SECONDS);
+        keepScreenOnSetLatch.await(WAIT_TIMEOUT_S, TimeUnit.SECONDS);
 
         mWmState.computeState();
         windowState = mWmState.getWindowState(TEST_ACTIVITY);
         // Assert the KEEP_SCREEN_ON flag is now set on the main window.
         assertEquals(FLAG_KEEP_SCREEN_ON, (windowState.getFlags() & FLAG_KEEP_SCREEN_ON));
 
-        final CountDownLatch countDownLatch2 = new CountDownLatch(2);
+        final CountDownLatch keepScreenOnUnsetLatch = new CountDownLatch(2);
         mActivityRule.runOnUiThread(() -> {
             mEmbeddedView.setKeepScreenOn(false);
-            mEmbeddedView.getViewTreeObserver().addOnDrawListener(countDownLatch2::countDown);
-            mSurfaceView.getViewTreeObserver().addOnDrawListener(countDownLatch2::countDown);
+            mEmbeddedView.getViewTreeObserver().addOnDrawListener(
+                    keepScreenOnUnsetLatch::countDown);
+            mSurfaceView.getViewTreeObserver().addOnDrawListener(keepScreenOnUnsetLatch::countDown);
         });
-        countDownLatch.await(WAIT_TIMEOUT_S, TimeUnit.SECONDS);
+        keepScreenOnUnsetLatch.await(WAIT_TIMEOUT_S, TimeUnit.SECONDS);
 
         mWmState.computeState();
         windowState = mWmState.getWindowState(TEST_ACTIVITY);
