@@ -62,6 +62,7 @@ import android.os.Process;
 import android.permission.cts.appthataccesseslocation.IAccessLocationOnCommand;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.AsbSecurityTest;
+import android.platform.test.annotations.FlakyTest;
 import android.platform.test.annotations.SystemUserOnly;
 import android.provider.DeviceConfig;
 import android.provider.Settings;
@@ -783,6 +784,8 @@ public class LocationAccessCheckTest {
     }
 
     @Test
+    // Mark as flaky until b/286874765 is fixed
+    @FlakyTest
     @AsbSecurityTest(cveBugId = 141028068)
     public void testOpeningLocationSettingsDoesNotTriggerAccess() throws Throwable {
         assumeNotPlayManaged();
