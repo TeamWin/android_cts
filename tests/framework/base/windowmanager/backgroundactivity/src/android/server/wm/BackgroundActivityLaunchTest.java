@@ -61,9 +61,11 @@ import android.platform.test.annotations.Presubmit;
 import android.provider.Settings;
 import android.server.wm.backgroundactivity.appa.Components;
 import android.server.wm.backgroundactivity.appa.IBackgroundActivityTestService;
+import android.server.wm.backgroundactivity.appb.IAppBTestService;
 import android.server.wm.backgroundactivity.common.CommonComponents.Event;
 import android.server.wm.backgroundactivity.common.EventReceiver;
 import android.util.Log;
+import android.view.textclassifier.TextClassification;
 
 import androidx.annotation.Nullable;
 import androidx.test.filters.FlakyTest;
@@ -120,6 +122,7 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
     private static final int BROADCAST_DELIVERY_TIMEOUT_MS = 60000;
 
     private IBackgroundActivityTestService mBackgroundActivityTestService;
+    private IAppBTestService mAppBTestService;
 
     @Test
     public void testBackgroundActivityBlocked() {
@@ -924,6 +927,42 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
         assertActivityFocused(APP_A.BACKGROUND_ACTIVITY);
     }
 
+    @Test
+    public void testActivityStartbyTextClassifier_appBInFg_allowsActivityStart() throws Exception {
+        setupPendingIntentService(APP_A);
+        setupTestServiceB(APP_B);
+        // create PI in appA
+        PendingIntent pi = mBackgroundActivityTestService.generatePendingIntent(false);
+
+        // app B in foreground
+        Intent intent = new Intent();
+        intent.setComponent(APP_B.FOREGROUND_ACTIVITY);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        mContext.startActivity(intent);
+        // pass to appB and send PI
+        TextClassification tc = mAppBTestService.createTextClassification(pi);
+        mAppBTestService.sendByTextClassification(tc);
+
+        // assert that start succeeded
+        assertActivityFocused(APP_A.BACKGROUND_ACTIVITY);
+    }
+
+    @Test
+    public void testActivityStartbyTextClassifier_appBInBg_blocksActivityStart() throws Exception {
+        setupPendingIntentService(APP_A);
+        setupTestServiceB(APP_B);
+        // create PI in appA
+        PendingIntent pi = mBackgroundActivityTestService.generatePendingIntent(false);
+
+        // app B not in FG
+        // pass to appB and send PI
+        TextClassification tc = mAppBTestService.createTextClassification(pi);
+        mAppBTestService.sendByTextClassification(tc);
+
+        // assert that start is blocked
+        assertActivityNotFocused(APP_A.BACKGROUND_ACTIVITY);
+    }
+
     private void clickAllowBindWidget(Components appA, ResultReceiver resultReceiver)
             throws Exception {
         PackageManager pm = mContext.getPackageManager();
@@ -1095,6 +1134,31 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
             }
         };
         boolean success = mContext.bindService(bindIntent, mBalServiceConnection,
+                Context.BIND_AUTO_CREATE);
+        assertTrue(success);
+        assertTrue("Timeout connecting to test service",
+                bindLatch.await(1000, TimeUnit.MILLISECONDS));
+    }
+
+    private void setupTestServiceB(android.server.wm.backgroundactivity.appb.Components appB)
+            throws Exception {
+        Intent bindIntent = new Intent();
+        bindIntent.setComponent(appB.APP_B_TEST_SERVICE);
+        final CountDownLatch bindLatch = new CountDownLatch(1);
+
+        mAppBTestServiceConnection = new ServiceConnection() {
+            @Override
+            public void onServiceConnected(ComponentName name, IBinder service) {
+                mAppBTestService =
+                        IAppBTestService.Stub.asInterface(service);
+                bindLatch.countDown();
+            }
+            @Override
+            public void onServiceDisconnected(ComponentName name) {
+                mAppBTestService = null;
+            }
+        };
+        boolean success = mContext.bindService(bindIntent, mAppBTestServiceConnection,
                 Context.BIND_AUTO_CREATE);
         assertTrue(success);
         assertTrue("Timeout connecting to test service",
