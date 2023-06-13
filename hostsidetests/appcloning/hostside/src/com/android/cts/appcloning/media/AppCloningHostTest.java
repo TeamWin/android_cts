@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 The Android Open Source Project
+ * Copyright (C) 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.cts.appcloning;
+package com.android.cts.appcloning.media;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -25,6 +25,7 @@ import static org.junit.Assume.assumeTrue;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.LargeTest;
 
+import com.android.cts.appcloning.AppCloningBaseHostTest;
 import com.android.tradefed.invoker.TestInformation;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BeforeClassWithInfo;
@@ -49,13 +50,11 @@ public class AppCloningHostTest extends AppCloningBaseHostTest {
 
     private static final int CLONE_PROFILE_DIRECTORY_CREATION_TIMEOUT_MS = 20000;
     private static final int CLONE_PROFILE_MEDIA_PROVIDER_OPERATION_TIMEOUT_MS = 30000;
-    private static final int CONTENT_PROVIDER_SETUP_TIMEOUT_MS = 50000;
 
     private static final int USER_VOLUME_REMOUNT_TIMEOUT_MS = 30000;
 
     private static final String IMAGE_NAME_TO_BE_CREATED_KEY = "imageNameToBeCreated";
     private static final String IMAGE_NAME_TO_BE_DISPLAYED_KEY = "imageNameToBeDisplayed";
-    private static final String PUBLIC_SD_CARD_VOLUME_KEY = "publicSdCardVol";
     private static final String CONTENT_OWNER_KEY = "contentOwner";
     private static final String EXTERNAL_STORAGE_PATH = "/storage/emulated/%d/";
     private static final String IMAGE_NAME_TO_BE_VERIFIED_IN_OWNER_PROFILE_KEY =
