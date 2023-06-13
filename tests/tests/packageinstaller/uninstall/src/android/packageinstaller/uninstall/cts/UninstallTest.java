@@ -147,6 +147,8 @@ public class UninstallTest {
         mUiDevice.pressBack();
         // return to home/launcher to prevent from being obscured by systemui or other alert window
         mUiDevice.pressHome();
+        // Wait for device idle
+        mUiDevice.waitForIdle();
 
         mContext.startActivity(intent);
 
