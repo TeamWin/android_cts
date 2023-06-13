@@ -54,7 +54,10 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.os.Build;
+import android.os.Handler;
+import android.os.HandlerThread;
 import android.os.IBinder;
+import android.os.Looper;
 import android.os.Process;
 import android.os.SystemClock;
 import android.os.SystemProperties;
@@ -104,6 +107,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.testng.Assert;
 
+import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -843,6 +847,80 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
 
             // Wait until the UI thread countDownLatch reach to 0 or timeout
             assertTrue(uiThreadSignal.await(EXPECT_TIMEOUT, TimeUnit.MILLISECONDS));
+        }
+    }
+
+    /**
+     * Make sure that {@link View#isInEditMode()} will never get called on a non-UI thread even if
+     * {@link InputMethodManager#isActive()} is called on a background thread.
+     *
+     * <p>This is basically a regression test for b/286016109.</p>
+     */
+    @Test
+    public void testOnCheckIsTextEditorRunOnUIThreadWithInputMethodManagerIsActive()
+            throws Exception {
+        final Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
+        try (MockImeSession imeSession = MockImeSession.create(
+                instrumentation.getContext(),
+                instrumentation.getUiAutomation(),
+                new ImeSettings.Builder())) {
+            final ImeEventStream stream = imeSession.openEventStream();
+            final String marker = getTestMarker();
+            final AtomicReference<LinearLayout> layoutRef = new AtomicReference<>();
+
+            // Launch test activity
+            TestActivity.startSync(activity -> {
+                final LinearLayout layout = new LinearLayout(activity);
+                layout.setOrientation(LinearLayout.VERTICAL);
+                final EditText editText = new EditText(activity);
+                editText.setPrivateImeOptions(marker);
+                editText.setHint("editText");
+                layoutRef.set(layout);
+                layout.addView(editText);
+
+                editText.requestFocus();
+                return layout;
+            });
+
+            // "onStartInput" gets called for the EditText.
+            expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
+
+            final HandlerThread backgroundThread = new HandlerThread("testthread");
+            backgroundThread.start();
+
+            final AtomicBoolean nonUiThreadCallMade = new AtomicBoolean(false);
+            final CountDownLatch latch = new CountDownLatch(1);
+            final String marker2 = getTestMarker();
+            runOnMainSync(() -> {
+                final LinearLayout layout = layoutRef.get();
+                final EditText editText2 = new EditText(layout.getContext()) {
+                    @Override
+                    public boolean onCheckIsTextEditor() {
+                        if (!Looper.getMainLooper().isCurrentThread()) {
+                            nonUiThreadCallMade.set(true);
+                        }
+                        return super.onCheckIsTextEditor();
+                    }
+                };
+                editText2.setPrivateImeOptions(marker2);
+                layout.addView(editText2);
+                editText2.requestFocus();
+
+                final InputMethodManager imm =
+                        Objects.requireNonNull(
+                                layout.getContext().getSystemService(InputMethodManager.class));
+                Handler.createAsync(backgroundThread.getLooper()).post(() -> {
+                    // IMM#isActive() is known to have side effect to trigger startInput().
+                    // Do this on a background thread to emulate b/286016109
+                    imm.isActive();
+                    latch.countDown();
+                });
+            });
+            backgroundThread.quitSafely();
+            assertTrue(latch.await(TIMEOUT, TimeUnit.MILLISECONDS));
+
+            expectEvent(stream, editorMatcher("onStartInput", marker2), TIMEOUT);
+            assertFalse(nonUiThreadCallMade.get());
         }
     }
 
