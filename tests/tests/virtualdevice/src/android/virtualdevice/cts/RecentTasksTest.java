@@ -22,12 +22,10 @@ import static android.Manifest.permission.ADD_TRUSTED_DISPLAY;
 import static android.Manifest.permission.CREATE_VIRTUAL_DEVICE;
 import static android.Manifest.permission.REAL_GET_TASKS;
 import static android.Manifest.permission.WAKE_LOCK;
-import static android.app.PendingIntent.FLAG_IMMUTABLE;
-import static android.app.PendingIntent.FLAG_UPDATE_CURRENT;
 import static android.companion.virtual.VirtualDeviceParams.DEVICE_POLICY_CUSTOM;
 import static android.companion.virtual.VirtualDeviceParams.DEVICE_POLICY_DEFAULT;
 import static android.companion.virtual.VirtualDeviceParams.POLICY_TYPE_RECENTS;
-import static android.virtualdevice.cts.util.TestAppHelper.MAIN_ACTIVITY_COMPONENT;
+import static android.virtualdevice.cts.util.VirtualDeviceTestUtils.createActivityOptions;
 
 import static androidx.test.core.app.ApplicationProvider.getApplicationContext;
 
@@ -35,14 +33,11 @@ import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assume.assumeNotNull;
 import static org.junit.Assume.assumeTrue;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.timeout;
-import static org.mockito.Mockito.verify;
 
 import static java.lang.Integer.MAX_VALUE;
 
+import android.app.Activity;
 import android.app.ActivityManager;
-import android.app.PendingIntent;
 import android.companion.virtual.VirtualDeviceManager;
 import android.companion.virtual.VirtualDeviceManager.VirtualDevice;
 import android.companion.virtual.VirtualDeviceParams;
@@ -54,6 +49,7 @@ import android.hardware.display.VirtualDisplay;
 import android.hardware.display.VirtualDisplayConfig;
 import android.platform.test.annotations.AppModeFull;
 import android.virtualdevice.cts.common.FakeAssociationRule;
+import android.virtualdevice.cts.util.EmptyActivity;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -64,10 +60,9 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 
-import java.util.function.IntConsumer;
+import java.util.List;
+import java.util.function.Predicate;
 
 @RunWith(AndroidJUnit4.class)
 @AppModeFull(reason = "VirtualDeviceManager cannot be accessed by instant apps")
@@ -90,12 +85,9 @@ public class RecentTasksTest {
     public FakeAssociationRule mFakeAssociationRule = new FakeAssociationRule();
     private VirtualDeviceManager mVirtualDeviceManager;
     private ActivityManager mActivityManager;
-    @Mock
-    private IntConsumer mLaunchCompleteListener;
 
     @Before
     public void setUp() throws Exception {
-        MockitoAnnotations.initMocks(this);
         Context context = getApplicationContext();
         final PackageManager packageManager = context.getPackageManager();
         assumeTrue(packageManager.hasSystemFeature(PackageManager.FEATURE_COMPANION_DEVICE_SETUP));
@@ -112,12 +104,13 @@ public class RecentTasksTest {
                 DEVICE_POLICY_DEFAULT)) {
             VirtualDisplay virtualDisplay = virtualDevice.createVirtualDisplay(
                     VIRTUAL_DISPLAY_CONFIG, /*executor=*/null, /*callback=*/null);
+            Activity activity = startActivityOnVirtualDisplay(virtualDisplay, EmptyActivity.class);
 
-            launchTestActivity(virtualDevice, virtualDisplay);
+            List<ActivityManager.RecentTaskInfo> recentTasks = mActivityManager.getRecentTasks(
+                    MAX_VALUE, /*flags=*/0);
+            activity.finish();
 
-            assertThat(
-                    mActivityManager.getRecentTasks(MAX_VALUE, /*flags=*/0).stream().anyMatch(
-                            RecentTasksTest::hasTestActivityComponentIntent)).isTrue();
+            assertThat(recentTasks.stream().anyMatch(matchesActivity(activity))).isTrue();
         }
     }
 
@@ -127,32 +120,19 @@ public class RecentTasksTest {
                 DEVICE_POLICY_CUSTOM)) {
             VirtualDisplay virtualDisplay = virtualDevice.createVirtualDisplay(
                     VIRTUAL_DISPLAY_CONFIG, /*executor=*/null, /*callback=*/null);
+            Activity activity = startActivityOnVirtualDisplay(virtualDisplay, EmptyActivity.class);
 
-            launchTestActivity(virtualDevice, virtualDisplay);
+            List<ActivityManager.RecentTaskInfo> recentTasks = mActivityManager.getRecentTasks(
+                    MAX_VALUE, /*flags=*/0);
+            activity.finish();
 
-            assertThat(
-                    mActivityManager.getRecentTasks(MAX_VALUE, /*flags=*/0).stream().anyMatch(
-                            RecentTasksTest::hasTestActivityComponentIntent)).isFalse();
+            assertThat(recentTasks.stream().anyMatch(matchesActivity(activity))).isFalse();
         }
     }
 
-    private void launchTestActivity(VirtualDevice virtualDevice, VirtualDisplay virtualDisplay) {
-        Intent intent = new Intent()
-                .setComponent(MAIN_ACTIVITY_COMPONENT)
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        virtualDevice.launchPendingIntent(virtualDisplay.getDisplay().getDisplayId(),
-                PendingIntent.getActivity(getApplicationContext(),
-                        MAIN_ACTIVITY_COMPONENT.hashCode(), intent,
-                        FLAG_IMMUTABLE | FLAG_UPDATE_CURRENT),
-                Runnable::run, mLaunchCompleteListener);
-
-        verify(mLaunchCompleteListener, timeout(1000)).accept(
-                eq(VirtualDeviceManager.LAUNCH_SUCCESS));
-    }
-
-    private static boolean hasTestActivityComponentIntent(
-            ActivityManager.RecentTaskInfo recentTaskInfo) {
-        return recentTaskInfo.baseIntent != null && MAIN_ACTIVITY_COMPONENT.equals(
+    Predicate<ActivityManager.RecentTaskInfo> matchesActivity(Activity activity) {
+        return recentTaskInfo -> recentTaskInfo.baseIntent != null
+                && activity.getComponentName().equals(
                 recentTaskInfo.baseIntent.getComponent());
     }
 
@@ -162,5 +142,15 @@ public class RecentTasksTest {
                 mFakeAssociationRule.getAssociationInfo().getId(),
                 new VirtualDeviceParams.Builder().setDevicePolicy(POLICY_TYPE_RECENTS,
                         recentsPolicy).build());
+    }
+
+    private static <T extends Activity> Activity startActivityOnVirtualDisplay(
+            VirtualDisplay virtualDisplay, Class<T> activityClass) {
+        return InstrumentationRegistry.getInstrumentation()
+                .startActivitySync(
+                        new Intent(getApplicationContext(), activityClass)
+                                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK
+                                        | Intent.FLAG_ACTIVITY_CLEAR_TASK),
+                        createActivityOptions(virtualDisplay));
     }
 }
