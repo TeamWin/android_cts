@@ -17,6 +17,7 @@
 package android.media.misc.cts;
 
 import android.hardware.Camera;
+import android.hardware.cts.helpers.CameraUtils;
 import android.media.MediaCodecList;
 import android.media.MediaFormat;
 import android.media.MediaMetadataRetriever;
@@ -148,11 +149,7 @@ public class ResourceManagerRecorderActivity extends MediaStubActivity {
     // Get the lowest or highest supported Video size
     // through the camera capture.
     private void setSupportedResolution(Camera camera) {
-        Camera.Parameters parameters = camera.getParameters();
-        List<Camera.Size> videoSizes = parameters.getSupportedPreviewSizes();
-        if (videoSizes == null) {
-            videoSizes = parameters.getSupportedVideoSizes();
-        }
+        List<Camera.Size> videoSizes = CameraUtils.getSupportedVideoSizes(camera);
 
         // Pick the max or min resolution (width * height) based
         // on the requirement.
@@ -221,6 +218,8 @@ public class ResourceManagerRecorderActivity extends MediaStubActivity {
             return false;
         }
 
+        Log.i(TAG, "The device has an encoder for mime: " + mime
+                + " resolution: " + width + "x" + height);
         return true;
     }
 
