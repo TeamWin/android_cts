@@ -16,8 +16,6 @@
 
 package android.car.cts;
 
-import static com.android.tradefed.targetprep.UserHelper.RUN_TESTS_AS_USER_KEY;
-
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.cts.statsdatom.lib.ConfigUtils;
@@ -145,7 +143,6 @@ public class CarWatchdogHostTest extends CarHostJUnit4TestCase {
 
     private boolean mDidModifyDateTime;
     private long mOriginalForegroundBytes;
-    private int mTestRunningUserId;
 
     @Before
     public void dateSetUp() throws Exception {
@@ -169,18 +166,6 @@ public class CarWatchdogHostTest extends CarHostJUnit4TestCase {
         executeCommand("logcat -c");
         startCustomCollection();
         executeCommand(RESET_RESOURCE_OVERUSE_CMD);
-
-        // The test runs as the current user in most cases. For secondary_user_on_secondary_display
-        // case, we set mTestRunningUserId from RUN_TEST_AS_USER.
-        mTestRunningUserId = getCurrentUserId();
-        if (getDevice().isVisibleBackgroundUsersSupported()) {
-            try {
-                mTestRunningUserId = Integer.parseInt(
-                        getTestInformation().properties().get(RUN_TESTS_AS_USER_KEY));
-            } catch (Exception e) {
-                CLog.e("Failed to parse the userId for " + RUN_TESTS_AS_USER_KEY + " due to " + e);
-            }
-        }
     }
 
     @After
@@ -199,8 +184,8 @@ public class CarWatchdogHostTest extends CarHostJUnit4TestCase {
         uploadStatsdConfig(APP_PKG);
 
         for (int i = 0; i < RECURRING_OVERUSE_COUNT; ++i) {
-            overuseDiskIo(APP_PKG, mTestRunningUserId);
-            verifyAtomIoOveruseStatsReported(APP_PKG, mTestRunningUserId,
+            overuseDiskIo(APP_PKG, getTestRunningUserId());
+            verifyAtomIoOveruseStatsReported(APP_PKG, getTestRunningUserId(),
                     /* overuseTimes= */ i + 1);
             ReportUtils.clearReports(getDevice());
         }
@@ -208,7 +193,7 @@ public class CarWatchdogHostTest extends CarHostJUnit4TestCase {
         executeCommand(APPLY_DISABLE_DISPLAY_POWER_POLICY_CMD);
 
         verifyTestAppsKilled(APP_PKG);
-        verifyAtomKillStatsReported(APP_PKG, mTestRunningUserId);
+        verifyAtomKillStatsReported(APP_PKG, getTestRunningUserId());
     }
 
     @Test
@@ -217,16 +202,17 @@ public class CarWatchdogHostTest extends CarHostJUnit4TestCase {
         uploadStatsdConfig(WATCHDOG_APP_PKG);
 
         for (int i = 0; i < RECURRING_OVERUSE_COUNT; i++) {
-            overuseDiskIo(i % 2 == 0 ? WATCHDOG_APP_PKG : WATCHDOG_APP_PKG_2, mTestRunningUserId);
+            overuseDiskIo(i % 2 == 0 ? WATCHDOG_APP_PKG : WATCHDOG_APP_PKG_2,
+                    getTestRunningUserId());
             verifyAtomIoOveruseStatsReported(i % 2 == 0 ? WATCHDOG_APP_PKG_2 : WATCHDOG_APP_PKG,
-                    mTestRunningUserId, /* overuseTimes= */ i + 1);
+                    getTestRunningUserId(), /* overuseTimes= */ i + 1);
             ReportUtils.clearReports(getDevice());
         }
 
         executeCommand(APPLY_DISABLE_DISPLAY_POWER_POLICY_CMD);
 
         verifyTestAppsKilled(WATCHDOG_APP_PKG, WATCHDOG_APP_PKG_2);
-        verifyAtomKillStatsReported(WATCHDOG_APP_PKG, mTestRunningUserId);
+        verifyAtomKillStatsReported(WATCHDOG_APP_PKG, getTestRunningUserId());
     }
 
     private void uploadStatsdConfig(String packageName) throws Exception {

@@ -161,30 +161,32 @@ public final class PowerPolicyHostTest extends CarHostJUnit4TestCase {
         String clientAction = PowerPolicyTestCommandType.DUMP_LISTENER.name();
         String component = "AUDIO";
 
-        setClientTestcase(clientTestcase);
+        setClientTestcase(clientTestcase, getTestRunningUserId());
         int currentNumberListeners = getNumberPolicyListeners();
-        registerPowerPolicyListener(component);
+        registerPowerPolicyListener(component, getTestRunningUserId());
         waitUntilNumberPolicyListenersEquals(++currentNumberListeners);
-        resetPowerPolicyListeners();
+        resetPowerPolicyListeners(getTestRunningUserId());
         waitResetPowerPolicyListenersComplete(testResult, clientTestcase,
                 PowerPolicyTestCommandType.RESET_LISTENERS.name(), component);
         applyPowerPolicy(PowerPolicyDef.IdSet.LISTENER_TEST);
         waitPowerPolicyListenersUpdated(testResult, clientTestcase,
-                PowerPolicyTestCommandType.CHECK_LISTENERS.name(), component);
+                PowerPolicyTestCommandType.CHECK_LISTENERS.name(), component,
+                getTestRunningUserId());
 
-        dumpPowerPolicyListener(component);
+        dumpPowerPolicyListener(component, getTestRunningUserId());
         testResult.checkLastTestResultEntry(clientTestcase, clientAction,
                 component, PowerPolicyDef.PolicySet.LISTENER_TEST);
 
-        unregisterPowerPolicyListener(component);
+        unregisterPowerPolicyListener(component, getTestRunningUserId());
         applyPowerPolicy(PowerPolicyDef.IdSet.DEFAULT_ALL_ON);
         waitPowerPolicyListenersUpdated(testResult, clientTestcase,
-                PowerPolicyTestCommandType.CHECK_LISTENERS.name(), component);
+                PowerPolicyTestCommandType.CHECK_LISTENERS.name(), component,
+                getTestRunningUserId());
 
-        dumpPowerPolicyListener(component);
+        dumpPowerPolicyListener(component, getTestRunningUserId());
         testResult.checkLastTestResultEntry(clientTestcase, clientAction,
                 component, "not_registered");
-        clearClientTestcase();
+        clearClientTestcase(getTestRunningUserId());
 
         // add respect to user setting test case here to utilize a single device reboot
         testPowerPolicyAndComponentUserSetting();
@@ -285,45 +287,48 @@ public final class PowerPolicyHostTest extends CarHostJUnit4TestCase {
         executeCommand("cmd car_service set-power-policy-group %s", policyGroupId);
     }
 
-    private void setClientTestcase(String testcase) throws Exception {
-        executeCommand("%s settest,%s", TEST_COMMAND_HEADER, testcase);
+    private void setClientTestcase(String testcase, int userId) throws Exception {
+        executeCommand("%s settest,%s --user %d", TEST_COMMAND_HEADER, testcase, userId);
     }
 
-    private void clearClientTestcase() throws Exception {
-        executeCommand("%s cleartest", TEST_COMMAND_HEADER);
+    private void clearClientTestcase(int userId) throws Exception {
+        executeCommand("%s cleartest --user %d", TEST_COMMAND_HEADER, userId);
     }
 
-    private void registerPowerPolicyListener(String componentName) throws Exception {
-        executeCommand("%s addlistener,%s", TEST_COMMAND_HEADER, componentName);
+    private void registerPowerPolicyListener(String componentName, int userId) throws Exception {
+        executeCommand("%s addlistener,%s --user %d", TEST_COMMAND_HEADER, componentName, userId);
     }
 
-    private void unregisterPowerPolicyListener(String componentName) throws Exception {
-        executeCommand("%s removelistener,%s", TEST_COMMAND_HEADER, componentName);
+    private void unregisterPowerPolicyListener(String componentName, int userId) throws Exception {
+        executeCommand("%s removelistener,%s --user %d",
+                TEST_COMMAND_HEADER, componentName, userId);
     }
 
-    private void dumpPowerPolicyListener(String componentName) throws Exception {
-        executeCommand("%s dumplistener,%s", TEST_COMMAND_HEADER, componentName);
+    private void dumpPowerPolicyListener(String componentName, int userId) throws Exception {
+        executeCommand("%s dumplistener,%s --user %d", TEST_COMMAND_HEADER, componentName, userId);
     }
 
     private void waitPowerPolicyListenersUpdated(PowerPolicyTestResult testResult,
-            String clientTestcase, String clientAction, String component) throws Exception {
+            String clientTestcase, String clientAction, String component, int userId)
+            throws Exception {
         CommonTestUtils.waitUntil("timed out (" + DEFAULT_TIMEOUT_SEC
                 + "s) waiting  policy listeners updated", DEFAULT_TIMEOUT_SEC,
                 () -> {
                     return checkPowerPolicyListenersUpdated(testResult, clientTestcase,
-                            clientAction, component);
+                            clientAction, component, userId);
                 });
     }
 
     private boolean checkPowerPolicyListenersUpdated(PowerPolicyTestResult testResult,
-            String clientTestcase, String clientAction, String component) throws Exception {
-        executeCommand("%s checklisteners", TEST_COMMAND_HEADER);
+            String clientTestcase, String clientAction, String component, int userId)
+            throws Exception {
+        executeCommand("%s checklisteners --user %d", TEST_COMMAND_HEADER, userId);
         return testResult.checkLastTestResultEntryData(clientTestcase, clientAction,
                 component, PowerPolicyTestCommandStatus.PROPAGATED);
     }
 
-    private void resetPowerPolicyListeners() throws Exception {
-        executeCommand("%s resetlisteners", TEST_COMMAND_HEADER);
+    private void resetPowerPolicyListeners(int userId) throws Exception {
+        executeCommand("%s resetlisteners --user %d", TEST_COMMAND_HEADER, userId);
     }
 
     private void waitResetPowerPolicyListenersComplete(PowerPolicyTestResult testResult,
