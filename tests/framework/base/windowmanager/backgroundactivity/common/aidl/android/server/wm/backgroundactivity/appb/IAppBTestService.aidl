@@ -21,4 +21,6 @@ import android.app.PendingIntent;
 interface IAppBTestService {
     TextClassification createTextClassification(in PendingIntent pendingIntent);
     void sendByTextClassification(in TextClassification classification);
+    void sendPendingIntent(in PendingIntent pendingIntent, in Bundle sendOptions);
+
 }
