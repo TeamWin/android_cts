@@ -69,6 +69,10 @@
           "exclude-filter": "android.os.cts.CompanionDeviceManagerTest#testProfiles"
         },
         {
+          // Requires a discoverable bluetooth device nearby
+          "exclude-filter": "android.os.cts.CompanionDeviceManagerTest#testRequestNotifications"
+        },
+        {
           // TODO(b/244594813)
           "exclude-filter": "android.os.cts.DebugTest#testStartMethodTracingDefaultExternalStorage"
         },
