@@ -146,16 +146,19 @@ class ItsBaseTest(base_test.BaseTestClass):
       )
       foldable_state = str(foldable_state_unencoded.decode('utf-8')).strip()
       is_folded = 'CLOSE' in foldable_state
-      scene_with_suffix = self.user_params.get('scene_with_suffix', self.scene)
-      if 'folded' in scene_with_suffix and not is_folded:
-        raise AssertionError(
-            f'Testing folded scene {scene_with_suffix} with unfolded device!')
-      if ('folded' not in scene_with_suffix and is_folded and
-          self.camera.startswith(FRONT_CAMERA_ID_PREFIX)):  # Not rear camera
-        raise AssertionError(
-            f'Testing unfolded scene {scene_with_suffix} with a '
-            'non-rear camera while device is folded!'
-        )
+      scene_with_suffix = self.user_params.get('scene_with_suffix')
+      if scene_with_suffix:
+        if 'folded' in scene_with_suffix and not is_folded:
+          raise AssertionError(
+              f'Testing folded scene {scene_with_suffix} with unfolded device!')
+        if ('folded' not in scene_with_suffix and is_folded and
+            self.camera.startswith(FRONT_CAMERA_ID_PREFIX)):  # Not rear camera
+          raise AssertionError(
+              f'Testing unfolded scene {scene_with_suffix} with a '
+              'non-rear camera while device is folded!'
+          )
+      else:
+        logging.debug('Testing without `run_all_tests`')
 
   def _setup_devices(self, num):
     """Sets up each device in parallel if more than one device."""
