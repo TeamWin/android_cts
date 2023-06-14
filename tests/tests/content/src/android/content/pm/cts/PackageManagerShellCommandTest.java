@@ -40,6 +40,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.UiAutomation;
@@ -211,6 +212,10 @@ public class PackageManagerShellCommandTest {
 
     private static UiAutomation getUiAutomation() {
         return InstrumentationRegistry.getInstrumentation().getUiAutomation();
+    }
+
+    private static UserManager getUserManager() {
+        return InstrumentationRegistry.getContext().getSystemService(UserManager.class);
     }
 
     private static String executeShellCommand(String command) throws IOException {
@@ -1829,6 +1834,8 @@ public class PackageManagerShellCommandTest {
     @Test
     public void testCreateUserCurAsType() throws Exception {
         assumeTrue(UserManager.supportsMultipleUsers());
+        assumeFalse(getUserManager().hasUserRestriction(UserManager.DISALLOW_REMOVE_USER));
+
         final String oldPropertyValue = getSystemProperty(UserManager.DEV_CREATE_OVERRIDE_PROPERTY);
         setSystemProperty(UserManager.DEV_CREATE_OVERRIDE_PROPERTY, "1");
         try {
