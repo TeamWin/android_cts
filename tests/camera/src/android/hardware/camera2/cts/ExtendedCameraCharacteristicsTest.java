@@ -70,6 +70,7 @@ import android.media.ImageReader;
 import android.mediapc.cts.common.PerformanceClassEvaluator;
 import android.mediapc.cts.common.PerformanceClassEvaluator.CameraExtensionRequirement;
 import android.mediapc.cts.common.PerformanceClassEvaluator.DynamicRangeTenBitsRequirement;
+import android.mediapc.cts.common.PerformanceClassEvaluator.FaceDetectionRequirement;
 import android.mediapc.cts.common.RequiredMeasurement;
 import android.mediapc.cts.common.Requirement;
 import android.mediapc.cts.common.RequirementConstants;
@@ -194,6 +195,10 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
             CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_CONSTRAINED_HIGH_SPEED_VIDEO;
     private static final int DYNAMIC_RANGE_TEN_BIT =
             CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_DYNAMIC_RANGE_TEN_BIT;
+    private static final int FACE_DETECTION_MODE_SIMPLE =
+            CameraCharacteristics.STATISTICS_FACE_DETECT_MODE_SIMPLE;
+    private static final int FACE_DETECTION_MODE_FULL =
+            CameraCharacteristics.STATISTICS_FACE_DETECT_MODE_FULL;
     private static final int MONOCHROME =
             CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_MONOCHROME;
     private static final int HIGH_SPEED_FPS_LOWER_MIN = 30;
@@ -3696,7 +3701,8 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
     @AppModeFull(reason = "Media Performance class test not applicable to instant apps")
     @CddTest(requirements = {
             "2.2.7.2/7.5/H-1-15",
-            "2.2.7.2/7.5/H-1-16"})
+            "2.2.7.2/7.5/H-1-16",
+            "2.2.7.2/7.5/H-1-17"})
     public void testCameraUPerfClassCharacteristics() throws Exception {
         if (mAdoptShellPerm) {
             // Skip test for system camera. Performance class is only applicable for public camera
@@ -3706,6 +3712,7 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
         PerformanceClassEvaluator pce = new PerformanceClassEvaluator(this.mTestName);
         CameraExtensionRequirement cameraExtensionReq = pce.addR7_5__H_1_15();
         DynamicRangeTenBitsRequirement dynamicRangeTenBitsReq = pce.addR7_5__H_1_16();
+        FaceDetectionRequirement faceDetectionReq = pce.addR7_5__H_1_17();
 
         String primaryRearId = CameraTestUtils.getPrimaryRearCamera(mCameraManager,
                 mCameraIdsUnderTest);
@@ -3723,6 +3730,12 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
                 DynamicRangeTenBitsRequirement.PRIMARY_REAR_CAMERA, dynamicRangeTenBitsReq);
         verifyDynamicRangeTenBits(primaryFrontId,
                 DynamicRangeTenBitsRequirement.PRIMARY_FRONT_CAMERA, dynamicRangeTenBitsReq);
+
+        // H-1-17
+        verifyFaceDetection(primaryRearId,
+                FaceDetectionRequirement.PRIMARY_REAR_CAMERA, faceDetectionReq);
+        verifyFaceDetection(primaryFrontId,
+                FaceDetectionRequirement.PRIMARY_FRONT_CAMERA, faceDetectionReq);
 
         pce.submitAndCheck();
     }
@@ -3776,6 +3789,25 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
                 staticInfo.isCapabilitySupported(DYNAMIC_RANGE_TEN_BIT);
 
         req.setDynamicRangeTenBitsSupported(facing, dynamicRangeTenBitsSupported);
+    }
+
+    /**
+     * Verify face detection requirements for a camera id
+     */
+    private void verifyFaceDetection(String cameraId, int facing, FaceDetectionRequirement req) {
+        if (cameraId == null) {
+            req.setFaceDetectionSupported(facing, false);
+            return;
+        }
+
+        StaticMetadata staticInfo = mAllStaticInfo.get(cameraId);
+        int[] availableFaceDetectionModes = staticInfo.getAvailableFaceDetectModesChecked();
+        assertNotNull(availableFaceDetectionModes);
+        int[] supportedFaceDetectionModes = {FACE_DETECTION_MODE_SIMPLE, FACE_DETECTION_MODE_FULL};
+        boolean faceDetectionSupported = arrayContainsAnyOf(availableFaceDetectionModes,
+                supportedFaceDetectionModes);
+
+        req.setFaceDetectionSupported(facing, faceDetectionSupported);
     }
 
     /**
