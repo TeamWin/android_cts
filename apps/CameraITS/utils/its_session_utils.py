@@ -146,12 +146,16 @@ class ItsSession(object):
 
   IMAGE_FORMAT_LIST_1 = [
       'jpegImage', 'rawImage', 'raw10Image', 'raw12Image', 'rawStatsImage',
-      'dngImage', 'y8Image', 'jpeg_rImage'
+      'dngImage', 'y8Image', 'jpeg_rImage',
+      'rawQuadBayerImage', 'rawQuadBayerStatsImage',
+      'raw10StatsImage', 'raw10QuadBayerStatsImage', 'raw10QuadBayerImage'
   ]
 
   IMAGE_FORMAT_LIST_2 = [
       'jpegImage', 'rawImage', 'raw10Image', 'raw12Image', 'rawStatsImage',
-      'yuvImage', 'jpeg_rImage'
+      'yuvImage', 'jpeg_rImage',
+      'rawQuadBayerImage', 'rawQuadBayerStatsImage',
+      'raw10StatsImage', 'raw10QuadBayerStatsImage', 'raw10QuadBayerImage'
   ]
 
   CAP_JPEG = {'format': 'jpeg'}
@@ -873,7 +877,12 @@ class ItsSession(object):
         'rawStats': [],
         'dng': [],
         'jpeg': [],
-        'y8': []
+        'y8': [],
+        'rawQuadBayer': [],
+        'rawQuadBayerStats': [],
+        'raw10Stats': [],
+        'raw10QuadBayerStats': [],
+        'raw10QuadBayer': [],
     }
 
     # Only allow yuv output to multiple targets
@@ -1276,7 +1285,12 @@ class ItsSession(object):
             'dng': [],
             'jpeg': [],
             'jpeg_r': [],
-            'y8': []
+            'y8': [],
+            'rawQuadBayer': [],
+            'rawQuadBayerStats': [],
+            'raw10Stats': [],
+            'raw10QuadBayerStats': [],
+            'raw10QuadBayer': [],
         }
 
     for cam_id in cam_ids:
@@ -1336,6 +1350,12 @@ class ItsSession(object):
     raw_formats += 1 if 'raw10' in formats else 0
     raw_formats += 1 if 'raw12' in formats else 0
     raw_formats += 1 if 'rawStats' in formats else 0
+    raw_formats += 1 if 'rawQuadBayer' in formats else 0
+    raw_formats += 1 if 'rawQuadBayerStats' in formats else 0
+    raw_formats += 1 if 'raw10Stats' in formats else 0
+    raw_formats += 1 if 'raw10QuadBayer' in formats else 0
+    raw_formats += 1 if 'raw10QuadBayerStats' in formats else 0
+
     if raw_formats > 1:
       raise error_util.CameraItsError('Different raw formats not supported')
 

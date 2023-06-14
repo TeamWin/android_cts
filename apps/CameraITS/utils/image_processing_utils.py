@@ -21,13 +21,13 @@ import math
 import os
 import sys
 
+import capture_read_noise_utils
+import capture_request_utils
 import error_util
+import noise_model_utils
 import numpy
 from PIL import Image
 from PIL import ImageCms
-
-import capture_request_utils
-
 
 # The matrix is from JFIF spec
 DEFAULT_YUV_TO_RGB_CCM = numpy.matrix([[1.000, 0.000, 1.402],
@@ -84,9 +84,10 @@ def convert_capture_to_rgb_image(cap,
   """
   w = cap['width']
   h = cap['height']
-  if cap['format'] == 'raw10':
+  if cap['format'] == 'raw10' or cap['format'] == 'raw10QuadBayer':
     assert_props_is_not_none(props)
-    cap = unpack_raw10_capture(cap)
+    is_quad_bayer = cap['format'] == 'raw10QuadBayer'
+    cap = unpack_raw10_capture(cap, is_quad_bayer)
 
   if cap['format'] == 'raw12':
     assert_props_is_not_none(props)
@@ -99,7 +100,8 @@ def convert_capture_to_rgb_image(cap,
     return convert_yuv420_planar_to_rgb_image(y, u, v, w, h)
   elif cap['format'] == 'jpeg' or cap['format'] == 'jpeg_r':
     return decompress_jpeg_to_rgb_image(cap['data'])
-  elif cap['format'] == 'raw' or cap['format'] == 'rawStats':
+  elif (cap['format'] in ('raw', 'rawQuadBayer') or
+        cap['format'] in noise_model_utils.VALID_RAW_STATS_FORMATS):
     assert_props_is_not_none(props)
     r, gr, gb, b = convert_capture_to_planes(cap, props)
     return convert_raw_to_rgb_image(
@@ -111,11 +113,12 @@ def convert_capture_to_rgb_image(cap,
     raise error_util.CameraItsError(f"Invalid format {cap['format']}")
 
 
-def unpack_raw10_capture(cap):
+def unpack_raw10_capture(cap, is_quad_bayer=False):
   """Unpack a raw-10 capture to a raw-16 capture.
 
   Args:
     cap: A raw-10 capture object.
+    is_quad_bayer: Boolean flag for Bayer or Quad Bayer capture.
 
   Returns:
     New capture object with raw-16 data.
@@ -127,7 +130,7 @@ def unpack_raw10_capture(cap):
     raise error_util.CameraItsError('Invalid raw-10 buffer width')
   cap = copy.deepcopy(cap)
   cap['data'] = unpack_raw10_image(cap['data'].reshape(h, w * 5 // 4))
-  cap['format'] = 'raw'
+  cap['format'] = 'rawQuadBayer' if is_quad_bayer else 'raw'
   return cap
 
 
@@ -293,6 +296,7 @@ def convert_image_to_numpy_array(image_path):
 
   Args:
     image_path: file path
+
   Returns:
     numpy array
   """
@@ -300,6 +304,36 @@ def convert_image_to_numpy_array(image_path):
     raise AssertionError(f'{image_path} does not exist.')
   image = Image.open(image_path)
   return numpy.array(image)
+
+
+def _convert_quad_bayer_img_to_bayer_channels(quad_bayer_img, props=None):
+  """Convert a quad Bayer image to the Bayer image channels.
+
+  Args:
+      quad_bayer_img: The quad Bayer image.
+      props: The camera properties.
+
+  Returns:
+      A list of reordered standard Bayer channels of the Bayer image.
+  """
+  height, width, num_channels = quad_bayer_img.shape
+
+  if num_channels != noise_model_utils.NUM_QUAD_BAYER_CHANNELS:
+    raise AssertionError(
+        'The number of channels in the quad Bayer image must be '
+        f'{noise_model_utils.NUM_QUAD_BAYER_CHANNELS}.'
+    )
+  quad_bayer_cfa_order = get_canonical_cfa_order(props, is_quad_bayer=True)
+
+  # Bayer channels are in the order of R, Gr, Gb and B.
+  bayer_channels = []
+  for ch in range(4):
+    channel_img = numpy.zeros(shape=(height, width), dtype='<f')
+    # Average every four quad Bayer channels into a standard Bayer channel.
+    for i in quad_bayer_cfa_order[4 * ch: 4 * (ch + 1)]:
+      channel_img[:, :] += quad_bayer_img[:, :, i]
+    bayer_channels.append(channel_img / 4)
+  return bayer_channels
 
 
 def convert_capture_to_planes(cap, props=None):
@@ -311,11 +345,15 @@ def convert_capture_to_planes(cap, props=None):
         Returns Y,U,V planes, where the Y plane is full-res and the U,V planes
         are each 1/2 x 1/2 of the full res.
 
-    For Bayer captures ("raw", "raw10", "raw12", or "rawStats"):
-        Returns planes in the order R,Gr,Gb,B, regardless of the Bayer pattern
-        layout. For full-res raw images ("raw", "raw10", "raw12"), each plane
-        is 1/2 x 1/2 of the full res. For "rawStats" images, the mean image
-        is returned.
+    For standard Bayer or quad Bayer captures ("raw", "raw10", "raw12",
+    "rawQuadBayer", "rawStats", "rawQuadBayerStats", "raw10QuadBayer",
+    "raw10Stats", "raw10QuadBayerStats"):
+        Returns planes in the order R, Gr, Gb, B, regardless of the Bayer
+        pattern layout.
+        For full-res raw images ("raw", "rawQuadBayer", "raw10",
+        "raw10QuadBayer", "raw12"), each plane is 1/2 x 1/2 of the full res.
+        For standard Bayer stats images, the mean image is returned.
+        For quad Bayer stats images, the average mean image is returned.
 
     For JPEG captures ("jpeg"):
         Returns R,G,B full-res planes.
@@ -331,9 +369,11 @@ def convert_capture_to_planes(cap, props=None):
   """
   w = cap['width']
   h = cap['height']
-  if cap['format'] == 'raw10':
+  if cap['format'] in ('raw10', 'raw10QuadBayer'):
     assert_props_is_not_none(props)
-    cap = unpack_raw10_capture(cap)
+    is_quad_bayer = cap['format'] == 'raw10QuadBayer'
+    cap = unpack_raw10_capture(cap, is_quad_bayer)
+
   if cap['format'] == 'raw12':
     assert_props_is_not_none(props)
     cap = unpack_raw12_capture(cap)
@@ -350,29 +390,38 @@ def convert_capture_to_planes(cap, props=None):
             rgb[2::3].reshape(h, w, 1))
   elif cap['format'] == 'raw':
     assert_props_is_not_none(props)
+    is_quad_bayer = 'QuadBayer' in cap['format']
     white_level = float(props['android.sensor.info.whiteLevel'])
     img = numpy.ndarray(
         shape=(h * w,), dtype='<u2', buffer=cap['data'][0:w * h * 2])
     img = img.astype(numpy.float32).reshape(h, w) / white_level
+    if is_quad_bayer:
+      pixel_array_size = props.get(
+          'android.sensor.info.pixelArraySizeMaximumResolution'
+      )
+      active_array_size = props.get(
+          'android.sensor.info.preCorrectionActiveArraySizeMaximumResolution'
+      )
+    else:
+      pixel_array_size = props.get('android.sensor.info.pixelArraySize')
+      active_array_size = props.get(
+          'android.sensor.info.preCorrectionActiveArraySize'
+      )
     # Crop the raw image to the active array region.
-    if (props.get('android.sensor.info.preCorrectionActiveArraySize') is
-        not None and
-        props.get('android.sensor.info.pixelArraySize') is not None):
+    if pixel_array_size and active_array_size:
       # Note that the Rect class is defined such that the left,top values
       # are "inside" while the right,bottom values are "outside"; that is,
       # it's inclusive of the top,left sides only. So, the width is
       # computed as right-left, rather than right-left+1, etc.
-      wfull = props['android.sensor.info.pixelArraySize']['width']
-      hfull = props['android.sensor.info.pixelArraySize']['height']
-      xcrop = props['android.sensor.info.preCorrectionActiveArraySize']['left']
-      ycrop = props['android.sensor.info.preCorrectionActiveArraySize']['top']
-      wcrop = props['android.sensor.info.preCorrectionActiveArraySize'][
-          'right'] - xcrop
-      hcrop = props['android.sensor.info.preCorrectionActiveArraySize'][
-          'bottom'] - ycrop
+      wfull = pixel_array_size['width']
+      hfull = pixel_array_size['height']
+      xcrop = active_array_size['left']
+      ycrop = active_array_size['top']
+      wcrop = active_array_size['right'] - xcrop
+      hcrop = active_array_size['bottom'] - ycrop
       if not wfull >= wcrop >= 0:
         raise AssertionError(f'wcrop: {wcrop} not in wfull: {wfull}')
-      if not  hfull >= hcrop >= 0:
+      if not hfull >= hcrop >= 0:
         raise AssertionError(f'hcrop: {hcrop} not in hfull: {hfull}')
       if not wfull - wcrop >= xcrop >= 0:
         raise AssertionError(f'xcrop: {xcrop} not in wfull-crop: {wfull-wcrop}')
@@ -384,27 +433,56 @@ def convert_capture_to_planes(cap, props=None):
         w = wcrop
         h = hcrop
       elif w == wcrop and h == hcrop:
-        logging.debug('Image is already cropped.No cropping needed.')
-        # pylint: disable=pointless-statement
-        None
+        logging.debug('Image is already cropped. No cropping needed.')
       else:
         raise error_util.CameraItsError('Invalid image size metadata')
-    # Separate the image planes.
-    imgs = [
-        img[::2].reshape(w * h // 2)[::2].reshape(h // 2, w // 2, 1),
-        img[::2].reshape(w * h // 2)[1::2].reshape(h // 2, w // 2, 1),
-        img[1::2].reshape(w * h // 2)[::2].reshape(h // 2, w // 2, 1),
-        img[1::2].reshape(w * h // 2)[1::2].reshape(h // 2, w // 2, 1)
-    ]
-    idxs = get_canonical_cfa_order(props)
-    return [imgs[i] for i in idxs]
-  elif cap['format'] == 'rawStats':
+
+    idxs = get_canonical_cfa_order(props, is_quad_bayer)
+    if is_quad_bayer:
+      # Subsample image array based on the color map.
+      quad_bayer_img = capture_read_noise_utils.subsample(
+          img, noise_model_utils.NUM_QUAD_BAYER_CHANNELS
+      )
+      bayer_channels = _convert_quad_bayer_img_to_bayer_channels(
+          quad_bayer_img, props
+      )
+      return bayer_channels
+    else:
+      # Separate the image planes.
+      imgs = [
+          img[::2].reshape(w * h // 2)[::2].reshape(h // 2, w // 2, 1),
+          img[::2].reshape(w * h // 2)[1::2].reshape(h // 2, w // 2, 1),
+          img[1::2].reshape(w * h // 2)[::2].reshape(h // 2, w // 2, 1),
+          img[1::2].reshape(w * h // 2)[1::2].reshape(h // 2, w // 2, 1),
+      ]
+      return [imgs[i] for i in idxs]
+  elif cap['format'] in (
+      'rawStats',
+      'raw10Stats',
+      'rawQuadBayerStats',
+      'raw10QuadBayerStats',
+  ):
     assert_props_is_not_none(props)
+    is_quad_bayer = 'QuadBayer' in cap['format']
     white_level = float(props['android.sensor.info.whiteLevel'])
-    # pylint: disable=unused-variable
-    mean_image, var_image = unpack_rawstats_capture(cap)
-    idxs = get_canonical_cfa_order(props)
-    return [mean_image[:, :, i] / white_level for i in idxs]
+    if is_quad_bayer:
+      num_channels = noise_model_utils.NUM_QUAD_BAYER_CHANNELS
+    else:
+      num_channels = noise_model_utils.NUM_BAYER_CHANNELS
+    mean_image, _ = unpack_rawstats_capture(cap, num_channels)
+    if is_quad_bayer:
+      bayer_channels = _convert_quad_bayer_img_to_bayer_channels(
+          mean_image, props
+      )
+      bayer_channels = [
+          bayer_channels[i] / white_level for i in range(len(bayer_channels))
+      ]
+      return bayer_channels
+    else:
+      # Standard Bayer canonical color channel indices.
+      idxs = get_canonical_cfa_order(props, is_quad_bayer=False)
+      # Normalizes the range to [0, 1] without subtracting the black level.
+      return [mean_image[:, :, i] / white_level for i in idxs]
   else:
     raise error_util.CameraItsError(f"Invalid format {cap['format']}")
 
@@ -464,16 +542,15 @@ def convert_raw_to_rgb_image(r_plane, gr_plane, gb_plane, b_plane, props,
   Returns:
    RGB float-3 image array, with pixel values in [0.0, 1.0]
   """
-    # Values required for the RAW to RGB conversion.
+  # Values required for the RAW to RGB conversion.
   assert_props_is_not_none(props)
   white_level = float(props['android.sensor.info.whiteLevel'])
-  black_levels = props['android.sensor.blackLevelPattern']
   gains = cap_res['android.colorCorrection.gains']
   ccm = cap_res['android.colorCorrection.transform']
 
   # Reorder black levels and gains to R,Gr,Gb,B, to match the order
   # of the planes.
-  black_levels = [get_black_level(i, props, cap_res) for i in range(4)]
+  black_levels = get_black_levels(props, cap_res, is_quad_bayer=False)
   gains = get_gains_in_canonical_order(props, gains)
 
   # Convert CCM from rational to float, as numpy arrays.
@@ -609,82 +686,106 @@ def get_gains_in_canonical_order(props, gains):
     raise error_util.CameraItsError('Not supported')
 
 
-def get_black_level(chan, props, cap_res=None):
-  """Return the black level to use for a given capture.
+def get_black_levels(props, cap=None, is_quad_bayer=False):
+  """Gets black levels to use for a given capture.
 
   Uses a dynamic value from the capture result if available, else falls back
   to the static global value in the camera characteristics.
 
   Args:
-    chan: The channel index, in canonical order (R, Gr, Gb, B).
     props: The camera properties object.
-    cap_res: A capture result object.
+    cap: A capture object.
+    is_quad_bayer: Boolean flag for Bayer or Quad Bayer capture.
 
   Returns:
-    The black level value for the specified channel.
+    A list of black level values reordered in canonical order.
   """
-  if (cap_res is not None and
-      'android.sensor.dynamicBlackLevel' in cap_res and
-      cap_res['android.sensor.dynamicBlackLevel'] is not None):
-    black_levels = cap_res['android.sensor.dynamicBlackLevel']
+  if (cap is not None and
+      'android.sensor.dynamicBlackLevel' in cap and
+      cap['android.sensor.dynamicBlackLevel'] is not None):
+    black_levels = cap['android.sensor.dynamicBlackLevel']
   else:
     black_levels = props['android.sensor.blackLevelPattern']
-  idxs = get_canonical_cfa_order(props)
-  ordered_black_levels = [black_levels[i] for i in idxs]
-  return ordered_black_levels[chan]
+
+  idxs = get_canonical_cfa_order(props, is_quad_bayer)
+  if is_quad_bayer:
+    ordered_black_levels = [black_levels[i // 4] for i in idxs]
+  else:
+    ordered_black_levels = [black_levels[i] for i in idxs]
+  return ordered_black_levels
 
 
-def get_canonical_cfa_order(props):
-  """Returns a mapping to the standard order R,Gr,Gb,B.
+def get_canonical_cfa_order(props, is_quad_bayer=False):
+  """Returns a list of channel indices according to color filter arrangement.
 
-  Returns a mapping from the Bayer 2x2 top-left grid in the CFA to the standard
-  order R,Gr,Gb,B.
+  Color filter arrangement index is a integer ranging from 0 to 3, which maps
+  the color filter arrangement in the following way.
+    0: R, Gr, Gb, B,
+    1: Gr, R, B, Gb,
+    2: Gb, B, R, Gr,
+    3: B, Gb, Gr, R.
+
+  This function return a list of channel indices that can be used to reorder
+  the stats data as the canonical order:
+    (1) For standard Bayer: R, Gr, Gb, B.
+    (2) For quad Bayer: R0, R1, R2, R3,
+                        Gr0, Gr1, Gr2, Gr3,
+                        Gb0, Gb1, Gb2, Gb3,
+                        B0, B1, B2, B3.
 
   Args:
     props: Camera properties object.
+    is_quad_bayer: Boolean flag for Bayer or Quad Bayer capture.
 
   Returns:
-     List of 4 integers, corresponding to the positions in the 2x2 top-
-     left Bayer grid of R,Gr,Gb,B, where the 2x2 grid is labeled as
-     0,1,2,3 in row major order.
+    A list of channel indices with values ranging from:
+      (1) [0, 3] for standard Bayer,
+      (2) [0, 15] for quad Bayer.
   """
-    # Note that raw streams aren't croppable, so the cropRegion doesn't need
-    # to be considered when determining the top-left pixel color.
   cfa_pat = props['android.sensor.info.colorFilterArrangement']
-  if cfa_pat == 0:
-    # RGGB
-    return [0, 1, 2, 3]
-  elif cfa_pat == 1:
-    # GRBG
-    return [1, 0, 3, 2]
-  elif cfa_pat == 2:
-    # GBRG
-    return [2, 3, 0, 1]
-  elif cfa_pat == 3:
-    # BGGR
-    return [3, 2, 1, 0]
-  else:
+  if not 0 <= cfa_pat < 4:
     raise error_util.CameraItsError('Not supported')
 
+  channel_indices = []
+  if is_quad_bayer:
+    color_map = noise_model_utils.QUAD_BAYER_COLOR_FILTER_MAP[cfa_pat]
+    for ch in noise_model_utils.BAYER_COLORS:
+      channel_indices.extend(color_map[ch])
+  else:
+    color_map = noise_model_utils.BAYER_COLOR_FILTER_MAP[cfa_pat]
+    channel_indices = [color_map[ch] for ch in noise_model_utils.BAYER_COLORS]
+  return channel_indices
 
-def unpack_rawstats_capture(cap):
-  """Unpack a rawStats capture to the mean and variance images.
+
+def unpack_rawstats_capture(cap, num_channels=4):
+  """Unpacks a stats image capture to the mean and variance images.
 
   Args:
     cap: A capture object as returned by its_session_utils.do_capture.
+    num_channels: The number of color channels in the stats image capture, which
+      can be one of noise_model_utils.VALID_NUM_CHANNELS.
 
   Returns:
     Tuple (mean_image var_image) of float-4 images, with non-normalized
-    pixel values computed from the RAW16 images on the device
+    pixel values computed from the RAW10/RAW16 images on the device
   """
-  if cap['format'] != 'rawStats':
-    raise AssertionError(f"Unpack fmt != rawStats: {cap['format']}")
+  if cap['format'] not in noise_model_utils.VALID_RAW_STATS_FORMATS:
+    raise AssertionError(f"Unsupported stats format: {cap['format']}")
+
+  if num_channels not in noise_model_utils.VALID_NUM_CHANNELS:
+    raise AssertionError(
+        f'Unsupported number of channels {num_channels}, which should be in'
+        f' {noise_model_utils.VALID_NUM_CHANNELS}.'
+    )
+
   w = cap['width']
   h = cap['height']
-  img = numpy.ndarray(shape=(2 * h * w * 4,), dtype='<f', buffer=cap['data'])
-  analysis_image = img.reshape((2, h, w, 4))
-  mean_image = analysis_image[0, :, :, :].reshape(h, w, 4)
-  var_image = analysis_image[1, :, :, :].reshape(h, w, 4)
+  img = numpy.ndarray(
+      shape=(2 * h * w * num_channels,), dtype='<f', buffer=cap['data']
+  )
+  analysis_image = img.reshape((2, h, w, num_channels))
+  mean_image = analysis_image[0, :, :, :].reshape(h, w, num_channels)
+  var_image = analysis_image[1, :, :, :].reshape(h, w, num_channels)
   return mean_image, var_image
 
 
