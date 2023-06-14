@@ -40,7 +40,7 @@ import static android.permission.cts.TestUtils.awaitJobUntilRequestedState;
 import static com.android.compatibility.common.util.SystemUtil.callWithShellPermissionIdentity;
 import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
-import static com.android.compatibility.common.util.SystemUtil.waitForBroadcasts;
+import static com.android.compatibility.common.util.SystemUtil.waitForBroadcastDispatch;
 
 import android.app.AppOpsManager;
 import android.app.UiAutomation;
@@ -369,15 +369,20 @@ public class PermissionUtils {
             @NonNull String broadcastReceiver) throws Exception {
         long startTime = System.currentTimeMillis();
         String jobStatus = "";
+        simulateReboot(packageName, intentAction, broadcastReceiver);
 
         while ((System.currentTimeMillis() - startTime) < timeout
                 && !jobStatus.contains("waiting")) {
-            simulateReboot(packageName, intentAction, broadcastReceiver);
             String cmd =
                     "cmd jobscheduler get-job-state -u " + Process.myUserHandle().getIdentifier()
                             + " " + packageName + " " + jobId;
             jobStatus = runShellCommand(automation, cmd).trim();
             Log.v(LOG_TAG, "Job: " + jobId + ", job status " + jobStatus);
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                // ignore interrupt
+            }
         }
         if (!jobStatus.contains("waiting")) {
             throw new IllegalStateException("The job didn't get scheduled in time.");
@@ -403,6 +408,6 @@ public class PermissionUtils {
             intent.setPackage(packageName);
             sContext.sendBroadcast(intent);
         }
-        waitForBroadcasts();
+        waitForBroadcastDispatch(intentAction);
     }
 }

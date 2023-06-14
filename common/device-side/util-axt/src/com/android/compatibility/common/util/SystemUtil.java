@@ -410,4 +410,15 @@ public class SystemUtil {
         }
         runShellCommand(cmd);
     }
+
+    /**
+     * waits for a particular broadcast dispatch.
+     */
+    public static void waitForBroadcastDispatch(@NonNull String action) {
+        if (SdkLevel.isAtLeastU()) {
+            runShellCommand(String.format("am wait-for-broadcast-dispatch -a %s", action));
+        } else {
+            runShellCommand("am wait-for-broadcast-idle");
+        }
+    }
 }
