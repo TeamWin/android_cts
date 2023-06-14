@@ -548,6 +548,19 @@ public class CameraBokehActivity extends PassFailButtons.Activity
                 byte[] jpegData = new byte[jpegBuffer.limit()];
                 jpegBuffer.get(jpegData);
                 imgBitmap = BitmapFactory.decodeByteArray(jpegData, 0, jpegData.length);
+
+                // apply correct rotation when create bitmap for jpeg, such that
+                // the image will not be displayed rotated if the phone orientation
+                // is not same with the sensor orientation when captured.
+                int displayRotation = getDisplayRotation();
+                int rotation = (360 + mCameraSensorOrientation - displayRotation) % 360;
+                if (mCameraLensFacing == CameraMetadata.LENS_FACING_FRONT) {
+                    rotation = (mCameraSensorOrientation + displayRotation) % 360;
+                }
+                Matrix m = new Matrix();
+                m.postRotate(rotation);
+                imgBitmap = Bitmap.createBitmap(imgBitmap, 0, 0, imgBitmap.getWidth(),
+                                                imgBitmap.getHeight(), m, true);
                 img.close();
             } else {
                 Log.i(TAG, "Unsupported image format: " + format);
@@ -570,6 +583,10 @@ public class CameraBokehActivity extends PassFailButtons.Activity
                         mImageView.setImageBitmap(bitmap);
                         if (format == ImageFormat.YUV_420_888) {
                             configureImageViewTransform();
+                        }
+
+                        if (format == ImageFormat.JPEG) {
+                            mImageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
                         }
                     }
                 });
