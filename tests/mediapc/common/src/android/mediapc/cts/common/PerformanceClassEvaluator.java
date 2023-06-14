@@ -1111,6 +1111,50 @@ public class PerformanceClassEvaluator {
         }
     }
 
+    public static class FaceDetectionRequirement extends Requirement {
+        private static final String TAG =
+                FaceDetectionRequirement.class.getSimpleName();
+
+        public static int PRIMARY_REAR_CAMERA = 0;
+        public static int PRIMARY_FRONT_CAMERA = 1;
+
+        private FaceDetectionRequirement(String id, RequiredMeasurement<?> ... reqs) {
+            super(id, reqs);
+        }
+
+        public void setFaceDetectionSupported(int camera, boolean supported) {
+            if (camera == PRIMARY_REAR_CAMERA) {
+                this.setMeasuredValue(RequirementConstants.REAR_CAMERA_FACE_DETECTION_SUPPORTED,
+                        supported);
+            } else if (camera == PRIMARY_FRONT_CAMERA) {
+                this.setMeasuredValue(RequirementConstants.FRONT_CAMERA_FACE_DETECTION_SUPPORTED,
+                        supported);
+            }
+        }
+
+        /**
+         * [2.2.7.2/7.5/H-1-17] MUST support face detection capability
+         * (STATISTICS_FACE_DETECT_MODE_SIMPLE or STATISTICS_FACE_DETECT_MODE_FULL) for the primary
+         * cameras.
+         */
+        public static FaceDetectionRequirement createFaceDetectionReq() {
+            RequiredMeasurement<Boolean> rearFaceDetectionRequirement = RequiredMeasurement
+                    .<Boolean>builder()
+                    .setId(RequirementConstants.REAR_CAMERA_FACE_DETECTION_SUPPORTED)
+                    .setPredicate(RequirementConstants.BOOLEAN_EQ)
+                    .addRequiredValue(Build.VERSION_CODES.UPSIDE_DOWN_CAKE, true)
+                    .build();
+            RequiredMeasurement<Boolean> frontFaceDetectionRequirement = RequiredMeasurement
+                    .<Boolean>builder()
+                    .setId(RequirementConstants.FRONT_CAMERA_FACE_DETECTION_SUPPORTED)
+                    .setPredicate(RequirementConstants.BOOLEAN_EQ)
+                    .addRequiredValue(Build.VERSION_CODES.UPSIDE_DOWN_CAKE, true)
+                    .build();
+            return new FaceDetectionRequirement(RequirementConstants.R7_5__H_1_17,
+                    rearFaceDetectionRequirement, frontFaceDetectionRequirement);
+        }
+    }
+
     // used for requirements [8.2/H-1-1], [8.2/H-1-2], [8.2/H-1-3], [8.2/H-1-4]
     public static class FileSystemRequirement extends Requirement {
 
@@ -1985,7 +2029,7 @@ public class PerformanceClassEvaluator {
         }
 
         /**
-         * [2.2.7.1/5.1/H-1-19] MUST support AV1 encoder which can encode up to 480p resolution
+         * [2.2.7.1/5.1/H-1-18] MUST support AV1 encoder which can encode up to 480p resolution
          * at 30fps and 1Mbps.
          */
         public static VideoCodecRequirement createRAV1EncoderReq() {
@@ -2010,7 +2054,7 @@ public class PerformanceClassEvaluator {
                     .addRequiredValue(Build.VERSION_CODES.UPSIDE_DOWN_CAKE, 1)
                     .build();
 
-            return new VideoCodecRequirement(RequirementConstants.R5_1__H_1_19, resolution, fps,
+            return new VideoCodecRequirement(RequirementConstants.R5_1__H_1_18, resolution, fps,
                     bitrate);
         }
 
@@ -2217,8 +2261,7 @@ public class PerformanceClassEvaluator {
         return this.addRequirement(VideoCodecRequirement.createRAVIFDecoderReq());
     }
 
-
-    /* Adds requirement 5.1/H-1-19 */
+    /* Adds requirement 5.1/H-1-18 */
     public VideoCodecRequirement addRAV1EncoderReq() {
         return this.addRequirement(VideoCodecRequirement.createRAV1EncoderReq());
     }
@@ -2330,6 +2373,10 @@ public class PerformanceClassEvaluator {
 
     public DynamicRangeTenBitsRequirement addR7_5__H_1_16() {
         return this.addRequirement(DynamicRangeTenBitsRequirement.createDynamicRangeTenBitsReq());
+    }
+
+    public FaceDetectionRequirement addR7_5__H_1_17() {
+        return this.addRequirement(FaceDetectionRequirement.createFaceDetectionReq());
     }
 
 

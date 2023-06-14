@@ -176,9 +176,11 @@ class PreviewVideoZoomTest(its_base_test.ItsBaseTest):
       z_range = props['android.control.zoomRatioRange']
 
       # Skip unless camera has zoom ability
-      first_api_level = its_session_utils.get_first_api_level(self.dut.serial)
+      vendor_api_level = its_session_utils.get_vendor_api_level(
+          self.dut.serial)
       camera_properties_utils.skip_unless(
-          z_range and first_api_level >= its_session_utils.ANDROID14_API_LEVEL)
+          z_range and vendor_api_level >= its_session_utils.ANDROID14_API_LEVEL
+      )
       logging.debug('Testing zoomRatioRange: %s', str(z_range))
 
       # Load chart for scene

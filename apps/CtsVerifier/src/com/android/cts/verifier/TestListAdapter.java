@@ -132,6 +132,9 @@ public abstract class TestListAdapter extends BaseAdapter {
         /** Configs display mode to run this test. */
         public final String displayMode;
 
+        /** Configs test pass mode to record the test result. */
+        public final boolean passInEitherMode;
+
         // TODO: refactor to use a Builder approach instead
 
         /**
@@ -208,6 +211,36 @@ public abstract class TestListAdapter extends BaseAdapter {
                 String[] excludedFeatures,
                 String[] applicableFeatures,
                 String[] excludedUserTypes,
+                String displayMode,
+                boolean passInEitherMode) {
+            return new TestListItem(
+                    title,
+                    testName,
+                    intent,
+                    requiredFeatures,
+                    requiredConfigs,
+                    requiredActions,
+                    excludedFeatures,
+                    applicableFeatures,
+                    excludedUserTypes,
+                    displayMode,
+                    passInEitherMode);
+        }
+
+        /**
+         * Creates a new test item with given display mode, the required, excluded, applicable
+         * features, required configurations and actions and test pass mode.
+         */
+        public static TestListItem newTest(
+                String title,
+                String testName,
+                Intent intent,
+                String[] requiredFeatures,
+                String[] requiredConfigs,
+                String[] requiredActions,
+                String[] excludedFeatures,
+                String[] applicableFeatures,
+                String[] excludedUserTypes,
                 String displayMode) {
             return new TestListItem(
                     title,
@@ -219,7 +252,8 @@ public abstract class TestListAdapter extends BaseAdapter {
                     excludedFeatures,
                     applicableFeatures,
                     excludedUserTypes,
-                    displayMode);
+                    displayMode,
+                    /* passInEitherMode= */ false);
         }
 
         /**
@@ -244,7 +278,8 @@ public abstract class TestListAdapter extends BaseAdapter {
                     excludedFeatures,
                     applicableFeatures,
                     /* excludedUserTypes= */ null,
-                    /* displayMode= */ null);
+                    /* displayMode= */ null,
+                    /* passInEitherMode= */ false);
         }
 
         /** Creates a new test item with given required, excluded and applicable features. */
@@ -265,7 +300,8 @@ public abstract class TestListAdapter extends BaseAdapter {
                     excludedFeatures,
                     applicableFeatures,
                     /* excludedUserTypes= */ null,
-                    /* displayMode= */ null);
+                    /* displayMode= */ null,
+                    /* passInEitherMode= */ false);
         }
 
         /** Creates a new test item with given required and excluded features. */
@@ -285,7 +321,8 @@ public abstract class TestListAdapter extends BaseAdapter {
                     excludedFeatures,
                     /* applicableFeatures= */ null,
                     /* excludedUserTypes= */ null,
-                    /* displayMode= */ null);
+                    /* displayMode= */ null,
+                    /* passInEitherMode= */ false);
         }
 
         /** Creates a new test item with given required features. */
@@ -301,7 +338,8 @@ public abstract class TestListAdapter extends BaseAdapter {
                     /* excludedFeatures= */ null,
                     /* applicableFeatures= */ null,
                     /* excludedUserTypes= */ null,
-                    /* displayMode= */ null);
+                    /* displayMode= */ null,
+                    /* passInEitherMode= */ false);
         }
 
         public static TestListItem newCategory(Context context, int titleResId) {
@@ -319,7 +357,8 @@ public abstract class TestListAdapter extends BaseAdapter {
                     /* excludedFeatures= */ null,
                     /* applicableFeatures= */ null,
                     /* excludedUserTypes= */ null,
-                    /* displayMode= */ null);
+                    /* displayMode= */ null,
+                    /* passInEitherMode= */ false);
         }
 
         protected TestListItem(
@@ -339,7 +378,8 @@ public abstract class TestListAdapter extends BaseAdapter {
                     excludedFeatures,
                     applicableFeatures,
                     /* excludedUserTypes= */ null,
-                    /* displayMode= */ null);
+                    /* displayMode= */ null,
+                    /* passInEitherMode= */ false);
         }
 
         protected TestListItem(
@@ -352,7 +392,8 @@ public abstract class TestListAdapter extends BaseAdapter {
                 String[] excludedFeatures,
                 String[] applicableFeatures,
                 String[] excludedUserTypes,
-                String displayMode) {
+                String displayMode,
+                boolean passInEitherMode) {
             this.title = title;
             if (!sInitialLaunch) {
                 testName = setTestNameSuffix(sCurrentDisplayMode, testName);
@@ -366,6 +407,7 @@ public abstract class TestListAdapter extends BaseAdapter {
             this.applicableFeatures = applicableFeatures;
             this.excludedUserTypes = excludedUserTypes;
             this.displayMode = displayMode;
+            this.passInEitherMode = passInEitherMode;
         }
 
         boolean isTest() {
@@ -675,6 +717,16 @@ public abstract class TestListAdapter extends BaseAdapter {
         return position;
     }
 
+    /** Gets {@link TestListItem} with the given test name. */
+    public TestListItem getItemByName(String testName) {
+        for (TestListItem item: mRows) {
+            if (item != null && item.testName != null && item.testName.equals(testName)) {
+                return item;
+            }
+        }
+        return null;
+    }
+
     public int getTestResult(int position) {
         TestListItem item = getItem(position);
         return mTestResults.containsKey(item.testName)
@@ -906,6 +958,11 @@ public abstract class TestListAdapter extends BaseAdapter {
                 && mode.equalsIgnoreCase(DisplayMode.FOLDED.toString())
                 && !name.endsWith(DisplayMode.FOLDED.asSuffix())) {
             return name + DisplayMode.FOLDED.asSuffix();
+        }
+        if (name != null
+                && mode.equalsIgnoreCase(DisplayMode.UNFOLDED.toString())
+                && name.endsWith(DisplayMode.FOLDED.asSuffix())) {
+            return name.substring(0, name.length() - DisplayMode.FOLDED.asSuffix().length());
         }
         return name;
     }
