@@ -293,10 +293,11 @@ public class ExtensionRearDisplayTest extends WindowManagerJetpackTestBase imple
     @ApiTest(apis = {
             "androidx.window.extensions.area.WindowAreaComponent#getRearDisplayMetrics"})
     @Test
-    public void testGetRearDisplayMetrics_sameAfterRotation() throws Throwable {
+    public void testGetRearDisplayMetrics_afterRotation() throws Throwable {
         ExtensionUtil.assumeVendorApiLevelAtLeast(3 /* vendorApiLevel */);
         assumeTrue(mRearDisplayAddress != INVALID_DISPLAY_ADDRESS);
         DisplayMetrics originalMetricsApi = mWindowAreaComponent.getRearDisplayMetrics();
+        assertNotNull(originalMetricsApi);
         // Reset configuration property to be able to verify that rear display was disabled.
         resetActivityConfigurationChangeValues(mActivity);
         // Enable rear display mode to get the expected display metrics for the rear display
@@ -323,12 +324,11 @@ public class ExtensionRearDisplayTest extends WindowManagerJetpackTestBase imple
         WindowMetrics postRotationWindowMetrics =
                 mActivity.getWindowManager().getCurrentWindowMetrics();
         DisplayMetrics postRotationMetricsApi = mWindowAreaComponent.getRearDisplayMetrics();
-
+        assertNotNull(postRotationMetricsApi);
 
         // Verify that the metrics returned from the activity do not equal after rotation
         assertNotEquals(windowMetrics, postRotationWindowMetrics);
-        // Verify that metrics returned from #getRearDisplayMetrics equals
-        assertEquals(originalMetricsApi, postRotationMetricsApi);
+        assertNotEquals(originalMetricsApi, postRotationMetricsApi);
     }
 
     /**
