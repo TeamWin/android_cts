@@ -42,6 +42,7 @@ import android.hardware.camera2.params.RggbChannelVector;
 import android.hardware.camera2.params.TonemapCurve;
 import android.hardware.cts.helpers.CameraUtils;
 import android.media.Image;
+import android.os.Build;
 import android.os.Parcel;
 import android.util.ArraySet;
 import android.util.Log;
@@ -127,6 +128,8 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
     };
     private final Rational ZERO_R = new Rational(0, 1);
     private final Rational ONE_R = new Rational(1, 1);
+
+    private static final int ZOOM_STEPS = 15;
 
     private enum TorchSeqState {
         RAMPING_UP,
@@ -847,6 +850,32 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
                 openDevice(id);
                 Size maxPreviewSize = mOrderedPreviewSizes.get(0);
                 zoomRatioTestByCamera(maxPreviewSize);
+            } finally {
+                closeDevice();
+            }
+        }
+    }
+
+    /**
+     * Test that zoom doesn't incur non-monotonic timestamp sequence
+     *
+     * Camera API requires that camera timestamps monotonically increase.
+     */
+    @Test
+    public void testZoomTimestampIncrease() throws Exception {
+        if (PropertyUtil.getVendorApiLevel() <= Build.VERSION_CODES.TIRAMISU) {
+            // Only run test for Vendor API level U or higher
+            return;
+        }
+
+        for (String id : mCameraIdsUnderTest) {
+            try {
+                if (!mAllStaticInfo.get(id).isColorOutputSupported()) {
+                    Log.i(TAG, "Camera " + id + " does not support color outputs, skipping");
+                    continue;
+                }
+                openDevice(id);
+                zoomTimestampIncreaseTestByCamera();
             } finally {
                 closeDevice();
             }
@@ -2639,7 +2668,6 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
     }
 
     private void digitalZoomTestByCamera(Size previewSize, boolean repeating) throws Exception {
-        final int ZOOM_STEPS = 15;
         final PointF[] TEST_ZOOM_CENTERS;
         final float maxZoom = mStaticInfo.getAvailableMaxDigitalZoomChecked();
         final float ZOOM_ERROR_MARGIN = 0.01f;
@@ -2858,7 +2886,6 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
     }
 
     private void zoomRatioTestByCamera(Size previewSize) throws Exception {
-        final int ZOOM_STEPS = 15;
         final Range<Float> zoomRatioRange = mStaticInfo.getZoomRatioRangeChecked();
         // The error margin is derive from a VGA size camera zoomed all the way to 10x, in which
         // case the cropping error can be as large as 480/46 - 480/48 = 0.435.
@@ -3020,6 +3047,41 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
                             cropRegion, cropRegionWithCrop, CROP_REGION_ERROR_PERCENT_DELTA);
                 }
             }
+        }
+    }
+
+    private void zoomTimestampIncreaseTestByCamera() throws Exception {
+        final Range<Float> zoomRatioRange = mStaticInfo.getZoomRatioRangeChecked();
+
+        Size maxPreviewSize = mOrderedPreviewSizes.get(0);
+        updatePreviewSurface(maxPreviewSize);
+        CaptureRequest.Builder requestBuilder =
+                mCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
+        configurePreviewOutput(requestBuilder);
+
+        // Submit a sequence of requests first zooming in then zooming out.
+        List<CaptureRequest> requests = new ArrayList<CaptureRequest>();
+        SimpleCaptureCallback listener = new SimpleCaptureCallback();
+        float zoomRange = zoomRatioRange.getUpper() - zoomRatioRange.getLower();
+        for (int i = 0; i <= ZOOM_STEPS; i++) {
+            float zoomFactor = zoomRatioRange.getUpper() - (zoomRange * i / ZOOM_STEPS);
+            requestBuilder.set(CaptureRequest.CONTROL_ZOOM_RATIO, zoomFactor);
+            // Add each ratio to both the beginning and end of the list.
+            requests.add(requestBuilder.build());
+            requests.add(0, requestBuilder.build());
+        }
+        mSession.captureBurst(requests, listener, mHandler);
+
+        // Check timestamp monotonically increase for thoe whole sequence
+        long  prevTimestamp = 0;
+        for (CaptureRequest request : requests) {
+            TotalCaptureResult result = listener.getTotalCaptureResultForRequest(
+                    request, NUM_RESULTS_WAIT_TIMEOUT);
+            long timestamp = getValueNotNull(result, CaptureResult.SENSOR_TIMESTAMP);
+            mCollector.expectGreater("Sensor timestamp must monotonically increase, "
+                    + "but changed from " + prevTimestamp + " to " + timestamp,
+                    prevTimestamp, timestamp);
+            prevTimestamp = timestamp;
         }
     }
 
