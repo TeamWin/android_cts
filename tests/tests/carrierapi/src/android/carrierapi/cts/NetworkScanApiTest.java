@@ -84,7 +84,7 @@ public class NetworkScanApiTest extends BaseCarrierApiTest {
     private static final int EVENT_NETWORK_SCAN_COMPLETED = 400;
     private static final int EVENT_SCAN_DENIED = 500;
     private List<CellInfo> mScanResults = null;
-    private NetworkScanHandlerThread mTestHandlerThread;
+    private HandlerThread mTestHandlerThread;
     private Handler mHandler;
     private NetworkScan mNetworkScan;
     private NetworkScanRequest mNetworkScanRequest;
@@ -133,8 +133,79 @@ public class NetworkScanApiTest extends BaseCarrierApiTest {
         InstrumentationRegistry.getInstrumentation()
                 .getUiAutomation()
                 .grantRuntimePermission(selfPackageName, ACCESS_BACKGROUND_LOCATION);
-        mTestHandlerThread = new NetworkScanHandlerThread(TAG);
+        mTestHandlerThread = new HandlerThread(TAG);
         mTestHandlerThread.start();
+        /* create a custom handler for the Handler Thread */
+        mHandler =
+                new Handler(mTestHandlerThread.getLooper()) {
+                    @Override
+                    public void handleMessage(Message msg) {
+                        switch (msg.what) {
+                            case EVENT_NETWORK_SCAN_START: {
+                                Log.d(TAG, "request network scan");
+                                boolean useShellIdentity = (Boolean) msg.obj;
+                                if (useShellIdentity) {
+                                    InstrumentationRegistry.getInstrumentation()
+                                            .getUiAutomation()
+                                            .adoptShellPermissionIdentity();
+                                }
+                                try {
+                                    mNetworkScan =
+                                            mTelephonyManager.requestNetworkScan(
+                                                    mNetworkScanRequest,
+                                                    AsyncTask.SERIAL_EXECUTOR,
+                                                    mNetworkScanCallback);
+                                    if (mNetworkScan == null) {
+                                        mNetworkScanStatus = EVENT_SCAN_DENIED;
+                                        setReady(true);
+                                    }
+                                } catch (SecurityException e) {
+                                    mNetworkScanStatus = EVENT_SCAN_DENIED;
+                                    setReady(true);
+                                } finally {
+                                    if (useShellIdentity) {
+                                        InstrumentationRegistry.getInstrumentation()
+                                                .getUiAutomation()
+                                                .dropShellPermissionIdentity();
+                                    }
+                                }
+                                break;
+                            }
+                            case EVENT_NETWORK_SCAN_RENOUNCE_START: {
+                                Log.d(TAG, "request network scan with renounce");
+                                boolean useShellIdentity = (Boolean) msg.obj;
+                                if (useShellIdentity) {
+                                    InstrumentationRegistry.getInstrumentation()
+                                            .getUiAutomation()
+                                            .adoptShellPermissionIdentity();
+                                }
+                                try {
+                                    mNetworkScan = mTelephonyManager.requestNetworkScan(
+                                            TelephonyManager.INCLUDE_LOCATION_DATA_NONE,
+                                            mNetworkScanRequest,
+                                            AsyncTask.SERIAL_EXECUTOR,
+                                            mNetworkScanCallback);
+                                    if (mNetworkScan == null) {
+                                        mNetworkScanStatus = EVENT_SCAN_DENIED;
+                                        setReady(true);
+                                    }
+                                } catch (SecurityException e) {
+                                    mNetworkScanStatus = EVENT_SCAN_DENIED;
+                                    setReady(true);
+                                } finally {
+                                    if (useShellIdentity) {
+                                        InstrumentationRegistry.getInstrumentation()
+                                                .getUiAutomation()
+                                                .dropShellPermissionIdentity();
+                                    }
+                                }
+                                break;
+                            }
+                            default:
+                                Log.d(TAG, "Unknown Event " + msg.what);
+                        }
+                    }
+                };
     }
 
     @After
@@ -162,88 +233,6 @@ public class NetworkScanApiTest extends BaseCarrierApiTest {
         synchronized (mLock) {
             mReady = ready;
             mLock.notifyAll();
-        }
-    }
-
-    private class NetworkScanHandlerThread extends HandlerThread {
-
-        public NetworkScanHandlerThread(String name) {
-            super(name);
-        }
-
-        @Override
-        public void onLooperPrepared() {
-            /* create a custom handler for the Handler Thread */
-            mHandler =
-                    new Handler(mTestHandlerThread.getLooper()) {
-                        @Override
-                        public void handleMessage(Message msg) {
-                            switch (msg.what) {
-                                case EVENT_NETWORK_SCAN_START: {
-                                    Log.d(TAG, "request network scan");
-                                    boolean useShellIdentity = (Boolean) msg.obj;
-                                    if (useShellIdentity) {
-                                        InstrumentationRegistry.getInstrumentation()
-                                                .getUiAutomation()
-                                                .adoptShellPermissionIdentity();
-                                    }
-                                    try {
-                                        mNetworkScan =
-                                                mTelephonyManager.requestNetworkScan(
-                                                        mNetworkScanRequest,
-                                                        AsyncTask.SERIAL_EXECUTOR,
-                                                        mNetworkScanCallback);
-                                        if (mNetworkScan == null) {
-                                            mNetworkScanStatus = EVENT_SCAN_DENIED;
-                                            setReady(true);
-                                        }
-                                    } catch (SecurityException e) {
-                                        mNetworkScanStatus = EVENT_SCAN_DENIED;
-                                        setReady(true);
-                                    } finally {
-                                        if (useShellIdentity) {
-                                            InstrumentationRegistry.getInstrumentation()
-                                                    .getUiAutomation()
-                                                    .dropShellPermissionIdentity();
-                                        }
-                                    }
-                                    break;
-                                }
-                                case EVENT_NETWORK_SCAN_RENOUNCE_START: {
-                                    Log.d(TAG, "request network scan with renounce");
-                                    boolean useShellIdentity = (Boolean) msg.obj;
-                                    if (useShellIdentity) {
-                                        InstrumentationRegistry.getInstrumentation()
-                                                .getUiAutomation()
-                                                .adoptShellPermissionIdentity();
-                                    }
-                                    try {
-                                        mNetworkScan = mTelephonyManager.requestNetworkScan(
-                                                TelephonyManager.INCLUDE_LOCATION_DATA_NONE,
-                                                mNetworkScanRequest,
-                                                AsyncTask.SERIAL_EXECUTOR,
-                                                mNetworkScanCallback);
-                                        if (mNetworkScan == null) {
-                                            mNetworkScanStatus = EVENT_SCAN_DENIED;
-                                            setReady(true);
-                                        }
-                                    } catch (SecurityException e) {
-                                        mNetworkScanStatus = EVENT_SCAN_DENIED;
-                                        setReady(true);
-                                    } finally {
-                                        if (useShellIdentity) {
-                                            InstrumentationRegistry.getInstrumentation()
-                                                    .getUiAutomation()
-                                                    .dropShellPermissionIdentity();
-                                        }
-                                    }
-                                    break;
-                                }
-                                default:
-                                    Log.d(TAG, "Unknown Event " + msg.what);
-                            }
-                        }
-                    };
         }
     }
 
