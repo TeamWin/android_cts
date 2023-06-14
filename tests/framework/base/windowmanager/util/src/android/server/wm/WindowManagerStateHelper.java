@@ -730,26 +730,28 @@ public class WindowManagerStateHelper extends WindowManagerState {
     }
 
     public void assertKeyguardShowingAndOccluded() {
-        assertTrue("Keyguard is showing",
+        assertTrue("Keyguard must be showing",
                 getKeyguardControllerState().keyguardShowing);
-        assertFalse("keygaurd is not going away",
+        assertFalse("keyguard must not be going away",
                 getKeyguardControllerState().mKeyguardGoingAway);
-        assertTrue("Keyguard is occluded",
+        assertTrue("Keyguard must be occluded",
                 getKeyguardControllerState().isKeyguardOccluded(DEFAULT_DISPLAY));
     }
 
     public void assertKeyguardShowingAndNotOccluded() {
-        assertTrue("Keyguard is showing",
+        assertTrue("Keyguard must be showing",
                 getKeyguardControllerState().keyguardShowing);
-        assertFalse("keygaurd is not going away",
+        assertFalse("Keyguard must not be going away",
                 getKeyguardControllerState().mKeyguardGoingAway);
-        assertFalse("Keyguard is not occluded",
+        assertFalse("Keyguard must not be occluded",
                 getKeyguardControllerState().isKeyguardOccluded(DEFAULT_DISPLAY));
     }
 
     public void assertKeyguardGone() {
         assertFalse("Keyguard is not shown",
                 getKeyguardControllerState().keyguardShowing);
+        assertFalse("Keyguard must not be going away",
+                getKeyguardControllerState().mKeyguardGoingAway);
     }
 
     void assertKeyguardShownOnSecondaryDisplay(int displayId) {
