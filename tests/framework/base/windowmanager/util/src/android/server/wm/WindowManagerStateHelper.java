@@ -368,7 +368,7 @@ public class WindowManagerStateHelper extends WindowManagerState {
 
     public boolean waitForWithAmState(Predicate<WindowManagerState> waitCondition,
             String message) {
-        return waitFor((amState) -> waitCondition.test(amState), message);
+        return waitFor(waitCondition, message);
     }
 
     public void waitWindowingModeTopFocus(int windowingMode, boolean topFocus, String message) {
