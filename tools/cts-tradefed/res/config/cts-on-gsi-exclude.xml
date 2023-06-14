@@ -142,5 +142,6 @@
 
     <!-- b/284917528 -->
     <option name="compatibility:exclude-filter" value="MicrodroidHostTestCases" />
+    <option name="compatibility:exclude-filter" value="MicrodroidTestApp" />
 
 </configuration>
