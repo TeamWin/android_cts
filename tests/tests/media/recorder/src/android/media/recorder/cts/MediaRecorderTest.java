@@ -1155,10 +1155,10 @@ public class MediaRecorderTest extends MediaTestBase {
         mMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
         mMediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
         mMediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264);
-        // Try to get camera profile for QUALITY_LOW; if unavailable,
+        // Try to get camera profile for QUALITY_HIGH; if unavailable,
         // set the video size to default value.
         CamcorderProfile profile = CamcorderProfile.get(
-                0 /* cameraId */, CamcorderProfile.QUALITY_LOW);
+                0 /* cameraId */, CamcorderProfile.QUALITY_HIGH);
         if (profile != null) {
             width = profile.videoFrameWidth;
             height = profile.videoFrameHeight;
