@@ -32,6 +32,8 @@
 
     <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
         <option name="run-command" value="pm uninstall android.packageinstaller.emptytestapp.cts" />
+        <!-- dismiss all system dialogs before launch test -->
+        <option name="run-command" value="am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS" />
         <option name="teardown-command" value="pm uninstall android.packageinstaller.emptytestapp.cts" />
     </target_preparer>
 
