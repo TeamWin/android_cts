@@ -1686,29 +1686,29 @@ class ItsSession(object):
         chart_distance, camera_fov)
     if math.isclose(
         chart_scaling,
-        opencv_processing_utils.SCALE_RFOV_IN_WFOV_BOX,
+        opencv_processing_utils.SCALE_WIDE_IN_22CM_RIG,
         abs_tol=SCALING_TO_FILE_ATOL):
-      file_name = f'{scene}_{opencv_processing_utils.SCALE_RFOV_IN_WFOV_BOX}x_scaled.png'
+      file_name = f'{scene}_{opencv_processing_utils.SCALE_WIDE_IN_22CM_RIG}x_scaled.png'
     elif math.isclose(
         chart_scaling,
-        opencv_processing_utils.SCALE_TELE_IN_WFOV_BOX,
+        opencv_processing_utils.SCALE_TELE_IN_22CM_RIG,
         abs_tol=SCALING_TO_FILE_ATOL):
-      file_name = f'{scene}_{opencv_processing_utils.SCALE_TELE_IN_WFOV_BOX}x_scaled.png'
+      file_name = f'{scene}_{opencv_processing_utils.SCALE_TELE_IN_22CM_RIG}x_scaled.png'
     elif math.isclose(
         chart_scaling,
-        opencv_processing_utils.SCALE_TELE25_IN_RFOV_BOX,
+        opencv_processing_utils.SCALE_TELE25_IN_31CM_RIG,
         abs_tol=SCALING_TO_FILE_ATOL):
-      file_name = f'{scene}_{opencv_processing_utils.SCALE_TELE25_IN_RFOV_BOX}x_scaled.png'
+      file_name = f'{scene}_{opencv_processing_utils.SCALE_TELE25_IN_31CM_RIG}x_scaled.png'
     elif math.isclose(
         chart_scaling,
-        opencv_processing_utils.SCALE_TELE40_IN_RFOV_BOX,
+        opencv_processing_utils.SCALE_TELE40_IN_31CM_RIG,
         abs_tol=SCALING_TO_FILE_ATOL):
-      file_name = f'{scene}_{opencv_processing_utils.SCALE_TELE40_IN_RFOV_BOX}x_scaled.png'
+      file_name = f'{scene}_{opencv_processing_utils.SCALE_TELE40_IN_31CM_RIG}x_scaled.png'
     elif math.isclose(
         chart_scaling,
-        opencv_processing_utils.SCALE_TELE_IN_RFOV_BOX,
+        opencv_processing_utils.SCALE_TELE_IN_31CM_RIG,
         abs_tol=SCALING_TO_FILE_ATOL):
-      file_name = f'{scene}_{opencv_processing_utils.SCALE_TELE_IN_RFOV_BOX}x_scaled.png'
+      file_name = f'{scene}_{opencv_processing_utils.SCALE_TELE_IN_31CM_RIG}x_scaled.png'
     else:
       file_name = f'{scene}.png'
     logging.debug('Scene to load: %s', file_name)
@@ -1986,14 +1986,14 @@ def load_scene(cam, props, scene, tablet, chart_distance, lighting_check=True,
   rfov_camera_in_rfov_box = (
       math.isclose(
           chart_distance,
-          opencv_processing_utils.CHART_DISTANCE_RFOV, rel_tol=0.1) and
+          opencv_processing_utils.CHART_DISTANCE_31CM, rel_tol=0.1) and
       opencv_processing_utils.FOV_THRESH_TELE <= float(camera_fov)
-      <= opencv_processing_utils.FOV_THRESH_WFOV)
+      <= opencv_processing_utils.FOV_THRESH_UW)
   wfov_camera_in_wfov_box = (
       math.isclose(
           chart_distance,
-          opencv_processing_utils.CHART_DISTANCE_WFOV, rel_tol=0.1) and
-      float(camera_fov) > opencv_processing_utils.FOV_THRESH_WFOV)
+          opencv_processing_utils.CHART_DISTANCE_22CM, rel_tol=0.1) and
+      float(camera_fov) > opencv_processing_utils.FOV_THRESH_UW)
   if (rfov_camera_in_rfov_box or wfov_camera_in_wfov_box) and lighting_check:
     cam.do_3a()
     cap = cam.do_capture(

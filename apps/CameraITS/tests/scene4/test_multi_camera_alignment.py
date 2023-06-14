@@ -112,19 +112,19 @@ def select_ids_to_test(ids, props, chart_distance):
                   chart_distance)
     # determine best combo with rig used or recommend different rig
     if (opencv_processing_utils.FOV_THRESH_TELE < fov <
-        opencv_processing_utils.FOV_THRESH_WFOV):
+        opencv_processing_utils.FOV_THRESH_UW):
       test_ids.append(i)  # RFoV camera
     elif fov < opencv_processing_utils.FOV_THRESH_TELE40:
       logging.debug('Skipping camera. Not appropriate multi-camera testing.')
       continue  # super-TELE camera
     elif (fov <= opencv_processing_utils.FOV_THRESH_TELE and
           math.isclose(chart_distance,
-                       opencv_processing_utils.CHART_DISTANCE_RFOV,
+                       opencv_processing_utils.CHART_DISTANCE_31CM,
                        rel_tol=_CHART_DISTANCE_RTOL)):
       test_ids.append(i)  # TELE camera in RFoV rig
-    elif (fov >= opencv_processing_utils.FOV_THRESH_WFOV and
+    elif (fov >= opencv_processing_utils.FOV_THRESH_UW and
           math.isclose(chart_distance,
-                       opencv_processing_utils.CHART_DISTANCE_WFOV,
+                       opencv_processing_utils.CHART_DISTANCE_22CM,
                        rel_tol=_CHART_DISTANCE_RTOL)):
       test_ids.append(i)  # WFoV camera in WFoV rig
     else:
