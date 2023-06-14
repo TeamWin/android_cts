@@ -1789,6 +1789,42 @@ public class AccessibilityEndToEndTest extends StsExtraBusinessLogicTestCase {
         }
     }
 
+    @AsbSecurityTest(cveBugId = {282016107})
+    @Test
+    public void testInstallAppWithLargeServiceVolume_displaysServicesSuccessfully()
+            throws Throwable {
+
+        // The apk used for this test deliberately includes a large amount of junk services,
+        // so we're installing/uninstalling it as part of the test instead of leaving it in.
+        final String apkPath =
+                "/data/local/tmp/cts/content/CtsAccessibilityLargeServiceVolumeApp.apk";
+        final String packageName = "foo.bar.multipleservices";
+        final int installedServiceCount = 16; // 16 unique services present in manifest.
+        AccessibilityManager manager = mActivity.getSystemService(AccessibilityManager.class);
+
+        try {
+            assertThat(ShellUtils.runShellCommand(
+                    "pm install " + apkPath)).startsWith("Success");
+            TestUtils.waitUntil(
+                    "Installed services have not appeared on the list.",
+                    TIMEOUT_SERVICE_ENABLE / 1000,
+                    () -> {
+                        List<AccessibilityServiceInfo> installedServices =
+                                manager.getInstalledAccessibilityServiceList();
+                        int count = 0;
+                        for (int i = 0; i < installedServices.size(); i++) {
+                            if (installedServices.get(i).getId().contains("JunkService")) {
+                                count++;
+                            }
+                        }
+                        return count == installedServiceCount;
+                    }
+            );
+        } finally {
+            ShellUtils.runShellCommand("pm uninstall " + packageName);
+        }
+    }
+
     @Test
     @ApiTest(apis = {
             "android.view.accessibility.AccessibilityNodeInfo#setContainerTitle"})

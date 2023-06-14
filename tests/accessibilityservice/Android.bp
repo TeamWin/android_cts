@@ -49,6 +49,7 @@ android_test {
         ":CtsAccessibilityMultipleServicesApp",
         ":CtsAccessibilityWidgetProvider",
         ":CtsAccessibilityProxyApp",
+        ":CtsAccessibilityLargeServiceVolumeApp",
     ],
 }
 
