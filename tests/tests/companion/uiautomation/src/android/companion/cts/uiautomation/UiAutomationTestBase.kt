@@ -21,6 +21,8 @@ import android.annotation.CallSuper
 import android.app.Activity
 import android.app.Activity.RESULT_CANCELED
 import android.app.role.RoleManager
+import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothManager
 import android.companion.AssociationInfo
 import android.companion.AssociationRequest
 import android.companion.BluetoothDeviceFilter
@@ -43,6 +45,7 @@ import android.companion.cts.common.RecordingCallback.OnFailure
 import android.companion.cts.common.SIMPLE_EXECUTOR
 import android.companion.cts.common.TestBase
 import android.companion.cts.common.assertEmpty
+import android.companion.cts.common.waitFor
 import android.companion.cts.uicommon.CompanionDeviceManagerUi
 import android.content.Intent
 import android.net.MacAddress
@@ -56,9 +59,12 @@ import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 import kotlin.time.Duration.Companion.ZERO
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
+import org.junit.AfterClass
 import org.junit.Assume
 import org.junit.Assume.assumeFalse
+import org.junit.BeforeClass
 
 open class UiAutomationTestBase(
     protected val profile: String?,
@@ -69,8 +75,12 @@ open class UiAutomationTestBase(
     }
 
     val uiDevice: UiDevice = UiDevice.getInstance(instrumentation)
+    // CDM discovery requires bluetooth is enabled, enable the location if it was disabled.
+    var bluetoothWasEnabled: Boolean = false
     protected val confirmationUi = CompanionDeviceManagerUi(uiDevice)
     protected val callback by lazy { RecordingCallback() }
+    private val bluetoothManager = context.getSystemService(BluetoothManager::class.java)!!
+    private val bluetoothAdapter: BluetoothAdapter = bluetoothManager.adapter
 
     @CallSuper
     override fun setUp() {
@@ -78,6 +88,7 @@ open class UiAutomationTestBase(
 
         assumeFalse(confirmationUi.isVisible)
         Assume.assumeTrue(CompanionActivity.waitUntilGone())
+
         uiDevice.waitForIdle()
 
         callback.clearRecordedInvocations()
@@ -365,6 +376,27 @@ open class UiAutomationTestBase(
         ZERO, SYS_PROP_DEBUG_DISCOVERY_TIMEOUT
     )
 
+    fun enableBluetoothIfNeeded() {
+        bluetoothWasEnabled = bluetoothAdapter.isEnabled
+        if (!bluetoothWasEnabled) {
+            runShellCommand("svc bluetooth enable")
+            val result = waitFor(timeout = 5.seconds, interval = 100.milliseconds) {
+                bluetoothAdapter.isEnabled
+            }
+            assumeFalse("Not able to enable the bluetooth", !result)
+        }
+    }
+
+    fun disableBluetoothIfNeeded() {
+        if (!bluetoothWasEnabled) {
+            runShellCommand("svc bluetooth disable")
+            val result = waitFor(timeout = 5.seconds, interval = 100.milliseconds) {
+                !bluetoothAdapter.isEnabled
+            }
+            assumeFalse("Not able to disable the bluetooth", !result)
+        }
+    }
+
     companion object {
         /**
          * List of (profile, permission, name) tuples that represent all supported profiles and
@@ -390,5 +422,21 @@ open class UiAutomationTestBase(
                 .build()
 
         private const val SYS_PROP_DEBUG_DISCOVERY_TIMEOUT = "debug.cdm.discovery_timeout"
+
+        @JvmStatic
+        @BeforeClass
+        fun setupBeforeClass() {
+            // Enable bluetooth if it was disabled.
+            val uiAutomationTestBase = UiAutomationTestBase(null, null)
+            uiAutomationTestBase.enableBluetoothIfNeeded()
+        }
+
+        @JvmStatic
+        @AfterClass
+        fun tearDownAfterClass() {
+            // Disable bluetooth if it was disabled.
+            val uiAutomationTestBase = UiAutomationTestBase(null, null)
+            uiAutomationTestBase.disableBluetoothIfNeeded()
+        }
     }
 }

@@ -28,6 +28,8 @@ import android.content.Context
 import androidx.test.uiautomator.UiDevice
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.seconds
+import org.junit.AfterClass
+import org.junit.BeforeClass
 
 open class AssociationRevokedTestBase : TestBase() {
     private val roleManager: RoleManager by lazy {
@@ -72,5 +74,23 @@ open class AssociationRevokedTestBase : TestBase() {
             roleManager.getRoleHolders(profile)
         }
         return roleHolders
+    }
+
+    companion object {
+        @JvmStatic
+        @BeforeClass
+        fun setupBeforeClass() {
+            // Enable bluetooth if it was disabled.
+            val uiAutomationTestBase = UiAutomationTestBase(null, null)
+            uiAutomationTestBase.enableBluetoothIfNeeded()
+        }
+
+        @JvmStatic
+        @AfterClass
+        fun tearDownAfterClass() {
+            // Disable bluetooth if it was disabled.
+            val uiAutomationTestBase = UiAutomationTestBase(null, null)
+            uiAutomationTestBase.disableBluetoothIfNeeded()
+        }
     }
 }
