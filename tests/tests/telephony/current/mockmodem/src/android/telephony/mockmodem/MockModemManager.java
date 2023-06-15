@@ -24,8 +24,11 @@ import android.content.Context;
 import android.hardware.radio.sim.Carrier;
 import android.hardware.radio.voice.CdmaSignalInfoRecord;
 import android.hardware.radio.voice.UusInfo;
+import android.os.Looper;
 import android.telephony.Annotation;
 import android.telephony.BarringInfo;
+import android.telephony.SubscriptionManager;
+import android.telephony.TelephonyManager;
 import android.telephony.ims.feature.ConnectionFailureInfo;
 import android.telephony.ims.feature.MmTelFeature;
 import android.telephony.ims.stub.ImsRegistrationImplBase;
@@ -35,15 +38,19 @@ import android.util.SparseArray;
 
 import androidx.test.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.TestThread;
+
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BooleanSupplier;
 
 public class MockModemManager {
     private static final String TAG = "MockModemManager";
 
     private static Context sContext;
     private static MockModemServiceConnector sServiceConnector;
+    private static final long TIMEOUT_IN_MSEC_FOR_SIM_STATUS_CHANGED = 10000;
     private MockModemService mMockModemService;
 
     public MockModemManager() {
@@ -52,6 +59,51 @@ public class MockModemManager {
 
     private void waitForTelephonyFrameworkDone(int delayInSec) throws Exception {
         TimeUnit.SECONDS.sleep(delayInSec);
+    }
+
+    private void waitForSubscriptionCondition(BooleanSupplier condition, long maxWaitMillis)
+            throws Exception {
+        final Object lock = new Object();
+        SubscriptionManager sm =
+                (SubscriptionManager)
+                        sContext.getSystemService(Context.TELEPHONY_SUBSCRIPTION_SERVICE);
+
+        TestThread t =
+                new TestThread(
+                        () -> {
+                            Looper.prepare();
+
+                            SubscriptionManager.OnSubscriptionsChangedListener listener =
+                                    new SubscriptionManager.OnSubscriptionsChangedListener() {
+                                        @Override
+                                        public void onSubscriptionsChanged() {
+                                            synchronized (lock) {
+                                                if (condition.getAsBoolean()) {
+                                                    lock.notifyAll();
+                                                    Looper.myLooper().quitSafely();
+                                                }
+                                            }
+                                        }
+                                    };
+
+                            sm.addOnSubscriptionsChangedListener(listener);
+                            try {
+                                synchronized (lock) {
+                                    if (condition.getAsBoolean()) lock.notifyAll();
+                                }
+                                Log.d(TAG, "before loop()....");
+                                if (!condition.getAsBoolean()) Looper.loop();
+                                Log.d(TAG, "after loop()....");
+                            } finally {
+                                sm.removeOnSubscriptionsChangedListener(listener);
+                            }
+                        });
+
+        synchronized (lock) {
+            if (condition.getAsBoolean()) return;
+            t.start();
+            lock.wait(maxWaitMillis);
+        }
     }
 
     /* Public APIs */
@@ -173,9 +225,17 @@ public class MockModemManager {
             MockModemConfigInterface configInterface =
                     mMockModemService.getMockModemConfigInterface();
             if (configInterface != null) {
+                TelephonyManager tm = sContext.getSystemService(TelephonyManager.class);
+
                 result = configInterface.changeSimProfile(slotId, simProfileId, TAG);
                 if (result) {
-                    waitForTelephonyFrameworkDone(3);
+                    try {
+                        waitForSubscriptionCondition(
+                                () -> (TelephonyManager.SIM_STATE_PRESENT == tm.getSimCardState()),
+                                TIMEOUT_IN_MSEC_FOR_SIM_STATUS_CHANGED);
+                    } finally {
+                        Log.d(TAG, "Insert Sim - subscription changed.");
+                    }
                 }
             }
         } else {
@@ -199,9 +259,17 @@ public class MockModemManager {
             MockModemConfigInterface configInterface =
                     mMockModemService.getMockModemConfigInterface();
             if (configInterface != null) {
+                TelephonyManager tm = sContext.getSystemService(TelephonyManager.class);
+
                 result = configInterface.changeSimProfile(slotId, MOCK_SIM_PROFILE_ID_DEFAULT, TAG);
                 if (result) {
-                    waitForTelephonyFrameworkDone(2);
+                    try {
+                        waitForSubscriptionCondition(
+                                () -> (TelephonyManager.SIM_STATE_ABSENT == tm.getSimCardState()),
+                                TIMEOUT_IN_MSEC_FOR_SIM_STATUS_CHANGED);
+                    } finally {
+                        Log.d(TAG, "Remove Sim - subscription changed.");
+                    }
                 }
             }
         } else {

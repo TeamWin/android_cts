@@ -37,6 +37,7 @@ android_library {
         "android.hardware.radio.ims-V2-java",
         "android.hardware.radio.satellite-V1-java",
         "telephony-cts-utils",
+        "compatibility-device-util-axt",
     ],
 
     min_sdk_version: "30",
