@@ -584,7 +584,8 @@ public final class Users {
         }
 
         try (PermissionContext p =
-                     TestApis.permissions().withPermission(CREATE_USERS, QUERY_USERS)) {
+                     TestApis.permissions().withPermission(CREATE_USERS)
+                             .withPermissionOnVersionAtLeast(Versions.U, QUERY_USERS)) {
             return sUserManager.getUsers(
                     /* excludePartial= */ false,
                     /* excludeDying= */ true,

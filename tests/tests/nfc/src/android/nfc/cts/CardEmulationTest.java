@@ -48,6 +48,11 @@ public class CardEmulationTest {
         return pm.hasSystemFeature(PackageManager.FEATURE_NFC_HOST_CARD_EMULATION);
     }
 
+    private boolean supportsHardwareForEse() {
+        final PackageManager pm = InstrumentationRegistry.getContext().getPackageManager();
+        return pm.hasSystemFeature(PackageManager.FEATURE_NFC_OFF_HOST_CARD_EMULATION_ESE);
+    }
+
     @Before
     public void setUp() throws NoSuchFieldException, RemoteException {
         MockitoAnnotations.initMocks(this);
@@ -151,6 +156,7 @@ public class CardEmulationTest {
 
     @Test
     public void testUnsetOffHostForService() throws NoSuchFieldException, RemoteException {
+        assumeTrue(supportsHardwareForEse());
         CardEmulation instance = createMockedInstance();
         when(mEmulation.unsetOffHostForService(anyInt(), any(ComponentName.class)))
             .thenReturn(true);
@@ -160,6 +166,7 @@ public class CardEmulationTest {
 
     @Test
     public void testSetOffHostForService() throws NoSuchFieldException, RemoteException {
+        assumeTrue(supportsHardwareForEse());
         CardEmulation instance = createMockedInstance();
         String offHostSecureElement = "eSE";
         when(mEmulation.setOffHostForService(anyInt(), any(ComponentName.class), anyString()))
@@ -257,6 +264,7 @@ public class CardEmulationTest {
     @Test
     public void testGetRouteDestinationForPreferredPaymentServiceWithOffHostAndSecureElement()
         throws NoSuchFieldException, RemoteException {
+        assumeTrue(supportsHardwareForEse());
         CardEmulation instance = createMockedInstance();
         String offHostSecureElement = "OffHost Secure Element";
         ApduServiceInfo serviceInfo = new ApduServiceInfo(new ResolveInfo(), /* onHost = */ false,
