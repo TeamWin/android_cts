@@ -110,6 +110,7 @@ class LowLatencyZoomTest(its_base_test.ItsBaseTest):
       # Check low latency zoom outputs match result metadata
       for i, cap in enumerate(caps):
         z_result = cap['metadata']['android.control.zoomRatio']
+        scaled_zoom = min(z_list[i], z_result)
         logging.debug('zoom ratio in result: %.2f', z_result)
         img = image_processing_utils.convert_capture_to_rgb_image(
             cap, props=props)
@@ -128,7 +129,7 @@ class LowLatencyZoomTest(its_base_test.ItsBaseTest):
           circle = opencv_processing_utils.find_center_circle(
               img, img_name, _CIRCLE_COLOR, circle_ar_rtol=_CIRCLE_AR_RTOL,
               circlish_rtol=_CIRCLISH_RTOL,
-              min_area=_MIN_AREA_RATIO*size[0]*size[1]*z_result*z_result,
+              min_area=_MIN_AREA_RATIO*size[0]*size[1]*scaled_zoom*scaled_zoom,
               min_circle_pts=_MIN_CIRCLE_PTS, debug=debug)
           if opencv_processing_utils.is_circle_cropped(circle, size):
             logging.debug('zoom %.2f is too large! Skip further captures',
