@@ -30,9 +30,6 @@
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
             android:targetPackage="android.video.cts"
             android:label="CTS tests for Video" >
-        <meta-data
-            android:name="listener"
-            android:value="com.android.cts.runner.CtsTestRunListener" />
     </instrumentation>
     <uses-sdk android:minSdkVersion="29"   android:targetSdkVersion="29" />
 </manifest>

@@ -28,7 +28,5 @@
         android:name="androidx.test.runner.AndroidJUnitRunner"
         android:targetPackage="android.service.resolver.cts"
         android:label="CTS tests of android.service.resolver">
-        <meta-data android:name="listener"
-            android:value="com.android.cts.runner.CtsTestRunListener" />
     </instrumentation>
 </manifest>

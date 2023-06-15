@@ -34,7 +34,5 @@
         android:name="androidx.test.runner.AndroidJUnitRunner"
         android:targetPackage="android.app.role.cts"
         android:label="CTS tests of android.app.role">
-        <meta-data android:name="listener"
-            android:value="com.android.cts.runner.CtsTestRunListener" />
     </instrumentation>
 </manifest>

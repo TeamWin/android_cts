@@ -27,8 +27,5 @@
     <instrumentation
         android:targetPackage="android.taskswitching.control.cts"
         android:name="androidx.test.runner.AndroidJUnitRunner" >
-        <meta-data
-            android:name="listener"
-            android:value="com.android.cts.runner.CtsTestRunListener" />
     </instrumentation>
 </manifest>
