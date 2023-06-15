@@ -42,7 +42,9 @@ import android.app.Instrumentation;
 import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.content.pm.PermissionInfo;
 import android.os.Build;
+import android.os.Process;
 import android.provider.DeviceConfig;
 
 import androidx.test.filters.SdkSuppress;
@@ -298,6 +300,17 @@ public class RevokeSelfPermissionTest {
     private void revokePermissions(String[] permissions) {
         runShellCommand("am start-activity -W -n " + APP_PKG_NAME  + "/.RevokePermission"
                 + " --esa permissions " + String.join(",", permissions));
+        PackageManager pkgMgr = mContext.getPackageManager();
+        eventually(() -> runWithShellPermissionIdentity(() -> {
+            for (int i = 0; i < permissions.length; i++) {
+                if ((pkgMgr.getPermissionInfo(permissions[i], 0).getProtection()
+                        & PermissionInfo.PROTECTION_DANGEROUS) != 0) {
+                    int permissionFlags = pkgMgr.getPermissionFlags(permissions[i], APP_PKG_NAME,
+                                    Process.myUserHandle());
+                    Assert.assertTrue((permissionFlags & FLAG_PERMISSION_ONE_TIME) != 0);
+                }
+            }
+        }));
     }
 
     private void killApp() {
