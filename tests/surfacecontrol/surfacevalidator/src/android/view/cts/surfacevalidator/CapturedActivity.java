@@ -49,12 +49,14 @@ import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject2;
 import android.support.test.uiautomator.Until;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.SparseArray;
 import android.view.PointerIcon;
 import android.view.WindowInsets;
 import android.view.WindowInsetsController;
 import android.view.WindowManager;
+import android.view.WindowMetrics;
 import android.widget.FrameLayout;
 
 import androidx.test.InstrumentationRegistry;
@@ -331,9 +333,10 @@ public class CapturedActivity extends Activity {
 
             CountDownLatch setupLatch = new CountDownLatch(1);
             mHandler.postDelayed(() -> {
-                Log.d(TAG, "Starting capture");
+                WindowMetrics metrics = getWindowManager().getCurrentWindowMetrics();
+                Log.d(TAG, "Starting capture: metrics=" + metrics);
 
-                int density = (int) getWindowManager().getCurrentWindowMetrics().getDensity();
+                int densityDpi = (int) (metrics.getDensity() * DisplayMetrics.DENSITY_DEFAULT);
 
                 int testAreaWidth = mParentLayout.getWidth();
                 int testAreaHeight = mParentLayout.getHeight();
@@ -354,7 +357,7 @@ public class CapturedActivity extends Activity {
                         + ", bounds are " + boundsToCheck.toShortString());
                 mVirtualDisplay = mMediaProjection.createVirtualDisplay("CtsCapturedActivity",
                         mLogicalDisplaySize.x, mLogicalDisplaySize.y,
-                        density, DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
+                        densityDpi, DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
                         mSurfacePixelValidator.getSurface(),
                         null /*Callbacks*/,
                         null /*Handler*/);
