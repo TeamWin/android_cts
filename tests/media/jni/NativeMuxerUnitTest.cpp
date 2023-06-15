@@ -47,7 +47,7 @@ static media_status_t insertPerFrameSubtitles(AMediaMuxer* muxer, long pts, size
 }
 
 static jboolean nativeTestIfInvalidFdIsRejected(JNIEnv*, jobject) {
-    AMediaMuxer* muxer = AMediaMuxer_new(-1, (OutputFormat)OUTPUT_FORMAT_THREE_GPP);
+    AMediaMuxer* muxer = AMediaMuxer_new(-1, AMEDIAMUXER_OUTPUT_FORMAT_THREE_GPP);
     bool isPass = true;
     if (muxer != nullptr) {
         AMediaMuxer_delete(muxer);
@@ -60,7 +60,12 @@ static jboolean nativeTestIfInvalidFdIsRejected(JNIEnv*, jobject) {
 static jboolean nativeTestIfReadOnlyFdIsRejected(JNIEnv* env, jobject, jstring jdstPath) {
     const char* cdstPath = env->GetStringUTFChars(jdstPath, nullptr);
     FILE* ofp = fopen(cdstPath, "rbe");
-    AMediaMuxer* muxer = AMediaMuxer_new(fileno(ofp), (OutputFormat)OUTPUT_FORMAT_THREE_GPP);
+    if (ofp == nullptr) {
+        ALOGE("Unable to open file %s", cdstPath);
+        env->ReleaseStringUTFChars(jdstPath, cdstPath);
+        return static_cast<jboolean>(false);
+    }
+    AMediaMuxer* muxer = AMediaMuxer_new(fileno(ofp), AMEDIAMUXER_OUTPUT_FORMAT_THREE_GPP);
     bool isPass = true;
     if (muxer != nullptr) {
         AMediaMuxer_delete(muxer);
@@ -78,7 +83,7 @@ static jboolean nativeTestIfNonSeekableFdIsRejected(JNIEnv*, jobject) {
         ALOGE("unable to create pipe fd");
         return false;
     }
-    AMediaMuxer* muxer = AMediaMuxer_new(pipefd[1], (OutputFormat)OUTPUT_FORMAT_THREE_GPP);
+    AMediaMuxer* muxer = AMediaMuxer_new(pipefd[1], AMEDIAMUXER_OUTPUT_FORMAT_THREE_GPP);
     bool isPass = true;
     if (muxer != nullptr) {
         AMediaMuxer_delete(muxer);
@@ -93,12 +98,27 @@ static jboolean nativeTestIfNonSeekableFdIsRejected(JNIEnv*, jobject) {
 static jboolean nativeTestIfInvalidOutputFormatIsRejected(JNIEnv* env, jobject, jstring jdstPath) {
     const char* cdstPath = env->GetStringUTFChars(jdstPath, nullptr);
     FILE* ofp = fopen(cdstPath, "wbe+");
-    AMediaMuxer* muxer = AMediaMuxer_new(fileno(ofp), (OutputFormat)(OUTPUT_FORMAT_LIST_END + 1));
+    if (ofp == nullptr) {
+        ALOGE("Unable to open file %s", cdstPath);
+        env->ReleaseStringUTFChars(jdstPath, cdstPath);
+        return static_cast<jboolean>(false);
+    }
+    AMediaMuxer* muxer = nullptr;
     bool isPass = true;
+
+    muxer = AMediaMuxer_new(fileno(ofp), (OutputFormat)(-1));
     if (muxer != nullptr) {
         AMediaMuxer_delete(muxer);
-        ALOGE("error: muxer constructor accepts invalid output format");
+        ALOGE("error: muxer constructor accepts invalid (negative) output format");
         isPass = false;
+        muxer = nullptr;
+    }
+    muxer = AMediaMuxer_new(fileno(ofp), (OutputFormat)(LOCAL_AMEDIAMUXER_OUTPUT_FORMAT_LAST + 1));
+    if (muxer != nullptr) {
+        AMediaMuxer_delete(muxer);
+        ALOGE("error: muxer constructor accepts invalid (too large) output format");
+        isPass = false;
+        muxer = nullptr;
     }
     fclose(ofp);
     env->ReleaseStringUTFChars(jdstPath, cdstPath);
@@ -108,7 +128,12 @@ static jboolean nativeTestIfInvalidOutputFormatIsRejected(JNIEnv* env, jobject, 
 static jboolean nativeTestIfInvalidMediaFormatIsRejected(JNIEnv* env, jobject, jstring jdstPath) {
     const char* cdstPath = env->GetStringUTFChars(jdstPath, nullptr);
     FILE* ofp = fopen(cdstPath, "wbe+");
-    AMediaMuxer* muxer = AMediaMuxer_new(fileno(ofp), (OutputFormat)OUTPUT_FORMAT_MPEG_4);
+    if (ofp == nullptr) {
+        ALOGE("Unable to open file %s", cdstPath);
+        env->ReleaseStringUTFChars(jdstPath, cdstPath);
+        return static_cast<jboolean>(false);
+    }
+    AMediaMuxer* muxer = AMediaMuxer_new(fileno(ofp), AMEDIAMUXER_OUTPUT_FORMAT_MPEG_4);
     AMediaFormat* format = AMediaFormat_new();
     bool isPass = true;
     if (AMediaMuxer_addTrack(muxer, format) >= 0) {
@@ -131,8 +156,13 @@ static jboolean nativeTestIfInvalidMediaFormatIsRejected(JNIEnv* env, jobject, j
 static jboolean nativeTestIfCorruptMediaFormatIsRejected(JNIEnv* env, jobject, jstring jdstPath) {
     const char* cdstPath = env->GetStringUTFChars(jdstPath, nullptr);
     FILE* ofp = fopen(cdstPath, "wbe+");
+    if (ofp == nullptr) {
+        ALOGE("Unable to open file %s", cdstPath);
+        env->ReleaseStringUTFChars(jdstPath, cdstPath);
+        return static_cast<jboolean>(false);
+    }
     bool isPass = true;
-    AMediaMuxer* muxer = AMediaMuxer_new(fileno(ofp), (OutputFormat)OUTPUT_FORMAT_MPEG_4);
+    AMediaMuxer* muxer = AMediaMuxer_new(fileno(ofp), AMEDIAMUXER_OUTPUT_FORMAT_MPEG_4);
     AMediaFormat* format = AMediaFormat_new();
     AMediaFormat_setString(format, AMEDIAFORMAT_KEY_MIME, AMEDIA_MIMETYPE_AUDIO_AAC);
     AMediaFormat_setInt32(format, AMEDIAFORMAT_KEY_SAMPLE_RATE, -1);
@@ -150,8 +180,13 @@ static jboolean nativeTestIfCorruptMediaFormatIsRejected(JNIEnv* env, jobject, j
 static jboolean nativeTestIfAddTrackSucceedsAfterStart(JNIEnv* env, jobject, jstring jdstPath) {
     const char* cdstPath = env->GetStringUTFChars(jdstPath, nullptr);
     FILE* ofp = fopen(cdstPath, "wbe+");
+    if (ofp == nullptr) {
+        ALOGE("Unable to open file %s", cdstPath);
+        env->ReleaseStringUTFChars(jdstPath, cdstPath);
+        return static_cast<jboolean>(false);
+    }
     bool isPass = true;
-    AMediaMuxer* muxer = AMediaMuxer_new(fileno(ofp), (OutputFormat)OUTPUT_FORMAT_MPEG_4);
+    AMediaMuxer* muxer = AMediaMuxer_new(fileno(ofp), AMEDIAMUXER_OUTPUT_FORMAT_MPEG_4);
     AMediaFormat* format = AMediaFormat_new();
     AMediaFormat_setString(format, AMEDIAFORMAT_KEY_MIME, "application/x-subrip");
     isPass &= AMediaMuxer_addTrack(muxer, format) >= 0;
@@ -171,8 +206,13 @@ static jboolean nativeTestIfAddTrackSucceedsAfterWriteSampleData(JNIEnv* env, jo
                                                                  jstring jdstPath) {
     const char* cdstPath = env->GetStringUTFChars(jdstPath, nullptr);
     FILE* ofp = fopen(cdstPath, "wbe+");
+    if (ofp == nullptr) {
+        ALOGE("Unable to open file %s", cdstPath);
+        env->ReleaseStringUTFChars(jdstPath, cdstPath);
+        return static_cast<jboolean>(false);
+    }
     bool isPass = true;
-    AMediaMuxer* muxer = AMediaMuxer_new(fileno(ofp), (OutputFormat)OUTPUT_FORMAT_MPEG_4);
+    AMediaMuxer* muxer = AMediaMuxer_new(fileno(ofp), AMEDIAMUXER_OUTPUT_FORMAT_MPEG_4);
     AMediaFormat* format = AMediaFormat_new();
     AMediaFormat_setString(format, AMEDIAFORMAT_KEY_MIME, "application/x-subrip");
     ssize_t trackID = AMediaMuxer_addTrack(muxer, format);
@@ -193,8 +233,13 @@ static jboolean nativeTestIfAddTrackSucceedsAfterWriteSampleData(JNIEnv* env, jo
 static jboolean nativeTestIfAddTrackSucceedsAfterStop(JNIEnv* env, jobject, jstring jdstPath) {
     const char* cdstPath = env->GetStringUTFChars(jdstPath, nullptr);
     FILE* ofp = fopen(cdstPath, "wbe+");
+    if (ofp == nullptr) {
+        ALOGE("Unable to open file %s", cdstPath);
+        env->ReleaseStringUTFChars(jdstPath, cdstPath);
+        return static_cast<jboolean>(false);
+    }
     bool isPass = true;
-    AMediaMuxer* muxer = AMediaMuxer_new(fileno(ofp), (OutputFormat)OUTPUT_FORMAT_MPEG_4);
+    AMediaMuxer* muxer = AMediaMuxer_new(fileno(ofp), AMEDIAMUXER_OUTPUT_FORMAT_MPEG_4);
     AMediaFormat* format = AMediaFormat_new();
     AMediaFormat_setString(format, AMEDIAFORMAT_KEY_MIME, "application/x-subrip");
     ssize_t trackID = AMediaMuxer_addTrack(muxer, format);
@@ -216,8 +261,13 @@ static jboolean nativeTestIfAddTrackSucceedsAfterStop(JNIEnv* env, jobject, jstr
 static jboolean nativeTestIfMuxerStartsBeforeAddTrack(JNIEnv* env, jobject, jstring jdstPath) {
     const char* cdstPath = env->GetStringUTFChars(jdstPath, nullptr);
     FILE* ofp = fopen(cdstPath, "wbe+");
+    if (ofp == nullptr) {
+        ALOGE("Unable to open file %s", cdstPath);
+        env->ReleaseStringUTFChars(jdstPath, cdstPath);
+        return static_cast<jboolean>(false);
+    }
     bool isPass = true;
-    AMediaMuxer* muxer = AMediaMuxer_new(fileno(ofp), (OutputFormat)OUTPUT_FORMAT_MPEG_4);
+    AMediaMuxer* muxer = AMediaMuxer_new(fileno(ofp), AMEDIAMUXER_OUTPUT_FORMAT_MPEG_4);
     if (AMediaMuxer_start(muxer) == AMEDIA_OK) {
         ALOGE("error: muxer.start succeeds before muxer.addTrack");
         isPass = false;
@@ -231,8 +281,13 @@ static jboolean nativeTestIfMuxerStartsBeforeAddTrack(JNIEnv* env, jobject, jstr
 static jboolean nativeTestIdempotentStart(JNIEnv* env, jobject, jstring jdstPath) {
     const char* cdstPath = env->GetStringUTFChars(jdstPath, nullptr);
     FILE* ofp = fopen(cdstPath, "wbe+");
+    if (ofp == nullptr) {
+        ALOGE("Unable to open file %s", cdstPath);
+        env->ReleaseStringUTFChars(jdstPath, cdstPath);
+        return static_cast<jboolean>(false);
+    }
     bool isPass = true;
-    AMediaMuxer* muxer = AMediaMuxer_new(fileno(ofp), (OutputFormat)OUTPUT_FORMAT_MPEG_4);
+    AMediaMuxer* muxer = AMediaMuxer_new(fileno(ofp), AMEDIAMUXER_OUTPUT_FORMAT_MPEG_4);
     AMediaFormat* format = AMediaFormat_new();
     AMediaFormat_setString(format, AMEDIAFORMAT_KEY_MIME, "application/x-subrip");
     isPass &= AMediaMuxer_addTrack(muxer, format) >= 0;
@@ -252,8 +307,13 @@ static jboolean nativeTestIfMuxerStartsAfterWriteSampleData(JNIEnv* env, jobject
                                                             jstring jdstPath) {
     const char* cdstPath = env->GetStringUTFChars(jdstPath, nullptr);
     FILE* ofp = fopen(cdstPath, "wbe+");
+    if (ofp == nullptr) {
+        ALOGE("Unable to open file %s", cdstPath);
+        env->ReleaseStringUTFChars(jdstPath, cdstPath);
+        return static_cast<jboolean>(false);
+    }
     bool isPass = true;
-    AMediaMuxer* muxer = AMediaMuxer_new(fileno(ofp), (OutputFormat)OUTPUT_FORMAT_MPEG_4);
+    AMediaMuxer* muxer = AMediaMuxer_new(fileno(ofp), AMEDIAMUXER_OUTPUT_FORMAT_MPEG_4);
     AMediaFormat* format = AMediaFormat_new();
     AMediaFormat_setString(format, AMEDIAFORMAT_KEY_MIME, "application/x-subrip");
     ssize_t trackID = AMediaMuxer_addTrack(muxer, format);
@@ -274,8 +334,13 @@ static jboolean nativeTestIfMuxerStartsAfterWriteSampleData(JNIEnv* env, jobject
 static jboolean nativeTestIfMuxerStartsAfterStop(JNIEnv* env, jobject, jstring jdstPath) {
     const char* cdstPath = env->GetStringUTFChars(jdstPath, nullptr);
     FILE* ofp = fopen(cdstPath, "wbe+");
+    if (ofp == nullptr) {
+        ALOGE("Unable to open file %s", cdstPath);
+        env->ReleaseStringUTFChars(jdstPath, cdstPath);
+        return static_cast<jboolean>(false);
+    }
     bool isPass = true;
-    AMediaMuxer* muxer = AMediaMuxer_new(fileno(ofp), (OutputFormat)OUTPUT_FORMAT_MPEG_4);
+    AMediaMuxer* muxer = AMediaMuxer_new(fileno(ofp), AMEDIAMUXER_OUTPUT_FORMAT_MPEG_4);
     AMediaFormat* format = AMediaFormat_new();
     AMediaFormat_setString(format, AMEDIAFORMAT_KEY_MIME, "application/x-subrip");
     ssize_t trackID = AMediaMuxer_addTrack(muxer, format);
@@ -297,8 +362,13 @@ static jboolean nativeTestIfMuxerStartsAfterStop(JNIEnv* env, jobject, jstring j
 static jboolean nativeTestStopOnANonStartedMuxer(JNIEnv* env, jobject, jstring jdstPath) {
     const char* cdstPath = env->GetStringUTFChars(jdstPath, nullptr);
     FILE* ofp = fopen(cdstPath, "wbe+");
+    if (ofp == nullptr) {
+        ALOGE("Unable to open file %s", cdstPath);
+        env->ReleaseStringUTFChars(jdstPath, cdstPath);
+        return static_cast<jboolean>(false);
+    }
     bool isPass = true;
-    AMediaMuxer* muxer = AMediaMuxer_new(fileno(ofp), (OutputFormat)OUTPUT_FORMAT_MPEG_4);
+    AMediaMuxer* muxer = AMediaMuxer_new(fileno(ofp), AMEDIAMUXER_OUTPUT_FORMAT_MPEG_4);
     AMediaFormat* format = AMediaFormat_new();
     AMediaFormat_setString(format, AMEDIAFORMAT_KEY_MIME, "application/x-subrip");
     isPass &= AMediaMuxer_addTrack(muxer, format) >= 0;
@@ -316,8 +386,13 @@ static jboolean nativeTestStopOnANonStartedMuxer(JNIEnv* env, jobject, jstring j
 static jboolean nativeTestIdempotentStop(JNIEnv* env, jobject, jstring jdstPath) {
     const char* cdstPath = env->GetStringUTFChars(jdstPath, nullptr);
     FILE* ofp = fopen(cdstPath, "wbe+");
+    if (ofp == nullptr) {
+        ALOGE("Unable to open file %s", cdstPath);
+        env->ReleaseStringUTFChars(jdstPath, cdstPath);
+        return static_cast<jboolean>(false);
+    }
     bool isPass = true;
-    AMediaMuxer* muxer = AMediaMuxer_new(fileno(ofp), (OutputFormat)OUTPUT_FORMAT_MPEG_4);
+    AMediaMuxer* muxer = AMediaMuxer_new(fileno(ofp), AMEDIAMUXER_OUTPUT_FORMAT_MPEG_4);
     AMediaFormat* format = AMediaFormat_new();
     AMediaFormat_setString(format, AMEDIAFORMAT_KEY_MIME, "application/x-subrip");
     ssize_t trackID = AMediaMuxer_addTrack(muxer, format);
@@ -339,8 +414,13 @@ static jboolean nativeTestIdempotentStop(JNIEnv* env, jobject, jstring jdstPath)
 static jboolean nativeTestSimpleStartStop(JNIEnv* env, jobject, jstring jdstPath) {
     const char* cdstPath = env->GetStringUTFChars(jdstPath, nullptr);
     FILE* ofp = fopen(cdstPath, "wbe+");
+    if (ofp == nullptr) {
+        ALOGE("Unable to open file %s", cdstPath);
+        env->ReleaseStringUTFChars(jdstPath, cdstPath);
+        return static_cast<jboolean>(false);
+    }
     bool isPass = true;
-    AMediaMuxer* muxer = AMediaMuxer_new(fileno(ofp), (OutputFormat)OUTPUT_FORMAT_MPEG_4);
+    AMediaMuxer* muxer = AMediaMuxer_new(fileno(ofp), AMEDIAMUXER_OUTPUT_FORMAT_MPEG_4);
     AMediaFormat* format = AMediaFormat_new();
     AMediaFormat_setString(format, AMEDIAFORMAT_KEY_MIME, "application/x-subrip");
     ssize_t trackID = AMediaMuxer_addTrack(muxer, format);
@@ -359,7 +439,12 @@ static jboolean nativeTestIfWriteSampleDataRejectsInvalidTrackIndex(JNIEnv* env,
     bool isPass = true;
     const char* cdstPath = env->GetStringUTFChars(jdstPath, nullptr);
     FILE* ofp = fopen(cdstPath, "wbe+");
-    AMediaMuxer* muxer = AMediaMuxer_new(fileno(ofp), (OutputFormat)OUTPUT_FORMAT_MPEG_4);
+    if (ofp == nullptr) {
+        ALOGE("Unable to open file %s", cdstPath);
+        env->ReleaseStringUTFChars(jdstPath, cdstPath);
+        return static_cast<jboolean>(false);
+    }
+    AMediaMuxer* muxer = AMediaMuxer_new(fileno(ofp), AMEDIAMUXER_OUTPUT_FORMAT_MPEG_4);
     AMediaFormat* format = AMediaFormat_new();
     AMediaFormat_setString(format, AMEDIAFORMAT_KEY_MIME, "application/x-subrip");
     ssize_t trackID = AMediaMuxer_addTrack(muxer, format);
@@ -382,7 +467,12 @@ static jboolean nativeTestIfWriteSampleDataRejectsInvalidPts(JNIEnv* env, jobjec
     bool isPass = true;
     const char* cdstPath = env->GetStringUTFChars(jdstPath, nullptr);
     FILE* ofp = fopen(cdstPath, "wbe+");
-    AMediaMuxer* muxer = AMediaMuxer_new(fileno(ofp), (OutputFormat)OUTPUT_FORMAT_MPEG_4);
+    if (ofp == nullptr) {
+        ALOGE("Unable to open file %s", cdstPath);
+        env->ReleaseStringUTFChars(jdstPath, cdstPath);
+        return static_cast<jboolean>(false);
+    }
+    AMediaMuxer* muxer = AMediaMuxer_new(fileno(ofp), AMEDIAMUXER_OUTPUT_FORMAT_MPEG_4);
     AMediaFormat* format = AMediaFormat_new();
     AMediaFormat_setString(format, AMEDIAFORMAT_KEY_MIME, "application/x-subrip");
     ssize_t trackID = AMediaMuxer_addTrack(muxer, format);
@@ -405,7 +495,12 @@ static jboolean nativeTestIfWriteSampleDataSucceedsBeforeStart(JNIEnv* env, jobj
     bool isPass = true;
     const char* cdstPath = env->GetStringUTFChars(jdstPath, nullptr);
     FILE* ofp = fopen(cdstPath, "wbe+");
-    AMediaMuxer* muxer = AMediaMuxer_new(fileno(ofp), (OutputFormat)OUTPUT_FORMAT_MPEG_4);
+    if (ofp == nullptr) {
+        ALOGE("Unable to open file %s", cdstPath);
+        env->ReleaseStringUTFChars(jdstPath, cdstPath);
+        return static_cast<jboolean>(false);
+    }
+    AMediaMuxer* muxer = AMediaMuxer_new(fileno(ofp), AMEDIAMUXER_OUTPUT_FORMAT_MPEG_4);
     AMediaFormat* format = AMediaFormat_new();
     AMediaFormat_setString(format, AMEDIAFORMAT_KEY_MIME, "application/x-subrip");
     ssize_t trackID = AMediaMuxer_addTrack(muxer, format);
@@ -426,7 +521,12 @@ static jboolean nativeTestIfWriteSampleDataSucceedsAfterStop(JNIEnv* env, jobjec
     bool isPass = true;
     const char* cdstPath = env->GetStringUTFChars(jdstPath, nullptr);
     FILE* ofp = fopen(cdstPath, "wbe+");
-    AMediaMuxer* muxer = AMediaMuxer_new(fileno(ofp), (OutputFormat)OUTPUT_FORMAT_MPEG_4);
+    if (ofp == nullptr) {
+        ALOGE("Unable to open file %s", cdstPath);
+        env->ReleaseStringUTFChars(jdstPath, cdstPath);
+        return static_cast<jboolean>(false);
+    }
+    AMediaMuxer* muxer = AMediaMuxer_new(fileno(ofp), AMEDIAMUXER_OUTPUT_FORMAT_MPEG_4);
     AMediaFormat* format = AMediaFormat_new();
     AMediaFormat_setString(format, AMEDIAFORMAT_KEY_MIME, "application/x-subrip");
     ssize_t trackID = AMediaMuxer_addTrack(muxer, format);

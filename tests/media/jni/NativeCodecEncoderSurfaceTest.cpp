@@ -100,7 +100,14 @@ CodecEncoderSurfaceTest::CodecEncoderSurfaceTest(const char* mediaType, const ch
     resetContext(false, false);
     mMaxBFrames = 0;
     if (mEncFormat != nullptr) {
-        AMediaFormat_getInt32(mEncFormat, TBD_AMEDIACODEC_PARAMETER_KEY_MAX_B_FRAMES, &mMaxBFrames);
+        // key formalized in Android U (sdk==34).
+        // Use internally-defined when running on earlier releases, such as happens with MTS
+        if (__builtin_available(android __ANDROID_API_U__, *)) {
+            AMediaFormat_getInt32(mEncFormat, AMEDIAFORMAT_KEY_MAX_B_FRAMES, &mMaxBFrames);
+        } else {
+            AMediaFormat_getInt32(mEncFormat, COMPATIBLE_AMEDIAFORMAT_KEY_MAX_B_FRAMES,
+                                  &mMaxBFrames);
+        }
     }
     mLatency = mMaxBFrames;
     mReviseLatency = false;
@@ -573,16 +580,14 @@ bool CodecEncoderSurfaceTest::testSimpleEncode(const char* encoder, const char* 
         RETURN_IF_NULL(mEncoder, StringFormat("unable to create media codec by name %s", encoder))
         FILE* ofp = nullptr;
         if (muxOutput && loopCounter == 0) {
-            int muxerFormat = 0;
+            OutputFormat muxerFormat = AMEDIAMUXER_OUTPUT_FORMAT_MPEG_4;
             if (!strcmp(mMediaType, AMEDIA_MIMETYPE_VIDEO_VP8) ||
                 !strcmp(mMediaType, AMEDIA_MIMETYPE_VIDEO_VP9)) {
-                muxerFormat = OUTPUT_FORMAT_WEBM;
-            } else {
-                muxerFormat = OUTPUT_FORMAT_MPEG_4;
+                muxerFormat = AMEDIAMUXER_OUTPUT_FORMAT_WEBM;
             }
             ofp = fopen(muxOutPath, "wbe+");
             if (ofp) {
-                mMuxer = AMediaMuxer_new(fileno(ofp), (OutputFormat)muxerFormat);
+                mMuxer = AMediaMuxer_new(fileno(ofp), muxerFormat);
             }
         }
         if (!configureCodec(isAsync, false, usePersistentSurface)) return false;
