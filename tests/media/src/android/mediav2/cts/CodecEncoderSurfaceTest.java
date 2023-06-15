@@ -365,11 +365,14 @@ public class CodecEncoderSurfaceTest {
                             testArgs[3] =
                                     getVideoEncoderCfgParams(mediaType, br, fps, toneMap ? 8 : 10,
                                             maxBFrame);
+                            if (toneMap && (colorFormat == COLOR_FormatYUVP010)) {
+                                colorFormat = COLOR_FormatYUV420Flexible;
+                            }
                             testArgs[4] = colorFormat;  // color format
                             testArgs[5] = arg[5];   // tone map
                             testArgs[6] = usePersistentSurface;
                             testArgs[7] = String.format("%dkbps_%dfps_%s_%s_%s", br / 1000, fps,
-                                    colorFormatToString(colorFormat, 10),
+                                    colorFormatToString(colorFormat, toneMap ? 8 : 10),
                                     toneMap ? "tonemapyes" : "tonemapno",
                                     usePersistentSurface ? "persistentsurface" : "surface");
                             exhaustiveArgsList.add(testArgs);
