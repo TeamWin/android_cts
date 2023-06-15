@@ -142,7 +142,6 @@ public class ExactAlarmsTest {
                 .with("allow_while_idle_compat_quota", ALLOW_WHILE_IDLE_COMPAT_QUOTA)
                 .with("allow_while_idle_window", ALLOW_WHILE_IDLE_WINDOW)
                 .with("allow_while_idle_compat_window", ALLOW_WHILE_IDLE_COMPAT_WINDOW)
-                .with("kill_on_schedule_exact_alarm_revoked", false)
                 .commitAndAwaitPropagation();
     }
 
