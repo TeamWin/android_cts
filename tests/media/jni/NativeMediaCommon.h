@@ -21,6 +21,7 @@
 #include <string>
 #include <vector>
 #include <media/NdkMediaFormat.h>
+#include <media/NdkMediaMuxer.h>
 
 // Migrate this method to std::format when C++20 becomes available
 template <typename... Args>
@@ -53,16 +54,9 @@ extern const float kRmsErrorTolerance;
 extern const long kQDeQTimeOutUs;
 extern const int kRetryLimit;
 
-// TODO(b/146420990)
-typedef enum {
-    OUTPUT_FORMAT_START = 0,
-    OUTPUT_FORMAT_MPEG_4 = OUTPUT_FORMAT_START,
-    OUTPUT_FORMAT_WEBM = OUTPUT_FORMAT_START + 1,
-    OUTPUT_FORMAT_THREE_GPP = OUTPUT_FORMAT_START + 2,
-    OUTPUT_FORMAT_HEIF = OUTPUT_FORMAT_START + 3,
-    OUTPUT_FORMAT_OGG = OUTPUT_FORMAT_START + 4,
-    OUTPUT_FORMAT_LIST_END = OUTPUT_FORMAT_START + 4,
-} MuxerFormat;
+// TODO: make this extend itself automatically
+constexpr int LOCAL_AMEDIAMUXER_OUTPUT_FORMAT_FIRST = AMEDIAMUXER_OUTPUT_FORMAT_MPEG_4;
+constexpr int LOCAL_AMEDIAMUXER_OUTPUT_FORMAT_LAST = AMEDIAMUXER_OUTPUT_FORMAT_OGG;
 
 // Color formats supported by encoder - should mirror supportedColorList
 // from MediaCodecConstants.h (are these going to be deprecated)
@@ -74,11 +68,8 @@ constexpr int COLOR_FormatYUVP010 = 54;
 // constants not defined in NDK
 extern const char* TBD_AMEDIACODEC_PARAMETER_KEY_REQUEST_SYNC_FRAME;
 extern const char* TBD_AMEDIACODEC_PARAMETER_KEY_VIDEO_BITRATE;
-extern const char* TBD_AMEDIACODEC_PARAMETER_KEY_MAX_B_FRAMES;
+extern const char* COMPATIBLE_AMEDIAFORMAT_KEY_MAX_B_FRAMES;    // available >= sdk 34
 extern const char* TBD_AMEDIAFORMAT_KEY_BIT_RATE_MODE;
-static const int TBD_AMEDIACODEC_BUFFER_FLAG_KEY_FRAME = 0x1;
-
-static const int kBitrateModeConstant = 2;
 
 // common utility functions
 bool isCSDIdentical(AMediaFormat* refFormat, AMediaFormat* testFormat);
