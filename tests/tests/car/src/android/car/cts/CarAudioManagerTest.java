@@ -21,6 +21,7 @@ import static android.car.media.CarAudioManager.AUDIO_FEATURE_AUDIO_MIRRORING;
 import static android.car.media.CarAudioManager.AUDIO_FEATURE_DYNAMIC_ROUTING;
 import static android.car.media.CarAudioManager.AUDIO_FEATURE_VOLUME_GROUP_EVENTS;
 import static android.car.media.CarAudioManager.AUDIO_FEATURE_VOLUME_GROUP_MUTING;
+import static android.car.media.CarAudioManager.AUDIO_MIRROR_CAN_ENABLE;
 import static android.car.media.CarAudioManager.CarVolumeCallback;
 import static android.car.media.CarAudioManager.INVALID_AUDIO_ZONE;
 import static android.car.media.CarAudioManager.INVALID_REQUEST_ID;
@@ -214,6 +215,18 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
                 AUDIO_FEATURE_AUDIO_MIRRORING);
 
         assertThat(audioMirroringEnabled).isAnyOf(true, false);
+    }
+
+    @Test
+    @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_SETTINGS)
+    @ApiTest(apis = {"android.car.media.CarAudioManager#canEnableAudioMirror"})
+    public void canEnableAudioMirror() {
+        assumeAudioMirrorEnabled();
+
+        int status = mCarAudioManager.canEnableAudioMirror();
+
+        assertWithMessage("Can enable audio mirror status with feature supported")
+                .that(status).isEqualTo(AUDIO_MIRROR_CAN_ENABLE);
     }
 
     @Test
@@ -1374,8 +1387,24 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
 
         List<Integer> queriedZones = mCarAudioManager.getMirrorAudioZonesForAudioZone(zoneToQuery);
 
-        mAudioZonesMirrorCallback.waitForCallback();
         assertWithMessage("Queried audio zones").that(queriedZones)
+                .containsExactlyElementsIn(audioZones);
+    }
+
+    @Test
+    @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_SETTINGS)
+    @ApiTest(apis = {"android.car.media.CarAudioManager#getMirrorAudioZonesForMirrorRequest(long)"})
+    public void getMirrorAudioZonesForMirrorRequest() throws Exception {
+        assumeAudioMirrorEnabled();
+        List<Integer> audioZones = assumePassengersForAudioMirror();
+        setupAudioMirrorStatusCallback();
+        mMirrorRequestId = mCarAudioManager.enableMirrorForAudioZones(audioZones);
+        mAudioZonesMirrorCallback.waitForCallback();
+
+        List<Integer> queriedZones = mCarAudioManager.getMirrorAudioZonesForMirrorRequest(
+                mMirrorRequestId);
+
+        assertWithMessage("Queried audio zones for request %s", mMirrorRequestId).that(queriedZones)
                 .containsExactlyElementsIn(audioZones);
     }
 
