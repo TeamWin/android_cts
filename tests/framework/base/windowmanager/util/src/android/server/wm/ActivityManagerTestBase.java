@@ -3069,8 +3069,8 @@ public abstract class ActivityManagerTestBase {
                                 .setTargetActivity(activityName));
             } else {
                 launchActivityOnDisplay(activityName, windowingMode, DEFAULT_DISPLAY);
+                mWmState.computeState(new WaitForValidActivityState(activityName));
             }
-            mWmState.computeState(new WaitForValidActivityState(activityName));
         }
 
         private boolean isAnotherApp() {
@@ -3095,7 +3095,6 @@ public abstract class ActivityManagerTestBase {
         @Override
         public void close() {
             if (mSession != null && mActivity != null) {
-                mActivity.finish();
                 mSession.close();
                 mWmState.waitForActivityRemoved(mActivityName);
             } else if (isAnotherApp()) {
