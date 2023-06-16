@@ -183,6 +183,10 @@ public final class RecognitionServiceMicIndicatorTest {
 
     @Test
     public void testNonTrustedRecognitionServiceCanBlameCallingApp() throws Throwable {
+        // skip test for automototive devices, as Mic indicator is not a MUST requirement as per CDD
+        assumeFalse(mContext.getPackageManager()
+            .hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE));
+
         // We treat trusted if the current voice recognizer is also a preinstalled app. This is a
         // untrusted case.
         setCurrentRecognizer(CTS_VOICE_RECOGNITION_SERVICE);
@@ -193,6 +197,10 @@ public final class RecognitionServiceMicIndicatorTest {
 
     @Test
     public void testTrustedRecognitionServiceCanBlameCallingApp() throws Throwable {
+        // skip test for automototive devices, as Mic indicator is not a MUST requirement as per CDD
+        assumeFalse(mContext.getPackageManager()
+            .hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE));
+
         // We treat trusted if the current voice recognizer is also a preinstalled app. This is a
         // trusted case.
         boolean hasPreInstalledRecognizer = hasPreInstalledRecognizer(
