@@ -48,7 +48,7 @@ public class UiAutomatorUtils {
     private static final double DEFAULT_SWIPE_DEADZONE_PCT_TV       = 0.1f;
     private static final double DEFAULT_SWIPE_DEADZONE_PCT_ALL      = 0.25f;
     /**
-     * On Wear, some cts tests like CtsPermission3TestCases that run on
+     * On Wear, some cts tests like CtsPermissionUiTestCases that run on
      * low performance device. Keep 0.05 to have better matching.
      */
     private static final double DEFAULT_SWIPE_DEADZONE_PCT_WEAR     = 0.05f;
