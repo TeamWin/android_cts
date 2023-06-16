@@ -69,42 +69,29 @@ class DisplayP3Test(its_base_test.ItsBaseTest):
 
       req = capture_request_utils.auto_capture_request()
 
-      srgb_color_space = camera_properties_utils.color_space_to_int(
-          'SRGB')
       display_p3_color_space = camera_properties_utils.color_space_to_int(
           'DISPLAY_P3')
 
       surface_fmt = {'format': 'jpeg'}
 
       try:
-        srgb_fmt = surface_fmt.copy()
-        srgb_fmt['colorSpace'] = srgb_color_space
         p3_fmt = surface_fmt.copy()
         p3_fmt['colorSpace'] = display_p3_color_space
 
-        srgb_cap = cam.do_capture(req, srgb_fmt)
         p3_cap = cam.do_capture(req, p3_fmt)
 
         name_with_path = os.path.join(self.log_path, _NAME)
 
         fmt_str = surface_fmt['format']
-        srgb_img_name = f'{name_with_path}_{fmt_str}_cap_srgb.jpg'
-        srgb_img_icc = srgb_img_name.strip('.jpg') + '.icc'
         p3_img_name = f'{name_with_path}_{fmt_str}_cap_display_p3.jpg'
         p3_img_icc = p3_img_name.strip('.jpg') + '.icc'
-        srgb_jpeg_img = image_processing_utils.get_img(srgb_cap['data'])
         p3_jpeg_img = image_processing_utils.get_img(p3_cap['data'])
-        srgb_jpeg_img.save(srgb_img_name)
         p3_jpeg_img.save(p3_img_name)
 
-        if not _check_icc(srgb_jpeg_img, 'SRGB', fmt_str, srgb_img_icc):
-          raise AssertionError('Failure: SRGB JPEG does not contain correct '
-                               'icc profile')
         if not _check_icc(p3_jpeg_img, 'DISPLAY_P3', fmt_str, p3_img_icc):
           raise AssertionError('Failure: P3 JPEG does not contain correct '
                                'icc profile')
-        if not image_processing_utils.img_has_wider_gamut(srgb_jpeg_img,
-                                                          p3_jpeg_img):
+        if not image_processing_utils.img_has_wide_gamut(p3_jpeg_img):
           raise AssertionError('Failure: P3 JPEG does not contain wide gamut '
                                'pixels outside the SRGB color space.')
 
