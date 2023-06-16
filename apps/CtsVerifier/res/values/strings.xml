@@ -5759,9 +5759,9 @@ You should be prompted to select credentials; choose the ones you just installed
         This time is defined as the \"cold start latency\". To pass this test, a maximum
         cold start latency time of 500ms or less is REQUIRED, while a time of 100ms or less
         is STRONGLY RECOMMENDED. (See <a href="https://source.android.com/compatibility/android-cdd#5_6_audio_latency">Android CDD § 5.6. Audio Latency</a>)
-        \n\nTo run this test, it is required to have touch-sounds disabled in the device
-        \"Sound &amp; Vibration\" settings
-        panel.
+        \n\nTo run this test, it is required to have Tap &amp; click sounds disabled in the device
+        \"Sound &amp; Vibration\" settings panel. Note that in some versions of Android, this setting
+        may be called \"Touch sounds\".
         \n\nThe \"Java API\" and \"Native API\" allow for capturing performance data from the
         two streaming APIs. The cold start latency measurement need only pass for one API.
         The Native API generally gives the best performance.
@@ -5786,7 +5786,8 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="audio_coldstart_outputlbl">Output Cold Start Latency</string>
     <string name="audio_coldstart_inputlbl">Input Cold Start Latency</string>
     <string name="audio_coldstart_touchsounds_message">
-        Touch sounds are ENABLED. Please DISABLE touch sounds in the \"Sound &amp; Vibration\" settings panel.
+        Tap &amp; click sounds are ENABLED. Please DISABLE Tap &amp; click in the \"Sound &amp; Vibration\" settings panel.
+        \nNote that in some versions of Android, this setting may be called \"Touch sounds\".
     </string>
     <string name="audio_coldstart_notouchsounds_message">Touch sound are DISABLED.</string>
 
