@@ -18,7 +18,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="android.deviceconfig.cts" android:targetSandboxVersion="2">
 
-    <uses-sdk android:minSdkVersion="UpsideDownCake" android:targetSdkVersion="UpsideDownCake" />
     <application>
         <uses-library android:name="android.test.runner" />
     </application>
