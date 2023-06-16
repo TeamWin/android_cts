@@ -199,6 +199,8 @@ class CameraMicIndicatorsPermissionTest : StsExtraBusinessLogicTestCase {
 
     @Test
     fun testMicIndicator() {
+        // skip test for automototive devices, as Mic indicator is not a MUST requirement as per CDD
+        assumeFalse(packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE))
         changeSafetyCenterFlag(false.toString())
         testCameraAndMicIndicator(useMic = true, useCamera = false)
     }
