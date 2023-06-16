@@ -156,13 +156,8 @@ def calibrate_read_noise(
     # Maximum sensitivity for measuring noise model.
     sens_max_meas = sens_max_analog
 
-    # Create the folder structure.
-    if hidden_physical_id:
-      camera_name = f'{camera_id}.{hidden_physical_id}'
-    else:
-      camera_name = camera_id
-
     # Prepare read noise folder.
+    camera_name = cam.get_camera_name()
     read_noise_folder = os.path.join(
         read_noise_folder_prefix, device_id.replace(':', '_'), camera_name
     )
@@ -177,7 +172,6 @@ def calibrate_read_noise(
       # Read noise data file does not exist, collect read noise data.
       capture_read_noise_utils.capture_read_noise_for_iso_range(
           cam,
-          camera_name,
           raw_format,
           sens_min,
           sens_max_meas,
@@ -530,7 +524,6 @@ def get_next_iso(
 
 def capture_stats_images(
     cam,
-    camera_name: str,
     props,
     stats_config: Dict[str, Any],
     sens_min: int,
@@ -557,7 +550,6 @@ def capture_stats_images(
   Args:
     cam: The camera session (its_session_utils.ItsSession) for capturing stats
       images.
-    camera_name: Name of the camera to use.
     props: Camera property object.
     stats_config: The stats format config, a dictionary that specifies the raw
       stats image format and tile size.
@@ -630,8 +622,8 @@ def capture_stats_images(
   if round(iso) <= sens_max_meas:
     # Wait until camera is repositioned for noise model calibration.
     input(
-        f'\nPress <ENTER> after covering camera lense {camera_name} with'
-        ' frosted glass diffuser, and facing lense at evenly illuminated'
+        f'\nPress <ENTER> after covering camera lense {cam.get_camera_name()} '
+        'with frosted glass diffuser, and facing lense at evenly illuminated'
         ' surface.\n'
     )
     # Do AE to get a rough idea of where we are.
