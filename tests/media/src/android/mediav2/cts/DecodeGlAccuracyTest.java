@@ -548,10 +548,10 @@ public class DecodeGlAccuracyTest extends CodecDecoderTestBase {
             }
         }
 
-        if (!mUseHighBitDepth && (mRange != MediaFormat.COLOR_RANGE_LIMITED
-                || mStandard != MediaFormat.COLOR_STANDARD_BT601_NTSC)) {
-            // This test was added in Android T, but some upgrading devices fail the test. Hence
-            // limit the test to devices launching with T
+        if (mRange != MediaFormat.COLOR_RANGE_LIMITED
+                || mStandard != MediaFormat.COLOR_STANDARD_BT601_NTSC) {
+            // Prior to Android T, only BT601 limited range support was tested. Hence
+            // limit testing other color spaces to devices launching with T
             assumeTrue("Skipping color range " + mRange + " and color standard " + mStandard +
                             " for devices upgrading to T",
                     FIRST_SDK_IS_AT_LEAST_T && VNDK_IS_AT_LEAST_T);
