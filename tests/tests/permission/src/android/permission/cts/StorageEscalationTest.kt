@@ -45,7 +45,7 @@ class StorageEscalationTest {
         const val APP_APK_PATH_28 = "$APK_DIRECTORY/CtsStorageEscalationApp28.apk"
         const val APP_APK_PATH_29_SCOPED = "$APK_DIRECTORY/CtsStorageEscalationApp29Scoped.apk"
         const val APP_APK_PATH_29_FULL = "$APK_DIRECTORY/CtsStorageEscalationApp29Full.apk"
-        const val APP_PACKAGE_NAME = "android.permission3.cts.storageescalation"
+        const val APP_PACKAGE_NAME = "android.permission.cts.storageescalation"
         const val DELAY_TIME_MS: Long = 200
         val permissions = listOf<String>(READ_EXTERNAL_STORAGE, WRITE_EXTERNAL_STORAGE,
             ACCESS_MEDIA_LOCATION)

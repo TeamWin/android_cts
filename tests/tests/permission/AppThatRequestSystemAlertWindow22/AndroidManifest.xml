@@ -18,7 +18,7 @@
 
 <manifest
     xmlns:android="http://schemas.android.com/apk/res/android"
-    package="android.permission3.cts.usesystemalertwindowpermission">
+    package="android.permission.cts.usesystemalertwindowpermission">
 
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
 </manifest>
