@@ -30,6 +30,7 @@ import static com.android.bedstead.nene.permissions.CommonPermissions.MANAGE_PRO
 import static com.android.bedstead.nene.permissions.CommonPermissions.MODIFY_QUIET_MODE;
 import static com.android.bedstead.nene.permissions.CommonPermissions.QUERY_USERS;
 import static com.android.bedstead.nene.users.Users.users;
+import static com.android.bedstead.nene.utils.Versions.U;
 
 import android.annotation.TargetApi;
 import android.app.KeyguardManager;
@@ -131,7 +132,7 @@ public final class UserReference implements AutoCloseable {
      * {@code true} if this is a test user which should not include any user data.
      */
     public boolean isForTesting() {
-        if (!Versions.meetsMinimumSdkVersionRequirement(Versions.U)) {
+        if (!Versions.meetsMinimumSdkVersionRequirement(U)) {
             return false;
         }
         return userInfo().isForTesting();
@@ -506,7 +507,8 @@ public final class UserReference implements AutoCloseable {
                 mUserType = adbUser().type();
             } else {
                 try (PermissionContext p = TestApis.permissions()
-                        .withPermission(CREATE_USERS, QUERY_USERS)) {
+                        .withPermission(CREATE_USERS)
+                        .withPermissionOnVersionAtLeast(U, QUERY_USERS)) {
                     String userTypeName = mUserManager.getUserType();
                     if (userTypeName.equals("")) {
                         throw new NeneException("User does not exist " + this);
@@ -967,7 +969,9 @@ public final class UserReference implements AutoCloseable {
 
         UserInfo userInfo = userInfo();
         if (!userInfo.supportsSwitchTo()) {
-            return "supportsSwitchTo=false(partial=" + userInfo.partial + ", isEnabled=" + userInfo.isEnabled() + ", preCreated=" + userInfo.preCreated + ", isFull=" + userInfo.isFull() + ")";
+            return "supportsSwitchTo=false(partial=" + userInfo.partial + ", isEnabled="
+                    + userInfo.isEnabled() + ", preCreated=" + userInfo.preCreated + ", isFull="
+                    + userInfo.isFull() + ")";
         }
 
         return null;
