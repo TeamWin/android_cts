@@ -345,6 +345,6 @@
     <value>mime=video/hevc,width=720,height=480,frame-rate=30,profile=1,level=64;mime=audio/mp4a-latm,bitrate=128918,sample-rate=48000,channel-count=2,profile=2,aac-profile=2</value>
   </entry>
   <entry key="media_files_url">
-    <value>https://storage.googleapis.com/android_media/cts/tests/tests/mediastress/CtsMediaStressTestCases-1.0.zip</value>
+    <value>https://dl.google.com/android/xts/cts/tests/tests/mediastress/CtsMediaStressTestCases-1.0.zip</value>
   </entry>
 </dynamicConfig>
