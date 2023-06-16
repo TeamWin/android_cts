@@ -39,6 +39,7 @@ import android.telecom.RemoteConnection.VideoProvider;
 import android.telecom.StatusHints;
 import android.telecom.TelecomManager;
 import android.telecom.VideoProfile;
+import android.telephony.ServiceState;
 import android.view.Surface;
 
 import java.util.ArrayList;
@@ -115,7 +116,17 @@ public class RemoteConnectionTest extends BaseRemoteTelecomTest {
         assertRemoteConnectionState(mRemoteConnectionObject, Connection.STATE_ACTIVE);
         assertConnectionState(mRemoteConnection, Connection.STATE_ACTIVE);
 
-        assertNotNull(mRemoteConnection.getExtras().get(Connection.EXTRA_LAST_KNOWN_CELL_IDENTITY));
+        ServiceState serviceState = mTelephonyManager.getServiceState();
+        if (serviceState != null
+                && serviceState.getState() == ServiceState.STATE_IN_SERVICE) {
+            // Check LAST_KNOWN_CELL_IDENTITY only if device has voice service
+            assertNotNull(mRemoteConnection.getExtras()
+                    .get(Connection.EXTRA_LAST_KNOWN_CELL_IDENTITY));
+        } else {
+            assertNull(mRemoteConnection.getExtras()
+                    .get(Connection.EXTRA_LAST_KNOWN_CELL_IDENTITY));
+        }
+
         call.disconnect();
         assertCallState(call, Call.STATE_DISCONNECTED);
         assertConnectionState(mConnection, Connection.STATE_DISCONNECTED);
