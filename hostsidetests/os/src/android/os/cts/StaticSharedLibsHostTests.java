@@ -757,11 +757,25 @@ public class StaticSharedLibsHostTests extends DeviceTestCase implements IBuildR
         // This really should be a assumeTrue(getDevice().getMaxNumberOfUsersSupported() > 1), but
         // JUnit3 doesn't support assumptions framework.
         // TODO: change to assumeTrue after migrating tests to JUnit4.
-        if (!(getDevice().getMaxNumberOfUsersSupported() > 1)) {
+        final int maxUserCount = getDevice().getMaxNumberOfUsersSupported();
+        if (!(maxUserCount > 1)) {
             LogUtil.CLog.logAndDisplay(Log.LogLevel.INFO, "The device does not support multi-user");
             return;
         }
-        doTestPruneUnusedStaticSharedLibrariesWithMultiUser_reboot();
+
+        boolean shouldCreateSecondUser = true;
+        // Check whether the current user count on the device is not less than the max user count or
+        // not. If yes, don't create the other user.
+        final int currentUserCount = getDevice().listUsers().size();
+        if (currentUserCount >= maxUserCount) {
+            String message = String.format("Current user count %s is not less than the max user"
+                    + " count %s, don't create the other user.", currentUserCount, maxUserCount);
+            LogUtil.CLog.logAndDisplay(Log.LogLevel.INFO, message);
+            shouldCreateSecondUser = false;
+        }
+
+
+        doTestPruneUnusedStaticSharedLibrariesWithMultiUser_reboot(shouldCreateSecondUser);
     }
 
     @LargeTest
@@ -771,22 +785,40 @@ public class StaticSharedLibsHostTests extends DeviceTestCase implements IBuildR
         // This really should be a assumeTrue(getDevice().getMaxNumberOfUsersSupported() > 1), but
         // JUnit3 doesn't support assumptions framework.
         // TODO: change to assumeTrue after migrating tests to JUnit4.
-        if (!(getDevice().getMaxNumberOfUsersSupported() > 1)) {
+        final int maxUserCount = getDevice().getMaxNumberOfUsersSupported();
+        if (!(maxUserCount > 1)) {
             LogUtil.CLog.logAndDisplay(Log.LogLevel.INFO, "The device does not support multi-user");
             return;
         }
+
+        boolean shouldCreateSecondUser = true;
+        // Check whether the current user count on the device is not less than the max user count or
+        // not. If yes, don't create the other user.
+        final int currentUserCount = getDevice().listUsers().size();
+        if (currentUserCount >= maxUserCount) {
+            String message = String.format("Current user count %s is not less than the max user"
+                    + " count %s, don't create the other user.", currentUserCount, maxUserCount);
+            LogUtil.CLog.logAndDisplay(Log.LogLevel.INFO, message);
+            shouldCreateSecondUser = false;
+        }
+
         mInstantMode = true;
-        doTestPruneUnusedStaticSharedLibrariesWithMultiUser_reboot();
+        doTestPruneUnusedStaticSharedLibrariesWithMultiUser_reboot(shouldCreateSecondUser);
     }
 
-    private void doTestPruneUnusedStaticSharedLibrariesWithMultiUser_reboot() throws Exception {
+    private void doTestPruneUnusedStaticSharedLibrariesWithMultiUser_reboot(
+            boolean shouldCreateSecondUser) throws Exception {
         int userId = -1;
         try {
-            userId = createAndStartSecondUser();
-            assertThat(userId).isNotEqualTo(-1);
+            if (shouldCreateSecondUser) {
+                userId = createAndStartSecondUser();
+                assertThat(userId).isNotEqualTo(-1);
+            }
             doTestPruneUnusedStaticSharedLibraries_reboot();
         } finally {
-            stopAndRemoveUser(userId);
+            if (shouldCreateSecondUser) {
+                stopAndRemoveUser(userId);
+            }
         }
     }
 
