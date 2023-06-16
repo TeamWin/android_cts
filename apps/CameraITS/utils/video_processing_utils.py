@@ -298,12 +298,13 @@ def get_frame_deltas(video_file_name_with_path, timestamp_type='pts'):
   if raw_output:
     output = str(raw_output.decode('utf-8')).strip().split('\n')
     deltas = []
-    prev_time = 0
+    prev_time = None
     for line in output:
       if timestamp_type not in line:
         continue
       curr_time = float(re.search(r'time= *([0-9][0-9\.]*)', line).group(1))
-      deltas.append(curr_time - prev_time)
+      if prev_time is not None:
+        deltas.append(curr_time - prev_time)
       prev_time = curr_time
     logging.debug('Frame deltas: %s', deltas)
     return deltas
