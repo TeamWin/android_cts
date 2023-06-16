@@ -62,7 +62,7 @@ public class PermissionFlagsTest {
     /** The package name of most apps used in the test */
     private static final String APP_PKG = "android.permission.cts.appthatrequestpermission";
     private static final String APP_SYSTEM_ALERT_WINDOW_PKG =
-            "android.permissionui.cts.usesystemalertwindowpermission";
+            "android.permission3.cts.usesystemalertwindowpermission";
 
     private static final String TMP_DIR = "/data/local/tmp/cts/permissions/";
     private static final String APK_CONTACTS_15 =
