@@ -154,7 +154,6 @@ def find_opencv_faces(img, scale_factor, min_neighbors):
 
 def find_all_contours(img):
   cv2_version = cv2.__version__
-  logging.debug('cv2_version: %s', cv2_version)
   if cv2_version.startswith('3.'):  # OpenCV 3.x
     _, contours, _ = cv2.findContours(img, cv2.RETR_TREE,
                                       cv2.CHAIN_APPROX_SIMPLE)
