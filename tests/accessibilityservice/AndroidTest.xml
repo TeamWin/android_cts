@@ -33,6 +33,8 @@
         <option name="cleanup" value="true" />
         <option name="push-file" key="CtsAccessibilityMultipleServicesApp.apk"
             value="/data/local/tmp/cts/content/CtsAccessibilityMultipleServicesApp.apk" />
+        <option name="push-file" key="CtsAccessibilityLargeServiceVolumeApp.apk"
+            value="/data/local/tmp/cts/content/CtsAccessibilityLargeServiceVolumeApp.apk" />
     </target_preparer>
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
         <option name="cleanup-apks" value="true" />
