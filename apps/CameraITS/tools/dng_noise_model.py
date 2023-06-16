@@ -30,17 +30,28 @@ from mobly import test_runner
 import noise_model_utils
 import numpy as np
 
-_COLOR_CHANNEL_NAMES = noise_model_utils.BAYER_COLORS
-_PLOT_COLORS = noise_model_utils.BAYER_PLOT_COLORS
-_TILE_SIZE = 32  # Tile size to compute mean/variance. Large tiles may have
-                 # their variance corrupted by low freq image changes.
-_STATS_FORMAT = 'rawStats'  # rawStats or raw10Stats.
+_IS_QUAD_BAYER = False  # A manual flag to choose standard or quad Bayer noise
+                        # model generation.
+if _IS_QUAD_BAYER:
+  _COLOR_CHANNEL_NAMES = noise_model_utils.QUAD_BAYER_COLORS
+  _PLOT_COLORS = noise_model_utils.QUAD_BAYER_PLOT_COLORS
+  _TILE_SIZE = 64  # Tile size to compute mean/variance. Large tiles may have
+                   # their variance corrupted by low freq image changes.
+  _STATS_FORMAT = 'raw10QuadBayerStats'  # rawQuadBayerStats or raw10QuadBayerStats.
+  _READ_NOISE_RAW_FORMAT = 'raw10QuadBayer'  # rawQuadBayer or raw10QuadBayer.
+else:
+  _COLOR_CHANNEL_NAMES = noise_model_utils.BAYER_COLORS
+  _PLOT_COLORS = noise_model_utils.BAYER_PLOT_COLORS
+  _TILE_SIZE = 32  # Tile size to compute mean/variance. Large tiles may have
+                   # their variance corrupted by low freq image changes.
+  _STATS_FORMAT = 'rawStats'  # rawStats or raw10Stats.
+  _READ_NOISE_RAW_FORMAT = 'raw'  # raw or raw10.
+
 _STATS_CONFIG = {
     'format': _STATS_FORMAT,
     'gridWidth': _TILE_SIZE,
     'gridHeight': _TILE_SIZE,
 }
-_READ_NOISE_RAW_FORMAT = 'raw'  # raw or raw10.
 _BRACKET_MAX = 8  # Exposure bracketing range in stops
 _BRACKET_FACTOR = math.pow(2, _BRACKET_MAX)
 _ISO_MAX_VALUE = None  # ISO range max value, uses sensor max if None
@@ -65,6 +76,8 @@ _ZOOM_RATIO = 1  # Zoom target to be used while running the model
 _FIG_DPI = 100  # DPI for plotting noise model figures.
 _BAYER_COLORS_FOR_NOISE_PROFILE = [color.lower() for color in
                                    noise_model_utils.BAYER_COLORS]
+_QUAD_BAYER_COLORS_FOR_NOISE_PROFILE = [color.lower() for color in
+                                        noise_model_utils.QUAD_BAYER_COLORS]
 
 
 class DngNoiseModel(its_base_test.ItsBaseTest):
@@ -202,12 +215,41 @@ class DngNoiseModel(its_base_test.ItsBaseTest):
         os.path.join(log_path, 'noise_model.c'),
     )
 
-    # Create noise profile code with noise model parameters.
-    self._create_noise_profile_code(
-        noise_model,
-        _BAYER_COLORS_FOR_NOISE_PROFILE,
-        os.path.join(log_path, 'noise_profile.cc'),
-    )
+    num_channels = noise_model.shape[0]
+    is_quad_bayer = num_channels == noise_model_utils.NUM_QUAD_BAYER_CHANNELS
+    if is_quad_bayer:
+      # Average noise model parameters of every four channels.
+      avg_noise_model = noise_model.reshape(-1, 4, noise_model.shape[1]).mean(
+          axis=1
+      )
+      # Create noise model code with average noise model parameters.
+      self._create_noise_model_code(
+          avg_noise_model,
+          sens_min,
+          sens_max,
+          sens_max_analog,
+          os.path.join(log_path, 'noise_model_avg.c'),
+      )
+      # Create noise profile code with average noise model parameters.
+      self._create_noise_profile_code(
+          avg_noise_model,
+          _BAYER_COLORS_FOR_NOISE_PROFILE,
+          os.path.join(log_path, 'noise_profile_avg.cc'),
+      )
+      # Create noise profile code with noise model parameters.
+      self._create_noise_profile_code(
+          noise_model,
+          _QUAD_BAYER_COLORS_FOR_NOISE_PROFILE,
+          os.path.join(log_path, 'noise_profile.cc'),
+      )
+
+    else:
+      # Create noise profile code with noise model parameters.
+      self._create_noise_profile_code(
+          noise_model,
+          _BAYER_COLORS_FOR_NOISE_PROFILE,
+          os.path.join(log_path, 'noise_profile.cc'),
+      )
 
   def _plot_stats_and_noise_model_fittings(
       self, iso_to_stats_dict, measured_models, noise_model, sens_max_analog,
@@ -378,7 +420,8 @@ class DngNoiseModel(its_base_test.ItsBaseTest):
     # Plot noise model parameters.
     fig, axes = plt.subplots(4, 2, figsize=(22, 17))
     s_plots, o_plots = axes[:, 0], axes[:, 1]
-
+    num_channels = noise_model.shape[0]
+    is_quad_bayer = num_channels == noise_model_utils.NUM_QUAD_BAYER_CHANNELS
     for pidx, measured_model in enumerate(measured_models):
       # Grab the sensitivities and line parameters of each sensitivity.
       sens, s_measured, o_measured = zip(*measured_model)
@@ -394,7 +437,10 @@ class DngNoiseModel(its_base_test.ItsBaseTest):
       # o_model = (offset_a * analog_gain^2 + offset_b) * digital_gain^2.
       s_model = scale_a * sens * digital_gains + scale_b
       o_model = (offset_a * sens_sq + offset_b) * np.square(digital_gains)
-      s_plot, o_plot = s_plots[pidx], o_plots[pidx]
+      if is_quad_bayer:
+        s_plot, o_plot = s_plots[pidx // 4], o_plots[pidx // 4]
+      else:
+        s_plot, o_plot = s_plots[pidx], o_plots[pidx]
 
       self._plot_noise_model_single_plane(
           pidx, s_plot, sens, s_measured, s_model)
@@ -421,7 +467,7 @@ class DngNoiseModel(its_base_test.ItsBaseTest):
     fig.savefig(f'{name_with_log_path}.png', dpi=_FIG_DPI)
 
   def test_dng_noise_model_generation(self):
-    """Calibrates standard Bayer noise model.
+    """Calibrates standard Bayer or quad Bayer noise model.
 
     def requires 'test' in name to actually run.
     This function:
