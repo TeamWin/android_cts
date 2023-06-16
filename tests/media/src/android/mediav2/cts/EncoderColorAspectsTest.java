@@ -55,6 +55,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Color Primaries, Color Standard and Color Transfer are essential information to display the
@@ -117,14 +118,19 @@ public class EncoderColorAspectsTest extends CodecEncoderTestBase {
                             }
                             Object[] testArgs = new Object[3];
                             testArgs[0] = mediaType;
-                            EncoderConfigParams cfg = new EncoderConfigParams.Builder(mediaType)
-                                    .setRange(range)
-                                    .setStandard(standard)
-                                    .setTransfer(transfer)
-                                    .setMaxBFrames(maxBFrame)
-                                    .setColorFormat(colorFormat)
-                                    .setInputBitDepth(bitDepth)
-                                    .build();
+                            EncoderConfigParams.Builder foreman =
+                                    new EncoderConfigParams.Builder(mediaType)
+                                            .setRange(range)
+                                            .setStandard(standard)
+                                            .setTransfer(transfer)
+                                            .setMaxBFrames(maxBFrame)
+                                            .setColorFormat(colorFormat)
+                                            .setInputBitDepth(bitDepth);
+                            if (colorFormat == COLOR_FormatSurface && bitDepth == 10) {
+                                foreman.setProfile(
+                                        Objects.requireNonNull(PROFILE_HLG_MAP.get(mediaType))[0]);
+                            }
+                            EncoderConfigParams cfg = foreman.build();
                             testArgs[1] = cfg;
                             testArgs[2] = String.format("%s_%s_%s_%s_%d-bframes",
                                     rangeToString(range),
