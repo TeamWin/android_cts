@@ -1083,22 +1083,19 @@ def point_in_triangle(x1, y1, x2, y2, x3, y3, xp, yp):
   return math.isclose(a, (a1 + a2 + a3), abs_tol=0.001)
 
 
-def img_has_wider_gamut(narrow_img, wide_img):
-  """Compare a narrow gamut image with a wide gamut image of the same contents.
+def img_has_wide_gamut(wide_img):
+  """Check if an image contains wide gamut pixels.
 
-  Given two images with similar contents, determines whether the image with
-  the wider gamut actually makes use of that gamut.
+  Given an image that should have a wider gamut than SRGB, checks all pixel
+  values to see if any reside outside the SRGB gamut.
 
   Args:
-    narrow_img: The PIL.Image in a color space that is narrower.
-    wide_img: The PIL.Image in a color space that is wider.
+    wide_img: The PIL.Image in a color space that is wider than SRGB.
 
   Returns:
-    True if the gamut of wide_img is greater than that of narrow_img.
+    True if the gamut of wide_img is greater than that of SRGB.
     False otherwise.
   """
-  f = io.BytesIO(narrow_img.info.get('icc_profile'))
-  narrow_icc_profile = ImageCms.getOpenProfile(f)
   f = io.BytesIO(wide_img.info.get('icc_profile'))
   wide_icc_profile = ImageCms.getOpenProfile(f)
   xyz_profile = ImageCms.createProfile('XYZ')
@@ -1111,14 +1108,6 @@ def img_has_wider_gamut(narrow_img, wide_img):
   h = wide_xyz_img.size[1]
   wide_arr = numpy.array(wide_xyz_img)
 
-  narrow_cms_profile = narrow_icc_profile.profile
-  narrow_rx, narrow_ry = get_primary_chromaticity(
-      narrow_cms_profile.red_primary)
-  narrow_gx, narrow_gy = get_primary_chromaticity(
-      narrow_cms_profile.green_primary)
-  narrow_bx, narrow_by = get_primary_chromaticity(
-      narrow_cms_profile.blue_primary)
-
   # Check if any pixel in the wide gamut image is outside the color space of
   # the narrow gamut image.
   count = 0
@@ -1127,9 +1116,10 @@ def img_has_wider_gamut(narrow_img, wide_img):
       chromaticity_x, chromaticity_y = xyz_to_chromaticity(wide_arr[y][x][0],
                                                            wide_arr[y][x][1],
                                                            wide_arr[y][x][2])
-      if not point_in_triangle(narrow_rx, narrow_ry, narrow_gx, narrow_gy,
-                               narrow_bx, narrow_by, chromaticity_x,
-                               chromaticity_y):
+      if not point_in_triangle(EXPECTED_RX_SRGB, EXPECTED_RY_SRGB,
+                               EXPECTED_GX_SRGB, EXPECTED_GY_SRGB,
+                               EXPECTED_BX_SRGB, EXPECTED_BY_SRGB,
+                               chromaticity_x, chromaticity_y):
         count += 1
 
   return count > 0
