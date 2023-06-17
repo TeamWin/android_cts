@@ -16,6 +16,7 @@
 import logging
 import os
 import time
+import cv2
 
 import its_session_utils
 import lighting_control_utils
@@ -159,6 +160,9 @@ class ItsBaseTest(base_test.BaseTestClass):
           )
       else:
         logging.debug('Testing without `run_all_tests`')
+
+    cv2_version = cv2.__version__
+    logging.debug('cv2_version: %s', cv2_version)
 
   def _setup_devices(self, num):
     """Sets up each device in parallel if more than one device."""
