@@ -32,9 +32,10 @@ import static org.junit.Assert.assertNull;
 
 import android.content.ComponentName;
 import android.content.Intent;
-import android.content.ServiceConnection;
 import android.os.UserManager;
 import android.server.wm.WindowManagerState.Task;
+import android.server.wm.backgroundactivity.appa.IBackgroundActivityTestService;
+import android.server.wm.backgroundactivity.appb.IAppBTestService;
 import android.util.Log;
 
 import androidx.annotation.CallSuper;
@@ -81,8 +82,8 @@ public abstract class BackgroundActivityTestBase extends ActivityManagerTestBase
     final DeviceConfigStateHelper mDeviceConfig =
             new DeviceConfigStateHelper(NAMESPACE_WINDOW_MANAGER);
 
-    ServiceConnection mBalServiceConnection;
-    ServiceConnection mAppBTestServiceConnection;
+    FutureConnection<IBackgroundActivityTestService> mBalServiceConnection;
+    FutureConnection<IAppBTestService> mAppBTestServiceConnection;
 
     @Before
     public void enableFeatureFlags() {
