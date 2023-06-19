@@ -29,6 +29,8 @@ java_library {
     static_libs: [
         "compatibility-device-util-axt",
         "androidx.test.rules",
+        "core-test-rules",
+        "platform-test-annotations",
         "vogarexpect",
         "testng",
     ],
