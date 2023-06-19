@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.cts.appcloning;
+package com.android.cts.appcloning.media.storage;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -22,6 +22,7 @@ import static org.junit.Assume.assumeTrue;
 
 import android.platform.test.annotations.LargeTest;
 
+import com.android.cts.appcloning.AppCloningBaseHostTest;
 import com.android.tradefed.invoker.TestInformation;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BeforeClassWithInfo;
