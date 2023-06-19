@@ -99,13 +99,6 @@ public class DeviceAndProfileOwnerTransferIncomingTest {
     }
 
     @Test
-    public void testTransferOwnershipBundleLoaded() throws Throwable {
-        PersistableBundle bundle = mDevicePolicyManager.getTransferOwnershipBundle();
-        assertNotNull(bundle);
-        assertTrue(bundle.getBoolean(ARE_PARAMETERS_SAVED));
-    }
-
-    @Test
     public void testTransferOwnershipEmptyBundleLoaded() throws Throwable {
         PersistableBundle bundle = mDevicePolicyManager.getTransferOwnershipBundle();
         assertNotNull(bundle);

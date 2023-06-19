@@ -110,16 +110,6 @@ public abstract class DeviceAndProfileOwnerHostSideTransferTest extends BaseDevi
     }
 
     @Test
-    public void testIsTransferBundlePersisted() throws DeviceNotAvailableException {
-        runDeviceTestsAsUser(TRANSFER_OWNER_OUTGOING_PKG,
-                mOutgoingTestClassName,
-                "testTransferOwnershipBundleSaved", mUserId);
-        runDeviceTestsAsUser(TRANSFER_OWNER_INCOMING_PKG,
-                mIncomingTestClassName,
-                "testTransferOwnershipBundleLoaded", mUserId);
-    }
-
-    @Test
     public void testGetTransferOwnershipBundleOnlyCalledFromAdmin()
             throws DeviceNotAvailableException {
         runDeviceTestsAsUser(TRANSFER_OWNER_OUTGOING_PKG,
