@@ -7,6 +7,7 @@ The tests are organized into following testcases
 | VideoResolutionTest    | Transform resolution of input videos and validate output resolution |
 | TransformReverseTransformIdentityTest | Test verify that quality shouldn't be reduced too much when scaling/resizing and then reversing the operation. |
 | TransformHdrToSdrToneMapTest | Test transform HDR to SDR ToneMapping for given input and verify that ouput shouldn't have HDR profile. |
+| TransformVideoAspectRatio | Test transform aspects ratio of input videos and validate the output resolution according to the requested aspect ratio. |
 
 
 ## List of tests and helper classes imported from [androidx.media3.transformer](https://github.com/androidx/media/tree/release/libraries/transformer when it was at commit https://github.com/androidx/media/commit/2ff5dab0039c44d767dc831fec92724254e5e0aa)and changes done in them.
@@ -47,3 +48,6 @@ Test verify that quality shouldn't be reduced too much when scaling/resizing and
 
 ### TransformHdrToSdrToneMapTest.java
 Test transform HDR to SDR ToneMapping for given input and verify that ouput shouldn't have HDR profile.
+
+### TransformVideoAspectRatio.java
+Test transform aspects ratio of input videos and validate the output resolution according to the requested aspect ratio.

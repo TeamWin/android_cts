@@ -80,6 +80,9 @@ public final class MediaEditingUtil {
   public static final String MKV_ASSET_HEVC_1280W_720H_5S_10BIT =
       "cosmat_1280x720_24fps_crf22_hevc_10bit_nob.mkv";
 
+  public static final String MP4_ASSET_HEVC_WITH_INCREASING_TIMESTAMPS_608W_1080H_4S_URI_STRING =
+      "video_decode_accuracy_and_capability-hevc_608x1080_30fps.mp4";
+
   public static Format getMuxedWidthHeight(String filePath) throws IOException {
     MediaExtractor mediaExtractor = new MediaExtractor();
     mediaExtractor.setDataSource(filePath);
