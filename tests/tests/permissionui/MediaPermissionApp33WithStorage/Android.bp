@@ -20,9 +20,11 @@ package {
 
 android_test_helper_app {
     name: "CtsMediaPermissionApp33WithStorage",
-    sdk_version: "33",
+    min_sdk_version: "33",
+    target_sdk_version: "33",
     static_libs: [
         "kotlin-stdlib",
+        "compatibility-device-util-axt",
     ],
     srcs: [
         ":CtsUsePermissionAppSrc",
