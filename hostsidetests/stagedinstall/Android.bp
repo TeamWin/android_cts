@@ -676,7 +676,6 @@ prebuilt_apex {
 genrule {
     name: "deapexer.zip",
     tools: [
-        "blkid",
         "deapexer",
         "debugfs_static",
         "fsck.erofs",
@@ -685,7 +684,6 @@ genrule {
     cmd: "rm -rf mkdir $(genDir)/deapexer && mkdir $(genDir)/deapexer && " +
         "cp $(location deapexer) $(genDir)/deapexer && " +
         "cp $(location debugfs_static) $(genDir)/deapexer && " +
-        "cp $(location blkid) $(genDir)/deapexer && " +
         "cp $(location fsck.erofs) $(genDir)/deapexer && " +
         "HOST_OUT_SHARED_LIBRARIES=$$(dirname $(location deapexer))/../lib64 && " +
         "cp $${HOST_OUT_SHARED_LIBRARIES}/libc++.* $(genDir)/deapexer && " +
