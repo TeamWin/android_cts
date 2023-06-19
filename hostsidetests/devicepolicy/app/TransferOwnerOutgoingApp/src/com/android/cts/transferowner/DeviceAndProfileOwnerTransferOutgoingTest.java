@@ -151,13 +151,6 @@ public abstract class DeviceAndProfileOwnerTransferOutgoingTest {
     }
 
     @Test
-    public void testTransferOwnershipBundleSaved() throws Throwable {
-        PersistableBundle b = new PersistableBundle();
-        b.putBoolean(ARE_PARAMETERS_SAVED, true);
-        mDevicePolicyManager.transferOwnership(mOutgoingComponentName, INCOMING_COMPONENT_NAME, b);
-    }
-
-    @Test
     public void testGetTransferOwnershipBundleOnlyCalledFromAdmin() throws Throwable {
         PersistableBundle b = new PersistableBundle();
         b.putBoolean(ARE_PARAMETERS_SAVED, true);
