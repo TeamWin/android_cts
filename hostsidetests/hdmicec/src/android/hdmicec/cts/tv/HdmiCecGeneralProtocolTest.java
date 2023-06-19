@@ -33,8 +33,6 @@ import org.junit.runner.RunWith;
 @RunWith(DeviceJUnit4ClassRunner.class)
 public final class HdmiCecGeneralProtocolTest extends BaseHdmiCecCtsTest {
 
-    private static final int WAIT_TIME_MS = 1000;
-
     @Rule
     public RuleChain ruleChain =
             RuleChain.outerRule(CecRules.requiresCec(this))
