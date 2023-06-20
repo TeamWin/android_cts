@@ -62,7 +62,6 @@ android_test {
         ":CtsAccessMicrophoneAppLocationProvider",
         ":CtsHelperAppOverlay",
         ":CtsCreateNotificationChannelsApp31",
-        ":CtsCreateNotificationChannelsApp33",
         ":CtsMediaPermissionApp33WithStorage",
         ":CtsDifferentPkgNameApp",
         ":CtsUsePermissionAppImplicitUserSelectStorage",
