@@ -309,6 +309,8 @@ public class SeccompTest extends AndroidTestCase {
                 return installTestFilter(getAssets());
             }
 
+            @SuppressWarnings("DoNotCall") // b/287715292: ignore warning for synchronous call
+                                           // to Thread.run()
             public boolean createThread() {
                 Thread thread = new Thread(new Runnable() {
                     @Override
@@ -320,7 +322,7 @@ public class SeccompTest extends AndroidTestCase {
                         }
                     }
                 });
-                thread.start();
+                thread.run();
                 try {
                     thread.join();
                 } catch (InterruptedException e) {
