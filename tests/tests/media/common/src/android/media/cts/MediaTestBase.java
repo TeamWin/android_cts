@@ -63,7 +63,9 @@ public class MediaTestBase {
 
     @CallSuper
     protected void tearDown() {
-        mActivityScenario.close();
+        if (mActivityScenario != null) {
+            mActivityScenario.close();
+        }
         mActivity = null;
     }
 
