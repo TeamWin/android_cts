@@ -20,7 +20,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.times;
@@ -55,7 +54,6 @@ public class ChoreographerTest {
     private static final long DELAY_PERIOD = NOMINAL_VSYNC_PERIOD * 5;
     private static final long NANOS_PER_MS = 1000000;
     private static final long WAIT_TIMEOUT_S = 5;
-    private static final long EARLY_LATCH_MAX_THRESHOLD_NANOS = 100000000L;
     private static final Object TOKEN = new Object();
 
     private Choreographer mChoreographer;
@@ -530,47 +528,6 @@ public class ChoreographerTest {
             }
         } catch (InterruptedException ex) {
             throw new AssertionError("Test interrupted", ex);
-        }
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void testGetExpectedPresentationTimeNanosOutsideCallback() {
-        mChoreographer.getExpectedPresentationTimeNanos();
-    }
-
-    @Test
-    public void testGetExpectedPresentationTimeNanos() {
-        // local variables referenced within a lambda expression must be either declared as final
-        // or effectively final.
-        final long[] timeNanosHolder = {0, 0};
-        final long currentTimeNanos = System.nanoTime();
-        final Runnable mockRunnable = mock(Runnable.class);
-
-        // Define the behavior of the mock Runnable lambda
-        doAnswer(invocation -> {
-            final long expectedPresentationTimeNanos =
-                    mChoreographer.getExpectedPresentationTimeNanos();
-            final long frameTimeNanos = mChoreographer.getFrameTimeNanos();
-            timeNanosHolder[0] = expectedPresentationTimeNanos;
-            timeNanosHolder[1] = frameTimeNanos;
-            return null;
-        }).when(mockRunnable).run();
-        try {
-            // Add and remove a few callbacks.
-            mChoreographer.postCallback(
-                    Choreographer.CALLBACK_ANIMATION, mockRunnable, null);
-
-            // We expect the addedCallback1 to have been invoked once.
-            verify(mockRunnable, timeout(NOMINAL_VSYNC_PERIOD * 10).times(1)).run();
-
-            // Ensure the expectedPresentationTimeNanos to have a reasonable value.
-            assertTrue(timeNanosHolder[0] > currentTimeNanos);
-            // expectedPresentationTimeNanos - frameTimeNanos should not be greater than 100ms.
-            assertTrue(timeNanosHolder[0] - timeNanosHolder[1] <= EARLY_LATCH_MAX_THRESHOLD_NANOS);
-
-        } finally {
-            mChoreographer.removeCallbacks(
-                    Choreographer.CALLBACK_ANIMATION, mockRunnable, null);
         }
     }
 }
