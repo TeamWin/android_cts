@@ -236,7 +236,8 @@ public class CtsWindowInfoUtils {
                 }
 
                 for (var windowInfo : aboveWindowInfos) {
-                    if (Rect.intersects(targetWindowInfo.bounds, windowInfo.bounds)) {
+                    if (targetWindowInfo.displayId == windowInfo.displayId
+                            && Rect.intersects(targetWindowInfo.bounds, windowInfo.bounds)) {
                         // The window is occluded. If we have an active timer, we need to cancel it
                         // as it's possible the window was previously not occluded and now is
                         // occluded.
