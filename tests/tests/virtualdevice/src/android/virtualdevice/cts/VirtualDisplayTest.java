@@ -39,6 +39,7 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
+import android.hardware.display.VirtualDisplayConfig;
 import android.platform.test.annotations.AppModeFull;
 import android.view.Display;
 import android.virtualdevice.cts.common.FakeAssociationRule;
@@ -73,10 +74,14 @@ public class VirtualDisplayTest {
     private static final int DISPLAY_WIDTH = 640;
     private static final int DISPLAY_HEIGHT = 480;
     private static final int DISPLAY_DPI = 420;
+    private static final String DISPLAY_NAME = "TestVirtualDisplay";
     private static final int TIMEOUT_MILLIS = 1000;
 
     private static final VirtualDeviceParams DEFAULT_VIRTUAL_DEVICE_PARAMS =
             new VirtualDeviceParams.Builder().build();
+    private static final VirtualDisplayConfig VIRTUAL_DISPLAY_CONFIG =
+            new VirtualDisplayConfig.Builder(DISPLAY_NAME, DISPLAY_WIDTH, DISPLAY_HEIGHT,
+                    DISPLAY_DPI).build();
 
     @Rule
     public AdoptShellPermissionsRule mAdoptShellPermissionsRule = new AdoptShellPermissionsRule(
@@ -130,6 +135,26 @@ public class VirtualDisplayTest {
                         DEFAULT_VIRTUAL_DEVICE_PARAMS);
 
         VirtualDisplay virtualDisplay = mVirtualDevice.createVirtualDisplay(
+                VIRTUAL_DISPLAY_CONFIG, Runnable::run, mVirtualDisplayCallback);
+        mDisplayListener.waitForOnDisplayAddedCallback();
+
+        assertThat(virtualDisplay).isNotNull();
+        Display display = virtualDisplay.getDisplay();
+        assertThat(display.isValid()).isTrue();
+        assertThat(display.getWidth()).isEqualTo(VIRTUAL_DISPLAY_CONFIG.getWidth());
+        assertThat(display.getHeight()).isEqualTo(VIRTUAL_DISPLAY_CONFIG.getHeight());
+        assertThat(mDisplayListener.getObservedAddedDisplays()).containsExactly(
+                Integer.valueOf(display.getDisplayId()));
+    }
+
+    @Test
+    public void createVirtualDisplay_deprecatedOverload_shouldSucceed() {
+        mVirtualDevice =
+                mVirtualDeviceManager.createVirtualDevice(
+                        mFakeAssociationRule.getAssociationInfo().getId(),
+                        DEFAULT_VIRTUAL_DEVICE_PARAMS);
+
+        VirtualDisplay virtualDisplay = mVirtualDevice.createVirtualDisplay(
                 /* width= */ DISPLAY_WIDTH,
                 /* height= */ DISPLAY_HEIGHT,
                 /* densityDpi= */ DISPLAY_DPI,
@@ -158,20 +183,14 @@ public class VirtualDisplayTest {
                                 .build());
 
         VirtualDisplay virtualDisplay = mVirtualDevice.createVirtualDisplay(
-                /* width= */ DISPLAY_WIDTH,
-                /* height= */ DISPLAY_HEIGHT,
-                /* densityDpi= */ DISPLAY_DPI,
-                /* surface= */ null,
-                /* flags= */ 0,
-                Runnable::run,
-                mVirtualDisplayCallback);
+                VIRTUAL_DISPLAY_CONFIG, Runnable::run, mVirtualDisplayCallback);
         mDisplayListener.waitForOnDisplayAddedCallback();
 
         assertThat(virtualDisplay).isNotNull();
         Display display = virtualDisplay.getDisplay();
         assertThat(display.isValid()).isTrue();
-        assertThat(display.getWidth()).isEqualTo(DISPLAY_WIDTH);
-        assertThat(display.getHeight()).isEqualTo(DISPLAY_HEIGHT);
+        assertThat(display.getWidth()).isEqualTo(VIRTUAL_DISPLAY_CONFIG.getWidth());
+        assertThat(display.getHeight()).isEqualTo(VIRTUAL_DISPLAY_CONFIG.getHeight());
         int displayFlags = display.getFlags();
         assertWithMessage(
                 String.format(
@@ -190,11 +209,7 @@ public class VirtualDisplayTest {
                         mFakeAssociationRule.getAssociationInfo().getId(),
                         DEFAULT_VIRTUAL_DEVICE_PARAMS);
         VirtualDisplay virtualDisplay = mVirtualDevice.createVirtualDisplay(
-                /* width= */ DISPLAY_WIDTH,
-                /* height= */ DISPLAY_HEIGHT,
-                /* densityDpi= */ DISPLAY_DPI,
-                /* surface= */ null,
-                /* flags= */ 0,
+                VIRTUAL_DISPLAY_CONFIG,
                 /* executor= */ null,
                 /* callback= */ null);
         mDisplayListener.waitForOnDisplayAddedCallback();
@@ -202,8 +217,8 @@ public class VirtualDisplayTest {
         assertThat(virtualDisplay).isNotNull();
         Display display = virtualDisplay.getDisplay();
         assertThat(display.isValid()).isTrue();
-        assertThat(display.getWidth()).isEqualTo(DISPLAY_WIDTH);
-        assertThat(display.getHeight()).isEqualTo(DISPLAY_HEIGHT);
+        assertThat(display.getWidth()).isEqualTo(VIRTUAL_DISPLAY_CONFIG.getWidth());
+        assertThat(display.getHeight()).isEqualTo(VIRTUAL_DISPLAY_CONFIG.getHeight());
         assertThat(mDisplayListener.getObservedAddedDisplays()).containsExactly(
                 Integer.valueOf(display.getDisplayId()));
     }
@@ -217,13 +232,7 @@ public class VirtualDisplayTest {
 
         assertThrows(NullPointerException.class, () ->
                 mVirtualDevice.createVirtualDisplay(
-                        /* width= */ DISPLAY_WIDTH,
-                        /* height= */ DISPLAY_HEIGHT,
-                        /* densityDpi= */ DISPLAY_DPI,
-                        /* surface= */ null,
-                        /* flags= */ 0,
-                        /* executor= */ null,
-                        mVirtualDisplayCallback));
+                        VIRTUAL_DISPLAY_CONFIG, /*executor=*/ null, mVirtualDisplayCallback));
     }
 
     @Test
@@ -235,13 +244,7 @@ public class VirtualDisplayTest {
         ArrayList<VirtualDisplay> displays = new ArrayList<>();
         for (int i = 0; i < 5; i++) {
             displays.add(mVirtualDevice.createVirtualDisplay(
-                    /* width= */ DISPLAY_WIDTH,
-                    /* height= */ DISPLAY_HEIGHT,
-                    /* densityDpi= */ DISPLAY_DPI,
-                    /* surface= */ null,
-                    /* flags= */ 0,
-                    Runnable::run,
-                    mVirtualDisplayCallback));
+                    VIRTUAL_DISPLAY_CONFIG, Runnable::run, mVirtualDisplayCallback));
         }
 
         // Releasing several displays in quick succession should not cause deadlock
@@ -261,13 +264,7 @@ public class VirtualDisplayTest {
         ArrayList<VirtualDisplay> displays = new ArrayList<>();
         for (int i = 0; i < 5; i++) {
             displays.add(mVirtualDevice.createVirtualDisplay(
-                    /* width= */ DISPLAY_WIDTH,
-                    /* height= */ DISPLAY_HEIGHT,
-                    /* densityDpi= */ DISPLAY_DPI,
-                    /* surface= */ null,
-                    /* flags= */ 0,
-                    Runnable::run,
-                    mVirtualDisplayCallback));
+                    VIRTUAL_DISPLAY_CONFIG, Runnable::run, mVirtualDisplayCallback));
         }
 
         // Closing the virtual device should automatically release displays.
@@ -288,13 +285,7 @@ public class VirtualDisplayTest {
         ArrayList<VirtualDisplay> displays = new ArrayList<>();
         for (int i = 0; i < 5; i++) {
             displays.add(mVirtualDevice.createVirtualDisplay(
-                    /* width= */ DISPLAY_WIDTH,
-                    /* height= */ DISPLAY_HEIGHT,
-                    /* densityDpi= */ DISPLAY_DPI,
-                    /* surface= */ null,
-                    /* flags= */ 0,
-                    Runnable::run,
-                    mVirtualDisplayCallback));
+                    VIRTUAL_DISPLAY_CONFIG, Runnable::run, mVirtualDisplayCallback));
         }
 
         // Releasing and closing the device should result in each display being released only once.
@@ -313,13 +304,7 @@ public class VirtualDisplayTest {
                         mFakeAssociationRule.getAssociationInfo().getId(),
                         DEFAULT_VIRTUAL_DEVICE_PARAMS);
         VirtualDisplay virtualDisplay = mVirtualDevice.createVirtualDisplay(
-                /* width= */ DISPLAY_WIDTH,
-                /* height= */ DISPLAY_HEIGHT,
-                /* densityDpi= */ DISPLAY_DPI,
-                /* surface= */ null,
-                /* flags= */ 0,
-                Runnable::run,
-                mVirtualDisplayCallback);
+                VIRTUAL_DISPLAY_CONFIG, Runnable::run, mVirtualDisplayCallback);
 
         assertThat(mVirtualDeviceManager.getDeviceIdForDisplayId(
                 virtualDisplay.getDisplay().getDisplayId())).isEqualTo(
@@ -333,13 +318,7 @@ public class VirtualDisplayTest {
                         mFakeAssociationRule.getAssociationInfo().getId(),
                         DEFAULT_VIRTUAL_DEVICE_PARAMS);
         VirtualDisplay virtualDisplay = mVirtualDevice.createVirtualDisplay(
-                /* width= */ DISPLAY_WIDTH,
-                /* height= */ DISPLAY_HEIGHT,
-                /* densityDpi= */ DISPLAY_DPI,
-                /* surface= */ null,
-                /* flags= */ 0,
-                Runnable::run,
-                mVirtualDisplayCallback);
+                VIRTUAL_DISPLAY_CONFIG, Runnable::run, mVirtualDisplayCallback);
         virtualDisplay.release();
         mDisplayListener.waitForOnDisplayRemovedCallback();
 
@@ -364,13 +343,7 @@ public class VirtualDisplayTest {
                         mFakeAssociationRule.getAssociationInfo().getId(),
                         DEFAULT_VIRTUAL_DEVICE_PARAMS);
         VirtualDisplay virtualDisplay = mVirtualDevice.createVirtualDisplay(
-                /* width= */ DISPLAY_WIDTH,
-                /* height= */ DISPLAY_HEIGHT,
-                /* densityDpi= */ DISPLAY_DPI,
-                /* surface= */ null,
-                /* flags= */ 0,
-                Runnable::run,
-                mVirtualDisplayCallback);
+                VIRTUAL_DISPLAY_CONFIG, Runnable::run, mVirtualDisplayCallback);
 
         mVirtualDevice.close();
         mDisplayListener.waitForOnDisplayRemovedCallback();
