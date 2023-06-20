@@ -23,6 +23,7 @@ import sys
 
 import capture_read_noise_utils
 import capture_request_utils
+import colour
 import error_util
 import noise_model_utils
 import numpy
@@ -43,6 +44,7 @@ NUM_TRIES = 2
 NUM_FRAMES = 4
 TEST_IMG_DIR = os.path.join(os.environ['CAMERA_ITS_TOP'], 'test_images')
 
+# Expected adapted primaries in ICC profile per color space
 EXPECTED_RX_P3 = 0.682
 EXPECTED_RY_P3 = 0.319
 EXPECTED_GX_P3 = 0.285
@@ -56,6 +58,10 @@ EXPECTED_GX_SRGB = 0.321
 EXPECTED_GY_SRGB = 0.598
 EXPECTED_BX_SRGB = 0.156
 EXPECTED_BY_SRGB = 0.066
+
+# Chosen empirically - tolerance for the point in triangle test for colorspace
+# chromaticities
+COLORSPACE_TRIANGLE_AREA_TOL = 0.00028
 
 
 def convert_image_to_uint8(image):
@@ -1120,27 +1126,11 @@ def is_jpeg_icc_profile_correct(jpeg_img, color_space, icc_profile_path=None):
   ]
 
   for (actual, expected) in cmp_values:
-    if math.isclose(actual, expected, abs_tol=0.001):
+    if not math.isclose(actual, expected, abs_tol=0.001):
       # Values significantly differ
       return False
 
   return True
-
-
-def xyz_to_chromaticity(x, y, z):
-  """Converts an XYZ color to its chromaticity coordinates.
-
-  Args:
-    x (float): The X component of the color
-    y (float): The Y component of the color
-    z (float): The Z component of the color
-
-  Returns:
-    (float, float): xy chromaticity coordinates
-  """
-  chromaticity_x = x / (x + y + z)
-  chromaticity_y = y / (x + y + z)
-  return (chromaticity_x, chromaticity_y)
 
 
 def area_of_triangle(x1, y1, x2, y2, x3, y3):
@@ -1161,7 +1151,7 @@ def area_of_triangle(x1, y1, x2, y2, x3, y3):
   return area
 
 
-def point_in_triangle(x1, y1, x2, y2, x3, y3, xp, yp):
+def point_in_triangle(x1, y1, x2, y2, x3, y3, xp, yp, abs_tol):
   """Checks if the point (xp, yp) is inside the triangle.
 
   Args:
@@ -1173,6 +1163,7 @@ def point_in_triangle(x1, y1, x2, y2, x3, y3, xp, yp):
     y3 (float): The y-coordinate of the third point.
     xp (float): The x-coordinate of the point to check.
     yp (float): The y-coordinate of the point to check.
+    abs_tol (float): Absolute tolerance amount.
 
   Returns:
     bool: True if the point is inside the triangle, False otherwise.
@@ -1180,47 +1171,50 @@ def point_in_triangle(x1, y1, x2, y2, x3, y3, xp, yp):
   a = area_of_triangle(x1, y1, x2, y2, x3, y3)
   a1 = area_of_triangle(xp, yp, x2, y2, x3, y3)
   a2 = area_of_triangle(x1, y1, xp, yp, x3, y3)
-  a3 = area_of_triangle(x1, y2, x2, y2, xp, yp)
-  return math.isclose(a, (a1 + a2 + a3), abs_tol=0.001)
+  a3 = area_of_triangle(x1, y1, x2, y2, xp, yp)
+  return math.isclose(a, (a1 + a2 + a3), abs_tol=abs_tol)
 
 
-def img_has_wide_gamut(wide_img):
-  """Check if an image contains wide gamut pixels.
+def p3_img_has_wide_gamut(wide_img):
+  """Check if a DISPLAY_P3 image contains wide gamut pixels.
 
-  Given an image that should have a wider gamut than SRGB, checks all pixel
-  values to see if any reside outside the SRGB gamut.
+  Given a DISPLAY_P3 image that should have a wider gamut than SRGB, checks all
+  pixel values to see if any reside outside the SRGB gamut. This is done by
+  converting to CIE xy chromaticities using a Bradford chromatic adaptation for
+  consistency with ICC profiles.
 
   Args:
-    wide_img: The PIL.Image in a color space that is wider than SRGB.
+    wide_img: The PIL.Image in the DISPLAY_P3 color space.
 
   Returns:
     True if the gamut of wide_img is greater than that of SRGB.
     False otherwise.
   """
-  f = io.BytesIO(wide_img.info.get('icc_profile'))
-  wide_icc_profile = ImageCms.getOpenProfile(f)
-  xyz_profile = ImageCms.createProfile('XYZ')
+  w = wide_img.size[0]
+  h = wide_img.size[1]
+  wide_arr = numpy.array(wide_img)
 
-  # Convert the wide image to XYZ.
-  wide_xyz_img = ImageCms.profileToProfile(wide_img, wide_icc_profile,
-                                           xyz_profile)
+  img_arr = colour.RGB_to_XYZ(
+      wide_arr / 255.0,
+      colour.models.rgb.datasets.display_p3.RGB_COLOURSPACE_DISPLAY_P3.whitepoint,
+      colour.models.rgb.datasets.display_p3.RGB_COLOURSPACE_DISPLAY_P3.whitepoint,
+      colour.models.rgb.datasets.display_p3.RGB_COLOURSPACE_DISPLAY_P3.matrix_RGB_to_XYZ,
+      'Bradford', lambda x: colour.eotf(x, 'sRGB'))
 
-  w = wide_xyz_img.size[0]
-  h = wide_xyz_img.size[1]
-  wide_arr = numpy.array(wide_xyz_img)
+  xy_arr = colour.XYZ_to_xy(img_arr)
 
-  # Check if any pixel in the wide gamut image is outside the color space of
-  # the narrow gamut image.
-  count = 0
+  srgb_colorspace = colour.models.RGB_COLOURSPACE_sRGB
+  srgb_primaries = srgb_colorspace.primaries
+
   for y in range(h):
     for x in range(w):
-      chromaticity_x, chromaticity_y = xyz_to_chromaticity(wide_arr[y][x][0],
-                                                           wide_arr[y][x][1],
-                                                           wide_arr[y][x][2])
-      if not point_in_triangle(EXPECTED_RX_SRGB, EXPECTED_RY_SRGB,
-                               EXPECTED_GX_SRGB, EXPECTED_GY_SRGB,
-                               EXPECTED_BX_SRGB, EXPECTED_BY_SRGB,
-                               chromaticity_x, chromaticity_y):
-        count += 1
+      # Check if the pixel chromaticity is inside or outside the SRGB gamut.
+      # This check is not guaranteed not to emit false positives / negatives,
+      # however the probability of either on an arbitrary DISPLAY_P3 camera
+      # capture is exceedingly unlikely.
+      if not point_in_triangle(*srgb_primaries.reshape(6),
+                               xy_arr[y][x][0], xy_arr[y][x][1],
+                               COLORSPACE_TRIANGLE_AREA_TOL):
+        return True
 
-  return count > 0
+  return False
