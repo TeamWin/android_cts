@@ -50,6 +50,7 @@
         <option name="test-file-name" value="TestExternalImsServiceApp.apk"/>
         <option name="test-file-name" value="MockSatelliteGatewayServiceApp.apk"/>
         <option name="test-file-name" value="MockSatelliteServiceApp.apk"/>
+        <option name="test-file-name" value="MockPointingUiApp.apk"/>
     </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.telephony.cts" />
