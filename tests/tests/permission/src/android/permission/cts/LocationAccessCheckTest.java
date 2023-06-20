@@ -132,6 +132,8 @@ public class LocationAccessCheckTest {
     private static final PackageManager sPackageManager = sContext.getPackageManager();
     private static final AppOpsManager sAppOpsManager =
             sContext.getSystemService(AppOpsManager.class);
+    private static final LocationManager sLocationManager =
+            sContext.getSystemService(LocationManager.class);
     private static final UiAutomation sUiAutomation = InstrumentationRegistry.getInstrumentation()
             .getUiAutomation();
 
@@ -196,11 +198,19 @@ public class LocationAccessCheckTest {
                     PROPERTY_LOCATION_ACCESS_CHECK_DELAY_MILLIS,
                     "50");
 
+    private static boolean sWasLocationEnabled = true;
+
     @BeforeClass
     public static void beforeClassSetup() throws Exception {
         reduceDelays();
         allowNotificationAccess();
         installBackgroundAccessApp();
+        runWithShellPermissionIdentity(() -> {
+            sWasLocationEnabled = sLocationManager.isLocationEnabled();
+            if (!sWasLocationEnabled) {
+                sLocationManager.setLocationEnabledForUser(true, Process.myUserHandle());
+            }
+        });
     }
 
     /**
@@ -221,6 +231,11 @@ public class LocationAccessCheckTest {
         resetDelays();
         uninstallTestApp();
         disallowNotificationAccess();
+        runWithShellPermissionIdentity(() -> {
+            if (!sWasLocationEnabled) {
+                sLocationManager.setLocationEnabledForUser(false, Process.myUserHandle());
+            }
+        });
     }
 
     /**
