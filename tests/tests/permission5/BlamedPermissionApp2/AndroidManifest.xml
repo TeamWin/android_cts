@@ -47,9 +47,6 @@
         android:name="androidx.test.runner.AndroidJUnitRunner"
         android:targetPackage="android.permission5.cts.blamed2"
         android:label="CTS permission attribution tests">
-        <meta-data
-            android:name="listener"
-            android:value="com.android.cts.runner.CtsTestRunListener" />
     </instrumentation>
 
 </manifest>

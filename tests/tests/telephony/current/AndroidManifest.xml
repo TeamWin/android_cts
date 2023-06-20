@@ -261,8 +261,6 @@
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
          android:targetPackage="android.telephony.cts"
          android:label="CTS tests of android.telephony">
-        <meta-data android:name="listener"
-             android:value="com.android.cts.runner.CtsTestRunListener"/>
     </instrumentation>
 
     <!-- Make sure the cts can connect to CarrierMessagingServices. This is needed for

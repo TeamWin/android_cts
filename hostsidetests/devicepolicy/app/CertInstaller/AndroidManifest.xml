@@ -51,8 +51,6 @@
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
          android:label="Delegated Cert Installer CTS test"
          android:targetPackage="com.android.cts.certinstaller">
-        <meta-data android:name="listener"
-             android:value="com.android.cts.runner.CtsTestRunListener"/>
     </instrumentation>
 
 </manifest>

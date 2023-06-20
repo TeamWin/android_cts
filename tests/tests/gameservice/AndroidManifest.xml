@@ -68,8 +68,6 @@
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
                      android:targetPackage="android.gameservice.cts"
                      android:label="CTS tests for Android Game Service">
-        <meta-data android:name="listener"
-                   android:value="com.android.cts.runner.CtsTestRunListener" />
     </instrumentation>
 
 </manifest>
