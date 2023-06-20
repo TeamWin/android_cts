@@ -357,13 +357,14 @@ public class WindowInsetsAnimationTestBase extends WindowManagerTestBase {
             mView.addView(mChild);
             mView.addView(mEditor);
 
+            setContentView(mView);
+
             getWindow().setDecorFitsSystemWindows(false);
             getWindow().getAttributes().layoutInDisplayCutoutMode =
                     LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS;
             getWindow().setSoftInputMode(SOFT_INPUT_STATE_HIDDEN);
             getWindow().getDecorView().getWindowInsetsController().setSystemBarsBehavior(
                     BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
-            setContentView(mView);
             mEditor.requestFocus();
         }
 
