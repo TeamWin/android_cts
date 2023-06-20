@@ -24,5 +24,7 @@
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
                      android:targetPackage="android.icu4c.cts"
                      android:label="CTS tests for ICU4C">
+        <meta-data android:name="listener"
+                   android:value="com.android.cts.runner.CtsTestRunListener" />
     </instrumentation>
 </manifest>
