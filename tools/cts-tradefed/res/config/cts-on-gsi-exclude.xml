@@ -137,6 +137,7 @@
     <!-- b/284917528 -->
     <option name="compatibility:exclude-filter" value="MicrodroidHostTestCases" />
     <option name="compatibility:exclude-filter" value="MicrodroidTestApp" />
+    <option name="compatibility:exclude-filter" value="odsign_e2e_tests" />
 
     <!-- b/285455242 Temporarily exclude some save save UI tests failing due to layout issue -->
     <option name="compatibility:exclude-filter" value="CtsAutoFillServiceTestCases android.autofillservice.cts.servicebehavior.MultiScreenLoginTest#testSaveBothFieldsAtOnceNoClientStateOnSecondRequest" />
