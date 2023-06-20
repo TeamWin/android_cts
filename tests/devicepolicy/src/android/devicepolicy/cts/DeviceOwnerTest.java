@@ -16,6 +16,8 @@
 
 package android.devicepolicy.cts;
 
+import static android.content.pm.PackageManager.FEATURE_SECURE_LOCK_SCREEN;
+
 import static com.android.bedstead.harrier.UserType.ADDITIONAL_USER;
 import static com.android.bedstead.nene.permissions.CommonPermissions.MANAGE_PROFILE_AND_DEVICE_OWNERS;
 
@@ -25,7 +27,6 @@ import static org.junit.Assert.assertThrows;
 
 import android.app.admin.DevicePolicyManager;
 import android.app.admin.RemoteDevicePolicyManager;
-import android.content.ComponentName;
 import android.content.Context;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
@@ -37,6 +38,7 @@ import com.android.bedstead.harrier.annotations.EnsureHasAdditionalUser;
 import com.android.bedstead.harrier.annotations.EnsureHasNoAccounts;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.Postsubmit;
+import com.android.bedstead.harrier.annotations.RequireFeature;
 import com.android.bedstead.harrier.annotations.RequireNotHeadlessSystemUserMode;
 import com.android.bedstead.harrier.annotations.RequireRunOnSystemUser;
 import com.android.bedstead.harrier.annotations.UserTest;
@@ -393,6 +395,7 @@ public final class DeviceOwnerTest {
         }
     }
 
+    @RequireFeature(FEATURE_SECURE_LOCK_SCREEN)
     @EnsureHasDeviceOwner
     @Test
     public void clearDeviceOwnerApp_escrowTokenExists_success() {
