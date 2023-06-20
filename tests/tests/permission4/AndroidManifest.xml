@@ -32,8 +32,5 @@
         android:name="androidx.test.runner.AndroidJUnitRunner"
         android:targetPackage="android.permission4.cts"
         android:label="CTS UI tests for permissions">
-        <meta-data
-            android:name="listener"
-            android:value="com.android.cts.runner.CtsTestRunListener" />
     </instrumentation>
 </manifest>
