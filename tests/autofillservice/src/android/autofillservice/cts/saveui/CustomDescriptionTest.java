@@ -239,6 +239,7 @@ public class CustomDescriptionTest extends AbstractLoginActivityTestCase {
 
     @Test
     public void validTransformationWithMultipleTemplateUpdates() throws Exception {
+        mUiBot.assumeMinimumResolution(500);
         testCustomDescription((usernameId, passwordId) -> {
             RemoteViews presentation = newTemplate(R.layout.two_horizontal_text_fields);
 
