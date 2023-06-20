@@ -18,7 +18,7 @@ package android.server.wm.backgroundactivity.appa;
 
 import android.app.PendingIntent;
 
-interface IBackgroundActivityTestService {
+interface IAppATestService {
     PendingIntent generatePendingIntent(boolean isBroadcast);
     void getAndStartManageSpaceActivity();
 }
