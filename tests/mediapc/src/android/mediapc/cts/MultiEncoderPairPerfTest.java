@@ -194,7 +194,7 @@ public class MultiEncoderPairPerfTest extends MultiCodecPerfTestBase {
             r5_1__H_1_3.setConcurrentInstances(maxInstances);
             r5_1__H_1_4.setConcurrentFps(achievedFrameRate);
         } else {
-            r5_1__H_1_3 = pce.addR5_1__H_1_3_720p(mMime, mMime, height);
+            r5_1__H_1_3 = pce.addR5_1__H_1_3_720p(mFirstPair.first, mSecondPair.first, height);
             r5_1__H_1_4 = pce.addR5_1__H_1_4_720p();
             r5_1__H_1_3.setConcurrentInstances(maxInstances);
             r5_1__H_1_4.setConcurrentFps(achievedFrameRate);
