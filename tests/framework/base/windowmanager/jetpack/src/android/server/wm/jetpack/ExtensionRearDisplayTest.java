@@ -44,6 +44,7 @@ import androidx.test.filters.LargeTest;
 import androidx.window.extensions.area.WindowAreaComponent;
 import androidx.window.extensions.area.WindowAreaComponent.WindowAreaSessionState;
 import androidx.window.extensions.area.WindowAreaComponent.WindowAreaStatus;
+import androidx.window.extensions.core.util.function.Consumer;
 
 import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.PollingCheck;
@@ -57,7 +58,6 @@ import org.junit.runner.RunWith;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
-import java.util.function.Consumer;
 
 /**
  * Tests for the {@link androidx.window.extensions.area.WindowAreaComponent} implementation
@@ -208,8 +208,8 @@ public class ExtensionRearDisplayTest extends WindowManagerJetpackTestBase imple
 
         mActivity.mConfigurationChanged = false;
         mWindowAreaComponent.endRearDisplaySession();
+        waitAndAssert(() -> WindowAreaComponent.SESSION_STATE_INACTIVE == mWindowAreaSessionState);
         waitAndAssert(() -> mActivity.mConfigurationChanged);
-        assertEquals(WindowAreaComponent.SESSION_STATE_INACTIVE, (int) mWindowAreaSessionState);
         assertTrue(isActivityVisible(mActivity));
         // Cancelling rear display mode should cancel the override, so verifying that the
         // device state is the same as the physical state of the device.

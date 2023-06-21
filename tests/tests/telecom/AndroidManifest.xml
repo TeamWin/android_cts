@@ -87,6 +87,22 @@
             </intent-filter>
         </service>
 
+        <service android:name=".NullBindingCallScreeningService"
+                 android:permission="android.permission.BIND_SCREENING_SERVICE"
+                 android:enabled="false"
+                 android:exported="true">
+            <intent-filter>
+                <action android:name="android.telecom.CallScreeningService"/>
+            </intent-filter>
+        </service>
+
+        <service android:name=".NullBindingCallRedirectionServiceController"
+                 android:exported="true">
+            <intent-filter>
+                <action android:name="android.telecom.cts.ACTION_CONTROL_CALL_REDIRECTION_SERVICE"/>
+            </intent-filter>
+        </service>
+
         <service android:name="android.telecom.cts.MockInCallService"
              android:permission="android.permission.BIND_INCALL_SERVICE"
              android:exported="true">

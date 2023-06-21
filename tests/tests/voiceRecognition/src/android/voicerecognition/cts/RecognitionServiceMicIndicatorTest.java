@@ -48,6 +48,7 @@ import com.android.compatibility.common.util.SettingsStateChangerRule;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -195,6 +196,7 @@ public final class RecognitionServiceMicIndicatorTest {
         testVoiceRecognitionServiceBlameCallingApp(/* trustVoiceService */ false);
     }
 
+    @Ignore("b/266789512")
     @Test
     public void testTrustedRecognitionServiceCanBlameCallingApp() throws Throwable {
         // skip test for automototive devices, as Mic indicator is not a MUST requirement as per CDD

@@ -66,6 +66,7 @@ import android.view.inputmethod.InputBinding;
 import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InputContentInfo;
 import android.view.inputmethod.InputMethod;
+import android.view.inputmethod.InputMethodSubtype;
 import android.view.inputmethod.TextAttribute;
 import android.widget.FrameLayout;
 import android.widget.HorizontalScrollView;
@@ -407,6 +408,26 @@ public final class MockIme extends InputMethodService {
                                 command.getExtras().getBoolean("imeConsumesInput");
                         return getMemorizedOrCurrentInputConnection().setImeConsumesInput(
                                 imeConsumesInput);
+                    }
+                    case "switchInputMethod": {
+                        final String id = command.getExtras().getString("id");
+                        try {
+                            switchInputMethod(id);
+                        } catch (Exception e) {
+                            return e;
+                        }
+                        return ImeEvent.RETURN_VALUE_UNAVAILABLE;
+                    }
+                    case "switchInputMethod(String,InputMethodSubtype)": {
+                        final String id = command.getExtras().getString("id");
+                        final InputMethodSubtype subtype = command.getExtras().getParcelable(
+                                "subtype", InputMethodSubtype.class);
+                        try {
+                            switchInputMethod(id, subtype);
+                        } catch (Exception e) {
+                            return e;
+                        }
+                        return ImeEvent.RETURN_VALUE_UNAVAILABLE;
                     }
                     case "setBackDisposition": {
                         final int backDisposition =

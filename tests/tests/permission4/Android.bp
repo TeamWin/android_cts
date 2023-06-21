@@ -31,6 +31,7 @@ android_test {
         "compatibility-device-util-axt",
         "ctstestrunner-axt",
         "cts-wm-util",
+        "sts-device-util",
     ],
     test_suites: [
         "cts",
