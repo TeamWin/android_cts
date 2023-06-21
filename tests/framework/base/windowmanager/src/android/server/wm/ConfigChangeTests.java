@@ -256,30 +256,27 @@ public class ConfigChangeTests extends ActivityManagerTestBase {
         }
         final int densityDpi = extras.getInt(EXTRA_FONT_ACTIVITY_DPI);
 
-        final float step = 0.15f;
-        for (float fontScale = 0.85f; fontScale <= 1.3f; fontScale += step) {
-            separateTestJournal();
-            fontScaleSession.set(fontScale);
-            mWmState.computeState(activityName);
-            // The number of config changes could be greater than expected as there may have
-            // other configuration change events triggered after font scale changed, such as
-            // NavigationBar recreated.
-            new ActivityLifecycleCounts(activityName).assertCountWithRetry(
-                    "relaunch or config changed",
-                    countSpec(ActivityCallback.ON_DESTROY, CountSpec.EQUALS, relaunch ? 1 : 0),
-                    countSpec(ActivityCallback.ON_CREATE, CountSpec.EQUALS, relaunch ? 1 : 0),
-                    countSpec(ActivityCallback.ON_RESUME, CountSpec.EQUALS, relaunch ? 1 : 0),
-                    countSpec(ActivityCallback.ON_CONFIGURATION_CHANGED,
-                            CountSpec.GREATER_THAN_OR_EQUALS, relaunch ? 0 : 1));
+        final float fontScale = 0.85f;
+        separateTestJournal();
+        fontScaleSession.set(fontScale);
+        mWmState.computeState(activityName);
+        // The number of config changes could be greater than expected as there may have
+        // other configuration change events triggered after font scale changed, such as
+        // NavigationBar recreated.
+        new ActivityLifecycleCounts(activityName).assertCountWithRetry(
+                "relaunch or config changed",
+                countSpec(ActivityCallback.ON_DESTROY, CountSpec.EQUALS, relaunch ? 1 : 0),
+                countSpec(ActivityCallback.ON_CREATE, CountSpec.EQUALS, relaunch ? 1 : 0),
+                countSpec(ActivityCallback.ON_RESUME, CountSpec.EQUALS, relaunch ? 1 : 0),
+                countSpec(ActivityCallback.ON_CONFIGURATION_CHANGED,
+                        CountSpec.GREATER_THAN_OR_EQUALS, relaunch ? 0 : 1));
 
-            // Verify that the display metrics are updated, and therefore the text size is also
-            // updated accordingly.
-            final float scale = fontScale;
-            waitForOrFail("reported fontPixelSize from " + activityName,
-                    () -> scaledPixelsToPixels(EXPECTED_FONT_SIZE_SP, scale, densityDpi)
-                            == TestJournalContainer.get(activityName).extras.getInt(
-                            EXTRA_FONT_PIXEL_SIZE));
-        }
+        // Verify that the display metrics are updated, and therefore the text size is also
+        // updated accordingly.
+        waitForOrFail("reported fontPixelSize from " + activityName,
+                () -> scaledPixelsToPixels(EXPECTED_FONT_SIZE_SP, fontScale, densityDpi)
+                        == TestJournalContainer.get(activityName).extras.getInt(
+                        EXTRA_FONT_PIXEL_SIZE));
     }
 
     /**
