@@ -24,4 +24,8 @@ java_test_host {
         "gts",
         "general-tests",
     ],
+
+    data: [":SharedLibraryInfoTestApp"],
+
+    per_testcase_directory: true,
 }
