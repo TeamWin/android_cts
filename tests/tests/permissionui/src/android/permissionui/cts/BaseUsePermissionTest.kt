@@ -18,10 +18,12 @@ package android.permissionui.cts
 
 import android.Manifest
 import android.app.Activity
+import android.app.ActivityManager
 import android.app.Instrumentation
 import android.content.ComponentName
 import android.content.Intent
 import android.content.Intent.ACTION_REVIEW_APP_DATA_SHARING_UPDATES
+import android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK
 import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
 import android.content.pm.PackageInstaller.PACKAGE_SOURCE_DOWNLOADED_FILE
 import android.content.pm.PackageInstaller.PACKAGE_SOURCE_LOCAL_FILE
@@ -50,7 +52,6 @@ import com.android.modules.utils.build.SdkLevel
 import java.util.concurrent.TimeUnit
 import java.util.regex.Pattern
 import org.junit.After
-import org.junit.Assert
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
@@ -185,6 +186,7 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
 
         // The highest SDK for which the system will show a "low SDK" warning when launching the app
         const val MAX_SDK_FOR_SDK_WARNING = 27
+        const val MIN_SDK_FOR_RUNTIME_PERMS = 23
 
         val TEST_INSTALLER_ACTIVITY_COMPONENT_NAME =
             ComponentName(context, TestInstallerActivity::class.java)
@@ -297,6 +299,59 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
         uninstallPackage(APP_PACKAGE_NAME, requireSuccess = false)
     }
 
+    override fun installPackage(
+        apkPath: String,
+        reinstall: Boolean,
+        grantRuntimePermissions: Boolean,
+        expectSuccess: Boolean,
+        installSource: String?
+    ) {
+        installPackage(apkPath, reinstall, grantRuntimePermissions, expectSuccess, installSource,
+            false)
+    }
+
+    fun installPackage(
+        apkPath: String,
+        reinstall: Boolean = false,
+        grantRuntimePermissions: Boolean = false,
+        expectSuccess: Boolean = true,
+        installSource: String? = null,
+        skipClearLowSdkDialog: Boolean = false
+    ) {
+        super.installPackage(apkPath, reinstall, grantRuntimePermissions, expectSuccess,
+            installSource
+        )
+
+        val targetSdk = getTargetSdk()
+        // If the targetSDK is high enough, the low sdk warning won't show. If the SDK is
+        // below runtime permissions, the dialog will be delayed by the permission review screen.
+        // If success is not expected, don't bother trying
+        if (targetSdk > MAX_SDK_FOR_SDK_WARNING || targetSdk < MIN_SDK_FOR_RUNTIME_PERMS ||
+            !expectSuccess || skipClearLowSdkDialog) {
+            return
+        }
+
+        val finishOnCreateIntent = Intent().apply {
+            component = ComponentName(
+                APP_PACKAGE_NAME, "$APP_PACKAGE_NAME.FinishOnCreateActivity"
+            )
+            flags = FLAG_ACTIVITY_NEW_TASK or FLAG_ACTIVITY_CLEAR_TASK
+        }
+
+        // Check if an activity resolves for the test app. If it doesn't, then our test app doesn't
+        // have the usual set of activities, and likely won't be opened, and thus, won't show the
+        // dialog
+        callWithShellPermissionIdentity {
+            context.packageManager.resolveActivity(finishOnCreateIntent, PackageManager.MATCH_ALL)
+        } ?: return
+
+        // Start the test app, and expect the targetSDK warning dialog
+        context.startActivity(finishOnCreateIntent)
+        clearTargetSdkWarning()
+        // Kill the test app, so that the next time we launch, we don't see the app warning dialog
+        killTestApp()
+    }
+
     protected fun clearTargetSdkWarning(timeoutMillis: Long = TIMEOUT_MILLIS) {
         waitForIdle()
         waitFindObjectOrNull(By.res("android:id/button1"), timeoutMillis)?.let {
@@ -306,8 +361,17 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
                 // Click sometimes fails with StaleObjectException (b/280430717).
                 e.printStackTrace()
             }
-            waitForIdle()
         }
+    }
+
+    protected fun killTestApp() {
+        pressBack()
+        pressBack()
+        runWithShellPermissionIdentity {
+            val am = context.getSystemService(ActivityManager::class.java)!!
+            am.forceStopPackage(APP_PACKAGE_NAME)
+        }
+        waitForIdle()
     }
 
     protected fun clickPermissionReviewContinue() {
@@ -316,6 +380,12 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
         } else {
             click(By.res("com.android.permissioncontroller:id/continue_button"))
         }
+    }
+
+    protected fun clickPermissionReviewContinueAndClearSdkWarning() {
+        clickPermissionReviewContinue()
+        waitForIdle()
+        clearTargetSdkWarning()
     }
 
     protected fun installPackageWithInstallSourceAndEmptyMetadata(
@@ -463,9 +533,8 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
 
     protected fun approvePermissionReview() {
         startAppActivityAndAssertResultCode(Activity.RESULT_OK) {
-            clickPermissionReviewContinue()
+            clickPermissionReviewContinueAndClearSdkWarning()
             waitForIdle()
-            clearTargetSdkWarning()
         }
     }
 
@@ -507,7 +576,7 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
                             APP_PACKAGE_NAME, "$APP_PACKAGE_NAME.RequestPermissionsActivity"
                     )
                     putExtra("$APP_PACKAGE_NAME.PERMISSIONS", permissions)
-                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    addFlags(FLAG_ACTIVITY_NEW_TASK or FLAG_ACTIVITY_CLEAR_TASK)
                 }
         )
         waitForIdle()
@@ -529,12 +598,6 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
             }
         )
         waitForIdle()
-
-        // Clear the low target SDK warning message if it's expected
-        if (getTargetSdk() <= MAX_SDK_FOR_SDK_WARNING) {
-            clearTargetSdkWarning(timeoutMillis = QUICK_CHECK_TIMEOUT_MILLIS)
-            waitForIdle()
-        }
 
         // Notification permission prompt is shown first, so get it out of the way
         clickNotificationPermissionRequestAllowButtonIfAvailable()
@@ -799,12 +862,11 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
         }, TIMEOUT_MILLIS)
     }
 
-    protected fun getTargetSdk(packageName: String = APP_PACKAGE_NAME): Int {
+    private fun getTargetSdk(packageName: String = APP_PACKAGE_NAME): Int {
          return callWithShellPermissionIdentity {
             try {
                 context.packageManager.getApplicationInfo(packageName, 0).targetSdkVersion
             } catch (e: PackageManager.NameNotFoundException) {
-                Assert.fail("Package $packageName not found")
                 -1
             }
         }
@@ -814,9 +876,6 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
         permission: String,
         manuallyNavigate: Boolean = false
     ) {
-        if (getTargetSdk() <= MAX_SDK_FOR_SDK_WARNING) {
-            clearTargetSdkWarning()
-        }
 
         val useLegacyNavigation = isWatch || isTv || isAutomotive || manuallyNavigate
         if (useLegacyNavigation) {
@@ -858,10 +917,6 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
         isLegacyApp: Boolean,
         manuallyNavigate: Boolean = false,
     ) {
-        val targetSdk = getTargetSdk()
-        if (targetSdk <= MAX_SDK_FOR_SDK_WARNING) {
-            clearTargetSdkWarning(QUICK_CHECK_TIMEOUT_MILLIS)
-        }
         val useLegacyNavigation = isWatch || isAutomotive || isTv || manuallyNavigate
         if (useLegacyNavigation) {
             navigateToAppPermissionSettings()
@@ -976,7 +1031,7 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
             }
 
             val shouldShowStorageWarning = SdkLevel.isAtLeastT() &&
-                targetSdk <= Build.VERSION_CODES.S_V2 &&
+                getTargetSdk() <= Build.VERSION_CODES.S_V2 &&
                 permission in MEDIA_PERMISSIONS
             if (shouldShowStorageWarning) {
                 click(By.res(ALERT_DIALOG_OK_BUTTON))

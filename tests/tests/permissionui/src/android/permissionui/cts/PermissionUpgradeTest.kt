@@ -34,7 +34,7 @@ class PermissionUpgradeTest : BaseUsePermissionTest() {
 
         assertAllPermissionsGrantedByDefault()
 
-        installPackage(APP_APK_PATH_23, reinstall = true)
+        installPackage(APP_APK_PATH_23, reinstall = true, skipClearLowSdkDialog = true)
 
         assertAllPermissionsGrantedOnUpgrade()
     }
@@ -77,7 +77,7 @@ class PermissionUpgradeTest : BaseUsePermissionTest() {
 
     @Test
     fun testNoDowngradePermissionModel() {
-        installPackage(APP_APK_PATH_23)
+        installPackage(APP_APK_PATH_23, skipClearLowSdkDialog = true)
         installPackage(APP_APK_PATH_22, reinstall = true, expectSuccess = false)
     }
 
@@ -92,7 +92,7 @@ class PermissionUpgradeTest : BaseUsePermissionTest() {
         // Revoke a permission
         revokeAppPermissions(android.Manifest.permission.WRITE_CALENDAR, isLegacyApp = true)
 
-        installPackage(APP_APK_PATH_23, reinstall = true)
+        installPackage(APP_APK_PATH_23, reinstall = true, skipClearLowSdkDialog = true)
 
         assertAppHasPermission(android.Manifest.permission.WRITE_CALENDAR, false)
     }
@@ -113,7 +113,7 @@ class PermissionUpgradeTest : BaseUsePermissionTest() {
             clickPermissionRequestAllowButton()
         }
 
-        installPackage(APP_APK_PATH_23, reinstall = true)
+        installPackage(APP_APK_PATH_23, reinstall = true, skipClearLowSdkDialog = true)
 
         // Make sure the permission is still granted after the upgrade
         assertAppHasPermission(android.Manifest.permission.READ_CALENDAR, true)

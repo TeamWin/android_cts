@@ -158,7 +158,7 @@ class PermissionReviewTest : BaseUsePermissionTest() {
         // Service is not started before permission are reviewed
         assertNull(results.poll(UNEXPECTED_TIMEOUT_MILLIS.toLong(), TimeUnit.MILLISECONDS))
 
-        clickPermissionReviewContinue()
+        clickPermissionReviewContinueAndClearSdkWarning()
 
         // Service should be started after permission review
         assertEquals(
