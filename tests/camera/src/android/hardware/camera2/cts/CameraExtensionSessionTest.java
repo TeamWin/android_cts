@@ -949,14 +949,14 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
             ImageReader extensionImageReader = null;
             try {
                 mTestRule.openDevice(id);
+                concurrentCameraDevice = CameraTestUtils.openCamera(mTestRule.getCameraManager(),
+                        concurrentCameraId, new BlockingStateCallback(), mTestRule.getHandler());
                 CameraDevice camera = mTestRule.getCamera();
                 camera.createExtensionSession(configuration);
                 CameraExtensionSession extensionSession = sessionListener.waitAndGetSession(
                         SESSION_CONFIGURE_TIMEOUT_MS);
                 assertNotNull(extensionSession);
 
-                concurrentCameraDevice = CameraTestUtils.openCamera(mTestRule.getCameraManager(),
-                        concurrentCameraId, new BlockingStateCallback(), mTestRule.getHandler());
                 assertNotNull(concurrentCameraDevice);
                 int concurrentExtensionId =
                         concurrentExtensionChars.getSupportedExtensions().get(0);
