@@ -2037,7 +2037,7 @@ public class PerformanceClassEvaluator {
                     .<Integer>builder()
                     .setId(RequirementConstants.AV1_ENC_RESOLUTION)
                     .setPredicate(RequirementConstants.INTEGER_GTE)
-                    .addRequiredValue(Build.VERSION_CODES.UPSIDE_DOWN_CAKE, 720 * 480)
+                    .addRequiredValue(Build.VERSION_CODES.UPSIDE_DOWN_CAKE, 480)
                     .build();
 
             RequiredMeasurement<Double> fps = RequiredMeasurement
