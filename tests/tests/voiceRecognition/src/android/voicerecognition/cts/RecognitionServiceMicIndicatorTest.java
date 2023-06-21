@@ -82,7 +82,7 @@ public final class RecognitionServiceMicIndicatorTest {
     private static final String CTS_VOICE_RECOGNITION_SERVICE =
             "android.recognitionservice.service/android.recognitionservice.service"
                     + ".CtsVoiceRecognitionService";
-
+    private static final long LONG_TIMEOUT_FOR_CAR = 30000L;
     protected final Context mContext =
             InstrumentationRegistry.getInstrumentation().getTargetContext();
     private final String mOriginalVoiceRecognizer = Settings.Secure.getString(
@@ -308,8 +308,16 @@ public final class RecognitionServiceMicIndicatorTest {
                     .doesNotContain(APP_LABEL);
         }
 
-        // Wait for the privacy indicator to disappear to avoid the test becoming flaky.
-        waitForNoIndicator(chipId);
+        if (isCar()) {
+            // In cars the privacy chip will continue showing while the recognizer still has a
+            // session in progress
+            mActivity.destroyRecognizerDefault();
+            privacyChip.click();
+            waitForNoIndicatorForCar(chipId);
+        } else {
+            // Wait for the privacy indicator to disappear to avoid the test becoming flaky.
+            waitForNoIndicator(chipId);
+       }
     }
 
     @NonNull
@@ -320,10 +328,19 @@ public final class RecognitionServiceMicIndicatorTest {
     private void waitForNoIndicator(String chipId) {
         SystemUtil.eventually(() -> {
             final UiObject2 foundChip =
-                    mUiDevice.findObject(By.res(PRIVACY_CHIP_PACKAGE_NAME, chipId));
+                  mUiDevice.findObject(By.res(PRIVACY_CHIP_PACKAGE_NAME, chipId));
             assertWithMessage("Chip still visible.").that(foundChip).isNull();
         });
     }
+
+    private void waitForNoIndicatorForCar(String chipId) {
+        SystemUtil.eventually(() -> {
+            final UiObject2 foundChip =
+                    mUiDevice.findObject(By.res(PRIVACY_CHIP_PACKAGE_NAME, chipId));
+            assertWithMessage("Chip still visible.").that(foundChip).isNull();
+        }, LONG_TIMEOUT_FOR_CAR);
+    }
+    
 
     private boolean isTv() {
         PackageManager pm = mContext.getPackageManager();
