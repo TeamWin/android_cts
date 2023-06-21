@@ -42,15 +42,11 @@ import org.junit.Assume.assumeFalse
 import org.junit.Before
 import org.junit.Test
 
-const val EXTRA_DELETE_CHANNELS_ON_CLOSE = "extra_delete_channels_on_close"
 const val EXTRA_CREATE_CHANNELS = "extra_create"
-const val EXTRA_CREATE_CHANNELS_DELAYED = "extra_create_delayed"
 const val EXTRA_REQUEST_OTHER_PERMISSIONS = "extra_request_permissions"
 const val EXTRA_REQUEST_NOTIF_PERMISSION = "extra_request_notif_permission"
-const val EXTRA_REQUEST_PERMISSIONS_DELAYED = "extra_request_permissions_delayed"
 const val EXTRA_START_SECOND_ACTIVITY = "extra_start_second_activity"
 const val EXTRA_START_SECOND_APP = "extra_start_second_app"
-const val ACTIVITY_NAME = "CreateNotificationChannelsActivity"
 const val ACTIVITY_LABEL = "CreateNotif"
 const val SECOND_ACTIVITY_LABEL = "EmptyActivity"
 const val ALLOW = "to send you"
@@ -68,13 +64,17 @@ class NotificationPermissionTest : BaseUsePermissionTest() {
     private var previousEnableState = -1
     private var countDown: CountDownLatch = CountDownLatch(1)
     private var allowedGroups = listOf<String>()
-    private val receiver: BroadcastReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context?, intent: Intent?) {
-            allowedGroups = intent?.getStringArrayListExtra(
-                PackageManager.EXTRA_REQUEST_PERMISSIONS_RESULTS) ?: emptyList()
-            countDown.countDown()
+    private val receiver: BroadcastReceiver =
+        object : BroadcastReceiver() {
+            override fun onReceive(context: Context?, intent: Intent?) {
+                allowedGroups =
+                    intent?.getStringArrayListExtra(
+                        PackageManager.EXTRA_REQUEST_PERMISSIONS_RESULTS
+                    )
+                        ?: emptyList()
+                countDown.countDown()
+            }
         }
-    }
 
     @Before
     fun setLatchAndEnablePermission() {
@@ -105,7 +105,7 @@ class NotificationPermissionTest : BaseUsePermissionTest() {
         runWithShellPermissionIdentity {
             Assert.assertTrue("SDK < 32 apps should have POST_NOTIFICATIONS added implicitly",
                 context.packageManager.getPackageInfo(APP_PACKAGE_NAME,
-                    PackageManager.GET_PERMISSIONS).requestedPermissions
+                    PackageManager.GET_PERMISSIONS).requestedPermissions!!
                     .contains(POST_NOTIFICATIONS))
         }
     }
@@ -168,14 +168,14 @@ class NotificationPermissionTest : BaseUsePermissionTest() {
         // create channels, then leave the app
         launchApp()
         killTestApp()
-        launchApp(mainIntent = false)
+        launchApp(intentAction = INTENT_ACTION)
         assertDialogNotShowing()
     }
 
     @Test
     fun notificationPromptDoesNotShowForNonMainIntentActionLaunches_onChannelCreate() {
         installPackage(APP_APK_PATH_CREATE_NOTIFICATION_CHANNELS_31, expectSuccess = true)
-        launchApp(mainIntent = false)
+        launchApp(intentAction = INTENT_ACTION)
         assertDialogNotShowing()
     }
 
@@ -185,7 +185,7 @@ class NotificationPermissionTest : BaseUsePermissionTest() {
         // create channels, then leave the app
         launchApp()
         killTestApp()
-        launchApp(mainIntent = false, isEligibleForPromptOption = true)
+        launchApp(intentAction = INTENT_ACTION, isEligibleForPromptOption = true)
         clickPermissionRequestAllowButton()
     }
 
@@ -205,7 +205,7 @@ class NotificationPermissionTest : BaseUsePermissionTest() {
     @Test
     fun notificationPromptNotShownForSubsequentStartsIfTaskStartWasNotLauncher() {
         installPackage(APP_APK_PATH_CREATE_NOTIFICATION_CHANNELS_31, expectSuccess = true)
-        launchApp(mainIntent = false, startSecondActivity = true)
+        launchApp(intentAction = INTENT_ACTION, startSecondActivity = true)
         assertDialogNotShowing()
     }
 
@@ -219,7 +219,7 @@ class NotificationPermissionTest : BaseUsePermissionTest() {
     @Test
     fun notificationPromptNotShownForChannelCreateInSecondActivityIfTaskStartWasntLauncher() {
         installPackage(APP_APK_PATH_CREATE_NOTIFICATION_CHANNELS_31, expectSuccess = true)
-        launchApp(mainIntent = false, startSecondActivity = true, createChannels = false)
+        launchApp(intentAction = INTENT_ACTION, startSecondActivity = true, createChannels = false)
         assertDialogNotShowing()
     }
 
@@ -271,7 +271,17 @@ class NotificationPermissionTest : BaseUsePermissionTest() {
     @Test
     fun mergeAppPermissionRequestIntoNotificationAndVerifyResult() {
         installPackage(APP_APK_PATH_CREATE_NOTIFICATION_CHANNELS_31, expectSuccess = true)
-        launchApp(requestPermissionsDelayed = true)
+        launchApp()
+        findPermissionRequestAllowButton()
+        // Notification dialog is showing, trigger RECORD_AUDIO check, and wait until it has been
+        // requested
+        val intent = createIntent(requestPermissions = true, intentAction = BROADCAST_ACTION)
+        context.sendBroadcast(intent)
+        countDown.await()
+        Thread.sleep(1000)
+        // reset countDownLatch
+        countDown = CountDownLatch(1)
+
         clickPermissionRequestAllowButton()
         assertAppPermissionGrantedState(POST_NOTIFICATIONS, granted = true)
         clickPermissionRequestAllowForegroundButton()
@@ -284,7 +294,17 @@ class NotificationPermissionTest : BaseUsePermissionTest() {
     @Test
     fun mergeNotificationRequestIntoAppPermissionRequestAndVerifyResult() {
         installPackage(APP_APK_PATH_CREATE_NOTIFICATION_CHANNELS_31, expectSuccess = true)
-        launchApp(createChannels = false, createChannelsDelayed = true, requestPermissions = true)
+        launchApp(createChannels = false, requestPermissions = true)
+        findPermissionRequestAllowForegroundButton()
+        // Microphone dialog is showing, trigger Notification check, and wait until it has been
+        // requested
+        val intent = createIntent(createChannels = true, intentAction = BROADCAST_ACTION)
+        context.sendBroadcast(intent)
+        countDown.await()
+        Thread.sleep(1000)
+        // reset countDownLatch
+        countDown = CountDownLatch(1)
+
         clickPermissionRequestAllowForegroundButton()
         assertAppPermissionGrantedState(RECORD_AUDIO, granted = true)
         clickPermissionRequestAllowButton()
@@ -309,45 +329,61 @@ class NotificationPermissionTest : BaseUsePermissionTest() {
     private fun assertAppPermissionGrantedState(permission: String, granted: Boolean) {
         SystemUtil.eventually {
             runWithShellPermissionIdentity {
-                Assert.assertEquals("Expected $permission to be granted", context.packageManager
-                        .checkPermission(permission, APP_PACKAGE_NAME), PERMISSION_GRANTED)
+                Assert.assertEquals(
+                    "Expected $permission to be granted",
+                    context.packageManager.checkPermission(permission, APP_PACKAGE_NAME),
+                    PERMISSION_GRANTED
+                )
             }
         }
     }
 
-    private fun launchApp(
+    private fun createIntent(
         createChannels: Boolean = true,
-        createChannelsDelayed: Boolean = false,
         requestNotificationPermission: Boolean = false,
         requestPermissions: Boolean = false,
-        requestPermissionsDelayed: Boolean = false,
         launcherCategory: Boolean = true,
-        mainIntent: Boolean = true,
-        isEligibleForPromptOption: Boolean = false,
+        intentAction: String = Intent.ACTION_MAIN,
         startSecondActivity: Boolean = false,
         startSecondaryAppAndCreateChannelsAfterSecondStart: Boolean = false
-    ) {
-        val intent = if (mainIntent && launcherCategory) {
-            packageManager.getLaunchIntentForPackage(APP_PACKAGE_NAME)!!
-        } else if (mainIntent) {
-            Intent(Intent.ACTION_MAIN)
-        } else {
-            Intent(INTENT_ACTION)
-        }
+    ): Intent {
+        val intent =
+            if (intentAction == Intent.ACTION_MAIN && launcherCategory) {
+                packageManager.getLaunchIntentForPackage(APP_PACKAGE_NAME)!!
+            } else {
+                Intent(intentAction)
+            }
 
         intent.`package` = APP_PACKAGE_NAME
         intent.putExtra(EXTRA_CREATE_CHANNELS, createChannels)
-        if (!createChannels) {
-            intent.putExtra(EXTRA_CREATE_CHANNELS_DELAYED, createChannelsDelayed)
-        }
         intent.putExtra(EXTRA_REQUEST_OTHER_PERMISSIONS, requestPermissions)
-        if (!requestPermissions) {
-            intent.putExtra(EXTRA_REQUEST_PERMISSIONS_DELAYED, requestPermissionsDelayed)
-        }
         intent.putExtra(EXTRA_REQUEST_NOTIF_PERMISSION, requestNotificationPermission)
         intent.putExtra(EXTRA_START_SECOND_ACTIVITY, startSecondActivity)
         intent.putExtra(EXTRA_START_SECOND_APP, startSecondaryAppAndCreateChannelsAfterSecondStart)
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        return intent
+    }
+
+    private fun launchApp(
+        createChannels: Boolean = true,
+        requestNotificationPermission: Boolean = false,
+        requestPermissions: Boolean = false,
+        launcherCategory: Boolean = true,
+        intentAction: String = Intent.ACTION_MAIN,
+        isEligibleForPromptOption: Boolean = false,
+        startSecondActivity: Boolean = false,
+        startSecondaryAppAndCreateChannelsAfterSecondStart: Boolean = false
+    ) {
+        val intent =
+            createIntent(
+                createChannels,
+                requestNotificationPermission,
+                requestPermissions,
+                launcherCategory,
+                intentAction,
+                startSecondActivity,
+                startSecondaryAppAndCreateChannelsAfterSecondStart
+            )
 
         val options = ActivityOptions.makeBasic()
         options.isEligibleForLegacyPermissionPrompt = isEligibleForPromptOption

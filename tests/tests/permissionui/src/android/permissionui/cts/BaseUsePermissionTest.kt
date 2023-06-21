@@ -82,8 +82,6 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
         const val APP_APK_PATH_WITH_OVERLAY = "$APK_DIRECTORY/CtsUsePermissionAppWithOverlay.apk"
         const val APP_APK_PATH_CREATE_NOTIFICATION_CHANNELS_31 =
             "$APK_DIRECTORY/CtsCreateNotificationChannelsApp31.apk"
-        const val APP_APK_PATH_CREATE_NOTIFICATION_CHANNELS_33 =
-            "$APK_DIRECTORY/CtsCreateNotificationChannelsApp33.apk"
         const val APP_APK_PATH_MEDIA_PERMISSION_33_WITH_STORAGE =
             "$APK_DIRECTORY/CtsMediaPermissionApp33WithStorage.apk"
         const val APP_APK_PATH_IMPLICIT_USER_SELECT_STORAGE =
@@ -581,6 +579,14 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
         block
     )
 
+    protected fun findPermissionRequestAllowButton(timeoutMillis: Long = 20000) {
+        if (isAutomotive) {
+            waitFindObject(By.text(getPermissionControllerString(ALLOW_BUTTON_TEXT)), timeoutMillis)
+        } else {
+            waitFindObject(By.res(ALLOW_BUTTON), timeoutMillis)
+        }
+    }
+
     protected fun clickPermissionRequestAllowButton(timeoutMillis: Long = 20000) {
         if (isAutomotive) {
             click(By.text(getPermissionControllerString(ALLOW_BUTTON_TEXT)), timeoutMillis)
@@ -637,6 +643,15 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
             click(By.text(getPermissionControllerString("app_permission_button_deny")))
         } else {
             click(By.res("com.android.permissioncontroller:id/deny_radio_button"))
+        }
+    }
+
+    protected fun findPermissionRequestAllowForegroundButton(timeoutMillis: Long = 20000) {
+        if (isAutomotive) {
+            waitFindObject(By.text(
+                getPermissionControllerString(ALLOW_FOREGROUND_BUTTON_TEXT)), timeoutMillis)
+        } else {
+            waitFindObject(By.res(ALLOW_FOREGROUND_BUTTON), timeoutMillis)
         }
     }
 
