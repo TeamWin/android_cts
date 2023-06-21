@@ -44,7 +44,7 @@ class PermissionTest22 : BaseUsePermissionTest() {
     @Test
     fun testCompatRevoked() {
         // Revoke the permission
-        revokeAppPermissions(android.Manifest.permission.WRITE_CALENDAR, isLegacyApp = true)
+        revokeAppPermissionsByUi(android.Manifest.permission.WRITE_CALENDAR, isLegacyApp = true)
 
         // Legacy permission model appears granted
         assertAppHasPermission(android.Manifest.permission.READ_CALENDAR, true)

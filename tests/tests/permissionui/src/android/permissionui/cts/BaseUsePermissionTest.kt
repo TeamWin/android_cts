@@ -586,6 +586,7 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
 
     protected inline fun requestAppPermissions(
         vararg permissions: String?,
+        askTwice: Boolean = false,
         block: () -> Unit
     ): Instrumentation.ActivityResult {
         // Request the permissions
@@ -595,6 +596,7 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
                     APP_PACKAGE_NAME, "$APP_PACKAGE_NAME.RequestPermissionsActivity"
                 )
                 putExtra("$APP_PACKAGE_NAME.PERMISSIONS", permissions)
+                putExtra("$APP_PACKAGE_NAME.ASK_TWICE", askTwice)
             }
         )
         waitForIdle()
@@ -609,9 +611,10 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
     protected inline fun requestAppPermissionsAndAssertResult(
         permissions: Array<out String?>,
         permissionAndExpectedGrantResults: Array<out Pair<String?, Boolean>>,
+        askTwice: Boolean = false,
         block: () -> Unit
     ) {
-        val result = requestAppPermissions(*permissions, block = block)
+        val result = requestAppPermissions(*permissions, askTwice = askTwice, block = block)
         assertEquals(Activity.RESULT_OK, result.resultCode)
         assertEquals(
             result.resultData!!.getStringArrayExtra("$APP_PACKAGE_NAME.PERMISSIONS")!!.size,
@@ -635,10 +638,12 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
 
     protected inline fun requestAppPermissionsAndAssertResult(
         vararg permissionAndExpectedGrantResults: Pair<String?, Boolean>,
+        askTwice: Boolean = false,
         block: () -> Unit
     ) = requestAppPermissionsAndAssertResult(
         permissionAndExpectedGrantResults.map { it.first }.toTypedArray(),
         permissionAndExpectedGrantResults,
+        askTwice,
         block
     )
 
@@ -809,11 +814,17 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
         click(By.res(GRANT_DIALOG_PERMISSION_RATIONALE_CONTAINER_VIEW))
     }
 
-    protected fun grantAppPermissions(vararg permissions: String) {
+    protected fun grantAppPermissionsByUi(vararg permissions: String) {
         setAppPermissionState(*permissions, state = PermissionState.ALLOWED, isLegacyApp = false)
     }
 
-    protected fun revokeAppPermissions(
+    protected fun grantRuntimePermissions(vararg permissions: String) {
+        for (permission in permissions) {
+            uiAutomation.grantRuntimePermission(APP_PACKAGE_NAME, permission)
+        }
+    }
+
+    protected fun revokeAppPermissionsByUi(
         vararg permissions: String,
         isLegacyApp: Boolean = false
     ) {

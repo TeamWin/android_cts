@@ -23,30 +23,31 @@ import android.os.Bundle
 import com.android.modules.utils.build.SdkLevel
 
 class RequestPermissionsActivity : Activity() {
+
+    private var shouldAskTwice = false
+    private var timesAsked = 0
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         if (savedInstanceState == null) {
             val permissions = intent.getStringArrayExtra("$packageName.PERMISSIONS")!!
+            shouldAskTwice = intent.getBooleanExtra("$packageName.ASK_TWICE", false)
             if (SdkLevel.isAtLeastV()) {
                 // TODO: make deviceId dynamic
                 requestPermissions(permissions, 1, Context.DEVICE_ID_DEFAULT)
             } else {
                 requestPermissions(permissions, 1)
             }
+            timesAsked = 1
         }
     }
 
     override fun onRequestPermissionsResult(
-            requestCode: Int,
-            permissions: Array<out String>,
-            grantResults: IntArray
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
     ) {
-        setResult(RESULT_OK, Intent().apply {
-            putExtra("$packageName.PERMISSIONS", permissions)
-            putExtra("$packageName.GRANT_RESULTS", grantResults)
-        })
-        finish()
+        handleResult(permissions, grantResults)
     }
 
     override fun onRequestPermissionsResult(
@@ -55,11 +56,30 @@ class RequestPermissionsActivity : Activity() {
         grantResults: IntArray,
         deviceId: Int
     ) {
-        setResult(RESULT_OK, Intent().apply {
-            putExtra("$packageName.PERMISSIONS", permissions)
-            putExtra("$packageName.GRANT_RESULTS", grantResults)
-            putExtra("$packageName.DEVICE_ID", deviceId)
-        })
+        handleResult(permissions, grantResults, deviceId)
+    }
+
+    private fun handleResult(
+        permissions: Array<out String>,
+        grantResults: IntArray,
+        deviceId: Int? = null
+    ) {
+        if (shouldAskTwice && timesAsked < 2) {
+            requestPermissions(permissions, 1)
+            timesAsked += 1
+            return
+        }
+
+        setResult(
+            RESULT_OK,
+            Intent().apply {
+                putExtra("$packageName.PERMISSIONS", permissions)
+                putExtra("$packageName.GRANT_RESULTS", grantResults)
+                if (deviceId != null) {
+                    putExtra("$packageName.DEVICE_ID", deviceId)
+                }
+            }
+        )
         finish()
     }
 }

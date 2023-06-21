@@ -50,21 +50,21 @@ class MediaPermissionTest : BaseUsePermissionTest() {
     @Test
     fun testWhenRESIsGrantedManuallyThenShouldGrantAllPermissions() {
         installPackage(APP_APK_PATH_23)
-        grantAppPermissions(Manifest.permission.READ_EXTERNAL_STORAGE)
+        grantAppPermissionsByUi(Manifest.permission.READ_EXTERNAL_STORAGE)
         assertStorageAndMediaPermissionState(true)
     }
 
     @Test
     fun testWhenAuralIsGrantedManuallyThenShouldGrantAllPermissions() {
         installPackage(APP_APK_PATH_23)
-        grantAppPermissions(Manifest.permission.READ_MEDIA_AUDIO)
+        grantAppPermissionsByUi(Manifest.permission.READ_MEDIA_AUDIO)
         assertStorageAndMediaPermissionState(true)
     }
 
     @Test
     fun testWhenVisualIsGrantedManuallyThenShouldGrantAllPermissions() {
         installPackage(APP_APK_PATH_23)
-        grantAppPermissions(Manifest.permission.READ_MEDIA_VIDEO)
+        grantAppPermissionsByUi(Manifest.permission.READ_MEDIA_VIDEO)
         assertStorageAndMediaPermissionState(true)
     }
 
@@ -80,16 +80,17 @@ class MediaPermissionTest : BaseUsePermissionTest() {
     @Test
     fun testWhenRESIsDeniedManuallyThenShouldDenyAllPermissions() {
         installPackage(APP_APK_PATH_23)
-        grantAppPermissions(Manifest.permission.READ_EXTERNAL_STORAGE)
-        revokeAppPermissions(Manifest.permission.READ_EXTERNAL_STORAGE)
+        grantAppPermissionsByUi(Manifest.permission.READ_EXTERNAL_STORAGE)
+        assertStorageAndMediaPermissionState(true)
+        revokeAppPermissionsByUi(Manifest.permission.READ_EXTERNAL_STORAGE)
         assertStorageAndMediaPermissionState(false)
     }
 
     @Test
     fun testWhenAuralIsDeniedManuallyThenShouldDenyAllPermissions() {
         installPackage(APP_APK_PATH_23)
-        grantAppPermissions(Manifest.permission.READ_MEDIA_AUDIO)
-        revokeAppPermissions(Manifest.permission.READ_MEDIA_AUDIO)
+        grantAppPermissionsByUi(Manifest.permission.READ_MEDIA_AUDIO)
+        revokeAppPermissionsByUi(Manifest.permission.READ_MEDIA_AUDIO)
         assertStorageAndMediaPermissionState(false)
     }
 
@@ -98,8 +99,8 @@ class MediaPermissionTest : BaseUsePermissionTest() {
         // TODO: Re-enable after b/239249703 is fixed
         Assume.assumeFalse("skip on TV due to flaky", isTv)
         installPackage(APP_APK_PATH_23)
-        grantAppPermissions(Manifest.permission.READ_MEDIA_VIDEO)
-        revokeAppPermissions(Manifest.permission.READ_MEDIA_VIDEO)
+        grantAppPermissionsByUi(Manifest.permission.READ_MEDIA_VIDEO)
+        revokeAppPermissionsByUi(Manifest.permission.READ_MEDIA_VIDEO)
         assertStorageAndMediaPermissionState(false)
     }
 

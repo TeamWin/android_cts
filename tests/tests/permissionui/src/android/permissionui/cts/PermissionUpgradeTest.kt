@@ -90,7 +90,7 @@ class PermissionUpgradeTest : BaseUsePermissionTest() {
         approvePermissionReview()
 
         // Revoke a permission
-        revokeAppPermissions(android.Manifest.permission.WRITE_CALENDAR, isLegacyApp = true)
+        revokeAppPermissionsByUi(android.Manifest.permission.WRITE_CALENDAR, isLegacyApp = true)
 
         installPackage(APP_APK_PATH_23, reinstall = true, skipClearLowSdkDialog = true)
 
