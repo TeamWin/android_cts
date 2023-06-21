@@ -30,8 +30,8 @@ _FLASH_MODES = {'OFF': 0, 'SINGLE': 1, 'TORCH': 2}
 _FLASH_STATES = {'UNAVAIL': 0, 'CHARGING': 1, 'READY': 2, 'FIRED': 3,
                  'PARTIAL': 4}
 _NAME = os.path.splitext(os.path.basename(__file__))[0]
-_PATCH_H = 0.25  # center 25%
-_PATCH_W = 0.25
+_PATCH_H = 0.7  # center 70%
+_PATCH_W = 0.7
 _PATCH_X = 0.5 - _PATCH_W/2
 _PATCH_Y = 0.5 - _PATCH_H/2
 _GRADIENT_DELTA = 0.1  # used for tablet setups (tablet screen aborbs energy)
