@@ -1035,7 +1035,7 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
 
         // Capture a sequence of frames with different sensitivities and validate the black/white
         // level values
-        int[] sensitivities = getSensitivityTestValues();
+        int[] sensitivities = getSensitivityTestValuesSorted();
         float[][] dynamicBlackLevels = new float[sensitivities.length][];
         int[] dynamicWhiteLevels = new int[sensitivities.length];
         float[][] opticalBlackLevels = new float[sensitivities.length][];
@@ -2138,29 +2138,57 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
         requestBuilder.set(CaptureRequest.CONTROL_AE_MODE, CONTROL_AE_MODE_OFF);
         SimpleCaptureCallback listener =  new SimpleCaptureCallback();
 
-        long[] expTimesNs = getExposureTimeTestValues();
-        int[] sensitivities = getSensitivityTestValues();
-        // Submit single request at a time, then verify the result.
-        for (int i = 0; i < expTimesNs.length; i++) {
-            for (int j = 0; j < sensitivities.length; j++) {
-                if (VERBOSE) {
-                    Log.v(TAG, "Camera " + mCamera.getId() + ": Testing sensitivity "
-                            + sensitivities[j] + ", exposure time " + expTimesNs[i] + "ns");
-                }
+        long[] expTimesNs = getExposureTimeTestValuesSorted();
+        int[] sensitivities = getSensitivityTestValuesSorted();
 
-                changeExposure(requestBuilder, expTimesNs[i], sensitivities[j]);
-                mSession.capture(requestBuilder.build(), listener, mHandler);
+        assertTrue(expTimesNs.length > 0);
+        assertTrue(sensitivities.length > 0);
 
-                // make sure timeout is long enough for long exposure time - add a 2x safety margin
-                // to exposure time
-                long timeoutMs = WAIT_FOR_RESULT_TIMEOUT_MS + 2 * expTimesNs[i] / 1000000;
-                CaptureResult result = listener.getCaptureResult(timeoutMs);
-                long resultExpTimeNs = getValueNotNull(result, CaptureResult.SENSOR_EXPOSURE_TIME);
-                int resultSensitivity = getValueNotNull(result, CaptureResult.SENSOR_SENSITIVITY);
-                validateExposureTime(expTimesNs[i], resultExpTimeNs);
-                validateSensitivity(sensitivities[j], resultSensitivity);
-                validateFrameDurationForCapture(result);
+        // For multiple exposure times, make smart combinations of exposure and sensitivity to
+        // reduce test time and still have exhaustive coverage.
+        List<Pair<Long, Integer>> exposureSensitivityTestValues =
+                new ArrayList<Pair<Long, Integer>>();
+
+        // Min exposure should be tested with all sensitivity values.
+        for (int i = 0; i < sensitivities.length; i++) {
+            exposureSensitivityTestValues.add(
+                    new Pair<Long, Integer>(expTimesNs[0], sensitivities[i]));
+        }
+
+        // All other exposure values should be tested only with min and max sensitivity.
+        for (int i = 1; i < expTimesNs.length;  i++) {
+            exposureSensitivityTestValues.add(
+                    new Pair<Long, Integer>(expTimesNs[i], sensitivities[0]));
+
+            if (sensitivities.length > 1) {
+                exposureSensitivityTestValues.add(
+                        new Pair<Long, Integer>(expTimesNs[i],
+                                sensitivities[sensitivities.length - 1]));
             }
+        }
+
+        // Submit single request at a time, then verify the result.
+        for (int i = 0; i < exposureSensitivityTestValues.size(); i++) {
+            long exposure = exposureSensitivityTestValues.get(i).first;
+            int sensitivity = exposureSensitivityTestValues.get(i).second;
+
+            if (VERBOSE) {
+                Log.v(TAG, "Camera " + mCamera.getId() + ": Testing sensitivity "
+                        + sensitivity + ", exposure time " + exposure + "ns");
+            }
+
+            changeExposure(requestBuilder, exposure, sensitivity);
+            mSession.capture(requestBuilder.build(), listener, mHandler);
+
+            // make sure timeout is long enough for long exposure time - add a 2x safety margin
+            // to exposure time
+            long timeoutMs = WAIT_FOR_RESULT_TIMEOUT_MS + 2 * exposure / 1000000;
+            CaptureResult result = listener.getCaptureResult(timeoutMs);
+            long resultExpTimeNs = getValueNotNull(result, CaptureResult.SENSOR_EXPOSURE_TIME);
+            int resultSensitivity = getValueNotNull(result, CaptureResult.SENSOR_SENSITIVITY);
+            validateExposureTime(exposure, resultExpTimeNs);
+            validateSensitivity(sensitivity, resultSensitivity);
+            validateFrameDurationForCapture(result);
         }
         mSession.stopRepeating();
 
@@ -3341,7 +3369,7 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
      * Get the exposure time array that contains multiple exposure time steps in
      * the exposure time range, in nanoseconds.
      */
-    private long[] getExposureTimeTestValues() {
+    private long[] getExposureTimeTestValuesSorted() {
         long[] testValues = new long[DEFAULT_NUM_EXPOSURE_TIME_STEPS + 1];
         long maxExpTime = mStaticInfo.getExposureMaximumOrDefault(DEFAULT_EXP_TIME_NS);
         long minExpTime = mStaticInfo.getExposureMinimumOrDefault(DEFAULT_EXP_TIME_NS);
@@ -3349,7 +3377,8 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
         long range = maxExpTime - minExpTime;
         double stepSize = range / (double)DEFAULT_NUM_EXPOSURE_TIME_STEPS;
         for (int i = 0; i < testValues.length; i++) {
-            testValues[i] = maxExpTime - (long)(stepSize * i);
+            // Multiply stepSize by largest to smallest so that the final array is sorted.
+            testValues[i] = maxExpTime - (long) (stepSize * (testValues.length - 1 - i));
             testValues[i] = mStaticInfo.getExposureClampToRange(testValues[i]);
         }
 
@@ -3394,7 +3423,7 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
      * bounded by {@value #DEFAULT_NUM_SENSITIVITY_STEPS}.
      * </p>
      */
-    private int[] getSensitivityTestValues() {
+    private int[] getSensitivityTestValuesSorted() {
         int maxSensitivity = mStaticInfo.getSensitivityMaximumOrDefault(
                 DEFAULT_SENSITIVITY);
         int minSensitivity = mStaticInfo.getSensitivityMinimumOrDefault(
@@ -3410,7 +3439,8 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
         }
         int[] testValues = new int[numSteps + 1];
         for (int i = 0; i < testValues.length; i++) {
-            testValues[i] = maxSensitivity - stepSize * i;
+            // Multiply stepSize by largest to smallest so that the final array is sorted.
+            testValues[i] = maxSensitivity - stepSize * (testValues.length - 1 - i);
             testValues[i] = mStaticInfo.getSensitivityClampToRange(testValues[i]);
         }
 
