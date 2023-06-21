@@ -637,6 +637,7 @@ public class ItsService extends Service implements SensorEventListener {
                 mCamera.close();
                 mCamera = null;
                 mCameraManager.unregisterAvailabilityCallback(ac);
+                unavailablePhysicalCamEventQueue.clear();
             }
         } catch (Exception e) {
             throw new ItsException("Failed to close device");
