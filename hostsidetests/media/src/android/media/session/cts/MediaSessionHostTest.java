@@ -43,6 +43,11 @@ public class MediaSessionHostTest extends CompatChangeGatingTestCase {
      * com.android.server.media.MediaSessionRecord#THROW_FOR_INVALID_BROADCAST_RECEIVER}.
      */
     private static final long THROW_FOR_INVALID_BROADCAST_RECEIVER = 270049379L;
+    /**
+     * Change id from {@link
+     * com.android.server.media.MediaSessionRecord#THROW_FOR_ACTIVITY_MEDIA_BUTTON_RECEIVER}.
+     */
+    private static final long THROW_FOR_ACTIVITY_MEDIA_BUTTON_RECEIVER = 272737196L;
 
     @Override
     protected void setUp() throws Exception {
@@ -73,7 +78,7 @@ public class MediaSessionHostTest extends CompatChangeGatingTestCase {
                 DEVICE_SIDE_TEST_PKG,
                 DEVICE_SIDE_TEST_CLASS,
                 "setMediaButtonBroadcastReceiver_withFakeReceiver_changeEnabled_throwsIAE",
-                ImmutableSet.of(THROW_FOR_INVALID_BROADCAST_RECEIVER),
+                /* Enabled changes */ ImmutableSet.of(THROW_FOR_INVALID_BROADCAST_RECEIVER),
                 /* Disabled changes */ Collections.emptySet());
     }
 
@@ -83,6 +88,24 @@ public class MediaSessionHostTest extends CompatChangeGatingTestCase {
                 DEVICE_SIDE_TEST_CLASS,
                 "setMediaButtonBroadcastReceiver_withFakeReceiver_changeDisabled_isIgnored",
                 /* Enabled changes */ Collections.emptySet(),
-                ImmutableSet.of(THROW_FOR_INVALID_BROADCAST_RECEIVER));
+                /* Disabled changes */ ImmutableSet.of(THROW_FOR_INVALID_BROADCAST_RECEIVER));
+    }
+
+    public void testSetMediaButtonReceiverChangeEnabled() throws Exception {
+        runDeviceCompatTest(
+                DEVICE_SIDE_TEST_PKG,
+                DEVICE_SIDE_TEST_CLASS,
+                "setMediaButtonReceiver_withActivity_changeEnabled_throwsIAE",
+                /* Enabled changes */ ImmutableSet.of(THROW_FOR_ACTIVITY_MEDIA_BUTTON_RECEIVER),
+                /* Disabled changes */ Collections.emptySet());
+    }
+
+    public void testSetMediaButtonReceiverChangeDisabled() throws Exception {
+        runDeviceCompatTest(
+                DEVICE_SIDE_TEST_PKG,
+                DEVICE_SIDE_TEST_CLASS,
+                "setMediaButtonReceiver_withActivity_changeDisabled_isIgnored",
+                /* Enabled changes */ Collections.emptySet(),
+                /* Disabled changes */ ImmutableSet.of(THROW_FOR_ACTIVITY_MEDIA_BUTTON_RECEIVER));
     }
 }
