@@ -287,22 +287,19 @@ public class AppCloningHostTest extends AppCloningBaseHostTest {
      * For ex: inserting a screenshot of a cloned app by sysUi process (user 0), the content is
      * specified as `content://10@media/external/images/media/`, hinting that it should go in the
      * storage of user 10. However, since clonedProfile shares Media with its parent, the media
-     * gets
-     * saved successfully in user 0.
-     * The reverse is however, not true
-     * (<a href="https://b.corp.google.com/issues/270688031#comment4">...</a>),
-     * content provider does not have a way to allow a cloned app to create content with URI
-     * as content://0@media/external/images/media/` unless, it has INTERACT_ACROSS_USERS access.
+     * gets saved successfully in user 0.
+     * We also include the reverse test here i.e. inserting a file with uri as
+     * `content://0@media/external/images/media/` from a cloned app process. The content will be
+     * saved in cloned user in this case.
      */
-    // TODO(b/283399640): Add a fix and test for the reverse scenario.
     @Test
     public void testMediaCreationWithContentOwnerSpecified() throws Exception {
         assumeTrue(isAtLeastU(sDevice));
 
         int currentUserId = getCurrentUserId();
 
-        // Install the app in owner user space
-        installPackage(APP_A, "--user " + currentUserId);
+        // Install the app in owner user space and cloned user space
+        installPackage(APP_A, "--user all");
 
         // Try to save image from user 0 by specifying clonedUser as content owner
         Map<String, String> ownerArgs = new HashMap<>();
@@ -320,6 +317,24 @@ public class AppCloningHostTest extends AppCloningBaseHostTest {
 
         runDeviceTestAsUserInPkgA("testMediaStoreManager_verifyClonedUserImageSavedInOwnerUserOnly",
                 currentUserId, args);
+
+        // Try to save image from user 10 by specifying user 0 as content owner
+        Map<String, String> clonedArgs = new HashMap<>();
+        clonedArgs.put(IMAGE_NAME_TO_BE_DISPLAYED_KEY, "OwnerProfileImageToBeSavedInClone");
+        clonedArgs.put(IMAGE_NAME_TO_BE_CREATED_KEY, "clone_profile_image");
+        clonedArgs.put(CONTENT_OWNER_KEY, String.valueOf(currentUserId));
+
+        runDeviceTestAsUserInPkgA("testMediaStoreManager_writeImageToContentOwnerSharedStorage",
+                Integer.valueOf(sCloneUserId), clonedArgs);
+
+        // Verify that the image created by user 10 is saved in user 10's space.
+        Map<String, String> cloneArgs = new HashMap<>();
+        cloneArgs.put(IMAGE_NAME_TO_BE_VERIFIED_IN_CLONE_PROFILE_KEY,
+                "OwnerProfileImageToBeSavedInClone");
+        cloneArgs.put(CLONE_USER_ID, sCloneUserId);
+
+        runDeviceTestAsUserInPkgA("testMediaStoreManager_verifyOwnerUserImageSavedInClonedUserOnly",
+                currentUserId, cloneArgs);
     }
 
     // This test should be run with only user 0 as the currentUserId.
