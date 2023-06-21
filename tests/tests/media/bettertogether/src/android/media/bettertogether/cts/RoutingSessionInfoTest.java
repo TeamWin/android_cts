@@ -610,6 +610,20 @@ public class RoutingSessionInfoTest {
     }
 
     @Test
+    public void testGroupVolumeHandlingForSystemSession() {
+        RoutingSessionInfo sessionInfo =
+                new RoutingSessionInfo.Builder(TEST_ID, TEST_CLIENT_PACKAGE_NAME)
+                        .setName(TEST_NAME)
+                        .addSelectedRoute(TEST_ROUTE_ID_0)
+                        .addSelectedRoute(TEST_ROUTE_ID_1)
+                        .setSystemSession(true)
+                        .setVolumeHandling(PLAYBACK_VOLUME_VARIABLE)
+                        .build();
+
+        assertThat(sessionInfo.getVolumeHandling()).isEqualTo(PLAYBACK_VOLUME_VARIABLE);
+    }
+
+    @Test
     public void testSingleRouteVolumeHandling() {
         RoutingSessionInfo sessionInfo = new RoutingSessionInfo.Builder(
                 TEST_ID, TEST_CLIENT_PACKAGE_NAME)
