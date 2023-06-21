@@ -5789,7 +5789,7 @@ You should be prompted to select credentials; choose the ones you just installed
         Tap &amp; click sounds are ENABLED. Please DISABLE Tap &amp; click in the \"Sound &amp; Vibration\" settings panel.
         \nNote that in some versions of Android, this setting may be called \"Touch sounds\".
     </string>
-    <string name="audio_coldstart_notouchsounds_message">Touch sound are DISABLED.</string>
+    <string name="audio_coldstart_notouchsounds_message">Tap &amp; click sounds are DISABLED.</string>
 
     <!-- Audio Frequency Line Test -->
     <string name="audio_frequency_line_test">Audio Frequency Line Test</string>
