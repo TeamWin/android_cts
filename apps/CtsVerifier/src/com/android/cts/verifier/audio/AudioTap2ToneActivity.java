@@ -165,7 +165,7 @@ public class AudioTap2ToneActivity
     // Note that each key will be suffixed with the ID of the API tested
     private static final String KEY_LATENCY_MIN = "latency_min_";
     private static final String KEY_LATENCY_MAX = "latency_max_";
-    private static final String KEY_LATENCY_AVE = "latency_max_";
+    private static final String KEY_LATENCY_AVE = "latency_ave_";
     private static final String KEY_LATENCY_NUM_MEASUREMENTS = "latency_num_measurements_";
 
     public final TestName testName = new TestName();
