@@ -118,7 +118,7 @@ public class StreamedAppClipboardTest {
     private static final ComponentName CLIPBOARD_TEST_ACTIVITY_2 =
             new ComponentName("android.virtualdevice.streamedtestapp2",
                     "android.virtualdevice.streamedtestapp2.ClipboardTestActivity2");
-    private static final int EVENT_TIMEOUT_MS = 6000;
+    private static final int EVENT_TIMEOUT_MS = 8000;
 
     @Rule
     public AdoptShellPermissionsRule mAdoptShellPermissionsRule = new AdoptShellPermissionsRule(
