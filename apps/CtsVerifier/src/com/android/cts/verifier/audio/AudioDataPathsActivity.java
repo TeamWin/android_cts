@@ -39,6 +39,7 @@ import com.android.cts.verifier.audio.audiolib.AudioSystemFlags;
 import com.android.cts.verifier.audio.audiolib.WaveScopeView;
 
 // MegaAudio
+import org.hyphonate.megaaudio.common.Globals;
 import org.hyphonate.megaaudio.common.StreamBase;
 import org.hyphonate.megaaudio.duplex.DuplexAudioManager;
 import org.hyphonate.megaaudio.player.AudioSource;
@@ -220,6 +221,11 @@ public class AudioDataPathsActivity
 
     private class TestSpec {
         //
+        // Stream Attributes
+        //
+        static final int ATTRIBUTE_DISABLE_MMAP = 0x00000001;
+
+        //
         // Datapath specifications
         //
         // Playback Specification
@@ -233,6 +239,8 @@ public class AudioDataPathsActivity
         final int mInSampleRate;
         final int mInChannelCount;
         int mInputPreset;
+
+        int mGlobalAttributes;
 
         AudioDeviceInfo mOutDeviceInfo;
         AudioDeviceInfo mInDeviceInfo;
@@ -285,6 +293,14 @@ public class AudioDataPathsActivity
 
         void setInputPreset(int preset) {
             mInputPreset = preset;
+        }
+
+        void setGlobalAttributes(int attributes) {
+            mGlobalAttributes = attributes;
+        }
+
+        int getGlobalAttributes() {
+            return mGlobalAttributes;
         }
 
         boolean isValid() {
@@ -463,6 +479,8 @@ public class AudioDataPathsActivity
         ArrayList<TestSpec> mTestSpecs = new ArrayList<TestSpec>();
 
         int mApi;
+
+        boolean mPreTestMMapEnabled;
 
         private int    mPhaseCount;
 
@@ -685,19 +703,59 @@ public class AudioDataPathsActivity
                 mTestSpecs.add(testSpec);
             }
 
-            // Speaker Safe - ALWAYS Fails on Pixel.
             if (doSpeakerSafe) {
+                int speakerSafeSampleRate = 48000;
+                // Left
                 testSpec = new TestSpec(
-                        AudioDeviceInfo.TYPE_BUILTIN_SPEAKER_SAFE, 48000, 2,
-                        AudioDeviceInfo.TYPE_BUILTIN_MIC, 48000, 1);
+                        AudioDeviceInfo.TYPE_BUILTIN_SPEAKER_SAFE, speakerSafeSampleRate, 2,
+                        AudioDeviceInfo.TYPE_BUILTIN_MIC, speakerSafeSampleRate, 1);
                 testSpec.setSources(leftSineSourceProvider, mMicSinkProvider);
-                testSpec.setDescription("SpeakerSafe:2:Left Mic:1");
+                testSpec.setDescription("SpeakerSafe:2:Left Mic:1 no MMAP");
+                testSpec.setGlobalAttributes(TestSpec.ATTRIBUTE_DISABLE_MMAP);
                 mTestSpecs.add(testSpec);
+
+                // Right
                 testSpec = new TestSpec(
-                        AudioDeviceInfo.TYPE_BUILTIN_SPEAKER_SAFE, 48000, 2,
-                        AudioDeviceInfo.TYPE_BUILTIN_MIC, 48000, 1);
+                        AudioDeviceInfo.TYPE_BUILTIN_SPEAKER_SAFE, speakerSafeSampleRate, 2,
+                        AudioDeviceInfo.TYPE_BUILTIN_MIC, speakerSafeSampleRate, 1);
                 testSpec.setSources(rightSineSourceProvider, mMicSinkProvider);
-                testSpec.setDescription("SpeakerSafe:2:Right Mic:1");
+                testSpec.setDescription("SpeakerSafe:2:Right Mic:1 no MMAP");
+                testSpec.setGlobalAttributes(TestSpec.ATTRIBUTE_DISABLE_MMAP);
+                mTestSpecs.add(testSpec);
+
+                // These specs are duplicated because it often only fails on the second time.
+                // Left
+                testSpec = new TestSpec(
+                        AudioDeviceInfo.TYPE_BUILTIN_SPEAKER_SAFE, speakerSafeSampleRate, 2,
+                        AudioDeviceInfo.TYPE_BUILTIN_MIC, speakerSafeSampleRate, 1);
+                testSpec.setSources(leftSineSourceProvider, mMicSinkProvider);
+                testSpec.setDescription("SpeakerSafe:2:Left Mic:1 no MMAP");
+                testSpec.setGlobalAttributes(TestSpec.ATTRIBUTE_DISABLE_MMAP);
+                mTestSpecs.add(testSpec);
+
+                // Right
+                testSpec = new TestSpec(
+                        AudioDeviceInfo.TYPE_BUILTIN_SPEAKER_SAFE, speakerSafeSampleRate, 2,
+                        AudioDeviceInfo.TYPE_BUILTIN_MIC, speakerSafeSampleRate, 1);
+                testSpec.setSources(rightSineSourceProvider, mMicSinkProvider);
+                testSpec.setDescription("SpeakerSafe:2:Right Mic:1 no MMAP");
+                testSpec.setGlobalAttributes(TestSpec.ATTRIBUTE_DISABLE_MMAP);
+                mTestSpecs.add(testSpec);
+
+                testSpec = new TestSpec(
+                        AudioDeviceInfo.TYPE_BUILTIN_SPEAKER_SAFE, speakerSafeSampleRate, 2,
+                        AudioDeviceInfo.TYPE_BUILTIN_MIC, speakerSafeSampleRate, 1);
+                testSpec.setSources(leftSineSourceProvider, mMicSinkProvider);
+                testSpec.setDescription("SpeakerSafe:2:Left Mic:1 MMAP");
+                testSpec.setGlobalAttributes(0);
+                mTestSpecs.add(testSpec);
+
+                testSpec = new TestSpec(
+                        AudioDeviceInfo.TYPE_BUILTIN_SPEAKER_SAFE, speakerSafeSampleRate, 2,
+                        AudioDeviceInfo.TYPE_BUILTIN_MIC, speakerSafeSampleRate, 1);
+                testSpec.setSources(rightSineSourceProvider, mMicSinkProvider);
+                testSpec.setDescription("SpeakerSafe:2:Right Mic:1 MMAP");
+                testSpec.setGlobalAttributes(0);
                 mTestSpecs.add(testSpec);
             }
 
@@ -823,7 +881,12 @@ public class AudioDataPathsActivity
                 mDuplexAudioManager.setInputPreset(testSpec.mInputPreset);
                 mDuplexAudioManager.setRecorderSampleRate(testSpec.mInSampleRate);
                 mDuplexAudioManager.setNumRecorderChannels(testSpec.mInChannelCount);
+
                 mDuplexAudioManager.setupStreams(mAudioApi, mAudioApi);
+
+                if ((testSpec.getGlobalAttributes() & TestSpec.ATTRIBUTE_DISABLE_MMAP) != 0) {
+                    Globals.setMMapEnabled(false);
+                }
 
                 // Adjust the player frequency to match with the quantized frequency
                 // of the analyzer.
@@ -837,6 +900,7 @@ public class AudioDataPathsActivity
                 mWaveView.setNumChannels(testSpec.mInChannelCount);
 
                 mDuplexAudioManager.start();
+
                 return true;
             } else {
                 return false;
@@ -852,6 +916,8 @@ public class AudioDataPathsActivity
             mResultsView.setVisibility(View.GONE);
 
             mApi = api;
+
+            mPreTestMMapEnabled = Globals.isMMapEnabled();
 
             if (mTestStep == TESTSTEP_NONE) {
                 (mTimer = new Timer()).scheduleAtFixedRate(new TimerTask() {
@@ -874,6 +940,8 @@ public class AudioDataPathsActivity
         }
 
         public void completeTest() {
+            Globals.setMMapEnabled(mPreTestMMapEnabled);
+
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -949,6 +1017,13 @@ public class AudioDataPathsActivity
             if (mTestStep >= mTestSpecs.size()) {
                 stopTest();
                 completeTest();
+            } else {
+                (mTimer = new Timer()).schedule(new TimerTask() {
+                    @Override
+                    public void run() {
+                        advanceTestStep();
+                    }
+                }, TEST_TIME_IN_SECONDS * MS_PER_SEC);
             }
         }
 
