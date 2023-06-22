@@ -108,6 +108,7 @@ public class ClasspathDeviceInfo extends BaseHostJUnit4Test {
                 mLogger.addTestLog(REPORT_FILE_NAME, LogDataType.TEXT, source);
             }
         } catch (Exception e) {
+            CLog.e(e);
             throw new RuntimeException(String.format(
                 "Failed to collect %s: %s", REPORT_NAME, e.getMessage()));
         } finally {
