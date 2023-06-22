@@ -207,7 +207,7 @@ public class VideoCodecRequirementsTest {
      */
     @SmallTest
     @Test(timeout = CodecTestBase.PER_TEST_TIMEOUT_SMALL_TEST_MS)
-    @CddTest(requirement = "2.2.7.1/5.1/H-1-19")
+    @CddTest(requirement = "2.2.7.1/5.1/H-1-18")
     public void testAV1EncoderRequirements() throws Exception {
         int width = 720;
         int height = 480;
@@ -254,7 +254,7 @@ public class VideoCodecRequirementsTest {
 
         PerformanceClassEvaluator pce = new PerformanceClassEvaluator(this.mTestName);
         PerformanceClassEvaluator.VideoCodecRequirement rAV1EncoderReq = pce.addRAV1EncoderReq();
-        rAV1EncoderReq.setAv1EncResolution(width * height);
+        rAV1EncoderReq.setAv1EncResolution(height);
         rAV1EncoderReq.setAv1EncFps(fps);
         rAV1EncoderReq.setAv1EncBitrate(1);
         pce.submitAndCheck();

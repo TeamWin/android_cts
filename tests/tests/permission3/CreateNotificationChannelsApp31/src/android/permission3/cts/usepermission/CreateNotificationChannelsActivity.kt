@@ -37,7 +37,7 @@ const val SECONDARY_APP_INTENT = "emptyactivity.main"
 const val SECONDARY_APP_PKG = "android.permission3.cts.usepermissionother"
 const val CHANNEL_ID_31 = "test_channel_id"
 const val BROADCAST_ACTION = "usepermission.createchannels.BROADCAST"
-const val DELAY_MS = 1000L
+const val DELAY_MS = 3000L
 const val LONG_DELAY_MS = 2000L
 
 class CreateNotificationChannelsActivity : Activity() {
