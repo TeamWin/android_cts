@@ -290,6 +290,13 @@ public class CapturedActivity extends Activity {
             // because permission activity is already recreated. Thus, we try to click that
             // button multiple times.
             do {
+                // There are some cases where the consent dialog isn't shown because the process
+                // already has the additional permissions. In that case, we can skip waiting to
+                // dismiss the dialog.
+                if (mMediaProjectionCreatedLatch.getCount() == 0) {
+                    break;
+                }
+
                 if (mIsSharingScreenDenied.get()) {
                     throw new IllegalStateException("User denied screen sharing permission.");
                 }
@@ -300,7 +307,6 @@ public class CapturedActivity extends Activity {
                 Thread.sleep(1000);
             } while (count <= RETRY_COUNT);
 
-            assertTrue("Can't get the permission", count <= RETRY_COUNT);
             assertTrue("Failed to create mediaProjection",
                     mMediaProjectionCreatedLatch.await(20L * HW_TIMEOUT_MULTIPLIER,
                             TimeUnit.SECONDS));
