@@ -300,8 +300,8 @@ def get_read_noise_coefficients(read_noise_data, iso_low=0, iso_high=1000000):
   return read_noise_coefficients_a, read_noise_coefficients_b
 
 
-def capture_read_noise_for_iso_range(cam, camera_name, raw_format, low_iso,
-                                     high_iso, steps_per_stop, dest_file):
+def capture_read_noise_for_iso_range(cam, raw_format, low_iso, high_iso,
+                                     steps_per_stop, dest_file):
   """Captures read noise data at the lowest advertised exposure value.
 
   This function captures a series of images at different ISO sensitivities,
@@ -312,7 +312,6 @@ def capture_read_noise_for_iso_range(cam, camera_name, raw_format, low_iso,
 
   Args:
     cam:             Camera for the current ItsSession.
-    camera_name:     Camera name (camera_id and hidden_physical_id).
     raw_format:      The format of read noise image.
     low_iso:         The lowest iso value in range.
     high_iso:        The highest iso value in range.
@@ -367,7 +366,7 @@ def capture_read_noise_for_iso_range(cam, camera_name, raw_format, low_iso,
   if round(iso) <= high_iso:
     # Wait until camera is repositioned for read noise data collection.
     input(
-        f'\nPress <ENTER> after concealing camera {camera_name} '
+        f'\nPress <ENTER> after concealing camera {cam.get_camera_name()} '
         'in complete darkness.\n'
     )
 

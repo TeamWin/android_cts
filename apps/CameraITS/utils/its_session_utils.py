@@ -531,6 +531,17 @@ class ItsSession(object):
       raise error_util.CameraItsError('Invalid command response')
     return data['objValue']
 
+  def get_camera_name(self):
+    """Gets the camera name.
+
+    Returns:
+      The camera name with camera id and/or hidden physical id.
+    """
+    if self._hidden_physical_id:
+      return f'{self._camera_id}.{self._hidden_physical_id}'
+    else:
+      return self._camera_id
+
   def get_unavailable_physical_cameras(self, camera_id):
     """Get the unavailable physical cameras ids.
 
