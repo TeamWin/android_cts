@@ -199,6 +199,64 @@ public class GainmapTest {
     }
 
     @Test
+    public void testDecodeGainmapBitmapRegionDecoderReusePastBounds() throws Exception {
+        InputStream is = sContext.getResources().openRawResource(R.raw.gainmap);
+        BitmapRegionDecoder decoder = BitmapRegionDecoder.newInstance(is);
+        BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inMutable = true;
+        options.inDensity = 160;
+        options.inTargetDensity = 160;
+        int offsetX = decoder.getWidth() - (TILE_SIZE / 2);
+        int offsetY = decoder.getHeight() - (TILE_SIZE / 4);
+        Bitmap region = decoder.decodeRegion(new Rect(offsetX, offsetY, offsetX + TILE_SIZE,
+                        offsetY + TILE_SIZE), options);
+        checkGainmap(region);
+        Bitmap gainmap = region.getGainmap().getGainmapContents();
+        // Since there's no re-use bitmap, the resulting bitmap size will be the size of the rect
+        // that overlaps with the image. 1/2 of the X and 3/4ths of the Y are out of bounds
+        assertEquals(TILE_SIZE / 2, region.getWidth());
+        assertEquals(TILE_SIZE / 4, region.getHeight());
+        // The test image has a 1:1 ratio between base & gainmap
+        assertEquals(region.getWidth(), gainmap.getWidth());
+        assertEquals(region.getHeight(), gainmap.getHeight());
+
+        options.inBitmap = Bitmap.createBitmap(TILE_SIZE, TILE_SIZE, Bitmap.Config.ARGB_8888);
+        region = decoder.decodeRegion(new Rect(offsetX, offsetY, offsetX + TILE_SIZE,
+                offsetY + TILE_SIZE), options);
+        gainmap = region.getGainmap().getGainmapContents();
+        // Although 1/2 the X and 3/4ths the Y are out of bounds, because there's a re-use
+        // bitmap the resulting decode must exactly match the size given
+        assertEquals(TILE_SIZE, region.getWidth());
+        assertEquals(TILE_SIZE, region.getHeight());
+        // The test image has a 1:1 ratio between base & gainmap
+        assertEquals(region.getWidth(), gainmap.getWidth());
+        assertEquals(region.getHeight(), gainmap.getHeight());
+    }
+
+    @Test
+    public void testDecodeGainmapBitmapRegionDecoderReuseCropped() throws Exception {
+        InputStream is = sContext.getResources().openRawResource(R.raw.gainmap);
+        BitmapRegionDecoder decoder = BitmapRegionDecoder.newInstance(is);
+        BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inMutable = true;
+        options.inDensity = 160;
+        options.inTargetDensity = 160;
+        options.inBitmap = Bitmap.createBitmap(TILE_SIZE / 2, TILE_SIZE / 2,
+                Bitmap.Config.ARGB_8888);
+        Bitmap region = decoder.decodeRegion(new Rect(0, 0, TILE_SIZE, TILE_SIZE),
+                options);
+        checkGainmap(region);
+        Bitmap gainmap = region.getGainmap().getGainmapContents();
+        // Although the rect was entirely in-bounds of the image, the inBitmap is 1/2th the
+        // the specified width/height so make sure the gainmap matches
+        assertEquals(TILE_SIZE / 2, region.getWidth());
+        assertEquals(TILE_SIZE / 2, region.getHeight());
+        // The test image has a 1:1 ratio between base & gainmap
+        assertEquals(region.getWidth(), gainmap.getWidth());
+        assertEquals(region.getHeight(), gainmap.getHeight());
+    }
+
+    @Test
     public void testDefaults() {
         Gainmap gainmap = new Gainmap(Bitmap.createBitmap(10, 10, Bitmap.Config.ALPHA_8));
         assertAllAre(1.0f, gainmap.getRatioMin());
