@@ -55,6 +55,9 @@ public class BluetoothLeBroadcastSettingsTest {
 
     private static final String TEST_MAC_ADDRESS = "00:11:22:33:44:55";
     private static final String TEST_BROADCAST_NAME = "TEST";
+    private static final String TEST_INVALID_SHORT_BROADCAST_NAME = "TE";
+    private static final String TEST_INVALID_LONG_BROADCAST_NAME =
+                "TESTWITHLENGTH34TESTWITHLENGTH3434";
     private static final int TEST_QUALITY =
             BluetoothLeBroadcastSubgroupSettings.QUALITY_STANDARD;
 
@@ -106,11 +109,32 @@ public class BluetoothLeBroadcastSettingsTest {
                         .setProgramInfo(TEST_PROGRAM_INFO).build();
         BluetoothLeBroadcastSettings.Builder builder = new BluetoothLeBroadcastSettings.Builder()
                         .setPublicBroadcast(false)
-                        .setBroadcastName(TEST_BROADCAST_NAME)
-                        .setBroadcastCode(null)
                         .setPublicBroadcastMetadata(publicBroadcastMetadata);
         // builder expect at least one subgroup
         assertThrows(IllegalArgumentException.class, builder::build);
+
+        // test invalid code length 0
+        assertThrows(IllegalArgumentException.class, () ->
+                        builder.setBroadcastCode(new byte[0]));
+
+        // test invalid code length 18
+        assertThrows(IllegalArgumentException.class, () ->
+                        builder.setBroadcastCode(new byte[] {0x01, 0x02, 0x03, 0x04, 0x05,
+                                                             0x06, 0x07, 0x08, 0x09, 0x0A,
+                                                             0x0B, 0x0C, 0x0D, 0x0E, 0x0F,
+                                                             0x10, 0x11, 0x12}));
+
+        // test invalid name length 2
+        assertThrows(IllegalArgumentException.class, () ->
+                        builder.setBroadcastName(TEST_INVALID_SHORT_BROADCAST_NAME));
+
+        // test invalid name length 34
+        assertThrows(IllegalArgumentException.class, () ->
+                        builder.setBroadcastName(TEST_INVALID_LONG_BROADCAST_NAME));
+
+        builder.setBroadcastCode(null);
+        builder.setBroadcastName(null);
+
         BluetoothLeBroadcastSubgroupSettings[] subgroupSettings =
                 new BluetoothLeBroadcastSubgroupSettings[] {
                     createBroadcastSubgroupSettings()
@@ -120,7 +144,7 @@ public class BluetoothLeBroadcastSettingsTest {
         }
         BluetoothLeBroadcastSettings broadcastSettings = builder.build();
         assertFalse(broadcastSettings.isPublicBroadcast());
-        assertEquals(TEST_BROADCAST_NAME, broadcastSettings.getBroadcastName());
+        assertNull(broadcastSettings.getBroadcastName());
         assertNull(broadcastSettings.getBroadcastCode());
         assertEquals(publicBroadcastMetadata, broadcastSettings.getPublicBroadcastMetadata());
         assertArrayEquals(subgroupSettings,
