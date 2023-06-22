@@ -146,7 +146,7 @@ public class MultiTranscoderPerfTest extends MultiCodecPerfTestBase {
     @CddTest(requirements = {"2.2.7.1/5.1/H-1-5", "2.2.7.1/5.1/H-1-6"})
     public void test4k() throws Exception {
         Assume.assumeTrue(Utils.isUPerfClass() || !Utils.isPerfClass());
-        testCodec(m2160pTestFiles, 2160, 3840, REQUIRED_MIN_CONCURRENT_INSTANCES, false);
+        testCodec(m2160pPc14TestFiles, 2160, 3840, REQUIRED_MIN_CONCURRENT_INSTANCES, false);
     }
 
     /**
@@ -164,7 +164,7 @@ public class MultiTranscoderPerfTest extends MultiCodecPerfTestBase {
         Assume.assumeFalse("Skip HBD tests for avc",
                 mDecoderPair.first.equals(MediaFormat.MIMETYPE_VIDEO_AVC)
                         || mEncoderPair.first.equals(MediaFormat.MIMETYPE_VIDEO_AVC));
-        testCodec(m2160p10bitTestFiles, 2160, 3840, 3, true);
+        testCodec(m2160pPc1410bitTestFiles, 2160, 3840, 3, true);
     }
 
     private void testCodec(Map<String, String> testFiles, int height, int width,
