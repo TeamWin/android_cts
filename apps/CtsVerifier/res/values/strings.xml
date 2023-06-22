@@ -2389,7 +2389,7 @@
         particular ringer mode states works properly.
     </string>
     <string name="ringer_mode_pass_test">These tests are handled by CTS.</string>
-    <string name="test_sound_effects">Test touch sound</string>
+    <string name="test_sound_effects">Test Tap &amp; click sounds</string>
     <string name="test_vibrate_notification">Test vibrate notification</string>
     <string name="test_vibrate_ringer">Test vibrate ringer</string>
     <string name="test_access_ringer_mode">Test access ringer mode</string>
@@ -2397,7 +2397,7 @@
     <string name="test_volume_dnd_affected_stream">Test volume change</string>
     <string name="test_mute_dnd_affected_streams">Test mute streams</string>
     <string name="test_ringer_manager">Test RingtoneManager</string>
-    <string name="enable_sound_effects">Please enable touch sound in Sound settings.</string>
+    <string name="enable_sound_effects">Please enable Tap &amp; click sounds in Sound settings.</string>
     <string name="attention_ready">I\'m done</string>
     <string name="attention_filter_any">Please enable \"Do not disturb\" by tapping the Quick Settings tile.</string>
     <string name="attention_filter_all">Please disable \"Do not disturb\" by tapping the Quick Settings tile.</string>
