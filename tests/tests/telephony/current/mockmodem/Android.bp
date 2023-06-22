@@ -34,6 +34,7 @@ android_library {
         "android.hardware.radio.messaging-V1-java",
         "android.hardware.radio.voice-V1-java",
         "telephony-cts-utils",
+        "compatibility-device-util-axt",
     ],
 
     min_sdk_version: "30",
