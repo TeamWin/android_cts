@@ -21,6 +21,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <sys/prctl.h>
+
+#include <android-base/test_utils.h>
+
 //mask the top 8 bits
 #define TAG_MASK ((0xFFULL) << 56)
 
@@ -34,6 +38,12 @@ static void sigsegv_handler(int signum) {
 
 jboolean android_os_cts_TaggedPointer_hasTaggedPointer(JNIEnv* env, jobject thiz)
 {
+    int level = prctl(PR_GET_TAGGED_ADDR_CTRL, 0, 0, 0, 0);
+    bool running_with_mte =  level >= 0 && (level & PR_TAGGED_ADDR_ENABLE) &&
+         (level & PR_MTE_TCF_MASK) != PR_MTE_TCF_NONE;
+    if (running_with_hwasan() || running_with_mte) {
+        return true;  // HWASan and MTE require tagged pointers.
+    }
     uint32_t data;
     uint32_t *tagged;
     uintptr_t tmp;
