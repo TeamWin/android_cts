@@ -31,10 +31,10 @@ ANGLE_NUM_MIN = 10  # Minimum number of angles for find_angle() to be valid
 
 TEST_IMG_DIR = os.path.join(os.environ['CAMERA_ITS_TOP'], 'test_images')
 CHART_FILE = os.path.join(TEST_IMG_DIR, 'ISO12233.png')
-CHART_HEIGHT_RFOV = 13.5  # cm
-CHART_HEIGHT_WFOV = 9.5  # cm
-CHART_DISTANCE_RFOV = 31.0  # cm
-CHART_DISTANCE_WFOV = 22.0  # cm
+CHART_HEIGHT_31CM = 13.5  # cm
+CHART_HEIGHT_22CM = 9.5  # cm
+CHART_DISTANCE_31CM = 31.0  # cm
+CHART_DISTANCE_22CM = 22.0  # cm
 CHART_SCALE_RTOL = 0.1
 CHART_SCALE_START = 0.65
 CHART_SCALE_STOP = 1.35
@@ -57,18 +57,18 @@ HAARCASCADE_FILE_NAME = 'haarcascade_frontalface_default.xml'
 FOV_THRESH_TELE25 = 25
 FOV_THRESH_TELE40 = 40
 FOV_THRESH_TELE = 60
-FOV_THRESH_WFOV = 90
+FOV_THRESH_UW = 90
 
 LOW_RES_IMG_THRESH = 320 * 240
 
 RGB_GRAY_WEIGHTS = (0.299, 0.587, 0.114)  # RGB to Gray conversion matrix
 
-SCALE_RFOV_IN_WFOV_BOX = 0.67
-SCALE_TELE_IN_WFOV_BOX = 0.5
-SCALE_TELE_IN_RFOV_BOX = 0.67
-SCALE_TELE40_IN_WFOV_BOX = 0.33
-SCALE_TELE40_IN_RFOV_BOX = 0.5
-SCALE_TELE25_IN_RFOV_BOX = 0.33
+SCALE_WIDE_IN_22CM_RIG = 0.67
+SCALE_TELE_IN_22CM_RIG = 0.5
+SCALE_TELE_IN_31CM_RIG = 0.67
+SCALE_TELE40_IN_22CM_RIG = 0.33
+SCALE_TELE40_IN_31CM_RIG = 0.5
+SCALE_TELE25_IN_31CM_RIG = 0.33
 
 SQUARE_AREA_MIN_REL = 0.05  # Minimum size for square relative to image area
 SQUARE_CROP_MARGIN = 0  # Set to aid detection of QR codes
@@ -173,31 +173,26 @@ def calc_chart_scaling(chart_distance, camera_fov):
    chart_scaling: float; scaling factor for chart
   """
   chart_scaling = 1.0
-  camera_fov = float(camera_fov)
-  if (FOV_THRESH_TELE < camera_fov < FOV_THRESH_WFOV and
-      math.isclose(
-          chart_distance, CHART_DISTANCE_WFOV, rel_tol=CHART_SCALE_RTOL)):
-    chart_scaling = SCALE_RFOV_IN_WFOV_BOX
-  elif (FOV_THRESH_TELE40 < camera_fov <= FOV_THRESH_TELE and
-        math.isclose(
-            chart_distance, CHART_DISTANCE_WFOV, rel_tol=CHART_SCALE_RTOL)):
-    chart_scaling = SCALE_TELE_IN_WFOV_BOX
-  elif (camera_fov <= FOV_THRESH_TELE40 and
-        math.isclose(chart_distance, CHART_DISTANCE_WFOV, rel_tol=CHART_SCALE_RTOL)):
-    chart_scaling = SCALE_TELE40_IN_WFOV_BOX
-  elif (camera_fov <= FOV_THRESH_TELE25 and
-        (math.isclose(
-            chart_distance, CHART_DISTANCE_RFOV, rel_tol=CHART_SCALE_RTOL) or
-         chart_distance > CHART_DISTANCE_RFOV)):
-    chart_scaling = SCALE_TELE25_IN_RFOV_BOX
-  elif (camera_fov <= FOV_THRESH_TELE40 and
-        math.isclose(
-            chart_distance, CHART_DISTANCE_RFOV, rel_tol=CHART_SCALE_RTOL)):
-    chart_scaling = SCALE_TELE40_IN_RFOV_BOX
-  elif (camera_fov <= FOV_THRESH_TELE and
-        math.isclose(
-            chart_distance, CHART_DISTANCE_RFOV, rel_tol=CHART_SCALE_RTOL)):
-    chart_scaling = SCALE_TELE_IN_RFOV_BOX
+  fov = float(camera_fov)
+  chart_distance_22cm = math.isclose(
+      chart_distance, CHART_DISTANCE_22CM, rel_tol=CHART_SCALE_RTOL)
+  chart_distance_31cm = math.isclose(
+      chart_distance, CHART_DISTANCE_31CM, rel_tol=CHART_SCALE_RTOL)
+
+  if FOV_THRESH_TELE < fov < FOV_THRESH_UW and chart_distance_22cm:
+    chart_scaling = SCALE_WIDE_IN_22CM_RIG
+  elif FOV_THRESH_TELE40 < fov <= FOV_THRESH_TELE and chart_distance_22cm:
+    chart_scaling = SCALE_TELE_IN_22CM_RIG
+  elif fov <= FOV_THRESH_TELE40 and chart_distance_22cm:
+    chart_scaling = SCALE_TELE40_IN_22CM_RIG
+  elif (fov <= FOV_THRESH_TELE25 and
+        chart_distance_31cm or
+        chart_distance > CHART_DISTANCE_31CM):
+    chart_scaling = SCALE_TELE25_IN_31CM_RIG
+  elif fov <= FOV_THRESH_TELE40 and chart_distance_31cm:
+    chart_scaling = SCALE_TELE40_IN_31CM_RIG
+  elif fov <= FOV_THRESH_TELE and chart_distance_31cm:
+    chart_scaling = SCALE_TELE_IN_31CM_RIG
   return chart_scaling
 
 
@@ -253,12 +248,12 @@ class Chart(object):
     """
     self._file = chart_file or CHART_FILE
     if math.isclose(
-        distance, CHART_DISTANCE_RFOV, rel_tol=CHART_SCALE_RTOL):
-      self._height = height or CHART_HEIGHT_RFOV
+        distance, CHART_DISTANCE_31CM, rel_tol=CHART_SCALE_RTOL):
+      self._height = height or CHART_HEIGHT_31CM
       self._distance = distance
     else:
-      self._height = height or CHART_HEIGHT_WFOV
-      self._distance = CHART_DISTANCE_WFOV
+      self._height = height or CHART_HEIGHT_22CM
+      self._distance = CHART_DISTANCE_22CM
     self._scale_start = scale_start or CHART_SCALE_START
     self._scale_stop = scale_stop or CHART_SCALE_STOP
     self._scale_step = scale_step or CHART_SCALE_STEP
