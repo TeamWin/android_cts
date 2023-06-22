@@ -1363,7 +1363,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
 
     @Test
     public void testSatelliteModeRadios() {
-        if (!shouldTestSatellite()) return;
+        if (!shouldTestSatelliteWithMockService()) return;
 
         logd("testSatelliteModeRadios: start");
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
@@ -1424,7 +1424,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
 
     @Test
     public void testSatelliteModeRadios_noRadiosSensitiveToSatelliteMode() {
-        if (!shouldTestSatellite()) return;
+        if (!shouldTestSatelliteWithMockService()) return;
 
         logd("testSatelliteModeRadios_noRadiosSensitiveToSatelliteMode: start");
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
@@ -1487,7 +1487,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
 
     @Test
     public void testSatelliteModeRadiosWithAirplaneMode() throws Exception {
-        if (!shouldTestSatellite()) return;
+        if (!shouldTestSatelliteWithMockService()) return;
 
         logd("testSatelliteModeRadiosWithAirplaneMode: start");
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
@@ -1934,7 +1934,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
 
     @Test
     public void testSatelliteModemBusy_modemSendingDatagram_pollingFailure() {
-        if (!shouldTestSatellite()) return;
+        if (!shouldTestSatelliteWithMockService()) return;
 
         logd("testSatelliteModemBusy_modemSendingDatagram_pollingFailure");
         grantSatellitePermission();
@@ -1979,7 +1979,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
 
     @Test
     public void testSatelliteModemBusy_modemPollingDatagrams_pollingFailure() {
-        if (!shouldTestSatellite()) return;
+        if (!shouldTestSatelliteWithMockService()) return;
 
         logd("testSatelliteModemBusy_modemPollingDatagrams_pollingFailure");
         grantSatellitePermission();
@@ -2017,7 +2017,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
 
     @Test
     public void testSatelliteModemBusy_modemPollingDatagram_sendingDelayed() {
-        if (!shouldTestSatellite()) return;
+        if (!shouldTestSatelliteWithMockService()) return;
 
         logd("testSatelliteModemBusy_modemPollingDatagram_sendingDelayed");
         grantSatellitePermission();
