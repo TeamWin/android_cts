@@ -46,7 +46,7 @@ cc_test {
 
     shared_libs: [
         "libandroid",
-        "libbinder",
+        "libbinder_ndk",
         "liblog",
         "libutils",
     ],
