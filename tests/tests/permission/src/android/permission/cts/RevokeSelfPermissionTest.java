@@ -45,6 +45,7 @@ import android.content.pm.PackageManager;
 import android.content.pm.PermissionInfo;
 import android.os.Build;
 import android.os.Process;
+import android.platform.test.annotations.AppModeFull;
 import android.provider.DeviceConfig;
 
 import androidx.test.filters.SdkSuppress;
@@ -59,6 +60,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE, codeName = "UpsideDownCake")
+@AppModeFull(reason = "Null permission info in instant mode")
 public class RevokeSelfPermissionTest {
     private static final String APP_PKG_NAME =
             "android.permission.cts.apptotestrevokeselfpermission";
