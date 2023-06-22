@@ -34,6 +34,7 @@ public class InstallReasonTest extends BasePackageInstallTest {
     @Test
     public void testInstallReason() throws Exception {
         assumeTrue("FEATURE_DEVICE_ADMIN unavailable", mHasFeature);
+        assumeTrue("Could not set BasicAdminReceiver.class as device owner", mAmIDeviceOwner);
 
         // Verify that since the Device Owner was sideloaded, its install reason is unknown.
         assertEquals(PackageManager.INSTALL_REASON_UNKNOWN, getInstallReason(PACKAGE_NAME));

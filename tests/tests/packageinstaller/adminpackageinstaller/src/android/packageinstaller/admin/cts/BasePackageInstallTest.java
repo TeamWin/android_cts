@@ -35,9 +35,12 @@ import android.content.pm.PackageInstaller;
 import android.content.pm.PackageManager;
 import android.os.ParcelFileDescriptor;
 import android.os.Process;
+import android.util.Log;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.uiautomator.UiDevice;
+
+import com.android.bedstead.nene.TestApis;
 
 import org.junit.After;
 import org.junit.Before;
@@ -54,6 +57,7 @@ import java.util.ArrayList;
  * Base test case for testing PackageInstaller.
  */
 public class BasePackageInstallTest {
+    private static final String TAG = BasePackageInstallTest.class.getSimpleName();
     protected static final String TEST_APP_LOCATION =
             "/data/local/tmp/cts/packageinstaller/CtsEmptyTestApp.apk";
     protected static final String TEST_APP_PKG = "android.packageinstaller.emptytestapp.cts";
@@ -72,8 +76,10 @@ public class BasePackageInstallTest {
     protected boolean mCallbackReceived;
     protected int mCallbackStatus;
     protected Intent mCallbackIntent;
+    protected ComponentName mDeviceOwner;
 
     protected boolean mHasFeature;
+    protected boolean mAmIDeviceOwner;
 
     protected Instrumentation mInstrumentation = InstrumentationRegistry.getInstrumentation();
     protected UiAutomation mUiAutomation = mInstrumentation.getUiAutomation();
@@ -116,11 +122,23 @@ public class BasePackageInstallTest {
         }
     }
 
+    @Before
+    public void addDeviceOwner() {
+        mDeviceOwner = new ComponentName(mContext, BasicAdminReceiver.class);
+        try {
+            TestApis.devicePolicy().setDeviceOwner(mDeviceOwner);
+            mAmIDeviceOwner = true;
+        } catch (Exception e) {
+            mAmIDeviceOwner = false;
+            Log.e(TAG, e.getMessage());
+        }
+    }
+
     @After
     public void tearDown() throws Exception {
         if (mDevicePolicyManager.isDeviceOwnerApp(PACKAGE_NAME) ||
                 mDevicePolicyManager.isProfileOwnerApp(PACKAGE_NAME)) {
-            mDevicePolicyManager.setUninstallBlocked(getWho(), TEST_APP_PKG, false);
+            mDevicePolicyManager.setUninstallBlocked(mDeviceOwner, TEST_APP_PKG, false);
         }
         try {
             mContext.unregisterReceiver(mBroadcastReceiver);
@@ -133,8 +151,14 @@ public class BasePackageInstallTest {
         forceUninstall();
     }
 
-    protected static ComponentName getWho() {
-        return new ComponentName(PACKAGE_NAME, BasicAdminReceiver.class.getName());
+    @After
+    public void removeDeviceOwner() {
+        try {
+            TestApis.devicePolicy().getDeviceOwner().remove();
+        } catch (NullPointerException e) {
+            Log.e(TAG, "Could not find a device owner set by this test. "
+                    + "Maybe an owner already exists?");
+        }
     }
 
     protected void assertInstallPackage() throws Exception {
