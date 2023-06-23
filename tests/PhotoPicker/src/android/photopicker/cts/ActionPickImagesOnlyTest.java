@@ -22,7 +22,7 @@ import static android.photopicker.cts.util.PhotoPickerUiUtils.SHORT_TIMEOUT;
 import static android.photopicker.cts.util.PhotoPickerUiUtils.clickAndWait;
 import static android.photopicker.cts.util.PhotoPickerUiUtils.findAddButton;
 import static android.photopicker.cts.util.PhotoPickerUiUtils.findItemList;
-import static android.photopicker.cts.util.ResultsAssertionsUtils.assertPersistedGrant;
+import static android.photopicker.cts.util.ResultsAssertionsUtils.assertPersistedReadGrants;
 import static android.photopicker.cts.util.ResultsAssertionsUtils.assertPickerUriFormat;
 import static android.photopicker.cts.util.ResultsAssertionsUtils.assertRedactedReadOnlyAccess;
 
@@ -158,7 +158,7 @@ public class ActionPickImagesOnlyTest extends PhotoPickerBaseTest {
 
         final Uri uri = mActivity.getResult().data.getData();
         assertPickerUriFormat(uri, mContext.getUserId());
-        assertPersistedGrant(uri, mContext.getContentResolver());
+        assertPersistedReadGrants(uri, mContext.getContentResolver());
         assertRedactedReadOnlyAccess(uri);
     }
 
