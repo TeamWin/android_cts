@@ -1111,17 +1111,9 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
             expectBindInput(stream, Process.myPid(), TIMEOUT);
             addVirtualStylusIdForTestSession();
 
-            final int touchSlop = getTouchSlop();
-            final int startX = delegateView.getWidth() / 2;
-            final int startY = delegateView.getHeight() / 2;
-            final int endX = startX + 2 * touchSlop;
-            final int endY = startY + 2 * touchSlop;
-            final int number = 5;
-            TestUtils.injectStylusDownEvent(delegateView, startX, startY);
-            TestUtils.injectStylusMoveEvents(delegateView, startX, startY, endX, endY, number);
-            // The handwriting initiator should trigger the delegate view's callback which creates
-            // the EditText and requests focus, which should then initiate handwriting for the
-            // EditText.
+            // After injecting DOWN and MOVE events, the handwriting initiator should trigger the
+            // delegate view's callback which creates the EditText and requests focus, which should
+            // then initiate handwriting for the EditText.
             injectStylusEventToEditorAndVerify(delegateView, stream, imeSession,
                     editTextMarker, true /* verifyHandwritingStart */,
                     true /* verifyHandwritingWindowShown */,
