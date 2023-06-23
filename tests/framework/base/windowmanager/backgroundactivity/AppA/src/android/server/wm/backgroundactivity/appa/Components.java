@@ -108,6 +108,12 @@ public class Components extends ComponentsBase {
                 "START_ACTIVITY_FROM_FG_ACTIVITY_DELAY_MS_EXTRA";
     }
 
+    /** Extra key constants for {@link #VIRTUAL_DISPLAY_ACTIVITY} */
+    public static class VirtualDisplayActivityExtra {
+        public final String USE_PUBLIC_PRESENTATION =
+                "USE_PUBLIC_PRESENTATION_EXTRA";
+    }
+
     // TODO(b/263368846) rename to camelCase
     public final String APP_PACKAGE_NAME;
     public final ComponentName BACKGROUND_ACTIVITY;
@@ -138,6 +144,9 @@ public class Components extends ComponentsBase {
             new SendPendingIntentReceiverExtra();
     public final StartActivityReceiverExtra START_ACTIVITY_RECEIVER_EXTRA =
             new StartActivityReceiverExtra();
+
+    public final VirtualDisplayActivityExtra VIRTUAL_DISPLAY_ACTIVITY_EXTRA =
+            new VirtualDisplayActivityExtra();
 
     public Components(String appPackageName) {
         APP_PACKAGE_NAME = appPackageName;
