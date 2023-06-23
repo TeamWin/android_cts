@@ -18,12 +18,15 @@ package com.android.cts.core.runner.filter;
 
 import android.os.Build;
 import android.os.Bundle;
-import android.util.Log;
+import android.platform.test.annotations.FlakyTest;
+import android.platform.test.annotations.LargeTest;
+
+import libcore.test.annotation.NonCts;
+import libcore.test.annotation.NonMts;
 
 import org.junit.runner.Description;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
@@ -31,23 +34,16 @@ import java.util.Set;
 import java.util.function.Predicate;
 
 public class CoreTestModeFilter implements Predicate<Description> {
-    private static final String LOG_TAG = "CoreTestModeFilter";
 
     private static final String ARGUMENT_MODE = "core-test-mode";
 
-    private static final String NON_MTS_ANNOTATION_NAME = "libcore.test.annotation.NonMts";
-
-    private final Set<String> mTestSkippingAnnotations;
-    /** true if checking disabledUntilSdk annotation attribute is required. */
-    private final boolean mCheckDisabledUntilSdk;
+    private final Set<Class> mTestSkippingAnnotations;
 
     /**
-     * @param testSkippingAnnotations list of annotation names returned from
-     *        {@link Class#getName()}.
+     * @param testSkippingAnnotations list of annotation classes.
      */
-    private CoreTestModeFilter(String[] testSkippingAnnotations) {
+    private CoreTestModeFilter(Class<? extends Annotation>... testSkippingAnnotations) {
         mTestSkippingAnnotations = new HashSet<>(Arrays.asList(testSkippingAnnotations));
-        mCheckDisabledUntilSdk = mTestSkippingAnnotations.contains(NON_MTS_ANNOTATION_NAME);
     }
 
     /**
@@ -60,20 +56,15 @@ public class CoreTestModeFilter implements Predicate<Description> {
         if ("mts".equals(mode)) {
             // We have to hard-coded the annotation name of NonMts because the annotation definition
             // isn't built into the same apk file.
-            return new CoreTestModeFilter(new String[]{
-                    NON_MTS_ANNOTATION_NAME,
-            });
+            return new CoreTestModeFilter(NonMts.class);
         } else if ("presubmit".equals(mode)) {
-            return new CoreTestModeFilter(new String[]{
-                    "android.platform.test.annotations.FlakyTest",
-                    "android.platform.test.annotations.LargeTest",
-            });
+            return new CoreTestModeFilter(FlakyTest.class, LargeTest.class);
         } else {
             // The default mode is CTS, because most libcore test suites are prefixed with "Cts".
             // It's okay that ignoredTestsInCts.txt doesn't exist in the test .apk file, and
             // the created CoreExpectationFilter doesn't skip any test in this case.
             Set<String> expectationFile = Set.of("/skippedCtsTest.txt");
-            return new CoreTestModeFilter(new String[] { "libcore.test.annotation.NonCts" })
+            return new CoreTestModeFilter(NonCts.class)
                     .and(CoreExpectationFilter.createInstance(expectationFile));
         }
     }
@@ -92,10 +83,10 @@ public class CoreTestModeFilter implements Predicate<Description> {
 
     private boolean isAnnotated(Collection<Annotation> annotations) {
         for (Annotation annotation : annotations) {
-            String name = annotation.annotationType().getName();
-            if (mTestSkippingAnnotations.contains(name)) {
-                if (mCheckDisabledUntilSdk && NON_MTS_ANNOTATION_NAME.equals(name)) {
-                    if (isNonMtsTestDisabledOnThisSdk(annotation)) {
+            Class<? extends Annotation> clazz = annotation.annotationType();
+            if (mTestSkippingAnnotations.contains(clazz)) {
+                if (annotation instanceof NonMts) {
+                    if (isNonMtsTestDisabledOnThisSdk((NonMts) annotation)) {
                         return true;
                     } else {
                         // Process the next annotation.
@@ -109,18 +100,9 @@ public class CoreTestModeFilter implements Predicate<Description> {
         return false;
     }
 
-    private static boolean isNonMtsTestDisabledOnThisSdk(Annotation annotation) {
-        try {
-            // This apk isn't compiled with the NonMts class. Thus, we use reflection to read
-            // the annotation attribute.
-            Method method = annotation.annotationType().getMethod("disabledUntilSdk");
-            int disabledUntilSdk = (int) method.invoke(annotation);
-            return Build.VERSION.SDK_INT < disabledUntilSdk;
-        } catch (ReflectiveOperationException e) {
-            Log.e(LOG_TAG, "libcore.test.annotation.NonMts has no disabledUntilSdk attribute");
-            // Skip this test
-            return true;
-        }
+    private static boolean isNonMtsTestDisabledOnThisSdk(NonMts annotation) {
+        int disabledUntilSdk = annotation.disabledUntilSdk();
+        return disabledUntilSdk < 0 || Build.VERSION.SDK_INT < disabledUntilSdk;
     }
 
 }
