@@ -233,6 +233,27 @@ public class VibrationEffectXmlSerializationTest {
     }
 
     @Test
+    public void testParseHiddenPredefinedEffectIsNull() throws Exception {
+        // Hidden effect id
+        assertThat(parse(
+                """
+                <vibration>
+                    <predefined-effect name="texture_tick"/>
+                </vibration>
+                """))
+                .isNull();
+
+        // Non-default fallback flag
+        assertThat(parse(
+                """
+                <vibration>
+                    <predefined-effect name="tick" fallback="false"/>
+                </vibration>
+                """))
+                .isNull();
+    }
+
+    @Test
     public void testParsePrimitiveTagWrongAttributesIsNull() throws Exception {
         // Missing name attribute
         assertThat(parse(
@@ -764,8 +785,21 @@ public class VibrationEffectXmlSerializationTest {
     }
 
     @Test
-    public void testSerializeVibrationEffectFromNonPublicApiIsFalse() throws Exception {
+    public void testSerializeVibrationEffectFromNonPublicApiIsFalse() {
         StringWriter writer = new StringWriter();
+
+        // Predefined effect with non-default fallback flag.
+        assertThrows(VibrationXmlSerializer.SerializationFailedException.class,
+                () -> VibrationXmlSerializer.serialize(
+                        VibrationEffect.get(VibrationEffect.EFFECT_TICK, /* fallback= */ false),
+                        writer));
+        assertThat(writer.toString()).isEmpty();
+
+        // Predefined effect with hidden effect id.
+        assertThrows(VibrationXmlSerializer.SerializationFailedException.class,
+                () -> VibrationXmlSerializer.serialize(
+                        VibrationEffect.get(VibrationEffect.EFFECT_TEXTURE_TICK), writer));
+        assertThat(writer.toString()).isEmpty();
 
         // Step with non-default frequency.
         assertThrows(VibrationXmlSerializer.SerializationFailedException.class,
