@@ -34,6 +34,7 @@ android_test_helper_app {
     ],
     static_libs: [
         "kotlin-stdlib",
+        "compatibility-device-util-axt",
     ],
     certificate: ":cts-testkey2",
 }

@@ -17,8 +17,10 @@
 package android.permissionui.cts.usepermission
 
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import com.android.modules.utils.build.SdkLevel
 
 class RequestPermissionsActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -26,20 +28,37 @@ class RequestPermissionsActivity : Activity() {
 
         if (savedInstanceState == null) {
             val permissions = intent.getStringArrayExtra("$packageName.PERMISSIONS")!!
-            requestPermissions(permissions, 1)
+            if (SdkLevel.isAtLeastV()) {
+                // TODO: make deviceId dynamic
+                requestPermissions(permissions, 1, Context.DEVICE_ID_DEFAULT)
+            } else {
+                requestPermissions(permissions, 1)
+            }
         }
+    }
+
+    override fun onRequestPermissionsResult(
+            requestCode: Int,
+            permissions: Array<out String>,
+            grantResults: IntArray
+    ) {
+        setResult(RESULT_OK, Intent().apply {
+            putExtra("$packageName.PERMISSIONS", permissions)
+            putExtra("$packageName.GRANT_RESULTS", grantResults)
+        })
+        finish()
     }
 
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<out String>,
-        grantResults: IntArray
+        grantResults: IntArray,
+        deviceId: Int
     ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-
         setResult(RESULT_OK, Intent().apply {
             putExtra("$packageName.PERMISSIONS", permissions)
             putExtra("$packageName.GRANT_RESULTS", grantResults)
+            putExtra("$packageName.DEVICE_ID", deviceId)
         })
         finish()
     }
