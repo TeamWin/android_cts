@@ -44,6 +44,8 @@ import org.junit.runner.RunWith;
 public class AnimationUtilsTest {
     private Activity mActivity;
 
+    private static final long NANOS_PER_MS = 1000000;
+
     @Rule
     public ActivityTestRule<AnimationTestCtsActivity> mActivityRule =
             new ActivityTestRule<>(AnimationTestCtsActivity.class);
@@ -120,6 +122,8 @@ public class AnimationUtilsTest {
         assertEquals(AnimationUtils.currentAnimationTimeMillis(), vsyncMillis);
         assertEquals(AnimationUtils.getExpectedPresentationTimeNanos(),
                 expectedPresentationTimeNanos);
+        assertEquals(AnimationUtils.getExpectedPresentationTimeMillis(),
+                expectedPresentationTimeNanos / NANOS_PER_MS);
         AnimationUtils.unlockAnimationClock();
     }
 }
