@@ -16,21 +16,17 @@
 package com.android.cts.core.runner;
 
 import android.os.Bundle;
-import android.util.Log;
-import com.google.common.base.Splitter;
-import java.io.IOException;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
-import javax.annotation.Nullable;
+
+import com.android.cts.core.runner.filter.CoreExpectationFilter;
+import com.android.cts.core.runner.filter.CoreTestModeFilter;
+
 import org.junit.runner.Description;
 import org.junit.runner.manipulation.Filter;
 import org.junit.runners.ParentRunner;
 import org.junit.runners.Suite;
-import vogar.expect.Expectation;
-import vogar.expect.ExpectationStore;
-import vogar.expect.ModeId;
-import vogar.expect.Result;
+
+import java.util.List;
+import java.util.function.Predicate;
 
 /**
  * Filter out tests/classes that are not requested or which are expected to fail.
@@ -61,34 +57,18 @@ import vogar.expect.Result;
  * {@link ParentRunner}, as that would prevent it from traversing the hierarchy and finding
  * the leaf nodes.
  */
-class ExpectationBasedFilter extends Filter {
+public class ExpectationBasedFilter extends Filter {
 
-    static final String TAG = "ExpectationBasedFilter";
+    private final Predicate<Description> mFilter;
 
-    private static final String ARGUMENT_EXPECTATIONS = "core-expectations";
-
-    private static final Splitter CLASS_LIST_SPLITTER = Splitter.on(',').trimResults();
-
-    private final ExpectationStore expectationStore;
-
-    private static List<String> getExpectationResourcePaths(Bundle args) {
-        return CLASS_LIST_SPLITTER.splitToList(args.getString(ARGUMENT_EXPECTATIONS));
-    }
-
+    /**
+     * Invoked and created by JUnit when the command option
+     * {@code -e filter com.android.cts.core.runner.ExpectationBasedFilter} is passed to
+     * the {@code adb shell am instrument} command.
+     */
     public ExpectationBasedFilter(Bundle args) {
-        ExpectationStore expectationStore = null;
-        try {
-            // Get the set of resource names containing the expectations.
-            Set<String> expectationResources = new LinkedHashSet<>(
-                getExpectationResourcePaths(args));
-            Log.i(TAG, "Loading expectations from: " + expectationResources);
-            expectationStore = ExpectationStore.parseResources(
-                getClass(), expectationResources, ModeId.DEVICE);
-        } catch (IOException e) {
-            Log.e(TAG, "Could not initialize ExpectationStore: ", e);
-        }
-
-        this.expectationStore = expectationStore;
+        mFilter = CoreExpectationFilter.createInstance(args)
+                .and(CoreTestModeFilter.createInstance(args));
     }
 
     @Override
@@ -97,22 +77,10 @@ class ExpectationBasedFilter extends Filter {
         // Non-leaf nodes must not be filtered out as that would prevent leaf nodes from being
         // visited in the case when we are traversing the hierarchy of classes.
         Description testDescription = getTestDescription(description);
-        if (testDescription != null) {
-            String className = testDescription.getClassName();
-            String methodName = testDescription.getMethodName();
-            String testName = className + "#" + methodName;
-
-            if (expectationStore != null) {
-                Expectation expectation = expectationStore.get(testName);
-                if (expectation.getResult() != Result.SUCCESS) {
-                    Log.d(TAG, "Excluding test " + testDescription
-                            + " as it matches expectation: " + expectation);
-                    return false;
-                }
-            }
+        if (testDescription == null) {
+            return true;
         }
-
-        return true;
+        return mFilter.test(testDescription);
     }
 
     private Description getTestDescription(Description description) {
