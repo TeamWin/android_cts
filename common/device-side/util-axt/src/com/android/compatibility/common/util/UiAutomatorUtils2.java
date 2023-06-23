@@ -60,6 +60,40 @@ public class UiAutomatorUtils2 {
         return UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
     }
 
+    private static int convertDpToPx(float dp) {
+        return Math.round(TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dp,
+                ApplicationProvider.getApplicationContext().getResources().getDisplayMetrics()));
+    }
+
+    private static double getSwipeDeadZonePct() {
+        if (FeatureUtil.isTV()) {
+            return DEFAULT_SWIPE_DEADZONE_PCT_TV;
+        } else if (FeatureUtil.isWatch()) {
+            return DEFAULT_SWIPE_DEADZONE_PCT_WEAR;
+        } else {
+            return DEFAULT_SWIPE_DEADZONE_PCT_ALL;
+        }
+    }
+
+    public static void waitUntilObjectGone(BySelector selector) {
+        waitUntilObjectGone(selector, 20_000);
+    }
+
+    public static void waitUntilObjectGone(BySelector selector, long timeoutMs) {
+        try {
+            if (getUiDevice().wait(Until.gone(selector), timeoutMs)) {
+                return;
+            }
+        } catch (StaleObjectException exception) {
+            // UiDevice.wait() may cause StaleObjectException if the {@link View} attached to
+            // UiObject2 is no longer in the view tree.
+            return;
+        }
+
+        throw new RuntimeException("view " + selector + " is still visible after " + timeoutMs
+                + "ms");
+    }
+
     public static UiObject2 waitFindObject(BySelector selector) throws UiObjectNotFoundException {
         return waitFindObject(selector, 20_000);
     }
@@ -77,21 +111,6 @@ public class UiAutomatorUtils2 {
     public static UiObject2 waitFindObjectOrNull(BySelector selector)
             throws UiObjectNotFoundException {
         return waitFindObjectOrNull(selector, 20_000);
-    }
-
-    private static int convertDpToPx(float dp) {
-        return Math.round(TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dp,
-                ApplicationProvider.getApplicationContext().getResources().getDisplayMetrics()));
-    }
-
-    private static double getSwipeDeadZonePct() {
-        if (FeatureUtil.isTV()) {
-            return DEFAULT_SWIPE_DEADZONE_PCT_TV;
-        } else if (FeatureUtil.isWatch()) {
-            return DEFAULT_SWIPE_DEADZONE_PCT_WEAR;
-        } else {
-            return DEFAULT_SWIPE_DEADZONE_PCT_ALL;
-        }
     }
 
     public static UiObject2 waitFindObjectOrNull(BySelector selector, long timeoutMs)

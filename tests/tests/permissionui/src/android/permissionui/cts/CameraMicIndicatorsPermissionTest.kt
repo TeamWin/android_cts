@@ -493,11 +493,7 @@ class CameraMicIndicatorsPermissionTest : StsExtraBusinessLogicTestCase {
                 privacyChip.click()
             }
         } else {
-            eventually {
-                val privacyChip = UiAutomatorUtils2
-                    .waitFindObjectOrNull(By.res(PRIVACY_CHIP_ID), UNEXPECTED_TIMEOUT_MILLIS)
-                assertNull("Expected not to find view with id $PRIVACY_CHIP_ID", privacyChip)
-            }
+            UiAutomatorUtils2.waitUntilObjectGone(By.res(PRIVACY_CHIP_ID))
             return
         }
 
