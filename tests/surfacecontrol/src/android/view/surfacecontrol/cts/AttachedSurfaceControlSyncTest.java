@@ -23,9 +23,7 @@ import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.PorterDuff;
-import android.graphics.Rect;
-import android.graphics.Region;
+import android.platform.test.annotations.Presubmit;
 import android.util.IntProperty;
 import android.util.Property;
 import android.view.Gravity;
@@ -38,7 +36,6 @@ import android.view.cts.surfacevalidator.AnimationFactory;
 import android.view.cts.surfacevalidator.AnimationTestCase;
 import android.view.cts.surfacevalidator.CapturedActivityWithResource;
 import android.view.cts.surfacevalidator.PixelChecker;
-import android.view.cts.surfacevalidator.ViewFactory;
 import android.widget.FrameLayout;
 
 import androidx.test.filters.SmallTest;
@@ -50,6 +47,7 @@ import org.junit.Test;
 import org.junit.rules.TestName;
 
 @SmallTest
+@Presubmit
 public class AttachedSurfaceControlSyncTest {
     private static final String TAG = "AttachedSurfaceControlSyncTests";
 
@@ -75,14 +73,14 @@ public class AttachedSurfaceControlSyncTest {
         final Surface mSurface;
         final int[] mLocation = new int[2];
 
-        private final ViewTreeObserver.OnPreDrawListener mDrawListener = () -> {
-            SurfaceControl.Transaction t = new SurfaceControl.Transaction();
-            getLocationInWindow(mLocation);
-            t.setGeometry(mSurfaceControl, null, new Rect(mLocation[0], mLocation[1],
-                    mLocation[0]+100,
-                    mLocation[1]+100), 0);
-            getRootSurfaceControl().applyTransactionOnDraw(t);
-            return true;
+        final Runnable mUpdatePositionRunnable = new Runnable() {
+            @Override
+            public void run() {
+                SurfaceControl.Transaction t = new SurfaceControl.Transaction();
+                getLocationInWindow(mLocation);
+                t.setPosition(mSurfaceControl, mLocation[0], mLocation[1]);
+                getRootSurfaceControl().applyTransactionOnDraw(t);
+            }
         };
 
         GreenSurfaceAnchorView(Context c) {
@@ -95,19 +93,7 @@ public class AttachedSurfaceControlSyncTest {
             Canvas canvas = mSurface.lockHardwareCanvas();
             canvas.drawColor(Color.GREEN);
             mSurface.unlockCanvasAndPost(canvas);
-        }
-
-        @Override
-        public boolean gatherTransparentRegion(Region region) {
-            int w = getWidth();
-            int h = getHeight();
-            if (w>0 && h>0) {
-                getLocationInWindow(mLocation);
-                int l = mLocation[0];
-                int t = mLocation[1];
-                region.op(l, t, l+w, t+h, Region.Op.UNION);
-            }
-            return false;
+            setBackgroundColor(Color.BLACK);
         }
 
         @Override
@@ -115,36 +101,69 @@ public class AttachedSurfaceControlSyncTest {
             super.onAttachedToWindow();
             SurfaceControl.Transaction t =
                 getRootSurfaceControl().buildReparentTransaction(mSurfaceControl);
-            t.setLayer(mSurfaceControl, -1)
+            // Add the SC on top of the view, which is colored black. If the SC moves out of sync
+            // from the view, the black view behind should show.
+            t.setLayer(mSurfaceControl, 1)
                 .setVisibility(mSurfaceControl, true)
                 .apply();
-
-            ViewTreeObserver observer = getViewTreeObserver();
-            observer.addOnPreDrawListener(mDrawListener);
-
-            getParent().requestTransparentRegion(this);
         }
 
         @Override
         protected void onDetachedFromWindow() {
-            ViewTreeObserver observer = getViewTreeObserver();
-            observer.removeOnPreDrawListener(mDrawListener);
-
             new SurfaceControl.Transaction().reparent(mSurfaceControl, null).apply();
             mSurfaceControl.release();
             mSurface.release();
 
             super.onDetachedFromWindow();
         }
+    }
+
+    private static class GreenSurfaceAnchorViewOnPreDraw extends GreenSurfaceAnchorView {
+        private final ViewTreeObserver.OnPreDrawListener mOnPreDrawListener = () -> {
+            mUpdatePositionRunnable.run();
+            return true;
+        };
+
+        GreenSurfaceAnchorViewOnPreDraw(Context c) {
+            super(c);
+        }
 
         @Override
-        public void onDraw(Canvas canvas) {
-            canvas.drawColor(0, PorterDuff.Mode.CLEAR);
+        protected void onAttachedToWindow() {
+            super.onAttachedToWindow();
+            ViewTreeObserver observer = getViewTreeObserver();
+            observer.addOnPreDrawListener(mOnPreDrawListener);
+        }
+
+        @Override
+        protected void onDetachedFromWindow() {
+            super.onDetachedFromWindow();
+            ViewTreeObserver observer = getViewTreeObserver();
+            observer.removeOnPreDrawListener(mOnPreDrawListener);
         }
     }
 
-    private static final ViewFactory sGreenSurfaceControlAnchorFactory =
-            GreenSurfaceAnchorView::new;
+    private static class GreenSurfaceAnchorViewOnDraw extends GreenSurfaceAnchorView {
+        private final ViewTreeObserver.OnDrawListener mDrawListener = mUpdatePositionRunnable::run;
+
+        GreenSurfaceAnchorViewOnDraw(Context c) {
+            super(c);
+        }
+
+        @Override
+        protected void onAttachedToWindow() {
+            super.onAttachedToWindow();
+            ViewTreeObserver observer = getViewTreeObserver();
+            observer.addOnDrawListener(mDrawListener);
+        }
+
+        @Override
+        protected void onDetachedFromWindow() {
+            super.onDetachedFromWindow();
+            ViewTreeObserver observer = getViewTreeObserver();
+            observer.removeOnDrawListener(mDrawListener);
+        }
+    }
 
     private static final AnimationFactory sTranslateAnimationFactory = view -> {
         Property<View, Integer> translationX = new IntProperty<View>("translationX") {
@@ -186,7 +205,7 @@ public class AttachedSurfaceControlSyncTest {
     @Test
     public void testSync() throws Throwable {
         mActivity.verifyTest(new AnimationTestCase(
-                sGreenSurfaceControlAnchorFactory,
+                GreenSurfaceAnchorViewOnPreDraw::new,
                 new FrameLayout.LayoutParams(100, 100, Gravity.LEFT | Gravity.TOP),
                 sTranslateAnimationFactory,
                 new PixelChecker() {
@@ -196,4 +215,19 @@ public class AttachedSurfaceControlSyncTest {
                     }
                 }), mName);
     }
+
+    @Test
+    public void testSyncFromDrawCallback() throws Throwable {
+        mActivity.verifyTest(new AnimationTestCase(
+                GreenSurfaceAnchorViewOnDraw::new,
+                new FrameLayout.LayoutParams(100, 100, Gravity.LEFT | Gravity.TOP),
+                sTranslateAnimationFactory,
+                new PixelChecker() {
+                    @Override
+                    public boolean checkPixels(int blackishPixelCount, int width, int height) {
+                        return blackishPixelCount == 0;
+                    }
+                }), mName);
+    }
+
 }
