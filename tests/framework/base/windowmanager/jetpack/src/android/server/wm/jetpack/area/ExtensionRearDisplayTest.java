@@ -220,31 +220,46 @@ public class ExtensionRearDisplayTest extends WindowManagerJetpackTestBase imple
         assumeTrue(mWindowAreaStatus == WindowAreaComponent.STATUS_AVAILABLE);
         assumeTrue(mCurrentDeviceState != mRearDisplayState);
 
-        // Reset configuration property to be able to verify that rear display was enabled.
-        resetActivityConfigurationChangeValues(mActivity);
+        // Get initial window metrics to determine if the activity is moved, it's returned
+        // back to the initial configuration when feature is ended.
+        WindowMetrics initialWindowMetrics = mActivity.getWindowManager().getCurrentWindowMetrics();
+
         // Running with CONTROL_DEVICE_STATE permission to bypass educational overlay
         DeviceStateUtils.runWithControlDeviceStatePermission(() ->
                 mWindowAreaComponent.startRearDisplaySession(mActivity, mSessionStateListener));
-        // To verify that the rear display is enabled, check a configuration change occurred
-        waitAndAssert(() -> mActivity.mConfigurationChanged);
-        assertTrue(mWindowAreaSessionState != null
-                        && mWindowAreaSessionState == WindowAreaComponent.SESSION_STATE_ACTIVE);
+
+        waitAndAssert(() -> isActivityVisible(mActivity));
+        waitAndAssert(() -> mWindowAreaSessionState != null
+                && mWindowAreaSessionState == WindowAreaComponent.SESSION_STATE_ACTIVE);
         assertEquals(mCurrentDeviceState, mRearDisplayState);
-        assertTrue(isActivityVisible(mActivity));
         assertEquals(WindowAreaComponent.STATUS_ACTIVE, (int) mWindowAreaStatus);
 
-        // Reset configuration property to be able to verify that rear display was disabled.
+        WindowMetrics rearDisplayWindowMetrics =
+                mActivity.getWindowManager().getCurrentWindowMetrics();
+
+        if (!rearDisplayWindowMetrics.getBounds().equals(initialWindowMetrics.getBounds())) {
+            assertTrue(mActivity.mConfigurationChanged);
+        }
         resetActivityConfigurationChangeValues(mActivity);
+
         DeviceStateUtils.runWithControlDeviceStatePermission(() ->
                 mWindowAreaComponent.endRearDisplaySession());
-        waitAndAssert(() -> WindowAreaComponent.SESSION_STATE_INACTIVE == mWindowAreaSessionState);
-        // To verify that the rear display is enabled, check a configuration change occurred
-        waitAndAssert(() -> mActivity.mConfigurationChanged);
-        assertTrue(isActivityVisible(mActivity));
+
+
+        waitAndAssert(() -> mWindowAreaStatus == WindowAreaComponent.STATUS_AVAILABLE);
+        waitAndAssert(() -> initialWindowMetrics.getBounds().equals(
+                mActivity.getWindowManager().getCurrentWindowMetrics().getBounds()));
         // Cancelling rear display mode should cancel the override, so verifying that the
         // device state is the same as the physical state of the device.
         assertEquals(mCurrentDeviceState, mCurrentDeviceBaseState);
-        assertEquals(WindowAreaComponent.STATUS_AVAILABLE, (int) mWindowAreaStatus);
+        assertEquals(WindowAreaComponent.SESSION_STATE_INACTIVE, (int) mWindowAreaSessionState);
+
+        // If the rear display window metrics did not match the initial window metrics, verifying
+        // that the Activity has gone through a configuration change when the feature was disabled.
+        if (!rearDisplayWindowMetrics.getBounds().equals(initialWindowMetrics.getBounds())) {
+            waitAndAssert(() -> mActivity.mConfigurationChanged);
+        }
+        assertTrue(isActivityVisible(mActivity));
 
         verifyCallbacks();
     }
@@ -260,18 +275,25 @@ public class ExtensionRearDisplayTest extends WindowManagerJetpackTestBase imple
     public void testGetRearDisplayMetrics() throws Throwable {
         ExtensionUtil.assumeVendorApiLevelAtLeast(3 /* vendorApiLevel */);
         assumeTrue(mRearDisplayAddress != INVALID_DISPLAY_ADDRESS);
-        DisplayMetrics originalMetrics = mWindowAreaComponent.getRearDisplayMetrics();
-        DisplayMetrics expectedMetrics = new DisplayMetrics();
 
-        // Reset configuration property to be able to verify that rear display was disabled.
-        resetActivityConfigurationChangeValues(mActivity);
+        DisplayMetrics originalMetrics = mWindowAreaComponent.getRearDisplayMetrics();
+
         // Enable rear display mode to get the expected display metrics for the rear display
         // Running with CONTROL_DEVICE_STATE permission to bypass educational overlay
         DeviceStateUtils.runWithControlDeviceStatePermission(() ->
                 mWindowAreaComponent.startRearDisplaySession(mActivity, mSessionStateListener));
 
-        // To verify that the rear display is enabled, check a configuration change occurred
-        waitAndAssert(() -> mActivity.mConfigurationChanged);
+        // Verify that the new display metrics of the activity match the expected rear display.
+        // If the activity needed to change displays or go through a configuration change, there is
+        // some time before the new display metrics match.
+        DisplayMetrics expectedMetrics = new DisplayMetrics();
+        waitAndAssert(() -> {
+            mActivity.getDisplay().getRealMetrics(expectedMetrics);
+            return expectedMetrics.equals(originalMetrics);
+        });
+
+        waitAndAssert(() -> mCurrentDeviceState == mRearDisplayState);
+
         mActivity.getDisplay().getRealMetrics(expectedMetrics);
         DeviceStateUtils.runWithControlDeviceStatePermission(() ->
                 mWindowAreaComponent.endRearDisplaySession());
@@ -298,15 +320,22 @@ public class ExtensionRearDisplayTest extends WindowManagerJetpackTestBase imple
         assumeTrue(mRearDisplayAddress != INVALID_DISPLAY_ADDRESS);
         DisplayMetrics originalMetricsApi = mWindowAreaComponent.getRearDisplayMetrics();
         assertNotNull(originalMetricsApi);
-        // Reset configuration property to be able to verify that rear display was disabled.
-        resetActivityConfigurationChangeValues(mActivity);
+
+        DisplayMetrics currentMetrics = new DisplayMetrics();
         // Enable rear display mode to get the expected display metrics for the rear display
         // Running with CONTROL_DEVICE_STATE permission to bypass educational overlay
         DeviceStateUtils.runWithControlDeviceStatePermission(() ->
                 mWindowAreaComponent.startRearDisplaySession(mActivity, mSessionStateListener));
 
-        // To verify that the rear display is enabled, check a configuration change occurred
-        waitAndAssert(() -> mActivity.mConfigurationChanged);
+        // Verify that the activity is on the rear display by matching the display metrics with what
+        // was returned in the API. This isn't an immediate operation as the activity may have had
+        // to switch displays.
+        waitAndAssert(() -> {
+            mActivity.getDisplay().getRealMetrics(currentMetrics);
+            return originalMetricsApi.equals(currentMetrics);
+        });
+        waitAndAssert(() -> mCurrentDeviceState == mRearDisplayState);
+        assertTrue(isActivityVisible(mActivity));
 
         WindowMetrics windowMetrics = mActivity.getWindowManager().getCurrentWindowMetrics();
 
@@ -323,6 +352,7 @@ public class ExtensionRearDisplayTest extends WindowManagerJetpackTestBase imple
 
         WindowMetrics postRotationWindowMetrics =
                 mActivity.getWindowManager().getCurrentWindowMetrics();
+
         DisplayMetrics postRotationMetricsApi = mWindowAreaComponent.getRearDisplayMetrics();
         assertNotNull(postRotationMetricsApi);
 
