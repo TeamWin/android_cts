@@ -1797,8 +1797,10 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
         Size[] availableSizes = mStaticInfo.getAvailableSizesForFormatChecked(format,
                 StaticMetadata.StreamDirection.Output);
 
+        Size[] testSizes = getMinAndMaxSizes(availableSizes);
+
         // for each resolution, test imageReader:
-        for (Size sz : availableSizes) {
+        for (Size sz : testSizes) {
             Log.v(TAG, "testing size " + sz.toString());
             try {
                 if (VERBOSE) {
@@ -1861,7 +1863,6 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
                                     getValueNotNull(result, CaptureResult.SENSOR_SENSITIVITY),
                                     TEST_SENSITIVITY_VALUE),
                             sensitivityDiff >= 0);
-
 
                     // Sleep to Simulate long porcessing before closing the image.
                     Thread.sleep(LONG_PROCESS_TIME_MS);
@@ -2079,6 +2080,36 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
         // Return all pending images to the ImageReader as the validateImage may
         // take a while to return and there could be many images pending.
         mListener.closePendingImages();
+    }
+
+    /**
+     * Gets the list of test sizes to run the test on, given the array of available sizes.
+     * For ImageReaderTest, where the sizes are not the most relevant, it is sufficient to test with
+     * just the min and max size, which helps reduce test time significantly.
+     */
+    private Size[] getMinAndMaxSizes(Size[] availableSizes) {
+        if (availableSizes.length <= 2) {
+            return availableSizes;
+        }
+
+        Size[] testSizes = new Size[2];
+        Size maxSize = availableSizes[0];
+        Size minSize = availableSizes[1];
+
+        for (Size size : availableSizes) {
+            if (size.getWidth() * size.getHeight() > maxSize.getWidth() * maxSize.getHeight()) {
+                maxSize = size;
+            }
+
+            if (size.getWidth() * size.getHeight() < minSize.getWidth() * minSize.getHeight()) {
+                minSize = size;
+            }
+        }
+
+        testSizes[0] = minSize;
+        testSizes[1] = maxSize;
+
+        return testSizes;
     }
 
     /** Load dynamic depth validation jni on initialization */
