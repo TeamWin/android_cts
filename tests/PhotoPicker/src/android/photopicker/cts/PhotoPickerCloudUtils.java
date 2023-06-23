@@ -128,11 +128,17 @@ public class PhotoPickerCloudUtils {
                 .isEqualTo(allowedPackagesJoined);
 
         writeDeviceConfigProp(KEY_CLOUD_MEDIA_FEATURE_ENABLED, true);
+        assertWithMessage("Failed to update the cloud media feature device config")
+                .that(isCloudMediaEnabled())
+                .isTrue();
     }
 
 
     static void disableCloudMediaAndClearAllowedCloudProviders() {
         writeDeviceConfigProp(KEY_CLOUD_MEDIA_FEATURE_ENABLED, false);
+        assertWithMessage("Failed to update the cloud media feature device config")
+                .that(isCloudMediaEnabled())
+                .isFalse();
 
         deleteDeviceConfigProp(KEY_ALLOWED_CLOUD_PROVIDERS);
         assertWithMessage("Failed to delete the allowed cloud providers device config")
