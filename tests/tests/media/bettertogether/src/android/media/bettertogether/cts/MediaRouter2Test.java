@@ -220,7 +220,7 @@ public class MediaRouter2Test {
     }
 
     @Test
-    public void activeScanRouteListingPreference_scansOnSelfScanProvider() {
+    public void activeScanRouteDiscoveryPreference_scansOnSelfScanProvider() {
         RouteDiscoveryPreference activeScanRouteDiscoveryPreference =
                 new RouteDiscoveryPreference.Builder(
                                 List.of("placeholder_feature"), /* activeScan= */ true)
