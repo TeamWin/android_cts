@@ -35,6 +35,7 @@ import android.view.Display
 import android.view.InputDevice
 import android.view.MotionEvent
 import android.view.MotionEvent.ACTION_DOWN
+import android.view.MotionEvent.ACTION_UP
 import android.view.View
 import android.view.ViewTreeObserver
 import androidx.test.core.app.ActivityScenario
@@ -47,6 +48,7 @@ import com.android.compatibility.common.util.PollingCheck
 import com.android.compatibility.common.util.SystemUtil
 import com.android.compatibility.common.util.WindowUtil
 import com.google.common.truth.Truth.assertThat
+import java.lang.AutoCloseable
 import java.util.Arrays
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
@@ -78,7 +80,7 @@ class TouchModeTest {
 
     @Rule
     fun permissionsRule() = AdoptShellPermissionsRule(
-            instrumentation.getUiAutomation(), ADD_TRUSTED_DISPLAY_PERMISSION
+            instrumentation.getUiAutomation(), Manifest.permission.ADD_TRUSTED_DISPLAY
     )
 
     @Before
@@ -127,7 +129,7 @@ class TouchModeTest {
     @Test
     fun testOnTouchModeChangeNotification() {
         val touchModeChangeListener = OnTouchModeChangeListenerImpl()
-        var observer = activity.window.decorView.rootView.viewTreeObserver
+        val observer = activity.window.decorView.rootView.viewTreeObserver
         observer.addOnTouchModeChangeListener(touchModeChangeListener)
         val newTouchMode = !isInTouchMode()
 
@@ -195,11 +197,12 @@ class TouchModeTest {
                 targetContext.resources.getBoolean(targetContext.resources.getIdentifier(
                         "config_perDisplayFocusEnabled", "bool", "android")))
 
-        var secondaryDisplayId = findOrCreateSecondaryDisplay()
+        val secondaryDisplayId = findOrCreateSecondaryDisplay()
 
-        injectMotionEventOnMainDisplay()
-        assertThat(isInTouchMode()).isTrue()
-        assertSecondaryDisplayTouchModeState(secondaryDisplayId, /* inTouch= */ true)
+        touchDownOnDefaultDisplay().use {
+            assertThat(isInTouchMode()).isTrue()
+            assertSecondaryDisplayTouchModeState(secondaryDisplayId, isInTouch = true)
+        }
     }
 
     /**
@@ -216,12 +219,13 @@ class TouchModeTest {
                 targetContext.resources.getBoolean(targetContext.resources.getIdentifier(
                         "config_perDisplayFocusEnabled", "bool", "android")))
 
-        var secondaryDisplayId = findOrCreateSecondaryDisplay()
+        val secondaryDisplayId = findOrCreateSecondaryDisplay()
 
-        injectMotionEventOnMainDisplay()
-        assertThat(isInTouchMode()).isTrue()
-        assertSecondaryDisplayTouchModeState(secondaryDisplayId, /* isInTouch= */ false,
-                /* delayBeforeChecking= */ true)
+        touchDownOnDefaultDisplay().use {
+            assertThat(isInTouchMode()).isTrue()
+            assertSecondaryDisplayTouchModeState(secondaryDisplayId, isInTouch = false,
+                delayBeforeChecking = true)
+        }
     }
 
     /**
@@ -229,25 +233,26 @@ class TouchModeTest {
      * touch mode changes does not affect displays with own focus.
      *
      * In this test, we tap the main display, and ensure that touch mode becomes
-     * true n main display only. Touch mode on secondary display must remain false because it
-     * maintains its own focus and touch mode.
+     * true only on the main display. Touch mode on the secondary display must remain false because
+     * it maintains its own focus and touch mode.
      */
     @Test
     fun testTouchModeUpdate_DisplayHasOwnFocus() {
         assumeTrue(isRunningActivitiesOnSecondaryDisplaysSupported())
-        var secondaryDisplayId = createVirtualDisplay(
+        val secondaryDisplayId = createVirtualDisplay(
                 VIRTUAL_DISPLAY_FLAG_OWN_FOCUS or VIRTUAL_DISPLAY_FLAG_TRUSTED)
-        injectMotionEventOnMainDisplay()
 
-        assertThat(isInTouchMode()).isTrue()
-        assertSecondaryDisplayTouchModeState(secondaryDisplayId, /* isInTouch= */ false,
-                /* delayBeforeChecking= */ true)
+        touchDownOnDefaultDisplay().use {
+            assertThat(isInTouchMode()).isTrue()
+            assertSecondaryDisplayTouchModeState(secondaryDisplayId, isInTouch = false,
+                delayBeforeChecking = true)
+        }
     }
 
     private fun findOrCreateSecondaryDisplay(): Int {
         // Pick a random secondary external display if there is any.
         // A virtual display is only created if the device only has a single (default) display.
-        var display = Arrays.stream(displayManager.displays).filter { d ->
+        val display = Arrays.stream(displayManager.displays).filter { d ->
             d.displayId != Display.DEFAULT_DISPLAY && d.type == Display.TYPE_EXTERNAL
         }.findFirst()
         if (display.isEmpty) {
@@ -294,13 +299,21 @@ class TouchModeTest {
         }, Manifest.permission.INTERNAL_SYSTEM_WINDOW)
     }
 
-    private fun injectMotionEventOnMainDisplay() {
+    private fun touchDownOnDefaultDisplay(): AutoCloseable {
         val downTime = SystemClock.uptimeMillis()
-        val eventTime = downTime
-        val event = MotionEvent.obtain(downTime, eventTime, ACTION_DOWN,
+        val down = MotionEvent.obtain(downTime, downTime, ACTION_DOWN,
                 /* x= */ 100f, /* y= */ 100f, /* metaState= */ 0)
-        event.source = InputDevice.SOURCE_TOUCHSCREEN
-        instrumentation.uiAutomation.injectInputEvent(event, /* sync= */ true)
+        down.source = InputDevice.SOURCE_TOUCHSCREEN
+        instrumentation.uiAutomation.injectInputEvent(down, /* sync= */ true)
+
+        // Clean up by sending an up event so that we ensure gestures are injected consistently.
+        return AutoCloseable {
+            val upEventTime = SystemClock.uptimeMillis()
+            val up = MotionEvent.obtain(downTime, upEventTime, ACTION_UP,
+                /* x= */ 100f, /* y= */ 100f, /* metaState= */ 0)
+            up.source = InputDevice.SOURCE_TOUCHSCREEN
+            instrumentation.uiAutomation.injectInputEvent(up, /* sync= */ true)
+        }
     }
 
     private fun createVirtualDisplay(flags: Int): Int {
@@ -337,5 +350,3 @@ class TouchModeTest {
         const val VIRTUAL_DISPLAY_FLAG_TRUSTED = 1 shl 10
     }
 }
-
-private val ADD_TRUSTED_DISPLAY_PERMISSION: String = android.Manifest.permission.ADD_TRUSTED_DISPLAY
