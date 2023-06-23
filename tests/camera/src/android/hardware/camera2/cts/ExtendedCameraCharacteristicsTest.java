@@ -3401,11 +3401,9 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
             "2.2.7.2/7.5/H-1-13",
             "2.2.7.2/7.5/H-1-14"})
     public void testCameraPerfClassCharacteristics() throws Exception {
-        if (mAdoptShellPerm) {
-            // Skip test for system camera. Performance class is only applicable for public camera
-            // ids.
-            return;
-        }
+        assumeFalse("Media performance class tests not applicable if shell permission is adopted",
+                mAdoptShellPerm);
+
         PerformanceClassEvaluator pce = new PerformanceClassEvaluator(this.mTestName);
         PerformanceClassEvaluator.PrimaryCameraRequirement primaryRearReq =
                 pce.addPrimaryRearCameraReq();
@@ -3700,17 +3698,13 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
     @Test
     @AppModeFull(reason = "Media Performance class test not applicable to instant apps")
     @CddTest(requirements = {
-            "2.2.7.2/7.5/H-1-15",
             "2.2.7.2/7.5/H-1-16",
             "2.2.7.2/7.5/H-1-17"})
     public void testCameraUPerfClassCharacteristics() throws Exception {
-        if (mAdoptShellPerm) {
-            // Skip test for system camera. Performance class is only applicable for public camera
-            // ids.
-            return;
-        }
+        assumeFalse("Media performance class tests not applicable if shell permission is adopted",
+                mAdoptShellPerm);
+
         PerformanceClassEvaluator pce = new PerformanceClassEvaluator(this.mTestName);
-        CameraExtensionRequirement cameraExtensionReq = pce.addR7_5__H_1_15();
         DynamicRangeTenBitsRequirement dynamicRangeTenBitsReq = pce.addR7_5__H_1_16();
         FaceDetectionRequirement faceDetectionReq = pce.addR7_5__H_1_17();
 
@@ -3718,12 +3712,6 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
                 mCameraIdsUnderTest);
         String primaryFrontId = CameraTestUtils.getPrimaryFrontCamera(mCameraManager,
                 mCameraIdsUnderTest);
-
-        // H-1-15
-        verifyExtensionForCamera(primaryRearId, CameraExtensionRequirement.PRIMARY_REAR_CAMERA,
-                cameraExtensionReq);
-        verifyExtensionForCamera(primaryFrontId, CameraExtensionRequirement.PRIMARY_FRONT_CAMERA,
-                cameraExtensionReq);
 
         // H-1-16
         verifyDynamicRangeTenBits(primaryRearId,
@@ -3736,6 +3724,34 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
                 FaceDetectionRequirement.PRIMARY_REAR_CAMERA, faceDetectionReq);
         verifyFaceDetection(primaryFrontId,
                 FaceDetectionRequirement.PRIMARY_FRONT_CAMERA, faceDetectionReq);
+
+        pce.submitAndCheck();
+    }
+
+    /**
+     * Check camera extension characteristics for Android 14 Performance class requirements
+     * as specified in CDD camera section 7.5
+     */
+    @Test
+    @AppModeFull(reason = "Media Performance class test not applicable to instant apps")
+    @CddTest(requirements = {
+            "2.2.7.2/7.5/H-1-15"})
+    public void testCameraUPerfClassExtensionCharacteristics() throws Exception {
+        assumeFalse("Media performance class tests not applicable if shell permission is adopted",
+                mAdoptShellPerm);
+
+        PerformanceClassEvaluator pce = new PerformanceClassEvaluator(this.mTestName);
+        CameraExtensionRequirement cameraExtensionReq = pce.addR7_5__H_1_15();
+
+        String primaryRearId = CameraTestUtils.getPrimaryRearCamera(mCameraManager,
+                mCameraIdsUnderTest);
+        String primaryFrontId = CameraTestUtils.getPrimaryFrontCamera(mCameraManager,
+                mCameraIdsUnderTest);
+
+        verifyExtensionForCamera(primaryRearId, CameraExtensionRequirement.PRIMARY_REAR_CAMERA,
+                cameraExtensionReq);
+        verifyExtensionForCamera(primaryFrontId, CameraExtensionRequirement.PRIMARY_FRONT_CAMERA,
+                cameraExtensionReq);
 
         pce.submitAndCheck();
     }
