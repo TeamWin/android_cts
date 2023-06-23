@@ -26,7 +26,22 @@ public class VirtualDisplayActivity extends RelaunchingActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        createVirtualDisplayAndShowPresentation();
+        boolean usePublicPresentation = getIntent().getBooleanExtra(
+                Components.VirtualDisplayActivityExtra.USE_PUBLIC_PRESENTATION, false);
+        if (usePublicPresentation) {
+            createPublicVirtualDisplayAndShowPresentation();
+        } else {
+            createVirtualDisplayAndShowPresentation();
+        }
+    }
+
+    private void createPublicVirtualDisplayAndShowPresentation() {
+        VirtualDisplay virtualDisplay = getSystemService(DisplayManager.class).createVirtualDisplay(
+                "VirtualDisplay1", 10, 10, 10, null,
+                DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC
+                        + DisplayManager.VIRTUAL_DISPLAY_FLAG_PRESENTATION
+                        + DisplayManager.VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY);
+        new Presentation(getBaseContext(), virtualDisplay.getDisplay()).show();
     }
 
     private void createVirtualDisplayAndShowPresentation() {
