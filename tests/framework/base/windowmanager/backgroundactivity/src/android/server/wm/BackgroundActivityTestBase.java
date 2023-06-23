@@ -82,6 +82,7 @@ public abstract class BackgroundActivityTestBase extends ActivityManagerTestBase
             new DeviceConfigStateHelper(NAMESPACE_WINDOW_MANAGER);
 
     ServiceConnection mBalServiceConnection;
+    ServiceConnection mAppBTestServiceConnection;
 
     @Before
     public void enableFeatureFlags() {
@@ -145,6 +146,9 @@ public abstract class BackgroundActivityTestBase extends ActivityManagerTestBase
         AppOpsUtils.reset(SHELL_PACKAGE);
         if (mBalServiceConnection != null) {
             mContext.unbindService(mBalServiceConnection);
+        }
+        if (mAppBTestServiceConnection != null) {
+            mContext.unbindService(mAppBTestServiceConnection);
         }
     }
 

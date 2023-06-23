@@ -31,5 +31,7 @@
             android:name=".ForegroundActivity"
             android:allowUntrustedActivityEmbedding="true"
             android:exported="true" />
+        <service android:name=".AppBTestService"
+            android:exported="true"/>
     </application>
 </manifest>
