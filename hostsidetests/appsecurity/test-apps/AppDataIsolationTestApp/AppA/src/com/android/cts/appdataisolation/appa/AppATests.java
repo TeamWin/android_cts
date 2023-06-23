@@ -33,6 +33,7 @@ import static com.android.cts.appdataisolation.common.UserUtils.getCurrentUserId
 
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static android.view.Display.DEFAULT_DISPLAY;
 
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -75,6 +76,13 @@ public class AppATests {
     private String mDePath;
     private String mExternalDataPath;
     private String mObbPath;
+
+    // Sending the unlock keycode events to DEFAULT_DISPLAY
+    private String testUnlockDeviceCommand_1 = "input -d "+ DEFAULT_DISPLAY +" keyevent "+KeyEvent.KEYCODE_1;
+    private String testUnlockDeviceCommand_2 = "input -d "+ DEFAULT_DISPLAY +" keyevent "+KeyEvent.KEYCODE_2;
+    private String testUnlockDeviceCommand_3 = "input -d "+ DEFAULT_DISPLAY +" keyevent "+KeyEvent.KEYCODE_3;
+    private String testUnlockDeviceCommand_4 = "input -d "+ DEFAULT_DISPLAY +" keyevent "+KeyEvent.KEYCODE_4;
+    private String testUnlockDeviceCommand_enter = "input -d "+ DEFAULT_DISPLAY +" keyevent "+KeyEvent.KEYCODE_ENTER;
 
     private volatile CountDownLatch mServiceConnectedLatch;
     private IIsolatedService mService;
@@ -206,12 +214,15 @@ public class AppATests {
         mDevice.waitForIdle();
         mDevice.pressMenu();
         mDevice.waitForIdle();
-        mDevice.pressKeyCode(KeyEvent.KEYCODE_1);
-        mDevice.pressKeyCode(KeyEvent.KEYCODE_2);
-        mDevice.pressKeyCode(KeyEvent.KEYCODE_3);
-        mDevice.pressKeyCode(KeyEvent.KEYCODE_4);
+        mDevice.executeShellCommand(testUnlockDeviceCommand_1);
         mDevice.waitForIdle();
-        mDevice.pressEnter();
+        mDevice.executeShellCommand(testUnlockDeviceCommand_2);
+        mDevice.waitForIdle();
+        mDevice.executeShellCommand(testUnlockDeviceCommand_3);
+        mDevice.waitForIdle();
+        mDevice.executeShellCommand(testUnlockDeviceCommand_4);
+        mDevice.waitForIdle();
+        mDevice.executeShellCommand(testUnlockDeviceCommand_enter);
         mDevice.waitForIdle();
         mDevice.pressHome();
         mDevice.waitForIdle();
