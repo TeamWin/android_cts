@@ -136,6 +136,7 @@ class AutoRevokeTest {
         assertThat(
                 runShellCommandOrThrow("cmd statusbar collapse"),
                 equalTo(""))
+        clearNotifications()
         // Wake up the device
         runShellCommandOrThrow("input keyevent KEYCODE_WAKEUP")
         if ("false".equals(runShellCommandOrThrow("cmd lock_settings get-disabled"))) {
