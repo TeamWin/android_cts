@@ -215,7 +215,7 @@ class TestNgRunner extends Runner implements Filterable {
         continue;
       }
 
-      Description child = Description.createTestDescription(cls, name);
+      Description child = Description.createTestDescription(cls, name, m.getAnnotations());
 
       parent.addChild(child);
 
