@@ -72,8 +72,8 @@ per-file src/android/car/cts/CarRemoteAccessManagerTest.java = ericjeong@google.
 per-file src/android/car/cts/CarRemoteDeviceManagerTest.java = ericjeong@google.com, shanyu@google.com
 
 # Car Watchdog related CTS files
-per-file src/android/car/cts/CarWatchdogDaemonTest.java = lakshmana@google.com
-per-file src/android/car/cts/CarWatchdogManagerTest.java = lakshmana@google.com
+per-file src/android/car/cts/CarWatchdogDaemonTest.java = lakshmana@google.com, jahdiel@google.com
+per-file src/android/car/cts/CarWatchdogManagerTest.java = lakshmana@google.com, jahdiel@google.com
 
 # Telemetry related CTS files
 per-file src/android/car/cts/CarTelemetryManagerTest.java = sgurun@google.com
