@@ -76,7 +76,7 @@ public final class RecognitionServiceMicIndicatorTest {
     private static final String SC_PRIVACY_DIALOG_PACKAGE_NAME = "com.android.permissioncontroller";
     private static final String SC_PRIVACY_DIALOG_CONTENT_ID = "indicator_label";
     // The cts app label
-    private static final String APP_LABEL = "CtsVoiceRecognitionTestCases";
+    private static final String APP_LABEL = "CtsVoiceRecognition";
     // A simple test voice recognition service implementation
     private static final String CTS_VOICE_RECOGNITION_SERVICE =
             "android.recognitionservice.service/android.recognitionservice.service"
