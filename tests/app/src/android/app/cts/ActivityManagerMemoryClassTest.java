@@ -135,7 +135,7 @@ public class ActivityManagerMemoryClassTest
             expectedMemorySizeForLargeScreen.put(DisplayMetrics.DENSITY_600, 448);
             expectedMemorySizeForLargeScreen.put(DisplayMetrics.DENSITY_XXXHIGH, 512);
             // Backport of DENSITY_520 from Android 14 to android13-tests-dev
-            expectedMemorySizeForSmallNormalScreen.put(520, 192);
+            expectedMemorySizeForLargeScreen.put(520, 192);
         }
 
         static {
