@@ -105,7 +105,9 @@ public abstract class InputTestCase {
     @After
     public void tearDown() throws Exception {
         onTearDown();
-        mActivityRule.close();
+        if (mActivityRule != null) {
+            mActivityRule.close();
+        }
     }
 
     /** Optional setup logic performed before the test activity is launched. */
