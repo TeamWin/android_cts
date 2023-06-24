@@ -16,14 +16,26 @@
 
 package android.packageinstaller.admin.cts;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
+
+import com.android.bedstead.harrier.BedsteadJUnit4;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
 /**
  * This class tests silent package install and uninstall by a device owner.
  */
+@RunWith(BedsteadJUnit4.class)
 public class SilentPackageInstallTest extends BasePackageInstallTest {
+
+    @Test
     public void testSilentInstallUninstall() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
+        assumeTrue("FEATURE_DEVICE_ADMIN unavailable", mHasFeature);
+        assumeTrue("Could not set BasicAdminReceiver.class as device owner", mAmIDeviceOwner);
+
         // install the app
         assertInstallPackage();
 
@@ -32,21 +44,22 @@ public class SilentPackageInstallTest extends BasePackageInstallTest {
         assertFalse(isPackageInstalled(TEST_APP_PKG));
     }
 
+    @Test
     public void testUninstallBlocked() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
+        assumeTrue("FEATURE_DEVICE_ADMIN unavailable", mHasFeature);
+        assumeTrue("Could not set BasicAdminReceiver.class as device owner", mAmIDeviceOwner);
+
         // install the app
         assertInstallPackage();
 
-        mDevicePolicyManager.setUninstallBlocked(getWho(), TEST_APP_PKG, true);
-        assertTrue(mDevicePolicyManager.isUninstallBlocked(getWho(), TEST_APP_PKG));
+        mDevicePolicyManager.setUninstallBlocked(mDeviceOwner, TEST_APP_PKG, true);
+        assertTrue(mDevicePolicyManager.isUninstallBlocked(mDeviceOwner, TEST_APP_PKG));
         assertTrue(mDevicePolicyManager.isUninstallBlocked(null, TEST_APP_PKG));
         assertFalse(tryUninstallPackage());
         assertTrue(isPackageInstalled(TEST_APP_PKG));
 
-        mDevicePolicyManager.setUninstallBlocked(getWho(), TEST_APP_PKG, false);
-        assertFalse(mDevicePolicyManager.isUninstallBlocked(getWho(), TEST_APP_PKG));
+        mDevicePolicyManager.setUninstallBlocked(mDeviceOwner, TEST_APP_PKG, false);
+        assertFalse(mDevicePolicyManager.isUninstallBlocked(mDeviceOwner, TEST_APP_PKG));
         assertFalse(mDevicePolicyManager.isUninstallBlocked(null, TEST_APP_PKG));
         assertTrue(tryUninstallPackage());
         assertFalse(isPackageInstalled(TEST_APP_PKG));
