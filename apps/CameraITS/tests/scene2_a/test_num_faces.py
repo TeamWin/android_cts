@@ -32,7 +32,8 @@ _CV2_FACE_SCALE_FACTOR = 1.05  # 5% step for resizing image to find face
 _CV2_FACE_MIN_NEIGHBORS = 4  # recommended 3-6: higher for less faces
 _CV2_GREEN = (0, 1, 0)
 _CV2_RED = (1, 0, 0)
-_FACE_CENTER_MATCH_TOL = 12  # 12 pixels or ~1% in 640x480 image
+_FACE_CENTER_MATCH_TOL_X = 10  # 10 pixels or ~1.5% in 640x480 image
+_FACE_CENTER_MATCH_TOL_Y = 14  # 14 pixels or ~3% in 640x480 image
 _FACE_CENTER_MIN_LOGGING_DIST = 50
 _FD_MODE_OFF, _FD_MODE_SIMPLE, _FD_MODE_FULL = 0, 1, 2
 _NAME = os.path.splitext(os.path.basename(__file__))[0]
@@ -70,7 +71,8 @@ def match_face_locations(faces_cropped, faces_opencv, mode, img, img_name):
       centers_dist = math.hypot(x-x1, y-y1)
       if centers_dist < _FACE_CENTER_MIN_LOGGING_DIST:
         logging.debug('centers_dist: %.3f', centers_dist)
-      if centers_dist < _FACE_CENTER_MATCH_TOL:
+      if (abs(x-x1) < _FACE_CENTER_MATCH_TOL_X and
+          abs(y-y1) < _FACE_CENTER_MATCH_TOL_Y):
         num_centers_aligned += 1
 
   # If test failed, save image with green AND OpenCV red rectangles
