@@ -76,8 +76,8 @@ public class MultiCodecPerfTestBase {
         m720pTestFiles.put(MediaFormat.MIMETYPE_VIDEO_AVC, "bbb_1280x720_3mbps_30fps_avc.mp4");
         m720pTestFiles.put(MediaFormat.MIMETYPE_VIDEO_HEVC, "bbb_1280x720_3mbps_30fps_hevc.mp4");
 
-        // Test VP9 and AV1 as well for Build.VERSION_CODES.S and beyond
-        if (Utils.getPerfClass() >= Build.VERSION_CODES.S) {
+        // Test VP9 and AV1 as well when performance class is other than Build.VERSION_CODES.R
+        if (Utils.getPerfClass() != Build.VERSION_CODES.R) {
             mMimeList.add(MediaFormat.MIMETYPE_VIDEO_VP9);
             mMimeList.add(MediaFormat.MIMETYPE_VIDEO_AV1);
 
