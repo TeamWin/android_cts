@@ -1114,7 +1114,11 @@ public class AudioDataPathsActivity
 
     @Override
     public void recordTestResults() {
-        mTestManager.generateReportLog();
+// TODO Remove all report logging from this file. This is a quick fix.
+// This code generates multiple records in the JSON file.
+// That duplication is invalid JSON and causes the database
+// ingestion to fail.
+//        mTestManager.generateReportLog();
     }
 
     //
