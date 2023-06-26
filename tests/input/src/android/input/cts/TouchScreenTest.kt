@@ -30,6 +30,7 @@ import android.view.InputDevice
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.MediumTest
 import androidx.test.platform.app.InstrumentationRegistry
+import com.android.cts.input.DebugInputRule
 import com.android.cts.input.UinputTouchDevice
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -46,6 +47,8 @@ class TouchScreenTest {
     private lateinit var touchScreen: UinputTouchDevice
     private lateinit var verifier: EventVerifier
 
+    @get:Rule
+    val debugInputRule = DebugInputRule()
     @get:Rule
     val virtualDisplayRule = VirtualDisplayActivityScenarioRule()
 
@@ -75,6 +78,7 @@ class TouchScreenTest {
                 .getHostUsiVersion(virtualDisplayRule.virtualDisplay.display))
     }
 
+    @DebugInputRule.DebugInput(bug = 288321659)
     @Test
     fun testSingleTouch() {
         val pointer = Point(100, 100)
@@ -95,6 +99,7 @@ class TouchScreenTest {
         verifier.assertReceivedUp()
     }
 
+    @DebugInputRule.DebugInput(bug = 288321659)
     @Test
     fun testMultiTouch() {
         val pointer1 = Point(100, 100)
@@ -124,6 +129,7 @@ class TouchScreenTest {
         verifier.assertReceivedUp()
     }
 
+    @DebugInputRule.DebugInput(bug = 288321659)
     @Test
     fun testDeviceCancel() {
         val pointer = Point(100, 100)
@@ -151,6 +157,7 @@ class TouchScreenTest {
     /**
      * Check that pointer cancel is received by the activity via uinput device.
      */
+    @DebugInputRule.DebugInput(bug = 288321659)
     @Test
     fun testDevicePointerCancel() {
         val pointer1 = Point(100, 100)
