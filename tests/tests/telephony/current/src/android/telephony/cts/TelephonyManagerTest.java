@@ -5857,9 +5857,9 @@ public class TelephonyManagerTest {
                     mDesireRadioPowerState = desiredRadioState;
                     try {
                         // Since SST sets waiting time up to 10 seconds for the power off radio,
-                        // the RadioStateIntent timer extends the wait time up to 10 seconds
+                        // the RadioStateIntent timer extends the wait time up to 15 seconds
                         // here as well.
-                        mLock.wait(10000);
+                        mLock.wait(TimeUnit.SECONDS.toMillis(15));
                     } catch (Exception e) {
                         fail(e.getMessage());
                     }
