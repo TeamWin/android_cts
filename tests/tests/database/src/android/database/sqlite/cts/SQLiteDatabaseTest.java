@@ -51,9 +51,13 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.Phaser;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BinaryOperator;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
@@ -2212,5 +2216,64 @@ public class SQLiteDatabaseTest extends AndroidTestCase {
         // exist any more.
         mDatabase.execSQL("ALTER TABLE \"t2\" RENAME TO \"t1\";");
         mDatabase.endTransaction();
+    }
+
+    public void testStatementDDLEvictsCache() {
+        // The following will be cached (key is SQL string)
+        String selectQuery = "SELECT * FROM t1";
+
+        mDatabase.beginTransaction();
+        mDatabase.execSQL("CREATE TABLE `t1` (`c1` INTEGER NOT NULL PRIMARY KEY, data TEXT)");
+        try (Cursor c = mDatabase.rawQuery(selectQuery, null)) {
+            assertEquals(2, c.getColumnCount());
+        }
+        // Alter the schema in such a way that if the cached query is used it would produce wrong
+        // results due to the change in column amounts.
+        mDatabase.execSQL("ALTER TABLE `t1` RENAME TO `t1_old`");
+        mDatabase.execSQL("CREATE TABLE `t1` (`c1` INTEGER NOT NULL PRIMARY KEY)");
+        // Execute cached query (that should have been evicted), validating it sees the new schema.
+        try (Cursor c = mDatabase.rawQuery(selectQuery, null)) {
+            assertEquals(1, c.getColumnCount());
+        }
+        mDatabase.setTransactionSuccessful();
+        mDatabase.endTransaction();
+    }
+
+    public void testStressDDLEvicts() {
+        mDatabase.enableWriteAheadLogging();
+        mDatabase.execSQL("CREATE TABLE `t1` (`c1` INTEGER NOT NULL PRIMARY KEY, data TEXT)");
+        final int iterations = 1000;
+        ExecutorService exec = Executors.newFixedThreadPool(2);
+        exec.execute(() -> {
+                    boolean pingPong = true;
+                    for (int i = 0; i < iterations; i++) {
+                        mDatabase.beginTransaction();
+                        if (pingPong) {
+                            mDatabase.execSQL("ALTER TABLE `t1` RENAME TO `t1_old`");
+                            mDatabase.execSQL("CREATE TABLE `t1` (`c1` INTEGER NOT NULL "
+                                + "PRIMARY KEY)");
+                            pingPong = false;
+                        } else {
+                            mDatabase.execSQL("DROP TABLE `t1`");
+                            mDatabase.execSQL("ALTER TABLE `t1_old` RENAME TO `t1`");
+                            pingPong = true;
+                        }
+                        mDatabase.setTransactionSuccessful();
+                        mDatabase.endTransaction();
+                    }
+                });
+        exec.execute(() -> {
+                    for (int i = 0; i < iterations; i++) {
+                        try (Cursor c = mDatabase.rawQuery("SELECT * FROM t1", null)) {
+                            c.getCount();
+                        }
+                    }
+                });
+        try {
+            exec.shutdown();
+            assertTrue(exec.awaitTermination(1, TimeUnit.MINUTES));
+        } catch (InterruptedException e) {
+            fail("Timed out");
+        }
     }
 }
