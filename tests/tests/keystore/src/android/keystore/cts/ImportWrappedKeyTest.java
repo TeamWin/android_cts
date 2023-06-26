@@ -32,14 +32,14 @@ import static com.google.common.truth.Truth.assertWithMessage;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeNoException;
+import static org.junit.Assume.assumeTrue;
 
 import android.content.Context;
 import android.keystore.cts.util.TestUtils;
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
 import android.security.keystore.SecureKeyImportUnavailableException;
-import android.security.keystore.StrongBoxUnavailableException;
 import android.security.keystore.WrappedKeyEntry;
 
 import androidx.test.InstrumentationRegistry;
@@ -93,28 +93,35 @@ public class ImportWrappedKeyTest {
     }
 
     @Test
-    public void testKeyStore_ImportWrappedKey() throws Exception {
-        random.setSeed(0);
+    public void testKeyStore_ImportWrappedKey_AES() throws Exception {
+        testKeyStore_ImportWrappedKey_AES(false);
+    }
 
-        byte[] keyMaterial = new byte[32];
-        random.nextBytes(keyMaterial);
-        byte[] mask = new byte[32]; // Zero mask
+    @Test
+    public void testKeyStore_ImportWrappedKey_AES_StrongBox() throws Exception {
+        testKeyStore_ImportWrappedKey_AES(true);
+    }
 
-        KeyPair kp;
-        try {
-            kp = genKeyPair(WRAPPING_KEY_ALIAS, false);
-        } catch (SecureKeyImportUnavailableException e) {
-            return;
+    public void testKeyStore_ImportWrappedKey_AES(boolean isStrongBox) throws Exception {
+        if (isStrongBox) {
+            TestUtils.assumeStrongBox();
         }
+
+        KeyGenerator kg = KeyGenerator.getInstance("AES");
+        kg.init(256);
+        Key swKey = kg.generateKey();
+
+        byte[] keyMaterial = swKey.getEncoded();
+        byte[] mask = new byte[32]; // Zero mask
 
         try {
             importWrappedKey(wrapKey(
-                    kp.getPublic(),
+                    genKeyPair(WRAPPING_KEY_ALIAS, isStrongBox).getPublic(),
                     keyMaterial,
                     mask,
                     makeAuthList(keyMaterial.length * 8, KM_ALGORITHM_AES)));
         } catch (SecureKeyImportUnavailableException e) {
-            return;
+            assumeNoException("Can only test if secure key import is available", e);
         }
 
         // Use Key
@@ -124,15 +131,21 @@ public class ImportWrappedKeyTest {
         assertTrue("Failed to load key after wrapped import", keyStore.containsAlias(ALIAS));
 
         Key key = keyStore.getKey(ALIAS, null);
+        String plaintext = "hello, world";
 
         Cipher c = Cipher.getInstance("AES/ECB/PKCS7Padding");
         c.init(Cipher.ENCRYPT_MODE, key);
-        byte[] encrypted = c.doFinal("hello, world".getBytes());
+        byte[] encrypted = c.doFinal(plaintext.getBytes());
 
+        // Decrypt using key imported into keystore.
         c = Cipher.getInstance("AES/ECB/PKCS7Padding");
         c.init(Cipher.DECRYPT_MODE, key);
+        assertEquals(new String(c.doFinal(encrypted)), plaintext);
 
-        assertEquals(new String(c.doFinal(encrypted)), "hello, world");
+        // Decrypt using local software copy of the key.
+        c = Cipher.getInstance("AES/ECB/PKCS7Padding");
+        c.init(Cipher.DECRYPT_MODE, swKey);
+        assertEquals(new String(c.doFinal(encrypted)), plaintext);
     }
 
     @Test
@@ -155,23 +168,16 @@ public class ImportWrappedKeyTest {
         random.nextBytes(keyMaterial);
         byte[] mask = new byte[32]; // Zero mask
 
-        KeyPair kp;
-        try {
-            kp = genKeyPair(WRAPPING_KEY_ALIAS, isStrongBox);
-        } catch (SecureKeyImportUnavailableException e) {
-            return;
-        }
-
         KeyStoreException exception = null;
         try {
             importWrappedKey(wrapKey(
-                    kp.getPublic(),
+                    genKeyPair(WRAPPING_KEY_ALIAS, isStrongBox).getPublic(),
                     keyMaterial,
                     mask,
                     makeAuthList(keyMaterial.length * 8, KM_ALGORITHM_AES),
                     false /* incorrect wrapping required*/));
         } catch (SecureKeyImportUnavailableException e) {
-            return;
+            assumeNoException("Can only test if secure key import is available", e);
         } catch (KeyStoreException e) {
             exception = e;
         }
@@ -194,7 +200,6 @@ public class ImportWrappedKeyTest {
             importWrappedKey(fakeWrappedKey, WRAPPING_KEY_ALIAS + "_Missing");
         } catch (KeyStoreException e) {
             exception = e;
-
         }
 
         assertWithMessage("Did not hit a failure but expected one").that(exception).isNotNull();
@@ -209,30 +214,36 @@ public class ImportWrappedKeyTest {
 
     @Test
     public void testKeyStore_ImportWrappedKey_3DES() throws Exception {
-      if (!TestUtils.supports3DES()) {
-          return;
+        testKeyStore_ImportWrappedKey_3DES(false);
+    }
+
+    @Test
+    public void testKeyStore_ImportWrappedKey_3DES_StrongBox() throws Exception {
+        testKeyStore_ImportWrappedKey_3DES(true);
+    }
+
+    public void testKeyStore_ImportWrappedKey_3DES(boolean isStrongBox) throws Exception {
+        if (isStrongBox) {
+            TestUtils.assumeStrongBox();
         }
+
+        assumeTrue("Can only test if device supports 3DES", TestUtils.supports3DES());
+
         KeyGenerator kg = KeyGenerator.getInstance("DESEDE");
         kg.init(168);
-        byte[] keyMaterial = kg.generateKey().getEncoded();
-        random.nextBytes(keyMaterial);
-        byte[] mask = new byte[24]; // Zero mask
+        Key swKey = kg.generateKey();
 
-        KeyPair kp;
-        try {
-            kp = genKeyPair(WRAPPING_KEY_ALIAS, false);
-        } catch (SecureKeyImportUnavailableException e) {
-            return;
-        }
+        byte[] keyMaterial = swKey.getEncoded();
+        byte[] mask = new byte[24]; // Zero mask
 
         try {
             importWrappedKey(wrapKey(
-                    kp.getPublic(),
+                    genKeyPair(WRAPPING_KEY_ALIAS, isStrongBox).getPublic(),
                     keyMaterial,
                     mask,
                     makeAuthList(168, KM_ALGORITHM_3DES)));
         } catch (SecureKeyImportUnavailableException e) {
-            return;
+            assumeNoException("Can only test if secure key import is available", e);
         }
 
         // Use Key
@@ -242,113 +253,22 @@ public class ImportWrappedKeyTest {
         assertTrue("Failed to load key after wrapped import", keyStore.containsAlias(ALIAS));
 
         Key key = keyStore.getKey(ALIAS, null);
+        String plaintext = "hello, world";
 
         Cipher c = Cipher.getInstance("DESede/CBC/PKCS7Padding");
         c.init(Cipher.ENCRYPT_MODE, key);
         IvParameterSpec paramSpec = new IvParameterSpec(c.getIV());
-        byte[] encrypted = c.doFinal("hello, world".getBytes());
+        byte[] encrypted = c.doFinal(plaintext.getBytes());
 
+        // Decrypt using key imported into keystore.
         c = Cipher.getInstance("DESede/CBC/PKCS7Padding");
         c.init(Cipher.DECRYPT_MODE, key, paramSpec);
+        assertEquals(new String(c.doFinal(encrypted)), plaintext);
 
-        assertEquals(new String(c.doFinal(encrypted)), "hello, world");
-    }
-
-    @Test
-    public void testKeyStore_ImportWrappedKey_3DES_StrongBox() throws Exception {
-      if (!TestUtils.supports3DES()) {
-          return;
-      }
-
-      if (TestUtils.hasStrongBox(getContext())) {
-            KeyGenerator kg = KeyGenerator.getInstance("DESEDE");
-            kg.init(168);
-            byte[] keyMaterial = kg.generateKey().getEncoded();
-            random.nextBytes(keyMaterial);
-            byte[] mask = new byte[24]; // Zero mask
-
-            importWrappedKey(wrapKey(
-                    genKeyPair(WRAPPING_KEY_ALIAS, true).getPublic(),
-                    keyMaterial,
-                    mask,
-                    makeAuthList(168, KM_ALGORITHM_3DES)));
-
-            // Use Key
-            KeyStore keyStore = KeyStore.getInstance("AndroidKeyStore");
-            keyStore.load(null, null);
-
-            assertTrue("Failed to load key after wrapped import", keyStore.containsAlias(ALIAS));
-
-            Key key = keyStore.getKey(ALIAS, null);
-
-            Cipher c = Cipher.getInstance("DESede/CBC/PKCS7Padding");
-            c.init(Cipher.ENCRYPT_MODE, key);
-            IvParameterSpec paramSpec = new IvParameterSpec(c.getIV());
-            byte[] encrypted = c.doFinal("hello, world".getBytes());
-
-            c = Cipher.getInstance("DESede/CBC/PKCS7Padding");
-            c.init(Cipher.DECRYPT_MODE, key, paramSpec);
-
-            assertEquals(new String(c.doFinal(encrypted)), "hello, world");
-        } else {
-            try {
-                genKeyPair(WRAPPING_KEY_ALIAS, true);
-                fail();
-            } catch (StrongBoxUnavailableException | SecureKeyImportUnavailableException e) {
-            }
-        }
-    }
-
-    @Test
-    public void testKeyStore_ImportWrappedKey_AES_StrongBox() throws Exception {
-        if (TestUtils.hasStrongBox(getContext())) {
-            random.setSeed(0);
-
-            byte[] keyMaterial = new byte[32];
-            random.nextBytes(keyMaterial);
-            byte[] mask = new byte[32]; // Zero mask
-
-            importWrappedKey(wrapKey(
-                    genKeyPair(WRAPPING_KEY_ALIAS, true).getPublic(),
-                    keyMaterial,
-                    mask,
-                    makeAuthList(keyMaterial.length * 8, KM_ALGORITHM_AES)));
-
-            // Use Key
-            KeyStore keyStore = KeyStore.getInstance("AndroidKeyStore");
-            keyStore.load(null, null);
-
-            assertTrue("Failed to load key after wrapped import", keyStore.containsAlias(ALIAS));
-
-            Key key = keyStore.getKey(ALIAS, null);
-
-            Cipher c = Cipher.getInstance("AES/CBC/PKCS7Padding");
-            c.init(Cipher.ENCRYPT_MODE, key);
-            IvParameterSpec paramSpec = new IvParameterSpec(c.getIV());
-
-            byte[] encrypted = c.doFinal("hello, world".getBytes());
-
-            c = Cipher.getInstance("AES/CBC/PKCS7Padding");
-            c.init(Cipher.DECRYPT_MODE, key, paramSpec);
-
-            assertEquals(new String(c.doFinal(encrypted)), "hello, world");
-        } else {
-            try {
-              random.setSeed(0);
-
-              byte[] keyMaterial = new byte[32];
-              random.nextBytes(keyMaterial);
-              byte[] mask = new byte[32]; // Zero mask
-
-              importWrappedKey(wrapKey(
-                  genKeyPair(WRAPPING_KEY_ALIAS, true).getPublic(),
-                  keyMaterial,
-                  mask,
-                  makeAuthList(keyMaterial.length * 8, KM_ALGORITHM_AES)));
-                fail();
-            } catch (StrongBoxUnavailableException | SecureKeyImportUnavailableException e) {
-            }
-        }
+        // Decrypt using local software copy of the key.
+        c = Cipher.getInstance("DESede/CBC/PKCS7Padding");
+        c.init(Cipher.DECRYPT_MODE, swKey, paramSpec);
+        assertEquals(new String(c.doFinal(encrypted)), plaintext);
     }
 
     public void importWrappedKey(byte[] wrappedKey, String wrappingKeyAlias) throws Exception {
