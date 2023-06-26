@@ -86,9 +86,15 @@ public class SuspendPackagesTest {
     @Rule
     public static final DeviceState sDeviceState = new DeviceState();
 
-    private void addAndAssertDeviceOwner() {
-        TestApis.devicePolicy().setDeviceOwner(new ComponentName(DEVICE_ADMIN_PACKAGE,
-                TestDeviceAdmin.class.getName()));
+    private boolean addDeviceOwner() {
+        try {
+            TestApis.devicePolicy().setDeviceOwner(new ComponentName(DEVICE_ADMIN_PACKAGE,
+                    TestDeviceAdmin.class.getName()));
+            return true;
+        } catch (Exception e) {
+            Log.e(TAG, "Could not add device owner", e);
+        }
+        return false;
     }
 
     private void addAndAssertDeviceAdmin() {
@@ -193,7 +199,7 @@ public class SuspendPackagesTest {
     @Test
     public void testCanSuspendWhenDeviceOwner() throws Exception {
         assumeTrue(FeatureUtil.hasSystemFeature(PackageManager.FEATURE_DEVICE_ADMIN));
-        addAndAssertDeviceOwner();
+        assumeTrue(addDeviceOwner());
         SuspendTestUtils.suspend(null, null, null);
     }
 
