@@ -22,6 +22,7 @@ android_test {
     compile_multilib: "both",
     static_libs: [
         "compatibility-device-util-axt",
+        "ctsmediav2common",
         "ctstestrunner-axt",
         "ctstestserver",
         "MediaPerformanceClassCommon",
