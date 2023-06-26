@@ -35,8 +35,6 @@
 
     <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
         <option name="run-command" value="settings put global activity_manager_constants background_settle_time=0" />
-        <!-- TODO(b/254155965): Design a mechanism to finally remove this command. -->
-        <option name="run-command" value="settings put global device_config_sync_disabled 0" />
         <option name="teardown-command" value="settings delete global activity_manager_constants" />
     </target_preparer>
 
