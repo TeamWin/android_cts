@@ -18,6 +18,7 @@ package android.mediav2.cts;
 
 import static android.mediav2.common.cts.CodecTestBase.SupportClass.CODEC_ALL;
 import static android.mediav2.common.cts.CodecTestBase.SupportClass.CODEC_OPTIONAL;
+import static android.mediav2.common.cts.CodecTestBase.VNDK_IS_AT_MOST_U;
 
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
@@ -190,7 +191,11 @@ public class AdaptivePlaybackTest extends CodecDecoderTestBase {
             MediaCodec.BufferInfo bufferInfo = new MediaCodec.BufferInfo();
             bufferInfo.offset = offset;
             bufferInfo.size = 0;
-            bufferInfo.presentationTimeUs = 0;
+            // For some devices with VNDK versions till Android U, sending a zero
+            // timestamp for CSD results in out of order timestamps at the output.
+            // For devices with VNDK versions > Android U, codecs are expected to
+            // handle CSD buffers with timestamp set to zero.
+            bufferInfo.presentationTimeUs = VNDK_IS_AT_MOST_U ? ptsOffset : 0;
             bufferInfo.flags = MediaCodec.BUFFER_FLAG_CODEC_CONFIG;
             for (int i = 0; ; i++) {
                 String csdKey = "csd-" + i;
