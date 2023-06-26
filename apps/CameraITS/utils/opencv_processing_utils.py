@@ -174,24 +174,24 @@ def calc_chart_scaling(chart_distance, camera_fov):
   """
   chart_scaling = 1.0
   fov = float(camera_fov)
-  chart_distance_22cm = math.isclose(
+  is_chart_distance_22cm = math.isclose(
       chart_distance, CHART_DISTANCE_22CM, rel_tol=CHART_SCALE_RTOL)
-  chart_distance_31cm = math.isclose(
+  is_chart_distance_31cm = math.isclose(
       chart_distance, CHART_DISTANCE_31CM, rel_tol=CHART_SCALE_RTOL)
 
-  if FOV_THRESH_TELE < fov < FOV_THRESH_UW and chart_distance_22cm:
+  if FOV_THRESH_TELE < fov < FOV_THRESH_UW and is_chart_distance_22cm:
     chart_scaling = SCALE_WIDE_IN_22CM_RIG
-  elif FOV_THRESH_TELE40 < fov <= FOV_THRESH_TELE and chart_distance_22cm:
+  elif FOV_THRESH_TELE40 < fov <= FOV_THRESH_TELE and is_chart_distance_22cm:
     chart_scaling = SCALE_TELE_IN_22CM_RIG
-  elif fov <= FOV_THRESH_TELE40 and chart_distance_22cm:
+  elif fov <= FOV_THRESH_TELE40 and is_chart_distance_22cm:
     chart_scaling = SCALE_TELE40_IN_22CM_RIG
   elif (fov <= FOV_THRESH_TELE25 and
-        chart_distance_31cm or
+        is_chart_distance_31cm or
         chart_distance > CHART_DISTANCE_31CM):
     chart_scaling = SCALE_TELE25_IN_31CM_RIG
-  elif fov <= FOV_THRESH_TELE40 and chart_distance_31cm:
+  elif fov <= FOV_THRESH_TELE40 and is_chart_distance_31cm:
     chart_scaling = SCALE_TELE40_IN_31CM_RIG
-  elif fov <= FOV_THRESH_TELE and chart_distance_31cm:
+  elif fov <= FOV_THRESH_TELE and is_chart_distance_31cm:
     chart_scaling = SCALE_TELE_IN_31CM_RIG
   return chart_scaling
 
