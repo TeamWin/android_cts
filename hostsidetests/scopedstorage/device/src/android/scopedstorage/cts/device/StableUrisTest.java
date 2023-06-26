@@ -35,6 +35,8 @@ import android.content.ContentResolver;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.pm.ProviderInfo;
+import android.net.Uri;
+import android.os.Bundle;
 import android.provider.MediaStore;
 import android.scopedstorage.cts.lib.TestUtils;
 import android.util.Log;
@@ -54,7 +56,10 @@ import org.junit.runners.Parameterized.Parameter;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 
 @RunWith(Parameterized.class)
 public final class StableUrisTest extends ScopedStorageBaseDeviceTest {
@@ -66,8 +71,13 @@ public final class StableUrisTest extends ScopedStorageBaseDeviceTest {
             "android.scopedstorage.cts.testapp.filemanager", 1, false,
             "CtsScopedStorageTestAppFileManager.apk");
 
+    private static final TestApp APP_NO_PERMS = new TestApp("TestAppB",
+            "android.scopedstorage.cts.testapp.B.noperms", 1, false,
+            "CtsScopedStorageTestAppB.apk");
     private static final String OPSTR_MANAGE_EXTERNAL_STORAGE =
             permissionToOp(Manifest.permission.MANAGE_EXTERNAL_STORAGE);
+
+    private static final int MAX_MEDIA_FILES_COUNT_THRESHOLD = 1000;
 
     private Context mContext;
     private ContentResolver mContentResolver;
@@ -79,23 +89,60 @@ public final class StableUrisTest extends ScopedStorageBaseDeviceTest {
     /** Parameters data. */
     @Parameterized.Parameters(name = "volume={0}")
     public static Iterable<?> data() {
-        return Arrays.asList(MediaStore.VOLUME_EXTERNAL_PRIMARY);
+        return Arrays.asList(MediaStore.VOLUME_EXTERNAL);
     }
 
     @Before
     public void setUp() throws Exception {
         super.setupExternalStorage(mVolumeName);
-        Log.d(TAG, "Using volume : " + mVolumeName);
         mContext = ApplicationProvider.getApplicationContext();
         mContentResolver = mContext.getContentResolver();
         final Instrumentation inst = InstrumentationRegistry.getInstrumentation();
         mDevice = UiDevice.getInstance(inst);
+        final int mMediaFilesCount = TestUtils.queryWithArgsAs(APP_FM,
+                MediaStore.Files.getContentUri(mVolumeName), null);
+        Log.d(TAG, "Number of media files on device: " + mMediaFilesCount);
+
+        assumeTrue("The number of media files is too large; Skipping the test as it "
+                        + "will take too much time to execute",
+                mMediaFilesCount <= MAX_MEDIA_FILES_COUNT_THRESHOLD);
     }
 
     @Test
     public void testUrisMapToExistingIds_withoutNextRowIdBackup() throws Exception {
         assumeFalse(getBoolean("persist.sys.fuse.backup.nextrowid_enabled", true));
         testScenario(/* nextRowIdBackupEnabled */ false);
+    }
+
+    @Test
+    public void testAttributesRestoration() throws Exception {
+        Map<File, Uri> fileToUriMap = new HashMap<>();
+
+        try {
+            setFlag("persist.sys.fuse.backup.internal_db_backup", true);
+            setFlag("persist.sys.fuse.backup.external_volume_backup", true);
+
+            fileToUriMap = createFilesAsTestApp(APP_NO_PERMS, 5);
+            final Map<File, Bundle> fileToAttributesMapBeforeRestore = setAttributes(fileToUriMap);
+
+            final Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+            final ContentResolver resolver = context.getContentResolver();
+            MediaStore.waitForIdle(resolver);
+            resolver.call(MediaStore.AUTHORITY, "idle_maintenance_for_stable_uris",
+                    null, null);
+
+            // Clear MediaProvider package data to trigger DB recreation.
+            mDevice.executeShellCommand("pm clear " + getMediaProviderPackageName());
+
+            // Sleeping to make sure the db recovering is completed
+            Thread.sleep(20000);
+
+            verifyAttributes(fileToUriMap, fileToAttributesMapBeforeRestore);
+        } finally {
+            for (File file : fileToUriMap.keySet()) {
+                file.delete();
+            }
+        }
     }
 
     @Test
@@ -113,7 +160,7 @@ public final class StableUrisTest extends ScopedStorageBaseDeviceTest {
                     0);
             allowAppOpsToUid(fmUid, OPSTR_MANAGE_EXTERNAL_STORAGE);
 
-            files = createFilesAsTestApp(APP_FM, 5);
+            files.addAll(createFilesAsTestApp(APP_FM, 5).keySet());
 
             long maxRowIdOfInternalDbBeforeReset = readMaximumRowIdFromDatabaseAs(APP_FM,
                     MediaStore.Files.getContentUri(MediaStore.VOLUME_INTERNAL));
@@ -161,17 +208,93 @@ public final class StableUrisTest extends ScopedStorageBaseDeviceTest {
         }
     }
 
-    private List<File> createFilesAsTestApp(TestApp app, int count) throws Exception {
-        List<File> files = new ArrayList<>();
+    private Map<File, Uri> createFilesAsTestApp(TestApp app, int count) throws Exception {
+        final Map<File, Uri> files = new HashMap<>();
         for (int i = 1; i <= count; i++) {
             final File file = new File(getPicturesDir(),
                     "Cts_" + System.currentTimeMillis() + ".jpg");
-            TestUtils.createFileAs(app, file.getAbsolutePath());
-            MediaStore.scanFile(mContentResolver, file);
-            files.add(file);
+            final boolean isFileCreated = !file.exists()
+                    && TestUtils.createFileAs(app, file.getAbsolutePath());
+
+            if (!isFileCreated) {
+                throw new RuntimeException(
+                        "File was not created on path: " + file.getAbsolutePath());
+            }
+
+            final Uri uri = MediaStore.scanFile(mContentResolver, file);
+            if (uri == null) {
+                throw new RuntimeException("Scanning returned null uri for file "
+                        + file.getAbsolutePath());
+            }
+            files.put(file, uri);
         }
 
         return files;
+    }
+
+    private void verifyAttributes(Map<File, Uri> fileToUriMap,
+            Map<File, Bundle> fileToAttributesMapBeforeRestore) throws Exception {
+        Log.d(TAG, "Started attributes verification after db restore");
+        for (Map.Entry<File, Uri> entry : fileToUriMap.entrySet()) {
+            final Bundle originalAttributes = fileToAttributesMapBeforeRestore.get(entry.getKey());
+            final Bundle attributesAfterRestore = TestUtils.queryMediaByUriAs(APP_NO_PERMS,
+                    entry.getValue(), originalAttributes.keySet());
+
+            assertWithMessage("Uri doesn't point to a media file after db restore")
+                    .that(attributesAfterRestore.isEmpty()).isFalse();
+
+            for (String attribute : originalAttributes.keySet()) {
+                final String afterRestore = attributesAfterRestore.getString(attribute);
+                final String beforeRestore = fileToAttributesMapBeforeRestore
+                        .get(entry.getKey()).getString(attribute);
+
+                final String assertMessage = String.format("Expected values for %s attribute to be "
+                        + "equal before and after DB restoration", attribute);
+                assertWithMessage(assertMessage)
+                        .that(afterRestore).isEqualTo(beforeRestore);
+            }
+        }
+        Log.d(TAG, "Finished attributes verification after db restore");
+    }
+
+    private Map<File, Bundle> setAttributes(Map<File, Uri> fileToUriMap) throws Exception {
+        final Map<File, Bundle> fileToAttributes = new HashMap<>();
+        int seed = 0;
+        for (Map.Entry<File, Uri> entry : fileToUriMap.entrySet()) {
+            final Bundle attributes = generateAttributes(seed++);
+
+            TestUtils.updateMediaByUriAs(APP_NO_PERMS, entry.getValue(), attributes);
+
+            final Bundle autoGeneratedAttributes = TestUtils.queryMediaByUriAs(APP_NO_PERMS,
+                    entry.getValue(), new HashSet<>(Arrays.asList(
+                            MediaStore.MediaColumns._ID,
+                            MediaStore.MediaColumns.DATE_EXPIRES,
+                            MediaStore.MediaColumns.OWNER_PACKAGE_NAME)));
+
+            attributes.putAll(autoGeneratedAttributes);
+            fileToAttributes.put(entry.getKey(), attributes);
+        }
+        return fileToAttributes;
+    }
+
+    private Bundle generateAttributes(int seed) {
+        final Bundle attributes = new Bundle();
+        attributes.putString(MediaStore.MediaColumns.IS_FAVORITE, seed % 2 == 0 ? "1" : "0");
+        attributes.putString(MediaStore.MediaColumns.IS_PENDING, seed % 3 == 0 ? "1" : "0");
+        // Shouldn't set both IS_PENDING and IS_TRASHED
+        attributes.putString(MediaStore.MediaColumns.IS_TRASHED,
+                seed % 4 == 0 && seed % 3 != 0 ? "1" : "0");
+
+        return attributes;
+    }
+
+    private void setFlag(String flagName, boolean value) throws Exception {
+        mDevice.executeShellCommand(
+                "setprop " + flagName + " " + value);
+        final String newValue = mDevice.executeShellCommand("getprop " + flagName).trim();
+
+        assumeTrue("Not able to set flag: " + flagName,
+                String.valueOf(value).equals(newValue));
     }
 
     private static String getMediaProviderPackageName() {
