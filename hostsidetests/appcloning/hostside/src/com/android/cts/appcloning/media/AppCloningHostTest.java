@@ -27,6 +27,7 @@ import android.platform.test.annotations.LargeTest;
 
 import com.android.cts.appcloning.AppCloningBaseHostTest;
 import com.android.tradefed.invoker.TestInformation;
+import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BeforeClassWithInfo;
 import com.android.tradefed.util.CommandResult;
@@ -65,6 +66,8 @@ public class AppCloningHostTest extends AppCloningBaseHostTest {
     private static final String MEDIA_PROVIDER_IMAGES_PATH = "/external/images/media/";
     private static final String CLONE_DIRECTORY_CREATION_FAILURE =
             "Failed to setup and user clone directories";
+    private static final String MEDIA_PROVIDER_MODULE_NAME =
+            "com.google.android.providers.media.module";
 
     /**
      * To help avoid flaky tests, give ourselves a unique nonce to be used for
@@ -325,20 +328,23 @@ public class AppCloningHostTest extends AppCloningBaseHostTest {
     // This test should be run with only user 0 as the currentUserId.
     @Test
     @LargeTest
-    public void testKillingMediaProviderDoesNotAffectVolumeMounts() throws Exception {
+    public void testCrashingMediaProviderDoesNotAffectVolumeMounts() throws Exception {
         assumeTrue(isAtLeastU(sDevice));
         int currentUserId = getCurrentUserId();
 
-        // Find MP process corresponding to user 0.
         String mediaProviderProcess = getMediaProviderProcess(String.valueOf(currentUserId));
         assertNotNull("No Media Provider Process Found for " + currentUserId, mediaProviderProcess);
 
-        // Kill the MP process.
-        CommandResult result = executeShellV2Command("kill " + mediaProviderProcess);
+        // Crash the MP process. After a while the process will be restarted and volumes remounted.
+        CommandResult result = executeShellV2Command("am crash --user %s %s",
+                String.valueOf(currentUserId), MEDIA_PROVIDER_MODULE_NAME);
+        CLog.d("MP crash command result: " + result);
         assertTrue(isSuccessful(result));
 
-        // Assert that User 0 and Clone User volumes are still mounted after MP process was killed.
+        // Assert that a new MP process is spawned.
+        // Assert that User 0 and Clone User volumes are still mounted after MP process was crashed.
         eventually(() -> {
+            assertNotNull(getMediaProviderProcess(String.valueOf(currentUserId)));
             assertTrue(isUserVolumeMounted(String.valueOf(currentUserId)));
             assertTrue(isUserVolumeMounted(sCloneUserId));
         }, USER_VOLUME_REMOUNT_TIMEOUT_MS);
