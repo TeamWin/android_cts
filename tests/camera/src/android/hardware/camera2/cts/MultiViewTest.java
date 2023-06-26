@@ -16,33 +16,38 @@
 
 package android.hardware.camera2.cts;
 
-import static android.hardware.camera2.cts.CameraTestUtils.*;
-import static android.hardware.cts.helpers.CameraUtils.*;
+import static android.hardware.camera2.cts.CameraTestUtils.ImageDropperListener;
+import static android.hardware.camera2.cts.CameraTestUtils.MAX_READER_IMAGES;
+import static android.hardware.camera2.cts.CameraTestUtils.SimpleCaptureCallback;
+import static android.hardware.camera2.cts.CameraTestUtils.assertEquals;
+import static android.hardware.camera2.cts.CameraTestUtils.assertNotNull;
+import static android.hardware.camera2.cts.CameraTestUtils.assertTrue;
+import static android.hardware.camera2.cts.CameraTestUtils.fail;
+import static android.hardware.camera2.cts.CameraTestUtils.makeImageReader;
+import static android.hardware.cts.helpers.CameraUtils.getAvailableSurfaceTexture;
 
 import static org.junit.Assert.assertArrayEquals;
 
 import android.graphics.Bitmap;
 import android.graphics.ImageFormat;
 import android.graphics.SurfaceTexture;
+import android.hardware.HardwareBuffer;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraDevice;
-import android.hardware.camera2.CameraAccessException;
-import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureFailure;
+import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.TotalCaptureResult;
 import android.hardware.camera2.cts.CameraTestUtils.ImageVerifierListener;
 import android.hardware.camera2.cts.helpers.StaticMetadata;
 import android.hardware.camera2.cts.rs.BitmapUtils;
 import android.hardware.camera2.cts.testcases.Camera2MultiViewTestCase;
-import android.hardware.camera2.cts.testcases.Camera2MultiViewTestCase.CameraPreviewListener;
 import android.hardware.camera2.params.OutputConfiguration;
-import android.hardware.HardwareBuffer;
 import android.media.Image;
 import android.media.ImageReader;
 import android.media.ImageWriter;
 import android.opengl.Matrix;
-import android.os.SystemClock;
 import android.os.ConditionVariable;
+import android.os.SystemClock;
 import android.util.Log;
 import android.util.Size;
 import android.view.Surface;
@@ -50,14 +55,14 @@ import android.view.TextureView;
 
 import com.android.ex.camera2.blocking.BlockingCameraManager.BlockingOpenException;
 
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
-
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.Test;
 
 /**
  * CameraDevice test by using combination of SurfaceView, TextureView and ImageReader
@@ -816,15 +821,13 @@ public class MultiViewTest extends Camera2MultiViewTestCase {
         assertTrue("Unable to start preview", previewDone);
         mTextureView[0].setSurfaceTextureListener(null);
 
-        SystemClock.sleep(PREVIEW_TIME_MS);
-
         for (int i = 0; i < switchCount; i++) {
             //Add one more output surface while preview is streaming
             surfaceSharedOutput.addSurface(surfaces[1]);
             updateOutputConfiguration(cameraId, surfaceSharedOutput);
             int sequenceId = updateRepeatingRequest(cameraId, outputConfigurations, resultListener);
 
-            SystemClock.sleep(PREVIEW_TIME_MS);
+            SystemClock.sleep(100);
 
             //Try to remove the shared surface while while we still have active requests that
             //use it as output.
@@ -844,7 +847,6 @@ public class MultiViewTest extends Camera2MultiViewTestCase {
             checkForLastFrameInSequence(lastSequenceFrameNumber, resultListener);
             updateOutputConfiguration(cameraId, surfaceSharedOutput);
 
-            SystemClock.sleep(PREVIEW_TIME_MS);
         }
 
         stopPreview(cameraId);
