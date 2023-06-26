@@ -59,6 +59,7 @@ java_test_host {
         "src/**/wifi/*.java",
         "src/**/incremental/*.java",
         "src/**/memorysafety/*.java",
+        "src/**/express/*.java",
     ],
 
     test_suites: [
@@ -90,6 +91,7 @@ java_test_host {
         ":CtsStatsdAlarmHelper2",
         ":CtsVoiceInteractionTestCases",
         ":CtsCredentialManagerTestCases",
+        ":CtsStatsdExpressLogHelper",
     ],
     per_testcase_directory: true,
 }
