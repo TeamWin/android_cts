@@ -123,6 +123,7 @@ class AppHibernationIntegrationTest {
         assertThat(
             runShellCommandOrThrow("cmd statusbar collapse"),
             CoreMatchers.equalTo(""))
+        clearNotifications()
 
         // Wake up the device
         runShellCommandOrThrow("input keyevent KEYCODE_WAKEUP")
