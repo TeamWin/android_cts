@@ -43,6 +43,7 @@ import android.os.Parcel;
 import android.os.Parcelable;
 import android.os.StrictMode;
 import android.test.AndroidTestCase;
+import android.util.Pair;
 import android.widget.RemoteViews;
 
 import androidx.annotation.Nullable;
@@ -1037,6 +1038,95 @@ public class NotificationTest extends AndroidTestCase {
                 extras.getInt(Notification.EXTRA_CALL_TYPE));
     }
 
+    public void testFreeformRemoteInputActionPair_noRemoteInput() {
+        PendingIntent intent = PendingIntent.getActivity(
+                mContext, 0, new Intent("test1"), PendingIntent.FLAG_IMMUTABLE);
+        Icon icon = Icon.createWithBitmap(Bitmap.createBitmap(300, 300, Bitmap.Config.ARGB_8888));
+        Notification notification = new Notification.Builder(mContext, "test")
+                .addAction(new Notification.Action.Builder(icon, "TEXT 1", intent)
+                        .build())
+                .build();
+        assertNull(notification.findRemoteInputActionPair(false));
+    }
+
+    public void testFreeformRemoteInputActionPair_hasRemoteInput() {
+        PendingIntent intent = PendingIntent.getActivity(
+                mContext, 0, new Intent("test1"), PendingIntent.FLAG_IMMUTABLE);
+        Icon icon = Icon.createWithBitmap(Bitmap.createBitmap(300, 300, Bitmap.Config.ARGB_8888));
+
+        RemoteInput remoteInput = new RemoteInput.Builder("a").build();
+
+        Notification.Action actionWithRemoteInput =
+                new Notification.Action.Builder(icon, "TEXT 1", intent)
+                        .addRemoteInput(remoteInput)
+                        .addRemoteInput(remoteInput)
+                        .build();
+
+        Notification.Action actionWithoutRemoteInput =
+                new Notification.Action.Builder(icon, "TEXT 2", intent)
+                        .build();
+
+        Notification notification = new Notification.Builder(mContext, "test")
+                .addAction(actionWithoutRemoteInput)
+                .addAction(actionWithRemoteInput)
+                .build();
+
+        Pair<RemoteInput, Notification.Action> remoteInputActionPair =
+                notification.findRemoteInputActionPair(false);
+
+        assertNotNull(remoteInputActionPair);
+        assertEquals(remoteInput, remoteInputActionPair.first);
+        assertEquals(actionWithRemoteInput, remoteInputActionPair.second);
+    }
+
+    public void testFreeformRemoteInputActionPair_requestFreeform_noFreeformRemoteInput() {
+        PendingIntent intent = PendingIntent.getActivity(
+                mContext, 0, new Intent("test1"), PendingIntent.FLAG_IMMUTABLE);
+        Icon icon = Icon.createWithBitmap(Bitmap.createBitmap(300, 300, Bitmap.Config.ARGB_8888));
+        Notification notification = new Notification.Builder(mContext, "test")
+                .addAction(new Notification.Action.Builder(icon, "TEXT 1", intent)
+                        .addRemoteInput(
+                                new RemoteInput.Builder("a")
+                                        .setAllowFreeFormInput(false).build())
+                        .build())
+                .build();
+        assertNull(notification.findRemoteInputActionPair(true));
+    }
+
+    public void testFreeformRemoteInputActionPair_requestFreeform_hasFreeformRemoteInput() {
+        PendingIntent intent = PendingIntent.getActivity(
+                mContext, 0, new Intent("test1"), PendingIntent.FLAG_IMMUTABLE);
+        Icon icon = Icon.createWithBitmap(Bitmap.createBitmap(300, 300, Bitmap.Config.ARGB_8888));
+
+        RemoteInput remoteInput =
+                new RemoteInput.Builder("a").setAllowFreeFormInput(false).build();
+        RemoteInput freeformRemoteInput =
+                new RemoteInput.Builder("b").setAllowFreeFormInput(true).build();
+
+        Notification.Action actionWithFreeformRemoteInput =
+                new Notification.Action.Builder(icon, "TEXT 1", intent)
+                        .addRemoteInput(remoteInput)
+                        .addRemoteInput(freeformRemoteInput)
+                        .build();
+
+        Notification.Action actionWithoutFreeformRemoteInput =
+                new Notification.Action.Builder(icon, "TEXT 2", intent)
+                        .addRemoteInput(remoteInput)
+                        .build();
+
+        Notification notification = new Notification.Builder(mContext, "test")
+                .addAction(actionWithoutFreeformRemoteInput)
+                .addAction(actionWithFreeformRemoteInput)
+                .build();
+
+        Pair<RemoteInput, Notification.Action> remoteInputActionPair =
+                notification.findRemoteInputActionPair(true);
+
+        assertNotNull(remoteInputActionPair);
+        assertEquals(freeformRemoteInput, remoteInputActionPair.first);
+        assertEquals(actionWithFreeformRemoteInput, remoteInputActionPair.second);
+    }
+
     private static void assertMessageEquals(
             Notification.MessagingStyle.Message expected,
             Notification.MessagingStyle.Message actual) {
@@ -1107,3 +1197,4 @@ public class NotificationTest extends AndroidTestCase {
                 .build();
     }
 }
+
