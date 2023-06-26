@@ -87,6 +87,7 @@ public class BackgroundRestrictedAlarmsTest {
 
     private volatile int mAlarmCount;
     private volatile String mFgsResult;
+    private int mInitialSyncDisabledMode = -1;
 
     private final BroadcastReceiver mAlarmStateReceiver = new BroadcastReceiver() {
         @Override
@@ -114,8 +115,10 @@ public class BackgroundRestrictedAlarmsTest {
         updateAlarmManagerConstants();
         mActivityManagerDeviceConfigStateHelper
                 .set("bg_auto_restricted_bucket_on_bg_restricted", "false");
-        SystemUtil.runWithShellPermissionIdentity(() ->
-                DeviceConfig.setSyncDisabledMode(DeviceConfig.SYNC_DISABLED_MODE_UNTIL_REBOOT));
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            mInitialSyncDisabledMode = DeviceConfig.getSyncDisabledMode();
+            DeviceConfig.setSyncDisabledMode(DeviceConfig.SYNC_DISABLED_MODE_UNTIL_REBOOT);
+        });
         AppOpsUtils.setOpMode(TEST_APP_PACKAGE, OPSTR_RUN_ANY_IN_BACKGROUND, MODE_IGNORED);
         makeUidIdle();
         setAppStandbyBucket("active");
@@ -205,8 +208,10 @@ public class BackgroundRestrictedAlarmsTest {
 
     @After
     public void tearDown() throws Exception {
-        SystemUtil.runWithShellPermissionIdentity(() ->
-                DeviceConfig.setSyncDisabledMode(DeviceConfig.SYNC_DISABLED_MODE_NONE));
+        if (mInitialSyncDisabledMode != -1) {
+            SystemUtil.runWithShellPermissionIdentity(() ->
+                    DeviceConfig.setSyncDisabledMode(mInitialSyncDisabledMode));
+        }
         deleteAlarmManagerConstants();
         AppOpsUtils.reset(TEST_APP_PACKAGE);
         mActivityManagerDeviceConfigStateHelper.restoreOriginalValues();
