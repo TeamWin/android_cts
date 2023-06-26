@@ -69,8 +69,12 @@ public class SatelliteManagerTestBase {
     protected static String TAG = "SatelliteManagerTestBase";
 
     protected static final String TOKEN = "TEST_TOKEN";
-    protected static final long TIMEOUT = 2000;
-    protected static final long EXTERNAL_DEPENDENT_TIMEOUT = 10000;
+    protected static final long TIMEOUT = TimeUnit.SECONDS.toMillis(2);
+    /**
+     * Since SST sets waiting time up to 10 seconds for the power off radio, the timer waiting for
+     * radio power state change should be greater than 10 seconds.
+     */
+    protected static final long EXTERNAL_DEPENDENT_TIMEOUT = TimeUnit.SECONDS.toMillis(15);
 
     protected static SatelliteManager sSatelliteManager;
     protected static TelephonyManager sTelephonyManager = null;
