@@ -31,6 +31,7 @@ import androidx.test.filters.MediumTest
 import androidx.test.platform.app.InstrumentationRegistry
 import com.android.compatibility.common.util.PollingCheck
 import com.android.compatibility.common.util.SystemUtil
+import com.android.cts.input.DebugInputRule
 import com.android.cts.input.UinputDevice
 import com.android.cts.input.UinputTouchDevice
 import org.junit.After
@@ -72,6 +73,7 @@ class StylusButtonInputEventTest {
             )
     }
 
+    @get:Rule val debugInputRule = DebugInputRule()
     @get:Rule val virtualDisplayRule = VirtualDisplayActivityScenarioRule()
     private val instrumentation = InstrumentationRegistry.getInstrumentation()
     private lateinit var statusBarManager: StatusBarManager
@@ -144,6 +146,7 @@ class StylusButtonInputEventTest {
         }
     }
 
+    @DebugInputRule.DebugInput(bug = 288321659)
     @Test
     fun testStylusButtonsEnabledMotionEvents() {
         enableStylusButtons()
@@ -199,6 +202,7 @@ class StylusButtonInputEventTest {
         }
     }
 
+    @DebugInputRule.DebugInput(bug = 288321659)
     @Test
     fun testStylusButtonsDisabledMotionEvents() {
         disableStylusButtons()
