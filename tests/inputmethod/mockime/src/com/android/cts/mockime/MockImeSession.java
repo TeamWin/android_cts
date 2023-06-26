@@ -46,6 +46,7 @@ import android.view.inputmethod.ExtractedTextRequest;
 import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InputContentInfo;
 import android.view.inputmethod.InputMethodManager;
+import android.view.inputmethod.InputMethodSubtype;
 import android.view.inputmethod.TextAttribute;
 
 import androidx.annotation.AnyThread;
@@ -1308,6 +1309,44 @@ public class MockImeSession implements AutoCloseable {
         final Bundle params = new Bundle();
         params.putBoolean("imeConsumesInput", imeConsumesInput);
         return callCommandInternal("setImeConsumesInput", params);
+    }
+
+    /**
+     * Makes {@link MockIme} call {@link
+     * android.inputmethodservice.InputMethodService#switchInputMethod(String)}
+     * with the given parameters.
+     *
+     * @param id the IME ID.
+     * @return {@link ImeCommand} object that can be passed to
+     *         {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to
+     *         wait until this event is handled by {@link MockIme}
+     */
+    @NonNull
+    public ImeCommand callSwitchInputMethod(String id) {
+        final Bundle params = new Bundle();
+        params.putString("id", id);
+        return callCommandInternal("switchInputMethod", params);
+    }
+
+    /**
+     * Lets {@link MockIme} to call {@link
+     * android.inputmethodservice.InputMethodService#switchInputMethod(String, InputMethodSubtype)}
+     * with the given parameters.
+     *
+     * <p>This triggers {@code switchInputMethod(id, subtype)}.</p>
+     *
+     * @param id the IME ID.
+     * @param subtype {@link InputMethodSubtype} to be switched to. Ignored if {@code null}.
+     * @return {@link ImeCommand} object that can be passed to
+     *         {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to
+     *         wait until this event is handled by {@link MockIme}
+     */
+    @NonNull
+    public ImeCommand callSwitchInputMethod(String id, @Nullable InputMethodSubtype subtype) {
+        final Bundle params = new Bundle();
+        params.putString("id", id);
+        params.putParcelable("subtype", subtype);
+        return callCommandInternal("switchInputMethod(String,InputMethodSubtype)", params);
     }
 
     /**

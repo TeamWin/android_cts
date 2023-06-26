@@ -138,6 +138,24 @@ public class TestUtils {
             .addSupportedUriScheme(PhoneAccount.SCHEME_VOICEMAIL)
             .build();
 
+    public static final PhoneAccount TEST_PHONE_ACCOUNT_THAT_HANDLES_CONTENT_SCHEME =
+            PhoneAccount.builder(
+                            TEST_PHONE_ACCOUNT_HANDLE, ACCOUNT_LABEL)
+                    .setAddress(Uri.parse("tel:555-TEST"))
+                    .setSubscriptionAddress(Uri.parse("tel:555-TEST"))
+                    .setCapabilities(PhoneAccount.CAPABILITY_CALL_PROVIDER |
+                            PhoneAccount.CAPABILITY_VIDEO_CALLING |
+                            PhoneAccount.CAPABILITY_RTT |
+                            PhoneAccount.CAPABILITY_CONNECTION_MANAGER |
+                            PhoneAccount.CAPABILITY_PLACE_EMERGENCY_CALLS |
+                            PhoneAccount.CAPABILITY_ADHOC_CONFERENCE_CALLING)
+                    .setHighlightColor(Color.RED)
+                    .setShortDescription(ACCOUNT_LABEL)
+                    .addSupportedUriScheme(PhoneAccount.SCHEME_TEL)
+                    .addSupportedUriScheme(PhoneAccount.SCHEME_VOICEMAIL)
+                    .addSupportedUriScheme("content")
+                    .build();
+
     public static final PhoneAccount TEST_SIM_PHONE_ACCOUNT = PhoneAccount.builder(
             TEST_SIM_PHONE_ACCOUNT_HANDLE, SIM_ACCOUNT_LABEL)
             .setAddress(Uri.parse("tel:555-TEST"))

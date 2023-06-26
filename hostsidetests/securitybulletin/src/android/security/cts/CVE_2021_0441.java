@@ -16,6 +16,9 @@
 
 package android.security.cts;
 
+import static org.junit.Assume.assumeFalse;
+import static org.junit.Assume.assumeNoException;
+
 import android.platform.test.annotations.AsbSecurityTest;
 
 import com.android.sts.common.tradefed.testtype.NonRootSecurityTestCase;
@@ -34,18 +37,25 @@ public class CVE_2021_0441 extends NonRootSecurityTestCase {
 
     /**
      * b/174495520
+     * Vulnerable Module : com.google.android.mediaprovider
+     * Is Play managed   : Yes
      */
     @AsbSecurityTest(cveBugId = 174495520)
     @Test
-    public void testPocCVE_2021_0441() throws Exception {
-        ITestDevice device = getDevice();
-        uninstallPackage(device, TEST_PKG);
+    public void testPocCVE_2021_0441() {
+        try {
+            assumeFalse(moduleIsPlayManaged("com.google.android.mediaprovider"));
+            ITestDevice device = getDevice();
+            uninstallPackage(device, TEST_PKG);
 
-        AdbUtils.runCommandLine("input keyevent KEYCODE_WAKEUP", device);
-        AdbUtils.runCommandLine("input keyevent KEYCODE_MENU", device);
-        AdbUtils.runCommandLine("input keyevent KEYCODE_HOME", device);
+            AdbUtils.runCommandLine("input keyevent KEYCODE_WAKEUP", device);
+            AdbUtils.runCommandLine("input keyevent KEYCODE_MENU", device);
+            AdbUtils.runCommandLine("input keyevent KEYCODE_HOME", device);
 
-        installPackage(TEST_APP);
-        runDeviceTests(TEST_PKG, TEST_CLASS, "testCVE_2021_0441");
+            installPackage(TEST_APP);
+            runDeviceTests(TEST_PKG, TEST_CLASS, "testCVE_2021_0441");
+        } catch (Exception e) {
+            assumeNoException(e);
+        }
     }
 }
