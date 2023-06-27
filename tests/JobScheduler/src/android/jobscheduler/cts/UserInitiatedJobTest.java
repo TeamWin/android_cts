@@ -17,6 +17,7 @@
 package android.jobscheduler.cts;
 
 import static android.app.job.JobInfo.NETWORK_TYPE_ANY;
+import static android.jobscheduler.cts.JobThrottlingTest.setScreenState;
 import static android.jobscheduler.cts.JobThrottlingTest.setTestPackageStandbyBucket;
 import static android.jobscheduler.cts.TestAppInterface.TEST_APP_PACKAGE;
 
@@ -46,7 +47,6 @@ import androidx.test.runner.AndroidJUnit4;
 import androidx.test.uiautomator.UiDevice;
 
 import com.android.compatibility.common.util.CallbackAsserter;
-import com.android.compatibility.common.util.ScreenUtils;
 import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.After;
@@ -142,7 +142,7 @@ public class UserInitiatedJobTest {
     public void testTopUiUnlimited() throws Exception {
         final int standardConcurrency = 64;
         final int numUijs = standardConcurrency + 1;
-        ScreenUtils.setScreenOn(true);
+        setScreenState(mUiDevice, true);
         mTestAppInterface.startAndKeepTestActivity(true);
         for (int i = 0; i < numUijs; ++i) {
             mTestAppInterface.scheduleJob(
@@ -205,6 +205,7 @@ public class UserInitiatedJobTest {
             mNetworkingHelper.setAllNetworksEnabled(true);
             assertFalse(mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT_MS));
 
+            setScreenState(mUiDevice, true);
             mTestAppInterface.startAndKeepTestActivity(true);
             assertTrue(mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT_MS));
         }
@@ -253,7 +254,7 @@ public class UserInitiatedJobTest {
     /** Test that UI jobs of restricted apps will be stopped after the app leaves the TOP state. */
     @Test
     public void testRestrictedTopToBg() throws Exception {
-        ScreenUtils.setScreenOn(true);
+        setScreenState(mUiDevice, true);
         mTestAppInterface.setTestPackageRestricted(true);
         mTestAppInterface.startAndKeepTestActivity(true);
         mTestAppInterface.scheduleJob(
@@ -338,7 +339,7 @@ public class UserInitiatedJobTest {
     public void testSchedulingBg() throws Exception {
         // Close the activity and turn the screen off so the app isn't considered TOP.
         mTestAppInterface.closeActivity();
-        ScreenUtils.setScreenOn(false);
+        setScreenState(mUiDevice, false);
         mTestAppInterface.scheduleJob(
                 Map.of(TestJobSchedulerReceiver.EXTRA_AS_USER_INITIATED, true),
                 Map.of(TestJobSchedulerReceiver.EXTRA_REQUIRED_NETWORK_TYPE, NETWORK_TYPE_ANY));
@@ -351,7 +352,7 @@ public class UserInitiatedJobTest {
     public void testSchedulingEj() throws Exception {
         // Close the activity and turn the screen off so the app isn't considered TOP.
         mTestAppInterface.closeActivity();
-        ScreenUtils.setScreenOn(false);
+        setScreenState(mUiDevice, false);
 
         final int jobIdEj = JOB_ID;
         final int jobIdUij = JOB_ID + 1;
@@ -374,7 +375,7 @@ public class UserInitiatedJobTest {
     /** Test that UI jobs can be scheduled directly from an FGS that was started in TOP state. */
     @Test
     public void testSchedulingFgs_approved() throws Exception {
-        ScreenUtils.setScreenOn(true);
+        setScreenState(mUiDevice, true);
         mTestAppInterface.startAndKeepTestActivity(true);
         mTestAppInterface.startFgs();
         mTestAppInterface.closeActivity(true);
@@ -409,7 +410,7 @@ public class UserInitiatedJobTest {
     /** Test that UI jobs can be scheduled directly from the TOP state. */
     @Test
     public void testSchedulingTop() throws Exception {
-        ScreenUtils.setScreenOn(true);
+        setScreenState(mUiDevice, true);
         mTestAppInterface.startAndKeepTestActivity(true);
         mTestAppInterface.scheduleJob(
                 Map.of(TestJobSchedulerReceiver.EXTRA_AS_USER_INITIATED, true),
@@ -424,7 +425,7 @@ public class UserInitiatedJobTest {
         int firstJobId = JOB_ID;
         int secondJobId = firstJobId + 1;
 
-        ScreenUtils.setScreenOn(true);
+        setScreenState(mUiDevice, true);
         mTestAppInterface.startAndKeepTestActivity(true);
         mTestAppInterface.scheduleJob(
                 Map.of(
