@@ -15,8 +15,10 @@
  * limitations under the License.
  */
 package android.permission3.cts
+
 import android.Manifest.permission.ACCESS_COARSE_LOCATION
 import android.Manifest.permission.ACCESS_FINE_LOCATION
+import android.content.res.Resources
 import android.provider.DeviceConfig
 import androidx.test.uiautomator.By
 import com.android.compatibility.common.util.DeviceConfigStateChangerRule
@@ -101,6 +103,19 @@ class SafetyProtectionTest : BaseUsePermissionTest() {
         private const val SAFETY_PROTECTION_DISPLAY_TEXT =
             "com.android.permissioncontroller:id/safety_protection_display_text"
         private val safetyProtectionResourcesExist =
-            !context.getString(android.R.string.safety_protection_display_text).isNullOrEmpty()
+            try {
+                context
+                    .getResources()
+                    .getBoolean(
+                        Resources.getSystem()
+                            .getIdentifier("config_safetyProtectionEnabled", "bool", "android")
+                    ) &&
+                    context.getDrawable(android.R.drawable.ic_safety_protection) != null &&
+                    !context.getString(
+                        android.R.string.safety_protection_display_text
+                    ).isNullOrEmpty()
+            } catch (e: Resources.NotFoundException) {
+                false
+            }
     }
 }
