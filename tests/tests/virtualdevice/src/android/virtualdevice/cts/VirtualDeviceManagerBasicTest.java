@@ -61,6 +61,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.AdoptShellPermissionsRule;
+import com.android.compatibility.common.util.FeatureUtil;
 import com.android.internal.annotations.GuardedBy;
 import com.android.internal.os.BackgroundThread;
 
@@ -122,6 +123,11 @@ public class VirtualDeviceManagerBasicTest {
         assumeTrue(packageManager.hasSystemFeature(PackageManager.FEATURE_COMPANION_DEVICE_SETUP));
         assumeTrue(packageManager.hasSystemFeature(
                 PackageManager.FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS));
+
+        // Virtual device manager is disabled on wearables
+        // TODO(b/287295010): Remove in favor of VDM feature flag check
+        assumeFalse(FeatureUtil.isWatch());
+
         mVirtualDeviceManager = context.getSystemService(VirtualDeviceManager.class);
     }
 
