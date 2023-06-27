@@ -100,6 +100,7 @@ import android.window.OnBackInvokedDispatcher;
 import androidx.annotation.ColorInt;
 import androidx.annotation.IntRange;
 import androidx.annotation.NonNull;
+import androidx.test.filters.FlakyTest;
 import androidx.test.filters.MediumTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
@@ -1488,6 +1489,7 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
      * 4. Focus/click on first activity, then click on the editText.
      */
     @Test
+    @FlakyTest
     public void testIMEVisibleInSplitScreenAfterGainingFocus() throws Exception {
         assumeTrue(TestUtils.supportsSplitScreenMultiWindow());
 
@@ -1561,6 +1563,7 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
      * 7. Test step 3-5 again to ensure it passes after exiting split screen mode.
      */
     @Test
+    @FlakyTest
     public void testIMEVisibleInSplitScreenWithWindowInsetsApi() throws Throwable {
         assumeTrue(TestUtils.supportsSplitScreenMultiWindow());
 
