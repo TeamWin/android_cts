@@ -1017,13 +1017,6 @@ public class AudioDataPathsActivity
             if (mTestStep >= mTestSpecs.size()) {
                 stopTest();
                 completeTest();
-            } else {
-                (mTimer = new Timer()).schedule(new TimerTask() {
-                    @Override
-                    public void run() {
-                        advanceTestStep();
-                    }
-                }, TEST_TIME_IN_SECONDS * MS_PER_SEC);
             }
         }
 
