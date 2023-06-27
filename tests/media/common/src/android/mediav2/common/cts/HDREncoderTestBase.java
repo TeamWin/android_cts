@@ -16,6 +16,7 @@
 
 package android.mediav2.common.cts;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -25,11 +26,11 @@ import android.media.MediaFormat;
 
 import org.junit.Assume;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -39,21 +40,61 @@ public class HDREncoderTestBase extends CodecEncoderTestBase {
     private static final String LOG_TAG = HDREncoderTestBase.class.getSimpleName();
 
     private ByteBuffer mHdrStaticInfo;
-    private Map<Integer, String> mHdrDynamicInfo;
+    private Map<Long, String> mHdrDynamicInfo;
+    private ArrayList<Long> mTotalMetadataQueued;
+    private Map<Long, String> mHdrDynamicInfoReceived;
 
     public HDREncoderTestBase(String encoderName, String mediaType,
             EncoderConfigParams encCfgParams, String allTestParams) {
         super(encoderName, mediaType, new EncoderConfigParams[]{encCfgParams}, allTestParams);
     }
 
+    private String getMetadataForPts(Map<Long, String> dynamicInfoList, Long pts) {
+        final int roundToleranceUs = 10;
+        if (dynamicInfoList.containsKey(pts)) return dynamicInfoList.get(pts);
+        for (Map.Entry<Long, String> entry : dynamicInfoList.entrySet()) {
+            Long keyPts = entry.getKey();
+            if (Math.abs(keyPts - pts) < roundToleranceUs) return entry.getValue();
+        }
+        return null;
+    }
+
+    public void resetContext(boolean isAsync, boolean signalEOSWithLastFrame) {
+        if (mTotalMetadataQueued != null) mTotalMetadataQueued.clear();
+        if (mHdrDynamicInfoReceived != null) mHdrDynamicInfoReceived.clear();
+        super.resetContext(isAsync, signalEOSWithLastFrame);
+    }
+
     protected void enqueueInput(int bufferIndex) {
-        if (mHdrDynamicInfo != null && mHdrDynamicInfo.containsKey(mInputCount)) {
-            insertHdrDynamicInfo(loadByteArrayFromString(mHdrDynamicInfo.get(mInputCount)));
+        if (mHdrDynamicInfo != null) {
+            long pts = mInputOffsetPts + mInputCount * 1000000L / mActiveEncCfg.mFrameRate;
+            String info = getMetadataForPts(mHdrDynamicInfo, pts);
+            if (info != null) {
+                insertHdrDynamicInfo(loadByteArrayFromString(info));
+                mTotalMetadataQueued.add(pts);
+            }
         }
         super.enqueueInput(bufferIndex);
     }
 
-    public void validateHDRInfo(String hdrStaticInfo, Map<Integer, String> hdrDynamicInfo)
+    protected void dequeueOutput(int bufferIndex, MediaCodec.BufferInfo info) {
+        if (mHdrDynamicInfo != null) {
+            if (info.size > 0 && (info.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) == 0) {
+                MediaFormat outFormat = mCodec.getOutputFormat(bufferIndex);
+                ByteBuffer metadataBuff =
+                        outFormat.getByteBuffer(MediaFormat.KEY_HDR10_PLUS_INFO, null);
+                if (metadataBuff != null) {
+                    byte[] bytes = new byte[metadataBuff.remaining()];
+                    metadataBuff.get(bytes);
+                    mHdrDynamicInfoReceived.put(info.presentationTimeUs,
+                            byteArrayToHexString(bytes));
+                }
+            }
+        }
+        super.dequeueOutput(bufferIndex, info);
+    }
+
+    public void validateHDRInfo(String hdrStaticInfo, Map<Long, String> hdrDynamicInfo)
             throws IOException, InterruptedException {
         mHdrStaticInfo = hdrStaticInfo != null
                 ? ByteBuffer.wrap(loadByteArrayFromString(hdrStaticInfo)) : null;
@@ -74,10 +115,12 @@ public class HDREncoderTestBase extends CodecEncoderTestBase {
 
         int frameLimit = 4;
         if (mHdrDynamicInfo != null) {
-            Integer lastHdr10PlusFrame =
-                    Collections.max(HDR_DYNAMIC_INFO.entrySet(), Map.Entry.comparingByKey())
+            mTotalMetadataQueued = new ArrayList<>();
+            mHdrDynamicInfoReceived = new HashMap();
+            Long lastHdr10PlusFramePts =
+                    Collections.max(mHdrDynamicInfo.entrySet(), Map.Entry.comparingByKey())
                             .getKey();
-            frameLimit = lastHdr10PlusFrame + 10;
+            frameLimit = (int) (lastHdr10PlusFramePts * mActiveEncCfg.mFrameRate / 1000000L) + 10;
         }
         int maxNumFrames = mInputData.length
                 / (mActiveRawRes.mWidth * mActiveRawRes.mHeight * mActiveRawRes.mBytesPerSample);
@@ -98,12 +141,29 @@ public class HDREncoderTestBase extends CodecEncoderTestBase {
 
         mCodec.stop();
         mCodec.release();
+
+        // verify if the out fmt contains HDR Static info as expected
         if (mHdrStaticInfo != null) {
-            // verify if the out fmt contains HDR Static info as expected
-            validateHDRInfo(fmt, MediaFormat.KEY_HDR_STATIC_INFO, mHdrStaticInfo);
+            validateHDRInfo(fmt, MediaFormat.KEY_HDR_STATIC_INFO, mHdrStaticInfo, -1L);
         }
 
-        // verify if the muxed file contains HDR Dynamic info as expected
+        // verify if the out fmt contains HDR Dynamic info as expected
+        if (mHdrDynamicInfo != null) {
+            assertEquals("Test did not queue metadata of all frames", mHdrDynamicInfo.size(),
+                    mTotalMetadataQueued.size());
+            for (Map.Entry<Long, String> entry : mHdrDynamicInfo.entrySet()) {
+                Long pts = entry.getKey();
+                assertTrue("At timestamp : " + pts + "application queued hdr10+ metadata,"
+                                + " during dequeue application did not receive it in output format",
+                        mHdrDynamicInfoReceived.containsKey(pts));
+                ByteBuffer hdrInfoRef = ByteBuffer.wrap(loadByteArrayFromString(entry.getValue()));
+                ByteBuffer hdrInfoTest =
+                        ByteBuffer.wrap(loadByteArrayFromString(mHdrDynamicInfoReceived.get(pts)));
+                validateHDRInfo(MediaFormat.KEY_HDR10_PLUS_INFO, hdrInfoRef, hdrInfoTest, pts);
+            }
+        }
+
+        // verify if the muxed file contains HDR metadata as expected
         MediaCodecList codecList = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
         String decoder = codecList.findDecoderForFormat(format);
         assertNotNull("Device advertises support for encoding " + format + " but not decoding it \n"
@@ -111,10 +171,10 @@ public class HDREncoderTestBase extends CodecEncoderTestBase {
 
         HDRDecoderTestBase decoderTest =
                 new HDRDecoderTestBase(decoder, mMediaType, mMuxedOutputFile, mAllTestParams);
-        decoderTest.validateHDRInfo(hdrStaticInfo, hdrStaticInfo, mHdrDynamicInfo, mHdrDynamicInfo);
+        decoderTest.validateHDRInfo(hdrStaticInfo, hdrStaticInfo, mHdrDynamicInfo,
+                mHdrDynamicInfo);
         if (HDR_INFO_IN_BITSTREAM_CODECS.contains(mMediaType)) {
             decoderTest.validateHDRInfo(hdrStaticInfo, null, mHdrDynamicInfo, null);
         }
-        new File(mMuxedOutputFile).delete();
     }
 }
