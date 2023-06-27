@@ -130,7 +130,18 @@ public class CarrierCapability {
                     "311486",
                     "311487",
                     "311488",
-                    "311489"
+                    "311489",
+                    // AT&T
+                    "310030",
+                    "310070",
+                    "310170",
+                    "310280",
+                    "310380",
+                    "310410",
+                    "310560",
+                    "310680",
+                    "310950",
+                    "311180"
             );
 
     // List of network operators that doesn't support Maltipart SMS message
