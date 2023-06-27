@@ -27,6 +27,8 @@ import android.view.View;
 import com.android.cts.verifier.OrderedTestActivity;
 import com.android.cts.verifier.R;
 
+import java.lang.reflect.Method;
+
 /** Test activity to check fulfillment of the ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS intent. */
 public class IgnoreBatteryOptimizationsTestActivity extends OrderedTestActivity {
     private PowerManager mPowerManager;
@@ -45,6 +47,7 @@ public class IgnoreBatteryOptimizationsTestActivity extends OrderedTestActivity 
     @Override
     protected Test[] getTests() {
         return new Test[]{
+                mCheckAutoPowerModesEnabled,
                 mConfirmNotExemptedAtStart,
                 mRequestExemption,
                 mIntermediate,
@@ -63,15 +66,31 @@ public class IgnoreBatteryOptimizationsTestActivity extends OrderedTestActivity 
 
     private boolean isExempted() {
         return mPowerManager.isIgnoringBatteryOptimizations(getPackageName())
+                // getAppStandbyBucket() should return EXEMPTED if standby buckets are disabled,
+                // so no need to check UsageStatsManager.isAppStandbyEnabled() here.
                 && mUsageStatsManager.getAppStandbyBucket()
                 == UsageStatsManager.STANDBY_BUCKET_EXEMPTED;
+    }
+
+    private boolean isAppStandbyEnabled() {
+        try {
+            Method method = UsageStatsManager.class.getDeclaredMethod("isAppStandbyEnabled");
+            method.setAccessible(true);
+            return (Boolean) method.invoke(mUsageStatsManager);
+        } catch (Exception e) {
+            // Expected on most builds.
+        }
+
+        // The test previously assumed app standby is enabled.
+        return true;
     }
 
     private boolean isFullyNotExempted() {
         // Use an OR so we check both values to make sure neither of them say the app is exempted.
         if (mPowerManager.isIgnoringBatteryOptimizations(getPackageName())
-                || mUsageStatsManager.getAppStandbyBucket()
-                == UsageStatsManager.STANDBY_BUCKET_EXEMPTED) {
+                || (isAppStandbyEnabled()
+                    && mUsageStatsManager.getAppStandbyBucket()
+                        == UsageStatsManager.STANDBY_BUCKET_EXEMPTED)) {
             return false;
         }
         return true;
@@ -81,6 +100,37 @@ public class IgnoreBatteryOptimizationsTestActivity extends OrderedTestActivity 
         Intent intent = new Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS);
         startActivity(intent);
     }
+
+    private boolean areAutoPowerSaveModesEnabled() {
+        try {
+            Method method = PowerManager.class.getDeclaredMethod("areAutoPowerSaveModesEnabled");
+            method.setAccessible(true);
+            return (Boolean) method.invoke(mPowerManager);
+        } catch (Exception e) {
+            // Expected on most builds.
+        }
+
+        // The test previously assumed auto power save modes were enabled.
+        return true;
+    }
+
+    private final Test mCheckAutoPowerModesEnabled =
+            new Test(R.string.ibo_auto_power_modes_enabled) {
+                @Override
+                protected void run() {
+                    super.run();
+
+                    if (areAutoPowerSaveModesEnabled()) {
+                        succeed();
+                    } else {
+                        // Auto power save modes disabled. This test doesn't apply to this device.
+                        mInstructions.setText(R.string.tests_completed_successfully);
+                        mNextButton.setVisibility(View.GONE);
+                        findViewById(R.id.pass_button).setVisibility(View.VISIBLE);
+                        findViewById(R.id.fail_button).setVisibility(View.GONE);
+                    }
+                }
+            };
 
     private final Test mConfirmNotExemptedAtStart = new Test(R.string.ibo_test_start_unexempt_app) {
         @Override
