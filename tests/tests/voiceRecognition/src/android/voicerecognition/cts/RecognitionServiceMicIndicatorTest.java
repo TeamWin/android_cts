@@ -44,6 +44,7 @@ import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.SettingsStateChangerRule;
 import com.android.compatibility.common.util.SystemUtil;
 
@@ -159,6 +160,10 @@ public final class RecognitionServiceMicIndicatorTest {
         mUiDevice.waitForIdle();
     }
 
+    private String getCurrentRecognizer() {
+        return Settings.Secure.getString(mContext.getContentResolver(), VOICE_RECOGNITION_SERVICE);
+    }
+
     private void setIndicatorsEnabledState(String enabled) {
         runWithShellPermissionIdentity(
                 () -> DeviceConfig.setProperty(DeviceConfig.NAMESPACE_PRIVACY, INDICATORS_FLAG,
@@ -183,16 +188,26 @@ public final class RecognitionServiceMicIndicatorTest {
     }
 
     @Test
+    @CddTest(requirements = {"9.8.2/H-4-1"})
     public void testNonTrustedRecognitionServiceCanBlameCallingApp() throws Throwable {
-        // We treat trusted if the current voice recognizer is also a preinstalled app. This is a
-        // untrusted case.
+        // Save currently selected recognition service.
+        String previousRecognizer = getCurrentRecognizer();
+
+        // We treat trusted if the current voice recognizer is also a preinstalled app.
+        // This is an untrusted case.
         setCurrentRecognizer(CTS_VOICE_RECOGNITION_SERVICE);
 
-        // verify that the untrusted app cannot blame the calling app mic access
-        testVoiceRecognitionServiceBlameCallingApp(/* trustVoiceService */ false);
+        try {
+            // Verify that the untrusted app cannot blame the calling app mic access.
+            testVoiceRecognitionServiceBlameCallingApp(/* trustVoiceService */ false);
+        } finally {
+            // Reinstate previously selected recognition service.
+            setCurrentRecognizer(previousRecognizer);
+        }
     }
 
     @Test
+    @CddTest(requirements = {"9.8.2/H-4-1"})
     public void testTrustedRecognitionServiceCanBlameCallingApp() throws Throwable {
         // We treat trusted if the current voice recognizer is also a preinstalled app. This is a
         // trusted case.
