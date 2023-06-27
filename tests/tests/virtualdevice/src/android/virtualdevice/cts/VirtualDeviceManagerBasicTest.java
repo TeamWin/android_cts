@@ -25,6 +25,7 @@ import static androidx.test.core.app.ApplicationProvider.getApplicationContext;
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertThrows;
+import static org.junit.Assume.assumeFalse;
 
 import android.annotation.Nullable;
 import android.companion.virtual.VirtualDeviceManager;
@@ -38,6 +39,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.AdoptShellPermissionsRule;
+import com.android.compatibility.common.util.FeatureUtil;
 
 import org.junit.After;
 import org.junit.Before;
@@ -70,6 +72,10 @@ public class VirtualDeviceManagerBasicTest {
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
         Context context = getApplicationContext();
+
+        // Virtual device manager is disabled on wearables
+        assumeFalse(FeatureUtil.isWatch());
+
         mVirtualDeviceManager = context.getSystemService(VirtualDeviceManager.class);
     }
 
