@@ -113,7 +113,7 @@ android::status_t dumpService(const ndk::SpAIBinder& binder,
   return true;
 }
 
-bool waitSocketIsNotTagged(const sp<IBinder>& binder, uint64_t cookie,
+bool waitSocketIsNotTagged(const ndk::SpAIBinder& binder, uint64_t cookie,
                            int maxTries) {
     for (int i = 0; i < maxTries; ++i) {
         if (socketIsNotTagged(binder, cookie)) return true;
