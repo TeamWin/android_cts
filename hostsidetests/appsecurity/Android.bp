@@ -89,6 +89,8 @@ java_test_host {
         ":CtsEphemeralTestsEphemeralApp2",
         ":CtsEphemeralTestsUserApp",
         ":CtsEphemeralTestsUserAppTest",
+        ":CtsInstantCookieApp",
+        ":CtsInstantCookieApp2",
         ":CtsV3SigningSchemeRotationTest",
         ":CtsPkgInstallTinyApp",
         ":CtsPkgInstallTinyAppV2",
