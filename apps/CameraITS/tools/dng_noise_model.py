@@ -21,266 +21,429 @@ import tempfile
 import textwrap
 
 import capture_read_noise_utils
-import capture_request_utils
-import image_processing_utils
 import its_base_test
 import its_session_utils
 from matplotlib import pylab
 import matplotlib.pyplot as plt
-from matplotlib.ticker import NullLocator, ScalarFormatter
+import matplotlib.ticker
 from mobly import test_runner
+import noise_model_utils
 import numpy as np
-import scipy.signal
-import scipy.stats
 
-
-_BAYER_LIST = ('R', 'GR', 'GB', 'B')  # List of Bayer colors
-_BAYER_COLOR_FILTERS = [  # Bayer filters (SENSOR_INFO_COLOR_FILTER_ARRANGEMENT)
-    'RGGB',  # 0
-    'GRBG',  # 1
-    'GBRG',  # 2
-    'BGGR',  # 3
-    'RBG',   # 4
-    'MONO',  # 5
-    'NIR'    # 6
-]
+_COLOR_CHANNEL_NAMES = noise_model_utils.BAYER_COLORS
+_PLOT_COLORS = noise_model_utils.BAYER_PLOT_COLORS
+_TILE_SIZE = 32  # Tile size to compute mean/variance. Large tiles may have
+                 # their variance corrupted by low freq image changes.
+_STATS_FORMAT = 'rawStats'  # rawStats or raw10Stats.
+_STATS_CONFIG = {
+    'format': _STATS_FORMAT,
+    'gridWidth': _TILE_SIZE,
+    'gridHeight': _TILE_SIZE,
+}
+_READ_NOISE_RAW_FORMAT = 'raw'  # raw or raw10.
 _BRACKET_MAX = 8  # Exposure bracketing range in stops
 _BRACKET_FACTOR = math.pow(2, _BRACKET_MAX)
 _ISO_MAX_VALUE = None  # ISO range max value, uses sensor max if None
 _ISO_MIN_VALUE = None  # ISO range min value, uses sensor min if None
-_PLOT_COLORS = 'rygcbm'  # Colors used for plotting the data for each exposure.
 _MAX_SCALE_FUDGE = 1.1
 _MAX_SIGNAL_VALUE = 0.25  # Maximum value to allow mean of the tiles to go.
 _NAME = os.path.basename(__file__).split('.')[0]
 _NAME_READ_NOISE = os.path.join(tempfile.gettempdir(), 'CameraITS/ReadNoise')
 _NAME_READ_NOISE_FILE = 'read_noise_results.pkl'
-_OUTLIE_MEDIAN_ABS_DEVS = 10  # Defines the number of Median Absolute Deviations
-                              # that consitutes acceptable data
+_STATS_FILE_NAME = 'stats.pkl'
+_OUTLIER_MEDIAN_ABS_DEVS = 10  # Defines the number of Median Absolute
+                               # Deviations that constitutes acceptable data
 _READ_NOISE_STEPS_PER_STOP = 12  # Sensitivities per stop to sample for read
                                  # noise
-_REMOVE_OUTLIERS = False  # When True, filters the variance to remove outliers
+_REMOVE_VAR_OUTLIERS = False  # When True, filters the variance to remove
+                              # outliers
 _STEPS_PER_STOP = 3  # How many sensitivities per stop to sample.
-_TILE_SIZE = 32  # Tile size to compute mean/variance. Large tiles may have
-                 # their variance corrupted by low freq image changes.
+_ISO_MULTIPLIER = math.pow(2, 1.0 / _STEPS_PER_STOP)
 _TILE_CROP_N = 0  # Number of tiles to crop from edge of image. Usually 0.
 _TWO_STAGE_MODEL = False  # Require read noise data prior to running noise model
 _ZOOM_RATIO = 1  # Zoom target to be used while running the model
-
-
-def check_auto_exposure_targets(auto_e, sens_min, sens_max, props):
-  """Checks if AE too bright for highest gain & too dark for lowest gain."""
-
-  min_exposure_ns, max_exposure_ns = props[
-      'android.sensor.info.exposureTimeRange']
-  if auto_e < min_exposure_ns*sens_max:
-    raise AssertionError('Scene is too bright to properly expose at highest '
-                         f'sensitivity: {sens_max}')
-  if auto_e*_BRACKET_FACTOR > max_exposure_ns*sens_min:
-    raise AssertionError('Scene is too dark to properly expose at lowest '
-                         f'sensitivity: {sens_min}')
-
-
-def create_noise_model_code(noise_model_a, noise_model_b,
-                            noise_model_c, noise_model_d,
-                            sens_min, sens_max, digital_gain_cdef, log_path):
-  """Creates the c file for the noise model."""
-
-  noise_model_a_array = ','.join([str(i) for i in noise_model_a])
-  noise_model_b_array = ','.join([str(i) for i in noise_model_b])
-  noise_model_c_array = ','.join([str(i) for i in noise_model_c])
-  noise_model_d_array = ','.join([str(i) for i in noise_model_d])
-  code = textwrap.dedent(f"""\
-          /* Generated test code to dump a table of data for external validation
-           * of the noise model parameters.
-           */
-          #include <stdio.h>
-          #include <assert.h>
-          double compute_noise_model_entry_S(int plane, int sens);
-          double compute_noise_model_entry_O(int plane, int sens);
-          int main(void) {{
-              for (int plane = 0; plane < {len(noise_model_a)}; plane++) {{
-                  for (int sens = {sens_min}; sens <= {sens_max}; sens += 100) {{
-                      double o = compute_noise_model_entry_O(plane, sens);
-                      double s = compute_noise_model_entry_S(plane, sens);
-                      printf("%d,%d,%lf,%lf\\n", plane, sens, o, s);
-                  }}
-              }}
-              return 0;
-          }}
-
-          /* Generated functions to map a given sensitivity to the O and S noise
-           * model parameters in the DNG noise model. The planes are in
-           * R, Gr, Gb, B order.
-           */
-          double compute_noise_model_entry_S(int plane, int sens) {{
-              static double noise_model_A[] = {{ {noise_model_a_array:s} }};
-              static double noise_model_B[] = {{ {noise_model_b_array:s} }};
-              double A = noise_model_A[plane];
-              double B = noise_model_B[plane];
-              double s = A * sens + B;
-              return s < 0.0 ? 0.0 : s;
-          }}
-
-          double compute_noise_model_entry_O(int plane, int sens) {{
-              static double noise_model_C[] = {{ {noise_model_c_array:s} }};
-              static double noise_model_D[] = {{ {noise_model_d_array:s} }};
-              double digital_gain = {digital_gain_cdef:s};
-              double C = noise_model_C[plane];
-              double D = noise_model_D[plane];
-              double o = C * sens * sens + D * digital_gain * digital_gain;
-              return o < 0.0 ? 0.0 : o;
-          }}
-          """)
-  text_file = open(os.path.join(log_path, 'noise_model.c'), 'w')
-  text_file.write(code)
-  text_file.close()
-
-  # Creates the noise profile C++ file
-  code = textwrap.dedent(f"""\
-          /* noise_profile.cc
-             Note: gradient_slope --> gradient of API slope parameter
-                   offset_slope --> offset of API slope parameter
-                   gradient_intercept--> gradient of API intercept parameter
-                   offset_intercept --> offset of API intercept parameter
-             Note: SENSOR_NOISE_PROFILE in Android Developers doc uses
-                   N(x) = sqrt(Sx + O), where 'S' is 'slope' & 'O' is 'intercept'
-          */
-          .noise_profile =
-              {{.noise_coefficients_r = {{.gradient_slope = {noise_model_a[0]},
-                                        .offset_slope = {noise_model_b[0]},
-                                        .gradient_intercept = {noise_model_c[0]},
-                                        .offset_intercept = {noise_model_d[0]}}},
-               .noise_coefficients_gr = {{.gradient_slope = {noise_model_a[1]},
-                                         .offset_slope = {noise_model_b[1]},
-                                         .gradient_intercept = {noise_model_c[1]},
-                                         .offset_intercept = {noise_model_d[1]}}},
-               .noise_coefficients_gb = {{.gradient_slope = {noise_model_a[2]},
-                                         .offset_slope = {noise_model_b[2]},
-                                         .gradient_intercept = {noise_model_c[2]},
-                                         .offset_intercept = {noise_model_d[2]}}},
-               .noise_coefficients_b = {{.gradient_slope = {noise_model_a[3]},
-                                        .offset_slope = {noise_model_b[3]},
-                                        .gradient_intercept = {noise_model_c[3]},
-                                        .offset_intercept = {noise_model_d[3]}}}}},
-          """)
-  text_file = open(os.path.join(log_path, 'noise_profile.cc'), 'w')
-  text_file.write(code)
-  text_file.close()
-
-
-def outlier_removed_indices(data, deviations=3):
-  """Removes outliers using median absolute deviation and returns indices kept.
-
-  Args:
-      data:             list to remove outliers from
-      deviations:       number of deviations from median to keep
-  Returns:
-      keep_indices:     The indices of data which should be kept
-  """
-  std_dev = scipy.stats.median_abs_deviation(data, axis=None, scale=1)
-  med = np.median(data)
-  keep_indices = np.where(
-      np.logical_and(data > med-deviations*std_dev,
-                     data < med+deviations*std_dev))
-  return keep_indices
-
-
-def reorganize_read_noise_coeff_to_rggb(data, cmap):
-  """Reorganize the list of read noise coeffs to RGGB Bayer form.
-
-  Args:
-    data:      list; List of color channel data
-    cmap:      str; Color map filter of the given data
-  Returns:
-    list       Returns data reformatted in the correct RGGB order
-  """
-  if cmap not in _BAYER_COLOR_FILTERS:
-    raise AssertionError(f'Unexpected color map {cmap}')
-
-  if cmap.lower() == 'rggb':
-    return data
-  if cmap.lower() == 'grbg':
-    return [data[1], data[0], data[3], data[2]]
-  if cmap.lower() == 'gbrg':
-    return [data[2], data[3], data[0], data[1]]
-  if cmap.lower() == 'bggr':
-    return [data[3], data[2], data[1], data[0]]
-  else:
-    raise AssertionError(
-        'Currently only 4-channel filters supported for 2-Stage model')
+_FIG_DPI = 100  # DPI for plotting noise model figures.
+_BAYER_COLORS_FOR_NOISE_PROFILE = [color.lower() for color in
+                                   noise_model_utils.BAYER_COLORS]
 
 
 class DngNoiseModel(its_base_test.ItsBaseTest):
   """Create DNG noise model.
 
   Captures RAW images with increasing analog gains to create the model.
-  def requires 'test' in name to actually run.
   """
 
+  def _create_noise_model_code(self, noise_model, sens_min, sens_max,
+                               sens_max_analog, file_path):
+    """Creates the C file for the noise model.
+
+    Args:
+      noise_model: Noise model parameters.
+      sens_min: The minimum sensitivity value.
+      sens_max: The maximum sensitivity value.
+      sens_max_analog: The maximum analog sensitivity value.
+      file_path: The path to the noise model file.
+    """
+    # Generate individual noise model components.
+    scale_a, scale_b, offset_a, offset_b = zip(*noise_model)
+    digital_gain_cdef = (
+        f'(sens / {sens_max_analog:.1f}) < 1.0 ? '
+        f'1.0 : (sens / {sens_max_analog:.1f})'
+    )
+
+    with open(file_path, 'w') as text_file:
+      scale_a_str = ','.join([str(i) for i in scale_a])
+      scale_b_str = ','.join([str(i) for i in scale_b])
+      offset_a_str = ','.join([str(i) for i in offset_a])
+      offset_b_str = ','.join([str(i) for i in offset_b])
+      # pylint: disable=line-too-long
+      code = textwrap.dedent(f"""\
+              /* Generated test code to dump a table of data for external validation
+              * of the noise model parameters.
+              */
+              #include <stdio.h>
+              #include <assert.h>
+              double compute_noise_model_entry_S(int plane, int sens);
+              double compute_noise_model_entry_O(int plane, int sens);
+              int main(void) {{
+                  for (int plane = 0; plane < {len(scale_a)}; plane++) {{
+                      for (int sens = {sens_min}; sens <= {sens_max}; sens += 100) {{
+                          double o = compute_noise_model_entry_O(plane, sens);
+                          double s = compute_noise_model_entry_S(plane, sens);
+                          printf("%d,%d,%lf,%lf\\n", plane, sens, o, s);
+                      }}
+                  }}
+                  return 0;
+              }}
+
+              /* Generated functions to map a given sensitivity to the O and S noise
+              * model parameters in the DNG noise model. The planes are in
+              * R, Gr, Gb, B order.
+              */
+              double compute_noise_model_entry_S(int plane, int sens) {{
+                  static double noise_model_A[] = {{ {scale_a_str:s} }};
+                  static double noise_model_B[] = {{ {scale_b_str:s} }};
+                  double A = noise_model_A[plane];
+                  double B = noise_model_B[plane];
+                  double s = A * sens + B;
+                  return s < 0.0 ? 0.0 : s;
+              }}
+
+              double compute_noise_model_entry_O(int plane, int sens) {{
+                  static double noise_model_C[] = {{ {offset_a_str:s} }};
+                  static double noise_model_D[] = {{ {offset_b_str:s} }};
+                  double digital_gain = {digital_gain_cdef:s};
+                  double C = noise_model_C[plane];
+                  double D = noise_model_D[plane];
+                  double o = C * sens * sens + D * digital_gain * digital_gain;
+                  return o < 0.0 ? 0.0 : o;
+              }}
+              """)
+
+      text_file.write(code)
+
+  def _create_noise_profile_code(self, noise_model, color_channels, file_path):
+    """Creates the noise profile C++ file.
+
+    Args:
+      noise_model: Noise model parameters.
+      color_channels: Color channels in canonical order.
+      file_path: The path to the noise profile C++ file.
+    """
+    # Generate individual noise model components.
+    scale_a, scale_b, offset_a, offset_b = zip(*noise_model)
+    num_channels = noise_model.shape[0]
+    params = []
+    for ch, color in enumerate(color_channels):
+      prefix = f'.noise_coefficients_{color} = {{'
+      spaces = ' ' * len(prefix)
+      suffix = '},' if ch != num_channels - 1 else '}'
+      params.append(textwrap.dedent(f"""
+        {prefix}.gradient_slope = {scale_a[ch]},
+        {spaces}.offset_slope = {scale_b[ch]},
+        {spaces}.gradient_intercept = {offset_a[ch]},
+        {spaces}.offset_intercept = {offset_b[ch]}{suffix}"""))
+
+    with open(file_path, 'w') as text_file:
+      # pylint: disable=line-too-long
+      code_comment = textwrap.dedent("""\
+              /* noise_profile.cc
+                Note: gradient_slope --> gradient of API s_measured parameter
+                      offset_slope --> o_model of API s_measured parameter
+                      gradient_intercept--> gradient of API o_measured parameter
+                      offset_intercept --> o_model of API o_measured parameter
+                Note: SENSOR_NOISE_PROFILE in Android Developers doc uses
+                      N(x) = sqrt(Sx + O), where 'S' is 's_measured' & 'O' is 'o_measured'
+              */
+      """)
+      params_str = textwrap.indent(''.join(params), ' ' * 4)
+      code_params = '.noise_profile = {' + params_str + '},'
+      code = code_comment + code_params
+      text_file.write(code)
+
+  def _create_noise_model_and_profile_code(self, noise_model, sens_min,
+                                           sens_max, sens_max_analog, log_path):
+    """Creates the code file with noise model parameters.
+
+    Args:
+      noise_model: Noise model parameters.
+      sens_min: The minimum sensitivity value.
+      sens_max: The maximum sensitivity value.
+      sens_max_analog: The maximum analog sensitivity value.
+      log_path: The path to the log file.
+    """
+    noise_model_utils.check_noise_model_shape(noise_model)
+    # Create noise model code with noise model parameters.
+    self._create_noise_model_code(
+        noise_model,
+        sens_min,
+        sens_max,
+        sens_max_analog,
+        os.path.join(log_path, 'noise_model.c'),
+    )
+
+    # Create noise profile code with noise model parameters.
+    self._create_noise_profile_code(
+        noise_model,
+        _BAYER_COLORS_FOR_NOISE_PROFILE,
+        os.path.join(log_path, 'noise_profile.cc'),
+    )
+
+  def _plot_stats_and_noise_model_fittings(
+      self, iso_to_stats_dict, measured_models, noise_model, sens_max_analog,
+      folder_path_prefix):
+    """Plots the stats (means, vars_) and noise models fittings.
+
+    Args:
+      iso_to_stats_dict: A dictionary mapping ISO to a list of tuples of
+        exposure time in milliseconds, mean values, and variance values.
+      measured_models: A list of measured noise models for each ISO value.
+      noise_model: A numpy array of global noise model parameters for all ISO
+        values.
+      sens_max_analog: The maximum analog sensitivity value.
+      folder_path_prefix: The prefix of path to save figures.
+
+    Raises:
+      ValueError: If the noise model shape is invalid.
+    """
+    noise_model_utils.check_noise_model_shape(noise_model)
+    # Separate individual noise model components.
+    scale_a, scale_b, offset_a, offset_b = zip(*noise_model)
+
+    iso_pidx_to_measured_model_dict = {}
+    num_channels = noise_model.shape[0]
+    for pidx in range(num_channels):
+      for iso, s_measured, o_measured in measured_models[pidx]:
+        iso_pidx_to_measured_model_dict[(iso, pidx)] = (s_measured, o_measured)
+
+    isos = np.asarray(sorted(iso_to_stats_dict.keys()))
+    digital_gains = noise_model_utils.compute_digital_gains(
+        isos, sens_max_analog
+    )
+
+    x_range = [0, _MAX_SIGNAL_VALUE]
+    for iso, digital_gain in zip(isos, digital_gains):
+      logging.info('Plotting stats and noise model for ISO %d.', iso)
+      fig, subplots = noise_model_utils.create_stats_figure(
+          iso, _COLOR_CHANNEL_NAMES
+      )
+
+      xmax = 0
+      stats_per_plane = [[] for _ in range(num_channels)]
+      for exposure_ms, means, vars_ in iso_to_stats_dict[iso]:
+        exposure_norm = noise_model_utils.COLOR_NORM(np.log2(exposure_ms))
+        exposure_color = noise_model_utils.RAINBOW_CMAP(exposure_norm)
+        for pidx in range(num_channels):
+          means_p = means[pidx]
+          vars_p = vars_[pidx]
+
+          if means_p.size > 0 and vars_p.size > 0:
+            subplots[pidx].plot(
+                means_p,
+                vars_p,
+                color=exposure_color,
+                marker='.',
+                markeredgecolor=exposure_color,
+                markersize=1,
+                linestyle='None',
+                alpha=0.5,
+            )
+
+            stats_per_plane[pidx].extend(list(zip(means_p, vars_p)))
+            xmax = max(xmax, max(means_p))
+
+      iso_sq = iso ** 2
+      digital_gain_sq = digital_gain ** 2
+      for pidx in range(num_channels):
+        # Add the final noise model to subplots.
+        s_model = scale_a[pidx] * iso * digital_gain + scale_b[pidx]
+        o_model = (offset_a[pidx] * iso_sq + offset_b[pidx]) * digital_gain_sq
+
+        plot_color = _PLOT_COLORS[pidx]
+        subplots[pidx].plot(
+            x_range,
+            [o_model, s_model * _MAX_SIGNAL_VALUE + o_model],
+            color=plot_color,
+            linestyle='-',
+            label='Model',
+            alpha=0.5,
+        )
+
+        # Add the noise model measured by captures with current iso to subplots.
+        if (iso, pidx) not in iso_pidx_to_measured_model_dict:
+          continue
+
+        s_measured, o_measured = iso_pidx_to_measured_model_dict[(iso, pidx)]
+
+        subplots[pidx].plot(
+            x_range,
+            [o_measured, s_measured * _MAX_SIGNAL_VALUE + o_measured],
+            color=plot_color,
+            linestyle='--',
+            label='Linear fit',
+        )
+
+        ymax = (o_measured + s_measured * xmax) * _MAX_SCALE_FUDGE
+        subplots[pidx].set_xlim(xmin=0, xmax=xmax)
+        subplots[pidx].set_ylim(ymin=0, ymax=ymax)
+        subplots[pidx].legend()
+
+      fig.savefig(
+          f'{folder_path_prefix}_samples_iso{iso:04d}.png', dpi=_FIG_DPI
+      )
+
+  def _plot_noise_model_single_plane(
+      self, pidx, plot, sens, measured_params, modeled_params):
+    """Plots the noise model for one color plane specified by pidx.
+
+    Args:
+      pidx: The index of the color plane in Bayer pattern.
+      plot: The ax to plot on.
+      sens: The sensitivity of the sensor.
+      measured_params:  The measured parameters.
+      modeled_params: The modeled parameters.
+    """
+    color_channel = _COLOR_CHANNEL_NAMES[pidx]
+    measured_label = f'{color_channel}-Measured'
+    model_label = f'{color_channel}-Model'
+
+    plot_color = _PLOT_COLORS[pidx]
+    # Plot the measured parameters.
+    plot.loglog(
+        sens,
+        measured_params,
+        color=plot_color,
+        marker='+',
+        markeredgecolor=plot_color,
+        linestyle='None',
+        base=10,
+        label=measured_label,
+    )
+    # Plot the modeled parameters.
+    plot.loglog(
+        sens,
+        modeled_params,
+        color=plot_color,
+        marker='o',
+        markeredgecolor=plot_color,
+        linestyle='None',
+        base=10,
+        label=model_label,
+        alpha=0.3,
+    )
+
+  def _plot_noise_model(self, isos, measured_models, noise_model,
+                        sens_max_analog, name_with_log_path):
+    """Plot the noise model for a given set of ISO values.
+
+    The read noise model is defined by the following equation:
+      f(x) = s_model * x + o_model
+    where we have:
+    s_model = scale_a * analog_gain * digital_gain + scale_b is the
+    multiplicative factor,
+    o_model = (offset_a * analog_gain^2 + offset_b) * digital_gain^2
+    is the offset term.
+
+    Args:
+      isos: A list of ISO values.
+      measured_models: A list of measured models, each of which is a tuple of
+        (sens, s_measured, o_measured).
+      noise_model: Noise model parameters of each plane, each of which is a
+        tuple of (scale_a, scale_b, offset_a, offset_b).
+      sens_max_analog: The maximum analog gain.
+      name_with_log_path: The name of the file to save the logs to.
+    """
+    noise_model_utils.check_noise_model_shape(noise_model)
+
+    # Plot noise model parameters.
+    fig, axes = plt.subplots(4, 2, figsize=(22, 17))
+    s_plots, o_plots = axes[:, 0], axes[:, 1]
+
+    for pidx, measured_model in enumerate(measured_models):
+      # Grab the sensitivities and line parameters of each sensitivity.
+      sens, s_measured, o_measured = zip(*measured_model)
+      sens = np.asarray(sens)
+      sens_sq = np.square(sens)
+      scale_a, scale_b, offset_a, offset_b = noise_model[pidx]
+      # Plot noise model components with the values predicted by the model.
+      digital_gains = noise_model_utils.compute_digital_gains(
+          sens, sens_max_analog
+      )
+
+      # s_model = scale_a * analog_gain * digital_gain + scale_b,
+      # o_model = (offset_a * analog_gain^2 + offset_b) * digital_gain^2.
+      s_model = scale_a * sens * digital_gains + scale_b
+      o_model = (offset_a * sens_sq + offset_b) * np.square(digital_gains)
+      s_plot, o_plot = s_plots[pidx], o_plots[pidx]
+
+      self._plot_noise_model_single_plane(
+          pidx, s_plot, sens, s_measured, s_model)
+      self._plot_noise_model_single_plane(
+          pidx, o_plot, sens, o_measured, o_model)
+
+    # Set figure attributes after plotting noise model parameters.
+    for s_plot, o_plot in zip(s_plots, o_plots):
+      s_plot.set_xlabel('ISO')
+      s_plot.set_ylabel('S')
+
+      o_plot.set_xlabel('ISO')
+      o_plot.set_ylabel('O')
+
+      for sub_plot in (s_plot, o_plot):
+        sub_plot.set_xticks(isos)
+        # No minor ticks.
+        sub_plot.xaxis.set_minor_locator(matplotlib.ticker.NullLocator())
+        sub_plot.xaxis.set_major_formatter(matplotlib.ticker.ScalarFormatter())
+        sub_plot.legend()
+
+    fig.suptitle('Noise model: N(x) = sqrt(Sx + O)', x=0.54, y=0.99)
+    pylab.tight_layout()
+    fig.savefig(f'{name_with_log_path}.png', dpi=_FIG_DPI)
+
   def test_dng_noise_model_generation(self):
-    read_noise_folder = ''
-    read_noise_data = ''
+    """Calibrates standard Bayer noise model.
 
-    # If 2-Stage model is enabled, check/collect read noise data
-    if _TWO_STAGE_MODEL:
-      with its_session_utils.ItsSession(
-          device_id=self.dut.serial,
-          camera_id=self.camera_id,
-          hidden_physical_id=self.hidden_physical_id) as cam:
-        props = cam.get_camera_properties()
-        props = cam.override_with_hidden_physical_camera_props(props)
-
-        # Get sensor ISO range
-        sens_min, _ = props['android.sensor.info.sensitivityRange']
-        sens_max_analog = props['android.sensor.maxAnalogSensitivity']
-        color_map_index = props['android.sensor.info.colorFilterArrangement']
-        color_map = _BAYER_COLOR_FILTERS[color_map_index]
-
-        sens_max_meas = sens_max_analog
-
-        # Create the folder structure
-        if self.hidden_physical_id:
-          camera_name = f'{self.camera_id}.{self.hidden_physical_id}'
-        else:
-          camera_name = self.camera_id
-
-        read_noise_folder = os.path.join(_NAME_READ_NOISE,
-                                         self.dut.serial.replace(':', '_'),
-                                         camera_name)
-        read_noise_data = os.path.join(read_noise_folder,
-                                       _NAME_READ_NOISE_FILE)
-
-        if not os.path.exists(read_noise_folder):
-          os.makedirs(read_noise_folder)
-
-        logging.info('Read noise data folder: %s', read_noise_folder)
-        # Collect or retrieve read noise data
-        if not os.path.isfile(read_noise_data):
-          # Wait until camera is repositioned for read noise data collection
-          input(f'\nPress <ENTER> after concealing camera {self.camera_id} in'
-                ' complete darkness.\n')
-          logging.info('Collecting read noise data for %s', self.camera_id)
-          # Results file does not exist, collect read noise data
-          capture_read_noise_utils.capture_read_noise_for_iso_range(
-              cam, sens_min, sens_max_meas, _READ_NOISE_STEPS_PER_STOP,
-              color_map, read_noise_data)
-        else:  # If data exists, check if it covers the full range
-          with open(read_noise_data, 'rb') as f:
-            results = pickle.load(f)
-            # The +5 offset takes write to read error into account
-            if results[-1][0]['iso'] + 50 < sens_max_meas:
-              logging.info('\nNot enough ISO data points exist. '
-                           '\nMax ISO measured: %.2f'
-                           '\nMax ISO possible: %.2f',
-                           results[-1][0]['iso'],
-                           sens_max_meas)
-              # Wait until camera is repositioned for read noise data collection
-              input(f'\nPress <ENTER> after concealing camera {self.camera_id} '
-                    'in complete darkness.\n')
-              # Not all data points were captured, continue capture
-              capture_read_noise_utils.capture_read_noise_for_iso_range(
-                  cam, sens_min, sens_max_meas, _READ_NOISE_STEPS_PER_STOP,
-                  color_map, read_noise_data)
+    def requires 'test' in name to actually run.
+    This function:
+    * Calibrates read noise (optional).
+    * Captures stats images of different ISO values and exposure times.
+    * Measures linear fittings for each ISO value.
+    * Computes and validates overall noise model parameters.
+    * Plots noise model parameters figures.
+    * Plots stats samples, linear fittings and model fittings.
+    * Saves the read noise plot and csv data (optional).
+    * Generates noise model and noise profile code.
+    """
+    read_noise_file_path = noise_model_utils.calibrate_read_noise(
+        self.dut.serial,
+        self.camera_id,
+        self.hidden_physical_id,
+        _NAME_READ_NOISE,
+        _NAME_READ_NOISE_FILE,
+        _READ_NOISE_STEPS_PER_STOP,
+        raw_format=_READ_NOISE_RAW_FORMAT,
+        is_two_stage_model=_TWO_STAGE_MODEL,
+    )
 
     # Begin DNG Noise Model Calibration
     with its_session_utils.ItsSession(
@@ -291,19 +454,13 @@ class DngNoiseModel(its_base_test.ItsBaseTest):
       props = cam.override_with_hidden_physical_camera_props(props)
       log_path = self.log_path
       name_with_log_path = os.path.join(log_path, _NAME)
-      if self.hidden_physical_id:
-        camera_name = f'{self.camera_id}.{self.hidden_physical_id}'
-      else:
-        camera_name = self.camera_id
-      logging.info('Starting %s for camera %s', _NAME, camera_name)
+      logging.info('Starting %s for camera %s', _NAME, cam.get_camera_name())
 
       # Get basic properties we need.
       sens_min, sens_max = props['android.sensor.info.sensitivityRange']
       sens_max_analog = props['android.sensor.maxAnalogSensitivity']
+      # Maximum sensitivity for measuring noise model.
       sens_max_meas = sens_max_analog
-      white_level = props['android.sensor.info.whiteLevel']
-      min_exposure_ns, _ = props[
-          'android.sensor.info.exposureTimeRange']
 
       # Change the ISO min and/or max values if specified
       if _ISO_MIN_VALUE is not None:
@@ -311,335 +468,123 @@ class DngNoiseModel(its_base_test.ItsBaseTest):
       if _ISO_MAX_VALUE is not None:
         sens_max_meas = _ISO_MAX_VALUE
 
-      # Wait until camera is repositioned for DNG noise model calibration
-      input(f'\nPress <ENTER> after covering camera lense {self.camera_id} with'
-            ' frosted glass diffuser, and facing lense at evenly illuminated'
-            ' surface.\n')
-
-      if _TWO_STAGE_MODEL:
-        # Check if read noise results exist for this device and camera
-        if not os.path.exists(read_noise_data):
-          raise AssertionError(
-              'Read noise results file does not exist for this device. Run '
-              'capture_read_noise_data script to gather read noise data for '
-              'current sensor')
-
-        color_map_index = props['android.sensor.info.colorFilterArrangement']
-        color_map = _BAYER_COLOR_FILTERS[color_map_index]
-
-        with open(read_noise_data, 'rb') as f:
-          read_noise_results = pickle.load(f)
-
-        coeff_a, coeff_b = capture_read_noise_utils.get_read_noise_coefficients(
-            read_noise_results, sens_min, sens_max_meas)
-
-        coeff_a = reorganize_read_noise_coeff_to_rggb(coeff_a, color_map)
-        coeff_b = reorganize_read_noise_coeff_to_rggb(coeff_b, color_map)
-
       logging.info('Sensitivity range: [%d, %d]', sens_min, sens_max)
       logging.info('Max analog sensitivity: %d', sens_max_analog)
+      logging.info(
+          'Sensitivity range for measurement: [%d, %d]',
+          sens_min, sens_max_meas,
+      )
 
-      # Do AE to get a rough idea of where we are.
-      iso_ae, exp_ae, _, _, _ = cam.do_3a(
-          get_results=True, do_awb=False, do_af=False)
-
-      # Underexpose to get more data for low signal levels.
-      auto_e = iso_ae * exp_ae / _BRACKET_FACTOR
-      check_auto_exposure_targets(auto_e, sens_min, sens_max_meas, props)
-
-      # Focus at zero to intentionally blur the scene as much as possible.
-      f_dist = 0.0
-
-      # Start the sensitivities at the minimum.
-      iso = sens_min
-      samples = [[], [], [], []]
-      plots = []
-      measured_models = [[], [], [], []]
-      color_plane_plots = {}
-      isos = []
-      fmt_raw = {'format': 'rawStats',
-                 'gridWidth': _TILE_SIZE,
-                 'gridHeight': _TILE_SIZE}
-
-      while int(round(iso)) <= sens_max_meas:
-        req = capture_request_utils.manual_capture_request(
-            int(round(iso)), min_exposure_ns, f_dist)
-        cap = cam.do_capture(req, fmt_raw)
-
-        # Instead of raising an error when the sensitivity readback != requested
-        # use the readback value for calculations instead
-        iso_cap = cap['metadata']['android.sensor.sensitivity']
-        isos.append(iso_cap)
-
-        logging.info('ISO %d', iso_cap)
-
-        fig, [[plt_r, plt_gr], [plt_gb, plt_b]] = plt.subplots(
-            2, 2, figsize=(11, 11))
-        fig.gca()
-        color_plane_plots[iso_cap] = [plt_r, plt_gr, plt_gb, plt_b]
-        fig.suptitle('ISO %d' % iso_cap, x=0.54, y=0.99)
-        for i, plot in enumerate(color_plane_plots[iso_cap]):
-          plot.set_title(_BAYER_LIST[i])
-          plot.set_xlabel('Mean signal level')
-          plot.set_ylabel('Variance')
-
-        samples_s = [[], [], [], []]
-        for b in range(_BRACKET_MAX):
-          # Get the exposure for this sensitivity and exposure time.
-          exposure = int(math.pow(2, b)*auto_e/iso)
-          logging.info('exp %.3fms', round(exposure*1.0E-6, 3))
-          req = capture_request_utils.manual_capture_request(iso_cap, exposure,
-                                                             f_dist)
-          req['android.control.zoomRatio'] = _ZOOM_RATIO
-          fmt_raw = {'format': 'rawStats',
-                     'gridWidth': _TILE_SIZE,
-                     'gridHeight': _TILE_SIZE}
-          cap = cam.do_capture(req, fmt_raw)
-          if self.debug_mode:
-            img = image_processing_utils.convert_capture_to_rgb_image(
-                cap, props=props)
-            image_processing_utils.write_image(
-                img, f'{name_with_log_path}_{iso_cap}_{exposure}ns.jpg', True)
-
-          mean_img, var_img = image_processing_utils.unpack_rawstats_capture(
-              cap)
-          idxs = image_processing_utils.get_canonical_cfa_order(props)
-          raw_stats_size = mean_img.shape
-          means = [mean_img[_TILE_CROP_N:raw_stats_size[0]-_TILE_CROP_N,
-                            _TILE_CROP_N:raw_stats_size[1]-_TILE_CROP_N, i]
-                   for i in idxs]
-          vars_ = [var_img[_TILE_CROP_N:raw_stats_size[0]-_TILE_CROP_N,
-                           _TILE_CROP_N:raw_stats_size[1]-_TILE_CROP_N, i]
-                   for i in idxs]
-          if self.debug_mode:
-            logging.info('rawStats image size: %s', str(raw_stats_size))
-            logging.info('R planes means image size: %s', str(means[0].shape))
-            logging.info('means min: %.3f, median: %.3f, max: %.3f',
-                         np.min(means), np.median(means), np.max(means))
-            logging.info('vars_ min: %.4f, median: %.4f, max: %.4f',
-                         np.min(vars_), np.median(vars_), np.max(vars_))
-
-          # If remove outliers is True, we will filter the variance data
-          if _REMOVE_OUTLIERS:
-            means_filtered = []
-            vars_filtered = []
-            for pidx in range(len(means)):
-              keep_indices = outlier_removed_indices(vars_[pidx],
-                                                     _OUTLIE_MEDIAN_ABS_DEVS)
-              means_filtered.append(means[pidx][keep_indices])
-              vars_filtered.append(vars_[pidx][keep_indices])
-
-            means = means_filtered
-            vars_ = vars_filtered
-
-          for pidx in range(len(means)):
-            plot = color_plane_plots[iso_cap][pidx]
-
-            # convert_capture_to_planes normalizes the range to [0, 1], but
-            # without subtracting the black level.
-            black_level = image_processing_utils.get_black_level(
-                pidx, props, cap['metadata'])
-            means_p = (means[pidx] - black_level)/(white_level - black_level)
-            vars_p = vars_[pidx]/((white_level - black_level)**2)
-
-            # TODO(dsharlet): It should be possible to account for low
-            # frequency variation by looking at neighboring means, but I
-            # have not been able to make this work.
-
-            means_p = np.asarray(means_p).flatten()
-            vars_p = np.asarray(vars_p).flatten()
-
-            samples_e = []
-            for (mean, var) in zip(means_p, vars_p):
-              # Don't include the tile if it has samples that might be clipped.
-              if mean + 2*math.sqrt(max(var, 0)) < _MAX_SIGNAL_VALUE:
-                samples_e.append([mean, var])
-
-            if samples_e:
-              means_e, vars_e = zip(*samples_e)
-              color_plane_plots[iso_cap][pidx].plot(
-                  means_e, vars_e, _PLOT_COLORS[b%len(_PLOT_COLORS)] + '.',
-                  alpha=0.5, markersize=1)
-              samples_s[pidx].extend(samples_e)
-
-        for (pidx, _) in enumerate(samples_s):
-          [slope, intercept, rvalue, _, _] = scipy.stats.linregress(
-              samples_s[pidx])
-
-          measured_models[pidx].append([iso_cap, slope, intercept])
-          logging.info('%s sensitivity %d: %e*y + %e (R=%f)',
-                       _BAYER_LIST[pidx], iso_cap, slope, intercept, rvalue)
-
-          # Add the samples for this sensitivity to the global samples list.
-          samples[pidx].extend(
-              [(iso_cap, mean, var) for (mean, var) in samples_s[pidx]])
-
-          # Add the linear fit to subplot for this sensitivity.
-          color_plane_plots[iso_cap][pidx].plot(
-              [0, _MAX_SIGNAL_VALUE],
-              [intercept, intercept + slope * _MAX_SIGNAL_VALUE],
-              'rgkb'[pidx] + '--',
-              label='Linear fit')
-
-          xmax = max([max([x for (x, _) in p]) for p in samples_s
-                     ]) * _MAX_SCALE_FUDGE
-          ymax = (intercept + slope * xmax) * _MAX_SCALE_FUDGE
-          color_plane_plots[iso_cap][pidx].set_xlim(xmin=0, xmax=xmax)
-          color_plane_plots[iso_cap][pidx].set_ylim(ymin=0, ymax=ymax)
-          color_plane_plots[iso_cap][pidx].legend()
-          pylab.tight_layout()
-
-        fig.savefig(f'{name_with_log_path}_samples_iso{iso_cap:04d}.png')
-        plots.append([iso_cap, fig])
-
-        # Move to the next sensitivity.
-        iso *= math.pow(2, 1.0/_STEPS_PER_STOP)
-
-    # Do model plots
-    (fig, (plt_s, plt_o)) = plt.subplots(2, 1, figsize=(11, 8.5))
-    plt_s.set_title('Noise model: N(x) = sqrt(Sx + O)')
-    plt_s.set_ylabel('S')
-    plt_o.set_xlabel('ISO')
-    plt_o.set_ylabel('O')
-
-    noise_model = []
-    for (pidx, _) in enumerate(measured_models):
-      # Grab the sensitivities and line parameters from each sensitivity.
-      s_measured = [e[1] for e in measured_models[pidx]]
-      o_measured = [e[2] for e in measured_models[pidx]]
-      sens = np.asarray([e[0] for e in measured_models[pidx]])
-      sens_sq = np.square(sens)
-
-      # Use a global linear optimization to fit the noise model.
-      gains = np.asarray([s[0] for s in samples[pidx]])
-      means = np.asarray([s[1] for s in samples[pidx]])
-      vars_ = np.asarray([s[2] for s in samples[pidx]])
-      gains = gains.flatten()
-      means = means.flatten()
-      vars_ = vars_.flatten()
-
-      # Define digital gain as the gain above the max analog gain
-      # per the Camera2 spec. Also, define a corresponding C
-      # expression snippet to use in the generated model code.
-      digital_gains = np.maximum(gains/sens_max_analog, 1)
-      if not np.all(digital_gains == 1):
-        raise AssertionError(f'Digital gain! gains: {gains}, '
-                             f'Max analog gain: {sens_max_analog}.')
-      digital_gain_cdef = '(sens / %d.0) < 1.0 ? 1.0 : (sens / %d.0)' % (
-          sens_max_analog, sens_max_analog)
-
-      # Noise model function:
-      # f(x) = scale * x + offset
-      # Where:
-      # scale = scale_a*analog_gain*digital_gain + scale_b
-      # offset = (offset_a*analog_gain^2 + offset_b)*digital_gain^2
-      #
-      # Function f will be used to train the scale and offset coefficients,
-      # scale_a, scale_b, offset_a, offset_b (a, b, c, d respectively)
-      # Divide the whole system by gains*means.
+      offset_a, offset_b = None, None
+      read_noise_data = None
       if _TWO_STAGE_MODEL:
-        # For the two-stage model, we want to use the line fit coefficients
-        # found from capturing read noise data (offset_a and offset_b) to
-        # train the scale coefficients
-        f = lambda x, a, b: (x[1]*a*x[0]+(x[1])*b+coeff_a[pidx]*(x[0]**2)+
-                             coeff_b[pidx])/(x[0])
-      else:
-        f = lambda x, a, b, c, d: (x[1]*a*x[0]+x[1]*b + c*(x[0]**2)+d)/(x[0])
-      result, _ = scipy.optimize.curve_fit(f, (gains, means), vars_/(gains))
-      # result[0:4] = s_gradient, s_offset, o_gradient, o_offset
-      # Note 'S' and 'O' are the API terms for the 2 model params.
-      # The noise_profile.cc uses 'slope' for 'S' and 'intercept' for 'O'.
-      # 'gradient' and 'offset' are used to describe the linear fit
-      # parameters for 'S' and 'O'.
+        # Check if read noise results exist for this device and camera
+        if not os.path.exists(read_noise_file_path):
+          raise AssertionError(
+              'Read noise results file does not exist for this device. Run'
+              ' capture_read_noise_file_path script to gather read noise data'
+              ' for current sensor'
+          )
 
-      # If using two-stage model, two of the coefficients calculated above are
-      # constant, so we need to append them to the result ndarray
-      if _TWO_STAGE_MODEL:
-        result = np.append(result, coeff_a[pidx])
-        result = np.append(result, coeff_b[pidx])
+        with open(read_noise_file_path, 'rb') as f:
+          read_noise_data = pickle.load(f)
 
-      noise_model.append(result[0:4])
+        offset_a, offset_b = (
+            capture_read_noise_utils.get_read_noise_coefficients(
+                read_noise_data,
+                sens_min,
+                sens_max_meas,
+            )
+        )
 
-      # Plot noise model components with the values predicted by the model.
-      s_model = result[0]*sens + result[1]
-      o_model = result[2]*sens_sq + result[3]*np.square(np.maximum(
-          sens/sens_max_analog, 1))
+      iso_to_stats_dict = noise_model_utils.capture_stats_images(
+          cam,
+          props,
+          _STATS_CONFIG,
+          sens_min,
+          sens_max_meas,
+          _ZOOM_RATIO,
+          _TILE_CROP_N,
+          _MAX_SIGNAL_VALUE,
+          _ISO_MULTIPLIER,
+          _BRACKET_MAX,
+          _BRACKET_FACTOR,
+          self.log_path,
+          stats_file_name=_STATS_FILE_NAME,
+          is_remove_var_outliers=_REMOVE_VAR_OUTLIERS,
+          outlier_median_abs_deviations=_OUTLIER_MEDIAN_ABS_DEVS,
+          is_debug_mode=self.debug_mode,
+      )
 
-      plt_s.loglog(sens, s_measured, 'rgkb'[pidx]+'+', base=10,
-                   label='Measured')
-      plt_s.loglog(sens, s_model, 'rgkb'[pidx]+'o', base=10,
-                   label='Model', alpha=0.3)
-      plt_o.loglog(sens, o_measured, 'rgkb'[pidx]+'+', base=10,
-                   label='Measured')
-      plt_o.loglog(sens, o_model, 'rgkb'[pidx]+'o', base=10,
-                   label='Model', alpha=0.3)
+    measured_models, samples = noise_model_utils.measure_linear_noise_models(
+        iso_to_stats_dict,
+        _COLOR_CHANNEL_NAMES,
+    )
 
-    plt_s.set_xticks(isos)
-    plt_s.xaxis.set_minor_locator(NullLocator())  # no minor ticks
-    plt_s.xaxis.set_major_formatter(ScalarFormatter())
-    plt_s.legend()
+    noise_model = noise_model_utils.compute_noise_model(
+        samples,
+        sens_max_analog,
+        offset_a,
+        offset_b,
+        _TWO_STAGE_MODEL,
+    )
 
-    plt_o.set_xticks(isos)
-    plt_o.xaxis.set_minor_locator(NullLocator())  # no minor ticks
-    plt_o.xaxis.set_major_formatter(ScalarFormatter())
-    plt_o.legend()
-    fig.savefig(f'{name_with_log_path}.png')
+    noise_model_utils.validate_noise_model(
+        noise_model,
+        _COLOR_CHANNEL_NAMES,
+        sens_min,
+    )
 
-    # Generate individual noise model components
-    noise_model_a, noise_model_b, noise_model_c, noise_model_d = zip(
-        *noise_model)
+    self._plot_noise_model(
+        sorted(iso_to_stats_dict.keys()),
+        measured_models,
+        noise_model,
+        sens_max_analog,
+        name_with_log_path,
+    )
 
-    # Add models to subplots and re-save
-    for [iso, fig] in plots:  # re-step through figs...
-      dig_gain = max(iso/sens_max_analog, 1)
-      fig.gca()
-      for (pidx, _) in enumerate(measured_models):
-        s = noise_model_a[pidx]*iso + noise_model_b[pidx]
-        o = noise_model_c[pidx]*iso**2 + noise_model_d[pidx]*dig_gain**2
-        color_plane_plots[iso][pidx].plot(
-            [0, _MAX_SIGNAL_VALUE], [o, o+s*_MAX_SIGNAL_VALUE],
-            'rgkb'[pidx]+'-', label='Model', alpha=0.5)
-        color_plane_plots[iso][pidx].legend(loc='upper left')
-      fig.savefig(f'{name_with_log_path}_samples_iso{iso:04d}.png')
-
-    # Validity checks on model: read noise > 0, positive intercept gradient.
-    for i, _ in enumerate(_BAYER_LIST):
-      read_noise = noise_model_c[i] * sens_min * sens_min + noise_model_d[i]
-      if read_noise <= 0:
-        raise AssertionError(f'{_BAYER_LIST[i]} model min ISO noise < 0! '
-                             f'API intercept gradient: {noise_model_c[i]:.4e}, '
-                             f'API intercept offset: {noise_model_d[i]:.4e}, '
-                             f'read_noise: {read_noise:.4e}')
-      if noise_model_c[i] <= 0:
-        raise AssertionError(f'{_BAYER_LIST[i]} model API intercept gradient '
-                             f'is negative: {noise_model_c[i]:.4e}')
+    self._plot_stats_and_noise_model_fittings(
+        iso_to_stats_dict,
+        measured_models,
+        noise_model,
+        sens_max_analog,
+        name_with_log_path,
+    )
 
     # If 2-Stage model is enabled, save the read noise graph and csv data
     if _TWO_STAGE_MODEL:
       # Save the linear plot of the read noise data
       filename = f'{Path(_NAME_READ_NOISE_FILE).stem}.png'
       file_path = os.path.join(log_path, filename)
-      capture_read_noise_utils.create_read_noise_plots_from_results(
-          read_noise_results,
+      capture_read_noise_utils.plot_read_noise_data(
+          read_noise_data,
           sens_min,
           sens_max_meas,
-          color_map,
-          file_path)
+          file_path,
+          _COLOR_CHANNEL_NAMES,
+          _PLOT_COLORS,
+      )
 
       # Save the data as a csv file
       filename = f'{Path(_NAME_READ_NOISE_FILE).stem}.csv'
       file_path = os.path.join(log_path, filename)
-      capture_read_noise_utils.create_and_save_csv_from_results(
-          read_noise_results,
+      capture_read_noise_utils.save_read_noise_data_as_csv(
+          read_noise_data,
           sens_min,
           sens_max_meas,
-          color_map,
-          file_path)
+          file_path,
+          _COLOR_CHANNEL_NAMES,
+      )
 
     # Generate the noise model file.
-    create_noise_model_code(
-        noise_model_a, noise_model_b, noise_model_c, noise_model_d,
-        sens_min, sens_max, digital_gain_cdef, log_path)
+    self._create_noise_model_and_profile_code(
+        noise_model,
+        sens_min,
+        sens_max,
+        sens_max_analog,
+        log_path,
+    )
+
 
 if __name__ == '__main__':
   test_runner.main()
