@@ -1002,6 +1002,7 @@
         should disable battery optimizations for an app and to allow a user to remove the app from
         the exemption list.
     </string>
+    <string name="ibo_auto_power_modes_enabled">Auto power modes enabled.</string>
     <string name="ibo_test_start_unexempt_app">
         Remove the test app from the ignore battery optimizations list to begin the test. (Try going
         to the App Info page and make sure the system is optimizing battery for the app.)
