@@ -47,6 +47,9 @@ class InputAtomsTest : DeviceTestCase() {
     companion object {
         const val TEST_APP_PACKAGE = "android.input.cts.hostside.app"
         const val EMULATE_INPUT_DEVICE_CLASS = "$TEST_APP_PACKAGE.EmulateInputDevice"
+
+        // TODO(b/287676652): Re-enable the test when usage metrics collection is enabled.
+        const val INPUT_DEVICE_USAGE_METRICS_ENABLED = false
     }
 
     override fun setUp() {
@@ -64,6 +67,10 @@ class InputAtomsTest : DeviceTestCase() {
 
     @CddTest(requirements = ["6.1/C-0-10"])
     fun testInputDeviceUsageAtom() {
+        if (!INPUT_DEVICE_USAGE_METRICS_ENABLED) {
+            return
+        }
+
         val registry: ExtensionRegistry = ExtensionRegistry.newInstance()
         InputExtensionAtoms.registerAllExtensions(registry)
 
