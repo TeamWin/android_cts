@@ -1131,7 +1131,7 @@ public class ViewGroupTest implements CTSResult {
     }
 
     private void onResolvePointerIcon_scrollabilityAffectsPointerIcon(boolean vertical,
-            boolean canScroll, boolean pointerIsSystemArrow) {
+            boolean canScroll, boolean pointerIsNull) {
 
         // Arrange
 
@@ -1166,8 +1166,10 @@ public class ViewGroupTest implements CTSResult {
 
         // Assert
 
-        if (pointerIsSystemArrow) {
-            assertEquals(PointerIcon.getSystemIcon(mContext, PointerIcon.TYPE_ARROW), actualResult);
+        if (pointerIsNull) {
+            // When the returned PointerIcon is null it will fallback to the system default for the
+            // given source devices.
+            assertNull(actualResult);
         } else {
             assertEquals(expectedPointerIcon, actualResult);
         }
