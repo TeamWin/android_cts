@@ -41,21 +41,38 @@ public class HDRDecoderTestBase extends CodecDecoderTestBase {
     private ByteBuffer mHdrStaticInfoRef;
     private ByteBuffer mHdrStaticInfoStream;
     private ByteBuffer mHdrStaticInfoContainer;
-    private Map<Integer, String> mHdrDynamicInfoRef;
-    private Map<Integer, String> mHdrDynamicInfoStream;
-    private Map<Integer, String> mHdrDynamicInfoContainer;
-    private String mHdrDynamicInfoCurrent;
+    private Map<Long, String> mHdrDynamicInfoRef;
+    private Map<Long, String> mHdrDynamicInfoStream;
+    private Map<Long, String> mHdrDynamicInfoContainer;
+    private final ArrayList<Long> mTotalMetadataQueued = new ArrayList<>();
 
     public HDRDecoderTestBase(String decoder, String mediaType, String testFile,
-                              String allTestParams) {
+            String allTestParams) {
         super(decoder, mediaType, testFile, allTestParams);
     }
 
+    private String getMetadataForPts(Map<Long, String> dynamicInfoList, Long pts) {
+        final int sttsToleranceUs = 1000;
+        if (dynamicInfoList.containsKey(pts)) return dynamicInfoList.get(pts);
+        for (Map.Entry<Long, String> entry : dynamicInfoList.entrySet()) {
+            Long keyPts = entry.getKey();
+            if (Math.abs(keyPts - pts) < sttsToleranceUs) return entry.getValue();
+        }
+        return null;
+    }
+
+    public void resetContext(boolean isAsync, boolean signalEOSWithLastFrame) {
+        mTotalMetadataQueued.clear();
+        super.resetContext(isAsync, signalEOSWithLastFrame);
+    }
+
     protected void enqueueInput(int bufferIndex) {
-        if (mHdrDynamicInfoContainer != null && mHdrDynamicInfoContainer.containsKey(mInputCount)
-                && mExtractor.getSampleSize() != -1) {
-            insertHdrDynamicInfo(
-                    loadByteArrayFromString(mHdrDynamicInfoContainer.get(mInputCount)));
+        if (mHdrDynamicInfoContainer != null && mExtractor.getSampleSize() != -1) {
+            String info = getMetadataForPts(mHdrDynamicInfoContainer, mExtractor.getSampleTime());
+            if (info != null) {
+                insertHdrDynamicInfo(loadByteArrayFromString(info));
+                mTotalMetadataQueued.add(mExtractor.getSampleTime());
+            }
         }
         super.enqueueInput(bufferIndex);
     }
@@ -63,17 +80,18 @@ public class HDRDecoderTestBase extends CodecDecoderTestBase {
     protected void dequeueOutput(int bufferIndex, MediaCodec.BufferInfo info) {
         if (info.size > 0 && mHdrDynamicInfoRef != null) {
             MediaFormat format = mCodec.getOutputFormat(bufferIndex);
-            if (mHdrDynamicInfoRef.containsKey(mOutputCount)) {
-                mHdrDynamicInfoCurrent = mHdrDynamicInfoRef.get(mOutputCount);
+            String hdr10Info = getMetadataForPts(mHdrDynamicInfoRef, info.presentationTimeUs);
+            if (hdr10Info != null) {
+                validateHDRInfo(format, MediaFormat.KEY_HDR10_PLUS_INFO,
+                        ByteBuffer.wrap(loadByteArrayFromString(hdr10Info)),
+                        info.presentationTimeUs);
             }
-            validateHDRInfo(format, MediaFormat.KEY_HDR10_PLUS_INFO,
-                    ByteBuffer.wrap(loadByteArrayFromString(mHdrDynamicInfoCurrent)));
         }
         super.dequeueOutput(bufferIndex, info);
     }
 
     public void validateHDRInfo(String hdrStaticInfoStream, String hdrStaticInfoContainer,
-            Map<Integer, String> hdrDynamicInfoStream, Map<Integer, String> hdrDynamicInfoContainer)
+            Map<Long, String> hdrDynamicInfoStream, Map<Long, String> hdrDynamicInfoContainer)
             throws IOException, InterruptedException {
         mHdrStaticInfoStream = hdrStaticInfoStream != null
                 ? ByteBuffer.wrap(loadByteArrayFromString(hdrStaticInfoStream)) : null;
@@ -105,7 +123,7 @@ public class HDRDecoderTestBase extends CodecDecoderTestBase {
             assertEquals("Container hdr10+ info size and elementary stream SEI hdr10+ info"
                     + " size are unequal \n" + mTestConfig + mTestEnv, mHdrDynamicInfoStream.size(),
                     mHdrDynamicInfoContainer.size());
-            for (Map.Entry<Integer, String> element : mHdrDynamicInfoStream.entrySet()) {
+            for (Map.Entry<Long, String> element : mHdrDynamicInfoStream.entrySet()) {
                 assertTrue("Container hdr10+ info and elementary stream SEI hdr10+ info "
                                 + "frame positions are not in sync \n" + mTestConfig + mTestEnv,
                         mHdrDynamicInfoContainer.containsKey(element.getKey()));
@@ -134,10 +152,14 @@ public class HDRDecoderTestBase extends CodecDecoderTestBase {
         waitForAllOutputs();
         if (mHdrStaticInfoRef != null) {
             validateHDRInfo(mCodec.getOutputFormat(), MediaFormat.KEY_HDR_STATIC_INFO,
-                    mHdrStaticInfoRef);
+                    mHdrStaticInfoRef, -1L);
         }
         mCodec.stop();
         mCodec.release();
         mExtractor.release();
+        if (mHdrDynamicInfoContainer != null) {
+            assertEquals("Test did not queue metadata of all frames",
+                    mHdrDynamicInfoContainer.size(), mTotalMetadataQueued.size());
+        }
     }
 }
