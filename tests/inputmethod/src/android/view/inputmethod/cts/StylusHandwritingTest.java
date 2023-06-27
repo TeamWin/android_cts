@@ -1596,9 +1596,9 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
                     stream,
                     editorMatcher("onStartStylusHandwriting", secondaryMarker),
                     TIMEOUT);
-            TestUtils.injectStylusUpEvent(editText, endX, endY);
 
             verifyStylusHandwritingWindowIsShown(stream, imeSession);
+            TestUtils.injectStylusUpEvent(editText, endX, endY);
 
             // Finish handwriting to remove test stylus id.
             imeSession.callFinishStylusHandwriting();
