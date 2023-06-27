@@ -247,8 +247,8 @@ public class PerformanceClassEvaluator {
 
         /**
          * [2.2.7.2/7.5/H-1-6] MUST have camera2 startup latency (open camera to first
-         * preview frame) < 600ms as measured by the CTS camera PerformanceTest under ITS lighting
-         * conditions (3000K) for both primary cameras.
+         * preview frame) < 600ms (S and below) or 500ms (T and above) as measured by the CTS camera
+         * PerformanceTest under ITS lighting conditions (3000K) for both primary cameras.
          */
         public static CameraLatencyRequirement createLaunchLatencyReq() {
             RequiredMeasurement<Float> rearLaunchLatency = RequiredMeasurement
@@ -257,8 +257,8 @@ public class PerformanceClassEvaluator {
                     .setPredicate(RequirementConstants.FLOAT_LTE)
                     .addRequiredValue(Build.VERSION_CODES.R, 600.0f)
                     .addRequiredValue(Build.VERSION_CODES.S, 600.0f)
-                    .addRequiredValue(Build.VERSION_CODES.TIRAMISU, 600.0f)
-                    .addRequiredValue(Build.VERSION_CODES.UPSIDE_DOWN_CAKE, 600.0f)
+                    .addRequiredValue(Build.VERSION_CODES.TIRAMISU, 500.0f)
+                    .addRequiredValue(Build.VERSION_CODES.UPSIDE_DOWN_CAKE, 500.0f)
                     .build();
             RequiredMeasurement<Float> frontLaunchLatency = RequiredMeasurement
                     .<Float>builder()
@@ -266,8 +266,8 @@ public class PerformanceClassEvaluator {
                     .setPredicate(RequirementConstants.FLOAT_LTE)
                     .addRequiredValue(Build.VERSION_CODES.R, 600.0f)
                     .addRequiredValue(Build.VERSION_CODES.S, 600.0f)
-                    .addRequiredValue(Build.VERSION_CODES.TIRAMISU, 600.0f)
-                    .addRequiredValue(Build.VERSION_CODES.UPSIDE_DOWN_CAKE, 600.0f)
+                    .addRequiredValue(Build.VERSION_CODES.TIRAMISU, 500.0f)
+                    .addRequiredValue(Build.VERSION_CODES.UPSIDE_DOWN_CAKE, 500.0f)
                     .build();
 
             return new CameraLatencyRequirement(RequirementConstants.R7_5__H_1_6,
