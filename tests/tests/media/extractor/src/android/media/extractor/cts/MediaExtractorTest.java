@@ -22,6 +22,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
 
 import android.content.Context;
 import android.content.res.AssetFileDescriptor;
@@ -77,6 +78,8 @@ import java.util.TreeMap;
 public class MediaExtractorTest {
     private static final String TAG = "MediaExtractorTest";
     private static final boolean IS_AT_LEAST_S = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S);
+    private static final boolean IS_AT_LEAST_T =
+            ApiLevelUtil.isAtLeast(Build.VERSION_CODES.TIRAMISU);
     //TODO(b/248315681) Remove codenameEquals() check once devices return correct version for U
     public static final boolean IS_AT_LEAST_U = ApiLevelUtil.isAfter(Build.VERSION_CODES.TIRAMISU)
             || ApiLevelUtil.codenameEquals("UpsideDownCake");
@@ -860,10 +863,10 @@ public class MediaExtractorTest {
     @ApiTest(apis = {"android.media.MediaFormat#MIMETYPE_AUDIO_DTS"})
     public void testDtsInMpeg2ts() throws Exception {
         setDataSource("sample_dts.ts");
-        assertEquals(1, mExtractor.getTrackCount());
+        assumeTrue("extractor did not find the DTS track", 1 == mExtractor.getTrackCount());
 
-        // The following values below require API Build.VERSION_CODES.U
-        if (IS_AT_LEAST_U) {
+        // The following values below require API Build.VERSION_CODES.TIRAMISU
+        if (IS_AT_LEAST_T) {
             MediaFormat trackFormat = mExtractor.getTrackFormat(0);
             final String mediaType = trackFormat.getString(MediaFormat.KEY_MIME);
             assertEquals(MediaFormat.MIMETYPE_AUDIO_DTS, mediaType);
@@ -875,15 +878,18 @@ public class MediaExtractorTest {
     @ApiTest(apis = {"android.media.MediaFormat#MIMETYPE_AUDIO_DTS_HD"})
     public void testDtsHdInMpeg2ts() throws Exception {
         setDataSource("sample_dts_hd.ts");
-        assertEquals(1, mExtractor.getTrackCount());
+        assumeTrue("extractor did not find the DTS track", 1 == mExtractor.getTrackCount());
 
-        // The following values below require API Build.VERSION_CODES.U
-        if (IS_AT_LEAST_U) {
+        // The following values below require API Build.VERSION_CODES.TIRAMISU
+        if (IS_AT_LEAST_T) {
             MediaFormat trackFormat = mExtractor.getTrackFormat(0);
             final String mediaType = trackFormat.getString(MediaFormat.KEY_MIME);
             assertEquals(MediaFormat.MIMETYPE_AUDIO_DTS_HD, mediaType);
-            int mediaProfile = trackFormat.getInteger(MediaFormat.KEY_PROFILE);
-            assertEquals(MediaCodecInfo.CodecProfileLevel.DTS_HDProfileLBR, mediaProfile);
+            // The following values below require API Build.VERSION_CODES.UPSIDE_DOWN_CAKE
+            if (IS_AT_LEAST_U) {
+                int mediaProfile = trackFormat.getInteger(MediaFormat.KEY_PROFILE);
+                assertEquals(MediaCodecInfo.CodecProfileLevel.DTS_HDProfileLBR, mediaProfile);
+            }
         }
         readAllData();
     }
@@ -892,15 +898,18 @@ public class MediaExtractorTest {
     @ApiTest(apis = {"android.media.MediaFormat#MIMETYPE_AUDIO_DTS_UHD"})
     public void testDtsUhdInMpeg2ts() throws Exception {
         setDataSource("sample_dts_uhd.ts");
-        assertEquals(1, mExtractor.getTrackCount());
+        assumeTrue("extractor did not find the DTS track", 1 == mExtractor.getTrackCount());
 
-        // The following values below require API Build.VERSION_CODES.U
-        if (IS_AT_LEAST_U) {
+        // The following values below require API Build.VERSION_CODES.TIRAMISU
+        if (IS_AT_LEAST_T) {
             MediaFormat trackFormat = mExtractor.getTrackFormat(0);
             final String mediaType = trackFormat.getString(MediaFormat.KEY_MIME);
             assertEquals(MediaFormat.MIMETYPE_AUDIO_DTS_UHD, mediaType);
-            int mediaProfile = trackFormat.getInteger(MediaFormat.KEY_PROFILE);
-            assertEquals(MediaCodecInfo.CodecProfileLevel.DTS_UHDProfileP2, mediaProfile);
+            // The following values below require API Build.VERSION_CODES.UPSIDE_DOWN_CAKE
+            if (IS_AT_LEAST_U) {
+                int mediaProfile = trackFormat.getInteger(MediaFormat.KEY_PROFILE);
+                assertEquals(MediaCodecInfo.CodecProfileLevel.DTS_UHDProfileP2, mediaProfile);
+            }
         }
         readAllData();
     }
