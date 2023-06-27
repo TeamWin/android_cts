@@ -16,10 +16,15 @@
 
 package android.media.session.cts;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assert.assertThrows;
 
+import android.app.Activity;
+import android.app.PendingIntent;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.Intent;
 import android.media.session.MediaSession;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -57,5 +62,36 @@ public final class MediaSessionTest {
         ComponentName fakeReceiver =
                 new ComponentName(mContext.getPackageName(), FAKE_RECEIVER_CLASS);
         session.setMediaButtonBroadcastReceiver(fakeReceiver);
+    }
+
+    @Test
+    public void setMediaButtonReceiver_withActivity_changeEnabled_throwsIAE() {
+        MediaSession session = new MediaSession(mContext, "TAG");
+        try {
+            Intent intent = new Intent(mContext, Activity.class);
+            PendingIntent pi = PendingIntent.getActivity(mContext, /* requestCode */ 0,
+                    intent, PendingIntent.FLAG_IMMUTABLE);
+            assertThat(pi.isActivity()).isTrue();
+            assertThrows(
+                    "PendingIntent targeting activity was allowed. This should throw.",
+                    IllegalArgumentException.class,
+                    () -> session.setMediaButtonReceiver(pi));
+        } finally {
+            session.release();
+        }
+    }
+
+    @Test
+    public void setMediaButtonReceiver_withActivity_changeDisabled_isIgnored() {
+        MediaSession session = new MediaSession(mContext, "TAG");
+        try {
+            Intent intent = new Intent(mContext, Activity.class);
+            PendingIntent pi = PendingIntent.getActivity(mContext, /* requestCode */ 0,
+                    intent, PendingIntent.FLAG_IMMUTABLE);
+            assertThat(pi.isActivity()).isTrue();
+            session.setMediaButtonReceiver(pi);
+        } finally {
+            session.release();
+        }
     }
 }

@@ -565,6 +565,15 @@ public class MediaSessionTest {
         simulateMediaKeyInput(KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE);
     }
 
+    @Test
+    public void testSetMediaButtonReceiver_withNull_doesNotThrow() {
+        try {
+            mSession.setMediaButtonReceiver(null);
+        } finally {
+            mSession.release();
+        }
+    }
+
     /**
      * Test whether media button receiver can be a explicit broadcast receiver via
      * MediaSession.setMediaButtonBroadcastReceiver(ComponentName)
