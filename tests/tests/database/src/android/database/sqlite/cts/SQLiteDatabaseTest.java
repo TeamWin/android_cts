@@ -34,6 +34,7 @@ import android.database.sqlite.SQLiteDebug;
 import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteGlobal;
 import android.database.sqlite.SQLiteQuery;
+import android.database.sqlite.SQLiteRawStatement;
 import android.database.sqlite.SQLiteStatement;
 import android.database.sqlite.SQLiteTransactionListener;
 import android.icu.text.Collator;
@@ -2274,6 +2275,66 @@ public class SQLiteDatabaseTest extends AndroidTestCase {
             assertTrue(exec.awaitTermination(1, TimeUnit.MINUTES));
         } catch (InterruptedException e) {
             fail("Timed out");
+        }
+    }
+
+    public void testLastInsertRowId() {
+        final int size = 10;
+
+        // Enable WAL.
+        assertFalse(mDatabase.isWriteAheadLoggingEnabled());
+        assertTrue(mDatabase.enableWriteAheadLogging());
+        assertTrue(mDatabase.isWriteAheadLoggingEnabled());
+        assertTrue(DatabaseUtils.stringForQuery(mDatabase, "PRAGMA journal_mode", null)
+                .equalsIgnoreCase("WAL"));
+
+        // Create the t1 table and put some data in it.
+        mDatabase.beginTransaction();
+        try {
+            mDatabase.execSQL("CREATE TABLE t1 (i int);");
+            mDatabase.setTransactionSuccessful();
+        } finally {
+            mDatabase.endTransaction();
+        }
+
+        final String sql = "INSERT INTO t1 (i) VALUES(?1)";
+
+        // Put 10 lines in the database.
+        mDatabase.beginTransaction();
+        try {
+            try (SQLiteRawStatement s = mDatabase.createRawStatement(sql)) {
+                for (int i = 0; i < size; i++) {
+                    int vi = i * 3;
+                    s.bindInt(1, vi);
+                    boolean r = s.step();
+                    // No row is returned by this query.
+                    assertFalse(r);
+                    s.reset();
+                    assertEquals(i + 1, mDatabase.getLastInsertRowId());
+                }
+            }
+            mDatabase.setTransactionSuccessful();
+        } finally {
+            mDatabase.endTransaction();
+        }
+
+        // Put a second 10 lines in the database.
+        mDatabase.beginTransaction();
+        try {
+            try (SQLiteRawStatement s = mDatabase.createRawStatement(sql)) {
+                for (int i = 0; i < size; i++) {
+                    int vi = i * 3;
+                    s.bindInt(1, vi);
+                    boolean r = s.step();
+                    // No row is returned by this query.
+                    assertFalse(r);
+                    s.reset();
+                    assertEquals(size + i + 1, mDatabase.getLastInsertRowId());
+                }
+            }
+            mDatabase.setTransactionSuccessful();
+        } finally {
+            mDatabase.endTransaction();
         }
     }
 }
