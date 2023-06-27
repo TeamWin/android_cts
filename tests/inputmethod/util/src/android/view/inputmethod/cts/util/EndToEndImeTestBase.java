@@ -34,6 +34,7 @@ import android.platform.test.annotations.AppModeInstant;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.CtsTouchUtils;
+import com.android.compatibility.common.util.FeatureUtil;
 import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.After;
@@ -72,6 +73,15 @@ public class EndToEndImeTestBase {
      * used to handle reverting the state when the test run ends.
      */
     private static boolean sWasVerboseImeTrackerLoggingEnabled;
+
+    /**
+     * Skip test executions for know broken platforms.
+     */
+    @Before
+    public final void checkSupportedPlatforms() {
+        // STOPSHIP(b/288952673): Re-enable tests for wear once it becomes stable enough.
+        assumeFalse(FeatureUtil.isWatch());
+    }
 
     /**
      * Enters touch mode when instrumenting.
