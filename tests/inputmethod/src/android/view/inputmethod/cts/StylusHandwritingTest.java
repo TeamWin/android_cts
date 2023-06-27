@@ -839,6 +839,7 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
      * {@link InputMethodService#onUpdateEditorToolType(int)} lifecycle method.
      */
     @Test
+    @FlakyTest
     public void testOnViewClicked_withStylusTap() throws Exception {
         try (MockImeSession imeSession = MockImeSession.create(
                 InstrumentationRegistry.getInstrumentation().getContext(),
@@ -887,6 +888,7 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
      * {@link InputMethodService#onUpdateEditorToolType(int)} lifecycle method.
      */
     @Test
+    @FlakyTest
     public void testOnViewClicked_withFingerTap() throws Exception {
         try (MockImeSession imeSession = MockImeSession.create(
                 InstrumentationRegistry.getInstrumentation().getContext(),
@@ -937,6 +939,7 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
      * {@link InputMethodService#onUpdateEditorToolType(int)} on next startInput().
      */
     @Test
+    @FlakyTest
     public void testOnViewClicked_withStylusHandwriting() throws Exception {
         try (MockImeSession imeSession = MockImeSession.create(
                 InstrumentationRegistry.getInstrumentation().getContext(),

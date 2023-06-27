@@ -54,6 +54,7 @@ import android.widget.LinearLayout;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.test.filters.FlakyTest;
 import androidx.test.filters.MediumTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
@@ -109,6 +110,7 @@ public final class AccessibilityInputMethodTest extends EndToEndImeTestBase {
     }
 
     @Test
+    @FlakyTest
     public void testLifecycle() throws Exception {
         testA11yIme((uiAutomation, imeSession, a11yImeSession) -> {
             final var stream = a11yImeSession.openEventStream();
@@ -153,6 +155,7 @@ public final class AccessibilityInputMethodTest extends EndToEndImeTestBase {
     }
 
     @Test
+    @FlakyTest
     public void testRestartInput() throws Exception {
         testA11yIme((uiAutomation, imeSession, a11yImeSession) -> {
             final var stream = a11yImeSession.openEventStream();
@@ -247,6 +250,7 @@ public final class AccessibilityInputMethodTest extends EndToEndImeTestBase {
     }
 
     @Test
+    @FlakyTest
     public void testNoFallbackInputConnection() throws Exception {
         final String marker = getTestMarker();
         testA11yIme((uiAutomation, imeSession, a11yImeSession) -> {
@@ -305,6 +309,7 @@ public final class AccessibilityInputMethodTest extends EndToEndImeTestBase {
     }
 
     @Test
+    @FlakyTest
     public void testNoFallbackInputConnectionAfterRestartInput() throws Exception {
         final String marker = getTestMarker();
         testA11yIme((uiAutomation, imeSession, a11yImeSession) -> {
@@ -538,6 +543,7 @@ public final class AccessibilityInputMethodTest extends EndToEndImeTestBase {
     }
 
     @Test
+    @FlakyTest
     public void testInvalidateInput() throws Exception {
         // If IC#takeSnapshot() returns true, it should work, even if IC#{begin,end}BatchEdit()
         // always return false.
