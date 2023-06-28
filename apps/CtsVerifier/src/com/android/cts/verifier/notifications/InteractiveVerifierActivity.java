@@ -42,6 +42,7 @@ import android.widget.TextView;
 
 import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
+import com.android.cts.verifier.TestListActivity;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -56,6 +57,7 @@ public abstract class InteractiveVerifierActivity extends PassFailButtons.Activi
     private static final String STATE = "state";
     private static final String STATUS = "status";
     private static final String SCROLLY = "scrolly";
+    private static final String DISPLAY_MODE = "display_mode";
     private static LinkedBlockingQueue<String> sDeletedQueue = new LinkedBlockingQueue<String>();
     protected static final String LISTENER_PATH = "com.android.cts.verifier/" +
             "com.android.cts.verifier.notifications.MockListener";
@@ -168,6 +170,10 @@ public abstract class InteractiveVerifierActivity extends PassFailButtons.Activi
         int savedStateIndex = (savedState == null) ? 0 : savedState.getInt(STATE, 0);
         int savedStatus = (savedState == null) ? SETUP : savedState.getInt(STATUS, SETUP);
         int scrollY = (savedState == null) ? 0 : savedState.getInt(SCROLLY, 0);
+        String displayMode = (savedState == null) ? null : savedState.getString(DISPLAY_MODE, null);
+        if (displayMode != null) {
+            TestListActivity.sCurrentDisplayMode = displayMode;
+        }
         Log.i(TAG, "restored state(" + savedStateIndex + "}, status(" + savedStatus + ")");
         mContext = this;
         mRunner = this;
@@ -218,6 +224,7 @@ public abstract class InteractiveVerifierActivity extends PassFailButtons.Activi
         final int status = mCurrentTest == null ? SETUP : mCurrentTest.status;
         outState.putInt(STATUS, status);
         outState.putInt(SCROLLY, mScrollView.getScrollY());
+        outState.putString(DISPLAY_MODE, TestListActivity.sCurrentDisplayMode);
         Log.i(TAG, "saved state(" + stateIndex + "), status(" + status + ")");
     }
 
