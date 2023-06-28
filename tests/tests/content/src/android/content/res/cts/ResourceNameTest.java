@@ -16,11 +16,10 @@
 
 package android.content.res.cts;
 
+import android.content.cts.R;
 import android.content.res.Resources;
 import android.test.AndroidTestCase;
 import android.test.suitebuilder.annotation.SmallTest;
-
-import android.content.cts.R;
 
 public class ResourceNameTest extends AndroidTestCase {
 
@@ -28,16 +27,16 @@ public class ResourceNameTest extends AndroidTestCase {
     public void testGetResourceName() {
         final Resources res = mContext.getResources();
 
-        final String fullName = res.getResourceName(R.configVarying.simple);
-        assertEquals("android.content.cts:configVarying/simple", fullName);
+        final String fullName = res.getResourceName(R.string.simple);
+        assertEquals("android.content.cts:string/simple", fullName);
 
-        final String packageName = res.getResourcePackageName(R.configVarying.simple);
+        final String packageName = res.getResourcePackageName(R.string.simple);
         assertEquals("android.content.cts", packageName);
 
-        final String typeName = res.getResourceTypeName(R.configVarying.simple);
-        assertEquals("configVarying", typeName);
+        final String typeName = res.getResourceTypeName(R.string.simple);
+        assertEquals("string", typeName);
 
-        final String entryName = res.getResourceEntryName(R.configVarying.simple);
+        final String entryName = res.getResourceEntryName(R.string.simple);
         assertEquals("simple", entryName);
     }
 
@@ -45,17 +44,17 @@ public class ResourceNameTest extends AndroidTestCase {
     public void testGetResourceIdentifier() {
         final Resources res = mContext.getResources();
         int resid = res.getIdentifier(
-                "android.content.cts:configVarying/simple",
+                "android.content.cts:string/simple",
                 null, null);
-        assertEquals(R.configVarying.simple, resid);
+        assertEquals(R.string.simple, resid);
 
-        resid = res.getIdentifier("configVarying/simple", null,
+        resid = res.getIdentifier("string/simple", null,
                 "android.content.cts");
-        assertEquals(R.configVarying.simple, resid);
+        assertEquals(R.string.simple, resid);
 
-        resid = res.getIdentifier("simple", "configVarying",
+        resid = res.getIdentifier("simple", "string",
                 "android.content.cts");
-        assertEquals(R.configVarying.simple, resid);
+        assertEquals(R.string.simple, resid);
     }
 }
 
