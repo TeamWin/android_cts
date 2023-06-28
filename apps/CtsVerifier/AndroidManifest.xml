@@ -2851,10 +2851,12 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.cts.intent.category.MANUAL_TEST" />
             </intent-filter>
+            <meta-data android:name="CddTest" android:value="7.3/C-1-5" />
             <meta-data android:name="test_category" android:value="@string/test_category_sensors" />
             <meta-data android:name="test_applicable_features"
                        android:value="android.hardware.sensor.stepcounter:android.hardware.sensor.stepdetector:android.hardware.sensor.proximity:android.hardware.sensor.light" />
             <meta-data android:name="display_mode" android:value="multi_display_mode" />
+            <meta-data android:name="test_pass_mode" android:value="either_mode" />
         </activity>
 
         <!-- TODO: enable when a more reliable way to identify time synchronization is available -->
