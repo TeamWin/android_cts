@@ -1,0 +1,6 @@
+package: "android.cts.flags.tests"
+flag {
+  name: "readwrite_disabled_flag"
+  namespace: "cts"
+  description: "testing flag that is always disabled for annotation testing"
+}
