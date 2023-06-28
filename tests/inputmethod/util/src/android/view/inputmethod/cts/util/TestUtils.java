@@ -230,18 +230,7 @@ public final class TestUtils {
      * @return the injected MotionEvent.
      */
     public static MotionEvent injectStylusDownEvent(@NonNull View view, int x, int y) {
-        int[] xy = new int[2];
-        view.getLocationOnScreen(xy);
-        x += xy[0];
-        y += xy[1];
-
-        // Inject stylus ACTION_DOWN
-        long downTime = SystemClock.uptimeMillis();
-        final MotionEvent downEvent =
-                getMotionEvent(downTime, downTime, MotionEvent.ACTION_DOWN, x, y,
-                        MotionEvent.TOOL_TYPE_STYLUS);
-        injectMotionEvent(downEvent, true /* sync */);
-        return downEvent;
+        return injectStylusEvent(view, MotionEvent.ACTION_DOWN, x, y);
     }
 
     /**
@@ -252,17 +241,28 @@ public final class TestUtils {
      * @return the injected MotionEvent.
      */
     public static MotionEvent injectStylusUpEvent(@NonNull View view, int x, int y) {
+        return injectStylusEvent(view, MotionEvent.ACTION_UP, x, y);
+    }
+
+    public static void injectStylusHoverEvents(@NonNull View view, int x, int y) {
+        injectStylusEvent(view, MotionEvent.ACTION_HOVER_ENTER, x, y);
+        injectStylusEvent(view, MotionEvent.ACTION_HOVER_MOVE, x, y);
+        injectStylusEvent(view, MotionEvent.ACTION_HOVER_EXIT, x, y);
+    }
+
+    private static MotionEvent injectStylusEvent(@NonNull View view, int action, int x, int y) {
         int[] xy = new int[2];
         view.getLocationOnScreen(xy);
         x += xy[0];
         y += xy[1];
 
-        // Inject stylus ACTION_DOWN
-        long downTime = SystemClock.uptimeMillis();
-        final MotionEvent upEvent = getMotionEvent(downTime, downTime, MotionEvent.ACTION_UP, x, y,
-                MotionEvent.TOOL_TYPE_STYLUS);
-        injectMotionEvent(upEvent, true /* sync */);
-        return upEvent;
+        // Inject stylus action
+        long eventTime = SystemClock.uptimeMillis();
+        final MotionEvent event =
+                getMotionEvent(eventTime, eventTime, action, x, y,
+                        MotionEvent.TOOL_TYPE_STYLUS);
+        injectMotionEvent(event, true /* sync */);
+        return event;
     }
 
     /**
