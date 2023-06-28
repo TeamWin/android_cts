@@ -1461,11 +1461,19 @@ public class JobThrottlingTest {
      * Set the screen state.
      */
     private void setScreenState(boolean on) throws Exception {
+        setScreenState(mUiDevice, on);
+    }
+
+    static void setScreenState(UiDevice uiDevice, boolean on) throws Exception {
+        PowerManager powerManager =
+                InstrumentationRegistry.getContext().getSystemService(PowerManager.class);
         if (on) {
-            mUiDevice.executeShellCommand("input keyevent KEYCODE_WAKEUP");
-            mUiDevice.executeShellCommand("wm dismiss-keyguard");
+            uiDevice.executeShellCommand("input keyevent KEYCODE_WAKEUP");
+            uiDevice.executeShellCommand("wm dismiss-keyguard");
+            waitUntil("Device not interactive", () -> powerManager.isInteractive());
         } else {
-            mUiDevice.executeShellCommand("input keyevent KEYCODE_SLEEP");
+            uiDevice.executeShellCommand("input keyevent KEYCODE_SLEEP");
+            waitUntil("Device still interactive", () -> !powerManager.isInteractive());
         }
         // Wait a little bit to make sure the screen state has changed.
         Thread.sleep(4_000);
