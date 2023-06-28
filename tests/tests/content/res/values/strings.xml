@@ -190,4 +190,17 @@ I think so, so how about double this string, like copy and paste! </string>
     <string name="config_overridden_string">default</string>
 
     <string name="smallestWidthTest">default</string>
+
+    <string name="simple">simple default</string>
+    <bag type="style" name="bag">
+        <item type="string" name="testString">bag default</item>
+    </bag>
+    <string name="small">default</string>
+    <string name="normal">default</string>
+    <string name="large">default</string>
+    <string name="xlarge">default</string>
+    <string name="sw">default</string>
+    <string name="w">default</string>
+    <string name="h">default</string>
+    <string name="wh">default</string>
 </resources>
