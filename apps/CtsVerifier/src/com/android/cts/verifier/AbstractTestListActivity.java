@@ -117,7 +117,7 @@ public abstract class AbstractTestListActivity extends ListActivity {
             // Set the same result in both folded and unfolded mode if the test pass mode is set to
             // either_mode.
             TestListItem testListItem = mAdapter.getItemByName(testResult.getName());
-            if (testListItem.passInEitherMode) {
+            if (testListItem != null && testListItem.passInEitherMode) {
                 setTestResult(TestResult.fromActivityResultWithDisplayMode(
                         resultCode, data, DisplayMode.FOLDED.toString()));
                 setTestResult(TestResult.fromActivityResultWithDisplayMode(
