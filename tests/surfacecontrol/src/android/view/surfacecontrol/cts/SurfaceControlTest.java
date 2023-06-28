@@ -1671,7 +1671,7 @@ public class SurfaceControlTest {
         final int extendedDataspace = DataSpace.pack(DataSpace.STANDARD_BT709,
                 DataSpace.TRANSFER_SRGB, DataSpace.RANGE_EXTENDED);
         final HardwareBuffer buffer = getSolidBuffer(DEFAULT_LAYOUT_WIDTH,
-                DEFAULT_LAYOUT_HEIGHT, Color.RED);
+                DEFAULT_LAYOUT_HEIGHT, Color.WHITE);
 
         verifyTest(
                 new BasicSurfaceHolderCallback() {
@@ -1685,7 +1685,7 @@ public class SurfaceControlTest {
                                 .apply();
                     }
                 },
-                new PixelChecker(Color.RED) { //10000
+                new PixelChecker(Color.WHITE) { //10000
                     @Override
                     public boolean checkPixels(int pixelCount, int width, int height) {
                         return pixelCount > 9000 && pixelCount < 11000;
@@ -1711,7 +1711,7 @@ public class SurfaceControlTest {
                                     .apply();
                         }
                     },
-                    new PixelChecker(Color.RED) { //10000
+                    new PixelChecker(Color.WHITE) { //10000
                         @Override
                         public boolean checkPixels(int pixelCount, int width, int height) {
                             return pixelCount > 9000 && pixelCount < 11000;
