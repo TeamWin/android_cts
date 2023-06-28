@@ -689,8 +689,7 @@ public final class CommandSession {
         protected void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
             if (mUseTestJournal) {
-                mTestJournalClient = TestJournalClient.create(this /* context */,
-                        getComponentName());
+                mTestJournalClient = createTestJournalClient();
             }
 
             final String hostId = getIntent().getStringExtra(KEY_HOST_ID);
@@ -770,6 +769,10 @@ public final class CommandSession {
 
         protected boolean hasPendingCommand(String command) {
             return mReceiver != null && sCommandStorage.containsCommand(getHostId(), command);
+        }
+
+        protected TestJournalClient createTestJournalClient() {
+            return TestJournalClient.create(this /* context */, getComponentName());
         }
 
         /** Returns null means this activity does support the session protocol. */
