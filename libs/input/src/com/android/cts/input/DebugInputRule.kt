@@ -64,10 +64,10 @@ class DebugInputRule : TestWatcher() {
     override fun finished(description: Description?) {
         if (!shouldEnableInputDebugging(description!!)) return
 
-        for (tag in debugInputTags) {
-            SystemUtil.runShellCommandOrThrow(
-                    "setprop log.tag.$tag \"${initialValues.remove(tag)!!}\"")
+        for (entry in initialValues) {
+            SystemUtil.runShellCommandOrThrow("setprop log.tag.${entry.key} \"${entry.value}\"")
         }
+        initialValues.clear()
     }
 
     override fun skipped(e: AssumptionViolatedException?, description: Description?) {
