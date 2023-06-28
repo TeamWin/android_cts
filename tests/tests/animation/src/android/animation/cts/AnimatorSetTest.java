@@ -1271,6 +1271,23 @@ public class AnimatorSetTest {
     }
 
     @Test
+    public void hugeDuration() throws Throwable {
+        AnimatorSet animators = new AnimatorSet();
+        TargetObj target = new TargetObj();
+        ObjectAnimator animator = ObjectAnimator.ofFloat(target, "val", 1, 0);
+
+        // The duration + repeat count will cause a total duration > MAXINT, which caused a
+        // failure due to casting a resulting difference to an int (b/265674577)
+        animator.setDuration(1000);
+        animator.setRepeatCount(2147483);
+
+        mActivityRule.runOnUiThread(() -> {
+            animators.play(animator);
+            animators.start();
+        });
+    }
+
+    @Test
     public void childListenersCalledWhilePaused() throws Throwable {
         AnimationCountListener setListener1 = new AnimationCountListener();
         AnimationCountListener setListener2 = new AnimationCountListener();
