@@ -48,11 +48,15 @@ class ApduScriptUtil {
     private static final String TAG = "ApduScriptUtil";
 
     private static final long SET_SIM_POWER_TIMEOUT_SECONDS = 30;
-    private static final long APP_STATE_ADDITIONAL_WAIT_MILLIS = TimeUnit.SECONDS.toMillis(3);
+    private static final long APP_STATE_ADDITIONAL_WAIT_MILLIS = TimeUnit.SECONDS.toMillis(5);
     // TelephonyManager constants are @hide, so manually copy them here
     private static final int CARD_POWER_DOWN = 0;
     private static final int CARD_POWER_UP = 1;
     private static final int CARD_POWER_UP_PASS_THROUGH = 2;
+    // TODO(b/236950019): Find a deterministic way to detect SIM power state change
+    // from DOWN to PASS_THROUGH or vice versa and then remove the stub SIM state thoroughly.
+    // Stub SIM state indicating we don't have deterministic target SIM card/app state to wait for.
+    private static final int SIM_SATE_UNDEFINED = -1;
 
     private static Context getContext() {
         return InstrumentationRegistry.getInstrumentation().getTargetContext();
@@ -123,14 +127,15 @@ class ApduScriptUtil {
             // Note: Even if it won't wipe out subId after hal version 1.6, we still use the
             // slot/port-based APDU method while in pass-through mode to make compatible with
             // older hal version.
-            rebootSimCard(subId,
-                    logicalSlotId, CARD_POWER_UP_PASS_THROUGH, listenToSimCardStateChange);
+            rebootSimCard(subId, logicalSlotId, CARD_POWER_UP_PASS_THROUGH,
+                    listenToSimCardStateChange, false /* isCardPowerUpPassThrough */);
             sendApdus(physicalSlotId, portIndex, apdus);
         } finally {
             // Even if rebootSimCard failed midway through (leaving the SIM in POWER_DOWN) or timed
             // out waiting for the right SIM state after rebooting in POWER_UP_PASS_THROUGH, we try
             // to bring things back to the normal POWER_UP state to avoid breaking other suites.
-            rebootSimCard(subId, logicalSlotId, CARD_POWER_UP, listenToSimCardStateChange);
+            rebootSimCard(subId, logicalSlotId, CARD_POWER_UP, listenToSimCardStateChange,
+                    true /* isCardPowerUpPassThrough */);
         }
     }
 
@@ -151,8 +156,8 @@ class ApduScriptUtil {
      *     The SIM application state keeps in NOT_READY state after simPower moving from
      *     CARD_POWER_DOWN to CARD_POWER_UP_PASS_THROUGH.
      */
-    private static void rebootSimCard(int subId,
-            int logicalSlotId, int targetPowerState, boolean listenToSimCardStateChange)
+    private static void rebootSimCard(int subId, int logicalSlotId, int targetPowerState,
+            boolean listenToSimCardStateChange, boolean isCardPowerUpPassThrough)
             throws InterruptedException {
         if (listenToSimCardStateChange) {
             setSimPowerAndWaitForCardState(subId,
@@ -162,9 +167,12 @@ class ApduScriptUtil {
                     logicalSlotId, targetPowerState,
                     TelephonyManager.SIM_STATE_PRESENT, listenToSimCardStateChange);
         } else {
+            // Distinguish power transition cases of UP_PASS_THROUGH->DOWN from UP->DOWN.
+            // The former has no unified SIM state to monitor but the latter one has.
             setSimPowerAndWaitForCardState(subId,
                     logicalSlotId, CARD_POWER_DOWN,
-                    TelephonyManager.SIM_STATE_NOT_READY, listenToSimCardStateChange);
+                    isCardPowerUpPassThrough ? SIM_SATE_UNDEFINED
+                            : TelephonyManager.SIM_STATE_NOT_READY, listenToSimCardStateChange);
             if (targetPowerState == CARD_POWER_UP) {
                 setSimPowerAndWaitForCardState(subId,
                         logicalSlotId, targetPowerState,
@@ -172,7 +180,7 @@ class ApduScriptUtil {
             } else if (targetPowerState == CARD_POWER_UP_PASS_THROUGH) {
                 setSimPowerAndWaitForCardState(subId,
                         logicalSlotId, targetPowerState,
-                        TelephonyManager.SIM_STATE_NOT_READY, listenToSimCardStateChange);
+                        SIM_SATE_UNDEFINED, listenToSimCardStateChange);
             }
         }
     }
@@ -265,9 +273,10 @@ class ApduScriptUtil {
                     .createForSubscriptionId(subId).getSimApplicationState();
             Log.i(TAG, "Waiting for SIM " + logicalSlotId
                     + " to become " + targetSimState + " from " + simApplicationState);
-            // TODO(b/236950019): Find a deterministic way to detect SIM power state change
-            // from DOWN to PASS_THROUGH.
-            if ((!listenToSimCardStateChange) && (targetSimState == simApplicationState)) {
+            if (!listenToSimCardStateChange && ((targetSimState == simApplicationState)
+                    || targetSimState == SIM_SATE_UNDEFINED)) {
+                Log.w(TAG, "This SIM power transition results in an ambiguous SIM state, waiting "
+                        + APP_STATE_ADDITIONAL_WAIT_MILLIS + "ms and assuming success");
                 Thread.sleep(APP_STATE_ADDITIONAL_WAIT_MILLIS);
             } else if (!cardStateLatch.await(SET_SIM_POWER_TIMEOUT_SECONDS, SECONDS)) {
                 throw new IllegalStateException(
