@@ -195,7 +195,6 @@ def calibrate_read_noise(
           # Not all data points were captured, continue capture.
           capture_read_noise_utils.capture_read_noise_for_iso_range(
               cam,
-              camera_name,
               raw_format,
               sens_min,
               sens_max_meas,
