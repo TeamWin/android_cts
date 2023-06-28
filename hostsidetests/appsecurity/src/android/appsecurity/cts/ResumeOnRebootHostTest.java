@@ -31,6 +31,8 @@ import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
+import com.android.tradefed.util.CommandResult;
+import com.android.tradefed.util.CommandStatus;
 import com.android.tradefed.util.RunUtil;
 
 import org.junit.After;
@@ -74,7 +76,11 @@ public class ResumeOnRebootHostTest extends BaseHostJUnit4Test {
     private static final long USER_SWITCH_WAIT = TimeUnit.SECONDS.toMillis(10);
     private static final int UNLOCK_BROADCAST_WAIT_SECONDS = 10;
 
+    // This is the PIN set in EncryptionAppTest.testSetUp()
+    private static final String DEFAULT_PIN = "1234";
+
     private boolean mSupportsMultiUser;
+    private String mOriginalVerifyAdbInstallerSetting = null;
 
     @Rule(order = 0)
     public BootCountTrackerRule mBootCountTrackingRule = new BootCountTrackerRule(this, 0);
@@ -89,7 +95,11 @@ public class ResumeOnRebootHostTest extends BaseHostJUnit4Test {
 
         mSupportsMultiUser = getDevice().getMaxNumberOfUsersSupported() > 1;
 
+        normalizeUserStates();
         setScreenStayOnValue(true);
+        mOriginalVerifyAdbInstallerSetting =
+                getDevice().getSetting("global", "verifier_verify_adb_installs");
+        getDevice().setSetting("global", "verifier_verify_adb_installs", "0");
         removeTestPackages();
         deviceDisableDeviceConfigSync();
         deviceSetupServerBasedParameter();
@@ -100,6 +110,11 @@ public class ResumeOnRebootHostTest extends BaseHostJUnit4Test {
         removeTestPackages();
         deviceCleanupServerBasedParameter();
         deviceRestoreDeviceConfigSync();
+        if (mOriginalVerifyAdbInstallerSetting != null) {
+            getDevice().setSetting(
+                    "global", "verifier_verify_adb_installs",
+                    mOriginalVerifyAdbInstallerSetting);
+        }
         setScreenStayOnValue(false);
     }
 
@@ -565,16 +580,49 @@ public class ResumeOnRebootHostTest extends BaseHostJUnit4Test {
         }
     }
 
+    private void setScreenStayOnValue(boolean value) throws DeviceNotAvailableException {
+        CommandResult result = getDevice().executeShellV2Command("svc power stayon " + value);
+        if (result.getStatus() != CommandStatus.SUCCESS) {
+            CLog.w("Could not set screen stay-on value. " + generateErrorStringFromCommandResult(
+                    result));
+        }
+    }
+
+    private void normalizeUserStates() throws Exception {
+        int[] userIds = Utils.getAllUsers(getDevice());
+        switchUser(userIds[0]);
+
+        for (int userId : userIds) {
+            CommandResult lockScreenDisabledResult =
+                    getDevice().executeShellV2Command(
+                            "locksettings get-disabled --old " + DEFAULT_PIN + " --user " + userId);
+            if (lockScreenDisabledResult.getStatus() != CommandStatus.SUCCESS) {
+                CLog.w("Couldn't check whether there's already a PIN on the device. "
+                        + generateErrorStringFromCommandResult(lockScreenDisabledResult));
+            }
+            if ("false".equals(lockScreenDisabledResult.getStdout().trim())) {
+                CommandResult unsetPinResult =
+                        getDevice().executeShellV2Command(
+                                "locksettings clear --old " + DEFAULT_PIN + " --user " + userId);
+                if (unsetPinResult.getStatus() != CommandStatus.SUCCESS) {
+                    CLog.w("Couldn't unset existing PIN on device. Test might not work properly. "
+                            + generateErrorStringFromCommandResult(unsetPinResult));
+                }
+            }
+        }
+    }
+
+    private static String generateErrorStringFromCommandResult(CommandResult result) {
+        return "Status code: " + result.getStatus() + ", Exit code: " + result.getExitCode()
+                + ", Error: " + result.getStderr();
+    }
+
     private String executeShellCommandWithLogging(String command)
             throws DeviceNotAvailableException {
         CLog.d("Starting command: " + command);
         String result = getDevice().executeShellCommand(command);
         CLog.d("Output for command \"" + command + "\": " + result);
         return result;
-    }
-
-    private void setScreenStayOnValue(boolean value) throws DeviceNotAvailableException {
-        getDevice().executeShellCommand("svc power stayon " + value);
     }
 
     private int[] prepareUsers(int users) throws DeviceNotAvailableException {
