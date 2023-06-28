@@ -28,10 +28,10 @@ public final class SettingsProviderInvalidKeyTest extends AndroidTestCase {
     public void testLongKeysAreRejected() {
         final ContentResolver resolver = getContext().getContentResolver();
         IllegalStateException thrown = expectThrows(IllegalStateException.class,
-                () -> Settings.System.putString(resolver, Strings.repeat("A", 65000), ""));
+                () -> Settings.System.putString(resolver, Strings.repeat("A", 30001), ""));
         assertTrue(thrown.getMessage().contains("adding too many system settings"));
         // Repeated calls should throw as well
         expectThrows(IllegalStateException.class,
-                () -> Settings.System.putString(resolver, Strings.repeat("A", 65000), ""));
+                () -> Settings.System.putString(resolver, Strings.repeat("A", 30001), ""));
     }
 }
