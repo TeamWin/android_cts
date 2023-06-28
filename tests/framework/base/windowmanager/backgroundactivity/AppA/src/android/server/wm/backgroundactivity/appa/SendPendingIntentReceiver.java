@@ -16,6 +16,8 @@
 
 package android.server.wm.backgroundactivity.appa;
 
+import static android.app.ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_ALLOWED;
+import static android.app.ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_DENIED;
 import static android.server.wm.backgroundactivity.common.CommonComponents.EVENT_NOTIFIER_EXTRA;
 
 import android.app.ActivityOptions;
@@ -39,7 +41,15 @@ public class SendPendingIntentReceiver extends BroadcastReceiver {
     private static Bundle createBundleWithBalEnabled() {
         ActivityOptions result =
                 ActivityOptions.makeBasic();
-        result.setPendingIntentBackgroundActivityLaunchAllowed(true);
+        result.setPendingIntentBackgroundActivityStartMode(MODE_BACKGROUND_ACTIVITY_START_ALLOWED);
+        return result.toBundle();
+    }
+
+    private static Bundle createOrAddToBundleWithPICreatorBalDenied(Bundle optionBundle) {
+        ActivityOptions result = optionBundle == null
+                ? ActivityOptions.makeBasic() : ActivityOptions.fromBundle(optionBundle);
+        result.setPendingIntentCreatorBackgroundActivityStartMode(
+                MODE_BACKGROUND_ACTIVITY_START_DENIED);
         return result.toBundle();
     }
 
@@ -56,12 +66,29 @@ public class SendPendingIntentReceiver extends BroadcastReceiver {
                 getOptionalBooleanExtra(receivedIntent,
                         appA.SEND_PENDING_INTENT_RECEIVER_EXTRA.ALLOW_BAL_EXTRA_ON_PENDING_INTENT,
                         false);
+        Optional<Boolean> extraPICreatorBalOnIntent =
+                getOptionalBooleanExtra(receivedIntent,
+                        appA.SEND_PENDING_INTENT_RECEIVER_EXTRA.DENY_CREATOR_BAL_PRIVILEGE,
+                        false);
+        Optional<Boolean> launchAppB =
+                getOptionalBooleanExtra(receivedIntent,
+                        appA.SEND_PENDING_INTENT_RECEIVER_EXTRA.CREATE_PI_LAUNCH_APP_B,
+                        false);
 
         ResultReceiver eventNotifier = receivedIntent.getParcelableExtra(EVENT_NOTIFIER_EXTRA);
 
         if (eventNotifier != null) {
             eventNotifier.send(Event.APP_A_SEND_PENDING_INTENT_BROADCAST_RECEIVED, null);
         }
+
+        String appBPackage = receivedIntent.getStringExtra(
+                appA.SEND_PENDING_INTENT_RECEIVER_EXTRA.APP_B_PACKAGE);
+        if (appBPackage == null) {
+            appBPackage = android.server.wm.backgroundactivity.appb.Components.JAVA_PACKAGE_NAME;
+        }
+
+        android.server.wm.backgroundactivity.appb.Components appB =
+                android.server.wm.backgroundactivity.appb.Components.get(appBPackage);
 
         final PendingIntent pendingIntent;
         if (isBroadcast) {
@@ -82,29 +109,31 @@ public class SendPendingIntentReceiver extends BroadcastReceiver {
                             newIntent,
                             PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_IMMUTABLE);
         } else {
-            // Create a pendingIntent to launch appA's BackgroundActivity
+            // Create a pendingIntent to launch either appA's BackgroundActivity or appB's
+            // ForegroundActivity.
             Intent newIntent = new Intent();
-            newIntent.setClass(context, BackgroundActivity.class);
+            if (launchAppB.orElse(false)) {
+                newIntent.setComponent(appB.FOREGROUND_ACTIVITY);
+            } else {
+                newIntent.setClass(context, BackgroundActivity.class);
+            }
             newIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            Bundle optionBundle = null;
             if (extraBalOnIntent.orElse(false)) {
-                newIntent.putExtras(createBundleWithBalEnabled());
+                optionBundle = createBundleWithBalEnabled();
+                newIntent.putExtras(optionBundle);
+            }
+            if (extraPICreatorBalOnIntent.orElse(false)) {
+                optionBundle = createOrAddToBundleWithPICreatorBalDenied(optionBundle);
             }
             pendingIntent =
                     PendingIntent.getActivity(
                             context,
                             0,
                             newIntent,
-                            PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+                            PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_IMMUTABLE,
+                            optionBundle);
         }
-
-        String appBPackage = receivedIntent.getStringExtra(
-                appA.SEND_PENDING_INTENT_RECEIVER_EXTRA.APP_B_PACKAGE);
-        if (appBPackage == null) {
-            appBPackage = android.server.wm.backgroundactivity.appb.Components.JAVA_PACKAGE_NAME;
-        }
-
-        android.server.wm.backgroundactivity.appb.Components appB =
-                android.server.wm.backgroundactivity.appb.Components.get(appBPackage);
 
         Optional<Boolean> extraBal =
                 getOptionalBooleanExtra(receivedIntent,
@@ -112,6 +141,9 @@ public class SendPendingIntentReceiver extends BroadcastReceiver {
         Optional<Boolean> useNullBundle =
                 getOptionalBooleanExtra(receivedIntent,
                         appB.START_PENDING_INTENT_ACTIVITY_EXTRA.USE_NULL_BUNDLE, false);
+        Optional<Boolean> extraPICreatorBal =
+                getOptionalBooleanExtra(receivedIntent,
+                        appB.START_PENDING_INTENT_ACTIVITY_EXTRA.ALLOW_CREATOR_BAL, false);
 
 
         // Send the pendingIntent to appB
@@ -123,6 +155,8 @@ public class SendPendingIntentReceiver extends BroadcastReceiver {
                 .putExtra(appB.START_PENDING_INTENT_ACTIVITY_EXTRA.ALLOW_BAL, v));
         useNullBundle.ifPresent(v -> intent
                 .putExtra(appB.START_PENDING_INTENT_ACTIVITY_EXTRA.USE_NULL_BUNDLE, v));
+        extraPICreatorBal.ifPresent(v -> intent
+                .putExtra(appB.START_PENDING_INTENT_ACTIVITY_EXTRA.ALLOW_CREATOR_BAL, v));
         Log.d(TAG, "sendBroadcast(" + intent + ") from " + context.getPackageName() + " at "
                 + context.getApplicationInfo().targetSdkVersion);
         context.sendBroadcast(intent);

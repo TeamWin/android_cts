@@ -100,6 +100,15 @@ public class Components extends ComponentsBase {
          */
         public final String ALLOW_BAL_EXTRA_ON_PENDING_INTENT =
                 "ALLOW_BAL_EXTRA_ON_PENDING_INTENT";
+        /**
+         * Create a PendingIntent with creator BAL option set to Deny BAL privilege.
+         */
+        public final String DENY_CREATOR_BAL_PRIVILEGE = "DENY_CREATOR_BAL_PRIVILEGE";
+        /**
+         * Create a PendingIntent to launch App B Foreground Activity instead of the usual App A
+         * Background Activity.
+         */
+        public final String CREATE_PI_LAUNCH_APP_B = "CREATE_PI_LAUNCH_APP_B";
     }
 
     /** Extra key constants for {@link #START_ACTIVITY_RECEIVER} */

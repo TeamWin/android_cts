@@ -520,6 +520,57 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
     }
 
     @Test
+    public void testPI_appAIsForegroundDenyCreatorPrivilege_launchAppB_isBlocked()
+            throws Exception {
+        // Start AppA foreground activity
+        Intent intent = new Intent();
+        intent.setComponent(APP_A.FOREGROUND_ACTIVITY);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        mContext.startActivity(intent);
+        boolean result = waitForActivityFocused(APP_A.FOREGROUND_ACTIVITY);
+        assertTrue("Not able to start foreground Activity", result);
+        assertTaskStackHasComponents(APP_A.FOREGROUND_ACTIVITY, APP_A.FOREGROUND_ACTIVITY);
+
+        // App A create a PendingIntent with ActivityOption that denies PendingIntent sender to use
+        // creator's privilege to launch itself. The PendingIntent itself is to launch App B. Since
+        // App B is in the background, it should be blocked even though the creator (App A) is in
+        // the foreground.
+        sendPendingIntentActivity(APP_A, APP_B,
+                APP_A.SEND_PENDING_INTENT_RECEIVER_EXTRA.DENY_CREATOR_BAL_PRIVILEGE,
+                APP_A.SEND_PENDING_INTENT_RECEIVER_EXTRA.CREATE_PI_LAUNCH_APP_B);
+
+        result = waitForActivityFocused(APP_B.FOREGROUND_ACTIVITY);
+        assertFalse("Should not able to launch background activity", result);
+    }
+
+    @Test
+    public void testPI_appAIsFgDenyCreatorPrivilege_appBTryOverrideCreatorPrivilege_isBlocked()
+            throws Exception {
+        // Start AppB foreground activity
+        Intent intent = new Intent();
+        intent.setComponent(APP_A.FOREGROUND_ACTIVITY);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        mContext.startActivity(intent);
+        boolean result = waitForActivityFocused(APP_A.FOREGROUND_ACTIVITY);
+        assertTrue("Not able to start foreground Activity", result);
+        assertTaskStackHasComponents(APP_A.FOREGROUND_ACTIVITY, APP_A.FOREGROUND_ACTIVITY);
+
+        // App A create a PendingIntent with ActivityOption that denies PendingIntent sender to use
+        // creator's privilege to launch itself. The PendingIntent itself is to launch App B.
+        // App B is in the background, it should be blocked even though the creator (App A) is in
+        // the foreground. However, The sender (App B) also tries to override the creator option by
+        // setting the creator option from the sender side. This should not work. Creator option
+        // cannot be set from the sender side.
+        sendPendingIntentActivity(APP_A, APP_B,
+                APP_A.SEND_PENDING_INTENT_RECEIVER_EXTRA.DENY_CREATOR_BAL_PRIVILEGE,
+                APP_A.SEND_PENDING_INTENT_RECEIVER_EXTRA.CREATE_PI_LAUNCH_APP_B,
+                APP_B.START_PENDING_INTENT_ACTIVITY_EXTRA.ALLOW_CREATOR_BAL);
+
+        result = waitForActivityFocused(APP_B.FOREGROUND_ACTIVITY);
+        assertFalse("Should not able to launch background activity", result);
+    }
+
+    @Test
     public void testPendingIntentActivity_appAIsForeground_isNotBlocked() {
         // Start AppA foreground activity
         Intent intent = new Intent();
@@ -1069,12 +1120,6 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
         pressHomeButton();
         mWmState.waitForHomeActivityVisible();
         mWmState.waitForAppTransitionIdleOnDisplay(DEFAULT_DISPLAY);
-    }
-
-    private void pressHomeAndWaitHomeResumed(int timeoutMs) {
-        assumeSetupComplete();
-        pressHomeButton();
-        assertActivityFocused(timeoutMs, mWmState.getHomeActivityName());
     }
 
     private void assumeSetupComplete() {
