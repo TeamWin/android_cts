@@ -208,6 +208,8 @@ class ItsBaseTest(base_test.BaseTestClass):
     self.tablet.adb.shell('am force-stop com.android.gallery3d')
     self.tablet.adb.shell('am force-stop com.sec.android.gallery3d')
     self.tablet.adb.shell('am force-stop com.miui.gallery')
+    self.tablet.adb.shell(
+        'settings put global policy_control immersive.full=*')
 
   def set_tablet_landscape_orientation(self):
     """Sets the screen orientation to landscape.
