@@ -16,19 +16,42 @@
 
 package android.cts.flags.tests;
 
+import static org.junit.Assert.assertArrayEquals;
+
 import android.platform.test.annotations.RequiresFlagsDisabled;
 import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.platform.test.flag.junit.CheckFlagsRule;
 import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 
+import org.junit.FixMethodOrder;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+import org.junit.runners.MethodSorters;
 
-/** Tests for test filtering base on flag values. */
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+
+/**
+ * Tests for test filtering base on flag values. Test case that will be executed MUST be ended with
+ * '_execute'.
+ */
 @RunWith(JUnit4.class)
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public final class FlagAnnotationTest {
+    private static final List<String> EXPECTED_TESTS_EXECUTED =
+            Arrays.stream(FlagAnnotationTest.class.getDeclaredMethods())
+                    .map(Method::getName)
+                    .filter(methodName -> methodName.endsWith("_execute"))
+                    .sorted()
+                    .collect(Collectors.toList());
+
+    private static final List<String> ACTUAL_TESTS_EXECUTED = new ArrayList<>();
+
     @Rule
     public final CheckFlagsRule mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
 
@@ -38,5 +61,46 @@ public final class FlagAnnotationTest {
 
     @Test
     @RequiresFlagsDisabled(Flags.FLAG_READWRITE_DISABLED_FLAG)
-    public void requiresReadonlyDisabledFlagDisabled_execute() {}
+    public void requiresReadonlyDisabledFlagDisabled_execute() {
+        ACTUAL_TESTS_EXECUTED.add("requiresReadonlyDisabledFlagDisabled_execute");
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_READWRITE_ENABLED_FLAG)
+    public void requiresReadonlyEnabledFlagEnabled_execute() {
+        ACTUAL_TESTS_EXECUTED.add("requiresReadonlyEnabledFlagEnabled_execute");
+    }
+
+    @Test
+    @RequiresFlagsDisabled(Flags.FLAG_READWRITE_ENABLED_FLAG)
+    public void requiresReadonlyEnabledFlagDisabled_skip() {}
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_READWRITE_ENABLED_FLAG)
+    @RequiresFlagsDisabled(Flags.FLAG_READWRITE_DISABLED_FLAG)
+    public void requiresMultiStateFlags_execute() {
+        ACTUAL_TESTS_EXECUTED.add("requiresMultiStateFlags_execute");
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_READWRITE_DISABLED_FLAG)
+    @RequiresFlagsDisabled(Flags.FLAG_READWRITE_ENABLED_FLAG)
+    public void requiresMultiStateFlags_skip() {}
+
+    @Test
+    @RequiresFlagsDisabled({Flags.FLAG_READWRITE_DISABLED_FLAG,
+            Flags.FLAG_READWRITE_DISABLED_FLAG_2})
+    public void requiresMultiFlagsForTheSameState_execute() {
+        ACTUAL_TESTS_EXECUTED.add("requiresMultiFlagsForTheSameState_execute");
+    }
+
+    @Test
+    @RequiresFlagsEnabled({Flags.FLAG_READWRITE_ENABLED_FLAG, Flags.FLAG_READWRITE_DISABLED_FLAG})
+    public void requiresMultiFlagsForTheSameState_skip() {}
+
+    @Test
+    public void zLastTest_checkExecutedTests() { // Starts the method name with 'z' so that
+        // it will be the last test to get executed.
+        assertArrayEquals(EXPECTED_TESTS_EXECUTED.toArray(), ACTUAL_TESTS_EXECUTED.toArray());
+    }
 }
