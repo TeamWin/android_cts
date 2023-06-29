@@ -122,11 +122,20 @@ public class SPerfClassTest extends AndroidTestCase {
         Size[] jpegSizes = staticInfo.getJpegOutputSizesChecked();
         assertTrue("Primary cameras must support JPEG formats",
                 jpegSizes != null && jpegSizes.length > 0);
+        int minEuclidDistSquare = Integer.MAX_VALUE;
+        Size closestJpegSizeToVga = VGA;
         for (Size jpegSize : jpegSizes) {
             mCollector.expectTrue(
                     "Primary camera's JPEG size must be at least 1080p, but is " +
                     jpegSize, jpegSize.getWidth() * jpegSize.getHeight()
                             >= FULLHD.getWidth() * FULLHD.getHeight());
+            int widthDist = jpegSize.getWidth() - VGA.getWidth();
+            int heightDist = jpegSize.getHeight() - VGA.getHeight();
+            int euclidDistSquare = widthDist * widthDist + heightDist * heightDist;
+            if (euclidDistSquare < minEuclidDistSquare) {
+                closestJpegSizeToVga = jpegSize;
+                minEuclidDistSquare = euclidDistSquare;
+            }
         }
 
         CameraDevice camera = null;
@@ -144,7 +153,7 @@ public class SPerfClassTest extends AndroidTestCase {
             outputConfigs.add(new OutputConfiguration(jpegSurface));
 
             // isSessionConfigurationSupported will return true for JPEG sizes smaller
-            // than 1080P, due to framework rouding up to closest supported size (1080p).
+            // than 1080P, due to framework rouding up to closest supported size.
             SessionConfigSupport sessionConfigSupport = isSessionConfigSupported(
                     camera, mHandler, outputConfigs, /*inputConfig*/ null,
                     SessionConfiguration.SESSION_REGULAR, true/*defaultSupport*/);
@@ -154,7 +163,7 @@ public class SPerfClassTest extends AndroidTestCase {
                     sessionConfigSupport.configSupported);
 
             // Session creation for JPEG sizes smaller than 1080p will succeed, and the
-            // result JPEG image dimension is rounded up to closest supported size (1080p).
+            // result JPEG image dimension is rounded up to closest supported size.
             CaptureRequest.Builder request =
                     camera.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
             request.addTarget(jpegSurface);
@@ -190,8 +199,8 @@ public class SPerfClassTest extends AndroidTestCase {
             byte[] data = CameraTestUtils.getDataFromImage(image);
             assertTrue("Invalid image data", data != null && data.length > 0);
 
-            CameraTestUtils.validateJpegData(data, FULLHD.getWidth(), FULLHD.getHeight(),
-                    null /*filePath*/);
+            CameraTestUtils.validateJpegData(data, closestJpegSizeToVga.getWidth(),
+                    closestJpegSizeToVga.getHeight(), null /*filePath*/);
         } finally {
             if (camera != null) {
                 camera.close();
