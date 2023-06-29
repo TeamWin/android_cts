@@ -31,8 +31,5 @@
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
         android:targetPackage="android.videocodec.cts"
         android:label="CTS VideoCodec tests of android.videocodec" >
-        <meta-data
-            android:name="listener"
-            android:value="com.android.cts.runner.CtsTestRunListener" />
     </instrumentation>
 </manifest>

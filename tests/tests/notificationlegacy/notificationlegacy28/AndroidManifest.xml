@@ -27,7 +27,5 @@
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
                      android:targetPackage="android.app.notification.legacy28.cts"
                      android:label="CTS tests for notification behavior (API 28)">
-        <meta-data android:name="listener"
-                   android:value="com.android.cts.runner.CtsTestRunListener" />
     </instrumentation>
 </manifest>

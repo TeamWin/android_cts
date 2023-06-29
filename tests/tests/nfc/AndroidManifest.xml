@@ -42,8 +42,6 @@
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
                      android:label="CTS tests for Nfc CardEmulation API"
                      android:targetPackage="android.nfc.cts">
-        <meta-data android:name="listener"
-                   android:value="com.android.cts.runner.CtsTestRunListener"/>
     </instrumentation>
 
 </manifest>

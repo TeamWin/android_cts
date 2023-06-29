@@ -28,8 +28,6 @@
   <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
                    android:targetPackage="android.netsecpolicy.usescleartext_true.cts"
                    android:label="Tests for NetworkSecurityPolicy cleartext traffic policy when it is set to permitted.">
-        <meta-data android:name="listener"
-            android:value="com.android.cts.runner.CtsTestRunListener" />
     </instrumentation>
 
 </manifest>
