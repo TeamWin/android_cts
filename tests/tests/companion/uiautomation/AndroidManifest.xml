@@ -23,9 +23,6 @@
         android:targetPackage="android.companion.cts.uiautomation"
         android:label="CompanionDeviceManager UiAutomation CTS tests">
 
-        <meta-data
-            android:name="listener"
-            android:value="com.android.cts.runner.CtsTestRunListener" />
     </instrumentation>
 
 </manifest>

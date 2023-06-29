@@ -39,8 +39,6 @@
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
                      android:label="CTS tests for android.location that require GNSS signal"
                      android:targetPackage="android.location.cts.gnss" >
-        <meta-data android:name="listener"
-                   android:value="com.android.cts.runner.CtsTestRunListener" />
     </instrumentation>
 
 </manifest>
