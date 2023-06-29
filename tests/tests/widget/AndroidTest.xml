@@ -72,6 +72,7 @@
         <option name="runtime-hint" value="11m55s" />
         <option name="hidden-api-checks" value="false" />
         <option name="instrumentation-arg" key="thisisignored" value="thisisignored --no-window-animation" />
+        <option name="runner" value="android.widget.cts.runner.WidgetRunner" />
     </test>
     <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
         <option name="run-command" value="input keyevent KEYCODE_WAKEUP" />

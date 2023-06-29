@@ -46,9 +46,9 @@ import android.widget.LinearLayout.LayoutParams;
 import android.widget.Magnifier;
 import android.widget.ScrollView;
 
+import androidx.test.InstrumentationRegistry;
 import androidx.test.annotation.UiThreadTest;
 import androidx.test.filters.SmallTest;
-import androidx.test.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
@@ -737,7 +737,7 @@ public class MagnifierTest {
             final Canvas canvas = surfaceHolder.lockHardwareCanvas();
             canvas.drawColor(Color.BLUE);
             surfaceHolder.unlockCanvasAndPost(canvas);
-        }, false /* forceLayout */);
+        }, true /* forceLayout */);
         final View view = mActivity.findViewById(R.id.magnifier_centered_view);
         final Magnifier.Builder builder = new Magnifier.Builder(view)
                 .setSize(100, 100)
