@@ -20,8 +20,6 @@
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
                      android:targetPackage="android.os.cts.uffdgc"
                      android:label="CTS tests of userfaultfd-based GC">
-        <meta-data android:name="listener"
-            android:value="com.android.cts.runner.CtsTestRunListener" />
     </instrumentation>
 </manifest>
 

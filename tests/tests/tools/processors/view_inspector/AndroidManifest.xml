@@ -27,8 +27,6 @@
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
                      android:targetPackage="android.processor.view.inspector.cts"
                      android:label="CTS tests of android.processor.view.inspector">
-        <meta-data android:name="listener"
-            android:value="com.android.cts.runner.CtsTestRunListener" />
     </instrumentation>
 
 </manifest>

@@ -20,7 +20,5 @@
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
                      android:targetPackage="android.compilation.cts.statuscheckerapp"
                      android:label="An instrumentation test that checks optimization status">
-        <meta-data android:name="listener"
-                   android:value="com.android.cts.runner.CtsTestRunListener" />
     </instrumentation>
 </manifest>

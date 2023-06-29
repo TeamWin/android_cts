@@ -23,9 +23,6 @@
         android:targetPackage="android.companion.cts.core"
         android:label="CompanionDeviceManager Core CTS tests">
 
-        <meta-data
-            android:name="listener"
-            android:value="com.android.cts.runner.CtsTestRunListener" />
     </instrumentation>
 
 </manifest>

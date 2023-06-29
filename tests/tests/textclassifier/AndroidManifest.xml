@@ -39,8 +39,6 @@
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
                      android:targetPackage="android.view.textclassifier.cts"
                      android:label="CTS tests of android.view.textclassifier">
-        <meta-data android:name="listener"
-                   android:value="com.android.cts.runner.CtsTestRunListener"/>
     </instrumentation>
 
 </manifest>

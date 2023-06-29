@@ -29,8 +29,6 @@
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
                      android:label="CTS tests for android.location"
                      android:targetPackage="android.location.cts.coarse" >
-        <meta-data android:name="listener"
-                   android:value="com.android.cts.runner.CtsTestRunListener" />
     </instrumentation>
 </manifest>
 
