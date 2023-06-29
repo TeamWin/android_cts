@@ -19,6 +19,10 @@
         <option name="cleanup-apks" value="true" />
         <option name="test-file-name" value="FlagAnnotationTests.apk" />
     </target_preparer>
+    <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
+        <option name="run-command" value="device_config put cts android.cts.flags.tests.readwrite_enabled_flag true" />
+        <option name="teardown-command" value="device_config put cts android.cts.flags.tests.readwrite_enabled_flag false" />
+    </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.cts.flags.tests" />
         <option name="runtime-hint" value="1m" />
