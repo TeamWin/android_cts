@@ -4205,7 +4205,7 @@ You should be prompted to select credentials; choose the ones you just installed
         Then press Go to open the WiFi page in Settings.
         Confirm that:\n\n
         - You cannot add a new WiFi configuration.\n
-        - The UI indicates that this is disabled due to admin policy.\n
+        - Tapping on the disabled network shows a dialog explaining the admin restriction.\n
         \n
         Use the Back button to return to this page.
     </string>
