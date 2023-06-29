@@ -33,4 +33,9 @@
     <!-- Exclude @SecurityTest tests from CTS. These are tested in STS. b/180417031-->
     <option name="compatibility:test-arg" value="com.android.tradefed.testtype.AndroidJUnitTest:exclude-annotation:android.platform.test.annotations.AsbSecurityTest" />
     <option name="compatibility:test-arg" value="com.android.compatibility.common.tradefed.testtype.JarHostTest:exclude-annotation:android.platform.test.annotations.AsbSecurityTest" />
+
+    <!-- Exclude few tests as it depends on implementation details of the ART module. b/287732826 -->
+    <option name="compatibility:exclude-filter" value="CtsJvmtiRunTest913HostTestCases" />
+    <option name="compatibility:exclude-filter" value="CtsJvmtiRunTest912HostTestCases" />
+    <option name="compatibility:exclude-filter" value="CtsJvmtiRunTest988HostTestCases" />
 </configuration>
