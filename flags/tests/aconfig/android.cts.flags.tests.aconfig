@@ -2,5 +2,17 @@ package: "android.cts.flags.tests"
 flag {
   name: "readwrite_disabled_flag"
   namespace: "cts"
-  description: "testing flag that is always disabled for annotation testing"
+  description: "testing flag that is always disabled"
+}
+
+flag {
+  name: "readwrite_disabled_flag_2"
+  namespace: "cts"
+  description: "another testing flag that is always disabled"
+}
+
+flag {
+  name: "readwrite_enabled_flag"
+  namespace: "cts"
+  description: "testing flag that is always enabled"
 }
