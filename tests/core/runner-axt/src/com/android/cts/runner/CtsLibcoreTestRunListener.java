@@ -20,7 +20,6 @@ import android.app.ActivityManager;
 import android.app.KeyguardManager;
 import android.content.Context;
 import android.content.pm.PackageManager;
-import android.text.TextUtils;
 import android.util.Log;
 
 import androidx.test.internal.runner.listener.InstrumentationRunListener;
@@ -30,10 +29,7 @@ import junit.framework.TestCase;
 import org.junit.runner.Description;
 import org.junit.runner.notification.RunListener;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.lang.Class;
 import java.lang.ReflectiveOperationException;
 import java.lang.reflect.Field;
@@ -61,7 +57,6 @@ public class CtsLibcoreTestRunListener extends InstrumentationRunListener {
     private static final String TAG = "CtsLibcoreTestRunListener";
 
     private TestEnvironment mEnvironment;
-    private Class<?> lastClass;
 
     @Override
     public void testRunStarted(Description description) throws Exception {
@@ -90,11 +85,6 @@ public class CtsLibcoreTestRunListener extends InstrumentationRunListener {
 
     @Override
     public void testStarted(Description description) throws Exception {
-        if (description.getTestClass() != lastClass) {
-            lastClass = description.getTestClass();
-            printMemory(description.getTestClass());
-        }
-
         mEnvironment.reset();
     }
 
@@ -106,55 +96,6 @@ public class CtsLibcoreTestRunListener extends InstrumentationRunListener {
         // if (test instanceof TestCase) {
         // cleanup((TestCase) test);
         // }
-    }
-
-    /**
-     * Dumps some memory info.
-     */
-    private void printMemory(Class<?> testClass) {
-        Runtime runtime = Runtime.getRuntime();
-
-        long total = runtime.totalMemory();
-        long free = runtime.freeMemory();
-        long used = total - free;
-
-        Log.d(TAG, "Total memory  : " + total);
-        Log.d(TAG, "Used memory   : " + used);
-        Log.d(TAG, "Free memory   : " + free);
-
-        String tempdir = System.getProperty("java.io.tmpdir", "");
-        // TODO: Remove these extra Logs added to debug a specific timeout problem.
-        Log.d(TAG, "java.io.tmpdir is:" + tempdir);
-
-        if (!TextUtils.isEmpty(tempdir)) {
-            String[] commands = {"df", tempdir};
-            BufferedReader in = null;
-            try {
-                Log.d(TAG, "About to .exec df");
-                Process proc = runtime.exec(commands);
-                Log.d(TAG, ".exec returned");
-                in = new BufferedReader(new InputStreamReader(proc.getInputStream()));
-                Log.d(TAG, "Stream reader created");
-                String line;
-                while ((line = in.readLine()) != null) {
-                    Log.d(TAG, line);
-                }
-            } catch (IOException e) {
-                Log.d(TAG, "Exception: " + e.toString());
-                // Well, we tried
-            } finally {
-                Log.d(TAG, "In finally");
-                if (in != null) {
-                    try {
-                        in.close();
-                    } catch (IOException e) {
-                        // Meh
-                    }
-                }
-            }
-        }
-
-        Log.d(TAG, "Now executing : " + testClass.getName());
     }
 
     /**
