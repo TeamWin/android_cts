@@ -77,29 +77,35 @@ public class InputSurface {
         // to minimize artifacts from possible YUV conversion.
         int eglColorSize = useHighBitDepth ? 10 : 8;
         int eglAlphaSize = useHighBitDepth ? 2 : 0;
-        int recordable = useHighBitDepth ? 0 : 1;
-        int[] configAttribList = {
-                EGL14.EGL_RED_SIZE, eglColorSize,
-                EGL14.EGL_GREEN_SIZE, eglColorSize,
-                EGL14.EGL_BLUE_SIZE, eglColorSize,
-                EGL14.EGL_ALPHA_SIZE, eglAlphaSize,
-                EGL14.EGL_RENDERABLE_TYPE, EGL14.EGL_OPENGL_ES2_BIT,
-                EGLExt.EGL_RECORDABLE_ANDROID, recordable,
-                EGL14.EGL_NONE
-        };
-        int[] numConfigs = new int[1];
-        if (!EGL14.eglChooseConfig(mEGLDisplay, configAttribList, 0, mConfigs, 0, mConfigs.length,
-                numConfigs, 0)) {
-            throw new RuntimeException("unable to find RGB888+recordable ES2 EGL config");
-        }
+        int[] recordableList = useHighBitDepth ? new int[]{0, 1} : new int[]{1};
 
-        // Configure context for OpenGL ES 2.0.
-        int[] contextAttribList = {
-                EGL14.EGL_CONTEXT_CLIENT_VERSION, 2,
-                EGL14.EGL_NONE
-        };
-        mEGLContext = EGL14.eglCreateContext(mEGLDisplay, mConfigs[0], EGL14.EGL_NO_CONTEXT,
-                contextAttribList, 0);
+        for (int recordable : recordableList) {
+            int[] configAttribList = {
+                    EGL14.EGL_RED_SIZE, eglColorSize,
+                    EGL14.EGL_GREEN_SIZE, eglColorSize,
+                    EGL14.EGL_BLUE_SIZE, eglColorSize,
+                    EGL14.EGL_ALPHA_SIZE, eglAlphaSize,
+                    EGL14.EGL_RENDERABLE_TYPE, EGL14.EGL_OPENGL_ES2_BIT,
+                    EGLExt.EGL_RECORDABLE_ANDROID, recordable,
+                    EGL14.EGL_NONE
+            };
+            int[] numConfigs = new int[1];
+            if (!EGL14.eglChooseConfig(mEGLDisplay, configAttribList, 0, mConfigs, 0,
+                    mConfigs.length, numConfigs, 0)) {
+                throw new RuntimeException("unable to find RGB888+recordable ES2 EGL config");
+            }
+
+            // Configure context for OpenGL ES 2.0.
+            int[] contextAttribList = {
+                    EGL14.EGL_CONTEXT_CLIENT_VERSION, 2,
+                    EGL14.EGL_NONE
+            };
+            mEGLContext = EGL14.eglCreateContext(mEGLDisplay, mConfigs[0], EGL14.EGL_NO_CONTEXT,
+                    contextAttribList, 0);
+            if (mEGLContext != null && EGL14.EGL_SUCCESS == EGL14.eglGetError()) {
+                break;
+            }
+        }
         checkEglError("eglCreateContext");
         if (mEGLContext == null) {
             throw new RuntimeException("null context");
