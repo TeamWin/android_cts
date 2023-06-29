@@ -32,13 +32,13 @@ import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
+import android.view.AttachedSurfaceControl;
 import android.view.Gravity;
 import android.view.PointerIcon;
 import android.view.SurfaceControl;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
-import android.view.ViewTreeObserver;
 import android.view.WindowInsets;
 import android.view.WindowInsetsAnimation;
 import android.view.WindowManager;
@@ -129,7 +129,7 @@ public class ASurfaceControlTestActivity extends Activity {
         }
         SurfaceHolderCallback surfaceHolderCallbackWrapper = new SurfaceHolderCallback(
                 surfaceHolderCallback,
-                readyFence, mParent.getViewTreeObserver());
+                readyFence, mParent.getRootSurfaceControl());
         createSurface(surfaceHolderCallbackWrapper);
         try {
             if (waitForTransactionLatch) {
@@ -141,6 +141,7 @@ public class ASurfaceControlTestActivity extends Activity {
             Assert.fail("interrupted");
         }
         verifyScreenshot(pixelChecker, name);
+        mHandler.post(() -> mSurfaceView.getHolder().removeCallback(surfaceHolderCallback));
     }
 
     public void awaitReadyState() {
@@ -306,19 +307,23 @@ public class ASurfaceControlTestActivity extends Activity {
     public static class SurfaceHolderCallback implements SurfaceHolder.Callback {
         private final SurfaceHolder.Callback mTestCallback;
         private final CountDownLatch mSurfaceCreatedLatch;
-        private final ViewTreeObserver mViewTreeObserver;
+        private final AttachedSurfaceControl mAttachedSurfaceControl;
 
         public SurfaceHolderCallback(SurfaceHolder.Callback callback, CountDownLatch readyFence,
-                ViewTreeObserver viewTreeObserver) {
+                AttachedSurfaceControl attachedSurfaceControl) {
             mTestCallback = callback;
             mSurfaceCreatedLatch = readyFence;
-            mViewTreeObserver = viewTreeObserver;
+            mAttachedSurfaceControl = attachedSurfaceControl;
         }
 
         @Override
         public void surfaceCreated(@NonNull SurfaceHolder holder) {
             mTestCallback.surfaceCreated(holder);
-            mViewTreeObserver.registerFrameCommitCallback(mSurfaceCreatedLatch::countDown);
+            try (SurfaceControl.Transaction transaction = new SurfaceControl.Transaction()) {
+                transaction.addTransactionCommittedListener(Runnable::run,
+                        mSurfaceCreatedLatch::countDown);
+                mAttachedSurfaceControl.applyTransactionOnDraw(transaction);
+            }
         }
 
         @Override
