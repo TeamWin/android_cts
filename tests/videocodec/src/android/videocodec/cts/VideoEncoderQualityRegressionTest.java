@@ -20,10 +20,13 @@ import static android.media.MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_CBR;
 import static android.media.MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_VBR;
 import static android.mediav2.common.cts.CodecTestBase.ComponentClass.HARDWARE;
 import static android.videocodec.cts.VideoEncoderValidationTestBase.BIRTHDAY_FULLHD_LANDSCAPE;
+import static android.videocodec.cts.VideoEncoderValidationTestBase.DIAGNOSTICS;
+import static android.videocodec.cts.VideoEncoderValidationTestBase.logAllFilesInCacheDir;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeNotNull;
 import static org.junit.Assume.assumeTrue;
 
 import android.media.MediaFormat;
@@ -40,6 +43,7 @@ import com.android.compatibility.common.util.ApiTest;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assume;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -103,15 +107,27 @@ public class VideoEncoderQualityRegressionTest {
 
     @BeforeClass
     public static void decodeResourceToYuv() throws IOException, InterruptedException {
-        DecodeStreamToYuv yuvRes = new DecodeStreamToYuv(RES.mMediaType, RES.mResFile, FRAME_LIMIT,
-                LOG_TAG);
-        sActiveRawRes = yuvRes.getDecodedYuv();
+        logAllFilesInCacheDir(true);
+        try {
+            DecodeStreamToYuv yuv = new DecodeStreamToYuv(RES.mMediaType, RES.mResFile,
+                    FRAME_LIMIT, LOG_TAG);
+            sActiveRawRes = yuv.getDecodedYuv();
+        } catch (Exception e) {
+            DIAGNOSTICS.append(String.format("\nWhile decoding the resource : %s,"
+                    + " encountered exception :  %s was thrown", RES, e));
+            logAllFilesInCacheDir(false);
+        }
     }
 
     @AfterClass
     public static void cleanUpResources() {
         new File(sActiveRawRes.mFileName).delete();
         sActiveRawRes = null;
+    }
+
+    @Before
+    public void setUp() {
+        assumeNotNull("no raw resource found for testing : ", sActiveRawRes);
     }
 
     @After

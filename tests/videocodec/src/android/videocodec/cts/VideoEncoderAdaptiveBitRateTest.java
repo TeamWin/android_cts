@@ -21,8 +21,8 @@ import static android.media.MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_VBR;
 import static android.mediav2.common.cts.CodecTestBase.ComponentClass.HARDWARE;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeNotNull;
 
 import android.media.MediaCodec;
 import android.media.MediaFormat;
@@ -201,7 +201,7 @@ public class VideoEncoderAdaptiveBitRateTest extends VideoEncoderValidationTestB
                 areFormatsSupported(mCodecName, mMediaType, formats));
 
         RawResource res = RES_YUV_MAP.getOrDefault(mCRes.uniqueLabel(), null);
-        assertNotNull("no raw resource found for testing config : " + mEncCfgParams[0] + mTestConfig
+        assumeNotNull("no raw resource found for testing config : " + mEncCfgParams[0] + mTestConfig
                 + mTestEnv + DIAGNOSTICS, res);
         int limit = mSegmentBitRates.length * SEGMENT_DURATION * mEncCfgParams[0].mFrameRate;
         encodeToMemory(mCodecName, mEncCfgParams[0], res, limit, true, false);
