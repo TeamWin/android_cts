@@ -576,8 +576,20 @@ public class AudioLoopbackLatencyActivity extends PassFailButtons.Activity {
 
     @Override
     public void recordTestResults() {
+        // Look for a valid route with the minimum latency.
+        int bestRoute = -1;
+        double minLatency = Double.MAX_VALUE;
         for (int route = 0; route < NUM_TEST_ROUTES; route++) {
-            recordRouteResults(route);
+            if (mTestSpecs[route].isMeasurementValid()) {
+                if (mTestSpecs[route].mMeanLatencyMS < minLatency) {
+                    bestRoute = route;
+                    minLatency = mTestSpecs[route].mMeanLatencyMS;
+                }
+            }
+        }
+        // Record a single result.
+        if (bestRoute >= 0) {
+            recordRouteResults(bestRoute);
         }
     }
 
