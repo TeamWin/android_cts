@@ -447,4 +447,13 @@ public class ServiceStateTest {
         serviceState.addNetworkRegistrationInfo(nri);
         assertFalse(serviceState.isSearching());
     }
+
+    @Test
+    public void testIsUsingNonTerrestrialNetwork() {
+        NetworkRegistrationInfo nri = new NetworkRegistrationInfo.Builder()
+                .setIsNonTerrestrialNetwork(true)
+                .build();
+        serviceState.addNetworkRegistrationInfo(nri);
+        assertTrue(serviceState.isUsingNonTerrestrialNetwork());
+    }
 }
