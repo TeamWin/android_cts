@@ -42,8 +42,8 @@
       </intent-filter>
     </activity>
 
-    <provider android:name="android.server.wm.TestJournalProvider"
-              android:authorities="android.server.wm.testjournalprovider"
+    <provider android:name="android.grammaticalinflection.cts.GrammaticalInflectionTestJournalProvider"
+              android:authorities="android.server.grammaticalinflection.testjournalprovider"
               android:exported="true" />
   </application>
 

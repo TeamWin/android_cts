@@ -16,7 +16,4 @@
 
 package android.grammaticalinflection.cts;
 
-import android.server.wm.CommandSession;
-
-public class TestHandleConfigChangeActivity extends CommandSession.BasicTestActivity {
-}
+public class TestHandleConfigChangeActivity extends GrammaticalInflectionBaseActivity { }

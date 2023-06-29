@@ -35,7 +35,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-//TODO(b/263201531): Add test cases that handle onConfigurationChanged in test activity
 @RunWith(AndroidJUnit4.class)
 public class GrammaticalInflectionManagerTest extends ActivityManagerTestBase {
     private final ComponentName TEST_APP_MAIN_ACTIVITY = new ComponentName(
