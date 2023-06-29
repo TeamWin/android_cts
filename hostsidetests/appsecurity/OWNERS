@@ -76,3 +76,7 @@ per-file ScopedDirectoryAccessTest.java = file:platform/frameworks/base:/core/ja
 
 per-file *Documents* = file:platform/packages/apps/DocumentsUI:/OWNERS
 per-file ScopedDirectoryAccessTest.java = file:platform/packages/apps/DocumentsUI:/OWNERS
+
+# OTA
+per-file *ResumeOnReboot* = file:platform/frameworks/base:/core/java/android/service/resumeonreboot/OWNERS
+per-file BootCountTrackerRule.java = file:platform/frameworks/base:/core/java/android/service/resumeonreboot/OWNERS
