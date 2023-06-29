@@ -219,6 +219,7 @@
 
         <activity android:name="android.security.cts.ActivityManagerTest$ActivityOptionsActivity" />
         <activity android:name="android.security.cts.ActivityManagerTest$BaseActivity" />
+        <activity android:name="android.security.cts.ActivityManagerTest$WaitEnterAnimActivity" />
 
         <activity android:name="android.security.cts.PackageInstallerTest$BackgroundLaunchActivity"
             android:exported="true" />

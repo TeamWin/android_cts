@@ -258,6 +258,47 @@ public class ActivityManagerTest extends StsExtraBusinessLogicTestCase {
         assertNull(activity.mReceivedTransition);
     }
 
+    @AsbSecurityTest(cveBugId = 286882367)
+    @Test
+    public void testActivityManager_rejectRemoteTransition() throws Exception {
+        Context targetContext = getInstrumentation().getTargetContext();
+        final Intent baseIntent = new Intent(targetContext, WaitEnterAnimActivity.class);
+        baseIntent.setFlags(FLAG_ACTIVITY_NO_USER_ACTION | FLAG_ACTIVITY_NEW_TASK);
+
+        final boolean[] remoteCalled = new boolean[]{false};
+        RemoteTransition someRemote = new RemoteTransition(new IRemoteTransition.Stub() {
+            @Override
+            public void startAnimation(IBinder token, TransitionInfo info,
+                    SurfaceControl.Transaction t,
+                    IRemoteTransitionFinishedCallback finishCallback) throws RemoteException {
+                remoteCalled[0] = true;
+                t.apply();
+                finishCallback.onTransitionFinished(null /* wct */, null /* sct */);
+            }
+
+            @Override
+            public void mergeAnimation(IBinder token, TransitionInfo info,
+                    SurfaceControl.Transaction t, IBinder mergeTarget,
+                    IRemoteTransitionFinishedCallback finishCallback) throws RemoteException {
+                remoteCalled[0] = true;
+            }
+        });
+        ActivityOptions opts = ActivityOptions.makeRemoteTransition(someRemote);
+
+        boolean securityException = false;
+        final WaitEnterAnimActivity baseActivity;
+        try {
+            baseActivity = (WaitEnterAnimActivity)
+                    getInstrumentation().startActivitySync(baseIntent, opts.toBundle());
+            assertTrue(waitUntil(() -> baseActivity.mAnimComplete));
+        } catch (SecurityException se) {
+            securityException = true;
+        }
+
+        assertFalse(remoteCalled[0]);
+        assertTrue(securityException);
+    }
+
     /**
      * Run ActivityManager.getHistoricalProcessExitReasons once, return the time spent on it.
      */
@@ -322,6 +363,15 @@ public class ActivityManagerTest extends StsExtraBusinessLogicTestCase {
         public void onResume() {
             super.onResume();
             mResumed = true;
+        }
+    }
+
+    public static class WaitEnterAnimActivity extends Activity {
+        public boolean mAnimComplete = false;
+
+        @Override
+        public void onEnterAnimationComplete() {
+            mAnimComplete = true;
         }
     }
 
