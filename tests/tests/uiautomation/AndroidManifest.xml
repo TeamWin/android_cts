@@ -24,17 +24,14 @@
   <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"/>
   <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS"/>
   <uses-permission android:name="android.permission.ANSWER_PHONE_CALLS"/>
+  <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"/>
 
   <application android:theme="@android:style/Theme.Holo.NoActionBar"
        android:requestLegacyExternalStorage="true">
 
       <uses-library android:name="android.test.runner"/>
 
-      <activity android:name="android.app.uiautomation.cts.UiAutomationTestFirstActivity"
-           android:exported="true">
-      </activity>
-
-      <activity android:name="android.app.uiautomation.cts.UiAutomationTestSecondActivity"
+      <activity android:name="android.app.uiautomation.cts.UiAutomationTestActivity"
            android:exported="true">
       </activity>
 

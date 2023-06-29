@@ -27,23 +27,20 @@ import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
 import android.accessibility.cts.common.InstrumentedAccessibilityService;
 import android.accessibilityservice.AccessibilityService;
 import android.accessibilityservice.AccessibilityServiceInfo;
+import android.accessibilityservice.cts.utils.ActivityLaunchUtils;
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.Instrumentation;
 import android.app.UiAutomation;
 import android.content.ContentResolver;
 import android.content.Context;
-import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.os.Process;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
-import android.platform.test.annotations.FlakyTest;
 import android.platform.test.annotations.Presubmit;
 import android.provider.Settings;
-import android.text.TextUtils;
-import android.util.Log;
 import android.view.FrameStats;
 import android.view.KeyEvent;
 import android.view.WindowAnimationFrameStats;
@@ -51,10 +48,10 @@ import android.view.WindowContentFrameStats;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityManager;
 import android.view.accessibility.AccessibilityNodeInfo;
-import android.view.accessibility.AccessibilityWindowInfo;
 import android.widget.ListView;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.UserHelper;
@@ -64,9 +61,9 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
 
-import java.util.List;
 import java.util.concurrent.TimeoutException;
 
 /**
@@ -75,8 +72,6 @@ import java.util.concurrent.TimeoutException;
 @RunWith(AndroidJUnit4.class)
 public final class UiAutomationTest {
 
-    private static final String TAG = UiAutomationTest.class.getSimpleName();
-
     private static final long IDLE_QUIET_TIME_MS = 1000;
     private static final long IDLE_WAIT_TIME_MS = 10 * 1000;
     private static final long TIMEOUT_FOR_SERVICE_ENABLE_MS = 10 * 1000;
@@ -84,9 +79,15 @@ public final class UiAutomationTest {
     // Used to enable/disable accessibility services
     private static final String COMPONENT_NAME_SEPARATOR = ":";
 
-    @Rule
-    public final AccessibilityDumpOnFailureRule mDumpOnFailureRule =
+    private final AccessibilityDumpOnFailureRule mDumpOnFailureRule =
             new AccessibilityDumpOnFailureRule();
+    private final ActivityTestRule<UiAutomationTestActivity> mActivityRule =
+            new ActivityTestRule<>(UiAutomationTestActivity.class, false, false);
+
+    @Rule
+    public final RuleChain mRuleChain = RuleChain
+            .outerRule(mActivityRule)
+            .around(mDumpOnFailureRule);
 
     private final UserHelper mUserHelper = new UserHelper();
 
@@ -110,9 +111,6 @@ public final class UiAutomationTest {
     public void tearDown() {
         if (mUiAutomation != null) {
             mUiAutomation.destroy();
-        }
-        if (mActivity != null) {
-            mActivity.finish();
         }
     }
 
@@ -202,6 +200,7 @@ public final class UiAutomationTest {
 
     @Test
     public void testWindowContentFrameStats() throws Exception {
+        mUiAutomation = getInstrumentation().getUiAutomation();
         final int windowId = startActivitySync();
         // Clear stats to start with a clean slate.
         assertWithMessage("clearWindowContentFrameStats(%s)", windowId)
@@ -224,9 +223,9 @@ public final class UiAutomationTest {
                 stats.getFramePresentedTimeNano(stats.getFrameCount() - 1));
     }
 
-    @FlakyTest
     @Test
     public void testWindowContentFrameStats_NoAnimation() throws Exception {
+        mUiAutomation = getInstrumentation().getUiAutomation();
         final int windowId = startActivitySync();
         // Clear stats to start with a clean slate.
         assertWithMessage("clearWindowContentFrameStats(%s)", windowId)
@@ -517,58 +516,15 @@ public final class UiAutomationTest {
         fail(message);
     }
 
-    private int findAppWindowId(List<AccessibilityWindowInfo> windows, Activity activity) {
-        final StringBuilder activityTitle = new StringBuilder();
-        getInstrumentation().runOnMainSync(() -> activityTitle.append(activity.getTitle()));
-        final int windowCount = windows.size();
-        for (int i = 0; i < windowCount; i++) {
-            AccessibilityWindowInfo window = windows.get(i);
-            int displayId = window.getDisplayId();
-            CharSequence title = window.getTitle();
-            Log.v(TAG, "findAppWindowId()#" + i + ": title=" + title + ", display=" + displayId);
-            if (window.getType() == AccessibilityWindowInfo.TYPE_APPLICATION
-                    && TextUtils.equals(title, activityTitle)) {
-                // TODO(b/271188189): once working, remove false or whole statement below
-                if (false && displayId != mUserHelper.getMainDisplayId()) {
-                    continue;
-                }
-                return window.getId();
-            }
-        }
-        return -1;
-    }
-
     private Instrumentation getInstrumentation() {
         return InstrumentationRegistry.getInstrumentation();
     }
 
     /** Start an activity and return its accessibility window id. */
     private int startActivitySync() throws Exception {
-        mUiAutomation = getInstrumentation().getUiAutomation();
-        AccessibilityServiceInfo info = mUiAutomation.getServiceInfo();
-        info.flags |= AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS;
-        mUiAutomation.setServiceInfo(info);
-
-        // Start an activity.
-        Intent intent = new Intent(getInstrumentation().getContext(),
-                UiAutomationTestFirstActivity.class);
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        mActivity = getInstrumentation().startActivitySync(intent,
-                mUserHelper.getActivityOptions().toBundle());
-
-        // Wait for things to settle.
-        mUiAutomation.waitForIdle(IDLE_QUIET_TIME_MS, IDLE_WAIT_TIME_MS);
-
-        // Wait for Activity draw finish
-        getInstrumentation().waitForIdleSync();
-
-        // Find the application window.
-        List<AccessibilityWindowInfo> windows = mUiAutomation.getWindows();
-        assertWithMessage("UiAutomation.getWindows()").that(windows).isNotEmpty();
-        int windowId = findAppWindowId(windows, mActivity);
-        assertWithMessage("window id for activity %s (windows=%s)", mActivity, windows)
-                .that(windowId).isAtLeast(0);
-
-        return windowId;
+        mActivity = ActivityLaunchUtils.launchActivityAndWaitForItToBeOnscreen(
+                getInstrumentation(), mUiAutomation, mActivityRule);
+        return ActivityLaunchUtils.findWindowByTitle(mUiAutomation,
+                ActivityLaunchUtils.getActivityTitle(getInstrumentation(), mActivity)).getId();
     }
 }

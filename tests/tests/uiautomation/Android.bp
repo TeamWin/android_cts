@@ -26,6 +26,7 @@ android_test {
     ],
     static_libs: [
         "CtsAccessibilityCommon",
+        "CtsAccessibilityServiceUtils",
         "ctstestrunner-axt",
         "truth-prebuilt",
         "ub-uiautomator",
