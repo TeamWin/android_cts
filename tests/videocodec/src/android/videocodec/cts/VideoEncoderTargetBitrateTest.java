@@ -21,7 +21,7 @@ import static android.media.MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_VBR;
 import static android.mediav2.common.cts.CodecTestBase.ComponentClass.HARDWARE;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assume.assumeNotNull;
 
 import android.media.MediaCodec;
 import android.media.MediaFormat;
@@ -182,7 +182,7 @@ public class VideoEncoderTargetBitrateTest extends VideoEncoderValidationTestBas
         Assume.assumeTrue("Encoder: " + mCodecName + " doesn't support format: " + format,
                 areFormatsSupported(mCodecName, mMediaType, formats));
         RawResource res = RES_YUV_MAP.getOrDefault(mCRes.uniqueLabel(), null);
-        assertNotNull("no raw resource found for testing config : " + mEncCfgParams[0] + mTestConfig
+        assumeNotNull("no raw resource found for testing config : " + mEncCfgParams[0] + mTestConfig
                 + mTestEnv + DIAGNOSTICS, res);
         encodeToMemory(mCodecName, mEncCfgParams[0], res, FRAME_LIMIT, true, false);
         assertEquals("encoder did not encode the requested number of frames \n"
