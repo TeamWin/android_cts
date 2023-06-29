@@ -76,7 +76,7 @@ public final class RecognitionServiceMicIndicatorTest {
     private static final String SC_PRIVACY_DIALOG_PACKAGE_NAME = "com.android.permissioncontroller";
     private static final String SC_PRIVACY_DIALOG_CONTENT_ID = "indicator_label";
     // The cts app label
-    private static final String APP_LABEL = "CtsVoiceRecognition";
+    private static final String APP_LABEL = "CtsVoiceRecognitionTestCases";
     // A simple test voice recognition service implementation
     private static final String CTS_VOICE_RECOGNITION_SERVICE =
             "android.recognitionservice.service/android.recognitionservice.service"
@@ -158,6 +158,10 @@ public final class RecognitionServiceMicIndicatorTest {
         mUiDevice.waitForIdle();
     }
 
+    private String getCurrentRecognizer() {
+        return Settings.Secure.getString(mContext.getContentResolver(), VOICE_RECOGNITION_SERVICE);
+    }
+
     private void setIndicatorsEnabledState(String enabled) {
         runWithShellPermissionIdentity(
                 () -> DeviceConfig.setProperty(DeviceConfig.NAMESPACE_PRIVACY, INDICATORS_FLAG,
@@ -183,16 +187,24 @@ public final class RecognitionServiceMicIndicatorTest {
 
     @Test
     public void testNonTrustedRecognitionServiceCanBlameCallingApp() throws Throwable {
-        // skip test for automototive devices, as Mic indicator is not a MUST requirement as per CDD
+        // Skip test for automotive devices, as Mic indicator is not a MUST requirement as per CDD.
         assumeFalse(mContext.getPackageManager()
             .hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE));
 
-        // We treat trusted if the current voice recognizer is also a preinstalled app. This is a
-        // untrusted case.
+        // Save currently selected recognition service.
+        String previousRecognizer = getCurrentRecognizer();
+
+        // We treat trusted if the current voice recognizer is also a preinstalled app.
+        // This is an untrusted case.
         setCurrentRecognizer(CTS_VOICE_RECOGNITION_SERVICE);
 
-        // verify that the untrusted app cannot blame the calling app mic access
-        testVoiceRecognitionServiceBlameCallingApp(/* trustVoiceService */ false);
+        try {
+            // Verify that the untrusted app cannot blame the calling app mic access.
+            testVoiceRecognitionServiceBlameCallingApp(/* trustVoiceService */ false);
+        } finally {
+            // Reinstate previously selected recognition service.
+            setCurrentRecognizer(previousRecognizer);
+        }
     }
 
     @Test
