@@ -23,7 +23,6 @@
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
         <option name="cleanup-apks" value="true"/>
         <option name="test-file-name" value="WebViewSandboxTestSdk.apk"/>
-        <option name="test-file-name" value="EmptySdkProviderApp.apk"/>
         <option name="test-file-name" value="CtsSdkSandboxWebkitTestCases.apk"/>
     </target_preparer>
 
