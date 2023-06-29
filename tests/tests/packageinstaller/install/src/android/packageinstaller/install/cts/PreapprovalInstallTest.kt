@@ -28,6 +28,8 @@ import android.provider.DeviceConfig
 import androidx.test.runner.AndroidJUnit4
 import com.android.compatibility.common.util.DeviceConfigStateChangerRule
 import java.io.File
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.fail
@@ -166,9 +168,15 @@ class PreapprovalInstallTest : PackageInstallerTestBase() {
         val (sessionId, session) = createSession(0 /* flags */, false /* isMultiPackage */,
                 null /* packageSource */)
 
+        val latch = CountDownLatch(1)
         val dummyReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {
-                // Do nothing
+                // This is to make sure we receive the pre-approval intent before
+                // committing the session
+                val preapproval = intent.getBooleanExtra(PackageInstaller.EXTRA_PRE_APPROVAL, false)
+                if (preapproval) {
+                    latch.countDown()
+                }
             }
         }
 
@@ -182,6 +190,7 @@ class PreapprovalInstallTest : PackageInstallerTestBase() {
                     PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE)
             session.requestUserPreapproval(preparePreapprovalDetails(), pendingIntent.intentSender)
 
+            latch.await(2000, TimeUnit.MILLISECONDS)
             writeAndCommitSession(TEST_APK_NAME, session)
             clickInstallerUIButton(INSTALL_BUTTON_ID)
 
