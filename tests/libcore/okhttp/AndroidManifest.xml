@@ -26,7 +26,7 @@
                      android:targetPackage="android.libcore.cts.okhttp"
                      android:label="CTS Libcore OkHttp test cases">
         <meta-data android:name="listener"
-                   android:value="com.android.cts.runner.CtsTestRunListener" />
+                   android:value="com.android.cts.runner.CtsLibcoreTestRunListener" />
     </instrumentation>
 
 </manifest>

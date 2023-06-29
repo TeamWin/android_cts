@@ -24,7 +24,7 @@
                      android:targetPackage="android.libcore.cts.jsr166"
                      android:label="CTS Libcore JSR166 test cases">
         <meta-data android:name="listener"
-                   android:value="com.android.cts.runner.CtsTestRunListener" />
+                   android:value="com.android.cts.runner.CtsLibcoreTestRunListener" />
     </instrumentation>
 
 </manifest>
