@@ -42,8 +42,6 @@
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
          android:label="CTS tests of android.view.inputmethod"
          android:targetPackage="android.view.inputmethod.cts">
-        <meta-data android:name="listener"
-             android:value="com.android.cts.runner.CtsTestRunListener"/>
     </instrumentation>
 
 </manifest>
