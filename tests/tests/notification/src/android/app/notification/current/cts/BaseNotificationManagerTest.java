@@ -303,7 +303,7 @@ public abstract class BaseNotificationManagerTest extends AndroidTestCase {
         String command = "cmd activity fgs-notification-rate-limit "
                 + (enable ? "enable" : "disable");
 
-       mNotificationHelper. runCommand(command, InstrumentationRegistry.getInstrumentation());
+        mNotificationHelper.runCommand(command, InstrumentationRegistry.getInstrumentation());
     }
 
     protected void suspendPackage(String packageName,

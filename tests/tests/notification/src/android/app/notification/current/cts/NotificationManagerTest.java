@@ -107,6 +107,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Semaphore;
@@ -157,6 +158,8 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
 
     private static final long TIMEOUT_LONG_MS = 10000;
     private static final long TIMEOUT_MS = 4000;
+
+    private static final long POST_TIMEOUT = 200;
     private static final int MESSAGE_BROADCAST_NOTIFICATION = 1;
     private static final int MESSAGE_SERVICE_NOTIFICATION = 2;
     private static final int MESSAGE_CLICK_NOTIFICATION = 3;
@@ -179,6 +182,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         PermissionUtils.grantPermission(TRAMPOLINE_APP_API_30, POST_NOTIFICATIONS);
         PermissionUtils.grantPermission(TRAMPOLINE_APP_API_32, POST_NOTIFICATIONS);
         PermissionUtils.grantPermission(NOTIFICATIONPROVIDER, POST_NOTIFICATIONS);
+
         // This will leave a set of channels on the device with each test run.
         mId = UUID.randomUUID().toString();
 
@@ -836,14 +840,18 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         mListener = mNotificationHelper.enableListener(STUB_PACKAGE_NAME);
         assertNotNull(mListener);
 
+        CountDownLatch notificationPostedLatch = mListener.setPostedCountDown(1);
         sendNotification(1, R.drawable.black);
-        Thread.sleep(500); // wait for notification listener to receive notification
+        // wait for notification listener to receive notification
+        notificationPostedLatch.await(500, TimeUnit.MILLISECONDS);
         assertEquals(1, mListener.mPosted.size());
 
+        CountDownLatch notificationRankingLatch = mListener.setRankingUpdateCountDown(1);
         // suspend package, ranking should be updated with suspended = true
         suspendPackage(mContext.getPackageName(), InstrumentationRegistry.getInstrumentation(),
                 true);
-        Thread.sleep(500); // wait for notification listener to get response
+        // wait for notification listener to get response
+        notificationRankingLatch.await(500, TimeUnit.MILLISECONDS);
         NotificationListenerService.RankingMap rankingMap = mListener.mRankingMap;
         NotificationListenerService.Ranking outRanking = new NotificationListenerService.Ranking();
         for (String key : rankingMap.getOrderedKeys()) {
@@ -854,10 +862,12 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
             }
         }
 
+        notificationRankingLatch = mListener.setRankingUpdateCountDown(1);
         // unsuspend package, ranking should be updated with suspended = false
         suspendPackage(mContext.getPackageName(), InstrumentationRegistry.getInstrumentation(),
                 false);
-        Thread.sleep(500); // wait for notification listener to get response
+        // wait for notification listener to get response
+        notificationRankingLatch.await(500, TimeUnit.MILLISECONDS);
         rankingMap = mListener.mRankingMap;
         for (String key : rankingMap.getOrderedKeys()) {
             if (key.contains(mListener.getPackageName())) {
@@ -873,13 +883,15 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
     public void testSuspendedPackageSendsNotification() throws Exception {
         mListener = mNotificationHelper.enableListener(STUB_PACKAGE_NAME);
         assertNotNull(mListener);
+        CountDownLatch postedLatch = mListener.setPostedCountDown(1);
 
         // suspend package, post notification while package is suspended, see notification
         // in ranking map with suspended = true
         suspendPackage(mContext.getPackageName(), InstrumentationRegistry.getInstrumentation(),
                 true);
         sendNotification(1, R.drawable.black);
-        Thread.sleep(500); // wait for notification listener to receive notification
+        // wait for notification listener to receive notification
+        postedLatch.await(500, TimeUnit.MILLISECONDS);
         assertEquals(1, mListener.mPosted.size()); // apps targeting P receive notification
         NotificationListenerService.RankingMap rankingMap = mListener.mRankingMap;
         NotificationListenerService.Ranking outRanking = new NotificationListenerService.Ranking();
@@ -920,9 +932,11 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
 
         mListener = mNotificationHelper.enableListener(STUB_PACKAGE_NAME);
         assertNotNull(mListener);
+        CountDownLatch postedLatch = mListener.setPostedCountDown(1);
         try {
             sendNotification(1, R.drawable.black);
-            Thread.sleep(500); // wait for notification listener to receive notification
+            // wait for notification listener to receive notification
+            postedLatch.await(500, TimeUnit.MILLISECONDS);
             NotificationListenerService.RankingMap rankingMap = mListener.mRankingMap;
             NotificationListenerService.Ranking outRanking =
                     new NotificationListenerService.Ranking();
@@ -933,12 +947,15 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
                 }
             }
 
+            CountDownLatch rankingUpdateLatch = mListener.setRankingUpdateCountDown(1);
+
             // turn off badging globally
             SystemUtil.runWithShellPermissionIdentity(() ->
                     Settings.Secure.putInt(mContext.getContentResolver(),
                             Settings.Secure.NOTIFICATION_BADGING, 0));
 
-            Thread.sleep(500); // wait for ranking update
+            // wait for ranking update
+            rankingUpdateLatch.await(500, TimeUnit.MILLISECONDS);
 
             rankingMap = mListener.mRankingMap;
             outRanking = new NotificationListenerService.Ranking();
@@ -960,9 +977,12 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         mListener = mNotificationHelper.enableListener(STUB_PACKAGE_NAME);
         assertNotNull(mListener);
 
+        CountDownLatch postedLatch = mListener.setPostedCountDown(1);
+
         final int notificationId = 1;
         sendNotification(notificationId, R.drawable.black);
-        Thread.sleep(500); // wait for notification listener to receive notification
+        // wait for notification listener to receive notification
+        postedLatch.await(500, TimeUnit.MILLISECONDS);
 
         NotificationListenerService.RankingMap rankingMap = mListener.mRankingMap;
         NotificationListenerService.Ranking outRanking =
@@ -1608,34 +1628,49 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         mListener = mNotificationHelper.enableListener(STUB_PACKAGE_NAME);
         assertNotNull(mListener);
 
+        CountDownLatch postedLatch = mListener.setPostedCountDown(1);
+
         try {
             // Post #7
             performNotificationProviderAction("send-7");
 
+            postedLatch.await(POST_TIMEOUT, TimeUnit.MILLISECONDS);
             assertEquals(background7Uri, getNotificationBackgroundImageUri(7));
             assertTrue(mNotificationHelper.isNotificationGone(8, SEARCH_TYPE.LISTENER));
             assertAccessible(background7Uri);
             assertInaccessible(background8Uri);
 
+            // Reset the notification posted latch.
+            postedLatch = mListener.setPostedCountDown(1);
+
             // Post #8
             performNotificationProviderAction("send-8");
 
+            postedLatch.await(POST_TIMEOUT, TimeUnit.MILLISECONDS);
             assertEquals(background7Uri, getNotificationBackgroundImageUri(7));
             assertEquals(background8Uri, getNotificationBackgroundImageUri(8));
             assertAccessible(background7Uri);
             assertAccessible(background8Uri);
 
+            // Add a notification removed latch.
+            CountDownLatch removedLatch = mListener.setRemovedCountDown(1);
+
             // Cancel #7
             performNotificationProviderAction("cancel-7");
 
+            removedLatch.await(POST_TIMEOUT, TimeUnit.MILLISECONDS);
             assertTrue(mNotificationHelper.isNotificationGone(7, SEARCH_TYPE.LISTENER));
             assertEquals(background8Uri, getNotificationBackgroundImageUri(8));
             assertInaccessible(background7Uri);
             assertAccessible(background8Uri);
 
+            // Reset the notification reemoved latch.
+            removedLatch = mListener.setRemovedCountDown(1);
+
             // Cancel #8
             performNotificationProviderAction("cancel-8");
 
+            removedLatch.await(POST_TIMEOUT, TimeUnit.MILLISECONDS);
             assertTrue(mNotificationHelper.isNotificationGone(7, SEARCH_TYPE.LISTENER));
             assertTrue(mNotificationHelper.isNotificationGone(8, SEARCH_TYPE.LISTENER));
             assertInaccessible(background7Uri);
@@ -1870,7 +1905,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         for (int tries = 3; tries-- > 0; ) {
             try (AssetFileDescriptor fd = contentResolver.openAssetFile(uri, "r", null)) {
             } catch (SecurityException e) {
-               return;
+                return;
             }
             try {
                 Thread.sleep(100);
@@ -1882,8 +1917,8 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
 
     @NonNull
     private Uri getNotificationBackgroundImageUri(int notificationId) {
-        StatusBarNotification sbn = mNotificationHelper.findPostedNotification(null, notificationId,
-                SEARCH_TYPE.LISTENER);
+        StatusBarNotification sbn = mNotificationHelper.findPostedNotification(null,
+                notificationId, SEARCH_TYPE.LISTENER);
         assertNotNull(sbn);
         String imageUriString = sbn.getNotification().extras
                 .getString(Notification.EXTRA_BACKGROUND_IMAGE_URI);
@@ -1902,12 +1937,14 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
     public void testNotificationListener_setNotificationsShown() throws Exception {
         mListener = mNotificationHelper.enableListener(STUB_PACKAGE_NAME);
         assertNotNull(mListener);
+        CountDownLatch postedLatch = mListener.setPostedCountDown(2);
         final int notificationId1 = 1003;
         final int notificationId2 = 1004;
 
         sendNotification(notificationId1, R.drawable.black);
         sendNotification(notificationId2, R.drawable.black);
-        Thread.sleep(500); // wait for notification listener to receive notification
+        // wait for notification listener to receive notification
+        postedLatch.await(500, TimeUnit.MILLISECONDS);
 
         StatusBarNotification sbn1 = mNotificationHelper.findPostedNotification(
                 null, notificationId1, SEARCH_TYPE.LISTENER);
@@ -1967,12 +2004,14 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
     public void testNotificationListener_getActiveNotifications() throws Exception {
         mListener = mNotificationHelper.enableListener(STUB_PACKAGE_NAME);
         assertNotNull(mListener);
+        CountDownLatch postedLatch = mListener.setPostedCountDown(2);
         final int notificationId1 = 1001;
         final int notificationId2 = 1002;
 
         sendNotification(notificationId1, R.drawable.black);
         sendNotification(notificationId2, R.drawable.black);
-        Thread.sleep(500); // wait for notification listener to receive notification
+        // wait for notification listener to receive notification
+        postedLatch.await(500, TimeUnit.MILLISECONDS);
 
         StatusBarNotification sbn1 = mNotificationHelper.findPostedNotification(
                 null, notificationId1, SEARCH_TYPE.LISTENER);
@@ -1993,8 +2032,10 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
     public void testNotificationListener_getCurrentRanking() throws Exception {
         mListener = mNotificationHelper.enableListener(STUB_PACKAGE_NAME);
         assertNotNull(mListener);
+        CountDownLatch rankingUpdateLatch = mListener.setRankingUpdateCountDown(1);
 
         sendNotification(1, R.drawable.black);
+        rankingUpdateLatch.await(POST_TIMEOUT, TimeUnit.MILLISECONDS);
         mNotificationHelper.findPostedNotification(null, 1, SEARCH_TYPE.POSTED);
 
         assertEquals(mListener.mRankingMap, mListener.getCurrentRanking());
@@ -2005,13 +2046,17 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         assertNotNull(mListener);
         final int notificationId = 1006;
 
+        CountDownLatch postedLatch = mListener.setPostedCountDown(1);
         sendNotification(notificationId, R.drawable.black);
-        Thread.sleep(500); // wait for notification listener to receive notification
+        // wait for notification listener to receive notification
+        postedLatch.await(POST_TIMEOUT, TimeUnit.MILLISECONDS);
 
         StatusBarNotification sbn = mNotificationHelper.findPostedNotification(null, notificationId,
                 SEARCH_TYPE.LISTENER);
 
         mListener.cancelNotification(sbn.getPackageName(), sbn.getTag(), sbn.getId());
+        // Beginning with Lollipop, this cancelNotification signature no longer cancels the
+        // notification.
         if (mContext.getApplicationInfo().targetSdkVersion >= Build.VERSION_CODES.LOLLIPOP) {
             assertNotNull(mNotificationHelper.findPostedNotification(null, notificationId,
                     SEARCH_TYPE.LISTENER));
@@ -2128,12 +2173,14 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
     public void testConversationRankingFields() throws Exception {
         mListener = mNotificationHelper.enableListener(STUB_PACKAGE_NAME);
         assertNotNull(mListener);
+        CountDownLatch postedLatch = mListener.setPostedCountDown(1);
 
         createDynamicShortcut();
         mNotificationManager.notify(177, getConversationNotification().build());
 
+        // wait for notification listener to receive notification
+        postedLatch.await(500, TimeUnit.MILLISECONDS);
         assertNotNull(mNotificationHelper.findPostedNotification(null, 177, SEARCH_TYPE.LISTENER));
-        Thread.sleep(500); // wait for notification listener to receive notification
         assertEquals(1, mListener.mPosted.size());
 
         NotificationListenerService.RankingMap rankingMap = mListener.mRankingMap;
@@ -2173,6 +2220,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
 
     public void testDeleteConversationChannels() throws Exception {
         setUpNotifListener();
+        CountDownLatch postedLatch = mListener.setPostedCountDown(1);
 
         createDynamicShortcut();
 
@@ -2189,8 +2237,9 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
 
         mNotificationManager.notify(177, getConversationNotification().build());
 
+        // wait for notification listener to receive notification
+        postedLatch.await(500, TimeUnit.MILLISECONDS);
         assertNotNull(mNotificationHelper.findPostedNotification(null, 177, SEARCH_TYPE.LISTENER));
-        Thread.sleep(500); // wait for notification listener to receive notification
         assertEquals(1, mListener.mPosted.size());
 
         deleteShortcuts();
@@ -2230,12 +2279,14 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         deactivateGracePeriod();
         setUpNotifListener();
         mListener.addTestPackage(TRAMPOLINE_APP);
+        CountDownLatch postedLatch = mListener.setPostedCountDown(1);
         EventCallback callback = new EventCallback();
         int notificationId = 6001;
 
         // Post notification and fire its pending intent
         sendTrampolineMessage(TRAMPOLINE_SERVICE, MESSAGE_BROADCAST_NOTIFICATION, notificationId,
                 callback);
+        postedLatch.await(POST_TIMEOUT, TimeUnit.MILLISECONDS);
         StatusBarNotification statusBarNotification = mNotificationHelper.findPostedNotification(
                 null, notificationId, SEARCH_TYPE.LISTENER);
         assertNotNull("Notification not posted on time", statusBarNotification);
@@ -2251,12 +2302,14 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         deactivateGracePeriod();
         setUpNotifListener();
         mListener.addTestPackage(TRAMPOLINE_APP);
+        CountDownLatch postedLatch = mListener.setPostedCountDown(1);
         EventCallback callback = new EventCallback();
         int notificationId = 6002;
 
         // Post notification and fire its pending intent
         sendTrampolineMessage(TRAMPOLINE_SERVICE, MESSAGE_SERVICE_NOTIFICATION, notificationId,
                 callback);
+        postedLatch.await(POST_TIMEOUT, TimeUnit.MILLISECONDS);
         StatusBarNotification statusBarNotification = mNotificationHelper.findPostedNotification(
                 null, notificationId, SEARCH_TYPE.LISTENER);
         assertNotNull("Notification not posted on time", statusBarNotification);
@@ -2272,12 +2325,14 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         deactivateGracePeriod();
         setUpNotifListener();
         mListener.addTestPackage(TRAMPOLINE_APP_API_30);
+        CountDownLatch postedLatch = mListener.setPostedCountDown(1);
         EventCallback callback = new EventCallback();
         int notificationId = 6003;
 
         // Post notification and fire its pending intent
         sendTrampolineMessage(TRAMPOLINE_SERVICE_API_30, MESSAGE_BROADCAST_NOTIFICATION,
                 notificationId, callback);
+        postedLatch.await(POST_TIMEOUT, TimeUnit.MILLISECONDS);
         StatusBarNotification statusBarNotification = mNotificationHelper.findPostedNotification(
                 null, notificationId, SEARCH_TYPE.LISTENER);
         assertNotNull("Notification not posted on time", statusBarNotification);
@@ -2293,12 +2348,14 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         deactivateGracePeriod();
         setUpNotifListener();
         mListener.addTestPackage(TRAMPOLINE_APP_API_30);
+        CountDownLatch postedLatch = mListener.setPostedCountDown(1);
         EventCallback callback = new EventCallback();
         int notificationId = 6004;
 
         // Post notification and fire its pending intent
         sendTrampolineMessage(TRAMPOLINE_SERVICE_API_30, MESSAGE_SERVICE_NOTIFICATION,
                 notificationId, callback);
+        postedLatch.await(POST_TIMEOUT, TimeUnit.MILLISECONDS);
         StatusBarNotification statusBarNotification = mNotificationHelper.findPostedNotification(
                 null, notificationId, SEARCH_TYPE.LISTENER);
         assertNotNull("Notification not posted on time", statusBarNotification);
@@ -2316,12 +2373,14 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         setDefaultBrowser(TRAMPOLINE_APP);
         setUpNotifListener();
         mListener.addTestPackage(TRAMPOLINE_APP);
+        CountDownLatch postedLatch = mListener.setPostedCountDown(1);
         EventCallback callback = new EventCallback();
         int notificationId = 6005;
 
         // Post notification and fire its pending intent
         sendTrampolineMessage(TRAMPOLINE_SERVICE, MESSAGE_BROADCAST_NOTIFICATION, notificationId,
                 callback);
+        postedLatch.await(POST_TIMEOUT, TimeUnit.MILLISECONDS);
         StatusBarNotification statusBarNotification = mNotificationHelper.findPostedNotification(
                 null, notificationId, SEARCH_TYPE.LISTENER);
         assertNotNull("Notification not posted on time", statusBarNotification);
@@ -2339,12 +2398,14 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         setDefaultBrowser(TRAMPOLINE_APP_API_32);
         setUpNotifListener();
         mListener.addTestPackage(TRAMPOLINE_APP_API_32);
+        CountDownLatch postedLatch = mListener.setPostedCountDown(1);
         EventCallback callback = new EventCallback();
         int notificationId = 6005;
 
         // Post notification and fire its pending intent
         sendTrampolineMessage(TRAMPOLINE_SERVICE_API_32, MESSAGE_BROADCAST_NOTIFICATION,
                 notificationId, callback);
+        postedLatch.await(POST_TIMEOUT, TimeUnit.MILLISECONDS);
         StatusBarNotification statusBarNotification = mNotificationHelper.findPostedNotification(
                 null, notificationId, SEARCH_TYPE.LISTENER);
         assertNotNull("Notification not posted on time", statusBarNotification);
@@ -2362,12 +2423,14 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         setDefaultBrowser(TRAMPOLINE_APP);
         setUpNotifListener();
         mListener.addTestPackage(TRAMPOLINE_APP);
+        CountDownLatch postedLatch = mListener.setPostedCountDown(1);
         EventCallback callback = new EventCallback();
         int notificationId = 6006;
 
         // Post notification and fire its pending intent
         sendTrampolineMessage(TRAMPOLINE_SERVICE, MESSAGE_SERVICE_NOTIFICATION, notificationId,
                 callback);
+        postedLatch.await(POST_TIMEOUT, TimeUnit.MILLISECONDS);
         StatusBarNotification statusBarNotification = mNotificationHelper.findPostedNotification(
                 null, notificationId, SEARCH_TYPE.LISTENER);
         assertNotNull("Notification not posted on time", statusBarNotification);
@@ -2385,12 +2448,14 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         setDefaultBrowser(TRAMPOLINE_APP_API_32);
         setUpNotifListener();
         mListener.addTestPackage(TRAMPOLINE_APP_API_32);
+        CountDownLatch postedLatch = mListener.setPostedCountDown(1);
         EventCallback callback = new EventCallback();
         int notificationId = 6006;
 
         // Post notification and fire its pending intent
         sendTrampolineMessage(TRAMPOLINE_SERVICE_API_32, MESSAGE_SERVICE_NOTIFICATION,
                 notificationId, callback);
+        postedLatch.await(POST_TIMEOUT, TimeUnit.MILLISECONDS);
         StatusBarNotification statusBarNotification = mNotificationHelper.findPostedNotification(
                 null, notificationId, SEARCH_TYPE.LISTENER);
         assertNotNull("Notification not posted on time", statusBarNotification);
@@ -2444,10 +2509,11 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
 
     public void testChannelDeletion_cancelReason() throws Exception {
         setUpNotifListener();
+        CountDownLatch notificationPostedLatch = mListener.setPostedCountDown(1);
 
         sendNotification(566, R.drawable.black);
-
-        Thread.sleep(500); // wait for notification listener to receive notification
+        // wait for notification listener to receive notification
+        notificationPostedLatch.await(500, TimeUnit.MILLISECONDS);
         assertEquals(1, mListener.mPosted.size());
         String key = mListener.mPosted.get(0).getKey();
 
@@ -2583,6 +2649,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
     public void testIsAmbient() throws Exception {
         mListener = mNotificationHelper.enableListener(STUB_PACKAGE_NAME);
         assertNotNull(mListener);
+        CountDownLatch postedLatch = mListener.setPostedCountDown(2);
 
         NotificationChannel lowChannel = new NotificationChannel(
                 "testIsAmbientLOW", "testIsAmbientLOW", IMPORTANCE_LOW);
@@ -2602,6 +2669,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         mNotificationManager.notify("lowN", 1, lowN);
         mNotificationManager.notify("minN", 1, minN);
 
+        postedLatch.await(POST_TIMEOUT, TimeUnit.MILLISECONDS);
         StatusBarNotification lowSbn = mNotificationHelper.findPostedNotification("lowN", 1,
                 SEARCH_TYPE.POSTED);
         StatusBarNotification minSbn = mNotificationHelper.findPostedNotification("minN", 1,
@@ -2621,6 +2689,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
     public void testFlagForegroundServiceNeedsRealFgs() throws Exception {
         mListener = mNotificationHelper.enableListener(STUB_PACKAGE_NAME);
         assertNotNull(mListener);
+        CountDownLatch postedLatch = mListener.setPostedCountDown(1);
 
         final Notification n =
                 new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
@@ -2628,7 +2697,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
                         .setFlag(FLAG_FOREGROUND_SERVICE, true)
                         .build();
         mNotificationManager.notify("testFlagForegroundServiceNeedsRealFgs", 1, n);
-
+        postedLatch.await(POST_TIMEOUT, TimeUnit.MILLISECONDS);
         StatusBarNotification sbn = mNotificationHelper.findPostedNotification(
                 "testFlagForegroundServiceNeedsRealFgs", 1, SEARCH_TYPE.POSTED);
 
@@ -2638,6 +2707,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
     public void testFlagUserInitiatedJobNeedsRealUij() throws Exception {
         mListener = mNotificationHelper.enableListener(STUB_PACKAGE_NAME);
         assertNotNull(mListener);
+        CountDownLatch postedLatch = mListener.setPostedCountDown(1);
 
         final Notification n =
                 new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
@@ -2645,7 +2715,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
                         .setFlag(FLAG_USER_INITIATED_JOB, true)
                         .build();
         mNotificationManager.notify("testFlagUserInitiatedJobNeedsRealUij", 1, n);
-
+        postedLatch.await(POST_TIMEOUT, TimeUnit.MILLISECONDS);
         StatusBarNotification sbn = mNotificationHelper.findPostedNotification(
                 "testFlagUserInitiatedJobNeedsRealUij", 1, SEARCH_TYPE.POSTED);
 
