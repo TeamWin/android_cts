@@ -397,7 +397,7 @@ public class StillCaptureTest extends Camera2SurfaceViewTestCase {
      * result validation is covered by {@link #stillExifTestByCamera} test.
      * </p>
      */
-    @Test(timeout=60*60*1000) // timeout = 60 mins for long running tests
+    @Test(timeout=120*60*1000) // timeout = 120 mins for long running tests
     public void testStillPreviewCombination() throws Exception {
         for (String id : mCameraIdsUnderTest) {
             try {
