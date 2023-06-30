@@ -416,6 +416,7 @@ def zoom_ratio_range(props):
   return 'android.control.zoomRatioRange' in props and props[
       'android.control.zoomRatioRange'] is not None
 
+
 def low_latency_zoom(props):
   """Returns whether a device supports low latency zoom via settings override.
 
@@ -426,7 +427,8 @@ def low_latency_zoom(props):
     Boolean. True if device supports SETTINGS_OVERRIDE_ZOOM.
   """
   return ('android.control.availableSettingsOverrides') in props and (
-      SETTINGS_OVERRIDE_ZOOM in props['android.control.availableSettingsOverrides'])
+      SETTINGS_OVERRIDE_ZOOM in props[
+          'android.control.availableSettingsOverrides'])
 
 
 def sync_latency(props):
@@ -626,17 +628,17 @@ def edge_mode(props, mode):
 
 
 def tonemap_mode(props, mode):
-    """Returns whether a device supports the tonemap mode.
+  """Returns whether a device supports the tonemap mode.
 
-    Args:
-        props: Camera properties object.
-        mode: Integer, indicating the tonemap mode to check for availability.
+  Args:
+    props: Camera properties object.
+    mode: Integer, indicating the tonemap mode to check for availability.
 
-    Return:
-        Boolean.
-    """
-    return 'android.tonemap.availableToneMapModes' in props and mode in props[
-        'android.tonemap.availableToneMapModes']
+  Return:
+    Boolean.
+  """
+  return 'android.tonemap.availableToneMapModes' in props and mode in props[
+      'android.tonemap.availableToneMapModes']
 
 
 def yuv_reprocess(props):
@@ -677,6 +679,7 @@ def stream_use_case(props):
   return 'android.request.availableCapabilities' in props and 19 in props[
       'android.request.availableCapabilities']
 
+
 def cropped_raw_stream_use_case(props):
   """Returns whether a device supports the CROPPED_RAW stream use case.
 
@@ -686,7 +689,8 @@ def cropped_raw_stream_use_case(props):
   Returns:
      Boolean. True if the device supports the CROPPED_RAW stream use case.
   """
-  return stream_use_case(props) and 6 in props['android.scaler.availableStreamUseCases']
+  return stream_use_case(props) and 6 in props[
+      'android.scaler.availableStreamUseCases']
 
 
 def intrinsic_calibration(props):
@@ -990,4 +994,4 @@ def autoframing(props):
     Boolean. True if android.control.autoframing is supported.
   """
   return 'android.control.autoframingAvailable' in props and props[
-    'android.control.autoframingAvailable'] == 1
+      'android.control.autoframingAvailable'] == 1
