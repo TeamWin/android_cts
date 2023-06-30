@@ -33,6 +33,7 @@ import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.widget.ListView;
 
+import com.android.compatibility.common.util.BatteryUtils;
 import com.android.cts.verifier.TestListActivity.DisplayMode;
 import com.android.modules.utils.build.SdkLevel;
 
@@ -147,6 +148,8 @@ public class ManifestTestListAdapter extends TestListAdapter {
     private static final String TEST_DISPLAY_MODE_META_DATA = "display_mode";
 
     private static final String TEST_PASS_MODE = "test_pass_mode";
+
+    private static final String CONFIG_BATTERY_SUPPORTED = "config_battery_supported";
 
     private static final String CONFIG_NO_EMULATOR = "config_no_emulator";
 
@@ -501,6 +504,11 @@ public class ManifestTestListAdapter extends TestListAdapter {
                                     LOG_TAG,
                                     "Exception while looking up HDMI device type.",
                                     exception);
+                        }
+                        break;
+                    case CONFIG_BATTERY_SUPPORTED:
+                        if (!BatteryUtils.hasBattery()) {
+                            return false;
                         }
                         break;
                     case CONFIG_QUICK_SETTINGS_SUPPORTED:
