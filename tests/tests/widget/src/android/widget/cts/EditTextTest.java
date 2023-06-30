@@ -916,8 +916,10 @@ public class EditTextTest {
             viewGroup.removeView(editText);
         });
 
-        LinearLayout layout = testActivity.findViewById(R.id.edit_text);
-        layout.addView(editText);
+        mInstrumentation.runOnMainSync(() -> {
+            LinearLayout layout = testActivity.findViewById(R.id.edit_text);
+            layout.addView(editText);
+        });
 
         mInstrumentation.runOnMainSync(() -> {
             editText.requestFocus();
