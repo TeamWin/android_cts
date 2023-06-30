@@ -15,6 +15,8 @@
   ~ limitations under the License.
   -->
 <configuration description="Test filtering based on feature flag values tests">
+    <!-- Do not shard the execution to collect and verify all executed tests. -->
+    <option name="not-shardable" value="true" />
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
         <option name="cleanup-apks" value="true" />
         <option name="test-file-name" value="FlagAnnotationTests.apk" />
