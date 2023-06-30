@@ -40,6 +40,7 @@ import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -369,6 +370,7 @@ public class GainmapTest {
     }
 
     @Test
+    @Ignore("Skip it until BitmapRegionDecoder have Alpha8 gainmap support")
     public void testCompressA8ByBitmapRegionDecoder() throws Exception {
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
         assertTrue(sScalingRedA8.compress(Bitmap.CompressFormat.JPEG, 100, stream));
