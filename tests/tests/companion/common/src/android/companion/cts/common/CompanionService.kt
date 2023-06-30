@@ -31,10 +31,13 @@ sealed class CompanionService<T : CompanionService<T>>(
     @Volatile var isBound: Boolean = false
         private set(isBound) {
             Log.d(TAG, "$this.isBound=$isBound")
-            if (!isBound && !connectedDevices.isEmpty())
+            if (!isBound && !connectedDevices.isEmpty()) {
                 error("Unbinding while there are connected devices")
+            }
             field = isBound
         }
+
+    var currentState: Int = -2
 
     val connectedDevices: Collection<AssociationInfo>
         get() = _connectedDevices.values
@@ -42,7 +45,13 @@ sealed class CompanionService<T : CompanionService<T>>(
     val associationIdsForConnectedDevices: Collection<Int>
         get() = _connectedDevices.keys
 
+    val associationIdsForBtBondDevices: Collection<Int>
+        get() = _connectedBtBondDevices.keys
+
     private val _connectedDevices: MutableMap<Int, AssociationInfo> =
+            synchronizedMap(mutableMapOf())
+
+    private val _connectedBtBondDevices: MutableMap<Int, AssociationInfo> =
             synchronizedMap(mutableMapOf())
 
     override fun onCreate() {
@@ -72,6 +81,21 @@ sealed class CompanionService<T : CompanionService<T>>(
         super.onDeviceDisappeared(associationInfo)
     }
 
+    override fun onDeviceEvent(associationInfo: AssociationInfo, event: Int) {
+        Log.i(TAG, "$this.onDeviceEvent(), associationInfo=$associationInfo state is: $event")
+
+        currentState = event
+        if (event == DEVICE_EVENT_BT_CONNECTED) {
+            _connectedBtBondDevices[associationInfo.id] = associationInfo
+        } else if (event == DEVICE_EVENT_BT_DISCONNECTED) {
+            _connectedBtBondDevices.remove(associationInfo.id)
+                    ?: error("onDeviceDisconnected() has not been called for association with id " +
+                            "${associationInfo.id}")
+        }
+
+        super.onDeviceEvent(associationInfo, event)
+    }
+
     // For now, we need to "post" a Runnable that sets isBound to false to the Main Thread's
     // Handler, because this may be called between invocations of
     // CompanionDeviceService.Stub.onDeviceAppeared() and the "real"
@@ -98,6 +122,7 @@ sealed class InstanceHolder<T : CompanionService<T>> {
     // getter is expected to be called mostly from the instrumentation thread.
     var instance: T? = null
         @Synchronized internal set
+
         @Synchronized get
 
     val isBound: Boolean
@@ -106,24 +131,34 @@ sealed class InstanceHolder<T : CompanionService<T>> {
     val connectedDevices: Collection<AssociationInfo>
         get() = instance?.connectedDevices ?: emptySet()
 
+    val connectedBtBondDevices: Collection<AssociationInfo>
+        get() = instance?.connectedDevices ?: emptySet()
+
     val associationIdsForConnectedDevices: Collection<Int>
         get() = instance?.associationIdsForConnectedDevices ?: emptySet()
 
+    private val associationIdsForBtBondDevices: Collection<Int>
+        get() = instance?.associationIdsForBtBondDevices ?: emptySet()
+
     fun waitForBind(timeout: Duration = 1.seconds) {
-        if (!waitFor(timeout) { isBound })
+        if (!waitFor(timeout) { isBound }) {
             throw AssertionError("Service hasn't been bound")
+        }
     }
 
     fun waitForUnbind(timeout: Duration) {
-        if (!waitFor(timeout) { !isBound })
+        if (!waitFor(timeout) { !isBound }) {
             throw AssertionError("Service hasn't been unbound")
+        }
     }
 
     fun waitAssociationToAppear(associationId: Int, timeout: Duration = 1.seconds) {
         val appeared = waitFor(timeout) {
             associationIdsForConnectedDevices.contains(associationId)
         }
-        if (!appeared) throw AssertionError("""Association with $associationId hasn't "appeared"""")
+        if (!appeared) {
+            throw AssertionError("""Association with $associationId hasn't "appeared"""")
+        }
     }
 
     fun waitAssociationToDisappear(associationId: Int, timeout: Duration = 1.seconds) {
@@ -133,11 +168,33 @@ sealed class InstanceHolder<T : CompanionService<T>> {
         if (!gone) throw AssertionError("""Association with $associationId hasn't "disappeared"""")
     }
 
+    fun waitAssociationToBtConnect(associationId: Int, timeout: Duration = 1.seconds) {
+        val appeared = waitFor(timeout) {
+            associationIdsForBtBondDevices.contains(associationId)
+        }
+        if (!appeared) {
+            throw AssertionError("""Association with$associationId hasn't "connected"""")
+        }
+    }
+
+    fun waitAssociationToBtDisconnect(associationId: Int, timeout: Duration = 1.seconds) {
+        val gone = waitFor(timeout) {
+            !associationIdsForBtBondDevices.contains(associationId)
+        }
+        if (!gone) {
+            throw AssertionError("""Association with $associationId hasn't "disconnected"""")
+        }
+    }
+
     // This is a useful function to use to conveniently "forget" that a device is currently present.
     // Use to bypass the "unbinding while there are connected devices" for simulated devices.
     // (Don't worry! they would have removed themselves after 1 minute anyways!)
     fun forgetDevicePresence(associationId: Int) {
         instance?.removeConnectedDevice(associationId)
+    }
+
+    fun getCurrentState(): Int? {
+        return instance?.currentState
     }
 }
 
@@ -149,12 +206,12 @@ class SecondaryCompanionService : CompanionService<SecondaryCompanionService>(Co
     companion object : InstanceHolder<SecondaryCompanionService>()
 }
 
-class MissingPermissionCompanionService
-    : CompanionService<MissingPermissionCompanionService>(Companion) {
+class MissingPermissionCompanionService : CompanionService<
+        MissingPermissionCompanionService>(Companion) {
     companion object : InstanceHolder<MissingPermissionCompanionService>()
 }
 
-class MissingIntentFilterActionCompanionService
-    : CompanionService<MissingIntentFilterActionCompanionService>(Companion) {
+class MissingIntentFilterActionCompanionService : CompanionService<
+        MissingIntentFilterActionCompanionService>(Companion) {
     companion object : InstanceHolder<MissingIntentFilterActionCompanionService>()
 }
