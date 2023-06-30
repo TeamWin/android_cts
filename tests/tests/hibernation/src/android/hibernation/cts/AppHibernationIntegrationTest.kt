@@ -34,14 +34,14 @@ import android.platform.test.annotations.AppModeFull
 import android.provider.DeviceConfig
 import android.provider.DeviceConfig.NAMESPACE_APP_HIBERNATION
 import android.provider.Settings
-import android.support.test.uiautomator.By
-import android.support.test.uiautomator.BySelector
-import android.support.test.uiautomator.UiObject2
-import android.support.test.uiautomator.UiScrollable
-import android.support.test.uiautomator.UiSelector
 import androidx.test.InstrumentationRegistry
 import androidx.test.filters.SdkSuppress
 import androidx.test.runner.AndroidJUnit4
+import androidx.test.uiautomator.By
+import androidx.test.uiautomator.BySelector
+import androidx.test.uiautomator.UiObject2
+import androidx.test.uiautomator.UiScrollable
+import androidx.test.uiautomator.UiSelector
 import com.android.compatibility.common.util.ApiTest
 import com.android.compatibility.common.util.CddTest
 import com.android.compatibility.common.util.DisableAnimationRule
@@ -51,7 +51,7 @@ import com.android.compatibility.common.util.SystemUtil.callWithShellPermissionI
 import com.android.compatibility.common.util.SystemUtil.eventually
 import com.android.compatibility.common.util.SystemUtil.runShellCommandOrThrow
 import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
-import com.android.compatibility.common.util.UiAutomatorUtils
+import com.android.compatibility.common.util.UiAutomatorUtils2
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import org.hamcrest.CoreMatchers
@@ -340,14 +340,14 @@ class AppHibernationIntegrationTest {
 
             // Settings can have multiple scrollable containers so all of them should be
             // searched.
-            var toggleFound = UiAutomatorUtils.waitFindObjectOrNull(By.text(title)) != null
+            var toggleFound = UiAutomatorUtils2.waitFindObjectOrNull(By.text(title)) != null
             var i = 0
             var scrollableObject = UiScrollable(UiSelector().scrollable(true).instance(i))
             while (!toggleFound && scrollableObject.waitForExists(WAIT_TIME_MS)) {
                 // The following line should work for both handhold and car Settings.
                 toggleFound =
                     scrollableObject.scrollTextIntoView(title) ||
-                        UiAutomatorUtils.waitFindObjectOrNull(By.text(title)) != null
+                        UiAutomatorUtils2.waitFindObjectOrNull(By.text(title)) != null
                 scrollableObject = UiScrollable(UiSelector().scrollable(true).instance(++i))
             }
 
