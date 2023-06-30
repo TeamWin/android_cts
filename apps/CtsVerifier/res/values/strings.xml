@@ -2649,6 +2649,8 @@ When the buttons are enabled, pass this test if the information in the dialog wa
     <string name="nls_block_group">Please block the linked notification channel group and return here.</string>
     <string name="nls_channel_settings_with_filter_instructions">In the following dialog, please take a note of which channel settings are visible. Then turn on vibration for the channel and press \"Done\".</string>
     <string name="nls_channel_settings_with_filter_verification">Were the channel settings shown in a bottom sheet instead of the normal \"full-screen\" settings? Were sound and vibration the only available options?</string>
+    <string name="nls_channel_settings_with_filter_instructions_no_vibrator">In the following dialog, please take a note of which channel settings are visible. Then add a sound for the channel and press \"Done\".</string>
+    <string name="nls_channel_settings_with_filter_verification_no_vibrator">Were the channel settings shown in a bottom sheet instead of the normal \"full-screen\" settings? Was sound the only available option?</string>
     <string name="nls_disable_service">Please disable \"Notification Listener for CTS Verifier\"
         under Apps > Gear Icon > Special Access > Notification Access and return here.</string>
     <string name="nls_start_settings">Launch Settings</string>
