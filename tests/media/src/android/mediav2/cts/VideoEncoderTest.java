@@ -47,6 +47,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * The test verifies encoders present in media codec list in bytebuffer mode. The test feeds raw
@@ -71,14 +72,18 @@ public class VideoEncoderTest extends CodecEncoderTestBase {
 
     private static EncoderConfigParams getVideoEncoderCfgParams(String mediaType, int bitRate,
             int width, int height, int frameRate, int colorFormat, int maxBFrames) {
-        return new EncoderConfigParams.Builder(mediaType)
-                .setBitRate(bitRate)
-                .setWidth(width)
-                .setHeight(height)
-                .setFrameRate(frameRate)
-                .setColorFormat(colorFormat)
-                .setMaxBFrames(maxBFrames)
-                .build();
+        EncoderConfigParams.Builder foreman =
+                new EncoderConfigParams.Builder(mediaType)
+                        .setBitRate(bitRate)
+                        .setWidth(width)
+                        .setHeight(height)
+                        .setFrameRate(frameRate)
+                        .setColorFormat(colorFormat)
+                        .setMaxBFrames(maxBFrames);
+        if (colorFormat == COLOR_FormatYUVP010) {
+            foreman.setProfile(Objects.requireNonNull(PROFILE_HLG_MAP.get(mediaType))[0]);
+        }
+        return foreman.build();
     }
 
     private static List<Object[]> prepareTestArgs(List<Object[]> args) {
