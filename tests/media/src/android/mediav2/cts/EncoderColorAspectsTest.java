@@ -126,7 +126,8 @@ public class EncoderColorAspectsTest extends CodecEncoderTestBase {
                                             .setMaxBFrames(maxBFrame)
                                             .setColorFormat(colorFormat)
                                             .setInputBitDepth(bitDepth);
-                            if (colorFormat == COLOR_FormatSurface && bitDepth == 10) {
+                            if ((colorFormat == COLOR_FormatSurface && bitDepth == 10)
+                                    || colorFormat == COLOR_FormatYUVP010) {
                                 foreman.setProfile(
                                         Objects.requireNonNull(PROFILE_HLG_MAP.get(mediaType))[0]);
                             }
