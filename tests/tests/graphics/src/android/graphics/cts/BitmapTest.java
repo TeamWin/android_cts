@@ -21,6 +21,7 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeNoException;
@@ -664,11 +665,26 @@ public class BitmapTest {
         }
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void testWrapHardwareBufferWithInvalidUsageFails() {
+    @Test
+    public void testWrapHardwareBufferMissingGpuUsageFails() {
         try (HardwareBuffer hwBuffer = HardwareBuffer.create(512, 512, HardwareBuffer.RGBA_8888, 1,
             HardwareBuffer.USAGE_CPU_WRITE_RARELY)) {
-            Bitmap bitmap = Bitmap.wrapHardwareBuffer(hwBuffer, ColorSpace.get(Named.SRGB));
+            assertThrows(IllegalArgumentException.class, () -> {
+                Bitmap.wrapHardwareBuffer(hwBuffer, ColorSpace.get(Named.SRGB));
+            });
+        }
+    }
+
+    @Test
+    public void testWrapHardwareBufferWithProtectedUsageFails() {
+        try (HardwareBuffer hwBuffer = HardwareBuffer.create(512, 512, HardwareBuffer.RGBA_8888, 1,
+                HardwareBuffer.USAGE_GPU_COLOR_OUTPUT
+                        | HardwareBuffer.USAGE_GPU_SAMPLED_IMAGE
+                        | HardwareBuffer.USAGE_COMPOSER_OVERLAY
+                        | HardwareBuffer.USAGE_PROTECTED_CONTENT)) {
+            assertThrows(IllegalArgumentException.class, () -> {
+                Bitmap.wrapHardwareBuffer(hwBuffer, ColorSpace.get(Named.SRGB));
+            });
         }
     }
 
