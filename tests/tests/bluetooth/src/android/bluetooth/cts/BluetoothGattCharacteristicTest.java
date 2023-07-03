@@ -17,8 +17,10 @@
 package android.bluetooth.cts;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 import android.bluetooth.BluetoothGattCharacteristic;
+import android.bluetooth.BluetoothGattService;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -49,5 +51,18 @@ public class BluetoothGattCharacteristicTest {
     @Test
     public void test_getInstanceId() {
         assertEquals(mBluetoothGattCharacteristic.getInstanceId(), 0);
+    }
+
+    @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
+    @Test
+    public void test_getService() {
+        // Service is null after initialization with public constructor
+        assertNull(mBluetoothGattCharacteristic.getService());
+        BluetoothGattService service = new BluetoothGattService(TEST_UUID,
+                BluetoothGattService.SERVICE_TYPE_PRIMARY);
+
+        service.addCharacteristic(mBluetoothGattCharacteristic);
+
+        assertEquals(mBluetoothGattCharacteristic.getService(), service);
     }
 }
