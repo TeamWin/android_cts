@@ -30,6 +30,7 @@ import org.junit.runner.RunWith;
 
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class CVE_2022_20112 extends RootSecurityTestCase {
+    private static final String FEATURE_AUTOMOTIVE = "android.hardware.type.automotive";
 
     // b/206987762
     // Vulnerable module : com.android.settings
@@ -37,7 +38,10 @@ public class CVE_2022_20112 extends RootSecurityTestCase {
     // Is play managed : No
     @AsbSecurityTest(cveBugId = 206987762)
     @Test
-    public void testPocCVE_2022_20112() {
+    public void testPocCVE_2022_20112() throws Exception {
+        // This setting is not supported on automotive
+        if (isAutomotive()) return;
+
         final String testPkg = "android.security.cts.CVE_2022_20112";
         ITestDevice device = null;
         int currentUser = -1;
@@ -84,5 +88,9 @@ public class CVE_2022_20112 extends RootSecurityTestCase {
                 // Ignore exception here
             }
         }
+    }
+
+    private boolean isAutomotive() throws Exception {
+        return getDevice().hasFeature(FEATURE_AUTOMOTIVE);
     }
 }
