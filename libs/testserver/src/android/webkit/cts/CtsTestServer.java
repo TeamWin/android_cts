@@ -741,7 +741,7 @@ public class CtsTestServer {
                 if (query == null || !query.contains(NOLENGTH_POSTFIX)) {
                     response.setHeader("Content-Length", "" + entity.getContentLength());
                 }
-            } catch (IOException e) {
+            } catch (IOException | NullPointerException e) {
                 response = null;
                 // fall through, return 404 at the end
             }
