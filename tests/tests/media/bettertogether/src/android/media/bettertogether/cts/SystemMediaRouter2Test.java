@@ -28,8 +28,10 @@ import static android.media.bettertogether.cts.StubMediaRoute2ProviderService.RO
 import static android.media.bettertogether.cts.StubMediaRoute2ProviderService.ROUTE_ID4_TO_SELECT_AND_DESELECT;
 import static android.media.bettertogether.cts.StubMediaRoute2ProviderService.ROUTE_ID5_TO_TRANSFER_TO;
 import static android.media.bettertogether.cts.StubMediaRoute2ProviderService.ROUTE_ID6_REJECT_SET_VOLUME;
+import static android.media.bettertogether.cts.StubMediaRoute2ProviderService.ROUTE_ID7_STATIC_GROUP;
 import static android.media.bettertogether.cts.StubMediaRoute2ProviderService.ROUTE_ID_VARIABLE_VOLUME;
 import static android.media.bettertogether.cts.StubMediaRoute2ProviderService.ROUTE_NAME2;
+import static android.media.bettertogether.cts.StubMediaRoute2ProviderService.STATIC_GROUP_SELECTED_ROUTES_IDS;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -58,6 +60,7 @@ import androidx.test.platform.app.InstrumentationRegistry;
 import com.android.compatibility.common.util.NonMainlineTest;
 import com.android.compatibility.common.util.PollingCheck;
 
+import com.google.common.truth.Correspondence;
 import com.google.common.truth.Expect;
 
 import org.junit.After;
@@ -99,6 +102,8 @@ public class SystemMediaRouter2Test {
     private static final int WAIT_MS = 2000;
     private static final String EXTRA_ROUTE_ID = "EXTRA_ROUTE_ID";
     private static final String EXTRA_ROUTE_NAME = "EXTRA_ROUTE_NAME";
+    private static final Correspondence<MediaRoute2Info, String> ROUTE_HAS_ORIGINAL_ID =
+            Correspondence.transforming(MediaRoute2Info::getOriginalId, "has original id");
 
     private RouteCallback mAppRouterPlaceHolderCallback = new RouteCallback() {};
 
@@ -660,6 +665,132 @@ public class SystemMediaRouter2Test {
 
             // onSessionCreationFailed should not be called.
             assertThat(failureLatch.await(WAIT_MS, TimeUnit.MILLISECONDS)).isFalse();
+        } finally {
+            releaseControllers(controllers);
+            mSystemRouter2ForCts.unregisterTransferCallback(transferCallback);
+        }
+    }
+
+    @Test
+    public void getSelectedRoutes_returnsNonMatchingFeatureRoutes() throws Exception {
+        // Set discovery preference to FEATURE_SPECIAL.
+        Map<String, MediaRoute2Info> routes = waitAndGetRoutes(FEATURE_SPECIAL);
+        MediaRoute2Info route = routes.get(ROUTE_ID7_STATIC_GROUP);
+        assertThat(route).isNotNull();
+
+        final CountDownLatch successLatch = new CountDownLatch(1);
+        final List<RoutingController> controllers = new ArrayList<>();
+        TransferCallback transferCallback =
+                new TransferCallback() {
+                    @Override
+                    public void onTransfer(
+                            RoutingController oldController, RoutingController newController) {
+                        if (newController != null) {
+                            controllers.add(newController);
+                            successLatch.countDown();
+                        }
+                    }
+                };
+
+        try {
+            mSystemRouter2ForCts.registerTransferCallback(mExecutor, transferCallback);
+            mSystemRouter2ForCts.transferTo(route);
+            assertThat(successLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)).isTrue();
+
+            RoutingController newController = controllers.get(0);
+            assertThat(newController.getSelectedRoutes())
+                    .comparingElementsUsing(ROUTE_HAS_ORIGINAL_ID)
+                    .containsExactlyElementsIn(STATIC_GROUP_SELECTED_ROUTES_IDS);
+
+            // Make sure ROUTE_ID1 does not match FEATURE_SPECIAL.
+            assertThat(mAppRouter2.getRoutes())
+                    .comparingElementsUsing(ROUTE_HAS_ORIGINAL_ID)
+                    .doesNotContain(ROUTE_ID1);
+
+        } finally {
+            releaseControllers(controllers);
+            mSystemRouter2ForCts.unregisterTransferCallback(transferCallback);
+        }
+    }
+
+    @Test
+    public void getSelectableRoutes_returnsNonMatchingFeatureRoutes() throws Exception {
+        // Set discovery preference to FEATURE_SPECIAL.
+        Map<String, MediaRoute2Info> routes = waitAndGetRoutes(FEATURE_SPECIAL);
+        MediaRoute2Info route = routes.get(ROUTE_ID7_STATIC_GROUP);
+        assertThat(route).isNotNull();
+
+        final CountDownLatch successLatch = new CountDownLatch(1);
+        final List<RoutingController> controllers = new ArrayList<>();
+        TransferCallback transferCallback =
+                new TransferCallback() {
+                    @Override
+                    public void onTransfer(
+                            RoutingController oldController, RoutingController newController) {
+                        if (newController != null) {
+                            controllers.add(newController);
+                            successLatch.countDown();
+                        }
+                    }
+                };
+
+        try {
+            mSystemRouter2ForCts.registerTransferCallback(mExecutor, transferCallback);
+            mSystemRouter2ForCts.transferTo(route);
+            assertThat(successLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)).isTrue();
+
+            RoutingController newController = controllers.get(0);
+            assertThat(newController.getSelectableRoutes())
+                    .comparingElementsUsing(ROUTE_HAS_ORIGINAL_ID)
+                    .containsExactly(ROUTE_ID4_TO_SELECT_AND_DESELECT);
+
+            // Make sure ROUTE_ID4_TO_SELECT_AND_DESELECT does not match FEATURE_SPECIAL.
+            assertThat(mAppRouter2.getRoutes())
+                    .comparingElementsUsing(ROUTE_HAS_ORIGINAL_ID)
+                    .doesNotContain(ROUTE_ID4_TO_SELECT_AND_DESELECT);
+
+        } finally {
+            releaseControllers(controllers);
+            mSystemRouter2ForCts.unregisterTransferCallback(transferCallback);
+        }
+    }
+
+    @Test
+    public void getDeselectableRoutes_returnsNonMatchingFeatureRoutes() throws Exception {
+        // Set discovery preference to FEATURE_SPECIAL.
+        Map<String, MediaRoute2Info> routes = waitAndGetRoutes(FEATURE_SPECIAL);
+        MediaRoute2Info route = routes.get(ROUTE_ID7_STATIC_GROUP);
+        assertThat(route).isNotNull();
+
+        final CountDownLatch successLatch = new CountDownLatch(1);
+        final List<RoutingController> controllers = new ArrayList<>();
+        TransferCallback transferCallback =
+                new TransferCallback() {
+                    @Override
+                    public void onTransfer(
+                            RoutingController oldController, RoutingController newController) {
+                        if (newController != null) {
+                            controllers.add(newController);
+                            successLatch.countDown();
+                        }
+                    }
+                };
+
+        try {
+            mSystemRouter2ForCts.registerTransferCallback(mExecutor, transferCallback);
+            mSystemRouter2ForCts.transferTo(route);
+            assertThat(successLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)).isTrue();
+
+            RoutingController newController = controllers.get(0);
+            assertThat(newController.getDeselectableRoutes())
+                    .comparingElementsUsing(ROUTE_HAS_ORIGINAL_ID)
+                    .containsExactly(ROUTE_ID1);
+
+            // Make sure ROUTE_ID1 does not match FEATURE_SPECIAL.
+            assertThat(mAppRouter2.getRoutes())
+                    .comparingElementsUsing(ROUTE_HAS_ORIGINAL_ID)
+                    .doesNotContain(ROUTE_ID1);
+
         } finally {
             releaseControllers(controllers);
             mSystemRouter2ForCts.unregisterTransferCallback(transferCallback);
