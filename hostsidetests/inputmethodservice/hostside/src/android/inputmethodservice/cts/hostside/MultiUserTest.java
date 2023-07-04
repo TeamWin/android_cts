@@ -52,7 +52,7 @@ import java.util.concurrent.TimeoutException;
 public class MultiUserTest extends BaseHostJUnit4Test {
     private static final long USER_SWITCH_TIMEOUT = TimeUnit.SECONDS.toMillis(60);
     private static final long USER_SWITCH_POLLING_INTERVAL = TimeUnit.MILLISECONDS.toMillis(100);
-    private static final long IME_COMMAND_TIMEOUT = TimeUnit.SECONDS.toMillis(7);
+    private static final long IME_COMMAND_TIMEOUT = TimeUnit.SECONDS.toMillis(20);
 
     /**
      * Because of Bug 132082599, processes can be asynchronously killed due to delayed tasks in
@@ -230,6 +230,8 @@ public class MultiUserTest extends BaseHostJUnit4Test {
         assertIme1NotExistInApiResult(profileUserId);
         assertIme1ImplicitlyEnabledSubtypeNotExist(primaryUserId);
         assertIme1ImplicitlyEnabledSubtypeNotExist(profileUserId);
+
+        shell(ShellCommandUtils.waitForBroadcastBarrier());
 
         // Install IME1 then enable/set it as the current IME for the primary user.
         installPackageAsUser(Ime1Constants.APK, true, primaryUserId, "-r");
