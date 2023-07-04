@@ -46,6 +46,7 @@ import static android.virtualdevice.cts.common.AudioHelper.SHORT_VALUE;
 import android.annotation.NonNull;
 import android.annotation.Nullable;
 import android.app.Activity;
+import android.app.ActivityTaskManager;
 import android.app.KeyguardManager;
 import android.content.ClipData;
 import android.content.ClipboardManager;
@@ -95,6 +96,12 @@ public class MainActivity extends Activity {
     static final String EXTRA_DISPLAY = "display";
 
     /**
+     * Boolean extra in the result data that is set to true iff test app task is in list of
+     * recent tasks, false otherwise.
+     */
+    static final String EXTRA_ACTIVITY_INCLUDED_IN_RECENT_TASKS = "activityIncludedInRecentTasks";
+
+    /**
      * Tell this activity to test camera access when it is launched. It will get the String camera
      * id to try opening from {@link #EXTRA_CAMERA_ID}, and put the test outcome in
      * {@link #EXTRA_CAMERA_RESULT} on the activity result intent. If the result was that the
@@ -137,6 +144,8 @@ public class MainActivity extends Activity {
                             getIntent().getParcelableExtra(EXTRA_ACTIVITY_LAUNCHED_RECEIVER);
                     Bundle result = new Bundle();
                     result.putInt(EXTRA_DISPLAY, getDisplay().getDisplayId());
+                    result.putBoolean(EXTRA_ACTIVITY_INCLUDED_IN_RECENT_TASKS,
+                            isActivityIncludedInRecentTasks());
                     resultReceiver.send(Activity.RESULT_OK, result);
                     finish();
                     break;
@@ -210,6 +219,12 @@ public class MainActivity extends Activity {
                     Log.w(TAG, "Unknown action: " + action);
             }
         }
+    }
+
+    private boolean isActivityIncludedInRecentTasks() {
+        return getSystemService(ActivityTaskManager.class).getRecentTasks(
+                Integer.MAX_VALUE, /*flags=*/0,
+                getUserId()).stream().anyMatch(task -> task.taskId == getTaskId());
     }
 
     private void testClipboard() {
