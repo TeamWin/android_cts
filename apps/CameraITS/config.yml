@@ -17,7 +17,7 @@ TestBeds:
     # Use TEST_BED_MANUAL for manual testing and remove below lines:
     #     - serial <tablet_id>
     #       label: tablet
-    # Test configuration for scenes[0:4, 6, _change]
+    # Test configuration for scenes[0:4, 6]
     Controllers:
         AndroidDevice:
           - serial: <device-id>  # quotes are needed if serial id is entirely numeric
