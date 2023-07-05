@@ -25,6 +25,7 @@
 
 constexpr int kNumFrames = 256;
 constexpr int64_t kMillisPerNanos = 1000000;
+constexpr int64_t kMillisPerMicros = 1000;
 
 void tryOpeningStream(aaudio_direction_t direction, aaudio_performance_mode_t performanceMode) {
     AAudioStreamBuilder *builder = nullptr;
@@ -51,6 +52,18 @@ void tryOpeningStream(aaudio_direction_t direction, aaudio_performance_mode_t pe
     } else {
         ASSERT_EQ(kNumFrames,
                   AAudioStream_write(stream, buffer.get(), kNumFrames, 500 * kMillisPerNanos));
+        // Total_frames_transferred is the number of frames consumed by the audio endpoint.
+        // Wait until the data is consumed by the audio endpoint.
+        // Wait in 10ms increments up to 50 times.
+        constexpr int kMaxRetries = 50;
+        constexpr int kTimeBetweenRetriesMillis = 10;
+        int numRetries = 0;
+        int framesRead = AAudioStream_getFramesRead(stream);
+        while (numRetries < kMaxRetries && framesRead < kNumFrames) {
+            usleep(kTimeBetweenRetriesMillis * kMillisPerMicros);
+            framesRead = AAudioStream_getFramesRead(stream);
+            numRetries++;
+        }
     }
 
     ASSERT_EQ(AAUDIO_OK, AAudioStream_requestStop(stream));
