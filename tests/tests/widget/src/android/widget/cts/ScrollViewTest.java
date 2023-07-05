@@ -1353,6 +1353,45 @@ public class ScrollViewTest {
         PollingCheck.waitFor(1000L, () -> mScrollViewStretch.getScrollY() != 210);
     }
 
+    @Test
+    public void onReleaseCalledAfterAbsorb() throws Throwable {
+        showOnlyStretch();
+
+        NoReleaseEdgeEffect edgeEffect = new NoReleaseEdgeEffect(mActivity);
+
+        mScrollViewStretch.mEdgeGlowBottom = edgeEffect;
+
+        mActivityRule.runOnUiThread(() -> {
+            // Fling to the bottom
+            mScrollViewStretch.fling(10000);
+        });
+
+        PollingCheck.waitFor(() -> edgeEffect.getDistance() > 0);
+        PollingCheck.waitFor(edgeEffect::getOnReleaseCalled);
+    }
+
+    @Test
+    public void onReleaseCalledAfterAbsorbAtTop() throws Throwable {
+        showOnlyStretch();
+
+        mActivityRule.runOnUiThread(() -> {
+            // Scroll all the way to the bottom
+            mScrollViewStretch.scrollToEnd();
+        });
+
+        NoReleaseEdgeEffect edgeEffect = new NoReleaseEdgeEffect(mActivity);
+
+        mScrollViewStretch.mEdgeGlowTop = edgeEffect;
+
+        mActivityRule.runOnUiThread(() -> {
+            // Fling to the top
+            mScrollViewStretch.fling(-10000);
+        });
+
+        PollingCheck.waitFor(() -> edgeEffect.getDistance() > 0);
+        PollingCheck.waitFor(edgeEffect::getOnReleaseCalled);
+    }
+
     private MotionEvent createScrollEvent(float scrollAmount, int source) {
         MotionEvent.PointerProperties pointerProperties = new MotionEvent.PointerProperties();
         pointerProperties.toolType = MotionEvent.TOOL_TYPE_MOUSE;
