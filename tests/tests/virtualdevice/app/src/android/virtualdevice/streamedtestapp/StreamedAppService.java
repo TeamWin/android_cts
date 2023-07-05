@@ -44,6 +44,9 @@ public class StreamedAppService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        if (intent == null) {
+            return START_STICKY;
+        }
         switch (intent.getAction()) {
             case ACTION_START_MAIN_ACTIVITY:
                 Intent activityIntent = new Intent(this, MainActivity.class)
