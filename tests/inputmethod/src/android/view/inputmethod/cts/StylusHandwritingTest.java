@@ -329,6 +329,60 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
     }
 
     /**
+     * Verifies that stylus hover events initializes the InkWindow.
+     * @throws Exception
+     */
+    @Test
+    public void testStylusHoverInitInkWindow() throws Exception {
+        try (MockImeSession imeSession = MockImeSession.create(
+                InstrumentationRegistry.getInstrumentation().getContext(),
+                InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+                new ImeSettings.Builder())) {
+            final ImeEventStream stream = imeSession.openEventStream();
+
+            final String marker = getTestMarker();
+            final EditText editText = launchTestActivity(marker);
+
+            expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
+            notExpectEvent(
+                    stream,
+                    editorMatcher("onStartInputView", marker),
+                    NOT_EXPECT_TIMEOUT);
+
+            addVirtualStylusIdForTestSession();
+            // Verify there is no handwriting window before stylus is added.
+            assertFalse(expectCommand(
+                    stream, imeSession.callHasStylusHandwritingWindow(), TIMEOUT_1_S)
+                    .getReturnBooleanValue());
+            // Stylus hover
+            final int startX = editText.getWidth() / 2;
+            final int startY = editText.getHeight() / 2;
+            TestUtils.injectStylusHoverEvents(editText, startX, startY);
+            // keyboard shouldn't show up.
+            notExpectEvent(
+                    stream,
+                    editorMatcher("onStartInputView", marker),
+                    NOT_EXPECT_TIMEOUT);
+
+            // Handwriting prep should start for stylus onHover
+            expectEvent(
+                    stream,
+                    editorMatcher("onPrepareStylusHandwriting", marker),
+                    TIMEOUT);
+            notExpectEvent(
+                    stream,
+                    editorMatcher("onStartStylusHandwriting", marker),
+                    NOT_EXPECT_TIMEOUT);
+
+            // Verify handwriting window exists but not shown.
+            assertTrue(expectCommand(
+                    stream, imeSession.callHasStylusHandwritingWindow(), TIMEOUT_1_S)
+                    .getReturnBooleanValue());
+            verifyStylusHandwritingWindowIsNotShown(stream, imeSession);
+        }
+    }
+
+    /**
      * Call {@link InputMethodManager#startStylusHandwriting(View)} and inject Stylus touch events
      * on screen. Make sure {@link InputMethodService#onStylusHandwritingMotionEvent(MotionEvent)}
      * receives those events via Spy window surface.
