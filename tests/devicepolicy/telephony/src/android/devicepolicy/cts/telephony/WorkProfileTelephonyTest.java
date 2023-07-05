@@ -62,7 +62,6 @@ import android.telecom.Call;
 import android.telecom.InCallService;
 import android.telecom.PhoneAccountHandle;
 import android.telecom.TelecomManager;
-import android.telephony.PhoneNumberUtils;
 import android.telephony.SmsManager;
 import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
@@ -140,9 +139,8 @@ public final class WorkProfileTelephonyTest {
         try (PermissionContext p = TestApis.permissions().withPermission(READ_PHONE_NUMBERS)) {
             SubscriptionManager subscriptionManager = sContext.getSystemService(
                     SubscriptionManager.class);
-            mDestinationNumber = PhoneNumberUtils.formatNumberToE164(
-                    subscriptionManager.getPhoneNumber(SubscriptionManager.DEFAULT_SUBSCRIPTION_ID),
-                    mTelephonyManager.getSimCountryIso());
+            mDestinationNumber =
+                    subscriptionManager.getPhoneNumber(SubscriptionManager.DEFAULT_SUBSCRIPTION_ID);
         }
     }
 
