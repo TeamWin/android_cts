@@ -37,15 +37,16 @@ _CIRCLE_R = 2
 _CIRCLE_X = 0
 _CIRCLE_Y = 1
 _CIRCLISH_RTOL = 0.15  # contour area vs ideal circle area pi*((w+h)/4)**2
+_LENS_FACING_FRONT = 0
 _LINE_COLOR = (255, 0, 0)  # red
 _MAX_STR = 'max'
 _MIN_STR = 'min'
 _MIN_AREA_RATIO = 0.00015  # based on 2000/(4000x3000) pixels
 _MIN_CIRCLE_PTS = 25
-_MIN_SIZE = 640*480 # VGA
+_MIN_SIZE = 640*480  # VGA
 _NAME = os.path.splitext(os.path.basename(__file__))[0]
-_OFFSET_TOL = 5 # pixels
-_RADIUS_RTOL = 0.1 # 10% tolerance Video/Preview circle size
+_OFFSET_TOL = 5  # pixels
+_RADIUS_RTOL = 0.1  # 10% tolerance Video/Preview circle size
 _RECORDING_DURATION = 2  # seconds
 _ZOOM_COMP_MAX_THRESH = 1.15
 _ZOOM_MIN_THRESH = 2.0
@@ -171,7 +172,6 @@ class PreviewVideoZoomTest(its_base_test.ItsBaseTest):
 
         return video_file_name
 
-
       # Find zoom range
       z_range = props['android.control.zoomRatioRange']
 
@@ -266,6 +266,12 @@ class PreviewVideoZoomTest(its_base_test.ItsBaseTest):
             # Get key frames from the preview recording
             preview_img = _extract_key_frame_from_recording(
                 log_path, preview_file_name)
+
+            # If testing front camera, mirror preview image
+            # Opencv expects a numpy array but np.flip generates a 'view' which
+            # doesn't work with opencv. ndarray.copy forces copy instead of view
+            if props['android.lens.facing'] == _LENS_FACING_FRONT:
+              preview_img = np.ndarray.copy(np.flip(preview_img, 0))
 
             # Find the center circle in preview img
             preview_img_name = (f'Preview_zoomRatio_{z}_{size}_circle.png')
