@@ -1519,6 +1519,8 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
                             editText.setPrivateImeOptions(marker);
                             editText.requestFocus();
                             final AlertDialog dialog = new AlertDialog.Builder(activity)
+                                    .setTitle("DialogWithEditText")
+                                    .setCancelable(false)
                                     .setView(editText)
                                     .create();
                             dialog.getWindow().setSoftInputMode(SOFT_INPUT_STATE_UNCHANGED);
