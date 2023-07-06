@@ -61,6 +61,7 @@ android_test {
         "cts",
         "general-tests",
         "sts",
+        "mts-documentsui",
     ],
     sdk_version: "test_current",
     libs: [
