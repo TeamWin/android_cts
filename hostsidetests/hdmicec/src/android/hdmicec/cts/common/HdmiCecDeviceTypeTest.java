@@ -48,6 +48,9 @@ public final class HdmiCecDeviceTypeTest extends BaseHostJUnit4Test {
     @Rule
     public RuleChain ruleChain = RuleChain.outerRule(CecRules.requiresLeanback(this));
 
+
+    /** @deprecated not used anymore **/
+    @Deprecated
     @Option(name = HdmiCecConstants.PHYSICAL_ADDRESS_NAME,
         description = "HDMI CEC physical address of the DUT",
         mandatory = false)

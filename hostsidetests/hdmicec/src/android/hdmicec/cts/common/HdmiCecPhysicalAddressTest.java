@@ -19,15 +19,14 @@ package android.hdmicec.cts.common;
 import android.hdmicec.cts.BaseHdmiCecCtsTest;
 import android.hdmicec.cts.CecMessage;
 import android.hdmicec.cts.CecOperand;
-import android.hdmicec.cts.HdmiCecConstants;
 
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
 import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
-import org.junit.Test;
 
 /** HDMI CEC test to verify physical address after device reboot (Section 10.1.2) */
 @RunWith(DeviceJUnit4ClassRunner.class)
@@ -47,11 +46,7 @@ public final class HdmiCecPhysicalAddressTest extends BaseHdmiCecCtsTest {
     @Test
     public void cect_10_1_2_1_RebootPhysicalAddress() throws Exception {
         ITestDevice device = getDevice();
-        String deviceType = device.getProperty(HdmiCecConstants.HDMI_DEVICE_TYPE_PROPERTY);
-        int physicalAddress =
-                deviceType.equals(Integer.toString(HdmiCecConstants.CEC_DEVICE_TYPE_TV))
-                        ? 0x0000
-                        : dutPhysicalAddress;
+        int physicalAddress = getDumpsysPhysicalAddress();
         device.reboot();
         String message = hdmiCecClient.checkExpectedOutput(CecOperand.REPORT_PHYSICAL_ADDRESS);
         CecMessage.assertPhysicalAddressValid(message, physicalAddress);
