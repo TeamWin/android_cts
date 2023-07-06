@@ -124,7 +124,6 @@ public final class PowerPolicyHostTest extends CarHostJUnit4TestCase {
     @Test
     public void testPowerPolicyChange() throws Exception {
         String testcase = "testPowerPolicyChange:";
-        int expectedTotalPolicies = PowerPolicyDef.PolicySet.TOTAL_DEFAULT_REGISTERED_POLICIES;
         int stepNo = 0;
         String teststep;
         PowerPolicyTestHelper testHelper;
@@ -132,8 +131,12 @@ public final class PowerPolicyHostTest extends CarHostJUnit4TestCase {
         teststep = "check the inital power policies";
         testHelper = getTestHelper(testcase, stepNo++, teststep);
         testHelper.checkCurrentState(PowerPolicyConstants.CarPowerState.ON);
-        testHelper.checkCurrentPolicy(PowerPolicyDef.IdSet.DEFAULT_ALL_ON);
-        testHelper.checkTotalRegisteredPolicies(expectedTotalPolicies);
+        // power policy can be different from system_power_policy_all_on, save it to check
+        // after device restart.
+        String powerPolicyForOnState = testHelper.getCurrentPolicyId();
+        // save number of device power policies
+        int registeredPoliciesNumber = testHelper.getNumberOfRegisteredPolicies();
+        int expectedTotalPolicies = registeredPoliciesNumber;
 
         // create two power policies, test1 and test2, for power policy change test
         defineAndCheckPolicyTest1(testcase, stepNo++, ++expectedTotalPolicies);
@@ -191,18 +194,12 @@ public final class PowerPolicyHostTest extends CarHostJUnit4TestCase {
         // add respect to user setting test case here to utilize a single device reboot
         testPowerPolicyAndComponentUserSetting();
 
-        // add power policy group test here to utilize added test1 and test2 policies
-        teststep = "check default power policy group";
-        PowerPolicyGroups emptyGroups = new PowerPolicyGroups();
-        testHelper = getTestHelper(testcase, stepNo++, teststep);
-        testHelper.checkCurrentPolicyGroupId(null);
-        testHelper.checkPowerPolicyGroups(emptyGroups);
-
         teststep = "define power policy group";
         definePowerPolicyGroup(PowerPolicyGroups.TestSet.POLICY_GROUP_DEF1.toShellCommandString());
         definePowerPolicyGroup(PowerPolicyGroups.TestSet.POLICY_GROUP_DEF2.toShellCommandString());
         testHelper = getTestHelper(testcase, stepNo++, teststep);
-        testHelper.checkPowerPolicyGroups(PowerPolicyGroups.TestSet.POLICY_GROUPS1);
+        // check that device policy groups, include just added groups as well
+        testHelper.checkPowerPolicyGroupsDefined(PowerPolicyGroups.TestSet.POLICY_GROUPS1);
 
         teststep = "set power policy group";
         setPowerPolicyGroup(PowerPolicyGroups.TestSet.GROUP_ID1);
@@ -214,10 +211,9 @@ public final class PowerPolicyHostTest extends CarHostJUnit4TestCase {
         rebootDevice();
         teststep = "reboot to clear added test power policies";
         testHelper = getTestHelper(testcase, stepNo++, teststep);
-        expectedTotalPolicies = PowerPolicyDef.PolicySet.TOTAL_DEFAULT_REGISTERED_POLICIES;
         testHelper.checkCurrentState(PowerPolicyConstants.CarPowerState.ON);
-        testHelper.checkCurrentPolicy(PowerPolicyDef.IdSet.DEFAULT_ALL_ON);
-        testHelper.checkTotalRegisteredPolicies(expectedTotalPolicies);
+        testHelper.checkCurrentPolicy(powerPolicyForOnState);
+        testHelper.checkTotalRegisteredPolicies(registeredPoliciesNumber);
     }
 
     public String fetchActivityDumpsys() throws Exception {
