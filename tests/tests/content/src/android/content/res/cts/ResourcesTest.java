@@ -56,12 +56,12 @@ import java.util.Locale;
 import java.util.stream.IntStream;
 
 public class ResourcesTest extends AndroidTestCase {
-    private static final String CONFIG_VARYING = "configVarying";
+    private static final String STRING = "string";
     private static final String SIMPLE = "simple";
-    private static final String CONFIG_VARYING_SIMPLE = "configVarying/simple";
+    private static final String STRING_SIMPLE = "string/simple";
     private static final String PACKAGE_NAME = "android.content.cts";
     private static final String COM_ANDROID_CTS_STUB_IDENTIFIER =
-                "android.content.cts:configVarying/simple";
+                "android.content.cts:string/simple";
     public static final float FONT_SCALING_TOLERANCE = 0.05f;
     private Resources mResources;
 
@@ -746,13 +746,13 @@ public class ResourcesTest extends AndroidTestCase {
     public void testGetIdentifier() {
 
         int resid = mResources.getIdentifier(COM_ANDROID_CTS_STUB_IDENTIFIER, null, null);
-        assertEquals(R.configVarying.simple, resid);
+        assertEquals(R.string.simple, resid);
 
-        resid = mResources.getIdentifier(CONFIG_VARYING_SIMPLE, null, PACKAGE_NAME);
-        assertEquals(R.configVarying.simple, resid);
+        resid = mResources.getIdentifier(STRING_SIMPLE, null, PACKAGE_NAME);
+        assertEquals(R.string.simple, resid);
 
-        resid = mResources.getIdentifier(SIMPLE, CONFIG_VARYING, PACKAGE_NAME);
-        assertEquals(R.configVarying.simple, resid);
+        resid = mResources.getIdentifier(SIMPLE, STRING, PACKAGE_NAME);
+        assertEquals(R.string.simple, resid);
     }
 
     public void testGetIntArray() {
@@ -824,18 +824,18 @@ public class ResourcesTest extends AndroidTestCase {
     }
 
     public void testGetResourceEntryName() {
-        assertEquals(SIMPLE, mResources.getResourceEntryName(R.configVarying.simple));
+        assertEquals(SIMPLE, mResources.getResourceEntryName(R.string.simple));
     }
 
     public void testGetResourceName() {
-        final String fullName = mResources.getResourceName(R.configVarying.simple);
+        final String fullName = mResources.getResourceName(R.string.simple);
         assertEquals(COM_ANDROID_CTS_STUB_IDENTIFIER, fullName);
 
-        final String packageName = mResources.getResourcePackageName(R.configVarying.simple);
+        final String packageName = mResources.getResourcePackageName(R.string.simple);
         assertEquals(PACKAGE_NAME, packageName);
 
-        final String typeName = mResources.getResourceTypeName(R.configVarying.simple);
-        assertEquals(CONFIG_VARYING, typeName);
+        final String typeName = mResources.getResourceTypeName(R.string.simple);
+        assertEquals(STRING, typeName);
     }
 
     public void testGetStringWithIntParam() {
