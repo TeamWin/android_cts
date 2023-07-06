@@ -231,7 +231,7 @@ abstract class BasePermissionTest {
         return By.text(Pattern.compile(regex, Pattern.CASE_INSENSITIVE or Pattern.UNICODE_CASE))
     }
 
-    protected fun installPackage(
+    protected open fun installPackage(
         apkPath: String,
         reinstall: Boolean = false,
         grantRuntimePermissions: Boolean = false,

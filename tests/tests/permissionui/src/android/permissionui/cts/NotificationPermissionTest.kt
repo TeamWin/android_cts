@@ -18,7 +18,6 @@ package android.permissionui.cts
 
 import android.Manifest.permission.POST_NOTIFICATIONS
 import android.Manifest.permission.RECORD_AUDIO
-import android.app.ActivityManager
 import android.app.ActivityOptions
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -392,16 +391,6 @@ class NotificationPermissionTest : BaseUsePermissionTest() {
         // Watch does not have app bar
         if (!isWatch) {
             waitFindObject(By.textContains(ACTIVITY_LABEL))
-        }
-        waitForIdle()
-    }
-
-    private fun killTestApp() {
-        pressBack()
-        pressBack()
-        runWithShellPermissionIdentity {
-            val am = context.getSystemService(ActivityManager::class.java)!!
-            am.forceStopPackage(APP_PACKAGE_NAME)
         }
         waitForIdle()
     }
