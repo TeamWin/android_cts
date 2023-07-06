@@ -27,6 +27,8 @@ import java.lang.annotation.RetentionPolicy;
 public class CommonComponents {
 
     public static final String EVENT_NOTIFIER_EXTRA = "EVENT_NOTIFIER_EXTRA";
+    public static final String TEST_SERVICE =
+            "android.server.wm.backgroundactivity.common.TestService";
     public static final CommonForegroundActivityExtras COMMON_FOREGROUND_ACTIVITY_EXTRAS =
             new CommonForegroundActivityExtras();
 

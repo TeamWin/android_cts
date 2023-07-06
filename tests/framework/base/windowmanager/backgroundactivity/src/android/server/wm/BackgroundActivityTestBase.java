@@ -21,6 +21,7 @@ import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
 import static android.app.WindowConfiguration.WINDOWING_MODE_PINNED;
 import static android.server.wm.ComponentNameUtils.getActivityName;
 import static android.server.wm.backgroundactivity.common.CommonComponents.COMMON_FOREGROUND_ACTIVITY_EXTRAS;
+import static android.server.wm.backgroundactivity.common.CommonComponents.TEST_SERVICE;
 
 import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
@@ -29,13 +30,15 @@ import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
 import android.os.UserManager;
 import android.server.wm.WindowManagerState.Task;
-import android.server.wm.backgroundactivity.appa.IAppATestService;
-import android.server.wm.backgroundactivity.appb.IAppBTestService;
+import android.server.wm.backgroundactivity.appa.Components;
+import android.server.wm.backgroundactivity.common.ITestService;
 import android.util.Log;
 
 import androidx.annotation.CallSuper;
@@ -47,7 +50,9 @@ import org.junit.After;
 import org.junit.Before;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -79,11 +84,12 @@ public abstract class BackgroundActivityTestBase extends ActivityManagerTestBase
     static final String NAMESPACE_WINDOW_MANAGER = "window_manager";
     static final String ASM_RESTRICTIONS_ENABLED =
             "ActivitySecurity__asm_restrictions_enabled";
+    private static final int TEST_SERVICE_SETUP_TIMEOUT_MS = 1000;
     final DeviceConfigStateHelper mDeviceConfig =
             new DeviceConfigStateHelper(NAMESPACE_WINDOW_MANAGER);
 
-    FutureConnection<IAppATestService> mBalServiceConnection;
-    FutureConnection<IAppBTestService> mAppBTestServiceConnection;
+    private final Map<ComponentName, FutureConnection<ITestService>> mServiceConnections =
+            new HashMap<>();
 
     @Before
     public void enableFeatureFlags() {
@@ -145,11 +151,8 @@ public abstract class BackgroundActivityTestBase extends ActivityManagerTestBase
             stopTestPackage(appB.APP_PACKAGE_NAME);
         }
         AppOpsUtils.reset(SHELL_PACKAGE);
-        if (mBalServiceConnection != null) {
-            mContext.unbindService(mBalServiceConnection);
-        }
-        if (mAppBTestServiceConnection != null) {
-            mContext.unbindService(mAppBTestServiceConnection);
+        for (FutureConnection<ITestService> fc : mServiceConnections.values()) {
+            mContext.unbindService(fc);
         }
     }
 
@@ -421,6 +424,30 @@ public abstract class BackgroundActivityTestBase extends ActivityManagerTestBase
         waitForActivityResumed(timeoutMs, componentName);
         assertWithMessage(message).that(mWmState.getFocusedActivity())
                 .isNotEqualTo(getActivityName(componentName));
+    }
+
+    protected ITestService getTestService(Components c) throws Exception {
+        return getTestService(new ComponentName(c.APP_PACKAGE_NAME, TEST_SERVICE));
+    }
+
+    protected ITestService getTestService(android.server.wm.backgroundactivity.appb.Components c)
+            throws Exception {
+        return getTestService(new ComponentName(c.APP_PACKAGE_NAME, TEST_SERVICE));
+    }
+
+    private ITestService getTestService(ComponentName componentName) throws Exception {
+        FutureConnection<ITestService> futureConnection = mServiceConnections.get(componentName);
+        if (futureConnection == null) {
+            // need to setup new test service connection for the component
+            Intent bindIntent = new Intent();
+            bindIntent.setComponent(componentName);
+            futureConnection = new FutureConnection<>(ITestService.Stub::asInterface);
+            mServiceConnections.put(componentName, futureConnection);
+            boolean success = mContext.bindService(bindIntent, futureConnection,
+                    Context.BIND_AUTO_CREATE);
+            assertTrue("Failed to setup " + componentName.toString(), success);
+        }
+        return futureConnection.get(TEST_SERVICE_SETUP_TIMEOUT_MS);
     }
 
 }

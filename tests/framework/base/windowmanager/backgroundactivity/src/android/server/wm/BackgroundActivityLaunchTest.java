@@ -60,10 +60,9 @@ import android.platform.test.annotations.AsbSecurityTest;
 import android.platform.test.annotations.Presubmit;
 import android.provider.Settings;
 import android.server.wm.backgroundactivity.appa.Components;
-import android.server.wm.backgroundactivity.appa.IAppATestService;
-import android.server.wm.backgroundactivity.appb.IAppBTestService;
 import android.server.wm.backgroundactivity.common.CommonComponents.Event;
 import android.server.wm.backgroundactivity.common.EventReceiver;
+import android.server.wm.backgroundactivity.common.ITestService;
 import android.util.Log;
 import android.view.textclassifier.TextClassification;
 
@@ -118,7 +117,6 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
      * is long and it takes some time to process the broadcast we just sent.
      */
     private static final int BROADCAST_DELIVERY_TIMEOUT_MS = 60000;
-    private static final int TEST_SERVICE_SETUP_TIMEOUT_MS = 1000;
 
     @Test
     public void testBackgroundActivityBlocked() {
@@ -613,11 +611,11 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
         mContext.startActivity(intent);
 
         // setup
-        IAppATestService appATestService = setupAppATestService(APP_A);
-        IAppBTestService appBTestService = setupAppBTestService(APP_B_33);
+        ITestService appATestService = getTestService(APP_A);
+        ITestService appBTestService = getTestService(APP_B_33);
 
         // create PI in appA
-        PendingIntent pi = appATestService.generatePendingIntent(false);
+        PendingIntent pi = appATestService.generatePendingIntent(APP_A.BACKGROUND_ACTIVITY);
 
         // app B should now be in foreground
         assertActivityFocused(APP_B_33.FOREGROUND_ACTIVITY);
@@ -684,11 +682,11 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
         mContext.startActivity(intent);
 
         // setup
-        IAppATestService appATestService = setupAppATestService(APP_A);
-        IAppBTestService appBTestService = setupAppBTestService(APP_B);
+        ITestService appATestService = getTestService(APP_A);
+        ITestService appBTestService = getTestService(APP_B);
 
         // create PI in appA
-        PendingIntent pi = appATestService.generatePendingIntent(false);
+        PendingIntent pi = appATestService.generatePendingIntent(APP_A.BACKGROUND_ACTIVITY);
 
         // app B should now be in foreground
         assertActivityFocused(APP_B.FOREGROUND_ACTIVITY);
@@ -951,14 +949,14 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
     // Test manage space pending intent created by system cannot bypass BAL check.
     @Test
     public void testManageSpacePendingIntentNoBalAllowed() throws Exception {
-        IAppATestService appATestService = setupAppATestService(APP_A);
+        ITestService appATestService = getTestService(APP_A);
         runWithShellPermissionIdentity(() -> {
             runShellCommandOrThrow("cmd appops set " + APP_A.APP_PACKAGE_NAME
                     + " android:manage_external_storage allow");
         });
         // Make sure AppA paused at least 10s so it can't start activity because of grace period.
         Thread.sleep(1000 * 10);
-        appATestService.getAndStartManageSpaceActivity();
+        appATestService.startManageSpaceActivity();
         boolean result = waitForActivityFocused(APP_A.BACKGROUND_ACTIVITY);
         assertFalse("Should not able to launch background activity", result);
         assertTaskStackIsEmpty(APP_A.BACKGROUND_ACTIVITY);
@@ -1013,10 +1011,10 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
 
     @Test
     public void testActivityStartbyTextClassifier_appBInFg_allowsActivityStart() throws Exception {
-        IAppATestService appATestService = setupAppATestService(APP_A);
-        IAppBTestService appBTestService = setupAppBTestService(APP_B);
+        ITestService appATestService = getTestService(APP_A);
+        ITestService appBTestService = getTestService(APP_B);
         // create PI in appA
-        PendingIntent pi = appATestService.generatePendingIntent(false);
+        PendingIntent pi = appATestService.generatePendingIntent(APP_A.BACKGROUND_ACTIVITY);
 
         // app B in foreground
         Intent intent = new Intent();
@@ -1033,10 +1031,10 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
 
     @Test
     public void testActivityStartbyTextClassifier_appBInBg_blocksActivityStart() throws Exception {
-        IAppATestService appATestService = setupAppATestService(APP_A);
-        IAppBTestService appBTestService = setupAppBTestService(APP_B);
+        ITestService appATestService = getTestService(APP_A);
+        ITestService appBTestService = getTestService(APP_B);
         // create PI in appA
-        PendingIntent pi = appATestService.generatePendingIntent(false);
+        PendingIntent pi = appATestService.generatePendingIntent(APP_A.BACKGROUND_ACTIVITY);
 
         // app B not in FG
         // pass to appB and send PI
@@ -1194,41 +1192,14 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
         }
     }
 
-    private IAppATestService setupAppATestService(Components appA) throws Exception {
-        Intent bindIntent = new Intent();
-        bindIntent.setComponent(appA.APP_A_TEST_SERVICE);
-
-        mBalServiceConnection =
-                new FutureConnection<>(IAppATestService.Stub::asInterface);
-        boolean success = mContext.bindService(bindIntent, mBalServiceConnection,
-                Context.BIND_AUTO_CREATE);
-        assertTrue(success);
-        return mBalServiceConnection.get(TEST_SERVICE_SETUP_TIMEOUT_MS);
-    }
-
-    private IAppBTestService setupAppBTestService(
-            android.server.wm.backgroundactivity.appb.Components appB)
-            throws Exception {
-        Intent bindIntent = new Intent();
-        bindIntent.setComponent(appB.APP_B_TEST_SERVICE);
-
-        mAppBTestServiceConnection =
-                new FutureConnection<>(IAppBTestService.Stub::asInterface);
-
-        boolean success = mContext.bindService(bindIntent, mAppBTestServiceConnection,
-                Context.BIND_AUTO_CREATE);
-        assertTrue(success);
-        return mAppBTestServiceConnection.get(TEST_SERVICE_SETUP_TIMEOUT_MS);
-    }
-
     private void startPendingIntentSenderActivity(Components appA,
             android.server.wm.backgroundactivity.appb.Components appB, boolean allowBal)
             throws Exception {
-        IAppATestService appATestService = setupAppATestService(appA);
+        ITestService appATestService = getTestService(appA);
         // Get a PendingIntent created by appA.
         final PendingIntent pi;
         try {
-            pi = appATestService.generatePendingIntent(false);
+            pi = appATestService.generatePendingIntent(appA.BACKGROUND_ACTIVITY);
         } catch (Exception e) {
             throw new AssertionError(e);
         }

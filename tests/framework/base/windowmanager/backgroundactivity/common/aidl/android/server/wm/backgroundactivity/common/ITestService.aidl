@@ -14,11 +14,16 @@
  * limitations under the License.
  */
 
-package android.server.wm.backgroundactivity.appa;
+package android.server.wm.backgroundactivity.common;
 
 import android.app.PendingIntent;
+import android.content.ComponentName;
 
-interface IAppATestService {
-    PendingIntent generatePendingIntent(boolean isBroadcast);
-    void getAndStartManageSpaceActivity();
+interface ITestService {
+    PendingIntent generatePendingIntent(in ComponentName componentName);
+    PendingIntent generatePendingIntentBroadcast(in ComponentName componentName);
+    void startManageSpaceActivity();
+    TextClassification createTextClassification(in PendingIntent pendingIntent);
+    void sendByTextClassification(in TextClassification classification);
+    void sendPendingIntent(in PendingIntent pendingIntent, in Bundle sendOptions);
 }

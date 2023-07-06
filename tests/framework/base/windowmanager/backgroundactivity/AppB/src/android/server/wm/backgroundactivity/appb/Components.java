@@ -82,7 +82,6 @@ public class Components extends ComponentsBase {
     public final ComponentName FOREGROUND_ACTIVITY;
     public final ComponentName START_PENDING_INTENT_ACTIVITY;
     public final ComponentName START_PENDING_INTENT_RECEIVER;
-    public final ComponentName APP_B_TEST_SERVICE;
 
     public final ForegroundActivityAction FOREGROUND_ACTIVITY_ACTIONS;
     public final ForegroundActivityExtra FOREGROUND_ACTIVITY_EXTRA = new ForegroundActivityExtra();
@@ -101,8 +100,6 @@ public class Components extends ComponentsBase {
                 component(APP_PACKAGE_NAME, "StartPendingIntentActivity");
         START_PENDING_INTENT_RECEIVER =
                 component(APP_PACKAGE_NAME, "StartPendingIntentReceiver");
-        APP_B_TEST_SERVICE =
-                component(APP_PACKAGE_NAME, "AppBTestService");
 
         FOREGROUND_ACTIVITY_ACTIONS = new ForegroundActivityAction(APP_PACKAGE_NAME);
     }
