@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 The Android Open Source Project
+ * Copyright (C) 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.server.wm.backgroundactivity.appc;
+package android.server.wm.backgroundactivity.appa;
 
 import android.app.Activity;
 import android.content.ComponentName;
@@ -27,7 +27,7 @@ import android.util.Log;
 /**
  * Foreground activity that makes AppB as foreground.
  */
-public class ForegroundActivity extends Activity {
+public class BindServiceActivity extends Activity {
     private static final String TAG = "AppCForegroundActivity";
     private boolean mAllowBackgroundActivityLaunch;
 
