@@ -192,7 +192,7 @@ public class ResourceManagerCodecActivity extends Activity {
 
         if (shouldSkip) {
             Log.d(TAG, "test skipped as there's no supported codec.");
-            finishWithResult(RESULT_OK);
+            finishWithResult(ResourceManagerStubActivity.RESULT_CODE_NO_DECODER);
         }
 
         Log.d(TAG, "allocateCodecs returned " + mCodecs.size());
@@ -269,7 +269,7 @@ public class ResourceManagerCodecActivity extends Activity {
         mWorkerThread = new Thread(new Runnable() {
             @Override
             public void run() {
-                Log.e(TAG, "Started the thread");
+                Log.i(TAG, "Started the thread");
                 long start = System.currentTimeMillis();
                 long timeSinceStartedMs = 0;
                 boolean success = true;
