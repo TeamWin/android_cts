@@ -44,6 +44,7 @@ import com.android.bedstead.harrier.annotations.RequireRunOnWorkProfile;
 
 import org.junit.After;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -79,6 +80,7 @@ public class PhotoPickerCrossProfileTest extends PhotoPickerBaseTest {
     @Test
     @RequireRunOnWorkProfile
     @SdkSuppress(minSdkVersion = 32, codeName = "T")
+    @Ignore("Ignored in Android T b/288065034")
     public void testWorkApp_canAccessPersonalProfileContents() throws Exception {
         final int imageCount = 2;
         createImages(imageCount, sDeviceState.primaryUser().id(), mUriList);
