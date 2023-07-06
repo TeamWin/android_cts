@@ -304,6 +304,11 @@ public class LegacyStorageHostTest extends BaseHostTestCase {
         runDeviceTest("testUpdateToExternalDirsViaRelativePath");
     }
 
+    @Test
+    public void testInsertToOtherAppPrivateDirFails() throws Exception {
+        runDeviceTest("testInsertToOtherAppPrivateDirFails");
+    }
+
     private void allowAppOps(String... ops) throws Exception {
         for (String op : ops) {
             executeShellCommand("cmd appops set --uid android.scopedstorage.cts.legacy "
