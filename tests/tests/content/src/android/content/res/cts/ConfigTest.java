@@ -101,7 +101,7 @@ public class ConfigTest {
             assertEquals("Returned wrong configuration-based style value: expected '"
                     + expectedValues[i] + "', got '" + actual + "' from attr "
                     + i + " of resource 0x" + Integer.toHexString(resId),
-                    actual, expectedValues[i]);
+                    expectedValues[i], actual);
         }
         sa.recycle();
     }
@@ -278,227 +278,227 @@ public class ConfigTest {
          */
         TotalConfig config = makeEmptyConfig();
         Resources res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple default");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple default");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag default"});
 
         config = makeEmptyConfig();
         config.setProperty(Properties.LANGUAGE, "xx");
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple xx");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple xx");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag xx"});
 
         config = makeEmptyConfig();
         config.setProperty(Properties.LANGUAGE, "xx");
         config.setProperty(Properties.COUNTRY, "YY");
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple xx-rYY");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple xx-rYY");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag xx-rYY"});
 
         config = makeEmptyConfig();
         config.setProperty(Properties.MCC, 111);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple mcc111");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple mcc111");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag mcc111"});
 
         config = makeEmptyConfig();
         config.setProperty(Properties.MNC, 222);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple mnc222");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple mnc222");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag mnc222"});
 
         config = makeEmptyConfig();
         config.setProperty(Properties.TOUCHSCREEN, Configuration.TOUCHSCREEN_NOTOUCH);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple notouch");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple notouch");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag notouch"});
 
         config = makeEmptyConfig();
         config.setProperty(Properties.TOUCHSCREEN, Configuration.TOUCHSCREEN_STYLUS);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple stylus");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple stylus");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag stylus"});
 
         config = makeEmptyConfig();
         config.setProperty(Properties.KEYBOARD, Configuration.KEYBOARD_NOKEYS);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple nokeys");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple nokeys");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag nokeys"});
 
         config = makeEmptyConfig();
         config.setProperty(Properties.KEYBOARD, Configuration.KEYBOARD_12KEY);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple 12key");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple 12key");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag 12key"});
 
         config = makeEmptyConfig();
         config.setProperty(Properties.KEYBOARDHIDDEN, Configuration.KEYBOARDHIDDEN_NO);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple keysexposed");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple keysexposed");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag keysexposed"});
 
         config = makeEmptyConfig();
         config.setProperty(Properties.NAVIGATION, Configuration.NAVIGATION_NONAV);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple nonav");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple nonav");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag nonav"});
 
         config = makeEmptyConfig();
         config.setProperty(Properties.NAVIGATION, Configuration.NAVIGATION_DPAD);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple dpad");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple dpad");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag dpad"});
 
         config = makeEmptyConfig();
         config.setProperty(Properties.NAVIGATION, Configuration.NAVIGATION_WHEEL);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple wheel");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple wheel");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag wheel"});
 
         config = makeEmptyConfig();
         config.setProperty(Properties.HEIGHT, 480);
         config.setProperty(Properties.WIDTH, 320);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple 480x320");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple 480x320");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag 480x320"});
 
         config = makeEmptyConfig();
         config.setProperty(Properties.DENSITY, 240);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple 240dpi");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple 240dpi");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag 240dpi"});
 
         config = makeEmptyConfig();
         config.setProperty(Properties.ORIENTATION, Configuration.ORIENTATION_LANDSCAPE);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple landscape");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple landscape");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag landscape"});
 
         config = makeEmptyConfig();
         config.setProperty(Properties.ORIENTATION, Configuration.ORIENTATION_SQUARE);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple square");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple square");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag square"});
 
         config = makeEmptyConfig();
         config.setProperty(Properties.COLOR_MODE, Configuration.COLOR_MODE_HDR_YES);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple hdr");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple hdr");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag hdr"});
 
         config = makeEmptyConfig();
         config.setProperty(Properties.COLOR_MODE, Configuration.COLOR_MODE_HDR_NO);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple ldr");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple ldr");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag ldr"});
 
         config = makeEmptyConfig();
         config.setProperty(Properties.COLOR_MODE, Configuration.COLOR_MODE_WIDE_COLOR_GAMUT_YES);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple widecg");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple widecg");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag widecg"});
 
         config = makeEmptyConfig();
         config.setProperty(Properties.COLOR_MODE, Configuration.COLOR_MODE_WIDE_COLOR_GAMUT_NO);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple nowidecg");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple nowidecg");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag nowidecg"});
 
         config = makeEmptyConfig();
         config.setProperty(Properties.SCREENLAYOUT, Configuration.SCREENLAYOUT_SIZE_SMALL);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple small");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple small");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag small"});
 
         config = makeEmptyConfig();
         config.setProperty(Properties.SCREENLAYOUT, Configuration.SCREENLAYOUT_SIZE_NORMAL);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple normal");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple normal");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag normal"});
 
         config = makeEmptyConfig();
         config.setProperty(Properties.SCREENLAYOUT, Configuration.SCREENLAYOUT_SIZE_LARGE);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple large");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple large");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag large"});
 
         config = makeEmptyConfig();
         config.setProperty(Properties.SCREENLAYOUT, Configuration.SCREENLAYOUT_SIZE_XLARGE);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple xlarge");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple xlarge");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag xlarge"});
 
         config = makeEmptyConfig();
         config.setProperty(Properties.SWIDTH_DP, 600);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple sw600");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple sw600");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag sw600"});
 
         config = makeEmptyConfig();
         config.setProperty(Properties.SWIDTH_DP, 600);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple sw600");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple sw600");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag sw600"});
 
         config = makeEmptyConfig();
         config.setProperty(Properties.SWIDTH_DP, 720);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple sw720");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple sw720");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag sw720"});
 
         config = makeEmptyConfig();
         config.setProperty(Properties.WIDTH_DP, 600);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple w600");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple w600");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag w600"});
 
         config = makeEmptyConfig();
         config.setProperty(Properties.WIDTH_DP, 720);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple w720");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple w720");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag w720"});
 
         config = makeEmptyConfig();
         config.setProperty(Properties.HEIGHT_DP, 550);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple h550");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple h550");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag h550"});
 
         config = makeEmptyConfig();
         config.setProperty(Properties.HEIGHT_DP, 670);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple h670");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple h670");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag h670"});
 
         config = makeEmptyConfig();
@@ -534,200 +534,200 @@ public class ConfigTest {
          */
         TotalConfig config = makeClassicConfig();
         Resources res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple default");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple default");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag default"});
 
         config = makeClassicConfig();
         config.setProperty(Properties.LANGUAGE, "xx");
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple xx");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple xx");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag xx"});
 
         config = makeClassicConfig();
         config.setProperty(Properties.LANGUAGE, "xx");
         config.setProperty(Properties.COUNTRY, "YY");
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple xx-rYY");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple xx-rYY");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag xx-rYY"});
 
         config = makeClassicConfig();
         config.setProperty(Properties.MCC, 111);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple mcc111");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple mcc111");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag mcc111"});
 
         config = makeClassicConfig();
         config.setProperty(Properties.MNC, 222);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple mnc222");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple mnc222");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag mnc222"});
 
         config = makeClassicConfig();
         config.setProperty(Properties.TOUCHSCREEN, Configuration.TOUCHSCREEN_NOTOUCH);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple notouch");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple notouch");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag notouch"});
 
         config = makeClassicConfig();
         config.setProperty(Properties.TOUCHSCREEN, Configuration.TOUCHSCREEN_STYLUS);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple stylus");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple stylus");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag stylus"});
 
         config = makeClassicConfig();
         config.setProperty(Properties.KEYBOARD, Configuration.KEYBOARD_NOKEYS);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple nokeys");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple nokeys");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag nokeys"});
 
         config = makeClassicConfig();
         config.setProperty(Properties.KEYBOARD, Configuration.KEYBOARD_12KEY);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple 12key 63x57");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple 12key 63x57");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag 12key 63x57"});
 
         config = makeClassicConfig();
         config.setProperty(Properties.KEYBOARDHIDDEN, Configuration.KEYBOARDHIDDEN_NO);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple keysexposed");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple keysexposed");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag keysexposed"});
 
         config = makeClassicConfig();
         config.setProperty(Properties.NAVIGATION, Configuration.NAVIGATION_NONAV);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple nonav");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple nonav");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag nonav"});
 
         config = makeClassicConfig();
         config.setProperty(Properties.NAVIGATION, Configuration.NAVIGATION_DPAD);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple dpad 63x57");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple dpad 63x57");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag dpad 63x57"});
 
         config = makeClassicConfig();
         config.setProperty(Properties.NAVIGATION, Configuration.NAVIGATION_WHEEL);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple wheel");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple wheel");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag wheel"});
 
         config = makeClassicConfig();
         config.setProperty(Properties.HEIGHT, 480);
         config.setProperty(Properties.WIDTH, 320);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple 480x320");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple 480x320");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag 480x320"});
 
         config = makeClassicConfig();
         config.setProperty(Properties.DENSITY, 240);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple 240dpi");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple 240dpi");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag 240dpi"});
 
         config = makeClassicConfig();
         config.setProperty(Properties.ORIENTATION, Configuration.ORIENTATION_LANDSCAPE);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple landscape");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple landscape");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag landscape"});
 
         config = makeClassicConfig();
         config.setProperty(Properties.ORIENTATION, Configuration.ORIENTATION_SQUARE);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple square");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple square");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag square"});
 
         config = makeClassicConfig();
         config.setProperty(Properties.SCREENLAYOUT, Configuration.SCREENLAYOUT_SIZE_SMALL);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple small");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple small");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag small"});
 
         config = makeClassicConfig();
         config.setProperty(Properties.SCREENLAYOUT, Configuration.SCREENLAYOUT_SIZE_NORMAL);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple normal");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple normal");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag normal"});
 
         config = makeClassicConfig();
         config.setProperty(Properties.SCREENLAYOUT, Configuration.SCREENLAYOUT_SIZE_LARGE);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple large");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple large");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag large"});
 
         config = makeClassicConfig();
         config.setProperty(Properties.SCREENLAYOUT, Configuration.SCREENLAYOUT_SIZE_XLARGE);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple xlarge");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple xlarge");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag xlarge"});
 
         config = makeClassicConfig();
         config.setProperty(Properties.SWIDTH_DP, 600);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple sw600");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple sw600");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag sw600"});
 
         config = makeClassicConfig();
         config.setProperty(Properties.SWIDTH_DP, 600);
         config.setProperty(Properties.ORIENTATION, Configuration.ORIENTATION_LANDSCAPE);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple sw600 land");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple sw600 land");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag sw600 land"});
 
         config = makeClassicConfig();
         config.setProperty(Properties.SWIDTH_DP, 720);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple sw720");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple sw720");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag sw720"});
 
         config = makeClassicConfig();
         config.setProperty(Properties.WIDTH_DP, 600);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple w600");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple w600");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag w600"});
 
         config = makeClassicConfig();
         config.setProperty(Properties.WIDTH_DP, 720);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple w720");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple w720");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag w720"});
 
         config = makeClassicConfig();
         config.setProperty(Properties.HEIGHT_DP, 550);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple h550");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple h550");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag h550"});
 
         config = makeClassicConfig();
         config.setProperty(Properties.HEIGHT_DP, 670);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple h670");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple h670");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag h670"});
     }
     
@@ -738,50 +738,50 @@ public class ConfigTest {
         TotalConfig config = makeClassicConfig();
         config.setProperty(Properties.DENSITY, 2);
         Resources res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple 32dpi");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple 32dpi");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag 32dpi"});
 
         config = makeClassicConfig();
         config.setProperty(Properties.DENSITY, 32);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple 32dpi");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple 32dpi");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag 32dpi"});
 
         config = makeClassicConfig();
         config.setProperty(Properties.DENSITY, 48);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple default");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple default");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag default"});
 
         config = makeClassicConfig();
         config.setProperty(Properties.DENSITY, 150);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple default");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple default");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag default"});
 
         config = makeClassicConfig();
         config.setProperty(Properties.DENSITY, 181);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple 240dpi");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple 240dpi");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag 240dpi"});
 
         config = makeClassicConfig();
         config.setProperty(Properties.DENSITY, 239);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple 240dpi");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple 240dpi");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag 240dpi"});
 
         config = makeClassicConfig();
         config.setProperty(Properties.DENSITY, 490);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple 240dpi");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple 240dpi");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag 240dpi"});
     }
 
@@ -792,38 +792,38 @@ public class ConfigTest {
         TotalConfig config = makeClassicConfig();
         config.setProperty(Properties.SCREENLAYOUT, Configuration.SCREENLAYOUT_SIZE_SMALL);
         Resources res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple small");
-        checkValue(res, R.configVarying.small, "small");
-        checkValue(res, R.configVarying.normal, "default");
-        checkValue(res, R.configVarying.large, "default");
-        checkValue(res, R.configVarying.xlarge, "default");
+        checkValue(res, R.string.simple, "simple small");
+        checkValue(res, R.string.small, "small");
+        checkValue(res, R.string.normal, "default");
+        checkValue(res, R.string.large, "default");
+        checkValue(res, R.string.xlarge, "default");
         
         config = makeClassicConfig();
         config.setProperty(Properties.SCREENLAYOUT, Configuration.SCREENLAYOUT_SIZE_NORMAL);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple normal");
-        checkValue(res, R.configVarying.small, "default");
-        checkValue(res, R.configVarying.normal, "normal");
-        checkValue(res, R.configVarying.large, "default");
-        checkValue(res, R.configVarying.xlarge, "default");
+        checkValue(res, R.string.simple, "simple normal");
+        checkValue(res, R.string.small, "default");
+        checkValue(res, R.string.normal, "normal");
+        checkValue(res, R.string.large, "default");
+        checkValue(res, R.string.xlarge, "default");
         
         config = makeClassicConfig();
         config.setProperty(Properties.SCREENLAYOUT, Configuration.SCREENLAYOUT_SIZE_LARGE);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple large");
-        checkValue(res, R.configVarying.small, "default");
-        checkValue(res, R.configVarying.normal, "normal");
-        checkValue(res, R.configVarying.large, "large");
-        checkValue(res, R.configVarying.xlarge, "default");
+        checkValue(res, R.string.simple, "simple large");
+        checkValue(res, R.string.small, "default");
+        checkValue(res, R.string.normal, "normal");
+        checkValue(res, R.string.large, "large");
+        checkValue(res, R.string.xlarge, "default");
         
         config = makeClassicConfig();
         config.setProperty(Properties.SCREENLAYOUT, Configuration.SCREENLAYOUT_SIZE_XLARGE);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple xlarge");
-        checkValue(res, R.configVarying.small, "default");
-        checkValue(res, R.configVarying.normal, "normal");
-        checkValue(res, R.configVarying.large, "large");
-        checkValue(res, R.configVarying.xlarge, "xlarge");
+        checkValue(res, R.string.simple, "simple xlarge");
+        checkValue(res, R.string.small, "default");
+        checkValue(res, R.string.normal, "normal");
+        checkValue(res, R.string.large, "large");
+        checkValue(res, R.string.xlarge, "xlarge");
     }
 
     @Test
@@ -837,11 +837,11 @@ public class ConfigTest {
         config.setProperty(Properties.ORIENTATION, Configuration.ORIENTATION_LANDSCAPE);
         config.setProperty(Properties.SCREENLAYOUT, Configuration.SCREENLAYOUT_SIZE_LARGE);
         Resources res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple large");
-        checkValue(res, R.configVarying.sw, "default");
-        checkValue(res, R.configVarying.w, "default");
-        checkValue(res, R.configVarying.h, "default");
-        checkValue(res, R.configVarying.wh, "default");
+        checkValue(res, R.string.simple, "simple large");
+        checkValue(res, R.string.sw, "default");
+        checkValue(res, R.string.w, "default");
+        checkValue(res, R.string.h, "default");
+        checkValue(res, R.string.wh, "default");
 
         config = makeClassicConfig();
         config.setProperty(Properties.SWIDTH_DP, 590);
@@ -851,35 +851,35 @@ public class ConfigTest {
         config.setProperty(Properties.SCREENLAYOUT, Configuration.SCREENLAYOUT_SIZE_LARGE);
         config.setProperty(Properties.DENSITY, DisplayMetrics.DENSITY_MEDIUM);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple sw590 mdpi");
-        checkValue(res, R.configVarying.sw, "590 mdpi");
+        checkValue(res, R.string.simple, "simple sw590 mdpi");
+        checkValue(res, R.string.sw, "590 mdpi");
 
         config.setProperty(Properties.DENSITY, DisplayMetrics.DENSITY_HIGH);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple sw590 hdpi");
-        checkValue(res, R.configVarying.sw, "590 hdpi");
+        checkValue(res, R.string.simple, "simple sw590 hdpi");
+        checkValue(res, R.string.sw, "590 hdpi");
 
         config.setProperty(Properties.DENSITY, DisplayMetrics.DENSITY_XHIGH);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple sw590 xhdpi");
-        checkValue(res, R.configVarying.sw, "590 xhdpi");
+        checkValue(res, R.string.simple, "simple sw590 xhdpi");
+        checkValue(res, R.string.sw, "590 xhdpi");
 
         config.setProperty(Properties.SWIDTH_DP, 591);
         config.setProperty(Properties.WIDTH_DP, 591);
         config.setProperty(Properties.DENSITY, DisplayMetrics.DENSITY_MEDIUM);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple sw591");
-        checkValue(res, R.configVarying.sw, "591");
+        checkValue(res, R.string.simple, "simple sw591");
+        checkValue(res, R.string.sw, "591");
 
         config.setProperty(Properties.DENSITY, DisplayMetrics.DENSITY_HIGH);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple sw591 hdpi");
-        checkValue(res, R.configVarying.sw, "591 hdpi");
+        checkValue(res, R.string.simple, "simple sw591 hdpi");
+        checkValue(res, R.string.sw, "591 hdpi");
 
         config.setProperty(Properties.DENSITY, DisplayMetrics.DENSITY_XHIGH);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple sw591 hdpi");
-        checkValue(res, R.configVarying.sw, "591 hdpi");
+        checkValue(res, R.string.simple, "simple sw591 hdpi");
+        checkValue(res, R.string.sw, "591 hdpi");
 
         config = makeClassicConfig();
         config.setProperty(Properties.SWIDTH_DP, 480);
@@ -888,11 +888,11 @@ public class ConfigTest {
         config.setProperty(Properties.ORIENTATION, Configuration.ORIENTATION_LANDSCAPE);
         config.setProperty(Properties.SCREENLAYOUT, Configuration.SCREENLAYOUT_SIZE_LARGE);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple w720");
-        checkValue(res, R.configVarying.sw, "default");
-        checkValue(res, R.configVarying.w, "720");
-        checkValue(res, R.configVarying.h, "default");
-        checkValue(res, R.configVarying.wh, "600");
+        checkValue(res, R.string.simple, "simple w720");
+        checkValue(res, R.string.sw, "default");
+        checkValue(res, R.string.w, "720");
+        checkValue(res, R.string.h, "default");
+        checkValue(res, R.string.wh, "600");
 
         config = makeClassicConfig();
         config.setProperty(Properties.SWIDTH_DP, 600);
@@ -901,11 +901,11 @@ public class ConfigTest {
         config.setProperty(Properties.ORIENTATION, Configuration.ORIENTATION_LANDSCAPE);
         config.setProperty(Properties.SCREENLAYOUT, Configuration.SCREENLAYOUT_SIZE_LARGE);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple sw600 land");
-        checkValue(res, R.configVarying.sw, "600 land");
-        checkValue(res, R.configVarying.w, "720");
-        checkValue(res, R.configVarying.h, "550");
-        checkValue(res, R.configVarying.wh, "600-550");
+        checkValue(res, R.string.simple, "simple sw600 land");
+        checkValue(res, R.string.sw, "600 land");
+        checkValue(res, R.string.w, "720");
+        checkValue(res, R.string.h, "550");
+        checkValue(res, R.string.wh, "600-550");
 
         config = makeClassicConfig();
         config.setProperty(Properties.SWIDTH_DP, 600);
@@ -914,11 +914,11 @@ public class ConfigTest {
         config.setProperty(Properties.ORIENTATION, Configuration.ORIENTATION_PORTRAIT);
         config.setProperty(Properties.SCREENLAYOUT, Configuration.SCREENLAYOUT_SIZE_LARGE);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple sw600");
-        checkValue(res, R.configVarying.sw, "600");
-        checkValue(res, R.configVarying.w, "600");
-        checkValue(res, R.configVarying.h, "670");
-        checkValue(res, R.configVarying.wh, "600-550");
+        checkValue(res, R.string.simple, "simple sw600");
+        checkValue(res, R.string.sw, "600");
+        checkValue(res, R.string.w, "600");
+        checkValue(res, R.string.h, "670");
+        checkValue(res, R.string.wh, "600-550");
 
         config = makeClassicConfig();
         config.setProperty(Properties.SWIDTH_DP, 719);
@@ -927,11 +927,11 @@ public class ConfigTest {
         config.setProperty(Properties.ORIENTATION, Configuration.ORIENTATION_LANDSCAPE);
         config.setProperty(Properties.SCREENLAYOUT, Configuration.SCREENLAYOUT_SIZE_LARGE);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple sw600 land");
-        checkValue(res, R.configVarying.sw, "600 land");
-        checkValue(res, R.configVarying.w, "720");
-        checkValue(res, R.configVarying.h, "550");
-        checkValue(res, R.configVarying.wh, "600-550");
+        checkValue(res, R.string.simple, "simple sw600 land");
+        checkValue(res, R.string.sw, "600 land");
+        checkValue(res, R.string.w, "720");
+        checkValue(res, R.string.h, "550");
+        checkValue(res, R.string.wh, "600-550");
 
         config = makeClassicConfig();
         config.setProperty(Properties.SWIDTH_DP, 800);
@@ -940,11 +940,11 @@ public class ConfigTest {
         config.setProperty(Properties.ORIENTATION, Configuration.ORIENTATION_LANDSCAPE);
         config.setProperty(Properties.SCREENLAYOUT, Configuration.SCREENLAYOUT_SIZE_XLARGE);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple sw720");
-        checkValue(res, R.configVarying.sw, "720");
-        checkValue(res, R.configVarying.w, "720");
-        checkValue(res, R.configVarying.h, "670");
-        checkValue(res, R.configVarying.wh, "720-670");
+        checkValue(res, R.string.simple, "simple sw720");
+        checkValue(res, R.string.sw, "720");
+        checkValue(res, R.string.w, "720");
+        checkValue(res, R.string.h, "670");
+        checkValue(res, R.string.wh, "720-670");
 
         config = makeClassicConfig();
         config.setProperty(Properties.SWIDTH_DP, 800);
@@ -953,11 +953,11 @@ public class ConfigTest {
         config.setProperty(Properties.ORIENTATION, Configuration.ORIENTATION_PORTRAIT);
         config.setProperty(Properties.SCREENLAYOUT, Configuration.SCREENLAYOUT_SIZE_XLARGE);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple sw720");
-        checkValue(res, R.configVarying.sw, "720");
-        checkValue(res, R.configVarying.w, "720");
-        checkValue(res, R.configVarying.h, "670");
-        checkValue(res, R.configVarying.wh, "720-670");
+        checkValue(res, R.string.simple, "simple sw720");
+        checkValue(res, R.string.sw, "720");
+        checkValue(res, R.string.w, "720");
+        checkValue(res, R.string.h, "670");
+        checkValue(res, R.string.wh, "720-670");
     }
 
 // TODO - add tests for special cases - ie, other key params seem ignored if 
@@ -973,80 +973,80 @@ public class ConfigTest {
         config.setProperty(Properties.HEIGHT, 640);
         config.setProperty(Properties.WIDTH, 400);
         Resources res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple 640x400");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple 640x400");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag 640x400"});
 
         config.setProperty(Properties.NAVIGATION, Configuration.NAVIGATION_NONAV);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple nonav");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple nonav");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag nonav"});
 
         config.setProperty(Properties.KEYBOARD, Configuration.KEYBOARD_NOKEYS);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple nokeys");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple nokeys");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag nokeys"});
 
         config.setProperty(Properties.KEYBOARDHIDDEN, Configuration.KEYBOARDHIDDEN_NO);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple keysexposed");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple keysexposed");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag keysexposed"});
 
         config.setProperty(Properties.TOUCHSCREEN, Configuration.TOUCHSCREEN_NOTOUCH);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple notouch");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple notouch");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag notouch"});
 
         config.setProperty(Properties.DENSITY, 240);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple 240dpi");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple 240dpi");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag 240dpi"});
 
         config.setProperty(Properties.ORIENTATION, Configuration.ORIENTATION_LANDSCAPE);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple landscape");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple landscape");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag landscape"});
 
         config.setProperty(Properties.COLOR_MODE, Configuration.COLOR_MODE_HDR_YES);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple hdr");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple hdr");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag hdr"});
 
         config.setProperty(Properties.COLOR_MODE, Configuration.COLOR_MODE_WIDE_COLOR_GAMUT_YES);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple widecg");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple widecg");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag widecg"});
 
         config.setProperty(Properties.SCREENLAYOUT, Configuration.SCREENLAYOUT_SIZE_XLARGE);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple xlarge");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple xlarge");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag xlarge"});
 
         config.setProperty(Properties.HEIGHT_DP, 670);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple h670");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple h670");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag h670"});
 
         config.setProperty(Properties.WIDTH_DP, 720);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple 720-670");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple 720-670");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag 720-670"});
 
         config.setProperty(Properties.SWIDTH_DP, 720);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple sw720");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple sw720");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag sw720"});
 
         config.setProperty(Properties.GRAMMATICAL_GENDER,
@@ -1059,20 +1059,20 @@ public class ConfigTest {
         config.setProperty(Properties.LANGUAGE, "xx");
         config.setProperty(Properties.COUNTRY, "YY");
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple xx-rYY");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple xx-rYY");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag xx-rYY"});
 
         config.setProperty(Properties.MCC, 111);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple mcc111 xx-rYY");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple mcc111 xx-rYY");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag mcc111 xx-rYY"});
 
         config.setProperty(Properties.MNC, 222);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple mcc111 mnc222");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple mcc111 mnc222");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag mcc111 mnc222"});
     }
 
@@ -1097,8 +1097,8 @@ public class ConfigTest {
         config.setProperty(Properties.MNC, 220);
         config.setProperty(Properties.LANGUAGE, "xx");
         Resources res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple mcc110 xx");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple mcc110 xx");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag mcc110 xx"});
 
         /* full A + B + C doesn't exist.  Do we get A + C or B + C? 
@@ -1108,8 +1108,8 @@ public class ConfigTest {
         config.setProperty(Properties.MNC, 222);
         config.setProperty(Properties.LANGUAGE, "xx");
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple mcc111 mnc222");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple mcc111 mnc222");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag mcc111 mnc222"});
 
         config = makeClassicConfig();
@@ -1118,8 +1118,8 @@ public class ConfigTest {
         config.setProperty(Properties.ORIENTATION, 
                 Configuration.ORIENTATION_SQUARE);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple mnc222 xx");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple mnc222 xx");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag mnc222 xx"});
 
         config = makeClassicConfig();
@@ -1128,8 +1128,8 @@ public class ConfigTest {
                 Configuration.ORIENTATION_SQUARE);
         config.setProperty(Properties.DENSITY, 32);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple xx square");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple xx square");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag xx square"});
 
         /**
@@ -1142,8 +1142,8 @@ public class ConfigTest {
         config.setProperty(Properties.COUNTRY, "YY");
         config.setProperty(Properties.MCC, 111);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple mcc111 xx-rYY");
-        checkValue(res, R.configVarying.bag, R.styleable.TestConfig,
+        checkValue(res, R.string.simple, "simple mcc111 xx-rYY");
+        checkValue(res, R.style.bag, R.styleable.TestConfig,
                 new String[] { "bag mcc111 xx-rYY" });
 
         config = makeClassicConfig();
@@ -1151,15 +1151,15 @@ public class ConfigTest {
         config.setProperty(Properties.COUNTRY, "YY");
         config.setProperty(Properties.MCC, 333);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple xx-rYY");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple xx-rYY");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[] { "bag xx-rYY" });
 
         config = makeClassicConfig();
         config.setProperty(Properties.MNC, 333);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple default");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple default");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag default"});
 
         config = makeClassicConfig();
@@ -1169,8 +1169,8 @@ public class ConfigTest {
         config.setProperty(Properties.TOUCHSCREEN, 
                 Configuration.TOUCHSCREEN_STYLUS);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple square 32dpi");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple square 32dpi");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag square 32dpi"});
 
         config = makeClassicConfig();
@@ -1180,8 +1180,8 @@ public class ConfigTest {
         config.setProperty(Properties.KEYBOARDHIDDEN, 
                 Configuration.KEYBOARDHIDDEN_NO);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple 32dpi stylus");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple 32dpi stylus");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag 32dpi stylus"});
 
         config = makeClassicConfig();
@@ -1191,8 +1191,8 @@ public class ConfigTest {
                 Configuration.KEYBOARDHIDDEN_NO);
         config.setProperty(Properties.KEYBOARD, Configuration.KEYBOARD_12KEY);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple stylus keysexposed");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple stylus keysexposed");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag stylus keysexposed"});
 
         config = makeClassicConfig();
@@ -1202,8 +1202,8 @@ public class ConfigTest {
         config.setProperty(Properties.NAVIGATION, 
                 Configuration.NAVIGATION_DPAD);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple keysexposed 12key");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple keysexposed 12key");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag keysexposed 12key"});
 
         config = makeClassicConfig();
@@ -1213,8 +1213,8 @@ public class ConfigTest {
         config.setProperty(Properties.HEIGHT, 63);
         config.setProperty(Properties.WIDTH, 57);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple 12key dpad");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple 12key dpad");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag 12key dpad"});
 
         config = makeClassicConfig();
@@ -1223,8 +1223,8 @@ public class ConfigTest {
         config.setProperty(Properties.HEIGHT, 640);
         config.setProperty(Properties.WIDTH, 400);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple dpad 63x57");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple dpad 63x57");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag dpad 63x57"});
     }
 
@@ -1263,32 +1263,32 @@ public class ConfigTest {
         // Hebrew
         config.setProperty(Properties.LANGUAGE, "iw");
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple iw");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple iw");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag iw"});
 
         // Hebrew for Israel
         config.setProperty(Properties.LANGUAGE, "iw");
         config.setProperty(Properties.COUNTRY, "IL");
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple iw IL");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple iw IL");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag iw IL"});
 
         config = makeClassicConfig();
         // Macedonian
         config.setProperty(Properties.LANGUAGE, "mk");
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple mk");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple mk");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag mk"});
 
         // Macedonian for Macedonia
         config.setProperty(Properties.LANGUAGE, "mk");
         config.setProperty(Properties.COUNTRY, "MK");
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple mk MK");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple mk MK");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag mk MK"});
     }
 
@@ -1298,30 +1298,30 @@ public class ConfigTest {
         // BCP 47 Locale kok
         config.setProperty(Properties.LANGUAGE, "kok");
         Resources res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple kok");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple kok");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag kok"});
 
         // BCP 47 Locale kok-IN
         config.setProperty(Properties.COUNTRY, "IN");
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple kok IN");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple kok IN");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag kok IN"});
 
         // BCP 47 Locale kok-419
         config.setProperty(Properties.COUNTRY, "419");
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple kok 419");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple kok 419");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag kok 419"});
 
 
         // BCP 47 Locale kok-419-VARIANT
         config.setProperty(Properties.VARIANT, "VARIANT");
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple kok 419 VARIANT");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple kok 419 VARIANT");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag kok 419 VARIANT"});
 
         // BCP 47 Locale kok-Knda
@@ -1329,22 +1329,22 @@ public class ConfigTest {
         config.setProperty(Properties.LANGUAGE, "kok");
         config.setProperty(Properties.SCRIPT, "Knda");
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple kok Knda");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple kok Knda");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag kok Knda"});
 
         // BCP 47 Locale kok-Knda-419
         config.setProperty(Properties.COUNTRY, "419");
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple kok Knda 419");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple kok Knda 419");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag kok Knda 419"});
 
         // BCP 47 Locale kok-Knda-419-VARIANT
         config.setProperty(Properties.VARIANT, "VARIANT");
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple kok Knda 419 VARIANT");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple kok Knda 419 VARIANT");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag kok Knda 419 VARIANT"});
 
         // BCP 47 Locale kok-VARIANT
@@ -1352,8 +1352,8 @@ public class ConfigTest {
         config.setProperty(Properties.LANGUAGE, "kok");
         config.setProperty(Properties.VARIANT, "VARIANT");
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple kok VARIANT");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple kok VARIANT");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag kok VARIANT"});
     }
 
@@ -1365,8 +1365,8 @@ public class ConfigTest {
         config.setProperty(Properties.LANGUAGE, "fil");
         config.setProperty(Properties.COUNTRY, "US");
         Resources res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple fil");  // We have this resource in 'fil'
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple fil");  // We have this resource in 'fil'
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[] { "bag tl" });  // But this comes from 'tl'
 
         // Ensure that "fil-PH" is mapped to "tl-PH" correctly.
@@ -1374,8 +1374,8 @@ public class ConfigTest {
         config.setProperty(Properties.LANGUAGE, "fil");
         config.setProperty(Properties.COUNTRY, "PH");
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple tl PH");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple tl PH");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[] { "bag tl PH" });
 
         // Ensure that "fil-SA" works with no "tl" version.
@@ -1383,8 +1383,8 @@ public class ConfigTest {
         config.setProperty(Properties.LANGUAGE, "fil");
         config.setProperty(Properties.COUNTRY, "SA");
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple fil");  // This comes from 'fil'
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple fil");  // This comes from 'fil'
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[] { "bag fil SA" });  // And this from 'fil-SA'
 
         // Ensure that "tlh" is not mistakenly treated as a "tl" variant.
@@ -1392,23 +1392,23 @@ public class ConfigTest {
         config.setProperty(Properties.LANGUAGE, "tlh");
         config.setProperty(Properties.COUNTRY, "US");
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple tlh");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple tlh");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[] { "bag tlh" });
 
         config = makeClassicConfig();
         config.setProperty(Properties.LANGUAGE, "tgl");
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple tgl");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple tgl");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[] { "bag tgl" });
 
         config = makeClassicConfig();
         config.setProperty(Properties.LANGUAGE, "tgl");
         config.setProperty(Properties.COUNTRY, "PH");
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple tgl PH");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple tgl PH");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[] { "bag tgl PH" });
     }
 
