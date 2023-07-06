@@ -34,7 +34,7 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.os.UserManager;
 import android.server.wm.WindowManagerState.Task;
-import android.server.wm.backgroundactivity.appa.IBackgroundActivityTestService;
+import android.server.wm.backgroundactivity.appa.IAppATestService;
 import android.server.wm.backgroundactivity.appb.IAppBTestService;
 import android.util.Log;
 
@@ -82,7 +82,7 @@ public abstract class BackgroundActivityTestBase extends ActivityManagerTestBase
     final DeviceConfigStateHelper mDeviceConfig =
             new DeviceConfigStateHelper(NAMESPACE_WINDOW_MANAGER);
 
-    FutureConnection<IBackgroundActivityTestService> mBalServiceConnection;
+    FutureConnection<IAppATestService> mBalServiceConnection;
     FutureConnection<IAppBTestService> mAppBTestServiceConnection;
 
     @Before

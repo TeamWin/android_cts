@@ -23,8 +23,8 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.os.storage.StorageManager;
 
-public class BackgroundActivityTestService extends Service {
-    private final IBackgroundActivityTestService mBinder = new MyBinder();
+public class AppATestService extends Service {
+    private final IAppATestService mBinder = new MyBinder();
     private Components mA;
 
     @Override
@@ -37,7 +37,7 @@ public class BackgroundActivityTestService extends Service {
         return mBinder.asBinder();
     }
 
-    private class MyBinder extends IBackgroundActivityTestService.Stub {
+    private class MyBinder extends IAppATestService.Stub {
         @Override
         public PendingIntent generatePendingIntent(boolean isBroadcast) {
             if (isBroadcast) {
@@ -45,14 +45,14 @@ public class BackgroundActivityTestService extends Service {
                 // background activity.
                 Intent newIntent = new Intent();
                 newIntent.setComponent(mA.START_ACTIVITY_RECEIVER);
-                return PendingIntent.getBroadcast(BackgroundActivityTestService.this, 0, newIntent,
+                return PendingIntent.getBroadcast(AppATestService.this, 0, newIntent,
                         PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
             } else {
                 // Create a pendingIntent to launch appA's BackgroundActivity
                 Intent newIntent = new Intent();
                 newIntent.setComponent(mA.BACKGROUND_ACTIVITY);
                 newIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                return PendingIntent.getActivity(BackgroundActivityTestService.this, 0, newIntent,
+                return PendingIntent.getActivity(AppATestService.this, 0, newIntent,
                         PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
             }
         }
