@@ -3124,8 +3124,8 @@ public class RobustnessTest extends Camera2AndroidTestCase {
                     CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP_MAXIMUM_RESOLUTION);
 
             mMaxRawSize = (rawSizes.length != 0) ? CameraTestUtils.getMaxSize(rawSizes) : null;
-            mMaxResolutionRawSize = (maxResConfigs != null)
-                    ? CameraTestUtils.getMaxSize(
+            mMaxResolutionRawSize = sm.isUltraHighResolutionSensor() ?
+                    CameraTestUtils.getMaxSize(
                             maxResConfigs.getOutputSizes(ImageFormat.RAW_SENSOR))
                     : null;
 
@@ -3144,7 +3144,7 @@ public class RobustnessTest extends Camera2AndroidTestCase {
                     mMaxJpegSizes[RECORD] = getMaxRecordingSize(cameraId);
                 }
 
-                if (maxResConfigs != null) {
+                if (sm.isUltraHighResolutionSensor()) {
                     mMaxYuvSizes[MAX_RES] = CameraTestUtils.getMaxSize(
                             maxResConfigs.getOutputSizes(ImageFormat.YUV_420_888));
                     mMaxJpegSizes[MAX_RES] = CameraTestUtils.getMaxSize(
@@ -3302,8 +3302,9 @@ public class RobustnessTest extends Camera2AndroidTestCase {
             mMaxPrivInputSizes[INPUT_MAXIMUM] = privInputSizes != null
                     ? CameraTestUtils.getMaxSize(privInputSizes)
                     : null;
-            Size[] maxResPrivInputSizes = maxResConfigs != null
-                    ? maxResConfigs.getInputSizes(ImageFormat.PRIVATE)
+            Size[] maxResPrivInputSizes =
+                    sm.isUltraHighResolutionSensor() ?
+                    maxResConfigs.getInputSizes(ImageFormat.PRIVATE)
                     : null;
             mMaxPrivInputSizes[INPUT_MAX_RES] = maxResPrivInputSizes != null
                     ? CameraTestUtils.getMaxSize(maxResPrivInputSizes)
@@ -3313,8 +3314,8 @@ public class RobustnessTest extends Camera2AndroidTestCase {
             mMaxYuvInputSizes[INPUT_MAXIMUM] = yuvInputSizes != null
                     ? CameraTestUtils.getMaxSize(yuvInputSizes)
                     : null;
-            Size[] maxResYuvInputSizes = maxResConfigs != null
-                    ? maxResConfigs.getInputSizes(ImageFormat.YUV_420_888)
+            Size[] maxResYuvInputSizes = sm.isUltraHighResolutionSensor() ?
+                    maxResConfigs.getInputSizes(ImageFormat.YUV_420_888)
                     : null;
             mMaxYuvInputSizes[INPUT_MAX_RES] = maxResYuvInputSizes != null
                     ? CameraTestUtils.getMaxSize(maxResYuvInputSizes)
