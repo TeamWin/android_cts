@@ -929,6 +929,94 @@ public class AccessibilityEndToEndTest extends StsExtraBusinessLogicTestCase {
 
     @MediumTest
     @Test
+    @ApiTest(apis = {"android.view.View#setContextClickable"})
+    public void testIsImportantForAccessibility_isContextClickable_isImportant() throws
+            TimeoutException {
+        sInstrumentation.runOnMainSync(() -> mActivity.findViewById(R.id.autoImportantLinearLayout)
+                .setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_AUTO));
+
+        final String autoImportantLinearLayoutName = mActivity.getResources().getResourceName(
+                R.id.autoImportantLinearLayout);
+        final AccessibilityNodeInfo autoImportantLinearLayoutNode =
+                sUiAutomation.getRootInActiveWindow().findAccessibilityNodeInfosByViewId(
+                        autoImportantLinearLayoutName).get(0);
+
+        assertThat(autoImportantLinearLayoutNode.isContextClickable()).isFalse();
+        assertThat(autoImportantLinearLayoutNode.isImportantForAccessibility()).isFalse();
+
+        sUiAutomation.executeAndWaitForEvent(() -> sInstrumentation.runOnMainSync(() ->
+                        mActivity.findViewById(R.id.autoImportantLinearLayout)
+                                .setContextClickable(true)),
+                // Setting clickable sends an event of subtype CONTENT_CHANGE_TYPE_UNDEFINED.
+                filterForEventType(AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED),
+                DEFAULT_TIMEOUT_MS);
+
+        autoImportantLinearLayoutNode.refresh();
+        assertThat(autoImportantLinearLayoutNode.isContextClickable()).isTrue();
+        assertThat(autoImportantLinearLayoutNode.isImportantForAccessibility()).isTrue();
+    }
+
+    @MediumTest
+    @Test
+    @ApiTest(apis = {"android.view.View#setAccessibilityHeading"})
+    public void testIsImportantForAccessibility_isHeading_isImportant() throws
+            TimeoutException {
+        sInstrumentation.runOnMainSync(() -> mActivity.findViewById(R.id.autoImportantLinearLayout)
+                .setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_AUTO));
+
+        final String autoImportantLinearLayoutName = mActivity.getResources().getResourceName(
+                R.id.autoImportantLinearLayout);
+        final AccessibilityNodeInfo autoImportantLinearLayoutNode =
+                sUiAutomation.getRootInActiveWindow().findAccessibilityNodeInfosByViewId(
+                        autoImportantLinearLayoutName).get(0);
+
+        assertThat(autoImportantLinearLayoutNode.isHeading()).isFalse();
+        assertThat(autoImportantLinearLayoutNode.isImportantForAccessibility()).isFalse();
+
+        sUiAutomation.executeAndWaitForEvent(() -> sInstrumentation.runOnMainSync(() ->
+                        mActivity.findViewById(R.id.autoImportantLinearLayout)
+                                .setAccessibilityHeading(true)),
+                // Setting a heading sends an event of subtype CONTENT_CHANGE_TYPE_UNDEFINED.
+                filterForEventType(AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED),
+                DEFAULT_TIMEOUT_MS);
+
+        autoImportantLinearLayoutNode.refresh();
+        assertThat(autoImportantLinearLayoutNode.isHeading()).isTrue();
+        assertThat(autoImportantLinearLayoutNode.isImportantForAccessibility()).isTrue();
+    }
+
+    @MediumTest
+
+    @Test
+    @ApiTest(apis = {"android.view.View#setScreenReaderFocusable"})
+    public void testIsImportantForAccessibility_isScreenReaderFocusable_isImportant() throws
+            TimeoutException {
+        sInstrumentation.runOnMainSync(() -> mActivity.findViewById(R.id.autoImportantLinearLayout)
+                .setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_AUTO));
+
+        final String autoImportantLinearLayoutName = mActivity.getResources().getResourceName(
+                R.id.autoImportantLinearLayout);
+        final AccessibilityNodeInfo autoImportantLinearLayoutNode =
+                sUiAutomation.getRootInActiveWindow().findAccessibilityNodeInfosByViewId(
+                        autoImportantLinearLayoutName).get(0);
+
+        assertThat(autoImportantLinearLayoutNode.isScreenReaderFocusable()).isFalse();
+        assertThat(autoImportantLinearLayoutNode.isImportantForAccessibility()).isFalse();
+
+        sUiAutomation.executeAndWaitForEvent(() -> sInstrumentation.runOnMainSync(() ->
+                        mActivity.findViewById(R.id.autoImportantLinearLayout)
+                                .setScreenReaderFocusable(true)),
+                // Setting focusable sends an event of subtype CONTENT_CHANGE_TYPE_UNDEFINED.
+                filterForEventType(AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED),
+                DEFAULT_TIMEOUT_MS);
+
+        autoImportantLinearLayoutNode.refresh();
+        assertThat(autoImportantLinearLayoutNode.isScreenReaderFocusable()).isTrue();
+        assertThat(autoImportantLinearLayoutNode.isImportantForAccessibility()).isTrue();
+    }
+
+    @MediumTest
+    @Test
     @ApiTest(apis = {"android.view.accessibility.AccessibilityNodeInfo"
             + "#isImportantForAccessibility"})
     public void testDelegate_ImportantForAccessibility() throws Exception {
