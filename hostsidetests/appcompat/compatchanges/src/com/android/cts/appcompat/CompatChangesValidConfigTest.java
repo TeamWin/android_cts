@@ -39,6 +39,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 public final class CompatChangesValidConfigTest extends CompatChangeGatingTestCase {
 
     private static final long RESTRICT_STORAGE_ACCESS_FRAMEWORK = 141600225L;
+    private static final long SPLIT_AS_STREAM_RETURNS_SINGLE_EMPTY_STRING = 288845345L;
     private static final String FEATURE_WATCH = "android.hardware.type.watch";
 
     private static final Set<String> OVERRIDES_ALLOWLIST = ImmutableSet.of(
@@ -168,6 +169,11 @@ public final class CompatChangesValidConfigTest extends CompatChangeGatingTestCa
                 }
             }
         }
+
+        // Exclude SPLIT_AS_STREAM_RETURNS_SINGLE_EMPTY_STRING
+        // This feature is enabled only from U for apps targeting SDK 34+, see b/288845345
+        changes.removeIf(c -> c.changeId == SPLIT_AS_STREAM_RETURNS_SINGLE_EMPTY_STRING);
+
         return changes;
     }
 
