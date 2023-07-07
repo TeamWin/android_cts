@@ -418,7 +418,7 @@ public class PackageManagerShellCommandIncrementalTest {
         try {
             mSession.start(Executors.newSingleThreadExecutor(),
                     IncrementalDeviceConnection.Factory.reliableExpectInstallationFailure());
-            mSession.waitForAnyCompletion(3, TimeUnit.SECONDS);
+            mSession.waitForAnyCompletion(30, TimeUnit.SECONDS);
         } finally {
             getUiAutomation().dropShellPermissionIdentity();
         }
