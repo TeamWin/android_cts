@@ -22,7 +22,6 @@ import static org.junit.Assume.assumeFalse;
 
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.AsbSecurityTest;
-import android.platform.test.annotations.FlakyTest;
 
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -485,7 +484,6 @@ public class EphemeralTest extends BaseAppSecurityTest {
 
     /** Test for search manager */
     @Test
-    @FlakyTest(bugId = 289797357) // Remove when the failure is fixed
     public void testGetSearchableInfo() throws Throwable {
         if (mIsUnsupportedDevice) {
             return;
