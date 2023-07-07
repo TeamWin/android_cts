@@ -30,6 +30,7 @@ import android.car.media.CarMediaManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.os.Build;
+import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -45,6 +46,7 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+@AppModeFull(reason = "No need to run the tests in instant app mode")
 public class CarMediaManagerTest {
 
     private static final String TAG = CarMediaManagerTest.class.getSimpleName();
