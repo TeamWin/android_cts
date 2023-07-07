@@ -353,6 +353,11 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
     }
 
     protected fun clearTargetSdkWarning(timeoutMillis: Long = TIMEOUT_MILLIS) {
+        if (SdkLevel.isAtLeastV()) {
+            // In V and above, the target SDK dialog can be disabled via system property
+            return
+        }
+
         waitForIdle()
         waitFindObjectOrNull(By.res("android:id/button1"), timeoutMillis)?.let {
             try {
