@@ -43,7 +43,7 @@ class PreviewMinFrameRateTest(its_base_test.ItsBaseTest):
   recording's frame rate is at the minimum of the requested FPS range.
   """
 
-  def test_video_min_frame_rate(self):
+  def test_preview_min_frame_rate(self):
     with its_session_utils.ItsSession(
         device_id=self.dut.serial,
         camera_id=self.camera_id,
