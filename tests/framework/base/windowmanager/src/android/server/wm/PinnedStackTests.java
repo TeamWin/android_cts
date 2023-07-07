@@ -856,7 +856,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         launchActivity(PIP_ACTIVITY);
         mBroadcastActionTrigger.doAction(ACTION_ENTER_PIP);
         waitForEnterPipAnimationComplete(PIP_ACTIVITY);
-        int defaultDisplayWindowingMode = getDefaultDisplayWindowingMode(PIP_ACTIVITY);
+        int defaultDisplayWindowingMode = getDisplayAreaWindowingMode(PIP_ACTIVITY);
 
         // Launch second PIP activity
         launchActivity(PIP_ACTIVITY2, extraString(EXTRA_ENTER_PIP, "true"));
@@ -1840,10 +1840,8 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         assertTrue(displayRect.contains(pinnedStackBounds));
     }
 
-    private int getDefaultDisplayWindowingMode(ComponentName activityName) {
-        Task task = mWmState.getTaskByActivity(activityName);
-        return mWmState.getDisplay(task.mDisplayId)
-                .getWindowingMode();
+    private int getDisplayAreaWindowingMode(ComponentName activityName) {
+        return mWmState.getTaskDisplayArea(activityName).getWindowingMode();
     }
 
     /**
