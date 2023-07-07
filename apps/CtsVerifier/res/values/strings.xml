@@ -4219,7 +4219,8 @@ You should be prompted to select credentials; choose the ones you just installed
         - You cannot share an admin configured WiFi config.\n
         - Sharing option is disabled in Settings.\n
         \n
-        Use the Back button to return to this page.
+        Use the Back button to return to this page.\n
+        NOTE: If the device does not support Wi-Fi sharing please skip this test and mark it as passing.
     </string>
     <string name="device_owner_wifi_security_level_restriction">Set WiFi security level restriction</string>
     <string name="device_owner_wifi_security_level_restriction_info">
