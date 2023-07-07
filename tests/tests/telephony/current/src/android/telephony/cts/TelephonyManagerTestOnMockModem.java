@@ -269,6 +269,10 @@ public class TelephonyManagerTestOnMockModem {
         return isSimHotSwapCapable;
     }
 
+    private static boolean isWatch() {
+        return getContext().getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH);
+    }
+
     private static void enforceMockModemDeveloperSetting() throws Exception {
         boolean isAllowed = SystemProperties.getBoolean(ALLOW_MOCK_MODEM_PROPERTY, false);
         boolean isAllowedForBoot =
@@ -357,6 +361,7 @@ public class TelephonyManagerTestOnMockModem {
 
         assumeTrue(isSimHotSwapCapable());
 
+        long watchExtraWaitTimeSec = 20L;
         int slotId = 0;
         int subId;
 
@@ -369,6 +374,10 @@ public class TelephonyManagerTestOnMockModem {
 
         // Expect: Seaching State
         TimeUnit.SECONDS.sleep(2);
+        if (isWatch()) {
+            // It requires a longer wait time on watch.
+            TimeUnit.SECONDS.sleep(watchExtraWaitTimeSec);
+        }
         subId = getActiveSubId(slotId);
         assertEquals(
                 getRegState(NetworkRegistrationInfo.DOMAIN_CS, subId),
@@ -380,6 +389,10 @@ public class TelephonyManagerTestOnMockModem {
 
         // Expect: Home State
         TimeUnit.SECONDS.sleep(2);
+        if (isWatch()) {
+            // It requires a longer wait time on watch.
+            TimeUnit.SECONDS.sleep(watchExtraWaitTimeSec);
+        }
         assertEquals(
                 getRegState(NetworkRegistrationInfo.DOMAIN_CS, subId),
                 NetworkRegistrationInfo.REGISTRATION_STATE_HOME);
@@ -390,6 +403,10 @@ public class TelephonyManagerTestOnMockModem {
 
         // Expect: Seaching State
         TimeUnit.SECONDS.sleep(2);
+        if (isWatch()) {
+            // It requires a longer wait time on watch.
+            TimeUnit.SECONDS.sleep(watchExtraWaitTimeSec);
+        }
         assertEquals(
                 getRegState(NetworkRegistrationInfo.DOMAIN_CS, subId),
                 NetworkRegistrationInfo.REGISTRATION_STATE_NOT_REGISTERED_SEARCHING);
