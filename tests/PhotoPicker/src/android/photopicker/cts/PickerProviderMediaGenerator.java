@@ -19,6 +19,7 @@ package android.photopicker.cts;
 import static android.provider.CloudMediaProviderContract.AlbumColumns;
 import static android.provider.CloudMediaProviderContract.EXTRA_ALBUM_ID;
 import static android.provider.CloudMediaProviderContract.EXTRA_MEDIA_COLLECTION_ID;
+import static android.provider.CloudMediaProviderContract.EXTRA_PAGE_SIZE;
 import static android.provider.CloudMediaProviderContract.EXTRA_SYNC_GENERATION;
 import static android.provider.CloudMediaProviderContract.MediaCollectionInfo;
 import static android.provider.CloudMediaProviderContract.MediaColumns;
@@ -91,23 +92,25 @@ public class PickerProviderMediaGenerator {
             mPrivateDir = context.getFilesDir();
         }
 
-        public Cursor getMedia(long generation, String albumId, String mimeType, long sizeBytes) {
+        public Cursor getMedia(long generation, String albumId, String mimeType, long sizeBytes,
+                int pageSize) {
             final Cursor cursor = getCursor(mMedia, generation, albumId, mimeType, sizeBytes,
                     /* isDeleted */ false);
-            cursor.setExtras(buildCursorExtras(mCollectionId, generation > 0, albumId != null));
+            cursor.setExtras(buildCursorExtras(mCollectionId, generation > 0, albumId != null,
+                    pageSize > -1));
             return cursor;
         }
 
         public Cursor getAlbums(String mimeType, long sizeBytes) {
             final Cursor cursor = getCursor(mAlbums, mimeType, sizeBytes);
-            cursor.setExtras(buildCursorExtras(mCollectionId, false, false));
+            cursor.setExtras(buildCursorExtras(mCollectionId, false, false, false));
             return cursor;
         }
 
         public Cursor getDeletedMedia(long generation) {
             final Cursor cursor = getCursor(mDeletedMedia, generation, /* albumId */ null,
                     /* mimeType */ null, /* sizeBytes */ 0, /* isDeleted */ true);
-            cursor.setExtras(buildCursorExtras(mCollectionId, generation > 0, false));
+            cursor.setExtras(buildCursorExtras(mCollectionId, generation > 0, false, false));
             return cursor;
         }
 
@@ -128,13 +131,17 @@ public class PickerProviderMediaGenerator {
         }
 
         public Bundle buildCursorExtras(String mediaCollectionId, boolean honoredSyncGeneration,
-                boolean honoredAlbumdId) {
+                boolean honoredAlbumdId, boolean honoredPageSize) {
             final ArrayList<String> honoredArgs = new ArrayList<>();
             if (honoredSyncGeneration) {
                 honoredArgs.add(EXTRA_SYNC_GENERATION);
             }
             if (honoredAlbumdId) {
                 honoredArgs.add(EXTRA_ALBUM_ID);
+            }
+
+            if (honoredPageSize) {
+                honoredArgs.add(EXTRA_PAGE_SIZE);
             }
 
             final Bundle bundle = new Bundle();
@@ -425,6 +432,7 @@ public class PickerProviderMediaGenerator {
         public final String mimeType;
         public final long sizeBytes;
         public final long generation;
+        public final int pageSize;
 
         public QueryExtras(Bundle bundle) {
             if (bundle == null) {
@@ -435,6 +443,7 @@ public class PickerProviderMediaGenerator {
             mimeType = bundle.getString(Intent.EXTRA_MIME_TYPES, null);
             sizeBytes = bundle.getLong(CloudMediaProviderContract.EXTRA_SIZE_LIMIT_BYTES, 0);
             generation = bundle.getLong(CloudMediaProviderContract.EXTRA_SYNC_GENERATION, 0);
+            pageSize = bundle.getInt(CloudMediaProviderContract.EXTRA_PAGE_SIZE, -1);
         }
     }
 }
