@@ -44,6 +44,10 @@ import static android.media.audio.cts.AudioTestUtil.resetVolumeIndex;
 import static android.provider.Settings.Global.APPLY_RAMPING_RINGER;
 import static android.provider.Settings.System.SOUND_EFFECTS_ENABLED;
 
+import static com.android.media.mediatestutils.TestUtils.getFutureForIntent;
+
+import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -100,10 +104,12 @@ import com.android.compatibility.common.util.NonMainlineTest;
 import com.android.compatibility.common.util.SettingsStateKeeperRule;
 import com.android.compatibility.common.util.UserSettings.Namespace;
 import com.android.internal.annotations.GuardedBy;
+import com.android.media.mediatestutils.CancelAllFuturesRule;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -115,7 +121,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.BooleanSupplier;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -193,6 +201,9 @@ public class AudioManagerTest {
     public static final SettingsStateKeeperRule mSurroundSoundModeSettingsKeeper =
             new SettingsStateKeeperRule(InstrumentationRegistry.getTargetContext(),
                     Namespace.GLOBAL, Settings.Global.ENCODED_SURROUND_OUTPUT);
+
+    @Rule
+    public final CancelAllFuturesRule mCancelRule = new CancelAllFuturesRule();
 
     private static Instrumentation getInstrumentation() {
         return InstrumentationRegistry.getInstrumentation();
@@ -1443,23 +1454,81 @@ public class AudioManagerTest {
         assertEquals(ringerMode, mAudioManager.getRingerMode());
     }
 
+    /**
+     * Ensure adjusting volume when total silence zen mode is enabled does not affect
+     * stream volumes.
+     */
     @Test
     public void testAdjustVolumeInTotalSilenceMode() throws Exception {
+
         if (mSkipRingerTests) {
             return;
         }
+        final int TEST_INIT_STREAM_VOL = 1;
+        final int SILENCE_VOL = 0;
+        final int prevVol =  mAudioManager.getStreamVolume(STREAM_MUSIC);
         try {
             Utils.toggleNotificationPolicyAccess(
                     mContext.getPackageName(), getInstrumentation(), true);
-            mAudioManager.setStreamVolume(STREAM_MUSIC, 1, 0);
-            setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_NONE);
-            Thread.sleep(ASYNC_TIMING_TOLERANCE_MS);
-            int musicVolume = mAudioManager.getStreamVolume(STREAM_MUSIC);
-            mAudioManager.adjustStreamVolume(
-                    STREAM_MUSIC, ADJUST_RAISE, 0);
-            assertStreamVolumeEquals(STREAM_MUSIC, musicVolume);
 
+            // Set the volume to a known value
+            if (prevVol != TEST_INIT_STREAM_VOL) {
+                var knownVolumeFuture = mCancelRule.registerFuture(getFutureForIntent(mContext,
+                            AudioManager.ACTION_VOLUME_CHANGED,
+                            i -> i != null && i.getIntExtra(
+                                AudioManager.EXTRA_VOLUME_STREAM_TYPE, -1) == STREAM_MUSIC));
+
+                mAudioManager.setStreamVolume(STREAM_MUSIC, TEST_INIT_STREAM_VOL, 0 /* flags */);
+                knownVolumeFuture.get();
+            }
+
+            assertThat(mAudioManager.getStreamVolume(STREAM_MUSIC)).isEqualTo(TEST_INIT_STREAM_VOL);
+
+            // Set to silence
+            final var isSilencedFuture = mCancelRule.registerFuture(getFutureForIntent(
+                    mContext,
+                    AudioManager.RINGER_MODE_CHANGED_ACTION,
+                    i -> (i != null) && i.getIntExtra(AudioManager.EXTRA_RINGER_MODE, -1)
+                        == AudioManager.RINGER_MODE_SILENT));
+            mNm.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_NONE);
+            isSilencedFuture.get();
+
+            assertThat(mAudioManager.getStreamVolume(STREAM_MUSIC)).isEqualTo(SILENCE_VOL);
+
+            // Raise shouldn't work when silenced
+            mAudioManager.adjustStreamVolume(STREAM_MUSIC, ADJUST_RAISE, 0 /* flags */);
+            // Wait a bit to check for early fail
+            SystemClock.sleep(50);
+            assertThat(mAudioManager.getStreamVolume(STREAM_MUSIC)).isEqualTo(SILENCE_VOL);
+
+            // Set the mode out of silence
+            final var isUnsilencedFuture = mCancelRule.registerFuture(getFutureForIntent(
+                    mContext,
+                    AudioManager.RINGER_MODE_CHANGED_ACTION,
+                    i -> (i != null) && i.getIntExtra(AudioManager.EXTRA_RINGER_MODE, -1)
+                        != AudioManager.RINGER_MODE_SILENT));
+            mNm.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL);
+            isUnsilencedFuture.get();
+
+            // Volume should be back to normal
+            assertThat(mAudioManager.getStreamVolume(STREAM_MUSIC))
+                    .isEqualTo(TEST_INIT_STREAM_VOL);
+
+            // Raise volume
+            final var isVolumeRaisedFuture = mCancelRule.registerFuture(getFutureForIntent(
+                    mContext,
+                    AudioManager.ACTION_VOLUME_CHANGED,
+                    i -> (i != null) && i.getIntExtra(AudioManager.EXTRA_VOLUME_STREAM_TYPE, -1)
+                        == STREAM_MUSIC));
+            mAudioManager.adjustStreamVolume(STREAM_MUSIC, ADJUST_RAISE, 0 /* flags */);
+            isVolumeRaisedFuture.get();
+
+            final int MEDIA_DELTA = 1;
+            // Volume should be raised exactly once, since the adjust while silenced was suppressed
+            assertThat(mAudioManager.getStreamVolume(STREAM_MUSIC))
+                    .isEqualTo(TEST_INIT_STREAM_VOL + MEDIA_DELTA);
         } finally {
+            mAudioManager.setStreamVolume(STREAM_MUSIC, prevVol, 0 /* flags */);
             setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL);
         }
     }
@@ -2078,16 +2147,8 @@ public class AudioManagerTest {
 
     private void setInterruptionFilter(int filter) {
         mNm.setInterruptionFilter(filter);
-        final long startPoll = SystemClock.uptimeMillis();
-        int currentFilter = -1;
-        while (SystemClock.uptimeMillis() - startPoll < POLL_TIME_UPDATE_INTERRUPTION_FILTER) {
-            currentFilter = mNm.getCurrentInterruptionFilter();
-            if (currentFilter == filter) {
-                return;
-            }
-        }
-        Log.e(TAG, "interruption filter unsuccessfully set. wanted=" + filter
-                + " actual=" + currentFilter);
+        pollWithBackoff(() -> mNm.getCurrentInterruptionFilter() == filter, 100, 50, 500,
+                POLL_TIME_UPDATE_INTERRUPTION_FILTER);
     }
 
     private int getVolumeDelta(int volume) {
@@ -2861,6 +2922,24 @@ public class AudioManagerTest {
             actualVolume = mAudioManager.getStreamVolume(stream);
         }
         assertEquals(msg, expectedVolume, actualVolume);
+    }
+
+
+    private void pollWithBackoff(BooleanSupplier isDone, long initialMs,
+            long backoff, long maxBackoff, long timeout) {
+        final long startTime = SystemClock.uptimeMillis();
+        long waitMs = initialMs;
+        while (true) {
+            if (isDone.getAsBoolean()) {
+                return;
+            }
+            long timeLeft = timeout - (SystemClock.uptimeMillis() - startTime);
+            if (timeLeft < 0) {
+                throw new AssertionError("Polling timeout");
+            }
+            waitMs = Math.min(Math.min(waitMs + backoff, maxBackoff), timeLeft);
+            SystemClock.sleep(waitMs);
+        }
     }
 
     // volume adjustments are asynchronous, we poll the volume in case the mute state hasn't
