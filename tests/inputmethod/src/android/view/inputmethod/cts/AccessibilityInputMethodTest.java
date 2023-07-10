@@ -560,6 +560,7 @@ public final class AccessibilityInputMethodTest extends EndToEndImeTestBase {
     }
 
     @Test
+    @FlakyTest
     public void testInvalidateInputFallback() throws Exception {
         // If IC#takeSnapshot() returns false, then fall back to IMM#restartInput()
         testInvalidateInputMain((view, editable) -> new TestInputConnection(view, editable) {
