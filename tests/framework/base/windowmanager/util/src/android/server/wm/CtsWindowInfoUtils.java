@@ -39,8 +39,6 @@ import com.android.compatibility.common.util.CtsTouchUtils;
 import com.android.compatibility.common.util.SystemUtil;
 import com.android.compatibility.common.util.ThrowingRunnable;
 
-import org.junit.rules.TestName;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -455,13 +453,13 @@ public class CtsWindowInfoUtils {
         return true;
     }
 
-    public static void dumpWindowsOnScreen(String tag, TestName testName)
+    public static void dumpWindowsOnScreen(String tag, String message)
             throws InterruptedException {
         waitForWindowInfos(windowInfos -> {
             if (windowInfos.size() == 0) {
                 return false;
             }
-            Log.d(tag, "Dumping windows on screen for test " + testName.getMethodName());
+            Log.d(tag, "Dumping windows on screen: " + message);
             for (var windowInfo : windowInfos) {
                 Log.d(tag, "     " + windowInfo);
             }
