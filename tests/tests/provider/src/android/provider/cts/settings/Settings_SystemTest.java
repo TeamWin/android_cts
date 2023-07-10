@@ -217,4 +217,17 @@ public class Settings_SystemTest extends StsExtraBusinessLogicTestCase {
                 () -> System.putString(
                         cr, Strings.repeat("A", 65535), "test"));
     }
+
+    @Test
+    public void testResetToDefaults() throws SettingNotFoundException {
+        final ContentResolver cr = InstrumentationRegistry.getTargetContext().getContentResolver();
+        final String oldStringValue = System.getString(cr, STRING_FIELD);
+        final String newStringValue = "tmp";
+        System.putString(cr, STRING_FIELD, oldStringValue, /* makeDefault= */true, false);
+        System.putString(cr, STRING_FIELD, newStringValue, /* makeDefault= */false, false);
+        assertEquals(newStringValue, System.getString(cr, STRING_FIELD));
+
+        System.resetToDefaults(cr, null);
+        assertEquals(oldStringValue, System.getString(cr, STRING_FIELD));
+    }
 }
