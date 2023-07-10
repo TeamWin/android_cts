@@ -117,6 +117,7 @@ public class EditTextTest {
     @After
     public void teardown() throws Throwable {
         mActivityRule.runOnUiThread(() -> mEditText1.setSingleLine(false));
+        mEmptyActivityRule.finishActivity();
     }
 
     @Test
@@ -962,5 +963,4 @@ public class EditTextTest {
         assertTrue(editor.isBlinking());
 
     }
-
 }
