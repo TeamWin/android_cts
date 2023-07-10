@@ -46,7 +46,7 @@ class PermissionTest23 : BaseUsePermissionTest() {
 
     @Test
     fun testGranted() {
-        grantAppPermissions(android.Manifest.permission.READ_CALENDAR)
+        grantAppPermissionsByUi(android.Manifest.permission.READ_CALENDAR)
 
         // Read/write access should be allowed
         assertAppHasPermission(android.Manifest.permission.READ_CALENDAR, true)
@@ -122,15 +122,13 @@ class PermissionTest23 : BaseUsePermissionTest() {
         // Make sure we don't have the permission
         assertAppHasPermission(android.Manifest.permission.WRITE_CONTACTS, false)
 
-        // Request the permission and deny it
+        // Request the permission and deny it twice
         // Expect the permission is not granted
-        requestAppPermissionsAndAssertResult(android.Manifest.permission.WRITE_CONTACTS to false) {
+        requestAppPermissionsAndAssertResult(
+            android.Manifest.permission.WRITE_CONTACTS to false,
+            askTwice = true
+        ) {
             clickPermissionRequestDenyButton()
-        }
-
-        // Request the permission and choose don't ask again
-        // Expect the permission is not granted
-        requestAppPermissionsAndAssertResult(android.Manifest.permission.WRITE_CONTACTS to false) {
             denyPermissionRequestWithPrejudice()
         }
 
@@ -143,14 +141,14 @@ class PermissionTest23 : BaseUsePermissionTest() {
     @Test
     fun testRevokeAffectsWholeGroup() {
         // Grant the group
-        grantAppPermissions(android.Manifest.permission.READ_CALENDAR)
+        grantAppPermissionsByUi(android.Manifest.permission.READ_CALENDAR)
 
         // Make sure we have the permissions
         assertAppHasPermission(android.Manifest.permission.READ_CALENDAR, true)
         assertAppHasPermission(android.Manifest.permission.WRITE_CALENDAR, true)
 
         // Revoke the group
-        revokeAppPermissions(android.Manifest.permission.READ_CALENDAR)
+        revokeAppPermissionsByUi(android.Manifest.permission.READ_CALENDAR)
 
         // Make sure we don't have the permissions
         assertAppHasPermission(android.Manifest.permission.READ_CALENDAR, false)
@@ -160,31 +158,31 @@ class PermissionTest23 : BaseUsePermissionTest() {
     @Test
     fun testGrantPreviouslyRevokedWithPrejudiceShowsPrompt() {
         // Make sure we don't have the permission
-        assertAppHasPermission(android.Manifest.permission.CAMERA, false)
+        assertAppHasPermission(android.Manifest.permission.READ_CALENDAR, false)
 
-        // Request the permission and deny it
+        // Request the permission and deny it twice
         // Expect the permission is not granted
-        requestAppPermissionsAndAssertResult(android.Manifest.permission.CAMERA to false) {
+        requestAppPermissionsAndAssertResult(
+            android.Manifest.permission.READ_CALENDAR to false,
+            askTwice = true
+        ) {
             clickPermissionRequestDenyButton()
-        }
-
-        // Request the permission and choose don't ask again
-        // Expect the permission is not granted
-        requestAppPermissionsAndAssertResult(android.Manifest.permission.CAMERA to false) {
+            waitForIdle()
             denyPermissionRequestWithPrejudice()
         }
 
         // Clear the denial with prejudice
-        grantAppPermissions(android.Manifest.permission.CAMERA)
-        revokeAppPermissions(android.Manifest.permission.CAMERA)
+        uiAutomation.grantRuntimePermission(APP_PACKAGE_NAME,
+            android.Manifest.permission.READ_CALENDAR)
+        revokeAppPermissionsByUi(android.Manifest.permission.READ_CALENDAR)
 
         // Make sure we don't have the permission
-        assertAppHasPermission(android.Manifest.permission.CAMERA, false)
+        assertAppHasPermission(android.Manifest.permission.READ_CALENDAR, false)
 
         // Request the permission and allow it
         // Make sure the permission is granted
-        requestAppPermissionsAndAssertResult(android.Manifest.permission.CAMERA to true) {
-            clickPermissionRequestAllowForegroundButton()
+        requestAppPermissionsAndAssertResult(android.Manifest.permission.READ_CALENDAR to true) {
+            clickPermissionRequestAllowButton()
         }
     }
 
@@ -239,28 +237,19 @@ class PermissionTest23 : BaseUsePermissionTest() {
     fun testNoResidualPermissionsOnUninstall() {
         Assume.assumeFalse(packageManager.arePermissionsIndividuallyControlled())
 
-        // Grant all permissions
-        grantAppPermissions(
-            android.Manifest.permission.WRITE_CALENDAR,
-            android.Manifest.permission.WRITE_CONTACTS,
+        // Grant one permission via UI, and the rest via automation
+        grantAppPermissionsByUi(android.Manifest.permission.WRITE_CALENDAR)
+        grantRuntimePermissions(android.Manifest.permission.WRITE_CONTACTS,
             android.Manifest.permission.READ_SMS,
             android.Manifest.permission.CALL_PHONE,
             android.Manifest.permission.RECORD_AUDIO,
             android.Manifest.permission.CAMERA,
-            android.Manifest.permission.READ_EXTERNAL_STORAGE
-        )
-        // Don't use UI for granting location and sensor permissions as they show another dialog
-        uiAutomation.grantRuntimePermission(
-            APP_PACKAGE_NAME, android.Manifest.permission.ACCESS_FINE_LOCATION
-        )
-        uiAutomation.grantRuntimePermission(
-            APP_PACKAGE_NAME, android.Manifest.permission.ACCESS_COARSE_LOCATION
-        )
-        uiAutomation.grantRuntimePermission(
-            APP_PACKAGE_NAME, android.Manifest.permission.ACCESS_BACKGROUND_LOCATION
-        )
-        uiAutomation.grantRuntimePermission(
-            APP_PACKAGE_NAME, android.Manifest.permission.BODY_SENSORS
+            android.Manifest.permission.READ_EXTERNAL_STORAGE,
+            android.Manifest.permission.ACCESS_FINE_LOCATION,
+            android.Manifest.permission.ACCESS_COARSE_LOCATION,
+            android.Manifest.permission.ACCESS_BACKGROUND_LOCATION,
+            android.Manifest.permission.ACCESS_FINE_LOCATION,
+            android.Manifest.permission.BODY_SENSORS,
         )
         uninstallPackage(APP_PACKAGE_NAME)
         installPackage(APP_APK_PATH_23)
@@ -312,12 +301,12 @@ class PermissionTest23 : BaseUsePermissionTest() {
         Assume.assumeFalse("other form factors might not support the ask button",
                 isTv || isAutomotive || isWatch)
 
-        grantAppPermissions(android.Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+        grantAppPermissionsByUi(android.Manifest.permission.ACCESS_BACKGROUND_LOCATION)
         assertAppHasPermission(android.Manifest.permission.ACCESS_BACKGROUND_LOCATION, true)
         assertAppHasPermission(android.Manifest.permission.ACCESS_FINE_LOCATION, true)
         assertAppHasPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION, true)
 
-        revokeAppPermissions(android.Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+        revokeAppPermissionsByUi(android.Manifest.permission.ACCESS_BACKGROUND_LOCATION)
         SystemUtil.runWithShellPermissionIdentity {
             val perms = listOf(android.Manifest.permission.ACCESS_BACKGROUND_LOCATION,
                     android.Manifest.permission.ACCESS_FINE_LOCATION,

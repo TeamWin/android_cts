@@ -140,7 +140,7 @@ class PermissionTest30WithBluetooth : BaseUsePermissionTest() {
 
         Log.v(LOG_TAG, "Testing for: Given {BLUETOOTH_SCAN, BLUETOOTH_SCAN.COMPAT_REVOKE, " +
                 "ACCESS_*_LOCATION}, expect ERROR")
-        revokeAppPermissions(BLUETOOTH_SCAN, isLegacyApp = true)
+        revokeAppPermissionsByUi(BLUETOOTH_SCAN, isLegacyApp = true)
         assertBluetoothRevokedCompatState(revoked = true)
         val res = scanForBluetoothDevices()
         if (res != BluetoothScanResult.ERROR && res != BluetoothScanResult.EMPTY) {
@@ -158,7 +158,7 @@ class PermissionTest30WithBluetooth : BaseUsePermissionTest() {
     @Test
     fun testRevokedCompatPersistsOnReinstall() {
         assertBluetoothRevokedCompatState(revoked = false)
-        revokeAppPermissions(BLUETOOTH_SCAN, isLegacyApp = true)
+        revokeAppPermissionsByUi(BLUETOOTH_SCAN, isLegacyApp = true)
         assertBluetoothRevokedCompatState(revoked = true)
         reinstallApp()
         assertBluetoothRevokedCompatState(revoked = true)
