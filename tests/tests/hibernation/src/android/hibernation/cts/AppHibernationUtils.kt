@@ -126,23 +126,19 @@ fun runBootCompleteReceiver(context: Context, testTag: String) {
 }
 
 fun runAppHibernationJob(context: Context, tag: String) {
-    // Sometimes first run observes stale package data
-    // so run twice to prevent that
-    repeat(2) {
-        val userId = Process.myUserHandle().identifier
-        val permissionControllerPackageName =
-            context.packageManager.permissionControllerPackageName
-        runShellCommandOrThrow("cmd jobscheduler run -u " +
-                "$userId -f " +
-                "$permissionControllerPackageName 2")
-        eventually({
-            Thread.sleep(JOB_RUN_WAIT_TIME)
-            val jobState = runShellCommandOrThrow("cmd jobscheduler get-job-state -u " +
-                "$userId " +
-                "$permissionControllerPackageName 2")
-            assertTrue("Job expected waiting but is $jobState", jobState.contains("waiting"))
-        }, JOB_RUN_TIMEOUT)
-    }
+    val userId = Process.myUserHandle().identifier
+    val permissionControllerPackageName =
+        context.packageManager.permissionControllerPackageName
+    runShellCommandOrThrow("cmd jobscheduler run -u " +
+            "$userId -f " +
+            "$permissionControllerPackageName 2")
+    eventually({
+        Thread.sleep(JOB_RUN_WAIT_TIME)
+        val jobState = runShellCommandOrThrow("cmd jobscheduler get-job-state -u " +
+            "$userId " +
+            "$permissionControllerPackageName 2")
+        assertTrue("Job expected waiting but is $jobState", jobState.contains("waiting"))
+    }, JOB_RUN_TIMEOUT)
 }
 
 fun runPermissionEventCleanupJob(context: Context) {
