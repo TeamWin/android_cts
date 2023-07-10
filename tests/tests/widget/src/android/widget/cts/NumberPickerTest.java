@@ -392,7 +392,11 @@ public class NumberPickerTest {
                     numberPickerMiddleX,
                     numberPickerStartY,
                     0,
-                    mNumberPicker.getHeight()); // drag down to the bottom of the screen.
+                    mNumberPicker.getHeight(),
+                    300 /* dragDurationMs */,
+                    20 /* moveEventCount */,
+                    null /* eventInjectionListener */
+            ); // drag down to the bottom of the screen.
 
             Assert.assertTrue("Expected to get to IDLE state within 5 seconds",
                     latch.await(5, TimeUnit.SECONDS));
@@ -462,7 +466,11 @@ public class NumberPickerTest {
                     numberPickerMiddleX,
                     numberPickerEndY,
                     0,
-                    -(mNumberPicker.getHeight())); // drag up to the top of the screen.
+                    -(mNumberPicker.getHeight()),
+                    300 /* dragDurationMs */,
+                    20 /* moveEventCount */,
+                    null /* eventInjectionListener */
+            ); // drag up to the top of the screen.
             Assert.assertTrue("Expected to get to IDLE state within 5 seconds",
                     latch.await(5, TimeUnit.SECONDS));
         } catch (Throwable t) {
