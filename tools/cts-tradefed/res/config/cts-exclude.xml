@@ -40,4 +40,9 @@
     <option name="compatibility:exclude-filter" value="CtsJvmtiRunTest913HostTestCases" />
     <option name="compatibility:exclude-filter" value="CtsJvmtiRunTest912HostTestCases" />
     <option name="compatibility:exclude-filter" value="CtsJvmtiRunTest988HostTestCases" />
+
+    <!-- Exclude art_standalone_dex2oat_cts_tests which cannot link with recent
+         ART module due to internal library symbol changes. b/288212464#comment5 -->
+    <option name="compatibility:exclude-filter" value="art_standalone_dex2oat_cts_tests" />
+
 </configuration>
