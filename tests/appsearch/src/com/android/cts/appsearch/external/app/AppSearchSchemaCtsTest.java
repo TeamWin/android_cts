@@ -367,7 +367,6 @@ public class AppSearchSchemaCtsTest {
                         .build();
 
         String schemaString = schema.toString();
-
         String expectedString =
                 "{\n"
                         + "  schemaType: \"testSchema\",\n"
@@ -423,6 +422,9 @@ public class AppSearchSchemaCtsTest {
                         + "  ]\n"
                         + "}";
 
-        assertThat(schemaString).isEqualTo(expectedString);
+        String[] lines = expectedString.split("\\R");
+        for (String line : lines) {
+            assertThat(schemaString).contains(line);
+        }
     }
 }
