@@ -510,6 +510,12 @@ public final class ScreenCaptureDisabledTest {
                     sLocalDevicePolicyManager.getScreenCaptureDisabled(/* admin= */ null)).isTrue();
 
         } finally {
+            TestApis.flags().set(
+                    NAMESPACE_DEVICE_POLICY_MANAGER, ENABLE_DEVICE_POLICY_ENGINE_FLAG, "false");
+            sDeviceState.dpc().devicePolicyManager().setScreenCaptureDisabled(
+                    sDeviceState.dpc().componentName(), /* disabled= */ false);
+            TestApis.flags().set(
+                    NAMESPACE_DEVICE_POLICY_MANAGER, ENABLE_DEVICE_POLICY_ENGINE_FLAG, "true");
             sDeviceState.dpc().devicePolicyManager().setScreenCaptureDisabled(
                     sDeviceState.dpc().componentName(), /* disabled= */ false);
             TestApis.flags().set(
