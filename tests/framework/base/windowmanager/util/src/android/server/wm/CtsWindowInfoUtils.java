@@ -196,14 +196,14 @@ public class CtsWindowInfoUtils {
 
     /**
      * Calls {@link CtsWindowInfoUtils#waitForWindowOnTop(int, TimeUnit, Supplier)}. Adopts
-     * required permissions and waits five seconds before timing out.
+     * required permissions and waits at least five seconds before timing out.
      *
      * @param window The window to wait on.
      * @return True if the window satisfies the visibility requirements before the timeout is
      * reached. False otherwise.
      */
     public static boolean waitForWindowOnTop(@NonNull Window window) throws InterruptedException {
-        return waitForWindowOnTop(5, TimeUnit.SECONDS,
+        return waitForWindowOnTop(HW_TIMEOUT_MULTIPLIER * 5, TimeUnit.SECONDS,
                 () -> window.getDecorView().getWindowToken());
     }
 
