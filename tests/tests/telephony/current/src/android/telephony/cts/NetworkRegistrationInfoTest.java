@@ -400,4 +400,12 @@ public class NetworkRegistrationInfoTest {
         assertEquals(NetworkRegistrationInfo.REGISTRATION_STATE_EMERGENCY,
                 nri.getRegistrationState());
     }
+
+    @Test
+    public void testIsNonTerrestrialNetwork() {
+        NetworkRegistrationInfo nri = new NetworkRegistrationInfo.Builder()
+                .setIsNonTerrestrialNetwork(true)
+                .build();
+        assertTrue(nri.isNonTerrestrialNetwork());
+    }
 }
