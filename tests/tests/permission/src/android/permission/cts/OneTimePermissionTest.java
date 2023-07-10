@@ -36,6 +36,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.platform.test.annotations.AsbSecurityTest;
+import android.platform.test.rule.ScreenRecordRule;
 import android.provider.DeviceConfig;
 
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -57,7 +58,9 @@ import org.junit.Test;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
+@ScreenRecordRule.ScreenRecord
 public class OneTimePermissionTest {
+
     private static final String APP_PKG_NAME = "android.permission.cts.appthatrequestpermission";
     private static final String CUSTOM_CAMERA_PERM_APP_PKG_NAME =
             "android.permission.cts.appthatrequestcustomcamerapermission";
@@ -86,6 +89,9 @@ public class OneTimePermissionTest {
             mContext.getSystemService(ActivityManager.class);
     private String mOldOneTimePermissionTimeoutValue;
     private String mOldOneTimePermissionKilledDelayValue;
+
+    @Rule
+    public final ScreenRecordRule sScreenRecordRule = new ScreenRecordRule(false, false);
 
     @Rule
     public IgnoreAllTestsRule mIgnoreAutomotive = new IgnoreAllTestsRule(

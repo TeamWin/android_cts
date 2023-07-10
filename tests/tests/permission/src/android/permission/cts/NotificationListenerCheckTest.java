@@ -29,6 +29,7 @@ import android.app.ActivityOptions;
 import android.app.PendingIntent;
 import android.os.Build;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.rule.ScreenRecordRule;
 import android.service.notification.StatusBarNotification;
 
 import androidx.test.filters.SdkSuppress;
@@ -48,7 +49,10 @@ import org.junit.runner.RunWith;
 @AppModeFull(reason = "Cannot set system settings as instant app. Also we never show a notification"
         + " listener check notification for instant apps.")
 @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
+@ScreenRecordRule.ScreenRecord
 public class NotificationListenerCheckTest extends BaseNotificationListenerCheckTest {
+
+    public final ScreenRecordRule mScreenRecordRule = new ScreenRecordRule(false, false);
 
     @Before
     public void setup() throws Throwable {

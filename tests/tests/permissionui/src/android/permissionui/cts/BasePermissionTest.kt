@@ -37,6 +37,7 @@ import android.content.pm.PackageManager
 import android.content.res.Resources
 import android.os.PersistableBundle
 import android.os.SystemClock
+import android.platform.test.rule.ScreenRecordRule
 import android.provider.DeviceConfig
 import android.provider.Settings
 import android.text.Html
@@ -69,6 +70,7 @@ import org.junit.Assert.assertNotEquals
 import org.junit.Before
 import org.junit.Rule
 
+@ScreenRecordRule.ScreenRecord
 abstract class BasePermissionTest {
     companion object {
         private const val TAG = "BasePermissionTest"
@@ -109,6 +111,9 @@ abstract class BasePermissionTest {
         protected val isAutomotive =
             packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)
     }
+
+    @get:Rule
+    val screenRecordRule = ScreenRecordRule(false, false)
 
     @get:Rule
     val disableAnimationRule = DisableAnimationRule()

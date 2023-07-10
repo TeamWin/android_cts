@@ -23,7 +23,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.platform.test.annotations.AppModeFull
-import android.platform.test.rule.ScreenRecordRule
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.runner.AndroidJUnit4
 import androidx.test.uiautomator.By
@@ -38,7 +37,6 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assume
 import org.junit.Before
-import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -55,9 +53,6 @@ class ReviewAccessibilityServicesTest {
     companion object {
         private const val EXPECTED_TIMEOUT_MS = 500L
     }
-
-    @get:Rule
-    val screenRecordRule = ScreenRecordRule()
 
     @get:Rule
     val accessibilityServiceRule =
@@ -86,7 +81,6 @@ class ReviewAccessibilityServicesTest {
     }
 
     @Test
-    @ScreenRecordRule.ScreenRecord
     fun testActivityShowsSingleEnabledAccessibilityService() {
         accessibilityServiceRule.enableService()
         startAccessibilityActivity()
@@ -95,7 +89,6 @@ class ReviewAccessibilityServicesTest {
     }
 
     @Test
-    @ScreenRecordRule.ScreenRecord
     fun testActivityShowsMultipleEnabledAccessibilityServices() {
         accessibilityServiceRule.enableService()
         accessibilityServiceRule2.enableService()
@@ -105,7 +98,6 @@ class ReviewAccessibilityServicesTest {
     }
 
     @Test
-    @ScreenRecordRule.ScreenRecord
     fun testClickingSettingsGoesToIndividualSettingsWhenOneServiceEnabled() {
         accessibilityServiceRule.enableService()
         startAccessibilityActivity()
@@ -116,7 +108,6 @@ class ReviewAccessibilityServicesTest {
     }
 
     @Test
-    @ScreenRecordRule.ScreenRecord
     fun testClickingSettingsGoesToGeneralSettingsWhenMultipleServicesEnabled() {
         accessibilityServiceRule.enableService()
         accessibilityServiceRule2.enableService()
@@ -128,7 +119,6 @@ class ReviewAccessibilityServicesTest {
     }
 
     @Test
-    @ScreenRecordRule.ScreenRecord
     fun testClickingIndividualGoesToIndividualSettingsWhenMultipleServicesEnabled() {
         accessibilityServiceRule.enableService()
         accessibilityServiceRule2.enableService()

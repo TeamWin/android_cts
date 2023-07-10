@@ -50,6 +50,7 @@ android_test {
         "CtsAccessibilityCommon",
         "safety-center-internal-data",
         "sts-device-util",
+        "platform-test-rules",
     ],
     jni_libs: [
         "libctspermission_jni",

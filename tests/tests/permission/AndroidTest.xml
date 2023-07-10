@@ -47,6 +47,12 @@
         <option name="teardown-command" value="rm -rf /data/local/tmp/cts"/>
     </target_preparer>
 
+    <!-- Collect screen recordings -->
+    <metrics_collector class="com.android.tradefed.device.metric.FilePullerLogCollector">
+        <option name="directory-keys" value="/data/user/0/android.permission.cts/files" />
+        <option name="collect-on-run-ended-only" value="true" />
+    </metrics_collector>
+
     <!-- Load additional APKs onto device -->
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.FilePusher">
         <option name="push" value="CtsAppThatRequestsPermissionAandB.apk->/data/local/tmp/cts/permissions/CtsAppThatRequestsPermissionAandB.apk" />
