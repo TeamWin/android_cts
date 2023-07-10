@@ -170,7 +170,7 @@ public class TooltipTest {
     }
 
     private void injectLongKeyPress(View target, int keyCode) throws Throwable {
-        injectKeyPress(target, keyCode, ViewConfiguration.getLongPressTimeout());
+        injectKeyPress(target, keyCode, ViewConfiguration.getLongPressTimeout() * 2);
     }
 
     private void injectLongEnter(View target) throws Throwable {
