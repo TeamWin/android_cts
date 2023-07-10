@@ -31,8 +31,8 @@ import androidx.test.runner.AndroidJUnit4;
 
 import com.google.common.collect.ImmutableList;
 
-import org.junit.Test;
 import org.junit.Before;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @RequiresDevice
@@ -41,16 +41,22 @@ import org.junit.runner.RunWith;
 public final class PermissionCarInfoTest {
     private static final ImmutableList<Integer> PERMISSION_CAR_INFO_PROPERTIES =
             ImmutableList.<Integer>builder().add(
-                    VehiclePropertyIds.INFO_MAKE, VehiclePropertyIds.INFO_MODEL,
-                    VehiclePropertyIds.INFO_MODEL_YEAR, VehiclePropertyIds.INFO_FUEL_CAPACITY,
-                    VehiclePropertyIds.INFO_FUEL_TYPE, VehiclePropertyIds.INFO_EV_BATTERY_CAPACITY,
-                    VehiclePropertyIds.INFO_EV_CONNECTOR_TYPE,
-                    VehiclePropertyIds.INFO_FUEL_DOOR_LOCATION,
-                    VehiclePropertyIds.INFO_MULTI_EV_PORT_LOCATIONS,
-                    VehiclePropertyIds.INFO_EV_PORT_LOCATION, VehiclePropertyIds.INFO_DRIVER_SEAT,
-                    VehiclePropertyIds.INFO_EXTERIOR_DIMENSIONS,
-                    VehiclePropertyIds.ELECTRONIC_TOLL_COLLECTION_CARD_TYPE,
-                    VehiclePropertyIds.ELECTRONIC_TOLL_COLLECTION_CARD_STATUS)
+                            VehiclePropertyIds.INFO_MAKE,
+                            VehiclePropertyIds.INFO_MODEL,
+                            VehiclePropertyIds.INFO_MODEL_YEAR,
+                            VehiclePropertyIds.INFO_FUEL_CAPACITY,
+                            VehiclePropertyIds.INFO_FUEL_TYPE,
+                            VehiclePropertyIds.INFO_EV_BATTERY_CAPACITY,
+                            VehiclePropertyIds.INFO_EV_CONNECTOR_TYPE,
+                            VehiclePropertyIds.INFO_FUEL_DOOR_LOCATION,
+                            VehiclePropertyIds.INFO_MULTI_EV_PORT_LOCATIONS,
+                            VehiclePropertyIds.INFO_EV_PORT_LOCATION,
+                            VehiclePropertyIds.INFO_DRIVER_SEAT,
+                            VehiclePropertyIds.INFO_EXTERIOR_DIMENSIONS,
+                            VehiclePropertyIds.ELECTRONIC_TOLL_COLLECTION_CARD_TYPE,
+                            VehiclePropertyIds.ELECTRONIC_TOLL_COLLECTION_CARD_STATUS,
+                            // Hard coding property ID - GENERAL_SAFETY_REGULATION_COMPLIANCE
+                            0x11400F47)
                     .build();
 
     private CarPropertyManager mCarPropertyManager;
