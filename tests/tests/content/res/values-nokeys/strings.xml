@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (C) 2021 The Android Open Source Project
+<!-- Copyright (C) 2009 The Android Open Source Project
 
      Licensed under the Apache License, Version 2.0 (the "License");
      you may not use this file except in compliance with the License.
@@ -14,10 +14,9 @@
      limitations under the License.
 -->
 
-<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
-    <string name="config_overridden_string">landscape</string>
-    <string name="simple">simple landscape</string>
+<resources>
+    <string name="simple">simple nokeys</string>
     <bag type="style" name="bag">
-        <item type="string" name="testString">bag landscape</item>
+        <item type="string" name="testString">bag nokeys</item>
     </bag>
 </resources>
