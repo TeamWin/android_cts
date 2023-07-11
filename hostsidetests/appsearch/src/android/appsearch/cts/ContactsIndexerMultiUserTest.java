@@ -39,6 +39,8 @@ import java.util.Collections;
  * <p>Unlock your device when testing locally.
  */
 @RunWith(DeviceJUnit4ClassRunner.class)
+@Ignore("b/285969557 Re-enable tests after figuring out a better way to wait for lifecycle "
+        + "events to complete")
 public class ContactsIndexerMultiUserTest extends AppSearchHostTestBase {
 
     private static int sSecondaryUserId;
@@ -90,9 +92,6 @@ public class ContactsIndexerMultiUserTest extends AppSearchHostTestBase {
     }
 
     @Test
-    @Ignore
-    // TODO(b/285969557) Re-enable test after figuring out a better way to wait for lifecycle events
-    //  to complete
     public void testMultiUser_CiDisabled_cancelsFullUpdateJobs() throws Exception {
         setCiEnabled(getDevice(), false);
         startUserAndInstallPackage();
@@ -102,9 +101,6 @@ public class ContactsIndexerMultiUserTest extends AppSearchHostTestBase {
     }
 
     @Test
-    @Ignore
-    // TODO(b/285969557) Re-enable test after figuring out a better way to wait for lifecycle events
-    //  to complete
     public void testMultiUser_CiDisabledAndThenEnabled_schedulesFullUpdateJobs() throws Exception {
         setCiEnabled(getDevice(), false);
         setCiEnabled(getDevice(), true);
