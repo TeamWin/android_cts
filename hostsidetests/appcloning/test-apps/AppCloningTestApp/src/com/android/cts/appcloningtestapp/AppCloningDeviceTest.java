@@ -228,6 +228,9 @@ public class AppCloningDeviceTest {
         if (imageNameToBeCreated.equalsIgnoreCase("owner_profile_image")) {
             // Green represents owner profile image
             color = Color.GREEN;
+        } else if (imageNameToBeCreated.equalsIgnoreCase("clone_profile_image")) {
+            // Blue represents clone profile image
+            color = Color.BLUE;
         }
 
         Bitmap bitmap = createImage(1000, 1000, color);
@@ -277,6 +280,37 @@ public class AppCloningDeviceTest {
 
         assertThat(verifiedImageInOwnerProfile).isTrue();
         assertThat(verifiedImageInClonedProfile).isFalse();
+    }
+
+    @Test
+    public void testMediaStoreManager_verifyOwnerUserImageSavedInClonedUserOnly() throws Exception {
+        // This method will be called only after writing images in owner and clone profile
+        String imageNameToBeVerifiedInCloneProfile = getImageNameToBeVerifiedInCloneProfile();
+        Uri collection = MediaStore.Images.Media.getContentUri(MediaStore.VOLUME_EXTERNAL);
+
+        List<Image> imageList = MediaStoreReadOperation.getImageFilesFromMediaStore(mContext,
+                collection);
+        boolean verifiedImageInOwnerProfile = false;
+        boolean verifiedImageInClonedProfile = false;
+
+        for (Image image: imageList) {
+            // Eg: Data: /storage/emulated/<user_id>/Pictures/<imageName>.jpg
+            // user_id will be 0 for owner
+            if (!verifiedImageInOwnerProfile && image.getData().contains("/emulated/0/")
+                    && image.getDisplayName().startsWith(imageNameToBeVerifiedInCloneProfile)) {
+                verifiedImageInOwnerProfile = true;
+                continue;
+            }
+            // user_id will be <clonedUserId> for clonedOwner storage
+            if (!verifiedImageInClonedProfile && image.getData().contains("/emulated/"
+                    + getCloneUserId() + "/")
+                    && image.getDisplayName().startsWith(imageNameToBeVerifiedInCloneProfile)) {
+                verifiedImageInClonedProfile = true;
+            }
+        }
+
+        assertThat(verifiedImageInOwnerProfile).isFalse();
+        assertThat(verifiedImageInClonedProfile).isTrue();
     }
 
     /**
