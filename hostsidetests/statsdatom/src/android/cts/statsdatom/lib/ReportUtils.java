@@ -82,12 +82,15 @@ public final class ReportUtils {
         data.sort(Comparator.comparing(EventMetricData::getElapsedTimestampNanos));
 
         CLog.d("Get EventMetricDataList as following:\n");
-        for (EventMetricData d : data) {
-            CLog.d("Atom at " + d.getElapsedTimestampNanos() + ":\n" + d.getAtom().toString());
-        }
+        printEventMetricDataList(data);
         return data;
     }
 
+    public static void printEventMetricDataList(List<EventMetricData> data) {
+        for (EventMetricData d : data) {
+            CLog.d("Atom at " + d.getElapsedTimestampNanos() + ":\n" + d.getAtom().toString());
+        }
+    }
 
     private static List<EventMetricData> backfillAggregatedAtomsInEventMetric(
             EventMetricData metricData) {
