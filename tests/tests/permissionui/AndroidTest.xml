@@ -78,6 +78,8 @@
         <option name="run-command" value="settings put secure user_setup_complete 1" />
         <!-- disable DeprecatedAbi warning -->
         <option name="run-command" value="setprop debug.wm.disable_deprecated_abi_dialog 1" />
+        <!-- disable DeprecatedTargetSdk warning -->
+        <option name="run-command" value="setprop debug.wm.disable_deprecated_target_sdk_dialog 1" />
     </target_preparer>
 
     <metrics_collector class="com.android.tradefed.device.metric.FilePullerLogCollector">
