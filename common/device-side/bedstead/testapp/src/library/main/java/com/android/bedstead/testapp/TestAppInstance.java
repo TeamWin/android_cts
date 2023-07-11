@@ -63,6 +63,7 @@ import android.telephony.RemoteSmsManagerWrapper;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.appops.AppOps;
 import com.android.bedstead.nene.exceptions.NeneException;
+import com.android.bedstead.nene.packages.Package;
 import com.android.bedstead.nene.packages.ProcessReference;
 import com.android.bedstead.nene.users.UserReference;
 
@@ -143,6 +144,13 @@ public class TestAppInstance implements AutoCloseable, ConnectionListener {
      */
     public UserReference user() {
         return mUser;
+    }
+
+    /**
+     * The {@link Package} of the {@link TestApp} this instance refers to.
+     */
+    public Package pkg() {
+        return Package.of(packageName());
     }
 
     /**
