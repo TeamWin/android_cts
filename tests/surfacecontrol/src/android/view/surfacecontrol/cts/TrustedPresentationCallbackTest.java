@@ -424,7 +424,7 @@ public class TrustedPresentationCallbackTest {
         mResultsLock.wait(WAIT_TIME_MS);
 
         if (!mReceivedResults) {
-            CtsWindowInfoUtils.dumpWindowsOnScreen(TAG, mName);
+            CtsWindowInfoUtils.dumpWindowsOnScreen(TAG, "test " + mName.getMethodName());
         }
         // Make sure we received the results and not just timed out
         assertTrue("Timed out waiting for results", mReceivedResults);

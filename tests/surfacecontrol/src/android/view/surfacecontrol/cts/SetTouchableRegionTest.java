@@ -168,7 +168,7 @@ public class SetTouchableRegionTest {
         // and so the tap should not reach us
         boolean success = mMotionRecordingView.waitForEvent(false /* receivedEvent */);
         if (!success) {
-            CtsWindowInfoUtils.dumpWindowsOnScreen(TAG, mName);
+            CtsWindowInfoUtils.dumpWindowsOnScreen(TAG, "test " + mName.getMethodName());
         }
         assertTrue(success);
 
@@ -194,7 +194,7 @@ public class SetTouchableRegionTest {
         // we should be reachable again.
         success = mMotionRecordingView.waitForEvent(true /* receivedEvent */);
         if (!success) {
-            CtsWindowInfoUtils.dumpWindowsOnScreen(TAG, mName);
+            CtsWindowInfoUtils.dumpWindowsOnScreen(TAG, "test " + mName.getMethodName());
         }
         assertTrue(success);
     }

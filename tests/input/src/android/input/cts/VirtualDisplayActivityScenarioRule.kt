@@ -34,16 +34,19 @@ import com.android.compatibility.common.util.SystemUtil
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import org.junit.Assert.assertTrue
+import org.junit.Assert.fail
 import org.junit.Assume.assumeTrue
 import org.junit.rules.ExternalResource
+import org.junit.rules.TestName
 
 /**
  * A test rule that sets up a virtual display, and launches the [CaptureEventActivity] on that
  * display.
  */
-class VirtualDisplayActivityScenarioRule : ExternalResource() {
+class VirtualDisplayActivityScenarioRule(val testName: TestName) : ExternalResource() {
 
     companion object {
+        const val TAG = "VirtualDisplayActivityScenarioRule"
         const val VIRTUAL_DISPLAY_NAME = "CtsTouchScreenTestVirtualDisplay"
         const val WIDTH = 480
         const val HEIGHT = 800
@@ -157,7 +160,10 @@ class VirtualDisplayActivityScenarioRule : ExternalResource() {
         WindowManagerStateHelper().waitForAppTransitionIdleOnDisplay(displayId)
         instrumentation.uiAutomation.syncInputTransactions()
         instrumentation.waitForIdleSync()
-        assertTrue("Window did not become visible",
-            CtsWindowInfoUtils.waitForWindowOnTop(activity.window!!))
+        if (!CtsWindowInfoUtils.waitForWindowOnTop(activity.window!!)) {
+            CtsWindowInfoUtils.dumpWindowsOnScreen(TAG,
+                "test: ${testName.methodName}, virtualDisplayId=$displayId")
+            fail("Window did not become visible")
+        }
     }
 }
