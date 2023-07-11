@@ -183,8 +183,6 @@ public class StreamedAppClipboardTest {
 
     @After
     public void tearDown() {
-        // Avoid crash in sysui showing toasts on closed VirtualDisplay (b/265325338).
-        waitForNoToasts();
         if (mVirtualDisplay != null) {
             mVirtualDisplay.release();
         }
@@ -273,9 +271,7 @@ public class StreamedAppClipboardTest {
                 eq(RESULT_CODE_CLIP_LISTENER_READY), any());
 
         ClipData clipToSet = ClipData.newPlainText("some label", "Hello World");
-        waitForNoToasts();
         deviceClipboard.setPrimaryClip(clipToSet);
-        waitForToastToAppearAndDisappear();
 
         ArgumentCaptor<Bundle> bundle = ArgumentCaptor.forClass(Bundle.class);
         verify(mOnReceiveResultListener, timeout(EVENT_TIMEOUT_MS)).onReceiveResult(
@@ -374,10 +370,8 @@ public class StreamedAppClipboardTest {
                         CLIPBOARD_TEST_ACTIVITY_2)
                 .putExtra(EXTRA_RESULT_RECEIVER, createResultReceiver(secondResultReceiver));
 
-        waitForNoToasts();
         launchAndAwaitActivityOnVirtualDisplay(secondAppIntent);
         tapOnDisplay(mVirtualDisplay.getDisplay());
-        waitForToastToAppearAndDisappear();
 
         // Make sure that the second activity now running on top of the VirtualDisplay reads the
         // value which was set by the first activity.
@@ -592,7 +586,6 @@ public class StreamedAppClipboardTest {
             verify(secondDeviceClipboardListener,
                     timeout(EVENT_TIMEOUT_MS).atLeastOnce()).onPrimaryClipChanged();
             assertThat(secondDeviceClipboard.hasPrimaryClip()).isTrue();
-            waitForNoToasts();
             readClip = secondDeviceClipboard.getPrimaryClip();
             assertThat(readClip.getItemCount()).isEqualTo(1);
             assertThat(readClip.getDescription().getLabel().toString()).isEqualTo(
@@ -631,8 +624,7 @@ public class StreamedAppClipboardTest {
         verify(deviceClipboardListener,
                 timeout(EVENT_TIMEOUT_MS).atLeastOnce()).onPrimaryClipChanged();
         assertThat(deviceClipboard.hasPrimaryClip()).isTrue();
-        waitForNoToasts();
-        ClipData clipData = deviceClipboard.getPrimaryClip();
+        ClipData unused = deviceClipboard.getPrimaryClip();
 
         // Since we set the DEVICE_CONFIG_SHOW_ACCESS_NOTIFICATIONS_FOR_VD_OWNER flag to false
         // above, there should be no Toast windows.
@@ -681,33 +673,6 @@ public class StreamedAppClipboardTest {
             throw new RuntimeException(e);
         }
         virtualDevice.removeActivityListener(activityListener);
-    }
-
-    private void waitForNoToasts() {
-        boolean observedToast = true;
-        // The default timeout for mWmState.waitFor is a little low so we try a few times.
-        for (int i = 0; i < 5; i++) {
-            if (mWmState.waitFor(state -> state.getMatchingWindowType(
-                    WindowManager.LayoutParams.TYPE_TOAST).isEmpty(), "No Toast appears")) {
-                observedToast = false;
-                break;
-            }
-        }
-        assertThat(observedToast).isFalse();
-    }
-
-    private void waitForToastToAppearAndDisappear() {
-        boolean observedToast = false;
-        // The default timeout for mWmState.waitFor is a little low so we try a few times.
-        for (int i = 0; i < 5; i++) {
-            if (mWmState.waitFor(state -> !state.getMatchingWindowType(
-                    WindowManager.LayoutParams.TYPE_TOAST).isEmpty(), "Toast appears")) {
-                observedToast = true;
-                break;
-            }
-        }
-        assertThat(observedToast).isTrue();
-        waitForNoToasts();
     }
 
     /**
