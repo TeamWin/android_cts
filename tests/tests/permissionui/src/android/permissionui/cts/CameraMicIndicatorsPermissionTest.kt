@@ -243,7 +243,6 @@ class CameraMicIndicatorsPermissionTest : StsExtraBusinessLogicTestCase {
     // TODO b/269687722: remove once mainline presubmit uses a more recent S build
     @Test
     @AsbSecurityTest(cveBugId = [258672042])
-    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE, codeName = "UpsideDownCake")
     fun testMicIndicatorWithManualFinishOpStillShows() {
         changeSafetyCenterFlag(false.toString())
         testCameraAndMicIndicator(useMic = true, useCamera = false, finishEarly = true)
