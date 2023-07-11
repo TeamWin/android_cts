@@ -46,10 +46,8 @@ class YuvPlusDngTest(its_base_test.ItsBaseTest):
       props = cam.override_with_hidden_physical_camera_props(props)
       name_with_log_path = os.path.join(self.log_path, _NAME)
 
-      # check SKIP conditions
-      camera_properties_utils.skip_unless(
-          camera_properties_utils.raw(props) and
-          camera_properties_utils.read_3a(props))
+      # Check SKIP conditions
+      camera_properties_utils.skip_unless(camera_properties_utils.raw(props))
 
       # Load chart for scene
       its_session_utils.load_scene(
