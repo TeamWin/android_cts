@@ -16,13 +16,12 @@
 
 package android.appsecurity.cts;
 
-import com.android.tradefed.util.RunUtil;
-import static android.appsecurity.cts.SplitTests.ABI_TO_APK;
-import static android.appsecurity.cts.SplitTests.APK;
-import static android.appsecurity.cts.SplitTests.APK_mdpi;
-import static android.appsecurity.cts.SplitTests.APK_xxhdpi;
-import static android.appsecurity.cts.SplitTests.CLASS;
-import static android.appsecurity.cts.SplitTests.PKG;
+import static android.appsecurity.cts.Utils.ABI_TO_APK;
+import static android.appsecurity.cts.Utils.APK;
+import static android.appsecurity.cts.Utils.APK_mdpi;
+import static android.appsecurity.cts.Utils.APK_xxhdpi;
+import static android.appsecurity.cts.Utils.CLASS;
+import static android.appsecurity.cts.Utils.PKG;
 
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -33,6 +32,7 @@ import com.android.tradefed.device.CollectingOutputReceiver;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
+import com.android.tradefed.util.RunUtil;
 
 import org.junit.After;
 import org.junit.Assert;

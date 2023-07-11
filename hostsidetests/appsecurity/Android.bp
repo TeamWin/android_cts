@@ -16,15 +16,10 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-java_test_host {
-    name: "CtsAppSecurityHostTestCases",
+java_library_host {
+    name: "CtsAppSecurityUtils",
     defaults: ["cts_defaults"],
 
-    // Only compile source java files in this apk.
-    srcs: [
-        "src/**/*.java",
-        "src/**/*.kt",
-    ],
     libs: [
         "cts-tradefed",
         "tradefed",
@@ -41,7 +36,42 @@ java_test_host {
         "sts-host-util",
     ],
 
+    srcs: [
+        "src/**/AppSecurityPreparer.java",
+        "src/**/BaseAppSecurityTest.java",
+        "src/**/BaseInstallMultiple.java",
+        "src/**/ExceptionUtils.java",
+        "src/**/LockScreenInspector.java",
+        "src/**/MatcherUtils.java",
+        "src/**/ThrowingRunnable.java",
+        "src/**/Utils.java",
+    ],
+}
+
+java_defaults {
+    name: "appsecurity_cts_defaults",
+    defaults: ["cts_defaults"],
+
+    libs: [
+        "cts-tradefed",
+        "tradefed",
+        "compatibility-host-util",
+        "truth-prebuilt",
+        "hamcrest-library",
+    ],
+
+    static_libs: [
+        "CtsAppSecurityUtils",
+        "CompatChangeGatingTestBase",
+        "CtsPkgInstallerConstants",
+        "cts-host-utils",
+        "cts-statsd-atom-host-test-utils",
+        "sts-host-util",
+    ],
+
     java_resource_dirs: ["res"],
+
+    per_testcase_directory: true,
 
     // tag this module as a cts test artifact
     test_suites: [
@@ -279,7 +309,176 @@ java_test_host {
         ":v3-rsa-2048-decl-knownSigner-str-res-ec-p256-1",
         ":v3-rsa-2048-declperm",
     ],
-    per_testcase_directory: true,
+}
+
+java_test_host {
+    name: "CtsAppSecurityHostTestCases",
+    defaults: ["appsecurity_cts_defaults"],
+
+    srcs: [
+        // TODO(b/288320695) remove catch-all globs once the test mapping is fixed
+        "src/**/*.java",
+        "src/**/*.kt",
+        "src/**/ApexSignatureVerificationTest.java",
+        "src/**/AppSecurityTests.java",
+        "src/**/DeviceIdentifierTest.java",
+        "src/**/KeySetHostTest.java",
+        "src/**/ListeningPortsTest.java",
+        "src/**/PkgInstallSignatureVerificationTest.java",
+        "src/**/StatsdAppSecurityAtomTest.java",
+    ],
+}
+
+java_test_host {
+    name: "CtsPermissionsHostTestCases",
+    defaults: ["appsecurity_cts_defaults"],
+
+    srcs: [
+        "src/**/AccessSerialNumberTest.java",
+        "src/**/AppOpsTest.java",
+        "src/**/LocationPolicyTest.java",
+        "src/**/PermissionEscalationTest.java",
+    ],
+    test_config: "PermissionsTests.xml",
+}
+
+java_test_host {
+    name: "CtsAppDataIsolationHostTestCases",
+    defaults: ["appsecurity_cts_defaults"],
+
+    srcs: [
+        "src/**/AppDataIsolationTests.java",
+    ],
+    test_config: "AppDataIsolationTests.xml",
+}
+
+java_test_host {
+    name: "CtsUseEmbeddedDexHostTestCases",
+    defaults: ["appsecurity_cts_defaults"],
+
+    srcs: [
+        "src/**/UseEmbeddedDexTest.java",
+    ],
+    test_config: "UseEmbeddedDexTests.xml",
+}
+
+java_test_host {
+    name: "CtsPackageManagerHostTestCases",
+    defaults: ["appsecurity_cts_defaults"],
+
+    srcs: [
+        "src/**/ApplicationVisibilityTest.java",
+        "src/**/AuthBoundKeyTest.java",
+        "src/**/BaseInstallMultiple.java",
+        "src/**/IsolatedSplitsTests.java",
+        "src/**/MajorVersionTest.java",
+        "src/**/PackageResolutionHostTest.java",
+        "src/**/PackageSetInstallerTest.kt",
+        "src/**/PackageVisibilityTest.java",
+        "src/**/PrivilegedUpdateTests.java",
+        "src/**/ReadableSettingsFieldsTest.java",
+        "src/**/SessionReferrerUriTest.java",
+        "src/**/SettingsProviderInvalidKeyTest.java",
+        "src/**/SharedUserIdTest.java",
+        "src/**/SplitTests.java",
+        "src/**/UseProcessTest.java",
+    ],
+    test_config: "PackageManagerTests.xml",
+}
+
+java_test_host {
+    name: "CtsInstantAppsHostTestCases",
+    defaults: ["appsecurity_cts_defaults"],
+
+    srcs: [
+        "src/**/EphemeralTest.java",
+        "src/**/InstantAppUserTest.java",
+        "src/**/InstantCookieHostTest.java",
+    ],
+    test_config: "InstantAppsTests.xml",
+}
+
+java_test_host {
+    name: "CtsAdoptableHostTestCases",
+    defaults: ["appsecurity_cts_defaults"],
+
+    srcs: [
+        "src/**/*Adoptable*.java",
+    ],
+    test_config: "AdoptableTests.xml",
+}
+
+java_test_host {
+    name: "CtsDirectBootHostTestCases",
+    defaults: ["appsecurity_cts_defaults"],
+
+    srcs: [
+        "src/**/*DirectBoot*.java",
+    ],
+    test_config: "DirectBootTests.xml",
+}
+
+java_test_host {
+    name: "CtsStorageHostTestCases",
+    defaults: ["appsecurity_cts_defaults"],
+
+    srcs: [
+        "src/**/*Storage*.java",
+    ],
+    test_config: "StorageTests.xml",
+}
+
+java_test_host {
+    name: "CtsDocumentsHostTestCases",
+    defaults: ["appsecurity_cts_defaults"],
+
+    srcs: [
+        "src/**/*Documents*.java",
+        "src/**/ScopedDirectoryAccessTest.java",
+    ],
+    test_config: "DocumentsTests.xml",
+}
+
+java_test_host {
+    name: "CtsResumeOnRebootHostTestCases",
+    defaults: ["appsecurity_cts_defaults"],
+
+    srcs: [
+        "src/**/*ResumeOnReboot*.java",
+        "src/**/BootCountTrackerRule.java",
+        "src/**/NormalizeScreenStateRule.java",
+    ],
+    test_config: "ResumeOnRebootTests.xml",
+}
+
+java_test_host {
+    name: "CtsApkVerityInstallHostTestCases",
+    defaults: ["appsecurity_cts_defaults"],
+
+    srcs: [
+        "src/**/ApkVerityInstallTest.java",
+    ],
+    test_config: "ApkVerityInstallTests.xml",
+}
+
+java_test_host {
+    name: "CtsCorruptApkHostTestCases",
+    defaults: ["appsecurity_cts_defaults"],
+
+    srcs: [
+        "src/**/CorruptApkTests.java",
+    ],
+    test_config: "CorruptApkTests.xml",
+}
+
+java_test_host {
+    name: "CtsOverlayHostTestCases",
+    defaults: ["appsecurity_cts_defaults"],
+
+    srcs: [
+        "src/**/OverlayHostTest.java",
+    ],
+    test_config: "OverlayTests.xml",
 }
 
 filegroup {

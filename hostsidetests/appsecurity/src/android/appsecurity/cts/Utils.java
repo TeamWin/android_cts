@@ -16,7 +16,6 @@
 
 package android.appsecurity.cts;
 
-import com.android.tradefed.util.RunUtil;
 import com.android.ddmlib.AdbCommandRejectedException;
 import com.android.ddmlib.CollectingOutputReceiver;
 import com.android.ddmlib.Log;
@@ -28,8 +27,10 @@ import com.android.tradefed.result.CollectingTestListener;
 import com.android.tradefed.result.TestDescription;
 import com.android.tradefed.result.TestResult;
 import com.android.tradefed.result.TestRunResult;
+import com.android.tradefed.util.RunUtil;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
@@ -38,6 +39,36 @@ public class Utils {
     private static final String LOG_TAG = Utils.class.getSimpleName();
 
     public static final int USER_SYSTEM = 0;
+
+    static final String PKG = "com.android.cts.splitapp";
+    static final String CLASS = PKG + ".SplitAppTest";
+
+    static final String APK = "CtsSplitApp.apk";
+
+    static final String APK_mdpi = "CtsSplitApp_mdpi-v4.apk";
+    static final String APK_hdpi = "CtsSplitApp_hdpi-v4.apk";
+    static final String APK_xhdpi = "CtsSplitApp_xhdpi-v4.apk";
+    static final String APK_xxhdpi = "CtsSplitApp_xxhdpi-v4.apk";
+
+    static final String APK_x86 = "CtsSplitApp_x86.apk";
+    static final String APK_x86_64 = "CtsSplitApp_x86_64.apk";
+    static final String APK_armeabi_v7a = "CtsSplitApp_armeabi-v7a.apk";
+    static final String APK_armeabi = "CtsSplitApp_armeabi.apk";
+    static final String APK_arm64_v8a = "CtsSplitApp_arm64-v8a.apk";
+    static final String APK_mips64 = "CtsSplitApp_mips64.apk";
+    static final String APK_mips = "CtsSplitApp_mips.apk";
+
+    static final HashMap<String, String> ABI_TO_APK = new HashMap<>();
+
+    static {
+        ABI_TO_APK.put("x86", APK_x86);
+        ABI_TO_APK.put("x86_64", APK_x86_64);
+        ABI_TO_APK.put("armeabi-v7a", APK_armeabi_v7a);
+        ABI_TO_APK.put("armeabi", APK_armeabi);
+        ABI_TO_APK.put("arm64-v8a", APK_arm64_v8a);
+        ABI_TO_APK.put("mips64", APK_mips64);
+        ABI_TO_APK.put("mips", APK_mips);
+    }
 
     public static void runDeviceTestsAsCurrentUser(ITestDevice device, String packageName,
             String testClassName, String testMethodName) throws DeviceNotAvailableException {
