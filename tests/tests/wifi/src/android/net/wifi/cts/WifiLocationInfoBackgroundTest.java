@@ -26,6 +26,7 @@ import static org.junit.Assume.assumeTrue;
 
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
 import android.os.Build;
@@ -93,6 +94,10 @@ public class WifiLocationInfoBackgroundTest extends WifiJUnit4TestBase{
         if (!WifiFeature.isWifiSupported(sContext)) {
             return;
         }
+        // TODO(b/290671748): re-enable the test when we havea solution on wear devices
+        if (isWearDevice()) {
+            return;
+        }
         sShouldRunTest = true;
 
         sWifiManager = sContext.getSystemService(WifiManager.class);
@@ -127,6 +132,10 @@ public class WifiLocationInfoBackgroundTest extends WifiJUnit4TestBase{
         sPower = sContext.getSystemService(PowerManager.class);
         sLock = sPower.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, TAG);
         turnScreenOff();
+    }
+
+    private static boolean isWearDevice() {
+        return sContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH);
     }
 
     @Before
