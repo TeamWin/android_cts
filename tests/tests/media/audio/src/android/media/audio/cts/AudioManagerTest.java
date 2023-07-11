@@ -47,6 +47,7 @@ import static android.provider.Settings.System.SOUND_EFFECTS_ENABLED;
 import static com.android.media.mediatestutils.TestUtils.getFutureForIntent;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -97,6 +98,7 @@ import android.view.SoundEffectConstants;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.AmUtils;
 import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.MediaUtils;
@@ -264,6 +266,8 @@ public class AudioManagerTest {
                 mDoNotCheckUnmute = true;
             }
         }
+        // Reduce flake due to late intent delivery
+        AmUtils.waitForBroadcastIdle();
     }
 
     @After
@@ -373,8 +377,6 @@ public class AudioManagerTest {
     @AppModeFull(reason = "ACTION_VOLUME_CHANGED is not sent to Instant apps (no FLAG_RECEIVER_VISIBLE_TO_INSTANT_APPS)")
     @Test
     public void testVolumeChangedIntent() throws Exception {
-        final MyBlockingIntentReceiver receiver =
-                new MyBlockingIntentReceiver(AudioManager.ACTION_VOLUME_CHANGED);
         if (mAudioManager.isVolumeFixed()) {
             return;
         }
@@ -382,36 +384,34 @@ public class AudioManagerTest {
         getInstrumentation().getUiAutomation()
                 .adoptShellPermissionIdentity(Manifest.permission.STATUS_BAR_SERVICE);
         mAudioManager.disableSafeMediaVolume();
+        getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
 
-        try {
-            mContext.registerReceiver(receiver,
-                    new IntentFilter(AudioManager.ACTION_VOLUME_CHANGED));
-            // only listen for the STREAM_MUSIC volume changes
-            receiver.setWaitForIntExtra(AudioManager.EXTRA_VOLUME_STREAM_TYPE, STREAM_MUSIC);
-            int mediaVol = mAudioManager.getStreamVolume(STREAM_MUSIC);
-            final int origVol = mediaVol;
-            final int maxMediaVol = mAudioManager.getStreamMaxVolume(STREAM_MUSIC);
-            // change media volume from current value
-            mAudioManager.setStreamVolume(STREAM_MUSIC,
-                    mediaVol == maxMediaVol ? --mediaVol : ++mediaVol,
-                    0 /*flags*/);
-            // verify a change was reported
-            final boolean intentFired = receiver.waitForExpectedAction(
-                    VOLUME_CHANGED_INTENT_TIMEOUT_MS);
-            assertTrue("VOLUME_CHANGED_ACTION wasn't fired for change from "
-                    + origVol + " to " + mediaVol, intentFired);
-            // verify the new value is in the extras
-            final Intent intent = receiver.getIntent();
-            assertEquals("Not an intent for STREAM_MUSIC", STREAM_MUSIC,
-                    intent.getIntExtra(AudioManager.EXTRA_VOLUME_STREAM_TYPE, -1));
-            assertEquals("New STREAM_MUSIC volume not as expected", mediaVol,
-                    intent.getIntExtra(AudioManager.EXTRA_VOLUME_STREAM_VALUE, -1));
-            assertEquals("Previous STREAM_MUSIC volume not as expected", origVol,
-                    intent.getIntExtra(AudioManager.EXTRA_PREV_VOLUME_STREAM_VALUE, -1));
-        } finally {
-            mContext.unregisterReceiver(receiver);
-            getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
-        }
+        var future = mCancelRule.registerFuture(getFutureForIntent(
+                    mContext,
+                    AudioManager.ACTION_VOLUME_CHANGED,
+                    i -> (i != null)
+                        && (i.getIntExtra(AudioManager.EXTRA_VOLUME_STREAM_TYPE,
+                                Integer.MIN_VALUE) == STREAM_MUSIC)));
+
+        int mediaVol = mAudioManager.getStreamVolume(STREAM_MUSIC);
+        final int origVol = mediaVol;
+        final int maxMediaVol = mAudioManager.getStreamMaxVolume(STREAM_MUSIC);
+        // change media volume from current value
+        mAudioManager.setStreamVolume(STREAM_MUSIC,
+                mediaVol == maxMediaVol ? --mediaVol : ++mediaVol,
+                0 /*flags*/);
+        // verify a change was reported
+        final Intent intent = future.get(VOLUME_CHANGED_INTENT_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+
+        assertWithMessage("Not an intent for STREAM_MUSIC")
+                .that(intent.getIntExtra(AudioManager.EXTRA_VOLUME_STREAM_TYPE, -1))
+                .isEqualTo(STREAM_MUSIC);
+        assertWithMessage("New STREAM_MUSIC volume not as expected")
+                .that(intent.getIntExtra(AudioManager.EXTRA_VOLUME_STREAM_VALUE, -1))
+                .isEqualTo(mediaVol);
+        assertWithMessage("Previous STREAM_MUSIC volume not as expected")
+                .that(intent.getIntExtra(AudioManager.EXTRA_PREV_VOLUME_STREAM_VALUE, -1))
+                .isEqualTo(origVol);
     }
 
     private static final class MyBlockingIntentReceiver extends BroadcastReceiver {
