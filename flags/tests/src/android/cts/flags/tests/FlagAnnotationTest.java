@@ -17,6 +17,7 @@
 package android.cts.flags.tests;
 
 import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.fail;
 
 import android.platform.test.annotations.RequiresFlagsDisabled;
 import android.platform.test.annotations.RequiresFlagsEnabled;
@@ -57,7 +58,10 @@ public final class FlagAnnotationTest {
 
     @Test
     @RequiresFlagsEnabled(Flags.FLAG_READWRITE_DISABLED_FLAG)
-    public void requiresReadonlyDisabledFlagEnabled_skip() {}
+    public void requiresReadonlyDisabledFlagEnabled_skip() {
+        // Should not run.
+        fail();
+    }
 
     @Test
     @RequiresFlagsDisabled(Flags.FLAG_READWRITE_DISABLED_FLAG)
@@ -73,7 +77,10 @@ public final class FlagAnnotationTest {
 
     @Test
     @RequiresFlagsDisabled(Flags.FLAG_READWRITE_ENABLED_FLAG)
-    public void requiresReadonlyEnabledFlagDisabled_skip() {}
+    public void requiresReadonlyEnabledFlagDisabled_skip() {
+        // Should not run.
+        fail();
+    }
 
     @Test
     @RequiresFlagsEnabled(Flags.FLAG_READWRITE_ENABLED_FLAG)
@@ -85,7 +92,10 @@ public final class FlagAnnotationTest {
     @Test
     @RequiresFlagsEnabled(Flags.FLAG_READWRITE_DISABLED_FLAG)
     @RequiresFlagsDisabled(Flags.FLAG_READWRITE_ENABLED_FLAG)
-    public void requiresMultiStateFlags_skip() {}
+    public void requiresMultiStateFlags_skip() {
+        // Should not run.
+        fail();
+    }
 
     @Test
     @RequiresFlagsDisabled({Flags.FLAG_READWRITE_DISABLED_FLAG,
@@ -96,7 +106,10 @@ public final class FlagAnnotationTest {
 
     @Test
     @RequiresFlagsEnabled({Flags.FLAG_READWRITE_ENABLED_FLAG, Flags.FLAG_READWRITE_DISABLED_FLAG})
-    public void requiresMultiFlagsForTheSameState_skip() {}
+    public void requiresMultiFlagsForTheSameState_skip() {
+        // Should not run.
+        fail();
+    }
 
     @Test
     public void zLastTest_checkExecutedTests() { // Starts the method name with 'z' so that
