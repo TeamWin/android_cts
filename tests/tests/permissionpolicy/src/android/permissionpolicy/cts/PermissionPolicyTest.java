@@ -37,6 +37,8 @@ import android.util.ArraySet;
 import android.util.Log;
 import android.util.Xml;
 
+import com.android.modules.utils.build.SdkLevel;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -70,6 +72,9 @@ public class PermissionPolicyTest {
     private static final Date MANAGE_COMPANION_DEVICES_PATCH_DATE = parseDate("2020-07-01");
     private static final String MANAGE_COMPANION_DEVICES_PERMISSION
             = "android.permission.MANAGE_COMPANION_DEVICES";
+
+    private static final String SYNC_FLAGS_PERMISSION = "android.permission.SYNC_FLAGS";
+    private static final String WRITE_FLAGS_PERMISSION = "android.permission.WRITE_FLAGS";
 
     private static final String LOG_TAG = "PermissionProtectionTest";
 
@@ -503,6 +508,9 @@ public class PermissionPolicyTest {
 
     private boolean shouldSkipPermission(String permissionName) {
         switch (permissionName) {
+            case SYNC_FLAGS_PERMISSION:
+            case WRITE_FLAGS_PERMISSION:
+                return !SdkLevel.isAtLeastV();  // Added in u-qpr.
             case HIDE_NON_SYSTEM_OVERLAY_WINDOWS_PERMISSION:
                 return parseDate(SECURITY_PATCH).before(HIDE_NON_SYSTEM_OVERLAY_WINDOWS_PATCH_DATE);
             case MANAGE_COMPANION_DEVICES_PERMISSION:
