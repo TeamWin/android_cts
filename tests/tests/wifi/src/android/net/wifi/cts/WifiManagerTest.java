@@ -5935,7 +5935,7 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
         try {
             uiAutomation.adoptShellPermissionIdentity();
             boolean enabled = DeviceConfig.getBoolean(DEVICE_CONFIG_NAMESPACE,
-                    "application_qos_policy_api_enabled", false);
+                    "application_qos_policy_api_enabled", true);
 
             // If the feature flag is disabled, verify that all policies are rejected.
             if (!enabled) {
