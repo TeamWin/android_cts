@@ -38,7 +38,6 @@ import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
-import org.junit.rules.TestName
 import org.junit.runner.RunWith
 
 @MediumTest
@@ -51,9 +50,7 @@ class TouchScreenTest {
     @get:Rule
     val debugInputRule = DebugInputRule()
     @get:Rule
-    val testName = TestName()
-    @get:Rule
-    val virtualDisplayRule = VirtualDisplayActivityScenarioRule(testName)
+    val virtualDisplayRule = VirtualDisplayActivityScenarioRule()
 
     @Before
     fun setUp() {
