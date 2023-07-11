@@ -35,6 +35,8 @@ import com.android.compatibility.common.util.PollingCheck;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.Objects;
+
 @SmallTest
 @RunWith(AndroidJUnit4.class)
 public class VirtualKeyboardLayoutTest extends VirtualDeviceTestCase {
@@ -86,16 +88,17 @@ public class VirtualKeyboardLayoutTest extends VirtualDeviceTestCase {
                         .setLanguageTag(languageTag)
                         .setLayoutType(layoutType)
                         .build();
-        return mVirtualDevice.createVirtualKeyboard(keyboardConfig);
+        VirtualKeyboard virtualKeyboard =  mVirtualDevice.createVirtualKeyboard(keyboardConfig);
+        PollingCheck.waitFor(() -> isVirtualDeviceFullySetup(languageTag, layoutType),
+                "Waiting for " + languageTag + "(" + layoutType
+                        + ") keyboard to be configured correctly took too long");
+        return virtualKeyboard;
     }
 
     @Test
     public void createVirtualKeyboard_layoutSelected() {
         // Creates a virtual keyboard with french layout
         try (VirtualKeyboard virtualKeyboard = createVirtualKeyboard("fr-Latn-FR", "azerty")) {
-            PollingCheck.waitFor(
-                    () -> isCorrectlyConfigured(KeyEvent.KEYCODE_Q, KeyEvent.KEYCODE_A),
-                    "Waiting for French keyboard to be configured correctly took too long");
             assertKeyMappings(
                     new int[]{
                             KeyEvent.KEYCODE_Q,
@@ -118,9 +121,6 @@ public class VirtualKeyboardLayoutTest extends VirtualDeviceTestCase {
 
         // Creates a Virtual keyboard with Swiss german layout
         try (VirtualKeyboard virtualKeyboard = createVirtualKeyboard("de-CH", "qwertz")) {
-            PollingCheck.waitFor(
-                    () -> isCorrectlyConfigured(KeyEvent.KEYCODE_Y, KeyEvent.KEYCODE_Z),
-                    "Waiting for Swiss German keyboard to be configured correctly took too long");
             assertKeyMappings(
                     new int[]{
                             KeyEvent.KEYCODE_Q,
@@ -146,10 +146,6 @@ public class VirtualKeyboardLayoutTest extends VirtualDeviceTestCase {
     public void createVirtualKeyboard_layoutSelected_differentLayoutType() {
         // Creates a virtual keyboard with English(QWERTY) layout
         try (VirtualKeyboard virtualKeyboard = createVirtualKeyboard("en-Latn-US", "qwerty")) {
-            PollingCheck.waitFor(
-                    () -> isCorrectlyConfigured(KeyEvent.KEYCODE_Q, KeyEvent.KEYCODE_Q),
-                    "Waiting for English(QWERTY) keyboard to be configured correctly took too "
-                            + "long");
             assertKeyMappings(
                     new int[]{
                             KeyEvent.KEYCODE_Q,
@@ -172,10 +168,6 @@ public class VirtualKeyboardLayoutTest extends VirtualDeviceTestCase {
 
         // Creates a Virtual keyboard with English(Dvorak) layout
         try (VirtualKeyboard virtualKeyboard = createVirtualKeyboard("en-Latn-US", "dvorak")) {
-            PollingCheck.waitFor(
-                    () -> isCorrectlyConfigured(KeyEvent.KEYCODE_Q, KeyEvent.KEYCODE_APOSTROPHE),
-                    "Waiting for English(Dvorak) keyboard to be configured correctly took too "
-                            + "long");
             assertKeyMappings(
                     new int[]{
                             KeyEvent.KEYCODE_Q,
@@ -212,11 +204,6 @@ public class VirtualKeyboardLayoutTest extends VirtualDeviceTestCase {
         }
     }
 
-    private boolean isCorrectlyConfigured(int fromKeyCode, int toKeyCode) {
-        return mVirtualInputDevice != null
-                && mVirtualInputDevice.getKeyCodeForKeyLocation(fromKeyCode) == toKeyCode;
-    }
-
     private InputManager.InputDeviceListener createInputDeviceListener() {
         return new InputManager.InputDeviceListener() {
             @Override
@@ -226,7 +213,7 @@ public class VirtualKeyboardLayoutTest extends VirtualDeviceTestCase {
 
             @Override
             public void onInputDeviceRemoved(int deviceId) {
-                if (mVirtualInputDevice.getId() == deviceId) {
+                if (mVirtualInputDevice != null && mVirtualInputDevice.getId() == deviceId) {
                     mVirtualInputDevice = null;
                 }
             }
@@ -236,6 +223,12 @@ public class VirtualKeyboardLayoutTest extends VirtualDeviceTestCase {
                 updateVirtualInputDevice(deviceId);
             }
         };
+    }
+
+    private boolean isVirtualDeviceFullySetup(String languageTag, String layoutType) {
+        return mVirtualInputDevice != null && Objects.equals(
+                mVirtualInputDevice.getKeyboardLanguageTag(), languageTag) && Objects.equals(
+                mVirtualInputDevice.getKeyboardLayoutType(), layoutType);
     }
 
     private void updateVirtualInputDevice(int deviceId) {
