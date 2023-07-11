@@ -37,6 +37,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.TestName
 import org.junit.runner.RunWith
 
 @MediumTest
@@ -46,7 +47,9 @@ class DrawingTabletTest {
     private lateinit var verifier: EventVerifier
 
     @get:Rule
-    val virtualDisplayRule = VirtualDisplayActivityScenarioRule()
+    val testName = TestName()
+    @get:Rule
+    val virtualDisplayRule = VirtualDisplayActivityScenarioRule(testName)
 
     @Before
     fun setUp() {

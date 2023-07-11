@@ -39,6 +39,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.TestName
 import org.junit.runner.RunWith
 
 /**
@@ -74,7 +75,8 @@ class StylusButtonInputEventTest {
     }
 
     @get:Rule val debugInputRule = DebugInputRule()
-    @get:Rule val virtualDisplayRule = VirtualDisplayActivityScenarioRule()
+    @get:Rule val testName = TestName()
+    @get:Rule val virtualDisplayRule = VirtualDisplayActivityScenarioRule(testName)
     private val instrumentation = InstrumentationRegistry.getInstrumentation()
     private lateinit var statusBarManager: StatusBarManager
     private lateinit var initialStylusButtonsEnabledSetting: String
