@@ -73,6 +73,7 @@ import androidx.test.filters.SdkSuppress;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
+import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.ShellIdentityUtils;
 
 import java.util.ArrayDeque;
@@ -1121,7 +1122,9 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
      * Validate successful suspend/resume with a publish session.
      */
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
-    public void testSuspendResumeSuccessWithPublishSession() {
+    @ApiTest(apis = {"android.net.wifi.aware.DiscoverySession#suspend",
+            "android.net.wifi.aware.DiscoverySession#resume"})
+    public void testSuspendResumeFailWithoutNdpOnPublishSession() {
         if (!TestUtils.shouldTestWifiAware(getContext())) {
             return;
         }
@@ -1155,18 +1158,12 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
 
             // 2. suspend
             discoverySession.suspend();
-            assertTrue("Publish session suspended",
-                    discoveryCb.waitForCallback(
-                            DiscoverySessionCallbackTest.ON_SESSION_SUSPEND_SUCCEEDED));
-            assertFalse(discoveryCb.waitForCallback(
+            assertTrue(discoveryCb.waitForCallback(
                     DiscoverySessionCallbackTest.ON_SESSION_SUSPEND_FAILED));
 
             // 3. resume
             discoverySession.resume();
-            assertTrue("Publish session resumed",
-                    discoveryCb.waitForCallback(
-                            DiscoverySessionCallbackTest.ON_SESSION_RESUME_SUCCEEDED));
-            assertFalse(discoveryCb.waitForCallback(
+            assertTrue(discoveryCb.waitForCallback(
                     DiscoverySessionCallbackTest.ON_SESSION_RESUME_FAILED));
 
             // 4. destroy
@@ -1422,7 +1419,9 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
      * Validate successful suspend/resume with a subscribe session.
      */
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
-    public void testSuspendResumeSuccessWithSubscribeSession() {
+    @ApiTest(apis = {"android.net.wifi.aware.DiscoverySession#suspend",
+            "android.net.wifi.aware.DiscoverySession#resume"})
+    public void testSuspendResumeFailWithoutNdpOnSubscribeSession() {
         if (!TestUtils.shouldTestWifiAware(getContext())) {
             return;
         }
@@ -1457,18 +1456,12 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
 
             // 2. suspend
             discoverySession.suspend();
-            assertTrue("Subscribe session suspended",
-                    discoveryCb.waitForCallback(
-                            DiscoverySessionCallbackTest.ON_SESSION_SUSPEND_SUCCEEDED));
-            assertFalse(discoveryCb.waitForCallback(
+            assertTrue(discoveryCb.waitForCallback(
                     DiscoverySessionCallbackTest.ON_SESSION_SUSPEND_FAILED));
 
             // 3. resume
             discoverySession.resume();
-            assertTrue("Subscribe session resumed",
-                    discoveryCb.waitForCallback(
-                            DiscoverySessionCallbackTest.ON_SESSION_RESUME_SUCCEEDED));
-            assertFalse(discoveryCb.waitForCallback(
+            assertTrue(discoveryCb.waitForCallback(
                     DiscoverySessionCallbackTest.ON_SESSION_RESUME_FAILED));
 
             // 4. destroy
