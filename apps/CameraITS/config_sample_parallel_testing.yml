@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Note: This is a sample file for reference only. Users should edit and use config.yml instead.
 TestBeds:
   - Name: TEST_BED_TABLET_SCENES_INDEX_0  # Need 'tablet' in name for tablet scenes
     Controllers:
