@@ -238,11 +238,14 @@ public class ResumeOnRebootHostTest extends BaseHostJUnit4Test {
 
             deviceRebootAndApply();
 
-            switchUser(secondaryUser);
-            runDeviceTestsAsUser("testVerifyUnlockedAndDismiss", secondaryUser);
+            // Try to start early to calm down broadcast storms.
+            getDevice().startUser(secondaryUser);
 
             switchUser(initialUser);
             runDeviceTestsAsUser("testVerifyUnlockedAndDismiss", initialUser);
+
+            switchUser(secondaryUser);
+            runDeviceTestsAsUser("testVerifyUnlockedAndDismiss", secondaryUser);
         } finally {
             // Remove secure lock screens and tear down test app
             switchUser(secondaryUser);
