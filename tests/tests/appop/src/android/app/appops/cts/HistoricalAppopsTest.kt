@@ -23,31 +23,26 @@ import android.app.AppOpsManager.OPSTR_REQUEST_DELETE_PACKAGES
 import android.app.AppOpsManager.OP_FLAGS_ALL
 import android.os.Process
 import android.os.SystemClock
-import android.provider.DeviceConfig
 import androidx.test.InstrumentationRegistry
 import androidx.test.rule.ActivityTestRule
 import androidx.test.runner.AndroidJUnit4
 import androidx.test.uiautomator.UiDevice
 import com.google.common.truth.Truth.assertThat
+import java.time.Instant
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.locks.ReentrantLock
+import java.util.function.Consumer
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.time.Instant
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.locks.ReentrantLock
-import java.util.function.Consumer
-
-const val PROPERTY_PERMISSIONS_HUB_ENABLED = "permissions_hub_enabled"
 
 @RunWith(AndroidJUnit4::class)
 class HistoricalAppopsTest {
     private val uid = Process.myUid()
     private lateinit var appOpsManager: AppOpsManager
     private lateinit var packageName: String
-
-    private var wasPermissionsHubEnabled = false
 
     // Start an activity to make sure this app counts as being in the foreground
     @Rule @JvmField
@@ -65,10 +60,6 @@ class HistoricalAppopsTest {
         appOpsManager = context.getSystemService(AppOpsManager::class.java)!!
         packageName = context.packageName!!
         runWithShellPermissionIdentity {
-            wasPermissionsHubEnabled = DeviceConfig.getBoolean(DeviceConfig.NAMESPACE_PRIVACY,
-                    PROPERTY_PERMISSIONS_HUB_ENABLED, false)
-            DeviceConfig.setProperty(DeviceConfig.NAMESPACE_PRIVACY,
-                    PROPERTY_PERMISSIONS_HUB_ENABLED, true.toString(), false)
             appOpsManager.clearHistory()
             appOpsManager.resetHistoryParameters()
         }
@@ -79,8 +70,6 @@ class HistoricalAppopsTest {
         runWithShellPermissionIdentity {
             appOpsManager.clearHistory()
             appOpsManager.resetHistoryParameters()
-            DeviceConfig.setProperty(DeviceConfig.NAMESPACE_PRIVACY,
-                    PROPERTY_PERMISSIONS_HUB_ENABLED, wasPermissionsHubEnabled.toString(), false)
         }
     }
 

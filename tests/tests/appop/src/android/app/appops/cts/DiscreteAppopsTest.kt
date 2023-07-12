@@ -18,13 +18,13 @@ package android.app.appops.cts
 import android.app.AppOpsManager
 import android.app.AppOpsManager.HISTORICAL_MODE_ENABLED_ACTIVE
 import android.app.AppOpsManager.HISTORICAL_MODE_ENABLED_PASSIVE
-import android.app.AppOpsManager.HistoricalOps
+import android.app.AppOpsManager.HISTORY_FLAGS_ALL
 import android.app.AppOpsManager.HISTORY_FLAG_AGGREGATE
 import android.app.AppOpsManager.HISTORY_FLAG_DISCRETE
-import android.app.AppOpsManager.HISTORY_FLAGS_ALL
+import android.app.AppOpsManager.HistoricalOps
+import android.app.AppOpsManager.KEY_BG_STATE_SETTLE_TIME
 import android.app.AppOpsManager.KEY_FG_SERVICE_STATE_SETTLE_TIME
 import android.app.AppOpsManager.KEY_TOP_STATE_SETTLE_TIME
-import android.app.AppOpsManager.KEY_BG_STATE_SETTLE_TIME
 import android.app.AppOpsManager.MODE_ALLOWED
 import android.app.AppOpsManager.MODE_IGNORED
 import android.app.AppOpsManager.OPSTR_CAMERA
@@ -48,14 +48,14 @@ import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.UiDevice
 import com.android.compatibility.common.util.SystemUtil
 import com.google.common.truth.Truth.assertThat
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.locks.ReentrantLock
+import java.util.function.Consumer
 import org.junit.After
 import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.locks.ReentrantLock
-import java.util.concurrent.TimeUnit
-import java.util.function.Consumer
 
 private const val PACKAGE_NAME = "android.app.appops.cts.appfordiscretetest"
 private const val TIMEOUT_MILLIS = 45000L
@@ -86,7 +86,6 @@ class DiscreteAppopsTest {
     private lateinit var foregroundControlService: IAppOpsForegroundControlService
     private lateinit var serviceConnection: ServiceConnection
 
-    private var wasPermissionsHubEnabled = false
     private var previousDiscreteHistoryCutoffMillis: String? = null
     private var previousDiscreteHistoryQuantizationMillis: String? = null
     private var previousDiscreteHistoryOpFlags: String? = null
@@ -115,11 +114,6 @@ class DiscreteAppopsTest {
             previousDiscreteHistoryOpsCslist = DeviceConfig.getString(
                     NAMESPACE_PRIVACY, PROPERTY_OPS_LIST, null)
 
-            wasPermissionsHubEnabled = DeviceConfig.getBoolean(NAMESPACE_PRIVACY,
-                    PROPERTY_PERMISSIONS_HUB_ENABLED, false)
-
-            DeviceConfig.setProperty(NAMESPACE_PRIVACY,
-                    PROPERTY_PERMISSIONS_HUB_ENABLED, true.toString(), false)
             appOpsManager.clearHistory()
             appOpsManager.resetHistoryParameters()
 
@@ -167,8 +161,6 @@ class DiscreteAppopsTest {
         runWithShellPermissionIdentity {
             appOpsManager.clearHistory()
             appOpsManager.resetHistoryParameters()
-            DeviceConfig.setProperty(NAMESPACE_PRIVACY, PROPERTY_PERMISSIONS_HUB_ENABLED,
-                    wasPermissionsHubEnabled.toString(), false)
         }
         foregroundControlService.cleanup()
         context.unbindService(serviceConnection)
