@@ -86,7 +86,7 @@ public class DecoderRenderTest extends MediaTestBase {
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE, codeName = "UpsideDownCake")
     public void onFrameRendered_indicatesAllFramesRendered_toDisplay_vp9() throws Exception {
         onFrameRendered_indicatesAllFramesRendered(
-                "bbb_s1_640x360_webm_vp9_0p21_1600kbps_30fps_vorbis_stereo_128kbps_48000hz.webm",
+                "video_480x360_webm_vp9_333kbps_25fps_vorbis_stereo_128kbps_48000hz.webm",
                 getActivity().getSurfaceHolder().getSurface());
     }
 
@@ -98,9 +98,9 @@ public class DecoderRenderTest extends MediaTestBase {
     @ApiTest(apis = {"android.media.MediaCodec.OnFrameRenderedListener#onFrameRendered"})
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE, codeName = "UpsideDownCake")
     public void onFrameRendered_indicatesAllFramesRendered_toTexture_vp9() throws Exception {
-        OutputSurface outputSurface = new OutputSurface(640, 360);
+        OutputSurface outputSurface = new OutputSurface(480, 360);
         onFrameRendered_indicatesAllFramesRendered(
-                "bbb_s1_640x360_webm_vp9_0p21_1600kbps_30fps_vorbis_stereo_128kbps_48000hz.webm",
+                "video_480x360_webm_vp9_333kbps_25fps_vorbis_stereo_128kbps_48000hz.webm",
                 outputSurface.getSurface());
     }
 
