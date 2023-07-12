@@ -18,6 +18,8 @@ package com.android.cts.documentclient;
 
 import static android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION;
 import static android.content.Intent.FLAG_GRANT_WRITE_URI_PERMISSION;
+import static android.os.SystemClock.uptimeMillis;
+import static android.text.format.DateUtils.SECOND_IN_MILLIS;
 
 import android.app.Activity;
 import android.content.ContentResolver;
@@ -42,7 +44,6 @@ import android.support.test.uiautomator.UiScrollable;
 import android.support.test.uiautomator.UiSelector;
 import android.test.MoreAsserts;
 import android.text.TextUtils;
-import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -78,29 +79,52 @@ public class DocumentsClientTest extends DocumentsClientTestCase {
     private static final Duration SCROLL_ACKNOWLEDGEMENT_TIMEOUT = Duration.ofMillis(500);
     private long mOriginalScrollAcknowledgementTimeout;
 
-    private UiSelector findRootListSelector() throws UiObjectNotFoundException {
+    private UiSelector findRootListSelector() {
         return new UiSelector().resourceId(
                 getDocumentsUiPackageId() + ":id/container_roots").childSelector(
                 new UiSelector().resourceId(getDocumentsUiPackageId() + ":id/roots_list"));
 
     }
 
-    private void revealRoot(UiSelector rootsList, String label) throws UiObjectNotFoundException {
-        // We might need to expand drawer if not visible
-        if (!new UiObject(rootsList).waitForExists(TIMEOUT)) {
-            Log.d(TAG, "Failed to find roots list; trying to expand");
-            final UiSelector hamburger = new UiSelector().resourceId(
-                    getDocumentsUiPackageId() + ":id/toolbar").childSelector(
-                    new UiSelector().className("android.widget.ImageButton").clickable(true));
-            new UiObject(hamburger).click();
+    private UiSelector toolbarSelector() {
+        return new UiSelector().resourceId(getDocumentsUiPackageId() + ":id/toolbar");
+    }
+
+    private UiSelector hamburgerButtonSelector() {
+        return toolbarSelector().childSelector(
+                new UiSelector().className("android.widget.ImageButton").clickable(true));
+    }
+
+    private void revealRoot(UiSelector rootsListSelector, String label)
+            throws UiObjectNotFoundException {
+        waitForRootList(rootsListSelector);
+
+        // Now scroll around to find our item
+        new UiScrollable(rootsListSelector).scrollIntoView(new UiSelector().text(label));
+    }
+
+
+    private void waitForRootList(UiSelector rootsListSelector) throws UiObjectNotFoundException {
+        final UiObject rootList = new UiObject(rootsListSelector);
+        final UiObject hamburgerBtn = new UiObject(hamburgerButtonSelector());
+        boolean hamburgerBtnClicked = false;
+
+        final long startMills = uptimeMillis();
+        while (!rootList.waitForExists(SECOND_IN_MILLIS)) {
+            if (uptimeMillis() - startMills > TIMEOUT) break;
+
+            // We could not find the root list, this might be because the drawer is not visible.
+            // See if the drawer opening hamburger button exists, and if so click on it.
+            if (!hamburgerBtnClicked && hamburgerBtn.exists()) {
+                hamburgerBtn.click();
+                hamburgerBtnClicked = true;
+            }
         }
 
         // Wait for the first list item to appear
-        assertTrue("First list item",
-                new UiObject(rootsList.childSelector(new UiSelector())).waitForExists(TIMEOUT));
-
-        // Now scroll around to find our item
-        new UiScrollable(rootsList).scrollIntoView(new UiSelector().text(label));
+        assertTrue("Could not find any items in the root list",
+                new UiObject(rootsListSelector.childSelector(new UiSelector()))
+                        .waitForExists(TIMEOUT - (uptimeMillis() - startMills)));
     }
 
     private UiObject findSearchViewTextField() {
@@ -175,13 +199,12 @@ public class DocumentsClientTest extends DocumentsClientTestCase {
                 .childSelector(new UiSelector().resourceId("android:id/button1")));
     }
 
-    private UiObject findPositiveButton() throws UiObjectNotFoundException {
+    private UiObject findPositiveButton() {
         return new UiObject(new UiSelector().resourceId("android:id/button1"));
     }
 
-    private boolean checkToolbarTitleEquals(String label) throws UiObjectNotFoundException {
-        final UiObject title = new UiObject(new UiSelector().resourceId(
-                getDocumentsUiPackageId() + ":id/toolbar").childSelector(
+    private boolean checkToolbarTitleEquals(String label) {
+        final UiObject title = new UiObject(toolbarSelector().childSelector(
                 new UiSelector().className("android.widget.TextView").text(label)));
 
         return title.waitForExists(TIMEOUT);
