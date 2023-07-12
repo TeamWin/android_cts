@@ -34,6 +34,11 @@ public class RetrieveScanResultsAndReturnStatusService extends JobService {
     public boolean onStartJob(JobParameters jobParameters) {
         ResultReceiver resultReceiver =
                 jobParameters.getTransientExtras().getParcelable(RESULT_RECEIVER_EXTRA);
+        try {
+            Thread.sleep(5_000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
         WifiManager wifiManager = getSystemService(WifiManager.class);
         boolean succeeded;
         try {
