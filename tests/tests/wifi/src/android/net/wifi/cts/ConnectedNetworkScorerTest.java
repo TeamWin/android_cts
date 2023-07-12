@@ -74,8 +74,9 @@ import com.android.compatibility.common.util.ShellIdentityUtils;
 
 import com.google.common.collect.Range;
 
-import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -96,81 +97,93 @@ import java.util.concurrent.TimeUnit;
 @LargeTest
 @RunWith(AndroidJUnit4.class)
 public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
-    private Context mContext;
-    private WifiManager mWifiManager;
-    private ConnectivityManager mConnectivityManager;
-    private UiDevice mUiDevice;
-    private TestHelper mTestHelper;
-    private TelephonyManager mTelephonyManager;
+    private static Context sContext;
+    private static WifiManager sWifiManager;
+    private static ConnectivityManager sConnectivityManager;
+    private static UiDevice sUiDevice;
+    private static TestHelper sTestHelper;
+    private static TelephonyManager sTelephonyManager;
 
-    private boolean mWasVerboseLoggingEnabled;
+    private static boolean sWasVerboseLoggingEnabled;
 
     private static final int WIFI_CONNECT_TIMEOUT_MILLIS = 30_000;
     private static final int TIMEOUT = 12_000;
     private static final int WAIT_DURATION = 5_000;
 
-    @Before
-    public void setUp() throws Exception {
-        mContext = InstrumentationRegistry.getInstrumentation().getContext();
+    private static boolean sShouldRunTest = false;
+    private static boolean sWasScanThrottleEnabled;
 
-        // skip the test if WiFi is not supported
-        assumeTrue(WifiFeature.isWifiSupported(mContext));
+    @BeforeClass
+    public static void setUpClass() throws Exception {
+        sContext = InstrumentationRegistry.getInstrumentation().getContext();
 
-        mWifiManager = mContext.getSystemService(WifiManager.class);
-        assertThat(mWifiManager).isNotNull();
+        if (!WifiFeature.isWifiSupported(sContext)) {
+            return;
+        }
+        sShouldRunTest = true;
+
+        sWifiManager = sContext.getSystemService(WifiManager.class);
+        assertThat(sWifiManager).isNotNull();
         // Location mode must be enabled, otherwise the connection info will be redacted.
-        assertThat(Objects.requireNonNull(mContext.getSystemService(LocationManager.class))
+        assertThat(Objects.requireNonNull(sContext.getSystemService(LocationManager.class))
                 .isLocationEnabled()).isTrue();
 
-        mConnectivityManager = mContext.getSystemService(ConnectivityManager.class);
+        sConnectivityManager = sContext.getSystemService(ConnectivityManager.class);
 
         // turn on verbose logging for tests
-        mWasVerboseLoggingEnabled = ShellIdentityUtils.invokeWithShellPermissions(
-                () -> mWifiManager.isVerboseLoggingEnabled());
+        sWasVerboseLoggingEnabled = ShellIdentityUtils.invokeWithShellPermissions(
+                () -> sWifiManager.isVerboseLoggingEnabled());
         ShellIdentityUtils.invokeWithShellPermissions(
-                () -> mWifiManager.setVerboseLoggingEnabled(true));
+                () -> sWifiManager.setVerboseLoggingEnabled(true));
+        sWasScanThrottleEnabled = ShellIdentityUtils.invokeWithShellPermissions(
+                () -> sWifiManager.isScanThrottleEnabled());
+        ShellIdentityUtils.invokeWithShellPermissions(
+                () -> sWifiManager.setScanThrottleEnabled(false));
 
         // enable Wifi
-        if (!mWifiManager.isWifiEnabled()) {
-            ShellIdentityUtils.invokeWithShellPermissions(() -> mWifiManager.setWifiEnabled(true));
+        if (!sWifiManager.isWifiEnabled()) {
+            ShellIdentityUtils.invokeWithShellPermissions(() -> sWifiManager.setWifiEnabled(true));
         }
-        PollingCheck.check("Wifi not enabled", TIMEOUT, () -> mWifiManager.isWifiEnabled());
+        PollingCheck.check("Wifi not enabled", TIMEOUT, () -> sWifiManager.isWifiEnabled());
 
         // turn screen on
-        mUiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
+        sUiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
 
-        mTestHelper = new TestHelper(mContext, mUiDevice);
-        mTestHelper.turnScreenOn();
-
-        // Clear any existing app state before each test.
-        if (WifiBuildCompat.isPlatformOrWifiModuleAtLeastS(mContext)) {
-            ShellIdentityUtils.invokeWithShellPermissions(
-                    () -> mWifiManager.removeAppState(myUid(), mContext.getPackageName()));
-        }
+        sTestHelper = new TestHelper(sContext, sUiDevice);
+        sTestHelper.turnScreenOn();
 
         // check we have >= 1 saved network
         List<WifiConfiguration> savedNetworks = ShellIdentityUtils.invokeWithShellPermissions(
-                () -> mWifiManager.getConfiguredNetworks());
+                () -> sWifiManager.getConfiguredNetworks());
         assertWithMessage("Need at least one saved network").that(savedNetworks).isNotEmpty();
+        sTelephonyManager = sContext.getSystemService(TelephonyManager.class);
+    }
 
+    @Before
+    public void setUp() throws Exception {
+        assumeTrue(sShouldRunTest);
+        // Clear any existing app state before each test.
+        ShellIdentityUtils.invokeWithShellPermissions(
+                () -> sWifiManager.removeAppState(myUid(), sContext.getPackageName()));
         // ensure Wifi is connected
-        ShellIdentityUtils.invokeWithShellPermissions(() -> mWifiManager.reconnect());
+        ShellIdentityUtils.invokeWithShellPermissions(() -> sWifiManager.reconnect());
         PollingCheck.check(
                 "Wifi not connected",
                 WIFI_CONNECT_TIMEOUT_MILLIS,
-                () -> mWifiManager.getConnectionInfo().getNetworkId() != -1);
-        mTelephonyManager = mContext.getSystemService(TelephonyManager.class);
+                () -> sWifiManager.getConnectionInfo().getNetworkId() != -1);
     }
 
-    @After
-    public void tearDown() throws Exception {
-        if (!WifiFeature.isWifiSupported(mContext)) return;
-        if (!mWifiManager.isWifiEnabled()) {
-            ShellIdentityUtils.invokeWithShellPermissions(() -> mWifiManager.setWifiEnabled(true));
+    @AfterClass
+    public static void tearDownClass() throws Exception {
+        if (!sShouldRunTest) return;
+        if (!sWifiManager.isWifiEnabled()) {
+            ShellIdentityUtils.invokeWithShellPermissions(() -> sWifiManager.setWifiEnabled(true));
         }
-        mTestHelper.turnScreenOff();
+        sTestHelper.turnScreenOff();
         ShellIdentityUtils.invokeWithShellPermissions(
-                () -> mWifiManager.setVerboseLoggingEnabled(mWasVerboseLoggingEnabled));
+                () -> sWifiManager.setVerboseLoggingEnabled(sWasVerboseLoggingEnabled));
+        ShellIdentityUtils.invokeWithShellPermissions(
+                () -> sWifiManager.setScanThrottleEnabled(sWasScanThrottleEnabled));
     }
 
     private static class TestUsabilityStatsListener implements
@@ -210,7 +223,7 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
                 new TestUsabilityStatsListener(countDownLatch);
         try {
             uiAutomation.adoptShellPermissionIdentity();
-            mWifiManager.addOnWifiUsabilityStatsListener(
+            sWifiManager.addOnWifiUsabilityStatsListener(
                     Executors.newSingleThreadExecutor(), usabilityStatsListener);
             // Wait for new usability stats (while connected & screen on this is triggered
             // by platform periodically).
@@ -226,7 +239,7 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
             assertThat(statsEntry.getTotalTxRetries()).isAtLeast(0L);
             assertThat(statsEntry.getTotalTxBad()).isAtLeast(0L);
             assertThat(statsEntry.getTotalRxSuccess()).isAtLeast(0L);
-            if (mWifiManager.isEnhancedPowerReportingSupported()) {
+            if (sWifiManager.isEnhancedPowerReportingSupported()) {
                 assertThat(statsEntry.getTotalRadioOnTimeMillis()).isAtLeast(0L);
                 assertThat(statsEntry.getTotalRadioTxTimeMillis()).isAtLeast(0L);
                 assertThat(statsEntry.getTotalRadioRxTimeMillis()).isAtLeast(0L);
@@ -296,9 +309,9 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
                     assertEquals(10, contentionStats.getContentionNumSamples());
                     // Note that -1 is also a possible returned value for utilization ratio.
                     assertThat(statsEntry.getChannelUtilizationRatio()).isIn(Range.closed(-1, 255));
-                    if (mTelephonyManager != null) {
+                    if (sTelephonyManager != null) {
                         boolean isCellularDataAvailable =
-                                mTelephonyManager.getDataState() == TelephonyManager.DATA_CONNECTED;
+                                sTelephonyManager.getDataState() == TelephonyManager.DATA_CONNECTED;
                         assertEquals(isCellularDataAvailable, statsEntry.isCellularDataAvailable());
                     } else {
                         assertFalse(statsEntry.isCellularDataAvailable());
@@ -469,7 +482,7 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
                 assertThat(statsEntry.isSameRegisteredCell()).isFalse();
             }
         } finally {
-            mWifiManager.removeOnWifiUsabilityStatsListener(usabilityStatsListener);
+            sWifiManager.removeOnWifiUsabilityStatsListener(usabilityStatsListener);
             uiAutomation.dropShellPermissionIdentity();
         }
     }
@@ -483,7 +496,7 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
         try {
             uiAutomation.adoptShellPermissionIdentity();
             // update scoring with dummy values.
-            mWifiManager.updateWifiUsabilityScore(0, 50, 50);
+            sWifiManager.updateWifiUsabilityScore(0, 50, 50);
         } finally {
             uiAutomation.dropShellPermissionIdentity();
         }
@@ -498,7 +511,7 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
         UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         try {
             uiAutomation.adoptShellPermissionIdentity();
-            assertTrue(mWifiManager.setWifiScoringEnabled(true));
+            assertTrue(sWifiManager.setWifiScoringEnabled(true));
         } finally {
             uiAutomation.dropShellPermissionIdentity();
         }
@@ -632,10 +645,10 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
         try {
             uiAutomation.adoptShellPermissionIdentity();
             // Clear any external scorer already active on the device.
-            mWifiManager.clearWifiConnectedNetworkScorer();
+            sWifiManager.clearWifiConnectedNetworkScorer();
             Thread.sleep(500);
 
-            mWifiManager.setWifiConnectedNetworkScorer(
+            sWifiManager.setWifiConnectedNetworkScorer(
                     Executors.newSingleThreadExecutor(), connectedNetworkScorer);
             // Since we're already connected, wait for onStart to be invoked.
             assertThat(countDownLatchScorer.await(TIMEOUT, TimeUnit.MILLISECONDS)).isTrue();
@@ -650,7 +663,7 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
             scoreUpdateObserver.notifyScoreUpdate(connectedNetworkScorer.startSessionId, 50);
 
             // Register the usability listener
-            mWifiManager.addOnWifiUsabilityStatsListener(
+            sWifiManager.addOnWifiUsabilityStatsListener(
                     Executors.newSingleThreadExecutor(), usabilityStatsListener);
             // Trigger a usability stats update.
             scoreUpdateObserver.triggerUpdateOfWifiUsabilityStats(
@@ -672,12 +685,12 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
                 scoreUpdateObserver.blocklistCurrentBssid(-1);
             }
             // Now disconnect from the network.
-            mWifiManager.disconnect();
+            sWifiManager.disconnect();
             // Wait for it to be disconnected.
             PollingCheck.check(
                     "Wifi not disconnected",
                     TIMEOUT,
-                    () -> mWifiManager.getConnectionInfo().getNetworkId() == -1);
+                    () -> sWifiManager.getConnectionInfo().getNetworkId() == -1);
             disconnected = true;
 
             // Wait for stop to be invoked and ensure that the session id matches.
@@ -694,16 +707,16 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
             connectedNetworkScorer.onStop(200);
             assertEquals(200, connectedNetworkScorer.stopSessionId.intValue());
         } finally {
-            mWifiManager.removeOnWifiUsabilityStatsListener(usabilityStatsListener);
-            mWifiManager.clearWifiConnectedNetworkScorer();
+            sWifiManager.removeOnWifiUsabilityStatsListener(usabilityStatsListener);
+            sWifiManager.clearWifiConnectedNetworkScorer();
 
             if (disconnected) {
-                mWifiManager.reconnect();
+                sWifiManager.reconnect();
                 // Wait for it to be reconnected.
                 PollingCheck.check(
                         "Wifi not reconnected",
                         WIFI_CONNECT_TIMEOUT_MILLIS,
-                        () -> mWifiManager.getConnectionInfo().getNetworkId() != -1);
+                        () -> sWifiManager.getConnectionInfo().getNetworkId() != -1);
             }
             uiAutomation.dropShellPermissionIdentity();
         }
@@ -724,10 +737,10 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
         try {
             uiAutomation.adoptShellPermissionIdentity();
             // Clear any external scorer already active on the device.
-            mWifiManager.clearWifiConnectedNetworkScorer();
+            sWifiManager.clearWifiConnectedNetworkScorer();
             Thread.sleep(500);
 
-            mWifiManager.setWifiConnectedNetworkScorer(
+            sWifiManager.setWifiConnectedNetworkScorer(
                     Executors.newSingleThreadExecutor(), connectedNetworkScorer);
             // Since we're already connected, wait for onStart to be invoked.
             assertThat(countDownLatchScorer.await(TIMEOUT, TimeUnit.MILLISECONDS)).isTrue();
@@ -743,7 +756,7 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
             connectedNetworkScorer.resetCountDownLatch(countDownLatchScorer);
 
             // Restart wifi subsystem.
-            mWifiManager.restartWifiSubsystem();
+            sWifiManager.restartWifiSubsystem();
 
             // wait for scorer to stop session due to network disconnection.
             assertThat(countDownLatchScorer.await(TIMEOUT, TimeUnit.MILLISECONDS)).isTrue();
@@ -755,7 +768,7 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
             PollingCheck.check(
                     "Wifi not connected",
                     WIFI_CONNECT_TIMEOUT_MILLIS * 2,
-                    () -> mWifiManager.getConnectionInfo().getNetworkId() != -1);
+                    () -> sWifiManager.getConnectionInfo().getNetworkId() != -1);
 
             // Followed by a new onStart() after the connection.
             // Note: There is a 5 second delay between stop/start when restartWifiSubsystem() is
@@ -767,7 +780,7 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
             assertThat(connectedNetworkScorer.scoreUpdateObserver).isSameInstanceAs(
                     prevScoreUpdateObserver);
         } finally {
-            mWifiManager.clearWifiConnectedNetworkScorer();
+            sWifiManager.clearWifiConnectedNetworkScorer();
             uiAutomation.dropShellPermissionIdentity();
         }
     }
@@ -796,27 +809,27 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
                     READ_WIFI_CREDENTIAL);
 
             // Clear any external scorer already active on the device.
-            mWifiManager.clearWifiConnectedNetworkScorer();
+            sWifiManager.clearWifiConnectedNetworkScorer();
             Thread.sleep(500);
 
-            savedNetworks = mWifiManager.getPrivilegedConfiguredNetworks();
+            savedNetworks = sWifiManager.getPrivilegedConfiguredNetworks();
             WifiConfiguration testNetwork =
-                    TestHelper.findMatchingSavedNetworksWithBssid(mWifiManager, savedNetworks, 1)
+                    TestHelper.findMatchingSavedNetworksWithBssid(sWifiManager, savedNetworks, 1)
                             .get(0);
             // Disconnect & disable auto-join on the saved network to prevent auto-connect from
             // interfering with the test.
             for (WifiConfiguration savedNetwork : savedNetworks) {
-                mWifiManager.disableNetwork(savedNetwork.networkId);
+                sWifiManager.disableNetwork(savedNetwork.networkId);
             }
             // Wait for Wifi to be disconnected.
             PollingCheck.check(
                     "Wifi not disconnected",
                     20000,
-                    () -> mWifiManager.getConnectionInfo().getNetworkId() == -1);
+                    () -> sWifiManager.getConnectionInfo().getNetworkId() == -1);
             assertThat(testNetwork).isNotNull();
 
             // Register the external scorer.
-            mWifiManager.setWifiConnectedNetworkScorer(
+            sWifiManager.setWifiConnectedNetworkScorer(
                     Executors.newSingleThreadExecutor(), connectedNetworkScorer);
 
             // Now connect using the provided connection initiator
@@ -827,7 +840,7 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
             assertThat(connectedNetworkScorer.startSessionId).isNull();
 
             // Now disconnect from the network.
-            mConnectivityManager.unregisterNetworkCallback(networkCallback);
+            sConnectivityManager.unregisterNetworkCallback(networkCallback);
             networkCallback = null;
 
             // We should not receive the stop either
@@ -837,14 +850,14 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
             assertThat(connectedNetworkScorer.stopSessionId).isNull();
         } finally {
             executorService.shutdownNow();
-            mWifiManager.clearWifiConnectedNetworkScorer();
+            sWifiManager.clearWifiConnectedNetworkScorer();
             if (networkCallback != null) {
-                mConnectivityManager.unregisterNetworkCallback(networkCallback);
+                sConnectivityManager.unregisterNetworkCallback(networkCallback);
             }
             // Re-enable the networks after the test.
             if (savedNetworks != null) {
                 for (WifiConfiguration savedNetwork : savedNetworks) {
-                    mWifiManager.enableNetwork(savedNetwork.networkId, false);
+                    sWifiManager.enableNetwork(savedNetwork.networkId, false);
                 }
             }
             uiAutomation.dropShellPermissionIdentity();
@@ -862,9 +875,9 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
                     // Connect using wifi network specifier.
                     WifiNetworkSpecifier specifier =
                             TestHelper.createSpecifierBuilderWithCredentialFromSavedNetwork(
-                                    testNetwork, false)
+                                    testNetwork, true)
                                     .build();
-                    return mTestHelper.testConnectionFlowWithSpecifierWithShellIdentity(
+                    return sTestHelper.testConnectionFlowWithSpecifierWithShellIdentity(
                             testNetwork, specifier, false);
                 }
         );
@@ -885,7 +898,7 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
                     if (restrictedNetworkCapabilities.contains(NET_CAPABILITY_OEM_PRIVATE)) {
                         suggestionBuilder.setOemPrivate(true);
                     }
-                    return mTestHelper.testConnectionFlowWithSuggestionWithShellIdentity(
+                    return sTestHelper.testConnectionFlowWithSuggestionWithShellIdentity(
                             testNetwork, suggestionBuilder.build(), executorService,
                             restrictedNetworkCapabilities, false/* restrictedNetwork */);
                 }
@@ -933,8 +946,8 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
             WifiSsid ssid = WifiSsid.fromBytes(new byte[]{0x12, 0x34, 0x56});
             byte[] oui = new byte[]{0x00, 0x01, 0x02};
             List<DhcpOption> options = new ArrayList<DhcpOption>();
-            mWifiManager.addCustomDhcpOptions(ssid, oui, options);
-            mWifiManager.removeCustomDhcpOptions(ssid, oui);
+            sWifiManager.addCustomDhcpOptions(ssid, oui, options);
+            sWifiManager.removeCustomDhcpOptions(ssid, oui);
         } finally {
             uiAutomation.dropShellPermissionIdentity();
         }
@@ -953,7 +966,7 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
             WifiSsid ssid = WifiSsid.fromBytes(new byte[]{0x12, 0x34, 0x56});
             byte[] oui = new byte[]{0x00, 0x01, 0x02};
             List<DhcpOption> options = new ArrayList<DhcpOption>();
-            mWifiManager.addCustomDhcpOptions(ssid, oui, options);
+            sWifiManager.addCustomDhcpOptions(ssid, oui, options);
             fail("Expected SecurityException");
         } catch (SecurityException e) {
             // expected
