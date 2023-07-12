@@ -279,9 +279,12 @@ public class FullScreenMagnificationGestureHandlerTest {
         dispatch(doubleTap(mTapLocation));
         mTouchListener.assertPropagated(ACTION_DOWN, ACTION_UP, ACTION_DOWN, ACTION_UP);
 
+        // Smaller display devices does not have much screen space in Zoomed state
+        PackageManager pm = mInstrumentation.getTargetContext().getPackageManager();
+        int y = (pm.hasSystemFeature(pm.FEATURE_WATCH)) ? 5 : 29;
         dispatch(swipe(
                 mTapLocation,
-                add(mTapLocation, 0, 29)));
+                add(mTapLocation, 0, y)));
         mTouchListener.assertPropagated(ACTION_DOWN, ACTION_MOVE, ACTION_UP);
     }
 
