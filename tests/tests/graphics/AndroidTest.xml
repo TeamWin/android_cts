@@ -21,17 +21,31 @@
     <option name="config-descriptor:metadata" key="parameter" value="secondary_user" />
     <option name="config-descriptor:metadata" key="parameter" value="all_foldable_states" />
     <option name="config-descriptor:metadata" key="parameter" value="run_on_sdk_sandbox" />
+
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
         <option name="cleanup-apks" value="true" />
         <option name="test-file-name" value="CtsGraphicsTestCases.apk" />
     </target_preparer>
+
+    <!-- Disable new crash error dialogs before CLOSE_SYSTEM_DIALOGS dismisses any current ones -->
+    <target_preparer class="com.android.compatibility.common.tradefed.targetprep.SettingsPreparer">
+        <option name="device-setting" value="hide_error_dialogs"/>
+        <option name="setting-type" value="global"/>
+        <option name="set-value" value="1"/>
+    </target_preparer>
+
+    <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
+        <!-- Dismiss all system dialogs before launch test -->
+        <option name="run-command" value="am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS" />
+        <!-- Collapse notifications -->
+        <option name="run-command" value="cmd statusbar collapse" />
+        <!-- disable DeprecatedAbi warning -->
+        <option name="run-command" value="setprop debug.wm.disable_deprecated_abi_dialog 1" />
+    </target_preparer>
+
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.graphics.cts" />
         <option name="runtime-hint" value="5m" />
         <option name="hidden-api-checks" value="false" />
     </test>
-    <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
-        <!-- disable DeprecatedAbi warning -->
-        <option name="run-command" value="setprop debug.wm.disable_deprecated_abi_dialog 1" />
-    </target_preparer>
 </configuration>
