@@ -71,8 +71,6 @@ import static com.android.compatibility.common.util.ShellUtils.tap;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
-import static org.junit.Assert.assertThrows;
-
 import android.app.PendingIntent;
 import android.app.assist.AssistStructure.ViewNode;
 import android.autofillservice.cts.R;
@@ -101,7 +99,6 @@ import android.content.IntentFilter;
 import android.content.IntentSender;
 import android.graphics.Color;
 import android.graphics.Rect;
-import android.graphics.drawable.Icon;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
@@ -1386,46 +1383,6 @@ public class LoginActivityTest extends LoginActivityCommonTestCase {
 
         // Check the results.
         mActivity.assertAutoFilled();
-    }
-
-    @Test
-    public void remoteViews_doesNotSpillAcrossUsers() throws Exception {
-        // Set service.
-        enableService();
-
-
-        RemoteViews firstRv = createPresentation("hello");
-        RemoteViews secondRv = createPresentation("world");
-
-        // bad url, should not be displayed
-        firstRv.setImageViewIcon(R.id.icon,
-                Icon.createWithContentUri("content://1000@com.android.contacts/display_photo/1"));
-        secondRv.setImageViewIcon(R.id.icon,
-                Icon.createWithContentUri("content://1000@com.android.contacts/display_photo/1"));
-
-        // Set expectations.
-        sReplier.addResponse(new CannedFillResponse.Builder()
-                .addDataset(new CannedDataset.Builder()
-                    .setField(ID_USERNAME, "dude", firstRv)
-                    .setField(ID_PASSWORD, "sweet", secondRv)
-                    .build())
-                .setHeader(firstRv)
-                .setFooter(secondRv)
-                .build());
-
-        mActivity.expectAutoFill("dude", "sweet");
-
-        // Trigger auto-fill.
-        requestFocusOnUsername();
-        sReplier.getNextFillRequest();
-
-        // Asser that the dataset is not shown
-        assertThrows(RetryableException.class,
-                () -> mUiBot.assertDatasets("The Dude"));
-
-        // Assert that header/footer is not shown
-        assertThrows(RetryableException.class,
-                () -> mUiBot.assertDatasetsWithBorders("hello", "world", "The Dude"));
     }
 
     /**

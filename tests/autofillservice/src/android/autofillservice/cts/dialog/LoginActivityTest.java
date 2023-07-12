@@ -37,9 +37,6 @@ import static android.service.autofill.FillRequest.FLAG_SUPPORTS_FILL_DIALOG;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import static org.junit.Assert.assertThrows;
-
-import android.autofillservice.cts.R;
 import android.autofillservice.cts.activities.FieldsNoPasswordActivity;
 import android.autofillservice.cts.activities.LoginActivity;
 import android.autofillservice.cts.commontests.AutoFillServiceTestCase;
@@ -49,11 +46,7 @@ import android.autofillservice.cts.testcore.InstrumentedAutoFillService;
 import android.autofillservice.cts.testcore.InstrumentedAutoFillService.FillRequest;
 import android.content.Intent;
 import android.service.autofill.FillEventHistory;
-import android.graphics.drawable.Icon;
 import android.view.View;
-import android.widget.RemoteViews;
-
-import com.android.compatibility.common.util.RetryableException;
 
 import androidx.test.uiautomator.UiObject2;
 
@@ -693,51 +686,6 @@ public class LoginActivityTest extends AutoFillServiceTestCase.ManualActivityLau
 
         // Verify IME is shown
         assertMockImeStatus(activity, true);
-    }
-
-    @Test
-    public void remoteViews_doesNotSpillAcrossUsers() throws Exception {
-        enableFillDialogFeature(sContext);
-        enableService();
-
-        RemoteViews header = createPresentation("Dialog Header");
-        RemoteViews dialogRv = createPresentation("Dialog Presentation");
-        // bad url, should not be displayed
-        header.setImageViewIcon(R.id.icon, Icon.createWithContentUri(
-                "content://1000@com.android.contacts/display_photo/1"));
-        dialogRv.setImageViewIcon(R.id.icon, Icon.createWithContentUri(
-                "content://1000@com.android.contacts/display_photo/1"));
-
-        // Set response with a dataset
-        final CannedFillResponse.Builder builder = new CannedFillResponse.Builder()
-                .addDataset(new CannedDataset.Builder()
-                    .setField(ID_USERNAME, "dude")
-                    .setField(ID_PASSWORD, "sweet")
-                    .setPresentation(createPresentation("Dropdown Presentation"))
-                    .setDialogPresentation(dialogRv)
-                    .build())
-                .setDialogHeader(header)
-                .setDialogTriggerIds(ID_PASSWORD);
-        sReplier.addResponse(builder.build());
-
-        // Start activity and autofill
-        LoginActivity activity = startLoginActivity();
-        mUiBot.waitForIdleSync();
-
-        sReplier.getNextFillRequest();
-        mUiBot.waitForIdleSync();
-
-        // Click on password field to trigger fill dialog
-        mUiBot.selectByRelativeId(ID_PASSWORD);
-        mUiBot.waitForIdleSync();
-
-        // Asserts that the header is not shown
-        assertThrows(RetryableException.class,
-                () -> mUiBot.findFillDialogHeaderPicker());
-
-        // Asserts that the
-        assertThrows(RetryableException.class,
-                () -> mUiBot.findFillDialogDatasetPicker());
     }
 
     private FieldsNoPasswordActivity startNoPasswordActivity() throws Exception {

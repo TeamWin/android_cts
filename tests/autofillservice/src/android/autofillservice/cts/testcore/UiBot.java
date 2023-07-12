@@ -1390,11 +1390,11 @@ public class UiBot {
         return waitForObject(FILL_DIALOG_SELECTOR, UI_DATASET_PICKER_TIMEOUT);
     }
 
-    public UiObject2 findFillDialogDatasetPicker() throws Exception {
+    private UiObject2 findFillDialogDatasetPicker() throws Exception {
         return waitForObject(FILL_DIALOG_DATASET_SELECTOR, UI_DATASET_PICKER_TIMEOUT);
     }
 
-    public UiObject2 findFillDialogHeaderPicker() throws Exception {
+    private UiObject2 findFillDialogHeaderPicker() throws Exception {
         return waitForObject(FILL_DIALOG_HEADER_SELECTOR, UI_DATASET_PICKER_TIMEOUT);
     }
 
