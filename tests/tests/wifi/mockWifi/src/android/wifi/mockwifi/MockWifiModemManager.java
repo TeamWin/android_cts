@@ -18,6 +18,7 @@ package android.wifi.mockwifi;
 
 import android.content.Context;
 import android.util.Log;
+import android.wifi.mockwifi.nl80211.IClientInterfaceImp;
 
 import androidx.test.InstrumentationRegistry;
 
@@ -108,15 +109,13 @@ public class MockWifiModemManager {
     }
 
     /**
-     * Configures the return result for signalPoll API for the target iface name.
-     *
+     * Configures a mock client interface.
      */
-    public boolean configureSignalPoll(String ifaceName, int currentRssiDbm, int txBitrateMbps,
-            int rxBitrateMbps, int associationFrequencyMHz) {
+    public boolean configureClientInterfaceMock(String ifaceName,
+            IClientInterfaceImp.ClientInterfaceMock clientInterfaceMock) {
         if (mMockWifiModemService == null) {
             return false;
         }
-        return mMockWifiModemService.configureSignalPoll(ifaceName, currentRssiDbm, txBitrateMbps,
-                rxBitrateMbps, associationFrequencyMHz);
+        return mMockWifiModemService.configureClientInterfaceMock(ifaceName, clientInterfaceMock);
     }
 }
