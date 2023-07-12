@@ -950,7 +950,12 @@ public final class UserReference implements AutoCloseable {
         return user;
     }
 
+    /**
+     * Note: This method should not be run on < S.
+     */
     private UserInfo userInfo() {
+        Versions.requireMinimumVersion(S);
+
         return users().filter(ui -> ui.id == id()).findFirst()
                 .orElseThrow(() -> new NeneException("User does not exist " + this));
     }
@@ -988,6 +993,10 @@ public final class UserReference implements AutoCloseable {
      * Get the reason this user cannot be switched to. Null if none.
      */
     public String getSwitchToUserError() {
+        if (!Versions.meetsMinimumSdkVersionRequirement(S)) {
+            return null;
+        }
+
         if (TestApis.users().isHeadlessSystemUserMode() && equals(TestApis.users().system())) {
             return "Cannot switch to system user on HSUM devices";
         }
