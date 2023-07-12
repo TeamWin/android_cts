@@ -16,6 +16,8 @@
 
 package android.photopicker.cts;
 
+import static android.photopicker.cts.PhotoPickerCloudUtils.disableDeviceConfigSync;
+
 import android.app.Instrumentation;
 import android.content.Context;
 import android.content.Intent;
@@ -31,6 +33,7 @@ import androidx.test.uiautomator.UiDevice;
 
 import org.junit.Assume;
 import org.junit.Before;
+import org.junit.BeforeClass;
 
 import java.io.IOException;
 
@@ -49,6 +52,11 @@ public class PhotoPickerBaseTest {
 
     protected GetResultActivity mActivity;
     protected Context mContext;
+
+    @BeforeClass
+    public static void  setUpBeforeSuperClass() {
+        disableDeviceConfigSync();
+    }
 
     @Before
     public void setUp() throws Exception {

@@ -31,6 +31,7 @@ import android.content.ClipData;
 import android.content.Context;
 import android.provider.DeviceConfig;
 import android.provider.MediaStore;
+import android.util.Log;
 import android.util.Pair;
 
 import androidx.annotation.NonNull;
@@ -41,6 +42,7 @@ import androidx.test.uiautomator.UiObject;
 
 import com.android.modules.utils.build.SdkLevel;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -49,6 +51,27 @@ public class PhotoPickerCloudUtils {
     private static final String NAMESPACE_STORAGE_NATIVE_BOOT = "storage_native_boot";
     private static final String KEY_ALLOWED_CLOUD_PROVIDERS = "allowed_cloud_providers";
     private static final String KEY_CLOUD_MEDIA_FEATURE_ENABLED = "cloud_media_feature_enabled";
+    private static final String DISABLE_DEVICE_CONFIG_SYNC =
+            "cmd device_config set_sync_disabled_for_tests %s";
+    private static final String DISABLE_DEVICE_CONFIG_SYNC_MODE = "until_reboot";
+    private static final String TAG = "PickerCloudUtils";
+
+    /**
+     * Device config is reset from the server periodically. When tests override device config, it is
+     * not a sticky change. The device config may be reset to server values at any point - even
+     * while a test is running. In order to prevent unwanted device config resets, this method
+     * disables device config syncs until device reboot.
+     */
+    static void disableDeviceConfigSync() {
+        try {
+            UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
+                    .executeShellCommand(String.format(DISABLE_DEVICE_CONFIG_SYNC,
+                            DISABLE_DEVICE_CONFIG_SYNC_MODE));
+        } catch (IOException e) {
+            Log.e(TAG, "Could not disable device_config sync. "
+                    + "Device config may reset to server values at any point during test runs.", e);
+        }
+    }
 
     public static List<String> extractMediaIds(ClipData clipData, int minCount) {
         final int count = clipData.getItemCount();
@@ -180,6 +203,23 @@ public class PhotoPickerCloudUtils {
     }
 
     private static void deleteDeviceConfigProp(@NonNull String name) {
-        DeviceConfig.deleteProperty(NAMESPACE_STORAGE_NATIVE_BOOT, name);
+        try {
+            if (SdkLevel.isAtLeastU()) {
+                getUiAutomation().adoptShellPermissionIdentity(WRITE_ALLOWLISTED_DEVICE_CONFIG);
+                DeviceConfig.deleteProperty(NAMESPACE_STORAGE_NATIVE_BOOT, name);
+            } else {
+                // DeviceConfig.deleteProperty API is only available from T onwards.
+                try {
+                    UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
+                            .executeShellCommand(
+                                    String.format("device_config delete %s %s",
+                                            NAMESPACE_STORAGE_NATIVE_BOOT, name));
+                } catch (IOException e) {
+                    Log.e(TAG, "Could not delete device_config " + name, e);
+                }
+            }
+        } finally {
+            getUiAutomation().dropShellPermissionIdentity();
+        }
     }
 }
