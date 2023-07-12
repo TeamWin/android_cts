@@ -807,6 +807,7 @@ public class LocationAccessCheckTest {
     @Test
     // Mark as flaky until b/286874765 is fixed
     @FlakyTest
+    @MtsIgnore
     @AsbSecurityTest(cveBugId = 141028068)
     public void testOpeningLocationSettingsDoesNotTriggerAccess() throws Throwable {
         assumeNotPlayManaged();

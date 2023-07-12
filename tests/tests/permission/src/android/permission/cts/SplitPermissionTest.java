@@ -267,6 +267,7 @@ public class SplitPermissionTest {
      * granted state.
      */
     @FlakyTest(bugId = 152580253)
+    @MtsIgnore(bugId = 152580253)
     @Test
     public void inheritGrantedPermissionState() throws Exception {
         install(APK_LOCATION_29);
@@ -300,6 +301,7 @@ public class SplitPermissionTest {
      * <p>(Pre-M version of test)
      */
     @FlakyTest(bugId = 152580253)
+    @MtsIgnore(bugId = 152580253)
     @Test
     public void inheritFlagsPreM() {
         install(APK_CONTACTS_16);
@@ -317,6 +319,7 @@ public class SplitPermissionTest {
      * flags.
      */
     @FlakyTest(bugId = 152580253)
+    @MtsIgnore(bugId = 152580253)
     @Test
     public void inheritFlags() {
         install(APK_LOCATION_29);

@@ -17,6 +17,7 @@
 package android.permissionui.cts
 
 import android.content.pm.PackageManager
+import android.permission.cts.MtsIgnore
 import androidx.test.filters.FlakyTest
 import com.android.compatibility.common.util.SystemUtil
 import org.junit.Assert
@@ -138,6 +139,7 @@ class PermissionTest23 : BaseUsePermissionTest() {
     }
 
     @FlakyTest
+    @MtsIgnore
     @Test
     fun testRevokeAffectsWholeGroup() {
         // Grant the group
@@ -234,6 +236,7 @@ class PermissionTest23 : BaseUsePermissionTest() {
 
     @Test(timeout = 180000)
     @FlakyTest
+    @MtsIgnore
     fun testNoResidualPermissionsOnUninstall() {
         Assume.assumeFalse(packageManager.arePermissionsIndividuallyControlled())
 

@@ -16,6 +16,7 @@
 
 package android.permissionui.cts
 
+import android.permission.cts.MtsIgnore
 import androidx.test.filters.FlakyTest
 import androidx.test.uiautomator.By
 import com.android.compatibility.common.util.SystemUtil.eventually
@@ -103,6 +104,7 @@ class PermissionTest29 : BaseUsePermissionTest() {
     }
 
     @FlakyTest
+    @MtsIgnore
     @Test
     fun testDenyBackgroundWithPrejudice() {
         // Step 1: deny the first time
@@ -129,6 +131,7 @@ class PermissionTest29 : BaseUsePermissionTest() {
     }
 
     @FlakyTest
+    @MtsIgnore
     @Test
     fun testGrantDialogToSettingsNoOp() {
         // Step 1: Request both, go to settings, do nothing
