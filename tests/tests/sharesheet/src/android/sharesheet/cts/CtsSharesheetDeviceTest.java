@@ -271,7 +271,9 @@ public class CtsSharesheetDeviceTest {
             // Note: EII and ECT cap is not tested here
 
             showsExtraInitialIntents();
-            showsExtraChooserTargets();
+            if (!mActivityManager.isLowRamDevice()) {
+                showsExtraChooserTargets();
+            }
             isSharingShortcutDirectShareEnabled();
 
         }, () -> {
@@ -659,6 +661,10 @@ public class CtsSharesheetDeviceTest {
     @Test
     @ApiTest(apis = "android.content.Intent#EXTRA_CHOOSER_TARGETS")
     public void testChooserTargets() throws Throwable {
+        assumeFalse(
+                "EXTRA_CHOOSER_TARGETS not required on low RAM devices",
+                mActivityManager.isLowRamDevice());
+
         final CountDownLatch appStarted = new CountDownLatch(1);
         final AtomicReference<Intent> targetLaunchIntent = new AtomicReference<>();
 
@@ -698,6 +704,10 @@ public class CtsSharesheetDeviceTest {
     @Test
     @ApiTest(apis = "android.content.Intent#EXTRA_CHOOSER_TARGETS")
     public void testChooserTargetsRefinement() throws Throwable {
+        assumeFalse(
+                "EXTRA_CHOOSER_TARGETS not required on low RAM devices",
+                mActivityManager.isLowRamDevice());
+
         final CountDownLatch broadcastInvoked = new CountDownLatch(1);
         final CountDownLatch appStarted = new CountDownLatch(1);
         final AtomicReference<Intent> targetLaunchIntent = new AtomicReference<>();
