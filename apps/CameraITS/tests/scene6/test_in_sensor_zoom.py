@@ -45,6 +45,7 @@ class InSensorZoomTest(its_base_test.ItsBaseTest):
       props = cam.get_camera_properties()
       props = cam.override_with_hidden_physical_camera_props(props)
       name_with_log_path = os.path.join(self.log_path, _NAME)
+      debug = self.debug_mode
       # Skip the test if CROPPED_RAW is not present in stream use cases
       camera_properties_utils.skip_unless(
           camera_properties_utils.cropped_raw_stream_use_case(props))
@@ -106,10 +107,10 @@ class InSensorZoomTest(its_base_test.ItsBaseTest):
           raise AssertionError('RAW_CROP_REGION width and height aspect ratio'
                                f' != active array AR, region size: {rw} x {rh} '
                                f' active array size: {aw} x {ah}')
-       # Find the center circle in img
-        circle = zoom_capture_utils.get_center_circle(
+        # Find the center circle in img
+        circle = zoom_capture_utils.find_center_circle(
             rgb_zoomed_raw, img_name, size_raw, effective_zoom_ratio,
-            z_list[0], debug=True)
+            z_list[0], debug=debug)
         # Zoom is too large to find center circle, break out
         if circle is None:
           break

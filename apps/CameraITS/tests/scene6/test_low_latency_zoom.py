@@ -122,28 +122,9 @@ class LowLatencyZoomTest(its_base_test.ItsBaseTest):
         cap_fl = cap['metadata']['android.lens.focalLength']
         radius_tol, offset_tol = test_tols[cap_fl]
 
-        # convert [0, 1] image to [0, 255] and cast as uint8
-        img = image_processing_utils.convert_image_to_uint8(img)
-
-        # Find the center circle in img
-        try:
-          circle = opencv_processing_utils.find_center_circle(
-              img, img_name, _CIRCLE_COLOR, circle_ar_rtol=_CIRCLE_AR_RTOL,
-              circlish_rtol=_CIRCLISH_RTOL,
-              min_area=_MIN_AREA_RATIO*size[0]*size[1]*scaled_zoom*scaled_zoom,
-              min_circle_pts=_MIN_CIRCLE_PTS, debug=debug)
-          if opencv_processing_utils.is_circle_cropped(circle, size):
-            logging.debug('zoom %.2f is too large! Skip further captures',
-                          z_result)
-            break
-        except AssertionError as e:
-          if z_result/z_list[0] >= zoom_capture_utils.ZOOM_MAX_THRESH:
-            break
-          else:
-            raise AssertionError(
-                'No circle detected for zoom ratio <= '
-                f'{zoom_capture_utils.ZOOM_MAX_THRESH}. '
-                'Take pictures according to instructions carefully!') from e
+        # Find the center circle in img and check if it's cropped
+        circle = zoom_capture_utils.find_center_circle(
+            img, img_name, size, z_result, z_min, debug=debug)
 
         test_data[i] = {'z': z_result, 'circle': circle, 'r_tol': radius_tol,
                         'o_tol': offset_tol, 'fl': cap_fl}
