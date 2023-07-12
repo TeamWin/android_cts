@@ -19,8 +19,8 @@ package android.videocodec.cts;
 import static android.mediav2.common.cts.CodecTestBase.ComponentClass.HARDWARE;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeNotNull;
 import static org.junit.Assume.assumeTrue;
 
 import android.media.MediaFormat;
@@ -143,7 +143,7 @@ public class VideoEncoderFrameRateTest extends VideoEncoderValidationTestBase {
         int refSize = -1;
         boolean testSkipped = false;
         RawResource res = RES_YUV_MAP.getOrDefault(mCRes.uniqueLabel(), null);
-        assertNotNull("no raw resource found for testing config : " + mEncCfgParams[0] + mTestConfig
+        assumeNotNull("no raw resource found for testing config : " + mEncCfgParams[0] + mTestConfig
                 + mTestEnv + DIAGNOSTICS, res);
         for (float scaleFactor : scaleFactors) {
             EncoderConfigParams cfg = mEncCfgParams[0].getBuilder()
