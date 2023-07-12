@@ -15,7 +15,6 @@
  */
 package android.cts.statsdatom.statsd;
 
-import com.android.tradefed.util.RunUtil;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
@@ -41,15 +40,18 @@ import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.log.LogUtil;
 import com.android.tradefed.testtype.DeviceTestCase;
 import com.android.tradefed.testtype.IBuildReceiver;
+import com.android.tradefed.util.RunUtil;
 
 import com.google.common.collect.Range;
 import com.google.protobuf.ByteString;
+import com.google.protobuf.ExtensionRegistry;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Statsd atom tests that are done via adb (hostside).
@@ -621,6 +623,37 @@ public class HostAtomTests extends DeviceTestCase implements IBuildReceiver {
         }
         assertThat(foundConnectEvent).isTrue();
         assertThat(foundDisconnectEvent).isTrue();
+    }
+
+    public void testAtomsLoggedOnBoot() throws Exception {
+        ConfigUtils.uploadConfigForPushedAtoms(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                new int[] {
+                    Atom.DEVICE_IDLE_MODE_STATE_CHANGED_FIELD_NUMBER,
+                    Atom.SCREEN_STATE_CHANGED_FIELD_NUMBER,
+                    Atom.BATTERY_LEVEL_CHANGED_FIELD_NUMBER,
+                    Atom.CHARGING_STATE_CHANGED_FIELD_NUMBER,
+                    Atom.PLUGGED_STATE_CHANGED_FIELD_NUMBER
+                }
+        );
+
+        DeviceUtils.rebootDeviceAndWaitUntilReady(getDevice());
+        RunUtil.getDefault().sleep(10_000);
+
+        // Get events from the report after boot.
+        List<Atom> atoms = ReportUtils
+                .getEventMetricDataList(
+                        getDevice(), ExtensionRegistry.getEmptyRegistry(), /*reportIndex*/ 1)
+                .stream()
+                .map(EventMetricData::getAtom)
+                .collect(Collectors.toList());
+
+        assertThat(atoms.stream().anyMatch(Atom::hasDeviceIdleModeStateChanged)).isTrue();
+        assertThat(atoms.stream().anyMatch(Atom::hasScreenStateChanged)).isTrue();
+        if (!DeviceUtils.hasFeature(getDevice(), FEATURE_AUTOMOTIVE)) {
+            assertThat(atoms.stream().anyMatch(Atom::hasBatteryLevelChanged)).isTrue();
+            assertThat(atoms.stream().anyMatch(Atom::hasChargingStateChanged)).isTrue();
+            assertThat(atoms.stream().anyMatch(Atom::hasPluggedStateChanged)).isTrue();
+        }
     }
 
     // Gets whether "Always on Display" setting is enabled.
