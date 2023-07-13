@@ -390,7 +390,7 @@ public class CtsWindowInfoUtils {
         return true;
     }
 
-    private static Rect getWindowBounds(@NonNull Supplier<IBinder> windowTokenSupplier)
+    public static Rect getWindowBounds(@NonNull Supplier<IBinder> windowTokenSupplier)
             throws InterruptedException {
         Rect bounds = new Rect();
         Predicate<WindowInfo> predicate = windowInfo -> {

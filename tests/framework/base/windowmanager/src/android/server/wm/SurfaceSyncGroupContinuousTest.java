@@ -16,8 +16,6 @@
 
 package android.server.wm;
 
-import static android.server.wm.WindowManagerState.getLogicalDisplaySize;
-
 import android.platform.test.annotations.Presubmit;
 import android.view.cts.surfacevalidator.CapturedActivity;
 
@@ -42,7 +40,6 @@ public class SurfaceSyncGroupContinuousTest {
     @Before
     public void setup() {
         mCapturedActivity = mActivityRule.getActivity();
-        mCapturedActivity.setLogicalDisplaySize(getLogicalDisplaySize());
     }
 
     @Test

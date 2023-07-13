@@ -23,7 +23,6 @@
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD"/>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION"/>
 
     <application android:label="Android TestCase"
          android:maxRecents="1"
@@ -109,11 +108,6 @@
 
         <service android:name="android.server.wm.scvh.EmbeddedSCVHService"
             android:process="com.android.server.wm.scvh.embedded_process" />
-
-        <service android:name="android.view.cts.surfacevalidator.LocalMediaProjectionService"
-                 android:foregroundServiceType="mediaProjection"
-                 android:enabled="true">
-        </service>
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"

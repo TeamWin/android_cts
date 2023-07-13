@@ -24,7 +24,6 @@
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD"/>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION"/>
     <uses-feature android:name="android.hardware.camera"/>
 
     <application android:label="Android TestCase"
@@ -334,16 +333,6 @@
             </intent-filter>
         </activity>
 
-        <activity android:name="android.view.cts.surfacevalidator.CapturedActivity"
-             android:screenOrientation="locked"
-             android:theme="@style/WhiteBackgroundTheme"
-             android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-                <category android:name="android.intent.category.LAUNCHER"/>
-            </intent-filter>
-        </activity>
-
         <activity android:name="android.view.cts.surfacevalidator.ASurfaceControlTestActivity"
             android:screenOrientation="locked"
             android:theme="@style/WhiteBackgroundTheme"
@@ -353,21 +342,6 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
-
-        <activity android:name="android.view.cts.surfacevalidator.CapturedActivityWithResource"
-             android:screenOrientation="locked"
-             android:theme="@style/WhiteBackgroundTheme"
-             android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-                <category android:name="android.intent.category.LAUNCHER"/>
-            </intent-filter>
-        </activity>
-
-        <service android:name="android.view.cts.surfacevalidator.LocalMediaProjectionService"
-             android:foregroundServiceType="mediaProjection"
-             android:enabled="true">
-        </service>
 
         <activity android:name="android.view.cts.HoverCtsActivity"
              android:screenOrientation="locked"

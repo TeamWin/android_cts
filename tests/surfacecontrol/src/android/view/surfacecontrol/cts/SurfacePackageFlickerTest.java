@@ -17,7 +17,6 @@ package android.view.surfacecontrol.cts;
 
 import static android.server.wm.ActivityManagerTestBase.createFullscreenActivityScenarioRule;
 import static android.server.wm.BuildUtils.HW_TIMEOUT_MULTIPLIER;
-import static android.server.wm.WindowManagerState.getLogicalDisplaySize;
 
 import android.content.Context;
 import android.graphics.Color;
@@ -57,7 +56,6 @@ public class SurfacePackageFlickerTest {
     @Before
     public void setup() {
         mActivityRule.getScenario().onActivity(activity -> mActivity = activity);
-        mActivity.setLogicalDisplaySize(getLogicalDisplaySize());
     }
 
     class SurfacePackageTestCase implements ISurfaceValidatorTestCase {

@@ -15,17 +15,18 @@
  */
 package android.view.surfacecontrol.cts;
 
-import static android.server.wm.WindowManagerState.getLogicalDisplaySize;
+import static android.server.wm.BuildUtils.HW_TIMEOUT_MULTIPLIER;
 
 import android.animation.ObjectAnimator;
 import android.animation.PropertyValuesHolder;
 import android.animation.ValueAnimator;
-import android.annotation.SuppressLint;
+import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.media.MediaPlayer;
 import android.view.Gravity;
+import android.view.SurfaceControl;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
@@ -48,11 +49,15 @@ import org.junit.Test;
 import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
 @RunWith(AndroidJUnit4.class)
 @LargeTest
-@SuppressLint("RtlHardcoded")
 public class SurfaceViewSyncTest {
     private static final String TAG = "SurfaceViewSyncTests";
+
+    private static final long WAIT_TIMEOUT_S = 5L * HW_TIMEOUT_MULTIPLIER;
 
     @Rule
     public ActivityTestRule<CapturedActivityWithResource> mActivityRule =
@@ -68,7 +73,6 @@ public class SurfaceViewSyncTest {
     public void setup() {
         mActivity = mActivityRule.getActivity();
         mMediaPlayer = mActivity.getMediaPlayer();
-        mActivity.setLogicalDisplaySize(getLogicalDisplaySize());
     }
 
     private static ValueAnimator makeInfinite(ValueAnimator a) {
@@ -83,7 +87,7 @@ public class SurfaceViewSyncTest {
     // ViewFactories
     ///////////////////////////////////////////////////////////////////////////
 
-    private ViewFactory sEmptySurfaceViewFactory = context -> {
+    private final ViewFactory mEmptySurfaceViewFactory = context -> {
         SurfaceView surfaceView = new SurfaceView(context);
 
         // prevent transparent region optimization, which is invalid for a SurfaceView moving around
@@ -92,61 +96,110 @@ public class SurfaceViewSyncTest {
         return surfaceView;
     };
 
-    private ViewFactory sGreenSurfaceViewFactory = context -> {
-        SurfaceView surfaceView = new SurfaceView(context);
+    private final ViewFactory mGreenSurfaceViewFactory = new ViewFactory() {
+        private final CountDownLatch mCountDownLatch = new CountDownLatch(1);
 
-        // prevent transparent region optimization, which is invalid for a SurfaceView moving around
-        surfaceView.setWillNotDraw(false);
+        @Override
+        public View createView(Context context) {
+            SurfaceView surfaceView = new SurfaceView(context);
 
-        surfaceView.getHolder().setFixedSize(640, 480);
-        surfaceView.getHolder().addCallback(new SurfaceHolder.Callback() {
-            @Override
-            public void surfaceCreated(SurfaceHolder holder) {}
+            // prevent transparent region optimization, which is invalid for a SurfaceView moving
+            // around
+            surfaceView.setWillNotDraw(false);
 
-            @Override
-            public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-                Canvas canvas = holder.lockCanvas();
-                canvas.drawColor(Color.GREEN);
-                holder.unlockCanvasAndPost(canvas);
+            surfaceView.getHolder().setFixedSize(640, 480);
+            surfaceView.getHolder().addCallback(new SurfaceHolder.Callback() {
+                @Override
+                public void surfaceCreated(SurfaceHolder holder) {}
+
+                @Override
+                public void surfaceChanged(SurfaceHolder holder, int format, int width,
+                        int height) {
+                    Canvas canvas = holder.lockCanvas();
+                    canvas.drawColor(Color.GREEN);
+                    holder.unlockCanvasAndPost(canvas);
+                    mCountDownLatch.countDown();
+                }
+
+                @Override
+                public void surfaceDestroyed(SurfaceHolder holder) {}
+            });
+            return surfaceView;
+        }
+
+        @Override
+        public boolean waitForReady() {
+            try {
+                return mCountDownLatch.await(WAIT_TIMEOUT_S, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                return false;
             }
-
-            @Override
-            public void surfaceDestroyed(SurfaceHolder holder) {}
-        });
-        return surfaceView;
+        }
     };
 
-    private ViewFactory sVideoViewFactory = context -> {
-        SurfaceView surfaceView = new SurfaceView(context);
+    private final ViewFactory mVideoViewFactory = new ViewFactory() {
+        private final CountDownLatch mCountDownLatch = new CountDownLatch(1);
 
-        // prevent transparent region optimization, which is invalid for a SurfaceView moving around
-        surfaceView.setWillNotDraw(false);
+        @Override
+        public View createView(Context context) {
+            SurfaceView surfaceView = new SurfaceView(context);
 
-        surfaceView.getHolder().setFixedSize(640, 480);
-        surfaceView.getHolder().addCallback(new SurfaceHolder.Callback() {
-            @Override
-            public void surfaceCreated(SurfaceHolder holder) {
-                mMediaPlayer.setSurface(holder.getSurface());
-                mMediaPlayer.start();
+            // prevent transparent region optimization, which is invalid for a SurfaceView moving
+            // around
+            surfaceView.setWillNotDraw(false);
+
+            surfaceView.getHolder().setFixedSize(640, 480);
+            surfaceView.getHolder().addCallback(new SurfaceHolder.Callback() {
+                @Override
+                public void surfaceCreated(SurfaceHolder holder) {
+                    // When using MediaPlayer, we need to wait until the first frame is drawn since
+                    // it can be rendered asynchronously. Merge a commit callback transaction so
+                    // the next draw into the SV gets the callback invoked when content is rendered
+                    // on screen. This is a good signal to know when the test can start.
+                    SurfaceControl.Transaction t = new SurfaceControl.Transaction();
+                    t.addTransactionCommittedListener(Runnable::run, mCountDownLatch::countDown);
+                    surfaceView.applyTransactionToFrame(t);
+
+                    mMediaPlayer.setSurface(holder.getSurface());
+                    mMediaPlayer.start();
+                }
+
+                @Override
+                public void surfaceChanged(SurfaceHolder holder, int format, int width,
+                        int height) {
+                }
+
+                @Override
+                public void surfaceDestroyed(SurfaceHolder holder) {
+                    mMediaPlayer.pause();
+                    mMediaPlayer.setSurface(null);
+                }
+            });
+            return surfaceView;
+        }
+
+        @Override
+        public boolean waitForReady() {
+            try {
+                return mCountDownLatch.await(WAIT_TIMEOUT_S, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                return false;
             }
+        }
+    };
 
-            @Override
-            public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {}
-
-            @Override
-            public void surfaceDestroyed(SurfaceHolder holder) {
-                mMediaPlayer.pause();
-                mMediaPlayer.setSurface(null);
-            }
-        });
-        return surfaceView;
+    private final PixelChecker mBlackPixelChecker = new PixelChecker() {
+        @Override
+        public boolean checkPixels(int blackishPixelCount, int width, int height) {
+            return blackishPixelCount == 0;
+        }
     };
 
     ///////////////////////////////////////////////////////////////////////////
     // AnimationFactories
     ///////////////////////////////////////////////////////////////////////////
 
-    private AnimationFactory sSmallScaleAnimationFactory = view -> {
+    private final AnimationFactory mSmallScaleAnimationFactory = view -> {
         view.setPivotX(0);
         view.setPivotY(0);
         PropertyValuesHolder pvhX = PropertyValuesHolder.ofFloat(View.SCALE_X, 0.01f, 1f);
@@ -154,7 +207,7 @@ public class SurfaceViewSyncTest {
         return makeInfinite(ObjectAnimator.ofPropertyValuesHolder(view, pvhX, pvhY));
     };
 
-    private AnimationFactory sBigScaleAnimationFactory = view -> {
+    private final AnimationFactory mBigScaleAnimationFactory = view -> {
         view.setTranslationX(10);
         view.setTranslationY(10);
         view.setPivotX(0);
@@ -164,7 +217,7 @@ public class SurfaceViewSyncTest {
         return makeInfinite(ObjectAnimator.ofPropertyValuesHolder(view, pvhX, pvhY));
     };
 
-    private static AnimationFactory sFixedSizeWithViewSizeAnimationFactory = view -> {
+    private static final AnimationFactory sFixedSizeWithViewSizeAnimationFactory = view -> {
         ValueAnimator anim = ValueAnimator.ofInt(0, 100);
         anim.addUpdateListener(valueAnimator -> {
             ViewGroup.LayoutParams layoutParams = view.getLayoutParams();
@@ -184,7 +237,7 @@ public class SurfaceViewSyncTest {
         return makeInfinite(anim);
     };
 
-    private static AnimationFactory sFixedSizeAnimationFactory = view -> {
+    private static final AnimationFactory sFixedSizeAnimationFactory = view -> {
         ValueAnimator anim = ValueAnimator.ofInt(0, 100);
         anim.addUpdateListener(valueAnimator -> {
             if ((Integer) valueAnimator.getAnimatedValue() % 2 == 0) {
@@ -196,7 +249,7 @@ public class SurfaceViewSyncTest {
         return makeInfinite(anim);
     };
 
-    private AnimationFactory sTranslateAnimationFactory = view -> {
+    private final AnimationFactory mTranslateAnimationFactory = view -> {
         PropertyValuesHolder pvhX = PropertyValuesHolder.ofFloat(View.TRANSLATION_X, 10f, 30f);
         PropertyValuesHolder pvhY = PropertyValuesHolder.ofFloat(View.TRANSLATION_Y, 10f, 30f);
         return makeInfinite(ObjectAnimator.ofPropertyValuesHolder(view, pvhX, pvhY));
@@ -209,24 +262,23 @@ public class SurfaceViewSyncTest {
     /** Draws a moving 10x10 black rectangle, validates 100 pixels of black are seen each frame */
     @Test
     public void testSmallRect() throws Throwable {
-        mActivity.verifyTest(new AnimationTestCase(
-                context -> new View(context) {
-                    // draw a single pixel
-                    final Paint sBlackPaint = new Paint();
-                    @Override
-                    protected void onDraw(Canvas canvas) {
-                        canvas.drawRect(0, 0, 10, 10, sBlackPaint);
-                    }
+        mActivity.verifyTest(new AnimationTestCase(context -> new View(context) {
+            // draw a single pixel
+            final Paint mBlackPaint = new Paint();
 
-                    @SuppressWarnings("unused")
-                    void setOffset(int offset) {
-                        // Note: offset by integer values, to ensure no rounding
-                        // is done in rendering layer, as that may be brittle
-                        setTranslationX(offset);
-                        setTranslationY(offset);
-                    }
-                },
-                new FrameLayout.LayoutParams(100, 100, Gravity.LEFT | Gravity.TOP),
+            @Override
+            protected void onDraw(Canvas canvas) {
+                canvas.drawRect(0, 0, 10, 10, mBlackPaint);
+            }
+
+            @SuppressWarnings("unused")
+            void setOffset(int offset) {
+                // Note: offset by integer values, to ensure no rounding
+                // is done in rendering layer, as that may be brittle
+                setTranslationX(offset);
+                setTranslationY(offset);
+            }
+        }, new FrameLayout.LayoutParams(100, 100, Gravity.LEFT | Gravity.TOP),
                 view -> makeInfinite(ObjectAnimator.ofInt(view, "offset", 10, 30)),
                 new PixelChecker() {
                     @Override
@@ -243,9 +295,9 @@ public class SurfaceViewSyncTest {
     @Test
     public void testEmptySurfaceView() throws Throwable {
         mActivity.verifyTest(new AnimationTestCase(
-                sEmptySurfaceViewFactory,
+                mEmptySurfaceViewFactory,
                 new FrameLayout.LayoutParams(100, 100, Gravity.LEFT | Gravity.TOP),
-                sTranslateAnimationFactory,
+                mTranslateAnimationFactory,
                 new PixelChecker() {
                     @Override
                     public boolean checkPixels(int blackishPixelCount, int width, int height) {
@@ -257,9 +309,9 @@ public class SurfaceViewSyncTest {
     @Test
     public void testSurfaceViewSmallScale() throws Throwable {
         mActivity.verifyTest(new AnimationTestCase(
-                sGreenSurfaceViewFactory,
+                mGreenSurfaceViewFactory,
                 new FrameLayout.LayoutParams(320, 240, Gravity.LEFT | Gravity.TOP),
-                sSmallScaleAnimationFactory,
+                mSmallScaleAnimationFactory,
                 new PixelChecker() {
                     @Override
                     public boolean checkPixels(int blackishPixelCount, int width, int height) {
@@ -271,15 +323,9 @@ public class SurfaceViewSyncTest {
     @Test
     public void testSurfaceViewBigScale() throws Throwable {
         mActivity.verifyTest(new AnimationTestCase(
-                sGreenSurfaceViewFactory,
+                mGreenSurfaceViewFactory,
                 new FrameLayout.LayoutParams(640, 480, Gravity.LEFT | Gravity.TOP),
-                sBigScaleAnimationFactory,
-                new PixelChecker() {
-                    @Override
-                    public boolean checkPixels(int blackishPixelCount, int width, int height) {
-                        return blackishPixelCount == 0;
-                    }
-                }), mName);
+                mBigScaleAnimationFactory, mBlackPixelChecker), mName);
     }
 
 
@@ -290,15 +336,9 @@ public class SurfaceViewSyncTest {
     @Test
     public void testSurfaceViewFixedSizeWithViewSizeChanges() throws Throwable {
         mActivity.verifyTest(new AnimationTestCase(
-                sVideoViewFactory,
+                mVideoViewFactory,
                 new FrameLayout.LayoutParams(640, 480, Gravity.LEFT | Gravity.TOP),
-                sFixedSizeWithViewSizeAnimationFactory,
-                new PixelChecker() {
-                    @Override
-                    public boolean checkPixels(int blackishPixelCount, int width, int height) {
-                        return blackishPixelCount == 0;
-                    }
-                }), mName);
+                sFixedSizeWithViewSizeAnimationFactory, mBlackPixelChecker), mName);
     }
 
     /**
@@ -308,52 +348,35 @@ public class SurfaceViewSyncTest {
     @Test
     public void testSurfaceViewFixedSizeChanges() throws Throwable {
         mActivity.verifyTest(new AnimationTestCase(
-                sVideoViewFactory,
+                mVideoViewFactory,
                 new FrameLayout.LayoutParams(640, 480, Gravity.LEFT | Gravity.TOP),
-                sFixedSizeAnimationFactory,
-                new PixelChecker() {
-                    @Override
-                    public boolean checkPixels(int blackishPixelCount, int width, int height) {
-                        return blackishPixelCount == 0;
-                    }
-                }), mName);
+                sFixedSizeAnimationFactory, mBlackPixelChecker), mName);
     }
 
     @Test
     public void testVideoSurfaceViewTranslate() throws Throwable {
         mActivity.verifyTest(new AnimationTestCase(
-                sVideoViewFactory,
+                mVideoViewFactory,
                 new FrameLayout.LayoutParams(640, 480, Gravity.LEFT | Gravity.TOP),
-                sTranslateAnimationFactory,
-                new PixelChecker() {
-                    @Override
-                    public boolean checkPixels(int blackishPixelCount, int width, int height) {
-                        return blackishPixelCount == 0;
-                    }
-                }), mName);
+                mTranslateAnimationFactory, mBlackPixelChecker), mName);
     }
 
     @Test
     public void testVideoSurfaceViewRotated() throws Throwable {
         mActivity.verifyTest(new AnimationTestCase(
-                sVideoViewFactory,
+                mVideoViewFactory,
                 new FrameLayout.LayoutParams(100, 100, Gravity.LEFT | Gravity.TOP),
                 view -> makeInfinite(ObjectAnimator.ofPropertyValuesHolder(view,
                         PropertyValuesHolder.ofFloat(View.TRANSLATION_X, 10f, 30f),
                         PropertyValuesHolder.ofFloat(View.TRANSLATION_Y, 10f, 30f),
                         PropertyValuesHolder.ofFloat(View.ROTATION, 45f, 45f))),
-                new PixelChecker() {
-                    @Override
-                    public boolean checkPixels(int blackishPixelCount, int width, int height) {
-                        return blackishPixelCount == 0;
-                    }
-                }), mName);
+                mBlackPixelChecker), mName);
     }
 
     @Test
     public void testVideoSurfaceViewEdgeCoverage() throws Throwable {
         mActivity.verifyTest(new AnimationTestCase(
-                sVideoViewFactory,
+                mVideoViewFactory,
                 new FrameLayout.LayoutParams(640, 480, Gravity.CENTER),
                 view -> {
                     ViewGroup parent = (ViewGroup) view.getParent();
@@ -364,19 +387,13 @@ public class SurfaceViewSyncTest {
                     return makeInfinite(ObjectAnimator.ofPropertyValuesHolder(view,
                             PropertyValuesHolder.ofFloat(View.TRANSLATION_X, -x, 0, x, 0, -x),
                             PropertyValuesHolder.ofFloat(View.TRANSLATION_Y, 0, -y, 0, y, 0)));
-                },
-                new PixelChecker() {
-                    @Override
-                    public boolean checkPixels(int blackishPixelCount, int width, int height) {
-                        return blackishPixelCount == 0;
-                    }
-                }), mName);
+                }, mBlackPixelChecker), mName);
     }
 
     @Test
     public void testVideoSurfaceViewCornerCoverage() throws Throwable {
         mActivity.verifyTest(new AnimationTestCase(
-                sVideoViewFactory,
+                mVideoViewFactory,
                 new FrameLayout.LayoutParams(640, 480, Gravity.CENTER),
                 view -> {
                     ViewGroup parent = (ViewGroup) view.getParent();
@@ -387,12 +404,6 @@ public class SurfaceViewSyncTest {
                     return makeInfinite(ObjectAnimator.ofPropertyValuesHolder(view,
                             PropertyValuesHolder.ofFloat(View.TRANSLATION_X, -x, x, x, -x, -x),
                             PropertyValuesHolder.ofFloat(View.TRANSLATION_Y, -y, -y, y, y, -y)));
-                },
-                new PixelChecker() {
-                    @Override
-                    public boolean checkPixels(int blackishPixelCount, int width, int height) {
-                        return blackishPixelCount == 0;
-                    }
-                }), mName);
+                }, mBlackPixelChecker), mName);
     }
 }
