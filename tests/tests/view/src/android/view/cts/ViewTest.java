@@ -4100,7 +4100,7 @@ public class ViewTest {
 
         KeyEvent keyEvent = new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_0);
         mInstrumentation.sendKeySync(keyEvent);
-        assertTrue(mockView.isFocused());
+        mActivityRule.runOnUiThread(() -> assertTrue(mockView.isFocused()));
         assertFalse(fitWindowsView.isFocused());
         mActivityRule.runOnUiThread(fitWindowsView::requestFocus);
         mInstrumentation.waitForIdleSync();
@@ -4117,7 +4117,7 @@ public class ViewTest {
         assertTrue(fitWindowsView.isInTouchMode());
 
         mInstrumentation.sendKeySync(keyEvent);
-        assertFalse(fitWindowsView.isInTouchMode());
+        mActivityRule.runOnUiThread(() -> assertFalse(fitWindowsView.isInTouchMode()));
 
         event.setAction(MotionEvent.ACTION_DOWN);
         mInstrumentation.sendPointerSync(event);
@@ -4126,7 +4126,7 @@ public class ViewTest {
         assertTrue(fitWindowsView.isInTouchMode());
 
         mInstrumentation.sendKeySync(keyEvent);
-        assertFalse(fitWindowsView.isInTouchMode());
+        mActivityRule.runOnUiThread(() -> assertFalse(fitWindowsView.isInTouchMode()));
 
         // Stylus events should trigger touch mode.
         event.setAction(MotionEvent.ACTION_DOWN);
