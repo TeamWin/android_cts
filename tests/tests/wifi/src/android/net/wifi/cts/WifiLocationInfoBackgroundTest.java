@@ -33,11 +33,12 @@ import android.os.PowerManager;
 import android.platform.test.annotations.AppModeFull;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.filters.LargeTest;
 import androidx.test.filters.SdkSuppress;
-import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
 
+import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.ShellIdentityUtils;
 import com.android.compatibility.common.util.SystemUtil;
@@ -53,8 +54,9 @@ import org.junit.runner.RunWith;
 import java.util.List;
 
 @AppModeFull(reason = "Cannot get WifiManager in instant app mode")
-@SmallTest
+@LargeTest
 @RunWith(AndroidJUnit4.class)
+@ApiTest(apis = {"Manifest.permission#ACCESS_BACKGROUND_LOCATION"})
 public class WifiLocationInfoBackgroundTest extends WifiJUnit4TestBase{
     private static final String TAG = "WifiLocationInfoTest";
 
