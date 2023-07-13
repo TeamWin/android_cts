@@ -575,7 +575,12 @@ public final class Users {
         return UserManager.supportsMultipleUsers();
     }
 
+    /**
+     * Note: This method should not be run on < S.
+     */
     static Stream<UserInfo> users() {
+        Versions.requireMinimumVersion(S);
+
         if (Permissions.sIgnorePermissions.get()) {
             return sUserManager.getUsers(
                     /* excludePartial= */ false,
