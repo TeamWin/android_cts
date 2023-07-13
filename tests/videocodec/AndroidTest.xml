@@ -35,5 +35,7 @@
     </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.videocodec.cts" />
+        <!-- Timeout individual tests only after 30m (rather than 10m default) for slow devices. -->
+        <option name="test-timeout" value="1800000" />
     </test>
 </configuration>
