@@ -395,6 +395,7 @@ public class NumberPickerTest {
                     mNumberPicker.getHeight(),
                     300 /* dragDurationMs */,
                     20 /* moveEventCount */,
+                    false /* waitForAnimations */,
                     null /* eventInjectionListener */
             ); // drag down to the bottom of the screen.
 
