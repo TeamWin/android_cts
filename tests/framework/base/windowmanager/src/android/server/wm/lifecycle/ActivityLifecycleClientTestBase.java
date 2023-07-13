@@ -43,6 +43,7 @@ import android.app.PictureInPictureParams;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
+import android.graphics.Rect;
 import android.os.Bundle;
 import android.server.wm.MultiDisplayTestBase;
 import android.server.wm.ObjectTracker;
@@ -621,6 +622,18 @@ public class ActivityLifecycleClientTestBase extends MultiDisplayTestBase {
     void moveTaskToPrimarySplitScreenAndVerify(Activity primaryActivity,
             Activity secondaryActivity) throws Exception {
         getTransitionLog().clear();
+
+        final int screenwidth = mWm.getDefaultDisplay().getWidth();
+        final int screenheight = mWm.getDefaultDisplay().getHeight();
+
+        mTaskOrganizer.registerOrganizerIfNeeded();
+        Rect primaryTaskBounds = mTaskOrganizer.getPrimaryTaskBounds();
+        if (screenheight > screenwidth) {
+            primaryTaskBounds.bottom = primaryTaskBounds.width() / 2;
+        } else {
+            primaryTaskBounds.right = primaryTaskBounds.height() / 2;
+        }
+        mTaskOrganizer.setRootPrimaryTaskBounds(primaryTaskBounds);
 
         mWmState.computeState(secondaryActivity.getComponentName());
         moveActivitiesToSplitScreen(primaryActivity.getComponentName(),
