@@ -1,7 +1,7 @@
 {
   "presubmit": [
     {
-      "name": "CtsAppSecurityHostTestCases",
+      "name": "CtsPackageManagerHostTestCases",
       "options": [
         {
           "include-filter": "android.appsecurity.cts.SplitTests"
@@ -10,7 +10,7 @@
       "file_patterns": ["SplitTests\\.java"]
     },
     {
-      "name": "CtsAppSecurityHostTestCases",
+      "name": "CtsInstantAppsHostTestCases",
       "options": [
         {
           "include-filter": "android.appsecurity.cts.EphemeralTest"
@@ -21,7 +21,7 @@
       ]
     },
     {
-      "name": "CtsAppSecurityHostTestCases",
+      "name": "CtsPackageManagerHostTestCases",
       "options": [
         {
           "include-filter": "android.appsecurity.cts.IsolatedSplitsTests"
