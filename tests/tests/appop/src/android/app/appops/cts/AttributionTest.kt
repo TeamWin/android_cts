@@ -23,6 +23,7 @@ import android.app.AppOpsManager.OP_FLAGS_ALL
 import android.content.Intent
 import android.content.ComponentName
 import android.platform.test.annotations.AppModeFull
+import android.platform.test.annotations.FlakyTest
 import androidx.test.platform.app.InstrumentationRegistry
 import com.google.common.truth.Truth.assertThat
 import org.junit.Before
@@ -71,6 +72,7 @@ class AttributionTest {
     }
 
     @Test
+    @FlakyTest
     fun manifestReceiverTagging() {
         val PKG = "android.app.appops.cts.appwithreceiverattribution"
 

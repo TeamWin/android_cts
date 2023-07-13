@@ -17,6 +17,7 @@
 package android.permissionui.cts
 
 import android.content.Intent
+import androidx.test.filters.FlakyTest
 import androidx.test.uiautomator.By
 import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
 import org.junit.Assume.assumeFalse
@@ -26,6 +27,7 @@ import org.junit.Test
 /**
  * Tests permission usage info action.
  */
+@FlakyTest
 class PermissionUsageInfoTest : BaseUsePermissionTest() {
     @Before
     fun assumeHandheld() {

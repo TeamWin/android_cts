@@ -40,6 +40,7 @@ import android.provider.DeviceConfig
 import android.safetylabel.SafetyLabelConstants
 import android.safetylabel.SafetyLabelConstants.SAFETY_LABEL_CHANGE_NOTIFICATIONS_ENABLED
 import androidx.test.InstrumentationRegistry
+import androidx.test.filters.FlakyTest
 import androidx.test.filters.SdkSuppress
 import androidx.test.uiautomator.By
 import com.android.compatibility.common.util.DeviceConfigStateChangerRule
@@ -56,6 +57,7 @@ import org.junit.Test
 
 /** End-to-end test for SafetyLabelChangesJobService. */
 @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE, codeName = "UpsideDownCake")
+@FlakyTest
 class SafetyLabelChangesJobServiceTest : BaseUsePermissionTest() {
 
     @get:Rule

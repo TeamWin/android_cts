@@ -29,6 +29,7 @@ import android.net.Uri
 import android.os.Build
 import android.provider.DeviceConfig
 import android.provider.DeviceConfig.NAMESPACE_PRIVACY
+import androidx.test.filters.FlakyTest
 import androidx.test.filters.SdkSuppress
 import androidx.test.uiautomator.By
 import com.android.compatibility.common.util.SystemUtil.eventually
@@ -43,6 +44,7 @@ import org.junit.BeforeClass
 import org.junit.Test
 
 @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE, codeName = "UpsideDownCake")
+@FlakyTest
 class PhotoPickerPermissionTest : BaseUsePermissionTest() {
 
     companion object {

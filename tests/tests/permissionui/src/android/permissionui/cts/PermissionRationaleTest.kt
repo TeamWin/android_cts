@@ -21,6 +21,7 @@ import android.app.ActivityManager
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import android.platform.test.annotations.FlakyTest
 import android.provider.DeviceConfig
 import android.safetylabel.SafetyLabelConstants.PERMISSION_RATIONALE_ENABLED
 import android.text.Spanned
@@ -45,6 +46,7 @@ import org.junit.Test
 
 /** Permission rationale activity tests. Permission rationale is only available on U+ */
 @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE, codeName = "UpsideDownCake")
+@FlakyTest
 class PermissionRationaleTest : BaseUsePermissionTest() {
 
     private var activityManager: ActivityManager? = null

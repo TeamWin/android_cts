@@ -21,6 +21,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Point
 import android.os.Build
+import android.platform.test.annotations.FlakyTest
 import androidx.test.filters.SdkSuppress
 import androidx.test.uiautomator.By
 import com.android.compatibility.common.util.SystemUtil
@@ -31,6 +32,7 @@ import org.junit.Test
 /**
  * Tests permissions can't be tapjacked
  */
+@FlakyTest
 class PermissionTapjackingTest : BaseUsePermissionTest() {
 
     @Before

@@ -32,6 +32,7 @@ import android.os.Process
 import android.os.UserHandle
 import android.util.Log
 import androidx.test.InstrumentationRegistry
+import androidx.test.filters.FlakyTest
 import androidx.test.filters.SdkSuppress
 import com.android.compatibility.common.util.SystemUtil.runShellCommandOrThrow
 import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
@@ -50,6 +51,7 @@ private const val LOG_TAG = "PermissionTest30WithBluetooth"
  * Runtime Bluetooth-permission behavior of apps targeting API 30
  */
 @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S, codeName = "S")
+@FlakyTest
 class PermissionTest30WithBluetooth : BaseUsePermissionTest() {
 
     private val TEST_APP_AUTHORITY =

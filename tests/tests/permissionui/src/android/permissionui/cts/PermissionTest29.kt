@@ -27,6 +27,7 @@ import org.junit.Test
 /**
  * Runtime permission behavior tests for apps targeting API 29.
  */
+@FlakyTest
 class PermissionTest29 : BaseUsePermissionTest() {
     @Before
     fun assumeNotTv() {

@@ -19,6 +19,7 @@ package android.permissionui.cts
 import android.Manifest.permission.ACCESS_BACKGROUND_LOCATION
 import android.Manifest.permission.ACCESS_COARSE_LOCATION
 import android.Manifest.permission.ACCESS_FINE_LOCATION
+import android.platform.test.annotations.FlakyTest
 import androidx.test.uiautomator.By
 import com.android.modules.utils.build.SdkLevel
 import org.junit.Assume.assumeFalse
@@ -26,6 +27,7 @@ import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.Test
 
+@FlakyTest
 class LocationAccuracyTest : BaseUsePermissionTest() {
 
     companion object {

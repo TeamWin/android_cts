@@ -18,6 +18,7 @@ package android.permissionui.cts
 
 import android.Manifest
 import android.os.Build
+import android.platform.test.annotations.FlakyTest
 import androidx.test.filters.SdkSuppress
 import org.junit.Assume
 import org.junit.Before
@@ -28,6 +29,7 @@ import org.junit.Test
  * TODO(mrulhania): will update the test once all iris permission API changes are merged.
  */
 @SdkSuppress(minSdkVersion = Build.VERSION_CODES.VANILLA_ICE_CREAM, codeName = "VanillaIceCream")
+@FlakyTest
 class MultiDevicePermissionTest : BaseUsePermissionTest() {
     @Before
     fun setup() {

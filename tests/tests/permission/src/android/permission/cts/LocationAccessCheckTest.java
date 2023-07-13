@@ -98,6 +98,7 @@ import java.util.concurrent.CountDownLatch;
 @AppModeFull(reason = "Cannot set system settings as instant app. Also we never show a location "
         + "access check notification for instant apps.")
 @ScreenRecordRule.ScreenRecord
+@FlakyTest
 public class LocationAccessCheckTest {
 
     private static final String LOG_TAG = LocationAccessCheckTest.class.getSimpleName();

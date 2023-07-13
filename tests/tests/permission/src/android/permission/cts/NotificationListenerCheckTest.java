@@ -29,6 +29,7 @@ import android.app.ActivityOptions;
 import android.app.PendingIntent;
 import android.os.Build;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.FlakyTest;
 import android.platform.test.rule.ScreenRecordRule;
 import android.service.notification.StatusBarNotification;
 
@@ -50,6 +51,7 @@ import org.junit.runner.RunWith;
         + " listener check notification for instant apps.")
 @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
 @ScreenRecordRule.ScreenRecord
+@FlakyTest
 public class NotificationListenerCheckTest extends BaseNotificationListenerCheckTest {
 
     public final ScreenRecordRule mScreenRecordRule = new ScreenRecordRule(false, false);

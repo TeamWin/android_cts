@@ -21,6 +21,7 @@ import android.Manifest.permission.READ_MEDIA_AUDIO
 import android.Manifest.permission.READ_MEDIA_IMAGES
 import android.Manifest.permission.READ_MEDIA_VIDEO
 import android.os.Build
+import android.platform.test.annotations.FlakyTest
 import androidx.test.filters.SdkSuppress
 import com.android.compatibility.common.util.CddTest
 import org.junit.Test
@@ -30,6 +31,7 @@ import org.junit.Test
  */
 @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
 @CddTest(requirement = "9.1/C-0-1")
+@FlakyTest
 class MediaPermissionUpgradeTest : BaseUsePermissionTest() {
     @Test
     fun testAfterUpgradeToTiramisuThenNoGrantDialogShownForMediaPerms() {

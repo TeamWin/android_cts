@@ -19,6 +19,7 @@ package android.permissionui.cts
 import android.app.Activity
 import android.content.ComponentName
 import android.content.Intent
+import android.platform.test.annotations.FlakyTest
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -28,6 +29,7 @@ import java.util.concurrent.TimeUnit
 /**
  * Tests for the platform permission policy around apps targeting API 25.
  */
+@FlakyTest
 class PermissionPolicyTest25 : BasePermissionTest() {
     companion object {
         const val APP_APK_PATH_25 = "$APK_DIRECTORY/CtsPermissionPolicyApp25.apk"

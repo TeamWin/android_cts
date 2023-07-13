@@ -37,6 +37,7 @@ import android.permission.cts.SafetyCenterUtils.deleteDeviceConfigPrivacyPropert
 import android.permission.cts.SafetyCenterUtils.deviceSupportsSafetyCenter
 import android.permission.cts.SafetyCenterUtils.setDeviceConfigPrivacyProperty
 import android.platform.test.annotations.AppModeFull
+import android.platform.test.annotations.FlakyTest
 import android.platform.test.rule.ScreenRecordRule
 import android.provider.DeviceConfig
 import android.safetycenter.SafetyCenterManager
@@ -64,6 +65,7 @@ import org.junit.runner.RunWith
 )
 @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
 @ScreenRecordRule.ScreenRecord
+@FlakyTest
 class AccessibilityPrivacySourceTest {
 
     private val instrumentation: Instrumentation = InstrumentationRegistry.getInstrumentation()

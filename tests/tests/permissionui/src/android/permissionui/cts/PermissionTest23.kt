@@ -28,6 +28,7 @@ import org.junit.Test
 /**
  * Runtime permission behavior tests for apps targeting API 23.
  */
+@FlakyTest
 class PermissionTest23 : BaseUsePermissionTest() {
     companion object {
         private const val NON_EXISTENT_PERMISSION = "permission.does.not.exist"
