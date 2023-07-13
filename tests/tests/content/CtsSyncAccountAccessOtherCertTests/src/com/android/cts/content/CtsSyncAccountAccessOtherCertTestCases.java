@@ -108,6 +108,22 @@ public class CtsSyncAccountAccessOtherCertTestCases {
         // the permission request will not trigger. b/72114924
         assumeFalse(ActivityManager.isRunningInTestHarness());
 
+        // We need to ensure there are no other notifications present
+        // so that the search for the permission notification does not fail
+        UiDevice uiDevice = getUiDevice();
+        if (uiDevice.openNotification()) {
+            Thread.sleep(1000);
+            for (int i = 0; i < 5; i++) {
+                final UiObject2 clear = uiDevice
+                        .wait(Until.findObject(By.text("Clear all")), 2000);
+                if (clear != null) {
+                    clear.click();
+                    break;
+                }
+                scrollNotifications();
+            }
+        }
+
         try (AutoCloseable ignored = withAccount(activity.getActivity())) {
             AbstractThreadedSyncAdapter adapter = AlwaysSyncableSyncService.getInstance(
                     activity.getActivity()).setNewDelegate();
@@ -119,7 +135,6 @@ public class CtsSyncAccountAccessOtherCertTestCases {
             verify(adapter, never()).onPerformSync(any(), any(), any(), any(), any());
             Log.i(LOG_TAG, "Did not get onPerformSync");
 
-            UiDevice uiDevice = getUiDevice();
             if (isWatch()) {
                 UiObject2 notification = findPermissionNotificationInStream(uiDevice);
                 notification.click();
