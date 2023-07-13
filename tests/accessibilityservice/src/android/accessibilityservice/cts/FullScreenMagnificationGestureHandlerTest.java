@@ -46,7 +46,7 @@ import android.accessibility.cts.common.InstrumentedAccessibilityServiceTestRule
 import android.accessibilityservice.GestureDescription;
 import android.accessibilityservice.GestureDescription.StrokeDescription;
 import android.accessibilityservice.cts.AccessibilityGestureDispatchTest.GestureDispatchActivity;
-import android.accessibilityservice.cts.utils.EventCapturingTouchListener;
+import android.accessibilityservice.cts.utils.EventCapturingMotionEventListener;
 import android.app.Instrumentation;
 import android.content.pm.PackageManager;
 import android.graphics.PointF;
@@ -83,7 +83,8 @@ public class FullScreenMagnificationGestureHandlerTest {
 
     private InstrumentedAccessibilityService mService;
     private Instrumentation mInstrumentation;
-    private EventCapturingTouchListener mTouchListener = new EventCapturingTouchListener();
+    private EventCapturingMotionEventListener mTouchListener =
+            new EventCapturingMotionEventListener();
     float mCurrentScale = 1f;
     PointF mCurrentZoomCenter = null;
     PointF mTapLocation;
