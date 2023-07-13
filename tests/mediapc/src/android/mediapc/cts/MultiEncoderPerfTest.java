@@ -124,6 +124,7 @@ public class MultiEncoderPerfTest extends MultiCodecPerfTestBase {
         int maxInstances = checkAndGetMaxSupportedInstancesForCodecCombinations(height, width,
                 mimeEncoderPairs, true, requiredMinInstances);
         double achievedFrameRate = 0.0;
+        boolean hasAV1 = mMime.equals(MediaFormat.MIMETYPE_VIDEO_AV1);
         if (maxInstances >= requiredMinInstances) {
             ExecutorService pool = Executors.newFixedThreadPool(maxInstances);
             List<Encode> testList = new ArrayList<>();
@@ -131,8 +132,13 @@ public class MultiEncoderPerfTest extends MultiCodecPerfTestBase {
                 int instances4k = maxInstances / 3;
                 int instances1080p = maxInstances - instances4k;
                 for (int i = 0; i < instances4k; i++) {
-                    testList.add(
-                            new Encode(mMime, mEncoderName, mIsAsync, height, width, 30, bitrate));
+                    if (hasAV1) {
+                        testList.add(new Encode(mMime, mEncoderName, mIsAsync, 1080, 1920, 30,
+                                10000000));
+                    } else {
+                        testList.add(new Encode(mMime, mEncoderName, mIsAsync, height, width, 30,
+                                bitrate));
+                    }
                 }
                 for (int i = 0; i < instances1080p; i++) {
                     testList.add(
