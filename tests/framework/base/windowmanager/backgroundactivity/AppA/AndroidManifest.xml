@@ -36,7 +36,7 @@
              android:exported="true"/>
         <receiver android:name=".SendPendingIntentReceiver"
                   android:exported="true"/>
-        <service android:name=".AppATestService"
+        <service android:name="android.server.wm.backgroundactivity.common.TestService"
              android:exported="true"/>
         <receiver android:name=".SimpleAdminReceiver"
              android:permission="android.permission.BIND_DEVICE_ADMIN"

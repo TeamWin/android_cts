@@ -132,7 +132,6 @@ public class Components extends ComponentsBase {
     public final ComponentName SEND_PENDING_INTENT_RECEIVER;
     public final ComponentName START_ACTIVITY_RECEIVER;
     public final ComponentName SIMPLE_ADMIN_RECEIVER;
-    public final ComponentName APP_A_TEST_SERVICE;
     public final ComponentName ACTIVITY_START_SERVICE;
     public final ComponentName PIP_ACTIVITY;
     public final ComponentName LAUNCH_INTO_PIP_ACTIVITY;
@@ -174,8 +173,6 @@ public class Components extends ComponentsBase {
                 component(APP_PACKAGE_NAME, "StartBackgroundActivityReceiver");
         SIMPLE_ADMIN_RECEIVER =
                 component(APP_PACKAGE_NAME, "SimpleAdminReceiver");
-        APP_A_TEST_SERVICE =
-                component(APP_PACKAGE_NAME, "AppATestService");
         PIP_ACTIVITY =
                 component(APP_PACKAGE_NAME, "PipActivity");
         LAUNCH_INTO_PIP_ACTIVITY =
