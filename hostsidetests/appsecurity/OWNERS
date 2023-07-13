@@ -23,50 +23,64 @@
 
 # OTA bug component
 # Bug component: 330599 = per-file *ResumeOnReboot*
+# Bug component: 330599 = per-file ApexSignatureVerificationTest.java
 
 # Security bug component
 # Bug component: 36824 = per-file ListeningPortsTest.java
 
 patb@google.com
-per-file AccessSerialNumberTest.java = ashfall@google.com
-per-file ApexSignatureVerificationTest.java = dariofreni@google.com
+include platform/frameworks/base:/PACKAGE_MANAGER_OWNERS
+
+# Permissions
+per-file AccessSerialNumberTest.java = file:platform/frameworks/base:/core/java/android/permission/OWNERS
+per-file AppOpsTest.java = file:platform/frameworks/base:/core/java/android/permission/OWNERS
+per-file LocationPolicyTest.java = file:platform/frameworks/base:/core/java/android/permission/OWNERS
+per-file PermissionEscalationTest.java = file:platform/frameworks/base:/core/java/android/permission/OWNERS
+per-file RoleSecurityTest.java = file:platform/frameworks/base:/core/java/android/permission/OWNERS
+
+# Data Isolation
 per-file AppDataIsolationTests.java = rickywai@google.com,alanstokes@google.com
-per-file AppOpsTest.java = ashfall@google.com
-per-file AppSecurityTests.java = cbrubaker@google.com
-per-file AuthBoundKeyTest.java = file:test-apps/AuthBoundKeyApp/OWNERS
-per-file DeviceIdentifierTest.java = cbrubaker@google.com
-per-file ExternalStorageHostTest.java = nandana@google.com
-per-file ExternalStorageHostTest.java = zezeozue@google.com
-per-file KeySetHostTest.java = cbrubaker@google.com
-per-file ListeningPortsTest.java = cbrubaker@google.com,mpgroover@google.com
-per-file PermissionsHostTest.java = ashfall@google.com
-per-file PkgInstallSignatureVerificationTest.java = cbrubaker@google.com,mpgroover@google.com
-per-file RequestsOnlyCalendarApp22.java = ashfall@google.com
+
+# Use Embedded Dex
 per-file UseEmbeddedDexTest.java = victorhsieh@google.com
 
+# Security
+per-file AppSecurityTests.java = cbrubaker@google.com,mpgroover@google.com
+per-file DeviceIdentifierTest.java = cbrubaker@google.com,mpgroover@google.com
+per-file KeySetHostTest.java = cbrubaker@google.com,mpgroover@google.com
+per-file ListeningPortsTest.java = cbrubaker@google.com,mpgroover@google.com
+per-file PkgInstallSignatureVerificationTest.java = cbrubaker@google.com,mpgroover@google.com
+per-file StatsdAppSecurityAtomTest.java = yaochen@google.com
+
 # Package Manager
-per-file ApplicationVisibilityTest.java = chiuwinson@google.com, patb@google.com, schfan@google.com
-per-file BaseInstallMultiple.java =  chiuwinson@google.com, patb@google.com, schfan@google.com
-per-file EphemeralTest.java =  chiuwinson@google.com, patb@google.com, schfan@google.com
-per-file InstantAppUserTest.java =  chiuwinson@google.com, patb@google.com, schfan@google.com
-per-file InstantCookieHostTest.java =  chiuwinson@google.com, patb@google.com, schfan@google.com
-per-file IsolatedSplitsTests.java = chiuwinson@google.com, patb@google.com, schfan@google.com
-per-file MajorVersionTest.java =  chiuwinson@google.com, patb@google.com, schfan@google.com
-per-file PermissionsHostTest.java = ashfall@google.com
-per-file Pkg* = chiuwinson@google.com, patb@google.com, schfan@google.com
-per-file PrivilegedUpdateTests.java = chiuwinson@google.com, patb@google.com, schfan@google.com
-per-file SharedUserIdTest.java = chiuwinson@google.com, patb@google.com, schfan@google.com
-per-file SplitTests.java = chiuwinson@google.com, patb@google.com, schfan@google.com
+per-file AuthBoundKeyTest.java = file:test-apps/AuthBoundKeyApp/OWNERS
+per-file ApplicationVisibilityTest.java = file:platform/frameworks/base:/PACKAGE_MANAGER_OWNERS
+per-file BaseInstallMultiple.java =  file:platform/frameworks/base:/PACKAGE_MANAGER_OWNERS
+per-file EphemeralTest.java =  file:platform/frameworks/base:/PACKAGE_MANAGER_OWNERS
+per-file InstantAppUserTest.java =  file:platform/frameworks/base:/PACKAGE_MANAGER_OWNERS
+per-file InstantCookieHostTest.java =  file:platform/frameworks/base:/PACKAGE_MANAGER_OWNERS
+per-file IsolatedSplitsTests.java = file:platform/frameworks/base:/PACKAGE_MANAGER_OWNERS
+per-file MajorVersionTest.java = file:platform/frameworks/base:/PACKAGE_MANAGER_OWNERS
+per-file PackageResolutionHostTest.java = file:platform/frameworks/base:/PACKAGE_MANAGER_OWNERS
+per-file PackageSetInstallerTest.kt = file:platform/frameworks/base:/PACKAGE_MANAGER_OWNERS
+per-file PackageVisibilityTest.java = file:platform/frameworks/base:/PACKAGE_MANAGER_OWNERS
+per-file PkgInstallSignatureVerificationTest.java = file:platform/frameworks/base:/PACKAGE_MANAGER_OWNERS
+per-file PrivilegedUpdateTests.java = file:platform/frameworks/base:/PACKAGE_MANAGER_OWNERS
+per-file ReadableSettingsFieldsTest.java = file:platform/frameworks/base:/PACKAGE_MANAGER_OWNERS
+per-file SessionReferrerUriTest.java = file:platform/frameworks/base:/PACKAGE_MANAGER_OWNERS
+per-file SettingsProviderInvalidKeyTest.java = file:platform/frameworks/base:/PACKAGE_MANAGER_OWNERS
+per-file SharedUserIdTest.java = file:platform/frameworks/base:/PACKAGE_MANAGER_OWNERS
+per-file SplitTests.java = file:platform/frameworks/base:/PACKAGE_MANAGER_OWNERS
+per-file UseProcessTest.java = file:platform/frameworks/base:/PACKAGE_MANAGER_OWNERS
 
 # Resources
 per-file CorruptApkTests.java = patb@google.com, zyy@google.com
 per-file OverlayHostTest.java = patb@google.com, zyy@google.com
 
 # test apps
-per-file BasePermissionsTest.java = ashfall@google.com
-per-file RequestsOnlyCalendarApp22.java = ashfall@google.com
-per-file ReviewPermissionHelper = ashfall@google.com
-per-file UsePermission*.java = ashfall@google.com
+per-file BasePermissionsTest.java = file:platform/frameworks/base:/core/java/android/permission/OWNERS
+per-file ReviewPermissionHelper = file:platform/frameworks/base:/core/java/android/permission/OWNERS
+per-file UsePermission*.java = file:platform/frameworks/base:/core/java/android/permission/OWNERS
 
 # CTS shim packages
 per-file CtsShim*.apk = dariofreni@google.com
@@ -82,6 +96,7 @@ per-file *Documents* = file:platform/frameworks/base:/core/java/android/os/stora
 per-file ScopedDirectoryAccessTest.java = file:platform/frameworks/base:/core/java/android/os/storage/OWNERS
 
 # OTA
+per-file ApexSignatureVerificationTest.java = dariofreni@google.com
 per-file *ResumeOnReboot* = file:platform/frameworks/base:/core/java/android/service/resumeonreboot/OWNERS
 per-file BootCountTrackerRule.java = file:platform/frameworks/base:/core/java/android/service/resumeonreboot/OWNERS
 

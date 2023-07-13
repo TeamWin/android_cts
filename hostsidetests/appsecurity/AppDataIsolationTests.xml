@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (C) 2015 The Android Open Source Project
+<!-- Copyright (C) 2023 The Android Open Source Project
 
      Licensed under the Apache License, Version 2.0 (the "License");
      you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<configuration description="Config for the CTS App Security host tests">
+<configuration description="Config for the CTS App Data Isolation host tests">
     <option name="test-suite-tag" value="cts" />
     <option name="config-descriptor:metadata" key="component" value="framework" />
     <option name="config-descriptor:metadata" key="parameter" value="not_instant_app" />
@@ -29,7 +29,6 @@
         <option name="teardown-command" value="settings put global verifier_engprod 0"/>
     </target_preparer>
     <test class="com.android.compatibility.common.tradefed.testtype.JarHostTest" >
-        <option name="jar" value="CtsAppSecurityHostTestCases.jar" />
-        <option name="runtime-hint" value="20m" />
+        <option name="jar" value="CtsAppDataIsolationHostTestCases.jar" />
     </test>
 </configuration>
