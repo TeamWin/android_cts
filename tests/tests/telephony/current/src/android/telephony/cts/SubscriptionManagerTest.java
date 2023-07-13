@@ -91,6 +91,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -1287,6 +1288,43 @@ public class SubscriptionManagerTest {
         } finally {
             overrideCarrierConfig(null, mSubId);
         }
+    }
+
+    @Test
+    public void testCreateSubscriptionChangedListenerWithoutLooper() throws Throwable {
+        CompletableFuture<Throwable> futureResult = new CompletableFuture<>();
+
+        Thread t = new Thread(() -> {
+            SubscriptionManager.OnSubscriptionsChangedListener oscl =
+                    new SubscriptionManager.OnSubscriptionsChangedListener();
+            try {
+                mSm.addOnSubscriptionsChangedListener((r) -> {}, oscl);
+                mSm.removeOnSubscriptionsChangedListener(oscl);
+                futureResult.complete(null);
+            } catch (Exception e) {
+                futureResult.complete(e);
+                try {
+                    mSm.removeOnSubscriptionsChangedListener(oscl);
+                } catch (Exception likely) {
+                    // nothing to do
+                }
+            }
+
+            try {
+                mSm.addOnSubscriptionsChangedListener(oscl);
+                futureResult.complete(
+                        new Exception("Looper wasn't required as expected"));
+            } catch (Exception expected) {
+                futureResult.complete(null);
+            } finally {
+                mSm.removeOnSubscriptionsChangedListener(oscl);
+            }
+        });
+
+        t.start();
+        t.join(5000 /*millis*/);
+
+        if (futureResult.get() != null) throw futureResult.get();
     }
 
     private String getSubscriptionIso(int subId) {
