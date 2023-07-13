@@ -68,6 +68,7 @@ import androidx.test.filters.SdkSuppress;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
+import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.ShellIdentityUtils;
 
@@ -488,6 +489,7 @@ public class ConcurrencyTest extends WifiJUnit4TestBase {
         removeAllPersistentGroups();
     }
 
+    @ApiTest(apis = {"android.net.wifi.p2p.WifiP2pManager#requestP2pState"})
     @Test
     public void testConcurrency() {
         sWifiP2pManager.requestP2pState(sWifiP2pChannel, new WifiP2pManager.P2pStateListener() {
@@ -504,6 +506,9 @@ public class ConcurrencyTest extends WifiJUnit4TestBase {
         assertEquals(WifiP2pManager.WIFI_P2P_STATE_ENABLED, MY_RESPONSE.p2pState);
     }
 
+    @ApiTest(apis = {"android.net.wifi.p2p.WifiP2pManager#requestDiscoveryState",
+            "android.net.wifi.p2p.WifiP2pManager#discoverPeers",
+            "android.net.wifi.p2p.WifiP2pManager#stopPeerDiscovery"})
     @Test
     public void testRequestDiscoveryState() {
         sWifiP2pManager.requestDiscoveryState(
@@ -558,6 +563,9 @@ public class ConcurrencyTest extends WifiJUnit4TestBase {
         sWifiP2pManager.stopPeerDiscovery(sWifiP2pChannel, null);
     }
 
+    @ApiTest(apis = {"android.net.wifi.p2p.WifiP2pManager#requestNetworkInfo",
+            "android.net.wifi.p2p.WifiP2pManager#createGroup",
+            "android.net.wifi.p2p.WifiP2pManager#removeGroup"})
     @Test
     public void testRequestNetworkInfo() {
         sWifiP2pManager.requestNetworkInfo(sWifiP2pChannel,
@@ -659,6 +667,7 @@ public class ConcurrencyTest extends WifiJUnit4TestBase {
         return MY_RESPONSE.deviceName;
     }
 
+    @ApiTest(apis = {"android.net.wifi.p2p.WifiP2pManager#setDeviceName"})
     @Test
     public void testSetDeviceName() {
         String testDeviceName = "test";
@@ -704,6 +713,8 @@ public class ConcurrencyTest extends WifiJUnit4TestBase {
         return MY_RESPONSE.persistentGroups;
     }
 
+    @ApiTest(apis = {"android.net.wifi.p2p.WifiP2pManager#requestPersistentGroupInfo",
+            "android.net.wifi.p2p.WifiP2pManager#factoryReset"})
     @Test
     public void testPersistentGroupOperation() {
         sWifiP2pManager.createGroup(sWifiP2pChannel, sActionListener);
@@ -766,6 +777,9 @@ public class ConcurrencyTest extends WifiJUnit4TestBase {
         assertEquals(0, persistentGroups.getGroupList().size());
     }
 
+    @ApiTest(apis = {"android.net.wifi.p2p.WifiP2pManager#setWifiP2pChannels",
+            "android.net.wifi.p2p.WifiP2pManager#startListening",
+            "android.net.wifi.p2p.WifiP2pManager#stopListening"})
     @Test
     public void testP2pListening() {
         ShellIdentityUtils.invokeWithShellPermissions(() -> {
@@ -787,6 +801,10 @@ public class ConcurrencyTest extends WifiJUnit4TestBase {
         assertTrue(MY_RESPONSE.success);
     }
 
+    @ApiTest(apis = {"android.net.wifi.p2p.WifiP2pManager#setServiceResponseListener",
+            "android.net.wifi.p2p.WifiP2pManager#addLocalService",
+            "android.net.wifi.p2p.WifiP2pManager#clearLocalServices",
+            "android.net.wifi.p2p.WifiP2pManager#removeLocalService"})
     @Test
     public void testP2pService() {
         // This only store the listener to the WifiP2pManager internal variable, nothing to fail.
@@ -825,6 +843,7 @@ public class ConcurrencyTest extends WifiJUnit4TestBase {
         assertTrue(MY_RESPONSE.success);
     }
 
+    @ApiTest(apis = {"android.net.wifi.p2p.WifiP2pManager#removeClient"})
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU)
     @Test
     public void testRemoveClient() {
@@ -845,6 +864,7 @@ public class ConcurrencyTest extends WifiJUnit4TestBase {
         assertTrue(MY_RESPONSE.success);
     }
 
+    @ApiTest(apis = {"android.net.wifi.p2p.WifiP2pManager#discoverPeersOnSpecificFrequency"})
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU)
     @Test
     public void testDiscoverPeersOnSpecificFreq() {
@@ -904,6 +924,7 @@ public class ConcurrencyTest extends WifiJUnit4TestBase {
         sWifiP2pManager.stopPeerDiscovery(sWifiP2pChannel, null);
     }
 
+    @ApiTest(apis = {"android.net.wifi.p2p.WifiP2pManager#discoverPeersOnSocialChannels"})
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU)
     @Test
     public void testDiscoverPeersOnSocialChannelsOnly() {
@@ -963,6 +984,7 @@ public class ConcurrencyTest extends WifiJUnit4TestBase {
         sWifiP2pManager.stopPeerDiscovery(sWifiP2pChannel, null);
     }
 
+    @ApiTest(apis = {"android.net.wifi.p2p.WifiP2pConfig.Builder#setGroupClientIpProvisioningMode"})
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU)
     @Test
     public void testP2pConnectDoesNotThrowExceptionWhenGroupOwnerIpv6IsNotProvided() {
@@ -980,6 +1002,7 @@ public class ConcurrencyTest extends WifiJUnit4TestBase {
         assertFalse(MY_RESPONSE.success);
     }
 
+    @ApiTest(apis = {"android.net.wifi.p2p.WifiP2pManager#setVendorElements"})
     @Test
     public void testP2pSetVendorElements() {
 
@@ -1001,6 +1024,8 @@ public class ConcurrencyTest extends WifiJUnit4TestBase {
     }
 
     /** Test IEs whose size is greater than the maximum allowed size. */
+    @ApiTest(apis = {"android.net.wifi.p2p.WifiP2pManager"
+            + "#getP2pMaxAllowedVendorElementsLengthBytes"})
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU)
     @Test
     public void testP2pSetVendorElementsOverMaximumAllowedSize() {
@@ -1022,6 +1047,9 @@ public class ConcurrencyTest extends WifiJUnit4TestBase {
     }
 
     /** Test that external approver APIs. */
+    @ApiTest(apis = {"android.net.wifi.p2p.WifiP2pManager#addExternalApprover",
+            "android.net.wifi.p2p.WifiP2pManager#setConnectionRequestResult",
+            "android.net.wifi.p2p.WifiP2pManager#removeExternalApprover"})
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU)
     @Test
     public void testP2pExternalApprover() {
@@ -1086,6 +1114,7 @@ public class ConcurrencyTest extends WifiJUnit4TestBase {
     }
 
     /** Test setWfdInfo() API. */
+    @ApiTest(apis = {"android.net.wifi.p2p.WifiP2pManager#setWfdInfo"})
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
     @Test
     public void testP2pSetWfdInfo() {
@@ -1103,6 +1132,7 @@ public class ConcurrencyTest extends WifiJUnit4TestBase {
     /**
      * Tests {@link WifiP2pManager#getListenState(WifiP2pManager.Channel, Executor, Consumer)}
      */
+    @ApiTest(apis = {"android.net.wifi.p2p.WifiP2pManager#getListenState"})
     @Test
     public void testGetListenState() {
         Consumer<Integer> testListenStateListener = new Consumer<Integer>() {
@@ -1141,6 +1171,7 @@ public class ConcurrencyTest extends WifiJUnit4TestBase {
         assertEquals(WifiP2pManager.WIFI_P2P_LISTEN_STOPPED, MY_RESPONSE.listenState);
     }
 
+    @ApiTest(apis = {"android.net.wifi.WifiP2pManager#getListenState"})
     @Test
     public void testWpsInfo() {
         WpsInfo info = new WpsInfo();
