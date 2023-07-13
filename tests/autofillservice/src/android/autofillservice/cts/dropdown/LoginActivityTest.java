@@ -131,6 +131,7 @@ import androidx.test.uiautomator.UiObject2;
 import com.android.compatibility.common.util.RetryableException;
 
 import org.junit.After;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.concurrent.CountDownLatch;
@@ -1472,6 +1473,7 @@ public class LoginActivityTest extends LoginActivityCommonTestCase {
     }
 
     @Test
+    @Ignore("b/290671195 Fix error on remote cf instances")
     public void remoteViews_doesNotSpillAcrossUsers() throws Exception {
         // Set service.
         enableService();
