@@ -543,8 +543,6 @@ public class AudioDataPathsActivity
 
         int mApi;
 
-        boolean mPreTestMMapEnabled;
-
         private int    mPhaseCount;
 
         // which route are we running
@@ -797,26 +795,7 @@ public class AudioDataPathsActivity
                 testSpec.setGlobalAttributes(TestSpec.ATTRIBUTE_DISABLE_MMAP);
                 mTestSpecs.add(testSpec);
 
-                // These specs are duplicated because it often only fails on the second time.
-                // Left
-                testSpec = new TestSpec(
-                        AudioDeviceInfo.TYPE_BUILTIN_SPEAKER_SAFE, speakerSafeSampleRate, 2,
-                        AudioDeviceInfo.TYPE_BUILTIN_MIC, speakerSafeSampleRate, 1);
-                testSpec.setSources(leftSineSourceProvider, mMicSinkProvider);
-                testSpec.setDescription("SpeakerSafe:2:Left Mic:1 no MMAP");
-                testSpec.setGlobalAttributes(TestSpec.ATTRIBUTE_DISABLE_MMAP);
-                mTestSpecs.add(testSpec);
-
-                // Right
-                testSpec = new TestSpec(
-                        AudioDeviceInfo.TYPE_BUILTIN_SPEAKER_SAFE, speakerSafeSampleRate, 2,
-                        AudioDeviceInfo.TYPE_BUILTIN_MIC, speakerSafeSampleRate, 1);
-                testSpec.setSources(rightSineSourceProvider, mMicSinkProvider);
-                testSpec.setDescription("SpeakerSafe:2:Right Mic:1 no MMAP");
-                testSpec.setGlobalAttributes(TestSpec.ATTRIBUTE_DISABLE_MMAP);
-                mTestSpecs.add(testSpec);
-
-                if (Globals.isMMapSupported() || mApi == TEST_API_JAVA) {
+                if (Globals.isMMapSupported() && mApi == TEST_API_NATIVE) {
                     testSpec = new TestSpec(
                             AudioDeviceInfo.TYPE_BUILTIN_SPEAKER_SAFE, speakerSafeSampleRate, 2,
                             AudioDeviceInfo.TYPE_BUILTIN_MIC, speakerSafeSampleRate, 1);
@@ -984,11 +963,16 @@ public class AudioDataPathsActivity
                 mDuplexAudioManager.setRecorderSampleRate(testSpec.mInSampleRate);
                 mDuplexAudioManager.setNumRecorderChannels(testSpec.mInChannelCount);
 
-                mDuplexAudioManager.setupStreams(mAudioApi, mAudioApi);
+                // Set MMAP policy before opening the streams.
+                boolean mmapEnabled =
+                        ((testSpec.getGlobalAttributes() & TestSpec.ATTRIBUTE_DISABLE_MMAP) != 0)
+                        ? false
+                        : Globals.isMMapSupported();
+                Log.d(TAG, "DataPaths: setMMapEnabled(" + mmapEnabled + ")");
+                Globals.setMMapEnabled(mmapEnabled);
 
-                if ((testSpec.getGlobalAttributes() & TestSpec.ATTRIBUTE_DISABLE_MMAP) != 0) {
-                    Globals.setMMapEnabled(false);
-                }
+                // Open the streams.
+                mDuplexAudioManager.setupStreams(mAudioApi, mAudioApi);
 
                 // Adjust the player frequency to match with the quantized frequency
                 // of the analyzer.
@@ -1033,8 +1017,6 @@ public class AudioDataPathsActivity
 
             clearTestState();
 
-            mPreTestMMapEnabled = Globals.isMMapEnabled();
-
             mTestStep = TESTSTEP_NONE;
             (mTimer = new Timer()).scheduleAtFixedRate(new TimerTask() {
                 @Override
@@ -1059,8 +1041,6 @@ public class AudioDataPathsActivity
 
         public void completeTest() {
             Log.i(TAG, "completeTest()");
-
-            Globals.setMMapEnabled(mPreTestMMapEnabled);
 
             runOnUiThread(new Runnable() {
                 @Override
@@ -1276,6 +1256,7 @@ public class AudioDataPathsActivity
         mTestManager.displayTestDevices();
 
         enableTestButtons(true, false);
+        Globals.setMMapEnabled(Globals.isMMapSupported());
     }
 
     //
