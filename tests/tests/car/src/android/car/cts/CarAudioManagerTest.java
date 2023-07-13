@@ -42,6 +42,7 @@ import android.car.Car;
 import android.car.CarOccupantZoneManager;
 import android.car.CarOccupantZoneManager.OccupantZoneInfo;
 import android.car.PlatformVersion;
+import android.car.cts.utils.ProtoDumpUtils;
 import android.car.media.AudioZonesMirrorStatusCallback;
 import android.car.media.CarAudioManager;
 import android.car.media.CarAudioZoneConfigInfo;
@@ -63,6 +64,10 @@ import android.view.KeyEvent;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.car.audio.CarAudioDumpProto;
+import com.android.car.audio.CarAudioDumpProto.CarAudioZoneConfigProto;
+import com.android.car.audio.CarAudioDumpProto.CarAudioZoneProto;
+import com.android.car.audio.CarAudioDumpProto.CarVolumeGroupProto;
 import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.ShellUtils;
 
@@ -77,8 +82,6 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @RunWith(AndroidJUnit4.class)
@@ -88,17 +91,6 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
     private static final String TAG = CarAudioManagerTest.class.getSimpleName();
 
     private static final long WAIT_TIMEOUT_MS = 5_000;
-
-    private static final Pattern ZONE_PATTERN = Pattern.compile(
-            "CarAudioZone\\(.*:(\\d?)\\) isPrimary\\? (.*?)\n.*Current Config Id: (\\d?)");
-    private static final Pattern VOLUME_GROUP_PATTERN = Pattern.compile(
-            "CarVolumeGroup\\((\\d?)\\)\n.*Name\\((.*?)\\)\n.*Zone Id\\((\\d?)\\)\n"
-                    + ".*Configuration Id\\((\\d?)\\)");
-    private static final Pattern ZONE_CONFIG_PATTERN = Pattern.compile(
-            "CarAudioZoneConfig\\((.*?):(\\d?)\\) of zone (\\d?) isDefault\\? (.*?)");
-
-    private static final Pattern PRIMARY_ZONE_MEDIA_REQUEST_APPROVERS_PATTERN =
-            Pattern.compile("Media request callbacks\\[(\\d+)\\]:");
 
     private static final int USAGE_INVALID = -1;
     private static final int VOLUME_FLAGS = 0;
@@ -115,13 +107,14 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
 
     private CarAudioManager mCarAudioManager;
     private SyncCarVolumeCallback mCallback;
-    private int mZoneId = -1;
+    private int mZoneId = LEGACY_ZONE_ID;
     private int mConfigId = -1;
     private int mVolumeGroupId = -1;
+    private int mVolumeGroupCount = LEGACY_GROUP_VOLUME_COUNT;
     private CarOccupantZoneManager mCarOccupantZoneManager;
     private TestPrimaryZoneMediaAudioRequestStatusCallback mRequestCallback;
     private long mMediaRequestId = INVALID_REQUEST_ID;
-    private String mCarAudioServiceDump;
+    private CarAudioDumpProto mCarAudioServiceDump;
     private TestAudioZonesMirrorStatusCallback mAudioZonesMirrorCallback;
     private long mMirrorRequestId = INVALID_REQUEST_ID;
     private TestCarVolumeGroupEventCallback mEventCallback;
@@ -130,9 +123,8 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
     public void setUp() throws Exception {
         mCarAudioManager = getCar().getCarManager(CarAudioManager.class);
         mCarOccupantZoneManager = getCar().getCarManager(CarOccupantZoneManager.class);
-        // TODO(b/271918489): dump CarAudioService as protobuf
-        mCarAudioServiceDump = ShellUtils.runShellCommand(
-                "dumpsys car_service --services CarAudioService");
+        mCarAudioServiceDump = CarAudioDumpProto.parseFrom(ProtoDumpUtils
+                .executeProtoDumpShellCommand("CarAudioService"));
     }
 
     @After
@@ -484,8 +476,6 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
     public void getGroupVolume() {
         if (mCarAudioManager.isAudioFeatureEnabled(AUDIO_FEATURE_DYNAMIC_ROUTING)) {
             assumePrimaryZone();
-        } else {
-            mVolumeGroupId = LEGACY_VOLUME_GROUP_ID;
         }
         int maxIndex = mCarAudioManager.getGroupMaxVolume(mVolumeGroupId);
         int minIndex = mCarAudioManager.getGroupMinVolume(mVolumeGroupId);
@@ -506,9 +496,6 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
     public void getGroupVolume_withZoneId() {
         if (mCarAudioManager.isAudioFeatureEnabled(AUDIO_FEATURE_DYNAMIC_ROUTING)) {
             readFirstZoneAndVolumeGroup();
-        } else {
-            mZoneId = LEGACY_ZONE_ID;
-            mVolumeGroupId = LEGACY_VOLUME_GROUP_ID;
         }
         int maxIndex = mCarAudioManager.getGroupMaxVolume(mZoneId, mVolumeGroupId);
         int minIndex = mCarAudioManager.getGroupMinVolume(mZoneId, mVolumeGroupId);
@@ -637,33 +624,24 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
     @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_VOLUME)
     @ApiTest(apis = {"android.car.media.CarAudioManager#getVolumeGroupCount()"})
     public void getVolumeGroupCount() {
-        int countExpected;
         if (mCarAudioManager.isAudioFeatureEnabled(AUDIO_FEATURE_DYNAMIC_ROUTING)) {
             assumePrimaryZone();
-            countExpected = readVolumeGroupCount(PRIMARY_AUDIO_ZONE, mConfigId);
-        } else {
-            countExpected = LEGACY_GROUP_VOLUME_COUNT;
         }
 
         assertWithMessage("Primary zone volume group count")
-                .that(mCarAudioManager.getVolumeGroupCount()).isEqualTo(countExpected);
+                .that(mCarAudioManager.getVolumeGroupCount()).isEqualTo(mVolumeGroupCount);
     }
 
     @Test
     @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_VOLUME)
     @ApiTest(apis = {"android.car.media.CarAudioManager#getVolumeGroupCount(int)"})
     public void getVolumeGroupCount_withZoneIdAndDynamicRouting() {
-        int countExpected;
         if (mCarAudioManager.isAudioFeatureEnabled(AUDIO_FEATURE_DYNAMIC_ROUTING)) {
             readFirstZoneAndVolumeGroup();
-            countExpected = readVolumeGroupCount(mZoneId, mConfigId);
-        } else {
-            mZoneId = LEGACY_ZONE_ID;
-            countExpected = LEGACY_GROUP_VOLUME_COUNT;
         }
 
         assertWithMessage("Zone %s volume group count", mZoneId)
-                .that(mCarAudioManager.getVolumeGroupCount(mZoneId)).isEqualTo(countExpected);
+                .that(mCarAudioManager.getVolumeGroupCount(mZoneId)).isEqualTo(mVolumeGroupCount);
     }
 
     @Test
@@ -1490,15 +1468,20 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
 
     private SparseArray<List<TestZoneConfigInfo>> parseAudioZoneConfigs() {
         SparseArray<List<TestZoneConfigInfo>> zoneConfigs = new SparseArray<>();
-        Matcher zoneConfigMatcher = ZONE_CONFIG_PATTERN.matcher(mCarAudioServiceDump);
-        while (zoneConfigMatcher.find()) {
-            int zoneId = Integer.parseInt(zoneConfigMatcher.group(3));
-            int zoneConfigId = Integer.parseInt(zoneConfigMatcher.group(2));
-            String configName = zoneConfigMatcher.group(1);
-            if (!zoneConfigs.contains(zoneId)) {
-                zoneConfigs.put(zoneId, new ArrayList<>());
+        List<CarAudioZoneProto> zoneProtoList = mCarAudioServiceDump.getCarAudioZonesList();
+        for (int zoneIndex = 0; zoneIndex < zoneProtoList.size(); zoneIndex++) {
+            int zoneId = zoneProtoList.get(zoneIndex).getId();
+            List<CarAudioZoneConfigProto> zoneConfigProtoList = zoneProtoList.get(zoneIndex)
+                    .getZoneConfigsList();
+            for (int configIndex = 0; configIndex < zoneConfigProtoList.size(); configIndex++) {
+                if (!zoneConfigs.contains(zoneId)) {
+                    zoneConfigs.put(zoneId, new ArrayList<>());
+                }
+                int zoneConfigId = zoneConfigProtoList.get(configIndex).getId();
+                String configName = zoneConfigProtoList.get(configIndex).getName();
+                zoneConfigs.get(zoneId).add(new TestZoneConfigInfo(zoneId, zoneConfigId,
+                        configName));
             }
-            zoneConfigs.get(zoneId).add(new TestZoneConfigInfo(zoneId, zoneConfigId, configName));
         }
         return zoneConfigs;
     }
@@ -1753,10 +1736,8 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
     }
 
     private int getNumberOfPrimaryZoneAudioMediaCallbacks() {
-        Matcher matchCount = PRIMARY_ZONE_MEDIA_REQUEST_APPROVERS_PATTERN
-                .matcher(mCarAudioServiceDump);
-        assertWithMessage("No Car Audio Media in dump").that(matchCount.find()).isTrue();
-        return Integer.parseInt(matchCount.group(1));
+        return mCarAudioServiceDump.getMediaRequestHandler().hasMediaRequestCallbackCount()
+                ? mCarAudioServiceDump.getMediaRequestHandler().getMediaRequestCallbackCount() : 0;
     }
 
     private void assumeNoPrimaryZoneAudioMediaApprovers() {
@@ -1824,51 +1805,41 @@ public final class CarAudioManagerTest extends AbstractCarTestCase {
     private void injectVolumeMuteKeyEvent() {
         injectKeyEvent(KeyEvent.KEYCODE_VOLUME_MUTE);
     }
+
     private void readFirstZoneAndVolumeGroup() {
-        Matcher matchZone = ZONE_PATTERN.matcher(mCarAudioServiceDump);
-        assertWithMessage("No CarAudioZone in dump").that(matchZone.find()).isTrue();
-        mZoneId = Integer.parseInt(matchZone.group(1));
-        mConfigId = Integer.parseInt(matchZone.group(3));
-        readFirstVolumeGroup(mZoneId, mConfigId);
+        List<CarAudioZoneProto> zoneProtoList = mCarAudioServiceDump.getCarAudioZonesList();
+        assertWithMessage("No CarAudioZone in dump").that(zoneProtoList).isNotEmpty();
+        mZoneId = zoneProtoList.get(0).getId();
+        readFirstVolumeGroupAndVolumeGroupCount(zoneProtoList.get(0));
     }
 
     private void assumePrimaryZone() {
-        Matcher matchZone = ZONE_PATTERN.matcher(mCarAudioServiceDump);
-        while (matchZone.find()) {
-            if (Integer.parseInt(matchZone.group(1)) == PRIMARY_AUDIO_ZONE) {
-                mZoneId = PRIMARY_AUDIO_ZONE;
-                mConfigId = Integer.parseInt(matchZone.group(3));
+        List<CarAudioZoneProto> zoneProtoList = mCarAudioServiceDump.getCarAudioZonesList();
+        for (int zoneIndex = 0; zoneIndex < zoneProtoList.size(); zoneIndex++) {
+            int zoneId = zoneProtoList.get(zoneIndex).getId();
+            if (zoneId == PRIMARY_AUDIO_ZONE) {
+                mZoneId = zoneId;
+                readFirstVolumeGroupAndVolumeGroupCount(zoneProtoList.get(zoneIndex));
                 break;
             }
         }
         assumeTrue("Primary zone exists", mZoneId == PRIMARY_AUDIO_ZONE);
-        readFirstVolumeGroup(mZoneId, mConfigId);
     }
 
-    private void readFirstVolumeGroup(int zoneId, int currentConfigId) {
-        Matcher matchGroup = VOLUME_GROUP_PATTERN.matcher(mCarAudioServiceDump);
-        boolean findVolumeGroup = false;
-        while (matchGroup.find()) {
-            if (Integer.parseInt(matchGroup.group(3)) == zoneId
-                    && Integer.parseInt(matchGroup.group(4)) == currentConfigId) {
-                mVolumeGroupId = Integer.parseInt(matchGroup.group(1));
-                findVolumeGroup = true;
-                break;
+    private void readFirstVolumeGroupAndVolumeGroupCount(CarAudioZoneProto zoneProto) {
+        mConfigId = zoneProto.getCurrentZoneConfigId();
+        List<CarAudioZoneConfigProto> zoneConfigProtoList = zoneProto.getZoneConfigsList();
+        for (int configIndex = 0; configIndex < zoneConfigProtoList.size(); configIndex++) {
+            if (zoneConfigProtoList.get(configIndex).getId() != mConfigId) {
+                continue;
             }
+            List<CarVolumeGroupProto> volumeGroupProtoList = zoneConfigProtoList
+                    .get(configIndex).getVolumeGroupsList();
+            assertWithMessage("No CarVolumeGroup in dump").that(volumeGroupProtoList)
+                    .isNotEmpty();
+            mVolumeGroupCount = volumeGroupProtoList.size();
+            mVolumeGroupId = volumeGroupProtoList.get(0).getId();
         }
-        assertWithMessage("No CarVolumeGroup in dump").that(findVolumeGroup).isTrue();
-    }
-
-    private int readVolumeGroupCount(int zoneId, int currentConfigId) {
-        Matcher matchGroup = VOLUME_GROUP_PATTERN.matcher(mCarAudioServiceDump);
-        int volumeGroupCount = 0;
-        while (matchGroup.find()) {
-            if (Integer.parseInt(matchGroup.group(3)) == zoneId
-                    && Integer.parseInt(matchGroup.group(4)) == currentConfigId) {
-                volumeGroupCount++;
-            }
-        }
-        return volumeGroupCount;
     }
 
     private void setVolumeGroupMute(int zoneId, int groupId, boolean mute) {

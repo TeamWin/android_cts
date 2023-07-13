@@ -40,6 +40,7 @@ android_test {
         "src/**/*.java",
         ":cartelemetryservice-proto-srcs",
         ":rotary-service-proto-source",
+        ":car-service-dump-proto-srcs",
     ],
     // Tag this module as a cts test artifact
     test_suites: [
