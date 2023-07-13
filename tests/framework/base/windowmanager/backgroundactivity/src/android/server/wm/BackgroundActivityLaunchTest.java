@@ -102,16 +102,6 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
     private static final int ACTIVITY_START_TIMEOUT_MS = 5000;
     private static final int ACTIVITY_NOT_RESUMED_TIMEOUT_MS = 5000;
 
-    private static final String APP_C_PACKAGE_NAME = "android.server.wm.backgroundactivity.appc";
-    private static final String APP_C33_PACKAGE_NAME = APP_C_PACKAGE_NAME + "33";
-
-    public static final ComponentName APP_C_FOREGROUND_ACTIVITY =
-            new ComponentName(APP_C_PACKAGE_NAME,
-                    "android.server.wm.backgroundactivity.appc.ForegroundActivity");
-    public static final ComponentName APP_C_33_FOREGROUND_ACTIVITY =
-            new ComponentName(APP_C33_PACKAGE_NAME,
-                    "android.server.wm.backgroundactivity.appc.ForegroundActivity");
-
     /**
      * Tests can be executed as soon as the device has booted. When that happens the broadcast queue
      * is long and it takes some time to process the broadcast we just sent.
@@ -981,7 +971,7 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
     @Test
     public void testBalOptInBindToService_whenOptedIn_allowsActivityStarts() {
         Intent appcIntent = new Intent()
-                .setComponent(APP_C_FOREGROUND_ACTIVITY)
+                .setComponent(APP_C.BIND_SERVICE_ACTIVITY)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 .putExtra("android.server.wm.backgroundactivity.appc.ALLOW_BAL", true);
 
@@ -992,7 +982,7 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
     @Test
     public void testBalOptInBindToService_whenNotOptedIn_blocksActivityStarts() {
         Intent appcIntent = new Intent()
-                .setComponent(APP_C_FOREGROUND_ACTIVITY)
+                .setComponent(APP_C.BIND_SERVICE_ACTIVITY)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
         mContext.startActivity(appcIntent);
@@ -1002,7 +992,7 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
     @Test
     public void testBalOptInBindToService_whenNotOptedInAndSdk33_allowsActivityStart() {
         Intent appcIntent = new Intent()
-                .setComponent(APP_C_33_FOREGROUND_ACTIVITY)
+                .setComponent(APP_C_33.BIND_SERVICE_ACTIVITY)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
         mContext.startActivity(appcIntent);
@@ -1045,7 +1035,7 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
         assertActivityNotFocused(APP_A.BACKGROUND_ACTIVITY);
     }
 
-    private void clickAllowBindWidget(Components appA, ResultReceiver resultReceiver)
+    private void clickAllowBindWidget(Components app, ResultReceiver resultReceiver)
             throws Exception {
         PackageManager pm = mContext.getPackageManager();
         Assume.assumeTrue(pm.hasSystemFeature(PackageManager.FEATURE_APP_WIDGETS));
@@ -1053,7 +1043,7 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
         Assume.assumeFalse(pm.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE));
         Assume.assumeFalse(pm.hasSystemFeature(PackageManager.FEATURE_LEANBACK_ONLY));
 
-        // Create appWidgetId so we can send it to appA, to request bind widget and start config
+        // Create appWidgetId so we can send it to app, to request bind widget and start config
         // activity.
         UiDevice device = UiDevice.getInstance(mInstrumentation);
         AppWidgetHost appWidgetHost = new AppWidgetHost(mContext, 0);
@@ -1061,10 +1051,10 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
         Intent appWidgetIntent = new Intent(AppWidgetManager.ACTION_APPWIDGET_BIND);
         appWidgetIntent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId);
         appWidgetIntent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_PROVIDER,
-                appA.WIDGET_PROVIDER);
+                app.WIDGET_PROVIDER);
 
         Intent intent = new Intent();
-        intent.setComponent(appA.WIDGET_CONFIG_TEST_ACTIVITY);
+        intent.setComponent(app.WIDGET_CONFIG_TEST_ACTIVITY);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         intent.putExtra(Intent.EXTRA_INTENT, appWidgetIntent);
         intent.putExtra(EVENT_NOTIFIER_EXTRA, resultReceiver);
@@ -1140,9 +1130,9 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
         return true;
     }
 
-    private void assertActivityNotResumed(Components appA) throws Exception {
+    private void assertActivityNotResumed(Components app) throws Exception {
         assertFalse("Test activity is resumed",
-                waitUntilForegroundChanged(appA.APP_PACKAGE_NAME, true,
+                waitUntilForegroundChanged(app.APP_PACKAGE_NAME, true,
                         ACTIVITY_NOT_RESUMED_TIMEOUT_MS));
     }
 
@@ -1161,10 +1151,8 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
         resumeAppSwitches();
     }
 
-    private void assertPendingIntentBroadcastTimeoutTest(Components appA,
-            android.server.wm.backgroundactivity.appb.Components appB,
-            int delayMs, boolean expectedResult)
-            throws TimeoutException {
+    private void assertPendingIntentBroadcastTimeoutTest(Components appA, Components appB,
+            int delayMs, boolean expectedResult) throws TimeoutException {
         // Start AppB foreground activity
         Intent intent = new Intent();
         intent.setComponent(appB.FOREGROUND_ACTIVITY);
@@ -1192,35 +1180,37 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
         }
     }
 
-    private void startPendingIntentSenderActivity(Components appA,
-            android.server.wm.backgroundactivity.appb.Components appB, boolean allowBal)
-            throws Exception {
-        ITestService appATestService = getTestService(appA);
-        // Get a PendingIntent created by appA.
+    private void startPendingIntentSenderActivity(Components appToCreatePendingIntent,
+            Components appToSendPendingIntent, boolean allowBal) throws Exception {
+        ITestService testServiceToCreatePendingIntent = getTestService(appToCreatePendingIntent);
+        // Get a PendingIntent created by appToCreatePendingIntent.
         final PendingIntent pi;
         try {
-            pi = appATestService.generatePendingIntent(appA.BACKGROUND_ACTIVITY);
+            pi = testServiceToCreatePendingIntent
+                    .generatePendingIntent(appToCreatePendingIntent.BACKGROUND_ACTIVITY);
         } catch (Exception e) {
             throw new AssertionError(e);
         }
 
         // Start app B's activity so it runs send() on PendingIntent created by app A.
         Intent secondIntent = new Intent();
-        secondIntent.setComponent(appB.START_PENDING_INTENT_ACTIVITY);
+        secondIntent.setComponent(appToSendPendingIntent.START_PENDING_INTENT_ACTIVITY);
         secondIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        secondIntent.putExtra(appB.START_PENDING_INTENT_RECEIVER_EXTRA.PENDING_INTENT, pi);
-        secondIntent.putExtra(appB.START_PENDING_INTENT_ACTIVITY_EXTRA.ALLOW_BAL, allowBal);
+        secondIntent.putExtra(
+                appToSendPendingIntent.START_PENDING_INTENT_RECEIVER_EXTRA.PENDING_INTENT, pi);
+        secondIntent.putExtra(
+                appToSendPendingIntent.START_PENDING_INTENT_ACTIVITY_EXTRA.ALLOW_BAL, allowBal);
         mContext.startActivity(secondIntent);
     }
 
-    private void sendPendingIntentActivity(Components appA,
-            android.server.wm.backgroundactivity.appb.Components appB,
+    private void sendPendingIntentActivity(Components appToSendPendingIntent, Components appToStart,
             String... booleanExtras) {
         Intent intent = new Intent();
-        intent.setComponent(appA.SEND_PENDING_INTENT_RECEIVER);
-        intent.putExtra(appA.SEND_PENDING_INTENT_RECEIVER_EXTRA.IS_BROADCAST, false);
-        intent.putExtra(appA.SEND_PENDING_INTENT_RECEIVER_EXTRA.APP_B_PACKAGE,
-                appB.APP_PACKAGE_NAME);
+        intent.setComponent(appToSendPendingIntent.SEND_PENDING_INTENT_RECEIVER);
+        intent.putExtra(appToSendPendingIntent.SEND_PENDING_INTENT_RECEIVER_EXTRA.IS_BROADCAST,
+                false);
+        intent.putExtra(appToSendPendingIntent.SEND_PENDING_INTENT_RECEIVER_EXTRA.APP_B_PACKAGE,
+                appToStart.APP_PACKAGE_NAME);
         for (String booleanExtra : booleanExtras) {
             intent.putExtra(booleanExtra, true);
         }
@@ -1233,21 +1223,21 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
         mContext.sendBroadcast(intent);
     }
 
-    private void sendPendingIntentBroadcast(Components appA, int delayMs,
+    private void sendPendingIntentBroadcast(Components app, int delayMs,
             @Nullable ResultReceiver eventNotifier) {
-        sendPendingIntentBroadcast(appA, delayMs, eventNotifier, false);
+        sendPendingIntentBroadcast(app, delayMs, eventNotifier, false);
     }
 
-    private void sendPendingIntentBroadcast(Components appA, int delayMs,
+    private void sendPendingIntentBroadcast(Components app, int delayMs,
             @Nullable ResultReceiver eventNotifier,  boolean allowBalFromStartingApp) {
         Intent intent = new Intent();
-        intent.setComponent(appA.SEND_PENDING_INTENT_RECEIVER);
-        intent.putExtra(appA.SEND_PENDING_INTENT_RECEIVER_EXTRA.IS_BROADCAST, true);
+        intent.setComponent(app.SEND_PENDING_INTENT_RECEIVER);
+        intent.putExtra(app.SEND_PENDING_INTENT_RECEIVER_EXTRA.IS_BROADCAST, true);
         if (allowBalFromStartingApp) {
             intent.putExtra(APP_B.START_PENDING_INTENT_ACTIVITY_EXTRA.ALLOW_BAL, true);
         }
         if (delayMs > 0) {
-            intent.putExtra(appA.START_ACTIVITY_RECEIVER_EXTRA.START_ACTIVITY_DELAY_MS, delayMs);
+            intent.putExtra(app.START_ACTIVITY_RECEIVER_EXTRA.START_ACTIVITY_DELAY_MS, delayMs);
         }
         intent.putExtra(EVENT_NOTIFIER_EXTRA, eventNotifier);
         mContext.sendBroadcast(intent);

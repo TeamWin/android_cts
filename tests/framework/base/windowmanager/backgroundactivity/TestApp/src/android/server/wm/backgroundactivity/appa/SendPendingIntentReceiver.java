@@ -37,6 +37,7 @@ import java.util.Optional;
  */
 public class SendPendingIntentReceiver extends BroadcastReceiver {
     private static final String TAG = "SendPendingIntentReceiver";
+    static final String APP_B_PACKAGE = "android.server.wm.backgroundactivity.appb";
 
     private static Bundle createBundleWithBalEnabled() {
         ActivityOptions result =
@@ -84,11 +85,10 @@ public class SendPendingIntentReceiver extends BroadcastReceiver {
         String appBPackage = receivedIntent.getStringExtra(
                 appA.SEND_PENDING_INTENT_RECEIVER_EXTRA.APP_B_PACKAGE);
         if (appBPackage == null) {
-            appBPackage = android.server.wm.backgroundactivity.appb.Components.JAVA_PACKAGE_NAME;
+            appBPackage = APP_B_PACKAGE;
         }
 
-        android.server.wm.backgroundactivity.appb.Components appB =
-                android.server.wm.backgroundactivity.appb.Components.get(appBPackage);
+        Components appB = Components.get(appBPackage);
 
         final PendingIntent pendingIntent;
         if (isBroadcast) {
