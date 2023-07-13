@@ -143,6 +143,8 @@ public class MultiEncoderPairPerfTest extends MultiCodecPerfTestBase {
         int maxInstances = checkAndGetMaxSupportedInstancesForCodecCombinations(height, width,
                 mimeEncoderPairs, true, requiredMinInstances);
         double achievedFrameRate = 0.0;
+        boolean firstPairAV1 = mFirstPair.first.equals(MediaFormat.MIMETYPE_VIDEO_AV1);
+        boolean secondPairAV1 = mSecondPair.first.equals(MediaFormat.MIMETYPE_VIDEO_AV1);
         if (maxInstances >= requiredMinInstances) {
             int secondPairInstances = maxInstances / 2;
             int firstPairInstances = maxInstances - secondPairInstances;
@@ -152,27 +154,33 @@ public class MultiEncoderPairPerfTest extends MultiCodecPerfTestBase {
             List<Encode> testList = new ArrayList<>();
             if (height > 1080) {
                 for (int i = 0; i < firstPairInstances1080p; i++) {
-                    testList.add(
-                            new Encode(mFirstPair.first, mFirstPair.second, mIsAsync, 1080, 1920,
-                                    30, 10000000));
+                    testList.add(new Encode(mFirstPair.first, mFirstPair.second, mIsAsync, 1080,
+                            1920, 30, 10000000));
                 }
                 for (int i = 0; i < secondPairInstances1080p; i++) {
-                    testList.add(
-                            new Encode(mSecondPair.first, mSecondPair.second, mIsAsync, 1080, 1920,
-                                    30, 10000000));
+                    testList.add(new Encode(mSecondPair.first, mSecondPair.second, mIsAsync, 1080,
+                            1920, 30, 10000000));
                 }
                 firstPairInstances -= firstPairInstances1080p;
                 secondPairInstances -= secondPairInstances1080p;
             }
             for (int i = 0; i < firstPairInstances; i++) {
-                testList.add(
-                        new Encode(mFirstPair.first, mFirstPair.second, mIsAsync, height, width, 30,
-                                bitrate));
+                if (height > 1080 && firstPairAV1) {
+                    testList.add(new Encode(mFirstPair.first, mFirstPair.second, mIsAsync, 1080,
+                            1920, 30, 10000000));
+                } else {
+                    testList.add(new Encode(mFirstPair.first, mFirstPair.second, mIsAsync, height,
+                            width, 30, bitrate));
+                }
             }
             for (int i = 0; i < secondPairInstances; i++) {
-                testList.add(
-                        new Encode(mSecondPair.first, mSecondPair.second, mIsAsync, height, width,
-                                30, bitrate));
+                if (height > 1080 && secondPairAV1) {
+                    testList.add(new Encode(mSecondPair.first, mSecondPair.second, mIsAsync, 1080,
+                            1920, 30, 10000000));
+                } else {
+                    testList.add(new Encode(mSecondPair.first, mSecondPair.second, mIsAsync, height,
+                            width, 30, bitrate));
+                }
             }
             List<Future<Double>> resultList = pool.invokeAll(testList);
             for (Future<Double> result : resultList) {
