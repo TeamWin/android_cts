@@ -24,6 +24,7 @@
 #include <signal.h>
 #include "memutils.h"
 
+map_struct_t s_mem_map[MAX_ENTRIES] = {};
 void exit_handler(void) {
     size_t page_size = getpagesize();
     for (int i = 0; i < s_mem_map_index; i++) {
