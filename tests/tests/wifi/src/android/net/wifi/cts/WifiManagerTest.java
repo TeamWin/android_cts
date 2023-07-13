@@ -5913,6 +5913,31 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
     }
 
     /**
+     * Check whether the application QoS feature is enabled.
+     *
+     * The feature is enabled if the overlay is true, the experiment feature flag
+     * is true, and the supplicant service implements V2 of the AIDL interface.
+     */
+    private boolean applicationQosFeatureEnabled() {
+        boolean overlayEnabled;
+        try {
+            WifiResourceUtil resourceUtil = new WifiResourceUtil(sContext);
+            overlayEnabled = resourceUtil
+                    .getWifiBoolean("config_wifiApplicationCentricQosPolicyFeatureEnabled");
+        } catch (Exception e) {
+            Log.i(TAG, "Unable to retrieve the QoS overlay value");
+            return false;
+        }
+
+        // Supplicant V2 is supported if the vendor partition indicates API > T.
+        boolean halSupport = PropertyUtil.isVendorApiLevelNewerThan(Build.VERSION_CODES.TIRAMISU);
+        boolean featureFlagEnabled = DeviceConfig.getBoolean(DEVICE_CONFIG_NAMESPACE,
+                "application_qos_policy_api_enabled", true);
+
+        return overlayEnabled && featureFlagEnabled && halSupport;
+    }
+
+    /**
      * Tests that {@link WifiManager#addQosPolicies(List, Executor, Consumer)},
      * {@link WifiManager#removeQosPolicies(int[])}, and
      * {@link WifiManager#removeAllQosPolicies()} do not crash.
@@ -5953,10 +5978,9 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
         UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         try {
             uiAutomation.adoptShellPermissionIdentity();
-            boolean enabled = DeviceConfig.getBoolean(DEVICE_CONFIG_NAMESPACE,
-                    "application_qos_policy_api_enabled", true);
+            boolean enabled = applicationQosFeatureEnabled();
 
-            // If the feature flag is disabled, verify that all policies are rejected.
+            // If the feature is disabled, verify that all policies are rejected.
             if (!enabled) {
                 Log.i(TAG, "QoS policy APIs are not enabled");
                 fillQosPolicyParamsList(policyParamsList, 4, true);
