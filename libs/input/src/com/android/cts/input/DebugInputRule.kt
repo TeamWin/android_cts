@@ -65,7 +65,8 @@ class DebugInputRule : TestWatcher() {
         if (!shouldEnableInputDebugging(description!!)) return
 
         for (entry in initialValues) {
-            SystemUtil.runShellCommandOrThrow("setprop log.tag.${entry.key} \"${entry.value}\"")
+            val value = entry.value.ifBlank { "UNKNOWN" }
+            SystemUtil.runShellCommandOrThrow("setprop log.tag.${entry.key} $value")
         }
         initialValues.clear()
     }
