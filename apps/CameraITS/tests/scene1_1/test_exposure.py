@@ -43,7 +43,7 @@ _THRESH_MAX_LEVEL = 0.9
 _THRESH_MAX_LEVEL_DIFF = 0.045
 _THRESH_MAX_LEVEL_DIFF_WIDE_RANGE = 0.06
 _THRESH_MAX_OUTLIER_DIFF = 0.1
-_THRESH_ROUND_DOWN_GAIN = 0.1
+_THRESH_ROUND_DOWN_ISO = 0.04
 _THRESH_ROUND_DOWN_EXP = 0.03
 _THRESH_ROUND_DOWN_EXP0 = 1.00  # TOL at 0ms exp; theoretical limit @ 4-line exp
 _THRESH_EXP_KNEE = 6E6  # exposures less than knee have relaxed tol
@@ -265,9 +265,9 @@ class ExposureTest(its_base_test.ItsBaseTest):
               _THRESH_ROUND_DOWN_EXP +
               (_THRESH_ROUND_DOWN_EXP0 - _THRESH_ROUND_DOWN_EXP) *
               (_THRESH_EXP_KNEE - e_req) / _THRESH_EXP_KNEE)
-        if not 0 <= s_req - s_res < s_req * _THRESH_ROUND_DOWN_GAIN:
+        if not 0 <= s_req - s_res < s_req * _THRESH_ROUND_DOWN_ISO:
           raise AssertionError(f's_req: {s_req}, s_res: {s_res}, '
-                               f'TOL=-{_THRESH_ROUND_DOWN_GAIN*100}%')
+                               f'TOL=-{_THRESH_ROUND_DOWN_ISO*100}%')
         if not 0 <= e_req - e_res < e_req * thresh_round_down_exp:
           raise AssertionError(f'e_req: {e_req}ns, e_res: {e_res}ns, '
                                f'TOL=-{thresh_round_down_exp*100}%')
