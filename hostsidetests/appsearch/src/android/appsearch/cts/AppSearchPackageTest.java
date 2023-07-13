@@ -23,7 +23,6 @@ import com.android.tradefed.util.RunUtil;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -40,7 +39,6 @@ import org.junit.runner.RunWith;
  * <p>Unlock your device when test locally.
  */
 @RunWith(DeviceJUnit4ClassRunner.class)
-@Ignore("b/290690596 Re-enable tests after fixing flaky behavior.")
 public class AppSearchPackageTest extends AppSearchHostTestBase {
 
     private int mPrimaryUserId;
