@@ -45,6 +45,14 @@
 
     <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
         <option name="run-command" value="appops set android.packageinstaller.install.cts REQUEST_INSTALL_PACKAGES allow" />
+        <!-- Unlock screen -->
+        <option name="run-command" value="input keyevent KEYCODE_WAKEUP" />
+        <!-- Dismiss keyguard, in case it's set as "Swipe to unlock" -->
+        <option name="run-command" value="wm dismiss-keyguard" />
+        <!-- Collapse notifications -->
+        <option name="run-command" value="cmd statusbar collapse" />
+        <!-- dismiss all system dialogs before launch test -->
+        <option name="run-command" value="am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS" />
     </target_preparer>
 
     <!-- Required for UserRestrictionInstallTest (b/277987631) -->
