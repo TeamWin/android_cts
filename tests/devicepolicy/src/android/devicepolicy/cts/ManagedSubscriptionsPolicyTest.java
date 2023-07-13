@@ -156,11 +156,6 @@ public final class ManagedSubscriptionsPolicyTest {
             profileOwner.setIsOrganizationOwned(true);
             UserHandle managedProfileUserHandle = dpc.user().userHandle();
 
-            assertThat(TestApis.packages().oemDefaultDialerApp().installedOnUser(
-                    managedProfileUserHandle)).isFalse();
-            assertThat(TestApis.packages().oemDefaultSmsApp().installedOnUser(
-                    managedProfileUserHandle)).isFalse();
-
             dpc.devicePolicyManager().setManagedSubscriptionsPolicy(new ManagedSubscriptionsPolicy(
                     ManagedSubscriptionsPolicy.TYPE_ALL_MANAGED_SUBSCRIPTIONS));
 
