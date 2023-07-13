@@ -91,6 +91,11 @@ public class ScreenshotTestActivity extends PassFailButtons.Activity {
     }
 
     @Override
+    public boolean requiresReportLog() {
+        return true;
+    }
+
+    @Override
     protected void onResume() {
         super.onResume();
         if (mScreenshotFile != null) {
@@ -105,7 +110,7 @@ public class ScreenshotTestActivity extends PassFailButtons.Activity {
                     KEY_CAPTURE_ERROR_MESSAGE,
                     Objects.requireNonNullElse(mErrorMessage,
                             "Screenshot capture step was canceled"),
-                    ResultType.NEUTRAL,
+                    ResultType.WARNING,
                     ResultUnit.NONE);
             reset();
         }
