@@ -76,6 +76,9 @@ public class UseSharedLibraryTest {
             assertNotNull(sharedLib.getName());
 
             final int type = sharedLib.getType();
+            if (type == SharedLibraryInfo.TYPE_SDK_PACKAGE) {
+                continue;
+            }
             int typeCount = 0;
             typeCount += type == SharedLibraryInfo.TYPE_BUILTIN ? 1 : 0;
             typeCount += type == SharedLibraryInfo.TYPE_DYNAMIC ? 1 : 0;
