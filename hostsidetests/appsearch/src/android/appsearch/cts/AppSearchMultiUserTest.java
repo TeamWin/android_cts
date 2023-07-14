@@ -26,7 +26,6 @@ import com.android.tradefed.testtype.junit4.AfterClassWithInfo;
 import com.android.tradefed.testtype.junit4.BeforeClassWithInfo;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -46,7 +45,6 @@ import java.util.Map;
  * <p>Unlock your device when test locally.
  */
 @RunWith(DeviceJUnit4ClassRunner.class)
-@Ignore("b/290690596 Re-enable tests after fixing flaky behavior.")
 public class AppSearchMultiUserTest extends AppSearchHostTestBase {
 
     private static int sInitialUserId;
