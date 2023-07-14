@@ -116,6 +116,7 @@ public class AnimationUtilsTest {
 
     @Test
     public void testGetExpectedPresentationTimeNanos() {
+        // test getting the value in a callback
         long vsyncMillis = 1349311227921L;
         long expectedPresentationTimeNanos = 255073580723571L;
         AnimationUtils.lockAnimationClock(vsyncMillis, expectedPresentationTimeNanos);
@@ -125,5 +126,9 @@ public class AnimationUtilsTest {
         assertEquals(AnimationUtils.getExpectedPresentationTimeMillis(),
                 expectedPresentationTimeNanos / NANOS_PER_MS);
         AnimationUtils.unlockAnimationClock();
+
+        // test getting the value outside of a callback
+        long currentTimeNanos = System.nanoTime();
+        assertTrue(AnimationUtils.getExpectedPresentationTimeNanos() >= currentTimeNanos);
     }
 }
