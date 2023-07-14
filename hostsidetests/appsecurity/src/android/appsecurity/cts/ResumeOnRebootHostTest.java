@@ -245,7 +245,7 @@ public class ResumeOnRebootHostTest extends BaseHostJUnit4Test {
             runDeviceTestsAsUser("testVerifyUnlockedAndDismiss", initialUser);
 
             switchUser(secondaryUser);
-            runDeviceTestsAsUser("testVerifyLockedAndDismiss", secondaryUser);
+            runDeviceTestsAsUser("testVerifyUnlockedAndDismiss", secondaryUser);
         } finally {
             // Remove secure lock screens and tear down test app
             switchUser(secondaryUser);
