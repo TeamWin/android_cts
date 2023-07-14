@@ -2022,10 +2022,23 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
 
             SparseIntArray testBandsAndChannels = getAvailableBandAndChannelForTesting(
                     lohsSoftApCallback.getCurrentSoftApCapability());
-
+            // The devices which doesn't have SIM and default country code in system property
+            // (ro.boot.wificountrycodeCountry) will return a null country code. Since country code
+            // is mandatory for 5GHz/6GHz band, skip the softap operation on 5GHz & 6GHz only band.
+            boolean skip5g6gBand = false;
+            String wifiCountryCode = ShellIdentityUtils.invokeWithShellPermissions(
+                    sWifiManager::getCountryCode);
+            if (wifiCountryCode == null) {
+                skip5g6gBand = true;
+                Log.e(TAG, "Country Code is not available - Skip 5GHz and 6GHz test");
+            }
             for (int i = 0; i < testBandsAndChannels.size(); i++) {
                 TestLocalOnlyHotspotCallback callback = new TestLocalOnlyHotspotCallback(mLock);
                 int testBand = testBandsAndChannels.keyAt(i);
+                if (skip5g6gBand && (testBand == SoftApConfiguration.BAND_6GHZ
+                        || testBand == SoftApConfiguration.BAND_5GHZ)) {
+                    continue;
+                }
                 // WPA2_PSK is not allowed in 6GHz band. So test with WPA3_SAE which is
                 // mandatory to support in 6GHz band.
                 if (testBand == SoftApConfiguration.BAND_6GHZ) {
