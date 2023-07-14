@@ -46,12 +46,12 @@ public class CpuFeaturesTest extends TestCase {
         assertFalse("Machine does not support getauxval(AT_HWCAP)",
                 hwcaps == 0);
 
-        assertHwCap("VFP", hwcaps, CpuFeatures.HWCAP_VFP);
-        assertHwCap("NEON", hwcaps, CpuFeatures.HWCAP_NEON);
-        assertHwCap("VFPv3", hwcaps, CpuFeatures.HWCAP_VFPv3);
-        assertHwCap("VFPv4", hwcaps, CpuFeatures.HWCAP_VFPv4);
-        assertHwCap("IDIVA", hwcaps, CpuFeatures.HWCAP_IDIVA);
-        assertHwCap("IDIVT", hwcaps, CpuFeatures.HWCAP_IDIVT);
+        assertHwCap("VFP", hwcaps, CpuFeatures.Arm64.HWCAP_VFP);
+        assertHwCap("NEON", hwcaps, CpuFeatures.Arm64.HWCAP_NEON);
+        assertHwCap("VFPv3", hwcaps, CpuFeatures.Arm64.HWCAP_VFPv3);
+        assertHwCap("VFPv4", hwcaps, CpuFeatures.Arm64.HWCAP_VFPv4);
+        assertHwCap("IDIVA", hwcaps, CpuFeatures.Arm64.HWCAP_IDIVA);
+        assertHwCap("IDIVT", hwcaps, CpuFeatures.Arm64.HWCAP_IDIVT);
     }
 
     private static String getFieldFromCpuinfo(String field) throws IOException {
