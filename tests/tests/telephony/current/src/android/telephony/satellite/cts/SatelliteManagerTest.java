@@ -16,6 +16,8 @@
 
 package android.telephony.satellite.cts;
 
+import static android.telephony.satellite.SatelliteManager.SATELLITE_COMMUNICATION_RESTRICTION_REASON_GEOLOCATION;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -645,5 +647,82 @@ public class SatelliteManagerTest extends SatelliteManagerTestBase {
         assertThrows(SecurityException.class,
                 () -> sSatelliteManager.requestTimeForNextSatelliteVisibility(
                         getContext().getMainExecutor(), receiver));
+    }
+
+    @Test
+    public void testRequestSatelliteAttachEnabledForCarrier() throws Exception {
+        if (!shouldTestSatellite()) return;
+
+        LinkedBlockingQueue<Integer> error = new LinkedBlockingQueue<>(1);
+
+        // Throws SecurityException as we do not have SATELLITE_COMMUNICATION permission.
+        assertThrows(SecurityException.class,
+                () -> sSatelliteManager.requestSatelliteAttachEnabledForCarrier(true,
+                        getContext().getMainExecutor(), error::offer));
+        assertThrows(SecurityException.class,
+                () -> sSatelliteManager.requestSatelliteAttachEnabledForCarrier(false,
+                        getContext().getMainExecutor(), error::offer));
+    }
+
+    @Test
+    public void testRequestIsSatelliteAttachEnabledForCarrier() {
+        if (!shouldTestSatellite()) return;
+
+        final AtomicReference<Boolean> enabled = new AtomicReference<>();
+        final AtomicReference<Integer> errorCode = new AtomicReference<>();
+        OutcomeReceiver<Boolean, SatelliteManager.SatelliteException> receiver =
+                new OutcomeReceiver<>() {
+                    @Override
+                    public void onResult(Boolean result) {
+                        Log.d(TAG, "onResult: result=" + result);
+                        enabled.set(result);
+                    }
+
+                    @Override
+                    public void onError(SatelliteManager.SatelliteException exception) {
+                        Log.d(TAG, "onError: onError=" + exception);
+                        errorCode.set(exception.getErrorCode());
+                    }
+                };
+
+        // Throws SecurityException as we do not have SATELLITE_COMMUNICATION permission.
+        assertThrows(SecurityException.class,
+                () -> sSatelliteManager.requestIsSatelliteAttachEnabledForCarrier(
+                        getContext().getMainExecutor(), receiver));
+    }
+
+    @Test
+    public void testAddSatelliteAttachRestrictionForCarrier() {
+        if (!shouldTestSatellite()) return;
+
+        LinkedBlockingQueue<Integer> error = new LinkedBlockingQueue<>(1);
+
+        // Throws SecurityException as we do not have SATELLITE_COMMUNICATION permission.
+        assertThrows(SecurityException.class,
+                () -> sSatelliteManager.addSatelliteAttachRestrictionForCarrier(
+                        SATELLITE_COMMUNICATION_RESTRICTION_REASON_GEOLOCATION,
+                        getContext().getMainExecutor(), error::offer));
+    }
+
+    @Test
+    public void testRemoveSatelliteAttachRestrictionForCarrier() {
+        if (!shouldTestSatellite()) return;
+
+        LinkedBlockingQueue<Integer> error = new LinkedBlockingQueue<>(1);
+
+        // Throws SecurityException as we do not have SATELLITE_COMMUNICATION permission.
+        assertThrows(SecurityException.class,
+                () -> sSatelliteManager.removeSatelliteAttachRestrictionForCarrier(
+                        SATELLITE_COMMUNICATION_RESTRICTION_REASON_GEOLOCATION,
+                        getContext().getMainExecutor(), error::offer));
+    }
+
+    @Test
+    public void testGetSatelliteCommunicationRestrictionReasons() {
+        if (!shouldTestSatellite()) return;
+
+        // Throws SecurityException as we do not have SATELLITE_COMMUNICATION permission.
+        assertThrows(SecurityException.class,
+                () -> sSatelliteManager.getSatelliteAttachRestrictionReasonsForCarrier());
     }
 }

@@ -57,4 +57,10 @@ oneway interface ILocalSatelliteListener {
      * requestSatelliteListeningEnabled from Telephony.
      */
     void onSatelliteListeningEnabled(in boolean enabled);
+
+    /**
+     * Indicates that MockSatelliteService has just received the request
+     * setSatellitePlmn from Telephony.
+     */
+    void onSetSatellitePlmn();
 }

@@ -42,6 +42,7 @@ import com.android.internal.util.FunctionalUtils;
 import com.android.telephony.Rlog;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -95,6 +96,8 @@ public class MockSatelliteService extends SatelliteImplBase {
     private Object mSendDatagramWithDelayLock = new Object();
     private static final long TIMEOUT = 1000;
     private final AtomicBoolean mShouldRespondTelephony = new AtomicBoolean(true);
+    private List<String> mPlmnList;
+    private boolean mIsSatelliteEnabledForCarrier;
 
     /**
      * Create MockSatelliteService using the Executor specified for methods being called from
@@ -469,6 +472,64 @@ public class MockSatelliteService extends SatelliteImplBase {
         }
     }
 
+    @Override
+    public void setSatellitePlmn(@NonNull int simLogicalSlotIndex, @NonNull List<String> plmnList,
+            @NonNull IIntegerConsumer errorCallback) {
+        logd("setSatellitePlmn: mErrorCode=" + mErrorCode);
+        if (mErrorCode != SatelliteResult.SATELLITE_RESULT_SUCCESS) {
+            if (mShouldRespondTelephony.get()) {
+                runWithExecutor(() -> errorCallback.accept(mErrorCode));
+            }
+            return;
+        }
+        if (mShouldRespondTelephony.get()) {
+            runWithExecutor(() -> errorCallback.accept(SatelliteResult.SATELLITE_RESULT_SUCCESS));
+        }
+
+        mPlmnList = plmnList;
+
+        if (mLocalListener != null) {
+            runWithExecutor(() -> mLocalListener.onSetSatellitePlmn());
+        } else {
+            loge("setSatellitePlmn: mLocalListener is null");
+        }
+    }
+
+    @Override
+    public void setSatelliteEnabledForCarrier(@NonNull int simLogicalSlotIndex,
+            @NonNull boolean satelliteEnabled,
+            @NonNull IIntegerConsumer callback) {
+        logd("setSatelliteEnabledForCarrier: mErrorCode=" + mErrorCode
+                + ", satelliteEnabled=" + satelliteEnabled
+                + ", mShouldRespondTelephony=" + mShouldRespondTelephony.get());
+        if (mErrorCode != SatelliteResult.SATELLITE_RESULT_SUCCESS) {
+            if (mShouldRespondTelephony.get()) {
+                runWithExecutor(() -> callback.accept(mErrorCode));
+            }
+            return;
+        }
+
+        mIsSatelliteEnabledForCarrier = satelliteEnabled;
+        if (mShouldRespondTelephony.get()) {
+            runWithExecutor(() -> callback.accept(SatelliteResult.SATELLITE_RESULT_SUCCESS));
+        }
+    }
+
+    @Override
+    public void requestIsSatelliteEnabledForCarrier(@NonNull int simLogicalSlotIndex,
+            @NonNull IIntegerConsumer resultCallback, @NonNull IBooleanConsumer callback) {
+        logd("requestIsSatelliteEnabledForCarrier: mErrorCode=" + mErrorCode);
+        if (mErrorCode != SatelliteResult.SATELLITE_RESULT_SUCCESS) {
+            if (mShouldRespondTelephony.get()) {
+                runWithExecutor(() -> resultCallback.accept(mErrorCode));
+            }
+            return;
+        }
+        if (mShouldRespondTelephony.get()) {
+            runWithExecutor(() -> callback.accept(mIsSatelliteEnabledForCarrier));
+        }
+    }
+
     public void setLocalSatelliteListener(@NonNull ILocalSatelliteListener listener) {
         logd("setLocalSatelliteListener: listener=" + listener);
         mLocalListener = listener;
@@ -529,6 +590,20 @@ public class MockSatelliteService extends SatelliteImplBase {
             mSendDatagramErrorCallback = null;
             return true;
         }
+    }
+
+    public List<String> getPlmnList() {
+        logd("getPlmnList");
+        return mPlmnList;
+    }
+
+    public boolean getIsSatelliteEnabledForCarrier() {
+        logd("getIsSatelliteEnabledForCarrier");
+        return mIsSatelliteEnabledForCarrier;
+    }
+
+    public void clearSatelliteEnabledForCarrier() {
+        mIsSatelliteEnabledForCarrier = false;
     }
 
     /**

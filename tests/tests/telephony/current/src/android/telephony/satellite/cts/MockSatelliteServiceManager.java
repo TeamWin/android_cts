@@ -43,7 +43,6 @@ import android.telephony.cts.externalsatelliteservice.IExternalSatelliteListener
 import android.telephony.cts.util.TelephonyUtils;
 import android.telephony.satellite.stub.PointingInfo;
 import android.telephony.satellite.stub.SatelliteDatagram;
-import android.telephony.satellite.stub.SatelliteResult;
 import android.text.TextUtils;
 
 import com.android.internal.R;
@@ -111,6 +110,7 @@ class MockSatelliteServiceManager {
             new MockPointingUiActivityStatusReceiver(mMockPointingUiActivitySemaphore);
     private final boolean mIsSatelliteServicePackageConfigured;
     boolean mIsPointingUiOverridden = false;
+    private final Semaphore mSetSatellitePlmnSemaphore = new Semaphore(0);
 
     @NonNull
     private final ILocalSatelliteListener mSatelliteListener =
@@ -176,6 +176,16 @@ class MockSatelliteServiceManager {
                         mListeningEnabledSemaphore.release();
                     } catch (Exception ex) {
                         logd("onSatelliteListeningEnabled: Got exception, ex=" + ex);
+                    }
+                }
+
+                @Override
+                public void onSetSatellitePlmn() {
+                    logd("onSetSatellitePlmn()");
+                    try {
+                        mSetSatellitePlmnSemaphore.release();
+                    } catch (Exception ex) {
+                        logd("onSetSatellitePlmn: Got exception, ex=" + ex);
                     }
                 }
             };
@@ -819,7 +829,23 @@ class MockSatelliteServiceManager {
         return true;
     }
 
-    void setErrorCode(@SatelliteResult int errorCode) {
+    boolean waitForEventOnSetSatellitePlmn(int expectedNumberOfEvents) {
+        for (int i = 0; i < expectedNumberOfEvents; i++) {
+            try {
+                if (!mSetSatellitePlmnSemaphore.tryAcquire(
+                        TIMEOUT, TimeUnit.MILLISECONDS)) {
+                    loge("Timeout to receive onSetSatellitePlmn");
+                    return false;
+                }
+            } catch (Exception ex) {
+                loge("onSetSatellitePlmn: Got exception=" + ex);
+                return false;
+            }
+        }
+        return true;
+    }
+
+    void setErrorCode(int errorCode) {
         logd("setErrorCode: errorCode=" + errorCode);
         if (mSatelliteService == null) {
             loge("setErrorCode: mSatelliteService is null");
@@ -951,6 +977,30 @@ class MockSatelliteServiceManager {
             loge("stopExternalMockPointingUi: ex=" + ex);
             return false;
         }
+    }
+
+    @Nullable List<String> getPlmnList() {
+        if (mSatelliteService == null) {
+            loge("getPlmnList: mSatelliteService is null");
+            return null;
+        }
+        return mSatelliteService.getPlmnList();
+    }
+
+    @Nullable Boolean getIsSatelliteEnabledForCarrier() {
+        if (mSatelliteService == null) {
+            loge("getIsSatelliteEnabledForCarrier: mSatelliteService is null");
+            return null;
+        }
+        return mSatelliteService.getIsSatelliteEnabledForCarrier();
+    }
+
+    void clearSatelliteEnabledForCarrier() {
+        if (mSatelliteService == null) {
+            loge("clearSatelliteEnabledForCarrier: mSatelliteService is null");
+            return;
+        }
+        mSatelliteService.clearSatelliteEnabledForCarrier();
     }
 
     private boolean setupLocalSatelliteService() {
