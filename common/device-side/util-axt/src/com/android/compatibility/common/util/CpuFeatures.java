@@ -26,19 +26,21 @@ public class CpuFeatures {
 
     public static final String MIPSABI = "mips";
 
-    public static final  String X86ABI = "x86";
+    public static final String X86ABI = "x86";
 
-    public static final int HWCAP_VFP = (1 << 6);
+    public static class Arm64 {
+        public static final int HWCAP_VFP = (1 << 6);
 
-    public static final int HWCAP_NEON = (1 << 12);
+        public static final int HWCAP_NEON = (1 << 12);
 
-    public static final int HWCAP_VFPv3 = (1 << 13);
+        public static final int HWCAP_VFPv3 = (1 << 13);
 
-    public static final int HWCAP_VFPv4 = (1 << 16);
+        public static final int HWCAP_VFPv4 = (1 << 16);
 
-    public static final int HWCAP_IDIVA = (1 << 17);
+        public static final int HWCAP_IDIVA = (1 << 17);
 
-    public static final int HWCAP_IDIVT = (1 << 18);
+        public static final int HWCAP_IDIVT = (1 << 18);
+    }
 
     static {
         System.loadLibrary("cts_jni");
