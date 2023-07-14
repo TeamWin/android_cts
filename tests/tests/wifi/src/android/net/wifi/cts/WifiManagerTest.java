@@ -1124,7 +1124,9 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
            mMySync.expectedState = STATE_WIFI_CHANGING;
 
            // now shut down LocalOnlyHotspot
-           callback.reservation.close();
+           if (callback.reservation != null) {
+               callback.reservation.close();
+           }
 
            try {
                waitForExpectedWifiState(wifiEnabled);
