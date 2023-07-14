@@ -95,4 +95,35 @@ class EmulateInputDevice {
         sendBtnTouch(false)
         sendUp(0 /*id*/)
     }
+
+    @Test
+    fun useTouchpadWithFingersAndPalms() {
+        UinputTouchDevice(
+                instrumentation,
+                context.display!!,
+                R.raw.test_touchpad_register,
+                InputDevice.SOURCE_TOUCHPAD or InputDevice.SOURCE_MOUSE,
+        ).use { touchpad ->
+            for (i in 0 until 3) {
+                val pointer = Point(100, 200)
+                touchpad.sendBtnTouch(true)
+                touchpad.sendBtn(UinputTouchDevice.BTN_TOOL_FINGER, true)
+                touchpad.sendDown(0, pointer, UinputTouchDevice.MT_TOOL_FINGER)
+
+                touchpad.sendBtnTouch(false)
+                touchpad.sendBtn(UinputTouchDevice.BTN_TOOL_FINGER, false)
+                touchpad.sendUp(0)
+            }
+            for (i in 0 until 2) {
+                val pointer = Point(100, 200)
+                touchpad.sendBtnTouch(true)
+                touchpad.sendBtn(UinputTouchDevice.BTN_TOOL_FINGER, true)
+                touchpad.sendDown(0, pointer, UinputTouchDevice.MT_TOOL_PALM)
+
+                touchpad.sendBtnTouch(false)
+                touchpad.sendBtn(UinputTouchDevice.BTN_TOOL_FINGER, false)
+                touchpad.sendUp(0)
+            }
+        }
+    }
 }

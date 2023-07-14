@@ -145,6 +145,7 @@ class UinputTouchDevice(
         const val ABS_MT_POSITION_Y = 0x36
         const val ABS_MT_TOOL_TYPE = 0x37
         const val ABS_MT_TRACKING_ID = 0x39
+        const val BTN_TOOL_FINGER = 0x145
         const val BTN_TOUCH = 0x14a
         const val SYN_REPORT = 0
         const val MT_TOOL_FINGER = 0
