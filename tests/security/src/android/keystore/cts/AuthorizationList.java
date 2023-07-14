@@ -223,13 +223,19 @@ public class AuthorizationList {
 
         ASN1SequenceParser parser = ((ASN1Sequence) sequence).parser();
         ASN1TaggedObject entry = parseAsn1TaggedObject(parser);
+        int currentTag = 0, prevTag = 0;
         for (; entry != null; entry = parseAsn1TaggedObject(parser)) {
-            int tag = entry.getTagNo();
+            prevTag = currentTag;
+            currentTag = entry.getTagNo();
+            if (prevTag > currentTag) {
+                throw new CertificateParsingException(
+                        "Incorrect order of tags in authorization list: " + currentTag);
+            }
             ASN1Primitive value = entry.getObject();
-            Log.i("Attestation", "Parsing tag: [" + tag + "], value: [" + value + "]");
-            switch (tag) {
+            Log.i("Attestation", "Parsing tag: [" + currentTag + "], value: [" + value + "]");
+            switch (currentTag) {
                 default:
-                    throw new CertificateParsingException("Unknown tag " + tag + " found");
+                    throw new CertificateParsingException("Unknown tag " + currentTag + " found");
 
                 case KM_TAG_PURPOSE & KEYMASTER_TAG_TYPE_MASK:
                     purposes = Asn1Utils.getIntegersFromAsn1Set(value);
