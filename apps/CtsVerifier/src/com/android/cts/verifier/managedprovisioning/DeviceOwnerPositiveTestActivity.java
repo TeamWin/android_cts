@@ -652,6 +652,7 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
 
         // Customize lock screen message
         if (FeatureUtil.isSwipeToUnlockSupported(this)
+                && FeatureUtil.isCustomizeLockScreenMessageSupported(this)
                 && Utils.isLockscreenSupported(this)) {
             adapter.add(TestListItem.newTest(this,
                     R.string.device_owner_customize_lockscreen_message,
@@ -682,7 +683,7 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
         }
 
         // setRequiredPasswordComplexity
-        if (Utils.isLockscreenSupported(this)) {
+        if (Utils.isLockscreenSupported(this) && FeatureUtil.isPasswordSupported(this)) {
             adapter.add(createInteractiveTestItem(this, SET_REQUIRED_PASSWORD_COMPLEXITY_ID,
                     R.string.device_owner_required_password_complexity_test,
                     R.string.device_owner_required_password_complexity_test_info,
