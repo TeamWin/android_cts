@@ -656,7 +656,11 @@ public class DevicePolicyManagerTest extends AndroidTestCase {
         } catch (SecurityException e) {
             assertProfileOwnerMessage(e.getMessage());
         } finally {
-            mNotificationManager.setNotificationPolicy(origPolicy);
+            try {
+                mNotificationManager.setNotificationPolicy(origPolicy);
+            } catch (Exception e) {
+                // Might fail clean up - don't suppress other errors
+            }
         }
     }
 
