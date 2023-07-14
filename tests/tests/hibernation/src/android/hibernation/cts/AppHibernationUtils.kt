@@ -25,6 +25,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Point
+import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.os.Process
@@ -126,6 +127,14 @@ fun runBootCompleteReceiver(context: Context, testTag: String) {
 }
 
 fun runAppHibernationJob(context: Context, tag: String) {
+    runAppHibernationJobInternal(context, tag)
+    if (Build.VERSION.SDK_INT == 31) {
+        // On S and S only, run the job twice as a workaround for a deadlock. See b/291147868
+        runAppHibernationJobInternal(context, tag)
+    }
+}
+
+private fun runAppHibernationJobInternal(context: Context, tag: String) {
     val userId = Process.myUserHandle().identifier
     val permissionControllerPackageName =
         context.packageManager.permissionControllerPackageName
