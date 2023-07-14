@@ -172,13 +172,13 @@ public class RadioButtonTest {
         assertFalse(mRadioButton.isChecked());
 
         // tap to checked
-        mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mRadioButton);
+        mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mRadioButton, false);
         // wait for the posted onClick() after the tap
         verify(mockCheckedChangeListener, timeout(5000)).onCheckedChanged(mRadioButton, true);
         assertTrue(mRadioButton.isChecked());
 
         // tap to not checked - this should leave the radio button in checked state
-        mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mRadioButton);
+        mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mRadioButton, false);
         assertTrue(mRadioButton.isChecked());
 
         verifyNoMoreInteractions(mockCheckedChangeListener);
