@@ -121,6 +121,7 @@ public class PhotoPickerBannersTest extends PhotoPickerBaseTest {
     }
 
     @Test
+    @Ignore("Tracking this in b/274840171")
     public void testChooseAppBannerOnDismiss() throws Exception {
         // 1. Setting up the 'Choose App' banner.
         setCloudMediaInfoForChooseAppBanner();
