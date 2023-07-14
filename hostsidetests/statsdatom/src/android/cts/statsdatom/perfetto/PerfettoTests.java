@@ -40,6 +40,8 @@ import com.android.os.AtomsProto.PerfettoUploaded;
 import com.android.os.AtomsProto.TracingServiceReportEvent;
 import com.android.os.StatsLog.EventMetricData;
 import com.android.tradefed.build.IBuildInfo;
+import com.android.tradefed.log.LogUtil;
+import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.DeviceTestCase;
 import com.android.tradefed.testtype.IBuildReceiver;
 import com.android.tradefed.util.CommandResult;
@@ -68,9 +70,20 @@ public class PerfettoTests extends DeviceTestCase implements IBuildReceiver {
     private static final int ALERT_ID = 11;
     private static final int SUBSCRIPTION_ID_PERFETTO = 42;
 
+    private boolean defaultSystemTracingConfigurationHasChanged = false;
+
     @Override
     protected void setUp() throws Exception {
         super.setUp();
+
+        // Default Android configuration can only change for device type that doesn't require SystemTracingEnabled
+        // by default in CDD.
+        String chars = getDevice().getProperty("ro.build.characteristics");
+        if (!isSystemTracingEnabled() && chars.contains("automotive")) {
+            enableSystemTracing();
+            defaultSystemTracingConfigurationHasChanged = true;
+        }
+
         ConfigUtils.removeConfig(getDevice());
         ReportUtils.clearReports(getDevice());
         RunUtil.getDefault().sleep(AtomTestUtils.WAIT_TIME_LONG);
@@ -78,6 +91,22 @@ public class PerfettoTests extends DeviceTestCase implements IBuildReceiver {
 
     @Override
     protected void tearDown() throws Exception {
+        // Disable SystemTracing if previously enabled at test setUp()
+        if (defaultSystemTracingConfigurationHasChanged) {
+            disableSystemTracing();
+            defaultSystemTracingConfigurationHasChanged = false;
+        }
+        // Deadline to finish trace collection
+        final long deadLine = System.currentTimeMillis() + 10000;
+        while (isSystemTracingEnabled()) {
+            if (System.currentTimeMillis() > deadLine) {
+                CLog.w("/sys/kernel/debug/tracing/tracing_on is still 1 after 10 secs : " + isSystemTracingEnabled());
+                break;
+            }
+            CLog.d("Waiting to finish collecting traces. ");
+            Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
+        }
+
         ConfigUtils.removeConfig(getDevice());
         ReportUtils.clearReports(getDevice());
         super.tearDown();
@@ -343,5 +372,38 @@ public class PerfettoTests extends DeviceTestCase implements IBuildReceiver {
                                 .setRefractoryPeriodSecs(0)
                                 .setTriggerIfSumGt(0))
                 .addNoReportMetric(METRIC_ID);
+    }
+
+    private String probe(String path) throws Exception {
+        return getDevice().executeShellCommand("if [ -e " + path + " ] ; then"
+                + " cat " + path + " ; else echo -1 ; fi");
+    }
+
+    private void enableSystemTracing() throws Exception {
+        getDevice().executeShellCommand("setprop persist.traced.enable 1");
+    }
+
+    private void disableSystemTracing() throws Exception {
+        getDevice().executeShellCommand("setprop persist.traced.enable 0");
+    }
+
+    /**
+     * Determines whether perfetto enabled the kernel ftrace tracer.
+     */
+    protected boolean isSystemTracingEnabled() throws Exception {
+        final String traceFsPath = "/sys/kernel/tracing/tracing_on";
+        String tracing_on = probe(traceFsPath);
+        if (tracing_on.startsWith("0")) return false;
+        if (tracing_on.startsWith("1")) return true;
+
+        // fallback to debugfs
+        LogUtil.CLog.d("Unexpected state for %s = %s. Falling back to debugfs", traceFsPath,
+                tracing_on);
+
+        final String debugFsPath = "/sys/kernel/debug/tracing/tracing_on";
+        tracing_on = probe(debugFsPath);
+        if (tracing_on.startsWith("0")) return false;
+        if (tracing_on.startsWith("1")) return true;
+        throw new Exception(String.format("Unexpected state for %s = %s", traceFsPath, tracing_on));
     }
 }
