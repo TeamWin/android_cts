@@ -16,7 +16,9 @@
 
 package android.security.net.config.cts;
 
-import android.security.net.config.cts.CtsNetSecConfigDownloadManagerTestCases.R;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import android.app.DownloadManager;
 import android.content.BroadcastReceiver;
@@ -26,19 +28,21 @@ import android.content.IntentFilter;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.SystemClock;
+import android.security.net.config.cts.CtsNetSecConfigDownloadManagerTestCases.R;
 import android.text.format.DateUtils;
-import android.util.Log;
+
+import androidx.test.runner.AndroidJUnit4;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
-import java.net.Socket;
 import java.net.ServerSocket;
+import java.net.Socket;
 import java.security.KeyFactory;
 import java.security.KeyStore;
 import java.security.PrivateKey;
-import java.security.Provider;
-import java.security.Security;
-import java.security.Signature;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
@@ -46,7 +50,6 @@ import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -54,21 +57,22 @@ import java.util.concurrent.TimeoutException;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLServerSocket;
-import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
-import javax.net.ssl.X509TrustManager;
 
+@RunWith(AndroidJUnit4.class)
 public class DownloadManagerTest extends BaseTestCase {
 
     private static final String HTTP_RESPONSE =
             "HTTP/1.0 200 OK\r\nContent-Type: text/plain\r\nContent-length: 5\r\n\r\nhello";
     private static final long TIMEOUT = 3 * DateUtils.SECOND_IN_MILLIS;
 
+    @Test
     public void testConfigTrustedCaAccepted() throws Exception {
         SSLServerSocket serverSocket = bindTLSServer(R.raw.valid_chain, R.raw.test_key);
         runDownloadManagerTest(serverSocket, true);
     }
 
+    @Test
     public void testUntrustedCaRejected() throws Exception {
         try {
             SSLServerSocket serverSocket = bindTLSServer(R.raw.invalid_chain, R.raw.test_key);
@@ -78,6 +82,7 @@ public class DownloadManagerTest extends BaseTestCase {
         }
     }
 
+    @Test
     public void testPerDomainCleartextAccepted() throws Exception {
         ServerSocket serverSocket = new ServerSocket();
         serverSocket.bind(null);
@@ -85,8 +90,7 @@ public class DownloadManagerTest extends BaseTestCase {
     }
 
     private void runDownloadManagerTest(ServerSocket serverSocket, boolean https) throws Exception {
-        DownloadManager dm =
-                (DownloadManager) getContext().getSystemService(Context.DOWNLOAD_SERVICE);
+        DownloadManager dm =  mContext.getSystemService(DownloadManager.class);
         DownloadCompleteReceiver receiver = new DownloadCompleteReceiver();
         FutureTask<Void> serverFuture = new FutureTask<Void>(new Callable() {
             @Override
@@ -97,7 +101,7 @@ public class DownloadManagerTest extends BaseTestCase {
         });
         try {
             IntentFilter filter = new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE);
-            getContext().registerReceiver(receiver, filter, Context.RECEIVER_EXPORTED);
+            mContext.registerReceiver(receiver, filter, Context.RECEIVER_EXPORTED);
             new Thread(serverFuture).start();
             String host = (https ? "https" : "http") + "://localhost";
             Uri destination = Uri.parse(host + ":" + serverSocket.getLocalPort());
@@ -114,7 +118,7 @@ public class DownloadManagerTest extends BaseTestCase {
                 dm.remove(id);
             }
         } finally {
-            getContext().unregisterReceiver(receiver);
+            mContext.unregisterReceiver(receiver);
             serverFuture.cancel(true);
             try {
                 serverSocket.close();
@@ -133,7 +137,7 @@ public class DownloadManagerTest extends BaseTestCase {
         // Load certificate chain.
         CertificateFactory fact = CertificateFactory.getInstance("X.509");
         Collection<? extends Certificate> certs;
-        try (InputStream is = getContext().getResources().openRawResource(chainResId)) {
+        try (InputStream is = mContext.getResources().openRawResource(chainResId)) {
             certs = fact.generateCertificates(is);
         }
         X509Certificate[] chain = new X509Certificate[certs.size()];
@@ -144,7 +148,7 @@ public class DownloadManagerTest extends BaseTestCase {
 
         // Load private key for the leaf.
         PrivateKey key;
-        try (InputStream is = getContext().getResources().openRawResource(keyResId)) {
+        try (InputStream is = mContext.getResources().openRawResource(keyResId)) {
             ByteArrayOutputStream keyout = new ByteArrayOutputStream();
             byte[] buffer = new byte[4096];
             int chunk_size;
@@ -178,8 +182,7 @@ public class DownloadManagerTest extends BaseTestCase {
 
     private void assertSuccessfulDownload(long id) throws Exception {
         Cursor cursor = null;
-        DownloadManager dm =
-                (DownloadManager) getContext().getSystemService(Context.DOWNLOAD_SERVICE);
+        DownloadManager dm = mContext.getSystemService(DownloadManager.class);
         try {
             cursor = dm.query(new DownloadManager.Query().setFilterById(id));
             assertTrue(cursor.moveToNext());

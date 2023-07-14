@@ -16,8 +16,16 @@
 
 package android.security.net.config.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
+
 import android.security.net.config.cts.CtsNetSecConfigResourcesSrcTestCases.R;
 import android.test.MoreAsserts;
+
+import androidx.test.runner.AndroidJUnit4;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.io.InputStream;
 import java.security.KeyStore;
@@ -31,8 +39,10 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
 
+@RunWith(AndroidJUnit4.class)
 public class ResourceSourceTest extends BaseTestCase {
 
+    @Test
     public void testSingleDerPresent() throws Exception {
         Set<X509Certificate> trusted = getTrustedCertificates();
         Set<X509Certificate> singleDer = loadCertificates(R.raw.der_single);
@@ -40,6 +50,7 @@ public class ResourceSourceTest extends BaseTestCase {
         assertContainsAll(trusted, singleDer);
     }
 
+    @Test
     public void testSinglePemPresent() throws Exception {
         Set<X509Certificate> trusted = getTrustedCertificates();
         Set<X509Certificate> singlePem = loadCertificates(R.raw.pem_single);
@@ -47,6 +58,7 @@ public class ResourceSourceTest extends BaseTestCase {
         assertContainsAll(trusted, singlePem);
     }
 
+    @Test
     public void testMultipleDerPresent() throws Exception {
         Set<X509Certificate> trusted = getTrustedCertificates();
         Set<X509Certificate> multipleDer = loadCertificates(R.raw.der_multiple);
@@ -54,6 +66,7 @@ public class ResourceSourceTest extends BaseTestCase {
         assertContainsAll(trusted, multipleDer);
     }
 
+    @Test
     public void testMultiplePemPresent() throws Exception {
         Set<X509Certificate> trusted = getTrustedCertificates();
         Set<X509Certificate> multiplePem = loadCertificates(R.raw.pem_multiple);
@@ -61,6 +74,7 @@ public class ResourceSourceTest extends BaseTestCase {
         assertContainsAll(trusted, multiplePem);
     }
 
+    @Test
     public void testOnlyResourceCasPresent() throws Exception {
         Set<X509Certificate> trusted = getTrustedCertificates();
         Set<X509Certificate> certs = loadCertificates(R.raw.der_single);
@@ -75,7 +89,7 @@ public class ResourceSourceTest extends BaseTestCase {
         CertificateFactory factory = CertificateFactory.getInstance("X.509");
         InputStream is = null;
         try {
-            is = getContext().getResources().openRawResource(resId);
+            is = mContext.getResources().openRawResource(resId);
             for (Certificate cert : factory.generateCertificates(is)) {
                 result.add((X509Certificate)cert);
             }

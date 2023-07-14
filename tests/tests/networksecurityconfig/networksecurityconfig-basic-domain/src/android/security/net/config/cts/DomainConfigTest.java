@@ -16,21 +16,34 @@
 
 package android.security.net.config.cts;
 
+import static org.junit.Assert.fail;
+
+import androidx.test.runner.AndroidJUnit4;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+
 import javax.net.ssl.X509TrustManager;
 
+@RunWith(AndroidJUnit4.class)
 public class DomainConfigTest extends BaseTestCase {
+
+    @Test
     public void testDomainConfig() throws Exception {
         TestUtils.assertTlsConnectionSucceeds("android.com", 443);
     }
 
+    @Test
     public void testDefaultConfig() throws Exception {
         // The default config in this case has no trusted CAs, so all connections should fail.
         TestUtils.assertTlsConnectionFails("developer.android.com", 443);
         TestUtils.assertTlsConnectionFails("example.com", 443);
     }
 
+    @Test
     public void testHostnameAwareCheckServerTrustedRequired() throws Exception {
         X509TrustManager x509tm = TestUtils.getDefaultTrustManager();
         try {
