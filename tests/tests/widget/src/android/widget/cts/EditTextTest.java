@@ -112,6 +112,8 @@ public class EditTextTest {
 
         XmlPullParser parser = mActivity.getResources().getXml(R.layout.edittext_layout);
         mAttributeSet = Xml.asAttributeSet(parser);
+
+        mActivity.sendBroadcast(new Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS));
     }
 
     @After
