@@ -157,7 +157,10 @@ def extract_key_frames_from_video(log_path, video_file_name):
          'quiet',
         ]
   logging.debug('Extracting key frames from: %s', video_file_name)
-  _ = subprocess.call(cmd)
+  _ = subprocess.call(cmd,
+                      stdin=subprocess.DEVNULL,
+                      stdout=subprocess.DEVNULL,
+                      stderr=subprocess.DEVNULL)
   arr = os.listdir(os.path.join(log_path))
   key_frame_files = []
   for file in arr:
@@ -221,7 +224,10 @@ def extract_all_frames_from_video(log_path, video_file_name, img_format):
       '-vsync', 'vfr', # force ffmpeg to use video fps instead of inferred fps
       ffmpeg_image_file_names, '-loglevel', 'quiet'
   ]
-  _ = subprocess.call(cmd)
+  _ = subprocess.call(cmd,
+                      stdin=subprocess.DEVNULL,
+                      stdout=subprocess.DEVNULL,
+                      stderr=subprocess.DEVNULL)
 
   file_list = sorted(
       [_ for _ in os.listdir(log_path) if (_.endswith(img_format)
@@ -253,7 +259,9 @@ def get_average_frame_rate(video_file_name_with_path):
   logging.debug('Getting frame rate')
   raw_output = ''
   try:
-    raw_output = subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+    raw_output = subprocess.check_output(cmd,
+                                         stdin=subprocess.DEVNULL,
+                                         stderr=subprocess.STDOUT)
   except subprocess.CalledProcessError as e:
     raise AssertionError(str(e.output)) from e
   if raw_output:
@@ -292,7 +300,9 @@ def get_frame_deltas(video_file_name_with_path, timestamp_type='pts'):
   logging.debug('Getting frame deltas')
   raw_output = ''
   try:
-    raw_output = subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+    raw_output = subprocess.check_output(cmd,
+                                         stdin=subprocess.DEVNULL,
+                                         stderr=subprocess.STDOUT)
   except subprocess.CalledProcessError as e:
     raise AssertionError(str(e.output)) from e
   if raw_output:
