@@ -60,6 +60,7 @@ import com.android.compatibility.common.util.AdoptShellPermissionsRule;
 import com.android.compatibility.common.util.DisplayStateManager;
 import com.android.compatibility.common.util.SettingsStateKeeperRule;
 import com.android.compatibility.common.util.StateKeeperRule;
+import com.android.compatibility.common.util.UserSettings.Namespace;
 
 import org.junit.After;
 import org.junit.Before;
@@ -116,13 +117,13 @@ public class VirtualDisplayTest {
     public static final SettingsStateKeeperRule mAreUserDisabledHdrFormatsAllowedSettingsKeeper =
             new SettingsStateKeeperRule(
                     InstrumentationRegistry.getInstrumentation().getTargetContext(),
-                    Settings.Global.ARE_USER_DISABLED_HDR_FORMATS_ALLOWED);
+                    Namespace.GLOBAL, Settings.Global.ARE_USER_DISABLED_HDR_FORMATS_ALLOWED);
 
     @ClassRule
     public static final SettingsStateKeeperRule mUserDisabledHdrFormatsSettingsKeeper =
             new SettingsStateKeeperRule(
                     InstrumentationRegistry.getInstrumentation().getTargetContext(),
-                    Settings.Global.USER_DISABLED_HDR_FORMATS);
+                    Namespace.GLOBAL, Settings.Global.USER_DISABLED_HDR_FORMATS);
 
     @Rule(order = 1)
     public StateKeeperRule<DisplayStateManager.DisplayState> mDisplayManagerStateKeeper =
