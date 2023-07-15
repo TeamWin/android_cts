@@ -86,8 +86,10 @@ public class DecoderRenderTest extends MediaTestBase {
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE, codeName = "UpsideDownCake")
     public void onFrameRendered_indicatesAllFramesRendered_toDisplay_vp9() throws Exception {
         onFrameRendered_indicatesAllFramesRendered(
-                "video_480x360_webm_vp9_333kbps_25fps_vorbis_stereo_128kbps_48000hz.webm",
-                getActivity().getSurfaceHolder().getSurface());
+                "bbb_s1_640x360_webm_vp9_0p21_1600kbps_30fps_vorbis_stereo_128kbps_48000hz.webm",
+                // TODO(b/290839444): The framework selects 30Hz refresh rate for 29.97fps, causing
+                // frame drops (and 24Hz for 25fps). Tell SurfaceFlinger that we prefer 60Hz.
+                getActivity().getSurfaceHolder().getSurface(), 60f);
     }
 
     /*
@@ -100,8 +102,10 @@ public class DecoderRenderTest extends MediaTestBase {
     public void onFrameRendered_indicatesAllFramesRendered_toTexture_vp9() throws Exception {
         OutputSurface outputSurface = new OutputSurface(480, 360);
         onFrameRendered_indicatesAllFramesRendered(
-                "video_480x360_webm_vp9_333kbps_25fps_vorbis_stereo_128kbps_48000hz.webm",
-                outputSurface.getSurface());
+                "bbb_s1_640x360_webm_vp9_0p21_1600kbps_30fps_vorbis_stereo_128kbps_48000hz.webm",
+                // TODO(b/290839444): The framework selects 30Hz refresh rate for 29.97fps, causing
+                // frame drops (and 24Hz for 25fps). Tell SurfaceFlinger that we prefer 60Hz.
+                outputSurface.getSurface(), 60f);
     }
 
     public class MutableData {
@@ -110,8 +114,12 @@ public class DecoderRenderTest extends MediaTestBase {
     }
 
     // TODO(b/234833109): Run this test against a variety of video files and codecs.
-    private void onFrameRendered_indicatesAllFramesRendered(String fileName, Surface surface)
+    private void onFrameRendered_indicatesAllFramesRendered(String fileName, Surface surface,
+                                                            float fps)
             throws Exception {
+        // Disable SurfaceFlinger's frame rate detection that can cause frames to be dropped
+        surface.setFrameRate(fps, Surface.FRAME_RATE_COMPATIBILITY_FIXED_SOURCE);
+
         // TODO(b/268212517): Preplay some video to prime the video and graphics pipeline to
         // simulate a device in its normal steady-state (less chances for dropped frames). This
         // avoids problems, for example, with GPU shaders being compiled when rendering the first
