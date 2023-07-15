@@ -17,8 +17,10 @@
 package android.accessibilityservice.cts;
 
 import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.launchActivityOnSpecifiedDisplayAndWaitForItToBeOnscreen;
+import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.supportsMultiDisplay;
 
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
 import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
 import android.accessibility.cts.common.InstrumentedAccessibilityService;
@@ -102,6 +104,7 @@ public class AccessibilityOverlayTest {
 
     @Test
     public void testA11yServiceShowsOverlayOnVirtualDisplay_shouldAppear() throws Exception {
+        assumeTrue(supportsMultiDisplay(sInstrumentation.getContext()));
         try (final DisplayUtils.VirtualDisplaySession displaySession =
                      new DisplayUtils.VirtualDisplaySession()) {
             final Display newDisplay = displaySession.createDisplayWithDefaultDisplayMetricsAndWait(
