@@ -18,6 +18,8 @@ package com.android.compatibility.common.util;
 import android.content.Context;
 import android.provider.Settings;
 
+import com.android.compatibility.common.util.UserSettings.Namespace;
+
 /**
  * JUnit rule used to restore a {@link Settings} preference after the test is run.
  *
@@ -33,5 +35,16 @@ public class SettingsStateKeeperRule extends StateKeeperRule<String> {
      */
     public SettingsStateKeeperRule(Context context, String key) {
         super(new SettingsStateManager(context, key));
+    }
+
+    /**
+     * Detailed constructor.
+     *
+     * @param context context used to retrieve the {@link Settings} provider.
+     * @param namespace settings namespace.
+     * @param key preference key.
+     */
+    public SettingsStateKeeperRule(Context context, Namespace namespace, String key) {
+        super(new SettingsStateManager(context, namespace, key));
     }
 }

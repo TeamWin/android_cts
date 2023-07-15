@@ -90,6 +90,7 @@ import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.MediaUtils;
 import com.android.compatibility.common.util.NonMainlineTest;
 import com.android.compatibility.common.util.SettingsStateKeeperRule;
+import com.android.compatibility.common.util.UserSettings.Namespace;
 import com.android.internal.annotations.GuardedBy;
 
 import org.junit.ClassRule;
@@ -172,12 +173,12 @@ public class AudioManagerTest extends InstrumentationTestCase {
     @ClassRule
     public static final SettingsStateKeeperRule mSurroundSoundFormatsSettingsKeeper =
             new SettingsStateKeeperRule(InstrumentationRegistry.getTargetContext(),
-                    Settings.Global.ENCODED_SURROUND_OUTPUT_ENABLED_FORMATS);
+                    Namespace.GLOBAL, Settings.Global.ENCODED_SURROUND_OUTPUT_ENABLED_FORMATS);
 
     @ClassRule
     public static final SettingsStateKeeperRule mSurroundSoundModeSettingsKeeper =
             new SettingsStateKeeperRule(InstrumentationRegistry.getTargetContext(),
-                    Settings.Global.ENCODED_SURROUND_OUTPUT);
+                    Namespace.GLOBAL, Settings.Global.ENCODED_SURROUND_OUTPUT);
 
     @Override
     protected void setUp() throws Exception {
