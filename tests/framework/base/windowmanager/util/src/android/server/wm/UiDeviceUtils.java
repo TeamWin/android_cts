@@ -62,7 +62,7 @@ public class UiDeviceUtils {
         getDevice().drag(from.x, from.y, to.x, to.y, steps);
     }
 
-    static void pressEnterButton() {
+    public static void pressEnterButton() {
         if (DEBUG) Log.d(TAG, "pressEnterButton");
         getDevice().pressEnter();
     }
@@ -110,12 +110,12 @@ public class UiDeviceUtils {
                 "***Waiting for device unlock...");
     }
 
-    static void pressWindowButton() {
+    public static void pressWindowButton() {
         if (DEBUG) Log.d(TAG, "pressWindowButton");
         pressKeyCode(KEYCODE_WINDOW);
     }
 
-    static void pressAppSwitchButton() {
+    public static void pressAppSwitchButton() {
         if (DEBUG) Log.d(TAG, "pressAppSwitchButton");
         pressKeyCode(KEYCODE_APP_SWITCH);
     }

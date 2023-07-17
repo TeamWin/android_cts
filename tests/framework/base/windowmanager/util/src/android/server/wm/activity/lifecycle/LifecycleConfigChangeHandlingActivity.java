@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.server.wm.lifecycle;
+package android.server.wm.activity.lifecycle;
 
 // Config change handling activity
 public class LifecycleConfigChangeHandlingActivity extends CallbackTrackingActivity {

@@ -132,8 +132,11 @@ public class WindowMetricsTestHelper {
      * @param display the display to compare bounds against
      * @param shouldBoundsIncludeInsets whether the bounds to be verified should include insets
      */
-    static void assertMetricsMatchDisplay(WindowMetrics maxMetrics, WindowMetrics currentMetrics,
-            Display display, boolean shouldBoundsIncludeInsets) {
+    public static void assertMetricsMatchDisplay(
+            WindowMetrics maxMetrics,
+            WindowMetrics currentMetrics,
+            Display display,
+            boolean shouldBoundsIncludeInsets) {
         // Check window bounds
         final DisplayMetrics displayMetrics = new DisplayMetrics();
         display.getMetrics(displayMetrics);
@@ -171,7 +174,7 @@ public class WindowMetricsTestHelper {
      * Returns {@code true} if the bounds from {@link WindowManager#getMaximumWindowMetrics()} are
      * sandboxed, so are smaller than the DisplayArea.
      */
-    static boolean maxWindowBoundsSandboxed(Rect displayAreaBounds, Rect maxBounds) {
+    public static boolean maxWindowBoundsSandboxed(Rect displayAreaBounds, Rect maxBounds) {
         return maxBounds.width() < displayAreaBounds.width()
                 || maxBounds.height() < displayAreaBounds.height();
     }
@@ -217,7 +220,7 @@ public class WindowMetricsTestHelper {
             }
         }
 
-        void waitForLayout() {
+        public void waitForLayout() {
             try {
                 assertTrue("Timed out waiting for layout.",
                         mLayoutLatch.await(4, TimeUnit.SECONDS));

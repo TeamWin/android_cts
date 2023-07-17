@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.server.wm.lifecycle;
+package android.server.wm.activity.lifecycle;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 

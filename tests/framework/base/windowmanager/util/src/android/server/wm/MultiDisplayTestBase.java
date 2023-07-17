@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 The Android Open Source Project
+ * Copyright (C) 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,7 +11,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License
+ * limitations under the License.
  */
 
 package android.server.wm;
@@ -87,14 +87,14 @@ import java.util.function.Predicate;
 /**
  * Base class for ActivityManager display tests.
  *
- * @see DisplayTests
- * @see MultiDisplayKeyguardTests
- * @see MultiDisplayLockedKeyguardTests
- * @see AppConfigurationTests
+ * @see android.server.wm.display.DisplayTests
+ * @see android.server.wm.display.MultiDisplayKeyguardTests
+ * @see android.server.wm.display.MultiDisplayLockedKeyguardTests
+ * @see android.server.wm.display.AppConfigurationTests
  */
 public class MultiDisplayTestBase extends ActivityManagerTestBase {
 
-    static final int CUSTOM_DENSITY_DPI = 222;
+    public static final int CUSTOM_DENSITY_DPI = 222;
     private static final int INVALID_DENSITY_DPI = -1;
     protected Context mTargetContext;
 
@@ -109,11 +109,11 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
         mTargetContext = getInstrumentation().getTargetContext();
     }
 
-    DisplayContent getDisplayState(int displayId) {
+    protected DisplayContent getDisplayState(int displayId) {
         return getDisplayState(getDisplaysStates(), displayId);
     }
 
-    DisplayContent getDisplayState(List<DisplayContent> displays, int displayId) {
+    protected DisplayContent getDisplayState(List<DisplayContent> displays, int displayId) {
         for (DisplayContent display : displays) {
             if (display.mId == displayId) {
                 return display;
@@ -123,13 +123,13 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
     }
 
     /** Return the display state with width, height, dpi. Always not default display. */
-    DisplayContent getDisplayState(List<DisplayContent> displays, int width, int height,
+    protected DisplayContent getDisplayState(List<DisplayContent> displays, int width, int height,
             int dpi) {
         for (DisplayContent display : displays) {
             if (display.mId == DEFAULT_DISPLAY) {
                 continue;
             }
-            final Configuration config = display.mFullConfiguration;
+            final Configuration config = display.getFullConfiguration();
             if (config.densityDpi == dpi && config.screenWidthDp == width
                     && config.screenHeightDp == height) {
                 return display;
@@ -138,7 +138,7 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
         return null;
     }
 
-    List<DisplayContent> getDisplaysStates() {
+    protected List<DisplayContent> getDisplaysStates() {
         mWmState.computeState();
         return mWmState.getDisplays();
     }
@@ -229,27 +229,27 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
             return this;
         }
 
-        VirtualDisplaySession setLaunchInSplitScreen(boolean launchInSplitScreen) {
+        public VirtualDisplaySession setLaunchInSplitScreen(boolean launchInSplitScreen) {
             mLaunchInSplitScreen = launchInSplitScreen;
             return this;
         }
 
-        VirtualDisplaySession setCanShowWithInsecureKeyguard(boolean canShowWithInsecureKeyguard) {
+        public VirtualDisplaySession setCanShowWithInsecureKeyguard(boolean canShowWithInsecureKeyguard) {
             mCanShowWithInsecureKeyguard = canShowWithInsecureKeyguard;
             return this;
         }
 
-        VirtualDisplaySession setPublicDisplay(boolean publicDisplay) {
+        public VirtualDisplaySession setPublicDisplay(boolean publicDisplay) {
             mPublicDisplay = publicDisplay;
             return this;
         }
 
-        VirtualDisplaySession setResizeDisplay(boolean resizeDisplay) {
+        public VirtualDisplaySession setResizeDisplay(boolean resizeDisplay) {
             mResizeDisplay = resizeDisplay;
             return this;
         }
 
-        VirtualDisplaySession setShowSystemDecorations(boolean showSystemDecorations) {
+        public VirtualDisplaySession setShowSystemDecorations(boolean showSystemDecorations) {
             mShowSystemDecorations = showSystemDecorations;
             return this;
         }
@@ -259,7 +259,7 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
             return this;
         }
 
-        VirtualDisplaySession setSupportsTouch(boolean supportsTouch) {
+        public VirtualDisplaySession setSupportsTouch(boolean supportsTouch) {
             mSupportsTouch = supportsTouch;
             return this;
         }
@@ -275,12 +275,12 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
          *     <li>{@link WindowManager#DISPLAY_IME_POLICY_HIDE}
          *   </ul>
          */
-        VirtualDisplaySession setDisplayImePolicy(int displayImePolicy) {
+        public VirtualDisplaySession setDisplayImePolicy(int displayImePolicy) {
             mDisplayImePolicy = displayImePolicy;
             return this;
         }
 
-        VirtualDisplaySession setPresentationDisplay(boolean presentationDisplay) {
+        public VirtualDisplaySession setPresentationDisplay(boolean presentationDisplay) {
             mPresentationDisplay = presentationDisplay;
             return this;
         }
@@ -291,7 +291,7 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
             return this;
         }
 
-        VirtualDisplaySession setSimulationDisplaySize(int width, int height) {
+        public VirtualDisplaySession setSimulationDisplaySize(int width, int height) {
             mSimulationDisplaySize = new Size(width, height);
             return this;
         }
@@ -312,7 +312,7 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
         }
 
         @NonNull
-        List<DisplayContent> createDisplays(int count) {
+        public List<DisplayContent> createDisplays(int count) {
             if (mSimulateDisplay) {
                 return simulateDisplays(count);
             } else {
@@ -320,7 +320,7 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
             }
         }
 
-        void resizeDisplay() {
+        public void resizeDisplay() {
             if (mSimulateDisplay) {
                 throw new IllegalStateException(
                         "Please use ReportedDisplayMetrics#setDisplayMetrics to resize"
@@ -383,7 +383,7 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
                         .setTargetActivity(VIRTUAL_DISPLAY_ACTIVITY)
                         .execute();
                 final int secondaryTaskId =
-                        mWmState.getTaskByActivity(VIRTUAL_DISPLAY_ACTIVITY).mTaskId;
+                        mWmState.getTaskByActivity(VIRTUAL_DISPLAY_ACTIVITY).getTaskId();
                 mTaskOrganizer.putTaskInSplitSecondary(secondaryTaskId);
             } else {
                 launchActivity(VIRTUAL_DISPLAY_ACTIVITY);
@@ -434,16 +434,16 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
     }
 
     // TODO(b/112837428): Merge into VirtualDisplaySession when all usages are migrated.
-    protected class VirtualDisplayLauncher extends VirtualDisplaySession {
+    public class VirtualDisplayLauncher extends VirtualDisplaySession {
         private final ActivitySessionClient mActivitySessionClient = createActivitySessionClient();
 
-        ActivitySession launchActivityOnDisplay(ComponentName activityName,
+        public ActivitySession launchActivityOnDisplay(ComponentName activityName,
                 DisplayContent display) {
             return launchActivityOnDisplay(activityName, display, null /* extrasConsumer */,
                     true /* withShellPermission */, true /* waitForLaunch */);
         }
 
-        ActivitySession launchActivityOnDisplay(ComponentName activityName,
+        public ActivitySession launchActivityOnDisplay(ComponentName activityName,
                 DisplayContent display, Consumer<Bundle> extrasConsumer,
                 boolean withShellPermission, boolean waitForLaunch) {
             return launchActivity(builder -> builder
@@ -457,7 +457,7 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
                     .setDisplayId(display.mId));
         }
 
-        ActivitySession launchActivity(Consumer<LaunchActivityBuilder> setupBuilder) {
+        public ActivitySession launchActivity(Consumer<LaunchActivityBuilder> setupBuilder) {
             final LaunchActivityBuilder builder = getLaunchActivityBuilder()
                     .setUseInstrumentation();
             setupBuilder.accept(builder);
@@ -590,7 +590,7 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
     }
 
     /** Wait for provided number of displays and report their configurations. */
-    List<DisplayContent> getDisplayStateAfterChange(int expectedDisplayCount) {
+    protected List<DisplayContent> getDisplayStateAfterChange(int expectedDisplayCount) {
         return Condition.waitForResult("the correct number of displays=" + expectedDisplayCount,
                 condition -> condition
                         .setReturnLastResult(true)
@@ -604,7 +604,7 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
             return false;
         }
         for (DisplayContent display : displays) {
-            if (display.mOverrideConfiguration.densityDpi == 0) {
+            if (display.getOverrideConfiguration().densityDpi == 0) {
                 return false;
             }
         }
@@ -678,7 +678,8 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
     }
 
     @SafeVarargs
-    final void waitOrderedImeEventsThenAssertImeShown(ImeEventStream stream, int displayId,
+    protected final void waitOrderedImeEventsThenAssertImeShown(ImeEventStream stream,
+            int displayId,
             Predicate<ImeEvent>... conditions) throws Exception {
         for (Predicate<ImeEvent> condition : conditions) {
             expectEvent(stream, condition, TimeUnit.SECONDS.toMillis(5) /* eventTimeout */);
@@ -720,12 +721,12 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
         @Nullable
         private VirtualDisplayHelper mExternalDisplayHelper;
 
-        ExternalDisplaySession setCanShowWithInsecureKeyguard(boolean canShowWithInsecureKeyguard) {
+        public ExternalDisplaySession setCanShowWithInsecureKeyguard(boolean canShowWithInsecureKeyguard) {
             mCanShowWithInsecureKeyguard = canShowWithInsecureKeyguard;
             return this;
         }
 
-        ExternalDisplaySession setPublicDisplay(boolean publicDisplay) {
+        public ExternalDisplaySession setPublicDisplay(boolean publicDisplay) {
             mPublicDisplay = publicDisplay;
             return this;
         }
@@ -736,7 +737,7 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
          * please use simulated display.
          */
         @Deprecated
-        ExternalDisplaySession setShowSystemDecorations(boolean showSystemDecorations) {
+        public ExternalDisplaySession setShowSystemDecorations(boolean showSystemDecorations) {
             mShowSystemDecorations = showSystemDecorations;
             return this;
         }
@@ -744,7 +745,7 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
         /**
          * Creates a private virtual display with insecure keyguard flags set.
          */
-        DisplayContent createVirtualDisplay() {
+        public DisplayContent createVirtualDisplay() {
             final List<DisplayContent> originalDS = getDisplaysStates();
             final int originalDisplayCount = originalDS.size();
 
@@ -766,14 +767,14 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
             return newDisplay;
         }
 
-        void turnDisplayOff() {
+        public void turnDisplayOff() {
             if (mExternalDisplayHelper == null) {
                 throw new RuntimeException("No external display created");
             }
             mExternalDisplayHelper.turnDisplayOff();
         }
 
-        void turnDisplayOn() {
+        public void turnDisplayOn() {
             if (mExternalDisplayHelper == null) {
                 throw new RuntimeException("No external display created");
             }
@@ -794,7 +795,7 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
 
     public class PrimaryDisplayStateSession implements AutoCloseable {
 
-        void turnScreenOff() {
+        public void turnScreenOff() {
             setPrimaryDisplayState(false);
         }
 

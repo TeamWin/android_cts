@@ -38,38 +38,38 @@ import java.lang.reflect.Array;
 import javax.annotation.concurrent.GuardedBy;
 
 public class WindowManagerTestBase extends MultiDisplayTestBase {
-    static final long TIMEOUT_WINDOW_FOCUS_CHANGED = 1000; // milliseconds
+    protected static final long TIMEOUT_WINDOW_FOCUS_CHANGED = 1000; // milliseconds
 
-    static <T extends FocusableActivity> T startActivity(Class<T> cls) {
+    public static <T extends FocusableActivity> T startActivity(Class<T> cls) {
         return startActivity(cls, DEFAULT_DISPLAY);
     }
 
-    static <T extends FocusableActivity> T startActivity(Class<T> cls, int displayId) {
+    protected static <T extends FocusableActivity> T startActivity(Class<T> cls, int displayId) {
         return startActivity(cls, displayId, true /* hasFocus */);
     }
 
-    static <T extends FocusableActivity> T startActivity(
+    protected static <T extends FocusableActivity> T startActivity(
             Class<T> cls, int displayId, boolean hasFocus) {
         return startActivity(cls, displayId, hasFocus, WINDOWING_MODE_UNDEFINED);
     }
 
-    static <T extends FocusableActivity> T startActivityInWindowingMode(
+    public static <T extends FocusableActivity> T startActivityInWindowingMode(
             Class<T> cls, int windowingMode) {
         return startActivity(cls, DEFAULT_DISPLAY, true /* hasFocus */, windowingMode);
     }
 
-    static <T extends FocusableActivity> T startActivityInWindowingModeFullScreen(
+    protected static <T extends FocusableActivity> T startActivityInWindowingModeFullScreen(
             Class<T> cls) {
         return startActivity(cls, DEFAULT_DISPLAY, true /* hasFocus */, WINDOWING_MODE_FULLSCREEN);
     }
 
-    static <T extends FocusableActivity> T startActivity(Class<T> cls, int displayId,
-            boolean hasFocus, int windowingMode) {
+    public static <T extends FocusableActivity> T startActivity(
+            Class<T> cls, int displayId, boolean hasFocus, int windowingMode) {
         return startActivity(cls, displayId, hasFocus, windowingMode, INVALID_STACK_ID);
     }
 
-    static <T extends FocusableActivity> T startActivity(Class<T> cls, int displayId,
-            boolean hasFocus, int windowingMode, int taskId) {
+    protected static <T extends FocusableActivity> T startActivity(
+            Class<T> cls, int displayId, boolean hasFocus, int windowingMode, int taskId) {
         final Bundle options;
         if (displayId == DEFAULT_DISPLAY && windowingMode == WINDOWING_MODE_UNDEFINED
                 && taskId == INVALID_STACK_ID) {
@@ -91,13 +91,13 @@ public class WindowManagerTestBase extends MultiDisplayTestBase {
         return activity[0];
     }
 
-    static class FocusableActivity extends Activity {
+    public static class FocusableActivity extends Activity {
         private final Object mLockWindowFocus = new Object();
 
         @GuardedBy("mLockWindowFocus")
         private boolean mHasWindowFocus;
 
-        final String getLogTag() {
+        public final String getLogTag() {
             return ComponentNameUtils.getLogTag(getComponentName());
         }
 
@@ -116,7 +116,7 @@ public class WindowManagerTestBase extends MultiDisplayTestBase {
             }
         }
 
-        void waitAndAssertWindowFocusState(boolean hasFocus) {
+        public void waitAndAssertWindowFocusState(boolean hasFocus) {
             synchronized (mLockWindowFocus) {
                 if (mHasWindowFocus != hasFocus) {
                     try {

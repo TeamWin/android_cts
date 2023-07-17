@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-package android.server.wm.lifecycle;
+package android.server.wm.activity.lifecycle;
 
-import static android.server.wm.lifecycle.LifecycleConstants.EXTRA_SKIP_TOP_RESUMED_STATE;
-import static android.server.wm.lifecycle.LifecycleConstants.ON_ACTIVITY_RESULT;
-import static android.server.wm.lifecycle.LifecycleConstants.ON_MULTI_WINDOW_MODE_CHANGED;
-import static android.server.wm.lifecycle.LifecycleConstants.ON_NEW_INTENT;
-import static android.server.wm.lifecycle.LifecycleConstants.ON_POST_CREATE;
-import static android.server.wm.lifecycle.LifecycleConstants.ON_TOP_POSITION_GAINED;
-import static android.server.wm.lifecycle.LifecycleConstants.ON_TOP_POSITION_LOST;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.EXTRA_SKIP_TOP_RESUMED_STATE;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.ON_ACTIVITY_RESULT;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.ON_MULTI_WINDOW_MODE_CHANGED;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.ON_NEW_INTENT;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.ON_POST_CREATE;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.ON_TOP_POSITION_GAINED;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.ON_TOP_POSITION_LOST;
 
 import android.content.Intent;
 import android.content.res.Configuration;

@@ -14,24 +14,24 @@
  * limitations under the License.
  */
 
-package android.server.wm.lifecycle;
+package android.server.wm.activity.lifecycle;
 
-import static android.server.wm.lifecycle.LifecycleConstants.EXTRA_ACTIVITY_ON_USER_LEAVE_HINT;
-import static android.server.wm.lifecycle.LifecycleConstants.EXTRA_FINISH_IN_ON_CREATE;
-import static android.server.wm.lifecycle.LifecycleConstants.EXTRA_FINISH_IN_ON_PAUSE;
-import static android.server.wm.lifecycle.LifecycleConstants.EXTRA_FINISH_IN_ON_RESUME;
-import static android.server.wm.lifecycle.LifecycleConstants.EXTRA_FINISH_IN_ON_START;
-import static android.server.wm.lifecycle.LifecycleConstants.EXTRA_FINISH_IN_ON_STOP;
-import static android.server.wm.lifecycle.LifecycleConstants.EXTRA_START_ACTIVITY_IN_ON_CREATE;
-import static android.server.wm.lifecycle.LifecycleConstants.EXTRA_START_ACTIVITY_WHEN_IDLE;
-import static android.server.wm.lifecycle.LifecycleConstants.ON_CREATE;
-import static android.server.wm.lifecycle.LifecycleConstants.ON_DESTROY;
-import static android.server.wm.lifecycle.LifecycleConstants.ON_PAUSE;
-import static android.server.wm.lifecycle.LifecycleConstants.ON_RESTART;
-import static android.server.wm.lifecycle.LifecycleConstants.ON_RESUME;
-import static android.server.wm.lifecycle.LifecycleConstants.ON_START;
-import static android.server.wm.lifecycle.LifecycleConstants.ON_STOP;
-import static android.server.wm.lifecycle.LifecycleConstants.ON_USER_LEAVE_HINT;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.EXTRA_ACTIVITY_ON_USER_LEAVE_HINT;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.EXTRA_FINISH_IN_ON_CREATE;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.EXTRA_FINISH_IN_ON_PAUSE;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.EXTRA_FINISH_IN_ON_RESUME;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.EXTRA_FINISH_IN_ON_START;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.EXTRA_FINISH_IN_ON_STOP;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.EXTRA_START_ACTIVITY_IN_ON_CREATE;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.EXTRA_START_ACTIVITY_WHEN_IDLE;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.ON_CREATE;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.ON_DESTROY;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.ON_PAUSE;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.ON_RESTART;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.ON_RESUME;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.ON_START;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.ON_STOP;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.ON_USER_LEAVE_HINT;
 
 import android.app.Activity;
 import android.content.Intent;

@@ -205,7 +205,7 @@ public class TouchHelper {
     /**
      * Helper class for injecting a sequence of motion event to simulate a gesture swipe.
      */
-    static class SwipeSession {
+    public static class SwipeSession {
         private static final int INJECT_INPUT_DELAY_MILLIS = 5;
         private final int mDisplayId;
         private final boolean mSync;
@@ -217,14 +217,13 @@ public class TouchHelper {
         private long mStartDownTime = -1;
         private long mNextEventTime = -1;
 
-        SwipeSession(int displayId,
-                boolean sync, boolean waitForAnimations) {
+        public SwipeSession(int displayId, boolean sync, boolean waitForAnimations) {
             mDisplayId = displayId;
             mSync = sync;
             mWaitForAnimations = waitForAnimations;
         }
 
-        long beginSwipe(int startX, int startY) {
+        public long beginSwipe(int startX, int startY) {
             mStartX = startX;
             mStartY = startY;
             mStartDownTime = SystemClock.uptimeMillis();
@@ -233,7 +232,7 @@ public class TouchHelper {
             return mStartDownTime;
         }
 
-        void continueSwipe(int endX, int endY, int steps) {
+        public void continueSwipe(int endX, int endY, int steps) {
             if (steps <= 0) {
                 steps = 1;
             }
@@ -255,12 +254,12 @@ public class TouchHelper {
             }
         }
 
-        void finishSwipe() {
+        public void finishSwipe() {
             injectMotion(mStartDownTime, mNextEventTime, MotionEvent.ACTION_UP, mEndX, mEndY,
                     mDisplayId, mSync, mWaitForAnimations);
         }
 
-        void cancelSwipe() {
+        public void cancelSwipe() {
             injectMotion(mStartDownTime, mNextEventTime, MotionEvent.ACTION_CANCEL, mEndX, mEndY,
                     mDisplayId, mSync, mWaitForAnimations);
         }

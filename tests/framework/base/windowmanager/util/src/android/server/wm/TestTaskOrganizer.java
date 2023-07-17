@@ -262,7 +262,7 @@ public class TestTaskOrganizer extends TaskOrganizer {
         dismissSplitScreen(new WindowContainerTransaction(), primaryOnTop);
     }
 
-    void dismissSplitScreen(WindowContainerTransaction t, boolean primaryOnTop) {
+    public void dismissSplitScreen(WindowContainerTransaction t, boolean primaryOnTop) {
         synchronized (this) {
             NestedShellPermission.run(() -> {
                 t.setLaunchRoot(mRootPrimary.getToken(), null, null)
@@ -331,11 +331,11 @@ public class TestTaskOrganizer extends TaskOrganizer {
         }
     }
 
-    int getPrimarySplitTaskCount() {
+    public int getPrimarySplitTaskCount() {
         return mPrimaryChildrenTaskIds.size();
     }
 
-    int getSecondarySplitTaskCount() {
+    public int getSecondarySplitTaskCount() {
         return mSecondaryChildrenTaskIds.size();
     }
 
@@ -347,7 +347,7 @@ public class TestTaskOrganizer extends TaskOrganizer {
         return mRootSecondary != null ? mRootSecondary.taskId : INVALID_TASK_ID;
     }
 
-    ActivityManager.RunningTaskInfo getTaskInfo(int taskId) {
+    public ActivityManager.RunningTaskInfo getTaskInfo(int taskId) {
         synchronized (this) {
             ActivityManager.RunningTaskInfo taskInfo = mKnownTasks.get(taskId);
             if (taskInfo != null) return taskInfo;
@@ -363,8 +363,8 @@ public class TestTaskOrganizer extends TaskOrganizer {
     }
 
     @Override
-    public void onTaskAppeared(@NonNull ActivityManager.RunningTaskInfo taskInfo,
-            SurfaceControl leash) {
+    public void onTaskAppeared(
+            @NonNull ActivityManager.RunningTaskInfo taskInfo, SurfaceControl leash) {
         synchronized (this) {
             notifyOnEnd(() -> {
                 SurfaceControl.Transaction t = new SurfaceControl.Transaction();

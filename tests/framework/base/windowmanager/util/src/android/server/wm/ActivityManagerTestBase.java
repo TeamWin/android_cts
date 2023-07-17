@@ -430,12 +430,12 @@ public abstract class ActivityManagerTestBase {
                     .setFlags(Intent.FLAG_RECEIVER_FOREGROUND);
         }
 
-        void doAction(String broadcastAction) {
+        public void doAction(String broadcastAction) {
             mContext.sendBroadcast(createIntentWithAction(broadcastAction));
         }
 
-        void doActionWithRemoteCallback(String broadcastAction,
-                String callbackName, RemoteCallback callback) {
+        public void doActionWithRemoteCallback(
+                String broadcastAction, String callbackName, RemoteCallback callback) {
             try {
                 // We need also a RemoteCallback to ensure the callback passed in is properly set
                 // in the Activity before moving forward.
@@ -451,39 +451,39 @@ public abstract class ActivityManagerTestBase {
             }
         }
 
-        void finishBroadcastReceiverActivity() {
+        public void finishBroadcastReceiverActivity() {
             mContext.sendBroadcast(createIntentWithAction(ACTION_TRIGGER_BROADCAST)
                     .putExtra(EXTRA_FINISH_BROADCAST, true));
         }
 
-        void launchActivityNewTask(String launchComponent) {
+        public void launchActivityNewTask(String launchComponent) {
             mContext.sendBroadcast(createIntentWithAction(ACTION_TRIGGER_BROADCAST)
                     .putExtra(KEY_LAUNCH_ACTIVITY, true)
                     .putExtra(KEY_NEW_TASK, true)
                     .putExtra(KEY_TARGET_COMPONENT, launchComponent));
         }
 
-        void moveTopTaskToBack() {
+        public void moveTopTaskToBack() {
             mContext.sendBroadcast(createIntentWithAction(ACTION_TRIGGER_BROADCAST)
                     .putExtra(EXTRA_MOVE_BROADCAST_TO_BACK, true));
         }
 
-        void requestOrientation(int orientation) {
+        public void requestOrientation(int orientation) {
             mContext.sendBroadcast(createIntentWithAction(ACTION_TRIGGER_BROADCAST)
                     .putExtra(EXTRA_BROADCAST_ORIENTATION, orientation));
         }
 
-        void dismissKeyguardByFlag() {
+        public void dismissKeyguardByFlag() {
             mContext.sendBroadcast(createIntentWithAction(ACTION_TRIGGER_BROADCAST)
                     .putExtra(EXTRA_DISMISS_KEYGUARD, true));
         }
 
-        void dismissKeyguardByMethod() {
+        public void dismissKeyguardByMethod() {
             mContext.sendBroadcast(createIntentWithAction(ACTION_TRIGGER_BROADCAST)
                     .putExtra(EXTRA_DISMISS_KEYGUARD_METHOD, true));
         }
 
-        void enterPipAndWait() {
+        public void enterPipAndWait() {
             try {
                 final CompletableFuture<Boolean> future = new CompletableFuture<>();
                 final RemoteCallback remoteCallback = new RemoteCallback(
@@ -496,28 +496,28 @@ public abstract class ActivityManagerTestBase {
             }
         }
 
-        void expandPip() {
+        public void expandPip() {
             mContext.sendBroadcast(createIntentWithAction(ACTION_EXPAND_PIP));
         }
 
-        void expandPipWithAspectRatio(String extraNum, String extraDenom) {
+        public void expandPipWithAspectRatio(String extraNum, String extraDenom) {
             mContext.sendBroadcast(createIntentWithAction(ACTION_EXPAND_PIP)
                     .putExtra(EXTRA_SET_ASPECT_RATIO_WITH_DELAY_NUMERATOR, extraNum)
                     .putExtra(EXTRA_SET_ASPECT_RATIO_WITH_DELAY_DENOMINATOR, extraDenom));
         }
 
-        void sendPipStateUpdate(RemoteCallback callback, boolean stashed) {
+        public void sendPipStateUpdate(RemoteCallback callback, boolean stashed) {
             mContext.sendBroadcast(createIntentWithAction(ACTION_UPDATE_PIP_STATE)
                     .putExtra(EXTRA_SET_PIP_CALLBACK, callback)
                     .putExtra(EXTRA_SET_PIP_STASHED, stashed));
         }
 
-        void requestOrientationForPip(int orientation) {
+        public void requestOrientationForPip(int orientation) {
             mContext.sendBroadcast(createIntentWithAction(ACTION_SET_REQUESTED_ORIENTATION)
                     .putExtra(EXTRA_PIP_ORIENTATION, String.valueOf(orientation)));
         }
 
-        void changeAspectRatio(int numerator, int denominator) {
+        public void changeAspectRatio(int numerator, int denominator) {
             mContext.sendBroadcast(createIntentWithAction(ACTION_CHANGE_ASPECT_RATIO)
                     .putExtra(EXTRA_SET_ASPECT_RATIO_NUMERATOR, Integer.toString(numerator))
                     .putExtra(EXTRA_SET_ASPECT_RATIO_DENOMINATOR, Integer.toString(denominator)));
@@ -532,6 +532,10 @@ public abstract class ActivityManagerTestBase {
         boolean mFinishAfterClose;
         private static final int ACTIVITY_LAUNCH_TIMEOUT = 10000;
         private static final int WAIT_SLICE = 50;
+
+        public void setFinishAfterClose(boolean value) {
+            mFinishAfterClose = value;
+        }
 
         /**
          * Launches an {@link Activity} on a target display synchronously.
@@ -549,7 +553,7 @@ public abstract class ActivityManagerTestBase {
          * @param displayId ID of the target display
          * @param windowingMode Windowing mode at launch
          */
-        void launchTestActivityOnDisplaySync(
+        public void launchTestActivityOnDisplaySync(
                 Class<T> activityClass, int displayId, int windowingMode) {
             final Intent intent = new Intent(mContext, activityClass)
                     .addFlags(FLAG_ACTIVITY_NEW_TASK);
@@ -565,8 +569,8 @@ public abstract class ActivityManagerTestBase {
          * @param intent Intent to launch an activity
          * @param displayId ID for the target display
          */
-        void launchTestActivityOnDisplaySync(@Nullable String className, Intent intent,
-                int displayId) {
+        public void launchTestActivityOnDisplaySync(
+                @Nullable String className, Intent intent, int displayId) {
             launchTestActivityOnDisplaySync(className, intent, displayId, WINDOWING_MODE_UNDEFINED);
         }
 
@@ -579,7 +583,7 @@ public abstract class ActivityManagerTestBase {
          * @param displayId ID for the target display
          * @param windowingMode Windowing mode at launch
          */
-        void launchTestActivityOnDisplaySync(
+        public void launchTestActivityOnDisplaySync(
                 @Nullable String className, Intent intent, int displayId, int windowingMode) {
             runWithShellPermission(
                     () -> {
@@ -598,7 +602,7 @@ public abstract class ActivityManagerTestBase {
          * @param activityClass The {@link Activity} class to be launched
          * @param displayId ID of the target display
          */
-        void launchTestActivityOnDisplay(Class<T> activityClass, int displayId) {
+        public void launchTestActivityOnDisplay(Class<T> activityClass, int displayId) {
             final Intent intent = new Intent(mContext, activityClass)
                     .addFlags(FLAG_ACTIVITY_NEW_TASK);
             final String className = intent.getComponent().getClassName();
@@ -642,20 +646,20 @@ public abstract class ActivityManagerTestBase {
             return mTestActivity;
         }
 
-        void finishCurrentActivityNoWait() {
+        public void finishCurrentActivityNoWait() {
             if (mTestActivity != null) {
                 mTestActivity.finishAndRemoveTask();
                 mTestActivity = null;
             }
         }
 
-        void runOnMainSyncAndWait(Runnable runnable) {
+        public void runOnMainSyncAndWait(Runnable runnable) {
             mInstrumentation.runOnMainSync(runnable);
             mInstrumentation.waitForIdleSync();
         }
 
-        void runOnMainAndAssertWithTimeout(@NonNull BooleanSupplier condition, long timeoutMs,
-                String message) {
+        public void runOnMainAndAssertWithTimeout(
+                @NonNull BooleanSupplier condition, long timeoutMs, String message) {
             final AtomicBoolean result = new AtomicBoolean();
             final long expiredTime = System.currentTimeMillis() + timeoutMs;
             while (!result.get()) {
@@ -877,7 +881,7 @@ public abstract class ActivityManagerTestBase {
      * Do a back gesture and trigger a back event from it.
      * Attempt to simulate human behavior, so don't wait for animations.
      */
-    void triggerBackEventByGesture(int displayId) {
+    protected void triggerBackEventByGesture(int displayId) {
         mTouchHelper.triggerBackEventByGesture(
                 displayId, true /* sync */, false /* waitForAnimations */);
     }
@@ -936,7 +940,7 @@ public abstract class ActivityManagerTestBase {
         getInstrumentation().waitForIdleSync();
     }
 
-    static void waitForOrFail(String message, BooleanSupplier condition) {
+    public static void waitForOrFail(String message, BooleanSupplier condition) {
         Condition.waitFor(new Condition<>(message, condition)
                 .setRetryIntervalMs(500)
                 .setRetryLimit(20)
@@ -978,7 +982,7 @@ public abstract class ActivityManagerTestBase {
      * Launches the home activity directly. If there is no specific reason to simulate a home key
      * (which will trigger stop-app-switches), it is the recommended method to go home.
      */
-    protected static void launchHomeActivityNoWait() {
+    public static void launchHomeActivityNoWait() {
         // dismiss all system dialogs before launch home.
         closeSystemDialogs();
         executeShellCommand(AM_START_HOME_ACTIVITY_COMMAND);
@@ -1582,7 +1586,7 @@ public abstract class ActivityManagerTestBase {
     /**
      * Test @Rule class that disables Immersive mode confirmation dialog.
      */
-    protected static class DisableImmersiveModeConfirmationRule implements TestRule {
+    public static class DisableImmersiveModeConfirmationRule implements TestRule {
         @Override
         public Statement apply(Statement base, Description description) {
             return new Statement() {
@@ -1607,7 +1611,7 @@ public abstract class ActivityManagerTestBase {
     protected class DisableScreenDozeRule implements TestRule {
         AmbientDisplayConfiguration mConfig;
 
-        DisableScreenDozeRule() {
+        public DisableScreenDozeRule() {
             mConfig = new AmbientDisplayConfiguration(mContext);
         }
 
@@ -1635,7 +1639,7 @@ public abstract class ActivityManagerTestBase {
         }
     }
 
-    ComponentName getDefaultHomeComponent() {
+    public ComponentName getDefaultHomeComponent() {
         final Intent intent = new Intent(ACTION_MAIN);
         intent.addCategory(CATEGORY_HOME);
         intent.addFlags(FLAG_ACTIVITY_NEW_TASK);
@@ -1740,7 +1744,7 @@ public abstract class ActivityManagerTestBase {
             return this;
         }
 
-        LockScreenSession disableLockScreen() {
+        public LockScreenSession disableLockScreen() {
             setLockDisabled(true);
             return this;
         }
@@ -1767,7 +1771,7 @@ public abstract class ActivityManagerTestBase {
             return this;
         }
 
-        LockScreenSession wakeUpDevice() {
+        public LockScreenSession wakeUpDevice() {
             pressWakeupButton();
             return this;
         }
@@ -1915,11 +1919,11 @@ public abstract class ActivityManagerTestBase {
             mConfig = new AmbientDisplayConfiguration(mContext);
         }
 
-        boolean isAodAvailable() {
+        public boolean isAodAvailable() {
             return mConfig.alwaysOnAvailable();
         }
 
-        void setAodEnabled(boolean enabled) {
+        public void setAodEnabled(boolean enabled) {
             set(enabled ? 1 : 0);
         }
     }
@@ -2135,12 +2139,12 @@ public abstract class ActivityManagerTestBase {
         return mContext.getPackageManager().hasSystemFeature(FEATURE_INPUT_METHODS);
     }
 
-    static class CountSpec<T> {
+    public static class CountSpec<T> {
         static final int DONT_CARE = Integer.MIN_VALUE;
-        static final int EQUALS = 1;
-        static final int GREATER_THAN = 2;
+        public static final int EQUALS = 1;
+        public static final int GREATER_THAN = 2;
         static final int LESS_THAN = 3;
-        static final int GREATER_THAN_OR_EQUALS = 4;
+        public static final int GREATER_THAN_OR_EQUALS = 4;
 
         final T mEvent;
         final int mRule;
@@ -2196,7 +2200,7 @@ public abstract class ActivityManagerTestBase {
         return new CountSpec<>(event, rule, count, message);
     }
 
-    static <T> CountSpec<T> countSpec(T event, int rule, int count) {
+    public static <T> CountSpec<T> countSpec(T event, int rule, int count) {
         return new CountSpec<>(event, rule, count, null /* message */);
     }
 
@@ -2215,15 +2219,21 @@ public abstract class ActivityManagerTestBase {
                         configChangeCount));
     }
 
-    static void assertLifecycleCounts(ComponentName activityName,
-            int createCount, int startCount, int resumeCount, int pauseCount, int stopCount,
-            int destroyCount, int configChangeCount) {
+    public static void assertLifecycleCounts(
+            ComponentName activityName,
+            int createCount,
+            int startCount,
+            int resumeCount,
+            int pauseCount,
+            int stopCount,
+            int destroyCount,
+            int configChangeCount) {
         assertLifecycleCounts(activityName, "Assert lifecycle of " + getLogTag(activityName),
                 createCount, startCount, resumeCount, pauseCount, stopCount,
                 destroyCount, configChangeCount);
     }
 
-    static void assertSingleLaunch(ComponentName activityName) {
+    public static void assertSingleLaunch(ComponentName activityName) {
         assertLifecycleCounts(activityName,
                 "activity create, start, and resume",
                 1 /* createCount */, 1 /* startCount */, 1 /* resumeCount */,
@@ -2231,7 +2241,7 @@ public abstract class ActivityManagerTestBase {
                 CountSpec.DONT_CARE /* configChangeCount */);
     }
 
-    static void assertSingleLaunchAndStop(ComponentName activityName) {
+    public static void assertSingleLaunchAndStop(ComponentName activityName) {
         assertLifecycleCounts(activityName,
                 "activity create, start, resume, pause, and stop",
                 1 /* createCount */, 1 /* startCount */, 1 /* resumeCount */,
@@ -2239,7 +2249,7 @@ public abstract class ActivityManagerTestBase {
                 CountSpec.DONT_CARE /* configChangeCount */);
     }
 
-    static void assertSingleStartAndStop(ComponentName activityName) {
+    public static void assertSingleStartAndStop(ComponentName activityName) {
         assertLifecycleCounts(activityName,
                 "activity start, resume, pause, and stop",
                 0 /* createCount */, 1 /* startCount */, 1 /* resumeCount */,
@@ -2247,7 +2257,7 @@ public abstract class ActivityManagerTestBase {
                 CountSpec.DONT_CARE /* configChangeCount */);
     }
 
-    static void assertSingleStart(ComponentName activityName) {
+    protected static void assertSingleStart(ComponentName activityName) {
         assertLifecycleCounts(activityName,
                 "activity start and resume",
                 0 /* createCount */, 1 /* startCount */, 1 /* resumeCount */,
@@ -2268,8 +2278,8 @@ public abstract class ActivityManagerTestBase {
     }
 
     /** Assert the activity is either relaunched or received configuration changed. */
-    static List<ActivityCallback> assertActivityLifecycle(ActivitySession activitySession,
-            boolean relaunched) {
+    public static List<ActivityCallback> assertActivityLifecycle(
+            ActivitySession activitySession, boolean relaunched) {
         final String name = activitySession.getName().flattenToShortString();
         final List<ActivityCallback> callbackHistory = activitySession.takeCallbackHistory();
         String failedReason = checkActivityIsRelaunchedOrConfigurationChanged(
@@ -2299,8 +2309,8 @@ public abstract class ActivityManagerTestBase {
                                 name + " must have received configuration changed."));
     }
 
-    static void assertRelaunchOrConfigChanged(ComponentName activityName, int numRelaunch,
-            int numConfigChange) {
+    public static void assertRelaunchOrConfigChanged(
+            ComponentName activityName, int numRelaunch, int numConfigChange) {
         new ActivityLifecycleCounts(activityName).assertCountWithRetry("relaunch or config changed",
                 countSpec(ActivityCallback.ON_DESTROY, CountSpec.EQUALS, numRelaunch),
                 countSpec(ActivityCallback.ON_CREATE, CountSpec.EQUALS, numRelaunch),
@@ -2308,14 +2318,14 @@ public abstract class ActivityManagerTestBase {
                         numConfigChange));
     }
 
-    static void assertActivityDestroyed(ComponentName activityName) {
+    public static void assertActivityDestroyed(ComponentName activityName) {
         new ActivityLifecycleCounts(activityName).assertCountWithRetry("activity destroyed",
                 countSpec(ActivityCallback.ON_DESTROY, CountSpec.EQUALS, 1),
                 countSpec(ActivityCallback.ON_CREATE, CountSpec.EQUALS, 0),
                 countSpec(ActivityCallback.ON_CONFIGURATION_CHANGED, CountSpec.EQUALS, 0));
     }
 
-    static void assertSecurityExceptionFromActivityLauncher() {
+    public static void assertSecurityExceptionFromActivityLauncher() {
         waitForOrFail("SecurityException from " + ActivityLauncher.TAG,
                 ActivityLauncher::hasCaughtSecurityException);
     }
@@ -2325,7 +2335,7 @@ public abstract class ActivityManagerTestBase {
             Pattern.compile("mUiModeLocked=(true|false)");
 
     @NonNull
-    SizeInfo getLastReportedSizesForActivity(ComponentName activityName) {
+    public SizeInfo getLastReportedSizesForActivity(ComponentName activityName) {
         return Condition.waitForResult("sizes of " + activityName + " to be reported",
                 condition -> condition.setResultSupplier(() -> {
                     final ConfigInfo info = TestJournalContainer.get(activityName).lastConfigInfo;
@@ -2335,7 +2345,7 @@ public abstract class ActivityManagerTestBase {
     }
 
     /** Check if a device has display cutout. */
-    boolean hasDisplayCutout() {
+    public boolean hasDisplayCutout() {
         // Launch an activity to report cutout state
         separateTestJournal();
         launchActivity(BROADCAST_RECEIVER_ACTIVITY);
@@ -2369,32 +2379,32 @@ public abstract class ActivityManagerTestBase {
     }
 
     /** Waits for at least one onMultiWindowModeChanged event. */
-    ActivityLifecycleCounts waitForOnMultiWindowModeChanged(ComponentName activityName) {
+    public ActivityLifecycleCounts waitForOnMultiWindowModeChanged(ComponentName activityName) {
         final ActivityLifecycleCounts counts = new ActivityLifecycleCounts(activityName);
         Condition.waitFor(counts.countWithRetry("waitForOnMultiWindowModeChanged", countSpec(
                 ActivityCallback.ON_MULTI_WINDOW_MODE_CHANGED, CountSpec.GREATER_THAN, 0)));
         return counts;
     }
 
-    WindowState getPackageWindowState(String packageName) {
+    protected WindowState getPackageWindowState(String packageName) {
         final WindowManagerState.WindowState window =
                 mWmState.getWindowByPackageName(packageName, TYPE_BASE_APPLICATION);
         assertNotNull(window);
         return window;
     }
 
-    static class ActivityLifecycleCounts {
+    public static class ActivityLifecycleCounts {
         private final int[] mCounts = new int[ActivityCallback.SIZE];
         private final int[] mFirstIndexes = new int[ActivityCallback.SIZE];
         private final int[] mLastIndexes = new int[ActivityCallback.SIZE];
         private ComponentName mActivityName;
 
-        ActivityLifecycleCounts(ComponentName componentName) {
+        public ActivityLifecycleCounts(ComponentName componentName) {
             mActivityName = componentName;
             updateCount(TestJournalContainer.get(componentName).callbacks);
         }
 
-        ActivityLifecycleCounts(List<ActivityCallback> callbacks) {
+        public ActivityLifecycleCounts(List<ActivityCallback> callbacks) {
             updateCount(callbacks);
         }
 
@@ -2415,21 +2425,21 @@ public abstract class ActivityManagerTestBase {
             });
         }
 
-        int getCount(ActivityCallback callback) {
+        public int getCount(ActivityCallback callback) {
             return mCounts[callback.ordinal()];
         }
 
-        int getFirstIndex(ActivityCallback callback) {
+        public int getFirstIndex(ActivityCallback callback) {
             return mFirstIndexes[callback.ordinal()];
         }
 
-        int getLastIndex(ActivityCallback callback) {
+        public int getLastIndex(ActivityCallback callback) {
             return mLastIndexes[callback.ordinal()];
         }
 
         @SafeVarargs
-        final Condition<String> countWithRetry(String message,
-                CountSpec<ActivityCallback>... countSpecs) {
+        public final Condition<String> countWithRetry(
+                String message, CountSpec<ActivityCallback>... countSpecs) {
             if (mActivityName == null) {
                 throw new IllegalStateException(
                         "It is meaningless to retry without specified activity");
@@ -2445,7 +2455,8 @@ public abstract class ActivityManagerTestBase {
         }
 
         @SafeVarargs
-        final void assertCountWithRetry(String message, CountSpec<ActivityCallback>... countSpecs) {
+        public final void assertCountWithRetry(
+                String message, CountSpec<ActivityCallback>... countSpecs) {
             if (mActivityName == null) {
                 throw new IllegalStateException(
                         "It is meaningless to retry without specified activity");
@@ -2943,6 +2954,24 @@ public abstract class ActivityManagerTestBase {
 
         final int mDisplayId;
 
+        @NonNull
+        public Size getPhysicalSize() {
+            return physicalSize;
+        }
+
+        public int getPhysicalDensity() {
+            return physicalDensity;
+        }
+
+        @Nullable
+        public Size getOverrideSize() {
+            return overrideSize;
+        }
+
+        public Integer getOverrideDensity() {
+            return overrideDensity;
+        }
+
         /** Get physical and override display metrics from WM for specified display. */
         public static ReportedDisplayMetrics getDisplayMetrics(int displayId) {
             return new ReportedDisplayMetrics(
@@ -3035,11 +3064,11 @@ public abstract class ActivityManagerTestBase {
         @Nullable
         private CommandSession.ActivitySessionClient mSession;
 
-        ActivitySessionCloseable(final ComponentName activityName) {
+        public ActivitySessionCloseable(final ComponentName activityName) {
             this(activityName, WINDOWING_MODE_FULLSCREEN);
         }
 
-        ActivitySessionCloseable(final ComponentName activityName, final int windowingMode) {
+        public ActivitySessionCloseable(final ComponentName activityName, final int windowingMode) {
             this(activityName, windowingMode, /* forceCommandActivity */ false);
         }
 
@@ -3054,7 +3083,9 @@ public abstract class ActivityManagerTestBase {
          *              argument can be used to ensure that this activity is managed as
          *              {@link CommandSession.BasicTestActivity}.
          */
-        ActivitySessionCloseable(final ComponentName activityName, final int windowingMode,
+        public ActivitySessionCloseable(
+                final ComponentName activityName,
+                final int windowingMode,
                 final boolean forceCommandActivity) {
             mActivityName = activityName;
 
@@ -3105,7 +3136,7 @@ public abstract class ActivityManagerTestBase {
             }
         }
 
-        WindowManagerState.Activity getActivityState() {
+        public WindowManagerState.Activity getActivityState() {
             return getActivityWaitState(mActivityName);
         }
 
@@ -3113,7 +3144,7 @@ public abstract class ActivityManagerTestBase {
          * Not null only for {@link CommandSession.BasicTestActivity} activities.
          */
         @Nullable
-        CommandSession.ActivitySession getActivitySession() {
+        public CommandSession.ActivitySession getActivitySession() {
             return mActivity;
         }
     }
@@ -3122,17 +3153,18 @@ public abstract class ActivityManagerTestBase {
      * Same as ActivitySessionCloseable, but with forceCommandActivity = true
      */
     public class BaseActivitySessionCloseable extends ActivitySessionCloseable {
-        BaseActivitySessionCloseable(ComponentName activityName) {
+        public BaseActivitySessionCloseable(ComponentName activityName) {
             this(activityName, WINDOWING_MODE_FULLSCREEN);
         }
 
-        BaseActivitySessionCloseable(final ComponentName activityName, final int windowingMode) {
-            super(activityName, windowingMode, /* forceCommandActivity */true);
+        public BaseActivitySessionCloseable(
+                final ComponentName activityName, final int windowingMode) {
+            super(activityName, windowingMode, /* forceCommandActivity */ true);
         }
 
         @Override
         @NonNull
-        CommandSession.ActivitySession getActivitySession() {
+        public CommandSession.ActivitySession getActivitySession() {
             assertNotNull(mActivity);
             return mActivity;
         }
@@ -3145,7 +3177,8 @@ public abstract class ActivityManagerTestBase {
         private final ActivitySessionCloseable mPrimarySession;
         private final ActivitySessionCloseable mSecondarySession;
 
-        SplitScreenActivitiesCloseable(final ComponentName primaryActivityName,
+        public SplitScreenActivitiesCloseable(
+                final ComponentName primaryActivityName,
                 final ComponentName secondaryActivityName) {
             this(primaryActivityName, WINDOWING_MODE_FULLSCREEN,
                     /* forcePrimaryCommandActivity */ false,
@@ -3153,7 +3186,8 @@ public abstract class ActivityManagerTestBase {
                     /* forceSecondaryCommandActivity */ false);
         }
 
-        SplitScreenActivitiesCloseable(final ComponentName primaryActivityName,
+        public SplitScreenActivitiesCloseable(
+                final ComponentName primaryActivityName,
                 final int primaryWindowingMode,
                 final boolean forcePrimaryCommandActivity,
                 final ComponentName secondaryActivityName,
@@ -3177,14 +3211,13 @@ public abstract class ActivityManagerTestBase {
             mSecondarySession.close();
         }
 
-        ActivitySessionCloseable getPrimaryActivity() {
+        public ActivitySessionCloseable getPrimaryActivity() {
             return mPrimarySession;
         }
 
-        ActivitySessionCloseable getSecondaryActivity() {
+        public ActivitySessionCloseable getSecondaryActivity() {
             return mSecondarySession;
         }
-
     }
 
     /**
@@ -3201,9 +3234,9 @@ public abstract class ActivityManagerTestBase {
          * @param requestedOrientation values are Configuration#Orientation
          *          either {@link ORIENTATION_PORTRAIT} or {@link ORIENTATION_LANDSCAPE}
          */
-        DeviceOrientationCloseable(int requestedOrientation) {
+        public DeviceOrientationCloseable(int requestedOrientation) {
             // Need to use window to get the size of the screen taking orientation into account.
-            // mWmState.getDisplay(DEFAULT_DISPLAY).mFullConfiguration.orientation
+            // mWmState.getDisplay(DEFAULT_DISPLAY).getFullConfiguration().orientation
             // can not be used because returned orientation can be {@link ORIENTATION_UNDEFINED}
             final Size windowSize = asSize(mWm.getMaximumWindowMetrics().getBounds());
 
@@ -3247,11 +3280,11 @@ public abstract class ActivityManagerTestBase {
         private final int mDisplayId;
         private final WindowManagerState.DisplayContent mOriginalDC;
 
-        DisplayMetricsWaitCloseable() {
+        public DisplayMetricsWaitCloseable() {
             this(DEFAULT_DISPLAY);
         }
 
-        DisplayMetricsWaitCloseable(int displayId) {
+        public DisplayMetricsWaitCloseable(int displayId) {
             super(displayId);
             mDisplayId = displayId;
             mOriginalDC = mWmState.getDisplay(displayId);
@@ -3274,11 +3307,11 @@ public abstract class ActivityManagerTestBase {
         private final String mChangeName;
         private final String mPackageName;
 
-        CompatChangeCloseable(final Long changeId, String packageName) {
+        public CompatChangeCloseable(final Long changeId, String packageName) {
             this(changeId.toString(), packageName);
         }
 
-        CompatChangeCloseable(final String changeName, String packageName) {
+        public CompatChangeCloseable(final String changeName, String packageName) {
             this.mChangeName = changeName;
             this.mPackageName = packageName;
 
