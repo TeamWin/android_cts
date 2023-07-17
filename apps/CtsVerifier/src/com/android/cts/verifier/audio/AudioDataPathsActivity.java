@@ -197,6 +197,12 @@ public class AudioDataPathsActivity
         getPassButton().setEnabled(false);
     }
 
+    @Override
+    public void onStop() {
+        stopTest();
+        super.onStop();
+    }
+
     //
     // UI Helpers
     //
@@ -539,20 +545,22 @@ public class AudioDataPathsActivity
         static final String TAG = "TestManager";
 
         // Audio Device Type ID -> TestProfile
-        ArrayList<TestSpec> mTestSpecs = new ArrayList<TestSpec>();
+        private ArrayList<TestSpec> mTestSpecs = new ArrayList<TestSpec>();
 
-        int mApi;
+        private int mApi;
 
         private int    mPhaseCount;
 
         // which route are we running
         static final int TESTSTEP_NONE = -1;
-        int mTestStep = TESTSTEP_NONE;
+        private int mTestStep = TESTSTEP_NONE;
 
-        Timer mTimer;
+        private Timer mTimer;
 
-        AudioSource mJavaSinSource;
-        NativeAudioSource mNativeSinSource;
+        private boolean mTestRunning;
+
+        private AudioSource mJavaSinSource;
+        private NativeAudioSource mNativeSinSource;
 
         public void initializeTests() {
             AudioSourceProvider sinSourceProvider = new SinAudioSourceProvider();
@@ -1018,6 +1026,7 @@ public class AudioDataPathsActivity
             clearTestState();
 
             mTestStep = TESTSTEP_NONE;
+            mTestRunning = true;
             (mTimer = new Timer()).scheduleAtFixedRate(new TimerTask() {
                 @Override
                 public void run() {
@@ -1029,13 +1038,14 @@ public class AudioDataPathsActivity
 
         public void stopTest() {
             Log.i(TAG, "stopTest() mTestStep:" + mTestStep);
+            mTestRunning = false;
             if (mTestStep != TESTSTEP_NONE) {
+                mTestStep = TESTSTEP_NONE;
+
                 mTimer.cancel();
                 mTimer = null;
 
                 mDuplexAudioManager.stop();
-
-                mTestStep = TESTSTEP_NONE;
             }
         }
 
@@ -1089,7 +1099,7 @@ public class AudioDataPathsActivity
                 }
 
                 TestSpec testSpec = getActiveTestSpec();
-                if (testSpec.canRun()) {
+                if (testSpec != null && testSpec.canRun()) {
                     testSpec.setTestResults(mApi, new TestResults(mApi,
                             mAnalyzer.getMagnitude(),
                             mAnalyzer.getMaxMagnitude(),
@@ -1108,6 +1118,11 @@ public class AudioDataPathsActivity
 
         public void advanceTestStep() {
             Log.i(TAG, "advanceTestStep() mTestStep:" + mTestStep);
+            if (!mTestRunning) {
+                // we are shutting down, so just bail
+                return;
+            }
+
             while (++mTestStep < mTestSpecs.size()) {
                 // update the display to show progress
                 runOnUiThread(new Runnable() {
@@ -1309,6 +1324,7 @@ public class AudioDataPathsActivity
             stopTest();
         } else if (id == R.id.audioJavaApiBtn || id == R.id.audioNativeApiBtn) {
             super.onClick(view);
+            stopTest();
             mTestManager.clearTestState();
             showDeviceView();
             mTestManager.displayTestDevices();
