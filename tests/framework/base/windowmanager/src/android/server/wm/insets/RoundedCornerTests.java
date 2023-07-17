@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.server.wm;
+package android.server.wm.insets;
 
 import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
 import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
@@ -43,6 +43,9 @@ import android.content.Intent;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.platform.test.annotations.Presubmit;
+import android.server.wm.ActivityManagerTestBase;
+import android.server.wm.RotationSession;
+import android.server.wm.WindowManagerStateHelper;
 import android.util.Log;
 import android.view.Display;
 import android.view.Gravity;

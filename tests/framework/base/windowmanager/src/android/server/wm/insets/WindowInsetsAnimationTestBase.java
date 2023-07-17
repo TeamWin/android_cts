@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.server.wm;
+package android.server.wm.insets;
 
 import static android.graphics.Insets.NONE;
 import static android.view.WindowInsets.Type.ime;
@@ -38,7 +38,8 @@ import static org.mockito.Mockito.spy;
 import android.graphics.Insets;
 import android.os.Bundle;
 import android.os.SystemClock;
-import android.server.wm.WindowInsetsAnimationTestBase.AnimCallback.AnimationStep;
+import android.server.wm.WindowManagerTestBase;
+import android.server.wm.insets.WindowInsetsAnimationTestBase.AnimCallback.AnimationStep;
 import android.util.ArraySet;
 import android.view.View;
 import android.view.WindowInsets;
@@ -304,7 +305,7 @@ public class WindowInsetsAnimationTestBase extends WindowManagerTestBase {
     public static class TestActivity extends FocusableActivity {
 
         private final String mEditTextMarker =
-                "android.server.wm.WindowInsetsAnimationTestBase.TestActivity"
+                "android.server.wm.insets.WindowInsetsAnimationTestBase.TestActivity"
                         + SystemClock.elapsedRealtimeNanos();
 
         AnimCallback mCallback =

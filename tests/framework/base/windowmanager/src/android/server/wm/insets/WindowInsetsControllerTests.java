@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.server.wm;
+package android.server.wm.insets;
 
 import static android.graphics.PixelFormat.TRANSLUCENT;
 import static android.server.wm.ShellCommandHelper.executeShellCommand;
@@ -64,6 +64,8 @@ import android.content.res.Resources;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
+import android.server.wm.MockImeHelper;
+import android.server.wm.WindowManagerTestBase;
 import android.view.InputDevice;
 import android.view.MotionEvent;
 import android.view.View;

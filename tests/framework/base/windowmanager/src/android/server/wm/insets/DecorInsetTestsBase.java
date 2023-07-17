@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.server.wm;
+package android.server.wm.insets;
 
 import static org.junit.Assert.assertEquals;
 
@@ -81,6 +81,18 @@ public class DecorInsetTestsBase {
                     mLaidOut.countDown();
                 }
             });
+        }
+
+        public WindowInsets getLastContentInsets() {
+            return mLastContentInsets;
+        }
+
+        public WindowInsets getLastDecorInsets() {
+            return mLastDecorInsets;
+        }
+
+        public CountDownLatch getLaidOut() {
+            return mLaidOut;
         }
 
         private static int intentToSysuiVisibility(Intent intent) {

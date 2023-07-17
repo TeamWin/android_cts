@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.server.wm;
+package android.server.wm.insets;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;

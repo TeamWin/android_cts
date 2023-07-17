@@ -14,7 +14,7 @@
  * limitations under the License
  */
 
-package android.server.wm;
+package android.server.wm.insets;
 
 import static android.content.res.Configuration.ORIENTATION_PORTRAIT;
 import static android.server.wm.app.Components.LAUNCHING_ACTIVITY;
@@ -38,6 +38,8 @@ import android.content.pm.PackageManager;
 import android.graphics.Insets;
 import android.os.Bundle;
 import android.platform.test.annotations.Presubmit;
+import android.server.wm.ActivityManagerTestBase;
+import android.server.wm.RotationSession;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
@@ -145,7 +147,7 @@ public class WindowInsetsPolicyTest extends ActivityManagerTestBase {
         }
 
         mWmState.waitForValidState(mTestActivityComponentName);
-        final int taskId = mWmState.getTaskByActivity(mTestActivityComponentName).mTaskId;
+        final int taskId = mWmState.getTaskByActivity(mTestActivityComponentName).getTaskId();
         launchActivityInPrimarySplit(LAUNCHING_ACTIVITY);
         mTaskOrganizer.putTaskInSplitSecondary(taskId);
         mWmState.waitForValidState(mTestActivityComponentName);

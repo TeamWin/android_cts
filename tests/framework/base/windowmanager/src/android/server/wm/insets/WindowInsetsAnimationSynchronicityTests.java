@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.server.wm;
+package android.server.wm.insets;
 
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
@@ -40,7 +40,7 @@ import android.inputmethodservice.InputMethodService;
 import android.os.Bundle;
 import android.platform.test.annotations.LargeTest;
 import android.provider.Settings;
-import android.server.wm.WindowInsetsAnimationControllerTests.LimitedErrorCollector;
+import android.server.wm.insets.WindowInsetsAnimationControllerTests.LimitedErrorCollector;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;

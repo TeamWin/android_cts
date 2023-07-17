@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.server.wm;
+package android.server.wm.insets;
 
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
@@ -30,6 +30,7 @@ import android.graphics.Insets;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.platform.test.annotations.Presubmit;
+import android.server.wm.WindowManagerTestBase;
 import android.view.View;
 import android.view.WindowInsets;
 import android.view.WindowInsets.Side;
