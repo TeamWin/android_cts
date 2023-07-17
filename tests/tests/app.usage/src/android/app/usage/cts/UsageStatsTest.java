@@ -369,7 +369,7 @@ public class UsageStatsTest extends StsExtraBusinessLogicTestCase {
     @AppModeFull(reason = "No usage events access in instant apps")
     @Test
     public void testLastTimeVisible_launchActivityShouldBeDetected() throws Exception {
-        mUiDevice.wakeUp();
+        wakeDevice();
         dismissKeyguard(); // also want to start out with the keyguard dismissed.
 
         final long startTime = System.currentTimeMillis();
@@ -382,7 +382,7 @@ public class UsageStatsTest extends StsExtraBusinessLogicTestCase {
     @AppModeFull(reason = "No usage events access in instant apps")
     @Test
     public void testLastTimeAnyComponentUsed_launchActivityShouldBeDetected() throws Exception {
-        mUiDevice.wakeUp();
+        wakeDevice();
         dismissKeyguard(); // also want to start out with the keyguard dismissed.
 
         final long startTime = System.currentTimeMillis();
@@ -395,7 +395,7 @@ public class UsageStatsTest extends StsExtraBusinessLogicTestCase {
     @AppModeFull(reason = "No usage events access in instant apps")
     @Test
     public void testLastTimeAnyComponentUsed_bindServiceShouldBeDetected() throws Exception {
-        mUiDevice.wakeUp();
+        wakeDevice();
         dismissKeyguard(); // also want to start out with the keyguard dismissed.
 
         final long startTime = System.currentTimeMillis();
@@ -409,7 +409,7 @@ public class UsageStatsTest extends StsExtraBusinessLogicTestCase {
     @Test
     public void testLastTimeAnyComponentUsed_bindExplicitBroadcastReceiverShouldBeDetected()
             throws Exception {
-        mUiDevice.wakeUp();
+        wakeDevice();
         dismissKeyguard(); // also want to start out with the keyguard dismissed.
 
         final long startTime = System.currentTimeMillis();
@@ -423,7 +423,7 @@ public class UsageStatsTest extends StsExtraBusinessLogicTestCase {
     @Test
     public void testLastTimeAnyComponentUsed_bindContentProviderShouldBeDetected()
             throws Exception {
-        mUiDevice.wakeUp();
+        wakeDevice();
         dismissKeyguard(); // also want to start out with the keyguard dismissed.
 
         final long startTime = System.currentTimeMillis();
@@ -465,7 +465,7 @@ public class UsageStatsTest extends StsExtraBusinessLogicTestCase {
     @AppModeFull(reason = "No usage events access in instant apps")
     @Test
     public void testLastTimeAnyComponentUsed_JobServiceShouldBeIgnored() throws Exception {
-        mUiDevice.wakeUp();
+        wakeDevice();
         dismissKeyguard(); // also want to start out with the keyguard dismissed.
 
         final long startTime = System.currentTimeMillis();
@@ -509,7 +509,7 @@ public class UsageStatsTest extends StsExtraBusinessLogicTestCase {
                 Activities.ActivityTwo.class,
                 Activities.ActivityThree.class,
         };
-        mUiDevice.wakeUp();
+        wakeDevice();
         dismissKeyguard(); // also want to start out with the keyguard dismissed.
 
         final long startTime = System.currentTimeMillis();
@@ -568,7 +568,7 @@ public class UsageStatsTest extends StsExtraBusinessLogicTestCase {
     }
 
     private void testActivityOnButton(Runnable pressButton) throws Exception {
-        mUiDevice.wakeUp();
+        wakeDevice();
         final long startTime = System.currentTimeMillis();
         final Class clazz = Activities.ActivityOne.class;
         launchSubActivity(clazz);
@@ -952,7 +952,7 @@ public class UsageStatsTest extends StsExtraBusinessLogicTestCase {
             deviceConfigStateHelper.set(KEY_NOTIFICATION_SEEN_HOLD_DURATION,
                     String.valueOf(promotedBucketHoldDurationMs));
 
-            mUiDevice.wakeUp();
+            wakeDevice();
             dismissKeyguard();
             final TestServiceConnection connection = bindToTestServiceAndGetConnection();
             final TestServiceConnection connection2 = bindToTestServiceAndGetConnection(
@@ -1028,7 +1028,7 @@ public class UsageStatsTest extends StsExtraBusinessLogicTestCase {
             deviceConfigStateHelper.set(KEY_RETAIN_NOTIFICATION_SEEN_IMPACT_FOR_PRE_T_APPS,
                     String.valueOf(true));
 
-            mUiDevice.wakeUp();
+            wakeDevice();
             dismissKeyguard();
             final TestServiceConnection connection = bindToTestServiceAndGetConnection();
             final TestServiceConnection connection2 = bindToTestServiceAndGetConnection(
@@ -1103,7 +1103,7 @@ public class UsageStatsTest extends StsExtraBusinessLogicTestCase {
             deviceConfigStateHelper.set(KEY_NOTIFICATION_SEEN_HOLD_DURATION,
                     String.valueOf(promotedBucketHoldDurationMs));
 
-            mUiDevice.wakeUp();
+            wakeDevice();
             dismissKeyguard();
             final TestServiceConnection connection = bindToTestServiceAndGetConnection();
             try {
@@ -1637,8 +1637,10 @@ public class UsageStatsTest extends StsExtraBusinessLogicTestCase {
     @Test
     public void testInteractiveEvents() throws Exception {
         // We need to start out with the screen on.
-        mUiDevice.wakeUp();
+        wakeDevice();
         dismissKeyguard(); // also want to start out with the keyguard dismissed.
+        SystemClock.sleep(500);
+
 
         try {
             ArrayList<Event> events;
@@ -1646,9 +1648,11 @@ public class UsageStatsTest extends StsExtraBusinessLogicTestCase {
             // Determine time to start looking for events.
             final long startTime = getEvents(ALL_EVENTS, 0, null, null) + 1;
             SparseArray<AggrAllEventsData> baseAggr = getAggrEventData();
+            SystemClock.sleep(500);
 
             // First test -- put device to sleep and make sure we see this event.
             sleepDevice();
+            SystemClock.sleep(500);
 
             // Do we have one event, going in to non-interactive mode?
             events = waitForEventCount(INTERACTIVE_EVENTS, startTime, 1);
@@ -1660,7 +1664,7 @@ public class UsageStatsTest extends StsExtraBusinessLogicTestCase {
             // XXX need to wait a bit so we don't accidentally trigger double-power
             // to launch camera.  (SHOULD FIX HOW WE WAKEUP / SLEEP TO NOT USE POWER KEY)
             SystemClock.sleep(500);
-            mUiDevice.wakeUp();
+            wakeDevice();
             events = waitForEventCount(INTERACTIVE_EVENTS, startTime, 2);
             assertEquals(Event.SCREEN_NON_INTERACTIVE, events.get(0).getEventType());
             assertEquals(Event.SCREEN_INTERACTIVE, events.get(1).getEventType());
@@ -1690,7 +1694,7 @@ public class UsageStatsTest extends StsExtraBusinessLogicTestCase {
 
         } finally {
             // Dismiss keyguard to get device back in its normal state.
-            mUiDevice.wakeUp();
+            wakeDevice();
             executeShellCmd("wm dismiss-keyguard");
         }
     }
@@ -1828,7 +1832,7 @@ public class UsageStatsTest extends StsExtraBusinessLogicTestCase {
     @AppModeFull(reason = "No usage events access in instant apps")
     @Test
     public void testTaskRootEventField() throws Exception {
-        mUiDevice.wakeUp();
+        wakeDevice();
         dismissKeyguard(); // also want to start out with the keyguard dismissed.
 
         final long startTime = System.currentTimeMillis();
@@ -1853,7 +1857,7 @@ public class UsageStatsTest extends StsExtraBusinessLogicTestCase {
     @AppModeFull(reason = "No usage events access in instant apps")
     @Test
     public void testUsageSourceAttribution() throws Exception {
-        mUiDevice.wakeUp();
+        wakeDevice();
         dismissKeyguard(); // also want to start out with the keyguard dismissed.
         mUiDevice.pressHome();
 
@@ -1874,7 +1878,7 @@ public class UsageStatsTest extends StsExtraBusinessLogicTestCase {
     @Test
     public void testTaskRootAttribution_finishingTaskRoot() throws Exception {
         setUsageSourceSetting(Integer.toString(UsageStatsManager.USAGE_SOURCE_TASK_ROOT_ACTIVITY));
-        mUiDevice.wakeUp();
+        wakeDevice();
         dismissKeyguard(); // also want to start out with the keyguard dismissed.
 
         launchTestActivity(TEST_APP2_PKG, TEST_APP2_CLASS_FINISHING_TASK_ROOT);
@@ -1901,7 +1905,7 @@ public class UsageStatsTest extends StsExtraBusinessLogicTestCase {
                 Activities.ActivityTwo.class,
                 Activities.ActivityThree.class,
         };
-        mUiDevice.wakeUp();
+        wakeDevice();
         mUiDevice.pressHome();
 
         final long startTime = System.currentTimeMillis();
@@ -1947,7 +1951,7 @@ public class UsageStatsTest extends StsExtraBusinessLogicTestCase {
     @AppModeFull(reason = "No usage events access in instant apps")
     @Test
     public void testSuddenDestroy() throws Exception {
-        mUiDevice.wakeUp();
+        wakeDevice();
         dismissKeyguard(); // also want to start out with the keyguard dismissed.
         mUiDevice.pressHome();
 
@@ -1996,7 +2000,7 @@ public class UsageStatsTest extends StsExtraBusinessLogicTestCase {
         assumeTrue("Test cannot run without Picture in Picture support",
                 mContext.getPackageManager().hasSystemFeature(
                         PackageManager.FEATURE_PICTURE_IN_PICTURE));
-        mUiDevice.wakeUp();
+        wakeDevice();
         dismissKeyguard(); // also want to start out with the keyguard dismissed.
         mUiDevice.pressHome();
 
@@ -2065,7 +2069,7 @@ public class UsageStatsTest extends StsExtraBusinessLogicTestCase {
         assumeTrue("Test cannot run without Picture in Picture support",
                 mContext.getPackageManager().hasSystemFeature(
                         PackageManager.FEATURE_PICTURE_IN_PICTURE));
-        mUiDevice.wakeUp();
+        wakeDevice();
         dismissKeyguard(); // also want to start out with the keyguard dismissed.
         mUiDevice.pressHome();
 
@@ -2093,7 +2097,7 @@ public class UsageStatsTest extends StsExtraBusinessLogicTestCase {
 
         // Waking the device should cause the stopped Pip to return to the paused state.
         final long wakeTime = System.currentTimeMillis();
-        mUiDevice.wakeUp();
+        wakeDevice();
         dismissKeyguard();
         mWMStateHelper.waitForActivityState(TEST_APP2_PIP_COMPONENT,
                 WindowManagerState.STATE_PAUSED);
@@ -2455,9 +2459,21 @@ public class UsageStatsTest extends StsExtraBusinessLogicTestCase {
         waitUntil(() -> {
             try {
                 return mUiDevice.isScreenOn();
-            } catch(Exception e) {
+            } catch (Exception e) {
                 return true;
             }
         }, false);
+    }
+
+    private void wakeDevice() throws Exception {
+        mUiDevice.wakeUp();
+
+        waitUntil(() -> {
+            try {
+                return mUiDevice.isScreenOn();
+            } catch (Exception e) {
+                return false;
+            }
+        }, true);
     }
 }
