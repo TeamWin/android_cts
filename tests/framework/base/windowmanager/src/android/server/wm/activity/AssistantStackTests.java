@@ -14,7 +14,7 @@
  * limitations under the License
  */
 
-package android.server.wm;
+package android.server.wm.activity;
 
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_ASSISTANT;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
@@ -52,6 +52,9 @@ import static org.junit.Assume.assumeTrue;
 import android.content.ComponentName;
 import android.platform.test.annotations.Presubmit;
 import android.provider.Settings;
+import android.server.wm.ActivityManagerTestBase;
+import android.server.wm.WaitForValidActivityState;
+import android.server.wm.WindowManagerState;
 import android.server.wm.settings.SettingsSession;
 
 import org.junit.Ignore;
@@ -346,8 +349,7 @@ public class AssistantStackTests extends ActivityManagerTestBase {
             final WindowManagerState amState = mWmState;
             assertThat(amState.getRootTaskByActivityType(ACTIVITY_TYPE_ASSISTANT).getTasks(),
                     hasSize(1));
-            final int taskId = mWmState.getTaskByActivity(ASSISTANT_ACTIVITY)
-                    .mTaskId;
+            final int taskId = mWmState.getTaskByActivity(ASSISTANT_ACTIVITY).getTaskId();
 
             // Launch a new fullscreen activity
             // Using Animation Test Activity because it is opaque on all devices.
@@ -379,7 +381,7 @@ public class AssistantStackTests extends ActivityManagerTestBase {
             assertThat(amState.getRootTaskByActivityType(ACTIVITY_TYPE_ASSISTANT).getTasks(),
                     hasSize(1));
             assertEquals(taskId,
-                    mWmState.getTaskByActivity(ASSISTANT_ACTIVITY).mTaskId);
+                    mWmState.getTaskByActivity(ASSISTANT_ACTIVITY).getTaskId());
 
         }
     }

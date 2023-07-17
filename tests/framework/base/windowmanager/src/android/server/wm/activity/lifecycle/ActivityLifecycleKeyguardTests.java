@@ -14,19 +14,18 @@
  * limitations under the License
  */
 
-package android.server.wm.lifecycle;
+package android.server.wm.activity.lifecycle;
 
+import static android.server.wm.activity.lifecycle.LifecycleConstants.ON_PAUSE;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.ON_RESTART;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.ON_RESUME;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.ON_START;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.ON_STOP;
+import static android.server.wm.activity.lifecycle.TransitionVerifier.assertRestartAndResumeSequence;
+import static android.server.wm.activity.lifecycle.TransitionVerifier.assertRestartAndResumeSubSequence;
+import static android.server.wm.activity.lifecycle.TransitionVerifier.assertResumeToStopSequence;
+import static android.server.wm.activity.lifecycle.TransitionVerifier.assertSequence;
 import static android.server.wm.app.Components.PipActivity.EXTRA_ENTER_PIP;
-import static android.server.wm.lifecycle.LifecycleConstants.ON_PAUSE;
-import static android.server.wm.lifecycle.LifecycleConstants.ON_RESTART;
-import static android.server.wm.lifecycle.LifecycleConstants.ON_RESUME;
-import static android.server.wm.lifecycle.LifecycleConstants.ON_START;
-import static android.server.wm.lifecycle.LifecycleConstants.ON_STOP;
-import static android.server.wm.lifecycle.TransitionVerifier.assertLaunchAndStopSequence;
-import static android.server.wm.lifecycle.TransitionVerifier.assertRestartAndResumeSequence;
-import static android.server.wm.lifecycle.TransitionVerifier.assertRestartAndResumeSubSequence;
-import static android.server.wm.lifecycle.TransitionVerifier.assertResumeToStopSequence;
-import static android.server.wm.lifecycle.TransitionVerifier.assertSequence;
 
 import static org.junit.Assume.assumeTrue;
 
@@ -59,7 +58,7 @@ public class ActivityLifecycleKeyguardTests extends ActivityLifecycleClientTestB
                     .setExpectedState(ON_STOP)
                     .setNoInstance()
                     .launch();
-            assertLaunchAndStopSequence(FirstActivity.class, getTransitionLog());
+            TransitionVerifier.assertLaunchAndStopSequence(FirstActivity.class, getTransitionLog());
         }
     }
 
@@ -75,7 +74,7 @@ public class ActivityLifecycleKeyguardTests extends ActivityLifecycleClientTestB
             lockScreenSession.setLockCredential().gotoKeyguard();
             waitAndAssertActivityStates(state(activity, ON_STOP));
 
-            assertLaunchAndStopSequence(FirstActivity.class, getTransitionLog());
+            TransitionVerifier.assertLaunchAndStopSequence(FirstActivity.class, getTransitionLog());
             getTransitionLog().clear();
         } // keyguard hidden
 

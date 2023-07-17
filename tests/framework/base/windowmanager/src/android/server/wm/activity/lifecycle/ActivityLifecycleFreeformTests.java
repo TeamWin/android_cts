@@ -14,7 +14,7 @@
  * limitations under the License
  */
 
-package android.server.wm.lifecycle;
+package android.server.wm.activity.lifecycle;
 
 import static android.app.WindowConfiguration.WINDOWING_MODE_FREEFORM;
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
@@ -24,17 +24,16 @@ import static android.server.wm.ComponentNameUtils.getWindowName;
 import static android.server.wm.WindowManagerState.STATE_PAUSED;
 import static android.server.wm.WindowManagerState.STATE_RESUMED;
 import static android.server.wm.WindowManagerState.STATE_STOPPED;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.ON_RESUME;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.ON_TOP_POSITION_LOST;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.getComponentName;
+import static android.server.wm.activity.lifecycle.TransitionVerifier.assertEmptySequence;
+import static android.server.wm.activity.lifecycle.TransitionVerifier.assertLaunchAndPauseSequence;
+import static android.server.wm.activity.lifecycle.TransitionVerifier.assertRestartAndResumeSequence;
+import static android.server.wm.activity.lifecycle.TransitionVerifier.assertResumeToDestroySequence;
+import static android.server.wm.activity.lifecycle.TransitionVerifier.assertSequence;
 import static android.server.wm.app27.Components.SDK_27_LAUNCHING_ACTIVITY;
 import static android.server.wm.app27.Components.SDK_27_TEST_ACTIVITY;
-import static android.server.wm.lifecycle.LifecycleConstants.ON_RESUME;
-import static android.server.wm.lifecycle.LifecycleConstants.ON_TOP_POSITION_LOST;
-import static android.server.wm.lifecycle.LifecycleConstants.getComponentName;
-import static android.server.wm.lifecycle.TransitionVerifier.assertEmptySequence;
-import static android.server.wm.lifecycle.TransitionVerifier.assertLaunchAndPauseSequence;
-import static android.server.wm.lifecycle.TransitionVerifier.assertLaunchSequence;
-import static android.server.wm.lifecycle.TransitionVerifier.assertRestartAndResumeSequence;
-import static android.server.wm.lifecycle.TransitionVerifier.assertResumeToDestroySequence;
-import static android.server.wm.lifecycle.TransitionVerifier.assertSequence;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assume.assumeTrue;
@@ -83,9 +82,9 @@ public class ActivityLifecycleFreeformTests extends ActivityLifecycleClientTestB
         // Wait and assert resume
         waitAndAssertActivityState(getComponentName(FirstActivity.class), STATE_RESUMED,
                 "Activity should be resumed after launch");
-        assertLaunchSequence(FirstActivity.class, getTransitionLog());
-        assertLaunchSequence(CallbackTrackingActivity.class, getTransitionLog(),
-                ON_TOP_POSITION_LOST);
+        TransitionVerifier.assertLaunchSequence(FirstActivity.class, getTransitionLog());
+        TransitionVerifier.assertLaunchSequence(
+                CallbackTrackingActivity.class, getTransitionLog(), ON_TOP_POSITION_LOST);
     }
 
     @Test
@@ -119,11 +118,11 @@ public class ActivityLifecycleFreeformTests extends ActivityLifecycleClientTestB
         waitAndAssertActivityState(getComponentName(ThirdActivity.class), STATE_RESUMED, message);
 
         // Assert lifecycle
-        assertLaunchSequence(FirstActivity.class, getTransitionLog());
-        assertLaunchSequence(SecondActivity.class, getTransitionLog());
-        assertLaunchSequence(ThirdActivity.class, getTransitionLog());
-        assertLaunchSequence(CallbackTrackingActivity.class, getTransitionLog(),
-                ON_TOP_POSITION_LOST);
+        TransitionVerifier.assertLaunchSequence(FirstActivity.class, getTransitionLog());
+        TransitionVerifier.assertLaunchSequence(SecondActivity.class, getTransitionLog());
+        TransitionVerifier.assertLaunchSequence(ThirdActivity.class, getTransitionLog());
+        TransitionVerifier.assertLaunchSequence(
+                CallbackTrackingActivity.class, getTransitionLog(), ON_TOP_POSITION_LOST);
     }
 
     @Test
@@ -157,10 +156,10 @@ public class ActivityLifecycleFreeformTests extends ActivityLifecycleClientTestB
 
         // Assert lifecycle
         TransitionVerifier.assertLaunchAndStopSequence(FirstActivity.class, getTransitionLog());
-        assertLaunchSequence(SecondActivity.class, getTransitionLog());
-        assertLaunchSequence(ThirdActivity.class, getTransitionLog());
-        assertLaunchSequence(CallbackTrackingActivity.class, getTransitionLog(),
-                ON_TOP_POSITION_LOST);
+        TransitionVerifier.assertLaunchSequence(SecondActivity.class, getTransitionLog());
+        TransitionVerifier.assertLaunchSequence(ThirdActivity.class, getTransitionLog());
+        TransitionVerifier.assertLaunchSequence(
+                CallbackTrackingActivity.class, getTransitionLog(), ON_TOP_POSITION_LOST);
 
         // Finish the activity that was occluding the first one
         getTransitionLog().clear();
@@ -215,10 +214,10 @@ public class ActivityLifecycleFreeformTests extends ActivityLifecycleClientTestB
 
         // Assert lifecycle
         assertLaunchAndPauseSequence(FirstActivity.class, getTransitionLog());
-        assertLaunchSequence(TranslucentActivity.class, getTransitionLog());
-        assertLaunchSequence(ThirdActivity.class, getTransitionLog());
-        assertLaunchSequence(CallbackTrackingActivity.class, getTransitionLog(),
-                ON_TOP_POSITION_LOST);
+        TransitionVerifier.assertLaunchSequence(TranslucentActivity.class, getTransitionLog());
+        TransitionVerifier.assertLaunchSequence(ThirdActivity.class, getTransitionLog());
+        TransitionVerifier.assertLaunchSequence(
+                CallbackTrackingActivity.class, getTransitionLog(), ON_TOP_POSITION_LOST);
 
         // Finish the activity that was occluding the first one
         getTransitionLog().clear();

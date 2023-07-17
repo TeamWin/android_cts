@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.server.wm;
+package android.server.wm.activity;
 
 import static android.server.wm.app.Components.RenderService.BROADCAST_EMBED_CONTENT;
 import static android.server.wm.app.Components.RenderService.EXTRAS_BUNDLE;

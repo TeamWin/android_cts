@@ -14,7 +14,7 @@
  * limitations under the License
  */
 
-package android.server.wm;
+package android.server.wm.activity;
 
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_ASSISTANT;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_DREAM;
@@ -52,7 +52,10 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.os.Bundle;
 import android.platform.test.annotations.Presubmit;
+import android.server.wm.ActivityManagerTestBase;
+import android.server.wm.CommandSession;
 import android.server.wm.CommandSession.ActivitySession;
+import android.server.wm.WindowManagerState;
 import android.server.wm.intent.Activities;
 
 import com.android.compatibility.common.util.ApiTest;
@@ -372,8 +375,9 @@ public class StartActivityTests extends ActivityManagerTestBase {
         waitAndAssertActivityState(TEST_ACTIVITY, STATE_INITIALIZING,
                 "Activity behind taskOverlay should not resumed");
         // check order: SecondActivity(top) -> TestActivity -> RegularActivity(base)
-        final List<String> activitiesOrder = mWmState.getTaskByActivity(baseIntent.getComponent())
-                .mActivities
+        final List<String> activitiesOrder = mWmState.getTaskByActivity(
+                        baseIntent.getComponent())
+                .getActivities()
                 .stream()
                 .map(WindowManagerState.Activity::getName)
                 .collect(Collectors.toList());

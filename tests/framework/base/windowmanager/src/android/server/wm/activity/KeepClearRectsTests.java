@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.server.wm;
+package android.server.wm.activity;
 
 import static android.server.wm.app.Components.KEEP_CLEAR_RECTS_ACTIVITY;
 import static android.server.wm.app.Components.KEEP_CLEAR_RECTS_ACTIVITY2;
@@ -35,6 +35,8 @@ import android.graphics.Color;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.platform.test.annotations.Presubmit;
+import android.server.wm.WindowManagerState;
+import android.server.wm.WindowManagerTestBase;
 import android.server.wm.cts.R;
 import android.view.Gravity;
 import android.view.View;
@@ -554,8 +556,8 @@ public class KeepClearRectsTests extends WindowManagerTestBase {
                 KEEP_CLEAR_RECTS_ACTIVITY2, Collections.emptyList(), Collections.emptyList());
         final List<Rect> prevKeepClearRectsOnDisplay = getKeepClearRectsOnDefaultDisplay();
 
-        removeRootTask(mWmState.getTaskByActivity(KEEP_CLEAR_RECTS_ACTIVITY).mTaskId);
-        removeRootTask(mWmState.getTaskByActivity(KEEP_CLEAR_RECTS_ACTIVITY2).mTaskId);
+        removeRootTask(mWmState.getTaskByActivity(KEEP_CLEAR_RECTS_ACTIVITY).getTaskId());
+        removeRootTask(mWmState.getTaskByActivity(KEEP_CLEAR_RECTS_ACTIVITY2).getTaskId());
 
         startKeepClearActivitiesInSplitscreen(KEEP_CLEAR_RECTS_ACTIVITY,
                 KEEP_CLEAR_RECTS_ACTIVITY2, TEST_KEEP_CLEAR_RECTS, TEST_KEEP_CLEAR_RECTS_2);

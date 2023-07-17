@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-package android.server.wm;
+package android.server.wm.activity;
 
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
-import static android.server.wm.ActivityTransitionTests.CustomBackgroundTransitionActivity.BACKGROUND_COLOR_KEY;
-import static android.server.wm.ActivityTransitionTests.CustomBackgroundTransitionActivity.ENTER_ANIM_KEY;
-import static android.server.wm.ActivityTransitionTests.CustomBackgroundTransitionActivity.EXIT_ANIM_KEY;
-import static android.server.wm.ActivityTransitionTests.EdgeExtensionActivity.BOTTOM;
-import static android.server.wm.ActivityTransitionTests.EdgeExtensionActivity.DIRECTION_KEY;
-import static android.server.wm.ActivityTransitionTests.EdgeExtensionActivity.LEFT;
-import static android.server.wm.ActivityTransitionTests.EdgeExtensionActivity.RIGHT;
-import static android.server.wm.ActivityTransitionTests.EdgeExtensionActivity.TOP;
+import static android.server.wm.activity.ActivityTransitionTests.CustomBackgroundTransitionActivity.BACKGROUND_COLOR_KEY;
+import static android.server.wm.activity.ActivityTransitionTests.CustomBackgroundTransitionActivity.ENTER_ANIM_KEY;
+import static android.server.wm.activity.ActivityTransitionTests.CustomBackgroundTransitionActivity.EXIT_ANIM_KEY;
+import static android.server.wm.activity.ActivityTransitionTests.EdgeExtensionActivity.BOTTOM;
+import static android.server.wm.activity.ActivityTransitionTests.EdgeExtensionActivity.DIRECTION_KEY;
+import static android.server.wm.activity.ActivityTransitionTests.EdgeExtensionActivity.LEFT;
+import static android.server.wm.activity.ActivityTransitionTests.EdgeExtensionActivity.RIGHT;
+import static android.server.wm.activity.ActivityTransitionTests.EdgeExtensionActivity.TOP;
 import static android.server.wm.app.Components.TEST_ACTIVITY;
 import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.RoundedCorner.POSITION_BOTTOM_LEFT;
@@ -56,6 +56,9 @@ import android.os.Looper;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
 import android.provider.Settings;
+import android.server.wm.ActivityManagerTestBase;
+import android.server.wm.Condition;
+import android.server.wm.WindowManagerState;
 import android.server.wm.cts.R;
 import android.server.wm.settings.SettingsSession;
 import android.util.Range;
@@ -104,9 +107,9 @@ public class ActivityTransitionTests extends ActivityManagerTestBase {
     static final int TRANSITION_TYPE_CLOSE = 0x2;
 
     static final String ACTION_UPDATE =
-            "android.server.wm.ActivityTransitionTests.ACTION_UPDATE";
+            "android.server.wm.activity.ActivityTransitionTests.ACTION_UPDATE";
     static final String ACTION_FINISH =
-            "android.server.wm.ActivityTransitionTests.ACTION_FINISH";
+            "android.server.wm.activity.ActivityTransitionTests.ACTION_FINISH";
 
     private boolean mAnimationScaleResetRequired = false;
     private String mInitialWindowAnimationScale;

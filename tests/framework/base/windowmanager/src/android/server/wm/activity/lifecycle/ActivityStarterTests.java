@@ -14,7 +14,7 @@
  * limitations under the License
  */
 
-package android.server.wm.lifecycle;
+package android.server.wm.activity.lifecycle;
 
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.app.WindowConfiguration.WINDOWING_MODE_MULTI_WINDOW;
@@ -30,12 +30,12 @@ import static android.server.wm.ComponentNameUtils.getActivityName;
 import static android.server.wm.UiDeviceUtils.pressWakeupButton;
 import static android.server.wm.WindowManagerState.STATE_DESTROYED;
 import static android.server.wm.WindowManagerState.STATE_RESUMED;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.ON_STOP;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.getComponentName;
 import static android.server.wm.app.Components.ALIAS_TEST_ACTIVITY;
 import static android.server.wm.app.Components.NO_HISTORY_ACTIVITY;
 import static android.server.wm.app.Components.SHOW_WHEN_LOCKED_TRANSLUCENT_ACTIVITY;
 import static android.server.wm.app.Components.TEST_ACTIVITY;
-import static android.server.wm.lifecycle.LifecycleConstants.ON_STOP;
-import static android.server.wm.lifecycle.LifecycleConstants.getComponentName;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
@@ -48,6 +48,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.ActivityLauncher;
+import android.server.wm.HelperActivities;
 import android.server.wm.WaitForValidActivityState;
 import android.server.wm.app.Components;
 
@@ -62,9 +63,9 @@ import org.junit.Test;
 public class ActivityStarterTests extends ActivityLifecycleClientTestBase {
 
     private static final ComponentName STANDARD_ACTIVITY
-            = getComponentName(StandardActivity.class);
+            = getComponentName(HelperActivities.StandardActivity.class);
     private static final ComponentName SECOND_STANDARD_ACTIVITY
-            = getComponentName(SecondStandardActivity.class);
+            = getComponentName(HelperActivities.SecondStandardActivity.class);
     private static final ComponentName SINGLE_TOP_ACTIVITY
             = getComponentName(SingleTopActivity.class);
     private static final ComponentName SINGLE_INSTANCE_ACTIVITY
@@ -89,10 +90,8 @@ public class ActivityStarterTests extends ActivityLifecycleClientTestBase {
 
     /**
      * Ensures that the following launch flag combination works when starting an activity which is
-     * already running:
-     * - {@code FLAG_ACTIVITY_CLEAR_TOP}
-     * - {@code FLAG_ACTIVITY_RESET_TASK_IF_NEEDED}
-     * - {@code FLAG_ACTIVITY_NEW_TASK}
+     * already running: - {@code FLAG_ACTIVITY_CLEAR_TOP} - {@code
+     * FLAG_ACTIVITY_RESET_TASK_IF_NEEDED} - {@code FLAG_ACTIVITY_NEW_TASK}
      */
     @Test
     public void testClearTopNewTaskResetTask() throws Exception {
@@ -802,14 +801,6 @@ public class ActivityStarterTests extends ActivityLifecycleClientTestBase {
                         new Intent(this, TestLaunchingActivity.class), 1 /* requestCode */);
             }
         }
-    }
-
-    // Test activity
-    public static class StandardActivity extends Activity {
-    }
-
-    // Test activity
-    public static class SecondStandardActivity extends Activity {
     }
 
     // Test activity

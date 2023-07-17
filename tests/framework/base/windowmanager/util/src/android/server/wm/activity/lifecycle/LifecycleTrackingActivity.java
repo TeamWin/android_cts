@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 The Android Open Source Project
+ * Copyright (C) 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,7 +47,7 @@ public class LifecycleTrackingActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mEventLogClient = EventLog.EventLogClient.create(this.getClass().getCanonicalName(), this,
-                Uri.parse("content://android.server.wm.lifecycle.logprovider"));
+                Uri.parse("content://android.server.wm.activity.lifecycle.logprovider"));
         mEventLogClient.onCallback(ON_CREATE);
 
         final Intent intent = getIntent();

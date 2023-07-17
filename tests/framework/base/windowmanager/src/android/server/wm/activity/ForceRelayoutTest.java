@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.server.wm;
+package android.server.wm.activity;
 
 import static android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_NOTHING;
 import static android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN;

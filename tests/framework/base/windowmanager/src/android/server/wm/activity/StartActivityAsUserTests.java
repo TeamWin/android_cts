@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.server.wm;
+package android.server.wm.activity;
 
 import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
@@ -33,6 +33,8 @@ import android.os.RemoteCallback;
 import android.os.UserHandle;
 import android.os.UserManager;
 import android.platform.test.annotations.Presubmit;
+import android.server.wm.WindowManagerState;
+import android.server.wm.WindowManagerStateHelper;
 import android.util.Log;
 
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -51,7 +53,7 @@ public class StartActivityAsUserTests {
     static final String KEY_USER_ID = "user id";
 
     private static final String PACKAGE = "android.server.wm.cts";
-    private static final String CLASS = "android.server.wm.StartActivityAsUserActivity";
+    private static final String CLASS = "android.server.wm.activity.StartActivityAsUserActivity";
     private static final int INVALID_STACK = -1;
     private static final boolean SUPPORTS_MULTIPLE_USERS = UserManager.supportsMultipleUsers();
 

@@ -14,7 +14,7 @@
  * limitations under the License
  */
 
-package android.server.wm;
+package android.server.wm.activity;
 
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.os.SystemClock.sleep;
@@ -65,7 +65,10 @@ import android.metrics.MetricsReader;
 import android.os.Process;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
+import android.server.wm.ActivityManagerTestBase;
 import android.server.wm.CommandSession.ActivitySessionClient;
+import android.server.wm.Condition;
+import android.server.wm.StateLogger;
 import android.support.test.metricshelper.MetricsAsserts;
 import android.util.EventLog.Event;
 

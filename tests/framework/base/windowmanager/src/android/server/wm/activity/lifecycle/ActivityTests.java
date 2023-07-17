@@ -14,25 +14,24 @@
  * limitations under the License
  */
 
-package android.server.wm.lifecycle;
+package android.server.wm.activity.lifecycle;
 
 import static android.content.Intent.FLAG_ACTIVITY_MULTIPLE_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.server.wm.WindowManagerState.STATE_STOPPED;
-import static android.server.wm.lifecycle.LifecycleConstants.ON_DESTROY;
-import static android.server.wm.lifecycle.LifecycleConstants.ON_PAUSE;
-import static android.server.wm.lifecycle.LifecycleConstants.ON_RESTART;
-import static android.server.wm.lifecycle.LifecycleConstants.ON_RESUME;
-import static android.server.wm.lifecycle.LifecycleConstants.ON_START;
-import static android.server.wm.lifecycle.LifecycleConstants.ON_STOP;
-import static android.server.wm.lifecycle.LifecycleConstants.ON_TOP_POSITION_GAINED;
-import static android.server.wm.lifecycle.LifecycleConstants.ON_TOP_POSITION_LOST;
-import static android.server.wm.lifecycle.TransitionVerifier.assertEmptySequence;
-import static android.server.wm.lifecycle.TransitionVerifier.assertEntireSequence;
-import static android.server.wm.lifecycle.TransitionVerifier.assertLaunchAndDestroySequence;
-import static android.server.wm.lifecycle.TransitionVerifier.assertLaunchSequence;
-import static android.server.wm.lifecycle.TransitionVerifier.assertSequence;
-import static android.server.wm.lifecycle.TransitionVerifier.transition;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.ON_DESTROY;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.ON_PAUSE;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.ON_RESTART;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.ON_RESUME;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.ON_START;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.ON_STOP;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.ON_TOP_POSITION_GAINED;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.ON_TOP_POSITION_LOST;
+import static android.server.wm.activity.lifecycle.TransitionVerifier.assertEmptySequence;
+import static android.server.wm.activity.lifecycle.TransitionVerifier.assertEntireSequence;
+import static android.server.wm.activity.lifecycle.TransitionVerifier.assertLaunchAndDestroySequence;
+import static android.server.wm.activity.lifecycle.TransitionVerifier.assertSequence;
+import static android.server.wm.activity.lifecycle.TransitionVerifier.transition;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -88,7 +87,7 @@ public class ActivityTests extends ActivityLifecycleClientTestBase {
         getTransitionLog().clear();
         secondActivity.finish();
         waitAndAssertActivityStates(state(secondActivity, ON_DESTROY));
-        assertLaunchSequence(FirstActivity.class, getTransitionLog());
+        TransitionVerifier.assertLaunchSequence(FirstActivity.class, getTransitionLog());
     }
 
     /**

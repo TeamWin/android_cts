@@ -14,23 +14,23 @@
  * limitations under the License
  */
 
-package android.server.wm.lifecycle;
+package android.server.wm.activity.lifecycle;
 
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.content.Intent.FLAG_ACTIVITY_FORWARD_RESULT;
 import static android.content.Intent.FLAG_ACTIVITY_MULTIPLE_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.server.wm.StateLogger.log;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.ACTIVITY_LAUNCH_TIMEOUT;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.EXTRA_RECREATE;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.EXTRA_SKIP_TOP_RESUMED_STATE;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.ON_MULTI_WINDOW_MODE_CHANGED;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.ON_PAUSE;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.ON_RESUME;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.ON_STOP;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.ON_TOP_POSITION_GAINED;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.getComponentName;
 import static android.server.wm.app.Components.PipActivity.EXTRA_ENTER_PIP;
-import static android.server.wm.lifecycle.LifecycleConstants.ACTIVITY_LAUNCH_TIMEOUT;
-import static android.server.wm.lifecycle.LifecycleConstants.EXTRA_RECREATE;
-import static android.server.wm.lifecycle.LifecycleConstants.EXTRA_SKIP_TOP_RESUMED_STATE;
-import static android.server.wm.lifecycle.LifecycleConstants.ON_MULTI_WINDOW_MODE_CHANGED;
-import static android.server.wm.lifecycle.LifecycleConstants.ON_PAUSE;
-import static android.server.wm.lifecycle.LifecycleConstants.ON_RESUME;
-import static android.server.wm.lifecycle.LifecycleConstants.ON_STOP;
-import static android.server.wm.lifecycle.LifecycleConstants.ON_TOP_POSITION_GAINED;
-import static android.server.wm.lifecycle.LifecycleConstants.getComponentName;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
@@ -45,9 +45,9 @@ import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.graphics.Rect;
 import android.os.Bundle;
-import android.server.wm.MultiDisplayTestBase;
 import android.server.wm.ObjectTracker;
 import android.server.wm.cts.R;
+import android.server.wm.MultiDisplayTestBase;
 import android.transition.Transition;
 import android.transition.TransitionListenerAdapter;
 import android.util.Pair;

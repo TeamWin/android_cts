@@ -14,33 +14,31 @@
  * limitations under the License
  */
 
-package android.server.wm.lifecycle;
+package android.server.wm.activity.lifecycle;
 
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.content.Intent.FLAG_ACTIVITY_MULTIPLE_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
-import static android.server.wm.lifecycle.LifecycleConstants.EXTRA_ACTIVITY_ON_USER_LEAVE_HINT;
-import static android.server.wm.lifecycle.LifecycleConstants.ON_ACTIVITY_RESULT;
-import static android.server.wm.lifecycle.LifecycleConstants.ON_CREATE;
-import static android.server.wm.lifecycle.LifecycleConstants.ON_DESTROY;
-import static android.server.wm.lifecycle.LifecycleConstants.ON_MULTI_WINDOW_MODE_CHANGED;
-import static android.server.wm.lifecycle.LifecycleConstants.ON_PAUSE;
-import static android.server.wm.lifecycle.LifecycleConstants.ON_POST_CREATE;
-import static android.server.wm.lifecycle.LifecycleConstants.ON_RESUME;
-import static android.server.wm.lifecycle.LifecycleConstants.ON_START;
-import static android.server.wm.lifecycle.LifecycleConstants.ON_STOP;
-import static android.server.wm.lifecycle.LifecycleConstants.ON_TOP_POSITION_GAINED;
-import static android.server.wm.lifecycle.LifecycleConstants.ON_TOP_POSITION_LOST;
-import static android.server.wm.lifecycle.LifecycleConstants.ON_USER_LEAVE_HINT;
-import static android.server.wm.lifecycle.LifecycleConstants.getComponentName;
-import static android.server.wm.lifecycle.TransitionVerifier.assertLaunchSequence;
-import static android.server.wm.lifecycle.TransitionVerifier.assertOrder;
-import static android.server.wm.lifecycle.TransitionVerifier.assertRecreateAndResumeSequence;
-import static android.server.wm.lifecycle.TransitionVerifier.assertRestartAndResumeSequence;
-import static android.server.wm.lifecycle.TransitionVerifier.assertResumeToDestroySequence;
-import static android.server.wm.lifecycle.TransitionVerifier.assertSequence;
-import static android.server.wm.lifecycle.TransitionVerifier.assertTransitionObserved;
-import static android.server.wm.lifecycle.TransitionVerifier.transition;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.EXTRA_ACTIVITY_ON_USER_LEAVE_HINT;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.ON_ACTIVITY_RESULT;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.ON_CREATE;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.ON_DESTROY;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.ON_MULTI_WINDOW_MODE_CHANGED;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.ON_PAUSE;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.ON_POST_CREATE;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.ON_RESUME;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.ON_START;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.ON_STOP;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.ON_TOP_POSITION_GAINED;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.ON_TOP_POSITION_LOST;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.ON_USER_LEAVE_HINT;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.getComponentName;
+import static android.server.wm.activity.lifecycle.TransitionVerifier.assertRecreateAndResumeSequence;
+import static android.server.wm.activity.lifecycle.TransitionVerifier.assertRestartAndResumeSequence;
+import static android.server.wm.activity.lifecycle.TransitionVerifier.assertResumeToDestroySequence;
+import static android.server.wm.activity.lifecycle.TransitionVerifier.assertSequence;
+import static android.server.wm.activity.lifecycle.TransitionVerifier.assertTransitionObserved;
+import static android.server.wm.activity.lifecycle.TransitionVerifier.transition;
 
 import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
@@ -112,7 +110,7 @@ public class ActivityLifecycleLegacySplitScreenTests extends ActivityLifecycleCl
         assertRecreateAndResumeSequence(FirstActivity.class, getTransitionLog());
 
         // Verify that the lifecycle state did not change for activity in non-focused stack
-        assertLaunchSequence(ThirdActivity.class, getTransitionLog());
+        TransitionVerifier.assertLaunchSequence(ThirdActivity.class, getTransitionLog());
     }
 
     @Test
@@ -283,7 +281,7 @@ public class ActivityLifecycleLegacySplitScreenTests extends ActivityLifecycleCl
                 .launch();
 
         // Wait for the activity to resume
-        assertLaunchSequence(CallbackTrackingActivity.class, getTransitionLog());
+        TransitionVerifier.assertLaunchSequence(CallbackTrackingActivity.class, getTransitionLog());
 
         // Enter split screen
         getTransitionLog().clear();
@@ -295,9 +293,12 @@ public class ActivityLifecycleLegacySplitScreenTests extends ActivityLifecycleCl
                         ON_CREATE, ON_START, ON_POST_CREATE, ON_RESUME, ON_TOP_POSITION_GAINED,
                         ON_TOP_POSITION_LOST, ON_PAUSE);
         waitForActivityTransitions(CallbackTrackingActivity.class, expectedEnterSequence);
-        assertOrder(getTransitionLog(), CallbackTrackingActivity.class,
-                Arrays.asList(ON_TOP_POSITION_LOST, ON_PAUSE, ON_STOP, ON_DESTROY, ON_CREATE,
-                        ON_RESUME), "moveToSplitScreen");
+        TransitionVerifier.assertOrder(
+                getTransitionLog(),
+                CallbackTrackingActivity.class,
+                Arrays.asList(
+                        ON_TOP_POSITION_LOST, ON_PAUSE, ON_STOP, ON_DESTROY, ON_CREATE, ON_RESUME),
+                "moveToSplitScreen");
 
         // Exit split-screen
         getTransitionLog().clear();
@@ -308,7 +309,9 @@ public class ActivityLifecycleLegacySplitScreenTests extends ActivityLifecycleCl
                 Arrays.asList(ON_STOP, ON_DESTROY, ON_CREATE, ON_START,
                         ON_POST_CREATE, ON_RESUME, ON_PAUSE, ON_RESUME, ON_TOP_POSITION_GAINED);
         waitForActivityTransitions(CallbackTrackingActivity.class, expectedExitSequence);
-        assertOrder(getTransitionLog(), CallbackTrackingActivity.class,
+        TransitionVerifier.assertOrder(
+                getTransitionLog(),
+                CallbackTrackingActivity.class,
                 Arrays.asList(ON_DESTROY, ON_CREATE, ON_RESUME, ON_TOP_POSITION_GAINED),
                 "moveFromSplitScreen");
     }
@@ -332,7 +335,8 @@ public class ActivityLifecycleLegacySplitScreenTests extends ActivityLifecycleCl
             // Wait for the activity to receive the change.
             waitForActivityTransitions(LifecycleConfigChangeHandlingActivity.class,
                     Arrays.asList(ON_TOP_POSITION_LOST, ON_MULTI_WINDOW_MODE_CHANGED));
-            assertOrder(getTransitionLog(),
+            TransitionVerifier.assertOrder(
+                    getTransitionLog(),
                     LifecycleConfigChangeHandlingActivity.class,
                     Arrays.asList(ON_MULTI_WINDOW_MODE_CHANGED, ON_TOP_POSITION_LOST),
                     "moveToSplitScreen");
@@ -380,7 +384,9 @@ public class ActivityLifecycleLegacySplitScreenTests extends ActivityLifecycleCl
 
         waitForIdle();
 
-        assertOrder(getTransitionLog(), FirstActivity.class,
+        TransitionVerifier.assertOrder(
+                getTransitionLog(),
+                FirstActivity.class,
                 Arrays.asList(ON_USER_LEAVE_HINT, ON_PAUSE, ON_STOP),
                 "moveFromSplitScreen");
     }

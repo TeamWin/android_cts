@@ -14,7 +14,7 @@
  * limitations under the License
  */
 
-package android.server.wm;
+package android.server.wm.activity;
 
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
 import static android.app.WindowConfiguration.WINDOWING_MODE_FREEFORM;
@@ -60,8 +60,10 @@ import static org.junit.Assume.assumeTrue;
 
 import android.content.ComponentName;
 import android.platform.test.annotations.Presubmit;
+import android.server.wm.ActivityManagerTestBase;
 import android.server.wm.CommandSession.ActivitySession;
 import android.server.wm.CommandSession.ActivitySessionClient;
+import android.server.wm.WaitForValidActivityState;
 import android.server.wm.app.Components;
 
 import org.junit.Rule;
@@ -374,7 +376,7 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
                 .setLaunchTaskDisplayAreaFeatureId(homeTaskDisplayAreaFeatureId)
                 .setIntentFlags(FLAG_ACTIVITY_NEW_TASK).execute();
         waitAndAssertResumedActivity(BROADCAST_RECEIVER_ACTIVITY,"Activity must be resumed");
-        final int taskId = mWmState.getTaskByActivity(BROADCAST_RECEIVER_ACTIVITY).mTaskId;
+        final int taskId = mWmState.getTaskByActivity(BROADCAST_RECEIVER_ACTIVITY).getTaskId();
 
         try {
             runWithShellPermission(() -> mAtm.startSystemLockTaskMode(taskId));

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.server.wm;
+package android.server.wm.activity;
 
 import static android.app.WindowConfiguration.WINDOWING_MODE_FREEFORM;
 import static android.server.wm.app.Components.LOG_CONFIGURATION_ACTIVITY;
@@ -24,7 +24,9 @@ import static android.view.Surface.ROTATION_180;
 import static org.junit.Assume.assumeTrue;
 
 import android.platform.test.annotations.Presubmit;
+import android.server.wm.ActivityManagerTestBase;
 import android.server.wm.CommandSession.ActivityCallback;
+import android.server.wm.RotationSession;
 
 import org.junit.Test;
 

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.server.wm;
+package android.server.wm.activity;
 
 import static android.server.wm.second.Components.TEST_ACTIVITY_WITH_SAME_AFFINITY_DIFFERENT_UID;
 import static android.server.wm.shareuid.a.Components.TEST_ACTIVITY_WITH_SAME_AFFINITY;
@@ -27,6 +27,7 @@ import static org.junit.Assert.assertNotEquals;
 
 import android.content.ComponentName;
 import android.platform.test.annotations.Presubmit;
+import android.server.wm.ActivityManagerTestBase;
 import android.server.wm.annotation.Group3;
 
 import org.junit.Test;
@@ -72,12 +73,12 @@ public class ActivityTaskAffinityTests extends ActivityManagerTestBase {
         launchActivity(activityA);
         waitAndAssertTopResumedActivity(activityA, DEFAULT_DISPLAY,
                 "Launched activity must be top-resumed.");
-        final int firstAppTaskId = mWmState.getTaskByActivity(activityA).mTaskId;
+        final int firstAppTaskId = mWmState.getTaskByActivity(activityA).getTaskId();
 
         launchActivity(activityB);
         waitAndAssertTopResumedActivity(activityB, DEFAULT_DISPLAY,
                 "Launched activity must be top-resumed.");
-        final int secondAppTaskId = mWmState.getTaskByActivity(activityB).mTaskId;
+        final int secondAppTaskId = mWmState.getTaskByActivity(activityB).getTaskId();
 
         if (sameTask) {
             assertEquals("Activities with same affinity must be in the same task.",

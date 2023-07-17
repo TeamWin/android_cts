@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package android.server.wm;
+package android.server.wm.activity;
 
 
-import static android.server.wm.StartActivityAsUserTests.EXTRA_CALLBACK;
-import static android.server.wm.StartActivityAsUserTests.KEY_USER_ID;
+import static android.server.wm.activity.StartActivityAsUserTests.EXTRA_CALLBACK;
+import static android.server.wm.activity.StartActivityAsUserTests.KEY_USER_ID;
 
 import android.app.Activity;
 import android.os.Bundle;

@@ -14,12 +14,13 @@
  * limitations under the License
  */
 
-package android.server.wm;
+package android.server.wm.activity;
 
 import static android.server.wm.app.Components.RECURSIVE_ACTIVITY;
 import static android.server.wm.app.Components.TEST_ACTIVITY;
 
 import android.platform.test.annotations.Presubmit;
+import android.server.wm.ActivityManagerTestBase;
 
 import org.junit.Test;
 

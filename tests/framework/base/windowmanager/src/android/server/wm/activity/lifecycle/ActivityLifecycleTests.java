@@ -14,7 +14,7 @@
  * limitations under the License
  */
 
-package android.server.wm.lifecycle;
+package android.server.wm.activity.lifecycle;
 
 import static android.app.Instrumentation.ActivityMonitor;
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
@@ -25,49 +25,49 @@ import static android.content.Intent.FLAG_ACTIVITY_NO_USER_ACTION;
 import static android.server.wm.UiDeviceUtils.pressBackButton;
 import static android.server.wm.WindowManagerState.STATE_PAUSED;
 import static android.server.wm.WindowManagerState.STATE_STOPPED;
-import static android.server.wm.lifecycle.ActivityLifecycleClientTestBase.LaunchForResultActivity.EXTRA_LAUNCH_ON_RESULT;
-import static android.server.wm.lifecycle.ActivityLifecycleClientTestBase.LaunchForResultActivity.EXTRA_LAUNCH_ON_RESUME_AFTER_RESULT;
-import static android.server.wm.lifecycle.ActivityLifecycleClientTestBase.NoDisplayActivity.EXTRA_LAUNCH_ACTIVITY;
-import static android.server.wm.lifecycle.ActivityLifecycleClientTestBase.NoDisplayActivity.EXTRA_NEW_TASK;
-import static android.server.wm.lifecycle.LifecycleConstants.EXTRA_ACTIVITY_ON_USER_LEAVE_HINT;
-import static android.server.wm.lifecycle.LifecycleConstants.EXTRA_FINISH_IN_ON_CREATE;
-import static android.server.wm.lifecycle.LifecycleConstants.EXTRA_FINISH_IN_ON_PAUSE;
-import static android.server.wm.lifecycle.LifecycleConstants.EXTRA_FINISH_IN_ON_RESUME;
-import static android.server.wm.lifecycle.LifecycleConstants.EXTRA_FINISH_IN_ON_START;
-import static android.server.wm.lifecycle.LifecycleConstants.EXTRA_FINISH_IN_ON_STOP;
-import static android.server.wm.lifecycle.LifecycleConstants.EXTRA_RECREATE;
-import static android.server.wm.lifecycle.LifecycleConstants.EXTRA_SKIP_TOP_RESUMED_STATE;
-import static android.server.wm.lifecycle.LifecycleConstants.EXTRA_START_ACTIVITY_IN_ON_CREATE;
-import static android.server.wm.lifecycle.LifecycleConstants.EXTRA_START_ACTIVITY_WHEN_IDLE;
-import static android.server.wm.lifecycle.LifecycleConstants.ON_ACTIVITY_RESULT;
-import static android.server.wm.lifecycle.LifecycleConstants.ON_CREATE;
-import static android.server.wm.lifecycle.LifecycleConstants.ON_DESTROY;
-import static android.server.wm.lifecycle.LifecycleConstants.ON_NEW_INTENT;
-import static android.server.wm.lifecycle.LifecycleConstants.ON_PAUSE;
-import static android.server.wm.lifecycle.LifecycleConstants.ON_POST_CREATE;
-import static android.server.wm.lifecycle.LifecycleConstants.ON_RESTART;
-import static android.server.wm.lifecycle.LifecycleConstants.ON_RESUME;
-import static android.server.wm.lifecycle.LifecycleConstants.ON_START;
-import static android.server.wm.lifecycle.LifecycleConstants.ON_STOP;
-import static android.server.wm.lifecycle.LifecycleConstants.ON_TOP_POSITION_GAINED;
-import static android.server.wm.lifecycle.LifecycleConstants.ON_TOP_POSITION_LOST;
-import static android.server.wm.lifecycle.LifecycleConstants.ON_USER_LEAVE_HINT;
-import static android.server.wm.lifecycle.LifecycleConstants.getComponentName;
-import static android.server.wm.lifecycle.TransitionVerifier.assertEmptySequence;
-import static android.server.wm.lifecycle.TransitionVerifier.assertEntireSequence;
-import static android.server.wm.lifecycle.TransitionVerifier.assertLaunchAndDestroySequence;
-import static android.server.wm.lifecycle.TransitionVerifier.assertLaunchSequence;
-import static android.server.wm.lifecycle.TransitionVerifier.assertOrder;
-import static android.server.wm.lifecycle.TransitionVerifier.assertRelaunchSequence;
-import static android.server.wm.lifecycle.TransitionVerifier.assertRestartAndResumeSequence;
-import static android.server.wm.lifecycle.TransitionVerifier.assertRestartSequence;
-import static android.server.wm.lifecycle.TransitionVerifier.assertResumeToDestroySequence;
-import static android.server.wm.lifecycle.TransitionVerifier.assertSequence;
-import static android.server.wm.lifecycle.TransitionVerifier.assertSequenceMatchesOneOf;
-import static android.server.wm.lifecycle.TransitionVerifier.assertTransitionNotObserved;
-import static android.server.wm.lifecycle.TransitionVerifier.assertTransitionObserved;
-import static android.server.wm.lifecycle.TransitionVerifier.getLaunchAndDestroySequence;
-import static android.server.wm.lifecycle.TransitionVerifier.transition;
+import static android.server.wm.activity.lifecycle.ActivityLifecycleClientTestBase.LaunchForResultActivity.EXTRA_LAUNCH_ON_RESULT;
+import static android.server.wm.activity.lifecycle.ActivityLifecycleClientTestBase.LaunchForResultActivity.EXTRA_LAUNCH_ON_RESUME_AFTER_RESULT;
+import static android.server.wm.activity.lifecycle.ActivityLifecycleClientTestBase.NoDisplayActivity.EXTRA_LAUNCH_ACTIVITY;
+import static android.server.wm.activity.lifecycle.ActivityLifecycleClientTestBase.NoDisplayActivity.EXTRA_NEW_TASK;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.EXTRA_ACTIVITY_ON_USER_LEAVE_HINT;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.EXTRA_FINISH_IN_ON_CREATE;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.EXTRA_FINISH_IN_ON_PAUSE;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.EXTRA_FINISH_IN_ON_RESUME;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.EXTRA_FINISH_IN_ON_START;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.EXTRA_FINISH_IN_ON_STOP;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.EXTRA_RECREATE;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.EXTRA_SKIP_TOP_RESUMED_STATE;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.EXTRA_START_ACTIVITY_IN_ON_CREATE;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.EXTRA_START_ACTIVITY_WHEN_IDLE;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.ON_ACTIVITY_RESULT;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.ON_CREATE;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.ON_DESTROY;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.ON_NEW_INTENT;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.ON_PAUSE;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.ON_POST_CREATE;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.ON_RESTART;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.ON_RESUME;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.ON_START;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.ON_STOP;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.ON_TOP_POSITION_GAINED;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.ON_TOP_POSITION_LOST;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.ON_USER_LEAVE_HINT;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.getComponentName;
+import static android.server.wm.activity.lifecycle.TransitionVerifier.assertEmptySequence;
+import static android.server.wm.activity.lifecycle.TransitionVerifier.assertEntireSequence;
+import static android.server.wm.activity.lifecycle.TransitionVerifier.assertLaunchAndDestroySequence;
+import static android.server.wm.activity.lifecycle.TransitionVerifier.assertLaunchSequence;
+import static android.server.wm.activity.lifecycle.TransitionVerifier.assertOrder;
+import static android.server.wm.activity.lifecycle.TransitionVerifier.assertRelaunchSequence;
+import static android.server.wm.activity.lifecycle.TransitionVerifier.assertRestartAndResumeSequence;
+import static android.server.wm.activity.lifecycle.TransitionVerifier.assertRestartSequence;
+import static android.server.wm.activity.lifecycle.TransitionVerifier.assertResumeToDestroySequence;
+import static android.server.wm.activity.lifecycle.TransitionVerifier.assertSequence;
+import static android.server.wm.activity.lifecycle.TransitionVerifier.assertSequenceMatchesOneOf;
+import static android.server.wm.activity.lifecycle.TransitionVerifier.assertTransitionNotObserved;
+import static android.server.wm.activity.lifecycle.TransitionVerifier.assertTransitionObserved;
+import static android.server.wm.activity.lifecycle.TransitionVerifier.getLaunchAndDestroySequence;
+import static android.server.wm.activity.lifecycle.TransitionVerifier.transition;
 import static android.view.Surface.ROTATION_0;
 import static android.view.Surface.ROTATION_180;
 import static android.view.Surface.ROTATION_270;
@@ -108,7 +108,7 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
     public void testSingleLaunch() throws Exception {
         launchActivityAndWait(FirstActivity.class);
 
-        assertLaunchSequence(FirstActivity.class, getTransitionLog());
+        TransitionVerifier.assertLaunchSequence(FirstActivity.class, getTransitionLog());
     }
 
     @Test
@@ -333,7 +333,7 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
     /**
      * This triggers launch of an activity for result, which immediately finishes. After receiving
      * result new activity launch is triggered automatically.
-     * @see android.server.wm.lifecycle.ActivityLifecycleClientTestBase.LaunchForResultActivity
+     * @see android.server.wm.activity.lifecycle.ActivityLifecycleClientTestBase.LaunchForResultActivity
      */
     private void testLaunchForResultAndLaunchAfterResultSequence(String flag) throws Exception {
         new Launcher(LaunchForResultActivity.class)
@@ -813,7 +813,7 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
         // Launch a singleTop activity
         launchActivityAndWait(SingleTopActivity.class);
 
-        assertLaunchSequence(SingleTopActivity.class, getTransitionLog());
+        TransitionVerifier.assertLaunchSequence(SingleTopActivity.class, getTransitionLog());
 
         // Try to launch again
         getTransitionLog().clear();
@@ -832,7 +832,7 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
     public void testOnNewIntentFromHidden() throws Exception {
         // Launch a singleTop activity
         final Activity singleTopActivity = launchActivityAndWait(SingleTopActivity.class);
-        assertLaunchSequence(SingleTopActivity.class, getTransitionLog());
+        TransitionVerifier.assertLaunchSequence(SingleTopActivity.class, getTransitionLog());
 
         int singleTopActivityTDAFeatureId = mWmState.getTaskDisplayAreaFeatureId(singleTopActivity
                 .getComponentName());
@@ -869,7 +869,7 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
     public void testOnNewIntentFromPaused() throws Exception {
         // Launch a singleTop activity
         final Activity singleTopActivity = launchActivityAndWait(SingleTopActivity.class);
-        assertLaunchSequence(SingleTopActivity.class, getTransitionLog());
+        TransitionVerifier.assertLaunchSequence(SingleTopActivity.class, getTransitionLog());
 
         // Launch translucent activity, which will make the first one paused.
         launchActivityAndWait(TranslucentActivity.class);

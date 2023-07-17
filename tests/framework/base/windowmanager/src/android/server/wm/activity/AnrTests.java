@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.server.wm;
+package android.server.wm.activity;
 
 import static android.server.wm.ShellCommandHelper.executeShellCommand;
 import static android.server.wm.app.Components.HOST_ACTIVITY;
@@ -32,6 +32,8 @@ import android.content.ComponentName;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
 import android.provider.Settings;
+import android.server.wm.ActivityManagerTestBase;
+import android.server.wm.WindowManagerState;
 import android.server.wm.app.Components.RenderService;
 import android.server.wm.settings.SettingsSession;
 import android.util.EventLog;

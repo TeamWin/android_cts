@@ -14,24 +14,23 @@
  * limitations under the License
  */
 
-package android.server.wm.lifecycle;
+package android.server.wm.activity.lifecycle;
 
 import static android.content.Intent.FLAG_ACTIVITY_MULTIPLE_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.ON_CREATE;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.ON_DESTROY;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.ON_PAUSE;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.ON_RESTART;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.ON_RESUME;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.ON_START;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.ON_STOP;
+import static android.server.wm.activity.lifecycle.TransitionVerifier.assertEmptySequence;
+import static android.server.wm.activity.lifecycle.TransitionVerifier.assertRestartAndResumeSequence;
+import static android.server.wm.activity.lifecycle.TransitionVerifier.assertResumeToDestroySequence;
+import static android.server.wm.activity.lifecycle.TransitionVerifier.assertSequence;
+import static android.server.wm.activity.lifecycle.TransitionVerifier.assertSequenceMatchesOneOf;
 import static android.server.wm.app.Components.PipActivity.EXTRA_ENTER_PIP;
-import static android.server.wm.lifecycle.LifecycleConstants.ON_CREATE;
-import static android.server.wm.lifecycle.LifecycleConstants.ON_DESTROY;
-import static android.server.wm.lifecycle.LifecycleConstants.ON_PAUSE;
-import static android.server.wm.lifecycle.LifecycleConstants.ON_RESTART;
-import static android.server.wm.lifecycle.LifecycleConstants.ON_RESUME;
-import static android.server.wm.lifecycle.LifecycleConstants.ON_START;
-import static android.server.wm.lifecycle.LifecycleConstants.ON_STOP;
-import static android.server.wm.lifecycle.TransitionVerifier.assertEmptySequence;
-import static android.server.wm.lifecycle.TransitionVerifier.assertLaunchSequence;
-import static android.server.wm.lifecycle.TransitionVerifier.assertRestartAndResumeSequence;
-import static android.server.wm.lifecycle.TransitionVerifier.assertResumeToDestroySequence;
-import static android.server.wm.lifecycle.TransitionVerifier.assertSequence;
-import static android.server.wm.lifecycle.TransitionVerifier.assertSequenceMatchesOneOf;
 
 import static org.junit.Assume.assumeTrue;
 
@@ -152,7 +151,7 @@ public class ActivityLifecyclePipTests extends ActivityLifecycleClientTestBase {
                 .launch();
 
         // Wait and verify the sequence
-        assertLaunchSequence(FirstActivity.class, getTransitionLog());
+        TransitionVerifier.assertLaunchSequence(FirstActivity.class, getTransitionLog());
         assertEmptySequence(PipActivity.class, getTransitionLog(),
                 "launchBelowPip");
     }
@@ -233,7 +232,7 @@ public class ActivityLifecyclePipTests extends ActivityLifecycleClientTestBase {
         final Activity firstActivity = new Launcher(FirstActivity.class)
                 .setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK)
                 .launch();
-        assertLaunchSequence(FirstActivity.class, getTransitionLog());
+        TransitionVerifier.assertLaunchSequence(FirstActivity.class, getTransitionLog());
 
         // Enter split screen
         moveTaskToPrimarySplitScreenAndVerify(firstActivity, sideActivity);
@@ -249,7 +248,7 @@ public class ActivityLifecyclePipTests extends ActivityLifecycleClientTestBase {
                 .setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK)
                 .launch();
 
-        assertLaunchSequence(SecondActivity.class, getTransitionLog());
+        TransitionVerifier.assertLaunchSequence(SecondActivity.class, getTransitionLog());
         assertEmptySequence(PipActivity.class, getTransitionLog(),
                 "launchBelow");
     }

@@ -14,7 +14,7 @@
  * limitations under the License
  */
 
-package android.server.wm;
+package android.server.wm.activity;
 
 import static android.app.ActivityManager.LOCK_TASK_MODE_NONE;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_HOME;
@@ -130,9 +130,13 @@ import android.os.RemoteCallback;
 import android.platform.test.annotations.AsbSecurityTest;
 import android.platform.test.annotations.Presubmit;
 import android.provider.Settings;
+import android.server.wm.ActivityManagerTestBase;
 import android.server.wm.CommandSession.ActivityCallback;
 import android.server.wm.CommandSession.SizeInfo;
+import android.server.wm.RotationSession;
 import android.server.wm.TestJournalProvider.TestJournalContainer;
+import android.server.wm.WaitForValidActivityState;
+import android.server.wm.WindowManagerState;
 import android.server.wm.WindowManagerState.Task;
 import android.server.wm.settings.SettingsSession;
 import android.util.Log;
@@ -830,7 +834,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         // Ensure that auto-enter pip failed and that the resumed activity in the pinned stack is
         // still the first activity
         final Task pinnedStack = getPinnedStack();
-        assertEquals(getActivityName(ALWAYS_FOCUSABLE_PIP_ACTIVITY), pinnedStack.mRealActivity);
+        assertEquals(getActivityName(ALWAYS_FOCUSABLE_PIP_ACTIVITY), pinnedStack.getRealActivity());
     }
 
     @Test
@@ -1049,7 +1053,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         waitForEnterPip(PIP_ACTIVITY);
 
         final Task task = mWmState.getTaskByActivity(LAUNCH_ENTER_PIP_ACTIVITY);
-        assertEquals(1, task.mActivities.size());
+        assertEquals(1, task.getActivities().size());
         assertPinnedStackExists();
     }
 
@@ -1067,7 +1071,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         waitForEnterPip(PIP_ACTIVITY);
 
         final Task task = mWmState.getTaskByActivity(LAUNCH_ENTER_PIP_ACTIVITY);
-        assertEquals(1, task.mActivities.size());
+        assertEquals(1, task.getActivities().size());
         assertPinnedStackExists();
         waitAndAssertActivityState(PIP_ACTIVITY, STATE_PAUSED, "activity must be paused");
     }
@@ -1083,7 +1087,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         waitForExitPipToFullscreen(PIP_ACTIVITY);
 
         final Task task = mWmState.getTaskByActivity(LAUNCH_ENTER_PIP_ACTIVITY);
-        assertEquals(2, task.mActivities.size());
+        assertEquals(2, task.getActivities().size());
     }
 
     @Test
@@ -1097,7 +1101,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         waitForPinnedStackRemoved();
 
         final Task task = mWmState.getTaskByActivity(LAUNCH_ENTER_PIP_ACTIVITY);
-        assertFalse(task.mHasChildPipActivity);
+        assertFalse(task.hasChildPipActivity());
     }
 
     /**
@@ -1126,7 +1130,8 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         launchActivity(LAUNCH_ENTER_PIP_ACTIVITY);
         waitForEnterPip(PIP_ACTIVITY);
 
-        final int originalTaskId = mWmState.getTaskByActivity(LAUNCH_ENTER_PIP_ACTIVITY).mTaskId;
+        final int originalTaskId =
+                mWmState.getTaskByActivity(LAUNCH_ENTER_PIP_ACTIVITY).getTaskId();
         removeRootTask(originalTaskId);
         waitForPinnedStackRemoved();
 
@@ -1203,7 +1208,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         // when paused
         SystemUtil.runWithShellPermissionIdentity(() -> {
             try {
-                mAtm.startSystemLockTaskMode(task.mTaskId);
+                mAtm.startSystemLockTaskMode(task.getTaskId());
                 waitForOrFail("Task in lock mode", () -> {
                     return mAm.getLockTaskModeState() != LOCK_TASK_MODE_NONE;
                 });
@@ -1392,8 +1397,10 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         launchActivity(PIP_ACTIVITY, extraString(EXTRA_ENTER_PIP, "true"));
         waitForEnterPip(PIP_ACTIVITY);
         assertPinnedStackExists();
-        int taskId = mWmState.getStandardRootTaskByWindowingMode(WINDOWING_MODE_PINNED).getTopTask()
-                .mTaskId;
+        int taskId =
+                mWmState.getStandardRootTaskByWindowingMode(WINDOWING_MODE_PINNED)
+                        .getTopTask()
+                        .getTaskId();
 
         // Ensure that we don't any any other overlays as a result of launching into PIP
         launchHomeActivity();
@@ -1414,7 +1421,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         waitForEnterPip(PIP_ACTIVITY);
         assertPinnedStackExists();
         Task task = mWmState.getStandardRootTaskByWindowingMode(WINDOWING_MODE_PINNED);
-        int taskId = task.getTopTask().mTaskId;
+        int taskId = task.getTopTask().getTaskId();
 
         // Launch task overlay activity into PiP activity task
         launchPinnedActivityAsTaskOverlay(TRANSLUCENT_TEST_ACTIVITY, taskId);
@@ -1455,8 +1462,8 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         assertPinnedStackExists();
 
         // Launch the root activity again...
-        int rootActivityTaskId = mWmState.getTaskByActivity(
-                TEST_ACTIVITY_WITH_SAME_AFFINITY).mTaskId;
+        int rootActivityTaskId =
+                mWmState.getTaskByActivity(TEST_ACTIVITY_WITH_SAME_AFFINITY).getTaskId();
         launchHomeActivity();
         launchActivity(TEST_ACTIVITY_WITH_SAME_AFFINITY);
 
@@ -1465,8 +1472,9 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         assertPinnedStackExists();
         mWmState.assertFocusedActivity("Expected root activity focused",
                 TEST_ACTIVITY_WITH_SAME_AFFINITY);
-        assertEquals(rootActivityTaskId, mWmState.getTaskByActivity(
-                TEST_ACTIVITY_WITH_SAME_AFFINITY).mTaskId);
+        assertEquals(
+                rootActivityTaskId,
+                mWmState.getTaskByActivity(TEST_ACTIVITY_WITH_SAME_AFFINITY).getTaskId());
     }
 
     @Test
@@ -1487,8 +1495,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         assertPinnedStackExists();
 
         // Launch the root activity again...
-        int rootActivityTaskId = mWmState.getTaskByActivity(
-                TEST_ACTIVITY).mTaskId;
+        int rootActivityTaskId = mWmState.getTaskByActivity(TEST_ACTIVITY).getTaskId();
         launchHomeActivity();
         launchActivityNoWait(TEST_ACTIVITY_WITH_SAME_AFFINITY);
         mWmState.computeState();
@@ -1497,8 +1504,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         // found and reused, and that the pinned stack is unaffected
         assertPinnedStackExists();
         mWmState.assertFocusedActivity("Expected root activity focused", TEST_ACTIVITY);
-        assertEquals(rootActivityTaskId, mWmState.getTaskByActivity(
-                TEST_ACTIVITY).mTaskId);
+        assertEquals(rootActivityTaskId, mWmState.getTaskByActivity(TEST_ACTIVITY).getTaskId());
     }
 
     @Test
@@ -1513,13 +1519,12 @@ public class PinnedStackTests extends ActivityManagerTestBase {
 
         // Launch the root activity again, of the matching task and ensure that we expand to
         // fullscreen
-        int activityTaskId = mWmState.getTaskByActivity(PIP_ACTIVITY).mTaskId;
+        int activityTaskId = mWmState.getTaskByActivity(PIP_ACTIVITY).getTaskId();
         launchHomeActivity();
         launchActivityNoWait(TEST_ACTIVITY_WITH_SAME_AFFINITY);
         waitForExitPipToFullscreen(PIP_ACTIVITY);
         assertPinnedStackDoesNotExist();
-        assertEquals(activityTaskId, mWmState.getTaskByActivity(
-                PIP_ACTIVITY).mTaskId);
+        assertEquals(activityTaskId, mWmState.getTaskByActivity(PIP_ACTIVITY).getTaskId());
     }
 
     /** Test that reported display size corresponds to fullscreen after exiting PiP. */

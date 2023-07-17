@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.server.wm;
+package android.server.wm.activity;
 
 import static android.server.wm.ActivityManagerTestBase.createFullscreenActivityScenarioRule;
 import static android.server.wm.ActivityManagerTestBase.wakeUpAndUnlock;
