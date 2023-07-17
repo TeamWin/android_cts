@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 The Android Open Source Project
+ * Copyright (C) 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.server.wm;
+package android.server.wm.insets;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -42,10 +42,10 @@ public class DecorInsetSdk29Tests extends DecorInsetTestsBase {
                 .putExtra(ARG_LAYOUT_FULLSCREEN, false)
                 .putExtra(ARG_LAYOUT_HIDE_NAV, false)
                 .putExtra(ARG_DECOR_FITS_SYSTEM_WINDOWS, true));
-        activity.mLaidOut.await(4, TimeUnit.SECONDS);
+        activity.getLaidOut().await(4, TimeUnit.SECONDS);
 
-        assertNotNull("test setup failed", activity.mLastDecorInsets);
-        assertNull("unexpected content insets", activity.mLastContentInsets);
+        assertNotNull("test setup failed", activity.getLastDecorInsets());
+        assertNull("unexpected content insets", activity.getLastContentInsets());
 
         assertContentViewLocationMatchesInsets();
     }
@@ -57,10 +57,10 @@ public class DecorInsetSdk29Tests extends DecorInsetTestsBase {
                 .putExtra(ARG_LAYOUT_FULLSCREEN, true)
                 .putExtra(ARG_LAYOUT_HIDE_NAV, false)
                 .putExtra(ARG_DECOR_FITS_SYSTEM_WINDOWS, true));
-        activity.mLaidOut.await(4, TimeUnit.SECONDS);
+        activity.getLaidOut().await(4, TimeUnit.SECONDS);
 
-        assertNotNull("test setup failed", activity.mLastDecorInsets);
-        assertEquals("unexpected bottom inset: ", 0, activity.mLastContentInsets.getInsets(
+        assertNotNull("test setup failed", activity.getLastDecorInsets());
+        assertEquals("unexpected bottom inset: ", 0, activity.getLastContentInsets().getInsets(
                 WindowInsets.Type.systemBars()).bottom);
 
         assertContentViewLocationMatchesInsets();
@@ -73,12 +73,12 @@ public class DecorInsetSdk29Tests extends DecorInsetTestsBase {
                 .putExtra(ARG_LAYOUT_FULLSCREEN, false)
                 .putExtra(ARG_LAYOUT_HIDE_NAV, true)
                 .putExtra(ARG_DECOR_FITS_SYSTEM_WINDOWS, true));
-        activity.mLaidOut.await(4, TimeUnit.SECONDS);
+        activity.getLaidOut().await(4, TimeUnit.SECONDS);
 
-        assertNotNull("test setup failed", activity.mLastDecorInsets);
+        assertNotNull("test setup failed", activity.getLastDecorInsets());
         assertEquals("insets were unexpectedly consumed: ",
-                activity.mLastDecorInsets.getSystemWindowInsets(),
-                activity.mLastContentInsets.getSystemWindowInsets());
+                activity.getLastDecorInsets().getSystemWindowInsets(),
+                activity.getLastContentInsets().getSystemWindowInsets());
 
         assertContentViewLocationMatchesInsets();
     }
@@ -90,14 +90,14 @@ public class DecorInsetSdk29Tests extends DecorInsetTestsBase {
                 .putExtra(ARG_LAYOUT_FULLSCREEN, false)
                 .putExtra(ARG_LAYOUT_HIDE_NAV, false)
                 .putExtra(ARG_DECOR_FITS_SYSTEM_WINDOWS, false));
-        activity.mLaidOut.await(4, TimeUnit.SECONDS);
+        activity.getLaidOut().await(4, TimeUnit.SECONDS);
 
         assertEquals(0, activity.getWindow().getDecorView().getWindowSystemUiVisibility());
 
-        assertNotNull("test setup failed", activity.mLastDecorInsets);
+        assertNotNull("test setup failed", activity.getLastDecorInsets());
         assertEquals("insets were unexpectedly consumed: ",
-                activity.mLastDecorInsets.getSystemWindowInsets(),
-                activity.mLastContentInsets.getSystemWindowInsets());
+                activity.getLastDecorInsets().getSystemWindowInsets(),
+                activity.getLastContentInsets().getSystemWindowInsets());
 
         assertContentViewLocationMatchesInsets();
     }

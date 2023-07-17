@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.server.wm;
+package android.server.wm.window;
 
 import static android.content.pm.PackageManager.FEATURE_WATCH;
 
@@ -25,6 +25,7 @@ import static org.junit.Assume.assumeTrue;
 
 import android.app.Activity;
 import android.platform.test.annotations.Presubmit;
+import android.server.wm.window.AspectRatioTestsBase;
 
 import androidx.test.rule.ActivityTestRule;
 
