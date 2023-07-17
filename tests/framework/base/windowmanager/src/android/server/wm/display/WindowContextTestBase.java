@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-package android.server.wm;
+package android.server.wm.display;
 
 import static android.view.WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
 
 import android.content.Context;
+import android.server.wm.MultiDisplayTestBase;
 import android.view.Display;
 
 /**  Base class for window context tests */

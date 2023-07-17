@@ -14,11 +14,10 @@
  * limitations under the License
  */
 
-package android.server.wm;
+package android.server.wm.display;
 
 import static android.server.wm.ComponentNameUtils.getActivityName;
 import static android.server.wm.MockImeHelper.createManagedMockImeSession;
-import static android.server.wm.MultiDisplaySystemDecorationTests.ImeTestActivity;
 import static android.server.wm.ShellCommandHelper.executeShellCommand;
 import static android.server.wm.WindowManagerState.STATE_RESUMED;
 import static android.server.wm.app.Components.DISPLAY_ACCESS_CHECK_EMBEDDING_ACTIVITY;
@@ -30,6 +29,7 @@ import static android.server.wm.app.Components.LaunchBroadcastReceiver.EXTRA_TAR
 import static android.server.wm.app.Components.LaunchBroadcastReceiver.LAUNCH_BROADCAST_ACTION;
 import static android.server.wm.app.Components.TEST_ACTIVITY;
 import static android.server.wm.app.Components.VIRTUAL_DISPLAY_ACTIVITY;
+import static android.server.wm.display.MultiDisplaySystemDecorationTests.ImeTestActivity;
 import static android.server.wm.second.Components.EMBEDDING_ACTIVITY;
 import static android.server.wm.second.Components.EmbeddingActivity.ACTION_EMBEDDING_TEST_ACTIVITY_START;
 import static android.server.wm.second.Components.EmbeddingActivity.EXTRA_EMBEDDING_COMPONENT_NAME;
@@ -65,7 +65,10 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.platform.test.annotations.Presubmit;
+import android.server.wm.ActivityLauncher;
 import android.server.wm.CommandSession.ActivitySession;
+import android.server.wm.Condition;
+import android.server.wm.MultiDisplayTestBase;
 import android.server.wm.TestJournalProvider.TestJournalContainer;
 import android.server.wm.WindowManagerState.DisplayContent;
 import android.server.wm.WindowManagerState.Task;
@@ -391,8 +394,10 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
         // Assert that the UID can present on display.
         final ActivitySession session1 = virtualDisplayLauncher.launchActivityOnDisplay(
                 DISPLAY_ACCESS_CHECK_EMBEDDING_ACTIVITY, newDisplay);
-        assertEquals("Activity which the UID should accessible on private display",
-                isUidAccesibleOnDisplay(session1), true);
+        assertEquals(
+                "Activity which the UID should accessible on private display",
+                isUidAccessibleOnDisplay(session1),
+                true);
 
         // Launch another embeddable activity with a different UID, verify that it will be
         // able to access the display where it was put.
@@ -404,8 +409,10 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
                 true /* withShellPermission */, true /* waitForLaunch */);
 
         // Verify SECOND_ACTIVITY's UID has access to this virtual private display.
-        assertEquals("Second activity which the UID should accessible on private display",
-                isUidAccesibleOnDisplay(session2), true);
+        assertEquals(
+                "Second activity which the UID should accessible on private display",
+                isUidAccessibleOnDisplay(session2),
+                true);
     }
 
     @Test
@@ -420,8 +427,10 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
         // Assume that the UID can access on display.
         final ActivitySession session1 = virtualDisplayLauncher.launchActivityOnDisplay(
                 DISPLAY_ACCESS_CHECK_EMBEDDING_ACTIVITY, newDisplay);
-        assertEquals("Activity which the UID should accessible on private display",
-                isUidAccesibleOnDisplay(session1), true);
+        assertEquals(
+                "Activity which the UID should accessible on private display",
+                isUidAccessibleOnDisplay(session1),
+                true);
 
         // Verify SECOND_NO_EMBEDDING_ACTIVITY's UID can't access this virtual private display
         // since there is no entity with this UID on this display.
@@ -431,8 +440,10 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
         final ActivitySession session2 = virtualDisplayLauncher.launchActivityOnDisplay(
                 SECOND_NO_EMBEDDING_ACTIVITY, newDisplay, null /* extrasConsumer */,
                 false /* withShellPermission */, false /* waitForLaunch */);
-        assertEquals("Second activity which the UID should not accessible on private display",
-                isUidAccesibleOnDisplay(session2), false);
+        assertEquals(
+                "Second activity which the UID should not accessible on private display",
+                isUidAccessibleOnDisplay(session2),
+                false);
     }
 
     @Test
@@ -453,10 +464,10 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
         fail("UID should not have access to private display without present entities.");
     }
 
-    private boolean isUidAccesibleOnDisplay(ActivitySession session) {
+    private boolean isUidAccessibleOnDisplay(ActivitySession session) {
         boolean result = false;
         try {
-            result = session.isUidAccesibleOnDisplay();
+            result = session.isUidAccessibleOnDisplay();
         } catch (RuntimeException e) {
             // Catch the exception while waiting reply (i.e. timeout)
         }
@@ -538,8 +549,10 @@ public class MultiDisplaySecurityTests extends MultiDisplayTestBase {
         // Check that the first activity is launched onto the secondary display.
         final int frontRootTaskId = mWmState.getFrontRootTaskId(newDisplay.mId);
         Task frontTask = mWmState.getRootTask(frontRootTaskId);
-        assertEquals("Activity launched on secondary display must be resumed",
-                getActivityName(LAUNCHING_ACTIVITY), frontTask.mResumedActivity);
+        assertEquals(
+                "Activity launched on secondary display must be resumed",
+                getActivityName(LAUNCHING_ACTIVITY),
+                frontTask.getResumedActivity());
         mWmState.assertFocusedRootTask("Top task must be on secondary display",
                 frontRootTaskId);
 

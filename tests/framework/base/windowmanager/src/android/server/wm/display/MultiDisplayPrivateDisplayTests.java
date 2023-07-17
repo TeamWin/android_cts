@@ -14,7 +14,7 @@
  * limitations under the License
  */
 
-package android.server.wm;
+package android.server.wm.display;
 
 import static android.server.wm.app.Components.TEST_ACTIVITY;
 import static android.view.Display.FLAG_PRIVATE;
@@ -28,15 +28,16 @@ import android.app.ActivityManager;
 import android.content.Context;
 import android.content.Intent;
 import android.platform.test.annotations.Presubmit;
+import android.server.wm.MultiDisplayTestBase;
 import android.server.wm.WindowManagerState.DisplayContent;
 import android.util.Log;
 
 import com.android.compatibility.common.util.SystemUtil;
 
-import java.util.ArrayList;
-
 import org.junit.Before;
 import org.junit.Test;
+
+import java.util.ArrayList;
 
 /**
  * Build/Install/Run:

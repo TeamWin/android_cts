@@ -14,17 +14,17 @@
  * limitations under the License
  */
 
-package android.server.wm;
+package android.server.wm.display;
 
 import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
 import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
 import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE;
 import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_REVERSE_PORTRAIT;
 import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED;
-import static android.server.wm.DisplayCutoutTests.TestActivity.EXTRA_CUTOUT_MODE;
-import static android.server.wm.DisplayCutoutTests.TestActivity.EXTRA_ORIENTATION;
-import static android.server.wm.DisplayCutoutTests.TestDef.Which.DISPATCHED;
-import static android.server.wm.DisplayCutoutTests.TestDef.Which.ROOT;
+import static android.server.wm.display.DisplayCutoutTests.TestActivity.EXTRA_CUTOUT_MODE;
+import static android.server.wm.display.DisplayCutoutTests.TestActivity.EXTRA_ORIENTATION;
+import static android.server.wm.display.DisplayCutoutTests.TestDef.Which.DISPATCHED;
+import static android.server.wm.display.DisplayCutoutTests.TestDef.Which.ROOT;
 import static android.util.DisplayMetrics.DENSITY_DEFAULT;
 import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
@@ -61,6 +61,10 @@ import android.graphics.Path;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.platform.test.annotations.Presubmit;
+import android.server.wm.ActivityManagerTestBase;
+import android.server.wm.DisplayMetricsSession;
+import android.server.wm.SetRequestedOrientationRule;
+import android.server.wm.WindowManagerStateHelper;
 import android.util.Size;
 import android.view.DisplayCutout;
 import android.view.View;

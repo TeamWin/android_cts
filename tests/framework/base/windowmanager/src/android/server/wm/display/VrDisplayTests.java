@@ -14,7 +14,7 @@
  * limitations under the License
  */
 
-package android.server.wm;
+package android.server.wm.display;
 
 import static android.server.wm.ComponentNameUtils.getActivityName;
 import static android.server.wm.ShellCommandHelper.executeShellCommand;
@@ -32,6 +32,9 @@ import static org.junit.Assume.assumeTrue;
 import android.content.ComponentName;
 import android.platform.test.annotations.Presubmit;
 import android.provider.Settings;
+import android.server.wm.ActivityManagerTestBase;
+import android.server.wm.MultiDisplayTestBase;
+import android.server.wm.WindowManagerState;
 import android.server.wm.WindowManagerState.DisplayContent;
 import android.server.wm.settings.SettingsSession;
 
@@ -137,7 +140,7 @@ public class VrDisplayTests extends MultiDisplayTestBase {
         final int focusedTaskId = mWmState.getFocusedTaskId();
         final WindowManagerState.Task focusedTask = mWmState.getRootTask(focusedTaskId);
         assertEquals("Launched activity must be resumed in focused task",
-                getActivityName(LAUNCHING_ACTIVITY), focusedTask.mResumedActivity);
+                getActivityName(LAUNCHING_ACTIVITY), focusedTask.getResumedActivity());
 
         // Check if the launch activity is in Vr virtual display id.
         final List<DisplayContent> reportedDisplays = getDisplaysStates();
@@ -186,8 +189,10 @@ public class VrDisplayTests extends MultiDisplayTestBase {
         final int focusedTaskId = mWmState.getFocusedTaskId();
         final WindowManagerState.Task focusedTask
                 = mWmState.getRootTask(focusedTaskId);
-        assertEquals("Launched activity must be resumed in focused task",
-                getActivityName(LAUNCHING_ACTIVITY), focusedTask.mResumedActivity);
+        assertEquals(
+                "Launched activity must be resumed in focused task",
+                getActivityName(LAUNCHING_ACTIVITY),
+                focusedTask.getResumedActivity());
 
         // Check if the launch activity is in Vr virtual display id.
         final List<DisplayContent> reportedDisplays = getDisplaysStates();
@@ -236,7 +241,7 @@ public class VrDisplayTests extends MultiDisplayTestBase {
             final WindowManagerState.Task focusedTask = mWmState.getRootTask(focusedTaskId);
             assertEquals("Launched activity must be resumed in focused task",
                     getActivityName(ALT_LAUNCHING_ACTIVITY),
-                    focusedTask.mResumedActivity);
+                    focusedTask.getResumedActivity());
 
             // Check if the launch activity is in Vr virtual display id.
             final List<DisplayContent> reportedDisplays = getDisplaysStates();
@@ -272,8 +277,10 @@ public class VrDisplayTests extends MultiDisplayTestBase {
         final int frontRootTaskId = mWmState.getFrontRootTaskId(DEFAULT_DISPLAY);
         final WindowManagerState.Task frontRootTask
                 = mWmState.getRootTask(frontRootTaskId);
-        assertEquals("Launched activity must be resumed in front root task",
-                getActivityName(RESIZEABLE_ACTIVITY), frontRootTask.mResumedActivity);
+        assertEquals(
+                "Launched activity must be resumed in front root task",
+                getActivityName(RESIZEABLE_ACTIVITY),
+                frontRootTask.getResumedActivity());
         assertEquals("Front root task must be on primary display",
                 DEFAULT_DISPLAY, frontRootTask.mDisplayId);
     }

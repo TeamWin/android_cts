@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.server.wm;
+package android.server.wm.display;
 
 import static android.server.wm.WindowManagerTestBase.startActivity;
 import static android.view.Display.DEFAULT_DISPLAY;
@@ -41,7 +41,11 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.Presubmit;
-import android.server.wm.WindowContextTests.TestWindowService.TestToken;
+import android.server.wm.DisplayMetricsSession;
+import android.server.wm.TestLogService;
+import android.server.wm.WindowContextTestActivity;
+import android.server.wm.WindowManagerState;
+import android.server.wm.display.WindowContextTests.TestWindowService.TestToken;
 import android.view.View;
 import android.view.WindowManager;
 import android.window.WindowProviderService;
@@ -197,7 +201,7 @@ public class WindowContextTests extends WindowContextTestBase {
         assumeTrue(supportsSplitScreenMultiWindow());
 
         // Start an activity for WindowProviderService to attach
-        final TestActivity activity = startActivity(TestActivity.class);
+        final WindowContextTestActivity activity = startActivity(WindowContextTestActivity.class);
         final ComponentName activityName = activity.getComponentName();
 
         // If the device supports multi-window, make this Activity to multi-window mode.
@@ -215,8 +219,8 @@ public class WindowContextTests extends WindowContextTestBase {
         // Compute state to obtain associated TaskActivityArea information.
         mWmState.computeState(activityName);
         final WindowManagerState.DisplayArea da = mWmState.getTaskDisplayArea(activityName);
-        final Rect daBounds = da.mFullConfiguration.windowConfiguration.getBounds();
-        final Rect maxDaBounds = da.mFullConfiguration.windowConfiguration.getMaxBounds();
+        final Rect daBounds = da.getFullConfiguration().windowConfiguration.getBounds();
+        final Rect maxDaBounds = da.getFullConfiguration().windowConfiguration.getMaxBounds();
 
         assertBoundsMatches(service, daBounds, maxDaBounds,
                 "WindowProviderService bounds must match DisplayArea bounds.");
@@ -294,24 +298,6 @@ public class WindowContextTests extends WindowContextTestBase {
             throw new AssertionError("Calling WindowManager APIs before"
                     + " WindowProviderService#onCreate must not throw Throwable, but did.",
                     service.mThrowableFromOnCreate);
-        }
-    }
-
-    public static class TestActivity extends WindowManagerTestBase.FocusableActivity {
-        final CountDownLatch mLatch = new CountDownLatch(1);
-
-        @Override
-        public void onConfigurationChanged(@NonNull Configuration newConfig) {
-            super.onConfigurationChanged(newConfig);
-            mLatch.countDown();
-        }
-
-        private void waitAndAssertConfigurationChanged() {
-            try {
-                assertThat(mLatch.await(4, TimeUnit.SECONDS)).isTrue();
-            } catch(InterruptedException e) {
-                throw new RuntimeException(e);
-            }
         }
     }
 

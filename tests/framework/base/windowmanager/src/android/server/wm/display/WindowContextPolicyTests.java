@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.server.wm;
+package android.server.wm.display;
 
 import static android.view.WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY;
 import static android.view.WindowManager.LayoutParams.TYPE_APPLICATION;
@@ -43,6 +43,7 @@ import static android.view.WindowManager.LayoutParams.TYPE_WALLPAPER;
 
 import android.content.Context;
 import android.platform.test.annotations.Presubmit;
+import android.server.wm.WindowManagerState;
 import android.view.Display;
 import android.view.View;
 import android.view.WindowManager;
@@ -66,8 +67,8 @@ public class WindowContextPolicyTests extends WindowContextTestBase {
     @Test(expected = IllegalArgumentException.class)
     public void testWindowContextWithNullDisplay() {
         final Context displayContext = createDisplayContext(Display.DEFAULT_DISPLAY);
-        displayContext.createWindowContext(null /* display */, TYPE_APPLICATION_OVERLAY,
-                null /* options */);
+        displayContext.createWindowContext(
+                null /* display */, TYPE_APPLICATION_OVERLAY, null /* options */);
     }
 
     @Test

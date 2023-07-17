@@ -14,7 +14,7 @@
  * limitations under the License
  */
 
-package android.server.wm;
+package android.server.wm.display;
 
 import static android.server.wm.ComponentNameUtils.getActivityName;
 import static android.server.wm.app.Components.TEST_ACTIVITY;
@@ -30,6 +30,9 @@ import static org.junit.Assume.assumeTrue;
 import android.content.Context;
 import android.content.res.Configuration;
 import android.platform.test.annotations.Presubmit;
+import android.server.wm.DisplayMetricsSession;
+import android.server.wm.MultiDisplayTestBase;
+import android.server.wm.WindowManagerState;
 import android.server.wm.WindowManagerState.DisplayContent;
 import android.util.Size;
 import android.view.Display;
@@ -54,9 +57,10 @@ public class DisplayTests extends MultiDisplayTestBase {
         final List<DisplayContent> reportedDisplays = getDisplaysStates();
         final DisplayContent primaryDisplay = getDisplayState(reportedDisplays, DEFAULT_DISPLAY);
         assertEquals("Primary display's configuration should be equal to global configuration.",
-                primaryDisplay.mOverrideConfiguration, primaryDisplay.mFullConfiguration);
+                primaryDisplay.getOverrideConfiguration(), primaryDisplay.getFullConfiguration());
         assertEquals("Primary display's configuration should be equal to global configuration.",
-                primaryDisplay.mOverrideConfiguration, primaryDisplay.mMergedOverrideConfiguration);
+                primaryDisplay.getOverrideConfiguration(),
+                primaryDisplay.getMergedOverrideConfiguration());
     }
 
     /**
@@ -79,7 +83,7 @@ public class DisplayTests extends MultiDisplayTestBase {
         final DisplayContent newDisplay = createManagedVirtualDisplaySession().createDisplay();
 
         // Find the density of created display.
-        final int newDensityDpi = newDisplay.mFullConfiguration.densityDpi;
+        final int newDensityDpi = newDisplay.getFullConfiguration().densityDpi;
         assertEquals(CUSTOM_DENSITY_DPI, newDensityDpi);
     }
 
@@ -125,10 +129,14 @@ public class DisplayTests extends MultiDisplayTestBase {
         final int frontStackId = mWmState.getFrontRootTaskId(DEFAULT_DISPLAY);
         final WindowManagerState.Task frontStack =
                 mWmState.getRootTask(frontStackId);
-        assertEquals("Launched activity must be resumed",
-                getActivityName(TEST_ACTIVITY), frontStack.mResumedActivity);
-        assertEquals("Front stack must be on the default display",
-                DEFAULT_DISPLAY, frontStack.mDisplayId);
+        assertEquals(
+                "Launched activity must be resumed",
+                getActivityName(TEST_ACTIVITY),
+                frontStack.getResumedActivity());
+        assertEquals(
+                "Front stack must be on the default display",
+                DEFAULT_DISPLAY,
+                frontStack.mDisplayId);
         mWmState.assertFocusedRootTask("Focus must be on the default display", frontStackId);
     }
 
@@ -163,28 +171,27 @@ public class DisplayTests extends MultiDisplayTestBase {
                 displayMetricsSession.getInitialDisplayMetrics();
 
         // Apply new override values that don't match the physical metrics.
-        final Size overrideSize = new Size(
-                (int) (originalDisplayMetrics.physicalSize.getWidth() * 0.9),
-                (int) (originalDisplayMetrics.physicalSize.getHeight() * 0.9));
-        final Integer overrideDensity = (int) (originalDisplayMetrics.physicalDensity * 1.1);
+        final Size overrideSize =
+                new Size(
+                        (int) (originalDisplayMetrics.getPhysicalSize().getWidth() * 0.9),
+                        (int) (originalDisplayMetrics.getPhysicalSize().getHeight() * 0.9));
+        final Integer overrideDensity = (int) (originalDisplayMetrics.getPhysicalDensity() * 1.1);
         displayMetricsSession.overrideDisplayMetrics(overrideSize, overrideDensity);
 
         // Check if overrides applied correctly.
         ReportedDisplayMetrics displayMetrics = displayMetricsSession.getDisplayMetrics();
-        assertEquals(overrideSize, displayMetrics.overrideSize);
-        assertEquals(overrideDensity, displayMetrics.overrideDensity);
+        assertEquals(overrideSize, displayMetrics.getOverrideSize());
+        assertEquals(overrideDensity, displayMetrics.getOverrideDensity());
 
         // Lock and unlock device. This will cause a DISPLAY_CHANGED event to be triggered and
         // might update the metrics.
-        lockScreenSession.sleepDevice()
-                .wakeUpDevice()
-                .unlockDevice();
+        lockScreenSession.sleepDevice().wakeUpDevice().unlockDevice();
         mWmState.waitForHomeActivityVisible();
 
         // Check if overrides are still applied.
         displayMetrics = displayMetricsSession.getDisplayMetrics();
-        assertEquals(overrideSize, displayMetrics.overrideSize);
-        assertEquals(overrideDensity, displayMetrics.overrideDensity);
+        assertEquals(overrideSize, displayMetrics.getOverrideSize());
+        assertEquals(overrideDensity, displayMetrics.getOverrideDensity());
     }
 
     private Configuration getDisplayResourcesConfiguration(int displayWidth, int displayHeight)

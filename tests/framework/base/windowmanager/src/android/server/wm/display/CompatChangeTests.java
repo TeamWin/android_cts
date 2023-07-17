@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.server.wm;
+package android.server.wm.display;
 
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.content.pm.ActivityInfo.OVERRIDE_ENABLE_COMPAT_FAKE_FOCUS;
@@ -79,6 +79,10 @@ import android.os.ConditionVariable;
 import android.platform.test.annotations.Presubmit;
 import android.provider.DeviceConfig;
 import android.provider.DeviceConfig.Properties;
+import android.server.wm.HelperActivities;
+import android.server.wm.MultiDisplayTestBase;
+import android.server.wm.ObjectTracker;
+import android.server.wm.WindowManagerState;
 import android.server.wm.app.AbstractLifecycleLogActivity;
 import android.util.Size;
 
@@ -113,27 +117,27 @@ import java.util.Map;
 @Presubmit
 public final class CompatChangeTests extends MultiDisplayTestBase {
     private static final ComponentName RESIZEABLE_PORTRAIT_ACTIVITY =
-            component(ResizeablePortraitActivity.class);
+            component(HelperActivities.ResizeablePortraitActivity.class);
     private static final ComponentName NON_RESIZEABLE_PORTRAIT_ACTIVITY =
-            component(NonResizeablePortraitActivity.class);
+            component(HelperActivities.NonResizeablePortraitActivity.class);
     private static final ComponentName NON_RESIZEABLE_LANDSCAPE_ACTIVITY =
-            component(NonResizeableLandscapeActivity.class);
+            component(HelperActivities.NonResizeableLandscapeActivity.class);
     private static final ComponentName NON_RESIZEABLE_NON_FIXED_ORIENTATION_ACTIVITY =
-            component(NonResizeableNonFixedOrientationActivity.class);
+            component(HelperActivities.NonResizeableNonFixedOrientationActivity.class);
     private static final ComponentName NON_RESIZEABLE_ASPECT_RATIO_ACTIVITY =
-            component(NonResizeableAspectRatioActivity.class);
+            component(HelperActivities.NonResizeableAspectRatioActivity.class);
     private static final ComponentName NON_RESIZEABLE_LARGE_ASPECT_RATIO_ACTIVITY =
-            component(NonResizeableLargeAspectRatioActivity.class);
+            component(HelperActivities.NonResizeableLargeAspectRatioActivity.class);
     private static final ComponentName SUPPORTS_SIZE_CHANGES_PORTRAIT_ACTIVITY =
-            component(SupportsSizeChangesPortraitActivity.class);
+            component(HelperActivities.SupportsSizeChangesPortraitActivity.class);
     private static final ComponentName RESIZEABLE_LEFT_ACTIVITY =
-            component(ResizeableLeftActivity.class);
+            component(HelperActivities.ResizeableLeftActivity.class);
     private static final ComponentName RESIZEABLE_RIGHT_ACTIVITY =
-            component(ResizeableRightActivity.class);
+            component(HelperActivities.ResizeableRightActivity.class);
     private static final ComponentName RESPONSIVE_ACTIVITY =
-            component(ResponsiveActivity.class);
+            component(HelperActivities.ResponsiveActivity.class);
     private static final ComponentName NO_PROPERTY_CHANGE_ORIENTATION_WHILE_RELAUNCHING_ACTIVITY =
-            component(NoPropertyChangeOrientationWhileRelaunchingActivity.class);
+            component(HelperActivities.NoPropertyChangeOrientationWhileRelaunchingActivity.class);
 
     // Fixed orientation min aspect ratio
     private static final float FIXED_ORIENTATION_MIN_ASPECT_RATIO = 1.03f;

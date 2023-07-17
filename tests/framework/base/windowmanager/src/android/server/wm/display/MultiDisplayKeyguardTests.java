@@ -14,7 +14,7 @@
  * limitations under the License
  */
 
-package android.server.wm;
+package android.server.wm.display;
 
 import static android.server.wm.UiDeviceUtils.pressBackButton;
 import static android.server.wm.app.Components.DISMISS_KEYGUARD_ACTIVITY;
@@ -23,6 +23,8 @@ import static android.view.Display.DEFAULT_DISPLAY;
 import static org.junit.Assume.assumeTrue;
 
 import android.platform.test.annotations.Presubmit;
+import android.server.wm.DisplayMetricsSession;
+import android.server.wm.MultiDisplayTestBase;
 import android.server.wm.WindowManagerState.DisplayContent;
 import android.util.Size;
 
@@ -131,10 +133,11 @@ public class MultiDisplayKeyguardTests extends MultiDisplayTestBase {
         // on secondary display.
         final ReportedDisplayMetrics originalDisplayMetrics =
                 displayMetricsSession.getInitialDisplayMetrics();
-        final Size overrideSize = new Size(
-                (int) (originalDisplayMetrics.physicalSize.getWidth() * 1.5),
-                (int) (originalDisplayMetrics.physicalSize.getHeight() * 1.5));
-        final Integer overrideDensity = (int) (originalDisplayMetrics.physicalDensity * 1.1);
+        final Size overrideSize =
+                new Size(
+                        (int) (originalDisplayMetrics.getPhysicalSize().getWidth() * 1.5),
+                        (int) (originalDisplayMetrics.getPhysicalSize().getHeight() * 1.5));
+        final Integer overrideDensity = (int) (originalDisplayMetrics.getPhysicalDensity() * 1.1);
         displayMetricsSession.overrideDisplayMetrics(overrideSize, overrideDensity);
 
         lockScreenSession.gotoKeyguard();
@@ -209,12 +212,14 @@ public class MultiDisplayKeyguardTests extends MultiDisplayTestBase {
         // Resize decored display. Keyguard should still be shown on the decored system display
         final ReportedDisplayMetrics displayMetrics =
                 ReportedDisplayMetrics.getDisplayMetrics(decoredSystemDisplayId);
-        final Size overrideSize = new Size(
-                (int) (displayMetrics.physicalSize.getWidth() * 0.5),
-                (int) (displayMetrics.physicalSize.getHeight() * 0.5));
+        final Size overrideSize =
+                new Size(
+                        (int) (displayMetrics.getPhysicalSize().getWidth() * 0.5),
+                        (int) (displayMetrics.getPhysicalSize().getHeight() * 0.5));
         final DisplayMetricsSession displayMetricsSession =
                 createManagedDisplayMetricsSession(decoredSystemDisplayId);
-        displayMetricsSession.overrideDisplayMetrics(overrideSize, displayMetrics.physicalDensity);
+        displayMetricsSession.overrideDisplayMetrics(
+                overrideSize, displayMetrics.getPhysicalDensity());
         mWmState.computeState();
         mWmState.waitAndAssertKeyguardShownOnSecondaryDisplay(decoredSystemDisplayId);
 

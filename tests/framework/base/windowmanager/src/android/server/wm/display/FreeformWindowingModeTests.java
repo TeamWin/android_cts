@@ -14,7 +14,7 @@
  * limitations under the License
  */
 
-package android.server.wm;
+package android.server.wm.display;
 
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
 import static android.app.WindowConfiguration.WINDOWING_MODE_FREEFORM;
@@ -38,6 +38,8 @@ import static org.junit.Assume.assumeTrue;
 import android.content.ComponentName;
 import android.graphics.Rect;
 import android.platform.test.annotations.Presubmit;
+import android.server.wm.MultiDisplayTestBase;
+import android.server.wm.WaitForValidActivityState;
 import android.server.wm.WindowManagerState.Task;
 import android.view.Display;
 

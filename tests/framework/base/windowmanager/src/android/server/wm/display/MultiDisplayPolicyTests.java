@@ -14,7 +14,7 @@
  * limitations under the License
  */
 
-package android.server.wm;
+package android.server.wm.display;
 
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
@@ -38,7 +38,6 @@ import static android.server.wm.app.Components.VIRTUAL_DISPLAY_ACTIVITY;
 import static android.server.wm.app27.Components.SDK_27_LAUNCHING_ACTIVITY;
 import static android.server.wm.app27.Components.SDK_27_SEPARATE_PROCESS_ACTIVITY;
 import static android.server.wm.app27.Components.SDK_27_TEST_ACTIVITY;
-import static android.server.wm.lifecycle.ActivityStarterTests.StandardActivity;
 import static android.view.Display.DEFAULT_DISPLAY;
 
 import static org.junit.Assert.assertEquals;
@@ -53,6 +52,12 @@ import android.platform.test.annotations.Presubmit;
 import android.server.wm.CommandSession.ActivityCallback;
 import android.server.wm.CommandSession.ActivitySession;
 import android.server.wm.CommandSession.SizeInfo;
+import android.server.wm.Condition;
+import android.server.wm.DeprecatedTargetSdkUtils;
+import android.server.wm.HelperActivities;
+import android.server.wm.MultiDisplayTestBase;
+import android.server.wm.RotationSession;
+import android.server.wm.WaitForValidActivityState;
 import android.server.wm.WindowManagerState.DisplayContent;
 import android.server.wm.WindowManagerState.Task;
 
@@ -334,8 +339,9 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
         mWmState.waitFor((amState) -> amState.getDisplayCount() == displayCount,
                 "external displays to be removed");
         assertEquals(displayCount, mWmState.getDisplayCount());
-        assertEquals(displayCount, mWmState.getKeyguardControllerState().
-                mKeyguardOccludedStates.size());
+        assertEquals(
+                displayCount,
+                mWmState.getKeyguardControllerState().getKeyguardOccludedStates().size());
     }
 
     /**
@@ -762,7 +768,7 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
     @Test
     public void testAppTransitionForActivityOnDifferentDisplay() {
         assumeFalse(ENABLE_SHELL_TRANSITIONS);
-        final TestActivitySession<StandardActivity> transitionActivitySession =
+        final TestActivitySession<HelperActivities.StandardActivity> transitionActivitySession =
                 createManagedTestActivitySession();
         // Create new simulated display.
         final DisplayContent newDisplay = createManagedVirtualDisplaySession()
@@ -775,8 +781,8 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
                 "Activity must be resumed");
 
         // Launch StandardActivity on default display, verify last transition if is correct.
-        transitionActivitySession.launchTestActivityOnDisplaySync(StandardActivity.class,
-                DEFAULT_DISPLAY);
+        transitionActivitySession.launchTestActivityOnDisplaySync(
+                HelperActivities.StandardActivity.class, DEFAULT_DISPLAY);
         mWmState.waitForAppTransitionIdleOnDisplay(DEFAULT_DISPLAY);
         mWmState.assertValidity();
         assertEquals(TRANSIT_TASK_OPEN,
@@ -806,7 +812,7 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
         launchActivityOnDisplay(TEST_ACTIVITY, newDisplay.mId);
         mWmState.waitForAppTransitionIdleOnDisplay(newDisplay.mId);
         mWmState.assertValidity();
-        final String lastTranstionOnVirtualDisplay = mWmState
+        final String lastTransitionOnVirtualDisplay = mWmState
                 .getDisplay(newDisplay.mId).getLastTransition();
 
         // Move TestActivity from virtual display to default display.
@@ -819,7 +825,8 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
                 "Existing task must be brought to front");
 
         // Make sure last transition will not change when task move to another display.
-        assertEquals(lastTranstionOnVirtualDisplay,
+        assertEquals(
+                lastTransitionOnVirtualDisplay,
                 mWmState.getDisplay(newDisplay.mId).getLastTransition());
     }
 
@@ -874,7 +881,7 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
                 .setTargetActivity(SDK_27_TEST_ACTIVITY).setNewTask(true)
                 .setDisplayId(newDisplay.mId).execute();
         // Dismiss DeprecatedTargetSdkVersionDialog to avoid it disturbing tapOnTaskCenter.
-        DeprecatedTargetSdkTest.waitAndDismissDeprecatedTargetSdkDialog(mWmState);
+        DeprecatedTargetSdkUtils.waitAndDismissDeprecatedTargetSdkDialog(mWmState);
         waitAndAssertTopResumedActivity(SDK_27_TEST_ACTIVITY, newDisplay.mId,
                 "Activity launched on secondary display must be resumed and focused");
 

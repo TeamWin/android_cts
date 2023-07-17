@@ -14,7 +14,7 @@
  * the License.
  */
 
-package android.server.wm;
+package android.server.wm.display;
 
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
 import static android.app.WindowConfiguration.WINDOWING_MODE_FREEFORM;
@@ -67,7 +67,11 @@ import android.server.wm.CommandSession.ActivitySession;
 import android.server.wm.CommandSession.ActivitySessionClient;
 import android.server.wm.CommandSession.ConfigInfo;
 import android.server.wm.CommandSession.SizeInfo;
+import android.server.wm.MultiDisplayTestBase;
+import android.server.wm.RotationSession;
 import android.server.wm.TestJournalProvider.TestJournalContainer;
+import android.server.wm.WaitForValidActivityState;
+import android.server.wm.WindowManagerState;
 import android.view.Display;
 import android.window.WindowContainerTransaction;
 
@@ -207,7 +211,7 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
         final ActivitySession activitySession = noRelaunchActivityClient.getLastStartedSession();
         final ComponentName activityName = activitySession.getName();
         final WindowManagerState.Task task = mWmState.getTaskByActivity(activityName);
-        final int displayId = mWmState.getRootTask(task.mRootTaskId).mDisplayId;
+        final int displayId = mWmState.getRootTask(task.getRootTaskId()).mDisplayId;
 
         assumeTrue(supportsLockedUserRotation(rotationSession, displayId));
 
@@ -298,7 +302,7 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
 
         separateTestJournal();
         // Restore to fullscreen.
-        final int activityTaskId = mWmState.getTaskByActivity(activityName).mTaskId;
+        final int activityTaskId = mWmState.getTaskByActivity(activityName).getTaskId();
         final WindowContainerTransaction wct = new WindowContainerTransaction()
             .setWindowingMode(mTaskOrganizer.getTaskInfo(activityTaskId).getToken(),
                 WINDOWING_MODE_FULLSCREEN);

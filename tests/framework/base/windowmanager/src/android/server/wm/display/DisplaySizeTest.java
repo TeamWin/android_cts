@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.server.wm;
+package android.server.wm.display;
 
 import static android.server.wm.ShellCommandHelper.executeShellCommand;
 import static android.server.wm.ShellCommandHelper.executeShellCommandAndGetStdout;
@@ -31,6 +31,8 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.platform.test.annotations.Presubmit;
+import android.server.wm.ActivityManagerTestBase;
+import android.server.wm.CommandSession;
 import android.view.Display;
 
 import org.junit.After;

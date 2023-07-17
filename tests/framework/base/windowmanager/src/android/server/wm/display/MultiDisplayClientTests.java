@@ -14,7 +14,7 @@
  * limitations under the License
  */
 
-package android.server.wm;
+package android.server.wm.display;
 
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.server.wm.CommandSession.ActivityCallback.ON_CONFIGURATION_CHANGED;
@@ -40,6 +40,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.platform.test.annotations.Presubmit;
+import android.server.wm.CommandSession;
+import android.server.wm.MockImeHelper;
+import android.server.wm.MultiDisplayTestBase;
 import android.server.wm.WindowManagerState.DisplayContent;
 import android.view.Display;
 import android.view.View;

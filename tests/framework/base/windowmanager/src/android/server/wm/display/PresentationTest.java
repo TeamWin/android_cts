@@ -14,7 +14,7 @@
  * limitations under the License
  */
 
-package android.server.wm;
+package android.server.wm.display;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -22,6 +22,8 @@ import static org.junit.Assert.assertTrue;
 
 import android.content.Intent;
 import android.platform.test.annotations.Presubmit;
+import android.server.wm.MultiDisplayTestBase;
+import android.server.wm.WindowManagerState;
 import android.server.wm.app.Components;
 import android.view.Display;
 
@@ -127,7 +129,7 @@ public class PresentationTest extends MultiDisplayTestBase {
 
         WindowManagerState.DisplayContent display = mWmState.getDisplay(displayId);
         assertThat(display.getDisplayRect()).isEqualTo(
-                presentationWindowState.mFullConfiguration.windowConfiguration.getBounds());
+                presentationWindowState.getFullConfiguration().windowConfiguration.getBounds());
     }
 
     private void launchPresentationActivity(int displayId) {

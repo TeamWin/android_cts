@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.server.wm;
+package android.server.wm.display;
 
 import static android.provider.Settings.Global.STAY_ON_WHILE_PLUGGED_IN;
 import static android.provider.Settings.System.SCREEN_OFF_TIMEOUT;
@@ -33,6 +33,8 @@ import android.content.res.Resources;
 import android.os.PowerManager;
 import android.os.SystemClock;
 import android.provider.Settings;
+import android.server.wm.MultiDisplayTestBase;
+import android.server.wm.WindowManagerState;
 
 import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.BlockingBroadcastReceiver;

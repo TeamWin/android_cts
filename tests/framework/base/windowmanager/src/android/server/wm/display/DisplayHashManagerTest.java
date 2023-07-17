@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.server.wm;
+package android.server.wm.display;
 
 import static android.server.wm.UiDeviceUtils.pressUnlockButton;
 import static android.server.wm.UiDeviceUtils.pressWakeupButton;
@@ -43,6 +43,7 @@ import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.PowerManager;
 import android.platform.test.annotations.Presubmit;
+import android.server.wm.WindowManagerStateHelper;
 import android.service.displayhash.DisplayHashParams;
 import android.util.Size;
 import android.view.Gravity;

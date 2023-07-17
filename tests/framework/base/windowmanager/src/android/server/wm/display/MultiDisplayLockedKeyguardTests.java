@@ -14,11 +14,11 @@
  * limitations under the License
  */
 
-package android.server.wm;
+package android.server.wm.display;
 
+import static android.server.wm.ActivityManagerTestBase.LockScreenSession.FLAG_REMOVE_ACTIVITIES_ON_CLOSE;
 import static android.server.wm.WindowManagerState.STATE_RESUMED;
 import static android.server.wm.WindowManagerState.STATE_STOPPED;
-import static android.server.wm.ActivityManagerTestBase.LockScreenSession.FLAG_REMOVE_ACTIVITIES_ON_CLOSE;
 import static android.server.wm.app.Components.DISMISS_KEYGUARD_ACTIVITY;
 import static android.server.wm.app.Components.SHOW_WHEN_LOCKED_ACTIVITY;
 import static android.server.wm.app.Components.TEST_ACTIVITY;
@@ -27,9 +27,8 @@ import static android.server.wm.app.Components.VIRTUAL_DISPLAY_ACTIVITY;
 import static org.junit.Assume.assumeTrue;
 
 import android.platform.test.annotations.Presubmit;
+import android.server.wm.MultiDisplayTestBase;
 import android.server.wm.WindowManagerState.DisplayContent;
-
-import androidx.test.filters.FlakyTest;
 
 import org.junit.Before;
 import org.junit.Test;

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.server.wm;
+package android.server.wm.display;
 
 import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.RoundedCorner.POSITION_BOTTOM_LEFT;
@@ -33,6 +33,9 @@ import android.graphics.RectF;
 import android.hardware.display.DisplayManager;
 import android.os.Build;
 import android.platform.test.annotations.Presubmit;
+import android.server.wm.MultiDisplayTestBase;
+import android.server.wm.WindowManagerState;
+import android.server.wm.WindowManagerTestBase;
 import android.view.Display;
 import android.view.DisplayShape;
 import android.view.RoundedCorner;

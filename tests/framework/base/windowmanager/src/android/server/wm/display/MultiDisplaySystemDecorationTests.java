@@ -14,7 +14,7 @@
  * limitations under the License
  */
 
-package android.server.wm;
+package android.server.wm.display;
 
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_HOME;
 import static android.server.wm.BarTestUtils.assumeHasBars;
@@ -65,7 +65,11 @@ import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
+import android.server.wm.InputMethodVisibilityVerifier;
+import android.server.wm.MultiDisplayTestBase;
+import android.server.wm.TestJournalProvider;
 import android.server.wm.TestJournalProvider.TestJournalContainer;
+import android.server.wm.WindowManagerState;
 import android.server.wm.WindowManagerState.DisplayContent;
 import android.server.wm.WindowManagerState.WindowState;
 import android.text.TextUtils;
@@ -262,7 +266,8 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
 
         // Secondary home activity can't be launched on the display without system decoration
         // support.
-        assertEquals("No stacks on newly launched virtual display", 0, newDisplay.mRootTasks.size());
+        assertEquals(
+                "No stacks on newly launched virtual display", 0, newDisplay.getRootTasks().size());
     }
 
     /** Tests launching a home activity on untrusted virtual display. */
@@ -275,7 +280,7 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
                 .setPublicDisplay(true).setShowSystemDecorations(true).createVirtualDisplay();
 
         // Secondary home activity can't be launched on the untrusted virtual display.
-        assertEquals("No stacks on untrusted virtual display", 0, newDisplay.mRootTasks.size());
+        assertEquals("No stacks on untrusted virtual display", 0, newDisplay.getRootTasks().size());
     }
 
     /**
@@ -930,9 +935,9 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
             WindowState imeWinState, DisplayContent display) {
         // The IME window should inherit the configuration from the IME DisplayArea.
         final WindowManagerState.DisplayArea imeContainerDisplayArea = display.getImeContainer();
-        final Configuration configurationForIme = imeWinState.mMergedOverrideConfiguration;
+        final Configuration configurationForIme = imeWinState.getMergedOverrideConfiguration();
         final Configuration configurationForImeContainer =
-                imeContainerDisplayArea.mMergedOverrideConfiguration;
+                imeContainerDisplayArea.getMergedOverrideConfiguration();
         final int displayDensityDpiForIme = configurationForIme.densityDpi;
         final int displayDensityDpiForImeContainer = configurationForImeContainer.densityDpi;
         final Rect displayBoundsForIme = configurationForIme.windowConfiguration.getBounds();

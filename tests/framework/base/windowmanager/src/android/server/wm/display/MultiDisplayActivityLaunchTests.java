@@ -14,7 +14,7 @@
  * limitations under the License
  */
 
-package android.server.wm;
+package android.server.wm.display;
 
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_ASSISTANT;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_RECENTS;
@@ -78,6 +78,7 @@ import android.os.Bundle;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.CommandSession.ActivitySession;
 import android.server.wm.CommandSession.SizeInfo;
+import android.server.wm.MultiDisplayTestBase;
 import android.server.wm.WindowManagerState.DisplayContent;
 import android.server.wm.WindowManagerState.Task;
 import android.view.SurfaceView;
@@ -260,9 +261,9 @@ public class MultiDisplayActivityLaunchTests extends MultiDisplayTestBase {
                 "Activity requested to launch on secondary display must be focused");
 
         final Configuration taskConfig = mWmState
-                .getTaskByActivity(NON_RESIZEABLE_ACTIVITY).mFullConfiguration;
+                .getTaskByActivity(NON_RESIZEABLE_ACTIVITY).getFullConfiguration();
         final Configuration displayConfig = mWmState
-                .getDisplay(newDisplay.mId).mFullConfiguration;
+                .getDisplay(newDisplay.mId).getFullConfiguration();
 
         // Check that activity config corresponds to display config.
         assertEquals("Activity launched on secondary display must have proper configuration",
@@ -360,7 +361,7 @@ public class MultiDisplayActivityLaunchTests extends MultiDisplayTestBase {
                 newFrontRootTask.mDisplayId);
         assertEquals("Launched activity must be resumed",
                 getActivityName(NON_RESIZEABLE_ACTIVITY),
-                newFrontRootTask.mResumedActivity);
+                newFrontRootTask.getResumedActivity());
         mWmState.assertFocusedRootTask(
                 "Top task must be the one with just launched activity",
                 newFrontRootTaskId);
@@ -614,9 +615,9 @@ public class MultiDisplayActivityLaunchTests extends MultiDisplayTestBase {
         launchActivityOnDisplay(RESIZEABLE_ACTIVITY, newDisplay.mId);
         mWmState.assertVisibility(RESIZEABLE_ACTIVITY, true /* visible */);
 
-        final int rootTaskNum = mWmState.getDisplay(DEFAULT_DISPLAY).mRootTasks.size();
-        final int rootTaskNumOnSecondary = mWmState
-                .getDisplay(newDisplay.mId).mRootTasks.size();
+        final int rootTaskNum = mWmState.getDisplay(DEFAULT_DISPLAY).getRootTasks().size();
+        final int rootTaskNumOnSecondary =
+                mWmState.getDisplay(newDisplay.mId).getRootTasks().size();
 
         // Launch activity on new secondary display.
         // Using custom command here, because normally we add flags
@@ -634,12 +635,13 @@ public class MultiDisplayActivityLaunchTests extends MultiDisplayTestBase {
         // Check that task has moved from primary display to secondary.
         // Since it is 1-to-1 relationship between task and root task for standard type &
         // fullscreen activity, we check the number of root tasks here
-        final int rootTaskNumFinal = mWmState.getDisplay(DEFAULT_DISPLAY)
-                .mRootTasks.size();
-        assertEquals("Root task number in default root task must be decremented.", rootTaskNum - 1,
+        final int rootTaskNumFinal = mWmState.getDisplay(DEFAULT_DISPLAY).getRootTasks().size();
+        assertEquals(
+                "Root task number in default root task must be decremented.",
+                rootTaskNum - 1,
                 rootTaskNumFinal);
-        final int rootTaskNumFinalOnSecondary = mWmState
-                .getDisplay(newDisplay.mId).mRootTasks.size();
+        final int rootTaskNumFinalOnSecondary =
+                mWmState.getDisplay(newDisplay.mId).getRootTasks().size();
         assertEquals("Root task number on external display must be incremented.",
                 rootTaskNumOnSecondary + 1, rootTaskNumFinalOnSecondary);
     }
@@ -659,7 +661,7 @@ public class MultiDisplayActivityLaunchTests extends MultiDisplayTestBase {
         final DisplayContent newDisplay = createManagedVirtualDisplaySession().createDisplay();
         mWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
 
-        final int rootTaskNum = mWmState.getDisplay(DEFAULT_DISPLAY).mRootTasks.size();
+        final int rootTaskNum = mWmState.getDisplay(DEFAULT_DISPLAY).getRootTasks().size();
 
         // Launch activity on new secondary display.
         // Using custom command here, because normally we add flags
@@ -675,9 +677,10 @@ public class MultiDisplayActivityLaunchTests extends MultiDisplayTestBase {
                 "Existing task must be brought to front");
 
         // Check that task has moved from primary display to secondary.
-        final int rootTaskNumFinal = mWmState.getDisplay(DEFAULT_DISPLAY)
-                .mRootTasks.size();
-        assertEquals("Root task number in default root task must be decremented.", rootTaskNum - 1,
+        final int rootTaskNumFinal = mWmState.getDisplay(DEFAULT_DISPLAY).getRootTasks().size();
+        assertEquals(
+                "Root task number in default root task must be decremented.",
+                rootTaskNum - 1,
                 rootTaskNumFinal);
     }
 
@@ -698,7 +701,7 @@ public class MultiDisplayActivityLaunchTests extends MultiDisplayTestBase {
         final Task firstFrontRootTask = mWmState.getRootTask(frontRootTaskId);
         assertEquals("Activity launched on secondary display must be resumed",
                 getActivityName(LAUNCHING_ACTIVITY),
-                firstFrontRootTask.mResumedActivity);
+                firstFrontRootTask.getResumedActivity());
         mWmState.assertFocusedRootTask("Top root task must be on secondary display",
                 frontRootTaskId);
 
@@ -721,9 +724,9 @@ public class MultiDisplayActivityLaunchTests extends MultiDisplayTestBase {
         final int secondFrontRootTaskId = mWmState.getFrontRootTaskId(newDisplay.mId);
         assertEquals("Activity launched on secondary display must be resumed",
                 getActivityName(ALT_LAUNCHING_ACTIVITY),
-                displayFrontRootTask.mResumedActivity);
-        mWmState.assertFocusedRootTask("Top root task must be on primary display",
-                secondFrontRootTaskId);
+                displayFrontRootTask.getResumedActivity());
+        mWmState.assertFocusedRootTask(
+                "Top root task must be on primary display", secondFrontRootTaskId);
         assertEquals("Second display must contain 2 root tasks", 2,
                 mWmState.getDisplay(newDisplay.mId).getRootTasks().size());
         assertEquals("Top task must contain 2 activities", 2,
@@ -772,8 +775,10 @@ public class MultiDisplayActivityLaunchTests extends MultiDisplayTestBase {
         // Check that activity is on the secondary display.
         final int frontRootTaskId = mWmState.getFrontRootTaskId(newDisplay.mId);
         final Task firstFrontRootTask = mWmState.getRootTask(frontRootTaskId);
-        assertEquals("Activity launched on secondary display must be resumed",
-                getActivityName(LAUNCHING_ACTIVITY), firstFrontRootTask.mResumedActivity);
+        assertEquals(
+                "Activity launched on secondary display must be resumed",
+                getActivityName(LAUNCHING_ACTIVITY),
+                firstFrontRootTask.getResumedActivity());
         mWmState.assertFocusedRootTask("Focus must be on secondary display", frontRootTaskId);
 
         // We don't want FLAG_ACTIVITY_MULTIPLE_TASK, so we can't use launchActivityOnDisplay
@@ -789,7 +794,7 @@ public class MultiDisplayActivityLaunchTests extends MultiDisplayTestBase {
                 mWmState.getRootTask(secondFrontRootTaskId);
         assertEquals("Activity launched on secondary display must be resumed",
                 getActivityName(ALT_LAUNCHING_ACTIVITY),
-                secondFrontRootTask.mResumedActivity);
+                secondFrontRootTask.getResumedActivity());
         mWmState.assertFocusedRootTask("Top root task must be on secondary display",
                 secondFrontRootTaskId);
         assertEquals("Second display must only contain 1 task",
@@ -826,8 +831,10 @@ public class MultiDisplayActivityLaunchTests extends MultiDisplayTestBase {
         // first activity lands
         waitAndAssertTopResumedActivity(LAUNCHING_ACTIVITY, newDisplay.mId,
                 "Activity must be launched on secondary display");
-        assertEquals("Secondary display must contain 2 root tasks", 2,
-                mWmState.getDisplay(newDisplay.mId).mRootTasks.size());
+        assertEquals(
+                "Secondary display must contain 2 root tasks",
+                2,
+                mWmState.getDisplay(newDisplay.mId).getRootTasks().size());
     }
 
     /**
@@ -861,8 +868,10 @@ public class MultiDisplayActivityLaunchTests extends MultiDisplayTestBase {
         // first activity lands
         waitAndAssertTopResumedActivity(LAUNCHING_ACTIVITY, newDisplay.mId,
                 "Activity must be launched on secondary display");
-        assertEquals("Secondary display must contain 2 root tasks", 2,
-                mWmState.getDisplay(newDisplay.mId).mRootTasks.size());
+        assertEquals(
+                "Secondary display must contain 2 root tasks",
+                2,
+                mWmState.getDisplay(newDisplay.mId).getRootTasks().size());
         assertBothDisplaysHaveResumedActivities(pair(DEFAULT_DISPLAY, SECOND_ACTIVITY),
                 pair(newDisplay.mId, LAUNCHING_ACTIVITY));
     }
@@ -929,7 +938,7 @@ public class MultiDisplayActivityLaunchTests extends MultiDisplayTestBase {
             final int frontRootTaskId = mWmState.getFrontRootTaskId(displayId);
             final Task firstFrontRootTask = mWmState.getRootTask(frontRootTaskId);
             assertEquals("Activity launched on secondary display must be resumed",
-                    getActivityName(componentName), firstFrontRootTask.mResumedActivity);
+                    getActivityName(componentName), firstFrontRootTask.getResumedActivity());
         } finally {
             virtualDisplay.release();
         }
