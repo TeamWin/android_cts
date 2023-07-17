@@ -20,6 +20,9 @@ import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
 import static android.app.admin.DevicePolicyManager.ACTION_DATA_SHARING_RESTRICTION_APPLIED;
 import static android.app.admin.DevicePolicyManager.FLAG_MANAGED_CAN_ACCESS_PARENT;
 import static android.app.admin.DevicePolicyManager.FLAG_PARENT_CAN_ACCESS_MANAGED;
+import static android.content.Intent.ACTION_SEND;
+import static android.content.Intent.CATEGORY_DEFAULT;
+import static android.content.Intent.EXTRA_TEXT;
 import static android.content.pm.PackageManager.MATCH_DEFAULT_ONLY;
 import static android.os.UserManager.DISALLOW_SHARE_INTO_MANAGED_PROFILE;
 
@@ -29,9 +32,11 @@ import static com.android.queryable.queries.IntentFilterQuery.intentFilter;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.ActivityInfo;
 import android.content.pm.ResolveInfo;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
@@ -42,9 +47,12 @@ import com.android.bedstead.harrier.annotations.RequireRunOnWorkProfile;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.permissions.PermissionContext;
 import com.android.bedstead.nene.users.UserReference;
+import com.android.bedstead.nene.utils.Poll;
+import com.android.bedstead.nene.utils.ResolveInfoWrapper;
 import com.android.bedstead.remotedpc.RemoteDpc;
 import com.android.bedstead.testapp.TestApp;
 import com.android.bedstead.testapp.TestAppInstance;
+import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.BlockingBroadcastReceiver;
 
 import org.junit.ClassRule;
@@ -86,9 +94,21 @@ public final class CrossProfileSharingTest {
 
     // These are the data sharing intents which can be forwarded to the managed profile.
     private static final Intent[] SHARING_INTENTS = {
-            new Intent(Intent.ACTION_SEND).setType("*/*"),
+            new Intent(ACTION_SEND).setType("*/*"),
             new Intent(Intent.ACTION_SEND_MULTIPLE).setType("*/*")
     };
+
+    private static final IntentFilter SEND_INTENT_FILTER =
+            IntentFilter.create(ACTION_SEND, /* dataType= */ "*/*");
+    static {
+        SEND_INTENT_FILTER.addCategory(CATEGORY_DEFAULT);
+    }
+
+    private static final Intent SEND_INTENT =
+            new Intent(ACTION_SEND).setType("text/plain").addCategory(CATEGORY_DEFAULT)
+                    .putExtra(EXTRA_TEXT, "example");
+    private static final Intent CHOOSER_INTENT =
+            Intent.createChooser(SEND_INTENT, /* title= */ null);
 
     /**
      * Test sharing initiated from the profile side i.e. user tries to pick up personal data within
@@ -171,6 +191,64 @@ public final class CrossProfileSharingTest {
             assertCrossProfileIntentsResolvability(
                     SHARING_INTENTS, personalToWorkForwarder, /* expectForwardable */ true);
         }
+    }
+
+    @ApiTest(apis = "android.app.admin.DevicePolicyManager#addCrossProfileIntentFilter")
+    @Postsubmit(reason = "new test")
+    @Test
+    @EnsureHasWorkProfile(dpcIsPrimary = true)
+    public void addCrossProfileIntentFilter_switchToOtherProfile_chooserActivityLaunched() {
+        try {
+            IntentFilter sendIntentFilter = IntentFilter.create(ACTION_SEND, /* dataType= */ "*/*");
+            sendIntentFilter.addCategory(CATEGORY_DEFAULT);
+            sDeviceState.dpc().devicePolicyManager().addCrossProfileIntentFilter(
+                    sDeviceState.dpc().componentName(), sendIntentFilter,
+                    FLAG_MANAGED_CAN_ACCESS_PARENT | FLAG_PARENT_CAN_ACCESS_MANAGED);
+            Intent switchToOtherProfileIntent = getSwitchToOtherProfileIntent();
+
+            TestApis.context().instrumentedContext().startActivity(switchToOtherProfileIntent);
+
+            Poll.forValue("Chooser activity launched",
+                            () -> TestApis.activities().foregroundActivity().componentName())
+                    .toBeEqualTo(new ComponentName("com.android.intentresolver",
+                            "com.android.intentresolver.ChooserActivity"))
+                    .errorOnFail()
+                    .await();
+        } finally {
+            sDeviceState.dpc().devicePolicyManager().clearCrossProfileIntentFilters(
+                    sDeviceState.dpc().componentName());
+        }
+    }
+
+    private Intent getSwitchToOtherProfileIntent() {
+        ResolveInfoWrapper switchToOtherProfileResolveInfo = getSwitchToOtherProfileResolveInfo(
+        );
+        assertWithMessage("Could not retrieve the switch to other profile resolve info.")
+                .that(switchToOtherProfileResolveInfo)
+                .isNotNull();
+
+        Intent switchToOtherProfileIntent = new Intent(CHOOSER_INTENT);
+        ActivityInfo activityInfo = switchToOtherProfileResolveInfo.activityInfo();
+        switchToOtherProfileIntent.setComponent(
+                new ComponentName(activityInfo.packageName, activityInfo.name));
+        switchToOtherProfileIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        return switchToOtherProfileIntent;
+    }
+
+    /**
+     * Returns the ResolveInfo of the "Switch Profiles" dialog if one exists for this intent
+     * (otherwise null).
+     */
+    private ResolveInfoWrapper getSwitchToOtherProfileResolveInfo() {
+        // match == 0 means that this intent actually doesn't match to any activity on this profile,
+        // that means it should be on the other profile.
+
+        return TestApis.packages().queryIntentActivities(CrossProfileSharingTest.SEND_INTENT,
+                        android.content.pm.PackageManager.MATCH_DEFAULT_ONLY)
+                .stream()
+                .filter(r -> r.match() == 0)
+                .findFirst()
+                .orElse(null);
     }
 
     private ResolveInfo getPersonalToWorkForwarder() {
