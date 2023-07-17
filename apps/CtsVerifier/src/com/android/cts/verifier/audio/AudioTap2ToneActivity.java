@@ -208,6 +208,8 @@ public class AudioTap2ToneActivity
 
         ((Button) findViewById(R.id.tap2tone_clearResults)).setOnClickListener(this);
 
+        getPassButton().setOnClickListener(this);
+
         mSpecView = (TextView) findViewById(R.id.tap2tone_specTxt);
         mResultsView = (TextView) findViewById(R.id.tap2tone_resultTxt);
         mStatsView = (TextView) findViewById(R.id.tap2tone_statsTxt);
@@ -246,7 +248,14 @@ public class AudioTap2ToneActivity
         // MegaAudio Initialization
         StreamBase.setup(this);
 
+        stopAudio();
         calculateTestPass();
+    }
+
+    @Override
+    public void onStop() {
+        stopAudio();
+        super.onStop();
     }
 
     private void startAudio() {
@@ -284,8 +293,8 @@ public class AudioTap2ToneActivity
             mDuplexAudioManager.stop();
             // is there a teardown method here?
             mIsRecording = false;
-            enableAudioButtons(!mIsRecording, mIsRecording);
         }
+        enableAudioButtons(!mIsRecording, mIsRecording);
     }
 
     private void resetStats() {
