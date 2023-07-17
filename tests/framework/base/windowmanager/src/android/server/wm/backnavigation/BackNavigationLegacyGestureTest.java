@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.server.wm;
+package android.server.wm.backnavigation;
 
 import static android.server.wm.WindowManagerState.STATE_RESUMED;
 import static android.server.wm.backlegacyapp.Components.BACK_LEGACY;
@@ -23,6 +23,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import android.platform.test.annotations.Presubmit;
+import android.server.wm.ActivityManagerTestBase;
 import android.server.wm.TestJournalProvider.TestJournalContainer;
 import android.server.wm.backlegacyapp.Components;
 

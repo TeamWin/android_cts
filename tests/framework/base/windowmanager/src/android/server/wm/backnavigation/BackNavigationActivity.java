@@ -14,13 +14,10 @@
  * limitations under the License.
  */
 
-package android.server.wm;
+package android.server.wm.backnavigation;
 
 import android.app.Activity;
-import android.content.Context;
 import android.os.Bundle;
-import android.view.KeyEvent;
-import android.view.View;
 
 import androidx.annotation.Nullable;
 

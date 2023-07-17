@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 The Android Open Source Project
+ * Copyright (C) 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.server.wm;
+package android.server.wm.backnavigation;
 
 import static android.view.Display.DEFAULT_DISPLAY;
 
@@ -24,6 +24,8 @@ import static junit.framework.Assert.fail;
 import static org.junit.Assert.assertTrue;
 
 import android.app.Instrumentation;
+import android.server.wm.ActivityManagerTestBase;
+import android.server.wm.TouchHelper;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.window.BackEvent;
