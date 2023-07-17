@@ -14,7 +14,7 @@
  * limitations under the License
  */
 
-package android.server.wm;
+package android.server.wm.keyguard;
 
 import static android.app.WindowConfiguration.WINDOWING_MODE_MULTI_WINDOW;
 import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
@@ -58,8 +58,12 @@ import android.app.KeyguardManager.KeyguardLockedStateListener;
 import android.content.ComponentName;
 import android.content.res.Configuration;
 import android.platform.test.annotations.Presubmit;
+import android.server.wm.CommandSession;
 import android.server.wm.CommandSession.ActivitySession;
 import android.server.wm.CommandSession.ActivitySessionClient;
+import android.server.wm.RotationSession;
+import android.server.wm.UiDeviceUtils;
+import android.server.wm.WindowManagerState;
 import android.server.wm.app.Components;
 
 import org.junit.Before;
@@ -429,7 +433,7 @@ public class KeyguardTests extends KeyguardTestBase {
                 .getDisplayByActivity(SHOW_WHEN_LOCKED_ATTR_ROTATION_ACTIVITY);
         WindowManagerState.DisplayContent display = mWmState
                 .getDisplay(displayId);
-        final int origDisplayOrientation = display.mFullConfiguration.orientation;
+        final int origDisplayOrientation = display.getFullConfiguration().orientation;
         final int orientation = origDisplayOrientation == Configuration.ORIENTATION_LANDSCAPE
                 ? SCREEN_ORIENTATION_PORTRAIT
                 : SCREEN_ORIENTATION_LANDSCAPE;
@@ -444,7 +448,7 @@ public class KeyguardTests extends KeyguardTestBase {
 
         // If the window is a non-fullscreen window (e.g. a freeform window) or the display is
         // squared, there won't be activity lifecycle.
-        if (display.mFullConfiguration.orientation != origDisplayOrientation) {
+        if (display.getFullConfiguration().orientation != origDisplayOrientation) {
             assertActivityLifecycle(SHOW_WHEN_LOCKED_ATTR_ROTATION_ACTIVITY,
                     false /* relaunched */);
         }
@@ -513,7 +517,7 @@ public class KeyguardTests extends KeyguardTestBase {
 
         final LockScreenSession lockScreenSession = createManagedLockScreenSession();
         lockScreenSession.sleepDevice();
-        assertTrue(mWmState.getKeyguardControllerState().keyguardShowing);
+        assertTrue(mWmState.getKeyguardControllerState().isKeyguardShowing());
 
         final CommandSession.ActivitySessionClient activityClient =
                 createManagedActivityClientSession();
@@ -528,7 +532,7 @@ public class KeyguardTests extends KeyguardTestBase {
         // unlock insecure keyguard even if it has setTurnScreenOn, so the device should stay
         // invisible and the display stay in dozing.
         waitAndAssertStoppedActivity(TURN_SCREEN_ON_ACTIVITY);
-        assertTrue(mWmState.getKeyguardControllerState().keyguardShowing);
+        assertTrue(mWmState.getKeyguardControllerState().isKeyguardShowing());
         assertFalse(isDisplayOn(DEFAULT_DISPLAY));
     }
 
@@ -583,7 +587,7 @@ public class KeyguardTests extends KeyguardTestBase {
         final LockScreenSession lockScreenSession = createManagedLockScreenSession();
         lockScreenSession.gotoKeyguard();
         mWmState.computeState();
-        assertTrue(mWmState.getKeyguardControllerState().keyguardShowing);
+        assertTrue(mWmState.getKeyguardControllerState().isKeyguardShowing());
         launchActivity(DISMISS_KEYGUARD_ACTIVITY);
         mWmState.waitForKeyguardShowingAndOccluded();
         waitAndAssertResumedActivity(DISMISS_KEYGUARD_ACTIVITY);
@@ -596,11 +600,11 @@ public class KeyguardTests extends KeyguardTestBase {
         separateTestJournal();
         lockScreenSession.gotoKeyguard();
         mWmState.computeState();
-        assertTrue(mWmState.getKeyguardControllerState().keyguardShowing);
+        assertTrue(mWmState.getKeyguardControllerState().isKeyguardShowing());
         launchActivity(DISMISS_KEYGUARD_METHOD_ACTIVITY);
         mWmState.waitForKeyguardGone();
         waitAndAssertResumedActivity(DISMISS_KEYGUARD_METHOD_ACTIVITY);
-        assertFalse(mWmState.getKeyguardControllerState().keyguardShowing);
+        assertFalse(mWmState.getKeyguardControllerState().isKeyguardShowing());
         assertOnDismissSucceeded(DISMISS_KEYGUARD_METHOD_ACTIVITY);
     }
 
@@ -610,7 +614,7 @@ public class KeyguardTests extends KeyguardTestBase {
         separateTestJournal();
         lockScreenSession.gotoKeyguard();
         mWmState.computeState();
-        assertTrue(mWmState.getKeyguardControllerState().keyguardShowing);
+        assertTrue(mWmState.getKeyguardControllerState().isKeyguardShowing());
         launchActivity(BROADCAST_RECEIVER_ACTIVITY);
         launchActivity(TEST_ACTIVITY);
         mBroadcastActionTrigger.dismissKeyguardByMethod();
@@ -623,11 +627,11 @@ public class KeyguardTests extends KeyguardTestBase {
         separateTestJournal();
         lockScreenSession.sleepDevice();
         mWmState.computeState();
-        assertTrue(mWmState.getKeyguardControllerState().keyguardShowing);
+        assertTrue(mWmState.getKeyguardControllerState().isKeyguardShowing());
         launchActivity(TURN_SCREEN_ON_DISMISS_KEYGUARD_ACTIVITY);
         mWmState.waitForKeyguardGone();
         waitAndAssertResumedActivity(TURN_SCREEN_ON_DISMISS_KEYGUARD_ACTIVITY);
-        assertFalse(mWmState.getKeyguardControllerState().keyguardShowing);
+        assertFalse(mWmState.getKeyguardControllerState().isKeyguardShowing());
         assertOnDismissSucceeded(TURN_SCREEN_ON_DISMISS_KEYGUARD_ACTIVITY);
         assertTrue(isDisplayOn(DEFAULT_DISPLAY));
     }
@@ -655,7 +659,7 @@ public class KeyguardTests extends KeyguardTestBase {
         waitAndAssertResumedActivity(SHOW_WHEN_LOCKED_NO_PREVIEW_ACTIVITY);
 
         lockScreenSession.gotoKeyguard();
-        assertFalse(mWmState.getKeyguardControllerState().mKeyguardGoingAway);
+        assertFalse(mWmState.getKeyguardControllerState().isKeyguardGoingAway());
     }
 
     @Test
@@ -709,11 +713,11 @@ public class KeyguardTests extends KeyguardTestBase {
 
         separateTestJournal();
         mWmState.computeState();
-        assertTrue(mWmState.getKeyguardControllerState().keyguardShowing);
+        assertTrue(mWmState.getKeyguardControllerState().isKeyguardShowing());
         launchActivity(TURN_SCREEN_ON_ATTR_DISMISS_KEYGUARD_ACTIVITY);
         mWmState.waitForKeyguardGone();
         waitAndAssertResumedActivity(TURN_SCREEN_ON_ATTR_DISMISS_KEYGUARD_ACTIVITY);
-        assertFalse(mWmState.getKeyguardControllerState().keyguardShowing);
+        assertFalse(mWmState.getKeyguardControllerState().isKeyguardShowing());
         assertTrue(isDisplayOn(DEFAULT_DISPLAY));
     }
 

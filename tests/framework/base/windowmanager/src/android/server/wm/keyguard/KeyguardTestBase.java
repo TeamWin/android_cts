@@ -14,7 +14,7 @@
  * limitations under the License
  */
 
-package android.server.wm;
+package android.server.wm.keyguard;
 
 import static android.server.wm.app.Components.KeyguardDismissLoggerCallback.ENTRY_ON_DISMISS_CANCELLED;
 import static android.server.wm.app.Components.KeyguardDismissLoggerCallback.ENTRY_ON_DISMISS_ERROR;
@@ -22,6 +22,7 @@ import static android.server.wm.app.Components.KeyguardDismissLoggerCallback.ENT
 
 import android.app.KeyguardManager;
 import android.content.ComponentName;
+import android.server.wm.ActivityManagerTestBase;
 import android.server.wm.TestJournalProvider.TestJournalContainer;
 
 class KeyguardTestBase extends ActivityManagerTestBase {

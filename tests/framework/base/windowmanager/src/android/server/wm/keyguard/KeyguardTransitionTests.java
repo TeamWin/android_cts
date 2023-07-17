@@ -14,7 +14,7 @@
  * limitations under the License
  */
 
-package android.server.wm;
+package android.server.wm.keyguard;
 
 import static android.server.wm.WindowManagerState.STATE_STOPPED;
 import static android.server.wm.WindowManagerState.TRANSIT_ACTIVITY_OPEN;
@@ -35,6 +35,7 @@ import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 import android.platform.test.annotations.Presubmit;
+import android.server.wm.ActivityManagerTestBase;
 
 import org.junit.Before;
 import org.junit.Test;

@@ -14,7 +14,7 @@
  * limitations under the License
  */
 
-package android.server.wm;
+package android.server.wm.keyguard;
 
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
 import static android.app.WindowConfiguration.WINDOWING_MODE_PINNED;
@@ -50,6 +50,8 @@ import android.content.ComponentName;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
+import android.server.wm.ActivityManagerTestBase;
+import android.server.wm.WaitForValidActivityState;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.LinearLayout;
@@ -186,14 +188,14 @@ public class KeyguardLockedTests extends KeyguardTestBase {
 
         lockScreenSession.gotoKeyguard();
         mWmState.computeState();
-        assertTrue(mWmState.getKeyguardControllerState().keyguardShowing);
+        assertTrue(mWmState.getKeyguardControllerState().isKeyguardShowing());
 
         launchActivity(DISMISS_KEYGUARD_METHOD_ACTIVITY);
         lockScreenSession.enterAndConfirmLockCredential();
         mWmState.waitForKeyguardGone();
         mWmState.computeState(DISMISS_KEYGUARD_METHOD_ACTIVITY);
         mWmState.assertVisibility(DISMISS_KEYGUARD_METHOD_ACTIVITY, true);
-        assertFalse(mWmState.getKeyguardControllerState().keyguardShowing);
+        assertFalse(mWmState.getKeyguardControllerState().isKeyguardShowing());
         assertOnDismissSucceeded(DISMISS_KEYGUARD_METHOD_ACTIVITY);
     }
 
@@ -208,14 +210,14 @@ public class KeyguardLockedTests extends KeyguardTestBase {
 
         lockScreenSession.gotoKeyguard();
         mWmState.computeState();
-        assertTrue(mWmState.getKeyguardControllerState().keyguardShowing);
+        assertTrue(mWmState.getKeyguardControllerState().isKeyguardShowing());
 
         launchActivity(DISMISS_KEYGUARD_METHOD_ACTIVITY);
         pressBackButton();
         assertOnDismissCancelled(DISMISS_KEYGUARD_METHOD_ACTIVITY);
         mWmState.computeState();
         mWmState.assertVisibility(DISMISS_KEYGUARD_METHOD_ACTIVITY, false);
-        assertTrue(mWmState.getKeyguardControllerState().keyguardShowing);
+        assertTrue(mWmState.getKeyguardControllerState().isKeyguardShowing());
     }
 
     @Test
@@ -223,13 +225,13 @@ public class KeyguardLockedTests extends KeyguardTestBase {
         final LockScreenSession lockScreenSession = createManagedLockScreenSession();
         lockScreenSession.setLockCredential().sleepDevice();
         mWmState.computeState();
-        assertTrue(mWmState.getKeyguardControllerState().keyguardShowing);
+        assertTrue(mWmState.getKeyguardControllerState().isKeyguardShowing());
 
         launchActivity(TURN_SCREEN_ON_ATTR_DISMISS_KEYGUARD_ACTIVITY);
         mWmState.waitForKeyguardShowingAndNotOccluded();
         mWmState.assertVisibility(TURN_SCREEN_ON_ATTR_DISMISS_KEYGUARD_ACTIVITY, false);
-        assertTrue(mWmState.getKeyguardControllerState().keyguardShowing);
-        assertTrue(isDisplayOn(DEFAULT_DISPLAY));
+        assertTrue(mWmState.getKeyguardControllerState().isKeyguardShowing());
+        assertTrue(ActivityManagerTestBase.isDisplayOn(DEFAULT_DISPLAY));
     }
 
     @Test
@@ -396,7 +398,8 @@ public class KeyguardLockedTests extends KeyguardTestBase {
                 () -> rootView.getRootWindowInsets().isVisible(ime()));
 
         lockScreenSession.setLockCredential().gotoKeyguard();
-        assertTrue("Keyguard is showing", mWmState.getKeyguardControllerState().keyguardShowing);
+        assertTrue(
+                "Keyguard is showing", mWmState.getKeyguardControllerState().isKeyguardShowing());
         lockScreenSession.unlockDevice().enterAndConfirmLockCredential();
         mWmState.waitAndAssertKeyguardGone();
 

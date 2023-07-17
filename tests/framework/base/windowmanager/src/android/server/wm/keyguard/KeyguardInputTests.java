@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.server.wm;
+package android.server.wm.keyguard;
 
 import static android.server.wm.UiDeviceUtils.pressEnterButton;
 
@@ -25,6 +25,8 @@ import static org.junit.Assume.assumeTrue;
 
 import android.content.ComponentName;
 import android.platform.test.annotations.Presubmit;
+import android.server.wm.ActivityManagerTestBase;
+import android.server.wm.KeyEventActivity;
 import android.view.KeyEvent;
 
 import androidx.test.rule.ActivityTestRule;
