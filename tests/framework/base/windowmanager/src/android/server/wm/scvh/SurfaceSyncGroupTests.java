@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.server.wm;
+package android.server.wm.scvh;
 
 import static android.server.wm.BuildUtils.HW_TIMEOUT_MULTIPLIER;
 
@@ -28,8 +28,6 @@ import android.graphics.Color;
 import android.graphics.Rect;
 import android.os.RemoteException;
 import android.platform.test.annotations.Presubmit;
-import android.server.wm.scvh.IAttachEmbeddedWindow;
-import android.server.wm.scvh.SurfaceSyncGroupActivity;
 import android.util.Log;
 import android.view.SurfaceControl;
 import android.view.SurfaceControlViewHost.SurfacePackage;

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.server.wm;
+package android.server.wm.scvh;
 
 import android.platform.test.annotations.Presubmit;
 import android.view.cts.surfacevalidator.CapturedActivity;

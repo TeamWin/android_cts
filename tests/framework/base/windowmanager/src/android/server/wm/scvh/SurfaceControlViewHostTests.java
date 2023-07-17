@@ -14,7 +14,7 @@
  * limitations under the License
  */
 
-package android.server.wm;
+package android.server.wm.scvh;
 
 import static android.server.wm.BuildUtils.HW_TIMEOUT_MULTIPLIER;
 import static android.server.wm.CtsWindowInfoUtils.tapOnWindow;
@@ -65,7 +65,9 @@ import android.os.RemoteException;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
 import android.platform.test.annotations.RequiresDevice;
-import android.server.wm.scvh.Components;
+import android.server.wm.ActivityManagerTestBase;
+import android.server.wm.FutureConnection;
+import android.server.wm.WindowManagerState;
 import android.server.wm.shared.ICrossProcessSurfaceControlViewHostTestService;
 import android.util.ArrayMap;
 import android.view.Gravity;
