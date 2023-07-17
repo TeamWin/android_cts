@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.server.wm;
+package android.server.wm.taskfragment;
 
 import static android.app.ActivityManager.LOCK_TASK_MODE_LOCKED;
 import static android.app.ActivityManager.LOCK_TASK_MODE_NONE;
@@ -29,6 +29,7 @@ import android.app.Activity;
 import android.app.ActivityOptions;
 import android.content.Intent;
 import android.platform.test.annotations.Presubmit;
+import android.server.wm.ActivityManagerTestBase;
 import android.server.wm.WindowManagerState.Task;
 
 import com.android.compatibility.common.util.ApiTest;
@@ -56,10 +57,10 @@ public class LockTaskModeTests extends ActivityManagerTestBase {
 
         try (TestActivitySession<TestActivity> session = createManagedTestActivitySession()) {
             // pin app
-            session.mFinishAfterClose = true;
+            session.setFinishAfterClose(true);
             session.launchTestActivityOnDisplaySync(TestActivity.class, DEFAULT_DISPLAY);
             Task task = mWmState.getRootTaskByActivity(session.getActivity().getComponentName());
-            runWithShellPermission(() -> mAtm.startSystemLockTaskMode(task.mTaskId));
+            runWithShellPermission(() -> mAtm.startSystemLockTaskMode(task.getTaskId()));
             waitForOrFail("Task in app pinning mode", () -> {
                 return mAm.getLockTaskModeState() == LOCK_TASK_MODE_PINNED;
             });

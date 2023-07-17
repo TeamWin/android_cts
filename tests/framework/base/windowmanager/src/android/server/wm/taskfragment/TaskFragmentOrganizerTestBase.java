@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.server.wm;
+package android.server.wm.taskfragment;
 
 import static android.app.ActivityTaskManager.INVALID_STACK_ID;
 import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
@@ -42,8 +42,9 @@ import android.graphics.Rect;
 import android.os.Binder;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.server.wm.WindowContextTests.TestActivity;
+import android.server.wm.WindowContextTestActivity;
 import android.server.wm.WindowManagerState.WindowContainer;
+import android.server.wm.WindowManagerTestBase;
 import android.util.ArrayMap;
 import android.util.Log;
 import android.window.TaskFragmentCreationParams;
@@ -96,7 +97,7 @@ public class TaskFragmentOrganizerTestBase extends WindowManagerTestBase {
     Activity setUpOwnerActivity() {
         // Launch activities in fullscreen in case the device may use freeform as the default
         // windowing mode.
-        return startActivityInWindowingModeFullScreen(TestActivity.class);
+        return startActivityInWindowingModeFullScreen(WindowContextTestActivity.class);
     }
 
     @After
@@ -161,7 +162,8 @@ public class TaskFragmentOrganizerTestBase extends WindowManagerTestBase {
             final WindowContainer parent = containers[i];
             final WindowContainer child = containers[i + 1];
             assertWithMessage(parent + " must contains " + child)
-                    .that(parent.mChildren).contains(child);
+                    .that(parent.getChildren())
+                    .contains(child);
         }
     }
 
@@ -219,7 +221,7 @@ public class TaskFragmentOrganizerTestBase extends WindowManagerTestBase {
     }
 
     static Activity startNewActivity() {
-        return startNewActivity(TestActivity.class);
+        return startNewActivity(WindowContextTestActivity.class);
     }
 
     static Activity startNewActivity(Class<?> className) {

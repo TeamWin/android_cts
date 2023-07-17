@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.server.wm;
+package android.server.wm.taskfragment;
 
 import static android.app.WindowConfiguration.WINDOWING_MODE_MULTI_WINDOW;
 import static android.server.wm.WindowManagerState.STATE_RESUMED;
@@ -37,6 +37,7 @@ import android.graphics.Rect;
 import android.os.Binder;
 import android.os.IBinder;
 import android.platform.test.annotations.Presubmit;
+import android.server.wm.WindowManagerState;
 import android.server.wm.WindowManagerState.Task;
 import android.window.TaskFragmentInfo;
 import android.window.WindowContainerTransaction;
@@ -208,7 +209,7 @@ public class TaskFragmentTrustedModeTest extends TaskFragmentOrganizerTestBase {
                 SECOND_UNTRUSTED_EMBEDDING_ACTIVITY);
         assertNotNull(tf);
         assertEquals(WINDOWING_MODE_MULTI_WINDOW, tf.getWindowingMode());
-        assertEquals(parentBounds, tf.mFullConfiguration.windowConfiguration.getBounds());
+        assertEquals(parentBounds, tf.getFullConfiguration().windowConfiguration.getBounds());
     }
 
     /**

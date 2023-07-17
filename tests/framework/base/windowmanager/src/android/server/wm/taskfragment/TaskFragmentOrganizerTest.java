@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.server.wm;
+package android.server.wm.taskfragment;
 
 import static android.app.WindowConfiguration.WINDOWING_MODE_MULTI_WINDOW;
 import static android.server.wm.WindowManagerState.STATE_RESUMED;
@@ -36,8 +36,10 @@ import android.os.Binder;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.platform.test.annotations.Presubmit;
+import android.server.wm.MetricsActivity;
 import android.server.wm.WindowManagerState.Task;
 import android.server.wm.WindowManagerState.TaskFragment;
+import android.server.wm.WindowManagerTestBase;
 import android.window.TaskFragmentCreationParams;
 import android.window.TaskFragmentInfo;
 import android.window.TaskFragmentOrganizer;
@@ -56,8 +58,8 @@ import org.junit.Test;
 @Presubmit
 @android.server.wm.annotation.Group2
 public class TaskFragmentOrganizerTest extends TaskFragmentOrganizerTestBase {
-    private final ComponentName mLaunchingActivity = new ComponentName(mContext,
-            WindowMetricsActivityTests.MetricsActivity.class);
+    private final ComponentName mLaunchingActivity =
+            new ComponentName(mContext, MetricsActivity.class);
 
     /**
      * Verifies the behavior of
@@ -247,8 +249,7 @@ public class TaskFragmentOrganizerTest extends TaskFragmentOrganizerTestBase {
             "android.window.TaskFragmentOrganizer#applyTransaction",
             "android.window.WindowContainerTransaction#finishActivity"})
     public void testFinishActivity() {
-        final Activity activity = startNewActivity(
-                WindowMetricsActivityTests.MetricsActivity.class);
+        final Activity activity = startNewActivity(MetricsActivity.class);
         // Make sure mLaunchingActivity is mapping to the correct component that is started.
         mWmState.waitAndAssertActivityState(mLaunchingActivity, STATE_RESUMED);
 
@@ -268,7 +269,7 @@ public class TaskFragmentOrganizerTest extends TaskFragmentOrganizerTestBase {
     public void testActivityVisibilityBehindTaskFragment() {
         // Start an activity and reparent it to a TaskFragment.
         final Activity embeddedActivity =
-                startActivity(WindowMetricsActivityTests.MetricsActivity.class);
+                WindowManagerTestBase.startActivity(MetricsActivity.class);
         final IBinder embeddedActivityToken = getActivityToken(embeddedActivity);
         final TaskFragmentCreationParams params = generateTaskFragCreationParams();
         final IBinder taskFragToken = params.getFragmentToken();

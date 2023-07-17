@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-package android.server.wm;
+package android.server.wm.taskfragment;
 
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.app.WindowConfiguration.WINDOWING_MODE_MULTI_WINDOW;
 import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
 import static android.content.res.Configuration.ORIENTATION_LANDSCAPE;
 import static android.content.res.Configuration.ORIENTATION_PORTRAIT;
-import static android.server.wm.SplitActivityLifecycleTest.SplitTestActivity.EXTRA_SET_RESULT_AND_FINISH;
-import static android.server.wm.SplitActivityLifecycleTest.SplitTestActivity.EXTRA_SHOW_WHEN_LOCKED;
 import static android.server.wm.WindowManagerState.STATE_STARTED;
 import static android.server.wm.WindowManagerState.STATE_STOPPED;
+import static android.server.wm.taskfragment.SplitActivityLifecycleTest.SplitTestActivity.EXTRA_SET_RESULT_AND_FINISH;
+import static android.server.wm.taskfragment.SplitActivityLifecycleTest.SplitTestActivity.EXTRA_SHOW_WHEN_LOCKED;
 import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.Surface.ROTATION_0;
 import static android.view.Surface.ROTATION_90;
@@ -46,6 +46,8 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.os.SystemProperties;
 import android.platform.test.annotations.Presubmit;
+import android.server.wm.RotationSession;
+import android.server.wm.WindowManagerState;
 import android.server.wm.WindowManagerState.TaskFragment;
 import android.view.WindowManager;
 import android.window.TaskFragmentCreationParams;
@@ -201,8 +203,9 @@ public class SplitActivityLifecycleTest extends TaskFragmentOrganizerTestBase {
 
         final TaskFragment taskFragmentA = mWmState.getTaskFragmentByActivity(mActivityA);
         assertWithMessage("TaskFragmentA must contain Activity A and C")
-                .that(taskFragmentA.mActivities).containsExactly(mWmState.getActivity(mActivityA),
-                mWmState.getActivity(mActivityC));
+                .that(taskFragmentA.getActivities())
+                .containsExactly(
+                        mWmState.getActivity(mActivityA), mWmState.getActivity(mActivityC));
     }
 
     /**
@@ -240,8 +243,9 @@ public class SplitActivityLifecycleTest extends TaskFragmentOrganizerTestBase {
 
         final TaskFragment taskFragmentB = mWmState.getTaskFragmentByActivity(mActivityB);
         assertWithMessage("TaskFragmentB must contain Activity B and C")
-                .that(taskFragmentB.mActivities).containsExactly(mWmState.getActivity(mActivityB),
-                mWmState.getActivity(mActivityC));
+                .that(taskFragmentB.getActivities())
+                .containsExactly(
+                        mWmState.getActivity(mActivityB), mWmState.getActivity(mActivityC));
     }
 
     /**
@@ -279,8 +283,9 @@ public class SplitActivityLifecycleTest extends TaskFragmentOrganizerTestBase {
 
         final TaskFragment taskFragmentB = mWmState.getTaskFragmentByActivity(mActivityB);
         assertWithMessage("TaskFragmentB must contain Activity B and C")
-                .that(taskFragmentB.mActivities).containsExactly(mWmState.getActivity(mActivityB),
-                mWmState.getActivity(mActivityC));
+                .that(taskFragmentB.getActivities())
+                .containsExactly(
+                        mWmState.getActivity(mActivityB), mWmState.getActivity(mActivityC));
     }
 
     /**
@@ -619,7 +624,7 @@ public class SplitActivityLifecycleTest extends TaskFragmentOrganizerTestBase {
     private Configuration getDisplayConfiguration() {
         mWmState.computeState();
         WindowManagerState.DisplayContent display = mWmState.getDisplay(DEFAULT_DISPLAY);
-        return display.mFullConfiguration;
+        return display.getFullConfiguration();
     }
 
     /**
