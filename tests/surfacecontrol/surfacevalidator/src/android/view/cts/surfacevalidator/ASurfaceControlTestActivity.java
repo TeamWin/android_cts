@@ -16,6 +16,8 @@
 
 package android.view.cts.surfacevalidator;
 
+import static android.view.cts.surfacevalidator.CapturedActivity.STORAGE_DIR;
+
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
 import static org.junit.Assert.assertNotNull;
@@ -340,6 +342,7 @@ public class ASurfaceControlTestActivity extends Activity {
 
     private void saveFailureCapture(Bitmap failFrame, TestName name) {
         String directoryName = Environment.getExternalStorageDirectory()
+                + "/" + STORAGE_DIR
                 + "/" + getClass().getSimpleName()
                 + "/" + name.getMethodName();
         File testDirectory = new File(directoryName);
