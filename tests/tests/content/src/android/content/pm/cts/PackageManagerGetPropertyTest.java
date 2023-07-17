@@ -68,7 +68,8 @@ public class PackageManagerGetPropertyTest {
                 .getInstrumentation()
                 .getUiAutomation()
                 .adoptShellPermissionIdentity(
-                        Manifest.permission.INSTALL_PACKAGES, Manifest.permission.DELETE_PACKAGES);
+                        Manifest.permission.INSTALL_PACKAGES, Manifest.permission.DELETE_PACKAGES,
+                        Manifest.permission.USE_SYSTEM_DATA_LOADERS);
     }
 
     private static void dropShellPermissions() {
@@ -341,6 +342,8 @@ public class PackageManagerGetPropertyTest {
     @Test
     public void testPackageRemoval() throws Exception {
         adoptShellPermissions();
+        Uninstall.packages(PROPERTY_APP1_PACKAGE_NAME, PROPERTY_APP2_PACKAGE_NAME,
+                PROPERTY_APP3_PACKAGE_NAME);
         Install.single(PROPERTY_APP3).commit();
         dropShellPermissions();
 
