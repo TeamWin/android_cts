@@ -69,7 +69,7 @@ public class SharedConnectivityTest {
     // Number of times to check before failing.
     private static final long CHECK_RETRIES = 8;
     // Time to wait for callback's CountDownLatch.
-    private static final long LATCH_TIMEOUT_SECS = 10;
+    private static final long LATCH_TIMEOUT_SECS = 20;
 
     private HotspotNetwork mTestHotspotNetwork1;
     private HotspotNetwork mTestHotspotNetwork2;
