@@ -42,6 +42,7 @@ import android.util.Log;
 import android.util.SparseArray;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class IRadioNetworkImpl extends IRadioNetwork.Stub {
     private static final String TAG = "MRNW";
@@ -68,6 +69,7 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
 
     private int mRadioState;
     private boolean mSimReady;
+    private List<String> mSatellitePlmnList = new ArrayList<>();
 
     private MockNetworkService mServiceState;
 
@@ -1000,6 +1002,29 @@ public class IRadioNetworkImpl extends IRadioNetwork.Stub {
             mRadioNetworkResponse.setN1ModeEnabledResponse(rsp);
         } catch (RemoteException ex) {
             Log.e(TAG, "Failed to setN1ModeEnabled from AIDL. Exception " + ex);
+        }
+    }
+
+    /**
+     * Set the non-terrestrial PLMN with lower priority than terrestrial networks.
+     * MCC/MNC broadcast by the non-terrestrial networks may not be included in OPLMNwACT file on
+     * SIM profile. Acquisition of satellite based system is lower priority to terrestrial
+     * networks. UE shall make all attempts to acquire terrestrial service prior to camping on
+     * satellite LTE service.
+     *
+     * @param serial Serial number of request.
+     * @param plmnList The list of roaming PLMN used for connecting to satellite networks.
+     */
+    @Override
+    public void setSatellitePlmn(int serial, List<String> plmnList) {
+        Log.d(mTag, "setSatellitePlmn");
+
+        mSatellitePlmnList = plmnList;
+        RadioResponseInfo rsp = mService.makeSolRsp(serial, RadioError.NONE);
+        try {
+            mRadioNetworkResponse.setSatellitePlmnResponse(rsp);
+        } catch (RemoteException ex) {
+            Log.e(mTag, "Failed to setSatellitePlmn from AIDL. Exception" + ex);
         }
     }
 
