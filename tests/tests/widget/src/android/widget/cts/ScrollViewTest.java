@@ -1366,7 +1366,7 @@ public class ScrollViewTest {
             mScrollViewStretch.fling(10000);
         });
 
-        PollingCheck.waitFor(() -> edgeEffect.getDistance() > 0);
+        PollingCheck.waitFor(edgeEffect::getOnPullDistanceCalled);
         PollingCheck.waitFor(edgeEffect::getOnReleaseCalled);
     }
 
@@ -1388,7 +1388,7 @@ public class ScrollViewTest {
             mScrollViewStretch.fling(-10000);
         });
 
-        PollingCheck.waitFor(() -> edgeEffect.getDistance() > 0);
+        PollingCheck.waitFor(edgeEffect::getOnPullDistanceCalled);
         PollingCheck.waitFor(edgeEffect::getOnReleaseCalled);
     }
 
