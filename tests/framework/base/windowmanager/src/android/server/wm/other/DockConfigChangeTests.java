@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.server.wm;
+package android.server.wm.other;
 
 import static android.content.res.Configuration.UI_MODE_TYPE_DESK;
 import static android.content.res.Configuration.UI_MODE_TYPE_MASK;
@@ -31,6 +31,8 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.platform.test.annotations.Presubmit;
+import android.server.wm.ActivityManagerTestBase;
+import android.server.wm.RotationSession;
 
 import org.junit.Test;
 

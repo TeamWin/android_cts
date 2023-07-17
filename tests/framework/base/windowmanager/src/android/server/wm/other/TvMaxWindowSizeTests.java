@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.server.wm;
+package android.server.wm.other;
 
 
 import static android.content.pm.PackageManager.FEATURE_LEANBACK;
@@ -35,6 +35,9 @@ import android.content.ComponentName;
 import android.content.pm.PackageManager;
 import android.graphics.Point;
 import android.hardware.display.DisplayManager;
+import android.server.wm.ActivityManagerTestBase;
+import android.server.wm.CommandSession;
+import android.server.wm.WaitForValidActivityState;
 import android.view.Display;
 
 import org.junit.Before;

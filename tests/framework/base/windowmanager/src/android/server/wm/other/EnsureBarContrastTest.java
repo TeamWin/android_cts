@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 The Android Open Source Project
+ * Copyright (C) 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,16 +14,15 @@
  * limitations under the License.
  */
 
-package android.server.wm;
+package android.server.wm.other;
 
-import static android.content.pm.PackageManager.FEATURE_AUTOMOTIVE;
-import static android.server.wm.EnsureBarContrastTest.TestActivity.EXTRA_ENSURE_CONTRAST;
-import static android.server.wm.EnsureBarContrastTest.TestActivity.EXTRA_LIGHT_BARS;
-import static android.server.wm.EnsureBarContrastTest.TestActivity.backgroundForBar;
 import static android.server.wm.BarTestUtils.assumeHasColoredBars;
 import static android.server.wm.BarTestUtils.assumeHasColoredNavigationBar;
 import static android.server.wm.BarTestUtils.assumeHasColoredStatusBar;
 import static android.server.wm.BarTestUtils.isAssumptionViolated;
+import static android.server.wm.other.EnsureBarContrastTest.TestActivity.EXTRA_ENSURE_CONTRAST;
+import static android.server.wm.other.EnsureBarContrastTest.TestActivity.EXTRA_LIGHT_BARS;
+import static android.server.wm.other.EnsureBarContrastTest.TestActivity.backgroundForBar;
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
@@ -38,6 +37,7 @@ import android.graphics.Rect;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.platform.test.annotations.Presubmit;
+import android.server.wm.DumpOnFailure;
 import android.util.SparseIntArray;
 import android.view.View;
 import android.view.ViewGroup;

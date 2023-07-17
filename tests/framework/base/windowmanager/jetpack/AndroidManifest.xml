@@ -64,7 +64,7 @@
                   android:exported="true"
         />
         <!-- The provider properties must match the shared one defined in the util module. -->
-        <provider android:name="android.server.wm.lifecycle.EventLog"
+        <provider android:name="android.server.wm.activity.lifecycle.EventLog"
                   android:authorities="android.server.wm.jetpack.logprovider"
                   android:exported="true"/>
 

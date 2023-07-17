@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 The Android Open Source Project
+ * Copyright (C) 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.server.wm;
+package android.server.wm.other;
 
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 
@@ -39,6 +39,7 @@ import android.os.Parcel;
 import android.os.Parcelable;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
+import android.server.wm.WindowManagerTestBase;
 import android.server.wm.cts.R;
 import android.util.Size;
 import android.view.Display;
@@ -348,15 +349,16 @@ public class DragDropTest extends WindowManagerTestBase {
 
     @BeforeClass
     public static void resetToPhysicalDisplayMetrics() {
-        if (sReportedDisplayMetrics.overrideSize != null) {
-            final Size realSize = new Size(
-                    sReportedDisplayMetrics.physicalSize.getWidth(),
-                    sReportedDisplayMetrics.physicalSize.getHeight());
+        if (sReportedDisplayMetrics.getOverrideSize() != null) {
+            final Size realSize =
+                    new Size(
+                            sReportedDisplayMetrics.getPhysicalSize().getWidth(),
+                            sReportedDisplayMetrics.getPhysicalSize().getHeight());
             sReportedDisplayMetrics.setSize(realSize);
         }
 
-        if (sReportedDisplayMetrics.overrideDensity != null) {
-            final Integer realDensity = sReportedDisplayMetrics.physicalDensity;
+        if (sReportedDisplayMetrics.getOverrideDensity() != null) {
+            final Integer realDensity = sReportedDisplayMetrics.getPhysicalDensity();
             sReportedDisplayMetrics.setDensity(realDensity);
         }
     }

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.server.wm;
+package android.server.wm.intent;
 
 import android.os.Environment;
 import android.server.wm.intent.Persistence;

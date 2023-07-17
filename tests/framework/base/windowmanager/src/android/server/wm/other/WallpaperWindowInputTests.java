@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 The Android Open Source Project
+ * Copyright (C) 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.server.wm;
+package android.server.wm.other;
 
 import static android.server.wm.CliIntentExtra.extraBool;
 import static android.server.wm.app.Components.TestInteractiveLiveWallpaperKeys.COMPONENT;
@@ -32,6 +32,9 @@ import android.app.WallpaperManager;
 import android.graphics.Rect;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
+import android.server.wm.ActivityManagerTestBase;
+import android.server.wm.TestJournalProvider;
+import android.server.wm.WindowManagerState;
 import android.server.wm.app.Components;
 import android.view.InputDevice;
 import android.view.MotionEvent;

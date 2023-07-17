@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 The Android Open Source Project
+ * Copyright (C) 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.server.wm;
+package android.server.wm.other;
 
 import static android.server.wm.ShellCommandHelper.executeShellCommand;
 
@@ -27,6 +27,7 @@ import android.content.ComponentName;
 import android.os.SystemClock;
 import android.platform.test.annotations.Postsubmit;
 import android.provider.Settings;
+import android.server.wm.ActivityManagerTestBase;
 import android.server.wm.annotation.Group3;
 import android.server.wm.app.Components;
 import android.server.wm.settings.SettingsSession;
