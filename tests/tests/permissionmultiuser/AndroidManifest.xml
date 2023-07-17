@@ -30,8 +30,5 @@
         android:name="androidx.test.runner.AndroidJUnitRunner"
         android:targetPackage="android.permissionmultiuser.cts"
         android:label="CTS multi-user tests for permissions">
-        <meta-data
-            android:name="listener"
-            android:value="com.android.cts.runner.CtsTestRunListener" />
     </instrumentation>
 </manifest>
