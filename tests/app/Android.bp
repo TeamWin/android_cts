@@ -65,6 +65,7 @@ android_test {
         ":CtsAppTestStubsApp3",
         ":CtsAppTestStubsApp2",
         ":CtsAppTestStubsApi30",
+        ":CtsAppTestWedgedStart",
         ":CtsBadProviderStubs",
         ":CtsCantSaveState1",
         ":CtsCantSaveState2",
