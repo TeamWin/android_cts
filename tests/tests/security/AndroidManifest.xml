@@ -271,6 +271,14 @@
             </intent-filter>
         </activity>
 
+        <activity android:name="android.security.cts.CVE_2023_20916.PocActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
         <service android:name="android.security.cts.AttributionSourceService"
             android:enabled="true"
             android:exported="true"
