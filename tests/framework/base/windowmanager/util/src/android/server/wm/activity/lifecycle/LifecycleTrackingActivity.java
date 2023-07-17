@@ -47,7 +47,7 @@ public class LifecycleTrackingActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mEventLogClient = EventLog.EventLogClient.create(this.getClass().getCanonicalName(), this,
-                Uri.parse("content://android.server.wm.activity.lifecycle.logprovider"));
+                Uri.parse("content://android.server.wm.lifecycle.logprovider"));
         mEventLogClient.onCallback(ON_CREATE);
 
         final Intent intent = getIntent();

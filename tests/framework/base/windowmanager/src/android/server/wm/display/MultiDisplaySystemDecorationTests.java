@@ -72,6 +72,7 @@ import android.server.wm.TestJournalProvider.TestJournalContainer;
 import android.server.wm.WindowManagerState;
 import android.server.wm.WindowManagerState.DisplayContent;
 import android.server.wm.WindowManagerState.WindowState;
+import android.server.wm.intent.Activities;
 import android.text.TextUtils;
 import android.view.View;
 import android.view.Window;
@@ -677,9 +678,9 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
 
         // Launch a regular activity on default display at the test beginning to prevent the test
         // may mis-touch the launcher icon that breaks the test expectation.
-        final TestActivitySession<RegularActivity> testActivitySession =
+        final TestActivitySession<Activities.RegularActivity> testActivitySession =
                 createManagedTestActivitySession();
-        testActivitySession.launchTestActivityOnDisplaySync(RegularActivity.class,
+        testActivitySession.launchTestActivityOnDisplaySync(Activities.RegularActivity.class,
                 DEFAULT_DISPLAY);
 
         // Create a virtual display and launch an activity on virtual display.
@@ -976,23 +977,5 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
                 activitySession.getActivity().mEditText.getPrivateImeOptions()), TIMEOUT);
         // Assert the IME is shown on the expected display.
         mWmState.waitAndAssertImeWindowShownOnDisplay(displayId);
-    }
-
-    private static class BaseActivity extends Activity {
-        @Override
-        protected void onCreate(Bundle savedInstanceState) {
-            super.onCreate(savedInstanceState);
-            setTitle(getClass().getSimpleName());
-        }
-    }
-
-    private static class RegularActivity extends BaseActivity {
-        public boolean mIsOnNewIntentCalled = false;
-
-        @Override
-        protected void onNewIntent(Intent intent) {
-            super.onNewIntent(intent);
-            mIsOnNewIntentCalled = true;
-        }
     }
 }

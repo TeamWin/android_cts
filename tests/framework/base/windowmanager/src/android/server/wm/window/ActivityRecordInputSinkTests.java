@@ -45,13 +45,12 @@ import org.junit.Test;
 @Presubmit
 public class ActivityRecordInputSinkTests extends ActivityManagerTestBase {
 
-    private static final String APP_SELF =
-            WindowUntrustedTouchTest.class.getPackage().getName() + ".cts";
+    private static final String APP_SELF = "android.server.wm.cts";
     private static final String APP_A =
             android.server.wm.second.Components.class.getPackage().getName();
 
     private static final ComponentName TEST_ACTIVITY =
-            new ComponentName(APP_SELF, "android.server.wm.ActivityRecordInputSinkTestsActivity");
+            new ComponentName(APP_SELF, "android.server.wm.window.ActivityRecordInputSinkTestsActivity");
 
     private static final ComponentName OVERLAY_IN_SAME_UID =
             Components.TranslucentFloatingActivity.getComponent(APP_SELF);

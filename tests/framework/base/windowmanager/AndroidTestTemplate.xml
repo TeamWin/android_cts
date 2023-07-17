@@ -13,7 +13,7 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<configuration description="Config for CTS WindowManager test cases">
+<configuration description="Config for CTS WindowManager test cases {MODULE}">
     <option name="test-suite-tag" value="cts" />
     <option name="config-descriptor:metadata" key="component" value="framework"/>
     <option name="config-descriptor:metadata" key="parameter" value="not_instant_app" />
@@ -23,7 +23,7 @@
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
         <option name="cleanup-apks" value="true"/>
         <option name="install-arg" value="-t" />
-        <option name="test-file-name" value="CtsWindowManagerDeviceTestCases.apk"/>
+        <option name="test-file-name" value="{MODULE}.apk"/>
         <option name="test-file-name" value="CtsPropertyCompatAllowOrientationOverrideApp.apk" />
         <option name="test-file-name" value="CtsPropertyCompatAllowDisplayOrientationOverrideApp.apk" />
         <option name="test-file-name" value="CtsDragAndDropSourceApp.apk"/>

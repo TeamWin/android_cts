@@ -125,8 +125,7 @@ public class WindowUntrustedTouchTest {
     private static final int OVERLAY_COLOR = 0xFFFF0000;
     private static final int ACTIVITY_COLOR = 0xFFFFFFFF;
 
-    private static final String APP_SELF =
-            WindowUntrustedTouchTest.class.getPackage().getName() + ".cts";
+    private static final String APP_SELF = "android.server.wm.cts";
     private static final String APP_A =
             android.server.wm.second.Components.class.getPackage().getName();
     private static final String APP_B =
