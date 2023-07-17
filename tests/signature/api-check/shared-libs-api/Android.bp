@@ -123,8 +123,8 @@ genrule {
         "  apiLevel=$${apiLevel%_api.txt} && " +
         "  if [ -z $${apiLevel} ]; then apiLevel=public; fi && " +
         // Convert the .txt file into its XML representation.
-        "  $(location metalava) -J--add-opens=java.base/java.util=ALL-UNNAMED --no-banner " +
-        "    -convert2xmlnostrip $${f} $(genDir)/list/$${fileName}-current-$${apiLevel}.api; " +
+        "  $(location metalava) -J--add-opens=java.base/java.util=ALL-UNNAMED " +
+        "  signature-to-jdiff $${f} $(genDir)/list/$${fileName}-current-$${apiLevel}.api; " +
         "done && " +
         "$(location soong_zip) -o $(out) -C $(genDir)/list -D $(genDir)/list",
 }
@@ -150,8 +150,8 @@ genrule {
         "  platformSdkVersion=$$(echo $${f} | awk -F/ '{print $$(3)}') && " +
         "  if [ $${platformSdkVersion} -lt 28 ]; then continue; fi && " +
         "  apiLevel=$$(echo $${f} | awk -F/ '{print $$(4)}') && " +
-        "  $(location metalava) -J--add-opens=java.base/java.util=ALL-UNNAMED --no-banner " +
-        "    -convert2xmlnostrip $${f} $(genDir)/list/$${fileName}-$${platformSdkVersion}-$${apiLevel}.api; " +
+        "  $(location metalava) -J--add-opens=java.base/java.util=ALL-UNNAMED " +
+        "  signature-to-jdiff $${f} $(genDir)/list/$${fileName}-$${platformSdkVersion}-$${apiLevel}.api; " +
         "done && " +
         "$(location soong_zip) -o $(out) -C $(genDir)/list -D $(genDir)/list",
 }
