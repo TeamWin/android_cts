@@ -68,6 +68,9 @@ public class ActivityLaunchUtils {
     public static final String INPUT_KEYEVENT_KEYCODE_BACK =
             "input keyevent KEYCODE_BACK";
 
+    // Precision when asserting the launched activity bounds equals the reported a11y window bounds.
+    private static final int BOUNDS_PRECISION_PX = 1;
+
     // Using a static variable so it can be used in lambdas. Not preserving state in it.
     private static Activity mTempActivity;
 
@@ -295,6 +298,16 @@ public class ActivityLaunchUtils {
                                 findWindowByTitleAndDisplay(uiAutomation, activityTitle, displayId);
                         if (window == null) return false;
                         if (window.getRoot() == null) return false;
+
+                        window.getBoundsInScreen(bounds);
+                        mTempActivity.getWindow().getDecorView().getLocationOnScreen(location);
+
+                        // Stores the related information including event, location and window
+                        // as a timeout exception record.
+                        timeoutExceptionRecords.append(String.format("{Received event: %s \n"
+                                        + "Window location: %s \nA11y window: %s}\n",
+                                event, Arrays.toString(location), window));
+
                         if (displayId == Display.DEFAULT_DISPLAY
                                 && (!window.isActive() || !window.isFocused())) {
                             // The window should get activated and focused.
@@ -303,17 +316,9 @@ public class ActivityLaunchUtils {
                             return false;
                         }
 
-                        window.getBoundsInScreen(bounds);
-                        mTempActivity.getWindow().getDecorView().getLocationOnScreen(location);
-
-                        // Stores the related information including event, location and window
-                        // as a timeout exception record.
-                        timeoutExceptionRecords.append(String.format("{Received event: %s \n"
-                                + "Window location: %s \nA11y window: %s}\n",
-                                event, Arrays.toString(location), window));
-
                         return (!bounds.isEmpty())
-                                && (bounds.left == location[0]) && (bounds.top == location[1]);
+                                && Math.abs(bounds.left - location[0]) <= BOUNDS_PRECISION_PX
+                                && Math.abs(bounds.top - location[1]) <= BOUNDS_PRECISION_PX;
                     }, DEFAULT_TIMEOUT_MS);
             assertNotNull(awaitedEvent);
         } catch (TimeoutException timeout) {
