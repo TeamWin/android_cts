@@ -172,8 +172,6 @@ public class AnalogHeadsetAudioActivity
 
         mAudioManager = (AudioManager)getSystemService(AUDIO_SERVICE);
 
-        setupPlayer();
-
         mAudioManager.registerAudioDeviceCallback(new ConnectListener(), new Handler());
 
         mHeadsetPlugReceiver = new HeadsetPlugReceiver();
@@ -188,6 +186,14 @@ public class AnalogHeadsetAudioActivity
 
         setPassFailButtonClickListeners();
         getPassButton().setEnabled(false);
+
+        stopPlay();
+    }
+
+    @Override
+    public void onStop() {
+        stopPlay();
+        super.onStop();
     }
 
     private String generateStateString() {
@@ -419,12 +425,12 @@ public class AnalogHeadsetAudioActivity
 
     protected void startPlay() {
         if (!mIsPlaying) {
+            setupPlayer();
             mAudioPlayer.startStream();
             mIsPlaying = true;
-
-            mPlayButton.setEnabled(false);
-            mStopButton.setEnabled(true);
         }
+        mPlayButton.setEnabled(false);
+        mStopButton.setEnabled(true);
     }
 
     protected void stopPlay() {
@@ -433,12 +439,11 @@ public class AnalogHeadsetAudioActivity
             mAudioPlayer.teardownStream();
             mIsPlaying = false;
 
-            mPlayButton.setEnabled(true);
-            mStopButton.setEnabled(false);
-
             mPlaybackStatusTxt.setText(getResources().getString(
                     R.string.analog_headset_playback_query));
         }
+        mPlayButton.setEnabled(true);
+        mStopButton.setEnabled(false);
     }
 
     //
