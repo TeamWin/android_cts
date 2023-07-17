@@ -51,6 +51,7 @@ java_test_host {
         "src/**/tls/*.java",
         "src/**/wifi/*.java",
         "src/**/incremental/*.java",
+        "src/**/express/*.java",
     ],
 
     test_suites: [
@@ -80,6 +81,7 @@ java_test_host {
         ":CtsSimpleApp",
         ":CtsStatsdAlarmHelper",
         ":CtsStatsdAlarmHelper2",
+        ":CtsStatsdExpressLogHelper",
     ],
     per_testcase_directory: true,
 }
