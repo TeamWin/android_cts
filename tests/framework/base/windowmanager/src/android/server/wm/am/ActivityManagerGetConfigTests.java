@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.server.wm;
+package android.server.wm.am;
 
 import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
@@ -26,7 +26,6 @@ import android.app.KeyguardManager;
 import android.content.Context;
 import android.content.nano.DeviceConfigurationProto;
 import android.content.nano.GlobalConfigurationProto;
-import android.content.nano.LocaleProto;
 import android.content.nano.ResourcesConfigurationProto;
 import android.content.pm.ConfigurationInfo;
 import android.content.pm.FeatureInfo;
@@ -39,6 +38,7 @@ import android.os.Build;
 import android.os.LocaleList;
 import android.os.ParcelFileDescriptor;
 import android.platform.test.annotations.Presubmit;
+import android.server.wm.VirtualDisplayHelper;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.view.Display;

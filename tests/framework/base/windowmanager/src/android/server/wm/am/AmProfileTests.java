@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.server.wm;
+package android.server.wm.am;
 
 import static android.server.wm.ComponentNameUtils.getActivityName;
 import static android.server.wm.ShellCommandHelper.executeShellCommand;
@@ -31,6 +31,7 @@ import static org.junit.Assert.assertEquals;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.platform.test.annotations.Presubmit;
+import android.server.wm.ActivityManagerTestBase;
 import android.server.wm.CommandSession.ActivitySession;
 import android.server.wm.CommandSession.DefaultLaunchProxy;
 
