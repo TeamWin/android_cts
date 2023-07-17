@@ -461,29 +461,6 @@ public final class ManagedProfileTest extends BaseManagedProfileTest {
         }
     }
 
-    @Test
-    public void testChooserActivityLaunchedFromWorkProfileWithSelectedPersonalTab()
-            throws Exception {
-        installAppAsUser(SHARING_APP_1_APK, mPrimaryUserId);
-        installAppAsUser(SHARING_APP_2_APK, mPrimaryUserId);
-        installAppAsUser(SHARING_APP_1_APK, mProfileUserId);
-        installAppAsUser(SHARING_APP_2_APK, mProfileUserId);
-        try {
-            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileSharingTest",
-                    "addCrossProfileIntents", mProfileUserId);
-            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileSharingTest",
-                    "startSwitchToOtherProfileIntent_chooser", mProfileUserId);
-
-            RunUtil.getDefault().sleep(30000);
-
-            assertChooserActivityInForeground(mProfileUserId);
-        } finally {
-            pressHome();
-            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileSharingTest",
-                    "clearCrossProfileIntents", mProfileUserId);
-        }
-    }
-
     private void pressHome() throws Exception {
         executeShellCommand("input keyevent KEYCODE_HOME");
     }

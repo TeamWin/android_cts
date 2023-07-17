@@ -39,6 +39,7 @@ import android.content.IntentFilter;
 import android.content.pm.FeatureInfo;
 import android.content.pm.PackageInstaller;
 import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.content.res.Resources;
 import android.os.Build;
 import android.util.Log;
@@ -56,6 +57,7 @@ import com.android.bedstead.nene.permissions.PermissionContext;
 import com.android.bedstead.nene.users.UserReference;
 import com.android.bedstead.nene.utils.BlockingIntentSender;
 import com.android.bedstead.nene.utils.Poll;
+import com.android.bedstead.nene.utils.ResolveInfoWrapper;
 import com.android.bedstead.nene.utils.ShellCommand;
 import com.android.bedstead.nene.utils.ShellCommandUtils;
 import com.android.bedstead.nene.utils.UndoableContext;
@@ -71,6 +73,7 @@ import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -727,4 +730,16 @@ public final class Packages {
     public Package launcher() {
         return find(TestApis.ui().device().getLauncherPackageName());
     }
-}
+
+
+    /** See {@link PackageManager#queryIntentActivities(Intent, int)}.
+     *
+     * <p> Returns a list of {@link ResolveInfo} wrapped in {@link ResolveInfoWrapper}.*/
+    @Experimental
+    public List<ResolveInfoWrapper> queryIntentActivities(Intent intent, int flags) {
+        return TestApis.context().instrumentedContext().getPackageManager()
+                .queryIntentActivities(intent, flags)
+                .stream().map(r -> new ResolveInfoWrapper(r.activityInfo, r.match))
+                .collect(Collectors.toList());
+    }
+ }
