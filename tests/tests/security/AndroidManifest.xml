@@ -248,6 +248,15 @@
                 android:resource="@xml/syncadapter" />
         </service>
 
+        <service
+            android:name="android.security.cts.CVE_2022_20129.PocService"
+            android:exported="true"
+            android:permission="android.permission.BIND_TELECOM_CONNECTION_SERVICE">
+            <intent-filter>
+                <action android:name="android.telecom.ConnectionService"/>
+            </intent-filter>
+        </service>
+
         <activity android:name="android.security.cts.CVE_2023_20953.PocActivity"
             android:exported="true" />
 
