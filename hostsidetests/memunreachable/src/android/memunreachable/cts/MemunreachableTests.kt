@@ -30,7 +30,7 @@ class MemunreachableTests : BaseHostJUnit4Test() {
     @Throws(DeviceNotAvailableException::class)
     private fun dumpsysMemunreachable(pkg: String, activity: String): String? {
         device.executeShellCommand("am start -W -n $pkg/$activity")
-        val meminfo = device.executeShellCommand("dumpsys meminfo --unreachable $pkg")
+        val meminfo = device.executeShellCommand("dumpsys -t120 meminfo --unreachable $pkg")
         val matcher = UNREACHABLE_MEMORY_PATTERN.find(meminfo)
         return matcher?.groupValues?.get(1)
     }
@@ -51,6 +51,7 @@ class MemunreachableTests : BaseHostJUnit4Test() {
         // Test that an app not marked android:debuggable can have dumpsys meminfo --unreachable run on it
         // on a userdebug build but not on a user build.
         val meminfo = dumpsysMemunreachable(UNDEBUGGABLE_TEST_PACKAGE, TEST_ACTIVITY)
+        Truth.assertThat(meminfo).isNotNull()
         Truth.assertThat(meminfo).startsWith("Unreachable memory\n")
         if (device.getProperty("ro.build.type") == "user") {
             Truth.assertWithMessage("on a user build").that(meminfo)
@@ -67,6 +68,6 @@ class MemunreachableTests : BaseHostJUnit4Test() {
         private const val TEST_ACTIVITY = "android.memunreachable.app.TestMemunreachableActivity"
         private val UNREACHABLE_MEMORY_PATTERN = Regex("\n\\s*(Unreachable memory\n.*)")
         private val UNREACHABLE_MEMORY_RESULT_PATTERN =
-                Regex("\\d+ bytes in \\d+ unreachable allocations")
+                Regex("\\d+ bytes in \\d+ unreachable allocation")
     }
 }
