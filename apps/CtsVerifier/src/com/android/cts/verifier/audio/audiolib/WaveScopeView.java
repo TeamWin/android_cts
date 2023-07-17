@@ -127,8 +127,10 @@ public class WaveScopeView extends View {
         }
 
         // Canvas.drawLines() uses 2 points (float pairs) per line-segment
-        mPointsBuffer = new float[mNumFrames * 4];
-
+        // Only reallocate if we need more space.
+        if (mPointsBuffer == null || (mNumFrames * 4) > mPointsBuffer.length) {
+            mPointsBuffer = new float[mNumFrames * 4];
+        }
         float xIncr = (float) width / (float) mNumFrames;
 
         float X = 0;
@@ -159,16 +161,14 @@ public class WaveScopeView extends View {
         int pntIndex = 1; // of the first Y coordinate
         float Y = zeroY;
         int smplIndex = chanIndex;
-        if (numFrames > mNumFrames) {
-            // This shouldn't happen, but there could be a race condition where a callback
-            // with a larger frame count comes around after changing this view in anticipation
-            // of a smaller count
-            numFrames = mNumFrames;
-        }
+        // use a local reference to the points in case a realloc rolls around.
+        float[] localPointsBuffer = mPointsBuffer;
+        numFrames = Math.min(numFrames, localPointsBuffer.length / 4);
         if (mDisplayMaxMagnitudes) {
             short maxMagnitude = 0;
+            // ensure we don't step past the end of the points buffer
             for (int frame = 0; frame < numFrames; frame++) {
-                mPointsBuffer[pntIndex] = Y;
+                localPointsBuffer[pntIndex] = Y;
                 pntIndex += 2;
 
                 short smpl = samples[smplIndex];
@@ -180,7 +180,7 @@ public class WaveScopeView extends View {
 
                 Y = zeroY - (smpl * yScale);
 
-                mPointsBuffer[pntIndex] = Y;
+                localPointsBuffer[pntIndex] = Y;
                 pntIndex += 2;
 
                 smplIndex += numChans;
@@ -190,21 +190,21 @@ public class WaveScopeView extends View {
             cvs.drawText("" + maxMagnitude, 0, zeroY, mPaint);
 
             mPaint.setColor(mTraceColor);
-            cvs.drawLines(mPointsBuffer, mPaint);
+            cvs.drawLines(localPointsBuffer, mPaint);
         } else {
             for (int frame = 0; frame < numFrames; frame++) {
-                mPointsBuffer[pntIndex] = Y;
+                localPointsBuffer[pntIndex] = Y;
                 pntIndex += 2;
 
                 Y = zeroY - (samples[smplIndex] * yScale);
 
-                mPointsBuffer[pntIndex] = Y;
+                localPointsBuffer[pntIndex] = Y;
                 pntIndex += 2;
 
                 smplIndex += numChans;
             }
             mPaint.setColor(mTraceColor);
-            cvs.drawLines(mPointsBuffer, mPaint);
+            cvs.drawLines(localPointsBuffer, mPaint);
         }
     }
 
@@ -223,16 +223,14 @@ public class WaveScopeView extends View {
         int pntIndex = 1; // of the first Y coordinate
         float Y = zeroY;
         int smplIndex = chanIndex;
-        if (numFrames > mNumFrames) {
-            // This shouldn't happen, but there could be a race condition where a callback
-            // with a larger frame count comes around after changing this view in anticipation
-            // of a smaller count
-            numFrames = mNumFrames;
-        }
+        // use a local reference to the points in case a realloc rolls around.
+        float[] localPointsBuffer = mPointsBuffer;
+        numFrames = Math.min(numFrames, localPointsBuffer.length / 4);
         if (mDisplayMaxMagnitudes) {
             float maxMagnitude = 0f;
+            // ensure we don't step past the end of the points buffer
             for (int frame = 0; frame < numFrames; frame++) {
-                mPointsBuffer[pntIndex] = Y;
+                localPointsBuffer[pntIndex] = Y;
                 pntIndex += 2;
 
                 float smpl = samples[smplIndex];
@@ -244,7 +242,7 @@ public class WaveScopeView extends View {
 
                 Y = zeroY - (smpl * yScale);
 
-                mPointsBuffer[pntIndex] = Y;
+                localPointsBuffer[pntIndex] = Y;
                 pntIndex += 2;
 
                 smplIndex += numChans;
@@ -254,21 +252,21 @@ public class WaveScopeView extends View {
             cvs.drawText("" + maxMagnitude, 0, zeroY, mPaint);
 
             mPaint.setColor(mTraceColor);
-            cvs.drawLines(mPointsBuffer, mPaint);
+            cvs.drawLines(localPointsBuffer, mPaint);
         } else {
             for (int frame = 0; frame < numFrames; frame++) {
-                mPointsBuffer[pntIndex] = Y;
+                localPointsBuffer[pntIndex] = Y;
                 pntIndex += 2;
 
                 Y = zeroY - (samples[smplIndex] * yScale);
 
-                mPointsBuffer[pntIndex] = Y;
+                localPointsBuffer[pntIndex] = Y;
                 pntIndex += 2;
 
                 smplIndex += numChans;
             }
             mPaint.setColor(mTraceColor);
-            cvs.drawLines(mPointsBuffer, mPaint);
+            cvs.drawLines(localPointsBuffer, mPaint);
         }
 
         if (mDisplayPersistentMaxMagnitude) {
