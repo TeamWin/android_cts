@@ -36,5 +36,6 @@ android_app_import {
             apk: "x86/CtsShimTargetPSdk.apk",
         },
     },
+    preprocessed: true,
     presigned: true,
 }
