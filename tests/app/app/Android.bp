@@ -213,3 +213,26 @@ android_test_helper_app {
         "--debug-mode",
     ],
 }
+
+android_test_helper_app {
+    name: "CtsAppTestWedgedStart",
+    defaults: ["cts_support_defaults"],
+    manifest: "WedgedAndroidManifest.xml",
+    libs: [
+        "android.test.runner",
+        "android.test.base",
+    ],
+    srcs: [
+        "src/android/app/stubs/WedgedApplication.java",
+        "src/android/app/stubs/MockApplicationActivity.java",
+    ],
+    // Tag this module as a cts test artifact
+    test_suites: [
+        "general-tests",
+        "sts",
+    ],
+    platform_apis: true,
+    aaptflags: [
+        "--rename-manifest-package com.android.wedged_start",
+    ],
+}

@@ -152,6 +152,9 @@ public final class ActivityManagerTest {
     private static final String TAG = ActivityManagerTest.class.getSimpleName();
     private static final String STUB_PACKAGE_NAME = "android.app.stubs";
     private static final long WAITFOR_MSEC = 5000;
+    // Long enough to cover devices with doubled hw multipliers. On most devices
+    // this should be 10s as defined in ActivityManagerService#PROC_START_TIMEOUT
+    private static final long WAITFOR_PROCSTAT_TIMEOUT_MSEC = 30000;
     private static final String SERVICE_NAME = "android.app.stubs.MockService";
     private static final long WAIT_TIME = 2000;
     private static final long WAITFOR_ORDERED_BROADCAST_DRAINED = 60000;
@@ -177,6 +180,7 @@ public final class ActivityManagerTest {
     private static final String PACKAGE_NAME_APP1 = "com.android.app1";
     private static final String PACKAGE_NAME_APP2 = "com.android.app2";
     private static final String PACKAGE_NAME_APP3 = "com.android.app3";
+    private static final String PACKAGE_NAME_WEDGED_STARTUP = "com.android.wedged_start";
 
     private static final String CANT_SAVE_STATE_1_PACKAGE_NAME = "com.android.test.cantsavestate1";
     private static final String ACTION_FINISH = "com.android.test.action.FINISH";
@@ -1166,6 +1170,37 @@ public final class ActivityManagerTest {
             monitor.finish();
             runWithShellPermissionIdentity(() -> {
                 mActivityManager.forceStopPackage(PACKAGE_NAME_APP1);
+            });
+        }
+    }
+
+    /**
+     * This test verifies that the PROC_START_TIMEOUT triggers an ANR.
+     */
+    @Test
+    public void testAppNotRespondingOnStartup() throws Exception {
+        // Setup the ANR monitor
+        AmMonitor monitor = new AmMonitor(mInstrumentation,
+                new String[]{AmMonitor.WAIT_FOR_CRASHED});
+
+        Intent intent = new Intent(Intent.ACTION_MAIN);
+        intent.setClassName(PACKAGE_NAME_WEDGED_STARTUP, MockApplicationActivity.class.getName());
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+
+        mTargetContext.startActivity(intent);
+
+        try {
+            // Verify we got the ANR
+            assertTrue(monitor.waitFor(AmMonitor.WAIT_FOR_EARLY_ANR,
+                            WAITFOR_PROCSTAT_TIMEOUT_MSEC));
+
+            // Just kill the test app
+            monitor.sendCommand(AmMonitor.CMD_KILL);
+        } finally {
+            // clean up
+            monitor.finish();
+            runWithShellPermissionIdentity(() -> {
+                mActivityManager.forceStopPackage(PACKAGE_NAME_WEDGED_STARTUP);
             });
         }
     }

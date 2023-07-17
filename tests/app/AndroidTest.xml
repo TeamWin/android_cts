@@ -31,6 +31,7 @@
         <option name="test-file-name" value="CtsAppTestStubsApp3.apk" />
         <option name="test-file-name" value="CtsAppTestStubsApp2.apk" />
         <option name="test-file-name" value="CtsAppTestStubsApi30.apk" />
+        <option name="test-file-name" value="CtsAppTestWedgedStart.apk" />
         <option name="test-file-name" value="CtsAppTestCases.apk" />
         <option name="test-file-name" value="CtsBadProviderStubs.apk" />
         <option name="test-file-name" value="CtsCantSaveState1.apk" />
