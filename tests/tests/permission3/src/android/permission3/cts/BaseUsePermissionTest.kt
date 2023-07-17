@@ -324,11 +324,11 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
                 .filter { it.first != null }
                 .toList(),
             result.resultData!!.getStringArrayExtra("$APP_PACKAGE_NAME.PERMISSIONS")!!
-                .filterNotNull()
                 .zip(
                     result.resultData!!.getIntArrayExtra("$APP_PACKAGE_NAME.GRANT_RESULTS")!!
                         .map { it == PackageManager.PERMISSION_GRANTED }
                 )
+                .filter { it.first != null }
         )
         permissionAndExpectedGrantResults.forEach {
             it.first?.let { permission ->
