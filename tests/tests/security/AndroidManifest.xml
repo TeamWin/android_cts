@@ -200,7 +200,14 @@
             android:grantUriPermissions="true"
             android:process=":badprovider" />
 
-        <activity android:name="android.security.cts.CVE_2022_20143.PocActivity"
+        <activity android:name="android.security.cts.AutomaticZenRuleTests.PocActivity"
+                  android:exported="true">
+            <intent-filter>
+                <action android:name="android.app.action.AUTOMATIC_ZEN_RULE"/>
+            </intent-filter>
+        </activity>
+
+        <activity android:name="android.security.cts.AutomaticZenRuleTests.SecondPocActivity"
                   android:exported="true">
             <intent-filter>
                 <action android:name="android.app.action.AUTOMATIC_ZEN_RULE"/>

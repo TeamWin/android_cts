@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package android.security.cts.CVE_2022_20143;
+package android.security.cts.AutomaticZenRuleTests;
 
 import android.app.Activity;
 
-public class PocActivity extends Activity {
+public class SecondPocActivity extends Activity {
 }
