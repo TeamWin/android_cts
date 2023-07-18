@@ -283,10 +283,10 @@ STATE_CODES = {
 DEFAULT_STATES = "csywal"
 
 SHORT_PACKAGE_PREFIXES = {
+    "a.d.i": "android.devicepolicy.internal",
     "a.d.c": "android.devicepolicy.cts",
     "a.d.g": "android.devicepolicy.gts",
     "a.m.c": "android.multiuser.cts",
-
     "nene": "com.android.bedstead.nene"
 }
 
@@ -318,6 +318,13 @@ supported_modules = {
         "package": "android.accounts.cts.multiuser",
         "runner": "androidx.test.runner.AndroidJUnitRunner",
         "states": [RUN_ON_SYSTEM_USER, RUN_ON_WORK_PROFILE, RUN_ON_SECONDARY_USER, RUN_ON_ADDITIONAL_USER]
+    },
+
+    # Internal
+    "InternalDevicePolicyTestCases": {
+        "package": "android.devicepolicy.internal",
+        "runner": "androidx.test.runner.AndroidJUnitRunner",
+        "states": [RUN_ON_SYSTEM_USER, RUN_ON_WORK_PROFILE, RUN_ON_SECONDARY_USER, RUN_ON_ADDITIONAL_USER, RUN_ON_CLONE_PROFILE]
     },
 
     # Bedstead
