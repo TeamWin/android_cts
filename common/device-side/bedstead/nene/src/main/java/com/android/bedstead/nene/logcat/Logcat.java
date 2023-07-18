@@ -29,6 +29,8 @@ import com.android.bedstead.nene.utils.ShellCommandUtils;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -111,6 +113,14 @@ public final class Logcat {
             return null;
         }
         return exceptions.get(exceptions.size() - 1);
+    }
+
+    /**
+     * Get the most recent log from logcat matching the {@code lineFilter}.
+     */
+    public String recent(Predicate<String> lineFilter) {
+        String[] logs = dump(lineFilter).split("\n");
+        return logs[logs.length - 1];
     }
 
     private List<SystemServerException> findSystemServerExceptions(Throwable t) {
