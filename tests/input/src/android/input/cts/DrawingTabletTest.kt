@@ -57,9 +57,9 @@ class DrawingTabletTest {
             UinputTouchDevice(
                 InstrumentationRegistry.getInstrumentation(),
                 virtualDisplayRule.virtualDisplay.display,
-                Size(WIDTH, HEIGHT),
                 R.raw.test_drawing_tablet_register,
                 InputDevice.SOURCE_MOUSE or InputDevice.SOURCE_STYLUS,
+                Size(WIDTH, HEIGHT),
             )
         verifier = EventVerifier(virtualDisplayRule.activity::getInputEvent)
     }

@@ -60,9 +60,9 @@ class TouchScreenTest {
         touchScreen = UinputTouchDevice(
                 instrumentation,
                 virtualDisplayRule.virtualDisplay.display,
-                Size(WIDTH, HEIGHT),
                 R.raw.test_touchscreen_register,
                 InputDevice.SOURCE_TOUCHSCREEN,
+                Size(WIDTH, HEIGHT),
         )
         verifier = EventVerifier(virtualDisplayRule.activity::getInputEvent)
     }

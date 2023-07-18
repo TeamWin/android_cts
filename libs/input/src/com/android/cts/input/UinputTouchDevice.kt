@@ -33,9 +33,9 @@ import org.json.JSONObject
 class UinputTouchDevice(
     instrumentation: Instrumentation,
     display: Display,
-    size: Size,
     private val rawResource: Int,
     private val source: Int,
+    sizeOverride: Size? = null,
 ) :
     AutoCloseable {
 
@@ -44,7 +44,7 @@ class UinputTouchDevice(
     private val inputManager: InputManager
 
     init {
-        uinputDevice = createDevice(instrumentation, size)
+        uinputDevice = createDevice(instrumentation, sizeOverride)
         inputManager = instrumentation.targetContext.getSystemService(InputManager::class.java)!!
         associateWith(display)
     }
@@ -94,22 +94,26 @@ class UinputTouchDevice(
             .bufferedReader().use { it.readText() }
     }
 
-    private fun createDevice(instrumentation: Instrumentation, size: Size): UinputDevice {
+    private fun createDevice(instrumentation: Instrumentation, sizeOverride: Size?): UinputDevice {
         val json = JSONObject(readRawResource(instrumentation.targetContext))
         val resourceDeviceId: Int = json.getInt("id")
         val vendorId = json.getInt("vid")
         val productId = json.getInt("pid")
         port = json.getString("port")
 
-        // Use the display size to set maximum values
-        val absInfo: JSONArray = json.getJSONArray("abs_info")
-        for (i in 0 until absInfo.length()) {
-            val item = absInfo.getJSONObject(i)
-            if (item.get("code") == ABS_MT_POSITION_X) {
-                item.getJSONObject("info").put("maximum", size.width - 1)
-            }
-            if (item.get("code") == ABS_MT_POSITION_Y) {
-                item.getJSONObject("info").put("maximum", size.height - 1)
+        if (sizeOverride != null) {
+            // Use the given size to set the maximum values of relevant axes.
+            val absInfo: JSONArray = json.getJSONArray("abs_info")
+            for (i in 0 until absInfo.length()) {
+                val item = absInfo.getJSONObject(i)
+                if (item.get("code") == ABS_MT_POSITION_X) {
+                    item.getJSONObject("info")
+                        .put("maximum", sizeOverride.width - 1)
+                }
+                if (item.get("code") == ABS_MT_POSITION_Y) {
+                    item.getJSONObject("info")
+                        .put("maximum", sizeOverride.height - 1)
+                }
             }
         }
 

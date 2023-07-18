@@ -65,9 +65,9 @@ class EmulateInputDevice {
         UinputTouchDevice(
                 instrumentation,
                 context.display!!,
-                screenSize,
                 R.raw.test_touchscreen_register,
-                InputDevice.SOURCE_TOUCHSCREEN
+                InputDevice.SOURCE_TOUCHSCREEN,
+                screenSize,
         ).use { touchscreen ->
             // Start the usage session.
             touchscreen.tapOnScreen()
