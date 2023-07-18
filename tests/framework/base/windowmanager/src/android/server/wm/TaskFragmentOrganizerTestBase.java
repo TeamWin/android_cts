@@ -16,6 +16,7 @@
 
 package android.server.wm;
 
+import static android.app.ActivityTaskManager.INVALID_STACK_ID;
 import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.server.wm.WindowManagerState.STATE_RESUMED;
@@ -63,6 +64,8 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
+
+import javax.annotation.concurrent.GuardedBy;
 
 public class TaskFragmentOrganizerTestBase extends WindowManagerTestBase {
     private static final String TAG = "TaskFragmentOrganizerTestBase";
@@ -229,12 +232,25 @@ public class TaskFragmentOrganizerTestBase extends WindowManagerTestBase {
     public static class BasicTaskFragmentOrganizer extends TaskFragmentOrganizer {
         private final static int WAIT_TIMEOUT_IN_SECOND = 10;
 
+        private final Object mLock = new Object();
+
+        @GuardedBy("mLock")
         private final Map<IBinder, TaskFragmentInfo> mInfos = new ArrayMap<>();
+        @GuardedBy("mLock")
         private final Map<IBinder, TaskFragmentInfo> mRemovedInfos = new ArrayMap<>();
-        private int mParentTaskId;
+        @GuardedBy("mLock")
+        private int mParentTaskId = INVALID_STACK_ID;
+        @Nullable
+        @GuardedBy("mLock")
         private Configuration mParentConfig;
+        @Nullable
+        @GuardedBy("mLock")
         private IBinder mErrorToken;
+        @Nullable
+        @GuardedBy("mLock")
         private Throwable mThrowable;
+        @GuardedBy("mLock")
+        private boolean mIsRegistered;
 
         private CountDownLatch mAppearedLatch = new CountDownLatch(1);
         private CountDownLatch mChangedLatch = new CountDownLatch(1);
@@ -247,19 +263,27 @@ public class TaskFragmentOrganizerTestBase extends WindowManagerTestBase {
         }
 
         public TaskFragmentInfo getTaskFragmentInfo(IBinder taskFragToken) {
-            return mInfos.get(taskFragToken);
+            synchronized (mLock) {
+                return mInfos.get(taskFragToken);
+            }
         }
 
         public TaskFragmentInfo getRemovedTaskFragmentInfo(IBinder taskFragToken) {
-            return mRemovedInfos.get(taskFragToken);
+            synchronized (mLock) {
+                return mRemovedInfos.get(taskFragToken);
+            }
         }
 
         public Throwable getThrowable() {
-            return mThrowable;
+            synchronized (mLock) {
+                return mThrowable;
+            }
         }
 
         public IBinder getErrorCallbackToken() {
-            return mErrorToken;
+            synchronized (mLock) {
+                return mErrorToken;
+            }
         }
 
         public void resetLatch() {
@@ -353,6 +377,7 @@ public class TaskFragmentOrganizerTestBase extends WindowManagerTestBase {
             }
         }
 
+        @GuardedBy("mLock")
         private void removeAllTaskFragments() {
             final WindowContainerTransaction wct = new WindowContainerTransaction();
             for (TaskFragmentInfo info : mInfos.values()) {
@@ -363,75 +388,104 @@ public class TaskFragmentOrganizerTestBase extends WindowManagerTestBase {
         }
 
         @Override
+        public void registerOrganizer() {
+            synchronized (mLock) {
+                mIsRegistered = true;
+            }
+            super.registerOrganizer();
+        }
+
+        @Override
         public void unregisterOrganizer() {
-            removeAllTaskFragments();
-            mRemovedInfos.clear();
+            synchronized (mLock) {
+                mIsRegistered = false;
+                removeAllTaskFragments();
+                mRemovedInfos.clear();
+                mInfos.clear();
+                mParentTaskId = INVALID_STACK_ID;
+                mParentConfig = null;
+                mErrorToken = null;
+                mThrowable = null;
+            }
             super.unregisterOrganizer();
         }
 
         @Override
         public void onTransactionReady(@NonNull TaskFragmentTransaction transaction) {
-            final List<TaskFragmentTransaction.Change> changes = transaction.getChanges();
-            for (TaskFragmentTransaction.Change change : changes) {
-                final int taskId = change.getTaskId();
-                final TaskFragmentInfo info = change.getTaskFragmentInfo();
-                switch (change.getType()) {
-                    case TYPE_TASK_FRAGMENT_APPEARED:
-                        onTaskFragmentAppeared(info);
-                        break;
-                    case TYPE_TASK_FRAGMENT_INFO_CHANGED:
-                        onTaskFragmentInfoChanged(info);
-                        break;
-                    case TYPE_TASK_FRAGMENT_VANISHED:
-                        onTaskFragmentVanished(info);
-                        break;
-                    case TYPE_TASK_FRAGMENT_PARENT_INFO_CHANGED:
-                        onTaskFragmentParentInfoChanged(taskId, change.getTaskConfiguration());
-                        break;
-                    case TYPE_TASK_FRAGMENT_ERROR:
-                        final Bundle errorBundle = change.getErrorBundle();
-                        final IBinder errorToken = change.getErrorCallbackToken();
-                        final TaskFragmentInfo errorTaskFragmentInfo = errorBundle.getParcelable(
-                                KEY_ERROR_CALLBACK_TASK_FRAGMENT_INFO, TaskFragmentInfo.class);
-                        final int opType = errorBundle.getInt(KEY_ERROR_CALLBACK_OP_TYPE);
-                        final Throwable exception = errorBundle.getSerializable(
-                                KEY_ERROR_CALLBACK_THROWABLE, Throwable.class);
-                        onTaskFragmentError(errorToken, errorTaskFragmentInfo, opType,
-                                exception);
-                        break;
-                    case TYPE_ACTIVITY_REPARENTED_TO_TASK:
-                        onActivityReparentedToTask(
-                                taskId,
-                                change.getActivityIntent(),
-                                change.getActivityToken());
-                        break;
-                    default:
-                        // Log instead of throwing exception in case we will add more types between
-                        // releases.
-                        Log.w(TAG, "Unknown TaskFragmentEvent=" + change.getType());
+            synchronized (mLock) {
+                if (!mIsRegistered) {
+                    // Ignore callback that is invoked after unregister. This can be a racing
+                    // condition before the unregister reaches the server side.
+                    return;
                 }
+                final List<TaskFragmentTransaction.Change> changes = transaction.getChanges();
+                for (TaskFragmentTransaction.Change change : changes) {
+                    final int taskId = change.getTaskId();
+                    final TaskFragmentInfo info = change.getTaskFragmentInfo();
+                    switch (change.getType()) {
+                        case TYPE_TASK_FRAGMENT_APPEARED:
+                            onTaskFragmentAppeared(info);
+                            break;
+                        case TYPE_TASK_FRAGMENT_INFO_CHANGED:
+                            onTaskFragmentInfoChanged(info);
+                            break;
+                        case TYPE_TASK_FRAGMENT_VANISHED:
+                            onTaskFragmentVanished(info);
+                            break;
+                        case TYPE_TASK_FRAGMENT_PARENT_INFO_CHANGED:
+                            onTaskFragmentParentInfoChanged(taskId, change.getTaskConfiguration());
+                            break;
+                        case TYPE_TASK_FRAGMENT_ERROR:
+                            final Bundle errorBundle = change.getErrorBundle();
+                            final IBinder errorToken = change.getErrorCallbackToken();
+                            final TaskFragmentInfo errorTaskFragmentInfo =
+                                    errorBundle.getParcelable(
+                                            KEY_ERROR_CALLBACK_TASK_FRAGMENT_INFO,
+                                            TaskFragmentInfo.class);
+                            final int opType = errorBundle.getInt(KEY_ERROR_CALLBACK_OP_TYPE);
+                            final Throwable exception = errorBundle.getSerializable(
+                                    KEY_ERROR_CALLBACK_THROWABLE, Throwable.class);
+                            onTaskFragmentError(errorToken, errorTaskFragmentInfo, opType,
+                                    exception);
+                            break;
+                        case TYPE_ACTIVITY_REPARENTED_TO_TASK:
+                            onActivityReparentedToTask(
+                                    taskId,
+                                    change.getActivityIntent(),
+                                    change.getActivityToken());
+                            break;
+                        default:
+                            // Log instead of throwing exception in case we will add more types
+                            // between releases.
+                            Log.w(TAG, "Unknown TaskFragmentEvent=" + change.getType());
+                    }
+                }
+                onTransactionHandled(transaction.getTransactionToken(),
+                        new WindowContainerTransaction(), TASK_FRAGMENT_TRANSIT_NONE,
+                        false /* shouldApplyIndependently */);
             }
-            onTransactionHandled(transaction.getTransactionToken(),
-                    new WindowContainerTransaction(), TASK_FRAGMENT_TRANSIT_NONE,
-                    false /* shouldApplyIndependently */);
         }
 
+        @GuardedBy("mLock")
         private void onTaskFragmentAppeared(@NonNull TaskFragmentInfo taskFragmentInfo) {
             mInfos.put(taskFragmentInfo.getFragmentToken(), taskFragmentInfo);
             mAppearedLatch.countDown();
         }
 
+        @GuardedBy("mLock")
         private void onTaskFragmentInfoChanged(@NonNull TaskFragmentInfo taskFragmentInfo) {
             mInfos.put(taskFragmentInfo.getFragmentToken(), taskFragmentInfo);
             mChangedLatch.countDown();
         }
 
+        @GuardedBy("mLock")
         private void onTaskFragmentVanished(@NonNull TaskFragmentInfo taskFragmentInfo) {
             mInfos.remove(taskFragmentInfo.getFragmentToken());
             mRemovedInfos.put(taskFragmentInfo.getFragmentToken(), taskFragmentInfo);
             mVanishedLatch.countDown();
         }
 
+        @GuardedBy("mLock")
         private void onTaskFragmentParentInfoChanged(int taskId,
                 @NonNull Configuration parentConfig) {
             mParentTaskId = taskId;
@@ -439,6 +493,7 @@ public class TaskFragmentOrganizerTestBase extends WindowManagerTestBase {
             mParentChangedLatch.countDown();
         }
 
+        @GuardedBy("mLock")
         private void onTaskFragmentError(@NonNull IBinder errorCallbackToken,
                 @Nullable TaskFragmentInfo taskFragmentInfo, int opType,
                 @NonNull Throwable exception) {
