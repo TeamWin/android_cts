@@ -50,6 +50,8 @@ public abstract class Attestation {
     public static final int KM_VERSION_KEYMASTER_4 = 40;
     public static final int KM_VERSION_KEYMASTER_4_1 = 41;
     public static final int KM_VERSION_KEYMINT_1 = 100;
+    public static final int KM_VERSION_KEYMINT_2 = 200;
+    public static final int KM_VERSION_KEYMINT_3 = 300;
 
     int attestationVersion;
     int keymasterVersion;
