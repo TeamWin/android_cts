@@ -16,10 +16,6 @@
 
 package com.android.cts.verifier.streamquality;
 
-import com.android.cts.verifier.PassFailButtons;
-import com.android.cts.verifier.R;
-import com.android.cts.verifier.streamquality.StreamingVideoActivity.Stream;
-
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.DialogInterface;
@@ -36,6 +32,11 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.ViewGroup.LayoutParams;
 import android.widget.FrameLayout;
+
+import com.android.cts.verifier.PassFailButtons;
+import com.android.cts.verifier.R;
+import com.android.cts.verifier.UrlReplacement;
+import com.android.cts.verifier.streamquality.StreamingVideoActivity.Stream;
 
 import java.io.IOException;
 
@@ -56,7 +57,8 @@ public class PlayVideoActivity extends PassFailButtons.Activity
     private static final int FAIL_DIALOG_ID = 1;
 
     private final Runnable enablePassButton = new Runnable() {
-        @Override public void run() {
+        @Override
+        public void run() {
             setEnablePassButton(true);
         }
     };
@@ -66,9 +68,14 @@ public class PlayVideoActivity extends PassFailButtons.Activity
     private SurfaceView mSurfaceView;
     private FrameLayout mVideoFrame;
     private MediaPlayer mPlayer;
-    private Handler mHandler = new Handler();
+    private final Handler mHandler = new Handler();
     private int mVideoWidth;
     private int mVideoHeight;
+
+    /** Gets the id for the test. */
+    public static String getTestId(String code) {
+        return PlayVideoActivity.class.getName() + "_" + code;
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -78,8 +85,8 @@ public class PlayVideoActivity extends PassFailButtons.Activity
 
         setEnablePassButton(false);
 
-        mSurfaceView = (SurfaceView) findViewById(R.id.surface);
-        mVideoFrame = (FrameLayout) findViewById(R.id.videoframe);
+        mSurfaceView = findViewById(R.id.surface);
+        mVideoFrame = findViewById(R.id.videoframe);
         mHolder = mSurfaceView.getHolder();
         mHolder.addCallback(this);
         mHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
@@ -99,7 +106,7 @@ public class PlayVideoActivity extends PassFailButtons.Activity
         mPlayer.setOnErrorListener(this);
         mPlayer.setOnPreparedListener(this);
         try {
-            mPlayer.setDataSource(mStream.uri);
+            mPlayer.setDataSource(UrlReplacement.getFinalUri(mStream.uri));
         } catch (IOException e) {
             Log.e(TAG, "Unable to play video, setDataSource failed", e);
             showDialog(FAIL_DIALOG_ID);
@@ -110,30 +117,24 @@ public class PlayVideoActivity extends PassFailButtons.Activity
 
     @Override
     public Dialog onCreateDialog(int id, Bundle args) {
-        switch (id) {
-            case FAIL_DIALOG_ID:
-                return new AlertDialog.Builder(this)
-                        .setTitle(getString(R.string.sv_failed_title))
-                        .setMessage(getString(R.string.sv_failed_message))
-                        .setNegativeButton("Close", new OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                setTestResultAndFinish(false);
-                            }
-                        })
-                        .show();
-            default:
-                return super.onCreateDialog(id, args);
+        if (id == FAIL_DIALOG_ID) {
+            return new AlertDialog.Builder(this)
+                    .setTitle(getString(R.string.sv_failed_title))
+                    .setMessage(getString(R.string.sv_failed_message))
+                    .setNegativeButton("Close", new OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            setTestResultAndFinish(false);
+                        }
+                    })
+                    .show();
         }
+        return super.onCreateDialog(id, args);
     }
 
     @Override
     public String getTestId() {
         return getTestId(mStream.code);
-    }
-
-    public static String getTestId(String code) {
-        return PlayVideoActivity.class.getName() + "_" + code;
     }
 
     @Override
@@ -202,6 +203,11 @@ public class PlayVideoActivity extends PassFailButtons.Activity
         mSurfaceView.setLayoutParams(lp);
     }
 
-    @Override public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {}
-    @Override public void surfaceDestroyed(SurfaceHolder holder) {}
+    @Override
+    public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
+    }
+
+    @Override
+    public void surfaceDestroyed(SurfaceHolder holder) {
+    }
 }
