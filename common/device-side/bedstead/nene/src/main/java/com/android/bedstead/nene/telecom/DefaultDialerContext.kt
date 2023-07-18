@@ -13,17 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.android.bedstead.nene.telecom
 
-package com.android.bedstead.nene;
-
-import com.android.bedstead.nene.utils.ShellCommand;
+import com.android.bedstead.nene.utils.ShellCommand
 
 /**
  * A context that, when closed, will reset the default dialer override.
  */
-public final class DefaultDialerContext implements AutoCloseable {
-    @Override
-    public void close() throws Exception {
-        ShellCommand.builder("telecom set-default-dialer default").execute();
+class DefaultDialerContext : AutoCloseable {
+    override fun close() {
+        // TODO: Add validation
+        ShellCommand.builder("telecom set-default-dialer default").execute()
     }
 }

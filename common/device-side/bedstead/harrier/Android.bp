@@ -22,6 +22,7 @@ java_library_host {
     name: "HarrierCommon",
     srcs: [
         "common/src/main/java/**/*.java",
+        "common/src/main/java/**/*.kt",
     ],
 
     static_libs: [
@@ -40,6 +41,7 @@ android_library {
     name: "HarrierCommonAndroid",
     srcs: [
         "common/src/main/java/**/*.java",
+        "common/src/main/java/**/*.kt",
     ],
 
     static_libs: [
@@ -62,6 +64,7 @@ android_library {
 
     srcs: [
         "src/main/java/**/*.java",
+        "src/main/java/**/*.kt",
     ],
 
     static_libs: [
@@ -83,6 +86,7 @@ android_test {
     name: "HarrierTest",
     srcs: [
         "src/test/java/**/*.java",
+        "src/test/java/**/*.kt",
     ],
     test_suites: [
         "general-tests",

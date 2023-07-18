@@ -40,6 +40,7 @@ import com.android.bedstead.nene.roles.Roles;
 import com.android.bedstead.nene.services.Services;
 import com.android.bedstead.nene.settings.Settings;
 import com.android.bedstead.nene.systemproperties.SystemProperties;
+import com.android.bedstead.nene.telecom.Telecom;
 import com.android.bedstead.nene.ui.Ui;
 import com.android.bedstead.nene.users.Users;
 import com.android.bedstead.nene.wifi.Wifi;
@@ -109,7 +110,7 @@ public final class TestApis {
     /** Access Test APIs related to accessibility. */
     @Experimental
     public static Accessibility accessibility() {
-        return Accessibility.sInstance;
+        return Accessibility.INSTANCE;
     }
 
     /** Access Test APIs related to bluetooth. */
@@ -120,7 +121,7 @@ public final class TestApis {
 
     /** Access Test APIs related to wifi. */
     public static Wifi wifi() {
-        return Wifi.sInstance;
+        return Wifi.INSTANCE;
     }
 
     /** Access Test APIs related to input methods. */
@@ -171,7 +172,7 @@ public final class TestApis {
     /** Access Test APIs related to telecom */
     @Experimental
     public static Telecom telecom() {
-        return Telecom.sInstance;
+        return Telecom.INSTANCE;
     }
 
     /** Access Test APIs related to logcat */

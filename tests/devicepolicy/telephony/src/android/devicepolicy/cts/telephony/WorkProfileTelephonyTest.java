@@ -76,7 +76,7 @@ import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.RequireFeature;
 import com.android.bedstead.harrier.annotations.RequireRunOnInitialUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnWorkProfile;
-import com.android.bedstead.nene.DefaultDialerContext;
+import com.android.bedstead.nene.telecom.DefaultDialerContext;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.packages.ComponentReference;
 import com.android.bedstead.nene.permissions.PermissionContext;
@@ -356,7 +356,7 @@ public final class WorkProfileTelephonyTest {
         UserReference workProfileUser = sDeviceState.workProfile();
         try (TestAppInstance dialerApp = sDialerApp.install(workProfileUser);
              DefaultDialerContext dc = TestApis.telecom().setDefaultDialerForAllUsers(
-                     dialerApp.packageName());
+                     dialerApp.testApp().pkg());
              PermissionContext p = dialerApp.permissions().withPermission(CALL_PHONE).withAppOp(
                      OPSTR_CALL_PHONE)) {
 
@@ -394,7 +394,7 @@ public final class WorkProfileTelephonyTest {
              PermissionContext p = dialerApp.permissions().withPermission(CALL_PHONE).withAppOp(
                      OPSTR_CALL_PHONE);
              DefaultDialerContext dc = TestApis.telecom().setDefaultDialerForAllUsers(
-                     dialerApp.packageName())) {
+                     dialerApp.testApp().pkg())) {
 
             dialerApp.telecomManager().placeCall(Uri.fromParts("tel", mDestinationNumber, null),
                     null);
@@ -427,7 +427,7 @@ public final class WorkProfileTelephonyTest {
         try (TestAppInstance dialerApp = sDialerApp.install(workProfileUser);
              PermissionContext p = dialerApp.permissions().withPermission(READ_PHONE_STATE);
              DefaultDialerContext dc = TestApis.telecom().setDefaultDialerForAllUsers(
-                     dialerApp.packageName())) {
+                     dialerApp.testApp().pkg())) {
 
             List<PhoneAccountHandle> callCapableAccounts =
                     dialerApp.telecomManager().getCallCapablePhoneAccounts();
@@ -458,7 +458,7 @@ public final class WorkProfileTelephonyTest {
         try (TestAppInstance dialerApp = sDialerApp.install(primaryUser);
              PermissionContext p = dialerApp.permissions().withPermission(READ_PHONE_STATE);
              DefaultDialerContext dc = TestApis.telecom().setDefaultDialerForAllUsers(
-                     dialerApp.packageName())) {
+                     dialerApp.testApp().pkg())) {
 
             List<PhoneAccountHandle> callCapableAccounts =
                     dialerApp.telecomManager().getCallCapablePhoneAccounts();
@@ -486,7 +486,7 @@ public final class WorkProfileTelephonyTest {
                         ManagedSubscriptionsPolicy.TYPE_ALL_MANAGED_SUBSCRIPTIONS));
         try (TestAppInstance dialerApp = sDialerApp.install(sDeviceState.workProfile());
              DefaultDialerContext dc = TestApis.telecom().setDefaultDialerForAllUsers(
-                     dialerApp.packageName());
+                     dialerApp.testApp().pkg());
              PermissionContext p = dialerApp.permissions().withPermission(CALL_PHONE).withAppOp(
                      OPSTR_CALL_PHONE)) {
             // This will create a call log in work profile
@@ -528,7 +528,7 @@ public final class WorkProfileTelephonyTest {
                         ManagedSubscriptionsPolicy.TYPE_ALL_MANAGED_SUBSCRIPTIONS));
         try (TestAppInstance dialerApp = sDialerApp.install(sDeviceState.workProfile());
              DefaultDialerContext dc = TestApis.telecom().setDefaultDialerForAllUsers(
-                     dialerApp.packageName());
+                     dialerApp.testApp().pkg());
              PermissionContext p = dialerApp.permissions().withPermission(CALL_PHONE).withAppOp(
                      OPSTR_CALL_PHONE)) {
             // This will create a call log in work profile
