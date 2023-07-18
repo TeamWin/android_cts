@@ -85,7 +85,20 @@ public final class InlineUiBot extends UiBot {
 
     @Override
     public void selectDataset(String name) throws Exception {
-        selectSuggestion(name);
+        int retryCount = 0;
+        while (retryCount < MAX_UIOBJECT_RETRY_COUNT) {
+            try {
+                selectSuggestion(name);
+                break;
+            } catch (AssertionError ex) {
+                retryCount++;
+                if (retryCount == MAX_UIOBJECT_RETRY_COUNT) {
+                    throw ex;
+                } else {
+                    Thread.sleep(100);
+                }
+            }
+        }
     }
 
     @Override

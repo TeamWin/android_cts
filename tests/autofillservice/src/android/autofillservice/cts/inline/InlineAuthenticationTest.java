@@ -32,6 +32,7 @@ import android.autofillservice.cts.activities.AuthenticationActivity;
 import android.autofillservice.cts.commontests.AbstractLoginActivityTestCase;
 import android.autofillservice.cts.testcore.CannedFillResponse;
 import android.autofillservice.cts.testcore.CannedFillResponse.CannedDataset;
+import android.autofillservice.cts.testcore.DeviceUtils;
 import android.autofillservice.cts.testcore.Helper;
 import android.autofillservice.cts.testcore.InlineUiBot;
 import android.autofillservice.cts.testcore.InstrumentedAutoFillService;
@@ -162,13 +163,14 @@ public class InlineAuthenticationTest extends AbstractLoginActivityTestCase {
         AuthenticationActivity.setResultCode(RESULT_OK);
         // Select the dataset to start authentication
         mUiBot.selectDataset("Tap to auth!");
-        mUiBot.waitForIdle();
+        mUiBot.waitForIdleSync();
         // Authentication done, show real dataset
-        mUiBot.assertDatasets("Dataset");
+        DeviceUtils.Dataset.assertShowsInline();
+        mUiBot.waitForIdleSync();
 
         // Select the dataset and check the result is autofilled.
         mUiBot.selectDataset("Dataset");
-        mUiBot.waitForIdle();
+        mUiBot.waitForIdleSync();
         mUiBot.assertNoDatasets();
         mActivity.assertAutoFilled();
     }
