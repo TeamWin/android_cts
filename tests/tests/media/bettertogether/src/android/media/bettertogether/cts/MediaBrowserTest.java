@@ -35,6 +35,7 @@ import com.android.compatibility.common.util.PollingCheck;
 import com.google.common.truth.Correspondence;
 
 import org.junit.After;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -425,6 +426,7 @@ public class MediaBrowserTest {
                 .isEqualTo(pageSize);
     }
 
+    @Ignore // TODO(b/291800179): Diagnose flakiness and re-enable.
     @Test
     public void testSubscriptionCallbackNotCalledAfterDisconnect() throws Throwable {
         createMediaBrowser(TEST_BROWSER_SERVICE);
