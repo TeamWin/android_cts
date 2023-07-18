@@ -39,6 +39,7 @@ public final class CompatChangesValidConfigTest extends CompatChangeGatingTestCa
 
     private static final long RESTRICT_STORAGE_ACCESS_FRAMEWORK = 141600225L;
     private static final long ENFORCE_INTENTS_TO_MATCH_INTENT_FILTERS = 161252188;
+    private static final long SPLIT_AS_STREAM_RETURNS_SINGLE_EMPTY_STRING = 288845345L;
     private static final String FEATURE_WATCH = "android.hardware.type.watch";
 
     private static final Set<String> OVERRIDES_ALLOWLIST = ImmutableSet.of(
@@ -127,6 +128,10 @@ public final class CompatChangesValidConfigTest extends CompatChangeGatingTestCa
         // Exclude ENFORCE_INTENTS_TO_MATCH_INTENT_FILTERS
         // This feature is disabled retroactively in T, see b/274147456
         changes.removeIf(c -> c.changeId == ENFORCE_INTENTS_TO_MATCH_INTENT_FILTERS);
+
+        // Exclude SPLIT_AS_STREAM_RETURNS_SINGLE_EMPTY_STRING
+        // This feature is enabled only from U, see b/288845345
+        changes.removeIf(c -> c.changeId == SPLIT_AS_STREAM_RETURNS_SINGLE_EMPTY_STRING);
 
         return changes;
     }
