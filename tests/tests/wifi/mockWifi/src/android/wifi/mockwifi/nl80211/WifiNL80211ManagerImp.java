@@ -24,6 +24,7 @@ import android.net.wifi.nl80211.IInterfaceEventCallback;
 import android.net.wifi.nl80211.IWificond;
 import android.net.wifi.nl80211.IWificondEventCallback;
 import android.os.IBinder;
+import android.util.Log;
 import android.wifi.mockwifi.MockWifiModemService;
 
 import java.util.HashMap;
@@ -147,15 +148,16 @@ public class WifiNL80211ManagerImp extends IWificond.Stub {
     }
     // CHECKSTYLE:ON Generated code
 
-    public boolean configureSignalPoll(String ifaceName, int currentRssiDbm, int txBitrateMbps,
-            int rxBitrateMbps, int associationFrequencyMHz) {
+    public boolean configureClientInterfaceMock(String ifaceName,
+            IClientInterfaceImp.ClientInterfaceMock clientInterfaceMock) {
         IClientInterfaceImp clientInterface = mMockIClientInterfaces.get(ifaceName);
         if (clientInterface == null) return false;
-        mConfiguredMethodSet.add("signalPoll");
-        clientInterface.setRxBitrateMbps(rxBitrateMbps);
-        clientInterface.setTxBitrateMbps(txBitrateMbps);
-        clientInterface.setCurrentRssiDbm(currentRssiDbm);
-        clientInterface.setAssociationFrequencyMHz(associationFrequencyMHz);
+        Set<String> configuredMethods = clientInterface.setClientInterfaceMock(clientInterfaceMock);
+        if (configuredMethods.isEmpty()) {
+            Log.e(TAG, "No methods overridden in the mock ClientInterface!?");
+            return false;
+        }
+        mConfiguredMethodSet.addAll(configuredMethods);
         return true;
     }
 

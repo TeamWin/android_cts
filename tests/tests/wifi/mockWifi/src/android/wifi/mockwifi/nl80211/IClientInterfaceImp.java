@@ -19,46 +19,81 @@ package android.wifi.mockwifi.nl80211;
 import android.net.wifi.nl80211.IClientInterface;
 import android.net.wifi.nl80211.ISendMgmtFrameEvent;
 import android.net.wifi.nl80211.IWifiScannerImpl;
+import android.util.ArraySet;
 import android.util.Log;
+
+import java.util.Collections;
+import java.util.Set;
 
 public class IClientInterfaceImp extends IClientInterface.Stub {
     private static final String TAG = "IClientInterfaceImp";
 
     private IWifiScannerImp mIWifiScannerImp;
     private String mIfaceName = null;
+    private ClientInterfaceMock mClientInterfaceMock;
 
-    private int mCurrentRssiDbm = 0;
-    private int mTxBitrateMbps = 0;
-    private int mRxBitrateMbps = 0;
-    private int mAssociationFrequencyMHz = 0;
+    public interface ClientInterfaceMock {
+        default int[] signalPoll() {
+            return null;
+        }
+
+        default int[] getPacketCounters() {
+            return null;
+        }
+
+        default byte[] getMacAddress() {
+            return null;
+        }
+
+        default String getInterfaceName() {
+            return null;
+        }
+    }
 
     public IClientInterfaceImp(String ifaceName) {
         mIfaceName = ifaceName;
         mIWifiScannerImp = new IWifiScannerImp(ifaceName);
     }
 
-    public void setRxBitrateMbps(int rxBitrateMbps) {
-        mRxBitrateMbps = rxBitrateMbps;
+    private boolean isMethodOverridden(ClientInterfaceMock clientInterfaceMock,
+            String methodName) throws NoSuchMethodException {
+        return !clientInterfaceMock.getClass().getMethod(methodName).getDeclaringClass().equals(
+                ClientInterfaceMock.class);
     }
 
-    public void setTxBitrateMbps(int txBitrateMbps) {
-        mTxBitrateMbps = txBitrateMbps;
-    }
+    public Set<String> setClientInterfaceMock(ClientInterfaceMock clientInterfaceMock) {
+        Set<String> overriddenMethods = new ArraySet<>();
+        try {
+            if (isMethodOverridden(clientInterfaceMock, "signalPoll")) {
+                overriddenMethods.add("signalPoll");
+            }
+            if (isMethodOverridden(clientInterfaceMock, "getPacketCounters")) {
+                overriddenMethods.add("getPacketCounters");
+            }
+            if (isMethodOverridden(clientInterfaceMock, "getMacAddress")) {
+                overriddenMethods.add("getMacAddress");
+            }
+            if (isMethodOverridden(clientInterfaceMock, "getInterfaceName")) {
+                overriddenMethods.add("getInterfaceName");
+            }
+        } catch (NoSuchMethodException e) {
+            Log.e(TAG, "Reflection error: " + e);
+            return Collections.emptySet();
+        }
 
-    public void setCurrentRssiDbm(int currentRssiDbm) {
-        mCurrentRssiDbm = currentRssiDbm;
-    }
-
-    public void setAssociationFrequencyMHz(int associationFrequencyMHz) {
-        mAssociationFrequencyMHz = associationFrequencyMHz;
+        mClientInterfaceMock = clientInterfaceMock;
+        return overriddenMethods;
     }
 
     // Supported methods in IClientInterface.aidl
     @Override
     public int[] signalPoll() {
         Log.d(TAG, "signalPoll");
-        return new int[] {mCurrentRssiDbm, mTxBitrateMbps,
-                mAssociationFrequencyMHz, mRxBitrateMbps};
+        if (mClientInterfaceMock == null) {
+            Log.e(TAG, "signalPoll: null mock!");
+            return null;
+        }
+        return mClientInterfaceMock.signalPoll();
     }
 
     @Override
