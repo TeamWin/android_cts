@@ -63,6 +63,7 @@ import android.system.ErrnoException;
 import android.virtualdevice.cts.common.FakeAssociationRule;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.filters.FlakyTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.AdoptShellPermissionsRule;
@@ -618,6 +619,7 @@ public class VirtualSensorTest {
         assertThat(virtualSensor.getValue().getHandle()).isEqualTo(mVirtualSensor.getHandle());
     }
 
+    @FlakyTest(bugId = 291719810)
     @Test
     public void directConnection_memoryFile_injectEvents() throws Exception {
         setUpDirectChannel();
