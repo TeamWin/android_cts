@@ -83,6 +83,7 @@ import android.content.pm.ActivityInfo;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.ComponentInfo;
 import android.content.pm.IPackageManager;
+import android.content.pm.InstallSourceInfo;
 import android.content.pm.InstrumentationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageItemInfo;
@@ -105,6 +106,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.IBinder;
+import android.os.Process;
 import android.os.RemoteException;
 import android.os.SystemClock;
 import android.os.SystemProperties;
@@ -232,6 +234,8 @@ public class PackageManagerTest {
             + "CtsSyncAccountAccessStubs.apk";
     private static final String STUB_PACKAGE_SPLIT =
             SAMPLE_APK_BASE + "CtsSyncAccountAccessStubs_mdpi-v4.apk";
+    private static final String TEST_HW_NO_APP_STORAGE =
+            SAMPLE_APK_BASE + "HelloWorldNoAppStorage.apk";
 
     private static final int MAX_SAFE_LABEL_LENGTH = 1000;
 
@@ -2093,14 +2097,35 @@ public class PackageManagerTest {
                 "pm install -t " + apkPath).equals("Success\n");
     }
 
+    private void installPackage(String apkPath, String expectedResultStartsWith)
+            throws IOException {
+        String result = SystemUtil.runShellCommand("pm install -t -g " + apkPath);
+        assertTrue(result, result.startsWith(expectedResultStartsWith));
+    }
+
     private boolean addSplitDontKill(String packageName, String splitPath) {
         return SystemUtil.runShellCommand(
                 "pm install-streaming -p " + packageName + " --dont-kill -t " + splitPath).equals(
                 "Success\n");
     }
 
+    private void installPackageWithInstallerPkgName(String apkPath, String installerName)
+            throws IOException {
+        File file = new File(apkPath);
+        assertEquals("Success\n", SystemUtil.runShellCommand(
+                "pm install -i " + installerName + " -t -g " + file.getPath()));
+    }
+
     private void uninstallPackage(String packageName) {
         SystemUtil.runShellCommand("pm uninstall " + packageName);
+    }
+
+    private static boolean isAppInstalled(String packageName) throws IOException {
+        final String commandResult = SystemUtil.runShellCommand("pm list packages");
+        final int prefixLength = "package:".length();
+        return Arrays.stream(commandResult.split("\\r?\\n")).anyMatch(
+                line -> line.length() > prefixLength && line.substring(prefixLength).equals(
+                        packageName));
     }
 
     @Test
@@ -2589,7 +2614,7 @@ public class PackageManagerTest {
     }
 
     private static String runCommand(String cmd) throws Exception {
-        final Process process = Runtime.getRuntime().exec(cmd);
+        final var process = Runtime.getRuntime().exec(cmd);
         final StringBuilder output = new StringBuilder();
         BufferedReader reader =
                 new BufferedReader(new InputStreamReader(process.getInputStream()));
@@ -2619,6 +2644,100 @@ public class PackageManagerTest {
         }, DELETE_PACKAGES);
 
         assertEquals(true, mPackageManager.canUserUninstall(PACKAGE_NAME, CURRENT));
+    }
+
+    @Test
+    public void testAppWithNoAppStorageUpdateSuccess() throws Exception {
+        installPackage(TEST_HW_NO_APP_STORAGE);
+        assertTrue(isAppInstalled(HELLO_WORLD_PACKAGE_NAME));
+        // Updates that don't change value of NO_APP_DATA_STORAGE property are allowed.
+        installPackage(TEST_HW_NO_APP_STORAGE);
+        assertTrue(isAppInstalled(HELLO_WORLD_PACKAGE_NAME));
+    }
+
+    @Test
+    public void testAppUpdateAddsNoAppDataStorageProperty() throws Exception {
+        installPackage(HELLO_WORLD_APK);
+        assertTrue(isAppInstalled(HELLO_WORLD_PACKAGE_NAME));
+        installPackage(
+                TEST_HW_NO_APP_STORAGE,
+                "Failure [INSTALL_FAILED_UPDATE_INCOMPATIBLE: Update "
+                        + "attempted to change value of "
+                        + "android.internal.PROPERTY_NO_APP_DATA_STORAGE");
+    }
+
+    @Test
+    public void testAppUpdateRemovesNoAppDataStorageProperty() throws Exception {
+        installPackage(TEST_HW_NO_APP_STORAGE);
+        assertTrue(isAppInstalled(HELLO_WORLD_PACKAGE_NAME));
+        installPackage(
+                HELLO_WORLD_APK,
+                "Failure [INSTALL_FAILED_UPDATE_INCOMPATIBLE: Update "
+                        + "attempted to change value of "
+                        + "android.internal.PROPERTY_NO_APP_DATA_STORAGE");
+    }
+
+    @Test
+    public void testNoAppDataStoragePropertyCanChangeAfterUninstall() throws Exception {
+        installPackage(TEST_HW_NO_APP_STORAGE);
+        assertTrue(isAppInstalled(HELLO_WORLD_PACKAGE_NAME));
+        uninstallPackage(HELLO_WORLD_PACKAGE_NAME);
+        // After app is uninstalled new install can change the value of the property.
+        installPackage(HELLO_WORLD_APK);
+        assertTrue(isAppInstalled(HELLO_WORLD_PACKAGE_NAME));
+    }
+
+    @Test
+    public void testQuerySdkSandboxPackageName() throws Exception {
+        final PackageManager pm = mPackageManager;
+        final String name = pm.getSdkSandboxPackageName();
+        assertNotNull(name);
+        final ApplicationInfo info = pm.getApplicationInfo(
+                name, PackageManager.ApplicationInfoFlags.of(PackageManager.MATCH_SYSTEM_ONLY));
+        assertEquals(ApplicationInfo.FLAG_SYSTEM, info.flags & ApplicationInfo.FLAG_SYSTEM);
+        assertTrue(info.sourceDir.startsWith("/apex/com.android.adservices"));
+    }
+
+    @Test
+    public void testGetPackagesForUid_sdkSandboxUid() throws Exception {
+        final PackageManager pm = mPackageManager;
+        final String[] pkgs = pm.getPackagesForUid(Process.toSdkSandboxUid(10239));
+        assertEquals(1, pkgs.length);
+        assertEquals(pm.getSdkSandboxPackageName(), pkgs[0]);
+    }
+
+    @Test
+    public void testGetNameForUid_sdkSandboxUid() throws Exception {
+        final PackageManager pm = mPackageManager;
+        final String pkgName = pm.getNameForUid(Process.toSdkSandboxUid(11543));
+        assertEquals(pm.getSdkSandboxPackageName(), pkgName);
+    }
+
+    @Test
+    public void testGetNamesForUids_sdkSandboxUids() throws Exception {
+        final PackageManager pm = mPackageManager;
+        final int[] uids = new int[]{Process.toSdkSandboxUid(10101)};
+        final String[] names = pm.getNamesForUids(uids);
+        assertEquals(1, names.length);
+        assertEquals(pm.getSdkSandboxPackageName(), names[0]);
+    }
+
+    @Test
+    public void testShellInitiatingPkgName() throws Exception {
+        installPackage(HELLO_WORLD_APK);
+        InstallSourceInfo installSourceInfo = mPackageManager
+                .getInstallSourceInfo(HELLO_WORLD_PACKAGE_NAME);
+        assertEquals(SHELL_PACKAGE_NAME, installSourceInfo.getInitiatingPackageName());
+        assertNull(installSourceInfo.getInstallingPackageName());
+    }
+
+    @Test
+    public void testShellInitiatingPkgNameSetInstallerPkgName() throws Exception {
+        installPackageWithInstallerPkgName(HELLO_WORLD_APK, PACKAGE_NAME);
+        InstallSourceInfo installSourceInfo = mPackageManager
+                .getInstallSourceInfo(HELLO_WORLD_PACKAGE_NAME);
+        assertEquals(SHELL_PACKAGE_NAME, installSourceInfo.getInitiatingPackageName());
+        assertEquals(PACKAGE_NAME, installSourceInfo.getInstallingPackageName());
     }
 
     private void sendIntent(IntentSender intentSender) throws IntentSender.SendIntentException {
