@@ -21,6 +21,7 @@ import android.app.Instrumentation;
 import android.app.UiAutomation;
 import android.graphics.Point;
 import android.graphics.Rect;
+import android.graphics.RectF;
 import android.os.IBinder;
 import android.os.SystemClock;
 import android.os.SystemProperties;
@@ -395,9 +396,17 @@ public class CtsWindowInfoUtils {
         Rect bounds = new Rect();
         Predicate<WindowInfo> predicate = windowInfo -> {
             if (!windowInfo.bounds.isEmpty()) {
-                bounds.set(windowInfo.bounds);
+                if (!windowInfo.transform.isIdentity()) {
+                    RectF rectF = new RectF(windowInfo.bounds);
+                    windowInfo.transform.mapRect(rectF);
+                    bounds.set((int) rectF.left, (int) rectF.top, (int) rectF.right,
+                            (int) rectF.bottom);
+                } else {
+                    bounds.set(windowInfo.bounds);
+                }
                 return true;
             }
+
             return false;
         };
 
