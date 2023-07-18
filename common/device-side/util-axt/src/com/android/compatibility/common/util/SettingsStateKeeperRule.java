@@ -34,6 +34,11 @@ public class SettingsStateKeeperRule extends StateKeeperRule<String> {
      * @param key prefence key.
      */
     public SettingsStateKeeperRule(@NonNull Context context, @NonNull String key) {
-        super(new SettingsStateManager(context, SettingsUtils.NAMESPACE_SECURE, key));
+        this(context, SettingsUtils.NAMESPACE_SECURE, key);
+    }
+
+    public SettingsStateKeeperRule(@NonNull Context context,
+            @NonNull String namespace, @NonNull String key) {
+        super(new SettingsStateManager(context, namespace, key));
     }
 }
