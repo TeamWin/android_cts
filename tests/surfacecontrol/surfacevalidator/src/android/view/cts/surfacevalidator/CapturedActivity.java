@@ -62,6 +62,8 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 public class CapturedActivity extends Activity {
+    public static final String STORAGE_DIR = "CtsSurfaceControl";
+
     public static class TestResult {
         public int passFrames;
         public int failFrames;
@@ -290,6 +292,7 @@ public class CapturedActivity extends Activity {
         if (failFrames.size() == 0) return;
 
         String directoryName = Environment.getExternalStorageDirectory()
+                + "/" + STORAGE_DIR
                 + "/" + getClass().getSimpleName()
                 + "/" + name.getMethodName();
         File testDirectory = new File(directoryName);

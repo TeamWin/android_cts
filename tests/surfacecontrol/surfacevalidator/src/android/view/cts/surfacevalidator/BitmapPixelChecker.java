@@ -18,6 +18,7 @@ package android.view.cts.surfacevalidator;
 
 import static android.view.WindowInsets.Type.displayCutout;
 import static android.view.WindowInsets.Type.systemBars;
+import static android.view.cts.surfacevalidator.CapturedActivity.STORAGE_DIR;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -116,6 +117,7 @@ public class BitmapPixelChecker {
 
     private static void saveFailureCaptures(Bitmap failFrame, Class<?> clazz, TestName name) {
         String directoryName = Environment.getExternalStorageDirectory()
+                + "/" + STORAGE_DIR
                 + "/" + clazz.getSimpleName()
                 + "/" + name.getMethodName();
         File testDirectory = new File(directoryName);
