@@ -186,17 +186,18 @@ public class MultiTranscoderPerfTest extends MultiCodecPerfTestBase {
                 for (int i = 0; i < (maxInstances / 2) - 1; i++) {
                     transcodeList.add(
                             new Transcode(mEncoderPair.first, testFiles1080p, mDecoderPair.second,
-                                    mEncoderPair.second, mIsAsync));
+                                    mEncoderPair.second, mIsAsync, useHighBitDepth));
                 }
-                transcodeList
-                        .add(new Transcode(mEncoderPair.first, mTestFiles.get(mDecoderPair.first),
-                                mDecoderPair.second, mEncoderPair.second, mIsAsync));
+                transcodeList.add(
+                        new Transcode(mEncoderPair.first, mTestFiles.get(mDecoderPair.first),
+                                mDecoderPair.second, mEncoderPair.second, mIsAsync,
+                                useHighBitDepth));
             } else {
                 for (int i = 0; i < maxInstances / 2; i++) {
-                    transcodeList
-                            .add(new Transcode(mEncoderPair.first,
-                                    mTestFiles.get(mDecoderPair.first),
-                                    mDecoderPair.second, mEncoderPair.second, mIsAsync));
+                    transcodeList.add(
+                            new Transcode(mEncoderPair.first, mTestFiles.get(mDecoderPair.first),
+                                    mDecoderPair.second, mEncoderPair.second, mIsAsync,
+                                    useHighBitDepth));
                 }
             }
             List<Future<Double>> decodeResultList = null;
