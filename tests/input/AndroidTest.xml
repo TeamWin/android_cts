@@ -38,5 +38,6 @@
     <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
         <!-- TODO(b/285554134): Remove once underlying issue is fixed-->
         <option name="run-command" value="wm set-ignore-orientation-request false" />
+        <option name="run-command" value="wm set-letterbox-style --isEducationEnabled false" />
     </target_preparer>
 </configuration>
