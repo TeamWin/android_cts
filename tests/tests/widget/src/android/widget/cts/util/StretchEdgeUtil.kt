@@ -186,6 +186,13 @@ open class NoReleaseEdgeEffect(context: Context) : EdgeEffect(context) {
 
     var onReleaseCalled = false
 
+    var onPullDistanceCalled = false
+
+    override fun onPullDistance(deltaDistance: Float, displacement: Float): Float {
+        onPullDistanceCalled = true
+        return super.onPullDistance(deltaDistance, displacement)
+    }
+
     override fun onRelease() {
         onReleaseCalled = true
         if (!pauseRelease) {
