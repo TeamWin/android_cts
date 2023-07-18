@@ -38,18 +38,11 @@ android_test_helper_app {
         "vts",
         "general-tests",
     ],
-    java_resources: [":zip_validation_test_jar_named_test"],
+    java_resources: [":zip_validation_test_jar"],
 }
 
 java_library {
     name: "zip_validation_test_jar",
     java_resource_dirs: ["test-jar"],
-}
-
-// temporary genrule to rename the output jar file until b/285843207 is fixed
-java_genrule {
-    name: "zip_validation_test_jar_named_test",
-    srcs: [":zip_validation_test_jar"],
-    out: ["test.jar"],
-    cmd: "cp $(in) $(out)",
+    stem: "test",
 }
