@@ -15,7 +15,7 @@
 -->
 <configuration description="Config for CTS Sseccomp host test cases">
     <option name="test-suite-tag" value="cts" />
-    <option name="config-descriptor:metadata" key="component" value="misc" />
+    <option name="config-descriptor:metadata" key="component" value="security" />
     <!-- Run in instant_app mode as well, since application zygotes are available
 	 even in that context -->
     <option name="config-descriptor:metadata" key="parameter" value="instant_app" />
