@@ -526,7 +526,7 @@ def find_circle(img, img_name, min_area, color):
         logging.debug('Circlish value: %.3f', circlish)
         logging.debug('Location: %.1f x %.1f', circle['x'], circle['y'])
         logging.debug('Radius: %.3f', circle['r'])
-        logging.debug('Circle center position wrt to image center:%.3fx%.3f',
+        logging.debug('Circle center position wrt to image center: %.3fx%.3f',
                       circle['x_offset'], circle['y_offset'])
         num_circles += 1
         # if more than one circle found, break
