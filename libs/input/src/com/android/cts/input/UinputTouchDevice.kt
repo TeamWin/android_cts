@@ -146,12 +146,27 @@ class UinputTouchDevice(
         const val ABS_MT_POSITION_Y = 0x36
         const val ABS_MT_TOOL_TYPE = 0x37
         const val ABS_MT_TRACKING_ID = 0x39
-        const val BTN_TOOL_FINGER = 0x145
         const val BTN_TOUCH = 0x14a
+        const val BTN_TOOL_FINGER = 0x145
+        const val BTN_TOOL_DOUBLETAP = 0x14d
+        const val BTN_TOOL_TRIPLETAP = 0x14e
+        const val BTN_TOOL_QUADTAP = 0x14f
+        const val BTN_TOOL_QUINTTAP = 0x148
         const val SYN_REPORT = 0
         const val MT_TOOL_FINGER = 0
         const val MT_TOOL_PEN = 1
         const val MT_TOOL_PALM = 2
         const val INVALID_TRACKING_ID = -1
+
+        fun toolBtnForFingerCount(numFingers: Int): Int {
+            return when (numFingers) {
+                1 -> BTN_TOOL_FINGER
+                2 -> BTN_TOOL_DOUBLETAP
+                3 -> BTN_TOOL_TRIPLETAP
+                4 -> BTN_TOOL_QUADTAP
+                5 -> BTN_TOOL_QUINTTAP
+                else -> throw IllegalArgumentException("Number of fingers must be between 1 and 5")
+            }
+        }
     }
 }
