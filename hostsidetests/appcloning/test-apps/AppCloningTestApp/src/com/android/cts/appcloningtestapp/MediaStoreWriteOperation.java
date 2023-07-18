@@ -23,7 +23,6 @@ import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.provider.MediaStore;
-import android.util.Log;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -77,7 +76,6 @@ public class MediaStoreWriteOperation {
         Uri newImageUri =
                 createImageFileToMediaStoreReturnUri(context, displayName, bitmap, imageCollection);
         if (newImageUri != null) {
-            Log.d("MediaStoreWriteOp", "Uri: " + newImageUri);
             String[] projection = new String[]{
                     MediaStore.Images.Media.DISPLAY_NAME,
             };
@@ -89,11 +87,8 @@ public class MediaStoreWriteOperation {
             if (cursor.moveToNext()) {
                 // Get values of columns for a given image.
                 String displayNameActual = cursor.getString(displayNameColumn);
-                Log.d("MediaStoreWriteOp", "DisplayNameA: " + displayNameActual);
-                Log.d("MediaStoreWriteOp", "DisplayName: " + displayName);
                 return displayNameActual.contains(displayName);
             }
-            Log.d("MediaStoreWriteOp", "Uri: " + newImageUri + " not found");
         }
         return false;
     }

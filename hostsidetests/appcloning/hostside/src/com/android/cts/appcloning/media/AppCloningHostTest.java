@@ -291,12 +291,9 @@ public class AppCloningHostTest extends AppCloningBaseHostTest {
      * specified as `content://10@media/external/images/media/`, hinting that it should go in the
      * storage of user 10. However, since clonedProfile shares Media with its parent, the media
      * gets saved successfully in user 0.
-     * We also include the reverse test here i.e. inserting a file with uri as
-     * `content://0@media/external/images/media/` from a cloned app process. The content will be
-     * saved in cloned user in this case.
      */
     @Test
-    public void testMediaCreationWithContentOwnerSpecified() throws Exception {
+    public void testMediaCreationWithContentOwnerSpecifiedAsCloneUser() throws Exception {
         assumeTrue(isAtLeastU(sDevice));
 
         int currentUserId = getCurrentUserId();
@@ -320,6 +317,22 @@ public class AppCloningHostTest extends AppCloningBaseHostTest {
 
         runDeviceTestAsUserInPkgA("testMediaStoreManager_verifyClonedUserImageSavedInOwnerUserOnly",
                 currentUserId, args);
+    }
+
+    /**
+     * In this test we verify that apps can create URIs with content owner appended successfully,
+     * with clonedUser present.
+     * For ex: inserting a file with uri as `content://0@media/external/images/media/`
+     * from a cloned app process. The content will be saved in cloned user in this case.
+     */
+    @Test
+    public void testMediaCreationWithContentOwnerSpecifiedAsParentUser() throws Exception {
+        assumeTrue(isAtLeastV(sDevice));
+
+        int currentUserId = getCurrentUserId();
+
+        // Install the app in owner user space and cloned user space
+        installPackage(APP_A, "--user all");
 
         // Try to save image from user 10 by specifying user 0 as content owner
         Map<String, String> clonedArgs = new HashMap<>();

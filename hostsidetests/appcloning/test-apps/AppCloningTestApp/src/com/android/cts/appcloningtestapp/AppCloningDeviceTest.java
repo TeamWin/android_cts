@@ -242,7 +242,8 @@ public class AppCloningDeviceTest {
         Uri imageCollection = (Build.VERSION.SDK_INT >= ANDROID_Q)
                 ? MediaStore.Images.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY) :
                 MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
-        // Add contentOwner to the uri, so that it becomes content://10@media/external/images/media/
+        // Add contentOwner to the uri, so that it becomes
+        // content://<content-owner>@media/external/images/media/
         Uri.Builder builder = imageCollection.buildUpon();
         builder.encodedAuthority("" + contentOwner + "@" + imageCollection.getEncodedAuthority());
         imageCollection = builder.build();
