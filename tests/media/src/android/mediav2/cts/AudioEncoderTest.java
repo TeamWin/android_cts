@@ -129,11 +129,10 @@ public class AudioEncoderTest extends CodecEncoderTestBase {
                 {MediaFormat.MIMETYPE_AUDIO_AMR_WB, new int[]{6600, 8850, 12650, 14250, 15850,
                         18250, 19850, 23050, 23850}, new int[]{16000}, new int[]{1},
                         AudioFormat.ENCODING_PCM_16BIT},
-                /* TODO(169310292) */
-                {MediaFormat.MIMETYPE_AUDIO_FLAC, new int[]{/* 0, 1, 2, */ 3, 4, 5, 6, 7, 8},
+                {MediaFormat.MIMETYPE_AUDIO_FLAC, new int[]{0, 1, 2, 3, 4, 5, 6, 7, 8},
                         new int[]{8000, 16000, 32000, 48000, 96000, 192000}, new int[]{1, 2},
                         AudioFormat.ENCODING_PCM_16BIT},
-                {MediaFormat.MIMETYPE_AUDIO_FLAC, new int[]{/* 0, 1, 2, */ 3, 4, 5, 6, 7, 8},
+                {MediaFormat.MIMETYPE_AUDIO_FLAC, new int[]{0, 1, 2, 3, 4, 5, 6, 7, 8},
                         new int[]{8000, 16000, 32000, 48000, 96000, 192000}, new int[]{1, 2},
                         AudioFormat.ENCODING_PCM_FLOAT},
         }));
