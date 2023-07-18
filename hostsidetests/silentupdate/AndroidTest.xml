@@ -27,6 +27,17 @@
     <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
         <option name="run-command" value="pm uninstall com.android.cts.install.lib.testapp.A" />
         <option name="teardown-command" value="pm uninstall com.android.cts.install.lib.testapp.A" />
+        <!-- enable/disable verifier_engprod -->
+        <option name="run-command" value="settings put global verifier_engprod 1" />
+        <option name="teardown-command" value="settings put global verifier_engprod 0"/>
+        <!-- Unlock screen -->
+        <option name="run-command" value="input keyevent KEYCODE_WAKEUP" />
+        <!-- Dismiss keyguard, in case it's set as "Swipe to unlock" -->
+        <option name="run-command" value="wm dismiss-keyguard" />
+        <!-- Collapse notifications -->
+        <option name="run-command" value="cmd statusbar collapse" />
+        <!-- dismiss all system dialogs before launch test -->
+        <option name="run-command" value="am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS" />
     </target_preparer>
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.FilePusher">
         <!-- Push the test APK so we can test self-update -->
