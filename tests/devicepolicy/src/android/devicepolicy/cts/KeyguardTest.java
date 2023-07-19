@@ -23,6 +23,7 @@ import static android.app.admin.DevicePolicyManager.KEYGUARD_DISABLE_SECURE_CAME
 import static android.app.admin.DevicePolicyManager.KEYGUARD_DISABLE_SECURE_NOTIFICATIONS;
 import static android.app.admin.DevicePolicyManager.KEYGUARD_DISABLE_TRUST_AGENTS;
 import static android.app.admin.DevicePolicyManager.KEYGUARD_DISABLE_UNREDACTED_NOTIFICATIONS;
+import static android.content.pm.PackageManager.FEATURE_SECURE_LOCK_SCREEN;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -34,6 +35,7 @@ import android.os.PersistableBundle;
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.Postsubmit;
+import com.android.bedstead.harrier.annotations.RequireFeature;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
@@ -488,6 +490,7 @@ public final class KeyguardTest {
         }
     }
 
+    @RequireFeature(FEATURE_SECURE_LOCK_SCREEN)
     @CannotSetPolicyTest(policy = TrustAgentConfiguration.class,
             includeNonDeviceAdminStates = false)
     @Postsubmit(reason = "New test")
@@ -498,6 +501,7 @@ public final class KeyguardTest {
                         sDeviceState.dpc().componentName(), TRUST_AGENT, CONFIGURATION));
     }
 
+    @RequireFeature(FEATURE_SECURE_LOCK_SCREEN)
     @PolicyAppliesTest(policy = TrustAgentConfiguration.class)
     @Postsubmit(reason = "New test")
     @ApiTest(apis = {"android.app.admin.DevicePolicyManager#setTrustAgentConfiguration",
@@ -522,6 +526,7 @@ public final class KeyguardTest {
         }
     }
 
+    @RequireFeature(FEATURE_SECURE_LOCK_SCREEN)
     @PolicyDoesNotApplyTest(policy = TrustAgentConfiguration.class)
     @Postsubmit(reason = "New test")
     @ApiTest(apis = {"android.app.admin.DevicePolicyManager#setTrustAgentConfiguration",
@@ -546,6 +551,7 @@ public final class KeyguardTest {
         }
     }
 
+    @RequireFeature(FEATURE_SECURE_LOCK_SCREEN)
     @CanSetPolicyTest(policy = TrustAgentConfiguration.class)
     @Postsubmit(reason = "New test")
     public void setTrustAgentConfiguration_veryLongPackage_throws() {
@@ -557,6 +563,7 @@ public final class KeyguardTest {
                         sDeviceState.dpc().componentName(), badAgent, CONFIGURATION));
     }
 
+    @RequireFeature(FEATURE_SECURE_LOCK_SCREEN)
     @CanSetPolicyTest(policy = TrustAgentConfiguration.class)
     @Postsubmit(reason = "New test")
     public void setTrustAgentConfiguration_veryLongClassName_throws() {
@@ -568,6 +575,7 @@ public final class KeyguardTest {
                         sDeviceState.dpc().componentName(), badAgent, CONFIGURATION));
     }
 
+    @RequireFeature(FEATURE_SECURE_LOCK_SCREEN)
     @CanSetPolicyTest(policy = TrustAgentConfiguration.class)
     @Postsubmit(reason = "New test")
     public void setTrustAgentConfiguration_veryLongConfigValue_throws() {
@@ -579,6 +587,7 @@ public final class KeyguardTest {
                         sDeviceState.dpc().componentName(), TRUST_AGENT, badConfig));
     }
 
+    @RequireFeature(FEATURE_SECURE_LOCK_SCREEN)
     @CanSetPolicyTest(policy = TrustAgentConfiguration.class)
     @Postsubmit(reason = "New test")
     public void setTrustAgentConfiguration_veryLongConfigKey_throws() {
@@ -590,6 +599,7 @@ public final class KeyguardTest {
                         sDeviceState.dpc().componentName(), TRUST_AGENT, badConfig));
     }
 
+    @RequireFeature(FEATURE_SECURE_LOCK_SCREEN)
     @CanSetPolicyTest(policy = TrustAgentConfiguration.class)
     @Postsubmit(reason = "New test")
     public void setTrustAgentConfiguration_veryLongConfigValueInArray_throws() {
@@ -601,6 +611,7 @@ public final class KeyguardTest {
                         sDeviceState.dpc().componentName(), TRUST_AGENT, badConfig));
     }
 
+    @RequireFeature(FEATURE_SECURE_LOCK_SCREEN)
     @CanSetPolicyTest(policy = TrustAgentConfiguration.class)
     @Postsubmit(reason = "New test")
     public void setTrustAgentConfiguration_veryLongConfigValueInNestedBundle_throws() {
