@@ -5727,7 +5727,8 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="audio_loopback_test_btn">Test</string>
     <string name="audio_loopback_results_text">Results...</string>
     <string name="audio_loopback_test_all_paths">Please test all supported paths.</string>
-
+    <string name="audio_loopback_test_not_required">Test not required for this device.</string>
+    <string name="audio_loopback_test_non_handheld">This device is not a handheld. Test can pass.</string>
     <string name="audio_loopback_speakermicpath_instructions">Place the DUT flat on a table
     in a quiet room. Press the Start button and allow the test to proceed.</string>
 
@@ -5739,6 +5740,18 @@ You should be prompted to select credentials; choose the ones you just installed
         button and allow the test to proceed.</string>
 
     <string name="audio_loopback_failure">FAILURE - Could not allocate analyzer thread.</string>
+    <string name="audio_loopback_automobile">Automobile:</string>
+    <string name="audio_loopback_handheld">Handheld:</string>
+    <string name="audio_loopback_tv">TV:</string>
+    <string name="audio_loopback_watch">Watch:</string>
+    <string name="audio_loopback_mmapexclusive">MMAP Exclusive:</string>
+    <string name="audio_loopback_mmap">MMAP:</string>
+    <string name="audio_loopback_mcp">MPC:</string>
+    <string name="audio_loopback_lowlatency">Low Latency:</string>
+    <string name="audio_loopback_proaudio">Pro Audio:</string>
+    <string name="audio_loopback_speakermic">Speaker/Mic</string>
+    <string name="audio_loopback_headsetjack">Headset Jack</string>
+    <string name="audio_loopback_usb">USB</string>
 
     <!-- result codes -->
     <string name="audio_loopback_resultcode_none">Result: None.</string>

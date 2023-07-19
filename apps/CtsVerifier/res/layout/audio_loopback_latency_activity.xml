@@ -74,46 +74,36 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="match_parent"
-                        android:text="Pro Audio:"/>
+                        android:text="@string/audio_loopback_proaudio"/>
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="match_parent"
-                        android:text=""
+                        android:textStyle="bold"
                         android:id="@+id/audio_loopback_pro_audio"/>
-                </LinearLayout>
-
-                <LinearLayout
-                    android:orientation="horizontal"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content">
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="match_parent"
-                        android:text="Low Latency:"/>
+                        android:layout_marginStart="5dp"
+                        android:text="@string/audio_loopback_lowlatency"/>
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="match_parent"
-                        android:text=""
+                        android:textStyle="bold"
                         android:id="@+id/audio_loopback_low_latency"/>
-                </LinearLayout>
-
-                <LinearLayout
-                    android:orientation="horizontal"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content">
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="match_parent"
-                        android:text="Media Performance Class:"/>
+                        android:layout_marginStart="5dp"
+                        android:text="@string/audio_loopback_mcp"/>
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="match_parent"
-                        android:text=""
+                        android:textStyle="bold"
                         android:id="@+id/audio_loopback_mpc"/>
                 </LinearLayout>
 
@@ -125,13 +115,25 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="match_parent"
-                        android:text="MMAP Supported:"/>
+                        android:text="@string/audio_loopback_mmap"/>
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="match_parent"
-                        android:text=""
+                        android:textStyle="bold"
                         android:id="@+id/audio_loopback_mmap"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:layout_marginStart="5dp"
+                        android:text="@string/audio_loopback_mmapexclusive"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:textStyle="bold"
+                        android:id="@+id/audio_loopback_mmap_exclusive"/>
                 </LinearLayout>
 
                 <LinearLayout
@@ -142,21 +144,57 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="match_parent"
-                        android:text="MMAP Exclusive Supported:"/>
+                        android:text="@string/audio_loopback_watch"/>
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="match_parent"
-                        android:text=""
-                        android:id="@+id/audio_loopback_mmap_exclusive"/>
+                        android:textStyle="bold"
+                        android:id="@+id/audio_loopback_is_watch"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:layout_marginStart="5dp"
+                        android:text="@string/audio_loopback_tv"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:textStyle="bold"
+                        android:id="@+id/audio_loopback_is_TV"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:layout_marginStart="5dp"
+                        android:text="@string/audio_loopback_automobile"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:textStyle="bold"
+                        android:id="@+id/audio_loopback_is_automobile"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:layout_marginStart="5dp"
+                        android:text="@string/audio_loopback_handheld"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:textStyle="bold"
+                        android:id="@+id/audio_loopback_is_handheld"/>
                 </LinearLayout>
 
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@string/audio_loopback_test_all_paths"
+                    android:id="@+id/audio_loopback_instructions"
                     android:textSize="20dp"
-                    android:gravity="center" />
+                    android:gravity="center"/>
 
                 <!-- Speaker/Mic -->
                 <LinearLayout
@@ -167,7 +205,7 @@
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Speaker/Mic"
+                        android:text="@string/audio_loopback_speakermic"
                         android:textSize="18sp"/>
 
                     <LinearLayout
@@ -201,7 +239,7 @@
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Headset Jack"
+                        android:text="@string/audio_loopback_headsetjack"
                         android:textSize="18sp"/>
 
                     <LinearLayout
@@ -234,7 +272,7 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="USB"
+                    android:text="@string/audio_loopback_usb"
                     android:textSize="18sp"/>
 
                 <LinearLayout
