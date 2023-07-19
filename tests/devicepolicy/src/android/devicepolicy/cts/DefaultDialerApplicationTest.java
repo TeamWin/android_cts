@@ -40,6 +40,7 @@ import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyDoesNotApplyTest;
 import com.android.bedstead.harrier.policies.DefaultDialerApplication;
 import com.android.bedstead.nene.TestApis;
+import com.android.bedstead.nene.utils.Retry;
 import com.android.bedstead.remotedpc.RemotePolicyManager;
 import com.android.bedstead.testapp.TestApp;
 import com.android.bedstead.testapp.TestAppInstance;
@@ -85,11 +86,11 @@ public final class DefaultDialerApplicationTest {
                 || (mRoleManager != null && mRoleManager.isRoleAvailable(RoleManager.ROLE_DIALER)));
         String previousDialerAppName = getDefaultDialerPackage();
         try (TestAppInstance dialerApp = sDialerApp.install()) {
-            mDpm.setDefaultDialerApplication(dialerApp.packageName());
+            setDefaultDialerApplication(mDpm, dialerApp.packageName());
 
             assertThat(getDefaultDialerPackage()).isEqualTo(dialerApp.packageName());
         } finally {
-            mDpm.setDefaultDialerApplication(previousDialerAppName);
+            setDefaultDialerApplication(mDpm, previousDialerAppName);
         }
     }
 
@@ -103,11 +104,11 @@ public final class DefaultDialerApplicationTest {
         String previousDialerAppInDpc = sDeviceState.dpc().telecomManager()
                 .getDefaultDialerPackage();
         try (TestAppInstance dialerApp = sDialerApp.install(sDeviceState.dpc().user())) {
-            mDpm.setDefaultDialerApplication(dialerApp.packageName());
+            setDefaultDialerApplication(mDpm, dialerApp.packageName());
             // Make sure the default dialer in the test user is unchanged.
             assertThat(getDefaultDialerPackage()).isEqualTo(previousDialerAppInTest);
         } finally {
-            mDpm.setDefaultDialerApplication(previousDialerAppInDpc);
+            setDefaultDialerApplication(mDpm, previousDialerAppInDpc);
         }
     }
 
@@ -121,10 +122,10 @@ public final class DefaultDialerApplicationTest {
 
         try {
             assertThrows(IllegalArgumentException.class, () ->
-                    mDpm.setDefaultDialerApplication(FAKE_DIALER_APP_NAME));
+                    setDefaultDialerApplication(mDpm, FAKE_DIALER_APP_NAME));
             assertThat(getDefaultDialerPackage()).isEqualTo(previousDialerAppName);
         } finally {
-            mDpm.setDefaultDialerApplication(previousDialerAppName);
+            setDefaultDialerApplication(mDpm, previousDialerAppName);
         }
     }
 
@@ -137,15 +138,33 @@ public final class DefaultDialerApplicationTest {
                         || !mRoleManager.isRoleAvailable(RoleManager.ROLE_DIALER)));
         String previousDialerAppName = getDefaultDialerPackage();
         try (TestAppInstance dialerApp = sDialerApp.install()) {
-            mDpm.setDefaultDialerApplication(dialerApp.packageName());
+            setDefaultDialerApplication(mDpm, dialerApp.packageName());
 
             assertThat(getDefaultDialerPackage()).isEqualTo(previousDialerAppName);
         } finally {
-            mDpm.setDefaultDialerApplication(previousDialerAppName);
+            setDefaultDialerApplication(mDpm, previousDialerAppName);
         }
     }
 
     private String getDefaultDialerPackage() {
         return sContext.getSystemService(TelecomManager.class).getDefaultDialerPackage();
+    }
+
+    private void setDefaultDialerApplication(RemoteDevicePolicyManager dpm, String packageName) {
+        Retry.logic(() -> {
+            TestApis.logcat().clear();
+
+            dpm.setDefaultDialerApplication(packageName);
+
+            var logcat = TestApis.logcat()
+                    .dump(l -> l.contains("Error calling onAddRoleHolder()"));
+
+            if (!logcat.isEmpty()) {
+                // Error adding role holder - could be due to busy broadcast queue
+                Thread.sleep(10_000);
+                throw new IllegalStateException(
+                        "Error setting default dialer application. Relevant logcat: " + logcat);
+            }
+        });
     }
 }
