@@ -305,7 +305,7 @@ public class TestTaskOrganizer extends TaskOrganizer {
         }
     }
 
-    void setRootPrimaryTaskBounds(Rect bounds) {
+    public void setRootPrimaryTaskBounds(Rect bounds) {
         setTaskBounds(mRootPrimary.getToken(), bounds);
     }
 
