@@ -304,7 +304,7 @@ abstract class BaseBroadcastTest {
         return true;
     }
 
-    private void waitForBroadcastBarrier() {
+    protected void waitForBroadcastBarrier() {
         SystemUtil.runCommandAndPrintOnLogcat(TAG,
                 "cmd activity wait-for-broadcast-barrier --flush-application-threads");
     }
