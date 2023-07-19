@@ -129,12 +129,10 @@ open class CompanionDeviceManagerUi(private val ui: UiDevice) {
         private val NEGATIVE_BUTTON_MULTIPLE_DEVICES = By.pkg(PACKAGE_NAME)
                 .res(PACKAGE_NAME, "negative_multiple_devices_layout")
 
-        private val DEVICE_LIST = By.pkg(PACKAGE_NAME)
-                .res(PACKAGE_NAME, "device_list")
-        private val DEVICE_LIST_ITEM = By.pkg(PACKAGE_NAME)
-                .res(PACKAGE_NAME, "list_item_device")
+        private val DEVICE_LIST = By.res(PACKAGE_NAME, "device_list")
+        private val DEVICE_LIST_ITEM = By.res(PACKAGE_NAME, "list_item_device")
         private val DEVICE_LIST_WITH_ITEMS = By.copy(DEVICE_LIST)
-                .hasChild(DEVICE_LIST_ITEM)
+                .hasDescendant(DEVICE_LIST_ITEM)
 
         private val SCROLLABLE_PERMISSION_LIST = By.pkg(PACKAGE_NAME)
                 .res(PACKAGE_NAME, "permission_list")
