@@ -66,34 +66,26 @@ static bool arePtsListsIdentical(const std::vector<int64_t>& refArray,
         logs->append(StringFormat("test pts list size is %zu \n", testArray.size()));
         isEqual = false;
     }
-    if (!isEqual || refArray != testArray) {
-        isEqual = false;
-        std::vector<int64_t> refArrayDiff;
-        std::vector<int64_t> testArrayDiff;
-        std::set_difference(refArray.begin(), refArray.end(), testArray.begin(), testArray.end(),
-                            std::inserter(refArrayDiff, refArrayDiff.begin()));
-        std::set_difference(testArray.begin(), testArray.end(), refArray.begin(), refArray.end(),
-                            std::inserter(testArrayDiff, testArrayDiff.begin()));
-        if (!refArrayDiff.empty()) {
-            logs->append("Some of the frame/access-units present in ref list are not present in "
-                         "test list. Possibly due to frame drops \n");
-            logs->append("List of timestamps that are dropped by the component :- \n");
-            logs->append("pts :- [[ ");
-            for (auto pts : refArrayDiff) {
-                logs->append(StringFormat("{ %" PRId64 " us }, ", pts));
-            }
-            logs->append(" ]]\n");
+    for (int i = 0; i < std::min(refArray.size(), testArray.size()); i++) {
+        if (refArray[i] != testArray[i]) {
+            logs->append(StringFormat("Frame idx %d, ref pts %dus, test pts %dus \n", i,
+                                      refArray[i], testArray[i]));
+            isEqual = false;
         }
-        if (!testArrayDiff.empty()) {
-            logs->append("Test list contains frame/access-units that are not present in ref list, "
-                         "Possible due to duplicate transmissions \n");
-            logs->append("List of timestamps that are additionally present in test list are :- \n");
-            logs->append("pts :- [[ ");
-            for (auto pts : testArrayDiff) {
-                logs->append(StringFormat("{ %" PRId64 " us }, ", pts));
-            }
-            logs->append(" ]]\n");
+    }
+    if (refArray.size() < testArray.size()) {
+        for (auto i = refArray.size(); i < testArray.size(); i++) {
+            logs->append(
+                    StringFormat("Frame idx %d, ref pts EMPTY, test pts %dus \n", i, testArray[i]));
         }
+    } else if (refArray.size() > testArray.size()) {
+        for (auto i = testArray.size(); i < refArray.size(); i++) {
+            logs->append(
+                    StringFormat("Frame idx %d, ref pts %dus, test pts EMPTY \n", i, refArray[i]));
+        }
+    }
+    if (!isEqual) {
+        logs->append("Are frames for which timestamps differ between reference and test. \n");
     }
     return isEqual;
 }
@@ -289,23 +281,26 @@ void OutputManager::updateChecksum(uint8_t* buf, AMediaCodecBufferInfo* info, in
     }
 }
 
-bool OutputManager::isOutPtsListIdenticalToInpPtsList(bool requireSorting) {
-    std::sort(inpPtsArray.begin(), inpPtsArray.end());
-    if (requireSorting) {
-        std::sort(outPtsArray.begin(), outPtsArray.end());
+bool OutputManager::isOutPtsListIdenticalToInpPtsList(bool isPtsOutOfOrder) {
+    std::vector<int64_t> inPtsArrayCopy(inpPtsArray);
+    std::sort(inPtsArrayCopy.begin(), inPtsArrayCopy.end());
+    if (isPtsOutOfOrder) {
+        std::vector<int64_t> outPtsArrayCopy(outPtsArray);
+        std::sort(outPtsArrayCopy.begin(), outPtsArrayCopy.end());
+        return arePtsListsIdentical(inPtsArrayCopy, outPtsArrayCopy, mSharedErrorLogs);
     }
-    return arePtsListsIdentical(inpPtsArray, outPtsArray, mSharedErrorLogs);
+    return arePtsListsIdentical(inPtsArrayCopy, outPtsArray, mSharedErrorLogs);
 }
 
 bool OutputManager::equals(OutputManager* that) {
     if (this == that) return true;
     if (that == nullptr) return false;
-    if (!equalsInterlaced(that)) return false;
-    if (!arePtsListsIdentical(outPtsArray, that->outPtsArray, mSharedErrorLogs)) return false;
+    if (!equalsByteOutput(that)) return false;
+    if (!equalsPtsList(that)) return false;
     return true;
 }
 
-bool OutputManager::equalsInterlaced(OutputManager* that) {
+bool OutputManager::equalsByteOutput(OutputManager* that) {
     if (this == that) return true;
     if (that == nullptr) return false;
     if (crc32value != that->crc32value) {
@@ -341,6 +336,12 @@ bool OutputManager::equalsInterlaced(OutputManager* that) {
         return false;
     }
     return true;
+}
+
+bool OutputManager::equalsPtsList(OutputManager* that) {
+    if (this == that) return true;
+    if (that == nullptr) return false;
+    return arePtsListsIdentical(outPtsArray, that->outPtsArray, mSharedErrorLogs);
 }
 
 float OutputManager::getRmsError(uint8_t* refData, int length) {

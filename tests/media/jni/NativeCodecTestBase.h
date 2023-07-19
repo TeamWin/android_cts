@@ -144,7 +144,8 @@ class OutputManager {
         mErrorLogs.clear();
         mSharedErrorLogs->clear();
     }
-    bool equalsInterlaced(OutputManager* that);
+    bool equalsPtsList(OutputManager* that);
+    bool equalsByteOutput(OutputManager* that);
     bool equals(OutputManager* that);
     float getRmsError(uint8_t* refData, int length);
     std::string getErrorMsg() { return mErrorLogs + *mSharedErrorLogs; }
