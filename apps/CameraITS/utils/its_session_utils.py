@@ -39,7 +39,7 @@ ANDROID13_API_LEVEL = 33
 LOAD_SCENE_DELAY_SEC = 3
 SUB_CAMERA_SEPARATOR = '.'
 DEFAULT_TABLET_BRIGHTNESS = 192  # 8-bit tablet 75% brightness
-ELEVEN_BIT_TABLET_BRIGHTNESS = 1536
+ELEVEN_BIT_TABLET_BRIGHTNESS = 1024  # 50% brightness for Xiaomi tablets
 ELEVEN_BIT_TABLET_NAMES = ('nabu',)
 LEGACY_TABLET_BRIGHTNESS = 96
 LEGACY_TABLET_NAME = 'dragon'
@@ -680,7 +680,7 @@ class ItsSession(object):
     return data['strValue'].split(';')
 
   def get_display_size(self):
-    """ Get the display size of the screen.
+    """Get the display size of the screen.
 
     Returns:
       The size of the display resolution in pixels.
@@ -699,7 +699,7 @@ class ItsSession(object):
     return data['strValue'].split('x')
 
   def get_max_camcorder_profile_size(self, camera_id):
-    """ Get the maximum camcorder profile size for this camera device.
+    """Get the maximum camcorder profile size for this camera device.
 
     Args:
       camera_id: int; device id
