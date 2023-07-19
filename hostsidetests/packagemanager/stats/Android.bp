@@ -16,10 +16,10 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-java_test_host {
-    name: "CtsPackageManagerStatsHostTestCases",
+java_defaults {
+    name: "stats_host_cts_defaults",
     defaults: ["cts_defaults"],
-    srcs: ["src/**/*.java"],
+
     // tag this module as a cts test artifact
     test_suites: [
         "cts",
@@ -45,4 +45,30 @@ java_test_host {
         ":PackageManagerStatsTestsHelper",
     ],
     java_resource_dirs: ["res"],
+}
+
+java_test_host {
+    name: "CtsPackageManagerStatsHostTestCases",
+    defaults: ["stats_host_cts_defaults"],
+    srcs: [
+        "src/**/PackageInstallationSessionReportedStatsTests.java",
+        "src/**/PackageInstallerV2StatsTests.java",
+        "src/**/PackageManagerStatsTestsBase.java",
+        "src/**/SettingsProviderSettingChangedStatsTests.java",
+        "src/**/Utils.java",
+    ],
+    test_config: "AndroidTest.xml",
+}
+
+java_test_host {
+    name: "CtsPackageManagerIncrementalStatsHostTestCases",
+    defaults: ["stats_host_cts_defaults"],
+
+    srcs: [
+        "src/**/IncrementalAppErrorStatsTests.java",
+        "src/**/InstalledIncrementalPackageStatsTests.java",
+        "src/**/PackageManagerStatsTestsBase.java",
+        "src/**/Utils.java",
+    ],
+    test_config: "IncrementalStatsTests.xml",
 }

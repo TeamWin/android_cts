@@ -19,6 +19,9 @@
       "name": "CtsPackageManagerPreferredActivityHostTestCases"
     },
     {
+      "name": "CtsPackageManagerIncrementalStatsHostTestCases"
+    },
+    {
       "name": "CtsPackageManagerStatsHostTestCases"
     },
     {
