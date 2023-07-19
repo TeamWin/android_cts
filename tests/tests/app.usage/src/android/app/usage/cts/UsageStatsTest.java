@@ -414,6 +414,8 @@ public class UsageStatsTest extends StsExtraBusinessLogicTestCase {
 
         final long startTime = System.currentTimeMillis();
         bindToTestBroadcastReceiver();
+        // Add some delay for UsageStatsService to process the usage event.
+        SystemClock.sleep(1000);
         final long endTime = System.currentTimeMillis();
 
         verifyLastTimeAnyComponentUsedWithinRange(startTime, endTime, TEST_APP_PKG);
