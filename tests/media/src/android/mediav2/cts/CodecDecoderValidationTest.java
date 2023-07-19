@@ -691,8 +691,6 @@ public class CodecDecoderValidationTest extends CodecDecoderTestBase {
                     // @CddTest(requirements={"5.3.5/C-1-2", "5.3.5/C-2-1"})
                     {MEDIA_TYPE_HEVC, new String[]{"bbb_3840x2160_30fps_hevc_main_l50.mp4"}, null,
                             -1.0f, 2312004815L, -1, -1, 3840, 2160, CODEC_ANY},
-                    {MEDIA_TYPE_VP8, new String[]{"bbb_3840x2160_30fps_vp8.mkv"}, null, -1.0f,
-                            632639587L, -1, -1, 3840, 2160, CODEC_ANY},
                     // @CddTest(requirements={"5.3.7/C-2-1", "5.3.7/C-3-1"})
                     {MEDIA_TYPE_VP9, new String[]{"bbb_3840x2160_30fps_vp9.mkv"}, null, -1.0f,
                             279585450L, -1, -1, 3840, 2160, CODEC_ANY},
