@@ -149,6 +149,8 @@ public class BaseHdmiCecCtsTest extends BaseHostJUnit4Test {
         }
     }
 
+    /** @deprecated not used anymore **/
+    @Deprecated
     @Option(name = HdmiCecConstants.PHYSICAL_ADDRESS_NAME,
             description = "HDMI CEC physical address of the DUT",
             mandatory = false)
