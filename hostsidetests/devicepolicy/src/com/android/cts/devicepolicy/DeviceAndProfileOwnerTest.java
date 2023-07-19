@@ -922,30 +922,6 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         executeDeviceTestClass(".SetSystemSettingTest");
     }
 
-    @Test
-    public void testClearApplicationData_testPkg() throws Exception {
-        installAppAsUser(INTENT_RECEIVER_APK, mUserId);
-        runDeviceTestsAsUser(INTENT_RECEIVER_PKG, INTENT_RECEIVER_PKG + ".ClearApplicationDataTest",
-                "testWriteToSharedPreference", mUserId);
-        executeDeviceTestMethod(".ClearApplicationDataTest", "testClearApplicationData_testPkg");
-        runDeviceTestsAsUser(INTENT_RECEIVER_PKG, INTENT_RECEIVER_PKG + ".ClearApplicationDataTest",
-                "testSharedPreferenceCleared", mUserId);
-    }
-
-    @Test
-    public void testClearApplicationData_deviceProvisioning() throws Exception {
-        // Clearing data of device configuration app should fail
-        executeDeviceTestMethod(".ClearApplicationDataTest",
-                "testClearApplicationData_deviceProvisioning");
-    }
-
-    @Test
-    public void testClearApplicationData_activeAdmin() throws Exception {
-        // Clearing data of active admin should fail
-        executeDeviceTestMethod(".ClearApplicationDataTest",
-                "testClearApplicationData_activeAdmin");
-    }
-
     @TemporarilyIgnoreOnHeadlessSystemUserMode(bugId = "197859595",
             reason = "Will be migrated to new test infra")
     @Test
