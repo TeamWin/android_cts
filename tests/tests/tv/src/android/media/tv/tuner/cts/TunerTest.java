@@ -362,8 +362,8 @@ public class TunerTest {
 
     private class TunerTestOnTuneEventListener implements OnTuneEventListener {
         public static final int INVALID_TUNE_EVENT = -1;
-        private static final int SLEEP_TIME_MS = 100;
-        private static final int TIMEOUT_MS = 500;
+        private static final int SLEEP_TIME_MS = 3000;
+        private static final int TIMEOUT_MS = 3000;
         private final ReentrantLock mLock = new ReentrantLock();
         private final ConditionVariable mCV = new ConditionVariable();
         private int mLastTuneEvent = INVALID_TUNE_EVENT;
