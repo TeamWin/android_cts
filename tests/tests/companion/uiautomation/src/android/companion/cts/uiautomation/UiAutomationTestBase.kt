@@ -229,28 +229,13 @@ open class UiAutomationTestBase(
     ) {
         sendRequestAndLaunchConfirmation(singleDevice = singleDevice)
 
-        if (profile != null) {
-            if (singleDevice) {
-                confirmationUi.scrollToBottom()
-                callback.assertInvokedByActions {
-                    confirmationAction()
-                }
-            } else {
-                // First, select the device in the device chooser dialog.
-                confirmationUi.waitAndClickOnFirstFoundDevice()
-                // Second, wait until the permissionList dialog shows up and scroll to the bottom.
-                confirmationUi.scrollToBottom()
-                // Third, tap the `Allow` bottom.
-                callback.assertInvokedByActions {
-                    confirmationUi.waitUntilPositiveButtonIsEnabledAndClick()
-                }
-            }
-        } else {
-            callback.assertInvokedByActions {
-                confirmationAction()
-            }
+        if (singleDevice && profile != null) {
+            confirmationUi.scrollToBottom()
         }
 
+        callback.assertInvokedByActions {
+            confirmationAction()
+        }
         // Check callback invocations: there should have been exactly 1 invocation of the
         // OnAssociationCreated() method.
         assertEquals(1, callback.invocations.size)
