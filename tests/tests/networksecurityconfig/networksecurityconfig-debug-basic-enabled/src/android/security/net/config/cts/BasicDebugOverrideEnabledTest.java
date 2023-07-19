@@ -16,8 +16,15 @@
 
 package android.security.net.config.cts;
 
+import androidx.test.runner.AndroidJUnit4;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+@RunWith(AndroidJUnit4.class)
 public class BasicDebugOverrideEnabledTest extends BaseTestCase {
 
+    @Test
     public void testDefaultConfig() throws Exception {
         // Connections should work thanks to the debug overrides adding the system CA store.
         TestUtils.assertTlsConnectionSucceeds("android.com", 443);

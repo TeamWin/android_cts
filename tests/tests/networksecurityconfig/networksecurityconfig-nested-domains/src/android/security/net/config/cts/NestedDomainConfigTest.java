@@ -16,16 +16,27 @@
 
 package android.security.net.config.cts;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 import android.security.NetworkSecurityPolicy;
 
+import androidx.test.runner.AndroidJUnit4;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+@RunWith(AndroidJUnit4.class)
 public class NestedDomainConfigTest extends BaseTestCase {
 
+    @Test
     public void testRootDomainConfig() throws Exception {
         TestUtils.assertTlsConnectionFails("android.com", 443);
         NetworkSecurityPolicy instance = NetworkSecurityPolicy.getInstance();
         assertTrue(instance.isCleartextTrafficPermitted("android.com"));
     }
 
+    @Test
     public void testNestedDomainConfig() throws Exception {
         TestUtils.assertTlsConnectionFails("developer.android.com", 443);
         NetworkSecurityPolicy instance = NetworkSecurityPolicy.getInstance();

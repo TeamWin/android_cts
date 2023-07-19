@@ -16,9 +16,20 @@
 
 package android.security.net.config.cts;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 import android.security.NetworkSecurityPolicy;
 
+import androidx.test.runner.AndroidJUnit4;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+@RunWith(AndroidJUnit4.class)
 public class TestAttributes extends BaseTestCase {
+
+    @Test
     public void testCleartextTrafficPermitted() throws Exception {
         NetworkSecurityPolicy instance = NetworkSecurityPolicy.getInstance();
         // Since there are some configs that do not allow cleartext the non-hostname aware version

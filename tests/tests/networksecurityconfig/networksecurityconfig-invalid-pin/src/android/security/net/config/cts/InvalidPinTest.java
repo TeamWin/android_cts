@@ -16,12 +16,20 @@
 
 package android.security.net.config.cts;
 
+import androidx.test.runner.AndroidJUnit4;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+@RunWith(AndroidJUnit4.class)
 public class InvalidPinTest extends BaseTestCase {
 
+    @Test
     public void testPinFailure() throws Exception {
         TestUtils.assertTlsConnectionFails("android.com", 443);
     }
 
+    @Test
     public void testDefaultDomainUnaffected() throws Exception {
         TestUtils.assertTlsConnectionSucceeds("example.com", 443);
         TestUtils.assertTlsConnectionSucceeds("developer.android.com", 443);
