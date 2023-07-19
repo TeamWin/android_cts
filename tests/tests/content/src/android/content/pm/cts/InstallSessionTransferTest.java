@@ -148,9 +148,9 @@ public class InstallSessionTransferTest {
         int sessionId = installer.createSession(params);
         Session session = installer.openSession(sessionId);
 
-        writeApk(session, "CtsContentTestCases");
+        writeApk(session, "CtsPackageManagerTestCases");
 
-        InputStream danglingReadStream = session.openRead("CtsContentTestCases");
+        InputStream danglingReadStream = session.openRead("CtsPackageManagerTestCases");
 
         SessionInfo info = getSessionInfo(installer, sessionId);
         assertThat(info.getInstallerPackageName()).isEqualTo(context.getPackageName());
@@ -171,7 +171,7 @@ public class InstallSessionTransferTest {
         // Even when the session is transferred read streams still work and contain the same content
         // that we initially wrote into it.
         try (InputStream originalContent = new FileInputStream(
-                "/data/local/tmp/cts/content/CtsContentTestCases.apk")) {
+                "/data/local/tmp/cts/content/CtsPackageManagerTestCases.apk")) {
             try (InputStream sessionContent = danglingReadStream) {
                 byte[] buffer = new byte[4096];
                 while (true) {
@@ -192,7 +192,7 @@ public class InstallSessionTransferTest {
     @Test
     public void transferToInvalidNewOwner() throws Exception {
         Session session = createSession();
-        writeApk(session, "CtsContentTestCases");
+        writeApk(session, "CtsPackageManagerTestCases");
 
         try {
             // This will fail as the name of the new owner is invalid
@@ -208,7 +208,7 @@ public class InstallSessionTransferTest {
     @Test
     public void transferToOwnerWithoutInstallPermission() throws Exception {
         Session session = createSession();
-        writeApk(session, "CtsContentTestCases");
+        writeApk(session, "CtsPackageManagerTestCases");
 
         try {
             // This will fail as the current package does not own the install-packages permission

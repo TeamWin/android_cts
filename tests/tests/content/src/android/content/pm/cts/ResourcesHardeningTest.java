@@ -26,6 +26,7 @@ import static android.content.pm.cts.PackageManagerShellCommandIncrementalTest.u
 import static org.hamcrest.core.IsInstanceOf.instanceOf;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
 import android.app.ActivityManager;
 import android.app.UiAutomation;
@@ -52,7 +53,6 @@ import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -71,7 +71,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 @RunWith(AndroidJUnit4.class)
 @AppModeFull
 @LargeTest
-@Ignore("b/280484615")
 public class ResourcesHardeningTest {
     private static final String TEST_APK_PATH = "/data/local/tmp/cts/content/";
     private static final String[] TEST_APKS = {
@@ -87,6 +86,8 @@ public class ResourcesHardeningTest {
 
     @Before
     public void onBefore() throws Exception {
+        // TODO(b/280484615): remove once test is deflaked.
+        assumeTrue(false);
         checkIncrementalDeliveryFeature();
 
         setDeviceProperty("incfs_default_timeouts", "1:1:1");

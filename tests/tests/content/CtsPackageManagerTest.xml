@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (C) 2015 The Android Open Source Project
+<!-- Copyright (C) 2023 The Android Open Source Project
 
      Licensed under the Apache License, Version 2.0 (the "License");
      you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<configuration description="Config for CTS Content test cases">
+<configuration description="Config for CTS PackageManager test cases">
     <option name="test-suite-tag" value="cts" />
     <option name="config-descriptor:metadata" key="component" value="framework" />
 
@@ -48,7 +48,7 @@
 
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.FilePusher">
         <option name="cleanup" value="true" />
-        <option name="push" value="CtsContentTestCases.apk->/data/local/tmp/cts/content/CtsContentTestCases.apk" />
+        <option name="push" value="CtsPackageManagerTestCases.apk->/data/local/tmp/cts/content/CtsPackageManagerTestCases.apk" />
         <option name="push" value="CtsContentEmptyTestApp.apk->/data/local/tmp/cts/content/CtsContentEmptyTestApp.apk" />
         <option name="push" value="CtsContentLongPackageNameTestApp.apk->/data/local/tmp/cts/content/CtsContentLongPackageNameTestApp.apk" />
         <option name="push" value="CtsContentLongSharedUserIdTestApp.apk->/data/local/tmp/cts/content/CtsContentLongSharedUserIdTestApp.apk" />
@@ -160,7 +160,7 @@
 
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
         <option name="cleanup-apks" value="true" />
-        <option name="test-file-name" value="CtsContentTestCases.apk" />
+        <option name="test-file-name" value="CtsPackageManagerTestCases.apk" />
         <option name="test-file-name" value="CtsContentDirectBootUnawareTestApp.apk" />
         <option name="test-file-name" value="CtsContentPartiallyDirectBootAwareTestApp.apk" />
         <option name="test-file-name" value="CtsSyncAccountAccessStubs.apk" />
@@ -169,13 +169,11 @@
         <option name="test-file-name" value="CtsIntentResolutionTestAppApi30.apk" />
         <option name="test-file-name" value="CtsContentNoApplicationTestApp.apk" />
         <option name="test-file-name" value="CtsContentMockRestrictedApp.apk" />
-
     </target_preparer>
 
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="runner" value="androidx.test.runner.AndroidJUnitRunner" />
         <option name="package" value="android.content.cts" />
-        <option name="runtime-hint" value="21m30s" />
         <option name="hidden-api-checks" value="false" />
     </test>
 </configuration>

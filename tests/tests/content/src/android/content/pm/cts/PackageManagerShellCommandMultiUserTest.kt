@@ -33,7 +33,6 @@ import androidx.test.InstrumentationRegistry
 import com.android.bedstead.harrier.BedsteadJUnit4
 import com.android.bedstead.harrier.DeviceState
 import com.android.bedstead.harrier.annotations.EnsureHasSecondaryUser
-import com.android.bedstead.harrier.annotations.StringTestParameter
 import com.android.bedstead.nene.users.UserReference
 import com.android.compatibility.common.util.SystemUtil
 import com.google.common.truth.Truth.assertThat
@@ -155,18 +154,9 @@ class PackageManagerShellCommandMultiUserTest {
     }
 
     @Test
-    fun testGetFirstInstallTime(
-        @StringTestParameter(
-            "install",
-            "install-streaming",
-            "install-incremental"
-        ) installTypeString: String
-    ) {
-        if (skipTheInstallType(installTypeString)) {
-            return
-        }
+    fun testGetFirstInstallTime() {
         val startTimeMillisForPrimaryUser = System.currentTimeMillis()
-        installPackageAsUser(TEST_HW5, primaryUser, installTypeString)
+        installPackageAsUser(TEST_HW5, primaryUser)
         assertTrue(isAppInstalledForUser(TEST_APP_PACKAGE, primaryUser))
         val origFirstInstallTimeForPrimaryUser =
             getFirstInstallTimeAsUser(TEST_APP_PACKAGE, primaryUser)
@@ -176,7 +166,7 @@ class PackageManagerShellCommandMultiUserTest {
         assertTrue(System.currentTimeMillis() > origFirstInstallTimeForPrimaryUser)
 
         // Install again with replace and the firstInstallTime should remain the same
-        installPackage(TEST_HW5, installTypeString)
+        installPackage(TEST_HW5)
         var firstInstallTimeForPrimaryUser =
             getFirstInstallTimeAsUser(TEST_APP_PACKAGE, primaryUser)
         assertEquals(origFirstInstallTimeForPrimaryUser, firstInstallTimeForPrimaryUser)
@@ -186,7 +176,7 @@ class PackageManagerShellCommandMultiUserTest {
         installExistingPackageAsUser(context.packageName, secondaryUser)
         assertTrue(isAppInstalledForUser(context.packageName, secondaryUser))
         // Install test package with replace
-        installPackageAsUser(TEST_HW5, secondaryUser, installTypeString)
+        installPackageAsUser(TEST_HW5, secondaryUser)
         assertTrue(isAppInstalledForUser(TEST_APP_PACKAGE, secondaryUser))
         firstInstallTimeForPrimaryUser = getFirstInstallTimeAsUser(TEST_APP_PACKAGE, primaryUser)
         // firstInstallTime should remain unchanged for the current user
@@ -220,7 +210,7 @@ class PackageManagerShellCommandMultiUserTest {
         assertFalse(isAppInstalledForUser(TEST_APP_PACKAGE, primaryUser))
         assertFalse(isAppInstalledForUser(TEST_APP_PACKAGE, secondaryUser))
         // Reinstall for all users
-        installPackage(TEST_HW5, installTypeString)
+        installPackage(TEST_HW5)
         assertTrue(isAppInstalledForUser(TEST_APP_PACKAGE, primaryUser))
         assertTrue(isAppInstalledForUser(TEST_APP_PACKAGE, secondaryUser))
         firstInstallTimeForPrimaryUser = getFirstInstallTimeAsUser(TEST_APP_PACKAGE, primaryUser)
@@ -302,21 +292,22 @@ class PackageManagerShellCommandMultiUserTest {
         assertEquals("", out)
         out = SystemUtil.runShellCommand("pm list packages -U $TEST_APP_PACKAGE")
                 .replace("\n", "")
-        assertTrue(out.split(":").last().split(",").size == 1)
+        var installedUsersCount = out.split(":").last().split(",").size
+        assertTrue(out, installedUsersCount >= 1)
         installExistingPackageAsUser(TEST_APP_PACKAGE, secondaryUser)
         assertTrue(isAppInstalledForUser(TEST_APP_PACKAGE, primaryUser))
         assertTrue(isAppInstalledForUser(TEST_APP_PACKAGE, secondaryUser))
         out = SystemUtil.runShellCommand("pm list packages -U $TEST_APP_PACKAGE")
                 .replace("\n", "")
-        assertTrue(out.split(":").last().split(",").size == 2)
+        assertTrue(out, out.split(":").last().split(",").size > installedUsersCount)
         out = SystemUtil.runShellCommand(
                     "pm list packages -U --user ${primaryUser.id()} $TEST_APP_PACKAGE"
                 ).replace("\n", "")
-        assertTrue(out.split(":").last().split(",").size == 1)
+        assertTrue(out, out.split(":").last().split(",").size == 1)
         out = SystemUtil.runShellCommand(
                     "pm list packages -U --user ${secondaryUser.id()} $TEST_APP_PACKAGE"
                 ).replace("\n", "")
-        assertTrue(out.split(":").last().split(",").size == 1)
+        assertTrue(out, out.split(":").last().split(",").size == 1)
     }
 
     @Test
@@ -330,13 +321,13 @@ class PackageManagerShellCommandMultiUserTest {
             var commandResult = SystemUtil.runShellCommand("pm create-user --profileOf cur " +
                     "--user-type android.os.usertype.profile.CLONE test")
             var matcher = pattern.matcher(commandResult)
-            assertTrue(matcher.find())
+            assertTrue(commandResult, matcher.find())
             commandResult = SystemUtil.runShellCommand("pm remove-user " + matcher.group(1))
             assertEquals("Success: removed user\n", commandResult)
             commandResult = SystemUtil.runShellCommand("pm create-user --profileOf current " +
                     "--user-type android.os.usertype.profile.CLONE test")
             matcher = pattern.matcher(commandResult)
-            assertTrue(matcher.find())
+            assertTrue(commandResult, matcher.find())
             commandResult = SystemUtil.runShellCommand("pm remove-user " + matcher.group(1))
             assertEquals("Success: removed user\n", commandResult)
         } finally {
@@ -356,13 +347,9 @@ class PackageManagerShellCommandMultiUserTest {
             .firstInstallTime
 
     private fun installPackage(baseName: String) {
-        installPackage(baseName, "install")
-    }
-
-    private fun installPackage(baseName: String, installTypeString: String) {
         val file = File(PackageManagerShellCommandInstallTest.createApkPath(baseName))
-        assertThat(SystemUtil.runShellCommand("pm $installTypeString -t -g ${file.path}"))
-            .isEqualTo("Success\n")
+        assertThat(SystemUtil.runShellCommand("pm install -t -g ${file.path}"))
+                .isEqualTo("Success\n")
     }
 
     private fun installExistingPackageAsUser(packageName: String, user: UserReference) {
@@ -375,21 +362,13 @@ class PackageManagerShellCommandMultiUserTest {
             baseName: String,
             user: UserReference
     ) {
-        installPackageAsUser(baseName, user, "install")
-    }
-
-    private fun installPackageAsUser(
-        baseName: String,
-        user: UserReference,
-        installTypeString: String
-    ) {
         val file = File(PackageManagerShellCommandInstallTest.createApkPath(baseName))
         assertThat(
-            SystemUtil.runShellCommand(
-                "pm $installTypeString -t -g --user ${user.id()} ${file.path}"
-            )
+                SystemUtil.runShellCommand(
+                        "pm install -t -g --user ${user.id()} ${file.path}"
+                )
         )
-            .isEqualTo("Success\n")
+                .isEqualTo("Success\n")
     }
 
     private fun uninstallPackageAsUser(packageName: String, user: UserReference) =

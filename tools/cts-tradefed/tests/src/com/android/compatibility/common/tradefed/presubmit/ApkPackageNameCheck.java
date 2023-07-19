@@ -56,6 +56,7 @@ public class ApkPackageNameCheck {
     static {
         // TODO: Remove exception when their package have been fixed.
         EXCEPTION_LIST.add("android.app.cts");
+        EXCEPTION_LIST.add("android.content.cts");
         EXCEPTION_LIST.add("android.systemui.cts");
     }
 

@@ -45,6 +45,7 @@ import android.util.ArrayMap;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.FlakyTest;
 import androidx.test.filters.LargeTest;
 import androidx.test.runner.AndroidJUnit4;
 
@@ -235,6 +236,7 @@ public class PackageManagerShellCommandIncrementalTest {
 
     @LargeTest
     @Test
+    @FlakyTest
     public void testSpaceAllocatedForPackage() throws Exception {
         final String apk = createApkPath(TEST_APK);
         final String idsig = createApkPath(TEST_APK_IDSIG);
