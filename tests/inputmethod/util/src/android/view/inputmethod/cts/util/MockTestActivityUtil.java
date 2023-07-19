@@ -21,9 +21,14 @@ import static android.content.Intent.FLAG_RECEIVER_VISIBLE_TO_INSTANT_APPS;
 import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
 
+import android.Manifest;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.RemoteCallback;
+import android.os.SystemClock;
+import android.os.UserHandle;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -40,7 +45,7 @@ import java.util.Map;
  * {@link android.view.inputmethod.ctstestapp.MainActivity}.
  */
 public final class MockTestActivityUtil {
-    private static final ComponentName TEST_ACTIVITY = new ComponentName(
+    public static final ComponentName TEST_ACTIVITY = new ComponentName(
             "android.view.inputmethod.ctstestapp",
             "android.view.inputmethod.ctstestapp.MainActivity");
     private static final Uri TEST_ACTIVITY_URI =
@@ -83,6 +88,16 @@ public final class MockTestActivityUtil {
      * {@link android.view.View#setIsHandwritingDelegate(boolean) handwriting delegator}.
      */
     public static final String EXTRA_HANDWRITING_DELEGATE = "extra_handwriting_delegator";
+
+    /**
+     * Is used by the {@link RemoteCallback} in launchSyncAsUser()
+     */
+    public static final String ACTION_KEY_REPLY_USER_HANDLE =
+            "android.inputmethodservice.cts.ime.ReplyUserHandle";
+    public static final String EXTRA_ON_CREATE_INPUT_CONNECTION_CALLBACK =
+            "extra_on_create_input_connection_callback";
+    public static final String EXTRA_ON_CREATE_USER_HANDLE_SESSION_ID =
+            "extra_on_create_user_handle_session_id";
 
     @NonNull
     private static Uri formatStringIntentParam(@NonNull Uri uri, Map<String, String> extras) {
@@ -139,6 +154,48 @@ public final class MockTestActivityUtil {
         UiDevice uiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
         BySelector activitySelector = By.pkg(TEST_ACTIVITY.getPackageName()).depth(0);
         uiDevice.wait(Until.hasObject(activitySelector), timeout);
+
+        // Make sure to stop package after test finished for resource reclaim.
+        return () -> TestUtils.forceStopPackage(TEST_ACTIVITY.getPackageName());
+    }
+
+    /**
+     * Launches {@link android.view.inputmethod.ctstestapp.MainActivity}.
+     *
+     * @param userId the user id for which the Activity should be started
+     * @param instant {@code true} when the Activity is installed as an instant app.
+     * @param extras extra parameters to be passed to the Activity.
+     * @param onCreateInputConnectionCallback the callback that will be invoked, once the input
+     *                                        connection was created
+     * @return {@link AutoCloseable} object to automatically stop the test Activity package.
+     */
+    public static AutoCloseable launchSyncAsUser(int userId, boolean instant,
+            @Nullable Map<String, String> extras, RemoteCallback onCreateInputConnectionCallback) {
+        Context context = InstrumentationRegistry.getInstrumentation().getContext();
+        final Intent intent = new Intent().setClassName(TEST_ACTIVITY.getPackageName(),
+                TEST_ACTIVITY.getClassName()).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        if (extras != null) {
+            extras.forEach(intent::putExtra);
+        }
+        if (onCreateInputConnectionCallback != null) {
+            intent.putExtra(EXTRA_ON_CREATE_INPUT_CONNECTION_CALLBACK,
+                    onCreateInputConnectionCallback);
+            intent.putExtra(EXTRA_ON_CREATE_USER_HANDLE_SESSION_ID,
+                    Long.toString(SystemClock.elapsedRealtimeNanos()));
+        }
+
+        if (instant) {
+            // Override app-links domain verification.
+            runShellCommand(
+                    String.format("pm set-app-links-user-selection --user cur --package %s true %s",
+                            TEST_ACTIVITY.getPackageName(), TEST_ACTIVITY_URI.getHost()));
+            intent.setAction(Intent.ACTION_VIEW).addCategory(Intent.CATEGORY_BROWSABLE);
+        } else {
+            intent.setAction(Intent.ACTION_MAIN);
+        }
+        runWithShellPermissionIdentity(() -> {
+            context.startActivityAsUser(intent, UserHandle.of(userId));
+        }, Manifest.permission.INTERACT_ACROSS_USERS_FULL);
 
         // Make sure to stop package after test finished for resource reclaim.
         return () -> TestUtils.forceStopPackage(TEST_ACTIVITY.getPackageName());

@@ -29,8 +29,12 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.RemoteCallback;
 import android.view.Gravity;
+import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InputMethodManager;
+import android.view.inputmethod.cts.util.MockTestActivityUtil;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -78,14 +82,13 @@ public final class MainActivity extends Activity {
             }
             return uri.getBooleanQueryParameter(key, false);
         }
-        return getIntent().getBooleanExtra(key, false)
-                || "true".equals(getIntent().getStringExtra(key));
+        return getIntent().getBooleanExtra(key, false) || "true".equals(
+                getIntent().getStringExtra(key));
     }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         final LinearLayout layout = new LinearLayout(this);
         layout.setOrientation(LinearLayout.VERTICAL);
         final boolean needShowDialog = getBooleanIntentExtra(EXTRA_KEY_SHOW_DIALOG);
@@ -99,14 +102,35 @@ public final class MainActivity extends Activity {
             textView.setText("This is DialogActivity");
             layout.addView(textView);
 
-            mDialog = new AlertDialog.Builder(this)
-                    .setView(new LinearLayout(this))
-                    .create();
+            mDialog = new AlertDialog.Builder(this).setView(new LinearLayout(this)).create();
             mDialog.getWindow().addFlags(FLAG_ALT_FOCUSABLE_IM);
             mDialog.getWindow().setSoftInputMode(SOFT_INPUT_ADJUST_PAN);
             mDialog.show();
         } else {
-            mEditor = new EditText(this);
+            RemoteCallback remoteCallback = getIntent().getParcelableExtra(
+                    MockTestActivityUtil.EXTRA_ON_CREATE_INPUT_CONNECTION_CALLBACK,
+                    RemoteCallback.class);
+            String sessionId = getStringIntentExtra(
+                    MockTestActivityUtil.EXTRA_ON_CREATE_USER_HANDLE_SESSION_ID);
+            if (remoteCallback == null || sessionId == null) {
+                mEditor = new EditText(this);
+            } else {
+                mEditor = new EditText(this) {
+                    @Override
+                    public InputConnection onCreateInputConnection(EditorInfo editorInfo) {
+                        final InputConnection original = super.onCreateInputConnection(editorInfo);
+                        if (editorInfo.extras == null) {
+                            editorInfo.extras = new Bundle();
+                        }
+                        editorInfo.extras.putString(
+                                ReplyReceivingInputConnection
+                                        .EDITOR_INFO_KEY_REPLY_USER_HANDLE_SESSION_ID,
+                                sessionId);
+                        return new ReplyReceivingInputConnection(original, sessionId,
+                                remoteCallback);
+                    }
+                };
+            }
             mEditor.setHint("editText");
             final String privateImeOptions = getStringIntentExtra(EXTRA_KEY_PRIVATE_IME_OPTIONS);
             if (privateImeOptions != null) {
