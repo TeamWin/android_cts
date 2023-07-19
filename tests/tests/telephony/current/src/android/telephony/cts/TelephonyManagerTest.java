@@ -67,6 +67,7 @@ import android.os.Looper;
 import android.os.Parcel;
 import android.os.PersistableBundle;
 import android.os.Process;
+import android.os.SystemClock;
 import android.os.SystemProperties;
 import android.os.UserManager;
 import android.telecom.PhoneAccount;
@@ -169,6 +170,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import java.util.function.IntSupplier;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -5818,6 +5820,8 @@ public class TelephonyManagerTest {
     private static class ServiceStateRadioStateListener extends TelephonyCallback
             implements TelephonyCallback.ServiceStateListener,
             TelephonyCallback.RadioPowerStateListener {
+        private static final long TIMEOUT_TO_WAIT_FOR_DESIRED_STATE =
+                TimeUnit.SECONDS.toMillis(15);
         private final Object mPowerStateLock = new Object();
         private final Object mServiceStateLock = new Object();
         ServiceState mServiceState;
@@ -5857,30 +5861,41 @@ public class TelephonyManagerTest {
         public void waitForRadioStateIntent(int desiredRadioState) {
             Log.d(TAG, "waitForRadioStateIntent: desiredRadioState=" + desiredRadioState);
             synchronized (mPowerStateLock) {
-                if (mRadioPowerState != desiredRadioState) {
-                    mDesireRadioPowerState = desiredRadioState;
-                    try {
-                        // Since SST sets waiting time up to 10 seconds for the power off radio,
-                        // the RadioStateIntent timer extends the wait time up to 15 seconds
-                        // here as well.
-                        mPowerStateLock.wait(TimeUnit.SECONDS.toMillis(15));
-                    } catch (Exception e) {
-                        fail(e.getMessage());
-                    }
-                }
+                mDesireRadioPowerState = desiredRadioState;
+                /**
+                 * Since SST sets waiting time up to 10 seconds for the power off radio, the
+                 * RadioStateIntent timer extends the wait time up to 15 seconds here as well.
+                 */
+                waitForDesiredState(mPowerStateLock, desiredRadioState,
+                        () -> mRadioPowerState, true);
             }
         }
 
-        public void waitForServiceStateIntent(int desiredServiceState) {
+        public void waitForServiceStateIntent(int desiredServiceState, boolean failOnTimeOut) {
             Log.d(TAG, "waitForServiceStateIntent: desiredServiceState=" + desiredServiceState);
             synchronized (mServiceStateLock) {
-                if (mServiceState.getState() != desiredServiceState) {
-                    mDesireServiceState = desiredServiceState;
+                mDesireServiceState = desiredServiceState;
+                waitForDesiredState(mServiceStateLock, desiredServiceState,
+                        () -> mServiceState.getState(), failOnTimeOut);
+            }
+        }
+
+        private void waitForDesiredState(@NonNull Object lock, int desiredState,
+                @NonNull IntSupplier currentStateSupplier, boolean failOnTimeOut) {
+            synchronized (lock) {
+                long now = SystemClock.elapsedRealtime();
+                long deadline = now + TIMEOUT_TO_WAIT_FOR_DESIRED_STATE;
+                while (currentStateSupplier.getAsInt() != desiredState && now < deadline) {
                     try {
-                        mServiceStateLock.wait(TimeUnit.SECONDS.toMillis(15));
+                        lock.wait(TIMEOUT_TO_WAIT_FOR_DESIRED_STATE);
                     } catch (Exception e) {
-                        fail(e.getMessage());
+                        if (failOnTimeOut) {
+                            fail(e.getMessage());
+                        } else {
+                            Log.w(TAG, "waitForDesiredState: e=" + e);
+                        }
                     }
+                    now = SystemClock.elapsedRealtime();
                 }
             }
         }
@@ -5902,7 +5917,7 @@ public class TelephonyManagerTest {
                 ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
                         tm -> tm.setRadioPower(false), permission.MODIFY_PHONE_STATE);
                 callback.waitForRadioStateIntent(TelephonyManager.RADIO_POWER_OFF);
-                callback.waitForServiceStateIntent(ServiceState.STATE_POWER_OFF);
+                callback.waitForServiceStateIntent(ServiceState.STATE_POWER_OFF, true);
                 assertEquals(TelephonyManager.RADIO_POWER_OFF, callback.mRadioPowerState);
                 assertEquals(ServiceState.STATE_POWER_OFF, callback.mServiceState.getState());
                 turnedRadioOff = true;
@@ -5932,7 +5947,7 @@ public class TelephonyManagerTest {
                 ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
                         tm -> tm.setVoiceServiceStateOverride(true),
                         permission.BIND_TELECOM_CONNECTION_SERVICE);
-                callback.waitForServiceStateIntent(ServiceState.STATE_IN_SERVICE);
+                callback.waitForServiceStateIntent(ServiceState.STATE_IN_SERVICE, false);
                 setServiceStateOverride = true;
 
                 serviceState = mTelephonyManager.getServiceState();
@@ -5950,7 +5965,7 @@ public class TelephonyManagerTest {
             ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
                     tm -> tm.setVoiceServiceStateOverride(false),
                     permission.BIND_TELECOM_CONNECTION_SERVICE);
-            callback.waitForServiceStateIntent(originalServiceState);
+            callback.waitForServiceStateIntent(originalServiceState, true);
             assertEquals(originalServiceState, callback.mServiceState.getState());
             assertEquals(originalServiceState, mTelephonyManager.getServiceState().getState());
         } finally {
@@ -5968,7 +5983,7 @@ public class TelephonyManagerTest {
                 ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
                         tm -> tm.setRadioPower(true), permission.MODIFY_PHONE_STATE);
                 callback.waitForRadioStateIntent(TelephonyManager.RADIO_POWER_ON);
-                callback.waitForServiceStateIntent(ServiceState.STATE_IN_SERVICE);
+                callback.waitForServiceStateIntent(ServiceState.STATE_IN_SERVICE, true);
                 assertEquals(TelephonyManager.RADIO_POWER_ON, callback.mRadioPowerState);
                 assertEquals(ServiceState.STATE_IN_SERVICE, callback.mServiceState.getState());
             }
