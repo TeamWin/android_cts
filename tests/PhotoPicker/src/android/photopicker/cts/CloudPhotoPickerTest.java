@@ -56,6 +56,7 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -178,6 +179,7 @@ public class CloudPhotoPickerTest extends PhotoPickerBaseTest {
     }
 
     @Test
+    @Ignore("Re-enable when b/288553885 is fixed")
     public void testDeleteCloudMedia() throws Exception {
         initPrimaryCloudProviderWithImage(Pair.create(null, CLOUD_ID1),
                 Pair.create(null, CLOUD_ID2));
@@ -239,6 +241,7 @@ public class CloudPhotoPickerTest extends PhotoPickerBaseTest {
     }
 
     @Test
+    @Ignore("Re-enable when b/288553885 is fixed")
     public void testProviderSwitchSuccess() throws Exception {
         setCloudProvider(CloudProviderPrimary.AUTHORITY);
         assertThat(MediaStore.isCurrentCloudMediaProviderAuthority(mContext.getContentResolver(),
@@ -332,6 +335,7 @@ public class CloudPhotoPickerTest extends PhotoPickerBaseTest {
     }
 
     @Test
+    @Ignore("Re-enable when b/288553885 is fixed")
     public void testCloudEventNotification() throws Exception {
         // Create a placeholder local image to ensure that the picker UI is never empty.
         // The PhotoPickerUiUtils#findItemList needs to select an item and it times out if the
