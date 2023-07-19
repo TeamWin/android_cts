@@ -23,27 +23,29 @@ import android.content.Context.RECEIVER_EXPORTED
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
-import android.content.pm.cts.PackageManagerShellCommandTest.FullyRemovedBroadcastReceiver
+import android.content.pm.cts.PackageManagerShellCommandInstallTest.FullyRemovedBroadcastReceiver
 import android.content.pm.cts.util.AbandonAllPackageSessionsRule
 import android.os.Handler
 import android.os.HandlerThread
+import android.os.UserManager
 import android.platform.test.annotations.AppModeFull
 import androidx.test.InstrumentationRegistry
 import com.android.bedstead.harrier.BedsteadJUnit4
 import com.android.bedstead.harrier.DeviceState
 import com.android.bedstead.harrier.annotations.EnsureHasSecondaryUser
 import com.android.bedstead.harrier.annotations.StringTestParameter
-import com.android.bedstead.nene.permissions.CommonPermissions.INTERACT_ACROSS_USERS
-import com.android.bedstead.nene.permissions.CommonPermissions.INTERACT_ACROSS_USERS_FULL
 import com.android.bedstead.nene.users.UserReference
 import com.android.compatibility.common.util.SystemUtil
 import com.google.common.truth.Truth.assertThat
 import java.io.File
+import java.util.regex.Pattern
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
+import org.junit.Assume.assumeFalse
+import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.ClassRule
 import org.junit.Rule
@@ -60,8 +62,8 @@ class PackageManagerShellCommandMultiUserTest {
 
     companion object {
 
-        private const val TEST_APP_PACKAGE = PackageManagerShellCommandTest.TEST_APP_PACKAGE
-        private const val TEST_HW5 = PackageManagerShellCommandTest.TEST_HW5
+        private const val TEST_APP_PACKAGE = PackageManagerShellCommandInstallTest.TEST_APP_PACKAGE
+        private const val TEST_HW5 = PackageManagerShellCommandInstallTest.TEST_HW5
 
         @JvmField
         @ClassRule(order = 0)
@@ -117,12 +119,12 @@ class PackageManagerShellCommandMultiUserTest {
 
     private var mPackageVerifier: String? = null
     private var mStreamingVerificationTimeoutMs =
-        PackageManagerShellCommandTest.DEFAULT_STREAMING_VERIFICATION_TIMEOUT_MS
+            PackageManagerShellCommandInstallTest.DEFAULT_STREAMING_VERIFICATION_TIMEOUT_MS
 
     @Before
     fun setup() {
         uninstallPackageSilently(TEST_APP_PACKAGE)
-        assertFalse(PackageManagerShellCommandTest.isAppInstalled(TEST_APP_PACKAGE))
+        assertFalse(PackageManagerShellCommandInstallTest.isAppInstalled(TEST_APP_PACKAGE))
         mPackageVerifier =
             SystemUtil.runShellCommand("settings get global verifier_verify_adb_installs")
         // Disable the package verifier for non-incremental installations to avoid the dialog
@@ -132,14 +134,14 @@ class PackageManagerShellCommandMultiUserTest {
             "settings get global streaming_verifier_timeout"
         )
             .toLongOrNull()
-            ?: PackageManagerShellCommandTest.DEFAULT_STREAMING_VERIFICATION_TIMEOUT_MS
+            ?: PackageManagerShellCommandInstallTest.DEFAULT_STREAMING_VERIFICATION_TIMEOUT_MS
     }
 
     @After
     fun reset() {
         uninstallPackageSilently(TEST_APP_PACKAGE)
-        assertFalse(PackageManagerShellCommandTest.isAppInstalled(TEST_APP_PACKAGE))
-        assertEquals(null, PackageManagerShellCommandTest.getSplits(TEST_APP_PACKAGE))
+        assertFalse(PackageManagerShellCommandInstallTest.isAppInstalled(TEST_APP_PACKAGE))
+        assertEquals(null, PackageManagerShellCommandInstallTest.getSplits(TEST_APP_PACKAGE))
 
         // Reset the global settings to their original values.
         SystemUtil.runShellCommand(
@@ -231,22 +233,13 @@ class PackageManagerShellCommandMultiUserTest {
     }
 
     @Test
-    fun testPackageFullyRemovedBroadcastAfterUninstall(
-        @StringTestParameter(
-            "install",
-            "install-streaming",
-            "install-incremental"
-        ) installTypeString: String
-    ) {
-        if (skipTheInstallType(installTypeString)) {
-            return
-        }
+    fun testPackageFullyRemovedBroadcastAfterUninstall() {
         if (!backgroundThread.isAlive) {
             backgroundThread.start()
         }
         val backgroundHandler = Handler(backgroundThread.getLooper())
         installExistingPackageAsUser(context.packageName, secondaryUser)
-        installPackage(TEST_HW5, installTypeString)
+        installPackage(TEST_HW5)
         assertTrue(isAppInstalledForUser(context.packageName, primaryUser))
         assertTrue(isAppInstalledForUser(context.packageName, secondaryUser))
         assertTrue(isAppInstalledForUser(TEST_APP_PACKAGE, primaryUser))
@@ -295,17 +288,8 @@ class PackageManagerShellCommandMultiUserTest {
     }
 
     @Test
-    fun testListPackageDefaultAllUsers(
-        @StringTestParameter(
-            "install",
-            "install-streaming",
-            "install-incremental"
-        ) installTypeString: String
-    ) {
-        if (skipTheInstallType(installTypeString)) {
-            return
-        }
-        installPackageAsUser(TEST_HW5, primaryUser, installTypeString)
+    fun testListPackageDefaultAllUsers() {
+        installPackageAsUser(TEST_HW5, primaryUser)
         assertTrue(isAppInstalledForUser(TEST_APP_PACKAGE, primaryUser))
         assertFalse(isAppInstalledForUser(TEST_APP_PACKAGE, secondaryUser))
         var out = SystemUtil.runShellCommand(
@@ -335,14 +319,48 @@ class PackageManagerShellCommandMultiUserTest {
         assertTrue(out.split(":").last().split(",").size == 1)
     }
 
+    @Test
+    fun testCreateUserCurAsType() {
+        assumeTrue(UserManager.supportsMultipleUsers())
+        assumeFalse(getUserManager().hasUserRestriction(UserManager.DISALLOW_REMOVE_USER))
+        val oldPropertyValue = getSystemProperty(UserManager.DEV_CREATE_OVERRIDE_PROPERTY)
+        setSystemProperty(UserManager.DEV_CREATE_OVERRIDE_PROPERTY, "1")
+        try {
+            val pattern = Pattern.compile("Success: created user id (\\d+)\\R*")
+            var commandResult = SystemUtil.runShellCommand("pm create-user --profileOf cur " +
+                    "--user-type android.os.usertype.profile.CLONE test")
+            var matcher = pattern.matcher(commandResult)
+            assertTrue(matcher.find())
+            commandResult = SystemUtil.runShellCommand("pm remove-user " + matcher.group(1))
+            assertEquals("Success: removed user\n", commandResult)
+            commandResult = SystemUtil.runShellCommand("pm create-user --profileOf current " +
+                    "--user-type android.os.usertype.profile.CLONE test")
+            matcher = pattern.matcher(commandResult)
+            assertTrue(matcher.find())
+            commandResult = SystemUtil.runShellCommand("pm remove-user " + matcher.group(1))
+            assertEquals("Success: removed user\n", commandResult)
+        } finally {
+            setSystemProperty(UserManager.DEV_CREATE_OVERRIDE_PROPERTY,
+                    if (oldPropertyValue.isEmpty()) "invalid" else oldPropertyValue)
+        }
+    }
+
+    private fun getUserManager(): UserManager {
+        return context.getSystemService(UserManager::class.java)!!
+    }
+
     private fun getFirstInstallTimeAsUser(packageName: String, user: UserReference) =
         context.createContextAsUser(user.userHandle(), 0)
             .packageManager
             .getPackageInfo(packageName, PackageManager.PackageInfoFlags.of(0))
             .firstInstallTime
 
+    private fun installPackage(baseName: String) {
+        installPackage(baseName, "install")
+    }
+
     private fun installPackage(baseName: String, installTypeString: String) {
-        val file = File(PackageManagerShellCommandTest.createApkPath(baseName))
+        val file = File(PackageManagerShellCommandInstallTest.createApkPath(baseName))
         assertThat(SystemUtil.runShellCommand("pm $installTypeString -t -g ${file.path}"))
             .isEqualTo("Success\n")
     }
@@ -354,11 +372,18 @@ class PackageManagerShellCommandMultiUserTest {
     }
 
     private fun installPackageAsUser(
+            baseName: String,
+            user: UserReference
+    ) {
+        installPackageAsUser(baseName, user, "install")
+    }
+
+    private fun installPackageAsUser(
         baseName: String,
         user: UserReference,
         installTypeString: String
     ) {
-        val file = File(PackageManagerShellCommandTest.createApkPath(baseName))
+        val file = File(PackageManagerShellCommandInstallTest.createApkPath(baseName))
         assertThat(
             SystemUtil.runShellCommand(
                 "pm $installTypeString -t -g --user ${user.id()} ${file.path}"
@@ -385,4 +410,8 @@ class PackageManagerShellCommandMultiUserTest {
     private fun setSystemProperty(name: String, value: String) =
         assertThat(SystemUtil.runShellCommand("setprop $name $value"))
             .isEmpty()
+
+    fun getSystemProperty(prop: String): String {
+        return SystemUtil.runShellCommand("getprop $prop").replace("\n", "")
+    }
 }

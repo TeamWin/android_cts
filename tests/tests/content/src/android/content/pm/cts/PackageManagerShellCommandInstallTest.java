@@ -38,9 +38,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.UiAutomation;
@@ -55,7 +53,6 @@ import android.content.IntentSender;
 import android.content.pm.ApkChecksum;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.DataLoaderParams;
-import android.content.pm.InstallSourceInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageInstaller;
 import android.content.pm.PackageInstaller.SessionParams;
@@ -67,10 +64,8 @@ import android.content.pm.cts.util.AbandonAllPackageSessionsRule;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.ParcelFileDescriptor;
-import android.os.Process;
 import android.os.RemoteException;
 import android.os.UserHandle;
-import android.os.UserManager;
 import android.platform.test.annotations.AppModeFull;
 import android.util.PackageUtils;
 
@@ -83,6 +78,7 @@ import com.android.internal.util.HexDump;
 import libcore.util.HexEncoding;
 
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -110,13 +106,11 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @RunWith(Parameterized.class)
 @AppModeFull
-public class PackageManagerShellCommandTest {
+public class PackageManagerShellCommandInstallTest {
     static final String TEST_APP_PACKAGE = "com.example.helloworld";
     static final String TEST_VERIFIER_PACKAGE = "com.example.helloverifier";
     static final String TEST_SUFFICIENT_VERIFIER_PACKAGE = "com.example.hellosufficient";
@@ -160,7 +154,6 @@ public class PackageManagerShellCommandTest {
     private static final String TEST_SDK3_USING_SDK1_AND_SDK2 = "HelloWorldSdk3UsingSdk1And2.apk";
     private static final String TEST_USING_SDK3 = "HelloWorldUsingSdk3.apk";
 
-    private static final String TEST_HW_NO_APP_STORAGE = "HelloWorldNoAppStorage.apk";
 
     private static final String TEST_SUFFICIENT = "HelloWorldWithSufficient.apk";
 
@@ -173,8 +166,6 @@ public class PackageManagerShellCommandTest {
     private static final String TEST_VERIFIER_DISABLED = "HelloVerifierDisabled.apk";
 
     private static final String PACKAGE_MIME_TYPE = "application/vnd.android.package-archive";
-
-    private static final String SHELL_PACKAGE_NAME = "com.android.shell";
 
     static final long DEFAULT_STREAMING_VERIFICATION_TIMEOUT_MS = 3 * 1000;
     static final long VERIFICATION_BROADCAST_RECEIVED_TIMEOUT_MS = 10 * 1000;
@@ -212,10 +203,6 @@ public class PackageManagerShellCommandTest {
 
     private static UiAutomation getUiAutomation() {
         return InstrumentationRegistry.getInstrumentation().getUiAutomation();
-    }
-
-    private static UserManager getUserManager() {
-        return InstrumentationRegistry.getContext().getSystemService(UserManager.class);
     }
 
     private static String executeShellCommand(String command) throws IOException {
@@ -1351,10 +1338,10 @@ public class PackageManagerShellCommandTest {
 
         runPackageVerifierTestSync(baseName, updatedName, expectedResultStartsWith,
                 (context, intent) -> {
-            Thread thread = new Thread(() -> onBroadcast.accept(context, intent));
-            thread.start();
-            onBroadcastThread.set(thread);
-        });
+                    Thread thread = new Thread(() -> onBroadcast.accept(context, intent));
+                    thread.start();
+                    onBroadcastThread.set(thread);
+                });
 
         final Thread thread = onBroadcastThread.get();
         if (thread != null) {
@@ -1754,166 +1741,6 @@ public class PackageManagerShellCommandTest {
 
     }
 
-    @Test
-    public void testAppWithNoAppStorageUpdateSuccess() throws Exception {
-        installPackage(TEST_HW_NO_APP_STORAGE);
-        assertTrue(isAppInstalled(TEST_APP_PACKAGE));
-        // Updates that don't change value of NO_APP_DATA_STORAGE property are allowed.
-        installPackage(TEST_HW_NO_APP_STORAGE);
-        assertTrue(isAppInstalled(TEST_APP_PACKAGE));
-    }
-
-    @Test
-    public void testAppUpdateAddsNoAppDataStorageProperty() throws Exception {
-        installPackage(TEST_HW5);
-        assertTrue(isAppInstalled(TEST_APP_PACKAGE));
-        installPackage(
-                TEST_HW_NO_APP_STORAGE,
-                "Failure [INSTALL_FAILED_UPDATE_INCOMPATIBLE: Update "
-                        + "attempted to change value of "
-                        + "android.internal.PROPERTY_NO_APP_DATA_STORAGE");
-    }
-
-    @Test
-    public void testAppUpdateRemovesNoAppDataStorageProperty() throws Exception {
-        installPackage(TEST_HW_NO_APP_STORAGE);
-        assertTrue(isAppInstalled(TEST_APP_PACKAGE));
-        installPackage(
-                TEST_HW5,
-                "Failure [INSTALL_FAILED_UPDATE_INCOMPATIBLE: Update "
-                        + "attempted to change value of "
-                        + "android.internal.PROPERTY_NO_APP_DATA_STORAGE");
-    }
-
-    @Test
-    public void testNoAppDataStoragePropertyCanChangeAfterUninstall() throws Exception {
-        installPackage(TEST_HW_NO_APP_STORAGE);
-        assertTrue(isAppInstalled(TEST_APP_PACKAGE));
-        uninstallPackageSilently(TEST_APP_PACKAGE);
-        // After app is uninstalled new install can change the value of the property.
-        installPackage(TEST_HW5);
-        assertTrue(isAppInstalled(TEST_APP_PACKAGE));
-    }
-
-    @Test
-    public void testQuerySdkSandboxPackageName() throws Exception {
-        final PackageManager pm = getPackageManager();
-        final String name = pm.getSdkSandboxPackageName();
-        assertNotNull(name);
-        final ApplicationInfo info = pm.getApplicationInfo(
-                name, PackageManager.ApplicationInfoFlags.of(PackageManager.MATCH_SYSTEM_ONLY));
-        assertEquals(ApplicationInfo.FLAG_SYSTEM, info.flags & ApplicationInfo.FLAG_SYSTEM);
-        assertTrue(info.sourceDir.startsWith("/apex/com.android.adservices"));
-    }
-
-    @Test
-    public void testGetPackagesForUid_sdkSandboxUid() throws Exception {
-        final PackageManager pm = getPackageManager();
-        final String[] pkgs = pm.getPackagesForUid(Process.toSdkSandboxUid(10239));
-        assertEquals(1, pkgs.length);
-        assertEquals(pm.getSdkSandboxPackageName(), pkgs[0]);
-    }
-
-    @Test
-    public void testGetNameForUid_sdkSandboxUid() throws Exception {
-        final PackageManager pm = getPackageManager();
-        final String pkgName = pm.getNameForUid(Process.toSdkSandboxUid(11543));
-        assertEquals(pm.getSdkSandboxPackageName(), pkgName);
-    }
-
-    @Test
-    public void testGetNamesForUids_sdkSandboxUids() throws Exception {
-        final PackageManager pm = getPackageManager();
-        final int[] uids = new int[]{Process.toSdkSandboxUid(10101)};
-        final String[] names = pm.getNamesForUids(uids);
-        assertEquals(1, names.length);
-        assertEquals(pm.getSdkSandboxPackageName(), names[0]);
-    }
-
-    @LargeTest
-    @Test
-    public void testCreateUserCurAsType() throws Exception {
-        assumeTrue(UserManager.supportsMultipleUsers());
-        assumeFalse(getUserManager().hasUserRestriction(UserManager.DISALLOW_REMOVE_USER));
-
-        final String oldPropertyValue = getSystemProperty(UserManager.DEV_CREATE_OVERRIDE_PROPERTY);
-        setSystemProperty(UserManager.DEV_CREATE_OVERRIDE_PROPERTY, "1");
-        try {
-            Pattern pattern = Pattern.compile("Success: created user id (\\d+)\\R*");
-            String commandResult = executeShellCommand("pm create-user --profileOf cur "
-                    + "--user-type android.os.usertype.profile.CLONE test");
-            Matcher matcher = pattern.matcher(commandResult);
-            assertTrue(matcher.find());
-            commandResult = executeShellCommand("pm remove-user " + matcher.group(1));
-            assertEquals("Success: removed user\n", commandResult);
-            commandResult = executeShellCommand("pm create-user --profileOf current "
-                    + "--user-type android.os.usertype.profile.CLONE test");
-            matcher = pattern.matcher(commandResult);
-            assertTrue(matcher.find());
-            commandResult = executeShellCommand("pm remove-user " + matcher.group(1));
-            assertEquals("Success: removed user\n", commandResult);
-        } finally {
-            setSystemProperty(UserManager.DEV_CREATE_OVERRIDE_PROPERTY,
-                    oldPropertyValue.isEmpty() ? "invalid" : oldPropertyValue);
-        }
-    }
-
-    @Test
-    public void testShellInitiatingPkgName() throws Exception {
-        installPackage(TEST_HW5);
-        InstallSourceInfo installSourceInfo = getPackageManager()
-                .getInstallSourceInfo(TEST_APP_PACKAGE);
-        assertEquals(SHELL_PACKAGE_NAME, installSourceInfo.getInitiatingPackageName());
-        assertNull(installSourceInfo.getInstallingPackageName());
-    }
-
-    @Test
-    public void testShellInitiatingPkgNameSetInstallerPkgName() throws Exception {
-        installPackageWithInstallerPkgName(TEST_HW5, CTS_PACKAGE_NAME);
-        InstallSourceInfo installSourceInfo = getPackageManager()
-                .getInstallSourceInfo(TEST_APP_PACKAGE);
-        assertEquals(SHELL_PACKAGE_NAME, installSourceInfo.getInitiatingPackageName());
-        assertEquals(CTS_PACKAGE_NAME, installSourceInfo.getInstallingPackageName());
-    }
-
-    static class FullyRemovedBroadcastReceiver extends BroadcastReceiver {
-        private final String mTargetPackage;
-        private final int mTargetUserId;
-        private final CompletableFuture<Boolean> mUserReceivedBroadcast = new CompletableFuture<>();
-        FullyRemovedBroadcastReceiver(String packageName, int targetUserId) {
-            mTargetPackage = packageName;
-            mTargetUserId = targetUserId;
-        }
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            final String packageName = intent.getData().getEncodedSchemeSpecificPart();
-            final int userId = context.getUserId();
-            if (intent.getAction().equals(Intent.ACTION_PACKAGE_FULLY_REMOVED)
-                    && packageName.equals(mTargetPackage) && userId == mTargetUserId) {
-                mUserReceivedBroadcast.complete(true);
-                context.unregisterReceiver(this);
-            }
-        }
-        public void assertBroadcastReceived() throws Exception {
-            // Make sure broadcast has been sent from PackageManager
-            executeShellCommand("pm wait-for-handler --timeout 2000");
-            // Make sure broadcast has been dispatched from the queue
-            executeShellCommand(String.format(
-                    "am wait-for-broadcast-dispatch -a %s -d package:%s",
-                    Intent.ACTION_PACKAGE_FULLY_REMOVED, mTargetPackage));
-            // Checks that broadcast is delivered here
-            assertTrue(mUserReceivedBroadcast.get(500, TimeUnit.MILLISECONDS));
-        }
-        public void assertBroadcastNotReceived() throws Exception {
-            // Make sure broadcast has been sent from PackageManager
-            executeShellCommand("pm wait-for-handler --timeout 2000");
-            executeShellCommand(String.format(
-                    "am wait-for-broadcast-dispatch -a %s -d package:%s",
-                    Intent.ACTION_PACKAGE_FULLY_REMOVED, mTargetPackage));
-            assertThrows(TimeoutException.class,
-                    () -> mUserReceivedBroadcast.get(500, TimeUnit.MILLISECONDS));
-        }
-    }
 
     private List<SharedLibraryInfo> getSharedLibraries() {
         getUiAutomation().adoptShellPermissionIdentity();
@@ -2056,13 +1883,6 @@ public class PackageManagerShellCommandTest {
         assertTrue(result, result.startsWith(expectedResultStartsWith));
     }
 
-    private void installPackageWithInstallerPkgName(String baseName, String installerName)
-            throws IOException {
-        File file = new File(createApkPath(baseName));
-        assertEquals("Success\n", executeShellCommand(
-                "pm " + mInstall + "-i " + installerName + " -t -g " + file.getPath()));
-    }
-
     private void updatePackage(String packageName, String baseName) throws IOException {
         File file = new File(createApkPath(baseName));
         assertEquals("Success\n", executeShellCommand(
@@ -2172,7 +1992,7 @@ public class PackageManagerShellCommandTest {
         assertEquals("", executeShellCommand("setprop " + name + " " + value));
     }
 
-    private static String getSystemProperty(String prop) throws Exception {
+    public static String getSystemProperty(String prop) throws Exception {
         return executeShellCommand("getprop " + prop).replace("\n", "");
     }
 
@@ -2185,5 +2005,45 @@ public class PackageManagerShellCommandTest {
             getUiAutomation().dropShellPermissionIdentity();
         }
     }
+
+    static class FullyRemovedBroadcastReceiver extends BroadcastReceiver {
+        private final String mTargetPackage;
+        private final int mTargetUserId;
+        private final CompletableFuture<Boolean> mUserReceivedBroadcast = new CompletableFuture<>();
+        FullyRemovedBroadcastReceiver(String packageName, int targetUserId) {
+            mTargetPackage = packageName;
+            mTargetUserId = targetUserId;
+        }
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            final String packageName = intent.getData().getEncodedSchemeSpecificPart();
+            final int userId = context.getUserId();
+            if (intent.getAction().equals(Intent.ACTION_PACKAGE_FULLY_REMOVED)
+                    && packageName.equals(mTargetPackage) && userId == mTargetUserId) {
+                mUserReceivedBroadcast.complete(true);
+                context.unregisterReceiver(this);
+            }
+        }
+        public void assertBroadcastReceived() throws Exception {
+            // Make sure broadcast has been sent from PackageManager
+            executeShellCommand("pm wait-for-handler --timeout 2000");
+            // Make sure broadcast has been dispatched from the queue
+            executeShellCommand(String.format(
+                    "am wait-for-broadcast-dispatch -a %s -d package:%s",
+                    Intent.ACTION_PACKAGE_FULLY_REMOVED, mTargetPackage));
+            // Checks that broadcast is delivered here
+            assertTrue(mUserReceivedBroadcast.get(500, TimeUnit.MILLISECONDS));
+        }
+        public void assertBroadcastNotReceived() throws Exception {
+            // Make sure broadcast has been sent from PackageManager
+            executeShellCommand("pm wait-for-handler --timeout 2000");
+            executeShellCommand(String.format(
+                    "am wait-for-broadcast-dispatch -a %s -d package:%s",
+                    Intent.ACTION_PACKAGE_FULLY_REMOVED, mTargetPackage));
+            Assert.assertThrows(TimeoutException.class,
+                    () -> mUserReceivedBroadcast.get(500, TimeUnit.MILLISECONDS));
+        }
+    }
+
 }
 
