@@ -353,7 +353,7 @@ public class CtsWindowInfoUtils {
      */
     public static boolean tapOnWindowCenter(Instrumentation instrumentation,
             @NonNull Supplier<IBinder> windowTokenSupplier) throws InterruptedException {
-        Rect bounds = getWindowBounds(windowTokenSupplier);
+        Rect bounds = getWindowBoundsInDisplaySpace(windowTokenSupplier);
         if (bounds == null) {
             return false;
         }
@@ -380,7 +380,7 @@ public class CtsWindowInfoUtils {
     public static boolean tapOnWindow(Instrumentation instrumentation,
             @NonNull Supplier<IBinder> windowTokenSupplier, @Nullable Point offset)
             throws InterruptedException {
-        Rect bounds = getWindowBounds(windowTokenSupplier);
+        Rect bounds = getWindowBoundsInDisplaySpace(windowTokenSupplier);
         if (bounds == null) {
             return false;
         }
@@ -391,7 +391,7 @@ public class CtsWindowInfoUtils {
         return true;
     }
 
-    public static Rect getWindowBounds(@NonNull Supplier<IBinder> windowTokenSupplier)
+    public static Rect getWindowBoundsInWindowSpace(@NonNull Supplier<IBinder> windowTokenSupplier)
             throws InterruptedException {
         Rect bounds = new Rect();
         Predicate<WindowInfo> predicate = windowInfo -> {
@@ -404,6 +404,24 @@ public class CtsWindowInfoUtils {
                 } else {
                     bounds.set(windowInfo.bounds);
                 }
+                return true;
+            }
+
+            return false;
+        };
+
+        if (!waitForWindowInfo(predicate, 5, TimeUnit.SECONDS, windowTokenSupplier)) {
+            return null;
+        }
+        return bounds;
+    }
+
+    public static Rect getWindowBoundsInDisplaySpace(@NonNull Supplier<IBinder> windowTokenSupplier)
+            throws InterruptedException {
+        Rect bounds = new Rect();
+        Predicate<WindowInfo> predicate = windowInfo -> {
+            if (!windowInfo.bounds.isEmpty()) {
+                bounds.set(windowInfo.bounds);
                 return true;
             }
 
