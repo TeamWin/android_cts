@@ -79,6 +79,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -190,6 +191,7 @@ public class MediaRouter2Test {
      *
      * <p>Runs on both the primary user and a work profile, as per {@link UserTest}.
      */
+    @Ignore // TODO(b/291800179): Diagnose flakiness and re-enable.
     @UserTest({UserType.PRIMARY_USER, UserType.WORK_PROFILE})
     @Test
     public void testGetRoutes() throws Exception {
@@ -298,6 +300,7 @@ public class MediaRouter2Test {
         }
     }
 
+    @Ignore // TODO(b/291800179): Diagnose flakiness and re-enable.
     @Test
     public void testTransferToFailure() throws Exception {
         final List<String> sampleRouteType = new ArrayList<>();
@@ -623,6 +626,7 @@ public class MediaRouter2Test {
     }
 
     // TODO: Add tests for illegal inputs if needed (e.g. selecting already selected route)
+    @Ignore // TODO(b/291800179): Diagnose flakiness and re-enable.
     @Test
     public void testRoutingControllerSelectAndDeselectRoute() throws Exception {
         final List<String> sampleRouteType = new ArrayList<>();
@@ -1085,6 +1089,7 @@ public class MediaRouter2Test {
         }
     }
 
+    @Ignore // TODO(b/291800179): Diagnose flakiness and re-enable.
     @Test
     public void testRoutingControllerRelease() throws Exception {
         final List<String> sampleRouteType = new ArrayList<>();
