@@ -76,6 +76,8 @@ public class CodecDecoderPauseTest extends CodecDecoderTestBase {
                         CODEC_ALL},
                 {MediaFormat.MIMETYPE_VIDEO_VP8, "bbb_640x360_512kbps_30fps_vp8.webm", CODEC_ALL},
                 {MediaFormat.MIMETYPE_VIDEO_VP9, "bbb_cif_768kbps_30fps_vp9.mkv", CODEC_ALL},
+                {MediaFormat.MIMETYPE_VIDEO_AV1, "cosmat_520x390_24fps_768kbps_av1_10bit.mkv",
+                        CODEC_ALL},
         });
         return prepareParamList(exhaustiveArgsList, isEncoder, needAudio, needVideo, false);
     }
