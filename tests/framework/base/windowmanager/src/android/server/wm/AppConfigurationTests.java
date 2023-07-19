@@ -272,6 +272,19 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
         launchActivity(activityName, WINDOWING_MODE_FULLSCREEN);
         final SizeInfo initialFullscreenSizes = getLastReportedSizesForActivity(activityName);
 
+        // Ensure the orientation configuration is different while moving the activity into split
+        // primary task later if we expected activity to be launched.
+        if (relaunch) {
+            mTaskOrganizer.registerOrganizerIfNeeded();
+            Rect primaryTaskBounds = mTaskOrganizer.getPrimaryTaskBounds();
+            if (initialFullscreenSizes.displayHeight > initialFullscreenSizes.displayWidth) {
+                primaryTaskBounds.bottom = primaryTaskBounds.width() / 2;
+            } else {
+                primaryTaskBounds.right = primaryTaskBounds.height() / 2;
+            }
+            mTaskOrganizer.setRootPrimaryTaskBounds(primaryTaskBounds);
+        }
+
         // Move the task to the primary split task.
         separateTestJournal();
         putActivityInPrimarySplit(activityName);

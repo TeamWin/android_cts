@@ -50,6 +50,9 @@ import android.server.wm.cts.R;
 import android.transition.Transition;
 import android.transition.TransitionListenerAdapter;
 import android.util.Pair;
+import android.view.WindowManager;
+import android.view.Display;
+import android.graphics.Rect;
 
 import androidx.annotation.NonNull;
 import androidx.test.rule.ActivityTestRule;
@@ -621,6 +624,18 @@ public class ActivityLifecycleClientTestBase extends MultiDisplayTestBase {
     void moveTaskToPrimarySplitScreenAndVerify(Activity primaryActivity,
             Activity secondaryActivity) throws Exception {
         getTransitionLog().clear();
+
+        final int screenwidth = mWm.getDefaultDisplay().getWidth();
+        final int screenheight = mWm.getDefaultDisplay().getHeight();
+
+        mTaskOrganizer.registerOrganizerIfNeeded();
+        Rect primaryTaskBounds = mTaskOrganizer.getPrimaryTaskBounds();
+        if (screenheight > screenwidth) {
+            primaryTaskBounds.bottom = primaryTaskBounds.width() / 2;
+        } else {
+            primaryTaskBounds.right = primaryTaskBounds.height() / 2;
+        }
+        mTaskOrganizer.setRootPrimaryTaskBounds(primaryTaskBounds);
 
         mWmState.computeState(secondaryActivity.getComponentName());
         moveActivitiesToSplitScreen(primaryActivity.getComponentName(),
