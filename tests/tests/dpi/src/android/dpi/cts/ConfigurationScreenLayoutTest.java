@@ -25,10 +25,7 @@ import static android.content.res.Configuration.SCREENLAYOUT_SIZE_NORMAL;
 import static android.content.res.Configuration.SCREENLAYOUT_SIZE_XLARGE;
 import static android.server.wm.ActivityManagerTestBase.isTablet;
 import static android.view.WindowInsets.Type.displayCutout;
-import static android.view.WindowInsets.Type.navigationBars;
 import static android.view.WindowInsets.Type.systemBars;
-
-import static android.server.wm.ActivityManagerTestBase.isTablet;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -143,14 +140,8 @@ public class ConfigurationScreenLayoutTest
     private int computeScreenLayout(Activity activity) {
         final WindowInsets windowInsets = activity.getWindowManager().getCurrentWindowMetrics()
                 .getWindowInsets();
-        // 1. Calculate the screenLayout from display, which use the display size excluding nav bar
-        //    and cutout area.
-        Insets insets = windowInsets.getInsets(navigationBars() | displayCutout());
-        int screenLayout = reduceScreenLayout(activity, insets, BIGGEST_LAYOUT);
-        // 2. Calculate the screenLayout from Task, which use the bounds excluding all system bars
-        //    and cutout area.
-        insets = windowInsets.getInsets(systemBars() | displayCutout());
-        return reduceScreenLayout(activity, insets, screenLayout);
+        final Insets insets = windowInsets.getInsets(systemBars() | displayCutout());
+        return reduceScreenLayout(activity, insets, BIGGEST_LAYOUT);
     }
 
     private int reduceScreenLayout(Activity activity, Insets excludeInsets, int screenLayout) {
