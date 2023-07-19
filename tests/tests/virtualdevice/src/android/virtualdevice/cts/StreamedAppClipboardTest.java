@@ -74,6 +74,7 @@ import android.graphics.PixelFormat;
 import android.graphics.Point;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
+import android.hardware.display.VirtualDisplayConfig;
 import android.media.ImageReader;
 import android.os.Bundle;
 import android.os.ResultReceiver;
@@ -119,6 +120,10 @@ public class StreamedAppClipboardTest {
             new ComponentName("android.virtualdevice.streamedtestapp2",
                     "android.virtualdevice.streamedtestapp2.ClipboardTestActivity2");
     private static final int EVENT_TIMEOUT_MS = 8000;
+
+    private static final VirtualDisplayConfig VIRTUAL_DISPLAY_CONFIG =
+            new VirtualDisplayConfig.Builder("VirtualDisplay",
+                    /*width=*/100, /*height=*/100, /*densityDpi=*/240).build();
 
     @Rule
     public AdoptShellPermissionsRule mAdoptShellPermissionsRule = new AdoptShellPermissionsRule(
@@ -169,14 +174,9 @@ public class StreamedAppClipboardTest {
 
         mImageReaderForVirtualDisplay = ImageReader.newInstance(/* width= */ 100, /* height= */ 100,
                 PixelFormat.RGBA_8888, /* maxImages= */ 1);
-        mVirtualDisplay = mVirtualDevice.createVirtualDisplay(
-                /* width= */ 100,
-                /* height= */ 100,
-                /* densityDpi= */ 240,
-                /* surface= */ mImageReaderForVirtualDisplay.getSurface(),
-                /* flags= */ 0,
-                /* executor= */ Runnable::run,
-                mVirtualDisplayCallback);
+        mVirtualDisplay = mVirtualDevice.createVirtualDisplay(VIRTUAL_DISPLAY_CONFIG,
+                /*executor=*/Runnable::run, mVirtualDisplayCallback);
+        mVirtualDisplay.setSurface(mImageReaderForVirtualDisplay.getSurface());
         mResultReceiver = createResultReceiver(mOnReceiveResultListener);
     }
 
@@ -478,13 +478,9 @@ public class StreamedAppClipboardTest {
         ImageReader reader = ImageReader.newInstance(/* width= */ 100, /* height= */ 100,
                 PixelFormat.RGBA_8888, /* maxImages= */ 1);
         VirtualDisplay secondVirtualDisplay = secondDevice.createVirtualDisplay(
-                /* width= */ 100,
-                /* height= */ 100,
-                /* densityDpi= */ 240,
-                /* surface= */ reader.getSurface(),
-                /* flags= */ 0,
-                Runnable::run,
-                /* callback= */ null);
+                VIRTUAL_DISPLAY_CONFIG,
+                /*executor=*/Runnable::run, mVirtualDisplayCallback);
+        secondVirtualDisplay.setSurface(reader.getSurface());
         try {
             ClipboardManager deviceClipboard = mVirtualDevice.createContext().getSystemService(
                     ClipboardManager.class);
