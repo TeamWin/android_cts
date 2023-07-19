@@ -88,7 +88,7 @@ import java.util.concurrent.atomic.AtomicReference;
 @AppModeFull(reason = "Can't bind to helper apps from instant mode")
 public class GlobalSearchSessionPlatformCtsTest {
 
-    private static final long TIMEOUT_BIND_SERVICE_SEC = 2;
+    private static final long TIMEOUT_BIND_SERVICE_SEC = 10;
 
     private static final String TAG = "GlobalSearchSessionPlatformCtsTest";
 
@@ -1473,11 +1473,15 @@ public class GlobalSearchSessionPlatformCtsTest {
             if (mCommandReceiver == null) {
                 mCommandReceiver = ICommandReceiver.Stub.asInterface(getService());
             }
+            if (mCommandReceiver == null) {
+                Log.e(TAG, "Cannot bind to a service in " + TIMEOUT_BIND_SERVICE_SEC + " second.");
+            }
             return mCommandReceiver;
         }
 
         public void unbind() {
             mCommandReceiver = null;
+            Log.i(TAG, "Service got unbinded.");
             mContext.unbindService(this);
         }
     }
