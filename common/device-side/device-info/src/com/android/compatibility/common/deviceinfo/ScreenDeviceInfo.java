@@ -18,16 +18,23 @@ package com.android.compatibility.common.deviceinfo;
 import android.app.Activity;
 import android.content.Context;
 import android.content.res.Configuration;
+import android.os.Build;
 import android.os.Bundle;
-import android.server.wm.jetpack.utils.SidecarUtil;
 import android.server.wm.jetpack.utils.ExtensionUtil;
+import android.server.wm.jetpack.utils.SidecarUtil;
 import android.server.wm.jetpack.utils.Version;
 import android.util.DisplayMetrics;
 import android.view.Display;
 import android.view.WindowManager;
 
+import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.DeviceInfoStore;
 import com.android.compatibility.common.util.DummyActivity;
+
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.Optional;
 
 /**
  * Screen device info collector.
@@ -55,6 +62,8 @@ public final class ScreenDeviceInfo extends DeviceInfo {
 
         // Add WindowManager Jetpack Library version and available display features.
         addDisplayFeaturesIfPresent(store);
+
+        addPhysicalResolutionAndRefreshRate(store, display);
     }
 
     private void addDisplayFeaturesIfPresent(DeviceInfoStore store) throws Exception {
@@ -83,6 +92,35 @@ public final class ScreenDeviceInfo extends DeviceInfo {
             int[] displayFeatureTypes = SidecarUtil.getSidecarDisplayFeatureTypes(activity);
             store.addArrayResult("display_features", displayFeatureTypes);
         }
+    }
+
+    private static void addPhysicalResolutionAndRefreshRate(
+            DeviceInfoStore store, Display display) throws IOException {
+        if (ApiLevelUtil.isBefore(Build.VERSION_CODES.M)) {
+            return;
+        }
+
+        // Add properties of an active display mode.
+        Display.Mode activeMode = display.getMode();
+        addDisplayModeProperties(store, activeMode, "");
+
+        // Add properties of a supported mode with max resolution and refresh rate.
+        Display.Mode[] supportedModes = display.getSupportedModes();
+        Comparator<Display.Mode> modeComparator = Comparator.comparingInt(
+                Display.Mode::getPhysicalWidth).thenComparingInt(
+                Display.Mode::getPhysicalHeight).thenComparingDouble(
+                Display.Mode::getRefreshRate);
+        Optional<Display.Mode> maxMode = Arrays.stream(supportedModes).max(modeComparator);
+        if (maxMode.isPresent()) {
+            addDisplayModeProperties(store, maxMode.get(), "max_");
+        }
+    }
+
+    private static void addDisplayModeProperties(
+            DeviceInfoStore store, Display.Mode mode, String propertyPrefix) throws IOException {
+        store.addResult(propertyPrefix + "physical_width_pixels", mode.getPhysicalWidth());
+        store.addResult(propertyPrefix + "physical_height_pixels", mode.getPhysicalHeight());
+        store.addResult(propertyPrefix + "refresh_rate", mode.getRefreshRate());
     }
 
     private static String getScreenSize(Configuration configuration) {
