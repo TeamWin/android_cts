@@ -20,6 +20,9 @@ import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import android.Manifest;
+import android.app.ActivityManager;
+import android.app.UiAutomation;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -27,14 +30,12 @@ import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.os.BugreportManager;
 import android.os.BugreportParams;
-import android.os.UserManager;
+import android.os.UserHandle;
 import android.util.Pair;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.LargeTest;
 import androidx.test.runner.AndroidJUnit4;
-
-import static org.junit.Assume.assumeFalse;
 
 import org.junit.After;
 import org.junit.Before;
@@ -62,15 +63,20 @@ public class BugreportManagerTest {
     private static final String BUGREPORT_SERVICE = "bugreportd";
 
     private Context mContext;
+    private Context mSystemContext;
     private BugreportManager mBugreportManager;
+    private UiAutomation mUiAutomation;
 
     private boolean mIsTv;
+    private int mCurrentUserId;
 
     @Before
     public void setup() {
-        assumeFalse("Bugreport cannot run in headless system user mode",
-                          UserManager.isHeadlessSystemUserMode());
         mContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        mUiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        mUiAutomation.adoptShellPermissionIdentity(Manifest.permission.INTERACT_ACROSS_USERS_FULL);
+        mCurrentUserId = ActivityManager.getCurrentUser();
+        mSystemContext = mContext.createContextAsUser(UserHandle.SYSTEM, 0);
         mBugreportManager = mContext.getSystemService(BugreportManager.class);
         mIsTv = mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_LEANBACK);
         // Kill current bugreport, so that it does not interfere with future bugreports.
@@ -81,17 +87,18 @@ public class BugreportManagerTest {
     public void tearDown() {
         // Kill current bugreport, so that it does not interfere with future bugreports.
         runShellCommand("setprop ctl.stop " + BUGREPORT_SERVICE);
+        mUiAutomation.dropShellPermissionIdentity();
     }
 
     @Test
-    public void testBugreportParams_getMode() throws Exception {
+    public void testBugreportParams_getMode() {
         int expected_mode = BugreportParams.BUGREPORT_MODE_FULL;
         BugreportParams bp = new BugreportParams(expected_mode);
         assertThat(bp.getMode()).isEqualTo(expected_mode);
     }
 
     @Test
-    public void testBugreportParams_getFlags() throws Exception {
+    public void testBugreportParams_getFlags() {
         {
             BugreportParams bp = new BugreportParams(BugreportParams.BUGREPORT_MODE_FULL);
             assertThat(bp.getFlags()).isEqualTo(0);
@@ -111,7 +118,7 @@ public class BugreportManagerTest {
         String bugreport = brFiles.first;
         String screenshot = brFiles.second;
 
-        assertBugreportFileNameCorrect(bugreport, "-telephony-" /* suffixName */);
+        assertBugreportFileNameCorrect(bugreport, "-telephony-" /* suffixName */, false);
         assertThatFileisNotEmpty(bugreport);
         // telephony bugreport does not take any screenshot
         assertThat(screenshot).isNull();
@@ -124,7 +131,7 @@ public class BugreportManagerTest {
         String bugreport = brFiles.first;
         String screenshot = brFiles.second;
 
-        assertBugreportFileNameCorrect(bugreport, null /* suffixName */);
+        assertBugreportFileNameCorrect(bugreport, null /* suffixName */, false);
         assertThatFileisNotEmpty(bugreport);
         // full bugreport takes a default screenshot
         assertScreenshotFileNameCorrect(screenshot);
@@ -138,7 +145,7 @@ public class BugreportManagerTest {
         String bugreport = brFiles.first;
         String screenshot = brFiles.second;
 
-        assertBugreportFileNameCorrect(bugreport, null /* suffixName */);
+        assertBugreportFileNameCorrect(bugreport, null /* suffixName */, false);
         assertThatFileisNotEmpty(bugreport);
         // tv does not support screenshot button in the ui, interactive bugreport takes a
         // default screenshot.
@@ -157,7 +164,7 @@ public class BugreportManagerTest {
         String bugreport = brFiles.first;
         String screenshot = brFiles.second;
 
-        assertBugreportFileNameCorrect(bugreport, "-wifi-" /* suffixName */);
+        assertBugreportFileNameCorrect(bugreport, "-wifi-" /* suffixName */, false);
         assertThatFileisNotEmpty(bugreport);
         // wifi bugreport does not take any screenshot
         assertThat(screenshot).isNull();
@@ -170,7 +177,7 @@ public class BugreportManagerTest {
         String bugreport = brFiles.first;
         String screenshot = brFiles.second;
 
-        assertBugreportFileNameCorrect(bugreport, null /* suffixName */);
+        assertBugreportFileNameCorrect(bugreport, null /* suffixName */, true);
         assertThatFileisNotEmpty(bugreport);
         // remote bugreport does not take any screenshot
         assertThat(screenshot).isNull();
@@ -183,7 +190,7 @@ public class BugreportManagerTest {
         String bugreport = brFiles.first;
         String screenshot = brFiles.second;
 
-        assertBugreportFileNameCorrect(bugreport, null /* suffixName */);
+        assertBugreportFileNameCorrect(bugreport, null /* suffixName */, false);
         assertThatFileisNotEmpty(bugreport);
         // wear bugreport takes a default screenshot
         assertScreenshotFileNameCorrect(screenshot);
@@ -197,15 +204,23 @@ public class BugreportManagerTest {
         String bugreport = brFiles.first;
         String screenshot = brFiles.second;
 
-        assertBugreportFileNameCorrect(bugreport, null /* suffixName */);
+        assertBugreportFileNameCorrect(bugreport, null /* suffixName */, false);
         assertThatFileisNotEmpty(bugreport);
         // onboarding bugreport does not take any screenshot
         assertThat(screenshot).isNull();
     }
 
-    private void assertBugreportFileNameCorrect(String fileName, String suffixName) {
+    private void assertBugreportFileNameCorrect(String fileName, String suffixName,
+            boolean isRemote) {
+        int expectedUserId = mCurrentUserId;
+        if (isRemote) {
+            // Remote bugreport requests are sent to the SYSTEM user.
+            expectedUserId = UserHandle.SYSTEM.getIdentifier();
+        }
         assertThat(fileName).startsWith(
-                "/data/user_de/0/com.android.shell/files/bugreports/bugreport-");
+                String.format(
+                        "/data/user_de/%d/com.android.shell/files/bugreports/bugreport-",
+                        expectedUserId));
         assertThat(fileName).endsWith(".zip");
         if (suffixName != null) {
             assertThat(fileName).contains(suffixName);
@@ -214,7 +229,9 @@ public class BugreportManagerTest {
 
     private void assertScreenshotFileNameCorrect(String fileName) {
         assertThat(fileName).startsWith(
-                "/data/user_de/0/com.android.shell/files/bugreports/screenshot-");
+                String.format(
+                        "/data/user_de/%d/com.android.shell/files/bugreports/screenshot-",
+                        mCurrentUserId));
         assertThat(fileName).endsWith("-default.png");
     }
 
@@ -259,13 +276,18 @@ public class BugreportManagerTest {
     private Pair<String, String> triggerBugreport(int type) throws Exception {
         BugreportBroadcastReceiver br = new BugreportBroadcastReceiver();
         final IntentFilter intentFilter;
+        Context receivingContext = mContext;
+        if (type == BugreportParams.BUGREPORT_MODE_REMOTE && mCurrentUserId != 0) {
+            // Remote bugreports are handled by the system user.
+            receivingContext = mSystemContext;
+        }
         if (type == BugreportParams.BUGREPORT_MODE_REMOTE) {
             intentFilter = new IntentFilter(INTENT_REMOTE_BUGREPORT_DISPATCH,
                     REMOTE_BUGREPORT_MIMETYPE);
         } else {
             intentFilter = new IntentFilter(INTENT_BUGREPORT_FINISHED);
         }
-        mContext.registerReceiver(br, intentFilter, Context.RECEIVER_EXPORTED_UNAUDITED);
+        receivingContext.registerReceiver(br, intentFilter, Context.RECEIVER_EXPORTED);
         final BugreportParams params = new BugreportParams(type);
         mBugreportManager.requestBugreport(params, "" /* shareTitle */, "" /* shareDescription */);
 
@@ -274,7 +296,7 @@ public class BugreportManagerTest {
         } finally {
             // The latch may fail for a number of reasons but we still need to unregister the
             // BroadcastReceiver.
-            mContext.unregisterReceiver(br);
+            receivingContext.unregisterReceiver(br);
         }
 
         Intent response = br.getBugreportFinishedIntent();
