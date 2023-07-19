@@ -1501,10 +1501,10 @@ public class LoginActivityTest extends LoginActivityCommonTestCase {
         mActivity.expectAutoFill("dude", "sweet");
 
         // Trigger auto-fill.
-        requestFocusOnUsername();
+        mActivity.onUsername(View::requestFocus);
         sReplier.getNextFillRequest();
 
-        // Asser that the dataset is not shown
+        // Assert that the dataset is not shown
         assertThrows(RetryableException.class,
                 () -> mUiBot.assertDatasets("The Dude"));
 
