@@ -16,7 +16,7 @@
 package android.view.cts.surfacevalidator;
 
 import static android.server.wm.BuildUtils.HW_TIMEOUT_MULTIPLIER;
-import static android.server.wm.CtsWindowInfoUtils.getWindowBounds;
+import static android.server.wm.CtsWindowInfoUtils.getWindowBoundsInWindowSpace;
 import static android.view.WindowInsets.Type.statusBars;
 import static android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS;
 
@@ -225,7 +225,7 @@ public class CapturedActivity extends Activity {
             assertTrue("Failed to wait for frame draw",
                     frameDrawnLatch.await(WAIT_TIMEOUT_S, TimeUnit.SECONDS));
 
-            Rect bounds = getWindowBounds(mParentLayout::getWindowToken);
+            Rect bounds = getWindowBoundsInWindowSpace(mParentLayout::getWindowToken);
             assertNotNull("Failed to wait for test window bounds", bounds);
             mTestAreaSize.set(bounds.width(), bounds.height());
 
