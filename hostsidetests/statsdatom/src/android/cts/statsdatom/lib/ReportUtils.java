@@ -65,8 +65,27 @@ public final class ReportUtils {
      */
     public static List<EventMetricData> getEventMetricDataList(ConfigMetricsReportList reportList)
             throws Exception {
-        assertThat(reportList.getReportsCount()).isEqualTo(1);
-        ConfigMetricsReport report = reportList.getReports(0);
+        return getEventMetricDataList(reportList, /*reportIndex*/ 0);
+    }
+
+    /**
+     * Returns a list of event metrics, which is sorted by timestamp, from the statsd report.
+     * Note: Calling this function deletes the report from statsd.
+     */
+    public static List<EventMetricData> getEventMetricDataList(ITestDevice device,
+            ExtensionRegistry extensionRegistry, int reportIndex) throws Exception {
+        ConfigMetricsReportList reportList = getReportList(device, extensionRegistry);
+        return getEventMetricDataList(reportList, reportIndex);
+    }
+
+    /**
+     * Extracts and sorts the EventMetricData from the given ConfigMetricsReportList containing the
+     * report at the specified index. The atoms are sorted by timestamp within the report.
+     */
+    public static List<EventMetricData> getEventMetricDataList(
+            ConfigMetricsReportList reportList, int reportIndex) throws Exception {
+        assertThat(reportList.getReportsCount()).isGreaterThan(reportIndex);
+        ConfigMetricsReport report = reportList.getReports(reportIndex);
 
         List<EventMetricData> data = new ArrayList<>();
         for (StatsLogReport metric : report.getMetricsList()) {
@@ -183,8 +202,8 @@ public final class ReportUtils {
     private static ConfigMetricsReportList getReportList(
             ITestDevice device, ExtensionRegistry extensionRegistry) throws Exception {
         try {
-            String cmd = String.join(" ", DUMP_REPORT_CMD, ConfigUtils.CONFIG_ID_STRING,
-                    "--include_current_bucket", "--proto");
+            String cmd = String.join(" ", DUMP_REPORT_CMD, ConfigUtils.SHELL_UID_STRING,
+                    ConfigUtils.CONFIG_ID_STRING, "--include_current_bucket", "--proto");
             ConfigMetricsReportList reportList = DeviceUtils.getShellCommandOutput(
                     device, ConfigMetricsReportList.parser(), extensionRegistry, cmd);
             return reportList;
