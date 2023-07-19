@@ -89,7 +89,6 @@ import android.virtualdevice.cts.util.VirtualDeviceTestUtils;
 
 import androidx.annotation.NonNull;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
-import androidx.test.filters.FlakyTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.AdoptShellPermissionsRule;
@@ -350,7 +349,6 @@ public class StreamedAppClipboardTest {
         assertThat(clipData).isNull();
     }
 
-    @FlakyTest(bugId = 288339992)
     @Test
     public void twoAppsOnVirtualDevice_firstAppWrites_secondAppCanRead() {
         final Intent firstAppIntent =
