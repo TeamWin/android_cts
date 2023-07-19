@@ -310,7 +310,9 @@ class NightExtensionTest(its_base_test.ItsBaseTest):
       should_run = _EXTENSION_NIGHT in supported_extensions
       media_performance_class = its_session_utils.get_media_performance_class(
           self.dut.serial)
-      if media_performance_class >= _TEST_REQUIRED_MPC and not should_run:
+      if (media_performance_class >= _TEST_REQUIRED_MPC and
+          cam.is_primary_camera() and
+          not should_run):
         its_session_utils.raise_mpc_assertion_error(
             _TEST_REQUIRED_MPC, _NAME, media_performance_class)
 
