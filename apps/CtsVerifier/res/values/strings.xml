@@ -5980,6 +5980,8 @@ Follow the instructions on the screen to measure the frequency response for the 
         \nThe test passes if all routes demonstrate the correct stream disconnection behavior.
     </string>
     <string name="audio_disconnect_wired_prompt">Does this device support an analog or USB audio peripheral?</string>
+    <string name="audio_disconnect_port_detected">"Wired device support detected"</string>
+
     <!--Audio Frequency Global strings -->
     <string name="af_button_play">Play</string>
     <string name="af_button_stop">Stop</string>

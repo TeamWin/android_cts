@@ -10,6 +10,7 @@
         android:scrollbars="vertical"
         android:gravity="bottom"
         android:id="@+id/audio_wired_port_exists"
+        android:textSize="20dp"
         android:text="@string/audio_wired_exists" />
 
     <LinearLayout

@@ -25,9 +25,6 @@ import android.media.AudioTrack;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
-import android.view.View;
-import android.view.View.OnClickListener;
-import android.widget.Button;
 import android.widget.TextView;
 
 import com.android.compatibility.common.util.ResultType;
@@ -53,13 +50,7 @@ public class AudioOutputRoutingNotificationsActivity extends AudioWiredDeviceBas
 
     Context mContext;
 
-    Button playBtn;
-    Button stopBtn;
-    TextView mInfoView;
-
     int mNumRoutingNotifications;
-
-    private OnBtnClickListener mBtnClickListener = new OnBtnClickListener();
 
     // ignore messages sent as a consequence of starting the player
     private static final int NUM_IGNORE_MESSAGES = 1;
@@ -76,22 +67,11 @@ public class AudioOutputRoutingNotificationsActivity extends AudioWiredDeviceBas
     // ReportLog schema
     private static final String SECTION_OUTPUT_ROUTING = "audio_out_routing_notifications";
 
-    private class OnBtnClickListener implements OnClickListener {
-        @Override
-        public void onClick(View v) {
-            if (mAudioPlayer == null) {
-                return; // failed to create the player
-            }
-            int id = v.getId();
-            if (id == R.id.audio_routingnotification_playBtn) {
-                startPlayback();
-            } else if (id == R.id.audio_routingnotification_playStopBtn) {
-                stopPlayback();
-            }
+    @Override
+    void startAudio() {
+        if (mAudioPlayer == null) {
+            return; // failed to create the player
         }
-    }
-
-    private void startPlayback() {
         if (!mIsPlaying) {
             mNumRoutingNotifications = 0;
 
@@ -105,9 +85,14 @@ public class AudioOutputRoutingNotificationsActivity extends AudioWiredDeviceBas
 
             enableTestButtons(false);
         }
+        Log.i(TAG, "  ... done startAudio()");
     }
 
-    private void stopPlayback() {
+    @Override
+    void stopAudio() {
+        if (mAudioPlayer == null) {
+            return; // failed to create the player
+        }
         if (mIsPlaying) {
             mAudioPlayer.stopStream();
 
@@ -122,7 +107,7 @@ public class AudioOutputRoutingNotificationsActivity extends AudioWiredDeviceBas
 
     private class AudioTrackRoutingChangeListener implements AudioTrack.OnRoutingChangedListener {
         public void onRoutingChanged(AudioTrack audioTrack) {
-            // Starting playback triggers a messages, so ignore the first one.
+            // Starting playback triggers a message, so ignore the first one.
             mNumRoutingNotifications++;
             if (mNumRoutingNotifications <= NUM_IGNORE_MESSAGES) {
                 return;
@@ -136,14 +121,9 @@ public class AudioOutputRoutingNotificationsActivity extends AudioWiredDeviceBas
             mConnectedPeripheralName = AudioDeviceUtils.formatDeviceName(routedDevice);
             textView.setText(msg + ": " + mConnectedPeripheralName);
             mRoutingNotificationReceived = true;
+            stopAudio();
             calculatePass();
         }
-    }
-
-    @Override
-    protected void enableTestButtons(boolean enabled) {
-        playBtn.setEnabled(enabled);
-        stopBtn.setEnabled(!enabled);
     }
 
     @Override
@@ -188,12 +168,7 @@ public class AudioOutputRoutingNotificationsActivity extends AudioWiredDeviceBas
 
         mContext = this;
 
-        playBtn = (Button) findViewById(R.id.audio_routingnotification_playBtn);
-        playBtn.setOnClickListener(mBtnClickListener);
-        stopBtn = (Button) findViewById(R.id.audio_routingnotification_playStopBtn);
-        stopBtn.setOnClickListener(mBtnClickListener);
-
-        mInfoView = (TextView) findViewById(R.id.info_text);
+        connectProcessUI();
 
         enableTestButtons(false);
 
@@ -222,11 +197,5 @@ public class AudioOutputRoutingNotificationsActivity extends AudioWiredDeviceBas
                 R.string.audio_output_routingnotification_instructions, -1);
         setPassFailButtonClickListeners();
         getPassButton().setEnabled(false);
-    }
-
-    @Override
-    public void onBackPressed () {
-        stopPlayback();
-        super.onBackPressed();
     }
 }
