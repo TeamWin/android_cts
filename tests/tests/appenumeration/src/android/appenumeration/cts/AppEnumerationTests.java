@@ -181,6 +181,8 @@ import android.content.res.Resources;
 import android.net.Uri;
 import android.os.Bundle;
 
+import androidx.test.filters.LargeTest;
+
 import com.android.bedstead.nene.users.UserReference;
 import com.android.compatibility.common.util.AmUtils;
 import com.android.compatibility.common.util.SystemUtil;
@@ -806,6 +808,7 @@ public class AppEnumerationTests extends AppEnumerationTestsBase {
         }
     }
 
+    @LargeTest
     @Test
     public void broadcastAdded_notVisibleDoesNotReceive() throws Exception {
         final Result result = sendCommand(QUERIES_NOTHING, TARGET_FILTERS,
@@ -834,6 +837,7 @@ public class AppEnumerationTests extends AppEnumerationTestsBase {
         }
     }
 
+    @LargeTest
     @Test
     public void reinstallTarget_broadcastRemoved_notVisibleDoesNotReceive() throws Exception {
         final Result result = sendCommand(QUERIES_NOTHING, TARGET_FILTERS,
@@ -862,6 +866,7 @@ public class AppEnumerationTests extends AppEnumerationTestsBase {
         }
     }
 
+    @LargeTest
     @Test
     public void uninstallTarget_broadcastRemoved_notVisibleDoesNotReceive() throws Exception {
         ensurePackageIsInstalled(TARGET_STUB, TARGET_STUB_APK);
@@ -892,6 +897,7 @@ public class AppEnumerationTests extends AppEnumerationTestsBase {
         }
     }
 
+    @LargeTest
     @Test
     public void uninstallTarget_broadcastFullyRemoved_notVisibleDoesNotReceive() throws Exception {
         ensurePackageIsInstalled(TARGET_STUB, TARGET_STUB_APK);
@@ -922,6 +928,7 @@ public class AppEnumerationTests extends AppEnumerationTestsBase {
         }
     }
 
+    @LargeTest
     @Test
     public void clearTargetData_broadcastDataCleared_notVisibleDoesNotReceive() throws Exception {
         ensurePackageIsInstalled(TARGET_STUB, TARGET_STUB_APK);
@@ -957,6 +964,7 @@ public class AppEnumerationTests extends AppEnumerationTestsBase {
         assertBroadcastRestartedVisible(QUERIES_PACKAGE, TARGET_NO_API, TARGET_NO_API);
     }
 
+    @LargeTest
     @Test
     public void broadcastRestarted_notVisibleDoesNotReceive() throws Exception {
         assertBroadcastRestartedVisible(QUERIES_NOTHING, /* expectedPackage */ null, TARGET_NO_API);
@@ -969,6 +977,7 @@ public class AppEnumerationTests extends AppEnumerationTestsBase {
                 Arrays.asList(TARGET_NO_API, TARGET_SYNCADAPTER));
     }
 
+    @LargeTest
     @Test
     public void broadcastSuspended_notVisibleDoesNotReceive() throws Exception {
         assertBroadcastSuspendedVisible(QUERIES_NOTHING,
@@ -976,6 +985,7 @@ public class AppEnumerationTests extends AppEnumerationTestsBase {
                 Arrays.asList(TARGET_NO_API, TARGET_SYNCADAPTER));
     }
 
+    @LargeTest
     @Test
     public void broadcastSuspended_visibleReceivesAndNotVisibleDoesNotReceive() throws Exception {
         assertBroadcastSuspendedVisible(QUERIES_ACTIVITY_ACTION,
