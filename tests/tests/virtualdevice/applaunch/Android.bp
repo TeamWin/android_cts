@@ -1,4 +1,4 @@
-// Copyright (C) 2022 The Android Open Source Project
+// Copyright (C) 2021 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,15 +16,38 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-android_library {
-    name: "CtsVirtualDeviceCommonLib",
-    srcs: [
-        "src/**/*.java",
-        "//cts/tests/tests/virtualdevice:CtsVirtualDevicesTestAidl",
+android_test {
+    name: "CtsVirtualDevicesAppLaunchTestCases",
+
+    defaults: ["cts_defaults"],
+
+    platform_apis: true,
+
+    libs: [
+        "android.test.runner",
+        "android.test.base",
     ],
+
     static_libs: [
         "androidx.test.ext.junit",
         "compatibility-device-util-axt",
+        "cts-wm-util",
+        "ctstestrunner-axt",
+        "CtsVirtualDeviceCommonLib",
+        "junit",
     ],
-    manifest: "AndroidManifest.xml",
+
+    srcs: [
+        "src/**/*.java",
+    ],
+
+    // Tag this module as a cts test artifact
+    test_suites: [
+        "cts",
+        "general-tests",
+    ],
+    data: [
+        ":CtsVirtualDeviceStreamedTestApp",
+    ],
+    per_testcase_directory: true,
 }
