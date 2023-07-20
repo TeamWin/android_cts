@@ -259,4 +259,11 @@ public class StaticNonce {
             int v40, int v41, int v42, int v43, int v44,
             int v45, int v46, int v47, int v48, int v49,
             int v50);
+
+    @CriticalNative
+    public static native boolean takeCoolHandLukeWithFloatsCritical(
+            int v1, int v2, int v3, int v4, int v5,
+            double v6, double v7, double v8, double v9, double v10,
+            double v11, double v12, double v13, double v14);
+
 }
