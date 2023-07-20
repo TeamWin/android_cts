@@ -35,6 +35,7 @@ import android.provider.Settings;
 import android.safetycenter.SafetyCenterManager;
 import android.server.wm.WindowManagerStateHelper;
 import android.support.test.uiautomator.By;
+import android.support.test.uiautomator.BySelector;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject2;
 import android.util.Log;
@@ -55,6 +56,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.List;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @RunWith(AndroidJUnit4.class)
@@ -72,8 +74,8 @@ public final class RecognitionServiceMicIndicatorTest {
     private static final String CAR_MIC_PRIVACY_CHIP_ID = "mic_privacy_chip";
     private static final String PRIVACY_DIALOG_PACKAGE_NAME = "com.android.systemui";
     private static final String PRIVACY_DIALOG_CONTENT_ID = "text";
+    private static final String PRIVACY_DIALOG_CONTENT_V2_ID = "privacy_dialog_item_header_summary";
     private static final String CAR_PRIVACY_DIALOG_CONTENT_ID = "qc_title";
-    private static final String CAR_PRIVACY_DIALOG_APP_LABEL_CONTENT_ID = "qc_title";
     private static final String TV_MIC_INDICATOR_WINDOW_TITLE = "MicrophoneCaptureIndicator";
     private static final String SC_PRIVACY_DIALOG_PACKAGE_NAME = "com.android.permissioncontroller";
     private static final String SC_PRIVACY_DIALOG_CONTENT_ID = "indicator_label";
@@ -260,23 +262,25 @@ public final class RecognitionServiceMicIndicatorTest {
                 });
 
         // Make sure dialog is shown
-        String dialogPackageName =
-                mSafetyCenterEnabled ? SC_PRIVACY_DIALOG_PACKAGE_NAME : PRIVACY_DIALOG_PACKAGE_NAME;
-        String contentId;
+        BySelector selector;
         if (isCar()) {
-            contentId = CAR_PRIVACY_DIALOG_CONTENT_ID;
+            selector = By.res(PRIVACY_DIALOG_PACKAGE_NAME, CAR_PRIVACY_DIALOG_CONTENT_ID);
         } else if (mSafetyCenterEnabled) {
-            contentId = SC_PRIVACY_DIALOG_CONTENT_ID;
+            selector =
+                    byEitherRes(
+                            SC_PRIVACY_DIALOG_PACKAGE_NAME,
+                            SC_PRIVACY_DIALOG_CONTENT_ID,
+                            PRIVACY_DIALOG_PACKAGE_NAME,
+                            PRIVACY_DIALOG_CONTENT_V2_ID);
         } else {
-            contentId = PRIVACY_DIALOG_CONTENT_ID;
+            selector = By.res(PRIVACY_DIALOG_PACKAGE_NAME, PRIVACY_DIALOG_CONTENT_ID);
         }
 
         // Click the privacy indicator and verify the calling app name display status in the dialog.
         privacyChip.click();
         List<UiObject2> recognitionCallingAppLabels =
                 SystemUtil.getEventually(() -> {
-                    List<UiObject2> labels = mUiDevice.findObjects(
-                            By.res(dialogPackageName, contentId));
+                    List<UiObject2> labels = mUiDevice.findObjects(selector);
                     assertWithMessage("No permission dialog shown after clicking privacy chip.")
                             .that(labels).isNotEmpty();
                     return labels;
@@ -346,5 +350,22 @@ public final class RecognitionServiceMicIndicatorTest {
     private boolean isWatch() {
         PackageManager pm = mContext.getPackageManager();
         return pm.hasSystemFeature(PackageManager.FEATURE_WATCH);
+    }
+
+    private static BySelector byEitherRes(
+            String resourcePackageA,
+            String resourceIdA,
+            String resourcePackageB,
+            String resourceIdB) {
+        return By.res(
+                Pattern.compile(
+                        String.format(
+                                "%s|%s",
+                                resourceNameLiteral(resourcePackageA, resourceIdA),
+                                resourceNameLiteral(resourcePackageB, resourceIdB))));
+    }
+
+    private static String resourceNameLiteral(String resourcePackage, String resourceId) {
+        return Pattern.quote(String.format("%s:id/%s", resourcePackage, resourceId));
     }
 }
