@@ -85,6 +85,11 @@ abstract class BaseHostTestCase extends BaseHostJUnit4Test {
         return deviceSdkLevel.isDeviceAtLeastU();
     }
 
+    protected static boolean isAtLeastV(ITestDevice device) throws DeviceNotAvailableException {
+        DeviceSdkLevel deviceSdkLevel = new DeviceSdkLevel(device);
+        return deviceSdkLevel.isDeviceAtLeastV();
+    }
+
     protected static void throwExceptionIfTimeout(long start, long timeoutMillis, Throwable e) {
         if (System.currentTimeMillis() - start < timeoutMillis) {
             RunUtil.getDefault().sleep(100);
