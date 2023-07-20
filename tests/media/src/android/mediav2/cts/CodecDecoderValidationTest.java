@@ -19,6 +19,7 @@ package android.mediav2.cts;
 import static android.mediav2.common.cts.CodecTestBase.SupportClass.CODEC_ALL;
 import static android.mediav2.common.cts.CodecTestBase.SupportClass.CODEC_ANY;
 import static android.mediav2.common.cts.CodecTestBase.SupportClass.CODEC_DEFAULT;
+import static android.mediav2.common.cts.CodecTestBase.SupportClass.CODEC_HW;
 import static android.mediav2.common.cts.CodecTestBase.SupportClass.CODEC_OPTIONAL;
 
 import static org.junit.Assert.assertEquals;
@@ -696,9 +697,9 @@ public class CodecDecoderValidationTest extends CodecDecoderTestBase {
                             279585450L, -1, -1, 3840, 2160, CODEC_ANY},
                     // @CddTest(requirements={"5.3.9/C-2-2"})
                     {MEDIA_TYPE_AV1, new String[]{"bbb_3840x2160_30fps_av1.mkv"}, null, -1.0f,
-                            100543644L, -1, -1, 3840, 2160, CODEC_ANY},
+                            100543644L, -1, -1, 3840, 2160, CODEC_OPTIONAL},
                     {MEDIA_TYPE_AV1, new String[]{"cosmat_3840x2160_30fps_av1_10bit.mkv"}, null,
-                            -1.0f, 4214931794L, -1, -1, 3840, 2160, CODEC_ANY},
+                            -1.0f, 4214931794L, -1, -1, 3840, 2160, CODEC_OPTIONAL},
             }));
         }
         if (MAX_DISPLAY_HEIGHT_LAND >= 1080) {
@@ -719,9 +720,9 @@ public class CodecDecoderValidationTest extends CodecDecoderTestBase {
                             2637993192L, -1, -1, 1920, 1080, CODEC_ANY},
                     // @CddTest(requirements={"5.3.9/C-2-2"})
                     {MEDIA_TYPE_AV1, new String[]{"bbb_1920x1080_30fps_av1.mkv"}, null, -1.0f,
-                            3428220318L, -1, -1, 1920, 1080, CODEC_ANY},
+                            3428220318L, -1, -1, 1920, 1080, CODEC_HW},
                     {MEDIA_TYPE_AV1, new String[]{"cosmat_1920x1080_30fps_av1_10bit.mkv"}, null,
-                            -1.0f, 3477727836L, -1, -1, 1920, 1080, CODEC_ANY},
+                            -1.0f, 3477727836L, -1, -1, 1920, 1080, CODEC_HW},
             }));
         }
         if (MAX_DISPLAY_HEIGHT_LAND >= 720) {
@@ -737,9 +738,9 @@ public class CodecDecoderValidationTest extends CodecDecoderTestBase {
                             -1.0f, 3902485256L, -1, -1, 1280, 720, CODEC_ANY},
                     // @CddTest(requirements={"5.3.9/C-2-1"})
                     {MEDIA_TYPE_AV1, new String[]{"bbb_1280x720_1mbps_30fps_av1.webm"}, null, -1.0f,
-                            4202081555L, -1, -1, 1280, 720, CODEC_ANY},
+                            4202081555L, -1, -1, 1280, 720, CODEC_HW},
                     {MEDIA_TYPE_AV1, new String[]{"cosmat_1280x720_24fps_1200kbps_av1_10bit.mkv"},
-                            null, -1.0f, 2039973562L, -1, -1, 1280, 720, CODEC_ANY},
+                            null, -1.0f, 2039973562L, -1, -1, 1280, 720, CODEC_HW},
 
                     // vp9 test vectors with AQ mode enabled
                     {MEDIA_TYPE_VP9, new String[]{"bbb_1280x720_800kbps_30fps_vp9.webm"},
