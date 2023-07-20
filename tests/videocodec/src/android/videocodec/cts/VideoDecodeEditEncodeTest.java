@@ -417,7 +417,7 @@ public class VideoDecodeEditEncodeTest {
             formats.add(decoderFormat);
             ArrayList<String> decoders = CodecTestBase.selectCodecs(RES_MEDIA_TYPE, formats, null,
                     false, SELECT_SWITCH);
-            assertTrue("Could not find decoder for format : " + decoderFormat, decoders.size() > 0);
+            assumeTrue("Could not find decoder for format : " + decoderFormat, decoders.size() > 0);
             String decoderName = decoders.get(0);
 
             // build encoder format and check if it is supported by the current component
