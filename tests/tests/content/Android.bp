@@ -16,8 +16,26 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-android_test {
-    name: "CtsContentTestCases",
+java_library {
+    name: "CtsContentUtils",
+    defaults: ["cts_defaults"],
+
+    libs: [
+        "android.test.runner",
+        "android.test.base",
+        "android.test.mock",
+    ],
+    srcs: [
+        "src/android/content/cts/**/DummyProvider.java",
+        "src/android/content/cts/**/Mock*.java",
+        "src/android/content/cts/**/ResultReceiver.java",
+        "src/android/content/cts/util/**/*.java",
+        "src/**/DummyParcelable.java",
+    ],
+}
+
+java_defaults {
+    name: "cts_content_defaults",
     defaults: ["cts_defaults"],
 
     // Don't run manifestmerger on dependencies, it is unhappy with the duplicate
@@ -55,6 +73,7 @@ android_test {
         "Nene",
         "Harrier",
         "platformprotosnano",
+        "CtsContentUtils",
     ],
     // Use multi-dex as the compatibility-common-util-devicesidelib dependency
     // on compatibility-device-util-axt pushes us beyond 64k methods.
@@ -73,11 +92,6 @@ android_test {
         "-c tgl,tgl-rPH",
         "-c tlh",
         "-c xx,xx-rYY",
-    ],
-    srcs: [
-        "src/**/*.java",
-        "src/**/*.kt",
-        "BinderPermissionTestService/**/I*.aidl",
     ],
     per_testcase_directory: true,
     data: [
@@ -157,4 +171,47 @@ android_test {
     ],
     min_sdk_version: "29",
     replace_max_sdk_version_placeholder: "current",
+}
+
+android_test {
+    name: "CtsContentTestCases",
+    defaults: ["cts_content_defaults"],
+
+    srcs: [
+        "src/android/content/cts/**/*.java",
+        "BinderPermissionTestService/**/I*.aidl",
+    ],
+    test_config: "CtsContentTest.xml",
+}
+
+android_test {
+    name: "CtsResourcesTestCases",
+    defaults: ["cts_content_defaults"],
+
+    srcs: [
+        "src/android/content/om/**/*.java",
+        "src/android/content/res/**/*.java",
+    ],
+    test_config: "CtsResourcesTest.xml",
+}
+
+android_test {
+    name: "CtsWindowManagerTestCases",
+    defaults: ["cts_content_defaults"],
+
+    srcs: [
+        "src/android/content/wm/**/*.java",
+    ],
+    test_config: "CtsWindowManagerTest.xml",
+}
+
+android_test {
+    name: "CtsPackageManagerTestCases",
+    defaults: ["cts_content_defaults"],
+
+    srcs: [
+        "src/android/content/pm/**/*.java",
+        "src/android/content/pm/**/*.kt",
+    ],
+    test_config: "CtsPackageManagerTest.xml",
 }
