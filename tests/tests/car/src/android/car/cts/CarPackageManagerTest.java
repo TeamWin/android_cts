@@ -24,13 +24,17 @@ import android.app.PendingIntent;
 import android.car.Car;
 import android.car.content.pm.CarPackageManager;
 import android.car.test.ApiCheckerRule.Builder;
+import android.content.ComponentName;
 import android.content.Intent;
 import android.os.Build;
 import android.platform.test.annotations.AppModeFull;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.util.Log;
 
+import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
+
+import com.android.compatibility.common.util.ApiTest;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -96,6 +100,22 @@ public final class CarPackageManagerTest extends AbstractCarTestCase {
             assertThat(mCarPm.isActivityDistractionOptimized("android.car.cts",
                     "android.car.cts.drivingstate.DistractionOptimizedActivity")).isTrue();
         }
+    }
+
+    @Test
+    @ApiTest(
+            apis = {
+                    "android.car.content.pm.CarPackageManager#isActivityBackedBySafeActivity"
+            })
+    public void testIsActivityBackedBySafeActivity_carNotMoving_nonDoActivity_returnsTrue() {
+        ComponentName nonDoActivityComponent = ComponentName.createRelative(mContext,
+                ".drivingstate.NonDistractionOptimizedActivity");
+
+        InstrumentationRegistry.getInstrumentation().startActivitySync(
+                Intent.makeMainActivity(nonDoActivityComponent)
+                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK), /* option */ null);
+
+        assertThat(mCarPm.isActivityBackedBySafeActivity(nonDoActivityComponent)).isTrue();
     }
 
     @Test
