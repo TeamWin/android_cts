@@ -1380,6 +1380,188 @@ public class StylusHandwritingTest extends EndToEndImeTestBase {
         }
     }
 
+    @Test
+    public void testHandwritingFinishesOnUnbind() throws Exception {
+        try (MockImeSession imeSession = MockImeSession.create(
+                InstrumentationRegistry.getInstrumentation().getContext(),
+                InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+                new ImeSettings.Builder())) {
+            final ImeEventStream stream = imeSession.openEventStream();
+
+            final String marker = getTestMarker();
+            final EditText editText = launchTestActivity(marker);
+
+            expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
+            notExpectEvent(
+                    stream,
+                    editorMatcher("onStartInputView", marker),
+                    NOT_EXPECT_TIMEOUT);
+
+            addVirtualStylusIdForTestSession();
+
+            final int touchSlop = getTouchSlop();
+            final int startX = editText.getWidth() / 2;
+            final int startY = editText.getHeight() / 2;
+            final int endX = startX + 2 * touchSlop;
+            final int endY = startY;
+            final int number = 5;
+            TestUtils.injectStylusDownEvent(editText, startX, startY);
+            TestUtils.injectStylusMoveEvents(editText, startX, startY,
+                    endX, endY, number);
+
+            expectEvent(
+                    stream,
+                    editorMatcher("onStartStylusHandwriting", marker),
+                    TIMEOUT);
+            // Unbind IME and verify finish is called
+            ((Activity) editText.getContext()).finish();
+
+            // Handwriting should finish soon.
+            expectEvent(
+                    stream,
+                    editorMatcher("onFinishStylusHandwriting", marker),
+                    TIMEOUT_1_S);
+            verifyStylusHandwritingWindowIsNotShown(stream, imeSession);
+        }
+    }
+
+    /**
+     * Verify that system remove handwriting window immediately when timeout is small
+     */
+    @Test
+    public void testHandwritingWindowRemoval_immediate() throws Exception {
+        final InputMethodManager imm = mContext.getSystemService(InputMethodManager.class);
+        try (MockImeSession imeSession = MockImeSession.create(
+                InstrumentationRegistry.getInstrumentation().getContext(),
+                InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+                new ImeSettings.Builder())) {
+            final ImeEventStream stream = imeSession.openEventStream();
+
+            final String marker = getTestMarker();
+            final EditText editText = launchTestActivity(marker);
+
+            expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
+            notExpectEvent(
+                    stream,
+                    editorMatcher("onStartInputView", marker),
+                    NOT_EXPECT_TIMEOUT);
+
+            addVirtualStylusIdForTestSession();
+            // update handwriting window timeout to a small value so that it is removed immediately.
+            SystemUtil.runWithShellPermissionIdentity(() ->
+                    imm.setStylusWindowIdleTimeoutForTest(100));
+
+            final int touchSlop = getTouchSlop();
+            final int startX = editText.getWidth() / 2;
+            final int startY = editText.getHeight() / 2;
+            final int endX = startX + 2 * touchSlop;
+            final int endY = startY;
+            final int number = 5;
+            TestUtils.injectStylusDownEvent(editText, startX, startY);
+            TestUtils.injectStylusMoveEvents(editText, startX, startY,
+                    endX, endY, number);
+            // Handwriting should already be initiated before ACTION_UP.
+            // keyboard shouldn't show up.
+            notExpectEvent(
+                    stream,
+                    editorMatcher("onStartInputView", marker),
+                    NOT_EXPECT_TIMEOUT);
+            // Handwriting should start
+            expectEvent(
+                    stream,
+                    editorMatcher("onStartStylusHandwriting", marker),
+                    TIMEOUT);
+            TestUtils.injectStylusUpEvent(editText, startX, startY);
+
+            // Handwriting should finish soon.
+            expectEvent(
+                    stream,
+                    editorMatcher("onFinishStylusHandwriting", marker),
+                    TIMEOUT_1_S);
+            verifyStylusHandwritingWindowIsNotShown(stream, imeSession);
+            // Verify handwriting window is removed.
+            assertFalse(expectCommand(
+                    stream, imeSession.callHasStylusHandwritingWindow(), TIMEOUT_1_S)
+                    .getReturnBooleanValue());
+        }
+    }
+
+
+    /**
+     * Verify that system remove handwriting window after timeout
+     */
+    @Test
+    public void testHandwritingWindowRemoval_afterDelay() throws Exception {
+        final InputMethodManager imm = mContext.getSystemService(InputMethodManager.class);
+        try (MockImeSession imeSession = MockImeSession.create(
+                InstrumentationRegistry.getInstrumentation().getContext(),
+                InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+                new ImeSettings.Builder())) {
+            // skip this test if device doesn't have stylus.
+            // stylus is required, otherwise stylus virtual deviceId is removed on finishInput and
+            // we cannot test InkWindow living beyond finishHandwriting.
+            assumeTrue("Skipping test on devices that don't have stylus connected.",
+                    hasSupportedStylus());
+            final ImeEventStream stream = imeSession.openEventStream();
+
+            final String marker = getTestMarker();
+            final EditText editText = launchTestActivity(marker);
+
+            expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
+            notExpectEvent(
+                    stream,
+                    editorMatcher("onStartInputView", marker),
+                    NOT_EXPECT_TIMEOUT);
+
+            final int touchSlop = getTouchSlop();
+            final int startX = editText.getWidth() / 2;
+            final int startY = editText.getHeight() / 2;
+            final int endX = startX + 2 * touchSlop;
+            final int endY = startY;
+            final int number = 5;
+
+            // Set a larger timeout and verify handwriting window exists after unbind.
+            SystemUtil.runWithShellPermissionIdentity(() ->
+                    imm.setStylusWindowIdleTimeoutForTest(TIMEOUT));
+
+            TestUtils.injectStylusDownEvent(editText, startX, startY);
+            TestUtils.injectStylusMoveEvents(editText, startX, startY,
+                    endX, endY, number);
+            // Handwriting should already be initiated before ACTION_UP.
+            // Handwriting should start
+            expectEvent(
+                    stream,
+                    editorMatcher("onStartStylusHandwriting", marker),
+                    TIMEOUT);
+            TestUtils.injectStylusUpEvent(editText, startX, startY);
+
+            // Handwriting should finish soon.
+            notExpectEvent(
+                    stream,
+                    editorMatcher("onFinishStylusHandwriting", marker),
+                    TIMEOUT_1_S);
+            verifyStylusHandwritingWindowIsShown(stream, imeSession);
+            // Verify handwriting window exists.
+            assertTrue(expectCommand(
+                    stream, imeSession.callHasStylusHandwritingWindow(), TIMEOUT_1_S)
+                    .getReturnBooleanValue());
+
+            // Finish activity and IME window should be invisible.
+            ((Activity) editText.getContext()).finish();
+            verifyStylusHandwritingWindowIsNotShown(stream, imeSession);
+            // Verify handwriting window isn't removed immediately.
+            assertTrue(expectCommand(
+                    stream, imeSession.callHasStylusHandwritingWindow(), TIMEOUT_1_S)
+                    .getReturnBooleanValue());
+            // Verify handwriting window is eventually removed (within timeout).
+            CommonTestUtils.waitUntil("Stylus handwriting window should be removed",
+                    TIMEOUT_IN_SECONDS,
+                    () -> !expectCommand(
+                            stream, imeSession.callHasStylusHandwritingWindow(), TIMEOUT)
+                            .getReturnBooleanValue());
+        }
+    }
+
     /**
      * Verify that when system has no stylus, there is no handwriting window.
      */
