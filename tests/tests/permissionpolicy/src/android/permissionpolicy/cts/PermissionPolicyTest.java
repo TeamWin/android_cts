@@ -515,7 +515,7 @@ public class PermissionPolicyTest {
         switch (permissionName) {
             case SYNC_FLAGS_PERMISSION:
             case WRITE_FLAGS_PERMISSION:
-                return !SdkLevel.isAtLeastV();  // Added in u-qpr.
+                return true;  // Added in u-qpr.
             case HIDE_NON_SYSTEM_OVERLAY_WINDOWS_PERMISSION:
                 return parseDate(SECURITY_PATCH).before(HIDE_NON_SYSTEM_OVERLAY_WINDOWS_PATCH_DATE);
             case MANAGE_COMPANION_DEVICES_PERMISSION:
