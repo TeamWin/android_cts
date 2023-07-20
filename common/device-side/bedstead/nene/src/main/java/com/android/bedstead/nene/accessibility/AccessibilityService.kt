@@ -13,26 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.android.bedstead.nene.accessibility
 
-package com.android.bedstead.nene.accessibility;
-
-import android.accessibilityservice.AccessibilityServiceInfo;
-
-import com.android.bedstead.nene.TestApis;
-import com.android.bedstead.nene.packages.Package;
+import android.accessibilityservice.AccessibilityServiceInfo
+import com.android.bedstead.nene.TestApis
+import com.android.bedstead.nene.packages.Package
 
 /**
  * An accessibility service.
  */
-public final class AccessibilityService {
+class AccessibilityService internal constructor(
+        private val serviceInfo: AccessibilityServiceInfo) {
 
-    private AccessibilityServiceInfo mServiceInfo;
-    AccessibilityService(AccessibilityServiceInfo serviceInfo) {
-        mServiceInfo = serviceInfo;
-    }
-
-    /** The package of the accessibility service. */
-    public Package pkg() {
-        return TestApis.packages().find(mServiceInfo.getResolveInfo().serviceInfo.packageName);
-    }
+    /** The package of the accessibility service.  */
+    fun pkg(): Package = TestApis.packages().find(serviceInfo.resolveInfo.serviceInfo.packageName)
 }

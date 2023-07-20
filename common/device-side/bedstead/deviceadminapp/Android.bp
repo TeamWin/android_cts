@@ -9,7 +9,10 @@ android_library {
     static_libs: [
         "EventLib",
     ],
-    srcs: ["src/main/java/**/*.java"],
+    srcs: [
+        "src/main/java/**/*.java",
+        "src/main/java/**/*.kt",
+    ],
     resource_dirs: ["src/main/res"],
     min_sdk_version: "29"
 }
@@ -17,7 +20,8 @@ android_library {
 android_test {
     name: "DeviceAdminAppTest",
     srcs: [
-        "src/test/java/**/*.java"
+        "src/test/java/**/*.java",
+        "src/test/java/**/*.kt",
     ],
     test_suites: [
         "general-tests",

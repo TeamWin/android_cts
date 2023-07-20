@@ -6,7 +6,8 @@ android_library {
     name: "RemoteFrameworkClasses",
     sdk_version: "test_current",
     srcs: [
-        "src/types/main/java/**/*.java"
+        "src/types/main/java/**/*.java",
+        "src/types/main/java/**/*.kt",
     ],
     static_libs: [
         "RemoteFrameworkClasses_Annotations",
@@ -21,7 +22,8 @@ android_library {
 java_library {
     name: "RemoteFrameworkClasses_Annotations",
     srcs: [
-        "src/processor/main/java/com/android/bedstead/remoteframeworkclasses/processor/annotations/*.java"
+        "src/processor/main/java/com/android/bedstead/remoteframeworkclasses/processor/annotations/*.java",
+        "src/processor/main/java/com/android/bedstead/remoteframeworkclasses/processor/annotations/*.kt",
     ],
     host_supported: true
 }
@@ -37,7 +39,8 @@ java_plugin {
         "ConnectedAppsSDK_Annotations"
     ],
     srcs: [
-        "src/processor/main/java/com/android/bedstead/remoteframeworkclasses/processor/*.java"
+        "src/processor/main/java/com/android/bedstead/remoteframeworkclasses/processor/*.java",
+        "src/processor/main/java/com/android/bedstead/remoteframeworkclasses/processor/*.kt",
     ],
     plugins: ["auto_service_plugin"],
     generates_api: true,

@@ -39,7 +39,10 @@ android_test {
         "statsdprotolite",
         "Interactive",
     ],
-    srcs: ["src/**/*.java"],
+    srcs: [
+        "src/**/*.java",
+        "src/**/*.kt",
+    ],
     test_suites: [
         "cts",
         "vts10",
@@ -69,7 +72,10 @@ android_test {
         "statsdprotolite",
         "Interactive",
     ],
-    srcs: ["src/**/*.java"],
+    srcs: [
+        "src/**/*.java",
+        "src/**/*.kt",
+    ],
     test_suites: [
         "cts-interactive",
         "general-tests",

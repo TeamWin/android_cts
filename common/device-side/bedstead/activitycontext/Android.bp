@@ -6,7 +6,8 @@ android_library {
     name: "ActivityContext",
     sdk_version: "29",
     srcs: [
-        "src/main/java/**/*.java"
+        "src/main/java/**/*.java",
+        "src/main/java/**/*.kt",
     ],
     static_libs: [
         "EventLib",
@@ -18,7 +19,8 @@ android_library {
 android_test {
     name: "ActivityContextTest",
     srcs: [
-        "src/test/java/**/*.java"
+        "src/test/java/**/*.java",
+        "src/test/java/**/*.kt",
     ],
     test_suites: [
         "general-tests",
@@ -37,7 +39,8 @@ android_test {
 android_test {
     name: "ActivityContextInstrumentOtherAppTest",
     srcs: [
-        "src/test/java/**/*.java"
+        "src/test/java/**/*.java",
+        "src/test/java/**/*.kt",
     ],
     test_suites: [
         "general-tests",

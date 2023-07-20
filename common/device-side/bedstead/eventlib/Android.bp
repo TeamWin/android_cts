@@ -7,6 +7,7 @@ android_library {
     sdk_version: "test_current",
     srcs: [
         "src/main/java/**/*.java",
+        "src/main/java/**/*.kt",
         "src/main/aidl/**/I*.aidl",
     ],
     aidl: {
@@ -23,7 +24,8 @@ android_library {
 android_test {
     name: "EventLibTest",
     srcs: [
-        "src/test/java/**/*.java"
+        "src/test/java/**/*.java",
+        "src/test/java/**/*.kt",
     ],
     test_suites: [
         "general-tests",

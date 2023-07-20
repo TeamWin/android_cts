@@ -13,27 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.android.bedstead.nene.telecom
 
-package com.android.bedstead.nene;
-
-import com.android.bedstead.nene.annotations.Experimental;
-import com.android.bedstead.nene.exceptions.AdbException;
-import com.android.bedstead.nene.utils.ShellCommand;
-import com.android.bedstead.nene.utils.ShellCommandUtils;
+import com.android.bedstead.nene.annotations.Experimental
+import com.android.bedstead.nene.exceptions.AdbException
+import com.android.bedstead.nene.packages.Package
+import com.android.bedstead.nene.utils.ShellCommand
+import com.android.bedstead.nene.utils.ShellCommandUtils
 
 /**
  * Entry point to Nene Telecom.
  */
 @Experimental
-public class Telecom {
+object Telecom {
 
-    public static final Telecom sInstance = new Telecom();
-
-    public DefaultDialerContext setDefaultDialerForAllUsers(String packageName) throws AdbException {
+    /** Set the default dialer package for all users. */
+    fun setDefaultDialerForAllUsers(pkg: Package): DefaultDialerContext {
         ShellCommand.builder("telecom set-default-dialer")
-                .addOperand(packageName)
-                .validate(ShellCommandUtils::startsWithSuccess)
-                .execute();
-        return new DefaultDialerContext();
+                .addOperand(pkg.packageName())
+                .validate { output -> ShellCommandUtils.startsWithSuccess(output) }
+                .executeOrThrowNeneException("Error setting default dialer for all users")
+        return DefaultDialerContext()
     }
 }
