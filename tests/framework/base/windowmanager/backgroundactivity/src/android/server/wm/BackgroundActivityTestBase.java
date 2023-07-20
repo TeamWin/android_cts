@@ -82,7 +82,7 @@ public abstract class BackgroundActivityTestBase extends ActivityManagerTestBase
     static final String NAMESPACE_WINDOW_MANAGER = "window_manager";
     static final String ASM_RESTRICTIONS_ENABLED =
             "ActivitySecurity__asm_restrictions_enabled";
-    private static final int TEST_SERVICE_SETUP_TIMEOUT_MS = 1000;
+    private static final int TEST_SERVICE_SETUP_TIMEOUT_MS = 2000;
     final DeviceConfigStateHelper mDeviceConfig =
             new DeviceConfigStateHelper(NAMESPACE_WINDOW_MANAGER);
 

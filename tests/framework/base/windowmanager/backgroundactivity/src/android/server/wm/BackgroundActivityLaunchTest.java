@@ -43,6 +43,7 @@ import static org.junit.Assume.assumeTrue;
 import android.Manifest;
 import android.app.ActivityOptions;
 import android.app.PendingIntent;
+import android.app.RemoteAction;
 import android.app.UiAutomation;
 import android.appwidget.AppWidgetHost;
 import android.appwidget.AppWidgetManager;
@@ -52,6 +53,8 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.content.pm.UserInfo;
+import android.graphics.Bitmap;
+import android.graphics.drawable.Icon;
 import android.os.Bundle;
 import android.os.ResultReceiver;
 import android.os.UserHandle;
@@ -97,6 +100,9 @@ import java.util.concurrent.TimeoutException;
 public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
 
     private static final String TAG = "BackgroundActivityLaunchTest";
+
+    private static final Icon EMPTY_ICON = Icon.createWithBitmap(
+            Bitmap.createBitmap(8, 8, Bitmap.Config.ARGB_8888));
 
     private static final long ACTIVITY_BG_START_GRACE_PERIOD_MS = 10 * 1000;
     private static final int ACTIVITY_START_TIMEOUT_MS = 5000;
@@ -1011,8 +1017,12 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
         intent.setComponent(APP_B.FOREGROUND_ACTIVITY);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         mContext.startActivity(intent);
+        assertActivityFocused(APP_B.FOREGROUND_ACTIVITY);
         // pass to appB and send PI
-        TextClassification tc = appBTestService.createTextClassification(pi);
+        TextClassification tc = new TextClassification.Builder()
+                .addAction(new RemoteAction(EMPTY_ICON, "myAction",
+                        "classifiedContentDescription", pi))
+                .build();
         appBTestService.sendByTextClassification(tc);
 
         // assert that start succeeded
@@ -1028,7 +1038,10 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
 
         // app B not in FG
         // pass to appB and send PI
-        TextClassification tc = appBTestService.createTextClassification(pi);
+        TextClassification tc = new TextClassification.Builder()
+                .addAction(new RemoteAction(EMPTY_ICON, "myAction",
+                        "classifiedContentDescription", pi))
+                .build();
         appBTestService.sendByTextClassification(tc);
 
         // assert that start is blocked
