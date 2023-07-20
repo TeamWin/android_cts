@@ -2408,6 +2408,8 @@ public class BitmapTest {
             surface.unlockCanvasAndPost(canvas);
             bitmap.recycle();
         });
+
+        surface.release();
         renderTarget.destroy();
     }
 
@@ -2516,13 +2518,17 @@ public class BitmapTest {
         // The Bitmap is already in shared memory, so no work is done.
         Bitmap shared2 = shared.asShared();
         assertSame(shared, shared2);
+
+        original.recycle();
+        shared.recycle();
+        shared2.recycle();
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void testAsSharedRecycled() {
         Bitmap bitmap = Bitmap.createBitmap(10, 10, Config.ARGB_8888);
         bitmap.recycle();
-        bitmap.asShared();
+        assertThrows(IllegalStateException.class, bitmap::asShared);
     }
 
     @Test
