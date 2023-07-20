@@ -1163,7 +1163,7 @@ public class CipherTest {
         });
         int kmVersion = TestUtils.getFeatureVersionKeystore(getContext());
         for (String algorithm : EXPECTED_ALGORITHMS) {
-            if (kmVersion < Attestation.KM_VERSION_KEYMINT_1
+            if (kmVersion < Attestation.KM_VERSION_KEYMINT_3
                     && keymasterNonSupportedAlgos.contains(algorithm)) {
                 // Skipping algorithms which are not supported in older KeyMaster.
                 // This functionality has to support through software emulation.
