@@ -30,7 +30,6 @@ import static android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_UNCHANGED
 import static android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_UNSPECIFIED;
 import static android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE;
 import static android.view.inputmethod.InputMethodManager.CLEAR_SHOW_FORCED_FLAG_WHEN_LEAVING;
-import static android.view.inputmethod.InputMethodManager.SHOW_FORCED;
 import static android.view.inputmethod.cts.util.InputMethodVisibilityVerifier.expectImeInvisible;
 import static android.view.inputmethod.cts.util.InputMethodVisibilityVerifier.expectImeVisible;
 import static android.view.inputmethod.cts.util.TestUtils.getOnMainSync;
@@ -596,7 +595,8 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
 
             // Test showSoftInput() flow with adding SHOW_FORCED flag
             assertTrue("showSoftInput must success if the View has IME focus",
-                    getOnMainSync(() -> imm.showSoftInput(ediTextRef.get(), SHOW_FORCED)));
+                    getOnMainSync(() ->
+                            imm.showSoftInput(ediTextRef.get(), InputMethodManager.SHOW_FORCED)));
 
             expectEvent(stream, showSoftInputMatcher(InputMethod.SHOW_EXPLICIT), TIMEOUT);
             expectEvent(stream, editorMatcher("onStartInputView", marker), TIMEOUT);
