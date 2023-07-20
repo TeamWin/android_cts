@@ -33,9 +33,9 @@ import org.json.JSONObject
 class UinputTouchDevice(
     instrumentation: Instrumentation,
     display: Display,
-    size: Size,
     private val rawResource: Int,
     private val source: Int,
+    sizeOverride: Size? = null,
 ) :
     AutoCloseable {
 
@@ -44,7 +44,7 @@ class UinputTouchDevice(
     private val inputManager: InputManager
 
     init {
-        uinputDevice = createDevice(instrumentation, size)
+        uinputDevice = createDevice(instrumentation, sizeOverride)
         inputManager = instrumentation.targetContext.getSystemService(InputManager::class.java)!!
         associateWith(display)
     }
@@ -94,22 +94,26 @@ class UinputTouchDevice(
             .bufferedReader().use { it.readText() }
     }
 
-    private fun createDevice(instrumentation: Instrumentation, size: Size): UinputDevice {
+    private fun createDevice(instrumentation: Instrumentation, sizeOverride: Size?): UinputDevice {
         val json = JSONObject(readRawResource(instrumentation.targetContext))
         val resourceDeviceId: Int = json.getInt("id")
         val vendorId = json.getInt("vid")
         val productId = json.getInt("pid")
         port = json.getString("port")
 
-        // Use the display size to set maximum values
-        val absInfo: JSONArray = json.getJSONArray("abs_info")
-        for (i in 0 until absInfo.length()) {
-            val item = absInfo.getJSONObject(i)
-            if (item.get("code") == ABS_MT_POSITION_X) {
-                item.getJSONObject("info").put("maximum", size.width - 1)
-            }
-            if (item.get("code") == ABS_MT_POSITION_Y) {
-                item.getJSONObject("info").put("maximum", size.height - 1)
+        if (sizeOverride != null) {
+            // Use the given size to set the maximum values of relevant axes.
+            val absInfo: JSONArray = json.getJSONArray("abs_info")
+            for (i in 0 until absInfo.length()) {
+                val item = absInfo.getJSONObject(i)
+                if (item.get("code") == ABS_MT_POSITION_X) {
+                    item.getJSONObject("info")
+                        .put("maximum", sizeOverride.width - 1)
+                }
+                if (item.get("code") == ABS_MT_POSITION_Y) {
+                    item.getJSONObject("info")
+                        .put("maximum", sizeOverride.height - 1)
+                }
             }
         }
 
@@ -141,6 +145,7 @@ class UinputTouchDevice(
         const val ABS_MT_POSITION_Y = 0x36
         const val ABS_MT_TOOL_TYPE = 0x37
         const val ABS_MT_TRACKING_ID = 0x39
+        const val BTN_TOOL_FINGER = 0x145
         const val BTN_TOUCH = 0x14a
         const val SYN_REPORT = 0
         const val MT_TOOL_FINGER = 0
