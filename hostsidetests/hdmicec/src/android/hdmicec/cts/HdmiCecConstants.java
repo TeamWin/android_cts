@@ -24,6 +24,8 @@ public final class HdmiCecConstants {
 
     private HdmiCecConstants() {}
 
+    /** @deprecated not used anymore **/
+    @Deprecated
     public static final String PHYSICAL_ADDRESS_NAME = "cec-phy-addr";
     public static final int REBOOT_TIMEOUT = 60000;
     public static final int TIMEOUT_CEC_REINIT_SECONDS = 5;
