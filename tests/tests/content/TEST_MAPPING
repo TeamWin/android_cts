@@ -1,16 +1,13 @@
 {
-  "presubmit-large": [
+  "presubmit": [
     {
-      "name": "CtsContentTestCases",
+      "name": "CtsPackageManagerTestCases",
       "options": [
         {
           "exclude-annotation": "androidx.test.filters.FlakyTest"
         },
         {
           "exclude-annotation": "org.junit.Ignore"
-        },
-        {
-          "include-filter": "android.content.pm.cts"
         }
       ]
     }
