@@ -23,14 +23,14 @@ import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.startActivit
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.waitAndAssertNotVisible;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.waitAndAssertResumed;
 import static android.server.wm.jetpack.utils.TestActivityLauncher.KEY_ACTIVITY_ID;
-import static android.server.wm.lifecycle.LifecycleConstants.ON_CREATE;
-import static android.server.wm.lifecycle.LifecycleConstants.ON_DESTROY;
-import static android.server.wm.lifecycle.LifecycleConstants.ON_PAUSE;
-import static android.server.wm.lifecycle.LifecycleConstants.ON_RESUME;
-import static android.server.wm.lifecycle.LifecycleConstants.ON_START;
-import static android.server.wm.lifecycle.LifecycleConstants.ON_STOP;
-import static android.server.wm.lifecycle.TransitionVerifier.checkOrder;
-import static android.server.wm.lifecycle.TransitionVerifier.transition;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.ON_CREATE;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.ON_DESTROY;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.ON_PAUSE;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.ON_RESUME;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.ON_START;
+import static android.server.wm.activity.lifecycle.LifecycleConstants.ON_STOP;
+import static android.server.wm.activity.lifecycle.TransitionVerifier.checkOrder;
+import static android.server.wm.activity.lifecycle.TransitionVerifier.transition;
 
 import static androidx.window.extensions.embedding.SplitRule.FINISH_ALWAYS;
 import static androidx.window.extensions.embedding.SplitRule.FINISH_NEVER;
@@ -50,9 +50,9 @@ import android.server.wm.jetpack.utils.TestActivityWithId;
 import android.server.wm.jetpack.utils.TestActivityWithId2;
 import android.server.wm.jetpack.utils.TestConfigChangeHandlingActivity;
 import android.server.wm.jetpack.utils.TestValueCountConsumer;
-import android.server.wm.lifecycle.EventLog;
-import android.server.wm.lifecycle.EventLog.EventLogClient;
-import android.server.wm.lifecycle.EventTracker;
+import android.server.wm.activity.lifecycle.EventLog;
+import android.server.wm.activity.lifecycle.EventLog.EventLogClient;
+import android.server.wm.activity.lifecycle.EventTracker;
 import android.util.Pair;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;

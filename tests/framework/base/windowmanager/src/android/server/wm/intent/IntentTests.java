@@ -21,7 +21,6 @@ import static androidx.test.InstrumentationRegistry.getInstrumentation;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.res.AssetManager;
-import android.os.Environment;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.intent.Persistence.IntentFlag;
 import android.server.wm.intent.Persistence.TestCase;
@@ -38,11 +37,8 @@ import org.junit.runners.Parameterized;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -145,18 +141,4 @@ public class IntentTests extends IntentTestBase {
 
         return testCases;
     }
-
-    static void writeToDocumentsStorage(TestCase testCase, int number, String dirName)
-            throws JSONException, IOException {
-        File documentsDirectory = Environment.getExternalStoragePublicDirectory(
-                Environment.DIRECTORY_DOCUMENTS);
-        Path testsFilePath = documentsDirectory.toPath().resolve(dirName);
-
-        if (!Files.exists(testsFilePath)) {
-            Files.createDirectories(testsFilePath);
-        }
-        Files.write(testsFilePath.resolve("test-" + number + ".json"),
-                Lists.newArrayList(testCase.toJson().toString(JSON_INDENTATION_LEVEL)));
-    }
 }
-
