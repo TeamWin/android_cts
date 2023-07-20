@@ -42,6 +42,7 @@ import android.os.Vibrator;
 import android.os.Vibrator.OnVibratorStateChangedListener;
 import android.os.VibratorManager;
 import android.os.vibrator.VibratorFrequencyProfile;
+import android.os.vibrator.cts.VibratorTestActivity;
 
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
 import androidx.test.filters.LargeTest;
@@ -75,8 +76,8 @@ public class VibratorTest {
     private static final String SYSTEM_VIBRATOR_LABEL = "SystemVibrator";
 
     @Rule
-    public ActivityScenarioRule<SimpleTestActivity> mActivityRule =
-            new ActivityScenarioRule<>(SimpleTestActivity.class);
+    public ActivityScenarioRule<VibratorTestActivity> mActivityRule =
+            new ActivityScenarioRule<>(VibratorTestActivity.class);
 
     @Rule
     public final AdoptShellPermissionsRule mAdoptShellPermissionsRule =
