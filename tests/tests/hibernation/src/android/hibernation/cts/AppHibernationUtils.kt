@@ -50,6 +50,7 @@ import com.android.compatibility.common.util.UiDumpUtils
 import com.android.compatibility.common.util.click
 import com.android.compatibility.common.util.depthFirstSearch
 import com.android.compatibility.common.util.textAsString
+import com.android.modules.utils.build.SdkLevel
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import org.hamcrest.Matcher
@@ -126,6 +127,33 @@ fun runBootCompleteReceiver(context: Context, testTag: String) {
         countdownLatch.await(BROADCAST_TIMEOUT_MS, TimeUnit.MILLISECONDS))
 }
 
+fun bypassBatterySavingRestrictions(context: Context) {
+    if (SdkLevel.isAtLeastU()) {
+        val userId = Process.myUserHandle().identifier
+        val permissionControllerPackageName =
+            context.packageManager.permissionControllerPackageName
+        runShellCommandOrThrow("cmd tare set-vip $userId $permissionControllerPackageName true")
+    }
+}
+
+fun resetBatterySavingRestrictions(context: Context) {
+    if (SdkLevel.isAtLeastU()) {
+        val userId = Process.myUserHandle().identifier
+        val permissionControllerPackageName =
+            context.packageManager.permissionControllerPackageName
+        runShellCommandOrThrow("cmd tare set-vip $userId $permissionControllerPackageName default")
+    }
+}
+
+fun resetJob(context: Context) {
+    val userId = Process.myUserHandle().identifier
+    val permissionControllerPackageName =
+        context.packageManager.permissionControllerPackageName
+    runShellCommandOrThrow("cmd jobscheduler reset-execution-quota -u " +
+            "$userId $permissionControllerPackageName")
+    runShellCommandOrThrow("cmd jobscheduler reset-schedule-quota")
+}
+
 fun runAppHibernationJob(context: Context, tag: String) {
     runAppHibernationJobInternal(context, tag)
     if (Build.VERSION.SDK_INT == 31) {
@@ -146,6 +174,7 @@ private fun runAppHibernationJobInternal(context: Context, tag: String) {
         val jobState = runShellCommandOrThrow("cmd jobscheduler get-job-state -u " +
             "$userId " +
             "$permissionControllerPackageName 2")
+        Log.d(tag, "Job output: $jobState")
         assertTrue("Job expected waiting but is $jobState", jobState.contains("waiting"))
     }, JOB_RUN_TIMEOUT)
 }
