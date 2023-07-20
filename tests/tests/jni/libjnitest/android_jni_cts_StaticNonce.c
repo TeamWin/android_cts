@@ -751,6 +751,22 @@ static jboolean StaticNonce_takeCoolHandLukeCritical(
             v41, v42, v43, v44, v45, v46, v47, v48, v49, v50);
 }
 
+// @CriticalNative
+// public static native boolean takeCoolHandLukeWithFloatsCritical(
+//         int v1, int v2, int v3, int v4, int v5,
+//         double v6, double v7, double v8, double v9, double v10,
+//         double v11, double v12, double v13, double v14);
+static jboolean StaticNonce_takeCoolHandLukeWithFloatsCritical(
+        jint v1, jint v2, jint v3, jint v4, jint v5,
+        jdouble v6, jdouble v7, jdouble v8, jdouble v9,
+        jdouble v10, jdouble v11, jdouble v12, jdouble v13,
+        jdouble v14) {
+    return (v1 == 1) && (v2 == 2) && (v3 == 3) && (v4 == 4) && (v5 == 5) &&
+        (v6 == 6.0) && (v7 == 7.0) && (v8 == 8.0) && (v9 == 9.0) &&
+        (v10 == 10.0) && (v11 == 11.0) && (v12 == 12.0) && (v13 == 13.0) &&
+        (v14 == 14.0);
+}
+
 static JNINativeMethod methods[] = {
     // name, signature, function
     { "nop",               "()V", StaticNonce_nop },
@@ -853,6 +869,9 @@ static JNINativeMethod methods[] = {
     { "takeCoolHandLukeCritical",
       "(IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII)Z",
       StaticNonce_takeCoolHandLukeCritical },
+    { "takeCoolHandLukeWithFloatsCritical",
+      "(IIIIIDDDDDDDDD)Z",
+      StaticNonce_takeCoolHandLukeWithFloatsCritical },
 };
 
 int register_StaticNonce(JNIEnv *env) {
