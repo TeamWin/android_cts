@@ -23,18 +23,21 @@ import static com.android.bedstead.nene.users.UserType.MANAGED_PROFILE_TYPE_NAME
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.fail;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.EnsureHasAccount;
-import com.android.bedstead.harrier.annotations.EnsureHasAccountAuthenticator;
 import com.android.bedstead.harrier.annotations.EnsureHasNoAccounts;
+import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDpc;
+import com.android.bedstead.harrier.annotations.enterprise.EnsureHasProfileOwner;
 import com.android.bedstead.nene.TestApis;
-import com.android.bedstead.nene.accounts.AccountReference;
 import com.android.bedstead.nene.devicepolicy.ProfileOwner;
 import com.android.bedstead.nene.exceptions.AdbException;
+import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.packages.ComponentReference;
+import com.android.bedstead.nene.packages.Package;
 import com.android.bedstead.nene.users.UserReference;
 import com.android.bedstead.nene.utils.Poll;
 import com.android.bedstead.nene.utils.ShellCommand;
@@ -289,6 +292,37 @@ public final class ProfileOwnerTest {
                     .toMeet(i -> !i.contains(NOT_TEST_ONLY_DPC_COMPONENT))
                     .errorOnFail("Expected active admins to not contain DPC")
                     .await();
+        }
+    }
+
+    @EnsureHasProfileOwner
+    @Test
+    @Postsubmit(reason = "new test")
+    public void disableComponentInProfileOwnerViaAdb_throwsException() {
+        String component = sDeviceState.dpc().packageName()+ "/" +
+                sDeviceState.dpc().testApp().activities().query().get().className();
+
+        try {
+            Package.of(component).disable();
+            fail("AdbException should be thrown here");
+        } catch (NeneException e) {
+            assertThat(e.getCause() instanceof AdbException).isTrue();
+            assertThat(((AdbException) e.getCause()).error()).contains(
+                    "Cannot disable a protected package: " + sDeviceState.dpc().packageName());
+        }
+    }
+
+    @EnsureHasProfileOwner
+    @Test
+    @Postsubmit(reason = "new test")
+    public void disableProfileOwnerViaAdb_throwsException() {
+        try {
+            sDeviceState.dpc().pkg().disable();
+            fail("AdbException should be thrown here");
+        } catch (NeneException e) {
+            assertThat(e.getCause() instanceof AdbException).isTrue();
+            assertThat(((AdbException) e.getCause()).error()).contains(
+                    "Cannot disable a protected package: " + sDeviceState.dpc().packageName());
         }
     }
 }

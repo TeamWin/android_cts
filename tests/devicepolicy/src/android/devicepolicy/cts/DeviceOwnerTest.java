@@ -24,6 +24,7 @@ import static com.android.bedstead.nene.permissions.CommonPermissions.MANAGE_PRO
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.fail;
 
 import android.app.admin.DevicePolicyManager;
 import android.app.admin.RemoteDevicePolicyManager;
@@ -49,6 +50,7 @@ import com.android.bedstead.nene.devicepolicy.DeviceOwner;
 import com.android.bedstead.nene.exceptions.AdbException;
 import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.packages.ComponentReference;
+import com.android.bedstead.nene.packages.Package;
 import com.android.bedstead.nene.users.UserReference;
 import com.android.bedstead.nene.utils.Poll;
 import com.android.bedstead.nene.utils.ShellCommand;
@@ -405,5 +407,36 @@ public final class DeviceOwnerTest {
         // clearDeviceOwnerApp should not throw, and isDeviceOwnerApp should return false afterwards
         dpm.clearDeviceOwnerApp(sDeviceState.dpc().packageName());
         assertThat(dpm.isDeviceOwnerApp(sDeviceState.dpc().packageName())).isFalse();
+    }
+
+    @EnsureHasDeviceOwner
+    @Test
+    @Postsubmit(reason = "new test")
+    public void disableComponentInDeviceOwnerViaAdb_throwsException() {
+        String component = sDeviceState.dpc().packageName()+ "/" +
+                sDeviceState.dpc().testApp().activities().query().get().className();
+
+        try {
+            Package.of(component).disable();
+            fail("AdbException should be thrown here.");
+        } catch (NeneException e) {
+            assertThat(e.getCause() instanceof AdbException).isTrue();
+            assertThat(((AdbException) e.getCause()).error()).contains(
+                    "Cannot disable a protected package: " + sDeviceState.dpc().packageName());
+        }
+    }
+
+    @EnsureHasDeviceOwner
+    @Test
+    @Postsubmit(reason = "new test")
+    public void disableDeviceOwnerViaAdb_throwsException() {
+        try {
+            sDeviceState.dpc().pkg().disable();
+            fail("AdbException should be thrown here.");
+        } catch (NeneException e) {
+            assertThat(e.getCause() instanceof AdbException).isTrue();
+            assertThat(((AdbException) e.getCause()).error()).contains(
+                    "Cannot disable a protected package: " + sDeviceState.dpc().packageName());
+        }
     }
 }
