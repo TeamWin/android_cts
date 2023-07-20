@@ -543,6 +543,11 @@ public class JniStaticTest extends JniTestCase {
                         41, 42, 43, 44, 45, 46, 47, 48, 49, 50));
     }
 
+    public void test_takeCoolHandLukeWithFloatsCritical() {
+        assertTrue(StaticNonce.takeCoolHandLukeWithFloatsCritical(
+                        1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14));
+    }
+
     /**
      * dlopen(3) any of the public lib via file name (non-absolute path) should succeed.
      */
