@@ -43,7 +43,6 @@ import android.net.Uri;
 import android.os.Build;
 import android.photopicker.cts.cloudproviders.CloudProviderPrimary;
 
-
 import androidx.annotation.Nullable;
 import androidx.test.filters.SdkSuppress;
 import androidx.test.uiautomator.UiObject;
