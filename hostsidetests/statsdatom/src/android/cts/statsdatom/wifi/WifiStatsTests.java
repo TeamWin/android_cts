@@ -107,7 +107,22 @@ public class WifiStatsTests extends DeviceTestCase implements IBuildReceiver {
 
         ConfigUtils.uploadConfigForPushedAtomWithUid(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
                 AtomsProto.Atom.WIFI_LOCK_STATE_CHANGED_FIELD_NUMBER, true);
-        DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(), ".AtomTests", "testWifiLockLowLatency");
+
+        // For low latency lock to be active following conditions need to be met,
+        //    - Wi-Fi is connected
+        //    - Screen On
+        //    - Application is foreground.
+
+        // Check Wi-Fi is connected.
+        DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(), ".AtomTests", "testWifiConnected");
+
+        // Turn screen on.
+        DeviceUtils.turnScreenOn(getDevice());
+
+        // Acquire and release low latency lock in foreground activity.
+        DeviceUtils.runActivity(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                "StatsdCtsForegroundActivity", "action", "action.acquire_release_wifi_ll_lock");
+        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
 
         // Sorted list of events in order in which they occurred.
         List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
