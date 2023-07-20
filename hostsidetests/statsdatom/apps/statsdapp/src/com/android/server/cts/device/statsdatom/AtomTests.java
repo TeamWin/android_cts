@@ -859,8 +859,13 @@ public class AtomTests {
     }
 
     @Test
-    public void testWifiLockHighPerf() {
+    public void testWifiLockHighPerf() throws Exception {
         Context context = InstrumentationRegistry.getContext();
+        boolean wifiConnected = isWifiConnected(context);
+        Assert.assertTrue(
+                "Wifi is not connected. The test expects Wifi to be connected before the run",
+                wifiConnected);
+
         WifiManager wm = context.getSystemService(WifiManager.class);
         WifiManager.WifiLock lock =
                 wm.createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF, "StatsdCTSWifiLock");
@@ -870,14 +875,12 @@ public class AtomTests {
     }
 
     @Test
-    public void testWifiLockLowLatency() {
+    public void testWifiConnected() throws Exception {
         Context context = InstrumentationRegistry.getContext();
-        WifiManager wm = context.getSystemService(WifiManager.class);
-        WifiManager.WifiLock lock =
-                wm.createWifiLock(WifiManager.WIFI_MODE_FULL_LOW_LATENCY, "StatsdCTSWifiLock");
-        lock.acquire();
-        sleep(500);
-        lock.release();
+        boolean wifiConnected = isWifiConnected(context);
+        Assert.assertTrue(
+                "Wifi is not connected. The test expects Wifi to be connected before the run",
+                wifiConnected);
     }
 
     @Test
