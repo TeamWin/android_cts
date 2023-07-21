@@ -49,9 +49,8 @@ LOW_RESOLUTION_SIZES = (
 
 LOWEST_RES_TESTED_AREA = 640*360
 
-
 VIDEO_QUALITY_SIZE = {
-    # '480P', '1080P', HIGH' and 'LOW' are not included as they are DUT-dependent
+    # '480P', '1080P', HIGH' & 'LOW' are not included as they are DUT-dependent
     '2160P': '3840x2160',
     '720P': '1280x720',
     'VGA': '640x480',
