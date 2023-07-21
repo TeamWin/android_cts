@@ -50,7 +50,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.hardware.display.VirtualDisplay;
-import android.hardware.display.VirtualDisplayConfig;
 import android.os.Bundle;
 import android.os.ResultReceiver;
 import android.platform.test.annotations.AppModeFull;
@@ -90,12 +89,6 @@ public class ActivityManagementTest {
     private static final VirtualDeviceParams DEFAULT_VIRTUAL_DEVICE_PARAMS =
             new VirtualDeviceParams.Builder().build();
 
-    private static final VirtualDisplayConfig VIRTUTAL_DISPLAY_CONFIG =
-            new VirtualDisplayConfig
-                    .Builder("virtualDisplay",
-                    /*width=*/100,
-                    /*height=*/100,
-                    /*densityDpi=*/240).build();
     private static final int TIMEOUT_MS = 5000;
 
     @Rule
@@ -160,8 +153,7 @@ public class ActivityManagementTest {
         ActivityListener activityListener = mock(ActivityListener.class);
         Executor mockExecutor = mock(Executor.class);
         mVirtualDevice.addActivityListener(mockExecutor, activityListener);
-        VirtualDisplay virtualDisplay = mVirtualDevice.createVirtualDisplay(
-                VIRTUTAL_DISPLAY_CONFIG, Runnable::run, mVirtualDisplayCallback);
+        VirtualDisplay virtualDisplay = createVirtualDisplay();
         InstrumentationRegistry.getInstrumentation()
                 .startActivitySync(
                         new Intent(context, EmptyActivity.class)
@@ -205,8 +197,7 @@ public class ActivityManagementTest {
                         DEFAULT_VIRTUAL_DEVICE_PARAMS);
         ActivityListener activityListener = mock(ActivityListener.class);
         mVirtualDevice.addActivityListener(context.getMainExecutor(), activityListener);
-        VirtualDisplay virtualDisplay = mVirtualDevice.createVirtualDisplay(
-                VIRTUTAL_DISPLAY_CONFIG, Runnable::run, mVirtualDisplayCallback);
+        VirtualDisplay virtualDisplay = createVirtualDisplay();
         EmptyActivity emptyActivity = (EmptyActivity) InstrumentationRegistry.getInstrumentation()
                 .startActivitySync(
                         new Intent(context, EmptyActivity.class)
@@ -238,8 +229,7 @@ public class ActivityManagementTest {
                         DEFAULT_VIRTUAL_DEVICE_PARAMS);
         ActivityListener activityListener = mock(ActivityListener.class);
         mVirtualDevice.addActivityListener(context.getMainExecutor(), activityListener);
-        VirtualDisplay virtualDisplay = mVirtualDevice.createVirtualDisplay(
-                VIRTUTAL_DISPLAY_CONFIG, Runnable::run, mVirtualDisplayCallback);
+        VirtualDisplay virtualDisplay = createVirtualDisplay();
         EmptyActivity emptyActivity = (EmptyActivity) InstrumentationRegistry.getInstrumentation()
                 .startActivitySync(
                         new Intent(context, EmptyActivity.class)
@@ -270,8 +260,7 @@ public class ActivityManagementTest {
                 mVirtualDeviceManager.createVirtualDevice(
                         mFakeAssociationRule.getAssociationInfo().getId(),
                         DEFAULT_VIRTUAL_DEVICE_PARAMS);
-        VirtualDisplay virtualDisplay = mVirtualDevice.createVirtualDisplay(
-                VIRTUTAL_DISPLAY_CONFIG, Runnable::run, mVirtualDisplayCallback);
+        VirtualDisplay virtualDisplay = createVirtualDisplay();
         mVirtualDevice.launchPendingIntent(virtualDisplay.getDisplay().getDisplayId(),
                 pendingIntent, Runnable::run, mLaunchCompleteListener);
 
@@ -290,8 +279,7 @@ public class ActivityManagementTest {
                 mVirtualDeviceManager.createVirtualDevice(
                         mFakeAssociationRule.getAssociationInfo().getId(),
                         DEFAULT_VIRTUAL_DEVICE_PARAMS);
-        VirtualDisplay virtualDisplay = mVirtualDevice.createVirtualDisplay(
-                VIRTUTAL_DISPLAY_CONFIG, Runnable::run, mVirtualDisplayCallback);
+        VirtualDisplay virtualDisplay = createVirtualDisplay();
         // Android 10 (and higher) place restrictions on when apps can start activities when the
         // app is running in the background. To except the restriction, starting an activity before
         // launching activity from background.
@@ -319,8 +307,7 @@ public class ActivityManagementTest {
                 mVirtualDeviceManager.createVirtualDevice(
                         mFakeAssociationRule.getAssociationInfo().getId(),
                         DEFAULT_VIRTUAL_DEVICE_PARAMS);
-        VirtualDisplay virtualDisplay = mVirtualDevice.createVirtualDisplay(
-                VIRTUTAL_DISPLAY_CONFIG, Runnable::run, mVirtualDisplayCallback);
+        VirtualDisplay virtualDisplay = createVirtualDisplay();
 
         mVirtualDevice.launchPendingIntent(
                 virtualDisplay.getDisplay().getDisplayId(),
@@ -332,6 +319,12 @@ public class ActivityManagementTest {
                 eq(Activity.RESULT_OK), nullable(Bundle.class));
         verify(mLaunchCompleteListener, timeout(TIMEOUT_MS)).accept(
                 eq(VirtualDeviceManager.LAUNCH_FAILURE_NO_ACTIVITY));
+    }
+
+    private VirtualDisplay createVirtualDisplay() {
+        return mVirtualDevice.createVirtualDisplay(
+                VirtualDeviceTestUtils.VIRTUAL_DISPLAY_BUILDER.build(), Runnable::run,
+                mVirtualDisplayCallback);
     }
 
     private IStreamedTestApp getTestAppService() throws Exception {

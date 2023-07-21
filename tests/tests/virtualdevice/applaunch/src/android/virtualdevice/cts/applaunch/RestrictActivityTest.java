@@ -44,15 +44,14 @@ import android.companion.virtual.VirtualDeviceParams;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.graphics.PixelFormat;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
 import android.hardware.display.VirtualDisplayConfig;
-import android.media.ImageReader;
 import android.os.ResultReceiver;
 import android.platform.test.annotations.AppModeFull;
 import android.virtualdevice.cts.common.FakeAssociationRule;
 import android.virtualdevice.cts.common.util.TestAppHelper;
+import android.virtualdevice.cts.common.util.VirtualDeviceTestUtils;
 import android.virtualdevice.cts.common.util.VirtualDeviceTestUtils.OnReceiveResultListener;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -75,8 +74,6 @@ import java.util.Set;
 @AppModeFull(reason = "VirtualDeviceManager cannot be accessed by instant apps")
 public class RestrictActivityTest {
 
-    private static final String DISPLAY_NAME = "RestrictActivityTest";
-
     @Rule
     public AdoptShellPermissionsRule mAdoptShellPermissionsRule =
             new AdoptShellPermissionsRule(
@@ -96,7 +93,6 @@ public class RestrictActivityTest {
     @Mock private OnReceiveResultListener mOnReceiveResultListener;
     private ResultReceiver mResultReceiver;
     private DisplayManager mDisplayManager;
-    private ImageReader mReader;
 
     @Before
     public void setUp() throws Exception {
@@ -109,9 +105,6 @@ public class RestrictActivityTest {
         mVirtualDeviceManager = context.getSystemService(VirtualDeviceManager.class);
         mDisplayManager = context.getSystemService(DisplayManager.class);
         mResultReceiver = createResultReceiver(mOnReceiveResultListener);
-        mReader = ImageReader.newInstance(
-                        /* width= */ 100, /* height= */ 100,
-                PixelFormat.RGBA_8888, /* maxImages= */ 1);
     }
 
     @After
@@ -189,13 +182,8 @@ public class RestrictActivityTest {
     @Test
     public void restrictedActivity_noGwpc_shouldFail() {
         VirtualDisplay virtualDisplay =
-                mDisplayManager.createVirtualDisplay(
-                        /* name= */ "name",
-                        /* width= */ 100,
-                        /* height= */ 100,
-                        /* densityDpi= */ 240,
-                        mReader.getSurface(),
-                        DisplayManager.VIRTUAL_DISPLAY_FLAG_TRUSTED);
+                mDisplayManager.createVirtualDisplay(VirtualDeviceTestUtils.VIRTUAL_DISPLAY_BUILDER
+                                .setFlags(DisplayManager.VIRTUAL_DISPLAY_FLAG_TRUSTED).build());
         launchRestrictedAutomotiveActivity(virtualDisplay);
 
         verify(mOnReceiveResultListener, after(3000).never()).onReceiveResult(anyInt(), any());
@@ -216,8 +204,7 @@ public class RestrictActivityTest {
                         mFakeAssociationRule.getAssociationInfo().getId(),
                         new VirtualDeviceParams.Builder().build());
         VirtualDisplayConfig.Builder builder =
-                new VirtualDisplayConfig.Builder(DISPLAY_NAME, 100, 100, 240)
-                        .setSurface(mReader.getSurface())
+                VirtualDeviceTestUtils.VIRTUAL_DISPLAY_BUILDER
                         .setFlags(DisplayManager.VIRTUAL_DISPLAY_FLAG_TRUSTED);
         if (displayCategories != null) {
             builder = builder.setDisplayCategories(displayCategories);

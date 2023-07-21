@@ -51,15 +51,14 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.graphics.PixelFormat;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
-import android.media.ImageReader;
 import android.os.ResultReceiver;
 import android.platform.test.annotations.AppModeFull;
 import android.virtualdevice.cts.applaunch.util.EmptyActivity;
 import android.virtualdevice.cts.common.FakeAssociationRule;
 import android.virtualdevice.cts.common.util.TestAppHelper;
+import android.virtualdevice.cts.common.util.VirtualDeviceTestUtils;
 import android.virtualdevice.cts.common.util.VirtualDeviceTestUtils.OnReceiveResultListener;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -419,15 +418,11 @@ public class ActivityBlockingTest {
     private VirtualDisplay createVirtualDisplay(@NonNull VirtualDeviceParams virtualDeviceParams,
             int virtualDisplayFlags) {
         mVirtualDevice = mVirtualDeviceManager.createVirtualDevice(
-                        mFakeAssociationRule.getAssociationInfo().getId(), virtualDeviceParams);
-        ImageReader reader = ImageReader.newInstance(/* width= */ 100, /* height= */ 100,
-                PixelFormat.RGBA_8888, /* maxImages= */ 1);
+                mFakeAssociationRule.getAssociationInfo().getId(), virtualDeviceParams);
         return mVirtualDevice.createVirtualDisplay(
-                /* width= */ 100,
-                /* height= */ 100,
-                /* densityDpi= */ 240,
-                reader.getSurface(),
-                virtualDisplayFlags,
+                VirtualDeviceTestUtils.VIRTUAL_DISPLAY_BUILDER
+                        .setFlags(virtualDisplayFlags)
+                        .build(),
                 Runnable::run,
                 mVirtualDisplayCallback);
     }
