@@ -374,6 +374,8 @@ public class UsageStatsTest extends StsExtraBusinessLogicTestCase {
 
         final long startTime = System.currentTimeMillis();
         launchSubActivity(Activities.ActivityOne.class);
+        // Add some delay for UsageStatsService to process the usage event.
+        SystemClock.sleep(1000);
         final long endTime = System.currentTimeMillis();
 
         verifyLastTimeVisibleWithinRange(startTime, endTime, mTargetPackage);
@@ -387,6 +389,8 @@ public class UsageStatsTest extends StsExtraBusinessLogicTestCase {
 
         final long startTime = System.currentTimeMillis();
         launchSubActivity(Activities.ActivityOne.class);
+        // Add some delay for UsageStatsService to process the usage event.
+        SystemClock.sleep(1000);
         final long endTime = System.currentTimeMillis();
 
         verifyLastTimeAnyComponentUsedWithinRange(startTime, endTime, mTargetPackage);
