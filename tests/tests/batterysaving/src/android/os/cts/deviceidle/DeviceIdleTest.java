@@ -27,6 +27,7 @@ import android.annotation.NonNull;
 import android.content.Context;
 import android.content.IntentFilter;
 import android.os.PowerManager;
+import android.provider.DeviceConfig;
 
 import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -35,6 +36,7 @@ import androidx.test.uiautomator.UiDevice;
 
 import com.android.compatibility.common.util.BatteryUtils;
 import com.android.compatibility.common.util.CallbackAsserter;
+import com.android.compatibility.common.util.DeviceConfigStateHelper;
 
 import org.junit.After;
 import org.junit.Before;
@@ -44,6 +46,8 @@ import org.junit.runner.RunWith;
 @SmallTest
 @RunWith(AndroidJUnit4.class)
 public class DeviceIdleTest {
+    private final DeviceConfigStateHelper mDeviceConfigStateHelper =
+            new DeviceConfigStateHelper(DeviceConfig.NAMESPACE_DEVICE_IDLE);
 
     private UiDevice mUiDevice;
 
@@ -55,6 +59,7 @@ public class DeviceIdleTest {
     @After
     public void tearDown() throws Exception {
         BatteryUtils.runDumpsysBatteryReset();
+        mDeviceConfigStateHelper.restoreOriginalValues();
     }
 
     @Test
@@ -68,6 +73,11 @@ public class DeviceIdleTest {
         final String output = mUiDevice.executeShellCommand("cmd deviceidle enabled light").trim();
         final boolean isEnabled = Integer.parseInt(output) != 0;
         assumeTrue("device idle not enabled", isEnabled);
+
+        // Explicitly set the light idle timeouts to override device specific values and reduce the
+        // runtime of this test.
+        mDeviceConfigStateHelper.set("light_idle_to", "500");
+        mDeviceConfigStateHelper.set("light_idle_to_initial_flex", "1000");
 
         // Reset idle state.
         setScreenState(true);
