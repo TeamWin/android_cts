@@ -23,7 +23,6 @@ interface ITestService {
     PendingIntent generatePendingIntent(in ComponentName componentName);
     PendingIntent generatePendingIntentBroadcast(in ComponentName componentName);
     void startManageSpaceActivity();
-    TextClassification createTextClassification(in PendingIntent pendingIntent);
     void sendByTextClassification(in TextClassification classification);
     void sendPendingIntent(in PendingIntent pendingIntent, in Bundle sendOptions);
 }

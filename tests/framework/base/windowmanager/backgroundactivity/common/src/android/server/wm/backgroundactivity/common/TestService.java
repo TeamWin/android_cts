@@ -17,24 +17,18 @@
 package android.server.wm.backgroundactivity.common;
 
 import android.app.PendingIntent;
-import android.app.RemoteAction;
 import android.app.Service;
 import android.content.ComponentName;
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.drawable.Icon;
 import android.os.Binder;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.storage.StorageManager;
 import android.view.View;
 import android.view.textclassifier.TextClassification;
-import android.view.textclassifier.TextClassifier;
 
 public class TestService extends Service {
     static final String TAG = TestService.class.getName();
-    private static final Icon EMPTY_ICON = Icon.createWithBitmap(
-            Bitmap.createBitmap(8, 8, Bitmap.Config.ARGB_8888));
     private final ITestService mBinder = new MyBinder();
 
     @Override
@@ -73,19 +67,6 @@ public class TestService extends Service {
             } finally {
                 Binder.restoreCallingIdentity(token);
             }
-        }
-
-        @Override
-        public TextClassification createTextClassification(PendingIntent pendingIntent) {
-            TextClassification classification = new TextClassification.Builder()
-                    .setText("my classified text")
-                    .setEntityType(TextClassifier.TYPE_ADDRESS, 1.0f)
-                    .addAction(new RemoteAction(EMPTY_ICON, "myAction",
-                            "classifiedContentDescription", pendingIntent))
-                    .setId("id")
-                    .setExtras(new Bundle())
-                    .build();
-            return classification;
         }
 
         @Override
