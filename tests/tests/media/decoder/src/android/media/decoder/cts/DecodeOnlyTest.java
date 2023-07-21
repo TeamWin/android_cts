@@ -784,7 +784,10 @@ public class DecodeOnlyTest extends MediaTestBase {
                 outputBuffer.clear();
                 ByteBuffer audioData = ByteBuffer.wrap(audioArray);
                 int writtenSize = 0;
-                while (true) {
+                // This is a workaround, just to avoid blocking audio track write and codec
+                // crashes caused by invalid index after audio track pause and codec flush.
+                // b/291959069 to fix the outstanding callback issue.
+                while (!mDone.get()) {
                     int written = mAudioTrack.write(audioData, info.size - writtenSize,
                             AudioTrack.WRITE_BLOCKING, info.presentationTimeUs * 1000);
                     if (written >= 0) {
