@@ -5947,7 +5947,7 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
         // Supplicant V2 is supported if the vendor partition indicates API > T.
         boolean halSupport = PropertyUtil.isVendorApiLevelNewerThan(Build.VERSION_CODES.TIRAMISU);
         boolean featureFlagEnabled = DeviceConfig.getBoolean(DEVICE_CONFIG_NAMESPACE,
-                "application_qos_policy_api_enabled", false);
+                "application_qos_policy_api_enabled", true);
 
         return overlayEnabled && featureFlagEnabled && halSupport;
     }
