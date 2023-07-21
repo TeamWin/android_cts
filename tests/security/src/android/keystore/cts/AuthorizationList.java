@@ -211,11 +211,11 @@ public class AuthorizationList {
     private boolean confirmationRequired;
     private String mSecondImei;
 
-    public AuthorizationList(ASN1Encodable sequence) throws CertificateParsingException {
-        this(sequence, true);
+    public AuthorizationList(ASN1Encodable sequence, int attestationVersion) throws CertificateParsingException {
+        this(sequence, attestationVersion, true);
     }
 
-    public AuthorizationList(ASN1Encodable sequence, boolean strictParsing) throws CertificateParsingException {
+    public AuthorizationList(ASN1Encodable sequence, int attestationVersion, boolean strictParsing) throws CertificateParsingException {
         if (!(sequence instanceof ASN1Sequence)) {
             throw new CertificateParsingException("Expected sequence for authorization list, found "
                     + sequence.getClass().getName());
@@ -308,7 +308,7 @@ public class AuthorizationList {
                     userAuthType = Asn1Utils.getIntegerFromAsn1(value);
                     break;
                 case KM_TAG_ROOT_OF_TRUST & KEYMASTER_TAG_TYPE_MASK:
-                    rootOfTrust = new RootOfTrust(value, strictParsing);
+                    rootOfTrust = new RootOfTrust(value, attestationVersion, strictParsing);
                     break;
                 case KM_TAG_ATTESTATION_APPLICATION_ID & KEYMASTER_TAG_TYPE_MASK:
                     attestationApplicationId = new AttestationApplicationId(Asn1Utils
