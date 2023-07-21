@@ -86,6 +86,7 @@ import android.server.wm.WindowManagerState;
 import android.server.wm.app.AbstractLifecycleLogActivity;
 import android.util.Size;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import libcore.junit.util.compat.CoreCompatChangeRule.DisableCompatChanges;
@@ -159,7 +160,9 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
         super.setUp();
         enableAndAssumeGestureNavigationMode();
         createManagedLetterboxAspectRatioSession(FIXED_ORIENTATION_MIN_ASPECT_RATIO);
-        createManagedConstrainDisplayApisFlagsSession();
+        mObjectTracker.manage(setAlwaysConstrainDisplayApisFlag(null));
+        mObjectTracker.manage(setNeverConstrainDisplayApisAllPackagesFlag(null));
+        mObjectTracker.manage(setNeverConstrainDisplayApisFlag(null));
     }
 
     @Test
@@ -599,11 +602,11 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
      */
     @Test
     public void testSandboxForNonResizableActivityNeverSandboxDeviceConfigAllPackagesFlagTrue() {
-        setNeverConstrainDisplayApisAllPackagesFlag("true");
-        // Setting 'never_constrain_display_apis' as well to make sure it is ignored.
-        setNeverConstrainDisplayApisFlag("com.android.other::");
-        runSizeCompatModeSandboxTest(NON_RESIZEABLE_LARGE_ASPECT_RATIO_ACTIVITY,
-                /* isSandboxed */ false, /* inSizeCompatModeAfterResize */ true);
+        try (var neverForAll = setNeverConstrainDisplayApisAllPackagesFlag("true");
+                var neverAnApp = setNeverConstrainDisplayApisFlag("com.android.other::")) {
+            runSizeCompatModeSandboxTest(NON_RESIZEABLE_LARGE_ASPECT_RATIO_ACTIVITY,
+                    /* isSandboxed */ false, /* inSizeCompatModeAfterResize */ true);
+        }
     }
 
     /**
@@ -614,10 +617,11 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
     @Test
     public void testSandboxForNonResizableActivityPackageUnboundedInNeverSandboxDeviceConfigFlag() {
         ComponentName activity = NON_RESIZEABLE_LARGE_ASPECT_RATIO_ACTIVITY;
-        setNeverConstrainDisplayApisFlag(
-                "com.android.other::," + activity.getPackageName() + "::");
-        runSizeCompatModeSandboxTest(activity, /* isSandboxed */ false,
-                /* inSizeCompatModeAfterResize */ true);
+        try (var neverForApp = setNeverConstrainDisplayApisFlag(
+                "com.android.other::," + activity.getPackageName() + "::")) {
+            runSizeCompatModeSandboxTest(activity, /* isSandboxed */ false,
+                    /* inSizeCompatModeAfterResize */ true);
+        }
     }
 
     /**
@@ -629,11 +633,12 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
     public void testSandboxForNonResizableActivityPackageWithinRangeInNeverSandboxDeviceConfig() {
         ComponentName activity = NON_RESIZEABLE_LARGE_ASPECT_RATIO_ACTIVITY;
         long version = getPackageVersion(activity);
-        setNeverConstrainDisplayApisFlag(
+        try (var neverForApp = setNeverConstrainDisplayApisFlag(
                 "com.android.other::," + activity.getPackageName() + ":" + String.valueOf(
-                        version - 1) + ":" + String.valueOf(version + 1));
-        runSizeCompatModeSandboxTest(activity, /* isSandboxed */ false,
-                /* inSizeCompatModeAfterResize */ true);
+                        version - 1) + ":" + String.valueOf(version + 1))) {
+            runSizeCompatModeSandboxTest(activity, /* isSandboxed */ false,
+                    /* inSizeCompatModeAfterResize */ true);
+        }
     }
 
     /**
@@ -645,11 +650,12 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
     public void testSandboxForNonResizableActivityPackageOutsideRangeInNeverSandboxDeviceConfig() {
         ComponentName activity = NON_RESIZEABLE_LARGE_ASPECT_RATIO_ACTIVITY;
         long version = getPackageVersion(activity);
-        setNeverConstrainDisplayApisFlag(
+        try (var neverForApp = setNeverConstrainDisplayApisFlag(
                 "com.android.other::," + activity.getPackageName() + ":" + String.valueOf(
-                        version + 1) + ":");
-        runSizeCompatModeSandboxTest(activity, /* isSandboxed */ true,
-                /* inSizeCompatModeAfterResize */ true);
+                        version + 1) + ":")) {
+            runSizeCompatModeSandboxTest(activity, /* isSandboxed */ true,
+                    /* inSizeCompatModeAfterResize */ true);
+        }
     }
 
     /**
@@ -659,9 +665,11 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
      */
     @Test
     public void testSandboxForNonResizableActivityPackageNotInNeverSandboxDeviceConfigFlag() {
-        setNeverConstrainDisplayApisFlag("com.android.other::,com.android.other2::");
-        runSizeCompatModeSandboxTest(NON_RESIZEABLE_LARGE_ASPECT_RATIO_ACTIVITY,
-                /* isSandboxed */ true, /* inSizeCompatModeAfterResize */ true);
+        try (var neverForApp = setNeverConstrainDisplayApisFlag(
+                "com.android.other::,com.android.other2::")) {
+            runSizeCompatModeSandboxTest(NON_RESIZEABLE_LARGE_ASPECT_RATIO_ACTIVITY,
+                    /* isSandboxed */ true, /* inSizeCompatModeAfterResize */ true);
+        }
     }
 
     /**
@@ -670,9 +678,10 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
      */
     @Test
     public void testSandboxForNonResizableActivityNeverSandboxDeviceConfigFlagEmpty() {
-        setNeverConstrainDisplayApisFlag("");
-        runSizeCompatModeSandboxTest(NON_RESIZEABLE_LARGE_ASPECT_RATIO_ACTIVITY,
-                /* isSandboxed */ true, /* inSizeCompatModeAfterResize */ true);
+        try (var empty = setNeverConstrainDisplayApisFlag("")) {
+            runSizeCompatModeSandboxTest(NON_RESIZEABLE_LARGE_ASPECT_RATIO_ACTIVITY,
+                    /* isSandboxed */ true, /* inSizeCompatModeAfterResize */ true);
+        }
     }
 
     /**
@@ -683,10 +692,11 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
     @Test
     public void testSandboxForNonResizableActivityInvalidEntryInNeverSandboxDeviceConfigFlag() {
         ComponentName activity = NON_RESIZEABLE_LARGE_ASPECT_RATIO_ACTIVITY;
-        setNeverConstrainDisplayApisFlag(
-                "com.android.other::," + activity.getPackageName() + ":::");
-        runSizeCompatModeSandboxTest(activity, /* isSandboxed */ true,
-                /* inSizeCompatModeAfterResize */ true);
+        try (var neverForApp = setNeverConstrainDisplayApisFlag(
+                "com.android.other::," + activity.getPackageName() + ":::")) {
+            runSizeCompatModeSandboxTest(activity, /* isSandboxed */ true,
+                    /* inSizeCompatModeAfterResize */ true);
+        }
     }
 
     /** =================
@@ -791,7 +801,6 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
      */
     @Test
     public void testSandboxResizableActivityAlwaysSandboxDeviceConfigFlagEmpty() {
-        setAlwaysConstrainDisplayApisFlag("");
         runLetterboxSandboxTest(RESIZEABLE_PORTRAIT_ACTIVITY, /* isSandboxed */ false);
     }
 
@@ -803,9 +812,10 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
     @Test
     public void testSandboxResizableActivityPackageInAlwaysSandboxDeviceConfigFlag() {
         ComponentName activity = RESIZEABLE_PORTRAIT_ACTIVITY;
-        setAlwaysConstrainDisplayApisFlag(
-                "com.android.other::," + activity.getPackageName() + "::");
-        runLetterboxSandboxTest(activity, /* isSandboxed */ true);
+        try (var alwaysForApp = setAlwaysConstrainDisplayApisFlag(
+                "com.android.other::," + activity.getPackageName() + "::")) {
+            runLetterboxSandboxTest(activity, /* isSandboxed */ true);
+        }
     }
 
     /**
@@ -1083,57 +1093,23 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
         }
     }
 
-    private class ConstrainDisplayApisFlagsSession implements AutoCloseable {
-        private Properties mInitialProperties;
-
-        ConstrainDisplayApisFlagsSession() {
-            runWithShellPermission(
-                    () -> {
-                        mInitialProperties = DeviceConfig.getProperties(
-                                NAMESPACE_CONSTRAIN_DISPLAY_APIS);
-                        try {
-                            DeviceConfig.setProperties(new Properties.Builder(
-                                    NAMESPACE_CONSTRAIN_DISPLAY_APIS).build());
-                        } catch (Exception e) {
-                        }
-                    });
-        }
-
-        @Override
-        public void close() {
-            runWithShellPermission(
-                    () -> {
-                        try {
-                            DeviceConfig.setProperties(mInitialProperties);
-                        } catch (Exception e) {
-                        }
-                    });
-        }
+    private CloseableDeviceConfig setNeverConstrainDisplayApisFlag(@Nullable String value) {
+        return setConstrainDisplayApisFlag("never_constrain_display_apis", value);
     }
 
-    /** @see ObjectTracker#manage(AutoCloseable) */
-    private ConstrainDisplayApisFlagsSession createManagedConstrainDisplayApisFlagsSession() {
-        return mObjectTracker.manage(new ConstrainDisplayApisFlagsSession());
+    private CloseableDeviceConfig setNeverConstrainDisplayApisAllPackagesFlag(
+            @Nullable String value) {
+        return setConstrainDisplayApisFlag("never_constrain_display_apis_all_packages", value);
     }
 
-    private void setNeverConstrainDisplayApisFlag(@Nullable String value) {
-        setConstrainDisplayApisFlag("never_constrain_display_apis", value);
+    private CloseableDeviceConfig setAlwaysConstrainDisplayApisFlag(
+            @Nullable String value) {
+        return setConstrainDisplayApisFlag("always_constrain_display_apis", value);
     }
 
-    private void setNeverConstrainDisplayApisAllPackagesFlag(@Nullable String value) {
-        setConstrainDisplayApisFlag("never_constrain_display_apis_all_packages", value);
-    }
-
-    private void setAlwaysConstrainDisplayApisFlag(@Nullable String value) {
-        setConstrainDisplayApisFlag("always_constrain_display_apis", value);
-    }
-
-    private void setConstrainDisplayApisFlag(String flagName, @Nullable String value) {
-        runWithShellPermission(
-                () -> {
-                    DeviceConfig.setProperty(NAMESPACE_CONSTRAIN_DISPLAY_APIS, flagName,
-                            value, /* makeDefault */ false);
-                });
+    private CloseableDeviceConfig setConstrainDisplayApisFlag(@NonNull String flagName,
+            @Nullable String value) {
+        return new CloseableDeviceConfig(NAMESPACE_CONSTRAIN_DISPLAY_APIS, flagName, value);
     }
 
     /**
@@ -1249,6 +1225,33 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
         @Override
         public void close() {
             mContext.unregisterReceiver(mAppCommunicator);
+        }
+    }
+
+    /**
+     * Resets device config to the original value after the try-with-resources block finishes
+     * try (var dc = new CloseableDeviceConfig()) {...}
+     */
+    private class CloseableDeviceConfig implements AutoCloseable {
+        private String mOriginalValue;
+        private final String mNamespace;
+        private final String mFlagName;
+
+        CloseableDeviceConfig(@NonNull String namespace, @NonNull String flagName,
+                @Nullable String value) {
+            mNamespace = namespace;
+            mFlagName = flagName;
+            runWithShellPermission(() -> {
+                mOriginalValue = DeviceConfig.getProperty(namespace, flagName);
+                DeviceConfig.setProperty(namespace, flagName, value, /* makeDefault */
+                        false);
+            });
+        }
+
+        @Override
+        public void close() {
+            runWithShellPermission(() -> DeviceConfig.setProperty(mNamespace, mFlagName,
+                    mOriginalValue, /* makeDefault */ false));
         }
     }
 }
