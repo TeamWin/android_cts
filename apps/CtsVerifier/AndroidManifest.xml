@@ -419,7 +419,10 @@
 
         <!-- Support service to ensure HID Device Test succeeds on
             devices with full screen pairing dialogs (ex. Android TV -->
-        <service android:name=".bluetooth.FocusLossPreventionService" />
+        <service android:name=".bluetooth.FocusLossPreventionService"
+                 android:foregroundServiceType="specialUse">
+            <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE" android:value="CtsVerifier" />
+        </service>
 
         <!--
              CTS Verifier Bluetooth Hid Host Test Screen
