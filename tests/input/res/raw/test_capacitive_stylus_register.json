@@ -62,6 +62,14 @@
         "fuzz": 0,
         "flat": 0,
         "resolution": 0
+      }},
+      {"code":0x37, "info": {       // ABS_MT_TOOL_TYPE
+        "value": 0,
+        "minimum": 0x00,            // MT_TOOL_FINGER
+        "maximum": 0x02,            // MT_TOOL_PALM
+        "fuzz": 0,
+        "flat": 0,
+        "resolution": 0
       }}
     ]
   }
