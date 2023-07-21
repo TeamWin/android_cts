@@ -192,116 +192,106 @@ filegroup {
     srcs: ["src/**/window/*.java"],
 }
 
-// android_test {
-//     name: "CtsWindowManagerDeviceActivity",
-//     defaults: ["CtsWindowManagerDeviceDefault"],
-//     package_name: "android.server.wm.cts.activity",
+android_test {
+    name: "CtsWindowManagerDeviceActivity",
+    defaults: ["CtsWindowManagerDeviceDefault"],
 
-//     srcs: [
-//         ":CtsWindowManagerDeviceActivity-src",
-//         ":CtsVerifierMockVrListenerServiceFiles",
-//     ],
-// }
+    srcs: [
+        ":CtsWindowManagerDeviceActivity-src",
+        ":CtsVerifierMockVrListenerServiceFiles",
+    ],
+}
 
-// android_test {
-//     name: "CtsWindowManagerDeviceAm",
-//     defaults: ["CtsWindowManagerDeviceDefault"],
-//     package_name: "android.server.wm.cts.am",
+android_test {
+    name: "CtsWindowManagerDeviceAm",
+    defaults: ["CtsWindowManagerDeviceDefault"],
 
-//     srcs: [
-//         ":CtsWindowManagerDeviceAm-src",
-//         ":CtsVerifierMockVrListenerServiceFiles",
-//     ],
-// }
+    srcs: [
+        ":CtsWindowManagerDeviceAm-src",
+        ":CtsVerifierMockVrListenerServiceFiles",
+    ],
+}
 
-// android_test {
-//     name: "CtsWindowManagerDeviceBackNavigation",
-//     defaults: ["CtsWindowManagerDeviceDefault"],
-//     package_name: "android.server.wm.cts.backnavigation",
+android_test {
+    name: "CtsWindowManagerDeviceBackNavigation",
+    defaults: ["CtsWindowManagerDeviceDefault"],
 
-//     srcs: [
-//         ":CtsWindowManagerDeviceBackNavigation-src",
-//         ":CtsVerifierMockVrListenerServiceFiles",
-//     ],
-// }
+     srcs: [
+        ":CtsWindowManagerDeviceBackNavigation-src",
+        ":CtsVerifierMockVrListenerServiceFiles",
+    ],
+}
 
-// android_test {
-//     name: "CtsWindowManagerDeviceDisplay",
-//     defaults: ["CtsWindowManagerDeviceDefault"],
-//     package_name: "android.server.wm.cts.display",
+android_test {
+    name: "CtsWindowManagerDeviceDisplay",
+    defaults: ["CtsWindowManagerDeviceDefault"],
 
-//     srcs: [
-//         ":CtsWindowManagerDeviceHelper-src",
-//         ":CtsWindowManagerDeviceDisplay-src",
-//         ":CtsVerifierMockVrListenerServiceFiles",
-//     ],
-// }
+    srcs: [
+        ":CtsWindowManagerDeviceHelper-src",
+        ":CtsWindowManagerDeviceDisplay-src",
+        ":CtsVerifierMockVrListenerServiceFiles",
+    ],
+}
 
-// android_test {
-//     name: "CtsWindowManagerDeviceKeyguard",
-//     defaults: ["CtsWindowManagerDeviceDefault"],
-//     package_name: "android.server.wm.cts.keyguard",
+android_test {
+    name: "CtsWindowManagerDeviceKeyguard",
+    defaults: ["CtsWindowManagerDeviceDefault"],
 
-//     srcs: [
-//         ":CtsWindowManagerDeviceKeyguard-src",
-//         ":CtsVerifierMockVrListenerServiceFiles",
-//     ],
-// }
+    srcs: [
+        ":CtsWindowManagerDeviceKeyguard-src",
+        ":CtsVerifierMockVrListenerServiceFiles",
+    ],
+}
 
-// android_test {
-//     name: "CtsWindowManagerDeviceInsets",
-//     defaults: ["CtsWindowManagerDeviceDefault"],
-//     package_name: "android.server.wm.cts.insets",
+android_test {
+    name: "CtsWindowManagerDeviceInsets",
+    defaults: ["CtsWindowManagerDeviceDefault"],
 
-//     srcs: [
-//         ":CtsWindowManagerDeviceInsets-src",
-//         ":CtsVerifierMockVrListenerServiceFiles",
-//     ],
-// }
+    srcs: [
+        ":CtsWindowManagerDeviceInsets-src",
+        ":CtsVerifierMockVrListenerServiceFiles",
+    ],
+}
 
-// android_test {
-//     name: "CtsWindowManagerDeviceTaskFragment",
-//     package_name: "android.server.wm.cts.taskfragment",
-//     defaults: ["CtsWindowManagerDeviceDefault"],
+android_test {
+    name: "CtsWindowManagerDeviceTaskFragment",
+    defaults: ["CtsWindowManagerDeviceDefault"],
 
-//     srcs: [
-//         ":CtsWindowManagerDeviceHelper-src",
-//         ":CtsWindowManagerDeviceTaskFragment-src",
-//         ":CtsVerifierMockVrListenerServiceFiles",
-//     ],
-// }
+    srcs: [
+        ":CtsWindowManagerDeviceHelper-src",
+        ":CtsWindowManagerDeviceTaskFragment-src",
+        ":CtsVerifierMockVrListenerServiceFiles",
+    ],
+}
 
-// android_test {
-//     name: "CtsWindowManagerDeviceScvh",
-//     defaults: ["CtsWindowManagerDeviceDefault"],
-//     package_name: "android.server.wm.cts.scvh",
+android_test {
+    name: "CtsWindowManagerDeviceScvh",
+    defaults: ["CtsWindowManagerDeviceDefault"],
 
-//     srcs: [
-//         ":CtsWindowManagerDeviceScvh-src",
-//         ":CtsVerifierMockVrListenerServiceFiles",
-//     ],
-// }
+    srcs: [
+        ":CtsWindowManagerDeviceScvh-src",
+        ":CtsVerifierMockVrListenerServiceFiles",
+    ],
+}
 
-// android_test {
-//     name: "CtsWindowManagerDeviceWindow",
-//     defaults: ["CtsWindowManagerDeviceDefault"],
-//     package_name: "android.server.wm.cts.window",
+android_test {
+    name: "CtsWindowManagerDeviceWindow",
+    defaults: ["CtsWindowManagerDeviceDefault"],
 
-//     srcs: [
-//         ":CtsWindowManagerDeviceWindow-src",
-//         "alertwindowservice/src/**/*.java",
-//         ":CtsVerifierMockVrListenerServiceFiles",
-//     ],
-// }
+    srcs: [
+        ":CtsWindowManagerDeviceWindow-src",
+        "alertwindowservice/src/**/*.java",
+        ":CtsVerifierMockVrListenerServiceFiles",
+    ],
+}
 
-// android_test {
-//     name: "CtsWindowManagerDeviceOther",
-//     defaults: ["CtsWindowManagerDeviceDefault"],
-//     package_name: "android.server.wm.cts.other",
+android_test {
+    name: "CtsWindowManagerDeviceOther",
+    defaults: ["CtsWindowManagerDeviceDefault"],
 
-//     srcs: [
-//         ":CtsWindowManagerDeviceOther-src",
-//         "alertwindowservice/src/**/*.java",
-//         ":CtsVerifierMockVrListenerServiceFiles",
-//     ],
-// }
+    srcs: [
+        ":CtsWindowManagerDeviceOther-src",
+        "alertwindowservice/src/**/*.java",
+        ":CtsVerifierMockVrListenerServiceFiles",
+    ],
+}
