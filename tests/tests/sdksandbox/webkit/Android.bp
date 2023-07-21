@@ -31,7 +31,6 @@ android_test {
         "ctswebkitsharedenv",
     ],
     data: [
-        ":EmptySdkProviderApp",
         ":WebViewSandboxTestSdk",
     ],
     srcs: [
