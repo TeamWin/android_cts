@@ -42,6 +42,7 @@ import android.content.Intent;
 import android.content.IntentSender;
 import android.os.Bundle;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.FlakyTest;
 import android.platform.test.annotations.Presubmit;
 import android.view.View;
 import android.view.autofill.AutofillValue;
@@ -749,6 +750,9 @@ public class AuthenticationTest extends AbstractLoginActivityTestCase {
         Helper.assertAuthenticationClientState("on save", saveRequest.data, "CSI", expectedValue);
     }
 
+    @FlakyTest(
+            bugId = 292002615,
+            detail = "Meet July-31-23 trunk stable no flaky SLO. Deflake asap")
     @Presubmit
     @Test
     public void testFillResponseAuthBothFields() throws Exception {

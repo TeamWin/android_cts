@@ -32,6 +32,7 @@ import android.content.ClipData;
 import android.content.ContentResolver;
 import android.content.IntentSender;
 import android.net.Uri;
+import android.platform.test.annotations.FlakyTest;
 import android.platform.test.annotations.Presubmit;
 import android.service.autofill.Dataset;
 import android.view.ContentInfo;
@@ -87,6 +88,9 @@ public class InlineAugmentedContentTest
         sReplier.addResponse(NO_RESPONSE);
     }
 
+    @FlakyTest(
+            bugId = 292285491,
+            detail = "Meet July-31-23 trunk stable no flaky SLO. Deflake asap")
     @Test
     public void testFillContent_text() throws Exception {
         final String suggestion = "Sample Text";

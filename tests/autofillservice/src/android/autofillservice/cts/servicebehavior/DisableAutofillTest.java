@@ -196,6 +196,9 @@ public class DisableAutofillTest extends AutoFillServiceTestCase.ManualActivityL
         Helper.resetApplicationAutofillOptions(sContext);
     }
 
+    @FlakyTest(
+            bugId = 292280852,
+            detail = "Meet July-31-23 trunk stable no flaky SLO. Deflake asap")
     @Presubmit
     @Test
     public void testDisableApp() throws Exception {
