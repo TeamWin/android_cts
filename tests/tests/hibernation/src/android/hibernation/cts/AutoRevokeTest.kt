@@ -144,6 +144,8 @@ class AutoRevokeTest {
             // picker" which may cover another UI elements on freeform window configuration.
             runShellCommandOrThrow("input keyevent 82")
         }
+        resetJob(context)
+        bypassBatterySavingRestrictions(context)
 
         if (isAutomotiveDevice()) {
             supportedApkPath = APK_PATH_S_APP
@@ -161,6 +163,7 @@ class AutoRevokeTest {
     @After
     fun cleanUp() {
         goHome()
+        resetBatterySavingRestrictions(context)
     }
 
     @AppModeFull(reason = "Uses separate apps for testing")

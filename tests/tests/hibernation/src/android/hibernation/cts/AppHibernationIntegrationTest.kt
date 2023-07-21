@@ -130,6 +130,9 @@ class AppHibernationIntegrationTest {
         // Wake up the device
         runShellCommandOrThrow("input keyevent KEYCODE_WAKEUP")
         runShellCommandOrThrow("input keyevent 82")
+
+        resetJob(context)
+        bypassBatterySavingRestrictions(context)
     }
 
     @After
@@ -139,6 +142,7 @@ class AppHibernationIntegrationTest {
             DeviceConfig.setProperty(NAMESPACE_APP_HIBERNATION, HIBERNATION_ENABLED_KEY,
                 oldHibernationValue, false /* makeDefault */)
         }
+        resetBatterySavingRestrictions(context)
     }
 
     @Test
