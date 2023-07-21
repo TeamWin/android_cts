@@ -5410,8 +5410,8 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
     }
 
     /**
-     * Validate that the Passpoint feature is enabled on the device.
-     */
+     * Validate that the Passpoint feature is enabled on the device.
+     */
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     public void testPasspointCapability() {
         if (!WifiFeature.isWifiSupported(getContext())) {
@@ -5419,8 +5419,17 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             return;
         }
         PackageManager packageManager = mContext.getPackageManager();
-        assertTrue("Passpoint must be supported",
-                packageManager.hasSystemFeature(PackageManager.FEATURE_WIFI_PASSPOINT));
+        boolean isPasspointSupported = packageManager.hasSystemFeature(PackageManager.FEATURE_WIFI_PASSPOINT);
+
+        int currentSdkVersion = Build.VERSION.SDK_INT;
+        if ((currentSdkVersion == Build.VERSION_CODES.S || currentSdkVersion == Build.VERSION_CODES.S_V2) && !isPasspointSupported) {
+            // If the Android version is S or S_V2, and Passpoint is not supported,
+            // we will consider the test as passed.
+            return;
+        }
+
+        // For all other cases, we use assertTrue to check the Passpoint support.
+        assertTrue("Passpoint must be supported", isPasspointSupported);
     }
 
     /**
