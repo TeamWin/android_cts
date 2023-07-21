@@ -3332,7 +3332,8 @@ public abstract class ActivityManagerTestBase {
     }
 
     public class DisplaySizeCloseable extends DisplayMetricsWaitCloseable {
-        private List<Pair<ComponentName, Rect>> mOriginalBounds = List.of();
+
+        private List<Pair<ComponentName, Rect>> mNewBounds = List.of();
 
         private static boolean isLandscape(Size s) {
             return s.getWidth() > s.getHeight();
@@ -3351,7 +3352,7 @@ public abstract class ActivityManagerTestBase {
                 final int requestedOrientation, final double aspectRatio,
                 @NonNull List<ComponentName> activities) {
             if (sizeScaleFactor != 1 || densityScaleFactor != 1) {
-                mOriginalBounds = activities.stream()
+                var originalBounds = activities.stream()
                         .map(a -> new Pair<>(a, getActivityWaitState(a).getBounds()))
                         .toList();
 
@@ -3360,10 +3361,14 @@ public abstract class ActivityManagerTestBase {
                 changeDisplayMetrics(sizeScaleFactor, densityScaleFactor);
                 waitForDisplaySizeChanged(origDisplaySize, sizeScaleFactor);
 
-                mOriginalBounds.forEach(activityAndBounds -> {
+                originalBounds.forEach(activityAndBounds -> {
                     waitForActivityBoundsChanged(activityAndBounds.first, activityAndBounds.second);
                     mWmState.computeState(new WaitForValidActivityState(activityAndBounds.first));
                 });
+
+                mNewBounds = activities.stream()
+                        .map(a -> new Pair<>(a, getActivityWaitState(a).getBounds()))
+                        .toList();
             }
 
             if (ORIENTATION_UNDEFINED != requestedOrientation && aspectRatio > 0) {
@@ -3387,9 +3392,11 @@ public abstract class ActivityManagerTestBase {
         @Override
         public void close() {
             super.close();
-            mOriginalBounds.forEach(activityAndBounds -> {
-                waitForActivityBoundsReset(activityAndBounds.first, activityAndBounds.second);
-                mWmState.computeState(new WaitForValidActivityState(activityAndBounds.first));
+            mNewBounds.forEach(activityAndBounds -> {
+                if (mWmState.isActivityVisible(activityAndBounds.first)) {
+                    waitForActivityBoundsChanged(activityAndBounds.first, activityAndBounds.second);
+                    mWmState.computeState(new WaitForValidActivityState(activityAndBounds.first));
+                }
             });
         }
 
@@ -3404,18 +3411,6 @@ public abstract class ActivityManagerTestBase {
                 WindowManagerState.Activity activity = wmState.getActivity(activityName);
                 return activity != null && !activity.getBounds().equals(priorActivityBounds);
             }, "checking activity bounds updated");
-        }
-
-        /**
-         * Waits until the given activity has reset task bounds.
-         */
-        private void waitForActivityBoundsReset(ComponentName activityName,
-                Rect priorActivityBounds) {
-            mWmState.waitForWithAmState(wmState -> {
-                mWmState.computeState(new WaitForValidActivityState(activityName));
-                WindowManagerState.Activity activity = wmState.getActivity(activityName);
-                return activity != null && activity.getBounds().equals(priorActivityBounds);
-            }, "checking activity bounds reset");
         }
 
         /**
