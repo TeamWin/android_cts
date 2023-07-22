@@ -39,7 +39,7 @@ public class StartPendingIntentActivity extends Activity {
         Intent intent = getIntent();
 
         final PendingIntent pendingIntent = intent.getParcelableExtra(
-                mB.START_PENDING_INTENT_RECEIVER_EXTRA.PENDING_INTENT);
+                mB.START_PENDING_INTENT_ACTIVITY_EXTRA.PENDING_INTENT);
         try {
             final Bundle bundle;
             if (intent.hasExtra(mB.START_PENDING_INTENT_ACTIVITY_EXTRA.ALLOW_BAL)) {

@@ -87,36 +87,6 @@ public class Components extends ComponentsBase {
         public final String FINISH_FIRST = "FINISH_FIRST_EXTRA";
     }
 
-    /** Extra key constants for {@link #SEND_PENDING_INTENT_RECEIVER} */
-    public static class SendPendingIntentReceiverExtra {
-        public final String IS_BROADCAST = "IS_BROADCAST_EXTRA";
-        public final String APP_B_PACKAGE = "APP_B_PACKAGE_EXTRA";
-
-        /**
-         * Create the intent with BAL set to the explicit value.
-         *
-         * <p>This should not have any effect as the ActivityOptions on the Intent are not used when
-         * starting the PendingIntent.
-         */
-        public final String ALLOW_BAL_EXTRA_ON_PENDING_INTENT =
-                "ALLOW_BAL_EXTRA_ON_PENDING_INTENT";
-        /**
-         * Create a PendingIntent with creator BAL option set to Deny BAL privilege.
-         */
-        public final String DENY_CREATOR_BAL_PRIVILEGE = "DENY_CREATOR_BAL_PRIVILEGE";
-        /**
-         * Create a PendingIntent to launch App B Foreground Activity instead of the usual App A
-         * Background Activity.
-         */
-        public final String CREATE_PI_LAUNCH_APP_B = "CREATE_PI_LAUNCH_APP_B";
-    }
-
-    /** Extra key constants for {@link #START_ACTIVITY_RECEIVER} */
-    public static class StartActivityReceiverExtra {
-        public final String START_ACTIVITY_DELAY_MS =
-                "START_ACTIVITY_FROM_FG_ACTIVITY_DELAY_MS_EXTRA";
-    }
-
     /** Extra key constants for {@link #START_PENDING_INTENT_ACTIVITY} */
     public static class StartPendingIntentActivityExtra {
         /**
@@ -132,13 +102,8 @@ public class Components extends ComponentsBase {
          * where setPendingIntentCreatorBackgroundActivityStartMode() to allow BAL.
          */
         public final String ALLOW_CREATOR_BAL = "ALLOW_CREATOR_BAL";
-    }
-
-    /** Extra key constants for {@link #START_PENDING_INTENT_RECEIVER} */
-    public static class StartPendingIntentReceiverExtra {
         public final String PENDING_INTENT = "PENDING_INTENT_EXTRA";
     }
-
 
     /** Extra key constants for {@link #VIRTUAL_DISPLAY_ACTIVITY} */
     public static class VirtualDisplayActivityExtra {
@@ -152,11 +117,8 @@ public class Components extends ComponentsBase {
     public final ComponentName SECOND_BACKGROUND_ACTIVITY;
     public final ComponentName FOREGROUND_ACTIVITY;
     public final ComponentName FOREGROUND_EMBEDDING_ACTIVITY;
-    public final ComponentName SEND_PENDING_INTENT_RECEIVER;
     public final ComponentName START_PENDING_INTENT_ACTIVITY;
-    public final ComponentName START_PENDING_INTENT_RECEIVER;
-
-    public final ComponentName START_ACTIVITY_RECEIVER;
+    public final ComponentName SIMPLE_BROADCAST_RECEIVER;
     public final ComponentName SIMPLE_ADMIN_RECEIVER;
     public final ComponentName ACTIVITY_START_SERVICE;
     public final ComponentName PIP_ACTIVITY;
@@ -176,18 +138,11 @@ public class Components extends ComponentsBase {
 
     public final LaunchIntoPipActivityAction LAUNCH_INTO_PIP_ACTIONS;
 
-    public final SendPendingIntentReceiverExtra SEND_PENDING_INTENT_RECEIVER_EXTRA =
-            new SendPendingIntentReceiverExtra();
-    public final StartActivityReceiverExtra START_ACTIVITY_RECEIVER_EXTRA =
-            new StartActivityReceiverExtra();
-
     public final VirtualDisplayActivityExtra VIRTUAL_DISPLAY_ACTIVITY_EXTRA =
             new VirtualDisplayActivityExtra();
 
     public final StartPendingIntentActivityExtra START_PENDING_INTENT_ACTIVITY_EXTRA =
             new StartPendingIntentActivityExtra();
-    public final StartPendingIntentReceiverExtra START_PENDING_INTENT_RECEIVER_EXTRA =
-            new StartPendingIntentReceiverExtra();
 
     public Components(String appPackageName) {
         APP_PACKAGE_NAME = appPackageName;
@@ -200,14 +155,10 @@ public class Components extends ComponentsBase {
                 component(APP_PACKAGE_NAME, "ForegroundActivity");
         FOREGROUND_EMBEDDING_ACTIVITY =
                 component(APP_PACKAGE_NAME, "ForegroundEmbeddingActivity");
-        SEND_PENDING_INTENT_RECEIVER =
-                component(APP_PACKAGE_NAME, "SendPendingIntentReceiver");
         START_PENDING_INTENT_ACTIVITY =
                 component(APP_PACKAGE_NAME, "StartPendingIntentActivity");
-        START_PENDING_INTENT_RECEIVER =
-                component(APP_PACKAGE_NAME, "StartPendingIntentReceiver");
-        START_ACTIVITY_RECEIVER =
-                component(APP_PACKAGE_NAME, "StartBackgroundActivityReceiver");
+        SIMPLE_BROADCAST_RECEIVER =
+                component(APP_PACKAGE_NAME, "SimpleBroadcastReceiver");
         SIMPLE_ADMIN_RECEIVER =
                 component(APP_PACKAGE_NAME, "SimpleAdminReceiver");
         PIP_ACTIVITY =

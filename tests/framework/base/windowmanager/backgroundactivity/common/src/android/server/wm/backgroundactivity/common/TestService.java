@@ -27,6 +27,8 @@ import android.os.storage.StorageManager;
 import android.view.View;
 import android.view.textclassifier.TextClassification;
 
+import java.util.UUID;
+
 public class TestService extends Service {
     static final String TAG = TestService.class.getName();
     private final ITestService mBinder = new MyBinder();
@@ -38,18 +40,22 @@ public class TestService extends Service {
 
     private class MyBinder extends ITestService.Stub {
         @Override
-        public PendingIntent generatePendingIntent(ComponentName componentName) {
+        public PendingIntent generatePendingIntent(ComponentName componentName,
+                Bundle createOptions) {
             Intent newIntent = new Intent();
             newIntent.setComponent(componentName);
             newIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            newIntent.setIdentifier(UUID.randomUUID().toString());
             return PendingIntent.getActivity(TestService.this, 0, newIntent,
-                    PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+                    PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE,
+                    createOptions);
         }
 
         @Override
         public PendingIntent generatePendingIntentBroadcast(ComponentName componentName) {
             Intent newIntent = new Intent();
             newIntent.setComponent(componentName);
+            newIntent.setIdentifier(UUID.randomUUID().toString());
             return PendingIntent.getBroadcast(TestService.this, 0, newIntent,
                     PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
         }
@@ -82,6 +88,11 @@ public class TestService extends Service {
             } catch (PendingIntent.CanceledException e) {
                 throw new AssertionError(e);
             }
+        }
+
+        @Override
+        public void startActivityIntent(Intent intent) {
+            startActivity(intent);
         }
     }
 }
