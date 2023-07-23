@@ -20,6 +20,7 @@ import static android.Manifest.permission.ACCESS_BROADCAST_RESPONSE_STATS;
 import static android.Manifest.permission.INTERNET;
 import static android.Manifest.permission.PACKAGE_USAGE_STATS;
 import static android.Manifest.permission.USE_EXACT_ALARM;
+import static android.app.role.RoleManager.ROLE_ASSISTANT;
 import static android.app.usage.cts.UsageStatsTest.TEST_APP_CLASS;
 import static android.app.usage.cts.UsageStatsTest.TEST_APP_CLASS_BROADCAST_RECEIVER;
 import static android.app.usage.cts.UsageStatsTest.TEST_APP_CLASS_SERVICE;
@@ -38,6 +39,7 @@ import android.app.BroadcastOptions;
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.UiAutomation;
+import android.app.role.OnRoleHoldersChangedListener;
 import android.app.role.RoleManager;
 import android.app.usage.BroadcastResponseStats;
 import android.app.usage.UsageStatsManager;
@@ -51,8 +53,10 @@ import android.os.Bundle;
 import android.os.Process;
 import android.os.RemoteCallback;
 import android.os.SystemClock;
+import android.os.UserHandle;
 import android.platform.test.annotations.AppModeFull;
 import android.util.ArrayMap;
+import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.MediumTest;
@@ -74,6 +78,7 @@ import org.junit.runner.RunWith;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -128,6 +133,7 @@ public class BroadcastResponseStatsTest {
     private static Context sContext;
     private static String sTargetPackage;
     private UsageStatsManager mUsageStatsManager;
+    private RoleManager mRoleManager;
     private UiDevice mUiDevice;
     private UiAutomation mUiAutomation;
 
@@ -153,6 +159,7 @@ public class BroadcastResponseStatsTest {
     @Before
     public void setUp() throws Exception {
         mUsageStatsManager = sContext.getSystemService(UsageStatsManager.class);
+        mRoleManager = sContext.getSystemService(RoleManager.class);
         mUiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
         mUiAutomation = InstrumentationRegistry.getInstrumentation()
                 .getUiAutomation();
@@ -1817,7 +1824,7 @@ public class BroadcastResponseStatsTest {
                 new DeviceConfigStateHelper(NAMESPACE_APP_STANDBY)) {
             updateFlagWithDelay(deviceConfigStateHelper,
                     KEY_BROADCAST_RESPONSE_EXEMPTED_ROLES,
-                    RoleManager.ROLE_ASSISTANT);
+                    ROLE_ASSISTANT);
 
             assertResponseStats(TEST_ASSIST_APP_PKG, TEST_RESPONSE_STATS_ID_1,
                     0 /* broadcastCount */,
@@ -1858,6 +1865,9 @@ public class BroadcastResponseStatsTest {
                         0 /* notificationCancelledCount */);
 
                 addAssistRoleHolder(TEST_ASSIST_APP_PKG, Process.myUserHandle().getIdentifier());
+                // Wait until the component tracking the broadcast response stats is updated with
+                // the new role holder.
+                waitForPackageToBeExempted(TEST_ASSIST_APP_PKG);
 
                 // Since the assistant role is exempted and the test app holds assist role,
                 // broadcast response stats for it would not be recorded.
@@ -1892,7 +1902,7 @@ public class BroadcastResponseStatsTest {
                 updateFlagWithDelay(deviceConfigStateHelper,
                         KEY_BROADCAST_RESPONSE_EXEMPTED_ROLES,
                         String.join("|", RoleManager.ROLE_BROWSER, RoleManager.ROLE_EMERGENCY,
-                                RoleManager.ROLE_ASSISTANT));
+                                ROLE_ASSISTANT));
 
                 sendBroadcastAndWaitForReceipt(intent, options.toBundle());
                 testReceiver.postNotification(TEST_NOTIFICATION_ID_1,
@@ -2177,26 +2187,87 @@ public class BroadcastResponseStatsTest {
         }
     }
 
-    protected void addAssistRoleHolder(String pkgName, int userId) throws Exception {
-        final String cmd = String.format("cmd role add-role-holder "
-                + "--user %d android.app.role.ASSISTANT %s", userId, pkgName);
-        SystemUtil.runShellCommand(cmd);
-        TestUtils.waitUntil(cmd + " failed", DEFAULT_TIMEOUT_MS,
-                () -> isAssistantRoleHolder(pkgName, userId));
+    protected void addAssistRoleHolder(String pkgName, int userId) {
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            if (isAssistantRoleHolder(pkgName, userId)) {
+                Log.d(TAG, pkgName + " already holds the assist role on u" + userId);
+                return;
+            }
+            final CountDownLatch latch = new CountDownLatch(1);
+            final OnRoleHoldersChangedListener listener = (roleName, user) -> {
+                Log.d(TAG, "Received role changed callback for role=" + roleName
+                        + " in u" + user.getIdentifier());
+                if (ROLE_ASSISTANT.equals(roleName) && user.getIdentifier() == userId
+                        && isAssistantRoleHolder(pkgName, userId)) {
+                    latch.countDown();
+                }
+            };
+            mRoleManager.addOnRoleHoldersChangedListenerAsUser(sContext.getMainExecutor(),
+                    listener, UserHandle.of(userId));
+            addRoleHolderAsUser(ROLE_ASSISTANT, pkgName, userId);
+            if (!latch.await(DEFAULT_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
+                fail("Timed out waiting for role holder to be added");
+            }
+            mRoleManager.removeOnRoleHoldersChangedListenerAsUser(listener, UserHandle.of(userId));
+        });
     }
 
-    protected void removeAssistRoleHolder(String pkgName, int userId) throws Exception {
-        final String cmd = String.format("cmd role remove-role-holder "
-                + "--user %d android.app.role.ASSISTANT %s", userId, pkgName);
-        SystemUtil.runShellCommand(cmd);
-        TestUtils.waitUntil(cmd + " failed", DEFAULT_TIMEOUT_MS,
-                () -> !isAssistantRoleHolder(pkgName, userId));
+    private void addRoleHolderAsUser(String roleName, String pkgName, int userId)
+            throws Exception {
+        final CompletableFuture<Boolean> callback = new CompletableFuture<>();
+        Log.d(TAG, "Adding assist role holder; pkg=" + pkgName + ", userId=" + userId);
+        mRoleManager.addRoleHolderAsUser(roleName, pkgName, 0,
+                UserHandle.of(userId), sContext.getMainExecutor(), callback::complete);
+        assertTrue(callback.get(DEFAULT_TIMEOUT_MS, TimeUnit.MILLISECONDS));
+    }
+
+    protected void removeAssistRoleHolder(String pkgName, int userId) {
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            if (!isAssistantRoleHolder(pkgName, userId)) {
+                Log.d(TAG, pkgName + " doesn't hold the assist role on u" + userId);
+                return;
+            }
+            final CountDownLatch latch = new CountDownLatch(1);
+            final OnRoleHoldersChangedListener listener = (roleName, user) -> {
+                Log.d(TAG, "Received role changed callback for role=" + roleName
+                        + " in u" + user.getIdentifier());
+                if (ROLE_ASSISTANT.equals(roleName) && user.getIdentifier() == userId
+                        && !isAssistantRoleHolder(pkgName, userId)) {
+                    latch.countDown();
+                }
+            };
+            mRoleManager.addOnRoleHoldersChangedListenerAsUser(sContext.getMainExecutor(),
+                    listener, UserHandle.of(userId));
+            removeRoleHolderAsUser(ROLE_ASSISTANT, pkgName, userId);
+            if (!latch.await(DEFAULT_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
+                fail("Timed out waiting for role holder to be removed");
+            }
+            mRoleManager.removeOnRoleHoldersChangedListenerAsUser(listener, UserHandle.of(userId));
+        });
+    }
+
+    private void removeRoleHolderAsUser(String roleName, String pkgName, int userId)
+            throws Exception {
+        final CompletableFuture<Boolean> callback = new CompletableFuture<>();
+        Log.d(TAG, "Removing assist role holder; pkg=" + pkgName + ", userId=" + userId);
+        mRoleManager.removeRoleHolderAsUser(roleName, pkgName, 0,
+                UserHandle.of(userId), sContext.getMainExecutor(), callback::complete);
+        assertTrue(callback.get(DEFAULT_TIMEOUT_MS, TimeUnit.MILLISECONDS));
     }
 
     protected boolean isAssistantRoleHolder(String pkgName, int userId) {
-        final String cmd = String.format(
-                "cmd role get-role-holders --user %d android.app.role.ASSISTANT", userId);
-        return SystemUtil.runShellCommand(cmd).contains(pkgName);
+        final List<String> roleHolders = mRoleManager.getRoleHoldersAsUser(
+                ROLE_ASSISTANT, UserHandle.of(userId));
+        return roleHolders.contains(pkgName);
+    }
+
+    private void waitForPackageToBeExempted(String pkgName) {
+        SystemUtil.runWithShellPermissionIdentity(() ->
+                TestUtils.waitUntil(
+                        "Timed out waiting for " + pkgName + " to be exempted",
+                        DEFAULT_TIMEOUT_MS,
+                        () -> mUsageStatsManager.isPackageExemptedFromBroadcastResponseStats(
+                                TEST_ASSIST_APP_PKG)));
     }
 
     private void wakeUpAndDismissKeyguard() throws Exception {
