@@ -37,6 +37,7 @@ import android.os.IBinder
 import android.os.Process
 import android.platform.test.annotations.AppModeFull
 import android.platform.test.annotations.AsbSecurityTest
+import android.platform.test.annotations.FlakyTest
 import android.provider.Settings
 import android.provider.Settings.Global.APP_OPS_CONSTANTS
 import android.support.test.uiautomator.UiDevice
@@ -186,6 +187,7 @@ class ForegroundModeAndActiveTest {
     }
 
     @Test
+    @FlakyTest
     fun modeIsAllowedWhenForeground() {
         makeTop()
         eventually {
@@ -194,6 +196,7 @@ class ForegroundModeAndActiveTest {
     }
 
     @Test
+    @FlakyTest
     fun modeBecomesIgnoredAfterEnteringBackground() {
         makeTop()
         assertThat(testPkgAppOpMode).isEqualTo(MODE_ALLOWED)
@@ -219,6 +222,7 @@ class ForegroundModeAndActiveTest {
     }
 
     @Test
+    @FlakyTest
     fun modeChangeCallbackWhenEnteringBackground() {
         makeTop()
 

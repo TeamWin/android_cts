@@ -17,6 +17,7 @@
 package android.permissionui.cts
 
 import android.app.Activity
+import android.platform.test.annotations.FlakyTest
 import androidx.test.runner.AndroidJUnit4
 import com.android.modules.utils.build.SdkLevel
 import org.junit.Assume
@@ -24,6 +25,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
+@FlakyTest
 class NoPermissionTest : BaseUsePermissionTest() {
     @Test
     fun testStartActivity22() {

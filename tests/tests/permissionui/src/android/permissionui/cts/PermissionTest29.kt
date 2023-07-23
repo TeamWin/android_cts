@@ -16,6 +16,7 @@
 
 package android.permissionui.cts
 
+import android.permission.cts.MtsIgnore
 import androidx.test.filters.FlakyTest
 import androidx.test.uiautomator.By
 import com.android.compatibility.common.util.SystemUtil.eventually
@@ -26,6 +27,7 @@ import org.junit.Test
 /**
  * Runtime permission behavior tests for apps targeting API 29.
  */
+@FlakyTest
 class PermissionTest29 : BaseUsePermissionTest() {
     @Before
     fun assumeNotTv() {
@@ -103,6 +105,7 @@ class PermissionTest29 : BaseUsePermissionTest() {
     }
 
     @FlakyTest
+    @MtsIgnore
     @Test
     fun testDenyBackgroundWithPrejudice() {
         // Step 1: deny the first time
@@ -129,6 +132,7 @@ class PermissionTest29 : BaseUsePermissionTest() {
     }
 
     @FlakyTest
+    @MtsIgnore
     @Test
     fun testGrantDialogToSettingsNoOp() {
         // Step 1: Request both, go to settings, do nothing

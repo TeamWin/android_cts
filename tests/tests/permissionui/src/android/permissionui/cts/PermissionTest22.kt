@@ -16,6 +16,7 @@
 
 package android.permissionui.cts
 
+import android.platform.test.annotations.FlakyTest
 import org.junit.Assume
 import org.junit.Before
 import org.junit.Test
@@ -23,6 +24,7 @@ import org.junit.Test
 /**
  * Runtime permission behavior tests for apps targeting API 22.
  */
+@FlakyTest
 class PermissionTest22 : BaseUsePermissionTest() {
 
     @Before

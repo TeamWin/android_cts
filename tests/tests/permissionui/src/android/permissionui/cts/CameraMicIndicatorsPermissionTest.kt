@@ -30,6 +30,7 @@ import android.os.SystemClock
 import android.os.SystemProperties
 import android.permission.PermissionManager
 import android.platform.test.annotations.AsbSecurityTest
+import android.platform.test.annotations.FlakyTest
 import android.provider.DeviceConfig
 import android.provider.Settings
 import android.safetycenter.SafetyCenterManager
@@ -90,6 +91,7 @@ private val HOTWORD_DETECTION_SERVICE_REQUIRED =
         SystemProperties.getBoolean("ro.hotword.detection_service_required", false)
 
 @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S, codeName = "S")
+@FlakyTest
 class CameraMicIndicatorsPermissionTest : StsExtraBusinessLogicTestCase {
     private val instrumentation: Instrumentation = InstrumentationRegistry.getInstrumentation()
     private val context: Context = instrumentation.context

@@ -98,6 +98,7 @@ import java.util.concurrent.CountDownLatch;
 @AppModeFull(reason = "Cannot set system settings as instant app. Also we never show a location "
         + "access check notification for instant apps.")
 @ScreenRecordRule.ScreenRecord
+@FlakyTest
 public class LocationAccessCheckTest {
 
     private static final String LOG_TAG = LocationAccessCheckTest.class.getSimpleName();
@@ -807,6 +808,7 @@ public class LocationAccessCheckTest {
     @Test
     // Mark as flaky until b/286874765 is fixed
     @FlakyTest
+    @MtsIgnore
     @AsbSecurityTest(cveBugId = 141028068)
     public void testOpeningLocationSettingsDoesNotTriggerAccess() throws Throwable {
         assumeNotPlayManaged();

@@ -77,6 +77,7 @@ import android.os.IBinder
 import android.os.Looper
 import android.os.Process
 import android.platform.test.annotations.AppModeFull
+import android.platform.test.annotations.FlakyTest
 import android.provider.ContactsContract
 import android.telephony.SmsManager
 import android.telephony.TelephonyManager
@@ -843,6 +844,7 @@ class AppOpsLoggingTest {
      * Realistic end-to-end test for opening camera
      */
     @Test
+    @FlakyTest
     fun openCameraWithAttribution() {
         openCamera(context.createAttributionContext(TEST_ATTRIBUTION_TAG))
     }

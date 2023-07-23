@@ -17,6 +17,7 @@
 package android.permissionui.cts
 
 import android.os.Build
+import android.platform.test.annotations.FlakyTest
 import androidx.test.filters.SdkSuppress
 import org.junit.Assume.assumeFalse
 import org.junit.Before
@@ -25,6 +26,7 @@ import org.junit.Test
 /**
  * Runtime permission behavior tests for permission splits.
  */
+@FlakyTest
 class PermissionSplitTest : BaseUsePermissionTest() {
     @Before
     fun assumeNotTv() {

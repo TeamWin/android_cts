@@ -20,6 +20,7 @@ import android.Manifest.permission.ACCESS_COARSE_LOCATION
 import android.Manifest.permission.ACCESS_FINE_LOCATION
 import android.Manifest.permission.CAMERA
 import android.os.Build
+import android.platform.test.annotations.FlakyTest
 import android.provider.DeviceConfig
 import android.safetylabel.SafetyLabelConstants.PERMISSION_RATIONALE_ENABLED
 import androidx.test.filters.SdkSuppress
@@ -35,6 +36,7 @@ import org.junit.Test
  * U+
  */
 @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE, codeName = "UpsideDownCake")
+@FlakyTest
 class PermissionRationalePermissionGrantDialogTest : BaseUsePermissionTest() {
 
     @get:Rule

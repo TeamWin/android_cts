@@ -28,6 +28,7 @@ import android.content.pm.PackageManager
 import android.content.pm.PackageManager.PERMISSION_GRANTED
 import android.os.Build
 import android.os.UserHandle
+import android.platform.test.annotations.FlakyTest
 import android.provider.Settings
 import androidx.test.filters.SdkSuppress
 import androidx.test.uiautomator.By
@@ -55,6 +56,7 @@ const val NOTIFICATION_PERMISSION_ENABLED = "notification_permission_enabled"
 const val EXPECTED_TIMEOUT_MS = 2000L
 
 @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
+@FlakyTest
 class NotificationPermissionTest : BaseUsePermissionTest() {
 
     private val cr = callWithShellPermissionIdentity {

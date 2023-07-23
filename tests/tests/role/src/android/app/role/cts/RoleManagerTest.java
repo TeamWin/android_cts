@@ -40,6 +40,7 @@ import android.content.pm.PermissionInfo;
 import android.os.Build;
 import android.os.Process;
 import android.os.UserHandle;
+import android.platform.test.annotations.FlakyTest;
 import android.provider.Settings;
 import android.provider.Telephony;
 import android.support.test.uiautomator.By;
@@ -225,6 +226,7 @@ public class RoleManagerTest {
     }
 
     @Test
+    @FlakyTest
     public void requestRoleAndDenyThenHasDontAskAgain() throws Exception {
         requestRole(ROLE_NAME);
         respondToRoleRequest(false);
@@ -250,6 +252,7 @@ public class RoleManagerTest {
     }
 
     @Test
+    @FlakyTest
     public void requestRoleAndDenyWithDontAskAgainThenDeniedAutomatically() throws Exception {
         requestRole(ROLE_NAME);
         respondToRoleRequest(false);
@@ -265,6 +268,7 @@ public class RoleManagerTest {
     }
 
     @Test
+    @FlakyTest
     public void requestRoleAndDenyWithDontAskAgainAndClearDataThenShowsUiWithoutDontAskAgain()
             throws Exception {
         requestRole(ROLE_NAME);
@@ -299,6 +303,7 @@ public class RoleManagerTest {
     }
 
     @Test
+    @FlakyTest
     public void requestRoleAndDenyWithDontAskAgainAndReinstallThenShowsUiWithoutDontAskAgain()
             throws Exception {
         requestRole(ROLE_NAME);

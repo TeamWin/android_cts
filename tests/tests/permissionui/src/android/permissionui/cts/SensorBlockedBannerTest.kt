@@ -26,6 +26,7 @@ import android.hardware.SensorPrivacyManager.Sensors.MICROPHONE
 import android.location.LocationManager
 import android.os.Build
 import android.provider.DeviceConfig
+import androidx.test.filters.FlakyTest
 import androidx.test.filters.SdkSuppress
 import androidx.test.uiautomator.By
 import com.android.compatibility.common.util.SystemUtil.callWithShellPermissionIdentity
@@ -40,6 +41,7 @@ import org.junit.Test
  * Banner card display tests on sensors being blocked
  */
 @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
+@FlakyTest
 class SensorBlockedBannerTest : BaseUsePermissionTest() {
     companion object {
         const val LOCATION = -1

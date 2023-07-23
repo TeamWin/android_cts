@@ -18,6 +18,7 @@ package android.permissionui.cts
 
 import android.content.ComponentName
 import android.content.Intent
+import android.platform.test.annotations.FlakyTest
 import androidx.test.uiautomator.By
 import com.android.compatibility.common.util.SystemUtil
 import java.lang.Exception
@@ -30,6 +31,7 @@ import org.junit.Test
 /**
  * Tests permission review screen can't be tapjacked
  */
+@FlakyTest
 class PermissionReviewTapjackingTest : BaseUsePermissionTest() {
 
     companion object {

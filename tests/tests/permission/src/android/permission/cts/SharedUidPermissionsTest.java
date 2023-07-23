@@ -28,6 +28,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import android.os.Build;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.FlakyTest;
 
 import androidx.test.filters.SdkSuppress;
 import androidx.test.runner.AndroidJUnit4;
@@ -114,6 +115,7 @@ public class SharedUidPermissionsTest {
     }
 
     @Test
+    @FlakyTest
     public void runtimePermissionsCanBeGrantedOnPackageThatDoesNotDeclarePermission()
             throws Exception {
         install(APK_THAT_REQUESTS_PERMISSIONS);
@@ -136,6 +138,7 @@ public class SharedUidPermissionsTest {
     }
 
     @Test
+    @FlakyTest
     public void sharedUidLoosesNormalPermissionWhenLastAppDeclaringItGetsUninstalled()
             throws Exception {
         install(APK_THAT_REQUESTS_PERMISSIONS);

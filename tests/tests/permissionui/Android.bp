@@ -40,6 +40,7 @@ android_test {
         "cts-wm-util",
         "CtsAccessibilityCommon",
         "platform-test-rules",
+        "platform-test-annotations",
     ],
     data: [
         ":CtsPermissionPolicyApp25",

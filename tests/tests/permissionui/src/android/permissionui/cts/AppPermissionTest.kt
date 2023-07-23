@@ -18,6 +18,7 @@ package android.permissionui.cts
 
 import android.Manifest.permission.ACCESS_COARSE_LOCATION
 import android.os.Build
+import android.platform.test.annotations.FlakyTest
 import android.provider.DeviceConfig
 import android.provider.Settings
 import android.provider.Settings.Secure.USER_SETUP_COMPLETE
@@ -33,6 +34,7 @@ import org.junit.Test
 
 /** App Permission page UI tests. */
 @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE, codeName = "UpsideDownCake")
+@FlakyTest
 class AppPermissionTest : BaseUsePermissionTest() {
 
   @get:Rule

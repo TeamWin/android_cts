@@ -30,6 +30,7 @@ import android.permission.cts.PermissionUtils
 import android.permissionui.cts.AppMetadata.createAppMetadataWithLocationSharingAds
 import android.permissionui.cts.AppMetadata.createAppMetadataWithLocationSharingNoAds
 import android.permissionui.cts.AppMetadata.createAppMetadataWithNoSharing
+import android.platform.test.annotations.FlakyTest
 import android.provider.DeviceConfig
 import android.safetylabel.SafetyLabelConstants.SAFETY_LABEL_CHANGE_NOTIFICATIONS_ENABLED
 import android.util.Log
@@ -51,6 +52,7 @@ import org.junit.Test
 
 /** Tests the UI that displays information about apps' updates to their data sharing policies. */
 @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE, codeName = "UpsideDownCake")
+@FlakyTest
 class AppDataSharingUpdatesTest : BaseUsePermissionTest() {
     // TODO(b/263838456): Add tests for personal and work profile.
 

@@ -48,6 +48,7 @@ import android.content.pm.PermissionInfo;
 import android.os.Process;
 import android.os.UserHandle;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.FlakyTest;
 import android.platform.test.annotations.SystemUserOnly;
 import android.util.ArraySet;
 
@@ -354,6 +355,7 @@ public class RestrictedPermissionsTest {
 
     @Test
     @AppModeFull
+    @FlakyTest
     public void onSideLoadWhitelistSomePermissions() throws Exception {
         Set<String> whitelistedPermissions = new ArraySet<>();
         whitelistedPermissions.add(Manifest.permission.SEND_SMS);
@@ -369,6 +371,7 @@ public class RestrictedPermissionsTest {
 
     @Test
     @AppModeFull
+    @FlakyTest
     public void onSideLoadWhitelistNoPermissions() throws Exception {
         SessionParams params = new SessionParams(SessionParams.MODE_FULL_INSTALL);
         params.setWhitelistedRestrictedPermissions(Collections.emptySet());

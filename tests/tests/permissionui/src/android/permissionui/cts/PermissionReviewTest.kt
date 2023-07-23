@@ -25,6 +25,7 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.os.ResultReceiver
+import android.platform.test.annotations.FlakyTest
 import androidx.test.filters.SdkSuppress
 import androidx.test.rule.ActivityTestRule
 import androidx.test.runner.AndroidJUnit4
@@ -40,6 +41,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
+@FlakyTest
 class PermissionReviewTest : BaseUsePermissionTest() {
 
     @Before

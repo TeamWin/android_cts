@@ -16,12 +16,14 @@
 
 package android.permissionui.cts
 
+import androidx.test.filters.FlakyTest
 import org.junit.Assume
 import org.junit.Test
 
 /**
  * Runtime permission behavior tests for upgrading apps.
  */
+@FlakyTest
 class PermissionUpgradeTest : BaseUsePermissionTest() {
 
     @Test

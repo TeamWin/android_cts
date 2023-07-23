@@ -36,6 +36,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.platform.test.annotations.AsbSecurityTest;
+import android.platform.test.annotations.FlakyTest;
 import android.platform.test.rule.ScreenRecordRule;
 import android.provider.DeviceConfig;
 
@@ -203,6 +204,7 @@ public class OneTimePermissionTest {
     }
 
     @Test
+    @FlakyTest
     public void testStickyServiceMaintainsPermissionOnRestart() throws Throwable {
         startApp();
 

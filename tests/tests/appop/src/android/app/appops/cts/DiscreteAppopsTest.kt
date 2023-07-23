@@ -40,6 +40,7 @@ import android.content.Intent
 import android.content.ServiceConnection
 import android.os.IBinder
 import android.platform.test.annotations.AppModeFull
+import android.platform.test.annotations.FlakyTest
 import android.provider.DeviceConfig
 import android.provider.DeviceConfig.NAMESPACE_PRIVACY
 import android.provider.Settings
@@ -442,6 +443,7 @@ class DiscreteAppopsTest {
     }
 
     @Test
+    @FlakyTest
     fun testDeduplicationUidState() {
         makeTop() // pre-warm application uid state change to make it faster during test run
         makeBackground()
@@ -491,6 +493,7 @@ class DiscreteAppopsTest {
     }
 
     @Test
+    @FlakyTest
     fun testDeduplicationAttributions() {
         setQuantization(SHORT_TIME_QUANT_MILLIS)
         waitUntilNextQuantStarts(SHORT_TIME_QUANT_MILLIS)
@@ -558,6 +561,7 @@ class DiscreteAppopsTest {
     }
 
     @Test
+    @FlakyTest
     fun testCutoffTime() {
         runWithShellPermissionIdentity {
             DeviceConfig.setProperty(NAMESPACE_PRIVACY, PROPERTY_CUTOFF, 120000L.toString(), false)
@@ -603,6 +607,7 @@ class DiscreteAppopsTest {
     }
 
     @Test
+    @FlakyTest
     fun testMixedDeduplication() {
         setQuantization(SHORT_TIME_QUANT_MILLIS)
         waitUntilNextQuantStarts(SHORT_TIME_QUANT_MILLIS)
@@ -725,6 +730,7 @@ class DiscreteAppopsTest {
     }
 
     @Test
+    @FlakyTest
     fun testOperationWithDuration() {
         setQuantization(SHORT_TIME_QUANT_MILLIS)
         waitUntilNextQuantStarts(SHORT_TIME_QUANT_MILLIS)

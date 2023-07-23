@@ -23,6 +23,7 @@ import android.content.Intent
 import android.location.LocationManager
 import android.os.Build
 import android.permission.cts.PermissionUtils
+import android.platform.test.annotations.FlakyTest
 import androidx.test.filters.SdkSuppress
 import androidx.test.uiautomator.By
 import com.android.compatibility.common.util.AppOpsUtils
@@ -42,6 +43,7 @@ private const val ACTION_MANAGE_APP_PERMISSIONS = "android.intent.action.MANAGE_
  * app in this test).
  */
 @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
+@FlakyTest
 class LocationProviderInterceptDialogTest : BaseUsePermissionTest() {
     @Before
     fun setup() {

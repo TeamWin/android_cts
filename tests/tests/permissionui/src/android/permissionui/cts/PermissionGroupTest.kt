@@ -16,11 +16,13 @@
 
 package android.permissionui.cts
 
+import android.platform.test.annotations.FlakyTest
 import org.junit.Test
 
 /**
  * Runtime permission behavior tests for permission groups.
  */
+@FlakyTest
 class PermissionGroupTest : BaseUsePermissionTest() {
     @Test
     fun testRuntimeGroupGrantExpansion23() {

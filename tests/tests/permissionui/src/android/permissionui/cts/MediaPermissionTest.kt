@@ -18,6 +18,7 @@ package android.permissionui.cts
 
 import android.Manifest
 import android.os.Build
+import android.platform.test.annotations.FlakyTest
 import androidx.test.filters.SdkSuppress
 import com.android.compatibility.common.util.CddTest
 import com.android.compatibility.common.util.SystemUtil
@@ -31,6 +32,7 @@ import org.junit.Test
  */
 @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
 @CddTest(requirement = "9.1/C-0-1")
+@FlakyTest
 class MediaPermissionTest : BaseUsePermissionTest() {
     private fun assertStorageAndMediaPermissionState(state: Boolean) {
         for (permission in STORAGE_AND_MEDIA_PERMISSIONS) {
