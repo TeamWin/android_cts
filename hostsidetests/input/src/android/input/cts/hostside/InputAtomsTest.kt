@@ -172,6 +172,13 @@ class InputAtomsTest : DeviceTestCase() {
         val builder = ConfigUtils.createConfigBuilder("AID_NOBODY")
         ConfigUtils.addGaugeMetric(builder, InputExtensionAtoms.TOUCHPAD_USAGE_FIELD_NUMBER)
         ConfigUtils.uploadConfig(device, builder)
+
+        // Trigger an atom pull and clear any returned atoms before running the rest of the test.
+        // This avoids flakes caused by the daily touchpad usage atom causing multiple atoms to be
+        // returned by getGaugeMetricAtoms later in the test.
+        AtomTestUtils.sendAppBreadcrumbReportedAtom(device)
+        RunUtil.getDefault().sleep(AtomTestUtils.WAIT_TIME_LONG.toLong())
+        ReportUtils.getGaugeMetricAtoms(device, registry, false)
     }
 }
 
