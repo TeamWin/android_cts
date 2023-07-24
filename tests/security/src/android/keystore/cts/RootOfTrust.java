@@ -39,28 +39,32 @@ public class RootOfTrust {
     private final int mVerifiedBootState;
     private final byte[] mVerifiedBootHash;
 
-    public RootOfTrust(ASN1Encodable asn1Encodable) throws CertificateParsingException {
-        this(asn1Encodable, true);
+    public RootOfTrust(ASN1Encodable asn1Encodable, int attestationVersion) throws CertificateParsingException {
+        this(asn1Encodable, attestationVersion, true);
     }
 
-    public RootOfTrust(ASN1Encodable asn1Encodable, boolean strictParsing)
+    public RootOfTrust(ASN1Encodable asn1Encodable, int attestationVersion, boolean strictParsing)
             throws CertificateParsingException {
         if (!(asn1Encodable instanceof ASN1Sequence)) {
             throw new CertificateParsingException("Expected sequence for root of trust, found "
-                    + asn1Encodable.getClass().getName());
+                + asn1Encodable.getClass().getName());
         }
 
         ASN1Sequence sequence = (ASN1Sequence) asn1Encodable;
         mVerifiedBootKey =
-                Asn1Utils.getByteArrayFromAsn1(sequence.getObjectAt(VERIFIED_BOOT_KEY_INDEX));
+            Asn1Utils.getByteArrayFromAsn1(sequence.getObjectAt(VERIFIED_BOOT_KEY_INDEX));
         mDeviceLocked = Asn1Utils.getBooleanFromAsn1(
-                sequence.getObjectAt(DEVICE_LOCKED_INDEX), strictParsing);
+            sequence.getObjectAt(DEVICE_LOCKED_INDEX), strictParsing);
         mVerifiedBootState =
-                Asn1Utils.getIntegerFromAsn1(sequence.getObjectAt(VERIFIED_BOOT_STATE_INDEX));
-        mVerifiedBootHash =
-              Asn1Utils.getByteArrayFromAsn1(sequence.getObjectAt(VERIFIED_BOOT_HASH_INDEX));
+            Asn1Utils.getIntegerFromAsn1(sequence.getObjectAt(VERIFIED_BOOT_STATE_INDEX));
+        // Verified boot hash was presented after attestation version v3.0
+        if (attestationVersion >= 3) {
+            mVerifiedBootHash =
+                Asn1Utils.getByteArrayFromAsn1(sequence.getObjectAt(VERIFIED_BOOT_HASH_INDEX));
+        } else {
+            mVerifiedBootHash = null;
+        }
     }
-
 
     RootOfTrust(byte[] verifiedBootKey, boolean deviceLocked, int verifiedBootState,
                 byte[] verifiedBootHash) {
