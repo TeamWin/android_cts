@@ -24,7 +24,10 @@ java_test_helper_library {
     //       1) common, 2) common + IME-only, and 3) common + client-only.
     //       Currently, both MockIme APK and test APKs that use MockIme contain
     //       all the Java classes, which is inefficient.
-    srcs: ["src/**/*.java"],
+    srcs: [
+        "src/**/*.java",
+        "src/**/*.kt",
+    ],
     libs: ["junit"],
     static_libs: [
         "androidx.annotation_annotation",
