@@ -63,8 +63,8 @@ public class Asn1Attestation extends Attestation {
 
         uniqueId = Asn1Utils.getByteArrayFromAsn1(seq.getObjectAt(UNIQUE_ID_INDEX));
 
-        softwareEnforced = new AuthorizationList(seq.getObjectAt(SW_ENFORCED_INDEX), strictParsing);
-        teeEnforced = new AuthorizationList(seq.getObjectAt(TEE_ENFORCED_INDEX), strictParsing);
+        softwareEnforced = new AuthorizationList(seq.getObjectAt(SW_ENFORCED_INDEX), attestationVersion, strictParsing);
+        teeEnforced = new AuthorizationList(seq.getObjectAt(TEE_ENFORCED_INDEX), attestationVersion, strictParsing);
     }
 
     ASN1Sequence getAttestationSequence(X509Certificate x509Cert)
