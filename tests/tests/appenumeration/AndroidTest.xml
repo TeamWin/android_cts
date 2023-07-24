@@ -106,6 +106,13 @@
         <option name="push" value="CtsNoRestartFeature.apk->/data/local/tmp/cts/appenumeration/CtsNoRestartFeature.apk" />
     </target_preparer>
 
+    <target_preparer class="com.android.tradefed.targetprep.DeviceSetup">
+        <option name="force-skip-system-props" value="true" />
+        <option name="set-global-setting" key="verifier_engprod" value="1" />
+        <option name="set-global-setting" key="verifier_verify_adb_installs" value="0" />
+        <option name="restore-settings" value="true" />
+    </target_preparer>
+
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.appenumeration.cts" />
         <option name="runtime-hint" value="12m30s" />
