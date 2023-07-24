@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package android.server.wm.shared;
+package android.server.wm.scvh;
 
 import android.os.IBinder;
-import android.view.SurfaceControlViewHost;
+import android.view.SurfaceControlViewHost.SurfacePackage;
 
 interface ICrossProcessSurfaceControlViewHostTestService {
-    SurfaceControlViewHost.SurfacePackage getSurfacePackage(IBinder hostInputToken);
+    SurfacePackage getSurfacePackage(IBinder hostInputToken);
     boolean getViewIsTouched();
     boolean getViewIsTouchedAndObscured();
     IBinder getWindowToken();

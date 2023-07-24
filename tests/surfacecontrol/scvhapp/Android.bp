@@ -22,6 +22,7 @@ android_test {
 
     srcs: [
         "src/**/*.java",
+        "src/**/*.aidl",
     ],
 
     static_libs: [

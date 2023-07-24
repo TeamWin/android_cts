@@ -11,10 +11,9 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License
+ * limitations under the License.
  */
-
-package android.server.wm.scvh;
+package android.view.surfacecontrol.cts;
 
 import static android.server.wm.BuildUtils.HW_TIMEOUT_MULTIPLIER;
 import static android.server.wm.CtsWindowInfoUtils.tapOnWindow;
@@ -69,7 +68,8 @@ import android.server.wm.ActivityManagerTestBase;
 import android.server.wm.CtsWindowInfoUtils;
 import android.server.wm.FutureConnection;
 import android.server.wm.WindowManagerState;
-import android.server.wm.shared.ICrossProcessSurfaceControlViewHostTestService;
+import android.server.wm.scvh.Components;
+import android.server.wm.scvh.ICrossProcessSurfaceControlViewHostTestService;
 import android.util.ArrayMap;
 import android.view.Gravity;
 import android.view.MotionEvent;
@@ -110,12 +110,13 @@ import java.util.function.Predicate;
 
 /**
  * Ensure end-to-end functionality of SurfaceControlViewHost.
- *
+ * <p>
  * Build/Install/Run:
- *     atest CtsWindowManagerDeviceTestCases:SurfaceControlViewHostTests
+ * atest CtsWindowManagerDeviceTestCases:SurfaceControlViewHostTests
  */
 @Presubmit
-public class SurfaceControlViewHostTests extends ActivityManagerTestBase implements SurfaceHolder.Callback {
+public class SurfaceControlViewHostTests extends ActivityManagerTestBase implements
+        SurfaceHolder.Callback {
 
     public static class TestActivity extends Activity {
         @Override
@@ -158,7 +159,7 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
     private SurfaceControlViewHost.SurfacePackage mRemoteSurfacePackage;
 
     private final Map<String,
-        FutureConnection<ICrossProcessSurfaceControlViewHostTestService>> mConnections =
+            FutureConnection<ICrossProcessSurfaceControlViewHostTestService>> mConnections =
             new ArrayMap<>();
     private ICrossProcessSurfaceControlViewHostTestService mTestService = null;
     private static final long TIMEOUT_MS = 3000L;
@@ -223,7 +224,7 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
     @After
     public void tearDown() throws Throwable {
         for (FutureConnection<ICrossProcessSurfaceControlViewHostTestService> connection :
-                 mConnections.values()) {
+                mConnections.values()) {
             mInstrumentation.getContext().unbindService(connection);
         }
         mConnections.clear();
@@ -454,7 +455,9 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
         }
     }
 
-    /** @see FeatureInfo#getGlEsVersion() */
+    /**
+     * @see FeatureInfo#getGlEsVersion()
+     */
     private static int getMajorVersion(int glEsVersion) {
         return ((glEsVersion & 0xffff0000) >> 16);
     }
@@ -502,7 +505,7 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
         assertFalse(mClicked);
 
         mActivityRule.runOnUiThread(() -> {
-                mVr.relayout(bigEdgeLength, bigEdgeLength);
+            mVr.relayout(bigEdgeLength, bigEdgeLength);
         });
         mInstrumentation.waitForIdleSync();
         waitUntilEmbeddedViewDrawn();
@@ -543,15 +546,15 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
         });
 
         mEmbeddedLayoutParams = new WindowManager.LayoutParams(mEmbeddedViewWidth,
-            mEmbeddedViewHeight, WindowManager.LayoutParams.TYPE_APPLICATION, 0,
-            PixelFormat.OPAQUE);
+                mEmbeddedViewHeight, WindowManager.LayoutParams.TYPE_APPLICATION, 0,
+                PixelFormat.OPAQUE);
 
         addSurfaceView(DEFAULT_SURFACE_VIEW_WIDTH, DEFAULT_SURFACE_VIEW_HEIGHT);
         mInstrumentation.waitForIdleSync();
 
         mActivityRule.runOnUiThread(() -> {
-                mEmbeddedLayoutParams.flags |= FLAG_NOT_TOUCHABLE;
-                mVr.relayout(mEmbeddedLayoutParams);
+            mEmbeddedLayoutParams.flags |= FLAG_NOT_TOUCHABLE;
+            mVr.relayout(mEmbeddedLayoutParams);
         });
         mInstrumentation.waitForIdleSync();
 
@@ -559,8 +562,8 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
         assertFalse(mClicked);
 
         mActivityRule.runOnUiThread(() -> {
-                mEmbeddedLayoutParams.flags &= ~FLAG_NOT_TOUCHABLE;
-                mVr.relayout(mEmbeddedLayoutParams);
+            mEmbeddedLayoutParams.flags &= ~FLAG_NOT_TOUCHABLE;
+            mVr.relayout(mEmbeddedLayoutParams);
         });
         mInstrumentation.waitForIdleSync();
 
@@ -735,7 +738,7 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
         mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSurfaceView);
         final ImeEventStream stream = mImeSession.openEventStream();
         expectEvent(stream, editorMatcher("onStartInputView",
-            editText.getPrivateImeOptions()), TIMEOUT_MS);
+                editText.getPrivateImeOptions()), TIMEOUT_MS);
     }
 
     @Test
@@ -780,19 +783,23 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
 
     private static class SurfaceCreatedCallback implements SurfaceHolder.Callback {
         private final CountDownLatch mSurfaceCreated;
+
         SurfaceCreatedCallback(CountDownLatch latch) {
             mSurfaceCreated = latch;
         }
+
         @Override
         public void surfaceCreated(SurfaceHolder holder) {
             mSurfaceCreated.countDown();
         }
 
         @Override
-        public void surfaceDestroyed(SurfaceHolder holder) {}
+        public void surfaceDestroyed(SurfaceHolder holder) {
+        }
 
         @Override
-        public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {}
+        public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
+        }
     }
 
     @Test
@@ -804,8 +811,10 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
             mSurfaceView = new SurfaceView(mActivity);
             mSurfaceView.setZOrderOnTop(true);
             content.addView(mSurfaceView, new FrameLayout.LayoutParams(
-                    DEFAULT_SURFACE_VIEW_WIDTH, DEFAULT_SURFACE_VIEW_HEIGHT, Gravity.LEFT | Gravity.TOP));
-            mActivity.setContentView(content, new ViewGroup.LayoutParams(DEFAULT_SURFACE_VIEW_WIDTH, DEFAULT_SURFACE_VIEW_HEIGHT));
+                    DEFAULT_SURFACE_VIEW_WIDTH, DEFAULT_SURFACE_VIEW_HEIGHT,
+                    Gravity.LEFT | Gravity.TOP));
+            mActivity.setContentView(content, new ViewGroup.LayoutParams(DEFAULT_SURFACE_VIEW_WIDTH,
+                    DEFAULT_SURFACE_VIEW_HEIGHT));
             mSurfaceView.getHolder().addCallback(new SurfaceCreatedCallback(surfaceCreated));
 
             // Create an embedded view.
@@ -975,9 +984,11 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
 
     class MotionRecordingSurfaceView extends SurfaceView {
         boolean mGotEvent = false;
+
         MotionRecordingSurfaceView(Context c) {
             super(c);
         }
+
         public boolean onTouchEvent(MotionEvent e) {
             super.onTouchEvent(e);
             synchronized (this) {
@@ -985,11 +996,13 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
             }
             return true;
         }
+
         boolean gotEvent() {
             synchronized (this) {
                 return mGotEvent;
             }
         }
+
         void reset() {
             synchronized (this) {
                 mGotEvent = false;
@@ -997,8 +1010,8 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
         }
     }
 
-    class TouchPunchingView extends View {
-        public TouchPunchingView(Context context) {
+    static class TouchPunchingView extends View {
+        TouchPunchingView(Context context) {
             super(context);
         }
 
@@ -1013,7 +1026,7 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
             mSurfaceView = new MotionRecordingSurfaceView(mActivity);
             mSurfaceView.setZOrderOnTop(true);
             content.addView(mSurfaceView, new FrameLayout.LayoutParams(
-                width, height, Gravity.LEFT | Gravity.TOP));
+                    width, height, Gravity.LEFT | Gravity.TOP));
             mActivity.setContentView(content, new ViewGroup.LayoutParams(width, height));
             mSurfaceView.getHolder().addCallback(this);
         });
@@ -1046,6 +1059,7 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
 
     class DetachRecordingView extends View {
         boolean mDetached = false;
+
         DetachRecordingView(Context c) {
             super(c);
         }
@@ -1058,6 +1072,7 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
 
     class ConfigRecordingView extends View {
         CountDownLatch mLatch;
+
         ConfigRecordingView(Context c, CountDownLatch latch) {
             super(c);
             mLatch = latch;
@@ -1075,7 +1090,7 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
             mSurfaceView = new ForwardingSurfaceView(mActivity);
             mSurfaceView.setZOrderOnTop(true);
             content.addView(mSurfaceView, new FrameLayout.LayoutParams(
-                width, height, Gravity.LEFT | Gravity.TOP));
+                    width, height, Gravity.LEFT | Gravity.TOP));
             mViewParent = content;
             mActivity.setContentView(content, new ViewGroup.LayoutParams(width, height));
             mSurfaceView.getHolder().addCallback(this);
@@ -1093,7 +1108,7 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
         mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSurfaceView);
         mInstrumentation.waitForIdleSync();
 
-        MotionRecordingSurfaceView mrsv = (MotionRecordingSurfaceView)mSurfaceView;
+        MotionRecordingSurfaceView mrsv = (MotionRecordingSurfaceView) mSurfaceView;
         assertFalse(mrsv.gotEvent());
         mActivityRule.runOnUiThread(() -> {
             tpv.punchHoleInTouchableRegion();
@@ -1143,8 +1158,8 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
         embeddedConfigLatch.await(3, TimeUnit.SECONDS);
         mInstrumentation.waitForIdleSync();
         mActivityRule.runOnUiThread(() -> {
-                assertEquals(mEmbeddedView.getResources().getConfiguration().orientation,
-                             mSurfaceView.getResources().getConfiguration().orientation);
+            assertEquals(mEmbeddedView.getResources().getConfiguration().orientation,
+                    mSurfaceView.getResources().getConfiguration().orientation);
         });
     }
 
@@ -1167,7 +1182,7 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
         String originalRegion = getTouchableRegionFromDump();
 
         mActivityRule.runOnUiThread(() -> {
-            mSurfaceView.getRootSurfaceControl().setTouchableRegion(new Region(0,0,1,1));
+            mSurfaceView.getRootSurfaceControl().setTouchableRegion(new Region(0, 0, 1, 1));
         });
         mInstrumentation.waitForIdleSync();
         // ViewRootImpl sends the touchable region to the WM via a one-way call, which is great
@@ -1186,7 +1201,8 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
     }
 
     private ICrossProcessSurfaceControlViewHostTestService getService() throws Exception {
-        return mConnections.computeIfAbsent("android.server.wm.scvh", this::connect).get(TIMEOUT_MS);
+        return mConnections.computeIfAbsent("android.server.wm.scvh", this::connect)
+                .get(TIMEOUT_MS);
     }
 
     private static ComponentName repackage(String packageName, ComponentName baseComponent) {
@@ -1197,12 +1213,12 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
             String packageName) {
         FutureConnection<ICrossProcessSurfaceControlViewHostTestService> connection =
                 new FutureConnection<>(
-                    ICrossProcessSurfaceControlViewHostTestService.Stub::asInterface);
+                        ICrossProcessSurfaceControlViewHostTestService.Stub::asInterface);
         Intent intent = new Intent();
         intent.setComponent(repackage(packageName,
-            Components.CrossProcessSurfaceControlViewHostTestService.COMPONENT));
+                Components.CrossProcessSurfaceControlViewHostTestService.COMPONENT));
         assertTrue(mInstrumentation.getContext().bindService(intent,
-            connection, Context.BIND_AUTO_CREATE));
+                connection, Context.BIND_AUTO_CREATE));
         return connection;
     }
 
