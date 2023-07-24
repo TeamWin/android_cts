@@ -5817,7 +5817,7 @@ public class TelephonyManagerTest {
         return true;
     }
 
-    private static class ServiceStateRadioStateListener extends TelephonyCallback
+    public static class ServiceStateRadioStateListener extends TelephonyCallback
             implements TelephonyCallback.ServiceStateListener,
             TelephonyCallback.RadioPowerStateListener {
         private static final long TIMEOUT_TO_WAIT_FOR_DESIRED_STATE =
@@ -5830,7 +5830,7 @@ public class TelephonyManagerTest {
         int mRadioPowerState;
         int mDesireRadioPowerState;
 
-        ServiceStateRadioStateListener(ServiceState serviceState, int radioPowerState) {
+        public ServiceStateRadioStateListener(ServiceState serviceState, int radioPowerState) {
             mServiceState = serviceState;
             mRadioPowerState = radioPowerState;
             mDesireRadioPowerState = radioPowerState;

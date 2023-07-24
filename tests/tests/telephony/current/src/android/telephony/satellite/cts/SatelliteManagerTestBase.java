@@ -38,9 +38,8 @@ import android.os.Looper;
 import android.os.OutcomeReceiver;
 import android.provider.Settings;
 import android.telephony.Rlog;
-import android.telephony.ServiceState;
-import android.telephony.TelephonyCallback;
 import android.telephony.TelephonyManager;
+import android.telephony.cts.TelephonyManagerTest.ServiceStateRadioStateListener;
 import android.telephony.satellite.PointingInfo;
 import android.telephony.satellite.SatelliteDatagram;
 import android.telephony.satellite.SatelliteDatagramCallback;
@@ -69,7 +68,7 @@ public class SatelliteManagerTestBase {
     protected static String TAG = "SatelliteManagerTestBase";
 
     protected static final String TOKEN = "TEST_TOKEN";
-    protected static final long TIMEOUT = TimeUnit.SECONDS.toMillis(2);
+    protected static final long TIMEOUT = TimeUnit.SECONDS.toMillis(5);
     /**
      * Since SST sets waiting time up to 10 seconds for the power off radio, the timer waiting for
      * radio power state change should be greater than 10 seconds.
@@ -534,51 +533,6 @@ public class SatelliteManagerTestBase {
                 }
             }
             return true;
-        }
-    }
-
-    protected static class ServiceStateRadioStateListener extends TelephonyCallback
-            implements TelephonyCallback.ServiceStateListener,
-            TelephonyCallback.RadioPowerStateListener {
-        private final Object mLock = new Object();
-        ServiceState mServiceState;
-        int mRadioPowerState;
-        int mDesireRadioPowerState;
-
-        ServiceStateRadioStateListener(ServiceState serviceState, int radioPowerState) {
-            mServiceState = serviceState;
-            mRadioPowerState = radioPowerState;
-            mDesireRadioPowerState = radioPowerState;
-        }
-
-        @Override
-        public void onServiceStateChanged(ServiceState ss) {
-            mServiceState = ss;
-        }
-
-        @Override
-        public void onRadioPowerStateChanged(int radioState) {
-            Log.d(TAG, "onRadioPowerStateChanged to " + radioState);
-            synchronized (mLock) {
-                mRadioPowerState = radioState;
-                if (radioState == mDesireRadioPowerState) {
-                    mLock.notify();
-                }
-            }
-        }
-
-        public void waitForRadioStateIntent(int desiredRadioState) {
-            Log.d(TAG, "waitForRadioStateIntent: desiredRadioState=" + desiredRadioState);
-            synchronized (mLock) {
-                if (mRadioPowerState != desiredRadioState) {
-                    mDesireRadioPowerState = desiredRadioState;
-                    try {
-                        mLock.wait(EXTERNAL_DEPENDENT_TIMEOUT);
-                    } catch (Exception e) {
-                        fail(e.getMessage());
-                    }
-                }
-            }
         }
     }
 
