@@ -163,6 +163,9 @@ public class LegacyNotificationManagerTest {
                 SUPPRESSED_EFFECT_SCREEN_ON | SUPPRESSED_EFFECT_SCREEN_OFF);
         mNotificationManager.setNotificationPolicy(appPolicy);
 
+        // Applying policy is asynchronous
+        Thread.sleep(300);
+
         int expected = userPolicy.suppressedVisualEffects
                 | SUPPRESSED_EFFECT_SCREEN_ON | SUPPRESSED_EFFECT_SCREEN_OFF
                 | SUPPRESSED_EFFECT_PEEK | SUPPRESSED_EFFECT_LIGHTS
