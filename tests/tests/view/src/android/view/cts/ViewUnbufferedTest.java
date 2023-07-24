@@ -182,7 +182,7 @@ public class ViewUnbufferedTest {
         MotionEvent downEvent =
                 MotionEvent.obtain(downTime, downTime, actions[0], x, y, 0);
         downEvent.setSource(source);
-        mAutomation.injectInputEvent(downEvent, true /* sync */);
+        mInstrumentation.sendPointerSync(downEvent);
 
         // Inject move events.
         startResetReceivedCountPerFrame();
@@ -197,7 +197,7 @@ public class ViewUnbufferedTest {
             final MotionEvent moveEvent = MotionEvent.obtain(downTime, eventTime,
                     actions[1], x, y, 0);
             moveEvent.setSource(source);
-            mAutomation.injectInputEvent(moveEvent, true /* sync */);
+            mInstrumentation.sendPointerSync(moveEvent);
             mSentEvents.add(moveEvent);
         }
 
@@ -205,7 +205,7 @@ public class ViewUnbufferedTest {
         final MotionEvent upEvent = MotionEvent.obtain(downTime, SystemClock.uptimeMillis(),
                 actions[2], x, y, 0);
         upEvent.setSource(source);
-        mAutomation.injectInputEvent(upEvent, true /* sync */);
+        mInstrumentation.sendPointerSync(upEvent);
     }
 
     // Joystick events could always be move events.
