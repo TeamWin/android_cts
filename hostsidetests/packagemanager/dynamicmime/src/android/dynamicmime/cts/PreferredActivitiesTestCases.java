@@ -16,11 +16,11 @@
 
 package android.dynamicmime.cts;
 
+import com.android.compatibility.common.util.ApiTest;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -31,6 +31,10 @@ import org.junit.runner.RunWith;
  * Verifies that preferred activity is removed after any change to any MIME group
  * declared by preferred activity package
  */
+@ApiTest(apis = {
+        "android.content.pm.PackageManager#getMimeGroup",
+        "android.content.pm.PackageManager#setMimeGroup"
+})
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class PreferredActivitiesTestCases extends BaseHostJUnit4Test {
     private static final String PACKAGE_TEST_APP = "android.dynamicmime.testapp";

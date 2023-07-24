@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 The Android Open Source Project
+ * Copyright (C) 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,38 +25,31 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 /**
- * Invokes device-side tests as is, no need for any host-side setup
+ * Invokes device-side changed groups app update tests as is, no need for any host-side setup
  */
 @ApiTest(apis = {
         "android.content.pm.PackageManager#getMimeGroup",
         "android.content.pm.PackageManager#setMimeGroup"
 })
 @RunWith(DeviceJUnit4ClassRunner.class)
-public class TestCases extends BaseHostJUnit4Test {
+public class ChangedGroupsAppUpdateTestCases extends BaseHostJUnit4Test {
     private static final String PACKAGE_TEST_APP = "android.dynamicmime.testapp";
 
     @Test
-    public void testDynamicMimeWithSingleApp() throws DeviceNotAvailableException {
-        runDeviceTests("SingleAppTest");
-    }
-
-    @Test
-    public void testDynamicMimeWithMultipleApps() throws DeviceNotAvailableException {
-        runDeviceTests("MultipleAppsTest");
-    }
-
-    @Test
-    public void testDynamicMimeWithMultipleGroupsPerFilter() throws DeviceNotAvailableException {
-        runDeviceTests("ComplexFilterTest");
-    }
-
-    @Test
-    public void testDynamicMimeWithAppUpdate() throws DeviceNotAvailableException {
-        runDeviceTests("update.SameGroupsTest");
-    }
-
-    private void runDeviceTests(String className)
+    public void testUpdateRemoveEmptyGroup()
             throws DeviceNotAvailableException {
-        runDeviceTests(PACKAGE_TEST_APP, PACKAGE_TEST_APP + "." + className);
+        runDeviceTestsWithMethodName("testUpdateRemoveEmptyGroup");
+    }
+
+    @Test
+    public void testUpdateRemoveNonEmptyGroup()
+            throws DeviceNotAvailableException {
+        runDeviceTestsWithMethodName("testUpdateRemoveNonEmptyGroup");
+    }
+
+    private void runDeviceTestsWithMethodName(String methodName)
+            throws DeviceNotAvailableException {
+        runDeviceTests(PACKAGE_TEST_APP, PACKAGE_TEST_APP + ".update.ChangedGroupsTest",
+                methodName);
     }
 }

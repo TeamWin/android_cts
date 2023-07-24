@@ -15,10 +15,10 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-java_test_host {
-    name: "CtsDynamicMimeHostTestCases",
+java_defaults {
+    name: "dynamic_mime_cts_defaults",
     defaults: ["cts_defaults"],
-    srcs: ["src/**/*.java"],
+
     // Tag this module as a cts test artifact
     test_suites: [
         "cts",
@@ -39,4 +39,99 @@ java_test_host {
         ":CtsDynamicMimeTestApp",
     ],
     per_testcase_directory: true,
+}
+
+java_test_host {
+    name: "CtsDynamicMimeHostTestCases",
+    defaults: ["dynamic_mime_cts_defaults"],
+
+    srcs: [
+        "src/**/TestCases.java",
+    ],
+}
+
+java_test_host {
+    name: "CtsDynamicMimeChangedGroupAppUpdateHostTestCases",
+    defaults: ["dynamic_mime_cts_defaults"],
+
+    srcs: [
+        "src/**/ChangedGroupsAppUpdateTestCases.java",
+    ],
+    test_config: "ChangedGroupsAppUpdateTestCases.xml",
+}
+
+java_test_host {
+    name: "CtsDynamicMimePreferredActivitiesHostTestCases",
+    defaults: ["dynamic_mime_cts_defaults"],
+
+    srcs: [
+        "src/**/PreferredActivitiesTestCases.java",
+    ],
+    test_config: "PreferredActivitiesTests.xml",
+}
+
+java_test_host {
+    name: "CtsDynamicMimeSingleAppRebootHostTestCases",
+    defaults: ["dynamic_mime_cts_defaults"],
+
+    srcs: [
+        "src/**/RebootTestCaseBase.java",
+        "src/**/SingleAppRebootTestCases.java",
+    ],
+    test_config: "SingleAppRebootTestCases.xml",
+}
+
+java_test_host {
+    name: "CtsDynamicMimeRemoveRebootHostTestCases",
+    defaults: ["dynamic_mime_cts_defaults"],
+
+    srcs: [
+        "src/**/RebootTestCaseBase.java",
+        "src/**/RemoveRebootTestCases.java",
+    ],
+    test_config: "RemoveRebootTestCases.xml",
+}
+
+java_test_host {
+    name: "CtsDynamicMimeSingleAppGroupRebootHostTestCases",
+    defaults: ["dynamic_mime_cts_defaults"],
+
+    srcs: [
+        "src/**/RebootTestCaseBase.java",
+        "src/**/SingleAppGroupRebootTestCases.java",
+    ],
+    test_config: "SingleAppGroupRebootTestCases.xml",
+}
+
+java_test_host {
+    name: "CtsDynamicMimeIndependentGroupRebootHostTestCases",
+    defaults: ["dynamic_mime_cts_defaults"],
+
+    srcs: [
+        "src/**/RebootTestCaseBase.java",
+        "src/**/IndependentGroupRebootTestCases.java",
+    ],
+    test_config: "IndependentGroupRebootTestCases.xml",
+}
+
+java_test_host {
+    name: "CtsDynamicMimeComplexFilterRebootHostTestCases",
+    defaults: ["dynamic_mime_cts_defaults"],
+
+    srcs: [
+        "src/**/RebootTestCaseBase.java",
+        "src/**/ComplexFilterRebootTestCases.java",
+    ],
+    test_config: "ComplexFilterRebootTestCases.xml",
+}
+
+java_test_host {
+    name: "CtsDynamicMimeComplexFilterClearGroupRebootHostTestCases",
+    defaults: ["dynamic_mime_cts_defaults"],
+
+    srcs: [
+        "src/**/RebootTestCaseBase.java",
+        "src/**/ComplexFilterClearGroupRebootTestCases.java",
+    ],
+    test_config: "ComplexFilterClearGroupRebootTestCases.xml",
 }
