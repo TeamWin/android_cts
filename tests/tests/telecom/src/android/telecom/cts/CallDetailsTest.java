@@ -490,6 +490,17 @@ public class CallDetailsTest extends BaseTelecomTestWithMockServices {
     }
 
     /**
+     * Tests whether the getId() getter returns the correct object.
+     */
+    public void testCallId() {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+
+        assertThat(mCall.getDetails().getId(), instanceOf(String.class));
+    }
+
+    /**
      * Tests whether the getConnectTimeMillis() getter returns the correct object.
      */
     public void testConnectTimeMillis() {
