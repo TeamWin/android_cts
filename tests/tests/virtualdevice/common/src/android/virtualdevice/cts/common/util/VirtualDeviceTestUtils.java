@@ -18,16 +18,22 @@ package android.virtualdevice.cts.common.util;
 
 import android.app.ActivityOptions;
 import android.hardware.display.VirtualDisplay;
+import android.hardware.display.VirtualDisplayConfig;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Parcel;
 import android.os.ResultReceiver;
+import android.view.Surface;
 
 /**
  * Test utilities for Virtual Device tests.
  */
 public final class VirtualDeviceTestUtils {
+
+    public static VirtualDisplayConfig.Builder VIRTUAL_DISPLAY_BUILDER =
+            new VirtualDisplayConfig.Builder("testDisplay", 100, 100, 240)
+                    .setSurface(new Surface());
 
     public static ResultReceiver createResultReceiver(OnReceiveResultListener listener) {
         ResultReceiver receiver = new ResultReceiver(new Handler(Looper.getMainLooper())) {

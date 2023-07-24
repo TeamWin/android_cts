@@ -53,6 +53,7 @@ import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraManager;
 import android.hardware.display.VirtualDisplay;
 import android.platform.test.annotations.AppModeFull;
+import android.view.Surface;
 import android.virtualdevice.cts.applaunch.util.EmptyActivity;
 import android.virtualdevice.cts.common.FakeAssociationRule;
 import android.virtualdevice.cts.common.util.TestAppHelper;
@@ -116,6 +117,7 @@ public class StreamedAppBehaviorTest {
                         mFakeAssociationRule.getAssociationInfo().getId(),
                         DEFAULT_VIRTUAL_DEVICE_PARAMS);
         mVirtualDevice.addActivityListener(mContext.getMainExecutor(), mActivityListener);
+        // TODO(b/292221336): Move to VirtualDisplayConfig
         mVirtualDisplay = mVirtualDevice.createVirtualDisplay(
                 /* width= */ 100,
                 /* height= */ 100,
@@ -124,6 +126,7 @@ public class StreamedAppBehaviorTest {
                 /* flags= */ 0,
                 Runnable::run,
                 mVirtualDisplayCallback);
+        mVirtualDisplay.setSurface(new Surface());
     }
 
     @After

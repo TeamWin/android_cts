@@ -50,7 +50,6 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
-import android.hardware.display.VirtualDisplayConfig;
 import android.os.Bundle;
 import android.platform.test.annotations.AppModeFull;
 import android.virtualdevice.cts.common.FakeAssociationRule;
@@ -79,9 +78,7 @@ import java.util.concurrent.TimeoutException;
 public class RecentTasksTest {
 
     private static final Duration TIMEOUT = Duration.ofSeconds(10);
-    private static final VirtualDisplayConfig VIRTUAL_DISPLAY_CONFIG =
-            new VirtualDisplayConfig.Builder("testDisplay", 100, 100, 100).setFlags(
-                    DisplayManager.VIRTUAL_DISPLAY_FLAG_TRUSTED).build();
+
 
     @Rule
     public AdoptShellPermissionsRule mAdoptShellPermissionsRule = new AdoptShellPermissionsRule(
@@ -113,8 +110,7 @@ public class RecentTasksTest {
     public void activityLaunchedOnVdmWithDefaultRecentPolicy_includedInRecents() throws Exception {
         try (VirtualDevice virtualDevice = createVirtualDeviceWithRecentsPolicy(
                 DEVICE_POLICY_DEFAULT)) {
-            VirtualDisplay virtualDisplay = virtualDevice.createVirtualDisplay(
-                    VIRTUAL_DISPLAY_CONFIG, /*executor=*/null, /*callback=*/null);
+            VirtualDisplay virtualDisplay = createVirtualDisplay(virtualDevice);
 
             Bundle activityResult = launchTestActivity(virtualDevice, virtualDisplay);
 
@@ -126,8 +122,7 @@ public class RecentTasksTest {
     public void activityLaunchedOnVdmWithCustomRecentPolicy_excludedFromRecents() throws Exception {
         try (VirtualDevice virtualDevice = createVirtualDeviceWithRecentsPolicy(
                 DEVICE_POLICY_CUSTOM)) {
-            VirtualDisplay virtualDisplay = virtualDevice.createVirtualDisplay(
-                    VIRTUAL_DISPLAY_CONFIG, /*executor=*/null, /*callback=*/null);
+            VirtualDisplay virtualDisplay = createVirtualDisplay(virtualDevice);
             launchTestActivity(virtualDevice, virtualDisplay);
 
             Bundle activityResult = launchTestActivity(virtualDevice, virtualDisplay);
@@ -165,6 +160,12 @@ public class RecentTasksTest {
         return activityResultCallback.waitForActivityResult();
     }
 
+    private static VirtualDisplay createVirtualDisplay(VirtualDevice virtualDevice) {
+        return virtualDevice.createVirtualDisplay(
+                VirtualDeviceTestUtils.VIRTUAL_DISPLAY_BUILDER.setFlags(
+                        DisplayManager.VIRTUAL_DISPLAY_FLAG_TRUSTED).build(),
+                /*executor=*/null, /*callback=*/null);
+    }
     private static class ActivityResultCallback implements
             VirtualDeviceTestUtils.OnReceiveResultListener {
 

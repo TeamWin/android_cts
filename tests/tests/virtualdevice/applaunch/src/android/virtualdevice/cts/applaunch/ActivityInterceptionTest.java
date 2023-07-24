@@ -50,6 +50,7 @@ import android.platform.test.annotations.AppModeFull;
 import android.virtualdevice.cts.applaunch.util.EmptyActivity;
 import android.virtualdevice.cts.applaunch.util.InterceptedActivity;
 import android.virtualdevice.cts.common.FakeAssociationRule;
+import android.virtualdevice.cts.common.util.VirtualDeviceTestUtils;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -112,11 +113,7 @@ public class ActivityInterceptionTest {
                         mFakeAssociationRule.getAssociationInfo().getId(),
                         DEFAULT_VIRTUAL_DEVICE_PARAMS);
         mVirtualDisplay = mVirtualDevice.createVirtualDisplay(
-                /* width= */ 100,
-                /* height= */ 100,
-                /* densityDpi= */ 240,
-                /* surface= */ null,
-                /* flags= */ 0,
+                VirtualDeviceTestUtils.VIRTUAL_DISPLAY_BUILDER.build(),
                 Runnable::run,
                 mVirtualDisplayCallback);
     }
