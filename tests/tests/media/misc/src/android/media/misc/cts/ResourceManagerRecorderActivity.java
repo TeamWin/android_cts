@@ -53,7 +53,7 @@ public class ResourceManagerRecorderActivity extends MediaStubActivity {
     private static final String TAG = "ResourceManagerRecorderActivity";
     private final String mOutputPath;
 
-    private boolean mSuccess = false;
+    private int mResult = RESULT_CANCELED;
     private boolean mHighResolution = false;
     private int mVideoWidth = VIDEO_WIDTH;
     private int mVideoHeight = VIDEO_HEIGHT;
@@ -133,14 +133,14 @@ public class ResourceManagerRecorderActivity extends MediaStubActivity {
         mWorkerThread = new Thread(new Runnable() {
             @Override
             public void run() {
-                Log.e(TAG, "Started the thread");
+                Log.i(TAG, "Started the thread");
                 try {
                     recordVideoUsingCamera();
                 } catch (Exception e) {
-                    Log.d(TAG, "Caught exception: " + e);
+                    Log.e(TAG, "Caught exception: " + e);
                     finishWithResult(RESULT_CANCELED);
                 }
-                finishWithResult(mSuccess ? RESULT_OK : RESULT_CANCELED);
+                finishWithResult(mResult);
             }
         });
         mWorkerThread.start();
@@ -238,18 +238,23 @@ public class ResourceManagerRecorderActivity extends MediaStubActivity {
             // recording.
             if (isEncoderSupported(mMime, mVideoWidth, mVideoHeight)) {
                 recordVideoUsingCamera(mCamera, mOutputPath, durMs);
+                boolean success = checkLocationInFile(mOutputPath);
+                mResult = success ? RESULT_OK : RESULT_CANCELED;
             } else {
                 // We are skipping the test.
                 Log.w(TAG, "The device doesn't support the encoder wth configuration("
                         + mMime + "," + mVideoWidth + "x" + mVideoHeight
                         + ") required for the Recording");
-                mSuccess = true;
+                mResult = ResourceManagerStubActivity.RESULT_CODE_NO_ENCODER;
             }
             mCamera.release();
             mCamera = null;
-            if (!mSuccess) {
-                mSuccess = checkLocationInFile(mOutputPath);
-            }
+        } else {
+            // Since there aren't any cameras on the device,
+            // we are skipping the test.
+            Log.w(TAG, "The device doesn't have any camera available for recording"
+                    + " as android.hardware.Camera.getNumberOfCameras() returns: " + nCamera);
+            mResult = ResourceManagerStubActivity.RESULT_CODE_NO_CAMERA;
         }
     }
 
