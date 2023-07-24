@@ -522,6 +522,8 @@ public class LoginActivityTest extends LoginActivityCommonTestCase {
         // Dynamically set password to make sure it's sanitized.
         mActivity.onPassword((v) -> v.setText("I AM GROOT"));
 
+        mUiBot.waitForIdleSync();
+
         // Trigger auto-fill.
         requestFocusOnUsername();
 
@@ -542,13 +544,13 @@ public class LoginActivityTest extends LoginActivityCommonTestCase {
         assertTextIsSanitized(request.structure, ID_PASSWORD);
         final FillContext fillContext = request.contexts.get(request.contexts.size() - 1);
         assertThat(fillContext.getFocusedId())
-                .isEqualTo(findAutofillIdByResourceId(fillContext, ID_USERNAME));
+                .isEqualTo(findAutofillIdByResourceId(fillContext, ID_PASSWORD));
 
         // Make sure initial focus was properly set.
-        assertWithMessage("Username node is not focused").that(
-                findNodeByResourceId(request.structure, ID_USERNAME).isFocused()).isTrue();
-        assertWithMessage("Password node is focused").that(
-                findNodeByResourceId(request.structure, ID_PASSWORD).isFocused()).isFalse();
+        assertWithMessage("Password node is not focused").that(
+                findNodeByResourceId(request.structure, ID_PASSWORD).isFocused()).isTrue();
+        assertWithMessage("Username node is focused").that(
+                findNodeByResourceId(request.structure, ID_USERNAME).isFocused()).isFalse();
     }
 
 
