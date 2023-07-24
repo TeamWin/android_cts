@@ -995,8 +995,9 @@ TEST_P(NdkBinderTest_Aidl, GetInterfaceVersion) {
   if (GetParam().shouldBeOld) {
     EXPECT_EQ(1, res);
   } else {
-    // 3 is the not-yet-frozen version
-    EXPECT_EQ(3, res);
+    // 3 is the not-yet-frozen version. It may be V2 or V3 depending
+    // on the release config. 'next' will be V2.
+    EXPECT_TRUE(res > 1);
   }
 }
 
@@ -1008,7 +1009,14 @@ TEST_P(NdkBinderTest_Aidl, GetInterfaceHash) {
     // aidl_api/libbinder_ndk_test_interface/1/.hash
     EXPECT_EQ("b663b681b3e0d66f9b5428c2f23365031b7d4ba0", res);
   } else {
-    EXPECT_EQ("notfrozen", res);
+    int32_t version = 0;
+    EXPECT_OK(compat_test->getInterfaceVersion(&version));
+    if (version == 2) {
+      // aidl_api/libbinder_ndk_test_interface/2/.hash
+      EXPECT_EQ("2740afaf3b5a0e739c44165c49633a0af87369f2", res);
+    } else {
+      EXPECT_EQ("notfrozen", res);
+    }
   }
 }
 
