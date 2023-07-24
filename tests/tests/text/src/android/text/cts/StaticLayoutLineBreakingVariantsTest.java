@@ -16,6 +16,9 @@
 
 package android.text.cts;
 
+import static android.graphics.text.LineBreaker.BREAK_STRATEGY_HIGH_QUALITY;
+import static android.graphics.text.LineBreaker.BREAK_STRATEGY_SIMPLE;
+
 import static org.junit.Assert.assertEquals;
 
 import android.content.Context;
@@ -49,17 +52,18 @@ public class StaticLayoutLineBreakingVariantsTest {
     }
 
     private static StaticLayout buildLayout(String text, LocaleList locales,
-            LineBreakConfig lineBreakConfig, int width) {
+            int breakStrategy, LineBreakConfig lineBreakConfig, int width) {
         StaticLayout.Builder builder = StaticLayout.Builder.obtain(text, 0, text.length(),
                 setupPaint(locales), width);
+        builder.setBreakStrategy(breakStrategy);
         builder.setLineBreakConfig(lineBreakConfig);
         return builder.build();
     }
 
-    private static void assertLineBreak(String text, String locale,
+    private static void assertLineBreak(String text, int breakStrategy, String locale,
             LineBreakConfig lineBreakConfig, int width, String... expected) {
         final StaticLayout layout = buildLayout(text, LocaleList.forLanguageTags(locale),
-                lineBreakConfig, width);
+                breakStrategy, lineBreakConfig, width);
         assertEquals(expected.length, layout.getLineCount());
 
         int currentExpectedOffset = 0;
@@ -92,39 +96,46 @@ public class StaticLayoutLineBreakingVariantsTest {
     private static final String SAMPLE_TEXT2 =
             "\u65B0\u3057\u3044\u6A5F\u7A2E\u3082\u6C17\u306B\u306A\u308B\u3057\u3002";
 
+    // Another test string is "live message" in Japanese.
+    // Here are the list of breaking points
+    //        \u30E9\u30A4\u30D6\u30E1\u30C3\u30BB\u30FC\u30B8
+    // loose :^     ^     ^     ^     ^     ^     ^     ^     ^
+    // strict:^     ^     ^     ^           ^           ^     ^
+    // phrase:^                                               ^
+    private static final String SAMPLE_TEXT3 = "\u30E9\u30A4\u30D6\u30E1\u30C3\u30BB\u30FC\u30B8";
     @Test
     public void testBreakVariant_loose() {
         LineBreakConfig config = new LineBreakConfig.Builder()
                 .setLineBreakStyle(LineBreakConfig.LINE_BREAK_STYLE_LOOSE)
                 .setLineBreakWordStyle(LineBreakConfig.LINE_BREAK_WORD_STYLE_NONE).build();
-        assertLineBreak(SAMPLE_TEXT, "ja-JP", config, 90, SAMPLE_TEXT);
-        assertLineBreak(SAMPLE_TEXT, "ja-JP", config, 80,
+        assertLineBreak(SAMPLE_TEXT, BREAK_STRATEGY_SIMPLE, "ja-JP", config, 90, SAMPLE_TEXT);
+        assertLineBreak(SAMPLE_TEXT, BREAK_STRATEGY_SIMPLE, "ja-JP", config, 80,
                 "\u30D0\u30C3\u30C6\u30EA\u30FC\u30BB\u30FC\u30D0",
                 "\u30FC");
-        assertLineBreak(SAMPLE_TEXT, "ja-JP", config, 70,
+        assertLineBreak(SAMPLE_TEXT, BREAK_STRATEGY_SIMPLE, "ja-JP", config, 70,
                 "\u30D0\u30C3\u30C6\u30EA\u30FC\u30BB\u30FC",
                 "\u30D0\u30FC");
-        assertLineBreak(SAMPLE_TEXT, "ja-JP", config, 60,
+        assertLineBreak(SAMPLE_TEXT, BREAK_STRATEGY_SIMPLE, "ja-JP", config, 60,
                 "\u30D0\u30C3\u30C6\u30EA\u30FC\u30BB",
                 "\u30FC\u30D0\u30FC");
-        assertLineBreak(SAMPLE_TEXT, "ja-JP", config, 50,
+        assertLineBreak(SAMPLE_TEXT, BREAK_STRATEGY_SIMPLE, "ja-JP", config, 50,
                 "\u30D0\u30C3\u30C6\u30EA\u30FC",
                 "\u30BB\u30FC\u30D0\u30FC");
-        assertLineBreak(SAMPLE_TEXT, "ja-JP", config, 40,
+        assertLineBreak(SAMPLE_TEXT, BREAK_STRATEGY_SIMPLE, "ja-JP", config, 40,
                 "\u30D0\u30C3\u30C6\u30EA",
                 "\u30FC\u30BB\u30FC\u30D0",
                 "\u30FC");
-        assertLineBreak(SAMPLE_TEXT, "ja-JP", config, 30,
+        assertLineBreak(SAMPLE_TEXT, BREAK_STRATEGY_SIMPLE, "ja-JP", config, 30,
                 "\u30D0\u30C3\u30C6",
                 "\u30EA\u30FC\u30BB",
                 "\u30FC\u30D0\u30FC");
-        assertLineBreak(SAMPLE_TEXT, "ja-JP", config, 20,
+        assertLineBreak(SAMPLE_TEXT, BREAK_STRATEGY_SIMPLE, "ja-JP", config, 20,
                 "\u30D0\u30C3",
                 "\u30C6\u30EA",
                 "\u30FC\u30BB",
                 "\u30FC\u30D0",
                 "\u30FC");
-        assertLineBreak(SAMPLE_TEXT, "ja-JP", config, 10,
+        assertLineBreak(SAMPLE_TEXT, BREAK_STRATEGY_SIMPLE, "ja-JP", config, 10,
                 "\u30D0",
                 "\u30C3",
                 "\u30C6",
@@ -141,46 +152,46 @@ public class StaticLayoutLineBreakingVariantsTest {
         LineBreakConfig config = new LineBreakConfig.Builder()
                 .setLineBreakStyle(LineBreakConfig.LINE_BREAK_STYLE_LOOSE)
                 .setLineBreakWordStyle(LineBreakConfig.LINE_BREAK_WORD_STYLE_NONE).build();
-        assertLineBreak(SAMPLE_TEXT2, "ja-JP", config, 120, SAMPLE_TEXT2);
-        assertLineBreak(SAMPLE_TEXT2, "ja-JP", config, 110,
+        assertLineBreak(SAMPLE_TEXT2, BREAK_STRATEGY_SIMPLE, "ja-JP", config, 120, SAMPLE_TEXT2);
+        assertLineBreak(SAMPLE_TEXT2, BREAK_STRATEGY_SIMPLE, "ja-JP", config, 110,
                 "\u65B0\u3057\u3044\u6A5F\u7A2E\u3082\u6C17\u306B\u306A\u308B",
                 "\u3057\u3002");
-        assertLineBreak(SAMPLE_TEXT2, "ja-JP", config, 100,
+        assertLineBreak(SAMPLE_TEXT2, BREAK_STRATEGY_SIMPLE, "ja-JP", config, 100,
                 "\u65B0\u3057\u3044\u6A5F\u7A2E\u3082\u6C17\u306B\u306A\u308B",
                 "\u3057\u3002");
-        assertLineBreak(SAMPLE_TEXT2, "ja-JP", config, 90,
+        assertLineBreak(SAMPLE_TEXT2, BREAK_STRATEGY_SIMPLE, "ja-JP", config, 90,
                 "\u65B0\u3057\u3044\u6A5F\u7A2E\u3082\u6C17\u306B\u306A",
                 "\u308B\u3057\u3002");
-        assertLineBreak(SAMPLE_TEXT2, "ja-JP", config, 80,
+        assertLineBreak(SAMPLE_TEXT2, BREAK_STRATEGY_SIMPLE, "ja-JP", config, 80,
                 "\u65B0\u3057\u3044\u6A5F\u7A2E\u3082\u6C17\u306B",
                 "\u306A\u308B\u3057\u3002");
-        assertLineBreak(SAMPLE_TEXT2, "ja-JP", config, 70,
+        assertLineBreak(SAMPLE_TEXT2, BREAK_STRATEGY_SIMPLE, "ja-JP", config, 70,
                 "\u65B0\u3057\u3044\u6A5F\u7A2E\u3082\u6C17",
                 "\u306B\u306A\u308B\u3057\u3002");
-        assertLineBreak(SAMPLE_TEXT2, "ja-JP", config, 60,
+        assertLineBreak(SAMPLE_TEXT2, BREAK_STRATEGY_SIMPLE, "ja-JP", config, 60,
                 "\u65B0\u3057\u3044\u6A5F\u7A2E\u3082",
                 "\u6C17\u306B\u306A\u308B\u3057\u3002");
-        assertLineBreak(SAMPLE_TEXT2, "ja-JP", config, 50,
+        assertLineBreak(SAMPLE_TEXT2, BREAK_STRATEGY_SIMPLE, "ja-JP", config, 50,
                 "\u65B0\u3057\u3044\u6A5F\u7A2E",
                 "\u3082\u6C17\u306B\u306A\u308B",
                 "\u3057\u3002");
-        assertLineBreak(SAMPLE_TEXT2, "ja-JP", config, 40,
+        assertLineBreak(SAMPLE_TEXT2, BREAK_STRATEGY_SIMPLE, "ja-JP", config, 40,
                 "\u65B0\u3057\u3044\u6A5F",
                 "\u7A2E\u3082\u6C17\u306B",
                 "\u306A\u308B\u3057\u3002");
-        assertLineBreak(SAMPLE_TEXT2, "ja-JP", config, 30,
+        assertLineBreak(SAMPLE_TEXT2, BREAK_STRATEGY_SIMPLE, "ja-JP", config, 30,
                 "\u65B0\u3057\u3044",
                 "\u6A5F\u7A2E\u3082",
                 "\u6C17\u306B\u306A",
                 "\u308B\u3057\u3002");
-        assertLineBreak(SAMPLE_TEXT2, "ja-JP", config, 20,
+        assertLineBreak(SAMPLE_TEXT2, BREAK_STRATEGY_SIMPLE, "ja-JP", config, 20,
                 "\u65B0\u3057",
                 "\u3044\u6A5F",
                 "\u7A2E\u3082",
                 "\u6C17\u306B",
                 "\u306A\u308B",
                 "\u3057\u3002");
-        assertLineBreak(SAMPLE_TEXT2, "ja-JP", config, 10,
+        assertLineBreak(SAMPLE_TEXT2, BREAK_STRATEGY_SIMPLE, "ja-JP", config, 10,
                 "\u65B0",
                 "\u3057",
                 "\u3044",
@@ -200,35 +211,35 @@ public class StaticLayoutLineBreakingVariantsTest {
         LineBreakConfig config = new LineBreakConfig.Builder()
                 .setLineBreakStyle(LineBreakConfig.LINE_BREAK_STYLE_STRICT)
                 .setLineBreakWordStyle(LineBreakConfig.LINE_BREAK_WORD_STYLE_NONE).build();
-        assertLineBreak(SAMPLE_TEXT, "ja-JP", config, 90, SAMPLE_TEXT);
-        assertLineBreak(SAMPLE_TEXT, "ja-JP", config, 80,
+        assertLineBreak(SAMPLE_TEXT, BREAK_STRATEGY_SIMPLE, "ja-JP", config, 90, SAMPLE_TEXT);
+        assertLineBreak(SAMPLE_TEXT, BREAK_STRATEGY_SIMPLE, "ja-JP", config, 80,
                 "\u30D0\u30C3\u30C6\u30EA\u30FC\u30BB\u30FC",
                 "\u30D0\u30FC");
-        assertLineBreak(SAMPLE_TEXT, "ja-JP", config, 70,
+        assertLineBreak(SAMPLE_TEXT, BREAK_STRATEGY_SIMPLE, "ja-JP", config, 70,
                 "\u30D0\u30C3\u30C6\u30EA\u30FC\u30BB\u30FC",
                 "\u30D0\u30FC");
-        assertLineBreak(SAMPLE_TEXT, "ja-JP", config, 60,
+        assertLineBreak(SAMPLE_TEXT, BREAK_STRATEGY_SIMPLE, "ja-JP", config, 60,
                 "\u30D0\u30C3\u30C6\u30EA\u30FC",
                 "\u30BB\u30FC\u30D0\u30FC");
-        assertLineBreak(SAMPLE_TEXT, "ja-JP", config, 50,
+        assertLineBreak(SAMPLE_TEXT, BREAK_STRATEGY_SIMPLE, "ja-JP", config, 50,
                 "\u30D0\u30C3\u30C6\u30EA\u30FC",
                 "\u30BB\u30FC\u30D0\u30FC");
-        assertLineBreak(SAMPLE_TEXT, "ja-JP", config, 40,
+        assertLineBreak(SAMPLE_TEXT, BREAK_STRATEGY_SIMPLE, "ja-JP", config, 40,
                 "\u30D0\u30C3\u30C6",
                 "\u30EA\u30FC\u30BB\u30FC",
                 "\u30D0\u30FC");
-        assertLineBreak(SAMPLE_TEXT, "ja-JP", config, 30,
+        assertLineBreak(SAMPLE_TEXT, BREAK_STRATEGY_SIMPLE, "ja-JP", config, 30,
                 "\u30D0\u30C3\u30C6",
                 "\u30EA\u30FC",
                 "\u30BB\u30FC",
                 "\u30D0\u30FC");
-        assertLineBreak(SAMPLE_TEXT, "ja-JP", config, 20,
+        assertLineBreak(SAMPLE_TEXT, BREAK_STRATEGY_SIMPLE, "ja-JP", config, 20,
                 "\u30D0\u30C3",
                 "\u30C6",
                 "\u30EA\u30FC",
                 "\u30BB\u30FC",
                 "\u30D0\u30FC");
-        assertLineBreak(SAMPLE_TEXT, "ja-JP", config, 10,
+        assertLineBreak(SAMPLE_TEXT, BREAK_STRATEGY_SIMPLE, "ja-JP", config, 10,
                 "\u30D0",
                 "\u30C3",
                 "\u30C6",
@@ -245,46 +256,46 @@ public class StaticLayoutLineBreakingVariantsTest {
         LineBreakConfig config = new LineBreakConfig.Builder()
                 .setLineBreakStyle(LineBreakConfig.LINE_BREAK_STYLE_STRICT)
                 .setLineBreakWordStyle(LineBreakConfig.LINE_BREAK_WORD_STYLE_NONE).build();
-        assertLineBreak(SAMPLE_TEXT2, "ja-JP", config, 120, SAMPLE_TEXT2);
-        assertLineBreak(SAMPLE_TEXT2, "ja-JP", config, 110,
+        assertLineBreak(SAMPLE_TEXT2, BREAK_STRATEGY_SIMPLE, "ja-JP", config, 120, SAMPLE_TEXT2);
+        assertLineBreak(SAMPLE_TEXT2, BREAK_STRATEGY_SIMPLE, "ja-JP", config, 110,
                 "\u65B0\u3057\u3044\u6A5F\u7A2E\u3082\u6C17\u306B\u306A\u308B",
                 "\u3057\u3002");
-        assertLineBreak(SAMPLE_TEXT2, "ja-JP", config, 100,
+        assertLineBreak(SAMPLE_TEXT2, BREAK_STRATEGY_SIMPLE, "ja-JP", config, 100,
                 "\u65B0\u3057\u3044\u6A5F\u7A2E\u3082\u6C17\u306B\u306A\u308B",
                 "\u3057\u3002");
-        assertLineBreak(SAMPLE_TEXT2, "ja-JP", config, 90,
+        assertLineBreak(SAMPLE_TEXT2, BREAK_STRATEGY_SIMPLE, "ja-JP", config, 90,
                 "\u65B0\u3057\u3044\u6A5F\u7A2E\u3082\u6C17\u306B\u306A",
                 "\u308B\u3057\u3002");
-        assertLineBreak(SAMPLE_TEXT2, "ja-JP", config, 80,
+        assertLineBreak(SAMPLE_TEXT2, BREAK_STRATEGY_SIMPLE, "ja-JP", config, 80,
                 "\u65B0\u3057\u3044\u6A5F\u7A2E\u3082\u6C17\u306B",
                 "\u306A\u308B\u3057\u3002");
-        assertLineBreak(SAMPLE_TEXT2, "ja-JP", config, 70,
+        assertLineBreak(SAMPLE_TEXT2, BREAK_STRATEGY_SIMPLE, "ja-JP", config, 70,
                 "\u65B0\u3057\u3044\u6A5F\u7A2E\u3082\u6C17",
                 "\u306B\u306A\u308B\u3057\u3002");
-        assertLineBreak(SAMPLE_TEXT2, "ja-JP", config, 60,
+        assertLineBreak(SAMPLE_TEXT2, BREAK_STRATEGY_SIMPLE, "ja-JP", config, 60,
                 "\u65B0\u3057\u3044\u6A5F\u7A2E\u3082",
                 "\u6C17\u306B\u306A\u308B\u3057\u3002");
-        assertLineBreak(SAMPLE_TEXT2, "ja-JP", config, 50,
+        assertLineBreak(SAMPLE_TEXT2, BREAK_STRATEGY_SIMPLE, "ja-JP", config, 50,
                 "\u65B0\u3057\u3044\u6A5F\u7A2E",
                 "\u3082\u6C17\u306B\u306A\u308B",
                 "\u3057\u3002");
-        assertLineBreak(SAMPLE_TEXT2, "ja-JP", config, 40,
+        assertLineBreak(SAMPLE_TEXT2, BREAK_STRATEGY_SIMPLE, "ja-JP", config, 40,
                 "\u65B0\u3057\u3044\u6A5F",
                 "\u7A2E\u3082\u6C17\u306B",
                 "\u306A\u308B\u3057\u3002");
-        assertLineBreak(SAMPLE_TEXT2, "ja-JP", config, 30,
+        assertLineBreak(SAMPLE_TEXT2, BREAK_STRATEGY_SIMPLE, "ja-JP", config, 30,
                 "\u65B0\u3057\u3044",
                 "\u6A5F\u7A2E\u3082",
                 "\u6C17\u306B\u306A",
                 "\u308B\u3057\u3002");
-        assertLineBreak(SAMPLE_TEXT2, "ja-JP", config, 20,
+        assertLineBreak(SAMPLE_TEXT2, BREAK_STRATEGY_SIMPLE, "ja-JP", config, 20,
                 "\u65B0\u3057",
                 "\u3044\u6A5F",
                 "\u7A2E\u3082",
                 "\u6C17\u306B",
                 "\u306A\u308B",
                 "\u3057\u3002");
-        assertLineBreak(SAMPLE_TEXT2, "ja-JP", config, 10,
+        assertLineBreak(SAMPLE_TEXT2, BREAK_STRATEGY_SIMPLE, "ja-JP", config, 10,
                 "\u65B0",
                 "\u3057",
                 "\u3044",
@@ -305,34 +316,34 @@ public class StaticLayoutLineBreakingVariantsTest {
         LineBreakConfig config = new LineBreakConfig.Builder()
                 .setLineBreakStyle(LineBreakConfig.LINE_BREAK_STYLE_NONE)
                 .setLineBreakWordStyle(LineBreakConfig.LINE_BREAK_WORD_STYLE_PHRASE).build();
-        assertLineBreak(SAMPLE_TEXT, "ja-JP", config, 90, SAMPLE_TEXT);
-        assertLineBreak(SAMPLE_TEXT, "ja-JP", config, 80,
+        assertLineBreak(SAMPLE_TEXT, BREAK_STRATEGY_SIMPLE, "ja-JP", config, 90, SAMPLE_TEXT);
+        assertLineBreak(SAMPLE_TEXT, BREAK_STRATEGY_SIMPLE, "ja-JP", config, 80,
                 "\u30D0\u30C3\u30C6\u30EA\u30FC\u30BB\u30FC\u30D0",
                 "\u30FC");
-        assertLineBreak(SAMPLE_TEXT, "ja-JP", config, 70,
+        assertLineBreak(SAMPLE_TEXT, BREAK_STRATEGY_SIMPLE, "ja-JP", config, 70,
                 "\u30D0\u30C3\u30C6\u30EA\u30FC\u30BB\u30FC",
                 "\u30D0\u30FC");
-        assertLineBreak(SAMPLE_TEXT, "ja-JP", config, 60,
+        assertLineBreak(SAMPLE_TEXT, BREAK_STRATEGY_SIMPLE, "ja-JP", config, 60,
                 "\u30D0\u30C3\u30C6\u30EA\u30FC\u30BB",
                 "\u30FC\u30D0\u30FC");
-        assertLineBreak(SAMPLE_TEXT, "ja-JP", config, 50,
+        assertLineBreak(SAMPLE_TEXT, BREAK_STRATEGY_SIMPLE, "ja-JP", config, 50,
                 "\u30D0\u30C3\u30C6\u30EA\u30FC",
                 "\u30BB\u30FC\u30D0\u30FC");
-        assertLineBreak(SAMPLE_TEXT, "ja-JP", config, 40,
+        assertLineBreak(SAMPLE_TEXT, BREAK_STRATEGY_SIMPLE, "ja-JP", config, 40,
                 "\u30D0\u30C3\u30C6\u30EA",
                 "\u30FC\u30BB\u30FC\u30D0",
                 "\u30FC");
-        assertLineBreak(SAMPLE_TEXT, "ja-JP", config, 30,
+        assertLineBreak(SAMPLE_TEXT, BREAK_STRATEGY_SIMPLE, "ja-JP", config, 30,
                 "\u30D0\u30C3\u30C6",
                 "\u30EA\u30FC\u30BB",
                 "\u30FC\u30D0\u30FC");
-        assertLineBreak(SAMPLE_TEXT, "ja-JP", config, 20,
+        assertLineBreak(SAMPLE_TEXT, BREAK_STRATEGY_SIMPLE, "ja-JP", config, 20,
                 "\u30D0\u30C3",
                 "\u30C6\u30EA",
                 "\u30FC\u30BB",
                 "\u30FC\u30D0",
                 "\u30FC");
-        assertLineBreak(SAMPLE_TEXT, "ja-JP", config, 10,
+        assertLineBreak(SAMPLE_TEXT, BREAK_STRATEGY_SIMPLE, "ja-JP", config, 10,
                 "\u30D0",
                 "\u30C3",
                 "\u30C6",
@@ -349,41 +360,41 @@ public class StaticLayoutLineBreakingVariantsTest {
         LineBreakConfig config = new LineBreakConfig.Builder()
                 .setLineBreakStyle(LineBreakConfig.LINE_BREAK_STYLE_LOOSE)
                 .setLineBreakWordStyle(LineBreakConfig.LINE_BREAK_WORD_STYLE_PHRASE).build();
-        assertLineBreak(SAMPLE_TEXT2, "ja-JP", config, 120, SAMPLE_TEXT2);
-        assertLineBreak(SAMPLE_TEXT2, "ja-JP", config, 110,
+        assertLineBreak(SAMPLE_TEXT2, BREAK_STRATEGY_SIMPLE, "ja-JP", config, 120, SAMPLE_TEXT2);
+        assertLineBreak(SAMPLE_TEXT2, BREAK_STRATEGY_SIMPLE, "ja-JP", config, 110,
                 "\u65B0\u3057\u3044\u6A5F\u7A2E\u3082\u6C17\u306B",
                 "\u306A\u308B\u3057\u3002");
-        assertLineBreak(SAMPLE_TEXT2, "ja-JP", config, 100,
+        assertLineBreak(SAMPLE_TEXT2, BREAK_STRATEGY_SIMPLE, "ja-JP", config, 100,
                 "\u65B0\u3057\u3044\u6A5F\u7A2E\u3082\u6C17\u306B",
                 "\u306A\u308B\u3057\u3002");
-        assertLineBreak(SAMPLE_TEXT2, "ja-JP", config, 90,
+        assertLineBreak(SAMPLE_TEXT2, BREAK_STRATEGY_SIMPLE, "ja-JP", config, 90,
                 "\u65B0\u3057\u3044\u6A5F\u7A2E\u3082\u6C17\u306B",
                 "\u306A\u308B\u3057\u3002");
-        assertLineBreak(SAMPLE_TEXT2, "ja-JP", config, 80,
+        assertLineBreak(SAMPLE_TEXT2, BREAK_STRATEGY_SIMPLE, "ja-JP", config, 80,
                 "\u65B0\u3057\u3044\u6A5F\u7A2E\u3082\u6C17\u306B",
                 "\u306A\u308B\u3057\u3002");
-        assertLineBreak(SAMPLE_TEXT2, "ja-JP", config, 70,
+        assertLineBreak(SAMPLE_TEXT2, BREAK_STRATEGY_SIMPLE, "ja-JP", config, 70,
                 "\u65B0\u3057\u3044\u6A5F\u7A2E\u3082",
                 "\u6C17\u306B\u306A\u308B\u3057\u3002");
-        assertLineBreak(SAMPLE_TEXT2, "ja-JP", config, 60,
+        assertLineBreak(SAMPLE_TEXT2, BREAK_STRATEGY_SIMPLE, "ja-JP", config, 60,
                 "\u65B0\u3057\u3044\u6A5F\u7A2E\u3082",
                 "\u6C17\u306B\u306A\u308B\u3057\u3002");
-        assertLineBreak(SAMPLE_TEXT2, "ja-JP", config, 50,
+        assertLineBreak(SAMPLE_TEXT2, BREAK_STRATEGY_SIMPLE, "ja-JP", config, 50,
                 "\u65B0\u3057\u3044",
                 "\u6A5F\u7A2E\u3082\u6C17\u306B",
                 "\u306A\u308B\u3057\u3002");
-        assertLineBreak(SAMPLE_TEXT2, "ja-JP", config, 40,
+        assertLineBreak(SAMPLE_TEXT2, BREAK_STRATEGY_SIMPLE, "ja-JP", config, 40,
                 "\u65B0\u3057\u3044",
                 "\u6A5F\u7A2E\u3082",
                 "\u6C17\u306B",
                 "\u306A\u308B\u3057\u3002");
-        assertLineBreak(SAMPLE_TEXT2, "ja-JP", config, 30,
+        assertLineBreak(SAMPLE_TEXT2, BREAK_STRATEGY_SIMPLE, "ja-JP", config, 30,
                 "\u65B0\u3057\u3044",
                 "\u6A5F\u7A2E\u3082",
                 "\u6C17\u306B",
-                "\u306A\u308B\u3057",
-                "\u3002");
-        assertLineBreak(SAMPLE_TEXT2, "ja-JP", config, 20,
+                "\u306A\u308B",
+                "\u3057\u3002");
+        assertLineBreak(SAMPLE_TEXT2, BREAK_STRATEGY_SIMPLE, "ja-JP", config, 20,
                 "\u65B0\u3057",
                 "\u3044",
                 "\u6A5F\u7A2E",
@@ -391,7 +402,7 @@ public class StaticLayoutLineBreakingVariantsTest {
                 "\u6C17\u306B",
                 "\u306A\u308B",
                 "\u3057\u3002");
-        assertLineBreak(SAMPLE_TEXT2, "ja-JP", config, 10,
+        assertLineBreak(SAMPLE_TEXT2, BREAK_STRATEGY_SIMPLE, "ja-JP", config, 10,
                 "\u65B0",
                 "\u3057",
                 "\u3044",
@@ -404,5 +415,163 @@ public class StaticLayoutLineBreakingVariantsTest {
                 "\u308B",
                 "\u3057",
                 "\u3002");
+    }
+
+    @Test
+    public void testPhraseFallback_Strict_Greedy() {
+        LineBreakConfig config = new LineBreakConfig.Builder()
+                .setLineBreakStyle(LineBreakConfig.LINE_BREAK_STYLE_STRICT)
+                .setLineBreakWordStyle(LineBreakConfig.LINE_BREAK_WORD_STYLE_PHRASE).build();
+        assertLineBreak(SAMPLE_TEXT3, BREAK_STRATEGY_SIMPLE, "ja-JP", config, 80, SAMPLE_TEXT3);
+        assertLineBreak(SAMPLE_TEXT3, BREAK_STRATEGY_SIMPLE, "ja-JP", config, 70,
+                "\u30E9\u30A4\u30D6\u30E1\u30C3\u30BB\u30FC",
+                "\u30B8");
+        assertLineBreak(SAMPLE_TEXT3, BREAK_STRATEGY_SIMPLE, "ja-JP", config, 60,
+                "\u30E9\u30A4\u30D6\u30E1\u30C3",
+                "\u30BB\u30FC\u30B8");
+        assertLineBreak(SAMPLE_TEXT3, BREAK_STRATEGY_SIMPLE, "ja-JP", config, 50,
+                "\u30E9\u30A4\u30D6\u30E1\u30C3",
+                "\u30BB\u30FC\u30B8");
+        assertLineBreak(SAMPLE_TEXT3, BREAK_STRATEGY_SIMPLE, "ja-JP", config, 40,
+                "\u30E9\u30A4\u30D6",
+                "\u30E1\u30C3\u30BB\u30FC",
+                "\u30B8");
+        assertLineBreak(SAMPLE_TEXT3, BREAK_STRATEGY_SIMPLE, "ja-JP", config, 30,
+                "\u30E9\u30A4\u30D6",
+                "\u30E1\u30C3",
+                "\u30BB\u30FC\u30B8");
+        assertLineBreak(SAMPLE_TEXT3, BREAK_STRATEGY_SIMPLE, "ja-JP", config, 20,
+                "\u30E9\u30A4",
+                "\u30D6",
+                "\u30E1\u30C3",
+                "\u30BB\u30FC",
+                "\u30B8");
+        assertLineBreak(SAMPLE_TEXT3, BREAK_STRATEGY_SIMPLE, "ja-JP", config, 10,
+                "\u30E9",
+                "\u30A4",
+                "\u30D6",
+                "\u30E1",
+                "\u30C3",
+                "\u30BB",
+                "\u30FC",
+                "\u30B8");
+    }
+
+    @Test
+    public void testPhraseFallback_Strict_Optimal() {
+        LineBreakConfig config = new LineBreakConfig.Builder()
+                .setLineBreakStyle(LineBreakConfig.LINE_BREAK_STYLE_STRICT)
+                .setLineBreakWordStyle(LineBreakConfig.LINE_BREAK_WORD_STYLE_PHRASE).build();
+        assertLineBreak(SAMPLE_TEXT3, BREAK_STRATEGY_HIGH_QUALITY, "ja-JP", config, 80,
+                SAMPLE_TEXT3);
+        assertLineBreak(SAMPLE_TEXT3, BREAK_STRATEGY_HIGH_QUALITY, "ja-JP", config, 70,
+                "\u30E9\u30A4\u30D6\u30E1\u30C3\u30BB\u30FC",
+                "\u30B8");
+        assertLineBreak(SAMPLE_TEXT3, BREAK_STRATEGY_HIGH_QUALITY, "ja-JP", config, 60,
+                "\u30E9\u30A4\u30D6\u30E1\u30C3",
+                "\u30BB\u30FC\u30B8");
+        assertLineBreak(SAMPLE_TEXT3, BREAK_STRATEGY_HIGH_QUALITY, "ja-JP", config, 50,
+                "\u30E9\u30A4\u30D6\u30E1\u30C3",
+                "\u30BB\u30FC\u30B8");
+        assertLineBreak(SAMPLE_TEXT3, BREAK_STRATEGY_HIGH_QUALITY, "ja-JP", config, 40,
+                "\u30E9\u30A4\u30D6",
+                "\u30E1\u30C3\u30BB\u30FC",
+                "\u30B8");
+        assertLineBreak(SAMPLE_TEXT3, BREAK_STRATEGY_HIGH_QUALITY, "ja-JP", config, 30,
+                "\u30E9\u30A4\u30D6",
+                "\u30E1\u30C3",
+                "\u30BB\u30FC\u30B8");
+        assertLineBreak(SAMPLE_TEXT3, BREAK_STRATEGY_HIGH_QUALITY, "ja-JP", config, 20,
+                "\u30E9\u30A4",
+                "\u30D6",
+                "\u30E1\u30C3",
+                "\u30BB\u30FC",
+                "\u30B8");
+        assertLineBreak(SAMPLE_TEXT3, BREAK_STRATEGY_HIGH_QUALITY, "ja-JP", config, 10,
+                "\u30E9",
+                "\u30A4",
+                "\u30D6",
+                "\u30E1",
+                "\u30C3",
+                "\u30BB",
+                "\u30FC",
+                "\u30B8");
+    }
+
+    @Test
+    public void testPhraseFallback_Loose_Greedy() {
+        LineBreakConfig config = new LineBreakConfig.Builder()
+                .setLineBreakStyle(LineBreakConfig.LINE_BREAK_STYLE_LOOSE)
+                .setLineBreakWordStyle(LineBreakConfig.LINE_BREAK_WORD_STYLE_PHRASE).build();
+        assertLineBreak(SAMPLE_TEXT3, BREAK_STRATEGY_SIMPLE, "ja-JP", config, 80, SAMPLE_TEXT3);
+        assertLineBreak(SAMPLE_TEXT3, BREAK_STRATEGY_SIMPLE, "ja-JP", config, 70,
+                "\u30E9\u30A4\u30D6\u30E1\u30C3\u30BB\u30FC",
+                "\u30B8");
+        assertLineBreak(SAMPLE_TEXT3, BREAK_STRATEGY_SIMPLE, "ja-JP", config, 60,
+                "\u30E9\u30A4\u30D6\u30E1\u30C3\u30BB",
+                "\u30FC\u30B8");
+        assertLineBreak(SAMPLE_TEXT3, BREAK_STRATEGY_SIMPLE, "ja-JP", config, 50,
+                "\u30E9\u30A4\u30D6\u30E1\u30C3",
+                "\u30BB\u30FC\u30B8");
+        assertLineBreak(SAMPLE_TEXT3, BREAK_STRATEGY_SIMPLE, "ja-JP", config, 40,
+                "\u30E9\u30A4\u30D6\u30E1",
+                "\u30C3\u30BB\u30FC\u30B8");
+        assertLineBreak(SAMPLE_TEXT3, BREAK_STRATEGY_SIMPLE, "ja-JP", config, 30,
+                "\u30E9\u30A4\u30D6",
+                "\u30E1\u30C3\u30BB",
+                "\u30FC\u30B8");
+        assertLineBreak(SAMPLE_TEXT3, BREAK_STRATEGY_SIMPLE, "ja-JP", config, 20,
+                "\u30E9\u30A4",
+                "\u30D6\u30E1",
+                "\u30C3\u30BB",
+                "\u30FC\u30B8");
+        assertLineBreak(SAMPLE_TEXT3, BREAK_STRATEGY_SIMPLE, "ja-JP", config, 10,
+                "\u30E9",
+                "\u30A4",
+                "\u30D6",
+                "\u30E1",
+                "\u30C3",
+                "\u30BB",
+                "\u30FC",
+                "\u30B8");
+    }
+
+    @Test
+    public void testPhraseFallback_Loose_Optimal() {
+        LineBreakConfig config = new LineBreakConfig.Builder()
+                .setLineBreakStyle(LineBreakConfig.LINE_BREAK_STYLE_LOOSE)
+                .setLineBreakWordStyle(LineBreakConfig.LINE_BREAK_WORD_STYLE_PHRASE).build();
+        assertLineBreak(SAMPLE_TEXT3, BREAK_STRATEGY_HIGH_QUALITY, "ja-JP", config, 80,
+                SAMPLE_TEXT3);
+        assertLineBreak(SAMPLE_TEXT3, BREAK_STRATEGY_HIGH_QUALITY, "ja-JP", config, 70,
+                "\u30E9\u30A4\u30D6\u30E1\u30C3\u30BB\u30FC",
+                "\u30B8");
+        assertLineBreak(SAMPLE_TEXT3, BREAK_STRATEGY_HIGH_QUALITY, "ja-JP", config, 60,
+                "\u30E9\u30A4\u30D6\u30E1\u30C3\u30BB",
+                "\u30FC\u30B8");
+        assertLineBreak(SAMPLE_TEXT3, BREAK_STRATEGY_HIGH_QUALITY, "ja-JP", config, 50,
+                "\u30E9\u30A4\u30D6\u30E1\u30C3",
+                "\u30BB\u30FC\u30B8");
+        assertLineBreak(SAMPLE_TEXT3, BREAK_STRATEGY_HIGH_QUALITY, "ja-JP", config, 40,
+                "\u30E9\u30A4\u30D6\u30E1",
+                "\u30C3\u30BB\u30FC\u30B8");
+        assertLineBreak(SAMPLE_TEXT3, BREAK_STRATEGY_HIGH_QUALITY, "ja-JP", config, 30,
+                "\u30E9\u30A4\u30D6",
+                "\u30E1\u30C3\u30BB",
+                "\u30FC\u30B8");
+        assertLineBreak(SAMPLE_TEXT3, BREAK_STRATEGY_HIGH_QUALITY, "ja-JP", config, 20,
+                "\u30E9\u30A4",
+                "\u30D6\u30E1",
+                "\u30C3\u30BB",
+                "\u30FC\u30B8");
+        assertLineBreak(SAMPLE_TEXT3, BREAK_STRATEGY_HIGH_QUALITY, "ja-JP", config, 10,
+                "\u30E9",
+                "\u30A4",
+                "\u30D6",
+                "\u30E1",
+                "\u30C3",
+                "\u30BB",
+                "\u30FC",
+                "\u30B8");
     }
 }
