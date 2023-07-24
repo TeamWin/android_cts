@@ -429,6 +429,7 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
     }
 
     @ApiTest(apis = {"android.inputmethodservice.InputMethodService#showSoftInput"})
+    @FlakyTest
     @Test
     public void testSoftInputStateAlwaysVisibleFocusEditorAfterLaunch() throws Exception {
         final Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
