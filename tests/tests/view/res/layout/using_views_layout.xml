@@ -27,16 +27,18 @@
 
     <EditText
         android:id="@+id/entry"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:background="@android:drawable/editbox_background"
+        android:layout_alignParentLeft="true"
+        android:layout_toLeftOf="@id/ok"
         android:layout_below="@id/country"/>
 
     <Button
         android:id="@+id/cancel"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@id/entry"
+        android:layout_below="@id/country"
         android:layout_alignParentRight="true"
         android:layout_marginLeft="10dip"
         android:text="@string/id_cancel"/>
@@ -45,8 +47,9 @@
         android:id="@+id/ok"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_below="@id/country"
         android:layout_toLeftOf="@id/cancel"
-        android:layout_alignTop="@id/cancel"
+        android:layout_marginLeft="10dip"
         android:text="@string/id_ok"/>
 
     <TextView
