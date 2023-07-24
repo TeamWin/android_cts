@@ -410,7 +410,8 @@ public class CtsWindowInfoUtils {
             return false;
         };
 
-        if (!waitForWindowInfo(predicate, 5, TimeUnit.SECONDS, windowTokenSupplier)) {
+        if (!waitForWindowInfo(predicate, 5L * HW_TIMEOUT_MULTIPLIER, TimeUnit.SECONDS,
+                windowTokenSupplier)) {
             return null;
         }
         return bounds;
@@ -428,7 +429,8 @@ public class CtsWindowInfoUtils {
             return false;
         };
 
-        if (!waitForWindowInfo(predicate, 5, TimeUnit.SECONDS, windowTokenSupplier)) {
+        if (!waitForWindowInfo(predicate, 5L * HW_TIMEOUT_MULTIPLIER, TimeUnit.SECONDS,
+                windowTokenSupplier)) {
             return null;
         }
         return bounds;
