@@ -2197,7 +2197,8 @@ public class BroadcastResponseStatsTest {
             final OnRoleHoldersChangedListener listener = (roleName, user) -> {
                 Log.d(TAG, "Received role changed callback for role=" + roleName
                         + " in u" + user.getIdentifier());
-                if (ROLE_ASSISTANT.equals(roleName) && user.getIdentifier() == userId
+                if (latch.getCount() > 0
+                        && ROLE_ASSISTANT.equals(roleName) && user.getIdentifier() == userId
                         && isAssistantRoleHolder(pkgName, userId)) {
                     latch.countDown();
                 }
@@ -2231,7 +2232,8 @@ public class BroadcastResponseStatsTest {
             final OnRoleHoldersChangedListener listener = (roleName, user) -> {
                 Log.d(TAG, "Received role changed callback for role=" + roleName
                         + " in u" + user.getIdentifier());
-                if (ROLE_ASSISTANT.equals(roleName) && user.getIdentifier() == userId
+                if (latch.getCount() > 0
+                        && ROLE_ASSISTANT.equals(roleName) && user.getIdentifier() == userId
                         && !isAssistantRoleHolder(pkgName, userId)) {
                     latch.countDown();
                 }
