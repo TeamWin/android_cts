@@ -15,6 +15,8 @@
  */
 package android.media.misc.cts;
 
+import static org.junit.Assume.assumeTrue;
+
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
@@ -24,10 +26,18 @@ import android.util.Log;
 import junit.framework.Assert;
 
 public class ResourceManagerStubActivity extends Activity {
+    // Define all the error codes specific to this test case here
+    // Test case was skipped as there aren't any supported decoder(s).
+    public static final int RESULT_CODE_NO_DECODER = Activity.RESULT_FIRST_USER + 1;
+    // Test case was skipped as there aren't any supported encoder(s).
+    public static final int RESULT_CODE_NO_ENCODER = Activity.RESULT_FIRST_USER + 2;
+    // Test case was skipped as the device doesn't have any camera available for recording.
+    public static final int RESULT_CODE_NO_CAMERA = Activity.RESULT_FIRST_USER + 3;
+
     private static final String TAG = "ResourceManagerStubActivity";
     private final Object mFinishEvent = new Object();
     private int[] mRequestCodes = {0, 1};
-    private boolean[] mResults = {false, false};
+    private int[] mResults = {RESULT_CANCELED, RESULT_CANCELED};
     private int mNumResults = 0;
     private int mType1 = ResourceManagerTestActivityBase.TYPE_NONSECURE;
     private int mType2 = ResourceManagerTestActivityBase.TYPE_NONSECURE;
@@ -59,12 +69,41 @@ public class ResourceManagerStubActivity extends Activity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         Log.d(TAG, "Activity " + requestCode + " finished with resultCode " + resultCode);
-        mResults[requestCode] = (resultCode == RESULT_OK);
+        mResults[requestCode] = resultCode;
         if (++mNumResults == mResults.length) {
             synchronized (mFinishEvent) {
                 mFinishEvent.notify();
             }
         }
+    }
+
+    private boolean processActivityResults() {
+        boolean result = true;
+        for (int i = 0; result && i < mResults.length; ++i) {
+            switch (mResults[i]) {
+                case RESULT_OK:
+                    // Activity completed successfully.
+                    break;
+                case RESULT_CODE_NO_DECODER:
+                    assumeTrue("Test case was skipped as there aren't any supported decoder(s).",
+                            false);
+                    break;
+                case RESULT_CODE_NO_ENCODER:
+                    assumeTrue("Test case was skipped as there aren't any supported encoder(s).",
+                            false);
+                    break;
+                case RESULT_CODE_NO_CAMERA:
+                    assumeTrue("Test case was skipped as the device doesn't have any "
+                            + "camera available for recording.", false);
+                    break;
+                default:
+                    Log.e(TAG, "Result from activity " + i + " is a fail.");
+                    result = false;
+                    break;
+            }
+        }
+
+        return result;
     }
 
     public void testReclaimResource(int type1, int type2, boolean highResolutionForActivity1,
@@ -107,14 +146,7 @@ public class ResourceManagerStubActivity extends Activity {
         System.gc();
         Thread.sleep(5000);  // give the gc a chance to release test activities.
 
-        boolean result = true;
-        for (int i = 0; i < mResults.length; ++i) {
-            if (!mResults[i]) {
-                Log.e(TAG, "Result from activity " + i + " is a fail.");
-                result = false;
-                break;
-            }
-        }
+        boolean result = processActivityResults();
         if (!result) {
             String failMessage = "The potential reasons for the failure:\n";
             StringBuilder reasons = new StringBuilder();
@@ -173,14 +205,7 @@ public class ResourceManagerStubActivity extends Activity {
         // give the gc a chance to release test activities.
         Thread.sleep(5000);
 
-        boolean result = true;
-        for (int i = 0; i < mResults.length; ++i) {
-            if (!mResults[i]) {
-                Log.e(TAG, "Result from activity " + i + " is a fail.");
-                result = false;
-                break;
-            }
-        }
+        boolean result = processActivityResults();
         if (!result) {
             String failMessage = "The potential reasons for the failure:\n";
             StringBuilder reasons = new StringBuilder();
