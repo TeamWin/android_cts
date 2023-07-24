@@ -360,10 +360,12 @@ class AutoRevokeTest {
         withUnusedThresholdMs(4L) {
             withDummyApp {
                 // Setup
+                val pm = context.packageManager
                 grantPermission()
                 assertPermission(PERMISSION_GRANTED)
-                startApp()
-                assertAllowlistState(false)
+                runWithShellPermissionIdentity {
+                    assertFalse(pm.isAutoRevokeWhitelisted(supportedAppPackageName))
+                }
 
                 // Verify
                 goToPermissions()
@@ -384,8 +386,9 @@ class AutoRevokeTest {
                 Thread.sleep(500L)
 
                 // Verify
-                startApp()
-                assertAllowlistState(true)
+                runWithShellPermissionIdentity {
+                    assertTrue(pm.isAutoRevokeWhitelisted(supportedAppPackageName))
+                }
                 assertPermission(PERMISSION_GRANTED)
             }
         }
