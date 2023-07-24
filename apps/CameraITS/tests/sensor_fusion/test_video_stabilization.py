@@ -28,9 +28,6 @@ import its_session_utils
 import sensor_fusion_utils
 import video_processing_utils
 
-_ARDUINO_ANGLES = (10, 25)  # degrees
-_ARDUINO_MOVE_TIME = 0.30  # seconds
-_ARDUINO_SERVO_SPEED = 10
 _ASPECT_RATIO_16_9 = 16/9  # determine if video fmt > 16:9
 _IMG_FORMAT = 'png'
 _MIN_PHONE_MOVEMENT_ANGLE = 5  # degrees
@@ -39,7 +36,6 @@ _NUM_ROTATIONS = 24
 _RADS_TO_DEGS = 180/math.pi
 _SEC_TO_NSEC = 1E9
 _START_FRAME = 30  # give 3A 1s to warm up
-_TABLET_SERVO_SPEED = 20
 _VIDEO_DELAY_TIME = 5.5  # seconds
 _VIDEO_DURATION = 5.5  # seconds
 _VIDEO_QUALITIES_TESTED = ('CIF:3', '480P:4', '720P:5', '1080P:6', 'QVGA:7',
@@ -79,14 +75,22 @@ def _collect_data(cam, tablet_device, video_profile, video_quality, rot_rig):
     sensor_fusion_utils.establish_serial_comm(serial_port)
   # Start camera vibration
   if tablet_device:
-    servo_speed = _TABLET_SERVO_SPEED
+    servo_speed = sensor_fusion_utils.ARDUINO_SERVO_SPEED_STABILIZATION_TABLET
   else:
-    servo_speed = _ARDUINO_SERVO_SPEED
+    servo_speed = sensor_fusion_utils.ARDUINO_SERVO_SPEED_STABILIZATION
 
   p = multiprocessing.Process(
       target=sensor_fusion_utils.rotation_rig,
-      args=(rot_rig['cntl'], rot_rig['ch'], _NUM_ROTATIONS,
-            _ARDUINO_ANGLES, servo_speed, _ARDUINO_MOVE_TIME, serial_port))
+      args=(
+          rot_rig['cntl'],
+          rot_rig['ch'],
+          _NUM_ROTATIONS,
+          sensor_fusion_utils.ARDUINO_ANGLES_STABILIZATION,
+          servo_speed,
+          sensor_fusion_utils.ARDUINO_MOVE_TIME_STABILIZATION,
+          serial_port,
+      ),
+  )
   p.start()
 
   cam.start_sensor_events()
