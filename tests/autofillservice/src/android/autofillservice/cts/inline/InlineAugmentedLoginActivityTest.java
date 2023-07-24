@@ -39,6 +39,7 @@ import android.autofillservice.cts.testcore.Helper;
 import android.autofillservice.cts.testcore.InlineUiBot;
 import android.autofillservice.cts.testcore.MyAutofillCallback;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.FlakyTest;
 import android.platform.test.annotations.Presubmit;
 import android.service.autofill.FillEventHistory;
 import android.service.autofill.FillEventHistory.Event;
@@ -268,6 +269,9 @@ public class InlineAugmentedLoginActivityTest
         mUiBot.assertNoDatasets();
     }
 
+    @FlakyTest(
+            bugId = 292284798,
+            detail = "Meet July-31-23 trunk stable no flaky SLO. Deflake asap")
     @Test
     public void testAugmentedAutoFill_startTypingThenHideInlineSuggestion() throws Exception {
         // Set services

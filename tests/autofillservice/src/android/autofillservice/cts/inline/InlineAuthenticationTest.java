@@ -124,6 +124,9 @@ public class InlineAuthenticationTest extends AbstractLoginActivityTestCase {
         dropDownUiBot.assertDatasets("Dataset");
     }
 
+    @FlakyTest(
+            bugId = 291803739,
+            detail = "Autofill behavior is flaky. See bug, try to resolve asap")
     @Presubmit
     @Test
     public void testFillResponseAuth() throws Exception {

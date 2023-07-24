@@ -388,6 +388,9 @@ public class LoginActivityTest extends LoginActivityCommonTestCase {
         mUiBot.assertDatasets("THE DUDE");
     }
 
+    @FlakyTest(
+            bugId = 292280793,
+            detail = "Meet July-31-23 trunk stable no flaky SLO. Deflake asap")
     @Presubmit
     @Test
     public void testAutoFillOneDataset() throws Exception {
@@ -406,6 +409,9 @@ public class LoginActivityTest extends LoginActivityCommonTestCase {
         autofillOneDatasetTest(BorderType.FOOTER_ONLY);
     }
 
+    @FlakyTest(
+            bugId = 292285138,
+            detail = "Meet July-31-23 trunk stable no flaky SLO. Deflake asap")
     @Presubmit
     @Test
     public void testAutoFillOneDataset_withHeaderAndFooter() throws Exception {
@@ -823,6 +829,9 @@ public class LoginActivityTest extends LoginActivityCommonTestCase {
         mActivity.assertAutoFilled();
     }
 
+    @FlakyTest(
+            bugId = 292285136,
+            detail = "Meet July-31-23 trunk stable no flaky SLO. Deflake asap")
     @Presubmit
     @Test
     public void testAutoFillWhenViewHasChildAccessibilityNodes() throws Exception {
