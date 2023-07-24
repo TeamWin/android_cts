@@ -86,14 +86,17 @@ class EmulateInputDevice {
         // Down
         sendBtnTouch(true)
         sendDown(0 /*id*/, pointer)
+        sync()
 
         // Move
         pointer.offset(1, 1)
         sendMove(0 /*id*/, pointer)
+        sync()
 
         // Up
         sendBtnTouch(false)
         sendUp(0 /*id*/)
+        sync()
     }
 
     @Test
@@ -109,20 +112,24 @@ class EmulateInputDevice {
                 touchpad.sendBtnTouch(true)
                 touchpad.sendBtn(UinputTouchDevice.BTN_TOOL_FINGER, true)
                 touchpad.sendDown(0, pointer, UinputTouchDevice.MT_TOOL_FINGER)
+                touchpad.sync()
 
                 touchpad.sendBtnTouch(false)
                 touchpad.sendBtn(UinputTouchDevice.BTN_TOOL_FINGER, false)
                 touchpad.sendUp(0)
+                touchpad.sync()
             }
             for (i in 0 until 2) {
                 val pointer = Point(100, 200)
                 touchpad.sendBtnTouch(true)
                 touchpad.sendBtn(UinputTouchDevice.BTN_TOOL_FINGER, true)
                 touchpad.sendDown(0, pointer, UinputTouchDevice.MT_TOOL_PALM)
+                touchpad.sync()
 
                 touchpad.sendBtnTouch(false)
                 touchpad.sendBtn(UinputTouchDevice.BTN_TOOL_FINGER, false)
                 touchpad.sendUp(0)
+                touchpad.sync()
             }
         }
     }

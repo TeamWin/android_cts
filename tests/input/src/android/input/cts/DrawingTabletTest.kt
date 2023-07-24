@@ -110,9 +110,11 @@ class DrawingTabletTest {
         for (i in INJECTION_POINTS.indices) {
             drawingTablet.sendBtnTouch(true)
             drawingTablet.sendDown(0 /*id*/, INJECTION_POINTS[i], UinputTouchDevice.MT_TOOL_PEN)
+            drawingTablet.sync()
 
             drawingTablet.sendBtnTouch(false)
             drawingTablet.sendUp(0 /*id*/)
+            drawingTablet.sync()
 
             val expected = expectedPoints[i]
             // Ensure the hard-coded expected points and the transformation function agree for the

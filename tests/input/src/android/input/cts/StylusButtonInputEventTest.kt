@@ -166,6 +166,7 @@ class StylusButtonInputEventTest {
                 uinputStylus.sendBtnTouch(true)
                 uinputStylus.sendBtn(button.key, true)
                 uinputStylus.sendDown(0, pointer, UinputTouchDevice.MT_TOOL_PEN)
+                uinputStylus.sync()
 
                 assertNextMotionEventEquals(
                         MotionEvent.ACTION_DOWN,
@@ -185,6 +186,7 @@ class StylusButtonInputEventTest {
                 uinputStylus.sendBtnTouch(false)
                 uinputStylus.sendBtn(button.key, false)
                 uinputStylus.sendUp(0)
+                uinputStylus.sync()
 
                 assertNextMotionEventEquals(
                         MotionEvent.ACTION_BUTTON_RELEASE,
@@ -222,6 +224,7 @@ class StylusButtonInputEventTest {
                 uinputStylus.sendBtnTouch(true)
                 uinputStylus.sendBtn(button.key, true)
                 uinputStylus.sendDown(0, pointer, UinputTouchDevice.MT_TOOL_PEN)
+                uinputStylus.sync()
 
                 assertNextMotionEventEquals(
                         MotionEvent.ACTION_DOWN,
@@ -234,6 +237,7 @@ class StylusButtonInputEventTest {
                 uinputStylus.sendBtnTouch(false)
                 uinputStylus.sendBtn(button.key, false)
                 uinputStylus.sendUp(0)
+                uinputStylus.sync()
 
                 assertNextMotionEventEquals(
                         MotionEvent.ACTION_UP,

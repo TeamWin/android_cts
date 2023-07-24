@@ -68,7 +68,6 @@ class UinputTouchDevice(
         if (toolType != null) injectEvent(intArrayOf(EV_ABS, ABS_MT_TOOL_TYPE, toolType))
         injectEvent(intArrayOf(EV_ABS, ABS_MT_POSITION_X, location.x))
         injectEvent(intArrayOf(EV_ABS, ABS_MT_POSITION_Y, location.y))
-        injectEvent(intArrayOf(EV_SYN, SYN_REPORT, 0))
     }
 
     fun sendMove(id: Int, location: Point) {
@@ -79,12 +78,14 @@ class UinputTouchDevice(
     fun sendUp(id: Int) {
         injectEvent(intArrayOf(EV_ABS, ABS_MT_SLOT, id))
         injectEvent(intArrayOf(EV_ABS, ABS_MT_TRACKING_ID, INVALID_TRACKING_ID))
-        injectEvent(intArrayOf(EV_SYN, SYN_REPORT, 0))
     }
 
     fun sendToolType(id: Int, toolType: Int) {
         injectEvent(intArrayOf(EV_ABS, ABS_MT_SLOT, id))
         injectEvent(intArrayOf(EV_ABS, ABS_MT_TOOL_TYPE, toolType))
+    }
+
+    fun sync() {
         injectEvent(intArrayOf(EV_SYN, SYN_REPORT, 0))
     }
 
