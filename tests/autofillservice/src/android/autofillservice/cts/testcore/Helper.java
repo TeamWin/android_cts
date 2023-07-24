@@ -28,13 +28,13 @@ import static android.service.autofill.FillEventHistory.Event.TYPE_DATASET_SELEC
 import static android.service.autofill.FillEventHistory.Event.TYPE_SAVE_SHOWN;
 import static android.service.autofill.FillEventHistory.Event.TYPE_VIEW_REQUESTED_AUTOFILL;
 
-
 import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.app.Activity;
+import android.app.ActivityOptions;
 import android.app.Instrumentation;
 import android.app.PendingIntent;
 import android.app.assist.AssistStructure;
@@ -58,6 +58,7 @@ import android.os.Environment;
 import android.os.UserManager;
 import android.provider.DeviceConfig;
 import android.provider.Settings;
+import android.service.autofill.CustomDescription;
 import android.service.autofill.FieldClassification;
 import android.service.autofill.FieldClassification.Match;
 import android.service.autofill.FillContext;
@@ -1817,6 +1818,10 @@ public final class Helper {
         return false;
     }
 
+    public static int getSystemResourceId(String id, String type, String packageName) {
+        return Resources.getSystem().getIdentifier(id, type, packageName);
+    }
+
     /**
      * Asserts whether mock IME is showing
      */
@@ -1942,6 +1947,47 @@ public final class Helper {
             return false;
         } finally {
             deviceStateAssessor.close();
+        }
+    }
+
+    public static class CustomDescriptionUtils {
+        public static RemoteViews newTemplate(String packageName) {
+            return new RemoteViews(packageName, R.layout.custom_description_with_link);
+        }
+
+        public static final CustomDescription.Builder newCustomDescriptionBuilder(
+                Context context, Class<? extends Activity> activityClass, String packageName) {
+            final Intent intent = new Intent(context, activityClass);
+            intent.setFlags(
+                    Intent.FLAG_ACTIVITY_RETAIN_IN_RECENTS | Intent.FLAG_ACTIVITY_NEW_DOCUMENT);
+            return newCustomDescriptionBuilder(context, intent, packageName);
+        }
+
+        public static final CustomDescription newCustomDescription(
+                Context context, Class<? extends Activity> activityClass, String packageName) {
+            return newCustomDescriptionBuilder(context, activityClass, packageName).build();
+        }
+
+        public static final CustomDescription.Builder newCustomDescriptionBuilder(
+                Context context, Intent intent, String packageName) {
+            final RemoteViews presentation = newTemplate(packageName);
+            final PendingIntent pendingIntent =
+                    PendingIntent.getActivity(
+                            context,
+                            0,
+                            intent,
+                            PendingIntent.FLAG_MUTABLE,
+                            ActivityOptions.makeBasic()
+                                    .setPendingIntentCreatorBackgroundActivityStartMode(
+                                            ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_ALLOWED)
+                                    .toBundle());
+            presentation.setOnClickPendingIntent(R.id.link, pendingIntent);
+            return new CustomDescription.Builder(presentation);
+        }
+
+        public static final CustomDescription newCustomDescription(
+                Context context, Intent intent, String packageName) {
+            return newCustomDescriptionBuilder(context, intent, packageName).build();
         }
     }
 

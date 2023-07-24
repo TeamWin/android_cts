@@ -858,6 +858,11 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase<Si
         autofillExpecation.assertAutoFilled();
     }
 
+    /**
+     * This test is being migrated to ../androidx-tests/SaveUiTest.java
+     * If making changes, modify SaveUiTest#testTapLink_changeOrientationThenTapBack
+     * instead, as this might be deprecated in the future.
+     */
     @Override
     protected void saveUiRestoredAfterTappingLinkTest(PostSaveLinkTappedAction type)
             throws Exception {

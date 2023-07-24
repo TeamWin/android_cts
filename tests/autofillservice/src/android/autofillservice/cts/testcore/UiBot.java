@@ -514,8 +514,12 @@ public class UiBot {
      * Selects a view by id.
      */
     public UiObject2 selectByRelativeId(String id) throws Exception {
-        Log.v(TAG, "selectByRelativeId(): " + id);
-        UiObject2 object = waitForObject(By.res(mPackageName, id));
+        return selectByRelativeId(mPackageName, id);
+    }
+
+    public UiObject2 selectByRelativeId(String packageName, String id) throws Exception {
+        Log.v(TAG, "selectByRelativeId(): " + packageName + ":/" + id);
+        UiObject2 object = waitForObject(By.res(packageName, id));
         object.click();
         return object;
     }
