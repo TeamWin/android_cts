@@ -24,7 +24,7 @@ import static android.media.AudioAttributes.ALLOW_CAPTURE_BY_NONE;
 import static android.media.AudioAttributes.ALLOW_CAPTURE_BY_SYSTEM;
 import static android.media.AudioManager.ADJUST_MUTE;
 import static android.media.AudioManager.ADJUST_UNMUTE;
-import static android.media.AudioManager.STREAM_MUSIC;
+import static android.media.AudioManager.STREAM_NOTIFICATION;
 import static android.media.AudioPlaybackConfiguration.MUTED_BY_APP_OPS;
 import static android.media.AudioPlaybackConfiguration.MUTED_BY_CLIENT_VOLUME;
 import static android.media.AudioPlaybackConfiguration.MUTED_BY_STREAM_VOLUME;
@@ -128,9 +128,9 @@ public class AudioPlaybackConfigurationTest extends CtsAndroidTestCase {
         super.tearDown();
     }
 
-    private static final int TEST_USAGE = AudioAttributes.USAGE_MEDIA;
-    private static final int TEST_CONTENT = AudioAttributes.CONTENT_TYPE_MUSIC;
-    private static final int TEST_STREAM_FOR_USAGE = STREAM_MUSIC;
+    private static final int TEST_USAGE = AudioAttributes.USAGE_NOTIFICATION;
+    private static final int TEST_CONTENT = AudioAttributes.CONTENT_TYPE_UNKNOWN;
+    private static final int TEST_STREAM_FOR_USAGE = STREAM_NOTIFICATION;
 
     // test marshalling/unmarshalling of an AudioPlaybackConfiguration instance. Since we can't
     // create an AudioPlaybackConfiguration directly, we first need to play something to get one.
