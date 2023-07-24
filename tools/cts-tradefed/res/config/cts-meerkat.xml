@@ -32,23 +32,23 @@
     <option name="compatibility:include-filter" value="CtsAppTestCases android.app.cts.CloseSystemDialogsTest"/>
 
     <!-- Overlays & touches -->
-    <option name="compatibility:include-filter" value="CtsWindowManagerDeviceTestCases android.server.wm.WindowInputTests"/>
-    <option name="compatibility:include-filter" value="CtsWindowManagerDeviceTestCases android.server.wm.WindowUntrustedTouchTest"/>
+    <option name="compatibility:include-filter" value="CtsWindowManagerDeviceTestCases android.server.wm.window.WindowInputTests"/>
+    <option name="compatibility:include-filter" value="CtsWindowManagerDeviceTestCases android.server.wm.window.WindowUntrustedTouchTest"/>
     <option name="compatibility:include-filter" value="CtsSecurityTestCases android.security.cts.MotionEventTest"/>
 
     <!-- System Alert Window (SAW) -->
     <option name="compatibility:include-filter" value="CtsSystemIntentTestCases"/>
-    <option name="compatibility:include-filter" value="CtsWindowManagerDeviceTestCases android.server.wm.HideOverlayWindowsTest"/>
+    <option name="compatibility:include-filter" value="CtsWindowManagerDeviceTestCases android.server.wm.window.HideOverlayWindowsTest"/>
     <option name="compatibility:include-filter" value="CtsMediaMiscTestCases android.media.misc.cts.MediaProjectionTest"/>
 
     <!-- Toasts -->
-    <option name="compatibility:include-filter" value="CtsWindowManagerDeviceTestCases android.server.wm.ToastWindowTest"/>
+    <option name="compatibility:include-filter" value="CtsWindowManagerDeviceTestCases android.server.wm.window.ToastWindowTest"/>
     <option name="compatibility:include-filter" value="CtsWidgetTestCases android.widget.cts.ToastTest"/>
     <option name="compatibility:include-filter" value="CtsWidgetTestCases29 android.widget.cts29.ToastTest"/>
     <option name="compatibility:include-filter" value="CtsToastTestCases android.widget.toast.cts.LegacyToastTest"/>
 
     <!-- Background activity launch -->
-    <option name="compatibility:include-filter" value="CtsWindowManagerDeviceTestCases android.server.wm.lifecycle.ActivityStarterTests"/>
+    <option name="compatibility:include-filter" value="CtsWindowManagerDeviceTestCases android.server.wm.activity.lifecycle.ActivityStarterTests"/>
     <option name="compatibility:include-filter" value="CtsActivityManagerBackgroundActivityTestCases android.server.wm.BackgroundActivityLaunchTest"/>
 
     <!-- Icon hiding -->
@@ -58,7 +58,7 @@
 
     <!-- App ops -->
     <option name="compatibility:include-filter" value="CtsAppOpsTestCases android.app.appops.cts.AppOpsTest"/>
-    <option name="compatibility:include-filter" value="CtsWindowManagerDeviceTestCases android.server.wm.AlertWindowsTests"/>
+    <option name="compatibility:include-filter" value="CtsWindowManagerDeviceTestCases android.server.wm.window.AlertWindowsTests"/>
     <option name="compatibility:include-filter" value="CtsAccessibilityServiceTestCases android.accessibilityservice.cts.AccessibilityLoggingTest"/>
     <option name="compatibility:include-filter" value="CtsPackageInstallTestCases android.packageinstaller.install.cts.SessionTest"/>
     <option name="compatibility:include-filter" value="CtsPackageInstallTestCases android.packageinstaller.install.cts.ExternalSourcesTestAppOpAllowed"/>
