@@ -293,4 +293,7 @@
     <option name="compatibility:exclude-filter" value="CtsBionicTestCases malloc#zeroed_allocations_small_medium_sizes" />
     <option name="compatibility:exclude-filter" value="CtsBionicTestCases malloc#zeroed_allocations_large_sizes" />
     <option name="compatibility:exclude-filter" value="CtsBionicTestCases malloc#zeroed_allocations_realloc" />
+
+    <!-- b/284406623 -->
+    <option name="compatibility:exclude-filter" value="CtsUwbMultiDeviceTestCase_FiraRangingTests" />
 </configuration>
