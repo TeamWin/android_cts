@@ -43,6 +43,7 @@ _MAX_STR = 'max'
 _MIN_STR = 'min'
 _MIN_AREA_RATIO = 0.00015  # based on 2000/(4000x3000) pixels
 _MIN_CIRCLE_PTS = 25
+_MIN_ZOOM_CHART_SCALING = 0.7
 _MIN_SIZE = 640*480  # VGA
 _NAME = os.path.splitext(os.path.basename(__file__))[0]
 _OFFSET_TOL = 5  # pixels
@@ -183,10 +184,6 @@ class PreviewVideoZoomTest(its_base_test.ItsBaseTest):
       )
       logging.debug('Testing zoomRatioRange: %s', str(z_range))
 
-      # Load chart for scene
-      its_session_utils.load_scene(
-          cam, props, self.scene, self.tablet, self.chart_distance)
-
       # Determine zoom factors
       z_min = z_range[0]
       camera_properties_utils.skip_unless(
@@ -197,6 +194,15 @@ class PreviewVideoZoomTest(its_base_test.ItsBaseTest):
       else:
         zoom_ratios_to_be_tested.append(float(z_min * 2))
       logging.debug('Testing zoom ratios: %s', str(zoom_ratios_to_be_tested))
+
+      # Load chart for scene
+      if z_min > _MIN_ZOOM_CHART_SCALING:
+        its_session_utils.load_scene(
+            cam, props, self.scene, self.tablet, self.chart_distance)
+      else:
+        its_session_utils.load_scene(
+            cam, props, self.scene, self.tablet,
+            its_session_utils.CHART_DISTANCE_NO_SCALING)
 
       # Find supported preview/video sizes, and their smallest and common size
       supported_preview_sizes = cam.get_supported_preview_sizes(self.camera_id)
