@@ -22,12 +22,14 @@ import static com.android.cts.verifier.TestListActivity.sInitialLaunch;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.content.res.Resources;
 import android.hardware.SensorPrivacyManager;
 import android.os.Bundle;
+import android.os.BatteryManager;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.widget.ListView;
@@ -133,6 +135,8 @@ public class ManifestTestListAdapter extends TestListAdapter {
     private static final String TEST_REQUIRED_ACTIONS_META_DATA = "test_required_actions";
 
     private static final String TEST_DISPLAY_MODE_META_DATA = "display_mode";
+
+    private static final String CONFIG_BATTERY_SUPPORTED = "config_battery_supported";
 
     private static final String CONFIG_NO_EMULATOR = "config_no_emulator";
 
@@ -487,6 +491,11 @@ public class ManifestTestListAdapter extends TestListAdapter {
                                     exception);
                         }
                         break;
+                    case CONFIG_BATTERY_SUPPORTED:
+                        if (!hasBattery()) {
+                            return false;
+                        }
+                        break;
                     case CONFIG_QUICK_SETTINGS_SUPPORTED:
                         if (!getSystemResourceFlag("config_quickSettingsSupported")) {
                             return false;
@@ -550,6 +559,11 @@ public class ManifestTestListAdapter extends TestListAdapter {
         return Arrays.stream(deviceTypesStr.split(","))
                 .map(Integer::parseInt)
                 .collect(Collectors.toList());
+    }
+
+    private boolean hasBattery(){
+        final Intent batteryInfo = mContext.registerReceiver(null, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
+        return batteryInfo.getBooleanExtra(BatteryManager.EXTRA_PRESENT, true);
     }
 
     List<TestListItem> filterTests(List<TestListItem> tests, String mode) {
