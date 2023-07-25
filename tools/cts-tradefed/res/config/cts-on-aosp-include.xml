@@ -214,8 +214,8 @@
     <option name="compatibility:include-filter" value="CtsWidgetTestCases android.widget.cts.PopupWindowTest#testClipToScreenClipsToInsets" />
 
     <!-- b/173560279: CtsWindowManagerDeviceTestCases -->
-    <option name="compatibility:include-filter" value="CtsWindowManagerDeviceTestCases android.server.wm.AppConfigurationTests#testAppOrientationRequestConfigChanges" />
-    <option name="compatibility:include-filter" value="CtsWindowManagerDeviceTestCases android.server.wm.KeyguardTests#testNoTransientConfigurationWhenShowWhenLockedRequestsOrientation" />
+    <option name="compatibility:include-filter" value="CtsWindowManagerDeviceDisplay android.server.wm.display.AppConfigurationTests#testAppOrientationRequestConfigChanges" />
+    <option name="compatibility:include-filter" value="CtsWindowManagerDeviceKeyguard android.server.wm.keyguard.KeyguardTests#testNoTransientConfigurationWhenShowWhenLockedRequestsOrientation" />
 
     <!-- b/173560279: CtsDpiTestCases -->
     <option name="compatibility:include-filter" value="CtsDpiTestCases android.dpi.cts.ConfigurationScreenLayoutTest#testScreenLayout" />

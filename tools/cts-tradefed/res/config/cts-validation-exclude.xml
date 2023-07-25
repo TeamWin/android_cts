@@ -24,6 +24,16 @@
     <option name="compatibility:exclude-filter" value="CtsDynamicMimeHostTestCases" />
     <option name="compatibility:exclude-filter" value="CtsViewTestCases" />
     <option name="compatibility:exclude-filter" value="CtsWindowManagerDeviceTestCases" />
+    <option name="compatibility:exclude-filter" value="CtsWindowManagerDeviceActivity" />
+    <option name="compatibility:exclude-filter" value="CtsWindowManagerDeviceAm" />
+    <option name="compatibility:exclude-filter" value="CtsWindowManagerDeviceBackNavigation" />
+    <option name="compatibility:exclude-filter" value="CtsWindowManagerDeviceDisplay" />
+    <option name="compatibility:exclude-filter" value="CtsWindowManagerDeviceKeyguard" />
+    <option name="compatibility:exclude-filter" value="CtsWindowManagerDeviceInsets" />
+    <option name="compatibility:exclude-filter" value="CtsWindowManagerDeviceTaskFragment" />
+    <option name="compatibility:exclude-filter" value="CtsWindowManagerDeviceScvh" />
+    <option name="compatibility:exclude-filter" value="CtsWindowManagerDeviceWindow" />
+    <option name="compatibility:exclude-filter" value="CtsWindowManagerDeviceOther" />
     <option name="compatibility:exclude-filter" value="CtsProviderTestCases" />
     <option name="compatibility:exclude-filter" value="CtsContentTestCases" />
     <option name="compatibility:exclude-filter" value="CtsLocationGnssTestCases" />
