@@ -1,6 +1,2 @@
-# Bug component: 59572
-jreck@google.com
-njawad@google.com
-djsollen@google.com
-stani@google.com
-scroggo@google.com
+# Bug component: 1075130
+include platform/frameworks/base:/libs/hwui/OWNERS
