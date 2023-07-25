@@ -86,6 +86,7 @@ import android.virtualdevice.cts.common.AudioHelper;
 import android.virtualdevice.cts.common.FakeAssociationRule;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.filters.FlakyTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.AdoptShellPermissionsRule;
@@ -287,6 +288,7 @@ public class VirtualAudioTest {
     }
 
     @Test
+    @FlakyTest(bugId = 292966437)
     public void audioCapture_readByteArray_shouldCaptureAppPlaybackData() {
         runAudioCaptureTest(BYTE_ARRAY, /* readMode= */ -1);
     }
