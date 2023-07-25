@@ -902,7 +902,7 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
         manuallyNavigate: Boolean = false
     ) {
 
-        val useLegacyNavigation = isWatch || isTv || isAutomotive || manuallyNavigate
+        val useLegacyNavigation = isWatch || isAutomotive || manuallyNavigate
         if (useLegacyNavigation) {
             navigateToAppPermissionSettings()
             val permissionLabel = getPermissionLabel(permission)
@@ -942,7 +942,7 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
         isLegacyApp: Boolean,
         manuallyNavigate: Boolean = false,
     ) {
-        val useLegacyNavigation = isWatch || isAutomotive || isTv || manuallyNavigate
+        val useLegacyNavigation = isWatch || isAutomotive || manuallyNavigate
         if (useLegacyNavigation) {
             navigateToAppPermissionSettings()
         }
