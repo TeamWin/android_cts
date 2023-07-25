@@ -24,6 +24,7 @@ import com.android.compatibility.common.util.ReportLogDeviceInfoStore;
 import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
 
+import org.json.JSONObject;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlSerializer;
 
@@ -31,6 +32,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 
 public class CtsVerifierReportLog extends ReportLog {
@@ -38,6 +41,7 @@ public class CtsVerifierReportLog extends ReportLog {
     private static final boolean DEBUG = false;
 
     private ReportLogDeviceInfoStore mStore;
+    private File mJsonFile;
 
     private static final String LOG_ERROR_STR = "Could not log metric.";
 
@@ -65,8 +69,8 @@ public class CtsVerifierReportLog extends ReportLog {
                 throw new IOException("Cannot create directory " + logDirectory
                         + " for device info files");
             } else {
-                File jsonFile = new File(logDirectory, mReportLogName + ".reportlog.json");
-                mStore = new ReportLogDeviceInfoStore(jsonFile, mStreamName);
+                mJsonFile = new File(logDirectory, mReportLogName + ".reportlog.json");
+                mStore = new ReportLogDeviceInfoStore(mJsonFile, mStreamName);
                 mStore.open();
             }
         } catch (Exception e) {
@@ -89,8 +93,28 @@ public class CtsVerifierReportLog extends ReportLog {
         }
         try {
             mStore.close();
+            if (mJsonFile != null) {
+                repairJsonFile(mJsonFile);
+            }
         } catch (Exception e) {
             Log.e(TAG, "ReportLog Submit Failed", e);
+        }
+    }
+
+    private static void repairJsonFile(File file) {
+        try {
+            Log.d(TAG, "Repair JSON file at " + file.getAbsolutePath());
+            Path path = file.toPath();
+            String content = new String(Files.readAllBytes(path));
+            // This loads the text into a valid JSON model, removing all duplicates.
+            JSONObject jsonObject = new JSONObject(content);
+            // Write as human readable text.
+            String fixed = jsonObject.toString(2);
+            Log.d(TAG, "JSON file size changed from " + content.length()
+                    + " to " + fixed.length());
+            Files.write(path, fixed.getBytes());
+        } catch (Exception e) {
+            Log.e(TAG, "Error when repairing the JSON file.", e);
         }
     }
 
