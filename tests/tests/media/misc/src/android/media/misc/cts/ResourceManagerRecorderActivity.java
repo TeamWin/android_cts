@@ -43,7 +43,6 @@ import java.util.List;
 //  - use either AVC or HEVC video encoder
 //  - record at lowest supported resolution or the highest resolution
 public class ResourceManagerRecorderActivity extends MediaStubActivity {
-    private static final int VIDEO_FRAMERATE = 30;
     private static final int RECORD_TIME_MS = 3000;
     private static final int VIDEO_WIDTH = 176;
     private static final int VIDEO_HEIGHT = 144;
@@ -156,7 +155,7 @@ public class ResourceManagerRecorderActivity extends MediaStubActivity {
         long curMaxResolution = 0;
         long curMinResolution = VIDEO_WIDTH * VIDEO_HEIGHT;
         for (Camera.Size size : videoSizes) {
-            long resolution = size.width * size.height;
+            long resolution = (long) size.width * size.height;
             if (!mHighResolution && (resolution < curMinResolution)) {
                 curMinResolution = resolution;
                 mVideoWidth = size.width;
@@ -212,7 +211,7 @@ public class ResourceManagerRecorderActivity extends MediaStubActivity {
     // Checks whether the device supports any encoder with given
     // configuration.
     private static boolean isEncoderSupported(String mime, int width, int height) {
-        MediaCodecList mcl = new MediaCodecList(MediaCodecList.ALL_CODECS);
+        MediaCodecList mcl = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
         MediaFormat format = MediaFormat.createVideoFormat(mime, width, height);
         if (mcl.findEncoderForFormat(format) == null) {
             return false;
