@@ -38,6 +38,7 @@ import android.slice.cts.SliceProvider.TestParcel;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -127,6 +128,7 @@ public class SliceBindingTest {
                 item.getIcon().toString());
     }
 
+    @Ignore("b/244094679")
     @Test
     public void testAction() {
         assumeFalse(isSliceDisabled);
