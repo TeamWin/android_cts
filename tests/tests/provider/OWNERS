@@ -1,5 +1,4 @@
 nicksauer@google.com
-nona@google.com
 
 # Storage team ownership
 
@@ -26,3 +25,7 @@ per-file src/android/provider/cts/contacts/* = file:../telecom/OWNERS
 # Bug component: 326016 = per-file src/android/provider/cts/settings/Settings_ConfigTest.java
 
 per-file src/android/provider/cts/settings/Settings_ConfigTest.java = file:../deviceconfig/OWNERS
+
+# Downloadable font ownership
+# Bug component: 25699 = per-file *Font*
+per-file *Font* = file:platform/frameworks/base:/core/java/android/text/OWNERS
