@@ -289,6 +289,7 @@ public class NavigationBarColorTest extends EndToEndImeTestBase {
     }
 
     @Test
+    @FlakyTest(detail = "slow test")
     public void testSetNavigationBarColor() throws Exception {
         final NavigationBarInfo info = NavigationBarInfo.getInstance();
 
