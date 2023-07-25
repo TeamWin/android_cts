@@ -41,7 +41,6 @@ import android.server.wm.RotationSession;
 import android.server.wm.app.Components;
 import android.view.Surface;
 
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -57,7 +56,7 @@ public class DreamManagerServiceTests extends ActivityManagerTestBase {
 
     private ComponentName mDreamActivityName;
 
-    private final DreamCoordinator mDreamCoordinator = new DreamCoordinator(mContext);
+    private DreamCoordinator mDreamCoordinator = new DreamCoordinator(mContext);
 
     @Before
     public void setup() {
@@ -65,8 +64,9 @@ public class DreamManagerServiceTests extends ActivityManagerTestBase {
     }
 
     @After
-    public void reset()  {
+    public void reset() {
         mDreamCoordinator.restoreDefaults();
+        mDreamCoordinator.stopDream();
     }
 
     private void waitAndAssertDreamActivityGone(int maxTimeOutInSeconds) {
