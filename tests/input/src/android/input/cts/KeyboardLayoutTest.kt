@@ -29,7 +29,6 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.android.compatibility.common.util.PollingCheck
 import com.android.compatibility.common.util.SystemUtil
 import com.android.cts.input.UinputDevice
-import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.fail
@@ -52,8 +51,6 @@ class KeyboardLayoutTest {
 
     private lateinit var activity: CaptureEventActivity
     private lateinit var inputManager: InputManager
-    private lateinit var virtualDevice: UinputDevice
-    private lateinit var keyboard: InputDevice
 
     @Before
     fun setUp() {
@@ -62,45 +59,42 @@ class KeyboardLayoutTest {
             activity = it
         }
         PollingCheck.waitFor { activity.hasWindowFocus() }
-
-        virtualDevice = UinputDevice.create(
-                instrumentation, R.raw.test_keyboard_register,
-                InputDevice.SOURCE_KEYBOARD
-        )
-
-        // Wait for device to be added
-        PollingCheck.waitFor { inputManager.getInputDevice(virtualDevice.deviceId) != null }
-        keyboard = inputManager.getInputDevice(virtualDevice.deviceId)!!
-    }
-
-    @After
-    fun tearDown() {
-        virtualDevice.close()
     }
 
     @Test
     fun testKeyboardLayoutType_CorrectlyInitialized() {
-        val englishQwertyLayoutDesc = getKeyboardLayoutDescriptor(keyboard, "english_us_qwerty")
-        val englishUndefinedLayoutDesc =
+        UinputDevice.create(
+            instrumentation, R.raw.test_keyboard_register,
+            InputDevice.SOURCE_KEYBOARD
+        ).use { virtualDevice ->
+            val keyboard = inputManager.getInputDevice(virtualDevice.deviceId)!!
+
+            val englishQwertyLayoutDesc = getKeyboardLayoutDescriptor(keyboard, "english_us_qwerty")
+            val englishUndefinedLayoutDesc =
                 getKeyboardLayoutDescriptor(keyboard, "english_us_undefined")
 
-        assertNotEquals("English qwerty layout should not be empty", "", englishQwertyLayoutDesc)
-        assertNotEquals(
+            assertNotEquals(
+                "English qwerty layout should not be empty",
+                "",
+                englishQwertyLayoutDesc!!
+            )
+            assertNotEquals(
                 "English undefined layout should not be empty",
                 "",
-                englishUndefinedLayoutDesc
-        )
+                englishUndefinedLayoutDesc!!
+            )
 
-        assertEquals(
+            assertEquals(
                 "Layout type should be qwerty",
                 "qwerty",
-                getKeyboardLayoutTypeForLayoutDescriptor(englishQwertyLayoutDesc!!)
-        )
-        assertEquals(
+                getKeyboardLayoutTypeForLayoutDescriptor(englishQwertyLayoutDesc)
+            )
+            assertEquals(
                 "Layout type should be undefined",
                 "undefined",
-                getKeyboardLayoutTypeForLayoutDescriptor(englishUndefinedLayoutDesc!!)
-        )
+                getKeyboardLayoutTypeForLayoutDescriptor(englishUndefinedLayoutDesc)
+            )
+        }
     }
 
     /**
