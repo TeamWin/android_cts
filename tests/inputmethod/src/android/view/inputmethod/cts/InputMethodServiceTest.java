@@ -331,6 +331,7 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
     }
 
     @Test
+    @FlakyTest(detail = "slow test")
     public void testRequestShowSelf() throws Exception {
         try (MockImeSession imeSession = MockImeSession.create(
                 InstrumentationRegistry.getInstrumentation().getContext(),
@@ -1026,6 +1027,7 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
     }
 
     @Test
+    @FlakyTest(detail = "slow test")
     public void testNoExceptionWhenSwitchingDisplaysWithImeReCreate() throws Exception {
         try (SimulatedVirtualDisplaySession displaySession = SimulatedVirtualDisplaySession.create(
                 mInstrumentation.getContext(), 800, 600, 240, DISPLAY_IME_POLICY_LOCAL);

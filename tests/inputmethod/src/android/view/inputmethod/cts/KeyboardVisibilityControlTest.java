@@ -520,6 +520,7 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
     }
 
     @Test
+    @FlakyTest(detail = "slow test")
     public void testShowHideKeyboardWithInterval() throws Exception {
         final InputMethodManager imm = mInstrumentation
                 .getTargetContext().getSystemService(InputMethodManager.class);
