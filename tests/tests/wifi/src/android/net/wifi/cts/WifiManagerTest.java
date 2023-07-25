@@ -5530,7 +5530,7 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
     /**
      * Validate that the Passpoint feature is enabled on the device.
      */
-    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU)
     @Test
     public void testPasspointCapability() {
         if (PropertyUtil.getVsrApiLevel() < Build.VERSION_CODES.S) {
