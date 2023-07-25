@@ -935,10 +935,16 @@ public class AudioLoopbackLatencyActivity extends PassFailButtons.Activity {
             setResultCode(basicPass, RESULTCODE_FAIL_BASIC);
 
             // For Media Performance Class T the RT latency must be <= 80 msec on one path.
-            boolean mpcAtLeastOnePass = (mediaPerformanceClass < MPC_T)
-                    || checkLatency(deviceLatency, LATENCY_MPC_AT_LEAST_ONE)
-                    || checkLatency(analogLatency, LATENCY_MPC_AT_LEAST_ONE)
-                    || checkLatency(usbLatency, LATENCY_MPC_AT_LEAST_ONE);
+            boolean mpcAtLeastOnePass;
+            if (mClaimsMediaPerformance) {
+                mpcAtLeastOnePass =
+                    (mediaPerformanceClass < MPC_T)
+                            || checkLatency(deviceLatency, LATENCY_MPC_AT_LEAST_ONE)
+                            || checkLatency(analogLatency, LATENCY_MPC_AT_LEAST_ONE)
+                            || checkLatency(usbLatency, LATENCY_MPC_AT_LEAST_ONE);
+            } else {
+                mpcAtLeastOnePass = true;
+            }
             Log.i(TAG, "  mpcAtLeastOnePass:" + mpcAtLeastOnePass);
             setResultCode(mpcAtLeastOnePass, RESULTCODE_FAIL_MPC);
 
