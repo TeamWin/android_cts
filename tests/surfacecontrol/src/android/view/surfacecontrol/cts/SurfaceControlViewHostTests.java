@@ -73,6 +73,7 @@ import android.server.wm.scvh.ICrossProcessSurfaceControlViewHostTestService;
 import android.util.ArrayMap;
 import android.view.Gravity;
 import android.view.MotionEvent;
+import android.view.SurfaceControl;
 import android.view.SurfaceControlViewHost;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -294,7 +295,7 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
                     latch::countDown);
             view.invalidate();
         });
-        assertTrue(latch.await(1, TimeUnit.SECONDS));
+        assertTrue(latch.await(HW_TIMEOUT_MULTIPLIER, TimeUnit.SECONDS));
     }
 
     private void waitUntilEmbeddedViewDrawn() throws Throwable {
@@ -825,13 +826,23 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
             mVr.setView(mEmbeddedView, mEmbeddedViewWidth, mEmbeddedViewHeight);
 
         });
-        surfaceCreated.await();
+        assertTrue("Failed to wait for SurfaceView created",
+                surfaceCreated.await(WAIT_TIMEOUT_S, TimeUnit.SECONDS));
 
         // Make a copy of the SurfacePackage and release the original package.
         SurfacePackage surfacePackage = mVr.getSurfacePackage();
         SurfacePackage copy = new SurfacePackage(surfacePackage);
         surfacePackage.release();
-        mSurfaceView.setChildSurfacePackage(copy);
+
+        CountDownLatch surfacePackageReparented = new CountDownLatch(1);
+        mActivityRule.runOnUiThread(() -> {
+            mSurfaceView.setChildSurfacePackage(copy);
+            SurfaceControl.Transaction t = new SurfaceControl.Transaction();
+            t.addTransactionCommittedListener(Runnable::run, surfacePackageReparented::countDown);
+            mSurfaceView.getRootSurfaceControl().applyTransactionOnDraw(t);
+        });
+        assertTrue("Failed to wait for surface package to get reparented",
+                surfacePackageReparented.await(WAIT_TIMEOUT_S, TimeUnit.SECONDS));
 
         mInstrumentation.waitForIdleSync();
         waitUntilEmbeddedViewDrawn();
@@ -879,7 +890,6 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
 
             // Assign the surface package to the first surface
             mSurfaceView.setChildSurfacePackage(surfacePackage);
-
 
             // Create the second surface view to which we'll assign the surface package copy
             SurfaceView secondSurface = new SurfaceView(mActivity);
@@ -931,50 +941,45 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
     @Test
     public void testCanReplaceSurfacePackage() throws Throwable {
         // Create a surface view and wait for its surface to be created.
-        {
-            CountDownLatch surfaceCreated = new CountDownLatch(1);
-            mActivityRule.runOnUiThread(() -> {
-                final FrameLayout content = new FrameLayout(mActivity);
-                mSurfaceView = new SurfaceView(mActivity);
-                mSurfaceView.setZOrderOnTop(true);
-                content.addView(mSurfaceView, new FrameLayout.LayoutParams(
-                        DEFAULT_SURFACE_VIEW_WIDTH, DEFAULT_SURFACE_VIEW_HEIGHT,
-                        Gravity.LEFT | Gravity.TOP));
-                mActivity.setContentView(content, new ViewGroup.LayoutParams(
-                        DEFAULT_SURFACE_VIEW_WIDTH, DEFAULT_SURFACE_VIEW_HEIGHT));
-                mSurfaceView.getHolder().addCallback(new SurfaceCreatedCallback(surfaceCreated));
+        CountDownLatch surfaceCreated = new CountDownLatch(1);
+        mActivityRule.runOnUiThread(() -> {
+            final FrameLayout content = new FrameLayout(mActivity);
+            mSurfaceView = new SurfaceView(mActivity);
+            mSurfaceView.setZOrderOnTop(true);
+            content.addView(mSurfaceView, new FrameLayout.LayoutParams(
+                    DEFAULT_SURFACE_VIEW_WIDTH, DEFAULT_SURFACE_VIEW_HEIGHT,
+                    Gravity.LEFT | Gravity.TOP));
+            mActivity.setContentView(content, new ViewGroup.LayoutParams(
+                    DEFAULT_SURFACE_VIEW_WIDTH, DEFAULT_SURFACE_VIEW_HEIGHT));
+            mSurfaceView.getHolder().addCallback(new SurfaceCreatedCallback(surfaceCreated));
 
-                // Create an embedded view without click handling.
-                mVr = new SurfaceControlViewHost(mActivity, mActivity.getDisplay(),
-                        mSurfaceView.getHostToken());
-                mEmbeddedView = new Button(mActivity);
-                mVr.setView(mEmbeddedView, mEmbeddedViewWidth, mEmbeddedViewHeight);
-
-            });
-            surfaceCreated.await();
+            // Create an embedded view without click handling.
+            mVr = new SurfaceControlViewHost(mActivity, mActivity.getDisplay(),
+                    mSurfaceView.getHostToken());
+            mEmbeddedView = new Button(mActivity);
+            mVr.setView(mEmbeddedView, mEmbeddedViewWidth, mEmbeddedViewHeight);
             mSurfaceView.setChildSurfacePackage(mVr.getSurfacePackage());
-            mInstrumentation.waitForIdleSync();
-            waitUntilEmbeddedViewDrawn();
-        }
+        });
+        surfaceCreated.await();
+        mInstrumentation.waitForIdleSync();
+        waitUntilEmbeddedViewDrawn();
 
-        {
-            CountDownLatch hostReady = new CountDownLatch(1);
-            // Create a second surface view and wait for its surface to be created.
-            mActivityRule.runOnUiThread(() -> {
-                // Create an embedded view.
-                mVr = new SurfaceControlViewHost(mActivity, mActivity.getDisplay(),
-                        mSurfaceView.getHostToken());
-                mEmbeddedView = new Button(mActivity);
-                mEmbeddedView.setOnClickListener((View v) -> mClicked = true);
-                mVr.setView(mEmbeddedView, mEmbeddedViewWidth, mEmbeddedViewHeight);
-                hostReady.countDown();
-
-            });
-            hostReady.await();
+        CountDownLatch hostReady = new CountDownLatch(1);
+        // Create a second surface view and wait for its surface to be created.
+        mActivityRule.runOnUiThread(() -> {
+            // Create an embedded view.
+            mVr = new SurfaceControlViewHost(mActivity, mActivity.getDisplay(),
+                    mSurfaceView.getHostToken());
+            mEmbeddedView = new Button(mActivity);
+            mEmbeddedView.setOnClickListener((View v) -> mClicked = true);
+            mVr.setView(mEmbeddedView, mEmbeddedViewWidth, mEmbeddedViewHeight);
+            hostReady.countDown();
             mSurfaceView.setChildSurfacePackage(mVr.getSurfacePackage());
-            mInstrumentation.waitForIdleSync();
-            waitUntilEmbeddedViewDrawn();
-        }
+        });
+        hostReady.await();
+        mInstrumentation.waitForIdleSync();
+        waitUntilEmbeddedViewDrawn();
+
 
         // Check to see if the click went through - this only would happen if the surface package
         // was replaced
