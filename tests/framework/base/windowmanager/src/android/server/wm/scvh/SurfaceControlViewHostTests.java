@@ -66,6 +66,7 @@ import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
 import android.platform.test.annotations.RequiresDevice;
 import android.server.wm.ActivityManagerTestBase;
+import android.server.wm.CtsWindowInfoUtils;
 import android.server.wm.FutureConnection;
 import android.server.wm.WindowManagerState;
 import android.server.wm.shared.ICrossProcessSurfaceControlViewHostTestService;
@@ -94,7 +95,9 @@ import com.android.cts.mockime.MockImeSession;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestName;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -125,6 +128,8 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
         }
     }
 
+    private static final String TAG = "SurfaceControlViewHostTests";
+
     private static final long WAIT_TIMEOUT_S = 5L * HW_TIMEOUT_MULTIPLIER;
 
     private static final ComponentName TEST_ACTIVITY = new ComponentName(
@@ -132,6 +137,9 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
 
     private final ActivityTestRule<TestActivity> mActivityRule = new ActivityTestRule<>(
             TestActivity.class);
+
+    @Rule
+    public TestName mName = new TestName();
 
     private Instrumentation mInstrumentation;
     private CtsTouchUtils mCtsTouchUtils;
@@ -821,7 +829,11 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
 
         // Check if SurfacePackage copy remains valid even though the original package has
         // been released.
-        mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSurfaceView);
+        boolean success = tapOnWindowCenter(mInstrumentation, ()-> mEmbeddedView.getWindowToken());
+        if (!success) {
+            CtsWindowInfoUtils.dumpWindowsOnScreen(TAG, "test " + mName.getMethodName());
+        }
+        assertTrue("Failed to find embedded window to tap", success);
         assertTrue(mClicked);
     }
 
