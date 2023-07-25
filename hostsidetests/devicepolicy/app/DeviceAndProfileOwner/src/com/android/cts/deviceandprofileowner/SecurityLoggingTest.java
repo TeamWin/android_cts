@@ -398,16 +398,16 @@ public class SecurityLoggingTest extends BaseDeviceAdminTest {
      */
     private List<SecurityEvent> getEvents() throws Exception {
         List<SecurityEvent> events = null;
-        // Retry once after seeping for 1 second, in case "dpm force-security-logs" hasn't taken
+        // Retry once after sleeping for 1 second, in case "dpm force-security-logs" hasn't taken
         // effect just yet.
-        for (int i = 0; i < 2 && events == null; i++) {
+        for (int i = 0; i < 5 && events == null; i++) {
             events = mDevicePolicyManager.retrieveSecurityLogs(ADMIN_RECEIVER_COMPONENT);
             Log.v(TAG, "getEvents(), batch #" + i + ": "  + (events == null ? -1 : events.size())
                     + " events");
-            if (events == null) sleep(1000);
+            if (events == null) sleep((i + 1) * 1000);
         }
 
-        Log.d(TAG, "getEvents(): received " + events.size() + " events");
+        Log.d(TAG, "getEvents(): received " + (events == null ? -1 : events.size()) + " events");
         if (VERBOSE) dumpSecurityLogs(events);
 
         try {
