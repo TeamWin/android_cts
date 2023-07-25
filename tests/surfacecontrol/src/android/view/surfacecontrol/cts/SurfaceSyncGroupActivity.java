@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.server.wm.scvh;
+package android.view.surfacecontrol.cts;
 
 import static org.junit.Assert.assertTrue;
 
@@ -28,6 +28,8 @@ import android.view.Gravity;
 import android.view.SurfaceControlViewHost;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.cts.surfacevalidator.IAttachEmbeddedWindow;
+import android.view.cts.surfacevalidator.SurfaceControlViewHostHelper;
 import android.widget.FrameLayout;
 
 import androidx.annotation.Nullable;

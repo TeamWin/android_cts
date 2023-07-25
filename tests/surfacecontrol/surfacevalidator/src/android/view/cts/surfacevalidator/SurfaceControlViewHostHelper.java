@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.server.wm.scvh;
+package android.view.cts.surfacevalidator;
 
 import android.content.ComponentName;
 import android.content.Context;
@@ -30,6 +30,7 @@ import android.view.SurfaceControlViewHost;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 
 import androidx.annotation.NonNull;
 
@@ -38,7 +39,6 @@ import java.util.concurrent.CountDownLatch;
 public class SurfaceControlViewHostHelper {
     private final String mTag;
 
-    private final Object mLock = new Object();
     private boolean mIsAttached;
 
     private IAttachEmbeddedWindow mIAttachEmbeddedWindow;
@@ -53,6 +53,8 @@ public class SurfaceControlViewHostHelper {
     private final Size mInitialSize;
 
     private boolean mSurfaceCreated;
+
+    private boolean mSurfaceViewAttached;
 
     private final CountDownLatch mReadyLatch;
 
@@ -75,6 +77,19 @@ public class SurfaceControlViewHostHelper {
     public SurfaceView attachSurfaceView(ViewGroup parent, ViewGroup.LayoutParams layoutParams) {
         mSurfaceView = new SurfaceView(mContext);
         mSurfaceView.getHolder().addCallback(mCallback);
+        mSurfaceView.getViewTreeObserver().addOnWindowAttachListener(
+                new ViewTreeObserver.OnWindowAttachListener() {
+                    @Override
+                    public void onWindowAttached() {
+                        mSurfaceViewAttached = true;
+                        attachEmbedded();
+                    }
+
+                    @Override
+                    public void onWindowDetached() {
+                        mSurfaceViewAttached = false;
+                    }
+                });
         parent.addView(mSurfaceView, layoutParams);
         return mSurfaceView;
     }
@@ -84,17 +99,13 @@ public class SurfaceControlViewHostHelper {
         public void onServiceConnected(ComponentName className, IBinder service) {
             Log.d(mTag, "Service Connected");
             mIAttachEmbeddedWindow = IAttachEmbeddedWindow.Stub.asInterface(service);
-            if (isReadyToAttach()) {
-                attachEmbedded();
-            }
+            attachEmbedded();
         }
 
         public void onServiceDisconnected(ComponentName className) {
             Log.d(mTag, "Service Disconnected");
             mIAttachEmbeddedWindow = null;
-            synchronized (mLock) {
-                mIsAttached = false;
-            }
+            mIsAttached = false;
         }
     };
 
@@ -102,12 +113,8 @@ public class SurfaceControlViewHostHelper {
         @Override
         public void surfaceCreated(@NonNull SurfaceHolder holder) {
             Log.d(mTag, "surface created");
-            synchronized (mLock) {
-                mSurfaceCreated = true;
-            }
-            if (isReadyToAttach()) {
-                attachEmbedded();
-            }
+            mSurfaceCreated = true;
+            attachEmbedded();
         }
 
         @Override
@@ -121,25 +128,28 @@ public class SurfaceControlViewHostHelper {
     };
 
     private boolean isReadyToAttach() {
-        synchronized (mLock) {
-            if (!mSurfaceCreated) {
-                Log.d(mTag, "surface is not created");
-            }
-            if (mIAttachEmbeddedWindow == null) {
-                Log.d(mTag, "Service is not attached");
-            }
-            if (mIsAttached) {
-                Log.d(mTag, "Already attached");
-            }
-
-            return mSurfaceCreated && mIAttachEmbeddedWindow != null && !mIsAttached;
+        if (!mSurfaceCreated) {
+            Log.d(mTag, "surface is not created");
         }
+        if (!mSurfaceViewAttached) {
+            Log.d(mTag, "SurfaceView is not attached to window");
+        }
+        if (mIAttachEmbeddedWindow == null) {
+            Log.d(mTag, "Service is not attached");
+        }
+        if (mIsAttached) {
+            Log.d(mTag, "Already attached");
+        }
+
+        return mSurfaceCreated && mIAttachEmbeddedWindow != null && !mIsAttached;
     }
 
     private void attachEmbedded() {
-        synchronized (mLock) {
-            mIsAttached = true;
+        if (!isReadyToAttach()) {
+            return;
         }
+        mIsAttached = true;
+
         Handler handler = new Handler(mHandlerThread.getLooper());
         handler.post(() -> {
             try {

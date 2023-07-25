@@ -106,8 +106,15 @@
             </intent-filter>
         </activity>
 
-        <service android:name="android.server.wm.scvh.EmbeddedSCVHService"
-            android:process="com.android.server.wm.scvh.embedded_process" />
+        <activity android:name="android.view.surfacecontrol.cts.SurfaceSyncGroupActivity"
+            android:screenOrientation="locked"
+            android:turnScreenOn="true"
+            android:theme="@style/WhiteBackgroundTheme"
+            android:exported="true"/>
+
+        <service android:name="android.view.cts.surfacevalidator.EmbeddedSCVHService"
+            android:process="android.view.cts.surfacevalidator.embedded_process" />
+        <service android:name="android.view.cts.surfacevalidator.SurfaceControlViewHostHelper$InProcessEmbeddedSCVHService" />
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"

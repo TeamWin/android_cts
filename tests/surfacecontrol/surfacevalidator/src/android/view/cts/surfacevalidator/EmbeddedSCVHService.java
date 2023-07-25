@@ -14,15 +14,12 @@
  * limitations under the License.
  */
 
-package android.server.wm.scvh;
-
-import static android.view.WindowManager.LayoutParams.TYPE_APPLICATION;
+package android.view.cts.surfacevalidator;
 
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
-import android.graphics.PixelFormat;
 import android.hardware.display.DisplayManager;
 import android.os.Handler;
 import android.os.IBinder;
@@ -101,10 +98,7 @@ public class EmbeddedSCVHService extends Service {
                 mSlowView.setBackgroundColor(Color.BLUE);
                 mSlowView.setTextColor(Color.WHITE);
                 content.addView(mSlowView);
-                WindowManager.LayoutParams lp = new WindowManager.LayoutParams(width, height,
-                        TYPE_APPLICATION, 0, PixelFormat.OPAQUE);
-                lp.setTitle("EmbeddedWindow");
-                mVr.setView(content, lp);
+                mVr.setView(content, width, height);
 
                 content.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
                     @Override
@@ -133,7 +127,7 @@ public class EmbeddedSCVHService extends Service {
         public void relayout(WindowManager.LayoutParams lp) {
             Runnable runnable = () -> {
                 mSlowView.setText(lp.width + "x" + lp.height);
-                mVr.relayout(lp);
+                mVr.relayout(lp.width, lp.height);
             };
 
             if (Thread.currentThread() == mHandler.getLooper().getThread()) {

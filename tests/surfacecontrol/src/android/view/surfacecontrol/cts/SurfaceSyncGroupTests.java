@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.server.wm.scvh;
+package android.view.surfacecontrol.cts;
 
 import static android.server.wm.BuildUtils.HW_TIMEOUT_MULTIPLIER;
 
@@ -34,6 +34,7 @@ import android.view.SurfaceControlViewHost.SurfacePackage;
 import android.view.View;
 import android.view.ViewTreeObserver;
 import android.view.cts.surfacevalidator.BitmapPixelChecker;
+import android.view.cts.surfacevalidator.IAttachEmbeddedWindow;
 import android.window.SurfaceSyncGroup;
 
 import androidx.test.platform.app.InstrumentationRegistry;
