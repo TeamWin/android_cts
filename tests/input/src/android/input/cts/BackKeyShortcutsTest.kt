@@ -93,25 +93,20 @@ class BackKeyShortcutsTest {
 
     @Test
     fun testBackKeyMetaShortcuts() {
-        val keyboardDevice = UinputDevice.create(
-                instrumentation, R.raw.test_keyboard_register,
-                InputDevice.SOURCE_KEYBOARD
-        )
+        UinputDevice.create(
+            instrumentation, R.raw.test_keyboard_register,
+            InputDevice.SOURCE_KEYBOARD
+        ).use { keyboardDevice ->
+            activity.assertNoEvents()
 
-        // Wait for device to be added
-        PollingCheck.waitFor { inputManager.getInputDevice(keyboardDevice.deviceId) != null }
-        activity.assertNoEvents()
+            for (scanCode in intArrayOf(KEY_GRAVE, KEY_DEL, KEY_DPAD_LEFT)) {
+                injectKeyDown(keyboardDevice, KEY_META_LEFT)
+                injectKeyDown(keyboardDevice, scanCode)
+                injectKeyUp(keyboardDevice, scanCode)
+                injectKeyUp(keyboardDevice, KEY_META_LEFT)
 
-        for (scanCode in intArrayOf(KEY_GRAVE, KEY_DEL, KEY_DPAD_LEFT)) {
-            injectKeyDown(keyboardDevice, KEY_META_LEFT)
-            injectKeyDown(keyboardDevice, scanCode)
-            injectKeyUp(keyboardDevice, scanCode)
-            injectKeyUp(keyboardDevice, KEY_META_LEFT)
-
-            assertReceivedEventsCorrectlyMapped(2, KeyEvent.KEYCODE_BACK)
+                assertReceivedEventsCorrectlyMapped(2, KeyEvent.KEYCODE_BACK)
+            }
         }
-
-        // Remove the device
-        keyboardDevice.close()
     }
 }
