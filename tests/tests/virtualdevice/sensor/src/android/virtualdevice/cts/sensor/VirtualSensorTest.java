@@ -467,13 +467,10 @@ public class VirtualSensorTest {
         mVirtualSensor = setUpVirtualSensor(
                 new VirtualSensorConfig.Builder(TYPE_ACCELEROMETER, VIRTUAL_SENSOR_NAME).build());
 
-        HardwareBuffer hardwareBuffer = HardwareBuffer.create(
-                /*width=*/SHARED_MEMORY_SIZE, /*height=*/1, HardwareBuffer.BLOB, /*layers=*/1,
-                HardwareBuffer.USAGE_CPU_READ_OFTEN | HardwareBuffer.USAGE_GPU_DATA_BUFFER
-                        | HardwareBuffer.USAGE_SENSOR_DIRECT_DATA);
-
-        assertThrows(UncheckedIOException.class,
-                () -> mVirtualDeviceSensorManager.createDirectChannel(hardwareBuffer));
+        try (HardwareBuffer hardwareBuffer = createSensorsHardwareBuffer()) {
+            assertThrows(UncheckedIOException.class,
+                    () -> mVirtualDeviceSensorManager.createDirectChannel(hardwareBuffer));
+        }
     }
 
     @Test
@@ -532,19 +529,18 @@ public class VirtualSensorTest {
         assumeTrue(mSensorManager.getSensorList(Sensor.TYPE_ALL).stream().anyMatch(
                 s -> s.isDirectChannelTypeSupported(TYPE_HARDWARE_BUFFER)));
 
-        HardwareBuffer hardwareBuffer = HardwareBuffer.create(
-                /*width=*/SHARED_MEMORY_SIZE, /*height=*/1, HardwareBuffer.BLOB, /*layers=*/1,
-                HardwareBuffer.USAGE_CPU_READ_OFTEN | HardwareBuffer.USAGE_GPU_DATA_BUFFER
-                        | HardwareBuffer.USAGE_SENSOR_DIRECT_DATA);
-        SensorDirectChannel channel = mSensorManager.createDirectChannel(hardwareBuffer);
+        try (HardwareBuffer hardwareBuffer = createSensorsHardwareBuffer()) {
+            SensorDirectChannel channel = mSensorManager.createDirectChannel(hardwareBuffer);
 
-        mVirtualSensor = setUpVirtualSensor(
-                new VirtualSensorConfig.Builder(TYPE_ACCELEROMETER, VIRTUAL_SENSOR_NAME).build());
+            mVirtualSensor = setUpVirtualSensor(
+                    new VirtualSensorConfig.Builder(TYPE_ACCELEROMETER,
+                            VIRTUAL_SENSOR_NAME).build());
 
-        // The channel is created for the default device ID, configuring it for a sensor of the
-        // virtual device should not be allowed.
-        Sensor sensor = mVirtualDeviceSensorManager.getDefaultSensor(TYPE_ACCELEROMETER);
-        assertThat(channel.configure(sensor, RATE_NORMAL)).isEqualTo(0);
+            // The channel is created for the default device ID, configuring it for a sensor of the
+            // virtual device should not be allowed.
+            Sensor sensor = mVirtualDeviceSensorManager.getDefaultSensor(TYPE_ACCELEROMETER);
+            assertThat(channel.configure(sensor, RATE_NORMAL)).isEqualTo(0);
+        }
     }
 
     @Test
@@ -857,5 +853,13 @@ public class VirtualSensorTest {
                 }
             }
         }
+    }
+
+    private static HardwareBuffer createSensorsHardwareBuffer() {
+        return HardwareBuffer.create(
+                /*width=*/SHARED_MEMORY_SIZE, /*height=*/1, HardwareBuffer.BLOB, /*layers=*/1,
+                HardwareBuffer.USAGE_CPU_READ_OFTEN
+                        | HardwareBuffer.USAGE_GPU_DATA_BUFFER
+                        | HardwareBuffer.USAGE_SENSOR_DIRECT_DATA);
     }
 }
