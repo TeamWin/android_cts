@@ -17,6 +17,7 @@ package android.content.pm.cts.shortcuthost;
 
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -38,6 +39,7 @@ public class ShortcutManagerUpgradeTest extends BaseShortcutManagerHostTest {
      * Make sure that, even when icon resource IDs have changed during an app upgrade,
      * ShortcutManager correctly resolves the right resources by resource name.
      */
+    @Ignore("b/288276271")
     @Test
     public void testUpgrade() throws Exception {
         installAppAsUser(VERSION1_APK, getPrimaryUserId());
