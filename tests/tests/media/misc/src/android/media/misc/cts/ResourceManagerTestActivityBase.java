@@ -27,7 +27,7 @@ import android.os.Bundle;
 import android.util.Log;
 
 import java.io.IOException;
-import java.util.Vector;
+import java.util.ArrayList;
 
 public class ResourceManagerTestActivityBase extends Activity {
     public static final int TYPE_NONSECURE = 0;
@@ -37,34 +37,37 @@ public class ResourceManagerTestActivityBase extends Activity {
     // 10 seconds between I-frames
     private static final int IFRAME_INTERVAL = 10;
     protected static final int MAX_INSTANCES = 32;
+    private static final MediaCodecList sMCL = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
 
+    private boolean mIsEncoder = false;
     private int mWidth = 0;
     private int mHeight = 0;
     protected String TAG;
     private String mMime = MediaFormat.MIMETYPE_VIDEO_AVC;
+    private String mCodecName = "none";
 
-    private Vector<MediaCodec> mCodecs = new Vector<MediaCodec>();
+    private ArrayList<MediaCodec> mCodecs = new ArrayList<MediaCodec>();
 
     private class TestCodecCallback extends MediaCodec.Callback {
         @Override
         public void onInputBufferAvailable(MediaCodec codec, int index) {
-            Log.d(TAG, "onInputBufferAvailable " + codec.toString());
+            Log.v(TAG, "onInputBufferAvailable " + codec.toString());
         }
 
         @Override
         public void onOutputBufferAvailable(
                 MediaCodec codec, int index, MediaCodec.BufferInfo info) {
-            Log.d(TAG, "onOutputBufferAvailable " + codec.toString());
+            Log.v(TAG, "onOutputBufferAvailable " + codec.toString());
         }
 
         @Override
         public void onError(MediaCodec codec, MediaCodec.CodecException e) {
-            Log.d(TAG, "onError " + codec.toString() + " errorCode " + e.getErrorCode());
+            Log.e(TAG, "onError " + codec.toString() + " errorCode " + e.getErrorCode());
         }
 
         @Override
         public void onOutputFormatChanged(MediaCodec codec, MediaFormat format) {
-            Log.d(TAG, "onOutputFormatChanged " + codec.toString());
+            Log.v(TAG, "onOutputFormatChanged " + codec.toString());
         }
     }
 
@@ -95,16 +98,44 @@ public class ResourceManagerTestActivityBase extends Activity {
         format.setInteger(MediaFormat.KEY_FRAME_RATE, FRAME_RATE);
         format.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, IFRAME_INTERVAL);
         format.setFeatureEnabled(CodecCapabilities.FEATURE_SecurePlayback, securePlayback);
+
+        if (mIsEncoder) {
+            // TODO: Facilitate the verification of reclaim when the codec is configured
+            // in realtime and non-realtime priorities.
+            // format.setInteger(MediaFormat.KEY_PRIORITY, 1);
+            // format.setInteger(MediaFormat.KEY_PRIORITY, 0);
+            // TODO: Make sure this color format is supported by the encoder
+            // If not, pick one that is supported.
+            format.setInteger(MediaFormat.KEY_COLOR_FORMAT,
+                    CodecCapabilities.COLOR_FormatYUV420Flexible);
+        }
         return format;
     }
 
-    private MediaCodecInfo getTestCodecInfo(boolean securePlayback) {
-        // Use avc decoder for testing.
-        boolean isEncoder = false;
+    private MediaCodecInfo getCodecInfo(boolean securePlayback) {
+        if (mCodecName.equals("none")) {
+            // We don't know the codec name yet, so look for a decoder
+            // that supports the mime type.
+            return getDecoderInfo(securePlayback);
+        }
 
-        MediaCodecList mcl = new MediaCodecList(MediaCodecList.ALL_CODECS);
-        for (MediaCodecInfo info : mcl.getCodecInfos()) {
-            if (info.isEncoder() != isEncoder) {
+        // We already know the codec name, so return the info directly.
+        for (MediaCodecInfo info : sMCL.getCodecInfos()) {
+            if (info.getName().equals(mCodecName)) {
+                mIsEncoder = info.isEncoder();
+                return info;
+            }
+        }
+
+        return null;
+    }
+
+    private MediaCodecInfo getDecoderInfo(boolean securePlayback) {
+        MediaCodecInfo fallbackInfo = null;
+
+        for (MediaCodecInfo info : sMCL.getCodecInfos()) {
+            if (info.isEncoder()) {
+                // Skip through encoders.
                 continue;
             }
             CodecCapabilities caps;
@@ -119,6 +150,11 @@ public class ResourceManagerTestActivityBase extends Activity {
                     Log.d(TAG, "securePlayback " + securePlayback + " will use " + info.getName());
                 } else {
                     Log.d(TAG, "securePlayback " + securePlayback + " skip " + info.getName());
+                    // If in case there is no secure decoder, use the first
+                    // one as fallback.
+                    if (fallbackInfo == null) {
+                        fallbackInfo = info;
+                    }
                     continue;
                 }
             } catch (IllegalArgumentException e) {
@@ -128,7 +164,7 @@ public class ResourceManagerTestActivityBase extends Activity {
             return info;
         }
 
-        return null;
+        return fallbackInfo;
     }
 
     protected int allocateCodecs(int max) {
@@ -137,6 +173,8 @@ public class ResourceManagerTestActivityBase extends Activity {
         boolean highResolution = false;
         if (extras != null) {
             type = extras.getInt("test-type", type);
+            // Check if codec name has been passed.
+            mCodecName = extras.getString("name", mCodecName);
             // Check if mime has been passed.
             mMime = extras.getString("mime", mMime);
             // Check if resolution has been passed.
@@ -149,15 +187,13 @@ public class ResourceManagerTestActivityBase extends Activity {
             } else if (mHeight >= 1080) {
                 highResolution = true;
             }
-
-            Log.d(TAG, "type is: " + type + " high-resolution: " + highResolution);
         }
 
         boolean shouldSkip = false;
         boolean securePlayback;
         if (type == TYPE_NONSECURE || type == TYPE_MIX) {
             securePlayback = false;
-            MediaCodecInfo info = getTestCodecInfo(securePlayback);
+            MediaCodecInfo info = getCodecInfo(securePlayback);
             if (info != null) {
                 allocateCodecs(max, info, securePlayback, highResolution);
             } else {
@@ -168,7 +204,7 @@ public class ResourceManagerTestActivityBase extends Activity {
         if (!shouldSkip) {
             if (type == TYPE_SECURE || type == TYPE_MIX) {
                 securePlayback = true;
-                MediaCodecInfo info = getTestCodecInfo(securePlayback);
+                MediaCodecInfo info = getCodecInfo(securePlayback);
                 if (info != null) {
                     allocateCodecs(max, info, securePlayback, highResolution);
                 } else {
@@ -182,23 +218,25 @@ public class ResourceManagerTestActivityBase extends Activity {
             finishWithResult(ResourceManagerStubActivity.RESULT_CODE_NO_DECODER);
         }
 
-        Log.d(TAG, "allocateCodecs returned " + mCodecs.size());
+        Log.d(TAG, "allocateCodecs(" +  mCodecName + ":" + mMime + ":" + mWidth
+                + "x" + mHeight + ") returned " + mCodecs.size());
         return mCodecs.size();
     }
 
     protected void allocateCodecs(int max, MediaCodecInfo info, boolean securePlayback,
             boolean highResolution) {
-        String name = info.getName();
+        mCodecName = info.getName();
+        int flag = mIsEncoder ? MediaCodec.CONFIGURE_FLAG_ENCODE : 0;
         CodecCapabilities caps = info.getCapabilitiesForType(mMime);
         MediaFormat format = getTestFormat(caps, securePlayback, highResolution);
         MediaCodec codec = null;
         for (int i = mCodecs.size(); i < max; ++i) {
             try {
-                Log.d(TAG, "Create codec " + name + " #" + i);
-                codec = MediaCodec.createByCodecName(name);
+                Log.d(TAG, "Create codec " + mCodecName + " #" + i);
+                codec = MediaCodec.createByCodecName(mCodecName);
                 codec.setCallback(mCallback);
                 Log.d(TAG, "Configure codec " + format);
-                codec.configure(format, null, null, 0);
+                codec.configure(format, null, null, flag);
                 Log.d(TAG, "Start codec " + format);
                 codec.start();
                 mCodecs.add(codec);
@@ -230,7 +268,7 @@ public class ResourceManagerTestActivityBase extends Activity {
         mCodecs.clear();
         setResult(result);
         finish();
-        Log.d(TAG, "activity finished");
+        Log.d(TAG, "activity finished with: " + result);
     }
 
     private void doUseCodecs() {

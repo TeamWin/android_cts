@@ -27,7 +27,7 @@ import android.os.Bundle;
 import android.util.Log;
 
 import java.io.IOException;
-import java.util.Vector;
+import java.util.ArrayList;
 
 public class ResourceManagerCodecActivity extends Activity {
     private static final String TAG = "ResourceManagerCodecActivity";
@@ -40,7 +40,7 @@ public class ResourceManagerCodecActivity extends Activity {
     private int mHeight = 0;
     private int mBitrate = 0;
     private String mMime = MediaFormat.MIMETYPE_VIDEO_AVC;
-    private Vector<MediaCodec> mCodecs = new Vector<MediaCodec>();
+    private ArrayList<MediaCodec> mCodecs = new ArrayList<MediaCodec>();
     private Thread mWorkerThread;
 
     @Override
@@ -73,7 +73,7 @@ public class ResourceManagerCodecActivity extends Activity {
     }
 
     // MediaCodec callback
-    private class TestCodecCallback extends MediaCodec.Callback {
+    private static class TestCodecCallback extends MediaCodec.Callback {
         @Override
         public void onInputBufferAvailable(MediaCodec codec, int index) {
         }
@@ -98,7 +98,7 @@ public class ResourceManagerCodecActivity extends Activity {
 
     // Get a HW Codec info for a given mime (mMime, which is either AVC or HEVC)
     private MediaCodecInfo getCodecInfo(boolean lookForDecoder) {
-        MediaCodecList mcl = new MediaCodecList(MediaCodecList.ALL_CODECS);
+        MediaCodecList mcl = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
         for (MediaCodecInfo info : mcl.getCodecInfos()) {
             if (info.isSoftwareOnly()) {
                 // not testing the sw codecs for now as currently there are't
@@ -119,16 +119,17 @@ public class ResourceManagerCodecActivity extends Activity {
                 // Skip it
                 continue;
             }
-            CodecCapabilities caps;
-            try {
-                caps = info.getCapabilitiesForType(mMime);
-            } catch (IllegalArgumentException e) {
-                // mime is not supported
-                continue;
+
+            // Return the first codec capable of the specified MIME type
+            String[] types = info.getSupportedTypes();
+            for (int j = 0; j < types.length; j++) {
+                if (types[j].equalsIgnoreCase(mMime)) {
+                    return info;
+                }
             }
-            return info;
         }
 
+        // no matching codec, return null.
         return null;
     }
 
