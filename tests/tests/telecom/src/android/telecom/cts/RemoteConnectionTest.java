@@ -21,6 +21,8 @@ import static android.telecom.cts.TestUtils.InvokeCounter;
 import static android.telecom.cts.TestUtils.TEST_PHONE_ACCOUNT_HANDLE;
 import static android.telecom.cts.TestUtils.WAIT_FOR_STATE_CHANGE_TIMEOUT_CALLBACK;
 import static android.telecom.cts.TestUtils.WAIT_FOR_STATE_CHANGE_TIMEOUT_MS;
+import static android.telephony.AccessNetworkConstants.TRANSPORT_TYPE_WWAN;
+import static android.telephony.NetworkRegistrationInfo.DOMAIN_CS;
 
 import android.graphics.SurfaceTexture;
 import android.net.Uri;
@@ -39,6 +41,7 @@ import android.telecom.RemoteConnection.VideoProvider;
 import android.telecom.StatusHints;
 import android.telecom.TelecomManager;
 import android.telecom.VideoProfile;
+import android.telephony.NetworkRegistrationInfo;
 import android.telephony.ServiceState;
 import android.view.Surface;
 
@@ -117,14 +120,14 @@ public class RemoteConnectionTest extends BaseRemoteTelecomTest {
         assertConnectionState(mRemoteConnection, Connection.STATE_ACTIVE);
 
         ServiceState serviceState = mTelephonyManager.getServiceState();
-        if (serviceState != null
-                && serviceState.getState() == ServiceState.STATE_IN_SERVICE) {
-            // Check LAST_KNOWN_CELL_IDENTITY only if device has voice service
-            assertNotNull(mRemoteConnection.getExtras()
-                    .get(Connection.EXTRA_LAST_KNOWN_CELL_IDENTITY));
-        } else {
-            assertNull(mRemoteConnection.getExtras()
-                    .get(Connection.EXTRA_LAST_KNOWN_CELL_IDENTITY));
+        if (serviceState != null) {
+            NetworkRegistrationInfo nri = serviceState.getNetworkRegistrationInfo(DOMAIN_CS,
+                    TRANSPORT_TYPE_WWAN);
+            if (nri != null && nri.isRegistered()) {
+                // Check LAST_KNOWN_CELL_IDENTITY only if device has voice service
+                assertNotNull(mRemoteConnection.getExtras()
+                        .get(Connection.EXTRA_LAST_KNOWN_CELL_IDENTITY));
+            }
         }
 
         call.disconnect();
