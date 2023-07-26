@@ -59,6 +59,7 @@ import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 
 import androidx.annotation.NonNull;
+import androidx.test.filters.FlakyTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
 
@@ -382,6 +383,7 @@ public class DisplayHashManagerTest {
     }
 
     @Test
+    @FlakyTest(bugId = 292291447)
     public void testGenerateAndVerifyDisplayHash_MultiColor() {
         final CountDownLatch committedCallbackLatch = new CountDownLatch(1);
         final SurfaceControl.Transaction t = new SurfaceControl.Transaction();
