@@ -17,7 +17,6 @@
 package android.companion.cts.core
 
 import android.Manifest.permission.MANAGE_COMPANION_DEVICES
-import android.annotation.UserIdInt
 import android.companion.AssociationInfo
 import android.companion.CompanionDeviceManager
 import android.companion.cts.common.MAC_ADDRESS_A
@@ -25,13 +24,14 @@ import android.companion.cts.common.MAC_ADDRESS_B
 import android.companion.cts.common.MAC_ADDRESS_C
 import android.companion.cts.common.assertAssociations
 import android.companion.cts.common.assertEmpty
+import android.companion.cts.common.getAssociationForPackage
 import android.net.MacAddress
 import android.platform.test.annotations.AppModeFull
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import org.junit.Test
-import org.junit.runner.RunWith
 import kotlin.test.assertFailsWith
 import kotlin.test.fail
+import org.junit.Test
+import org.junit.runner.RunWith
 
 /**
  * Test CDM APIs for removing existing associations.
@@ -50,9 +50,8 @@ class DisassociateTest : CoreTestBase() {
         val associations = cdm.myAssociations
         assertAssociations(
                 actual = associations,
-                expected = setOf(
-                        packageName to MAC_ADDRESS_A
-                ))
+                expected = setOf(packageName to MAC_ADDRESS_A)
+        )
 
         cdm.disassociate(associations[0].id)
         assertEmpty(cdm.myAssociations)
@@ -69,7 +68,8 @@ class DisassociateTest : CoreTestBase() {
                         packageName to MAC_ADDRESS_A,
                         packageName to MAC_ADDRESS_B,
                         packageName to MAC_ADDRESS_C
-                ))
+                )
+        )
 
         cdm.disassociate(cdm.getMyAssociationLinkedTo(MAC_ADDRESS_A).id)
         assertAssociations(
@@ -77,14 +77,14 @@ class DisassociateTest : CoreTestBase() {
                 expected = setOf(
                         packageName to MAC_ADDRESS_B,
                         packageName to MAC_ADDRESS_C
-                ))
+                )
+        )
 
         cdm.disassociate(cdm.getMyAssociationLinkedTo(MAC_ADDRESS_B).id)
         assertAssociations(
                 actual = cdm.myAssociations,
-                expected = setOf(
-                        packageName to MAC_ADDRESS_C
-                ))
+                expected = setOf(packageName to MAC_ADDRESS_C)
+        )
 
         cdm.disassociate(cdm.getMyAssociationLinkedTo(MAC_ADDRESS_C).id)
         assertEmpty(cdm.myAssociations)
@@ -95,12 +95,11 @@ class DisassociateTest : CoreTestBase() {
         associate(MAC_ADDRESS_A)
         assertAssociations(
                 actual = withShellPermissionIdentity { cdm.allAssociations },
-                expected = setOf(
-                        packageName to MAC_ADDRESS_A
-                ))
+                expected = setOf(packageName to MAC_ADDRESS_A)
+        )
 
         val association = withShellPermissionIdentity {
-            cdm.getAssociationForPackage(userId, packageName, MAC_ADDRESS_A)
+            getAssociationForPackage(userId, packageName, MAC_ADDRESS_A, cdm)
         }
 
         /**
@@ -112,9 +111,8 @@ class DisassociateTest : CoreTestBase() {
         }
         assertAssociations(
                 actual = withShellPermissionIdentity { cdm.allAssociations },
-                expected = setOf(
-                        packageName to MAC_ADDRESS_A
-                ))
+                expected = setOf(packageName to MAC_ADDRESS_A)
+        )
 
         /**
          * Re-running with [MANAGE_COMPANION_DEVICES] permissions: now should succeed and remove
@@ -126,7 +124,8 @@ class DisassociateTest : CoreTestBase() {
         assertEmpty(
                 withShellPermissionIdentity {
                     cdm.allAssociations
-                })
+                }
+        )
     }
 
     @Test
@@ -134,7 +133,8 @@ class DisassociateTest : CoreTestBase() {
         assertEmpty(
                 withShellPermissionIdentity {
                     cdm.allAssociations
-                })
+                }
+        )
 
         assertFailsWith(IllegalArgumentException::class) { cdm.disassociate(0) }
         assertFailsWith(IllegalArgumentException::class) { cdm.disassociate(1) }
@@ -145,12 +145,4 @@ class DisassociateTest : CoreTestBase() {
         macAddress: MacAddress
     ): AssociationInfo = myAssociations.find { it.deviceMacAddress == macAddress }
                     ?: fail("Association linked to address $macAddress does not exist")
-
-    private fun CompanionDeviceManager.getAssociationForPackage(
-        @UserIdInt userId: Int,
-        packageName: String,
-        macAddress: MacAddress
-    ): AssociationInfo = allAssociations.find {
-        it.belongsToPackage(userId, packageName) && it.deviceMacAddress == macAddress
-    } ?: fail("Association for u$userId/$packageName linked to address $macAddress does not exist")
 }

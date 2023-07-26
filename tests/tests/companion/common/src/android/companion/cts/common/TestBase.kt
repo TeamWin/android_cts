@@ -18,6 +18,7 @@ package android.companion.cts.common
 
 import android.Manifest
 import android.annotation.CallSuper
+import android.annotation.UserIdInt
 import android.app.Instrumentation
 import android.app.UiAutomation
 import android.companion.AssociationInfo
@@ -41,6 +42,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
+import kotlin.test.fail
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
@@ -367,3 +369,12 @@ fun killProcess(name: String) {
     val pid = SystemUtil.runShellCommand("pgrep -A $name").trim()
     Process.killProcess(Integer.valueOf(pid))
 }
+
+fun getAssociationForPackage(
+        @UserIdInt userId: Int,
+        packageName: String,
+        macAddress: MacAddress,
+        cdm: CompanionDeviceManager
+): AssociationInfo = cdm.allAssociations.find {
+    it.belongsToPackage(userId, packageName) && it.deviceMacAddress == macAddress
+} ?: fail("Association for u$userId/$packageName linked to address $macAddress does not exist")
