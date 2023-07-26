@@ -36,6 +36,8 @@ import org.junit.Assume;
 import java.io.BufferedReader;
 import java.io.FileDescriptor;
 import java.io.FileReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -155,10 +157,23 @@ public class WallpaperWindowsTestUtils {
         }
     }
 
+    private static void checkLocksettingsClear() throws Exception {
+        ParcelFileDescriptor[] parcelFileDescriptors = sUiAutomation.executeShellCommandRwe(
+                "locksettings clear");
+        parcelFileDescriptors[0].close();
+        parcelFileDescriptors[1].close();
+        InputStream errStr = new ParcelFileDescriptor.AutoCloseInputStream(
+                parcelFileDescriptors[2]);
+        BufferedReader reader = new BufferedReader(new InputStreamReader(errStr));
+        if (reader.readLine() != null) {
+            throw new RuntimeException("Can not unlock device because password protected");
+        }
+        parcelFileDescriptors[2].close();
+    }
+
     private static void setKeyguardUnlockMethod(
             WindowManagerStateHelper wmState, boolean setDisabled) throws Exception {
         try {
-            sUiAutomation.executeShellCommand("locksettings clear");
             sUiAutomation.executeShellCommand("locksettings set-disabled " + setDisabled);
         } catch (IllegalArgumentException e) {
             Assume.assumeNoException(e);
@@ -166,21 +181,31 @@ public class WallpaperWindowsTestUtils {
         // Unlock device to make the changes effective from the next unlock
         showHomeScreen(wmState);
     }
-
-    private static void showLockScreen() throws Exception {
+    private static void turnOffDisplay() throws Exception {
         if (sDisplayManager == null) throw new Exception("No display");
         Display display = sDisplayManager.getDisplay(sContext.getDisplayId());
 
         UiDeviceUtils.pressSleepButton();
         TestUtils.waitUntil("display does not turn off", 5, () -> !isDisplayOn(display));
+    }
+    private static void turnOnDisplay() throws Exception {
+        if (sDisplayManager == null) throw new Exception("No display");
+        Display display = sDisplayManager.getDisplay(sContext.getDisplayId());
+
         UiDeviceUtils.pressWakeupButton();
         TestUtils.waitUntil("display does not turn on", 5, () -> isDisplayOn(display));
     }
 
+    private static void showLockScreen() throws Exception {
+        turnOffDisplay();
+        turnOnDisplay();
+    }
+
     private static void showHomeScreen(WindowManagerStateHelper wmSH) throws Exception {
-        showLockScreen();
-        UiDeviceUtils.pressUnlockButton();
-        wmSH.waitForKeyguardGone();
+        checkLocksettingsClear();
+        turnOnDisplay();
+        sUiAutomation.executeShellCommand("wm dismiss-keyguard");
+        wmSH.waitAndAssertKeyguardGone();
     }
 
     private static boolean isDisplayOn(Display display) {
