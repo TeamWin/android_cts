@@ -185,7 +185,7 @@ public class BiometricSecurityTests extends BiometricTestBase {
 
         try (BiometricTestSession session = mBiometricManager.createTestSession(sensorId);
              ActivitySession activitySession = new ActivitySession(this, componentName)) {
-            final int userId = 0;
+            final int userId = Utils.getUserId();
             waitForAllUnenrolled();
             enrollForSensor(session, sensorId);
             final TestJournal journal =
@@ -365,7 +365,7 @@ public class BiometricSecurityTests extends BiometricTestBase {
 
         try (BiometricTestSession session = mBiometricManager.createTestSession(sensorId);
              ActivitySession activitySession = new ActivitySession(this, componentName)) {
-            final int userId = 0;
+            final int userId = Utils.getUserId();
             waitForAllUnenrolled();
             enrollForSensor(session, sensorId);
             final TestJournal journal =

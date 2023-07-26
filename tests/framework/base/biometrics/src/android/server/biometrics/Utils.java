@@ -23,6 +23,7 @@ import android.hardware.biometrics.BiometricManager;
 import android.hardware.biometrics.BiometricPrompt;
 import android.hardware.biometrics.SensorProperties;
 import android.os.ParcelFileDescriptor;
+import android.os.Process;
 import android.os.SystemProperties;
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
@@ -319,6 +320,11 @@ public class Utils {
     /** Find the sensor id of the AIDL face HAL, or -1 if not present. */
     public static int getAidlFaceSensorId() {
         return getAidlSensorId("dumpsys face", ", provider: FaceProvider");
+    }
+
+    /** Find current user id. */
+    public static int getUserId() {
+        return Process.myUserHandle().getIdentifier();
     }
 
     private static int getAidlSensorId(String adbCommand, String providerRegex) {
