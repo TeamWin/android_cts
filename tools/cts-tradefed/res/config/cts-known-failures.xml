@@ -140,10 +140,6 @@
     <option name="compatibility:exclude-filter" value="CtsNativeMediaAAudioTestCases android.nativemedia.aaudio.AAudioTests#AAudioTestMMap_testBasicMmapOutput" />
     <option name="compatibility:exclude-filter" value="CtsNativeMediaAAudioTestCases[instant] android.nativemedia.aaudio.AAudioTests#AAudioTestMMap_testBasicMmapOutput" />
 
-    <!-- b/134654621 -->
-    <option name="compatibility:exclude-filter" value="CtsWindowManagerDeviceTestCases android.server.wm.AppConfigurationTests#testTaskCloseRestoreFreeOrientation" />
-    <option name="compatibility:exclude-filter" value="CtsWindowManagerDeviceTestCases android.server.wm.AppConfigurationTests#testAppOrientationRequestConfigClears" />
-
     <!-- b/62976713 -->
     <option name="compatibility:exclude-filter" value="arm64-v8a CtsMediaBitstreamsTestCases" />
     <option name="compatibility:exclude-filter" value="x86_64 CtsMediaBitstreamsTestCases" />
@@ -209,13 +205,6 @@
 
     <!-- b/126548816 -->
     <option name="compatibility:exclude-filter" value="CtsRcsTestCases" />
-
-    <!-- b/112688380 -->
-    <option name="compatibility:exclude-filter" value="CtsActivityManagerDeviceTestCases android.server.am.ActivityManagerAppConfigurationTests#testAppOrientationRequestConfigClears" />
-    <option name="compatibility:exclude-filter" value="CtsActivityManagerDeviceTestCases android.server.am.ActivityManagerAppConfigurationTests#testTaskCloseRestoreFreeOrientation" />
-    <!-- b/112688380, b/139936670 -->
-    <option name="compatibility:exclude-filter" value="CtsWindowManagerDeviceTestCases android.server.wm.AppConfigurationTests#testAppOrientationRequestConfigClears" />
-    <option name="compatibility:exclude-filter" value="CtsWindowManagerDeviceTestCases android.server.wm.AppConfigurationTests#testTaskCloseRestoreFreeOrientation" />
 
     <!-- b/167931576 -->
     <option name="compatibility:exclude-filter" value="CtsWindowManagerDeviceTestCases android.server.wm.ActivityVisibilityTests#testTurnScreenOnAttrNoLockScreen" />
