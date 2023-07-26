@@ -29,6 +29,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import android.app.Instrumentation;
 import android.content.Context;
 import android.graphics.Color;
 import android.os.Handler;
@@ -48,7 +49,9 @@ import android.view.inputmethod.InputMethodManager;
 import android.view.inputmethod.SurroundingText;
 import android.view.inputmethod.cts.util.EndToEndImeTestBase;
 import android.view.inputmethod.cts.util.HandlerInputConnection;
+import android.view.inputmethod.cts.util.MockTestActivityUtil;
 import android.view.inputmethod.cts.util.TestActivity;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 
 import androidx.annotation.NonNull;
@@ -64,6 +67,7 @@ import com.android.cts.mockime.MockImeSession;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -217,6 +221,236 @@ public class InputConnectionHandlerTest extends EndToEndImeTestBase {
 
             assertEquals("commitText() must happen on the handler thread",
                     thread.getThreadId(), callingThreadId.get());
+        }
+    }
+
+    /**
+     * Test {@link InputConnection#closeConnection()} gets called on the associated thread after
+     * {@link InputMethodManager#restartInput(View)}.
+     *
+     * @see InputConnectionLifecycleTest#testCloseConnectionWithRestartInput()
+     */
+    @Test
+    public void testCloseConnectionWithRestartInput() throws Exception {
+        try (InputConnectionHandlingThread thread = new InputConnectionHandlingThread();
+             MockImeSession imeSession = MockImeSession.create(
+                     InstrumentationRegistry.getInstrumentation().getContext(),
+                     InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+                     new ImeSettings.Builder())) {
+
+            final CountDownLatch latch = new CountDownLatch(1);
+            final AtomicInteger callingThreadId = new AtomicInteger(0);
+
+            final ImeEventStream stream = imeSession.openEventStream();
+
+            final String marker = getTestMarker();
+
+            final AtomicReference<TestEditor> testEditorRef = new AtomicReference<>();
+
+            TestActivity.startSync(activity -> {
+                final LinearLayout layout = new LinearLayout(activity);
+                layout.setOrientation(LinearLayout.VERTICAL);
+
+                // Just to be conservative, we explicitly check MockImeSession#isActive() here when
+                // injecting our custom InputConnection implementation.
+                final TestEditor testEditor = new TestEditor(activity) {
+                    @Override
+                    public boolean onCheckIsTextEditor() {
+                        return imeSession.isActive();
+                    }
+
+                    @Override
+                    public InputConnection onCreateInputConnection(EditorInfo outAttrs) {
+                        if (!imeSession.isActive()) {
+                            return null;
+                        }
+                        outAttrs.inputType = InputType.TYPE_CLASS_TEXT;
+                        outAttrs.privateImeOptions = marker;
+                        return new HandlerInputConnection(thread.getHandler()) {
+                            @Override
+                            public void closeConnection() {
+                                if (callingThreadId.compareAndExchange(0, Os.gettid()) == 0) {
+                                    latch.countDown();
+                                }
+                                super.closeConnection();
+                            }
+                        };
+                    }
+                };
+                testEditorRef.set(testEditor);
+
+                testEditor.requestFocus();
+                layout.addView(testEditor);
+
+                return layout;
+            });
+
+            // Wait until "onStartInput" gets called for the EditText.
+            expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
+            assertEquals(1, latch.getCount());
+
+            runOnMainSync(() -> {
+                final TestEditor testEditor = testEditorRef.get();
+                final InputMethodManager imm = Objects.requireNonNull(
+                        testEditor.getContext().getSystemService(InputMethodManager.class));
+                imm.restartInput(testEditor);
+            });
+
+            assertTrue("closeConnection() must be called",
+                    latch.await(TIMEOUT, TimeUnit.MILLISECONDS));
+            assertEquals("closeConnection() must happen on the handler thread",
+                    thread.getThreadId(), callingThreadId.get());
+        }
+    }
+
+    /**
+     * Test {@link InputConnection#closeConnection()} gets called on the associated thread after
+     * losing the {@link View} focus.
+     *
+     * @see InputConnectionLifecycleTest#testCloseConnectionWithLosingViewFocus()
+     */
+    @Test
+    public void testCloseConnectionWithLosingViewFocus() throws Exception {
+        try (InputConnectionHandlingThread thread = new InputConnectionHandlingThread();
+             MockImeSession imeSession = MockImeSession.create(
+                     InstrumentationRegistry.getInstrumentation().getContext(),
+                     InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+                     new ImeSettings.Builder())) {
+
+            final CountDownLatch latch = new CountDownLatch(1);
+            final AtomicInteger callingThreadId = new AtomicInteger(0);
+
+            final ImeEventStream stream = imeSession.openEventStream();
+
+            final String marker = getTestMarker();
+
+            final AtomicReference<EditText> anotherEditTextRef = new AtomicReference<>();
+
+            TestActivity.startSync(activity -> {
+                final LinearLayout layout = new LinearLayout(activity);
+                layout.setOrientation(LinearLayout.VERTICAL);
+
+                // Just to be conservative, we explicitly check MockImeSession#isActive() here when
+                // injecting our custom InputConnection implementation.
+                final TestEditor testEditor = new TestEditor(activity) {
+                    @Override
+                    public boolean onCheckIsTextEditor() {
+                        return imeSession.isActive();
+                    }
+
+                    @Override
+                    public InputConnection onCreateInputConnection(EditorInfo outAttrs) {
+                        if (!imeSession.isActive()) {
+                            return null;
+                        }
+                        outAttrs.privateImeOptions = marker;
+                        return new HandlerInputConnection(thread.getHandler()) {
+                            @Override
+                            public void closeConnection() {
+                                if (callingThreadId.compareAndExchange(0, Os.gettid()) == 0) {
+                                    latch.countDown();
+                                }
+                                super.closeConnection();
+                            }
+                        };
+                    }
+                };
+
+                testEditor.requestFocus();
+                layout.addView(testEditor);
+
+                final EditText editText = new EditText(activity);
+                layout.addView(editText);
+
+                anotherEditTextRef.set(editText);
+
+                return layout;
+            });
+
+            // Wait until "onStartInput" gets called for the EditText.
+            expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
+            assertEquals(1, latch.getCount());
+
+            runOnMainSync(() -> anotherEditTextRef.get().requestFocus());
+
+            assertTrue("closeConnection() must be called",
+                    latch.await(TIMEOUT, TimeUnit.MILLISECONDS));
+            assertEquals("closeConnection() must happen on the handler thread",
+                    thread.getThreadId(), callingThreadId.get());
+        }
+    }
+
+    /**
+     * Test {@link InputConnection#closeConnection()} gets called on the associated thread after
+     * losing the {@link android.view.Window} focus.
+     *
+     * @see InputConnectionLifecycleTest#testCloseConnectionWithLosingWindowFocus()
+     */
+    @Test
+    public void testCloseConnectionWithLosingWindowFocus() throws Exception {
+        final Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
+        try (InputConnectionHandlingThread thread = new InputConnectionHandlingThread();
+             MockImeSession imeSession = MockImeSession.create(
+                     instrumentation.getContext(),
+                     instrumentation.getUiAutomation(),
+                     new ImeSettings.Builder())) {
+
+            final CountDownLatch latch = new CountDownLatch(1);
+            final AtomicInteger callingThreadId = new AtomicInteger(0);
+
+            final ImeEventStream stream = imeSession.openEventStream();
+
+            final String marker = getTestMarker();
+
+            TestActivity.startSync(activity -> {
+                final LinearLayout layout = new LinearLayout(activity);
+                layout.setOrientation(LinearLayout.VERTICAL);
+
+                // Just to be conservative, we explicitly check MockImeSession#isActive() here when
+                // injecting our custom InputConnection implementation.
+                final TestEditor testEditor = new TestEditor(activity) {
+                    @Override
+                    public boolean onCheckIsTextEditor() {
+                        return imeSession.isActive();
+                    }
+
+                    @Override
+                    public InputConnection onCreateInputConnection(EditorInfo outAttrs) {
+                        if (!imeSession.isActive()) {
+                            return null;
+                        }
+                        outAttrs.privateImeOptions = marker;
+                        return new HandlerInputConnection(thread.getHandler()) {
+                            @Override
+                            public void closeConnection() {
+                                if (callingThreadId.compareAndExchange(0, Os.gettid()) == 0) {
+                                    latch.countDown();
+                                }
+                                super.closeConnection();
+                            }
+                        };
+                    }
+                };
+
+                testEditor.requestFocus();
+                layout.addView(testEditor);
+
+                return layout;
+            });
+
+            // Wait until "onStartInput" gets called for the EditText.
+            expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
+            assertEquals(1, latch.getCount());
+
+            // Launch a new Activity in a different process.
+            final boolean instant =
+                    instrumentation.getTargetContext().getPackageManager().isInstantApp();
+            try (AutoCloseable unused = MockTestActivityUtil.launchSync(instant, TIMEOUT)) {
+                assertTrue("closeConnection() must be called",
+                        latch.await(TIMEOUT, TimeUnit.MILLISECONDS));
+                assertEquals("closeConnection() must happen on the handler thread",
+                        thread.getThreadId(), callingThreadId.get());
+            }
         }
     }
 
