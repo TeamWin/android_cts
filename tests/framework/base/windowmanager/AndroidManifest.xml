@@ -575,7 +575,7 @@
         <activity android:name="android.server.wm.activity.HostActivity"
                   android:exported="true">
                <intent-filter>
-                 <action android:name="android.server.wm.app.HostActivity"/>
+                 <action android:name="android.server.wm.activity.HostActivity"/>
                </intent-filter>
                <intent-filter>
                  <action android:name="android.intent.action.MAIN"/>
