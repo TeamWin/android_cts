@@ -951,6 +951,28 @@ public class LoginActivityTest extends LoginActivityCommonTestCase {
         mUiBot.assertNoDatasets();
     }
 
+    @Test
+    public void testUiNotShowAfterSessionEnds() throws Exception {
+        // Set service.
+        enableService();
+
+        // Set expectations.
+        sReplier.addResponse(new CannedDataset.Builder()
+                .setField(ID_USERNAME, "dude")
+                .setField(ID_PASSWORD, "sweet")
+                .setPresentation(createPresentation("The Dude"))
+                .build());
+        // Trigger auto-fill.
+        requestFocusOnUsername();
+        sReplier.getNextFillRequest();
+
+        // Call commit to end the session
+        final AutofillManager afm = mActivity.getAutofillManager();
+        afm.commit();
+
+        mUiBot.assertNoDatasetsEver();
+    }
+
     @Presubmit
     @Test
     public void testAutofillCallbacks() throws Exception {
