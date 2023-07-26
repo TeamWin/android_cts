@@ -4631,6 +4631,10 @@
             <meta-data android:name="test_excluded_features"
                     android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.automotive" />
             <meta-data android:name="display_mode" android:value="single_display_mode" />
+            <meta-data
+                android:name="test_required_configs"
+                android:value="config_battery_supported"/>
+            <meta-data android:name="CddTest" android:value="7.3/C-1-5" />
         </activity>
 
         <service
