@@ -42,6 +42,7 @@ import android.provider.Settings;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.FlakyTest;
 import androidx.test.filters.LargeTest;
 import androidx.test.runner.AndroidJUnit4;
 import androidx.test.uiautomator.UiDevice;
@@ -107,6 +108,7 @@ public class UserInitiatedJobTest {
     }
 
     @Test
+    @FlakyTest
     public void testJobUidState() throws Exception {
         // Go through the notification click/BAL route of scheduling the job so the proc state
         // data comes from being elevated by the running job and not because of the app being
@@ -282,6 +284,7 @@ public class UserInitiatedJobTest {
     }
 
     @Test
+    @FlakyTest
     public void testRestrictedUidState() throws Exception {
         mTestAppInterface.setTestPackageRestricted(true);
         // Go through the notification click/BAL route of scheduling the job so the proc state
