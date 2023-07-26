@@ -89,16 +89,19 @@ class TouchScreenTest {
         // ACTION_DOWN
         touchScreen.sendBtnTouch(true)
         touchScreen.sendDown(0 /*id*/, pointer)
+        touchScreen.sync()
         verifier.assertReceivedDown()
 
         // ACTION_MOVE
         pointer.offset(1, 1)
         touchScreen.sendMove(0 /*id*/, pointer)
+        touchScreen.sync()
         verifier.assertReceivedMove()
 
         // ACTION_UP
         touchScreen.sendBtnTouch(false)
         touchScreen.sendUp(0 /*id*/)
+        touchScreen.sync()
         verifier.assertReceivedUp()
     }
 
@@ -111,24 +114,29 @@ class TouchScreenTest {
         // ACTION_DOWN
         touchScreen.sendBtnTouch(true)
         touchScreen.sendDown(0 /*id*/, pointer1)
+        touchScreen.sync()
         verifier.assertReceivedDown()
 
         // ACTION_POINTER_DOWN
         touchScreen.sendDown(1 /*id*/, pointer2)
+        touchScreen.sync()
         verifier.assertReceivedPointerDown(1)
 
         // ACTION_MOVE
         pointer2.offset(1, 1)
         touchScreen.sendMove(1 /*id*/, pointer2)
+        touchScreen.sync()
         verifier.assertReceivedMove()
 
         // ACTION_POINTER_UP
         touchScreen.sendUp(0 /*id*/)
+        touchScreen.sync()
         verifier.assertReceivedPointerUp(0)
 
         // ACTION_UP
         touchScreen.sendBtnTouch(false)
         touchScreen.sendUp(1 /*id*/)
+        touchScreen.sync()
         verifier.assertReceivedUp()
     }
 
@@ -140,20 +148,24 @@ class TouchScreenTest {
         // ACTION_DOWN
         touchScreen.sendBtnTouch(true)
         touchScreen.sendDown(0 /*id*/, pointer)
+        touchScreen.sync()
         verifier.assertReceivedDown()
 
         // ACTION_MOVE
         pointer.offset(1, 1)
         touchScreen.sendMove(0 /*id*/, pointer)
+        touchScreen.sync()
         verifier.assertReceivedMove()
 
         // ACTION_CANCEL
         touchScreen.sendToolType(0 /*id*/, UinputTouchDevice.MT_TOOL_PALM)
+        touchScreen.sync()
         verifier.assertReceivedCancel()
 
         // No event
         touchScreen.sendBtnTouch(false)
         touchScreen.sendUp(0 /*id*/)
+        touchScreen.sync()
         virtualDisplayRule.activity.assertNoEvents()
     }
 
@@ -169,24 +181,29 @@ class TouchScreenTest {
         // ACTION_DOWN
         touchScreen.sendBtnTouch(true)
         touchScreen.sendDown(0 /*id*/, pointer1)
+        touchScreen.sync()
         verifier.assertReceivedDown()
 
         // ACTION_MOVE
         pointer1.offset(1, 1)
         touchScreen.sendMove(0 /*id*/, pointer1)
+        touchScreen.sync()
         verifier.assertReceivedMove()
 
         // ACTION_POINTER_DOWN(1)
         touchScreen.sendDown(1 /*id*/, pointer2)
+        touchScreen.sync()
         verifier.assertReceivedPointerDown(1)
 
         // ACTION_POINTER_UP(1) with cancel flag
         touchScreen.sendToolType(1 /*id*/, UinputTouchDevice.MT_TOOL_PALM)
+        touchScreen.sync()
         verifier.assertReceivedPointerCancel(1)
 
         // ACTION_UP
         touchScreen.sendBtnTouch(false)
         touchScreen.sendUp(0 /*id*/)
+        touchScreen.sync()
         verifier.assertReceivedUp()
     }
 
@@ -253,16 +270,19 @@ class TouchScreenTest {
        // ACTION_DOWN
         touchScreen.sendBtnTouch(true)
         touchScreen.sendDown(0 /*id*/, pointer)
+        touchScreen.sync()
         verifyEventTime()
 
         // ACTION_MOVE
         pointer.offset(1, 1)
         touchScreen.sendMove(0 /*id*/, pointer)
+        touchScreen.sync()
         verifyEventTime()
 
         // ACTION_UP
         touchScreen.sendBtnTouch(false)
         touchScreen.sendUp(0 /*id*/)
+        touchScreen.sync()
         verifyEventTime()
     }
 
@@ -278,10 +298,12 @@ class TouchScreenTest {
         for (i in 0 until 4) {
             touchScreen.sendBtnTouch(true)
             touchScreen.sendDown(0 /*id*/, CORNERS[i])
+            touchScreen.sync()
             verifier.assertReceivedDown(expectedPoints[i])
 
             touchScreen.sendBtnTouch(false)
             touchScreen.sendUp(0 /*id*/)
+            touchScreen.sync()
             verifier.assertReceivedUp()
         }
     }

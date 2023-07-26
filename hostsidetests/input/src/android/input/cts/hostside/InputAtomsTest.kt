@@ -121,9 +121,7 @@ class InputAtomsTest : DeviceTestCase() {
 
     @CddTest(requirements = ["6.1/C-0-10"])
     fun testTouchpadUsageAtom_FingerAndPalmCounts() {
-        val builder = ConfigUtils.createConfigBuilder("AID_NOBODY")
-        ConfigUtils.addGaugeMetric(builder, InputExtensionAtoms.TOUCHPAD_USAGE_FIELD_NUMBER)
-        ConfigUtils.uploadConfig(device, builder)
+        setupTouchpadUsageConfig()
 
         DeviceUtils.runDeviceTests(
                 device,
@@ -142,6 +140,45 @@ class InputAtomsTest : DeviceTestCase() {
                 member("fingerCount", { fingerCount }, equalTo(3)),
                 member("palmCount", { palmCount }, equalTo(2)),
         ))
+    }
+
+    @CddTest(requirements = ["6.1/C-0-10"])
+    fun testTouchpadUsageAtom_GestureCounts() {
+        setupTouchpadUsageConfig()
+
+        DeviceUtils.runDeviceTests(
+            device,
+            TEST_APP_PACKAGE,
+            EMULATE_INPUT_DEVICE_CLASS,
+            "gestureOnTouchpad")
+
+        // Trigger atom pull.
+        AtomTestUtils.sendAppBreadcrumbReportedAtom(device)
+        RunUtil.getDefault().sleep(AtomTestUtils.WAIT_TIME_LONG.toLong())
+
+        val atoms = ReportUtils.getGaugeMetricAtoms(device, registry, false)
+        assertThat(atoms.size, equalTo(1))
+        val touchpadUsage: TouchpadUsage = atoms[0].getExtension(InputExtensionAtoms.touchpadUsage)
+        assertThat(touchpadUsage, Matchers.allOf<TouchpadUsage>(
+            member("fingerCount", { fingerCount }, equalTo(2 + 3 + 4 + 2)),
+            member("twoFingerSwipeGestureCount", { twoFingerSwipeGestureCount }, equalTo(1)),
+            member("threeFingerSwipeGestureCount", { threeFingerSwipeGestureCount }, equalTo(1)),
+            member("fourFingerSwipeGestureCount", { fourFingerSwipeGestureCount }, equalTo(1)),
+            member("pinchGestureCount", { pinchGestureCount }, equalTo(1)),
+        ))
+    }
+
+    private fun setupTouchpadUsageConfig() {
+        val builder = ConfigUtils.createConfigBuilder("AID_NOBODY")
+        ConfigUtils.addGaugeMetric(builder, InputExtensionAtoms.TOUCHPAD_USAGE_FIELD_NUMBER)
+        ConfigUtils.uploadConfig(device, builder)
+
+        // Trigger an atom pull and clear any returned atoms before running the rest of the test.
+        // This avoids flakes caused by the daily touchpad usage atom causing multiple atoms to be
+        // returned by getGaugeMetricAtoms later in the test.
+        AtomTestUtils.sendAppBreadcrumbReportedAtom(device)
+        RunUtil.getDefault().sleep(AtomTestUtils.WAIT_TIME_LONG.toLong())
+        ReportUtils.getGaugeMetricAtoms(device, registry, false)
     }
 }
 

@@ -86,14 +86,17 @@ class EmulateInputDevice {
         // Down
         sendBtnTouch(true)
         sendDown(0 /*id*/, pointer)
+        sync()
 
         // Move
         pointer.offset(1, 1)
         sendMove(0 /*id*/, pointer)
+        sync()
 
         // Up
         sendBtnTouch(false)
         sendUp(0 /*id*/)
+        sync()
     }
 
     @Test
@@ -109,21 +112,110 @@ class EmulateInputDevice {
                 touchpad.sendBtnTouch(true)
                 touchpad.sendBtn(UinputTouchDevice.BTN_TOOL_FINGER, true)
                 touchpad.sendDown(0, pointer, UinputTouchDevice.MT_TOOL_FINGER)
+                touchpad.sync()
 
                 touchpad.sendBtnTouch(false)
                 touchpad.sendBtn(UinputTouchDevice.BTN_TOOL_FINGER, false)
                 touchpad.sendUp(0)
+                touchpad.sync()
             }
             for (i in 0 until 2) {
                 val pointer = Point(100, 200)
                 touchpad.sendBtnTouch(true)
                 touchpad.sendBtn(UinputTouchDevice.BTN_TOOL_FINGER, true)
                 touchpad.sendDown(0, pointer, UinputTouchDevice.MT_TOOL_PALM)
+                touchpad.sync()
 
                 touchpad.sendBtnTouch(false)
                 touchpad.sendBtn(UinputTouchDevice.BTN_TOOL_FINGER, false)
                 touchpad.sendUp(0)
+                touchpad.sync()
             }
         }
+    }
+
+    @Test
+    fun gestureOnTouchpad() {
+        // A short delay is required between the end of one gesture and the start of another, due to
+        // a number of timeouts in the Gestures library.
+        val delayBetweenGesturesMillis: Long = 150
+
+        UinputTouchDevice(
+            instrumentation,
+            context.display!!,
+            R.raw.test_touchpad_register,
+            InputDevice.SOURCE_TOUCHPAD or InputDevice.SOURCE_MOUSE
+        ).use { touchpad ->
+            multiFingerSwipe(touchpad, 2)
+            Thread.sleep(delayBetweenGesturesMillis)
+            multiFingerSwipe(touchpad, 3)
+            Thread.sleep(delayBetweenGesturesMillis)
+            multiFingerSwipe(touchpad, 4)
+            Thread.sleep(delayBetweenGesturesMillis)
+
+            // Pinch
+            val pointer0 = Point(500, 500)
+            val pointer1 = Point(700, 700)
+            touchpad.sendBtnTouch(true)
+            touchpad.sendBtn(UinputTouchDevice.BTN_TOOL_FINGER, true)
+            touchpad.sendDown(0, pointer0)
+            touchpad.sync()
+
+            touchpad.sendBtn(UinputTouchDevice.BTN_TOOL_FINGER, false)
+            touchpad.sendBtn(UinputTouchDevice.BTN_TOOL_DOUBLETAP, true)
+            touchpad.sendDown(1, pointer1)
+            touchpad.sync()
+            Thread.sleep(TOUCHPAD_SCAN_DELAY_MILLIS)
+
+            for (rep in 0 until 10) {
+                pointer0.offset(-20, -20)
+                touchpad.sendMove(0, pointer0)
+                pointer1.offset(20, 20)
+                touchpad.sendMove(1, pointer1)
+                touchpad.sync()
+                Thread.sleep(TOUCHPAD_SCAN_DELAY_MILLIS)
+            }
+
+            touchpad.sendBtn(UinputTouchDevice.BTN_TOOL_DOUBLETAP, false)
+            touchpad.sendBtn(UinputTouchDevice.BTN_TOOL_FINGER, true)
+            touchpad.sendUp(0)
+            touchpad.sync()
+
+            touchpad.sendBtn(UinputTouchDevice.BTN_TOOL_FINGER, false)
+            touchpad.sendBtnTouch(false)
+            touchpad.sendUp(1)
+            touchpad.sync()
+        }
+    }
+
+    private fun multiFingerSwipe(touchpad: UinputTouchDevice, numFingers: Int) {
+        val pointers = Array(numFingers) { i -> Point(500 + i * 200, 500) }
+        touchpad.sendBtnTouch(true)
+        touchpad.sendBtn(UinputTouchDevice.toolBtnForFingerCount(numFingers), true)
+        for (i in pointers.indices) {
+            touchpad.sendDown(i, pointers[i])
+        }
+        touchpad.sync()
+        Thread.sleep(TOUCHPAD_SCAN_DELAY_MILLIS)
+
+        for (rep in 0 until 10) {
+            for (i in pointers.indices) {
+                pointers[i].offset(0, 40)
+                touchpad.sendMove(i, pointers[i])
+            }
+            touchpad.sync()
+            Thread.sleep(TOUCHPAD_SCAN_DELAY_MILLIS)
+        }
+
+        for (i in pointers.indices) {
+            touchpad.sendUp(i)
+        }
+        touchpad.sendBtn(UinputTouchDevice.toolBtnForFingerCount(numFingers), false)
+        touchpad.sendBtnTouch(false)
+        touchpad.sync()
+    }
+
+    companion object {
+        const val TOUCHPAD_SCAN_DELAY_MILLIS: Long = 5
     }
 }
