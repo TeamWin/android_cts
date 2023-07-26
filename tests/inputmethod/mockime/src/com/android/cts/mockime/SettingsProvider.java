@@ -33,6 +33,7 @@ import androidx.annotation.Nullable;
  */
 public class SettingsProvider extends ContentProvider {
 
+    public static final String SET_INLINE_SUGGESTION_EXTRAS_COMMAND = "setInlineSuggestionsExtras";
     private static final String TAG = "SettingsProvider";
     static final String AUTHORITY = "com.android.cts.mockime.provider";
 
@@ -41,6 +42,8 @@ public class SettingsProvider extends ContentProvider {
 
     @Nullable
     private static ImeSettings sSettings = null;
+    @Nullable
+    private static Bundle sInlineSuggestionsExtras;
 
     @Override
     public boolean onCreate() {
@@ -93,7 +96,13 @@ public class SettingsProvider extends ContentProvider {
             getContext().getSystemService(InputMethodManager.class)
                     .setAdditionalInputMethodSubtypes(MockIme.getImeId(), additionalSubtypes);
         } else if ("delete".equals(method)) {
+            if (sSettings != null) {
+                sSettings.close();
+            }
             sSettings = null;
+            sInlineSuggestionsExtras = null;
+        } else if (SET_INLINE_SUGGESTION_EXTRAS_COMMAND.equals(method)) {
+            sInlineSuggestionsExtras = extras;
         }
         return Bundle.EMPTY;
     }
