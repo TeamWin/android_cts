@@ -3,15 +3,5 @@
     {
       "name" : "CtsStatsdAtomHostTestCases"
     }
-  ],
-  "kernel-presubmit": [
-    {
-      "name": "CtsStatsdAtomHostTestCases",
-      "options": [
-        {
-          "include-filter": "android.cts.statsdatom.memory.SystemMemoryStatsTests"
-        }
-      ]
-    }
   ]
 }
