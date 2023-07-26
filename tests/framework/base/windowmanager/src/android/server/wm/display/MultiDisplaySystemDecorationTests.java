@@ -801,6 +801,10 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
             // Tap secondDisplay to change it to the top focused display.
             tapOnDisplayCenter(secondDisplay.mId);
 
+            // Change secondDisplay to be top focused
+            mWmState.waitForWithAmState(state -> state.getFocusedDisplayId() == secondDisplay.mId,
+                    "Second display must be top focused.");
+
             // Move ImeTestActivity from firstDisplay to secondDisplay.
             getLaunchActivityBuilder()
                     .setUseInstrumentation()
