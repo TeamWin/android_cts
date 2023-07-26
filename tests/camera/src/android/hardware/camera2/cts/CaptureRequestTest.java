@@ -863,8 +863,8 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
      */
     @Test
     public void testZoomTimestampIncrease() throws Exception {
-        if (PropertyUtil.getVendorApiLevel() <= Build.VERSION_CODES.TIRAMISU) {
-            // Only run test for Vendor API level U or higher
+        if (PropertyUtil.getVendorApiLevel() <= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            // Only run test for Vendor API level V or higher
             return;
         }
 
