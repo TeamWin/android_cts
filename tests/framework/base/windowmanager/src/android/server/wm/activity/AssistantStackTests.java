@@ -342,6 +342,7 @@ public class AssistantStackTests extends ActivityManagerTestBase {
             launchActivityOnDisplayNoWait(LAUNCH_ASSISTANT_ACTIVITY_FROM_SESSION,
                     mAssistantDisplayId);
             waitForValidStateWithActivityType(ASSISTANT_ACTIVITY, ACTIVITY_TYPE_ASSISTANT);
+            mWmState.waitAndAssertActivityState(ASSISTANT_ACTIVITY, STATE_RESUMED);
             assertAssistantStackExists();
             mWmState.assertVisibility(ASSISTANT_ACTIVITY, true);
             mWmState.assertFocusedRootTask("Expected assistant stack focused",
@@ -362,7 +363,7 @@ public class AssistantStackTests extends ActivityManagerTestBase {
                             == mWmState.getTaskDisplayArea(ANIMATION_TEST_ACTIVITY)
             );
             // Wait for animation finished.
-            mWmState.waitForActivityState(ANIMATION_TEST_ACTIVITY, STATE_RESUMED);
+            mWmState.waitAndAssertActivityState(ANIMATION_TEST_ACTIVITY, STATE_RESUMED);
 
             if (isAssistantOnTopOfDream()) {
                 mWmState.assertVisibility(ASSISTANT_ACTIVITY, true);
