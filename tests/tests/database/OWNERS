@@ -1,4 +1,6 @@
 # Bug component: 21000
+include platform/frameworks/base:/SQLITE_OWNERS
+
 zezeozue@google.com
 nandana@google.com
 narayan@google.com
