@@ -20,6 +20,7 @@ import math
 import camera_properties_utils
 import capture_request_utils
 import image_processing_utils
+import numpy as np
 import opencv_processing_utils
 
 _CIRCLE_COLOR = 0  # [0: black, 255: white]
@@ -108,13 +109,15 @@ def get_center_circle(img, img_name, size, zoom_ratio, min_zoom_ratio, debug):
   Returns:
     circle: [center_x, center_y, radius] if found, else None
   """
+  # Create a copy since convert_image_to_uint8 uses mutable np array methods
+  imgc = np.copy(img)
   # convert [0, 1] image to [0, 255] and cast as uint8
-  img = image_processing_utils.convert_image_to_uint8(img)
+  imgc = image_processing_utils.convert_image_to_uint8(imgc)
 
   # Find the center circle in img
   try:
     circle = opencv_processing_utils.find_center_circle(
-        img, img_name, _CIRCLE_COLOR, circle_ar_rtol=_CIRCLE_AR_RTOL,
+        imgc, img_name, _CIRCLE_COLOR, circle_ar_rtol=_CIRCLE_AR_RTOL,
         circlish_rtol=_CIRCLISH_RTOL,
         min_area=_MIN_AREA_RATIO * size[0] * size[1] * zoom_ratio * zoom_ratio,
         min_circle_pts=_MIN_CIRCLE_PTS, debug=debug)
