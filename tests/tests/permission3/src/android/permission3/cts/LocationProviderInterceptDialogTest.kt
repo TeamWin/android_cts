@@ -74,7 +74,7 @@ class LocationProviderInterceptDialogTest : BaseUsePermissionTest() {
             By.textContains("Location access can be modified from location settings"),
             true)
         click(By.res(LOCATION_ACCESS_BUTTON_RES))
-        findView(By.textContains("Use location"), true)
+        findView(By.res(USE_LOCATION_LABEL_ID), true)
     }
 
     @Test
@@ -121,6 +121,8 @@ class LocationProviderInterceptDialogTest : BaseUsePermissionTest() {
     }
 
     companion object {
+        private const val USE_LOCATION_LABEL_ID =
+            "com.android.settings:id/switch_text"
         private const val MIC_LOCATION_PROVIDER_APP_APK_PATH =
             "$APK_DIRECTORY/CtsAccessMicrophoneAppLocationProvider.apk"
         private const val MIC_LOCATION_PROVIDER_APP_PACKAGE_NAME =
