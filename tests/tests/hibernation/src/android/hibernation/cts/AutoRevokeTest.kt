@@ -144,6 +144,7 @@ class AutoRevokeTest {
             // picker" which may cover another UI elements on freeform window configuration.
             runShellCommandOrThrow("input keyevent 82")
         }
+        runShellCommandOrThrow("am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS")
         resetJob(context)
         bypassBatterySavingRestrictions(context)
 
