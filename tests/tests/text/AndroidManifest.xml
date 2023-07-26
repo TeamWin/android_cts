@@ -86,7 +86,7 @@
 
     </application>
 
-    <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
+    <instrumentation android:name="android.text.cts.runner.CtsTextRunner"
          android:targetPackage="android.text.cts"
          android:label="CTS tests of android.text">
     </instrumentation>
