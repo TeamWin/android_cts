@@ -31,9 +31,10 @@ import android.view.Surface;
  */
 public final class VirtualDeviceTestUtils {
 
-    public static VirtualDisplayConfig.Builder VIRTUAL_DISPLAY_BUILDER =
-            new VirtualDisplayConfig.Builder("testDisplay", 100, 100, 240)
-                    .setSurface(new Surface());
+    public static VirtualDisplayConfig.Builder createDefaultVirtualDisplayConfigBuilder() {
+        return new VirtualDisplayConfig.Builder("testDisplay", 100, 100, 240)
+                .setSurface(new Surface());
+    }
 
     public static ResultReceiver createResultReceiver(OnReceiveResultListener listener) {
         ResultReceiver receiver = new ResultReceiver(new Handler(Looper.getMainLooper())) {

@@ -98,6 +98,7 @@ import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.drawable.Icon;
 import android.hardware.display.VirtualDisplay;
+import android.hardware.display.VirtualDisplayConfig;
 import android.media.ImageReader;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
@@ -1518,11 +1519,11 @@ public class AccessibilityDisplayProxyTest {
         mImageReader = ImageReader.newInstance(/* width= */ 100, /* height= */ 100,
                 PixelFormat.RGBA_8888, /* maxImages= */ 1);
         display = mVirtualDevice.createVirtualDisplay(
-                /* width= */ mImageReader.getWidth(),
-                /* height= */ mImageReader.getHeight(),
-                /* densityDpi= */ 240,
-                mImageReader.getSurface(),
-                0,
+                new VirtualDisplayConfig.Builder(
+                        "VirtualDisplay", mImageReader.getWidth(), mImageReader.getHeight(),
+                        /* densityDpi= */ 240)
+                        .setSurface(mImageReader.getSurface())
+                        .build(),
                 Runnable::run,
                 new VirtualDisplay.Callback(){});
         return display;

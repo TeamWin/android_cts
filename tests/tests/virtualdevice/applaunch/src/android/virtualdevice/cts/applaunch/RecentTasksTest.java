@@ -162,8 +162,9 @@ public class RecentTasksTest {
 
     private static VirtualDisplay createVirtualDisplay(VirtualDevice virtualDevice) {
         return virtualDevice.createVirtualDisplay(
-                VirtualDeviceTestUtils.VIRTUAL_DISPLAY_BUILDER.setFlags(
-                        DisplayManager.VIRTUAL_DISPLAY_FLAG_TRUSTED).build(),
+                VirtualDeviceTestUtils.createDefaultVirtualDisplayConfigBuilder()
+                        .setFlags(DisplayManager.VIRTUAL_DISPLAY_FLAG_TRUSTED)
+                        .build(),
                 /*executor=*/null, /*callback=*/null);
     }
     private static class ActivityResultCallback implements

@@ -84,6 +84,7 @@ import android.platform.test.annotations.AppModeFull;
 import android.virtualdevice.cts.common.ActivityResultReceiver;
 import android.virtualdevice.cts.common.AudioHelper;
 import android.virtualdevice.cts.common.FakeAssociationRule;
+import android.virtualdevice.cts.common.util.VirtualDeviceTestUtils;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -168,11 +169,9 @@ public class VirtualAudioTest {
                 mFakeAssociationRule.getAssociationInfo().getId(),
                 DEFAULT_VIRTUAL_DEVICE_PARAMS);
         mVirtualDisplay = mVirtualDevice.createVirtualDisplay(
-                /* width= */ 100,
-                /* height= */ 100,
-                /* densityDpi= */ 240,
-                /* surface= */ null,
-                /* flags= */ VIRTUAL_DISPLAY_FLAG_TRUSTED,
+                VirtualDeviceTestUtils.createDefaultVirtualDisplayConfigBuilder()
+                        .setFlags(VIRTUAL_DISPLAY_FLAG_TRUSTED)
+                        .build(),
                 Runnable::run,
                 mVirtualDisplayCallback);
     }
