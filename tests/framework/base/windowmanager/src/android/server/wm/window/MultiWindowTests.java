@@ -345,6 +345,9 @@ public class MultiWindowTests extends ActivityManagerTestBase {
         final int secondaryTaskId2;
         if (task != null) {
             secondaryTaskId2 = task.getTaskId();
+            // The task is a new child Task in split, so wait until it appear instead of trying
+            // to find a root task with this id.
+            mTaskOrganizer.waitForAndAssertTaskAppeared(secondaryTaskId2);
             mTaskOrganizer.putTaskInSplitSecondary(secondaryTaskId2);
         } else {
             secondaryTaskId2 = INVALID_TASK_ID;
@@ -380,6 +383,9 @@ public class MultiWindowTests extends ActivityManagerTestBase {
                 mWmState.getTaskByActivity(targetActivityName, excludeTaskIds);
         if (taskFinal != null) {
             int secondaryTaskId3 = taskFinal.getTaskId();
+            // The task is a new child Task in split, so wait until it appear instead of trying
+            // to find a root task with this id.
+            mTaskOrganizer.waitForAndAssertTaskAppeared(secondaryTaskId3);
             mTaskOrganizer.putTaskInSplitSecondary(secondaryTaskId3);
         }
         final int taskNumberFinal = mTaskOrganizer.getSecondarySplitTaskCount();
