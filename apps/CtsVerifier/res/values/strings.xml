@@ -5934,21 +5934,22 @@ Follow the instructions on the screen to measure the frequency response for the 
     <string name="analog_headset_volup">VOLUME_UP</string>
     <string name="analog_headset_voldown">VOLUME_DOWN</string>
     <string name="analog_headset_test">Analog Headset Test</string>
-    <string name="analog_headset_pass_noheadset">"PASS (No headset port available)"</string>
+    <string name="analog_headset_pass_noheadset">"PASS - No headset port available"</string>
+    <string name="analog_headset_headset_unknown">FAIL - Headset State Unknown</string>
     <string name="analog_headset_pass">PASS</string>
     <string name="analog_headset_port_detected">"Analog port detected"</string>
     <string name="analog_headset_press_buttons">Press each button on the headset verify recognition</string>
     <string name="analog_headset_no_buttons">No buttons detected</string>
-    <string name="analog_headset_headset_connected">Headset connected</string>
-    <string name="analog_headset_no_headset">No Headset - Connect headset to 3.5mm analog jack</string>
+    <string name="analog_headset_headset_connected">Analog headset connected</string>
+    <string name="analog_headset_no_headset">No Analog Headset - Connect headset to 3.5mm jack</string>
     <string name="analog_headset_action_received">ACTION_HEADSET_PLUG received - </string>
     <string name="analog_headset_unplugged">Unplugged</string>
     <string name="analog_headset_plugged">Plugged</string>
     <string name="analog_headset_mic"> [mic]</string>
     <string name="analog_headset_reportnojack">No analog Jack. PASS</string>
     <string name="analog_headset_no_jack">No analog jack detected. Please connect a headset, or PASS</string>
-    <string name="analog_headset_connect_headset">Please connect a headset</string>
-    <string name="analog_headset_play_audio">Please test audio through the headset</string>
+    <string name="analog_headset_connect_headset">Please connect an analog headset</string>
+    <string name="analog_headset_play_audio">Please test audio through the analog headset</string>
     <string name="analog_headset_test_buttons">Please test transport buttons</string>
 
     <string name="analog_headset_test_info">This test tests the following functionality with respect to wired analog headsets.\n
