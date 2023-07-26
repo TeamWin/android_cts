@@ -18,5 +18,15 @@
                 }
             ]
         }
-    ]
+  ],
+  "postsubmit": [
+    {
+      "name": "CtsPermissionUiTestCases"
+    }
+  ],
+  "mainline-postsubmit": [
+    {
+        "name": "CtsPermissionUiTestCases[com.google.android.permission.apex]"
+    }
+  ]
 }
