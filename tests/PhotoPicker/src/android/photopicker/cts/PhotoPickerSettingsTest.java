@@ -33,12 +33,14 @@ import android.photopicker.cts.util.PhotoPickerUiUtils;
 import android.provider.MediaStore;
 
 import androidx.test.filters.SdkSuppress;
+import androidx.test.runner.AndroidJUnit4;
 import androidx.test.uiautomator.UiObject;
 
 import org.junit.AfterClass;
 import org.junit.Assume;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 /**
  * Photo Picker tests for settings page launched from the overflow menu in PhotoPickerActivity or
@@ -46,6 +48,7 @@ import org.junit.Test;
  */
 // TODO(b/195009187): Enabling settings page requires setting allowed_cloud_providers device config.
 //  We currently can't do this in R.
+@RunWith(AndroidJUnit4.class)
 @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
 public class PhotoPickerSettingsTest extends PhotoPickerBaseTest {
 
@@ -62,7 +65,7 @@ public class PhotoPickerSettingsTest extends PhotoPickerBaseTest {
 
         // Enable Settings menu item in PhotoPickerActivity's overflow menu.
         PhotoPickerCloudUtils.enableCloudMediaAndSetAllowedCloudProviders(
-                /* allowedCloudProviders */ "not_empty");
+                /* allowedCloudProviders */ sTargetPackageName);
     }
 
     @AfterClass
