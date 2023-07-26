@@ -18,6 +18,7 @@ package android.devicepolicy.cts;
 
 import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
 import static android.app.admin.DevicePolicyManager.ACTION_DATA_SHARING_RESTRICTION_APPLIED;
+import static android.app.admin.DevicePolicyManager.EXTRA_RESTRICTION;
 import static android.app.admin.DevicePolicyManager.FLAG_MANAGED_CAN_ACCESS_PARENT;
 import static android.app.admin.DevicePolicyManager.FLAG_PARENT_CAN_ACCESS_MANAGED;
 import static android.content.Intent.ACTION_SEND;
@@ -27,9 +28,12 @@ import static android.content.pm.PackageManager.MATCH_DEFAULT_ONLY;
 import static android.os.UserManager.DISALLOW_SHARE_INTO_MANAGED_PROFILE;
 
 import static com.android.bedstead.harrier.UserType.WORK_PROFILE;
+import static com.android.bedstead.nene.userrestrictions.CommonUserRestrictions.DISALLOW_ADJUST_VOLUME;
+import static com.android.bedstead.nene.userrestrictions.CommonUserRestrictions.DISALLOW_CROSS_PROFILE_COPY_PASTE;
 import static com.android.queryable.queries.ActivityQuery.activity;
 import static com.android.queryable.queries.IntentFilterQuery.intentFilter;
 
+import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.content.ComponentName;
@@ -41,9 +45,15 @@ import android.content.pm.ResolveInfo;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
+import com.android.bedstead.harrier.annotations.EnsureDoesNotHaveUserRestriction;
+import com.android.bedstead.harrier.annotations.EnsureHasUserRestriction;
 import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
 import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.RequireRunOnWorkProfile;
+import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
+import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
+import com.android.bedstead.harrier.policies.DisallowAdjustVolume;
+import com.android.bedstead.harrier.policies.DisallowCrossProfileCopyPaste;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.permissions.PermissionContext;
 import com.android.bedstead.nene.users.UserReference;
@@ -218,6 +228,31 @@ public final class CrossProfileSharingTest {
             sDeviceState.dpc().devicePolicyManager().clearCrossProfileIntentFilters(
                     sDeviceState.dpc().componentName());
         }
+    }
+
+    @ApiTest(apis = {"android.app.admin.DevicePolicyManager#createAdminSupportIntent",
+            "android.os.UserManager#DISALLOW_CROSS_PROFILE_COPY_PASTE"})
+    @Postsubmit(reason = "new test")
+    @EnsureHasUserRestriction(DISALLOW_CROSS_PROFILE_COPY_PASTE)
+    @Test
+    public void createAdminSupportIntent_disallowCrossProfileCopyPaste_createsIntent() {
+        Intent intent = TestApis.devicePolicy().createAdminSupportIntent(
+                DISALLOW_CROSS_PROFILE_COPY_PASTE);
+
+        assertThat(intent.getStringExtra(EXTRA_RESTRICTION))
+                .isEqualTo(DISALLOW_CROSS_PROFILE_COPY_PASTE);
+    }
+
+    @ApiTest(apis = {"android.app.admin.DevicePolicyManager#createAdminSupportIntent",
+            "android.os.UserManager#DISALLOW_CROSS_PROFILE_COPY_PASTE"})
+    @Postsubmit(reason = "new test")
+    @EnsureDoesNotHaveUserRestriction(DISALLOW_CROSS_PROFILE_COPY_PASTE)
+    @Test
+    public void createAdminSupportIntent_allowCrossProfileCopyPaste_doesNotCreate() {
+        Intent intent = TestApis.devicePolicy().createAdminSupportIntent(
+                DISALLOW_CROSS_PROFILE_COPY_PASTE);
+
+        assertThat(intent).isNull();
     }
 
     private Intent getSwitchToOtherProfileIntent() {

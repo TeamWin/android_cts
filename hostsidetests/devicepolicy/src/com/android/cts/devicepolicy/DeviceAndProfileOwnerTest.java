@@ -796,27 +796,6 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     }
 
     @Test
-    public void testCreateAdminSupportIntent() throws Exception {
-        executeDeviceTestClass(".PolicyTransparencyTest");
-    }
-
-    @Test
-    public void testSetCameraDisabledLogged() throws Exception {
-        assertMetricsLogged(getDevice(), () -> {
-            executeDeviceTestMethod(".PolicyTransparencyTest", "testCameraDisabled");
-        }, new DevicePolicyEventWrapper.Builder(EventId.SET_CAMERA_DISABLED_VALUE)
-                    .setAdminPackageName(DEVICE_ADMIN_PKG)
-                    .setBoolean(true)
-                    .setStrings(NOT_CALLED_FROM_PARENT)
-                    .build(),
-            new DevicePolicyEventWrapper.Builder(EventId.SET_CAMERA_DISABLED_VALUE)
-                    .setAdminPackageName(DEVICE_ADMIN_PKG)
-                    .setBoolean(false)
-                    .setStrings(NOT_CALLED_FROM_PARENT)
-                    .build());
-    }
-
-    @Test
     public void testPasswordSufficientInitially() throws Exception {
         executeDeviceTestClass(".PasswordSufficientInitiallyTest");
     }
