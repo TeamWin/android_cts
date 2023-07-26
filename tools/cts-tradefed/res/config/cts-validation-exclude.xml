@@ -22,6 +22,14 @@
     <option name="compatibility:exclude-filter" value="CtsAutoFillServiceTestCases" />
     <option name="compatibility:exclude-filter" value="CtsTelecomTestCases" />
     <option name="compatibility:exclude-filter" value="CtsDynamicMimeHostTestCases" />
+    <option name="compatibility:exclude-filter" value="CtsDynamicMimePreferredActivitiesHostTestCases" />
+    <option name="compatibility:exclude-filter" value="CtsDynamicMimeSingleAppRebootHostTestCases" />
+    <option name="compatibility:exclude-filter" value="CtsDynamicMimeRemoveRebootHostTestCases" />
+    <option name="compatibility:exclude-filter" value="CtsDynamicMimeSingleAppGroupRebootHostTestCases" />
+    <option name="compatibility:exclude-filter" value="CtsDynamicMimeIndependentGroupRebootHostTestCases" />
+    <option name="compatibility:exclude-filter" value="CtsDynamicMimeComplexFilterRebootHostTestCases" />
+    <option name="compatibility:exclude-filter" value="CtsDynamicMimeComplexFilterClearGroupRebootHostTestCases" />
+    <option name="compatibility:exclude-filter" value="CtsDynamicMimeChangedGroupAppUpdateHostTestCases" />
     <option name="compatibility:exclude-filter" value="CtsViewTestCases" />
     <option name="compatibility:exclude-filter" value="CtsWindowManagerDeviceTestCases" />
     <option name="compatibility:exclude-filter" value="CtsWindowManagerDeviceActivity" />
