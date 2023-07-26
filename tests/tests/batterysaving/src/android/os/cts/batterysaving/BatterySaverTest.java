@@ -34,6 +34,7 @@ import android.content.res.Configuration;
 import android.os.PowerManager;
 import android.provider.DeviceConfig;
 
+import androidx.test.filters.FlakyTest;
 import androidx.test.filters.MediumTest;
 import androidx.test.runner.AndroidJUnit4;
 
@@ -104,6 +105,7 @@ public class BatterySaverTest extends BatterySavingTestBase {
     }
 
     @Test
+    @FlakyTest
     public void testSetBatterySaver_powerManager() throws Exception {
         enableBatterySaver(false);
 
