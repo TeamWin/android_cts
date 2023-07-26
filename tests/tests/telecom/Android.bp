@@ -69,6 +69,23 @@ filegroup {
     path: "ThirdPtyInCallServiceTestApp/",
 }
 
+filegroup {
+    name: "non-ui-ics-wo-export-srcs",
+    srcs: [
+        "NonUiInCallServiceWoExport/src/android/telecom/cts/nonuiincallservicewoexport/CtsNonUiInCallServiceWoExport.java",
+        "NonUiInCallServiceWoExport/src/android/telecom/cts/nonuiincallservicewoexport/CtsNonUiInCallServiceWoExportControl.java",
+    ],
+    path: "NonUiInCallServiceWoExport/",
+}
+
+filegroup {
+    name: "non-ui-ics-wo-export-aidl",
+    srcs: [
+        "NonUiInCallServiceWoExport/aidl/android/telecom/cts/nonuiincallservicewoexport/ICtsNonUiInCallServiceWoExportControl.aidl",
+    ],
+    path: "NonUiInCallServiceWoExport/",
+}
+
 android_test {
     name: "CtsTelecomTestCases",
     defaults: ["cts_defaults"],
@@ -96,6 +113,8 @@ android_test {
         "CallRedirectionServiceTestApp/**/I*.aidl",
         "Api29InCallServiceTestApp/**/*.java",
         "Api29InCallServiceTestApp/**/I*.aidl",
+        "NonUiInCallServiceWoExport/**/*.java",
+        "NonUiInCallServiceWoExport/**/I*.aidl",
         "ThirdPtyDialerTestApp/**/*.java",
         "ThirdPtyDialerTestAppTwo/**/*.java",
         "CarModeTestAppSelfManaged/**/*.java",
@@ -109,6 +128,7 @@ android_test {
     ],
     aidl: {
         local_include_dirs: [
+            "NonUiInCallServiceWoExport/aidl/",
             "ThirdPtyInCallServiceTestApp/aidl/",
             "CallRedirectionServiceTestApp/aidl/",
             "CallScreeningServiceTestApp/aidl/",
@@ -124,6 +144,7 @@ android_test {
         "general-tests",
     ],
     data: [
+        ":NonUiInCallServiceWoExport",
         ":ThirdPtyInCallServiceTestApp",
         ":CarModeTestAppTwo",
         ":SelfManagedCSTestAppOne",

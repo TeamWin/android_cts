@@ -36,6 +36,7 @@
         <option name="test-file-name" value="CallStreamingServiceTestApp.apk" />
         <option name="test-file-name" value="ThirdPtyDialerTestApp.apk" />
         <option name="test-file-name" value="ThirdPtyDialerTestAppTwo.apk" />
+        <option name="test-file-name" value="NonUiInCallServiceWoExport.apk" />
     </target_preparer>
 
     <!-- Enabling change id ALLOW_TEST_API_ACCESS allows that package to access @TestApi methods -->
