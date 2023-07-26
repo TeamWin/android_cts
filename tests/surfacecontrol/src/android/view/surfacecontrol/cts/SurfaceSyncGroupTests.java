@@ -17,17 +17,21 @@
 package android.view.surfacecontrol.cts;
 
 import static android.server.wm.BuildUtils.HW_TIMEOUT_MULTIPLIER;
+import static android.server.wm.app.Components.CRASHING_ACTIVITY;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import android.app.ActivityManager;
 import android.app.Instrumentation;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.os.RemoteException;
 import android.platform.test.annotations.Presubmit;
+import android.provider.Settings;
+import android.server.wm.settings.SettingsSession;
 import android.util.Log;
 import android.view.SurfaceControl;
 import android.view.SurfaceControlViewHost.SurfacePackage;
@@ -40,6 +44,9 @@ import android.window.SurfaceSyncGroup;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
 
+import com.android.compatibility.common.util.SystemUtil;
+
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -59,10 +66,26 @@ public class SurfaceSyncGroupTests {
 
     Instrumentation mInstrumentation;
 
+    private SettingsSession<Integer> mHideDialogSetting;
+
     @Before
     public void setup() {
         mActivity = mActivityRule.getActivity();
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
+        // One of the tests purposely crashes so disable showing the crash dialog to avoid breaking
+        // tests later on.
+        mHideDialogSetting = new SettingsSession<>(
+                Settings.Global.getUriFor(Settings.Global.HIDE_ERROR_DIALOGS),
+                Settings.Global::getInt, Settings.Global::putInt);
+        mHideDialogSetting.set(1);
+    }
+
+    @After
+    public void tearDown() {
+        if (mHideDialogSetting != null) mHideDialogSetting.close();
+        ActivityManager am = mActivity.getSystemService(ActivityManager.class);
+        SystemUtil.runWithShellPermissionIdentity(() -> am.forceStopPackage(
+                CRASHING_ACTIVITY.getPackageName()));
     }
 
     @Test
