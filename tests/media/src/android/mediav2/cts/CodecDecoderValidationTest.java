@@ -820,6 +820,17 @@ public class CodecDecoderValidationTest extends CodecDecoderTestBase {
             }
             Assume.assumeFalse("skip checksum verification due to tone mapping",
                     mSkipChecksumVerification);
+            if (mIsAudio) {
+                int inputPcmEncoding = formats.get(0)
+                        .getInteger(MediaFormat.KEY_PCM_ENCODING, AudioFormat.ENCODING_PCM_16BIT);
+                if (mMediaType.equals(MEDIA_TYPE_RAW)
+                        && inputPcmEncoding != AudioFormat.ENCODING_PCM_16BIT) {
+                    int outputPcmEncoding = mOutFormat.getInteger(MediaFormat.KEY_PCM_ENCODING,
+                            AudioFormat.ENCODING_PCM_16BIT);
+                    Assume.assumeTrue("output pcm encoding is not 16 bit, skipping output"
+                            + " validation", outputPcmEncoding == AudioFormat.ENCODING_PCM_16BIT);
+                }
+            }
             CodecDecoderTest.verify(ref, mRefFile, mRmsError, AudioFormat.ENCODING_PCM_16BIT,
                     mRefCRC, mTestConfig.toString() + mTestEnv.toString());
         }
