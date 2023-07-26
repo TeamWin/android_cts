@@ -36,6 +36,7 @@ import android.safetycenter.SafetyCenterIssue
 import android.safetycenter.SafetyCenterManager
 import android.view.accessibility.AccessibilityNodeInfo
 import androidx.test.InstrumentationRegistry
+import androidx.test.filters.FlakyTest
 import androidx.test.filters.SdkSuppress
 import androidx.test.runner.AndroidJUnit4
 import androidx.test.uiautomator.By
@@ -169,6 +170,7 @@ class AutoRevokeTest {
 
     @AppModeFull(reason = "Uses separate apps for testing")
     @Test
+    @FlakyTest(bugId = 293171897)
     @CddTest(requirement = "3.5.2/C-1-2")
     fun testUnusedApp_getsPermissionRevoked() {
         assumeFalse(
@@ -200,8 +202,10 @@ class AutoRevokeTest {
     }
 
     @AppModeFull(reason = "Uses separate apps for testing")
+    @FlakyTest(bugId = 293171897)
     @Test
     @CddTest(requirement = "3.5.1/C-1-1")
+    // TODO(b/238677038): In addition to flaking in general, this test also fails on R base image
     fun testUnusedApp_uninstallApp() {
         assumeFalse(
             "Unused apps screen may be unavailable on TV",
@@ -277,6 +281,7 @@ class AutoRevokeTest {
     }
 
     @AppModeFull(reason = "Uses separate apps for testing")
+    @FlakyTest(bugId = 293171897)
     @Test
     fun testAppWithPermissionsChangedRecently_doesNotGetPermissionRevoked() {
         val unusedThreshold = 15_000L
@@ -303,6 +308,7 @@ class AutoRevokeTest {
     }
 
     @AppModeFull(reason = "Uses separate apps for testing")
+    @FlakyTest(bugId = 293171897)
     @Test
     fun testPermissionEventCleanupService_scrubsEvents() {
         val unusedThreshold = 15_000L
@@ -448,6 +454,7 @@ class AutoRevokeTest {
 
     @AppModeFull(reason = "Uses separate apps for testing")
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU, codeName = "Tiramisu")
+    @FlakyTest(bugId = 293171897)
     @Test
     fun testAutoRevoke_showsUpInSafetyCenter() {
         assumeTrue(deviceSupportsSafetyCenter())
