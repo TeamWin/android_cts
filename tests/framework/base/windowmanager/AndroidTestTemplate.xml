@@ -55,7 +55,6 @@
         <option name="test-file-name" value="CtsMockInputMethod.apk" />
         <option name="test-file-name" value="CtsDeviceServicesTestShareUidAppA.apk" />
         <option name="test-file-name" value="CtsDeviceServicesTestShareUidAppB.apk" />
-        <option name="test-file-name" value="CtsCrossProcessSurfaceControlViewHostTestService.apk" />
         <option name="test-file-name" value="CtsWindowManagerJetpackSecondUidApp.apk" />
         <option name="test-file-name" value="CtsBackLegacyApp.apk" />
     </target_preparer>

@@ -48,6 +48,8 @@ android_test {
         "truth-prebuilt",
         "CtsSurfaceValidatorLib",
         "cts-wm-util",
+        "CtsMockInputMethodLib",
+        "CtsCrossProcessSurfaceControlViewHostTestService",
     ],
 
     jni_libs: [
@@ -57,6 +59,12 @@ android_test {
 
     srcs: [
         "src/**/*.java",
+        "src/**/*.aidl",
+    ],
+
+    data: [
+        ":CtsCrossProcessSurfaceControlViewHostTestService",
+        ":CtsMockInputMethod",
     ],
 
     sdk_version: "test_current",

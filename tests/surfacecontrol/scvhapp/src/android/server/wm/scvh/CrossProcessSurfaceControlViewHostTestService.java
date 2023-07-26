@@ -27,7 +27,6 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.server.wm.CtsWindowInfoUtils;
-import android.server.wm.shared.ICrossProcessSurfaceControlViewHostTestService;
 import android.util.Log;
 import android.view.Display;
 import android.view.MotionEvent;

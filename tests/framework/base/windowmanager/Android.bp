@@ -107,7 +107,6 @@ java_defaults {
         ":CtsMockInputMethod",
         ":CtsDeviceServicesTestShareUidAppA",
         ":CtsDeviceServicesTestShareUidAppB",
-        ":CtsCrossProcessSurfaceControlViewHostTestService",
         ":CtsWindowManagerJetpackSecondUidApp",
         ":CtsBackLegacyApp",
         ":CtsDragAndDropTargetAppSdk23",
@@ -133,6 +132,7 @@ filegroup {
     name: "CtsWindowManagerDeviceHelper-src",
     srcs: ["src/**/HelperActivities.java"],
 }
+
 filegroup {
     name: "CtsWindowManagerDeviceActivity-src",
     srcs: [
@@ -216,7 +216,7 @@ android_test {
     name: "CtsWindowManagerDeviceBackNavigation",
     defaults: ["CtsWindowManagerDeviceDefault"],
 
-     srcs: [
+    srcs: [
         ":CtsWindowManagerDeviceBackNavigation-src",
         ":CtsVerifierMockVrListenerServiceFiles",
     ],
