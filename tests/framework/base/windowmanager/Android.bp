@@ -116,23 +116,11 @@ java_defaults {
     per_testcase_directory: true,
 }
 
-android_test {
-    name: "CtsWindowManagerDeviceTestCases",
-    defaults: ["CtsWindowManagerDeviceDefault"],
-
-    srcs: [
-        "src/**/*.java",
-        "alertwindowservice/src/**/*.java",
-        ":cts-wm-components",
-        ":CtsVerifierMockVrListenerServiceFiles",
-        "src/**/*.aidl",
-    ],
-}
-
 filegroup {
     name: "CtsWindowManagerDeviceHelper-src",
     srcs: ["src/**/HelperActivities.java"],
 }
+
 filegroup {
     name: "CtsWindowManagerDeviceActivity-src",
     srcs: [
@@ -216,7 +204,7 @@ android_test {
     name: "CtsWindowManagerDeviceBackNavigation",
     defaults: ["CtsWindowManagerDeviceDefault"],
 
-     srcs: [
+    srcs: [
         ":CtsWindowManagerDeviceBackNavigation-src",
         ":CtsVerifierMockVrListenerServiceFiles",
     ],
