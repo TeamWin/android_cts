@@ -16,21 +16,21 @@
 <configuration description="Excluded tests for CtsWindowManagerDeviceTestCases">
 
     <!-- Troublesome tests that often crash the system -->
-    <option name="compatibility:exclude-filter" value="CtsWindowManagerDeviceTestCases android.server.wm.ActivityVisibilityTests#testTurnScreenOnActivity_withRelayout" />
-    <option name="compatibility:exclude-filter" value="CtsWindowManagerDeviceTestCases android.server.wm.AnrTests" />
-    <option name="compatibility:exclude-filter" value="CtsWindowManagerDeviceTestCases android.server.wm.MultiDisplaySecurityTests#testNoInputConnectionForUntrustedVirtualDisplay" />
-    <option name="compatibility:exclude-filter" value="CtsWindowManagerDeviceTestCases android.server.wm.MultiDisplaySystemDecorationTests#testImeApiForBug118341760" />
-    <option name="compatibility:exclude-filter" value="CtsWindowManagerDeviceTestCases android.server.wm.MultiDisplaySystemDecorationTests#testCrossDisplayBasicImeOperations" />
-    <option name="compatibility:exclude-filter" value="CtsWindowManagerDeviceTestCases android.server.wm.StartActivityTests#testStartActivityByNavigateUpToFromDiffUid" />
+    <option name="compatibility:exclude-filter" value="CtsWindowManagerDeviceActivity android.server.wm.activity.ActivityVisibilityTests#testTurnScreenOnActivity_withRelayout" />
+    <option name="compatibility:exclude-filter" value="CtsWindowManagerDeviceActivity android.server.wm.activity.AnrTests" />
+    <option name="compatibility:exclude-filter" value="CtsWindowManagerDeviceDisplay android.server.wm.displayMultiDisplaySecurityTests#testNoInputConnectionForUntrustedVirtualDisplay" />
+    <option name="compatibility:exclude-filter" value="CtsWindowManagerDeviceDisplay android.server.wm.display.MultiDisplaySystemDecorationTests#testImeApiForBug118341760" />
+    <option name="compatibility:exclude-filter" value="CtsWindowManagerDeviceDisplay android.server.wm.display.MultiDisplaySystemDecorationTests#testCrossDisplayBasicImeOperations" />
+    <option name="compatibility:exclude-filter" value="CtsWindowManagerDeviceActivity android.server.wm.activity.StartActivityTests#testStartActivityByNavigateUpToFromDiffUid" />
 
     <!-- No Home -->
-    <option name="compatibility:exclude-filter" value="CtsWindowManagerDeviceTestCases android.server.wm.MultiDisplaySystemDecorationTests#testLaunchHomeActivityOnSecondaryDisplayWithoutDecorations" />
-    <option name="compatibility:exclude-filter" value="CtsWindowManagerDeviceTestCases android.server.wm.MultiDisplaySystemDecorationTests#testLaunchSingleSecondaryHomeActivityOnDisplayWithDecorations" />
-    <option name="compatibility:exclude-filter" value="CtsWindowManagerDeviceTestCases android.server.wm.MultiDisplaySystemDecorationTests#testLaunchSingleHomeActivityOnDisplayWithDecorations" />
-    <option name="compatibility:exclude-filter" value="CtsWindowManagerDeviceTestCases android.server.wm.MultiDisplaySystemDecorationTests#testLaunchHomeActivityOnUntrustedVirtualSecondaryDisplay" />
-    <option name="compatibility:exclude-filter" value="CtsWindowManagerDeviceTestCases android.server.wm.MultiDisplaySystemDecorationTests#testLaunchSecondaryHomeActivityOnDisplayWithDecorations" />
-    <option name="compatibility:exclude-filter" value="CtsWindowManagerDeviceTestCases android.server.wm.MultiDisplaySystemDecorationTests#testLaunchHomeActivityOnDisplayWithDecorations" />
-    <option name="compatibility:exclude-filter" value="CtsWindowManagerDeviceTestCases android.server.wm.StartActivityTests#testStartHomeIfNoActivities" />
+    <option name="compatibility:exclude-filter" value="CtsWindowManagerDeviceDisplay android.server.wm.display.MultiDisplaySystemDecorationTests#testLaunchHomeActivityOnSecondaryDisplayWithoutDecorations" />
+    <option name="compatibility:exclude-filter" value="CtsWindowManagerDeviceDisplay android.server.wm.display.MultiDisplaySystemDecorationTests#testLaunchSingleSecondaryHomeActivityOnDisplayWithDecorations" />
+    <option name="compatibility:exclude-filter" value="CtsWindowManagerDeviceDisplay android.server.wm.display.MultiDisplaySystemDecorationTests#testLaunchSingleHomeActivityOnDisplayWithDecorations" />
+    <option name="compatibility:exclude-filter" value="CtsWindowManagerDeviceDisplay android.server.wm.display.MultiDisplaySystemDecorationTests#testLaunchHomeActivityOnUntrustedVirtualSecondaryDisplay" />
+    <option name="compatibility:exclude-filter" value="CtsWindowManagerDeviceDisplay android.server.wm.display.MultiDisplaySystemDecorationTests#testLaunchSecondaryHomeActivityOnDisplayWithDecorations" />
+    <option name="compatibility:exclude-filter" value="CtsWindowManagerDeviceDisplay android.server.wm.display.MultiDisplaySystemDecorationTests#testLaunchHomeActivityOnDisplayWithDecorations" />
+    <option name="compatibility:exclude-filter" value="CtsWindowManagerDeviceActivity android.server.wm.activity.StartActivityTests#testStartHomeIfNoActivities" />
 
     <!-- No SystemUI -->
     <option name="compatibility:exclude-filter" value="CtsWindowManagerDeviceTestCases android.server.wm.SurfaceControlTest" />
