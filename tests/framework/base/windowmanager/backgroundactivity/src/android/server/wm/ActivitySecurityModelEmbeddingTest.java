@@ -23,6 +23,7 @@ import static org.junit.Assume.assumeNotNull;
 
 import android.content.ComponentName;
 
+import androidx.test.filters.FlakyTest;
 import androidx.window.extensions.WindowExtensions;
 
 import org.junit.Before;
@@ -55,6 +56,7 @@ public class ActivitySecurityModelEmbeddingTest extends BackgroundActivityTestBa
     }
 
     @Test
+    @FlakyTest(bugId = 291212072)
     public void testEmbeddingLaunchesActivity_launchAllowed() {
         // Base State:
         // | A.FGE (A1) | B.FG (B1) |   --> left | right
@@ -75,6 +77,7 @@ public class ActivitySecurityModelEmbeddingTest extends BackgroundActivityTestBa
     }
 
     @Test
+    @FlakyTest(bugId = 291212072)
     public void testEmbeddedLaunchesActivity_launchAllowedOnlyOnTop() {
         // Base State:
         // | A.FGE (A1) | B.FG (B1) |   --> left | right
