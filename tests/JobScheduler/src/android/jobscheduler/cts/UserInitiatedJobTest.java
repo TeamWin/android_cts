@@ -38,6 +38,7 @@ import android.jobscheduler.cts.jobtestapp.TestFgsService;
 import android.jobscheduler.cts.jobtestapp.TestJobSchedulerReceiver;
 import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
+import android.os.UserManager;
 import android.provider.Settings;
 import android.util.Log;
 
@@ -217,6 +218,8 @@ public class UserInitiatedJobTest {
      */
     @Test
     public void testRestrictedToggling() throws Exception {
+        assumeFalse("Skipping test not supported on HSUM devices.",
+                    mContext.getSystemService(UserManager.class).isHeadlessSystemUserMode());
         try (TestNotificationListener.NotificationHelper notificationHelper =
                      new TestNotificationListener.NotificationHelper(
                              mContext, TEST_APP_PACKAGE)) {
