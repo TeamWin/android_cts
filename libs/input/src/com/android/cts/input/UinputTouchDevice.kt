@@ -20,9 +20,13 @@ import android.app.Instrumentation
 import android.content.Context
 import android.graphics.Point
 import android.hardware.input.InputManager
+import android.os.Handler
+import android.os.Looper
 import android.util.Size
 import android.view.Display
 import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
+import com.android.compatibility.common.util.TestUtils.waitOn
+import java.util.concurrent.TimeUnit
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -38,6 +42,8 @@ class UinputTouchDevice(
     sizeOverride: Size? = null,
 ) :
     AutoCloseable {
+
+    private val DISPLAY_ASSOCIATION_TIMEOUT_MILLIS = TimeUnit.SECONDS.toMillis(5)
 
     private val uinputDevice: UinputDevice
     private lateinit var port: String
@@ -128,6 +134,48 @@ class UinputTouchDevice(
         runWithShellPermissionIdentity(
                 { inputManager.addUniqueIdAssociation(port, display.uniqueId!!) },
                 "android.permission.ASSOCIATE_INPUT_DEVICE_TO_DISPLAY")
+        waitForDeviceUpdatesUntil {
+            val inputDevice = inputManager.getInputDevice(uinputDevice.deviceId)
+            display.displayId == inputDevice!!.associatedDisplayId
+        }
+    }
+
+    private fun waitForDeviceUpdatesUntil(condition: () -> Boolean) {
+        val lockForInputDeviceUpdates = Object()
+        val inputDeviceListener =
+            object : InputManager.InputDeviceListener {
+                override fun onInputDeviceAdded(deviceId: Int) {
+                    synchronized(lockForInputDeviceUpdates) {
+                        lockForInputDeviceUpdates.notify()
+                    }
+                }
+
+                override fun onInputDeviceRemoved(deviceId: Int) {
+                    synchronized(lockForInputDeviceUpdates) {
+                        lockForInputDeviceUpdates.notify()
+                    }
+                }
+
+                override fun onInputDeviceChanged(deviceId: Int) {
+                    synchronized(lockForInputDeviceUpdates) {
+                        lockForInputDeviceUpdates.notify()
+                    }
+                }
+            }
+
+        inputManager.registerInputDeviceListener(
+            inputDeviceListener,
+            Handler(Looper.getMainLooper())
+        )
+
+        waitOn(
+            lockForInputDeviceUpdates,
+            condition,
+            DISPLAY_ASSOCIATION_TIMEOUT_MILLIS,
+            null
+        )
+
+        inputManager.unregisterInputDeviceListener(inputDeviceListener)
     }
 
     override fun close() {
