@@ -26,14 +26,17 @@ import android.app.UiAutomation;
 import android.app.compat.CompatChanges;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
-import android.content.ContentProviderClient;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.graphics.RectF;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.CancellationSignal;
+import android.os.Handler;
+import android.os.HandlerThread;
 import android.os.ParcelFileDescriptor;
-import android.os.RemoteCallback;
 import android.os.SystemClock;
 import android.os.UserHandle;
 import android.provider.Settings;
@@ -69,11 +72,11 @@ import com.android.compatibility.common.util.PollingCheck;
 import org.junit.AssumptionViolatedException;
 
 import java.io.IOException;
-import java.util.concurrent.CountDownLatch;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Consumer;
 import java.util.function.IntConsumer;
 
 /**
@@ -90,7 +93,7 @@ public class MockImeSession implements AutoCloseable {
     private final String mImeEventActionName =
             "com.android.cts.mockime.action.IME_EVENT." + SystemClock.elapsedRealtimeNanos();
 
-    private static final long TIMEOUT_MILLIS = TimeUnit.SECONDS.toMillis(10);
+    private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(10);
 
     @NonNull
     private final Context mContext;
@@ -100,11 +103,9 @@ public class MockImeSession implements AutoCloseable {
     @NonNull
     private final AtomicBoolean mActive = new AtomicBoolean(true);
 
-    @Nullable
-    private ContentProviderClient mSettingsClient;
+    private final HandlerThread mHandlerThread = new HandlerThread("EventReceiver");
 
-    @Nullable
-    private SessionChannel mChannel;
+    private final List<Intent> mStickyBroadcasts = new ArrayList<>();
 
     private static final class EventStore {
         private static final int INITIAL_ARRAY_SIZE = 32;
@@ -139,18 +140,27 @@ public class MockImeSession implements AutoCloseable {
         }
     }
 
-    private static final class MockImeEventReceiver implements Consumer<Bundle> {
+    private static final class MockImeEventReceiver extends BroadcastReceiver {
         private final Object mLock = new Object();
 
         @GuardedBy("mLock")
         @NonNull
         private EventStore mCurrentEventStore = new EventStore();
 
+        @NonNull
+        private final String mActionName;
+
+        MockImeEventReceiver(@NonNull String actionName) {
+            mActionName = actionName;
+        }
+
         @Override
-        public void accept(Bundle bundle) {
-            synchronized (mLock) {
-                mCurrentEventStore =
-                        mCurrentEventStore.add(ImeEvent.fromBundle(bundle));
+        public void onReceive(Context context, Intent intent) {
+            if (TextUtils.equals(mActionName, intent.getAction())) {
+                synchronized (mLock) {
+                    mCurrentEventStore =
+                            mCurrentEventStore.add(ImeEvent.fromBundle(intent.getExtras()));
+                }
             }
         }
 
@@ -161,7 +171,7 @@ public class MockImeSession implements AutoCloseable {
         }
     }
     private final MockImeEventReceiver mEventReceiver =
-            new MockImeEventReceiver();
+            new MockImeEventReceiver(mImeEventActionName);
 
     private final ImeEventStream mEventStream =
             new ImeEventStream(mEventReceiver::takeEventSnapshot);
@@ -210,9 +220,8 @@ public class MockImeSession implements AutoCloseable {
     @Nullable
     private void writeMockImeSettings(@NonNull Context context,
             @NonNull String imeEventActionName,
-            @Nullable ImeSettings.Builder imeSettings,
-            @NonNull RemoteCallback channel) throws Exception {
-        final var bundle = ImeSettings.serializeToBundle(imeEventActionName, imeSettings, channel);
+            @Nullable ImeSettings.Builder imeSettings) throws Exception {
+        final Bundle bundle = ImeSettings.serializeToBundle(imeEventActionName, imeSettings);
         Log.i(TAG, "Writing MockIme settings: session=" + this);
         context.getContentResolver().call(SettingsProvider.AUTHORITY, "write", null, bundle);
     }
@@ -254,7 +263,7 @@ public class MockImeSession implements AutoCloseable {
     }
 
     private void initialize(@Nullable ImeSettings.Builder imeSettings) throws Exception {
-        PollingCheck.check("MockIME was not in getInputMethodList() after timeout.", TIMEOUT_MILLIS,
+        PollingCheck.check("MockIME was not in getInputMethodList() after timeout.", TIMEOUT,
                 () -> getInputMethodInfo() != null);
 
         // Make sure that MockIME is not selected.
@@ -298,26 +307,31 @@ public class MockImeSession implements AutoCloseable {
             }
         }
 
-        mSettingsClient = mContext.getContentResolver().acquireUnstableContentProviderClient(
-                SettingsProvider.AUTHORITY);
-        var sessionEstablished = new CountDownLatch(1);
-        mChannel = new SessionChannel(sessionEstablished::countDown);
-        mChannel.registerListener(mEventReceiver);
-        writeMockImeSettings(mContext, mImeEventActionName, imeSettings,
-                mChannel.takeTransport());
-        sessionEstablished.await(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+        writeMockImeSettings(mContext, mImeEventActionName, imeSettings);
+
+        mHandlerThread.start();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            mContext.registerReceiver(mEventReceiver,
+                    new IntentFilter(mImeEventActionName), null /* broadcastPermission */,
+                    new Handler(mHandlerThread.getLooper()), Context.RECEIVER_EXPORTED);
+        } else {
+            mContext.registerReceiver(mEventReceiver,
+                    new IntentFilter(mImeEventActionName), null /* broadcastPermission */,
+                    new Handler(mHandlerThread.getLooper()));
+        }
 
         String imeId = getImeId();
         executeImeCmd("enable", imeId);
         executeImeCmd("set", imeId);
 
-        PollingCheck.check("Make sure that MockIME becomes available", TIMEOUT_MILLIS,
+        PollingCheck.check("Make sure that MockIME becomes available", TIMEOUT,
                 () -> getImeId().equals(getCurrentInputMethodId()));
     }
 
     @Override
     public String toString() {
-        return TAG + "{active=" + mActive + "}";
+        return TAG + "{active=" + mActive + ", handlerThread=" + mHandlerThread
+                + ", stickyBroadcasts=" + mStickyBroadcasts + "}";
     }
 
     /** @see #create(Context, UiAutomation, ImeSettings.Builder) */
@@ -416,16 +430,18 @@ public class MockImeSession implements AutoCloseable {
     public void close() throws Exception {
         mActive.set(false);
 
+        mStickyBroadcasts.forEach(mContext::removeStickyBroadcast);
+        mStickyBroadcasts.clear();
+
         executeImeCmd("reset");
 
-        PollingCheck.check("Make sure that MockIME becomes unavailable", TIMEOUT_MILLIS, () ->
+        PollingCheck.check("Make sure that MockIME becomes unavailable", TIMEOUT, () ->
                 mContext.getSystemService(InputMethodManager.class)
                         .getEnabledInputMethodList()
                         .stream()
                         .noneMatch(info -> getMockImeComponentName().equals(info.getComponent())));
-        if (mChannel != null) {
-            mChannel.close();
-        }
+        mContext.unregisterReceiver(mEventReceiver);
+        mHandlerThread.quitSafely();
         Log.i(TAG, "Deleting MockIme settings: session=" + this);
         mContext.getContentResolver().call(SettingsProvider.AUTHORITY, "delete", null, null);
 
@@ -433,10 +449,6 @@ public class MockImeSession implements AutoCloseable {
         final InputMethodInfo imi = getInputMethodInfo();
         if (imi != null && imi.getSubtypeCount() != 0) {
             setAdditionalSubtypes(mContext, null);
-        }
-        if (mSettingsClient != null) {
-            mSettingsClient.close();
-            mSettingsClient = null;
         }
     }
 
@@ -454,11 +466,43 @@ public class MockImeSession implements AutoCloseable {
     private ImeCommand callCommandInternal(@NonNull String commandName, @NonNull Bundle params) {
         final ImeCommand command = new ImeCommand(
                 commandName, SystemClock.elapsedRealtimeNanos(), true, params);
-        if (!mChannel.send(command.toBundle())) {
-            throw new IllegalStateException("Channel already closed: " + commandName);
-        }
+        final Intent intent = createCommandIntent(command);
+        mContext.sendBroadcast(intent);
         return command;
     }
+
+    /**
+     * A variant of {@link #callCommandInternal} that uses
+     * {@link Context#sendStickyBroadcast(android.content.Intent) sendStickyBroadcast} to ensure
+     * that the command is received even if the IME is not running at the time of sending
+     * (e.g. when {@code config_preventImeStartupUnlessTextEditor} is set).
+     * <p>
+     * The caller requires the {@link android.Manifest.permission#BROADCAST_STICKY BROADCAST_STICKY}
+     * permission.
+     */
+    @NonNull
+    @RequiresPermission(android.Manifest.permission.BROADCAST_STICKY)
+    private ImeCommand callCommandInternalSticky(
+            @NonNull String commandName,
+            @NonNull Bundle params) {
+        final ImeCommand command = new ImeCommand(
+                commandName, SystemClock.elapsedRealtimeNanos(), true, params);
+        final Intent intent = createCommandIntent(command);
+        mStickyBroadcasts.add(intent);
+        mContext.sendStickyBroadcast(intent);
+        return command;
+    }
+
+    @NonNull
+    private Intent createCommandIntent(@NonNull ImeCommand command) {
+        final Intent intent = new Intent();
+        intent.setPackage(MockIme.getComponentName().getPackageName());
+        intent.setAction(MockIme.getCommandActionName(mImeEventActionName));
+        intent.setFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY | Intent.FLAG_RECEIVER_FOREGROUND);
+        intent.putExtras(command.toBundle());
+        return intent;
+    }
+
 
     /**
      * Lets {@link MockIme} suspend {@link MockIme.AbstractInputMethodImpl#createSession(
@@ -1687,9 +1731,8 @@ public class MockImeSession implements AutoCloseable {
 
     @NonNull
     @RequiresPermission(android.Manifest.permission.BROADCAST_STICKY)
-    public void callSetInlineSuggestionsExtras(@NonNull Bundle bundle) {
-        mContext.getContentResolver().call(SettingsProvider.AUTHORITY,
-                SettingsProvider.SET_INLINE_SUGGESTION_EXTRAS_COMMAND, null, bundle);
+    public ImeCommand callSetInlineSuggestionsExtras(@NonNull Bundle bundle) {
+        return callCommandInternalSticky("setInlineSuggestionsExtras", bundle);
     }
 
     @NonNull
