@@ -96,7 +96,7 @@ public class HostActivity extends Activity implements SurfaceHolder.Callback{
         Bundle bundle = new Bundle();
         bundle.putBinder(EXTRAS_HOST_TOKEN, mSurfaceView.getHostToken());
         bundle.putInt(EXTRAS_DISPLAY_ID, getDisplay().getDisplayId());
-        bundle.putInt(EXTRA_ON_MOTIONEVENT_DELAY_MS, 10000);
+        bundle.putInt(EXTRA_ON_MOTIONEVENT_DELAY_MS, 60000);
         mIntent.putExtra(EXTRAS_BUNDLE, bundle);
         bindService(mIntent, mConnection, Context.BIND_AUTO_CREATE | Context.BIND_IMPORTANT);
     }

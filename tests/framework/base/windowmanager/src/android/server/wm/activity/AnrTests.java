@@ -148,7 +148,7 @@ public class AnrTests extends ActivityManagerTestBase {
             mWmState.computeState();
             final WindowManagerState.Task hostActivityTask =
                     mWmState.getTaskByActivity(new ComponentName("android.server.wm.cts",
-                            "android.server.wm.HostActivity"));
+                            "android.server.wm.activity.HostActivity"));
             mTouchHelper.tapOnTaskCenterAsync(hostActivityTask);
             clickCloseAppOnAnrDialog();
         } catch (InterruptedException ignored) {
@@ -186,7 +186,7 @@ public class AnrTests extends ActivityManagerTestBase {
             ComponentName activity) {
         String flags = waitForCompletion ? " -W -n " : " -n ";
         String startCmd = "am start" + flags + activity.flattenToString() +
-                " --ei " + delayTypeExtra + " 30000";
+                " --ei " + delayTypeExtra + " 60000";
         executeShellCommand(startCmd);
     }
 }
