@@ -152,6 +152,7 @@ public class DisplayHashManagerTest {
                 () -> mDisplayHashManager.setDisplayHashThrottlingEnabled(true));
     }
 
+    @FlakyTest(bugId = 292291447)
     @Test
     public void testGenerateAndVerifyDisplayHash() {
         setupChildView();
