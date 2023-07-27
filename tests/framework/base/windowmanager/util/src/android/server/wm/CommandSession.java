@@ -791,7 +791,8 @@ public final class CommandSession {
         @Override
         public final void receiveCommand(String command, Bundle data) {
             if (mReceiver == null) {
-                throw new IllegalStateException("The receiver is not created");
+                Log.e(TAG, "The receiver is not created");
+                return;
             }
             sCommandStorage.add(getHostId(), data);
             handleCommand(command, data);
