@@ -28,7 +28,9 @@ import android.os.Looper;
 import android.os.RemoteException;
 import android.util.Log;
 import android.util.Size;
+import android.view.AttachedSurfaceControl;
 import android.view.Gravity;
+import android.view.SurfaceControl;
 import android.view.SurfaceControlViewHost.SurfacePackage;
 import android.view.SurfaceView;
 import android.view.ViewGroup;
@@ -98,9 +100,18 @@ public class SyncValidatorSCVHTestCase implements ISurfaceValidatorTestCase {
             syncGroup.add(mSurfacePackage, embeddedResizeRunnable);
             syncGroup.markSyncReady();
 
-            mLastSizeIndex++;
+            SurfaceControl.Transaction t = new SurfaceControl.Transaction();
+            t.addTransactionCommittedListener(Runnable::run, () -> {
+                if (mSurfaceView.isAttachedToWindow()) {
+                    mHandler.postDelayed(mResizeWithSurfaceSyncGroup, mDelayMs);
+                }
+            });
+            AttachedSurfaceControl attachedSurfaceControl = mSurfaceView.getRootSurfaceControl();
+            if (attachedSurfaceControl != null) {
+                mSurfaceView.getRootSurfaceControl().applyTransactionOnDraw(t);
+            }
 
-            mHandler.postDelayed(this, mDelayMs + 50);
+            mLastSizeIndex++;
         }
     };
 
