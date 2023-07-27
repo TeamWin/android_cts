@@ -486,14 +486,17 @@ def get_fps_range_to_test(fps_ranges):
   Returns:
     An AE target FPS range for testing.
   """
-  accepted_range = list(DEFAULT_AE_TARGET_FPS_RANGE)
+  default_range_min, default_range_max = DEFAULT_AE_TARGET_FPS_RANGE
+  default_range_size = default_range_max - default_range_min
   logging.debug('AE target FPS ranges: %s', fps_ranges)
-  for (fps_range_min, fps_range_max) in fps_ranges:
-    if (fps_range_max == accepted_range[1] and
-        fps_range_min < accepted_range[0]):
-      accepted_range[0] = fps_range_min
-  logging.debug('Accepted AE target FPS range: %s', accepted_range)
-  return accepted_range
+  widest_fps_range = max(fps_ranges, key=lambda r: r[1] - r[0])
+  if widest_fps_range[1] - widest_fps_range[0] < default_range_size:
+    logging.debug('Default range %s is wider than widest '
+                  'available AE target FPS range %s.',
+                  DEFAULT_AE_TARGET_FPS_RANGE,
+                  widest_fps_range)
+  logging.debug('Accepted AE target FPS range: %s', widest_fps_range)
+  return widest_fps_range
 
 
 def ae_lock(props):
