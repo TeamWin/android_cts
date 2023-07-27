@@ -362,6 +362,13 @@ public class TestTaskOrganizer extends TaskOrganizer {
         }
     }
 
+    /** Waits and asserts that given Task to appear. */
+    public void waitForAndAssertTaskAppeared(int taskId) {
+        synchronized (this) {
+            waitForAndAssert(o -> mKnownTasks.containsKey(taskId), "Can't find task=" + taskId);
+        }
+    }
+
     @Override
     public void onTaskAppeared(
             @NonNull ActivityManager.RunningTaskInfo taskInfo, SurfaceControl leash) {
