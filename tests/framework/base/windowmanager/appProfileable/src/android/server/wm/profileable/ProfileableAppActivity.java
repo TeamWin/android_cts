@@ -36,7 +36,6 @@ public class ProfileableAppActivity extends BasicTestActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        mUseTestJournal = false;
         mPrintCallbackLog = true;
         super.onCreate(savedInstanceState);
         mTraceFileObserver.startWatching();
