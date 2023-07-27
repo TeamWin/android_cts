@@ -495,4 +495,7 @@
     <!-- b/204720226 -->
     <option name="compatibility:exclude-filter" value="CtsPhotoPickerTest android.photopicker.cts.PhotoPickerCrossProfileTest#testPersonalApp_cannotAccessWorkProfile_default" />
     <option name="compatibility:exclude-filter" value="CtsMediaHostTestCases android.media.session.cts.MediaSessionManagerHostTest#testGetActiveSessionsFull_managedProfiles" />
+
+    <!-- b/292213604 -->
+    <option name="compatibility:exclude-filter" value="CtsDomainVerificationDeviceMultiUserTestCases" />
 </configuration>
