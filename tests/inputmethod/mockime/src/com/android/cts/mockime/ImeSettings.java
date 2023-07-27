@@ -20,7 +20,6 @@ import static java.lang.annotation.RetentionPolicy.SOURCE;
 
 import android.os.Bundle;
 import android.os.PersistableBundle;
-import android.os.RemoteCallback;
 import android.view.inputmethod.InputMethodSubtype;
 
 import androidx.annotation.ColorInt;
@@ -43,7 +42,6 @@ public class ImeSettings {
     private final String mEventCallbackActionName;
 
     private static final String EVENT_CALLBACK_INTENT_ACTION_KEY = "eventCallbackActionName";
-    private static final String CHANNEL_KEY = "channel";
     private static final String DATA_KEY = "data";
 
     private static final String BACKGROUND_COLOR_KEY = "BackgroundColor";
@@ -74,7 +72,7 @@ public class ImeSettings {
 
     @NonNull
     private final PersistableBundle mBundle;
-    private final SessionChannel mChannel;
+
 
     @Retention(SOURCE)
     @IntDef(value = {
@@ -113,16 +111,11 @@ public class ImeSettings {
         mClientPackageName = clientPackageName;
         mEventCallbackActionName = bundle.getString(EVENT_CALLBACK_INTENT_ACTION_KEY);
         mBundle = bundle.getParcelable(DATA_KEY);
-        mChannel = new SessionChannel(bundle.getParcelable(CHANNEL_KEY, RemoteCallback.class));
     }
 
     @Nullable
     String getEventCallbackActionName() {
         return mEventCallbackActionName;
-    }
-
-    SessionChannel getChannel() {
-        return mChannel;
     }
 
     @NonNull
@@ -206,18 +199,11 @@ public class ImeSettings {
         return mBundle.getBoolean(ON_BACK_CALLBACK_ENABLED, false);
     }
 
-    public void close() {
-        if (mChannel != null) {
-            mChannel.close();
-        }
-    }
-
     static Bundle serializeToBundle(@NonNull String eventCallbackActionName,
-            @Nullable Builder builder, @NonNull RemoteCallback channel) {
+            @Nullable Builder builder) {
         final Bundle result = new Bundle();
         result.putString(EVENT_CALLBACK_INTENT_ACTION_KEY, eventCallbackActionName);
         result.putParcelable(DATA_KEY, builder != null ? builder.mBundle : PersistableBundle.EMPTY);
-        result.putParcelable(CHANNEL_KEY, channel);
         return result;
     }
 
