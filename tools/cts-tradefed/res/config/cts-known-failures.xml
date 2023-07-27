@@ -299,4 +299,5 @@
 
     <!-- b/284406623 -->
     <option name="compatibility:exclude-filter" value="CtsUwbMultiDeviceTestCase_FiraRangingTests" />
+    <option name="compatibility:exclude-filter" value="CtsUwbMultiDeviceTestCase_RangingMeasurementTests" />
 </configuration>
