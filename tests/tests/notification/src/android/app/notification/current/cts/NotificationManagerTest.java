@@ -24,6 +24,7 @@ import static android.app.AppOpsManager.MODE_ALLOWED;
 import static android.app.AppOpsManager.MODE_DEFAULT;
 import static android.app.AppOpsManager.MODE_ERRORED;
 import static android.app.Notification.FLAG_FOREGROUND_SERVICE;
+import static android.app.Notification.FLAG_NO_CLEAR;
 import static android.app.Notification.FLAG_USER_INITIATED_JOB;
 import static android.app.NotificationManager.IMPORTANCE_DEFAULT;
 import static android.app.NotificationManager.IMPORTANCE_HIGH;
@@ -2803,6 +2804,38 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
 
         assertEquals(NotificationListenerService.REASON_CHANNEL_REMOVED,
                 getCancellationReason(key));
+    }
+
+    public void testMediaStyle_setNoClearFlag() {
+        int id = 99;
+        final Notification notification =
+                new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+                        .setSmallIcon(R.drawable.black)
+                        .setStyle(new Notification.MediaStyle())
+                        .build();
+        mNotificationManager.notify(id, notification);
+
+        StatusBarNotification sbn = mNotificationHelper.findPostedNotification(null, id,
+                SEARCH_TYPE.APP);
+        assertNotNull(sbn);
+
+        assertEquals(FLAG_NO_CLEAR, sbn.getNotification().flags & FLAG_NO_CLEAR);
+    }
+
+    public void testCustomMediaStyle_setNoClearFlag() {
+        int id = 99;
+        final Notification notification =
+                new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+                        .setSmallIcon(R.drawable.black)
+                        .setStyle(new Notification.DecoratedMediaCustomViewStyle())
+                        .build();
+        mNotificationManager.notify(id, notification);
+
+        StatusBarNotification sbn = mNotificationHelper.findPostedNotification(null, id,
+                SEARCH_TYPE.APP);
+        assertNotNull(sbn);
+
+        assertEquals(FLAG_NO_CLEAR, sbn.getNotification().flags & FLAG_NO_CLEAR);
     }
 
     public void testMediaStyleRemotePlayback_noPermission() throws Exception {
