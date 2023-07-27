@@ -240,12 +240,8 @@ public class OneTimePermissionTest {
     @Test
     @AsbSecurityTest(cveBugId = 237405974L)
     public void testCustomPermissionIsGrantedOneTime() throws Throwable {
-        Intent startApp = new Intent()
-                .setComponent(new ComponentName(CUSTOM_CAMERA_PERM_APP_PKG_NAME,
-                        CUSTOM_CAMERA_PERM_APP_PKG_NAME + ".RequestCameraPermission"))
-                .addFlags(FLAG_ACTIVITY_NEW_TASK);
-
-        mContext.startActivity(startApp);
+        startApp(new ComponentName(CUSTOM_CAMERA_PERM_APP_PKG_NAME,
+                CUSTOM_CAMERA_PERM_APP_PKG_NAME + ".RequestCameraPermission"));
 
         // We're only manually granting CAMERA, but the app will later request CUSTOM and get it
         // granted silently. This is intentional since it's in the same group but both should
@@ -333,17 +329,24 @@ public class OneTimePermissionTest {
     /**
      * Start the app. The app will request the permissions.
      */
-    private void startApp() {
+    private void startApp(ComponentName componentName) {
         // One time permission is not applicable for Wear OS.
         // The only permissions available are Allow or Deny
         assumeFalse(
                 "Skipping test: One time permission is not supported in Wear OS",
                 FeatureUtil.isWatch());
         Intent startApp = new Intent();
-        startApp.setComponent(new ComponentName(APP_PKG_NAME, APP_PKG_NAME + ".RequestPermission"));
+        startApp.setComponent(componentName);
         startApp.setFlags(FLAG_ACTIVITY_NEW_TASK);
 
         mContext.startActivity(startApp);
+    }
+
+    /**
+     * Start the default app for these tests. The app will request the permissions.
+     */
+    private void startApp() {
+        startApp(new ComponentName(APP_PKG_NAME, APP_PKG_NAME + ".RequestPermission"));
     }
 
     private void startAppForegroundService(long lifespanMillis, boolean sticky) {
