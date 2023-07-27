@@ -28,7 +28,7 @@ public class SuspendPackageTest extends InstrumentationTestCase {
     private static final int WAIT_DIALOG_TIMEOUT_IN_MS = 5000;
     private static final BySelector POPUP_TITLE_WATCH_SELECTOR = By
             .clazz(android.widget.TextView.class.getName())
-            .res("android:id/alertTitle")
+            .res("com.google.android.apps.wearable.settings:id/wear_alertdialog_title_text")
             .pkg("com.google.android.apps.wearable.settings");
     private static final BySelector POPUP_TITLE_AUTOMOTIVE_SELECTOR = By
             .clazz(android.widget.TextView.class.getName())
