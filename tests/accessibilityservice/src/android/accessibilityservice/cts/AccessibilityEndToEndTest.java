@@ -1878,6 +1878,7 @@ public class AccessibilityEndToEndTest extends StsExtraBusinessLogicTestCase {
     }
 
     @AsbSecurityTest(cveBugId = {282016107})
+    @AppModeFull
     @Test
     public void testInstallAppWithLargeServiceVolume_displaysServicesSuccessfully()
             throws Throwable {
