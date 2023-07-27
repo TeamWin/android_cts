@@ -350,7 +350,7 @@ public class StreamedAppClipboardTest {
         assertThat(clipData).isNull();
     }
 
-    @FlakyTest(bugId = 288339992)
+    @FlakyTest(bugId = 293404975)
     @Test
     public void twoAppsOnVirtualDevice_firstAppWrites_secondAppCanRead() {
         final Intent firstAppIntent =
