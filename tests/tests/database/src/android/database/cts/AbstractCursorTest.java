@@ -64,6 +64,11 @@ public class AbstractCursorTest extends InstrumentationTestCase {
 
     private static final long ON_CHANGE_TIMEOUT_MS = 5000;
 
+    // This timeout value allows for the 10s delay that occurs if an app moves to the CACHED_EMPTY
+    // process state.
+    // TODO(b/292616209) Remove the possibility of the 10s delay and eliminate this long timeout.
+    private static final long ON_CHANGE_TIMEOUT_LONG_MS = ON_CHANGE_TIMEOUT_MS + 10_000;
+
     @Override
     protected void setUp() throws Exception {
         super.setUp();
@@ -175,10 +180,10 @@ public class AbstractCursorTest extends InstrumentationTestCase {
             cursor.registerContentObserver(observer);
 
             mContext.getContentResolver().call(queryUri, "notify", "1", null);
-            observer.waitForOnChange(ON_CHANGE_TIMEOUT_MS);
+            observer.waitForOnChange(ON_CHANGE_TIMEOUT_LONG_MS);
             observer.resetOnChangeWatch();
             mContext.getContentResolver().call(queryUri, "notify", "2", null);
-            observer.waitForOnChange(ON_CHANGE_TIMEOUT_MS);
+            observer.waitForOnChange(ON_CHANGE_TIMEOUT_LONG_MS);
         }
     }
 
@@ -691,4 +696,3 @@ public class AbstractCursorTest extends InstrumentationTestCase {
         }
     }
 }
-
