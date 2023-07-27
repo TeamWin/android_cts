@@ -113,7 +113,7 @@ public class ActivityInterceptionTest {
                         mFakeAssociationRule.getAssociationInfo().getId(),
                         DEFAULT_VIRTUAL_DEVICE_PARAMS);
         mVirtualDisplay = mVirtualDevice.createVirtualDisplay(
-                VirtualDeviceTestUtils.VIRTUAL_DISPLAY_BUILDER.build(),
+                VirtualDeviceTestUtils.createDefaultVirtualDisplayConfigBuilder().build(),
                 Runnable::run,
                 mVirtualDisplayCallback);
     }

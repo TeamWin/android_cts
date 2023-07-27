@@ -49,7 +49,6 @@ import android.hardware.display.VirtualDisplay;
 import android.os.Bundle;
 import android.os.ResultReceiver;
 import android.platform.test.annotations.AppModeFull;
-import android.view.Surface;
 import android.virtualdevice.cts.common.FakeAssociationRule;
 import android.virtualdevice.cts.common.util.TestAppHelper;
 import android.virtualdevice.cts.common.util.VirtualDeviceTestUtils;
@@ -118,16 +117,12 @@ public class StartActivitiesTest {
                 mVirtualDeviceManager.createVirtualDevice(
                         mFakeAssociationRule.getAssociationInfo().getId(),
                         DEFAULT_VIRTUAL_DEVICE_PARAMS);
-        // TODO(b/292221336): Move to VirtualDisplayConfig
         mVirtualDisplay = mVirtualDevice.createVirtualDisplay(
-                /* width= */ 100,
-                /* height= */ 100,
-                /* densityDpi= */ 240,
-                /* surface= */ null,
-                /* flags= */ DisplayManager.VIRTUAL_DISPLAY_FLAG_TRUSTED,
+                VirtualDeviceTestUtils.createDefaultVirtualDisplayConfigBuilder()
+                        .setFlags(DisplayManager.VIRTUAL_DISPLAY_FLAG_TRUSTED)
+                        .build(),
                 Runnable::run,
                 mVirtualDisplayCallback);
-        mVirtualDisplay.setSurface(new Surface());
         mResultReceiver = createResultReceiver(mOnReceiveResultListener);
     }
 

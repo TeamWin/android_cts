@@ -420,7 +420,7 @@ public class ActivityBlockingTest {
         mVirtualDevice = mVirtualDeviceManager.createVirtualDevice(
                 mFakeAssociationRule.getAssociationInfo().getId(), virtualDeviceParams);
         return mVirtualDevice.createVirtualDisplay(
-                VirtualDeviceTestUtils.VIRTUAL_DISPLAY_BUILDER
+                VirtualDeviceTestUtils.createDefaultVirtualDisplayConfigBuilder()
                         .setFlags(virtualDisplayFlags)
                         .build(),
                 Runnable::run,

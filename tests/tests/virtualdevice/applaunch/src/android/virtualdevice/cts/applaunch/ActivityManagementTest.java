@@ -323,7 +323,8 @@ public class ActivityManagementTest {
 
     private VirtualDisplay createVirtualDisplay() {
         return mVirtualDevice.createVirtualDisplay(
-                VirtualDeviceTestUtils.VIRTUAL_DISPLAY_BUILDER.build(), Runnable::run,
+                VirtualDeviceTestUtils.createDefaultVirtualDisplayConfigBuilder().build(),
+                Runnable::run,
                 mVirtualDisplayCallback);
     }
 

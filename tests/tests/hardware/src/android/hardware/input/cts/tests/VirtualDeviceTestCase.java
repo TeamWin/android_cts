@@ -150,11 +150,10 @@ public abstract class VirtualDeviceTestCase extends InputTestCase {
         mVirtualDevice = virtualDeviceManager.createVirtualDevice(associationInfo.getId(),
                 new VirtualDeviceParams.Builder().build());
         mVirtualDisplay = mVirtualDevice.createVirtualDisplay(
-                /* width= */ DISPLAY_WIDTH,
-                /* height= */ DISPLAY_HEIGHT,
-                /* dpi= */ 50,
-                /* surface= */ new Surface(new SurfaceTexture(ARBITRARY_SURFACE_TEX_ID)),
-                /* flags= */ 0,
+                new VirtualDisplayConfig.Builder("VirtualDisplay", DISPLAY_WIDTH, DISPLAY_HEIGHT,
+                        /* densityDpi= */ 50)
+                        .setSurface(new Surface(new SurfaceTexture(ARBITRARY_SURFACE_TEX_ID)))
+                        .build(),
                 /* executor= */ Runnable::run,
                 /* callback= */ null);
         if (mVirtualDisplay == null) {

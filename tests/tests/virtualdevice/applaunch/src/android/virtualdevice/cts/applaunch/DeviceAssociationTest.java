@@ -473,7 +473,7 @@ public class DeviceAssociationTest {
 
     private VirtualDisplay createVirtualDisplay(VirtualDevice virtualDevice) {
         return virtualDevice.createVirtualDisplay(
-                VirtualDeviceTestUtils.VIRTUAL_DISPLAY_BUILDER.build(),
+                VirtualDeviceTestUtils.createDefaultVirtualDisplayConfigBuilder().build(),
                 Runnable::run,
                 mVirtualDisplayCallback);
     }

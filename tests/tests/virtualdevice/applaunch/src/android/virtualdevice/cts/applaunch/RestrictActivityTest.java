@@ -182,7 +182,8 @@ public class RestrictActivityTest {
     @Test
     public void restrictedActivity_noGwpc_shouldFail() {
         VirtualDisplay virtualDisplay =
-                mDisplayManager.createVirtualDisplay(VirtualDeviceTestUtils.VIRTUAL_DISPLAY_BUILDER
+                mDisplayManager.createVirtualDisplay(
+                        VirtualDeviceTestUtils.createDefaultVirtualDisplayConfigBuilder()
                                 .setFlags(DisplayManager.VIRTUAL_DISPLAY_FLAG_TRUSTED).build());
         launchRestrictedAutomotiveActivity(virtualDisplay);
 
@@ -204,7 +205,7 @@ public class RestrictActivityTest {
                         mFakeAssociationRule.getAssociationInfo().getId(),
                         new VirtualDeviceParams.Builder().build());
         VirtualDisplayConfig.Builder builder =
-                VirtualDeviceTestUtils.VIRTUAL_DISPLAY_BUILDER
+                VirtualDeviceTestUtils.createDefaultVirtualDisplayConfigBuilder()
                         .setFlags(DisplayManager.VIRTUAL_DISPLAY_FLAG_TRUSTED);
         if (displayCategories != null) {
             builder = builder.setDisplayCategories(displayCategories);
