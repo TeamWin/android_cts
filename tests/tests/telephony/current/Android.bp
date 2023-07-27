@@ -57,6 +57,7 @@ android_test {
         "compatibility-device-util-axt",
         "truth-prebuilt",
         "android.telephony.mockmodem",
+        "CtsTelecomUtilLib",
     ],
     srcs: [
         "src/**/*.java",
