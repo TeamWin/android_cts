@@ -5048,17 +5048,6 @@ You should be prompted to select credentials; choose the ones you just installed
         When successfully logout and switched back to primary user, confirm that the logout control
         is not available in primary user.
     </string>
-    <string name="disallow_cellular_2g">Disallow Cellular 2g</string>
-    <string name="disallow_cellular_2g_action">Configuring Cellular 2g</string>
-    <string name="device_owner_disallow_cellular_2g_info">
-        Device should have a sim card to perform this test.
-        Please press the Set restriction button to set the user restriction.
-        Then press Go to open the Mobile network page in Settings.
-        Confirm that:\n\n
-        - Enable 2g is disabled.\n
-        - Enabling 2g is not possible and triggers a support message.\n\n
-        Use the Back button to return to this page.
-    </string>
 
     <!-- Strings for JobScheduler Tests -->
     <string name="js_test_description">This test is mostly automated, but requires some user interaction. You can pass this test once the list items below are checked.</string>

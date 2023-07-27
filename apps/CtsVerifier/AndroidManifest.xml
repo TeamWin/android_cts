@@ -4869,8 +4869,6 @@
             <meta-data android:name="test_required_features" android:value="android.software.device_admin" />
             <meta-data android:name="display_mode"
                        android:value="single_display_mode" />
-            <meta-data android:name="ApiTest"
-                       android:value="android.os.UserManager#DISALLOW_CELLULAR_2G"/>
         </activity>
 
         <activity android:name=".managedprovisioning.ManagedUserPositiveTestActivity"
