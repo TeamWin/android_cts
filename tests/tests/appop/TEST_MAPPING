@@ -1,6 +1,16 @@
 {
   "presubmit": [
     {
+      "name": "CtsAppOpsTestCases",
+      "options": [
+          {
+            "exclude-annotation": "android.platform.test.annotations.FlakyTest"
+          }
+      ]
+    }
+  ],
+  "postsubmit": [
+    {
       "name": "CtsAppOpsTestCases"
     }
   ]
