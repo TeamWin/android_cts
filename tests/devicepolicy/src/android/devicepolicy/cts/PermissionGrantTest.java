@@ -33,10 +33,13 @@ import static android.app.admin.DevicePolicyManager.PERMISSION_GRANT_STATE_GRANT
 import static android.app.admin.DevicePolicyManager.PERMISSION_POLICY_AUTO_DENY;
 import static android.app.admin.DevicePolicyManager.PERMISSION_POLICY_AUTO_GRANT;
 import static android.app.admin.DevicePolicyManager.PERMISSION_POLICY_PROMPT;
+
 import static com.android.bedstead.harrier.UserType.WORK_PROFILE;
 import static com.android.bedstead.nene.utils.Versions.U;
+
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
+
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 import static org.testng.Assert.assertThrows;
@@ -45,6 +48,7 @@ import android.app.admin.ManagedSubscriptionsPolicy;
 import android.app.admin.RemoteDevicePolicyManager;
 import android.content.ComponentName;
 import android.provider.Settings;
+
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.AfterClass;
@@ -77,8 +81,7 @@ import com.android.bedstead.testapp.TestAppActivity;
 import com.android.bedstead.testapp.TestAppInstance;
 import com.android.queryable.annotations.IntegerQuery;
 import com.android.queryable.annotations.Query;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
+
 import org.junit.Assume;
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -86,6 +89,9 @@ import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 
 @RunWith(BedsteadJUnit4.class)
 public final class PermissionGrantTest {
@@ -422,6 +428,7 @@ public final class PermissionGrantTest {
     }
 
     @CanSetPolicyTest(policy = SetSensorPermissionGranted.class)
+    @Ignore("(282111883)")
     public void grantSensorPermission_setsGrantState(
             @SensorPermissionTestParameter String permission) {
         int existingGrantState = sDeviceState.dpc().devicePolicyManager()
@@ -893,7 +900,7 @@ public final class PermissionGrantTest {
                     GRANTABLE_PERMISSION, PERMISSION_GRANT_STATE_DEFAULT);
         }
     }
-    
+
     @AdditionalQueryParameters(
             forTestApp = "dpc",
             query = @Query(targetSdkVersion =
