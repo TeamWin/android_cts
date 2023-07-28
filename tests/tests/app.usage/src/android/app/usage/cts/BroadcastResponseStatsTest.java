@@ -59,6 +59,7 @@ import android.util.ArrayMap;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.FlakyTest;
 import androidx.test.filters.MediumTest;
 import androidx.test.uiautomator.UiDevice;
 
@@ -232,6 +233,7 @@ public class BroadcastResponseStatsTest {
         }
     }
 
+    @FlakyTest(bugId = 288339565)
     @AppModeFull(reason = "No broadcast message response stats in instant apps")
     @Test
     public void testBroadcastResponseStats_broadcastDispatchedCount() throws Exception {
@@ -1817,6 +1819,7 @@ public class BroadcastResponseStatsTest {
         }
     }
 
+    @FlakyTest(bugId = 288339565)
     @AppModeFull(reason = "No broadcast message response stats in instant apps")
     @Test
     public void testBroadcastResponseStats_exemptedRole() throws Exception {
