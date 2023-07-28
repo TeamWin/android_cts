@@ -18,7 +18,11 @@ package com.android.cts.verifier.notifications;
 
 import static android.provider.Settings.ACTION_NOTIFICATION_LISTENER_DETAIL_SETTINGS;
 import static android.provider.Settings.EXTRA_NOTIFICATION_LISTENER_COMPONENT_NAME;
+import static android.view.View.GONE;
+import static android.view.View.VISIBLE;
 
+import android.annotation.DrawableRes;
+import android.annotation.StringRes;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
@@ -191,7 +195,7 @@ public abstract class InteractiveVerifierActivity extends PassFailButtons.Activi
             setupTests(savedStateIndex, savedStatus, scrollY);
             view.findViewById(R.id.pass_button).setEnabled(false);
         } else {
-            view.findViewById(R.id.empty_text).setVisibility(View.VISIBLE);
+            view.findViewById(R.id.empty_text).setVisibility(VISIBLE);
             view.findViewById(R.id.fail_button).setEnabled(false);
         }
 
@@ -306,14 +310,24 @@ public abstract class InteractiveVerifierActivity extends PassFailButtons.Activi
         TextView instructions = item.findViewById(R.id.nls_instructions);
         instructions.setText(stringId);
         View button = item.findViewById(R.id.nls_action_button);
-        button.setVisibility(View.GONE);
+        button.setVisibility(GONE);
         return item;
     }
 
-    protected View createPassFailItem(ViewGroup parent, int stringId) {
+    protected View createPassFailItem(ViewGroup parent, @StringRes int textResId) {
+        return createPassFailItem(parent, textResId, 0);
+    }
+
+    protected View createPassFailItem(ViewGroup parent, @StringRes int textResId,
+            @DrawableRes int imageResId) {
         View item = mInflater.inflate(R.layout.iva_pass_fail_item, parent, false);
         TextView instructions = item.findViewById(R.id.nls_instructions);
-        instructions.setText(stringId);
+        instructions.setText(textResId);
+        ImageView instructionsImage = item.findViewById(R.id.nls_instructions_image);
+        instructionsImage.setVisibility(imageResId > 0 ? VISIBLE : GONE);
+        if (imageResId > 0) {
+            instructionsImage.setImageResource(imageResId);
+        }
         return item;
     }
 
@@ -322,7 +336,7 @@ public abstract class InteractiveVerifierActivity extends PassFailButtons.Activi
         TextView instructions = item.findViewById(R.id.nls_instructions);
         instructions.setText(stringId);
         Button button = item.findViewById(R.id.nls_action_button);
-        button.setVisibility(View.VISIBLE);
+        button.setVisibility(VISIBLE);
         button.setText(actionId);
         button.setTag(actionId);
         return item;

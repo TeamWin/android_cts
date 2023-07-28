@@ -3374,6 +3374,20 @@
             <meta-data android:name="CddTest" android:value="3.8.3.1/C-1-4|2.2.3/3.8.10/H-1-1" />
         </activity>
 
+        <activity android:name=".notifications.NotificationStyleVerifierActivity"
+            android:exported="true"
+            android:label="@string/notification_style_test">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.cts.intent.category.MANUAL_TEST" />
+            </intent-filter>
+            <meta-data android:name="test_category" android:value="@string/test_category_notifications" />
+            <meta-data android:name="test_excluded_features"
+                android:value="android.hardware.type.automotive:android.hardware.type.television:android.hardware.type.watch" />
+            <meta-data android:name="display_mode" android:value="multi_display_mode" />
+            <meta-data android:name="CddTest" android:value="3.8.3.1/C-2-1" />
+        </activity>
+
         <activity android:name=".notifications.ShowWhenLockedActivity"
             android:exported="true"
             android:showWhenLocked="true">

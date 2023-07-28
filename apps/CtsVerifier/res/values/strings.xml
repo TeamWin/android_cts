@@ -2524,6 +2524,28 @@
     <string name="fsi_sticky_hun_60s">There should be a Heads Up Notification on the screen.\n
         It would show for 60s.\n
         Fail the test if it doesn\'t show or disappears within 60s.</string>
+    <string name="notification_style_test">Notification Styles Test</string>
+    <string name="notification_style_test_info">This test checks that Notification Styles are rendered as expected.</string>
+    <string name="ns_custom_content_instructions">A notification with custom (app-provided) content was posted. Open the notification shade, collapse the notification (if it\'s expanded) and verify that:
+        \n\u2022 There is appropriate padding between the blue section and all other visual elements.
+        \n\u2022 The small icon (A) is clearly visible outside the blue region.
+        \n\u2022 If an expand/collapse affordance is present, it is clearly visible outside the blue region.
+        \nIt should look approximately like the image below (when factoring for theme, dynamic color, etc). </string>
+    <string name="ns_custom_big_content_instructions">A notification with custom (app-provided) content was posted. Open the notification shade, expand the notification (if it\'s collapsed), and verify that:
+        \n\u2022 There is appropriate padding between the blue section and all other visual elements.
+        \n\u2022 The small icon (B) is clearly visible outside the blue region.
+        \n\u2022 The App Name (\"CTS Verifier\") is clearly visible outside the blue region.
+        \n\u2022 If an expand/collapse affordance is present, it is clearly visible outside the blue region.
+        \nIt should look approximately like the image below (when factoring for theme, dynamic color, etc). </string>
+    <string name="ns_custom_heads_up_content_instructions">A notification with custom (app-provided) content was shown in heads-up. While in this state, verify that:
+        \n\u2022 There is appropriate padding between the blue section and all other visual elements.
+        \n\u2022 The small icon (C) is clearly visible outside the blue region.
+        \n\u2022 If an expand/collapse affordance is present, it is clearly visible outside the blue region.
+        \nIt should look approximately like the image below (when factoring for theme, dynamic color, etc). </string>
+    <string name="notification_custom_layout_text">Custom content here!</string>
+    <string name="ns_custom_content_alt_text">This is the expanded version of the notification.\nPlease collapse it to check the custom content view.</string>
+    <string name="ns_custom_big_content_alt_text">This is the collapsed version of the notification.\nPlease expand it to check the custom big content view.</string>
+    <string name="ns_custom_heads_up_content_alt_text">This is the expanded version of the notification.\nPlease collapse it (while it\'s showing as heads-up, not in the shade) to check the heads-up content view.</string>
     <string name="np_start_channel_settings">Launch Channel Settings</string>
     <string name="np_start_security_settings">Launch Security Settings</string>
     <string name="np_start_notif_settings">Launch Notification Settings</string>
