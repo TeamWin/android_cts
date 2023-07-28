@@ -288,6 +288,19 @@
             </intent-filter>
         </activity>
 
+        <activity android:name="android.security.cts.CVE_2021_0600.PocActivity" />
+
+        <receiver android:name="android.security.cts.CVE_2021_0600.PocDeviceAdminReceiver"
+            android:permission="android.permission.BIND_DEVICE_ADMIN"
+            android:exported="true">
+            <meta-data
+                android:name="android.app.device_admin"
+                android:resource="@xml/device_admin_cve_2021_0600" />
+            <intent-filter>
+                <action android:name="android.app.action.DEVICE_ADMIN_ENABLED" />
+            </intent-filter>
+        </receiver>
+
         <service android:name="android.security.cts.AttributionSourceService"
             android:enabled="true"
             android:exported="true"
