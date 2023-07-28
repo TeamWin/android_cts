@@ -113,11 +113,12 @@ class UinputTouchDevice(
             val absInfo: JSONArray = json.getJSONArray("abs_info")
             for (i in 0 until absInfo.length()) {
                 val item = absInfo.getJSONObject(i)
-                if (item.get("code") == ABS_MT_POSITION_X) {
+                val code: Any = item.get("code")
+                if (code == ABS_MT_POSITION_X || code == "ABS_MT_POSITION_X") {
                     item.getJSONObject("info")
                         .put("maximum", sizeOverride.width - 1)
                 }
-                if (item.get("code") == ABS_MT_POSITION_Y) {
+                if (code == ABS_MT_POSITION_Y || code == "ABS_MT_POSITION_Y") {
                     item.getJSONObject("info")
                         .put("maximum", sizeOverride.height - 1)
                 }
