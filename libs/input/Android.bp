@@ -29,5 +29,6 @@ java_library_static {
     static_libs: [
         "androidx.test.rules",
         "compatibility-device-util-axt",
+        "cts-wm-util",
     ],
 }
