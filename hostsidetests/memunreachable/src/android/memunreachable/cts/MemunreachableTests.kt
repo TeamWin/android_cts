@@ -48,18 +48,12 @@ class MemunreachableTests : BaseHostJUnit4Test() {
     @Test
     @Throws(DeviceNotAvailableException::class)
     fun testDumpsysMeminfoUnreachableUndebuggableApp() {
-        // Test that an app not marked android:debuggable can have dumpsys meminfo --unreachable run on it
-        // on a userdebug build but not on a user build.
+        // Test that an app not marked android:debuggable can not have dumpsys meminfo --unreachable run on it.
         val meminfo = dumpsysMemunreachable(UNDEBUGGABLE_TEST_PACKAGE, TEST_ACTIVITY)
         Truth.assertThat(meminfo).isNotNull()
         Truth.assertThat(meminfo).startsWith("Unreachable memory\n")
-        if (device.getProperty("ro.build.type") == "user") {
-            Truth.assertWithMessage("on a user build").that(meminfo)
-                    .doesNotContainMatch(UNREACHABLE_MEMORY_RESULT_PATTERN.toPattern())
-        } else {
-            Truth.assertWithMessage("on userdebug or eng build").that(meminfo)
-                    .containsMatch(UNREACHABLE_MEMORY_RESULT_PATTERN.toPattern())
-        }
+        Truth.assertThat(meminfo)
+            .doesNotContainMatch(UNREACHABLE_MEMORY_RESULT_PATTERN.toPattern())
     }
 
     companion object {
