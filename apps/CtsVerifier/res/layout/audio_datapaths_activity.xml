@@ -70,10 +70,10 @@
                 android:layout_height="match_parent"
                 android:id="@+id/audio_datapaths_start"/>
             <Button
-                android:text="@string/audio_general_stop"
+                android:text="@string/audio_general_cancel"
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
-                android:id="@+id/audio_datapaths_stop"/>
+                android:id="@+id/audio_datapaths_cancel"/>
         </LinearLayout>
 
         <com.android.cts.verifier.audio.audiolib.WaveScopeView
