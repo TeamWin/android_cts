@@ -17,7 +17,7 @@
 package android.permissionui.cts
 
 import android.content.Intent
-import androidx.test.filters.FlakyTest
+import android.platform.test.annotations.FlakyTest
 import androidx.test.uiautomator.By
 import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
 import org.junit.Assume.assumeFalse
