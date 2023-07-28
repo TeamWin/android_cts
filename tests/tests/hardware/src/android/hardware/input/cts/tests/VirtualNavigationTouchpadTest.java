@@ -188,7 +188,7 @@ public class VirtualNavigationTouchpadTest extends VirtualDeviceTestCase {
     public void sendFlingDown_motionEventNotConsumed_getsConvertedToDpadDown() {
         setConsumeGenericMotionEvents(false);
 
-        sendFlingEvents(/* startX= */ 30f, /* startY= */ 30f, /* diffX= */ 10f, /* diffY= */ 30f);
+        sendFlingEvents(/* startX= */ 30f, /* startY= */ 10f, /* diffX= */ 10f, /* diffY= */ 30f);
 
         verifyEvents(Arrays.asList(
                         createKeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DPAD_DOWN),
@@ -202,7 +202,7 @@ public class VirtualNavigationTouchpadTest extends VirtualDeviceTestCase {
     public void sendFlingRight_motionEventNotConsumed_getsConvertedToDpadRight() {
         setConsumeGenericMotionEvents(false);
 
-        sendFlingEvents(/* startX= */ 40f, /* startY= */ 40f, /* diffX= */ 30f, /* diffY= */ 10f);
+        sendFlingEvents(/* startX= */ 10f, /* startY= */ 30f, /* diffX= */ 30f, /* diffY= */ 10f);
 
         verifyEvents(Arrays.asList(
                         createKeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DPAD_RIGHT),
