@@ -42,6 +42,8 @@ import android.server.wm.WindowManagerState;
 import android.server.wm.WindowManagerTestBase;
 import android.view.WindowInsets;
 
+import androidx.test.filters.FlakyTest;
+
 import com.android.cts.mockime.MockIme;
 
 import org.junit.Before;
@@ -95,6 +97,7 @@ public class WindowInsetsAnimationImeTests extends WindowInsetsAnimationTestBase
         mRootView = mActivity.getWindow().getDecorView();
     }
 
+    @FlakyTest(bugId = 293267558)
     @Test
     public void testImeAnimationCallbacksShowAndHide() {
         initActivity(false /* useFloating */);

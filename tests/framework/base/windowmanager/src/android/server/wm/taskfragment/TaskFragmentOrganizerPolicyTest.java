@@ -65,6 +65,7 @@ import android.window.WindowContainerTransaction;
 import android.window.WindowContainerTransactionCallback;
 
 import androidx.annotation.NonNull;
+import androidx.test.filters.FlakyTest;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.ApiTest;
@@ -240,6 +241,7 @@ public class TaskFragmentOrganizerPolicyTest extends ActivityManagerTestBase {
      * Verifies that performing {@link WindowContainerTransaction#startActivityInTaskFragment} on
      * organized TaskFragment is allowed.
      */
+    @FlakyTest(bugId = 291129203)
     @Test
     @ApiTest(
             apis = {

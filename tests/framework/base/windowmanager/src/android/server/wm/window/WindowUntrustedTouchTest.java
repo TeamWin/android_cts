@@ -81,6 +81,7 @@ import android.widget.Toast;
 import androidx.annotation.AnimRes;
 import androidx.annotation.Nullable;
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
+import androidx.test.filters.FlakyTest;
 
 import com.android.compatibility.common.util.AppOpsUtils;
 import com.android.compatibility.common.util.FeatureUtil;
@@ -695,7 +696,7 @@ public class WindowUntrustedTouchTest {
     }
 
     /** Toast windows */
-
+    @FlakyTest(bugId = 293267005)
     @Test
     public void testWhenSelfTextToastWindow_allowsTouch() throws Throwable {
         addToastOverlay(APP_SELF, /* custom */ false);
