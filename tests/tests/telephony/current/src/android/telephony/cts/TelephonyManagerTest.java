@@ -5926,10 +5926,12 @@ public class TelephonyManagerTest {
             // long as it's not IN_SERVICE
             ServiceState serviceState = mTelephonyManager.getServiceState();
             int retry = 0;
-            while (serviceState == null && retry < 3) {
+            while ((serviceState == null
+                    || serviceState.getState() == ServiceState.STATE_IN_SERVICE) && retry < 3) {
                 serviceState = mTelephonyManager.getServiceState();
                 retry++;
-                waitForMs(200);
+                // wait up to 3s for radio power off/out of service
+                waitForMs(1000);
             }
             int originalServiceState = serviceState != null ? serviceState.getState()
                     : callback.mServiceState.getState();
