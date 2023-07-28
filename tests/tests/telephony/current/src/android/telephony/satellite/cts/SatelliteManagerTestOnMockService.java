@@ -197,6 +197,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         sMockSatelliteServiceManager.setErrorCode(SatelliteError.ERROR_NONE);
         sMockSatelliteServiceManager.setWaitToSend(false);
         sMockSatelliteServiceManager.setShouldRespondTelephony(true);
+        sMockSatelliteServiceManager.mIsPointingUiOverridden = false;
 
         // Initialize radio state
         mBTInitState = false;
@@ -253,10 +254,12 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
 
             sSatelliteManager.unregisterForSatelliteModemStateChanged(callback);
         }
+        sMockSatelliteServiceManager.restoreSatellitePointingUiClassName();
         sMockSatelliteServiceManager.clearSentSatelliteDatagramInfo();
         sMockSatelliteServiceManager.clearMockPointingUiActivityStatusChanges();
         sMockSatelliteServiceManager.clearListeningEnabledList();
         revokeSatellitePermission();
+        sMockSatelliteServiceManager.mIsPointingUiOverridden = false;
     }
 
     @Test
@@ -315,6 +318,72 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
                 satelliteProvisionStateCallback);
 
         revokeSatellitePermission();
+    }
+
+    @Test
+    public void testPointingUICrashHandling() {
+        if (!shouldTestSatelliteWithMockService()) return;
+
+        grantSatellitePermission();
+
+        assertTrue(isSatelliteProvisioned());
+
+        SatelliteStateCallbackTest callback = new SatelliteStateCallbackTest();
+        boolean originalEnabledState = isSatelliteEnabled();
+        boolean registerCallback = false;
+        if (originalEnabledState) {
+            registerCallback = true;
+
+            long registerResult = sSatelliteManager.registerForSatelliteModemStateChanged(
+                    getContext().getMainExecutor(), callback);
+            assertEquals(SatelliteManager.SATELLITE_ERROR_NONE, registerResult);
+            assertTrue(callback.waitUntilResult(1));
+
+            requestSatelliteEnabled(false);
+
+            assertTrue(callback.waitUntilModemOff());
+            assertEquals(SatelliteManager.SATELLITE_MODEM_STATE_OFF, callback.modemState);
+            assertFalse(isSatelliteEnabled());
+            callback.clearModemStates();
+        }
+        if (!registerCallback) {
+            long registerResult = sSatelliteManager
+                    .registerForSatelliteModemStateChanged(getContext().getMainExecutor(),
+                            callback);
+            assertEquals(SatelliteManager.SATELLITE_ERROR_NONE, registerResult);
+            assertTrue(callback.waitUntilResult(1));
+            assertEquals(SatelliteManager.SATELLITE_MODEM_STATE_OFF, callback.modemState);
+        }
+
+        assertTrue(sMockSatelliteServiceManager.connectSatelliteGatewayService());
+        assertTrue(sMockSatelliteServiceManager.overrideExternalSatellitePointingUiClassName());
+        sMockSatelliteServiceManager.clearMockPointingUiActivityStatusChanges();
+        requestSatelliteEnabled(true);
+        assertTrue(callback.waitUntilResult(1));
+        assertEquals(SatelliteManager.SATELLITE_MODEM_STATE_IDLE, callback.modemState);
+
+        assertTrue(sMockSatelliteServiceManager.waitForEventMockPointingUiActivityStarted(1));
+        sMockSatelliteServiceManager.clearStopPointingUiActivity();
+        assertTrue(isSatelliteEnabled());
+
+        // Forcefully stop the Pointing Ui.
+        assertTrue(sMockSatelliteServiceManager.stopExternalMockPointingUi());
+        assertTrue(sMockSatelliteServiceManager.waitForEventMockPointingUiActivityStopped(1));
+        sMockSatelliteServiceManager.clearMockPointingUiActivityStatusChanges();
+        //check if the Pointing Ui Restarted
+        assertTrue(sMockSatelliteServiceManager.waitForEventMockPointingUiActivityStarted(1));
+
+        //kill the pointing UI multiple times and check if it is restarted everytime
+        for (int i = 0; i < 10; i++) {
+            sMockSatelliteServiceManager.clearStopPointingUiActivity();
+            // Forcefully stop the Pointing Ui again.
+            assertTrue(sMockSatelliteServiceManager.stopExternalMockPointingUi());
+            assertTrue(sMockSatelliteServiceManager.waitForEventMockPointingUiActivityStopped(1));
+            sMockSatelliteServiceManager.clearMockPointingUiActivityStatusChanges();
+            //check if the Pointing Ui Restarted
+            assertTrue(sMockSatelliteServiceManager.waitForEventMockPointingUiActivityStarted(1));
+        }
+        assertTrue(sMockSatelliteServiceManager.restoreSatellitePointingUiClassName());
     }
 
     @Test

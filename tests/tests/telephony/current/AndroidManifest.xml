@@ -47,6 +47,7 @@
     <uses-permission android:name="android.permission.USE_ICC_AUTH_WITH_DEVICE_IDENTIFIER" />
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.SATELLITE_COMMUNICATION"/>
+    <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS"/>
 
     <permission android:name="android.telephony.embms.cts.permission.TEST_BROADCAST"
          android:protectionLevel="signature"/>
@@ -324,5 +325,6 @@
         <package android:name="android.telephony.cts.externalimsservice" />
         <package android:name="android.telephony.cts.externalsatellitegatewayservice" />
         <package android:name="android.telephony.cts.externalsatelliteservice" />
+        <package android:name="android.telephony.cts.externalpointingui" />
     </queries>
 </manifest>
