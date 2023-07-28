@@ -55,6 +55,7 @@ import android.os.Looper;
 import android.os.ParcelFileDescriptor;
 import android.os.SystemProperties;
 import android.platform.test.annotations.AppModeSdkSandbox;
+import android.platform.test.annotations.FlakyTest;
 import android.platform.test.annotations.Presubmit;
 import android.provider.Settings;
 import android.text.TextUtils;
@@ -624,6 +625,7 @@ public class DisplayTest extends TestBase {
      * Test that a mode switch to every reported display mode is successful.
      */
     @Test
+    @FlakyTest(bugId = 231609616)
     public void testModeSwitchOnPrimaryDisplay() throws Exception {
         Display.Mode[] modes = mDefaultDisplay.getSupportedModes();
         assumeTrue("Need two or more display modes to exercise switching.", modes.length > 1);
@@ -908,6 +910,7 @@ public class DisplayTest extends TestBase {
      * Test that refresh rate switch app requests are correctly executed on a secondary display.
      */
     @Test
+    @FlakyTest(bugId = 231609616)
     public void testRefreshRateSwitchOnSecondaryDisplay() throws Exception {
         // Standalone VR devices globally ignore SYSTEM_ALERT_WINDOW via AppOps.
         // Skip this test, which depends on a Presentation SYSTEM_ALERT_WINDOW to pass.
