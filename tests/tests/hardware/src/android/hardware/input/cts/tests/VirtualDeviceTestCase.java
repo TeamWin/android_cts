@@ -43,6 +43,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Process;
 import android.os.SystemClock;
+import android.server.wm.WindowManagerStateHelper;
 import android.view.MotionEvent;
 import android.view.Surface;
 import android.view.View;
@@ -168,6 +169,10 @@ public abstract class VirtualDeviceTestCase extends InputTestCase {
                 new Handler(Looper.getMainLooper()));
         onSetUpVirtualInputDevice();
         waitForInputDevice();
+        // Wait for any pending transitions
+        WindowManagerStateHelper windowManagerStateHelper = new WindowManagerStateHelper();
+        windowManagerStateHelper.waitForAppTransitionIdleOnDisplay(mTestActivity.getDisplayId());
+        mInstrumentation.getUiAutomation().syncInputTransactions();
         // Tap to gain window focus on the activity
         tapActivityToFocus();
     }
