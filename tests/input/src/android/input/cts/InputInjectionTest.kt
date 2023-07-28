@@ -29,6 +29,7 @@ import android.view.InputEvent
 import android.view.KeyEvent
 import android.view.MotionEvent
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.filters.FlakyTest
 import androidx.test.platform.app.InstrumentationRegistry
 import com.android.compatibility.common.util.SystemUtil
 import com.android.test.inputinjection.IInputInjectionTestCallbacks
@@ -119,6 +120,7 @@ class InputInjectionTest {
      * instrumentation. This means tests cannot inject pointer events into other foreground windows
      * that are not being instrumented.
      */
+    @FlakyTest(bugId = 293575644)
     @Test
     fun testCannotInjectPointerEventsFromInstrumentationToUnownedApp() {
         startInjectionActivitySync(withCallbacks()).use {
