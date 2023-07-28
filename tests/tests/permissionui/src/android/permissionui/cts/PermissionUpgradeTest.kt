@@ -16,7 +16,7 @@
 
 package android.permissionui.cts
 
-import androidx.test.filters.FlakyTest
+import android.platform.test.annotations.FlakyTest
 import org.junit.Assume
 import org.junit.Test
 

@@ -25,8 +25,8 @@ import android.hardware.SensorPrivacyManager.Sensors.CAMERA
 import android.hardware.SensorPrivacyManager.Sensors.MICROPHONE
 import android.location.LocationManager
 import android.os.Build
+import android.platform.test.annotations.FlakyTest
 import android.provider.DeviceConfig
-import androidx.test.filters.FlakyTest
 import androidx.test.filters.SdkSuppress
 import androidx.test.uiautomator.By
 import com.android.compatibility.common.util.SystemUtil.callWithShellPermissionIdentity
