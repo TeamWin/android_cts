@@ -63,7 +63,6 @@ import com.android.bedstead.nene.utils.Versions;
 
 import java.lang.reflect.InvocationTargetException;
 import java.time.Duration;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -875,5 +874,11 @@ public final class DevicePolicy {
                     .map(packageName -> TestApis.packages().find(packageName))
                     .collect(Collectors.toSet());
         }
+    }
+
+    /** See {@link DevicePolicyManager#createAdminSupportIntent}*/
+    @Experimental
+    public Intent createAdminSupportIntent(String restriction) {
+        return sDevicePolicyManager.createAdminSupportIntent(restriction);
     }
 }

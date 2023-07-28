@@ -16,6 +16,7 @@
 
 package android.devicepolicy.cts;
 
+import static android.app.admin.DevicePolicyManager.EXTRA_RESTRICTION;
 import static android.app.admin.DevicePolicyManager.WIFI_SECURITY_PERSONAL;
 
 import static com.android.bedstead.nene.userrestrictions.CommonUserRestrictions.DISALLOW_ADD_WIFI_CONFIG;
@@ -31,6 +32,7 @@ import static org.testng.Assert.assertThrows;
 
 import android.app.admin.DevicePolicyManager;
 import android.app.admin.WifiSsidPolicy;
+import android.content.Intent;
 import android.net.wifi.WifiSsid;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
@@ -656,5 +658,30 @@ public final class WifiTest {
                     .setConfiguredNetworksLockdownState(
                             sDeviceState.dpc().componentName(), originalLockdown);
         }
+    }
+
+    @ApiTest(apis = {"android.app.admin.DevicePolicyManager#createAdminSupportIntent",
+            "android.os.UserManager#DISALLOW_CONFIG_WIFI"})
+    @Postsubmit(reason = "new test")
+    @EnsureHasUserRestriction(DISALLOW_CONFIG_WIFI)
+    @Test
+    public void createAdminSupportIntent_disallowConfigWifi_createsIntent() {
+        Intent intent = TestApis.devicePolicy().createAdminSupportIntent(
+                DISALLOW_CONFIG_WIFI);
+
+        assertThat(intent).isNotNull();
+        assertThat(intent.getStringExtra(EXTRA_RESTRICTION)).isEqualTo(DISALLOW_CONFIG_WIFI);
+    }
+
+    @ApiTest(apis = {"android.app.admin.DevicePolicyManager#createAdminSupportIntent",
+            "android.os.UserManager#DISALLOW_CONFIG_WIFI"})
+    @Postsubmit(reason = "new test")
+    @EnsureDoesNotHaveUserRestriction(DISALLOW_CONFIG_WIFI)
+    @Test
+    public void createAdminSupportIntent_allowConfigWifi_doesNotCreate() {
+        Intent intent = TestApis.devicePolicy().createAdminSupportIntent(
+                DISALLOW_CONFIG_WIFI);
+
+        assertThat(intent).isNull();
     }
 }

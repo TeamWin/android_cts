@@ -40,5 +40,5 @@ import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy;
         APPLIED_BY_DEVICE_OWNER | APPLIED_BY_PROFILE_OWNER_USER_WITH_NO_DO | APPLIES_GLOBALLY,
         APPLIED_BY_PROFILE_OWNER_PROFILE  | APPLIED_BY_PARENT_INSTANCE_OF_ORGANIZATIONAL_OWNED_PROFILE_OWNER_PROFILE | APPLIES_TO_OWN_USER
                 | CANNOT_BE_APPLIED_BY_ROLE_HOLDER | INHERITABLE})
-public class DisallowCamera {
+public final class DisallowCamera {
 }
