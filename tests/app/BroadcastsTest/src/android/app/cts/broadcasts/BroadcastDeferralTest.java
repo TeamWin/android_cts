@@ -26,6 +26,8 @@ import android.os.Bundle;
 import android.os.SystemClock;
 import android.provider.DeviceConfig;
 
+import androidx.test.filters.FlakyTest;
+
 import com.android.app.cts.broadcasts.ICommandReceiver;
 import com.android.compatibility.common.util.AmUtils;
 import com.android.compatibility.common.util.DeviceConfigStateChangerRule;
@@ -36,6 +38,7 @@ import org.junit.runner.RunWith;
 
 import java.util.List;
 
+@FlakyTest(bugId = 288323707)
 @RunWith(BroadcastsTestRunner.class)
 public class BroadcastDeferralTest extends BaseBroadcastTest {
 
