@@ -45,6 +45,9 @@ public final class BitmapDumper {
     public static void initialize(Instrumentation instrumentation) {
         sInstrumentation = instrumentation;
         sDumpDirectory = instrumentation.getContext().getExternalCacheDir();
+        if (sDumpDirectory == null) {
+            sDumpDirectory = instrumentation.getContext().getCacheDir();
+        }
 
         // Cleanup old tests
         // These are removed on uninstall anyway but just in case...
