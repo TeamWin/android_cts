@@ -277,6 +277,8 @@
             </intent-filter>
         </activity>
 
+        <activity android:name="android.security.cts.CVE_2022_20429.PocActivity" />
+
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
