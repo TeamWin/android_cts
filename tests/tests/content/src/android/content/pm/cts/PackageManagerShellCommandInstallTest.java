@@ -39,6 +39,7 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.UiAutomation;
@@ -77,9 +78,10 @@ import com.android.internal.util.HexDump;
 
 import libcore.util.HexEncoding;
 
-import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -184,10 +186,9 @@ public class PackageManagerShellCommandInstallTest {
 
     private boolean mStreaming = false;
     private boolean mIncremental = false;
+    private boolean mVerifierTimeoutTest = false;
     private String mInstall = "";
-    private String mPackageVerifier = null;
-    private String mUnusedStaticSharedLibsMinCachePeriod = null;
-    private long mStreamingVerificationTimeoutMs = DEFAULT_STREAMING_VERIFICATION_TIMEOUT_MS;
+    private static long sStreamingVerificationTimeoutMs = DEFAULT_STREAMING_VERIFICATION_TIMEOUT_MS;
 
     private static PackageInstaller getPackageInstaller() {
         return getPackageManager().getPackageInstaller();
@@ -265,51 +266,51 @@ public class PackageManagerShellCommandInstallTest {
         }
     }
 
-    @Before
-    public void onBefore() throws Exception {
-        // Check if Incremental is allowed and revert to non-dataloader installation.
-        if (mDataLoaderType == DATA_LOADER_TYPE_INCREMENTAL && !checkIncrementalDeliveryFeature()) {
-            mDataLoaderType = DATA_LOADER_TYPE_NONE;
-        }
-
-        mStreaming = mDataLoaderType != DATA_LOADER_TYPE_NONE;
-        mIncremental = mDataLoaderType == DATA_LOADER_TYPE_INCREMENTAL;
-        mInstall = mDataLoaderType == DATA_LOADER_TYPE_NONE ? " install " :
-                mDataLoaderType == DATA_LOADER_TYPE_STREAMING ? " install-streaming " :
-                        " install-incremental ";
-
-        uninstallPackageSilently(TEST_APP_PACKAGE);
-        assertFalse(isAppInstalled(TEST_APP_PACKAGE));
-
-        uninstallPackageSilently(TEST_VERIFIER_PACKAGE);
-        uninstallPackageSilently(TEST_SUFFICIENT_VERIFIER_PACKAGE);
-
-        uninstallPackageSilently(TEST_SDK_USER_PACKAGE);
-        uninstallPackageSilently(TEST_SDK3_PACKAGE);
-        uninstallPackageSilently(TEST_SDK2_PACKAGE);
-        uninstallPackageSilently(TEST_SDK1_PACKAGE);
-        uninstallPackageSilently(TEST_SDK1_MAJOR_VERSION2_PACKAGE);
-
-        mPackageVerifier = executeShellCommand("settings get global verifier_verify_adb_installs");
-        // Disable the package verifier for non-incremental installations to avoid the dialog
-        // when installing an app.
-        executeShellCommand("settings put global verifier_verify_adb_installs 0");
-
-        mUnusedStaticSharedLibsMinCachePeriod = executeShellCommand(
-                "settings get global unused_static_shared_lib_min_cache_period");
-
+    @BeforeClass
+    public static void onBeforeClass() throws Exception {
         try {
-            mStreamingVerificationTimeoutMs = Long.parseUnsignedLong(
+            sStreamingVerificationTimeoutMs = Long.parseUnsignedLong(
                     executeShellCommand("settings get global streaming_verifier_timeout"));
         } catch (NumberFormatException ignore) {
         }
     }
 
-    @After
-    public void onAfter() throws Exception {
+    @Before
+    public void onBefore() throws Exception {
+        // Check if Incremental is allowed and skip incremental tests otherwise.
+        assumeFalse(mDataLoaderType == DATA_LOADER_TYPE_INCREMENTAL
+                && !checkIncrementalDeliveryFeature());
+
+        mStreaming = mDataLoaderType != DATA_LOADER_TYPE_NONE;
+        mIncremental = mDataLoaderType == DATA_LOADER_TYPE_INCREMENTAL;
+        // Don't repeat verifier timeout tests for non-Incremental installs.
+        mVerifierTimeoutTest = !mStreaming || mIncremental;
+
+        mInstall = mDataLoaderType == DATA_LOADER_TYPE_NONE ? " install " :
+                mDataLoaderType == DATA_LOADER_TYPE_STREAMING ? " install-streaming " :
+                        " install-incremental ";
+
         uninstallPackageSilently(TEST_APP_PACKAGE);
-        assertFalse(isAppInstalled(TEST_APP_PACKAGE));
-        assertEquals(null, getSplits(TEST_APP_PACKAGE));
+
+        executeShellCommand("settings put global verifier_verify_adb_installs 0");
+    }
+
+    private void onBeforeSdkTests() throws Exception {
+        assumeFalse(mStreaming);
+
+        uninstallPackageSilently(TEST_SDK_USER_PACKAGE);
+        uninstallPackageSilently(TEST_SDK3_PACKAGE);
+        uninstallPackageSilently(TEST_SDK2_PACKAGE);
+        uninstallPackageSilently(TEST_SDK1_PACKAGE);
+        uninstallPackageSilently(TEST_SDK1_MAJOR_VERSION2_PACKAGE);
+
+        setSystemProperty("debug.pm.uses_sdk_library_default_cert_digest", "invalid");
+        setSystemProperty("debug.pm.prune_unused_shared_libraries_delay", "invalid");
+    }
+
+    @AfterClass
+    public static void onAfterClass() throws Exception {
+        uninstallPackageSilently(TEST_APP_PACKAGE);
 
         uninstallPackageSilently(TEST_VERIFIER_PACKAGE);
         uninstallPackageSilently(TEST_SUFFICIENT_VERIFIER_PACKAGE);
@@ -319,11 +320,6 @@ public class PackageManagerShellCommandInstallTest {
         uninstallPackageSilently(TEST_SDK2_PACKAGE);
         uninstallPackageSilently(TEST_SDK1_PACKAGE);
         uninstallPackageSilently(TEST_SDK1_MAJOR_VERSION2_PACKAGE);
-
-        // Reset the global settings to their original values.
-        executeShellCommand("settings put global verifier_verify_adb_installs " + mPackageVerifier);
-        executeShellCommand("settings put global unused_static_shared_lib_min_cache_period "
-                + mUnusedStaticSharedLibsMinCachePeriod);
 
         // Set the test override to invalid.
         setSystemProperty("debug.pm.uses_sdk_library_default_cert_digest", "invalid");
@@ -345,9 +341,7 @@ public class PackageManagerShellCommandInstallTest {
 
     @Test
     public void testAppInstallErr() throws Exception {
-        if (!mStreaming) {
-            return;
-        }
+        assumeTrue(mStreaming);
         File file = new File(createApkPath(TEST_HW5));
         String command = "pm " + mInstall + " -t -g " + file.getPath() + (new Random()).nextLong();
         String commandResult = executeShellCommand(command);
@@ -409,6 +403,7 @@ public class PackageManagerShellCommandInstallTest {
 
     @Test
     public void testAppUpdateSkipEnable() throws Exception {
+        assumeFalse(mStreaming);
         installPackage(TEST_HW5);
         assertTrue(isAppInstalled(TEST_APP_PACKAGE));
         assertEquals(PackageManager.COMPONENT_ENABLED_STATE_DEFAULT,
@@ -429,6 +424,7 @@ public class PackageManagerShellCommandInstallTest {
 
     @Test
     public void testSplitsInstall() throws Exception {
+        assumeFalse(mStreaming); // Tested in testSplitsBatchInstall.
         installSplits(new String[]{TEST_HW5, TEST_HW5_SPLIT0, TEST_HW5_SPLIT1, TEST_HW5_SPLIT2,
                 TEST_HW5_SPLIT3, TEST_HW5_SPLIT4});
         assertTrue(isAppInstalled(TEST_APP_PACKAGE));
@@ -465,6 +461,7 @@ public class PackageManagerShellCommandInstallTest {
 
     @Test
     public void testSplitsUpdate() throws Exception {
+        assumeFalse(mStreaming); // Tested in testSplitsBatchUpdate.
         installSplits(new String[]{TEST_HW5, TEST_HW5_SPLIT0, TEST_HW5_SPLIT1, TEST_HW5_SPLIT2,
                 TEST_HW5_SPLIT3, TEST_HW5_SPLIT4});
         assertTrue(isAppInstalled(TEST_APP_PACKAGE));
@@ -480,6 +477,7 @@ public class PackageManagerShellCommandInstallTest {
 
     @Test
     public void testSplitsAdd() throws Exception {
+        assumeFalse(mStreaming); // Tested in testSplitsBatchAdd.
         installSplits(new String[]{TEST_HW5});
         assertTrue(isAppInstalled(TEST_APP_PACKAGE));
         assertEquals("base", getSplits(TEST_APP_PACKAGE));
@@ -569,6 +567,7 @@ public class PackageManagerShellCommandInstallTest {
 
     @Test
     public void testSplitsUninstall() throws Exception {
+        assumeFalse(mStreaming); // Tested in testSplitsBatchUninstall.
         installSplits(new String[]{TEST_HW5, TEST_HW5_SPLIT0, TEST_HW5_SPLIT1, TEST_HW5_SPLIT2,
                 TEST_HW5_SPLIT3, TEST_HW5_SPLIT4});
         assertTrue(isAppInstalled(TEST_APP_PACKAGE));
@@ -597,6 +596,7 @@ public class PackageManagerShellCommandInstallTest {
 
     @Test
     public void testSplitsRemove() throws Exception {
+        assumeFalse(mStreaming); // Tested in testSplitsBatchRemove.
         installSplits(new String[]{TEST_HW7, TEST_HW7_SPLIT0, TEST_HW7_SPLIT1, TEST_HW7_SPLIT2,
                 TEST_HW7_SPLIT3, TEST_HW7_SPLIT4});
         assertTrue(isAppInstalled(TEST_APP_PACKAGE));
@@ -637,9 +637,7 @@ public class PackageManagerShellCommandInstallTest {
 
     @Test
     public void testAppInstallErrDuplicate() throws Exception {
-        if (!mStreaming) {
-            return;
-        }
+        assumeTrue(mStreaming);
         String split = createApkPath(TEST_HW5);
         String commandResult = executeShellCommand(
                 "pm " + mInstall + " -t -g " + split + " " + split);
@@ -649,6 +647,7 @@ public class PackageManagerShellCommandInstallTest {
 
     @Test
     public void testDontKillWithSplit() throws Exception {
+        assumeFalse(mStreaming);
         installPackage(TEST_HW5);
 
         getUiAutomation().adoptShellPermissionIdentity();
@@ -694,6 +693,7 @@ public class PackageManagerShellCommandInstallTest {
 
     @Test
     public void testDontKillRemovedWithBaseApkFullInstall() throws Exception {
+        assumeFalse(mStreaming);
         installPackage(TEST_HW5);
 
         getUiAutomation().adoptShellPermissionIdentity();
@@ -730,6 +730,7 @@ public class PackageManagerShellCommandInstallTest {
 
     @Test
     public void testDontKillRemovedWithBaseApk() throws Exception {
+        assumeFalse(mStreaming);
         installPackage(TEST_HW5);
 
         getUiAutomation().adoptShellPermissionIdentity();
@@ -766,9 +767,7 @@ public class PackageManagerShellCommandInstallTest {
 
     @Test
     public void testDataLoaderParamsApiV1() throws Exception {
-        if (!mStreaming) {
-            return;
-        }
+        assumeTrue(mStreaming);
 
         getUiAutomation().adoptShellPermissionIdentity();
         try {
@@ -789,9 +788,7 @@ public class PackageManagerShellCommandInstallTest {
 
     @Test
     public void testDataLoaderParamsApiV2() throws Exception {
-        if (!mStreaming) {
-            return;
-        }
+        assumeTrue(mStreaming);
 
         getUiAutomation().adoptShellPermissionIdentity();
         try {
@@ -822,9 +819,7 @@ public class PackageManagerShellCommandInstallTest {
 
     @Test
     public void testRemoveFileApiV2() throws Exception {
-        if (!mStreaming) {
-            return;
-        }
+        assumeTrue(mStreaming);
 
         getUiAutomation().adoptShellPermissionIdentity();
         try {
@@ -860,6 +855,8 @@ public class PackageManagerShellCommandInstallTest {
 
     @Test
     public void testSdkInstallAndUpdate() throws Exception {
+        onBeforeSdkTests();
+
         installPackage(TEST_SDK1);
         assertTrue(isSdkInstalled(TEST_SDK1_NAME, 1));
 
@@ -877,6 +874,8 @@ public class PackageManagerShellCommandInstallTest {
 
     @Test
     public void testSdkInstallMultipleMajorVersions() throws Exception {
+        onBeforeSdkTests();
+
         // Major version 1.
         installPackage(TEST_SDK1);
         assertTrue(isSdkInstalled(TEST_SDK1_NAME, 1));
@@ -890,6 +889,8 @@ public class PackageManagerShellCommandInstallTest {
 
     @Test
     public void testSdkInstallMultipleMinorVersionsWrongSignature() throws Exception {
+        onBeforeSdkTests();
+
         // Major version 1.
         installPackage(TEST_SDK1);
         assertTrue(isSdkInstalled(TEST_SDK1_NAME, 1));
@@ -903,6 +904,8 @@ public class PackageManagerShellCommandInstallTest {
 
     @Test
     public void testSdkInstallMultipleMajorVersionsWrongSignature() throws Exception {
+        onBeforeSdkTests();
+
         // Major version 1.
         installPackage(TEST_SDK1_DIFFERENT_SIGNER);
         assertTrue(isSdkInstalled(TEST_SDK1_NAME, 1));
@@ -917,6 +920,8 @@ public class PackageManagerShellCommandInstallTest {
 
     @Test
     public void testSdkInstallAndUpdateTwoMajorVersions() throws Exception {
+        onBeforeSdkTests();
+
         installPackage(TEST_SDK1);
         assertTrue(isSdkInstalled(TEST_SDK1_NAME, 1));
 
@@ -942,6 +947,8 @@ public class PackageManagerShellCommandInstallTest {
 
     @Test
     public void testAppUsingSdkInstallAndUpdate() throws Exception {
+        onBeforeSdkTests();
+
         // Try to install without required SDK1.
         installPackage(TEST_USING_SDK1, "Failure [INSTALL_FAILED_MISSING_SHARED_LIBRARY");
         assertFalse(isAppInstalled(TEST_SDK_USER_PACKAGE));
@@ -1013,6 +1020,8 @@ public class PackageManagerShellCommandInstallTest {
 
     @Test
     public void testAppUsingSdkInstallGroupInstall() throws Exception {
+        onBeforeSdkTests();
+
         // Install/uninstall the sdk to grab its certDigest.
         installPackage(TEST_SDK1);
         assertTrue(isSdkInstalled(TEST_SDK1_NAME, 1));
@@ -1060,7 +1069,9 @@ public class PackageManagerShellCommandInstallTest {
     }
 
     @Test
-    public void testInstallFailsMismatchingCertificate() throws Exception {
+    public void testInstallSdkFailsMismatchingCertificate() throws Exception {
+        onBeforeSdkTests();
+
         // Install the required SDK1.
         installPackage(TEST_SDK1);
         assertTrue(isSdkInstalled(TEST_SDK1_NAME, 1));
@@ -1071,6 +1082,8 @@ public class PackageManagerShellCommandInstallTest {
 
     @Test
     public void testUninstallSdkWhileAppUsing() throws Exception {
+        onBeforeSdkTests();
+
         // Install the required SDK1.
         installPackage(TEST_SDK1);
         assertTrue(isSdkInstalled(TEST_SDK1_NAME, 1));
@@ -1085,6 +1098,8 @@ public class PackageManagerShellCommandInstallTest {
 
     @Test
     public void testGetSharedLibraries() throws Exception {
+        onBeforeSdkTests();
+
         // Install the SDK1.
         installPackage(TEST_SDK1);
         {
@@ -1148,6 +1163,8 @@ public class PackageManagerShellCommandInstallTest {
 
     @Test
     public void testUninstallUnusedSdks() throws Exception {
+        onBeforeSdkTests();
+
         installPackage(TEST_SDK1);
         installPackage(TEST_SDK2);
 
@@ -1172,6 +1189,8 @@ public class PackageManagerShellCommandInstallTest {
 
     @Test
     public void testAppUsingSdkUsingSdkInstallAndUpdate() throws Exception {
+        onBeforeSdkTests();
+
         // Try to install without required SDK1.
         installPackage(TEST_USING_SDK3, "Failure [INSTALL_FAILED_MISSING_SHARED_LIBRARY");
         assertFalse(isAppInstalled(TEST_SDK_USER_PACKAGE));
@@ -1253,6 +1272,8 @@ public class PackageManagerShellCommandInstallTest {
 
     @Test
     public void testSdkUsingSdkInstallAndUpdate() throws Exception {
+        onBeforeSdkTests();
+
         // Try to install without required SDK1.
         installPackage(TEST_SDK3_USING_SDK1, "Failure [INSTALL_FAILED_MISSING_SHARED_LIBRARY");
         assertFalse(isSdkInstalled(TEST_SDK3_NAME, 3));
@@ -1396,6 +1417,9 @@ public class PackageManagerShellCommandInstallTest {
     @Test
     @LargeTest
     public void testPackageVerifierAllow() throws Exception {
+        assumeTrue(!mStreaming);
+        uninstallPackageSilently(TEST_VERIFIER_PACKAGE);
+
         AtomicInteger dataLoaderType = new AtomicInteger(-1);
 
         runPackageVerifierTest((context, intent) -> {
@@ -1415,6 +1439,9 @@ public class PackageManagerShellCommandInstallTest {
     @Test
     @LargeTest
     public void testPackageVerifierAllowTwoVerifiers() throws Exception {
+        assumeTrue(!mStreaming);
+        uninstallPackageSilently(TEST_VERIFIER_PACKAGE);
+
         installPackage(TEST_VERIFIER_ALLOW);
         assertTrue(isAppInstalled(TEST_VERIFIER_PACKAGE));
 
@@ -1437,6 +1464,9 @@ public class PackageManagerShellCommandInstallTest {
     @Test
     @LargeTest
     public void testPackageVerifierReject() throws Exception {
+        assumeTrue(!mStreaming);
+        uninstallPackageSilently(TEST_VERIFIER_PACKAGE);
+
         AtomicInteger dataLoaderType = new AtomicInteger(-1);
 
         runPackageVerifierTest("Failure [INSTALL_FAILED_VERIFICATION_FAILURE: Install not allowed",
@@ -1457,6 +1487,9 @@ public class PackageManagerShellCommandInstallTest {
     @Test
     @LargeTest
     public void testPackageSufficientVerifierReject() throws Exception {
+        assumeTrue(!mStreaming);
+        uninstallPackageSilently(TEST_SUFFICIENT_VERIFIER_PACKAGE);
+
         // TEST_SUFFICIENT configured to have hellosufficient as sufficient verifier.
         installPackage(TEST_SUFFICIENT_VERIFIER_REJECT);
         assertTrue(isAppInstalled(TEST_SUFFICIENT_VERIFIER_PACKAGE));
@@ -1488,6 +1521,9 @@ public class PackageManagerShellCommandInstallTest {
     @Test
     @LargeTest
     public void testPackageVerifierRejectTwoVerifiersBothReject() throws Exception {
+        assumeTrue(!mStreaming);
+        uninstallPackageSilently(TEST_VERIFIER_PACKAGE);
+
         installPackage(TEST_VERIFIER_REJECT);
         assertTrue(isAppInstalled(TEST_VERIFIER_PACKAGE));
 
@@ -1511,6 +1547,9 @@ public class PackageManagerShellCommandInstallTest {
     @Test
     @LargeTest
     public void testPackageVerifierRejectTwoVerifiersOnlyOneRejects() throws Exception {
+        assumeTrue(!mStreaming);
+        uninstallPackageSilently(TEST_VERIFIER_PACKAGE);
+
         installPackage(TEST_VERIFIER_REJECT);
         assertTrue(isAppInstalled(TEST_VERIFIER_PACKAGE));
 
@@ -1535,10 +1574,9 @@ public class PackageManagerShellCommandInstallTest {
     @Test
     @LargeTest
     public void testPackageVerifierRejectTwoVerifiersOnlyOneDelayedRejects() throws Exception {
-        if (mIncremental) {
-            // Incremental does not allow timeout extension.
-            return;
-        }
+        assumeTrue(!mStreaming);
+        uninstallPackageSilently(TEST_VERIFIER_PACKAGE);
+
         installPackage(TEST_VERIFIER_DELAYED_REJECT);
         assertTrue(isAppInstalled(TEST_VERIFIER_PACKAGE));
 
@@ -1563,6 +1601,9 @@ public class PackageManagerShellCommandInstallTest {
     @Test
     @LargeTest
     public void testPackageVerifierRejectAfterTimeout() throws Exception {
+        assumeTrue(mVerifierTimeoutTest);
+        uninstallPackageSilently(TEST_VERIFIER_PACKAGE);
+
         AtomicInteger dataLoaderType = new AtomicInteger(-1);
 
         runPackageVerifierTestSync(TEST_HW5, TEST_HW7, "Success", (context, intent) -> {
@@ -1579,8 +1620,8 @@ public class PackageManagerShellCommandInstallTest {
                     // allow the install. Try to extend the timeout and then reject after
                     // much shorter time.
                     getPackageManager().extendVerificationTimeout(verificationId,
-                            VERIFICATION_REJECT, mStreamingVerificationTimeoutMs * 3);
-                    Thread.sleep(mStreamingVerificationTimeoutMs * 2);
+                            VERIFICATION_REJECT, sStreamingVerificationTimeoutMs * 3);
+                    Thread.sleep(sStreamingVerificationTimeoutMs * 2);
                     getPackageManager().verifyPendingInstall(verificationId,
                             VERIFICATION_REJECT);
                 } else {
@@ -1598,6 +1639,7 @@ public class PackageManagerShellCommandInstallTest {
     @Test
     @LargeTest
     public void testPackageVerifierWithExtensionAndTimeout() throws Exception {
+        assumeTrue(mVerifierTimeoutTest);
         AtomicInteger dataLoaderType = new AtomicInteger(-1);
 
         runPackageVerifierTest((context, intent) -> {
@@ -1614,8 +1656,8 @@ public class PackageManagerShellCommandInstallTest {
                     // allow the install. Try to extend the timeout and then reject after
                     // much shorter time.
                     getPackageManager().extendVerificationTimeout(verificationId,
-                            VERIFICATION_REJECT, mStreamingVerificationTimeoutMs * 3);
-                    Thread.sleep(mStreamingVerificationTimeoutMs * 2);
+                            VERIFICATION_REJECT, sStreamingVerificationTimeoutMs * 3);
+                    Thread.sleep(sStreamingVerificationTimeoutMs * 2);
                     getPackageManager().verifyPendingInstall(verificationId,
                             VERIFICATION_REJECT);
                 } else {
@@ -1632,6 +1674,9 @@ public class PackageManagerShellCommandInstallTest {
 
     @Test
     public void testPackageVerifierWithChecksums() throws Exception {
+        assumeTrue(mVerifierTimeoutTest);
+        uninstallPackageSilently(TEST_VERIFIER_PACKAGE);
+
         AtomicInteger dataLoaderType = new AtomicInteger(-1);
         List<ApkChecksum> checksums = new ArrayList<>();
         StringBuilder rootHash = new StringBuilder();
@@ -1675,6 +1720,9 @@ public class PackageManagerShellCommandInstallTest {
 
     @Test
     public void testPackageVerifierWithOneVerifierDisabledAtRunTime() throws Exception {
+        assumeTrue(!mStreaming);
+        uninstallPackageSilently(TEST_VERIFIER_PACKAGE);
+
         installPackage(TEST_VERIFIER_REJECT);
         assertTrue(isAppInstalled(TEST_VERIFIER_PACKAGE));
         runPackageVerifierTest("Failure [INSTALL_FAILED_VERIFICATION_FAILURE: Install not allowed",
@@ -1708,6 +1756,9 @@ public class PackageManagerShellCommandInstallTest {
 
     @Test
     public void testPackageVerifierWithOneVerifierDisabledAtManifest() throws Exception {
+        assumeTrue(!mStreaming);
+        uninstallPackageSilently(TEST_VERIFIER_PACKAGE);
+
         // The second verifier package is disabled in its manifest
         installPackage(TEST_VERIFIER_REJECT);
         assertTrue(isAppInstalled(TEST_VERIFIER_PACKAGE));
@@ -1972,7 +2023,7 @@ public class PackageManagerShellCommandInstallTest {
         assertTrue(result, result.startsWith(expectedResultStartsWith));
     }
 
-    private String uninstallPackageSilently(String packageName) throws IOException {
+    private static String uninstallPackageSilently(String packageName) throws IOException {
         return executeShellCommand("pm uninstall " + packageName);
     }
 
