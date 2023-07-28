@@ -54,10 +54,8 @@ import android.annotation.Nullable;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.PersistableBundle;
-import android.os.SystemProperties;
 import android.telecom.Call;
 import android.telecom.PhoneAccount;
 import android.telecom.TelecomManager;
@@ -100,9 +98,6 @@ public class CrossSimRedialingTestOnMockModem extends ImsCallingBase {
 
     private static final String LOG_TAG = "CtsCrossSimRedialingTestOnMockModem";
     private static final boolean VDBG = false;
-    private static final boolean DEBUG = !"user".equals(Build.TYPE);
-
-    private static final String ALLOW_MOCK_MODEM_PROPERTY = "persist.radio.allow_mock_modem";
 
     private static final String TEST_EMERGENCY_NUMBER = "998877665544332211";
 
@@ -157,7 +152,7 @@ public class CrossSimRedialingTestOnMockModem extends ImsCallingBase {
             return;
         }
 
-        enforceMockModemDeveloperSetting();
+        MockModemManager.enforceMockModemDeveloperSetting();
         sMockModemManager = new MockModemManager();
         assertNotNull(sMockModemManager);
         assertTrue(sMockModemManager.connectMockModemService(MOCK_SIM_PROFILE_ID_TWN_CHT));
@@ -379,16 +374,6 @@ public class CrossSimRedialingTestOnMockModem extends ImsCallingBase {
                                 ImsReasonInfo.CODE_UNSPECIFIED, ""));
 
         Thread.sleep(3000);
-    }
-
-    private static void enforceMockModemDeveloperSetting() throws Exception {
-        boolean isAllowed = SystemProperties.getBoolean(ALLOW_MOCK_MODEM_PROPERTY, false);
-        // Check for developer settings for user build. Always allow for debug builds
-        if (!isAllowed && !DEBUG) {
-            throw new IllegalStateException(
-                "!! Enable Mock Modem before running this test !! "
-                    + "Developer options => Allow Mock Modem");
-        }
     }
 
     private static PersistableBundle getDefaultPersistableBundle() {
