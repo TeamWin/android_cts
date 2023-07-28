@@ -24,7 +24,9 @@ import android.content.Context;
 import android.hardware.radio.sim.Carrier;
 import android.hardware.radio.voice.CdmaSignalInfoRecord;
 import android.hardware.radio.voice.UusInfo;
+import android.os.Build;
 import android.os.Looper;
+import android.os.SystemProperties;
 import android.telephony.Annotation;
 import android.telephony.BarringInfo;
 import android.telephony.SubscriptionManager;
@@ -46,11 +48,27 @@ import java.util.function.BooleanSupplier;
 
 public class MockModemManager {
     private static final String TAG = "MockModemManager";
+    private static final boolean DEBUG = !"user".equals(Build.TYPE);
+
+    private static final String ALLOW_MOCK_MODEM_PROPERTY = "persist.radio.allow_mock_modem";
+    private static final String BOOT_ALLOW_MOCK_MODEM_PROPERTY = "ro.boot.radio.allow_mock_modem";
 
     private static Context sContext;
     private static MockModemServiceConnector sServiceConnector;
     private static final long TIMEOUT_IN_MSEC_FOR_SIM_STATUS_CHANGED = 10000;
     private MockModemService mMockModemService;
+
+    public static void enforceMockModemDeveloperSetting() throws Exception {
+        boolean isAllowed = SystemProperties.getBoolean(ALLOW_MOCK_MODEM_PROPERTY, false);
+        boolean isAllowedForBoot =
+                SystemProperties.getBoolean(BOOT_ALLOW_MOCK_MODEM_PROPERTY, false);
+        // Check for developer settings for user build. Always allow for debug builds
+        if (!(isAllowed || isAllowedForBoot) && !DEBUG) {
+            throw new IllegalStateException(
+                "!! Enable Mock Modem before running this test !! "
+                    + "Developer options => Allow Mock Modem");
+        }
+    }
 
     public MockModemManager() {
         sContext = InstrumentationRegistry.getInstrumentation().getContext();
