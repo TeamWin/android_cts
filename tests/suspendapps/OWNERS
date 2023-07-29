@@ -1,5 +1,6 @@
 # Bug component: 36137
-set noparent
+patb@google.com
+include platform/frameworks/base:/PACKAGE_MANAGER_OWNERS
 
 suprabh@google.com
 varunshah@google.com
