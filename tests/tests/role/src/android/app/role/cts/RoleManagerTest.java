@@ -200,6 +200,7 @@ public class RoleManagerTest {
     }
 
     @Test
+    @FlakyTest(bugId = 288468003, detail = "CtsRoleTestCases is breaching 20min SLO")
     public void requestRoleAndDenyThenIsNotRoleHolder() throws Exception {
         requestRole(ROLE_NAME);
         respondToRoleRequest(false);
@@ -208,6 +209,7 @@ public class RoleManagerTest {
     }
 
     @Test
+    @FlakyTest(bugId = 288468003, detail = "CtsRoleTestCases is breaching 20min SLO")
     public void requestRoleAndAllowThenIsRoleHolder() throws Exception {
         requestRole(ROLE_NAME);
         respondToRoleRequest(true);
@@ -216,6 +218,7 @@ public class RoleManagerTest {
     }
 
     @Test
+    @FlakyTest(bugId = 288468003, detail = "CtsRoleTestCases is breaching 20min SLO")
     public void requestRoleFirstTimeNoDontAskAgain() throws Exception {
         requestRole(ROLE_NAME);
         UiObject2 dontAskAgainCheck = findDontAskAgainCheck(false);
@@ -240,6 +243,7 @@ public class RoleManagerTest {
     }
 
     @Test
+    @FlakyTest(bugId = 288468003, detail = "CtsRoleTestCases is breaching 20min SLO")
     public void requestRoleAndDenyWithDontAskAgainReturnsCanceled() throws Exception {
         requestRole(ROLE_NAME);
         respondToRoleRequest(false);
@@ -363,6 +367,7 @@ public class RoleManagerTest {
     }
 
     @Test
+    @FlakyTest(bugId = 288468003, detail = "CtsRoleTestCases is breaching 20min SLO")
     public void requestHoldingRoleThenAllowedAutomatically() throws Exception {
         requestRole(ROLE_NAME);
         respondToRoleRequest(true);
@@ -460,6 +465,7 @@ public class RoleManagerTest {
     }
 
     @Test
+    @FlakyTest(bugId = 288468003, detail = "CtsRoleTestCases is breaching 20min SLO")
     public void targetSdk28AndChangeDefaultDialerAndAllowThenIsDefaultDialer() throws Exception {
         assumeTrue(sRoleManager.isRoleAvailable(RoleManager.ROLE_DIALER));
 
@@ -480,6 +486,7 @@ public class RoleManagerTest {
     }
 
     @Test
+    @FlakyTest(bugId = 288468003, detail = "CtsRoleTestCases is breaching 20min SLO")
     public void targetSdk28AndChangeDefaultSmsAndAllowThenIsDefaultSms() throws Exception {
         assumeTrue(sRoleManager.isRoleAvailable(RoleManager.ROLE_SMS));
 
@@ -496,6 +503,7 @@ public class RoleManagerTest {
     }
 
     @Test
+    @FlakyTest(bugId = 288468003, detail = "CtsRoleTestCases is breaching 20min SLO")
     public void targetSdk28AndChangeDefaultDialerForAnotherAppThenDeniedAutomatically()
             throws Exception {
         assumeTrue(sRoleManager.isRoleAvailable(RoleManager.ROLE_DIALER));
@@ -511,6 +519,7 @@ public class RoleManagerTest {
     }
 
     @Test
+    @FlakyTest(bugId = 288468003, detail = "CtsRoleTestCases is breaching 20min SLO")
     public void targetSdk28AndChangeDefaultSmsForAnotherAppThenDeniedAutomatically()
             throws Exception {
         assumeTrue(sRoleManager.isRoleAvailable(RoleManager.ROLE_SMS));
@@ -526,6 +535,7 @@ public class RoleManagerTest {
     }
 
     @Test
+    @FlakyTest(bugId = 288468003, detail = "CtsRoleTestCases is breaching 20min SLO")
     public void
     targetSdk28AndChangeDefaultDialerForAnotherAppAsHolderAndAllowThenTheOtherAppIsDefaultDialer()
             throws Exception {
@@ -571,6 +581,7 @@ public class RoleManagerTest {
     }
 
     @Test
+    @FlakyTest(bugId = 288468003, detail = "CtsRoleTestCases is breaching 20min SLO")
     public void
     targetSdk28AndChangeDefaultSmsForAnotherAppAsHolderAndAllowThenTheOtherAppIsDefaultSms()
             throws Exception {
@@ -590,6 +601,7 @@ public class RoleManagerTest {
     }
 
     @Test
+    @FlakyTest(bugId = 288468003, detail = "CtsRoleTestCases is breaching 20min SLO")
     public void openDefaultAppDetailsThenIsNotDefaultApp() throws Exception {
         runWithShellPermissionIdentity(() -> sContext.startActivity(new Intent(
                 Intent.ACTION_MANAGE_DEFAULT_APP)
@@ -605,6 +617,7 @@ public class RoleManagerTest {
     }
 
     @Test
+    @FlakyTest(bugId = 288468003, detail = "CtsRoleTestCases is breaching 20min SLO")
     public void openDefaultAppDetailsAndSetDefaultAppThenIsDefaultApp() throws Exception {
         runWithShellPermissionIdentity(() -> sContext.startActivity(new Intent(
                 Intent.ACTION_MANAGE_DEFAULT_APP)
@@ -624,6 +637,7 @@ public class RoleManagerTest {
     }
 
     @Test
+    @FlakyTest(bugId = 288468003, detail = "CtsRoleTestCases is breaching 20min SLO")
     public void openDefaultAppDetailsAndSetDefaultAppAndSetAnotherThenIsNotDefaultApp()
             throws Exception {
         runWithShellPermissionIdentity(() -> sContext.startActivity(new Intent(
@@ -648,6 +662,7 @@ public class RoleManagerTest {
     }
 
     @Test
+    @FlakyTest(bugId = 288468003, detail = "CtsRoleTestCases is breaching 20min SLO")
     public void openDefaultAppListThenHasDefaultApp() throws Exception {
         sContext.startActivity(new Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS)
                 .addCategory(Intent.CATEGORY_DEFAULT)
@@ -671,6 +686,7 @@ public class RoleManagerTest {
     }
 
     @Test
+    @FlakyTest(bugId = 288468003, detail = "CtsRoleTestCases is breaching 20min SLO")
     public void openDefaultAppListAndSetDefaultAppThenIsDefaultApp() throws Exception {
         sContext.startActivity(new Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS)
                 .addCategory(Intent.CATEGORY_DEFAULT)
@@ -690,6 +706,7 @@ public class RoleManagerTest {
     }
 
     @Test
+    @FlakyTest(bugId = 288468003, detail = "CtsRoleTestCases is breaching 20min SLO")
     public void openDefaultAppListAndSetDefaultAppThenIsDefaultAppInList() throws Exception {
         sContext.startActivity(new Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS)
                 .addCategory(Intent.CATEGORY_DEFAULT)
@@ -976,6 +993,7 @@ public class RoleManagerTest {
     }
 
     @Test
+    @FlakyTest(bugId = 288468003, detail = "CtsRoleTestCases is breaching 20min SLO")
     public void packageManagerSetDefaultBrowserBackedByRole() throws Exception {
         callWithShellPermissionIdentity(() -> sPackageManager.setDefaultBrowserPackageNameAsUser(
                 APP_PACKAGE_NAME, UserHandle.myUserId()));
