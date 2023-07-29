@@ -22,6 +22,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeFalse;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
@@ -49,6 +50,7 @@ import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.FeatureUtil;
 import com.android.compatibility.common.util.PropertyUtil;
 
 import org.junit.Before;
@@ -250,6 +252,8 @@ public class InputMethodInfoTest {
 
     @Test
     public void testAtLeastOneEncryptionAwareInputMethodIsAvailable() {
+        assumeFalse(FeatureUtil.isWatch());
+
         if (!mContext.getPackageManager().hasSystemFeature(
                 PackageManager.FEATURE_INPUT_METHODS)) {
             return;
