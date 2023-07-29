@@ -1041,7 +1041,11 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
         secondIntent.putExtra(
                 appToSendPendingIntent.START_PENDING_INTENT_ACTIVITY_EXTRA.PENDING_INTENT, pi);
         secondIntent.putExtra(
-                appToSendPendingIntent.START_PENDING_INTENT_ACTIVITY_EXTRA.ALLOW_BAL, allowBal);
+                appToSendPendingIntent.START_PENDING_INTENT_ACTIVITY_EXTRA.START_BUNDLE,
+                ActivityOptions.makeBasic().setPendingIntentBackgroundActivityStartMode(
+                        allowBal ? ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_ALLOWED
+                                : ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_DENIED)
+                        .toBundle());
         mContext.startActivity(secondIntent);
     }
 

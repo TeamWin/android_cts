@@ -90,18 +90,10 @@ public class Components extends ComponentsBase {
     /** Extra key constants for {@link #START_PENDING_INTENT_ACTIVITY} */
     public static class StartPendingIntentActivityExtra {
         /**
-         * If present starts the pending intent with a bundle created from ActivityOptions where
-         * setBackgroundActivityLaunchAllowed() was set to this value.
+         * The bundle to use to start the pending intent/
          */
-        public final String ALLOW_BAL = "ALLOW_BAL_EXTRA";
+        public final String START_BUNDLE = "START_BUNDLE";
 
-        /** Start the pending intent with a `null` bundle if no options are set. */
-        public final String USE_NULL_BUNDLE = "USE_NULL_BUNDLE";
-        /**
-         * If present and true starts the pending intent with a bundle created from ActivityOptions
-         * where setPendingIntentCreatorBackgroundActivityStartMode() to allow BAL.
-         */
-        public final String ALLOW_CREATOR_BAL = "ALLOW_CREATOR_BAL";
         public final String PENDING_INTENT = "PENDING_INTENT_EXTRA";
     }
 
