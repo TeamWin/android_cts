@@ -45,6 +45,14 @@
         <option name="run-command" value="settings put secure immersive_mode_confirmations confirmed" />
         <option name="run-command" value="input keyevent KEYCODE_HOME" />
     </target_preparer>
+
+    <target_preparer class="com.android.tradefed.targetprep.DeviceSetup">
+        <option name="force-skip-system-props" value="true" />
+        <option name="set-global-setting" key="verifier_engprod" value="1" />
+        <option name="set-global-setting" key="verifier_verify_adb_installs" value="0" />
+        <option name="restore-settings" value="true" />
+    </target_preparer>
+
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="runner" value="androidx.test.runner.AndroidJUnitRunner" />
         <option name="package" value="android.app.cts" />
