@@ -26,6 +26,7 @@ import android.permission.cts.PermissionUtils
 import androidx.test.filters.SdkSuppress
 import androidx.test.uiautomator.By
 import com.android.compatibility.common.util.AppOpsUtils
+import com.android.compatibility.common.util.CddTest
 import com.android.compatibility.common.util.SystemUtil
 import java.util.concurrent.TimeUnit
 import org.junit.Assert
@@ -42,6 +43,7 @@ private const val ACTION_MANAGE_APP_PERMISSIONS = "android.intent.action.MANAGE_
  * app in this test).
  */
 @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
+@CddTest(requirement = "9.1/C-0-1")
 class LocationProviderInterceptDialogTest : BaseUsePermissionTest() {
     @Before
     fun setup() {
