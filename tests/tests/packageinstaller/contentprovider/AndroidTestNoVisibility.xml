@@ -31,6 +31,12 @@
         <option name="test-file-name" value="CtsExportedContentProvider.apk" />
         <option name="test-file-name" value="CtsUnexportedContentProvider.apk" />
     </target_preparer>
+    <target_preparer class="com.android.tradefed.targetprep.DeviceSetup">
+        <option name="force-skip-system-props" value="true" />
+        <option name="set-global-setting" key="verifier_engprod" value="1" />
+        <option name="set-global-setting" key="verifier_verify_adb_installs" value="0" />
+        <option name="restore-settings" value="true" />
+    </target_preparer>
     <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
         <option name="run-command" value="input keyevent KEYCODE_WAKEUP" />
         <option name="run-command" value="wm dismiss-keyguard" />

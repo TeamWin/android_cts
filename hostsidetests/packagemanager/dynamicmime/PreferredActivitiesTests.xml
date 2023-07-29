@@ -29,10 +29,18 @@
         <option name="test-file-name" value="CtsDynamicMimeTestApp.apk" />
     </target_preparer>
 
+    <target_preparer class="com.android.tradefed.targetprep.DeviceSetup">
+        <option name="force-skip-system-props" value="true" />
+        <option name="set-global-setting" key="verifier_engprod" value="1" />
+        <option name="set-global-setting" key="verifier_verify_adb_installs" value="0" />
+        <option name="restore-settings" value="true" />
+    </target_preparer>
+
     <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
         <option name="run-command" value="mkdir -p /data/local/tmp/dynamic-mime-test" />
         <option name="teardown-command" value="rm -rf /data/local/tmp/dynamic-mime-test"/>
     </target_preparer>
+
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.FilePusher">
         <option name="cleanup" value="true" />
         <option name="push" value="CtsDynamicMimePreferredApp.apk->/data/local/tmp/dynamic-mime-test/CtsDynamicMimePreferredApp.apk"/>

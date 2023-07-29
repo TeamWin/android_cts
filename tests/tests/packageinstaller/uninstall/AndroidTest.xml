@@ -39,6 +39,13 @@
         <option name="teardown-command" value="rm -rf /data/local/tmp/cts"/>
     </target_preparer>
 
+    <target_preparer class="com.android.tradefed.targetprep.DeviceSetup">
+        <option name="force-skip-system-props" value="true" />
+        <option name="set-global-setting" key="verifier_engprod" value="1" />
+        <option name="set-global-setting" key="verifier_verify_adb_installs" value="0" />
+        <option name="restore-settings" value="true" />
+    </target_preparer>
+
     <!-- Load additional APKs onto device -->
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.FilePusher">
         <option name="push" value="CtsSelfUninstallingTestApp.apk->/data/local/tmp/cts/uninstall/CtsSelfUninstallingTestApp.apk" />
