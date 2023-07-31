@@ -3130,9 +3130,11 @@ public class RobustnessTest extends Camera2AndroidTestCase {
                     : null;
 
             if (sm.isColorOutputSupported()) {
+                // We don't include JPEG sizes capped at PREVIEW since for MPC 12+ devices, JPEG
+                // sizes are necessarily > 1080p. Also the mandatory stream combinations have no
+                // JPEG streams capped at PREVIEW.
                 mMaxPrivSizes[PREVIEW] = getMaxSize(privSizes, maxPreviewSize);
                 mMaxYuvSizes[PREVIEW]  = getMaxSize(yuvSizes, maxPreviewSize);
-                mMaxJpegSizes[PREVIEW] = getMaxSize(jpegSizes, maxPreviewSize);
 
                 if (sm.isExternalCamera()) {
                     mMaxPrivSizes[RECORD] = getMaxExternalRecordingSize(cameraId, configs);
