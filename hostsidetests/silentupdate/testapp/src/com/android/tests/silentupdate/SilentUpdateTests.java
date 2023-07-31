@@ -38,6 +38,7 @@ import android.content.pm.PackageInstaller;
 import android.content.pm.PackageInstaller.SessionParams;
 import android.content.pm.PackageManager;
 import android.os.SystemClock;
+import android.util.ArraySet;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
@@ -80,12 +81,21 @@ public class SilentUpdateTests {
                     .whereTestOnly().isFalse()
                     .get();
 
+    private final ArraySet<Integer> mPendingAbandonSessionIds = new ArraySet<>();
+
     private static Context getContext() {
         return InstrumentationRegistry.getInstrumentation().getContext();
     }
 
     @After
     public void tearDown() {
+        if (mPendingAbandonSessionIds.size() > 0) {
+            for (int i = 0; i < mPendingAbandonSessionIds.size(); i++) {
+                int sessionId = mPendingAbandonSessionIds.valueAt(i);
+                getContext().getPackageManager().getPackageInstaller().abandonSession(sessionId);
+            }
+            mPendingAbandonSessionIds.clear();
+        }
         sDpcApp.uninstall();
         resetSilentUpdatesPolicy();
     }
@@ -277,7 +287,7 @@ public class SilentUpdateTests {
         if (result != PackageInstaller.STATUS_SUCCESS) {
             final int sessionId =
                     statusUpdate.getIntExtra(PackageInstaller.EXTRA_SESSION_ID, Integer.MIN_VALUE);
-            getContext().getPackageManager().getPackageInstaller().abandonSession(sessionId);
+            mPendingAbandonSessionIds.add(sessionId);
         }
         return result;
     }
