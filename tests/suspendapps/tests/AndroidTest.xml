@@ -33,6 +33,13 @@
         <option name="test-file-name" value="CtsSuspendTestDeviceAdmin.apk" />
     </target_preparer>
 
+    <target_preparer class="com.android.tradefed.targetprep.DeviceSetup">
+        <option name="force-skip-system-props" value="true" />
+        <option name="set-global-setting" key="verifier_engprod" value="1" />
+        <option name="set-global-setting" key="verifier_verify_adb_installs" value="0" />
+        <option name="restore-settings" value="true" />
+    </target_preparer>
+
     <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
         <!-- This is done to bring the app out of the stopped state -->
         <option name="run-command" value="am start -a com.android.suspendapps.suspendtestapp.action.FINISH_TEST_ACTIVITY com.android.suspendapps.suspendtestapp/.SuspendTestActivity" />
