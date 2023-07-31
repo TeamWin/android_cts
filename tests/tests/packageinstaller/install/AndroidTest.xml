@@ -79,9 +79,14 @@
         <option name="run-command" value="cmd statusbar collapse" />
         <!-- dismiss all system dialogs before launch test -->
         <option name="run-command" value="am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS" />
-        <!-- enable/disable verifier_engprod -->
-        <option name="run-command" value="settings put global verifier_engprod 1" />
-        <option name="teardown-command" value="settings put global verifier_engprod 0"/>
+    </target_preparer>
+
+    <!-- disable GPP UI -->
+    <target_preparer class="com.android.tradefed.targetprep.DeviceSetup">
+        <option name="force-skip-system-props" value="true" />
+        <option name="set-global-setting" key="verifier_engprod" value="1" />
+        <option name="set-global-setting" key="verifier_verify_adb_installs" value="0" />
+        <option name="restore-settings" value="true" />
     </target_preparer>
 
     <!-- Required for UserRestrictionInstallTest (b/277987631) -->
