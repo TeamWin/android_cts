@@ -21,10 +21,12 @@ import static android.accessibilityservice.cts.utils.GestureUtils.add;
 import static android.accessibilityservice.cts.utils.GestureUtils.click;
 import static android.accessibilityservice.cts.utils.GestureUtils.dispatchGesture;
 import static android.accessibilityservice.cts.utils.GestureUtils.doubleTap;
+import static android.accessibilityservice.cts.utils.GestureUtils.interruptedSwipe;
 import static android.accessibilityservice.cts.utils.GestureUtils.swipe;
 import static android.view.MotionEvent.ACTION_DOWN;
 import static android.view.MotionEvent.ACTION_HOVER_ENTER;
 import static android.view.MotionEvent.ACTION_HOVER_EXIT;
+import static android.view.MotionEvent.ACTION_HOVER_MOVE;
 import static android.view.MotionEvent.ACTION_MOVE;
 import static android.view.MotionEvent.ACTION_POINTER_DOWN;
 import static android.view.MotionEvent.ACTION_POINTER_UP;
@@ -238,7 +240,40 @@ public class TouchInteractionControllerTest {
         mTouchListener.assertNonePropagated();
     }
 
-    /** Test whether we can initiate a drag. */
+    /**
+     * Test whether interrupting and continuing touch exploration generates a consistent motion
+     * event stream.
+     */
+    @Test
+    @AppModeFull
+    public void testInterruptedSwipe_generatesConsistentEventStream() {
+        if (!mHasTouchscreen || !mScreenBigEnough) return;
+        assertBasicConsistency();
+        mController.registerCallback(
+                Executors.newSingleThreadExecutor(),
+                new BaseCallback() {
+                    public void onMotionEvent(MotionEvent event) {
+                        if (event.getActionMasked() == ACTION_DOWN
+                                && mController.getState()
+                                        != TouchInteractionController.STATE_TOUCH_EXPLORING) {
+                            mController.requestTouchExploration();
+                        }
+                    }
+                });
+        PointF startPoint = add(mTapLocation, -mSwipeDistance, 0);
+        PointF endPoint = add(mTapLocation, mSwipeDistance, 0);
+        dispatch(interruptedSwipe(startPoint, endPoint, mSwipeTimeMillis));
+        mHoverListener.assertPropagated(ACTION_HOVER_ENTER, ACTION_HOVER_MOVE, ACTION_HOVER_EXIT);
+        // If the touch exploration request arrives to the framework too late, we might only see one
+        // hover interaction that combines both swipes.
+        // All we care about is that the stream is consistent.
+        if (mHoverListener.peek() != null) {
+            mHoverListener.assertPropagated(
+                    ACTION_HOVER_ENTER, ACTION_HOVER_MOVE, ACTION_HOVER_EXIT);
+        }
+    }
+
+/** Test whether we can initiate a drag. */
     @Test
     @AppModeFull
     @FlakyTest
