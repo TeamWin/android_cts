@@ -374,8 +374,6 @@ public class UsageStatsTest extends StsExtraBusinessLogicTestCase {
 
         final long startTime = System.currentTimeMillis();
         launchSubActivity(Activities.ActivityOne.class);
-        // Add some delay for UsageStatsService to process the usage event.
-        SystemClock.sleep(1000);
         final long endTime = System.currentTimeMillis();
 
         verifyLastTimeVisibleWithinRange(startTime, endTime, mTargetPackage);
@@ -389,8 +387,6 @@ public class UsageStatsTest extends StsExtraBusinessLogicTestCase {
 
         final long startTime = System.currentTimeMillis();
         launchSubActivity(Activities.ActivityOne.class);
-        // Add some delay for UsageStatsService to process the usage event.
-        SystemClock.sleep(1000);
         final long endTime = System.currentTimeMillis();
 
         verifyLastTimeAnyComponentUsedWithinRange(startTime, endTime, mTargetPackage);
@@ -418,8 +414,6 @@ public class UsageStatsTest extends StsExtraBusinessLogicTestCase {
 
         final long startTime = System.currentTimeMillis();
         bindToTestBroadcastReceiver();
-        // Add some delay for UsageStatsService to process the usage event.
-        SystemClock.sleep(1000);
         final long endTime = System.currentTimeMillis();
 
         verifyLastTimeAnyComponentUsedWithinRange(startTime, endTime, TEST_APP_PKG);
@@ -441,22 +435,35 @@ public class UsageStatsTest extends StsExtraBusinessLogicTestCase {
 
     private void verifyLastTimeVisibleWithinRange(
             long startTime, long endTime, String targetPackage) {
-        final Map<String, UsageStats> map = mUsageStatsManager.queryAndAggregateUsageStats(
-                startTime, endTime);
-        final UsageStats stats = map.get(targetPackage);
+        UsageStats stats = getAggregateUsageStats(startTime, endTime, targetPackage);
         assertNotNull(stats);
-        final long lastTimeVisible = stats.getLastTimeVisible();
+        long lastTimeVisible = stats.getLastTimeVisible();
+        if (lastTimeVisible < startTime) {
+            // There is a slight possibility that the returned stats do not include the latest data,
+            // so query usage stats again after a 1s wait for the most recent data
+            SystemClock.sleep(1000);
+            stats = getAggregateUsageStats(startTime, endTime, targetPackage);
+            assertNotNull(stats);
+            lastTimeVisible = stats.getLastTimeVisible();
+        }
         assertLessThanOrEqual(startTime, lastTimeVisible);
         assertLessThanOrEqual(lastTimeVisible, endTime);
     }
 
     private void verifyLastTimeAnyComponentUsedWithinRange(
             long startTime, long endTime, String targetPackage) {
-        final Map<String, UsageStats> map = mUsageStatsManager.queryAndAggregateUsageStats(
-                startTime, endTime);
-        final UsageStats stats = map.get(targetPackage);
+
+        UsageStats stats = getAggregateUsageStats(startTime, endTime, targetPackage);
         assertNotNull(stats);
-        final long lastTimeAnyComponentUsed = stats.getLastTimeAnyComponentUsed();
+        long lastTimeAnyComponentUsed = stats.getLastTimeAnyComponentUsed();
+        if (lastTimeAnyComponentUsed < startTime) {
+            // There is a slight possibility that the returned stats do not include the latest data,
+            // so query usage stats again after a 1s wait for the most recent data
+            SystemClock.sleep(1000);
+            stats = getAggregateUsageStats(startTime, endTime, targetPackage);
+            assertNotNull(stats);
+            lastTimeAnyComponentUsed = stats.getLastTimeVisible();
+        }
         assertLessThanOrEqual(startTime, lastTimeAnyComponentUsed);
         assertLessThanOrEqual(lastTimeAnyComponentUsed, endTime);
 
@@ -466,6 +473,21 @@ public class UsageStatsTest extends StsExtraBusinessLogicTestCase {
             assertLessThanOrEqual(startTime / DAY, lastDayAnyComponentUsedGlobal);
             assertLessThanOrEqual(lastDayAnyComponentUsedGlobal, endTime / DAY);
         });
+    }
+
+    private UsageStats getAggregateUsageStats(long startTime, long endTime, String targetPackage) {
+        UsageStats stats;
+        // Query for up to 5 seconds in case the handler is busy.
+        for (int i = 0; i < 10; i++) {
+            final Map<String, UsageStats> map = mUsageStatsManager.queryAndAggregateUsageStats(
+                    startTime, endTime + 1000);
+            stats = map.get(targetPackage);
+            if (stats != null) {
+                return stats;
+            }
+            SystemClock.sleep(500);
+        }
+        return null;
     }
 
     @AppModeFull(reason = "No usage events access in instant apps")
