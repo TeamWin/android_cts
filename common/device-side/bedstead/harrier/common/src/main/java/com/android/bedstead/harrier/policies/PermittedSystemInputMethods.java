@@ -27,14 +27,13 @@ import static com.android.bedstead.nene.permissions.CommonPermissions.MANAGE_DEV
 import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy;
 
 /**
- * Policy for setting permitted input methods.
+ * Policy for setting permitted input methods - with the restriction that it only permits setting
+ * either system apps enabled or all apps enabled (with no option to specify particular apps).
  *
  * <p>See {@code DevicePolicyManager#setPermittedInputMethods(ComponentName, List<String>)}
  * for more detail.
- */ // APPLIED_BY_DPM_ROLE_HOLDER
-@EnterprisePolicy(dpc = APPLIED_BY_DEVICE_OWNER | APPLIED_BY_PROFILE_OWNER | APPLIES_TO_OWN_USER
-        | CANNOT_BE_APPLIED_BY_ROLE_HOLDER | INHERITABLE,
-        permissions = @EnterprisePolicy.Permission(appliedWith = MANAGE_DEVICE_POLICY_INPUT_METHODS,
-            appliesTo = APPLIES_TO_OWN_USER))
-public class PermittedInputMethods {
+ */
+@EnterprisePolicy(dpc = APPLIED_BY_PARENT_INSTANCE_OF_ORGANIZATIONAL_OWNED_PROFILE_OWNER_PROFILE | APPLIES_TO_OWN_USER
+        | CANNOT_BE_APPLIED_BY_ROLE_HOLDER | INHERITABLE)
+public class PermittedSystemInputMethods {
 }
