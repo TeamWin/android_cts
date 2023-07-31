@@ -376,12 +376,6 @@ public final class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
                 "testAdminCanGrantSensorsPermissions");
     }
 
-    @Override
-    @Test
-    public void testSensorsRelatedPermissionsNotGrantedViaPolicy() throws Exception {
-        // Skip for now, re-enable when the code path sets DO as able to grant permissions.
-    }
-
     //TODO(b/180413140) Investigate why the test fails on DO mode.
     @Override
     @Test

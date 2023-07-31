@@ -57,6 +57,7 @@ import com.android.bedstead.harrier.annotations.EnsureScreenIsOn;
 import com.android.bedstead.harrier.annotations.EnsureUnlocked;
 import com.android.bedstead.harrier.annotations.IntTestParameter;
 import com.android.bedstead.harrier.annotations.NotificationsTest;
+import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.RequireRunOnWorkProfile;
 import com.android.bedstead.harrier.annotations.StringTestParameter;
 import com.android.bedstead.harrier.annotations.enterprise.AdditionalQueryParameters;
@@ -79,6 +80,7 @@ import com.android.bedstead.nene.utils.Poll;
 import com.android.bedstead.testapp.TestApp;
 import com.android.bedstead.testapp.TestAppActivity;
 import com.android.bedstead.testapp.TestAppInstance;
+import com.android.compatibility.common.util.ApiTest;
 import com.android.queryable.annotations.IntegerQuery;
 import com.android.queryable.annotations.Query;
 
@@ -772,6 +774,53 @@ public final class PermissionGrantTest {
             sDeviceState.dpc().devicePolicyManager().setPermissionGrantState(
                     sDeviceState.dpc().componentName(), sNotInstalledTestApp.packageName(),
                     permission, PERMISSION_GRANT_STATE_DEFAULT);
+            sDeviceState.dpc().devicePolicyManager().setPermissionPolicy(
+                    sDeviceState.dpc().componentName(), PERMISSION_POLICY_PROMPT);
+        }
+    }
+
+    @ApiTest(apis = "android.app.admin.DevicePolicyManager#setPermissionPolicy")
+    @Postsubmit(reason = "new test")
+    @PolicyAppliesTest(policy = SetPermissionPolicy.class)
+    public void setPermissionPolicy_sensorPermissions_autoGrantPermission_denies(
+            @SensorPermissionTestParameter String permission) {
+        try (TestAppInstance testApp = sNotInstalledTestApp.install()) {
+            // We install fresh so the permissions are not granted
+            sDeviceState.dpc().devicePolicyManager().setPermissionPolicy(
+                    sDeviceState.dpc().componentName(), PERMISSION_POLICY_AUTO_GRANT);
+
+            Poll.forValue("Permission granted",
+                            () -> sNotInstalledTestApp.pkg().hasPermission(permission))
+                    .toBeEqualTo(false)
+                    .errorOnFail()
+                    .await();
+        } finally {
+            sDeviceState.dpc().devicePolicyManager().setPermissionPolicy(
+                    sDeviceState.dpc().componentName(), PERMISSION_POLICY_PROMPT);
+        }
+    }
+
+    @ApiTest(apis = "android.app.admin.DevicePolicyManager#setPermissionPolicy")
+    @Postsubmit(reason = "new test")
+    @PolicyAppliesTest(policy = SetPermissionPolicy.class)
+    public void setPermissionPolicy_sensorPermissions_autoGrantPermission_denies_userCanGrant(
+            @SensorPermissionTestParameter String permission) {
+        assumeTrue("Test requires showing activities",
+                TestApis.users().instrumented().canShowActivities());
+        try (TestAppInstance testApp = sNotInstalledTestApp.install()) {
+            // We install fresh so the permissions are not granted
+            sDeviceState.dpc().devicePolicyManager().setPermissionPolicy(
+                    sDeviceState.dpc().componentName(), PERMISSION_POLICY_AUTO_GRANT);
+
+            TestAppActivity activity = testApp.activities().any().start().activity();
+            activity.requestPermissions(new String[]{ permission }, /* requestCode= */ 0);
+
+            Poll.forValue("Permission granted",
+                            () -> sNotInstalledTestApp.pkg().hasPermission(permission))
+                    .toBeEqualTo(true)
+                    .errorOnFail()
+                    .await();
+        } finally {
             sDeviceState.dpc().devicePolicyManager().setPermissionPolicy(
                     sDeviceState.dpc().componentName(), PERMISSION_POLICY_PROMPT);
         }
