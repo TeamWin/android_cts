@@ -678,6 +678,7 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
      * Test focus distance control.
      */
     @Test
+    @AppModeFull(reason = "PropertyUtil methods don't work for instant apps")
     public void testFocusDistanceControl() throws Exception {
         for (String id : mCameraIdsUnderTest) {
             try {
