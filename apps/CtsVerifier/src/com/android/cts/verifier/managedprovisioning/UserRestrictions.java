@@ -143,7 +143,6 @@ public class UserRestrictions {
             Settings.ACTION_AIRPLANE_MODE_SETTINGS,
             Settings.ACTION_DISPLAY_SETTINGS,
             Settings.ACTION_DISPLAY_SETTINGS,
-            Settings.ACTION_WIRELESS_SETTINGS,
         };
 
         if (RESTRICTION_IDS_FOR_POLICY_TRANSPARENCY.length != restrictionLabels.length
