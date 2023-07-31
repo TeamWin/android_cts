@@ -132,10 +132,12 @@ public class CompatScaleTests extends ActivityManagerTestBase {
                 runTestUpdateResourcesConfiguration(session.getActivitySession());
             }
 
-            // Now launch the same activity with upscaling *enabled*
-            try (var up = new CompatChangeCloseable("DOWNSCALED_INVERSE", PACKAGE_UNDER_TEST);
-                 var session = new BaseActivitySessionCloseable(ACTIVITY_UNDER_TEST)) {
-                runTestUpdateResourcesConfiguration(session.getActivitySession());
+            if (mCompatScale >= MAX_UPSCALING_TESTED) {
+                // Now launch the same activity with upscaling *enabled*
+                try (var up = new CompatChangeCloseable("DOWNSCALED_INVERSE", PACKAGE_UNDER_TEST);
+                     var session = new BaseActivitySessionCloseable(ACTIVITY_UNDER_TEST)) {
+                    runTestUpdateResourcesConfiguration(session.getActivitySession());
+                }
             }
         }
     }
