@@ -24,6 +24,7 @@
     <option name="config-descriptor:metadata" key="parameter" value="no_foldable_states" />
     <option name="config-descriptor:metadata" key="parameter" value="run_on_sdk_sandbox" />
     <option name="config-descriptor:metadata" key="mainline-param" value="com.google.android.art.apex" />
+    <option name="config-descriptor:metadata" key="mainline-param" value="com.android.art.apex" />
     <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
         <!-- libcore.java.net.SocketTest requires wifi -->
         <option name="run-command" value="settings put global wifi_on 1" />
