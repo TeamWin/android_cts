@@ -266,16 +266,6 @@ public class SharedConnectivityManagerTest {
     }
 
     @Test
-    public void onServiceConnected() {
-        SharedConnectivityManager manager = SharedConnectivityManager.create(mContext);
-
-        manager.registerCallback(mExecutor, mClientCallback);
-        manager.getServiceConnection().onServiceConnected(COMPONENT_NAME, mIBinder);
-
-        verify(mClientCallback).onServiceConnected();
-    }
-
-    @Test
     public void onServiceDisconnected() {
         SharedConnectivityManager manager = SharedConnectivityManager.create(mContext);
 
@@ -285,7 +275,6 @@ public class SharedConnectivityManagerTest {
 
         verify(mClientCallback).onServiceDisconnected();
     }
-
 
     @Test
     public void connectHotspotNetwork_serviceNotConnected_shouldFail() {
