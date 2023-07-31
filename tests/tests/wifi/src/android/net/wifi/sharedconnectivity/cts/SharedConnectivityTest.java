@@ -40,6 +40,7 @@ import androidx.test.filters.SdkSuppress;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.NonMainlineTest;
 import com.android.modules.utils.build.SdkLevel;
 
 import org.junit.Before;
@@ -57,6 +58,7 @@ import java.util.concurrent.TimeUnit;
  */
 @RunWith(AndroidJUnit4.class)
 @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+@NonMainlineTest
 public class SharedConnectivityTest {
     private static final String TAG = "SharedConnectivityTest";
 

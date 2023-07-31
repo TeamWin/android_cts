@@ -36,6 +36,7 @@ import android.os.Parcel;
 
 import androidx.test.filters.SdkSuppress;
 
+import com.android.compatibility.common.util.NonMainlineTest;
 import com.android.modules.utils.build.SdkLevel;
 
 import org.junit.Before;
@@ -47,6 +48,7 @@ import java.util.Arrays;
  * CTS tests for {@link HotspotNetworkConnectionStatus}.
  */
 @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+@NonMainlineTest
 public class HotspotNetworkConnectionStatusTest {
     private static final long DEVICE_ID = 11L;
     private static final int NETWORK_TYPE = NETWORK_TYPE_CELLULAR;

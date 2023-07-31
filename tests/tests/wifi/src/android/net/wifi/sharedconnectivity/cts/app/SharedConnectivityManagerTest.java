@@ -53,6 +53,7 @@ import android.os.RemoteException;
 import androidx.test.filters.SdkSuppress;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.NonMainlineTest;
 import com.android.modules.utils.build.SdkLevel;
 
 import org.junit.Before;
@@ -70,6 +71,7 @@ import java.util.concurrent.Executor;
  */
 @RunWith(AndroidJUnit4.class)
 @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+@NonMainlineTest
 public class SharedConnectivityManagerTest {
     private static final long DEVICE_ID = 11L;
     private static final int NETWORK_TYPE = NETWORK_TYPE_CELLULAR;

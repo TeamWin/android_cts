@@ -30,6 +30,7 @@ import android.os.Parcel;
 
 import androidx.test.filters.SdkSuppress;
 
+import com.android.compatibility.common.util.NonMainlineTest;
 import com.android.modules.utils.build.SdkLevel;
 
 import org.junit.Test;
@@ -38,6 +39,7 @@ import org.junit.Test;
  * CTS tests for {@link NetworkProviderInfo}.
  */
 @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+@NonMainlineTest
 public class NetworkProviderInfoTest {
 
     private static final int DEVICE_TYPE = DEVICE_TYPE_PHONE;
