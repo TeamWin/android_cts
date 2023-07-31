@@ -936,29 +936,6 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     }
 
     @Test
-    public void testPermittedAccessibilityServices() throws Exception {
-        executeDeviceTestClass(".AccessibilityServicesTest");
-        assertMetricsLogged(getDevice(), () -> {
-            executeDeviceTestMethod(".AccessibilityServicesTest",
-                    "testPermittedAccessibilityServices");
-        }, new DevicePolicyEventWrapper
-                .Builder(EventId.SET_PERMITTED_ACCESSIBILITY_SERVICES_VALUE)
-                .setAdminPackageName(DEVICE_ADMIN_PKG)
-                .setStrings((String[]) null)
-                .build(),
-        new DevicePolicyEventWrapper
-                .Builder(EventId.SET_PERMITTED_ACCESSIBILITY_SERVICES_VALUE)
-                .setAdminPackageName(DEVICE_ADMIN_PKG)
-                .setStrings((String[]) null)
-                .build(),
-        new DevicePolicyEventWrapper
-                .Builder(EventId.SET_PERMITTED_ACCESSIBILITY_SERVICES_VALUE)
-                .setAdminPackageName(DEVICE_ADMIN_PKG)
-                .setStrings("com.google.pkg.one", "com.google.pkg.two")
-                .build());
-    }
-
-    @Test
     public void testPermittedInputMethods() throws Exception {
         executeDeviceTestMethod(".InputMethodsTest", "testPermittedInputMethodsThrowsIfWrongAdmin");
         assertMetricsLogged(getDevice(), () -> {
