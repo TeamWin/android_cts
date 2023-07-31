@@ -155,7 +155,7 @@ public class InstallUtilsHost {
      *     for verification to complete
      */
     public String installRebootlessPackage(File pkg) throws Exception {
-        return getTestInfo().getDevice().installPackage(pkg, false, "--force-non-staged");
+        return getTestInfo().getDevice().installPackage(pkg, false, "--non-staged");
     }
 
     /**
