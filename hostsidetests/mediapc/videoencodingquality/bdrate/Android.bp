@@ -18,16 +18,33 @@
 java_library_host {
     name: "cts-media-videoquality-bdrate-lib",
     srcs: [
-        "src/main/java/com/android/media/videoquality/bdrate/RateDistortionCurve.java",
-        "src/main/java/com/android/media/videoquality/bdrate/RateDistortionPoint.java",
+        "src/main/java/com/android/media/videoquality/bdrate/*.java",
     ],
     libs: [
         "auto_value_annotations",
     ],
     static_libs: [
         "guava",
+        "apache-commons-math",
     ],
     plugins: [
         "auto_value_plugin",
     ],
+    java_version: "11",
+
+}
+
+java_test_host {
+    name: "cts-media-videoquality-bdrate-lib-tests",
+    srcs: [
+        "src/test/java/com/android/media/videoquality/bdrate/*.java",
+    ],
+    static_libs: [
+        "cts-media-videoquality-bdrate-lib",
+        "junit",
+        "junit-params",
+        "truth",
+    ],
+    test_suites: ["general-tests"],
+    java_version: "11",
 }
