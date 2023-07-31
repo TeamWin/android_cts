@@ -20,7 +20,6 @@ import static android.server.wm.BuildUtils.HW_TIMEOUT_MULTIPLIER;
 
 import android.content.Context;
 import android.graphics.Color;
-import android.graphics.Rect;
 import android.os.Binder;
 import android.view.Gravity;
 import android.view.SurfaceControlViewHost;
@@ -128,16 +127,6 @@ public class SurfacePackageFlickerTest {
         @Override
         public PixelChecker getChecker() {
             return mPixelChecker;
-        }
-
-        @Override
-        public Rect getBoundsToCheck(FrameLayout parent) {
-            View boundsView = mParent;
-            Rect boundsToCheck = new Rect(0, 0, boundsView.getWidth(), boundsView.getHeight());
-            int[] topLeft = new int[2];
-            boundsView.getLocationOnScreen(topLeft);
-            boundsToCheck.offset(topLeft[0], topLeft[1]);
-            return boundsToCheck;
         }
     }
 
