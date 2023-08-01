@@ -135,25 +135,13 @@ class EmulateInputDevice {
     }
 
     @Test
-    fun gestureOnTouchpad() {
-        // A short delay is required between the end of one gesture and the start of another, due to
-        // a number of timeouts in the Gestures library.
-        val delayBetweenGesturesMillis: Long = 150
-
+    fun pinchOnTouchpad() {
         UinputTouchDevice(
             instrumentation,
             context.display!!,
             R.raw.test_touchpad_register,
             InputDevice.SOURCE_TOUCHPAD or InputDevice.SOURCE_MOUSE
         ).use { touchpad ->
-            multiFingerSwipe(touchpad, 2)
-            Thread.sleep(delayBetweenGesturesMillis)
-            multiFingerSwipe(touchpad, 3)
-            Thread.sleep(delayBetweenGesturesMillis)
-            multiFingerSwipe(touchpad, 4)
-            Thread.sleep(delayBetweenGesturesMillis)
-
-            // Pinch
             val pointer0 = Point(500, 500)
             val pointer1 = Point(700, 700)
             touchpad.sendBtnTouch(true)
@@ -185,37 +173,65 @@ class EmulateInputDevice {
             touchpad.sendBtnTouch(false)
             touchpad.sendUp(1)
             touchpad.sync()
+            Thread.sleep(TOUCHPAD_POST_GESTURE_DELAY_MILLIS)
         }
     }
 
-    private fun multiFingerSwipe(touchpad: UinputTouchDevice, numFingers: Int) {
-        val pointers = Array(numFingers) { i -> Point(500 + i * 200, 500) }
-        touchpad.sendBtnTouch(true)
-        touchpad.sendBtn(UinputTouchDevice.toolBtnForFingerCount(numFingers), true)
-        for (i in pointers.indices) {
-            touchpad.sendDown(i, pointers[i])
-        }
-        touchpad.sync()
-        Thread.sleep(TOUCHPAD_SCAN_DELAY_MILLIS)
+    @Test
+    fun twoFingerSwipeOnTouchpad() {
+        multiFingerSwipe(2)
+    }
 
-        for (rep in 0 until 10) {
+    @Test
+    fun threeFingerSwipeOnTouchpad() {
+        multiFingerSwipe(3)
+    }
+
+    @Test
+    fun fourFingerSwipeOnTouchpad() {
+        multiFingerSwipe(4)
+    }
+
+    private fun multiFingerSwipe(numFingers: Int) {
+        UinputTouchDevice(
+            instrumentation,
+            context.display!!,
+            R.raw.test_touchpad_register,
+            InputDevice.SOURCE_TOUCHPAD or InputDevice.SOURCE_MOUSE
+        ).use { touchpad ->
+            val pointers = Array(numFingers) { i -> Point(500 + i * 200, 500) }
+            touchpad.sendBtnTouch(true)
+            touchpad.sendBtn(UinputTouchDevice.toolBtnForFingerCount(numFingers), true)
             for (i in pointers.indices) {
-                pointers[i].offset(0, 40)
-                touchpad.sendMove(i, pointers[i])
+                touchpad.sendDown(i, pointers[i])
             }
             touchpad.sync()
             Thread.sleep(TOUCHPAD_SCAN_DELAY_MILLIS)
-        }
 
-        for (i in pointers.indices) {
-            touchpad.sendUp(i)
+            for (rep in 0 until 10) {
+                for (i in pointers.indices) {
+                    pointers[i].offset(0, 40)
+                    touchpad.sendMove(i, pointers[i])
+                }
+                touchpad.sync()
+                Thread.sleep(TOUCHPAD_SCAN_DELAY_MILLIS)
+            }
+
+            for (i in pointers.indices) {
+                touchpad.sendUp(i)
+            }
+            touchpad.sendBtn(UinputTouchDevice.toolBtnForFingerCount(numFingers), false)
+            touchpad.sendBtnTouch(false)
+            touchpad.sync()
+            Thread.sleep(TOUCHPAD_POST_GESTURE_DELAY_MILLIS)
         }
-        touchpad.sendBtn(UinputTouchDevice.toolBtnForFingerCount(numFingers), false)
-        touchpad.sendBtnTouch(false)
-        touchpad.sync()
     }
 
     companion object {
         const val TOUCHPAD_SCAN_DELAY_MILLIS: Long = 5
+
+        // This delay seems to be necessary to let the gesture be properly processed and added to
+        // metrics before the touchpad device is torn down.
+        const val TOUCHPAD_POST_GESTURE_DELAY_MILLIS: Long = 500
     }
 }
