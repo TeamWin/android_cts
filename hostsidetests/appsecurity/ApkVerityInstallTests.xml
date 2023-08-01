@@ -24,9 +24,11 @@
         <option name="run-command" value="setprop debug.wm.disable_deprecated_abi_dialog 1" />
     </target_preparer>
     <!-- disable GPP UI -->
-    <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
-        <option name="run-command" value="settings put global verifier_engprod 1" />
-        <option name="teardown-command" value="settings put global verifier_engprod 0"/>
+    <target_preparer class="com.android.tradefed.targetprep.DeviceSetup">
+        <option name="force-skip-system-props" value="true" />
+        <option name="set-global-setting" key="verifier_engprod" value="1" />
+        <option name="set-global-setting" key="verifier_verify_adb_installs" value="0" />
+        <option name="restore-settings" value="true" />
     </target_preparer>
     <test class="com.android.compatibility.common.tradefed.testtype.JarHostTest" >
         <option name="jar" value="CtsApkVerityInstallHostTestCases.jar" />
