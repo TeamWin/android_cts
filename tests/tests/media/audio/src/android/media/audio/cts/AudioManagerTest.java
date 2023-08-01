@@ -44,10 +44,17 @@ import static android.media.audio.cts.AudioTestUtil.resetVolumeIndex;
 import static android.provider.Settings.Global.APPLY_RAMPING_RINGER;
 import static android.provider.Settings.System.SOUND_EFFECTS_ENABLED;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import android.Manifest;
+import android.app.Instrumentation;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
@@ -79,12 +86,12 @@ import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.AppModeSdkSandbox;
 import android.provider.Settings;
 import android.provider.Settings.System;
-import android.test.InstrumentationTestCase;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.SoundEffectConstants;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.CddTest;
@@ -94,7 +101,11 @@ import com.android.compatibility.common.util.SettingsStateKeeperRule;
 import com.android.compatibility.common.util.UserSettings.Namespace;
 import com.android.internal.annotations.GuardedBy;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.ClassRule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -111,7 +122,8 @@ import java.util.stream.IntStream;
 
 @NonMainlineTest
 @AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
-public class AudioManagerTest extends InstrumentationTestCase {
+@RunWith(AndroidJUnit4.class)
+public class AudioManagerTest {
     private static final String TAG = "AudioManagerTest";
 
     private static final long ASYNC_TIMING_TOLERANCE_MS = 50;
@@ -182,9 +194,12 @@ public class AudioManagerTest extends InstrumentationTestCase {
             new SettingsStateKeeperRule(InstrumentationRegistry.getTargetContext(),
                     Namespace.GLOBAL, Settings.Global.ENCODED_SURROUND_OUTPUT);
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
+    private static Instrumentation getInstrumentation() {
+        return InstrumentationRegistry.getInstrumentation();
+    }
+
+    @Before
+    public void setUp() throws Exception {
         mContext = getInstrumentation().getContext();
         Utils.enableAppOps(mContext.getPackageName(), APPOPS_OP_STR, getInstrumentation());
         mAudioManager = (AudioManager) mContext.getSystemService(Context.AUDIO_SERVICE);
@@ -240,8 +255,8 @@ public class AudioManagerTest extends InstrumentationTestCase {
         }
     }
 
-    @Override
-    protected void tearDown() throws Exception {
+    @After
+    public void tearDown() throws Exception {
         try {
             Utils.toggleNotificationPolicyAccess(
                     mContext.getPackageName(), getInstrumentation(), true);
@@ -261,6 +276,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
     }
 
     @AppModeFull(reason = "Instant apps cannot hold android.permission.MODIFY_AUDIO_SETTINGS")
+    @Test
     public void testMicrophoneMute() throws Exception {
         mAudioManager.setMicrophoneMute(true);
         assertTrue(mAudioManager.isMicrophoneMute());
@@ -269,6 +285,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
     }
 
     @AppModeFull(reason = "Instant apps cannot hold android.permission.MODIFY_AUDIO_SETTINGS")
+    @Test
     public void testMicrophoneMuteIntent() throws Exception {
         if (!mDoNotCheckUnmute) {
             final MyBlockingIntentReceiver receiver = new MyBlockingIntentReceiver(
@@ -294,6 +311,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
     }
 
     @AppModeFull(reason = "Instant apps cannot hold android.permission.MODIFY_AUDIO_SETTINGS")
+    @Test
     public void testSpeakerphoneIntent() throws Exception {
         //  Speaker Phone Not supported in Automotive
         if (isAutomotive()) {
@@ -342,6 +360,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
     }
 
     @AppModeFull(reason = "ACTION_VOLUME_CHANGED is not sent to Instant apps (no FLAG_RECEIVER_VISIBLE_TO_INSTANT_APPS)")
+    @Test
     public void testVolumeChangedIntent() throws Exception {
         final MyBlockingIntentReceiver receiver =
                 new MyBlockingIntentReceiver(AudioManager.ACTION_VOLUME_CHANGED);
@@ -477,6 +496,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testSoundEffects() throws Exception {
         Settings.System.putInt(mContext.getContentResolver(), SOUND_EFFECTS_ENABLED, 1);
 
@@ -509,6 +529,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
         mAudioManager.playSoundEffect(AudioManager.FX_FOCUS_NAVIGATION_RIGHT, volume);
     }
 
+    @Test
     public void testCheckingZenModeBlockDoesNotRequireNotificationPolicyAccess() throws Exception {
         try {
             // set zen mode to priority only, so playSoundEffect will check notification policy
@@ -532,6 +553,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testMusicActive() throws Exception {
         if (mAudioManager.isMusicActive()) {
             return;
@@ -547,6 +569,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
     }
 
     @AppModeFull(reason = "Instant apps cannot hold android.permission.MODIFY_AUDIO_SETTINGS")
+    @Test
     public void testAccessMode() throws Exception {
         mAudioManager.setMode(MODE_RINGTONE);
         assertEquals(MODE_RINGTONE, mAudioManager.getMode());
@@ -556,6 +579,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
         assertEquals(MODE_NORMAL, mAudioManager.getMode());
     }
 
+    @Test
     public void testSetSurroundFormatEnabled() throws Exception {
         getInstrumentation().getUiAutomation().adoptShellPermissionIdentity(
                 Manifest.permission.WRITE_SETTINGS);
@@ -572,6 +596,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
     }
 
     @AppModeFull(reason = "Instant apps cannot hold android.permission.WRITE_SETTINGS")
+    @Test
     public void testSetEncodedSurroundMode() throws Exception {
         getInstrumentation().getUiAutomation().adoptShellPermissionIdentity(
                 Manifest.permission.WRITE_SETTINGS);
@@ -589,6 +614,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
 
     @SuppressWarnings("deprecation")
     @AppModeFull(reason = "Instant apps cannot hold android.permission.MODIFY_AUDIO_SETTINGS")
+    @Test
     public void testRouting() throws Exception {
         // setBluetoothA2dpOn is a no-op, and getRouting should always return -1
         boolean oldA2DP = mAudioManager.isBluetoothA2dpOn();
@@ -632,6 +658,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testVibrateNotification() throws Exception {
         if (mUseFixedVolume || !mHasVibrator) {
             return;
@@ -695,6 +722,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
                 mAudioManager.getVibrateSetting(VIBRATE_TYPE_NOTIFICATION));
     }
 
+    @Test
     public void testVibrateRinger() throws Exception {
         if (mUseFixedVolume || !mHasVibrator) {
             return;
@@ -759,6 +787,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
                 mAudioManager.getVibrateSetting(VIBRATE_TYPE_RINGER));
     }
 
+    @Test
     public void testAccessRingMode() throws Exception {
         Utils.toggleNotificationPolicyAccess(
                 mContext.getPackageName(), getInstrumentation(), true);
@@ -793,6 +822,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
      *   ADJUST_UNMUTE NOTIFICATION + FLAG_ALLOW_RINGER_MODES -> MODE_NORMAL
      * @throws Exception
      */
+    @Test
     public void testAdjustUnmuteNotificationInVibrate() throws Exception {
         Log.i(TAG, "starting testAdjustUnmuteNotificationInVibrate");
         if (mSkipRingerTests) {
@@ -881,6 +911,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
      *                            MODE_NORMAL if VolumePolicy.volumeUpToExitSilent true
      * @throws Exception
      */
+    @Test
     public void testAdjustUnmuteNotificationInSilent() throws Exception {
         if (mSkipRingerTests) {
             return;
@@ -907,6 +938,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
         assertEquals(RINGER_MODE_SILENT, mAudioManager.getRingerMode());
     }
 
+    @Test
     public void testSetRingerModePolicyAccess() throws Exception {
         if (mSkipRingerTests) {
             return;
@@ -970,6 +1002,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testAccessRampingRinger() {
         boolean originalEnabledState = mAudioManager.isRampingRingerEnabled();
         try {
@@ -983,6 +1016,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testRampingRingerSetting() {
         boolean originalEnabledState = mAudioManager.isRampingRingerEnabled();
         try {
@@ -997,6 +1031,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testVolume() throws Exception {
         if (MediaUtils.check(mIsTelevision, "No volume test due to fixed/full vol devices"))
             return;
@@ -1148,6 +1183,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testAccessibilityVolume() throws Exception {
         if (mUseFixedVolume) {
             Log.i("AudioManagerTest", "testAccessibilityVolume() skipped: fixed volume");
@@ -1184,6 +1220,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testSetVoiceCallVolumeToZeroPermission() {
         // Verify that only apps with MODIFY_PHONE_STATE can set VOICE_CALL_STREAM to 0
         mAudioManager.setStreamVolume(STREAM_VOICE_CALL, 0, 0);
@@ -1191,6 +1228,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
                     mAudioManager.getStreamVolume(STREAM_VOICE_CALL) != 0);
     }
 
+    @Test
     public void testMuteFixedVolume() throws Exception {
         int[] streams = {
                 STREAM_VOICE_CALL,
@@ -1216,6 +1254,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testMuteDndAffectedStreams() throws Exception {
         if (mSkipRingerTests) {
             return;
@@ -1290,6 +1329,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testMuteDndUnaffectedStreams() throws Exception {
         if (mSkipRingerTests) {
             return;
@@ -1393,6 +1433,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
         getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
     }
 
+    @Test
     public void testSetInvalidRingerMode() {
         int ringerMode = mAudioManager.getRingerMode();
         mAudioManager.setRingerMode(-1337);
@@ -1402,6 +1443,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
         assertEquals(ringerMode, mAudioManager.getRingerMode());
     }
 
+    @Test
     public void testAdjustVolumeInTotalSilenceMode() throws Exception {
         if (mSkipRingerTests) {
             return;
@@ -1422,6 +1464,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testAdjustVolumeInAlarmsOnlyMode() throws Exception {
         if (mSkipRingerTests) {
             return;
@@ -1445,6 +1488,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testSetStreamVolumeInTotalSilenceMode() throws Exception {
         if (mSkipRingerTests) {
             return;
@@ -1470,6 +1514,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testSetStreamVolumeInAlarmsOnlyMode() throws Exception {
         if (mSkipRingerTests) {
             return;
@@ -1493,6 +1538,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testSetStreamVolumeInPriorityOnlyMode() throws Exception {
         if (mSkipRingerTests) {
             return;
@@ -1531,6 +1577,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testAdjustVolumeInPriorityOnly() throws Exception {
         if (mSkipRingerTests) {
             return;
@@ -1576,6 +1623,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testPriorityOnlyMuteAll() throws Exception {
         if (mSkipRingerTests) {
             return;
@@ -1610,6 +1658,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testPriorityOnlyMediaAllowed() throws Exception {
         if (mSkipRingerTests) {
             return;
@@ -1644,6 +1693,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testPriorityOnlySystemAllowed() throws Exception {
         if (mSkipRingerTests) {
             return;
@@ -1676,6 +1726,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testPriorityOnlySystemDisallowedWithRingerMuted() throws Exception {
         if (mSkipRingerTests) {
             return;
@@ -1709,6 +1760,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testPriorityOnlyAlarmsAllowed() throws Exception {
         if (mSkipRingerTests) {
             return;
@@ -1744,6 +1796,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testPriorityOnlyRingerAllowed() throws Exception {
         if (mSkipRingerTests) {
             return;
@@ -1776,6 +1829,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testPriorityOnlyChannelsCanBypassDnd() throws Exception {
         if (mSkipRingerTests) {
             return;
@@ -1836,11 +1890,13 @@ public class AudioManagerTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testAdjustVolumeWithIllegalDirection() throws Exception {
         // Call the method with illegal direction. System should not reboot.
         mAudioManager.adjustVolume(37, 0);
     }
 
+    @Test
     public void testGetStreamVolumeDbWithIllegalArguments() throws Exception {
         Exception ex = null;
         // invalid stream type
@@ -1904,6 +1960,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
                 ex.getClass(), IllegalArgumentException.class);
     }
 
+    @Test
     public void testGetStreamVolumeDb() throws Exception {
         for (int streamType : PUBLIC_STREAM_TYPES) {
             // verify mininum index is strictly inferior to maximum index
@@ -1923,6 +1980,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testAdjustSuggestedStreamVolumeWithIllegalArguments() throws Exception {
         // Call the method with illegal direction. System should not reboot.
         mAudioManager.adjustSuggestedStreamVolume(37, STREAM_MUSIC, 0);
@@ -1932,6 +1990,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
     }
 
     @CddTest(requirement="5.4.1/C-1-4")
+    @Test
     public void testGetMicrophones() throws Exception {
         if (!mContext.getPackageManager().hasSystemFeature(
                 PackageManager.FEATURE_MICROPHONE)) {
@@ -1963,11 +2022,13 @@ public class AudioManagerTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testIsHapticPlaybackSupported() {
         // Calling the API to make sure it doesn't crash.
         Log.i(TAG, "isHapticPlaybackSupported: " + AudioManager.isHapticPlaybackSupported());
     }
 
+    @Test
     public void testIsUltrasoundSupported() {
         // Calling the API to make sure it must crash due to no permission.
         try {
@@ -1977,6 +2038,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testIsHotwordStreamSupported() {
         // Validate API requires permission
         assertThrows(SecurityException.class, () -> mAudioManager.isHotwordStreamSupported(false));
@@ -1994,6 +2056,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
                                .dropShellPermissionIdentity();
     }
 
+    @Test
     public void testGetAudioHwSyncForSession() {
         // AudioManager.getAudioHwSyncForSession is not supported before S
         if (ApiLevelUtil.isAtMost(Build.VERSION_CODES.R)) {
@@ -2041,6 +2104,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testAllowedCapturePolicy() throws Exception {
         final int policy = mAudioManager.getAllowedCapturePolicy();
         assertEquals("Wrong default capture policy", AudioAttributes.ALLOW_CAPTURE_BY_ALL, policy);
@@ -2054,28 +2118,33 @@ public class AudioManagerTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testIsHdmiSystemAudidoSupported() {
         // just make sure the call works
         boolean isSupported = mAudioManager.isHdmiSystemAudioSupported();
         Log.d(TAG, "isHdmiSystemAudioSupported() = " + isSupported);
     }
 
+    @Test
     public void testIsBluetoothScoAvailableOffCall() {
         // just make sure the call works
         boolean isSupported = mAudioManager.isBluetoothScoAvailableOffCall();
         Log.d(TAG, "isBluetoothScoAvailableOffCall() = " + isSupported);
     }
 
+    @Test
     public void testStartStopBluetoothSco() {
         mAudioManager.startBluetoothSco();
         mAudioManager.stopBluetoothSco();
     }
 
+    @Test
     public void testStartStopBluetoothScoVirtualCall() {
         mAudioManager.startBluetoothScoVirtualCall();
         mAudioManager.stopBluetoothSco();
     }
 
+    @Test
     public void testGetAdditionalOutputDeviceDelay() {
         AudioDeviceInfo[] devices = mAudioManager.getDevices(AudioManager.GET_DEVICES_ALL);
         for (AudioDeviceInfo device : devices) {
@@ -2097,6 +2166,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testPreferredDevicesForStrategy() {
         // setPreferredDeviceForStrategy
         AudioDeviceInfo[] devices = mAudioManager.getDevices(AudioManager.GET_DEVICES_OUTPUTS);
@@ -2169,6 +2239,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testPreferredDeviceForCapturePreset() {
         AudioDeviceInfo[] devices = mAudioManager.getDevices(AudioManager.GET_DEVICES_INPUTS);
         if (devices.length <= 0) {
@@ -2205,6 +2276,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
         mAudioManager.removeOnPreferredDevicesForCapturePresetChangedListener(listener);
     }
 
+    @Test
     public void testGetDevices() {
         AudioDeviceInfo[] devices = mAudioManager.getDevices(AudioManager.GET_DEVICES_ALL);
         for (AudioDeviceInfo device : devices) {
@@ -2243,6 +2315,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testGetDirectPlaybackSupport() {
         assertEquals(AudioManager.DIRECT_PLAYBACK_NOT_SUPPORTED,
                 AudioManager.getDirectPlaybackSupport(
@@ -2291,6 +2364,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
     }
 
     @AppModeFull(reason = "Instant apps cannot hold permission.MODIFY_AUDIO_SETTINGS_PRIVILEGED")
+    @Test
     public void testIndependentStreamTypes() throws Exception {
         Log.i(TAG, "starting testIndependentStreamTypes");
         getInstrumentation().getUiAutomation()
@@ -2333,6 +2407,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
     }
 
     @AppModeFull(reason = "Instant apps cannot hold permission.MODIFY_AUDIO_SETTINGS_PRIVILEGED")
+    @Test
     public void testStreamTypeAliasChange() throws Exception {
         if (!mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
             Log.i(TAG, "skipping testStreamTypeAliasChange, not a phone");
@@ -2391,6 +2466,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testAssistantUidRouting() {
         try {
             mAudioManager.addAssistantServicesUids(new int[0]);
@@ -2424,6 +2500,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
     }
 
     @AppModeFull(reason = "Instant apps cannot hold android.permission.MODIFY_AUDIO_ROUTING")
+    @Test
     public void testBluetoothVariableLatency() throws Exception {
         assertThrows(SecurityException.class,
                 () -> mAudioManager.supportsBluetoothVariableLatency());
@@ -2447,6 +2524,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
         getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
     }
 
+    @Test
     public void testGetHalVersion() {
         AudioHalVersionInfo halVersion = AudioManager.getHalVersion();
         assertNotEquals(null, halVersion);
@@ -2457,6 +2535,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
         assertTrue(halVersion.getMinorVersion() >= 0);
     }
 
+    @Test
     public void testPreferredMixerAttributes() {
         final AudioAttributes attr = new AudioAttributes.Builder()
                 .setUsage(AudioAttributes.USAGE_MEDIA).build();
@@ -2509,6 +2588,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testAdjustVolumeGroupVolume() {
         getInstrumentation().getUiAutomation().adoptShellPermissionIdentity(
                 Manifest.permission.MODIFY_AUDIO_SETTINGS_PRIVILEGED,
