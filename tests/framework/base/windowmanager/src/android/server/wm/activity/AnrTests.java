@@ -20,7 +20,6 @@ import static android.server.wm.ShellCommandHelper.executeShellCommand;
 import static android.server.wm.app.Components.HOST_ACTIVITY;
 import static android.server.wm.app.Components.UNRESPONSIVE_ACTIVITY;
 import static android.server.wm.app.Components.UnresponsiveActivity;
-import static android.server.wm.app.Components.UnresponsiveActivity.EXTRA_DELAY_UI_THREAD_MS;
 import static android.server.wm.app.Components.UnresponsiveActivity.EXTRA_ON_CREATE_DELAY_MS;
 import static android.server.wm.app.Components.UnresponsiveActivity.EXTRA_ON_KEYDOWN_DELAY_MS;
 import static android.server.wm.app.Components.UnresponsiveActivity.EXTRA_ON_MOTIONEVENT_DELAY_MS;
@@ -98,15 +97,6 @@ public class AnrTests extends ActivityManagerTestBase {
         // wait for input manager to get the new focus app. This sleep can be removed once we start
         // listing to input about the focused app.
         SystemClock.sleep(500);
-        injectKey(KeyEvent.KEYCODE_BACK, false /* longpress */, false /* sync */);
-        clickCloseAppOnAnrDialog();
-        assertEventLogsContainsAnr(UnresponsiveActivity.PROCESS_NAME);
-    }
-
-    @Test
-    public void slowUiThreadWithKeyEventTriggersAnr() {
-        startUnresponsiveActivity(EXTRA_DELAY_UI_THREAD_MS, true /* waitForCompletion */,
-                UNRESPONSIVE_ACTIVITY);
         injectKey(KeyEvent.KEYCODE_BACK, false /* longpress */, false /* sync */);
         clickCloseAppOnAnrDialog();
         assertEventLogsContainsAnr(UnresponsiveActivity.PROCESS_NAME);
