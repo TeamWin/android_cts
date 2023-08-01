@@ -35,6 +35,8 @@ import static android.media.bettertogether.cts.StubMediaRoute2ProviderService.ST
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assert.assertThrows;
+
 import android.Manifest;
 import android.app.UiAutomation;
 import android.content.Context;
@@ -362,6 +364,21 @@ public class SystemMediaRouter2Test {
 
         mService.removeRoute(ROUTE_ID2);
         assertThat(removedLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)).isTrue();
+    }
+
+    @Test
+    public void setRouteListingPreference_onPrivilegedInstance_withNull_throws() {
+        assertThrows(
+                UnsupportedOperationException.class,
+                () -> mSystemRouter2ForCts.setRouteListingPreference(null));
+    }
+
+    @Test
+    public void setRouteListingPreference_onPrivilegedInstance_withRLP_throws() {
+        RouteListingPreference rlp = new RouteListingPreference.Builder().build();
+        assertThrows(
+                UnsupportedOperationException.class,
+                () -> mSystemRouter2ForCts.setRouteListingPreference(rlp));
     }
 
     @Test
