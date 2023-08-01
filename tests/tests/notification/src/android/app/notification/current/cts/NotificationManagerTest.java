@@ -1239,36 +1239,65 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
     }
 
     public void testAutogrouping() throws Exception {
+        mListener = mNotificationHelper.enableListener(STUB_PACKAGE_NAME);
+        assertNotNull(mListener);
+        CountDownLatch rerankLatch = mListener.setRankingUpdateCountDown(5);
+
         sendNotification(801, R.drawable.black);
         sendNotification(802, R.drawable.blue);
         sendNotification(803, R.drawable.yellow);
         sendNotification(804, R.drawable.yellow);
 
+        // Wait until all the notifications, including the autogroup, are posted and grouped.
+        rerankLatch.await(400, TimeUnit.MILLISECONDS);
         assertNotificationCount(5);
         assertAllPostedNotificationsAutogrouped();
     }
 
     public void testAutogrouping_autogroupStaysUntilAllNotificationsCanceled() throws Exception {
+        mListener = mNotificationHelper.enableListener(STUB_PACKAGE_NAME);
+        assertNotNull(mListener);
+        CountDownLatch rerankLatch = mListener.setRankingUpdateCountDown(5);
+        CountDownLatch postingLatch = mListener.setRankingUpdateCountDown(5);
+
         sendNotification(701, R.drawable.black);
         sendNotification(702, R.drawable.blue);
         sendNotification(703, R.drawable.yellow);
         sendNotification(704, R.drawable.yellow);
 
+        // Wait until all the notifications, including the autogroup, are posted and grouped.
+        rerankLatch.await(400, TimeUnit.MILLISECONDS);
+        postingLatch.await(400, TimeUnit.MILLISECONDS);
         assertNotificationCount(5);
         assertAllPostedNotificationsAutogrouped();
 
         // Assert all notis stay in the same autogroup until all children are canceled
+        CountDownLatch removedLatch;
         for (int i = 704; i > 701; i--) {
+            rerankLatch = mListener.setRankingUpdateCountDown(1);
+            removedLatch = mListener.setRemovedCountDown(1);
+
             cancelAndPoll(i);
+
+            removedLatch.await(400, TimeUnit.MILLISECONDS);
+            rerankLatch.await(400, TimeUnit.MILLISECONDS);
             assertNotificationCount(i - 700);
             assertAllPostedNotificationsAutogrouped();
         }
+        removedLatch = mListener.setRankingUpdateCountDown(1);
+        rerankLatch = mListener.setRankingUpdateCountDown(1);
         cancelAndPoll(701);
+        rerankLatch.await(400, TimeUnit.MILLISECONDS);
         assertNotificationCount(0);
     }
 
     public void testAutogrouping_autogroupStaysUntilAllNotificationsAddedToGroup()
             throws Exception {
+        mListener = mNotificationHelper.enableListener(STUB_PACKAGE_NAME);
+        assertNotNull(mListener);
+        CountDownLatch rerankLatch = mListener.setRankingUpdateCountDown(5);
+        CountDownLatch postingLatch = mListener.setPostedCountDown(5);
+
         String newGroup = "new!";
         sendNotification(901, R.drawable.black);
         sendNotification(902, R.drawable.blue);
@@ -1281,17 +1310,31 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         postedIds.add(903);
         postedIds.add(904);
 
+        // Wait until all the notifications, including the autogroup, are posted and grouped.
+        postingLatch.await(400, TimeUnit.MILLISECONDS);
+        rerankLatch.await(400, TimeUnit.MILLISECONDS);
         assertNotificationCount(5);
         assertAllPostedNotificationsAutogrouped();
 
         // Assert all notis stay in the same autogroup until all children are canceled
         for (int i = 904; i > 901; i--) {
+            postingLatch = mListener.setPostedCountDown(1);
+            rerankLatch = mListener.setRankingUpdateCountDown(1);
+
             sendNotification(i, newGroup, R.drawable.blue);
             postedIds.remove(postedIds.size() - 1);
+
+            postingLatch.await(400, TimeUnit.MILLISECONDS);
+            rerankLatch.await(400, TimeUnit.MILLISECONDS);
             assertNotificationCount(5);
             assertOnlySomeNotificationsAutogrouped(postedIds);
         }
+        postingLatch = mListener.setPostedCountDown(1);
+        rerankLatch = mListener.setRankingUpdateCountDown(1);
         sendNotification(901, newGroup, R.drawable.blue);
+
+        postingLatch.await(400, TimeUnit.MILLISECONDS);
+        rerankLatch.await(400, TimeUnit.MILLISECONDS);
         assertNotificationCount(4); // no more autogroup summary
         postedIds.remove(0);
         assertOnlySomeNotificationsAutogrouped(postedIds);
@@ -1299,6 +1342,11 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
 
     public void testNewNotificationsAddedToAutogroup_ifOriginalNotificationsCanceled()
             throws Exception {
+        mListener = mNotificationHelper.enableListener(STUB_PACKAGE_NAME);
+        assertNotNull(mListener);
+        CountDownLatch postingLatch = mListener.setPostedCountDown(5);
+        CountDownLatch rerankLatch = mListener.setRankingUpdateCountDown(5);
+
         String newGroup = "new!";
         sendNotification(910, R.drawable.black);
         sendNotification(920, R.drawable.blue);
@@ -1311,31 +1359,35 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         postedIds.add(930);
         postedIds.add(940);
 
+        // Wait until all the notifications, including the autogroup, are posted and grouped.
+        postingLatch.await(400, TimeUnit.MILLISECONDS);
+        rerankLatch.await(400, TimeUnit.MILLISECONDS);
         assertNotificationCount(5);
         assertAllPostedNotificationsAutogrouped();
 
         // regroup all but one of the children
         for (int i = postedIds.size() - 1; i > 0; i--) {
-            try {
-                Thread.sleep(200);
-            } catch (InterruptedException ex) {
-                // pass
-            }
+            postingLatch = mListener.setPostedCountDown(1);
+            rerankLatch = mListener.setRankingUpdateCountDown(1);
+
             int id = postedIds.remove(i);
             sendNotification(id, newGroup, R.drawable.blue);
+
+            postingLatch.await(400, TimeUnit.MILLISECONDS);
+            rerankLatch.await(400, TimeUnit.MILLISECONDS);
             assertNotificationCount(5);
             assertOnlySomeNotificationsAutogrouped(postedIds);
         }
 
         // send a new non-grouped notification. since the autogroup summary still exists,
         // the notification should be added to it
+        rerankLatch = mListener.setRankingUpdateCountDown(1);
+        postingLatch = mListener.setPostedCountDown(1);
         sendNotification(950, R.drawable.blue);
         postedIds.add(950);
-        try {
-            Thread.sleep(200);
-        } catch (InterruptedException ex) {
-            // pass
-        }
+
+        postingLatch.await(400, TimeUnit.MILLISECONDS);
+        rerankLatch.await(400, TimeUnit.MILLISECONDS);
         assertOnlySomeNotificationsAutogrouped(postedIds);
     }
 
