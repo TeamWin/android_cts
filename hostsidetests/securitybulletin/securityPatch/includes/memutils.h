@@ -60,7 +60,7 @@ extern char enable_selective_overload;
 static int s_free_write_index = 0;
 static int s_free_read_index = 0;
 static int s_free_list_size = 0;
-map_struct_t s_free_list[MAX_ENTRIES];
+extern map_struct_t s_free_list[MAX_ENTRIES];
 #endif /* CHECK_USE_AFTER_FREE_WITH_WINDOW_SIZE */
 extern map_struct_t s_mem_map[MAX_ENTRIES];
 #if (!(defined CHECK_OVERFLOW) && !(defined CHECK_UNDERFLOW))
