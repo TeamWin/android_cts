@@ -48,10 +48,10 @@ import android.app.AutomaticZenRule;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
-import android.app.stubs.shared.NotificationHelper.SEARCH_TYPE;
 import android.app.stubs.AutomaticZenRuleActivity;
 import android.app.stubs.GetResultActivity;
 import android.app.stubs.R;
+import android.app.stubs.shared.NotificationHelper.SEARCH_TYPE;
 import android.content.ComponentName;
 import android.content.ContentProviderOperation;
 import android.content.Intent;
@@ -683,6 +683,9 @@ public class NotificationManagerZenTest extends BaseNotificationManagerTest {
             Condition condition = new Condition(rule.getConditionId(), "summary",
                     Condition.STATE_TRUE);
             mNotificationManager.setAutomaticZenRuleState(id, condition);
+
+            Thread.sleep(300); // wait for rules to be applied - it's done asynchronously
+
             assertExpectedDndState(INTERRUPTION_FILTER_PRIORITY);
 
             NotificationManager.Policy consolidatedPolicy =
