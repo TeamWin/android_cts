@@ -77,6 +77,8 @@ const char* AHBFormatAsString(int32_t format) {
         FORMAT_CASE(S8_UINT);
         FORMAT_CASE(Y8Cb8Cr8_420);
         FORMAT_CASE(R8_UNORM);
+        FORMAT_CASE(R16_UINT);
+        FORMAT_CASE(R16G16_UINT);
         GL_FORMAT_CASE(GL_RGB8);
         GL_FORMAT_CASE(GL_RGBA8);
         GL_FORMAT_CASE(GL_RGB565);
@@ -87,6 +89,8 @@ const char* AHBFormatAsString(int32_t format) {
         GL_FORMAT_CASE(GL_DEPTH24_STENCIL8);
         GL_FORMAT_CASE(GL_STENCIL_INDEX8);
         GL_FORMAT_CASE(GL_R8);
+        GL_FORMAT_CASE(GL_R16UI);
+        GL_FORMAT_CASE(GL_RG16UI);
     }
     return "";
 }
@@ -2673,6 +2677,54 @@ INSTANTIATE_TEST_CASE_P(
     SingleLayer, R8Test,
     ::testing::Values(
         AHardwareBuffer_Desc{57, 33, 1, AHARDWAREBUFFER_FORMAT_R8_UNORM, 0, 0, 0, 0}),
+    &GetTestName);
+
+class R16UITest : public AHardwareBufferGLTest {};
+
+// Verify that if we can allocate an R16_UINT AHB we can render to it.
+TEST_P(R16UITest, Write) {
+    AHardwareBuffer_Desc desc = GetParam();
+    desc.usage = AHARDWAREBUFFER_USAGE_GPU_FRAMEBUFFER;
+    if (!SetUpBuffer(desc)) {
+        return;
+    }
+
+    ASSERT_NO_FATAL_FAILURE(SetUpFramebuffer(desc.width, desc.height, 0, kBufferAsRenderbuffer));
+    ASSERT_NO_FATAL_FAILURE(
+        SetUpProgram(kVertexShader, kColorFragmentShader, kPyramidPositions, 0.5f));
+
+    glDrawArrays(GL_TRIANGLES, 0, kPyramidVertexCount);
+    ASSERT_EQ(GLenum{GL_NO_ERROR}, glGetError());
+}
+
+INSTANTIATE_TEST_CASE_P(
+    SingleLayer, R16UITest,
+    ::testing::Values(
+        AHardwareBuffer_Desc{57, 33, 1, AHARDWAREBUFFER_FORMAT_R16_UINT, 0, 0, 0, 0}),
+    &GetTestName);
+
+class RG16UITest : public AHardwareBufferGLTest {};
+
+// Verify that if we can allocate an R16G16_UINT AHB we can render to it.
+TEST_P(RG16UITest, Write) {
+    AHardwareBuffer_Desc desc = GetParam();
+    desc.usage = AHARDWAREBUFFER_USAGE_GPU_FRAMEBUFFER;
+    if (!SetUpBuffer(desc)) {
+        return;
+    }
+
+    ASSERT_NO_FATAL_FAILURE(SetUpFramebuffer(desc.width, desc.height, 0, kBufferAsRenderbuffer));
+    ASSERT_NO_FATAL_FAILURE(
+        SetUpProgram(kVertexShader, kColorFragmentShader, kPyramidPositions, 0.5f));
+
+    glDrawArrays(GL_TRIANGLES, 0, kPyramidVertexCount);
+    ASSERT_EQ(GLenum{GL_NO_ERROR}, glGetError());
+}
+
+INSTANTIATE_TEST_CASE_P(
+    SingleLayer, RG16UITest,
+    ::testing::Values(
+        AHardwareBuffer_Desc{57, 33, 1, AHARDWAREBUFFER_FORMAT_R16G16_UINT, 0, 0, 0, 0}),
     &GetTestName);
 
 }  // namespace android
