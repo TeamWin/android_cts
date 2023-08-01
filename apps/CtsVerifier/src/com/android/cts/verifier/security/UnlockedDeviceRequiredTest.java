@@ -271,11 +271,15 @@ public class UnlockedDeviceRequiredTest extends PassFailButtons.Activity {
          */
         private static final int MAX_DEVICE_STATE_RETRIES = 20;
         /**
-         * Time to sleep between lock state queries; this will allow the device up to one second to
-         * reach the new lock state before timing out.
+         * Number of times to retry the encryption after successful unlock of the device.
+         */
+        private static final int MAX_ENCRYPT_RETRIES = 10;
+        /**
+         * Time to sleep between lock state queries, and encryption tries. This will allow the
+         * device up to one second for the new lock state change, and up to half a second for the
+         * KeyStore authentication.
          */
         private static final long DEVICE_STATE_SLEEP_TIME = 50;
-
         /**
          * The test has been initialized and is waiting to verify that the device has met the
          * requirements for the test.
@@ -442,7 +446,8 @@ public class UnlockedDeviceRequiredTest extends PassFailButtons.Activity {
         private void runDeviceTest(boolean enteringLockState) {
             // Wait for the device to reach the expected lock state before attempting the test.
             if (waitForDeviceState(enteringLockState)) {
-                boolean encryptSuccessful = tryEncrypt(enteringLockState);
+                boolean encryptSuccessful =
+                        verifyEncrypt(enteringLockState);
                 // The test has failed if the encryption success is the same as the lock state; if
                 // the device is being locked then the encryption should fail, and if the device is
                 // being unlocked the encryption should be successful.
@@ -484,6 +489,43 @@ public class UnlockedDeviceRequiredTest extends PassFailButtons.Activity {
                         + " state within the timeout period; this may need to be increased for"
                         + " future tests");
             }
+        }
+
+        /**
+         * Verify encryption tries reaches the expected state. Returns a boolean value whether the
+         * encryption was successful or not.
+         * In case KeyStore is not fully processed the device lock state change, this will allow
+         * half a second for retries, while returns immediately when reaches an expected state.
+         *
+         * @param shouldFail boolean indicating whether an expectation of the encryption is to fail
+         *                   or to success
+         */
+        private boolean verifyEncrypt(boolean shouldFail) {
+            int numRetries = 0;
+            boolean encryptSuccess = false;
+            while (numRetries < MAX_ENCRYPT_RETRIES) {
+                numRetries++;
+
+                encryptSuccess = tryEncrypt(shouldFail);
+                if (shouldFail != encryptSuccess) {
+                    Log.d(
+                            TAG,
+                            "The encryption got the expected result : "
+                                    + (encryptSuccess ? "success" : "fail"));
+                    return encryptSuccess;
+                }
+
+                try {
+                    Thread.sleep(DEVICE_STATE_SLEEP_TIME);
+                } catch (InterruptedException e) {
+                    Log.w(TAG, "Caught an Exception while sleeping: ", e);
+                }
+            }
+            Log.e(
+                    TAG,
+                    "The encryption reached maximum retries, and got the unexpected result : "
+                            + (encryptSuccess ? "success" : "fail"));
+            return encryptSuccess;
         }
 
         /**
