@@ -91,7 +91,8 @@ class SharedUserMigrationTest {
         assertTrue(installPackage(InstallTest.APK4))
         val newPkgInfo = mPm.getPackageInfo(Const.INSTALL_TEST_PKG, FLAG_ZERO)
         assertNull(newPkgInfo.sharedUserId)
-        assertEquals(pkgInfo.applicationInfo.uid, newPkgInfo.applicationInfo.uid)
+        assertEquals(checkNotNull(pkgInfo.applicationInfo).uid,
+		     checkNotNull(newPkgInfo.applicationInfo).uid)
     }
 
     private fun testBestEffort(uid: Int) {
