@@ -41,6 +41,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.provider.Settings;
 import android.server.wm.settings.SettingsSession;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.SparseArray;
 import android.view.PointerIcon;
@@ -49,6 +50,7 @@ import android.view.ViewTreeObserver;
 import android.view.WindowInsets;
 import android.view.WindowInsetsController;
 import android.view.WindowManager;
+import android.view.WindowMetrics;
 import android.widget.FrameLayout;
 
 import com.android.compatibility.common.util.SystemUtil;
@@ -248,10 +250,13 @@ public class CapturedActivity extends Activity {
                 mSurfacePixelValidator = new SurfacePixelValidator2(mTestAreaSize,
                         boundsToCheck, animationTestCase.getChecker(), numFramesRequired);
 
-                int density = (int) getWindowManager().getCurrentWindowMetrics().getDensity();
+                WindowMetrics metrics = getWindowManager().getCurrentWindowMetrics();
+                Log.d(TAG, "Starting capture: metrics=" + metrics);
+                int densityDpi = (int) (metrics.getDensity() * DisplayMetrics.DENSITY_DEFAULT);
+
                 DisplayManager dm = getSystemService(DisplayManager.class);
                 mVirtualDisplay = dm.createVirtualDisplay("CtsCapturedActivity",
-                        mTestAreaSize.x, mTestAreaSize.y, density,
+                        mTestAreaSize.x, mTestAreaSize.y, densityDpi,
                         mSurfacePixelValidator.getSurface(), 0, null /*Callbacks*/,
                         null /*Handler*/);
                 assertNotNull("Failed to create VirtualDisplay", mVirtualDisplay);
