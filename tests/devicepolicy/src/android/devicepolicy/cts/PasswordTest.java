@@ -16,6 +16,9 @@
 
 package android.devicepolicy.cts;
 
+import static android.app.admin.DevicePolicyManager.PASSWORD_COMPLEXITY_HIGH;
+import static android.app.admin.DevicePolicyManager.PASSWORD_COMPLEXITY_MEDIUM;
+import static android.app.admin.DevicePolicyManager.PASSWORD_COMPLEXITY_NONE;
 import static android.content.pm.PackageManager.FEATURE_AUTOMOTIVE;
 import static android.content.pm.PackageManager.FEATURE_SECURE_LOCK_SCREEN;
 import static android.os.Build.VERSION_CODES.N;
@@ -29,6 +32,9 @@ import static org.testng.Assert.assertThrows;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
+import com.android.bedstead.harrier.annotations.EnsurePasswordNotSet;
+import com.android.bedstead.harrier.annotations.EnsurePasswordSet;
+import com.android.bedstead.harrier.annotations.EnsureUnlocked;
 import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.RequireDoesNotHaveFeature;
 import com.android.bedstead.harrier.annotations.RequireFeature;
@@ -40,6 +46,7 @@ import com.android.bedstead.harrier.annotations.enterprise.PolicyDoesNotApplyTes
 import com.android.bedstead.harrier.policies.DeprecatedResetPassword;
 import com.android.bedstead.harrier.policies.FailedPasswordAttempts;
 import com.android.bedstead.harrier.policies.PasswordExpirationTimeout;
+import com.android.bedstead.harrier.policies.PasswordSufficiency;
 import com.android.bedstead.harrier.policies.StrongAuthTimeout;
 import com.android.bedstead.nene.TestApis;
 import com.android.compatibility.common.util.ApiTest;
@@ -52,8 +59,10 @@ import org.junit.runner.RunWith;
 public final class PasswordTest {
 
     private static final long TIMEOUT = 51234;
+    private static final String PASSWORD_MEDIUM_COMPLEXITY = "abc12";
 
-    @ClassRule @Rule
+    @ClassRule
+    @Rule
     public static final DeviceState sDeviceState = new DeviceState();
 
     @CannotSetPolicyTest(policy = PasswordExpirationTimeout.class, includeNonDeviceAdminStates = false)
@@ -193,5 +202,47 @@ public final class PasswordTest {
         assertThrows(SecurityException.class,
                 () -> sDeviceState.dpc().devicePolicyManager()
                         .resetPassword(DEFAULT_PASSWORD, /* flags= */ 0));
+    }
+
+    @EnsurePasswordSet(password = PASSWORD_MEDIUM_COMPLEXITY)
+    @EnsureUnlocked
+    @CanSetPolicyTest(policy = PasswordSufficiency.class)
+    @ApiTest(apis = "android.app.admin.DevicePolicyManager#isActivePasswordSufficient")
+    public void isActivePasswordSufficient_passwordDoesNotMeetRequirement_returnsFalse() {
+        try {
+            sDeviceState.dpc().devicePolicyManager()
+                    .setRequiredPasswordComplexity(PASSWORD_COMPLEXITY_HIGH);
+
+            assertThat(sDeviceState.dpc().devicePolicyManager().isActivePasswordSufficient())
+                    .isFalse();
+        } finally {
+            sDeviceState.dpc().devicePolicyManager()
+                    .setRequiredPasswordComplexity(PASSWORD_COMPLEXITY_NONE);
+        }
+    }
+
+    @EnsurePasswordSet(password = PASSWORD_MEDIUM_COMPLEXITY)
+    @EnsureUnlocked
+    @CanSetPolicyTest(policy = PasswordSufficiency.class)
+    @ApiTest(apis = "android.app.admin.DevicePolicyManager#isActivePasswordSufficient")
+    public void isActivePasswordSufficient_passwordMeetsRequirement_returnsTrue() {
+        try {
+            sDeviceState.dpc().devicePolicyManager()
+                    .setRequiredPasswordComplexity(PASSWORD_COMPLEXITY_MEDIUM);
+
+            assertThat(sDeviceState.dpc().devicePolicyManager().isActivePasswordSufficient())
+                    .isTrue();
+        } finally {
+            sDeviceState.dpc().devicePolicyManager()
+                    .setRequiredPasswordComplexity(PASSWORD_COMPLEXITY_NONE);
+        }
+    }
+
+    @EnsurePasswordNotSet
+    @EnsureUnlocked
+    @CanSetPolicyTest(policy = PasswordSufficiency.class)
+    @ApiTest(apis = "android.app.admin.DevicePolicyManager#isActivePasswordSufficient")
+    public void isActivePasswordSufficient_passwordNotSet_returnsTrue() {
+        assertThat(sDeviceState.dpc().devicePolicyManager().isActivePasswordSufficient()).isTrue();
     }
 }
