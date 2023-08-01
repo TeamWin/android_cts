@@ -71,13 +71,13 @@ class WidgetAttributeTest {
         // theme via android:toolbarStyle
         val toolbar1 = rootView.findViewById<Toolbar>(R.id.toolbar_view1)
         val stackToolbar1padding =
-                toolbar1.getAttributeResolutionStack(android.R.attr.padding)
+                toolbar1!!.getAttributeResolutionStack(android.R.attr.padding)
         assertEquals(3, stackToolbar1padding.size.toLong())
         assertEquals(R.layout.widget_attribute_layout, stackToolbar1padding[0])
         assertEquals(R.style.MyToolbarStyle, stackToolbar1padding[1])
         assertEquals(R.style.MyToolbarStyleParent, stackToolbar1padding[2])
         val stackToolbar1titleMarginEnd =
-                toolbar1.getAttributeResolutionStack(android.R.attr.titleMarginEnd)
+                toolbar1!!.getAttributeResolutionStack(android.R.attr.titleMarginEnd)
         assertEquals(3, stackToolbar1titleMarginEnd.size.toLong())
         assertEquals(R.layout.widget_attribute_layout, stackToolbar1titleMarginEnd[0])
         assertEquals(R.style.MyToolbarStyle, stackToolbar1titleMarginEnd[1])
@@ -87,7 +87,7 @@ class WidgetAttributeTest {
         // theme via android:toolbarStyle has an explicit style ExplicitStyle1 set via style = ...
         val toolbar2 = rootView.findViewById<Toolbar>(R.id.toolbar_view2)
         val stackToolbar2padding =
-                toolbar2.getAttributeResolutionStack(android.R.attr.padding)
+                toolbar2!!.getAttributeResolutionStack(android.R.attr.padding)
         assertEquals(5, stackToolbar2padding.size.toLong())
         assertEquals(R.layout.widget_attribute_layout, stackToolbar2padding[0])
         assertEquals(R.style.ExplicitStyle1, stackToolbar2padding[1])
@@ -95,7 +95,7 @@ class WidgetAttributeTest {
         assertEquals(R.style.MyToolbarStyle, stackToolbar2padding[3])
         assertEquals(R.style.MyToolbarStyleParent, stackToolbar2padding[4])
         val stackToobar2titleMarginEnd =
-                toolbar2.getAttributeResolutionStack(android.R.attr.titleMarginEnd)
+                toolbar2!!.getAttributeResolutionStack(android.R.attr.titleMarginEnd)
         assertEquals(5, stackToobar2titleMarginEnd.size.toLong())
         assertEquals(R.layout.widget_attribute_layout, stackToobar2titleMarginEnd[0])
         assertEquals(R.style.ExplicitStyle1, stackToobar2titleMarginEnd[1])
@@ -105,10 +105,10 @@ class WidgetAttributeTest {
 
         val textview1 = rootView.findViewById<TextView>(R.id.textview1)
         val stackTextView1textColor =
-                textview1.getAttributeResolutionStack(android.R.attr.textColor)
+                textview1!!.getAttributeResolutionStack(android.R.attr.textColor)
         assertEquals(0, stackTextView1textColor.size.toLong())
         val stackTextView1textSize =
-                textview1.getAttributeResolutionStack(android.R.attr.textSize)
+                textview1!!.getAttributeResolutionStack(android.R.attr.textSize)
         assertEquals(4, stackTextView1textSize.size.toLong())
         assertEquals(R.layout.widget_attribute_layout, stackTextView1textSize[0])
         assertEquals(R.style.ExplicitStyle1, stackTextView1textSize[1])
@@ -117,7 +117,7 @@ class WidgetAttributeTest {
 
         val viewAnimator = rootView.findViewById<ViewAnimator>(R.id.viewAnimator)
         val viewAnimatorOutAnimation =
-                viewAnimator.getAttributeResolutionStack(android.R.attr.outAnimation)
+                viewAnimator!!.getAttributeResolutionStack(android.R.attr.outAnimation)
         assertEquals(1, viewAnimatorOutAnimation.size.toLong())
         assertEquals(R.layout.widget_attribute_layout, viewAnimatorOutAnimation[0])
     }
