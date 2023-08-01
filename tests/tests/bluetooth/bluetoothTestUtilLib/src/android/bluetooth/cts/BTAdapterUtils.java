@@ -40,8 +40,9 @@ public class BTAdapterUtils {
     private static final boolean DBG = Log.isLoggable(TAG, Log.DEBUG);
 
     // ADAPTER_ENABLE_TIMEOUT_MS = AdapterState.BLE_START_TIMEOUT_DELAY +
-    //                              AdapterState.BREDR_START_TIMEOUT_DELAY
-    private static final int ADAPTER_ENABLE_TIMEOUT_MS = 8000;
+    //                             AdapterState.BREDR_START_TIMEOUT_DELAY +
+    //                             (10 seconds of additional delay)
+    private static final int ADAPTER_ENABLE_TIMEOUT_MS = 18000;
     // ADAPTER_DISABLE_TIMEOUT_MS = AdapterState.BLE_STOP_TIMEOUT_DELAY +
     //                                  AdapterState.BREDR_STOP_TIMEOUT_DELAY
     private static final int ADAPTER_DISABLE_TIMEOUT_MS = 5000;
@@ -137,7 +138,9 @@ public class BTAdapterUtils {
                 // Handle situation where state change occurs, but we don't receive the broadcast
                 if (desiredState >= BluetoothAdapter.STATE_OFF
                         && desiredState <= BluetoothAdapter.STATE_TURNING_OFF) {
-                    return adapter.getState() == desiredState;
+                    int currentState = adapter.getState();
+                    Log.d(TAG, "desiredState: " + desiredState + ", currentState: " + currentState);
+                    return desiredState == currentState;
                 } else if (desiredState == STATE_BLE_ON) {
                     Log.d(TAG, "adapter isLeEnabled: " + adapter.isLeEnabled());
                     return adapter.isLeEnabled();
