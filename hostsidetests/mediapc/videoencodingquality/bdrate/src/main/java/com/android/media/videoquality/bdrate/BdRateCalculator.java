@@ -18,6 +18,9 @@ package com.android.media.videoquality.bdrate;
 
 import com.google.common.annotations.VisibleForTesting;
 
+import org.apache.commons.math.analysis.interpolation.SplineInterpolator;
+import org.apache.commons.math.analysis.polynomials.PolynomialFunction;
+import org.apache.commons.math.analysis.polynomials.PolynomialSplineFunction;
 import org.apache.commons.math.stat.descriptive.moment.Mean;
 
 import java.util.ArrayList;
@@ -40,7 +43,8 @@ public class BdRateCalculator {
 
     private static final Mean MEAN = new Mean();
 
-    private BdRateCalculator() {}
+    private BdRateCalculator() {
+    }
 
     public static BdRateCalculator create() {
         return new BdRateCalculator();
@@ -49,12 +53,105 @@ public class BdRateCalculator {
     /**
      * Calculates the Bjontegaard-Delta (BD) rate for the two provided rate-distortion curves.
      *
-     * @return The Bjontegaard-Delta rate value.
+     * @return The Bjontegaard-Delta rate value, or Double.NaN if it could not be calculated.
      * @throws IllegalArgumentException if any of the input data is invalid in rate-distortion
-     *     context (e.g. bitrate < 0).
+     *                                  context (e.g. bitrate < 0).
      */
     public double calculate(RateDistortionCurve referenceCurve, RateDistortionCurve targetCurve) {
-        return Double.NaN;
+        RateDistortionCurve clusteredReferenceCurve = cluster(referenceCurve);
+        RateDistortionCurve clusteredTargetCurve = cluster(targetCurve);
+
+        if (clusteredReferenceCurve.points().size() < 4
+                || clusteredTargetCurve.points().size() < 4) {
+            return Double.NaN;
+        }
+
+        if (!isMonotonicallyIncreasing(clusteredReferenceCurve)
+                || !isMonotonicallyIncreasing(clusteredTargetCurve)) {
+            return Double.NaN;
+        }
+
+        CalculationParameters referenceCalcParams = curveToCalculationParameters(referenceCurve);
+        CalculationParameters targetCalcParams = curveToCalculationParameters(targetCurve);
+
+        if (referenceCalcParams.mMaxDistortion < targetCalcParams.mMinDistortion
+                || targetCalcParams.mMaxDistortion < referenceCalcParams.mMinDistortion) {
+            return Double.NaN;
+        }
+
+        SplineInterpolator interpolator = new SplineInterpolator();
+
+        PolynomialSplineFunction referenceFitCurve =
+                interpolator.interpolate(
+                        referenceCalcParams.mDistortions, referenceCalcParams.mLogBitrates);
+        PolynomialSplineFunction targetFitCurve =
+                interpolator.interpolate(
+                        targetCalcParams.mDistortions, targetCalcParams.mLogBitrates);
+
+        double integrationRangeMin =
+                Math.max(referenceCalcParams.mMinDistortion, targetCalcParams.mMinDistortion);
+        double integrationRangeMax =
+                Math.min(referenceCalcParams.mMaxDistortion, targetCalcParams.mMaxDistortion);
+
+        double referenceAuc =
+                calculateAuc(referenceFitCurve, integrationRangeMin, integrationRangeMax);
+        double targetAuc = calculateAuc(targetFitCurve, integrationRangeMin, integrationRangeMax);
+
+        double bdRateLog = (targetAuc - referenceAuc) / (integrationRangeMax - integrationRangeMin);
+        return Math.pow(10, bdRateLog) - 1;
+    }
+
+    /**
+     * Calculates the area under the curve for the provided {@link PolynomialSplineFunction} between
+     * the min and max values.
+     */
+    private static double calculateAuc(PolynomialSplineFunction func, double min, double max) {
+
+        // Create the integral functions for each of the segments of the spline.
+        PolynomialFunction[] segmentFuncs = func.getPolynomials();
+        PolynomialFunction[] integralFuncs = new PolynomialFunction[segmentFuncs.length];
+        for (int funcIdx = 0; funcIdx < segmentFuncs.length; funcIdx++) {
+            integralFuncs[funcIdx] = integratePolynomial(segmentFuncs[funcIdx]);
+        }
+
+        // Calculate the integral for each segment, summing up the results
+        // which is the value of the spline's integral.
+        double result = 0;
+        double[] knots = func.getKnots();
+        for (int leftKnotIdx = 0; leftKnotIdx < knots.length - 1; leftKnotIdx++) {
+            double leftKnot = knots[leftKnotIdx];
+            double rightKnot = knots[leftKnotIdx + 1];
+
+            if (rightKnot < min) {
+                continue;
+            }
+
+            if (leftKnot > max) {
+                break;
+            }
+
+            double integrationLeft = Math.max(0, min - leftKnot);
+            double integrationRight = Math.min(rightKnot - leftKnot, max - leftKnot);
+
+            PolynomialFunction integralFunc = integralFuncs[leftKnotIdx];
+            result += integralFunc.value(integrationRight) - integralFunc.value(integrationLeft);
+        }
+
+        return result;
+    }
+
+    /**
+     * Perform a standard polynomial integration by parts on the provided {@link
+     * PolynomialFunction}, returning a new {@link PolynomialFunction} representing the integrated
+     * function.
+     */
+    private static PolynomialFunction integratePolynomial(PolynomialFunction function) {
+        double[] newCoeffs = new double[function.getCoefficients().length + 1];
+        for (int i = 1; i <= function.getCoefficients().length; i++) {
+            newCoeffs[i] = function.getCoefficients()[i - 1] / i;
+        }
+        newCoeffs[0] = 0;
+        return new PolynomialFunction(newCoeffs);
     }
 
     /**
@@ -66,7 +163,7 @@ public class BdRateCalculator {
      * in the same range as the cluster.
      */
     @VisibleForTesting
-    static final RateDistortionCurve cluster(RateDistortionCurve baseCurve) {
+    static RateDistortionCurve cluster(RateDistortionCurve baseCurve) {
         if (baseCurve.points().size() < 3) {
             return baseCurve;
         }
@@ -97,7 +194,8 @@ public class BdRateCalculator {
                 newCurve.addPoint(bucket.get(0));
             }
 
-            // New RD point is the average of all the points in the identified cluster.
+            // For a bucket with multiple points, the new point is the average
+            // between all other points.
             newCurve.addPoint(
                     RateDistortionPoint.create(
                             MEAN.evaluate(bucket.stream().mapToDouble(p -> p.rate()).toArray()),
@@ -106,5 +204,59 @@ public class BdRateCalculator {
         }
 
         return newCurve.build();
+    }
+
+    /**
+     * Returns whether a {@link RateDistortionCurve} is monotonically increasing which is required
+     * for the Cubic Spline interpolation performed during BD rate calculation.
+     */
+    private static boolean isMonotonicallyIncreasing(RateDistortionCurve rateDistortionCurve) {
+        Iterator<RateDistortionPoint> pointIterator = rateDistortionCurve.points().iterator();
+
+        RateDistortionPoint lastPoint = pointIterator.next();
+        RateDistortionPoint currentPoint;
+        while (pointIterator.hasNext()) {
+            currentPoint = pointIterator.next();
+            if (currentPoint.distortion() < lastPoint.distortion()) {
+                return false;
+            }
+            lastPoint = currentPoint;
+        }
+
+        return true;
+    }
+
+    /**
+     * Extracts the points in a {@link RateDistortionCurve} into {@link CalculationParameters} which
+     * is a format friendlier for calculation.
+     */
+    private static CalculationParameters curveToCalculationParameters(
+            RateDistortionCurve rateDistortionCurve) {
+        CalculationParameters params = new CalculationParameters();
+
+        params.mLogBitrates = new double[rateDistortionCurve.points().size()];
+        params.mDistortions = new double[rateDistortionCurve.points().size()];
+
+        int i = 0;
+        for (RateDistortionPoint p : rateDistortionCurve.points()) {
+            params.mLogBitrates[i] = Math.log10(p.rate());
+            params.mDistortions[i] = p.distortion();
+            i++;
+        }
+
+        // Since the values are guaranteed sorted in a rate-distortion curve,
+        // min/max is just the ends of the data.
+        params.mMinDistortion = params.mDistortions[0];
+        params.mMaxDistortion = params.mDistortions[params.mDistortions.length - 1];
+
+        return params;
+    }
+
+    /** Internal-only dataclass for storing the parameters needed for calculating BD rate. */
+    private static class CalculationParameters {
+        private double[] mLogBitrates;
+        private double[] mDistortions;
+        private double mMinDistortion;
+        private double mMaxDistortion;
     }
 }
