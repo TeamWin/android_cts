@@ -45,6 +45,8 @@ import android.test.MoreAsserts;
 import android.test.suitebuilder.annotation.LargeTest;
 import android.util.Log;
 
+import com.android.compatibility.common.util.CddTest;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -2278,39 +2280,50 @@ public class SQLiteDatabaseTest extends AndroidTestCase {
         }
     }
 
-    public void testLastInsertRowId() {
-        final int size = 10;
-
-        // Enable WAL.
-        assertFalse(mDatabase.isWriteAheadLoggingEnabled());
-        assertTrue(mDatabase.enableWriteAheadLogging());
-        assertTrue(mDatabase.isWriteAheadLoggingEnabled());
-        assertTrue(DatabaseUtils.stringForQuery(mDatabase, "PRAGMA journal_mode", null)
-                .equalsIgnoreCase("WAL"));
-
-        // Create the t1 table and put some data in it.
+    /**
+     * Create a database with one table with three columns.
+     */
+    private void createComplexDatabase() {
         mDatabase.beginTransaction();
         try {
-            mDatabase.execSQL("CREATE TABLE t1 (i int);");
+            mDatabase.execSQL("CREATE TABLE t1 (i int, d double, t text);");
             mDatabase.setTransactionSuccessful();
         } finally {
             mDatabase.endTransaction();
         }
+    }
 
-        final String sql = "INSERT INTO t1 (i) VALUES(?1)";
+    /**
+     * A three-value insert for the complex database.
+     */
+    private String createComplexInsert() {
+        return "INSERT INTO t1 (i, d, t) VALUES (?1, ?2, ?3)";
+    }
+
+    @CddTest(requirements = { "3.1/C-0-1,C-0-3" })
+    public void testAutomaticCounters() {
+        final int size = 10;
+
+        createComplexDatabase();
 
         // Put 10 lines in the database.
         mDatabase.beginTransaction();
         try {
-            try (SQLiteRawStatement s = mDatabase.createRawStatement(sql)) {
+            try (SQLiteRawStatement s = mDatabase.createRawStatement(createComplexInsert())) {
                 for (int i = 0; i < size; i++) {
                     int vi = i * 3;
+                    double vd = i * 2.5;
+                    String vt = String.format("text%02dvalue", i);
                     s.bindInt(1, vi);
+                    s.bindDouble(2, vd);
+                    s.bindText(3, vt);
                     boolean r = s.step();
                     // No row is returned by this query.
                     assertFalse(r);
                     s.reset();
                     assertEquals(i + 1, mDatabase.getLastInsertRowId());
+                    assertEquals(1, mDatabase.getLastChangedRowCount());
+                    assertEquals(i + 2, mDatabase.getTotalChangedRowCount());
                 }
             }
             mDatabase.setTransactionSuccessful();
@@ -2321,20 +2334,43 @@ public class SQLiteDatabaseTest extends AndroidTestCase {
         // Put a second 10 lines in the database.
         mDatabase.beginTransaction();
         try {
-            try (SQLiteRawStatement s = mDatabase.createRawStatement(sql)) {
+            try (SQLiteRawStatement s = mDatabase.createRawStatement(createComplexInsert())) {
                 for (int i = 0; i < size; i++) {
                     int vi = i * 3;
+                    double vd = i * 2.5;
+                    String vt = String.format("text%02dvalue", i);
                     s.bindInt(1, vi);
+                    s.bindDouble(2, vd);
+                    s.bindText(3, vt);
                     boolean r = s.step();
                     // No row is returned by this query.
                     assertFalse(r);
                     s.reset();
                     assertEquals(size + i + 1, mDatabase.getLastInsertRowId());
+                    assertEquals(1, mDatabase.getLastChangedRowCount());
+                    assertEquals(size + i + 2, mDatabase.getTotalChangedRowCount());
                 }
             }
             mDatabase.setTransactionSuccessful();
         } finally {
             mDatabase.endTransaction();
+        }
+    }
+
+    @CddTest(requirements = { "3.1/C-0-1,C-0-3" })
+    public void testAutomaticCountersOutsideTransactions() {
+        try {
+            mDatabase.getLastChangedRowCount();
+            fail("getLastChangedRowCount() succeeded outside a transaction");
+        } catch (IllegalStateException e) {
+            // This exception is expected.
+        }
+
+        try {
+            mDatabase.getTotalChangedRowCount();
+            fail("getTotalChangedRowCount() succeeded outside a transaction");
+        } catch (IllegalStateException e) {
+            // This exception is expected.
         }
     }
 }
