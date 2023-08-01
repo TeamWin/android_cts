@@ -382,6 +382,13 @@ public class SystemMediaRouter2Test {
     }
 
     @Test
+    public void showSystemOutputSwitcher_onPrivilegedInstance_throws() {
+        assertThrows(
+                UnsupportedOperationException.class,
+                () -> mSystemRouter2ForCts.showSystemOutputSwitcher());
+    }
+
+    @Test
     public void setRouteListingPreference_callsOnRouteListingPreferenceChanged()
             throws InterruptedException {
         RouteListingPreference.Item item =
