@@ -18,14 +18,15 @@ package com.android.media.videoquality.bdrate;
 
 import com.google.common.annotations.VisibleForTesting;
 
-import org.apache.commons.math.analysis.interpolation.SplineInterpolator;
-import org.apache.commons.math.analysis.polynomials.PolynomialFunction;
-import org.apache.commons.math.analysis.polynomials.PolynomialSplineFunction;
-import org.apache.commons.math.stat.descriptive.moment.Mean;
+import org.apache.commons.math3.analysis.interpolation.AkimaSplineInterpolator;
+import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
+import org.apache.commons.math3.analysis.polynomials.PolynomialSplineFunction;
+import org.apache.commons.math3.stat.descriptive.moment.Mean;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.logging.Logger;
 
 /**
  * Calculator for the Bjontegaard-Delta rate between two rate-distortion curves for an arbitrary
@@ -40,11 +41,11 @@ import java.util.LinkedList;
  * http://wftp3.itu.int/av-arch/video-site/0104_Aus/VCEG-M34.xls
  */
 public class BdRateCalculator {
+    private static final Logger LOGGER = Logger.getLogger(BdRateCalculator.class.getName());
 
     private static final Mean MEAN = new Mean();
 
-    private BdRateCalculator() {
-    }
+    private BdRateCalculator() {}
 
     public static BdRateCalculator create() {
         return new BdRateCalculator();
@@ -55,20 +56,23 @@ public class BdRateCalculator {
      *
      * @return The Bjontegaard-Delta rate value, or Double.NaN if it could not be calculated.
      * @throws IllegalArgumentException if any of the input data is invalid in rate-distortion
-     *                                  context (e.g. bitrate < 0).
+     *     context (e.g. bitrate < 0).
      */
     public double calculate(RateDistortionCurve referenceCurve, RateDistortionCurve targetCurve) {
         RateDistortionCurve clusteredReferenceCurve = cluster(referenceCurve);
         RateDistortionCurve clusteredTargetCurve = cluster(targetCurve);
 
-        if (clusteredReferenceCurve.points().size() < 4
-                || clusteredTargetCurve.points().size() < 4) {
-            return Double.NaN;
+        LOGGER.fine("Checking BD-RATE preconditions.");
+        if (clusteredReferenceCurve.points().size() < 5
+                || clusteredTargetCurve.points().size() < 5) {
+            throw new BdRateCalculationFailedPreconditionException(
+                    "Not enough data points in the supplied rate-distortion curves.");
         }
 
         if (!isMonotonicallyIncreasing(clusteredReferenceCurve)
                 || !isMonotonicallyIncreasing(clusteredTargetCurve)) {
-            return Double.NaN;
+            throw new BdRateCalculationFailedPreconditionException(
+                    "The supplied rate-distortion curves were not monotonically increasing.");
         }
 
         CalculationParameters referenceCalcParams = curveToCalculationParameters(referenceCurve);
@@ -76,16 +80,18 @@ public class BdRateCalculator {
 
         if (referenceCalcParams.mMaxDistortion < targetCalcParams.mMinDistortion
                 || targetCalcParams.mMaxDistortion < referenceCalcParams.mMinDistortion) {
-            return Double.NaN;
+            throw new BdRateCalculationFailedPreconditionException(
+                    "The supplied rate-distortion curves do not overlap.");
         }
 
-        SplineInterpolator interpolator = new SplineInterpolator();
+        LOGGER.fine("Preconditions passed, calculating BD-RATE.");
+        AkimaSplineInterpolator akimaInterpolator = new AkimaSplineInterpolator();
 
         PolynomialSplineFunction referenceFitCurve =
-                interpolator.interpolate(
+                akimaInterpolator.interpolate(
                         referenceCalcParams.mDistortions, referenceCalcParams.mLogBitrates);
         PolynomialSplineFunction targetFitCurve =
-                interpolator.interpolate(
+                akimaInterpolator.interpolate(
                         targetCalcParams.mDistortions, targetCalcParams.mLogBitrates);
 
         double integrationRangeMin =
@@ -217,7 +223,7 @@ public class BdRateCalculator {
         RateDistortionPoint currentPoint;
         while (pointIterator.hasNext()) {
             currentPoint = pointIterator.next();
-            if (currentPoint.distortion() < lastPoint.distortion()) {
+            if (currentPoint.distortion() <= lastPoint.distortion()) {
                 return false;
             }
             lastPoint = currentPoint;

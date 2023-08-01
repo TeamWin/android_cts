@@ -112,6 +112,10 @@ public class BdRateCalculatorTests {
                         .addPoint(RateDistortionPoint.create(61279.976, 40.3953))
                         .addPoint(RateDistortionPoint.create(33905.6656, 37.247))
                         .addPoint(RateDistortionPoint.create(18883.6928, 34.2911))
+
+                        // This point is synthetically added (generated with PCHIP) since
+                        // the Akima Interpolation used by this calculator requires 5 points.
+                        .addPoint(RateDistortionPoint.create(78915.635, 41.8147))
                         .build();
         RateDistortionCurve targetCurve =
                 RateDistortionCurve.builder()
@@ -119,12 +123,16 @@ public class BdRateCalculatorTests {
                         .addPoint(RateDistortionPoint.create(61299.9936, 40.4232))
                         .addPoint(RateDistortionPoint.create(33928.7472, 37.2761))
                         .addPoint(RateDistortionPoint.create(18910.912, 34.3147))
+
+                        // This point is synthetically added (generated with PCHIP) since
+                        // the Akima Interpolation used by this calculator requires 5 points.
+                        .addPoint(RateDistortionPoint.create(78532.332, 41.8147))
                         .build();
         BdRateCalculator bdRateCalculator = BdRateCalculator.create();
 
         double bdRate = BdRateCalculator.create().calculate(baselineCurve, targetCurve);
 
-        assertThat(bdRate).isWithin(0.0001).of(-0.00465215420752807);
+        assertThat(bdRate).isWithin(0.00005).of(-0.00465215420752807);
     }
 
     @Test
@@ -135,6 +143,10 @@ public class BdRateCalculatorTests {
                         .addPoint(RateDistortionPoint.create(7622.7456, 35.3756))
                         .addPoint(RateDistortionPoint.create(2394.488, 33.8977))
                         .addPoint(RateDistortionPoint.create(1017.6184, 32.0603))
+
+                        // This point is synthetically added (generated with PCHIP) since
+                        // the Akima Interpolation used by this calculator requires 5 points.
+                        .addPoint(RateDistortionPoint.create(19179.138, 36.5822))
                         .build();
         RateDistortionCurve targetCurve =
                 RateDistortionCurve.builder()
@@ -142,10 +154,14 @@ public class BdRateCalculatorTests {
                         .addPoint(RateDistortionPoint.create(7587.0024, 35.4025))
                         .addPoint(RateDistortionPoint.create(2390.0944, 33.9194))
                         .addPoint(RateDistortionPoint.create(1017.0984, 32.0822))
+
+                        // This point is synthetically added (generated with PCHIP) since
+                        // the Akima Interpolation used by this calculator requires 5 points.
+                        .addPoint(RateDistortionPoint.create(18727.134, 36.5822))
                         .build();
 
         double bdRate = BdRateCalculator.create().calculate(baselineCurve, targetCurve);
 
-        assertThat(bdRate).isWithin(0.0001).of(-0.018779823450567612);
+        assertThat(bdRate).isWithin(0.00005).of(-0.018779823450567612);
     }
 }
