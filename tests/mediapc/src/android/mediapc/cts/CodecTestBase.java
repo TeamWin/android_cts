@@ -941,7 +941,6 @@ class Encode extends CodecEncoderTestBase implements Callable<Double> {
         super(mime);
         mEncoderName = encoderName;
         mIsAsync = isAsync;
-        mSurface = MediaCodec.createPersistentInputSurface();
         mFrameRate = frameRate;
         mBitrate = bitrate;
         mHeight = height;
