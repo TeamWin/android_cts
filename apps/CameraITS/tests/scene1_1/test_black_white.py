@@ -39,8 +39,8 @@ _COLOR_PLANES = ['R', 'G', 'B']
 _NAME = os.path.splitext(os.path.basename(__file__))[0]
 _PATCH_H = 0.1
 _PATCH_W = 0.1
-_PATCH_X = 0.45
-_PATCH_Y = 0.45
+_PATCH_X = 0.5 - _PATCH_W/2
+_PATCH_Y = 0.5 - _PATCH_H/2
 _VGA_WIDTH, _VGA_HEIGHT = 640, 480
 
 
