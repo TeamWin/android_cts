@@ -710,6 +710,7 @@ public class TestUtils {
      */
     public static void installApp(TestApp testApp, boolean grantStoragePermission)
             throws Exception {
+        Log.d(TAG, String.format("Started installation of %s app", testApp.getPackageName()));
         UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         try {
             final String packageName = testApp.getPackageName();
@@ -728,19 +729,25 @@ public class TestUtils {
                     grantPermission(packageName, Manifest.permission.READ_MEDIA_VIDEO);
                 }
             }
+            Log.d(TAG, String.format("Successfully installed %s app", testApp.getPackageName()));
         } finally {
             uiAutomation.dropShellPermissionIdentity();
         }
     }
 
     public static boolean isAppInstalled(TestApp testApp) {
-        return InstallUtils.getInstalledVersion(testApp.getPackageName()) != -1;
+        boolean isAppInstalled = InstallUtils.getInstalledVersion(testApp.getPackageName()) != -1;
+
+        Log.d(TAG, String.format("Test app %s is %sinstalled", testApp.getPackageName(),
+                isAppInstalled ? "" : "not "));
+        return isAppInstalled;
     }
 
     /**
      * Uninstalls a {@link TestApp}.
      */
     public static void uninstallApp(TestApp testApp) throws Exception {
+        Log.d(TAG, String.format("Started to uninstall %s test app", testApp.getPackageName()));
         UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         try {
             final String packageName = testApp.getPackageName();
@@ -748,6 +755,7 @@ public class TestUtils {
 
             Uninstall.packages(packageName);
             assertThat(InstallUtils.getInstalledVersion(packageName)).isEqualTo(-1);
+            Log.d(TAG, String.format("Successfully uninstalled %s app", testApp.getPackageName()));
         } finally {
             uiAutomation.dropShellPermissionIdentity();
         }
