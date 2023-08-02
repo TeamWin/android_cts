@@ -601,7 +601,7 @@
                   android:exported="true"
                   android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|colorMode|density|touchscreen"
                   android:theme="@android:style/Theme.Translucent.NoTitleBar" />
-        <activity android:name="android.server.wm.taskfragment.LockTaskModeTests$TestActivity"
+        <activity android:name="android.server.wm.activity.LockTaskModeTests$TestActivity"
                   android:exported="true" />
         <activity android:name="android.server.wm.backnavigation.BackGestureInvokedTest$BackInvokedActivity"
                   android:label="BackInvokedActivity"
