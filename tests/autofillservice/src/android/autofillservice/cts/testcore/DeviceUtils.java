@@ -106,4 +106,15 @@ public final class DeviceUtils {
             DeviceUtils.Logcat.includes("SaveUI:V", "Hiding save dialog.");
         }
     }
+
+    public static class Dataset {
+
+        public static void assertShowsInline() throws IOException {
+            assertShows(2);
+        }
+
+        public static void assertShows(int uiType) throws IOException {
+            DeviceUtils.Logcat.includes("AutofillSession:D", "onShown(): " + uiType);
+        }
+    }
 }

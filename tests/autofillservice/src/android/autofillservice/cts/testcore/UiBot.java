@@ -165,7 +165,7 @@ public class UiBot {
 
     private static final boolean DUMP_ON_ERROR = true;
 
-    private static final int MAX_UIOBJECT_RETRY_COUNT = 3;
+    protected static final int MAX_UIOBJECT_RETRY_COUNT = 3;
 
     /**
      * Pass to {@link #setScreenOrientation(int)} to change the display to portrait mode.
