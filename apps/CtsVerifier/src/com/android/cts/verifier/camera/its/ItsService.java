@@ -957,6 +957,11 @@ public class ItsService extends Service implements SensorEventListener {
                 } else if ("getSupportedExtensions".equals(cmdObj.getString("cmdName"))) {
                     String cameraId = cmdObj.getString("cameraId");
                     doGetSupportedExtensions(cameraId);
+                } else if ("getSupportedExtensionSizes".equals(cmdObj.getString("cmdName"))) {
+                    String cameraId = cmdObj.getString("cameraId");
+                    int extension = cmdObj.getInt("extension");
+                    int format = cmdObj.getInt("format");
+                    doGetSupportedExtensionSizes(cameraId, extension, format);
                 } else if ("doBasicRecording".equals(cmdObj.getString("cmdName"))) {
                     String cameraId = cmdObj.getString("cameraId");
                     int profileId = cmdObj.getInt("profileId");
@@ -2433,6 +2438,23 @@ public class ItsService extends Service implements SensorEventListener {
             mSocketRunnableObj.sendResponse("supportedExtensions", extensionsList.toString());
         } catch (CameraAccessException e) {
             throw new ItsException("Failed to get supported extensions list", e);
+        }
+    }
+
+    private void doGetSupportedExtensionSizes(
+            String id, int extension, int format) throws ItsException {
+        try {
+            CameraExtensionCharacteristics chars =
+                    mCameraManager.getCameraExtensionCharacteristics(id);
+            List<Size> extensionSizes = chars.getExtensionSupportedSizes(extension, format);
+            String response = extensionSizes.stream()
+                .distinct()
+                .sorted(Comparator.comparingInt(s -> s.getWidth() * s.getHeight()))
+                .map(Size::toString)
+                .collect(Collectors.joining(";"));
+            mSocketRunnableObj.sendResponse("supportedExtensionSizes", response);
+        } catch (CameraAccessException e) {
+            throw new ItsException("Failed to get supported extensions sizes list", e);
         }
     }
 

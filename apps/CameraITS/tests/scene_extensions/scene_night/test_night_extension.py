@@ -37,8 +37,7 @@ _MIN_AREA = 0
 _WHITE = 255
 
 _FMT_NAME = 'yuv'  # To detect noise without conversion to RGB
-_WIDTH = 1920   # Most common 16/9 resolution width
-_HEIGHT = 1080  # Most common 16/9 resolution height
+_IMAGE_FORMAT_YUV_420_888_INT = 35
 
 _DOT_INTENSITY_DIFF_TOL = 20  # Min diff between dot/circle intensities [0:255]
 _DURATION_DIFF_TOL = 0.5  # Night mode ON captures must take 0.5 seconds longer
@@ -172,12 +171,12 @@ def _check_edge_noise(night_y, no_night_y):
                 'as noisy as night mode ON', right_patch_ratio)
   if left_patch_ratio < _EDGE_NOISE_IMPROVEMENT_TOL:
     raise AssertionError('Left edge of night mode OFF capture was only '
-                         f'{left_patch_ratio:.2f} as noisy as '
+                         f'{float(left_patch_ratio):.2f} as noisy as '
                          'night mode OFF, expected to be '
                          f'at least {_EDGE_NOISE_IMPROVEMENT_TOL}')
   if right_patch_ratio < _EDGE_NOISE_IMPROVEMENT_TOL:
     raise AssertionError('Right edge of night mode OFF capture was only '
-                         f'{right_patch_ratio:.2f} as noisy as '
+                         f'{float(right_patch_ratio):.2f} as noisy as '
                          'night mode OFF, expected to be '
                          f'at least {_EDGE_NOISE_IMPROVEMENT_TOL}')
 
@@ -196,7 +195,7 @@ class NightExtensionTest(its_base_test.ItsBaseTest):
   """
 
   def find_tablet_brightness(self, cam, default_brightness, file_stem,
-                             use_extensions=True):
+                             width, height, use_extensions=True):
     """Find maximum brightness at which orientation circle in scene is visible.
 
     Uses binary search on a range of (0, default_brightness), where visibility
@@ -206,6 +205,8 @@ class NightExtensionTest(its_base_test.ItsBaseTest):
       cam: its_session_utils object.
       default_brightness: int; brightness set by config.yml.
       file_stem: str; location and name to save files.
+      width: int; width for both extension and non-extension captures.
+      height: int; height for both extension and non-extension captures.
       use_extensions: bool; whether extension capture should be used.
     Returns:
       int; brightness at which orientation circle in scene is visible.
@@ -213,7 +214,7 @@ class NightExtensionTest(its_base_test.ItsBaseTest):
     min_brightness = 0
     max_brightness = default_brightness
     final_brightness = None
-    out_surfaces = {'format': _FMT_NAME, 'width': _WIDTH, 'height': _HEIGHT}
+    out_surfaces = {'format': _FMT_NAME, 'width': width, 'height': height}
     req = capture_request_utils.auto_capture_request()
     file_stem += '_night' if use_extensions else '_no_night'
     while min_brightness < max_brightness:
@@ -349,18 +350,49 @@ class NightExtensionTest(its_base_test.ItsBaseTest):
         self.tablet.adb.shell(
             f'input tap {_TAP_COORDINATES[0]} {_TAP_COORDINATES[1]}')
 
+      # Determine capture width and height
+      width, height = None, None
+      capture_sizes = capture_request_utils.get_available_output_sizes(
+          _FMT_NAME, props)
+      extension_capture_sizes_str = cam.get_supported_extension_sizes(
+          self.camera_id, _EXTENSION_NIGHT, _IMAGE_FORMAT_YUV_420_888_INT
+      )
+      extension_capture_sizes = [
+          tuple(int(size_part) for size_part in s.split(_X_STRING))
+          for s in extension_capture_sizes_str
+      ]
+      # Extension capture sizes are ordered in ascending area order by default
+      extension_capture_sizes.reverse()
+      logging.debug('Capture sizes: %s', capture_sizes)
+      logging.debug('Extension capture sizes: %s', extension_capture_sizes)
+
+      for capture_size, extension_capture_size in zip(
+          capture_sizes, extension_capture_sizes):
+        if capture_size == extension_capture_size:
+          width, height = capture_size
+          break
+      else:
+        raise AssertionError(
+            'No matching sizes for non-extension and extension captures! '
+            f'Camera ID {self.camera_id}, '
+            f'extension {_EXTENSION_NIGHT}, and '
+            f'format {_IMAGE_FORMAT_YUV_420_888_INT}'
+        )
+
       # Set tablet brightness to darken scene
-      file_stem = f'{test_name}_{_FMT_NAME}_{_WIDTH}x{_HEIGHT}'
+      file_stem = f'{test_name}_{_FMT_NAME}_{width}x{height}'
       night_brightness = self.find_tablet_brightness(
-          cam, self.tablet_screen_brightness, file_stem, use_extensions=True)
+          cam, self.tablet_screen_brightness, file_stem,
+          width, height, use_extensions=True)
       logging.debug('Night mode ON brightness: %d', night_brightness)
       no_night_brightness = self.find_tablet_brightness(
-          cam, self.tablet_screen_brightness, file_stem, use_extensions=False)
+          cam, self.tablet_screen_brightness, file_stem,
+          width, height, use_extensions=False)
       logging.debug('Night mode OFF brightness: %d', no_night_brightness)
       brightness = min(night_brightness, no_night_brightness)
       self.set_screen_brightness(str(brightness))
 
-      out_surfaces = {'format': _FMT_NAME, 'width': _WIDTH, 'height': _HEIGHT}
+      out_surfaces = {'format': _FMT_NAME, 'width': width, 'height': height}
       req = capture_request_utils.auto_capture_request()
 
       # Take auto capture with night mode on
