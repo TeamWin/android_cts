@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.server.wm.taskfragment;
+package android.server.wm.activity;
 
 import static android.app.ActivityManager.LOCK_TASK_MODE_LOCKED;
 import static android.app.ActivityManager.LOCK_TASK_MODE_NONE;
@@ -38,7 +38,7 @@ import org.junit.Test;
 
 /**
  * Build/Install/Run:
- * atest CtsWindowManagerDeviceTestCases:LockTaskModeTests
+ * atest CtsWindowManagerDeviceActivity:LockTaskModeTests
  */
 @Presubmit
 public class LockTaskModeTests extends ActivityManagerTestBase {
