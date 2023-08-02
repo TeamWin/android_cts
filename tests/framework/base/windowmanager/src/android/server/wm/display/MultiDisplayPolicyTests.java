@@ -66,7 +66,7 @@ import org.junit.Test;
 
 /**
  * Build/Install/Run:
- *     atest CtsWindowManagerDeviceTestCases:MultiDisplayPolicyTests
+ *     atest CtsWindowManagerDeviceDisplay:MultiDisplayPolicyTests
  *
  * Tests each expected policy on multi-display environment.
  */

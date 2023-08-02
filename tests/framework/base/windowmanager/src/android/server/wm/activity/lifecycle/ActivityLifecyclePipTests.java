@@ -48,7 +48,7 @@ import java.util.List;
 
 /**
  * Build/Install/Run:
- *     atest CtsWindowManagerDeviceTestCases:ActivityLifecyclePipTests
+ *     atest CtsWindowManagerDeviceActivity:ActivityLifecyclePipTests
  */
 @MediumTest
 @Presubmit

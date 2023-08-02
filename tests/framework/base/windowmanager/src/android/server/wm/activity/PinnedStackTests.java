@@ -158,7 +158,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Build/Install/Run:
- * atest CtsWindowManagerDeviceTestCases:PinnedStackTests
+ * atest CtsWindowManagerDeviceActivity:PinnedStackTests
  */
 @Presubmit
 @android.server.wm.annotation.Group2

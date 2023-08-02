@@ -49,7 +49,7 @@ import java.util.List;
 
 /**
  * Build/Install/Run:
- *     atest CtsWindowManagerDeviceTestCases:AlertWindowsTests
+ *     atest CtsWindowManagerDeviceWindow:AlertWindowsTests
  */
 @Presubmit
 @AppModeFull(reason = "Requires android.permission.MANAGE_ACTIVITY_TASKS")

@@ -60,7 +60,7 @@ import java.util.List;
 
 /**
  * Build/Install/Run:
- *     atest CtsWindowManagerDeviceTestCases:ActivityLifecycleLegacySplitScreenTests
+ *     atest CtsWindowManagerDeviceActivity:ActivityLifecycleLegacySplitScreenTests
  */
 @MediumTest
 @Presubmit

@@ -53,7 +53,7 @@ import org.junit.Test;
  * Tests that verify the behavior of {@link TaskFragmentOrganizer}.
  *
  * Build/Install/Run:
- *     atest CtsWindowManagerDeviceTestCases:TaskFragmentOrganizerTest
+ *     atest CtsWindowManagerDeviceTaskFragment:TaskFragmentOrganizerTest
  */
 @Presubmit
 @android.server.wm.annotation.Group2

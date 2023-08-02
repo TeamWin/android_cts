@@ -107,7 +107,7 @@ import java.util.function.Consumer;
 
 /**
  * Build/Install/Run:
- * atest CtsWindowManagerDeviceTestCases:SplashscreenTests
+ * atest CtsWindowManagerDeviceWindow:SplashscreenTests
  */
 @Presubmit
 @android.server.wm.annotation.Group1

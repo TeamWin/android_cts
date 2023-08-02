@@ -57,7 +57,7 @@ import org.junit.Test;
 
 /**
  * Build/Install/Run:
- * atest CtsWindowManagerDeviceTestCases:HideOverlayWindowsTest
+ * atest CtsWindowManagerDeviceWindow:HideOverlayWindowsTest
  */
 @Presubmit
 public class HideOverlayWindowsTest extends ActivityManagerTestBase {

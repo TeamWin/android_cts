@@ -92,7 +92,7 @@ import java.util.function.IntConsumer;
 /**
  * CTS device tests for {@link com.android.server.wm.ActivityMetricsLogger}.
  * Build/Install/Run:
- * atest CtsWindowManagerDeviceTestCases:ActivityMetricsLoggerTests
+ * atest CtsWindowManagerDeviceActivity:ActivityMetricsLoggerTests
  */
 @Presubmit
 public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {

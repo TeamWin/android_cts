@@ -54,7 +54,7 @@ import org.junit.Test;
  * Integration test for back navigation mode
  *
  *  <p>Build/Install/Run:
- *      atest CtsWindowManagerDeviceTestCases:BackGestureInvokedTest
+ *      atest CtsWindowManagerDeviceBackNavigation:BackGestureInvokedTest
  */
 @Presubmit
 @android.server.wm.annotation.Group1

@@ -83,7 +83,7 @@ import java.util.List;
  * Tests for {@link Activity#onTopResumedActivityChanged}.
  *
  * Build/Install/Run:
- *     atest CtsWindowManagerDeviceTestCases:ActivityLifecycleTopResumedStateTests
+ *     atest CtsWindowManagerDeviceActivity:ActivityLifecycleTopResumedStateTests
  */
 @MediumTest
 @Presubmit

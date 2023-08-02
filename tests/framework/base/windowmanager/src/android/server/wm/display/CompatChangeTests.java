@@ -78,10 +78,8 @@ import android.os.Bundle;
 import android.os.ConditionVariable;
 import android.platform.test.annotations.Presubmit;
 import android.provider.DeviceConfig;
-import android.provider.DeviceConfig.Properties;
 import android.server.wm.HelperActivities;
 import android.server.wm.MultiDisplayTestBase;
-import android.server.wm.ObjectTracker;
 import android.server.wm.WindowManagerState;
 import android.server.wm.app.AbstractLifecycleLogActivity;
 import android.util.Size;
@@ -113,7 +111,7 @@ import java.util.Map;
  * The behavior without enabling a compatibility change is also tested as a baseline.
  *
  * <p>Build/Install/Run:
- * atest CtsWindowManagerDeviceTestCases:CompatChangeTests
+ * atest CtsWindowManagerDeviceDisplay:CompatChangeTests
  */
 @Presubmit
 public final class CompatChangeTests extends MultiDisplayTestBase {

@@ -32,7 +32,7 @@ import org.junit.Test;
  * Ensure that compatibility dialog is shown when launching an application built
  * against a prerelease SDK.
  * <p>Build/Install/Run:
- *     atest CtsWindowManagerDeviceTestCases:PrereleaseSdkTest
+ *     atest CtsWindowManagerDeviceOther:PrereleaseSdkTest
  */
 @Presubmit
 public class PrereleaseSdkTest extends ActivityManagerTestBase {

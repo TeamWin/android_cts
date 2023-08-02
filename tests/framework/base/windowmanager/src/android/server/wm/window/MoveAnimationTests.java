@@ -49,7 +49,7 @@ import org.junit.rules.TestRule;
  * </ul>
  *
  * Build/Install/Run:
- *     atest CtsWindowManagerDeviceTestCases:MoveAnimationTests
+ *     atest CtsWindowManagerDeviceWindow:MoveAnimationTests
  */
 public class MoveAnimationTests extends WindowManagerTestBase {
 

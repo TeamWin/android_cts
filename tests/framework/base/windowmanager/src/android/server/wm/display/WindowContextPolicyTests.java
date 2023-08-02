@@ -54,7 +54,7 @@ import org.junit.Test;
  * Tests that verify the behavior of window context policy
  *
  * Build/Install/Run:
- *     atest CtsWindowManagerDeviceTestCases:WindowContextPolicyTests
+ *     atest CtsWindowManagerDeviceDisplay:WindowContextPolicyTests
  */
 @Presubmit
 public class WindowContextPolicyTests extends WindowContextTestBase {

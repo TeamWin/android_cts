@@ -48,7 +48,7 @@ import org.junit.Test;
  * insets APIs.
  *
  * Build/Install/Run:
- *     atest CtsWindowManagerDeviceTestCases:WindowInsetsLayoutTests
+ *     atest CtsWindowManagerDeviceInsets:WindowInsetsLayoutTests
  */
 @Presubmit
 @android.server.wm.annotation.Group2

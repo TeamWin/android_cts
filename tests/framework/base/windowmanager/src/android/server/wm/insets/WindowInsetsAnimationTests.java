@@ -58,7 +58,7 @@ import java.util.List;
 /**
  * Test whether {@link WindowInsetsAnimation.Callback} are properly dispatched to views.
  *
- * <p>Build/Install/Run: atest CtsWindowManagerDeviceTestCases:WindowInsetsAnimationTests
+ * <p>Build/Install/Run: atest CtsWindowManagerDeviceInsets:WindowInsetsAnimationTests
  */
 @Presubmit
 @android.server.wm.annotation.Group2

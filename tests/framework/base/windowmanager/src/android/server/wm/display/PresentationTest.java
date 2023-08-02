@@ -33,7 +33,7 @@ import java.util.List;
 
 /**
  * Build/Install/Run:
- *     atest CtsWindowManagerDeviceTestCases:PresentationTest
+ *     atest CtsWindowManagerDeviceDisplay:PresentationTest
  */
 @Presubmit
 public class PresentationTest extends MultiDisplayTestBase {

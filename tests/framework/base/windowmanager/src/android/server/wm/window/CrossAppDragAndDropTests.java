@@ -53,7 +53,7 @@ import java.util.Map;
 
 /**
  * Build/Install/Run:
- *     atest CtsWindowManagerDeviceTestCases:CrossAppDragAndDropTests
+ *     atest CtsWindowManagerDeviceWindow:CrossAppDragAndDropTests
  */
 @Presubmit
 @AppModeFull(reason = "Requires android.permission.MANAGE_ACTIVITY_TASKS")

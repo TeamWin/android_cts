@@ -34,7 +34,7 @@ import org.junit.Test;
  * Integration test for back navigation legacy mode
  *
  *  <p>Build/Install/Run:
- *      atest CtsWindowManagerDeviceTestCases:BackNavigationLegacyGestureTest
+ *      atest CtsWindowManagerDeviceBackNavigation:BackNavigationLegacyGestureTest
  */
 @Presubmit
 public class BackNavigationLegacyGestureTest extends ActivityManagerTestBase {

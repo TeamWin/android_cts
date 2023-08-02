@@ -90,7 +90,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Build/Install/Run:
- *     atest CtsWindowManagerDeviceTestCases:MultiDisplaySecurityTests
+ *     atest CtsWindowManagerDeviceDisplay:MultiDisplaySecurityTests
  *
  * Tests if be allowed to launch an activity on multi-display environment.
  */

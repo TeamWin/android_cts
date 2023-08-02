@@ -70,7 +70,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Build/Install/Run:
- *     atest CtsWindowManagerDeviceTestCases:KeyguardLockedTests
+ *     atest CtsWindowManagerDeviceKeyguard:KeyguardLockedTests
  */
 @Presubmit
 @android.server.wm.annotation.Group2

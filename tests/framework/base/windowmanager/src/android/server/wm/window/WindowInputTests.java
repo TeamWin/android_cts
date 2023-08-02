@@ -85,7 +85,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * Ensure moving windows and tapping is done synchronously.
  *
- * <p>Build/Install/Run: atest CtsWindowManagerDeviceTestCases:WindowInputTests
+ * <p>Build/Install/Run: atest CtsWindowManagerDeviceWindow:WindowInputTests
  */
 @Presubmit
 public class WindowInputTests {

@@ -53,7 +53,7 @@ import org.mockito.InOrder;
 /**
  * Same as {@link WindowInsetsAnimationTests} but IME specific.
  *
- * <p>Build/Install/Run: atest CtsWindowManagerDeviceTestCases:WindowInsetsAnimationImeTests
+ * <p>Build/Install/Run: atest CtsWindowManagerDeviceInsets:WindowInsetsAnimationImeTests
  */
 @Presubmit
 @android.server.wm.annotation.Group2

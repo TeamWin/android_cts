@@ -47,7 +47,7 @@ import java.util.List;
 
 /**
  * Build/Install/Run:
- *     atest CtsWindowManagerDeviceTestCases:VrDisplayTests
+ *     atest CtsWindowManagerDeviceDisplay:VrDisplayTests
  */
 @Presubmit
 @android.server.wm.annotation.Group3

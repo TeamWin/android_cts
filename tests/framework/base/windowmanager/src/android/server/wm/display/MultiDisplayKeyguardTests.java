@@ -35,7 +35,7 @@ import org.junit.Test;
  * Display tests that require a keyguard.
  *
  * <p>Build/Install/Run:
- *     atest CtsWindowManagerDeviceTestCases:MultiDisplayKeyguardTests
+ *     atest CtsWindowManagerDeviceDisplay:MultiDisplayKeyguardTests
  */
 @Presubmit
 @android.server.wm.annotation.Group3

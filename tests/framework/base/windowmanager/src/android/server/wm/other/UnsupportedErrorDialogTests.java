@@ -48,7 +48,7 @@ import org.junit.Test;
  * Test scenarios where crash dialogs should not be shown if they are not supported.
  *
  * <p>Build/Install/Run:
- * atest CtsWindowManagerDeviceTestCases:UnsupportedErrorDialogTests
+ * atest CtsWindowManagerDeviceOther:UnsupportedErrorDialogTests
  */
 @Group3
 @Postsubmit

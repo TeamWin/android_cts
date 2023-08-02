@@ -41,7 +41,7 @@ import java.util.ArrayList;
 
 /**
  * Build/Install/Run:
- *     atest CtsWindowManagerDeviceTestCases:MultiDisplayPrivateDisplayTests
+ *     atest CtsWindowManagerDeviceDisplay:MultiDisplayPrivateDisplayTests
  *
  * Tests if be allowed to launch/access an activity on private display
  * in multi-display environment.

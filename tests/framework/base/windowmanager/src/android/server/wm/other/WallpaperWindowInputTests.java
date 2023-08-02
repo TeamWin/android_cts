@@ -51,7 +51,7 @@ import org.junit.Test;
  * Ensure moving windows and tapping is done synchronously.
  *
  * Build/Install/Run:
- * atest CtsWindowManagerDeviceTestCases:WallpaperWindowInputTests
+ * atest CtsWindowManagerDeviceOther:WallpaperWindowInputTests
  */
 @Presubmit
 @android.server.wm.annotation.Group2

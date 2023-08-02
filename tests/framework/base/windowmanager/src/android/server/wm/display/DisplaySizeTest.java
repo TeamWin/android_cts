@@ -43,7 +43,7 @@ import org.junit.Test;
  * an unsupported smallest width.
  *
  * <p>Build/Install/Run:
- *     atest CtsWindowManagerDeviceTestCases:DisplaySizeTest
+ *     atest CtsWindowManagerDeviceDisplay:DisplaySizeTest
  */
 @Presubmit
 @android.server.wm.annotation.Group3

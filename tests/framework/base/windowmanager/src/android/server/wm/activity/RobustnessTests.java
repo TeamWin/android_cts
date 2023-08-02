@@ -26,7 +26,7 @@ import org.junit.Test;
 
 /**
  * Build/Install/Run:
- *     atest CtsWindowManagerDeviceTestCases:RobustnessTests
+ *     atest CtsWindowManagerDeviceActivity:RobustnessTests
  */
 @Presubmit
 public class RobustnessTests extends ActivityManagerTestBase {

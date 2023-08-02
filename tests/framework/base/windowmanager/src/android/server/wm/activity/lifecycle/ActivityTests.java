@@ -51,7 +51,7 @@ import java.util.Collections;
  * Tests for {@link Activity} class APIs.
  *
  * Build/Install/Run:
- *      atest CtsWindowManagerDeviceTestCases:ActivityTests
+ *      atest CtsWindowManagerDeviceActivity:ActivityTests
  */
 @Presubmit
 @MediumTest

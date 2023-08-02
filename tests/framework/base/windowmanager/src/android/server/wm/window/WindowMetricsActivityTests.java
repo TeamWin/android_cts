@@ -56,7 +56,7 @@ import java.util.function.Supplier;
  * Tests that verify the behavior of {@link WindowMetrics} APIs on {@link Activity activities}.
  *
  * Build/Install/Run:
- *     atest CtsWindowManagerDeviceTestCases:WindowMetricsActivityTests
+ *     atest CtsWindowManagerDeviceWindow:WindowMetricsActivityTests
  */
 @Presubmit
 @ApiTest(apis = {"android.view.WindowManager#getCurrentWindowMetrics",

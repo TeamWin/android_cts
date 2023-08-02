@@ -76,7 +76,6 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -85,7 +84,7 @@ import java.util.function.Function;
 
 /**
  * <p>Build/Install/Run:
- * atest CtsWindowManagerDeviceTestCases:ActivityTransitionTests
+ * atest CtsWindowManagerDeviceActivity:ActivityTransitionTests
  */
 @Presubmit
 public class ActivityTransitionTests extends ActivityManagerTestBase {

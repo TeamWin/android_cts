@@ -88,7 +88,7 @@ import org.junit.Test;
 
 /**
  * Build/Install/Run:
- *     atest CtsWindowManagerDeviceTestCases:MultiDisplayActivityLaunchTests
+ *     atest CtsWindowManagerDeviceDisplay:MultiDisplayActivityLaunchTests
  *
  *  Tests activity launching behavior on multi-display environment.
  */

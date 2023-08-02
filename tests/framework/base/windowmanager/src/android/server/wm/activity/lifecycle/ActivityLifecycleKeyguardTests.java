@@ -41,7 +41,7 @@ import java.util.Collections;
 
 /**
  * Build/Install/Run:
- *     atest CtsWindowManagerDeviceTestCases:ActivityLifecycleKeyguardTests
+ *     atest CtsWindowManagerDeviceActivity:ActivityLifecycleKeyguardTests
  */
 @MediumTest
 @Presubmit

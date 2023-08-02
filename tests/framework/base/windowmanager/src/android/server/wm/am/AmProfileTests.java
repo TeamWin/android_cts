@@ -41,7 +41,7 @@ import org.junit.Test;
 
 /**
  * Build/Install/Run:
- *     atest CtsWindowManagerDeviceTestCases:AmProfileTests
+ *     atest CtsWindowManagerDeviceAm:AmProfileTests
  *
  * Please talk to Android Studio team first if you want to modify or delete these tests.
  */

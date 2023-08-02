@@ -33,7 +33,7 @@ import org.junit.Test;
  * Tests for {@link android.view.WindowMetrics} constructor
  *
  * Build/Install/Run:
- *     atest CtsWindowManagerDeviceTestCases:WindowMetricsTest
+ *     atest CtsWindowManagerDeviceWindow:WindowMetricsTest
  */
 @SmallTest
 @Presubmit

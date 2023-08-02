@@ -30,7 +30,7 @@ import org.junit.Test;
  * Ensure that compatibility dialog is shown when launching an application
  * targeting a deprecated version of SDK.
  * <p>Build/Install/Run:
- *     atest CtsWindowManagerDeviceTestCases:DeprecatedTargetSdkTest
+ *     atest CtsWindowManagerDeviceWindow:DeprecatedTargetSdkTest
  */
 @Presubmit
 public class DeprecatedTargetSdkTest extends ActivityManagerTestBase {

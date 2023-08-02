@@ -43,7 +43,7 @@ import java.util.List;
  * Ensure that compatibility dialog is shown when launching an application
  * targeting a deprecated ABI.
  * <p>Build/Install/Run:
- *     atest CtsWindowManagerDeviceTestCases:DeprecatedAbiTest
+ *     atest CtsWindowManagerDeviceActivity:DeprecatedAbiTest
  */
 @Presubmit
 @ApiTest(apis = {"android.content.pm.PackageInstaller#STATUS_FAILURE_INCOMPATIBLE"})

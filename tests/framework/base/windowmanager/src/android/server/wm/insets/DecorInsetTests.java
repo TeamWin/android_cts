@@ -30,7 +30,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Build/Install/Run:
- *  atest CtsWindowManagerDeviceTestCases:DecorInsetTests
+ *  atest CtsWindowManagerDeviceInsets:DecorInsetTests
  */
 @Presubmit
 public class DecorInsetTests extends DecorInsetTestsBase {

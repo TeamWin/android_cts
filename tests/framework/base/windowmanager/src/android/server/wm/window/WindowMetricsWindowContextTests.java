@@ -50,7 +50,7 @@ import org.junit.Test;
  * from {@link Context#createWindowContext(Display, int, Bundle)}.
  *
  * Build/Install/Run:
- *     atest CtsWindowManagerDeviceTestCases:WindowMetricsWindowContextTests
+ *     atest CtsWindowManagerDeviceWindow:WindowMetricsWindowContextTests
  */
 @Presubmit
 @ApiTest(apis = {"android.view.WindowManager#getCurrentWindowMetrics",

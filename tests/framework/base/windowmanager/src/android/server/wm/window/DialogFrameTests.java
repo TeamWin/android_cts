@@ -55,7 +55,7 @@ import org.junit.Test;
 import java.util.List;
 
 /**
- * Build/Install/Run: atest CtsWindowManagerDeviceTestCases:DialogFrameTests
+ * Build/Install/Run: atest CtsWindowManagerDeviceWindow:DialogFrameTests
  *
  * <p>TODO: Consolidate this class with {@link ParentChildTestBase}.
  */

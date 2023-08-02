@@ -68,7 +68,7 @@ import org.junit.Test;
  * </p>
  *
  * Build/Install/Run:
- *     atest CtsWindowManagerDeviceTestCases:SplitActivityLifecycleTest
+ *     atest CtsWindowManagerDeviceTaskFragment:SplitActivityLifecycleTest
  */
 @Presubmit
 @android.server.wm.annotation.Group2

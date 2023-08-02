@@ -67,7 +67,7 @@ import java.util.Arrays;
  * declared in DPs (the text and the red square) have the same sizes on the screen (after
  * composition).
  *
- * <p>Build/Install/Run: atest CtsWindowManagerDeviceTestCases:CompatScaleTests
+ * <p>Build/Install/Run: atest CtsWindowManagerDeviceOther:CompatScaleTests
  */
 @RunWith(Parameterized.class)
 public class CompatScaleTests extends ActivityManagerTestBase {

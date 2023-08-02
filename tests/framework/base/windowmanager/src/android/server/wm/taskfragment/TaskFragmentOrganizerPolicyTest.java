@@ -81,7 +81,7 @@ import java.util.List;
 /**
  * Tests that verify the behavior of {@link TaskFragmentOrganizer} policy.
  *
- * <p>Build/Install/Run: atest CtsWindowManagerDeviceTestCases:TaskFragmentOrganizerPolicyTest
+ * <p>Build/Install/Run: atest CtsWindowManagerDeviceTaskFragment:TaskFragmentOrganizerPolicyTest
  */
 @RunWith(AndroidJUnit4.class)
 @Presubmit

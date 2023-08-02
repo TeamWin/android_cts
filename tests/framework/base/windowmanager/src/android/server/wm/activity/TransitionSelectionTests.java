@@ -62,7 +62,7 @@ import org.junit.Test;
  * TRANSIT_ACTIVITY_OPEN, TRANSIT_TASK_CLOSE, TRANSIT_WALLPAPER_OPEN, etc.). The exact animation is
  * unspecified and can be overridden.
  *
- * <p>Build/Install/Run: atest CtsWindowManagerDeviceTestCases:TransitionSelectionTests
+ * <p>Build/Install/Run: atest CtsWindowManagerDeviceActivity:TransitionSelectionTests
  */
 @Presubmit
 public class TransitionSelectionTests extends ActivityManagerTestBase {
