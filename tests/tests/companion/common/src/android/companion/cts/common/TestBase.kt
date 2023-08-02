@@ -177,6 +177,9 @@ abstract class TestBase {
             }
         }
     }
+
+    fun simulateDeviceEvent(associationId: Int, event: Int) =
+            runShellCommand("cmd companiondevice simulate-device-event $associationId $event")
 }
 
 const val TAG = "CtsCompanionDeviceManagerTestCases"
@@ -217,14 +220,13 @@ fun <T> assertEmpty(list: Collection<T>) = assertTrue("Collection is not empty")
 fun assertAssociations(
     actual: List<AssociationInfo>,
     expected: Set<Pair<String, MacAddress?>>
-) = assertEquals(actual = actual.map { it.packageName to it.deviceMacAddress }.toSet(),
-        expected = expected)
+) = assertEquals(actual = actual.map {
+    it.packageName to it.deviceMacAddress }.toSet(), expected = expected)
 
 fun assertSelfManagedAssociations(
     actual: List<AssociationInfo>,
     expected: Set<Pair<String, Int>>
-) = assertEquals(actual = actual.map { it.packageName to it.id }.toSet(),
-        expected = expected)
+) = assertEquals(actual = actual.map { it.packageName to it.id }.toSet(), expected = expected)
 
 /**
  * Assert that CDM binds valid CompanionDeviceServices, both primary and secondary.
@@ -275,9 +277,11 @@ fun assertValidCompanionDeviceServicesRemainUnbound() =
  * (i.e. missing permission or intent-filter).
  */
 fun assertInvalidCompanionDeviceServicesNotBound() =
-        assertFalse("CompanionDeviceServices that do not require " +
+        assertFalse(
+                "CompanionDeviceServices that do not require " +
                 "BIND_COMPANION_DEVICE_SERVICE permission or do not declare an intent-filter for " +
-                "\"android.companion.CompanionDeviceService\" action should not be bound") {
+                "\"android.companion.CompanionDeviceService\" action should not be bound"
+        ) {
             MissingPermissionCompanionService.isBound ||
                     MissingIntentFilterActionCompanionService.isBound
     }
@@ -297,8 +301,9 @@ fun assertOnlyPrimaryCompanionDeviceServiceNotified(associationId: Int, appeared
         assertContains(PrimaryCompanionService.associationIdsForConnectedDevices, associationId)
     } else {
         PrimaryCompanionService.waitAssociationToDisappear(associationId)
-        assertFalse(PrimaryCompanionService.associationIdsForConnectedDevices
-                .contains(associationId))
+        assertFalse(
+                PrimaryCompanionService.associationIdsForConnectedDevices.contains(associationId)
+        )
     }
 
     // ... while neither the non-primary nor incorrectly defined CompanionDeviceServices -
