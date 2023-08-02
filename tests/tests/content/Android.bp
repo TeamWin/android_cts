@@ -204,6 +204,7 @@ android_test {
         "data/malformed.apk.idsig",
         "data/test-cert.x509.pem",
         ":HelloWorld5",
+        ":HelloWorld5DifferentSigner",
         ":HelloWorld5Profileable",
         ":HelloWorld7",
         ":HelloWorldNoAppStorage",
