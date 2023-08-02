@@ -44,6 +44,7 @@ import androidx.test.InstrumentationRegistry
 import androidx.test.rule.ActivityTestRule
 import androidx.test.uiautomator.By
 import androidx.test.uiautomator.UiDevice
+import androidx.test.uiautomator.UiObject2
 import androidx.test.uiautomator.Until
 import com.android.compatibility.common.util.DisableAnimationRule
 import com.android.compatibility.common.util.FutureResultActivity
@@ -361,12 +362,18 @@ open class PackageInstallerTestBase {
      * @param resId The resource ID of the button to click
      */
     fun clickInstallerUIButton(resId: String) {
+        var button: UiObject2? = null
         val startTime = System.currentTimeMillis()
         while (startTime + TIMEOUT > System.currentTimeMillis()) {
             try {
-                uiDevice.wait(Until.findObject(By.res(PACKAGE_INSTALLER_PACKAGE_NAME, resId)), 1000)
-                        .click()
-                return
+                button = uiDevice.wait(
+                        Until.findObject(By.res(PACKAGE_INSTALLER_PACKAGE_NAME, resId)), 1000)
+                if (button != null) {
+                    Log.d(TAG, "Found bounds: ${button.getVisibleBounds()} of button $resId, " +
+                            "text: ${button.getText()}, package: ${button.getApplicationPackage()}")
+                    button.click()
+                    return
+                }
             } catch (ignore: Throwable) {
             }
         }
