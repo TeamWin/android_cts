@@ -39,6 +39,7 @@ class DebugInputRule : TestWatcher() {
                 "InputReaderRawEvents",
                 "InputDispatcherInboundEvent",
                 "InputTransportPublisher",
+                "InputTransportResampling",
         )
     }
 
