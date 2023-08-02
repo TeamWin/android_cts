@@ -106,6 +106,22 @@ public class GestureUtils {
         return new StrokeDescription(path(from, to), 0, duration);
     }
 
+    /**
+     * Simulates a touch exploration swipe that is interrupted partway through for a specified
+     * amount of time, and then continued.
+     */
+    public static GestureDescription interruptedSwipe(PointF from, PointF to, long duration) {
+        GestureDescription.Builder builder = new GestureDescription.Builder();
+        long time = 0;
+        PointF midpoint = new PointF((from.x + to.x) / 2.0f, (from.y + to.y) / 2.0f);
+        StrokeDescription swipe1 = new StrokeDescription(path(from, midpoint), 0, duration / 2);
+        builder.addStroke(swipe1);
+        time += swipe1.getDuration() + STROKE_TIME_GAP_MS;
+        StrokeDescription swipe2 = startingAt(time, swipe(midpoint, to, duration / 2));
+        builder.addStroke(swipe2);
+        return builder.build();
+    }
+
     public static StrokeDescription drag(StrokeDescription from, PointF to) {
         return from.continueStroke(
                 path(lastPointOf(from), to),
