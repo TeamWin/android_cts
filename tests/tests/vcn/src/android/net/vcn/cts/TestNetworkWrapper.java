@@ -390,6 +390,10 @@ public class TestNetworkWrapper implements AutoCloseable {
             return mCapabilitiesChangedHistory.poll(timeoutMillis, TimeUnit.MILLISECONDS);
         }
 
+        public void clearLostHistory() {
+            mLostHistory.clear();
+        }
+
         @Override
         public void onAvailable(@NonNull Network network) {
             mAvailableHistory.offer(network);
