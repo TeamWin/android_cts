@@ -473,10 +473,15 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
                 // Set the secondary split root task as launch root to verify remaining tasks will
                 // be reparented to matching launch root after removed the virtual display.
                 mTaskOrganizer.setLaunchRoot(mTaskOrganizer.getSecondarySplitTaskId());
+                // Launch activity on new secondary display in fullscreen to put it in splitscreen
+                // after the display's disconenction.
+                launchActivityOnDisplay(
+                        RESIZEABLE_ACTIVITY, WINDOWING_MODE_FULLSCREEN, newDisplay.mId);
+            } else {
+                // Launch activity on new secondary display
+                launchActivityOnDisplay(RESIZEABLE_ACTIVITY, newDisplay.mId);
             }
 
-            // Launch activity on new secondary display.
-            launchActivityOnDisplay(RESIZEABLE_ACTIVITY, WINDOWING_MODE_FULLSCREEN, newDisplay.mId);
             waitAndAssertActivityStateOnDisplay(RESIZEABLE_ACTIVITY, STATE_RESUMED, newDisplay.mId,
                     "Test activity must be on secondary display");
 
