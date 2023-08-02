@@ -1098,6 +1098,9 @@ public class VcnManagerTest extends VcnTestBase {
             @NonNull VcnTestNetworkCallback cellNetworkCb,
             @NonNull Network vcnNetwork)
             throws Exception {
+        // Clear the history to remove other networks have been matched to the request
+        cellNetworkCb.clearLostHistory();
+
         mVcnManager.clearVcnConfig(subGrp);
 
         // Expect VCN Network to disappear after VcnConfig is cleared.
@@ -1108,6 +1111,11 @@ public class VcnManagerTest extends VcnTestBase {
             // the VCN network MAY be immediately replaced with the underlying Cell, which only
             // fires an onAvailable for the new network, as opposed to an onLost() for the VCN
             // network. In that case, check that the VCN network has been unregistered.
+            //
+            // An alternative approach is to monitor #onAvailable as an indicator of potential
+            // network loss. However, since #onAvailable can mean either 1) the new network has
+            // higher priority, or 2) the old network is disconnected, this approach will introduce
+            // a lot more complexities.
             final Network lostVcnNetwork = cellNetworkCb.waitForLost();
             if (lostVcnNetwork != null) {
                 assertEquals(vcnNetwork, lostVcnNetwork);
