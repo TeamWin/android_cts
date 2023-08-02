@@ -30,12 +30,15 @@ import android.os.Parcel;
 import androidx.test.core.app.ApplicationProvider;
 import androidx.test.filters.SdkSuppress;
 
+import com.android.compatibility.common.util.NonMainlineTest;
+
 import org.junit.Test;
 
 /**
  * CTS tests for {@link SharedConnectivitySettingsState}.
  */
 @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+@NonMainlineTest
 public class SharedConnectivitySettingsStateTest {
     private static final boolean INSTANT_TETHER_STATE = true;
     private static final String INTENT_ACTION = "instant.tether.settings";

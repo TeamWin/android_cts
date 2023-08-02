@@ -35,6 +35,7 @@ import android.os.Parcel;
 
 import androidx.test.filters.SdkSuppress;
 
+import com.android.compatibility.common.util.NonMainlineTest;
 import com.android.modules.utils.build.SdkLevel;
 
 import org.junit.Before;
@@ -46,6 +47,7 @@ import java.util.Arrays;
  * CTS tests for {@link KnownNetworkConnectionStatus}.
  */
 @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+@NonMainlineTest
 public class KnownNetworkConnectionStatusTest {
     private static final int NETWORK_SOURCE = NETWORK_SOURCE_NEARBY_SELF;
     private static final String SSID = "TEST_SSID";
