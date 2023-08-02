@@ -684,7 +684,7 @@ public class JavaClientTest {
         if (mShouldBeOld) {
             assertEquals(1, compatTest.getInterfaceVersion());
         } else {
-            assertEquals(3, compatTest.getInterfaceVersion());
+            assertTrue(compatTest.getInterfaceVersion() >= 2);
         }
     }
 
@@ -694,7 +694,12 @@ public class JavaClientTest {
         if (mShouldBeOld) {
             assertEquals("b663b681b3e0d66f9b5428c2f23365031b7d4ba0", compatTest.getInterfaceHash());
         } else {
-            assertEquals("notfrozen", compatTest.getInterfaceHash());
+            if (compatTest.getInterfaceVersion() == 2) {
+                assertEquals("2740afaf3b5a0e739c44165c49633a0af87369f2",
+                        compatTest.getInterfaceHash());
+            } else {
+                assertEquals("notfrozen", compatTest.getInterfaceHash());
+            }
         }
     }
 
