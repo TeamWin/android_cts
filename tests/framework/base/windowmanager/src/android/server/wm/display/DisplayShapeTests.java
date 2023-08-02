@@ -48,7 +48,7 @@ import org.junit.Test;
 
 /**
  * Build/Install/Run:
- *     atest CtsWindowManagerDeviceTestCases:DisplayShapeTests
+ *     atest CtsWindowManagerDeviceDisplay:DisplayShapeTests
  */
 @Presubmit
 @android.server.wm.annotation.Group3

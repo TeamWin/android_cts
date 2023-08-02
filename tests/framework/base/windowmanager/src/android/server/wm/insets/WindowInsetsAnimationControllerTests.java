@@ -101,7 +101,7 @@ import java.util.stream.Collectors;
  * Test whether {@link android.view.WindowInsetsController#controlWindowInsetsAnimation} properly
  * works.
  *
- * <p>Build/Install/Run: atest CtsWindowManagerDeviceTestCases:WindowInsetsAnimationControllerTests
+ * <p>Build/Install/Run: atest CtsWindowManagerDeviceInsets:WindowInsetsAnimationControllerTests
  */
 // TODO(b/159167851) @Presubmit
 @RunWith(Parameterized.class)

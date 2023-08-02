@@ -53,7 +53,7 @@ import java.util.Collections;
 
 /**
  * Build/Install/Run:
- *     atest CtsWindowManagerDeviceTestCases:ActivityLifecycleFreeformTests
+ *     atest CtsWindowManagerDeviceActivity:ActivityLifecycleFreeformTests
  */
 @MediumTest
 @Presubmit

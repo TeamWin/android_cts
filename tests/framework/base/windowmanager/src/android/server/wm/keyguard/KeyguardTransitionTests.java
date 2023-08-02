@@ -45,7 +45,7 @@ import java.util.List;
 
 /**
  * Build/Install/Run:
- *     atest CtsWindowManagerDeviceTestCases:KeyguardTransitionTests
+ *     atest CtsWindowManagerDeviceKeyguard:KeyguardTransitionTests
  */
 @Presubmit
 @android.server.wm.annotation.Group2

@@ -64,7 +64,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Build/Install/Run:
- *     atest CtsWindowManagerDeviceTestCases:MultiDisplayClientTests
+ *     atest CtsWindowManagerDeviceDisplay:MultiDisplayClientTests
  */
 @Presubmit
 @MediumTest

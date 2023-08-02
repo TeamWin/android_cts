@@ -53,7 +53,7 @@ import java.util.concurrent.TimeUnit;
  * Test whether system alert window properly interacts with app ops.
  *
  * Build/Install/Run:
- *     atest CtsWindowManagerDeviceTestCases:AlertWindowsAppOpsTests
+ *     atest CtsWindowManagerDeviceWindow:AlertWindowsAppOpsTests
  */
 @Presubmit
 public class AlertWindowsAppOpsTests {

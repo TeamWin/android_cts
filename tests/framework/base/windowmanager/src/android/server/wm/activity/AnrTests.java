@@ -59,7 +59,7 @@ import java.util.concurrent.CountDownLatch;
  * Test scenarios that lead to ANR dialog being shown.
  *
  * <p>Build/Install/Run:
- *     atest CtsWindowManagerDeviceTestCases:AnrTests
+ *     atest CtsWindowManagerDeviceActivity:AnrTests
  */
 @Presubmit
 @FlakyTest(bugId = 280027157)

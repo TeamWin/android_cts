@@ -37,7 +37,7 @@ import android.view.Display;
 
 import org.junit.Test;
 
-/** Build/Install/Run: atest CtsWindowManagerDeviceTestCases:AspectRatioTests */
+/** Build/Install/Run: atest CtsWindowManagerDeviceWindow:AspectRatioTests */
 @Presubmit
 public class AspectRatioTests extends AspectRatioTestsBase {
 

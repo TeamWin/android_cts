@@ -47,7 +47,7 @@ import org.junit.Test;
 
 /**
  * Build/Install/Run:
- *     atest CtsWindowManagerDeviceTestCases:FreeformWindowingModeTests
+ *     atest CtsWindowManagerDeviceDisplay:FreeformWindowingModeTests
  */
 @Presubmit
 @android.server.wm.annotation.Group3

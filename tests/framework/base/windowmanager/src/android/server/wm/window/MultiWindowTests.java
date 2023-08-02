@@ -58,7 +58,7 @@ import org.junit.Test;
 
 /**
  * Build/Install/Run:
- *     atest CtsWindowManagerDeviceTestCases:MultiWindowTests
+ *     atest CtsWindowManagerDeviceWindow:MultiWindowTests
  */
 @Presubmit
 @android.server.wm.annotation.Group2

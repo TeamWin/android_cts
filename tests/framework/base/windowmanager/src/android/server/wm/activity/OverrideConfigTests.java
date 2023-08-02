@@ -32,7 +32,7 @@ import org.junit.Test;
 
 /**
  * Build/Install/Run:
- *     atest CtsWindowManagerDeviceTestCases:OverrideConfigTests
+ *     atest CtsWindowManagerDeviceActivity:OverrideConfigTests
  */
 @Presubmit
 public class OverrideConfigTests extends ActivityManagerTestBase {

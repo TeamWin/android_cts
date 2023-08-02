@@ -100,7 +100,7 @@ import java.util.function.Supplier;
  * Test whether WindowInsetsController controls window insets as expected.
  *
  * Build/Install/Run:
- *     atest CtsWindowManagerDeviceTestCases:WindowInsetsControllerTests
+ *     atest CtsWindowManagerDeviceInsets:WindowInsetsControllerTests
  */
 @Presubmit
 @android.server.wm.annotation.Group2

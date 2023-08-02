@@ -51,7 +51,7 @@ import org.junit.Test;
  * Tests that verifies the behaviors of embedding activities in different trusted modes.
  *
  * Build/Install/Run:
- *     atest CtsWindowManagerDeviceTestCases:TaskFragmentTrustedModeTest
+ *     atest CtsWindowManagerDeviceTaskFragment:TaskFragmentTrustedModeTest
  */
 @Presubmit
 @android.server.wm.annotation.Group2

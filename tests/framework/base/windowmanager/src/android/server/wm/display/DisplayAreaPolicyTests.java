@@ -37,7 +37,7 @@ import java.util.Set;
 
 /**
  * Build/Install/Run:
- *     atest CtsWindowManagerDeviceTestCases:DisplayAreaPolicyTests
+ *     atest CtsWindowManagerDeviceDisplay:DisplayAreaPolicyTests
  */
 @Presubmit
 public class DisplayAreaPolicyTests extends ActivityManagerTestBase {

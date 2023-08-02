@@ -62,7 +62,7 @@ import java.util.List;
 
 /**
  * Build/Install/Run:
- *     atest CtsWindowManagerDeviceTestCases:ConfigChangeTests
+ *     atest CtsWindowManagerDeviceWindow:ConfigChangeTests
  */
 @Presubmit
 public class ConfigChangeTests extends ActivityManagerTestBase {

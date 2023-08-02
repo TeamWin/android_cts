@@ -69,7 +69,7 @@ import java.util.stream.Stream;
 
 /**
  * Build/Install/Run:
- *     atest CtsWindowManagerDeviceTestCases:StartActivityTests
+ *     atest CtsWindowManagerDeviceActivity:StartActivityTests
  */
 @Presubmit
 public class StartActivityTests extends ActivityManagerTestBase {

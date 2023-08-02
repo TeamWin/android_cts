@@ -97,7 +97,7 @@ import java.util.List;
 
 /**
  * Build/Install/Run:
- *     atest CtsWindowManagerDeviceTestCases:ActivityLifecycleTests
+ *     atest CtsWindowManagerDeviceActivity:ActivityLifecycleTests
  */
 @MediumTest
 @Presubmit

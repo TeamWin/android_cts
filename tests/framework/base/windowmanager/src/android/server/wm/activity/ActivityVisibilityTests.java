@@ -71,7 +71,7 @@ import org.junit.Test;
 
 /**
  * Build/Install/Run:
- *     atest CtsWindowManagerDeviceTestCases:ActivityVisibilityTests
+ *     atest CtsWindowManagerDeviceActivity:ActivityVisibilityTests
  */
 @Presubmit
 @android.server.wm.annotation.Group2

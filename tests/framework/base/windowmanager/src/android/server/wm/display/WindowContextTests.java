@@ -65,7 +65,7 @@ import java.util.concurrent.TimeoutException;
  * Tests that verify the behavior of window context
  *
  * Build/Install/Run:
- *     atest CtsWindowManagerDeviceTestCases:WindowContextTests
+ *     atest CtsWindowManagerDeviceDisplay:WindowContextTests
  */
 @Presubmit
 public class WindowContextTests extends WindowContextTestBase {

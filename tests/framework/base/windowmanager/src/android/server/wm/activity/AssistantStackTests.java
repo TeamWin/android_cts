@@ -62,7 +62,7 @@ import org.junit.Test;
 
 /**
  * Build/Install/Run:
- *     atest CtsWindowManagerDeviceTestCases:AssistantStackTests
+ *     atest CtsWindowManagerDeviceActivity:AssistantStackTests
  */
 @Presubmit
 public class AssistantStackTests extends ActivityManagerTestBase {

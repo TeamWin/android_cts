@@ -101,7 +101,7 @@ import java.util.stream.Collectors;
 
 /**
  * Build/Install/Run:
- *     atest CtsWindowManagerDeviceTestCases:DisplayCutoutTests
+ *     atest CtsWindowManagerDeviceDisplay:DisplayCutoutTests
  */
 @Presubmit
 @android.server.wm.annotation.Group3

@@ -54,8 +54,8 @@ import org.junit.Test;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-/* Build/Install/Run:
- *     atest CtsWindowManagerDeviceTestCases:SnapshotTaskTests
+/** Build/Install/Run:
+ *     atest CtsWindowManagerDeviceWindow:SnapshotTaskTests
  */
 public class SnapshotTaskTests extends ActivityManagerTestBase {
     private static final String TAG = "SnapshotTaskTests";

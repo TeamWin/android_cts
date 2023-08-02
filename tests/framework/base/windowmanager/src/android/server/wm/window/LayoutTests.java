@@ -56,7 +56,7 @@ import java.util.ArrayList;
 /**
  * Test whether WindowManager performs the correct layout after we make some changes to it.
  *
- * <p>Build/Install/Run: atest CtsWindowManagerDeviceTestCases:LayoutTests
+ * <p>Build/Install/Run: atest CtsWindowManagerDeviceWindow:LayoutTests
  */
 @AppModeFull(reason = "Cannot write global settings as an instant app.")
 @Presubmit

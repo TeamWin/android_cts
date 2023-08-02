@@ -60,7 +60,7 @@ import java.util.function.ToIntFunction;
 
 /**
  * Build/Install/Run:
- *     atest CtsWindowManagerDeviceTestCases:AlertWindowsImportanceTests
+ *     atest CtsWindowManagerDeviceWindow:AlertWindowsImportanceTests
  */
 @Presubmit
 public final class AlertWindowsImportanceTests {

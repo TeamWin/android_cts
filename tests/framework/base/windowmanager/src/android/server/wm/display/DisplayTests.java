@@ -43,7 +43,7 @@ import java.util.List;
 
 /**
  * Build/Install/Run:
- *     atest CtsWindowManagerDeviceTestCases:DisplayTests
+ *     atest CtsWindowManagerDeviceDisplay:DisplayTests
  */
 @Presubmit
 @android.server.wm.annotation.Group3

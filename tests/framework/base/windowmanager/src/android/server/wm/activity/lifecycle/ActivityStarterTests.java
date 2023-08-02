@@ -56,7 +56,7 @@ import org.junit.Test;
 
 /**
  * Build/Install/Run:
- *     atest CtsWindowManagerDeviceTestCases:ActivityStarterTests
+ *     atest CtsWindowManagerDeviceActivity:ActivityStarterTests
  */
 @Presubmit
 @android.server.wm.annotation.Group3

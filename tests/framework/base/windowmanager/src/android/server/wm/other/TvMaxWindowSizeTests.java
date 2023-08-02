@@ -48,7 +48,7 @@ import org.junit.Test;
  * lower than S do not get a larger than 1080p (1920x1080) Window.
  *
  * <p>Build/Install/Run:
- *     atest CtsWindowManagerDeviceTestCases:TvMaxWindowSizeTests
+ *     atest CtsWindowManagerDeviceOther:TvMaxWindowSizeTests
  */
 public class TvMaxWindowSizeTests extends ActivityManagerTestBase {
 

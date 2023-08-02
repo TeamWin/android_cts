@@ -80,7 +80,7 @@ import java.util.function.Function;
 
 /**
  * Build/Install/Run:
- *     atest CtsWindowManagerDeviceTestCases:AppConfigurationTests
+ *     atest CtsWindowManagerDeviceDisplay:AppConfigurationTests
  */
 @Presubmit
 public class AppConfigurationTests extends MultiDisplayTestBase {

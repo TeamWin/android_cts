@@ -100,7 +100,7 @@ import java.util.stream.Collectors;
 
 /**
  * Build/Install/Run:
- *     atest CtsWindowManagerDeviceTestCases:MultiDisplaySystemDecorationTests
+ *     atest CtsWindowManagerDeviceDisplay:MultiDisplaySystemDecorationTests
  *
  * This tests that verify the following should not be run for OEM device verification:
  * Wallpaper added if display supports system decorations (and not added otherwise)

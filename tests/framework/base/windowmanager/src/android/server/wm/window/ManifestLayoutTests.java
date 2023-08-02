@@ -49,7 +49,7 @@ import java.util.List;
 
 /**
  * Build/Install/Run:
- *     atest CtsWindowManagerDeviceTestCases:ManifestLayoutTests
+ *     atest CtsWindowManagerDeviceWindow:ManifestLayoutTests
  */
 @Presubmit
 public class ManifestLayoutTests extends ActivityManagerTestBase {

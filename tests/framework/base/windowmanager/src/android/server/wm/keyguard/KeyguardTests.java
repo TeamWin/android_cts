@@ -72,7 +72,7 @@ import org.junit.Test;
 
 /**
  * Build/Install/Run:
- *     atest CtsWindowManagerDeviceTestCases:KeyguardTests
+ *     atest CtsWindowManagerDeviceKeyguard:KeyguardTests
  */
 @Presubmit
 @android.server.wm.annotation.Group2

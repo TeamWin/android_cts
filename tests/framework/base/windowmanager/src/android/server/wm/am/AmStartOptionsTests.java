@@ -42,7 +42,7 @@ import org.junit.Test;
 
 /**
  * Build/Install/Run:
- *     atest CtsWindowManagerDeviceTestCases:AmStartOptionsTests
+ *     atest CtsWindowManagerDeviceAm:AmStartOptionsTests
  */
 @Presubmit
 public class AmStartOptionsTests extends ActivityManagerTestBase {
