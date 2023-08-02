@@ -17,15 +17,12 @@
 package com.android.cts.appcompat;
 
 import static com.google.common.truth.Truth.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 import android.compat.cts.CompatChangeGatingTestCase;
 
 import com.google.common.collect.ImmutableSet;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -66,7 +63,7 @@ public class CompatChangesSelinuxTest extends CompatChangeGatingTestCase {
         final long configId = getClass().getCanonicalName().hashCode();
 
         installPackage(Q_TEST_APK, false);
-        Thread.currentThread().sleep(100);
+        Thread.currentThread().sleep(200);
         setCompatConfig(enabledChanges, disabledChanges, TEST_PKG);
 
         try {
@@ -86,7 +83,7 @@ public class CompatChangesSelinuxTest extends CompatChangeGatingTestCase {
         final Set<Long> disabledChanges = ImmutableSet.of();
 
         installPackage(Q_TEST_APK, false);
-        Thread.currentThread().sleep(100);
+        Thread.currentThread().sleep(200);
         setCompatConfig(enabledChanges, disabledChanges, TEST_PKG);
 
         try {
@@ -116,7 +113,7 @@ public class CompatChangesSelinuxTest extends CompatChangeGatingTestCase {
         final Set<Long> enabledChanges = ImmutableSet.of(SELINUX_LATEST_CHANGES);
         final Set<Long> disabledChanges = ImmutableSet.of();
         installPackage(R_TEST_APK, false);
-        Thread.currentThread().sleep(100);
+        Thread.currentThread().sleep(200);
         setCompatConfig(enabledChanges, disabledChanges, TEST_PKG);
 
         try {
