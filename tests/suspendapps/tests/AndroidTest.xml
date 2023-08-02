@@ -24,6 +24,13 @@
     <option name="config-descriptor:metadata" key="parameter" value="run_on_sdk_sandbox" />
     <option name="config-descriptor:metadata" key="parameter" value="multiuser" />
 
+    <target_preparer class="com.android.tradefed.targetprep.DeviceSetup">
+        <option name="force-skip-system-props" value="true" />
+        <option name="set-global-setting" key="verifier_engprod" value="1" />
+        <option name="set-global-setting" key="verifier_verify_adb_installs" value="0" />
+        <option name="restore-settings" value="true" />
+    </target_preparer>
+
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
         <option name="cleanup-apks" value="true" />
         <option name="install-arg" value="-t" />
@@ -31,13 +38,6 @@
         <option name="test-file-name" value="CtsSuspendTestApp.apk" />
         <option name="test-file-name" value="CtsSuspendTestApp2.apk" />
         <option name="test-file-name" value="CtsSuspendTestDeviceAdmin.apk" />
-    </target_preparer>
-
-    <target_preparer class="com.android.tradefed.targetprep.DeviceSetup">
-        <option name="force-skip-system-props" value="true" />
-        <option name="set-global-setting" key="verifier_engprod" value="1" />
-        <option name="set-global-setting" key="verifier_verify_adb_installs" value="0" />
-        <option name="restore-settings" value="true" />
     </target_preparer>
 
     <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">

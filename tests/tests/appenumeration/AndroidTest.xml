@@ -22,6 +22,13 @@
     <option name="config-descriptor:metadata" key="parameter" value="no_foldable_states" />
     <option name="config-descriptor:metadata" key="parameter" value="run_on_sdk_sandbox" />
 
+    <target_preparer class="com.android.tradefed.targetprep.DeviceSetup">
+        <option name="force-skip-system-props" value="true" />
+        <option name="set-global-setting" key="verifier_engprod" value="1" />
+        <option name="set-global-setting" key="verifier_verify_adb_installs" value="0" />
+        <option name="restore-settings" value="true" />
+    </target_preparer>
+
     <!-- Force service to be installed as non-instant mode, always -->
 
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
@@ -104,13 +111,6 @@
         <option name="push" value="CtsInputMethod1.apk->/data/local/tmp/cts/appenumeration/CtsInputMethod1.apk" />
         <option name="push" value="CtsNoRestartBase.apk->/data/local/tmp/cts/appenumeration/CtsNoRestartBase.apk" />
         <option name="push" value="CtsNoRestartFeature.apk->/data/local/tmp/cts/appenumeration/CtsNoRestartFeature.apk" />
-    </target_preparer>
-
-    <target_preparer class="com.android.tradefed.targetprep.DeviceSetup">
-        <option name="force-skip-system-props" value="true" />
-        <option name="set-global-setting" key="verifier_engprod" value="1" />
-        <option name="set-global-setting" key="verifier_verify_adb_installs" value="0" />
-        <option name="restore-settings" value="true" />
     </target_preparer>
 
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >

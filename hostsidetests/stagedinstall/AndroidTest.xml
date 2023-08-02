@@ -25,10 +25,11 @@
     <!-- TODO: Revisit secondary user eligibility once b/137885984 is resolved. -->
     <option name="config-descriptor:metadata" key="parameter" value="not_secondary_user" />
 
-    <target_preparer class="com.android.compatibility.common.tradefed.targetprep.SettingsPreparer">
-        <option name="device-setting" value="verifier_verify_adb_installs"/>
-        <option name="setting-type" value="global"/>
-        <option name="set-value" value="0"/>
+    <target_preparer class="com.android.tradefed.targetprep.DeviceSetup">
+        <option name="force-skip-system-props" value="true" />
+        <option name="set-global-setting" key="verifier_engprod" value="1" />
+        <option name="set-global-setting" key="verifier_verify_adb_installs" value="0" />
+        <option name="restore-settings" value="true" />
     </target_preparer>
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
         <option name="cleanup-apks" value="true" />
