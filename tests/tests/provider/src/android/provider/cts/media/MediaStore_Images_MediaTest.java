@@ -24,6 +24,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeFalse;
 
 import android.content.ContentResolver;
 import android.content.ContentUris;
@@ -54,7 +55,6 @@ import android.util.Size;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.SdkSuppress;
 
-import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -302,6 +302,11 @@ public class MediaStore_Images_MediaTest {
      */
     @Test
     public void testUpdateAndReplace() throws Exception {
+        // Don't run the test for MediaStore#VOLUME_EXTERNAL. This test specifically tests the
+        // usecase of update operation which is a write operation. MediaStore#VOLUME_EXTERNAL can't
+        // be used for write operations. We need to use specific volume names for write operations.
+        assumeFalse(MediaStore.VOLUME_EXTERNAL.equalsIgnoreCase(mVolumeName));
+
         File dir = mContext.getSystemService(StorageManager.class)
                 .getStorageVolume(mExternalFiles).getDirectory();
         File dcimDir = new File(dir, Environment.DIRECTORY_DCIM);
@@ -339,6 +344,11 @@ public class MediaStore_Images_MediaTest {
 
     @Test
     public void testUpsert() throws Exception {
+        // Don't run the test for MediaStore#VOLUME_EXTERNAL. This test specifically tests the
+        // usecase of upsert operation which is a write operation. MediaStore#VOLUME_EXTERNAL can't
+        // be used for write operations. We need to use specific volume names for write operations.
+        assumeFalse(MediaStore.VOLUME_EXTERNAL.equalsIgnoreCase(mVolumeName));
+
         File dir = mContext.getSystemService(StorageManager.class)
                 .getStorageVolume(mExternalFiles).getDirectory();
         File dcimDir = new File(dir, Environment.DIRECTORY_DCIM);
