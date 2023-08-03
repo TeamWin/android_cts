@@ -362,12 +362,12 @@ public class AssistantStackTests extends ActivityManagerTestBase {
                     mWmState.getTaskDisplayArea(ASSISTANT_ACTIVITY)
                             == mWmState.getTaskDisplayArea(ANIMATION_TEST_ACTIVITY)
             );
-            // Wait for animation finished.
-            mWmState.waitAndAssertActivityState(ANIMATION_TEST_ACTIVITY, STATE_RESUMED);
 
             if (isAssistantOnTopOfDream()) {
+                mWmState.waitAndAssertActivityState(ASSISTANT_ACTIVITY, STATE_RESUMED);
                 mWmState.assertVisibility(ASSISTANT_ACTIVITY, true);
             } else {
+                mWmState.waitAndAssertActivityState(ANIMATION_TEST_ACTIVITY, STATE_RESUMED);
                 mWmState.waitAndAssertVisibilityGone(ASSISTANT_ACTIVITY);
             }
 
