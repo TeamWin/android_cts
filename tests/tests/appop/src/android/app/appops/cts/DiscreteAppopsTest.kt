@@ -476,13 +476,13 @@ class DiscreteAppopsTest {
 
         var op = packageOps.getOp(OPSTR_CAMERA)
         assertThat(op).isNotNull()
-        assertThat(op.discreteAccessCount).isEqualTo(2)
-        var discrete = op.getDiscreteAccessAt(0)
+        assertThat(op!!.discreteAccessCount).isEqualTo(2)
+        var discrete = op!!.getDiscreteAccessAt(0)
 
         assertThat(discrete.getLastDuration(OP_FLAGS_ALL)).isEqualTo(-1)
         assertThat(discrete.getLastAccessBackgroundTime(OP_FLAGS_ALL)).isEqualTo(timestamp)
         assertThat(discrete.getLastAccessForegroundTime(OP_FLAGS_ALL)).isEqualTo(timestamp)
-        discrete = op.getDiscreteAccessAt(1)
+        discrete = op!!.getDiscreteAccessAt(1)
 
         assertThat(discrete.getLastDuration(OP_FLAGS_ALL)).isEqualTo(-1)
         assertThat(discrete.getLastAccessBackgroundTime(OP_FLAGS_ALL))
@@ -652,20 +652,20 @@ class DiscreteAppopsTest {
 
         var op = packageOps.getOp(OPSTR_CAMERA)
         assertThat(op).isNotNull()
-        assertThat(op.discreteAccessCount).isEqualTo(4)
-        var discrete = op.getDiscreteAccessAt(0)
+        assertThat(op!!.discreteAccessCount).isEqualTo(4)
+        var discrete = op!!.getDiscreteAccessAt(0)
         assertThat(discrete.getLastAccessForegroundTime(OP_FLAGS_ALL)).isEqualTo(timestamp)
         assertThat(discrete.getLastAccessBackgroundTime(OP_FLAGS_ALL)).isEqualTo(timestamp)
 
-        discrete = op.getDiscreteAccessAt(1)
+        discrete = op!!.getDiscreteAccessAt(1)
         assertThat(discrete.getLastAccessForegroundTime(OP_FLAGS_ALL)).isEqualTo(timestamp2)
         assertThat(discrete.getLastAccessBackgroundTime(OP_FLAGS_ALL)).isEqualTo(timestamp2)
 
-        discrete = op.getDiscreteAccessAt(2)
+        discrete = op!!.getDiscreteAccessAt(2)
         assertThat(discrete.getLastAccessForegroundTime(OP_FLAGS_ALL)).isEqualTo(timestamp3)
         assertThat(discrete.getLastAccessBackgroundTime(OP_FLAGS_ALL)).isEqualTo(-1)
 
-        discrete = op.getDiscreteAccessAt(3)
+        discrete = op!!.getDiscreteAccessAt(3)
         assertThat(discrete.getLastAccessForegroundTime(OP_FLAGS_ALL)).isEqualTo(-1)
         assertThat(discrete.getLastAccessBackgroundTime(OP_FLAGS_ALL)).isEqualTo(timestamp4)
 
