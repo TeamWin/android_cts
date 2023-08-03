@@ -154,9 +154,9 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@string/audio_loopback_test_all_paths"
+                    android:id="@+id/audio_loopback_instructions"
                     android:textSize="20dp"
-                    android:gravity="center" />
+                    android:gravity="center"/>
 
                 <!-- Speaker/Mic -->
                 <LinearLayout
