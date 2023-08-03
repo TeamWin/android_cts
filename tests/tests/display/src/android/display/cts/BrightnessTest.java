@@ -92,6 +92,14 @@ public class BrightnessTest extends TestBase {
         assumeTrue(
                 numberOfSystemAppsWithPermission(Manifest.permission.BRIGHTNESS_SLIDER_USAGE) > 0);
 
+        assumeTrue(
+                numberOfSystemAppsWithPermission(Manifest.permission.CONFIGURE_DISPLAY_BRIGHTNESS)
+                    > 0);
+        grantPermission(Manifest.permission.CONFIGURE_DISPLAY_BRIGHTNESS);
+        BrightnessConfiguration defaultConfig = mDisplayManager.getDefaultBrightnessConfiguration();
+        // This might be null, meaning that the device doesn't support autobrightness
+        assumeNotNull(defaultConfig);
+
         int previousBrightness = getSystemSetting(Settings.System.SCREEN_BRIGHTNESS);
         int previousBrightnessMode =
                 getSystemSetting(Settings.System.SCREEN_BRIGHTNESS_MODE);
@@ -144,6 +152,14 @@ public class BrightnessTest extends TestBase {
         // Don't run as there is no app that has permission to access slider usage.
         assumeTrue(
                 numberOfSystemAppsWithPermission(Manifest.permission.BRIGHTNESS_SLIDER_USAGE) > 0);
+
+        assumeTrue(
+                numberOfSystemAppsWithPermission(Manifest.permission.CONFIGURE_DISPLAY_BRIGHTNESS)
+                    > 0);
+        grantPermission(Manifest.permission.CONFIGURE_DISPLAY_BRIGHTNESS);
+        BrightnessConfiguration defaultConfig = mDisplayManager.getDefaultBrightnessConfiguration();
+        // This might be null, meaning that the device doesn't support autobrightness
+        assumeNotNull(defaultConfig);
 
         int previousBrightness = getSystemSetting(Settings.System.SCREEN_BRIGHTNESS);
         int previousBrightnessMode =
@@ -235,6 +251,11 @@ public class BrightnessTest extends TestBase {
                 Manifest.permission.CONFIGURE_DISPLAY_BRIGHTNESS) > 0);
 
         grantPermission(Manifest.permission.CONFIGURE_DISPLAY_BRIGHTNESS);
+
+        BrightnessConfiguration defaultConfig = mDisplayManager.getDefaultBrightnessConfiguration();
+        // This might be null, meaning that the device doesn't support autobrightness
+        assumeNotNull(defaultConfig);
+
         int previousBrightness = getSystemSetting(Settings.System.SCREEN_BRIGHTNESS);
         int previousBrightnessMode =
                 getSystemSetting(Settings.System.SCREEN_BRIGHTNESS_MODE);
@@ -395,6 +416,11 @@ public class BrightnessTest extends TestBase {
         // Don't run as there is no app that has permission to push curves.
         assumeTrue(numberOfSystemAppsWithPermission(
                 Manifest.permission.CONFIGURE_DISPLAY_BRIGHTNESS) > 0);
+        grantPermission(Manifest.permission.CONFIGURE_DISPLAY_BRIGHTNESS);
+
+        BrightnessConfiguration defaultConfig = mDisplayManager.getDefaultBrightnessConfiguration();
+        // This might be null, meaning that the device doesn't support autobrightness
+        assumeNotNull(defaultConfig);
 
         BrightnessConfiguration config =
                 new BrightnessConfiguration.Builder(
@@ -411,7 +437,6 @@ public class BrightnessTest extends TestBase {
             assertEquals(Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC, mode);
 
             grantPermission(Manifest.permission.BRIGHTNESS_SLIDER_USAGE);
-            grantPermission(Manifest.permission.CONFIGURE_DISPLAY_BRIGHTNESS);
 
             // Setup and remember some initial state.
             recordSliderEvents();
@@ -492,6 +517,11 @@ public class BrightnessTest extends TestBase {
                 Manifest.permission.CONFIGURE_DISPLAY_BRIGHTNESS) > 0);
 
         grantPermission(Manifest.permission.CONFIGURE_DISPLAY_BRIGHTNESS);
+
+        BrightnessConfiguration defaultConfig = mDisplayManager.getDefaultBrightnessConfiguration();
+        // This might be null, meaning that the device doesn't support autobrightness
+        assumeNotNull(defaultConfig);
+
         grantPermission(Manifest.permission.BRIGHTNESS_SLIDER_USAGE);
 
         BrightnessConfiguration previousConfig = mDisplayManager.getBrightnessConfiguration();
