@@ -49,8 +49,9 @@ import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.ShellIdentityUtils;
 import com.android.compatibility.common.util.ThrowingRunnable;
 
-import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -91,64 +92,66 @@ public class WifiBackupRestoreTest extends WifiJUnit4TestBase {
     public static final String EXPECTED_LEGACY_STATIC_PROXY_EXCLUSION_LIST = "";
     public static final String EXPECTED_LEGACY_PAC_PROXY_LOCATION = "http://";
 
-    private Context mContext;
-    private WifiManager mWifiManager;
-    private UiDevice mUiDevice;
-    private boolean mWasVerboseLoggingEnabled;
+    private static Context sContext;
+    private static WifiManager sWifiManager;
+    private static UiDevice sUiDevice;
+    private static boolean sWasVerboseLoggingEnabled;
+    private static boolean sShouldRunTest = false;
 
     private static final int DURATION = 10_000;
     private static final int DURATION_SCREEN_TOGGLE = 2000;
 
-    @Before
-    public void setUp() throws Exception {
-        mContext = InstrumentationRegistry.getInstrumentation().getContext();
+    @BeforeClass
+    public static void setUpClass() throws Exception {
+        sContext = InstrumentationRegistry.getInstrumentation().getContext();
         // skip the test if WiFi is not supported
-        assumeTrue(WifiFeature.isWifiSupported(mContext));
+        if (WifiFeature.isWifiSupported(sContext)) {
+            return;
+        }
+        sShouldRunTest = true;
 
-        mWifiManager = mContext.getSystemService(WifiManager.class);
-        assertThat(mWifiManager).isNotNull();
+        sWifiManager = sContext.getSystemService(WifiManager.class);
+        assertThat(sWifiManager).isNotNull();
 
         // turn on verbose logging for tests
-        mWasVerboseLoggingEnabled = ShellIdentityUtils.invokeWithShellPermissions(
-                () -> mWifiManager.isVerboseLoggingEnabled());
+        sWasVerboseLoggingEnabled = ShellIdentityUtils.invokeWithShellPermissions(
+                () -> sWifiManager.isVerboseLoggingEnabled());
         ShellIdentityUtils.invokeWithShellPermissions(
-                () -> mWifiManager.setVerboseLoggingEnabled(true));
+                () -> sWifiManager.setVerboseLoggingEnabled(true));
         // Disable scan throttling for tests.
         ShellIdentityUtils.invokeWithShellPermissions(
-                () -> mWifiManager.setScanThrottleEnabled(false));
+                () -> sWifiManager.setScanThrottleEnabled(false));
 
-        if (!mWifiManager.isWifiEnabled()) setWifiEnabled(true);
-        mUiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
+        if (!sWifiManager.isWifiEnabled()) setWifiEnabled(true);
+        sUiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
         turnScreenOn();
-        PollingCheck.check("Wifi not enabled", DURATION, () -> mWifiManager.isWifiEnabled());
+        PollingCheck.check("Wifi not enabled", DURATION, () -> sWifiManager.isWifiEnabled());
 
         List<WifiConfiguration> savedNetworks = ShellIdentityUtils.invokeWithShellPermissions(
-                () -> mWifiManager.getPrivilegedConfiguredNetworks());
+                () -> sWifiManager.getPrivilegedConfiguredNetworks());
         assertWithMessage("Need at least one saved network").that(savedNetworks).isNotEmpty();
     }
 
-    @After
-    public void tearDown() throws Exception {
-        if (!WifiFeature.isWifiSupported(mContext)) return;
-        if (!mWifiManager.isWifiEnabled()) setWifiEnabled(true);
-        turnScreenOff();
+    @Before
+    public void setup() {
+        assumeTrue(sShouldRunTest);
+    }
+
+    @AfterClass
+    public static void tearDownClass() throws Exception {
+        if (!sShouldRunTest) return;
+        if (!sWifiManager.isWifiEnabled()) setWifiEnabled(true);
         ShellIdentityUtils.invokeWithShellPermissions(
-                () -> mWifiManager.setVerboseLoggingEnabled(mWasVerboseLoggingEnabled));
+                () -> sWifiManager.setVerboseLoggingEnabled(sWasVerboseLoggingEnabled));
     }
 
-    private void setWifiEnabled(boolean enable) throws Exception {
-        ShellIdentityUtils.invokeWithShellPermissions(() -> mWifiManager.setWifiEnabled(enable));
+    private static void setWifiEnabled(boolean enable) throws Exception {
+        ShellIdentityUtils.invokeWithShellPermissions(() -> sWifiManager.setWifiEnabled(enable));
     }
 
-    private void turnScreenOn() throws Exception {
-        mUiDevice.executeShellCommand("input keyevent KEYCODE_WAKEUP");
-        mUiDevice.executeShellCommand("wm dismiss-keyguard");
-        // Since the screen on/off intent is ordered, they will not be sent right now.
-        Thread.sleep(DURATION_SCREEN_TOGGLE);
-    }
-
-    private void turnScreenOff() throws Exception {
-        mUiDevice.executeShellCommand("input keyevent KEYCODE_SLEEP");
+    private static void turnScreenOn() throws Exception {
+        sUiDevice.executeShellCommand("input keyevent KEYCODE_WAKEUP");
+        sUiDevice.executeShellCommand("wm dismiss-keyguard");
         // Since the screen on/off intent is ordered, they will not be sent right now.
         Thread.sleep(DURATION_SCREEN_TOGGLE);
     }
@@ -186,9 +189,9 @@ public class WifiBackupRestoreTest extends WifiJUnit4TestBase {
             uiAutomation.adoptShellPermissionIdentity();
 
             // Pick a regular saved network to modify (non-enterprise, non-Passpoint)
-            origNetwork = mWifiManager.getConfiguredNetworks().stream()
+            origNetwork = sWifiManager.getConfiguredNetworks().stream()
                     .filter(n -> {
-                        boolean canOverrideConfig = mContext.checkPermission(
+                        boolean canOverrideConfig = sContext.checkPermission(
                                 android.Manifest.permission.OVERRIDE_WIFI_CONFIG, -1, n.creatorUid)
                                 == PERMISSION_GRANTED;
                         return canOverrideConfig && !isEnterprise(n) && !n.isPasspoint();
@@ -202,14 +205,14 @@ public class WifiBackupRestoreTest extends WifiJUnit4TestBase {
             } else {
 
                 // Retrieve backup data.
-                byte[] backupData = mWifiManager.retrieveBackupData();
+                byte[] backupData = sWifiManager.retrieveBackupData();
                 // Modify the metered bit.
                 final String origNetworkSsid = origNetwork.SSID;
                 WifiConfiguration modNetwork = new WifiConfiguration(origNetwork);
                 flipMeteredOverride(modNetwork);
-                int networkId = mWifiManager.updateNetwork(modNetwork);
+                int networkId = sWifiManager.updateNetwork(modNetwork);
                 assertThat(networkId).isEqualTo(origNetwork.networkId);
-                assertThat(mWifiManager.getConfiguredNetworks()
+                assertThat(sWifiManager.getConfiguredNetworks()
                         .stream()
                         .filter(n -> n.SSID.equals(origNetworkSsid))
                         .findAny()
@@ -217,8 +220,8 @@ public class WifiBackupRestoreTest extends WifiJUnit4TestBase {
                         .isNotEqualTo(origNetwork.meteredOverride);
 
                 // Restore the original backup data & ensure that the metered bit is back to orig.
-                mWifiManager.restoreBackupData(backupData);
-                int metered = mWifiManager.getConfiguredNetworks()
+                sWifiManager.restoreBackupData(backupData);
+                int metered = sWifiManager.getConfiguredNetworks()
                         .stream()
                         .filter(n -> n.SSID.equals(origNetworkSsid))
                         .findAny()
@@ -230,7 +233,7 @@ public class WifiBackupRestoreTest extends WifiJUnit4TestBase {
         } finally {
             // Restore the orig network
             if (origNetwork != null) {
-                mWifiManager.updateNetwork(origNetwork);
+                sWifiManager.updateNetwork(origNetwork);
             }
             uiAutomation.dropShellPermissionIdentity();
         }
@@ -250,13 +253,13 @@ public class WifiBackupRestoreTest extends WifiJUnit4TestBase {
 
             // get soft ap configuration and set it back to update configuration to user
             // configuration.
-            mWifiManager.setSoftApConfiguration(mWifiManager.getSoftApConfiguration());
+            sWifiManager.setSoftApConfiguration(sWifiManager.getSoftApConfiguration());
 
             // Retrieve original soft ap config.
-            origSoftApConfig = mWifiManager.getSoftApConfiguration();
+            origSoftApConfig = sWifiManager.getSoftApConfiguration();
 
             // Retrieve backup data.
-            byte[] backupData = mWifiManager.retrieveSoftApBackupData();
+            byte[] backupData = sWifiManager.retrieveSoftApBackupData();
 
             // Modify softap config and set it.
             String origSsid = origSoftApConfig.getSsid();
@@ -267,16 +270,16 @@ public class WifiBackupRestoreTest extends WifiJUnit4TestBase {
             SoftApConfiguration modSoftApConfig = new SoftApConfiguration.Builder(origSoftApConfig)
                     .setSsid(updatedSsid)
                     .build();
-            mWifiManager.setSoftApConfiguration(modSoftApConfig);
+            sWifiManager.setSoftApConfiguration(modSoftApConfig);
             // Ensure that it does not match the orig softap config.
-            assertThat(mWifiManager.getSoftApConfiguration()).isNotEqualTo(origSoftApConfig);
+            assertThat(sWifiManager.getSoftApConfiguration()).isNotEqualTo(origSoftApConfig);
 
             // Restore the original backup data & ensure that the orig softap config is restored.
-            mWifiManager.restoreSoftApBackupData(backupData);
-            assertThat(mWifiManager.getSoftApConfiguration()).isEqualTo(origSoftApConfig);
+            sWifiManager.restoreSoftApBackupData(backupData);
+            assertThat(sWifiManager.getSoftApConfiguration()).isEqualTo(origSoftApConfig);
         } finally {
             if (origSoftApConfig != null) {
-                mWifiManager.setSoftApConfiguration(origSoftApConfig);
+                sWifiManager.setSoftApConfiguration(origSoftApConfig);
             }
             uiAutomation.dropShellPermissionIdentity();
         }
@@ -430,7 +433,7 @@ public class WifiBackupRestoreTest extends WifiJUnit4TestBase {
                 .that(actual.getIpConfiguration()).isEqualTo(expected.getIpConfiguration());
         assertWithMessage("Network: " + actual.toString())
                 .that(actual.meteredOverride).isEqualTo(expected.meteredOverride);
-        if (WifiBuildCompat.isPlatformOrWifiModuleAtLeastS(mContext)) {
+        if (WifiBuildCompat.isPlatformOrWifiModuleAtLeastS(sContext)) {
             assertWithMessage("Network: " + actual.toString())
                     .that(actual.getProfileKey()).isEqualTo(expected.getProfileKey());
         } else {
@@ -446,13 +449,13 @@ public class WifiBackupRestoreTest extends WifiJUnit4TestBase {
         List<WifiConfiguration> restoredSavedNetworks = null;
         try {
             uiAutomation.adoptShellPermissionIdentity();
-            Set<String> origSavedSsids = mWifiManager.getConfiguredNetworks().stream()
+            Set<String> origSavedSsids = sWifiManager.getConfiguredNetworks().stream()
                     .map(n -> n.SSID)
                     .collect(Collectors.toSet());
 
             restoreMethod.run();
             Thread.sleep(500);
-            restoredSavedNetworks = mWifiManager.getPrivilegedConfiguredNetworks().stream()
+            restoredSavedNetworks = sWifiManager.getPrivilegedConfiguredNetworks().stream()
                     .filter(n -> !origSavedSsids.contains(n.SSID))
                     .collect(Collectors.toList());
             assertConfigurationsEqual(
@@ -461,7 +464,7 @@ public class WifiBackupRestoreTest extends WifiJUnit4TestBase {
             // clean up all restored networks.
             if (restoredSavedNetworks != null) {
                 for (WifiConfiguration network : restoredSavedNetworks) {
-                    mWifiManager.removeNetwork(network.networkId);
+                    sWifiManager.removeNetwork(network.networkId);
                 }
             }
             uiAutomation.dropShellPermissionIdentity();
@@ -492,7 +495,7 @@ public class WifiBackupRestoreTest extends WifiJUnit4TestBase {
     @Test
     public void testRestoreFromLegacyBackupFormat() throws Exception {
         testRestoreFromBackupData(createExpectedLegacyConfigurations(),
-                () -> mWifiManager.restoreSupplicantBackupData(
+                () -> sWifiManager.restoreSupplicantBackupData(
                         loadResourceFile(LEGACY_SUPP_CONF_FILE),
                         loadResourceFile(LEGACY_IP_CONF_FILE)));
 
@@ -521,7 +524,7 @@ public class WifiBackupRestoreTest extends WifiJUnit4TestBase {
     @Test
     public void testRestoreFromV1_0BackupFormat() throws Exception {
         testRestoreFromBackupData(createExpectedV1_0Configurations(),
-                () -> mWifiManager.restoreBackupData(loadResourceFile(V1_0_FILE)));
+                () -> sWifiManager.restoreBackupData(loadResourceFile(V1_0_FILE)));
     }
 
     private List<WifiConfiguration> createExpectedV1_1Configurations() throws Exception {
@@ -550,7 +553,7 @@ public class WifiBackupRestoreTest extends WifiJUnit4TestBase {
     @Test
     public void testRestoreFromV1_1BackupFormat() throws Exception {
         testRestoreFromBackupData(createExpectedV1_1Configurations(),
-                () -> mWifiManager.restoreBackupData(loadResourceFile(V1_1_FILE)));
+                () -> sWifiManager.restoreBackupData(loadResourceFile(V1_1_FILE)));
     }
 
     private List<WifiConfiguration> createExpectedV1_2Configurations() throws Exception {
@@ -582,6 +585,6 @@ public class WifiBackupRestoreTest extends WifiJUnit4TestBase {
     @Test
     public void testRestoreFromV1_2BackupFormat() throws Exception {
         testRestoreFromBackupData(createExpectedV1_2Configurations(),
-                () -> mWifiManager.restoreBackupData(loadResourceFile(V1_2_FILE)));
+                () -> sWifiManager.restoreBackupData(loadResourceFile(V1_2_FILE)));
     }
 }

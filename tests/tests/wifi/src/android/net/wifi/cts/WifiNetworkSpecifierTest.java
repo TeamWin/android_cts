@@ -272,28 +272,20 @@ public class WifiNetworkSpecifierTest extends WifiJUnit4TestBase {
                 () -> sWifiManager.setScanThrottleEnabled(sWasScanThrottleEnabled));
         ShellIdentityUtils.invokeWithShellPermissions(
                 () -> sWifiManager.setVerboseLoggingEnabled(sWasVerboseLoggingEnabled));
-        sTestHelper.turnScreenOff();
     }
 
     @Before
     public void setUp() throws Exception {
         assumeTrue(sShouldRunTest);
 
-        assumeTrue(WifiFeature.isWifiSupported(sContext));
-
         // Clear any existing app state before each test.
-        if (WifiBuildCompat.isPlatformOrWifiModuleAtLeastS(sContext)) {
-            ShellIdentityUtils.invokeWithShellPermissions(
-                    () -> sWifiManager.removeAppState(myUid(), sContext.getPackageName()));
-        }
+        ShellIdentityUtils.invokeWithShellPermissions(
+                () -> sWifiManager.removeAppState(myUid(), sContext.getPackageName()));
 
         // Disconnect & disable auto-join on the saved network to prevent auto-connect from
         // interfering with the test.
-        ShellIdentityUtils.invokeWithShellPermissions(
-                () -> sWifiManager.allowAutojoinGlobal(false));
         disableAllSavedNetworks(sWifiManager);
-        ShellIdentityUtils.invokeWithShellPermissions(
-                () -> sWifiManager.allowAutojoinGlobal(true));
+        ShellIdentityUtils.invokeWithShellPermissions(() -> sWifiManager.disconnect());
 
         // Wait for Wifi to be disconnected.
         PollingCheck.check(
@@ -309,11 +301,9 @@ public class WifiNetworkSpecifierTest extends WifiJUnit4TestBase {
         if (mNrNetworkCallback != null) {
             sConnectivityManager.unregisterNetworkCallback(mNrNetworkCallback);
         }
-        // Clear any existing app state after each test.
-        if (WifiBuildCompat.isPlatformOrWifiModuleAtLeastS(sContext)) {
-            ShellIdentityUtils.invokeWithShellPermissions(
-                    () -> sWifiManager.removeAppState(myUid(), sContext.getPackageName()));
-        }
+
+        ShellIdentityUtils.invokeWithShellPermissions(
+                () -> sWifiManager.removeAppState(myUid(), sContext.getPackageName()));
     }
 
     private void testSuccessfulConnectionWithSpecifier(WifiNetworkSpecifier specifier)
@@ -540,10 +530,6 @@ public class WifiNetworkSpecifierTest extends WifiJUnit4TestBase {
      */
     @Test
     public void testBuilderForWpa3EnterpriseWithStandardApi() {
-        if (!WifiBuildCompat.isPlatformOrWifiModuleAtLeastS(sContext)) {
-            // Skip the test if wifi module version is older than S.
-            return;
-        }
         WifiNetworkSpecifier specifier1 = new WifiNetworkSpecifier.Builder()
                 .setSsid(WifiInfo.sanitizeSsid(sTestNetwork.SSID))
                 .setWpa3EnterpriseStandardModeConfig(new WifiEnterpriseConfig())
@@ -561,10 +547,6 @@ public class WifiNetworkSpecifierTest extends WifiJUnit4TestBase {
      */
     @Test
     public void testBuilderForWpa3Enterprise192bit() {
-        if (!WifiBuildCompat.isPlatformOrWifiModuleAtLeastS(sContext)) {
-            // Skip the test if wifi module version is older than S.
-            return;
-        }
         WifiEnterpriseConfig enterpriseConfig = new WifiEnterpriseConfig();
         enterpriseConfig.setEapMethod(WifiEnterpriseConfig.Eap.TLS);
         enterpriseConfig.setCaCertificate(CA_SUITE_B_ECDSA_CERT);
@@ -588,10 +570,6 @@ public class WifiNetworkSpecifierTest extends WifiJUnit4TestBase {
      */
     @Test
     public void testRedact() {
-        if (!WifiBuildCompat.isPlatformOrWifiModuleAtLeastS(sContext)) {
-            // Skip the test if wifi module version is older than S.
-            return;
-        }
         WifiNetworkSpecifier specifier = TestHelper
                 .createSpecifierBuilderWithCredentialFromSavedNetworkWithBssid(sTestNetwork)
                 .setBssidPattern(MacAddress.fromString(sTestNetwork.BSSID),

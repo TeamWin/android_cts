@@ -21,6 +21,12 @@ import static android.content.Context.RECEIVER_EXPORTED;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
+
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -38,28 +44,41 @@ import android.os.Parcel;
 import android.platform.test.annotations.AppModeFull;
 import android.support.test.uiautomator.UiDevice;
 
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.ShellIdentityUtils;
 
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
+
+@RunWith(AndroidJUnit4.class)
 @AppModeFull(reason = "Cannot get WifiManager in instant app mode")
-public class ScanResultTest extends WifiJUnit3TestBase {
+public class ScanResultTest extends WifiJUnit4TestBase {
+    private static Context sContext;
+
+    private static boolean sShouldRunTest = false;
+
     private static class MySync {
         int expectedState = STATE_NULL;
     }
 
-    private WifiManager mWifiManager;
-    private WifiLock mWifiLock;
-    private TestHelper mTestHelper;
-    private static MySync mMySync;
-    private boolean mWasVerboseLoggingEnabled;
-    private boolean mWasScanThrottleEnabled;
+    private static WifiManager sWifiManager;
+    private static WifiLock sWifiLock;
+    private static TestHelper sTestHelper;
+    private static MySync sMySync;
+    private static boolean sWasVerboseLoggingEnabled;
+    private static boolean sWasScanThrottleEnabled;
 
     private static final int STATE_NULL = 0;
     private static final int STATE_WIFI_CHANGING = 1;
@@ -88,123 +107,120 @@ public class ScanResultTest extends WifiJUnit3TestBase {
     public static final int TEST_FREQUENCY = 2412;
     public static final long TEST_TIMESTAMP = 4660L;
 
-    private IntentFilter mIntentFilter;
-    private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
+    private static final BroadcastReceiver RECEIVER = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             final String action = intent.getAction();
             if (action.equals(WifiManager.SUPPLICANT_STATE_CHANGED_ACTION)) {
-                synchronized (mMySync) {
-                    mMySync.expectedState = STATE_WIFI_CHANGED;
-                    mMySync.notify();
+                synchronized (sMySync) {
+                    sMySync.expectedState = STATE_WIFI_CHANGED;
+                    sMySync.notify();
                 }
             } else if (action.equals(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION)) {
-                synchronized (mMySync) {
+                synchronized (sMySync) {
                     if (intent.getBooleanExtra(WifiManager.EXTRA_RESULTS_UPDATED, false)) {
-                        mMySync.expectedState = STATE_SCAN_RESULTS_AVAILABLE;
+                        sMySync.expectedState = STATE_SCAN_RESULTS_AVAILABLE;
                     } else {
-                        mMySync.expectedState = STATE_SCAN_FAILURE;
+                        sMySync.expectedState = STATE_SCAN_FAILURE;
                     }
-                    mMySync.notify();
+                    sMySync.notify();
                 }
             }
         }
     };
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        if (!WifiFeature.isWifiSupported(getContext())) {
+    @BeforeClass
+    public static void setUpClass() throws Exception {
+        sContext = InstrumentationRegistry.getInstrumentation().getContext();
+        if (!WifiFeature.isWifiSupported(sContext)) {
             // skip the test if WiFi is not supported
             return;
         }
-        mMySync = new MySync();
-        mIntentFilter = new IntentFilter();
-        mIntentFilter.addAction(WifiManager.NETWORK_STATE_CHANGED_ACTION);
-        mIntentFilter.addAction(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION);
-        mIntentFilter.addAction(WifiManager.SUPPLICANT_CONNECTION_CHANGE_ACTION);
-        mIntentFilter.addAction(WifiManager.SUPPLICANT_STATE_CHANGED_ACTION);
-        mIntentFilter.addAction(WifiManager.WIFI_STATE_CHANGED_ACTION);
-        mIntentFilter.addAction(WifiManager.RSSI_CHANGED_ACTION);
-        mIntentFilter.addAction(WifiManager.NETWORK_IDS_CHANGED_ACTION);
-        mIntentFilter.addAction(WifiManager.ACTION_PICK_WIFI_NETWORK);
+        sShouldRunTest = true;
+        sMySync = new MySync();
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(WifiManager.NETWORK_STATE_CHANGED_ACTION);
+        intentFilter.addAction(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION);
+        intentFilter.addAction(WifiManager.SUPPLICANT_CONNECTION_CHANGE_ACTION);
+        intentFilter.addAction(WifiManager.SUPPLICANT_STATE_CHANGED_ACTION);
+        intentFilter.addAction(WifiManager.WIFI_STATE_CHANGED_ACTION);
+        intentFilter.addAction(WifiManager.RSSI_CHANGED_ACTION);
+        intentFilter.addAction(WifiManager.NETWORK_IDS_CHANGED_ACTION);
+        intentFilter.addAction(WifiManager.ACTION_PICK_WIFI_NETWORK);
 
         if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)) {
-            mContext.registerReceiver(mReceiver, mIntentFilter, RECEIVER_EXPORTED);
+            sContext.registerReceiver(RECEIVER, intentFilter, RECEIVER_EXPORTED);
         } else {
-            mContext.registerReceiver(mReceiver, mIntentFilter);
+            sContext.registerReceiver(RECEIVER, intentFilter);
         }
-        mWifiManager = (WifiManager) getContext().getSystemService(Context.WIFI_SERVICE);
-        assertThat(mWifiManager).isNotNull();
+        sWifiManager = sContext.getSystemService(WifiManager.class);
+        assertThat(sWifiManager).isNotNull();
 
-        mTestHelper = new TestHelper(InstrumentationRegistry.getInstrumentation().getContext(),
+        sTestHelper = new TestHelper(InstrumentationRegistry.getInstrumentation().getContext(),
                 UiDevice.getInstance(InstrumentationRegistry.getInstrumentation()));
 
         // turn on verbose logging for tests
-        mWasVerboseLoggingEnabled = ShellIdentityUtils.invokeWithShellPermissions(
-                () -> mWifiManager.isVerboseLoggingEnabled());
+        sWasVerboseLoggingEnabled = ShellIdentityUtils.invokeWithShellPermissions(
+                () -> sWifiManager.isVerboseLoggingEnabled());
         ShellIdentityUtils.invokeWithShellPermissions(
-                () -> mWifiManager.setVerboseLoggingEnabled(true));
+                () -> sWifiManager.setVerboseLoggingEnabled(true));
         // Disable scan throttling for tests.
-        mWasScanThrottleEnabled = ShellIdentityUtils.invokeWithShellPermissions(
-                () -> mWifiManager.isScanThrottleEnabled());
+        sWasScanThrottleEnabled = ShellIdentityUtils.invokeWithShellPermissions(
+                () -> sWifiManager.isScanThrottleEnabled());
         ShellIdentityUtils.invokeWithShellPermissions(
-                () -> mWifiManager.setScanThrottleEnabled(false));
+                () -> sWifiManager.setScanThrottleEnabled(false));
 
-        mWifiLock = mWifiManager.createWifiLock(TAG);
-        mWifiLock.acquire();
+        sWifiLock = sWifiManager.createWifiLock(TAG);
+        sWifiLock.acquire();
 
         // enable Wifi
-        if (!mWifiManager.isWifiEnabled()) setWifiEnabled(true);
+        if (!sWifiManager.isWifiEnabled()) setWifiEnabled(true);
         PollingCheck.check("Wifi not enabled", ENABLE_WAIT_MSEC,
-                () -> mWifiManager.isWifiEnabled());
+                () -> sWifiManager.isWifiEnabled());
 
-        mMySync.expectedState = STATE_NULL;
+        sMySync.expectedState = STATE_NULL;
     }
 
-    @Override
-    protected void tearDown() throws Exception {
-        if (!WifiFeature.isWifiSupported(getContext())) {
-            // skip the test if WiFi is not supported
-            super.tearDown();
+    @AfterClass
+    public static void tearDownClass() throws Exception {
+        if (!sShouldRunTest) {
             return;
         }
-        mWifiLock.release();
-        mContext.unregisterReceiver(mReceiver);
-        if (!mWifiManager.isWifiEnabled())
-            setWifiEnabled(true);
+        sWifiLock.release();
+        sContext.unregisterReceiver(RECEIVER);
+        if (!sWifiManager.isWifiEnabled()) setWifiEnabled(true);
         ShellIdentityUtils.invokeWithShellPermissions(
-                () -> mWifiManager.setScanThrottleEnabled(mWasScanThrottleEnabled));
+                () -> sWifiManager.setScanThrottleEnabled(sWasScanThrottleEnabled));
         ShellIdentityUtils.invokeWithShellPermissions(
-                () -> mWifiManager.setVerboseLoggingEnabled(mWasVerboseLoggingEnabled));
-        Thread.sleep(ENABLE_WAIT_MSEC);
-        super.tearDown();
+                () -> sWifiManager.setVerboseLoggingEnabled(sWasVerboseLoggingEnabled));
     }
 
-    private void setWifiEnabled(boolean enable) throws Exception {
-        synchronized (mMySync) {
-            mMySync.expectedState = STATE_WIFI_CHANGING;
+    @Before
+    public void setUp() throws Exception {
+        assumeTrue(sShouldRunTest);
+    }
+
+    private static void setWifiEnabled(boolean enable) throws Exception {
+        synchronized (sMySync) {
+            sMySync.expectedState = STATE_WIFI_CHANGING;
             ShellIdentityUtils.invokeWithShellPermissions(
-                    () -> mWifiManager.setWifiEnabled(enable));
+                    () -> sWifiManager.setWifiEnabled(enable));
             waitForBroadcast(TIMEOUT_MSEC, STATE_WIFI_CHANGED);
        }
     }
 
-    private boolean waitForBroadcast(long timeout, int expectedState) throws Exception {
+    private static boolean waitForBroadcast(long timeout, int expectedState) throws Exception {
         long waitTime = System.currentTimeMillis() + timeout;
         while (System.currentTimeMillis() < waitTime
-                && mMySync.expectedState != expectedState)
-            mMySync.wait(WAIT_MSEC);
-        return mMySync.expectedState == expectedState;
+                && sMySync.expectedState != expectedState)
+            sMySync.wait(WAIT_MSEC);
+        return sMySync.expectedState == expectedState;
     }
 
+    @Test
     public void testScanResultProperties() {
-        if (!WifiFeature.isWifiSupported(getContext())) {
-            // skip the test if WiFi is not supported
-            return;
-        }
         // this test case should in Wifi environment
-        for (ScanResult scanResult : mWifiManager.getScanResults()) {
+        for (ScanResult scanResult : sWifiManager.getScanResults()) {
             assertThat(scanResult.toString()).isNotNull();
 
             for (InformationElement ie : scanResult.getInformationElements()) {
@@ -251,10 +267,10 @@ public class ScanResultTest extends WifiJUnit3TestBase {
 
     /* Multiple scans to ensure bssid is updated */
     private void scanAndWait() throws Exception {
-        synchronized (mMySync) {
+        synchronized (sMySync) {
             for (int retry  = 0; retry < SCAN_MAX_RETRY_COUNT; retry++) {
-                mMySync.expectedState = STATE_START_SCAN;
-                mWifiManager.startScan();
+                sMySync.expectedState = STATE_START_SCAN;
+                sWifiManager.startScan();
                 if (waitForBroadcast(SCAN_WAIT_MSEC, STATE_SCAN_RESULTS_AVAILABLE)) {
                     break;
                 }
@@ -263,18 +279,14 @@ public class ScanResultTest extends WifiJUnit3TestBase {
    }
 
     @VirtualDeviceNotSupported
+    @Test
     public void testScanResultTimeStamp() throws Exception {
-        if (!WifiFeature.isWifiSupported(getContext())) {
-            // skip the test if WiFi is not supported
-            return;
-        }
-
         long timestamp = 0;
         String BSSID = null;
 
         scanAndWait();
 
-        List<ScanResult> scanResults = mWifiManager.getScanResults();
+        List<ScanResult> scanResults = sWifiManager.getScanResults();
         for (ScanResult result : scanResults) {
             BSSID = result.BSSID;
             timestamp = result.timestamp;
@@ -284,7 +296,7 @@ public class ScanResultTest extends WifiJUnit3TestBase {
 
         scanAndWait();
 
-        scanResults = mWifiManager.getScanResults();
+        scanResults = sWifiManager.getScanResults();
         for (ScanResult result : scanResults) {
             if (result.BSSID.equals(BSSID)) {
                 long timeDiff = (result.timestamp - timestamp) / 1000;
@@ -295,12 +307,8 @@ public class ScanResultTest extends WifiJUnit3TestBase {
     }
 
     /** Test that the copy constructor copies fields correctly. */
-    public void testScanResultConstructors() throws Exception {
-        if (!WifiFeature.isWifiSupported(getContext())) {
-            // skip the test if WiFi is not supported
-            return;
-        }
-
+    @Test
+    public void testScanResultConstructors() {
         ScanResult scanResult = new ScanResult();
         scanResult.SSID = TEST_SSID;
         scanResult.setWifiSsid(WifiSsid.fromBytes(TEST_SSID.getBytes(StandardCharsets.UTF_8)));
@@ -320,26 +328,22 @@ public class ScanResultTest extends WifiJUnit3TestBase {
         assertThat(scanResult2.timestamp).isEqualTo(TEST_TIMESTAMP);
     }
 
+    @Test
     public void testScanResultMatchesWifiInfo() throws Exception {
-        if (!WifiFeature.isWifiSupported(getContext())) {
-            // skip the test if WiFi is not supported
-            return;
-        }
-
         // ensure Wifi is connected
-        ShellIdentityUtils.invokeWithShellPermissions(() -> mWifiManager.reconnect());
+        ShellIdentityUtils.invokeWithShellPermissions(() -> sWifiManager.reconnect());
         PollingCheck.check(
                 "Wifi not connected",
                 WIFI_CONNECT_TIMEOUT_MILLIS,
-                () -> mWifiManager.getConnectionInfo().getNetworkId() != -1);
+                () -> sWifiManager.getConnectionInfo().getNetworkId() != -1);
 
-        final WifiInfo wifiInfo = mWifiManager.getConnectionInfo();
+        final WifiInfo wifiInfo = sWifiManager.getConnectionInfo();
         assertThat(wifiInfo).isNotNull();
 
         ScanResult currentNetwork = null;
         for (int i = 0; i < SCAN_FIND_BSSID_MAX_RETRY_COUNT; i++) {
             scanAndWait();
-            final List<ScanResult> scanResults = mWifiManager.getScanResults();
+            final List<ScanResult> scanResults = sWifiManager.getScanResults();
             currentNetwork = scanResults.stream().filter(r -> r.BSSID.equals(wifiInfo.getBSSID()))
                     .findAny().orElse(null);
 
@@ -367,40 +371,38 @@ public class ScanResultTest extends WifiJUnit3TestBase {
     /**
      * Verify that scan throttling is enforced.
      */
+    @Test
     public void testScanThrottling() throws Exception {
-        if (!WifiFeature.isWifiSupported(getContext())) {
-            // skip the test if WiFi is not supported
-            return;
-        }
-
         // re-enable scan throttling
         ShellIdentityUtils.invokeWithShellPermissions(
-                () -> mWifiManager.setScanThrottleEnabled(true));
-        mTestHelper.turnScreenOn();
+                () -> sWifiManager.setScanThrottleEnabled(true));
+        sTestHelper.turnScreenOn();
 
-        synchronized (mMySync) {
-            for (int i = 0; i < SCAN_REQUEST_THROTTLE_MAX_IN_TIME_WINDOW_FG_APPS; ++i) {
-                mWifiManager.startScan();
-                // TODO(b/277663385): Increased timeout until cuttlefish's mac80211_hwsim uses more
-                // than 1 channel.
-                assertTrue("Iteration #" + i,
-                        waitForBroadcast(SCAN_WAIT_MSEC * 2, STATE_SCAN_RESULTS_AVAILABLE));
+        try {
+            synchronized (sMySync) {
+                for (int i = 0; i < SCAN_REQUEST_THROTTLE_MAX_IN_TIME_WINDOW_FG_APPS; ++i) {
+                    sWifiManager.startScan();
+                    // TODO(b/277663385): Increased timeout until cuttlefish's mac80211_hwsim uses
+                    //  more than 1 channel.
+                    assertTrue("Iteration #" + i,
+                            waitForBroadcast(SCAN_WAIT_MSEC * 2, STATE_SCAN_RESULTS_AVAILABLE));
+                }
+
+                sWifiManager.startScan();
+                assertTrue("Should be throttled",
+                        waitForBroadcast(SCAN_WAIT_MSEC, STATE_SCAN_FAILURE));
             }
-
-            mWifiManager.startScan();
-            assertTrue("Should be throttled", waitForBroadcast(SCAN_WAIT_MSEC, STATE_SCAN_FAILURE));
+        } finally {
+            ShellIdentityUtils.invokeWithShellPermissions(
+                    () -> sWifiManager.setScanThrottleEnabled(false));
         }
     }
 
     /**
      * Test MLO Attributes in ScanResult Constructor (WiFi-7)
      */
+    @Test
     public void testScanResultMloAttributes() {
-        if (!WifiFeature.isWifiSupported(getContext())) {
-            // skip the test if WiFi is not supported
-            return;
-        }
-
         ScanResult scanResult = new ScanResult();
         assertNull(scanResult.getApMldMacAddress());
         assertEquals(MloLink.INVALID_MLO_LINK_ID, scanResult.getApMloLinkId());
@@ -411,12 +413,8 @@ public class ScanResultTest extends WifiJUnit3TestBase {
     /**
      * Test MLO Link Constructor (WiFi-7)
      */
+    @Test
     public void testMloLinkConstructor() {
-        if (!WifiFeature.isWifiSupported(getContext())) {
-            // skip the test if WiFi is not supported
-            return;
-        }
-
         MloLink mloLink = new MloLink();
         assertEquals(WifiScanner.WIFI_BAND_UNSPECIFIED, mloLink.getBand());
         assertEquals(0, mloLink.getChannel());
@@ -432,12 +430,8 @@ public class ScanResultTest extends WifiJUnit3TestBase {
     /**
      * Test MLO Link parcelable APIs
      */
+    @Test
     public void testMloLinkParcelable() {
-        if (!WifiFeature.isWifiSupported(getContext())) {
-            // skip the test if WiFi is not supported
-            return;
-        }
-
         Parcel p = Parcel.obtain();
         MloLink mloLink = new MloLink();
 

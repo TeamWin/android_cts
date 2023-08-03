@@ -18,6 +18,13 @@ package android.net.wifi.cts;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
+
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -32,21 +39,35 @@ import android.os.Build;
 import android.platform.test.annotations.AppModeFull;
 import android.telephony.SubscriptionManager;
 
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.platform.app.InstrumentationRegistry;
+
 import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.ShellIdentityUtils;
 
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
 import java.nio.charset.StandardCharsets;
 
+@RunWith(AndroidJUnit4.class)
 @AppModeFull(reason = "Cannot get WifiManager in instant app mode")
-public class WifiInfoTest extends WifiJUnit3TestBase {
+public class WifiInfoTest extends WifiJUnit4TestBase{
+    private static Context sContext;
+
+    private static boolean sShouldRunTest = false;
+
     private static class MySync {
         int expectedState = STATE_NULL;
     }
 
-    private WifiManager mWifiManager;
-    private WifiLock mWifiLock;
-    private static MySync mMySync;
+    private static WifiManager sWifiManager;
+    private static WifiLock sWifiLock;
+    private static MySync sMySync;
 
     private static final int STATE_NULL = 0;
     private static final int STATE_WIFI_CHANGING = 1;
@@ -63,97 +84,94 @@ public class WifiInfoTest extends WifiJUnit3TestBase {
     private static final int WAIT_MSEC = 60;
     private static final int DURATION = 10000;
     private static final int WIFI_CONNECT_TIMEOUT_MILLIS = 30_000;
-    private IntentFilter mIntentFilter;
-    private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
+    private static final BroadcastReceiver RECEIVER = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             final String action = intent.getAction();
             if (action.equals(WifiManager.WIFI_STATE_CHANGED_ACTION)) {
-                synchronized (mMySync) {
-                    mMySync.expectedState = STATE_WIFI_CHANGED;
-                    mMySync.notify();
+                synchronized (sMySync) {
+                    sMySync.expectedState = STATE_WIFI_CHANGED;
+                    sMySync.notify();
                 }
             }
         }
     };
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        if (!WifiFeature.isWifiSupported(getContext())) {
+    @BeforeClass
+    public static void setUpClass() throws Exception {
+        sContext = InstrumentationRegistry.getInstrumentation().getContext();
+        if (!WifiFeature.isWifiSupported(sContext)) {
             // skip the test if WiFi is not supported
             return;
         }
-        mMySync = new MySync();
-        mIntentFilter = new IntentFilter();
-        mIntentFilter.addAction(WifiManager.WIFI_STATE_CHANGED_ACTION);
+        sShouldRunTest = true;
+        sMySync = new MySync();
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(WifiManager.WIFI_STATE_CHANGED_ACTION);
 
-        mContext.registerReceiver(mReceiver, mIntentFilter);
-        mWifiManager = (WifiManager) getContext().getSystemService(Context.WIFI_SERVICE);
-        assertThat(mWifiManager).isNotNull();
-        mWifiLock = mWifiManager.createWifiLock(TAG);
-        mWifiLock.acquire();
+        sContext.registerReceiver(RECEIVER, intentFilter);
+        sWifiManager = sContext.getSystemService(WifiManager.class);
+        assertThat(sWifiManager).isNotNull();
+        sWifiLock = sWifiManager.createWifiLock(TAG);
+        sWifiLock.acquire();
 
         // enable Wifi
-        if (!mWifiManager.isWifiEnabled()) setWifiEnabled(true);
-        PollingCheck.check("Wifi not enabled", DURATION, () -> mWifiManager.isWifiEnabled());
+        if (!sWifiManager.isWifiEnabled()) setWifiEnabled(true);
+        PollingCheck.check("Wifi not enabled", DURATION, () -> sWifiManager.isWifiEnabled());
 
-        mMySync.expectedState = STATE_NULL;
+        sMySync.expectedState = STATE_NULL;
     }
 
-    @Override
-    protected void tearDown() throws Exception {
-        if (!WifiFeature.isWifiSupported(getContext())) {
-            // skip the test if WiFi is not supported
-            super.tearDown();
+    @AfterClass
+    public static void tearDownClass() throws Exception {
+        if (!sShouldRunTest) {
             return;
         }
-        mWifiLock.release();
-        mContext.unregisterReceiver(mReceiver);
-        if (!mWifiManager.isWifiEnabled())
-            setWifiEnabled(true);
-        Thread.sleep(DURATION);
-        super.tearDown();
+        sWifiLock.release();
+        sContext.unregisterReceiver(RECEIVER);
+        if (!sWifiManager.isWifiEnabled()) setWifiEnabled(true);
     }
 
-    private void setWifiEnabled(boolean enable) throws Exception {
-        synchronized (mMySync) {
-            mMySync.expectedState = STATE_WIFI_CHANGING;
+    @Before
+    public void setUp() throws Exception {
+        assumeTrue(sShouldRunTest);
+    }
+
+    private static void setWifiEnabled(boolean enable) throws Exception {
+        synchronized (sMySync) {
+            sMySync.expectedState = STATE_WIFI_CHANGING;
             ShellIdentityUtils.invokeWithShellPermissions(
-                    () -> mWifiManager.setWifiEnabled(enable));
+                    () -> sWifiManager.setWifiEnabled(enable));
             long timeout = System.currentTimeMillis() + TIMEOUT_MSEC;
             while (System.currentTimeMillis() < timeout
-                    && mMySync.expectedState == STATE_WIFI_CHANGING)
-                mMySync.wait(WAIT_MSEC);
+                    && sMySync.expectedState == STATE_WIFI_CHANGING)
+                sMySync.wait(WAIT_MSEC);
         }
     }
 
+    @Test
     public void testWifiInfoProperties() throws Exception {
-        if (!WifiFeature.isWifiSupported(getContext())) {
-            // skip the test if WiFi is not supported
-            return;
-        }
 
         // ensure Wifi is connected
-        ShellIdentityUtils.invokeWithShellPermissions(() -> mWifiManager.reconnect());
+        ShellIdentityUtils.invokeWithShellPermissions(() -> sWifiManager.reconnect());
         PollingCheck.check(
                 "Wifi not connected - Please ensure there is a saved network in range of this "
                         + "device",
                 WIFI_CONNECT_TIMEOUT_MILLIS,
-                () -> mWifiManager.getConnectionInfo().getNetworkId() != -1);
+                () -> sWifiManager.getConnectionInfo().getNetworkId() != -1);
 
         // this test case should in Wifi environment
-        WifiInfo wifiInfo = mWifiManager.getConnectionInfo();
+        WifiInfo wifiInfo = sWifiManager.getConnectionInfo();
 
         testWifiInfoPropertiesWhileConnected(wifiInfo);
 
         setWifiEnabled(false);
 
         PollingCheck.check("getNetworkId not -1", 20000,
-                () -> mWifiManager.getConnectionInfo().getNetworkId() == -1);
+                () -> sWifiManager.getConnectionInfo().getNetworkId() == -1);
 
         PollingCheck.check("getWifiState not disabled", 20000,
-                () -> mWifiManager.getWifiState() == WifiManager.WIFI_STATE_DISABLED);
+                () -> sWifiManager.getWifiState() == WifiManager.WIFI_STATE_DISABLED);
     }
 
     private void testWifiInfoPropertiesWhileConnected(WifiInfo wifiInfo) {
@@ -207,17 +225,16 @@ public class WifiInfoTest extends WifiJUnit3TestBase {
         assertThat(wifiInfo.getRxLinkSpeedMbps()).isAtLeast(-1);
         assertThat(wifiInfo.getMaxSupportedTxLinkSpeedMbps()).isAtLeast(-1);
         assertThat(wifiInfo.getMaxSupportedRxLinkSpeedMbps()).isAtLeast(-1);
-        if (WifiBuildCompat.isPlatformOrWifiModuleAtLeastS(mContext)) {
-            assertThat(wifiInfo.getCurrentSecurityType()).isNotEqualTo(
+        assertThat(wifiInfo.getCurrentSecurityType()).isNotEqualTo(
                     WifiInfo.SECURITY_TYPE_UNKNOWN);
-        }
     }
 
     /**
      * Test that the WifiInfo Builder returns the same values that was set, and that
      * calling build multiple times returns different instances.
      */
-    public void testWifiInfoBuilder() throws Exception {
+    @Test
+    public void testWifiInfoBuilder() {
         WifiInfo.Builder builder = new WifiInfo.Builder()
                 .setSsid(TEST_SSID.getBytes(StandardCharsets.UTF_8))
                 .setBssid(TEST_BSSID)
@@ -262,12 +279,9 @@ public class WifiInfoTest extends WifiJUnit3TestBase {
 
     /**
      * Test that setCurrentSecurityType and getCurrentSecurityType work as expected
-     * @throws Exception
      */
-    public void testWifiInfoCurrentSecurityType() throws Exception {
-        if (!WifiBuildCompat.isPlatformOrWifiModuleAtLeastS(mContext)) {
-            return;
-        }
+    @Test
+    public void testWifiInfoCurrentSecurityType() {
         WifiInfo.Builder builder = new WifiInfo.Builder()
                 .setSsid(TEST_SSID.getBytes(StandardCharsets.UTF_8))
                 .setBssid(TEST_BSSID)
@@ -285,6 +299,7 @@ public class WifiInfoTest extends WifiJUnit3TestBase {
     /**
      * Test MLO Attributes (WiFi-7)
      */
+    @Test
     public void testWifiInfoMloAttributes() {
         // Verify that MLO Attributes are initialzed correctly
         WifiInfo.Builder builder = new WifiInfo.Builder()
