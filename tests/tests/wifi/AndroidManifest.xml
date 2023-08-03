@@ -42,7 +42,7 @@
          (as opposed to HTTPS). -->
     <application android:usesCleartextTraffic="true">
         <uses-library android:name="android.test.runner"/>
-        <activity android:name=".WaitForResultActivity"/>
+        <activity android:name=".WaitForResultActivity" android:screenOrientation="portrait"/>
         <service
             android:name="android.net.wifi.sharedconnectivity.service.cts.TestSharedConnectivityService"
             android:exported="true">
