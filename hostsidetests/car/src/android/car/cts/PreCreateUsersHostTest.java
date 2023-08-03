@@ -274,6 +274,16 @@ public final class PreCreateUsersHostTest extends CarHostJUnit4TestCase {
         for (int userId : userIds) {
             getDevice().removeUser(userId);
         }
+        int retryCount =  10;
+        while (retryCount > 0) {
+            String allUsers = getDevice().executeShellCommand("cmd user list --all -v");
+            if (allUsers.contains("(pre-created)")) {
+                retryCount--;
+                sleep(1000);
+                continue;
+            }
+            break;
+        }
     }
 
     private void convertPreCreatedUser(boolean isGuest, int expectedId) throws Exception {
