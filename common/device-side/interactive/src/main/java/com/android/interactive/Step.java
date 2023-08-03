@@ -256,6 +256,21 @@ public abstract class Step<E> {
     }
 
     /**
+     * Adds small button with a single up/down arrow, used for moving the text box to the
+     * bottom of the screen in case it covers some critical area of the app
+     */
+
+    protected void addSwapButton() {
+        Button btn = new Button(TestApis.context().instrumentedContext());
+        // up/down arrow
+        btn.setText("\u21F5");
+        btn.setOnClickListener(v -> swap());
+
+        GridLayout layout = mInstructionView.findViewById(R.id.buttons);
+        layout.addView(btn);
+    }
+
+    /**
      * Adds a button to immediately mark the test as failed and request the tester to provide the
      * reason for failure.
      */
@@ -294,6 +309,19 @@ public abstract class Step<E> {
                 sWindowManager.addView(mInstructionView, params);
             }
         });
+    }
+
+    /**
+     * Swaps the prompt from the top to the bottom of the user screen
+     */
+    protected void swap() {
+        WindowManager.LayoutParams params = (WindowManager.LayoutParams) mInstructionView.getLayoutParams();
+        if (params.gravity == Gravity.TOP) {
+            params.gravity = Gravity.BOTTOM;
+        } else {
+            params.gravity = Gravity.TOP;
+        }
+        sWindowManager.updateViewLayout(mInstructionView, params);
     }
 
     protected void close() {
