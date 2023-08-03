@@ -58,13 +58,15 @@ class ZoomTest(its_base_test.ItsBaseTest):
       its_session_utils.load_scene(
           cam, props, self.scene, self.tablet, self.chart_distance)
 
+      # Determine test zoom range
       z_range = props['android.control.zoomRatioRange']
-      logging.debug('testing zoomRatioRange: %s', str(z_range))
       debug = self.debug_mode
-
       z_min, z_max = float(z_range[0]), float(z_range[1])
-      z_list = np.arange(z_min, z_max, float(z_max - z_min) / (_NUM_STEPS - 1))
+      camera_properties_utils.skip_unless(z_max >= z_min * _ZOOM_MIN_THRESH)
+      z_max = min(z_max, zoom_capture_utils.ZOOM_MAX_THRESH * z_min)
+      z_list = np.arange(z_min, z_max, (z_max - z_min) / (_NUM_STEPS - 1))
       z_list = np.append(z_list, z_max)
+      logging.debug('Testing zoom range: %s', str(z_list))
 
       # Check media performance class
       media_performance_class = its_session_utils.get_media_performance_class(
@@ -80,8 +82,6 @@ class ZoomTest(its_base_test.ItsBaseTest):
             'zoom_ratio minimum must be less than 1.0. '
             f'Found media performance class {media_performance_class} '
             f'and minimum zoom {z_min}.')
-
-      camera_properties_utils.skip_unless(z_max >= z_min * _ZOOM_MIN_THRESH)
 
       # set TOLs based on camera and test rig params
       if camera_properties_utils.logical_multi_camera(props):
