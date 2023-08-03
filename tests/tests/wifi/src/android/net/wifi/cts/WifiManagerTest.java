@@ -110,6 +110,7 @@ import android.util.Log;
 import android.util.SparseArray;
 import android.util.SparseIntArray;
 
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SdkSuppress;
 import androidx.test.platform.app.InstrumentationRegistry;
 
@@ -128,6 +129,7 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -161,6 +163,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+@RunWith(AndroidJUnit4.class)
 @AppModeFull(reason = "Cannot get WifiManager in instant app mode")
 public class WifiManagerTest extends WifiJUnit4TestBase {
     private static Context sContext;
@@ -477,7 +480,10 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
     public void setUp() throws Exception {
         assumeTrue(sShouldRunTest);
         // enable Wifi
-        if (!sWifiManager.isWifiEnabled()) setWifiEnabled(true);
+        if (!sWifiManager.isWifiEnabled()) {
+            setWifiEnabled(true);
+            startScan();
+        }
         PollingCheck.check("Wifi not enabled", TEST_WAIT_DURATION_MS,
                 () -> sWifiManager.isWifiEnabled());
 
