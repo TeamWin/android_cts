@@ -136,13 +136,6 @@ public class IncomingCallTest extends BaseTelecomTestWithMockServices {
         if (!mShouldTestTelecom  || !TestUtils.hasTelephonyFeature(mContext)) {
             return;
         }
-        ShellIdentityUtils.invokeStaticMethodWithShellPermissions(
-                (ShellIdentityUtils.StaticShellPermissionMethodHelper<Void>) () -> {
-                    RingtoneManager.setActualDefaultRingtoneUri(mContext,
-                            RingtoneManager.TYPE_RINGTONE,
-                            Settings.System.DEFAULT_RINGTONE_URI);
-                    return null;
-                });
         LinkedBlockingQueue<Boolean> queue = new LinkedBlockingQueue(1);
         setupConnectionService(null, FLAG_REGISTER | FLAG_ENABLE);
         AudioManager audioManager = mContext.getSystemService(AudioManager.class);
@@ -179,13 +172,6 @@ public class IncomingCallTest extends BaseTelecomTestWithMockServices {
         if (!mShouldTestTelecom) {
             return;
         }
-        ShellIdentityUtils.invokeStaticMethodWithShellPermissions(
-                (ShellIdentityUtils.StaticShellPermissionMethodHelper<Void>) () -> {
-                    RingtoneManager.setActualDefaultRingtoneUri(mContext,
-                            RingtoneManager.TYPE_RINGTONE,
-                            Settings.System.DEFAULT_RINGTONE_URI);
-                    return null;
-                });
         LinkedBlockingQueue<Boolean> queue = new LinkedBlockingQueue(1);
         setupConnectionService(null, FLAG_REGISTER | FLAG_ENABLE);
         AudioManager audioManager = mContext.getSystemService(AudioManager.class);
