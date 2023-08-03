@@ -316,6 +316,9 @@ public class AppCompatOverridesServiceTest extends CompatChangeGatingTestCase {
     }
 
     private Change getChange(long changeId) throws Exception {
+        // Data put by device_config app_compat_overrides need some time to update the data
+        // for dumpsys platform_compat so adding some sleep time
+        Thread.sleep(WAIT_TIME_MS);
         Change ctsChange = getOnDeviceChangeIdConfig(changeId);
         assertWithMessage("CTS specific change %s not found on device", changeId)
                 .that(ctsChange).isNotNull();
