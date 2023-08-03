@@ -48,10 +48,12 @@ import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
+import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDeviceOwner;
 import com.android.bedstead.harrier.annotations.enterprise.MostRestrictiveCoexistenceTest;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyDoesNotApplyTest;
 import com.android.bedstead.harrier.policies.PermittedInputMethods;
+import com.android.bedstead.harrier.policies.PermittedSystemInputMethods;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.inputmethods.InputMethod;
 import com.android.bedstead.nene.packages.Package;
@@ -107,7 +109,7 @@ public final class PermitInputMethodsTest {
     }
 
     @Postsubmit(reason = "New test")
-    @PolicyAppliesTest(policy = PermittedInputMethods.class)
+    @PolicyAppliesTest(policy = {PermittedInputMethods.class, PermittedSystemInputMethods.class})
     @EnsureHasPermission({INTERACT_ACROSS_USERS_FULL, QUERY_ADMIN_POLICY})
     public void setPermittedInputMethods_allPermitted() {
         assertThat(sDeviceState.dpc().devicePolicyManager().setPermittedInputMethods(
@@ -120,7 +122,7 @@ public final class PermitInputMethodsTest {
     }
 
     @Postsubmit(reason = "New test")
-    @CanSetPolicyTest(policy = PermittedInputMethods.class)
+    @CanSetPolicyTest(policy = {PermittedInputMethods.class, PermittedSystemInputMethods.class})
     @EnsureHasPermission({INTERACT_ACROSS_USERS_FULL, QUERY_ADMIN_POLICY})
     public void setPermittedInputMethods_doesNotThrowException() {
         sDeviceState.dpc().devicePolicyManager().setPermittedInputMethods(
@@ -128,12 +130,22 @@ public final class PermitInputMethodsTest {
     }
 
     @Postsubmit(reason = "New test")
-    @CannotSetPolicyTest(policy = PermittedInputMethods.class, includeNonDeviceAdminStates = false)
+    @CannotSetPolicyTest(policy = {PermittedInputMethods.class, PermittedSystemInputMethods.class},
+            includeNonDeviceAdminStates = false)
     @EnsureHasPermission({INTERACT_ACROSS_USERS_FULL, QUERY_ADMIN_POLICY})
     public void setPermittedInputMethods_canNotSet_throwsException() {
         assertThrows(SecurityException.class, () -> {
             sDeviceState.dpc().devicePolicyManager().setPermittedInputMethods(
                     sDeviceState.dpc().componentName(), /* packageNames= */ null);
+        });
+    }
+
+    @Postsubmit(reason = "New test")
+    @CanSetPolicyTest(policy = PermittedSystemInputMethods.class)
+    public void setPermittedInputMethods_nonEmptyList_throwsException() {
+        assertThrows(IllegalArgumentException.class, () -> {
+            sDeviceState.dpc().devicePolicyManager().setPermittedInputMethods(
+                    sDeviceState.dpc().componentName(), /* packageNames= */ List.of("package"));
         });
     }
 
@@ -183,7 +195,7 @@ public final class PermitInputMethodsTest {
     }
 
     @Postsubmit(reason = "New test")
-    @CanSetPolicyTest(policy = PermittedInputMethods.class)
+    @CanSetPolicyTest(policy = {PermittedInputMethods.class, PermittedSystemInputMethods.class})
     public void setPermittedInputMethods_packageNameTooLong_throwsException() {
         // Invalid package name - too long
         List<String> badMethods = List.of(new String(new char[1000]).replace('\0', 'A'));
@@ -225,7 +237,7 @@ public final class PermitInputMethodsTest {
     @ApiTest(apis = {"android.app.admin.DevicePolicyManager#setPermittedInputMethods"})
     // TODO: enable after adding the broadcast receiver to relevant test apps.
 //    @PolicyAppliesTest(policy = PermittedInputMethods.class)
-    @com.android.bedstead.harrier.annotations.enterprise.EnsureHasDeviceOwner(isPrimary = true)
+    @EnsureHasDeviceOwner(isPrimary = true)
     public void policyUpdateReceiver_setPermittedInputMethods_receivedPolicySetBroadcast() {
         assumeFalse("A system input method is required",
                 SYSTEM_INPUT_METHODS_PACKAGES.isEmpty());
@@ -448,7 +460,6 @@ public final class PermitInputMethodsTest {
                     .containsExactlyElementsIn(permittedPlusSystem);
             assertThat(policyState.getCurrentResolvedPolicy())
                     .containsExactlyElementsIn(enabledNonSystemImes);
-
         } finally {
             sDeviceState.dpc().devicePolicyManager().setPermittedInputMethods(
                     sDeviceState.dpc().componentName(), /* packageNames= */ null);
