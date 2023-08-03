@@ -183,8 +183,6 @@ public class WifiLocationInfoForegroundTest extends WifiJUnit4TestBase {
 
     private void startFgActivityAndAssertStatusIs(
             ComponentName componentName, boolean status) throws Exception {
-        turnScreenOn();
-
         WaitForResultActivity activity = mActivityRule.getActivity();
         activity.startActivityToWaitForResult(componentName);
         assertThat(activity.waitForActivityResult(DURATION_MS)).isEqualTo(status);

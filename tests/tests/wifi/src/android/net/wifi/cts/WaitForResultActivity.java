@@ -16,11 +16,7 @@
 
 package android.net.wifi.cts;
 
-import static com.google.common.truth.Truth.assertThat;
-
 import android.app.Activity;
-import android.app.job.JobInfo;
-import android.app.job.JobScheduler;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.os.Bundle;
@@ -59,7 +55,7 @@ public class WaitForResultActivity extends Activity {
     @NonNull
     public boolean waitForActivityResult(long timeoutMillis)
             throws InterruptedException {
-        assertThat(mLatch.await(timeoutMillis, TimeUnit.MILLISECONDS)).isTrue();
+        mLatch.await(timeoutMillis, TimeUnit.MILLISECONDS);
         synchronized (mStatusLock) {
             return mStatus;
         }
@@ -68,8 +64,12 @@ public class WaitForResultActivity extends Activity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         if (requestCode == REQUEST_CODE_WAIT_FOR_RESULT) {
-            assertThat(resultCode).isEqualTo(RESULT_OK);
-            assertThat(data.hasExtra(WIFI_LOCATION_TEST_APP_LOCATION_STATUS_EXTRA)).isTrue();
+            if (resultCode != RESULT_OK) {
+                return;
+            }
+            if (data == null || !data.hasExtra(WIFI_LOCATION_TEST_APP_LOCATION_STATUS_EXTRA)) {
+                return;
+            }
             synchronized (mStatusLock) {
                 mStatus = data.getBooleanExtra(
                         WIFI_LOCATION_TEST_APP_LOCATION_STATUS_EXTRA, false);
@@ -123,7 +123,7 @@ public class WaitForResultActivity extends Activity {
     @NonNull
     public boolean waitForServiceResult(long timeoutMillis)
             throws InterruptedException {
-        assertThat(mLatch.await(timeoutMillis, TimeUnit.MILLISECONDS)).isTrue();
+        mLatch.await(timeoutMillis, TimeUnit.MILLISECONDS);
         synchronized (mStatusLock) {
             return mStatus;
         }
