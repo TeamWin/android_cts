@@ -22,8 +22,8 @@ import static com.android.queryable.queries.IntentFilterQuery.intentFilter;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assume.assumeTrue;
-import static org.testng.Assert.assertThrows;
 
 import android.app.admin.RemoteDevicePolicyManager;
 import android.app.role.RoleManager;
@@ -40,6 +40,7 @@ import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyDoesNotApplyTest;
 import com.android.bedstead.harrier.policies.DefaultDialerApplication;
 import com.android.bedstead.nene.TestApis;
+import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.utils.Retry;
 import com.android.bedstead.remotedpc.RemotePolicyManager;
 import com.android.bedstead.testapp.TestApp;
@@ -121,8 +122,9 @@ public final class DefaultDialerApplicationTest {
         String previousDialerAppName = getDefaultDialerPackage();
 
         try {
-            assertThrows(IllegalArgumentException.class, () ->
+            NeneException e = assertThrows(NeneException.class, () ->
                     setDefaultDialerApplication(mDpm, FAKE_DIALER_APP_NAME));
+            assertThat(e).hasCauseThat().isInstanceOf(IllegalArgumentException.class);
             assertThat(getDefaultDialerPackage()).isEqualTo(previousDialerAppName);
         } finally {
             setDefaultDialerApplication(mDpm, previousDialerAppName);
@@ -165,6 +167,6 @@ public final class DefaultDialerApplicationTest {
                 throw new IllegalStateException(
                         "Error setting default dialer application. Relevant logcat: " + logcat);
             }
-        });
+        }).runAndWrapException();
     }
 }
