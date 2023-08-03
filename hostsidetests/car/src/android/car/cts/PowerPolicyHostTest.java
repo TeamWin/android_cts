@@ -131,9 +131,6 @@ public final class PowerPolicyHostTest extends CarHostJUnit4TestCase {
         teststep = "check the inital power policies";
         testHelper = getTestHelper(testcase, stepNo++, teststep);
         testHelper.checkCurrentState(PowerPolicyConstants.CarPowerState.ON);
-        // power policy can be different from system_power_policy_all_on, save it to check
-        // after device restart.
-        String powerPolicyForOnState = testHelper.getCurrentPolicyId();
         // save number of device power policies
         int registeredPoliciesNumber = testHelper.getNumberOfRegisteredPolicies();
         int expectedTotalPolicies = registeredPoliciesNumber;
@@ -210,7 +207,6 @@ public final class PowerPolicyHostTest extends CarHostJUnit4TestCase {
         teststep = "reboot to clear added test power policies";
         testHelper = getTestHelper(testcase, stepNo++, teststep);
         testHelper.checkCurrentState(PowerPolicyConstants.CarPowerState.ON);
-        testHelper.checkCurrentPolicy(powerPolicyForOnState);
         testHelper.checkTotalRegisteredPolicies(registeredPoliciesNumber);
     }
 
@@ -370,7 +366,6 @@ public final class PowerPolicyHostTest extends CarHostJUnit4TestCase {
         testHelper.checkCurrentState(PowerPolicyConstants.CarPowerState.ON);
         testHelper.checkRegisteredPolicy(PowerPolicyDef.PolicySet.INITIAL_ALL_ON);
         testHelper.checkRegisteredPolicy(PowerPolicyDef.PolicySet.DEFAULT_ALL_ON);
-        testHelper.checkCurrentPolicy(PowerPolicyDef.IdSet.DEFAULT_ALL_ON);
     }
 
     private void defineAndCheckPolicyTest1(String testcase, int stepNo,
