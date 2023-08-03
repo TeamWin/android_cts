@@ -42,7 +42,7 @@ import org.junit.runner.RunWith
 class RolePermissionOverrideTest : StsExtraBusinessLogicTestCase {
     private val context = getInstrumentation().targetContext
     private val packageManager = context.packageManager
-    private val roleManager = context.getSystemService(RoleManager::class.java)
+    private val roleManager = context.getSystemService(RoleManager::class.java)!!
     private val user = Process.myUserHandle()
 
     constructor() : super()

@@ -48,7 +48,7 @@ private const val TEST_ATTRIBUTION_TAG = "testAttribution"
 @AppModeFull(reason = "Test relies on other app to connect to. Instant apps can't see other apps")
 class AppOpsLoggingTest {
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
-    private val appOpsManager = context.getSystemService(AppOpsManager::class.java)
+    private val appOpsManager = context.getSystemService(AppOpsManager::class.java)!!
 
     // Collected note-op calls inside of this process
     private val noted = mutableListOf<Pair<SyncNotedAppOp, Array<StackTraceElement>>>()

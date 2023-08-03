@@ -47,7 +47,7 @@ class AttributionTest {
     private val instrumentation = InstrumentationRegistry.getInstrumentation()
     private val context = instrumentation.targetContext
     private val uiAutomation = instrumentation.getUiAutomation()
-    private val appOpsManager = context.getSystemService(AppOpsManager::class.java)
+    private val appOpsManager = context.getSystemService(AppOpsManager::class.java)!!
     private val appUid by lazy { context.packageManager.getPackageUid(APP_PKG, 0) }
 
     private fun installApk(apk: String) {
