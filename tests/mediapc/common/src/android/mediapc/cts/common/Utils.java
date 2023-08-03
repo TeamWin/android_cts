@@ -23,23 +23,26 @@ import static org.junit.Assume.assumeTrue;
 import android.app.ActivityManager;
 import android.content.Context;
 import android.content.pm.PackageManager;
-import android.graphics.Rect;
+import android.hardware.display.DisplayManager;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaCodecInfo.VideoCapabilities.PerformancePoint;
 import android.media.MediaFormat;
 import android.os.Build;
 import android.os.SystemProperties;
+import android.util.DisplayMetrics;
 import android.util.Log;
-import android.view.WindowManager;
-import android.view.WindowMetrics;
+import android.view.Display;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Stream;
 
 /**
  * Test utilities.
@@ -97,14 +100,30 @@ public class Utils {
         }
         // When used from ItsService, context will be null
         if (context != null) {
-            WindowManager windowManager = context.getSystemService(WindowManager.class);
-            WindowMetrics metrics = windowManager.getMaximumWindowMetrics();
-            Rect displayBounds = metrics.getBounds();
-            int widthPixels = displayBounds.width();
-            int heightPixels = displayBounds.height();
-            DISPLAY_DPI = context.getResources().getConfiguration().densityDpi;
-            DISPLAY_LONG_PIXELS = Math.max(widthPixels, heightPixels);
-            DISPLAY_SHORT_PIXELS = Math.min(widthPixels, heightPixels);
+            DisplayManager displayManager = context.getSystemService(DisplayManager.class);
+            Display defaultDisplay = displayManager.getDisplay(Display.DEFAULT_DISPLAY);
+            Display.Mode maxResolutionDisplayMode =
+                    Arrays.stream(displayManager.getDisplays())
+                            .map(Display::getSupportedModes)
+                            .flatMap(Stream::of)
+                            .max(Comparator.comparing(Display.Mode::getPhysicalHeight))
+                            .orElseThrow(
+                                    () -> new RuntimeException("Failed to determine max height"));
+            int maxWidthPixels = maxResolutionDisplayMode.getPhysicalWidth();
+            int maxHeightPixels = maxResolutionDisplayMode.getPhysicalHeight();
+            DISPLAY_LONG_PIXELS = Math.max(maxWidthPixels, maxHeightPixels);
+            DISPLAY_SHORT_PIXELS = Math.min(maxWidthPixels, maxHeightPixels);
+
+            int widthPixels = defaultDisplay.getMode().getPhysicalWidth();
+            int heightPixels = defaultDisplay.getMode().getPhysicalHeight();
+
+            DisplayMetrics metrics = context.getResources().getDisplayMetrics();
+            final double widthInch = (double) widthPixels / (double) metrics.xdpi;
+            final double heightInch = (double) heightPixels / (double) metrics.ydpi;
+            final double diagonalInch = Math.sqrt(widthInch * widthInch + heightInch * heightInch);
+            final double maxDiagonalPixels =
+                    Math.sqrt(maxWidthPixels * maxWidthPixels + maxHeightPixels * maxHeightPixels);
+            DISPLAY_DPI = (int) (maxDiagonalPixels / diagonalInch);
 
             ActivityManager activityManager = context.getSystemService(ActivityManager.class);
             ActivityManager.MemoryInfo memoryInfo = new ActivityManager.MemoryInfo();
