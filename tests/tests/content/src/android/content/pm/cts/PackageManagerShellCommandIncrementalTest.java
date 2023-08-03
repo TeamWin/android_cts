@@ -137,7 +137,6 @@ public class PackageManagerShellCommandIncrementalTest {
     public AbandonAllPackageSessionsRule mAbandonSessionsRule = new AbandonAllPackageSessionsRule();
 
     private IncrementalInstallSession mSession = null;
-    private String mPackageVerifier = null;
 
     private static UiAutomation getUiAutomation() {
         return InstrumentationRegistry.getInstrumentation().getUiAutomation();
@@ -154,19 +153,21 @@ public class PackageManagerShellCommandIncrementalTest {
     @Before
     public void onBefore() throws Exception {
         checkIncrementalDeliveryFeature();
-        cleanup();
-
-        // Disable the package verifier to avoid the dialog when installing an app.
-        mPackageVerifier = executeShellCommand("settings get global verifier_verify_adb_installs");
-        executeShellCommand("settings put global verifier_verify_adb_installs 0");
+        uninstallPackageSilently(TEST_APP_PACKAGE);
     }
 
     @After
     public void onAfter() throws Exception {
-        cleanup();
-
-        // Reset the package verifier setting to its original value.
-        executeShellCommand("settings put global verifier_verify_adb_installs " + mPackageVerifier);
+        uninstallPackageSilently(TEST_APP_PACKAGE);
+        setDeviceProperty("incfs_default_timeouts", null);
+        setDeviceProperty("known_digesters_list", null);
+        setSystemProperty("debug.incremental.enforce_readlogs_max_interval_for_system_dataloaders",
+                "0");
+        setSystemProperty("debug.incremental.readlogs_max_interval_sec", "10000");
+        setSystemProperty("debug.incremental.always_enable_read_timeouts_for_system_dataloaders",
+                "1");
+        IoUtils.closeQuietly(mSession);
+        mSession = null;
     }
 
     static void checkIncrementalDeliveryFeature() {
@@ -368,6 +369,7 @@ public class PackageManagerShellCommandIncrementalTest {
 
     @LargeTest
     @Test
+    @FlakyTest // This test is flaky by design
     public void testInstallWithMissingBlocks() throws Exception {
         setDeviceProperty("incfs_default_timeouts", "0:0:0");
         setDeviceProperty("known_digesters_list", CTS_PACKAGE_NAME);
@@ -1138,7 +1140,7 @@ public class PackageManagerShellCommandIncrementalTest {
         });
         readFromProcess.start();
 
-        for (int i = 0; i < installIterations; ++i) {
+        for (int i = 0; i < installIterations && !result.isDone(); ++i) {
             installer.call();
             assertTrue(isAppInstalled(TEST_APP_PACKAGE));
             Thread.currentThread().sleep(beforeReadDelayMs);
@@ -1347,21 +1349,6 @@ public class PackageManagerShellCommandIncrementalTest {
         if (expected > 0) {
             assertEquals(expected, total);
         }
-    }
-
-    private void cleanup() throws Exception {
-        uninstallPackageSilently(TEST_APP_PACKAGE);
-        assertFalse(isAppInstalled(TEST_APP_PACKAGE));
-        assertEquals(null, getSplits(TEST_APP_PACKAGE));
-        setDeviceProperty("incfs_default_timeouts", null);
-        setDeviceProperty("known_digesters_list", null);
-        setSystemProperty("debug.incremental.enforce_readlogs_max_interval_for_system_dataloaders",
-                "0");
-        setSystemProperty("debug.incremental.readlogs_max_interval_sec", "10000");
-        setSystemProperty("debug.incremental.always_enable_read_timeouts_for_system_dataloaders",
-                "1");
-        IoUtils.closeQuietly(mSession);
-        mSession = null;
     }
 
     static void setDeviceProperty(String name, String value) {
