@@ -108,6 +108,10 @@
         {
           // TODO(b/203424057)
           "exclude-filter": "android.os.storage.cts.StorageManagerTest#testMountAndUnmountTwoObbs"
+        },
+        {
+          // TODO(b/265922604)
+          "exclude-filter": "android.os.cts.VibratorTest"
         }
       ]
     }
