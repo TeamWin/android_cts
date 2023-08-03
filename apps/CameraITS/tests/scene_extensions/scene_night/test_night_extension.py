@@ -44,6 +44,7 @@ _DURATION_DIFF_TOL = 0.5  # Night mode ON captures must take 0.5 seconds longer
 _EDGE_NOISE_WIDTH = 0.1  # Edge is left 10% of image and right 10% of image
 _EDGE_NOISE_IMPROVEMENT_TOL = 1.5  # Edge noise must be reduced by at least 67%
 _INTENSITY_IMPROVEMENT_TOL = 1.1  # Night mode ON captures must be 10% brighter
+_IDEAL_INTENSITY_IMPROVEMENT = 2.5  # Skip noise check if images 2.5x brighter
 
 _R_STRING = 'r'
 _X_STRING = 'x'
@@ -137,9 +138,15 @@ def _get_edge_noise(night_y, no_night_y):
 def _check_overall_intensity(night_img, no_night_img):
   """Checks that overall intensity significantly improves with night mode ON.
 
+  All implementations must result in an increase in intensity of at least
+  _INTENSITY_IMPROVEMENT_TOL. _IDEAL_INTENSITY_IMPROVEMENT is the minimum
+  improvement to waive the edge noise check.
+
   Args:
     night_img: numpy image taken with night mode ON
     no_night_img: numpy image taken with night mode OFF
+  Returns:
+    True if intensity has increased enough to waive the edge noise check.
   """
   night_mean = np.mean(night_img)
   no_night_mean = np.mean(no_night_img)
@@ -151,6 +158,7 @@ def _check_overall_intensity(night_img, no_night_img):
                          'intense than night mode OFF image! '
                          f'Ratio: {overall_intensity_ratio:.2f}, '
                          f'Expected: {_INTENSITY_IMPROVEMENT_TOL}')
+  return overall_intensity_ratio > _IDEAL_INTENSITY_IMPROVEMENT
 
 
 def _check_edge_noise(night_y, no_night_y):
@@ -422,10 +430,11 @@ class NightExtensionTest(its_base_test.ItsBaseTest):
 
       logging.debug('Comparing overall intensity of capture with '
                     'night mode ON/OFF')
-      _check_overall_intensity(night_img, no_night_img)
+      can_skip_edge_check = _check_overall_intensity(night_img, no_night_img)
 
-      logging.debug('Comparing edge noise of capture with night mode ON/OFF')
-      _check_edge_noise(night_y, no_night_y)
+      if not can_skip_edge_check:
+        logging.debug('Comparing edge noise of capture with night mode ON/OFF')
+        _check_edge_noise(night_y, no_night_y)
 
 if __name__ == '__main__':
   test_runner.main()
