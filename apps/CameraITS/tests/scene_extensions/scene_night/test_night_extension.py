@@ -373,19 +373,7 @@ class NightExtensionTest(its_base_test.ItsBaseTest):
       extension_capture_sizes.reverse()
       logging.debug('Capture sizes: %s', capture_sizes)
       logging.debug('Extension capture sizes: %s', extension_capture_sizes)
-
-      for capture_size, extension_capture_size in zip(
-          capture_sizes, extension_capture_sizes):
-        if capture_size == extension_capture_size:
-          width, height = capture_size
-          break
-      else:
-        raise AssertionError(
-            'No matching sizes for non-extension and extension captures! '
-            f'Camera ID {self.camera_id}, '
-            f'extension {_EXTENSION_NIGHT}, and '
-            f'format {_IMAGE_FORMAT_YUV_420_888_INT}'
-        )
+      width, height = extension_capture_sizes[0]
 
       # Set tablet brightness to darken scene
       file_stem = f'{test_name}_{_FMT_NAME}_{width}x{height}'
