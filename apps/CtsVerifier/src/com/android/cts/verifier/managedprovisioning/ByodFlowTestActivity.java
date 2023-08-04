@@ -71,6 +71,7 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
     private static final int REQUEST_INTENT_FILTERS_STATUS = 2;
     private static final int REQUEST_CHECK_DISK_ENCRYPTION = 3;
     private static final int REQUEST_SET_LOCK_FOR_ENCRYPTION = 4;
+    private static final int REQUEST_DELETE_MANAGED_PROFILE = 5;
 
     private static final String PROVISIONING_PREFERENCES = "provisioning_preferences";
     private static final String PREFERENCE_PROVISIONING_COMPLETE_STATUS =
@@ -236,6 +237,10 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
                 // Called after checkIntentFilters()
                 handleIntentFiltersStatus(resultCode);
                 break;
+            case REQUEST_DELETE_MANAGED_PROFILE:
+                // Called during finish()
+                finishAfterProfileDeleted();
+                break;
             default:
                 super.handleActivityResult(requestCode, resultCode, data);
         }
@@ -252,6 +257,13 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
     public void finish() {
         // Pass and fail buttons are known to call finish() when clicked, and this is when we want to
         // clean up the provisioned profile.
+        Intent intent = new Intent(ByodHelperActivity.ACTION_REMOVE_MANAGED_PROFILE);
+        // Wait until the managed profile is deleted before returning to the previous
+        // activity, to ensure the deletion is not interrupted.
+        startActivityForResult(intent, REQUEST_DELETE_MANAGED_PROFILE);
+    }
+
+    private void finishAfterProfileDeleted() {
         mByodFlowTestHelper.tearDown();
         super.finish();
     }
