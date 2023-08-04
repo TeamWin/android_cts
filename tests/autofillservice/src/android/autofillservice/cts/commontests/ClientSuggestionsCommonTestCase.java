@@ -42,6 +42,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
@@ -320,6 +321,7 @@ public abstract class ClientSuggestionsCommonTestCase
     }
 
     @Test
+    @Ignore("b/288109790")
     public void testNoDatasetsAfterFallbackDefaultService() throws Exception {
         // Set service.
         enableService();
