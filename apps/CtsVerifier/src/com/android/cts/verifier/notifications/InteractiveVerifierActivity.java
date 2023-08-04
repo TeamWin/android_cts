@@ -30,6 +30,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.res.Resources;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.Parcelable;
@@ -315,7 +316,7 @@ public abstract class InteractiveVerifierActivity extends PassFailButtons.Activi
     }
 
     protected View createPassFailItem(ViewGroup parent, @StringRes int textResId) {
-        return createPassFailItem(parent, textResId, 0);
+        return createPassFailItem(parent, textResId, Resources.ID_NULL);
     }
 
     protected View createPassFailItem(ViewGroup parent, @StringRes int textResId,
@@ -324,8 +325,8 @@ public abstract class InteractiveVerifierActivity extends PassFailButtons.Activi
         TextView instructions = item.findViewById(R.id.nls_instructions);
         instructions.setText(textResId);
         ImageView instructionsImage = item.findViewById(R.id.nls_instructions_image);
-        instructionsImage.setVisibility(imageResId > 0 ? VISIBLE : GONE);
-        if (imageResId > 0) {
+        instructionsImage.setVisibility(imageResId != Resources.ID_NULL ? VISIBLE : GONE);
+        if (imageResId != Resources.ID_NULL) {
             instructionsImage.setImageResource(imageResId);
         }
         return item;

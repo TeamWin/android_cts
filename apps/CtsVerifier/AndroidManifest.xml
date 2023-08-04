@@ -3396,6 +3396,12 @@
                 android:value="Helper class. Test activities: NotificationPrivacyVerifierActivity, NotificationFullScreenIntentVerifierActivity" />
         </activity>
 
+        <provider
+            android:name=".notifications.AssetsProvider"
+            android:authorities="com.android.cts.verifier.notifications.assets"
+            android:exported="false"
+            android:grantUriPermissions="true" />
+
         <receiver android:name=".notifications.BlockChangeReceiver"
             android:exported="true">
             <intent-filter>

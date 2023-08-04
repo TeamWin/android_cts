@@ -23,6 +23,9 @@ import android.annotation.DrawableRes;
 import android.annotation.StringRes;
 import android.app.Notification;
 import android.app.NotificationChannel;
+import android.content.res.Resources;
+import android.graphics.drawable.Icon;
+import android.net.Uri;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.RemoteViews;
@@ -49,6 +52,8 @@ public class NotificationStyleVerifierActivity extends InteractiveVerifierActivi
     @Override
     protected List<InteractiveTestCase> createTestItems() {
         return ImmutableList.of(
+                new BigPictureAnimatedTest(),
+                new BigPictureAnimatedUriTest(),
                 new CustomContentViewTest(),
                 new CustomBigContentViewTest(),
                 new CustomHeadsUpContentViewTest());
@@ -61,6 +66,10 @@ public class NotificationStyleVerifierActivity extends InteractiveVerifierActivi
         @StringRes private final int mInstructionsText;
         @DrawableRes private final int mInstructionsImage;
         private View mView;
+
+        protected NotifyTestCase(@StringRes int instructionsText) {
+            this(instructionsText,  Resources.ID_NULL);
+        }
 
         protected NotifyTestCase(@StringRes int instructionsText,
                 @DrawableRes int instructionsImage) {
@@ -112,6 +121,57 @@ public class NotificationStyleVerifierActivity extends InteractiveVerifierActivi
 
         protected RemoteViews getCustomLayoutRemoteView() {
             return new RemoteViews(getPackageName(), R.layout.notification_custom_layout);
+        }
+    }
+
+    private class BigPictureAnimatedTest extends NotifyTestCase {
+
+        private static final String CHANNEL_ID = "NSVA.BigPictureAnimatedTest";
+
+        protected BigPictureAnimatedTest() {
+            super(R.string.ns_bigpicture_animated_instructions);
+        }
+
+        @Override
+        protected NotificationChannel getChannel() {
+            return new NotificationChannel(CHANNEL_ID, CHANNEL_ID, IMPORTANCE_DEFAULT);
+        }
+
+        @Override
+        protected Notification getNotification() {
+            return new Notification.Builder(mContext, CHANNEL_ID)
+                    .setSmallIcon(R.drawable.ic_stat_charlie)
+                    .setStyle(new Notification.BigPictureStyle().bigPicture(
+                            Icon.createWithResource(mContext,
+                                    R.drawable.notification_bigpicture_animated)))
+                    .build();
+        }
+    }
+
+    private class BigPictureAnimatedUriTest extends NotifyTestCase {
+
+        private static final String CHANNEL_ID = "NSVA.BigPictureAnimatedUriTest";
+
+        protected BigPictureAnimatedUriTest() {
+            super(R.string.ns_bigpicture_animated_instructions);
+        }
+
+        @Override
+        protected NotificationChannel getChannel() {
+            return new NotificationChannel(CHANNEL_ID, CHANNEL_ID, IMPORTANCE_DEFAULT);
+        }
+
+        @Override
+        protected Notification getNotification() {
+            Uri imageUri = Uri.parse(
+                    "content://com.android.cts.verifier.notifications.assets/"
+                            + "notification_bigpicture_animated.webp");
+
+            return new Notification.Builder(mContext, CHANNEL_ID)
+                    .setSmallIcon(R.drawable.ic_stat_charlie)
+                    .setStyle(new Notification.BigPictureStyle().bigPicture(
+                            Icon.createWithContentUri(imageUri)))
+                    .build();
         }
     }
 
