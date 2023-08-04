@@ -14,17 +14,13 @@
  * limitations under the License.
  */
 
-package android.app.usage.cts;
+package android.app.usage.brs.cts;
 
 import static android.Manifest.permission.ACCESS_BROADCAST_RESPONSE_STATS;
 import static android.Manifest.permission.INTERNET;
 import static android.Manifest.permission.PACKAGE_USAGE_STATS;
 import static android.Manifest.permission.USE_EXACT_ALARM;
 import static android.app.role.RoleManager.ROLE_ASSISTANT;
-import static android.app.usage.cts.UsageStatsTest.TEST_APP_CLASS;
-import static android.app.usage.cts.UsageStatsTest.TEST_APP_CLASS_BROADCAST_RECEIVER;
-import static android.app.usage.cts.UsageStatsTest.TEST_APP_CLASS_SERVICE;
-import static android.app.usage.cts.UsageStatsTest.TEST_APP_PKG;
 import static android.content.Intent.EXTRA_REMOTE_CALLBACK;
 import static android.provider.DeviceConfig.NAMESPACE_APP_STANDBY;
 
@@ -43,18 +39,20 @@ import android.app.role.OnRoleHoldersChangedListener;
 import android.app.role.RoleManager;
 import android.app.usage.BroadcastResponseStats;
 import android.app.usage.UsageStatsManager;
-import android.app.usage.cts.UsageStatsTest.TestServiceConnection;
+import android.app.usage.cts.ITestReceiver;
+import android.app.usage.cts.UsageStatsTestRunner;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.graphics.drawable.Icon;
 import android.media.session.MediaSession;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.os.Process;
 import android.os.RemoteCallback;
 import android.os.SystemClock;
 import android.os.UserHandle;
-import android.platform.test.annotations.AppModeFull;
 import android.util.ArrayMap;
 import android.util.Log;
 
@@ -79,13 +77,22 @@ import org.junit.runner.RunWith;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 @RunWith(UsageStatsTestRunner.class)
 public class BroadcastResponseStatsTest {
     private static final String TAG = "BroadcastResponseStatsTest";
+
+    private static final String TEST_APP_PKG = "android.app.usage.cts.test1";
+    private static final String TEST_APP_CLASS = "android.app.usage.cts.test1.SomeActivity";
+    private static final String TEST_APP_CLASS_SERVICE =
+            "android.app.usage.cts.test1.TestService";
+    private static final String TEST_APP_CLASS_BROADCAST_RECEIVER =
+            "android.app.usage.cts.test1.TestBroadcastReceiver";
 
     private static final String TEST_APP3_PKG = "android.app.usage.cts.test3";
     private static final String TEST_APP4_PKG = "android.app.usage.cts.test4";
@@ -110,6 +117,8 @@ public class BroadcastResponseStatsTest {
     // to ensure the event doesn't really occur. Otherwise, we cannot be sure if the event didn't
     // occur or the verification was done too early before the event occurred.
     private static final int WAIT_TIME_FOR_NEGATIVE_TESTS_MS = 500;
+
+    private static final long TIMEOUT_BINDER_SERVICE_SEC = 2;
 
     private static final long BROADCAST_SESSIONS_DURATION_MS = 2_000;
     private static final long BROADCAST_SESSIONS_WITH_RESPONSE_DURATION_MS = 2_000;
@@ -182,7 +191,6 @@ public class BroadcastResponseStatsTest {
         mUiAutomation.revokeRuntimePermission(sTargetPackage, ACCESS_BROADCAST_RESPONSE_STATS);
     }
 
-    @AppModeFull(reason = "No broadcast message response stats in instant apps")
     @Test
     public void testBroadcastOptions_noPermission() throws Exception {
         final BroadcastOptions options = BroadcastOptions.makeBasic();
@@ -201,7 +209,6 @@ public class BroadcastResponseStatsTest {
         }
     }
 
-    @AppModeFull(reason = "No broadcast message response stats in instant apps")
     @Test
     public void testQueryBroadcastResponseStats_noPermission() throws Exception {
         mUsageStatsManager.queryBroadcastResponseStats(TEST_APP_PKG, TEST_RESPONSE_STATS_ID_1);
@@ -217,7 +224,6 @@ public class BroadcastResponseStatsTest {
         }
     }
 
-    @AppModeFull(reason = "No broadcast message response stats in instant apps")
     @Test
     public void testClearBroadcastResponseStats_noPermission() throws Exception {
         mUsageStatsManager.clearBroadcastResponseStats(TEST_APP_PKG, TEST_RESPONSE_STATS_ID_1);
@@ -234,7 +240,6 @@ public class BroadcastResponseStatsTest {
     }
 
     @FlakyTest(bugId = 288339565)
-    @AppModeFull(reason = "No broadcast message response stats in instant apps")
     @Test
     public void testBroadcastResponseStats_broadcastDispatchedCount() throws Exception {
         assertResponseStats(TEST_APP_PKG, TEST_RESPONSE_STATS_ID_1,
@@ -306,7 +311,6 @@ public class BroadcastResponseStatsTest {
         }
     }
 
-    @AppModeFull(reason = "No broadcast message response stats in instant apps")
     @Test
     public void testBroadcastResponseStats_notificationPostedCount() throws Exception {
         assertResponseStats(TEST_APP_PKG, TEST_RESPONSE_STATS_ID_1,
@@ -385,7 +389,6 @@ public class BroadcastResponseStatsTest {
         }
     }
 
-    @AppModeFull(reason = "No broadcast message response stats in instant apps")
     @Test
     public void testBroadcastResponseStats_notificationUpdatedCount() throws Exception {
         assertResponseStats(TEST_APP_PKG, TEST_RESPONSE_STATS_ID_1,
@@ -467,7 +470,6 @@ public class BroadcastResponseStatsTest {
         }
     }
 
-    @AppModeFull(reason = "No broadcast message response stats in instant apps")
     @Test
     public void testBroadcastResponseStats_notificationCancelledCount() throws Exception {
         assertResponseStats(TEST_APP_PKG, TEST_RESPONSE_STATS_ID_1,
@@ -548,7 +550,6 @@ public class BroadcastResponseStatsTest {
         }
     }
 
-    @AppModeFull(reason = "No broadcast message response stats in instant apps")
     @Test
     public void testBroadcastResponseStats_multipleEvents() throws Exception {
         assertResponseStats(TEST_APP_PKG, TEST_RESPONSE_STATS_ID_1,
@@ -690,7 +691,6 @@ public class BroadcastResponseStatsTest {
         }
     }
 
-    @AppModeFull(reason = "No broadcast message response stats in instant apps")
     @Test
     public void testBroadcastResponseStats_clearCounts() throws Exception {
         assertResponseStats(TEST_APP_PKG, TEST_RESPONSE_STATS_ID_1,
@@ -787,7 +787,6 @@ public class BroadcastResponseStatsTest {
         }
     }
 
-    @AppModeFull(reason = "No broadcast message response stats in instant apps")
     @MediumTest
     @Test
     public void testBroadcastResponseStats_changeResponseWindowDuration() throws Exception {
@@ -881,7 +880,6 @@ public class BroadcastResponseStatsTest {
         }
     }
 
-    @AppModeFull(reason = "No broadcast message response stats in instant apps")
     @Test
     public void testBroadcastResponseStats_appNotInForeground() throws Exception {
         assertResponseStats(TEST_APP_PKG, TEST_RESPONSE_STATS_ID_1,
@@ -998,7 +996,6 @@ public class BroadcastResponseStatsTest {
         }
     }
 
-    @AppModeFull(reason = "No broadcast message response stats in instant apps")
     @Test
     public void testBroadcastResponseStats_multiplePackages() throws Exception {
         final ArrayMap<String, BroadcastResponseStats> expectedStats = new ArrayMap<>();
@@ -1107,7 +1104,6 @@ public class BroadcastResponseStatsTest {
         }
     }
 
-    @AppModeFull(reason = "No broadcast message response stats in instant apps")
     @Test
     public void testBroadcastResponseStats_multiplePackages_multipleIds() throws Exception {
         final ArrayMap<String, BroadcastResponseStats> expectedStatsForId1 = new ArrayMap<>();
@@ -1202,7 +1198,6 @@ public class BroadcastResponseStatsTest {
         }
     }
 
-    @AppModeFull(reason = "No broadcast message response stats in instant apps")
     @Test
     public void testBroadcastResponseStats_clearCounts_multiplePackages() throws Exception {
         final ArrayMap<String, BroadcastResponseStats> expectedStatsForId1 = new ArrayMap<>();
@@ -1297,7 +1292,6 @@ public class BroadcastResponseStatsTest {
         }
     }
 
-    @AppModeFull(reason = "No broadcast message response stats in instant apps")
     @Test
     public void testBroadcastResponseStats_clearCounts_multipleIds() throws Exception {
         final ArrayMap<String, BroadcastResponseStats> expectedStatsForId1 = new ArrayMap<>();
@@ -1392,7 +1386,6 @@ public class BroadcastResponseStatsTest {
         }
     }
 
-    @AppModeFull(reason = "No broadcast message response stats in instant apps")
     @Test
     public void testBroadcastResponseStats_clearAllCounts() throws Exception {
         final ArrayMap<String, BroadcastResponseStats> expectedStatsForId1 = new ArrayMap<>();
@@ -1481,7 +1474,6 @@ public class BroadcastResponseStatsTest {
         }
     }
 
-    @AppModeFull(reason = "No broadcast message response stats in instant apps")
     @Test
     public void testBroadcastResponseStats_mediaNotification() throws Exception {
         assertResponseStats(TEST_APP_PKG, TEST_RESPONSE_STATS_ID_1,
@@ -1522,12 +1514,11 @@ public class BroadcastResponseStatsTest {
         }
     }
 
-    @AppModeFull(reason = "No broadcast message response stats in instant apps")
     @MediumTest
     @Test
     public void testBroadcastResponseStats_broadcastSession() throws Exception {
         try (DeviceConfigStateHelper deviceConfigStateHelper =
-                new DeviceConfigStateHelper(NAMESPACE_APP_STANDBY)) {
+                     new DeviceConfigStateHelper(NAMESPACE_APP_STANDBY)) {
             updateFlagsWithDefaultDelays(deviceConfigStateHelper);
 
             assertResponseStats(TEST_APP_PKG, TEST_RESPONSE_STATS_ID_1,
@@ -1585,7 +1576,6 @@ public class BroadcastResponseStatsTest {
         }
     }
 
-    @AppModeFull(reason = "No broadcast message response stats in instant apps")
     @MediumTest
     @Test
     public void testBroadcastResponseStats_broadcastSession_withLateNotification()
@@ -1654,7 +1644,6 @@ public class BroadcastResponseStatsTest {
         }
     }
 
-    @AppModeFull(reason = "No broadcast message response stats in instant apps")
     @MediumTest
     @Test
     public void testBroadcastResponseStats_broadcastSessionWithResponse() throws Exception {
@@ -1725,7 +1714,6 @@ public class BroadcastResponseStatsTest {
         }
     }
 
-    @AppModeFull(reason = "No broadcast message response stats in instant apps")
     @MediumTest
     @Test
     public void testBroadcastResponseStats_broadcastSessionWithResponse_recordOnlyOne()
@@ -1820,11 +1808,10 @@ public class BroadcastResponseStatsTest {
     }
 
     @FlakyTest(bugId = 288339565)
-    @AppModeFull(reason = "No broadcast message response stats in instant apps")
     @Test
     public void testBroadcastResponseStats_exemptedRole() throws Exception {
         try (DeviceConfigStateHelper deviceConfigStateHelper =
-                new DeviceConfigStateHelper(NAMESPACE_APP_STANDBY)) {
+                     new DeviceConfigStateHelper(NAMESPACE_APP_STANDBY)) {
             updateFlagWithDelay(deviceConfigStateHelper,
                     KEY_BROADCAST_RESPONSE_EXEMPTED_ROLES,
                     ROLE_ASSISTANT);
@@ -1924,7 +1911,6 @@ public class BroadcastResponseStatsTest {
         }
     }
 
-    @AppModeFull(reason = "No broadcast message response stats in instant apps")
     @Test
     public void testBroadcastResponseStats_exemptedPermission() throws Exception {
         try (DeviceConfigStateHelper deviceConfigStateHelper =
@@ -2285,5 +2271,35 @@ public class BroadcastResponseStatsTest {
         intent.setClassName(pkgName, className);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         return intent;
+    }
+
+    private static class TestServiceConnection implements ServiceConnection {
+        private BlockingQueue<IBinder> mBlockingQueue = new LinkedBlockingQueue<>();
+        private Context mContext;
+
+        TestServiceConnection(Context context) {
+            mContext = context;
+        }
+
+        public void onServiceConnected(ComponentName componentName, IBinder service) {
+            mBlockingQueue.offer(service);
+        }
+
+        public void onServiceDisconnected(ComponentName componentName) {
+        }
+
+        public IBinder getService() throws Exception {
+            final IBinder service = mBlockingQueue.poll(TIMEOUT_BINDER_SERVICE_SEC,
+                    TimeUnit.SECONDS);
+            return service;
+        }
+
+        public ITestReceiver getITestReceiver() throws Exception {
+            return ITestReceiver.Stub.asInterface(getService());
+        }
+
+        public void unbind() {
+            mContext.unbindService(this);
+        }
     }
 }

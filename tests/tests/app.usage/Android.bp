@@ -154,3 +154,20 @@ android_test_helper_app {
         "--rename-manifest-package android.app.usage.cts.test.exactalarm",
     ],
 }
+
+filegroup {
+    name: "cts-common-test-src",
+    srcs: [
+        "src/**/UsageStatsTestRunner.java",
+        "src/**/DumpOnFailureRule.java",
+    ],
+    path: "src",
+}
+
+filegroup {
+    name: "cts-common-test-aidl",
+    srcs: [
+        "TestApp1/aidl/**/*.aidl",
+    ],
+    path: "TestApp1/aidl",
+}

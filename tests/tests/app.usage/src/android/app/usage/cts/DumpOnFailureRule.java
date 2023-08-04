@@ -16,8 +16,6 @@
 
 package android.app.usage.cts;
 
-import static android.app.usage.cts.UsageStatsTest.TAG;
-
 import android.os.Environment;
 import android.os.FileUtils;
 import android.os.ParcelFileDescriptor;
@@ -39,6 +37,8 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
 public class DumpOnFailureRule extends OnFailureRule {
+    private static final String TAG = "DumpOnFailureRule";
+
     private File mDumpDir = new File(Environment.getExternalStorageDirectory(),
             "CtsUsageStatsTestCases");
 

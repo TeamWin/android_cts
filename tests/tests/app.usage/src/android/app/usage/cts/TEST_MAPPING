@@ -1,22 +1,13 @@
 {
   "presubmit": [
     {
-      "name": "CtsUsageStatsTestCases",
+      "name": "CtsBRSTestCases",
       "options": [
-        {
-          "include-filter": "android.app.usage.cts.BroadcastResponseStatsTest"
-        },
         {
           "exclude-annotation": "androidx.test.filters.FlakyTest"
         },
         {
-          "exclude-annotation": "android.platform.test.annotations.FlakyTest"
-        },
-        {
-          "exclude-annotation": "androidx.test.filters.MediumTest"
-        },
-        {
-          "exclude-annotation": "androidx.test.filters.LargeTest"
+          "exclude-annotation": "org.junit.Ignore"
         }
       ]
     }
