@@ -49,6 +49,8 @@ public class BleRxTxOffsetPrecisionActivity extends PassFailButtons.Activity {
 
     // Report log schema
     private static final String KEY_REFERENCE_DEVICE = "reference_device";
+    private static final String KEY_RSSI_MEDIAN_DUT = "rssi_median_dut";
+    private static final String KEY_RSSI_MEDIAN_REFERENCE = "rssi_median_ref";
 
     // Thresholds
     private static final int MIN_RSSI_MEDIAN_DBM = -65;
@@ -72,9 +74,10 @@ public class BleRxTxOffsetPrecisionActivity extends PassFailButtons.Activity {
     private EditText mReferenceDeviceIdInput;
     private String mReferenceDeviceName;
     private CheckBox mIsReferenceDeviceCheckbox;
-    private boolean mTestPassed;
     private byte mCurrentReferenceDeviceId = 0;
     private byte mRssiMedianFromReferenceDevice = 0;
+    private int mRssiMedianOnDut = 0;
+    private boolean mTestCompleted;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -125,6 +128,9 @@ public class BleRxTxOffsetPrecisionActivity extends PassFailButtons.Activity {
     }
 
     private void startTestAsDut() {
+        mTestCompleted = false;
+        mRssiMedianFromReferenceDevice = 0;
+        mRssiMedianOnDut = 0;
         if (!checkBluetoothEnabled()) {
             return;
         }
@@ -217,6 +223,8 @@ public class BleRxTxOffsetPrecisionActivity extends PassFailButtons.Activity {
             startAdvertising();
             return;
         }
+        mRssiMedianOnDut = rssiMedian;
+        mTestCompleted = true;
         String dutDeviceTestInfo = getString(R.string.dut_test_result_info_presence,
                 rssiMedian, mRssiMedianFromReferenceDevice);
         mDutTestInfoTextView.setVisibility(View.VISIBLE);
@@ -226,7 +234,6 @@ public class BleRxTxOffsetPrecisionActivity extends PassFailButtons.Activity {
                 && mRssiMedianFromReferenceDevice <= MAX_RSSI_MEDIAN_DBM) {
             makeToast("Test passed! TX Rssi median is: " + rssiMedian + ". Rx Rssi median is: "
                     + mRssiMedianFromReferenceDevice);
-            mTestPassed = true;
             getPassButton().performClick();
         } else {
             makeToast("Test failed! TX Rssi median is: " + rssiMedian + ". Rx Rssi median is: "
@@ -244,7 +251,6 @@ public class BleRxTxOffsetPrecisionActivity extends PassFailButtons.Activity {
         mStopTestButton.setEnabled(false);
         mStartTestButton.setEnabled(true);
         mIsReferenceDeviceCheckbox.setEnabled(true);
-        mRssiMedianFromReferenceDevice = 0;
         mCurrentReferenceDeviceId = 0;
         mRefTestInfoTextView.setVisibility(View.GONE);
         mDeviceFoundTextView.setVisibility(View.GONE);
@@ -319,8 +325,12 @@ public class BleRxTxOffsetPrecisionActivity extends PassFailButtons.Activity {
 
     @Override
     public void recordTestResults() {
-        if (mTestPassed) {
+        if (mTestCompleted) {
             getReportLog().addValue(KEY_REFERENCE_DEVICE, mReferenceDeviceName,
+                    ResultType.NEUTRAL, ResultUnit.NONE);
+            getReportLog().addValue(KEY_RSSI_MEDIAN_DUT, mRssiMedianOnDut, ResultType.NEUTRAL,
+                    ResultUnit.NONE);
+            getReportLog().addValue(KEY_RSSI_MEDIAN_REFERENCE, mRssiMedianFromReferenceDevice,
                     ResultType.NEUTRAL, ResultUnit.NONE);
             getReportLog().submit();
         }
