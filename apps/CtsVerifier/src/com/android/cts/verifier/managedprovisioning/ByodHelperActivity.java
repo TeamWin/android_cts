@@ -34,7 +34,6 @@ import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.UserHandle;
 import android.os.UserManager;
 import android.provider.MediaStore;
 import android.util.Log;
@@ -258,6 +257,7 @@ public class ByodHelperActivity extends Activity
                 mDevicePolicyManager.clearCrossProfileIntentFilters(mAdminReceiverComponent);
                 mDevicePolicyManager.wipeData(0);
                 showToast(R.string.provisioning_byod_profile_deleted);
+                setResult(RESULT_OK);
             }
         } else if (action.equals(ACTION_CHECK_DISK_ENCRYPTION)) {
             final int status = mDevicePolicyManager.getStorageEncryptionStatus();
