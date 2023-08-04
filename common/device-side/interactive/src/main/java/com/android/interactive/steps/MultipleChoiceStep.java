@@ -46,5 +46,6 @@ public abstract class MultipleChoiceStep extends Step<String> {
             });
         }
         addFailButton();
+        addSwapButton();
     }
 }
