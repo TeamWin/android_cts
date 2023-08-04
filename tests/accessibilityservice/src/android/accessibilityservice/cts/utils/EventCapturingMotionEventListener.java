@@ -144,4 +144,8 @@ public class EventCapturingMotionEventListener
         assertThat(motionEvents).isNotEmpty();
         return motionEvents;
     }
+
+    public MotionEvent peek() {
+        return mEvents.peek();
+    }
 }
