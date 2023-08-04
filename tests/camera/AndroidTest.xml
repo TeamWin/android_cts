@@ -41,5 +41,7 @@
         <option name="test-timeout" value="24000000" />
         <option name="hidden-api-checks" value="false" />
         <option name="isolated-storage" value="false" />
+        <!-- Ensure native coverage info is dumped at end of the test -->
+        <option name="device-listeners" value="com.android.modules.utils.testing.NativeCoverageHackInstrumentationListener" />
     </test>
 </configuration>
