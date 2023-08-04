@@ -39,6 +39,7 @@ public class SplashScreenReplaceThemeActivity extends Activity {
         super.onCreate(savedInstanceState);
         getSplashScreen().setOnExitAnimationListener(mSplashScreenExitHandler);
         mOverrideTheme = getIntent().getBooleanExtra(OVERRIDE_THEME_ENABLED, false);
+        HandleSplashScreenExitActivity.deferDraw(this);
     }
 
     @Override

@@ -34,6 +34,7 @@ public class SplashScreenStyleThemeActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         getSplashScreen().setOnExitAnimationListener(mSplashScreenExitHandler);
+        HandleSplashScreenExitActivity.deferDraw(this);
     }
 
     private void onSplashScreenExit(SplashScreenView view) {
