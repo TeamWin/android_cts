@@ -44,6 +44,7 @@ import android.os.Bundle;
 import android.os.SystemClock;
 import android.server.wm.TestJournalProvider;
 import android.view.SurfaceView;
+import android.view.ViewTreeObserver;
 import android.window.SplashScreen;
 
 public class HandleSplashScreenExitActivity extends Activity {
@@ -73,6 +74,7 @@ public class HandleSplashScreenExitActivity extends Activity {
         if (getIntent().getBooleanExtra(DELAY_RESUME, false)) {
             SystemClock.sleep(5000);
         }
+        deferDraw(this);
     }
 
     private final SplashScreen.OnExitAnimationListener mSplashScreenExitHandler =
@@ -129,5 +131,18 @@ public class HandleSplashScreenExitActivity extends Activity {
             mReportSplashScreenNightMode = false;
             mUiModeManager.setApplicationNightMode(MODE_NIGHT_AUTO);
         }
+    }
+
+    /** Deferring show app window to let splash screen display for a while. */
+    static void deferDraw(Activity a) {
+        a.getWindow().getDecorView().getViewTreeObserver().addOnPreDrawListener(
+                new ViewTreeObserver.OnPreDrawListener() {
+                    final long mCreateTime = SystemClock.uptimeMillis();
+
+                    @Override
+                    public boolean onPreDraw() {
+                        return SystemClock.uptimeMillis() - mCreateTime > 500;
+                    }
+                });
     }
 }
