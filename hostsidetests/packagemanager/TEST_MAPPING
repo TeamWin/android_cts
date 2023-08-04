@@ -19,7 +19,12 @@
       "name": "CtsPackageManagerPreferredActivityHostTestCases"
     },
     {
-      "name": "CtsPackageManagerIncrementalStatsHostTestCases"
+      "name": "CtsPackageManagerIncrementalStatsHostTestCases",
+      "options": [
+        {
+          "exclude-annotation": "android.platform.test.annotations.LargeTest"
+        }
+      ]
     },
     {
       "name": "CtsPackageManagerStatsHostTestCases"
@@ -53,6 +58,16 @@
     },
     {
       "name": "CtsDynamicMimeChangedGroupAppUpdateHostTestCases"
+    }
+  ],
+  "postsubmit": [
+    {
+      "name": "CtsPackageManagerIncrementalStatsHostTestCases",
+      "options": [
+        {
+          "include-annotation": "android.platform.test.annotations.LargeTest"
+        }
+      ]
     }
   ]
 }

@@ -16,7 +16,6 @@
 
 package com.android.cts.packagemanager.stats.host;
 
-import com.android.tradefed.util.RunUtil;
 import static com.android.cts.packagemanager.stats.host.Utils.SIGNATURE_FILE_SUFFIX;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -25,6 +24,7 @@ import android.cts.statsdatom.lib.AtomTestUtils;
 import android.cts.statsdatom.lib.ConfigUtils;
 import android.cts.statsdatom.lib.DeviceUtils;
 import android.cts.statsdatom.lib.ReportUtils;
+import android.platform.test.annotations.LargeTest;
 import android.server.ErrorSource;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
@@ -36,6 +36,7 @@ import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.log.LogUtil;
 import com.android.tradefed.testtype.DeviceTestCase;
 import com.android.tradefed.testtype.IBuildReceiver;
+import com.android.tradefed.util.RunUtil;
 
 import org.junit.After;
 import org.junit.Before;
@@ -130,6 +131,7 @@ public final class IncrementalAppErrorStatsTests extends DeviceTestCase implemen
         super.tearDown();
     }
 
+    @LargeTest
     public void testAppCrashOnIncremental() throws Exception {
         if (!Utils.hasIncrementalFeature(getDevice())) {
             return;
@@ -174,6 +176,7 @@ public final class IncrementalAppErrorStatsTests extends DeviceTestCase implemen
         assertTrue(atom.getTotalDelayedReadsDurationMillis() > 0);
     }
 
+    @LargeTest
     public void testAppAnrIncremental() throws Exception {
         if (!Utils.hasIncrementalFeature(getDevice())) {
             return;
