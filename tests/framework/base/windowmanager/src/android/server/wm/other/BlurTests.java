@@ -40,7 +40,6 @@ import android.server.wm.WindowManagerState;
 import android.server.wm.WindowManagerTestBase;
 import android.server.wm.cts.R;
 import android.server.wm.settings.SettingsSession;
-import android.view.View;
 import android.view.WindowManager;
 
 import androidx.test.rule.ActivityTestRule;
@@ -438,7 +437,7 @@ public class BlurTests extends WindowManagerTestBase {
             super.onCreate(savedInstanceState);
             getSplashScreen().setOnExitAnimationListener(view -> view.remove());
 
-            setContentView(new View(this));
+            setContentView(R.layout.background_image);
 
             getWindow().setDecorFitsSystemWindows(false);
             getWindow().getInsetsController().hide(systemBars());
