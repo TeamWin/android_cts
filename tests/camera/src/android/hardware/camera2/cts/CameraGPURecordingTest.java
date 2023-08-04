@@ -100,10 +100,20 @@ public class CameraGPURecordingTest extends Camera2AndroidTestCase {
                 Log.i(TAG, "Camera " + id + " does not support CamcorderProfile, skipping");
                 continue;
             }
+            CamcorderProfile profile = CamcorderProfile.get(CamcorderProfile.QUALITY_720P);
+            // Downgrade if 720p isn't available.
+            if (profile == null) {
+                profile = CamcorderProfile.get(CamcorderProfile.QUALITY_480P);
+            }
+            // Skip the test if neither of 720 or 480 camcorder profile is available.
+            if (profile == null) {
+                Log.i(TAG, "Camcorder profile not available for camera " + id);
+                continue;
+            }
             try {
                 Log.i(TAG, "Testing Camera " + id);
                 openDevice(id);
-                prepareEncoder();
+                prepareEncoder(profile);
                 mInputSurface.makeCurrent();
 
                 mSurfaceTextureHolder = new SurfaceTextureHolder();
@@ -168,17 +178,16 @@ public class CameraGPURecordingTest extends Camera2AndroidTestCase {
         }
     }
 
-    private void prepareEncoder() throws Exception {
+    private void prepareEncoder(CamcorderProfile profile) throws Exception {
         mBufferInfo = new MediaCodec.BufferInfo();
-        CamcorderProfile profile720p = CamcorderProfile.get(CamcorderProfile.QUALITY_720P);
-        assertNotNull("Camcorder profile should not be null", profile720p);
-        int width = profile720p.videoFrameWidth;
-        int height = profile720p.videoFrameHeight;
+        assertNotNull("Camcorder profile should not be null", profile);
+        int width = profile.videoFrameWidth;
+        int height = profile.videoFrameHeight;
         MediaFormat format = MediaFormat.createVideoFormat(MIME_TYPE, width, height);
         format.setInteger(
                 MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);
-        format.setInteger(MediaFormat.KEY_BIT_RATE, profile720p.videoBitRate);
-        format.setInteger(MediaFormat.KEY_FRAME_RATE, profile720p.videoFrameRate);
+        format.setInteger(MediaFormat.KEY_BIT_RATE, profile.videoBitRate);
+        format.setInteger(MediaFormat.KEY_FRAME_RATE, profile.videoFrameRate);
         format.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, IFRAME_INTERVAL);
         Log.v(TAG, "format: " + format);
 
