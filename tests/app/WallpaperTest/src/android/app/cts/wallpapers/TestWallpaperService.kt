@@ -43,6 +43,7 @@ abstract class TestWallpaperService : WallpaperService() {
         private val TAG = TestWallpaperService::class.java.simpleName
         private const val DEBUG = true
         private var assertionError: AssertionError? = null
+        private var prevAction: String? = null
 
         /**
          * Tracks the number of times [FakeEngine.onCreate] is called
@@ -69,6 +70,17 @@ abstract class TestWallpaperService : WallpaperService() {
         fun checkAssertions() {
             assertionError?.let { throw assertionError!! }
             assertionError = null
+        }
+
+        /**
+         * Allow user to peek the previous handle command
+         */
+        fun getPrevAction(): String? {
+          return prevAction
+        }
+
+        fun resetPrevAction() {
+            prevAction = null
         }
     }
 
@@ -110,6 +122,7 @@ abstract class TestWallpaperService : WallpaperService() {
         ): Bundle? {
             if (DEBUG) Log.d(TAG, "onCommand")
             assertMainThread()
+            prevAction = action
             return super.onCommand(action, x, y, z, extras, resultRequested)
         }
 
