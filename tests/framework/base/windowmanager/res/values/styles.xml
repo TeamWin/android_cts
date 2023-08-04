@@ -67,7 +67,6 @@
         <item name="android:windowNoTitle">true</item>
         <item name="android:windowLayoutInDisplayCutoutMode">always</item>
         <item name="android:windowSoftInputMode">stateHidden</item>
-        <item name="android:windowBackground">@drawable/background_image</item>
     </style>
     <style name="BlurryDialog" parent="TranslucentDialog">
         <item name="android:windowBackgroundBlurRadius">@dimen/test_background_blur_radius</item>
