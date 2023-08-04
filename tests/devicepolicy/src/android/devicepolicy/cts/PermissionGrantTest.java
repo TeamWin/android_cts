@@ -765,7 +765,7 @@ public final class PermissionGrantTest {
             TestAppActivity activity = testApp.activities().any().start().activity();
             activity.requestPermissions(new String[]{ permission }, /* requestCode= */ 0);
 
-            Poll.forValue("Permission granted",
+            Poll.forValue("Permission not granted",
                     () -> sNotInstalledTestApp.pkg().hasPermission(permission))
                     .toBeEqualTo(false)
                     .errorOnFail()
@@ -784,12 +784,16 @@ public final class PermissionGrantTest {
     @PolicyAppliesTest(policy = SetPermissionPolicy.class)
     public void setPermissionPolicy_sensorPermissions_autoGrantPermission_denies(
             @SensorPermissionTestParameter String permission) {
+        // The IT admin cannot grant sensor permissions on work profile devices (PO).
         try (TestAppInstance testApp = sNotInstalledTestApp.install()) {
             // We install fresh so the permissions are not granted
             sDeviceState.dpc().devicePolicyManager().setPermissionPolicy(
                     sDeviceState.dpc().componentName(), PERMISSION_POLICY_AUTO_GRANT);
 
-            Poll.forValue("Permission granted",
+            TestAppActivity activity = testApp.activities().any().start().activity();
+            activity.requestPermissions(new String[]{ permission }, /* requestCode= */ 0);
+
+            Poll.forValue("Permission not granted",
                             () -> sNotInstalledTestApp.pkg().hasPermission(permission))
                     .toBeEqualTo(false)
                     .errorOnFail()
@@ -803,21 +807,19 @@ public final class PermissionGrantTest {
     @ApiTest(apis = "android.app.admin.DevicePolicyManager#setPermissionPolicy")
     @Postsubmit(reason = "new test")
     @PolicyAppliesTest(policy = SetPermissionPolicy.class)
-    public void setPermissionPolicy_sensorPermissions_autoGrantPermission_denies_userCanGrant(
-            @SensorPermissionTestParameter String permission) {
-        assumeTrue("Test requires showing activities",
-                TestApis.users().instrumented().canShowActivities());
+    public void setPermissionPolicy_smsPermission_autoGrantPermission_denies() {
+        // The IT admin cannot grant sms permission on work profile devices (PO).
         try (TestAppInstance testApp = sNotInstalledTestApp.install()) {
             // We install fresh so the permissions are not granted
             sDeviceState.dpc().devicePolicyManager().setPermissionPolicy(
                     sDeviceState.dpc().componentName(), PERMISSION_POLICY_AUTO_GRANT);
 
             TestAppActivity activity = testApp.activities().any().start().activity();
-            activity.requestPermissions(new String[]{ permission }, /* requestCode= */ 0);
+            activity.requestPermissions(new String[]{ READ_SMS }, /* requestCode= */ 0);
 
-            Poll.forValue("Permission granted",
-                            () -> sNotInstalledTestApp.pkg().hasPermission(permission))
-                    .toBeEqualTo(true)
+            Poll.forValue("Permission not granted",
+                            () -> sNotInstalledTestApp.pkg().hasPermission(READ_SMS))
+                    .toBeEqualTo(false)
                     .errorOnFail()
                     .await();
         } finally {
