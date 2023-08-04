@@ -1599,7 +1599,12 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         }
     }
 
-    public void testNotificationIcon() {
+    public void testNotificationIcon() throws Exception {
+        mListener = mNotificationHelper.enableListener(STUB_PACKAGE_NAME);
+        assertNotNull(mListener);
+
+        CountDownLatch postedLatch = mListener.setPostedCountDown(2);
+
         int id = 6000;
 
         Notification notification =
@@ -1614,16 +1619,17 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
 
         notification =
                 new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
-                        .setSmallIcon(Icon.createWithResource(mContext, android.R.id.icon))
+                        .setSmallIcon(Icon.createWithResource(mContext, R.drawable.icon_black))
                         .setWhen(System.currentTimeMillis())
                         .setFullScreenIntent(getPendingIntent(), true)
                         .setContentText("This notification has an Icon icon")
                         .setContentIntent(getPendingIntent())
                         .build();
         mNotificationManager.notify(id, notification);
+        postedLatch.await(POST_TIMEOUT, TimeUnit.MILLISECONDS);
 
         StatusBarNotification n = mNotificationHelper.findPostedNotification(
-                null, id, SEARCH_TYPE.APP);
+                null, id, SEARCH_TYPE.POSTED);
         assertNotNull(n);
     }
 
