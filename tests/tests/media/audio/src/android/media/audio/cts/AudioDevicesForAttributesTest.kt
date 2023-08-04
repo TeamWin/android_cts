@@ -43,7 +43,7 @@ class AudioDevicesForAttributesTest {
             context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUDIO_OUTPUT)
         )
 
-        val audioManager = context.getSystemService(AudioManager::class.java)
+        val audioManager = context.getSystemService(AudioManager::class.java)!!
         val allOutDevices = audioManager.getDevices(AudioManager.GET_DEVICES_OUTPUTS)
         var hasAtLeastOneDeviceForAttributes = false
 

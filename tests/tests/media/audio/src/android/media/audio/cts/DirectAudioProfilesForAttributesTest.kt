@@ -46,7 +46,7 @@ class DirectAudioProfilesForAttributesTest {
             context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUDIO_OUTPUT)
         )
 
-        audioManager = context.getSystemService(AudioManager::class.java)
+        audioManager = context.getSystemService(AudioManager::class.java)!!
     }
 
     /**

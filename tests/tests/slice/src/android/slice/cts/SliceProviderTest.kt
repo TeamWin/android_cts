@@ -80,7 +80,7 @@ class SliceProviderTest : StsExtraBusinessLogicTestCase {
         doQuery(shadyActionUri)
     }
 
-    private fun doQuery(actionUri: Uri): Slice {
+    private fun doQuery(actionUri: Uri): Slice? {
         val extras = Bundle().apply {
             putParcelable("slice_uri", actionUri)
             putParcelableArrayList("supported_specs", ArrayList(listOf(
@@ -96,6 +96,6 @@ class SliceProviderTest : StsExtraBusinessLogicTestCase {
                 null,
                 extras
         )
-        return result.getParcelable(SliceProvider.EXTRA_SLICE)
+        return result?.getParcelable(SliceProvider.EXTRA_SLICE)
     }
 }

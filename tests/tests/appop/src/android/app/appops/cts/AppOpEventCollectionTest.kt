@@ -51,7 +51,7 @@ private const val SHELL_PACKAGE_NAME = "com.android.shell"
 class AppOpEventCollectionTest {
     private val instrumentation = InstrumentationRegistry.getInstrumentation()
     private val context = instrumentation.targetContext
-    private val appOpsManager = context.getSystemService(AppOpsManager::class.java)
+    private val appOpsManager = context.getSystemService(AppOpsManager::class.java)!!
 
     private val myUid = Process.myUid()
     private val shellUid = UserHandle.getUid(Process.myUserHandle().identifier,

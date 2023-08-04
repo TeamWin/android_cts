@@ -48,7 +48,7 @@ class AppOpsUserService : Service() {
 
     override fun onBind(intent: Intent?): IBinder? {
         return object : IAppOpsUserService.Stub() {
-            private val appOpsManager = getSystemService(AppOpsManager::class.java)
+            private val appOpsManager = getSystemService(AppOpsManager::class.java)!!
 
             // Collected note-op calls inside of this process
             private val noted = mutableListOf<Pair<SyncNotedAppOp, Array<StackTraceElement>>>()

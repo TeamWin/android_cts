@@ -140,7 +140,7 @@ class FlagSlipperyTest : StsExtraBusinessLogicTestCase {
     fun setup() {
         scenario = rule.getScenario()
         windowManager = getInstrumentation().getTargetContext().getSystemService<WindowManager>(
-                WindowManager::class.java)
+                WindowManager::class.java)!!
         setDimensionsToQuarterScreen()
 
         waitForWindowFocusOnBottomActivity()
@@ -260,9 +260,9 @@ class FlagSlipperyTest : StsExtraBusinessLogicTestCase {
             }
 
             embeddedView.viewTreeObserver.registerFrameCommitCallback(viewDrawnCallback)
-            mVr = SurfaceControlViewHost(it, it.getDisplay(), surfaceView.getHostToken())
+            mVr = SurfaceControlViewHost(it, it.getDisplay()!!, surfaceView.getHostToken())
             mVr.setView(embeddedView, slipperyLayoutParams)
-            surfaceView.setChildSurfacePackage(mVr.getSurfacePackage())
+            surfaceView.setChildSurfacePackage(mVr.getSurfacePackage()!!)
             embeddedView.invalidate()
         }
         embeddedViewDrawn.await()

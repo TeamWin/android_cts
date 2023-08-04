@@ -34,7 +34,7 @@ class RuntimeMessageCollectionTest {
     private val TIMEOUT_MILLIS = 5000L
     private val instrumentation = InstrumentationRegistry.getInstrumentation()
     private val context = instrumentation.targetContext
-    private val appOpsManager = context.getSystemService(AppOpsManager::class.java)
+    private val appOpsManager = context.getSystemService(AppOpsManager::class.java)!!
     private var appUid = -1
 
     private fun installApk(apk: String) {
