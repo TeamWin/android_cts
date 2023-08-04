@@ -215,6 +215,8 @@ public final class ActivityManagerTest {
 
     private String mPreviousModernTrim;
 
+    private boolean mIsWaitForFinishAttachApplicationEnabled;
+
     private static final String WRITE_DEVICE_CONFIG_PERMISSION =
             "android.permission.WRITE_DEVICE_CONFIG";
 
@@ -1179,6 +1181,15 @@ public final class ActivityManagerTest {
      */
     @Test
     public void testAppNotRespondingOnStartup() throws Exception {
+        runWithShellPermissionIdentity(() -> {
+            mIsWaitForFinishAttachApplicationEnabled = DeviceConfig.getBoolean(
+                    DeviceConfig.NAMESPACE_ACTIVITY_MANAGER,
+                    "enable_wait_for_finish_attach_application",
+                    false);
+        });
+
+        assumeTrue("App startup ANRs disabled", mIsWaitForFinishAttachApplicationEnabled);
+
         // Setup the ANR monitor
         AmMonitor monitor = new AmMonitor(mInstrumentation,
                 new String[]{AmMonitor.WAIT_FOR_CRASHED});
