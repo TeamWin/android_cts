@@ -289,7 +289,7 @@ class AppOpEventCollectionTest {
         // Using the shell identity causes a trusted proxy note
         runWithShellPermissionIdentity {
             context.createAttributionContext(firstTag)
-                .getSystemService(AppOpsManager::class.java)
+                .getSystemService(AppOpsManager::class.java)!!
                 .noteProxyOp(OPSTR_WIFI_SCAN, otherPkg, otherUid, null, null)
         }
 
@@ -298,7 +298,7 @@ class AppOpEventCollectionTest {
 
         // untrusted proxy note
         context.createAttributionContext(secondTag)
-            .getSystemService(AppOpsManager::class.java)
+            .getSystemService(AppOpsManager::class.java)!!
             .noteProxyOp(OPSTR_WIFI_SCAN, otherPkg, otherUid, null, null)
 
         val opEntry = getOpEntry(otherUid, otherPkg, OPSTR_WIFI_SCAN)!!
