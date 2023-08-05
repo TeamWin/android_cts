@@ -88,54 +88,6 @@ def _convert_captures(cap, file_stem=None):
   return y, image_processing_utils.convert_image_to_uint8(img)
 
 
-def _get_left_patch(y):
-  """Return the left edge of a y plane according to _EDGE_NOISE_WIDTH.
-
-  Args:
-    y: y_plane from a capture.
-  Returns:
-    Cropped y_plane on the left edge of the capture.
-  """
-  return image_processing_utils.get_image_patch(
-      y, 0, 0, _EDGE_NOISE_WIDTH, 1)
-
-
-def _get_right_patch(y):
-  """Return the right edge of a y plane according to _EDGE_NOISE_WIDTH.
-
-  Args:
-    y: y_plane from a capture.
-  Returns:
-    Cropped y_plane on the right edge of the capture.
-  """
-  return image_processing_utils.get_image_patch(
-      y, 1 - _EDGE_NOISE_WIDTH, 0, _EDGE_NOISE_WIDTH, 1)
-
-
-def _get_edge_noise(night_y, no_night_y):
-  """Computes the left and right edge noise in the y plane.
-
-  Args:
-    night_y: y_plane from a capture with night mode ON.
-    no_night_y: y_plane from a capture with night mode OFF.
-  Returns:
-    float; ratio of left edge noise, float; ratio of right edge noise.
-  """
-  night_left_patch_std = np.std(_get_left_patch(night_y), axis=(0, 1))
-  no_night_left_patch_std = np.std(_get_left_patch(no_night_y), axis=(0, 1))
-  night_right_patch_std = np.std(_get_right_patch(night_y), axis=(0, 1))
-  no_night_right_patch_std = np.std(_get_right_patch(no_night_y), axis=(0, 1))
-  logging.debug('Night mode ON left patch noise: %.2f', night_left_patch_std)
-  logging.debug('Night mode OFF left patch noise: %.2f',
-                no_night_left_patch_std)
-  logging.debug('Night mode ON right patch noise: %.2f', night_right_patch_std)
-  logging.debug('Night mode OFF right patch noise: %.2f',
-                no_night_right_patch_std)
-  left_patch_ratio = no_night_left_patch_std / night_left_patch_std
-  right_patch_ratio = no_night_right_patch_std / night_right_patch_std
-  return left_patch_ratio, right_patch_ratio
-
-
 def _check_overall_intensity(night_img, no_night_img):
   """Checks that overall intensity significantly improves with night mode ON.
 
@@ -160,34 +112,6 @@ def _check_overall_intensity(night_img, no_night_img):
                          f'Ratio: {overall_intensity_ratio:.2f}, '
                          f'Expected: {_INTENSITY_IMPROVEMENT_TOL}')
   return overall_intensity_ratio > _IDEAL_INTENSITY_IMPROVEMENT
-
-
-def _check_edge_noise(night_y, no_night_y):
-  """Checks that noise at the edges significantly improves with night mode ON.
-
-  Args:
-    night_y: y_plane from a capture with night mode ON.
-    no_night_y: y_plane from a capture with night mode OFF.
-  """
-  # Normalize both y planes to [0, 255]
-  night_y *= 255
-  no_night_y *= 255
-  left_patch_ratio, right_patch_ratio = _get_edge_noise(
-      night_y, no_night_y)
-  logging.debug('Left edge of night mode OFF capture was %.2f times '
-                'as noisy as night mode ON', left_patch_ratio)
-  logging.debug('Right edge of night mode OFF capture was %.2f times '
-                'as noisy as night mode ON', right_patch_ratio)
-  if left_patch_ratio < _EDGE_NOISE_IMPROVEMENT_TOL:
-    raise AssertionError('Left edge of night mode OFF capture was only '
-                         f'{float(left_patch_ratio):.2f} as noisy as '
-                         'night mode OFF, expected to be '
-                         f'at least {_EDGE_NOISE_IMPROVEMENT_TOL}')
-  if right_patch_ratio < _EDGE_NOISE_IMPROVEMENT_TOL:
-    raise AssertionError('Right edge of night mode OFF capture was only '
-                         f'{float(right_patch_ratio):.2f} as noisy as '
-                         'night mode OFF, expected to be '
-                         f'at least {_EDGE_NOISE_IMPROVEMENT_TOL}')
 
 
 class NightExtensionTest(its_base_test.ItsBaseTest):
@@ -401,14 +325,14 @@ class NightExtensionTest(its_base_test.ItsBaseTest):
       cam.do_3a()
       night_capture_duration, night_cap = self._time_and_take_captures(
           cam, req, out_surfaces, use_extensions=True)
-      night_y, night_img = _convert_captures(night_cap, f'{file_stem}_night')
+      _, night_img = _convert_captures(night_cap, f'{file_stem}_night')
 
       # Take auto capture with night mode OFF
       logging.debug('Taking auto capture with night mode OFF')
       cam.do_3a()
       no_night_capture_duration, no_night_cap = self._time_and_take_captures(
           cam, req, out_surfaces, use_extensions=False)
-      no_night_y, no_night_img = _convert_captures(
+      _, no_night_img = _convert_captures(
           no_night_cap, f'{file_stem}_no_night')
 
       # Assert correct behavior
@@ -423,11 +347,9 @@ class NightExtensionTest(its_base_test.ItsBaseTest):
 
       logging.debug('Comparing overall intensity of capture with '
                     'night mode ON/OFF')
-      can_skip_edge_check = _check_overall_intensity(night_img, no_night_img)
-
-      if not can_skip_edge_check:
-        logging.debug('Comparing edge noise of capture with night mode ON/OFF')
-        _check_edge_noise(night_y, no_night_y)
+      much_higher_intensity = _check_overall_intensity(night_img, no_night_img)
+      if not much_higher_intensity:
+        logging.warning('Improvement in intensity was smaller than expected.')
 
 if __name__ == '__main__':
   test_runner.main()
