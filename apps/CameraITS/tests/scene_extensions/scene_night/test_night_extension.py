@@ -30,6 +30,7 @@ import lighting_control_utils
 import opencv_processing_utils
 
 _NAME = os.path.splitext(os.path.basename(__file__))[0]
+_DEFAULT_TABLET_BRIGHTNESS_SCALING = 0.04  # 4% of default brightness
 _EXTENSION_NIGHT = 4  # CameraExtensionCharacteristics.EXTENSION_NIGHT
 _TAP_COORDINATES = (500, 500)  # Location to tap tablet screen via adb
 _TEST_REQUIRED_MPC = 34
@@ -263,8 +264,12 @@ class NightExtensionTest(its_base_test.ItsBaseTest):
       except AssertionError:
         logging.debug('Unable to find circle with brightness %d', brightness)
         max_brightness = brightness
-    if not final_brightness:
-      raise AssertionError('Unable to find a valid brightness for the tablet')
+    if final_brightness is None:
+      logging.debug('Unable to find orientation dot at any brightness, '
+                    'defaulting to %.2f of current tablet brightness.',
+                    _DEFAULT_TABLET_BRIGHTNESS_SCALING)
+      return int(_DEFAULT_TABLET_BRIGHTNESS_SCALING *
+                 self.tablet_screen_brightness)
     return final_brightness
 
   def _time_and_take_captures(self, cam, req, out_surfaces,
