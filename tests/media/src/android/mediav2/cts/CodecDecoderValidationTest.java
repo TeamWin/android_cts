@@ -175,8 +175,9 @@ public class CodecDecoderValidationTest extends CodecDecoderTestBase {
 
                 // video test vectors covering cdd requirements
                 // @CddTest(requirement="5.3.1/C-1-1")
-                {MEDIA_TYPE_MPEG2, new String[]{"bbb_1920x1080_mpeg2_main_high.mp4"}, null, -1.0f,
-                        -1L, -1, -1, 1920, 1080, MediaUtils.isTv() ? CODEC_ANY : CODEC_OPTIONAL},
+                {MEDIA_TYPE_MPEG2, new String[]{"bbb_1920x1080_30fps_mpeg2_main_high.mp4"}, null,
+                        -1.0f, -1L, -1, -1, 1920, 1080,
+                        MediaUtils.isTv() ? CODEC_ANY : CODEC_OPTIONAL},
 
                 // @CddTest(requirement="5.3.2/C-1-1")
                 {MEDIA_TYPE_H263, new String[]{"bbb_352x288_384kbps_30fps_h263_baseline_l3.mp4"},
