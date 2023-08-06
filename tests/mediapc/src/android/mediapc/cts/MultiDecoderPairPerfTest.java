@@ -164,13 +164,13 @@ public class MultiDecoderPairPerfTest extends MultiCodecPerfTestBase {
         boolean bothSecure = isFirstSecure & isSecondSecure;
 
         if (bothSecure) {
-            testCodec(null, m2160pWidevineTestFiles, 2160, 3840,
+            testCodec(null, m2160pPc14WidevineTestFiles, 2160, 3840,
                     REQUIRED_MIN_CONCURRENT_SECURE_INSTANCES);
         } else if (onlyOneSecure) {
-            testCodec(m2160pTestFiles, m2160pWidevineTestFiles, 2160, 3840,
+            testCodec(m2160pPc14TestFiles, m2160pPc14WidevineTestFiles, 2160, 3840,
                     REQUIRED_CONCURRENT_NON_SECURE_INSTANCES_WITH_SECURE + 1);
         } else {
-            testCodec(m2160pTestFiles, null, 2160, 3840, REQUIRED_MIN_CONCURRENT_INSTANCES);
+            testCodec(m2160pPc14TestFiles, null, 2160, 3840, REQUIRED_MIN_CONCURRENT_INSTANCES);
         }
     }
 
@@ -193,11 +193,11 @@ public class MultiDecoderPairPerfTest extends MultiCodecPerfTestBase {
         boolean bothSecure = isFirstSecure & isSecondSecure;
 
         if (bothSecure) {
-            testCodec(null, m2160p10bitWidevineTestFiles, 2160, 3840,
+            testCodec(null, m2160pPc1410bitWidevineTestFiles, 2160, 3840,
                     REQUIRED_MIN_CONCURRENT_SECURE_INSTANCES);
         } else if (onlyOneSecure) {
             // 2 non-secure 4k HDR, 1 secure 4k SDR , 1 non-secure 1080p SDR
-            testCodec(m2160p10bitTestFiles, m2160pWidevineTestFiles, 2160, 3840,
+            testCodec(m2160pPc1410bitTestFiles, m2160pPc14WidevineTestFiles, 2160, 3840,
                     REQUIRED_CONCURRENT_NON_SECURE_INSTANCES_WITH_SECURE + 1);
         } else {
             Assume.assumeFalse("Skipping regular performance tests for pair of non-secure decoders",
