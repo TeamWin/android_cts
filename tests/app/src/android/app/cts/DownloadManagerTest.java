@@ -18,6 +18,7 @@ package android.app.cts;
 import static android.Manifest.permission.WRITE_MEDIA_STORAGE;
 import static android.content.pm.PackageManager.PERMISSION_DENIED;
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
+import static android.content.pm.PackageManager.FEATURE_AUTOMOTIVE;
 
 import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
 
@@ -27,6 +28,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeNotNull;
+import static org.junit.Assume.assumeFalse;
 
 import android.app.DownloadManager;
 import android.app.DownloadManager.Query;
@@ -724,6 +726,12 @@ public class DownloadManagerTest extends DownloadManagerTestBase {
 
     @Test
     public void testDownload_onMediaStoreDownloadsDeleted() throws Exception {
+        final PackageManager pm = mContext.getPackageManager();
+
+        // skip this test for automotive devices which uses FrameworkPackageStubs for
+        // a fake DocumentsUI package.
+        assumeFalse(pm.hasSystemFeature(FEATURE_AUTOMOTIVE));
+
         // setup for activity
         GetResultActivity activity = setUpForActivity();
         assumeNotNull(activity);
@@ -781,7 +789,7 @@ public class DownloadManagerTest extends DownloadManagerTestBase {
         intent.addCategory(Intent.CATEGORY_OPENABLE);
         intent.setType("*/*");
         final ResolveInfo ri = pm.resolveActivity(intent, 0);
-        if (ri.activityInfo == null) {
+        if (ri == null || ri.activityInfo == null) {
             return null;
         }
 
