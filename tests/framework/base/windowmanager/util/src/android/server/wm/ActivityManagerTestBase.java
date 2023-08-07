@@ -75,6 +75,7 @@ import static android.server.wm.ActivityLauncher.launchActivityFromExtras;
 import static android.server.wm.CommandSession.KEY_FORWARD;
 import static android.server.wm.ComponentNameUtils.getActivityName;
 import static android.server.wm.ComponentNameUtils.getLogTag;
+import static android.server.wm.ComponentNameUtils.getWindowName;
 import static android.server.wm.ShellCommandHelper.executeShellCommand;
 import static android.server.wm.ShellCommandHelper.executeShellCommandAndGetStdout;
 import static android.server.wm.StateLogger.log;
@@ -1324,6 +1325,7 @@ public abstract class ActivityManagerTestBase {
     public void waitAndAssertResumedActivity(ComponentName activityName, String message) {
         mWmState.waitForValidState(activityName);
         mWmState.waitForActivityState(activityName, STATE_RESUMED);
+        mWmState.waitForWindowSurfaceShown(getWindowName(activityName), true /* shown */);
         mWmState.assertValidity();
         assertTrue(message, mWmState.hasActivityState(activityName, STATE_RESUMED));
         mWmState.assertVisibility(activityName, true /* visible */);
