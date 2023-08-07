@@ -98,14 +98,14 @@ public final class AppUsageObserverTest {
     @Test
     @ApiTest(apis = "android.app.usage.UsageStatsManager#registerAppUsageObserver")
     @Postsubmit(reason = "new test")
-    public void registerAppUsageObserver_supersedesObserversLimit_throwsException() {
+    public void registerAppUsageObserver_exceedsObserversLimit_throwsException() {
         try {
             for (int observerId = 0; observerId < OBSERVER_LIMIT; observerId++) {
                 sUsageStatsManager.registerAppUsageObserver(
                         observerId, sPackages, 60, TimeUnit.SECONDS, sPendingIntent);
             }
 
-            assertThrows(IllegalArgumentException.class,
+            assertThrows(IllegalStateException.class,
                     () -> sUsageStatsManager.registerAppUsageObserver(
                             OBSERVER_LIMIT, sPackages, 60, TimeUnit.SECONDS,
                             sPendingIntent));
@@ -120,7 +120,7 @@ public final class AppUsageObserverTest {
     @Test
     @ApiTest(apis = "android.app.usage.UsageStatsManager#registerUsageSessionObserver")
     @Postsubmit(reason = "new test")
-    public void registerUsageSessionObserver_supersedesObserversLimit_throwsException() {
+    public void registerUsageSessionObserver_exceedsObserversLimit_throwsException() {
         try {
             for (int observerId = 0; observerId < OBSERVER_LIMIT; observerId++) {
                 sUsageStatsManager.registerUsageSessionObserver(
