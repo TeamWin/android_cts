@@ -366,13 +366,6 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     }
 
     @Test
-    public void testAutoGrantMultiplePermissionsInGroup() throws Exception {
-        installAppPermissionAppAsUser();
-        executeDeviceTestMethod(".PermissionsTest",
-                "testPermissionPolicyAutoGrant_multiplePermissionsInGroup");
-    }
-
-    @Test
     public void testPermissionGrantOfDisallowedPermissionWhileOtherPermIsGranted()
             throws Exception {
         installAppPermissionAppAsUser();

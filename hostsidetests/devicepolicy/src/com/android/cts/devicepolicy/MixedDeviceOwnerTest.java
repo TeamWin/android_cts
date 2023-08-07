@@ -450,13 +450,6 @@ public final class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
     @Override
     @Test
     @IgnoreOnHeadlessSystemUserMode(reason = "Headless system user doesn't launch activities")
-    public void testAutoGrantMultiplePermissionsInGroup() throws Exception {
-        super.testAutoGrantMultiplePermissionsInGroup();
-    }
-
-    @Override
-    @Test
-    @IgnoreOnHeadlessSystemUserMode(reason = "Headless system user doesn't launch activities")
     public void testPermissionGrantOfDisallowedPermissionWhileOtherPermIsGranted()
             throws Exception {
         super.testPermissionGrantOfDisallowedPermissionWhileOtherPermIsGranted();
