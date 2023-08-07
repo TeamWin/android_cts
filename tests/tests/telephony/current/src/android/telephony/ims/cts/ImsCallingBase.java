@@ -28,9 +28,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.PersistableBundle;
 import android.telecom.Call;
+import android.telecom.cts.TestUtils;
 import android.telephony.CarrierConfigManager;
 import android.telephony.SubscriptionManager;
 import android.telephony.cts.InCallServiceStateValidator;
@@ -64,6 +66,11 @@ public class ImsCallingBase {
     protected static final String PACKAGE_CTS_DIALER = "android.telephony.cts";
     protected static final String COMMAND_SET_DEFAULT_DIALER = "telecom set-default-dialer ";
     protected static final String COMMAND_GET_DEFAULT_DIALER = "telecom get-default-dialer";
+    protected static final String TEST_EMERGENCY_NUMBER = "5553637";
+    protected static final Uri TEST_EMERGENCY_URI =
+            Uri.fromParts("tel", TEST_EMERGENCY_NUMBER, null);
+    protected static final String INCALL_COMPONENT =
+            "android.telephony.cts/.InCallServiceStateValidator";
 
     // The timeout to wait in current state in milliseconds
     protected static final int WAIT_IN_CURRENT_STATE = 100;
@@ -100,7 +107,6 @@ public class ImsCallingBase {
     protected static long sPreviousOptInStatus = 0;
     protected static long sPreviousEn4GMode = 0;
     protected static String sPreviousDefaultDialer;
-
     private static CarrierConfigReceiver sReceiver;
     private static SubscriptionManager sSubscriptionManager;
 
@@ -112,6 +118,7 @@ public class ImsCallingBase {
     protected String mCurrentCallId = null;
 
     protected static final CountDownLatch[] sLatches = new CountDownLatch[LATCH_MAX];
+    private boolean mIsEmergencyCallingSetup = false;
 
     protected static void initializeLatches() {
         synchronized (mLock) {
@@ -598,5 +605,26 @@ public class ImsCallingBase {
         ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
                 carrierConfigManager, (m) -> m.overrideConfig(sTestSub, bundle));
         sReceiver.waitForChanged();
+    }
+
+    protected void setupForEmergencyCalling(String testNumber) throws Exception {
+        enableCarrierUseImsFirstForEmergency();
+        TestUtils.setSystemDialerOverride(
+                InstrumentationRegistry.getInstrumentation(), INCALL_COMPONENT);
+        TestUtils.addTestEmergencyNumber(InstrumentationRegistry.getInstrumentation(), testNumber);
+        mIsEmergencyCallingSetup = true;
+    }
+
+    protected void tearDownEmergencyCalling() throws Exception {
+        if (!mIsEmergencyCallingSetup) return;
+        mIsEmergencyCallingSetup = false;
+        TestUtils.clearSystemDialerOverride(InstrumentationRegistry.getInstrumentation());
+        TestUtils.clearTestEmergencyNumbers(InstrumentationRegistry.getInstrumentation());
+    }
+
+    private static void enableCarrierUseImsFirstForEmergency() throws Exception {
+        PersistableBundle bundle = new PersistableBundle();
+        bundle.putBoolean(CarrierConfigManager.KEY_CARRIER_USE_IMS_FIRST_FOR_EMERGENCY_BOOL, true);
+        overrideCarrierConfig(bundle);
     }
 }
