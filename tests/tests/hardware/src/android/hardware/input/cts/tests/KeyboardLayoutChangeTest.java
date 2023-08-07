@@ -22,8 +22,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.inOrder;
-import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.doAnswer;
 
 import android.Manifest;
 import android.content.BroadcastReceiver;
@@ -41,13 +40,15 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
 
 import com.android.compatibility.common.util.ApiTest;
+import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+
+import java.util.concurrent.atomic.AtomicInteger;
 
 @ApiTest(apis = {"android.view.InputDevice#getKeyCodeForKeyLocation"})
 @SmallTest
@@ -57,9 +58,9 @@ public class KeyboardLayoutChangeTest extends InputHidTestCase {
     private static final long KEYBOARD_LAYOUT_CHANGE_TIMEOUT = 500;
 
     private InputManager mInputManager;
+    private InputDevice mInputDevice;
     @Mock private InputManager.InputDeviceListener mInputDeviceChangedListener;
-    private InOrder mInOrderInputDeviceChangedListener;
-
+    private final AtomicInteger mInputDeviceChangeCount = new AtomicInteger(0);
 
     // this test needs any physical keyboard to test the keyboard layout change
     public KeyboardLayoutChangeTest() {
@@ -75,93 +76,94 @@ public class KeyboardLayoutChangeTest extends InputHidTestCase {
         assertNotNull(mInputManager);
         mInputManager.registerInputDeviceListener(mInputDeviceChangedListener,
                 new Handler(Looper.getMainLooper()));
-        mInOrderInputDeviceChangedListener = inOrder(mInputDeviceChangedListener);
+        mInputDevice = getInputDevice(
+                (d) -> d.getKeyboardType() == InputDevice.KEYBOARD_TYPE_ALPHABETIC);
+        assertNotNull(mInputDevice);
+        final int deviceId = mInputDevice.getId();
+        doAnswer((invocation) -> mInputDeviceChangeCount.incrementAndGet()).when(
+                mInputDeviceChangedListener).onInputDeviceChanged(eq(deviceId));
     }
 
     @Override
     void onTearDown() {
         super.onTearDown();
+        mInputManager.unregisterInputDeviceListener(mInputDeviceChangedListener);
         setNewSettingsUiFlag(mInstrumentation.getTargetContext(), "");
     }
 
     @Test
     public void testKeyboardLayoutChanges() {
-        final InputDevice device = getInputDevice(
-                (d) -> d.getKeyboardType() == InputDevice.KEYBOARD_TYPE_ALPHABETIC);
-        assertNotNull(device);
-        final String germanLayoutId = getKeyboardLayoutId(device, "german");
-        final String englishLayoutId = getKeyboardLayoutId(device, "english_us");
-        final String frenchLayoutId = getKeyboardLayoutId(device, "french");
+        final String germanLayoutId = getKeyboardLayoutId(mInputDevice, "german");
+        final String englishLayoutId = getKeyboardLayoutId(mInputDevice, "english_us");
+        final String frenchLayoutId = getKeyboardLayoutId(mInputDevice, "french");
         final String layoutError = "The %s layout descriptor is non-existent / empty.";
         assertNotEquals(String.format(layoutError, "German"), "", germanLayoutId);
         assertNotEquals(String.format(layoutError, "English (US)"), "", englishLayoutId);
         assertNotEquals(String.format(layoutError, "French"), "", frenchLayoutId);
         try {
-            setCurrentKeyboardLayout(device, germanLayoutId);
+            setCurrentKeyboardLayout(mInputDevice, germanLayoutId);
             assertEquals("Key location KEYCODE_Q should map to KEYCODE_Q on a German layout.",
-                    KeyEvent.KEYCODE_Q, device.getKeyCodeForKeyLocation(KeyEvent.KEYCODE_Q));
+                    KeyEvent.KEYCODE_Q, mInputDevice.getKeyCodeForKeyLocation(KeyEvent.KEYCODE_Q));
             assertEquals("Key location KEYCODE_W should map to KEYCODE_W on a German layout.",
-                    KeyEvent.KEYCODE_W, device.getKeyCodeForKeyLocation(KeyEvent.KEYCODE_W));
+                    KeyEvent.KEYCODE_W, mInputDevice.getKeyCodeForKeyLocation(KeyEvent.KEYCODE_W));
             assertEquals("Key location KEYCODE_E should map to KEYCODE_E on a German layout.",
-                    KeyEvent.KEYCODE_E, device.getKeyCodeForKeyLocation(KeyEvent.KEYCODE_E));
+                    KeyEvent.KEYCODE_E, mInputDevice.getKeyCodeForKeyLocation(KeyEvent.KEYCODE_E));
             assertEquals("Key location KEYCODE_R should map to KEYCODE_R on a German layout.",
-                    KeyEvent.KEYCODE_R, device.getKeyCodeForKeyLocation(KeyEvent.KEYCODE_R));
+                    KeyEvent.KEYCODE_R, mInputDevice.getKeyCodeForKeyLocation(KeyEvent.KEYCODE_R));
             assertEquals("Key location KEYCODE_T should map to KEYCODE_T on a German layout.",
-                    KeyEvent.KEYCODE_T, device.getKeyCodeForKeyLocation(KeyEvent.KEYCODE_T));
+                    KeyEvent.KEYCODE_T, mInputDevice.getKeyCodeForKeyLocation(KeyEvent.KEYCODE_T));
             assertEquals("Key location KEYCODE_Y should map to KEYCODE_Z on a German layout.",
-                    KeyEvent.KEYCODE_Z, device.getKeyCodeForKeyLocation(KeyEvent.KEYCODE_Y));
+                    KeyEvent.KEYCODE_Z, mInputDevice.getKeyCodeForKeyLocation(KeyEvent.KEYCODE_Y));
 
-            setCurrentKeyboardLayout(device, englishLayoutId);
+            setCurrentKeyboardLayout(mInputDevice, englishLayoutId);
             assertEquals(
                     "Key location KEYCODE_Q should map to KEYCODE_Q on an English (US) layout.",
-                    KeyEvent.KEYCODE_Q, device.getKeyCodeForKeyLocation(KeyEvent.KEYCODE_Q));
+                    KeyEvent.KEYCODE_Q, mInputDevice.getKeyCodeForKeyLocation(KeyEvent.KEYCODE_Q));
             assertEquals(
                     "Key location KEYCODE_W should map to KEYCODE_W on an English (US) layout.",
-                    KeyEvent.KEYCODE_W, device.getKeyCodeForKeyLocation(KeyEvent.KEYCODE_W));
+                    KeyEvent.KEYCODE_W, mInputDevice.getKeyCodeForKeyLocation(KeyEvent.KEYCODE_W));
             assertEquals(
                     "Key location KEYCODE_E should map to KEYCODE_E on an English (US) layout.",
-                    KeyEvent.KEYCODE_E, device.getKeyCodeForKeyLocation(KeyEvent.KEYCODE_E));
+                    KeyEvent.KEYCODE_E, mInputDevice.getKeyCodeForKeyLocation(KeyEvent.KEYCODE_E));
             assertEquals(
                     "Key location KEYCODE_R should map to KEYCODE_R on an English (US) layout.",
-                    KeyEvent.KEYCODE_R, device.getKeyCodeForKeyLocation(KeyEvent.KEYCODE_R));
+                    KeyEvent.KEYCODE_R, mInputDevice.getKeyCodeForKeyLocation(KeyEvent.KEYCODE_R));
             assertEquals(
                     "Key location KEYCODE_T should map to KEYCODE_T on an English (US) layout.",
-                    KeyEvent.KEYCODE_T, device.getKeyCodeForKeyLocation(KeyEvent.KEYCODE_T));
+                    KeyEvent.KEYCODE_T, mInputDevice.getKeyCodeForKeyLocation(KeyEvent.KEYCODE_T));
             assertEquals(
                     "Key location KEYCODE_Y should map to KEYCODE_Y on an English (US) layout.",
-                    KeyEvent.KEYCODE_Y, device.getKeyCodeForKeyLocation(KeyEvent.KEYCODE_Y));
+                    KeyEvent.KEYCODE_Y, mInputDevice.getKeyCodeForKeyLocation(KeyEvent.KEYCODE_Y));
 
-            setCurrentKeyboardLayout(device, frenchLayoutId);
+            setCurrentKeyboardLayout(mInputDevice, frenchLayoutId);
             assertEquals("Key location KEYCODE_Q should map to KEYCODE_A on a French layout.",
-                    KeyEvent.KEYCODE_A, device.getKeyCodeForKeyLocation(KeyEvent.KEYCODE_Q));
+                    KeyEvent.KEYCODE_A, mInputDevice.getKeyCodeForKeyLocation(KeyEvent.KEYCODE_Q));
             assertEquals("Key location KEYCODE_W should map to KEYCODE_Z on a French layout.",
-                    KeyEvent.KEYCODE_Z, device.getKeyCodeForKeyLocation(KeyEvent.KEYCODE_W));
+                    KeyEvent.KEYCODE_Z, mInputDevice.getKeyCodeForKeyLocation(KeyEvent.KEYCODE_W));
             assertEquals("Key location KEYCODE_E should map to KEYCODE_E on a French layout.",
-                    KeyEvent.KEYCODE_E, device.getKeyCodeForKeyLocation(KeyEvent.KEYCODE_E));
+                    KeyEvent.KEYCODE_E, mInputDevice.getKeyCodeForKeyLocation(KeyEvent.KEYCODE_E));
             assertEquals("Key location KEYCODE_R should map to KEYCODE_R on a French layout.",
-                    KeyEvent.KEYCODE_R, device.getKeyCodeForKeyLocation(KeyEvent.KEYCODE_R));
+                    KeyEvent.KEYCODE_R, mInputDevice.getKeyCodeForKeyLocation(KeyEvent.KEYCODE_R));
             assertEquals("Key location KEYCODE_T should map to KEYCODE_T on a French layout.",
-                    KeyEvent.KEYCODE_T, device.getKeyCodeForKeyLocation(KeyEvent.KEYCODE_T));
+                    KeyEvent.KEYCODE_T, mInputDevice.getKeyCodeForKeyLocation(KeyEvent.KEYCODE_T));
             assertEquals("Key location KEYCODE_Y should map to KEYCODE_Y on a French layout.",
-                    KeyEvent.KEYCODE_Y, device.getKeyCodeForKeyLocation(KeyEvent.KEYCODE_Y));
+                    KeyEvent.KEYCODE_Y, mInputDevice.getKeyCodeForKeyLocation(KeyEvent.KEYCODE_Y));
         } finally {
             // clean up to make sure this test doesn't affect other test cases
-            removeKeyboardLayout(device, germanLayoutId);
-            removeKeyboardLayout(device, englishLayoutId);
-            removeKeyboardLayout(device, frenchLayoutId);
+            removeKeyboardLayout(mInputDevice, germanLayoutId);
+            removeKeyboardLayout(mInputDevice, englishLayoutId);
+            removeKeyboardLayout(mInputDevice, frenchLayoutId);
             assertNull(
-                    mInputManager.getCurrentKeyboardLayoutForInputDevice(device.getIdentifier()));
+                    mInputManager.getCurrentKeyboardLayoutForInputDevice(
+                            mInputDevice.getIdentifier()));
         }
     }
 
     @Test
     public void testGetKeyCodeForKeyLocationWithInvalidKeyCode() {
-        final InputDevice device = getInputDevice(
-                (d) -> d.getKeyboardType() == InputDevice.KEYBOARD_TYPE_ALPHABETIC);
-        assertNotNull(device);
-        assertEquals(KeyEvent.KEYCODE_UNKNOWN, device.getKeyCodeForKeyLocation(-10));
+        assertEquals(KeyEvent.KEYCODE_UNKNOWN, mInputDevice.getKeyCodeForKeyLocation(-10));
         assertEquals(KeyEvent.KEYCODE_UNKNOWN,
-                device.getKeyCodeForKeyLocation(KeyEvent.getMaxKeyCode() + 1));
+                mInputDevice.getKeyCodeForKeyLocation(KeyEvent.getMaxKeyCode() + 1));
     }
 
     /**
@@ -171,10 +173,9 @@ public class KeyboardLayoutChangeTest extends InputHidTestCase {
      * @param layoutDescriptor the layout descriptor.
      */
     private void removeKeyboardLayout(InputDevice device, String layoutDescriptor) {
-        SystemUtil.runWithShellPermissionIdentity(() -> {
-            mInputManager.removeKeyboardLayoutForInputDevice(device.getIdentifier(),
-                    layoutDescriptor);
-        }, Manifest.permission.SET_KEYBOARD_LAYOUT);
+        SystemUtil.runWithShellPermissionIdentity(
+                () -> mInputManager.removeKeyboardLayoutForInputDevice(device.getIdentifier(),
+                        layoutDescriptor), Manifest.permission.SET_KEYBOARD_LAYOUT);
     }
 
     /**
@@ -204,15 +205,12 @@ public class KeyboardLayoutChangeTest extends InputHidTestCase {
      * @param layoutDescriptor The layout to which the current keyboard layout is set to.
      */
     private void setCurrentKeyboardLayout(InputDevice device, String layoutDescriptor) {
-        SystemUtil.runWithShellPermissionIdentity(() -> {
-            mInputManager.setCurrentKeyboardLayoutForInputDevice(device.getIdentifier(),
-                    layoutDescriptor);
-        }, Manifest.permission.SET_KEYBOARD_LAYOUT);
-        // The input devices will be reconfigured (async) after changing the keyboard layout.
-        // Once the device state is updated, the callback should be called
-        mInOrderInputDeviceChangedListener.verify(mInputDeviceChangedListener,
-                timeout(KEYBOARD_LAYOUT_CHANGE_TIMEOUT)).onInputDeviceChanged(
-                eq(device.getId()));
+        final int currCount = mInputDeviceChangeCount.get();
+        SystemUtil.runWithShellPermissionIdentity(
+                () -> mInputManager.setCurrentKeyboardLayoutForInputDevice(device.getIdentifier(),
+                        layoutDescriptor), Manifest.permission.SET_KEYBOARD_LAYOUT);
+        PollingCheck.waitFor(KEYBOARD_LAYOUT_CHANGE_TIMEOUT,
+                () -> mInputDeviceChangeCount.get() == currCount + 1);
     }
 
     public static class CtsKeyboardLayoutProvider extends BroadcastReceiver {
