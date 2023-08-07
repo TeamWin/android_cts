@@ -280,8 +280,31 @@ public final class DevicePolicy {
         }
     }
 
+    /**
+     * See {@link DevicePolicyManager#setNextOperationSafety(int, int)}.
+     */
+    public void setNextOperationSafety(
+            CommonDevicePolicy.DevicePolicyOperation operation,
+            CommonDevicePolicy.OperationSafetyReason reason) {
+        try (PermissionContext p = TestApis.permissions().withPermission(
+                MANAGE_DEVICE_ADMINS, INTERACT_ACROSS_USERS)) {
+            devicePolicyManager().setNextOperationSafety(operation.getValue(), reason.getValue());
+        }
+    }
+
+    /**
+     * See {@link DevicePolicyManager#lockNow()}.
+     */
+    public void lockNow() {
+        devicePolicyManager().lockNow();
+    }
+
+    private DevicePolicyManager devicePolicyManager() {
+        return TestApis.context().instrumentedContext().getSystemService(DevicePolicyManager.class);
+    }
+
     private DevicePolicyManager devicePolicyManager(UserReference user) {
-        return TestApis.context().instrumentedContextAsUser(user)
+        return TestApis.context().androidContextAsUser(user)
                 .getSystemService(DevicePolicyManager.class);
     }
 

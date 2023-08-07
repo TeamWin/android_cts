@@ -37,13 +37,6 @@ public final class DevicePolicySafetyCheckerIntegrationTest extends BaseProfileO
     }
 
     /**
-     * Tests {@link DevicePolicyManager#isSafeOperation(int)}.
-     */
-    public void testIsSafeOperation() {
-        mTester.testIsSafeOperation(mDevicePolicyManager);
-    }
-
-    /**
      * Tests {@link android.app.admin.UnsafeStateException} properties.
      */
     public void testUnsafeStateException() {
