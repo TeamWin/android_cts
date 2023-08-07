@@ -56,6 +56,8 @@ public final class DeviceTestConstants {
     public static final TestInfo TEST_IME_SWITCHING_WITHOUT_WINDOW_FOCUS_AFTER_DISPLAY_OFF_ON =
             new TestInfo(PACKAGE, SERVICE_TEST,
                     "testImeSwitchingWithoutWindowFocusAfterDisplayOffOn");
+    public static final TestInfo TEST_SWITCH_TO_HANDWRITING_INPUT =
+            new TestInfo(PACKAGE, SERVICE_TEST, "testSwitchToHandwritingInputMethod");
 
     /**
      * Device test class: ShellCommandDeviceTest.
