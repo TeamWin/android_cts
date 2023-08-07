@@ -93,6 +93,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -118,6 +119,10 @@ public class TestUtils {
     public static final String DELETE_FILE_QUERY = "android.scopedstorage.cts.deletefile";
     public static final String DELETE_MEDIA_BY_URI_QUERY =
             "android.scopedstorage.cts.deletemediabyuri";
+    public static final String UPDATE_MEDIA_BY_URI_QUERY =
+            "android.scopedstorage.cts.update_media_by_uri";
+    public static final String QUERY_MEDIA_BY_URI_QUERY =
+            "android.scopedstorage.cts.query_media_by_uri";
     public static final String DELETE_RECURSIVE_QUERY = "android.scopedstorage.cts.deleteRecursive";
     public static final String CAN_OPEN_FILE_FOR_READ_QUERY =
             "android.scopedstorage.cts.can_openfile_read";
@@ -410,6 +415,36 @@ public class TestUtils {
     public static int deleteMediaByUriAs(TestApp testApp, Uri uri) throws Exception {
         final String actionName = DELETE_MEDIA_BY_URI_QUERY;
         return getFromTestApp(testApp, uri, actionName).getInt(actionName);
+    }
+
+    /**
+     * Makes the given {@code testApp} update the media rows for the given {@code uri} by
+     * updating values for the provided {@code attributes}.
+     *
+     * <p>This method drops shell permission identity.
+     */
+    public static boolean updateMediaByUriAs(TestApp testApp, Uri uri, Bundle attributes)
+            throws Exception {
+        final String actionName = UPDATE_MEDIA_BY_URI_QUERY;
+        return getFromTestApp(testApp, uri, actionName, attributes).getBoolean(actionName);
+    }
+
+    /**
+     * Makes the given {@code testApp} query media file by the given {@code uri}
+     * and {@code projection}. An empty result will be returned if {@code uri}
+     * indicates location of multiple files or no files at all.
+     *
+     * <p>This method drops shell permission identity.
+     */
+    public static Bundle queryMediaByUriAs(TestApp testApp, Uri uri, Set<String> projection)
+            throws Exception {
+        final String actionName = QUERY_MEDIA_BY_URI_QUERY;
+        final Bundle bundle = new Bundle();
+        for (String columnName : projection) {
+            bundle.putString(columnName, "");
+        }
+
+        return getFromTestApp(testApp, uri, actionName, bundle).getBundle(actionName);
     }
 
     /**
