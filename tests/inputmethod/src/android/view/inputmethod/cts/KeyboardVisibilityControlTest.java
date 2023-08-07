@@ -495,6 +495,7 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
     }
 
     @Test
+    @FlakyTest(bugId = 294840051)
     public void testShowHideKeyboardOnWebView() throws Exception {
         final PackageManager pm =
                 mInstrumentation.getContext().getPackageManager();
