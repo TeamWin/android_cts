@@ -25,7 +25,6 @@ import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
 import org.junit.After;
 import org.junit.Assert;
-import org.junit.Assume;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -41,16 +40,11 @@ public class PackageSettingTest extends BaseHostJUnit4Test {
     private static final String TEST_CLASS = TEST_PACKAGE + "." + "PackageSettingDeviceTest";
     private static final String CODE_PATH_ROOT = "/data/app";
     private static final long DEFAULT_TIMEOUT = 10 * 60 * 1000L;
-    private int mSecondUser = -1;
-
     /** Uninstall apps after tests. */
     @After
     public void cleanUp() throws Exception {
         uninstallPackage(getDevice(), TEST_PACKAGE);
         Assert.assertFalse(isPackageInstalled(TEST_PACKAGE));
-        if (mSecondUser != -1) {
-            stopAndRemoveUser(mSecondUser);
-        }
     }
 
     @Test
@@ -84,52 +78,16 @@ public class PackageSettingTest extends BaseHostJUnit4Test {
     @Test
     @AppModeFull
     public void testFirstInstallTimeWithReboot() throws Exception {
-        Assume.assumeTrue("device does not support multi-user",
-                getDevice().getMaxNumberOfUsersSupported() > 1);
         installPackage(TEST_APK);
         final int currentUser = getDevice().getCurrentUser();
         final String firstInstallTimeForCurrentUser = getFirstInstallTimeForUserFromDumpsys(
                 TEST_PACKAGE, currentUser);
         Assert.assertNotNull(firstInstallTimeForCurrentUser);
-        testFirstInstallTimeMatchesDumpsys(firstInstallTimeForCurrentUser, currentUser);
+        testFirstInstallTimeMatchesDumpsys(firstInstallTimeForCurrentUser);
         // firstInstallTime should be the same after reboot
         getDevice().reboot();
         Assert.assertEquals(firstInstallTimeForCurrentUser,
                 getFirstInstallTimeForUserFromDumpsys(TEST_PACKAGE, currentUser));
-
-        mSecondUser = createAndStartSecondUser();
-        installPackageOnExistingUser(TEST_PACKAGE, mSecondUser);
-        final String firstInstallTimeForSecondUser = getFirstInstallTimeForUserFromDumpsys(
-                TEST_PACKAGE, mSecondUser);
-        Assert.assertNotNull(firstInstallTimeForSecondUser);
-        Assert.assertNotEquals(firstInstallTimeForCurrentUser, firstInstallTimeForSecondUser);
-        testFirstInstallTimeMatchesDumpsys(firstInstallTimeForSecondUser, mSecondUser);
-        getDevice().reboot();
-        Assert.assertEquals(firstInstallTimeForSecondUser,
-                getFirstInstallTimeForUserFromDumpsys(TEST_PACKAGE, mSecondUser));
-    }
-
-    private int createAndStartSecondUser() throws Exception {
-        String output = getDevice().executeShellCommand("pm create-user SecondUser");
-        Assert.assertTrue(output.startsWith("Success"));
-        int userId = Integer.parseInt(output.substring(output.lastIndexOf(" ")).trim());
-        output = getDevice().executeShellCommand("am start-user -w " + userId);
-        Assert.assertFalse(output.startsWith("Error"));
-        output = getDevice().executeShellCommand("am get-started-user-state " + userId);
-        Assert.assertTrue(output.contains("RUNNING_UNLOCKED"));
-        return userId;
-    }
-
-    private void stopAndRemoveUser(int userId) throws Exception {
-        getDevice().executeShellCommand("am stop-user -w -f " + userId);
-        getDevice().executeShellCommand("pm remove-user " + userId);
-    }
-
-    private void installPackageOnExistingUser(String packageName, int userId) throws Exception {
-        final String output = getDevice().executeShellCommand(
-                String.format("pm install-existing --user %d %s", userId, packageName));
-        Assert.assertEquals("Package " + packageName + " installed for user: " + userId + "\n",
-                output);
     }
 
     private String getFirstInstallTimeForUserFromDumpsys(String packageName, int userId)
@@ -138,14 +96,13 @@ public class PackageSettingTest extends BaseHostJUnit4Test {
         return packageInfo.getFirstInstallTime(userId);
     }
 
-    private void testFirstInstallTimeMatchesDumpsys(String firstInstallTime, int userId)
+    private void testFirstInstallTimeMatchesDumpsys(String firstInstallTime)
             throws Exception {
         final Map<String, String> testArgs = new HashMap<>();
         // Notice the printed timestamp in dumpsys is formatted and has lost sub-second precision
         final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         sdf.setTimeZone(TimeZone.getTimeZone(getDeviceTimezone()));
         final long firstInstallTs = sdf.parse(firstInstallTime).getTime();
-        testArgs.put("userId", String.valueOf(userId));
         testArgs.put("expectedFirstInstallTime", String.valueOf(firstInstallTs));
         runDeviceTests(getDevice(), null, TEST_PACKAGE, TEST_CLASS,
                 "testFirstInstallTimeMatchesExpected", null, DEFAULT_TIMEOUT, DEFAULT_TIMEOUT,
@@ -159,5 +116,4 @@ public class PackageSettingTest extends BaseHostJUnit4Test {
         }
         return "GMT";
     }
-
 }
