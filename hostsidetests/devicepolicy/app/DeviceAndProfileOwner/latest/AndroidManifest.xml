@@ -56,21 +56,6 @@
                 <action android:name="com.android.bedstead.dpmwrapper.action.WRAPPED_MANAGER_CALL"/>
             </intent-filter>
         </receiver>
-        <activity android:name="com.android.cts.deviceandprofileowner.ExampleIntentReceivingActivity1"
-             android:exported="true">
-            <intent-filter>
-                <action android:name="com.android.cts.deviceandprofileowner.EXAMPLE_ACTION"/>
-                <category android:name="android.intent.category.DEFAULT"/>
-            </intent-filter>
-        </activity>
-
-        <activity android:name="com.android.cts.deviceandprofileowner.ExampleIntentReceivingActivity2"
-             android:exported="true">
-            <intent-filter>
-                <action android:name="com.android.cts.deviceandprofileowner.EXAMPLE_ACTION"/>
-                <category android:name="android.intent.category.DEFAULT"/>
-            </intent-filter>
-        </activity>
 
         <activity android:name=".SetPolicyActivity"
              android:launchMode="singleTop"

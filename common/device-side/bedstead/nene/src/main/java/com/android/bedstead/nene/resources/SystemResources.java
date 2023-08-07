@@ -16,27 +16,19 @@
 
 package com.android.bedstead.nene.resources;
 
-import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.annotations.Experimental;
 
 /**
- * TestApi to access resources.
+ * TestApi to access system level resources.
  */
 @Experimental
-public final class Resources extends ResourcesWrapper {
+public final class SystemResources extends ResourcesWrapper {
 
-    public static final Resources sInstance = new Resources(
-            TestApis.context().instrumentedContext().getResources());
+    private static final android.content.res.Resources sResources =
+            android.content.res.Resources.getSystem();
+    static final SystemResources sInstance = new SystemResources(sResources);
 
-    private Resources(android.content.res.Resources resources) {
+    private SystemResources(android.content.res.Resources resources) {
         super(resources);
     }
-
-    /**
-     * Get reference to system level resources.
-     */
-    public SystemResources system() {
-        return SystemResources.sInstance;
-    }
-
 }
