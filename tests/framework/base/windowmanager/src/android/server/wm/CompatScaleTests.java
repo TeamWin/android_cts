@@ -73,9 +73,9 @@ public class CompatScaleTests extends ActivityManagerTestBase {
     /**
      * If application size is 1280, then Upscaling by 0.3 will make the surface 1280/0.3 = 4267.
      * Some devices do not support this high resolution, so limiting Upscaling test case for
-     * scaling >= 0.35.
+     * scaling >= 0.5.
      */
-    public static float MAX_UPSCALING_TESTED = 0.35f;
+    public static float MAX_UPSCALING_TESTED = 0.5f;
 
     @Parameterized.Parameters(name = "{0}")
     public static Iterable<Object[]> data() {
