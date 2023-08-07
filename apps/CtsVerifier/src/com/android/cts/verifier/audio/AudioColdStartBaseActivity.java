@@ -177,14 +177,14 @@ public abstract class AudioColdStartBaseActivity
         int id = v.getId();
         if (id == R.id.audioJavaApiBtn) {
             stopAudio();
-            updateTestStateButtons();
             clearResults();
+            updateTestStateButtons();
             mAudioApi = BuilderBase.TYPE_JAVA;
             mNumExchangeFrames = StreamBase.getNumBurstFrames(mAudioApi);
         } else if (id == R.id.audioNativeApiBtn) {
             stopAudio();
-            updateTestStateButtons();
             clearResults();
+            updateTestStateButtons();
             mAudioApi = BuilderBase.TYPE_OBOE;
             mNumExchangeFrames = StreamBase.getNumBurstFrames(mAudioApi);
         } else if (id == R.id.coldstart_run_btn) {
