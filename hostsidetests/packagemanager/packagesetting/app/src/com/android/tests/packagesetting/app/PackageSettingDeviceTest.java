@@ -19,7 +19,6 @@ package com.android.tests.packagesetting.app;
 import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
-import android.os.UserHandle;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
@@ -45,15 +44,12 @@ public class PackageSettingDeviceTest {
     @Test
     public void testFirstInstallTimeMatchesExpected() throws Exception {
         final Context context = InstrumentationRegistry.getInstrumentation().getContext();
-        String packageName =
-                InstrumentationRegistry.getInstrumentation().getContext().getPackageName();
-        String userIdStr = InstrumentationRegistry.getArguments().getString("userId");
+        String packageName = context.getPackageName();
         String expectedFirstInstallTimeStr = InstrumentationRegistry.getArguments().getString(
                 "expectedFirstInstallTime");
-        final int userId = Integer.parseInt(userIdStr);
         final long expectedFirstInstallTime = Long.parseLong(expectedFirstInstallTimeStr);
-        final Context contextAsUser = context.createContextAsUser(UserHandle.of(userId), 0);
-        PackageInfo pi = contextAsUser.getPackageManager().getPackageInfo(packageName,
+        final PackageManager packageManager = context.getPackageManager();
+        PackageInfo pi = packageManager.getPackageInfo(packageName,
                 PackageManager.PackageInfoFlags.of(0));
         Assert.assertTrue(Math.abs(expectedFirstInstallTime - pi.firstInstallTime) < 1000 /* ms */);
     }
