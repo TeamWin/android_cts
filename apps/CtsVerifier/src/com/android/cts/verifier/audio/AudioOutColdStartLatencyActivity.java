@@ -70,16 +70,18 @@ public class AudioOutColdStartLatencyActivity
     protected void onResume() {
         super.onResume();
         mTouchSoundsActive = SettingsUtils.areTouchSoundsActive(this);
-        showTouchSoundsState();
+        updateTestStateButtons();
     }
 
-    private void showTouchSoundsState() {
+    @Override
+    protected void updateTestStateButtons() {
         String message = getResources().getString(
                 mTouchSoundsActive
                         ? R.string.audio_coldstart_touchsounds_message
                         : R.string.audio_coldstart_notouchsounds_message);
         mAttributesTxt.setText(message);
-        enableTest(!mTouchSoundsActive);
+        enableTest(!mTouchSoundsActive && !mIsTestRunning);
+        mStopBtn.setEnabled(!mTouchSoundsActive && mIsTestRunning);
     }
 
     @Override
