@@ -88,6 +88,9 @@ public class MultiUserTest extends BaseHostJUnit4Test {
      */
     private ArrayList<Integer> mOriginalUsers;
 
+    /** Current user before the test runs. */
+    private int mInitialUserId;
+
     /**
      * Set up the test case
      */
@@ -96,6 +99,7 @@ public class MultiUserTest extends BaseHostJUnit4Test {
         // Skip whole tests when DUT has no android.software.input_methods feature.
         assumeTrue(hasDeviceFeature(ShellCommandUtils.FEATURE_INPUT_METHODS));
         assumeTrue(getDevice().isMultiUserSupported());
+        mInitialUserId = getDevice().getCurrentUser();
         mNeedsTearDown = true;
 
         mOriginalUsers = new ArrayList<>(getDevice().listUsers());
@@ -111,8 +115,9 @@ public class MultiUserTest extends BaseHostJUnit4Test {
         if (!mNeedsTearDown) {
             return;
         }
+        // Switch back to the initial user.
+        getDevice().switchUser(mInitialUserId);
 
-        getDevice().switchUser(getDeviceMainUserId(getDevice()));
         // We suspect that the optimization made for Bug 38143512 was a bit unstable.  Let's see
         // if adding a sleep improves the stability or not.
         RunUtil.getDefault().sleep(WAIT_AFTER_USER_SWITCH);
@@ -305,9 +310,14 @@ public class MultiUserTest extends BaseHostJUnit4Test {
         assertIme1NotCurrentInputMethodInfo(profileUserId);
     }
 
-    private static int getDeviceMainUserId(ITestDevice device) throws DeviceNotAvailableException {
-        return device.isHeadlessSystemUserMode() ? device.getPrimaryUserId() :
-                device.getMainUserId();
+    private int getDeviceMainUserId(ITestDevice device) throws Exception {
+        Integer userId = device.getMainUserId();
+
+        // Some headless surfaces like auto may not necessarily define a MAIN user.
+        if (userId == null) {
+            userId = mInitialUserId;
+        }
+        return userId;
     }
 
     private String shell(String command) {
