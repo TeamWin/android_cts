@@ -799,7 +799,7 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
             clearTargetSdkWarning()
         }
 
-        val useLegacyNavigation = isWatch || isTv || isAutomotive || manuallyNavigate
+        val useLegacyNavigation = isWatch || isAutomotive || manuallyNavigate
         if (useLegacyNavigation) {
             navigateToAppPermissionSettings()
             val permissionLabel = getPermissionLabel(permission)
@@ -843,7 +843,7 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
         if (targetSdk <= MAX_SDK_FOR_SDK_WARNING) {
             clearTargetSdkWarning(QUICK_CHECK_TIMEOUT_MILLIS)
         }
-        val useLegacyNavigation = isWatch || isAutomotive || isTv || manuallyNavigate
+        val useLegacyNavigation = isWatch || isAutomotive || manuallyNavigate
         if (useLegacyNavigation) {
             navigateToAppPermissionSettings()
         }
