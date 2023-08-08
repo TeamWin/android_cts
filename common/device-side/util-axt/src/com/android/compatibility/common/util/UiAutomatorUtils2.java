@@ -172,7 +172,7 @@ public class UiAutomatorUtils2 {
         if (scrollable != null && scrollable.exists()) {
             final Rect scrollableBounds = scrollable.getVisibleBounds();
             final int distanceToSwipe = collapsingToolbar.getVisibleBounds().height() / 2;
-            getUiDevice().drag(scrollableBounds.centerX(), scrollableBounds.centerY(),
+            getUiDevice().swipe(scrollableBounds.centerX(), scrollableBounds.centerY(),
                     scrollableBounds.centerX(), scrollableBounds.centerY() - distanceToSwipe,
                     steps);
         } else {
