@@ -39,6 +39,17 @@
         android:layout_toRightOf="@id/nls_status"
         android:text="@string/nls_enable_service" />
 
+    <ImageView
+        android:id="@+id/nls_instructions_image"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:adjustViewBounds="true"
+        android:scaleType="centerInside"
+        android:layout_below="@id/nls_instructions"
+        android:layout_toRightOf="@id/nls_status"
+        android:layout_alignParentRight="true"
+        android:visibility="gone" />
+
     <Button
         android:id="@+id/iva_action_button_pass"
         android:layout_width="wrap_content"
@@ -68,7 +79,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentRight="true"
-        android:layout_below="@id/nls_instructions"
+        android:layout_below="@id/nls_instructions_image"
         android:layout_marginLeft="20dip"
         android:layout_marginRight="20dip"
         android:layout_toRightOf="@id/nls_status"
