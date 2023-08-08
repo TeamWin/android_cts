@@ -59,6 +59,7 @@ import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 import static org.testng.Assert.assertThrows;
+import static org.testng.Assert.expectThrows;
 
 import android.annotation.NonNull;
 import android.app.Activity;
@@ -2120,6 +2121,10 @@ public class PackageManagerTest {
         SystemUtil.runShellCommand("pm uninstall " + packageName);
     }
 
+    private void uninstallPackageKeepData(String packageName) {
+        SystemUtil.runShellCommand("pm uninstall -k " + packageName);
+    }
+
     private static boolean isAppInstalled(String packageName) throws IOException {
         final String commandResult = SystemUtil.runShellCommand("pm list packages");
         final int prefixLength = "package:".length();
@@ -2738,6 +2743,34 @@ public class PackageManagerTest {
                 .getInstallSourceInfo(HELLO_WORLD_PACKAGE_NAME);
         assertEquals(SHELL_PACKAGE_NAME, installSourceInfo.getInitiatingPackageName());
         assertEquals(PACKAGE_NAME, installSourceInfo.getInstallingPackageName());
+    }
+
+    @Test
+    public void testUninstallWithKeepData() throws Exception {
+        installPackage(HELLO_WORLD_APK);
+        final String oldDataDir = mPackageManager.getPackageInfo(HELLO_WORLD_PACKAGE_NAME,
+                PackageManager.PackageInfoFlags.of(0))
+                .applicationInfo.dataDir;
+        uninstallPackageKeepData(HELLO_WORLD_PACKAGE_NAME);
+        assertFalse(isAppInstalled(HELLO_WORLD_PACKAGE_NAME));
+        // Test query with MATCH_UNINSTALLED_PACKAGES
+        final PackageInfo packageInfo = mPackageManager.getPackageInfo(HELLO_WORLD_PACKAGE_NAME,
+                PackageManager.PackageInfoFlags.of(MATCH_UNINSTALLED_PACKAGES));
+        assertEquals(HELLO_WORLD_PACKAGE_NAME, packageInfo.packageName);
+        // Test that signing info is still available
+        assertNotNull(packageInfo.signingInfo);
+        // Test that the app's data directory is preserved and matches dumpsys
+        final String newDataDir = packageInfo.applicationInfo.dataDir;
+        assertFalse(newDataDir.isEmpty());
+        assertEquals(oldDataDir, newDataDir);
+        final String appDirInDump = parsePackageDump(HELLO_WORLD_PACKAGE_NAME, "    dataDir=");
+        assertEquals(appDirInDump, newDataDir);
+        assertNotNull(packageInfo.applicationInfo.storageUuid);
+        // Fully clean up and test that the query fails
+        uninstallPackage(HELLO_WORLD_PACKAGE_NAME);
+        expectThrows(NameNotFoundException.class,
+                () -> mPackageManager.getPackageInfo(HELLO_WORLD_PACKAGE_NAME,
+                        PackageManager.PackageInfoFlags.of(MATCH_UNINSTALLED_PACKAGES)));
     }
 
     private void sendIntent(IntentSender intentSender) throws IntentSender.SendIntentException {
