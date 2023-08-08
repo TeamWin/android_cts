@@ -17,8 +17,10 @@
 package android.car.cts;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assert.assertThrows;
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 import android.car.Car;
@@ -26,15 +28,18 @@ import android.car.remoteaccess.CarRemoteAccessManager;
 import android.car.remoteaccess.CarRemoteAccessManager.CompletableRemoteTaskFuture;
 import android.car.remoteaccess.CarRemoteAccessManager.RemoteTaskClientCallback;
 import android.car.remoteaccess.RemoteTaskClientRegistrationInfo;
-import android.content.Context;
 import android.platform.test.annotations.AppModeFull;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.car.remoteaccess.CarRemoteAccessDumpProto;
+import com.android.car.remoteaccess.CarRemoteAccessDumpProto.ServerlessClientInfo;
 import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.PollingCheck;
+import com.android.compatibility.common.util.ProtoUtils;
 import com.android.internal.annotations.GuardedBy;
 
 import org.junit.Before;
@@ -48,6 +53,9 @@ public final class CarRemoteAccessManagerTest extends AbstractCarTestCase {
     private static final String TAG = CarRemoteAccessManagerTest.class.getSimpleName();
     private static final int CALLBACK_WAIT_TIME_MS = 2_000;
     private static final String INVALID_TASK_ID = "THIS_ID_CANNOT_BE_VALID_!@#$%^&*()";
+    private static final String DUMP_COMMAND =
+            "dumpsys car_service --services CarRemoteAccessService --proto";
+    private static final String SERVERLESS_CLIENT_ID = "TestServerlessClientId";
 
     private Executor mExecutor;
     private CarRemoteAccessManager mCarRemoteAccessManager;
@@ -57,19 +65,40 @@ public final class CarRemoteAccessManagerTest extends AbstractCarTestCase {
         assumeTrue("CarRemoteAccessService is not enabled, skipping test",
                 getCar().isFeatureEnabled(Car.CAR_REMOTE_ACCESS_SERVICE));
 
-        Context context = InstrumentationRegistry.getInstrumentation().getContext();
-        mExecutor = context.getMainExecutor();
+        mExecutor = mContext.getMainExecutor();
         mCarRemoteAccessManager = (CarRemoteAccessManager) getCar()
                 .getCarManager(Car.CAR_REMOTE_ACCESS_SERVICE);
         assertThat(mCarRemoteAccessManager).isNotNull();
     }
 
+    private boolean isTestPkgServerlessClient() {
+        try {
+            CarRemoteAccessDumpProto dump = ProtoUtils.getProto(
+                    InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+                    CarRemoteAccessDumpProto.class, DUMP_COMMAND);
+
+            for  (int i = 0; i < dump.getServerlessClientsCount(); i++) {
+                ServerlessClientInfo serverlessClientInfo = dump.getServerlessClients(i);
+                if (serverlessClientInfo.getPackageName().equals(mContext.getPackageName())) {
+                    return true;
+                }
+            }
+        } catch (Exception e) {
+            Log.w(TAG, "Failed to check whether this test is a serverless remote task client"
+                    + ", default to false", e);
+        }
+
+        return false;
+    }
+
     @Test
     @ApiTest(apis = {
-            "android.car.remoteaccess.CarRemoteAccessManager#"
-                    + "setRemoteTaskClient(Executor, RemoteTaskClientCallback)",
+            "android.car.remoteaccess.CarRemoteAccessManager#setRemoteTaskClient",
     })
-    public void testSetRemoteTaskClient() {
+    public void testSetRemoteTaskClient_regularClient() throws Exception {
+        assumeFalse("This test requires the test package to be a regular remote task client",
+                isTestPkgServerlessClient());
+
         RemoteTaskClientCallbackImpl callback = new RemoteTaskClientCallbackImpl();
 
         mCarRemoteAccessManager.setRemoteTaskClient(mExecutor, callback);
@@ -82,8 +111,34 @@ public final class CarRemoteAccessManagerTest extends AbstractCarTestCase {
 
     @Test
     @ApiTest(apis = {
-            "android.car.remoteaccess.CarRemoteAccessManager#"
-                    + "setRemoteTaskClient(Executor, RemoteTaskClientCallback)",
+            "android.car.remoteaccess.CarRemoteAccessManager#setRemoteTaskClient"
+    })
+    public void testSetRemoteTaskClient_serverlessClient() throws Exception {
+        String packageName = mContext.getPackageName();
+        mCarRemoteAccessManager.addServerlessRemoteTaskClient(packageName, SERVERLESS_CLIENT_ID);
+
+        assertWithMessage(
+                "This test requires the test package to be a serverless remote task client").that(
+                isTestPkgServerlessClient()).isTrue();
+
+        try {
+            RemoteTaskClientCallbackImpl callback = new RemoteTaskClientCallbackImpl();
+
+            mCarRemoteAccessManager.setRemoteTaskClient(mExecutor, callback);
+
+            PollingCheck.waitFor(CALLBACK_WAIT_TIME_MS,
+                    () -> callback.isServerlessClientRegistered());
+        } finally {
+            mCarRemoteAccessManager.removeServerlessRemoteTaskClient(packageName);
+        }
+    }
+
+    /**
+     * Tests that calling {@code setRemoteTaskClient} twice from the same client is not allowed.
+     */
+    @Test
+    @ApiTest(apis = {
+            "android.car.remoteaccess.CarRemoteAccessManager#setRemoteTaskClient"
     })
     public void testSetRemoteTaskClient_withAlreadyRegisteredClient() {
         RemoteTaskClientCallbackImpl callbackOne = new RemoteTaskClientCallbackImpl();
@@ -98,8 +153,7 @@ public final class CarRemoteAccessManagerTest extends AbstractCarTestCase {
 
     @Test
     @ApiTest(apis = {
-            "android.car.remoteaccess.CarRemoteAccessManager#"
-                    + "setRemoteTaskClient(Executor, RemoteTaskClientCallback)",
+            "android.car.remoteaccess.CarRemoteAccessManager#setRemoteTaskClient",
             "android.car.remoteaccess.CarRemoteAccessManager#clearRemoteTaskClient"
     })
     public void testClearRemoteTaskClient() {
@@ -120,7 +174,7 @@ public final class CarRemoteAccessManagerTest extends AbstractCarTestCase {
 
     @Test
     @ApiTest(apis = {
-            "android.car.remoteaccess.CarRemoteAccessManager#reportRemoteTaskDone(String)"
+            "android.car.remoteaccess.CarRemoteAccessManager#reportRemoteTaskDone"
     })
     public void testReportRemoteTaskDone_unregisteredClient() {
         assertThrows(IllegalStateException.class,
@@ -143,11 +197,20 @@ public final class CarRemoteAccessManagerTest extends AbstractCarTestCase {
 
         @GuardedBy("mLock")
         private RemoteTaskClientRegistrationInfo mInfo;
+        @GuardedBy("mLock")
+        private boolean mServerlessClientRegistered;
 
         @Override
         public void onRegistrationUpdated(@NonNull RemoteTaskClientRegistrationInfo info) {
             synchronized (mLock) {
                 mInfo = info;
+            }
+        }
+
+        @Override
+        public void onServerlessClientRegistered() {
+            synchronized (mLock) {
+                mServerlessClientRegistered = true;
             }
         }
 
@@ -166,25 +229,44 @@ public final class CarRemoteAccessManagerTest extends AbstractCarTestCase {
 
         public String getServiceId() {
             synchronized (mLock) {
+                if (mInfo == null) {
+                    return null;
+                }
                 return mInfo.getVehicleId();
             }
         }
 
         public String getVehicleId() {
+
             synchronized (mLock) {
+                if (mInfo == null) {
+                    return null;
+                }
                 return mInfo.getVehicleId();
             }
         }
 
         public String getProcessorId() {
             synchronized (mLock) {
+                if (mInfo == null) {
+                    return null;
+                }
                 return mInfo.getProcessorId();
             }
         }
 
         public String getClientId() {
             synchronized (mLock) {
+                if (mInfo == null) {
+                    return null;
+                }
                 return mInfo.getClientId();
+            }
+        }
+
+        public boolean isServerlessClientRegistered() {
+            synchronized (mLock) {
+                return mServerlessClientRegistered;
             }
         }
     }
