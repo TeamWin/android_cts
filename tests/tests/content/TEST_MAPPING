@@ -8,6 +8,19 @@
         },
         {
           "exclude-annotation": "org.junit.Ignore"
+        },
+        {
+          "exclude-filter": "android.content.pm.cts.PackageManagerShellCommandMultiUserTest"
+        }
+      ]
+    }
+  ],
+  "postsubmit": [
+    {
+      "name": "CtsPackageManagerTestCases",
+      "options": [
+        {
+          "include-filter": "android.content.pm.cts.PackageManagerShellCommandMultiUserTest"
         }
       ]
     }
