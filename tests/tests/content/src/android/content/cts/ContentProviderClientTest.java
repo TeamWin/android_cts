@@ -17,6 +17,7 @@
 package android.content.cts;
 
 import static org.mockito.Mockito.RETURNS_DEFAULTS;
+import static org.mockito.Mockito.after;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
@@ -130,7 +131,7 @@ public class ContentProviderClientTest extends AndroidTestCase {
 
         testTimeout(() -> mContentProviderClient.query(URI, null, ARGS, mCancellationSignal));
 
-        verify(mIContentProvider).query(mAttributionSource, URI, null, ARGS,
+        verify(mIContentProvider, after(150)).query(mAttributionSource, URI, null, ARGS,
                 mICancellationSignal);
     }
 
@@ -151,7 +152,7 @@ public class ContentProviderClientTest extends AndroidTestCase {
 
         testTimeout(() -> mContentProviderClient.getType(URI));
 
-        verify(mIContentProvider).getType(mAttributionSource, URI);
+        verify(mIContentProvider, after(150)).getType(mAttributionSource, URI);
     }
 
     public void testGetStreamTypes() throws RemoteException {
@@ -165,7 +166,7 @@ public class ContentProviderClientTest extends AndroidTestCase {
 
         testTimeout(() -> mContentProviderClient.getStreamTypes(URI, ""));
 
-        verify(mIContentProvider).getStreamTypes(mAttributionSource, URI, "");
+        verify(mIContentProvider, after(150)).getStreamTypes(mAttributionSource, URI, "");
     }
 
     public void testCanonicalize() throws RemoteException {
@@ -178,7 +179,7 @@ public class ContentProviderClientTest extends AndroidTestCase {
 
         testTimeout(() -> mContentProviderClient.canonicalize(URI));
 
-        verify(mIContentProvider).canonicalize(mAttributionSource, URI);
+        verify(mIContentProvider, after(150)).canonicalize(mAttributionSource, URI);
     }
 
     public void testUncanonicalize() throws RemoteException {
@@ -191,7 +192,7 @@ public class ContentProviderClientTest extends AndroidTestCase {
 
         testTimeout(() -> mContentProviderClient.uncanonicalize(URI));
 
-        verify(mIContentProvider).uncanonicalize(mAttributionSource, URI);
+        verify(mIContentProvider, after(150)).uncanonicalize(mAttributionSource, URI);
     }
 
     public void testRefresh() throws RemoteException {
@@ -206,7 +207,7 @@ public class ContentProviderClientTest extends AndroidTestCase {
 
         testTimeout(() -> mContentProviderClient.refresh(URI, ARGS, mCancellationSignal));
 
-        verify(mIContentProvider).refresh(mAttributionSource, URI, ARGS,
+        verify(mIContentProvider, after(150)).refresh(mAttributionSource, URI, ARGS,
                 mICancellationSignal);
     }
 
@@ -227,7 +228,7 @@ public class ContentProviderClientTest extends AndroidTestCase {
 
         testTimeout(() -> mContentProviderClient.insert(URI, VALUES, EXTRAS));
 
-        verify(mIContentProvider).insert(mAttributionSource, URI, VALUES, EXTRAS);
+        verify(mIContentProvider, after(150)).insert(mAttributionSource, URI, VALUES, EXTRAS);
     }
 
     public void testBulkInsert() throws RemoteException {
@@ -241,7 +242,7 @@ public class ContentProviderClientTest extends AndroidTestCase {
 
         testTimeout(() -> mContentProviderClient.bulkInsert(URI, VALUES_ARRAY));
 
-        verify(mIContentProvider).bulkInsert(mAttributionSource, URI, VALUES_ARRAY);
+        verify(mIContentProvider, after(150)).bulkInsert(mAttributionSource, URI, VALUES_ARRAY);
     }
 
     public void testDelete() throws RemoteException {
@@ -254,7 +255,7 @@ public class ContentProviderClientTest extends AndroidTestCase {
 
         testTimeout(() -> mContentProviderClient.delete(URI, EXTRAS));
 
-        verify(mIContentProvider).delete(mAttributionSource, URI, EXTRAS);
+        verify(mIContentProvider, after(150)).delete(mAttributionSource, URI, EXTRAS);
     }
 
     public void testUpdate() throws RemoteException {
@@ -268,7 +269,7 @@ public class ContentProviderClientTest extends AndroidTestCase {
 
         testTimeout(() -> mContentProviderClient.update(URI, VALUES, EXTRAS));
 
-        verify(mIContentProvider).update(mAttributionSource, URI, VALUES, EXTRAS);
+        verify(mIContentProvider, after(150)).update(mAttributionSource, URI, VALUES, EXTRAS);
     }
 
     public void testOpenFile() throws RemoteException, FileNotFoundException {
@@ -284,7 +285,8 @@ public class ContentProviderClientTest extends AndroidTestCase {
 
         testTimeout(() -> mContentProviderClient.openFile(URI, MODE, mCancellationSignal));
 
-        verify(mIContentProvider).openFile(mAttributionSource, URI, MODE, mICancellationSignal);
+        verify(mIContentProvider, after(150)).openFile(mAttributionSource, URI, MODE,
+                mICancellationSignal);
     }
 
     public void testOpenFileAlreadyCancelled() throws Exception {
@@ -307,7 +309,7 @@ public class ContentProviderClientTest extends AndroidTestCase {
 
         testTimeout(() -> mContentProviderClient.openAssetFile(URI, MODE, mCancellationSignal));
 
-        verify(mIContentProvider).openAssetFile(mAttributionSource, URI, MODE,
+        verify(mIContentProvider, after(150)).openAssetFile(mAttributionSource, URI, MODE,
                 mICancellationSignal);
     }
 
@@ -341,8 +343,8 @@ public class ContentProviderClientTest extends AndroidTestCase {
         testTimeout(() -> mContentProviderClient.openTypedAssetFile(URI, MODE, ARGS,
                 mCancellationSignal));
 
-        verify(mIContentProvider).openTypedAssetFile(mAttributionSource, URI, MODE, ARGS,
-                mICancellationSignal);
+        verify(mIContentProvider, after(150)).openTypedAssetFile(mAttributionSource, URI, MODE,
+                ARGS, mICancellationSignal);
     }
 
     public void testOpenTypedAssetFileAlreadyCancelled() throws Exception {
@@ -367,7 +369,7 @@ public class ContentProviderClientTest extends AndroidTestCase {
 
         testTimeout(() -> mContentProviderClient.applyBatch(AUTHORITY, OPS));
 
-        verify(mIContentProvider).applyBatch(mAttributionSource, AUTHORITY, OPS);
+        verify(mIContentProvider, after(150)).applyBatch(mAttributionSource, AUTHORITY, OPS);
     }
 
     public void testCall() throws RemoteException {
@@ -382,7 +384,8 @@ public class ContentProviderClientTest extends AndroidTestCase {
 
         testTimeout(() -> mContentProviderClient.call(AUTHORITY, METHOD, ARG, ARGS));
 
-        verify(mIContentProvider).call(mAttributionSource, AUTHORITY, METHOD, ARG, ARGS);
+        verify(mIContentProvider, after(150)).call(mAttributionSource, AUTHORITY, METHOD, ARG,
+                ARGS);
     }
 
     private void testTimeout(Function function) throws InterruptedException {
