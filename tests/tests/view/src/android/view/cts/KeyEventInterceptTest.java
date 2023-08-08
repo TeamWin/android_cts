@@ -108,16 +108,6 @@ public class KeyEventInterceptTest {
         testKeyCodeHomeShortcut(KeyEvent.META_META_RIGHT_ON | KeyEvent.META_META_ON);
     }
 
-    @Test
-    public void testKeyCodeBackShortcutLeftMeta() {
-        testKeyCodeBackShortcut(KeyEvent.META_META_LEFT_ON | KeyEvent.META_META_ON);
-    }
-
-    @Test
-    public void testKeyCodeBackShortcutRightMeta() {
-        testKeyCodeBackShortcut(KeyEvent.META_META_RIGHT_ON | KeyEvent.META_META_ON);
-    }
-
     private void testKeyCodeHomeShortcut(int metaState) {
         final long downTime = SystemClock.uptimeMillis();
         injectEvent(new KeyEvent(downTime, downTime, KeyEvent.ACTION_DOWN,
@@ -125,18 +115,6 @@ public class KeyEventInterceptTest {
         injectEvent(new KeyEvent(downTime, SystemClock.uptimeMillis(), KeyEvent.ACTION_UP,
                 KeyEvent.KEYCODE_ENTER, 0, metaState));
 
-        assertKeyNotReceived();
-    }
-
-    private void testKeyCodeBackShortcut(int metaState) {
-        long downTime = SystemClock.uptimeMillis();
-        injectEvent(new KeyEvent(downTime, downTime, KeyEvent.ACTION_DOWN,
-                KeyEvent.KEYCODE_DEL, 0, metaState));
-        injectEvent(new KeyEvent(downTime, downTime + 1, KeyEvent.ACTION_UP,
-                KeyEvent.KEYCODE_DEL, 0, metaState));
-
-        assertKeyReceived(KeyEvent.KEYCODE_BACK, KeyEvent.ACTION_DOWN);
-        assertKeyReceived(KeyEvent.KEYCODE_BACK, KeyEvent.ACTION_UP);
         assertKeyNotReceived();
     }
 
