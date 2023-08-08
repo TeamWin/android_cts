@@ -154,6 +154,7 @@ public class BackGestureInvokedTest extends ActivityManagerTestBase {
         launchActivity(componentName);
         mWmState.waitForActivityState(componentName, STATE_RESUMED);
         mWmState.assertVisibility(componentName, true);
+        mWmState.waitAndAssertImeWindowShownOnDisplay(DEFAULT_DISPLAY);
 
         triggerBackEventByGesture(DEFAULT_DISPLAY);
 
