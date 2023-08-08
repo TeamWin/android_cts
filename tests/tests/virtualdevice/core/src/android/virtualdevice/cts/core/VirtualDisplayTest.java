@@ -16,11 +16,11 @@
 
 package android.virtualdevice.cts;
 
-import static android.Manifest.permission.ACTIVITY_EMBEDDING;
 import static android.Manifest.permission.ADD_ALWAYS_UNLOCKED_DISPLAY;
 import static android.Manifest.permission.ADD_TRUSTED_DISPLAY;
 import static android.Manifest.permission.CREATE_VIRTUAL_DEVICE;
 import static android.Manifest.permission.WAKE_LOCK;
+import static android.virtualdevice.cts.common.util.VirtualDeviceTestUtils.createDefaultVirtualDisplayConfigBuilder;
 
 import static androidx.test.core.app.ApplicationProvider.getApplicationContext;
 
@@ -79,14 +79,12 @@ public class VirtualDisplayTest {
 
     private static final VirtualDeviceParams DEFAULT_VIRTUAL_DEVICE_PARAMS =
             new VirtualDeviceParams.Builder().build();
-    private static final VirtualDisplayConfig VIRTUAL_DISPLAY_CONFIG =
-            new VirtualDisplayConfig.Builder(DISPLAY_NAME, DISPLAY_WIDTH, DISPLAY_HEIGHT,
-                    DISPLAY_DPI).build();
+    private static final VirtualDisplayConfig DEFAULT_VIRTUAL_DISPLAY_CONFIG =
+            createDefaultVirtualDisplayConfigBuilder().build();
 
     @Rule
     public AdoptShellPermissionsRule mAdoptShellPermissionsRule = new AdoptShellPermissionsRule(
             InstrumentationRegistry.getInstrumentation().getUiAutomation(),
-            ACTIVITY_EMBEDDING,
             ADD_ALWAYS_UNLOCKED_DISPLAY,
             ADD_TRUSTED_DISPLAY,
             CREATE_VIRTUAL_DEVICE,
@@ -135,14 +133,14 @@ public class VirtualDisplayTest {
                         DEFAULT_VIRTUAL_DEVICE_PARAMS);
 
         VirtualDisplay virtualDisplay = mVirtualDevice.createVirtualDisplay(
-                VIRTUAL_DISPLAY_CONFIG, Runnable::run, mVirtualDisplayCallback);
+                DEFAULT_VIRTUAL_DISPLAY_CONFIG, Runnable::run, mVirtualDisplayCallback);
         mDisplayListener.waitForOnDisplayAddedCallback();
 
         assertThat(virtualDisplay).isNotNull();
         Display display = virtualDisplay.getDisplay();
         assertThat(display.isValid()).isTrue();
-        assertThat(display.getWidth()).isEqualTo(VIRTUAL_DISPLAY_CONFIG.getWidth());
-        assertThat(display.getHeight()).isEqualTo(VIRTUAL_DISPLAY_CONFIG.getHeight());
+        assertThat(display.getWidth()).isEqualTo(DEFAULT_VIRTUAL_DISPLAY_CONFIG.getWidth());
+        assertThat(display.getHeight()).isEqualTo(DEFAULT_VIRTUAL_DISPLAY_CONFIG.getHeight());
         assertThat(mDisplayListener.getObservedAddedDisplays()).containsExactly(
                 Integer.valueOf(display.getDisplayId()));
     }
@@ -174,7 +172,96 @@ public class VirtualDisplayTest {
     }
 
     @Test
-    public void createVirtualDisplay_alwaysUnlocked_shouldSpecifyFlagInVirtualDisplays() {
+    public void createVirtualDisplay_defaultVirtualDisplayFlags() {
+        mVirtualDevice =
+                mVirtualDeviceManager.createVirtualDevice(
+                        mFakeAssociationRule.getAssociationInfo().getId(),
+                        DEFAULT_VIRTUAL_DEVICE_PARAMS);
+
+        VirtualDisplay virtualDisplay = mVirtualDevice.createVirtualDisplay(
+                DEFAULT_VIRTUAL_DISPLAY_CONFIG, Runnable::run, mVirtualDisplayCallback);
+        mDisplayListener.waitForOnDisplayAddedCallback();
+
+        Display display = virtualDisplay.getDisplay();
+        assertThat(display.isValid()).isTrue();
+        assertThat(display.getFlags()).isEqualTo(
+                Display.FLAG_PRIVATE | Display.FLAG_TOUCH_FEEDBACK_DISABLED);
+        // Private displays always destroy their content on removal
+        assertThat(display.getRemoveMode()).isEqualTo(Display.REMOVE_MODE_DESTROY_CONTENT);
+        assertThat(mDisplayListener.getObservedAddedDisplays()).containsExactly(
+                display.getDisplayId());
+    }
+
+    @Test
+    public void createVirtualDisplay_publicDisplayDoesNotRemoveContentByDefault() {
+        mVirtualDevice =
+                mVirtualDeviceManager.createVirtualDevice(
+                        mFakeAssociationRule.getAssociationInfo().getId(),
+                        DEFAULT_VIRTUAL_DEVICE_PARAMS);
+
+        VirtualDisplayConfig config = createDefaultVirtualDisplayConfigBuilder()
+                .setFlags(DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC
+                        | DisplayManager.VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY)
+                .build();
+        VirtualDisplay virtualDisplay = mVirtualDevice.createVirtualDisplay(
+                config, Runnable::run, mVirtualDisplayCallback);
+        mDisplayListener.waitForOnDisplayAddedCallback();
+
+        Display display = virtualDisplay.getDisplay();
+        assertThat(display.isValid()).isTrue();
+        assertThat(display.getFlags()).isEqualTo(Display.FLAG_TOUCH_FEEDBACK_DISABLED);
+        assertThat(display.getRemoveMode()).isEqualTo(Display.REMOVE_MODE_MOVE_CONTENT_TO_PRIMARY);
+        assertThat(mDisplayListener.getObservedAddedDisplays()).containsExactly(
+                display.getDisplayId());
+    }
+
+    @Test
+    public void createVirtualDisplay_autoMirrorIsDefaultForPublicDisplays() {
+        mVirtualDevice =
+                mVirtualDeviceManager.createVirtualDevice(
+                        mFakeAssociationRule.getAssociationInfo().getId(),
+                        DEFAULT_VIRTUAL_DEVICE_PARAMS);
+
+        VirtualDisplayConfig config = createDefaultVirtualDisplayConfigBuilder()
+                .setFlags(DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC)
+                .build();
+
+        // TODO(b/286849916): Assert that the auto-mirror display is created.
+        assertThrows(SecurityException.class,
+                () -> mVirtualDevice.createVirtualDisplay(
+                        config, Runnable::run, mVirtualDisplayCallback));
+    }
+
+    @Test
+    public void createVirtualDisplay_trustedDisplay_shouldSpecifyOwnFocusFlag() {
+        mVirtualDevice =
+                mVirtualDeviceManager.createVirtualDevice(
+                        mFakeAssociationRule.getAssociationInfo().getId(),
+                        new VirtualDeviceParams.Builder()
+                                .setDevicePolicy(VirtualDeviceParams.POLICY_TYPE_RECENTS,
+                                        VirtualDeviceParams.DEVICE_POLICY_CUSTOM)
+                                .build());
+
+        VirtualDisplayConfig config = createDefaultVirtualDisplayConfigBuilder()
+                .setFlags(DisplayManager.VIRTUAL_DISPLAY_FLAG_TRUSTED)
+                .build();
+        VirtualDisplay virtualDisplay = mVirtualDevice.createVirtualDisplay(
+                config, Runnable::run, mVirtualDisplayCallback);
+        mDisplayListener.waitForOnDisplayAddedCallback();
+
+        assertThat(virtualDisplay).isNotNull();
+        Display display = virtualDisplay.getDisplay();
+        assertThat(display.isValid()).isTrue();
+        assertThat(display.getFlags()).isEqualTo(Display.FLAG_TOUCH_FEEDBACK_DISABLED
+                | Display.FLAG_TRUSTED
+                | Display.FLAG_PRIVATE
+                | Display.FLAG_OWN_FOCUS);
+        assertThat(mDisplayListener.getObservedAddedDisplays()).containsExactly(
+                display.getDisplayId());
+    }
+
+    @Test
+    public void createVirtualDisplay_alwaysUnlocked_shouldSpecifyAlwaysUnlockedFlag() {
         mVirtualDevice =
                 mVirtualDeviceManager.createVirtualDevice(
                         mFakeAssociationRule.getAssociationInfo().getId(),
@@ -183,14 +270,12 @@ public class VirtualDisplayTest {
                                 .build());
 
         VirtualDisplay virtualDisplay = mVirtualDevice.createVirtualDisplay(
-                VIRTUAL_DISPLAY_CONFIG, Runnable::run, mVirtualDisplayCallback);
+                DEFAULT_VIRTUAL_DISPLAY_CONFIG, Runnable::run, mVirtualDisplayCallback);
         mDisplayListener.waitForOnDisplayAddedCallback();
 
         assertThat(virtualDisplay).isNotNull();
         Display display = virtualDisplay.getDisplay();
         assertThat(display.isValid()).isTrue();
-        assertThat(display.getWidth()).isEqualTo(VIRTUAL_DISPLAY_CONFIG.getWidth());
-        assertThat(display.getHeight()).isEqualTo(VIRTUAL_DISPLAY_CONFIG.getHeight());
         int displayFlags = display.getFlags();
         assertWithMessage(
                 String.format(
@@ -203,22 +288,40 @@ public class VirtualDisplayTest {
     }
 
     @Test
+    public void createVirtualDisplay_customRecents_shouldSpecifyDisplayRemoveMode() {
+        mVirtualDevice =
+                mVirtualDeviceManager.createVirtualDevice(
+                        mFakeAssociationRule.getAssociationInfo().getId(),
+                        new VirtualDeviceParams.Builder()
+                                .setDevicePolicy(VirtualDeviceParams.POLICY_TYPE_RECENTS,
+                                        VirtualDeviceParams.DEVICE_POLICY_CUSTOM)
+                                .build());
+
+        VirtualDisplay virtualDisplay = mVirtualDevice.createVirtualDisplay(
+                DEFAULT_VIRTUAL_DISPLAY_CONFIG, Runnable::run, mVirtualDisplayCallback);
+        mDisplayListener.waitForOnDisplayAddedCallback();
+
+        assertThat(virtualDisplay).isNotNull();
+        Display display = virtualDisplay.getDisplay();
+        assertThat(display.isValid()).isTrue();
+        assertThat(display.getRemoveMode()).isEqualTo(Display.REMOVE_MODE_DESTROY_CONTENT);
+        assertThat(mDisplayListener.getObservedAddedDisplays()).containsExactly(
+                display.getDisplayId());
+    }
+
+    @Test
     public void createVirtualDisplay_nullExecutorAndCallback_shouldSucceed() {
         mVirtualDevice =
                 mVirtualDeviceManager.createVirtualDevice(
                         mFakeAssociationRule.getAssociationInfo().getId(),
                         DEFAULT_VIRTUAL_DEVICE_PARAMS);
         VirtualDisplay virtualDisplay = mVirtualDevice.createVirtualDisplay(
-                VIRTUAL_DISPLAY_CONFIG,
-                /* executor= */ null,
-                /* callback= */ null);
+                DEFAULT_VIRTUAL_DISPLAY_CONFIG, /* executor= */ null, /* callback= */ null);
         mDisplayListener.waitForOnDisplayAddedCallback();
 
         assertThat(virtualDisplay).isNotNull();
         Display display = virtualDisplay.getDisplay();
         assertThat(display.isValid()).isTrue();
-        assertThat(display.getWidth()).isEqualTo(VIRTUAL_DISPLAY_CONFIG.getWidth());
-        assertThat(display.getHeight()).isEqualTo(VIRTUAL_DISPLAY_CONFIG.getHeight());
         assertThat(mDisplayListener.getObservedAddedDisplays()).containsExactly(
                 Integer.valueOf(display.getDisplayId()));
     }
@@ -230,9 +333,10 @@ public class VirtualDisplayTest {
                         mFakeAssociationRule.getAssociationInfo().getId(),
                         DEFAULT_VIRTUAL_DEVICE_PARAMS);
 
-        assertThrows(NullPointerException.class, () ->
-                mVirtualDevice.createVirtualDisplay(
-                        VIRTUAL_DISPLAY_CONFIG, /*executor=*/ null, mVirtualDisplayCallback));
+        assertThrows(NullPointerException.class,
+                () -> mVirtualDevice.createVirtualDisplay(
+                        DEFAULT_VIRTUAL_DISPLAY_CONFIG, /*executor=*/ null,
+                        mVirtualDisplayCallback));
     }
 
     @Test
@@ -244,7 +348,7 @@ public class VirtualDisplayTest {
         ArrayList<VirtualDisplay> displays = new ArrayList<>();
         for (int i = 0; i < 5; i++) {
             displays.add(mVirtualDevice.createVirtualDisplay(
-                    VIRTUAL_DISPLAY_CONFIG, Runnable::run, mVirtualDisplayCallback));
+                    DEFAULT_VIRTUAL_DISPLAY_CONFIG, Runnable::run, mVirtualDisplayCallback));
         }
 
         // Releasing several displays in quick succession should not cause deadlock
@@ -264,7 +368,7 @@ public class VirtualDisplayTest {
         ArrayList<VirtualDisplay> displays = new ArrayList<>();
         for (int i = 0; i < 5; i++) {
             displays.add(mVirtualDevice.createVirtualDisplay(
-                    VIRTUAL_DISPLAY_CONFIG, Runnable::run, mVirtualDisplayCallback));
+                    DEFAULT_VIRTUAL_DISPLAY_CONFIG, Runnable::run, mVirtualDisplayCallback));
         }
 
         // Closing the virtual device should automatically release displays.
@@ -285,7 +389,7 @@ public class VirtualDisplayTest {
         ArrayList<VirtualDisplay> displays = new ArrayList<>();
         for (int i = 0; i < 5; i++) {
             displays.add(mVirtualDevice.createVirtualDisplay(
-                    VIRTUAL_DISPLAY_CONFIG, Runnable::run, mVirtualDisplayCallback));
+                    DEFAULT_VIRTUAL_DISPLAY_CONFIG, Runnable::run, mVirtualDisplayCallback));
         }
 
         // Releasing and closing the device should result in each display being released only once.
@@ -304,7 +408,7 @@ public class VirtualDisplayTest {
                         mFakeAssociationRule.getAssociationInfo().getId(),
                         DEFAULT_VIRTUAL_DEVICE_PARAMS);
         VirtualDisplay virtualDisplay = mVirtualDevice.createVirtualDisplay(
-                VIRTUAL_DISPLAY_CONFIG, Runnable::run, mVirtualDisplayCallback);
+                DEFAULT_VIRTUAL_DISPLAY_CONFIG, Runnable::run, mVirtualDisplayCallback);
 
         assertThat(mVirtualDeviceManager.getDeviceIdForDisplayId(
                 virtualDisplay.getDisplay().getDisplayId())).isEqualTo(
@@ -318,7 +422,7 @@ public class VirtualDisplayTest {
                         mFakeAssociationRule.getAssociationInfo().getId(),
                         DEFAULT_VIRTUAL_DEVICE_PARAMS);
         VirtualDisplay virtualDisplay = mVirtualDevice.createVirtualDisplay(
-                VIRTUAL_DISPLAY_CONFIG, Runnable::run, mVirtualDisplayCallback);
+                DEFAULT_VIRTUAL_DISPLAY_CONFIG, Runnable::run, mVirtualDisplayCallback);
         virtualDisplay.release();
         mDisplayListener.waitForOnDisplayRemovedCallback();
 
@@ -343,7 +447,7 @@ public class VirtualDisplayTest {
                         mFakeAssociationRule.getAssociationInfo().getId(),
                         DEFAULT_VIRTUAL_DEVICE_PARAMS);
         VirtualDisplay virtualDisplay = mVirtualDevice.createVirtualDisplay(
-                VIRTUAL_DISPLAY_CONFIG, Runnable::run, mVirtualDisplayCallback);
+                DEFAULT_VIRTUAL_DISPLAY_CONFIG, Runnable::run, mVirtualDisplayCallback);
 
         mVirtualDevice.close();
         mDisplayListener.waitForOnDisplayRemovedCallback();
