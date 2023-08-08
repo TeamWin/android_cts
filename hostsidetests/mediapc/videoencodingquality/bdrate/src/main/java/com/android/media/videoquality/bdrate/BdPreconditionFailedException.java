@@ -26,8 +26,15 @@ package com.android.media.videoquality.bdrate;
  *   <li>Non-overlapping rate-distortion curves.
  * </ul>
  */
-public class BdRateCalculationFailedPreconditionException extends RuntimeException {
-    public BdRateCalculationFailedPreconditionException(String message) {
+public class BdPreconditionFailedException extends RuntimeException {
+    private final boolean mIsTargetCurve;
+
+    public BdPreconditionFailedException(String message, boolean isTargetCurve) {
         super(message);
+        mIsTargetCurve = isTargetCurve;
+    }
+
+    public boolean isTargetCurve() {
+        return mIsTargetCurve;
     }
 }

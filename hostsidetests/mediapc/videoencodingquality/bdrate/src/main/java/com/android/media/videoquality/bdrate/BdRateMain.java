@@ -16,6 +16,7 @@
 
 package com.android.media.videoquality.bdrate;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -34,6 +35,7 @@ import java.nio.file.Path;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.logging.ConsoleHandler;
@@ -66,16 +68,20 @@ import java.util.logging.Logger;
  */
 public class BdRateMain {
     private static final Logger LOGGER = Logger.getLogger(BdRateMain.class.getName());
-    private static final double VERSION = 1.03;
+    private static final double VERSION = 1.05;
 
     private static final NumberFormat NUMBER_FORMAT = new DecimalFormat("0.00");
     private final Gson mGson;
 
     private final BdRateCalculator mBdRateCalculator;
 
-    public BdRateMain(Gson gson, BdRateCalculator bdRateCalculator) {
+    private final BdQualityCalculator mBdQualityCalculator;
+
+    public BdRateMain(
+            Gson gson, BdRateCalculator bdRateCalculator, BdQualityCalculator bdQualityCalculator) {
         mGson = gson;
         mBdRateCalculator = bdRateCalculator;
+        mBdQualityCalculator = bdQualityCalculator;
     }
 
     @Option(
@@ -90,6 +96,9 @@ public class BdRateMain {
             required = true)
     private Path mTestVmafFile;
 
+    @Option(name = "-v", usage = "If set, prints the version and then exits.", required = false)
+    private boolean mVersion;
+
     public void run(String[] args) {
         CmdLineParser parser = new CmdLineParser(this);
         LOGGER.info(String.format("cts-media-videoquality-bdrate v%.02f", VERSION));
@@ -98,6 +107,10 @@ public class BdRateMain {
             parser.parseArgument(args);
         } catch (CmdLineException e) {
             throw new IllegalArgumentException("Unable to parse command-line flags!", e);
+        }
+
+        if (mVersion) {
+            System.exit(0);
         }
 
         LOGGER.info(String.format("Reading reference configuration JSON file: %s", mRefJsonFile));
@@ -126,17 +139,71 @@ public class BdRateMain {
                 "Successfully loaded rate-distortion data: ",
                 refConfig.referenceCurve(),
                 veqTestResult.curve());
-        LOGGER.info(String.format("Calculating BD-RATE for %s", refConfig.referenceFile()));
+        LOGGER.info(
+                String.format(
+                        "Checking Video Encoding Quality (VEQ) for %s", refConfig.referenceFile()));
 
-        double bdRateResult =
-                mBdRateCalculator.calculate(refConfig.referenceCurve(), veqTestResult.curve());
-        LOGGER.info(String.format("BD-RATE: %.04f (%.02f%%)", bdRateResult, bdRateResult * 100));
+        checkVeq(
+                mBdRateCalculator,
+                mBdQualityCalculator,
+                refConfig.referenceCurve(),
+                veqTestResult.curve(),
+                refConfig.referenceThreshold());
+    }
 
-        if (bdRateResult > refConfig.referenceThreshold()) {
-            throw new BdRateGreaterThanThresholdException(
-                    "BD-RATE is higher than threshold.",
-                    refConfig.referenceThreshold(),
-                    bdRateResult);
+    /**
+     * Checks the video encoding quality of the target curve against the reference curve using
+     * Bjontegaard-Delta (BD) values, throwing a {@link VeqResultCheckFailureException} if the
+     * result is greater than the allowed threshold.
+     *
+     * @throws IllegalArgumentException if neither BD-RATE nor BD-QUALITY can be calculated for the
+     *     provided curves, which occurs when the curves do not overlap in any dimension.
+     * @throws BdPreconditionFailedException if the provided data is insufficient for BD
+     *     calculations.
+     */
+    @VisibleForTesting
+    static void checkVeq(
+            BdRateCalculator bdRateCalculator,
+            BdQualityCalculator bdQualityCalculator,
+            RateDistortionCurve baseline,
+            RateDistortionCurve target,
+            double threshold) {
+        RateDistortionCurvePair curvePair =
+                RateDistortionCurvePair.createClusteredPair(baseline, target);
+
+        if (curvePair.canCalculateBdRate()) {
+            LOGGER.info("Calculating BD-RATE...");
+
+            double bdRateResult = bdRateCalculator.calculate(curvePair);
+            LOGGER.info(
+                    String.format("BD-RATE: %.04f (%.02f%%)", bdRateResult, bdRateResult * 100));
+
+            if (bdRateResult > threshold) {
+                throw new VeqResultCheckFailureException(
+                        "BD-RATE is higher than threshold.", threshold, bdRateResult);
+            }
+        } else if (curvePair.canCalculateBdQuality()) {
+            LOGGER.warning("Unable to calculate BD-RATE, falling back to checking BD-QUALITY...");
+
+            double bdQualityResult = bdQualityCalculator.calculate(curvePair);
+            LOGGER.info(String.format("BD-QUALITY: %.02f", bdQualityResult));
+
+            double percentageQualityChange =
+                    bdQualityResult
+                            / Arrays.stream(curvePair.baseline().getDistortionsArray())
+                                    .average()
+                                    .getAsDouble();
+
+            // Since distortion is measured as a higher == better value, invert
+            // the percentage so that it can be compared equivalently with the threshold.
+            if (percentageQualityChange * -1 > threshold) {
+                throw new VeqResultCheckFailureException(
+                        "BD-QUALITY is higher than threshold.", threshold, bdQualityResult);
+            }
+        } else {
+            throw new IllegalArgumentException(
+                    "Cannot calculate BD-RATE or BD-QUALITY. Reference configuration likely does "
+                            + "not match the test result data.");
         }
     }
 
@@ -217,9 +284,10 @@ public class BdRateMain {
                                             ReferenceConfig.class,
                                             new ReferenceConfig.Deserializer())
                                     .create(),
-                            BdRateCalculator.create())
+                            BdRateCalculator.create(),
+                            BdQualityCalculator.create())
                     .run(args);
-        } catch (BdRateGreaterThanThresholdException bdgtte) {
+        } catch (VeqResultCheckFailureException bdgtte) {
             LOGGER.log(
                     Level.SEVERE,
                     String.format(
@@ -227,9 +295,9 @@ public class BdRateMain {
                                     + " (%.04f) which was greater than the test-defined threshold"
                                     + " of"
                                     + " (%.04f)",
-                            bdgtte.getBdRate(), bdgtte.getThreshold()));
+                            bdgtte.getBdResult(), bdgtte.getThreshold()));
             System.exit(1);
-        } catch (BdRateCalculationFailedPreconditionException bdfpe) {
+        } catch (BdPreconditionFailedException bdfpe) {
             LOGGER.log(
                     Level.SEVERE,
                     String.format("Unable to calculate BD-RATE because: %s", bdfpe.getMessage()));

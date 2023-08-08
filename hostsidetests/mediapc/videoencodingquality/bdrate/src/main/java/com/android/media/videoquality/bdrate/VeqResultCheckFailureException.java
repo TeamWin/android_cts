@@ -22,14 +22,14 @@ package com.android.media.videoquality.bdrate;
  *
  * <p>This indicates that a device has failed the VEQ test.
  */
-public class BdRateGreaterThanThresholdException extends RuntimeException {
+public class VeqResultCheckFailureException extends RuntimeException {
     private final double mThreshold;
-    private final double mBdRate;
+    private final double mBdResult;
 
-    public BdRateGreaterThanThresholdException(String message, double threshold, double bdRate) {
+    public VeqResultCheckFailureException(String message, double threshold, double bdResult) {
         super(message);
         mThreshold = threshold;
-        mBdRate = bdRate;
+        this.mBdResult = bdResult;
     }
 
     /** Returns the threshold value defined for the test. */
@@ -38,7 +38,7 @@ public class BdRateGreaterThanThresholdException extends RuntimeException {
     }
 
     /** Returns the calculated BD-RATE value. */
-    public double getBdRate() {
-        return mBdRate;
+    public double getBdResult() {
+        return mBdResult;
     }
 }
