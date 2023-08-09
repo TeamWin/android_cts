@@ -25,25 +25,22 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.AssetFileDescriptor;
 import android.media.AudioAttributes;
-import android.media.AudioDeviceInfo;
 import android.media.AudioFocusRequest;
 import android.media.AudioManager;
 import android.media.AudioManager.OnAudioFocusChangeListener;
-import android.media.AudioRouting;
 import android.media.MediaPlayer;
+import android.media.audio.cts.R;
 import android.media.cts.TestUtils;
 import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
-import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.AppModeSdkSandbox;
 import android.util.Log;
 
 import com.android.compatibility.common.util.CtsAndroidTestCase;
 import com.android.compatibility.common.util.NonMainlineTest;
 
-import java.util.Arrays;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
@@ -52,7 +49,7 @@ import java.util.concurrent.TimeUnit;
 public class AudioFocusTest extends CtsAndroidTestCase {
     private static final String TAG = "AudioFocusTest";
 
-    private static final int TEST_TIMING_TOLERANCE_MS = 200;
+    private static final int TEST_TIMING_TOLERANCE_MS = 100;
     private static final long MEDIAPLAYER_PREPARE_TIMEOUT_MS = 2000;
 
     private static final AudioAttributes ATTR_DRIVE_DIR = new AudioAttributes.Builder()
@@ -568,174 +565,6 @@ public class AudioFocusTest extends CtsAndroidTestCase {
         }
     }
 
-    private void runDuckedUidsTest(String testName, AudioAttributes mediaAttributes,
-                                   boolean expectDuck) throws Exception {
-        if (hasAutomotiveFeature(getContext())) {
-            Log.i(TAG, "Test " + testName + " skipped: not required for Auto platform");
-            return;
-        }
-        // for query of fade out duration and focus request/abandon test methods
-        getInstrumentation().getUiAutomation().adoptShellPermissionIdentity(
-                Manifest.permission.QUERY_AUDIO_STATE,
-                Manifest.permission.MODIFY_AUDIO_SETTINGS_PRIVILEGED);
-        final AudioManager am = new AudioManager(getContext());
-
-        java.util.List<Integer> duckedUids = am.getFocusDuckedUidsForTest();
-        assertEquals("Test start, expected no ducked UIDs bug got " + duckedUids,
-                0, duckedUids.size());
-
-        final int NB_FOCUS_OWNERS = 3;
-        final AudioFocusRequest[] focusRequests = new AudioFocusRequest[NB_FOCUS_OWNERS];
-        final FocusChangeListener[] focusListeners = new FocusChangeListener[NB_FOCUS_OWNERS];
-        // index of focus owner to be tested, has an active player
-        final int FOCUS_UNDER_TEST = 0;
-        // index of focus requester used to simulate a request coming from another client
-        // on a different UID than CTS
-        final int FOCUS_HELPER_ASSIST = 1; // will simulate assistant
-        final int FOCUS_HELPER_MEDIA = 2; // will simulate another media player
-        final int FOCUS_HELPER_ASSIST_UID = Integer.MAX_VALUE;
-        final int FOCUS_HELPER_MEDIA_UID = Integer.MAX_VALUE - 2;
-        // index of another simulated focus requester
-        int[] focusRequestTypes = {
-                AudioManager.AUDIOFOCUS_GAIN /*FOCUS_UNDER_TEST*/,
-                AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK /*FOCUS_HELPER_ASSIST*/,
-                AudioManager.AUDIOFOCUS_GAIN /*FOCUS_HELPER_MEDIA*/ };
-
-        final HandlerThread handlerThread = new HandlerThread(TAG);
-        handlerThread.start();
-        final Handler handler = new Handler(handlerThread.getLooper());
-
-        final AudioAttributes assistantAttributes = new AudioAttributes.Builder()
-                .setUsage(AudioAttributes.USAGE_ASSISTANT)
-                .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
-                .build();
-        AudioAttributes[] focusAttr = {
-                mediaAttributes /*FOCUS_UNDER_TEST*/,
-                assistantAttributes /*FOCUS_HELPER_ASSIST*/,
-                mediaAttributes /*FOCUS_HELPER_MEDIA*/
-        };
-        for (int focusIndex = 0; focusIndex < NB_FOCUS_OWNERS; focusIndex++) {
-            focusListeners[focusIndex] = new FocusChangeListener();
-            focusRequests[focusIndex] = new AudioFocusRequest.Builder(focusRequestTypes[focusIndex])
-                    .setAudioAttributes(focusAttr[focusIndex])
-                    .setOnAudioFocusChangeListener(focusListeners[focusIndex], handler)
-                    .build();
-        }
-
-        MediaPlayer mp = null;
-        final String assistFocusClientId = "fakeAssistantClientId";
-        final String mediaFocusClientId = "fakeMediaClientId";
-        final int playerUnderTestUid = android.os.Process.myUid();
-        try {
-            // prevent audio focus from apps other than CTS and the fake UIDs for test
-            assertTrue(am.enterAudioFocusFreezeForTest(Arrays.asList(
-                    FOCUS_HELPER_ASSIST_UID, FOCUS_HELPER_MEDIA_UID, playerUnderTestUid)));
-            // set up the test conditions: a focus owner is playing media on a MediaPlayer
-            mp = createPreparedMediaPlayer(R.raw.sine1khzs40dblong, mediaAttributes);
-            final MediaPlayerRoutingListener routingListener = new MediaPlayerRoutingListener(mp);
-            int res = am.requestAudioFocus(focusRequests[FOCUS_UNDER_TEST]);
-            assertEquals("real focus request failed",
-                    AudioManager.AUDIOFOCUS_REQUEST_GRANTED, res);
-            mp.setLooping(true);
-            mp.start();
-            routingListener.waitForRoutingChange(2 * TEST_TIMING_TOLERANCE_MS);
-
-            // assistant use case requests focus with GAIN_TRANSIENT_MAY_DUCK
-            res = am.requestAudioFocusForTest(focusRequests[FOCUS_HELPER_ASSIST],
-                    assistFocusClientId, FOCUS_HELPER_ASSIST_UID /*fakeClientUid*/,
-                    Build.VERSION_CODES.S);
-            assertEquals("assistant (test) focus request failed",
-                    AudioManager.AUDIOFOCUS_REQUEST_GRANTED, res);
-            if (expectDuck) {
-                // after the GAIN_TRANSIENT_MAY_DUCK request, the media
-                // gets ducked (strong because assistant) by the framework,
-                // thus no focus loss is sent, but the player's UID should be in the list
-                // of the ducked UIDs (which in theory should be of size 1, but we only check it's
-                // in the list for test robustness)
-                Thread.sleep(TEST_TIMING_TOLERANCE_MS);
-                duckedUids = am.getFocusDuckedUidsForTest();
-                assertTrue("List of ducked UIDs doesn't contain the player UID ("
-                        + playerUnderTestUid + ") list:" + duckedUids,
-                        duckedUids.contains(playerUnderTestUid));
-                // check that no focus change was received by the player under test
-                assertEquals("Player shouldn't have received a focus change",
-                        AudioManager.AUDIOFOCUS_NONE,
-                        focusListeners[FOCUS_UNDER_TEST].getFocusChangeAndReset());
-            } else {
-                // after the GAIN_TRANSIENT_MAY_DUCK request,
-                // the media player under test should get LOSS_TRANSIENT_CAN_DUCK
-                focusListeners[FOCUS_UNDER_TEST].waitForFocusChange(
-                        "testDuckedUidsAfterMediaSpeech",
-                        TEST_TIMING_TOLERANCE_MS,
-                        /* shouldAcquire= */ true);
-                assertEquals("Focus loss from media to assistant not dispatched",
-                        AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK,
-                        focusListeners[FOCUS_UNDER_TEST].getFocusChangeAndReset());
-                // verify the UID of the player is not ducked
-                duckedUids = am.getFocusDuckedUidsForTest();
-                assertFalse("List of ducked UIDs contains the player UID ("
-                                + playerUnderTestUid + ") list:" + duckedUids,
-                        duckedUids.contains(playerUnderTestUid));
-            }
-
-            // another (fake) media app requests focus with GAIN, the initial focus holder should
-            // be notified of the loss now with LOSS
-            res = am.requestAudioFocusForTest(focusRequests[FOCUS_HELPER_MEDIA],
-                    mediaFocusClientId, FOCUS_HELPER_MEDIA_UID /*fakeClientUid*/,
-                    Build.VERSION_CODES.S);
-            assertEquals("media (test) focus request failed",
-                    AudioManager.AUDIOFOCUS_REQUEST_GRANTED, res);
-            focusListeners[FOCUS_UNDER_TEST].waitForFocusChange("testDuckedUids",
-                    am.getFocusFadeOutDurationForTest()
-                            + TEST_TIMING_TOLERANCE_MS,
-                    /* shouldAcquire= */ true);
-            assertEquals("Focus loss from media to assistant not dispatched",
-                    AudioManager.AUDIOFOCUS_LOSS,
-                    focusListeners[FOCUS_UNDER_TEST].getFocusChangeAndReset());
-
-            // check there is more ducking going on
-            SafeWaitObject.checkConditionFor(am.getFocusUnmuteDelayAfterFadeOutForTest() * 2,
-                    /*period*/50, () -> am.getFocusDuckedUidsForTest().size() == 0);
-            duckedUids = am.getFocusDuckedUidsForTest();
-            assertEquals("Expected no ducked UIDs, got " + duckedUids, 0, duckedUids.size());
-        } finally {
-            am.exitAudioFocusFreezeForTest();
-            handler.getLooper().quit();
-            handlerThread.quitSafely();
-            if (mp != null) {
-                mp.release();
-            }
-            am.abandonAudioFocusRequest(focusRequests[FOCUS_UNDER_TEST]);
-            am.abandonAudioFocusForTest(focusRequests[FOCUS_HELPER_ASSIST], mediaFocusClientId);
-            am.abandonAudioFocusForTest(focusRequests[FOCUS_HELPER_MEDIA], assistFocusClientId);
-            getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
-        }
-    }
-
-    @AppModeFull(reason = "Instant apps cannot hold permission.MODIFY_AUDIO_SETTINGS_PRIVILEGED")
-    public void testDuckedUidsAfterMediaMusic() throws Exception {
-        // the media requests are done on USAGE_MEDIA but CONTENT_TYPE_SPEECH so there is ducking
-        final AudioAttributes mediaAttributes = new AudioAttributes.Builder()
-                .setUsage(AudioAttributes.USAGE_MEDIA)
-                .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-                .build();
-
-        runDuckedUidsTest("testDuckedUidsAfterMediaMusic", mediaAttributes,
-                /*expectDuck*/ true); // expecting ducking because this is not SPEECH content
-    }
-
-    @AppModeFull(reason = "Instant apps cannot hold permission.MODIFY_AUDIO_SETTINGS_PRIVILEGED")
-    public void testDuckedUidsAfterMediaSpeech() throws Exception {
-        // the media requests are done on USAGE_MEDIA but CONTENT_TYPE_SPEECH so there is no ducking
-        final AudioAttributes mediaAttributes = new AudioAttributes.Builder()
-                .setUsage(AudioAttributes.USAGE_MEDIA)
-                .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
-                .build();
-
-        runDuckedUidsTest("testDuckedUidsAfterMediaSpeech", mediaAttributes,
-                /*expectDuck*/ false); // not expecting ducking because this is SPEECH content
-    }
-
     /**
      * Test there is no delayed focus loss when focus loser is playing speech
      * @throws Exception
@@ -1019,11 +848,6 @@ public class AudioFocusTest extends CtsAndroidTestCase {
 
         void waitForFocusChange(String caller, long timeoutMs, boolean shouldAcquire)
                 throws Exception {
-            synchronized (mLock) {
-                if (mFocusChange != AudioManager.AUDIOFOCUS_NONE) {
-                    return;
-                }
-            }
             boolean acquired = mChangeEventSignal.tryAcquire(timeoutMs, TimeUnit.MILLISECONDS);
             assertWithMessage(caller + " wait acquired").that(acquired).isEqualTo(shouldAcquire);
         }
@@ -1033,49 +857,6 @@ public class AudioFocusTest extends CtsAndroidTestCase {
             Log.i(TAG, "onAudioFocusChange:" + focusChange + " listener:" + this);
             synchronized (mLock) {
                 mFocusChange = focusChange;
-            }
-            mChangeEventSignal.release();
-        }
-    }
-
-    private static class MediaPlayerRoutingListener implements AudioRouting.OnRoutingChangedListener
-    {
-        private final Object mLock = new Object();
-        private final Semaphore mChangeEventSignal = new Semaphore(0);
-        private AudioDeviceInfo mRoutedToDevice = null;
-
-        MediaPlayerRoutingListener(MediaPlayer mp) {
-            mp.addOnRoutingChangedListener(this, new Handler(Looper.getMainLooper()));
-        }
-
-        AudioDeviceInfo getRoutedToDeviceAndReset() {
-            final AudioDeviceInfo route;
-            synchronized (mLock) {
-                route = mRoutedToDevice;
-                mRoutedToDevice = null;
-            }
-            mChangeEventSignal.drainPermits();
-            return route;
-        }
-
-        void waitForRoutingChange(long timeoutMs)
-                throws Exception {
-            synchronized (mLock) {
-                if (mRoutedToDevice != null) {
-                    return;
-                }
-            }
-            boolean acquired = mChangeEventSignal.tryAcquire(timeoutMs, TimeUnit.MILLISECONDS);
-            assertWithMessage("MediaPlayerRoutingListener wait acquired").that(acquired).isTrue();
-        }
-        @Override
-        public void onRoutingChanged(AudioRouting router) {
-            String type = (router.getRoutedDevice() != null)
-                    ? "type:" + router.getRoutedDevice().getType()
-                    : "none";
-            Log.i(TAG, "onRoutingChanged: " + type + " listener:" + this);
-            synchronized (mLock) {
-                mRoutedToDevice = router.getRoutedDevice();
             }
             mChangeEventSignal.release();
         }
