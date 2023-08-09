@@ -20,12 +20,11 @@ import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.RoundedCorner.POSITION_BOTTOM_LEFT;
 import static android.view.RoundedCorner.POSITION_TOP_LEFT;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeNotNull;
 import static org.junit.Assume.assumeTrue;
 
 import android.graphics.Path;
@@ -50,13 +49,13 @@ import org.junit.Test;
 @Presubmit
 @android.server.wm.annotation.Group3
 public class DisplayShapeTests extends WindowManagerTestBase {
-    private static final String TAG = "DisplayShapeTests";
 
     private Display mDisplay;
 
     @Before
     public void setUp() throws Exception {
         mDisplay = mDm.getDisplay(DEFAULT_DISPLAY);
+        assumeNotNull(mDisplay);
     }
 
     @Test
@@ -76,25 +75,23 @@ public class DisplayShapeTests extends WindowManagerTestBase {
         assumeTrue("Test does not apply for vendor image with API level lower than U",
                 PropertyUtil.isVendorApiLevelNewerThan(Build.VERSION_CODES.TIRAMISU));
 
-        boolean hasRoundedCorners = false;
-        RoundedCorner r;
+        boolean hasRoundedCorner = false;
         for (int i = POSITION_TOP_LEFT; i <= POSITION_BOTTOM_LEFT; i++) {
-            r = mDisplay.getRoundedCorner(POSITION_TOP_LEFT);
-            if (r == null) {
-                continue;
+            final RoundedCorner r = mDisplay.getRoundedCorner(i);
+            if (r != null && r.getRadius() > 0) {
+                hasRoundedCorner = true;
+                break;
             }
-            hasRoundedCorners = true;
-            break;
         }
 
-        final Path path = mDisplay.getShape().getPath();
-        final boolean isRect = path.isRect(null);
-
-        // By default, if the config for display shape is not set, the returned shape will be
-        // rectangular. The config must be set if the display has rounded corners.
-        assertThat("The display has rounded corners but the returned path is a rectangular shape."
-                + " Please set the config(config_mainDisplayShape) for display shape.",
-                isRect, not(hasRoundedCorners));
+        if (hasRoundedCorner) {
+            // If the display shape is not configured, the returned path will be rectangular if the
+            // display is not round. The config must be set if the display is not round or
+            // rectangular.
+            assertFalse("The display has a rounded corner but the shape specifies a rectangle."
+                    + " Please set the config (config_mainDisplayShape) for the display shape.",
+                    mDisplay.getShape().getPath().isRect(null));
+        }
     }
 
     @Test
