@@ -97,6 +97,7 @@ import android.graphics.PixelFormat;
 import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.drawable.Icon;
+import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
 import android.hardware.display.VirtualDisplayConfig;
 import android.media.ImageReader;
@@ -1523,6 +1524,8 @@ public class AccessibilityDisplayProxyTest {
                         "VirtualDisplay", mImageReader.getWidth(), mImageReader.getHeight(),
                         /* densityDpi= */ 240)
                         .setSurface(mImageReader.getSurface())
+                        .setFlags(DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC
+                                | DisplayManager.VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY)
                         .build(),
                 Runnable::run,
                 new VirtualDisplay.Callback(){});
