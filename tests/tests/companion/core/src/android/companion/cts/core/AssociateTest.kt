@@ -18,13 +18,17 @@ package android.companion.cts.core
 
 import android.companion.AssociationRequest
 import android.companion.CompanionDeviceManager.FLAG_CALL_METADATA
+import android.companion.cts.common.ASSOCIATION_TAG
+import android.companion.cts.common.ASSOCIATION_TAG_INVALID
 import android.companion.cts.common.MAC_ADDRESS_A
 import android.companion.cts.common.RecordingCallback
 import android.companion.cts.common.RecordingCallback.OnAssociationPending
 import android.companion.cts.common.SIMPLE_EXECUTOR
+import android.companion.cts.common.getAssociationForPackage
 import android.platform.test.annotations.AppModeFull
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertIs
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -60,16 +64,74 @@ class AssociateTest : CoreTestBase() {
         associate(MAC_ADDRESS_A)
 
         var associations = cdm.myAssociations
-        assertEquals(0,
-            associations[0].systemDataSyncFlags and FLAG_CALL_METADATA)
+        assertEquals(
+                0,
+                associations[0].systemDataSyncFlags and FLAG_CALL_METADATA
+        )
 
         cdm.enableSystemDataSyncForTypes(associations[0].id, FLAG_CALL_METADATA)
         associations = cdm.myAssociations
-        assertEquals(FLAG_CALL_METADATA,
-                associations[0].systemDataSyncFlags and FLAG_CALL_METADATA)
+        assertEquals(
+                FLAG_CALL_METADATA,
+                associations[0].systemDataSyncFlags and FLAG_CALL_METADATA
+        )
 
         cdm.disableSystemDataSyncForTypes(associations[0].id, FLAG_CALL_METADATA)
         associations = cdm.myAssociations
         assertEquals(0, associations[0].systemDataSyncFlags and FLAG_CALL_METADATA)
+    }
+
+    @Test
+    fun test_association_invalid_tag() {
+        targetApp.associate(MAC_ADDRESS_A)
+        val association = cdm.myAssociations[0]
+        // Make sure that the length of given tag must less than 20.
+        assertFailsWith(IllegalArgumentException::class) {
+            cdm.setAssociationTag(association.id, ASSOCIATION_TAG_INVALID)
+        }
+    }
+
+    @Test
+    fun test_association_tag_different_packages() = with(testApp) {
+        associate(MAC_ADDRESS_A)
+
+        val association = withShellPermissionIdentity {
+            getAssociationForPackage(userId, packageName, MAC_ADDRESS_A, cdm)
+        }
+
+        // Only the package that own the association is able to set the tag.
+        assertFailsWith(IllegalArgumentException::class) {
+            cdm.setAssociationTag(association.id, ASSOCIATION_TAG)
+        }
+
+        withShellPermissionIdentity {
+            cdm.setAssociationTag(association.id, ASSOCIATION_TAG)
+        }
+
+        val associationWithTag = withShellPermissionIdentity {
+            getAssociationForPackage(userId, packageName, MAC_ADDRESS_A, cdm)
+        }
+
+        assertEquals(expected = associationWithTag.tag, actual = ASSOCIATION_TAG)
+    }
+
+    @Test
+    fun test_association_tag() = with(targetApp) {
+        associate(MAC_ADDRESS_A)
+        val association = withShellPermissionIdentity {
+            getAssociationForPackage(userId, packageName, MAC_ADDRESS_A, cdm)
+        }
+
+        cdm.setAssociationTag(association.id, ASSOCIATION_TAG)
+
+        val associationWithTag = cdm.myAssociations[0]
+
+        assertEquals(expected = associationWithTag.tag, actual = ASSOCIATION_TAG)
+
+        cdm.clearAssociationTag(association.id)
+
+        val associationNullTag = cdm.myAssociations[0]
+
+        assertEquals(expected = associationNullTag.tag, actual = null)
     }
 }
