@@ -64,6 +64,7 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.Looper;
+import android.server.wm.WindowManagerState;
 import android.server.wm.WindowManagerStateHelper;
 import android.util.Log;
 import android.view.Display;
@@ -1307,6 +1308,13 @@ public class WallpaperManagerTest {
         });
     }
 
+    private void startAndWaitActivity() {
+        mActivityTestRule.launchActivity(null);
+        sWindowManagerStateHelper.waitAndAssertActivityState(
+                mActivityTestRule.getActivity().getComponentName(),
+                WindowManagerState.STATE_RESUMED);
+    }
+
     /**
      * Check that the windows which have the role of home screen wallpapers
      * are actually visible on home screen
@@ -1316,14 +1324,15 @@ public class WallpaperManagerTest {
         assumeTrue(mWallpaperManager.isLockscreenLiveWallpaperEnabled());
         assumeTrue("Test requires FEATURE_LIVE_WALLPAPER",
                 mContext.getPackageManager().hasSystemFeature(FEATURE_LIVE_WALLPAPER));
-        // Launch an activity that shows the wallpaper to make sure it is not behind opaque
-        // activities
-        mActivityTestRule.launchActivity(null);
         runWithShellPermissionIdentity(() -> {
             WallpaperWindowsTestUtils.WallpaperWindowsHelper wallpaperWindowsHelper =
                     new WallpaperWindowsTestUtils.WallpaperWindowsHelper(
                             sWindowManagerStateHelper);
             wallpaperWindowsHelper.showHomeScreenAndUpdate();
+
+            // Launch an activity that shows the wallpaper to make sure it is not behind
+            // opaque activities
+            startAndWaitActivity();
 
             // Two independent wallpapers
             WallpaperManagerTestUtils.goToState(mWallpaperManager,
@@ -1382,13 +1391,14 @@ public class WallpaperManagerTest {
                 mContext.getPackageManager().hasSystemFeature(FEATURE_SECURE_LOCK_SCREEN));
         assumeTrue("Test requires FEATURE_LIVE_WALLPAPER",
                 mContext.getPackageManager().hasSystemFeature(FEATURE_LIVE_WALLPAPER));
-        mActivityTestRule.launchActivity(null /* startIntent */);
 
         WallpaperWindowsTestUtils.runWithKeyguardEnabled(sWindowManagerStateHelper, () -> {
             runWithShellPermissionIdentity(() -> {
                 WallpaperWindowsTestUtils.WallpaperWindowsHelper wallpaperWindowsHelper =
                         new WallpaperWindowsTestUtils.WallpaperWindowsHelper(
                                 sWindowManagerStateHelper);
+
+                startAndWaitActivity();
 
                 WallpaperManagerTestUtils.goToState(mWallpaperManager,
                         TWO_SAME_LIVE_WALLPAPERS);
@@ -1410,13 +1420,14 @@ public class WallpaperManagerTest {
                 mContext.getPackageManager().hasSystemFeature(FEATURE_SECURE_LOCK_SCREEN));
         assumeTrue("Test requires FEATURE_LIVE_WALLPAPER",
                 mContext.getPackageManager().hasSystemFeature(FEATURE_LIVE_WALLPAPER));
-        mActivityTestRule.launchActivity(null /* startIntent */);
 
         WallpaperWindowsTestUtils.runWithKeyguardEnabled(sWindowManagerStateHelper, () -> {
             runWithShellPermissionIdentity(() -> {
                 WallpaperWindowsTestUtils.WallpaperWindowsHelper wallpaperWindowsHelper =
                         new WallpaperWindowsTestUtils.WallpaperWindowsHelper(
                                 sWindowManagerStateHelper);
+
+                startAndWaitActivity();
 
                 boolean hasTwoWindows = mWallpaperManager.isLockscreenLiveWallpaperEnabled();
                 WallpaperState wallpaperState = hasTwoWindows ? TWO_DIFFERENT_LIVE_WALLPAPERS
