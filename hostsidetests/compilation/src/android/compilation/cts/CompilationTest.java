@@ -20,8 +20,8 @@ import static com.google.common.truth.Truth.assertThat;
 
 import android.compilation.cts.annotation.CtsTestCase;
 
-import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
+import com.android.tradefed.testtype.junit4.DeviceParameterizedRunner;
 import com.android.tradefed.testtype.junit4.DeviceTestRunOptions;
 
 import org.junit.After;
@@ -31,10 +31,12 @@ import org.junit.runner.RunWith;
 
 import java.util.regex.Pattern;
 
+import junitparams.Parameters;
+
 /**
  * Compilation tests that don't require root access.
  */
-@RunWith(DeviceJUnit4ClassRunner.class)
+@RunWith(DeviceParameterizedRunner.class)
 @CtsTestCase
 public class CompilationTest extends BaseHostJUnit4Test {
     private static final String STATUS_CHECKER_PKG = "android.compilation.cts.statuscheckerapp";
@@ -122,29 +124,31 @@ public class CompilationTest extends BaseHostJUnit4Test {
     }
 
     @Test
-    public void testCompileSecondaryDex() throws Exception {
+    @Parameters({"secondary.jar", "secondary"})
+    public void testCompileSecondaryDex(String filename) throws Exception {
         var options = new DeviceTestRunOptions(STATUS_CHECKER_PKG)
                               .setTestClassName(STATUS_CHECKER_CLASS)
-                              .setTestMethodName("createAndLoadSecondaryDex");
+                              .setTestMethodName("createAndLoadSecondaryDex")
+                              .addInstrumentationArg("secondary-dex-filename", filename);
         assertThat(runDeviceTests(options)).isTrue();
 
         // Verify that the secondary dex file is recorded.
         String dump = mUtils.assertCommandSucceeds("dumpsys package " + STATUS_CHECKER_PKG);
-        checkDexoptStatus(dump, "secondary\\.jar", ".*");
+        checkDexoptStatus(dump, Pattern.quote(filename), ".*?");
 
         mUtils.assertCommandSucceeds(
                 "pm compile --secondary-dex -m speed -f " + STATUS_CHECKER_PKG);
         dump = mUtils.assertCommandSucceeds("dumpsys package " + STATUS_CHECKER_PKG);
-        checkDexoptStatus(dump, "secondary\\.jar", "speed");
+        checkDexoptStatus(dump, Pattern.quote(filename), "speed");
 
         mUtils.assertCommandSucceeds(
                 "pm compile --secondary-dex -m verify -f " + STATUS_CHECKER_PKG);
         dump = mUtils.assertCommandSucceeds("dumpsys package " + STATUS_CHECKER_PKG);
-        checkDexoptStatus(dump, "secondary\\.jar", "verify");
+        checkDexoptStatus(dump, Pattern.quote(filename), "verify");
 
         mUtils.assertCommandSucceeds("pm delete-dexopt " + STATUS_CHECKER_PKG);
         dump = mUtils.assertCommandSucceeds("dumpsys package " + STATUS_CHECKER_PKG);
-        checkDexoptStatus(dump, "secondary\\.jar", "run-from-apk");
+        checkDexoptStatus(dump, Pattern.quote(filename), "run-from-apk");
     }
 
     private void checkDexoptStatus(String dump, String dexfilePattern, String statusPattern) {
@@ -153,7 +157,8 @@ public class CompilationTest extends BaseHostJUnit4Test {
         //       x86_64: [status=speed] [reason=cmdline] [primary-abi]
         // The pattern is intentionally minimized to be as forward compatible as possible.
         // TODO(b/283447251): Use a machine-readable format.
-        assertThat(dump).containsMatch(Pattern.compile(String.format(
-                "\\b(%s)\\b[^\\n]*\\n[^\\n]*\\[status=(%s)\\]", dexfilePattern, statusPattern)));
+        assertThat(dump).containsMatch(
+                Pattern.compile(String.format("[\\s/](%s)(\\s[^\\n]*)?\\n[^\\n]*\\[status=(%s)\\]",
+                        dexfilePattern, statusPattern)));
     }
 }
