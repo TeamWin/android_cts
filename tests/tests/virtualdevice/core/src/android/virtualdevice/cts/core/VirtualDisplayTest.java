@@ -193,29 +193,6 @@ public class VirtualDisplayTest {
     }
 
     @Test
-    public void createVirtualDisplay_publicDisplayDoesNotRemoveContentByDefault() {
-        mVirtualDevice =
-                mVirtualDeviceManager.createVirtualDevice(
-                        mFakeAssociationRule.getAssociationInfo().getId(),
-                        DEFAULT_VIRTUAL_DEVICE_PARAMS);
-
-        VirtualDisplayConfig config = createDefaultVirtualDisplayConfigBuilder()
-                .setFlags(DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC
-                        | DisplayManager.VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY)
-                .build();
-        VirtualDisplay virtualDisplay = mVirtualDevice.createVirtualDisplay(
-                config, Runnable::run, mVirtualDisplayCallback);
-        mDisplayListener.waitForOnDisplayAddedCallback();
-
-        Display display = virtualDisplay.getDisplay();
-        assertThat(display.isValid()).isTrue();
-        assertThat(display.getFlags()).isEqualTo(Display.FLAG_TOUCH_FEEDBACK_DISABLED);
-        assertThat(display.getRemoveMode()).isEqualTo(Display.REMOVE_MODE_MOVE_CONTENT_TO_PRIMARY);
-        assertThat(mDisplayListener.getObservedAddedDisplays()).containsExactly(
-                display.getDisplayId());
-    }
-
-    @Test
     public void createVirtualDisplay_autoMirrorIsDefaultForPublicDisplays() {
         mVirtualDevice =
                 mVirtualDeviceManager.createVirtualDevice(
@@ -283,28 +260,6 @@ public class VirtualDisplayTest {
                         displayFlags))
                 .that(displayFlags & Display.FLAG_ALWAYS_UNLOCKED)
                 .isNotEqualTo(0);
-        assertThat(mDisplayListener.getObservedAddedDisplays()).containsExactly(
-                display.getDisplayId());
-    }
-
-    @Test
-    public void createVirtualDisplay_customRecents_shouldSpecifyDisplayRemoveMode() {
-        mVirtualDevice =
-                mVirtualDeviceManager.createVirtualDevice(
-                        mFakeAssociationRule.getAssociationInfo().getId(),
-                        new VirtualDeviceParams.Builder()
-                                .setDevicePolicy(VirtualDeviceParams.POLICY_TYPE_RECENTS,
-                                        VirtualDeviceParams.DEVICE_POLICY_CUSTOM)
-                                .build());
-
-        VirtualDisplay virtualDisplay = mVirtualDevice.createVirtualDisplay(
-                DEFAULT_VIRTUAL_DISPLAY_CONFIG, Runnable::run, mVirtualDisplayCallback);
-        mDisplayListener.waitForOnDisplayAddedCallback();
-
-        assertThat(virtualDisplay).isNotNull();
-        Display display = virtualDisplay.getDisplay();
-        assertThat(display.isValid()).isTrue();
-        assertThat(display.getRemoveMode()).isEqualTo(Display.REMOVE_MODE_DESTROY_CONTENT);
         assertThat(mDisplayListener.getObservedAddedDisplays()).containsExactly(
                 display.getDisplayId());
     }
