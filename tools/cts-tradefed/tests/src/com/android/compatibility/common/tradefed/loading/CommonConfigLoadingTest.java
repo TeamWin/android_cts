@@ -66,6 +66,8 @@ import java.util.regex.Pattern;
 public class CommonConfigLoadingTest {
 
     private static final Pattern TODO_BUG_PATTERN = Pattern.compile(".*TODO\\(b/[0-9]+\\).*", Pattern.DOTALL);
+    private static final String TEST_TYPE_KEY = "test-type";
+    private static final String TEST_TYPE_VALUE_PERFORMANCE = "performance";
 
     /**
      * List of the officially supported runners in CTS, they meet all the interfaces criteria as
@@ -253,6 +255,14 @@ public class CommonConfigLoadingTest {
             }
             // Ensure options have been set
             c.validateOptions();
+
+            // Check that no performance test module is included
+            List<String> testTypes = cd.getMetaData(TEST_TYPE_KEY);
+            if (testTypes != null && testTypes.contains(TEST_TYPE_VALUE_PERFORMANCE)) {
+                throw new ConfigurationException(
+                        String.format("config: %s. Performance test modules are not allowed in xTS",
+                                config.getName()));
+            }
         }
     }
 
