@@ -15,8 +15,12 @@
  */
 package com.android.compatibility.common.deviceinfo;
 
+import android.content.pm.PackageManager;
+
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
+
+import android.os.Build;
 
 import android.util.Log;
 
@@ -63,12 +67,20 @@ public final class ConnectivityDeviceInfo extends DeviceInfo {
         return "";
     }
 
+    private boolean hasWifi() {
+        return getContext().getPackageManager().hasSystemFeature(PackageManager.FEATURE_WIFI);
+    }
+
     @Override
     protected void collectDeviceInfo(DeviceInfoStore store) throws Exception {
-        try {
-            collectWifiStandards(store);
-        } catch (IOException e) {
-            Log.w(LOG_TAG, "Failed to collect WiFi standards", e);
+        if (hasWifi()) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                try {
+                    collectWifiStandards(store);
+                } catch (IOException e) {
+                    Log.w(LOG_TAG, "Failed to collect WiFi standards", e);
+                }
+            }
         }
     }
 
