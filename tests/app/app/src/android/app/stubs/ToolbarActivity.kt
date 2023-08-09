@@ -30,7 +30,7 @@ class ToolbarActivity : Activity() {
     protected override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.toolbar_activity)
-        toolbar = findViewById(R.id.toolbar)
+        toolbar = requireViewById(R.id.toolbar)
         setActionBar(toolbar)
     }
 
