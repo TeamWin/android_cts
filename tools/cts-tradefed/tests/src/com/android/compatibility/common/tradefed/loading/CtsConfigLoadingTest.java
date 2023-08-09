@@ -86,6 +86,7 @@ public class CtsConfigLoadingTest {
                             "networking",
                             "neuralnetworks",
                             "packagemanager",
+                            "permissions",
                             "print",
                             "renderscript",
                             "security",
