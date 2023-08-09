@@ -11,6 +11,7 @@ import android.content.Context;
 import android.location.GnssMeasurementRequest;
 import android.location.LocationManager;
 import android.os.Parcel;
+import android.os.WorkSource;
 
 import androidx.test.core.app.ApplicationProvider;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -51,21 +52,25 @@ public class GnssMeasurementRequestTest {
 
     @Test
     public void testGetValues() {
-        GnssMeasurementRequest request1 = getTestGnssMeasurementRequest(true);
+        WorkSource workSource = new WorkSource();
+        GnssMeasurementRequest request1 = getTestGnssMeasurementRequest(true, workSource);
         assertTrue(request1.isCorrelationVectorOutputsEnabled());
-        GnssMeasurementRequest request2 = getTestGnssMeasurementRequest(false);
+        assertEquals(workSource, request1.getWorkSource());
+        GnssMeasurementRequest request2 = getTestGnssMeasurementRequest(false, /* workSource= */
+                null);
+        assertNotNull(request2.getWorkSource());
         assertFalse(request2.isCorrelationVectorOutputsEnabled());
     }
 
     @Test
     public void testDescribeContents() {
-        GnssMeasurementRequest request = getTestGnssMeasurementRequest(true);
+        GnssMeasurementRequest request = getTestGnssMeasurementRequest(true, new WorkSource());
         assertEquals(request.describeContents(), 0);
     }
 
     @Test
     public void testWriteToParcel() {
-        GnssMeasurementRequest request = getTestGnssMeasurementRequest(true);
+        GnssMeasurementRequest request = getTestGnssMeasurementRequest(true, new WorkSource());
 
         Parcel parcel = Parcel.obtain();
         request.writeToParcel(parcel, 0);
@@ -77,16 +82,18 @@ public class GnssMeasurementRequestTest {
 
     @Test
     public void testEquals() {
-        GnssMeasurementRequest request1 = getTestGnssMeasurementRequest(true);
+        GnssMeasurementRequest request1 = getTestGnssMeasurementRequest(true, new WorkSource());
         GnssMeasurementRequest request2 = new GnssMeasurementRequest.Builder(request1).build();
-        GnssMeasurementRequest request3 = getTestGnssMeasurementRequest(false);
+        GnssMeasurementRequest request3 = getTestGnssMeasurementRequest(false, null);
         assertEquals(request1, request2);
         assertNotEquals(request3, request2);
     }
 
-    private GnssMeasurementRequest getTestGnssMeasurementRequest(boolean correlationVectorOutputs) {
+    private GnssMeasurementRequest getTestGnssMeasurementRequest(boolean correlationVectorOutputs,
+            WorkSource workSource) {
         GnssMeasurementRequest.Builder builder = new GnssMeasurementRequest.Builder();
-        builder.setCorrelationVectorOutputsEnabled(correlationVectorOutputs);
+        builder.setCorrelationVectorOutputsEnabled(correlationVectorOutputs).setWorkSource(
+                workSource);
         return builder.build();
     }
 }
