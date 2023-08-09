@@ -41,6 +41,7 @@ import static android.virtualdevice.cts.common.ClipboardTestConstants.EXTRA_WAIT
 import static android.virtualdevice.cts.common.ClipboardTestConstants.RESULT_CODE_ATTACHED_TO_WINDOW;
 import static android.virtualdevice.cts.common.ClipboardTestConstants.RESULT_CODE_CLIP_LISTENER_READY;
 import static android.virtualdevice.cts.common.util.VirtualDeviceTestUtils.createActivityOptions;
+import static android.virtualdevice.cts.common.util.VirtualDeviceTestUtils.createDefaultVirtualDisplayConfigBuilder;
 import static android.virtualdevice.cts.common.util.VirtualDeviceTestUtils.createResultReceiver;
 
 import static androidx.test.core.app.ApplicationProvider.getApplicationContext;
@@ -123,8 +124,10 @@ public class StreamedAppClipboardTest {
     private static final int EVENT_TIMEOUT_MS = 8000;
 
     private static final VirtualDisplayConfig VIRTUAL_DISPLAY_CONFIG =
-            new VirtualDisplayConfig.Builder("VirtualDisplay",
-                    /*width=*/100, /*height=*/100, /*densityDpi=*/240).build();
+            createDefaultVirtualDisplayConfigBuilder()
+                    .setFlags(DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC
+                            | DisplayManager.VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY)
+                    .build();
 
     @Rule
     public AdoptShellPermissionsRule mAdoptShellPermissionsRule = new AdoptShellPermissionsRule(
