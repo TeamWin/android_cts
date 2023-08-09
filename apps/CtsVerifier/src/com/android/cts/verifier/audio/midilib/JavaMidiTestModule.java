@@ -55,7 +55,7 @@ public abstract class JavaMidiTestModule extends MidiTestModule {
     // the bandwidth, resulting in lost data. In this case, slow the data stream
     // down.
     private static final int THROTTLE_MAX_PACKET_SIZE = 15;
-    private static final int THROTTLE_PERIOD_MS = 10;
+    private static final int THROTTLE_PERIOD_MS = 20;
 
     private static final int MESSAGE_MAX_BYTES = 4096;
 
