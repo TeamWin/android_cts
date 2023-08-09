@@ -17,15 +17,24 @@
 package com.android.bedstead.nene.adb;
 
 import com.android.bedstead.nene.annotations.Experimental
-import com.android.bedstead.nene.utils.ShellCommandUtils;
+import com.android.bedstead.nene.utils.ShellCommandUtils
+import com.android.bedstead.nene.TestApis
 
-/** Test APIs related to adb. */
+/** Helper methods related to Adb. */
 @Experimental
 object Adb {
+
+    private const val ADB_WIFI_ENABLED = "adb_wifi_enabled";
 
     /**
      * Check if the device can run commands as root.
      */
     fun isRootAvailable(): Boolean = ShellCommandUtils.isRootAvailable();
 
+    /**
+     * Check if Adb is enabled over wifi.
+     */
+    fun isEnabledOverWifi(): Boolean {
+        return TestApis.settings().global().getInt(ADB_WIFI_ENABLED) == 1;
+    }
 }
