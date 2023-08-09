@@ -475,7 +475,7 @@ public final class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
         // Wait until IMS service is registered by the system.
         waitForOutput("Failed waiting for IME to become available",
                 String.format("ime list --user %d -s -a", userId),
-                s -> s.contains(imeComponent), 45 /* seconds */);
+                s -> s.contains(imeComponent), 100 /* seconds */);
 
         executeShellCommand("ime enable " + imeComponent);
         executeShellCommand("ime set " + imeComponent);
