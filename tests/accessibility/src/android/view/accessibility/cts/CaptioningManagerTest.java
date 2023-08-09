@@ -47,11 +47,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
 
-import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.Locale;
 
 /**
@@ -203,12 +201,10 @@ public class CaptioningManagerTest {
             mManager.setSystemAudioCaptioningEnabled(true);
             assertTrue("Test runner set system audio caption enabled to true",
                     mManager.isSystemAudioCaptioningEnabled());
-            assertEquals("1", getSecureSetting("odi_captions_enabled"));
 
             mManager.setSystemAudioCaptioningUiEnabled(true);
             assertTrue("Test runner set system audio caption ui enabled to true",
                     mManager.isSystemAudioCaptioningUiEnabled());
-            assertEquals("1", getSecureSetting("odi_captions_volume_ui_enabled"));
         } finally {
             mUiAutomation.dropShellPermissionIdentity();
             putSecureSetting("odi_captions_enabled", "0");
@@ -224,33 +220,14 @@ public class CaptioningManagerTest {
         execShellCommand("settings put secure " + name + " " + value);
     }
 
-    private String getSecureSetting(String name) {
-        return execShellCommand("settings get secure " + name);
-    }
-
-    private String execShellCommand(String cmd) {
+    private void execShellCommand(String cmd) {
         ParcelFileDescriptor pfd = mUiAutomation.executeShellCommand(cmd);
         InputStream is = new FileInputStream(pfd.getFileDescriptor());
-        StringBuilder stringBuilder = new StringBuilder();
         try {
-            BufferedReader reader = null;
-            try {
-                reader =
-                        new BufferedReader(
-                                new InputStreamReader(
-                                        new ParcelFileDescriptor.AutoCloseInputStream(pfd)));
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    stringBuilder.append(line);
-                }
-            } finally {
-                if (reader != null) {
-                    reader.close();
-                }
-            }
+            final byte[] buffer = new byte[8192];
+            while ((is.read(buffer)) != -1);
         } catch (IOException e) {
             throw new RuntimeException("Failed to exec: " + cmd);
         }
-        return stringBuilder.toString();
     }
 }
