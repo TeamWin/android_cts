@@ -34,7 +34,6 @@ import static android.media.AudioManager.STREAM_NOTIFICATION;
 import static android.media.AudioManager.STREAM_RING;
 import static android.media.AudioManager.STREAM_SYSTEM;
 import static android.media.AudioManager.STREAM_VOICE_CALL;
-import static android.media.AudioManager.USE_DEFAULT_STREAM_TYPE;
 import static android.media.AudioManager.VIBRATE_SETTING_OFF;
 import static android.media.AudioManager.VIBRATE_SETTING_ON;
 import static android.media.AudioManager.VIBRATE_SETTING_ONLY_SILENT;
@@ -45,8 +44,10 @@ import static android.provider.Settings.Global.APPLY_RAMPING_RINGER;
 import static android.provider.Settings.System.SOUND_EFFECTS_ENABLED;
 
 import static com.android.media.mediatestutils.TestUtils.getFutureForIntent;
+import static com.android.media.mediatestutils.TestUtils.getFutureForListener;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -56,6 +57,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeFalse;
 
 import android.Manifest;
 import android.app.Instrumentation;
@@ -97,6 +99,7 @@ import android.view.SoundEffectConstants;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.AmUtils;
 import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.MediaUtils;
@@ -105,6 +108,9 @@ import com.android.compatibility.common.util.SettingsStateKeeperRule;
 import com.android.compatibility.common.util.UserSettings.Namespace;
 import com.android.internal.annotations.GuardedBy;
 import com.android.media.mediatestutils.CancelAllFuturesRule;
+
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 
 import org.junit.After;
 import org.junit.Before;
@@ -119,10 +125,10 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BooleanSupplier;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -134,9 +140,8 @@ import java.util.stream.IntStream;
 public class AudioManagerTest {
     private static final String TAG = "AudioManagerTest";
 
-    private static final long ASYNC_TIMING_TOLERANCE_MS = 50;
+    private static final int INIT_VOL = 1;
     private static final long POLL_TIME_VOLUME_ADJUST = 400;
-    private static final long POLL_TIME_UPDATE_INTERRUPTION_FILTER = 5000;
     private static final int MP3_TO_PLAY = R.raw.testmp3; // ~ 5 second mp3
     private static final long POLL_TIME_PLAY_MUSIC = 2000;
     private static final long TIME_TO_PLAY = 2000;
@@ -168,7 +173,8 @@ public class AudioManagerTest {
             STREAM_SYSTEM, STREAM_RING, STREAM_MUSIC,
             STREAM_ALARM, STREAM_NOTIFICATION,
             STREAM_DTMF,  STREAM_ACCESSIBILITY };
-    private static final int VOLUME_CHANGED_INTENT_TIMEOUT_MS = 3000; // 3s
+
+    private static final int FUTURE_WAIT_SECS = 5; // Should never timeout; early fail
 
     private static final int INVALID_DIRECT_PLAYBACK_MODE = -1;
     private AudioManager mAudioManager;
@@ -228,6 +234,7 @@ public class AudioManagerTest {
                 Resources.getSystem().getIdentifier("config_single_volume", "bool", "android"));
         mSkipRingerTests = mUseFixedVolume || mIsTelevision || mIsSingleVolume;
 
+        // TODO (b/294941969) pull out volume/ringer/zen state setting/resetting into test rule
         // Store the original volumes that that they can be recovered in tearDown().
         final int[] streamTypes = {
             STREAM_VOICE_CALL,
@@ -244,15 +251,22 @@ public class AudioManagerTest {
             mOriginalStreamVolumes.put(streamType, mAudioManager.getStreamVolume(streamType));
         }
 
+        // Tests require the known state of volumes set to INIT_VOL and zen mode
+        // turned off.
         try {
             Utils.toggleNotificationPolicyAccess(
                     mContext.getPackageName(), getInstrumentation(), true);
             mOriginalNotificationPolicy = mNm.getNotificationPolicy();
             mOriginalZen = mNm.getCurrentInterruptionFilter();
-        } finally {
+            mAudioManager.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
             setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL);
+        } finally {
             Utils.toggleNotificationPolicyAccess(
                     mContext.getPackageName(), getInstrumentation(), false);
+        }
+
+        for (int streamType : streamTypes) {
+            mAudioManager.setStreamVolume(streamType, INIT_VOL, 0 /* flags */);
         }
 
         // Check original microphone mute/unmute status
@@ -264,6 +278,8 @@ public class AudioManagerTest {
                 mDoNotCheckUnmute = true;
             }
         }
+        // Reduce flake due to late intent delivery
+        AmUtils.waitForBroadcastIdle();
     }
 
     @After
@@ -271,6 +287,7 @@ public class AudioManagerTest {
         try {
             Utils.toggleNotificationPolicyAccess(
                     mContext.getPackageName(), getInstrumentation(), true);
+            mAudioManager.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
             mNm.setNotificationPolicy(mOriginalNotificationPolicy);
             setInterruptionFilter(mOriginalZen);
 
@@ -370,11 +387,12 @@ public class AudioManagerTest {
         return false;
     }
 
-    @AppModeFull(reason = "ACTION_VOLUME_CHANGED is not sent to Instant apps (no FLAG_RECEIVER_VISIBLE_TO_INSTANT_APPS)")
+    @AppModeFull(
+            reason =
+                    "ACTION_VOLUME_CHANGED is not sent to Instant apps (no"
+                        + " FLAG_RECEIVER_VISIBLE_TO_INSTANT_APPS)")
     @Test
     public void testVolumeChangedIntent() throws Exception {
-        final MyBlockingIntentReceiver receiver =
-                new MyBlockingIntentReceiver(AudioManager.ACTION_VOLUME_CHANGED);
         if (mAudioManager.isVolumeFixed()) {
             return;
         }
@@ -382,36 +400,34 @@ public class AudioManagerTest {
         getInstrumentation().getUiAutomation()
                 .adoptShellPermissionIdentity(Manifest.permission.STATUS_BAR_SERVICE);
         mAudioManager.disableSafeMediaVolume();
+        getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
 
-        try {
-            mContext.registerReceiver(receiver,
-                    new IntentFilter(AudioManager.ACTION_VOLUME_CHANGED));
-            // only listen for the STREAM_MUSIC volume changes
-            receiver.setWaitForIntExtra(AudioManager.EXTRA_VOLUME_STREAM_TYPE, STREAM_MUSIC);
-            int mediaVol = mAudioManager.getStreamVolume(STREAM_MUSIC);
-            final int origVol = mediaVol;
-            final int maxMediaVol = mAudioManager.getStreamMaxVolume(STREAM_MUSIC);
-            // change media volume from current value
-            mAudioManager.setStreamVolume(STREAM_MUSIC,
-                    mediaVol == maxMediaVol ? --mediaVol : ++mediaVol,
-                    0 /*flags*/);
-            // verify a change was reported
-            final boolean intentFired = receiver.waitForExpectedAction(
-                    VOLUME_CHANGED_INTENT_TIMEOUT_MS);
-            assertTrue("VOLUME_CHANGED_ACTION wasn't fired for change from "
-                    + origVol + " to " + mediaVol, intentFired);
-            // verify the new value is in the extras
-            final Intent intent = receiver.getIntent();
-            assertEquals("Not an intent for STREAM_MUSIC", STREAM_MUSIC,
-                    intent.getIntExtra(AudioManager.EXTRA_VOLUME_STREAM_TYPE, -1));
-            assertEquals("New STREAM_MUSIC volume not as expected", mediaVol,
-                    intent.getIntExtra(AudioManager.EXTRA_VOLUME_STREAM_VALUE, -1));
-            assertEquals("Previous STREAM_MUSIC volume not as expected", origVol,
-                    intent.getIntExtra(AudioManager.EXTRA_PREV_VOLUME_STREAM_VALUE, -1));
-        } finally {
-            mContext.unregisterReceiver(receiver);
-            getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
-        }
+        var future = mCancelRule.registerFuture(getFutureForIntent(
+                    mContext,
+                    AudioManager.ACTION_VOLUME_CHANGED,
+                    i -> (i != null)
+                        && (i.getIntExtra(AudioManager.EXTRA_VOLUME_STREAM_TYPE,
+                                Integer.MIN_VALUE) == STREAM_MUSIC)));
+
+        int mediaVol = mAudioManager.getStreamVolume(STREAM_MUSIC);
+        final int origVol = mediaVol;
+        final int maxMediaVol = mAudioManager.getStreamMaxVolume(STREAM_MUSIC);
+        // change media volume from current value
+        mAudioManager.setStreamVolume(STREAM_MUSIC,
+                mediaVol == maxMediaVol ? --mediaVol : ++mediaVol,
+                0 /*flags*/);
+        // verify a change was reported
+        final Intent intent = future.get(FUTURE_WAIT_SECS, TimeUnit.SECONDS);
+
+        assertWithMessage("Not an intent for STREAM_MUSIC")
+                .that(intent.getIntExtra(AudioManager.EXTRA_VOLUME_STREAM_TYPE, -1))
+                .isEqualTo(STREAM_MUSIC);
+        assertWithMessage("New STREAM_MUSIC volume not as expected")
+                .that(intent.getIntExtra(AudioManager.EXTRA_VOLUME_STREAM_VALUE, -1))
+                .isEqualTo(mediaVol);
+        assertWithMessage("Previous STREAM_MUSIC volume not as expected")
+                .that(intent.getIntExtra(AudioManager.EXTRA_PREV_VOLUME_STREAM_VALUE, -1))
+                .isEqualTo(origVol);
     }
 
     private static final class MyBlockingIntentReceiver extends BroadcastReceiver {
@@ -542,26 +558,18 @@ public class AudioManagerTest {
 
     @Test
     public void testCheckingZenModeBlockDoesNotRequireNotificationPolicyAccess() throws Exception {
-        try {
-            // set zen mode to priority only, so playSoundEffect will check notification policy
-            Utils.toggleNotificationPolicyAccess(mContext.getPackageName(), getInstrumentation(),
-                    true);
-            setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_PRIORITY);
-            Settings.System.putInt(mContext.getContentResolver(), SOUND_EFFECTS_ENABLED, 1);
+        // set zen mode to priority only, so playSoundEffect will check notification policy
+        Utils.toggleNotificationPolicyAccess(mContext.getPackageName(), getInstrumentation(),
+                true);
+        setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_PRIORITY);
+        Settings.System.putInt(mContext.getContentResolver(), SOUND_EFFECTS_ENABLED, 1);
 
-            // take away write-notification policy access from the package
-            Utils.toggleNotificationPolicyAccess(mContext.getPackageName(), getInstrumentation(),
-                    false);
+        // take away write-notification policy access from the package
+        Utils.toggleNotificationPolicyAccess(mContext.getPackageName(), getInstrumentation(),
+                false);
 
-            // playSoundEffect should NOT throw a security exception; all apps have read-access
-            mAudioManager.playSoundEffect(SoundEffectConstants.CLICK);
-        } finally {
-            Utils.toggleNotificationPolicyAccess(mContext.getPackageName(), getInstrumentation(),
-                    true);
-            setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL);
-            Utils.toggleNotificationPolicyAccess(mContext.getPackageName(), getInstrumentation(),
-                    false);
-        }
+        // playSoundEffect should NOT throw a security exception; all apps have read-access
+        mAudioManager.playSoundEffect(SoundEffectConstants.CLICK);
     }
 
     @Test
@@ -1054,12 +1062,6 @@ public class AudioManagerTest {
                 STREAM_VOICE_CALL,
                 STREAM_RING};
 
-        mAudioManager.adjustVolume(ADJUST_RAISE, 0);
-        // adjusting volume is asynchronous, wait before other volume checks
-        Thread.sleep(ASYNC_TIMING_TOLERANCE_MS);
-        mAudioManager.adjustSuggestedStreamVolume(
-                ADJUST_LOWER, USE_DEFAULT_STREAM_TYPE, 0);
-        Thread.sleep(ASYNC_TIMING_TOLERANCE_MS);
         int maxMusicVolume = mAudioManager.getStreamMaxVolume(STREAM_MUSIC);
 
         for (int stream : streams) {
@@ -1103,13 +1105,16 @@ public class AudioManagerTest {
                 } while (curvol != prevvol);
                 maxVolume = maxMusicVolume = curvol;
             }
-            mAudioManager.setStreamVolume(stream, maxVolume, 0);
-            mAudioManager.adjustStreamVolume(stream, ADJUST_RAISE, 0);
-            assertEquals(maxVolume, mAudioManager.getStreamVolume(stream));
+            waitForStreamVolumeSet(stream, maxVolume);
+            assertCallDoesNotChangeStreamVolume(
+                    () -> mAudioManager.adjustStreamVolume(stream, ADJUST_RAISE, 0),
+                    stream,
+                    "No change expected at max volume");
 
             volumeDelta = getVolumeDelta(mAudioManager.getStreamVolume(stream));
-            mAudioManager.adjustSuggestedStreamVolume(ADJUST_LOWER, stream, 0);
-            assertStreamVolumeEquals(stream, maxVolume - volumeDelta,
+            assertCallChangesStreamVolume(
+                    () -> mAudioManager.adjustSuggestedStreamVolume(ADJUST_LOWER, stream, 0),
+                    stream, maxVolume - volumeDelta,
                     "Vol ADJUST_LOWER suggested stream:" + stream + " maxVol:" + maxVolume);
 
             // volume lower
@@ -1117,8 +1122,9 @@ public class AudioManagerTest {
             volume = mAudioManager.getStreamVolume(stream);
             while (volume > minVolume) {
                 volumeDelta = getVolumeDelta(mAudioManager.getStreamVolume(stream));
-                mAudioManager.adjustStreamVolume(stream, ADJUST_LOWER, 0);
-                assertStreamVolumeEquals(stream,  Math.max(0, volume - volumeDelta),
+                assertCallChangesStreamVolume(
+                        () -> mAudioManager.adjustStreamVolume(stream, ADJUST_LOWER, 0),
+                        stream,  Math.max(0, volume - volumeDelta),
                         "Vol ADJUST_LOWER on stream:" + stream + " vol:" + volume
                                 + " minVol:" + minVolume + " volDelta:" + volumeDelta);
                 volume = mAudioManager.getStreamVolume(stream);
@@ -1131,20 +1137,20 @@ public class AudioManagerTest {
             volume = mAudioManager.getStreamVolume(stream);
             while (volume < maxVolume) {
                 volumeDelta = getVolumeDelta(mAudioManager.getStreamVolume(stream));
-                mAudioManager.adjustStreamVolume(stream, ADJUST_RAISE, 0);
-                assertStreamVolumeEquals(stream,   Math.min(volume + volumeDelta, maxVolume),
+                assertCallChangesStreamVolume(
+                        () -> mAudioManager.adjustStreamVolume(stream, ADJUST_RAISE, 0),
+                        stream,   Math.min(volume + volumeDelta, maxVolume),
                         "Vol ADJUST_RAISE on stream:" + stream + " vol:" + volume
                                 + " maxVol:" + maxVolume + " volDelta:" + volumeDelta);
                 volume = mAudioManager.getStreamVolume(stream);
             }
 
             // volume same
-            mAudioManager.setStreamVolume(stream, maxVolume, 0);
-            mAudioManager.adjustStreamVolume(stream, ADJUST_SAME, 0);
-            Thread.sleep(ASYNC_TIMING_TOLERANCE_MS);
-            assertEquals("Vol ADJUST_RAISE onADJUST_SAME stream:" + stream,
-                    maxVolume, mAudioManager.getStreamVolume(stream));
-
+            waitForStreamVolumeSet(stream, maxVolume);
+            assertCallDoesNotChangeStreamVolume(
+                    () -> mAudioManager.adjustStreamVolume(stream, ADJUST_SAME, 0),
+                    stream,
+                    "Vol ADJUST_RAISE onADJUST_SAME stream:" + stream);
             mAudioManager.setStreamVolume(stream, maxVolume, 0);
         }
 
@@ -1152,15 +1158,12 @@ public class AudioManagerTest {
             return;
         }
 
-        // adjust volume
-        mAudioManager.adjustVolume(ADJUST_RAISE, 0);
-        Thread.sleep(ASYNC_TIMING_TOLERANCE_MS);
-
         boolean isMusicPlayingBeforeTest = false;
         if (mAudioManager.isMusicActive()) {
             isMusicPlayingBeforeTest = true;
         }
 
+        // TODO this doesn't test anything now that STREAM_MUSIC is the default
         MediaPlayer mp = MediaPlayer.create(mContext, MP3_TO_PLAY);
         assertNotNull(mp);
         mp.setAudioStreamType(STREAM_MUSIC);
@@ -1168,24 +1171,27 @@ public class AudioManagerTest {
         mp.start();
         assertMusicActive(true);
 
+        waitForStreamVolumeSet(STREAM_MUSIC, maxMusicVolume - 1);
         // adjust volume as ADJUST_SAME
-        mAudioManager.adjustVolume(ADJUST_SAME, 0);
-        Thread.sleep(ASYNC_TIMING_TOLERANCE_MS);
-        assertStreamVolumeEquals(STREAM_MUSIC, maxMusicVolume);
+        assertCallDoesNotChangeStreamVolume(
+                () -> mAudioManager.adjustVolume(ADJUST_SAME, 0),
+                STREAM_MUSIC);
 
         // adjust volume as ADJUST_RAISE
-        mAudioManager.setStreamVolume(STREAM_MUSIC, 0, 0);
+        waitForStreamVolumeSet(STREAM_MUSIC, 0);
         volumeDelta = getVolumeDelta(mAudioManager.getStreamVolume(STREAM_MUSIC));
-        mAudioManager.adjustVolume(ADJUST_RAISE, 0);
-        Thread.sleep(ASYNC_TIMING_TOLERANCE_MS);
-        assertStreamVolumeEquals(STREAM_MUSIC, Math.min(volumeDelta, maxMusicVolume));
+        assertCallChangesStreamVolume(
+                () -> mAudioManager.adjustVolume(ADJUST_RAISE, 0),
+                STREAM_MUSIC,
+                volumeDelta);
 
         // adjust volume as ADJUST_LOWER
-        mAudioManager.setStreamVolume(STREAM_MUSIC, maxMusicVolume, 0);
-        maxMusicVolume = mAudioManager.getStreamVolume(STREAM_MUSIC);
+        waitForStreamVolumeSet(STREAM_MUSIC, maxMusicVolume);
         volumeDelta = getVolumeDelta(mAudioManager.getStreamVolume(STREAM_MUSIC));
-        mAudioManager.adjustVolume(ADJUST_LOWER, 0);
-        assertStreamVolumeEquals(STREAM_MUSIC, Math.max(0, maxMusicVolume - volumeDelta));
+        assertCallChangesStreamVolume(
+                () -> mAudioManager.adjustVolume(ADJUST_LOWER, 0),
+                STREAM_MUSIC,
+                maxMusicVolume - volumeDelta);
 
         mp.stop();
         mp.release();
@@ -1196,39 +1202,29 @@ public class AudioManagerTest {
 
     @Test
     public void testAccessibilityVolume() throws Exception {
-        if (mUseFixedVolume) {
-            Log.i("AudioManagerTest", "testAccessibilityVolume() skipped: fixed volume");
-            return;
-        }
+        // TODO this does not test the positive case (having permissions)
+        assumeFalse("AudioManagerTest testAccessibilityVolume() skipped: fixed volume",
+                mUseFixedVolume);
+
         final int maxA11yVol = mAudioManager.getStreamMaxVolume(STREAM_ACCESSIBILITY);
-        assertTrue("Max a11yVol not strictly positive", maxA11yVol > 0);
-        int originalVol = mAudioManager.getStreamVolume(STREAM_ACCESSIBILITY);
+        assertWithMessage("Max a11yVol must be strictly positive")
+                .that(maxA11yVol)
+                .isGreaterThan(0);
 
-        // changing STREAM_ACCESSIBILITY is subject to permission, shouldn't be able to change it
-        // test setStreamVolume
-        final int testSetVol;
-        if (originalVol != maxA11yVol) {
-            testSetVol = maxA11yVol;
-        } else {
-            testSetVol = maxA11yVol - 1;
-        }
-        mAudioManager.setStreamVolume(STREAM_ACCESSIBILITY, testSetVol, 0);
-        assertStreamVolumeEquals(STREAM_ACCESSIBILITY, originalVol,
-                "Should not be able to change A11y vol");
+        // changing STREAM_ACCESSIBILITY is subject to permission
+        assertCallDoesNotChangeStreamVolume(
+                () -> mAudioManager.setStreamVolume(STREAM_ACCESSIBILITY, INIT_VOL + 1, 0),
+                STREAM_ACCESSIBILITY,
+                "Setting accessibility vol requires perms");
+        assertCallDoesNotChangeStreamVolume(
+                () -> mAudioManager.adjustStreamVolume(STREAM_ACCESSIBILITY, ADJUST_LOWER, 0),
+                STREAM_ACCESSIBILITY,
+                "Setting accessibility vol requires perms");
 
-        // test adjustStreamVolume
-        //        LOWER
-        if (originalVol > 0) {
-            mAudioManager.adjustStreamVolume(STREAM_ACCESSIBILITY, ADJUST_LOWER, 0);
-            assertStreamVolumeEquals(STREAM_ACCESSIBILITY, originalVol,
-                    "Should not be able to change A11y vol");
-        }
-        //        RAISE
-        if (originalVol < maxA11yVol) {
-            mAudioManager.adjustStreamVolume(STREAM_ACCESSIBILITY, ADJUST_RAISE, 0);
-            assertStreamVolumeEquals(STREAM_ACCESSIBILITY, originalVol,
-                    "Should not be able to change A11y vol");
-        }
+        assertCallDoesNotChangeStreamVolume(
+                () -> mAudioManager.adjustStreamVolume(STREAM_ACCESSIBILITY, ADJUST_RAISE, 0),
+                STREAM_ACCESSIBILITY,
+                "Setting accessibility vol requires perms");
     }
 
     @Test
@@ -1466,71 +1462,31 @@ public class AudioManagerTest {
         }
         final int TEST_INIT_STREAM_VOL = 1;
         final int SILENCE_VOL = 0;
-        final int prevVol =  mAudioManager.getStreamVolume(STREAM_MUSIC);
-        try {
-            Utils.toggleNotificationPolicyAccess(
-                    mContext.getPackageName(), getInstrumentation(), true);
+        final int prevVol = mAudioManager.getStreamVolume(STREAM_MUSIC);
+        Utils.toggleNotificationPolicyAccess(mContext.getPackageName(), getInstrumentation(), true);
 
-            // Set the volume to a known value
-            if (prevVol != TEST_INIT_STREAM_VOL) {
-                var knownVolumeFuture = mCancelRule.registerFuture(getFutureForIntent(mContext,
-                            AudioManager.ACTION_VOLUME_CHANGED,
-                            i -> i != null && i.getIntExtra(
-                                AudioManager.EXTRA_VOLUME_STREAM_TYPE, -1) == STREAM_MUSIC));
+        waitForStreamVolumeSet(STREAM_MUSIC, TEST_INIT_STREAM_VOL);
 
-                mAudioManager.setStreamVolume(STREAM_MUSIC, TEST_INIT_STREAM_VOL, 0 /* flags */);
-                knownVolumeFuture.get();
-            }
+        // Set to silence
+        setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_NONE);
+        assertThat(mAudioManager.getStreamVolume(STREAM_MUSIC)).isEqualTo(SILENCE_VOL);
 
-            assertThat(mAudioManager.getStreamVolume(STREAM_MUSIC)).isEqualTo(TEST_INIT_STREAM_VOL);
+        // Raise shouldn't work when silenced
+        assertCallDoesNotChangeStreamVolume(
+                () -> mAudioManager.adjustStreamVolume(STREAM_MUSIC, ADJUST_RAISE, 0 /* flags */),
+                STREAM_MUSIC);
 
-            // Set to silence
-            final var isSilencedFuture = mCancelRule.registerFuture(getFutureForIntent(
-                    mContext,
-                    AudioManager.RINGER_MODE_CHANGED_ACTION,
-                    i -> (i != null) && i.getIntExtra(AudioManager.EXTRA_RINGER_MODE, -1)
-                        == AudioManager.RINGER_MODE_SILENT));
-            mNm.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_NONE);
-            isSilencedFuture.get();
+        // Set the mode out of silence
+        setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL);
 
-            assertThat(mAudioManager.getStreamVolume(STREAM_MUSIC)).isEqualTo(SILENCE_VOL);
+        // Volume should be back to normal
+        assertThat(mAudioManager.getStreamVolume(STREAM_MUSIC)).isEqualTo(TEST_INIT_STREAM_VOL);
 
-            // Raise shouldn't work when silenced
-            mAudioManager.adjustStreamVolume(STREAM_MUSIC, ADJUST_RAISE, 0 /* flags */);
-            // Wait a bit to check for early fail
-            SystemClock.sleep(50);
-            assertThat(mAudioManager.getStreamVolume(STREAM_MUSIC)).isEqualTo(SILENCE_VOL);
-
-            // Set the mode out of silence
-            final var isUnsilencedFuture = mCancelRule.registerFuture(getFutureForIntent(
-                    mContext,
-                    AudioManager.RINGER_MODE_CHANGED_ACTION,
-                    i -> (i != null) && i.getIntExtra(AudioManager.EXTRA_RINGER_MODE, -1)
-                        != AudioManager.RINGER_MODE_SILENT));
-            mNm.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL);
-            isUnsilencedFuture.get();
-
-            // Volume should be back to normal
-            assertThat(mAudioManager.getStreamVolume(STREAM_MUSIC))
-                    .isEqualTo(TEST_INIT_STREAM_VOL);
-
-            // Raise volume
-            final var isVolumeRaisedFuture = mCancelRule.registerFuture(getFutureForIntent(
-                    mContext,
-                    AudioManager.ACTION_VOLUME_CHANGED,
-                    i -> (i != null) && i.getIntExtra(AudioManager.EXTRA_VOLUME_STREAM_TYPE, -1)
-                        == STREAM_MUSIC));
-            mAudioManager.adjustStreamVolume(STREAM_MUSIC, ADJUST_RAISE, 0 /* flags */);
-            isVolumeRaisedFuture.get();
-
-            final int MEDIA_DELTA = 1;
-            // Volume should be raised exactly once, since the adjust while silenced was suppressed
-            assertThat(mAudioManager.getStreamVolume(STREAM_MUSIC))
-                    .isEqualTo(TEST_INIT_STREAM_VOL + MEDIA_DELTA);
-        } finally {
-            mAudioManager.setStreamVolume(STREAM_MUSIC, prevVol, 0 /* flags */);
-            setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL);
-        }
+        final int MEDIA_DELTA = getVolumeDelta(mAudioManager.getStreamVolume(STREAM_MUSIC));
+        assertCallChangesStreamVolume(
+                () -> mAudioManager.adjustStreamVolume(STREAM_MUSIC, ADJUST_RAISE, 0 /* flags */),
+                STREAM_MUSIC,
+                TEST_INIT_STREAM_VOL + MEDIA_DELTA);
     }
 
     @Test
@@ -1538,23 +1494,19 @@ public class AudioManagerTest {
         if (mSkipRingerTests) {
             return;
         }
-        try {
-            Utils.toggleNotificationPolicyAccess(
-                    mContext.getPackageName(), getInstrumentation(), true);
-            mAudioManager.setStreamVolume(STREAM_MUSIC, 1, 0);
+        Utils.toggleNotificationPolicyAccess(
+                mContext.getPackageName(), getInstrumentation(), true);
 
-            setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALARMS);
-            Thread.sleep(ASYNC_TIMING_TOLERANCE_MS);
-            int musicVolume = mAudioManager.getStreamVolume(STREAM_MUSIC);
-            mAudioManager.adjustStreamVolume(
-                    STREAM_MUSIC, ADJUST_RAISE, 0);
-            int volumeDelta =
-                    getVolumeDelta(mAudioManager.getStreamVolume(STREAM_MUSIC));
-            assertStreamVolumeEquals(STREAM_MUSIC, musicVolume + volumeDelta);
+        setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALARMS);
 
-        } finally {
-            setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL);
-        }
+        int volumeDelta = getVolumeDelta(mAudioManager.getStreamVolume(STREAM_MUSIC));
+
+        // Why should this go through? This call doesn't exit zen mode, for reasons...
+        assertCallChangesStreamVolume(
+                () -> mAudioManager.adjustStreamVolume(STREAM_MUSIC, ADJUST_RAISE, 0),
+                STREAM_MUSIC,
+                INIT_VOL + volumeDelta,
+                "Changing music volume should work when in alarm only mode");
     }
 
     @Test
@@ -1562,25 +1514,21 @@ public class AudioManagerTest {
         if (mSkipRingerTests) {
             return;
         }
-        try {
-            Utils.toggleNotificationPolicyAccess(
-                    mContext.getPackageName(), getInstrumentation(), true);
-            mAudioManager.setStreamVolume(STREAM_RING, 1, 0);
-            mAudioManager.setStreamVolume(STREAM_MUSIC, 1, 0);
+        Utils.toggleNotificationPolicyAccess(
+                mContext.getPackageName(), getInstrumentation(), true);
 
-            setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_NONE);
-            // delay for streams interruption filter to get into correct state
-            Thread.sleep(ASYNC_TIMING_TOLERANCE_MS);
+        setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_NONE);
 
-            // cannot adjust music, can adjust ringer since it could exit DND
-            int musicVolume = mAudioManager.getStreamVolume(STREAM_MUSIC);
-            mAudioManager.setStreamVolume(STREAM_MUSIC, 7, 0);
-            assertStreamVolumeEquals(STREAM_MUSIC, musicVolume);
-            mAudioManager.setStreamVolume(STREAM_RING, 7, 0);
-            assertStreamVolumeEquals(STREAM_RING, 7);
-        } finally {
-            setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL);
-        }
+        // cannot adjust music, can adjust ringer since it could exit DND
+        assertCallDoesNotChangeStreamVolume(
+                () -> mAudioManager.setStreamVolume(STREAM_MUSIC, 7, 0),
+                STREAM_MUSIC,
+                "Should not be able to adjust media volume in Zen mode");
+        assertCallChangesStreamVolume(
+                () -> mAudioManager.setStreamVolume(STREAM_RING, 7, 0),
+                STREAM_RING,
+                7,
+                "Should be able to adjust ring volume in Zen mode");
     }
 
     @Test
@@ -1588,23 +1536,23 @@ public class AudioManagerTest {
         if (mSkipRingerTests) {
             return;
         }
-        try {
-            Utils.toggleNotificationPolicyAccess(
-                    mContext.getPackageName(), getInstrumentation(), true);
-            mAudioManager.setStreamVolume(STREAM_RING, 1, 0);
-            mAudioManager.setStreamVolume(STREAM_MUSIC, 1, 0);
-            setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALARMS);
-            // delay for streams to get into correct volume states
-            Thread.sleep(ASYNC_TIMING_TOLERANCE_MS);
+        Utils.toggleNotificationPolicyAccess(
+                mContext.getPackageName(), getInstrumentation(), true);
 
-            // can still adjust music and ring volume
-            mAudioManager.setStreamVolume(STREAM_MUSIC, 3, 0);
-            assertStreamVolumeEquals(STREAM_MUSIC, 3);
-            mAudioManager.setStreamVolume(STREAM_RING, 7, 0);
-            assertStreamVolumeEquals(STREAM_RING, 7);
-        } finally {
-            setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL);
-        }
+        setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALARMS);
+
+        // can still adjust music and ring volume
+        assertCallChangesStreamVolume(
+                () -> mAudioManager.setStreamVolume(STREAM_MUSIC, 3, 0),
+                STREAM_MUSIC,
+                3,
+                "Stream volume settable in alarm only zen");
+        assertCallChangesStreamVolume(
+                () -> mAudioManager.setStreamVolume(STREAM_RING, 7, 0),
+                STREAM_RING,
+                7,
+                "Stream volume settable in alarm only zen");
+
     }
 
     @Test
@@ -1615,35 +1563,35 @@ public class AudioManagerTest {
         Utils.toggleNotificationPolicyAccess(
                 mContext.getPackageName(), getInstrumentation(), true);
 
-        try {
-            // turn off zen, set stream volumes to check for later
-            setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL);
+        final int testRingerVol = getTestRingerVol();
 
-            final int testRingerVol = getTestRingerVol();
-            mAudioManager.setStreamVolume(STREAM_MUSIC, 1, 0);
-            mAudioManager.setStreamVolume(STREAM_ALARM, 1, 0);
-            int musicVolume = mAudioManager.getStreamVolume(STREAM_MUSIC);
-            int alarmVolume = mAudioManager.getStreamVolume(STREAM_ALARM);
+        // disallow all sounds in priority only, turn on priority only DND
+        mNm.setNotificationPolicy(new NotificationManager.Policy(0, 0 , 0));
+        setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_PRIORITY);
 
-            // disallow all sounds in priority only, turn on priority only DND, try to change volume
-            mNm.setNotificationPolicy(new NotificationManager.Policy(0, 0 , 0));
-            setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_PRIORITY);
-            // delay for streams to get into correct volume states
-            Thread.sleep(ASYNC_TIMING_TOLERANCE_MS);
-            mAudioManager.setStreamVolume(STREAM_MUSIC, 3, 0);
-            mAudioManager.setStreamVolume(STREAM_ALARM, 5, 0);
-            mAudioManager.setStreamVolume(STREAM_RING, testRingerVol, 0);
+        // attempt to change volume
+        assertCallDoesNotChangeStreamVolume(
+                () -> mAudioManager.setStreamVolume(STREAM_MUSIC, 3, 0),
+                STREAM_MUSIC,
+                "Should not be able to change MUSIC volume in priority zen");
+        assertCallDoesNotChangeStreamVolume(
+                () ->  mAudioManager.setStreamVolume(STREAM_ALARM, 5, 0),
+                STREAM_ALARM,
+                "Should not be able to change ALARM volume in priority zen");
 
-            // Turn off zen and make sure stream levels are still the same prior to zen
-            // aside from ringer since ringer can exit dnd
-            setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL);
-            Thread.sleep(ASYNC_TIMING_TOLERANCE_MS); // delay for streams to get into correct states
-            assertEquals(musicVolume, mAudioManager.getStreamVolume(STREAM_MUSIC));
-            assertEquals(alarmVolume, mAudioManager.getStreamVolume(STREAM_ALARM));
-            assertEquals(testRingerVol, mAudioManager.getStreamVolume(STREAM_RING));
-        } finally {
-            setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL);
-        }
+        assertCallChangesStreamVolume(
+                () -> mAudioManager.setStreamVolume(STREAM_RING, testRingerVol, 0),
+                STREAM_RING,
+                testRingerVol,
+                "Should be able to set ring volume in zen");
+
+
+        // Turn off zen to evaluate stream vols following zen
+        setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL);
+
+        assertEquals(INIT_VOL, mAudioManager.getStreamVolume(STREAM_MUSIC));
+        assertEquals(INIT_VOL, mAudioManager.getStreamVolume(STREAM_ALARM));
+        assertEquals(testRingerVol, mAudioManager.getStreamVolume(STREAM_RING));
     }
 
     @Test
@@ -1654,42 +1602,36 @@ public class AudioManagerTest {
 
         Utils.toggleNotificationPolicyAccess(
                 mContext.getPackageName(), getInstrumentation(), true);
-        try {
-            // turn off zen, set stream volumes to check for later
-            setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL);
-            mAudioManager.setStreamVolume(STREAM_RING, 1, 0);
-            mAudioManager.setStreamVolume(STREAM_MUSIC, 1, 0);
-            mAudioManager.setStreamVolume(STREAM_ALARM, 1, 0);
-            int ringVolume = mAudioManager.getStreamVolume(STREAM_RING);
-            int musicVolume = mAudioManager.getStreamVolume(STREAM_MUSIC);
-            int alarmVolume = mAudioManager.getStreamVolume(STREAM_ALARM);
 
-            // disallow all sounds in priority only, turn on priority only DND, try to change volume
-            mNm.setNotificationPolicy(new NotificationManager.Policy(0, 0, 0));
-            setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_PRIORITY);
-            // delay for streams to get into correct mute states
-            Thread.sleep(ASYNC_TIMING_TOLERANCE_MS);
-            mAudioManager.adjustStreamVolume(
-                    STREAM_RING, ADJUST_RAISE, 0);
-            mAudioManager.adjustStreamVolume(
-                    STREAM_MUSIC, ADJUST_RAISE, 0);
-            mAudioManager.adjustStreamVolume(
-                    STREAM_ALARM, ADJUST_RAISE, 0);
+        // disallow all sounds in priority only, turn on priority only DND, try to change volume
+        mNm.setNotificationPolicy(new NotificationManager.Policy(0, 0, 0));
+        setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_PRIORITY);
 
-            // Turn off zen and make sure stream levels are still the same prior to zen
-            // aside from ringer since ringer can exit dnd
-            setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL);
-            Thread.sleep(ASYNC_TIMING_TOLERANCE_MS); // delay for streams to get into correct states
-            assertEquals(musicVolume, mAudioManager.getStreamVolume(STREAM_MUSIC));
-            assertEquals(alarmVolume, mAudioManager.getStreamVolume(STREAM_ALARM));
 
-            int volumeDelta =
-                    getVolumeDelta(mAudioManager.getStreamVolume(STREAM_RING));
-            assertEquals(ringVolume + volumeDelta,
-                    mAudioManager.getStreamVolume(STREAM_RING));
-        } finally {
-            setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL);
-        }
+        int volumeDelta = getVolumeDelta(mAudioManager.getStreamVolume(STREAM_RING));
+        assertCallDoesNotChangeStreamVolume(
+                () -> mAudioManager.adjustStreamVolume(STREAM_MUSIC, ADJUST_RAISE, 0),
+                STREAM_MUSIC,
+                "Should not be able to set music vol in zen");
+
+        assertCallDoesNotChangeStreamVolume(
+                () -> mAudioManager.adjustStreamVolume(STREAM_ALARM, ADJUST_RAISE, 0),
+                STREAM_ALARM,
+                "Should not be able to set alarm vol in zen");
+
+        assertCallChangesStreamVolume(
+                () -> mAudioManager.adjustStreamVolume(STREAM_RING, ADJUST_RAISE, 0),
+                STREAM_RING,
+                INIT_VOL + volumeDelta,
+                "Should be able to set ring volume in zen");
+
+        // Turn off zen and make sure stream levels are still the same prior to zen
+        // aside from ringer since ringer can exit dnd
+        setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL);
+
+        assertEquals(INIT_VOL, mAudioManager.getStreamVolume(STREAM_MUSIC));
+        assertEquals(INIT_VOL, mAudioManager.getStreamVolume(STREAM_ALARM));
+        assertEquals(INIT_VOL + volumeDelta, mAudioManager.getStreamVolume(STREAM_RING));
     }
 
     @Test
@@ -1700,31 +1642,22 @@ public class AudioManagerTest {
 
         Utils.toggleNotificationPolicyAccess(
                 mContext.getPackageName(), getInstrumentation(), true);
-        try {
-            // ensure volume is not muted/0 to start test
-            mAudioManager.setStreamVolume(STREAM_MUSIC, 1, 0);
-            mAudioManager.setStreamVolume(STREAM_ALARM, 1, 0);
-            mAudioManager.setStreamVolume(STREAM_SYSTEM, 1, 0);
-            mAudioManager.setStreamVolume(STREAM_RING, 1, 0);
 
-            // disallow all sounds in priority only, turn on priority only DND
-            mNm.setNotificationPolicy(new NotificationManager.Policy(0, 0, 0));
-            setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_PRIORITY);
+        // disallow all sounds in priority only, turn on priority only DND
+        mNm.setNotificationPolicy(new NotificationManager.Policy(0, 0, 0));
+        setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_PRIORITY);
 
-            assertStreamMuted(STREAM_MUSIC, true,
-                    "Music (media) stream should be muted");
-            assertStreamMuted(STREAM_SYSTEM, true,
-                    "System stream should be muted");
-            assertStreamMuted(STREAM_ALARM, true,
-                    "Alarm stream should be muted");
+        assertStreamMuted(STREAM_MUSIC, true,
+                "Music (media) stream should be muted");
+        assertStreamMuted(STREAM_SYSTEM, true,
+                "System stream should be muted");
+        assertStreamMuted(STREAM_ALARM, true,
+                "Alarm stream should be muted");
 
-            // if channels cannot bypass DND, the Ringer stream should be muted, else it
-            // shouldn't be muted
-            assertStreamMuted(STREAM_RING, !mAppsBypassingDnd,
-                    "Ringer stream should be muted if channels cannot bypassDnd");
-        } finally {
-            setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL);
-        }
+        // if channels cannot bypass DND, the Ringer stream should be muted, else it
+        // shouldn't be muted
+        assertStreamMuted(STREAM_RING, !mAppsBypassingDnd,
+                "Ringer stream should be muted if channels cannot bypassDnd");
     }
 
     @Test
@@ -1734,32 +1667,23 @@ public class AudioManagerTest {
         }
         Utils.toggleNotificationPolicyAccess(
                 mContext.getPackageName(), getInstrumentation(), true);
-        try {
-            // ensure volume is not muted/0 to start test
-            mAudioManager.setStreamVolume(STREAM_MUSIC, 1, 0);
-            mAudioManager.setStreamVolume(STREAM_ALARM, 1, 0);
-            mAudioManager.setStreamVolume(STREAM_SYSTEM, 1, 0);
-            mAudioManager.setStreamVolume(STREAM_RING, 1, 0);
 
-            // allow only media in priority only
-            mNm.setNotificationPolicy(new NotificationManager.Policy(
-                    NotificationManager.Policy.PRIORITY_CATEGORY_MEDIA, 0, 0));
-            setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_PRIORITY);
+        // allow only media in priority only
+        mNm.setNotificationPolicy(new NotificationManager.Policy(
+                NotificationManager.Policy.PRIORITY_CATEGORY_MEDIA, 0, 0));
+        setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_PRIORITY);
 
-            assertStreamMuted(STREAM_MUSIC, false,
-                    "Music (media) stream should not be muted");
-            assertStreamMuted(STREAM_SYSTEM, true,
-                    "System stream should be muted");
-            assertStreamMuted(STREAM_ALARM, true,
-                    "Alarm stream should be muted");
+        assertStreamMuted(STREAM_MUSIC, false,
+                "Music (media) stream should not be muted");
+        assertStreamMuted(STREAM_SYSTEM, true,
+                "System stream should be muted");
+        assertStreamMuted(STREAM_ALARM, true,
+                "Alarm stream should be muted");
 
-            // if channels cannot bypass DND, the Ringer stream should be muted, else it
-            // shouldn't be muted
-            assertStreamMuted(STREAM_RING, !mAppsBypassingDnd,
-                    "Ringer stream should be muted if channels cannot bypassDnd");
-        } finally {
-            setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL);
-        }
+        // if channels cannot bypass DND, the Ringer stream should be muted, else it
+        // shouldn't be muted
+        assertStreamMuted(STREAM_RING, !mAppsBypassingDnd,
+                "Ringer stream should be muted if channels cannot bypassDnd");
     }
 
     @Test
@@ -1770,29 +1694,20 @@ public class AudioManagerTest {
 
         Utils.toggleNotificationPolicyAccess(
                 mContext.getPackageName(), getInstrumentation(), true);
-        try {
-            // ensure volume is not muted/0 to start test
-            mAudioManager.setStreamVolume(STREAM_MUSIC, 1, 0);
-            mAudioManager.setStreamVolume(STREAM_ALARM, 1, 0);
-            mAudioManager.setStreamVolume(STREAM_SYSTEM, 1, 0);
-            mAudioManager.setStreamVolume(STREAM_RING, 1, 0);
 
-            // allow only system in priority only
-            mNm.setNotificationPolicy(new NotificationManager.Policy(
-                    NotificationManager.Policy.PRIORITY_CATEGORY_SYSTEM, 0, 0));
-            setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_PRIORITY);
+        // allow only system in priority only
+        mNm.setNotificationPolicy(new NotificationManager.Policy(
+                NotificationManager.Policy.PRIORITY_CATEGORY_SYSTEM, 0, 0));
+        setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_PRIORITY);
 
-            assertStreamMuted(STREAM_MUSIC, true,
-                    "Music (media) stream should be muted");
-            assertStreamMuted(STREAM_SYSTEM, false,
-                    "System stream should not be muted");
-            assertStreamMuted(STREAM_ALARM, true,
-                    "Alarm stream should be muted");
-            assertStreamMuted(STREAM_RING, false,
-                    "Ringer stream should not be muted");
-        } finally {
-            setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL);
-        }
+        assertStreamMuted(STREAM_MUSIC, true,
+                "Music (media) stream should be muted");
+        assertStreamMuted(STREAM_SYSTEM, false,
+                "System stream should not be muted");
+        assertStreamMuted(STREAM_ALARM, true,
+                "Alarm stream should be muted");
+        assertStreamMuted(STREAM_RING, false,
+                "Ringer stream should not be muted");
     }
 
     @Test
@@ -1803,30 +1718,23 @@ public class AudioManagerTest {
 
         Utils.toggleNotificationPolicyAccess(
                 mContext.getPackageName(), getInstrumentation(), true);
-        try {
-            // ensure volume is not muted/0 to start test, but then mute ringer
-            mAudioManager.setStreamVolume(STREAM_MUSIC, 1, 0);
-            mAudioManager.setStreamVolume(STREAM_ALARM, 1, 0);
-            mAudioManager.setStreamVolume(STREAM_SYSTEM, 1, 0);
-            mAudioManager.setStreamVolume(STREAM_RING, 0, 0);
-            mAudioManager.setRingerMode(RINGER_MODE_SILENT);
 
-            // allow only system in priority only
-            mNm.setNotificationPolicy(new NotificationManager.Policy(
-                    NotificationManager.Policy.PRIORITY_CATEGORY_SYSTEM, 0, 0));
-            setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_PRIORITY);
+        mAudioManager.setStreamVolume(STREAM_RING, 0, 0);
+        mAudioManager.setRingerMode(RINGER_MODE_SILENT);
 
-            assertStreamMuted(STREAM_MUSIC, true,
-                    "Music (media) stream should be muted");
-            assertStreamMuted(STREAM_SYSTEM, true,
-                    "System stream should be muted");
-            assertStreamMuted(STREAM_ALARM, true,
-                    "Alarm stream should be muted");
-            assertStreamMuted(STREAM_RING, true,
-                    "Ringer stream should be muted");
-        } finally {
-            setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL);
-        }
+        // allow only system in priority only
+        mNm.setNotificationPolicy(new NotificationManager.Policy(
+                NotificationManager.Policy.PRIORITY_CATEGORY_SYSTEM, 0, 0));
+        setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_PRIORITY);
+
+        assertStreamMuted(STREAM_MUSIC, true,
+                "Music (media) stream should be muted");
+        assertStreamMuted(STREAM_SYSTEM, true,
+                "System stream should be muted");
+        assertStreamMuted(STREAM_ALARM, true,
+                "Alarm stream should be muted");
+        assertStreamMuted(STREAM_RING, true,
+                "Ringer stream should be muted");
     }
 
     @Test
@@ -1837,32 +1745,23 @@ public class AudioManagerTest {
 
         Utils.toggleNotificationPolicyAccess(
                 mContext.getPackageName(), getInstrumentation(), true);
-        try {
-            // ensure volume is not muted/0 to start test
-            mAudioManager.setStreamVolume(STREAM_MUSIC, 1, 0);
-            mAudioManager.setStreamVolume(STREAM_ALARM, 1, 0);
-            mAudioManager.setStreamVolume(STREAM_SYSTEM, 1, 0);
-            mAudioManager.setStreamVolume(STREAM_RING, 1, 0);
 
-            // allow only alarms in priority only
-            mNm.setNotificationPolicy(new NotificationManager.Policy(
-                    NotificationManager.Policy.PRIORITY_CATEGORY_ALARMS, 0, 0));
-            setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_PRIORITY);
+        // allow only alarms in priority only
+        mNm.setNotificationPolicy(new NotificationManager.Policy(
+                NotificationManager.Policy.PRIORITY_CATEGORY_ALARMS, 0, 0));
+        setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_PRIORITY);
 
-            assertStreamMuted(STREAM_MUSIC, true,
-                    "Music (media) stream should be muted");
-            assertStreamMuted(STREAM_SYSTEM, true,
-                    "System stream should be muted");
-            assertStreamMuted(STREAM_ALARM, false,
-                    "Alarm stream should not be muted");
+        assertStreamMuted(STREAM_MUSIC, true,
+                "Music (media) stream should be muted");
+        assertStreamMuted(STREAM_SYSTEM, true,
+                "System stream should be muted");
+        assertStreamMuted(STREAM_ALARM, false,
+                "Alarm stream should not be muted");
 
-            // if channels cannot bypass DND, the Ringer stream should be muted, else it
-            // shouldn't be muted
-            assertStreamMuted(STREAM_RING, !mAppsBypassingDnd,
-                    "Ringer stream should be muted if channels cannot bypassDnd");
-        } finally {
-            setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL);
-        }
+        // if channels cannot bypass DND, the Ringer stream should be muted, else it
+        // shouldn't be muted
+        assertStreamMuted(STREAM_RING, !mAppsBypassingDnd,
+                "Ringer stream should be muted if channels cannot bypassDnd");
     }
 
     @Test
@@ -1873,29 +1772,25 @@ public class AudioManagerTest {
 
         Utils.toggleNotificationPolicyAccess(
                 mContext.getPackageName(), getInstrumentation(), true);
-        try {
-            // ensure volume is not muted/0 to start test
-            mAudioManager.setStreamVolume(STREAM_MUSIC, 1, 0);
-            mAudioManager.setStreamVolume(STREAM_ALARM, 1, 0);
-            mAudioManager.setStreamVolume(STREAM_SYSTEM, 1, 0);
-            mAudioManager.setStreamVolume(STREAM_RING, 1, 0);
+        // ensure volume is not muted/0 to start test
+        mAudioManager.setStreamVolume(STREAM_MUSIC, 1, 0);
+        mAudioManager.setStreamVolume(STREAM_ALARM, 1, 0);
+        mAudioManager.setStreamVolume(STREAM_SYSTEM, 1, 0);
+        mAudioManager.setStreamVolume(STREAM_RING, 1, 0);
 
-            // allow only reminders in priority only
-            mNm.setNotificationPolicy(new NotificationManager.Policy(
-                    NotificationManager.Policy.PRIORITY_CATEGORY_REMINDERS, 0, 0));
-            setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_PRIORITY);
+        // allow only reminders in priority only
+        mNm.setNotificationPolicy(new NotificationManager.Policy(
+                NotificationManager.Policy.PRIORITY_CATEGORY_REMINDERS, 0, 0));
+        setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_PRIORITY);
 
-            assertStreamMuted(STREAM_MUSIC, true,
-                    "Music (media) stream should be muted");
-            assertStreamMuted(STREAM_SYSTEM, true,
-                    "System stream should be muted");
-            assertStreamMuted(STREAM_ALARM, true,
-                    "Alarm stream should be muted");
-            assertStreamMuted(STREAM_RING, false,
-                    "Ringer stream should not be muted");
-        } finally {
-            setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL);
-        }
+        assertStreamMuted(STREAM_MUSIC, true,
+                "Music (media) stream should be muted");
+        assertStreamMuted(STREAM_SYSTEM, true,
+                "System stream should be muted");
+        assertStreamMuted(STREAM_ALARM, true,
+                "Alarm stream should be muted");
+        assertStreamMuted(STREAM_RING, false,
+                "Ringer stream should not be muted");
     }
 
     @Test
@@ -1911,11 +1806,6 @@ public class AudioManagerTest {
         NotificationChannel channel = new NotificationChannel(NOTIFICATION_CHANNEL_ID, "TEST",
                 NotificationManager.IMPORTANCE_DEFAULT);
         try {
-            // ensure volume is not muted/0 to start test
-            mAudioManager.setStreamVolume(STREAM_MUSIC, 1, 0);
-            mAudioManager.setStreamVolume(STREAM_ALARM, 1, 0);
-            mAudioManager.setStreamVolume(STREAM_SYSTEM, 1, 0);
-            mAudioManager.setStreamVolume(STREAM_RING, 1, 0);
 
             // create a channel that can bypass dnd
             channel.setBypassDnd(true);
@@ -1952,10 +1842,7 @@ public class AudioManagerTest {
                             + " areChannelsBypassing="
                             + NotificationManager.getService().areChannelsBypassingDnd());
         } finally {
-            setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL);
             mNm.deleteNotificationChannel(NOTIFICATION_CHANNEL_ID);
-            Utils.toggleNotificationPolicyAccess(mContext.getPackageName(), getInstrumentation(),
-                    false);
         }
     }
 
@@ -2145,10 +2032,35 @@ public class AudioManagerTest {
         }
     }
 
-    private void setInterruptionFilter(int filter) {
+    private void setInterruptionFilter(int filter) throws Exception {
+        // TODO (b/294941884) investigate uncommenting this
+        /*
+        assertWithMessage("Setting interruption filter relies on unset ringer mode")
+                .that(mAudioManager.getRingerMode())
+                .isEqualTo(AudioManager.RINGER_MODE_NORMAL);
+        */
+
+        if (mNm.getCurrentInterruptionFilter() == filter) {
+            return;
+        }
+        final int expectedRingerMode = switch(filter) {
+                case NotificationManager.INTERRUPTION_FILTER_NONE,
+                     NotificationManager.INTERRUPTION_FILTER_PRIORITY,
+                     NotificationManager.INTERRUPTION_FILTER_ALARMS
+                         -> AudioManager.RINGER_MODE_SILENT;
+                case NotificationManager.INTERRUPTION_FILTER_ALL -> AudioManager.RINGER_MODE_NORMAL;
+                default -> throw new AssertionError("Unexpected notification type");
+        };
+
+
+        var future = mCancelRule.registerFuture(getFutureForIntent(
+                mContext,
+                AudioManager.RINGER_MODE_CHANGED_ACTION,
+                i -> (i != null)
+                        && i.getIntExtra(AudioManager.EXTRA_RINGER_MODE, -1)
+                    == expectedRingerMode));
         mNm.setInterruptionFilter(filter);
-        pollWithBackoff(() -> mNm.getCurrentInterruptionFilter() == filter, 100, 50, 500,
-                POLL_TIME_UPDATE_INTERRUPTION_FILTER);
+        var intent = future.get(FUTURE_WAIT_SECS, TimeUnit.SECONDS);
     }
 
     private int getVolumeDelta(int volume) {
@@ -2597,7 +2509,7 @@ public class AudioManagerTest {
     }
 
     @Test
-    public void testPreferredMixerAttributes() {
+    public void testPreferredMixerAttributes() throws Exception {
         final AudioAttributes attr = new AudioAttributes.Builder()
                 .setUsage(AudioAttributes.USAGE_MEDIA).build();
         final AudioMixerAttributes defaultMixerAttributes = new AudioMixerAttributes.Builder(
@@ -2608,11 +2520,8 @@ public class AudioManagerTest {
                         .build())
                 .setMixerBehavior(AudioMixerAttributes.MIXER_BEHAVIOR_DEFAULT)
                 .build();
+
         for (AudioDeviceInfo device : mAudioManager.getDevices(AudioManager.GET_DEVICES_ALL)) {
-            MyPreferredMixerAttrListener listener =
-                    new MyPreferredMixerAttrListener(attr, device.getId());
-            mAudioManager.addOnPreferredMixerAttributesChangedListener(
-                    Executors.newSingleThreadExecutor(), listener);
             List<AudioMixerAttributes> supportedMixerAttributes =
                     mAudioManager.getSupportedMixerAttributes(device);
             if (supportedMixerAttributes.isEmpty()) {
@@ -2623,29 +2532,16 @@ public class AudioManagerTest {
                 for (AudioMixerAttributes mixerAttr : supportedMixerAttributes) {
                     assertNotNull(mixerAttr.getFormat());
                     assertTrue(ALL_MIXER_BEHAVIORS.contains(mixerAttr.getMixerBehavior()));
-                    listener.reset();
                     assertTrue(mAudioManager.setPreferredMixerAttributes(attr, device, mixerAttr));
-                    try {
-                        // Wait a while for callback to be called.
-                        Thread.sleep(TIME_TO_WAIT_CALLBACK_MS);
-                    } catch (InterruptedException e) {
-                    }
-                    assertTrue(listener.isPreferredMixerAttributesChanged());
+                    waitForMixerAttrChanged(attr, device.getId());
                     final AudioMixerAttributes mixerAttrFromQuery =
                             mAudioManager.getPreferredMixerAttributes(attr, device);
                     assertEquals(mixerAttr, mixerAttrFromQuery);
-                    listener.reset();
                     assertTrue(mAudioManager.clearPreferredMixerAttributes(attr, device));
-                    try {
-                        // Wait a while for callback to be called.
-                        Thread.sleep(TIME_TO_WAIT_CALLBACK_MS);
-                    } catch (InterruptedException e) {
-                    }
-                    assertTrue(listener.isPreferredMixerAttributesChanged());
+                    waitForMixerAttrChanged(attr, device.getId());
                     assertNull(mAudioManager.getPreferredMixerAttributes(attr, device));
                 }
             }
-            mAudioManager.removeOnPreferredMixerAttributesChangedListener(listener);
         }
     }
 
@@ -2876,52 +2772,113 @@ public class AudioManagerTest {
         }
     }
 
-    private final class MyPreferredMixerAttrListener
-            implements AudioManager.OnPreferredMixerAttributesChangedListener {
-        private final AudioAttributes mAttr;
-        private final int mDeviceId;
-
-        private AtomicBoolean mIsCalled = new AtomicBoolean();
-
-        MyPreferredMixerAttrListener(AudioAttributes attr, int deviceId) {
-            mAttr = attr;
-            mDeviceId = deviceId;
-        }
-
-        @Override
-        public void onPreferredMixerAttributesChanged(AudioAttributes attributes,
-                                                      AudioDeviceInfo device,
-                                                      AudioMixerAttributes mixerAttr) {
-            if (device.getId() == mDeviceId && mAttr.equals(attributes)) {
-                mIsCalled.set(true);
-            }
-        }
-
-        public void reset() {
-            mIsCalled.set(false);
-        }
-
-        public boolean isPreferredMixerAttributesChanged() {
-            return mIsCalled.get();
-        }
-    }
-
-    private void assertStreamVolumeEquals(int stream, int expectedVolume) throws Exception {
-        assertStreamVolumeEquals(stream, expectedVolume,
-                "Unexpected stream volume for stream=" + stream);
-    }
-
-    // volume adjustments are asynchronous, we poll the volume in case the volume state hasn't
-    // been adjusted yet
-    private void assertStreamVolumeEquals(int stream, int expectedVolume, String msg)
+    private void waitForMixerAttrChanged(AudioAttributes audioAttributes, int deviceId)
             throws Exception {
-        final long startPoll = SystemClock.uptimeMillis();
-        int actualVolume = mAudioManager.getStreamVolume(stream);
-        while (SystemClock.uptimeMillis() - startPoll < POLL_TIME_VOLUME_ADJUST
-                && expectedVolume != actualVolume) {
-            actualVolume = mAudioManager.getStreamVolume(stream);
+        final ListenableFuture<Void> future =
+                mCancelRule.registerFuture(
+                        getFutureForListener(
+                                listener ->
+                                        mAudioManager.addOnPreferredMixerAttributesChangedListener(
+                                                MoreExecutors.directExecutor(), listener),
+                                mAudioManager::removeOnPreferredMixerAttributesChangedListener,
+                                (completer) ->
+                                        (AudioAttributes aa,
+                                                AudioDeviceInfo device,
+                                                AudioMixerAttributes ma) -> {
+                                            if (device.getId() == deviceId
+                                                    && Objects.equals(aa, audioAttributes)) {
+                                                completer.set(null);
+                                            }
+                                        },
+                                "Wait for mixer attr changed future"));
+        future.get(FUTURE_WAIT_SECS, TimeUnit.MILLISECONDS);
+    }
+
+    private void assertCallChangesStreamVolume(Runnable r, int stream, int expectedVolume)
+            throws Exception {
+        assertCallChangesStreamVolume(r, stream, expectedVolume, null);
+    }
+
+    private void assertCallChangesStreamVolume(Runnable r, int stream, int expectedVolume,
+            String msg)
+            throws Exception {
+        var initVol = mAudioManager.getStreamVolume(stream);
+        assertWithMessage("Stream volume is already at desired")
+            .that(initVol)
+            .isNotEqualTo(expectedVolume);
+
+        var future = mCancelRule.registerFuture(getFutureForIntent(
+                            mContext,
+                            AudioManager.ACTION_VOLUME_CHANGED,
+                            i -> (i != null)
+                                && i.getIntExtra(AudioManager.EXTRA_VOLUME_STREAM_TYPE, -1)
+                                        == stream));
+        r.run();
+        var intent = future.get(FUTURE_WAIT_SECS, TimeUnit.SECONDS);
+        String assertMessage = "Unexpected volume for stream " + stream + ". "
+                + ((msg != null) ? msg : "");
+        // TODO prev volume from intent is not zeroed when moving out of zen
+        /*
+        assertWithMessage(assertMessage)
+                .that(intent.getIntExtra(AudioManager.EXTRA_PREV_VOLUME_STREAM_VALUE, -1))
+                .isEqualTo(initVol);
+        */
+        assertWithMessage(assertMessage)
+                .that(intent.getIntExtra(AudioManager.EXTRA_VOLUME_STREAM_VALUE, -1))
+                .isEqualTo(expectedVolume);
+        assertWithMessage(assertMessage)
+                .that(mAudioManager.getStreamVolume(stream))
+                .isEqualTo(expectedVolume);
+    }
+
+    private void assertCallDoesNotChangeStreamVolume(Runnable r, int stream) throws Exception {
+        assertCallDoesNotChangeStreamVolume(r, stream, null);
+    }
+
+    private void assertCallDoesNotChangeStreamVolume(Runnable r, int stream, String message)
+            throws Exception {
+        // It is hard to test a negative, but we will do our best
+        final int initVol = mAudioManager.getStreamVolume(stream);
+        // Set the volume to a known value
+
+        var future = mCancelRule.registerFuture(getFutureForIntent(
+                mContext,
+                AudioManager.ACTION_VOLUME_CHANGED,
+                i -> (i != null)
+                && i.getIntExtra(AudioManager.EXTRA_VOLUME_STREAM_TYPE, -1)
+                    == stream));
+        r.run();
+        SystemClock.sleep(50);
+        AmUtils.waitForBroadcastBarrier();
+        assertThat(future.isDone())
+                .isFalse();
+
+        assertWithMessage("Call expected to not change volume. "
+                + ((message != null) ? message : ""))
+                .that(mAudioManager.getStreamVolume(stream))
+                .isEqualTo(initVol);
+    }
+
+    private void waitForStreamVolumeSet(int stream, int expectedVolume) throws Exception {
+        final var initVol = mAudioManager.getStreamVolume(stream);
+        // Set the volume to a known value
+        if (initVol != expectedVolume) {
+            var future = mCancelRule.registerFuture(getFutureForIntent(
+                    mContext,
+                    AudioManager.ACTION_VOLUME_CHANGED,
+                    i -> (i != null)
+                    && i.getIntExtra(AudioManager.EXTRA_VOLUME_STREAM_TYPE, -1)
+                        == stream));
+            mAudioManager.setStreamVolume(stream,
+                    expectedVolume, 0 /* flags */);
+            assertThat(future.get(FUTURE_WAIT_SECS, TimeUnit.SECONDS)
+                    .getIntExtra(AudioManager.EXTRA_VOLUME_STREAM_VALUE, -1))
+                    .isEqualTo(expectedVolume);
         }
-        assertEquals(msg, expectedVolume, actualVolume);
+        assertWithMessage("Failed to set stream volume for " + stream + " to " + expectedVolume)
+                .that(mAudioManager.getStreamVolume(stream))
+                .isEqualTo(expectedVolume);
+
     }
 
 
