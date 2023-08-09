@@ -83,4 +83,6 @@
     <!-- CtsMediaDecoderTestCases: b/284409693 -->
     <option name="compatibility:exclude-filter" value="CtsMediaDecoderTestCases android.media.decoder.cts.VideoDecoderPerfTest" />
 
+    <!-- CtsSecurityHostTestCases: b/256140333 -->
+    <option name="compatibility:exclude-filter" value="CtsSecurityHostTestCases android.security.cts.FileSystemPermissionTest" />
 </configuration>
