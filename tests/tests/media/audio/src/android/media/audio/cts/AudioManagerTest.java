@@ -110,6 +110,7 @@ import com.android.internal.annotations.GuardedBy;
 import com.android.media.mediatestutils.CancelAllFuturesRule;
 
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.MoreExecutors;
 
 import org.junit.After;
@@ -141,7 +142,6 @@ public class AudioManagerTest {
     private static final String TAG = "AudioManagerTest";
 
     private static final int INIT_VOL = 1;
-    private static final long POLL_TIME_VOLUME_ADJUST = 400;
     private static final int MP3_TO_PLAY = R.raw.testmp3; // ~ 5 second mp3
     private static final long POLL_TIME_PLAY_MUSIC = 2000;
     private static final long TIME_TO_PLAY = 2000;
@@ -175,6 +175,8 @@ public class AudioManagerTest {
             STREAM_DTMF,  STREAM_ACCESSIBILITY };
 
     private static final int FUTURE_WAIT_SECS = 5; // Should never timeout; early fail
+    // How long to wait to verify that something that shouldn't happen doesn't happen
+    private static final int PROVE_NEGATIVE_DURATION_MS = 300;
 
     private static final int INVALID_DIRECT_PLAYBACK_MODE = -1;
     private AudioManager mAudioManager;
@@ -831,6 +833,7 @@ public class AudioManagerTest {
         }
     }
 
+    // TODO explain the intended behavior in this test
     /**
      * Test that in RINGER_MODE_VIBRATE we observe:
      * if NOTIFICATION & RING are not aliased:
@@ -855,7 +858,17 @@ public class AudioManagerTest {
         // set mode to VIBRATE
         Utils.toggleNotificationPolicyAccess(
                 mContext.getPackageName(), getInstrumentation(), true);
-        mAudioManager.setRingerMode(RINGER_MODE_VIBRATE);
+
+        Map<Integer, MuteStateTransition> expectedVibrateTransitions = Map.of(
+                STREAM_MUSIC, new MuteStateTransition(false, false),
+                STREAM_RING, new MuteStateTransition(false, true),
+                STREAM_NOTIFICATION, new MuteStateTransition(false, true),
+                STREAM_ALARM, new MuteStateTransition(false, false));
+
+        assertStreamMuteStateChange(() -> mAudioManager.setRingerMode(RINGER_MODE_VIBRATE),
+                expectedVibrateTransitions,
+                "RING and NOTIF should be muted in MODE_VIBRATE");
+
         assertEquals(RINGER_MODE_VIBRATE, mAudioManager.getRingerMode());
         Utils.toggleNotificationPolicyAccess(
                 mContext.getPackageName(), getInstrumentation(), false);
@@ -865,38 +878,45 @@ public class AudioManagerTest {
         final int notifiAliasedStream = mAudioManager.getStreamTypeAlias(STREAM_NOTIFICATION);
         getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
 
-        // verify expected muting from the VIBRATE mode
-        assertStreamMuted(STREAM_RING, true,
-                "RING not muted in MODE_VIBRATE");
-        assertStreamMuted(STREAM_NOTIFICATION, true,
-                "NOTIFICATION not muted in MODE_VIBRATE");
+        Map<Integer, MuteStateTransition> unmuteRingerTransitions = Map.of(
+            STREAM_MUSIC, new MuteStateTransition(false, false),
+            STREAM_RING, new MuteStateTransition(true , false),
+            STREAM_NOTIFICATION, new MuteStateTransition(true, false),
+            STREAM_ALARM, new MuteStateTransition(false, false));
 
         if (notifiAliasedStream == STREAM_NOTIFICATION) {
             Log.i(TAG, "testAdjustUnmuteNotificationInVibrate: NOTIF independent");
+
+            Map<Integer, MuteStateTransition> noMuteTransitions = Map.of(
+                STREAM_MUSIC, new MuteStateTransition(false, false),
+                STREAM_RING, new MuteStateTransition(true , true),
+                STREAM_NOTIFICATION, new MuteStateTransition(true, true),
+                STREAM_ALARM, new MuteStateTransition(false, false));
+
             // unmute NOTIFICATION
-            mAudioManager.adjustStreamVolume(STREAM_NOTIFICATION, AudioManager.ADJUST_UNMUTE, 0);
-            // verify it had no effect
-            assertStreamMuted(STREAM_NOTIFICATION, true, "NOTIFICATION did unmute");
+            assertStreamMuteStateChange(() -> mAudioManager.adjustStreamVolume(
+                        STREAM_NOTIFICATION, AudioManager.ADJUST_UNMUTE, 0),
+                    noMuteTransitions,
+                    "NOTIFICATION should not unmute");
             // unmuting NOTIFICATION should not have exited RINGER_MODE_VIBRATE
             assertEquals(RINGER_MODE_VIBRATE, mAudioManager.getRingerMode());
 
-            // unmute NOTIFICATION with FLAG_ALLOW_RINGER_MODES
-            mAudioManager.adjustStreamVolume(STREAM_NOTIFICATION,
-                    AudioManager.ADJUST_UNMUTE, AudioManager.FLAG_ALLOW_RINGER_MODES);
-            // verify it unmuted NOTIFICATION and RING
-            assertStreamMuted(STREAM_NOTIFICATION, false,
-                    "NOTIFICATION (+FLAG_ALLOW_RINGER_MODES) didn't unmute");
-            assertStreamMuted(STREAM_RING, false, "RING didn't unmute");
+
+            assertStreamMuteStateChange(() -> mAudioManager.adjustStreamVolume(
+                        STREAM_NOTIFICATION,
+                        AudioManager.ADJUST_UNMUTE, AudioManager.FLAG_ALLOW_RINGER_MODES),
+                    unmuteRingerTransitions,
+                    "NOTIFICATION(+FLAG_ALLOW_RINGER_MODES) should unmute RING/NOTIF");
             // unmuting NOTIFICATION w/ FLAG_ALLOW_RINGER_MODES should have exited MODE_VIBRATE
             assertEquals(RINGER_MODE_NORMAL, mAudioManager.getRingerMode());
         } else if (notifiAliasedStream == STREAM_RING) {
             Log.i(TAG, "testAdjustUnmuteNotificationInVibrate: NOTIF/RING aliased");
             // unmute NOTIFICATION (should be just like unmuting RING)
-            mAudioManager.adjustStreamVolume(STREAM_NOTIFICATION, AudioManager.ADJUST_UNMUTE, 0);
-            // verify it unmuted both RING and NOTIFICATION
-            assertStreamMuted(STREAM_NOTIFICATION, false, "NOTIFICATION didn't unmute");
-            assertStreamMuted(STREAM_RING, false, "RING didn't unmute");
-            // unmuting NOTIFICATION should have exited RINGER_MODE_VIBRATE
+            assertStreamMuteStateChange(() -> mAudioManager.adjustStreamVolume(
+                        STREAM_NOTIFICATION, AudioManager.ADJUST_UNMUTE, 0),
+                        unmuteRingerTransitions,
+                        "when aliased NOTIF/RING should be unmuted");
+
             assertEquals(RINGER_MODE_NORMAL, mAudioManager.getRingerMode());
 
             // test again with FLAG_ALLOW_RINGER_MODES
@@ -906,12 +926,14 @@ public class AudioManagerTest {
             assertEquals(RINGER_MODE_VIBRATE, mAudioManager.getRingerMode());
             Utils.toggleNotificationPolicyAccess(
                     mContext.getPackageName(), getInstrumentation(), false);
+
             // unmute NOTIFICATION (should be just like unmuting RING)
-            mAudioManager.adjustStreamVolume(STREAM_NOTIFICATION,
-                    AudioManager.ADJUST_UNMUTE, AudioManager.FLAG_ALLOW_RINGER_MODES);
-            // verify it unmuted both RING and NOTIFICATION
-            assertStreamMuted(STREAM_NOTIFICATION, false, "NOTIFICATION didn't unmute");
-            assertStreamMuted(STREAM_RING, false, "RING didn't unmute");
+            assertStreamMuteStateChange(() -> mAudioManager.adjustStreamVolume(
+                        STREAM_NOTIFICATION,
+                        AudioManager.ADJUST_UNMUTE, AudioManager.FLAG_ALLOW_RINGER_MODES),
+                    unmuteRingerTransitions,
+                    "when aliased NOTIF/RING should be unmuted");
+
             // unmuting NOTIFICATION should have exited RINGER_MODE_VIBRATE
             assertEquals(RINGER_MODE_NORMAL, mAudioManager.getRingerMode());
         }
@@ -932,36 +954,45 @@ public class AudioManagerTest {
      */
     @Test
     public void testAdjustUnmuteNotificationInSilent() throws Exception {
-        if (mSkipRingerTests) {
-            return;
-        }
+        assumeFalse(mSkipRingerTests);
+
+        Map<Integer, MuteStateTransition> expectedTransitionsSilentMode = Map.of(
+                STREAM_MUSIC, new MuteStateTransition(false, false),
+                STREAM_NOTIFICATION, new MuteStateTransition(false, true),
+                STREAM_RING, new MuteStateTransition(false, true),
+                STREAM_ALARM, new MuteStateTransition(false, false));
+
+
         // set mode to SILENT
         Utils.toggleNotificationPolicyAccess(
                 mContext.getPackageName(), getInstrumentation(), true);
-        mAudioManager.setRingerMode(RINGER_MODE_SILENT);
+        assertStreamMuteStateChange(() -> mAudioManager.setRingerMode(RINGER_MODE_SILENT),
+                expectedTransitionsSilentMode,
+                "RING/NOTIF should mute in SILENT");
         assertEquals(RINGER_MODE_SILENT, mAudioManager.getRingerMode());
         Utils.toggleNotificationPolicyAccess(
                 mContext.getPackageName(), getInstrumentation(), false);
 
-        // verify expected muting from the SILENT mode
-        assertStreamMuted(STREAM_RING, true,
-                "RING not muted in MODE_SILENT");
-        assertStreamMuted(STREAM_NOTIFICATION, true,
-                "NOTIFICATION not muted in MODE_SILENT");
+        Map<Integer, MuteStateTransition> expectedTransitionsRemainSilentMode = Map.of(
+                STREAM_MUSIC, new MuteStateTransition(false, false),
+                STREAM_NOTIFICATION, new MuteStateTransition(true, true),
+                STREAM_RING, new MuteStateTransition(true, true),
+                STREAM_ALARM, new MuteStateTransition(false, false));
+
 
         // unmute NOTIFICATION
-        mAudioManager.adjustStreamVolume(STREAM_NOTIFICATION, AudioManager.ADJUST_UNMUTE, 0);
-        // verify it had no effect
-        assertStreamMuted(STREAM_NOTIFICATION, true, "NOTIFICATION did unmute");
+        assertStreamMuteStateChange(() -> mAudioManager.adjustStreamVolume(
+                    STREAM_NOTIFICATION, AudioManager.ADJUST_UNMUTE, 0),
+                expectedTransitionsRemainSilentMode,
+                "Unmute NOTIF should have no effect in SILENT");
+
         // unmuting NOTIFICATION should not have exited RINGER_MODE_SILENT
         assertEquals(RINGER_MODE_SILENT, mAudioManager.getRingerMode());
     }
 
     @Test
     public void testSetRingerModePolicyAccess() throws Exception {
-        if (mSkipRingerTests) {
-            return;
-        }
+        assumeFalse(mSkipRingerTests);
         // Apps without policy access cannot change silent -> normal or silent -> vibrate.
         Utils.toggleNotificationPolicyAccess(
                 mContext.getPackageName(), getInstrumentation(), true);
@@ -1263,9 +1294,7 @@ public class AudioManagerTest {
 
     @Test
     public void testMuteDndAffectedStreams() throws Exception {
-        if (mSkipRingerTests) {
-            return;
-        }
+        assumeFalse(mSkipRingerTests);
         int[] streams = { STREAM_RING };
         // Mute streams
         Utils.toggleNotificationPolicyAccess(
@@ -1338,9 +1367,7 @@ public class AudioManagerTest {
 
     @Test
     public void testMuteDndUnaffectedStreams() throws Exception {
-        if (mSkipRingerTests) {
-            return;
-        }
+        assumeFalse(mSkipRingerTests);
         int[] streams = {
                 STREAM_VOICE_CALL,
                 STREAM_MUSIC,
@@ -1456,16 +1483,11 @@ public class AudioManagerTest {
      */
     @Test
     public void testAdjustVolumeInTotalSilenceMode() throws Exception {
+        assumeFalse(mSkipRingerTests);
 
-        if (mSkipRingerTests) {
-            return;
-        }
-        final int TEST_INIT_STREAM_VOL = 1;
         final int SILENCE_VOL = 0;
         final int prevVol = mAudioManager.getStreamVolume(STREAM_MUSIC);
         Utils.toggleNotificationPolicyAccess(mContext.getPackageName(), getInstrumentation(), true);
-
-        waitForStreamVolumeSet(STREAM_MUSIC, TEST_INIT_STREAM_VOL);
 
         // Set to silence
         setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_NONE);
@@ -1480,20 +1502,19 @@ public class AudioManagerTest {
         setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL);
 
         // Volume should be back to normal
-        assertThat(mAudioManager.getStreamVolume(STREAM_MUSIC)).isEqualTo(TEST_INIT_STREAM_VOL);
+        assertThat(mAudioManager.getStreamVolume(STREAM_MUSIC)).isEqualTo(INIT_VOL);
 
         final int MEDIA_DELTA = getVolumeDelta(mAudioManager.getStreamVolume(STREAM_MUSIC));
         assertCallChangesStreamVolume(
                 () -> mAudioManager.adjustStreamVolume(STREAM_MUSIC, ADJUST_RAISE, 0 /* flags */),
                 STREAM_MUSIC,
-                TEST_INIT_STREAM_VOL + MEDIA_DELTA);
+                INIT_VOL + MEDIA_DELTA);
     }
 
     @Test
     public void testAdjustVolumeInAlarmsOnlyMode() throws Exception {
-        if (mSkipRingerTests) {
-            return;
-        }
+        assumeFalse(mSkipRingerTests);
+
         Utils.toggleNotificationPolicyAccess(
                 mContext.getPackageName(), getInstrumentation(), true);
 
@@ -1511,9 +1532,7 @@ public class AudioManagerTest {
 
     @Test
     public void testSetStreamVolumeInTotalSilenceMode() throws Exception {
-        if (mSkipRingerTests) {
-            return;
-        }
+        assumeFalse(mSkipRingerTests);
         Utils.toggleNotificationPolicyAccess(
                 mContext.getPackageName(), getInstrumentation(), true);
 
@@ -1533,9 +1552,7 @@ public class AudioManagerTest {
 
     @Test
     public void testSetStreamVolumeInAlarmsOnlyMode() throws Exception {
-        if (mSkipRingerTests) {
-            return;
-        }
+        assumeFalse(mSkipRingerTests);
         Utils.toggleNotificationPolicyAccess(
                 mContext.getPackageName(), getInstrumentation(), true);
 
@@ -1557,9 +1574,7 @@ public class AudioManagerTest {
 
     @Test
     public void testSetStreamVolumeInPriorityOnlyMode() throws Exception {
-        if (mSkipRingerTests) {
-            return;
-        }
+        assumeFalse(mSkipRingerTests);
         Utils.toggleNotificationPolicyAccess(
                 mContext.getPackageName(), getInstrumentation(), true);
 
@@ -1596,10 +1611,7 @@ public class AudioManagerTest {
 
     @Test
     public void testAdjustVolumeInPriorityOnly() throws Exception {
-        if (mSkipRingerTests) {
-            return;
-        }
-
+        assumeFalse(mSkipRingerTests);
         Utils.toggleNotificationPolicyAccess(
                 mContext.getPackageName(), getInstrumentation(), true);
 
@@ -1636,168 +1648,157 @@ public class AudioManagerTest {
 
     @Test
     public void testPriorityOnlyMuteAll() throws Exception {
-        if (mSkipRingerTests) {
-            return;
-        }
-
+        assumeFalse(mSkipRingerTests);
         Utils.toggleNotificationPolicyAccess(
                 mContext.getPackageName(), getInstrumentation(), true);
+        Map<Integer, MuteStateTransition> expectedTransitions = Map.of(
+                STREAM_MUSIC, new MuteStateTransition(false, true),
+                STREAM_SYSTEM, new MuteStateTransition(false, true),
+                STREAM_ALARM, new MuteStateTransition(false, true),
+                // if channels cannot bypass DND, the Ringer stream should be muted, else it
+                // shouldn't be muted
+                STREAM_RING, new MuteStateTransition(false, !mAppsBypassingDnd));
 
-        // disallow all sounds in priority only, turn on priority only DND
-        mNm.setNotificationPolicy(new NotificationManager.Policy(0, 0, 0));
-        setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_PRIORITY);
-
-        assertStreamMuted(STREAM_MUSIC, true,
-                "Music (media) stream should be muted");
-        assertStreamMuted(STREAM_SYSTEM, true,
-                "System stream should be muted");
-        assertStreamMuted(STREAM_ALARM, true,
-                "Alarm stream should be muted");
-
-        // if channels cannot bypass DND, the Ringer stream should be muted, else it
-        // shouldn't be muted
-        assertStreamMuted(STREAM_RING, !mAppsBypassingDnd,
-                "Ringer stream should be muted if channels cannot bypassDnd");
+        assertStreamMuteStateChange(() -> {
+                    // disallow all sounds in priority only, turn on priority only DND
+                    mNm.setNotificationPolicy(new NotificationManager.Policy(0, 0, 0));
+                    setInterruptionFilter( NotificationManager.INTERRUPTION_FILTER_PRIORITY);
+                },
+                expectedTransitions,
+                "Priority mute all should mute all streams including ringer if" +
+                "channels cannot bypass DND");
     }
 
     @Test
     public void testPriorityOnlyMediaAllowed() throws Exception {
-        if (mSkipRingerTests) {
-            return;
-        }
+        assumeFalse(mSkipRingerTests);
         Utils.toggleNotificationPolicyAccess(
                 mContext.getPackageName(), getInstrumentation(), true);
 
-        // allow only media in priority only
-        mNm.setNotificationPolicy(new NotificationManager.Policy(
-                NotificationManager.Policy.PRIORITY_CATEGORY_MEDIA, 0, 0));
-        setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_PRIORITY);
-
-        assertStreamMuted(STREAM_MUSIC, false,
-                "Music (media) stream should not be muted");
-        assertStreamMuted(STREAM_SYSTEM, true,
-                "System stream should be muted");
-        assertStreamMuted(STREAM_ALARM, true,
-                "Alarm stream should be muted");
-
-        // if channels cannot bypass DND, the Ringer stream should be muted, else it
-        // shouldn't be muted
-        assertStreamMuted(STREAM_RING, !mAppsBypassingDnd,
-                "Ringer stream should be muted if channels cannot bypassDnd");
+        Map<Integer, MuteStateTransition> expectedTransitions = Map.of(
+                STREAM_MUSIC, new MuteStateTransition(false, false),
+                STREAM_SYSTEM, new MuteStateTransition(false, true),
+                STREAM_ALARM, new MuteStateTransition(false, true),
+                STREAM_RING, new MuteStateTransition(false, !mAppsBypassingDnd));
+        assertStreamMuteStateChange(() -> {
+                    // allow only media in priority only
+                    mNm.setNotificationPolicy(new NotificationManager.Policy(
+                            NotificationManager.Policy.PRIORITY_CATEGORY_MEDIA, 0, 0));
+                    setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_PRIORITY);
+                },
+                expectedTransitions,
+                "Priority category media should leave media unmuted, and rest muted");
     }
 
     @Test
     public void testPriorityOnlySystemAllowed() throws Exception {
-        if (mSkipRingerTests) {
-            return;
-        }
-
+        assumeFalse(mSkipRingerTests);
         Utils.toggleNotificationPolicyAccess(
                 mContext.getPackageName(), getInstrumentation(), true);
 
-        // allow only system in priority only
-        mNm.setNotificationPolicy(new NotificationManager.Policy(
-                NotificationManager.Policy.PRIORITY_CATEGORY_SYSTEM, 0, 0));
-        setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_PRIORITY);
+        Map<Integer, MuteStateTransition> expectedTransitions = Map.of(
+                STREAM_MUSIC, new MuteStateTransition(false, true),
+                STREAM_SYSTEM, new MuteStateTransition(false, false),
+                STREAM_ALARM, new MuteStateTransition(false, true),
+                STREAM_RING, new MuteStateTransition(false, false));
 
-        assertStreamMuted(STREAM_MUSIC, true,
-                "Music (media) stream should be muted");
-        assertStreamMuted(STREAM_SYSTEM, false,
-                "System stream should not be muted");
-        assertStreamMuted(STREAM_ALARM, true,
-                "Alarm stream should be muted");
-        assertStreamMuted(STREAM_RING, false,
-                "Ringer stream should not be muted");
+        assertStreamMuteStateChange(() -> {
+                    // allow only system in priority only
+                    mNm.setNotificationPolicy(new NotificationManager.Policy(
+                            NotificationManager.Policy.PRIORITY_CATEGORY_SYSTEM, 0, 0));
+                    setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_PRIORITY);
+                },
+                expectedTransitions,
+                "PRIORITY_CATEGORY_SYSTEM should leave RING and SYSTEM unmuted");
     }
 
     @Test
     public void testPriorityOnlySystemDisallowedWithRingerMuted() throws Exception {
-        if (mSkipRingerTests) {
-            return;
-        }
+        assumeFalse(mSkipRingerTests);
 
         Utils.toggleNotificationPolicyAccess(
                 mContext.getPackageName(), getInstrumentation(), true);
+        Map<Integer, MuteStateTransition> expectedSilentTransition = Map.of(
+                STREAM_MUSIC, new MuteStateTransition(false, false),
+                STREAM_SYSTEM, new MuteStateTransition(false, true),
+                STREAM_ALARM, new MuteStateTransition(false, false),
+                STREAM_RING, new MuteStateTransition(false, true));
 
-        mAudioManager.setStreamVolume(STREAM_RING, 0, 0);
-        mAudioManager.setRingerMode(RINGER_MODE_SILENT);
+        assertStreamMuteStateChange(() -> {
+                    mAudioManager.setStreamVolume(STREAM_RING, 0, 0);
+                    mAudioManager.setRingerMode(RINGER_MODE_SILENT);
+                },
+                expectedSilentTransition,
+                "RING/SYSTEM should be silenced by RINGER_MODE");
 
-        // allow only system in priority only
-        mNm.setNotificationPolicy(new NotificationManager.Policy(
-                NotificationManager.Policy.PRIORITY_CATEGORY_SYSTEM, 0, 0));
-        setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_PRIORITY);
+        Map<Integer, MuteStateTransition> expectedTransitions = Map.of(
+                STREAM_MUSIC, new MuteStateTransition(false, true),
+                STREAM_SYSTEM, new MuteStateTransition(true, true),
+                STREAM_ALARM, new MuteStateTransition(false, true),
+                STREAM_RING, new MuteStateTransition(true, true));
 
-        assertStreamMuted(STREAM_MUSIC, true,
-                "Music (media) stream should be muted");
-        assertStreamMuted(STREAM_SYSTEM, true,
-                "System stream should be muted");
-        assertStreamMuted(STREAM_ALARM, true,
-                "Alarm stream should be muted");
-        assertStreamMuted(STREAM_RING, true,
-                "Ringer stream should be muted");
+        assertStreamMuteStateChange(() -> {
+                // allow only system in priority only
+                mNm.setNotificationPolicy(new NotificationManager.Policy(
+                        NotificationManager.Policy.PRIORITY_CATEGORY_SYSTEM, 0, 0));
+                setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_PRIORITY);
+            },
+            expectedTransitions,
+            "SYSTEM/RING should stay muted if RINGER_MODE_SILENT entering zen");
     }
 
     @Test
     public void testPriorityOnlyAlarmsAllowed() throws Exception {
-        if (mSkipRingerTests) {
-            return;
-        }
+        assumeFalse(mSkipRingerTests);
 
         Utils.toggleNotificationPolicyAccess(
                 mContext.getPackageName(), getInstrumentation(), true);
 
-        // allow only alarms in priority only
-        mNm.setNotificationPolicy(new NotificationManager.Policy(
-                NotificationManager.Policy.PRIORITY_CATEGORY_ALARMS, 0, 0));
-        setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_PRIORITY);
+        Map<Integer, MuteStateTransition> expectedTransitions = Map.of(
+                STREAM_MUSIC, new MuteStateTransition(false, true),
+                STREAM_SYSTEM, new MuteStateTransition(false, true),
+                STREAM_ALARM, new MuteStateTransition(false, false),
+                // if channels cannot bypass DND, the Ringer stream should be muted, else it
+                // shouldn't be muted
+                STREAM_RING, new MuteStateTransition(false, !mAppsBypassingDnd));
 
-        assertStreamMuted(STREAM_MUSIC, true,
-                "Music (media) stream should be muted");
-        assertStreamMuted(STREAM_SYSTEM, true,
-                "System stream should be muted");
-        assertStreamMuted(STREAM_ALARM, false,
-                "Alarm stream should not be muted");
 
-        // if channels cannot bypass DND, the Ringer stream should be muted, else it
-        // shouldn't be muted
-        assertStreamMuted(STREAM_RING, !mAppsBypassingDnd,
-                "Ringer stream should be muted if channels cannot bypassDnd");
+        assertStreamMuteStateChange(() -> {
+                    // allow only alarms in priority only
+                    mNm.setNotificationPolicy(new NotificationManager.Policy(
+                            NotificationManager.Policy.PRIORITY_CATEGORY_ALARMS, 0, 0));
+                    setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_PRIORITY);
+                },
+                expectedTransitions,
+                "Alarm stream should be unmuted, all others muted");
     }
 
     @Test
     public void testPriorityOnlyRingerAllowed() throws Exception {
-        if (mSkipRingerTests) {
-            return;
-        }
+        assumeFalse(mSkipRingerTests);
 
         Utils.toggleNotificationPolicyAccess(
                 mContext.getPackageName(), getInstrumentation(), true);
-        // ensure volume is not muted/0 to start test
-        mAudioManager.setStreamVolume(STREAM_MUSIC, 1, 0);
-        mAudioManager.setStreamVolume(STREAM_ALARM, 1, 0);
-        mAudioManager.setStreamVolume(STREAM_SYSTEM, 1, 0);
-        mAudioManager.setStreamVolume(STREAM_RING, 1, 0);
 
-        // allow only reminders in priority only
-        mNm.setNotificationPolicy(new NotificationManager.Policy(
-                NotificationManager.Policy.PRIORITY_CATEGORY_REMINDERS, 0, 0));
-        setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_PRIORITY);
+        Map<Integer, MuteStateTransition> expectedTransitions = Map.of(
+                STREAM_MUSIC, new MuteStateTransition(false, true),
+                STREAM_SYSTEM, new MuteStateTransition(false, true),
+                STREAM_ALARM, new MuteStateTransition(false, true),
+                STREAM_RING, new MuteStateTransition(false, false));
 
-        assertStreamMuted(STREAM_MUSIC, true,
-                "Music (media) stream should be muted");
-        assertStreamMuted(STREAM_SYSTEM, true,
-                "System stream should be muted");
-        assertStreamMuted(STREAM_ALARM, true,
-                "Alarm stream should be muted");
-        assertStreamMuted(STREAM_RING, false,
-                "Ringer stream should not be muted");
+        assertStreamMuteStateChange(() -> {
+                    // allow only reminders in priority only
+                    mNm.setNotificationPolicy(new NotificationManager.Policy(
+                            NotificationManager.Policy.PRIORITY_CATEGORY_REMINDERS, 0, 0));
+                    setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_PRIORITY);
+                },
+                expectedTransitions,
+                "All streams except ring should be unmuted");
     }
 
     @Test
     public void testPriorityOnlyChannelsCanBypassDnd() throws Exception {
-        if (mSkipRingerTests) {
-            return;
-        }
+        assumeFalse(mSkipRingerTests);
 
         Utils.toggleNotificationPolicyAccess(
                 mContext.getPackageName(), getInstrumentation(), true);
@@ -1810,35 +1811,35 @@ public class AudioManagerTest {
             // create a channel that can bypass dnd
             channel.setBypassDnd(true);
             mNm.createNotificationChannel(channel);
+            Map<Integer, MuteStateTransition> expectedTransitions = Map.of(
+                    STREAM_MUSIC, new MuteStateTransition(false, true),
+                    STREAM_SYSTEM, new MuteStateTransition(false, true),
+                    STREAM_ALARM, new MuteStateTransition(false, true),
+                    STREAM_RING, new MuteStateTransition(false, false));
 
             // allow nothing
-            mNm.setNotificationPolicy(new NotificationManager.Policy(0,0, 0));
-            setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_PRIORITY);
-
-            assertStreamMuted(STREAM_MUSIC, true,
-                    "Music (media) stream should be muted");
-            assertStreamMuted(STREAM_SYSTEM, true,
-                    "System stream should be muted");
-            assertStreamMuted(STREAM_ALARM, true,
-                    "Alarm stream should be muted");
-            assertStreamMuted(STREAM_RING, false,
+            assertStreamMuteStateChange(() -> {
+                            mNm.setNotificationPolicy(new NotificationManager.Policy(0,0, 0));
+                            setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_PRIORITY);
+                    },
+                    expectedTransitions,
                     "Ringer stream should not be muted."
                             + " areChannelsBypassing="
                             + NotificationManager.getService().areChannelsBypassingDnd());
 
             // delete the channel that can bypass dnd
-            mNm.deleteNotificationChannel(NOTIFICATION_CHANNEL_ID);
+            Map<Integer, MuteStateTransition> expectedTransitionsDeleteChannel = Map.of(
+                    STREAM_MUSIC, new MuteStateTransition(true, true),
+                    STREAM_SYSTEM, new MuteStateTransition(true, true),
+                    STREAM_ALARM, new MuteStateTransition(true, true),
+                    // if channels cannot bypass DND, the Ringer stream should be muted, else it
+                    // shouldn't be muted
+                    STREAM_RING, new MuteStateTransition(false, !mAppsBypassingDnd));
 
-            assertStreamMuted(STREAM_MUSIC, true,
-                    "Music (media) stream should be muted");
-            assertStreamMuted(STREAM_SYSTEM, true,
-                    "System stream should be muted");
-            assertStreamMuted(STREAM_ALARM, true,
-                    "Alarm stream should be muted");
-            // if channels cannot bypass DND, the Ringer stream should be muted, else it
-            // shouldn't be muted
-            assertStreamMuted(STREAM_RING, !mAppsBypassingDnd,
-                    "Ringer stream should be muted if apps are bypassing dnd"
+            assertStreamMuteStateChange(() -> mNm.deleteNotificationChannel(
+                        NOTIFICATION_CHANNEL_ID),
+                    expectedTransitionsDeleteChannel,
+                    "Ringer stream should be muted if apps are not bypassing dnd"
                             + " areChannelsBypassing="
                             + NotificationManager.getService().areChannelsBypassingDnd());
         } finally {
@@ -2848,7 +2849,7 @@ public class AudioManagerTest {
                 && i.getIntExtra(AudioManager.EXTRA_VOLUME_STREAM_TYPE, -1)
                     == stream));
         r.run();
-        SystemClock.sleep(50);
+        SystemClock.sleep(PROVE_NEGATIVE_DURATION_MS);
         AmUtils.waitForBroadcastBarrier();
         assertThat(future.isDone())
                 .isFalse();
@@ -2899,17 +2900,72 @@ public class AudioManagerTest {
         }
     }
 
-    // volume adjustments are asynchronous, we poll the volume in case the mute state hasn't
-    // changed yet
-    private void assertStreamMuted(int stream, boolean expectedMuteState, String msg)
-            throws Exception{
-        final long startPoll = SystemClock.uptimeMillis();
-        boolean actualMuteState = mAudioManager.isStreamMute(stream);
-        while (SystemClock.uptimeMillis() - startPoll < POLL_TIME_VOLUME_ADJUST
-                && expectedMuteState != actualMuteState) {
-            actualMuteState = mAudioManager.isStreamMute(stream);
+    private ListenableFuture<Intent> createMuteFuture(int stream) {
+        return mCancelRule.registerFuture(getFutureForIntent(mContext,
+                    "android.media.STREAM_MUTE_CHANGED_ACTION",
+                i -> (i != null) &&
+                    i.getIntExtra(AudioManager.EXTRA_VOLUME_STREAM_TYPE, -1) == stream));
+    }
+
+    private static record MuteStateTransition(boolean before, boolean after) {}
+
+    private static interface ThrowingRunnable {
+        public void run() throws Exception;
+    }
+
+    private void assertStreamMuteStateChange(ThrowingRunnable r,
+            Map<Integer, MuteStateTransition> streamMuteMap,
+            String msg)
+            throws Exception {
+
+        streamMuteMap.forEach(
+                (Integer stream, MuteStateTransition mute)
+                        -> assertWithMessage(msg + " Initial stream mute state for " + stream +
+                            "does not correspond to expected mute state")
+                    .that(mAudioManager.isStreamMute(stream))
+                    .isEqualTo(mute.before()));
+
+        ListenableFuture<List<Intent>> futures = null;
+        List<ListenableFuture<Intent>> unchangedFutures = null;
+
+        futures = Futures.allAsList(streamMuteMap.entrySet().stream()
+                .filter(e -> e.getValue().before() != e.getValue().after())
+                .map(e -> {
+                    return Futures.transform(createMuteFuture(e.getKey()),
+                            (Intent i) -> {
+                                assertWithMessage(msg + " Stream " + e.getKey() + " failed to mute")
+                                    .that(i.getBooleanExtra(
+                                                "android.media.EXTRA_STREAM_VOLUME_MUTED",
+                                                false))
+                                    .isEqualTo(e.getValue().after());
+                                return i;
+                    }, MoreExecutors.directExecutor());
+                })
+                .collect(Collectors.toList()));
+
+        unchangedFutures = streamMuteMap.entrySet().stream()
+                .filter(e -> e.getValue().before() == e.getValue().after())
+                .map(e -> createMuteFuture(e.getKey()))
+                .collect(Collectors.toList());
+
+        r.run();
+
+        SystemClock.sleep(PROVE_NEGATIVE_DURATION_MS);
+        AmUtils.waitForBroadcastBarrier();
+        futures.get(FUTURE_WAIT_SECS, TimeUnit.SECONDS);
+
+        for (var f : unchangedFutures) {
+            if (f.isDone()) {
+                throw new AssertionError(msg + " Unexpected unmute: " + f.get());
+            }
         }
-        assertEquals(msg, expectedMuteState, actualMuteState);
+
+        streamMuteMap.forEach(
+                (Integer stream, MuteStateTransition mute)
+                        -> assertWithMessage(msg + " Final stream mute state for " + stream
+                            + " does not correspond to expected mute state")
+                    .that(mAudioManager.isStreamMute(stream))
+                    .isEqualTo(mute.after()));
     }
 
     private void assertMusicActive(boolean expectedIsMusicActive) throws Exception {
