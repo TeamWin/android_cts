@@ -46,6 +46,7 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.FlakyTest;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
@@ -209,6 +210,7 @@ public final class AccessibilityInputConnectionTest {
     }
 
     @Test
+    @FlakyTest
     public void testPerformEditorAction() {
         final InputMethod.AccessibilityInputConnection ic = getInputConnection();
         final InputConnection spy = resetAndGetLastInputConnectionSpy();

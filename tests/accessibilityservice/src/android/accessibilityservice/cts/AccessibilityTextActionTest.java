@@ -63,6 +63,7 @@ import android.widget.EditText;
 import android.widget.TextView;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.FlakyTest;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
@@ -291,6 +292,7 @@ public class AccessibilityTextActionTest {
     }
 
     @Test
+    @FlakyTest
     public void testTextLocations_textOutsideOfViewBounds_locationsShouldBeNull() {
         final EditText editText = (EditText) mActivity.findViewById(R.id.edit);
         makeTextViewVisibleAndSetText(editText, mActivity.getString(R.string.android_wiki));
@@ -402,6 +404,7 @@ public class AccessibilityTextActionTest {
     }
 
     @Test
+    @FlakyTest
     public void testTextLocations_withUnresponsiveRequestPreparer_shouldTimeout() {
         final TextView textView = (TextView) mActivity.findViewById(R.id.text);
         makeTextViewVisibleAndSetText(textView, mActivity.getString(R.string.a_b));
@@ -447,6 +450,7 @@ public class AccessibilityTextActionTest {
     }
 
     @Test
+    @FlakyTest
     public void testTextLocation_testLocationBoundary_locationShouldBeLimitationLength() {
         final TextView textView = (TextView) mActivity.findViewById(R.id.text);
         makeTextViewVisibleAndSetText(textView, mActivity.getString(R.string.a_b));

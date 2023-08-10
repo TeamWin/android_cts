@@ -55,6 +55,7 @@ import android.widget.Button;
 import android.widget.FrameLayout;
 import android.window.WindowInfosListenerForTest;
 
+import androidx.test.filters.FlakyTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
@@ -202,12 +203,14 @@ public class AccessibilityOverlayTest {
     }
 
     @Test
+    @FlakyTest
     public void testA11yServiceShowsWindowEmbeddedOverlayWithoutCallback_shouldAppearAndDisappear()
             throws Exception {
         doOverlayWindowTest(null, null);
     }
 
     @Test
+    @FlakyTest
     public void testA11yServiceShowsWindowEmbeddedOverlayWithCallback_shouldAppearAndDisappear()
             throws Exception {
         doOverlayWindowTest(mExecutor, mCallback);

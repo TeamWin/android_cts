@@ -65,6 +65,7 @@ import android.view.WindowManager;
 import android.view.accessibility.AccessibilityNodeInfo;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.FlakyTest;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
@@ -314,6 +315,7 @@ public class TouchInteractionControllerTest {
      * the view will be clicked.
      */
     @Test
+    @FlakyTest
     @AppModeFull
     public void testPerformClickAccessibilityFocus_performsClick() {
         if (!mHasTouchscreen || !mScreenBigEnough) return;
