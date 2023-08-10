@@ -498,6 +498,7 @@ public class SatelliteManagerTestBase {
 
     protected static class SatelliteDatagramCallbackTest implements SatelliteDatagramCallback {
         public SatelliteDatagram mDatagram;
+        public long mDatagramId;
         private final Semaphore mSemaphore = new Semaphore(0);
 
         @Override
@@ -506,6 +507,7 @@ public class SatelliteManagerTestBase {
             logd("onSatelliteDatagramReceived: datagramId=" + datagramId + ", datagram="
                     + datagram + ", pendingCount=" + pendingCount);
             mDatagram = datagram;
+            mDatagramId = datagramId;
             if (callback != null) {
                 logd("onSatelliteDatagramReceived: callback.accept() datagramId=" + datagramId);
                 callback.accept(null);
