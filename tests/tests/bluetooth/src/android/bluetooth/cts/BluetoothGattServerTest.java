@@ -22,10 +22,12 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import android.app.UiAutomation;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattServer;
 import android.bluetooth.BluetoothGattServerCallback;
 import android.bluetooth.BluetoothGattService;
@@ -45,10 +47,13 @@ import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 @RunWith(AndroidJUnit4.class)
 public class BluetoothGattServerTest {
 
+    private static final int LATCH_TIMEOUT_MS = 1000;
     private final UUID TEST_UUID = UUID.fromString("0000110a-0000-1000-8000-00805f9b34fb");
     private Context mContext;
     private BluetoothAdapter mBluetoothAdapter;
@@ -114,7 +119,31 @@ public class BluetoothGattServerTest {
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
     public void testGetService() {
-        assertNull(mBluetoothGattServer.getService(TEST_UUID));
+        final CountDownLatch latch = new CountDownLatch(1);
+        final BluetoothGattServerCallback callback = new BluetoothGattServerCallback() {
+            @Override
+            public void onServiceAdded(int status, BluetoothGattService service) {
+                latch.countDown();
+            }
+        };
+        final BluetoothGattServer server = mBluetoothManager.openGattServer(mContext, callback);
+        // Service is null after initialization with public constructor
+        assertNull(server.getService(TEST_UUID));
+        BluetoothGattCharacteristic characteristic = new BluetoothGattCharacteristic(TEST_UUID,
+                0x0A, 0x11);
+        BluetoothGattService service = new BluetoothGattService(TEST_UUID,
+                BluetoothGattService.SERVICE_TYPE_PRIMARY);
+
+        service.addCharacteristic(characteristic);
+        // If service is added successfully, latch.countDown() happens in the callback
+        server.addService(service);
+        try {
+            latch.await(LATCH_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            fail("should not throw an InterruptedException");
+        }
+
+        assertEquals(server.getService(TEST_UUID), service);
     }
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
