@@ -492,11 +492,13 @@ def find_circle(img, img_name, min_area, color):
   num_circles = 0
   circle_contours = []
   logging.debug('Initial number of contours: %d', len(contours))
+  min_circle_area = min_area * img_size[0] * img_size[1]
+  logging.debug('Screening out circles w/ radius < %.1f (pixels) or %d pts.',
+                math.sqrt(min_circle_area / math.pi), CIRCLE_MIN_PTS)
   for contour in contours:
     area = cv2.contourArea(contour)
     num_pts = len(contour)
-    if (area > img_size[0]*img_size[1]*min_area and
-        num_pts >= CIRCLE_MIN_PTS):
+    if (area > min_circle_area and num_pts >= CIRCLE_MIN_PTS):
       shape = component_shape(contour)
       radius = (shape['width'] + shape['height']) / 4
       colour = img_bw[shape['cty']][shape['ctx']]
