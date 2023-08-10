@@ -97,8 +97,11 @@ public class CertificateTest {
         System.setProperty("system.certs.enabled", mApexCertsEnabled);
         Set<String> expectedCertificates = new HashSet<String>(
                 Arrays.asList(CertificateData.CERTIFICATE_DATA));
+        Set<String> optionalCertificates = new HashSet<String>(
+                Arrays.asList(CertificateData.OPTIONAL_CERTIFICATE_DATA));
         Set<String> deviceCertificates = getDeviceCertificates();
         deviceCertificates.removeAll(expectedCertificates);
+        deviceCertificates.removeAll(optionalCertificates);
         assertEquals("Unknown CA certificates", Collections.EMPTY_SET, deviceCertificates);
     }
 
