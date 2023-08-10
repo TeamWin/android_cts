@@ -17,20 +17,30 @@
 package com.example.helloworld;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
-public class MainActivity extends AppCompatActivity {
+import java.io.IOException;
+import java.io.OutputStreamWriter;
 
+public class MainActivity extends AppCompatActivity {
+    private static final String TAG = MainActivity.class.getName();
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+        try (OutputStreamWriter writer = new OutputStreamWriter(
+                getApplicationContext().openFileOutput("test_file", MODE_PRIVATE))) {
+            writer.write("Testing");
+        } catch (IOException e) {
+            Log.e(TAG, "Failed to write data", e);
+        }
         System.exit(5);
     }
 

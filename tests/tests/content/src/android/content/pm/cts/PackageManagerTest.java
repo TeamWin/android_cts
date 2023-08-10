@@ -67,6 +67,8 @@ import android.app.ActivityOptions;
 import android.app.ActivityThread;
 import android.app.Instrumentation;
 import android.app.PendingIntent;
+import android.app.usage.StorageStats;
+import android.app.usage.StorageStatsManager;
 import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -362,11 +364,7 @@ public class PackageManagerTest {
             assertFalse(containsActivityInfoName("com.example.helloworld.MainActivity", matches));
         }
 
-        SystemUtil.runShellCommand("am start -W "
-                + "--user current "
-                + "-a android.intent.action.MAIN "
-                + "-c android.intent.category.LAUNCHER "
-                + HELLO_WORLD_PACKAGE_NAME + "/.MainActivity");
+        launchMainActivity(HELLO_WORLD_PACKAGE_NAME);
 
         // Started.
         {
@@ -383,6 +381,14 @@ public class PackageManagerTest {
                     PackageManager.ResolveInfoFlags.of(0));
             assertFalse(containsActivityInfoName("com.example.helloworld.MainActivity", matches));
         }
+    }
+
+    private static void launchMainActivity(String packageName) {
+        SystemUtil.runShellCommand("am start -W "
+                + "--user current "
+                + "-a android.intent.action.MAIN "
+                + "-c android.intent.category.LAUNCHER "
+                + packageName + "/.MainActivity");
     }
 
     // Disable the test due to feature revert
@@ -2748,16 +2754,27 @@ public class PackageManagerTest {
     @Test
     public void testUninstallWithKeepData() throws Exception {
         installPackage(HELLO_WORLD_APK);
-        final String oldDataDir = mPackageManager.getPackageInfo(HELLO_WORLD_PACKAGE_NAME,
-                PackageManager.PackageInfoFlags.of(0))
-                .applicationInfo.dataDir;
+        PackageInfo packageInfo = mPackageManager.getPackageInfo(HELLO_WORLD_PACKAGE_NAME,
+                PackageManager.PackageInfoFlags.of(0));
+        final String oldDataDir = packageInfo.applicationInfo.dataDir;
+        // Launch activity to write data to the data dir and verify the stats
+        launchMainActivity(HELLO_WORLD_PACKAGE_NAME);
+        StorageStatsManager storageStatsManager =
+                mContext.getSystemService(StorageStatsManager.class);
+        StorageStats stats = storageStatsManager.queryStatsForPackage(
+                packageInfo.applicationInfo.storageUuid, HELLO_WORLD_PACKAGE_NAME,
+                UserHandle.of(UserHandle.myUserId()));
+        assertTrue(stats.getDataBytes() > 0L);
+
         uninstallPackageKeepData(HELLO_WORLD_PACKAGE_NAME);
         assertFalse(isAppInstalled(HELLO_WORLD_PACKAGE_NAME));
+
         // Test query with MATCH_UNINSTALLED_PACKAGES
-        final PackageInfo packageInfo = mPackageManager.getPackageInfo(HELLO_WORLD_PACKAGE_NAME,
+        packageInfo = mPackageManager.getPackageInfo(HELLO_WORLD_PACKAGE_NAME,
                 PackageManager.PackageInfoFlags.of(MATCH_UNINSTALLED_PACKAGES));
         assertEquals(HELLO_WORLD_PACKAGE_NAME, packageInfo.packageName);
-        // Test that signing info is still available
+        // Test that the code path is gone but the signing info is still available
+        assertNull(packageInfo.applicationInfo.getCodePath());
         assertNotNull(packageInfo.signingInfo);
         // Test that the app's data directory is preserved and matches dumpsys
         final String newDataDir = packageInfo.applicationInfo.dataDir;
@@ -2766,6 +2783,11 @@ public class PackageManagerTest {
         final String appDirInDump = parsePackageDump(HELLO_WORLD_PACKAGE_NAME, "    dataDir=");
         assertEquals(appDirInDump, newDataDir);
         assertNotNull(packageInfo.applicationInfo.storageUuid);
+        // Verify the stats
+        stats = storageStatsManager.queryStatsForPackage(
+                packageInfo.applicationInfo.storageUuid, HELLO_WORLD_PACKAGE_NAME,
+                UserHandle.of(UserHandle.myUserId()));
+        assertTrue(stats.getDataBytes() > 0L);
         // Fully clean up and test that the query fails
         uninstallPackage(HELLO_WORLD_PACKAGE_NAME);
         expectThrows(NameNotFoundException.class,
