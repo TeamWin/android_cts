@@ -25,6 +25,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import android.hardware.HardwareBuffer;
+import android.os.BadParcelableException;
 import android.os.Build;
 import android.os.Parcel;
 import android.os.SystemProperties;
@@ -233,6 +234,16 @@ public class HardwareBufferTest {
         assertEquals(2, outBuffer.getWidth());
         assertNotEquals(0, outBuffer.getId());
         assertEquals(beforeId, outBuffer.getId());
+        parcel.recycle();
+    }
+
+    @Test
+    public void testReadInvalidParcelFails() {
+        Parcel parcel = Parcel.obtain();
+        assertNotNull(parcel);
+        assertThrows(BadParcelableException.class, () -> {
+            HardwareBuffer.CREATOR.createFromParcel(parcel);
+        });
         parcel.recycle();
     }
 }
