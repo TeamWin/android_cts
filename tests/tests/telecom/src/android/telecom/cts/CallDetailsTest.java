@@ -140,7 +140,7 @@ public class CallDetailsTest extends BaseTelecomTestWithMockServices {
                         getInstrumentation().getTargetContext().getContentResolver();
                 try {
                     mContactUri = insertContactWithPhoto(
-                            resolver, getTestNumber().toString());
+                            resolver, getTestNumber().getSchemeSpecificPart());
                 } catch (Exception e) {
                     assertTrue("Failed to insert test contact into ContactsProvider", false);
                 }
