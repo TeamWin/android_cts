@@ -117,7 +117,29 @@ public class PassFailButtons {
         void setTestResultAndFinish(boolean passed);
 
         /**
+         * @return true if the test module will write a ReportLog entry
+         *
+         * Note that in order to obtain a non-null CtsVerifierReportLog object from
+         * the getReportLog() method, the activity must override this method to return true
+         * and should implement the getReportFileName(), getReportSectionName() and
+         * recordTestResults() methods.
+         *
+         * If this method returns true and the user did not setup up CtsVerifier correctly
+         * with respect to accessing local data on the DUT;
+         * <code>
+         * adb shell appops set com.android.cts.verifier android:read_device_identifiers allow
+         * adb shell appops set com.android.cts.verifier MANAGE_EXTERNAL_STORAGE 0
+         * </code>
+         * a warning dialog will be displayed when invoking that test.
+         */
+        public boolean requiresReportLog();
+
+        /**
          * @return The name of the file to store the (suite of) ReportLog information.
+         *
+         * If a test uses the CtsVerifierReportLog, it should implement this method to provide
+         * a file name for the (JSON) report log data. This does not need to be unique to the
+         * test, perhaps specific to a set of related tests.
          */
         public String getReportFileName();
 
@@ -125,16 +147,29 @@ public class PassFailButtons {
          * @return A unique name to serve as a section header in the CtsVerifierReportLog file.
          * Tests need to conform to the underscore_delineated_name standard for use with
          * the protobuff/json ReportLog parsing in Google3
+         *
+         * If the test implements this method, it should also implement the requiresReportLog()
+         * method to return true and the getReportFileName() and recordTestResults() methods.
          */
         public String getReportSectionName();
 
         /**
          * Test subclasses can override this to record their CtsVerifierReportLogs.
-         * This is called when the test is exited
+         * This is called when the test is exited.
+         *
+         * NOTE: If the test gathers reportLog data, the test class should implement
+         * the requiresReportLog() to return true, and implement the getReportFileName() and
+         * getReportSectionName() methods.
          */
         void recordTestResults();
 
-        /** @return A {@link ReportLog} that is used to record test metric data. */
+        /**
+         * @return A {@link ReportLog} that is used to record test metric data or null.
+         *
+         * If a test calls this method it must implement the requiresReportLog() to return true,
+         * and implement the getReportFileName() and getReportSectionName() methods, otherwise
+         * this method will return null.
+         */
         CtsVerifierReportLog getReportLog();
 
         /**
@@ -222,10 +257,7 @@ public class PassFailButtons {
                     getReportFileName(), getReportSectionName());
         }
 
-        /**
-         * Specifies if the test module will write a ReportLog entry
-         * @return true if the test module will write a ReportLog entry
-         */
+        @Override
         public boolean requiresReportLog() {
             return false;
         }
@@ -329,6 +361,11 @@ public class PassFailButtons {
         }
 
         @Override
+        public boolean requiresReportLog() {
+            return false;
+        }
+
+        @Override
         public CtsVerifierReportLog getReportLog() {
             return mReportLog;
         }
@@ -419,6 +456,11 @@ public class PassFailButtons {
             PassFailButtons.setTestResultAndFinishHelper(
                     this, getTestId(), getTestDetails(), passed, getReportLog(),
                     getHistoryCollection());
+        }
+
+        @Override
+        public boolean requiresReportLog() {
+            return false;
         }
 
         @Override
