@@ -87,9 +87,75 @@ static void loadCameraAndVerifyFrameImport(JNIEnv *env, jclass,
   // TODO(b/110025779): We should find a way to validate pixels.
 }
 
+
+static void loadCameraAndVerifyFrameImportWithAIMAGE_FORMAT_YUV_420_888(JNIEnv *env, jclass, jobject assetMgr) {
+  // Initialize Vulkan.
+  VkInit init;
+  if (!init.init()) {
+    // Could not initialize Vulkan due to lack of device support, skip test.
+    return;
+  }
+  VkImageRenderer renderer(&init, kTestImageWidth, kTestImageHeight,
+                           VK_FORMAT_R8G8B8A8_UNORM, 4);
+  ASSERT(renderer.init(env, assetMgr), "Could not init VkImageRenderer.");
+
+  // Initialize image reader and camera helpers.
+  ImageReaderHelper imageReader(kTestImageWidth, kTestImageHeight,
+                                AIMAGE_FORMAT_YUV_420_888, kTestImageUsage,
+                                kTestImageCount);
+  CameraHelper camera;
+  ASSERT(imageReader.initImageReader() >= 0,
+         "Failed to initialize image reader.");
+  ASSERT(camera.initCamera(imageReader.getNativeWindow()) >= 0,
+         "Failed to initialize camera.");
+  ASSERT(camera.isCameraReady(), "Camera is not ready.");
+
+  // Acquire an AHardwareBuffer from the camera.
+  ASSERT(camera.takePicture() >= 0, "Camera failed to take picture.");
+  AHardwareBuffer *buffer;
+  int ret = imageReader.getBufferFromCurrentImage(&buffer);
+  while (ret != 0) {
+    usleep(1000);
+    ret = imageReader.getBufferFromCurrentImage(&buffer);
+  }
+
+  // Impor the AHardwareBuffer into Vulkan.
+  VkAHardwareBufferImage vkImage(&init);
+  ASSERT(vkImage.init(buffer, true /* useExternalFormat */), "Could not initialize VkAHardwareBufferImage.");
+
+  // Render the AHardwareBuffer using Vulkan and read back the result.
+  std::vector<uint32_t> imageData;
+  ASSERT(renderer.renderImageAndReadback(
+             vkImage.image(), vkImage.sampler(), vkImage.view(),
+             vkImage.semaphore(), vkImage.isSamplerImmutable(), &imageData),
+         "Could not render/read-back Vulkan pixels.");
+
+
+  VkAndroidHardwareBufferFormatPropertiesANDROID buffer_format_properties = {
+      .sType = VK_STRUCTURE_TYPE_ANDROID_HARDWARE_BUFFER_FORMAT_PROPERTIES_ANDROID,
+      .pNext = nullptr,
+      .externalFormat = 0,
+  };
+
+  VkAndroidHardwareBufferPropertiesANDROID buffer_properties = {
+      .sType = VK_STRUCTURE_TYPE_ANDROID_HARDWARE_BUFFER_PROPERTIES_ANDROID,
+      .pNext = &buffer_format_properties,
+  };
+
+  VkResult result = vkGetAndroidHardwareBufferPropertiesANDROID(init.device(), 
+    buffer,
+    &buffer_properties);
+
+  ASSERT( result == VK_SUCCESS, "vkGetAndroidHardwareBufferPropertiesANDROID failed");
+  ASSERT( buffer_format_properties.externalFormat != 0, "VkAndroidHardwareBufferFormatPropertiesANDROID returned externalFormat == 0, indicating improper usage of AIMAGE_FORMAT_YUV_420_888");
+}
+
 static JNINativeMethod gMethods[] = {
     {"loadCameraAndVerifyFrameImport", "(Landroid/content/res/AssetManager;)V",
      (void *)loadCameraAndVerifyFrameImport},
+
+    {"loadCameraAndVerifyFrameImportWithAIMAGE_FORMAT_YUV_420_888", "(Landroid/content/res/AssetManager;)V",
+     (void *)loadCameraAndVerifyFrameImportWithAIMAGE_FORMAT_YUV_420_888},
 };
 
 int register_android_graphics_cts_CameraVulkanGpuTest(JNIEnv *env) {
