@@ -4459,7 +4459,7 @@ public class ViewTest {
         });
         mInstrumentation.waitForIdleSync();
 
-        mInstrumentation.sendKeySync(new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_BACK));
+        mInstrumentation.sendKeySync(new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_A));
         assertTrue(view.hasCalledDispatchKeyEventPreIme());
         assertTrue(view.hasCalledOnKeyPreIme());
     }
