@@ -40,6 +40,7 @@ import androidx.annotation.Nullable;
 
 import java.lang.ref.WeakReference;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
 /**
@@ -133,20 +134,21 @@ public class NotificationTrampolineTestService extends Service {
                     break;
                 }
                 case MESSAGE_CLICK_NOTIFICATION: {
-                    PendingIntent intent = Stream
-                            .of(mNotificationManager.getActiveNotifications())
+                    AtomicInteger counter = new AtomicInteger();
+                    Stream.of(mNotificationManager.getActiveNotifications())
                             .filter(sb -> sb.getId() == notificationId)
-                            .map(sb -> sb.getNotification().contentIntent)
-                            .findFirst()
-                            .orElse(null);
-                    if (intent != null) {
-                        try {
-                            intent.send();
-                        } catch (PendingIntent.CanceledException e) {
-                            throw new IllegalStateException("Notification PI cancelled", e);
-                        }
-                    }
-                    sendMessageToTest(mCallback, TEST_MESSAGE_NOTIFICATION_CLICKED, intent != null);
+                            .flatMap(sb -> Stream.of(sb.getNotification().contentIntent,
+                                    sb.getNotification().publicVersion.contentIntent))
+                            .forEach(intent -> {
+                                try {
+                                    intent.send();
+                                } catch (PendingIntent.CanceledException e) {
+                                    throw new IllegalStateException("Notification PI cancelled", e);
+                                }
+                                counter.getAndIncrement();
+                            });
+                    sendMessageToTest(mCallback, TEST_MESSAGE_NOTIFICATION_CLICKED,
+                            counter.get() == 2);
                     break;
                 }
                 default:
@@ -164,10 +166,16 @@ public class NotificationTrampolineTestService extends Service {
     }
 
     private void postNotification(int notificationId, PendingIntent intent) {
+        Notification publicNotification =
+                new Notification.Builder(this, NOTIFICATION_CHANNEL_ID)
+                        .setSmallIcon(android.R.drawable.ic_info)
+                        .setContentIntent(intent)
+                        .build();
         Notification notification =
                 new Notification.Builder(this, NOTIFICATION_CHANNEL_ID)
                         .setSmallIcon(android.R.drawable.ic_info)
                         .setContentIntent(intent)
+                        .setPublicVersion(publicNotification)
                         .build();
         NotificationChannel notificationChannel = new NotificationChannel(NOTIFICATION_CHANNEL_ID,
                 NOTIFICATION_CHANNEL_ID, NotificationManager.IMPORTANCE_DEFAULT);
