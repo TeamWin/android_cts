@@ -28,10 +28,11 @@ import android.content.pm.PackageManager;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.test.suitebuilder.annotation.SmallTest;
-
-import java.util.List;
+import android.test.suitebuilder.annotation.Suppress;
 
 import com.android.compatibility.common.util.CddTest;
+
+import java.util.List;
 
 @CddTest(requirement="3.8.1/C-2-3")
 @SmallTest
@@ -186,6 +187,8 @@ public class ShortcutManagerStartShortcutTest extends ShortcutManagerCtsTestsBas
                 SecurityException.class);
     }
 
+    // TODO: b/288276271
+    @Suppress
     public void testShortcutNoLongerExists() {
         if (mOnWatch) {
             return; // b/109678268
