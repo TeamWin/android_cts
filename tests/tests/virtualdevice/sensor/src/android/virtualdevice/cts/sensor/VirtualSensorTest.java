@@ -632,6 +632,7 @@ public class VirtualSensorTest {
                 .onDirectChannelDestroyed(channelHandle.getValue());
     }
 
+    @FlakyTest(bugId = 291719810)
     @Test
     public void directConnection_memoryFile_injectEvents_withHelperWriter() throws Exception {
         mVirtualSensorDirectChannelWriter = new VirtualSensorDirectChannelWriter();
