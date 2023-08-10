@@ -154,6 +154,8 @@ public abstract class VirtualDeviceTestCase extends InputTestCase {
                 new VirtualDisplayConfig.Builder("VirtualDisplay", DISPLAY_WIDTH, DISPLAY_HEIGHT,
                         /* densityDpi= */ 50)
                         .setSurface(new Surface(new SurfaceTexture(ARBITRARY_SURFACE_TEX_ID)))
+                        .setFlags(DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC
+                                | DisplayManager.VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY)
                         .build(),
                 /* executor= */ Runnable::run,
                 /* callback= */ null);

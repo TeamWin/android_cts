@@ -29,6 +29,7 @@ import static android.hardware.Sensor.TYPE_ACCELEROMETER;
 import static android.media.AudioManager.AUDIO_SESSION_ID_GENERATE;
 import static android.media.AudioManager.FX_BACK;
 import static android.media.AudioManager.FX_KEY_CLICK;
+import static android.virtualdevice.cts.common.util.VirtualDeviceTestUtils.createDefaultVirtualDisplayConfigBuilder;
 
 import static androidx.test.core.app.ApplicationProvider.getApplicationContext;
 
@@ -94,7 +95,10 @@ public class VirtualDeviceManagerBasicTest {
                     .setName(VIRTUAL_DEVICE_NAME)
                     .build();
     private static final VirtualDisplayConfig DEFAULT_VIRTUAL_DISPLAY_CONFIG =
-            new VirtualDisplayConfig.Builder("testDisplay", 100, 100, 100).build();
+            createDefaultVirtualDisplayConfigBuilder()
+                    .setFlags(DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC
+                            | DisplayManager.VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY)
+                    .build();
 
     @Rule
     public AdoptShellPermissionsRule mAdoptShellPermissionsRule = new AdoptShellPermissionsRule(
