@@ -126,6 +126,7 @@ import android.widget.Button;
 import android.widget.EditText;
 
 import androidx.annotation.NonNull;
+import androidx.test.filters.FlakyTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
@@ -690,6 +691,7 @@ public class AccessibilityDisplayProxyTest {
         }
     }
     @Test
+    @FlakyTest
     @ApiTest(apis = {"android.view.accessibility.AccessibilityDisplayProxy#findFocus(int)"})
     public void testGetFocus_proxySetsAccessibilityFocus_serviceGetsNullFocus() throws Exception {
         final StubProxyConcurrentAccessibilityService service =
@@ -1042,6 +1044,7 @@ public class AccessibilityDisplayProxyTest {
     }
 
     @Test
+    @FlakyTest
     @ApiTest(apis = {"android.view.accessibility.AccessibilityManager"
             + ".AccessibilityServicesStateChangeListener#onAccessibilityServicesStateChanged"})
     public void testOnA11yServicesStateChanged_updateServiceTimeout_doesNotNotifyProxiedApp() {

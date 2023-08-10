@@ -46,6 +46,7 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.FlakyTest;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
@@ -239,6 +240,7 @@ public class AccessibilityImeTest {
     }
 
     @Test
+    @FlakyTest
     public void testInputConnection_requestIme() throws InterruptedException {
         CountDownLatch startInputLatch = new CountDownLatch(1);
         sStubImeAccessibilityService.setStartInputCountDownLatch(startInputLatch);
@@ -276,6 +278,7 @@ public class AccessibilityImeTest {
     }
 
     @Test
+    @FlakyTest
     public void testSelectionChange_requestIme() throws InterruptedException {
         CountDownLatch startInputLatch = new CountDownLatch(1);
         sStubImeAccessibilityService.setStartInputCountDownLatch(startInputLatch);

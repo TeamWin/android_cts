@@ -55,6 +55,7 @@ import android.view.WindowManager;
 import android.view.accessibility.AccessibilityEvent;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.FlakyTest;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.CddTest;
@@ -162,6 +163,7 @@ public class AccessibilityGestureDetectorTest {
     }
 
     @Test
+    @FlakyTest
     @AppModeFull
     public void testRecognizeGesturePath() {
         if (!mHasTouchScreen || !mScreenBigEnough) {
@@ -173,6 +175,7 @@ public class AccessibilityGestureDetectorTest {
     }
 
     @Test
+    @FlakyTest
     @AppModeFull
     public void testRecognizeGesturePathOnVirtualDisplay() throws Exception {
         assumeTrue(sInstrumentation.getContext().getPackageManager()

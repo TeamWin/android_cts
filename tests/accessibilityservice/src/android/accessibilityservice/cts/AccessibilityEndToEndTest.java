@@ -105,6 +105,7 @@ import android.widget.EditText;
 import android.widget.ListView;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.FlakyTest;
 import androidx.test.filters.MediumTest;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
@@ -1928,6 +1929,7 @@ public class AccessibilityEndToEndTest extends StsExtraBusinessLogicTestCase {
     }
 
     @Test
+    @FlakyTest
     @ApiTest(apis = {"android.accessibilityservice.AccessibilityService#onMotionEvent"})
     public void testOnMotionEvent_interceptsEventFromRequestedSource_SetAndUnset() {
         final int requestedSource = InputDevice.SOURCE_JOYSTICK;

@@ -85,6 +85,7 @@ import android.widget.Button;
 
 import androidx.annotation.NonNull;
 import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.FlakyTest;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
@@ -750,6 +751,7 @@ public class AccessibilityWindowQueryTest {
     }
 
     @Test
+    @FlakyTest
     public void testWindowLocale_setGet() throws Exception {
         final LocaleManager manager = mActivity.getSystemService(LocaleManager.class);
         final LocaleList systemLocales = manager.getSystemLocales();

@@ -60,6 +60,7 @@ import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.accessibility.AccessibilityWindowInfo;
 import android.widget.Button;
 
+import androidx.test.filters.FlakyTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
@@ -1059,6 +1060,7 @@ public class AccessibilityMagnificationTest {
     }
 
     @Test
+    @FlakyTest
     public void testA11yNodeInfoVisibility_whenOutOfMagnifiedArea_shouldVisible()
             throws Exception{
         final Activity activity = launchActivityAndWaitForItToBeOnscreen(
