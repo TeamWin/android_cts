@@ -1299,7 +1299,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
             sendSatelliteDatagramDemoModeSuccess(mText);
 
             // test pollPendingSatelliteDatagram for demo mode
-            sSatelliteManager.onDeviceAlignedWithSatellite(true);
+            sSatelliteManager.setDeviceAlignedWithSatellite(true);
             transmissionUpdateCallback = startTransmissionUpdates();
             SatelliteDatagramCallbackTest datagramCallback = new SatelliteDatagramCallbackTest();
             assertTrue(SatelliteManager.SATELLITE_ERROR_NONE
@@ -1341,7 +1341,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
             sSatelliteManager.unregisterForSatelliteDatagram(datagramCallback);
         }
 
-        sSatelliteManager.onDeviceAlignedWithSatellite(false);
+        sSatelliteManager.setDeviceAlignedWithSatellite(false);
         revokeSatellitePermission();
     }
 
@@ -1686,7 +1686,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         String mText = "This is a test datagram message from user";
         SatelliteDatagram datagram = new SatelliteDatagram(mText.getBytes());
         callback.clearSendDatagramStateChanges();
-        sSatelliteManager.onDeviceAlignedWithSatellite(false);
+        sSatelliteManager.setDeviceAlignedWithSatellite(false);
         sSatelliteManager.sendSatelliteDatagram(SatelliteManager.DATAGRAM_TYPE_SOS_MESSAGE,
                 datagram, true, getContext().getMainExecutor(),
                 resultListener::offer);
@@ -1754,7 +1754,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
 
         assertTrue(sMockSatelliteServiceManager.waitForEventOnSendSatelliteDatagram(1));
         callback.clearSendDatagramStateChanges();
-        sSatelliteManager.onDeviceAlignedWithSatellite(true);
+        sSatelliteManager.setDeviceAlignedWithSatellite(true);
 
         // Satellite is aligned now. We should get the response of the request
         // sendSatelliteDatagrams.
@@ -1784,7 +1784,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
                         0, SatelliteManager.SATELLITE_ERROR_NONE));
 
         // Move to sending state and wait for satellite alignment forever again
-        sSatelliteManager.onDeviceAlignedWithSatellite(false);
+        sSatelliteManager.setDeviceAlignedWithSatellite(false);
         callback.clearSendDatagramStateChanges();
         sSatelliteManager.sendSatelliteDatagram(SatelliteManager.DATAGRAM_TYPE_SOS_MESSAGE,
                 datagram, true, getContext().getMainExecutor(),
@@ -1878,7 +1878,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         requestSatelliteEnabledForDemoMode(true);
         assertTrue(stateCallback.waitUntilResult(1));
 
-        sSatelliteManager.onDeviceAlignedWithSatellite(true);
+        sSatelliteManager.setDeviceAlignedWithSatellite(true);
         // Send satellite datagram to compare with the received datagram in demo mode
         LinkedBlockingQueue<Integer> resultListener = new LinkedBlockingQueue<>(1);
         String mText = "This is a test datagram message";
@@ -1902,7 +1902,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
 
         // Test poll pending satellite datagram for demo mode while it is not aligned
         transmissionUpdateCallback.clearReceiveDatagramStateChanges();
-        sSatelliteManager.onDeviceAlignedWithSatellite(false);
+        sSatelliteManager.setDeviceAlignedWithSatellite(false);
         assertTrue(sMockSatelliteServiceManager.setSatelliteDeviceAlignedTimeoutDuration(
                 TEST_SATELLITE_DEVICE_ALIGN_TIMEOUT_MILLIS));
 
@@ -2597,7 +2597,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         assertTrue(sMockSatelliteServiceManager.overrideSatellitePointingUiClassName());
         sMockSatelliteServiceManager.clearMockPointingUiActivityStatusChanges();
         sMockSatelliteServiceManager.clearSentSatelliteDatagramInfo();
-        sSatelliteManager.onDeviceAlignedWithSatellite(true);
+        sSatelliteManager.setDeviceAlignedWithSatellite(true);
         sSatelliteManager.sendSatelliteDatagram(SatelliteManager.DATAGRAM_TYPE_SOS_MESSAGE,
                 datagram, true, getContext().getMainExecutor(),
                 resultListener::offer);
@@ -2638,7 +2638,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         assertTrue(sMockSatelliteServiceManager.waitForEventMockPointingUiActivityStarted(1));
         assertTrue(sMockSatelliteServiceManager.restoreSatellitePointingUiClassName());
 
-        sSatelliteManager.onDeviceAlignedWithSatellite(false);
+        sSatelliteManager.setDeviceAlignedWithSatellite(false);
         callback.clearSendDatagramStateChanges();
         sSatelliteManager.stopSatelliteTransmissionUpdates(callback, getContext().getMainExecutor(),
                 resultListener::offer);
