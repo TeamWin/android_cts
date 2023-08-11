@@ -691,6 +691,10 @@ public final class CameraDeviceInfo extends DeviceInfo {
         charsKeyNames.add(CameraCharacteristics.CONTROL_AVAILABLE_SETTINGS_OVERRIDES.getName());
         charsKeyNames.add(CameraCharacteristics.CONTROL_AUTOFRAMING_AVAILABLE.getName());
         charsKeyNames.add(CameraCharacteristics.EDGE_AVAILABLE_EDGE_MODES.getName());
+        charsKeyNames.add(CameraCharacteristics.FLASH_SINGLE_STRENGTH_MAX_LEVEL.getName());
+        charsKeyNames.add(CameraCharacteristics.FLASH_SINGLE_STRENGTH_DEFAULT_LEVEL.getName());
+        charsKeyNames.add(CameraCharacteristics.FLASH_TORCH_STRENGTH_MAX_LEVEL.getName());
+        charsKeyNames.add(CameraCharacteristics.FLASH_TORCH_STRENGTH_DEFAULT_LEVEL.getName());
         charsKeyNames.add(CameraCharacteristics.FLASH_INFO_AVAILABLE.getName());
         charsKeyNames.add(CameraCharacteristics.FLASH_INFO_STRENGTH_MAXIMUM_LEVEL.getName());
         charsKeyNames.add(CameraCharacteristics.FLASH_INFO_STRENGTH_DEFAULT_LEVEL.getName());

@@ -1021,6 +1021,7 @@ public class CaptureResultTest extends Camera2AndroidTestCase {
         resultKeys.add(CaptureResult.EDGE_MODE);
         resultKeys.add(CaptureResult.FLASH_MODE);
         resultKeys.add(CaptureResult.FLASH_STATE);
+        resultKeys.add(CaptureResult.FLASH_STRENGTH_LEVEL);
         resultKeys.add(CaptureResult.HOT_PIXEL_MODE);
         resultKeys.add(CaptureResult.JPEG_GPS_LOCATION);
         resultKeys.add(CaptureResult.JPEG_ORIENTATION);
