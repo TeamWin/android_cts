@@ -40,6 +40,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import android.Manifest;
 import android.content.ContentValues;
@@ -52,6 +53,7 @@ import android.os.Environment;
 import android.os.FileUtils;
 import android.os.ParcelFileDescriptor;
 import android.provider.MediaStore;
+import android.system.Os;
 
 import androidx.test.filters.SdkSuppress;
 
@@ -90,6 +92,9 @@ public class RedactUriDeviceTest extends ScopedStorageBaseDeviceTest {
     static final String NONCE = String.valueOf(System.nanoTime());
 
     static final String IMAGE_FILE_NAME = "ScopedStorageDeviceTest_file_" + NONCE + ".jpg";
+
+    static final String FUZZER_HEIC_FILE_NAME =
+            "ScopedStorageDeviceTest_file_fuzzer_" + NONCE + ".heic";
 
     // An app with no permissions
     private static final TestApp APP_B_NO_PERMS = new TestApp("TestAppB",
@@ -465,10 +470,30 @@ public class RedactUriDeviceTest extends ScopedStorageBaseDeviceTest {
             assertUriIsUnredacted(img);
 
             try (ParcelFileDescriptor pfd =
-                    getContentResolver().openFileDescriptor(redactedUri, "r")) {
+                         getContentResolver().openFileDescriptor(redactedUri, "r")) {
                 FileDescriptor fd = pfd.getFileDescriptor();
                 ExifInterface redactedExifInf = new ExifInterface(fd);
                 assertUriIsRedacted(redactedExifInf);
+            }
+        } finally {
+            img.delete();
+        }
+    }
+
+    @Test
+    public void testOpenOnRedactedUri_readFuzzer() throws Exception {
+        final File img = stageFuzzerImageFileWithMetadata(FUZZER_HEIC_FILE_NAME);
+        final Uri redactedUri = getRedactedUri(img);
+        try {
+            assertUriIsUnredacted(img);
+
+            try (ParcelFileDescriptor pfd =
+                         getContentResolver().openFileDescriptor(redactedUri, "r")) {
+                FileDescriptor fd = pfd.getFileDescriptor();
+                int bufSize = 0x1000000;
+                byte[] data = new byte[bufSize];
+                int fileSize = Os.read(fd, data, 0, bufSize);
+                assertUriIsRedacted(data, fileSize);
             }
         } finally {
             img.delete();
@@ -517,6 +542,19 @@ public class RedactUriDeviceTest extends ScopedStorageBaseDeviceTest {
         assertEquals(latLong[1], 0.0, 0.0);
     }
 
+    private void assertUriIsRedacted(byte[] data, int fileSize) {
+        // Data in redaction ranges should be zero.
+        int[] start = new int[]{50538, 712941, 712965, 712989, 713033, 713101};
+        int[] end = new int[]{711958, 712943, 712967, 712990, 713100, 713125};
+
+        assertTrue(fileSize == 4407744);
+        for (int index = 0; index < start.length && index < end.length; index++) {
+            for (int c = start[index]; c < end[index]; c++) {
+                assertTrue("It should be zero!", data[c] == (byte) 0);
+            }
+        }
+    }
+
     private Cursor getRedactedCursor(Uri redactedUri) {
         Cursor redactedUriCursor = getContentResolver().query(redactedUri, null, null, null);
         assertNotNull(redactedUriCursor);
@@ -530,11 +568,19 @@ public class RedactUriDeviceTest extends ScopedStorageBaseDeviceTest {
     }
 
     private File stageImageFileWithMetadata(String name) throws Exception {
+        return stageImageFileWithMetadata(name, R.raw.img_with_metadata);
+    }
+
+    private File stageFuzzerImageFileWithMetadata(String name) throws Exception {
+        return stageImageFileWithMetadata(name, R.raw.fuzzer);
+    }
+
+    private File stageImageFileWithMetadata(String name, int sourceId) throws Exception {
         final File img = new File(
                 Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM), name);
 
         try (InputStream in =
-                     getContext().getResources().openRawResource(R.raw.img_with_metadata);
+                     getContext().getResources().openRawResource(sourceId);
              OutputStream out = new FileOutputStream(img)) {
             // Dump the image we have to external storage
             FileUtils.copy(in, out);
