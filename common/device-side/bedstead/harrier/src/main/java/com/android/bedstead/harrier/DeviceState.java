@@ -1035,11 +1035,10 @@ public final class DeviceState extends HarrierRule {
                     continue;
                 }
 
-                for (String permission : ensureHasPermissionAnnotation.value()) {
-                    ensureCanGetPermission(permission);
-                }
-
                 try {
+                    for (String permission : ensureHasPermissionAnnotation.value()) {
+                        ensureCanGetPermission(permission);
+                    }
                     withPermission(ensureHasPermissionAnnotation.value());
                 } catch (NeneException e) {
                     failOrSkip("Error getting permission: " + e,
@@ -3113,9 +3112,14 @@ public final class DeviceState extends HarrierRule {
                 }
 
                 if (u.equals(instrumented)) {
-                    throw new IllegalStateException(
-                            "Cannot set Device Owner when running on a "
-                                    + "non-for-testing secondary user (" + u + ")");
+                    // From U+ we limit non-for-testing users when setting device owner.
+                    if (Versions.meetsMinimumSdkVersionRequirement(Versions.U)) {
+                        throw new IllegalStateException(
+                                "Cannot set Device Owner when running on a "
+                                        + "non-for-testing secondary user (" + u + ")");
+                    } else {
+                        continue;
+                    }
                 }
 
                 try {
