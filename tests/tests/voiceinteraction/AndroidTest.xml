@@ -15,6 +15,8 @@
 -->
 <configuration description="Config for CTS Voice Interaction test cases">
     <option name="test-suite-tag" value="cts" />
+    <!-- For downstream tests -->
+    <option name="test-suite-tag" value="gts" />
     <option name="config-descriptor:metadata" key="component" value="framework" />
     <option name="config-descriptor:metadata" key="parameter" value="all_foldable_states" />
     <option name="config-descriptor:metadata" key="parameter" value="instant_app" />
