@@ -309,6 +309,8 @@ public class FingerprintServiceTest extends ActivityManagerTestBase
             } else {
                 // devices that do not show a sysui prompt may not cancel until an attempt is made
                 mWmState.waitForActivityState(EMPTY_ACTIVITY, STATE_RESUMED);
+                //TODO(b/295160922): wait for BP UI animation over before accepting auth
+                Thread.sleep(300);
                 testSessions.first().acceptAuthentication(userId);
                 mInstrumentation.waitForIdleSync();
             }
