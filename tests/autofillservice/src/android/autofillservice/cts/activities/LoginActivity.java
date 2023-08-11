@@ -132,6 +132,15 @@ public class LoginActivity extends AbstractAutoFillActivity {
      * Emulates a login action.
      */
     private void login() {
+        login(false);
+    }
+
+    /**
+     * Emulates a login action and takes in @param stayInSameActivity, when set to true, will
+     * display an auto-focusable edit text in the same Activity. This will help test the
+     * resilience of the save logic.
+     */
+    public void login(boolean stayInSameActivity) {
         final String username = mUsernameEditText.getText().toString();
         final String password = mPasswordEditText.getText().toString();
         final boolean valid = username.equals(password)
@@ -141,13 +150,23 @@ public class LoginActivity extends AbstractAutoFillActivity {
 
         if (valid) {
             Log.d(TAG, "login ok: " + username);
-            final Intent intent = new Intent(this, WelcomeActivity.class);
             final String message = getWelcomeMessage(username);
-            intent.putExtra(WelcomeActivity.EXTRA_MESSAGE, message);
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             setLoginMessage(message);
-            startActivity(intent);
-            finish();
+            if (stayInSameActivity) {
+                syncRunOnUiThread(() -> {
+                    LinearLayout l = findViewById(R.id.login_activity_layout);
+                    l.removeAllViews();
+                    setContentView(R.layout.single_edit_text);
+                    getAutofillManager().requestAutofill(findViewById(R.id.single_edit_text));
+                });
+            } else {
+                final Intent intent = new Intent(this, WelcomeActivity.class);
+                intent.putExtra(WelcomeActivity.EXTRA_MESSAGE, message);
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(intent);
+                finish();
+            }
+
         } else {
             Log.d(TAG, "login failed: " + AUTHENTICATION_MESSAGE);
             mOutput.setText(AUTHENTICATION_MESSAGE);
