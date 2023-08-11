@@ -86,6 +86,7 @@ public class InputDeviceKeyLayoutMapTest {
                 // KeyEvents not delivered to apps.
                 "APP_SWITCH",
                 "ASSIST",
+                "BACK",
                 "BRIGHTNESS_DOWN",
                 "BRIGHTNESS_UP",
                 "HOME",
