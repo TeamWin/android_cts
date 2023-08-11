@@ -17,6 +17,7 @@
 #include <jni.h>
 #include <string.h>
 #include <sys/auxv.h>
+#include <sys/syscall.h>
 #include <sys/utsname.h>
 
 #include <string>
@@ -85,6 +86,18 @@ jboolean android_cts_CpuFeatures_isNativeBridgedCpu(JNIEnv* env, jobject thiz)
 #endif
 }
 
+jboolean android_cts_CpuFeatures_isRiscv64MisalignedFast(JNIEnv* env, jobject thiz) {
+#if defined(__riscv)
+  // https://github.com/torvalds/linux/blob/master/arch/riscv/include/uapi/asm/hwprobe.h
+  riscv_hwprobe probes[] = {{.key = RISCV_HWPROBE_KEY_CPUPERF_0}};
+  __riscv_hwprobe(probes, 1, 0, nullptr, 0);
+  if ((probes[0].value & RISCV_HWPROBE_MISALIGNED_MASK) == RISCV_HWPROBE_MISALIGNED_FAST) {
+    return true;
+  }
+#endif
+  return false;
+}
+
 static JNINativeMethod gMethods[] = {
     {  "isArmCpu", "()Z",
             (void *) android_cts_CpuFeatures_isArmCpu  },
@@ -98,6 +111,8 @@ static JNINativeMethod gMethods[] = {
             (void *) android_cts_CpuFeatures_isX86_64Cpu  },
     {  "getHwCaps", "()I",
             (void *) android_cts_CpuFeatures_getHwCaps  },
+    {  "isRiscv64MisalignedFast", "()Z",
+            (void *) android_cts_CpuFeatures_isRiscv64MisalignedFast },
     {  "isNativeBridgedCpu", "()Z",
             (void *) android_cts_CpuFeatures_isNativeBridgedCpu  },
 };
