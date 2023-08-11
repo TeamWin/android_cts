@@ -16,9 +16,17 @@
 
 package android.app.cts.wallpapers;
 
+import static android.Manifest.permission.ALWAYS_UPDATE_WALLPAPER;
+
+import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
+
 import android.app.Activity;
+import android.app.WallpaperManager;
+import android.content.Context;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.os.IBinder;
+import android.view.Window;
 import android.widget.FrameLayout;
 
 import javax.annotation.Nullable;
@@ -27,9 +35,14 @@ import javax.annotation.Nullable;
 * launching a second app on top of the first activity
 */
 public class WallpaperOverlayTestActivity extends Activity {
+    Context mContext;
+    WallpaperManager mWallpaperManager;
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        mContext = this.getApplicationContext();
+        mWallpaperManager = WallpaperManager.getInstance(mContext);
         FrameLayout frameLayout = new FrameLayout(this);
         frameLayout.setBackgroundColor(Color.TRANSPARENT);
         FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(
@@ -37,5 +50,19 @@ public class WallpaperOverlayTestActivity extends Activity {
                 FrameLayout.LayoutParams.MATCH_PARENT);
 
         setContentView(frameLayout, layoutParams);
+    }
+
+    public void sendWallpaperCommand(String command, boolean alwaysUpdateWallpaper) {
+        Window window = this.getWindow();
+        IBinder windowToken = window.getDecorView().getWindowToken();
+        if (alwaysUpdateWallpaper) {
+            runWithShellPermissionIdentity(() -> {
+                mWallpaperManager.sendWallpaperCommand(
+                        windowToken, WallpaperManager.COMMAND_TAP, 50, 50, 0, null);
+            }, ALWAYS_UPDATE_WALLPAPER);
+        } else {
+            mWallpaperManager.sendWallpaperCommand(
+                    windowToken, WallpaperManager.COMMAND_TAP, 50, 50, 0, null);
+        }
     }
 }
