@@ -55,6 +55,8 @@ import android.uwb.UwbManager;
 
 import androidx.test.InstrumentationRegistry;
 
+import com.android.internal.telephony.satellite.DatagramController;
+
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -577,6 +579,13 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         assertTrue(satelliteDatagramCallback.waitUntilResult(1));
         assertArrayEquals(satelliteDatagramCallback.mDatagram.getSatelliteDatagram(),
                 receivedText.getBytes());
+
+        // Compute next received datagramId using current ID and verify it is correct.
+        long nextDatagramId = ((satelliteDatagramCallback.mDatagramId + 1)
+                % DatagramController.MAX_DATAGRAM_ID);
+        sMockSatelliteServiceManager.sendOnSatelliteDatagramReceived(receivedDatagram, 0);
+        assertTrue(satelliteDatagramCallback.waitUntilResult(1));
+        assertThat(satelliteDatagramCallback.mDatagramId).isEqualTo(nextDatagramId);
 
         sSatelliteManager.unregisterForSatelliteDatagram(satelliteDatagramCallback);
         revokeSatellitePermission();
