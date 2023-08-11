@@ -270,7 +270,7 @@ public class PccFieldClassificationTest extends
         sClassificationReplier.getNextFieldClassificationRequest();
 
         // Set expected value
-        activity.expectPasswordAutoFill("sweet");
+        activity.expectAutoFill("dude", "sweet");
 
         // Click on password field to trigger autofill
         mUiBot.selectByRelativeId(ID_PASSWORD);
@@ -294,19 +294,6 @@ public class PccFieldClassificationTest extends
 
         // Set expected value
         activity.expectAutoFill("dude");
-
-        // Click on username field to see presentation from previous autofill request.
-        mUiBot.selectByRelativeId(ID_USERNAME);
-        mUiBot.waitForIdleSync();
-
-
-        // Auto-fill it.
-        picker = mUiBot.assertDatasetsWithBorders(
-                null /* expectedHeader */, null /* expectedFooter */, DROPDOWN_PRESENTATION);
-        mUiBot.selectDataset(picker, DROPDOWN_PRESENTATION);
-
-        // Check the results.
-        activity.assertAutoFilled();
 
         sClassificationReplier.assertNoUnhandledFieldClassificationRequests();
         sReplier.assertNoUnhandledFillRequests();
