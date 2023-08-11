@@ -33,10 +33,6 @@
     <application android:testOnly="true" android:manageSpaceActivity=".BackgroundActivity">
         <uses-library android:name="androidx.window.extensions"
             android:required="false" />
-        <receiver android:name=".StartBackgroundActivityReceiver"
-             android:exported="true"/>
-        <receiver android:name=".SendPendingIntentReceiver"
-                  android:exported="true"/>
         <service android:name="android.server.wm.backgroundactivity.common.TestService"
              android:exported="true"/>
         <receiver android:name=".SimpleAdminReceiver"
@@ -104,7 +100,7 @@
             android:exported="true">
         </service>
         <receiver
-            android:name=".StartPendingIntentReceiver"
+            android:name=".SimpleBroadcastReceiver"
             android:exported="true"/>
         <activity
             android:name=".StartPendingIntentActivity"
