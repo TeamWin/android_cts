@@ -54,6 +54,15 @@ public class CpuFeaturesTest extends TestCase {
         assertHwCap("IDIVT", hwcaps, CpuFeatures.Arm64.HWCAP_IDIVT);
     }
 
+    public void testRiscv64MisalignedFast() {
+        if (!CpuFeatures.isRiscv64Cpu()) {
+            return;
+        }
+
+        boolean fast = CpuFeatures.isRiscv64MisalignedFast();
+        assertTrue("Machine does not advertise RISCV_HWPROBE_MISALIGNED_FAST flag", fast);
+    }
+
     private static String getFieldFromCpuinfo(String field) throws IOException {
         BufferedReader br = new BufferedReader(new FileReader("/proc/cpuinfo"));
         Pattern p = Pattern.compile(field + "\\s*:\\s*(.*)");
