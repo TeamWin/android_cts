@@ -98,7 +98,7 @@ public class ActivityLaunchUtils {
         options.setLaunchDisplayId(displayId);
         final Intent intent = new Intent(instrumentation.getTargetContext(), clazz);
         // Add clear task because this activity may on other display.
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK|Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
 
         ActivityLauncher activityLauncher = new ActivityLauncher() {
             @Override
@@ -188,8 +188,12 @@ public class ActivityLaunchUtils {
                 new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME),
                 PackageManager.MATCH_DEFAULT_ONLY);
 
-        // Look for a window with a package name that matches the default home screen
+        // Look for an active focused window with a package name that matches
+        // the default home screen.
         for (AccessibilityWindowInfo window : windows) {
+            if (!window.isActive() || !window.isFocused()) {
+                continue;
+            }
             final AccessibilityNodeInfo root = window.getRoot();
             if (root != null) {
                 final CharSequence packageName = root.getPackageName();
@@ -234,7 +238,8 @@ public class ActivityLaunchUtils {
                             InputDevice.SOURCE_KEYBOARD), true /* sync */);
             try {
                 Thread.sleep(50);
-            } catch (InterruptedException e) {}
+            } catch (InterruptedException e) {
+            }
         } while (SystemClock.uptimeMillis() < deadlineUptimeMillis);
         fail("Unable to wake up screen");
     }
@@ -296,8 +301,17 @@ public class ActivityLaunchUtils {
                     (event) -> {
                         final AccessibilityWindowInfo window =
                                 findWindowByTitleAndDisplay(uiAutomation, activityTitle, displayId);
-                        if (window == null) return false;
-                        if (window.getRoot() == null) return false;
+                        if (window == null || window.getRoot() == null
+                                // Ignore the active & focused check for virtual displays,
+                                // which don't get focused on launch.
+                                || (displayId == Display.DEFAULT_DISPLAY
+                                    && (!window.isActive() || !window.isFocused()))) {
+                            // Attempt to close any system dialogs which can prevent the launched
+                            // activity from becoming visible, active, and focused.
+                            execShellCommand(uiAutomation,
+                                    AM_BROADCAST_CLOSE_SYSTEM_DIALOG_COMMAND);
+                            return false;
+                        }
 
                         window.getBoundsInScreen(bounds);
                         mTempActivity.getWindow().getDecorView().getLocationOnScreen(location);
@@ -307,14 +321,6 @@ public class ActivityLaunchUtils {
                         timeoutExceptionRecords.append(String.format("{Received event: %s \n"
                                         + "Window location: %s \nA11y window: %s}\n",
                                 event, Arrays.toString(location), window));
-
-                        if (displayId == Display.DEFAULT_DISPLAY
-                                && (!window.isActive() || !window.isFocused())) {
-                            // The window should get activated and focused.
-                            // Launching activity in non-default display in CTS is usually in a
-                            // virtual display, which doesn't get focused on launch.
-                            return false;
-                        }
 
                         return (!bounds.isEmpty())
                                 && Math.abs(bounds.left - location[0]) <= BOUNDS_PRECISION_PX
