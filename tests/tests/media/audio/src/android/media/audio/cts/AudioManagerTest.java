@@ -136,6 +136,8 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 @NonMainlineTest
+@AppModeFull(reason = "Waiting for volume/zen mode changes requires receiving intents. " +
+        "Several API calls require MODIFY_AUDIO_SETTINGS.")
 @AppModeSdkSandbox(reason = "Allow test in the SDK sandbox (does not prevent other modes).")
 @RunWith(AndroidJUnit4.class)
 public class AudioManagerTest {
