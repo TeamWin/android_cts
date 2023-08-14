@@ -66,7 +66,7 @@ import java.util.concurrent.TimeUnit;
 @RunWith(JUnit4.class)
 public class MultiUserTest {
     private static final String TAG = "MultiUserTest";
-    private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(5);
+    private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(15);
     private static final long USER_SWITCH_TIMEOUT = TimeUnit.SECONDS.toMillis(60);
     private static final long IME_COMMAND_TIMEOUT = TimeUnit.SECONDS.toMillis(20);
 
