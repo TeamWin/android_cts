@@ -45,6 +45,8 @@ public class EmergencyCallTests extends BaseTelecomTestWithMockServices {
     private static final String DUMPSYS_COMMAND = "dumpsys telecom";
     private static final int MIN_LINES_PER_DROPBOX_ENTRY = 15;
     private static final int MAX_READ_BYTES_PER_DROP_BOX_ENTRY = 5000;
+    private static final long DAYS_BACK_TO_SEARCH_EMERGENCY_DROP_BOX_ENTRIES_IN_MS =
+            30L * 24L * 60L * 60L * 1000L;
     private static final String DIAG_ERROR_MSG = "DiagnosticDataCollector error executing cmd";
     private CountDownLatch mLatchForDropBox;
     private IntentFilter dropBoxIntentFilter;
@@ -170,11 +172,10 @@ public class EmergencyCallTests extends BaseTelecomTestWithMockServices {
             for (String line : content) {
                 assertFalse(line.contains(DIAG_ERROR_MSG));
                 //verify that telecom dumpsys output also has this data
-                if (lineCount < MAX_LINES_TO_VERIFY_IN_DUMPSYS_OUTPUT) {
+                if (lineCount++ < MAX_LINES_TO_VERIFY_IN_DUMPSYS_OUTPUT) {
                     //we only check top x lines to verify presence in dumpsys output
                     assertTrue("line not found: " + line, dumpOutput.contains(line));
                 }
-
             }
             entry = dm.getNextEntry(DROPBOX_TAG, entryTime);
             if(totalEntries >= 3)
@@ -187,7 +188,8 @@ public class EmergencyCallTests extends BaseTelecomTestWithMockServices {
      */
     public void testEmergencyCallFailureCreatesDropboxEntries() throws Exception {
         if (!mShouldTestTelecom  || !TestUtils.hasTelephonyFeature(mContext)) return;
-        long startTime = System.currentTimeMillis();
+        long startTime = System.currentTimeMillis()
+                - DAYS_BACK_TO_SEARCH_EMERGENCY_DROP_BOX_ENTRIES_IN_MS;
         mContext.registerReceiver(new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
