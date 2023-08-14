@@ -16,6 +16,16 @@
 
 package android.media.mediaediting.cts;
 
+import static androidx.media3.common.util.Assertions.checkState;
+import static androidx.media3.common.util.Assertions.checkStateNotNull;
+
+import android.media.MediaExtractor;
+import android.media.MediaFormat;
+import androidx.annotation.Nullable;
+import androidx.media3.common.Format;
+import androidx.media3.common.MimeTypes;
+import java.io.IOException;
+
 /** Utilities for Media Editing tests. */
 public final class MediaEditingUtil {
 
@@ -37,4 +47,31 @@ public final class MediaEditingUtil {
 
   public static final String MP4_ASSET_HEVC_WITH_INCREASING_TIMESTAMPS_642W_642H_3S_URI_STRING =
     "bbb_642x642_768kbps_30fps_hevc.mp4";
+
+  public static Format getMuxedWidthHeight(String filePath) throws IOException {
+    MediaExtractor mediaExtractor = new MediaExtractor();
+    mediaExtractor.setDataSource(filePath);
+    @Nullable MediaFormat mediaFormat = null;
+    for (int i = 0; i < mediaExtractor.getTrackCount(); i++) {
+      if (MimeTypes.isVideo(mediaExtractor.getTrackFormat(i).getString(MediaFormat.KEY_MIME))) {
+        mediaFormat = mediaExtractor.getTrackFormat(i);
+        mediaExtractor.selectTrack(i);
+        break;
+      }
+    }
+
+    checkStateNotNull(mediaFormat);
+    checkState(mediaFormat.containsKey(MediaFormat.KEY_WIDTH));
+    checkState(mediaFormat.containsKey(MediaFormat.KEY_HEIGHT));
+
+    int rotationDegree = 0;
+    if (mediaFormat.containsKey(MediaFormat.KEY_ROTATION)) {
+      rotationDegree = mediaFormat.getInteger(MediaFormat.KEY_ROTATION);
+    }
+    return new Format.Builder()
+        .setWidth(mediaFormat.getInteger(MediaFormat.KEY_WIDTH))
+        .setHeight(mediaFormat.getInteger(MediaFormat.KEY_HEIGHT))
+        .setRotationDegrees(rotationDegree)
+        .build();
+  }
 }
