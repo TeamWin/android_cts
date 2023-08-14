@@ -25,10 +25,6 @@
         <option name="test-file-name" value="CtsInputTestCases.apk" />
         <option name="test-file-name" value="InputInjectionApp.apk" />
     </target_preparer>
-    <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
-        <option name="run-command" value="input keyevent KEYCODE_WAKEUP" />
-        <option name="run-command" value="wm dismiss-keyguard" />
-    </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.input.cts" />
         <option name="runtime-hint" value="14s" />
@@ -39,5 +35,13 @@
         <!-- TODO(b/285554134): Remove once underlying issue is fixed-->
         <option name="run-command" value="wm set-ignore-orientation-request false" />
         <option name="run-command" value="wm set-letterbox-style --isEducationEnabled false" />
+        <!-- Unlock screen -->
+        <option name="run-command" value="input keyevent KEYCODE_WAKEUP" />
+        <!-- Dismiss keyguard, in case it's set as "Swipe to unlock" -->
+        <option name="run-command" value="wm dismiss-keyguard" />
+        <!-- Collapse notifications -->
+        <option name="run-command" value="cmd statusbar collapse" />
+        <!-- dismiss all system dialogs before launch test -->
+        <option name="run-command" value="am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS" />
     </target_preparer>
 </configuration>
