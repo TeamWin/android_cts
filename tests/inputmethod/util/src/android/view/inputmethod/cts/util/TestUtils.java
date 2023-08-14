@@ -51,6 +51,8 @@ import com.android.compatibility.common.util.SystemUtil;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -68,6 +70,34 @@ public final class TestUtils {
      */
     public static void runOnMainSync(@NonNull Runnable task) {
         InstrumentationRegistry.getInstrumentation().runOnMainSync(task);
+    }
+
+    /**
+     * Executes a call on the application's main thread, blocking until it is complete. When a
+     * Throwable is thrown in the runnable, the exception is propagated back to the
+     * caller's thread. If it is an unchecked throwable, it will be rethrown as is. If it is a
+     * checked exception, it will be rethrown as a {@link RuntimeException}.
+     *
+     * <p>A simple wrapper for {@link Instrumentation#runOnMainSync(Runnable)}.</p>
+     *
+     * @param task task to be called on the UI thread
+     */
+    public static void runOnMainSyncWithRethrowing(@NonNull Runnable task) {
+        FutureTask<Void> wrapped = new FutureTask<>(task, null);
+        InstrumentationRegistry.getInstrumentation().runOnMainSync(wrapped);
+        try {
+            wrapped.get();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        } catch (ExecutionException e) {
+            Throwable cause = e.getCause();
+            if (cause instanceof RuntimeException) {
+                throw (RuntimeException) cause;
+            } else if (cause instanceof Error) {
+                throw (Error) cause;
+            }
+            throw new RuntimeException(cause);
+        }
     }
 
     /**

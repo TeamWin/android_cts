@@ -18,6 +18,7 @@ package android.view.inputmethod.cts;
 
 import static android.view.inputmethod.cts.util.TestUtils.getOnMainSync;
 import static android.view.inputmethod.cts.util.TestUtils.runOnMainSync;
+import static android.view.inputmethod.cts.util.TestUtils.runOnMainSyncWithRethrowing;
 
 import static com.android.cts.mockime.ImeEventStreamTestUtils.editorMatcher;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectBindInput;
@@ -32,6 +33,7 @@ import static org.junit.Assert.fail;
 import android.app.Instrumentation;
 import android.content.Context;
 import android.graphics.Color;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
@@ -547,6 +549,104 @@ public class InputConnectionHandlerTest extends EndToEndImeTestBase {
                             .getSystemService(InputMethodManager.class).isFullscreenMode()));
             assertTrue(expectCommand(stream, imeSession.callVerifyExtractViewNotNull(), TIMEOUT)
                     .getReturnBooleanValue());
+        }
+    }
+
+    /**
+     * Make sure that handling incoming {@link InputConnection} tasks in a background thread while
+     * the IME focus is being updated does not accelerate IME focus handling process.
+     *
+     * <p>Test case inspired from Bug 286470800 and Bug 283517132.</p>
+     */
+    @Test
+    public void testInputConnectionSideEffect() throws Exception {
+        final Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
+        try (InputConnectionHandlingThread thread = new InputConnectionHandlingThread();
+                MockImeSession imeSession = MockImeSession.create(
+                instrumentation.getContext(),
+                instrumentation.getUiAutomation(),
+                new ImeSettings.Builder())) {
+            final ImeEventStream stream = imeSession.openEventStream();
+            final String marker = getTestMarker();
+            final String fenceMarker = getTestMarker();
+            final AtomicReference<Runnable> removeViewRef = new AtomicReference<>();
+            final CountDownLatch fenceCommandLatch = new CountDownLatch(1);
+            final CountDownLatch closeConnectionLatch = new CountDownLatch(1);
+
+            final class MyInputConnection extends HandlerInputConnection {
+                MyInputConnection() {
+                    super(thread.getHandler());
+                }
+
+                @Override
+                public boolean performPrivateCommand(String action, Bundle data) {
+                    if (fenceMarker.equals(action)) {
+                        fenceCommandLatch.countDown();
+                        return true;
+                    }
+                    return false;
+                }
+
+                @Override
+                public void closeConnection() {
+                    closeConnectionLatch.countDown();
+                    super.closeConnection();
+                }
+            }
+
+            // Launch test activity
+            TestActivity.startSync(activity -> {
+                final LinearLayout layout = new LinearLayout(activity);
+                layout.setOrientation(LinearLayout.VERTICAL);
+
+                // Just to be conservative, we explicitly check MockImeSession#isActive() here when
+                // injecting our custom InputConnection implementation.
+                final TestEditor testEditor = new TestEditor(activity) {
+                    @Override
+                    public boolean onCheckIsTextEditor() {
+                        return imeSession.isActive();
+                    }
+
+                    @Override
+                    public InputConnection onCreateInputConnection(EditorInfo outAttrs) {
+                        if (imeSession.isActive()) {
+                            outAttrs.inputType = InputType.TYPE_CLASS_TEXT;
+                            outAttrs.privateImeOptions = marker;
+                            return new MyInputConnection();
+                        }
+                        return null;
+                    }
+                };
+
+                layout.addView(testEditor);
+                removeViewRef.set(() -> layout.removeView(testEditor));
+
+                testEditor.requestFocus();
+                return layout;
+            });
+
+            // "onStartInput" gets called for the EditText.
+            expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
+
+            runOnMainSyncWithRethrowing(() -> {
+                // Trigger layout.removeView(testEditor)
+                removeViewRef.getAndSet(null).run();
+
+                // In this state, editText2 is scheduled to become the next IME focus target, but
+                // it's not yet completed until the next on-idle.
+                // IMEs' calling IMS#requestCursorUpdates() in this state should not **immediately**
+                // trigger startInput().
+                imeSession.callRequestCursorUpdates(0);
+
+                // Then issue fence command to verify that IC still receives commands.
+                imeSession.callPerformPrivateCommand(fenceMarker, null);
+                try {
+                    assertTrue(fenceCommandLatch.await(TIMEOUT, TimeUnit.MILLISECONDS));
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+                assertEquals(1, closeConnectionLatch.getCount());
+            });
         }
     }
 
