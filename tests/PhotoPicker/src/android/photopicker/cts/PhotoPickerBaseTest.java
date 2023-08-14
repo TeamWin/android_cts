@@ -22,6 +22,7 @@ import android.app.Instrumentation;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.os.UserHandle;
 import android.util.Log;
 
 import androidx.annotation.Nullable;
@@ -91,11 +92,15 @@ public class PhotoPickerBaseTest {
     protected static void setCloudProvider(@Nullable String authority) throws Exception {
         if (authority == null) {
             sDevice.executeShellCommand(
-                    "content call  --uri content://media/ --method set_cloud_provider --extra"
+                    "content call"
+                            + " --user " + UserHandle.myUserId()
+                            + " --uri content://media/ --method set_cloud_provider --extra"
                             + " cloud_provider:n:null");
         } else {
             sDevice.executeShellCommand(
-                    "content call  --uri content://media/ --method set_cloud_provider --extra"
+                    "content call"
+                            + " --user " + UserHandle.myUserId()
+                            + " --uri content://media/ --method set_cloud_provider --extra"
                             + " cloud_provider:s:"
                             + authority);
         }
@@ -104,7 +109,9 @@ public class PhotoPickerBaseTest {
     protected static String getCurrentCloudProvider() throws IOException {
         final String out =
                 sDevice.executeShellCommand(
-                        "content call  --uri content://media/ --method get_cloud_provider");
+                        "content call"
+                                + " --user " + UserHandle.myUserId()
+                                + " --uri content://media/ --method get_cloud_provider");
         return extractCloudProvider(out);
     }
 
