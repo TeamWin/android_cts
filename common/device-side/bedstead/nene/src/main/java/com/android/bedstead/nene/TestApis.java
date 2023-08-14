@@ -19,6 +19,7 @@ package com.android.bedstead.nene;
 import com.android.bedstead.nene.accessibility.Accessibility;
 import com.android.bedstead.nene.accounts.Accounts;
 import com.android.bedstead.nene.activities.Activities;
+import com.android.bedstead.nene.adb.Adb;
 import com.android.bedstead.nene.annotations.Experimental;
 import com.android.bedstead.nene.bluetooth.Bluetooth;
 import com.android.bedstead.nene.broadcasts.Broadcasts;
@@ -194,6 +195,11 @@ public final class TestApis {
     /** Access Test APIs related to system services. */
     public static Services services() {
         return Services.sInstance;
+    }
+
+    /** Access Test APIs related to adb. */
+    public static Adb adb() {
+        return Adb.INSTANCE;
     }
 
     /** @deprecated Use statically */

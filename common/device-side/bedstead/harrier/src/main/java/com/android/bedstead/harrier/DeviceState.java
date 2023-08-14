@@ -95,6 +95,7 @@ import com.android.bedstead.harrier.annotations.EnsureWifiDisabled;
 import com.android.bedstead.harrier.annotations.EnsureWifiEnabled;
 import com.android.bedstead.harrier.annotations.FailureMode;
 import com.android.bedstead.harrier.annotations.OtherUser;
+import com.android.bedstead.harrier.annotations.RequireAdbRoot;
 import com.android.bedstead.harrier.annotations.RequireDoesNotHaveFeature;
 import com.android.bedstead.harrier.annotations.RequireFeature;
 import com.android.bedstead.harrier.annotations.RequireFeatureFlagEnabled;
@@ -1352,6 +1353,12 @@ public final class DeviceState extends HarrierRule {
                 ensureTestAppHasPermission(MostRestrictiveCoexistenceTest.DPC_2, permission,
                         0, Integer.MAX_VALUE, FailureMode.SKIP);
 
+                continue;
+            }
+
+            if (annotation instanceof RequireAdbRoot) {
+                RequireAdbRoot requireAdbRootAnnotation = (RequireAdbRoot) annotation;
+                requireAdbRoot(requireAdbRootAnnotation.failureMode());
                 continue;
             }
         }
@@ -4114,23 +4121,26 @@ public final class DeviceState extends HarrierRule {
             return;
         }
 
-        boolean hasSet = false;
-
-        if (onUser.equals(TestApis.users().system())) {
-            hasSet = trySetUserRestrictionWithDeviceOwner(restriction);
+        boolean shouldRunAsRoot = shouldRunAsRoot();
+        if (shouldRunAsRoot) {
+            Log.i(LOG_TAG, "Trying to set user restriction as root.");
+            try {
+                TestApis.devicePolicy().userRestrictions(onUser).set(restriction,
+                        /* set= */ true);
+            } catch (AdbException e) {
+                Log.i(LOG_TAG,
+                        "Unable to set user restriction as root, trying to set using heuristics.");
+                trySetUserRestriction(onUser, restriction);
+            }
+        } else {
+            trySetUserRestriction(onUser, restriction);
         }
 
-        if (!hasSet) {
-            hasSet = trySetUserRestrictionWithProfileOwner(onUser, restriction);
-        }
-
-        if (!hasSet && !onUser.equals(TestApis.users().system())) {
-            hasSet = trySetUserRestrictionWithDeviceOwner(restriction);
-        }
-
-        if (!hasSet) {
-            throw new AssumptionViolatedException(
-                    "Infra cannot set user restriction " + restriction);
+        if (!TestApis.devicePolicy().userRestrictions(onUser).isSet(restriction)) {
+            String message =
+                    "Infra cannot set user restriction " + restriction + (shouldRunAsRoot ? ""
+                            : ". Please add RequireAdbRoot to enable root capabilities.");
+            throw new AssumptionViolatedException(message);
         }
 
         if (mRemovedUserRestrictions.containsKey(onUser)
@@ -4146,6 +4156,24 @@ public final class DeviceState extends HarrierRule {
 
         if (!TestApis.devicePolicy().userRestrictions(onUser).isSet(restriction)) {
             throw new NeneException("Error setting user restriction " + restriction);
+        }
+    }
+
+    private void trySetUserRestriction(UserReference onUser, String restriction) {
+        Log.i(LOG_TAG, "Trying to set user restriction using heuristics.");
+
+        boolean hasSet = false;
+
+        if (onUser.equals(TestApis.users().system())) {
+            hasSet = trySetUserRestrictionWithDeviceOwner(restriction);
+        }
+
+        if (!hasSet) {
+            hasSet = trySetUserRestrictionWithProfileOwner(onUser, restriction);
+        }
+
+        if (!hasSet && !onUser.equals(TestApis.users().system())) {
+            trySetUserRestrictionWithDeviceOwner(restriction);
         }
     }
 
@@ -4232,11 +4260,7 @@ public final class DeviceState extends HarrierRule {
         ensureDoesNotHaveUserRestriction(restriction, resolveUserTypeToUser(onUser));
     }
 
-    private void ensureDoesNotHaveUserRestriction(String restriction, UserReference onUser) {
-        if (!TestApis.devicePolicy().userRestrictions(onUser).isSet(restriction)) {
-            return;
-        }
-
+    private void tryClearUserRestriction(UserReference onUser, String restriction) {
         if (restriction.equals(DISALLOW_ADD_MANAGED_PROFILE)) {
             // Special case - set by the system whenever there is a Device Owner
             ensureHasNoDeviceOwner();
@@ -4256,7 +4280,8 @@ public final class DeviceState extends HarrierRule {
             }
         }
 
-        boolean hasCleared = !TestApis.devicePolicy().userRestrictions(onUser).isSet(restriction);
+        boolean hasCleared = !TestApis.devicePolicy().userRestrictions(onUser).isSet(
+                restriction);
 
         if (!hasCleared && onUser.equals(TestApis.users().system())) {
             hasCleared = tryClearUserRestrictionWithDeviceOwner(restriction);
@@ -4267,21 +4292,37 @@ public final class DeviceState extends HarrierRule {
         }
 
         if (!hasCleared && !onUser.equals(TestApis.users().system())) {
-            hasCleared = tryClearUserRestrictionWithDeviceOwner(restriction);
+            tryClearUserRestrictionWithDeviceOwner(restriction);
+        }
+    }
+
+    private void ensureDoesNotHaveUserRestriction(String restriction, UserReference onUser) {
+        if (!TestApis.devicePolicy().userRestrictions(onUser).isSet(restriction)) {
+            return;
         }
 
-        if (!hasCleared && !onUser.equals(TestApis.users().system())) {
-            hasCleared = tryClearUserRestrictionWithDeviceOwner(restriction);
-        }
-
-        if (!hasCleared) {
-            throw new AssumptionViolatedException(
-                    "Infra cannot clear user restriction " + restriction);
+        boolean shouldRunAsRoot = shouldRunAsRoot();
+        if (shouldRunAsRoot) {
+            Log.i(LOG_TAG, "Trying to clear user restriction as root.");
+            try {
+                TestApis.devicePolicy().userRestrictions(onUser).set(restriction,
+                        /* set= */ false);
+            } catch (AdbException e) {
+                Log.i(LOG_TAG,
+                        "Unable to clear user restriction as root, trying to clear using heuristics.",
+                        e);
+                tryClearUserRestriction(onUser, restriction);
+            }
+        } else {
+            tryClearUserRestriction(onUser, restriction);
         }
 
         if (TestApis.devicePolicy().userRestrictions(onUser).isSet(restriction)) {
-            throw new AssumptionViolatedException("Error removing user restriction " + restriction + ". "
-                    + "It's possible this is set by the system and cannot be removed");
+            String message =
+                    "Infra cannot remove user restriction " + restriction + (shouldRunAsRoot ? ""
+                            : ". If this test requires capabilities only available on devices "
+                                    + "where adb has root, add @RequireAdbRoot to the test.");
+            throw new AssumptionViolatedException(message);
         }
 
         if (mAddedUserRestrictions.containsKey(onUser)
@@ -4299,5 +4340,17 @@ public final class DeviceState extends HarrierRule {
     private void requireSystemServiceAvailable(Class<?> serviceClass, FailureMode failureMode) {
         checkFailOrSkip("Requires " + serviceClass + " to be available",
                 TestApis.services().serviceIsAvailable(serviceClass), failureMode);
+    }
+
+    private void requireAdbRoot(FailureMode failureMode) {
+        if (TestApis.adb().isRootAvailable()) {
+            Tags.addTag(Tags.ADB_ROOT);
+        } else {
+            failOrSkip("Device does not have root available.", failureMode);
+        }
+    }
+
+    private static boolean shouldRunAsRoot() {
+        return Tags.hasTag(Tags.ADB_ROOT);
     }
 }
