@@ -44,7 +44,7 @@ import android.view.inputmethod.cts.installtests.common.Ime2Constants;
 import android.view.inputmethod.cts.installtests.common.ShellCommandUtils;
 import android.view.inputmethod.cts.util.MockTestActivityUtil;
 
-import androidx.test.filters.MediumTest;
+import androidx.test.filters.LargeTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.PollingCheck;
@@ -62,7 +62,7 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-@MediumTest
+@LargeTest
 @RunWith(JUnit4.class)
 public class MultiUserTest {
     private static final String TAG = "MultiUserTest";
