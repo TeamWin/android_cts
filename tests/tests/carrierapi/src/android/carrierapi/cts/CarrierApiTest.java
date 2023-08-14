@@ -39,6 +39,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -1383,6 +1384,10 @@ public class CarrierApiTest extends BaseCarrierApiTest {
 
     @Test
     public void testEapAkaAuthentication() {
+        // Wear devices do not yet support EapAkaAuthentication, so skip this test for now
+        if (isWear()) {
+            return;
+        }
         assumeTrue(
                 "testEapAkaAuthentication requires a 2021 CTS UICC or newer",
                 UiccUtil.uiccHasCertificate(CTS_UICC_2021));
@@ -1433,5 +1438,9 @@ public class CarrierApiTest extends BaseCarrierApiTest {
         CompletableFuture<NetworkSlicingConfig> resultFuture = new CompletableFuture<>();
         mTelephonyManager.getNetworkSlicingConfiguration(
                 AsyncTask.SERIAL_EXECUTOR, resultFuture::complete);
+    }
+
+    private boolean isWear() {
+        return getContext().getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH);
     }
 }
