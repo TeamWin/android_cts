@@ -102,14 +102,11 @@ public class SELinuxHostTest extends BaseHostJUnit4Test {
     private File mSepolicyAnalyze;
     private File checkSeapp;
     private File checkFc;
-    private File aospSeappFile;
     private File aospFcFile;
     private File aospPcFile;
     private File aospSvcFile;
     private File devicePolicyFile;
     private File deviceSystemPolicyFile;
-    private File devicePlatSeappFile;
-    private File deviceVendorSeappFile;
     private File devicePlatFcFile;
     private File deviceVendorFcFile;
     private File devicePcFile;
@@ -573,17 +570,29 @@ public class SELinuxHostTest extends BaseHostJUnit4Test {
     @CddTest(requirement="9.7")
     @Test
     public void testValidSeappContexts() throws Exception {
-
         /* obtain seapp_contexts file from running device */
-        devicePlatSeappFile = File.createTempFile("plat_seapp_contexts", ".tmp");
-        devicePlatSeappFile.deleteOnExit();
-        deviceVendorSeappFile = File.createTempFile("vendor_seapp_contexts", ".tmp");
-        deviceVendorSeappFile.deleteOnExit();
-        if (mDevice.pullFile("/system/etc/selinux/plat_seapp_contexts", devicePlatSeappFile)) {
-            mDevice.pullFile("/vendor/etc/selinux/vendor_seapp_contexts", deviceVendorSeappFile);
+        File platformSeappFile = File.createTempFile("plat_seapp_contexts", ".tmp");
+        platformSeappFile.deleteOnExit();
+        File systemExtSeappFile = File.createTempFile("system_ext_seapp_contexts", ".tmp");
+        systemExtSeappFile.deleteOnExit();
+        File productSeappFile = File.createTempFile("product_seapp_contexts", ".tmp");
+        productSeappFile.deleteOnExit();
+        File vendorSeappFile = File.createTempFile("vendor_seapp_contexts", ".tmp");
+        vendorSeappFile.deleteOnExit();
+        File odmSeappFile = File.createTempFile("odm_seapp_contexts", ".tmp");
+        odmSeappFile.deleteOnExit();
+        if (mDevice.pullFile("/system/etc/selinux/plat_seapp_contexts", platformSeappFile)) {
+            mDevice.pullFile("/system_ext/etc/selinux/system_ext_seapp_contexts",
+                    systemExtSeappFile);
+            mDevice.pullFile("/product/etc/selinux/product_seapp_contexts", productSeappFile);
+            mDevice.pullFile("/vendor/etc/selinux/vendor_seapp_contexts", vendorSeappFile);
+            mDevice.pullFile("/odm/etc/selinux/odm_seapp_contexts", odmSeappFile);
         } else {
-            mDevice.pullFile("/plat_seapp_contexts", devicePlatSeappFile);
-            mDevice.pullFile("/vendor_seapp_contexts", deviceVendorSeappFile);
+            mDevice.pullFile("/plat_seapp_contexts", platformSeappFile);
+            mDevice.pullFile("/system_ext_seapp_contexts", systemExtSeappFile);
+            mDevice.pullFile("/product_seapp_contexts", productSeappFile);
+            mDevice.pullFile("/vendor_seapp_contexts", vendorSeappFile);
+            mDevice.pullFile("/odm_seapp_contexts", odmSeappFile);
         }
 
         /* retrieve the checkseapp executable from jar */
@@ -597,8 +606,11 @@ public class SELinuxHostTest extends BaseHostJUnit4Test {
         ProcessBuilder pb = new ProcessBuilder(checkSeapp.getAbsolutePath(),
                 "-p", devicePolicyFile.getAbsolutePath(),
                 seappNeverAllowFile.getAbsolutePath(),
-                devicePlatSeappFile.getAbsolutePath(),
-                deviceVendorSeappFile.getAbsolutePath());
+                platformSeappFile.getAbsolutePath(),
+                systemExtSeappFile.getAbsolutePath(),
+                productSeappFile.getAbsolutePath(),
+                vendorSeappFile.getAbsolutePath(),
+                odmSeappFile.getAbsolutePath());
         pb.redirectOutput(ProcessBuilder.Redirect.PIPE);
         pb.redirectErrorStream(true);
         Process p = pb.start();
@@ -644,15 +656,15 @@ public class SELinuxHostTest extends BaseHostJUnit4Test {
     public void testAospSeappContexts() throws Exception {
 
         /* obtain seapp_contexts file from running device */
-        devicePlatSeappFile = File.createTempFile("seapp_contexts", ".tmp");
-        devicePlatSeappFile.deleteOnExit();
-        if (!mDevice.pullFile("/system/etc/selinux/plat_seapp_contexts", devicePlatSeappFile)) {
-            mDevice.pullFile("/plat_seapp_contexts", devicePlatSeappFile);
+        File platformSeappFile = File.createTempFile("seapp_contexts", ".tmp");
+        platformSeappFile.deleteOnExit();
+        if (!mDevice.pullFile("/system/etc/selinux/plat_seapp_contexts", platformSeappFile)) {
+            mDevice.pullFile("/plat_seapp_contexts", platformSeappFile);
         }
         /* retrieve the AOSP seapp_contexts file from jar */
-        aospSeappFile = copyResourceToTempFile("/plat_seapp_contexts");
+        File aospSeappFile = copyResourceToTempFile("/plat_seapp_contexts");
 
-        assertFileStartsWith(aospSeappFile, devicePlatSeappFile);
+        assertFileStartsWith(aospSeappFile, platformSeappFile);
     }
 
     /**
