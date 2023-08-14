@@ -57,6 +57,9 @@ android_test_import {
         x86_64: {
             apk: "apk/x86/CtsShimPrivUpgrade.apk",
         },
+        riscv64: {
+            apk: "apk/riscv64/CtsShimPrivUpgrade.apk",
+        },
     },
 }
 
@@ -86,6 +89,9 @@ android_test_import {
         },
         x86_64: {
             apk: "apk/x86/CtsShimPrivUpgradeWrongSHA.apk",
+        },
+        riscv64: {
+            apk: "apk/riscv64/CtsShimPrivUpgradeWrongSHA.apk",
         },
     },
 }
