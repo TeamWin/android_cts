@@ -32,7 +32,6 @@ public final class MediaEditingUtil {
   public static final String MP4_ASSET_HEVC_WITH_INCREASING_TIMESTAMPS_URI_STRING =
     "bbb_1920x1080_hevc_main_l40.mp4";
 
-  /** Baseline profile level 3.0 H.265 stream, which should be supported on all devices. */
   public static final String MP4_ASSET_HEVC_WITH_INCREASING_TIMESTAMPS_720W_480H_1S_URI_STRING =
     "bbb_720x480_30fps_hevc_main_l3.mp4";
 

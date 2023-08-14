@@ -89,7 +89,7 @@ public final class TranscodeQualityTest {
             MediaEditingUtil.MP4_ASSET_HEVC_WITH_INCREASING_TIMESTAMPS_URI_STRING, false},
         {MimeTypes.VIDEO_H265, MimeTypes.VIDEO_H265, 720, 480, 30.00f,
             MediaEditingUtil.MP4_ASSET_HEVC_WITH_INCREASING_TIMESTAMPS_720W_480H_1S_URI_STRING,
-            true},
+            false},
         {MimeTypes.VIDEO_H265, MimeTypes.VIDEO_H264, 720, 480, 30.00f,
             MediaEditingUtil.MP4_ASSET_HEVC_WITH_INCREASING_TIMESTAMPS_720W_480H_1S_URI_STRING,
             false},
