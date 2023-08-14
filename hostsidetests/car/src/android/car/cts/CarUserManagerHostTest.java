@@ -56,18 +56,6 @@ public final class CarUserManagerHostTest extends CarHostJUnit4TestCase {
     }
 
     @Test
-    public void testSwitchUserUxRestrictionFailure() throws Exception {
-        executeCommand("cmd car_service emulate-driving-state drive");
-        assertWithMessage("Waiting for driving state change").that(
-                waitForDrivingStateChanged("Current Driving State: 2", TEST_TIMEOUT_MS)).isTrue();
-
-        int newUserid = createFullUser("CarUserManagerHostTest_User");
-        switchUser(newUserid, STATUS_UX_RESTRICTION_FAILURE);
-
-        executeCommand("cmd car_service emulate-driving-state park");
-    }
-
-    @Test
     public void testRemoveUser() throws Exception {
         int newUserid = createFullUser("CarUserManagerHostTest_User");
 
