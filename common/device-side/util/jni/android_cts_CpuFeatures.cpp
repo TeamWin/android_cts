@@ -19,7 +19,7 @@
 #include <sys/auxv.h>
 #include <sys/syscall.h>
 #include <sys/utsname.h>
-
+#include <sys/hwprobe.h>
 #include <string>
 
 jboolean android_cts_CpuFeatures_isArmCpu(JNIEnv* env, jobject thiz)
