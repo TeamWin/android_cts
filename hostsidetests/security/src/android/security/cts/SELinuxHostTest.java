@@ -247,24 +247,12 @@ public class SELinuxHostTest extends BaseHostJUnit4Test {
 
         assertTrue(device.pullFile("/system/etc/selinux/plat_sepolicy.cil", systemSepolicyCilFile));
 
-        ProcessBuilder pb = new ProcessBuilder(
-                secilc.getAbsolutePath(),
+        String errorString = tryRunCommand(secilc.getAbsolutePath(),
                 "-m", "-M", "true", "-c", "30",
                 "-o", builtPolicyFile.getAbsolutePath(),
                 "-f", fileContextsFile.getAbsolutePath(),
                 systemSepolicyCilFile.getAbsolutePath());
-        pb.redirectOutput(ProcessBuilder.Redirect.PIPE);
-        pb.redirectErrorStream(true);
-        Process p = pb.start();
-        p.waitFor();
-        BufferedReader result = new BufferedReader(new InputStreamReader(p.getInputStream()));
-        String line;
-        StringBuilder errorString = new StringBuilder();
-        while ((line = result.readLine()) != null) {
-            errorString.append(line);
-            errorString.append("\n");
-        }
-        assertTrue(errorString.toString(), errorString.length() == 0);
+        assertTrue(errorString, errorString.length() == 0);
 
         synchronized (cache) {
             cache.put(device, builtPolicyFile);
@@ -418,19 +406,8 @@ public class SELinuxHostTest extends BaseHostJUnit4Test {
     public void testAllDomainsEnforcing() throws Exception {
 
         /* run sepolicy-analyze permissive check on policy file */
-        ProcessBuilder pb = new ProcessBuilder(mSepolicyAnalyze.getAbsolutePath(),
+        String errorString = tryRunCommand(mSepolicyAnalyze.getAbsolutePath(),
                 devicePolicyFile.getAbsolutePath(), "permissive");
-        pb.redirectOutput(ProcessBuilder.Redirect.PIPE);
-        pb.redirectErrorStream(true);
-        Process p = pb.start();
-        p.waitFor();
-        BufferedReader result = new BufferedReader(new InputStreamReader(p.getInputStream()));
-        String line;
-        StringBuilder errorString = new StringBuilder();
-        while ((line = result.readLine()) != null) {
-            errorString.append(line);
-            errorString.append("\n");
-        }
         assertTrue("The following SELinux domains were found to be in permissive mode:\n"
                    + errorString, errorString.length() == 0);
     }
@@ -603,7 +580,7 @@ public class SELinuxHostTest extends BaseHostJUnit4Test {
         seappNeverAllowFile = copyResourceToTempFile("/plat_seapp_neverallows");
 
         /* run checkseapp on seapp_contexts */
-        ProcessBuilder pb = new ProcessBuilder(checkSeapp.getAbsolutePath(),
+        String errorString = tryRunCommand(checkSeapp.getAbsolutePath(),
                 "-p", devicePolicyFile.getAbsolutePath(),
                 seappNeverAllowFile.getAbsolutePath(),
                 platformSeappFile.getAbsolutePath(),
@@ -611,17 +588,6 @@ public class SELinuxHostTest extends BaseHostJUnit4Test {
                 productSeappFile.getAbsolutePath(),
                 vendorSeappFile.getAbsolutePath(),
                 odmSeappFile.getAbsolutePath());
-        pb.redirectOutput(ProcessBuilder.Redirect.PIPE);
-        pb.redirectErrorStream(true);
-        Process p = pb.start();
-        p.waitFor();
-        BufferedReader result = new BufferedReader(new InputStreamReader(p.getInputStream()));
-        String line;
-        StringBuilder errorString = new StringBuilder();
-        while ((line = result.readLine()) != null) {
-            errorString.append(line);
-            errorString.append("\n");
-        }
         assertTrue("The seapp_contexts file was invalid:\n"
                    + errorString, errorString.length() == 0);
     }
@@ -685,18 +651,12 @@ public class SELinuxHostTest extends BaseHostJUnit4Test {
         aospFcFile = copyResourceToTempFile("/plat_file_contexts");
 
         /* run checkfc -c plat_file_contexts plat_file_contexts */
-        ProcessBuilder pb = new ProcessBuilder(checkFc.getAbsolutePath(),
+        String result = tryRunCommand(checkFc.getAbsolutePath(),
                 "-c", aospFcFile.getAbsolutePath(),
-                devicePlatFcFile.getAbsolutePath());
-        pb.redirectOutput(ProcessBuilder.Redirect.PIPE);
-        pb.redirectErrorStream(true);
-        Process p = pb.start();
-        p.waitFor();
-        BufferedReader result = new BufferedReader(new InputStreamReader(p.getInputStream()));
-        String line = result.readLine();
+                devicePlatFcFile.getAbsolutePath()).trim();
         assertTrue("The file_contexts file did not include the AOSP entries:\n"
-                   + line + "\n",
-                   line.equals("equal") || line.equals("subset"));
+                   + result + "\n",
+                   result.equals("equal") || result.equals("subset"));
     }
 
     /**
@@ -768,20 +728,9 @@ public class SELinuxHostTest extends BaseHostJUnit4Test {
         appendTo(combinedFcFile.getAbsolutePath(), deviceVendorFcFile.getAbsolutePath());
 
         /* run checkfc sepolicy file_contexts */
-        ProcessBuilder pb = new ProcessBuilder(checkFc.getAbsolutePath(),
+        String errorString = tryRunCommand(checkFc.getAbsolutePath(),
                 devicePolicyFile.getAbsolutePath(),
                 combinedFcFile.getAbsolutePath());
-        pb.redirectOutput(ProcessBuilder.Redirect.PIPE);
-        pb.redirectErrorStream(true);
-        Process p = pb.start();
-        p.waitFor();
-        BufferedReader result = new BufferedReader(new InputStreamReader(p.getInputStream()));
-        String line;
-        StringBuilder errorString = new StringBuilder();
-        while ((line = result.readLine()) != null) {
-            errorString.append(line);
-            errorString.append("\n");
-        }
         assertTrue("file_contexts was invalid:\n"
                    + errorString, errorString.length() == 0);
     }
@@ -808,20 +757,9 @@ public class SELinuxHostTest extends BaseHostJUnit4Test {
         }
 
         /* run property_info_checker on property_contexts */
-        ProcessBuilder pb = new ProcessBuilder(propertyInfoChecker.getAbsolutePath(),
+        String errorString = tryRunCommand(propertyInfoChecker.getAbsolutePath(),
                 devicePolicyFile.getAbsolutePath(),
                 devicePcFile.getAbsolutePath());
-        pb.redirectOutput(ProcessBuilder.Redirect.PIPE);
-        pb.redirectErrorStream(true);
-        Process p = pb.start();
-        p.waitFor();
-        BufferedReader result = new BufferedReader(new InputStreamReader(p.getInputStream()));
-        String line;
-        StringBuilder errorString = new StringBuilder();
-        while ((line = result.readLine()) != null) {
-            errorString.append(line);
-            errorString.append("\n");
-        }
         assertTrue("The property_contexts file was invalid:\n"
                    + errorString, errorString.length() == 0);
     }
@@ -845,20 +783,9 @@ public class SELinuxHostTest extends BaseHostJUnit4Test {
         mDevice.pullFile("/service_contexts", deviceSvcFile);
 
         /* run checkfc -s on service_contexts */
-        ProcessBuilder pb = new ProcessBuilder(checkFc.getAbsolutePath(),
+        String errorString = tryRunCommand(checkFc.getAbsolutePath(),
                 "-s", devicePolicyFile.getAbsolutePath(),
                 deviceSvcFile.getAbsolutePath());
-        pb.redirectOutput(ProcessBuilder.Redirect.PIPE);
-        pb.redirectErrorStream(true);
-        Process p = pb.start();
-        p.waitFor();
-        BufferedReader result = new BufferedReader(new InputStreamReader(p.getInputStream()));
-        String line;
-        StringBuilder errorString = new StringBuilder();
-        while ((line = result.readLine()) != null) {
-            errorString.append(line);
-            errorString.append("\n");
-        }
         assertTrue("The service_contexts file was invalid:\n"
                    + errorString, errorString.length() == 0);
     }
@@ -890,19 +817,8 @@ public class SELinuxHostTest extends BaseHostJUnit4Test {
             args.add(deviceSystemPolicyFile.getAbsolutePath());
         }
 
-        ProcessBuilder pb = new ProcessBuilder(args);
-        pb.redirectOutput(ProcessBuilder.Redirect.PIPE);
-        pb.redirectErrorStream(true);
-        Process p = pb.start();
-        p.waitFor();
-        BufferedReader result = new BufferedReader(new InputStreamReader(p.getInputStream()));
-        String line;
-        StringBuilder errorString = new StringBuilder();
-        while ((line = result.readLine()) != null) {
-            errorString.append(line);
-            errorString.append("\n");
-        }
-        assertTrue(errorString.toString(), errorString.length() == 0);
+        String errorString = tryRunCommand(args.toArray(new String[0]));
+        assertTrue(errorString, errorString.length() == 0);
 
         sepolicyTests.delete();
     }
@@ -1007,19 +923,8 @@ public class SELinuxHostTest extends BaseHostJUnit4Test {
     public void testNoBooleans() throws Exception {
 
         /* run sepolicy-analyze booleans check on policy file */
-        ProcessBuilder pb = new ProcessBuilder(mSepolicyAnalyze.getAbsolutePath(),
+        String errorString = tryRunCommand(mSepolicyAnalyze.getAbsolutePath(),
                 devicePolicyFile.getAbsolutePath(), "booleans");
-        pb.redirectOutput(ProcessBuilder.Redirect.PIPE);
-        pb.redirectErrorStream(true);
-        Process p = pb.start();
-        p.waitFor();
-        BufferedReader result = new BufferedReader(new InputStreamReader(p.getInputStream()));
-        String line;
-        StringBuilder errorString = new StringBuilder();
-        while ((line = result.readLine()) != null) {
-            errorString.append(line);
-            errorString.append("\n");
-        }
         assertTrue("The policy contained booleans:\n"
                    + errorString, errorString.length() == 0);
     }
@@ -1518,5 +1423,21 @@ public class SELinuxHostTest extends BaseHostJUnit4Test {
         public boolean isKernel() {
             return (pid == kernelParentThreadpid || ppid == kernelParentThreadpid);
         }
+    }
+
+    private static String tryRunCommand(String... command) throws Exception {
+        ProcessBuilder pb = new ProcessBuilder(command);
+        pb.redirectOutput(ProcessBuilder.Redirect.PIPE);
+        pb.redirectErrorStream(true);
+        Process p = pb.start();
+        p.waitFor();
+        BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
+        StringBuilder result = new StringBuilder();
+        String line;
+        while ((line = reader.readLine()) != null) {
+            result.append(line);
+            result.append("\n");
+        }
+        return result.toString();
     }
 }
