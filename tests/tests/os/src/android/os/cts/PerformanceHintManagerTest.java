@@ -273,6 +273,25 @@ public class PerformanceHintManagerTest {
         }
     }
 
+    @Test
+    @ApiTest(apis = {"android.os.PerformanceHintManager.Session#setPreferPowerEfficiency"})
+    public void testSetPreferPowerEfficiency() {
+        Session s = createSession();
+        assumeNotNull(s);
+        s.setPreferPowerEfficiency(false);
+        s.setPreferPowerEfficiency(true);
+        s.setPreferPowerEfficiency(true);
+    }
+
+    @Test
+    @ApiTest(apis = {"android.os.PerformanceHintManager.Session#setPreferPowerEfficiency"})
+    public void testNativeSetPreferPowerEfficiency() {
+        final String failureMessage = nativeSetPreferPowerEfficiency();
+        if (!Strings.isNullOrEmpty(failureMessage)) {
+            fail(failureMessage);
+        }
+    }
+
     private native String nativeTestCreateHintSession();
     private native String nativeTestGetPreferredUpdateRateNanos();
     private native String nativeUpdateTargetWorkDuration();
@@ -280,4 +299,6 @@ public class PerformanceHintManagerTest {
     private native String nativeReportActualWorkDuration();
     private native String nativeReportActualWorkDurationWithIllegalArgument();
     private native String nativeTestSetThreadsWithInvalidTid();
+    private native String nativeSetPreferPowerEfficiency();
+
 }

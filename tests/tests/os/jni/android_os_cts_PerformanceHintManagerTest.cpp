@@ -177,6 +177,29 @@ static jstring nativeTestSetThreadsWithInvalidTid(JNIEnv* env, jobject) {
 }
 
 
+static jstring nativeSetPreferPowerEfficiency(JNIEnv* env, jobject) {
+    APerformanceHintManager* manager = APerformanceHint_getManager();
+    if (!manager) return toJString(env, "null manager");
+    SessionWrapper wrapper = createSession(manager);
+    if (wrapper.session() == nullptr) return nullptr;
+
+    int result = APerformanceHint_setPreferPowerEfficiency(wrapper.session(), false);
+    if (result != 0) {
+        return toJString(env, "setPreferPowerEfficiency(false) did not return 0");
+    }
+
+    result = APerformanceHint_setPreferPowerEfficiency(wrapper.session(), true);
+    if (result != 0) {
+        return toJString(env, "setPreferPowerEfficiency(true) did not return 0");
+    }
+
+    result = APerformanceHint_setPreferPowerEfficiency(wrapper.session(), true);
+    if (result != 0) {
+        return toJString(env, "setPreferPowerEfficiency(true) did not return 0");
+    }
+    return nullptr;
+}
+
 static JNINativeMethod gMethods[] = {
     {"nativeTestCreateHintSession", "()Ljava/lang/String;",
      (void*)nativeTestCreateHintSession},
@@ -192,6 +215,8 @@ static JNINativeMethod gMethods[] = {
      (void*)nativeReportActualWorkDurationWithIllegalArgument},
     {"nativeTestSetThreadsWithInvalidTid", "()Ljava/lang/String;",
      (void*)nativeTestSetThreadsWithInvalidTid},
+    {"nativeSetPreferPowerEfficiency", "()Ljava/lang/String;",
+     (void*)nativeSetPreferPowerEfficiency},
 };
 
 int register_android_os_cts_PerformanceHintManagerTest(JNIEnv *env) {
