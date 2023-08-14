@@ -35,8 +35,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.after;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
@@ -83,7 +83,8 @@ import java.util.Set;
 @RunWith(AndroidJUnit4.class)
 @AppModeFull(reason = "VirtualDeviceManager cannot be accessed by instant apps")
 public class ActivityBlockingTest {
-
+    private static final ComponentName BLOCKED_ACTIVITY_COMPONENT =
+            new ComponentName("android", BlockedAppStreamingActivity.class.getName());
     private static final VirtualDeviceParams DEFAULT_VIRTUAL_DEVICE_PARAMS =
             new VirtualDeviceParams.Builder().build();
 
@@ -107,6 +108,7 @@ public class ActivityBlockingTest {
     @Mock
     private OnReceiveResultListener mOnReceiveResultListener;
     private ResultReceiver mResultReceiver;
+    @Mock
     private ActivityListener mActivityListener;
 
     @Before
@@ -158,13 +160,17 @@ public class ActivityBlockingTest {
 
         emptyActivity.startActivity(TestAppHelper.createCannotDisplayOnRemoteIntent(
                 /* newTask= */ true, mResultReceiver));
-        verify(mOnReceiveResultListener, after(3000).never())
-                .onReceiveResult(anyInt(), any());
+        verify(mActivityListener, timeout(3000)).onTopActivityChanged(
+                eq(virtualDisplay.getDisplay().getDisplayId()), eq(BLOCKED_ACTIVITY_COMPONENT),
+                anyInt());
+        verify(mOnReceiveResultListener, never()).onReceiveResult(anyInt(), any());
 
         emptyActivity.startActivity(TestAppHelper.createCannotDisplayOnRemoteIntent(
                 /* newTask= */ false, mResultReceiver));
-        verify(mOnReceiveResultListener, after(3000).never())
-                .onReceiveResult(anyInt(), any());
+        verify(mActivityListener, timeout(3000).times(2)).onTopActivityChanged(
+                eq(virtualDisplay.getDisplay().getDisplayId()), eq(BLOCKED_ACTIVITY_COMPONENT),
+                anyInt());
+        verify(mOnReceiveResultListener, never()).onReceiveResult(anyInt(), any());
         virtualDisplay.release();
     }
 
@@ -205,8 +211,10 @@ public class ActivityBlockingTest {
         emptyActivity.startActivity(
                 TestAppHelper.createActivityLaunchedReceiverIntent(mResultReceiver));
 
-        verify(mOnReceiveResultListener, after(3000).never())
-                .onReceiveResult(anyInt(), any());
+        verify(mActivityListener, timeout(3000)).onTopActivityChanged(
+                eq(virtualDisplay.getDisplay().getDisplayId()), eq(BLOCKED_ACTIVITY_COMPONENT),
+                anyInt());
+        verify(mOnReceiveResultListener, never()).onReceiveResult(anyInt(), any());
         virtualDisplay.release();
     }
 
@@ -229,8 +237,11 @@ public class ActivityBlockingTest {
         emptyActivity.startActivity(
                 TestAppHelper.createActivityLaunchedReceiverIntent(mResultReceiver));
 
-        verify(mOnReceiveResultListener, after(3000).never())
-                .onReceiveResult(anyInt(), any());
+        verify(mActivityListener, timeout(3000)).onTopActivityChanged(
+                eq(virtualDisplay.getDisplay().getDisplayId()), eq(BLOCKED_ACTIVITY_COMPONENT),
+                anyInt());
+        verify(mOnReceiveResultListener, never()).onReceiveResult(anyInt(), any());
+
         virtualDisplay.release();
     }
 
@@ -261,9 +272,6 @@ public class ActivityBlockingTest {
                         .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
                 createActivityOptions(virtualDisplay));
 
-        verify(mOnReceiveResultListener, after(3000).never())
-                .onReceiveResult(anyInt(), any());
-
         verify(mActivityListener, timeout(3000).times(1)).onTopActivityChanged(
                 eq(virtualDisplay.getDisplay().getDisplayId()),
                 eq(new ComponentName("android", BlockedAppStreamingActivity.class.getName())));
@@ -272,6 +280,8 @@ public class ActivityBlockingTest {
                 eq(virtualDisplay.getDisplay().getDisplayId()),
                 eq(new ComponentName("android", BlockedAppStreamingActivity.class.getName())),
                 eq(context.getUserId()));
+
+        verify(mOnReceiveResultListener, never()).onReceiveResult(anyInt(), any());
 
         emptyActivity.finish();
         virtualDisplay.release();
@@ -399,9 +409,6 @@ public class ActivityBlockingTest {
 
         emptyActivity.startActivity(allowedIntent, createActivityOptions(virtualDisplay));
 
-        verify(mOnReceiveResultListener, after(3000).never())
-                .onReceiveResult(anyInt(), any());
-
         verify(mActivityListener, timeout(3000).times(1)).onTopActivityChanged(
                 eq(virtualDisplay.getDisplay().getDisplayId()),
                 eq(new ComponentName("android", BlockedAppStreamingActivity.class.getName())));
@@ -411,6 +418,8 @@ public class ActivityBlockingTest {
                 eq(new ComponentName("android", BlockedAppStreamingActivity.class.getName())),
                 eq(context.getUserId()));
 
+        verify(mOnReceiveResultListener, never()).onReceiveResult(anyInt(), any());
+
         emptyActivity.finish();
         virtualDisplay.release();
     }
@@ -419,6 +428,8 @@ public class ActivityBlockingTest {
             int virtualDisplayFlags) {
         mVirtualDevice = mVirtualDeviceManager.createVirtualDevice(
                 mFakeAssociationRule.getAssociationInfo().getId(), virtualDeviceParams);
+        mVirtualDevice.addActivityListener(getApplicationContext().getMainExecutor(),
+                mActivityListener);
         return mVirtualDevice.createVirtualDisplay(
                 VirtualDeviceTestUtils.createDefaultVirtualDisplayConfigBuilder()
                         .setFlags(virtualDisplayFlags)

@@ -28,9 +28,10 @@ import static androidx.test.core.app.ApplicationProvider.getApplicationContext;
 
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.nullable;
-import static org.mockito.Mockito.after;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
@@ -89,7 +90,8 @@ public class ActivityManagementTest {
     private static final VirtualDeviceParams DEFAULT_VIRTUAL_DEVICE_PARAMS =
             new VirtualDeviceParams.Builder().build();
 
-    private static final int TIMEOUT_MS = 5000;
+    // VirtualDeviceImpl#PENDING_TRAMPOLINE_TIMEOUT_MS is 5000ms wait a bit longer than that.
+    private static final int TIMEOUT_MS = 5100;
 
     @Rule
     public AdoptShellPermissionsRule mAdoptShellPermissionsRule = new AdoptShellPermissionsRule(
@@ -315,10 +317,10 @@ public class ActivityManagementTest {
                 Runnable::run,
                 mLaunchCompleteListener);
 
-        verify(mOnReceiveResultListener, after(TIMEOUT_MS).never()).onReceiveResult(
-                eq(Activity.RESULT_OK), nullable(Bundle.class));
         verify(mLaunchCompleteListener, timeout(TIMEOUT_MS)).accept(
                 eq(VirtualDeviceManager.LAUNCH_FAILURE_NO_ACTIVITY));
+        verify(mOnReceiveResultListener, never()).onReceiveResult(
+                anyInt(), any());
     }
 
     private VirtualDisplay createVirtualDisplay() {
