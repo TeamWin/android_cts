@@ -221,6 +221,14 @@ public class ActivityEmbeddingPlaceholderTests extends ActivityEmbeddingTestBase
     public void testPlaceholderLaunchedWhenTaskWidthIncreased() {
         try (RotationSession rotationSession = new RotationSession()) {
             rotationSession.set(ROTATION_0);
+
+            // Reduce display size by 50% so that display size won't exceed the maximum display
+            // size during the test.
+            final Size currentSize = mReportedDisplayMetrics.getSize();
+            final Size displaySize = new Size((int) (currentSize.getWidth() * 0.5),
+                    (int) (currentSize.getHeight() * 0.5));
+            mReportedDisplayMetrics.setSize(displaySize);
+
             final double splitTaskWidth = getTaskWidth() * 1.05;
             final double splitTaskHeight = getTaskHeight() * 1.05;
 
@@ -246,9 +254,8 @@ public class ActivityEmbeddingPlaceholderTests extends ActivityEmbeddingTestBase
 
             // Increase display size by 10% so that the primary and placeholder activities are
             // stacked
-            final Size currentSize = mReportedDisplayMetrics.getSize();
-            mReportedDisplayMetrics.setSize(new Size((int) (currentSize.getWidth() * 1.1),
-                    (int) (currentSize.getHeight() * 1.1)));
+            mReportedDisplayMetrics.setSize(new Size((int) (displaySize.getWidth() * 1.1),
+                    (int) (displaySize.getHeight() * 1.1)));
 
             // Verify that the placeholder activity is launched into a split with the primary
             // activity
