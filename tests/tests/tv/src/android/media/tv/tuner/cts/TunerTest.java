@@ -658,7 +658,8 @@ public class TunerTest {
                         status.getInnerFec();
                         break;
                     case FrontendStatus.FRONTEND_STATUS_TYPE_MODULATION:
-                        if (info.getType() != FrontendSettings.TYPE_DVBT)
+                        if (info.getType() != FrontendSettings.TYPE_DVBT &&
+                            info.getType() !=  FrontendSettings.TYPE_ANALOG)
                             status.getModulation();
                         break;
                     case FrontendStatus.FRONTEND_STATUS_TYPE_SPECTRAL:
