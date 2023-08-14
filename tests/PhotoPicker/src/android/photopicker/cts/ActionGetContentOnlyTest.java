@@ -253,7 +253,7 @@ public class ActionGetContentOnlyTest extends PhotoPickerBaseTest {
         assertWithMessage("Waiting for app list to appear in DocumentsUi").that(
                 new UiObject(appList).waitForExists(SHORT_TIMEOUT)).isTrue();
 
-        String photoPickerAppName = "Media";
+        String photoPickerAppName = "Media picker";
         UiObject mediaButton = sDevice.findObject(new UiSelector().text(photoPickerAppName));
 
         assertWithMessage("Timed out waiting for " + photoPickerAppName + " app icon to appear")
