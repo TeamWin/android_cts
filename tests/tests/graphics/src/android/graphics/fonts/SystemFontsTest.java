@@ -34,7 +34,12 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.ReadOnlyBufferException;
+import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Set;
@@ -108,6 +113,23 @@ public class SystemFontsTest {
                     assertNotNull(axis);
                 }
             }
+        }
+    }
+
+    @Test
+    public void testFontsFallbackUnreadable() {
+        File file = new File("/system/etc/font_fallback.xml");
+        assertFalse(file.canRead());
+        assertFalse(file.canWrite());
+        assertFalse(file.canExecute());
+
+        try (FileInputStream fis = new FileInputStream(file)) {
+            FileChannel fc = fis.getChannel();
+            ByteBuffer buf = fc.map(FileChannel.MapMode.READ_ONLY, 0, fc.size());
+            buf.get();
+            fail("/system/etc/font_fallback.xml must not be readable.");
+        } catch (IOException e) {
+            // pass
         }
     }
 }
