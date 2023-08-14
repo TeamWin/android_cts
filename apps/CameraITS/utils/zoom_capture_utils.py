@@ -16,16 +16,19 @@
 
 import logging
 import math
+import cv2
+import numpy
 
 import camera_properties_utils
 import capture_request_utils
 import image_processing_utils
-import numpy as np
 import opencv_processing_utils
 
 _CIRCLE_COLOR = 0  # [0: black, 255: white]
 _CIRCLE_AR_RTOL = 0.15  # contour width vs height (aspect ratio)
 _CIRCLISH_RTOL = 0.05  # contour area vs ideal circle area pi*((w+h)/4)**2
+_CV2_LINE_THICKNESS = 3  # line thickness for drawing on images
+_CV2_RED = (255, 0, 0)  # color in cv2 to draw lines
 _MIN_AREA_RATIO = 0.00015  # based on 2000/(4000x3000) pixels
 _MIN_CIRCLE_PTS = 25
 _MIN_FOCUS_DIST_TOL = 0.80  # allow charts a little closer than min
@@ -92,46 +95,112 @@ def get_test_tols_and_cap_size(cam, props, chart_distance, debug):
   return test_tols, max(common_sizes)
 
 
-def get_center_circle(img, img_name, size, zoom_ratio, min_zoom_ratio, debug):
+def find_center_circle(
+    img, img_name, size, zoom_ratio, min_zoom_ratio,
+    expected_color=_CIRCLE_COLOR, circle_ar_rtol=_CIRCLE_AR_RTOL,
+    circlish_rtol=_CIRCLISH_RTOL, min_circle_pts=_MIN_CIRCLE_PTS,
+    debug=False):
   """Find circle closest to image center for scene with multiple circles.
 
+  Finds all contours in the image. Rejects those too small and not enough
+  points to qualify as a circle. The remaining contours must have center
+  point of color=color and are sorted based on distance from the center
+  of the image. The contour closest to the center of the image is returned.
   If circle is not found due to zoom ratio being larger than ZOOM_MAX_THRESH
   or the circle being cropped, None is returned.
 
+  Note: hierarchy is not used as the hierarchy for black circles changes
+  as the zoom level changes.
+
   Args:
-    img: numpy img array with pixel values in [0,255].
+    img: numpy img array with pixel values in [0,255]
     img_name: str file name for saved image
-    size: width, height of the image
+    size: [width, height] of the image
     zoom_ratio: zoom_ratio for the particular capture
     min_zoom_ratio: min_zoom_ratio supported by the camera device
-    debug: boolean to save extra data
+    expected_color: int 0 --> black, 255 --> white
+    circle_ar_rtol: float aspect ratio relative tolerance
+    circlish_rtol: float contour area vs ideal circle area pi*((w+h)/4)**2
+    min_circle_pts: int minimum number of points to define a circle
+    debug: bool to save extra data
 
   Returns:
-    circle: [center_x, center_y, radius] if found, else None
+    circle: [center_x, center_y, radius]
   """
-  # Create a copy since convert_image_to_uint8 uses mutable np array methods
-  imgc = np.copy(img)
-  # convert [0, 1] image to [0, 255] and cast as uint8
-  imgc = image_processing_utils.convert_image_to_uint8(imgc)
 
-  # Find the center circle in img
-  try:
-    circle = opencv_processing_utils.find_center_circle(
-        imgc, img_name, _CIRCLE_COLOR, circle_ar_rtol=_CIRCLE_AR_RTOL,
-        circlish_rtol=_CIRCLISH_RTOL,
-        min_area=_MIN_AREA_RATIO * size[0] * size[1] * zoom_ratio * zoom_ratio,
-        min_circle_pts=_MIN_CIRCLE_PTS, debug=debug)
-    if opencv_processing_utils.is_circle_cropped(circle, size):
-      logging.debug('zoom %.2f is too large! Skip further captures', zoom_ratio)
-      return None
-  except AssertionError as e:
-    if zoom_ratio / min_zoom_ratio >= ZOOM_MAX_THRESH:
+  width, height = size
+  min_area = _MIN_AREA_RATIO * width * height * zoom_ratio * zoom_ratio
+
+  # convert [0, 1] image to [0, 255] and cast as uint8
+  if img.dtype != numpy.uint8:
+    img = image_processing_utils.convert_image_to_uint8(img)
+
+  # gray scale & otsu threshold to binarize the image
+  gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+  _, img_bw = cv2.threshold(
+      numpy.uint8(gray), 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+
+  # use OpenCV to find contours (connected components)
+  contours = opencv_processing_utils.find_all_contours(255-img_bw)
+
+  # check contours and find the best circle candidates
+  circles = []
+  img_ctr = [gray.shape[1] // 2, gray.shape[0] // 2]
+
+  for contour in contours:
+    area = cv2.contourArea(contour)
+    logging.debug('area: %d, min_area: %d, num_pts: %d, min_circle_pts: %d',
+                  area, min_area, len(contour), min_circle_pts)
+    if area > min_area and len(contour) >= min_circle_pts:
+      shape = opencv_processing_utils.component_shape(contour)
+      radius = (shape['width'] + shape['height']) / 4
+      circle_color = img_bw[shape['cty']][shape['ctx']]
+      circlish = round((math.pi * radius**2) / area, 4)
+      logging.debug('circle_color: %s, expected_color: %s, circlish: %.2f',
+                    circle_color, expected_color, circlish)
+      if (circle_color == expected_color and
+          math.isclose(1, circlish, rel_tol=circlish_rtol) and
+          math.isclose(shape['width'], shape['height'],
+                       rel_tol=circle_ar_rtol)):
+        circles.append([shape['ctx'], shape['cty'], radius, circlish, area])
+
+  if not circles:
+    zoom_ratio_value = zoom_ratio / min_zoom_ratio
+    if zoom_ratio_value >= ZOOM_MAX_THRESH:
+      logging.debug('No circle was detected, but zoom %.2f exceeds'
+                    ' maximum zoom threshold', zoom_ratio_value)
       return None
     else:
       raise AssertionError(
           'No circle detected for zoom ratio <= '
           f'{ZOOM_MAX_THRESH}. '
-          'Take pictures according to instructions carefully!') from e
+          'Take pictures according to instructions carefully!')
+
+  if debug:
+    logging.debug('circles [x, y, r, pi*r**2/area, area]: %s', str(circles))
+
+  # find circle closest to center
+  circle = min(
+      circles, key=lambda x: math.hypot(x[0] - img_ctr[0], x[1] - img_ctr[1]))
+
+  # check if circle is cropped because of zoom factor
+  if opencv_processing_utils.is_circle_cropped(circle, size):
+    logging.debug('zoom %.2f is too large! Skip further captures', zoom_ratio)
+    return None
+
+  # mark image center
+  size = gray.shape
+  m_x, m_y = size[1] // 2, size[0] // 2
+  marker_size = _CV2_LINE_THICKNESS * 10
+  cv2.drawMarker(img, (m_x, m_y), _CV2_RED, markerType=cv2.MARKER_CROSS,
+                 markerSize=marker_size, thickness=_CV2_LINE_THICKNESS)
+
+  # add circle to saved image
+  center_i = (int(round(circle[0], 0)), int(round(circle[1], 0)))
+  radius_i = int(round(circle[2], 0))
+  cv2.circle(img, center_i, radius_i, _CV2_RED, _CV2_LINE_THICKNESS)
+  image_processing_utils.write_image(img / 255.0, img_name)
+
   return circle
 
 

@@ -14,12 +14,9 @@
 """Verify preview matches video output during video zoom."""
 
 import logging
-import math
-import multiprocessing
+import math 
 import os
-import time
 
-import cv2
 from mobly import test_runner
 import numpy as np
 
@@ -28,8 +25,8 @@ import camera_properties_utils
 import capture_request_utils
 import image_processing_utils
 import its_session_utils
-import opencv_processing_utils
 import video_processing_utils
+import zoom_capture_utils
 
 _CIRCLE_AR_RTOL = 0.15  # contour width vs height (aspect ratio)
 _CIRCLE_COLOR = 0  # [0: black, 255: white]
@@ -42,9 +39,9 @@ _LINE_COLOR = (255, 0, 0)  # red
 _MAX_STR = 'max'
 _MIN_STR = 'min'
 _MIN_AREA_RATIO = 0.00015  # based on 2000/(4000x3000) pixels
-_MIN_CIRCLE_PTS = 25
-_MIN_ZOOM_CHART_SCALING = 0.7
+_MIN_CIRCLE_PTS = 10
 _MIN_SIZE = 640*480  # VGA
+_MIN_ZOOM_SCALE_CHART = 0.70  # zoom factor to trigger scaled chart
 _NAME = os.path.splitext(os.path.basename(__file__))[0]
 _OFFSET_TOL = 5  # pixels
 _RADIUS_RTOL = 0.1  # 10% tolerance Video/Preview circle size
@@ -196,10 +193,10 @@ class PreviewVideoZoomTest(its_base_test.ItsBaseTest):
       logging.debug('Testing zoom ratios: %s', str(zoom_ratios_to_be_tested))
 
       # Load chart for scene
-      if z_min > _MIN_ZOOM_CHART_SCALING:
+      if z_min > _MIN_ZOOM_SCALE_CHART:
         its_session_utils.load_scene(
             cam, props, self.scene, self.tablet, self.chart_distance)
-      else:
+      else:  # Load full-scale chart for small zoom factor
         its_session_utils.load_scene(
             cam, props, self.scene, self.tablet,
             its_session_utils.CHART_DISTANCE_NO_SCALING)
@@ -248,11 +245,9 @@ class PreviewVideoZoomTest(its_base_test.ItsBaseTest):
 
             # Find the center circle in video img
             video_img_name = (f'Video_zoomRatio_{z}_{quality}_circle.png')
-            circle = opencv_processing_utils.find_center_circle(
-                video_img, video_img_name, _CIRCLE_COLOR,
-                circle_ar_rtol=_CIRCLE_AR_RTOL, circlish_rtol=_CIRCLISH_RTOL,
-                min_area=_MIN_AREA_RATIO * width * height * z * z,
-                min_circle_pts=_MIN_CIRCLE_PTS, debug=debug)
+            circle = zoom_capture_utils.find_center_circle(
+                video_img, video_img_name, [width, height],
+                z, z_min, min_circle_pts=_MIN_CIRCLE_PTS, debug=debug)
             logging.debug('Recorded video name: %s', video_file_name)
 
             video_test_data[i] = {'z': z, 'circle': circle}
@@ -281,14 +276,9 @@ class PreviewVideoZoomTest(its_base_test.ItsBaseTest):
 
             # Find the center circle in preview img
             preview_img_name = (f'Preview_zoomRatio_{z}_{size}_circle.png')
-            circle = opencv_processing_utils.find_center_circle(
-                preview_img, preview_img_name, _CIRCLE_COLOR,
-                circle_ar_rtol=_CIRCLE_AR_RTOL, circlish_rtol=_CIRCLISH_RTOL,
-                min_area=_MIN_AREA_RATIO * width * height * z * z,
-                min_circle_pts=_MIN_CIRCLE_PTS, debug=debug)
-            if opencv_processing_utils.is_circle_cropped(
-                circle, (width, height)):
-              logging.debug('Zoom %.2f is too large!', z)
+            circle = zoom_capture_utils.find_center_circle(
+                preview_img, preview_img_name, [width, height],
+                z, z_min, min_circle_pts=_MIN_CIRCLE_PTS, debug=debug)
 
             preview_test_data[i] = {'z': z, 'circle': circle}
 

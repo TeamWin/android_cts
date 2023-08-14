@@ -133,9 +133,10 @@ class ZoomTest(its_base_test.ItsBaseTest):
           cap_fl = cap['metadata']['android.lens.focalLength']
           radius_tol, offset_tol = test_tols[cap_fl]
 
-          # Find the center circle in img
-          circle = zoom_capture_utils.get_center_circle(img, img_name, size, z,
-                                                        z_list[0], debug)
+          # Find the center circle in img and check if it's cropped
+          circle = zoom_capture_utils.find_center_circle(
+              img, img_name, size, z, z_list[0], debug=debug)
+
           # Zoom is too large to find center circle
           if circle is None:
             break
