@@ -186,8 +186,7 @@ public class BiometricsAtomsTests extends BiometricDeviceTestCase {
             if (sensorInfo.hasWeakOrGreaterFaceSensor()) {
                 assertThat(authAtoms).hasSize(2);
                 assertAuthenticateAtomData(authAtoms.get(0));
-                // TODO(b/283843162): Session info may not be available at BP dismission
-                //assertAuthenticateAtomData(authAtoms.get(1));
+                assertAuthenticateAtomData(authAtoms.get(1));
 
                 final List<AtomsProto.BiometricAcquired> acquiredAtoms =
                         filterAcquiredAtoms(data, modality);
