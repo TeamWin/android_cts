@@ -98,5 +98,12 @@ public enum UserType {
      *
      * <p>The parent of this profile will be {@link UserType#INITIAL_USER}.
      */
-    CLONE_PROFILE
+    CLONE_PROFILE,
+
+    /**
+     * A user with type {@code android.os.usertype.profile.PRIVATE}.
+     *
+     * <p>The parent of this profile will be {@link UserType#INITIAL_USER}.
+     */
+    PRIVATE_PROFILE
 }

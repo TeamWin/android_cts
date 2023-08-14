@@ -90,6 +90,10 @@ import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnParent
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnParentOfOrganizationOwnedProfileOwnerUsingParentInstance;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnParentOfProfileOwnerUsingParentInstance;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnParentOfProfileOwnerWithNoDeviceOwner;
+import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnPrivateProfileAlongsideManagedProfile;
+import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnPrivateProfileAlongsideManagedProfileUsingParentInstance;
+import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnPrivateProfileAlongsideOrganizationOwnedProfile;
+import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnPrivateProfileAlongsideOrganizationOwnedProfileUsingParentInstance;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnProfileOwnerPrimaryUser;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnProfileOwnerProfileWithNoDeviceOwner;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnSecondaryUserInDifferentProfileGroupToOrganizationOwnedProfileOwnerProfileUsingParentInstance;
@@ -186,10 +190,10 @@ public final class Policy {
 
                     .put(APPLIED_BY_FINANCED_DEVICE_OWNER | APPLIES_TO_OWN_USER, generateDevicePolicyManagerRoleHolderAnnotation(includeRunOnFinancedDeviceOwnerUser(), /* roleHolderUser= */ SYSTEM_USER))
 
-                    .put(APPLIED_BY_PARENT_INSTANCE_OF_NON_ORGANIZATIONAL_OWNED_PROFILE_OWNER_PROFILE | APPLIES_TO_OWN_USER | INHERITABLE, singleAnnotation(includeRunOnCloneProfileAlongsideManagedProfileUsingParentInstance()))
-                    .put(APPLIED_BY_PARENT_INSTANCE_OF_ORGANIZATIONAL_OWNED_PROFILE_OWNER_PROFILE | APPLIES_TO_OWN_USER | INHERITABLE, singleAnnotation(includeRunOnCloneProfileAlongsideOrganizationOwnedProfileUsingParentInstance()))
-                    .put(APPLIED_BY_ORGANIZATION_OWNED_PROFILE_OWNER_PROFILE | APPLIES_TO_PARENT | INHERITABLE, singleAnnotation(includeRunOnCloneProfileAlongsideOrganizationOwnedProfile()))
-                    .put(APPLIED_BY_UNAFFILIATED_PROFILE_OWNER_PROFILE | APPLIES_TO_PARENT | INHERITABLE, singleAnnotation(includeRunOnCloneProfileAlongsideManagedProfile()))
+                    .put(APPLIED_BY_PARENT_INSTANCE_OF_NON_ORGANIZATIONAL_OWNED_PROFILE_OWNER_PROFILE | APPLIES_TO_OWN_USER | INHERITABLE, multipleAnnotations(includeRunOnCloneProfileAlongsideManagedProfileUsingParentInstance(), includeRunOnPrivateProfileAlongsideManagedProfileUsingParentInstance()))
+                    .put(APPLIED_BY_PARENT_INSTANCE_OF_ORGANIZATIONAL_OWNED_PROFILE_OWNER_PROFILE | APPLIES_TO_OWN_USER | INHERITABLE, multipleAnnotations(includeRunOnCloneProfileAlongsideOrganizationOwnedProfileUsingParentInstance(), includeRunOnPrivateProfileAlongsideOrganizationOwnedProfileUsingParentInstance()))
+                    .put(APPLIED_BY_ORGANIZATION_OWNED_PROFILE_OWNER_PROFILE | INHERITABLE, multipleAnnotations(includeRunOnCloneProfileAlongsideOrganizationOwnedProfile(), includeRunOnPrivateProfileAlongsideOrganizationOwnedProfile()))
+                    .put(APPLIED_BY_UNAFFILIATED_PROFILE_OWNER_PROFILE | INHERITABLE, multipleAnnotations(includeRunOnCloneProfileAlongsideManagedProfile(), includeRunOnPrivateProfileAlongsideManagedProfile()))
                     .build();
     // This must contain one key for every APPLIED_BY that is being used, and maps to the
     // "default" for testing that DPC type
@@ -392,6 +396,26 @@ public final class Policy {
     }
 
     @AutoAnnotation
+    private static IncludeRunOnPrivateProfileAlongsideManagedProfileUsingParentInstance includeRunOnPrivateProfileAlongsideManagedProfileUsingParentInstance() {
+        return new AutoAnnotation_Policy_includeRunOnPrivateProfileAlongsideManagedProfileUsingParentInstance();
+    }
+
+    @AutoAnnotation
+    private static IncludeRunOnPrivateProfileAlongsideOrganizationOwnedProfileUsingParentInstance includeRunOnPrivateProfileAlongsideOrganizationOwnedProfileUsingParentInstance() {
+        return new AutoAnnotation_Policy_includeRunOnPrivateProfileAlongsideOrganizationOwnedProfileUsingParentInstance();
+    }
+
+    @AutoAnnotation
+    private static IncludeRunOnPrivateProfileAlongsideManagedProfile includeRunOnPrivateProfileAlongsideManagedProfile() {
+        return new AutoAnnotation_Policy_includeRunOnPrivateProfileAlongsideManagedProfile();
+    }
+
+    @AutoAnnotation
+    private static IncludeRunOnPrivateProfileAlongsideOrganizationOwnedProfile includeRunOnPrivateProfileAlongsideOrganizationOwnedProfile() {
+        return new AutoAnnotation_Policy_includeRunOnPrivateProfileAlongsideOrganizationOwnedProfile();
+    }
+
+    @AutoAnnotation
     private static IncludeRunOnDevicePolicyManagementRoleHolderProfile includeRunOnDevicePolicyManagementRoleHolderProfile() {
         return new AutoAnnotation_Policy_includeRunOnDevicePolicyManagementRoleHolderProfile();
     }
@@ -419,6 +443,11 @@ public final class Policy {
     private static Function<EnterprisePolicy, Set<Annotation>> singleAnnotation(
             Annotation annotation) {
         return (i) -> ImmutableSet.of(annotation);
+    }
+
+    private static Function<EnterprisePolicy, Set<Annotation>> multipleAnnotations(
+            Annotation... annotations) {
+        return (i) -> ImmutableSet.copyOf(annotations);
     }
 
     private static Function<EnterprisePolicy, Set<Annotation>> generateDevicePolicyManagerRoleHolderAnnotation(

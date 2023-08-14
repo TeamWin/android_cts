@@ -80,10 +80,12 @@ import com.android.bedstead.harrier.annotations.EnsureHasCloneProfile;
 import com.android.bedstead.harrier.annotations.EnsureHasNoAccounts;
 import com.android.bedstead.harrier.annotations.EnsureHasNoAdditionalUser;
 import com.android.bedstead.harrier.annotations.EnsureHasNoCloneProfile;
+import com.android.bedstead.harrier.annotations.EnsureHasNoPrivateProfile;
 import com.android.bedstead.harrier.annotations.EnsureHasNoSecondaryUser;
 import com.android.bedstead.harrier.annotations.EnsureHasNoTvProfile;
 import com.android.bedstead.harrier.annotations.EnsureHasNoWorkProfile;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
+import com.android.bedstead.harrier.annotations.EnsureHasPrivateProfile;
 import com.android.bedstead.harrier.annotations.EnsureHasSecondaryUser;
 import com.android.bedstead.harrier.annotations.EnsureHasTvProfile;
 import com.android.bedstead.harrier.annotations.EnsureHasUserRestriction;
@@ -126,6 +128,7 @@ import com.android.bedstead.harrier.annotations.RequireRunNotOnVisibleBackground
 import com.android.bedstead.harrier.annotations.RequireRunOnCloneProfile;
 import com.android.bedstead.harrier.annotations.RequireRunOnInitialUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
+import com.android.bedstead.harrier.annotations.RequireRunOnPrivateProfile;
 import com.android.bedstead.harrier.annotations.RequireRunOnSecondaryUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnSystemUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnTvProfile;
@@ -150,6 +153,8 @@ import com.android.bedstead.harrier.annotations.enterprise.MostRestrictiveCoexis
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnBackgroundDeviceOwnerUser;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnCloneProfileAlongsideManagedProfileUsingParentInstance;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnCloneProfileAlongsideOrganizationOwnedProfileUsingParentInstance;
+import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnPrivateProfileAlongsideManagedProfileUsingParentInstance;
+import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnPrivateProfileAlongsideOrganizationOwnedProfileUsingParentInstance;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnDeviceOwnerUser;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnFinancedDeviceOwnerUser;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnOrganizationOwnedProfileOwner;
@@ -222,6 +227,7 @@ public class DeviceStateTest {
 
     private static final long TIMEOUT = 4000000;
     private static final String CLONE_PROFILE_TYPE_NAME = "android.os.usertype.profile.CLONE";
+    private static final String PRIVATE_PROFILE_TYPE_NAME = "android.os.usertype.profile.PRIVATE";
 
     private static final String USER_RESTRICTION = UserManager.DISALLOW_AUTOFILL;
     private static final String SECOND_USER_RESTRICTION = UserManager.DISALLOW_AIRPLANE_MODE;
@@ -390,6 +396,68 @@ public class DeviceStateTest {
     public void includeRunOnCloneProfileAlongsideOrgOwnedProfileOwnerUsingParentInstance_runsOnCloneProfile() {
         assertThat(TestApis.users().instrumented().type().name())
                 .isEqualTo(CLONE_PROFILE_TYPE_NAME);
+
+        UserReference dpcUser = sDeviceState.dpc().user();
+        assertThat(dpcUser.type().name()).isEqualTo(MANAGED_PROFILE_TYPE_NAME);
+        assertThat(TestApis.devicePolicy().getProfileOwner(dpcUser).isOrganizationOwned()).isTrue();
+        assertThat(sDeviceState.dpc().isParentInstance()).isTrue();
+    }
+
+    @Test
+    @EnsureHasPrivateProfile
+    public void privateProfile_privateProfileProvided_returnsPrivateProfile() {
+        assertThat(sDeviceState.privateProfile()).isNotNull();
+    }
+
+    @Test
+    @EnsureHasPrivateProfile
+    public void ensureHasPrivateProfileAnnotation_privateProfileExists() {
+        assertThat(TestApis.users().findProfileOfType(
+                TestApis.users().supportedType(PRIVATE_PROFILE_TYPE_NAME),
+                TestApis.users().instrumented())
+        ).isNotNull();
+    }
+
+    @Test
+    @EnsureHasNoPrivateProfile
+    public void ensureHasNoPrivateProfileAnnotation_privateProfileDoesNotExists() {
+        assertThat(TestApis.users().findProfileOfType(
+                TestApis.users().supportedType(PRIVATE_PROFILE_TYPE_NAME),
+                TestApis.users().instrumented())
+        ).isNull();
+    }
+
+    @Test
+    @RequireRunOnPrivateProfile
+    public void privateProfile_runningOnPrivateProfile_returnsCurrentProfile() {
+        assertThat(sDeviceState.privateProfile()).isEqualTo(TestApis.users().instrumented());
+    }
+
+    @Test
+    @RequireRunOnPrivateProfile
+    public void requireRunOnPrivateProfileAnnotation_isRunningOnPrivateProfile() {
+        assertThat(TestApis.users().instrumented().type().name())
+                .isEqualTo(PRIVATE_PROFILE_TYPE_NAME);
+    }
+
+    @Test
+    @IncludeRunOnPrivateProfileAlongsideManagedProfileUsingParentInstance
+    public void includeRunOnPrivateProfileAlongsideProfileOwnerUsingParentInstance_runsOnPrivateProfile() {
+        assertThat(TestApis.users().instrumented().type().name())
+                .isEqualTo(PRIVATE_PROFILE_TYPE_NAME);
+
+        UserReference dpcUser = sDeviceState.dpc().user();
+        assertThat(dpcUser.type().name()).isEqualTo(MANAGED_PROFILE_TYPE_NAME);
+        assertThat(TestApis.devicePolicy().getProfileOwner(dpcUser).isOrganizationOwned())
+                .isFalse();
+        assertThat(sDeviceState.dpc().isParentInstance()).isTrue();
+    }
+
+    @Test
+    @IncludeRunOnPrivateProfileAlongsideOrganizationOwnedProfileUsingParentInstance
+    public void includeRunOnPrivateProfileAlongsideOrgOwnedProfileOwnerUsingParentInstance_runsOnPrivateProfile() {
+        assertThat(TestApis.users().instrumented().type().name())
+                .isEqualTo(PRIVATE_PROFILE_TYPE_NAME);
 
         UserReference dpcUser = sDeviceState.dpc().user();
         assertThat(dpcUser.type().name()).isEqualTo(MANAGED_PROFILE_TYPE_NAME);
