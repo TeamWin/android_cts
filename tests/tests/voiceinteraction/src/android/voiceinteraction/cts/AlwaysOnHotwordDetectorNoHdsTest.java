@@ -52,6 +52,7 @@ import android.voiceinteraction.cts.testcore.VoiceInteractionServiceConnectedCla
 import android.voiceinteraction.cts.testcore.VoiceInteractionServiceOverrideEnrollmentRule;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.filters.FlakyTest;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.CddTest;
@@ -224,6 +225,7 @@ public class AlwaysOnHotwordDetectorNoHdsTest {
 
     @CddTest(requirements = {"9.8.2/H-4-1"})
     @Test
+    @FlakyTest(bugId = 295591542)
     @CtsDownstreamingTest
     public void ifExemptionEnabled_startRecognition_noRecordOpsNoted() throws Exception {
         assumeFalse(SYSPROP_HOTWORD_DETECTION_SERVICE_REQUIRED);
