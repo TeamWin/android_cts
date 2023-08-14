@@ -12,27 +12,35 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 package {
-    // See: http://go/android-license-faq
-    default_applicable_licenses: [
-        "Android-Apache-2.0",
-    ],
+    default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-android_library {
-    name: "ctsmediacujcommon",
+android_test {
+    name: "CtsMediaCUJSmallTest",
 
+    manifest: "AndroidManifest.xml",
     defaults: ["cts_defaults"],
+    // include both the 32 and 64 bit versions
+    compile_multilib: "both",
     static_libs: [
-        "compatibility-device-util-axt",
+        "ctstestrunner-axt",
         "androidx.appcompat_appcompat",
         "androidx.media3.media3-common",
         "androidx.media3.media3-exoplayer",
         "androidx.media3.media3-ui",
+        "ctsmediacujcommon",
     ],
     srcs: [
         "src/**/*.java",
+    ],
+    libs: [
+        "android.test.base",
+        "android.test.runner",
+    ],
+    test_suites: [
+        "cts",
+        "general-tests",
     ],
     min_sdk_version: "30",
     sdk_version: "current",
