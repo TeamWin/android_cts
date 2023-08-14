@@ -58,6 +58,7 @@ import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
+import static org.junit.Assume.assumeTrue;
 
 import android.Manifest;
 import android.app.Instrumentation;
@@ -319,26 +320,24 @@ public class AudioManagerTest {
     @AppModeFull(reason = "Instant apps cannot hold android.permission.MODIFY_AUDIO_SETTINGS")
     @Test
     public void testMicrophoneMuteIntent() throws Exception {
-        if (!mDoNotCheckUnmute) {
-            final MyBlockingIntentReceiver receiver = new MyBlockingIntentReceiver(
-                    AudioManager.ACTION_MICROPHONE_MUTE_CHANGED);
-            final boolean initialMicMute = mAudioManager.isMicrophoneMute();
-            try {
-                mContext.registerReceiver(receiver,
-                        new IntentFilter(AudioManager.ACTION_MICROPHONE_MUTE_CHANGED));
-                // change the mic mute state
-                mAudioManager.setMicrophoneMute(!initialMicMute);
-                // verify a change was reported
-                final boolean intentFired = receiver.waitForExpectedAction(500/*ms*/);
-                assertTrue("ACTION_MICROPHONE_MUTE_CHANGED wasn't fired", intentFired);
-                // verify the mic mute state is expected
-                final boolean newMicMute = mAudioManager.isMicrophoneMute();
-                assertTrue("new mic mute state not as expected (" + !initialMicMute + ")",
-                        (newMicMute == !initialMicMute));
-            } finally {
-                mContext.unregisterReceiver(receiver);
-                mAudioManager.setMicrophoneMute(initialMicMute);
-            }
+        assumeFalse(mDoNotCheckUnmute);
+
+        final boolean initialMicMute = mAudioManager.isMicrophoneMute();
+        var future = mCancelRule.registerFuture(getFutureForIntent(
+                mContext,
+                AudioManager.ACTION_MICROPHONE_MUTE_CHANGED,
+                i -> true));
+        try {
+            // change the mic mute state
+            mAudioManager.setMicrophoneMute(!initialMicMute);
+            // verify a change was reported
+            future.get(FUTURE_WAIT_SECS, TimeUnit.SECONDS);
+            // verify the mic mute state is expected
+            assertWithMessage("New mic mute should be changed after intent")
+                    .that(mAudioManager.isMicrophoneMute())
+                    .isNotEqualTo(initialMicMute);
+        } finally {
+            mAudioManager.setMicrophoneMute(initialMicMute);
         }
     }
 
@@ -346,34 +345,30 @@ public class AudioManagerTest {
     @Test
     public void testSpeakerphoneIntent() throws Exception {
         //  Speaker Phone Not supported in Automotive
-        if (isAutomotive()) {
-            return;
-        }
-        if (!hasBuiltinSpeaker()) {
-            return;
-        }
+        assumeFalse(mContext.getPackageManager().hasSystemFeature(
+                    PackageManager.FEATURE_AUTOMOTIVE));
 
-        final MyBlockingIntentReceiver receiver = new MyBlockingIntentReceiver(
-                AudioManager.ACTION_SPEAKERPHONE_STATE_CHANGED);
+        assumeTrue(hasBuiltinSpeaker());
+
+        var future = mCancelRule.registerFuture(getFutureForIntent(
+                    mContext,
+                    AudioManager.ACTION_SPEAKERPHONE_STATE_CHANGED,
+                    i -> true));
+
         final boolean initialSpeakerphoneState = mAudioManager.isSpeakerphoneOn();
         try {
             getInstrumentation().getUiAutomation().adoptShellPermissionIdentity(
                     Manifest.permission.MODIFY_PHONE_STATE);
 
-            mContext.registerReceiver(receiver,
-                    new IntentFilter(AudioManager.ACTION_SPEAKERPHONE_STATE_CHANGED));
             // change the speakerphone state
             mAudioManager.setSpeakerphoneOn(!initialSpeakerphoneState);
-            // verify a change was reported
-            final boolean intentFired = receiver.waitForExpectedAction(500/*ms*/);
-            assertTrue("ACTION_SPEAKERPHONE_STATE_CHANGED wasn't fired", intentFired);
-            // verify the speakerphon state is expected
-            final boolean newSpeakerphoneState = mAudioManager.isSpeakerphoneOn();
-            assertTrue("new mic mute state not as expected ("
-                    + !initialSpeakerphoneState + ")",
-                    newSpeakerphoneState == !initialSpeakerphoneState);
+            future.get(FUTURE_WAIT_SECS, TimeUnit.SECONDS);
+
+            // verify the speakerphone state is expected
+            assertWithMessage("New speakerphone state should be changed after intent")
+                    .that(mAudioManager.isSpeakerphoneOn())
+                    .isNotEqualTo(initialSpeakerphoneState);
         } finally {
-            mContext.unregisterReceiver(receiver);
             mAudioManager.setSpeakerphoneOn(initialSpeakerphoneState);
             getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
         }
@@ -432,80 +427,6 @@ public class AudioManagerTest {
         assertWithMessage("Previous STREAM_MUSIC volume not as expected")
                 .that(intent.getIntExtra(AudioManager.EXTRA_PREV_VOLUME_STREAM_VALUE, -1))
                 .isEqualTo(origVol);
-    }
-
-    private static final class MyBlockingIntentReceiver extends BroadcastReceiver {
-        private static final String TAG = "BlockingIntentRcvr";
-        private final SafeWaitObject mLock = new SafeWaitObject();
-        // the action for the intent to check
-        private final String mAction;
-        private String mWaitForExtra;
-        private int mWaitForExtraInt = Integer.MAX_VALUE;
-        @GuardedBy("mLock")
-        private volatile boolean mIntentReceived = false;
-        @GuardedBy("mLock")
-        private Intent mIntent;
-
-        MyBlockingIntentReceiver(String action) {
-            mAction = action;
-            mIntent = null;
-            mWaitForExtra = null;
-        }
-
-        /**
-         * Sets an optional extra along with an expected value that need to match for the received
-         * intent to be considered as valid for {@link #waitForExpectedAction(long)}.
-         * When querying the intent for the extra int value, the default is Integer.MIN_VALUE.
-         * @param extra
-         * @param expectedInt
-         */
-        public void setWaitForIntExtra(String extra, int expectedInt) {
-            mWaitForExtra = extra;
-            mWaitForExtraInt = expectedInt;
-        }
-
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            if (!TextUtils.equals(intent.getAction(), mAction)) {
-                // move along, this is not the action we're looking for
-                return;
-            }
-            synchronized (mLock) {
-                if (mWaitForExtra != null) {
-                    final int extraIntVal = intent.getIntExtra(mWaitForExtra, Integer.MIN_VALUE);
-                    if (extraIntVal != mWaitForExtraInt) {
-                        Log.i(TAG, "extra received: " + extraIntVal);
-                        return;
-                    } else {
-                        Log.i(TAG, "expected extra received: " + mWaitForExtraInt);
-                    }
-                }
-                mIntentReceived = true;
-                mIntent = intent;
-                mLock.notify();
-            }
-        }
-
-        /**
-         * Wait for the intent up to a given time
-         * @param timeOutMs the timeout in ms
-         * @return true if the intent fire, false if it didn't fire within the timeout
-         */
-        public boolean waitForExpectedAction(long timeOutMs) {
-            synchronized (mLock) {
-                Log.i(TAG, "starting wait: expected extra:"
-                        + mWaitForExtra + " val:" + mWaitForExtraInt);
-                final boolean res = mLock.waitFor(timeOutMs, () -> mIntentReceived);
-                Log.i(TAG, "wait stopped, intent received:" + mIntentReceived);
-                return res;
-            }
-        }
-
-        public Intent getIntent() {
-            synchronized (mLock) {
-                return mIntent;
-            }
-        }
     }
 
     private static final class MyBlockingRunnableListener {
