@@ -21,6 +21,7 @@ import android.os.Bundle;
 import android.view.WindowManager;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.media3.common.MediaItem;
+import androidx.media3.common.Player;
 import androidx.media3.exoplayer.ExoPlayer;
 import androidx.media3.ui.PlayerView;
 import java.util.ArrayList;
@@ -32,6 +33,7 @@ public class MainActivity extends AppCompatActivity {
   protected PlayerView exoplayerView;
   protected ExoPlayer player;
   protected static List<String> videoUrls = new ArrayList<>();
+  protected Player.Listener playerListener;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -86,5 +88,27 @@ public class MainActivity extends AppCompatActivity {
     super.onDestroy();
     player.release();
     getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+  }
+
+  /**
+   * Register a listener to receive events from the player.
+   *
+   * <p>This method can be called from any thread.
+   *
+   * @param listener The listener to register.
+   *
+   */
+  public void addPlayerListener(Player.Listener listener) {
+    player.addListener(listener);
+    this.playerListener = listener;
+  }
+
+  /**
+   * Unregister a listener registered through addPlayerListener(Listener). The listener will no
+   * longer receive events.
+   *
+   */
+  public void removePlayerListener() {
+    player.removeListener(this.playerListener);
   }
 }
