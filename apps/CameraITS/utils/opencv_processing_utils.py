@@ -49,6 +49,8 @@ CIRCLE_COLOR_ATOL = 0.05  # circle color fill tolerance
 
 CV2_LINE_THICKNESS = 3  # line thickness for drawing on images
 CV2_RED = (255, 0, 0)  # color in cv2 to draw lines
+CV2_THRESHOLD_BLOCK_SIZE = 11
+CV2_THRESHOLD_CONSTANT = 2
 
 CV2_HOME_DIRECTORY = os.path.dirname(cv2.__file__)
 CV2_ALTERNATE_DIRECTORY = pathlib.Path(CV2_HOME_DIRECTORY).parents[3]
@@ -466,7 +468,7 @@ def find_circle_fill_metric(shape, img_bw, color):
   return matching / total
 
 
-def find_circle(img, img_name, min_area, color):
+def find_circle(img, img_name, min_area, color, use_adaptive_threshold=False):
   """Find the circle in the test image.
 
   Args:
@@ -474,6 +476,7 @@ def find_circle(img, img_name, min_area, color):
     img_name: string with image info of format and size.
     min_area: float of minimum area of circle to find
     color: int of [0 or 255] 0 is black, 255 is white
+    use_adaptive_threshold: True if binarization should use adaptive threshold.
 
   Returns:
     circle = {'x', 'y', 'r', 'w', 'h', 'x_offset', 'y_offset'}
@@ -485,11 +488,15 @@ def find_circle(img, img_name, min_area, color):
   else:
     circlish_atol = CIRCLISH_LOW_RES_ATOL
 
-  # convert to gray-scale image
-  img_gray = convert_to_gray(img)
-
-  # otsu threshold to binarize the image
-  img_bw = binarize_image(img_gray)
+  # convert to gray-scale image and binarize using adaptive/global threshold
+  if use_adaptive_threshold:
+    img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    img_bw = cv2.adaptiveThreshold(img_gray, 255, cv2.ADAPTIVE_THRESH_MEAN_C,
+                                   cv2.THRESH_BINARY, CV2_THRESHOLD_BLOCK_SIZE,
+                                   CV2_THRESHOLD_CONSTANT)
+  else:
+    img_gray = convert_to_gray(img)
+    img_bw = binarize_image(img_gray)
 
   # find contours
   contours = find_all_contours(255-img_bw)
@@ -541,8 +548,12 @@ def find_circle(img, img_name, min_area, color):
 
   if num_circles == 0:
     image_processing_utils.write_image(img/255, img_name, True)
-    raise AssertionError('No black circle detected. '
-                         'Please take pictures according to instructions.')
+    if not use_adaptive_threshold:
+      return find_circle(
+          img, img_name, min_area, color, use_adaptive_threshold=True)
+    else:
+      raise AssertionError('No circle detected. '
+                           'Please take pictures according to instructions.')
 
   if num_circles > 1:
     image_processing_utils.write_image(img/255, img_name, True)
@@ -551,7 +562,7 @@ def find_circle(img, img_name, min_area, color):
     img_name_parts = img_name.split('.')
     image_processing_utils.write_image(
         img/255, f'{img_name_parts[0]}_contours.{img_name_parts[1]}', True)
-    raise AssertionError('More than 1 black circle detected. '
+    raise AssertionError('More than 1 circle detected. '
                          'Background of scene may be too complex.')
 
   return circle
