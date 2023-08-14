@@ -26,6 +26,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
 
 import android.content.Context;
 import android.content.pm.PackageManager;
@@ -1193,15 +1194,46 @@ public class MediaMetadataRetrieverTest {
                 1 /*imageCount*/, 0 /*primary*/, false /*useGrid*/, true /*checkColor*/);
     }
 
+    /**
+     * Test AVIF (1024x1024 with 2x2 grid) decoding
+     */
     @Test
-    public void testGetImageAtIndexAvifGrid() throws Exception {
+    public void testGetImageAtIndexAvif1024x1024Grid2x2() throws Exception {
+        testGetImageAtIndexAvifGrid("sample_grid_1024x1024_2x2.avif", 1024 /* imageWidth */,
+                1024 /* imageHeight */, 2 /* gridCols */, 2 /* gridRows */);
+    }
+
+    /**
+     * Test AVIF (1920x1080 with 2x4 grid) decoding
+     */
+    @Test
+    public void testGetImageAtIndexAvif1920x1080Grid2x4() throws Exception {
+        testGetImageAtIndexAvifGrid("sample_grid_1920x1080_2x4.avif", 1920 /* imageWidth */,
+                1080 /* imageHeight */, 2 /* gridCols */, 4 /* gridRows */);
+    }
+
+    /**
+     * Test AVIF (1920x1080 with 4x4 grid) decoding
+     */
+    @Test
+    public void testGetImageAtIndexAvif1920x1080Grid4x4() throws Exception {
+        testGetImageAtIndexAvifGrid("sample_grid_1920x1080_4x4.avif", 1920 /* imageWidth */,
+                1080 /* imageHeight */, 4 /* gridCols */, 4 /* gridRows */);
+    }
+
+    private void testGetImageAtIndexAvifGrid(final String res, int imageWidth, int imageHeight,
+                                             int gridCols, int gridRows) throws Exception {
         if (!MediaUtils.check(mIsAtLeastS, "test needs Android 12")) return;
-        if (!MediaUtils.canDecodeVideo(MediaFormat.MIMETYPE_VIDEO_AV1, 512, 512, 30)) {
-            MediaUtils.skipTest("No AV1 codec for 512p");
+        int gridWidth = imageWidth / gridCols;
+        int gridHeight = imageHeight / gridRows;
+        if (!MediaUtils.canDecodeVideo(MediaFormat.MIMETYPE_VIDEO_AV1, gridWidth, gridHeight, 30)) {
+            MediaUtils.skipTest("No AV1 codec for " + gridWidth + " x " + gridHeight);
+            //TODO (b/224402585) Remove the following once MediaUtils.skipTest() calls assumeTrue
+            assumeTrue("No AV1 codec for " + gridWidth + " x " + gridHeight, false);
             return;
         }
-        testGetImage("sample_grid2x4.avif", 1920, 1080, "image/avif", 0 /*rotation*/,
-                1 /*imageCount*/, 0 /*primary*/, true /*useGrid*/, true /*checkColor*/);
+        testGetImage(res, imageWidth, imageHeight, "image/avif", 0 /*rotation*/, 1 /*imageCount*/,
+                0 /*primary*/, true /*useGrid*/, true /*checkColor*/);
     }
 
     /**
