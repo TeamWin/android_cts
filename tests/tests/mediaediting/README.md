@@ -4,6 +4,7 @@ The tests are organized into following testcases
 | TestCase | Description |
 |------------------------|----------------------|
 | TranscodeQualityTest   | Transcode input and validate output using ssim |
+| VideoResolutionTest    | Transform resolution of input videos and validate output resolution |
 
 
 ## List of tests and helper classes imported from [androidx.media3.transformer](https://github.com/androidx/media/tree/release/libraries/transformer when it was at commit https://github.com/androidx/media/commit/2ff5dab0039c44d767dc831fec92724254e5e0aa)and changes done in them.
@@ -27,7 +28,11 @@ TransformerAndroidTestRunner is using `decoderFactory` and `encodeFactory` to in
 Parameterize `TranscodeQualityTest` and added more test vectors in it.
 
 
-## List of new helper class added.
+## List of new helper class and Test added.
 
 ###MediaEditingUtil.java
 It has paths for the input clips required for TranscodeQualityTest. Test now uses MediaPreparer to download zip file mentioned in DynamicConfig.xml and use input clips from sdcard.
+Added util function to parse width, height and roationDegree from muxed output.
+
+### VideoResolutionTest.java
+Test transform resolution of input videos and validate the output resolution.
