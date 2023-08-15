@@ -444,6 +444,11 @@ public class TestUtils {
         return executeShellCommand(instrumentation, COMMAND_SET_SYSTEM_DIALER + INCALL_COMPONENT);
     }
 
+    public static String setSystemDialerOverride(
+            Instrumentation instrumentation, String incallComponent) throws Exception {
+        return executeShellCommand(instrumentation, COMMAND_SET_SYSTEM_DIALER + incallComponent);
+    }
+
     public static String clearSystemDialerOverride(
             Instrumentation instrumentation) throws Exception {
         return executeShellCommand(instrumentation, COMMAND_SET_SYSTEM_DIALER + "default");
