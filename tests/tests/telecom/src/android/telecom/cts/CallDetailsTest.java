@@ -414,7 +414,7 @@ public class CallDetailsTest extends BaseTelecomTestWithMockServices {
         if (!mShouldTestTelecom) {
             return;
         }
-        String phoneNumber = getTestNumber().toString();
+        String phoneNumber = getTestNumber().getSchemeSpecificPart();
 
         Uri contactRef = PhoneLookup.ENTERPRISE_CONTENT_FILTER_URI.buildUpon()
                                  .appendPath(phoneNumber)
