@@ -69,8 +69,10 @@ import androidx.test.rule.ActivityTestRule;
 
 import com.android.compatibility.common.util.CtsTouchUtils;
 import com.android.compatibility.common.util.SystemUtil;
+import com.android.cts.input.DebugInputRule;
 
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -101,6 +103,10 @@ public class WindowInputTests {
     private final WindowManagerStateHelper mWmState = new WindowManagerStateHelper();
     private TestActivity mActivity;
     private InputManager mInputManager;
+
+    @Rule
+    public DebugInputRule mDebugInputRule = new DebugInputRule();
+
     private View mView;
     private final Random mRandom = new Random(1);
 
@@ -121,6 +127,7 @@ public class WindowInputTests {
         mClickCount = 0;
     }
 
+    @DebugInputRule.DebugInput(bug = 295885275)
     @Test
     public void testMoveWindowAndTap() throws Throwable {
         final WindowManager wm = mActivity.getWindowManager();
@@ -253,6 +260,7 @@ public class WindowInputTests {
 
     // If a window is obscured by another window from the same app, touches should still get
     // delivered to the bottom window, and the FLAG_WINDOW_IS_OBSCURED should not be set.
+    @DebugInputRule.DebugInput(bug = 295916860)
     @Test
     public void testFilterTouchesWhenObscuredByWindowFromSameUid() throws Throwable {
         final WindowManager.LayoutParams p = new WindowManager.LayoutParams();
@@ -546,6 +554,7 @@ public class WindowInputTests {
         }
     }
 
+    @DebugInputRule.DebugInput(bug = 295884840)
     @Test
     public void testFlagTouchesWhenPartiallyObscuredByZeroOpacityWindow() throws Throwable {
         final WindowManager.LayoutParams p = new WindowManager.LayoutParams();
