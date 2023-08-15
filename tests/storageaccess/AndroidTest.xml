@@ -23,6 +23,11 @@
     <option name="config-descriptor:metadata" key="parameter" value="secondary_user" />
 
     <target_preparer class="com.android.tradefed.targetprep.DeviceSetup">
+        <!-- com.android.tradefed.config.ConfigurationException: CtsStorageAccessTestCases.config:
+             class com.android.tradefed.targetprep.DeviceSetup needs to be configured with...-->
+        <option name="force-skip-system-props" value="true" />
+        <!-- ... in *TS. -->
+
         <option name="restore-settings" value="true" />
         <!-- settings put global verifier_engprod 1 -->
         <option name="set-global-setting" key="verifier_engprod" value="1" />
