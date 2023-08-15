@@ -57,17 +57,12 @@ import java.util.concurrent.TimeUnit;
 public class SessionCommitBroadcastTest extends BasePackageInstallTest {
 
     private static final long BROADCAST_TIMEOUT_SECS = 20;
-
     private ComponentName mDefaultLauncher;
     private ComponentName mThisAppLauncher;
     private SessionCommitReceiver mReceiver;
 
     @Before
     public void setUpTest() throws Exception {
-        final String myPackageName = mContext.getPackageName();
-        final int myUid = mPackageManager.getApplicationInfo(myPackageName, 0).uid;
-        assertTrue("Test package:" + myPackageName + " (uid:" + myUid + ") is not an admin",
-                mDevicePolicyManager.isDeviceOwnerApp(myPackageName));
         mDefaultLauncher = ComponentName.unflattenFromString(getDefaultLauncher());
         mThisAppLauncher = new ComponentName(mContext, LauncherActivity.class);
         mReceiver = new SessionCommitReceiver();
@@ -82,6 +77,7 @@ public class SessionCommitBroadcastTest extends BasePackageInstallTest {
     @Test
     public void testBroadcastNotReceivedForDifferentLauncher() throws Exception {
         assumeTrue("FEATURE_DEVICE_ADMIN unavailable", mHasFeature);
+        assumeTrue("Could not set BasicAdminReceiver.class as device owner", mAmIDeviceOwner);
 
         if (mDefaultLauncher.equals(mThisAppLauncher)) {
             // Find a different launcher
@@ -117,6 +113,7 @@ public class SessionCommitBroadcastTest extends BasePackageInstallTest {
     @Test
     public void testBroadcastNotReceivedForUpdateInstall() throws Exception {
         assumeTrue("FEATURE_DEVICE_ADMIN unavailable", mHasFeature);
+        assumeTrue("Could not set BasicAdminReceiver.class as device owner", mAmIDeviceOwner);
 
         try {
             setLauncher(mThisAppLauncher.flattenToString());
@@ -146,6 +143,7 @@ public class SessionCommitBroadcastTest extends BasePackageInstallTest {
     @Test
     public void testBroadcastReceivedForNewInstall() throws Exception {
         assumeTrue("FEATURE_DEVICE_ADMIN unavailable", mHasFeature);
+        assumeTrue("Could not set BasicAdminReceiver.class as device owner", mAmIDeviceOwner);
 
         setLauncher(mThisAppLauncher.flattenToString());
 
@@ -168,6 +166,7 @@ public class SessionCommitBroadcastTest extends BasePackageInstallTest {
     public void testBroadcastReceivedForEnablingApp() throws Exception {
         assumeTrue("FEATURE_DEVICE_ADMIN unavailable", mHasFeature);
         assumeTrue("Cannot add multiple users", UserManager.supportsMultipleUsers());
+        assumeTrue("Could not set BasicAdminReceiver.class as device owner", mAmIDeviceOwner);
 
         setLauncher(mThisAppLauncher.flattenToString());
 
