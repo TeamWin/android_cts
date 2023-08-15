@@ -15,7 +15,7 @@
 -->
 <configuration description="Runs the install API tests">
     <option name="test-suite-tag" value="cts" />
-    <option name="config-descriptor:metadata" key="component" value="framework" />
+    <option name="config-descriptor:metadata" key="component" value="packagemanager" />
     <!-- Instant apps can't have INSTALL_PACKAGES permission. -->
     <option name="config-descriptor:metadata" key="parameter" value="not_instant_app" />
     <option name="config-descriptor:metadata" key="parameter" value="not_multi_abi" />
