@@ -111,6 +111,7 @@ import android.graphics.drawable.Icon;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.AsbSecurityTest;
 import android.platform.test.annotations.Presubmit;
 import android.service.autofill.FillContext;
 import android.service.autofill.SaveInfo;
@@ -132,7 +133,6 @@ import androidx.test.uiautomator.UiObject2;
 import com.android.compatibility.common.util.RetryableException;
 
 import org.junit.After;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.concurrent.CountDownLatch;
@@ -1505,7 +1505,7 @@ public class LoginActivityTest extends LoginActivityCommonTestCase {
     }
 
     @Test
-    @Ignore("b/290671195 Fix error on remote cf instances")
+    @AsbSecurityTest(cveBugId = 281533566)
     public void remoteViews_doesNotSpillAcrossUsers() throws Exception {
         // Set service.
         enableService();

@@ -52,6 +52,7 @@ import android.autofillservice.cts.testcore.IdMode;
 import android.autofillservice.cts.testcore.InstrumentedAutoFillService.FillRequest;
 import android.content.Intent;
 import android.graphics.drawable.Icon;
+import android.platform.test.annotations.AsbSecurityTest;
 import android.platform.test.annotations.FlakyTest;
 import android.util.Log;
 import android.view.View;
@@ -64,7 +65,6 @@ import com.android.compatibility.common.util.RetryableException;
 
 import org.junit.After;
 import org.junit.Test;
-
 
 /**
  * This is the test cases for the fill dialog UI.
@@ -982,6 +982,7 @@ public class LoginActivityTest extends AutoFillServiceTestCase.ManualActivityLau
     }
 
     @Test
+    @AsbSecurityTest(cveBugId = 281666022)
     public void remoteViews_doesNotSpillAcrossUsers() throws Exception {
         enableFillDialogFeature(sContext);
         enableService();
