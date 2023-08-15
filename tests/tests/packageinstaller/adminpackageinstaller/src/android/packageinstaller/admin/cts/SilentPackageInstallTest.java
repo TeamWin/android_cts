@@ -16,14 +16,25 @@
 
 package android.packageinstaller.admin.cts;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
+
+import com.android.bedstead.harrier.BedsteadJUnit4;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
 /**
  * This class tests silent package install and uninstall by a device owner.
  */
+@RunWith(BedsteadJUnit4.class)
 public class SilentPackageInstallTest extends BasePackageInstallTest {
+
+    @Test
     public void testSilentInstallUninstall() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
+        assumeTrue("FEATURE_DEVICE_ADMIN unavailable", mHasFeature);
+
         // install the app
         assertInstallPackage();
 
@@ -32,10 +43,10 @@ public class SilentPackageInstallTest extends BasePackageInstallTest {
         assertFalse(isPackageInstalled(TEST_APP_PKG));
     }
 
+    @Test
     public void testUninstallBlocked() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
+        assumeTrue("FEATURE_DEVICE_ADMIN unavailable", mHasFeature);
+
         // install the app
         assertInstallPackage();
 

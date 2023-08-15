@@ -26,6 +26,8 @@ android_test {
         "androidx.test.rules",
         "androidx.legacy_legacy-support-v4",
         "cts-install-lib",
+        "Harrier",
+        "Nene",
     ],
     libs: ["android.test.base"],
     sdk_version: "test_current",
