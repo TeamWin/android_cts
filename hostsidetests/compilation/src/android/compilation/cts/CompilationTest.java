@@ -152,6 +152,22 @@ public class CompilationTest extends BaseHostJUnit4Test {
     }
 
     @Test
+    public void testCompileSecondaryDexUnsupportedClassLoader() throws Exception {
+        String filename = "secondary-unsupported-clc.jar";
+        var options = new DeviceTestRunOptions(STATUS_CHECKER_PKG)
+                              .setTestClassName(STATUS_CHECKER_CLASS)
+                              .setTestMethodName("createAndLoadSecondaryDexUnsupportedClassLoader")
+                              .addInstrumentationArg("secondary-dex-filename", filename);
+        assertThat(runDeviceTests(options)).isTrue();
+
+        // "speed" should be downgraded to "verify" because the CLC is unsupported.
+        mUtils.assertCommandSucceeds(
+                "pm compile --secondary-dex -m speed -f " + STATUS_CHECKER_PKG);
+        String dump = mUtils.assertCommandSucceeds("dumpsys package " + STATUS_CHECKER_PKG);
+        checkDexoptStatus(dump, Pattern.quote(filename), "verify");
+    }
+
+    @Test
     public void testSecondaryDexReporting() throws Exception {
         var options = new DeviceTestRunOptions(STATUS_CHECKER_PKG)
                               .setTestClassName(STATUS_CHECKER_CLASS)
