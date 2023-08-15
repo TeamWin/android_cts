@@ -29,6 +29,7 @@ import android.platform.test.annotations.Presubmit;
 import android.server.wm.jetpack.utils.TestActivityWithId;
 import android.server.wm.jetpack.utils.TestConfigChangeHandlingActivity;
 
+import androidx.annotation.NonNull;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.window.extensions.embedding.SplitAttributes;
 import androidx.window.extensions.embedding.SplitPairRule;
@@ -52,8 +53,10 @@ import java.util.Collections;
  */
 @Presubmit
 @RunWith(AndroidJUnit4.class)
-@ApiTest(apis = {"androidx.window.extensions.embedding.ActivityEmbeddingComponent"
-        + "#pinTopActivityStack"})
+@ApiTest(apis = {
+        "androidx.window.extensions.embedding.ActivityEmbeddingComponent#pinTopActivityStack",
+        "androidx.window.extensions.embedding.ActivityEmbeddingComponent#unpinTopActivityStack"
+})
 public class PinActivityStackTests extends ActivityEmbeddingTestBase {
     private Activity mPrimaryActivity;
     private Activity mPinnedActivity;
@@ -118,6 +121,67 @@ public class PinActivityStackTests extends ActivityEmbeddingTestBase {
     }
 
     /**
+     * Verifies that the activity navigation are not isolated after the top ActivityStack is
+     * unpinned.
+     */
+    @Test
+    public void testUnpinTopActivityStack() {
+        // Launch a secondary activity to side
+        mPinnedActivity = startActivityAndVerifySplitAttributes(mPrimaryActivity,
+                TestActivityWithId.class, mWildcardSplitPairRule,
+                mPinnedActivityId, mSplitInfoConsumer);
+
+        // Pin and unpin the top ActivityStack
+        assertTrue(pinTopActivityStack());
+        mActivityEmbeddingComponent.unpinTopActivityStack(mTaskId);
+
+        // Verifies the activities still splits after unpin.
+        waitAndAssertResumed(mPrimaryActivity);
+        waitAndAssertResumed(mPinnedActivity);
+
+        // Start an Activity from the primary ActivityStack
+        final String activityId1 = "Activity1";
+        startActivityFromActivity(mPrimaryActivity, TestActivityWithId.class, activityId1);
+
+        // Verifies the activity in the secondary ActivityStack is occluded by the new Activity.
+        waitAndAssertResumed(activityId1);
+        waitAndAssertResumed(mPrimaryActivity);
+        waitAndAssertNotVisible(mPinnedActivity);
+    }
+
+    /**
+     * Verifies that the activity is expanded if no split rules after unpinned.
+     */
+    @Test
+    public void testUnpinTopActivityStack_expands() {
+        // Launch a secondary activity to side
+        mPinnedActivity = startActivityAndVerifySplitAttributes(mPrimaryActivity,
+                TestActivityWithId.class, mWildcardSplitPairRule,
+                mPinnedActivityId, mSplitInfoConsumer);
+
+        // Pin the top ActivityStack
+        assertTrue(pinTopActivityStack());
+        waitAndAssertResumed(mPrimaryActivity);
+        waitAndAssertResumed(mPinnedActivity);
+
+        // Start an Activity from the primary ActivityStack
+        final String activityId1 = "Activity1";
+        startActivityFromActivity(mPrimaryActivity, TestActivityWithId.class, activityId1);
+
+        // Verifies the activity in the primary ActivityStack is occluded by the new Activity.
+        waitAndAssertResumed(activityId1);
+        waitAndAssertResumed(mPinnedActivity);
+        waitAndAssertNotVisible(mPrimaryActivity);
+        final Activity activity1 = getResumedActivityById(activityId1);
+
+        // Verifies the activity is expanded and occludes other activities after unpin.
+        mActivityEmbeddingComponent.unpinTopActivityStack(mTaskId);
+        waitAndAssertResumed(mPinnedActivity);
+        waitAndAssertNotVisible(mPrimaryActivity);
+        waitAndAssertNotVisible(activity1);
+    }
+
+    /**
      * Verifies that top ActivityStack cannot be pinned whenever it is not allowed.
      */
     @Test
@@ -133,6 +197,12 @@ public class PinActivityStackTests extends ActivityEmbeddingTestBase {
         // Cannot pin if no such task.
         assertFalse(pinTopActivityStack(mTaskId + 1));
 
+        // Cannot pin if parent window metric not large enough.
+        final SplitPinRule oversizeParentMetricsRule = new SplitPinRule.Builder(
+                new SplitAttributes.Builder().build(),
+                parentWindowMetrics -> false /* parentWindowMetricsPredicate */).build();
+        assertFalse(pinTopActivityStack(mTaskId, oversizeParentMetricsRule));
+
         // Pin the top ActivityStack
         assertTrue(pinTopActivityStack());
 
@@ -147,6 +217,10 @@ public class PinActivityStackTests extends ActivityEmbeddingTestBase {
     private boolean pinTopActivityStack(int taskId) {
         SplitPinRule splitPinRule = new SplitPinRule.Builder(new SplitAttributes.Builder().build(),
                 parentWindowMetrics -> true /* parentWindowMetricsPredicate */).build();
+        return pinTopActivityStack(taskId, splitPinRule);
+    }
+
+    private boolean pinTopActivityStack(int taskId, @NonNull SplitPinRule splitPinRule) {
         return mActivityEmbeddingComponent.pinTopActivityStack(taskId, splitPinRule);
     }
 }
