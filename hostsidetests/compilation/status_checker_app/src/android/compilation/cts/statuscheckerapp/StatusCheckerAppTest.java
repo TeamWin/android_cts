@@ -67,7 +67,9 @@ public class StatusCheckerAppTest {
     public void createAndLoadSecondaryDex() throws Exception {
         Context context = ApplicationProvider.getApplicationContext();
         String dataDir = context.getApplicationInfo().dataDir;
-        File secondaryDexFile = Paths.get(dataDir, "secondary.jar").toFile();
+        Bundle bundle = InstrumentationRegistry.getArguments();
+        String secondaryDexFilename = bundle.getString("secondary-dex-filename");
+        File secondaryDexFile = Paths.get(dataDir, secondaryDexFilename).toFile();
         if (secondaryDexFile.exists()) {
             secondaryDexFile.delete();
         }
