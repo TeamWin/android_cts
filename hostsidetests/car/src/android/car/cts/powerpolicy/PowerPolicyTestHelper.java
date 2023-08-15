@@ -93,31 +93,6 @@ public final class PowerPolicyTestHelper {
         assertWithMessage(REGISTERED_POLICY_ASSERT_MSG).that(status).isTrue();
     }
 
-    public void checkRegisteredPolicy(String policyId) {
-        boolean status = false;
-        for (PowerPolicyDef def : mSystemCpms.getRegisteredPolicies()) {
-            if (def.getPolicyId().equals(policyId)) {
-                status = true;
-                break;
-            }
-        }
-        assertWithMessage(REGISTERED_POLICY_ASSERT_MSG).that(status).isTrue();
-    }
-
-    public void checkPendingPolicyId(String id) {
-        boolean status = false;
-        if (id == null) {
-            if (mSystemCpms.getPendingPolicyId() != null) {
-                CLog.w("PowerPolicyTestHelper expected non null pending policy");
-            } else {
-                status = true;
-            }
-        } else {
-            status = id.equals(mSystemCpms.getPendingPolicyId());
-        }
-        assertWithMessage(PENDING_POLICY_ASSERT_MSG).that(status).isTrue();
-    }
-
     public void checkTotalRegisteredPolicies(int totalNum) {
         assertWithMessage(TOTAL_REGISTERED_POLICIES_ASSERT_MSG)
                 .that(mSystemCpms.getRegisteredPolicies().size() == totalNum).isTrue();
@@ -138,11 +113,6 @@ public final class PowerPolicyTestHelper {
                 .that(expected.equals(mFrameCpms.getCurrentPolicyGroupId())).isTrue();
     }
 
-    public void checkPowerPolicyGroups(PowerPolicyGroups expected) {
-        assertWithMessage("checkPowerPolicyGroups")
-                .that(expected.equals(mFrameCpms.getPowerPolicyGroups())).isTrue();
-    }
-
     public int getNumberOfRegisteredPolicies() {
         return mSystemCpms.getTotalRegisteredPolicies();
     }
@@ -158,7 +128,7 @@ public final class PowerPolicyTestHelper {
         }
     }
 
-    public String getCurrentPolicyId() {
-        return mFrameCpms.getCurrentPolicyId();
+    public int getCurrentPowerState() {
+        return mFrameCpms.getCurrentState();
     }
 }
