@@ -15,6 +15,8 @@
 
 package android.app.appops.cts
 
+import android.app.ActivityManager
+import android.app.ActivityManager.PROCESS_STATE_IMPORTANT_BACKGROUND
 import android.app.AppOpsManager
 import android.app.AppOpsManager.HISTORICAL_MODE_ENABLED_ACTIVE
 import android.app.AppOpsManager.HISTORICAL_MODE_ENABLED_PASSIVE
@@ -93,6 +95,7 @@ class DiscreteAppopsTest {
     private var previousDiscreteHistoryOpsCslist: String? = null
 
     private lateinit var appOpsManager: AppOpsManager
+    private lateinit var activityManager: ActivityManager
     private val uiDevice = UiDevice.getInstance(instrumentation)
 
     private val testPkgAppOpMode: Int
@@ -105,6 +108,7 @@ class DiscreteAppopsTest {
     @Before
     fun setUpTest() {
         appOpsManager = context.getSystemService(AppOpsManager::class.java)!!
+        activityManager = context.getSystemService(ActivityManager::class.java)!!
         runWithShellPermissionIdentity {
             previousDiscreteHistoryCutoffMillis = DeviceConfig.getString(
                     NAMESPACE_PRIVACY, PROPERTY_CUTOFF, null)
@@ -1128,7 +1132,11 @@ class DiscreteAppopsTest {
                     ComponentName(PACKAGE_NAME,
                             "$PACKAGE_NAME.AppOpsForegroundControlActivity"))
                     .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-            if (testPkgAppOpMode == MODE_ALLOWED) {
+            // b/294950507: Make sure the UidState is also foreground to avoid the race condition
+            // between AppOpsService#noteOperationUnchecked and
+            // ActivityManagerService#noteUidProcessState that caused flakiness
+            if (testPkgAppOpMode == MODE_ALLOWED &&
+                activityManager.getUidProcessState(uid) < PROCESS_STATE_IMPORTANT_BACKGROUND) {
                 break
             }
             Thread.sleep(100)
