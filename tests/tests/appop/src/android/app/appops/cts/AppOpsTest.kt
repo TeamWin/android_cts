@@ -37,8 +37,8 @@ import android.content.pm.PackageManager
 import android.os.Process
 import android.os.UserHandle
 import android.platform.test.annotations.AppModeFull
-import android.platform.test.annotations.FlakyTest
 import androidx.test.InstrumentationRegistry
+import androidx.test.filters.FlakyTest
 import androidx.test.runner.AndroidJUnit4
 import com.android.compatibility.common.util.PollingCheck
 import com.google.common.truth.Truth.assertThat

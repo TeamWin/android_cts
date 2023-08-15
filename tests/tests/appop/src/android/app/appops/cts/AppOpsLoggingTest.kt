@@ -77,12 +77,12 @@ import android.os.IBinder
 import android.os.Looper
 import android.os.Process
 import android.platform.test.annotations.AppModeFull
-import android.platform.test.annotations.FlakyTest
 import android.provider.ContactsContract
 import android.telephony.SmsManager
 import android.telephony.TelephonyManager
 import android.util.Log
 import android.util.Size
+import androidx.test.filters.FlakyTest
 import androidx.test.platform.app.InstrumentationRegistry
 import com.android.compatibility.common.util.SystemUtil.waitForBroadcasts
 import com.google.common.truth.Truth.assertThat
