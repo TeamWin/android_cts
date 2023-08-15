@@ -82,9 +82,7 @@ public class StatusCheckerAppTest {
 
     private String createAndLoadSecondaryDex(String secondaryDexFilename,
             BiFunction<String, ClassLoader, ClassLoader> classLoaderCtor) throws Exception {
-        Context context = ApplicationProvider.getApplicationContext();
-        String dataDir = context.getApplicationInfo().dataDir;
-        File secondaryDexFile = Paths.get(dataDir, secondaryDexFilename).toFile();
+        File secondaryDexFile = Paths.get(getDataDir(), secondaryDexFilename).toFile();
         if (secondaryDexFile.exists()) {
             secondaryDexFile.delete();
         }
@@ -94,28 +92,35 @@ public class StatusCheckerAppTest {
         return secondaryDexFile.getAbsolutePath();
     }
 
+    private String getDataDir() {
+        Context context = ApplicationProvider.getApplicationContext();
+        return context.getApplicationInfo().dataDir;
+    }
+
     @Test
     public void testSecondaryDexReporting() throws Exception {
-        String fooPath = createAndLoadSecondaryDex("foo.jar", PathClassLoader::new);
-        createAndLoadSecondaryDex("bar.jar", PathClassLoader::new);
-
+        String dataDir = getDataDir();
         var reporter =
                 (BaseDexClassLoader.Reporter) BaseDexClassLoader.class.getMethod("getReporter")
                         .invoke(null);
 
         // Invalid dex paths. The binder calls should be rejected, though we won't see any failure
         // on the client side because the calls are oneway.
-        reporter.report(Map.of("relative/path.apk", "PCL[]"));
-        reporter.report(Map.of("/non-normal/./path.apk", "PCL[]"));
+        reporter.report(Map.of("relative/reported_bad_1.apk", "PCL[]"));
+        reporter.report(
+                Map.of(Paths.get(dataDir, "non-normal/./reported_bad_2.apk").toString(), "PCL[]"));
 
         // Invalid class loader contexts. The binder calls should be rejected too.
-        reporter.report(Map.of(fooPath, "ABC"));
-        reporter.report(Map.of(fooPath, "PCL[./bar.jar]"));
+        reporter.report(Map.of(Paths.get(dataDir, "reported_bad_3.apk").toString(), "ABC"));
+        reporter.report(
+                Map.of(Paths.get(dataDir, "reported_bad_4.apk").toString(), "PCL[./bar.jar]"));
 
         // Valid paths and class loader contexts.
-        reporter.report(Map.of("/absolute/path.apk", "PCL[]"));
-        reporter.report(Map.of(fooPath, "PCL[bar.jar]"));
-        reporter.report(Map.of(fooPath, "=UnsupportedClassLoaderContext="));
+        reporter.report(Map.of(Paths.get(dataDir, "reported_good_1.apk").toString(), "PCL[]"));
+        reporter.report(
+                Map.of(Paths.get(dataDir, "reported_good_2.apk").toString(), "PCL[bar.jar]"));
+        reporter.report(Map.of(Paths.get(dataDir, "reported_good_3.apk").toString(),
+                "=UnsupportedClassLoaderContext="));
     }
 
     public File copyResourceToFile(String resourceName, File file) throws Exception {
