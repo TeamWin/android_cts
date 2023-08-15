@@ -28,6 +28,7 @@ android_test_import {
         "general-tests",
     ],
     // Make sure the build system doesn't try to resign the APK
+    preprocessed: true,
     presigned: true,
     dex_preopt: {
         enabled: false,
@@ -48,7 +49,7 @@ android_test_helper_app {
     // was: sdk_version: "current",
     libs: [
         "android.test.runner",
-	"android.test.base",
+        "android.test.base",
     ],
     // Tag this module as a cts test artifact
     test_suites: [
