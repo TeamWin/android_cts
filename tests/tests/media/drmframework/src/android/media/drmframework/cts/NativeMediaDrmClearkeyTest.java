@@ -25,11 +25,11 @@ import android.media.cts.IConnectionStatus;
 import android.net.Uri;
 import android.os.Build;
 import android.platform.test.annotations.AppModeFull;
-import android.platform.test.annotations.FlakyTest;
 import android.platform.test.annotations.Presubmit;
 import android.util.Log;
 import android.view.Surface;
 
+import androidx.test.filters.FlakyTest;
 import androidx.test.filters.SdkSuppress;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
