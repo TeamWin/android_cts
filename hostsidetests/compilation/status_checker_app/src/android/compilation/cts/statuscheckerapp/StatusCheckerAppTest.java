@@ -29,6 +29,7 @@ import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
 import dalvik.system.ApplicationRuntime;
+import dalvik.system.BaseDexClassLoader;
 import dalvik.system.PathClassLoader;
 
 import com.google.common.io.ByteStreams;
@@ -41,6 +42,7 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Paths;
+import java.util.Map;
 
 /**
  * An instrumentation test that checks optimization status.
@@ -65,10 +67,14 @@ public class StatusCheckerAppTest {
 
     @Test
     public void createAndLoadSecondaryDex() throws Exception {
-        Context context = ApplicationProvider.getApplicationContext();
-        String dataDir = context.getApplicationInfo().dataDir;
         Bundle bundle = InstrumentationRegistry.getArguments();
         String secondaryDexFilename = bundle.getString("secondary-dex-filename");
+        createAndLoadSecondaryDex(secondaryDexFilename);
+    }
+
+    private String createAndLoadSecondaryDex(String secondaryDexFilename) throws Exception {
+        Context context = ApplicationProvider.getApplicationContext();
+        String dataDir = context.getApplicationInfo().dataDir;
         File secondaryDexFile = Paths.get(dataDir, secondaryDexFilename).toFile();
         if (secondaryDexFile.exists()) {
             secondaryDexFile.delete();
@@ -76,6 +82,31 @@ public class StatusCheckerAppTest {
         copyResourceToFile(SECONDARY_DEX_RES, secondaryDexFile);
         assertThat(secondaryDexFile.setReadOnly()).isTrue();
         new PathClassLoader(secondaryDexFile.getAbsolutePath(), this.getClass().getClassLoader());
+        return secondaryDexFile.getAbsolutePath();
+    }
+
+    @Test
+    public void testSecondaryDexReporting() throws Exception {
+        String fooPath = createAndLoadSecondaryDex("foo.jar");
+        createAndLoadSecondaryDex("bar.jar");
+
+        var reporter =
+                (BaseDexClassLoader.Reporter) BaseDexClassLoader.class.getMethod("getReporter")
+                        .invoke(null);
+
+        // Invalid dex paths. The binder calls should be rejected, though we won't see any failure
+        // on the client side because the calls are oneway.
+        reporter.report(Map.of("relative/path.apk", "PCL[]"));
+        reporter.report(Map.of("/non-normal/./path.apk", "PCL[]"));
+
+        // Invalid class loader contexts. The binder calls should be rejected too.
+        reporter.report(Map.of(fooPath, "ABC"));
+        reporter.report(Map.of(fooPath, "PCL[./bar.jar]"));
+
+        // Valid paths and class loader contexts.
+        reporter.report(Map.of("/absolute/path.apk", "PCL[]"));
+        reporter.report(Map.of(fooPath, "PCL[bar.jar]"));
+        reporter.report(Map.of(fooPath, "=UnsupportedClassLoaderContext="));
     }
 
     public File copyResourceToFile(String resourceName, File file) throws Exception {
