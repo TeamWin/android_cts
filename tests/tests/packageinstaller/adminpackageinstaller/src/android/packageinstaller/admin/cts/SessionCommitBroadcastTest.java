@@ -15,6 +15,13 @@
  */
 package android.packageinstaller.admin.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
+
 import android.app.admin.DevicePolicyManager;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -28,10 +35,16 @@ import android.os.UserHandle;
 import android.os.UserManager;
 import android.text.TextUtils;
 
+import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.cts.install.lib.Install;
 import com.android.cts.install.lib.InstallUtils;
 import com.android.cts.install.lib.TestApp;
 import com.android.cts.install.lib.Uninstall;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -40,6 +53,7 @@ import java.util.concurrent.TimeUnit;
  * This class tests {@link PackageInstaller#ACTION_SESSION_COMMITTED} is properly sent to the
  * launcher app.
  */
+@RunWith(BedsteadJUnit4.class)
 public class SessionCommitBroadcastTest extends BasePackageInstallTest {
 
     private static final long BROADCAST_TIMEOUT_SECS = 20;
@@ -48,9 +62,8 @@ public class SessionCommitBroadcastTest extends BasePackageInstallTest {
     private ComponentName mThisAppLauncher;
     private SessionCommitReceiver mReceiver;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
+    @Before
+    public void setUpTest() throws Exception {
         final String myPackageName = mContext.getPackageName();
         final int myUid = mPackageManager.getApplicationInfo(myPackageName, 0).uid;
         assertTrue("Test package:" + myPackageName + " (uid:" + myUid + ") is not an admin",
@@ -60,16 +73,16 @@ public class SessionCommitBroadcastTest extends BasePackageInstallTest {
         mReceiver = new SessionCommitReceiver();
     }
 
-    @Override
-    protected void tearDown() throws Exception {
+    @After
+    public void tearDownTest() throws Exception {
         mContext.unregisterReceiver(mReceiver);
         Uninstall.packages(TestApp.A);
     }
 
+    @Test
     public void testBroadcastNotReceivedForDifferentLauncher() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
+        assumeTrue("FEATURE_DEVICE_ADMIN unavailable", mHasFeature);
+
         if (mDefaultLauncher.equals(mThisAppLauncher)) {
             // Find a different launcher
             Intent homeIntent = new Intent(Intent.ACTION_MAIN)
@@ -101,10 +114,9 @@ public class SessionCommitBroadcastTest extends BasePackageInstallTest {
         assertEquals(TEST_APP_PKG, info.getAppPackageName());
     }
 
+    @Test
     public void testBroadcastNotReceivedForUpdateInstall() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
+        assumeTrue("FEATURE_DEVICE_ADMIN unavailable", mHasFeature);
 
         try {
             setLauncher(mThisAppLauncher.flattenToString());
@@ -131,10 +143,10 @@ public class SessionCommitBroadcastTest extends BasePackageInstallTest {
         }
     }
 
+    @Test
     public void testBroadcastReceivedForNewInstall() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
+        assumeTrue("FEATURE_DEVICE_ADMIN unavailable", mHasFeature);
+
         setLauncher(mThisAppLauncher.flattenToString());
 
         // install the app
@@ -152,10 +164,11 @@ public class SessionCommitBroadcastTest extends BasePackageInstallTest {
         setLauncher(mDefaultLauncher.flattenToString());
     }
 
+    @Test
     public void testBroadcastReceivedForEnablingApp() throws Exception {
-        if (!mHasFeature || !UserManager.supportsMultipleUsers()) {
-            return;
-        }
+        assumeTrue("FEATURE_DEVICE_ADMIN unavailable", mHasFeature);
+        assumeTrue("Cannot add multiple users", UserManager.supportsMultipleUsers());
+
         setLauncher(mThisAppLauncher.flattenToString());
 
         ComponentName cn = new ComponentName(mContext, BasicAdminReceiver.class);
@@ -195,7 +208,7 @@ public class SessionCommitBroadcastTest extends BasePackageInstallTest {
 
     private void setLauncher(String component) throws Exception {
         runShellCommand("cmd package set-home-activity --user "
-                + getInstrumentation().getContext().getUserId() + " " + component);
+                + mInstrumentation.getContext().getUserId() + " " + component);
     }
 
     private class SessionCommitReceiver extends BroadcastReceiver {
