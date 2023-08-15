@@ -18,6 +18,7 @@ package {
 
 android_library {
     name: "CtsVirtualDeviceCommonLib",
+    min_sdk_version: "30",
     srcs: [
         "src/**/*.java",
         "//cts/tests/tests/virtualdevice:CtsVirtualDevicesTestAidl",
