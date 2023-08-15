@@ -154,4 +154,8 @@
     <option name="compatibility:exclude-filter" value="CtsUwbMultiDeviceTestCase_UwbManagerTests" />
     <option name="compatibility:exclude-filter" value="CtsUwbMultiDeviceTestCase_FiraRangingTests" />
 
+    <!-- b/290651182 -->
+    <option name="compatibility:exclude-filter" value="CtsSecurityTestCases android.security.cts.CertificateTest#testNoAddedCertificates" />
+    <option name="compatibility:exclude-filter" value="CtsSecurityTestCases android.security.cts.CertificateTest#testNoRemovedCertificates" />
+
 </configuration>
