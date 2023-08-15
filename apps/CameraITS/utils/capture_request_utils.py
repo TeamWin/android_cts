@@ -39,7 +39,8 @@ def is_common_aspect_ratio(size):
     Boolean
   """
   for aspect_ratio in _COMMON_IMG_ARS:
-    if math.isclose(size[0]/size[1], aspect_ratio, abs_tol=_COMMON_IMG_ARS_ATOL):
+    if math.isclose(size[0]/size[1], aspect_ratio,
+                    abs_tol=_COMMON_IMG_ARS_ATOL):
       return True
   return False
 
@@ -197,11 +198,12 @@ def get_available_output_sizes(fmt, props, max_size=None, match_ar_size=None):
   out_configs = [cfg for cfg in fmt_configs if not cfg['input']]
   out_sizes = [(cfg['width'], cfg['height']) for cfg in out_configs]
   if max_size:
+    max_size = [int(i) for i in max_size]
     out_sizes = [
-        s for s in out_sizes if s[0] <= int(max_size[0]) and s[1] <= int(max_size[1])
+        s for s in out_sizes if s[0] <= max_size[0] and s[1] <= max_size[1]
     ]
   if match_ar_size:
-    ar = match_ar_size[0] / float(match_ar_size[1])
+    ar = match_ar_size[0] / match_ar_size[1]
     out_sizes = [
         s for s in out_sizes if abs(ar - s[0] / float(s[1])) <= ar_tolerance
     ]

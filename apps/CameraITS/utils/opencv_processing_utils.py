@@ -563,6 +563,7 @@ def find_circle(img, img_name, min_area, color, use_adaptive_threshold=False):
 
   return circle
 
+
 def append_circle_center_to_img(circle, img, img_name):
   """Append circle center and image center to image and save image.
 
