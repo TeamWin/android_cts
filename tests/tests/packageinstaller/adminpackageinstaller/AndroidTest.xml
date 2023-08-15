@@ -22,6 +22,7 @@
     <option name="config-descriptor:metadata" key="parameter" value="not_multi_abi" />
     <option name="config-descriptor:metadata" key="parameter" value="not_secondary_user" />
     <option name="config-descriptor:metadata" key="parameter" value="no_foldable_states" />
+    <option name="config-descriptor:metadata" key="parameter" value="multiuser" />
 
     <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
         <option name="run-command" value="mkdir -p /data/local/tmp/cts/packageinstaller/" />
@@ -43,12 +44,10 @@
 
     <target_preparer class="com.android.tradefed.targetprep.RunOnSystemUserTargetPreparer"/>
 
-    <target_preparer class="com.android.tradefed.targetprep.DeviceOwnerTargetPreparer">
-        <option name="device-owner-component-name" value="android.packageinstaller.admin.cts/.BasicAdminReceiver" />
-    </target_preparer>
-
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.packageinstaller.admin.cts" />
+        <option name="exclude-annotation" value="com.android.bedstead.harrier.annotations.RequireRunOnWorkProfile" />
+        <option name="exclude-annotation" value="com.android.bedstead.harrier.annotations.RequireRunOnSecondaryUser" />
     </test>
 
 </configuration>
