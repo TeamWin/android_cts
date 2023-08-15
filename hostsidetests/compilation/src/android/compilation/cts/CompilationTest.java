@@ -151,6 +151,23 @@ public class CompilationTest extends BaseHostJUnit4Test {
         checkDexoptStatus(dump, Pattern.quote(filename), "run-from-apk");
     }
 
+    @Test
+    public void testSecondaryDexReporting() throws Exception {
+        var options = new DeviceTestRunOptions(STATUS_CHECKER_PKG)
+                              .setTestClassName(STATUS_CHECKER_CLASS)
+                              .setTestMethodName("testSecondaryDexReporting")
+                              .setDisableHiddenApiCheck(true);
+        assertThat(runDeviceTests(options)).isTrue();
+
+        // Check that ART Service doesn't crash on various operations after invalid dex paths are
+        // reported.
+        mUtils.assertCommandSucceeds("dumpsys package " + STATUS_CHECKER_PKG);
+        mUtils.assertCommandSucceeds(
+                "pm compile --secondary-dex -m verify -f " + STATUS_CHECKER_PKG);
+        mUtils.assertCommandSucceeds("pm art clear-app-profiles " + STATUS_CHECKER_PKG);
+        mUtils.assertCommandSucceeds("pm art cleanup");
+    }
+
     private void checkDexoptStatus(String dump, String dexfilePattern, String statusPattern) {
         // Matches the dump output typically being:
         //     /data/user/0/android.compilation.cts.statuscheckerapp/secondary.jar
