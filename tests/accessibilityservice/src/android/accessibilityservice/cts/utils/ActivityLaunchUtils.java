@@ -52,7 +52,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeoutException;
-import java.util.function.BooleanSupplier;
 import java.util.stream.Collectors;
 
 /**
@@ -146,17 +145,21 @@ public class ActivityLaunchUtils {
         serviceInfo.flags |= AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS;
         uiAutomation.setServiceInfo(serviceInfo);
         try {
-            executeAndWaitOn(
-                    uiAutomation,
+            execShellCommand(uiAutomation, AM_START_HOME_ACTIVITY_COMMAND);
+            execShellCommand(uiAutomation, AM_BROADCAST_CLOSE_SYSTEM_DIALOG_COMMAND);
+            execShellCommand(uiAutomation, INPUT_KEYEVENT_KEYCODE_BACK);
+            TestUtils.waitUntil("Home screen is showing",
+                    (int) DEFAULT_TIMEOUT_MS / 1000,
                     () -> {
-                        execShellCommand(uiAutomation, AM_START_HOME_ACTIVITY_COMMAND);
+                        if (isHomeScreenShowing(context, uiAutomation)) {
+                            return true;
+                        }
+                        // Attempt to close any newly-appeared system dialogs which can prevent the
+                        // home screen activity from becoming visible, active, and focused.
                         execShellCommand(uiAutomation, AM_BROADCAST_CLOSE_SYSTEM_DIALOG_COMMAND);
-                        execShellCommand(uiAutomation, INPUT_KEYEVENT_KEYCODE_BACK);
-                    },
-                    () -> isHomeScreenShowing(context, uiAutomation),
-                    DEFAULT_TIMEOUT_MS,
-                    "home screen");
-        } catch (AssertionError error) {
+                        return false;
+                    });
+        } catch (Exception error) {
             Log.e(LOG_TAG, "Timed out looking for home screen. Dumping window list");
             final List<AccessibilityWindowInfo> windows = uiAutomation.getWindows();
             if (windows == null) {
@@ -242,31 +245,6 @@ public class ActivityLaunchUtils {
             }
         } while (SystemClock.uptimeMillis() < deadlineUptimeMillis);
         fail("Unable to wake up screen");
-    }
-
-    /**
-     * Executes a command and waits for a specified condition up to a given wait timeout. It checks
-     * condition result each time when events delivered, and throws exception if the condition
-     * result is not {@code true} within the given timeout.
-     */
-    private static void executeAndWaitOn(UiAutomation uiAutomation, Runnable command,
-            BooleanSupplier condition, long timeoutMillis, String conditionName) {
-        final Object waitObject = new Object();
-        final long executionStartTimeMillis = SystemClock.uptimeMillis();
-        try {
-            uiAutomation.setOnAccessibilityEventListener((event) -> {
-                if (event.getEventTime() < executionStartTimeMillis) {
-                    return;
-                }
-                synchronized (waitObject) {
-                    waitObject.notifyAll();
-                }
-            });
-            command.run();
-            TestUtils.waitOn(waitObject, condition, timeoutMillis, conditionName);
-        } finally {
-            uiAutomation.setOnAccessibilityEventListener(null);
-        }
     }
 
     private static <T extends Activity> T launchActivityOnSpecifiedDisplayAndWaitForItToBeOnscreen(
