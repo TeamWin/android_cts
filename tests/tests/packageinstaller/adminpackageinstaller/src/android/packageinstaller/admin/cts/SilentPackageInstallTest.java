@@ -34,6 +34,7 @@ public class SilentPackageInstallTest extends BasePackageInstallTest {
     @Test
     public void testSilentInstallUninstall() throws Exception {
         assumeTrue("FEATURE_DEVICE_ADMIN unavailable", mHasFeature);
+        assumeTrue("Could not set BasicAdminReceiver.class as device owner", mAmIDeviceOwner);
 
         // install the app
         assertInstallPackage();
@@ -46,18 +47,19 @@ public class SilentPackageInstallTest extends BasePackageInstallTest {
     @Test
     public void testUninstallBlocked() throws Exception {
         assumeTrue("FEATURE_DEVICE_ADMIN unavailable", mHasFeature);
+        assumeTrue("Could not set BasicAdminReceiver.class as device owner", mAmIDeviceOwner);
 
         // install the app
         assertInstallPackage();
 
-        mDevicePolicyManager.setUninstallBlocked(getWho(), TEST_APP_PKG, true);
-        assertTrue(mDevicePolicyManager.isUninstallBlocked(getWho(), TEST_APP_PKG));
+        mDevicePolicyManager.setUninstallBlocked(mDeviceOwner, TEST_APP_PKG, true);
+        assertTrue(mDevicePolicyManager.isUninstallBlocked(mDeviceOwner, TEST_APP_PKG));
         assertTrue(mDevicePolicyManager.isUninstallBlocked(null, TEST_APP_PKG));
         assertFalse(tryUninstallPackage());
         assertTrue(isPackageInstalled(TEST_APP_PKG));
 
-        mDevicePolicyManager.setUninstallBlocked(getWho(), TEST_APP_PKG, false);
-        assertFalse(mDevicePolicyManager.isUninstallBlocked(getWho(), TEST_APP_PKG));
+        mDevicePolicyManager.setUninstallBlocked(mDeviceOwner, TEST_APP_PKG, false);
+        assertFalse(mDevicePolicyManager.isUninstallBlocked(mDeviceOwner, TEST_APP_PKG));
         assertFalse(mDevicePolicyManager.isUninstallBlocked(null, TEST_APP_PKG));
         assertTrue(tryUninstallPackage());
         assertFalse(isPackageInstalled(TEST_APP_PKG));
