@@ -112,22 +112,35 @@ public class BatteryUtils {
     }
 
     /**
-     * Enable / disable battery saver. Note {@link #runDumpsysBatteryUnplug} must have been
-     * executed before enabling BS.
+     * Enable / disable battery saver. Note {@link #runDumpsysBatteryUnplug} must have been executed
+     * before enabling BS. Always wait until battery saver is turned on or off according to the
+     *  input. So this method can only be used for battery saver is supported.
      */
     public static void enableBatterySaver(boolean enabled) throws Exception {
+        enableBatterySaver(enabled, /* shouldWait= */ true);
+    }
+
+    /**
+     * Enable / disable battery saver. Note {@link #runDumpsysBatteryUnplug} must have been
+     * executed before enabling BS. Only wait until battery saver when required.
+     */
+    public static void enableBatterySaver(boolean enabled, boolean shouldWait) throws Exception {
         UserSettings globalSettings = new UserSettings(Namespace.GLOBAL);
         if (enabled) {
             SystemUtil.runShellCommandForNoOutput("cmd power set-mode 1");
             AmUtils.waitForBroadcastBarrier();
             globalSettings.set(Global.LOW_POWER_MODE, "1");
-            waitUntil("Battery saver still off", () -> getPowerManager().isPowerSaveMode());
+            if (shouldWait) {
+                waitUntil("Battery saver still off", () -> getPowerManager().isPowerSaveMode());
+            }
         } else {
             SystemUtil.runShellCommandForNoOutput("cmd power set-mode 0");
             AmUtils.waitForBroadcastBarrier();
             globalSettings.set(Global.LOW_POWER_MODE, "0");
             globalSettings.set(Global.LOW_POWER_MODE_STICKY, "0");
-            waitUntil("Battery saver still on", () -> !getPowerManager().isPowerSaveMode());
+            if (shouldWait) {
+                waitUntil("Battery saver still on", () -> !getPowerManager().isPowerSaveMode());
+            }
         }
 
         AmUtils.waitForBroadcastBarrier();
@@ -161,7 +174,9 @@ public class BatteryUtils {
 
     /** @return true if the device supports battery saver. */
     public static boolean isBatterySaverSupported() {
-        if (!hasBattery()) {
+        final PowerManager powerManager = getPowerManager();
+        if (!powerManager.isBatterySaverSupported() || !hasBattery()) {
+            // Battery saver configuration has been turned off for devices.
             // Devices without a battery don't support battery saver.
             return false;
         }
