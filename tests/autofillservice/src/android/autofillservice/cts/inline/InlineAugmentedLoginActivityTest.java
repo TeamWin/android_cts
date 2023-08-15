@@ -39,13 +39,14 @@ import android.autofillservice.cts.testcore.Helper;
 import android.autofillservice.cts.testcore.InlineUiBot;
 import android.autofillservice.cts.testcore.MyAutofillCallback;
 import android.platform.test.annotations.AppModeFull;
-import android.platform.test.annotations.FlakyTest;
 import android.platform.test.annotations.Presubmit;
 import android.service.autofill.FillEventHistory;
 import android.service.autofill.FillEventHistory.Event;
 import android.view.autofill.AutofillId;
 import android.view.autofill.AutofillValue;
 import android.widget.EditText;
+
+import androidx.test.filters.FlakyTest;
 
 import org.junit.Test;
 import org.junit.rules.TestRule;

@@ -53,11 +53,11 @@ import android.autofillservice.cts.testcore.InstrumentedAutoFillService.FillRequ
 import android.content.Intent;
 import android.graphics.drawable.Icon;
 import android.platform.test.annotations.AsbSecurityTest;
-import android.platform.test.annotations.FlakyTest;
 import android.util.Log;
 import android.view.View;
 import android.widget.RemoteViews;
 
+import androidx.test.filters.FlakyTest;
 import androidx.test.uiautomator.UiObject2;
 
 import com.android.compatibility.common.util.CddTest;

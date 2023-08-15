@@ -31,10 +31,11 @@ import android.autofillservice.cts.testcore.Helper;
 import android.autofillservice.cts.testcore.MyAutofillCallback;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
-import android.platform.test.annotations.FlakyTest;
 import android.platform.test.annotations.Presubmit;
 import android.service.autofill.FillResponse;
 import android.util.Log;
+
+import androidx.test.filters.FlakyTest;
 
 import com.android.compatibility.common.util.RetryableException;
 
