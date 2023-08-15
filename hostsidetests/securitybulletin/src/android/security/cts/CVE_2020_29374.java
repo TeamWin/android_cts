@@ -17,10 +17,12 @@
 package android.security.cts;
 
 import static org.junit.Assert.*;
+import static org.junit.Assume.assumeTrue;
 
 import android.platform.test.annotations.AsbSecurityTest;
 
 import com.android.sts.common.tradefed.testtype.NonRootSecurityTestCase;
+import com.android.sts.common.util.KernelVersionHost;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
 import org.junit.Test;
@@ -36,6 +38,7 @@ public class CVE_2020_29374 extends NonRootSecurityTestCase {
     @AsbSecurityTest(cveBugId = 174737879)
     @Test
     public void testPocCVE_2020_29374() throws Exception {
+        assumeTrue(KernelVersionHost.isKernelVersionGreaterThanEqualTo(getDevice(), "5.4.0"));
         AdbUtils.runPocAssertExitStatusNotVulnerable("CVE-2020-29374", getDevice(),60);
     }
 }
