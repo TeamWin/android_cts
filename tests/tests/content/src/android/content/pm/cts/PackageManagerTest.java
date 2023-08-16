@@ -29,6 +29,8 @@ import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DEFAULT;
 import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED;
 import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_ENABLED;
 import static android.content.pm.PackageManager.DONT_KILL_APP;
+import static android.content.pm.PackageManager.FILTER_OUT_QUARANTINED_COMPONENTS;
+import static android.content.pm.PackageManager.FLAG_SUSPEND_QUARANTINED;
 import static android.content.pm.PackageManager.GET_ACTIVITIES;
 import static android.content.pm.PackageManager.GET_META_DATA;
 import static android.content.pm.PackageManager.GET_PERMISSIONS;
@@ -45,6 +47,8 @@ import static android.content.pm.PackageManager.MATCH_UNINSTALLED_PACKAGES;
 import static android.content.pm.cts.PackageManagerShellCommandIncrementalTest.parsePackageDump;
 import static android.os.UserHandle.CURRENT;
 import static android.os.UserHandle.USER_CURRENT;
+
+import static com.android.server.pm.Flags.FLAG_QUARANTINED_ENABLED;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
@@ -115,6 +119,10 @@ import android.os.SystemClock;
 import android.os.SystemProperties;
 import android.os.UserHandle;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.RequiresFlagsDisabled;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.provider.Settings;
 import android.text.TextUtils;
 import android.util.Log;
@@ -270,6 +278,8 @@ public class PackageManagerTest {
 
     private final ServiceTestRule mServiceTestRule = new ServiceTestRule();
 
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
     @Rule
     public AbandonAllPackageSessionsRule mAbandonSessionsRule = new AbandonAllPackageSessionsRule();
 
@@ -2793,6 +2803,37 @@ public class PackageManagerTest {
         expectThrows(NameNotFoundException.class,
                 () -> mPackageManager.getPackageInfo(HELLO_WORLD_PACKAGE_NAME,
                         PackageManager.PackageInfoFlags.of(MATCH_UNINSTALLED_PACKAGES)));
+    }
+
+    @Test
+    @RequiresFlagsDisabled(FLAG_QUARANTINED_ENABLED)
+    public void testQasDisabled() throws Exception {
+        testQas(false);
+    }
+
+    @Test
+    @RequiresFlagsEnabled(FLAG_QUARANTINED_ENABLED)
+    public void testQasEnabled() throws Exception {
+        testQas(true);
+    }
+
+    private void testQas(boolean enabled) throws Exception {
+        installPackage(HELLO_WORLD_APK);
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            String[] notset = mPackageManager.setPackagesSuspended(
+                    new String[]{HELLO_WORLD_PACKAGE_NAME}, true, null, null, null,
+                    FLAG_SUSPEND_QUARANTINED);
+            assertEquals("", String.join(",", notset));
+        });
+        ApplicationInfo appInfo = mPackageManager.getApplicationInfo(HELLO_WORLD_PACKAGE_NAME,
+                PackageManager.ApplicationInfoFlags.of(FILTER_OUT_QUARANTINED_COMPONENTS));
+        if (enabled) {
+            assertThat(runCommand("pm list packages -q")).contains(HELLO_WORLD_PACKAGE_NAME);
+            assertFalse(appInfo.enabled);
+        } else {
+            assertThat(runCommand("pm list packages -q")).doesNotContain(HELLO_WORLD_PACKAGE_NAME);
+            assertTrue(appInfo.enabled);
+        }
     }
 
     private void sendIntent(IntentSender intentSender) throws IntentSender.SendIntentException {
