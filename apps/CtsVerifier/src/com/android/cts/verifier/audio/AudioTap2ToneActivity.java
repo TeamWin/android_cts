@@ -38,6 +38,7 @@ import com.android.cts.verifier.R;
 import com.android.cts.verifier.audio.analyzers.TapLatencyAnalyzer;
 import com.android.cts.verifier.audio.audiolib.AudioSystemFlags;
 import com.android.cts.verifier.audio.audiolib.CircularBufferFloat;
+import com.android.cts.verifier.audio.audiolib.DisplayUtils;
 import com.android.cts.verifier.audio.audiolib.StatUtils;
 import com.android.cts.verifier.audio.audiolib.WaveformView;
 import com.android.cts.verifier.audio.sources.BlipAudioSourceProvider;
@@ -250,6 +251,8 @@ public class AudioTap2ToneActivity
 
         stopAudio();
         calculateTestPass();
+
+        DisplayUtils.setKeepScreenOn(this, true);
     }
 
     @Override

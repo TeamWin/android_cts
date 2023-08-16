@@ -37,6 +37,7 @@ import com.android.cts.verifier.R;
 import com.android.cts.verifier.audio.analyzers.BaseSineAnalyzer;
 import com.android.cts.verifier.audio.audiolib.AudioDeviceUtils;
 import com.android.cts.verifier.audio.audiolib.AudioSystemFlags;
+import com.android.cts.verifier.audio.audiolib.DisplayUtils;
 import com.android.cts.verifier.audio.audiolib.WaveScopeView;
 
 // MegaAudio
@@ -196,6 +197,8 @@ public class AudioDataPathsActivity
         mAudioManager.registerAudioDeviceCallback(new AudioDeviceConnectionCallback(), null);
 
         getPassButton().setEnabled(false);
+
+        DisplayUtils.setKeepScreenOn(this, true);
     }
 
     @Override
