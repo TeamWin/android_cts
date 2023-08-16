@@ -176,6 +176,7 @@ public class SystemFeaturesTest {
         boolean motionTracking = false;
         boolean raw = false;
         boolean hasFlash = false;
+        boolean hasAutofocus = false;
         CameraCharacteristics[] cameraChars = new CameraCharacteristics[cameraIds.length];
         for (String cameraId : cameraIds) {
             CameraCharacteristics chars = mCameraManager.getCameraCharacteristics(cameraId);
@@ -209,6 +210,11 @@ public class SystemFeaturesTest {
             if (flashAvailable) {
                 hasFlash = true;
             }
+            float minFocusDistance =
+                    chars.get(CameraCharacteristics.LENS_INFO_MINIMUM_FOCUS_DISTANCE);
+            if (minFocusDistance > 0) {
+                hasAutofocus = true;
+            }
         }
         assertFeature(fullCamera, PackageManager.FEATURE_CAMERA_LEVEL_FULL);
         assertFeature(manualSensor, PackageManager.FEATURE_CAMERA_CAPABILITY_MANUAL_SENSOR);
@@ -230,6 +236,7 @@ public class SystemFeaturesTest {
           assertNotAvailable(PackageManager.FEATURE_CAMERA_AR);
         }
         assertFeature(hasFlash, PackageManager.FEATURE_CAMERA_FLASH);
+        assertFeature(hasAutofocus, PackageManager.FEATURE_CAMERA_AUTOFOCUS);
     }
 
     private void checkFrontCamera() {
@@ -266,19 +273,14 @@ public class SystemFeaturesTest {
                 Camera.Parameters params = camera.getParameters();
                 if (params.getSupportedFocusModes().contains(Parameters.FOCUS_MODE_AUTO)) {
                     assertAvailable(PackageManager.FEATURE_CAMERA_AUTOFOCUS);
-                } else {
-                    assertNotAvailable(PackageManager.FEATURE_CAMERA_AUTOFOCUS);
                 }
 
                 if (params.getFlashMode() != null) {
                     assertAvailable(PackageManager.FEATURE_CAMERA_FLASH);
-                } else {
-                    assertNotAvailable(PackageManager.FEATURE_CAMERA_FLASH);
                 }
+
             } else {
                 assertNotAvailable(PackageManager.FEATURE_CAMERA);
-                assertNotAvailable(PackageManager.FEATURE_CAMERA_AUTOFOCUS);
-                assertNotAvailable(PackageManager.FEATURE_CAMERA_FLASH);
             }
         } finally {
             if (camera != null) {
