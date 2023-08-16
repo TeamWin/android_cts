@@ -42,8 +42,6 @@ _IMAGE_FORMAT_YUV_420_888_INT = 35
 
 _DOT_INTENSITY_DIFF_TOL = 20  # Min diff between dot/circle intensities [0:255]
 _DURATION_DIFF_TOL = 0.5  # Night mode ON captures must take 0.5 seconds longer
-_EDGE_NOISE_WIDTH = 0.1  # Edge is left 10% of image and right 10% of image
-_EDGE_NOISE_IMPROVEMENT_TOL = 1.5  # Edge noise must be reduced by at least 67%
 _INTENSITY_IMPROVEMENT_TOL = 1.1  # Night mode ON captures must be 10% brighter
 _IDEAL_INTENSITY_IMPROVEMENT = 2.5  # Skip noise check if images 2.5x brighter
 
@@ -88,6 +86,73 @@ def _convert_captures(cap, file_stem=None):
   return y, image_processing_utils.convert_image_to_uint8(img)
 
 
+def _check_dot_intensity_diff(night_img, night_y, no_night_img, no_night_y):
+  """Checks the difference between circle and dot intensities with Night ON.
+
+  The performance with Night OFF is logged for debugging purposes.
+  This is an optional check, and a successful result can replace the
+  overall intensity check.
+
+  Args:
+    night_img: numpy image from a capture with night mode ON.
+    night_y: y_plane from a capture with night mode ON.
+    no_night_img: numpy image from a capture with night mode OFF.
+    no_night_y: y_plane from a capture with night mode OFF.
+
+  Returns:
+    True if diff between circle and dot intensities is significant.
+  """
+  night_circle = opencv_processing_utils.find_circle(
+      night_img,
+      'night_dot_intensity_check.png',
+      _MIN_AREA,
+      _WHITE,
+  )
+  night_circle_center_mean = np.mean(
+      night_img[night_circle[_Y_STRING], night_circle[_X_STRING]])
+  night_dots = _get_dots_from_circle(night_circle)
+
+  no_night_circle = opencv_processing_utils.find_circle(
+      no_night_img,
+      'no_night_dot_intensity_check.png',
+      _MIN_AREA,
+      _WHITE,
+  )
+  no_night_circle_center_mean = np.mean(
+      no_night_img[no_night_circle[_Y_STRING], no_night_circle[_X_STRING]])
+  no_night_dots = _get_dots_from_circle(no_night_circle)
+
+  # Skip the first dot, which is of a different intensity
+  night_light_gray_dots_mean = np.mean(
+      [
+          night_y[night_dots[i][_Y_STRING], night_dots[i][_X_STRING]]
+          for i in range(1, len(night_dots))
+      ]
+  )
+  no_night_light_gray_dots_mean = np.mean(
+      [
+          no_night_y[no_night_dots[i][_Y_STRING], no_night_dots[i][_X_STRING]]
+          for i in range(1, len(no_night_dots))
+      ]
+  )
+
+  night_dot_intensity_diff = (
+      night_circle_center_mean -
+      night_light_gray_dots_mean
+  )
+  no_night_dot_intensity_diff = (
+      no_night_circle_center_mean -
+      no_night_light_gray_dots_mean
+  )
+  logging.debug('With night extension ON, the difference between white '
+                'circle intensity and non-orientation dot intensity was %.2f.',
+                night_dot_intensity_diff)
+  logging.debug('With night extension OFF, the difference between white '
+                'circle intensity and non-orientation dot intensity was %.2f.',
+                no_night_dot_intensity_diff)
+  return night_dot_intensity_diff > _DOT_INTENSITY_DIFF_TOL
+
+
 def _check_overall_intensity(night_img, no_night_img):
   """Checks that overall intensity significantly improves with night mode ON.
 
@@ -123,8 +188,7 @@ class NightExtensionTest(its_base_test.ItsBaseTest):
   3. Takes capture with night extension OFF using an auto capture request.
   Verifies that the capture with night mode ON:
     * takes longer
-    * is brighter
-    * contains less edge noise
+    * is brighter OR improves appearance of scene artifacts
   """
 
   def find_tablet_brightness(self, cam, default_brightness, file_stem,
@@ -325,14 +389,14 @@ class NightExtensionTest(its_base_test.ItsBaseTest):
       cam.do_3a()
       night_capture_duration, night_cap = self._time_and_take_captures(
           cam, req, out_surfaces, use_extensions=True)
-      _, night_img = _convert_captures(night_cap, f'{file_stem}_night')
+      night_y, night_img = _convert_captures(night_cap, f'{file_stem}_night')
 
       # Take auto capture with night mode OFF
       logging.debug('Taking auto capture with night mode OFF')
       cam.do_3a()
       no_night_capture_duration, no_night_cap = self._time_and_take_captures(
           cam, req, out_surfaces, use_extensions=False)
-      _, no_night_img = _convert_captures(
+      no_night_y, no_night_img = _convert_captures(
           no_night_cap, f'{file_stem}_no_night')
 
       # Assert correct behavior
@@ -345,11 +409,20 @@ class NightExtensionTest(its_base_test.ItsBaseTest):
                              f'Difference: {duration_diff:.2f}, '
                              f'Expected: {_DURATION_DIFF_TOL}')
 
-      logging.debug('Comparing overall intensity of capture with '
-                    'night mode ON/OFF')
-      much_higher_intensity = _check_overall_intensity(night_img, no_night_img)
-      if not much_higher_intensity:
-        logging.warning('Improvement in intensity was smaller than expected.')
+      logging.debug('Checking that dot intensities with Night ON match the '
+                    'expected values from the scene')
+      # Normalize y planes to [0:255]
+      dot_intensities_acceptable = _check_dot_intensity_diff(
+          night_img, night_y * 255, no_night_img, no_night_y * 255)
+
+      if not dot_intensities_acceptable:
+        logging.debug('Comparing overall intensity of capture with '
+                      'night mode ON/OFF')
+        much_higher_intensity = _check_overall_intensity(
+            night_img, no_night_img)
+        if not much_higher_intensity:
+          logging.warning(
+              'Improvement in intensity was smaller than expected.')
 
 if __name__ == '__main__':
   test_runner.main()
