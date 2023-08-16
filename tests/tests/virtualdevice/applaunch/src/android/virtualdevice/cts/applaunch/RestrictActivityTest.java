@@ -33,6 +33,7 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.after;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
@@ -41,6 +42,7 @@ import android.app.Activity;
 import android.companion.virtual.VirtualDeviceManager;
 import android.companion.virtual.VirtualDeviceManager.VirtualDevice;
 import android.companion.virtual.VirtualDeviceParams;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -58,6 +60,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.AdoptShellPermissionsRule;
+import com.android.internal.app.BlockedAppStreamingActivity;
 
 import org.junit.After;
 import org.junit.Before;
@@ -69,20 +72,20 @@ import org.mockito.MockitoAnnotations;
 
 import java.util.Set;
 
-/** Tests for blocking of activities that should not be shown on the virtual device. */
+/**
+ * Tests for blocking of activities that should not be shown on the virtual device.
+ */
 @RunWith(AndroidJUnit4.class)
 @AppModeFull(reason = "VirtualDeviceManager cannot be accessed by instant apps")
 public class RestrictActivityTest {
+    private static final ComponentName BLOCKED_ACTIVITY_COMPONENT = new ComponentName("android",
+            BlockedAppStreamingActivity.class.getName());
+    private static final int TIMEOUT_MS = 3000;
 
     @Rule
-    public AdoptShellPermissionsRule mAdoptShellPermissionsRule =
-            new AdoptShellPermissionsRule(
-                    InstrumentationRegistry.getInstrumentation().getUiAutomation(),
-                    ACTIVITY_EMBEDDING,
-                    ADD_ALWAYS_UNLOCKED_DISPLAY,
-                    ADD_TRUSTED_DISPLAY,
-                    CREATE_VIRTUAL_DEVICE,
-                    REAL_GET_TASKS,
+    public AdoptShellPermissionsRule mAdoptShellPermissionsRule = new AdoptShellPermissionsRule(
+            InstrumentationRegistry.getInstrumentation().getUiAutomation(), ACTIVITY_EMBEDDING,
+            ADD_ALWAYS_UNLOCKED_DISPLAY, ADD_TRUSTED_DISPLAY, CREATE_VIRTUAL_DEVICE, REAL_GET_TASKS,
                     WAKE_LOCK);
 
     @Rule public FakeAssociationRule mFakeAssociationRule = new FakeAssociationRule();
@@ -91,6 +94,7 @@ public class RestrictActivityTest {
     @Nullable private VirtualDevice mVirtualDevice;
     @Mock private VirtualDisplay.Callback mVirtualDisplayCallback;
     @Mock private OnReceiveResultListener mOnReceiveResultListener;
+    @Mock private VirtualDeviceManager.ActivityListener mActivityListener;
     private ResultReceiver mResultReceiver;
     private DisplayManager mDisplayManager;
 
@@ -117,20 +121,15 @@ public class RestrictActivityTest {
     @Test
     public void restrictedActivity_nonRestrictedActivityOnNonRestrictedDevice_shouldSucceed() {
         VirtualDisplay virtualDisplay = createVirtualDisplay(/* displayCategories= */ null);
-        Intent intent =
-                TestAppHelper.createActivityLaunchedReceiverIntent(mResultReceiver)
-                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        InstrumentationRegistry.getInstrumentation()
-                .getTargetContext()
-                .startActivity(intent, createActivityOptions(virtualDisplay));
+        Intent intent = TestAppHelper.createActivityLaunchedReceiverIntent(
+                mResultReceiver).addFlags(
+                Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        InstrumentationRegistry.getInstrumentation().getTargetContext().startActivity(intent,
+                createActivityOptions(virtualDisplay));
 
-        verify(mOnReceiveResultListener, timeout(3000))
-                .onReceiveResult(
-                        eq(Activity.RESULT_OK),
-                        argThat(
-                                result ->
-                                        result.getInt(TestAppHelper.EXTRA_DISPLAY)
-                                                == virtualDisplay.getDisplay().getDisplayId()));
+        verify(mOnReceiveResultListener, timeout(TIMEOUT_MS)).onReceiveResult(
+                eq(Activity.RESULT_OK), argThat(result -> result.getInt(TestAppHelper.EXTRA_DISPLAY)
+                        == virtualDisplay.getDisplay().getDisplayId()));
     }
 
     @Test
@@ -138,7 +137,10 @@ public class RestrictActivityTest {
         VirtualDisplay virtualDisplay = createVirtualDisplay(/* displayCategories= */ null);
         launchRestrictedAutomotiveActivity(virtualDisplay);
 
-        verify(mOnReceiveResultListener, after(3000).never()).onReceiveResult(anyInt(), any());
+        verify(mActivityListener, timeout(TIMEOUT_MS)).onTopActivityChanged(
+                eq(virtualDisplay.getDisplay().getDisplayId()), eq(BLOCKED_ACTIVITY_COMPONENT),
+                anyInt());
+        verify(mOnReceiveResultListener, never()).onReceiveResult(anyInt(), any());
     }
 
     @Test
@@ -152,7 +154,10 @@ public class RestrictActivityTest {
                 .getTargetContext()
                 .startActivity(intent, createActivityOptions(virtualDisplay));
 
-        verify(mOnReceiveResultListener, after(3000).never()).onReceiveResult(anyInt(), any());
+        verify(mActivityListener, timeout(TIMEOUT_MS)).onTopActivityChanged(
+                eq(virtualDisplay.getDisplay().getDisplayId()), eq(BLOCKED_ACTIVITY_COMPONENT),
+                anyInt());
+        verify(mOnReceiveResultListener, never()).onReceiveResult(anyInt(), any());
     }
 
     @Test
@@ -161,7 +166,10 @@ public class RestrictActivityTest {
                 createVirtualDisplay(Set.of("abc"));
         launchRestrictedAutomotiveActivity(virtualDisplay);
 
-        verify(mOnReceiveResultListener, after(3000).never()).onReceiveResult(anyInt(), any());
+        verify(mActivityListener, timeout(TIMEOUT_MS)).onTopActivityChanged(
+                eq(virtualDisplay.getDisplay().getDisplayId()), eq(BLOCKED_ACTIVITY_COMPONENT),
+                anyInt());
+        verify(mOnReceiveResultListener, never()).onReceiveResult(anyInt(), any());
     }
 
     @Test
@@ -170,7 +178,7 @@ public class RestrictActivityTest {
                 createVirtualDisplay(Set.of("automotive"));
         launchRestrictedAutomotiveActivity(virtualDisplay);
 
-        verify(mOnReceiveResultListener, timeout(3000))
+        verify(mOnReceiveResultListener, timeout(TIMEOUT_MS))
                 .onReceiveResult(
                         eq(Activity.RESULT_OK),
                         argThat(
@@ -181,13 +189,13 @@ public class RestrictActivityTest {
 
     @Test
     public void restrictedActivity_noGwpc_shouldFail() {
-        VirtualDisplay virtualDisplay =
-                mDisplayManager.createVirtualDisplay(
-                        VirtualDeviceTestUtils.createDefaultVirtualDisplayConfigBuilder()
-                                .setFlags(DisplayManager.VIRTUAL_DISPLAY_FLAG_TRUSTED).build());
+        VirtualDisplay virtualDisplay = mDisplayManager.createVirtualDisplay(
+                VirtualDeviceTestUtils.createDefaultVirtualDisplayConfigBuilder().setFlags(
+                        DisplayManager.VIRTUAL_DISPLAY_FLAG_TRUSTED).build());
         launchRestrictedAutomotiveActivity(virtualDisplay);
 
-        verify(mOnReceiveResultListener, after(3000).never()).onReceiveResult(anyInt(), any());
+        verify(mOnReceiveResultListener, after(TIMEOUT_MS).never()).onReceiveResult(anyInt(),
+                any());
     }
 
     private void launchRestrictedAutomotiveActivity(VirtualDisplay display) {
@@ -204,6 +212,8 @@ public class RestrictActivityTest {
                 mVirtualDeviceManager.createVirtualDevice(
                         mFakeAssociationRule.getAssociationInfo().getId(),
                         new VirtualDeviceParams.Builder().build());
+        mVirtualDevice.addActivityListener(getApplicationContext().getMainExecutor(),
+                mActivityListener);
         VirtualDisplayConfig.Builder builder =
                 VirtualDeviceTestUtils.createDefaultVirtualDisplayConfigBuilder()
                         .setFlags(DisplayManager.VIRTUAL_DISPLAY_FLAG_TRUSTED);

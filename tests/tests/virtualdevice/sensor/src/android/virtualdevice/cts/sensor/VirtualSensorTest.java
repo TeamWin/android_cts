@@ -31,8 +31,8 @@ import static org.junit.Assume.assumeTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.after;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -272,8 +272,7 @@ public class VirtualSensorTest {
         mVirtualSensor = setUpVirtualSensor(
                 new VirtualSensorConfig.Builder(TYPE_ACCELEROMETER, VIRTUAL_SENSOR_NAME).build());
 
-        verify(mDynamicSensorCallback, after(SENSOR_TIMEOUT_MILLIS).never())
-                .onDynamicSensorConnected(any());
+        verify(mDynamicSensorCallback, never()).onDynamicSensorConnected(any());
 
         mSensorManager.unregisterDynamicSensorCallback(mDynamicSensorCallback);
     }
