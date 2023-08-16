@@ -257,10 +257,12 @@ class MultiCameraFrameSyncTest(its_base_test.ItsBaseTest):
       name_with_log_path = os.path.join(self.log_path, _NAME)
       unavailable_physical_cameras = cam.get_unavailable_physical_cameras(
           self.camera_id)
-      unavailable_physical_ids = unavailable_physical_cameras['unavailablePhysicalCamerasArray']
+      unavailable_physical_ids = unavailable_physical_cameras[
+          'unavailablePhysicalCamerasArray']
       # find available physical camera IDs
-      all_physical_ids = camera_properties_utils.logical_multi_camera_physical_ids(
-          props)
+      all_physical_ids = (
+          camera_properties_utils.logical_multi_camera_physical_ids(props)
+      )
       for i in unavailable_physical_ids:
         if i in all_physical_ids:
           all_physical_ids.remove(i)
