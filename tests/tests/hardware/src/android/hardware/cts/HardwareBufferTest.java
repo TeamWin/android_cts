@@ -29,8 +29,8 @@ import android.os.Build;
 import android.os.Parcel;
 import android.os.SystemProperties;
 
-import androidx.test.filters.SmallTest;
-import androidx.test.runner.AndroidJUnit4;
+import junitparams.JUnitParamsRunner;
+import junitparams.Parameters;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -38,8 +38,7 @@ import org.junit.runner.RunWith;
 /**
  * Test {@link HardwareBuffer}.
  */
-@SmallTest
-@RunWith(AndroidJUnit4.class)
+@RunWith(JUnitParamsRunner.class)
 public class HardwareBufferTest {
     private static native HardwareBuffer nativeCreateHardwareBuffer(int width, int height,
             int format, int layers, long usage);
@@ -75,6 +74,37 @@ public class HardwareBufferTest {
                 HardwareBuffer.USAGE_CPU_READ_RARELY);
         assertEquals(HardwareBuffer.BLOB, buffer.getFormat());
     }
+
+    private static Object[] paramsForTestCreateOptionalFormats() {
+        return new Integer[]{
+            HardwareBuffer.RGBA_FP16,
+            HardwareBuffer.RGBA_1010102,
+            HardwareBuffer.YCBCR_420_888,
+            HardwareBuffer.D_16,
+            HardwareBuffer.D_24,
+            HardwareBuffer.DS_24UI8,
+            HardwareBuffer.D_FP32,
+            HardwareBuffer.DS_FP32UI8,
+            HardwareBuffer.S_UI8,
+            HardwareBuffer.YCBCR_P010,
+        };
+    }
+
+    @Test
+    @Parameters(method = "paramsForTestCreateOptionalFormats")
+    public void testCreateOptionalFormats(int format) {
+        if (HardwareBuffer.isSupported(2, 4, format, 1, HardwareBuffer.USAGE_CPU_READ_RARELY)) {
+            HardwareBuffer buffer =
+                    HardwareBuffer.create(2, 4, format, 1, HardwareBuffer.USAGE_CPU_READ_RARELY);
+            assertTrue(buffer != null);
+            assertEquals(2, buffer.getWidth());
+            assertEquals(4, buffer.getHeight());
+            assertEquals(format, buffer.getFormat());
+            assertEquals(1, buffer.getLayers());
+            assertEquals(HardwareBuffer.USAGE_CPU_READ_RARELY, buffer.getUsage());
+        }
+    }
+
 
     @Test
     public void testCreateFailsWithInvalidArguments() {
