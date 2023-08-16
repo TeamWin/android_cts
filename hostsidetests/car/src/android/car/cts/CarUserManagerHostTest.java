@@ -18,7 +18,6 @@ package android.car.cts;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
-import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
 import org.junit.Test;
@@ -86,26 +85,5 @@ public final class CarUserManagerHostTest extends CarHostJUnit4TestCase {
                 .mapToInt((userInfo) -> userInfo.id)
                 .max()
                 .orElse(0) + 1;
-    }
-
-    private boolean waitForDrivingStateChanged(String expected, long timeout) {
-        long start = System.currentTimeMillis();
-        while (start + timeout > System.currentTimeMillis()) {
-            try {
-                String result = executeCommand(
-                        "dumpsys car_service --services CarDrivingStateService");
-                if (result.contains(expected)) {
-                    return true;
-                }
-                Thread.sleep(TEST_WAIT_MS);
-            } catch (InterruptedException e) {
-                CLog.e(TAG, "Test interrupted: " + e);
-                return false;
-            } catch (Exception e) {
-                CLog.e(TAG, "executeCommand failed: " + e);
-                return false;
-            }
-        }
-        return false;
     }
 }
