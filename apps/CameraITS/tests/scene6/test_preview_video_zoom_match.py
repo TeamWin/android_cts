@@ -277,7 +277,19 @@ class PreviewVideoZoomTest(its_base_test.ItsBaseTest):
             # Opencv expects a numpy array but np.flip generates a 'view' which
             # doesn't work with opencv. ndarray.copy forces copy instead of view
             if props['android.lens.facing'] == _LENS_FACING_FRONT:
-              preview_img = np.ndarray.copy(np.fliplr(preview_img))
+              # Preview are flipped on device's natural orientation
+              # so for sensor orientation 90 or 270, it is up or down
+              # Sensor orientation 0 or 180 is left or right
+              if props['android.sensor.orientation'] in (90, 270):
+                preview_img = np.ndarray.copy(np.flipud(preview_img))
+                logging.debug(
+                    'Found sensor orientation %d, flipping up down',
+                    props['android.sensor.orientation'])
+              else:
+                preview_img = np.ndarray.copy(np.fliplr(preview_img))
+                logging.debug(
+                    'Found sensor orientation %d, flipping left right',
+                    props['android.sensor.orientation'])
 
             # Find the center circle in preview img
             preview_img_name = (f'Preview_zoomRatio_{z}_{size}_circle.png')
