@@ -76,6 +76,7 @@ public class BroadcastDeliveryGroupTest extends BaseBroadcastTest {
 
             // Now force delay the broadcasts to make sure delivery group policies are
             // applied as expected.
+            initializeQueue(HELPER_PKG2, cmdReceiver2);
             forceDelayBroadcasts(HELPER_PKG2);
 
             final Intent intent1 = new Intent(TEST_ACTION1)
@@ -142,6 +143,7 @@ public class BroadcastDeliveryGroupTest extends BaseBroadcastTest {
 
             // Now force delay the broadcasts to make sure delivery group policies are
             // applied as expected.
+            initializeQueue(HELPER_PKG2, cmdReceiver2);
             forceDelayBroadcasts(HELPER_PKG2);
 
             final Intent intent1 = new Intent(TEST_ACTION1)
@@ -162,5 +164,17 @@ public class BroadcastDeliveryGroupTest extends BaseBroadcastTest {
             connection1.unbind();
             connection2.unbind();
         }
+    }
+
+    private void initializeQueue(String pkg, ICommandReceiver cmdReceiver) throws Exception {
+        // TODO: b/294884478 - We can remove this method once forceDelayBroadcastDelivery() is
+        // updated to work in any state.
+        final String testAction = "com.android.app.cts.test";
+        final IntentFilter filter = new IntentFilter(testAction);
+        cmdReceiver.monitorBroadcasts(filter, testAction);
+
+        final Intent testIntent = new Intent(testAction)
+                .setPackage(pkg);
+        getContext().sendBroadcast(testIntent);
     }
 }
