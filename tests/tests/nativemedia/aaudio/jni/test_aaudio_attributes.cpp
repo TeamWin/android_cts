@@ -581,6 +581,12 @@ public:
             case AAUDIO_INPUT_PRESET_VOICE_PERFORMANCE:
                 ss << "voice_performance";
                 break;
+            case AAUDIO_INPUT_PRESET_SYSTEM_ECHO_REFERENCE:
+                ss << "echo_reference_system";
+                break;
+            case AAUDIO_INPUT_PRESET_SYSTEM_HOTWORD:
+                ss << "hotword_system";
+                break;
             default:
                 ss << "unknown";
                 break;
@@ -599,7 +605,18 @@ void InputPresetTest::SetUp() {
 }
 
 TEST_P(InputPresetTest, checkAttributes) {
+    switch (mPreset) {
+        case AAUDIO_INPUT_PRESET_SYSTEM_ECHO_REFERENCE:
+            enableAudioOutputPermission();
+            break;
+        case AAUDIO_INPUT_PRESET_SYSTEM_HOTWORD:
+            enableAudioHotwordPermission();
+            break;
+        default:
+            break;
+    }
     checkAttributes();
+    disablePermissions();
 }
 
 INSTANTIATE_TEST_CASE_P(AAudioTestAttributes, InputPresetTest,
@@ -613,7 +630,9 @@ INSTANTIATE_TEST_CASE_P(AAudioTestAttributes, InputPresetTest,
                                   AAUDIO_INPUT_PRESET_VOICE_RECOGNITION,
                                   AAUDIO_INPUT_PRESET_VOICE_COMMUNICATION,
                                   AAUDIO_INPUT_PRESET_UNPROCESSED,
-                                  AAUDIO_INPUT_PRESET_VOICE_PERFORMANCE)),
+                                  AAUDIO_INPUT_PRESET_VOICE_PERFORMANCE,
+                                  AAUDIO_INPUT_PRESET_SYSTEM_ECHO_REFERENCE,
+                                  AAUDIO_INPUT_PRESET_SYSTEM_HOTWORD)),
                 &InputPresetTest::getTestName);
 
 /******************************************************************************
@@ -791,3 +810,70 @@ INSTANTIATE_TEST_CASE_P(AAudioTestAttributes, SystemUsageTest,
                                   AAUDIO_SYSTEM_USAGE_VEHICLE_STATUS,
                                   AAUDIO_SYSTEM_USAGE_ANNOUNCEMENT)),
                 &SystemUsageTest::getTestName);
+
+/******************************************************************************
+ * PermissionGatedInputPresetTest
+ *****************************************************************************/
+
+using PermissionGatedInputPresetParam = std::tuple<aaudio_performance_mode_t,
+                                                   aaudio_input_preset_t>;
+class PermissionGatedInputPresetTest : public AAudioCtsBase,
+                        public ::testing::WithParamInterface<PermissionGatedInputPresetParam> {
+public:
+    static std::string getTestName(
+            const ::testing::TestParamInfo<PermissionGatedInputPresetParam>& info) {
+        std::stringstream ss;
+        printPerformanceModeToTestName(std::get<0>(info.param), ss);
+        ss << "_input_preset_";
+        switch (std::get<1>(info.param)) {
+            case AAUDIO_INPUT_PRESET_SYSTEM_ECHO_REFERENCE:
+                ss << "echo_reference_system";
+                break;
+            case AAUDIO_INPUT_PRESET_SYSTEM_HOTWORD:
+                ss << "hotword_system";
+                break;
+            default:
+                break;
+        }
+        return ss.str();
+    }
+};
+
+TEST_P(PermissionGatedInputPresetTest, openStreamFails) {
+    if (!deviceSupportsFeature(FEATURE_RECORDING)) return;
+
+    disablePermissions();
+
+    std::unique_ptr<float[]> buffer(new float[kNumFrames * kChannelCount]);
+
+    const auto param = GetParam();
+    AAudioStreamBuilder *aaudioBuilder = nullptr;
+    AAudioStream *aaudioStream = nullptr;
+
+    // Use an AAudioStreamBuilder to contain requested parameters.
+    ASSERT_EQ(AAUDIO_OK, AAudio_createStreamBuilder(&aaudioBuilder));
+
+    AAudioStreamBuilder_setPerformanceMode(aaudioBuilder, std::get<0>(param));
+    AAudioStreamBuilder_setInputPreset(aaudioBuilder, std::get<1>(param));
+    AAudioStreamBuilder_setDirection(aaudioBuilder, AAUDIO_DIRECTION_INPUT);
+
+    aaudio_result_t result = AAudioStreamBuilder_openStream(aaudioBuilder, &aaudioStream);
+
+    // openStream should not return AAUDIO_OK. If it does, close the stream.
+    if (result == AAUDIO_OK) {
+        AAudioStream_close(aaudioStream);
+    }
+    AAudioStreamBuilder_delete(aaudioBuilder);
+
+    // The test should not have the correct permission required to use the preset.
+    ASSERT_NE(result, AAUDIO_OK);
+}
+
+INSTANTIATE_TEST_CASE_P(AAudioTestAttributes, PermissionGatedInputPresetTest,
+                        ::testing::Combine(
+                                ::testing::Values(AAUDIO_PERFORMANCE_MODE_NONE,
+                                                  AAUDIO_PERFORMANCE_MODE_LOW_LATENCY,
+                                                  AAUDIO_PERFORMANCE_MODE_POWER_SAVING),
+                                ::testing::Values(AAUDIO_INPUT_PRESET_SYSTEM_ECHO_REFERENCE,
+                                                  AAUDIO_INPUT_PRESET_SYSTEM_HOTWORD)),
+                        &PermissionGatedInputPresetTest::getTestName);

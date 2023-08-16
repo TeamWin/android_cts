@@ -255,4 +255,10 @@ private:
 
 bool isIEC61937Supported();
 
+void enableAudioOutputPermission();
+
+void enableAudioHotwordPermission();
+
+void disablePermissions();
+
 #endif  // CTS_MEDIA_TEST_AAUDIO_UTILS_H
