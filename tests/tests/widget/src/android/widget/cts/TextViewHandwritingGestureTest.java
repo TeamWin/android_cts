@@ -1994,7 +1994,7 @@ public class TextViewHandwritingGestureTest {
         final int expectedColor =
                 ColorUtils.setAlphaComponent(textColor, (int) (0.2f * Color.alpha(textColor)));
 
-        assertGestureHighlightRange(start, end, expectedColor);
+        assertGestureHighlightRange(start, end);
     }
 
     private void assertCursorOffset(int offset) {
@@ -2035,6 +2035,19 @@ public class TextViewHandwritingGestureTest {
         int color = mEditText.getTextColors().getDefaultColor();
         color = ColorUtils.setAlphaComponent(color, (int) (0.2f * Color.alpha(color)));
         assertGestureHighlightRange(start, end, color);
+    }
+
+    private void assertGestureHighlightRange(int start, int end) {
+        Canvas canvas = prepareMockCanvas();
+        mEditText.draw(canvas);
+
+        ArgumentCaptor<Path> pathCaptor = ArgumentCaptor.forClass(Path.class);
+        ArgumentCaptor<Paint> paintCaptor = ArgumentCaptor.forClass(Paint.class);
+        verify(canvas).drawPath(pathCaptor.capture(), paintCaptor.capture());
+
+        Path expectedPath = new Path();
+        mEditText.getLayout().getSelectionPath(start, end, expectedPath);
+        assertPathEquals(expectedPath, pathCaptor.getValue());
     }
 
     private void assertGestureHighlightRange(int start, int end, int color) {
