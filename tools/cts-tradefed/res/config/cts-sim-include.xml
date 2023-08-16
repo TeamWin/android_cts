@@ -24,7 +24,9 @@
     <option name="compatibility:include-filter" value="CtsHostsideNetworkTests" />
     <option name="compatibility:include-filter" value="CtsJobSchedulerTestCases" />
     <option name="compatibility:include-filter" value="CtsNetTestCases" />
+    <option name="compatibility:include-filter" value="CtsNetTestCasesInternetPermission" />
     <option name="compatibility:include-filter" value="CtsNetTestCasesLegacyApi22" />
+    <option name="compatibility:include-filter" value="CtsNetTestCasesUpdateStatsPermission" />
     <option name="compatibility:include-filter" value="CtsOmapiTestCases" />
     <option name="compatibility:include-filter" value="CtsPermissionTestCases" />
     <option name="compatibility:include-filter" value="CtsPermission2TestCases" />
