@@ -413,10 +413,4 @@ public class CameraMuteToggleActivity extends PassFailButtons.Activity
         takePhoto.setOnClickListener(v -> takePicture());
         takePhoto.setEnabled(enabled);
     }
-
-    @Override
-    public void recordTestResults() {
-        CtsVerifierReportLog reportLog = getReportLog();
-        reportLog.submit();
-    }
 }
