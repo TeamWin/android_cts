@@ -17,17 +17,22 @@
 package android.media.cujlargetest.cts;
 
 import android.media.cujcommon.cts.CujTestBase;
+import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.LargeTest;
+
 import com.android.compatibility.common.util.ApiTest;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+
 @LargeTest
+@AppModeFull(reason = "Instant apps cannot access the SD card")
 @RunWith(Parameterized.class)
 public class CtsMediaLargeFormPlaybackTest extends CujTestBase {
 
