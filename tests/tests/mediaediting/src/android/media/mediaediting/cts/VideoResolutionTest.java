@@ -17,10 +17,13 @@
 package android.media.mediaediting.cts;
 
 import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
 import android.net.Uri;
+import android.platform.test.annotations.AppModeFull;
+
 import androidx.media3.common.Format;
 import androidx.media3.common.MediaItem;
 import androidx.media3.common.MimeTypes;
@@ -28,9 +31,17 @@ import androidx.media3.effect.Presentation;
 import androidx.media3.transformer.TransformationRequest;
 import androidx.media3.transformer.Transformer;
 import androidx.test.core.app.ApplicationProvider;
+
 import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.Preconditions;
+
 import com.google.common.collect.ImmutableList;
+
+import org.junit.Assume;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -38,14 +49,11 @@ import java.util.List;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.junit.Assume;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
 
 /**
  * Instrumentation tests for transform Video Resolution for given inputs.
  */
+@AppModeFull(reason = "Instant apps cannot access the SD card")
 @RunWith(Parameterized.class)
 public final class VideoResolutionTest {
   private static final String MEDIA_DIR = WorkDir.getMediaDirString();
