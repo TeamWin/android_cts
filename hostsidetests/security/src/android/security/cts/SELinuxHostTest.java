@@ -125,7 +125,7 @@ public class SELinuxHostTest extends BaseHostJUnit4Test {
     public static File copyResourceToTempFile(String resName) throws IOException {
         InputStream is = SELinuxHostTest.class.getResourceAsStream(resName);
         String tempFileName = "SELinuxHostTest" + resName.replace("/", "_");
-        File tempFile = File.createTempFile(tempFileName, ".tmp");
+        File tempFile = createTempFile(tempFileName, ".tmp");
         FileOutputStream os = new FileOutputStream(tempFile);
         byte[] buf = new byte[1024];
         int len;
@@ -135,7 +135,6 @@ public class SELinuxHostTest extends BaseHostJUnit4Test {
         }
         os.flush();
         os.close();
-        tempFile.deleteOnExit();
         return tempFile;
     }
 
@@ -214,8 +213,7 @@ public class SELinuxHostTest extends BaseHostJUnit4Test {
         if (file != null) {
             return file;
         }
-        file = File.createTempFile(tmpFileName, ".tmp");
-        file.deleteOnExit();
+        file = createTempFile(tmpFileName, ".tmp");
         device.pullFile(deviceFilePath, file);
         synchronized (cache) {
             cache.put(device, file);
@@ -234,16 +232,13 @@ public class SELinuxHostTest extends BaseHostJUnit4Test {
         }
 
 
-        builtPolicyFile = File.createTempFile(tmpFileName, ".tmp");
-        builtPolicyFile.deleteOnExit();
+        builtPolicyFile = createTempFile(tmpFileName, ".tmp");
 
         File secilc = copyResourceToTempFile("/secilc");
         secilc.setExecutable(true);
 
-        File systemSepolicyCilFile = File.createTempFile("plat_sepolicy", ".cil");
-        systemSepolicyCilFile.deleteOnExit();
-        File fileContextsFile = File.createTempFile("file_contexts", ".txt");
-        fileContextsFile.deleteOnExit();
+        File systemSepolicyCilFile = createTempFile("plat_sepolicy", ".cil");
+        File fileContextsFile = createTempFile("file_contexts", ".txt");
 
         assertTrue(device.pullFile("/system/etc/selinux/plat_sepolicy.cil", systemSepolicyCilFile));
 
@@ -547,17 +542,16 @@ public class SELinuxHostTest extends BaseHostJUnit4Test {
     @CddTest(requirement="9.7")
     @Test
     public void testValidSeappContexts() throws Exception {
-        /* obtain seapp_contexts file from running device */
-        File platformSeappFile = File.createTempFile("plat_seapp_contexts", ".tmp");
-        platformSeappFile.deleteOnExit();
-        File systemExtSeappFile = File.createTempFile("system_ext_seapp_contexts", ".tmp");
-        systemExtSeappFile.deleteOnExit();
-        File productSeappFile = File.createTempFile("product_seapp_contexts", ".tmp");
-        productSeappFile.deleteOnExit();
-        File vendorSeappFile = File.createTempFile("vendor_seapp_contexts", ".tmp");
-        vendorSeappFile.deleteOnExit();
-        File odmSeappFile = File.createTempFile("odm_seapp_contexts", ".tmp");
-        odmSeappFile.deleteOnExit();
+        /* obtain seapp_contexts file from running device
+         *
+         * PLEASE KEEP IN SYNC WITH:
+         * external/selinux/libselinux/src/android/android_seapp.c
+         */
+        File platformSeappFile = createTempFile("plat_seapp_contexts", ".tmp");
+        File systemExtSeappFile = createTempFile("system_ext_seapp_contexts", ".tmp");
+        File productSeappFile = createTempFile("product_seapp_contexts", ".tmp");
+        File vendorSeappFile = createTempFile("vendor_seapp_contexts", ".tmp");
+        File odmSeappFile = createTempFile("odm_seapp_contexts", ".tmp");
         if (mDevice.pullFile("/system/etc/selinux/plat_seapp_contexts", platformSeappFile)) {
             mDevice.pullFile("/system_ext/etc/selinux/system_ext_seapp_contexts",
                     systemExtSeappFile);
@@ -622,8 +616,7 @@ public class SELinuxHostTest extends BaseHostJUnit4Test {
     public void testAospSeappContexts() throws Exception {
 
         /* obtain seapp_contexts file from running device */
-        File platformSeappFile = File.createTempFile("seapp_contexts", ".tmp");
-        platformSeappFile.deleteOnExit();
+        File platformSeappFile = createTempFile("seapp_contexts", ".tmp");
         if (!mDevice.pullFile("/system/etc/selinux/plat_seapp_contexts", platformSeappFile)) {
             mDevice.pullFile("/plat_seapp_contexts", platformSeappFile);
         }
@@ -670,8 +663,7 @@ public class SELinuxHostTest extends BaseHostJUnit4Test {
     public void testAospPropertyContexts() throws Exception {
 
         /* obtain property_contexts file from running device */
-        devicePcFile = File.createTempFile("plat_property_contexts", ".tmp");
-        devicePcFile.deleteOnExit();
+        devicePcFile = createTempFile("plat_property_contexts", ".tmp");
         // plat_property_contexts may be either in /system/etc/sepolicy or in /
         if (!mDevice.pullFile("/system/etc/selinux/plat_property_contexts", devicePcFile)) {
             mDevice.pullFile("/plat_property_contexts", devicePcFile);
@@ -696,8 +688,7 @@ public class SELinuxHostTest extends BaseHostJUnit4Test {
     public void testAospServiceContexts() throws Exception {
 
         /* obtain service_contexts file from running device */
-        deviceSvcFile = File.createTempFile("service_contexts", ".tmp");
-        deviceSvcFile.deleteOnExit();
+        deviceSvcFile = createTempFile("service_contexts", ".tmp");
         if (!mDevice.pullFile("/system/etc/selinux/plat_service_contexts", deviceSvcFile)) {
             mDevice.pullFile("/plat_service_contexts", deviceSvcFile);
         }
@@ -722,8 +713,7 @@ public class SELinuxHostTest extends BaseHostJUnit4Test {
         checkFc.setExecutable(true);
 
         /* combine plat and vendor policies for testing */
-        File combinedFcFile = File.createTempFile("combined_file_context", ".tmp");
-        combinedFcFile.deleteOnExit();
+        File combinedFcFile = createTempFile("combined_file_context", ".tmp");
         appendTo(combinedFcFile.getAbsolutePath(), devicePlatFcFile.getAbsolutePath());
         appendTo(combinedFcFile.getAbsolutePath(), deviceVendorFcFile.getAbsolutePath());
 
@@ -749,8 +739,7 @@ public class SELinuxHostTest extends BaseHostJUnit4Test {
         propertyInfoChecker.setExecutable(true);
 
         /* obtain property_contexts file from running device */
-        devicePcFile = File.createTempFile("property_contexts", ".tmp");
-        devicePcFile.deleteOnExit();
+        devicePcFile = createTempFile("property_contexts", ".tmp");
         // plat_property_contexts may be either in /system/etc/sepolicy or in /
         if (!mDevice.pullFile("/system/etc/selinux/plat_property_contexts", devicePcFile)) {
             mDevice.pullFile("/plat_property_contexts", devicePcFile);
@@ -778,8 +767,7 @@ public class SELinuxHostTest extends BaseHostJUnit4Test {
         checkFc.setExecutable(true);
 
         /* obtain service_contexts file from running device */
-        deviceSvcFile = File.createTempFile("service_contexts", ".tmp");
-        deviceSvcFile.deleteOnExit();
+        deviceSvcFile = createTempFile("service_contexts", ".tmp");
         mDevice.pullFile("/service_contexts", deviceSvcFile);
 
         /* run checkfc -s on service_contexts */
@@ -1439,5 +1427,11 @@ public class SELinuxHostTest extends BaseHostJUnit4Test {
             result.append("\n");
         }
         return result.toString();
+    }
+
+    private static File createTempFile(String name, String ext) throws IOException {
+        File ret = File.createTempFile(name, ext);
+        ret.deleteOnExit();
+        return ret;
     }
 }
