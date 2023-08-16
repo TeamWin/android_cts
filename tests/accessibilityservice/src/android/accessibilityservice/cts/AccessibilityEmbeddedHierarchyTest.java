@@ -177,8 +177,10 @@ public class AccessibilityEmbeddedHierarchyTest {
         final Rect oldEmbeddedViewBoundsInScreen = new Rect();
         target.getBoundsInScreen(oldEmbeddedViewBoundsInScreen);
 
-        // Move Host SurfaceView from (0, 0) to (50, 50).
-        mActivity.requestNewLayoutForTest(50, 50);
+        // Move the host's SurfaceView away from (0,0).
+        int moveAmountPx = mActivity.getResources().getDimensionPixelSize(
+                R.dimen.embedded_hierarchy_embedded_layout_movement_size);
+        mActivity.moveSurfaceViewLayoutPosition(moveAmountPx, moveAmountPx);
 
         target.refresh();
         final AccessibilityNodeInfo parent = target.getParent();
@@ -207,7 +209,7 @@ public class AccessibilityEmbeddedHierarchyTest {
 
         // Move Host SurfaceView out of screen
         final Point screenSize = getScreenSize();
-        mActivity.requestNewLayoutForTest(screenSize.x, screenSize.y);
+        mActivity.moveSurfaceViewLayoutPosition(screenSize.x, screenSize.y);
 
         target.refresh();
         assertWithMessage("Embedded view should be invisible after moving out of screen.").that(
@@ -248,9 +250,6 @@ public class AccessibilityEmbeddedHierarchyTest {
             AccessibilityTestActivity implements SurfaceHolder.Callback {
         private final CountDownLatch mCountDownLatch = new CountDownLatch(1);
 
-        private static final int DEFAULT_WIDTH = 150;
-        private static final int DEFAULT_HEIGHT = 150;
-
         private SurfaceView mSurfaceView;
         private View mInputFocusableView;
         private SurfaceControlViewHost mViewHost;
@@ -273,7 +272,9 @@ public class AccessibilityEmbeddedHierarchyTest {
 
             View layout = getLayoutInflater().inflate(
                     R.layout.accessibility_embedded_hierarchy_test_embedded_side, null);
-            mViewHost.setView(layout, DEFAULT_WIDTH, DEFAULT_HEIGHT);
+            final int viewSizePx = getResources().getDimensionPixelSize(
+                    R.dimen.embedded_hierarchy_embedded_layout_size);
+            mViewHost.setView(layout, viewSizePx, viewSizePx);
             mCountDownLatch.countDown();
         }
 
@@ -296,7 +297,7 @@ public class AccessibilityEmbeddedHierarchyTest {
             }
         }
 
-        public void requestNewLayoutForTest(int x, int y) throws TimeoutException {
+        public void moveSurfaceViewLayoutPosition(int x, int y) throws TimeoutException {
             sUiAutomation.executeAndWaitForEvent(
                     () -> sInstrumentation.runOnMainSync(() -> {
                         mSurfaceView.setX(x);

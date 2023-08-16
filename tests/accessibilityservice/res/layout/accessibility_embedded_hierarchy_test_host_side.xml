@@ -16,8 +16,8 @@
   -->
 
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              android:layout_width="200dp"
-              android:layout_height="200dp"
+              android:layout_width="@dimen/embedded_hierarchy_host_layout_size"
+              android:layout_height="@dimen/embedded_hierarchy_host_layout_size"
               android:orientation="vertical">
 
     <EditText xmlns:android="http://schemas.android.com/apk/res/android"
