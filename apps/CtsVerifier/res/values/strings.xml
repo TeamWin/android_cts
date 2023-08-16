@@ -2554,7 +2554,7 @@
         \nPull down the notification shade and look for the NotifPrivacyTest notification.
         \nFail the test if it can be found without unlocking the device.
         \n\nGo back when ready to Pass/Fail the step.</string>
-    <string name="np_public_version_text">NotifPrivacyTefst: REDACTED</string>
+    <string name="np_public_version_text">NotifPrivacyTest: REDACTED</string>
     <string name="np_private_version_text">NotifPrivacyTest: EXPOSED</string>
     <string name="notif_privacy_test">Notification Privacy Test</string>
     <string name="notif_privacy_info">This test checks that Notification privacy is correctly
