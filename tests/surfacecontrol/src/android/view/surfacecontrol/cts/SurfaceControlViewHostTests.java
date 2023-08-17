@@ -425,10 +425,11 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
             final int displayX = surfaceLocation[0] + viewX;
             final int displayY = surfaceLocation[1] + viewY;
             final long downTime = SystemClock.uptimeMillis();
-            mCtsTouchUtils.injectDownEvent(uiAutomation, downTime, displayX, displayY,
-                    null /*eventInjectionListener*/);
-            mCtsTouchUtils.injectUpEvent(uiAutomation, downTime, true /*useCurrentEventTime*/,
-                    displayX, displayY, null /*eventInjectionListener*/);
+            mCtsTouchUtils.injectDownEvent(mInstrumentation, downTime, displayX, displayY,
+                    null /*eventInjectionListener*/, /* useGlobalInjection=*/ true);
+            mCtsTouchUtils.injectUpEvent(mInstrumentation, downTime, true /*useCurrentEventTime*/,
+                    displayX, displayY, /* waitForAnimations= */ true,
+                    /* eventInjectionListener= */ null, /* useGlobalInjection= */ true);
 
             assertEquals("Expected to capture all injected events.", 2, events.size());
             final float epsilon = 0.001f;
@@ -601,14 +602,16 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
 
         // Tap where the embedded window is placed to ensure focus is given via touch
         assertTrue("Failed to tap on embedded",
-                tapOnWindowCenter(mInstrumentation, () -> mEmbeddedView.getWindowToken()));
+                tapOnWindowCenter(mInstrumentation, () -> mEmbeddedView.getWindowToken(),
+                        /* useGlobalInjection= */ true));
         assertWindowFocused(mEmbeddedView, true);
         // assert host does not have focus
         assertWindowFocused(mSurfaceView, false);
 
         // Tap where the host window is placed to ensure focus is given back to host when touched
         assertTrue("Failed to tap on host",
-                tapOnWindowCenter(mInstrumentation, () -> mViewParent.getWindowToken()));
+                tapOnWindowCenter(mInstrumentation, () -> mViewParent.getWindowToken(),
+                        /* useGlobalInjection= */ true));
         assertWindowFocused(mEmbeddedView, false);
         // assert host does not have focus
         assertWindowFocused(mViewParent, true);
@@ -636,7 +639,8 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
         waitUntilViewDrawn(embeddedViewChild);
 
         assertTrue("Failed to tap on embedded child",
-                tapOnWindowCenter(mInstrumentation, () -> embeddedViewChild.getWindowToken()));
+                tapOnWindowCenter(mInstrumentation, () -> embeddedViewChild.getWindowToken(),
+                        /* useGlobalInjection= */ true));
         // When tapping on the child embedded window, it should gain focus.
         assertWindowFocused(embeddedViewChild, true);
         // assert parent embedded window does not have focus.
@@ -646,7 +650,7 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
 
         assertTrue("Failed to tap on embedded parent",
                 tapOnWindow(mInstrumentation, () -> mEmbeddedView.getWindowToken(),
-                        null /* offset */));
+                        null /* offset */, /* useGlobalInjection= */ true));
         // When tapping on the parent embedded window, it should gain focus.
         assertWindowFocused(mEmbeddedView, true);
         // assert child embedded window does not have focus.
@@ -671,14 +675,15 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
                     } catch (RemoteException e) {
                         return null;
                     }
-                }));
+                }, /* useGlobalInjection= */ true));
         assertTrue(mTestService.waitForFocus(true));
         // assert host does not have focus
         assertWindowFocused(mSurfaceView, false);
 
         // Tap where the host window is placed to ensure focus is given back to host when touched
         assertTrue("Failed to tap on host",
-                tapOnWindowCenter(mInstrumentation, () -> mViewParent.getWindowToken()));
+                tapOnWindowCenter(mInstrumentation, () -> mViewParent.getWindowToken(),
+                        /* useGlobalInjection= */ true));
         assertTrue(mTestService.waitForFocus(false));
         // assert host does not have focus
         assertWindowFocused(mViewParent, true);
@@ -849,7 +854,8 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
 
         // Check if SurfacePackage copy remains valid even though the original package has
         // been released.
-        boolean success = tapOnWindowCenter(mInstrumentation, ()-> mEmbeddedView.getWindowToken());
+        boolean success = tapOnWindowCenter(mInstrumentation, ()-> mEmbeddedView.getWindowToken(),
+                /* useGlobalInjection= */ true);
         if (!success) {
             CtsWindowInfoUtils.dumpWindowsOnScreen(TAG, "test " + mName.getMethodName());
         }
@@ -1180,7 +1186,8 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
         waitUntilEmbeddedViewDrawn();
 
         // We should receive no input until we punch a hole
-        mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSurfaceView);
+        mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSurfaceView,
+                /* waitForAnimations= */ true, /* useGlobalInjection= */ true);
         mInstrumentation.waitForIdleSync();
         assertFalse(mClicked);
 
@@ -1200,7 +1207,8 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
         // operations
         waitForTouchableRegionChanged(originalRegion);
 
-        mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSurfaceView);
+        mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSurfaceView,
+                /* waitForAnimations= */ true, /* useGlobalInjection= */ true);
         mInstrumentation.waitForIdleSync();
         assertTrue(mClicked);
     }
@@ -1244,7 +1252,8 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
                 waitForWindowVisible(mSurfaceView));
         assertTrue("Failed to wait for embedded window to be visible",
                 waitForWindowVisible(mTestService.getWindowToken()));
-        mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSurfaceView);
+        mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSurfaceView,
+                /* waitForAnimations= */ true, /* useGlobalInjection= */ true);
 
         int retryCount = 0;
         boolean isViewTouchedAndObscured = mTestService.getViewIsTouchedAndObscured();
@@ -1276,7 +1285,8 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
         assertTrue("Failed to wait for embedded window to be visible",
                 waitForWindowVisible(mTestService.getWindowToken()));
 
-        mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSurfaceView);
+        mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSurfaceView,
+                /* waitForAnimations= */ true, /* useGlobalInjection= */ true);
 
         assertFalse(mTestService.getViewIsTouched());
     }
@@ -1520,7 +1530,8 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
         long downTime = SystemClock.uptimeMillis();
 
         // We inject a down event
-        mCtsTouchUtils.injectDownEvent(uiAutomation, downTime, injectedX, injectedY, null);
+        mCtsTouchUtils.injectDownEvent(mInstrumentation, downTime, injectedX, injectedY, null,
+                /* useGlobalInjection= */ false);
 
 
         // And this down event should arrive on the embedded view, which should transfer the touch
@@ -1530,7 +1541,7 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
 
         downTime = SystemClock.uptimeMillis();
         // Now we inject an up event
-        mCtsTouchUtils.injectUpEvent(uiAutomation, downTime, false, injectedX, injectedY, null);
+        mCtsTouchUtils.injectUpEvent(mInstrumentation, downTime, false, injectedX, injectedY, null);
         // This should arrive on the host now, since we have transferred the touch focus
         synchronized (this) {
             if (!mHostGotEvent) {

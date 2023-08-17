@@ -171,12 +171,14 @@ public class CheckBoxTest {
         assertFalse(mCheckBox.isChecked());
 
         // tap to checked
-        mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mCheckBox, false);
+        mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mCheckBox, false,
+                /* useGlobalInjection= */ false);
         verify(mockCheckedChangeListener, times(1)).onCheckedChanged(mCheckBox, true);
         assertTrue(mCheckBox.isChecked());
 
         // tap to not checked
-        mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mCheckBox, false);
+        mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mCheckBox, false,
+                /* useGlobalInjection= */ false);
         verify(mockCheckedChangeListener, times(1)).onCheckedChanged(mCheckBox, false);
         assertFalse(mCheckBox.isChecked());
 
