@@ -55,6 +55,7 @@ java_defaults {
         "androidx.test.rules",
         "hamcrest-library",
         "platform-test-annotations",
+        "cts-input-lib",
         "cts-wm-util",
         "CtsSurfaceValidatorLib",
         "CtsMockInputMethodLib",
