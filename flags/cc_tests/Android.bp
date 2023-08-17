@@ -17,7 +17,7 @@ package {
 }
 
 cc_test {
-    name: "FlagMacrosTest",
+    name: "FlagMacrosTests",
     compile_multilib: "both",
     multilib: {
         lib32: {
@@ -27,7 +27,7 @@ cc_test {
             suffix: "64",
         },
     },
-    srcs: ["src/FlagMacrosTest.cpp"],
+    srcs: ["src/FlagMacrosTests.cpp"],
     cflags: [
         "-Wall",
         "-Werror",
