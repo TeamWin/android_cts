@@ -97,12 +97,12 @@ static sp<IDrmPlugin> makeDrmPlugin(const sp<IDrmFactory> &factory,
                                     const uint8_t uuid[16],
                                     const String8 &appPackageName) {
   sp<IDrmPlugin> plugin;
-  factory->createPlugin(uuid, appPackageName.string(),
+  factory->createPlugin(uuid, appPackageName.c_str(),
                         [&](Status status, const sp<IDrmPlugin> &hPlugin) {
-                          if (status != Status::OK) {
-                            return;
-                          }
-                          plugin = hPlugin;
+                            if (status != Status::OK) {
+                                return;
+                            }
+                            plugin = hPlugin;
                         });
   return plugin;
 }
