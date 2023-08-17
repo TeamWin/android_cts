@@ -82,6 +82,8 @@ class TestAppInterface implements AutoCloseable {
         intentFilter.addAction(ACTION_JOB_STOPPED);
         intentFilter.addAction(ACTION_JOB_SCHEDULE_RESULT);
         mContext.registerReceiver(mReceiver, intentFilter, Context.RECEIVER_EXPORTED_UNAUDITED);
+        SystemUtil.runShellCommand(
+                "am compat enable --no-kill ALLOW_TEST_API_ACCESS " + TEST_APP_PACKAGE);
         if (AppStandbyUtils.isAppStandbyEnabled()) {
             // Disable the bucket elevation so that we put the app in lower buckets.
             SystemUtil.runShellCommand(
