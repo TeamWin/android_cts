@@ -47,7 +47,7 @@ _W, _H = 640, 480
 
 
 def eliminate_duplicate_centers(coordinates_list):
-  """Checks center coordinates of OpenCV's face rectangles
+  """Checks center coordinates of OpenCV's face rectangles.
 
   Method makes sure that the list of face rectangles' centers do not
   contain duplicates from the same face.
@@ -60,8 +60,8 @@ def eliminate_duplicate_centers(coordinates_list):
   """
   output = set()
 
-  for i, xy1 in enumerate(coordinates_list):
-    for j, xy2 in enumerate(coordinates_list):
+  for _, xy1 in enumerate(coordinates_list):
+    for _, xy2 in enumerate(coordinates_list):
       if distance.euclidean(xy1, xy2) < _MIN_CENTER_DELTA:
         continue
       if xy1 not in output:
