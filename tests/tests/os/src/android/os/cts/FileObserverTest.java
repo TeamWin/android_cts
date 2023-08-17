@@ -129,6 +129,11 @@ public class FileObserverTest extends AndroidTestCase {
      *
      * On emulated storage, there may be additional operations related to case insensitivity, so
      * we just check that the expected ones are present.
+     *
+     * On internal storage, there may also be additional operations - the art runtime creates a
+     * folder called 'oat_primary' in the cache folder, for instance. So it is best just to
+     * always check that the expected ones are present, since we cannot stop other components
+     * from performing extra actions.
      */
     public void helpTestFileObserver(File dir, boolean isEmulated) throws Exception {
         MockFileObserver fileObserver = null;
@@ -153,10 +158,7 @@ public class FileObserverTest extends AndroidTestCase {
             // should not get any event
             expected = new int[] {UNDEFINED};
             moveEvents = waitForEvent(fileObserver);
-            if (isEmulated)
-                assertEventsContains(testFile, expected, moveEvents);
-            else
-                assertEventsEquals(testFile, expected, moveEvents);
+            assertEventsContains(testFile, expected, moveEvents);
         } finally {
             fileObserver.stopWatching();
             if (out != null)
@@ -192,11 +194,7 @@ public class FileObserverTest extends AndroidTestCase {
                     FileObserver.MOVE_SELF,
             };
             moveEvents = waitForEvent(movedFileObserver);
-            if (isEmulated) {
-                assertEventsContains(testFile, expected, moveEvents);
-            } else {
-                assertEventsEquals(testFile, expected, moveEvents);
-            }
+            assertEventsContains(testFile, expected, moveEvents);
         } finally {
             movedFileObserver.stopWatching();
         }
@@ -220,11 +218,7 @@ public class FileObserverTest extends AndroidTestCase {
         };
 
         final FileEvent[] moveEvents = waitForEvent(fileObserver);
-        if (isEmulated) {
-            assertEventsContains(testFile, expected, moveEvents);
-        } else {
-            assertEventsEquals(testFile, expected, moveEvents);
-        }
+        assertEventsContains(testFile, expected, moveEvents);
     }
 
     private void verifyTriggeredEventsOnDir(MockFileObserver fileObserver,
@@ -245,11 +239,7 @@ public class FileObserverTest extends AndroidTestCase {
         };
 
         final FileEvent[] moveEvents = waitForEvent(fileObserver);
-        if (isEmulated) {
-            assertEventsContains(testFile, expected, moveEvents);
-        } else {
-            assertEventsEquals(testFile, expected, moveEvents);
-        }
+        assertEventsContains(testFile, expected, moveEvents);
     }
 
     public void testFileObserver() throws Exception {
@@ -316,21 +306,6 @@ public class FileObserverTest extends AndroidTestCase {
             }
         } finally {
             fileObserver2.stopWatching();
-        }
-    }
-
-    private void assertEventsEquals(
-            File testFile, final int[] expected, final FileEvent[] moveEvents) {
-        List<Integer> expectedEvents = new ArrayList<Integer>();
-        for (int i = 0; i < expected.length; i++) {
-            expectedEvents.add(expected[i]);
-        }
-        List<FileEvent> actualEvents = Arrays.asList(moveEvents);
-        String message = "For test file [" + testFile.getAbsolutePath()
-                + "] expected: " + expectedEvents + " Actual: " + actualEvents;
-        assertEquals(message, expected.length, moveEvents.length);
-        for (int i = 0; i < expected.length; i++) {
-            assertEquals(message, expected[i], moveEvents[i].event);
         }
     }
 
