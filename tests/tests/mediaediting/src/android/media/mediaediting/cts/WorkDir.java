@@ -18,9 +18,12 @@ package android.media.mediaediting.cts;
 
 import android.os.Bundle;
 import android.os.Environment;
+
 import androidx.test.platform.app.InstrumentationRegistry;
-import java.io.File;
+
 import org.junit.Assert;
+
+import java.io.File;
 
 public final class WorkDir {
   private WorkDir() {}
@@ -42,7 +45,7 @@ public final class WorkDir {
       // user has specified the mediaDirString via instrumentation-arg
       return mediaDirString + ((mediaDirString.endsWith("/")) ? "" : "/");
     } else {
-      return (getTopDirString() + "test/CtsMediaEditingTestCases-1.0/");
+      return (getTopDirString() + "test/CtsMediaEditingTestCases-1.1/");
     }
   }
 }
