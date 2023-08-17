@@ -16,8 +16,6 @@
 
 package com.android.bedstead.nene.packages;
 
-import static android.Manifest.permission.FORCE_STOP_PACKAGES;
-import static android.Manifest.permission.QUERY_ALL_PACKAGES;
 import static android.content.pm.ApplicationInfo.FLAG_STOPPED;
 import static android.content.pm.ApplicationInfo.FLAG_SYSTEM;
 import static android.content.pm.PackageManager.GET_PERMISSIONS;
@@ -30,8 +28,10 @@ import static android.os.Build.VERSION_CODES.S;
 import static android.os.Process.myUid;
 
 import static com.android.bedstead.nene.permissions.CommonPermissions.CHANGE_COMPONENT_ENABLED_STATE;
+import static com.android.bedstead.nene.permissions.CommonPermissions.FORCE_STOP_PACKAGES;
 import static com.android.bedstead.nene.permissions.CommonPermissions.INTERACT_ACROSS_USERS_FULL;
 import static com.android.bedstead.nene.permissions.CommonPermissions.MANAGE_ROLE_HOLDERS;
+import static com.android.bedstead.nene.permissions.CommonPermissions.QUERY_ALL_PACKAGES;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
@@ -69,6 +69,7 @@ import com.android.bedstead.nene.utils.Poll;
 import com.android.bedstead.nene.utils.Retry;
 import com.android.bedstead.nene.utils.ShellCommand;
 import com.android.bedstead.nene.utils.ShellCommandUtils;
+import com.android.bedstead.nene.utils.Tags;
 import com.android.bedstead.nene.utils.Versions;
 import com.android.compatibility.common.util.BlockingBroadcastReceiver;
 import com.android.compatibility.common.util.BlockingCallback.DefaultBlockingCallback;
@@ -349,17 +350,22 @@ public final class Package {
         checkCanGrantOrRevokePermission(user, permission);
 
         try {
+            boolean shouldRunAsRoot = Tags.hasTag(Tags.ADB_ROOT);
+
             ShellCommand.builderForUser(user, "pm grant")
+                    .asRoot(shouldRunAsRoot)
                     .addOperand(packageName())
                     .addOperand(permission)
                     .allowEmptyOutput(true)
                     .validate(String::isEmpty)
                     .execute();
 
-            assertWithMessage("Error granting permission " + permission
+            String message = "Error granting permission " + permission
                     + " to package " + this + " on user " + user
-                    + ". Command appeared successful but not set.")
-                    .that(hasPermission(user, permission)).isTrue();
+                    + ". Command appeared successful but not set."
+                    + (shouldRunAsRoot ? "" : " If this test requires permissions that can only "
+                    + "be granted on devices where adb has root. Add @RequireAdbRoot to the test.");
+            assertWithMessage(message).that(hasPermission(user, permission)).isTrue();
 
             return this;
         } catch (AdbException e) {
@@ -400,17 +406,22 @@ public final class Package {
         }
 
         try {
+            boolean shouldRunAsRoot = Tags.hasTag(Tags.ADB_ROOT);
+
             ShellCommand.builderForUser(user, "pm revoke")
+                    .asRoot(shouldRunAsRoot)
                     .addOperand(packageName())
                     .addOperand(permission)
                     .allowEmptyOutput(true)
                     .validate(String::isEmpty)
                     .execute();
 
-            assertWithMessage("Error denying permission " + permission
+            String message = "Error denying permission " + permission
                     + " to package " + this + " on user " + user
-                    + ". Command appeared successful but not revoked.")
-                    .that(hasPermission(user, permission)).isFalse();
+                    + ". Command appeared successful but not revoked."
+                    + (shouldRunAsRoot ? "" : " If this test requires permissions that can only be "
+                    + "granted on devices where adb has root. Add @RequireAdbRoot to the test.");
+            assertWithMessage(message).that(hasPermission(user, permission)).isFalse();
 
             return this;
         } catch (AdbException e) {
@@ -425,6 +436,13 @@ public final class Package {
                     + " on user " + user + ". But it is not installed");
         }
 
+        if (Tags.hasTag(Tags.ADB_ROOT)) {
+            // If the test is being run as root, every permission can be granted or revoked.
+            Log.i(LOG_TAG,
+                    "checkCanGrantOrRevokePermission skipped as test is being run as root");
+            return;
+        }
+
         try {
             PermissionInfo permissionInfo =
                     sPackageManager.getPermissionInfo(permission, /* flags= */ 0);
@@ -432,7 +450,9 @@ public final class Package {
             if (!protectionIsDangerous(permissionInfo.protectionLevel)
                     && !protectionIsDevelopment(permissionInfo.protectionLevel)) {
                 throw new NeneException("Cannot grant non-runtime permission "
-                        + permission + ", protection level is " + permissionInfo.protectionLevel);
+                        + permission + ", protection level is " + permissionInfo.protectionLevel +
+                        ". To restrict this test to only running on debug devices where this "
+                        + "permission is available, add @RequireAdbRoot to the test.");
             }
 
             if (!requestedPermissions().contains(permission)) {

@@ -20,6 +20,7 @@ import static android.os.Build.VERSION_CODES.S;
 
 import android.app.Instrumentation;
 import android.app.UiAutomation;
+import android.os.Build;
 import android.os.ParcelFileDescriptor;
 import android.provider.Settings;
 import android.util.Log;
@@ -68,6 +69,8 @@ public final class ShellCommandUtils {
     }
 
     private ShellCommandUtils() { }
+
+    private static Boolean sRootAvailable = null;
 
     /**
      * Execute an adb shell command.
@@ -331,6 +334,33 @@ public final class ShellCommandUtils {
      */
     public static UiAutomation uiAutomation() {
         return instrumentation().getUiAutomation();
+    }
+
+    /**
+     * Check if the device can run commands as root.
+     */
+    public static boolean isRootAvailable() {
+        if (sRootAvailable != null) {
+            return sRootAvailable;
+        }
+
+        try {
+            // We run a basic command to check if the device can run it as root.
+            String output = ShellCommand.builder("echo hello").asRoot(true).execute();
+            if (output.contains("hello")) {
+                sRootAvailable = true;
+            }
+        } catch (AdbException ignored) {
+        }
+
+        if (sRootAvailable == null) {
+            Log.i(LOG_TAG,
+                    "Unable to run the test as root as the device does not allow that. "
+                            + "The device is of type: " + Build.TYPE);
+            sRootAvailable = false;
+        }
+
+        return sRootAvailable;
     }
 
     /** Wrapper around {@link Stream} of lines output from a shell command. */

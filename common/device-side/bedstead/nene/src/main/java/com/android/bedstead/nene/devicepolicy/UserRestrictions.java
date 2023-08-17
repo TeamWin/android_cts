@@ -21,8 +21,10 @@ import static com.android.bedstead.nene.permissions.CommonPermissions.INTERACT_A
 import android.os.UserManager;
 
 import com.android.bedstead.nene.TestApis;
+import com.android.bedstead.nene.exceptions.AdbException;
 import com.android.bedstead.nene.permissions.PermissionContext;
 import com.android.bedstead.nene.users.UserReference;
+import com.android.bedstead.nene.utils.ShellCommand;
 
 /**
  * Test APIs related to interacting with user restrictions.
@@ -54,6 +56,18 @@ public final class UserRestrictions {
         try (PermissionContext p = TestApis.permissions().withPermission(INTERACT_ACROSS_USERS)) {
             return sUserManager.hasUserRestrictionForUser(restriction, mUser.userHandle());
         }
+    }
+
+    /**
+     * Set {@code restriction}.
+     * <p>This requires {@code @RequireAdbRoot} to be set for the executing test.
+     */
+    public void set(String restriction, boolean set) throws AdbException {
+        ShellCommand.builderForUser(mUser, "pm set-user-restriction")
+                .asRoot(true)
+                .addOperand(restriction)
+                .addOperand(set ? 1 : 0)
+                .execute();
     }
 
 }

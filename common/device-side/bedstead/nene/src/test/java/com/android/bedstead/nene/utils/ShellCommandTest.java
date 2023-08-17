@@ -191,8 +191,20 @@ public class ShellCommandTest {
     public void executeAndParse_parseFails_throwsException() {
         assertThrows(AdbException.class, () ->
                 ShellCommand.builder(LIST_USERS_COMMAND)
-                .executeAndParseOutput((output) -> {
-                    throw new IllegalStateException();
-                }));
+                        .executeAndParseOutput((output) -> {
+                            throw new IllegalStateException();
+                        }));
+    }
+
+    @Test
+    public void buildCommand_asRoot_commandStartsWithRootPrefix() {
+        assertThat(ShellCommand.builder(LIST_USERS_COMMAND).asRoot(/* shouldRunAsRoot= */ true)
+                .build()).startsWith("su root");
+    }
+
+    @Test
+    public void buildCommand_notAsRoot_commandDoesNotStartWithRootPrefix() {
+        assertThat(ShellCommand.builder(LIST_USERS_COMMAND).asRoot(/* shouldRunAsRoot= */ false)
+                .build().startsWith("su root")).isFalse();
     }
 }
