@@ -45,6 +45,7 @@ import com.android.bedstead.harrier.annotations.RequireFeature;
 import com.android.bedstead.harrier.annotations.RequireRunOnInitialUser;
 import com.android.bedstead.harrier.annotations.SlowApiTest;
 import com.android.bedstead.nene.users.UserReference;
+import com.android.bedstead.nene.utils.Poll;
 import com.android.compatibility.common.util.BlockingBroadcastReceiver;
 
 import org.junit.ClassRule;
@@ -168,7 +169,11 @@ public final class StartProfilesTest {
         sActivityManager.stopProfile(sDeviceState.workProfile().userHandle());
         sActivityManager.startProfile(sDeviceState.workProfile().userHandle());
 
-        assertThat(sUserManager.isUserRunning(sDeviceState.workProfile().userHandle())).isTrue();
+        Poll.forValue("user running",
+                        () -> sUserManager.isUserRunning(sDeviceState.workProfile().userHandle()))
+                .toBeEqualTo(true)
+                .errorOnFail()
+                .await();
     }
 
     @Test
