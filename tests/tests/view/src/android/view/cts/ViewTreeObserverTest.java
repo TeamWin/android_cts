@@ -257,18 +257,21 @@ public class ViewTreeObserverTest {
 
     @LargeTest
     @Test
-    public void testRemoveOnPreDrawListener() {
+    public void testRemoveOnPreDrawListener() throws Throwable {
         mViewTreeObserver = mLinearLayout.getViewTreeObserver();
 
         final ViewTreeObserver.OnPreDrawListener listener =
                 mock(ViewTreeObserver.OnPreDrawListener.class);
-        mViewTreeObserver.addOnPreDrawListener(listener);
-        mViewTreeObserver.dispatchOnPreDraw();
-        verify(listener, times(1)).onPreDraw();
+        mActivityRule.runOnUiThread(() -> {
+            reset(listener); // in case draw happened before now.
+            mViewTreeObserver.addOnPreDrawListener(listener);
+            mViewTreeObserver.dispatchOnPreDraw();
+            verify(listener, times(1)).onPreDraw();
 
-        reset(listener);
-        mViewTreeObserver.removeOnPreDrawListener(listener);
-        mViewTreeObserver.dispatchOnPreDraw();
+            reset(listener);
+            mViewTreeObserver.removeOnPreDrawListener(listener);
+            mViewTreeObserver.dispatchOnPreDraw();
+        });
         // Since we've unregistered our listener, we expect it to not be called even after
         // we've waited for a couple of seconds
         SystemClock.sleep(TIMEOUT_MS);
