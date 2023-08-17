@@ -24,6 +24,7 @@ import android.widget.Toast;
 
 import com.android.compatibility.common.util.CddTest;
 import com.android.cts.verifier.R;
+import com.android.cts.verifier.audio.audiolib.DisplayUtils;
 import com.android.cts.verifier.audio.audiolib.WaveScopeView;
 
 import org.hyphonate.megaaudio.common.BuilderBase;
@@ -127,6 +128,8 @@ public class USBAudioPeripheralRecordActivity extends USBAudioPeripheralActivity
         setInfoResources(R.string.usbaudio_record_test, R.string.usbaudio_record_info, -1);
 
         connectUSBPeripheralUI();
+
+        DisplayUtils.setKeepScreenOn(this, true);
     }
 
     //

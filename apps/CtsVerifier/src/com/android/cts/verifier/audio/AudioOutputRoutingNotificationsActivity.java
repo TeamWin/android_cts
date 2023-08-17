@@ -32,6 +32,7 @@ import com.android.compatibility.common.util.ResultUnit;
 import com.android.cts.verifier.CtsVerifierReportLog;
 import com.android.cts.verifier.R;
 import com.android.cts.verifier.audio.audiolib.AudioDeviceUtils;
+import com.android.cts.verifier.audio.audiolib.DisplayUtils;
 
 import org.hyphonate.megaaudio.common.BuilderBase;
 import org.hyphonate.megaaudio.common.StreamBase;
@@ -197,5 +198,7 @@ public class AudioOutputRoutingNotificationsActivity extends AudioWiredDeviceBas
                 R.string.audio_output_routingnotification_instructions, -1);
         setPassFailButtonClickListeners();
         getPassButton().setEnabled(false);
+
+        DisplayUtils.setKeepScreenOn(this, true);
     }
 }

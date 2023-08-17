@@ -44,6 +44,7 @@ import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
 import com.android.cts.verifier.audio.audiolib.AudioSystemFlags;
 import com.android.cts.verifier.audio.audiolib.AudioUtils;
+import com.android.cts.verifier.audio.audiolib.DisplayUtils;
 import com.android.cts.verifier.audio.audiolib.StatUtils;
 
 /**
@@ -386,6 +387,8 @@ public class AudioLoopbackLatencyActivity extends PassFailButtons.Activity {
 
         showTestInstructions();
         handleTestCompletion(false);
+
+        DisplayUtils.setKeepScreenOn(this, true);
     }
 
     //

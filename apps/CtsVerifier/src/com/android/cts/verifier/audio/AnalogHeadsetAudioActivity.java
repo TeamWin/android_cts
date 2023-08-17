@@ -39,6 +39,7 @@ import com.android.cts.verifier.CtsVerifierReportLog;
 import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
 import com.android.cts.verifier.audio.audiolib.AudioSystemFlags;
+import com.android.cts.verifier.audio.audiolib.DisplayUtils;
 
 import org.hyphonate.megaaudio.common.BuilderBase;
 import org.hyphonate.megaaudio.common.StreamBase;
@@ -173,6 +174,8 @@ public class AnalogHeadsetAudioActivity
 
         setPassFailButtonClickListeners();
         getPassButton().setEnabled(false);
+
+        DisplayUtils.setKeepScreenOn(this, true);
     }
 
     @Override
