@@ -228,7 +228,7 @@ public class AudioLoopbackLatencyActivity extends PassFailButtons.Activity {
         private static final String KEY_IS_PERIPHERAL_ATTACHED = "is_peripheral_attached";
         private static final String KEY_INPUT_PERIPHERAL_NAME = "input_peripheral";
         private static final String KEY_OUTPUT_PERIPHERAL_NAME = "output_peripheral";
-        private static final String KEY_TEST_PERIPHERAL = "test_peripheral";
+        private static final String KEY_TEST_PERIPHERAL_NAME = "test_peripheral_name";
 
         void recordTestResults(CtsVerifierReportLog reportLog) {
             reportLog.addValue(
@@ -256,7 +256,7 @@ public class AudioLoopbackLatencyActivity extends PassFailButtons.Activity {
                     ResultUnit.NONE);
 
             reportLog.addValue(
-                    KEY_TEST_PERIPHERAL,
+                    KEY_TEST_PERIPHERAL_NAME,
                     mDeviceName,
                     ResultType.NEUTRAL,
                     ResultUnit.NONE);
