@@ -209,6 +209,10 @@ android_test {
     name: "CtsPackageManagerTestCases",
     defaults: ["cts_content_defaults"],
 
+    static_libs: [
+        "flag-junit",
+        "pm_flags_lib",
+    ],
     srcs: [
         "src/android/content/pm/**/*.java",
         "src/android/content/pm/**/*.kt",
