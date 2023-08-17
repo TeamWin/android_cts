@@ -162,8 +162,7 @@ public class InputMethodStartInputLifecycleTest extends EndToEndImeTestBase {
                 // Expected only onFinishInput and the EditText is inactive for input method.
                 expectEvent(stream, onFinishInputMatcher(), TIMEOUT);
                 notExpectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
-                assertFalse(TestUtils.getOnMainSync(() -> imm.isActive(editText)));
-                assertFalse(TestUtils.getOnMainSync(() -> imm.isAcceptingText()));
+                assertFalse(TestUtils.getOnMainSync(() -> imm.hasActiveInputConnection(editText)));
             } else {
                 expectEvent(stream, onFinishInputMatcher(), TIMEOUT);
             }
@@ -185,8 +184,7 @@ public class InputMethodStartInputLifecycleTest extends EndToEndImeTestBase {
                 // Expected only onStartInput and the EditText is active for input method.
                 notExpectEvent(stream, onFinishInputMatcher(), TIMEOUT);
             }
-            assertTrue(TestUtils.getOnMainSync(
-                    () -> imm.isActive(editText) && imm.isAcceptingText()));
+            assertTrue(TestUtils.getOnMainSync(() -> imm.hasActiveInputConnection(editText)));
             final ImeCommand commit1 = imeSession.callCommitText("Hello!", 1);
             expectCommand(stream, commit1, TIMEOUT);
             TestUtils.waitOnMainUntil(() -> TextUtils.equals(editText.getText(), "Hello!"), TIMEOUT,
@@ -243,8 +241,7 @@ public class InputMethodStartInputLifecycleTest extends EndToEndImeTestBase {
             // Verify the input connection of the EditText is still active and can accept text.
             final InputMethodManager imm = editText.getContext().getSystemService(
                     InputMethodManager.class);
-            assertTrue(TestUtils.getOnMainSync(() -> imm.isActive(editText)));
-            assertTrue(TestUtils.getOnMainSync(() -> imm.isAcceptingText()));
+            assertTrue(TestUtils.getOnMainSync(() -> imm.hasActiveInputConnection(editText)));
         }
     }
 

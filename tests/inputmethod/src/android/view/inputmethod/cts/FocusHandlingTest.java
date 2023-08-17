@@ -1145,7 +1145,7 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
             return layout;
         });
 
-        waitOnMainUntil(() -> imm.get().isActive(firstEditorRef.get()), TIMEOUT);
+        waitOnMainUntil(() -> imm.get().hasActiveInputConnection(firstEditorRef.get()), TIMEOUT);
 
         runOnMainSync(() -> {
             final ViewGroup layout = layoutRef.get();
@@ -1162,7 +1162,7 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
             layoutRef.get().removeView(firstEditorRef.get());
         });
 
-        assertTrue(getOnMainSync(() -> imm.get().isActive(secondEditorRef.get())));
+        assertTrue(getOnMainSync(() -> imm.get().hasActiveInputConnection(secondEditorRef.get())));
     }
 
     @AppModeFull(reason = "Instant apps cannot start TranslucentActivity from existing activity.")
@@ -1183,7 +1183,7 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
             return layout;
         });
 
-        waitOnMainUntil(() -> imm.get().isActive(editorRef.get()), TIMEOUT);
+        waitOnMainUntil(() -> imm.get().hasActiveInputConnection(editorRef.get()), TIMEOUT);
 
         // launch activity in a different package.
         final var intent = new Intent(Intent.ACTION_MAIN);
