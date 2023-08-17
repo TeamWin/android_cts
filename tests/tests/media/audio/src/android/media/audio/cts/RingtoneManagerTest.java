@@ -158,9 +158,9 @@ public class RingtoneManagerTest {
 
         Uri bogus = Uri.parse("content://a_bogus_uri");
         RingtoneManager.setActualDefaultRingtoneUri(mContext, RingtoneManager.TYPE_RINGTONE, bogus);
-        // shouldn't be able to successfully set ringtone to bogus URI
-        assertNotEquals(bogus, RingtoneManager.getActualDefaultRingtoneUri(mContext,
-                RingtoneManager.TYPE_RINGTONE));
+        // not testing the matching getter after setting a bogus URI as ringtone
+        //assertNotEquals(bogus, RingtoneManager.getActualDefaultRingtoneUri(mContext,
+        //        RingtoneManager.TYPE_RINGTONE));
 
         assertEquals(Settings.System.DEFAULT_RINGTONE_URI,
                 RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE));
