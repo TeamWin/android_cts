@@ -111,6 +111,7 @@ public class DisableAutofillTest extends AutoFillServiceTestCase.ManualActivityL
 
             if (action == PostLaunchAction.ASSERT_DISABLING) {
                 callback.assertUiUnavailableEvent(activity.mInput);
+                callback.assertNotCalled();
                 sReplier.getNextFillRequest();
 
                 // Make sure other fields are not triggered.
