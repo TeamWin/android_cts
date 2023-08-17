@@ -66,6 +66,8 @@ android_test {
         "mockito-target-minus-junit4",
         "platform-test-annotations",
         "ctshardware-aidl-java",
+        "junit",
+        "junit-params",
     ],
     jni_libs: [
         "libctshardware_jni",
