@@ -31,8 +31,6 @@ import static android.window.TaskFragmentOrganizer.TASK_FRAGMENT_TRANSIT_CHANGE;
 import static android.window.TaskFragmentOrganizer.TASK_FRAGMENT_TRANSIT_CLOSE;
 import static android.window.TaskFragmentOrganizer.TASK_FRAGMENT_TRANSIT_OPEN;
 
-import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
-
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
@@ -65,7 +63,6 @@ import android.window.WindowContainerTransaction;
 import android.window.WindowContainerTransactionCallback;
 
 import androidx.annotation.NonNull;
-import androidx.test.filters.FlakyTest;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.ApiTest;
@@ -241,7 +238,6 @@ public class TaskFragmentOrganizerPolicyTest extends ActivityManagerTestBase {
      * Verifies that performing {@link WindowContainerTransaction#startActivityInTaskFragment} on
      * organized TaskFragment is allowed.
      */
-    @FlakyTest(bugId = 291129203)
     @Test
     @ApiTest(
             apis = {
@@ -254,7 +250,7 @@ public class TaskFragmentOrganizerPolicyTest extends ActivityManagerTestBase {
                 createOrganizedTaskFragment(mTaskFragmentOrganizer, activity);
         final IBinder fragmentToken = taskFragmentInfo.getFragmentToken();
         final IBinder callerToken = getActivityToken(activity);
-        final Intent intent = new Intent(mContext, WindowContextTestActivity.class);
+        final Intent intent = new Intent(mContext, MetricsActivity.class);
 
         final WindowContainerTransaction wct =
                 new WindowContainerTransaction()
@@ -263,6 +259,11 @@ public class TaskFragmentOrganizerPolicyTest extends ActivityManagerTestBase {
 
         mTaskFragmentOrganizer.applyTransaction(
                 wct, TASK_FRAGMENT_TRANSIT_OPEN, false /* shouldApplyIndependently */);
+
+        waitAndAssertResumedActivity(intent.getComponent());
+        mTaskFragmentOrganizer.waitForAndGetTaskFragmentInfo(
+                fragmentToken, info -> info.getActivities().size() == 1,
+                "getActivities from TaskFragment must contain 1 activities");
     }
 
     /**
@@ -909,15 +910,14 @@ public class TaskFragmentOrganizerPolicyTest extends ActivityManagerTestBase {
         final TaskFragmentCreationParams params =
                 mTaskFragmentOrganizer.generateTaskFragParams(ownerToken);
         final IBinder taskFragToken = params.getFragmentToken();
+        final Intent intent = new Intent(mContext, MetricsActivity.class);
         final WindowContainerTransaction wct =
                 new WindowContainerTransaction()
                         .createTaskFragment(params)
                         .startActivityInTaskFragment(
                                 taskFragToken,
                                 ownerToken,
-                                new Intent(
-                                        getInstrumentation().getTargetContext(),
-                                        MetricsActivity.class),
+                                intent,
                                 null /* activityOptions */);
         mTaskFragmentOrganizer.applyTransaction(
                 wct, TASK_FRAGMENT_TRANSIT_OPEN, false /* shouldApplyIndependently */);
@@ -926,6 +926,7 @@ public class TaskFragmentOrganizerPolicyTest extends ActivityManagerTestBase {
                 taskFragToken,
                 info -> info.getActivities().size() == 1,
                 "getActivities from TaskFragment must contain 1 activities");
+        waitAndAssertResumedActivity(intent.getComponent());
 
         activity.startActivity(new Intent().setComponent(SDK_30_TEST_ACTIVITY));
 
