@@ -180,9 +180,11 @@ public class MultiCodecPerfTestBase {
         int[] maxMacroBlockRates1080p = new int[mimeCodecPairs.size()];
         int required4kInstances = isEncoder ? REQUIRED_MIN_CONCURRENT_4K_ENCODER_INSTANCES :
                 REQUIRED_MIN_CONCURRENT_4K_DECODER_INSTANCES;
-        int required1080pInstances =
-                isEncoder ? REQUIRED_MIN_CONCURRENT_1080_ENCODER_INSTANCES :
-                        REQUIRED_MIN_CONCURRENT_1080_DECODER_INSTANCES;
+        // when testing secure codecs limit 4k to 2 instances
+        if (requiredMinInstances < REQUIRED_MIN_CONCURRENT_INSTANCES) {
+            required4kInstances = REQUIRED_MIN_CONCURRENT_SECURE_INSTANCES;
+        }
+        int required1080pInstances = requiredMinInstances - required4kInstances;
         int loopCount = 0;
         for (Pair<String, String> mimeCodecPair : mimeCodecPairs) {
             MediaCodec codec = MediaCodec.createByCodecName(mimeCodecPair.second);
@@ -253,6 +255,7 @@ public class MultiCodecPerfTestBase {
                 int blocksPerSecond4k = blocksIn4k * 30;
                 int instances4k = Math.min((int) (maxFrameRates[i] / 30.0),
                         (int) (maxMacroBlockRates[i] / blocksPerSecond4k));
+                instances4k = Math.min(instances4k, maxInstances[i]);
                 if (instances4k < required4kInstances) {
                     Log.e(LOG_TAG, "Less than required 4k instances supported.");
                     return 0;
@@ -262,6 +265,7 @@ public class MultiCodecPerfTestBase {
                 int blocksPerSecond1080p = blocksIn1080p * 30;
                 int instances1080p = Math.min((int) (maxFrameRates1080p[i] / 30.0),
                         (int) (maxMacroBlockRates1080p[i] / blocksPerSecond1080p));
+                instances1080p = Math.min(instances1080p, maxInstances[i]);
                 if (instances1080p < required1080pInstances) {
                     Log.e(LOG_TAG, "Less than required 1080p instances supported.");
                     return 0;
