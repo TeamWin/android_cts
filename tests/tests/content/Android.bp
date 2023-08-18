@@ -94,23 +94,96 @@ java_defaults {
         "-c xx,xx-rYY",
     ],
     per_testcase_directory: true,
+    platform_apis: true,
+    // Tag this module as a cts test artifact
+    test_suites: [
+        "cts",
+        "general-tests",
+        "mts-documentsui",
+    ],
+    min_sdk_version: "29",
+    replace_max_sdk_version_placeholder: "current",
+}
+
+android_test {
+    name: "CtsContentTestCases",
+    defaults: ["cts_content_defaults"],
+
+    srcs: [
+        "src/android/content/cts/**/*.java",
+        "BinderPermissionTestService/**/I*.aidl",
+    ],
     data: [
-        ":CtsContentDirectBootUnawareTestApp",
-        ":CtsContentMockLauncherTestApp",
-        ":CtsContentMockRestrictedApp",
-        ":CtsContentLongLabelNameTestApp",
-        ":CtsContentPartiallyDirectBootAwareTestApp",
-        ":CtsIntentResolutionTestApp",
-        ":CtsSyncAccountAccessStubs",
         ":CtsContentEmptyTestApp",
-        ":CtsContentMaxPackageNameTestApp",
-        ":CtsBinderPermissionTestService",
-        ":CtsIntentResolutionTestAppApi30",
-        ":CtsContentLongSharedUserIdTestApp",
-        ":CtsContentMaxSharedUserIdTestApp",
         ":CtsContentLongPackageNameTestApp",
-        ":CtsContentNoApplicationTestApp",
+        ":CtsContentLongSharedUserIdTestApp",
+        ":CtsContentMaxPackageNameTestApp",
+        ":CtsContentMaxSharedUserIdTestApp",
+        ":CtsContentMockLauncherTestApp",
+        ":CtsContentLongLabelNameTestApp",
+        ":CtsSyncAccountAccessStubs",
         ":CtsContentLongUsesPermissionNameTestApp",
+        ":CtsContentDirectBootUnawareTestApp",
+        ":CtsContentPartiallyDirectBootAwareTestApp",
+        ":CtsBinderPermissionTestService",
+        ":CtsIntentResolutionTestApp",
+        ":CtsIntentResolutionTestAppApi30",
+        ":CtsContentNoApplicationTestApp",
+        ":CtsContentMockRestrictedApp",
+    ],
+    test_config: "CtsContentTest.xml",
+}
+
+android_test {
+    name: "CtsResourcesTestCases",
+    defaults: ["cts_content_defaults"],
+
+    srcs: [
+        "src/android/content/om/**/*.java",
+        "src/android/content/res/**/*.java",
+    ],
+    test_config: "CtsResourcesTest.xml",
+}
+
+android_test {
+    name: "CtsWindowManagerTestCases",
+    defaults: ["cts_content_defaults"],
+
+    srcs: [
+        "src/android/content/wm/**/*.java",
+    ],
+    test_config: "CtsWindowManagerTest.xml",
+}
+
+android_test {
+    name: "CtsPackageManagerTestCases",
+    defaults: ["cts_content_defaults"],
+
+    static_libs: [
+        "flag-junit",
+        "pm_flags_lib",
+    ],
+    srcs: [
+        "src/android/content/pm/**/*.java",
+        "src/android/content/pm/**/*.kt",
+    ],
+    data: [
+        ":CtsContentEmptyTestApp",
+        ":CtsContentLongPackageNameTestApp",
+        ":CtsContentLongSharedUserIdTestApp",
+        ":CtsContentMaxPackageNameTestApp",
+        ":CtsContentMaxSharedUserIdTestApp",
+        ":CtsContentMockLauncherTestApp",
+        ":CtsContentLongLabelNameTestApp",
+        ":CtsSyncAccountAccessStubs",
+        ":CtsContentLongUsesPermissionNameTestApp",
+        ":CtsContentDirectBootUnawareTestApp",
+        ":CtsContentPartiallyDirectBootAwareTestApp",
+        ":CtsBinderPermissionTestService",
+        ":CtsIntentResolutionTestApp",
+        ":CtsIntentResolutionTestAppApi30",
+        ":CtsContentNoApplicationTestApp",
+        ":CtsContentMockRestrictedApp",
         ":CtsApkVerityTestPrebuiltFiles",
         // v1/v2/v3/v4 signed version of android.appsecurity.cts.tinyapp to keep checksums stable
         "data/CtsPkgInstallTinyAppV1.apk",
@@ -161,61 +234,6 @@ java_defaults {
         ":PackagePropertyTestApp2",
         ":PackagePropertyTestApp3",
         ":TestInstallerApp",
-    ],
-    platform_apis: true,
-    // Tag this module as a cts test artifact
-    test_suites: [
-        "cts",
-        "general-tests",
-        "mts-documentsui",
-    ],
-    min_sdk_version: "29",
-    replace_max_sdk_version_placeholder: "current",
-}
-
-android_test {
-    name: "CtsContentTestCases",
-    defaults: ["cts_content_defaults"],
-
-    srcs: [
-        "src/android/content/cts/**/*.java",
-        "BinderPermissionTestService/**/I*.aidl",
-    ],
-    test_config: "CtsContentTest.xml",
-}
-
-android_test {
-    name: "CtsResourcesTestCases",
-    defaults: ["cts_content_defaults"],
-
-    srcs: [
-        "src/android/content/om/**/*.java",
-        "src/android/content/res/**/*.java",
-    ],
-    test_config: "CtsResourcesTest.xml",
-}
-
-android_test {
-    name: "CtsWindowManagerTestCases",
-    defaults: ["cts_content_defaults"],
-
-    srcs: [
-        "src/android/content/wm/**/*.java",
-    ],
-    test_config: "CtsWindowManagerTest.xml",
-}
-
-android_test {
-    name: "CtsPackageManagerTestCases",
-    defaults: ["cts_content_defaults"],
-
-    static_libs: [
-        "flag-junit",
-        "pm_flags_lib",
-    ],
-    srcs: [
-        "src/android/content/pm/**/*.java",
-        "src/android/content/pm/**/*.kt",
     ],
     test_config: "CtsPackageManagerTest.xml",
 }
