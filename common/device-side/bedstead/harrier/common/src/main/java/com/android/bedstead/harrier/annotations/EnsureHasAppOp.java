@@ -16,7 +16,7 @@
 
 package com.android.bedstead.harrier.annotations;
 
-import static com.android.bedstead.harrier.annotations.AnnotationRunPrecedence.MIDDLE;
+import static com.android.bedstead.harrier.annotations.AnnotationPriorityRunPrecedence.MIDDLE;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Repeatable;
@@ -41,15 +41,16 @@ public @interface EnsureHasAppOp {
     /** The maximum version where this appOp is required. */
     int maxVersion() default Integer.MAX_VALUE;
 
-    /**
-     * Weight sets the order that annotations will be resolved.
+     /**
+     * Priority sets the order that annotations will be resolved.
      *
-     * <p>Annotations with a lower weight will be resolved before annotations with a higher weight.
+     * <p>Annotations with a lower priority will be resolved before annotations with a higher
+     * priority.
      *
-     * <p>If there is an order requirement between annotations, ensure that the weight of the
+     * <p>If there is an order requirement between annotations, ensure that the priority of the
      * annotation which must be resolved first is lower than the one which must be resolved later.
      *
-     * <p>Weight can be set to a {@link AnnotationRunPrecedence} constant, or to any {@link int}.
+     * <p>Priority can be set to a {@link AnnotationPriorityRunPrecedence} constant, or to any {@link int}.
      */
-    int weight() default MIDDLE;
+    int priority() default MIDDLE;
 }

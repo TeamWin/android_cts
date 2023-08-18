@@ -257,6 +257,7 @@ public final class DeviceState extends HarrierRule {
             "permission-instrumentation-package";
     private static final String ADDITIONAL_FEATURES_KEY = "additional-features";
     private boolean mSkipTestTeardown;
+    private boolean mSkipShareableAndNonShareableStateTeardown;
     private boolean mSkipClassTeardown;
     private boolean mSkipTests;
     private boolean mFailTests;
@@ -357,6 +358,10 @@ public final class DeviceState extends HarrierRule {
     @Override
     void setSkipTestTeardown(boolean skipTestTeardown) {
         mSkipTestTeardown = skipTestTeardown;
+    }
+
+    void setSkipShareableAndNonShareableStateTeardown(boolean skip) {
+        mSkipShareableAndNonShareableStateTeardown = skip;
     }
 
     @Override
@@ -461,9 +466,11 @@ public final class DeviceState extends HarrierRule {
             base.evaluate();
         } finally {
             Log.d(LOG_TAG, "Tearing down state for test " + testName);
-            teardownNonShareableState();
-            if (!mSkipTestTeardown) {
-                teardownShareableState();
+            if (!mSkipShareableAndNonShareableStateTeardown) {
+                teardownNonShareableState();
+                if (!mSkipTestTeardown) {
+                    teardownShareableState();
+                }
             }
             Log.d(LOG_TAG, "Finished tearing down state for test " + testName);
         }
@@ -2638,7 +2645,7 @@ public final class DeviceState extends HarrierRule {
                 .orElse(null);
     }
 
-    private void teardownNonShareableState() {
+    void teardownNonShareableState() {
         mAdditionalQueryParameters.clear();
         mProfiles.clear();
         mUsers.clear();
@@ -2698,6 +2705,11 @@ public final class DeviceState extends HarrierRule {
 
     private Set<TestAppInstance> mInstalledTestApps = new HashSet<>();
     private Set<TestAppInstance> mUninstalledTestApps = new HashSet<>();
+
+    void teardown() {
+        teardownNonShareableState();
+        teardownShareableState();
+    }
 
     private void teardownShareableState() {
         if (!mCreatedAccounts.isEmpty()) {
