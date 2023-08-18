@@ -142,7 +142,6 @@ public class PhotoPickerCrossProfileTest extends PhotoPickerBaseTest {
      * ACTION_PICK_IMAGES is allowlisted by default from work to personal only (not vice-a-versa)
      */
     @Test
-    @Ignore("Re-enable once b/286026837 is fixed")
     @EnsureHasWorkProfile
     public void testPersonalApp_cannotAccessWorkProfile_default() throws Exception {
         assertBlockedByAdmin(/* isInvokedFromWorkProfile */ false);
