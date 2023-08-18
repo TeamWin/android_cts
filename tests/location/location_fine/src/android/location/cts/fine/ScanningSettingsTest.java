@@ -27,16 +27,14 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.platform.test.annotations.AppModeFull;
 import android.provider.Settings;
-import android.support.test.uiautomator.By;
-import android.support.test.uiautomator.UiDevice;
-import android.support.test.uiautomator.UiObject2;
-import android.support.test.uiautomator.UiObjectNotFoundException;
-import android.support.test.uiautomator.UiScrollable;
-import android.support.test.uiautomator.UiSelector;
-import android.support.test.uiautomator.Until;
 import android.test.AndroidTestCase;
 
 import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.uiautomator.By;
+import androidx.test.uiautomator.Direction;
+import androidx.test.uiautomator.UiDevice;
+import androidx.test.uiautomator.UiObject2;
+import androidx.test.uiautomator.Until;
 
 import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.FeatureUtil;
@@ -150,22 +148,22 @@ public class ScanningSettingsTest extends AndroidTestCase {
             throws PackageManager.NameNotFoundException {
         final Resources res = mPackageManager.getResourcesForApplication(SETTINGS_PACKAGE);
         int resId = res.getIdentifier(name, "string", SETTINGS_PACKAGE);
-        UiScrollable uiScrollable = new UiScrollable(new UiSelector().scrollable(true));
-        try {
-            uiScrollable.scrollTextIntoView(res.getString(resId));
-        } catch (UiObjectNotFoundException e) {
-            // Scrolling can fail if the UI is not scrollable
+        UiObject2 pref;
+        // Scroll to preference if the UI is scrollable
+        UiObject2 scrollable = mDevice.findObject(By.scrollable(true));
+        if (scrollable == null) {
+            pref = mDevice.findObject(By.text(res.getString(resId)));
+        } else {
+            pref = scrollable.scrollUntil(
+                Direction.DOWN, Until.findObject(By.text(res.getString(resId))));
         }
 
-        // Wait for the preference to appear
-        mDevice.wait(Until.hasObject(By.text(res.getString(resId))), TIMEOUT);
-
-        UiObject2 pref = mDevice.findObject(By.text(res.getString(resId)));
         // Click the preference to show the Scanning fragment
         pref.click();
 
         // Wait for the Scanning fragment to appear
-        mDevice.wait(Until.hasObject(By.pkg(SETTINGS_PACKAGE).depth(1)), TIMEOUT);
+        mDevice.wait(Until.hasObject(
+                By.res("com.android.settings:id/settingslib_main_switch_bar")), TIMEOUT);
     }
 
     private void clickAndWaitForSettingChange(UiObject2 pref, ContentResolver resolver,
