@@ -409,7 +409,6 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
                 mWmState.getDisplay(DEFAULT_DISPLAY));
     }
 
-    @FlakyTest(bugId = 292492981)
     @Test
     public void testImeApiForBug118341760() throws Exception {
         assumeTrue(MSG_NO_MOCK_IME, supportsInstallableIme());
