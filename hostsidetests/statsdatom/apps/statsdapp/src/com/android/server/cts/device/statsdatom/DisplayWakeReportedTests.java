@@ -93,7 +93,7 @@ public class DisplayWakeReportedTests {
     @Test
     public void testWakeWithWakeUpApi() throws Exception {
         ShellIdentityUtils.invokeWithShellPermissions(() ->
-                mPowerManager.wakeUp(SystemClock.elapsedRealtime(),
+                mPowerManager.wakeUp(SystemClock.uptimeMillis(),
                         PowerManager.WAKE_REASON_UNKNOWN,
                         TAG));
     }
