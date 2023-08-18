@@ -35,6 +35,8 @@ android_test {
         "src/**/*.kt"
     ],
 
+    // Need to run this on Android R and above.
+    min_sdk_version: "30",
     sdk_version: "test_current",
     dex_preopt: { enabled: false },
     optimize: { enabled: false },
