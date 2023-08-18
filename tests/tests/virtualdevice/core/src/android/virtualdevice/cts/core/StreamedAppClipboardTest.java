@@ -87,6 +87,7 @@ import android.view.Display;
 import android.view.MotionEvent;
 import android.view.WindowManager;
 import android.virtualdevice.cts.common.FakeAssociationRule;
+import android.server.wm.WakeUpAndUnlockRule;
 import android.virtualdevice.cts.common.util.VirtualDeviceTestUtils;
 
 import androidx.annotation.NonNull;
@@ -103,6 +104,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
@@ -130,16 +132,17 @@ public class StreamedAppClipboardTest {
                     .build();
 
     @Rule
-    public AdoptShellPermissionsRule mAdoptShellPermissionsRule = new AdoptShellPermissionsRule(
-            InstrumentationRegistry.getInstrumentation().getUiAutomation(),
-            ACTIVITY_EMBEDDING,
-            ADD_TRUSTED_DISPLAY,
-            CREATE_VIRTUAL_DEVICE,
-            READ_CLIPBOARD_IN_BACKGROUND,
-            READ_DEVICE_CONFIG,
-            WRITE_ALLOWLISTED_DEVICE_CONFIG,
-            WRITE_SECURE_SETTINGS,
-            WAKE_LOCK);
+    public RuleChain chain = RuleChain.outerRule(new WakeUpAndUnlockRule())
+            .around(new AdoptShellPermissionsRule(
+                    InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+                    ACTIVITY_EMBEDDING,
+                    ADD_TRUSTED_DISPLAY,
+                    CREATE_VIRTUAL_DEVICE,
+                    READ_CLIPBOARD_IN_BACKGROUND,
+                    READ_DEVICE_CONFIG,
+                    WRITE_ALLOWLISTED_DEVICE_CONFIG,
+                    WRITE_SECURE_SETTINGS,
+                    WAKE_LOCK));
 
     @Rule
     public FakeAssociationRule mFakeAssociationRule = new FakeAssociationRule();
