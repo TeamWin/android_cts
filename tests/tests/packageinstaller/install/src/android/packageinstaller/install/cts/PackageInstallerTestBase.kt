@@ -43,6 +43,7 @@ import androidx.core.content.FileProvider
 import androidx.test.InstrumentationRegistry
 import androidx.test.rule.ActivityTestRule
 import androidx.test.uiautomator.By
+import androidx.test.uiautomator.BySelector
 import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.UiObject2
 import androidx.test.uiautomator.Until
@@ -162,7 +163,14 @@ open class PackageInstallerTestBase {
      * Wait for session's install result and return it
      */
     protected fun getInstallSessionResult(timeout: Long = TIMEOUT): SessionResult {
-        return installSessionResult.poll(timeout, TimeUnit.MILLISECONDS)
+        return getInstallSessionResult(installSessionResult, timeout)
+    }
+
+    protected fun getInstallSessionResult(
+        installResult: LinkedBlockingQueue<SessionResult>,
+        timeout: Long = TIMEOUT
+    ): SessionResult {
+        return installResult.poll(timeout, TimeUnit.MILLISECONDS)
             ?: SessionResult(null /* status */, null /* preapproval */, "Fail to poll result")
     }
 
@@ -362,22 +370,31 @@ open class PackageInstallerTestBase {
      * @param resId The resource ID of the button to click
      */
     fun clickInstallerUIButton(resId: String) {
+        clickInstallerUIButton(By.res(PACKAGE_INSTALLER_PACKAGE_NAME, resId))
+    }
+
+    /**
+     * Click a button in the UI of the installer app
+     *
+     * @param bySelector The bySelector of the button to click
+     */
+    fun clickInstallerUIButton(bySelector: BySelector) {
         var button: UiObject2? = null
         val startTime = System.currentTimeMillis()
         while (startTime + TIMEOUT > System.currentTimeMillis()) {
             try {
-                button = uiDevice.wait(
-                        Until.findObject(By.res(PACKAGE_INSTALLER_PACKAGE_NAME, resId)), 1000)
+                button = uiDevice.wait(Until.findObject(bySelector), 1000)
                 if (button != null) {
-                    Log.d(TAG, "Found bounds: ${button.getVisibleBounds()} of button $resId, " +
-                            "text: ${button.getText()}, package: ${button.getApplicationPackage()}")
+                    Log.d(TAG, "Found bounds: ${button.getVisibleBounds()} of button $bySelector," +
+                            " text: ${button.getText()}," +
+                            " package: ${button.getApplicationPackage()}")
                     button.click()
                     return
                 }
             } catch (ignore: Throwable) {
             }
         }
-        Assert.fail("Failed to click the button: $resId")
+        Assert.fail("Failed to click the button: $bySelector")
     }
 
     /**

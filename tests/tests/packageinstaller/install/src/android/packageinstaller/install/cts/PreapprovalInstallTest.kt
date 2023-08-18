@@ -16,6 +16,7 @@
 
 package android.packageinstaller.install.cts
 
+import android.Manifest
 import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -25,9 +26,14 @@ import android.content.pm.PackageInstaller
 import android.icu.util.ULocale
 import android.platform.test.annotations.AppModeFull
 import android.provider.DeviceConfig
+import android.util.Log
+import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.runner.AndroidJUnit4
+import androidx.test.uiautomator.By
 import com.android.compatibility.common.util.DeviceConfigStateChangerRule
+import com.android.compatibility.common.util.FutureResultActivity
 import java.io.File
+import java.util.concurrent.LinkedBlockingQueue
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.fail
@@ -48,6 +54,8 @@ class PreapprovalInstallTest : PackageInstallerTestBase() {
         const val TEST_APP_LABEL_PL = "Empty Test App Polish"
         const val TEST_APP_LABEL_V2 = "Empty Test App V2"
         const val TEST_FAKE_APP_LABEL = "Fake Test App"
+        const val TEST_INSTALLER_APK_NAME = "CtsEmptyInstallerApp.apk"
+        const val TEST_INSTALLER_APK_PACKAGE_NAME = "android.packageinstaller.emptyinstaller.cts"
         const val PROPERTY_IS_PRE_APPROVAL_REQUEST_AVAILABLE = "is_preapproval_available"
     }
 
@@ -100,6 +108,117 @@ class PreapprovalInstallTest : PackageInstallerTestBase() {
         val result = getInstallSessionResult()
         assertEquals(PackageInstaller.STATUS_SUCCESS, result.status)
         assertEquals(true, result.preapproval)
+    }
+
+    /**
+     * Check that we can request a user pre-approval with updating ownership case, the action of
+     * the EXTRA_INTENT is PackageInstaller.ACTION_CONFIRM_PRE_APPROVAL.
+     */
+    @Test
+    fun requestUserPreapprovalWithUpdateOwnership_userAgree_statusSuccess() {
+        // Get the value of updateOwnership property to restore it finally
+        var isUpdateOwnershipEnforcementAvailable: String? =
+            getDeviceProperty(PROPERTY_IS_UPDATE_OWNERSHIP_ENFORCEMENT_AVAILABLE)
+        setDeviceProperty(PROPERTY_IS_UPDATE_OWNERSHIP_ENFORCEMENT_AVAILABLE, "true")
+
+        // Install the test installer to request update ownership
+        installPackage(TEST_INSTALLER_APK_NAME)
+        // Install the test app and enable update ownership enforcement with the test installer
+        installTestPackage("--update-ownership -i $TEST_INSTALLER_APK_PACKAGE_NAME")
+        assertInstalled()
+
+        var isStatusPendingUserActionCalled = false
+        var installResult = LinkedBlockingQueue<SessionResult>()
+
+        // Create the receiver to handle the install result.
+        // 1. If the Success status comes before STATUS_PENDING_USER_ACTION, we can assert it first
+        // without waiting the timeout.
+        // 2. Assert the action of the EXTRA_INTENT is PackageInstaller.ACTION_CONFIRM_PRE_APPROVAL
+        val receiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context, intent: Intent) {
+                val status = intent.getIntExtra(
+                    PackageInstaller.EXTRA_STATUS,
+                    PackageInstaller.STATUS_FAILURE_INVALID
+                )
+
+                val preapproval = intent.getBooleanExtra(
+                    PackageInstaller.EXTRA_PRE_APPROVAL,
+                    false /* defaultValue */
+                )
+                val msg = intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE)
+                Log.d(TAG, "status: $status, msg: $msg preapproval: $preapproval")
+
+                if (status == PackageInstaller.STATUS_SUCCESS) {
+                    // Make sure the PendingUserAction is called before success
+                    assertEquals(true, isStatusPendingUserActionCalled)
+                } else if (status == PackageInstaller.STATUS_PENDING_USER_ACTION) {
+                    isStatusPendingUserActionCalled = true
+                    val activityIntent =
+                        intent.getParcelableExtra(Intent.EXTRA_INTENT, Intent::class.java)
+                    assertEquals(
+                        PackageInstaller.ACTION_CONFIRM_PRE_APPROVAL,
+                        activityIntent!!.action
+                    )
+                    assertEquals(activityIntent.extras!!.keySet().size, 1)
+                    activityIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK or
+                            Intent.FLAG_ACTIVITY_NEW_TASK)
+                    installDialogStarter.activity.startActivityForResult(activityIntent)
+                }
+
+                installResult.offer(SessionResult(status, preapproval, msg))
+            }
+        }
+
+        var uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation()
+
+        try {
+            // Adopt the INSTALL_PACKAGES permission
+            uiAutomation.adoptShellPermissionIdentity(Manifest.permission.INSTALL_PACKAGES)
+
+            val session = createSession(
+                0 /* flags */, false /* isMultiPackage */,
+                null /* packageSource */
+            ).second
+
+            // Register the receiver for the install result
+            val action = "PreapprovalInstallTest.install_cb"
+            context.registerReceiver(receiver, IntentFilter(action), Context.RECEIVER_EXPORTED)
+
+            // Request user preapproval
+            FutureResultActivity.doAndAwaitStart {
+                val pendingIntent = PendingIntent.getBroadcast(
+                    context, 0 /* requestCode */,
+                    Intent(action).setPackage(context.packageName)
+                        .addFlags(Intent.FLAG_RECEIVER_FOREGROUND),
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
+                )
+                session.requestUserPreapproval(
+                    preparePreapprovalDetails(),
+                    pendingIntent.intentSender
+                )
+            }
+
+            // The system should have asked us to launch the installer with pre-approval true
+            var result = getInstallSessionResult(installResult)
+            assertEquals(PackageInstaller.STATUS_PENDING_USER_ACTION, result.status)
+            assertEquals(true, result.preapproval)
+
+            // Click the "Update anyway" button on the update ownership dialog
+            clickInstallerUIButton(By.text("Update anyway"))
+
+            // request should have succeeded
+            result = getInstallSessionResult(installResult)
+            assertEquals(PackageInstaller.STATUS_SUCCESS, result.status)
+            assertEquals(true, result.preapproval)
+        } finally {
+            context.unregisterReceiver(receiver)
+            uninstallPackage(TEST_INSTALLER_APK_PACKAGE_NAME)
+            uiAutomation.dropShellPermissionIdentity()
+            setDeviceProperty(
+                PROPERTY_IS_UPDATE_OWNERSHIP_ENFORCEMENT_AVAILABLE,
+                isUpdateOwnershipEnforcementAvailable
+            )
+        }
     }
 
     /**
