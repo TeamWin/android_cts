@@ -166,9 +166,9 @@ public class InputMethodManagerTest {
 
             return layout;
         });
-        waitOnMainUntil(() -> mImManager.isActive(), TIMEOUT);
-        assertTrue(mImManager.isAcceptingText());
-        assertTrue(mImManager.isActive(focusedEditTextRef.get()));
+        final View focusedEditText = focusedEditTextRef.get();
+        waitOnMainUntil(() -> mImManager.hasActiveInputConnection(focusedEditText), TIMEOUT);
+        assertTrue(mImManager.isActive(focusedEditText));
         assertFalse(mImManager.isActive(nonFocusedEditTextRef.get()));
     }
 
@@ -315,9 +315,8 @@ public class InputMethodManagerTest {
                 return viewRef[0];
             });
             // wait until editText becomes active
-            PollingCheck.waitFor(
-                    () -> testActivity.getSystemService(InputMethodManager.class).isActive(
-                            viewRef[0]));
+            final InputMethodManager imm = testActivity.getSystemService(InputMethodManager.class);
+            PollingCheck.waitFor(() -> imm.hasActiveInputConnection(viewRef[0]));
 
             Cleaner.create().register(viewRef[0], receivedSignalCleaned::countDown);
             viewRef[0] = null;
