@@ -77,7 +77,7 @@ public class GnssMeasurementValuesTest extends GnssTestCase {
 
     /**
      * Tests that one can listen for {@link GnssMeasurementsEvent} for collection purposes.
-     * It only performs sanity checks for the measurements received.
+     * It only performs initial checks for the measurements received.
      * This tests uses actual data retrieved from GPS HAL.
      */
     public void testListenForGnssMeasurements() throws Exception {
@@ -122,7 +122,7 @@ public class GnssMeasurementValuesTest extends GnssTestCase {
                 String.valueOf(eventCount), eventCount > 0);
 
         boolean carrierPhaseQualityPrrFound = false;
-        // we received events, so perform a quick sanity check on mandatory fields
+        // we received events, so perform a quick initial check on mandatory fields
         for (GnssMeasurementsEvent event : events) {
             // Verify Gps Event mandatory fields are in required ranges
             assertNotNull("GnssMeasurementEvent cannot be null.", event);
