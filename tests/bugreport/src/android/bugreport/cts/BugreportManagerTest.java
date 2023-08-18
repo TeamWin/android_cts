@@ -190,6 +190,19 @@ public class BugreportManagerTest {
         assertThatFileisNotEmpty(screenshot);
     }
 
+    @LargeTest
+    @Test
+    public void testOnboardingBugreport() throws Exception {
+        Pair<String, String> brFiles = triggerBugreport(BugreportParams.BUGREPORT_MODE_ONBOARDING);
+        String bugreport = brFiles.first;
+        String screenshot = brFiles.second;
+
+        assertBugreportFileNameCorrect(bugreport, null /* suffixName */);
+        assertThatFileisNotEmpty(bugreport);
+        // onboarding bugreport does not take any screenshot
+        assertThat(screenshot).isNull();
+    }
+
     private void assertBugreportFileNameCorrect(String fileName, String suffixName) {
         assertThat(fileName).startsWith(
                 "/data/user_de/0/com.android.shell/files/bugreports/bugreport-");
