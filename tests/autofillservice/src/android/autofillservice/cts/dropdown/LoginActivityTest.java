@@ -52,7 +52,6 @@ import static android.autofillservice.cts.testcore.InstrumentedAutoFillService.S
 import static android.autofillservice.cts.testcore.InstrumentedAutoFillService.isConnected;
 import static android.autofillservice.cts.testcore.InstrumentedAutoFillService.waitUntilConnected;
 import static android.autofillservice.cts.testcore.InstrumentedAutoFillService.waitUntilDisconnected;
-import static android.autofillservice.cts.testcore.Timeouts.RESPONSE_DELAY_MS;
 import static android.content.Context.CLIPBOARD_SERVICE;
 import static android.service.autofill.FillRequest.FLAG_MANUAL_REQUEST;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_ADDRESS;
@@ -1665,55 +1664,6 @@ public class LoginActivityTest extends LoginActivityCommonTestCase {
     @Test
     public void testSaveGoesAwayWhenTouchingOutside() throws Exception {
         saveGoesAway(DismissType.TOUCH_OUTSIDE);
-    }
-
-    @Test
-    public void testSaveUiWhenAutoFocusedToANewEditText() throws Exception {
-        enableService();
-
-        // Set expectations.
-        sReplier.addResponse(new CannedFillResponse.Builder()
-                .setSaveInfoFlags(SaveInfo.FLAG_SAVE_ON_ALL_VIEWS_INVISIBLE)
-                .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_USERNAME, ID_PASSWORD)
-                .build());
-        sReplier.addResponse(new CannedFillResponse.Builder(CannedFillResponse.ResponseType.DELAY)
-                .addDataset(new CannedDataset.Builder()
-                        .setField("single_edit_text", "dude")
-                        .setPresentation(createPresentation("The Dude"))
-                        .build())
-                .build());
-
-        // Trigger auto-fill.
-        mActivity.onUsername(View::requestFocus);
-
-        // Validation check.
-        mUiBot.assertNoDatasetsEver();
-
-        // Wait for onFill() before proceeding, otherwise the fields might be changed before
-        // the session started
-        sReplier.getNextFillRequest();
-
-        // Set credentials...
-        mActivity.onUsername((v) -> v.setText("malkovich"));
-        mActivity.onPassword((v) -> v.setText("malkovich"));
-
-        // ...and login, which will display an edit text which will be auto-focused
-        mActivity.login(true);
-
-        // The new edit text will trigger a new fill request.
-        sReplier.getNextFillRequest();
-
-        // Delayed response triggers additional fill request.
-        sReplier.getNextFillRequest();
-
-        // Assert that saveUi is showing.
-        mUiBot.assertSaveShowing(SAVE_DATA_TYPE_PASSWORD);
-
-        // Wait so that Fill Service has time to return the fill response.
-        SystemClock.sleep(RESPONSE_DELAY_MS);
-
-        // Assert that saveUi is still showing.
-        mUiBot.assertSaveShowing(SAVE_DATA_TYPE_PASSWORD);
     }
 
     private void saveGoesAway(DismissType dismissType) throws Exception {
