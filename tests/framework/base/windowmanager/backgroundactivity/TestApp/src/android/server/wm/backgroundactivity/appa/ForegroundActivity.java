@@ -68,35 +68,6 @@ public class ForegroundActivity extends Activity {
                 mA.FOREGROUND_ACTIVITY_EXTRA.RELAUNCH_FOREGROUND_ACTIVITY_EXTRA, false);
         mActivityId = intent.getIntExtra(mA.FOREGROUND_ACTIVITY_EXTRA.ACTIVITY_ID, -1);
 
-        boolean launchBackground = intent.getBooleanExtra(
-                mA.FOREGROUND_ACTIVITY_EXTRA.LAUNCH_BACKGROUND_ACTIVITY, false);
-        final int delay = intent.getIntExtra(
-                mA.FOREGROUND_ACTIVITY_EXTRA.START_ACTIVITY_FROM_FG_ACTIVITY_DELAY_MS, 0);
-        boolean newTask = intent.getBooleanExtra(
-                mA.FOREGROUND_ACTIVITY_EXTRA.START_ACTIVITY_FROM_FG_ACTIVITY_NEW_TASK, false);
-        if (launchBackground) {
-            final Intent newIntent = new Intent();
-            newIntent.setClass(this, BackgroundActivity.class);
-            if (newTask) {
-                newIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            }
-            if (delay == 0) {
-                startActivity(newIntent);
-            } else {
-                new Thread(() -> {
-                    SystemClock.sleep(delay);
-                    startActivity(newIntent);
-                }).start();
-            }
-        }
-
-        boolean launchSecond = intent.getBooleanExtra(
-                mA.FOREGROUND_ACTIVITY_EXTRA.LAUNCH_SECOND_BACKGROUND_ACTIVITY, false);
-        if (launchSecond) {
-            Intent newIntent = new Intent();
-            newIntent.setClass(this, SecondBackgroundActivity.class);
-            startActivity(newIntent);
-        }
         IntentFilter filter = new IntentFilter();
         filter.addAction(mA.FOREGROUND_ACTIVITY_ACTIONS.LAUNCH_BACKGROUND_ACTIVITIES);
         filter.addAction(mA.FOREGROUND_ACTIVITY_ACTIONS.FINISH_ACTIVITY);

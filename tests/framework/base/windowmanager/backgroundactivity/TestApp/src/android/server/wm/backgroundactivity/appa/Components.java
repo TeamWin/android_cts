@@ -69,16 +69,8 @@ public class Components extends ComponentsBase {
 
     /** Extra key constants for {@link #FOREGROUND_ACTIVITY}. */
     public static class ForegroundActivityExtra {
-        public final String LAUNCH_BACKGROUND_ACTIVITY =
-                "LAUNCH_BACKGROUND_ACTIVITY_EXTRA";
-        public final String LAUNCH_SECOND_BACKGROUND_ACTIVITY =
-                "LAUNCH_SECOND_BACKGROUND_ACTIVITY_EXTRA";
         public final String RELAUNCH_FOREGROUND_ACTIVITY_EXTRA =
                 "RELAUNCH_FOREGROUND_ACTIVITY_EXTRA";
-        public final String START_ACTIVITY_FROM_FG_ACTIVITY_DELAY_MS =
-                "START_ACTIVITY_FROM_FG_ACTIVITY_DELAY_MS_EXTRA";
-        public final String START_ACTIVITY_FROM_FG_ACTIVITY_NEW_TASK =
-                "START_ACTIVITY_FROM_FG_ACTIVITY_NEW_TASK_EXTRA";
 
         // Keep in sync with  android.server.wm.backgroundactivity.common.CommonComponents
         // .CommonForegroundActivityExtras
