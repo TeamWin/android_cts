@@ -21,10 +21,6 @@
 # Bug component: 46626 = per-file *Documents*
 # Bug component: 46626 = per-file ScopedDirectoryAccessTest.java
 
-# DocsUI bug component
-# Bug component: 46626 = per-file *Documents*
-# Bug component: 46626 = per-file ScopedDirectoryAccessTest.java
-
 patb@google.com
 per-file AccessSerialNumberTest.java = ashfall@google.com
 per-file ApexSignatureVerificationTest.java = dariofreni@google.com
@@ -71,11 +67,6 @@ per-file com.android.apex.cts.shim.*.apex = ioffe@google.com
 per-file *Adoptable* = file:platform/frameworks/base:/core/java/android/os/storage/OWNERS
 per-file *DirectBoot* = file:platform/frameworks/base:/core/java/android/os/storage/OWNERS
 per-file *Storage* = file:platform/frameworks/base:/core/java/android/os/storage/OWNERS
-per-file *Documents* = file:platform/frameworks/base:/core/java/android/os/storage/OWNERS
-per-file ScopedDirectoryAccessTest.java = file:platform/frameworks/base:/core/java/android/os/storage/OWNERS
-
-per-file *Documents* = file:platform/packages/apps/DocumentsUI:/OWNERS
-per-file ScopedDirectoryAccessTest.java = file:platform/packages/apps/DocumentsUI:/OWNERS
 
 # OTA
 per-file *ResumeOnReboot* = file:platform/frameworks/base:/core/java/android/service/resumeonreboot/OWNERS
