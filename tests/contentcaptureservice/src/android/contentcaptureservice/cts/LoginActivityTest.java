@@ -201,7 +201,7 @@ public class LoginActivityTest
                 .getContentCaptureSessionId();
         Log.v(TAG, "session ids: main=" + mainSessionId + ", child=" + childSessionId);
 
-        // Sanity checks
+        // Initial checks
         assertSessionId(childSessionId, activity.getRootView());
         assertSessionId(childSessionId, activity.mUsernameLabel);
         assertSessionId(childSessionId, activity.mUsername);
@@ -215,7 +215,7 @@ public class LoginActivityTest
         assertRightActivity(mainSession, mainSessionId, activity);
         assertRightRelationship(mainSession, childSession);
 
-        // Sanity check
+        // Initial check
         final List<ContentCaptureSessionId> allSessionIds = service.getAllSessionIds();
         assertThat(allSessionIds).containsExactly(mainSessionId, childSessionId);
 
@@ -353,7 +353,7 @@ public class LoginActivityTest
         final ContentCaptureSessionId sessionId = session.id;
         assertRightActivity(session, sessionId, activity);
 
-        // Sanity check
+        // Initial check
 
         final List<ContentCaptureEvent> events = session.getEvents();
         Log.v(TAG, "events(" + events.size() + "): " + events);

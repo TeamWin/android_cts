@@ -215,7 +215,7 @@ public abstract class AbstractContentCaptureIntegrationTest {
 
     /**
      * Sets {@link CtsContentCaptureService} as the service for the current user and waits until
-     * its created, then whitelist the CTS test package.
+     * its created, then allowlist the CTS test package.
      */
     public CtsContentCaptureService enableService() throws InterruptedException {
         return enableService(toSet(MY_PACKAGE), /* whitelistedComponents= */ null);
