@@ -20,5 +20,5 @@ package dot.junit.verify.a1.d;
  *
  */
 public class T_a1_2 {
-    // dummy
+    // placeholder
 }
