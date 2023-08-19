@@ -41,11 +41,11 @@ public class TestService extends Service {
 
     private class MyBinder extends ITestService.Stub {
         @Override
-        public PendingIntent generatePendingIntent(ComponentName componentName,
+        public PendingIntent generatePendingIntent(ComponentName componentName, int flags,
                 Bundle createOptions) {
             Intent newIntent = new Intent();
             newIntent.setComponent(componentName);
-            newIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            newIntent.addFlags(flags);
             newIntent.setIdentifier(UUID.randomUUID().toString());
             return PendingIntent.getActivity(TestService.this, 0, newIntent,
                     PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE,

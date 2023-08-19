@@ -32,6 +32,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import android.app.PendingIntent;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -213,6 +214,24 @@ public abstract class BackgroundActivityTestBase extends ActivityManagerTestBase
                 })
                 .toArray(Intent[]::new);
         broadcastIntent.putExtra(app.FOREGROUND_ACTIVITY_EXTRA.LAUNCH_INTENTS, intents);
+        return broadcastIntent;
+    }
+
+    Intent getLaunchActivitiesBroadcast(Components app,
+            PendingIntent... pendingIntents) {
+        Intent broadcastIntent = new Intent(
+                app.FOREGROUND_ACTIVITY_ACTIONS.LAUNCH_BACKGROUND_ACTIVITIES);
+        broadcastIntent.putExtra(app.FOREGROUND_ACTIVITY_EXTRA.LAUNCH_PENDING_INTENTS,
+                pendingIntents);
+        return broadcastIntent;
+    }
+
+    Intent getLaunchAndFinishActivitiesBroadcast(Components app, PendingIntent... pendingIntents) {
+        Intent broadcastIntent = new Intent(
+                app.FOREGROUND_ACTIVITY_ACTIONS.LAUNCH_BACKGROUND_ACTIVITIES);
+        broadcastIntent.putExtra(app.FOREGROUND_ACTIVITY_EXTRA.LAUNCH_PENDING_INTENTS,
+                pendingIntents);
+        broadcastIntent.putExtra(app.FOREGROUND_ACTIVITY_EXTRA.LAUNCH_FOR_RESULT_AND_FINISH, true);
         return broadcastIntent;
     }
 
@@ -402,11 +421,11 @@ public abstract class BackgroundActivityTestBase extends ActivityManagerTestBase
                 .isNotEqualTo(getActivityName(componentName));
     }
 
-    protected ITestService getTestService(Components c) throws Exception {
+    protected TestServiceClient getTestService(Components c) throws Exception {
         return getTestService(new ComponentName(c.APP_PACKAGE_NAME, TEST_SERVICE));
     }
 
-    private ITestService getTestService(ComponentName componentName) throws Exception {
+    private TestServiceClient getTestService(ComponentName componentName) throws Exception {
         FutureConnection<ITestService> futureConnection = mServiceConnections.get(componentName);
         if (futureConnection == null) {
             // need to setup new test service connection for the component
@@ -418,7 +437,7 @@ public abstract class BackgroundActivityTestBase extends ActivityManagerTestBase
                     Context.BIND_AUTO_CREATE);
             assertTrue("Failed to setup " + componentName.toString(), success);
         }
-        return futureConnection.get(TEST_SERVICE_SETUP_TIMEOUT_MS);
+        return new TestServiceClient(futureConnection.get(TEST_SERVICE_SETUP_TIMEOUT_MS));
     }
 
 }

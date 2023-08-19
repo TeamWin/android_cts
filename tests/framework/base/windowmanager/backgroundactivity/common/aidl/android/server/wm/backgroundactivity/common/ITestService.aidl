@@ -20,7 +20,7 @@ import android.app.PendingIntent;
 import android.content.ComponentName;
 
 interface ITestService {
-    PendingIntent generatePendingIntent(in ComponentName componentName, in Bundle createOptions);
+    PendingIntent generatePendingIntent(in ComponentName componentName, in int flags, in Bundle createOptions);
     PendingIntent generatePendingIntentBroadcast(in ComponentName componentName);
     void startManageSpaceActivity();
     void sendByTextClassification(in TextClassification classification);

@@ -17,17 +17,25 @@
 package android.server.wm.backgroundactivity.appa;
 
 import android.app.Activity;
+import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
 import android.os.SystemClock;
+import android.util.Log;
+
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Foreground activity that makes AppA as foreground.
  */
 public class ForegroundActivity extends Activity {
+    private static final String TAG = ForegroundActivity.class.getName();
     private Components mA;
 
     private int mActivityId = -1;
@@ -44,16 +52,55 @@ public class ForegroundActivity extends Activity {
             }
 
             if (mA.FOREGROUND_ACTIVITY_ACTIONS.FINISH_ACTIVITY.equals(action)
-                    || intent.getBooleanExtra(mA.FOREGROUND_ACTIVITY_EXTRA.FINISH_FIRST, false))  {
+                    || intent.getBooleanExtra(mA.FOREGROUND_ACTIVITY_EXTRA.FINISH_FIRST, false)) {
                 finish();
             }
 
             if (mA.FOREGROUND_ACTIVITY_ACTIONS.LAUNCH_BACKGROUND_ACTIVITIES.equals(action)) {
-                // Need to copy as a new array instead of just casting to Intent[] since a new
-                // array of type Parcelable[] is created when deserializing.
-                Intent[] intents = intent.getParcelableArrayExtra(
-                        mA.FOREGROUND_ACTIVITY_EXTRA.LAUNCH_INTENTS, Intent.class);
-                startActivities(intents);
+                if (intent.hasExtra(mA.FOREGROUND_ACTIVITY_EXTRA.LAUNCH_INTENTS)) {
+                    // Need to copy as a new array instead of just casting to Intent[] since a new
+                    // array of type Parcelable[] is created when deserializing.
+                    Intent[] intents = intent.getParcelableArrayExtra(
+                            mA.FOREGROUND_ACTIVITY_EXTRA.LAUNCH_INTENTS, Intent.class);
+                    Log.d(TAG, mA + ":start " + Arrays.asList(intents));
+                    startActivities(intents);
+                }
+                if (intent.hasExtra(mA.FOREGROUND_ACTIVITY_EXTRA.LAUNCH_PENDING_INTENTS)) {
+                    // Need to copy as a new array instead of just casting to Intent[] since a new
+                    // array of type Parcelable[] is created when deserializing.
+                    PendingIntent[] pendingIntents = intent.getParcelableArrayExtra(
+                            mA.FOREGROUND_ACTIVITY_EXTRA.LAUNCH_PENDING_INTENTS,
+                            PendingIntent.class);
+                    Log.d(TAG, mA + ":start " + Arrays.asList(pendingIntents));
+                    if (intent.getBooleanExtra(
+                            mA.FOREGROUND_ACTIVITY_EXTRA.LAUNCH_FOR_RESULT_AND_FINISH, false)) {
+                        // launch and then finish the activity
+                        int nextRequestCode = 123;
+                        List<Integer> requestCodesUsed = new ArrayList<>();
+                        for (PendingIntent pi : pendingIntents) {
+                            try {
+                                int requestCode = nextRequestCode++;
+                                startIntentSenderForResult(pi.getIntentSender(), requestCode, null,
+                                        0, 0, 0);
+                                requestCodesUsed.add(requestCode);
+                            } catch (Exception e) {
+                                throw new RuntimeException(e);
+                            }
+                        }
+                        SystemClock.sleep(Duration.ofSeconds(1).toMillis());
+                        for (int requestCode : requestCodesUsed) {
+                            finishActivity(requestCode);
+                        }
+                    } else {
+                        for (PendingIntent pi : pendingIntents) {
+                            try {
+                                startIntentSender(pi.getIntentSender(), null, 0, 0, 0);
+                            } catch (Exception e) {
+                                throw new RuntimeException(e);
+                            }
+                        }
+                    }
+                }
             }
         }
     };
