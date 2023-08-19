@@ -24,6 +24,7 @@ import android.os.Binder;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.storage.StorageManager;
+import android.util.Log;
 import android.view.View;
 import android.view.textclassifier.TextClassification;
 
@@ -67,8 +68,8 @@ public class TestService extends Service {
                 StorageManager stm = getSystemService(StorageManager.class);
                 PendingIntent pi = stm.getManageSpaceActivityIntent(getPackageName(), 0);
                 pi.send();
-            } catch (PendingIntent.CanceledException e) {
-                e.printStackTrace();
+            } catch (Exception e) {
+                Log.e(TAG, "startManageSpaceActivity failed", e);
                 throw new IllegalStateException("Unable to send PendingIntent");
             } finally {
                 Binder.restoreCallingIdentity(token);
@@ -85,14 +86,20 @@ public class TestService extends Service {
         public void sendPendingIntent(PendingIntent pendingIntent, Bundle sendOptions) {
             try {
                 pendingIntent.send(sendOptions);
-            } catch (PendingIntent.CanceledException e) {
+            } catch (Exception e) {
+                Log.e(TAG, "sendPendingIntent failed", e);
                 throw new AssertionError(e);
             }
         }
 
         @Override
         public void startActivityIntent(Intent intent) {
-            startActivity(intent);
+            try {
+                startActivity(intent);
+            } catch (Exception e) {
+                Log.e(TAG, "startActivityIntent failed", e);
+                throw new AssertionError(e);
+            }
         }
     }
 }
