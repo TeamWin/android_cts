@@ -98,6 +98,7 @@ class LowLatencyZoomTest(its_base_test.ItsBaseTest):
       reqs = []
       req = capture_request_utils.auto_capture_request()
       req['android.control.settingsOverride'] = camera_properties_utils.SETTINGS_OVERRIDE_ZOOM
+      req['android.control.enableZsl'] = False
       for z in z_list:
         logging.debug('zoom ratio: %.2f', z)
         req_for_zoom = req.copy()
