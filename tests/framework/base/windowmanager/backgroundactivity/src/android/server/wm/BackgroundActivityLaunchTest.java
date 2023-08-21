@@ -307,7 +307,6 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
     }
 
     @Test
-    @FlakyTest(bugId = 272082654)
     public void testActivityFromBgActivityInFgTaskSdk33_isNotBlocked() {
         // Launch Activity A, B in the same task with different processes.
         startActivity(APP_A_33.FOREGROUND_ACTIVITY);
