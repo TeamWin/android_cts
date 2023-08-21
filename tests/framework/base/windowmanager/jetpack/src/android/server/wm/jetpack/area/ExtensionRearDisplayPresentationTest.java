@@ -262,6 +262,7 @@ public class ExtensionRearDisplayPresentationTest extends WindowManagerJetpackTe
         ExtensionWindowAreaPresentation presentation =
                 mWindowAreaComponent.getRearDisplayPresentation();
         assertNotNull(presentation);
+        assertNotNull(presentation.getWindow());
         TestPresentationView presentationView = new TestPresentationView(
                 presentation.getPresentationContext());
         mActivity.runOnUiThread(() -> presentation.setPresentationView(presentationView));
@@ -314,6 +315,7 @@ public class ExtensionRearDisplayPresentationTest extends WindowManagerJetpackTe
         ExtensionWindowAreaPresentation presentation =
                 mWindowAreaComponent.getRearDisplayPresentation();
         assertNotNull(presentation);
+        assertNotNull(presentation.getWindow());
         TestPresentationView presentationView = new TestPresentationView(
                 presentation.getPresentationContext());
         mActivity.runOnUiThread(() -> presentation.setPresentationView(presentationView));
@@ -366,6 +368,7 @@ public class ExtensionRearDisplayPresentationTest extends WindowManagerJetpackTe
         ExtensionWindowAreaPresentation presentation =
                 mWindowAreaComponent.getRearDisplayPresentation();
         assertNotNull(presentation);
+        assertNotNull(presentation.getWindow());
         TestPresentationView presentationView = new TestPresentationView(
                 presentation.getPresentationContext());
         mActivity.runOnUiThread(() -> presentation.setPresentationView(presentationView));
