@@ -37,13 +37,13 @@ import android.graphics.Path;
 import android.graphics.PointF;
 import android.graphics.drawable.ShapeDrawable;
 import android.os.SystemClock;
-import android.platform.test.annotations.FlakyTest;
 import android.util.FloatProperty;
 import android.util.Property;
 import android.view.View;
 import android.view.animation.AccelerateInterpolator;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.FlakyTest;
 import androidx.test.filters.LargeTest;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;

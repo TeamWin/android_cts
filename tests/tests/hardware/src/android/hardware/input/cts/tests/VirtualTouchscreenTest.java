@@ -25,11 +25,11 @@ import android.hardware.display.VirtualDisplay;
 import android.hardware.input.VirtualTouchEvent;
 import android.hardware.input.VirtualTouchscreen;
 import android.hardware.input.VirtualTouchscreenConfig;
-import android.platform.test.annotations.FlakyTest;
 import android.view.InputDevice;
 import android.view.InputEvent;
 import android.view.MotionEvent;
 
+import androidx.test.filters.FlakyTest;
 import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
 
