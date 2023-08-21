@@ -516,7 +516,7 @@ public class CameraTestUtils extends Assert {
     }
 
     /**
-     * Dummy listener that release the image immediately once it is available.
+     * Placeholder listener that release the image immediately once it is available.
      *
      * <p>
      * It can be used for the case where we don't care the image data at all.
