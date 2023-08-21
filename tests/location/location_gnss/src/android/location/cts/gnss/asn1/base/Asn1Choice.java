@@ -29,7 +29,7 @@ import javax.annotation.Nullable;
  */
 public abstract class Asn1Choice extends Asn1Object {
   /**
-   * Dummy non-tag used as default tag for CHOICE, which reflects the BER encoding idea
+   * Placeholder non-tag used as default tag for CHOICE, which reflects the BER encoding idea
    * that CHOICE is not an object in itself, it just gets coded as its value. This means
    * that it doesn't matter whether the choice object tag is designated as IMPLICIT or
    * EXPLICIT, it gets coded the same way anyway.
