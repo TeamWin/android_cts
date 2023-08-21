@@ -34,6 +34,7 @@ import com.android.compatibility.common.util.DeviceConfigStateChangerRule
 import com.android.compatibility.common.util.FutureResultActivity
 import java.io.File
 import java.util.concurrent.LinkedBlockingQueue
+import java.util.regex.Pattern
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.fail
@@ -204,7 +205,14 @@ class PreapprovalInstallTest : PackageInstallerTestBase() {
             assertEquals(true, result.preapproval)
 
             // Click the "Update anyway" button on the update ownership dialog
-            clickInstallerUIButton(By.text("Update anyway"))
+            clickInstallerUIButton(
+                By.text(
+                     Pattern.compile(
+                         "UPDATE ANYWAY",
+                         Pattern.CASE_INSENSITIVE
+                     )
+                )
+            )
 
             // request should have succeeded
             result = getInstallSessionResult(installResult)
