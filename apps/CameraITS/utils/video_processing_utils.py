@@ -247,14 +247,13 @@ def get_average_frame_rate(video_file_name_with_path):
     Float. average frames per second.
   """
 
-  cmd = ['ffmpeg',
-         '-i',
-         video_file_name_with_path,
-         '-vf',
-         'vfrdet',
-         '-f',
-         'null',
-         '-',
+  cmd = ['ffprobe',
+         '-v',
+         'quiet',
+         '-show_streams',
+         '-select_streams',
+         'v:0',  # first video stream
+         video_file_name_with_path
         ]
   logging.debug('Getting frame rate')
   raw_output = ''
@@ -266,18 +265,16 @@ def get_average_frame_rate(video_file_name_with_path):
     raise AssertionError(str(e.output)) from e
   if raw_output:
     output = str(raw_output.decode('utf-8')).strip()
-    logging.debug('FFmpeg command %s output: %s', ' '.join(cmd), output)
-    fps_data = output.splitlines()[-3]  # frames printed on third to last line
-    frames = int(re.search(r'frame= *([0-9]+)', fps_data).group(1))
-    duration = re.search(r'time= *([0-9][0-9:\.]*)', fps_data).group(1)
-    time_parts = [float(t) for t in duration.split(':')]
-    seconds = time_parts[0] * HR_TO_SEC + time_parts[
-        1] * MIN_TO_SEC + time_parts[2]
-    logging.debug('Average FPS: %d / %d = %.4f',
-                  frames, seconds, frames / seconds)
-    return frames / seconds
+    logging.debug('ffprobe command %s output: %s', ' '.join(cmd), output)
+    average_frame_rate_data = (
+        re.search(r'avg_frame_rate=*([0-9]+/[0-9]+)', output).group(1)
+    )
+    average_frame_rate = (int(average_frame_rate_data.split('/')[0]) /
+                          int(average_frame_rate_data.split('/')[1]))
+    logging.debug('Average FPS: %.4f', average_frame_rate)
+    return average_frame_rate
   else:
-    raise AssertionError('ffmpeg failed to provide frame rate data')
+    raise AssertionError('ffprobe failed to provide frame rate data')
 
 
 def get_frame_deltas(video_file_name_with_path, timestamp_type='pts'):
