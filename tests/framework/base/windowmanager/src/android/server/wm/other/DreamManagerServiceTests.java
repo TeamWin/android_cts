@@ -149,20 +149,11 @@ public class DreamManagerServiceTests extends ActivityManagerTestBase {
 
     @Test
     public void testDreamServiceStopsTimely() throws Exception {
-        mDreamActivityName = mDreamCoordinator.setActiveDream(TEST_DREAM_SERVICE);
-
-        mDreamCoordinator.startDream();
-        waitAndAssertTopResumedActivity(mDreamActivityName, DEFAULT_DISPLAY,
-                "Dream activity should be the top resumed activity");
-        mWmState.waitForValidState(mWmState.getHomeActivityName());
-        mWmState.assertVisibility(mWmState.getHomeActivityName(), false);
-        assertTrue(mDreamCoordinator.isDreaming());
-
-        mDreamCoordinator.stopDream();
-
-        waitAndAssertDreamActivityGone(ACTIVITY_STOP_MAX_TIMEOUT);
-
-        assertFalse(mDreamCoordinator.isDreaming());
+        try (DreamingState state = new DreamingState(TEST_DREAM_SERVICE)) {
+            mDreamCoordinator.stopDream();
+            waitAndAssertDreamActivityGone(ACTIVITY_STOP_MAX_TIMEOUT);
+            assertFalse(mDreamCoordinator.isDreaming());
+        }
     }
 
     @Test
