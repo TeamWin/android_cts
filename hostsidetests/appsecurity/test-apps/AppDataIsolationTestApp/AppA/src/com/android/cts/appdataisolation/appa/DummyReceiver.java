@@ -20,7 +20,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 
-// Dummy receiver to make this app as direct boot aware.
+// Placeholder receiver to make this app as direct boot aware.
 public class DummyReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
