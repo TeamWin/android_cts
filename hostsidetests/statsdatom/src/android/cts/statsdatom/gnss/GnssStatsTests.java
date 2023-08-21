@@ -66,7 +66,7 @@ public class GnssStatsTests extends DeviceTestCase implements IBuildReceiver {
                 AtomsProto.Atom.GNSS_STATS_FIELD_NUMBER);
 
         if (!DeviceUtils.hasFeature(getDevice(), FEATURE_LOCATION_GPS)) return;
-        // Whitelist this app against background location request throttling
+        // Allowlist this app against background location request throttling
         String origWhitelist = getDevice().executeShellCommand(
                 "settings get global location_background_throttle_package_whitelist").trim();
         getDevice().executeShellCommand(String.format(
