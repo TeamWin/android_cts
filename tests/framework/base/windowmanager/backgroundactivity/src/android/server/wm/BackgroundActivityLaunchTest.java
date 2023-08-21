@@ -251,10 +251,11 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
     public void testActivityNotBlockedWhenForegroundActivityLaunch() throws Exception {
         // Start foreground activity, and foreground activity able to launch background activity
         // successfully
-        startActivityUnchecked(APP_A.FOREGROUND_ACTIVITY,
-                new String[]{APP_A.FOREGROUND_ACTIVITY_EXTRA.LAUNCH_BACKGROUND_ACTIVITY});
+        startActivity(APP_A.FOREGROUND_ACTIVITY);
 
+        mContext.sendBroadcast(getLaunchActivitiesBroadcast(APP_A, APP_A.BACKGROUND_ACTIVITY));
         assertActivityFocused(APP_A.BACKGROUND_ACTIVITY);
+
         assertTaskStackHasComponents(APP_A.FOREGROUND_ACTIVITY,
                 APP_A.BACKGROUND_ACTIVITY,
                 APP_A.FOREGROUND_ACTIVITY);
@@ -291,7 +292,7 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
 
         // Refresh last-stop-app-switch-time by returning to home and then make the task foreground.
         pressHomeAndResumeAppSwitch();
-        startActivityUnchecked(APP_A.FOREGROUND_ACTIVITY, new String[]{});
+        startActivityUnchecked(APP_A.FOREGROUND_ACTIVITY);
         mWmState.waitForValidState(APP_B.FOREGROUND_ACTIVITY);
         // As A is not visible, it can not start activities.
         mContext.sendBroadcast(new Intent(
@@ -319,7 +320,7 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
 
         // Refresh last-stop-app-switch-time by returning to home and then make the task foreground.
         pressHomeAndResumeAppSwitch();
-        startActivityUnchecked(APP_A_33.FOREGROUND_ACTIVITY, new String[]{});
+        startActivityUnchecked(APP_A_33.FOREGROUND_ACTIVITY);
         mWmState.waitForValidState(APP_B.FOREGROUND_ACTIVITY);
         // Though process A is in background, it is in a visible Task (top is B) so it should be
         // able to start activity successfully.
@@ -354,11 +355,13 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
     public void testSecondActivityNotBlockedWhenForegroundActivityLaunch() throws Exception {
         // Start AppA foreground activity, which will immediately launch one activity
         // and then the second.
-        startActivityUnchecked(APP_A.FOREGROUND_ACTIVITY,
-                new String[]{APP_A.FOREGROUND_ACTIVITY_EXTRA.LAUNCH_BACKGROUND_ACTIVITY,
-                        APP_A.FOREGROUND_ACTIVITY_EXTRA.LAUNCH_SECOND_BACKGROUND_ACTIVITY});
+        startActivity(APP_A.FOREGROUND_ACTIVITY);
 
+        mContext.sendBroadcast(getLaunchActivitiesBroadcast(APP_A, APP_A.BACKGROUND_ACTIVITY));
+        assertActivityFocused(APP_A.BACKGROUND_ACTIVITY);
+        mContext.sendBroadcast(getLaunchActivitiesBroadcast(APP_A, APP_A.SECOND_BACKGROUND_ACTIVITY));
         assertActivityFocused(APP_A.SECOND_BACKGROUND_ACTIVITY);
+
         assertTaskStackHasComponents(APP_A.FOREGROUND_ACTIVITY,
                 APP_A.SECOND_BACKGROUND_ACTIVITY,
                 APP_A.BACKGROUND_ACTIVITY,
