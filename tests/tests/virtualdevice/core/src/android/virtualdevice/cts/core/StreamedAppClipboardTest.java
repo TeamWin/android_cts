@@ -71,6 +71,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.res.Resources;
 import android.graphics.PixelFormat;
 import android.graphics.Point;
 import android.hardware.display.DisplayManager;
@@ -81,13 +82,13 @@ import android.os.Bundle;
 import android.os.ResultReceiver;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
+import android.server.wm.WakeUpAndUnlockRule;
 import android.server.wm.WindowManagerStateHelper;
 import android.util.DisplayMetrics;
 import android.view.Display;
 import android.view.MotionEvent;
 import android.view.WindowManager;
 import android.virtualdevice.cts.common.FakeAssociationRule;
-import android.server.wm.WakeUpAndUnlockRule;
 import android.virtualdevice.cts.common.util.VirtualDeviceTestUtils;
 
 import androidx.annotation.NonNull;
@@ -166,7 +167,11 @@ public class StreamedAppClipboardTest {
         MockitoAnnotations.initMocks(this);
         mContext = getApplicationContext();
         final PackageManager packageManager = mContext.getPackageManager();
-        assumeTrue(packageManager.hasSystemFeature(PackageManager.FEATURE_COMPANION_DEVICE_SETUP));
+        assumeTrue(mContext.getResources().getBoolean(
+                Resources.getSystem().getIdentifier(
+                        "config_enableVirtualDeviceManager",
+                        "bool",
+                        "android")));
         assumeTrue(packageManager.hasSystemFeature(
                 PackageManager.FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS));
         // TODO(b/261155110): Re-enable tests once freeform mode is supported in Virtual Display.
