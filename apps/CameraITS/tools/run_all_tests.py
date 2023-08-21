@@ -63,24 +63,25 @@ _PROPERTIES_TO_MATCH = (
 )
 _MAIN_TESTBED = 0
 
-# All possible scenes
+# Scenes that can be automated through tablet display
 # Notes on scene names:
 #   scene*_1/2/... are same scene split to load balance run times for scenes
 #   scene*_a/b/... are similar scenes that share one or more tests
-_ALL_SCENES = [
-    'scene0', 'scene1_1', 'scene1_2', 'scene2_a', 'scene2_b', 'scene2_c',
-    'scene2_d', 'scene2_e', 'scene2_f', 'scene3', 'scene4', 'scene5',
-    'scene6', os.path.join('scene_extensions', 'scene_hdr'),
-    os.path.join('scene_extensions', 'scene_night'), 'sensor_fusion'
-]
-
-# Scenes that can be automated through tablet display
-_AUTO_SCENES = [
+_TABLET_SCENES = [
     'scene0', 'scene1_1', 'scene1_2', 'scene2_a', 'scene2_b', 'scene2_c',
     'scene2_d', 'scene2_e', 'scene2_f', 'scene3', 'scene4', 'scene6',
     os.path.join('scene_extensions', 'scene_hdr'),
     os.path.join('scene_extensions', 'scene_night')
 ]
+
+# Scenes that use the 'sensor_fusion' test rig
+_MOTION_SCENES = ['sensor_fusion']
+
+# Scenes that have to be run manually regardless of configuration
+_MANUAL_SCENES = ['scene5']
+
+# All possible scenes
+_ALL_SCENES = _TABLET_SCENES + _MANUAL_SCENES + _MOTION_SCENES
 
 # Scenes that are logically grouped and can be called as group
 _GROUPED_SCENES = {
@@ -88,9 +89,6 @@ _GROUPED_SCENES = {
         'scene2': ['scene2_a', 'scene2_b', 'scene2_c', 'scene2_d', 'scene2_e',
                    'scene2_f']
 }
-
-# Scenes that have to be run manually regardless of configuration
-_MANUAL_SCENES = ['scene5']
 
 # Scene requirements for manual testing.
 _SCENE_REQ = {
@@ -714,7 +712,7 @@ def main():
       if auto_scene_switch:
         possible_scenes.remove('sensor_fusion')
     else:
-      possible_scenes = _AUTO_SCENES if auto_scene_switch else _ALL_SCENES
+      possible_scenes = _TABLET_SCENES if auto_scene_switch else _ALL_SCENES
 
     if '<scene-name>' in scenes:
       per_camera_scenes = possible_scenes
