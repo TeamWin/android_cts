@@ -70,7 +70,7 @@ public class AutoRestoreHostSideTest extends BaseBackupHostSideTest {
      *
      * <ol>
      *   <li>Enable auto restore
-     *   <li>Write dummy values to shared preferences
+     *   <li>Write placeholder values to shared preferences
      *   <li>Backup the package
      *   <li>Uninstall the package
      *   <li>Install the package again and verify shared prefs are restored
@@ -92,7 +92,7 @@ public class AutoRestoreHostSideTest extends BaseBackupHostSideTest {
      *
      * <ol>
      *   <li>Disable auto restore
-     *   <li>Write dummy values to shared preferences
+     *   <li>Write placeholder values to shared preferences
      *   <li>Backup the package
      *   <li>Uninstall the package
      *   <li>Install the package again and verify shared prefs aren't restored
