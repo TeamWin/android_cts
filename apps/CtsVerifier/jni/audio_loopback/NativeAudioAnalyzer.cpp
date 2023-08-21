@@ -83,6 +83,13 @@ aaudio_data_callback_result_t NativeAudioAnalyzer::dataCallbackProc(
         mMinNumFrames = numFrames;
     }
 
+    // Get atomic snapshot of the relative frame positions so they
+    // can be used to calculate timestamp latency.
+    int64_t framesRead = AAudioStream_getFramesRead(mInputStream);
+    int64_t framesWritten = AAudioStream_getFramesWritten(mOutputStream);
+    mWriteReadDelta = framesWritten - framesRead;
+    mWriteReadDeltaValid = true;
+
     // Silence the output.
     int32_t numBytes = numFrames * mActualOutputChannelCount * sizeof(float);
     memset(audioData, 0 /* value */, numBytes);
@@ -302,6 +309,8 @@ aaudio_result_t NativeAudioAnalyzer::openAudio(int inputDeviceId, int outputDevi
 aaudio_result_t NativeAudioAnalyzer::startAudio() {
     mLoopbackProcessor->prepareToTest();
 
+    mWriteReadDeltaValid = false;
+
     // Start OUTPUT first so INPUT does not overflow.
     aaudio_result_t result = AAudioStream_requestStart(mOutputStream);
     if (result != AAUDIO_OK) {
@@ -349,4 +358,45 @@ aaudio_result_t NativeAudioAnalyzer::closeAudio() {
         mInputStream = nullptr;
     }
     return result1 != AAUDIO_OK ? result1 : result2;
+}
+
+// The timestamp latency is the difference between the input
+// and output times for a specific frame.
+// Start with the position and time from an input timestamp.
+// Map the input position to the corresponding position in output
+// and calculate its time.
+// Use the difference between framesWritten and framesRead to
+// convert input positions to output positions.
+// Returns -1.0 if the data callback wasn't called or if the stream is closed.
+double NativeAudioAnalyzer::measureTimestampLatencyMillis() {
+    if (!mWriteReadDeltaValid) return -1.0; // Data callback never called.
+
+    int64_t writeReadDelta = mWriteReadDelta;
+    aaudio_result_t result;
+
+    int64_t inputPosition;
+    int64_t inputTimeNanos;
+    int64_t outputPosition;
+    int64_t outputTimeNanos;
+    result = AAudioStream_getTimestamp(mInputStream, CLOCK_MONOTONIC, &inputPosition,
+                                       &inputTimeNanos);
+    if (result != AAUDIO_OK) {
+        return -1.0; // Stream is closed.
+    }
+    result = AAudioStream_getTimestamp(mOutputStream, CLOCK_MONOTONIC, &outputPosition,
+                                       &outputTimeNanos);
+    if (result != AAUDIO_OK) {
+        return -1.0; // Stream is closed.
+    }
+
+    // Map input frame position to the corresponding output frame.
+    int64_t mappedPosition = inputPosition + writeReadDelta;
+    // Calculate when that frame will play.
+    int32_t sampleRate = getSampleRate();
+    int64_t mappedTimeNanos = outputTimeNanos + ((mappedPosition - outputPosition) * 1e9)
+            / sampleRate;
+
+    // Latency is the difference in time between when a frame was recorded and
+    // when its corresponding echo was played.
+    return (mappedTimeNanos - inputTimeNanos) * 1.0e-6; // convert nanos to millis
 }
