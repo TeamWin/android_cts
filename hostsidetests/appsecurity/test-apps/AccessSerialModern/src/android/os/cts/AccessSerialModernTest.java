@@ -36,7 +36,7 @@ public class AccessSerialModernTest {
     @Test
     public void testAccessSerialPermissionNeeded() throws Exception {
         // Build.SERIAL should not provide the device serial for modern apps.
-        // We don't know the serial but know that it should be the dummy
+        // We don't know the serial but know that it should be the placeholder
         // value returned to unauthorized callers, so make sure that value
         assertTrue("Build.SERIAL must not work for modern apps",
                 Build.UNKNOWN.equals(Build.SERIAL));
