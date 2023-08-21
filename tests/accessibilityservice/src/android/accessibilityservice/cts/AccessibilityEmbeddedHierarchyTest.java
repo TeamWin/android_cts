@@ -209,7 +209,7 @@ public class AccessibilityEmbeddedHierarchyTest {
     }
 
     /**
-     * This class is an dummy {@link android.app.Activity} used to perform embedded hierarchy
+     * This class is an placeholder {@link android.app.Activity} used to perform embedded hierarchy
      * testing of the accessibility feature by interaction with the UI widgets.
      */
     public static class AccessibilityEmbeddedHierarchyActivity extends
