@@ -46,7 +46,6 @@ import static android.virtualdevice.cts.common.AudioHelper.SHORT_VALUE;
 import android.annotation.NonNull;
 import android.annotation.Nullable;
 import android.app.Activity;
-import android.app.ActivityManager;
 import android.app.KeyguardManager;
 import android.content.ClipData;
 import android.content.ClipboardManager;
@@ -95,21 +94,6 @@ public class MainActivity extends Activity {
      */
     static final String EXTRA_DISPLAY = "display";
 
-
-    /**
-     * Tell this activity to check whether it's task is present on the recent tasks list
-     * and call result receiver with result passed in bundle under
-     * {@link MainActivity#EXTRA_ACTIVITY_INCLUDED_IN_RECENT_TASKS} key.
-     */
-    static final String ACTION_CHECK_RECENT_TASKS_PRESENCE =
-            PACKAGE_NAME + ".CHECK_RECENT_TASKS_PRESENCE";
-
-    /**
-     * Boolean extra in the result data that is set to true iff test app task is in list of
-     * recent tasks, false otherwise.
-     */
-    static final String EXTRA_ACTIVITY_INCLUDED_IN_RECENT_TASKS = "activityIncludedInRecentTasks";
-
     /**
      * Tell this activity to test camera access when it is launched. It will get the String camera
      * id to try opening from {@link #EXTRA_CAMERA_ID}, and put the test outcome in
@@ -153,8 +137,6 @@ public class MainActivity extends Activity {
                             getIntent().getParcelableExtra(EXTRA_ACTIVITY_LAUNCHED_RECEIVER);
                     Bundle result = new Bundle();
                     result.putInt(EXTRA_DISPLAY, getDisplay().getDisplayId());
-                    result.putBoolean(EXTRA_ACTIVITY_INCLUDED_IN_RECENT_TASKS,
-                            isActivityIncludedInRecentTasks());
                     resultReceiver.send(Activity.RESULT_OK, result);
                     finish();
                     break;
@@ -224,31 +206,10 @@ public class MainActivity extends Activity {
                             break;
                     }
                     break;
-                case ACTION_CHECK_RECENT_TASKS_PRESENCE:
-                    testRecentTasksPresence();
-                    break;
                 default:
                     Log.w(TAG, "Unknown action: " + action);
             }
         }
-    }
-
-    private void testRecentTasksPresence() {
-        Log.d(TAG, "Checking presence in recent tasks");
-        ResultReceiver resultReceiver =
-                getIntent().getParcelableExtra(EXTRA_ACTIVITY_LAUNCHED_RECEIVER,
-                        ResultReceiver.class);
-        Bundle result = new Bundle();
-        result.putBoolean(EXTRA_ACTIVITY_INCLUDED_IN_RECENT_TASKS,
-                isActivityIncludedInRecentTasks());
-        resultReceiver.send(Activity.RESULT_OK, result);
-        finish();
-    }
-
-    private boolean isActivityIncludedInRecentTasks() {
-        return getSystemService(ActivityManager.class)
-            .getRecentTasks(Integer.MAX_VALUE, /*flags=*/0)
-            .stream().anyMatch(task -> task.taskId == getTaskId());
     }
 
     private void testClipboard() {

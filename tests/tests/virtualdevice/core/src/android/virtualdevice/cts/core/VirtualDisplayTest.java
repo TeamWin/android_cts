@@ -26,7 +26,6 @@ import static androidx.test.core.app.ApplicationProvider.getApplicationContext;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
-import static com.google.common.util.concurrent.Uninterruptibles.tryAcquireUninterruptibly;
 
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assume.assumeTrue;
@@ -43,12 +42,12 @@ import android.hardware.display.VirtualDisplayConfig;
 import android.platform.test.annotations.AppModeFull;
 import android.view.Display;
 import android.virtualdevice.cts.common.FakeAssociationRule;
+import android.virtualdevice.cts.common.util.VirtualDeviceTestUtils;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.AdoptShellPermissionsRule;
-import com.android.internal.annotations.GuardedBy;
 
 import com.google.common.base.Objects;
 
@@ -63,8 +62,6 @@ import org.mockito.MockitoAnnotations;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.Semaphore;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -95,7 +92,7 @@ public class VirtualDisplayTest {
 
     private VirtualDeviceManager mVirtualDeviceManager;
     private DisplayManager mDisplayManager;
-    private DisplayListenerForTest mDisplayListener;
+    private VirtualDeviceTestUtils.DisplayListenerForTest mDisplayListener;
     @Nullable
     private VirtualDevice mVirtualDevice;
     @Mock
@@ -111,7 +108,7 @@ public class VirtualDisplayTest {
                 PackageManager.FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS));
         mVirtualDeviceManager = context.getSystemService(VirtualDeviceManager.class);
         mDisplayManager = context.getSystemService(DisplayManager.class);
-        mDisplayListener = new DisplayListenerForTest();
+        mDisplayListener = new VirtualDeviceTestUtils.DisplayListenerForTest();
         mDisplayManager.registerDisplayListener(mDisplayListener, /*handler=*/null);
     }
 
@@ -134,7 +131,7 @@ public class VirtualDisplayTest {
 
         VirtualDisplay virtualDisplay = mVirtualDevice.createVirtualDisplay(
                 DEFAULT_VIRTUAL_DISPLAY_CONFIG, Runnable::run, mVirtualDisplayCallback);
-        mDisplayListener.waitForOnDisplayAddedCallback();
+        assertThat(mDisplayListener.waitForOnDisplayAddedCallback()).isTrue();
 
         assertThat(virtualDisplay).isNotNull();
         Display display = virtualDisplay.getDisplay();
@@ -160,7 +157,7 @@ public class VirtualDisplayTest {
                 /* flags= */ 0,
                 Runnable::run,
                 mVirtualDisplayCallback);
-        mDisplayListener.waitForOnDisplayAddedCallback();
+        assertThat(mDisplayListener.waitForOnDisplayAddedCallback()).isTrue();
 
         assertThat(virtualDisplay).isNotNull();
         Display display = virtualDisplay.getDisplay();
@@ -180,7 +177,7 @@ public class VirtualDisplayTest {
 
         VirtualDisplay virtualDisplay = mVirtualDevice.createVirtualDisplay(
                 DEFAULT_VIRTUAL_DISPLAY_CONFIG, Runnable::run, mVirtualDisplayCallback);
-        mDisplayListener.waitForOnDisplayAddedCallback();
+        assertThat(mDisplayListener.waitForOnDisplayAddedCallback()).isTrue();
 
         Display display = virtualDisplay.getDisplay();
         assertThat(display.isValid()).isTrue();
@@ -224,7 +221,7 @@ public class VirtualDisplayTest {
                 .build();
         VirtualDisplay virtualDisplay = mVirtualDevice.createVirtualDisplay(
                 config, Runnable::run, mVirtualDisplayCallback);
-        mDisplayListener.waitForOnDisplayAddedCallback();
+        assertThat(mDisplayListener.waitForOnDisplayAddedCallback()).isTrue();
 
         assertThat(virtualDisplay).isNotNull();
         Display display = virtualDisplay.getDisplay();
@@ -248,7 +245,7 @@ public class VirtualDisplayTest {
 
         VirtualDisplay virtualDisplay = mVirtualDevice.createVirtualDisplay(
                 DEFAULT_VIRTUAL_DISPLAY_CONFIG, Runnable::run, mVirtualDisplayCallback);
-        mDisplayListener.waitForOnDisplayAddedCallback();
+        assertThat(mDisplayListener.waitForOnDisplayAddedCallback()).isTrue();
 
         assertThat(virtualDisplay).isNotNull();
         Display display = virtualDisplay.getDisplay();
@@ -272,7 +269,7 @@ public class VirtualDisplayTest {
                         DEFAULT_VIRTUAL_DEVICE_PARAMS);
         VirtualDisplay virtualDisplay = mVirtualDevice.createVirtualDisplay(
                 DEFAULT_VIRTUAL_DISPLAY_CONFIG, /* executor= */ null, /* callback= */ null);
-        mDisplayListener.waitForOnDisplayAddedCallback();
+        assertThat(mDisplayListener.waitForOnDisplayAddedCallback()).isTrue();
 
         assertThat(virtualDisplay).isNotNull();
         Display display = virtualDisplay.getDisplay();
@@ -309,7 +306,7 @@ public class VirtualDisplayTest {
         // Releasing several displays in quick succession should not cause deadlock
         displays.forEach(VirtualDisplay::release);
 
-        mDisplayListener.waitForOnDisplayRemovedCallback(/*numDisplays=*/5);
+        assertThat(mDisplayListener.waitForOnDisplayRemovedCallback(/*numDisplays=*/5)).isTrue();
         assertThat(mDisplayListener.getObservedRemovedDisplays()).containsExactlyElementsIn(
                 getDisplayIds(displays));
     }
@@ -329,7 +326,7 @@ public class VirtualDisplayTest {
         // Closing the virtual device should automatically release displays.
         mVirtualDevice.close();
 
-        mDisplayListener.waitForOnDisplayRemovedCallback(/*numDisplays=*/5);
+        assertThat(mDisplayListener.waitForOnDisplayRemovedCallback(/*numDisplays=*/5)).isTrue();
         assertThat(mDisplayListener.getObservedRemovedDisplays()).containsExactlyElementsIn(
                 getDisplayIds(displays));
         displays.forEach(display -> assertThat(display.getDisplay().isValid()).isFalse());
@@ -351,7 +348,7 @@ public class VirtualDisplayTest {
         displays.forEach(VirtualDisplay::release);
         mVirtualDevice.close();
 
-        mDisplayListener.waitForOnDisplayRemovedCallback(/*numDisplays=*/5);
+        assertThat(mDisplayListener.waitForOnDisplayRemovedCallback(/*numDisplays=*/5)).isTrue();
         assertThat(mDisplayListener.getObservedRemovedDisplays()).containsExactlyElementsIn(
                 getDisplayIds(displays));
     }
@@ -379,7 +376,7 @@ public class VirtualDisplayTest {
         VirtualDisplay virtualDisplay = mVirtualDevice.createVirtualDisplay(
                 DEFAULT_VIRTUAL_DISPLAY_CONFIG, Runnable::run, mVirtualDisplayCallback);
         virtualDisplay.release();
-        mDisplayListener.waitForOnDisplayRemovedCallback();
+        assertThat(mDisplayListener.waitForOnDisplayRemovedCallback()).isTrue();
 
         // When virtual display is released, the callback from display manager service to VDM
         // is dispatched asynchronously and after display listener callbacks are dispatched.
@@ -405,7 +402,7 @@ public class VirtualDisplayTest {
                 DEFAULT_VIRTUAL_DISPLAY_CONFIG, Runnable::run, mVirtualDisplayCallback);
 
         mVirtualDevice.close();
-        mDisplayListener.waitForOnDisplayRemovedCallback();
+        assertThat(mDisplayListener.waitForOnDisplayRemovedCallback()).isTrue();
 
         // Check whether display associated with virtual device is valid.
         Display display = virtualDisplay.getDisplay();
@@ -439,110 +436,5 @@ public class VirtualDisplayTest {
             lastResult = supplier.get();
         }
         return lastResult;
-    }
-
-
-    private static class DisplayListenerForTest implements DisplayManager.DisplayListener {
-        private final Semaphore mDisplayAddedSemaphore = new Semaphore(0);
-        private final Semaphore mDisplayRemovedSemaphore = new Semaphore(0);
-        private final Object mLock = new Object();
-        @GuardedBy("mLock")
-        private final ArrayList<Integer> mAddedDisplays = new ArrayList<>();
-        @GuardedBy("mLock")
-        private final ArrayList<Integer> mRemovedDisplays = new ArrayList<>();
-
-        /**
-         * Wait until {@code OnDisplayAddedCallback} is invoked at least numDisplays or timeout
-         * expires.
-         *
-         * @param numDisplays - how many invocations of {@code OnDisplayAddedCallback} to wait for.
-         * @return true iff the {@code OnDisplayAddedCallback} was invoked at least numDisplays
-         * before
-         * timeout expiration.
-         */
-        public boolean waitForOnDisplayAddedCallback(int numDisplays) {
-            return tryAcquireUninterruptibly(mDisplayAddedSemaphore, numDisplays, TIMEOUT_MILLIS,
-                    TimeUnit.MILLISECONDS);
-        }
-
-        /**
-         * Wait until {@code OnDisplayAddedCallback} is invoked once or timeout expires.
-         *
-         * @return true iff the {@code OnDisplayAddedCallback} was invoked at least once before
-         * timeout expiration.
-         */
-        public boolean waitForOnDisplayAddedCallback() {
-            return waitForOnDisplayAddedCallback(/*numDisplays=*/1);
-        }
-
-
-        /**
-         * Wait until {@code OnDisplayRemovedCallback} is invoked at least numDisplays or timeout
-         * expires.
-         *
-         * @param numDisplays - how many invocations of {@code OnDisplayRemovedCallback} to wait
-         *                    for.
-         * @return true iff the {@code OnDisplayRemovedCallback} was invoked at least numDisplays
-         * before
-         * timeout expiration.
-         */
-        public boolean waitForOnDisplayRemovedCallback(int numDisplays) {
-            return tryAcquireUninterruptibly(mDisplayRemovedSemaphore, numDisplays, TIMEOUT_MILLIS,
-                    TimeUnit.MILLISECONDS);
-        }
-
-        /**
-         * Wait until {@code OnDisplayRemovedCallback} is invoked once or timeout expires.
-         *
-         * @return true iff the {@code OnDisplayRemovedCallback} was invoked at least once before
-         * timeout expiration.
-         */
-        public boolean waitForOnDisplayRemovedCallback() {
-            return waitForOnDisplayRemovedCallback(/*numDisplays=*/1);
-        }
-
-        @Override
-        public void onDisplayAdded(int displayId) {
-            synchronized (mLock) {
-                mAddedDisplays.add(displayId);
-                mDisplayAddedSemaphore.release();
-            }
-        }
-
-        @Override
-        public void onDisplayRemoved(int displayId) {
-            synchronized (mLock) {
-                mRemovedDisplays.add(displayId);
-                mDisplayRemovedSemaphore.release();
-            }
-        }
-
-
-        @Override
-        public void onDisplayChanged(int displayId) {
-            //Do nothing.
-        }
-
-        /**
-         * Get list of recently added display ids.
-         *
-         * @return List of recently added display ids.
-         */
-        ArrayList<Integer> getObservedAddedDisplays() {
-            synchronized (mDisplayAddedSemaphore) {
-                return new ArrayList<>(mAddedDisplays);
-            }
-        }
-
-        /**
-         * Get list of recently removed display ids.
-         *
-         * @return List of recently removed display ids.
-         */
-        ArrayList<Integer> getObservedRemovedDisplays() {
-            synchronized (mDisplayRemovedSemaphore) {
-                return new ArrayList<>(mRemovedDisplays);
-            }
-        }
     }
 }

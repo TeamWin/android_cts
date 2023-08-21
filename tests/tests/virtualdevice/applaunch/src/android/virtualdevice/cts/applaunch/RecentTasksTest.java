@@ -16,22 +16,12 @@
 
 package android.virtualdevice.cts;
 
-import static android.Manifest.permission.ACTIVITY_EMBEDDING;
-import static android.Manifest.permission.ADD_ALWAYS_UNLOCKED_DISPLAY;
 import static android.Manifest.permission.ADD_TRUSTED_DISPLAY;
 import static android.Manifest.permission.CREATE_VIRTUAL_DEVICE;
-import static android.Manifest.permission.REAL_GET_TASKS;
-import static android.Manifest.permission.WAKE_LOCK;
-import static android.app.PendingIntent.FLAG_IMMUTABLE;
-import static android.app.PendingIntent.FLAG_UPDATE_CURRENT;
 import static android.companion.virtual.VirtualDeviceParams.DEVICE_POLICY_CUSTOM;
 import static android.companion.virtual.VirtualDeviceParams.DEVICE_POLICY_DEFAULT;
 import static android.companion.virtual.VirtualDeviceParams.POLICY_TYPE_RECENTS;
-import static android.virtualdevice.cts.common.util.TestAppHelper.ACTION_CHECK_RECENT_TASKS_PRESENCE;
-import static android.virtualdevice.cts.common.util.TestAppHelper.EXTRA_ACTIVITY_INCLUDED_IN_RECENT_TASKS;
-import static android.virtualdevice.cts.common.util.TestAppHelper.EXTRA_ACTIVITY_LAUNCHED_RECEIVER;
-import static android.virtualdevice.cts.common.util.TestAppHelper.MAIN_ACTIVITY_COMPONENT;
-import static android.virtualdevice.cts.common.util.VirtualDeviceTestUtils.createResultReceiver;
+import static android.virtualdevice.cts.common.util.VirtualDeviceTestUtils.createActivityOptions;
 
 import static androidx.test.core.app.ApplicationProvider.getApplicationContext;
 
@@ -40,8 +30,7 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assume.assumeNotNull;
 import static org.junit.Assume.assumeTrue;
 
-import android.app.Activity;
-import android.app.PendingIntent;
+import android.app.ActivityManager;
 import android.companion.virtual.VirtualDeviceManager;
 import android.companion.virtual.VirtualDeviceManager.VirtualDevice;
 import android.companion.virtual.VirtualDeviceParams;
@@ -50,8 +39,8 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
-import android.os.Bundle;
 import android.platform.test.annotations.AppModeFull;
+import android.virtualdevice.cts.applaunch.util.EmptyActivity;
 import android.virtualdevice.cts.common.FakeAssociationRule;
 import android.virtualdevice.cts.common.util.VirtualDeviceTestUtils;
 
@@ -60,40 +49,29 @@ import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.AdoptShellPermissionsRule;
 
-import com.google.common.util.concurrent.SettableFuture;
-import com.google.common.util.concurrent.Uninterruptibles;
-
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.time.Duration;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
 @RunWith(AndroidJUnit4.class)
 @AppModeFull(reason = "VirtualDeviceManager cannot be accessed by instant apps")
 public class RecentTasksTest {
 
-    private static final Duration TIMEOUT = Duration.ofSeconds(10);
-
-
     @Rule
     public AdoptShellPermissionsRule mAdoptShellPermissionsRule = new AdoptShellPermissionsRule(
             InstrumentationRegistry.getInstrumentation().getUiAutomation(),
-            ACTIVITY_EMBEDDING,
-            ADD_ALWAYS_UNLOCKED_DISPLAY,
             ADD_TRUSTED_DISPLAY,
-            CREATE_VIRTUAL_DEVICE,
-            REAL_GET_TASKS,
-            WAKE_LOCK);
+            CREATE_VIRTUAL_DEVICE);
 
     @Rule
     public FakeAssociationRule mFakeAssociationRule = new FakeAssociationRule();
 
     private VirtualDeviceManager mVirtualDeviceManager;
+    private DisplayManager mDisplayManager;
+    private ActivityManager mActivityManager;
+    private VirtualDeviceTestUtils.DisplayListenerForTest mDisplayListener;
 
     @Before
     public void setUp() {
@@ -104,32 +82,53 @@ public class RecentTasksTest {
                 PackageManager.FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS));
         mVirtualDeviceManager = context.getSystemService(VirtualDeviceManager.class);
         assumeNotNull(mVirtualDeviceManager);
+        mActivityManager = context.getSystemService(ActivityManager.class);
+        mDisplayManager = context.getSystemService(DisplayManager.class);
+        mDisplayListener = new VirtualDeviceTestUtils.DisplayListenerForTest();
+        mDisplayManager.registerDisplayListener(mDisplayListener, /*handler=*/null);
+    }
+
+    @After
+    public void tearDown() {
+        if (mDisplayManager != null && mDisplayListener != null) {
+            mDisplayManager.unregisterDisplayListener(mDisplayListener);
+        }
     }
 
     @Test
-    public void activityLaunchedOnVdmWithDefaultRecentPolicy_includedInRecents() throws Exception {
+    public void activityLaunchedOnVdmWithDefaultRecentPolicy_includedInRecents() {
+        EmptyActivity activity;
+        int taskId;
         try (VirtualDevice virtualDevice = createVirtualDeviceWithRecentsPolicy(
                 DEVICE_POLICY_DEFAULT)) {
             VirtualDisplay virtualDisplay = createVirtualDisplay(virtualDevice);
-
-            Bundle activityResult = launchTestActivity(virtualDevice, virtualDisplay);
-
-            assertThat(activityResult.getBoolean(EXTRA_ACTIVITY_INCLUDED_IN_RECENT_TASKS)).isTrue();
+            assertThat(mDisplayListener.waitForOnDisplayAddedCallback()).isTrue();
+            activity = launchTestActivity(virtualDisplay);
+            taskId = activity.getTaskId();
+            assertThat(isTaskIncludedInRecents(taskId)).isTrue();
         }
+
+        // Make sure the policy is respected even after the device / display are gone.
+        assertThat(mDisplayListener.waitForOnDisplayRemovedCallback()).isTrue();
+        assertThat(isTaskIncludedInRecents(taskId)).isTrue();
     }
 
     @Test
-    public void activityLaunchedOnVdmWithCustomRecentPolicy_excludedFromRecents() throws Exception {
+    public void activityLaunchedOnVdmWithCustomRecentPolicy_excludedFromRecents() {
+        EmptyActivity activity;
+        int taskId;
         try (VirtualDevice virtualDevice = createVirtualDeviceWithRecentsPolicy(
                 DEVICE_POLICY_CUSTOM)) {
             VirtualDisplay virtualDisplay = createVirtualDisplay(virtualDevice);
-            launchTestActivity(virtualDevice, virtualDisplay);
-
-            Bundle activityResult = launchTestActivity(virtualDevice, virtualDisplay);
-
-            assertThat(
-                    activityResult.getBoolean(EXTRA_ACTIVITY_INCLUDED_IN_RECENT_TASKS)).isFalse();
+            assertThat(mDisplayListener.waitForOnDisplayAddedCallback()).isTrue();
+            activity = launchTestActivity(virtualDisplay);
+            taskId = activity.getTaskId();
+            assertThat(isTaskIncludedInRecents(taskId)).isFalse();
         }
+
+        // Make sure the policy is respected even after the device / display are gone.
+        assertThat(mDisplayListener.waitForOnDisplayRemovedCallback()).isTrue();
+        assertThat(isTaskIncludedInRecents(taskId)).isFalse();
     }
 
     private VirtualDevice createVirtualDeviceWithRecentsPolicy(
@@ -140,52 +139,27 @@ public class RecentTasksTest {
                         recentsPolicy).build());
     }
 
-    private Bundle launchTestActivity(VirtualDevice virtualDevice, VirtualDisplay virtualDisplay)
-            throws ExecutionException, TimeoutException {
-        ActivityResultCallback activityResultCallback = new ActivityResultCallback();
-
-        Intent intent =
-                new Intent(ACTION_CHECK_RECENT_TASKS_PRESENCE)
-                        .setComponent(MAIN_ACTIVITY_COMPONENT)
-                        .putExtra(EXTRA_ACTIVITY_LAUNCHED_RECEIVER,
-                                createResultReceiver(activityResultCallback)).setFlags(
-                                Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        virtualDevice.launchPendingIntent(virtualDisplay.getDisplay().getDisplayId(),
-                PendingIntent.getActivity(getApplicationContext(),
-                        MAIN_ACTIVITY_COMPONENT.hashCode(), intent,
-                        FLAG_IMMUTABLE | FLAG_UPDATE_CURRENT),
-                Runnable::run, value -> {
-                });
-
-        return activityResultCallback.waitForActivityResult();
+    private EmptyActivity launchTestActivity(VirtualDisplay virtualDisplay) {
+        return (EmptyActivity) InstrumentationRegistry.getInstrumentation()
+                .startActivitySync(
+                        new Intent(getApplicationContext(), EmptyActivity.class)
+                                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK
+                                        | Intent.FLAG_ACTIVITY_CLEAR_TASK),
+                        createActivityOptions(virtualDisplay));
     }
 
     private static VirtualDisplay createVirtualDisplay(VirtualDevice virtualDevice) {
         return virtualDevice.createVirtualDisplay(
                 VirtualDeviceTestUtils.createDefaultVirtualDisplayConfigBuilder()
-                        .setFlags(DisplayManager.VIRTUAL_DISPLAY_FLAG_TRUSTED)
+                        .setFlags(DisplayManager.VIRTUAL_DISPLAY_FLAG_TRUSTED
+                                | DisplayManager.VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY
+                                | DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC)
                         .build(),
                 /*executor=*/null, /*callback=*/null);
     }
-    private static class ActivityResultCallback implements
-            VirtualDeviceTestUtils.OnReceiveResultListener {
 
-        private final SettableFuture<Bundle> mResultBundle = SettableFuture.create();
-
-        public Bundle waitForActivityResult() throws ExecutionException, TimeoutException {
-            return Uninterruptibles.getUninterruptibly(mResultBundle, TIMEOUT.getSeconds(),
-                    TimeUnit.SECONDS);
-        }
-
-        @Override
-        public void onReceiveResult(int resultCode, Bundle resultData) {
-            if (resultCode != Activity.RESULT_OK) {
-                mResultBundle.setException(new IllegalStateException(
-                        "Test activity returned unexpected result code: " + resultCode));
-            } else {
-                mResultBundle.set(resultData);
-            }
-        }
+    private boolean isTaskIncludedInRecents(int taskId) {
+        return mActivityManager.getRecentTasks(Integer.MAX_VALUE, /*flags=*/0)
+                .stream().anyMatch(task -> task.taskId == taskId);
     }
-
 }
