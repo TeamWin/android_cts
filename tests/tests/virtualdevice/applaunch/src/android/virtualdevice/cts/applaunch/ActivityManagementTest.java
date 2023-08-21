@@ -27,6 +27,7 @@ import static android.virtualdevice.cts.common.util.VirtualDeviceTestUtils.creat
 import static androidx.test.core.app.ApplicationProvider.getApplicationContext;
 
 import static org.junit.Assume.assumeFalse;
+import static org.junit.Assume.assumeNotNull;
 import static org.junit.Assume.assumeTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -121,13 +122,13 @@ public class ActivityManagementTest {
         MockitoAnnotations.initMocks(this);
         Context context = getApplicationContext();
         final PackageManager packageManager = context.getPackageManager();
-        assumeTrue(packageManager.hasSystemFeature(PackageManager.FEATURE_COMPANION_DEVICE_SETUP));
         assumeTrue(packageManager
                 .hasSystemFeature(PackageManager.FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS));
         // TODO(b/261155110): Re-enable tests once freeform mode is supported in Virtual Display.
         assumeFalse("Skipping test: VirtualDisplay window policy doesn't support freeform.",
                 packageManager.hasSystemFeature(FEATURE_FREEFORM_WINDOW_MANAGEMENT));
         mVirtualDeviceManager = context.getSystemService(VirtualDeviceManager.class);
+        assumeNotNull(mVirtualDeviceManager);
         mResultReceiver = VirtualDeviceTestUtils.createResultReceiver(mOnReceiveResultListener);
     }
 

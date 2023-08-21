@@ -23,6 +23,7 @@ import static android.content.pm.PackageManager.FEATURE_FREEFORM_WINDOW_MANAGEME
 
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
+import static org.junit.Assume.assumeNotNull;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.ActivityOptions;
@@ -148,6 +149,7 @@ public abstract class VirtualDeviceTestCase extends InputTestCase {
         }
         final VirtualDeviceManager virtualDeviceManager =
                 context.getSystemService(VirtualDeviceManager.class);
+        assumeNotNull(virtualDeviceManager);
         mVirtualDevice = virtualDeviceManager.createVirtualDevice(associationInfo.getId(),
                 new VirtualDeviceParams.Builder().build());
         mVirtualDisplay = mVirtualDevice.createVirtualDisplay(

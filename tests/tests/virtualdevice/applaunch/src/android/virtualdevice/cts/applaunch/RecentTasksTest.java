@@ -77,7 +77,6 @@ public class RecentTasksTest {
     public void setUp() {
         Context context = getApplicationContext();
         final PackageManager packageManager = context.getPackageManager();
-        assumeTrue(packageManager.hasSystemFeature(PackageManager.FEATURE_COMPANION_DEVICE_SETUP));
         assumeTrue(packageManager.hasSystemFeature(
                 PackageManager.FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS));
         mVirtualDeviceManager = context.getSystemService(VirtualDeviceManager.class);
