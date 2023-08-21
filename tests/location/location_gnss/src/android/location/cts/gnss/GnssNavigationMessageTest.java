@@ -72,7 +72,7 @@ public class GnssNavigationMessageTest extends GnssTestCase {
 
     /**
      * Tests that one can listen for {@link GnssNavigationMessage}s for collection purposes.
-     * It only performs sanity checks for the Navigation messages received.
+     * It only performs initial checks for the Navigation messages received.
      * This tests uses actual data retrieved from GPS HAL.
      */
     public void testGnssNavigationMessageMandatoryFieldRanges() throws Exception {
