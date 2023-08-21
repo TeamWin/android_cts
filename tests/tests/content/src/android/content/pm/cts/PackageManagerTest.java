@@ -2825,14 +2825,88 @@ public class PackageManagerTest {
                     FLAG_SUSPEND_QUARANTINED);
             assertEquals("", String.join(",", notset));
         });
+
+        // Flag treatment.
         ApplicationInfo appInfo = mPackageManager.getApplicationInfo(HELLO_WORLD_PACKAGE_NAME,
                 PackageManager.ApplicationInfoFlags.of(FILTER_OUT_QUARANTINED_COMPONENTS));
+
+        // Default filtration of services.
+        List<ResolveInfo> servicesResult;
+        {
+            Intent intent = new Intent("com.example.helloworld.service");
+            intent.setPackage(HELLO_WORLD_PACKAGE_NAME);
+            servicesResult = mPackageManager.queryIntentServices(intent, 0);
+            if (servicesResult == null) {
+                servicesResult = new ArrayList<>();
+            }
+        }
+
+        // Default filtration of providers.
+        final List<ResolveInfo> providersResult1;
+        {
+            Intent intent = new Intent("com.example.helloworld.provider");
+            intent.setPackage(HELLO_WORLD_PACKAGE_NAME);
+            intent.setComponent(new ComponentName(HELLO_WORLD_PACKAGE_NAME,
+                    "com.example.helloworld.TestContentProvider"));
+            providersResult1 = mPackageManager.queryIntentContentProviders(intent, 0);
+        }
+
+        final List<ResolveInfo> providersResult2;
+        {
+            Intent intent = new Intent("com.example.helloworld.provider");
+            providersResult2 = mPackageManager.queryIntentContentProviders(intent, 0);
+        }
+
+        final List<ResolveInfo> providersResult3;
+        {
+            Intent intent = new Intent("com.example.helloworld.provider");
+            intent.setPackage(HELLO_WORLD_PACKAGE_NAME);
+            providersResult3 = mPackageManager.queryIntentContentProviders(intent, 0);
+        }
+
+        ProviderInfo contentProvider = mPackageManager.resolveContentProvider(
+                "com.example.helloworld.testcontentprovider", 0);
+
+        boolean providerFound = false;
+        {
+            final List<ProviderInfo> result = mPackageManager.queryContentProviders(null, 0, 0);
+            for (int i = 0, size = result == null ? 0 : result.size(); i < size;
+                    ++i) {
+                final ProviderInfo providerInfo = result.get(i);
+                if ("com.example.helloworld.TestContentProvider".equals(providerInfo.name)) {
+                    providerFound = true;
+                    break;
+                }
+            }
+        }
+
         if (enabled) {
             assertThat(runCommand("pm list packages -q")).contains(HELLO_WORLD_PACKAGE_NAME);
             assertFalse(appInfo.enabled);
+            assertTrue(servicesResult.toString(), servicesResult.size() == 0);
+            assertTrue(providersResult1.toString(), providersResult1.size() == 0);
+            assertTrue(providersResult2.toString(), providersResult2.size() == 0);
+            assertTrue(providersResult3.toString(), providersResult3.size() == 0);
+            assertFalse(providerFound);
         } else {
             assertThat(runCommand("pm list packages -q")).doesNotContain(HELLO_WORLD_PACKAGE_NAME);
             assertTrue(appInfo.enabled);
+            assertEquals(servicesResult.toString(), 1, servicesResult.size());
+            assertEquals("com.example.helloworld.TestService",
+                    servicesResult.get(0).serviceInfo.name);
+            assertEquals(providersResult1.toString(), 1, providersResult1.size());
+            assertEquals("com.example.helloworld.TestContentProvider",
+                    providersResult1.get(0).providerInfo.name);
+            assertEquals(providersResult2.toString(), 1, providersResult2.size());
+            assertEquals("com.example.helloworld.TestContentProvider",
+                    providersResult2.get(0).providerInfo.name);
+            assertEquals(providersResult3.toString(), 1, providersResult3.size());
+            assertEquals("com.example.helloworld.TestContentProvider",
+                    providersResult3.get(0).providerInfo.name);
+            assertNotNull(contentProvider);
+            assertEquals("com.example.helloworld.TestContentProvider",
+                    contentProvider.name);
+            assertTrue(providerFound);
         }
     }
 

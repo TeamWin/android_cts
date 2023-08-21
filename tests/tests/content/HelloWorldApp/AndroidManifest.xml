@@ -31,6 +31,21 @@
             android:authorities="${applicationId}.androidx-startup"
             tools:node="remove" />
 
+        <provider android:name=".TestContentProvider"
+                  android:authorities="com.example.helloworld.testcontentprovider"
+                  android:exported="true">
+            <intent-filter>
+                <action android:name="com.example.helloworld.provider"/>
+            </intent-filter>
+        </provider>
+
+        <service android:name=".TestService"
+                 android:exported="true">
+            <intent-filter>
+                <action android:name="com.example.helloworld.service"/>
+            </intent-filter>
+        </service>
+
     </application>
 
 </manifest>
