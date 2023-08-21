@@ -18,5 +18,5 @@ package android.appsecurity.cts.apkveritytestapp;
 
 import android.app.Activity;
 
-/** Dummy class just to generate some dex */
+/** Placeholder class just to generate some dex */
 public class DummyActivity extends Activity {}
