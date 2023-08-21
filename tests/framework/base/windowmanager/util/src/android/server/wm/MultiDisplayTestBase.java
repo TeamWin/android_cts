@@ -254,7 +254,7 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
             return this;
         }
 
-        VirtualDisplaySession setOwnContentOnly(boolean ownContentOnly) {
+        public VirtualDisplaySession setOwnContentOnly(boolean ownContentOnly) {
             mOwnContentOnly = ownContentOnly;
             return this;
         }

@@ -29,7 +29,7 @@ import static android.server.wm.app.Components.LaunchBroadcastReceiver.EXTRA_TAR
 import static android.server.wm.app.Components.LaunchBroadcastReceiver.LAUNCH_BROADCAST_ACTION;
 import static android.server.wm.app.Components.TEST_ACTIVITY;
 import static android.server.wm.app.Components.VIRTUAL_DISPLAY_ACTIVITY;
-import static android.server.wm.display.MultiDisplaySystemDecorationTests.ImeTestActivity;
+import static android.server.wm.display.MultiDisplayImeTests.ImeTestActivity;
 import static android.server.wm.second.Components.EMBEDDING_ACTIVITY;
 import static android.server.wm.second.Components.EmbeddingActivity.ACTION_EMBEDDING_TEST_ACTIVITY_START;
 import static android.server.wm.second.Components.EmbeddingActivity.EXTRA_EMBEDDING_COMPONENT_NAME;
