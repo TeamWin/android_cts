@@ -18,6 +18,8 @@ package android.widget.cts;
 
 import static android.content.pm.ApplicationInfo.PRIVATE_FLAG_EXT_ENABLE_ON_BACK_INVOKED_CALLBACK;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -7435,6 +7437,50 @@ public class TextViewTest {
                         AccessibilityEvent.CONTENT_CHANGE_TYPE_ERROR
                                 | AccessibilityEvent.CONTENT_CHANGE_TYPE_CONTENT_INVALID),
                 TIMEOUT);
+    }
+
+    @Test
+    public void testAccessibilityActionNextGranularityLineOverText() throws Exception {
+        UiAutomation uiAutomation = mInstrumentation.getUiAutomation();
+        TextView textView = findTextView(R.id.textview_text);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT,
+                LayoutParams.WRAP_CONTENT);
+        mInstrumentation.runOnMainSync(() -> {
+            // Ensure we fall into case where the layout will be nulled in
+            // TextView#checkForRelayout when making sure the text is iterable for accessibility in
+            // TextView#ensureIterableTextForAccessibilitySelectable.
+            textView.setLayoutParams(params);
+            textView.setMinWidth(0);
+            textView.setMinWidth(Integer.MAX_VALUE);
+            textView.setText(mActivity.getResources().getString(R.id.textview_text_two_lines));
+        });
+
+        assertThat(textView.getText() instanceof Spannable).isFalse();
+
+        final AccessibilityNodeInfo text = uiAutomation
+                .getRootInActiveWindow().findAccessibilityNodeInfosByText(
+                        mActivity.getResources().getString(R.id.textview_text_two_lines)).get(0);
+
+        final int granularities = text.getMovementGranularities();
+        assertThat(
+                (granularities & AccessibilityNodeInfo.MOVEMENT_GRANULARITY_LINE) != 0).isTrue();
+
+        final Bundle arguments = new Bundle();
+        arguments.putInt(AccessibilityNodeInfo.ACTION_ARGUMENT_MOVEMENT_GRANULARITY_INT,
+                AccessibilityNodeInfo.MOVEMENT_GRANULARITY_LINE);
+        // Move to the next line and wait for an event.
+        AccessibilityEvent firstExpected = uiAutomation
+                .executeAndWaitForEvent(() -> text.performAction(
+                        AccessibilityNodeInfo.ACTION_NEXT_AT_MOVEMENT_GRANULARITY,
+                        arguments), event -> (event.getEventType()
+                        == AccessibilityEvent.TYPE_VIEW_TEXT_TRAVERSED_AT_MOVEMENT_GRANULARITY
+                        && event.getAction()
+                        == AccessibilityNodeInfo.ACTION_NEXT_AT_MOVEMENT_GRANULARITY
+                        && event.getMovementGranularity()
+                        == AccessibilityNodeInfo.MOVEMENT_GRANULARITY_LINE), TIMEOUT);
+
+        // Make sure we got the expected event.
+        assertNotNull(firstExpected);
     }
 
     @Test
