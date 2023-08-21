@@ -20,5 +20,5 @@ package dot.junit.verify.b3.d;
 *
 */
 public class T_b3_0 {
-   // dummy
+   // placeholder
 }
