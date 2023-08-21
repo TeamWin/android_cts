@@ -52,8 +52,18 @@ class CompanionDeviceManagerUi(private val ui: UiDevice) {
 
     fun clickNegativeButton() = click(NEGATIVE_BUTTON, "Negative button")
 
-    fun clickNegativeButtonMultipleDevices() = click(
-            NEGATIVE_BUTTON_MULTIPLE_DEVICES, "Negative button for multiple devices")
+    private fun swipeUp() {
+        val width: Int = ui.getDisplayWidth()
+        val height: Int = ui.getDisplayHeight()
+        val w = width / 2
+        val h = height / 2
+        ui.swipe(w, h, w, 1, 50)
+    }
+
+    fun clickNegativeButtonMultipleDevices() {
+        swipeUp()
+        click(NEGATIVE_BUTTON_MULTIPLE_DEVICES, "Negative button for multiple devices")
+    }
 
     private fun click(selector: BySelector, description: String) = ui.waitShortAndFind(
             Until.findObject(selector), "$description  is not found")
