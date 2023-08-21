@@ -49,7 +49,7 @@ import java.util.Set;
  * Tests for {@link ContentCaptureService#setContentCaptureWhitelist(Set, Set)}.
  *
  * <p><b>NOTE</b>: not all cases are supported because in some of them the test package is
- * whitelisted in 'lite' mode as it's the same as the service's.
+ * allowlisted in 'lite' mode as it's the same as the service's.
  */
 @AppModeFull(reason = "BlankWithTitleActivityTest is enough")
 public class WhitelistTest extends AbstractContentCaptureIntegrationActivityLessTest {
@@ -60,34 +60,34 @@ public class WhitelistTest extends AbstractContentCaptureIntegrationActivityLess
     @Test
     public void testNothingWhitelisted() throws Exception {
         final CtsContentCaptureService service = enableService(NO_PACKAGES, NO_ACTIVITIES);
-        assertNotWhitelisted(service);
+        assertNotAllowlisted(service);
     }
 
     @Ignore("will be whitelisted 'lite'")
     @Test
     public void testNotWhitelisted_byPackage() throws Exception {
         final CtsContentCaptureService service = enableService(toSet("not.me"), NO_ACTIVITIES);
-        assertNotWhitelisted(service);
+        assertNotAllowlisted(service);
     }
 
     @Test
     public void testNotWhitelisted_byActivity() throws Exception {
         final CtsContentCaptureService service = enableService(NO_PACKAGES,
                 toSet(ComponentName.createRelative(MY_PACKAGE, ".who.cares")));
-        assertNotWhitelisted(service);
+        assertNotAllowlisted(service);
     }
 
     @Test
     public void testWhitelisted_byPackage() throws Exception {
         final CtsContentCaptureService service = enableService(toSet(MY_PACKAGE), NO_ACTIVITIES);
-        assertWhitelisted(service);
+        assertAllowlisted(service);
     }
 
     @Test
     public void testWhitelisted_byActivity() throws Exception {
         final CtsContentCaptureService service = enableService(NO_PACKAGES,
                 toSet(OutOfProcessActivity.COMPONENT_NAME));
-        assertWhitelisted(service);
+        assertAllowlisted(service);
     }
 
     @Test
@@ -111,23 +111,23 @@ public class WhitelistTest extends AbstractContentCaptureIntegrationActivityLess
     public void testRinseAndRepeat() throws Exception {
         // Right package
         final CtsContentCaptureService service = enableService(toSet(MY_PACKAGE), NO_ACTIVITIES);
-        assertWhitelisted(service);
+        assertAllowlisted(service);
 
         // Wrong activity
         service.setContentCaptureWhitelist(NO_PACKAGES,
                 toSet(ComponentName.createRelative(MY_PACKAGE, ".who.cares")));
-        assertNotWhitelisted(service);
+        assertNotAllowlisted(service);
 
         // Right activity
         service.setContentCaptureWhitelist(NO_PACKAGES, toSet(OutOfProcessActivity.COMPONENT_NAME));
-        assertWhitelisted(service);
+        assertAllowlisted(service);
     }
 
-    private void assertWhitelisted(@NonNull CtsContentCaptureService service) throws Exception {
+    private void assertAllowlisted(@NonNull CtsContentCaptureService service) throws Exception {
         launchActivityAndAssert(service, /* expectHasManager= */ true);
     }
 
-    private void assertNotWhitelisted(@NonNull CtsContentCaptureService service) throws Exception {
+    private void assertNotAllowlisted(@NonNull CtsContentCaptureService service) throws Exception {
         launchActivityAndAssert(service, /* expectHasManager= */ false);
     }
 
