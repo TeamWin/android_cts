@@ -34,6 +34,7 @@ import android.os.PowerManager;
 import android.os.SystemClock;
 import android.provider.Settings;
 import android.server.wm.MultiDisplayTestBase;
+import android.server.wm.UiDeviceUtils;
 import android.server.wm.WindowManagerState;
 
 import com.android.compatibility.common.util.ApiTest;
@@ -69,7 +70,7 @@ public class KeepScreenOnTests extends MultiDisplayTestBase {
         setScreenOffTimeoutMs(mInitialDisplayTimeout);
         Settings.Global.putInt(mContentResolver, STAY_ON_WHILE_PLUGGED_IN,
                 mInitialStayOnWhilePluggedInSetting);
-        wakeUpAndUnlock(mContext);
+        UiDeviceUtils.wakeUpAndUnlock(mContext);
     }
 
     @ApiTest(apis = "android.view.WindowManager.LayoutParams#FLAG_KEEP_SCREEN_ON")

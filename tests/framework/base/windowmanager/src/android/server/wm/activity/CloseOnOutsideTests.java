@@ -17,7 +17,7 @@
 package android.server.wm.activity;
 
 import static android.server.wm.ActivityManagerTestBase.createFullscreenActivityScenarioRule;
-import static android.server.wm.ActivityManagerTestBase.wakeUpAndUnlock;
+import static android.server.wm.UiDeviceUtils.wakeUpAndUnlock;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 

@@ -139,7 +139,6 @@ import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.ActivityOptions;
 import android.app.ActivityTaskManager;
-import android.app.DreamManager;
 import android.app.Instrumentation;
 import android.app.KeyguardManager;
 import android.app.WallpaperManager;
@@ -157,7 +156,6 @@ import android.graphics.Rect;
 import android.hardware.display.AmbientDisplayConfiguration;
 import android.hardware.display.DisplayManager;
 import android.os.Bundle;
-import android.os.PowerManager;
 import android.os.Process;
 import android.os.RemoteCallback;
 import android.os.SystemClock;
@@ -688,25 +686,9 @@ public abstract class ActivityManagerTestBase {
         }
     }
 
-    public static void wakeUpAndUnlock(Context context) {
-        final KeyguardManager keyguardManager = context.getSystemService(KeyguardManager.class);
-        final PowerManager powerManager = context.getSystemService(PowerManager.class);
-        final DreamManager dreamManager = context.getSystemService(DreamManager.class);
-        if (keyguardManager == null || powerManager == null) {
-            return;
-        }
-
-        if (keyguardManager.isKeyguardLocked() || !powerManager.isInteractive()
-                || (dreamManager != null
-                && SystemUtil.runWithShellPermissionIdentity(dreamManager::isDreaming))) {
-            pressWakeupButton();
-            pressUnlockButton();
-        }
-    }
-
     @Before
     public void setUp() throws Exception {
-        wakeUpAndUnlock(mContext);
+        UiDeviceUtils.wakeUpAndUnlock(mContext);
 
         launchHomeActivityNoWait();
         // TODO(b/242933292): Consider removing all the tasks belonging to android.server.wm
@@ -741,7 +723,7 @@ public abstract class ActivityManagerTestBase {
         // activities but home are cleaned up from the root task at the end of each test. Am force
         // stop shell commands might be asynchronous and could interrupt the task cleanup
         // process if executed first.
-        wakeUpAndUnlock(mContext);
+        UiDeviceUtils.wakeUpAndUnlock(mContext);
         launchHomeActivityNoWait();
         removeRootTasksWithActivityTypes(ALL_ACTIVITY_TYPE_BUT_HOME);
         stopTestPackage(TEST_PACKAGE);

@@ -15,7 +15,7 @@
  */
 package android.server.wm.backnavigation;
 
-import static android.server.wm.ActivityManagerTestBase.wakeUpAndUnlock;
+import static android.server.wm.UiDeviceUtils.wakeUpAndUnlock;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;

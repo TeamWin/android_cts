@@ -807,7 +807,7 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
         /** Turns the primary display on/off by pressing the power key */
         private void setPrimaryDisplayState(boolean wantOn) {
             if (wantOn) {
-                wakeUpAndUnlock(mContext);
+                UiDeviceUtils.wakeUpAndUnlock(mContext);
             } else {
                 pressSleepButton();
             }
