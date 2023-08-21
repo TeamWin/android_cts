@@ -53,6 +53,7 @@ import android.util.Log;
 import android.view.Display;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.filters.SdkSuppress;
 import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 
@@ -1237,8 +1238,10 @@ public class MediaMetadataRetrieverTest {
     }
 
     @Test
+    // TODO(b/296893703): Replace this with Build.VERSION_CODES.V once it exists.
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.VANILLA_ICE_CREAM,
+            codeName = "VanillaIceCream")
     public void testGetImageAtIndexAvifWithCrop() throws Exception {
-        if (!MediaUtils.check(mIsAtLeastS, "test needs Android 12")) return;
         // sample_1960x1120_crop_20_20_1920_1080.avif is a 1960x1120 AVIF image with the crop window
         // set to left: 20 top: 20 crop width: 1920 crop height: 1080. The cropped image should
         // contain the same pixels as other sample AVIF images. So in order to verify the cropping,
