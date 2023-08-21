@@ -670,6 +670,8 @@ public class KeyguardTests extends KeyguardTestBase {
         launchActivity(KEYGUARD_LOCK_ACTIVITY);
         waitAndAssertResumedActivity(KEYGUARD_LOCK_ACTIVITY);
         mBroadcastActionTrigger.finishBroadcastReceiverActivity();
+        // The {@link KEYGUARD_LOCK_ACTIVITY} has gone because of the 'finish' broadcast.
+        mWmState.waitAndAssertActivityRemoved(KEYGUARD_LOCK_ACTIVITY);
         mWmState.waitForKeyguardShowingAndNotOccluded();
         mWmState.assertKeyguardShowingAndNotOccluded();
     }
