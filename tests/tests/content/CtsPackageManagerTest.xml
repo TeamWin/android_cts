@@ -165,11 +165,9 @@
         <option name="test-file-name" value="CtsContentDirectBootUnawareTestApp.apk" />
         <option name="test-file-name" value="CtsContentPartiallyDirectBootAwareTestApp.apk" />
         <option name="test-file-name" value="CtsSyncAccountAccessStubs.apk" />
-        <option name="test-file-name" value="CtsBinderPermissionTestService.apk" />
         <option name="test-file-name" value="CtsIntentResolutionTestApp.apk" />
         <option name="test-file-name" value="CtsIntentResolutionTestAppApi30.apk" />
         <option name="test-file-name" value="CtsContentNoApplicationTestApp.apk" />
-        <option name="test-file-name" value="CtsContentMockRestrictedApp.apk" />
     </target_preparer>
 
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
