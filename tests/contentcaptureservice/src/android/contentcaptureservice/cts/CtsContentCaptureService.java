@@ -211,7 +211,7 @@ public class CtsContentCaptureService extends ContentCaptureService {
      * When set, doesn't throw exceptions when it receives an event from a session that doesn't
      * exist.
      */
-    // TODO: try to refactor WhitelistTest so it doesn't need this hack.
+    // TODO: try to refactor AllowlistTest so it doesn't need this hack.
     public void setIgnoreOrphanSessionEvents(boolean newValue) {
         Log.d(TAG, "setIgnoreOrphanSessionEvents(): changing from " + mIgnoreOrphanSessionEvents
                 + " to " + newValue);
@@ -234,7 +234,7 @@ public class CtsContentCaptureService extends ContentCaptureService {
         }
 
         sw.mService = this;
-        // TODO(b/230554011): onConnected after onDisconnected immediately that cause the whitelist
+        // TODO(b/230554011): onConnected after onDisconnected immediately that cause the allowlist
         // is clear. This is a workaround to fix the test failure, we should find the reason in the
         // service infra to fix it and remove this workaround.
         if (sw.mDestroyed.getCount() == 0 && sw.mWhitelist != null) {
@@ -652,14 +652,14 @@ public class CtsContentCaptureService extends ContentCaptureService {
         }
 
         /**
-         * Whitelists stuff when the service connects.
+         * Allowlists stuff when the service connects.
          */
         public void whitelist(@Nullable Pair<Set<String>, Set<ComponentName>> whitelist) {
             mWhitelist = whitelist;
         }
 
        /**
-        * Whitelists just this package.
+        * Allowlists just this package.
         */
         public void whitelistSelf() {
             final ArraySet<String> pkgs = new ArraySet<>(1);

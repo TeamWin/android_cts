@@ -80,7 +80,7 @@ public class CustomViewActivityTest extends
     }
 
     /**
-     * Baseline / sanity check test for the other tests.
+     * Baseline / initial check test for the other tests.
      */
     @Test
     public void testLifecycle() throws Exception {
