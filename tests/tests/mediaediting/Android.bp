@@ -31,6 +31,7 @@ android_test {
         "androidx.media3.media3-exoplayer",
         "androidx.media3.media3-extractor",
         "androidx.media3.media3-transformer",
+        "androidx.media3.media3-test-utils",
         "error_prone_annotations",
         "checker-qual",
     ],
