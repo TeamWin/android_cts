@@ -102,7 +102,7 @@ import java.util.stream.Stream;
 
 /**
  * This class covers all test cases for starting/blocking background activities.
- * As instrumentation tests started by shell are whitelisted to allow starting background activity,
+ * As instrumentation tests started by shell are allowlisted to allow starting background activity,
  * tests can't be done in this app alone.
  * Hence, there are 2 extra apps, appA and appB. This class will send commands to appA/appB, for
  * example, send a broadcast to appA and ask it to start a background activity, and we will monitor
