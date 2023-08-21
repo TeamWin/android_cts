@@ -52,8 +52,6 @@ import com.android.compatibility.common.util.CallbackAsserter;
 import com.android.compatibility.common.util.ShellIdentityUtils;
 import com.android.compatibility.common.util.SystemUtil;
 
-import junit.framework.AssertionFailedError;
-
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -350,7 +348,7 @@ public class NetworkingHelper {
             if (mWifiManager.isWifiEnabled() != mInitialWiFiState) {
                 try {
                     setWifiState(mInitialWiFiState);
-                } catch (AssertionFailedError e) {
+                } catch (AssertionError e) {
                     // Don't fail the test just because wifi state wasn't set in tearDown.
                     Log.e(TAG, "Failed to return wifi state to " + mInitialWiFiState, e);
                 }
