@@ -85,7 +85,7 @@ public class GnssNavigationMessageRegistrationTest extends GnssTestCase {
 
     /**
      * Tests that one can listen for {@link GnssNavigationMessage}s for collection purposes.
-     * It only performs sanity checks for the Navigation messages received.
+     * It only performs initial checks for the Navigation messages received.
      */
     public void testGnssNavigationMessageRegistration() throws Exception {
         // Checks if GPS hardware feature is present, skips test (pass) if not
