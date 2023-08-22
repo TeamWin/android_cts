@@ -45,6 +45,8 @@ import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentat
 import static com.android.cts.mockime.ImeEventStreamTestUtils.editorMatcher;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
 
+import static com.google.common.truth.Truth.assertWithMessage;
+
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
@@ -80,6 +82,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.Nullable;
+import androidx.test.filters.FlakyTest;
 
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.cts.mockime.ImeEventStream;
@@ -796,6 +799,7 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
         assertEquals(1, dispatchApplyWindowInsetsCount[0]);
     }
 
+    @FlakyTest(bugId = 297000797)
     @Test
     public void testDispatchApplyWindowInsetsCount_ime() throws Exception {
         assumeFalse("Automotive is to skip this test until showing and hiding certain insets "
@@ -809,8 +813,10 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
         getInstrumentation().waitForIdleSync();
 
         final int[] dispatchApplyWindowInsetsCount = {0};
+        final StringBuilder insetsSb = new StringBuilder();
         rootView.setOnApplyWindowInsetsListener((v, insets) -> {
             dispatchApplyWindowInsetsCount[0]++;
+            insetsSb.append("\n").append(insets);
             return v.onApplyWindowInsets(insets);
         });
 
@@ -823,10 +829,12 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
         ANIMATION_CALLBACK.waitForFinishing();
 
         // ... should only trigger one dispatchApplyWindowInsets
-        assertEquals(1, dispatchApplyWindowInsetsCount[0]);
+        assertWithMessage("insets should be dispatched exactly once, received: " + insetsSb)
+                .that(dispatchApplyWindowInsetsCount[0]).isEqualTo(1);
 
         // One hide-ime call...
         dispatchApplyWindowInsetsCount[0] = 0;
+        insetsSb.setLength(0);
         ANIMATION_CALLBACK.reset();
         getInstrumentation().runOnMainSync(() -> {
             rootView.setWindowInsetsAnimationCallback(ANIMATION_CALLBACK);
@@ -835,7 +843,8 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
         ANIMATION_CALLBACK.waitForFinishing();
 
         // ... should only trigger one dispatchApplyWindowInsets
-        assertEquals(1, dispatchApplyWindowInsetsCount[0]);
+        assertWithMessage("insets should be dispatched exactly once, received: " + insetsSb)
+                .that(dispatchApplyWindowInsetsCount[0]).isEqualTo(1);
     }
 
     private static void broadcastCloseSystemDialogs() {
