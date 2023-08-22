@@ -38,6 +38,9 @@
     <!-- For FileIntegrityManager -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>
 
+     <!-- CVE-2023-21143 -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
     <application android:usesCleartextTraffic="true">
         <uses-library android:name="android.test.runner"/>
         <uses-library android:name="org.apache.http.legacy"
