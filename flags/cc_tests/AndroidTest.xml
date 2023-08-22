@@ -18,12 +18,12 @@
     <target_preparer class="com.android.tradefed.targetprep.RootTargetPreparer">
     </target_preparer>
     <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
-        <option name="run-command" value="setprop persist.device_config.cts.android.cts.flags.tests.readwrite_enabled_flag true" />
-        <option name="run-command" value="setprop persist.device_config.cts.android.cts.flags.tests.readwrite_disabled_flag false" />
-        <option name="run-command" value="setprop persist.device_config.cts.android.cts.flags.tests.readwrite_disabled_flag_2 false" />
-        <option name="teardown-command" value="setprop persist.device_config.cts.android.cts.flags.tests.readwrite_enabled_flag null" />
-        <option name="teardown-command" value="setprop persist.device_config.cts.android.cts.flags.tests.readwrite_disabled_flag null" />
-        <option name="teardown-command" value="setprop persist.device_config.cts.android.cts.flags.tests.readwrite_disabled_flag_2 null" />
+        <option name="run-command" value="setprop persist.device_config.aconfig_flags.cts.android.cts.flags.tests.readwrite_enabled_flag true" />
+        <option name="run-command" value="setprop persist.device_config.aconfig_flags.cts.android.cts.flags.tests.readwrite_disabled_flag false" />
+        <option name="run-command" value="setprop persist.device_config.aconfig_flags.cts.android.cts.flags.tests.readwrite_disabled_flag_2 false" />
+        <option name="teardown-command" value="setprop persist.device_config.aconfig_flags.cts.android.cts.flags.tests.readwrite_enabled_flag null" />
+        <option name="teardown-command" value="setprop persist.device_config.aconfig_flags.cts.android.cts.flags.tests.readwrite_disabled_flag null" />
+        <option name="teardown-command" value="setprop persist.device_config.aconfig_flags.cts.android.cts.flags.tests.readwrite_disabled_flag_2 null" />
     </target_preparer>
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.FilePusher">
         <option name="cleanup" value="true" />
