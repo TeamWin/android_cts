@@ -5537,7 +5537,8 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="audio_loopback_results_text">Results...</string>
     <string name="audio_loopback_test_all_paths">Please test all supported paths.</string>
     <string name="audio_loopback_test_not_required">Test not required for this device.</string>
-    <string name="audio_loopback_test_non_handheld">This device is not a handheld. Test can pass.</string>
+    <string name="audio_loopback_test_non_handheld">This device is not a phone. Test can pass.</string>
+    <string name="audio_loopback_test_internal_devices">Speaker/Mic</string>
     <string name="audio_loopback_speakermicpath_instructions">Place the DUT flat on a table
     in a quiet room. Press the Start button and allow the test to proceed.</string>
 
