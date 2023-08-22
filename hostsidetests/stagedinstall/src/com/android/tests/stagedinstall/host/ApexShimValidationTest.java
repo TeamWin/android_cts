@@ -60,7 +60,7 @@ import java.util.zip.ZipFile;
  *     <li>It doesn't have any pre or post install hooks.</li>
  *     <li>It's {@code apex_payload.img} contains only a regular text file called
  *         {@code hash.txt}.</li>
- *     <li>It's {@code sha512} hash is whitelisted in the {@code hash.txt} of pre-installed on the
+ *     <li>It's {@code sha512} hash is allowlisted in the {@code hash.txt} of pre-installed on the
  *         {@code /system} partition shim apex.</li>
  * </ul>
  */
