@@ -5777,6 +5777,7 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="audio_loopback_resultcode_failprousb">Result: Fail - Pro Audio USB latency not met.</string>
     <string name="audio_loopback_resultcode_fail24bit">Result: Fail - 24-bit playback requirement no met.</string>
     <string name="audio_loopback_resultcode_failproaudiowired">Result: Fail - Pro Audio latency for wired path not met.</string>
+    <string name="audio_loopback_resultcode_warningtimestamp">Result: Warning - Timestamp latency accuracy not met.</string>
     <string name="audio_loopback_resultcode_invalid">Result: Invalid result code.</string>
 
     <!-- Audio Cold-Start Latency Test -->

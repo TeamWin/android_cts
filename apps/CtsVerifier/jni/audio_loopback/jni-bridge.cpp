@@ -151,6 +151,16 @@ JNIEXPORT jint JNICALL Java_com_android_cts_verifier_audio_NativeAnalyzerThread_
     return 0;
 }
 
+JNIEXPORT jdouble JNICALL
+        Java_com_android_cts_verifier_audio_NativeAnalyzerThread_measureTimestampLatencyMillis
+        (JNIEnv *env __unused, jobject obj __unused, jlong pAnalyzer) {
+    NativeAudioAnalyzer * analyzer = (NativeAudioAnalyzer *) pAnalyzer;
+    if (analyzer != nullptr) {
+        return analyzer->measureTimestampLatencyMillis();
+    }
+    return 0;
+}
+
 //
 // com.android.cts.verifier.audio.audiolib.AudioUtils
 //

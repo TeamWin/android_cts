@@ -105,6 +105,8 @@ public:
         return mInputError ? mInputError : mOutputError;
     }
 
+    double measureTimestampLatencyMillis();
+
     AAudioStream      *mInputStream = nullptr;
     AAudioStream      *mOutputStream = nullptr;
     aaudio_format_t    mActualInputFormat = AAUDIO_FORMAT_INVALID;
@@ -146,6 +148,9 @@ private:
 
     int32_t            mOutputDeviceId = 0;
     int32_t            mInputDeviceId = 0;
+
+    std::atomic<bool> mWriteReadDeltaValid{false};
+    std::atomic<int64_t> mWriteReadDelta{0};
 
     static constexpr int kLogPeriodMillis         = 1000;
     static constexpr int kNumInputChannels        = 1;
