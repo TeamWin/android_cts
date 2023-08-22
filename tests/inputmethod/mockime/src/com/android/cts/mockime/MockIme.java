@@ -468,6 +468,15 @@ public final class MockIme extends InputMethodService {
                                 .setExplicitlyEnabledInputMethodSubtypes(imeId, subtypeHashCodes);
                         return ImeEvent.RETURN_VALUE_UNAVAILABLE;
                     }
+                    case "setAdditionalInputMethodSubtypes": {
+                        final String imeId = command.getExtras().getString("imeId");
+                        final InputMethodSubtype[] subtypes =
+                                command.getExtras().getParcelableArray("subtypes",
+                                        InputMethodSubtype.class);
+                        getSystemService(InputMethodManager.class)
+                                .setAdditionalInputMethodSubtypes(imeId, subtypes);
+                        return ImeEvent.RETURN_VALUE_UNAVAILABLE;
+                    }
                     case "switchInputMethod": {
                         final String id = command.getExtras().getString("id");
                         try {
