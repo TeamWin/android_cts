@@ -23,6 +23,7 @@ import android.content.Intent
 import android.location.LocationManager
 import android.os.Build
 import android.permission.cts.PermissionUtils
+import android.platform.test.annotations.FlakyTest
 import androidx.test.filters.SdkSuppress
 import androidx.test.uiautomator.By
 import com.android.compatibility.common.util.AppOpsUtils
@@ -32,6 +33,7 @@ import java.util.concurrent.TimeUnit
 import org.junit.Assert
 import org.junit.Assume.assumeFalse
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Test
 
 private const val EXTRA_PACKAGE_NAME = "android.intent.extra.PACKAGE_NAME"
@@ -43,6 +45,8 @@ private const val ACTION_MANAGE_APP_PERMISSIONS = "android.intent.action.MANAGE_
  * app in this test).
  */
 @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
+@FlakyTest
+@Ignore("b/288471744")
 @CddTest(requirement = "9.1/C-0-1")
 class LocationProviderInterceptDialogTest : BaseUsePermissionTest() {
     @Before
