@@ -110,7 +110,7 @@ public final class MainActivity extends Activity {
             RemoteCallback remoteCallback = getIntent().getParcelableExtra(
                     MockTestActivityUtil.EXTRA_ON_CREATE_INPUT_CONNECTION_CALLBACK,
                     RemoteCallback.class);
-            String sessionId = getStringIntentExtra(
+            String sessionId = getIntent().getStringExtra(
                     MockTestActivityUtil.EXTRA_ON_CREATE_USER_HANDLE_SESSION_ID);
             if (remoteCallback == null || sessionId == null) {
                 mEditor = new EditText(this);

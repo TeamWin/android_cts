@@ -27,6 +27,7 @@ import static org.junit.Assume.assumeTrue;
 import android.Manifest;
 import android.app.Instrumentation;
 import android.content.Context;
+import android.content.pm.InstantAppInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.UserInfo;
 import android.os.NewUserRequest;
@@ -59,6 +60,7 @@ import org.junit.runners.JUnit4;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -292,7 +294,8 @@ public class MultiUserTest {
                                 PackageManager.MATCH_INSTANT, userId).stream().anyMatch(
                                     packageInfo -> TextUtils.equals(packageInfo.packageName,
                                         packageName))),
-                Manifest.permission.INTERACT_ACROSS_USERS_FULL);
+                Manifest.permission.INTERACT_ACROSS_USERS_FULL,
+                Manifest.permission.ACCESS_INSTANT_APPS);
     }
 
     private void assertImeExistsInApiResult(String imeId, int userId) {
@@ -421,10 +424,8 @@ public class MultiUserTest {
                     equalTo(bundle.getInt(MockTestActivityUtil.ACTION_KEY_REPLY_USER_HANDLE)));
             latch.countDown();
         });
-        Log.i(TAG, "Starting test activity for user #" + userId);
-        try (AutoCloseable ignored = MockTestActivityUtil.launchSyncAsUser(userId,
-                mContext.getPackageManager().isInstantApp(), null,
-                onCreateInputConnectionCallback)) {
+        try (AutoCloseable ignored = MockTestActivityUtil.launchSyncAsUser(userId, isInstantApp(),
+                null, onCreateInputConnectionCallback)) {
             if (!latch.await(TIMEOUT, TimeUnit.MILLISECONDS)) {
                 fail(String.format("IME not connected to the same user #%s within timeout",
                         userId));
@@ -522,10 +523,27 @@ public class MultiUserTest {
 
     private void installExistingPackageAsUser(String packageName, int userId) {
         Log.v(TAG, "Installing existing package: " + packageName + " for user " + userId);
-        boolean instant = mContext.getPackageManager().isInstantApp();
-        runShellCommandOrThrow(
-                ShellCommandUtils.installExistingPackageAsUser(packageName, userId, instant));
+        runShellCommandOrThrow(ShellCommandUtils.installExistingPackageAsUser(packageName, userId,
+                isInstantApp()));
         runShellCommandOrThrow(ShellCommandUtils.waitForBroadcastBarrier());
+    }
+
+    private boolean isInstantApp() {
+        return SystemUtil.runWithShellPermissionIdentity(() -> {
+            // as this test app itself is always running as a full app, we can check if the
+            // CtsInputMethodStandaloneTestApp was installed as an instant app
+            boolean instant = false;
+            Optional<InstantAppInfo> instantAppInfo =
+                    mContext.getPackageManager().getInstantApps().stream()
+                            .filter(packageInfo -> TextUtils.equals(packageInfo.getPackageName(),
+                                    MockTestActivityUtil.TEST_ACTIVITY.getPackageName()))
+                            .findFirst();
+            if (instantAppInfo.isPresent()
+                    && instantAppInfo.get().getApplicationInfo().isInstantApp()) {
+                instant = true;
+            }
+            return instant;
+        }, Manifest.permission.ACCESS_INSTANT_APPS);
     }
 
     private static void uninstallImeAsUser(String packageName, int userId) {
