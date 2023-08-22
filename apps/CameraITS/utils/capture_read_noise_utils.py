@@ -102,8 +102,8 @@ def plot_read_noise_data(read_noise_data, iso_low, iso_high, file_path,
   num_channels = len(color_channel_names)
   is_quad_bayer = num_channels == noise_model_utils.NUM_QUAD_BAYER_CHANNELS
   # Create the figure for plotting the read noise to ISO^2 curve.
-  fig, ((R, Gr), (Gb, B)) = plt.subplots(2, 2, figsize=(22, 22))
-  subplots = [R, Gr, Gb, B]
+  fig, ((red, green_r), (green_b, blue)) = plt.subplots(2, 2, figsize=(22, 22))
+  subplots = [red, green_r, green_b, blue]
   fig.gca()
   fig.suptitle('Read Noise to ISO^2', x=0.54, y=0.99)
 

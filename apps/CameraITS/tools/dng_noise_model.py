@@ -11,11 +11,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""CameraITS script to generate noise models."""
 
 import logging
 import math
 import os.path
-from pathlib import Path
+import pathlib.Path
 import pickle
 import tempfile
 import textwrap
@@ -37,15 +38,15 @@ if _IS_QUAD_BAYER:
   _PLOT_COLORS = noise_model_utils.QUAD_BAYER_PLOT_COLORS
   _TILE_SIZE = 64  # Tile size to compute mean/variance. Large tiles may have
                    # their variance corrupted by low freq image changes.
-  _STATS_FORMAT = 'raw10QuadBayerStats'  # rawQuadBayerStats or raw10QuadBayerStats.
-  _READ_NOISE_RAW_FORMAT = 'raw10QuadBayer'  # rawQuadBayer or raw10QuadBayer.
+  _STATS_FORMAT = 'raw10QuadBayerStats'  # rawQuadBayerStats|raw10QuadBayerStats
+  _READ_NOISE_RAW_FORMAT = 'raw10QuadBayer'  # rawQuadBayer|raw10QuadBayer
 else:
   _COLOR_CHANNEL_NAMES = noise_model_utils.BAYER_COLORS
   _PLOT_COLORS = noise_model_utils.BAYER_PLOT_COLORS
   _TILE_SIZE = 32  # Tile size to compute mean/variance. Large tiles may have
                    # their variance corrupted by low freq image changes.
-  _STATS_FORMAT = 'rawStats'  # rawStats or raw10Stats.
-  _READ_NOISE_RAW_FORMAT = 'raw'  # raw or raw10.
+  _STATS_FORMAT = 'rawStats'  # rawStats|raw10Stats
+  _READ_NOISE_RAW_FORMAT = 'raw'  # raw|raw10
 
 _STATS_CONFIG = {
     'format': _STATS_FORMAT,
@@ -600,7 +601,7 @@ class DngNoiseModel(its_base_test.ItsBaseTest):
     # If 2-Stage model is enabled, save the read noise graph and csv data
     if _TWO_STAGE_MODEL:
       # Save the linear plot of the read noise data
-      filename = f'{Path(_NAME_READ_NOISE_FILE).stem}.png'
+      filename = f'{pathlib.Path(_NAME_READ_NOISE_FILE).stem}.png'
       file_path = os.path.join(log_path, filename)
       capture_read_noise_utils.plot_read_noise_data(
           read_noise_data,
@@ -612,7 +613,7 @@ class DngNoiseModel(its_base_test.ItsBaseTest):
       )
 
       # Save the data as a csv file
-      filename = f'{Path(_NAME_READ_NOISE_FILE).stem}.csv'
+      filename = f'{pathlib.Path(_NAME_READ_NOISE_FILE).stem}.csv'
       file_path = os.path.join(log_path, filename)
       capture_read_noise_utils.save_read_noise_data_as_csv(
           read_noise_data,
