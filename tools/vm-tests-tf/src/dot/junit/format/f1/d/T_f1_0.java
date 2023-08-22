@@ -20,5 +20,5 @@ package dot.junit.format.f1.d;
 *
 */
 public class T_f1_0 {
-   // dummy
+   // placeholder
 }
