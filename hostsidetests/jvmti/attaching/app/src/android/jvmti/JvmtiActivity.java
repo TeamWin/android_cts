@@ -54,7 +54,7 @@ public class JvmtiActivity extends Activity {
     }
 
     void returnResult(final String s) {
-      // Annoying, well-intentioned, 'sanity' checks prevent us from performing network actions on
+      // Annoying, well-intentioned, 'initial' checks prevent us from performing network actions on
       // the current thread. Create another one and wait for it.
       Thread t = new Thread(() -> {
           try (LocalSocket ls = new LocalSocket()) {
