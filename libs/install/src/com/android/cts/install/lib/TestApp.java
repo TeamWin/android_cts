@@ -27,7 +27,7 @@ import java.io.InputStream;
 import java.util.function.Function;
 
 /**
- * Collection of dummy apps used in tests.
+ * Collection of placeholder apps used in tests.
  */
 public class TestApp {
 
