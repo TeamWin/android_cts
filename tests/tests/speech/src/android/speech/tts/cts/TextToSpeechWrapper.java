@@ -108,7 +108,7 @@ public class TextToSpeechWrapper {
     }
 
     /**
-     * Sanity checks that the utteranceIds and only the utteranceIds completed and produced the
+     * Initial checks that the utteranceIds and only the utteranceIds completed and produced the
      * correct callbacks.
      * Can only be used when the test knows exactly which utterances should have been finished when
      * this call is made. Else use waitForStop(String) or waitForComplete(String).
