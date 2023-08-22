@@ -68,7 +68,7 @@ public class IntentTest {
     @Before
     public void setupPackageManager() throws Exception {
       mPackageManager = InstrumentationRegistry.getContext().getPackageManager();
-      intentWhitelist = getIntentWhitelist();
+      intentWhitelist = getIntentAllowlist();
     }
 
     @Test
@@ -105,7 +105,7 @@ public class IntentTest {
             }
         }
 
-        // Log the whitelist line to make it easy to update.
+        // Log the allowlist line to make it easy to update.
         for (String intent : allInvalidIntents) {
            Log.d(TAG, String.format("whitelist.add(\"%s\");", intent));
         }
@@ -176,13 +176,13 @@ public class IntentTest {
         }
     }
 
-    private static Set<String> getIntentWhitelist() throws Exception {
+    private static Set<String> getIntentAllowlist() throws Exception {
         Set<String> whitelist = new HashSet<>();
 
         DynamicConfigDeviceSide dcds = new DynamicConfigDeviceSide(MODULE_NAME);
         List<String> intentWhitelist = dcds.getValues("intent_whitelist");
 
-        // Log the whitelist Intent
+        // Log the allowlist Intent
         for (String intent : intentWhitelist) {
            Log.d(TAG, String.format("whitelist add: %s", intent));
            whitelist.add(intent);
