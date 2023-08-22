@@ -61,7 +61,6 @@ import java.util.concurrent.CountDownLatch;
  *     atest CtsWindowManagerDeviceActivity:AnrTests
  */
 @Presubmit
-@FlakyTest(bugId = 280027157)
 @android.server.wm.annotation.Group3
 public class AnrTests extends ActivityManagerTestBase {
     private static final String TAG = "AnrTests";
@@ -129,6 +128,7 @@ public class AnrTests extends ActivityManagerTestBase {
      * Verify embedded windows can trigger ANR and the verify embedded app is blamed.
      */
     @Test
+    @FlakyTest(bugId = 296860841)
     public void embeddedWindowTriggersAnr() {
         try (ActivityScenario<HostActivity> scenario =
                      ActivityScenario.launch(HostActivity.class)) {
