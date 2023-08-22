@@ -18,7 +18,7 @@ class PasswordTest {
         @JvmField @ClassRule @Rule
         val deviceState = DeviceState()
         val localDevicePolicyManager = TestApis.context().instrumentedContext()
-                .getSystemService(DevicePolicyManager::class.java)
+                .getSystemService(DevicePolicyManager::class.java)!!
     }
 
     @HiddenApiTest
