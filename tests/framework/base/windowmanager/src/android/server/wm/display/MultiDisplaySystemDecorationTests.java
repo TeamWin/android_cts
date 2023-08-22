@@ -83,8 +83,6 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 
-import androidx.test.filters.FlakyTest;
-
 import com.android.compatibility.common.util.SystemUtil;
 import com.android.compatibility.common.util.TestUtils;
 import com.android.cts.mockime.ImeCommand;
@@ -738,7 +736,6 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
         showSoftInputAndAssertImeShownOnDisplay(DEFAULT_DISPLAY, imeTestActivitySession, stream);
     }
 
-    @FlakyTest(bugId = 292538562)
     @Test
     public void testNoConfigurationChangedWhenSwitchBetweenTwoIdenticalDisplays() throws Exception {
         // If config_perDisplayFocusEnabled, the focus will not move even if touching on
