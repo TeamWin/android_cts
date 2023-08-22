@@ -54,6 +54,7 @@ import static org.testng.Assert.assertThrows;
 import android.app.ActivityManager;
 import android.app.admin.DevicePolicyManager;
 import android.app.contentsuggestions.ContentSuggestionsManager;
+import android.app.role.RoleManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.UserManager;
@@ -108,6 +109,7 @@ import com.android.bedstead.harrier.annotations.RequireFeatureFlagEnabled;
 import com.android.bedstead.harrier.annotations.RequireFeatureFlagNotEnabled;
 import com.android.bedstead.harrier.annotations.RequireFeatureFlagValue;
 import com.android.bedstead.harrier.annotations.RequireGmsBuild;
+import com.android.bedstead.harrier.annotations.RequireHasDefaultBrowser;
 import com.android.bedstead.harrier.annotations.RequireHeadlessSystemUserMode;
 import com.android.bedstead.harrier.annotations.RequireInstantApp;
 import com.android.bedstead.harrier.annotations.RequireLowRamDevice;
@@ -1636,4 +1638,9 @@ public class DeviceStateTest {
         assertThat(TestApis.content().suggestions().defaultServiceEnabled(sDeviceState.additionalUser())).isTrue();
     }
 
+    @Test
+    @RequireHasDefaultBrowser
+    public void requireHasDefaultBrowser_onDifferentUser_defaultContentSuggestionsServiceIsEnabled() {
+        assertThat(TestApis.roles().getRoleHolders(RoleManager.ROLE_BROWSER)).isNotEmpty();
+    }
 }
