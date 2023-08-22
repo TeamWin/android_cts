@@ -103,6 +103,8 @@ public class AudioLoopbackLatencyActivity extends PassFailButtons.Activity {
     private boolean mSupportsMMAPExclusive = AudioUtils.isMMapExclusiveSupported();
 
     private boolean mIsHandheld;
+    private int     mSpeakerDeviceId = AudioDeviceInfo.TYPE_UNKNOWN;
+    private int     mMicDeviceId = AudioDeviceInfo.TYPE_UNKNOWN;
 
     // Peripheral(s)
     private static final int NUM_TEST_ROUTES =       3;
@@ -347,8 +349,7 @@ public class AudioLoopbackLatencyActivity extends PassFailButtons.Activity {
         mTestInstructions = (TextView) findViewById(R.id.audio_loopback_instructions);
 
         mAudioManager = getSystemService(AudioManager.class);
-
-        mAudioManager.registerAudioDeviceCallback(new ConnectListener(), new Handler());
+        scanPeripheralList(mAudioManager.getDevices(AudioManager.GET_DEVICES_ALL));
 
         connectLoopbackUI();
 
@@ -359,6 +360,8 @@ public class AudioLoopbackLatencyActivity extends PassFailButtons.Activity {
             getPassButton().setEnabled(isReportLogOkToPass());
             enableStartButtons(false);
         }
+
+        mAudioManager.registerAudioDeviceCallback(new ConnectListener(), new Handler());
 
         showTestInstructions();
         handleTestCompletion(false);
@@ -435,19 +438,19 @@ public class AudioLoopbackLatencyActivity extends PassFailButtons.Activity {
         clearDeviceIds();
         clearDeviceConnected();
 
+        mSpeakerDeviceId = AudioDeviceInfo.TYPE_UNKNOWN;
+        mMicDeviceId = AudioDeviceInfo.TYPE_UNKNOWN;
         for (AudioDeviceInfo devInfo : devices) {
             switch (devInfo.getType()) {
                 // TESTROUTE_DEVICE (i.e. Speaker & Mic)
+                // This needs to be handled differently. The other devices can be assumed
+                // to contain both input & output devices in the same type.
+                // For built-in we need to see both TYPES to be sure to have both input & output.
                 case AudioDeviceInfo.TYPE_BUILTIN_SPEAKER:
+                    mSpeakerDeviceId = devInfo.getId();
+                    break;
                 case AudioDeviceInfo.TYPE_BUILTIN_MIC:
-                    if (devInfo.isSink()) {
-                        mTestSpecs[TESTROUTE_DEVICE].mOutputDeviceId = devInfo.getId();
-                    } else if (devInfo.isSource()) {
-                        mTestSpecs[TESTROUTE_DEVICE].mInputDeviceId = devInfo.getId();
-                    }
-                    mTestSpecs[TESTROUTE_DEVICE].mRouteAvailable = true;
-                    mTestSpecs[TESTROUTE_DEVICE].mRouteConnected = true;
-                    mTestSpecs[TESTROUTE_DEVICE].mDeviceName = devInfo.getProductName().toString();
+                    mMicDeviceId = devInfo.getId();
                     break;
 
                 // TESTROUTE_ANALOG_JACK
@@ -476,9 +479,19 @@ public class AudioLoopbackLatencyActivity extends PassFailButtons.Activity {
                     mTestSpecs[TESTROUTE_USB].mRouteConnected = true;
                     mTestSpecs[TESTROUTE_USB].mDeviceName = devInfo.getProductName().toString();
             }
-
-            enableStartButtons(mustRunTest());
         }
+
+        // do we have BOTH a Speaker and Mic?
+        if (hasInternalPath()) {
+            mTestSpecs[TESTROUTE_DEVICE].mOutputDeviceId = mSpeakerDeviceId;
+            mTestSpecs[TESTROUTE_DEVICE].mInputDeviceId = mMicDeviceId;
+            mTestSpecs[TESTROUTE_DEVICE].mRouteAvailable = true;
+            mTestSpecs[TESTROUTE_DEVICE].mRouteConnected = true;
+            mTestSpecs[TESTROUTE_DEVICE].mDeviceName =
+                    getResources().getString(R.string.audio_loopback_test_internal_devices);
+        }
+
+        enableStartButtons(mustRunTest());
     }
 
     private class ConnectListener extends AudioDeviceCallback {
@@ -685,7 +698,12 @@ public class AudioLoopbackLatencyActivity extends PassFailButtons.Activity {
     }
 
     private boolean mustRunTest() {
-        return mIsHandheld;
+        return mIsHandheld  && hasInternalPath();
+    }
+
+    boolean hasInternalPath() {
+        return mSpeakerDeviceId != AudioDeviceInfo.TYPE_UNKNOWN
+                && mMicDeviceId != AudioDeviceInfo.TYPE_UNKNOWN;
     }
 
     private void handleTestCompletion(boolean showResult) {
