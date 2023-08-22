@@ -104,8 +104,8 @@ _SCENE_REQ = {
     'scene3': 'The ISO12233 chart',
     'scene4': 'A test chart of a circle covering at least the middle 50% of '
               'the scene. See tests/scene4/scene4.png',
-    'scene5': 'Capture images with a diffuser attached to the camera. '
-              'See source.android.com/docs/compatibility/cts/camera-its-tests#scene5/diffuser '
+    'scene5': 'Capture images with a diffuser attached to the camera. See '
+              'source.android.com/docs/compatibility/cts/camera-its-tests#scene5/diffuser '  # pylint: disable line-too-long
               'for more details',
     'scene6': 'A grid of black circles on a white background. '
               'See tests/scene6/scene6.png',
@@ -180,14 +180,17 @@ def run(cmd):
 
 def check_cts_apk_installed(device_id):
   """Verifies that CtsVerifer.apk is installed on a given device."""
-  verify_cts_cmd = f'adb -s {device_id} shell pm list packages | grep {CTS_VERIFIER_PACKAGE_NAME}'
+  verify_cts_cmd = (
+      f'adb -s {device_id} shell pm list packages | '
+      f'grep {CTS_VERIFIER_PACKAGE_NAME}'
+  )
   raw_output = subprocess.check_output(
       verify_cts_cmd, stderr=subprocess.STDOUT, shell=True
   )
   output = str(raw_output.decode('utf-8')).strip()
   if CTS_VERIFIER_PACKAGE_NAME not in output:
     raise AssertionError(
-        f"{CTS_VERIFIER_PACKAGE_NAME} was not found in {device_id}'s list of packages!"
+        f"{CTS_VERIFIER_PACKAGE_NAME} not in {device_id}'s list of packages!"
     )
 
 
@@ -757,8 +760,10 @@ def main():
     # A subdir in topdir will be created for each camera_id. All scene test
     # output logs for each camera id will be stored in this subdir.
     # This output log path is a mobly param : LogPath
-    cam_id_string = f"cam_id_{camera_id.replace(its_session_utils.SUB_CAMERA_SEPARATOR, '_')}"
-    mobly_output_logs_path = os.path.join(topdir, cam_id_string)
+    camera_id_str = (
+        camera_id.replace(its_session_utils.SUB_CAMERA_SEPARATOR, '_')
+    )
+    mobly_output_logs_path = os.path.join(topdir, f'cam_id_{camera_id_str}')
     os.mkdir(mobly_output_logs_path)
     tot_pass = 0
     for s in per_camera_scenes:
@@ -785,7 +790,8 @@ def main():
           load_scenes_on_tablet(testing_scene, tablet_id)
       else:
         # Check manual scenes for correctness
-        if 'scene0' not in testing_scene and not testing_sensor_fusion_with_controller:
+        if ('scene0' not in testing_scene and
+            not testing_sensor_fusion_with_controller):
           check_manual_scenes(device_id, camera_id, testing_scene,
                               mobly_output_logs_path)
 
@@ -903,7 +909,8 @@ def main():
           results[s][METRICS_KEY].append(test_mpc_req)
         msg_short = f'{return_string} {test}'
         scene_test_summary += msg_short + '\n'
-        if test in _LIGHTING_CONTROL_TESTS and not testing_flash_with_controller:
+        if (test in _LIGHTING_CONTROL_TESTS and
+            not testing_flash_with_controller):
           print('Turn lights ON in rig and press <ENTER> to continue.')
 
       # unit is millisecond for execution time record in CtsVerifier
