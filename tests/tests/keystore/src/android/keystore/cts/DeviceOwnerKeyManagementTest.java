@@ -279,8 +279,12 @@ public class DeviceOwnerKeyManagementTest {
             assertThat(new String(teeAttestation.attestationIdMeid.get()))
                     .isEqualTo(expectedMeid);
         }
-        validateSecondImei(new String(teeAttestation.attestationIdSecondImei.get()),
-                expectedSecondImei);
+        assertThat(!TextUtils.isEmpty(expectedSecondImei))
+                .isEqualTo(teeAttestation.attestationIdSecondImei.isPresent());
+        if (!TextUtils.isEmpty(expectedSecondImei)) {
+            validateSecondImei(new String(teeAttestation.attestationIdSecondImei.get()),
+                    expectedSecondImei);
+        }
     }
 
     private void validateAttestationRecord(List<Certificate> attestation, byte[] providedChallenge)
