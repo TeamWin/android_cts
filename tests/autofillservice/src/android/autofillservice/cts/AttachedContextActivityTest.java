@@ -21,7 +21,8 @@ import android.autofillservice.cts.activities.AttachedContextActivity.FillExpect
 import android.autofillservice.cts.commontests.AutoFillServiceTestCase;
 import android.autofillservice.cts.testcore.AutofillActivityTestRule;
 import android.autofillservice.cts.testcore.CannedFillResponse;
-import android.platform.test.annotations.FlakyTest;
+
+import androidx.test.filters.FlakyTest;
 
 import org.junit.Test;
 

@@ -32,7 +32,6 @@ import android.content.ClipData;
 import android.content.ContentResolver;
 import android.content.IntentSender;
 import android.net.Uri;
-import android.platform.test.annotations.FlakyTest;
 import android.platform.test.annotations.Presubmit;
 import android.service.autofill.Dataset;
 import android.view.ContentInfo;
@@ -42,6 +41,8 @@ import android.view.autofill.AutofillId;
 import android.view.autofill.AutofillValue;
 import android.widget.EditText;
 import android.widget.TextView;
+
+import androidx.test.filters.FlakyTest;
 
 import org.junit.Before;
 import org.junit.Test;

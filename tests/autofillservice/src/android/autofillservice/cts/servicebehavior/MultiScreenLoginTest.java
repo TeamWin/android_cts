@@ -42,12 +42,12 @@ import android.autofillservice.cts.testcore.InstrumentedAutoFillService.SaveRequ
 import android.content.ComponentName;
 import android.os.Bundle;
 import android.platform.test.annotations.AppModeFull;
-import android.platform.test.annotations.FlakyTest;
 import android.service.autofill.CharSequenceTransformation;
 import android.service.autofill.SaveInfo;
 import android.util.Log;
 import android.view.autofill.AutofillId;
 
+import androidx.test.filters.FlakyTest;
 import androidx.test.uiautomator.UiObject2;
 
 import org.junit.Test;

@@ -40,9 +40,10 @@ import android.autofillservice.cts.testcore.InstrumentedAutoFillService.SaveRequ
 import android.autofillservice.cts.testcore.UiBot;
 import android.content.IntentSender;
 import android.platform.test.annotations.AppModeFull;
-import android.platform.test.annotations.FlakyTest;
 import android.platform.test.annotations.Presubmit;
 import android.view.inputmethod.InlineSuggestionsRequest;
+
+import androidx.test.filters.FlakyTest;
 
 import org.junit.Test;
 import org.junit.rules.TestRule;
