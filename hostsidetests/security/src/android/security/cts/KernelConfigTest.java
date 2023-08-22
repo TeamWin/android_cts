@@ -337,7 +337,7 @@ public class KernelConfigTest extends BaseHostJUnit4Test {
 
     /**
      * Test that the kernel enables static usermodehelper and sets
-     * the path to a whitelisted path.
+     * the path to an allowlisted path.
      *
      * @throws Exception
      */
