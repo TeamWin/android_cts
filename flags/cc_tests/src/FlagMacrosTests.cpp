@@ -43,7 +43,7 @@ TEST_F_WITH_FLAGS(
     TestFWithFlagsTest,
     requies_disabled_flag_disabled_execute,
     REQUIRES_FLAGS_DISABLED(
-        LEGACY_FLAG(cts, TEST_NS, readwrite_disabled_flag))
+        LEGACY_FLAG(aconfig_flags.cts, TEST_NS, readwrite_disabled_flag))
 ) {
     executed_tests.insert("requies_disabled_flag_disabled_execute");
 }
@@ -60,7 +60,7 @@ TEST_F_WITH_FLAGS(
     TestFWithFlagsTest,
     requies_enabled_flag_enabled_executed,
     REQUIRES_FLAGS_ENABLED(
-        LEGACY_FLAG(cts, TEST_NS, readwrite_enabled_flag))
+        LEGACY_FLAG(aconfig_flags.cts, TEST_NS, readwrite_enabled_flag))
 ) {
     executed_tests.insert("requies_enabled_flag_enabled_executed");
 }
@@ -70,7 +70,7 @@ TEST_F_WITH_FLAGS(
     multi_flags_skip,
     REQUIRES_FLAGS_ENABLED(ACONFIG_FLAG(TEST_NS, readwrite_disabled_flag)),
     REQUIRES_FLAGS_DISABLED(
-        LEGACY_FLAG(cts, TEST_NS, readwrite_enabled_flag))
+        LEGACY_FLAG(aconfig_flags.cts, TEST_NS, readwrite_enabled_flag))
 ) {
     TestFail();
 }
@@ -80,7 +80,7 @@ TEST_F_WITH_FLAGS(
     multi_flags_executed,
     REQUIRES_FLAGS_ENABLED(ACONFIG_FLAG(TEST_NS, readwrite_enabled_flag)),
     REQUIRES_FLAGS_DISABLED(
-        LEGACY_FLAG(cts, TEST_NS, readwrite_disabled_flag))
+        LEGACY_FLAG(aconfig_flags.cts, TEST_NS, readwrite_disabled_flag))
 ) {
     executed_tests.insert("multi_flags_executed");
 }
@@ -90,7 +90,7 @@ TEST_F_WITH_FLAGS(
     multi_flags_for_same_state_skip,
     REQUIRES_FLAGS_ENABLED(
         ACONFIG_FLAG(TEST_NS, readwrite_enabled_flag),
-        LEGACY_FLAG(cts, TEST_NS, readwrite_disabled_flag)
+        LEGACY_FLAG(aconfig_flags.cts, TEST_NS, readwrite_disabled_flag)
     )
 ) {
     TestFail();
@@ -101,7 +101,7 @@ TEST_F_WITH_FLAGS(
     multi_flags_for_same_state_executed,
     REQUIRES_FLAGS_DISABLED(
         ACONFIG_FLAG(TEST_NS, readwrite_disabled_flag),
-        LEGACY_FLAG(cts, TEST_NS, readwrite_disabled_flag_2)
+        LEGACY_FLAG(aconfig_flags.cts, TEST_NS, readwrite_disabled_flag_2)
     )
 ) {
     executed_tests.insert("multi_flags_for_same_state_executed");
@@ -128,7 +128,7 @@ TEST_WITH_FLAGS(
     TestWithFlagsTest,
     requies_disabled_flag_enabled_skip,
     REQUIRES_FLAGS_DISABLED(
-        LEGACY_FLAG(cts, TEST_NS, readwrite_enabled_flag))
+        LEGACY_FLAG(aconfig_flags.cts, TEST_NS, readwrite_enabled_flag))
 ) {
     FAIL();
 }
@@ -146,7 +146,7 @@ TEST_WITH_FLAGS(
     TestWithFlagsTest,
     requies_enabled_flag_disabled_skip,
     REQUIRES_FLAGS_ENABLED(
-        LEGACY_FLAG(cts, TEST_NS, readwrite_disabled_flag))
+        LEGACY_FLAG(aconfig_flags.cts, TEST_NS, readwrite_disabled_flag))
 ) {
     FAIL();
 }
@@ -164,7 +164,7 @@ TEST_WITH_FLAGS(
     TestWithFlagsTest,
     multi_flags_skip,
     REQUIRES_FLAGS_ENABLED(
-        LEGACY_FLAG(cts, TEST_NS, readwrite_disabled_flag)),
+        LEGACY_FLAG(aconfig_flags.cts, TEST_NS, readwrite_disabled_flag)),
     REQUIRES_FLAGS_DISABLED(ACONFIG_FLAG(TEST_NS, readwrite_enabled_flag))
 ) {
     FAIL();
@@ -174,7 +174,7 @@ TEST_WITH_FLAGS(
     TestWithFlagsTest,
     multi_flags_executed,
     REQUIRES_FLAGS_ENABLED(
-        LEGACY_FLAG(cts, TEST_NS, readwrite_enabled_flag)),
+        LEGACY_FLAG(aconfig_flags.cts, TEST_NS, readwrite_enabled_flag)),
     REQUIRES_FLAGS_DISABLED(ACONFIG_FLAG(TEST_NS, readwrite_disabled_flag))
 ) {
     TestWithFlagsTestHelper::executed_tests.insert(
@@ -185,7 +185,7 @@ TEST_WITH_FLAGS(
     TestWithFlagsTest,
     multi_flags_for_same_state_skip,
     REQUIRES_FLAGS_ENABLED(
-        LEGACY_FLAG(cts, TEST_NS, readwrite_enabled_flag),
+        LEGACY_FLAG(aconfig_flags.cts, TEST_NS, readwrite_enabled_flag),
         ACONFIG_FLAG(TEST_NS, readwrite_disabled_flag)
     )
 ) {
@@ -196,7 +196,7 @@ TEST_WITH_FLAGS(
     TestWithFlagsTest,
     multi_flags_for_same_state_executed,
     REQUIRES_FLAGS_DISABLED(
-        LEGACY_FLAG(cts, TEST_NS, readwrite_disabled_flag),
+        LEGACY_FLAG(aconfig_flags.cts, TEST_NS, readwrite_disabled_flag),
         ACONFIG_FLAG(TEST_NS, readwrite_disabled_flag_2)
     )
 ) {
