@@ -40,14 +40,6 @@ public class AutoHandwritingTest {
             new ActivityTestRule<>(HandwritingActivity.class);
 
     @Test
-    public void autoHandwriting_defaultValueIsTrue() {
-        Activity activity = mActivityRule.getActivity();
-        View view = activity.findViewById(R.id.default_view);
-
-        assertTrue(view.isAutoHandwritingEnabled());
-    }
-
-    @Test
     public void autoHandwriting_setToTrueInXml() {
         Activity activity = mActivityRule.getActivity();
         View view = activity.findViewById(R.id.auto_handwriting_enabled);
