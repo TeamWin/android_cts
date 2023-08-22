@@ -14,7 +14,7 @@
 """Verify preview matches video output during video zoom."""
 
 import logging
-import math 
+import math
 import os
 
 from mobly import test_runner
