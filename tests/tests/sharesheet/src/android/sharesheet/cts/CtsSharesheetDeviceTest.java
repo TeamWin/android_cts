@@ -420,7 +420,7 @@ public class CtsSharesheetDeviceTest {
      */
     public void isChooserTargetServiceDirectShareDisabled() {
         // ChooserTargets can take time to load. To account for this:
-        // * All non-test ChooserTargetServices shouldn't be loaded because of blacklist
+        // * All non-test ChooserTargetServices shouldn't be loaded because of denylist
         // * waitAndAssert operations have lengthy timeout periods
         // * Last time to run in suite so prior operations reduce wait time
 
