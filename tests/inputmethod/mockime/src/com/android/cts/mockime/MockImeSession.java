@@ -1518,6 +1518,26 @@ public class MockImeSession implements AutoCloseable {
     }
 
     /**
+     * Lets {@link MockIme} to call
+     * {@link InputMethodManager#setAdditionalInputMethodSubtypes(String, InputMethodSubtype[])}
+     * with the given parameters.
+     *
+     * @param imeId the IME ID
+     * @param subtypes A non-null array of {@link InputMethodSubtype}
+     * @return {@link ImeCommand} object that can be passed to
+     *         {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to
+     *         wait until this event is handled by {@link MockIme}
+     */
+    @NonNull
+    public ImeCommand callSetAdditionalInputMethodSubtypes(@NonNull String imeId,
+            @NonNull InputMethodSubtype[] subtypes) {
+        final Bundle params = new Bundle();
+        params.putString("imeId", imeId);
+        params.putParcelableArray("subtypes", subtypes);
+        return callCommandInternal("setAdditionalInputMethodSubtypes", params);
+    }
+
+    /**
      * Makes {@link MockIme} call {@link
      * android.inputmethodservice.InputMethodService#switchInputMethod(String)}
      * with the given parameters.
