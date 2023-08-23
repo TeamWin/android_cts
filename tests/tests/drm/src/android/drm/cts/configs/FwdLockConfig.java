@@ -36,7 +36,7 @@ public class FwdLockConfig implements Config {
         return "01234567";
     }
     public String getRightsPath() {
-        // Fwd lock does not have rights but send back dummy string anyways.
+        // Fwd lock does not have rights but send back placeholder string anyways.
         return "/sdcard/non_existing_rights.xml";
     }
     public String getContentPath() {
