@@ -404,7 +404,7 @@ public class FocusFinderTest {
 
     @Test
     public void testBasicFocusOrder() {
-        // Sanity check to make sure sorter is behaving
+        // Initial check to make sure sorter is behaving
         FrameLayout layout = new FrameLayout(mLayout.getContext());
         Button button1 = new Button(mLayout.getContext());
         Button button2 = new Button(mLayout.getContext());
