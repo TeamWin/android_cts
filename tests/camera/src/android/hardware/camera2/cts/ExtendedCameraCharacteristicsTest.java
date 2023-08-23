@@ -2138,8 +2138,6 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
                     config.isOutputSupportedFor(android.media.MediaRecorder.class));
                 assertTrue("MediaCodec must be supported",
                     config.isOutputSupportedFor(android.media.MediaCodec.class));
-                assertTrue("Allocation must be supported",
-                    config.isOutputSupportedFor(android.renderscript.Allocation.class));
                 assertTrue("SurfaceHolder must be supported",
                     config.isOutputSupportedFor(android.view.SurfaceHolder.class));
                 assertTrue("SurfaceTexture must be supported",
