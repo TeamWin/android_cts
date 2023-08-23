@@ -27,7 +27,7 @@ import java.util.regex.Pattern;
 class RootProcessScanner {
 
     /** Processes that are allowed to run as root. */
-    private static final Pattern ROOT_PROCESS_WHITELIST_PATTERN = getRootProcessWhitelistPattern(
+    private static final Pattern ROOT_PROCESS_ALLOWLIST_PATTERN = getRootProcessAllowlistPattern(
             "debuggerd",
             "debuggerd64",
             "healthd",
@@ -43,7 +43,7 @@ class RootProcessScanner {
     );
 
     /** Combine the individual patterns into one super pattern. */
-    private static Pattern getRootProcessWhitelistPattern(String... patterns) {
+    private static Pattern getRootProcessAllowlistPattern(String... patterns) {
         StringBuilder rootProcessPattern = new StringBuilder();
         for (int i = 0; i < patterns.length; i++) {
             rootProcessPattern.append(patterns[i]);
@@ -141,7 +141,7 @@ class RootProcessScanner {
      * Return whether or not this process is running as root without being approved.
      *
      * @param processDir with the status file
-     * @return whether or not it is a unwhitelisted root process
+     * @return whether or not it is a unallowlisted root process
      * @throws FileNotFoundException
      */
     private static boolean isRootProcess(File processDir) throws FileNotFoundException {
@@ -159,7 +159,7 @@ class RootProcessScanner {
             findToken(scanner, "Gid:");
             boolean rootGid = hasRootId(scanner);
 
-            return !ROOT_PROCESS_WHITELIST_PATTERN.matcher(name).matches()
+            return !ROOT_PROCESS_ALLOWLIST_PATTERN.matcher(name).matches()
                     && (rootUid || rootGid);
         } finally {
             if (scanner != null) {
