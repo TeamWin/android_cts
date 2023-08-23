@@ -231,13 +231,13 @@ public class SplitAttributesCalculatorTest extends ActivityEmbeddingTestBase {
         }
 
         try (RotationSession rotationSession = new RotationSession()) {
-            final int initialRotation = rotationSession.get();
+            final int initialRotation = activityA.getDisplay().getRotation();
             for (int i = 1; i <= 3; i++) {
                 // Rotate the device by 90 degree clockwise.
                 final int rotation = (initialRotation + i) % 4;
                 rotationSession.set(rotation);
 
-                verifier.waitAndAssertFunctionApplied("The calculator function mus be called for"
+                verifier.waitAndAssertFunctionApplied("The calculator function must be called for"
                         + " rotation:" + rotation);
             }
         }
