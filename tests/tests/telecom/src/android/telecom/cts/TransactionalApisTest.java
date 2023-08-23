@@ -331,6 +331,32 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
     }
 
     /**
+     * Ensure {@link Call.Details#PROPERTY_IS_TRANSACTIONAL} is properly set to true when a
+     * transactional outgoing call has been added and set active.
+     */
+    @CddTest(requirements = "7.4.1.2/C-12-1,7.4.1.2/C-12-2")
+    @ApiTest(apis = {"android.telecom.TelecomManager#addCall",
+            "android.telecom.CallControl#setActive",
+            "android.telecom.CallControl#disconnect"})
+    public void testAddOutgoingCallHasPropertyIsTransactional() {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+        try {
+            cleanup();
+            startCallWithAttributesAndVerify(mOutgoingCallAttributes, mCall1);
+            callControlAction(SET_ACTIVE, mCall1);
+            assertEquals(Call.STATE_ACTIVE, getLastAddedCall().getState());
+            // Ensure that the call has PROPERTY_IS_TRANSACTIONAL:
+            Call call = getLastAddedCall();
+            assertTrue(call.getDetails().hasProperty(Call.Details.PROPERTY_IS_TRANSACTIONAL));
+            callControlAction(DISCONNECT, mCall1);
+        } finally {
+            cleanup();
+        }
+    }
+
+    /**
      * Ensure the state transitions of a successful incoming call are correct.
      * State Transitions:  New -> * Ringing -> Active * -> Disconnecting -> Disconnected
      */
@@ -350,6 +376,32 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
             assertEquals(Call.STATE_ACTIVE, getLastAddedCall().getState());
             callControlAction(DISCONNECT, mCall1);
             assertNumCalls(getInCallService(), 0);
+        } finally {
+            cleanup();
+        }
+    }
+
+    /**
+     * Ensure {@link Call.Details#PROPERTY_IS_TRANSACTIONAL} is properly set to true when a
+     * transactional incoming call has been added and set active.
+     */
+    @CddTest(requirements = "7.4.1.2/C-12-1,7.4.1.2/C-12-2")
+    @ApiTest(apis = {"android.telecom.TelecomManager#addCall",
+            "android.telecom.CallControl#setActive",
+            "android.telecom.CallControl#disconnect"})
+    public void testAddIncomingCallHasPropertyIsTransactional() {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+        try {
+            cleanup();
+            startCallWithAttributesAndVerify(mIncomingCallAttributes, mCall1);
+            callControlAction(SET_ACTIVE, mCall1);
+            assertEquals(Call.STATE_ACTIVE, getLastAddedCall().getState());
+            // Ensure that the call has PROPERTY_IS_TRANSACTIONAL:
+            Call call = getLastAddedCall();
+            assertTrue(call.getDetails().hasProperty(Call.Details.PROPERTY_IS_TRANSACTIONAL));
+            callControlAction(DISCONNECT, mCall1);
         } finally {
             cleanup();
         }
