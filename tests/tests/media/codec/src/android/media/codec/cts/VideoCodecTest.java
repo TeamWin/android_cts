@@ -576,7 +576,7 @@ public class VideoCodecTest extends VideoCodecTestBase {
             return;
         }
 
-        // First do a sanity check - higher bitrates should results in higher PSNR.
+        // First do an initial check - higher bitrates should results in higher PSNR.
         for (int i = 1; i < TEST_BITRATES_SET.length ; i++) {
             if (!completed[i]) {
                 continue;
