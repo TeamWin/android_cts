@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 The Android Open Source Project
+ * Copyright (C) 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,10 @@
 package android.security.cts;
 
 import static org.junit.Assume.assumeNoException;
-import static org.junit.Assume.assumeTrue;
 
 import android.platform.test.annotations.AsbSecurityTest;
 
+import com.android.sts.common.UserUtils;
 import com.android.sts.common.tradefed.testtype.RootSecurityTestCase;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -38,55 +38,28 @@ public class CVE_2022_20112 extends RootSecurityTestCase {
     // Is play managed : No
     @AsbSecurityTest(cveBugId = 206987762)
     @Test
-    public void testPocCVE_2022_20112() throws Exception {
-        // This setting is not supported on automotive
-        if (isAutomotive()) return;
-
-        final String testPkg = "android.security.cts.CVE_2022_20112";
-        ITestDevice device = null;
-        int currentUser = -1;
-        int newUser = -1;
+    public void testPocCVE_2022_20112() {
         try {
-            device = getDevice();
+            // This setting is not supported on automotive
+            if (isAutomotive()) return;
 
-            // Device wakeup and unlock
-            AdbUtils.runCommandLine("input keyevent KEYCODE_WAKEUP", device);
-            AdbUtils.runCommandLine("wm dismiss-keyguard", device);
+            final ITestDevice device = getDevice();
+            try (AutoCloseable asGuestUser =
+                    new UserUtils.SecondaryUser(device)
+                            .name("CTSUser")
+                            .guest()
+                            .doSwitch()
+                            .withUser()) {
+                // Install PoC application in guest user
+                installPackageAsUser(
+                        "CVE-2022-20112.apk", false /* grantPermission */, device.getCurrentUser());
 
-            // Get current user
-            currentUser = device.getCurrentUser();
-
-            // Create new guest user 'CTSUser' for test
-            newUser = device.createUser("CTSUser", true, false);
-
-            // Start new guest user 'CTSUser'
-            assumeTrue("Unable to create new guest user", device.startUser(newUser, true));
-
-            // Switch to new user 'CTSUser'
-            assumeTrue("Unable to switch to guest user", device.switchUser(newUser));
-
-            // Install PoC application
-            installPackage("CVE-2022-20112.apk");
-
-            runDeviceTests(testPkg, testPkg + ".DeviceTest", "testprivateDnsPreferenceController");
+                final String testPkg = "android.security.cts.CVE_2022_20112";
+                runDeviceTests(
+                        testPkg, testPkg + ".DeviceTest", "testPrivateDnsPreferenceController");
+            }
         } catch (Exception e) {
             assumeNoException(e);
-        } finally {
-            try {
-                if (currentUser != -1) {
-                    // Switch back to previous user
-                    device.switchUser(currentUser);
-                }
-                if (newUser != -1) {
-                    // Stop user 'CTSUser'
-                    device.stopUser(newUser);
-
-                    // Remove user 'CTSUser'
-                    device.removeUser(newUser);
-                }
-            } catch (Exception e) {
-                // Ignore exception here
-            }
         }
     }
 
