@@ -16,13 +16,6 @@
 
 package android.server.wm.jetpack.embedding;
 
-import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.createWildcardSplitPairRule;
-import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.createWildcardSplitPairRuleBuilderWithPrimaryActivityClass;
-import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.createWildcardSplitPairRuleWithPrimaryActivityClass;
-import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.startActivityAndVerifySplitAttributes;
-import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.waitAndAssertNotVisible;
-import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.waitAndAssertResumed;
-import static android.server.wm.jetpack.utils.TestActivityLauncher.KEY_ACTIVITY_ID;
 import static android.server.wm.activity.lifecycle.LifecycleConstants.ON_CREATE;
 import static android.server.wm.activity.lifecycle.LifecycleConstants.ON_DESTROY;
 import static android.server.wm.activity.lifecycle.LifecycleConstants.ON_PAUSE;
@@ -31,6 +24,13 @@ import static android.server.wm.activity.lifecycle.LifecycleConstants.ON_START;
 import static android.server.wm.activity.lifecycle.LifecycleConstants.ON_STOP;
 import static android.server.wm.activity.lifecycle.TransitionVerifier.checkOrder;
 import static android.server.wm.activity.lifecycle.TransitionVerifier.transition;
+import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.createWildcardSplitPairRule;
+import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.createWildcardSplitPairRuleBuilderWithPrimaryActivityClass;
+import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.createWildcardSplitPairRuleWithPrimaryActivityClass;
+import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.startActivityAndVerifySplitAttributes;
+import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.waitAndAssertNotVisible;
+import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.waitAndAssertResumed;
+import static android.server.wm.jetpack.utils.TestActivityLauncher.KEY_ACTIVITY_ID;
 
 import static androidx.window.extensions.embedding.SplitRule.FINISH_ALWAYS;
 import static androidx.window.extensions.embedding.SplitRule.FINISH_NEVER;
@@ -46,13 +46,13 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.platform.test.annotations.Presubmit;
+import android.server.wm.activity.lifecycle.EventLog;
+import android.server.wm.activity.lifecycle.EventLog.EventLogClient;
+import android.server.wm.activity.lifecycle.EventTracker;
 import android.server.wm.jetpack.utils.TestActivityWithId;
 import android.server.wm.jetpack.utils.TestActivityWithId2;
 import android.server.wm.jetpack.utils.TestConfigChangeHandlingActivity;
 import android.server.wm.jetpack.utils.TestValueCountConsumer;
-import android.server.wm.activity.lifecycle.EventLog;
-import android.server.wm.activity.lifecycle.EventLog.EventLogClient;
-import android.server.wm.activity.lifecycle.EventTracker;
 import android.util.Pair;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -429,20 +429,15 @@ public class ActivityEmbeddingLifecycleTests extends ActivityEmbeddingTestBase {
                 "secondaryActivity2", mSplitInfoConsumer);
         waitAndAssertResumed(secondaryActivity);
         waitAndAssertResumed(secondaryActivity2);
-        mEventLog.clear();
 
         // Finish the middle activity
         secondaryActivity.finish();
         waitAndAssertResumed(secondaryActivity2);
         waitAndAssertNotVisible(primaryActivity);
-        List<Pair<String, String>> expected = List.of(
-                transition(TestActivityWithId.class, ON_PAUSE),
-                transition(TestConfigChangeHandlingActivity.class, ON_STOP));
-        assertTrue("Finish middle activity in multi-split",
-                mLifecycleTracker.waitForConditionWithTimeout(() ->
-                        checkOrder(mEventLog, expected)));
+
         // There is no guarantee on the order, because the removal may be delayed until the next
         // resumed becomes visible.
+        waitAndAssertActivityOnStop(TestConfigChangeHandlingActivity.class);
         waitAndAssertActivityOnDestroy(TestActivityWithId.class);
         waitAndAssertSplitStatesUpdated();
     }
@@ -472,20 +467,15 @@ public class ActivityEmbeddingLifecycleTests extends ActivityEmbeddingTestBase {
                 "secondaryActivity2", mSplitInfoConsumer);
         waitAndAssertResumed(secondaryActivity);
         waitAndAssertResumed(secondaryActivity2);
-        mEventLog.clear();
 
         // Finish the middle activity
         secondaryActivity.finish();
         waitAndAssertResumed(secondaryActivity2);
         waitAndAssertNotVisible(primaryActivity);
-        List<Pair<String, String>> expected = List.of(
-                transition(TestActivityWithId.class, ON_PAUSE),
-                transition(TestConfigChangeHandlingActivity.class, ON_STOP));
-        assertTrue("Finish middle activity in multi-split",
-                mLifecycleTracker.waitForConditionWithTimeout(() ->
-                        checkOrder(mEventLog, expected)));
+
         // There is no guarantee on the order, because the removal may be delayed until the next
         // resumed becomes visible.
+        waitAndAssertActivityOnStop(TestConfigChangeHandlingActivity.class);
         waitAndAssertActivityOnDestroy(TestActivityWithId.class);
         waitAndAssertSplitStatesUpdated();
     }
@@ -579,6 +569,10 @@ public class ActivityEmbeddingLifecycleTests extends ActivityEmbeddingTestBase {
         waitAndAssertResumed("primaryActivity2");
         waitAndAssertResumed("secondaryActivity");
         waitAndAssertNotVisible(primaryActivity);
+    }
+
+    private void waitAndAssertActivityOnStop(Class<? extends Activity> activityClass) {
+        mLifecycleTracker.waitAndAssertActivityCurrentState(activityClass, ON_STOP);
     }
 
     private void waitAndAssertActivityOnDestroy(Class<? extends Activity> activityClass) {
