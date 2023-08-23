@@ -429,6 +429,7 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
         int retries = 10;
         CLog.i("switching to user %d", userId);
         executeShellCommand("am switch-user " + userId);
+        RunUtil.getDefault().sleep(USER_SWITCH_WAIT);
         while (getDevice().getCurrentUser() != userId && (--retries) >= 0) {
             // am switch-user can be ignored if a previous user-switching operation
             // is still in progress. In this case, sleep a bit and then retry
