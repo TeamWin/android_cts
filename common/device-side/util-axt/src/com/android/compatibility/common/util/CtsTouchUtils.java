@@ -91,7 +91,8 @@ public final class CtsTouchUtils {
      */
     public void emulateTapOnViewCenter(Instrumentation instrumentation,
             ActivityTestRule<?> activityTestRule, View view) {
-        emulateTapOnViewCenter(instrumentation, activityTestRule, view, true);
+        emulateTapOnViewCenter(instrumentation, activityTestRule, view, true,
+                /* useGlobalInjection= */ false);
     }
 
     /**
@@ -100,11 +101,16 @@ public final class CtsTouchUtils {
      * @param instrumentation the instrumentation used to run the test
      * @param view the view to "tap"
      * @param waitForAnimations wait for animations to complete before sending an event
+     * @param useGlobalInjection Whether to use targeted injection (false) or global (true).
+     * Targeted injection will only send injected events to the owned test app, while global will
+     * send the events to the entire system, including spy windows (launcher/System UI).
+     * Always use targeted injection unless you know what you are doing.
      */
     public void emulateTapOnViewCenter(Instrumentation instrumentation,
-            ActivityTestRule<?> activityTestRule, View view, boolean waitForAnimations) {
+            ActivityTestRule<?> activityTestRule, View view, boolean waitForAnimations,
+            boolean useGlobalInjection) {
         emulateTapOnView(instrumentation, activityTestRule, view, view.getWidth() / 2,
-                view.getHeight() / 2, waitForAnimations);
+                view.getHeight() / 2, waitForAnimations, useGlobalInjection);
     }
 
     /**
@@ -119,7 +125,8 @@ public final class CtsTouchUtils {
     public void emulateTapOnView(Instrumentation instrumentation,
             ActivityTestRule<?> activityTestRule, View anchorView,
             int offsetX, int offsetY) {
-        emulateTapOnView(instrumentation, activityTestRule, anchorView, offsetX, offsetY, true);
+        emulateTapOnView(instrumentation, activityTestRule, anchorView, offsetX, offsetY,
+                /* waitForAnimations= */ true, /* useGlobalInjection= */ false);
     }
 
     /**
@@ -131,25 +138,29 @@ public final class CtsTouchUtils {
      * @param offsetX extra X offset for the tap
      * @param offsetY extra Y offset for the tap
      * @param waitForAnimations wait for animations to complete before sending an event
+     * @param useGlobalInjection Whether to use targeted injection (false) or global (true).
+     * Targeted injection will only send injected events to the owned test app, while global will
+     * send the events to the entire system, including spy windows (launcher/System UI).
+     * Always use targeted injection unless you know what you are doing.
      */
     public void emulateTapOnView(Instrumentation instrumentation,
             ActivityTestRule<?> activityTestRule, View anchorView,
-            int offsetX, int offsetY, boolean waitForAnimations) {
+            int offsetX, int offsetY, boolean waitForAnimations, boolean useGlobalInjection) {
         final int touchSlop = ViewConfiguration.get(anchorView.getContext()).getScaledTouchSlop();
         // Get anchor coordinates on the screen
         final int[] viewOnScreenXY = new int[2];
         anchorView.getLocationOnScreen(viewOnScreenXY);
         int xOnScreen = viewOnScreenXY[0] + offsetX;
         int yOnScreen = viewOnScreenXY[1] + offsetY;
-        final UiAutomation uiAutomation = instrumentation.getUiAutomation();
         final long downTime = SystemClock.uptimeMillis();
 
-        injectDownEvent(uiAutomation, downTime, xOnScreen, yOnScreen, waitForAnimations,
-                /* eventInjectionListener= */ null);
-        injectMoveEventForTap(uiAutomation, downTime, touchSlop, xOnScreen, yOnScreen,
-                waitForAnimations);
-        injectUpEvent(uiAutomation, downTime, /* useCurrentEventTime= */ false,
-                xOnScreen, yOnScreen, waitForAnimations, /* eventInjectionListener= */ null);
+        injectDownEvent(instrumentation, downTime, xOnScreen, yOnScreen, waitForAnimations,
+                /* eventInjectionListener= */ null, useGlobalInjection);
+        injectMoveEventForTap(instrumentation, downTime, touchSlop, xOnScreen, yOnScreen,
+                waitForAnimations, useGlobalInjection);
+        injectUpEvent(instrumentation, downTime, /* useCurrentEventTime= */ false,
+                xOnScreen, yOnScreen, waitForAnimations, /* eventInjectionListener= */ null,
+                useGlobalInjection);
 
         // Wait for the system to process all events in the queue
         if (activityTestRule != null) {
@@ -190,15 +201,20 @@ public final class CtsTouchUtils {
         anchorView.getLocationOnScreen(viewOnScreenXY);
         int xOnScreen = viewOnScreenXY[0] + offsetX;
         int yOnScreen = viewOnScreenXY[1] + offsetY;
-        final UiAutomation uiAutomation = instrumentation.getUiAutomation();
         final long downTime = SystemClock.uptimeMillis();
 
-        injectDownEvent(uiAutomation, downTime, xOnScreen, yOnScreen, null);
-        injectMoveEventForTap(uiAutomation, downTime, touchSlop, xOnScreen, yOnScreen, true);
-        injectUpEvent(uiAutomation, downTime, false, xOnScreen, yOnScreen, null);
-        injectDownEvent(uiAutomation, downTime, xOnScreen, yOnScreen, null);
-        injectMoveEventForTap(uiAutomation, downTime, touchSlop, xOnScreen, yOnScreen, true);
-        injectUpEvent(uiAutomation, downTime, false, xOnScreen, yOnScreen, null);
+        injectDownEvent(instrumentation, downTime, xOnScreen, yOnScreen, null,
+                /* useGlobalInjection= */ false);
+        injectMoveEventForTap(instrumentation, downTime, touchSlop, xOnScreen, yOnScreen, true,
+                /* useGlobalInjection= */ false);
+        injectUpEvent(instrumentation, downTime, false, xOnScreen, yOnScreen, null,
+                /* useGlobalInjection= */ false);
+        injectDownEvent(instrumentation, downTime, xOnScreen, yOnScreen, null,
+                /* useGlobalInjection= */ false);
+        injectMoveEventForTap(instrumentation, downTime, touchSlop, xOnScreen, yOnScreen, true,
+                /* useGlobalInjection= */ false);
+        injectUpEvent(instrumentation, downTime, false, xOnScreen, yOnScreen, null,
+                /* useGlobalInjection= */ false);
 
         // Wait for the system to process all events in the queue
         if (activityTestRule != null) {
@@ -274,22 +290,20 @@ public final class CtsTouchUtils {
             int dragStartX, int dragStartY, int dragAmountX, int dragAmountY,
             int dragDurationMs, int moveEventCount,
             boolean waitForAnimations, @Nullable EventInjectionListener eventInjectionListener) {
-        // We are using the UiAutomation object to inject events so that drag works
-        // across view / window boundaries (such as for the emulated drag and drop
-        // sequences)
-        final UiAutomation uiAutomation = instrumentation.getUiAutomation();
         final long downTime = SystemClock.uptimeMillis();
 
-        injectDownEvent(uiAutomation, downTime, dragStartX, dragStartY, waitForAnimations,
-                eventInjectionListener);
+        injectDownEvent(instrumentation, downTime, dragStartX, dragStartY, waitForAnimations,
+                eventInjectionListener, /* useGlobalInjection= */ false);
 
         // Inject a sequence of MOVE events that emulate the "move" part of the gesture
-        injectMoveEventsForDrag(uiAutomation, downTime, dragStartX, dragStartY,
+        injectMoveEventsForDrag(instrumentation, downTime, dragStartX, dragStartY,
                 dragStartX + dragAmountX, dragStartY + dragAmountY, moveEventCount,
-                dragDurationMs, waitForAnimations, eventInjectionListener);
+                dragDurationMs, waitForAnimations, eventInjectionListener,
+                /* useGlobalInjection= */ false);
 
-        injectUpEvent(uiAutomation, downTime, true, dragStartX + dragAmountX,
-                dragStartY + dragAmountY, waitForAnimations, eventInjectionListener);
+        injectUpEvent(instrumentation, downTime, true, dragStartX + dragAmountX,
+                dragStartY + dragAmountY, waitForAnimations, eventInjectionListener,
+                /* useGlobalInjection= */ false);
 
         // Wait for the system to process all events in the queue
         if (activityTestRule != null) {
@@ -325,7 +339,7 @@ public final class CtsTouchUtils {
         }
 
         emulateDragGesture(instrumentation, activityTestRule, coordinates, dragDurationMs,
-                moveEventCount);
+                moveEventCount, /* useGlobalInjection= */ false);
     }
 
     /**
@@ -360,23 +374,22 @@ public final class CtsTouchUtils {
 
     private void emulateDragGesture(Instrumentation instrumentation,
             ActivityTestRule<?> activityTestRule,
-            SparseArray<Point> coordinates, int dragDurationMs, int moveEventCount) {
+            SparseArray<Point> coordinates, int dragDurationMs, int moveEventCount,
+            boolean useGlobalInjection) {
         final int coordinatesSize = coordinates.size();
         if (coordinatesSize < 2) {
             throw new IllegalArgumentException("Need at least 2 points for emulating drag");
         }
-        // We are using the UiAutomation object to inject events so that drag works
-        // across view / window boundaries (such as for the emulated drag and drop
-        // sequences)
-        final UiAutomation uiAutomation = instrumentation.getUiAutomation();
+
         final long downTime = SystemClock.uptimeMillis();
 
-        injectDownEvent(uiAutomation, downTime, coordinates.get(0).x, coordinates.get(0).y, null);
+        injectDownEvent(instrumentation, downTime, coordinates.get(0).x, coordinates.get(0).y,
+                /* eventInjectionListener= */ null, useGlobalInjection);
 
         // Move to each coordinate.
         for (int i = 0; i < coordinatesSize - 1; i++) {
             // Inject a sequence of MOVE events that emulate the "move" part of the gesture.
-            injectMoveEventsForDrag(uiAutomation,
+            injectMoveEventsForDrag(instrumentation,
                     downTime,
                     coordinates.get(i).x,
                     coordinates.get(i).y,
@@ -385,15 +398,15 @@ public final class CtsTouchUtils {
                     moveEventCount,
                     dragDurationMs,
                     true,
-                    null);
+                    null, useGlobalInjection);
         }
 
-        injectUpEvent(uiAutomation,
+        injectUpEvent(instrumentation,
                 downTime,
                 true,
                 coordinates.get(coordinatesSize - 1).x,
                 coordinates.get(coordinatesSize - 1).y,
-                null);
+                null, useGlobalInjection);
 
         // Wait for the system to process all events in the queue
         if (activityTestRule != null) {
@@ -413,12 +426,18 @@ public final class CtsTouchUtils {
      * @param yOnScreen The y screen coordinate to press on
      * @param eventInjectionListener The listener to call back immediately after the down was
      *                               sent.
+     * @param useGlobalInjection Whether to use targeted injection (false) or global (true).
+     * Targeted injection will only send injected events to the owned test app, while global will
+     * send the events to the entire system, including spy windows (launcher/System UI).
+     * Always use targeted injection unless you know what you are doing.
+     *
      * @return <code>downTime</code>
      */
-    public long injectDownEvent(UiAutomation uiAutomation, long downTime, int xOnScreen,
-            int yOnScreen, @Nullable EventInjectionListener eventInjectionListener) {
-        return injectDownEvent(uiAutomation, downTime, xOnScreen, yOnScreen,
-                /* waitForAnimations= */ true, eventInjectionListener);
+    public long injectDownEvent(Instrumentation instrumentation, long downTime, int xOnScreen,
+            int yOnScreen, @Nullable EventInjectionListener eventInjectionListener,
+            boolean useGlobalInjection) {
+        return injectDownEvent(instrumentation, downTime, xOnScreen, yOnScreen,
+                /* waitForAnimations= */ true, eventInjectionListener, useGlobalInjection);
     }
 
     /**
@@ -431,16 +450,22 @@ public final class CtsTouchUtils {
      * @param waitForAnimations wait for animations to complete before sending an event
      * @param eventInjectionListener The listener to call back immediately after the down was
      *                               sent.
+     * @param useGlobalInjection Whether to use targeted injection (false) or global (true).
+     * Targeted injection will only send injected events to the owned test app, while global will
+     * send the events to the entire system, including spy windows (launcher/System UI).
+     * Always use targeted injection unless you know what you are doing.
+     *
      * @return <code>downTime</code>
      */
-    public long injectDownEvent(UiAutomation uiAutomation, long downTime, int xOnScreen,
+    private long injectDownEvent(Instrumentation instrumentation, long downTime, int xOnScreen,
             int yOnScreen, boolean waitForAnimations,
-            @Nullable EventInjectionListener eventInjectionListener) {
+            @Nullable EventInjectionListener eventInjectionListener, boolean useGlobalInjection) {
         MotionEvent eventDown = MotionEvent.obtain(
                 downTime, downTime, MotionEvent.ACTION_DOWN, xOnScreen, yOnScreen, 1);
         injectDisplayIdIfNeeded(eventDown);
         eventDown.setSource(InputDevice.SOURCE_TOUCHSCREEN);
-        uiAutomation.injectInputEvent(eventDown, true, waitForAnimations);
+        injectPointerEvent(instrumentation, eventDown, waitForAnimations, useGlobalInjection);
+
         if (eventInjectionListener != null) {
             eventInjectionListener.onDownInjected(xOnScreen, yOnScreen);
         }
@@ -448,20 +473,22 @@ public final class CtsTouchUtils {
         return downTime;
     }
 
-    private void injectMoveEventForTap(UiAutomation uiAutomation, long downTime,
-            int touchSlop, int xOnScreen, int yOnScreen, boolean waitForAnimations) {
+    private void injectMoveEventForTap(Instrumentation instrumentation, long downTime,
+            int touchSlop, int xOnScreen, int yOnScreen, boolean waitForAnimations,
+            boolean useGlobalInjection) {
         MotionEvent eventMove = MotionEvent.obtain(downTime, downTime, MotionEvent.ACTION_MOVE,
                 xOnScreen + (touchSlop / 2.0f), yOnScreen + (touchSlop / 2.0f), 1);
         injectDisplayIdIfNeeded(eventMove);
         eventMove.setSource(InputDevice.SOURCE_TOUCHSCREEN);
-        uiAutomation.injectInputEvent(eventMove, waitForAnimations);
+
+        injectPointerEvent(instrumentation, eventMove, waitForAnimations, useGlobalInjection);
         eventMove.recycle();
     }
 
-    private void injectMoveEventsForDrag(UiAutomation uiAutomation, long downTime,
+    private void injectMoveEventsForDrag(Instrumentation instrumentation, long downTime,
             int dragStartX, int dragStartY, int dragEndX, int dragEndY, int moveEventCount,
             int dragDurationMs, boolean waitForAnimations,
-            EventInjectionListener eventInjectionListener) {
+            EventInjectionListener eventInjectionListener, boolean useGlobalInjection) {
 
         final int dragAmountX = dragEndX - dragStartX;
         final int dragAmountY = dragEndY - dragStartY;
@@ -527,7 +554,8 @@ public final class CtsTouchUtils {
             }
 
             eventMove.setSource(InputDevice.SOURCE_TOUCHSCREEN);
-            uiAutomation.injectInputEvent(eventMove, true, waitForAnimations);
+            injectPointerEvent(instrumentation, eventMove, waitForAnimations, useGlobalInjection);
+
             if (eventInjectionListener != null) {
                 eventInjectionListener.onMoveInjected(xCoordsForListener, yCoordsForListener);
             }
@@ -539,7 +567,7 @@ public final class CtsTouchUtils {
     /**
      * Injects an {@link MotionEvent#ACTION_UP} event at the given coordinates.
      *
-     * @param uiAutomation the uiAutomation used to run the test
+     * @param instrumentation the Instrumentation used to run the test
      * @param downTime The time of the event, usually from {@link SystemClock#uptimeMillis()}
      * @param useCurrentEventTime <code>true</code> if it should use the current time for the
      *                            up event or <code>false</code> to use <code>downTime</code>.
@@ -548,17 +576,25 @@ public final class CtsTouchUtils {
      * @param eventInjectionListener The listener to call back immediately after the up was
      *                               sent.
      */
-    public void injectUpEvent(UiAutomation uiAutomation, long downTime,
+    public void injectUpEvent(Instrumentation instrumentation, long downTime,
             boolean useCurrentEventTime, int xOnScreen, int yOnScreen,
             EventInjectionListener eventInjectionListener) {
-        injectUpEvent(uiAutomation, downTime, useCurrentEventTime, xOnScreen, yOnScreen, true,
-                eventInjectionListener);
+        injectUpEvent(instrumentation, downTime,
+                useCurrentEventTime, xOnScreen, yOnScreen,
+                eventInjectionListener, /*useGlobalInjection=*/ false);
+    }
+
+    private void injectUpEvent(Instrumentation instrumentation, long downTime,
+            boolean useCurrentEventTime, int xOnScreen, int yOnScreen,
+            EventInjectionListener eventInjectionListener, boolean useGlobalInjection) {
+        injectUpEvent(instrumentation, downTime, useCurrentEventTime, xOnScreen, yOnScreen, true,
+                eventInjectionListener, useGlobalInjection);
     }
 
     /**
      * Injects an {@link MotionEvent#ACTION_UP} event at the given coordinates.
      *
-     * @param uiAutomation the uiAutomation used to run the test
+     * @param instrumentation the Instrumentation used to run the test
      * @param downTime The time of the event, usually from {@link SystemClock#uptimeMillis()}
      * @param useCurrentEventTime <code>true</code> if it should use the current time for the
      *                            up event or <code>false</code> to use <code>downTime</code>.
@@ -567,20 +603,36 @@ public final class CtsTouchUtils {
      * @param waitForAnimations wait for animations to complete before sending an event
      * @param eventInjectionListener The listener to call back immediately after the up was
      *                               sent.
+     * @param useGlobalInjection Whether to use targeted injection (false) or global (true).
+     * Targeted injection will only send injected events to the owned test app, while global will
+     * send the events to the entire system, including spy windows (launcher/System UI).
+     * Always use targeted injection unless you know what you are doing.
      */
-    public void injectUpEvent(UiAutomation uiAutomation, long downTime,
+    public void injectUpEvent(Instrumentation instrumentation, long downTime,
             boolean useCurrentEventTime, int xOnScreen, int yOnScreen,
-            boolean waitForAnimations, EventInjectionListener eventInjectionListener) {
+            boolean waitForAnimations, EventInjectionListener eventInjectionListener,
+            boolean useGlobalInjection) {
         long eventTime = useCurrentEventTime ? SystemClock.uptimeMillis() : downTime;
         MotionEvent eventUp = MotionEvent.obtain(
                 downTime, eventTime, MotionEvent.ACTION_UP, xOnScreen, yOnScreen, 1);
         injectDisplayIdIfNeeded(eventUp);
         eventUp.setSource(InputDevice.SOURCE_TOUCHSCREEN);
-        uiAutomation.injectInputEvent(eventUp, true, waitForAnimations);
+        injectPointerEvent(instrumentation, eventUp, waitForAnimations, useGlobalInjection);
+
         if (eventInjectionListener != null) {
             eventInjectionListener.onUpInjected(xOnScreen, yOnScreen);
         }
         eventUp.recycle();
+    }
+
+    private void injectPointerEvent(Instrumentation instrumentation, MotionEvent event,
+            boolean waitForAnimations, boolean useGlobalInjection) {
+        if (useGlobalInjection) {
+            final UiAutomation uiAutomation = instrumentation.getUiAutomation();
+            uiAutomation.injectInputEvent(event, true, waitForAnimations);
+        } else {
+            instrumentation.sendPointerSync(event);
+        }
     }
 
     /**
@@ -651,7 +703,7 @@ public final class CtsTouchUtils {
         // And do the same event injection sequence as our generic drag gesture
         emulateDragGesture(instrumentation, activityTestRule,
                 x, startY, 0, amountY, durationMs, durationMs / 16,
-            waitForAnimations, eventInjectionListener);
+                waitForAnimations, eventInjectionListener);
 
         return amountY;
     }
@@ -839,14 +891,16 @@ public final class CtsTouchUtils {
     private void emulateLongPressOnScreen(Instrumentation instrumentation,
             ActivityTestRule<?> activityTestRule,
             int xOnScreen, int yOnScreen, int touchSlop, long extraWaitMs, boolean upGesture) {
-        final UiAutomation uiAutomation = instrumentation.getUiAutomation();
         final long downTime = SystemClock.uptimeMillis();
 
-        injectDownEvent(uiAutomation, downTime, xOnScreen, yOnScreen, null);
-        injectMoveEventForTap(uiAutomation, downTime, touchSlop, xOnScreen, yOnScreen, true);
+        injectDownEvent(instrumentation, downTime, xOnScreen, yOnScreen, null,
+                /* useGlobalInjection= */ false);
+        injectMoveEventForTap(instrumentation, downTime, touchSlop, xOnScreen, yOnScreen, true,
+                /* useGlobalInjection= */ false);
         SystemClock.sleep((long) (ViewConfiguration.getLongPressTimeout() * 1.5f) + extraWaitMs);
         if (upGesture) {
-            injectUpEvent(uiAutomation, downTime, false, xOnScreen, yOnScreen, null);
+            injectUpEvent(instrumentation, downTime, false, xOnScreen, yOnScreen, null,
+                    /* useGlobalInjection= */ false);
         }
 
         // Wait for the system to process all events in the queue

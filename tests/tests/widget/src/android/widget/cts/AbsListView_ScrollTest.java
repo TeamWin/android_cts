@@ -519,7 +519,8 @@ public class AbsListView_ScrollTest {
         // Note that due to asynchronous nature of the moving pieces, we might still get one
         // more scroll frame as the injected motion events that constitute an emulated tap
         // are being processed by our list view.
-        mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mListView, false);
+        mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mListView, false,
+                /* useGlobalInjection= */ false);
 
         // Sleep for a second
         SystemClock.sleep(1000);
