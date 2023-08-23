@@ -67,7 +67,7 @@ public abstract class RendererBase implements GLSurfaceView.Renderer {
         mLatch.countDown();
     }
 
-    /// dummy method to be overridden by child
+    /// placeholder method to be overridden by child
     public void doOnDrawFrame(GL10 gl) {
     }
 }
