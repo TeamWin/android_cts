@@ -671,7 +671,7 @@ public class ProvisioningTest {
         IdentityCredential credential = store.getCredentialByName("test",
                 IdentityCredentialStore.CIPHERSUITE_ECDHE_HKDF_ECDSA_WITH_AES_256_GCM_SHA256);
 
-        // We're going to need some authentication keys for this so create some dummy ones.
+        // We're going to need some authentication keys for this so create some placeholder ones.
         credential.setAvailableAuthenticationKeys(5, 1);
         Collection<X509Certificate> authKeys = credential.getAuthKeysNeedingCertification();
         for (X509Certificate authKey : authKeys) {
