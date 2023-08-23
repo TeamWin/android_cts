@@ -110,6 +110,7 @@ import java.util.function.Supplier;
 public class WindowInsetsControllerTests extends WindowManagerTestBase {
 
     private final static long TIMEOUT = 1000; // milliseconds
+    private final static long TIMEOUT_COLD_START_IME = 10000; // milliseconds
     private final static long TIMEOUT_UPDATING_INPUT_WINDOW = 500; // milliseconds
     private final static long TIME_SLICE = 50; // milliseconds
     private final static AnimationCallback ANIMATION_CALLBACK = new AnimationCallback();
@@ -234,7 +235,8 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
 
         final View rootView = activity.getWindow().getDecorView();
         getInstrumentation().runOnMainSync(() -> rootView.getWindowInsetsController().show(ime()));
-        PollingCheck.waitFor(TIMEOUT, () -> rootView.getRootWindowInsets().isVisible(ime()));
+        PollingCheck.waitFor(TIMEOUT_COLD_START_IME,
+                () -> rootView.getRootWindowInsets().isVisible(ime()));
         getInstrumentation().runOnMainSync(() -> rootView.getWindowInsetsController().hide(ime()));
         PollingCheck.waitFor(TIMEOUT, () -> !rootView.getRootWindowInsets().isVisible(ime()));
     }
@@ -261,7 +263,7 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
         PollingCheck.waitFor(TIMEOUT,
                 () -> !rootView.getRootWindowInsets().isVisible(navigationBars()));
         getInstrumentation().runOnMainSync(() -> rootView.getWindowInsetsController().show(ime()));
-        PollingCheck.waitFor(TIMEOUT,
+        PollingCheck.waitFor(TIMEOUT_COLD_START_IME,
                 () -> rootView.getRootWindowInsets().isVisible(ime() | navigationBars()));
         getInstrumentation().runOnMainSync(() -> rootView.getWindowInsetsController().hide(ime()));
         PollingCheck.waitFor(TIMEOUT,
@@ -621,7 +623,8 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
         final TestShowOnCreateActivity activity = startActivity(TestShowOnCreateActivity.class);
         final View rootView = activity.getWindow().getDecorView();
         ANIMATION_CALLBACK.waitForFinishing();
-        PollingCheck.waitFor(TIMEOUT, () -> rootView.getRootWindowInsets().isVisible(ime()));
+        PollingCheck.waitFor(TIMEOUT_COLD_START_IME,
+                () -> rootView.getRootWindowInsets().isVisible(ime()));
     }
 
     @Test
@@ -634,7 +637,7 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
             final TestShowOnCreateActivity activity =
                     startActivityInWindowingModeFullScreen(TestShowOnCreateActivity.class);
             final View rootView = activity.getWindow().getDecorView();
-            PollingCheck.waitFor(TIMEOUT,
+            PollingCheck.waitFor(TIMEOUT_COLD_START_IME,
                     () -> rootView.getRootWindowInsets().isVisible(ime()));
             ANIMATION_CALLBACK.waitForFinishing();
             ANIMATION_CALLBACK.reset();
@@ -683,7 +686,7 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
             editor.getWindowInsetsController().show(ime());
         });
 
-        PollingCheck.waitFor(TIMEOUT, () -> getOnMainSync(
+        PollingCheck.waitFor(TIMEOUT_COLD_START_IME, () -> getOnMainSync(
                 () -> rootView.getRootWindowInsets().isVisible(ime())),
                 "Expected IME to become visible but didn't.");
     }
