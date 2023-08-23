@@ -208,12 +208,12 @@ public class PrintAttributesTest extends BasePrintTest {
     }
 
     /**
-     * Create dummy {@link PrintServiceCallbacks}
+     * Create placeholder {@link PrintServiceCallbacks}
      *
      * This is needed to as the print framework is trying to talk to any printer even if is not set
      * up.
      *
-     * @return Dummy {@link PrintServiceCallbacks}
+     * @return Placeholder {@link PrintServiceCallbacks}
      */
     private PrintServiceCallbacks createDummyMockPrintServiceCallbacks() {
         return createMockPrintServiceCallbacks(null, null, null);
