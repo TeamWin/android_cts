@@ -17,6 +17,8 @@
 package android.car.cts;
 
 import static android.Manifest.permission.ACCESS_FINE_LOCATION;
+import static android.car.VehicleAreaSeat.SEAT_ROW_1_LEFT;
+import static android.car.VehicleAreaSeat.SEAT_ROW_1_RIGHT;
 import static android.car.cts.utils.ShellPermissionUtils.runWithShellPermissionIdentity;
 import static android.car.hardware.property.CarPropertyManager.GetPropertyResult;
 import static android.car.hardware.property.CarPropertyManager.SetPropertyResult;
@@ -65,6 +67,7 @@ import android.car.hardware.property.LaneDepartureWarningState;
 import android.car.hardware.property.LaneKeepAssistState;
 import android.car.hardware.property.LocationCharacterization;
 import android.car.hardware.property.PropertyNotAvailableException;
+import android.car.hardware.property.SubscriptionOption;
 import android.car.hardware.property.TrailerState;
 import android.car.hardware.property.VehicleElectronicTollCollectionCardStatus;
 import android.car.hardware.property.VehicleElectronicTollCollectionCardType;
@@ -126,6 +129,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     private static final int ONCHANGE_RATE_EVENT_COUNTER = 1;
     private static final int UI_RATE_EVENT_COUNTER = 5;
     private static final int FAST_OR_FASTEST_EVENT_COUNTER = 10;
+    private static final int SECONDS_TO_MILLIS = 1_000;
     private static final long ASYNC_WAIT_TIMEOUT_IN_SEC = 15;
     private static final ImmutableSet<Integer> PORT_LOCATION_TYPES =
             ImmutableSet.<Integer>builder()
@@ -957,6 +961,11 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
         }
     }
 
+    private static long generateTimeoutMillis(float minSampleRate, long bufferMillis) {
+        return ((long) ((1.0f / minSampleRate) * SECONDS_TO_MILLIS * UI_RATE_EVENT_COUNTER))
+                + bufferMillis;
+    }
+
     private void verifyExpectedPropertiesWhenPermissionsGranted(
             ImmutableList<Integer> expectedProperties, String... requiredPermissions) {
         runWithShellPermissionIdentity(
@@ -1054,7 +1063,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                             assertThat(
                                             mCarPropertyManager.getAreaId(
                                                     cfg.getPropertyId(),
-                                                    VehicleAreaSeat.SEAT_ROW_1_LEFT))
+                                                    SEAT_ROW_1_LEFT))
                                     .isEqualTo(VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL);
                         } else {
                             int[] areaIds = cfg.getAreaIds();
@@ -2059,7 +2068,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                 .setAllPossibleEnumValues(
                         ImmutableSet.of(
                                 VehicleAreaSeat.SEAT_UNKNOWN,
-                                VehicleAreaSeat.SEAT_ROW_1_LEFT,
+                                SEAT_ROW_1_LEFT,
                                 VehicleAreaSeat.SEAT_ROW_1_CENTER,
                                 VehicleAreaSeat.SEAT_ROW_1_RIGHT))
                 .setAreaIdsVerifier(
@@ -6520,6 +6529,168 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
     @Test
     @ApiTest(
             apis = {
+                    "android.car.hardware.property.CarPropertyManager#subscribePropertyEvents"
+            })
+    public void testSubscribePropertyEventsWithInvalidProp() throws Exception {
+        runWithShellPermissionIdentity(() -> {
+            int invalidPropertyId = -1;
+
+            assertThrows(IllegalArgumentException.class, () ->
+                    mCarPropertyManager.subscribePropertyEvents(List.of(new SubscriptionOption
+                            .Builder(invalidPropertyId)
+                            .addAreaId(VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL).build()),
+                    /* callbackExecutor= */ null, new CarPropertyEventCounter()));
+        });
+    }
+
+    @Test
+    @ApiTest(
+            apis = {
+                    "android.car.hardware.property.CarPropertyManager#subscribePropertyEvents",
+                    "android.car.hardware.property.CarPropertyManager#"
+                            + "unregisterCallback(CarPropertyEventCallback)"
+
+            })
+    public void testSubscribePropertyEventsWithDifferentExecutorForSamePropIdAreaId_notAllowed()
+            throws Exception {
+        runWithShellPermissionIdentity(() -> {
+            // Ignores the test if wheel_tick property does not exist in the car.
+            assumeTrue(
+                    "WheelTick is not available, skip subscribePropertyEvent test",
+                    mCarPropertyManager.isPropertyAvailable(
+                            VehiclePropertyIds.WHEEL_TICK,
+                            VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL));
+
+            CarPropertyEventCallback callback = new CarPropertyEventCounter();
+            assertThat(mCarPropertyManager.subscribePropertyEvents(List.of(new SubscriptionOption
+                            .Builder(VehiclePropertyIds.PERF_VEHICLE_SPEED)
+                            .addAreaId(VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL).build()),
+                    Executors.newSingleThreadExecutor(), callback))
+                    .isTrue();
+
+            assertThrows(IllegalArgumentException.class, () ->
+                    mCarPropertyManager.subscribePropertyEvents(List.of(new SubscriptionOption
+                                    .Builder(VehiclePropertyIds.WHEEL_TICK)
+                                    .addAreaId(VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL).build()),
+                            Executors.newSingleThreadExecutor(), callback));
+
+            mCarPropertyManager.unregisterCallback(callback);
+        });
+    }
+
+    @Test
+    @ApiTest(
+            apis = {
+                    "android.car.hardware.property.CarPropertyManager#subscribePropertyEvents"
+            }
+    )
+    public void testSubscribeOverlappingPropIdAreaIdInOneCall_notAllowed() throws Exception {
+        runWithShellPermissionIdentity(() -> assertThrows(IllegalArgumentException.class, () ->
+                mCarPropertyManager.subscribePropertyEvents(
+                List.of(new SubscriptionOption.Builder(VehiclePropertyIds.HVAC_FAN_SPEED)
+                                .addAreaId(SEAT_ROW_1_LEFT).addAreaId(SEAT_ROW_1_RIGHT).build(),
+                        new SubscriptionOption.Builder(VehiclePropertyIds.HVAC_FAN_SPEED)
+                                .addAreaId(SEAT_ROW_1_LEFT).build()),
+                null, new CarPropertyEventCounter())));
+    }
+
+    @Test
+    @ApiTest(
+            apis = {
+                    "android.car.hardware.property.CarPropertyManager#subscribePropertyEvents",
+                    "android.car.hardware.property.CarPropertyManager#"
+                            + "unregisterCallback(CarPropertyEventCallback)"
+
+            })
+    public void testSubscribePropertyEventsForContinuousProperty() throws Exception {
+        runWithShellPermissionIdentity(
+                () -> {
+                    int vehicleSpeed = VehiclePropertyIds.PERF_VEHICLE_SPEED;
+                    CarPropertyConfig<?> carPropertyConfig =
+                            mCarPropertyManager.getCarPropertyConfig(
+                                    VehiclePropertyIds.PERF_VEHICLE_SPEED);
+                    assumeTrue("The CarPropertyConfig of vehicle speed does not exist",
+                            carPropertyConfig != null);
+                    long bufferMillis = 1_000; // 1 second
+                    // timeoutMillis is set to the maximum expected time needed to receive the
+                    // required number of PERF_VEHICLE_SPEED events for test. If the test does not
+                    // receive the required number of events before the timeout expires, it fails.
+                    long timeoutMillis = generateTimeoutMillis(carPropertyConfig.getMinSampleRate(),
+                            bufferMillis);
+                    CarPropertyEventCounter speedListenerUI =
+                            new CarPropertyEventCounter(timeoutMillis);
+                    CarPropertyEventCounter speedListenerFast = new CarPropertyEventCounter();
+
+                    assertThat(speedListenerUI.receivedEvent(vehicleSpeed)).isEqualTo(NO_EVENTS);
+                    assertThat(speedListenerUI.receivedError(vehicleSpeed)).isEqualTo(NO_EVENTS);
+                    assertThat(speedListenerUI.receivedErrorWithErrorCode(vehicleSpeed))
+                            .isEqualTo(NO_EVENTS);
+                    assertThat(speedListenerFast.receivedEvent(vehicleSpeed)).isEqualTo(NO_EVENTS);
+                    assertThat(speedListenerFast.receivedError(vehicleSpeed)).isEqualTo(NO_EVENTS);
+                    assertThat(speedListenerFast.receivedErrorWithErrorCode(vehicleSpeed))
+                            .isEqualTo(NO_EVENTS);
+
+                    speedListenerUI.resetCountDownLatch(UI_RATE_EVENT_COUNTER);
+                    mCarPropertyManager.subscribePropertyEvents(
+                            List.of(new SubscriptionOption
+                                    .Builder(VehiclePropertyIds.PERF_VEHICLE_SPEED)
+                                    .setUpdateRateUi()
+                                    .addAreaId(VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL).build()),
+                            /* callbackExecutor= */ null, speedListenerUI);
+                    mCarPropertyManager.subscribePropertyEvents(
+                            List.of(new SubscriptionOption
+                                    .Builder(VehiclePropertyIds.PERF_VEHICLE_SPEED)
+                                    .setUpdateRateFastest().addAreaId(
+                                            VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL).build()),
+                            /* callbackExecutor= */ null, speedListenerFast);
+                    speedListenerUI.assertOnChangeEventCalled();
+                    mCarPropertyManager.unregisterCallback(speedListenerUI);
+                    mCarPropertyManager.unregisterCallback(speedListenerFast);
+
+                    assertThat(speedListenerUI.receivedEvent(vehicleSpeed))
+                            .isGreaterThan(NO_EVENTS);
+                    assertThat(speedListenerFast.receivedEvent(vehicleSpeed))
+                            .isAtLeast(speedListenerUI.receivedEvent(vehicleSpeed));
+                    // The test did not change property values, it should not get error with error
+                    // codes.
+                    assertThat(speedListenerUI.receivedErrorWithErrorCode(vehicleSpeed))
+                            .isEqualTo(NO_EVENTS);
+                    assertThat(speedListenerFast.receivedErrorWithErrorCode(vehicleSpeed))
+                            .isEqualTo(NO_EVENTS);
+                });
+    }
+
+    @Test
+    @ApiTest(
+            apis = {
+                    "android.car.hardware.property.CarPropertyManager#subscribePropertyEvents",
+                    "android.car.hardware.property.CarPropertyManager#"
+                            + "unregisterCallback(CarPropertyEventCallback)"
+
+            })
+    public void testSubscribePropertyEventsForOnchangeProperty() throws Exception {
+        runWithShellPermissionIdentity(
+                () -> {
+                    // Test for on_change properties
+                    int nightMode = VehiclePropertyIds.NIGHT_MODE;
+                    CarPropertyConfig<?> carPropertyConfig =
+                            mCarPropertyManager.getCarPropertyConfig(nightMode);
+                    assumeTrue("The CarPropertyConfig of night mode does not exist",
+                            carPropertyConfig != null);
+                    CarPropertyEventCounter nightModeListener = new CarPropertyEventCounter();
+                    nightModeListener.resetCountDownLatch(ONCHANGE_RATE_EVENT_COUNTER);
+                    mCarPropertyManager.subscribePropertyEvents(
+                            List.of(new SubscriptionOption.Builder(nightMode).addAreaId(0).build()),
+                            /* callbackExecutor= */ null, nightModeListener);
+                    nightModeListener.assertOnChangeEventCalled();
+                    assertThat(nightModeListener.receivedEvent(nightMode)).isEqualTo(1);
+                    mCarPropertyManager.unregisterCallback(nightModeListener);
+                });
+    }
+
+    @Test
+    @ApiTest(
+            apis = {
                 "android.car.hardware.property.CarPropertyManager#registerCallback"
             })
     public void testRegisterCallbackWithInvalidProp() throws Exception {
@@ -6547,19 +6718,14 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                     CarPropertyConfig<?> carPropertyConfig =
                             mCarPropertyManager.getCarPropertyConfig(
                                     VehiclePropertyIds.PERF_VEHICLE_SPEED);
-                    float secondToMillis = 1_000;
                     long bufferMillis = 1_000; // 1 second
                     // timeoutMillis is set to the maximum expected time needed to receive the
                     // required
                     // number of PERF_VEHICLE_SPEED events for test. If the test does not receive
                     // the
                     // required number of events before the timeout expires, it fails.
-                    long timeoutMillis =
-                            ((long)
-                                            ((1.0f / carPropertyConfig.getMinSampleRate())
-                                                    * secondToMillis
-                                                    * UI_RATE_EVENT_COUNTER))
-                                    + bufferMillis;
+                    long timeoutMillis = generateTimeoutMillis(carPropertyConfig.getMinSampleRate(),
+                            bufferMillis);
                     CarPropertyEventCounter speedListenerUI =
                             new CarPropertyEventCounter(timeoutMillis);
                     CarPropertyEventCounter speedListenerFast = new CarPropertyEventCounter();
