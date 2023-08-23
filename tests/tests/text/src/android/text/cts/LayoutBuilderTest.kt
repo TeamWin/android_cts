@@ -78,7 +78,7 @@ class LayoutBuilderTest {
         assertThat(layout.lineSpacingMultiplier).isEqualTo(1.0f)
         assertThat(layout.spacingAdd).isEqualTo(0.0f)
         assertThat(layout.lineSpacingAmount).isEqualTo(0.0f)
-        assertThat(layout.isIncludeFontPadding).isTrue()
+        assertThat(layout.isFontPaddingIncluded).isTrue()
         assertThat(layout.isFallbackLineSpacingEnabled).isFalse()
         assertThat(layout.ellipsizedWidth).isEqualTo(WIDTH)
         assertThat(layout.ellipsize).isNull()
@@ -106,7 +106,7 @@ class LayoutBuilderTest {
         assertThat(layout.lineSpacingMultiplier).isEqualTo(1.0f)
         assertThat(layout.spacingAdd).isEqualTo(0.0f)
         assertThat(layout.lineSpacingAmount).isEqualTo(0.0f)
-        assertThat(layout.isIncludeFontPadding).isTrue()
+        assertThat(layout.isFontPaddingIncluded).isTrue()
         assertThat(layout.isFallbackLineSpacingEnabled).isFalse()
         assertThat(layout.ellipsizedWidth).isEqualTo(WIDTH)
         assertThat(layout.ellipsize).isNull()
@@ -185,14 +185,14 @@ class LayoutBuilderTest {
     @Test
     fun buildLayout_SetGetIncludePadding() {
         val boringLayout = makeBuilder(BORING_TEXT)
-                .setIncludeFontPadding(true)
+                .setFontPaddingIncluded(true)
                 .build()
-        assertThat(boringLayout.isIncludeFontPadding).isTrue()
+        assertThat(boringLayout.isFontPaddingIncluded).isTrue()
 
         val staticLayout = makeBuilder(STATIC_LAYOUT_TEXT)
-                .setIncludeFontPadding(true)
+                .setFontPaddingIncluded(true)
                 .build()
-        assertThat(staticLayout.isIncludeFontPadding).isTrue()
+        assertThat(staticLayout.isFontPaddingIncluded).isTrue()
     }
 
     @Test
