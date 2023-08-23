@@ -212,7 +212,7 @@ import java.util.Set;
  *         mBadgeColors.length: 0(null)
  *         mDarkThemeBadgeColors.length: 0(null)
  *
- * Whitelisted packages per user type
+ * Allowlisted packages per user type
  *     Mode: 13 (enforced) (implicit)
  *     Legend
  *         0 -> android.os.usertype.full.DEMO
@@ -245,8 +245,8 @@ import java.util.Set;
  *         com.android.internal.systemui.navbar.gestural_narrow_back: 0 1 2 3 4
  *     No errors
  *     2 warnings
- *         com.android.wallpapercropper is whitelisted but not present.
- *         com.google.android.apps.wallpaper.nexus is whitelisted but not present.
+ *         com.android.wallpapercropper is allowlisted but not present.
+ *         com.google.android.apps.wallpaper.nexus is allowlisted but not present.
  * }
  */
 @RequiresApi(Build.VERSION_CODES.R)
