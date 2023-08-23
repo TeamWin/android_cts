@@ -133,7 +133,7 @@ public class AudioLoopbackLatencyActivity extends PassFailButtons.Activity {
     public static final double LATENCY_PRO_AUDIO_USB = 25.0;
     public static final double LATENCY_MPC_AT_LEAST_ONE = 80.0;
 
-    public static final double TIMESTAMP_LATENCY_ACCURACY = 30.0;
+    public static final double TIMESTAMP_ACCURACY_MS = 30.0;
 
     // The audio stream callback threads should stop and close
     // in less than a few hundred msec. This is a generous timeout value.
@@ -929,9 +929,10 @@ public class AudioLoopbackLatencyActivity extends PassFailButtons.Activity {
             return measured == LATENCY_NOT_MEASURED || measured <= limit;
         }
 
-        private boolean checkTimestampLatency(double measured, double timestamp) {
-            return (measured == LATENCY_NOT_MEASURED)
-                    || (Math.abs(measured - timestamp) <= TIMESTAMP_LATENCY_ACCURACY);
+        private boolean checkTimestampLatencyAccuracy(double measuredLatency,
+                double timestampLatency) {
+            return (timestampLatency < 0.0) || (measuredLatency == LATENCY_NOT_MEASURED)
+                    || (Math.abs(measuredLatency - timestampLatency) <= TIMESTAMP_ACCURACY_MS);
         }
 
         private void setResultCode(boolean pass, int code) {
@@ -1048,9 +1049,10 @@ public class AudioLoopbackLatencyActivity extends PassFailButtons.Activity {
             setResultCode(has24BitHardwareSupportPass, RESULTCODE_FAIL_24BIT);
 
             // Timestamp latencies must be accurate enough.
-            boolean timestampPass = checkTimestampLatency(deviceLatency, deviceTimestampLatency)
-                    && checkTimestampLatency(analogLatency, analogTimestampLatency)
-                    && checkTimestampLatency(usbLatency, usbTimestampLatency);
+            boolean timestampPass =
+                    checkTimestampLatencyAccuracy(deviceLatency, deviceTimestampLatency)
+                    && checkTimestampLatencyAccuracy(analogLatency, analogTimestampLatency)
+                    && checkTimestampLatencyAccuracy(usbLatency, usbTimestampLatency);
             Log.i(TAG, "  timestampPass:" + timestampPass);
             setResultCode(timestampPass, RESULTCODE_WARNING_TIMESTAMP);
 
