@@ -63,7 +63,7 @@ public class SignedConfigHostTest implements IDeviceTest, IBuildReceiver {
     private static final String TEST_APP_APK_NAME_V1_DEBUG_KEY =
             "CtsSignedConfigTestAppV1_debug_key.apk";
 
-    private static final String SETTING_BLACKLIST_EXEMPTIONS = "hidden_api_blacklist_exemptions";
+    private static final String SETTING_DENYLIST_EXEMPTIONS = "hidden_api_blacklist_exemptions";
     private static final String SETTING_SIGNED_CONFIG_VERSION = "signed_config_version";
 
     private static final String ARG_INSTANT = "--instant";
@@ -98,7 +98,7 @@ public class SignedConfigHostTest implements IDeviceTest, IBuildReceiver {
     }
 
     private void deleteConfig() throws DeviceNotAvailableException {
-        deleteSetting(SETTING_BLACKLIST_EXEMPTIONS);
+        deleteSetting(SETTING_DENYLIST_EXEMPTIONS);
         deleteSetting(SETTING_SIGNED_CONFIG_VERSION);
     }
 
@@ -147,7 +147,7 @@ public class SignedConfigHostTest implements IDeviceTest, IBuildReceiver {
     public void testConfigAppliedOnInstall() throws Exception {
         installPackage(TEST_APP_APK_NAME_V1);
         waitUntilSettingMatches(SETTING_SIGNED_CONFIG_VERSION, "1");
-        assertThat(getDevice().getSetting("global", SETTING_BLACKLIST_EXEMPTIONS)).isEqualTo(
+        assertThat(getDevice().getSetting("global", SETTING_DENYLIST_EXEMPTIONS)).isEqualTo(
                 "LClass1;->method1(,LClass1;->field1:");
     }
 
@@ -155,7 +155,7 @@ public class SignedConfigHostTest implements IDeviceTest, IBuildReceiver {
     public void testConfigAppliedOnInstallInstant() throws Exception {
         installPackage(TEST_APP_APK_NAME_V1_INSTANT, ARG_INSTANT);
         waitUntilSettingMatches(SETTING_SIGNED_CONFIG_VERSION, "1");
-        assertThat(getDevice().getSetting("global", SETTING_BLACKLIST_EXEMPTIONS)).isEqualTo(
+        assertThat(getDevice().getSetting("global", SETTING_DENYLIST_EXEMPTIONS)).isEqualTo(
                 "LClass1;->method1(,LClass1;->field1:");
     }
 
@@ -165,7 +165,7 @@ public class SignedConfigHostTest implements IDeviceTest, IBuildReceiver {
         waitUntilSettingMatches(SETTING_SIGNED_CONFIG_VERSION, "1");
         installPackage(TEST_APP_APK_NAME_V2);
         waitUntilSettingMatches(SETTING_SIGNED_CONFIG_VERSION, "2");
-        assertThat(getDevice().getSetting("global", SETTING_BLACKLIST_EXEMPTIONS)).isEqualTo(
+        assertThat(getDevice().getSetting("global", SETTING_DENYLIST_EXEMPTIONS)).isEqualTo(
                 "LClass2;->method2(,LClass2;->field2:");
     }
 
@@ -175,7 +175,7 @@ public class SignedConfigHostTest implements IDeviceTest, IBuildReceiver {
         waitUntilSettingMatches(SETTING_SIGNED_CONFIG_VERSION, "1");
         installPackage(TEST_APP_APK_NAME_V2_INSTANT, ARG_INSTANT);
         waitUntilSettingMatches(SETTING_SIGNED_CONFIG_VERSION, "2");
-        assertThat(getDevice().getSetting("global", SETTING_BLACKLIST_EXEMPTIONS)).isEqualTo(
+        assertThat(getDevice().getSetting("global", SETTING_DENYLIST_EXEMPTIONS)).isEqualTo(
                 "LClass2;->method2(,LClass2;->field2:");
     }
 
@@ -185,7 +185,7 @@ public class SignedConfigHostTest implements IDeviceTest, IBuildReceiver {
         waitUntilSettingMatches(SETTING_SIGNED_CONFIG_VERSION, "1");
         installPackage(TEST_APP_APK_NAME_V2);
         waitUntilSettingMatches(SETTING_SIGNED_CONFIG_VERSION, "2");
-        assertThat(getDevice().getSetting("global", SETTING_BLACKLIST_EXEMPTIONS)).isEqualTo(
+        assertThat(getDevice().getSetting("global", SETTING_DENYLIST_EXEMPTIONS)).isEqualTo(
                 "LClass2;->method2(,LClass2;->field2:");
     }
 
@@ -196,7 +196,7 @@ public class SignedConfigHostTest implements IDeviceTest, IBuildReceiver {
         getDevice().uninstallPackage(TEST_APP_PACKAGE_NAME);
         waitForDevice(5);
         assertThat(getDevice().getSetting("global", SETTING_SIGNED_CONFIG_VERSION)).isEqualTo("1");
-        assertThat(getDevice().getSetting("global", SETTING_BLACKLIST_EXEMPTIONS)).isEqualTo(
+        assertThat(getDevice().getSetting("global", SETTING_DENYLIST_EXEMPTIONS)).isEqualTo(
                 "LClass1;->method1(,LClass1;->field1:");
     }
 
@@ -207,7 +207,7 @@ public class SignedConfigHostTest implements IDeviceTest, IBuildReceiver {
         getDevice().uninstallPackage(TEST_APP_PACKAGE_NAME);
         waitForDevice(5);
         assertThat(getDevice().getSetting("global", SETTING_SIGNED_CONFIG_VERSION)).isEqualTo("1");
-        assertThat(getDevice().getSetting("global", SETTING_BLACKLIST_EXEMPTIONS)).isEqualTo(
+        assertThat(getDevice().getSetting("global", SETTING_DENYLIST_EXEMPTIONS)).isEqualTo(
                 "LClass1;->method1(,LClass1;->field1:");
     }
 
@@ -218,7 +218,7 @@ public class SignedConfigHostTest implements IDeviceTest, IBuildReceiver {
         installPackage(TEST_APP_APK_NAME_V3_CONFIGV1);
         waitForDevice(5);
         assertThat(getDevice().getSetting("global", SETTING_SIGNED_CONFIG_VERSION)).isEqualTo("2");
-        assertThat(getDevice().getSetting("global", SETTING_BLACKLIST_EXEMPTIONS)).isEqualTo(
+        assertThat(getDevice().getSetting("global", SETTING_DENYLIST_EXEMPTIONS)).isEqualTo(
                 "LClass2;->method2(,LClass2;->field2:");
     }
 
@@ -228,7 +228,7 @@ public class SignedConfigHostTest implements IDeviceTest, IBuildReceiver {
         waitUntilSettingMatches(SETTING_SIGNED_CONFIG_VERSION, "1");
         installPackage(TEST_APP_APK_NAME_PACKAGE2_V2);
         waitUntilSettingMatches(SETTING_SIGNED_CONFIG_VERSION, "2");
-        assertThat(getDevice().getSetting("global", SETTING_BLACKLIST_EXEMPTIONS)).isEqualTo(
+        assertThat(getDevice().getSetting("global", SETTING_DENYLIST_EXEMPTIONS)).isEqualTo(
                 "LClass2;->method2(,LClass2;->field2:");
     }
 
@@ -238,7 +238,7 @@ public class SignedConfigHostTest implements IDeviceTest, IBuildReceiver {
         waitForDevice(5);
         assertThat(getDevice().getSetting("global", SETTING_SIGNED_CONFIG_VERSION))
                 .isEqualTo("null");
-        assertThat(getDevice().getSetting("global", SETTING_BLACKLIST_EXEMPTIONS))
+        assertThat(getDevice().getSetting("global", SETTING_DENYLIST_EXEMPTIONS))
                 .isEqualTo("null");
     }
 
@@ -267,7 +267,7 @@ public class SignedConfigHostTest implements IDeviceTest, IBuildReceiver {
         Assume.assumeThat(getDevice().getProperty("ro.debuggable"), is("1"));
         installPackage(TEST_APP_APK_NAME_V1_DEBUG_KEY);
         waitUntilSettingMatches(SETTING_SIGNED_CONFIG_VERSION, "1");
-        assertThat(getDevice().getSetting("global", SETTING_BLACKLIST_EXEMPTIONS)).isEqualTo(
+        assertThat(getDevice().getSetting("global", SETTING_DENYLIST_EXEMPTIONS)).isEqualTo(
                 "LClass1;->method1(,LClass1;->field1:");
     }
 
@@ -278,7 +278,7 @@ public class SignedConfigHostTest implements IDeviceTest, IBuildReceiver {
         waitForDevice(5);
         assertThat(getDevice().getSetting("global", SETTING_SIGNED_CONFIG_VERSION))
                 .isEqualTo("null");
-        assertThat(getDevice().getSetting("global", SETTING_BLACKLIST_EXEMPTIONS))
+        assertThat(getDevice().getSetting("global", SETTING_DENYLIST_EXEMPTIONS))
                 .isEqualTo("null");
     }
 }
