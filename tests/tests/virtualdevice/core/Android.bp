@@ -35,6 +35,8 @@ android_test {
         "ctstestrunner-axt",
         "CtsVirtualDeviceCommonLib",
         "junit",
+        "flag-junit",
+        "android.companion.virtual.flags-aconfig-java",
     ],
 
     srcs: [
