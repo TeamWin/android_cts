@@ -214,7 +214,7 @@ class HdrExtensionTest(its_base_test.ItsBaseTest):
 
       its_session_utils.load_scene(
           cam, props, self.scene, self.tablet, self.chart_distance,
-          log_path=self.log_path)
+          lighting_check=False, log_path=self.log_path)
 
       file_stem = f'{test_name}_{_FMT_NAME}_{_WIDTH}x{_HEIGHT}'
 
