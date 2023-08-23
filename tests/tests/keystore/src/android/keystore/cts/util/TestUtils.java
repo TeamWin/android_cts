@@ -110,6 +110,16 @@ public class TestUtils {
                 packageManager.hasSystemFeature(PackageManager.FEATURE_STRONGBOX_KEYSTORE));
     }
 
+    /**
+     * Returns 0 if not implemented. Otherwise returns the feature version.
+     */
+    public static int getFeatureVersionKeystore(Context appContext, boolean useStrongbox) {
+        if (useStrongbox) {
+            return getFeatureVersionKeystoreStrongBox(appContext);
+        }
+        return getFeatureVersionKeystore(appContext);
+    }
+
     // Returns 0 if not implemented. Otherwise returns the feature version.
     //
     public static int getFeatureVersionKeystore(Context appContext) {
