@@ -26,6 +26,7 @@ import static android.os.Build.VERSION_CODES.S;
 import static com.android.bedstead.nene.appops.AppOpsMode.ALLOWED;
 import static com.android.bedstead.nene.permissions.CommonPermissions.BLUETOOTH_CONNECT;
 import static com.android.bedstead.nene.permissions.CommonPermissions.READ_CONTACTS;
+import static com.android.bedstead.nene.permissions.CommonPermissions.READ_PRIVILEGED_PHONE_STATE;
 import static com.android.eventlib.truth.EventLogsSubject.assertThat;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -352,7 +353,6 @@ public final class TestAppInstanceTest {
             testAppInstance.wifiManager().getMaxNumberOfNetworkSuggestionsPerApp();
         }
     }
-
     @Test
     public void hardwarePropertiesManager_returnsUsableInstance() {
         try (TestAppInstance testAppInstance = sTestApp.install()) {
@@ -367,6 +367,15 @@ public final class TestAppInstanceTest {
     public void packageManager_returnsUsableInstance() {
         try (TestAppInstance testAppInstance = sTestApp.install()) {
             assertThat(testAppInstance.packageManager().hasSystemFeature("")).isFalse();
+        }
+    }
+
+    @Test
+    public void telephonyManager_returnsUsableInstance() {
+        try (TestAppInstance testAppInstance = sTestApp.install();
+             PermissionContext p = testAppInstance.permissions().withPermission(
+                     READ_PRIVILEGED_PHONE_STATE)) {
+            assertThat(testAppInstance.telephonyManager().getDeviceId()).isNotNull();
         }
     }
 

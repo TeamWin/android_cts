@@ -42,6 +42,7 @@ import com.android.bedstead.nene.services.Services;
 import com.android.bedstead.nene.settings.Settings;
 import com.android.bedstead.nene.systemproperties.SystemProperties;
 import com.android.bedstead.nene.telecom.Telecom;
+import com.android.bedstead.nene.telephony.Telephony;
 import com.android.bedstead.nene.ui.Ui;
 import com.android.bedstead.nene.users.Users;
 import com.android.bedstead.nene.wifi.Wifi;
@@ -200,6 +201,10 @@ public final class TestApis {
     /** Access Test APIs related to adb. */
     public static Adb adb() {
         return Adb.INSTANCE;
+    }
+
+    public static Telephony telephony() {
+        return Telephony.INSTANCE;
     }
 
     /** @deprecated Use statically */

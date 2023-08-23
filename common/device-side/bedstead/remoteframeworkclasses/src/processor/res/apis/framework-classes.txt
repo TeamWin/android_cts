@@ -16,3 +16,4 @@ android.app.NotificationManager
 android.telecom.TelecomManager
 android.content.RestrictionsManager
 android.telephony.SmsManager
+android.telephony.TelephonyManager
