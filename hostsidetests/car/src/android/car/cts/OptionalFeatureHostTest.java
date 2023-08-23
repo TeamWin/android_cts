@@ -16,21 +16,20 @@
 
 package android.car.cts;
 
-import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.hamcrest.CoreMatchers.endsWith;
 import static org.junit.Assume.assumeThat;
 
+import com.android.car.CarFeatureControlDumpProto;
+import com.android.compatibility.common.util.ProtoUtils;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Check Optional Feature related car configs.
@@ -70,8 +69,12 @@ public class OptionalFeatureHostTest extends CarHostJUnit4TestCase {
      */
     @Test
     public void testNoDisabledFeaturesFromVHAL() throws Exception {
-        List<String> features = findFeatureListFromCarServiceDump("mDisabledFeaturesFromVhal");
-        assertThat(features).isEmpty();
+        CarFeatureControlDumpProto featureControlDump = getFeatureControlDumpProto();
+
+        int numDisabledFeaturesFromVhal = featureControlDump.getDisabledFeaturesFromVhalCount();
+
+        assertWithMessage("Number of features disabled from VHAL").that(
+                numDisabledFeaturesFromVhal).isEqualTo(0);
     }
 
     /**
@@ -82,8 +85,12 @@ public class OptionalFeatureHostTest extends CarHostJUnit4TestCase {
     public void testNoExperimentalFeatures() throws Exception {
         // experimental feature disabled in user build
         assumeUserBuild();
-        List<String> features = findFeatureListFromCarServiceDump("mAvailableExperimentalFeatures");
-        assertThat(features).isEmpty();
+        CarFeatureControlDumpProto featureControlDump = getFeatureControlDumpProto();
+
+        int numExperimentalFeatures = featureControlDump.getAvailableExperimentalFeaturesCount();
+
+        assertWithMessage("Number of experimental features available").that(
+                numExperimentalFeatures).isEqualTo(0);
     }
 
     /**
@@ -96,7 +103,7 @@ public class OptionalFeatureHostTest extends CarHostJUnit4TestCase {
         // Only check for user 0 as experimental car service is launched as user 0.
         String output = getDevice().executeShellCommand(
                 "pm list package com.android.experimentalcar").strip();
-        assertThat(output).isEmpty();
+        assertWithMessage("Experimental car service package").that(output).isEmpty();
     }
 
     /**
@@ -105,16 +112,18 @@ public class OptionalFeatureHostTest extends CarHostJUnit4TestCase {
      */
     @Test
     public void testAllOptionalFeaturesEnabled() throws Exception {
-        List<String> enabledFeatures = findFeatureListFromCarServiceDump("mEnabledFeatures");
-        List<String> optionalFeaturesFromConfig = findFeatureListFromCarServiceDump(
-                "mDefaultEnabledFeaturesFromConfig");
+        List<String> enabledFeatures = getEnabledFeatures();
+        CarFeatureControlDumpProto featureControlDump = getFeatureControlDumpProto();
+        List<String> optionalFeaturesFromConfig =
+                featureControlDump.getDefaultEnabledFeaturesFromConfigList();
         List<String> missingFeatures = new ArrayList<>();
         for (String optional : optionalFeaturesFromConfig) {
             if (!enabledFeatures.contains(optional)) {
                 missingFeatures.add(optional);
             }
         }
-        assertThat(missingFeatures).isEmpty();
+        assertWithMessage("Missing optional features from config").that(
+                missingFeatures).isEmpty();
     }
 
     /**
@@ -122,14 +131,14 @@ public class OptionalFeatureHostTest extends CarHostJUnit4TestCase {
      */
     @Test
     public void testAllMandatoryFeaturesEnabled() throws Exception {
-        List<String> enabledFeatures = findFeatureListFromCarServiceDump("mEnabledFeatures");
+        List<String> enabledFeatures = getEnabledFeatures();
         List<String> missingFeatures = new ArrayList<>();
         for (String optional : MANDATORY_FEATURES) {
             if (!enabledFeatures.contains(optional)) {
                 missingFeatures.add(optional);
             }
         }
-        assertThat(missingFeatures).isEmpty();
+        assertWithMessage("Missing mandatory features").that(missingFeatures).isEmpty();
     }
 
     /**
@@ -137,37 +146,27 @@ public class OptionalFeatureHostTest extends CarHostJUnit4TestCase {
      */
     @Test
     public void testNoFeatureChangeAfterRebootForAdbCommand() throws Exception {
-        List<String> enabledFeaturesOrig = findFeatureListFromCarServiceDump("mEnabledFeatures");
+        List<String> enabledFeaturesOrig = getEnabledFeatures();
         for (String feature : enabledFeaturesOrig) {
             getDevice().executeShellCommand("cmd car_service disable-feature %s" + feature);
         }
+
         getDevice().reboot();
-        List<String> enabledFeaturesAfterReboot = findFeatureListFromCarServiceDump(
-                "mEnabledFeatures");
-        for (String feature : enabledFeaturesAfterReboot) {
-            enabledFeaturesOrig.remove(feature);
-        }
-        assertThat(enabledFeaturesOrig).isEmpty();
+        List<String> enabledFeaturesAfterReboot = getEnabledFeatures();
+
+        assertWithMessage(
+                "Comparison between enabled features before and after device reboot").that(
+                        enabledFeaturesOrig).isEqualTo(enabledFeaturesAfterReboot);
     }
 
-    private List<String> findFeatureListFromCarServiceDump(String featureDumpName)
-            throws Exception {
-        String output = getDevice().executeShellCommand(
-                "dumpsys car_service --services CarFeatureController");
-        Pattern pattern = Pattern.compile(featureDumpName + ":\\[(.*)\\]");
-        Matcher m = pattern.matcher(output);
-        if (!m.find()) {
-            return Collections.EMPTY_LIST;
-        }
-        String[] features = m.group(1).split(", ");
-        ArrayList<String> featureList = new ArrayList<>(features.length);
-        for (String feature : features) {
-            if (feature.isEmpty()) {
-                continue;
-            }
-            featureList.add(feature);
-        }
-        return featureList;
+    private CarFeatureControlDumpProto getFeatureControlDumpProto() throws Exception {
+        return ProtoUtils.getProto(getDevice(), CarFeatureControlDumpProto.parser(),
+                "dumpsys car_service --services CarFeatureController --proto");
+    }
+
+    private List<String> getEnabledFeatures() throws Exception {
+        CarFeatureControlDumpProto featureControlDump = getFeatureControlDumpProto();
+        return featureControlDump.getEnabledFeaturesList();
     }
 
     private void assumeUserBuild() throws Exception {
