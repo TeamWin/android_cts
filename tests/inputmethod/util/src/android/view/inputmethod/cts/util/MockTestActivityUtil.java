@@ -187,9 +187,10 @@ public final class MockTestActivityUtil {
         if (instant) {
             // Override app-links domain verification.
             runShellCommand(
-                    String.format("pm set-app-links-user-selection --user cur --package %s true %s",
-                            TEST_ACTIVITY.getPackageName(), TEST_ACTIVITY_URI.getHost()));
+                    String.format("pm set-app-links-user-selection --user %s --package %s true %s",
+                            userId, TEST_ACTIVITY.getPackageName(), TEST_ACTIVITY_URI.getHost()));
             intent.setAction(Intent.ACTION_VIEW).addCategory(Intent.CATEGORY_BROWSABLE);
+            intent.setData(TEST_ACTIVITY_URI);
         } else {
             intent.setAction(Intent.ACTION_MAIN);
         }
