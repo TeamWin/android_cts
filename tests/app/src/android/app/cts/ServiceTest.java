@@ -76,6 +76,8 @@ import com.android.server.am.nano.ProcessRecordProto;
 
 import com.google.protobuf.nano.InvalidProtocolBufferNanoException;
 
+import org.junit.Ignore;
+
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -982,6 +984,8 @@ public class ServiceTest extends ActivityTestsBase {
     }
 
     @MediumTest
+    @Ignore("b/289969631, test is 15% flaky, fix is risky, ignore the test until fix is fully "
+            + "tested")
     public void testForegroundService_dontRemoveNotificationOnStop() throws Exception {
         boolean success = false;
         try {
