@@ -16,6 +16,8 @@
 
 package android.server.wm.jetpack.embedding;
 
+import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.EXPAND_SPLIT_ATTRS;
+import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.createSplitPairRuleBuilder;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.createWildcardSplitPairRuleBuilderWithPrimaryActivityClass;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.startActivityAndVerifySplitAttributes;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.waitAndAssertNotVisible;
@@ -28,6 +30,7 @@ import android.app.Activity;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.jetpack.utils.TestActivityWithId;
 import android.server.wm.jetpack.utils.TestConfigChangeHandlingActivity;
+import android.util.Size;
 
 import androidx.annotation.NonNull;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -208,6 +211,82 @@ public class PinActivityStackTests extends ActivityEmbeddingTestBase {
 
         // Cannot pin once there's already a pinned ActivityStack.
         assertFalse(pinTopActivityStack());
+    }
+
+    /**
+     * Verifies that the pinned rule is sticky and applies whenever possible.
+     */
+    @Test
+    public void testPinTopActivityStack_resizeStickyPin() {
+        // Launch a secondary activity to side
+        Activity secondaryActivity = startActivityAndVerifySplitAttributes(mPrimaryActivity,
+                TestActivityWithId.class, mWildcardSplitPairRule,
+                mPinnedActivityId, mSplitInfoConsumer);
+
+        pinExpandActivityAndResizeDisplay(secondaryActivity, true /* stickyPin */);
+
+        // Verify the activities are still split
+        waitAndAssertResumed(secondaryActivity);
+        waitAndAssertResumed(mPinnedActivity);
+        waitAndAssertNotVisible(mPrimaryActivity);
+    }
+
+    /**
+     * Verifies that the pinned rule is non-sticky and removed after resizing.
+     */
+    @Test
+    public void testPinTopActivityStack_resizeNonStickyPin() {
+        // Launch a secondary activity to side
+        Activity secondaryActivity = startActivityAndVerifySplitAttributes(mPrimaryActivity,
+                TestActivityWithId.class, mWildcardSplitPairRule,
+                mPinnedActivityId, mSplitInfoConsumer);
+
+        pinExpandActivityAndResizeDisplay(secondaryActivity, false /* stickyPin */);
+
+        // Verify the unpinned activity is expanded.
+        waitAndAssertResumed(mPinnedActivity);
+        waitAndAssertNotVisible(secondaryActivity);
+        waitAndAssertNotVisible(mPrimaryActivity);
+    }
+
+    private void pinExpandActivityAndResizeDisplay(@NonNull Activity secondaryActivity,
+            boolean stickyPin) {
+        // Starts an Activity to always-expand
+        final SplitPairRule expandRule = createSplitPairRuleBuilder(activityActivityPair -> true,
+                activityIntentPair -> true, windowMetrics -> true).setDefaultSplitAttributes(
+                EXPAND_SPLIT_ATTRS).build();
+        mActivityEmbeddingComponent.setEmbeddingRules(
+                Collections.singleton(expandRule));
+        mPinnedActivity = startActivityAndVerifySplitAttributes(secondaryActivity,
+                TestActivityWithId.class, expandRule, "expandActivityId", mSplitInfoConsumer);
+
+        // Pin the top ActivityStack
+        final int originalTaskWidth = getTaskWidth();
+        final int originalTaskHeight = getTaskHeight();
+        final SplitPinRule stickySplitPinRule = new SplitPinRule.Builder(
+                new SplitAttributes.Builder().build(),
+                parentWindowMetrics -> parentWindowMetrics.getBounds().width() >= originalTaskWidth
+                        && parentWindowMetrics.getBounds().height() >= originalTaskHeight)
+                .setSticky(stickyPin).build();
+
+        // Verify the pinned activity is split with next-top activity
+        assertTrue(pinTopActivityStack(mTaskId, stickySplitPinRule));
+        waitAndAssertResumed(secondaryActivity);
+        waitAndAssertResumed(mPinnedActivity);
+        waitAndAssertNotVisible(mPrimaryActivity);
+
+        // Shrink the display by 10% to make the activities stacked
+        final Size originalDisplaySize = mReportedDisplayMetrics.getSize();
+        mReportedDisplayMetrics.setSize(new Size((int) (originalDisplaySize.getWidth() * 0.9),
+                (int) (originalDisplaySize.getHeight() * 0.9)));
+
+        // Verify only the pinned activity is visible
+        waitAndAssertResumed(mPinnedActivity);
+        waitAndAssertNotVisible(secondaryActivity);
+        waitAndAssertNotVisible(mPrimaryActivity);
+
+        // Restore to the original display size
+        mReportedDisplayMetrics.setSize(originalDisplaySize);
     }
 
     private boolean pinTopActivityStack() {
