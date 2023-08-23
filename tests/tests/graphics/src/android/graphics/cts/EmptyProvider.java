@@ -25,7 +25,7 @@ import android.net.Uri;
 import java.io.FileNotFoundException;
 
 /**
- * Dummy provider class for testing failure to open an asset.
+ * Placeholder provider class for testing failure to open an asset.
  */
 public final class EmptyProvider extends ContentProvider {
     public EmptyProvider() {
