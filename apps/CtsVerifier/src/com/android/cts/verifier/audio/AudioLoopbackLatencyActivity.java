@@ -164,6 +164,9 @@ public class AudioLoopbackLatencyActivity extends PassFailButtons.Activity {
         double mMeanConfidence;
         double mRequiredConfidence;
         double mMeanTimestampLatencyMS;
+        int mSampleRate;
+        boolean mIsLowLatencyStream;
+        boolean mHas24BitHardwareSupport;
 
         boolean mRouteAvailable; // Have we seen this route/device at any time
         boolean mRouteConnected; // is the route available NOW
@@ -175,6 +178,9 @@ public class AudioLoopbackLatencyActivity extends PassFailButtons.Activity {
 
             mInputDeviceId = DEVICEID_NONE;
             mOutputDeviceId = DEVICEID_NONE;
+
+            // Default to true if test not run.
+            mHas24BitHardwareSupport = true;
         }
 
         void startTest() {
@@ -199,6 +205,11 @@ public class AudioLoopbackLatencyActivity extends PassFailButtons.Activity {
                             mMeanLatencyMS, mLatencyMS, mLatencyMS.length);
             mMeanConfidence = StatUtils.calculateMean(mConfidence);
             mMeanTimestampLatencyMS = StatUtils.calculateMean(mTimestampLatencyMS);
+            if (mNativeAnalyzerThread != null) {
+                mSampleRate = mNativeAnalyzerThread.getSampleRate();
+                mIsLowLatencyStream = mNativeAnalyzerThread.isLowLatencyStream();
+                mHas24BitHardwareSupport = mNativeAnalyzerThread.has24BitHardwareSupport();
+            }
         }
 
         boolean isMeasurementValid() {
@@ -206,8 +217,7 @@ public class AudioLoopbackLatencyActivity extends PassFailButtons.Activity {
         }
 
         boolean has24BitHardwareSupport() {
-            return (mNativeAnalyzerThread != null)
-                    && mNativeAnalyzerThread.has24BitHardwareSupport();
+            return mHas24BitHardwareSupport;
         }
 
         String getResultString() {
@@ -236,8 +246,8 @@ public class AudioLoopbackLatencyActivity extends PassFailButtons.Activity {
                         mMeanLatencyMS,
                         mMeanAbsoluteDeviation,
                         mMeanConfidence,
-                        mNativeAnalyzerThread.isLowLatencyStream() ? mYesString : mNoString,
-                        mNativeAnalyzerThread.has24BitHardwareSupport() ? mYesString : mNoString,
+                        mIsLowLatencyStream ? mYesString : mNoString,
+                        mHas24BitHardwareSupport ? mYesString : mNoString,
                         mMeanTimestampLatencyMS);
             }
 
@@ -254,6 +264,10 @@ public class AudioLoopbackLatencyActivity extends PassFailButtons.Activity {
         private static final String KEY_OUTPUT_PERIPHERAL_NAME = "output_peripheral";
         private static final String KEY_TEST_PERIPHERAL_NAME = "test_peripheral_name";
         private static final String KEY_TIMESTAMP_LATENCY = "timestamp_latency";
+        private static final String KEY_SAMPLE_RATE = "sample_rate";
+        private static final String KEY_IS_LOW_LATENCY = "is_low_latency";
+        private static final String KEY_HAS_24_BIT_HARDWARE_SUPPORT =
+                "has_24_bit_hardware_support";
 
         void recordTestResults(CtsVerifierReportLog reportLog) {
             reportLog.addValue(
@@ -289,6 +303,24 @@ public class AudioLoopbackLatencyActivity extends PassFailButtons.Activity {
             reportLog.addValue(
                     KEY_TIMESTAMP_LATENCY,
                     mMeanTimestampLatencyMS,
+                    ResultType.NEUTRAL,
+                    ResultUnit.NONE);
+
+            reportLog.addValue(
+                    KEY_SAMPLE_RATE,
+                    mSampleRate,
+                    ResultType.NEUTRAL,
+                    ResultUnit.NONE);
+
+            reportLog.addValue(
+                    KEY_IS_LOW_LATENCY,
+                    mIsLowLatencyStream,
+                    ResultType.NEUTRAL,
+                    ResultUnit.NONE);
+
+            reportLog.addValue(
+                    KEY_HAS_24_BIT_HARDWARE_SUPPORT,
+                    mHas24BitHardwareSupport,
                     ResultType.NEUTRAL,
                     ResultUnit.NONE);
         }
@@ -599,14 +631,10 @@ public class AudioLoopbackLatencyActivity extends PassFailButtons.Activity {
     }
 
     // Test-Schema
-    private static final String KEY_SAMPLE_RATE = "sample_rate";
     private static final String KEY_IS_PRO_AUDIO = "is_pro_audio";
-    private static final String KEY_IS_LOW_LATENCY = "is_low_latency";
     private static final String KEY_TEST_MMAP = "supports_mmap";
     private static final String KEY_TEST_MMAPEXCLUSIVE = "supports_mmap_exclusive";
     private static final String KEY_LEVEL = "level";
-    private static final String KEY_HAS_24_BIT_HARDWARE_SUPPORT =
-            "has_24_bit_hardware_support";
 
     private void recordRouteResults(int routeIndex) {
         if (mTestSpecs[routeIndex].mTestRun) {
@@ -634,24 +662,6 @@ public class AudioLoopbackLatencyActivity extends PassFailButtons.Activity {
             reportLog.addValue(
                     KEY_TEST_MMAPEXCLUSIVE,
                     mSupportsMMAPExclusive,
-                    ResultType.NEUTRAL,
-                    ResultUnit.NONE);
-
-            reportLog.addValue(
-                    KEY_SAMPLE_RATE,
-                    mNativeAnalyzerThread.getSampleRate(),
-                    ResultType.NEUTRAL,
-                    ResultUnit.NONE);
-
-            reportLog.addValue(
-                    KEY_IS_LOW_LATENCY,
-                    mNativeAnalyzerThread.isLowLatencyStream(),
-                    ResultType.NEUTRAL,
-                    ResultUnit.NONE);
-
-            reportLog.addValue(
-                    KEY_HAS_24_BIT_HARDWARE_SUPPORT,
-                    mNativeAnalyzerThread.has24BitHardwareSupport(),
                     ResultType.NEUTRAL,
                     ResultUnit.NONE);
 
@@ -1033,7 +1043,7 @@ public class AudioLoopbackLatencyActivity extends PassFailButtons.Activity {
 
             // For Media Performance Class T, usb and analog should support >=24 bit audio.
             boolean has24BitHardwareSupportPass = (mediaPerformanceClass < MPC_T)
-                    || analog24BitHardwareSupport  || usb24BitHardwareSupport;
+                    || (analog24BitHardwareSupport && usb24BitHardwareSupport);
             Log.i(TAG, "  has24BitHardwareSupportPass:" + has24BitHardwareSupportPass);
             setResultCode(has24BitHardwareSupportPass, RESULTCODE_FAIL_24BIT);
 
