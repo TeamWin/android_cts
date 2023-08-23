@@ -46,6 +46,7 @@
         </receiver>
         <activity android:name=".ForegroundActivity"
              android:taskAffinity=".am_cts_bg_task_a"
+             android:allowUntrustedActivityEmbedding="true"
              android:exported="true"/>
         <activity android:name=".ForegroundEmbeddingActivity"
             android:taskAffinity=".am_cts_bg_task_asd"
