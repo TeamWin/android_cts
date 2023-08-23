@@ -18,6 +18,7 @@ package android.server.wm.display;
 
 import static android.server.wm.WindowManagerTestBase.startActivity;
 import static android.view.Display.DEFAULT_DISPLAY;
+import static android.view.Display.INVALID_DISPLAY;
 import static android.view.WindowManager.LayoutParams.TYPE_APPLICATION;
 import static android.view.WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
 
@@ -25,7 +26,9 @@ import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.WindowConfiguration;
@@ -59,7 +62,7 @@ import org.junit.Test;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.function.BooleanSupplier;
 
 /**
  * Tests that verify the behavior of window context
@@ -293,7 +296,8 @@ public class WindowContextTests extends WindowContextTestBase {
     @Test
     public void testWindowProviderServiceCallWmBeforeOnCreateNotCrash() {
         final TestWindowService service =
-                createManagedWindowServiceSession(true /* verifyWmInOnCreate */).getService();
+                createManagedWindowServiceSession(true /* verifyWmInOnCreate */,
+                        false /* verifyAttachingInvalidDisplay */).getService();
         if (service.mThrowableFromOnCreate != null) {
             throw new AssertionError("Calling WindowManager APIs before"
                     + " WindowProviderService#onCreate must not throw Throwable, but did.",
@@ -301,28 +305,51 @@ public class WindowContextTests extends WindowContextTestBase {
         }
     }
 
-    private TestWindowServiceSession createManagedWindowServiceSession() {
-        return mObjectTracker.manage(new TestWindowServiceSession(false /* verifyWmInOnCreate */));
+    @Test
+    public void testWindowProviderServiceAttachingInvalidDisplayNotCrash() {
+        final TestWindowServiceSession session = createManagedWindowServiceSession(
+                false /* verifyWmInOnCreate */, true /* verifyAttachingInvalidDisplay */);
+        final TestWindowService service = session.getService();
+        if (session.mThrowableAtInitialization != null) {
+            fail("WindowProviderService attaches invalid display must fallback to the default "
+                    + "display without throwing exception, but did."
+                    + session.mThrowableAtInitialization);
+        }
+        assertNotNull(service);
     }
 
-    private TestWindowServiceSession createManagedWindowServiceSession(boolean verifyWmInOnCreate) {
-        return mObjectTracker.manage(new TestWindowServiceSession(verifyWmInOnCreate));
+    private TestWindowServiceSession createManagedWindowServiceSession() {
+        return mObjectTracker.manage(new TestWindowServiceSession(false /* verifyWmInOnCreate */,
+                false /* verifyAttachingInvalidDisplay */));
+    }
+
+    private TestWindowServiceSession createManagedWindowServiceSession(boolean verifyWmInOnCreate,
+            boolean verifyAttachingInvalidDisplay) {
+        return mObjectTracker.manage(new TestWindowServiceSession(verifyWmInOnCreate,
+                verifyAttachingInvalidDisplay));
     }
 
     private static class TestWindowServiceSession implements AutoCloseable {
         private final ServiceTestRule mServiceRule = new ServiceTestRule();
-        private final TestWindowService mService;
-        private static boolean sVerifyWmInOnCreate = false;
+        private TestWindowService mService;
+        private static BooleanSupplier sVerifyWmInOnCreate;
 
-        private TestWindowServiceSession(boolean verifyWmInOnCreate) {
+        private static BooleanSupplier sVerifyAttachingInvalidDisplay;
+
+        private Throwable mThrowableAtInitialization;
+
+        private TestWindowServiceSession(boolean verifyWmInOnCreate,
+                                         boolean verifyAttachingInvalidDisplay) {
             final Context context = ApplicationProvider.getApplicationContext();
             final Intent intent = new Intent(context, TestWindowService.class);
-            sVerifyWmInOnCreate = verifyWmInOnCreate;
+            sVerifyWmInOnCreate = () -> verifyWmInOnCreate;
+            sVerifyAttachingInvalidDisplay = () -> verifyAttachingInvalidDisplay;
             try {
                 final TestToken token = (TestToken) mServiceRule.bindService(intent);
                 mService = token.getService();
-            } catch (TimeoutException e) {
-                throw new RuntimeException(e);
+            } catch (Throwable e) {
+                mThrowableAtInitialization = e;
+                mService = null;
             }
         }
 
@@ -347,6 +374,12 @@ public class WindowContextTests extends WindowContextTestBase {
             return TYPE_APPLICATION;
         }
 
+        @Override
+        public int getInitialDisplayId() {
+            return TestWindowServiceSession.sVerifyAttachingInvalidDisplay.getAsBoolean()
+                    ? INVALID_DISPLAY : DEFAULT_DISPLAY;
+        }
+
         @Nullable
         @Override
         public IBinder onBind(Intent intent) {
@@ -356,7 +389,7 @@ public class WindowContextTests extends WindowContextTestBase {
         @Override
         public void onCreate() {
             // Verify if call WindowManager before WindowProviderService#onCreate throws Exception.
-            if (TestWindowServiceSession.sVerifyWmInOnCreate) {
+            if (TestWindowServiceSession.sVerifyWmInOnCreate.getAsBoolean()) {
                 try {
                     getSystemService(WindowManager.class).getCurrentWindowMetrics();
                 } catch (Throwable t) {
