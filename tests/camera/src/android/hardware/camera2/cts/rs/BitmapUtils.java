@@ -17,10 +17,6 @@ package android.hardware.camera2.cts.rs;
 
 import android.graphics.Bitmap;
 import android.graphics.Color;
-import android.renderscript.Allocation;
-import android.renderscript.Element;
-import android.renderscript.RenderScript;
-import android.renderscript.ScriptIntrinsicHistogram;
 
 /**
  * Utility class providing methods for various pixel-wise ARGB bitmap operations.
@@ -29,28 +25,6 @@ public class BitmapUtils {
     private static final String TAG = "BitmapUtils";
     private static final int COLOR_BIT_DEPTH = 256;
     public static int NUM_CHANNELS = 4;
-
-    /**
-     * Return the histograms for each color channel (interleaved).
-     *
-     * @param rs a {@link RenderScript} context to use.
-     * @param bmap a {@link Bitmap} to generate the histograms for.
-     * @return an array containing NUM_CHANNELS * COLOR_BIT_DEPTH histogram bucket values, with
-     * the color channels interleaved.
-     */
-    public static int[] calcHistograms(RenderScript rs, Bitmap bmap) {
-        ScriptIntrinsicHistogram hist = ScriptIntrinsicHistogram.create(rs, Element.U8_4(rs));
-        Allocation sums = Allocation.createSized(rs, Element.I32_4(rs), COLOR_BIT_DEPTH);
-
-        // Setup input allocation (ARGB 8888 bitmap).
-        Allocation input = Allocation.createFromBitmap(rs, bmap);
-
-        hist.setOutput(sums);
-        hist.forEach(input);
-        int[] output = new int[COLOR_BIT_DEPTH * NUM_CHANNELS];
-        sums.copyTo(output);
-        return output;
-    }
 
     // Some stats output from comparing two Bitmap using calcDifferenceMetric
     public static class BitmapCompareResult {
@@ -79,7 +53,7 @@ public class BitmapUtils {
                     a.getWidth() + "x" + a.getHeight() + ", b=" + b.getWidth() + "x" +
                     b.getHeight());
         }
-        // TODO: Optimize this in renderscript to avoid copy.
+
         int[] aPixels = new int[a.getHeight() * a.getWidth()];
         int[] bPixels = new int[aPixels.length];
         a.getPixels(aPixels, /*offset*/0, /*stride*/a.getWidth(), /*x*/0, /*y*/0, a.getWidth(),
