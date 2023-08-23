@@ -190,12 +190,17 @@ public class ActivityLaunchUtils {
         final List<ResolveInfo> resolveInfos = packageManager.queryIntentActivities(
                 new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME),
                 PackageManager.MATCH_DEFAULT_ONLY);
+        final boolean isAuto = packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE);
 
         // Look for an active focused window with a package name that matches
         // the default home screen.
         for (AccessibilityWindowInfo window : windows) {
-            if (!window.isActive() || !window.isFocused()) {
-                continue;
+            if (!isAuto) {
+                // Auto does not set its home screen app as active+focused, so only non-auto
+                // devices enforce that the home screen is active+focused.
+                if (!window.isActive() || !window.isFocused()) {
+                    continue;
+                }
             }
             final AccessibilityNodeInfo root = window.getRoot();
             if (root != null) {
