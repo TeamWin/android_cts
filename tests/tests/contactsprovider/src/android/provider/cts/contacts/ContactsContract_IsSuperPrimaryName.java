@@ -94,7 +94,7 @@ public class ContactsContract_IsSuperPrimaryName extends AndroidTestCase {
         // Execute: aggregate the two raw contacts together
         setAggregationException(rawContact1.getId(), rawContact2.getId());
 
-        // Sanity check: two contacts are aggregated
+        // Initial check: two contacts are aggregated
         rawContact1.load();
         rawContact2.load();
         Assert.assertEquals(rawContact1.getContactId(), rawContact2.getContactId());
@@ -155,7 +155,7 @@ public class ContactsContract_IsSuperPrimaryName extends AndroidTestCase {
         // Execute: aggregate the two contacts together
         setAggregationException(rawContact1.getId(), rawContact2.getId());
 
-        // Sanity check: two contacts are aggregated
+        // Initial check: two contacts are aggregated
         rawContact1.load();
         rawContact2.load();
         Assert.assertEquals(rawContact1.getContactId(), rawContact2.getContactId());
