@@ -120,7 +120,7 @@ public class ContactsContract_StructuredPhoneticName extends AndroidTestCase {
         ContactUtil.setAggregationException(mResolver, AggregationExceptions.TYPE_KEEP_TOGETHER,
                 rawContact1.getId(), rawContact2.getId());
 
-        // Sanity check: two contacts are aggregated
+        // Initial check: two contacts are aggregated
         rawContact1.load();
         rawContact2.load();
         Assert.assertEquals(rawContact1.getContactId(), rawContact2.getContactId());
@@ -157,7 +157,7 @@ public class ContactsContract_StructuredPhoneticName extends AndroidTestCase {
         ContactUtil.setAggregationException(mResolver, AggregationExceptions.TYPE_KEEP_TOGETHER,
                 rawContact1.getId(), rawContact2.getId());
 
-        // Sanity check: two contacts are aggregated
+        // Initial check: two contacts are aggregated
         rawContact1.load();
         rawContact2.load();
         Assert.assertEquals(rawContact1.getContactId(), rawContact2.getContactId());
