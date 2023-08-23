@@ -532,14 +532,14 @@ public final class Package {
 
     /** Get the permissions requested in the package's manifest. */
     public Set<String> requestedPermissions() {
-        PackageInfo packageInfo = packageInfoFromAnyUser(GET_PERMISSIONS);
+        if (TestApis.packages().instrumented().isInstantApp()) {
+            Log.i(LOG_TAG, "Tried to get requestedPermissions for "
+                    + mPackageName + " but can't on instant apps");
+            return new HashSet<>();
+        }
 
+        PackageInfo packageInfo = packageInfoFromAnyUser(GET_PERMISSIONS);
         if (packageInfo == null) {
-            if (TestApis.packages().instrumented().isInstantApp()) {
-                Log.i(LOG_TAG, "Tried to get requestedPermissions for "
-                        + mPackageName + " but can't on instant apps");
-                return new HashSet<>();
-            }
             throw new NeneException("Error getting requestedPermissions, does not exist");
         }
 
