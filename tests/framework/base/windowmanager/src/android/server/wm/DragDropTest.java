@@ -51,6 +51,8 @@ import android.view.ViewGroup;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.UiAutomatorUtils;
+
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -220,7 +222,7 @@ public class DragDropTest extends WindowManagerTestBase {
         View v = mActivity.findViewById(viewId);
         View release = mActivity.findViewById(releaseViewId);
         int [] releaseLoc = new int[2];
-        release.getLocationOnScreen(releaseLoc);
+        release.getLocationInWindow(releaseLoc);
         int action = DragEvent.ACTION_DRAG_ENDED;
         mExpected.add(new LogEntry(v, action,
                 releaseLoc[0] + 6 / mInvCompatScale, releaseLoc[1] + 6 / mInvCompatScale,
@@ -334,6 +336,7 @@ public class DragDropTest extends WindowManagerTestBase {
     @Before
     public void setUp() throws InterruptedException {
         assumeFalse(isWatchDevice());
+        UiAutomatorUtils.getUiDevice().waitForIdle();
         mActivity = startActivityInWindowingMode(DragDropActivity.class, WINDOWING_MODE_FULLSCREEN);
 
         mStartReceived = new CountDownLatch(1);
