@@ -19,6 +19,7 @@ package android.view.inputmethod.cts.util;
 import static android.content.Intent.FLAG_RECEIVER_VISIBLE_TO_INSTANT_APPS;
 
 import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
+import static com.android.compatibility.common.util.SystemUtil.runShellCommandOrThrow;
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
 
 import android.Manifest;
@@ -133,7 +134,7 @@ public final class MockTestActivityUtil {
         final StringBuilder commandBuilder = new StringBuilder();
         if (instant) {
             // Override app-links domain verification.
-            runShellCommand(
+            runShellCommandOrThrow(
                     String.format("pm set-app-links-user-selection --user cur --package %s true %s",
                             TEST_ACTIVITY.getPackageName(), TEST_ACTIVITY_URI.getHost()));
             final Uri uri = formatStringIntentParam(TEST_ACTIVITY_URI, extras);
@@ -149,7 +150,7 @@ public final class MockTestActivityUtil {
         }
 
         runWithShellPermissionIdentity(() -> {
-            runShellCommand(commandBuilder.toString());
+            runShellCommandOrThrow(commandBuilder.toString());
         });
         UiDevice uiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
         BySelector activitySelector = By.pkg(TEST_ACTIVITY.getPackageName()).depth(0);

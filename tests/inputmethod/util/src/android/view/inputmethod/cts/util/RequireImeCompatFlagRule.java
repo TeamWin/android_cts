@@ -16,7 +16,7 @@
 
 package android.view.inputmethod.cts.util;
 
-import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
+import static com.android.compatibility.common.util.SystemUtil.runShellCommandOrThrow;
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
 
 import com.android.cts.mockime.MockIme;
@@ -46,14 +46,14 @@ public class RequireImeCompatFlagRule implements TestRule {
             public void evaluate() throws Throwable {
                 try {
                     runWithShellPermissionIdentity(() -> {
-                        runShellCommand("am compat " + (mEnabled ? "enable " : "disable ")
+                        runShellCommandOrThrow("am compat " + (mEnabled ? "enable " : "disable ")
                                 + mCompatFlag + " "
                                 + "com.android.cts.mockime");
                     });
                     base.evaluate();
                 } finally {
                     runWithShellPermissionIdentity(() -> {
-                        runShellCommand("am compat reset " + mCompatFlag + " "
+                        runShellCommandOrThrow("am compat reset " + mCompatFlag + " "
                                 + "com.android.cts.mockime");
                     });
                 }
