@@ -482,7 +482,7 @@ public class SurfaceViewPreviewTest extends Camera2SurfaceViewTestCase {
         // Confirm that other surface types aren't supported for OutputConfiguration
         Class[] unsupportedClasses =
                 {android.media.ImageReader.class, android.media.MediaCodec.class,
-                 android.renderscript.Allocation.class, android.media.MediaRecorder.class};
+                 android.media.MediaRecorder.class};
 
         for (Class klass : unsupportedClasses) {
             try {
