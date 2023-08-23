@@ -133,7 +133,7 @@ public class SharedPreferencesTest extends AndroidTestCase {
             editor.commit();
             long modtimeMillis1 = mPrefsFile.lastModified();
 
-            // Wait a second and modify the preferences in a dummy,
+            // Wait a second and modify the preferences in a placeholder,
             // redundant way.  Wish I could inject a clock or disk mock
             // here, but can't.  Instead relying on checking modtime of
             // file on disk.
