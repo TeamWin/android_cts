@@ -16,7 +16,10 @@
 
 package android.virtualdevice.cts.common.util;
 
+import static com.google.common.util.concurrent.Uninterruptibles.tryAcquireUninterruptibly;
+
 import android.app.ActivityOptions;
+import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
 import android.hardware.display.VirtualDisplayConfig;
 import android.os.Bundle;
@@ -25,6 +28,12 @@ import android.os.Looper;
 import android.os.Parcel;
 import android.os.ResultReceiver;
 import android.view.Surface;
+
+import com.android.internal.annotations.GuardedBy;
+
+import java.util.ArrayList;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Test utilities for Virtual Device tests.
@@ -71,4 +80,115 @@ public final class VirtualDeviceTestUtils {
     }
 
     private VirtualDeviceTestUtils() {}
+
+    public static class DisplayListenerForTest implements DisplayManager.DisplayListener {
+
+        private static final int TIMEOUT_MILLIS = 1000;
+
+        private final Semaphore mDisplayAddedSemaphore = new Semaphore(0);
+        private final Semaphore mDisplayRemovedSemaphore = new Semaphore(0);
+        private final Object mLock = new Object();
+        @GuardedBy("mLock")
+        private final ArrayList<Integer> mAddedDisplays = new ArrayList<>();
+        @GuardedBy("mLock")
+        private final ArrayList<Integer> mRemovedDisplays = new ArrayList<>();
+
+        /**
+         * Wait until {@code OnDisplayAddedCallback} is invoked at least numDisplays or timeout
+         * expires.
+         *
+         * @param numDisplays - how many invocations of {@code OnDisplayAddedCallback} to wait for.
+         * @return true iff the {@code OnDisplayAddedCallback} was invoked at least numDisplays
+         * before
+         * timeout expiration.
+         */
+        public boolean waitForOnDisplayAddedCallback(int numDisplays) {
+            return tryAcquireUninterruptibly(mDisplayAddedSemaphore, numDisplays, TIMEOUT_MILLIS,
+                    TimeUnit.MILLISECONDS);
+        }
+
+        /**
+         * Wait until {@code OnDisplayAddedCallback} is invoked once or timeout expires.
+         *
+         * @return true iff the {@code OnDisplayAddedCallback} was invoked at least once before
+         * timeout expiration.
+         */
+        public boolean waitForOnDisplayAddedCallback() {
+            return waitForOnDisplayAddedCallback(/*numDisplays=*/1);
+        }
+
+
+        /**
+         * Wait until {@code OnDisplayRemovedCallback} is invoked at least numDisplays or timeout
+         * expires.
+         *
+         * @param numDisplays - how many invocations of {@code OnDisplayRemovedCallback} to wait
+         *                    for.
+         * @return true iff the {@code OnDisplayRemovedCallback} was invoked at least numDisplays
+         * before
+         * timeout expiration.
+         */
+        public boolean waitForOnDisplayRemovedCallback(int numDisplays) {
+            return tryAcquireUninterruptibly(mDisplayRemovedSemaphore, numDisplays, TIMEOUT_MILLIS,
+                    TimeUnit.MILLISECONDS);
+        }
+
+        /**
+         * Wait until {@code OnDisplayRemovedCallback} is invoked once or timeout expires.
+         *
+         * @return true iff the {@code OnDisplayRemovedCallback} was invoked at least once before
+         * timeout expiration.
+         */
+        public boolean waitForOnDisplayRemovedCallback() {
+            return waitForOnDisplayRemovedCallback(/*numDisplays=*/1);
+        }
+
+        @Override
+        public void onDisplayAdded(int displayId) {
+            synchronized (mLock) {
+                mAddedDisplays.add(displayId);
+                mDisplayAddedSemaphore.release();
+            }
+        }
+
+        @Override
+        public void onDisplayRemoved(int displayId) {
+            synchronized (mLock) {
+                mRemovedDisplays.add(displayId);
+                mDisplayRemovedSemaphore.release();
+            }
+        }
+
+
+        @Override
+        public void onDisplayChanged(int displayId) {
+            //Do nothing.
+        }
+
+        /**
+         * Get list of recently added display ids.
+         *
+         * @return List of recently added display ids.
+         */
+        public ArrayList<Integer> getObservedAddedDisplays() {
+            synchronized (mLock) {
+                synchronized (mDisplayAddedSemaphore) {
+                    return new ArrayList<>(mAddedDisplays);
+                }
+            }
+        }
+
+        /**
+         * Get list of recently removed display ids.
+         *
+         * @return List of recently removed display ids.
+         */
+        public ArrayList<Integer> getObservedRemovedDisplays() {
+            synchronized (mLock) {
+                synchronized (mDisplayRemovedSemaphore) {
+                    return new ArrayList<>(mRemovedDisplays);
+                }
+            }
+        }
+    }
 }

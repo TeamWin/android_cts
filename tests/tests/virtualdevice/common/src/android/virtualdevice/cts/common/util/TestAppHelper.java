@@ -71,11 +71,6 @@ public class TestAppHelper {
     public static final String EXTRA_ACTIVITY_LAUNCHED_RECEIVER = "activityLaunchedReceiver";
     public static final String EXTRA_DISPLAY = "display";
 
-    public static final String ACTION_CHECK_RECENT_TASKS_PRESENCE =
-            PACKAGE_NAME + ".CHECK_RECENT_TASKS_PRESENCE";
-    public static final String EXTRA_ACTIVITY_INCLUDED_IN_RECENT_TASKS =
-            "activityIncludedInRecentTasks";
-
     /** @see android.virtualdevice.streamedtestapp.MainActivity */
     public static final String ACTION_CALL_IS_DEVICE_SECURE =
             PACKAGE_NAME + ".ACTION_CALL_IS_DEVICE_SECURE";
