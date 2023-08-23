@@ -24,7 +24,6 @@ import android.hardware.camera2.CaptureResult;
 import android.hardware.camera2.cts.helpers.StaticMetadata;
 import android.hardware.camera2.cts.testcases.Camera2AndroidTestRule;
 import android.platform.test.annotations.AppModeFull;
-import android.renderscript.Allocation;
 import android.util.ArraySet;
 import android.util.Log;
 import android.util.Range;
@@ -202,8 +201,9 @@ public class CameraExtensionCharacteristicsTest {
                 }
 
                 try {
+                    final class NotSupported {};
                     List<Size> ret = extensionChars.getExtensionSupportedSizes(extension,
-                            Allocation.class);
+                            NotSupported.class);
                     assertTrue("should get empty resolution list for unsupported " +
                             "surface type", ret.isEmpty());
                 } catch (IllegalArgumentException e) {
