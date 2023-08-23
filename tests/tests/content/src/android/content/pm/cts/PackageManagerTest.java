@@ -393,7 +393,7 @@ public class PackageManagerTest {
         }
     }
 
-    private static void launchMainActivity(String packageName) {
+    public static void launchMainActivity(String packageName) {
         SystemUtil.runShellCommand("am start -W "
                 + "--user current "
                 + "-a android.intent.action.MAIN "
@@ -2774,30 +2774,35 @@ public class PackageManagerTest {
         StorageStats stats = storageStatsManager.queryStatsForPackage(
                 packageInfo.applicationInfo.storageUuid, HELLO_WORLD_PACKAGE_NAME,
                 UserHandle.of(UserHandle.myUserId()));
-        assertTrue(stats.getDataBytes() > 0L);
+        assertThat(stats.getDataBytes()).isGreaterThan(0L);
 
         uninstallPackageKeepData(HELLO_WORLD_PACKAGE_NAME);
-        assertFalse(isAppInstalled(HELLO_WORLD_PACKAGE_NAME));
+        assertThat(isAppInstalled(HELLO_WORLD_PACKAGE_NAME)).isFalse();
 
         // Test query with MATCH_UNINSTALLED_PACKAGES
         packageInfo = mPackageManager.getPackageInfo(HELLO_WORLD_PACKAGE_NAME,
                 PackageManager.PackageInfoFlags.of(MATCH_UNINSTALLED_PACKAGES));
-        assertEquals(HELLO_WORLD_PACKAGE_NAME, packageInfo.packageName);
+        assertThat(packageInfo.packageName).isEqualTo(HELLO_WORLD_PACKAGE_NAME);
         // Test that the code path is gone but the signing info is still available
-        assertNull(packageInfo.applicationInfo.getCodePath());
-        assertNotNull(packageInfo.signingInfo);
+        assertThat(packageInfo.applicationInfo.getCodePath()).isNull();
+        assertThat(packageInfo.signingInfo).isNotNull();
         // Test that the app's data directory is preserved and matches dumpsys
         final String newDataDir = packageInfo.applicationInfo.dataDir;
-        assertFalse(newDataDir.isEmpty());
-        assertEquals(oldDataDir, newDataDir);
+        assertThat(newDataDir).isNotEmpty();
+        assertThat(newDataDir).isEqualTo(oldDataDir);
         final String appDirInDump = parsePackageDump(HELLO_WORLD_PACKAGE_NAME, "    dataDir=");
-        assertEquals(appDirInDump, newDataDir);
-        assertNotNull(packageInfo.applicationInfo.storageUuid);
+        assertThat(appDirInDump).isEqualTo(newDataDir);
+        assertThat(packageInfo.applicationInfo.storageUuid).isNotNull();
         // Verify the stats
         stats = storageStatsManager.queryStatsForPackage(
                 packageInfo.applicationInfo.storageUuid, HELLO_WORLD_PACKAGE_NAME,
                 UserHandle.of(UserHandle.myUserId()));
-        assertTrue(stats.getDataBytes() > 0L);
+        assertThat(stats.getDataBytes()).isGreaterThan(0L);
+        // Re-install the app and verify that the data dir is the same as before
+        installPackage(HELLO_WORLD_APK);
+        packageInfo = mPackageManager.getPackageInfo(HELLO_WORLD_PACKAGE_NAME,
+                PackageManager.PackageInfoFlags.of(0));
+        assertThat(packageInfo.applicationInfo.dataDir).isEqualTo(oldDataDir);
         // Fully clean up and test that the query fails
         uninstallPackage(HELLO_WORLD_PACKAGE_NAME);
         expectThrows(NameNotFoundException.class,

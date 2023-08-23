@@ -23,18 +23,21 @@ import android.content.Context.RECEIVER_EXPORTED
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
+import android.content.pm.PackageManager.MATCH_KNOWN_PACKAGES
+import android.content.pm.PackageManager.PackageInfoFlags
 import android.content.pm.cts.PackageManagerShellCommandInstallTest.FullyRemovedBroadcastReceiver
 import android.content.pm.cts.util.AbandonAllPackageSessionsRule
 import android.os.Handler
 import android.os.HandlerThread
 import android.os.UserManager
 import android.platform.test.annotations.AppModeFull
-import androidx.test.InstrumentationRegistry
+import androidx.test.platform.app.InstrumentationRegistry
 import com.android.bedstead.harrier.BedsteadJUnit4
 import com.android.bedstead.harrier.DeviceState
 import com.android.bedstead.harrier.annotations.EnsureHasSecondaryUser
 import com.android.bedstead.nene.users.UserReference
 import com.android.compatibility.common.util.SystemUtil
+import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
 import com.google.common.truth.Truth.assertThat
 import java.io.File
 import java.util.regex.Pattern
@@ -42,6 +45,7 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Assume.assumeFalse
 import org.junit.Assume.assumeTrue
@@ -91,9 +95,9 @@ class PackageManagerShellCommandMultiUserTest {
             }
         }
 
-        private val context: Context = InstrumentationRegistry.getContext()
+        private val context: Context = InstrumentationRegistry.getInstrumentation().targetContext
         private val uiAutomation: UiAutomation =
-            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+            InstrumentationRegistry.getInstrumentation().uiAutomation
 
         private var backgroundThread = HandlerThread("PackageManagerShellCommandMultiUserTest")
 
@@ -118,10 +122,12 @@ class PackageManagerShellCommandMultiUserTest {
 
     private var mPackageVerifier: String? = null
     private var mStreamingVerificationTimeoutMs =
-            PackageManagerShellCommandInstallTest.DEFAULT_STREAMING_VERIFICATION_TIMEOUT_MS
+        PackageManagerShellCommandInstallTest.DEFAULT_STREAMING_VERIFICATION_TIMEOUT_MS
 
     @Before
     fun setup() {
+        assumeTrue(UserManager.supportsMultipleUsers())
+        assumeFalse(getUserManager().hasUserRestriction(UserManager.DISALLOW_REMOVE_USER))
         uninstallPackageSilently(TEST_APP_PACKAGE)
         assertFalse(PackageManagerShellCommandInstallTest.isAppInstalled(TEST_APP_PACKAGE))
         mPackageVerifier =
@@ -283,57 +289,134 @@ class PackageManagerShellCommandMultiUserTest {
         assertTrue(isAppInstalledForUser(TEST_APP_PACKAGE, primaryUser))
         assertFalse(isAppInstalledForUser(TEST_APP_PACKAGE, secondaryUser))
         var out = SystemUtil.runShellCommand(
-                    "pm list packages -U --user ${primaryUser.id()} $TEST_APP_PACKAGE"
-                ).replace("\n", "")
+            "pm list packages -U --user ${primaryUser.id()} $TEST_APP_PACKAGE"
+        ).replace("\n", "")
         assertTrue(out.split(":").last().split(",").size == 1)
         out = SystemUtil.runShellCommand(
-                    "pm list packages -U --user ${secondaryUser.id()} $TEST_APP_PACKAGE"
-                ).replace("\n", "")
+            "pm list packages -U --user ${secondaryUser.id()} $TEST_APP_PACKAGE"
+        ).replace("\n", "")
         assertEquals("", out)
         out = SystemUtil.runShellCommand("pm list packages -U $TEST_APP_PACKAGE")
-                .replace("\n", "")
+            .replace("\n", "")
         var installedUsersCount = out.split(":").last().split(",").size
         assertTrue(out, installedUsersCount >= 1)
         installExistingPackageAsUser(TEST_APP_PACKAGE, secondaryUser)
         assertTrue(isAppInstalledForUser(TEST_APP_PACKAGE, primaryUser))
         assertTrue(isAppInstalledForUser(TEST_APP_PACKAGE, secondaryUser))
         out = SystemUtil.runShellCommand("pm list packages -U $TEST_APP_PACKAGE")
-                .replace("\n", "")
+            .replace("\n", "")
         assertTrue(out, out.split(":").last().split(",").size > installedUsersCount)
         out = SystemUtil.runShellCommand(
-                    "pm list packages -U --user ${primaryUser.id()} $TEST_APP_PACKAGE"
-                ).replace("\n", "")
+            "pm list packages -U --user ${primaryUser.id()} $TEST_APP_PACKAGE"
+        ).replace("\n", "")
         assertTrue(out, out.split(":").last().split(",").size == 1)
         out = SystemUtil.runShellCommand(
-                    "pm list packages -U --user ${secondaryUser.id()} $TEST_APP_PACKAGE"
-                ).replace("\n", "")
+            "pm list packages -U --user ${secondaryUser.id()} $TEST_APP_PACKAGE"
+        ).replace("\n", "")
         assertTrue(out, out.split(":").last().split(",").size == 1)
     }
 
     @Test
     fun testCreateUserCurAsType() {
-        assumeTrue(UserManager.supportsMultipleUsers())
-        assumeFalse(getUserManager().hasUserRestriction(UserManager.DISALLOW_REMOVE_USER))
         val oldPropertyValue = getSystemProperty(UserManager.DEV_CREATE_OVERRIDE_PROPERTY)
         setSystemProperty(UserManager.DEV_CREATE_OVERRIDE_PROPERTY, "1")
         try {
             val pattern = Pattern.compile("Success: created user id (\\d+)\\R*")
-            var commandResult = SystemUtil.runShellCommand("pm create-user --profileOf cur " +
-                    "--user-type android.os.usertype.profile.CLONE test")
+            var commandResult = SystemUtil.runShellCommand(
+                "pm create-user --profileOf cur " +
+                    "--user-type android.os.usertype.profile.CLONE test"
+            )
             var matcher = pattern.matcher(commandResult)
             assertTrue(commandResult, matcher.find())
             commandResult = SystemUtil.runShellCommand("pm remove-user " + matcher.group(1))
             assertEquals("Success: removed user\n", commandResult)
-            commandResult = SystemUtil.runShellCommand("pm create-user --profileOf current " +
-                    "--user-type android.os.usertype.profile.CLONE test")
+            commandResult = SystemUtil.runShellCommand(
+                "pm create-user --profileOf current " +
+                    "--user-type android.os.usertype.profile.CLONE test"
+            )
             matcher = pattern.matcher(commandResult)
             assertTrue(commandResult, matcher.find())
             commandResult = SystemUtil.runShellCommand("pm remove-user " + matcher.group(1))
             assertEquals("Success: removed user\n", commandResult)
         } finally {
-            setSystemProperty(UserManager.DEV_CREATE_OVERRIDE_PROPERTY,
-                    if (oldPropertyValue.isEmpty()) "invalid" else oldPropertyValue)
+            setSystemProperty(
+                UserManager.DEV_CREATE_OVERRIDE_PROPERTY,
+                if (oldPropertyValue.isEmpty()) "invalid" else oldPropertyValue
+            )
         }
+    }
+
+    @Test
+    fun testUninstallWithKeepDataMultiUser() {
+        // Install this test itself for the secondary user
+        installExistingPackageAsUser(context.packageName, secondaryUser)
+        assertTrue(isAppInstalledForUser(context.packageName, secondaryUser))
+        // Install the test package
+        installPackageAsUser(TEST_HW5, primaryUser)
+        installPackageAsUser(TEST_HW5, secondaryUser)
+        assertThat(isAppInstalledForUser(TEST_APP_PACKAGE, primaryUser)).isTrue()
+        assertThat(isAppInstalledForUser(TEST_APP_PACKAGE, secondaryUser)).isTrue()
+        // Delete app with DELETE_KEEP_DATA on second user
+        uninstallPackageWithKeepData(TEST_APP_PACKAGE, secondaryUser)
+
+        runWithShellPermissionIdentity(
+            uiAutomation,
+            {
+                val pmPrimaryUser = context.createContextAsUser(primaryUser.userHandle(), 0)
+                    .packageManager
+                val pmSecondaryUser = context.createContextAsUser(secondaryUser.userHandle(), 0)
+                    .packageManager
+                // App is not queryable without the MATCH_KNOWN_PACKAGES flag
+                assertThrows(PackageManager.NameNotFoundException::class.java) {
+                    pmSecondaryUser.getPackageInfo(
+                        TEST_APP_PACKAGE,
+                        PackageInfoFlags.of(0L)
+                    )
+                }
+                // Queryable with the MATCH_KNOWN_PACKAGES flag
+                var packageInfoSecondUser = pmSecondaryUser.getPackageInfo(
+                    TEST_APP_PACKAGE,
+                    PackageInfoFlags.of(MATCH_KNOWN_PACKAGES.toLong())
+                )
+                val oldDataDir = packageInfoSecondUser.applicationInfo!!.dataDir
+                assertThat(oldDataDir).isNotNull()
+                // Delete app on primary user without DELETE_KEEP_DATA flag and verify that the app is
+                // still queryable with MATCH_KNOWN_PACKAGES
+                uninstallPackageAsUser(TEST_APP_PACKAGE, primaryUser)
+                packageInfoSecondUser = pmSecondaryUser.getPackageInfo(
+                    TEST_APP_PACKAGE,
+                    PackageInfoFlags.of(MATCH_KNOWN_PACKAGES.toLong())
+                )
+                assertThat(packageInfoSecondUser.applicationInfo!!.dataDir).isEqualTo(oldDataDir)
+                // Expect not to throw when the package is queryable
+                pmPrimaryUser.getPackageInfo(
+                    TEST_APP_PACKAGE,
+                    PackageInfoFlags.of(MATCH_KNOWN_PACKAGES.toLong())
+                )
+                // Reinstall the app on the second user and verifies that the data dir stays the same,
+                // and the app is still not queryable on the primary user
+                installPackageAsUser(TEST_HW5, secondaryUser)
+                packageInfoSecondUser = pmSecondaryUser.getPackageInfo(
+                    TEST_APP_PACKAGE,
+                    PackageInfoFlags.of(0L)
+                )
+                assertThat(packageInfoSecondUser.applicationInfo!!.dataDir).isEqualTo(oldDataDir)
+                pmPrimaryUser.getPackageInfo(
+                    TEST_APP_PACKAGE,
+                    PackageInfoFlags.of(MATCH_KNOWN_PACKAGES.toLong())
+                )
+                // Fully uninstall the app on the second user and verify it's no longer queryable
+                uninstallPackageAsUser(TEST_APP_PACKAGE, secondaryUser)
+                assertThrows(PackageManager.NameNotFoundException::class.java) {
+                    pmSecondaryUser.getPackageInfo(
+                        TEST_APP_PACKAGE,
+                        PackageInfoFlags.of(MATCH_KNOWN_PACKAGES.toLong())
+                    )
+                }
+            },
+            Manifest.permission.INTERACT_ACROSS_USERS,
+            Manifest.permission.INTERACT_ACROSS_USERS_FULL
+        )
     }
 
     private fun getUserManager(): UserManager {
@@ -349,7 +432,7 @@ class PackageManagerShellCommandMultiUserTest {
     private fun installPackage(baseName: String) {
         val file = File(PackageManagerShellCommandInstallTest.createApkPath(baseName))
         assertThat(SystemUtil.runShellCommand("pm install -t -g ${file.path}"))
-                .isEqualTo("Success\n")
+            .isEqualTo("Success\n")
     }
 
     private fun installExistingPackageAsUser(packageName: String, user: UserReference) {
@@ -359,16 +442,16 @@ class PackageManagerShellCommandMultiUserTest {
     }
 
     private fun installPackageAsUser(
-            baseName: String,
-            user: UserReference
+        baseName: String,
+        user: UserReference
     ) {
         val file = File(PackageManagerShellCommandInstallTest.createApkPath(baseName))
         assertThat(
-                SystemUtil.runShellCommand(
-                        "pm install -t -g --user ${user.id()} ${file.path}"
-                )
+            SystemUtil.runShellCommand(
+                "pm install -t -g --user ${user.id()} ${file.path}"
+            )
         )
-                .isEqualTo("Success\n")
+            .isEqualTo("Success\n")
     }
 
     private fun uninstallPackageAsUser(packageName: String, user: UserReference) =
