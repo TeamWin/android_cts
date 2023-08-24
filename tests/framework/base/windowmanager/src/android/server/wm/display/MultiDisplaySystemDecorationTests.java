@@ -27,6 +27,7 @@ import static android.server.wm.app.Components.HOME_ACTIVITY;
 import static android.server.wm.app.Components.SECONDARY_HOME_ACTIVITY;
 import static android.server.wm.app.Components.SINGLE_HOME_ACTIVITY;
 import static android.server.wm.app.Components.SINGLE_SECONDARY_HOME_ACTIVITY;
+import static android.server.wm.app.Components.TEST_ACTIVITY;
 import static android.server.wm.app.Components.TEST_LIVE_WALLPAPER_SERVICE;
 import static android.server.wm.app.Components.TestLiveWallpaperKeys.COMPONENT;
 import static android.server.wm.app.Components.TestLiveWallpaperKeys.ENGINE_DISPLAY_ID;
@@ -54,6 +55,7 @@ import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.Activity;
+import android.app.ActivityOptions;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.ContextWrapper;
@@ -311,6 +313,63 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
     }
 
     /**
+     * Tests sending a secondary home intent to a virtual display with system decoration support.
+     * The currently configured secondary home activity should be resumed.
+     */
+    @Test
+    public void testSendSecondaryHomeIntentActivityOnDisplayWithDecorations() {
+        createManagedHomeActivitySession(SINGLE_SECONDARY_HOME_ACTIVITY);
+
+        // Create new simulated display with system decoration support.
+        final DisplayContent display = createManagedVirtualDisplaySession()
+                .setSimulateDisplay(true)
+                .setShowSystemDecorations(true)
+                .createDisplay();
+        assertSecondaryHomeResumedOnDisplay(getDefaultSecondaryHomeComponent(), display.mId);
+
+        // Launch a random activity on the display.
+        final VirtualDisplayLauncher virtualLauncher =
+                mObjectTracker.manage(new VirtualDisplayLauncher());
+        virtualLauncher.launchActivityOnDisplay(TEST_ACTIVITY, display);
+        waitAndAssertActivityStateOnDisplay(TEST_ACTIVITY, STATE_RESUMED, display.mId,
+                "Top activity must be on secondary display");
+
+        // Send a SECONDARY_HOME intent to that display and check that the home activity is resumed.
+        sendHomeIntentToDisplay(Intent.CATEGORY_SECONDARY_HOME, display.mId);
+        assertSecondaryHomeResumedOnDisplay(getDefaultSecondaryHomeComponent(), display.mId);
+    }
+
+    /**
+     * Tests sending a primary home intent to a virtual display with system decoration support.
+     * The currently configured secondary home activity should be resumed because the display does
+     * not support primary home.
+     */
+    @Test
+    public void testSendPrimaryHomeIntentActivityOnDisplayWithDecorations() {
+        createManagedHomeActivitySession(SINGLE_SECONDARY_HOME_ACTIVITY);
+
+        // Create new simulated display with system decoration support.
+        final DisplayContent display = createManagedVirtualDisplaySession()
+                .setSimulateDisplay(true)
+                .setShowSystemDecorations(true)
+                .createDisplay();
+        assertSecondaryHomeResumedOnDisplay(getDefaultSecondaryHomeComponent(), display.mId);
+
+        // Launch a random activity on the display.
+        final VirtualDisplayLauncher virtualLauncher =
+                mObjectTracker.manage(new VirtualDisplayLauncher());
+        virtualLauncher.launchActivityOnDisplay(TEST_ACTIVITY, display);
+        waitAndAssertActivityStateOnDisplay(TEST_ACTIVITY, STATE_RESUMED, display.mId,
+                "Top activity must be on secondary display");
+
+        // Send a HOME intent to that display and check that the home activity is resumed.
+        // The secondary home activity should be resumed because the target display does not support
+        // primary home but it supports secondary home.
+        sendHomeIntentToDisplay(Intent.CATEGORY_HOME, display.mId);
+        assertSecondaryHomeResumedOnDisplay(getDefaultSecondaryHomeComponent(), display.mId);
+    }
+
+    /**
      * Tests launching a multi-instance home activity on virtual display with system decoration
      * support.
      */
@@ -344,6 +403,14 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
         }
     }
 
+    private void sendHomeIntentToDisplay(String category, int displayId) {
+        Intent homeIntent = createHomeIntent(category);
+        homeIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        ActivityOptions options = ActivityOptions.makeBasic();
+        options.setLaunchDisplayId(displayId);
+        mContext.startActivity(homeIntent, options.toBundle());
+    }
+
     private void assertSecondaryHomeResumedOnNewDisplay(ComponentName homeComponentName) {
         // Create new simulated display with system decoration support.
         final DisplayContent newDisplay = createManagedVirtualDisplaySession()
@@ -351,12 +418,17 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
                 .setShowSystemDecorations(true)
                 .createDisplay();
 
-        waitAndAssertActivityStateOnDisplay(homeComponentName, STATE_RESUMED,
-                newDisplay.mId, "Activity launched on secondary display must be resumed");
+        assertSecondaryHomeResumedOnDisplay(homeComponentName, newDisplay.mId);
+    }
 
-        tapOnDisplayCenter(newDisplay.mId);
+    private void assertSecondaryHomeResumedOnDisplay(ComponentName homeComponentName,
+            int displayId) {
+        waitAndAssertActivityStateOnDisplay(homeComponentName, STATE_RESUMED,
+                displayId, "Activity launched on secondary display must be resumed");
+
+        tapOnDisplayCenter(displayId);
         assertEquals("Top activity must be home type", ACTIVITY_TYPE_HOME,
-                mWmState.getFrontRootTaskActivityType(newDisplay.mId));
+                mWmState.getFrontRootTaskActivityType(displayId));
     }
 
     // IME related tests
