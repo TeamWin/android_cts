@@ -35,6 +35,7 @@ import com.android.compatibility.common.util.Stat;
 
 import static org.junit.Assert.assertTrue;
 
+import org.junit.Before;
 import org.junit.After;
 import org.junit.Rule;
 import org.junit.Test;
@@ -58,8 +59,14 @@ public class SequentialRWTest {
     @Rule
     public final TestName mTestName = new TestName();
 
+    @Before
+    public void setUp() throws Exception {
+        CarTestUtil.getInstance().setUp();
+    }
+
     @After
     public void tearDown() throws Exception {
+        CarTestUtil.getInstance().tearDown();
         FileUtil.removeFileOrDir(getContext(), DIR_SEQ_WR);
         FileUtil.removeFileOrDir(getContext(), DIR_SEQ_UPDATE);
         FileUtil.removeFileOrDir(getContext(), DIR_SEQ_RD);
