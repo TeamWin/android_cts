@@ -31,6 +31,7 @@ import zoom_capture_utils
 _CIRCLE_COLOR = 0  # [0: black, 255: white]
 _CIRCLE_AR_RTOL = 0.15  # contour width vs height (aspect ratio)
 _CIRCLISH_RTOL = 0.05  # contour area vs ideal circle area pi*((w+h)/4)**2
+_CONTINUOUS_PICTURE_MODE = 4  # continuous picture AF mode
 _MIN_AREA_RATIO = 0.00015  # based on 2000/(4000x3000) pixels
 _MIN_CIRCLE_PTS = 25
 _NAME = os.path.splitext(os.path.basename(__file__))[0]
@@ -91,14 +92,18 @@ class LowLatencyZoomTest(its_base_test.ItsBaseTest):
       # do auto captures over zoom range and find circles with cv2
       img_name_stem = f'{os.path.join(self.log_path, _NAME)}'
       logging.debug('Using auto capture request')
-      cam.do_3a()
+      cam.do_3a(zoom_ratio=z_min)
       test_failed = False
       fmt = 'yuv'
       test_data = {}
       reqs = []
       req = capture_request_utils.auto_capture_request()
-      req['android.control.settingsOverride'] = camera_properties_utils.SETTINGS_OVERRIDE_ZOOM
+      req['android.control.settingsOverride'] = (
+          camera_properties_utils.SETTINGS_OVERRIDE_ZOOM
+      )
       req['android.control.enableZsl'] = False
+      if not camera_properties_utils.fixed_focus(props):
+        req['android.control.afMode'] = _CONTINUOUS_PICTURE_MODE
       for z in z_list:
         logging.debug('zoom ratio: %.2f', z)
         req_for_zoom = req.copy()
@@ -112,8 +117,10 @@ class LowLatencyZoomTest(its_base_test.ItsBaseTest):
       # Check low latency zoom outputs match result metadata
       for i, cap in enumerate(caps):
         z_result = cap['metadata']['android.control.zoomRatio']
+        af_state = cap['metadata']['android.control.afState']
         scaled_zoom = min(z_list[i], z_result)
-        logging.debug('zoom ratio in result: %.2f', z_result)
+        logging.debug('Result[%d]: zoom ratio %.2f, afState %d',
+                      i, z_result, af_state)
         img = image_processing_utils.convert_capture_to_rgb_image(
             cap, props=props)
         img_name = f'{img_name_stem}_{fmt}_{i}_{round(z_result, 2)}.jpg'
