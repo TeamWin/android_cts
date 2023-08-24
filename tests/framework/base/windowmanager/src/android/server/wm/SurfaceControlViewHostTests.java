@@ -21,6 +21,7 @@ import static android.server.wm.CtsWindowInfoUtils.tapOnWindowCenter;
 import static android.server.wm.CtsWindowInfoUtils.waitForWindowFocus;
 import static android.server.wm.CtsWindowInfoUtils.waitForWindowInfo;
 import static android.server.wm.CtsWindowInfoUtils.waitForWindowInfos;
+import static android.server.wm.CtsWindowInfoUtils.waitForWindowOnTop;
 import static android.server.wm.CtsWindowInfoUtils.waitForWindowVisible;
 import static android.server.wm.MockImeHelper.createManagedMockImeSession;
 import static android.view.SurfaceControlViewHost.SurfacePackage;
@@ -180,6 +181,8 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
         mCtsTouchUtils = new CtsTouchUtils(mInstrumentation.getTargetContext());
         mActivity = mActivityRule.launchActivity(null);
         mInstrumentation.waitForIdleSync();
+        // Wait for device animation that shows above the activity to leave.
+        waitForWindowOnTop(mActivity.getWindow());
 
         // This is necessary to call waitForWindowInfos
         mInstrumentation.getUiAutomation().adoptShellPermissionIdentity(
