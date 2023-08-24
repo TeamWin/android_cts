@@ -1709,19 +1709,49 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
             boolean supportsRemosaic = arrayContains(capabilities,
                     CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_REMOSAIC_REPROCESSING);
 
-            if (!isUltraHighResolutionSensor) {
-                Log.i(TAG, "Camera id " + cameraId + " not ultra high resolution. Skipping " +
-                        "testUltraHighResolutionSensorCharacteristics");
+            List<CaptureRequest.Key<?>> requestKeys = c.getAvailableCaptureRequestKeys();
+            boolean doesSupportSensorPixelMode =
+                    requestKeys.contains(CaptureRequest.SENSOR_PIXEL_MODE);
+
+            if (!isUltraHighResolutionSensor && !doesSupportSensorPixelMode) {
+                Log.i(TAG, "Camera id " + cameraId + " not ultra high resolution / doesn't" +
+                      " support sensor pixel mode. Skipping " +
+                      "testUltraHighResolutionSensorCharacteristics");
                 continue;
             }
-            assertArrayContains(
-                    String.format("Ultra high resolution sensor, camera id %s" +
-                    " must also have the RAW capability", cameraId), capabilities,
-                    CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_RAW);
+
+            // Test conditions applicable to both ULTRA_HIGH_RESOLUTION_SENSOR devices and those
+            // which support SENSOR_PIXEL_MODE.
             StreamConfigurationMap configs =
                     c.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP_MAXIMUM_RESOLUTION);
             assertNotNull("Maximum resolution stream configuration map must not be null for ultra" +
                     " high resolution sensor camera " + cameraId, configs);
+
+            int[] outputFormats = configs.getOutputFormats();
+            boolean supportsRawOutput =
+                    arrayContains(outputFormats, ImageFormat.RAW_SENSOR) ||
+                    arrayContains(outputFormats, ImageFormat.RAW10) ||
+                    arrayContains(outputFormats, ImageFormat.RAW_PRIVATE) ||
+                    arrayContains(outputFormats, ImageFormat.RAW12);
+
+            if (supportsRawOutput) {
+                Size binningFactor = c.get(CameraCharacteristics.SENSOR_INFO_BINNING_FACTOR);
+                assertTrue("SENSOR_INFO_BINNING_FACTOR must be advertised by a sensor that " +
+                        " supports ULTRA_HIGH_RESOLUTION_SENSOR / SENSOR_PIXEL_MODE with "
+                        + " RAW outputs - camera id: " +
+                        cameraId, binningFactor != null);
+            }
+
+            if (!isUltraHighResolutionSensor) {
+                continue;
+            }
+
+            // These conditions apply to ULTRA_HIGH_RESOLUTION_SENSOR devices.
+            assertArrayContains(
+                    String.format("Ultra high resolution sensor, camera id %s" +
+                    " must also have the RAW capability", cameraId), capabilities,
+                    CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_RAW);
+
             Size uhrPixelArraySize = CameraTestUtils.getValueNotNull(
                 c, CameraCharacteristics.SENSOR_INFO_PIXEL_ARRAY_SIZE_MAXIMUM_RESOLUTION);
             long uhrSensorSize = uhrPixelArraySize.getHeight() * uhrPixelArraySize.getWidth();
@@ -1730,7 +1760,6 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
                     MIN_UHR_SENSOR_RESOLUTION + " pixels, is " + uhrSensorSize + ", for camera id "
                     + cameraId, uhrSensorSize >= MIN_UHR_SENSOR_RESOLUTION);
 
-            int[] outputFormats = configs.getOutputFormats();
             assertArrayContains(String.format("No max res JPEG image format for ultra high" +
                   " resolution sensor: ID %s", cameraId), outputFormats, ImageFormat.JPEG);
             assertArrayContains(String.format("No max res YUV_420_88 image format for ultra high" +
