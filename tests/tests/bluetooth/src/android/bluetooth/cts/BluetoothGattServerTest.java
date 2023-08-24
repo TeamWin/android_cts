@@ -46,6 +46,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -168,5 +169,24 @@ public class BluetoothGattServerTest {
         assertThrows(SecurityException.class, () -> mBluetoothGattServer.setPreferredPhy(testDevice,
                 BluetoothDevice.PHY_LE_1M_MASK, BluetoothDevice.PHY_LE_1M_MASK,
                 BluetoothDevice.PHY_OPTION_NO_PREFERRED));
+    }
+
+    @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
+    @Test
+    public void testNotifyCharacteristicChanged_withValueOverMaxLength() {
+        BluetoothDevice testDevice = mBluetoothAdapter.getRemoteDevice("00:11:22:AA:BB:CC");
+        BluetoothGattCharacteristic characteristic = new BluetoothGattCharacteristic(TEST_UUID,
+                0x0A, 0x11);
+        BluetoothGattService service = new BluetoothGattService(TEST_UUID,
+                BluetoothGattService.SERVICE_TYPE_PRIMARY);
+        service.addCharacteristic(characteristic);
+
+        // 512 is the max attribute length
+        byte[] notification = new byte[513];
+        Arrays.fill(notification, (byte) 0x01);
+
+        assertThrows(IllegalArgumentException.class,
+                () -> mBluetoothGattServer.notifyCharacteristicChanged(testDevice, characteristic,
+                        false, notification));
     }
 }
