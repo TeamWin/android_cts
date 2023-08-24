@@ -24,7 +24,7 @@ import android.widget.Toast;
 import com.android.cts.verifier.R;
 
 /**
- * Dummy activity which notifies {@link CarDockTestActivity} that the CAR_DOCK application
+ * Placeholder activity which notifies {@link CarDockTestActivity} that the CAR_DOCK application
  * successfully opened.
  */
 public class CarDockActivity extends Activity {
