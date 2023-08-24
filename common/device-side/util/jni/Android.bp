@@ -25,6 +25,10 @@ cc_library_shared {
         "android_cts_CpuFeatures.cpp",
     ],
 
+    header_libs: [
+        "libbase_headers",
+    ],
+
     shared_libs: [
         "libnativehelper_compat_libc++",
         "liblog",
@@ -33,7 +37,7 @@ cc_library_shared {
 
     stl: "c++_static",
 
-    sdk_version: "19",
+    sdk_version: "current",
 
     cflags: [
         "-Wall",
