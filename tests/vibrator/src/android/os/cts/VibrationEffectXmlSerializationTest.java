@@ -30,6 +30,7 @@ import static com.google.common.truth.Truth.assertWithMessage;
 import static org.junit.Assert.assertThrows;
 
 import android.os.VibrationEffect;
+import android.os.vibrator.persistence.ParsedVibration;
 import android.os.vibrator.persistence.VibrationXmlParser;
 import android.os.vibrator.persistence.VibrationXmlSerializer;
 
@@ -45,6 +46,7 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.time.Duration;
+import java.util.Arrays;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -65,14 +67,43 @@ import junitparams.Parameters;
 public class VibrationEffectXmlSerializationTest {
 
     @Test
-    @Parameters(method = "getEffectsAndSerializations")
-    public void testParseValidVibrationEffect(VibrationEffect expectedEffect, String xml)
-            throws Exception {
-        assertThat(parse(xml)).isEqualTo(expectedEffect);
+    @Parameters(method = "getEffectsAndVibrationSelectXmls")
+    public void testValidParseDocument_vibrationSelectRootTag(
+            VibrationEffect[] expectedEffects, String xml) throws Exception {
+        assertWithMessage("Found wrong parse result for " + xml)
+                .that(parseDocument(xml).getVibrationEffectListForTesting())
+                .containsExactly(expectedEffects).inOrder();
     }
 
     @Test
-    @Parameters(method = "getEffectsAndSerializations")
+    @Parameters(method = "getEffectsAndVibrationSelectXmls")
+    public void testValidVibrationSelectXmlsFailWithParseVibrationEffect(
+            VibrationEffect[] unused, String xml) throws Exception {
+        assertWithMessage("Expected vibration-effect parsing to fail for vibration-select " + xml)
+                .that(parseVibrationEffect(xml))
+                .isNull();
+    }
+
+    @Test
+    @Parameters(method = "getEffectsAndVibrationEffectXmls")
+    public void testValidParseDocument_vibrationEffectRootTag(
+            VibrationEffect expectedEffect, String xml) throws Exception {
+        assertWithMessage("Found wrong parse result for " + xml)
+                .that(parseDocument(xml).getVibrationEffectListForTesting())
+                .containsExactly(expectedEffect).inOrder();
+    }
+
+    @Test
+    @Parameters(method = "getEffectsAndVibrationEffectXmls")
+    public void testParseValidVibrationEffect(VibrationEffect expectedEffect, String xml)
+            throws Exception {
+        assertWithMessage("Found wrong parse result for " + xml)
+                .that(parseVibrationEffect(xml))
+                .isEqualTo(expectedEffect);
+    }
+
+    @Test
+    @Parameters(method = "getEffectsAndVibrationEffectXmls")
     public void testSerializeValidVibrationEffect(VibrationEffect effect, String expectedXml)
             throws Exception {
         StringWriter writer = new StringWriter();
@@ -81,7 +112,7 @@ public class VibrationEffectXmlSerializationTest {
     }
 
     @Test
-    @Parameters(method = "getEffectsAndSerializations")
+    @Parameters(method = "getEffectsAndVibrationEffectXmls")
     @SuppressWarnings("unused") // Unused serialization argument to reuse parameters for round trip
     public void testParseSerializeRoundTrip(VibrationEffect effect, String unusedXml)
             throws Exception {
@@ -90,13 +121,13 @@ public class VibrationEffectXmlSerializationTest {
         VibrationXmlSerializer.serialize(effect, writer);
         // Parse serialized effect
         StringReader reader = new StringReader(writer.toString());
-        VibrationEffect parsedEffect = VibrationXmlParser.parse(reader);
+        VibrationEffect parsedEffect = VibrationXmlParser.parseVibrationEffect(reader);
         assertThat(parsedEffect).isEqualTo(effect);
     }
 
     @Test
     public void testParseValidVibrationEffectWithCommentsAndSpaces() throws Exception {
-        assertThat(parse(
+        assertThat(parseVibrationEffect(
                 """
 
                 <!-- comment before root tag -->
@@ -116,89 +147,165 @@ public class VibrationEffectXmlSerializationTest {
     }
 
     @Test
+    public void testParseValidDocumentWithCommentsAndSpaces() throws Exception {
+        assertThat(parseDocument(
+                """
+
+                <!-- comment before root tag -->
+
+                <vibration>
+                    <!--
+                            multi-lined
+                            comment
+                    -->
+                    <predefined-effect name="click"/>
+                    <!-- comment before closing root tag -->
+                </vibration>
+
+                <!-- comment after root tag -->
+                """).getVibrationEffectListForTesting())
+                .containsExactly(VibrationEffect.createPredefined(EFFECT_CLICK)).inOrder();
+
+        assertThat(parseDocument(
+                """
+
+                <!-- comment before root tag -->
+                <vibration-select>
+                    <!-- comment before vibration tag -->
+                    <vibration>
+                        <!--
+                                multi-lined
+                                comment
+                        -->
+                        <predefined-effect name="click"/>
+                        <!-- comment before closing vibration tag -->
+                    </vibration>
+                    <!-- comment after vibration tag -->
+                    <vibration>
+                        <!-- single-lined comment-->
+                        <predefined-effect name="tick"/>
+                    </vibration>
+                    <!-- comment before closing root tag -->
+                </vibration-select>
+                <!-- comment after root tag -->
+                """).getVibrationEffectListForTesting())
+                .containsExactly(
+                        VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK),
+                        VibrationEffect.createPredefined(VibrationEffect.EFFECT_TICK))
+                .inOrder();
+    }
+
+    @Test
     public void testParseInvalidXmlIsNull() throws Exception {
-        assertThat(parse("")).isNull();
-        assertThat(parse("<!-- pure comment -->")).isNull();
-        assertThat(parse("invalid")).isNull();
+        assertFailedParse("");
+        assertFailedParse("<!-- pure comment -->");
+        assertFailedParse("invalid");
         // Malformed vibration tag
-        assertThat(parse("<vibration")).isNull();
+        assertFailedParse("<vibration");
         // Open vibration tag is never closed
-        assertThat(parse("<vibration>")).isNull();
+        assertFailedParse("<vibration>");
         // Open predefined-effect tag is never closed before vibration is closed
-        assertThat(parse("<vibration><predefined-effect name=\"click\"></vibration>")).isNull();
+        assertFailedParse("<vibration><predefined-effect name=\"click\"></vibration>");
+        // Root tags mismatch
+        assertFailedParse("<vibration-select></vibration>");
+        assertFailedParse("<vibration></vibration-select>");
     }
 
     @Test
     public void testParseInvalidElementsOnStartIsNull() throws Exception {
-        assertThat(parse(
+        assertFailedParse(
                 """
                 # some invalid initial text
                 <vibration>
                     <predefined-effect name="click"/>
                 </vibration>
-                """))
-                .isNull();
-        assertThat(parse(
+                """);
+        assertFailedParse(
                 """
                 <invalid-first-tag/>
                 <vibration>
                     <predefined-effect name="click"/>
                 </vibration>
-                """))
-                .isNull();
-        assertThat(parse(
+                """);
+        assertFailedParse(
                 """
                 <invalid-root-tag>
                     <predefined-effect name="click"/>
                 </invalid-root-tag>
-                """))
-                .isNull();
+                """);
+        assertFailedParse(
+                """
+                <supposed-to-be-vibration-select>
+                    <vibration><predefined-effect name="click"/></vibration>
+                </supposed-to-be-vibration-select>
+                """);
+        assertFailedParse(
+                """
+                <rand-tag-name>
+                    <vibration-select>
+                        <vibration><predefined-effect name="click"/></vibration>
+                    </vibration-select>
+                </rand-tag-name>
+                """);
     }
 
     @Test
     public void testParseInvalidElementsOnEndIsNull() throws Exception {
-        assertThat(parse(
+        assertFailedParse(
                 """
                 <vibration>
                     <predefined-effect name="click"/>
                 </vibration>
                 # some invalid text
-                """))
-                .isNull();
-        assertThat(parse(
+                """);
+        assertFailedParse(
                 """
                 <vibration>
                     <predefined-effect name="click"/>
                 </vibration>
                 <invalid-trailing-tag/>
-                """))
-                .isNull();
-        assertThat(parse(
+                """);
+        assertFailedParse(
                 """
                 <vibration>
                     <predefined-effect name="click"/>
+                    <invalid-trailing-end-tag/>
                 </vibration>
-                </invalid-trailing-end-tag>
-                """))
-                .isNull();
-        assertThat(parse(
+                """);
+        assertFailedParse(
                 """
-                <vibration>
-                    <predefined-effect name="click"/>
-                    </invalid-trailing-end-tag>
-                </vibration>
-                """))
-                .isNull();
+                <vibration-select>
+                    <vibration>
+                        <predefined-effect name="click"/>
+                    </vibration>
+                    <invalid-trailing-end-tag/>
+                </vibration-select>
+                """);
+        assertFailedParse(
+                """
+                <vibration-select>
+                    <vibration>
+                        <predefined-effect name="click"/>
+                    </vibration>
+                </vibration-select>
+                <invalid-trailing-end-tag/>
+                """);
     }
 
     @Test
     public void testParseEmptyVibrationTagIsNull() throws Exception {
-        assertThat(parse("<vibration/>")).isNull();
+        assertFailedParse("<vibration/>");
+    }
+
+    @Test
+    public void testParseEmptyVibrationSelectTagIsEmpty() throws Exception {
+        assertThat(parseDocument("<vibration-select/>").getVibrationEffectListForTesting())
+                .isEmpty();
     }
 
     @Test
     public void testParseMultipleVibrationTagsIsNull() throws Exception {
-        assertThat(parse(
+        assertFailedParse(
                 """
                 <vibration>
                     <predefined-effect name="click"/>
@@ -206,98 +313,128 @@ public class VibrationEffectXmlSerializationTest {
                 <vibration>
                     <predefined-effect name="click"/>
                 </vibration>
-                """))
-                .isNull();
+                """);
+    }
+
+    @Test
+    public void testParseMultipleVibrationSelectTagsIsNull() throws Exception {
+        assertFailedParse(
+                """
+                <vibration-select>
+                    <vibration>
+                        <predefined-effect name="click"/>
+                    </vibration>
+                </vibration-select>
+                <vibration-select>
+                    <vibration>
+                        <predefined-effect name="tick"/>
+                    </vibration>
+                </vibration-select>
+                """);
     }
 
     @Test
     public void testParseEffectTagWrongAttributesIsNull() throws Exception {
         // Missing name attribute
-        assertThat(parse("<vibration><predefined-effect/></vibration>")).isNull();
+        assertFailedParse("<vibration><predefined-effect/></vibration>");
 
         // Wrong attribute
-        assertThat(parse(
+        assertFailedParse(
                 """
                 <vibration>
                     <predefined-effect id="0"/>
                 </vibration>
-                """))
-                .isNull();
-        assertThat(parse(
+                """);
+        assertFailedParse(
                 """
                 <vibration>
                     <predefined-effect name="click" extra="0"/>
                 </vibration>
-                """))
-                .isNull();
+                """);
+    }
+
+    @Test
+    public void testBadVibrationXmlWithinVibrationSelectTagIsNull() throws Exception {
+        assertFailedParse(
+                """
+                <vibration-select>
+                    <predefined-effect name="click"/></vibration>
+                </vibration-select>
+                """);
+        assertFailedParse(
+                """
+                <vibration-select>
+                    <vibration><predefined-effect name="bad_click"/></vibration>
+                </vibration-select>
+                """);
+        assertFailedParse(
+                """
+                <vibration-select>
+                    <vibration><predefined-effect name="click" rand_attr="100"/></vibration>
+                </vibration-select>
+                """);
     }
 
     @Test
     public void testParseHiddenPredefinedEffectIsNull() throws Exception {
         // Hidden effect id
-        assertThat(parse(
+        assertFailedParse(
                 """
                 <vibration>
                     <predefined-effect name="texture_tick"/>
                 </vibration>
-                """))
-                .isNull();
+                """);
 
         // Non-default fallback flag
-        assertThat(parse(
+        assertFailedParse(
                 """
                 <vibration>
                     <predefined-effect name="tick" fallback="false"/>
                 </vibration>
-                """))
-                .isNull();
+                """);
     }
 
     @Test
     public void testParsePrimitiveTagWrongAttributesIsNull() throws Exception {
         // Missing name attribute
-        assertThat(parse(
+        assertFailedParse(
                 """
                 <vibration>
                     <primitive-effect scale="1" delayMs="10"/>
                 </vibration>
-                """))
-                .isNull();
+                """);
 
         // Wrong attribute "delay" instead of "delayMs"
-        assertThat(parse(
+        assertFailedParse(
                 """
                 <vibration>
                     <primitive-effect name="click" delay="10"/>
                 </vibration>
-                """))
-                .isNull();
+                """);
 
         // Wrong attribute
-        assertThat(parse(
+        assertFailedParse(
                 """
                 <vibration>
                     <primitive-effect name="click" extra="0"/>
                 </vibration>
-                """))
-                .isNull();
+                """);
     }
 
     @Test
     public void testParseWaveformEffectAndRepeatingTagsAnyAttributeIsNull() throws Exception {
         // Waveform with wrong attribute
-        assertThat(parse(
+        assertFailedParse(
                 """
                 <vibration>
                     <waveform-effect extra="0">
                         <waveform-entry durationMs="10" amplitude="10"/>
                     </waveform-effect>
                 </vibration>
-                """))
-                .isNull();
+                """);
 
         // Repeating with wrong attribute
-        assertThat(parse(
+        assertFailedParse(
                 """
                 <vibration>
                     <waveform-effect>
@@ -306,90 +443,82 @@ public class VibrationEffectXmlSerializationTest {
                         </repeating>
                     </waveform-effect>
                 </vibration>
-                """))
-                .isNull();
+                """);
     }
 
     @Test
     public void testParseWaveformEntryTagWrongAttributesIsNull() throws Exception {
         // Missing amplitude attribute
-        assertThat(parse(
+        assertFailedParse(
                 """
                 <vibration>
                     <waveform-effect>
                         <waveform-entry durationMs="10"/>
                     </waveform-effect>
                 </vibration>
-                """))
-                .isNull();
+                """);
 
         // Missing durationMs attribute
-        assertThat(parse(
+        assertFailedParse(
                 """
                 <vibration>
                     <waveform-effect>
                         <waveform-entry amplitude="100"/>
                     </waveform-effect>
                 </vibration>
-                """))
-                .isNull();
+                """);
 
         // Wrong attribute "duration" instead of "durationMs"
-        assertThat(parse(
+        assertFailedParse(
                 """
                 <vibration>
                     <waveform-effect>
                         <waveform-entry amplitude="100" duration="10"/>
                     </waveform-effect>
                 </vibration>
-                """))
-                .isNull();
+                """);
 
         // Wrong attribute
-        assertThat(parse(
+        assertFailedParse(
                 """
                 <vibration>
                     <waveform-effect>
                         <waveform-entry amplitude="100" durationMs="10" extra="0"/>
                     </waveform-effect>
                 </vibration>
-                """))
-                .isNull();
+                """);
     }
 
     @Test
     public void testParseInvalidPredefinedEffectNameIsNull() throws Exception {
         // Invalid effect name
-        assertThat(parse(
+        assertFailedParse(
                 """
                 <vibration>
                     <predefined-effect name="lick"/>
                 </vibration>
-                """))
-                .isNull();
+                """);
     }
 
     @Test
     public void testParsePredefinedFollowedAnyEffectIsNull() throws Exception {
-        assertThat(parse(
+        assertFailedParse(
                 """
                 <vibration>
                     <predefined-effect name="click"/>
                     <predefined-effect name="tick"/>
                 </vibration>
-                """))
-                .isNull();
+                """);
 
-        assertThat(parse(
+        assertFailedParse(
                 """
                 <vibration>
                     <predefined-effect name="click"/>
                     <primitive-effect name="click"/>
                 </vibration>
-                """))
-                .isNull();
+                """);
 
-        assertThat(parse(
+        assertFailedParse(
                 """
                 <vibration>
                     <predefined-effect name="click"/>
@@ -397,49 +526,45 @@ public class VibrationEffectXmlSerializationTest {
                         <waveform-entry amplitude="default" durationMs="10"/>
                     </waveform-effect>
                 </vibration>
-                """))
-                .isNull();
+                """);
     }
 
     @Test
     public void testParseRepeatingPredefinedEffectsIsNull() throws Exception {
-        assertThat(parse(
+        assertFailedParse(
                 """
                 <vibration>
                     <repeating>
                         <predefined-effect name="click"/>
                     </repeating>
                 </vibration>
-                """))
-                .isNull();
+                """);
     }
 
     @Test
     public void testParseAnyTagInsidePredefinedEffectIsNull() throws Exception {
         // Predefined inside predefined effect
-        assertThat(parse(
+        assertFailedParse(
                 """
                 <vibration>
                     <predefined-effect name="click">
                         <predefined-effect name="click"/>
                     </predefined-effect>
                 </vibration>
-                """))
-                .isNull();
+                """);
 
         // Primitive inside predefined effect.
-        assertThat(parse(
+        assertFailedParse(
                 """
                 <vibration>
                     <predefined-effect name="click">
                         <primitive-effect name="click"/>
                     </predefined-effect>
                 </vibration>
-                """))
-                .isNull();
+                """);
 
         // Waveform inside predefined effect.
-        assertThat(parse(
+        assertFailedParse(
                 """
                 <vibration>
                     <predefined-effect name="click">
@@ -448,72 +573,64 @@ public class VibrationEffectXmlSerializationTest {
                         </waveform-effect>"
                     </predefined-effect>"
                 </vibration>
-                """))
-                .isNull();
+                """);
     }
 
     @Test
     public void testParseInvalidPrimitiveNameAndAttributesIsNull() throws Exception {
         // Invalid primitive name.
-        assertThat(parse(
+        assertFailedParse(
                 """
                 <vibration>
                     <primitive-effect name="lick"/>
                 </vibration>
-                """))
-                .isNull();
+                """);
 
         // Invalid primitive scale.
-        assertThat(parse(
+        assertFailedParse(
                 """
                 <vibration>
                     <primitive-effect name="click" scale="-1"/>
                 </vibration>
-                """))
-                .isNull();
-        assertThat(parse(
+                """);
+        assertFailedParse(
                 """
                 <vibration>
                     <primitive-effect name="click" scale="2"/>
                 </vibration>
-                """))
-                .isNull();
-        assertThat(parse(
+                """);
+        assertFailedParse(
                 """
                 <vibration>
                     <primitive-effect name="click" scale="NaN"/>
                 </vibration>
-                """))
-                .isNull();
-        assertThat(parse(
+                """);
+        assertFailedParse(
                 """
                 <vibration>
                     <primitive-effect name="click" scale="Infinity"/>
                 </vibration>
-                """))
-                .isNull();
+                """);
 
         // Invalid primitive delay.
-        assertThat(parse(
+        assertFailedParse(
                 """
                 <vibration>
                     <primitive-effect name="click" delayMs="-1"/>
                 </vibration>
-                """))
-                .isNull();
+                """);
     }
 
     @Test
     public void testParsePrimitiveFollowedByOtherEffectsIsNull() throws Exception {
-        assertThat(parse(
+        assertFailedParse(
                 """
                 <vibration>
                     <primitive-effect name="click"/>
                     <predefined-effect name="click"/>
                 </vibration>
-                """))
-                .isNull();
-        assertThat(parse(
+                """);
+        assertFailedParse(
                 """
                 <vibration>
                     <primitive-effect name="click"/>
@@ -521,36 +638,33 @@ public class VibrationEffectXmlSerializationTest {
                         <waveform-entry amplitude="default" durationMs="10"/>
                     </waveform-effect>"
                 </vibration>
-                """))
-                .isNull();
+                """);
     }
 
     @Test
     public void testParseAnyTagInsidePrimitiveIsNull() throws Exception {
         // Predefined inside primitive effect.
-        assertThat(parse(
+        assertFailedParse(
                 """
                 <vibration>
                     <primitive-effect name="click">
                         <predefined-effect name="click"/>
                     </primitive-effect>
                 </vibration>
-                """))
-                .isNull();
+                """);
 
         // Primitive inside primitive effect.
-        assertThat(parse(
+        assertFailedParse(
                 """
                 <vibration>
                     <primitive-effect name="click">
                         <primitive-effect name="click"/>
                     </primitive-effect>
                 </vibration>
-                """))
-                .isNull();
+                """);
 
         // Waveform inside primitive effect.
-        assertThat(parse(
+        assertFailedParse(
                 """
                 <vibration>
                     <primitive-effect name="click">
@@ -559,13 +673,12 @@ public class VibrationEffectXmlSerializationTest {
                         </waveform-effect>
                     </primitive-effect>
                 </vibration>
-                """))
-                .isNull();
+                """);
     }
 
     @Test
     public void testParseRepeatingPrimitivesIsNull() throws Exception {
-        assertThat(parse(
+        assertFailedParse(
                 """
                 <vibration>
                     <primitive-effect name="click"/>
@@ -573,39 +686,36 @@ public class VibrationEffectXmlSerializationTest {
                         <primitive-effect name="tick"/>
                     </repeating>
                 </vibration>
-                """))
-                .isNull();
+                """);
     }
 
     @Test
     public void testParseInvalidWaveformEntryAttributesIsNull() throws Exception {
         // Invalid amplitude.
-        assertThat(parse(
+        assertFailedParse(
                 """
                 <vibration>
                     <waveform-effect>
                         <waveform-entry durationMs="10" amplitude="-1"/>
                     </waveform-effect>
                 </vibration>
-                """))
-                .isNull();
+                """);
 
         // Invalid duration.
-        assertThat(parse(
+        assertFailedParse(
                 """
                 <vibration>
                     <waveform-effect>
                         <waveform-entry durationMs="-1" amplitude="default"/>
                     </waveform-effect>
                 </vibration>
-                """))
-                .isNull();
+                """);
     }
 
     @Test
     public void testParseInvalidTagInsideWaveformEffectIsNull() throws Exception {
         // Primitive inside waveform or repeating.
-        assertThat(parse(
+        assertFailedParse(
                 """
                 <vibration>
                     <waveform-effect>
@@ -613,9 +723,8 @@ public class VibrationEffectXmlSerializationTest {
                         <primitive-effect name="click"/>
                     </waveform-effect>
                 </vibration>
-                """))
-                .isNull();
-        assertThat(parse(
+                """);
+        assertFailedParse(
                 """
                 <vibration>
                     <waveform-effect>
@@ -623,11 +732,10 @@ public class VibrationEffectXmlSerializationTest {
                         <repeating><primitive-effect name="click"/></repeating>
                     </waveform-effect>
                 </vibration>
-                """))
-                .isNull();
+                """);
 
         // Predefined inside waveform or repeating.
-        assertThat(parse(
+        assertFailedParse(
                 """
                 <vibration>
                     <waveform-effect>
@@ -635,9 +743,8 @@ public class VibrationEffectXmlSerializationTest {
                         <predefined-effect name="click"/>
                     </waveform-effect>
                 </vibration>
-                """))
-                .isNull();
-        assertThat(parse(
+                """);
+        assertFailedParse(
                 """
                 <vibration>
                     <waveform-effect>
@@ -647,11 +754,10 @@ public class VibrationEffectXmlSerializationTest {
                         </repeating>
                     </waveform-effect>
                 </vibration>
-                """))
-                .isNull();
+                """);
 
         // Waveform effect inside waveform or repeating.
-        assertThat(parse(
+        assertFailedParse(
                 """
                 <vibration>
                     <waveform-effect>
@@ -661,9 +767,8 @@ public class VibrationEffectXmlSerializationTest {
                         </waveform-effect>
                     </waveform-effect>
                 </vibration>
-                """))
-                .isNull();
-        assertThat(parse(
+                """);
+        assertFailedParse(
                 """
                 <vibration>
                     <waveform-effect>
@@ -675,23 +780,21 @@ public class VibrationEffectXmlSerializationTest {
                         </repeating>
                     </waveform-effect>
                 </vibration>
-                """))
-                .isNull();
+                """);
     }
 
     @Test
     public void testParseInvalidVibrationWaveformIsNull() throws Exception {
         // Empty waveform.
-        assertThat(parse(
+        assertFailedParse(
                 """
                 <vibration>
                     <waveform-effect></waveform-effect>
                 </vibration>
-                """))
-                .isNull();
+                """);
 
         // Empty repeating block.
-        assertThat(parse(
+        assertFailedParse(
                 """
                 <vibration>
                     <waveform-effect>
@@ -699,11 +802,10 @@ public class VibrationEffectXmlSerializationTest {
                         <repeating/>
                     </waveform-effect>
                 </vibration>
-                """))
-                .isNull();
+                """);
 
         // Waveform with multiple repeating blocks.
-        assertThat(parse(
+        assertFailedParse(
                 """
                 <vibration>
                     <waveform-effect>
@@ -715,11 +817,10 @@ public class VibrationEffectXmlSerializationTest {
                         </repeating>
                     </waveform-effect>
                 </vibration>
-                """))
-                .isNull();
+                """);
 
         // Waveform with entries after repeating block.
-        assertThat(parse(
+        assertFailedParse(
                 """
                 <vibration>
                     <waveform-effect>
@@ -729,11 +830,10 @@ public class VibrationEffectXmlSerializationTest {
                         <waveform-entry durationMs="100" amplitude="default"/>
                     </waveform-effect>
                 </vibration>
-                """))
-                .isNull();
+                """);
 
         // Waveform with total duration zero.
-        assertThat(parse(
+        assertFailedParse(
                 """
                 <vibration>
                     <waveform-effect>
@@ -742,13 +842,12 @@ public class VibrationEffectXmlSerializationTest {
                         <waveform-entry durationMs="0" amplitude="30"/>
                     </waveform-effect>
                 </vibration>
-                """))
-                .isNull();
+                """);
     }
 
     @Test
     public void testParseWaveformFollowedAnyEffectIsNull() throws Exception {
-        assertThat(parse(
+        assertFailedParse(
                 """
                 <vibration>
                     <waveform-effect>
@@ -756,10 +855,9 @@ public class VibrationEffectXmlSerializationTest {
                     </waveform-effect>
                     <predefined-effect name="tick"/>
                 </vibration>
-                """))
-                .isNull();
+                """);
 
-        assertThat(parse(
+        assertFailedParse(
                 """
                 <vibration>
                     <waveform-effect>
@@ -767,10 +865,9 @@ public class VibrationEffectXmlSerializationTest {
                     </waveform-effect>
                     <primitive-effect name="click"/>
                 </vibration>
-                """))
-                .isNull();
+                """);
 
-        assertThat(parse(
+        assertFailedParse(
                 """
                 <vibration>
                     <waveform-effect>
@@ -780,8 +877,7 @@ public class VibrationEffectXmlSerializationTest {
                         <waveform-entry amplitude="default" durationMs="10"/>
                     </waveform-effect>
                 </vibration>
-                """))
-                .isNull();
+                """);
     }
 
     @Test
@@ -848,12 +944,91 @@ public class VibrationEffectXmlSerializationTest {
         assertThat(writer.toString()).isEmpty();
     }
 
-    private static VibrationEffect parse(String xml) throws IOException {
-        return VibrationXmlParser.parse(new StringReader(xml));
+    private static VibrationEffect parseVibrationEffect(String xml) throws IOException {
+        return VibrationXmlParser.parseVibrationEffect(new StringReader(xml));
+    }
+
+    private static ParsedVibration parseDocument(String xml) throws IOException {
+        return VibrationXmlParser.parseDocument(new StringReader(xml));
+    }
+
+    private static void assertFailedParse(String xml) throws IOException {
+        assertWithMessage("Expected vibration-effect parsing to fail for " + xml)
+                .that(VibrationXmlParser.parseVibrationEffect(new StringReader(xml)))
+                .isNull();
+        assertWithMessage("Expected document parsing to fail for " + xml)
+                .that(VibrationXmlParser.parseDocument(new StringReader(xml)))
+                .isNull();
     }
 
     @SuppressWarnings("unused") // Used in tests with @Parameters
-    private Object[] getEffectsAndSerializations() {
+    private Object[] getEffectsAndVibrationSelectXmls() {
+        return new Object[] {
+                new Object[] {
+                        new VibrationEffect[] {
+                                VibrationEffect.createWaveform(new long[]{10, 20},
+                                        /* repeat= */ -1)
+                        },
+                        """
+                        <vibration-select>
+                            <vibration>
+                                <waveform-effect>
+                                    <waveform-entry durationMs="10" amplitude="0"/>
+                                    <waveform-entry durationMs="20" amplitude="default"/>
+                                </waveform-effect>
+                            </vibration>
+                        </vibration-select>
+                        """,
+                },
+                new Object[] {
+                        new VibrationEffect[] {
+                                VibrationEffect.createWaveform(new long[]{1, 2, 3, 4},
+                                        /* repeat= */ -1),
+                                VibrationEffect.startComposition()
+                                        .addPrimitive(PRIMITIVE_TICK)
+                                        .addPrimitive(PRIMITIVE_CLICK, 0.123f)
+                                        .addPrimitive(PRIMITIVE_LOW_TICK, 1f, 900)
+                                        .addPrimitive(PRIMITIVE_SPIN, 0.404f, 9)
+                                        .compose(),
+                                VibrationEffect.createPredefined(EFFECT_CLICK),
+                                VibrationEffect.createWaveform(new long[]{1, 9, 7, 3},
+                                        /* repeat= */ 1)
+                        },
+                        """
+                        <vibration-select>
+                            <vibration>
+                                <waveform-effect>
+                                    <waveform-entry durationMs="1" amplitude="0"/>
+                                    <waveform-entry durationMs="2" amplitude="default"/>
+                                    <waveform-entry durationMs="3" amplitude="0"/>
+                                    <waveform-entry durationMs="4" amplitude="default"/>
+                                </waveform-effect>
+                            </vibration>
+                            <vibration>
+                                <primitive-effect name="tick"/>
+                                <primitive-effect name="click" scale="0.123"/>
+                                <primitive-effect name="low_tick" delayMs="900"/>
+                                <primitive-effect name="spin" scale="0.404" delayMs="9"/>
+                            </vibration>
+                            <vibration><predefined-effect name="click"/></vibration>
+                            <vibration>
+                                <waveform-effect>
+                                    <waveform-entry durationMs="1" amplitude="0"/>
+                                    <repeating>
+                                        <waveform-entry durationMs="9" amplitude="default"/>
+                                        <waveform-entry durationMs="7" amplitude="0"/>
+                                        <waveform-entry durationMs="3" amplitude="default"/>
+                                    </repeating>
+                                </waveform-effect>
+                            </vibration>
+                        </vibration-select>
+                        """
+                }
+        };
+    }
+
+    @SuppressWarnings("unused") // Used in tests with @Parameters
+    private Object[] getEffectsAndVibrationEffectXmls() {
         return new Object[]{
                 new Object[]{
                         // On-off pattern
