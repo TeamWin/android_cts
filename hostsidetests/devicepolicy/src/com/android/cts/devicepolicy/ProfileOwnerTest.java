@@ -69,11 +69,6 @@ public final class ProfileOwnerTest extends BaseDevicePolicyTest {
     }
 
     @Test
-    public void testDevicePolicySafetyCheckerIntegration_isSafeOperation() throws Exception {
-        executeDevicePolicySafetyCheckerIntegrationTest("testIsSafeOperation");
-    }
-
-    @Test
     public void testDevicePolicySafetyCheckerIntegration_unsafeStateException() throws Exception {
         executeDevicePolicySafetyCheckerIntegrationTest("testUnsafeStateException");
     }

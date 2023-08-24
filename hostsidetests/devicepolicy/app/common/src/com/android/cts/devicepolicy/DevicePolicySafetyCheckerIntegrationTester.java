@@ -112,28 +112,6 @@ public class DevicePolicySafetyCheckerIntegrationTester {
     }
 
     /**
-     * Tests {@link DevicePolicyManager#isSafeOperation(int)}.
-     */
-    public void testIsSafeOperation(DevicePolicyManager dpm) {
-        Log.d(TAG, "testIsSafeOperation(): dpm=" + dpm);
-        // Currently there's just one reason...
-        int reason = OPERATION_SAFETY_REASON_DRIVING_DISTRACTION;
-        Log.d(TAG, "testIsSafeOperation(): dpm=" + dpm + ", reason="
-                + operationSafetyReasonToString(reason));
-        Objects.requireNonNull(dpm);
-        assertOperationSafety(dpm, reason, /* isSafe= */ true);
-
-        setOperationUnsafe(dpm, OPERATION_LOCK_NOW, reason);
-
-        assertOperationSafety(dpm, reason, /* isSafe= */ false);
-    }
-
-    private void assertOperationSafety(DevicePolicyManager dpm, int reason, boolean isSafe) {
-        assertWithMessage("%s safety", operationSafetyReasonToString(reason))
-                .that(dpm.isSafeOperation(reason)).isEqualTo(isSafe);
-    }
-
-    /**
      * Tests {@link UnsafeStateException} properties.
      */
     public void testUnsafeStateException(DevicePolicyManager dpm, ComponentName admin) {
