@@ -240,17 +240,17 @@ public class AppStandbyTests {
     @Test
     public void testPowerWhitelistedAlarmNotBlocked() throws Exception {
         setTestAppStandbyBucket(APP_BUCKET_TAGS[RARE_INDEX]);
-        setPowerWhitelisted(true);
+        setPowerAllowlisted(true);
         final long triggerTime = SystemClock.elapsedRealtime() + MIN_FUTURITY;
         scheduleAlarm(triggerTime, 0);
         Thread.sleep(MIN_FUTURITY);
         assertTrue("Alarm did not go off for whitelisted app in rare bucket", waitForAlarm());
-        setPowerWhitelisted(false);
+        setPowerAllowlisted(false);
     }
 
     @After
     public void tearDown() throws Exception {
-        setPowerWhitelisted(false);
+        setPowerAllowlisted(false);
         setBatteryCharging(true);
         mConfigHelper.restoreAll();
         final Intent cancelAlarmsIntent = new Intent(TestAlarmScheduler.ACTION_CANCEL_ALL_ALARMS);
@@ -279,7 +279,7 @@ public class AppStandbyTests {
         mConfigHelper.commitAndAwaitPropagation();
     }
 
-    private void setPowerWhitelisted(boolean whitelist) throws IOException {
+    private void setPowerAllowlisted(boolean whitelist) throws IOException {
         final StringBuffer cmd = new StringBuffer("cmd deviceidle whitelist ");
         cmd.append(whitelist ? "+" : "-");
         cmd.append(TEST_APP_PACKAGE);
