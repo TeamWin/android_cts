@@ -88,8 +88,6 @@ public class ForceRelayoutTestBase {
         protected void onCreate(@Nullable Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
             getWindow().requestFeature(Window.FEATURE_NO_TITLE);
-            getWindow().setDecorFitsSystemWindows(false);
-            getWindow().getAttributes().layoutInDisplayCutoutMode = LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS;
             View view = new View(this) {
                 @Override
                 protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
@@ -114,17 +112,21 @@ public class ForceRelayoutTestBase {
                 return WindowInsets.CONSUMED;
             });
             setContentView(view);
+
+            getWindow().setDecorFitsSystemWindows(false);
+            getWindow().getAttributes().layoutInDisplayCutoutMode =
+                    LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS;
         }
     }
 
     private static boolean remoteInsetsControllerControlsSystemBars() {
         return InstrumentationRegistry.getInstrumentation().getTargetContext().getResources()
-                    .getBoolean(android.R.bool.config_remoteInsetsControllerControlsSystemBars);
+                .getBoolean(android.R.bool.config_remoteInsetsControllerControlsSystemBars);
     }
 
     private boolean isCar() {
         PackageManager pm = InstrumentationRegistry.getInstrumentation().getContext()
-                              .getPackageManager();
+                .getPackageManager();
         return pm.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE);
     }
 }
