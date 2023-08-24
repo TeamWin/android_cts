@@ -16,7 +16,7 @@
 package com.android.cts.verifier.sensors.sixdof.Utils.PoseProvider;
 
 /**
- * Contains camera intrinsic information. Can be set manually or use some dummy values.
+ * Contains camera intrinsic information. Can be set manually or use some placeholder values.
  */
 public class Intrinsics {
     private static final double DEFAULT_FOCAL_LENGTH = 3.5;
