@@ -429,20 +429,15 @@ public class ActivityEmbeddingLifecycleTests extends ActivityEmbeddingTestBase {
                 "secondaryActivity2", mSplitInfoConsumer);
         waitAndAssertResumed(secondaryActivity);
         waitAndAssertResumed(secondaryActivity2);
-        mEventLog.clear();
 
         // Finish the middle activity
         secondaryActivity.finish();
         waitAndAssertResumed(secondaryActivity2);
         waitAndAssertNotVisible(primaryActivity);
-        List<Pair<String, String>> expected = List.of(
-                transition(TestActivityWithId.class, ON_PAUSE),
-                transition(TestConfigChangeHandlingActivity.class, ON_STOP));
-        assertTrue("Finish middle activity in multi-split",
-                mLifecycleTracker.waitForConditionWithTimeout(() ->
-                        checkOrder(mEventLog, expected)));
+
         // There is no guarantee on the order, because the removal may be delayed until the next
         // resumed becomes visible.
+        waitAndAssertActivityOnStop(TestConfigChangeHandlingActivity.class);
         waitAndAssertActivityOnDestroy(TestActivityWithId.class);
         waitAndAssertSplitStatesUpdated();
     }
@@ -472,20 +467,15 @@ public class ActivityEmbeddingLifecycleTests extends ActivityEmbeddingTestBase {
                 "secondaryActivity2", mSplitInfoConsumer);
         waitAndAssertResumed(secondaryActivity);
         waitAndAssertResumed(secondaryActivity2);
-        mEventLog.clear();
 
         // Finish the middle activity
         secondaryActivity.finish();
         waitAndAssertResumed(secondaryActivity2);
         waitAndAssertNotVisible(primaryActivity);
-        List<Pair<String, String>> expected = List.of(
-                transition(TestActivityWithId.class, ON_PAUSE),
-                transition(TestConfigChangeHandlingActivity.class, ON_STOP));
-        assertTrue("Finish middle activity in multi-split",
-                mLifecycleTracker.waitForConditionWithTimeout(() ->
-                        checkOrder(mEventLog, expected)));
+
         // There is no guarantee on the order, because the removal may be delayed until the next
         // resumed becomes visible.
+        waitAndAssertActivityOnStop(TestConfigChangeHandlingActivity.class);
         waitAndAssertActivityOnDestroy(TestActivityWithId.class);
         waitAndAssertSplitStatesUpdated();
     }
@@ -579,6 +569,10 @@ public class ActivityEmbeddingLifecycleTests extends ActivityEmbeddingTestBase {
         waitAndAssertResumed("primaryActivity2");
         waitAndAssertResumed("secondaryActivity");
         waitAndAssertNotVisible(primaryActivity);
+    }
+
+    private void waitAndAssertActivityOnStop(Class<? extends Activity> activityClass) {
+        mLifecycleTracker.waitAndAssertActivityCurrentState(activityClass, ON_STOP);
     }
 
     private void waitAndAssertActivityOnDestroy(Class<? extends Activity> activityClass) {
