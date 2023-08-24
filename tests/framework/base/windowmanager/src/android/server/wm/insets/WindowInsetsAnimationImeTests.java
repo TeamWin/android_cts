@@ -198,6 +198,7 @@ public class WindowInsetsAnimationImeTests extends WindowInsetsAnimationTestBase
                         .getInsets(ime()));
     }
 
+    @FlakyTest(bugId = 297381114)
     @Test
     public void testZeroInsetsImeAnimates() {
         initActivity(true /* useFloating */);
