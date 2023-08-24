@@ -114,6 +114,7 @@ android_test {
         "BinderPermissionTestService/**/I*.aidl",
     ],
     data: [
+        ":CtsSyncAccountAccessStubs",
         ":CtsBinderPermissionTestService",
         ":CtsContentMockRestrictedApp",
     ],
