@@ -34,21 +34,21 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Tests that it is possible to remove apps from the system whitelist
+ * Tests that it is possible to remove apps from the system allowlist
  */
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class DeviceIdleWhitelistTest extends BaseHostJUnit4Test {
 
     private static final String DEVICE_IDLE_COMMAND_PREFIX = "cmd deviceidle sys-whitelist ";
-    private static final String RESET_SYS_WHITELIST_COMMAND = "cmd deviceidle sys-whitelist reset";
-    private static final String SHOW_SYS_WHITELIST_COMMAND = DEVICE_IDLE_COMMAND_PREFIX;
+    private static final String RESET_SYS_ALLOWLIST_COMMAND = "cmd deviceidle sys-whitelist reset";
+    private static final String SHOW_SYS_ALLOWLIST_COMMAND = DEVICE_IDLE_COMMAND_PREFIX;
 
     private List<String> mOriginalSystemWhitelist;
 
     @Before
     public void setUp() throws Exception {
-        getDevice().executeShellCommand(RESET_SYS_WHITELIST_COMMAND);
-        mOriginalSystemWhitelist = getSystemWhitelist();
+        getDevice().executeShellCommand(RESET_SYS_ALLOWLIST_COMMAND);
+        mOriginalSystemWhitelist = getSystemAllowlist();
         if (mOriginalSystemWhitelist.size() < 1) {
             LogUtil.CLog.w("No packages found in system whitelist");
             Assume.assumeTrue(false);
@@ -57,14 +57,14 @@ public class DeviceIdleWhitelistTest extends BaseHostJUnit4Test {
 
     @After
     public void tearDown() throws Exception {
-        getDevice().executeShellCommand(RESET_SYS_WHITELIST_COMMAND);
+        getDevice().executeShellCommand(RESET_SYS_ALLOWLIST_COMMAND);
     }
 
     @Test
     public void testRemoveFromSysWhitelist() throws Exception {
         final String packageToRemove = mOriginalSystemWhitelist.get(0);
         getDevice().executeShellCommand(DEVICE_IDLE_COMMAND_PREFIX + "-" + packageToRemove);
-        final List<String> newWhitelist = getSystemWhitelist();
+        final List<String> newWhitelist = getSystemAllowlist();
         assertFalse("Package " + packageToRemove + " not removed from whitelist",
                 newWhitelist.contains(packageToRemove));
     }
@@ -72,23 +72,23 @@ public class DeviceIdleWhitelistTest extends BaseHostJUnit4Test {
     @Test
     public void testRemovesPersistedAcrossReboots() throws Exception {
         for (int i = 0; i < mOriginalSystemWhitelist.size(); i+=2) {
-            // remove odd indexed packages from the whitelist
+            // remove odd indexed packages from the allowlist
             getDevice().executeShellCommand(
                     DEVICE_IDLE_COMMAND_PREFIX + "-" + mOriginalSystemWhitelist.get(i));
         }
-        final List<String> whitelistBeforeReboot = getSystemWhitelist();
+        final List<String> whitelistBeforeReboot = getSystemAllowlist();
         RunUtil.getDefault().sleep(10_000); // write to disk happens after 5 seconds
         getDevice().reboot();
         RunUtil.getDefault().sleep(5_000); // to make sure service is initialized
-        final List<String> whitelistAfterReboot = getSystemWhitelist();
+        final List<String> whitelistAfterReboot = getSystemAllowlist();
         assertEquals(whitelistBeforeReboot.size(), whitelistAfterReboot.size());
         for (int i = 0; i < whitelistBeforeReboot.size(); i++) {
             assertTrue(whitelistAfterReboot.contains(whitelistBeforeReboot.get(i)));
         }
     }
 
-    private List<String> getSystemWhitelist() throws DeviceNotAvailableException {
-        final String output = getDevice().executeShellCommand(SHOW_SYS_WHITELIST_COMMAND).trim();
+    private List<String> getSystemAllowlist() throws DeviceNotAvailableException {
+        final String output = getDevice().executeShellCommand(SHOW_SYS_ALLOWLIST_COMMAND).trim();
         final List<String> packages = new ArrayList<>();
         for (String line : output.split("\n")) {
             final int i = line.indexOf(',');
