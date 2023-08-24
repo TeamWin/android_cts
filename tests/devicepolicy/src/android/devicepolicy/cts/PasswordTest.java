@@ -204,6 +204,7 @@ public final class PasswordTest {
                         .resetPassword(DEFAULT_PASSWORD, /* flags= */ 0));
     }
 
+    @RequireFeature(FEATURE_SECURE_LOCK_SCREEN)
     @EnsurePasswordSet(password = PASSWORD_MEDIUM_COMPLEXITY)
     @EnsureUnlocked
     @CanSetPolicyTest(policy = PasswordSufficiency.class)
@@ -221,6 +222,7 @@ public final class PasswordTest {
         }
     }
 
+    @RequireFeature(FEATURE_SECURE_LOCK_SCREEN)
     @EnsurePasswordSet(password = PASSWORD_MEDIUM_COMPLEXITY)
     @EnsureUnlocked
     @CanSetPolicyTest(policy = PasswordSufficiency.class)
@@ -238,6 +240,7 @@ public final class PasswordTest {
         }
     }
 
+    @RequireFeature(FEATURE_SECURE_LOCK_SCREEN)
     @EnsurePasswordNotSet
     @EnsureUnlocked
     @CanSetPolicyTest(policy = PasswordSufficiency.class)
