@@ -16,6 +16,8 @@
 
 package android.provider.cts.settings;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -182,6 +184,17 @@ public class Settings_SystemTest extends StsExtraBusinessLogicTestCase {
         } finally {
             assertTrue(System.putString(cr, FLOAT_FIELD, originalFloatValue));
         }
+    }
+
+    @Test
+    @AsbSecurityTest(cveBugId = 227201030)
+    public void testInvalidRingtoneUriIsRejected() {
+        final ContentResolver cr = InstrumentationRegistry.getTargetContext().getContentResolver();
+        final String originalValue = System.getString(cr, System.RINGTONE);
+        final String invalidUri = "content://10@media/external/audio/media/1000000019";
+        System.putString(cr, System.RINGTONE, invalidUri);
+        // Assert that the insertion didn't take effect
+        assertThat(System.getString(cr, System.RINGTONE)).isEqualTo(originalValue);
     }
 
     @Test
