@@ -81,13 +81,13 @@ import android.os.Bundle;
 import android.os.ResultReceiver;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
+import android.server.wm.WakeUpAndUnlockRule;
 import android.server.wm.WindowManagerStateHelper;
 import android.util.DisplayMetrics;
 import android.view.Display;
 import android.view.MotionEvent;
 import android.view.WindowManager;
 import android.virtualdevice.cts.common.FakeAssociationRule;
-import android.server.wm.WakeUpAndUnlockRule;
 import android.virtualdevice.cts.common.util.VirtualDeviceTestUtils;
 
 import androidx.annotation.NonNull;
@@ -201,6 +201,7 @@ public class StreamedAppClipboardTest {
     }
 
     @Test
+    @FlakyTest(bugId = 297288652)
     public void oneAppOnVirtualDevice_canWriteAndReadClipboard() {
         ClipboardManager clipboard = mContext.createDeviceContext(
                 DEVICE_ID_DEFAULT).getSystemService(ClipboardManager.class);
