@@ -92,9 +92,6 @@ public class ForceRelayoutTestBase {
         protected void onCreate(@Nullable Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
             getWindow().requestFeature(Window.FEATURE_NO_TITLE);
-            getWindow().setDecorFitsSystemWindows(false);
-            getWindow().getAttributes().layoutInDisplayCutoutMode =
-                    LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS;
             View view =
                     new View(this) {
                         @Override
@@ -121,6 +118,10 @@ public class ForceRelayoutTestBase {
                         return WindowInsets.CONSUMED;
                     });
             setContentView(view);
+
+            getWindow().setDecorFitsSystemWindows(false);
+            getWindow().getAttributes().layoutInDisplayCutoutMode =
+                    LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS;
         }
     }
 
