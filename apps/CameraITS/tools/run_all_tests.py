@@ -22,6 +22,7 @@ import subprocess
 import sys
 import tempfile
 import time
+import types
 
 import camera_properties_utils
 import capture_request_utils
@@ -45,7 +46,7 @@ RESULT_NOT_EXECUTED = 'NOT_EXECUTED'
 RESULT_KEY = 'result'
 METRICS_KEY = 'mpc_metrics'
 SUMMARY_KEY = 'summary'
-RESULT_VALUES = {RESULT_PASS, RESULT_FAIL, RESULT_NOT_EXECUTED}
+RESULT_VALUES = (RESULT_PASS, RESULT_FAIL, RESULT_NOT_EXECUTED)
 CTS_VERIFIER_PACKAGE_NAME = 'com.android.cts.verifier'
 ITS_TEST_ACTIVITY = 'com.android.cts.verifier/.camera.its.ItsTestActivity'
 ACTION_ITS_RESULT = 'com.android.cts.verifier.camera.its.ACTION_ITS_RESULT'
@@ -56,42 +57,43 @@ EXTRA_RESULTS = 'camera.its.extra.RESULTS'
 TIME_KEY_START = 'start'
 TIME_KEY_END = 'end'
 VALID_CONTROLLERS = ('arduino', 'canakit')
-_INT_STR_DICT = {'11': '1_1', '12': '1_2'}  # recover replaced '_' in scene def
 _FRONT_CAMERA_ID = '1'
+# recover replaced '_' in scene def
+_INT_STR_DICT = types.MappingProxyType({'11': '1_1', '12': '1_2'})
+_MAIN_TESTBED = 0
 _PROPERTIES_TO_MATCH = (
     'ro.product.model', 'ro.product.name', 'ro.build.display.id', 'ro.revision'
 )
-_MAIN_TESTBED = 0
 
 # Scenes that can be automated through tablet display
 # Notes on scene names:
 #   scene*_1/2/... are same scene split to load balance run times for scenes
 #   scene*_a/b/... are similar scenes that share one or more tests
-_TABLET_SCENES = [
+_TABLET_SCENES = (
     'scene0', 'scene1_1', 'scene1_2', 'scene2_a', 'scene2_b', 'scene2_c',
     'scene2_d', 'scene2_e', 'scene2_f', 'scene3', 'scene4', 'scene6',
     os.path.join('scene_extensions', 'scene_hdr'),
-    os.path.join('scene_extensions', 'scene_night')
-]
+    os.path.join('scene_extensions', 'scene_night'),
+)
 
 # Scenes that use the 'sensor_fusion' test rig
-_MOTION_SCENES = ['sensor_fusion']
+_MOTION_SCENES = ('sensor_fusion',)
 
 # Scenes that have to be run manually regardless of configuration
-_MANUAL_SCENES = ['scene5']
+_MANUAL_SCENES = ('scene5',)
 
 # All possible scenes
 _ALL_SCENES = _TABLET_SCENES + _MANUAL_SCENES + _MOTION_SCENES
 
 # Scenes that are logically grouped and can be called as group
-_GROUPED_SCENES = {
-        'scene1': ['scene1_1', 'scene1_2'],
-        'scene2': ['scene2_a', 'scene2_b', 'scene2_c', 'scene2_d', 'scene2_e',
-                   'scene2_f']
-}
+_GROUPED_SCENES = types.MappingProxyType({
+        'scene1': ('scene1_1', 'scene1_2'),
+        'scene2': ('scene2_a', 'scene2_b', 'scene2_c', 'scene2_d', 'scene2_e',
+                   'scene2_f')
+})
 
 # Scene requirements for manual testing.
-_SCENE_REQ = {
+_SCENE_REQ = types.MappingProxyType({
     'scene0': None,
     'scene1_1': 'A grey card covering at least the middle 30% of the scene',
     'scene1_2': 'A grey card covering at least the middle 30% of the scene',
@@ -125,11 +127,10 @@ _SCENE_REQ = {
                      'See tests/sensor_fusion/SensorFusion.pdf for detailed '
                      'instructions.\nNote that this test will be skipped '
                      'on devices not supporting REALTIME camera timestamp.',
-}
+})
 
-
-SUB_CAMERA_TESTS = {
-    'scene0': [
+SUB_CAMERA_TESTS = types.MappingProxyType({
+    'scene0': (
         'test_burst_capture',
         'test_jitter',
         'test_metadata',
@@ -137,36 +138,36 @@ SUB_CAMERA_TESTS = {
         'test_sensor_events',
         'test_solid_color_test_pattern',
         'test_unified_timestamps',
-    ],
-    'scene1_1': [
+    ),
+    'scene1_1': (
         'test_burst_sameness_manual',
         'test_dng_noise_model',
         'test_exposure_iso_multiplier',
         'test_linearity',
-    ],
-    'scene1_2': [
+    ),
+    'scene1_2': (
         'test_raw_exposure',
         'test_raw_sensitivity',
         'test_yuv_plus_raw',
-    ],
-    'scene2_a': [
+    ),
+    'scene2_a': (
         'test_num_faces',
-    ],
-    'scene4': [
+    ),
+    'scene4': (
         'test_aspect_ratio_and_crop',
-    ],
-    'sensor_fusion': [
+    ),
+    'sensor_fusion': (
         'test_sensor_fusion',
-    ],
-}
+    ),
+})
 
-_LIGHTING_CONTROL_TESTS = [
+_LIGHTING_CONTROL_TESTS = (
     'test_auto_flash.py',
     'test_preview_min_frame_rate.py',
     'test_led_snapshot.py',
     'test_night_extension.py',
     'test_hdr_extension.py',
-    ]
+    )
 
 _DST_SCENE_DIR = '/sdcard/Download/'
 MOBLY_TEST_SUMMARY_TXT_FILE = 'test_mobly_summary.txt'
@@ -231,8 +232,6 @@ def report_result(device_id, camera_id, results):
   cmd = (f"{adb} shell am broadcast -a {ACTION_ITS_RESULT} --es {EXTRA_VERSION}"
          f" {CURRENT_ITS_VERSION} --es {EXTRA_CAMERA_ID} {camera_id} --es "
          f"{EXTRA_RESULTS} \'{json_results}\'")
-  if len(cmd) > 8000:
-    logging.info('ITS command string might be too long! len:%s', len(cmd))
   run(cmd)
 
 
