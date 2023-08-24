@@ -96,6 +96,7 @@ import java.util.concurrent.TimeUnit;
 public class VirtualSensorTest {
 
     private static final String VIRTUAL_SENSOR_NAME = "VirtualAccelerometer";
+    private static final String SECOND_SENSOR_NAME = VIRTUAL_SENSOR_NAME + "2";
     private static final String VIRTUAL_SENSOR_VENDOR = "VirtualDeviceVendor";
 
     private static final int CUSTOM_SENSOR_TYPE = 9999;
@@ -263,6 +264,42 @@ public class VirtualSensorTest {
         final List<Sensor> sensors = mVirtualDeviceSensorManager.getSensorList(TYPE_ACCELEROMETER);
         assertThat(sensors).isSameInstanceAs(
                 mVirtualDeviceSensorManager.getSensorList(TYPE_ACCELEROMETER));
+    }
+
+    @Test
+    public void createVirtualSensor_multipleSensorsSameType() {
+        VirtualDeviceParams.Builder builder = new VirtualDeviceParams.Builder()
+                .setDevicePolicy(VirtualDeviceParams.POLICY_TYPE_SENSORS,
+                        VirtualDeviceParams.DEVICE_POLICY_CUSTOM)
+                .addVirtualSensorConfig(
+                        new VirtualSensorConfig.Builder(TYPE_ACCELEROMETER, VIRTUAL_SENSOR_NAME)
+                                .build())
+                .addVirtualSensorConfig(
+                        new VirtualSensorConfig.Builder(TYPE_ACCELEROMETER, SECOND_SENSOR_NAME)
+                                .build())
+                .setVirtualSensorCallback(
+                        BackgroundThread.getExecutor(), mVirtualSensorCallback);
+        mVirtualDevice = mVirtualDeviceManager.createVirtualDevice(
+                mFakeAssociationRule.getAssociationInfo().getId(), builder.build());
+        Context deviceContext = InstrumentationRegistry.getInstrumentation().getContext()
+                .createDeviceContext(mVirtualDevice.getDeviceId());
+        mVirtualDeviceSensorManager = deviceContext.getSystemService(SensorManager.class);
+
+        List<VirtualSensor> virtualSensors = mVirtualDevice.getVirtualSensorList();
+        assertThat(virtualSensors).hasSize(2);
+        assertThat(virtualSensors.get(0).getType()).isEqualTo(TYPE_ACCELEROMETER);
+        assertThat(virtualSensors.get(0).getName()).isEqualTo(VIRTUAL_SENSOR_NAME);
+        assertThat(virtualSensors.get(0).getDeviceId()).isEqualTo(mVirtualDevice.getDeviceId());
+        assertThat(virtualSensors.get(1).getType()).isEqualTo(TYPE_ACCELEROMETER);
+        assertThat(virtualSensors.get(1).getName()).isEqualTo(SECOND_SENSOR_NAME);
+        assertThat(virtualSensors.get(1).getDeviceId()).isEqualTo(mVirtualDevice.getDeviceId());
+
+        List<Sensor> sensors = mVirtualDeviceSensorManager.getSensorList(TYPE_ACCELEROMETER);
+        assertThat(sensors).hasSize(2);
+        assertThat(sensors.get(0).getName()).isEqualTo(VIRTUAL_SENSOR_NAME);
+        assertThat(sensors.get(0).getType()).isEqualTo(TYPE_ACCELEROMETER);
+        assertThat(sensors.get(1).getName()).isEqualTo(SECOND_SENSOR_NAME);
+        assertThat(sensors.get(1).getType()).isEqualTo(TYPE_ACCELEROMETER);
     }
 
     @Test
