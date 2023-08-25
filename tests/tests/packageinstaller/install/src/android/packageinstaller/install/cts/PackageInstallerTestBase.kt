@@ -356,6 +356,13 @@ open class PackageInstallerTestBase {
         return pm.getPackageInfo(TEST_APK_PACKAGE_NAME, flags)
     }
 
+    fun assertInstalled(packageName: String,
+        flags: PackageManager.PackageInfoFlags = PackageManager.PackageInfoFlags.of(0),
+    ): PackageInfo {
+        // Throws exception if package is not installed.
+        return pm.getPackageInfo(packageName, flags)
+    }
+
     fun assertNotInstalled() {
         try {
             pm.getPackageInfo(TEST_APK_PACKAGE_NAME, PackageManager.PackageInfoFlags.of(0))
