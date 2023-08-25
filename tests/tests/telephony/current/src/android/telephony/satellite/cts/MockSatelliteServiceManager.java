@@ -43,7 +43,7 @@ import android.telephony.cts.externalsatelliteservice.IExternalSatelliteListener
 import android.telephony.cts.util.TelephonyUtils;
 import android.telephony.satellite.stub.PointingInfo;
 import android.telephony.satellite.stub.SatelliteDatagram;
-import android.telephony.satellite.stub.SatelliteError;
+import android.telephony.satellite.stub.SatelliteResult;
 import android.text.TextUtils;
 
 import com.android.internal.R;
@@ -819,7 +819,7 @@ class MockSatelliteServiceManager {
         return true;
     }
 
-    void setErrorCode(@SatelliteError int errorCode) {
+    void setErrorCode(@SatelliteResult int errorCode) {
         logd("setErrorCode: errorCode=" + errorCode);
         if (mSatelliteService == null) {
             loge("setErrorCode: mSatelliteService is null");

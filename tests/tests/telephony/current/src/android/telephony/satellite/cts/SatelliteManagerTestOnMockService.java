@@ -49,7 +49,7 @@ import android.telephony.satellite.PointingInfo;
 import android.telephony.satellite.SatelliteCapabilities;
 import android.telephony.satellite.SatelliteDatagram;
 import android.telephony.satellite.SatelliteManager;
-import android.telephony.satellite.stub.SatelliteError;
+import android.telephony.satellite.stub.SatelliteResult;
 import android.util.Log;
 import android.uwb.UwbManager;
 
@@ -132,7 +132,8 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         SatelliteStateCallbackTest callback = new SatelliteStateCallbackTest();
         int count = 0;
         while (sSatelliteManager.registerForSatelliteModemStateChanged(
-                getContext().getMainExecutor(), callback) != SatelliteManager.SATELLITE_ERROR_NONE
+                getContext().getMainExecutor(), callback)
+                != SatelliteManager.SATELLITE_RESULT_SUCCESS
                 && count < 10) {
             count++;
             waitFor(500);
@@ -153,7 +154,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
                     new SatelliteProvisionStateCallbackTest();
             long registerError = sSatelliteManager.registerForSatelliteProvisionStateChanged(
                     getContext().getMainExecutor(), satelliteProvisionStateCallback);
-            assertEquals(SatelliteManager.SATELLITE_ERROR_NONE, registerError);
+            assertEquals(SatelliteManager.SATELLITE_RESULT_SUCCESS, registerError);
 
             assertTrue(provisionSatellite());
 
@@ -175,7 +176,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         SatelliteStateCallbackTest callback = new SatelliteStateCallbackTest();
         long registerResult = sSatelliteManager.registerForSatelliteModemStateChanged(
                 getContext().getMainExecutor(), callback);
-        assertEquals(SatelliteManager.SATELLITE_ERROR_NONE, registerResult);
+        assertEquals(SatelliteManager.SATELLITE_RESULT_SUCCESS, registerResult);
         assertTrue(callback.waitUntilResult(1));
 
         assertTrue(sMockSatelliteServiceManager.restoreSatelliteServicePackageName());
@@ -196,7 +197,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         if (!shouldTestSatelliteWithMockService()) return;
         assumeTrue(sMockSatelliteServiceManager != null);
 
-        sMockSatelliteServiceManager.setErrorCode(SatelliteError.ERROR_NONE);
+        sMockSatelliteServiceManager.setErrorCode(SatelliteResult.SATELLITE_RESULT_SUCCESS);
         sMockSatelliteServiceManager.setWaitToSend(false);
         sMockSatelliteServiceManager.setShouldRespondTelephony(true);
         sMockSatelliteServiceManager.mIsPointingUiOverridden = false;
@@ -219,7 +220,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
             SatelliteStateCallbackTest callback = new SatelliteStateCallbackTest();
             long registerResult = sSatelliteManager.registerForSatelliteModemStateChanged(
                     getContext().getMainExecutor(), callback);
-            assertEquals(SatelliteManager.SATELLITE_ERROR_NONE, registerResult);
+            assertEquals(SatelliteManager.SATELLITE_RESULT_SUCCESS, registerResult);
             assertTrue(callback.waitUntilResult(1));
 
             requestSatelliteEnabled(true, EXTERNAL_DEPENDENT_TIMEOUT);
@@ -236,7 +237,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         logd("tearDown");
         if (!shouldTestSatelliteWithMockService()) return;
         assumeTrue(sMockSatelliteServiceManager != null);
-        sMockSatelliteServiceManager.setErrorCode(SatelliteError.ERROR_NONE);
+        sMockSatelliteServiceManager.setErrorCode(SatelliteResult.SATELLITE_RESULT_SUCCESS);
         sMockSatelliteServiceManager.setWaitToSend(false);
         sMockSatelliteServiceManager.setShouldRespondTelephony(true);
 
@@ -246,7 +247,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
             SatelliteStateCallbackTest callback = new SatelliteStateCallbackTest();
             long registerResult = sSatelliteManager.registerForSatelliteModemStateChanged(
                     getContext().getMainExecutor(), callback);
-            assertEquals(SatelliteManager.SATELLITE_ERROR_NONE, registerResult);
+            assertEquals(SatelliteManager.SATELLITE_RESULT_SUCCESS, registerResult);
             assertTrue(callback.waitUntilResult(1));
 
             // Disable satellite modem to clean up all pending resources and reset telephony states.
@@ -276,7 +277,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
                 new SatelliteProvisionStateCallbackTest();
         long registerError = sSatelliteManager.registerForSatelliteProvisionStateChanged(
                 getContext().getMainExecutor(), satelliteProvisionStateCallback);
-        assertEquals(SatelliteManager.SATELLITE_ERROR_NONE, registerError);
+        assertEquals(SatelliteManager.SATELLITE_RESULT_SUCCESS, registerError);
 
         if (isSatelliteProvisioned()) {
             logd("testProvisionSatelliteService: dreprovision");
@@ -302,7 +303,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
             return;
         }
         assertNotNull(errorCode);
-        assertEquals(SatelliteManager.SATELLITE_ERROR_NONE, (long) errorCode);
+        assertEquals(SatelliteManager.SATELLITE_RESULT_SUCCESS, (long) errorCode);
 
         // Provision succeeded and then got canceled - deprovisioned
         assertTrue(satelliteProvisionStateCallback.waitUntilResult(2));
@@ -338,7 +339,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
 
             long registerResult = sSatelliteManager.registerForSatelliteModemStateChanged(
                     getContext().getMainExecutor(), callback);
-            assertEquals(SatelliteManager.SATELLITE_ERROR_NONE, registerResult);
+            assertEquals(SatelliteManager.SATELLITE_RESULT_SUCCESS, registerResult);
             assertTrue(callback.waitUntilResult(1));
 
             requestSatelliteEnabled(false);
@@ -352,7 +353,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
             long registerResult = sSatelliteManager
                     .registerForSatelliteModemStateChanged(getContext().getMainExecutor(),
                             callback);
-            assertEquals(SatelliteManager.SATELLITE_ERROR_NONE, registerResult);
+            assertEquals(SatelliteManager.SATELLITE_RESULT_SUCCESS, registerResult);
             assertTrue(callback.waitUntilResult(1));
             assertEquals(SatelliteManager.SATELLITE_MODEM_STATE_OFF, callback.modemState);
         }
@@ -404,7 +405,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
 
             long registerResult = sSatelliteManager.registerForSatelliteModemStateChanged(
                     getContext().getMainExecutor(), callback);
-            assertEquals(SatelliteManager.SATELLITE_ERROR_NONE, registerResult);
+            assertEquals(SatelliteManager.SATELLITE_RESULT_SUCCESS, registerResult);
             assertTrue(callback.waitUntilResult(1));
 
             requestSatelliteEnabled(false);
@@ -418,7 +419,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
             long registerResult = sSatelliteManager
                     .registerForSatelliteModemStateChanged(getContext().getMainExecutor(),
                             callback);
-            assertEquals(SatelliteManager.SATELLITE_ERROR_NONE, registerResult);
+            assertEquals(SatelliteManager.SATELLITE_RESULT_SUCCESS, registerResult);
             assertTrue(callback.waitUntilResult(1));
             assertEquals(SatelliteManager.SATELLITE_MODEM_STATE_OFF, callback.modemState);
         }
@@ -439,7 +440,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
                 callback1 = new SatelliteStateCallbackTest();
         long registerResult = sSatelliteManager
                 .registerForSatelliteModemStateChanged(getContext().getMainExecutor(), callback1);
-        assertEquals(SatelliteManager.SATELLITE_ERROR_NONE, registerResult);
+        assertEquals(SatelliteManager.SATELLITE_RESULT_SUCCESS, registerResult);
         assertTrue(callback1.waitUntilResult(1));
         assertEquals(SatelliteManager.SATELLITE_MODEM_STATE_IDLE, callback1.modemState);
         sSatelliteManager.unregisterForSatelliteModemStateChanged(callback);
@@ -500,7 +501,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
 
             long registerResult = sSatelliteManager.registerForSatelliteModemStateChanged(
                     getContext().getMainExecutor(), callback);
-            assertEquals(SatelliteManager.SATELLITE_ERROR_NONE, registerResult);
+            assertEquals(SatelliteManager.SATELLITE_RESULT_SUCCESS, registerResult);
             assertTrue(callback.waitUntilResult(1));
 
             requestSatelliteEnabled(false);
@@ -514,18 +515,18 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
             long registerResult = sSatelliteManager
                     .registerForSatelliteModemStateChanged(getContext().getMainExecutor(),
                             callback);
-            assertEquals(SatelliteManager.SATELLITE_ERROR_NONE, registerResult);
+            assertEquals(SatelliteManager.SATELLITE_RESULT_SUCCESS, registerResult);
             assertTrue(callback.waitUntilResult(1));
             assertEquals(SatelliteManager.SATELLITE_MODEM_STATE_OFF, callback.modemState);
         }
 
-        requestSatelliteEnabled(true, true, SatelliteManager.SATELLITE_ERROR_NONE);
+        requestSatelliteEnabled(true, true, SatelliteManager.SATELLITE_RESULT_SUCCESS);
         assertTrue(callback.waitUntilResult(1));
         assertEquals(SatelliteManager.SATELLITE_MODEM_STATE_IDLE, callback.modemState);
         assertTrue(isSatelliteEnabled());
 
-        requestSatelliteEnabled(true, true, SatelliteManager.SATELLITE_ERROR_NONE);
-        requestSatelliteEnabled(true, false, SatelliteManager.SATELLITE_INVALID_ARGUMENTS);
+        requestSatelliteEnabled(true, true, SatelliteManager.SATELLITE_RESULT_SUCCESS);
+        requestSatelliteEnabled(true, false, SatelliteManager.SATELLITE_RESULT_INVALID_ARGUMENTS);
 
         turnRadioOff();
         grantSatellitePermission();
@@ -533,7 +534,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         assertEquals(SatelliteManager.SATELLITE_MODEM_STATE_OFF, callback.modemState);
         assertFalse(isSatelliteEnabled());
 
-        requestSatelliteEnabled(true, true, SatelliteManager.SATELLITE_INVALID_MODEM_STATE);
+        requestSatelliteEnabled(true, true, SatelliteManager.SATELLITE_RESULT_INVALID_MODEM_STATE);
         requestSatelliteEnabled(false);
 
         turnRadioOn();
@@ -542,7 +543,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         assertEquals(SatelliteManager.SATELLITE_MODEM_STATE_OFF, callback.modemState);
         assertFalse(isSatelliteEnabled());
 
-        requestSatelliteEnabled(true, true, SatelliteManager.SATELLITE_ERROR_NONE);
+        requestSatelliteEnabled(true, true, SatelliteManager.SATELLITE_RESULT_SUCCESS);
         assertTrue(callback.waitUntilResult(1));
         assertEquals(SatelliteManager.SATELLITE_MODEM_STATE_IDLE, callback.modemState);
         assertTrue(isSatelliteEnabled());
@@ -650,7 +651,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
             SatelliteStateCallbackTest callback = new SatelliteStateCallbackTest();
             long registerResult = sSatelliteManager.registerForSatelliteModemStateChanged(
                     getContext().getMainExecutor(), callback);
-            assertEquals(SatelliteManager.SATELLITE_ERROR_NONE, registerResult);
+            assertEquals(SatelliteManager.SATELLITE_RESULT_SUCCESS, registerResult);
             assertTrue(callback.waitUntilResult(1));
 
             SatelliteTransmissionUpdateCallbackTest transmissionUpdateCallback =
@@ -666,11 +667,11 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
             assertThat(transmissionUpdateCallback.getSendDatagramStateChange(0)).isEqualTo(
                     new SatelliteTransmissionUpdateCallbackTest.DatagramStateChangeArgument(
                             SatelliteManager.SATELLITE_DATAGRAM_TRANSFER_STATE_SEND_FAILED,
-                            1, SatelliteManager.SATELLITE_REQUEST_ABORTED));
+                            1, SatelliteManager.SATELLITE_RESULT_REQUEST_ABORTED));
             assertThat(transmissionUpdateCallback.getSendDatagramStateChange(1)).isEqualTo(
                     new SatelliteTransmissionUpdateCallbackTest.DatagramStateChangeArgument(
                             SatelliteManager.SATELLITE_DATAGRAM_TRANSFER_STATE_IDLE,
-                            0, SatelliteManager.SATELLITE_ERROR_NONE));
+                            0, SatelliteManager.SATELLITE_RESULT_SUCCESS));
             stopTransmissionUpdates(transmissionUpdateCallback);
 
             logd("testSendSatelliteDatagram_success: Enable satellite");
@@ -707,13 +708,13 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
             return;
         }
         assertNotNull(errorCode);
-        assertThat(errorCode).isEqualTo(SatelliteManager.SATELLITE_ERROR_NONE);
+        assertThat(errorCode).isEqualTo(SatelliteManager.SATELLITE_RESULT_SUCCESS);
 
         // Send satellite datagram
         String mText = "This is a test datagram message from user";
         SatelliteDatagram datagram = new SatelliteDatagram(mText.getBytes());
         callback.clearSendDatagramStateChanges();
-        sMockSatelliteServiceManager.setErrorCode(SatelliteError.SATELLITE_ERROR);
+        sMockSatelliteServiceManager.setErrorCode(SatelliteResult.SATELLITE_RESULT_ERROR);
         sSatelliteManager.sendSatelliteDatagram(SatelliteManager.DATAGRAM_TYPE_SOS_MESSAGE,
                 datagram, true, getContext().getMainExecutor(),
                 resultListener::offer);
@@ -726,7 +727,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
             return;
         }
         assertNotNull(errorCode);
-        assertThat(errorCode).isEqualTo(SatelliteManager.SATELLITE_ERROR);
+        assertThat(errorCode).isEqualTo(SatelliteManager.SATELLITE_RESULT_ERROR);
 
         /**
          * Send datagram transfer state should have the following transitions:
@@ -739,15 +740,15 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         assertThat(callback.getSendDatagramStateChange(0)).isEqualTo(
                 new SatelliteTransmissionUpdateCallbackTest.DatagramStateChangeArgument(
                         SatelliteManager.SATELLITE_DATAGRAM_TRANSFER_STATE_SENDING,
-                        1, SatelliteManager.SATELLITE_ERROR_NONE));
+                        1, SatelliteManager.SATELLITE_RESULT_SUCCESS));
         assertThat(callback.getSendDatagramStateChange(1)).isEqualTo(
                 new SatelliteTransmissionUpdateCallbackTest.DatagramStateChangeArgument(
                         SatelliteManager.SATELLITE_DATAGRAM_TRANSFER_STATE_SEND_FAILED,
-                        0, SatelliteManager.SATELLITE_ERROR));
+                        0, SatelliteManager.SATELLITE_RESULT_ERROR));
         assertThat(callback.getSendDatagramStateChange(2)).isEqualTo(
                 new SatelliteTransmissionUpdateCallbackTest.DatagramStateChangeArgument(
                         SatelliteManager.SATELLITE_DATAGRAM_TRANSFER_STATE_IDLE,
-                        0, SatelliteManager.SATELLITE_ERROR_NONE));
+                        0, SatelliteManager.SATELLITE_RESULT_SUCCESS));
 
         callback.clearSendDatagramStateChanges();
         sSatelliteManager.stopSatelliteTransmissionUpdates(callback, getContext().getMainExecutor(),
@@ -777,7 +778,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
             return;
         }
         assertNotNull(errorCode);
-        assertThat(errorCode).isEqualTo(SatelliteManager.SATELLITE_ERROR_NONE);
+        assertThat(errorCode).isEqualTo(SatelliteManager.SATELLITE_RESULT_SUCCESS);
 
         String mText = "This is a test datagram message from user";
         SatelliteDatagram datagram = new SatelliteDatagram(mText.getBytes());
@@ -815,19 +816,19 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
             return;
         }
         assertNotNull(errorCode);
-        assertThat(errorCode).isEqualTo(SatelliteManager.SATELLITE_ERROR_NONE);
+        assertThat(errorCode).isEqualTo(SatelliteManager.SATELLITE_RESULT_SUCCESS);
 
         int expectedNumOfEvents = 2;
         assertTrue(callback.waitUntilOnSendDatagramStateChanged(expectedNumOfEvents));
         assertThat(callback.getSendDatagramStateChange(0)).isEqualTo(
                 new SatelliteTransmissionUpdateCallbackTest.DatagramStateChangeArgument(
                         SatelliteManager.SATELLITE_DATAGRAM_TRANSFER_STATE_SENDING,
-                        1, SatelliteManager.SATELLITE_ERROR_NONE));
+                        1, SatelliteManager.SATELLITE_RESULT_SUCCESS));
         // Pending count is 2 as there are 2 datagrams to be sent.
         assertThat(callback.getSendDatagramStateChange(1)).isEqualTo(
                 new SatelliteTransmissionUpdateCallbackTest.DatagramStateChangeArgument(
                         SatelliteManager.SATELLITE_DATAGRAM_TRANSFER_STATE_SEND_SUCCESS,
-                        2, SatelliteManager.SATELLITE_ERROR_NONE));
+                        2, SatelliteManager.SATELLITE_RESULT_SUCCESS));
 
         assertTrue(sMockSatelliteServiceManager.waitForEventOnSendSatelliteDatagram(1));
 
@@ -843,18 +844,18 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
             return;
         }
         assertNotNull(errorCode);
-        assertThat(errorCode).isEqualTo(SatelliteManager.SATELLITE_ERROR_NONE);
+        assertThat(errorCode).isEqualTo(SatelliteManager.SATELLITE_RESULT_SUCCESS);
 
         expectedNumOfEvents = 2;
         assertTrue(callback.waitUntilOnSendDatagramStateChanged(expectedNumOfEvents));
         assertThat(callback.getSendDatagramStateChange(2)).isEqualTo(
                 new SatelliteTransmissionUpdateCallbackTest.DatagramStateChangeArgument(
                         SatelliteManager.SATELLITE_DATAGRAM_TRANSFER_STATE_SENDING,
-                        2, SatelliteManager.SATELLITE_ERROR_NONE));
+                        2, SatelliteManager.SATELLITE_RESULT_SUCCESS));
         assertThat(callback.getSendDatagramStateChange(3)).isEqualTo(
                 new SatelliteTransmissionUpdateCallbackTest.DatagramStateChangeArgument(
                         SatelliteManager.SATELLITE_DATAGRAM_TRANSFER_STATE_SEND_SUCCESS,
-                        1, SatelliteManager.SATELLITE_ERROR_NONE));
+                        1, SatelliteManager.SATELLITE_RESULT_SUCCESS));
 
         assertTrue(sMockSatelliteServiceManager.waitForEventOnSendSatelliteDatagram(1));
 
@@ -869,22 +870,22 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
             return;
         }
         assertNotNull(errorCode);
-        assertThat(errorCode).isEqualTo(SatelliteManager.SATELLITE_ERROR_NONE);
+        assertThat(errorCode).isEqualTo(SatelliteManager.SATELLITE_RESULT_SUCCESS);
 
         expectedNumOfEvents = 3;
         assertTrue(callback.waitUntilOnSendDatagramStateChanged(expectedNumOfEvents));
         assertThat(callback.getSendDatagramStateChange(4)).isEqualTo(
                 new SatelliteTransmissionUpdateCallbackTest.DatagramStateChangeArgument(
                         SatelliteManager.SATELLITE_DATAGRAM_TRANSFER_STATE_SENDING,
-                        1, SatelliteManager.SATELLITE_ERROR_NONE));
+                        1, SatelliteManager.SATELLITE_RESULT_SUCCESS));
         assertThat(callback.getSendDatagramStateChange(5)).isEqualTo(
                 new SatelliteTransmissionUpdateCallbackTest.DatagramStateChangeArgument(
                         SatelliteManager.SATELLITE_DATAGRAM_TRANSFER_STATE_SEND_SUCCESS,
-                        0, SatelliteManager.SATELLITE_ERROR_NONE));
+                        0, SatelliteManager.SATELLITE_RESULT_SUCCESS));
         assertThat(callback.getSendDatagramStateChange(6)).isEqualTo(
                 new SatelliteTransmissionUpdateCallbackTest.DatagramStateChangeArgument(
                         SatelliteManager.SATELLITE_DATAGRAM_TRANSFER_STATE_IDLE,
-                        0, SatelliteManager.SATELLITE_ERROR_NONE));
+                        0, SatelliteManager.SATELLITE_RESULT_SUCCESS));
 
         callback.clearSendDatagramStateChanges();
         sMockSatelliteServiceManager.clearSentSatelliteDatagramInfo();
@@ -916,7 +917,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
             return;
         }
         assertNotNull(errorCode);
-        assertThat(errorCode).isEqualTo(SatelliteManager.SATELLITE_ERROR_NONE);
+        assertThat(errorCode).isEqualTo(SatelliteManager.SATELLITE_RESULT_SUCCESS);
 
         String mText = "This is a test datagram message from user";
         SatelliteDatagram datagram = new SatelliteDatagram(mText.getBytes());
@@ -944,7 +945,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         assertTrue(sMockSatelliteServiceManager.waitForEventOnSendSatelliteDatagram(1));
 
         // Set error and send first datagram: SENDING to SENDING_FAILED
-        sMockSatelliteServiceManager.setErrorCode(SatelliteError.SATELLITE_ERROR);
+        sMockSatelliteServiceManager.setErrorCode(SatelliteResult.SATELLITE_RESULT_ERROR);
         assertTrue(sMockSatelliteServiceManager.sendSavedDatagram());
 
         try {
@@ -955,7 +956,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
             return;
         }
         assertNotNull(errorCode);
-        assertThat(errorCode).isEqualTo(SatelliteManager.SATELLITE_ERROR);
+        assertThat(errorCode).isEqualTo(SatelliteManager.SATELLITE_RESULT_ERROR);
 
         try {
             errorCode = resultListener2.poll(TIMEOUT, TimeUnit.MILLISECONDS);
@@ -965,7 +966,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
             return;
         }
         assertNotNull(errorCode);
-        assertThat(errorCode).isEqualTo(SatelliteManager.SATELLITE_REQUEST_ABORTED);
+        assertThat(errorCode).isEqualTo(SatelliteManager.SATELLITE_RESULT_REQUEST_ABORTED);
 
         try {
             errorCode = resultListener3.poll(TIMEOUT, TimeUnit.MILLISECONDS);
@@ -975,23 +976,23 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
             return;
         }
         assertNotNull(errorCode);
-        assertThat(errorCode).isEqualTo(SatelliteManager.SATELLITE_REQUEST_ABORTED);
+        assertThat(errorCode).isEqualTo(SatelliteManager.SATELLITE_RESULT_REQUEST_ABORTED);
 
         int expectedNumOfEvents = 3;
         assertTrue(callback.waitUntilOnSendDatagramStateChanged(expectedNumOfEvents));
         assertThat(callback.getSendDatagramStateChange(0)).isEqualTo(
                 new SatelliteTransmissionUpdateCallbackTest.DatagramStateChangeArgument(
                         SatelliteManager.SATELLITE_DATAGRAM_TRANSFER_STATE_SENDING,
-                        1, SatelliteManager.SATELLITE_ERROR_NONE));
+                        1, SatelliteManager.SATELLITE_RESULT_SUCCESS));
         // Pending count is 2 as there are 2 datagrams to be sent.
         assertThat(callback.getSendDatagramStateChange(1)).isEqualTo(
                 new SatelliteTransmissionUpdateCallbackTest.DatagramStateChangeArgument(
                         SatelliteManager.SATELLITE_DATAGRAM_TRANSFER_STATE_SEND_FAILED,
-                        2, SatelliteManager.SATELLITE_ERROR));
+                        2, SatelliteManager.SATELLITE_RESULT_ERROR));
         assertThat(callback.getSendDatagramStateChange(2)).isEqualTo(
                 new SatelliteTransmissionUpdateCallbackTest.DatagramStateChangeArgument(
                         SatelliteManager.SATELLITE_DATAGRAM_TRANSFER_STATE_IDLE,
-                        0, SatelliteManager.SATELLITE_ERROR_NONE));
+                        0, SatelliteManager.SATELLITE_RESULT_SUCCESS));
 
         callback.clearSendDatagramStateChanges();
         sMockSatelliteServiceManager.clearSentSatelliteDatagramInfo();
@@ -1019,7 +1020,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
             SatelliteStateCallbackTest callback = new SatelliteStateCallbackTest();
             long registerResult = sSatelliteManager.registerForSatelliteModemStateChanged(
                     getContext().getMainExecutor(), callback);
-            assertEquals(SatelliteManager.SATELLITE_ERROR_NONE, registerResult);
+            assertEquals(SatelliteManager.SATELLITE_RESULT_SUCCESS, registerResult);
             assertTrue(callback.waitUntilResult(1));
 
             SatelliteTransmissionUpdateCallbackTest transmissionUpdateCallback =
@@ -1037,11 +1038,11 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
             assertThat(transmissionUpdateCallback.getReceiveDatagramStateChange(0)).isEqualTo(
                     new SatelliteTransmissionUpdateCallbackTest.DatagramStateChangeArgument(
                             SatelliteManager.SATELLITE_DATAGRAM_TRANSFER_STATE_RECEIVE_FAILED,
-                            0, SatelliteManager.SATELLITE_REQUEST_ABORTED));
+                            0, SatelliteManager.SATELLITE_RESULT_REQUEST_ABORTED));
             assertThat(transmissionUpdateCallback.getReceiveDatagramStateChange(1)).isEqualTo(
                     new SatelliteTransmissionUpdateCallbackTest.DatagramStateChangeArgument(
                             SatelliteManager.SATELLITE_DATAGRAM_TRANSFER_STATE_IDLE,
-                            0, SatelliteManager.SATELLITE_ERROR_NONE));
+                            0, SatelliteManager.SATELLITE_RESULT_SUCCESS));
             stopTransmissionUpdates(transmissionUpdateCallback);
 
             logd("testReceiveSatelliteDatagram: Enable satellite");
@@ -1078,7 +1079,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
             return;
         }
         assertNotNull(errorCode);
-        assertThat(errorCode).isEqualTo(SatelliteManager.SATELLITE_ERROR_NONE);
+        assertThat(errorCode).isEqualTo(SatelliteManager.SATELLITE_RESULT_SUCCESS);
 
         SatelliteDatagramCallbackTest satelliteDatagramCallback =
                 new SatelliteDatagramCallbackTest();
@@ -1104,11 +1105,11 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         assertThat(transmissionUpdateCallback.getReceiveDatagramStateChange(0)).isEqualTo(
                 new SatelliteTransmissionUpdateCallbackTest.DatagramStateChangeArgument(
                         SatelliteManager.SATELLITE_DATAGRAM_TRANSFER_STATE_RECEIVING,
-                        0, SatelliteManager.SATELLITE_ERROR_NONE));
+                        0, SatelliteManager.SATELLITE_RESULT_SUCCESS));
         assertThat(transmissionUpdateCallback.getReceiveDatagramStateChange(1)).isEqualTo(
                 new SatelliteTransmissionUpdateCallbackTest.DatagramStateChangeArgument(
                         SatelliteManager.SATELLITE_DATAGRAM_TRANSFER_STATE_RECEIVE_SUCCESS,
-                        2, SatelliteManager.SATELLITE_ERROR_NONE));
+                        2, SatelliteManager.SATELLITE_RESULT_SUCCESS));
 
 
         // Receive second datagram: Datagram state changes from RECEIVING to RECEIVE_SUCCESS
@@ -1123,11 +1124,11 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         assertThat(transmissionUpdateCallback.getReceiveDatagramStateChange(2)).isEqualTo(
                 new SatelliteTransmissionUpdateCallbackTest.DatagramStateChangeArgument(
                         SatelliteManager.SATELLITE_DATAGRAM_TRANSFER_STATE_RECEIVING,
-                        2, SatelliteManager.SATELLITE_ERROR_NONE));
+                        2, SatelliteManager.SATELLITE_RESULT_SUCCESS));
         assertThat(transmissionUpdateCallback.getReceiveDatagramStateChange(3)).isEqualTo(
                 new SatelliteTransmissionUpdateCallbackTest.DatagramStateChangeArgument(
                         SatelliteManager.SATELLITE_DATAGRAM_TRANSFER_STATE_RECEIVE_SUCCESS,
-                        1, SatelliteManager.SATELLITE_ERROR_NONE));
+                        1, SatelliteManager.SATELLITE_RESULT_SUCCESS));
 
         // Receive third datagram: Datagram state changes from RECEIVING - RECEIVE_SUCCESS - IDLE
         assertTrue(sMockSatelliteServiceManager.waitForEventOnPollPendingSatelliteDatagrams(1));
@@ -1141,15 +1142,15 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         assertThat(transmissionUpdateCallback.getReceiveDatagramStateChange(4)).isEqualTo(
                 new SatelliteTransmissionUpdateCallbackTest.DatagramStateChangeArgument(
                         SatelliteManager.SATELLITE_DATAGRAM_TRANSFER_STATE_RECEIVING,
-                        1, SatelliteManager.SATELLITE_ERROR_NONE));
+                        1, SatelliteManager.SATELLITE_RESULT_SUCCESS));
         assertThat(transmissionUpdateCallback.getReceiveDatagramStateChange(5)).isEqualTo(
                 new SatelliteTransmissionUpdateCallbackTest.DatagramStateChangeArgument(
                         SatelliteManager.SATELLITE_DATAGRAM_TRANSFER_STATE_RECEIVE_SUCCESS,
-                        0, SatelliteManager.SATELLITE_ERROR_NONE));
+                        0, SatelliteManager.SATELLITE_RESULT_SUCCESS));
         assertThat(transmissionUpdateCallback.getReceiveDatagramStateChange(6)).isEqualTo(
                 new SatelliteTransmissionUpdateCallbackTest.DatagramStateChangeArgument(
                         SatelliteManager.SATELLITE_DATAGRAM_TRANSFER_STATE_IDLE,
-                        0, SatelliteManager.SATELLITE_ERROR_NONE));
+                        0, SatelliteManager.SATELLITE_RESULT_SUCCESS));
 
         transmissionUpdateCallback.clearReceiveDatagramStateChanges();
         sSatelliteManager.stopSatelliteTransmissionUpdates(transmissionUpdateCallback,
@@ -1180,7 +1181,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
             return;
         }
         assertNotNull(errorCode);
-        assertThat(errorCode).isEqualTo(SatelliteManager.SATELLITE_ERROR_NONE);
+        assertThat(errorCode).isEqualTo(SatelliteManager.SATELLITE_RESULT_SUCCESS);
 
         transmissionUpdateCallback.clearPointingInfo();
         android.telephony.satellite.stub.PointingInfo pointingInfo =
@@ -1223,7 +1224,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
             return;
         }
         assertNotNull(errorCode);
-        assertThat(errorCode).isEqualTo(SatelliteManager.SATELLITE_ERROR_NONE);
+        assertThat(errorCode).isEqualTo(SatelliteManager.SATELLITE_RESULT_SUCCESS);
 
         // Receive first position update
         transmissionUpdateCallback.clearPointingInfo();
@@ -1290,11 +1291,11 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
             assertThat(transmissionUpdateCallback.getSendDatagramStateChange(0)).isEqualTo(
                     new SatelliteTransmissionUpdateCallbackTest.DatagramStateChangeArgument(
                             SatelliteManager.SATELLITE_DATAGRAM_TRANSFER_STATE_SEND_FAILED,
-                            1, SatelliteManager.SATELLITE_REQUEST_ABORTED));
+                            1, SatelliteManager.SATELLITE_RESULT_REQUEST_ABORTED));
             assertThat(transmissionUpdateCallback.getSendDatagramStateChange(1)).isEqualTo(
                     new SatelliteTransmissionUpdateCallbackTest.DatagramStateChangeArgument(
                             SatelliteManager.SATELLITE_DATAGRAM_TRANSFER_STATE_IDLE,
-                            0, SatelliteManager.SATELLITE_ERROR_NONE));
+                            0, SatelliteManager.SATELLITE_RESULT_SUCCESS));
             stopTransmissionUpdates(transmissionUpdateCallback);
 
             logd("testSendSatelliteDatagram_DemoMode_success: Enable satellite");
@@ -1311,7 +1312,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
             sSatelliteManager.setDeviceAlignedWithSatellite(true);
             transmissionUpdateCallback = startTransmissionUpdates();
             SatelliteDatagramCallbackTest datagramCallback = new SatelliteDatagramCallbackTest();
-            assertTrue(SatelliteManager.SATELLITE_ERROR_NONE
+            assertTrue(SatelliteManager.SATELLITE_RESULT_SUCCESS
                     == sSatelliteManager.registerForSatelliteDatagram(
                             getContext().getMainExecutor(), datagramCallback));
 
@@ -1331,15 +1332,15 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
             assertThat(transmissionUpdateCallback.getReceiveDatagramStateChange(0)).isEqualTo(
                     new SatelliteTransmissionUpdateCallbackTest.DatagramStateChangeArgument(
                             SatelliteManager.SATELLITE_DATAGRAM_TRANSFER_STATE_RECEIVING,
-                            0, SatelliteManager.SATELLITE_ERROR_NONE));
+                            0, SatelliteManager.SATELLITE_RESULT_SUCCESS));
             assertThat(transmissionUpdateCallback.getReceiveDatagramStateChange(1)).isEqualTo(
                     new SatelliteTransmissionUpdateCallbackTest.DatagramStateChangeArgument(
                             SatelliteManager.SATELLITE_DATAGRAM_TRANSFER_STATE_RECEIVE_SUCCESS,
-                            0, SatelliteManager.SATELLITE_ERROR_NONE));
+                            0, SatelliteManager.SATELLITE_RESULT_SUCCESS));
             assertThat(transmissionUpdateCallback.getReceiveDatagramStateChange(2)).isEqualTo(
                     new SatelliteTransmissionUpdateCallbackTest.DatagramStateChangeArgument(
                             SatelliteManager.SATELLITE_DATAGRAM_TRANSFER_STATE_IDLE,
-                            0, SatelliteManager.SATELLITE_ERROR_NONE));
+                            0, SatelliteManager.SATELLITE_RESULT_SUCCESS));
             transmissionUpdateCallback.clearReceiveDatagramStateChanges();
             stopTransmissionUpdates(transmissionUpdateCallback);
 
@@ -1390,13 +1391,13 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
             return;
         }
         assertNotNull(errorCode);
-        assertThat(errorCode).isEqualTo(SatelliteManager.SATELLITE_ERROR_NONE);
+        assertThat(errorCode).isEqualTo(SatelliteManager.SATELLITE_RESULT_SUCCESS);
 
         // Send satellite datagram
         String mText = "This is a test datagram message from user";
         SatelliteDatagram datagram = new SatelliteDatagram(mText.getBytes());
         callback.clearSendDatagramStateChanges();
-        sMockSatelliteServiceManager.setErrorCode(SatelliteError.SATELLITE_ERROR);
+        sMockSatelliteServiceManager.setErrorCode(SatelliteResult.SATELLITE_RESULT_ERROR);
         sSatelliteManager.sendSatelliteDatagram(SatelliteManager.DATAGRAM_TYPE_SOS_MESSAGE,
                 datagram, true, getContext().getMainExecutor(),
                 resultListener::offer);
@@ -1409,7 +1410,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
             return;
         }
         assertNotNull(errorCode);
-        assertThat(errorCode).isEqualTo(SatelliteManager.SATELLITE_ERROR);
+        assertThat(errorCode).isEqualTo(SatelliteManager.SATELLITE_RESULT_ERROR);
 
         /**
          * Send datagram transfer state should have the following transitions:
@@ -1423,15 +1424,15 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         assertThat(callback.getSendDatagramStateChange(0)).isEqualTo(
                 new SatelliteTransmissionUpdateCallbackTest.DatagramStateChangeArgument(
                         SatelliteManager.SATELLITE_DATAGRAM_TRANSFER_STATE_SENDING,
-                        1, SatelliteManager.SATELLITE_ERROR_NONE));
+                        1, SatelliteManager.SATELLITE_RESULT_SUCCESS));
         assertThat(callback.getSendDatagramStateChange(1)).isEqualTo(
                 new SatelliteTransmissionUpdateCallbackTest.DatagramStateChangeArgument(
                         SatelliteManager.SATELLITE_DATAGRAM_TRANSFER_STATE_SEND_FAILED,
-                        0, SatelliteManager.SATELLITE_ERROR));
+                        0, SatelliteManager.SATELLITE_RESULT_ERROR));
         assertThat(callback.getSendDatagramStateChange(2)).isEqualTo(
                 new SatelliteTransmissionUpdateCallbackTest.DatagramStateChangeArgument(
                         SatelliteManager.SATELLITE_DATAGRAM_TRANSFER_STATE_IDLE,
-                        0, SatelliteManager.SATELLITE_ERROR_NONE));
+                        0, SatelliteManager.SATELLITE_RESULT_SUCCESS));
 
         callback.clearSendDatagramStateChanges();
         sSatelliteManager.stopSatelliteTransmissionUpdates(callback, getContext().getMainExecutor(),
@@ -1687,7 +1688,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
             return;
         }
         assertNotNull(errorCode);
-        assertThat(errorCode).isEqualTo(SatelliteManager.SATELLITE_ERROR_NONE);
+        assertThat(errorCode).isEqualTo(SatelliteManager.SATELLITE_RESULT_SUCCESS);
 
         // Send satellite datagram and satellite is not aligned.
         assertTrue(sMockSatelliteServiceManager.setSatelliteDeviceAlignedTimeoutDuration(
@@ -1708,7 +1709,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
             return;
         }
         assertNotNull(errorCode);
-        assertThat(errorCode).isEqualTo(SatelliteManager.SATELLITE_NOT_REACHABLE);
+        assertThat(errorCode).isEqualTo(SatelliteManager.SATELLITE_RESULT_NOT_REACHABLE);
 
         /**
          * Send datagram transfer state should have the following transitions:
@@ -1721,15 +1722,15 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         assertThat(callback.getSendDatagramStateChange(0)).isEqualTo(
                 new SatelliteTransmissionUpdateCallbackTest.DatagramStateChangeArgument(
                         SatelliteManager.SATELLITE_DATAGRAM_TRANSFER_STATE_SENDING,
-                        1, SatelliteManager.SATELLITE_ERROR_NONE));
+                        1, SatelliteManager.SATELLITE_RESULT_SUCCESS));
         assertThat(callback.getSendDatagramStateChange(1)).isEqualTo(
                 new SatelliteTransmissionUpdateCallbackTest.DatagramStateChangeArgument(
                         SatelliteManager.SATELLITE_DATAGRAM_TRANSFER_STATE_SEND_FAILED,
-                        0, SatelliteManager.SATELLITE_NOT_REACHABLE));
+                        0, SatelliteManager.SATELLITE_RESULT_NOT_REACHABLE));
         assertThat(callback.getSendDatagramStateChange(2)).isEqualTo(
                 new SatelliteTransmissionUpdateCallbackTest.DatagramStateChangeArgument(
                         SatelliteManager.SATELLITE_DATAGRAM_TRANSFER_STATE_IDLE,
-                        0, SatelliteManager.SATELLITE_ERROR_NONE));
+                        0, SatelliteManager.SATELLITE_RESULT_SUCCESS));
 
         // Move to sending state and wait for satellite alignment forever
         assertTrue(sMockSatelliteServiceManager.setSatelliteDeviceAlignedTimeoutDuration(
@@ -1759,7 +1760,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         assertThat(callback.getSendDatagramStateChange(0)).isEqualTo(
                 new SatelliteTransmissionUpdateCallbackTest.DatagramStateChangeArgument(
                         SatelliteManager.SATELLITE_DATAGRAM_TRANSFER_STATE_SENDING,
-                        1, SatelliteManager.SATELLITE_ERROR_NONE));
+                        1, SatelliteManager.SATELLITE_RESULT_SUCCESS));
 
         assertTrue(sMockSatelliteServiceManager.waitForEventOnSendSatelliteDatagram(1));
         callback.clearSendDatagramStateChanges();
@@ -1775,7 +1776,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
             return;
         }
         assertNotNull(errorCode);
-        assertThat(errorCode).isEqualTo(SatelliteManager.SATELLITE_ERROR_NONE);
+        assertThat(errorCode).isEqualTo(SatelliteManager.SATELLITE_RESULT_SUCCESS);
 
         /**
          * Send datagram transfer state should have the following transitions:
@@ -1786,11 +1787,11 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         assertThat(callback.getSendDatagramStateChange(0)).isEqualTo(
                 new SatelliteTransmissionUpdateCallbackTest.DatagramStateChangeArgument(
                         SatelliteManager.SATELLITE_DATAGRAM_TRANSFER_STATE_SEND_SUCCESS,
-                        0, SatelliteManager.SATELLITE_ERROR_NONE));
+                        0, SatelliteManager.SATELLITE_RESULT_SUCCESS));
         assertThat(callback.getSendDatagramStateChange(1)).isEqualTo(
                 new SatelliteTransmissionUpdateCallbackTest.DatagramStateChangeArgument(
                         SatelliteManager.SATELLITE_DATAGRAM_TRANSFER_STATE_IDLE,
-                        0, SatelliteManager.SATELLITE_ERROR_NONE));
+                        0, SatelliteManager.SATELLITE_RESULT_SUCCESS));
 
         // Move to sending state and wait for satellite alignment forever again
         sSatelliteManager.setDeviceAlignedWithSatellite(false);
@@ -1818,7 +1819,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         assertThat(callback.getSendDatagramStateChange(0)).isEqualTo(
                 new SatelliteTransmissionUpdateCallbackTest.DatagramStateChangeArgument(
                         SatelliteManager.SATELLITE_DATAGRAM_TRANSFER_STATE_SENDING,
-                        1, SatelliteManager.SATELLITE_ERROR_NONE));
+                        1, SatelliteManager.SATELLITE_RESULT_SUCCESS));
 
         callback.clearSendDatagramStateChanges();
         stateCallback.clearModemStates();
@@ -1834,7 +1835,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
             return;
         }
         assertNotNull(errorCode);
-        assertThat(errorCode).isEqualTo(SatelliteManager.SATELLITE_REQUEST_ABORTED);
+        assertThat(errorCode).isEqualTo(SatelliteManager.SATELLITE_RESULT_REQUEST_ABORTED);
 
         /**
          * Send datagram transfer state should have the following transitions:
@@ -1846,11 +1847,11 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         assertThat(callback.getSendDatagramStateChange(0)).isEqualTo(
                 new SatelliteTransmissionUpdateCallbackTest.DatagramStateChangeArgument(
                         SatelliteManager.SATELLITE_DATAGRAM_TRANSFER_STATE_SEND_FAILED,
-                        1, SatelliteManager.SATELLITE_REQUEST_ABORTED));
+                        1, SatelliteManager.SATELLITE_RESULT_REQUEST_ABORTED));
         assertThat(callback.getSendDatagramStateChange(1)).isEqualTo(
                 new SatelliteTransmissionUpdateCallbackTest.DatagramStateChangeArgument(
                         SatelliteManager.SATELLITE_DATAGRAM_TRANSFER_STATE_IDLE,
-                        0, SatelliteManager.SATELLITE_ERROR_NONE));
+                        0, SatelliteManager.SATELLITE_RESULT_SUCCESS));
 
         callback.clearSendDatagramStateChanges();
         sSatelliteManager.stopSatelliteTransmissionUpdates(callback, getContext().getMainExecutor(),
@@ -1926,7 +1927,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
             return;
         }
         assertNotNull(errorCode);
-        assertThat(errorCode).isEqualTo(SatelliteManager.SATELLITE_NOT_REACHABLE);
+        assertThat(errorCode).isEqualTo(SatelliteManager.SATELLITE_RESULT_NOT_REACHABLE);
 
         // Datagram transfer state should change from RECEIVING to IDLE.
         assertTrue(transmissionUpdateCallback
@@ -1936,15 +1937,15 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         assertThat(transmissionUpdateCallback.getReceiveDatagramStateChange(0)).isEqualTo(
                 new SatelliteTransmissionUpdateCallbackTest.DatagramStateChangeArgument(
                         SatelliteManager.SATELLITE_DATAGRAM_TRANSFER_STATE_RECEIVING,
-                        0, SatelliteManager.SATELLITE_ERROR_NONE));
+                        0, SatelliteManager.SATELLITE_RESULT_SUCCESS));
         assertThat(transmissionUpdateCallback.getReceiveDatagramStateChange(1)).isEqualTo(
                 new SatelliteTransmissionUpdateCallbackTest.DatagramStateChangeArgument(
                         SatelliteManager.SATELLITE_DATAGRAM_TRANSFER_STATE_RECEIVE_FAILED,
-                        0, SatelliteManager.SATELLITE_NOT_REACHABLE));
+                        0, SatelliteManager.SATELLITE_RESULT_NOT_REACHABLE));
         assertThat(transmissionUpdateCallback.getReceiveDatagramStateChange(2)).isEqualTo(
                 new SatelliteTransmissionUpdateCallbackTest.DatagramStateChangeArgument(
                         SatelliteManager.SATELLITE_DATAGRAM_TRANSFER_STATE_IDLE,
-                        0, SatelliteManager.SATELLITE_ERROR_NONE));
+                        0, SatelliteManager.SATELLITE_RESULT_SUCCESS));
 
         // Move satellite to receiving state and wait for satellite aligned forever
         assertTrue(sMockSatelliteServiceManager.setSatelliteDeviceAlignedTimeoutDuration(
@@ -1972,7 +1973,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         assertThat(transmissionUpdateCallback.getReceiveDatagramStateChange(0)).isEqualTo(
                 new SatelliteTransmissionUpdateCallbackTest.DatagramStateChangeArgument(
                         SatelliteManager.SATELLITE_DATAGRAM_TRANSFER_STATE_RECEIVING,
-                        0, SatelliteManager.SATELLITE_ERROR_NONE));
+                        0, SatelliteManager.SATELLITE_RESULT_SUCCESS));
 
         transmissionUpdateCallback.clearReceiveDatagramStateChanges();
         stateCallback.clearModemStates();
@@ -1988,7 +1989,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
             return;
         }
         assertNotNull(errorCode);
-        assertThat(errorCode).isEqualTo(SatelliteManager.SATELLITE_REQUEST_ABORTED);
+        assertThat(errorCode).isEqualTo(SatelliteManager.SATELLITE_RESULT_REQUEST_ABORTED);
 
         // Datagram transfer state should change from RECEIVING to IDLE.
         assertTrue(transmissionUpdateCallback
@@ -1998,11 +1999,11 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         assertThat(transmissionUpdateCallback.getReceiveDatagramStateChange(0)).isEqualTo(
                 new SatelliteTransmissionUpdateCallbackTest.DatagramStateChangeArgument(
                         SatelliteManager.SATELLITE_DATAGRAM_TRANSFER_STATE_RECEIVE_FAILED,
-                        0, SatelliteManager.SATELLITE_REQUEST_ABORTED));
+                        0, SatelliteManager.SATELLITE_RESULT_REQUEST_ABORTED));
         assertThat(transmissionUpdateCallback.getReceiveDatagramStateChange(1)).isEqualTo(
                 new SatelliteTransmissionUpdateCallbackTest.DatagramStateChangeArgument(
                         SatelliteManager.SATELLITE_DATAGRAM_TRANSFER_STATE_IDLE,
-                        0, SatelliteManager.SATELLITE_ERROR_NONE));
+                        0, SatelliteManager.SATELLITE_RESULT_SUCCESS));
 
         stopTransmissionUpdates(transmissionUpdateCallback);
         assertTrue(sMockSatelliteServiceManager.setSatelliteDeviceAlignedTimeoutDuration(
@@ -2046,7 +2047,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
             return;
         }
         assertNotNull(errorCode);
-        assertThat(errorCode).isEqualTo(SatelliteManager.SATELLITE_MODEM_BUSY);
+        assertThat(errorCode).isEqualTo(SatelliteManager.SATELLITE_RESULT_MODEM_BUSY);
 
         // Send datagram successfully to bring sending state back to IDLE.
         assertTrue(sMockSatelliteServiceManager.waitForEventOnSendSatelliteDatagram(1));
@@ -2083,7 +2084,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
             return;
         }
         assertNotNull(errorCode);
-        assertThat(errorCode).isEqualTo(SatelliteManager.SATELLITE_MODEM_BUSY);
+        assertThat(errorCode).isEqualTo(SatelliteManager.SATELLITE_RESULT_MODEM_BUSY);
 
         // Receive one datagram successfully to bring receiving state back to IDLE.
         String receivedText = "This is a test datagram message from satellite";
@@ -2121,7 +2122,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
             return;
         }
         assertNotNull(errorCode);
-        assertThat(errorCode).isEqualTo(SatelliteManager.SATELLITE_ERROR_NONE);
+        assertThat(errorCode).isEqualTo(SatelliteManager.SATELLITE_RESULT_SUCCESS);
 
         SatelliteDatagramCallbackTest satelliteDatagramCallback =
                 new SatelliteDatagramCallbackTest();
@@ -2137,7 +2138,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         // Datagram transfer state changes from IDLE -> RECEIVING.
         assertSingleReceiveDatagramStateChanged(transmissionUpdateCallback,
                 SatelliteManager.SATELLITE_DATAGRAM_TRANSFER_STATE_RECEIVING,
-                0, SatelliteManager.SATELLITE_ERROR_NONE);
+                0, SatelliteManager.SATELLITE_RESULT_SUCCESS);
 
         LinkedBlockingQueue<Integer> sendResultListener = new LinkedBlockingQueue<>(1);
         sSatelliteManager.sendSatelliteDatagram(SatelliteManager.DATAGRAM_TYPE_SOS_MESSAGE,
@@ -2160,11 +2161,11 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         assertThat(transmissionUpdateCallback.getReceiveDatagramStateChange(0)).isEqualTo(
                 new SatelliteTransmissionUpdateCallbackTest.DatagramStateChangeArgument(
                         SatelliteManager.SATELLITE_DATAGRAM_TRANSFER_STATE_RECEIVE_SUCCESS,
-                        0, SatelliteManager.SATELLITE_ERROR_NONE));
+                        0, SatelliteManager.SATELLITE_RESULT_SUCCESS));
         assertThat(transmissionUpdateCallback.getReceiveDatagramStateChange(1)).isEqualTo(
                 new SatelliteTransmissionUpdateCallbackTest.DatagramStateChangeArgument(
                         SatelliteManager.SATELLITE_DATAGRAM_TRANSFER_STATE_IDLE,
-                        0, SatelliteManager.SATELLITE_ERROR_NONE));
+                        0, SatelliteManager.SATELLITE_RESULT_SUCCESS));
 
         // As polling is completed, now modem will start sending datagrams
         expectedNumOfEvents = 3;
@@ -2173,15 +2174,15 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         assertThat(transmissionUpdateCallback.getSendDatagramStateChange(0)).isEqualTo(
                 new SatelliteTransmissionUpdateCallbackTest.DatagramStateChangeArgument(
                         SatelliteManager.SATELLITE_DATAGRAM_TRANSFER_STATE_SENDING,
-                        1, SatelliteManager.SATELLITE_ERROR_NONE));
+                        1, SatelliteManager.SATELLITE_RESULT_SUCCESS));
         assertThat(transmissionUpdateCallback.getSendDatagramStateChange(1)).isEqualTo(
                 new SatelliteTransmissionUpdateCallbackTest.DatagramStateChangeArgument(
                         SatelliteManager.SATELLITE_DATAGRAM_TRANSFER_STATE_SEND_SUCCESS,
-                        0, SatelliteManager.SATELLITE_ERROR_NONE));
+                        0, SatelliteManager.SATELLITE_RESULT_SUCCESS));
         assertThat(transmissionUpdateCallback.getSendDatagramStateChange(2)).isEqualTo(
                 new SatelliteTransmissionUpdateCallbackTest.DatagramStateChangeArgument(
                         SatelliteManager.SATELLITE_DATAGRAM_TRANSFER_STATE_IDLE,
-                        0, SatelliteManager.SATELLITE_ERROR_NONE));
+                        0, SatelliteManager.SATELLITE_RESULT_SUCCESS));
 
         transmissionUpdateCallback.clearSendDatagramStateChanges();
         transmissionUpdateCallback.clearReceiveDatagramStateChanges();
@@ -2216,7 +2217,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         SatelliteStateCallbackTest callback = new SatelliteStateCallbackTest();
         long registerResult = sSatelliteManager.registerForSatelliteModemStateChanged(
                 getContext().getMainExecutor(), callback);
-        assertEquals(SatelliteManager.SATELLITE_ERROR_NONE, registerResult);
+        assertEquals(SatelliteManager.SATELLITE_RESULT_SUCCESS, registerResult);
         assertTrue(callback.waitUntilResult(1));
 
         callback.clearModemStates();
@@ -2247,7 +2248,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         SatelliteStateCallbackTest callback = new SatelliteStateCallbackTest();
         long registerResult = sSatelliteManager.registerForSatelliteModemStateChanged(
                 getContext().getMainExecutor(), callback);
-        assertEquals(SatelliteManager.SATELLITE_ERROR_NONE, registerResult);
+        assertEquals(SatelliteManager.SATELLITE_RESULT_SUCCESS, registerResult);
         assertTrue(callback.waitUntilResult(1));
 
         if (isSatelliteEnabled()) {
@@ -2312,7 +2313,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
             return;
         }
         assertNotNull(errorCode);
-        assertEquals(SatelliteManager.SATELLITE_ERROR_NONE, (long) errorCode);
+        assertEquals(SatelliteManager.SATELLITE_RESULT_SUCCESS, (long) errorCode);
 
         /**
          * Modem state should have the following transitions:
@@ -2372,7 +2373,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         String mText = "This is a test datagram message from user";
         SatelliteDatagram datagram = new SatelliteDatagram(mText.getBytes());
 
-        sMockSatelliteServiceManager.setErrorCode(SatelliteError.SATELLITE_ERROR);
+        sMockSatelliteServiceManager.setErrorCode(SatelliteResult.SATELLITE_RESULT_ERROR);
         sMockSatelliteServiceManager.clearListeningEnabledList();
         callback.clearModemStates();
         sSatelliteManager.sendSatelliteDatagram(
@@ -2388,7 +2389,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
             return;
         }
         assertNotNull(errorCode);
-        assertEquals(SatelliteManager.SATELLITE_ERROR, (long) errorCode);
+        assertEquals(SatelliteManager.SATELLITE_RESULT_ERROR, (long) errorCode);
         assertTrue(callback.waitUntilResult(2));
         assertEquals(2, callback.getTotalCountOfModemStates());
         assertEquals(SatelliteManager.SATELLITE_MODEM_STATE_DATAGRAM_TRANSFERRING,
@@ -2402,7 +2403,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
             assertFalse(sMockSatelliteServiceManager.getListeningEnabled(0));
         }
         sMockSatelliteServiceManager.clearListeningEnabledList();
-        sMockSatelliteServiceManager.setErrorCode(SatelliteError.ERROR_NONE);
+        sMockSatelliteServiceManager.setErrorCode(SatelliteResult.SATELLITE_RESULT_SUCCESS);
     }
 
     /**
@@ -2470,7 +2471,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
 
         sMockSatelliteServiceManager.clearListeningEnabledList();
         callback.clearModemStates();
-        sMockSatelliteServiceManager.setErrorCode(SatelliteError.SATELLITE_ERROR);
+        sMockSatelliteServiceManager.setErrorCode(SatelliteResult.SATELLITE_RESULT_ERROR);
         sMockSatelliteServiceManager.sendOnPendingDatagrams();
         assertTrue(sMockSatelliteServiceManager.waitForEventOnPollPendingSatelliteDatagrams(1));
 
@@ -2496,7 +2497,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
 
         sMockSatelliteServiceManager.clearListeningEnabledList();
         sSatelliteManager.unregisterForSatelliteDatagram(satelliteDatagramCallback);
-        sMockSatelliteServiceManager.setErrorCode(SatelliteError.ERROR_NONE);
+        sMockSatelliteServiceManager.setErrorCode(SatelliteResult.SATELLITE_RESULT_SUCCESS);
     }
 
     private void moveToSendingState() {
@@ -2514,7 +2515,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
             return;
         }
         assertNotNull(errorCode);
-        assertThat(errorCode).isEqualTo(SatelliteManager.SATELLITE_ERROR_NONE);
+        assertThat(errorCode).isEqualTo(SatelliteManager.SATELLITE_RESULT_SUCCESS);
 
         // Send satellite datagram
         String mText = "This is a test datagram message from user";
@@ -2531,7 +2532,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         // Send datagram transfer state should move from IDLE to SENDING.
         assertSingleSendDatagramStateChanged(callback,
                 SatelliteManager.SATELLITE_DATAGRAM_TRANSFER_STATE_SENDING,
-                1, SatelliteManager.SATELLITE_ERROR_NONE);
+                1, SatelliteManager.SATELLITE_RESULT_SUCCESS);
 
         sMockSatelliteServiceManager.setShouldRespondTelephony(true);
         sMockSatelliteServiceManager.clearSentSatelliteDatagramInfo();
@@ -2564,7 +2565,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
             return;
         }
         assertNotNull(errorCode);
-        assertThat(errorCode).isEqualTo(SatelliteManager.SATELLITE_ERROR_NONE);
+        assertThat(errorCode).isEqualTo(SatelliteManager.SATELLITE_RESULT_SUCCESS);
         assertTrue(sMockSatelliteServiceManager.waitForEventOnSendSatelliteDatagram(1));
 
         /**
@@ -2579,15 +2580,15 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         assertThat(callback.getSendDatagramStateChange(0)).isEqualTo(
                 new SatelliteTransmissionUpdateCallbackTest.DatagramStateChangeArgument(
                         SatelliteManager.SATELLITE_DATAGRAM_TRANSFER_STATE_SENDING,
-                        1, SatelliteManager.SATELLITE_ERROR_NONE));
+                        1, SatelliteManager.SATELLITE_RESULT_SUCCESS));
         assertThat(callback.getSendDatagramStateChange(1)).isEqualTo(
                 new SatelliteTransmissionUpdateCallbackTest.DatagramStateChangeArgument(
                         SatelliteManager.SATELLITE_DATAGRAM_TRANSFER_STATE_SEND_SUCCESS,
-                        0, SatelliteManager.SATELLITE_ERROR_NONE));
+                        0, SatelliteManager.SATELLITE_RESULT_SUCCESS));
         assertThat(callback.getSendDatagramStateChange(2)).isEqualTo(
                 new SatelliteTransmissionUpdateCallbackTest.DatagramStateChangeArgument(
                         SatelliteManager.SATELLITE_DATAGRAM_TRANSFER_STATE_IDLE,
-                        0, SatelliteManager.SATELLITE_ERROR_NONE));
+                        0, SatelliteManager.SATELLITE_RESULT_SUCCESS));
         assertTrue(sMockSatelliteServiceManager.waitForEventMockPointingUiActivityStarted(1));
         assertTrue(sMockSatelliteServiceManager.restoreSatellitePointingUiClassName());
 
@@ -2620,7 +2621,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
             return;
         }
         assertNotNull(errorCode);
-        assertThat(errorCode).isEqualTo(SatelliteManager.SATELLITE_ERROR_NONE);
+        assertThat(errorCode).isEqualTo(SatelliteManager.SATELLITE_RESULT_SUCCESS);
         assertTrue(sMockSatelliteServiceManager.waitForEventOnSendSatelliteDatagram(1));
 
         /**
@@ -2635,15 +2636,15 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         assertThat(callback.getSendDatagramStateChange(0)).isEqualTo(
                 new SatelliteTransmissionUpdateCallbackTest.DatagramStateChangeArgument(
                         SatelliteManager.SATELLITE_DATAGRAM_TRANSFER_STATE_SENDING,
-                        1, SatelliteManager.SATELLITE_ERROR_NONE));
+                        1, SatelliteManager.SATELLITE_RESULT_SUCCESS));
         assertThat(callback.getSendDatagramStateChange(1)).isEqualTo(
                 new SatelliteTransmissionUpdateCallbackTest.DatagramStateChangeArgument(
                         SatelliteManager.SATELLITE_DATAGRAM_TRANSFER_STATE_SEND_SUCCESS,
-                        0, SatelliteManager.SATELLITE_ERROR_NONE));
+                        0, SatelliteManager.SATELLITE_RESULT_SUCCESS));
         assertThat(callback.getSendDatagramStateChange(2)).isEqualTo(
                 new SatelliteTransmissionUpdateCallbackTest.DatagramStateChangeArgument(
                         SatelliteManager.SATELLITE_DATAGRAM_TRANSFER_STATE_IDLE,
-                        0, SatelliteManager.SATELLITE_ERROR_NONE));
+                        0, SatelliteManager.SATELLITE_RESULT_SUCCESS));
         assertTrue(sMockSatelliteServiceManager.waitForEventMockPointingUiActivityStarted(1));
         assertTrue(sMockSatelliteServiceManager.restoreSatellitePointingUiClassName());
 
@@ -2668,7 +2669,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
             return;
         }
         assertNotNull(errorCode);
-        assertThat(errorCode).isEqualTo(SatelliteManager.SATELLITE_ERROR_NONE);
+        assertThat(errorCode).isEqualTo(SatelliteManager.SATELLITE_RESULT_SUCCESS);
 
         transmissionUpdateCallback.clearReceiveDatagramStateChanges();
         sMockSatelliteServiceManager.sendOnPendingDatagrams();
@@ -2677,7 +2678,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         // Datagram transfer state changes from IDLE to RECEIVING.
         assertSingleReceiveDatagramStateChanged(transmissionUpdateCallback,
                 SatelliteManager.SATELLITE_DATAGRAM_TRANSFER_STATE_RECEIVING,
-                0, SatelliteManager.SATELLITE_ERROR_NONE);
+                0, SatelliteManager.SATELLITE_RESULT_SUCCESS);
 
         transmissionUpdateCallback.clearReceiveDatagramStateChanges();
         stopTransmissionUpdates(transmissionUpdateCallback);
@@ -2716,15 +2717,15 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         assertThat(transmissionUpdateCallback.getReceiveDatagramStateChange(0)).isEqualTo(
                 new SatelliteTransmissionUpdateCallbackTest.DatagramStateChangeArgument(
                         SatelliteManager.SATELLITE_DATAGRAM_TRANSFER_STATE_RECEIVING,
-                        0, SatelliteManager.SATELLITE_ERROR_NONE));
+                        0, SatelliteManager.SATELLITE_RESULT_SUCCESS));
         assertThat(transmissionUpdateCallback.getReceiveDatagramStateChange(1)).isEqualTo(
                 new SatelliteTransmissionUpdateCallbackTest.DatagramStateChangeArgument(
                         SatelliteManager.SATELLITE_DATAGRAM_TRANSFER_STATE_RECEIVE_SUCCESS,
-                        0, SatelliteManager.SATELLITE_ERROR_NONE));
+                        0, SatelliteManager.SATELLITE_RESULT_SUCCESS));
         assertThat(transmissionUpdateCallback.getReceiveDatagramStateChange(2)).isEqualTo(
                 new SatelliteTransmissionUpdateCallbackTest.DatagramStateChangeArgument(
                         SatelliteManager.SATELLITE_DATAGRAM_TRANSFER_STATE_IDLE,
-                        0, SatelliteManager.SATELLITE_ERROR_NONE));
+                        0, SatelliteManager.SATELLITE_RESULT_SUCCESS));
 
         transmissionUpdateCallback.clearReceiveDatagramStateChanges();
         stopTransmissionUpdates(transmissionUpdateCallback);
@@ -2746,7 +2747,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
             return null;
         }
         assertNotNull(errorCode);
-        assertThat(errorCode).isEqualTo(SatelliteManager.SATELLITE_ERROR_NONE);
+        assertThat(errorCode).isEqualTo(SatelliteManager.SATELLITE_RESULT_SUCCESS);
         return transmissionUpdateCallback;
     }
 
