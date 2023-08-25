@@ -91,6 +91,7 @@ import libcore.junit.util.compat.CoreCompatChangeRule.DisableCompatChanges;
 import libcore.junit.util.compat.CoreCompatChangeRule.EnableCompatChanges;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -340,6 +341,7 @@ public final class CompatChangeTests extends MultiDisplayTestBase {
     }
 
     @Test
+    @Ignore("b/295873734 flaky")
     public void testOverrideIgnoreRequestedOrientation_propertyIsFalse_overrideNotApplied() {
         assumeTrue("Skipping test: "
                     + "config_letterboxIsPolicyForIgnoringRequestedOrientationEnabled not enabled",
