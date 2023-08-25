@@ -89,12 +89,6 @@ class RawSensitivityTest(its_base_test.ItsBaseTest):
         fmt = define_raw_stats_fmt(props)
         cap = cam.do_capture(req, fmt)
 
-        if self.debug_mode:
-          img = image_processing_utils.convert_capture_to_rgb_image(
-              cap, props=props)
-          image_processing_utils.write_image(
-              img, f'{name_with_log_path}_{s}_{e}ns.jpg', True)
-
         # Measure variance
         _, var_image = image_processing_utils.unpack_rawstats_capture(cap)
         cfa_idxs = image_processing_utils.get_canonical_cfa_order(props)
@@ -114,9 +108,14 @@ class RawSensitivityTest(its_base_test.ItsBaseTest):
       pylab.title(_NAME)
       matplotlib.pyplot.savefig(f'{name_with_log_path}_variances.png')
 
-      # Test that each shot is noisier than previous
+      # Test each shot noisier than previous and save img on FAIL
       for i in range(len(variances) - 1):
         if variances[i] >= variances[i+1]/_VAR_THRESH:
+          req = capture_request_utils.auto_capture_request()
+          img = image_processing_utils.convert_capture_to_rgb_image(
+              cam.do_capture(req, cam.CAP_YUV), props=props)
+          image_processing_utils.write_image(
+              img, f'{name_with_log_path}_scene.jpg', True)
           raise AssertionError(f'variances [i]: {variances[i]:5f}, [i+1]: '
                                f'{variances[i+1]:.5f}, THRESH: {_VAR_THRESH}')
 
