@@ -29,7 +29,7 @@ import static org.junit.Assume.assumeTrue;
 import android.companion.virtual.VirtualDeviceManager;
 import android.companion.virtual.VirtualDeviceParams;
 import android.content.Context;
-import android.content.pm.PackageManager;
+import android.content.res.Resources;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
 import android.hardware.display.VirtualDisplayConfig;
@@ -80,8 +80,11 @@ public class VirtualInputOnUnownedDisplayTest {
     @Before
     public void setUp() {
         final Context context = getApplicationContext();
-        assumeTrue(context.getPackageManager().hasSystemFeature(
-                PackageManager.FEATURE_COMPANION_DEVICE_SETUP));
+        assumeTrue(context.getResources().getBoolean(
+                Resources.getSystem().getIdentifier(
+                        "config_enableVirtualDeviceManager",
+                        "bool",
+                        "android")));
         final VirtualDeviceManager vdm = context.getSystemService(VirtualDeviceManager.class);
         mVirtualDevice = vdm.createVirtualDevice(mFakeAssociationRule.getAssociationInfo().getId(),
                 new VirtualDeviceParams.Builder().build());

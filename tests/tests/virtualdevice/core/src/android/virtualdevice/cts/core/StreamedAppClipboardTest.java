@@ -71,6 +71,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.res.Resources;
 import android.graphics.PixelFormat;
 import android.graphics.Point;
 import android.hardware.display.DisplayManager;
@@ -165,7 +166,11 @@ public class StreamedAppClipboardTest {
         MockitoAnnotations.initMocks(this);
         mContext = getApplicationContext();
         final PackageManager packageManager = mContext.getPackageManager();
-        assumeTrue(packageManager.hasSystemFeature(PackageManager.FEATURE_COMPANION_DEVICE_SETUP));
+        assumeTrue(mContext.getResources().getBoolean(
+                Resources.getSystem().getIdentifier(
+                        "config_enableVirtualDeviceManager",
+                        "bool",
+                        "android")));
         assumeTrue(packageManager.hasSystemFeature(
                 PackageManager.FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS));
         // TODO(b/261155110): Re-enable tests once freeform mode is supported in Virtual Display.
