@@ -24,7 +24,6 @@ import its_base_test
 import its_session_utils
 from mobly import test_runner
 import numpy as np
-import opencv_processing_utils
 import zoom_capture_utils
 
 
@@ -132,7 +131,7 @@ class LowLatencyZoomTest(its_base_test.ItsBaseTest):
 
         # Find the center circle in img and check if it's cropped
         circle = zoom_capture_utils.find_center_circle(
-            img, img_name, size, z_result, z_min, debug=debug)
+            img, img_name, size, scaled_zoom, z_min, debug=debug)
 
         test_data[i] = {'z': z_result, 'circle': circle, 'r_tol': radius_tol,
                         'o_tol': offset_tol, 'fl': cap_fl}
