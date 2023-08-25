@@ -168,7 +168,7 @@ public abstract class SensorCtsTestActivity extends BaseSensorTestActivity {
     }
 
     /**
-     * Dummy {@link RunListener}.
+     * Placeholder {@link RunListener}.
      * It is only used to handle logging into the UI.
      */
     private class SensorRunListener extends RunListener {
