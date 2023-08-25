@@ -367,6 +367,7 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
         separateTestJournal();
 
         launchActivity(LANDSCAPE_ORIENTATION_ACTIVITY);
+        mInstrumentation.getUiAutomation().syncInputTransactions();
         mWmState.assertVisibility(LANDSCAPE_ORIENTATION_ACTIVITY, true /* visible */);
         reportedSizes = getLastReportedSizesForActivity(LANDSCAPE_ORIENTATION_ACTIVITY);
         assertEquals("landscape activity should be in landscape",
