@@ -46,6 +46,7 @@ import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 import android.content.ComponentName;
+import android.content.pm.PackageManager;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.ActivityManagerTestBase;
 import android.server.wm.Condition;
@@ -132,6 +133,7 @@ public class TransitionSelectionTests extends ActivityManagerTestBase {
     // Test task open/close under normal timing
     @Test
     public void testOpenTask_NeitherWallpaper() {
+        assumeFalse(isAutomotive() && hasSplitscreenMultitaskingFeature());
         testOpenTask(
                 false /*bottomWallpaper*/,
                 false /*topWallpaper*/,
@@ -155,6 +157,7 @@ public class TransitionSelectionTests extends ActivityManagerTestBase {
 
     @Test
     public void testCloseTask_NeitherWallpaper() {
+        assumeFalse(isAutomotive() && hasSplitscreenMultitaskingFeature());
         testCloseTask(
                 false /*bottomWallpaper*/,
                 false /*topWallpaper*/,
@@ -271,6 +274,7 @@ public class TransitionSelectionTests extends ActivityManagerTestBase {
     // before AM receives its activitiyStopped
     @Test
     public void testCloseTask_NeitherWallpaper_SlowStop() {
+        assumeFalse(isAutomotive() && hasSplitscreenMultitaskingFeature());
         testCloseTask(
                 false /*bottomWallpaper*/,
                 false /*topWallpaper*/,
@@ -282,6 +286,7 @@ public class TransitionSelectionTests extends ActivityManagerTestBase {
 
     @Test
     public void testCloseTask_BottomWallpaper_TopNonResizable_SlowStop() {
+        assumeFalse(isAutomotive() && hasSplitscreenMultitaskingFeature());
         testCloseTask(
                 true /*bottomWallpaper*/,
                 false /*topWallpaper*/,
@@ -533,5 +538,22 @@ public class TransitionSelectionTests extends ActivityManagerTestBase {
                 "Picked wrong transition",
                 expectedTransit,
                 mWmState.getDefaultDisplayLastTransition());
+    }
+
+    /**
+     * Checks whether the device is automotive
+     */
+    private boolean isAutomotive() {
+        PackageManager pm =  mContext.getPackageManager();
+        return pm.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE);
+    }
+
+    /**
+     * Checks whether the device has automotive splitscreen multitasking feature enabled
+     */
+    private boolean hasSplitscreenMultitaskingFeature() {
+        PackageManager pm = mContext.getPackageManager();
+        return pm.hasSystemFeature(/* PackageManager.FEATURE_CAR_SPLITSCREEN_MULTITASKING */
+                "android.software.car.splitscreen_multitasking");
     }
 }
