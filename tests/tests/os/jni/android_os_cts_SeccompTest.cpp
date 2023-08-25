@@ -48,7 +48,6 @@ jboolean android_security_cts_SeccompBpfTest_nativeInstallTestFilter(
     minijail_enter(j);
     minijail_destroy(j);
 
-    close(policyFd);
     return true;
 #endif
 }
