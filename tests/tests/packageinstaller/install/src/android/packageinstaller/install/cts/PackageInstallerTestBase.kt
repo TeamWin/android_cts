@@ -39,6 +39,7 @@ import android.content.pm.PackageInstaller.SessionParams.MODE_FULL_INSTALL
 import android.content.pm.PackageManager
 import android.provider.DeviceConfig
 import android.support.test.uiautomator.By
+import android.support.test.uiautomator.BySelector
 import android.support.test.uiautomator.UiDevice
 import android.support.test.uiautomator.Until
 import android.util.Log
@@ -161,7 +162,14 @@ open class PackageInstallerTestBase {
      * Wait for session's install result and return it
      */
     protected fun getInstallSessionResult(timeout: Long = TIMEOUT): SessionResult {
-        return installSessionResult.poll(timeout, TimeUnit.MILLISECONDS)
+        return getInstallSessionResult(installSessionResult, timeout)
+    }
+
+    protected fun getInstallSessionResult(
+        installResult: LinkedBlockingQueue<SessionResult>,
+        timeout: Long = TIMEOUT
+    ): SessionResult {
+        return installResult.poll(timeout, TimeUnit.MILLISECONDS)
             ?: SessionResult(null /* status */, null /* preapproval */, "Fail to poll result")
     }
 
@@ -361,16 +369,24 @@ open class PackageInstallerTestBase {
      * @param resId The resource ID of the button to click
      */
     fun clickInstallerUIButton(resId: String) {
+        clickInstallerUIButton(By.res(PACKAGE_INSTALLER_PACKAGE_NAME, resId))
+    }
+
+    /**
+     * Click a button in the UI of the installer app
+     *
+     * @param bySelector The bySelector of the button to click
+     */
+    fun clickInstallerUIButton(bySelector: BySelector) {
         val startTime = System.currentTimeMillis()
         while (startTime + TIMEOUT > System.currentTimeMillis()) {
             try {
-                uiDevice.wait(Until.findObject(By.res(PACKAGE_INSTALLER_PACKAGE_NAME, resId)), 1000)
-                        .click()
+                uiDevice.wait(Until.findObject(bySelector), 1000).click()
                 return
             } catch (ignore: Throwable) {
             }
         }
-        Assert.fail("Failed to click the button: $resId")
+        Assert.fail("Failed to click the button: $bySelector")
     }
 
     /**
