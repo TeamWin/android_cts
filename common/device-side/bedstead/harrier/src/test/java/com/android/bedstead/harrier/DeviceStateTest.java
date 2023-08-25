@@ -16,8 +16,6 @@
 
 package com.android.bedstead.harrier;
 
-import com.android.bedstead.harrier.annotations.EnsureDefaultContentSuggestionsServiceEnabled;
-import com.android.bedstead.harrier.annotations.EnsureDefaultContentSuggestionsServiceDisabled;
 import static android.Manifest.permission.INTERACT_ACROSS_PROFILES;
 import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
 import static android.app.AppOpsManager.OPSTR_FINE_LOCATION;
@@ -63,6 +61,8 @@ import android.view.contentcapture.ContentCaptureManager;
 import com.android.bedstead.harrier.annotations.EnsureBluetoothDisabled;
 import com.android.bedstead.harrier.annotations.EnsureBluetoothEnabled;
 import com.android.bedstead.harrier.annotations.EnsureCanAddUser;
+import com.android.bedstead.harrier.annotations.EnsureDefaultContentSuggestionsServiceDisabled;
+import com.android.bedstead.harrier.annotations.EnsureDefaultContentSuggestionsServiceEnabled;
 import com.android.bedstead.harrier.annotations.EnsureDemoMode;
 import com.android.bedstead.harrier.annotations.EnsureDoesNotHaveAppOp;
 import com.android.bedstead.harrier.annotations.EnsureDoesNotHavePermission;
@@ -90,6 +90,7 @@ import com.android.bedstead.harrier.annotations.EnsureHasSecondaryUser;
 import com.android.bedstead.harrier.annotations.EnsureHasTvProfile;
 import com.android.bedstead.harrier.annotations.EnsureHasUserRestriction;
 import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
+import com.android.bedstead.harrier.annotations.EnsureHasWorkProfileKt;
 import com.android.bedstead.harrier.annotations.EnsureNotDemoMode;
 import com.android.bedstead.harrier.annotations.EnsurePackageNotInstalled;
 import com.android.bedstead.harrier.annotations.EnsurePasswordNotSet;
@@ -103,7 +104,6 @@ import com.android.bedstead.harrier.annotations.EnsureWifiDisabled;
 import com.android.bedstead.harrier.annotations.EnsureWifiEnabled;
 import com.android.bedstead.harrier.annotations.FailureMode;
 import com.android.bedstead.harrier.annotations.OtherUser;
-import com.android.bedstead.harrier.annotations.RequireAdbRoot;
 import com.android.bedstead.harrier.annotations.RequireAdbOverWifi;
 import com.android.bedstead.harrier.annotations.RequireAospBuild;
 import com.android.bedstead.harrier.annotations.RequireCnGmsBuild;
@@ -150,6 +150,7 @@ import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDeviceOwne
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDpc;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoProfileOwner;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasProfileOwner;
+import com.android.bedstead.harrier.annotations.enterprise.EnsureHasProfileOwnerKt;
 import com.android.bedstead.harrier.annotations.enterprise.MostImportantCoexistenceTest;
 import com.android.bedstead.harrier.annotations.enterprise.MostRestrictiveCoexistenceTest;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnBackgroundDeviceOwnerUser;
@@ -1623,9 +1624,9 @@ public class DeviceStateTest {
         assertThat(sDeviceState.dpc().testApp().targetSdkVersion()).isEqualTo(28);
     }
 
-    @EnsureHasProfileOwner(key = EnsureHasProfileOwner.DEFAULT_KEY, isPrimary = true)
+    @EnsureHasProfileOwner(key = EnsureHasProfileOwnerKt.DEFAULT_KEY, isPrimary = true)
     @AdditionalQueryParameters(
-            forTestApp = EnsureHasProfileOwner.DEFAULT_KEY,
+            forTestApp = EnsureHasProfileOwnerKt.DEFAULT_KEY,
             query = @Query(targetSdkVersion = @IntegerQuery(isEqualTo = 28))
     )
     @Test
@@ -1633,9 +1634,9 @@ public class DeviceStateTest {
         assertThat(sDeviceState.dpc().testApp().targetSdkVersion()).isEqualTo(28);
     }
 
-    @EnsureHasWorkProfile(dpcKey = EnsureHasWorkProfile.DEFAULT_KEY, dpcIsPrimary = true)
+    @EnsureHasWorkProfile(dpcKey = EnsureHasWorkProfileKt.DEFAULT_KEY, dpcIsPrimary = true)
     @AdditionalQueryParameters(
-            forTestApp = EnsureHasWorkProfile.DEFAULT_KEY,
+            forTestApp = EnsureHasWorkProfileKt.DEFAULT_KEY,
             query = @Query(targetSdkVersion = @IntegerQuery(isEqualTo = 28))
     )
     @Test

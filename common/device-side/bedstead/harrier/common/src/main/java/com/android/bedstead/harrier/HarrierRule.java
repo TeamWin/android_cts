@@ -16,9 +16,17 @@
 
 package com.android.bedstead.harrier;
 
+import com.android.queryable.annotations.Query;
+
 import org.junit.rules.TestRule;
 
 /** A @Rule used on device by Harrier. */
+// Annotating this class with @Query as a workaround to add this as a data type to a field
+// in annotations that are called upon by @AutoAnnotation (for e.g. EnsureHasWorkProfile).
+// @AutoAnnotation is not able to set default value for a field with an annotated data type,
+// so we try to pass the default value explicitly that is accessed via reflection through this
+// class.
+@Query
 public abstract class HarrierRule implements TestRule {
     /** Sets that we should skip tearing down between tests. */
     abstract void setSkipTestTeardown(boolean skipTestTeardown);

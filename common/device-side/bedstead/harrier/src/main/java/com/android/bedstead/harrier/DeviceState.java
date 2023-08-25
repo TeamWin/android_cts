@@ -143,6 +143,7 @@ import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDelegate;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDeviceOwner;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoProfileOwner;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasProfileOwner;
+import com.android.bedstead.harrier.annotations.enterprise.EnsureHasProfileOwnerKt;
 import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy;
 import com.android.bedstead.harrier.annotations.enterprise.MostImportantCoexistenceTest;
 import com.android.bedstead.harrier.annotations.enterprise.MostRestrictiveCoexistenceTest;
@@ -258,7 +259,6 @@ public final class DeviceState extends HarrierRule {
             "permission-instrumentation-package";
     private static final String ADDITIONAL_FEATURES_KEY = "additional-features";
     private boolean mSkipTestTeardown;
-    private boolean mSkipShareableAndNonShareableStateTeardown;
     private boolean mSkipClassTeardown;
     private boolean mSkipTests;
     private boolean mFailTests;
@@ -361,10 +361,6 @@ public final class DeviceState extends HarrierRule {
         mSkipTestTeardown = skipTestTeardown;
     }
 
-    void setSkipShareableAndNonShareableStateTeardown(boolean skip) {
-        mSkipShareableAndNonShareableStateTeardown = skip;
-    }
-
     @Override
     void setUsingBedsteadJUnit4(boolean usingBedsteadJUnit4) {
         mUsingBedsteadJUnit4 = usingBedsteadJUnit4;
@@ -427,54 +423,53 @@ public final class DeviceState extends HarrierRule {
         String testName = description.getMethodName();
 
         try {
-            Log.d(LOG_TAG, "Preparing state for test " + testName);
-
-            if (mOriginalSwitchedUser == null) {
-                mOriginalSwitchedUser = TestApis.users().current();
-            }
-            testApps().snapshot();
-            Tags.clearTags();
-            Tags.addTag(Tags.USES_DEVICESTATE);
-            assumeFalse(mSkipTestsReason, mSkipTests);
-            assertFalse(mFailTestsReason, mFailTests);
-            TestApis.packages().features().addAll(mAdditionalFeatures);
-
-            // Ensure that tests only see events from the current test
-            EventLogs.resetLogs();
-
-            // Avoid cached activities on screen
-            TestApis.activities().clearAllActivities();
-
-            mMinSdkVersionCurrentTest = mMinSdkVersion;
-            List<Annotation> annotations = getAnnotations(description);
-            applyAnnotations(annotations, /* isTest= */ true);
-            String coexistenceOption = TestApis.instrumentation().arguments().getString(
-                    "COEXISTENCE", "?");
-            if (coexistenceOption.equals("true")) {
-                ensureFeatureFlagEnabled(NAMESPACE_DEVICE_POLICY_MANAGER,
-                        PERMISSION_BASED_ACCESS_EXPERIMENT_FLAG);
-                ensureFeatureFlagEnabled(NAMESPACE_DEVICE_POLICY_MANAGER,
-                        ENABLE_DEVICE_POLICY_ENGINE_FLAG);
-            } else if (coexistenceOption.equals("false")) {
-                ensureFeatureFlagNotEnabled(NAMESPACE_DEVICE_POLICY_MANAGER,
-                        PERMISSION_BASED_ACCESS_EXPERIMENT_FLAG);
-                ensureFeatureFlagNotEnabled(NAMESPACE_DEVICE_POLICY_MANAGER,
-                        ENABLE_DEVICE_POLICY_ENGINE_FLAG);
-            }
-
-            Log.d(LOG_TAG, "Finished preparing state for test " + testName);
+            prepareTestState(description);
 
             base.evaluate();
         } finally {
             Log.d(LOG_TAG, "Tearing down state for test " + testName);
-            if (!mSkipShareableAndNonShareableStateTeardown) {
-                teardownNonShareableState();
-                if (!mSkipTestTeardown) {
-                    teardownShareableState();
-                }
+            teardownNonShareableState();
+            if (!mSkipTestTeardown) {
+                teardownShareableState();
             }
             Log.d(LOG_TAG, "Finished tearing down state for test " + testName);
         }
+    }
+
+    void prepareTestState(Description description) throws Throwable {
+        String testName = description.getMethodName();
+
+        Log.d(LOG_TAG, "Preparing state for test " + testName);
+
+        if (mOriginalSwitchedUser == null) {
+            mOriginalSwitchedUser = TestApis.users().current();
+        }
+        testApps().snapshot();
+        Tags.clearTags();
+        Tags.addTag(Tags.USES_DEVICESTATE);
+        assumeFalse(mSkipTestsReason, mSkipTests);
+        assertFalse(mFailTestsReason, mFailTests);
+        TestApis.packages().features().addAll(mAdditionalFeatures);
+
+        // Ensure that tests only see events from the current test
+        EventLogs.resetLogs();
+
+        // Avoid cached activities on screen
+        TestApis.activities().clearAllActivities();
+
+        mMinSdkVersionCurrentTest = mMinSdkVersion;
+        List<Annotation> annotations = getAnnotations(description);
+        applyAnnotations(annotations, /* isTest= */ true);
+        String coexistenceOption = TestApis.instrumentation().arguments().getString("COEXISTENCE", "?");
+        if (coexistenceOption.equals("true")) {
+            ensureFeatureFlagEnabled(NAMESPACE_DEVICE_POLICY_MANAGER, PERMISSION_BASED_ACCESS_EXPERIMENT_FLAG);
+            ensureFeatureFlagEnabled(NAMESPACE_DEVICE_POLICY_MANAGER, ENABLE_DEVICE_POLICY_ENGINE_FLAG);
+        } else if (coexistenceOption.equals("false")) {
+            ensureFeatureFlagNotEnabled(NAMESPACE_DEVICE_POLICY_MANAGER, PERMISSION_BASED_ACCESS_EXPERIMENT_FLAG);
+            ensureFeatureFlagNotEnabled(NAMESPACE_DEVICE_POLICY_MANAGER, ENABLE_DEVICE_POLICY_ENGINE_FLAG);
+        }
+
+        Log.d(LOG_TAG, "Finished preparing state for test " + testName);
     }
 
     private void applyAnnotations(List<Annotation> annotations, boolean isTest)
@@ -4330,7 +4325,7 @@ public final class DeviceState extends HarrierRule {
             String restriction) {
         ensureHasProfileOwner(onUser,
                 /* isPrimary= */ false, /* isParentInstance= */ false,
-                /* affiliationIds= */ Set.of(), EnsureHasProfileOwner.DEFAULT_KEY,
+                /* affiliationIds= */ Set.of(), EnsureHasProfileOwnerKt.DEFAULT_KEY,
                 new TestAppProvider().query());
 
         RemotePolicyManager dpc = profileOwner(onUser);
@@ -4367,7 +4362,7 @@ public final class DeviceState extends HarrierRule {
             String restriction) {
         ensureHasProfileOwner(onUser,
                 /* isPrimary= */ false, /* isParentInstance= */ false,
-                /* affiliationIds= */ Set.of(), EnsureHasProfileOwner.DEFAULT_KEY,
+                /* affiliationIds= */ Set.of(), EnsureHasProfileOwnerKt.DEFAULT_KEY,
                 new TestAppProvider().query());
 
         RemotePolicyManager dpc = profileOwner(onUser);

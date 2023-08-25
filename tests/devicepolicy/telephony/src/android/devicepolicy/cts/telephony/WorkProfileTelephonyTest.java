@@ -258,8 +258,8 @@ public final class WorkProfileTelephonyTest {
 
     @EnsureGlobalSettingSet(key =
             Settings.Global.ALLOW_WORK_PROFILE_TELEPHONY_FOR_NON_DPM_ROLE_HOLDERS, value = "1")
-    @EnsureHasWorkProfile(isOrganizationOwned = true)
     @RequireRunOnInitialUser
+    @EnsureHasWorkProfile(isOrganizationOwned = true)
     @Postsubmit(reason = "new test")
     @Test
     @CddTest(requirements = {"7.4.1.4/C-3-1"})

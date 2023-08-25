@@ -16,7 +16,6 @@
 
 package android.devicepolicy.cts;
 
-import static android.content.Context.RECEIVER_EXPORTED;
 import static android.content.pm.CrossProfileApps.ACTION_CAN_INTERACT_ACROSS_PROFILES_CHANGED;
 import static android.provider.Settings.ACTION_MANAGE_CROSS_PROFILE_ACCESS;
 
@@ -43,11 +42,9 @@ import android.app.admin.RemoteDevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.pm.CrossProfileApps;
 import android.os.UserHandle;
 import android.stats.devicepolicy.EventId;
-import android.util.Log;
 
 import androidx.test.core.app.ApplicationProvider;
 
@@ -57,7 +54,6 @@ import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.CrossUserTest;
 import com.android.bedstead.harrier.annotations.EnsureDoesNotHavePermission;
 import com.android.bedstead.harrier.annotations.EnsureHasNoProfile;
-import com.android.bedstead.harrier.annotations.EnsureHasNoWorkProfile;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
 import com.android.bedstead.harrier.annotations.PermissionTest;
@@ -770,8 +766,8 @@ public final class CrossProfileAppsTest {
     }
 
     @Test
-    @EnsureHasWorkProfile
     @RequireRunOnInitialUser
+    @EnsureHasWorkProfile
     public void canRequestInteractAcrossProfiles_permissionNotRequested_returnsFalse()
             throws Exception {
         RemoteDevicePolicyManager profileOwner = sDeviceState.profileOwner(WORK_PROFILE)
@@ -790,8 +786,8 @@ public final class CrossProfileAppsTest {
 
     // TODO(b/199148889): add require INTERACT_ACROSS_PROFILE permission for the dpc.
     @Test
-    @EnsureHasWorkProfile
     @RequireRunOnInitialUser
+    @EnsureHasWorkProfile
     public void canRequestInteractAcrossProfiles_profileOwner_returnsFalse()
             throws Exception {
         RemoteDevicePolicyManager profileOwner = sDeviceState.profileOwner(WORK_PROFILE)

@@ -16,7 +16,7 @@
 
 package com.android.bedstead.harrier.annotations;
 
-import static com.android.bedstead.harrier.annotations.EnsureHasWorkProfile.ENSURE_HAS_WORK_PROFILE_PRIORITY;
+import static com.android.bedstead.harrier.annotations.EnsureHasWorkProfileKt.ENSURE_HAS_WORK_PROFILE_PRIORITY;
 import static com.android.bedstead.nene.types.OptionalBoolean.ANY;
 
 import com.android.bedstead.nene.types.OptionalBoolean;
