@@ -64,6 +64,14 @@ EXPECTED_BY_SRGB = 0.066
 COLORSPACE_TRIANGLE_AREA_TOL = 0.00028
 
 
+def capture_scene_image(cam, props, name_with_log_path):
+  """Take a picture of the scene on test FAIL."""
+  req = capture_request_utils.auto_capture_request()
+  img = convert_capture_to_rgb_image(
+      cam.do_capture(req, cam.CAP_YUV), props=props)
+  write_image(img, f'{name_with_log_path}_scene.jpg', True)
+
+
 def convert_image_to_uint8(image):
   image *= 255
   return image.astype(numpy.uint8)

@@ -133,11 +133,8 @@ class RawSensitivityBurstTest(its_base_test.ItsBaseTest):
       # Assert each shot is noisier than previous and save img on FAIL
       for i in x[0:-1]:
         if variances[i] >= variances[i+1] / _VAR_THRESH:
-          req = capture_request_utils.auto_capture_request()
-          img = image_processing_utils.convert_capture_to_rgb_image(
-              cam.do_capture(req, cam.CAP_YUV), props=props)
-          image_processing_utils.write_image(
-              img, f'{name_with_log_path}_scene.jpg', True)
+          image_processing_utils.capture_scene_image(
+              cam, props, name_with_log_path)
           raise AssertionError(
               f'variances [i]: {variances[i] :.5f}, [i+1]: '
               f'{variances[i+1]:.5f}, THRESH: {_VAR_THRESH}')
