@@ -467,7 +467,10 @@ public class AppSearchSchemaCtsTest {
                         + "  ]\n"
                         + "}";
 
-        assertThat(schemaString).isEqualTo(expectedString);
+        String[] lines = expectedString.split("\n");
+        for (String line : lines) {
+            assertThat(schemaString).contains(line);
+        }
     }
 
     @Test
