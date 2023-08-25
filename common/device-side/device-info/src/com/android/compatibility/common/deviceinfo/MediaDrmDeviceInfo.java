@@ -38,7 +38,7 @@ public class MediaDrmDeviceInfo extends DeviceInfo {
     private static final String TAG = MediaDrmDeviceInfo.class.getSimpleName();
 
     @Override
-    @TargetApi(Build.VERSION_CODES.S)
+    @TargetApi(Build.VERSION_CODES.R)
     protected void collectDeviceInfo(DeviceInfoStore store) throws Exception {
         List<UUID> supportedCryptoSchemes = MediaDrm.getSupportedCryptoSchemes();
 
