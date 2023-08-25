@@ -492,7 +492,8 @@ public class SELinuxHostTest extends BaseHostJUnit4Test {
      */
     public static boolean isSepolicySplit(ITestDevice device)
             throws DeviceNotAvailableException {
-        return device.doesFileExist("/system/etc/selinux/plat_file_contexts");
+        return PropertyUtil.getFirstApiLevel(device) > 34 /* Build.VERSION_CODES.UPSIDE_DOWN_CAKE */
+                || device.doesFileExist("/system/etc/selinux/plat_file_contexts");
     }
 
     /**
