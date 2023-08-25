@@ -18,12 +18,10 @@ package android.photopicker.cts;
 
 import static android.photopicker.cts.PhotoPickerCloudUtils.addImage;
 import static android.photopicker.cts.PhotoPickerCloudUtils.containsExcept;
-import static android.photopicker.cts.PhotoPickerCloudUtils.disableCloudMediaAndClearAllowedCloudProviders;
 import static android.photopicker.cts.PhotoPickerCloudUtils.enableCloudMediaAndSetAllowedCloudProviders;
 import static android.photopicker.cts.PhotoPickerCloudUtils.extractMediaIds;
-import static android.photopicker.cts.PhotoPickerCloudUtils.getAllowedProvidersDeviceConfig;
-import static android.photopicker.cts.PhotoPickerCloudUtils.isCloudMediaEnabled;
 import static android.photopicker.cts.PickerProviderMediaGenerator.MediaGenerator;
+import static android.photopicker.cts.PickerProviderMediaGenerator.setCloudProvider;
 import static android.photopicker.cts.PickerProviderMediaGenerator.syncCloudProvider;
 import static android.photopicker.cts.util.PhotoPickerFilesUtils.createImagesAndGetUris;
 import static android.photopicker.cts.util.PhotoPickerFilesUtils.deleteMedia;
@@ -48,19 +46,15 @@ import android.photopicker.cts.cloudproviders.CloudProviderSecondary;
 import android.provider.MediaStore;
 import android.util.Pair;
 
-import androidx.annotation.Nullable;
 import androidx.test.filters.SdkSuppress;
 import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -83,35 +77,7 @@ public class CloudPhotoPickerTest extends PhotoPickerBaseTest {
 
     private static final String CLOUD_ID1 = "CLOUD_ID1";
     private static final String CLOUD_ID2 = "CLOUD_ID2";
-    private static boolean sCloudMediaPreviouslyEnabled;
-    private static String sPreviouslyAllowedCloudProviders;
-    @Nullable
-    private static String sPreviouslySetCloudProvider;
 
-    @BeforeClass
-    public static void setUpBeforeClass() throws IOException {
-        // Store the current CMP configs, so that we can reset them at the end of the test.
-        sCloudMediaPreviouslyEnabled = isCloudMediaEnabled();
-        if (sCloudMediaPreviouslyEnabled) {
-            sPreviouslyAllowedCloudProviders = getAllowedProvidersDeviceConfig();
-        }
-        sPreviouslySetCloudProvider = getCurrentCloudProvider();
-
-        // This is a self-instrumentation test, so both "target" package name and "own" package name
-        // should be the same (android.photopicker.cts).
-        enableCloudMediaAndSetAllowedCloudProviders(sTargetPackageName);
-    }
-
-    @AfterClass
-    public static void tearDownClass() throws Exception {
-        // Reset CloudMedia configs.
-        if (sCloudMediaPreviouslyEnabled) {
-            enableCloudMediaAndSetAllowedCloudProviders(sPreviouslyAllowedCloudProviders);
-        } else {
-            disableCloudMediaAndClearAllowedCloudProviders();
-        }
-        setCloudProvider(sPreviouslySetCloudProvider);
-    }
     @Before
     public void setUp() throws Exception {
         super.setUp();
@@ -127,7 +93,10 @@ public class CloudPhotoPickerTest extends PhotoPickerBaseTest {
         mCloudPrimaryMediaGenerator.setMediaCollectionId(COLLECTION_1);
         mCloudSecondaryMediaGenerator.setMediaCollectionId(COLLECTION_1);
 
-        setCloudProvider(null);
+        // This is a self-instrumentation test, so both "target" package name and "own" package name
+        // should be the same (android.photopicker.cts).
+        enableCloudMediaAndSetAllowedCloudProviders(sTargetPackageName);
+        setCloudProvider(mContext, null);
     }
 
     @After
@@ -140,7 +109,7 @@ public class CloudPhotoPickerTest extends PhotoPickerBaseTest {
         }
         mUriList.clear();
         if (mCloudPrimaryMediaGenerator != null) {
-            setCloudProvider(null);
+            setCloudProvider(mContext, null);
         }
     }
 
@@ -240,7 +209,7 @@ public class CloudPhotoPickerTest extends PhotoPickerBaseTest {
 
     @Test
     public void testProviderSwitchSuccess() throws Exception {
-        setCloudProvider(CloudProviderPrimary.AUTHORITY);
+        setCloudProvider(mContext, CloudProviderPrimary.AUTHORITY);
         assertThat(MediaStore.isCurrentCloudMediaProviderAuthority(mContext.getContentResolver(),
                         CloudProviderPrimary.AUTHORITY)).isTrue();
 
@@ -254,7 +223,7 @@ public class CloudPhotoPickerTest extends PhotoPickerBaseTest {
 
         containsExcept(mediaIds, CLOUD_ID1, CLOUD_ID2);
 
-        setCloudProvider(CloudProviderSecondary.AUTHORITY);
+        setCloudProvider(mContext, CloudProviderSecondary.AUTHORITY);
         assertThat(MediaStore.isCurrentCloudMediaProviderAuthority(mContext.getContentResolver(),
                         CloudProviderPrimary.AUTHORITY)).isFalse();
 
@@ -266,11 +235,11 @@ public class CloudPhotoPickerTest extends PhotoPickerBaseTest {
 
     @Test
     public void testProviderSwitchFailure() throws Exception {
-        setCloudProvider(CloudProviderNoIntentFilter.AUTHORITY);
+        setCloudProvider(mContext, CloudProviderNoIntentFilter.AUTHORITY);
         assertThat(MediaStore.isCurrentCloudMediaProviderAuthority(mContext.getContentResolver(),
                         CloudProviderPrimary.AUTHORITY)).isFalse();
 
-        setCloudProvider(CloudProviderNoPermission.AUTHORITY);
+        setCloudProvider(mContext, CloudProviderNoPermission.AUTHORITY);
         assertThat(MediaStore.isCurrentCloudMediaProviderAuthority(mContext.getContentResolver(),
                         CloudProviderPrimary.AUTHORITY)).isFalse();
     }
@@ -357,7 +326,7 @@ public class CloudPhotoPickerTest extends PhotoPickerBaseTest {
         assertThat(mediaIds).containsNoneIn(Collections.singletonList(CLOUD_ID1));
 
         // Now set the cloud provider and verify that notification succeeds
-        setCloudProvider(CloudProviderPrimary.AUTHORITY);
+        setCloudProvider(mContext, CloudProviderPrimary.AUTHORITY);
         assertThat(MediaStore.isCurrentCloudMediaProviderAuthority(mContext.getContentResolver(),
                         CloudProviderPrimary.AUTHORITY)).isTrue();
 
@@ -379,18 +348,18 @@ public class CloudPhotoPickerTest extends PhotoPickerBaseTest {
 
     @Test
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU)
-    public void testStorageManagerKnowsCloudProvider() throws Exception {
+    public void testStorageManagerKnowsCloudProvider() {
         final StorageManager storageManager = mContext.getSystemService(StorageManager.class);
 
-        setCloudProvider(CloudProviderPrimary.AUTHORITY);
+        setCloudProvider(mContext, CloudProviderPrimary.AUTHORITY);
         assertThat(storageManager.getCloudMediaProvider())
                 .isEqualTo(CloudProviderPrimary.AUTHORITY);
 
-        setCloudProvider(CloudProviderSecondary.AUTHORITY);
+        setCloudProvider(mContext, CloudProviderSecondary.AUTHORITY);
         assertThat(storageManager.getCloudMediaProvider())
                 .isEqualTo(CloudProviderSecondary.AUTHORITY);
 
-        setCloudProvider(null);
+        setCloudProvider(mContext, null);
         assertThat(storageManager.getCloudMediaProvider()).isNull();
     }
 
