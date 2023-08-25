@@ -23,7 +23,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
-public class BdRateCalculatorTests {
+public class BdQualityCalculatorTests {
 
     /* The following data is sourced from the VMAF library's implementation of
      * a BD rate calculator, which is in turn sourced from JCTVC E137 data:
@@ -34,7 +34,6 @@ public class BdRateCalculatorTests {
      * difference in interpolation methods (Netflix's own PCHIP implementation
      * vs the Apache Commons Math's SplineInterpolator used here).
      */
-
     @Test
     public void calculate_dataFromJCTVCE137_1() {
         RateDistortionCurve baselineCurve =
@@ -61,13 +60,13 @@ public class BdRateCalculatorTests {
                         .build();
         BdRateCalculator bdRateCalculator = BdRateCalculator.create();
 
-        double bdRate =
-                BdRateCalculator.create()
+        double bdQuality =
+                BdQualityCalculator.create()
                         .calculate(
                                 RateDistortionCurvePair.createClusteredPair(
                                         baselineCurve, targetCurve));
 
-        assertThat(bdRate).isWithin(0.00005).of(-0.00465215420752807);
+        assertThat(bdQuality).isWithin(0.00005).of(-0.00310);
     }
 
     @Test
@@ -95,43 +94,44 @@ public class BdRateCalculatorTests {
                         .addPoint(RateDistortionPoint.create(18727.134, 36.5822))
                         .build();
 
-        double bdRate =
-                BdRateCalculator.create()
+        double bdQuality =
+                BdQualityCalculator.create()
                         .calculate(
                                 RateDistortionCurvePair.createClusteredPair(
                                         baselineCurve, targetCurve));
 
-        assertThat(bdRate).isWithin(0.00005).of(-0.018779823450567612);
+        assertThat(bdQuality).isWithin(0.00005).of(0.028504);
     }
 
     @Test
     public void calculate_ctsData_1() {
         RateDistortionCurve baselineCurve =
                 RateDistortionCurve.builder()
-                        .addPoint(RateDistortionPoint.create(5076, 60))
-                        .addPoint(RateDistortionPoint.create(6853.00, 70))
-                        .addPoint(RateDistortionPoint.create(7945, 73))
-                        .addPoint(RateDistortionPoint.create(9892, 77))
-                        .addPoint(RateDistortionPoint.create(11862, 80))
+                        .addPoint(RateDistortionPoint.create(3797, 64))
+                        .addPoint(RateDistortionPoint.create(4830, 67))
+                        .addPoint(RateDistortionPoint.create(6016, 70))
+                        .addPoint(RateDistortionPoint.create(8037, 74))
+                        .addPoint(RateDistortionPoint.create(10110, 76))
+                        .addPoint(RateDistortionPoint.create(12090, 77))
                         .build();
-
         RateDistortionCurve targetCurve =
                 RateDistortionCurve.builder()
-                        .addPoint(RateDistortionPoint.create(5025.10, 61.54))
-                        .addPoint(RateDistortionPoint.create(5083.60, 60.78))
-                        .addPoint(RateDistortionPoint.create(5999.40, 68.98))
-                        .addPoint(RateDistortionPoint.create(7951.50, 75.18))
-                        .addPoint(RateDistortionPoint.create(9950.60, 79.16))
-                        .addPoint(RateDistortionPoint.create(11899.20, 82.11))
+                        .addPoint(RateDistortionPoint.create(2522.60, 79.34))
+                        .addPoint(RateDistortionPoint.create(4022.00, 87.73))
+                        .addPoint(RateDistortionPoint.create(6019.50, 93.18))
+                        .addPoint(RateDistortionPoint.create(8039.90, 95.90))
+                        .addPoint(RateDistortionPoint.create(10069.00, 97.34))
+                        .addPoint(RateDistortionPoint.create(12021.30, 98.22))
                         .build();
 
-        double bdRate =
-                BdRateCalculator.create()
+        double bdQuality =
+                BdQualityCalculator.create()
                         .calculate(
                                 RateDistortionCurvePair.createClusteredPair(
                                         baselineCurve, targetCurve));
 
-        // The target curve should require less bitrate, indicating a passing test.
-        assertThat(bdRate).isLessThan(0.0);
+        // We have no ground-truth data, but we know that the target curve should have higher
+        // quality than the baseline (and thus this should be greater than zero).
+        assertThat(bdQuality).isGreaterThan(0);
     }
 }

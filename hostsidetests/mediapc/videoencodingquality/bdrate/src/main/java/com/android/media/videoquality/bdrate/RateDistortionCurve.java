@@ -23,7 +23,7 @@ import java.util.Comparator;
 
 /**
  * Collection of {@link RateDistortionPoint}s that represent a rate-distorion curve for a given
- * encoder configuration.
+ * encoder configuration for calculating Bjontegaard-Delta (BD).
  *
  * <p>{@link RateDistortionPoint}s are maintained in ascending bitrate order, which allows for easy
  * precondition checks (such as monotonicity).
@@ -57,5 +57,29 @@ public abstract class RateDistortionCurve {
             setPoints(mPointsBuilder.build());
             return autoBuild();
         }
+    }
+
+    public double[] getLog10RatesArray() {
+        return points().stream().mapToDouble(p -> Math.log10(p.rate())).toArray();
+    }
+
+    public double[] getDistortionsArray() {
+        return points().stream().mapToDouble(RateDistortionPoint::distortion).toArray();
+    }
+
+    public double getMinDistortion() {
+        return points().first().distortion();
+    }
+
+    public double getMaxDistortion() {
+        return points().last().distortion();
+    }
+
+    public double getMinLog10Bitrate() {
+        return Math.log10(points().first().rate());
+    }
+
+    public double getMaxLog10Bitrate() {
+        return Math.log10(points().last().rate());
     }
 }
