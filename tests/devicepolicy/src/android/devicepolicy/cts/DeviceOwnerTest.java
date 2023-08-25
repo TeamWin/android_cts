@@ -217,10 +217,9 @@ public final class DeviceOwnerTest {
         } finally {
             // After attempting and failing to set the device owner, it will remain as an active
             // admin for a short while
-            Poll.forValue("Active admins",
-                            () -> TestApis.devicePolicy().getActiveAdmins(
-                                    TestApis.users().system()))
-                    .toMeet(i -> !i.contains(TEST_ONLY_DPC_COMPONENT))
+            Poll.forValue("Is admin active", () ->
+                            TestApis.devicePolicy().isAdminActive(TEST_ONLY_DPC_COMPONENT))
+                    .toBeEqualTo(false)
                     .errorOnFail("Expected active admins to not contain DPC")
                     .await();
         }
@@ -249,10 +248,9 @@ public final class DeviceOwnerTest {
         } finally {
             // After attempting and failing to set the device owner, it will remain as an active
             // admin for a short while
-            Poll.forValue("Active admins",
-                            () -> TestApis.devicePolicy().getActiveAdmins(
-                                    TestApis.users().system()))
-                    .toMeet(i -> !i.contains(TEST_ONLY_DPC_COMPONENT))
+            Poll.forValue("Is admin active", () ->
+                            TestApis.devicePolicy().isAdminActive(TEST_ONLY_DPC_COMPONENT))
+                    .toBeEqualTo(false)
                     .errorOnFail("Expected active admins to not contain DPC")
                     .await();
         }
@@ -281,10 +279,9 @@ public final class DeviceOwnerTest {
         } finally {
             // After attempting and failing to set the device owner, it will remain as an active
             // admin for a short while
-            Poll.forValue("Active admins",
-                            () -> TestApis.devicePolicy().getActiveAdmins(
-                                    TestApis.users().system()))
-                    .toMeet(i -> !i.contains(TEST_ONLY_DPC_COMPONENT))
+            Poll.forValue("Is admin active", () ->
+                            TestApis.devicePolicy().isAdminActive(TEST_ONLY_DPC_COMPONENT))
+                    .toBeEqualTo(false)
                     .errorOnFail("Expected active admins to not contain DPC")
                     .await();
         }
@@ -339,10 +336,9 @@ public final class DeviceOwnerTest {
         } finally {
             // After attempting and failing to set the device owner, it will remain as an active
             // admin for a short while
-            Poll.forValue("Active admins",
-                            () -> TestApis.devicePolicy().getActiveAdmins(
-                                    TestApis.users().system()))
-                    .toMeet(i -> !i.contains(NOT_TEST_ONLY_DPC_COMPONENT))
+            Poll.forValue("Is admin active", () ->
+                            TestApis.devicePolicy().isAdminActive(TEST_ONLY_DPC_COMPONENT))
+                    .toBeEqualTo(false)
                     .errorOnFail("Expected active admins to not contain DPC")
                     .await();
         }
