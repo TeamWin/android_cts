@@ -23,7 +23,6 @@ import numpy as np
 import its_base_test
 import camera_properties_utils
 import capture_request_utils
-import image_processing_utils
 import its_session_utils
 import video_processing_utils
 import zoom_capture_utils
@@ -49,39 +48,6 @@ _RECORDING_DURATION = 2  # seconds
 _ZOOM_COMP_MAX_THRESH = 1.15
 _ZOOM_MIN_THRESH = 2.0
 _ZOOM_RATIO = 2
-
-
-def _extract_key_frame_from_recording(log_path, file_name):
-  """Extract key frames from recordings.
-
-  Args:
-    log_path: str; file location
-    file_name: str file name for saved video
-
-  Returns:
-    dictionary of images
-  """
-  key_frame_files = []
-  key_frame_files = (
-      video_processing_utils.extract_key_frames_from_video(
-          log_path, file_name)
-  )
-  logging.debug('key_frame_files: %s', key_frame_files)
-
-  # Get the key frame file to process.
-  last_key_frame_file = (
-      video_processing_utils.get_key_frame_to_process(
-          key_frame_files)
-  )
-  logging.debug('last_key_frame: %s', last_key_frame_file)
-  last_key_frame_path = os.path.join(log_path, last_key_frame_file)
-
-  # Convert lastKeyFrame to numpy array
-  np_image = image_processing_utils.convert_image_to_numpy_array(
-      last_key_frame_path)
-  logging.debug('numpy image shape: %s', np_image.shape)
-
-  return np_image
 
 
 class PreviewVideoZoomTest(its_base_test.ItsBaseTest):
@@ -176,9 +142,9 @@ class PreviewVideoZoomTest(its_base_test.ItsBaseTest):
       # Skip unless camera has zoom ability
       vendor_api_level = its_session_utils.get_vendor_api_level(
           self.dut.serial)
-      camera_properties_utils.skip_unless(
-          z_range and vendor_api_level >= its_session_utils.ANDROID14_API_LEVEL
-      )
+      #camera_properties_utils.skip_unless(
+      #    z_range and vendor_api_level >= its_session_utils.ANDROID14_API_LEVEL
+      #)
       logging.debug('Testing zoomRatioRange: %s', str(z_range))
 
       # Determine zoom factors
@@ -240,7 +206,7 @@ class PreviewVideoZoomTest(its_base_test.ItsBaseTest):
                 cam, profile_id, quality, zoom_ratio=z)
 
             # Get key frames from the video recording
-            video_img = _extract_key_frame_from_recording(
+            video_img = video_processing_utils.extract_last_key_frame_from_recording(
                 log_path, video_file_name)
 
             # Find the center circle in video img
@@ -265,7 +231,7 @@ class PreviewVideoZoomTest(its_base_test.ItsBaseTest):
             height = int(size.split('x')[1])
 
             # Get key frames from the preview recording
-            preview_img = _extract_key_frame_from_recording(
+            preview_img = video_processing_utils.extract_last_key_frame_from_recording(
                 log_path, preview_file_name)
 
             # If testing front camera, mirror preview image
