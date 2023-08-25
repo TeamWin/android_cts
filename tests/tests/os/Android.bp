@@ -38,6 +38,7 @@ android_test {
         "hamcrest-library",
         "platformprotosnano",
         "device-time-shell-utils",
+        "android.os.flags-aconfig-java",
     ],
     jni_uses_platform_apis: true,
     jni_libs: [
