@@ -20,6 +20,7 @@ import static android.photopicker.cts.PhotoPickerCloudUtils.disableCloudMediaAnd
 import static android.photopicker.cts.PhotoPickerCloudUtils.enableCloudMediaAndSetAllowedCloudProviders;
 import static android.photopicker.cts.PhotoPickerCloudUtils.getAllowedProvidersDeviceConfig;
 import static android.photopicker.cts.PhotoPickerCloudUtils.isCloudMediaEnabled;
+import static android.photopicker.cts.PickerProviderMediaGenerator.setCloudProvider;
 import static android.photopicker.cts.util.PhotoPickerFilesUtils.createImage;
 import static android.photopicker.cts.util.PhotoPickerFilesUtils.deleteMedia;
 import static android.photopicker.cts.util.PhotoPickerUiUtils.TIMEOUT;
@@ -43,8 +44,6 @@ import android.net.Uri;
 import android.os.Build;
 import android.photopicker.cts.cloudproviders.CloudProviderPrimary;
 
-
-import androidx.annotation.Nullable;
 import androidx.test.filters.SdkSuppress;
 import androidx.test.uiautomator.UiObject;
 
@@ -54,8 +53,6 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
-
-import java.io.IOException;
 
 /**
  * Photo Picker Banner Tests for common flows.
@@ -67,38 +64,35 @@ public class PhotoPickerBannersTest extends PhotoPickerBaseTest {
 
     private static boolean sCloudMediaPreviouslyEnabled;
     private static String sPreviouslyAllowedCloudProviders;
-    @Nullable
-    private static String sPreviouslySetCloudProvider;
     private Uri mLocalMediaFileUri;
 
     @BeforeClass
-    public static void setUpBeforeClass() throws IOException {
+    public static void setUpBeforeClass() {
         // Store the current CMP configs, so that we can reset them at the end of the test.
         sCloudMediaPreviouslyEnabled = isCloudMediaEnabled();
         if (sCloudMediaPreviouslyEnabled) {
             sPreviouslyAllowedCloudProviders = getAllowedProvidersDeviceConfig();
         }
-        sPreviouslySetCloudProvider = getCurrentCloudProvider();
 
         // Override the allowed cloud providers config to enable the banners.
         enableCloudMediaAndSetAllowedCloudProviders(sTargetPackageName);
     }
 
     @AfterClass
-    public static void tearDownClass() throws Exception {
+    public static void tearDownClass() {
         // Reset CloudMedia configs.
         if (sCloudMediaPreviouslyEnabled) {
             enableCloudMediaAndSetAllowedCloudProviders(sPreviouslyAllowedCloudProviders);
         } else {
             disableCloudMediaAndClearAllowedCloudProviders();
         }
-        setCloudProvider(sPreviouslySetCloudProvider);
     }
 
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        setCloudProvider(/* authority */ null);
+
+        setCloudProvider(mContext, /* authority */ null);
 
         // Create a local media file because if there's no media items for the picker grids,
         // the recycler view gets hidden along with the banners.
@@ -118,7 +112,7 @@ public class PhotoPickerBannersTest extends PhotoPickerBaseTest {
 
         deleteMedia(mLocalMediaFileUri, mContext);
 
-        setCloudProvider(/* authority */ null);
+        setCloudProvider(mContext, /* authority */ null);
     }
 
     @Test
@@ -159,7 +153,7 @@ public class PhotoPickerBannersTest extends PhotoPickerBaseTest {
 
     private void setCloudMediaInfoForChooseAppBanner() throws Exception {
         // 1. Set a non-null cloud provider and launch the photo picker.
-        setCloudProvider(CloudProviderPrimary.AUTHORITY);
+        setCloudProvider(mContext, CloudProviderPrimary.AUTHORITY);
         launchPickerActivity();
 
         // 2. Wait for the banner controller construction.
@@ -173,7 +167,7 @@ public class PhotoPickerBannersTest extends PhotoPickerBaseTest {
         verifySettingsActivityIsVisible();
 
         // 3b. Set the cloud provider to None.
-        setCloudProvider(/* authority */ null);
+        setCloudProvider(mContext, /* authority */ null);
 
         // 3c. Go back to the picker.
         sDevice.pressBack();
