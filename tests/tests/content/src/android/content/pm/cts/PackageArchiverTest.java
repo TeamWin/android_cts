@@ -19,6 +19,7 @@ package android.content.pm.cts;
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.content.pm.PackageManager.MATCH_ARCHIVED_PACKAGES;
 import static android.content.pm.PackageManager.MATCH_UNINSTALLED_PACKAGES;
+import static android.content.pm.cts.PackageManagerShellCommandIncrementalTest.executeShellCommand;
 
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
 
@@ -36,10 +37,12 @@ import android.app.ActivityOptions;
 import android.app.Instrumentation;
 import android.app.usage.StorageStats;
 import android.app.usage.StorageStatsManager;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.IIntentReceiver;
 import android.content.IIntentSender;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.IntentSender;
 import android.content.pm.PackageArchiver;
 import android.content.pm.PackageInfo;
@@ -71,7 +74,9 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 // TODO(b/290775207) Add more test cases
@@ -174,6 +179,39 @@ public class PackageArchiverTest {
                 () -> mPackageManager.getPackageInfo(PACKAGE_NAME, /* flags= */ 0));
     }
 
+    @Test
+    public void unarchiveApp() throws IOException, ExecutionException, InterruptedException {
+        installPackage();
+        runWithShellPermissionIdentity(
+                () -> mPackageArchiver.requestArchive(PACKAGE_NAME,
+                        new IntentSender((IIntentSender) mIntentSender)),
+                Manifest.permission.DELETE_PACKAGES);
+        UnarchiveBroadcastReceiver unarchiveReceiver = new UnarchiveBroadcastReceiver();
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(Intent.ACTION_UNARCHIVE_PACKAGE);
+        mContext.registerReceiver(
+                unarchiveReceiver,
+                intentFilter,
+                null,
+                null,
+                Context.RECEIVER_EXPORTED
+        );
+
+        runWithShellPermissionIdentity(
+                () -> mPackageArchiver.requestUnarchive(PACKAGE_NAME),
+                Manifest.permission.INSTALL_PACKAGES);
+        // Make sure broadcast has been sent from PackageManager
+        executeShellCommand("pm wait-for-handler --timeout 2000");
+        // Make sure broadcast has been dispatched from the queue
+        executeShellCommand(String.format(
+                "am wait-for-broadcast-dispatch -a %s -d package:%s",
+                Intent.ACTION_PACKAGE_FULLY_REMOVED, mContext.getPackageName()));
+        assertThat(unarchiveReceiver.mPackage.get()).isEqualTo(PACKAGE_NAME);
+        assertThat(unarchiveReceiver.mAllUsers.get()).isFalse();
+
+        mContext.unregisterReceiver(unarchiveReceiver);
+    }
+
     private void launchTestActivity() {
         final ActivityOptions options = ActivityOptions.makeBasic();
         options.setLaunchWindowingMode(WINDOWING_MODE_FULLSCREEN);
@@ -222,6 +260,24 @@ public class PackageArchiverTest {
                 && !FeatureUtil.isTV()
                 && !FeatureUtil.isWatch()
                 && !FeatureUtil.isVrHeadset();
+    }
+
+    static class UnarchiveBroadcastReceiver extends BroadcastReceiver {
+
+        final CompletableFuture<String> mPackage = new CompletableFuture<>();
+        final CompletableFuture<Boolean> mAllUsers = new CompletableFuture<>();
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (!intent.getAction().equals(Intent.ACTION_UNARCHIVE_PACKAGE)) {
+                return;
+            }
+
+            mPackage.complete(
+                    intent.getStringExtra(PackageArchiver.EXTRA_UNARCHIVE_PACKAGE_NAME));
+            mAllUsers.complete(
+                    intent.getBooleanExtra(PackageArchiver.EXTRA_UNARCHIVE_ALL_USERS, true));
+        }
     }
 
     static class ArchiveIntentSender extends IIntentSender.Stub {
