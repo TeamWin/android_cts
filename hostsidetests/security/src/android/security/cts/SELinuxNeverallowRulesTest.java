@@ -84,7 +84,7 @@ public class SELinuxNeverallowRulesTest extends BaseHostJUnit4Test {
         "LAUNCHING_WITH_S_ONLY",
     };
 
-    private static class NeverAllowRule {
+    protected static class NeverAllowRule {
         public String mText;
         public boolean fullTrebleOnly;
         public boolean launchingWithROnly;
@@ -117,14 +117,7 @@ public class SELinuxNeverallowRulesTest extends BaseHostJUnit4Test {
         }
     }
 
-    /**
-     * Generate the test parameters based on the embedded policy (general_sepolicy.conf).
-     */
-    @Parameters
-    public static Iterable<NeverAllowRule> generateRules() throws Exception {
-        File publicPolicy = SELinuxHostTest.copyResourceToTempFile("/general_sepolicy.conf");
-        String policy = Files.readString(publicPolicy.toPath());
-
+    public static ArrayList<NeverAllowRule> parsePolicy(String policy) throws Exception {
         String patternConditions = Arrays.stream(sConditions)
                 .flatMap(condition -> Stream.of("BEGIN_" + condition, "END_" + condition))
                 .collect(Collectors.joining("|"));
@@ -142,8 +135,8 @@ public class SELinuxNeverallowRulesTest extends BaseHostJUnit4Test {
 
         /* Use a pattern to match all the neverallow rules or a condition. */
         Pattern neverAllowPattern = Pattern.compile(
-                "^\\s*(neverallow\\s.+?;|" + patternConditions + ")",
-                Pattern.MULTILINE | Pattern.DOTALL);
+                "(neverallow\\s[^;]+?;|" + patternConditions + ")",
+                Pattern.MULTILINE);
 
         ArrayList<NeverAllowRule> rules = new ArrayList();
         HashMap<String, Integer> conditions = new HashMap();
@@ -167,9 +160,23 @@ public class SELinuxNeverallowRulesTest extends BaseHostJUnit4Test {
         }
 
         for (Map.Entry<String, Integer> condition : conditions.entrySet()) {
-            assertTrue("End of input while inside " + condition.getKey() + " section",
-                    condition.getValue() == 0);
+            if (condition.getValue() != 0) {
+                throw new Exception("End of input while inside " + condition.getKey() + " section");
+            }
         }
+
+        return rules;
+    }
+
+    /**
+     * Generate the test parameters based on the embedded policy (general_sepolicy.conf).
+     */
+    @Parameters
+    public static Iterable<NeverAllowRule> generateRules() throws Exception {
+        File publicPolicy = SELinuxHostTest.copyResourceToTempFile("/general_sepolicy.conf");
+        String policy = Files.readString(publicPolicy.toPath());
+
+        ArrayList<NeverAllowRule> rules = parsePolicy(policy);
 
         assertTrue("No test generated from the CTS-embedded policy", !rules.isEmpty());
         return rules;
