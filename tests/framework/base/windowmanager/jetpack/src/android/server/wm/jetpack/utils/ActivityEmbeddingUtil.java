@@ -34,6 +34,8 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
+import static java.util.Objects.requireNonNull;
+
 import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Intent;
@@ -61,7 +63,6 @@ import com.android.compatibility.common.util.PollingCheck;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 
 /**
  * Utility class for activity embedding tests.
@@ -346,7 +347,8 @@ public class ActivityEmbeddingUtil {
         }
         waitAndAssertResumed(resumedActivities);
 
-        final Pair<Rect, Rect> expectedBoundsPair = getExpectedBoundsPair(primaryActivity,
+        final Pair<Rect, Rect> expectedBoundsPair = getExpectedBoundsPair(
+                shouldExpandContainers ? requireNonNull(secondaryActivity) : primaryActivity,
                 splitAttributes);
 
         final ActivityEmbeddingComponent activityEmbeddingComponent = getWindowExtensions()
@@ -379,7 +381,8 @@ public class ActivityEmbeddingUtil {
     private static void waitForActivityBoundsEquals(@NonNull Activity activity,
             @NonNull Rect bounds) {
         PollingCheck.waitFor(WAIT_FOR_LIFECYCLE_TIMEOUT_MS,
-                () -> getActivityBounds(activity).equals(bounds));
+                () -> getActivityBounds(activity).equals(bounds),
+                "Expected bounds: " + bounds + ", actual bounds:" + getActivityBounds(activity));
     }
 
     private static boolean waitForResumed(
@@ -650,7 +653,7 @@ public class ActivityEmbeddingUtil {
     public static void assumeActivityEmbeddingSupportedDevice() {
         assumeExtensionSupportedDevice();
         assumeTrue("Device does not support ActivityEmbedding",
-                Objects.requireNonNull(getWindowExtensions())
+                requireNonNull(getWindowExtensions())
                         .getActivityEmbeddingComponent() != null);
     }
 
