@@ -179,17 +179,18 @@ public class TaskFragmentTrustedModeTest extends TaskFragmentOrganizerTestBase {
      */
     @Test
     public void testUntrustedModeTaskFragment_setRelativeBoundsOutsideOfParentBounds() {
-        final Task parentTask = mWmState.getRootTask(mOwnerTaskId);
+        final Task parentTask = mWmState.getTaskByActivity(mOwnerActivityName);
         final Rect parentBounds = new Rect(parentTask.getBounds());
         // Create a TaskFragment with activity embedded in untrusted mode.
         final TaskFragmentInfo info = createTaskFragment(SECOND_UNTRUSTED_EMBEDDING_ACTIVITY);
 
         // Try to set relative bounds that is larger than its parent bounds.
         mTaskFragmentOrganizer.resetLatch();
-        final Rect taskFragBounds = new Rect(parentBounds);
-        taskFragBounds.right++;
+        final Rect taskFragRelativeBounds = new Rect(parentBounds);
+        taskFragRelativeBounds.offsetTo(0, 0);
+        taskFragRelativeBounds.right++;
         final WindowContainerTransaction wct = new WindowContainerTransaction()
-                .setRelativeBounds(info.getToken(), taskFragBounds)
+                .setRelativeBounds(info.getToken(), taskFragRelativeBounds)
                 .setWindowingMode(info.getToken(), WINDOWING_MODE_MULTI_WINDOW);
 
         // It is allowed to set TaskFragment bounds to outside of its parent bounds.
@@ -217,7 +218,7 @@ public class TaskFragmentTrustedModeTest extends TaskFragmentOrganizerTestBase {
      */
     @Test
     public void testUntrustedModeTaskFragment_startActivityInTaskFragmentOutsideOfParentBounds() {
-        final Task parentTask = mWmState.getRootTask(mOwnerTaskId);
+        final Task parentTask = mWmState.getTaskByActivity(mOwnerActivityName);
         final Rect parentBounds = new Rect(parentTask.getBounds());
         final IBinder errorCallbackToken = new Binder();
         final WindowContainerTransaction wct = new WindowContainerTransaction()
