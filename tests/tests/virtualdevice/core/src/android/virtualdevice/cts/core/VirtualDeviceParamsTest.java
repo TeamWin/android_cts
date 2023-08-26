@@ -74,6 +74,7 @@ public class VirtualDeviceParamsTest {
     private static final String SENSOR_VENDOR = "VirtualSensorVendor";
     private static final int PLAYBACK_SESSION_ID = 42;
     private static final int RECORDING_SESSION_ID = 77;
+    private static final ComponentName HOME_COMPONENT = new ComponentName("foo.bar", "foo.bar.Baz");
 
     @Rule
     public final CheckFlagsRule mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
@@ -131,6 +132,22 @@ public class VirtualDeviceParamsTest {
         assertThat(sensorConfig.getType()).isEqualTo(TYPE_ACCELEROMETER);
         assertThat(sensorConfig.getName()).isEqualTo(SENSOR_NAME);
         assertThat(sensorConfig.getVendor()).isEqualTo(SENSOR_VENDOR);
+    }
+
+    @RequiresFlagsEnabled(Flags.FLAG_VDM_CUSTOM_HOME)
+    @Test
+    public void customHome_parcelable_shouldRecreateSuccessfully() {
+        VirtualDeviceParams originalParams = new VirtualDeviceParams.Builder()
+                .setHomeComponent(HOME_COMPONENT)
+                .build();
+
+        Parcel parcel = Parcel.obtain();
+        originalParams.writeToParcel(parcel, 0);
+        parcel.setDataPosition(0);
+
+        VirtualDeviceParams params = VirtualDeviceParams.CREATOR.createFromParcel(parcel);
+        assertThat(params).isEqualTo(originalParams);
+        assertThat(params.getHomeComponent()).isEqualTo(HOME_COMPONENT);
     }
 
     @Test
