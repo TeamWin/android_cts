@@ -207,7 +207,9 @@ public class ConnectivityManagerTestOnMockModem {
     @After
     public void afterTest() {
         // unregister the network call back
-        unregisterNetworkCallback();
+        if (sNetworkCallback != null) {
+            unregisterNetworkCallback();
+        }
     }
 
     private static boolean isMultiSim(TelephonyManager tm) {
@@ -295,6 +297,8 @@ public class ConnectivityManagerTestOnMockModem {
             Log.d(TAG, "unregisterNetworkCallback");
         } catch (IllegalArgumentException e) {
             Log.e(TAG, "IllegalArgumentException during unregisterNetworkCallback(): ", e);
+        } finally {
+            sNetworkCallback = null;
         }
     }
 
