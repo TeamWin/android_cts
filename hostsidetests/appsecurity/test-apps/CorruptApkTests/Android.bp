@@ -19,6 +19,7 @@ package {
 android_test_import {
     name: "CtsCorruptApkTests_b71360999",
     apk: "b71360999.apk",
+    preprocessed: true,
     presigned: true,
     test_suites: [
         "cts",
@@ -29,6 +30,7 @@ android_test_import {
 android_test_import {
     name: "CtsCorruptApkTests_b71361168",
     apk: "b71361168.apk",
+    preprocessed: true,
     presigned: true,
     test_suites: [
         "cts",
@@ -39,6 +41,7 @@ android_test_import {
 android_test_import {
     name: "CtsCorruptApkTests_b79488511",
     apk: "b79488511.apk",
+    preprocessed: true,
     presigned: true,
     test_suites: [
         "cts",

@@ -29,6 +29,7 @@ android_test_import {
 android_test_import {
     name: "CtsCorruptApkTests_Compressed_R",
     apk: "compressed_R.apk",
+    preprocessed: true,
     presigned: true,
     test_suites: [
         "cts",
