@@ -184,7 +184,7 @@ def get_raw_active_array_size(props):
   return aaw, aah
 
 
-class ExposureIsoMultiplierTest(its_base_test.ItsBaseTest):
+class ExposureXIsoTest(its_base_test.ItsBaseTest):
   """Test that a constant brightness is seen as ISO and exposure time vary.
 
   Take a series of shots that have ISO and exposure time chosen to balance
@@ -192,7 +192,7 @@ class ExposureIsoMultiplierTest(its_base_test.ItsBaseTest):
   the images should get noisier.
   """
 
-  def test_exposure_iso_multiplier(self):
+  def test_exposure_x_iso(self):
     mults = []
     r_means = []
     g_means = []

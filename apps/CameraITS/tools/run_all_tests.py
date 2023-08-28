@@ -142,7 +142,7 @@ SUB_CAMERA_TESTS = types.MappingProxyType({
     'scene1_1': (
         'test_burst_sameness_manual',
         'test_dng_noise_model',
-        'test_exposure_iso_multiplier',
+        'test_exposure_x_iso',
         'test_linearity',
     ),
     'scene1_2': (
