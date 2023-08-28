@@ -16,6 +16,7 @@
 package android.text.cts
 
 import android.graphics.text.LineBreakConfig
+import android.platform.test.annotations.RequiresFlagsEnabled
 import android.test.suitebuilder.annotation.SmallTest
 import android.text.BoringLayout
 import android.text.Layout
@@ -31,12 +32,14 @@ import android.text.TextPaint
 import android.text.TextUtils
 import android.text.style.LeadingMarginSpan
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.android.text.flags.Flags.FLAG_USE_BOUNDS_FOR_WIDTH
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
 
 @SmallTest
 @RunWith(AndroidJUnit4::class)
+@RequiresFlagsEnabled(FLAG_USE_BOUNDS_FOR_WIDTH)
 class LayoutBuilderTest {
     private val BORING_TEXT = "hello, world."
     private val STATIC_LAYOUT_TEXT = SpannableString("hello, world").apply {

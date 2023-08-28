@@ -35,6 +35,7 @@ android_test {
         "androidx.test.rules",
         "androidx.test.uiautomator_uiautomator",
         "junit-params",
+        "com.android.text.flags-aconfig-java",
     ],
 
     libs: [
