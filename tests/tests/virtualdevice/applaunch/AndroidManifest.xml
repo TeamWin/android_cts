@@ -45,6 +45,13 @@
 
     <uses-feature android:name="android.software.companion_device_setup" />
 
+    <!--
+     * These permissions are used to verify permission behavior in VirtualDevicePermissionTest.
+     * The test module otherwise does not use these permissions.
+     -->
+    <uses-permission android:name="android.permission.HIGH_SAMPLING_RATE_SENSORS" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
                      android:targetPackage="android.virtualdevice.cts.applaunch"
                      android:label="CTS tests of android.companion.virtual applaunch functionality">
