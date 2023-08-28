@@ -297,8 +297,8 @@ public class BugreportManagerTest extends BaseCarrierApiTest {
 
     @Test
     public void startBugreport_invalidMode() throws Exception {
-        // Current max is BUGREPORT_MODE_DEFAULT (6) as defined by the AIDL.
-        assertExceptionThrownForMode(7, IllegalArgumentException.class);
+        assertExceptionThrownForMode(BugreportParams.BUGREPORT_MODE_MAX_VALUE + 1,
+                IllegalArgumentException.class);
     }
 
     /* Implementatiion of {@link BugreportCallback} that offers wrappers around execution result */
