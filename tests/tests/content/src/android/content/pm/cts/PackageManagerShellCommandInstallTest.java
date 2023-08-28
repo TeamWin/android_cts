@@ -33,6 +33,8 @@ import static android.content.pm.PackageManager.MATCH_STATIC_SHARED_AND_SDK_LIBR
 import static android.content.pm.PackageManager.VERIFICATION_ALLOW;
 import static android.content.pm.PackageManager.VERIFICATION_REJECT;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -337,6 +339,24 @@ public class PackageManagerShellCommandInstallTest {
     public void testAppInstall() throws Exception {
         installPackage(TEST_HW5);
         assertTrue(isAppInstalled(TEST_APP_PACKAGE));
+    }
+
+    @Test
+    public void testAppInstallInvalidUser() throws Exception {
+        File file = new File(createApkPath(TEST_HW5));
+        // MAX_USER_ID = UserHandle.MAX_SECONDARY_USER_ID
+        // ideally the test environment will not reach 999
+        String result = executeShellCommand(
+                "pm " + mInstall + " --user 999" + " -t -g " + file.getPath());
+        assertThat(result).isEqualTo("Failure [user 999 doesn't exist]\n");
+    }
+
+    @Test
+    public void testAppUnInstallInvalidUser() throws Exception {
+        // MAX_USER_ID = UserHandle.MAX_SECONDARY_USER_ID
+        // ideally the test environment will not reach 999
+        String result = executeShellCommand("pm uninstall --user 999 " + TEST_APP_PACKAGE);
+        assertThat(result).isEqualTo("Failure [user 999 doesn't exist]\n");
     }
 
     @Test
