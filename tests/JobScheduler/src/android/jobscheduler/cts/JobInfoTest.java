@@ -19,6 +19,7 @@ package android.jobscheduler.cts;
 import static android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET;
 import static android.net.NetworkCapabilities.NET_CAPABILITY_VALIDATED;
 
+import android.app.job.Flags;
 import android.app.job.JobInfo;
 import android.content.ClipData;
 import android.content.Intent;
@@ -30,10 +31,12 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.PersistableBundle;
+import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.provider.ContactsContract;
 import android.provider.MediaStore;
 
 import java.lang.reflect.Method;
+import java.util.Set;
 
 /**
  * Tests related to creating and reading JobInfo objects.
@@ -146,6 +149,76 @@ public class JobInfoTest extends BaseJobSchedulerTest {
         assertEquals(0, ji.getClipGrantFlags());
         // Confirm JobScheduler accepts the JobInfo object.
         mJobScheduler.schedule(ji);
+    }
+
+    @RequiresFlagsEnabled(Flags.FLAG_JOB_DEBUG_INFO_APIS)
+    public void testDebugTags() {
+        // Confirm defaults
+        JobInfo ji = new JobInfo.Builder(JOB_ID, kJobServiceComponent).build();
+        assertEquals(0, ji.getDebugTags().size());
+        // Confirm JobScheduler accepts the JobInfo object.
+        mJobScheduler.schedule(ji);
+
+        ji = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                .addDebugTag("a")
+                .addDebugTag("b")
+                .addDebugTag("c")
+                .build();
+        assertEquals(Set.of("a", "b", "c"), ji.getDebugTags());
+        // Confirm JobScheduler accepts the JobInfo object.
+        mJobScheduler.schedule(ji);
+
+        ji = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                .addDebugTag("a")
+                .addDebugTag("b")
+                .addDebugTag("c")
+                .removeDebugTag("b")
+                .build();
+        assertEquals(Set.of("a", "c"), ji.getDebugTags());
+        // Confirm JobScheduler accepts the JobInfo object.
+        mJobScheduler.schedule(ji);
+
+        // Tag is at the character limit
+        final String maxLengthDebugTag =
+                "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_"
+                        + "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-";
+        ji = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                .addDebugTag(maxLengthDebugTag)
+                .build();
+        assertEquals(Set.of(maxLengthDebugTag), ji.getDebugTags());
+        // Confirm JobScheduler accepts the JobInfo object.
+        mJobScheduler.schedule(ji);
+
+        try {
+            new JobInfo.Builder(JOB_ID, kJobServiceComponent).addDebugTag(null).build();
+            fail("Successfully built a JobInfo with a null debug tag");
+        } catch (Exception e) {
+            // Success
+        }
+        try {
+            new JobInfo.Builder(JOB_ID, kJobServiceComponent).addDebugTag("").build();
+            fail("Successfully built a JobInfo with an empty debug tag");
+        } catch (Exception e) {
+            // Success
+        }
+        try {
+            new JobInfo.Builder(JOB_ID, kJobServiceComponent).addDebugTag("        ").build();
+            fail("Successfully built a JobInfo with a whitespace-only debug tag");
+        } catch (Exception e) {
+            // Success
+        }
+        try {
+            new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                    .setTraceTag(maxLengthDebugTag + "x").build();
+            fail("Successfully built a JobInfo with a long debug tag");
+        } catch (Exception e) {
+            // Success
+        }
+        JobInfo.Builder jiBuilder = new JobInfo.Builder(JOB_ID, kJobServiceComponent);
+        for (int i = 0; i < 33; ++i) {
+            jiBuilder.addDebugTag(Integer.toString(i));
+        }
+        assertBuildFails("Successfully built a JobInfo with too many debug tags", jiBuilder);
     }
 
     public void testDeviceIdle() {
@@ -652,6 +725,58 @@ public class JobInfoTest extends BaseJobSchedulerTest {
         assertFalse(ji.isRequireStorageNotLow());
         // Confirm JobScheduler accepts the JobInfo object.
         mJobScheduler.schedule(ji);
+    }
+
+    @RequiresFlagsEnabled(Flags.FLAG_JOB_DEBUG_INFO_APIS)
+    public void testTraceTag() {
+        // Confirm defaults
+        JobInfo ji = new JobInfo.Builder(JOB_ID, kJobServiceComponent).build();
+        assertNull(ji.getTraceTag());
+        // Confirm JobScheduler accepts the JobInfo object.
+        mJobScheduler.schedule(ji);
+
+        ji = new JobInfo.Builder(JOB_ID, kJobServiceComponent).setTraceTag("tracing").build();
+        assertEquals("tracing", ji.getTraceTag());
+        // Confirm JobScheduler accepts the JobInfo object.
+        mJobScheduler.schedule(ji);
+
+        // Tag is at the character limit
+        final String maxLengthTraceTag =
+                "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_"
+                        + "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-";
+        ji = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                .setTraceTag(maxLengthTraceTag)
+                .build();
+        assertEquals(maxLengthTraceTag, ji.getTraceTag());
+        // Confirm JobScheduler accepts the JobInfo object.
+        mJobScheduler.schedule(ji);
+
+        ji = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                .setTraceTag(null)
+                .build();
+        assertNull(null, ji.getTraceTag());
+        // Confirm JobScheduler accepts the JobInfo object.
+        mJobScheduler.schedule(ji);
+
+        try {
+            new JobInfo.Builder(JOB_ID, kJobServiceComponent).setTraceTag("").build();
+            fail("Successfully built a JobInfo with an empty trace tag");
+        } catch (Exception e) {
+            // Success
+        }
+        try {
+            new JobInfo.Builder(JOB_ID, kJobServiceComponent).setTraceTag("        ").build();
+            fail("Successfully built a JobInfo with a whitespace-only trace tag");
+        } catch (Exception e) {
+            // Success
+        }
+        try {
+            new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                    .setTraceTag(maxLengthTraceTag + "x").build();
+            fail("Successfully built a JobInfo with a long trace tag");
+        } catch (Exception e) {
+            // Success
+        }
     }
 
     public void testTransientExtras() {
