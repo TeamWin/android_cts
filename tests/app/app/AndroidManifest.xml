@@ -16,6 +16,7 @@
  -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+          xmlns:tools="http://schemas.android.com/tools"
      package="android.app.stubs">
 
     <permission android:name="android.app.stubs.permission.TEST_GRANTED"
@@ -596,6 +597,12 @@
             android:process=":remote"
             android:excludeFromRecents="true"
             android:exported="true" />
+
+        <!-- (b/197936012) Remove startup provider due to test timeout issue -->
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="${applicationId}.androidx-startup"
+            tools:node="remove" />
     </application>
 
 </manifest>
