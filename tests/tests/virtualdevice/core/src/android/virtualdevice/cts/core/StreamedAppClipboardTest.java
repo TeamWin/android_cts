@@ -93,6 +93,7 @@ import android.virtualdevice.cts.common.util.VirtualDeviceTestUtils;
 
 import androidx.annotation.NonNull;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.filters.FlakyTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.AdoptShellPermissionsRule;
@@ -205,6 +206,7 @@ public class StreamedAppClipboardTest {
     }
 
     @Test
+    @FlakyTest(bugId = 297288652)
     public void oneAppOnVirtualDevice_canWriteAndReadClipboard() {
         ClipboardManager clipboard = mContext.createDeviceContext(
                 DEVICE_ID_DEFAULT).getSystemService(ClipboardManager.class);
@@ -360,6 +362,7 @@ public class StreamedAppClipboardTest {
         assertThat(clipData).isNull();
     }
 
+    @FlakyTest(bugId = 293404975)
     @Test
     public void twoAppsOnVirtualDevice_firstAppWrites_secondAppCanRead() {
         final Intent firstAppIntent =
