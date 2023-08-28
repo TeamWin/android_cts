@@ -160,6 +160,25 @@
         If Garage Mode ran as required, the pass button will be enabled.</string>
     <string name="car_component_power_on_policy_check">Verify Component Power On Policy</string>
     <string name="car_component_power_off_policy_check">Verify Component Power Off Policy</string>
+    <string name="car_uxre_test">Car UX Restrictions Test</string>
+    <string name="car_uxre_test_req_distraction_optimization">Requires Distraction Optimization</string>
+    <string name="car_uxre_test_not_req_distraction_optimization">No Distraction Optimization required</string>
+    <string name="car_uxre_test_parked">Parked</string>
+    <string name="car_uxre_test_idling">Idling</string>
+    <string name="car_uxre_test_moving">Moving</string>
+    <string name="car_uxre_test_unknown">Unknown</string>
+    <string name="car_uxre_test_driving_state">Driving state: %s</string>
+    <string name="car_uxre_test_test_pass">Finished, please mark test as passed</string>
+    <string name="car_uxre_test_test_progress">Test in progress</string>
+    <string name="car_uxre_test_desc">
+        For driver: Put the car in driving mode and make sure that the CTS Verifier activity is
+        blocked. Then park the car and make sure the CTS Verifier activity is shown again and mark
+        it as pass; mark it as fail if the CTS Verifier activity does not get blocked.
+        \n\n
+        For passenger: Put the car in driving mode and make sure that the CTS Verifier activity is
+        not blocked. Then park the car and make sure the CTS Verifier activity is still shown and
+        mark it as pass; mark it as fail if the CTS Verifier activity gets blocked.
+    </string>
     <string name="car_power_policy_test">Car Power Policy Test</string>
     <string name="car_power_policy_test_desc">
         This test verifies that Wi-Fi, Bluetooth and Location settings UI behaviors with respect
