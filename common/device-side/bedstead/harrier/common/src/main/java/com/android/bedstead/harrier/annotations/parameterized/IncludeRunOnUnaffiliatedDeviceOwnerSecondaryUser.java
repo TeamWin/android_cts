@@ -19,9 +19,9 @@ package com.android.bedstead.harrier.annotations.parameterized;
 import static com.android.bedstead.harrier.annotations.AnnotationRunPrecedence.EARLY;
 
 import com.android.bedstead.harrier.annotations.AnnotationRunPrecedence;
-import com.android.bedstead.harrier.annotations.RequireRunOnAdditionalUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnSecondaryUser;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDeviceOwner;
+import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDelegate;
 import com.android.bedstead.harrier.annotations.meta.ParameterizedAnnotation;
 
 import java.lang.annotation.ElementType;
@@ -39,7 +39,9 @@ import java.lang.annotation.Target;
 @RequireRunOnSecondaryUser
 @EnsureHasDeviceOwner(
         isPrimary = true,
-        affiliationIds = {})
+        affiliationIds = {},
+        key = "dpc")
+@EnsureHasNoDelegate
 public @interface IncludeRunOnUnaffiliatedDeviceOwnerSecondaryUser {
     /**
      * Weight sets the order that annotations will be resolved.

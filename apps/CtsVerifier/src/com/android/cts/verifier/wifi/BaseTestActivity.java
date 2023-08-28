@@ -17,7 +17,6 @@
 package com.android.cts.verifier.wifi;
 
 import android.content.Context;
-import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.text.Editable;
@@ -111,19 +110,11 @@ public abstract class BaseTestActivity extends PassFailButtons.Activity implemen
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     }
 
-    private boolean isWear() {
-        return getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH);
-    }
-
-
-
     @Override
     protected void onStop() {
         super.onStop();
-        if (!isWear()) {
-            mTestCase.stop();
-            mWifiProgress.setVisibility(View.GONE);
-        }
+        mTestCase.stop();
+        mWifiProgress.setVisibility(View.GONE);
     }
 
     @Override

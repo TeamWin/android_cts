@@ -20,13 +20,12 @@ import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.car.Car;
+import android.car.CarInfoManager;
 import android.car.CarVersion;
 import android.car.PlatformVersion;
-import android.car.test.ApiCheckerRule;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.ServiceConnection;
-import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.IBinder;
 import android.os.SystemProperties;
@@ -40,11 +39,8 @@ import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.ApiTest;
-import com.android.compatibility.common.util.RequiredFeatureRule;
 
 import org.junit.After;
-import org.junit.ClassRule;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -55,13 +51,7 @@ import java.util.concurrent.TimeUnit;
 @SmallTest
 @RunWith(AndroidJUnit4.class)
 @AppModeFull(reason = "Test relies on other server to connect to.")
-public class CarTest {
-    @ClassRule
-    public static final RequiredFeatureRule sRequiredFeatureRule = new RequiredFeatureRule(
-            PackageManager.FEATURE_AUTOMOTIVE);
-
-    @Rule
-    public final ApiCheckerRule mApiCheckerRule = new ApiCheckerRule.Builder().build();
+public class CarTest extends AbstractCarTestCase {
 
     private static final long DEFAULT_WAIT_TIMEOUT_MS = 2000;
 
@@ -158,11 +148,40 @@ public class CarTest {
         assertThat(Car.isApiAndPlatformVersionAtLeast(Car.API_VERSION_MAJOR_INT,
                 Build.VERSION.SDK_INT)).isTrue();
         assertThat(Car.isApiAndPlatformVersionAtLeast(Car.API_VERSION_MAJOR_INT,
-                Build.VERSION.SDK_INT + 1)).isFalse();
-        assertThat(Car.isApiAndPlatformVersionAtLeast(Car.API_VERSION_MAJOR_INT,
                 Car.API_VERSION_MINOR_INT, Build.VERSION.SDK_INT)).isTrue();
-        assertThat(Car.isApiAndPlatformVersionAtLeast(Car.API_VERSION_MAJOR_INT,
-                Car.API_VERSION_MINOR_INT, Build.VERSION.SDK_INT + 1)).isFalse();
+        if ("REL".equals(Build.VERSION.CODENAME)) { // SDK + 1 only works for released platform.
+            assertThat(Car.isApiAndPlatformVersionAtLeast(Car.API_VERSION_MAJOR_INT,
+                    Build.VERSION.SDK_INT + 1)).isFalse();
+            assertThat(Car.isApiAndPlatformVersionAtLeast(Car.API_VERSION_MAJOR_INT,
+                    Car.API_VERSION_MINOR_INT, Build.VERSION.SDK_INT + 1)).isFalse();
+        }
+    }
+
+    @ApiTest(apis =
+            {"android.car.Car#getCarManager(String)", "android.car.Car#getCarManager(Class)"})
+    @Test
+    public void testGetCarManager() throws Exception {
+        mCar = Car.createCar(mContext);
+        Object noSuchService = mCar.getCarManager("No such service");
+        mExpect.that(noSuchService).isNull();
+
+        // TODO(b/217131789): Add expectThat which wraps around mExpect.that.
+        CarInfoManager carInfoManager =
+                (CarInfoManager) mCar.getCarManager(Car.INFO_SERVICE);
+        mExpect.that(carInfoManager).isNotNull();
+
+        CarInfoManager carInfoManager2 =
+                (CarInfoManager) mCar.getCarManager(Car.INFO_SERVICE);
+        mExpect.that(carInfoManager2).isNotNull();
+        mExpect.that(carInfoManager2).isSameInstanceAs(carInfoManager);
+
+        CarInfoManager carInfoManagerByClass = mCar.getCarManager(CarInfoManager.class);
+        mExpect.that(carInfoManagerByClass).isNotNull();
+        mExpect.that(carInfoManagerByClass).isSameInstanceAs(carInfoManager);
+
+        CarInfoManager carInfoManagerByClass2 = mCar.getCarManager(CarInfoManager.class);
+        mExpect.that(carInfoManagerByClass2).isNotNull();
+        mExpect.that(carInfoManagerByClass2).isSameInstanceAs(carInfoManager);
     }
 
     @ApiTest(apis = {"android.car.Car#getCarVersion"})

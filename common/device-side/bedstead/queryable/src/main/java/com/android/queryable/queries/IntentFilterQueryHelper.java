@@ -85,6 +85,12 @@ public final class IntentFilterQueryHelper<E extends Queryable> implements Inten
     }
 
     @Override
+    public boolean isEmptyQuery() {
+        return Queryable.isEmptyQuery(mActionsQueryHelper)
+                && Queryable.isEmptyQuery(mCategoriesQueryHelper);
+    }
+
+    @Override
     public boolean matches(IntentFilter value) {
         Set<String> actions = new HashSet<>();
         Set<String> categories = new HashSet<>();

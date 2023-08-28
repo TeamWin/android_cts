@@ -204,8 +204,16 @@ public class MediaParserHostSideTest extends DeviceTestCase implements IBuildRec
         String trackCodecs = getSingleMediaParserReportedEvent().getTrackCodecs();
         List<String> actualTrackCodecs =
                 Arrays.asList(trackCodecs.split(MEDIAPARSER_METRICS_SEPARATOR));
-        assertThat(actualTrackCodecs).hasSize(2);
-        assertThat(actualTrackCodecs).contains("mp4a.40.2");
+        assertThat(actualTrackCodecs.get(1)).isEqualTo("mp4a.40.2");
+        // In one of MediaParser's updates, the backing ExoPlayer version added support for video
+        // codec parsing, so this test must support both old and new MediaParser versions (in some
+        // Android branches, a new version of the test can run against an older Mainline version).
+        // The old version would output an empty video codec string, and the new version reports the
+        // correct "avc1.64001F" value. The test should pass only in these two cases.
+        String videoCodec = actualTrackCodecs.get(0);
+        if (!videoCodec.isEmpty()) {
+            assertThat(videoCodec).isEqualTo("avc1.64001F");
+        }
     }
 
     public void testAlteredParameters() throws Exception {

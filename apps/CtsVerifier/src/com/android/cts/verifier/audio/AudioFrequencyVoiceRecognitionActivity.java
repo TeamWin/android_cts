@@ -16,6 +16,9 @@
 
 package com.android.cts.verifier.audio;
 
+import static com.android.cts.verifier.TestListActivity.sCurrentDisplayMode;
+import static com.android.cts.verifier.TestListAdapter.setTestNameSuffix;
+
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
 import android.os.Bundle;
@@ -30,8 +33,6 @@ import android.widget.TextView;
 
 import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
-import com.android.cts.verifier.audio.soundio.SoundPlayerObject;
-import com.android.cts.verifier.audio.soundio.SoundRecorderObject;
 import com.android.cts.verifier.CtsVerifierReportLog;
 import com.android.cts.verifier.R;
 import com.android.cts.verifier.audio.wavelib.DspBufferComplex;
@@ -913,6 +914,13 @@ public class AudioFrequencyVoiceRecognitionActivity extends AudioFrequencyActivi
     /**
      * Store test results in log
      */
+    private static final String SECTION_AUDIOFREQUENCYVOICERECOGNITION =
+            "audio_frequency_voicerecognition";
+    @Override
+    public final String getReportSectionName() {
+        return setTestNameSuffix(sCurrentDisplayMode, SECTION_AUDIOFREQUENCYVOICERECOGNITION);
+    }
+
     private void storeTestResults(Results results) {
         String channelLabel = "channel_" + results.mLabel;
 

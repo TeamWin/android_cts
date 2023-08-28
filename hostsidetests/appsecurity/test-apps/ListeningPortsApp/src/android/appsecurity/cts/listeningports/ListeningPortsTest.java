@@ -18,6 +18,7 @@ package android.appsecurity.cts.listeningports;
 
 import android.app.UiAutomation;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Process;
 import android.os.UserHandle;
@@ -95,6 +96,13 @@ public class ListeningPortsTest extends AndroidTestCase {
         EXCEPTION_PATTERNS.add("0.0.0.0:68");
     }
 
+    private static final List<String> USERDEBUG_EXCEPTION_PATTERNS = new ArrayList<>(2);
+
+    static {
+        USERDEBUG_EXCEPTION_PATTERNS.add("127.0.0.1:50002");  // Diagnostic Monitor Daemon port
+        USERDEBUG_EXCEPTION_PATTERNS.add("127.0.0.1:60002");  // vcd port
+    }
+
     private static final List<String> OEM_EXCEPTION_PATTERNS = new ArrayList<String>();
 
     static {
@@ -140,6 +148,7 @@ public class ListeningPortsTest extends AndroidTestCase {
 
             if (isPortListening(entry.state, isTcp)
                     && !(isException(addrPort) || isException(addrUid) || isException(addrPortUid))
+                    && !(isUserDebugException(addrPort))
                     && !(tv && isOemUid(entry.uid) && isOemException(addrPort))
                     && (!entry.localAddress.isLoopbackAddress() ^ loopback)) {
                 if (isTcp && !isTcpConnectable(entry.localAddress, entry.port)) {
@@ -207,6 +216,13 @@ public class ListeningPortsTest extends AndroidTestCase {
 
     private static boolean isException(String localAddress) {
         return isPatternMatch(EXCEPTION_PATTERNS, localAddress);
+    }
+
+    private static boolean isUserDebugException(String localAddress) {
+        if (!(Build.IS_USERDEBUG || Build.IS_ENG)) {
+            return false;
+        }
+        return isPatternMatch(USERDEBUG_EXCEPTION_PATTERNS, localAddress);
     }
 
     private static boolean isOemException(String localAddress) {

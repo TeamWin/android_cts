@@ -36,8 +36,6 @@ import static org.junit.Assume.assumeTrue;
 
 import android.platform.test.annotations.Presubmit;
 
-import androidx.test.filters.FlakyTest;
-
 import org.junit.Before;
 import org.junit.Test;
 
@@ -107,7 +105,6 @@ public class KeyguardTransitionTests extends ActivityManagerTestBase {
                 mWmState.getDefaultDisplayLastTransition());
     }
 
-    @FlakyTest(bugId = 238776938)
     @Test
     public void testDismissKeyguard() {
         createManagedLockScreenSession().gotoKeyguard();

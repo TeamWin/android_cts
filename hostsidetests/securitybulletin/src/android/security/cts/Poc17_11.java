@@ -23,6 +23,7 @@ import android.platform.test.annotations.AsbSecurityTest;
 import com.android.sts.common.tradefed.testtype.NonRootSecurityTestCase;
 import com.android.sts.common.util.TombstoneUtils;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
+import com.android.tradefed.util.RunUtil;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -43,7 +44,7 @@ public class Poc17_11 extends NonRootSecurityTestCase {
                                         "-d file:///sdcard/cve_2017_0859.mp4" +
                                         " -t audio/amr", getDevice());
             // Wait for intent to be processed before checking logcat
-            Thread.sleep(5000);
+            RunUtil.getDefault().sleep(5000);
         }
     }
 }

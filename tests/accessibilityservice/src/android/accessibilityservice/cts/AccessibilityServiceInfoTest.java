@@ -16,10 +16,11 @@
 
 package android.accessibilityservice.cts;
 
-import static android.accessibilityservice.cts.utils.CtsTestUtils.assertThrows;
+import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertThrows;
 
 import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
 import android.accessibility.cts.common.InstrumentedAccessibilityService;
@@ -32,6 +33,7 @@ import android.view.accessibility.AccessibilityEvent;
 import androidx.test.filters.MediumTest;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.CddTest;
 import com.android.sts.common.util.StsExtraBusinessLogicTestCase;
 
 import com.google.common.base.Strings;
@@ -45,6 +47,7 @@ import org.junit.runner.RunWith;
  */
 @Presubmit
 @RunWith(AndroidJUnit4.class)
+@CddTest(requirements = {"3.10/C-1-1,C-1-2"})
 public class AccessibilityServiceInfoTest extends StsExtraBusinessLogicTestCase {
 
     @Rule
@@ -155,6 +158,14 @@ public class AccessibilityServiceInfoTest extends StsExtraBusinessLogicTestCase 
         }
     }
 
+    @Test
+    public void testDefaultConstructor() throws Exception {
+        AccessibilityServiceInfo info = new AccessibilityServiceInfo();
+
+        assertWithMessage("info.getId()").that(info.getId()).isNull();
+        assertWithMessage("info.toString()").that(info.toString()).isNotNull();
+    }
+
     /**
      * Fully populates the {@link AccessibilityServiceInfo} to marshal.
      *
@@ -170,6 +181,7 @@ public class AccessibilityServiceInfoTest extends StsExtraBusinessLogicTestCase 
         };
         sentInfo.setInteractiveUiTimeoutMillis(2000);
         sentInfo.setNonInteractiveUiTimeoutMillis(4000);
+        sentInfo.setAccessibilityTool(true);
     }
 
     /**
@@ -196,5 +208,7 @@ public class AccessibilityServiceInfoTest extends StsExtraBusinessLogicTestCase 
         assertEquals("nonInteractiveUiTimeout not marshalled properly",
                 sentInfo.getNonInteractiveUiTimeoutMillis(),
                 receivedInfo.getNonInteractiveUiTimeoutMillis());
+        assertEquals("isAccessibilityTool not marshalled properly",
+                sentInfo.isAccessibilityTool(), receivedInfo.isAccessibilityTool());
     }
 }

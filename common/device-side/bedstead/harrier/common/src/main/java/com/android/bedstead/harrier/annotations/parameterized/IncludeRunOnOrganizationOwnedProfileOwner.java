@@ -20,6 +20,7 @@ import static com.android.bedstead.harrier.annotations.AnnotationRunPrecedence.E
 
 import com.android.bedstead.harrier.annotations.AnnotationRunPrecedence;
 import com.android.bedstead.harrier.annotations.RequireRunOnWorkProfile;
+import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDelegate;
 import com.android.bedstead.harrier.annotations.meta.ParameterizedAnnotation;
 
 import java.lang.annotation.ElementType;
@@ -31,7 +32,8 @@ import java.lang.annotation.Target;
 @Target({ElementType.METHOD, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @ParameterizedAnnotation(shadows = IncludeRunOnProfileOwnerProfileWithNoDeviceOwner.class)
-@RequireRunOnWorkProfile(isOrganizationOwned = true)
+@RequireRunOnWorkProfile(isOrganizationOwned = true, dpcKey = "dpc")
+@EnsureHasNoDelegate
 public @interface IncludeRunOnOrganizationOwnedProfileOwner {
     /**
      * Weight sets the order that annotations will be resolved.

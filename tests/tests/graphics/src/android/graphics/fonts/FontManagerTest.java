@@ -35,6 +35,9 @@ import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.ApiTest;
+import com.android.compatibility.common.util.CddTest;
+
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -60,9 +63,9 @@ public class FontManagerTest {
 
     private HashSet<String> getFallbackNameSet(FontConfig config) {
         HashSet<String> fallbackNames = new HashSet<>();
-        List<FontConfig.FontFamily> families = config.getFontFamilies();
+        List<FontConfig.NamedFamilyList> families = config.getNamedFamilyLists();
         assertThat(families).isNotEmpty();
-        for (FontConfig.FontFamily family : families) {
+        for (FontConfig.NamedFamilyList family : families) {
             if (family.getName() != null) {
                 fallbackNames.add(family.getName());
             }
@@ -85,6 +88,10 @@ public class FontManagerTest {
     }
 
     @Test
+    @ApiTest(apis = {
+            "android.text.FontConfig#getFontFamilies",
+            "android.text.FontConfig#getNamedFamilyLists",
+    })
     public void fontManager_getFontConfig_checkFamilies() {
         FontConfig config = getFontConfig();
         // To expect name availability, collect all fallback names.
@@ -284,6 +291,7 @@ public class FontManagerTest {
         }
     }
 
+    @CddTest(requirement = "3.8.13/C-1-3")
     @Test
     public void fontManager_NotoColorEmojiAvailable() throws IOException {
         FontConfig fontConfig = getFontConfig();

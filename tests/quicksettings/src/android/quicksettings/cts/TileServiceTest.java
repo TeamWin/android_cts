@@ -155,10 +155,10 @@ public class TileServiceTest extends BaseTileServiceTest {
      */
     private void waitForClick() throws InterruptedException {
         int ct = 0;
-        while (!TestTileService.hasBeenClicked() && (ct++ < CHECK_RETRIES)) {
+        while (!CurrentTestState.hasTileBeenClicked() && (ct++ < CHECK_RETRIES)) {
             Thread.sleep(CHECK_DELAY);
         }
-        assertTrue(TestTileService.hasBeenClicked());
+        assertTrue(CurrentTestState.hasTileBeenClicked());
     }
 
     /**
@@ -174,30 +174,6 @@ public class TileServiceTest extends BaseTileServiceTest {
     }
 
     @Override
-    protected void waitForListening(boolean state) throws InterruptedException {
-        int ct = 0;
-        while (TestTileService.isListening() != state && (ct++ < CHECK_RETRIES)) {
-            Thread.sleep(CHECK_DELAY);
-        }
-        assertEquals(state, TestTileService.isListening());
-    }
-
-    /**
-     * Waits for the TileService to be in the expected connected state. If it times out, it fails
-     * the test
-     * @param state desired connected state
-     * @throws InterruptedException
-     */
-    @Override
-    protected void waitForConnected(boolean state) throws InterruptedException {
-        int ct = 0;
-        while (TestTileService.isConnected() != state && (ct++ < CHECK_RETRIES)) {
-            Thread.sleep(CHECK_DELAY);
-        }
-        assertEquals(state, TestTileService.isConnected());
-    }
-
-    @Override
     protected String getTag() {
         return TAG;
     }
@@ -208,8 +184,8 @@ public class TileServiceTest extends BaseTileServiceTest {
     }
 
     @Override
-    protected TileService getTileServiceInstance() {
-        return TestTileService.getInstance();
+    protected String getTileServiceClassName() {
+        return TestTileService.class.getName();
     }
 
     class TestRunnable implements Runnable {

@@ -26,21 +26,21 @@ import android.content.ContentResolver;
 import android.content.res.Configuration;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Process;
 import android.os.SystemClock;
 import android.platform.test.annotations.AsbSecurityTest;
-import android.provider.Settings;
 import android.provider.Settings.SettingNotFoundException;
 import android.provider.Settings.System;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.sts.common.util.StsExtraBusinessLogicTestCase;
+
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
-import com.android.sts.common.util.StsExtraBusinessLogicTestCase;
 
 @RunWith(AndroidJUnit4.class)
 public class Settings_SystemTest extends StsExtraBusinessLogicTestCase {
@@ -49,11 +49,14 @@ public class Settings_SystemTest extends StsExtraBusinessLogicTestCase {
     private static final String FLOAT_FIELD = System.FONT_SCALE;
     private static final String STRING_FIELD = System.NEXT_ALARM_FORMATTED;
 
+    private static final int sUserId = Process.myUserHandle().getIdentifier();
+
     @BeforeClass
     public static void setUp() throws Exception {
         final String packageName = InstrumentationRegistry.getTargetContext().getPackageName();
         InstrumentationRegistry.getInstrumentation().getUiAutomation().executeShellCommand(
-                "appops set " + packageName + " android:write_settings allow");
+                "appops set --user " + sUserId + " " + packageName
+                        + " android:write_settings allow");
 
         // Wait a beat to persist the change
         SystemClock.sleep(500);
@@ -63,7 +66,8 @@ public class Settings_SystemTest extends StsExtraBusinessLogicTestCase {
     public static void tearDown() throws Exception {
         final String packageName = InstrumentationRegistry.getTargetContext().getPackageName();
         InstrumentationRegistry.getInstrumentation().getUiAutomation().executeShellCommand(
-                "appops set " + packageName + " android:write_settings default");
+                "appops set --user " + sUserId + " " + packageName
+                        + " android:write_settings default");
     }
 
     @Test

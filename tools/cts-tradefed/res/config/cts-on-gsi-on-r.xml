@@ -59,14 +59,6 @@
     <option name="compatibility:exclude-filter" value="CtsIdentityTestCases android.security.identity.cts.ReaderAuthTest" />
     <option name="compatibility:exclude-filter" value="CtsIdentityTestCases android.security.identity.cts.UserAuthTest" />
 
-    <!-- CtsIdentityTestCases: b/282102975: excluding tests to be disabled. -->
-    <option name="compatibility:exclude-filter" value="CtsIdentityTestCases android.security.identity.cts.AttestationTest" />
-    <option name="compatibility:exclude-filter" value="CtsIdentityTestCases android.security.identity.cts.DynamicAuthTest" />
-    <option name="compatibility:exclude-filter" value="CtsIdentityTestCases android.security.identity.cts.EphemeralKeyTest" />
-    <option name="compatibility:exclude-filter" value="CtsIdentityTestCases android.security.identity.cts.ProvisioningTest" />
-    <option name="compatibility:exclude-filter" value="CtsIdentityTestCases android.security.identity.cts.ReaderAuthTest" />
-    <option name="compatibility:exclude-filter" value="CtsIdentityTestCases android.security.identity.cts.UserAuthTest" />
-
     <!-- CtsKeystoreTestCases: b/262010816  -->
     <option name="compatibility:exclude-filter" value="CtsKeystoreTestCases android.keystore.cts.ECDSASignatureTest" />
     <!-- CtsKeystoreTestCases: b/264546541 -->

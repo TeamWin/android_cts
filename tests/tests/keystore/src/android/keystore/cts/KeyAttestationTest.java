@@ -1252,10 +1252,7 @@ public class KeyAttestationTest {
             boolean requireCreationDateTime =
                 attestation.getKeymasterVersion() >= Attestation.KM_VERSION_KEYMINT_1;
 
-            // b/232078430: skip time checks in Android T due to unfixed bug.
-            boolean doTimeChecks = false;
-
-            if (doTimeChecks && (requireCreationDateTime || creationDateTime != null)) {
+            if (requireCreationDateTime || creationDateTime != null) {
                 assertNotNull(creationDateTime);
 
                 assertTrue("Test start time (" + startTime.getTime() + ") and key creation time (" +

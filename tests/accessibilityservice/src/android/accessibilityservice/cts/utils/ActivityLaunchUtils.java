@@ -323,7 +323,7 @@ public class ActivityLaunchUtils {
         return (T) mTempActivity;
     }
 
-    private static AccessibilityWindowInfo findWindowByTitleWithList(CharSequence title,
+    public static AccessibilityWindowInfo findWindowByTitleWithList(CharSequence title,
             List<AccessibilityWindowInfo> windows) {
         AccessibilityWindowInfo returnValue = null;
         if (windows != null && windows.size() > 0) {

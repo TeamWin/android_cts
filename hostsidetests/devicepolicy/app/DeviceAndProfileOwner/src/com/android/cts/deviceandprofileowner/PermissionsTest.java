@@ -102,7 +102,8 @@ public class PermissionsTest extends BaseDeviceAdminTest {
     protected void setUp() throws Exception {
         super.setUp();
         mReceiver = new PermissionBroadcastReceiver();
-        mContext.registerReceiver(mReceiver, new IntentFilter(ACTION_PERMISSION_RESULT));
+        mContext.registerReceiver(mReceiver, new IntentFilter(ACTION_PERMISSION_RESULT),
+                Context.RECEIVER_EXPORTED);
         mDevice = UiDevice.getInstance(getInstrumentation());
         mUiAutomation = getInstrumentation().getUiAutomation();
     }

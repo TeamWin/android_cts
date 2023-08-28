@@ -120,7 +120,7 @@ public final class PowerPolicyTestHelper {
 
     public void checkTotalRegisteredPolicies(int totalNum) {
         assertWithMessage(TOTAL_REGISTERED_POLICIES_ASSERT_MSG)
-                .that(mSystemCpms.getRegisteredPolicies().size() == totalNum).isTrue();
+                .that(mSystemCpms.getRegisteredPolicies().size()).isEqualTo(totalNum);
     }
 
     public void checkCurrentPowerComponents(PowerPolicyDef expected) throws Exception {

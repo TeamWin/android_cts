@@ -110,7 +110,8 @@ public class MediaDrmCodecBlockModelTest extends AndroidTestCase {
         try (final MediaDrm drm = new MediaDrm(CLEARKEY_SCHEME_UUID)) {
             extractor.setDataSource(mInpPrefix + "llama_h264_main_720p_8000.mp4", null);
             extractor.selectTrack(0);
-            extractor.seekTo(12083333, MediaExtractor.SEEK_TO_CLOSEST_SYNC);
+            extractor.seekTo(ENCRYPTED_CONTENT_FIRST_BUFFER_TIMESTAMP_US,
+                    MediaExtractor.SEEK_TO_CLOSEST_SYNC);
             drm.setOnEventListener(
                     (MediaDrm mediaDrm, byte[] sessionId, int event, int extra, byte[] data) -> {
                         if (event == MediaDrm.EVENT_KEY_REQUIRED
@@ -165,6 +166,8 @@ public class MediaDrmCodecBlockModelTest extends AndroidTestCase {
         if (trackIndex == mediaExtractor.getTrackCount()) {
             throw new IllegalStateException("couldn't get a video track");
         }
+        mediaExtractor.seekTo(ENCRYPTED_CONTENT_FIRST_BUFFER_TIMESTAMP_US,
+            MediaExtractor.SEEK_TO_CLOSEST_SYNC);
 
         return mediaExtractor;
     }

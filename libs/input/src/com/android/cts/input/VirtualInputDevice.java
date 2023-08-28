@@ -44,7 +44,8 @@ import java.util.concurrent.TimeUnit;
 /**
  * Declares a virtual INPUT device registered through /dev/uinput or /dev/hid.
  */
-public abstract class VirtualInputDevice implements InputManager.InputDeviceListener {
+public abstract class VirtualInputDevice implements
+        InputManager.InputDeviceListener, AutoCloseable {
     private static final String TAG = "VirtualInputDevice";
     private InputStream mInputStream;
     private OutputStream mOutputStream;
@@ -174,6 +175,7 @@ public abstract class VirtualInputDevice implements InputManager.InputDeviceList
     /**
      * Close the device, which would cause the associated input device to unregister.
      */
+    @Override
     public void close() {
         closeQuietly(mInputStream);
         closeQuietly(mOutputStream);

@@ -18,7 +18,7 @@ package com.android.bedstead.harrier;
 
 import static com.android.bedstead.harrier.UserType.INITIAL_USER;
 import static com.android.bedstead.harrier.UserType.WORK_PROFILE;
-import static com.android.bedstead.nene.flags.CommonFlags.DevicePolicyManager.DISABLE_RESOURCES_UPDATABILITY_FLAG;
+import static com.android.bedstead.nene.flags.CommonFlags.DevicePolicyManager.ENABLE_DEVICE_POLICY_ENGINE_FLAG;
 import static com.android.bedstead.nene.flags.CommonFlags.NAMESPACE_DEVICE_POLICY_MANAGER;
 import static com.android.bedstead.nene.permissions.CommonPermissions.INTERACT_ACROSS_PROFILES;
 import static com.android.bedstead.nene.permissions.CommonPermissions.INTERACT_ACROSS_USERS;
@@ -38,10 +38,18 @@ import com.android.bedstead.harrier.annotations.RunWithFeatureFlagEnabledAndDisa
 import com.android.bedstead.harrier.annotations.StringTestParameter;
 import com.android.bedstead.harrier.annotations.UserPair;
 import com.android.bedstead.harrier.annotations.UserTest;
+import com.android.bedstead.harrier.annotations.enterprise.AdditionalQueryParameters;
+import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
+import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
+import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
+import com.android.bedstead.harrier.annotations.enterprise.PolicyDoesNotApplyTest;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnParentOfProfileOwnerUsingParentInstance;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnParentOfProfileOwnerWithNoDeviceOwner;
 import com.android.bedstead.harrier.exceptions.RestartTestException;
+import com.android.bedstead.harrier.policies.LockTask;
 import com.android.bedstead.nene.TestApis;
+import com.android.queryable.annotations.IntegerQuery;
+import com.android.queryable.annotations.Query;
 
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -78,7 +86,7 @@ public class BedsteadJUnit4Test {
     private static int sFeatureFlagTestCalls = 0;
 
     private static final String NAMESPACE = NAMESPACE_DEVICE_POLICY_MANAGER;
-    private static final String KEY = DISABLE_RESOURCES_UPDATABILITY_FLAG;
+    private static final String KEY = ENABLE_DEVICE_POLICY_ENGINE_FLAG;
 
     @AfterClass
     public static void afterClass() {
@@ -222,5 +230,41 @@ public class BedsteadJUnit4Test {
     @Test
     public void runWithFeatureFlagEnabledAndDisabledAnnotation_runs() {
         sFeatureFlagTestCalls += 1;
+    }
+
+    @PolicyAppliesTest(policy = LockTask.class)
+    @AdditionalQueryParameters(
+            forTestApp = "dpc",
+            query = @Query(targetSdkVersion = @IntegerQuery(isEqualTo = 28))
+    )
+    public void additionalQueryParameters_policyAppliesTest_isRespected() {
+        assertThat(sDeviceState.dpc().testApp().targetSdkVersion()).isEqualTo(28);
+    }
+
+    @PolicyDoesNotApplyTest(policy = LockTask.class)
+    @AdditionalQueryParameters(
+            forTestApp = "dpc",
+            query = @Query(targetSdkVersion = @IntegerQuery(isEqualTo = 28))
+    )
+    public void additionalQueryParameters_policyDoesNotApplyTest_isRespected() {
+        assertThat(sDeviceState.dpc().testApp().targetSdkVersion()).isEqualTo(28);
+    }
+
+    @CanSetPolicyTest(policy = LockTask.class)
+    @AdditionalQueryParameters(
+            forTestApp = "dpc",
+            query = @Query(targetSdkVersion = @IntegerQuery(isEqualTo = 28))
+    )
+    public void additionalQueryParameters_canSetPolicyTest_isRespected() {
+        assertThat(sDeviceState.dpc().testApp().targetSdkVersion()).isEqualTo(28);
+    }
+
+    @CannotSetPolicyTest(policy = LockTask.class)
+    @AdditionalQueryParameters(
+            forTestApp = "dpc",
+            query = @Query(targetSdkVersion = @IntegerQuery(isEqualTo = 28))
+    )
+    public void additionalQueryParameters_cannotSetPolicyTest_isRespected() {
+        assertThat(sDeviceState.dpc().testApp().targetSdkVersion()).isEqualTo(28);
     }
 }

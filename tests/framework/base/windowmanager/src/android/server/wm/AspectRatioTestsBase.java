@@ -16,8 +16,6 @@
 
 package android.server.wm;
 
-import static androidx.test.InstrumentationRegistry.getInstrumentation;
-
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.lessThanOrEqualTo;
 
@@ -27,14 +25,10 @@ import android.graphics.Point;
 import android.graphics.Rect;
 import android.server.wm.WindowManagerState.DisplayArea;
 import android.view.Display;
-import android.view.WindowManager;
 
 import androidx.test.rule.ActivityTestRule;
 
-import com.android.compatibility.common.util.WindowUtil;
-
 import org.hamcrest.Matcher;
-import org.junit.Before;
 
 class AspectRatioTestsBase extends ActivityManagerTestBase {
     // The delta allowed when comparing two floats for equality. We consider them equal if they are
@@ -67,7 +61,7 @@ class AspectRatioTestsBase extends ActivityManagerTestBase {
     void runAspectRatioTest(final ActivityTestRule activityRule,
             final AssertAspectRatioCallback callback) {
         final Activity activity = launchActivity(activityRule);
-        WindowUtil.waitForFocus(activity);
+        mWmState.computeState();
         try {
             final Point displaySize = new Point();
             getDisplay(activity).getSize(displaySize);
@@ -91,12 +85,6 @@ class AspectRatioTestsBase extends ActivityManagerTestBase {
 //        callback.assertAspectRatio(getAspectRatio(activity));
     }
 
-    @Before
-    public void wakeUpAndUnlock() {
-        UiDeviceUtils.pressWakeupButton();
-        UiDeviceUtils.pressUnlockButton();
-    }
-
     float getDisplayAspectRatio(ComponentName componentName) {
         final DisplayArea tda = mWmState.getTaskDisplayArea(componentName);
         final Rect appRect = tda.getAppBounds();
@@ -109,11 +97,6 @@ class AspectRatioTestsBase extends ActivityManagerTestBase {
         final int displayId = mWmState.getDisplayByActivity(componentName);
         final WindowManagerState.DisplayContent displayContent = mWmState.getDisplay(displayId);
         return displayContent.mMinSizeOfResizeableTaskDp;
-    }
-
-    static float getDefaultDisplayAspectRatio() {
-        return getAspectRatio(getInstrumentation().getContext().getSystemService(
-                WindowManager.class).getDefaultDisplay());
     }
 
     private static float getActivityAspectRatio(Activity activity) {

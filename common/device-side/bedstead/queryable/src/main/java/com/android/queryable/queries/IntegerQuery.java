@@ -40,4 +40,7 @@ public interface IntegerQuery<E extends Queryable> extends Query<Integer> {
 
     /** Require the {@link Integer} is less than or equal to {@code i}. */
     E isLessThanOrEqualTo(int i);
+
+    /** Require the {@link Integer} matches the requirements of the query annotation. */
+    E matchesAnnotation(com.android.queryable.annotations.IntegerQuery queryAnnotation);
 }

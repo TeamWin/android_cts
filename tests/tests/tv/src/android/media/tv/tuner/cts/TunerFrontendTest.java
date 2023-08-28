@@ -18,6 +18,7 @@ package android.media.tv.tuner.cts;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -46,6 +47,9 @@ import android.media.tv.tuner.frontend.DvbtFrontendSettings;
 import android.media.tv.tuner.frontend.FrontendCapabilities;
 import android.media.tv.tuner.frontend.FrontendInfo;
 import android.media.tv.tuner.frontend.FrontendSettings;
+import android.media.tv.tuner.frontend.IptvFrontendCapabilities;
+import android.media.tv.tuner.frontend.IptvFrontendSettings;
+import android.media.tv.tuner.frontend.IptvFrontendSettingsFec;
 import android.media.tv.tuner.frontend.Isdbs3FrontendCapabilities;
 import android.media.tv.tuner.frontend.Isdbs3FrontendSettings;
 import android.media.tv.tuner.frontend.IsdbsFrontendCapabilities;
@@ -61,7 +65,6 @@ import com.android.compatibility.common.util.RequiredFeatureRule;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -1076,6 +1079,47 @@ public class TunerFrontendTest {
     }
 
     @Test
+    public void testIptvFrontendSettings() throws Exception {
+        if (!TunerVersionChecker.checkHigherOrEqualVersionTo(TunerVersionChecker.TUNER_VERSION_3_0,
+                TAG + ": testIptvFrontendSettings")) {
+            return;
+        }
+        IptvFrontendSettingsFec fec =
+                new IptvFrontendSettingsFec
+                        .Builder()
+                        .setFecType(IptvFrontendSettingsFec.FEC_TYPE_ROW)
+                        .setFecColNum(19)
+                        .setFecRowNum(26)
+                        .build();
+        IptvFrontendSettings settings =
+                new IptvFrontendSettings
+                        .Builder()
+                        .setSrcIpAddress(new byte[]{2, 3, 4, 5})
+                        .setDstIpAddress(new byte[]{2, 3, 4, 5})
+                        .setSrcPort(8000)
+                        .setDstPort(9000)
+                        .setFec(fec)
+                        .setProtocol(IptvFrontendSettings.PROTOCOL_UDP)
+                        .setIgmp(IptvFrontendSettings.IGMP_V2)
+                        .setBitrate(1000)
+                        .setContentUrl("contentUrl")
+                        .build();
+        assertEquals(FrontendSettings.TYPE_IPTV, settings.getType());
+        assertArrayEquals(new byte[]{2, 3, 4, 5}, settings.getSrcIpAddress());
+        assertArrayEquals(new byte[]{2, 3, 4, 5}, settings.getDstIpAddress());
+        assertEquals(8000, settings.getSrcPort());
+        assertEquals(9000, settings.getDstPort());
+        assertEquals(IptvFrontendSettingsFec.FEC_TYPE_ROW, settings.getFec().getFecType());
+        assertEquals(26, settings.getFec().getFecRowNum());
+        assertEquals(19, settings.getFec().getFecColNum());
+        assertEquals(IptvFrontendSettings.PROTOCOL_UDP, settings.getProtocol());
+        assertEquals(IptvFrontendSettings.IGMP_V2, settings.getIgmp());
+        assertEquals(1000, settings.getBitrate());
+        assertEquals("contentUrl", settings.getContentUrl());
+    }
+
+
+    @Test
     public void testFrontendInfoWithLongFrequency() throws Exception {
         List<Integer> ids = mTuner.getFrontendIds();
         List<FrontendInfo> infos = mTuner.getAvailableFrontendInfos();
@@ -1130,6 +1174,8 @@ public class TunerFrontendTest {
                 case FrontendSettings.TYPE_DTMB:
                     testDtmbFrontendCapabilities(caps);
                     break;
+                case FrontendSettings.TYPE_IPTV:
+                    testIptvFrontendCapabilities(caps);
                 default:
                     break;
             }
@@ -1229,6 +1275,12 @@ public class TunerFrontendTest {
         dtmbCaps.getCodeRateCapability();
         dtmbCaps.getTransmissionModeCapability();
         dtmbCaps.getGuardIntervalCapability();
+    }
+
+    private void testIptvFrontendCapabilities(FrontendCapabilities caps) throws Exception {
+        assertTrue(caps instanceof IptvFrontendCapabilities);
+        IptvFrontendCapabilities iptvCaps = (IptvFrontendCapabilities) caps;
+        iptvCaps.getProtocolCapability();
     }
 
     private boolean hasTuner() {

@@ -76,6 +76,11 @@ public final class SerializableQueryHelper<E extends Queryable>
     }
 
     @Override
+    public boolean isEmptyQuery() {
+        return mEqualsValue == null;
+    }
+
+    @Override
     public boolean matches(Serializable value) {
         if (mEqualsValue != null && !mEqualsValue.equals(value)) {
             return false;

@@ -16,8 +16,6 @@
 
 package android.widget.cts;
 
-import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -36,10 +34,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 import android.app.Activity;
-import android.app.ActivityOptions;
 import android.app.Instrumentation;
 import android.content.Context;
-import android.content.Intent;
 import android.graphics.Rect;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
@@ -60,7 +56,6 @@ import android.widget.PopupWindow;
 import android.widget.TextView;
 
 import androidx.test.InstrumentationRegistry;
-import androidx.test.core.app.ActivityScenario;
 import androidx.test.filters.LargeTest;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
@@ -84,7 +79,10 @@ import java.util.concurrent.TimeUnit;
 @LargeTest
 @RunWith(AndroidJUnit4.class)
 public class ListPopupWindowTest {
+
     private Instrumentation mInstrumentation;
+    private CtsTouchUtils mCtsTouchUtils;
+    private CtsKeyEventUtil mCtsKeyEventUtil;
     private Activity mActivity;
     private Builder mPopupWindowBuilder;
     private View promptView;
@@ -93,8 +91,6 @@ public class ListPopupWindowTest {
     private ListPopupWindow mPopupWindow;
 
     private AdapterView.OnItemClickListener mItemClickListener;
-
-    private ActivityScenario<ListPopupWindowCtsActivity> mScenario;
 
     /**
      * Item click listener that dismisses our <code>ListPopupWindow</code> when any item
@@ -116,6 +112,8 @@ public class ListPopupWindowTest {
     @Before
     public void setup() {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
+        mCtsTouchUtils = new CtsTouchUtils(mInstrumentation.getTargetContext());
+        mCtsKeyEventUtil = new CtsKeyEventUtil(mInstrumentation.getTargetContext());
         mActivity = mActivityRule.getActivity();
         mItemClickListener = new PopupItemClickListener();
         mActivity.getApplicationInfo().setEnableOnBackInvokedCallback(false);
@@ -507,7 +505,7 @@ public class ListPopupWindowTest {
         final ListView popupListView = mPopupWindow.getListView();
         final Rect rect = new Rect();
         mPopupWindow.getBackground().getPadding(rect);
-        CtsTouchUtils.emulateTapOnView(instrumentation, null, popupListView,
+        mCtsTouchUtils.emulateTapOnView(instrumentation, mActivityRule, popupListView,
                 -rect.left - 20, popupListView.getHeight() / 2);
 
         // At this point our popup should not be showing and should have notified its
@@ -522,21 +520,6 @@ public class ListPopupWindowTest {
 
     @Test
     public void testDismissalOutsideNonModal() {
-        // Close the activity that was launched by setup
-        mActivityRule.finishActivity();
-
-        // Launch activity in fullscreen windowing mode
-        Intent intent = new Intent(Intent.ACTION_MAIN);
-        intent.setClass(mInstrumentation.getTargetContext(), ListPopupWindowCtsActivity.class);
-        final ActivityOptions options = ActivityOptions.makeBasic();
-        options.setLaunchWindowingMode(WINDOWING_MODE_FULLSCREEN);
-
-        mScenario = ActivityScenario.launch(intent, options.toBundle());
-        mScenario.onActivity(activity -> {
-            mActivity = activity;
-            mActivity.getApplicationInfo().setEnableOnBackInvokedCallback(false);
-        });
-
         verifyDismissalViaTouch(false);
     }
 
@@ -783,7 +766,7 @@ public class ListPopupWindowTest {
         // Send DPAD_DOWN key event. As our custom extension of EditText calls
         // ListPopupWindow.onKeyDown and onKeyUp, the end result should be transfer of selection
         // down one row
-        CtsKeyEventUtil.sendKeyDownUp(mInstrumentation, listView, KeyEvent.KEYCODE_DPAD_DOWN);
+        mCtsKeyEventUtil.sendKeyDownUp(mInstrumentation, listView, KeyEvent.KEYCODE_DPAD_DOWN);
         WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, root, null);
 
         // At this point we expect that item #2 was selected
@@ -793,7 +776,7 @@ public class ListPopupWindowTest {
         // Send a DPAD_UP key event. As our custom extension of EditText calls
         // ListPopupWindow.onKeyDown and onKeyUp, the end result should be transfer of selection
         // up one row
-        CtsKeyEventUtil.sendKeyDownUp(mInstrumentation, listView, KeyEvent.KEYCODE_DPAD_UP);
+        mCtsKeyEventUtil.sendKeyDownUp(mInstrumentation, listView, KeyEvent.KEYCODE_DPAD_UP);
         WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, root, null);
 
         // At this point we expect that item #1 was selected
@@ -803,7 +786,7 @@ public class ListPopupWindowTest {
         // Send one more DPAD_UP key event. As our custom extension of EditText calls
         // ListPopupWindow.onKeyDown and onKeyUp, the end result should be transfer of selection
         // up one more row
-        CtsKeyEventUtil.sendKeyDownUp(mInstrumentation, listView, KeyEvent.KEYCODE_DPAD_UP);
+        mCtsKeyEventUtil.sendKeyDownUp(mInstrumentation, listView, KeyEvent.KEYCODE_DPAD_UP);
         WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, root, null);
 
         // At this point we expect that item #0 was selected
@@ -813,7 +796,7 @@ public class ListPopupWindowTest {
         // Send ENTER key event. As our custom extension of EditText calls
         // ListPopupWindow.onKeyDown and onKeyUp, the end result should be dismissal of
         // the popup window
-        CtsKeyEventUtil.sendKeyDownUp(mInstrumentation,listView, KeyEvent.KEYCODE_ENTER);
+        mCtsKeyEventUtil.sendKeyDownUp(mInstrumentation, listView, KeyEvent.KEYCODE_ENTER);
         WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mActivity.getWindow().getDecorView(),
                 null);
 
@@ -853,7 +836,7 @@ public class ListPopupWindowTest {
         // Send DPAD_DOWN key event. As our custom extension of EditText calls
         // ListPopupWindow.onKeyDown and onKeyUp, the end result should be transfer of selection
         // down one row
-        CtsKeyEventUtil.sendKeyDownUp(mInstrumentation, listView, KeyEvent.KEYCODE_DPAD_DOWN);
+        mCtsKeyEventUtil.sendKeyDownUp(mInstrumentation, listView, KeyEvent.KEYCODE_DPAD_DOWN);
         WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, root, null);
 
         // At this point we expect that item #2 was selected
@@ -863,7 +846,7 @@ public class ListPopupWindowTest {
         // Send a DPAD_UP key event. As our custom extension of EditText calls
         // ListPopupWindow.onKeyDown and onKeyUp, the end result should be transfer of selection
         // up one row
-        CtsKeyEventUtil.sendKeyDownUp(mInstrumentation, listView, KeyEvent.KEYCODE_DPAD_UP);
+        mCtsKeyEventUtil.sendKeyDownUp(mInstrumentation, listView, KeyEvent.KEYCODE_DPAD_UP);
         WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, root, null);
 
         // At this point we expect that item #1 was selected
@@ -873,7 +856,7 @@ public class ListPopupWindowTest {
         // Send one more DPAD_UP key event. As our custom extension of EditText calls
         // ListPopupWindow.onKeyDown and onKeyUp, the end result should be transfer of selection
         // up one more row
-        CtsKeyEventUtil.sendKeyDownUp(mInstrumentation, listView, KeyEvent.KEYCODE_DPAD_UP);
+        mCtsKeyEventUtil.sendKeyDownUp(mInstrumentation, listView, KeyEvent.KEYCODE_DPAD_UP);
         WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, root, null);
 
         // At this point we expect that item #0 was selected
@@ -883,7 +866,7 @@ public class ListPopupWindowTest {
         // Send NUMPAD_ENTER key event. As our custom extension of EditText calls
         // ListPopupWindow.onKeyDown and onKeyUp, the end result should be item click and dismissal
         // of the popup window
-        CtsKeyEventUtil.sendKeyDownUp(mInstrumentation, listView, KeyEvent.KEYCODE_NUMPAD_ENTER);
+        mCtsKeyEventUtil.sendKeyDownUp(mInstrumentation, listView, KeyEvent.KEYCODE_NUMPAD_ENTER);
         WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mActivity.getWindow().getDecorView(),
                 null);
         verify(mPopupWindowBuilder.mOnItemClickListener, times(1)).onItemClick(
@@ -936,8 +919,8 @@ public class ListPopupWindowTest {
         int swipeAmount = 2 * popupRowHeight;
 
         // Emulate drag-down gesture with a sequence of motion events
-        CtsTouchUtils.emulateDragGesture(mInstrumentation, mActivityRule, emulatedX, emulatedStartY,
-                0, swipeAmount);
+        mCtsTouchUtils.emulateDragGesture(mInstrumentation, mActivityRule, emulatedX,
+                emulatedStartY, /* dragAmountX= */ 0, swipeAmount);
 
         // We expect the swipe / drag gesture to result in clicking the second item in our list.
         verify(mPopupWindowBuilder.mOnItemClickListener, times(1)).onItemClick(

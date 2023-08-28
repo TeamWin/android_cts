@@ -29,7 +29,9 @@ import static android.server.wm.CliIntentExtra.extraBool;
 import static android.server.wm.CliIntentExtra.extraString;
 import static android.server.wm.ComponentNameUtils.getActivityName;
 import static android.server.wm.ComponentNameUtils.getWindowName;
+import static android.server.wm.ShellCommandHelper.executeShellCommand;
 import static android.server.wm.UiDeviceUtils.pressBackButton;
+import static android.server.wm.UiDeviceUtils.pressHomeButton;
 import static android.server.wm.UiDeviceUtils.pressWindowButton;
 import static android.server.wm.WindowManagerState.STATE_PAUSED;
 import static android.server.wm.WindowManagerState.STATE_RESUMED;
@@ -54,6 +56,7 @@ import static android.server.wm.app.Components.PipActivity.ACTION_FINISH_LAUNCH_
 import static android.server.wm.app.Components.PipActivity.ACTION_LAUNCH_TRANSLUCENT_ACTIVITY;
 import static android.server.wm.app.Components.PipActivity.ACTION_MOVE_TO_BACK;
 import static android.server.wm.app.Components.PipActivity.ACTION_ON_PIP_REQUESTED;
+import static android.server.wm.app.Components.PipActivity.ACTION_SET_ON_PAUSE_REMOTE_CALLBACK;
 import static android.server.wm.app.Components.PipActivity.ACTION_START_LAUNCH_INTO_PIP_CONTAINER;
 import static android.server.wm.app.Components.PipActivity.EXTRA_ALLOW_AUTO_PIP;
 import static android.server.wm.app.Components.PipActivity.EXTRA_ASSERT_NO_ON_STOP_BEFORE_PIP;
@@ -68,9 +71,11 @@ import static android.server.wm.app.Components.PipActivity.EXTRA_ENTER_PIP_ON_US
 import static android.server.wm.app.Components.PipActivity.EXTRA_EXPANDED_PIP_ASPECT_RATIO_DENOMINATOR;
 import static android.server.wm.app.Components.PipActivity.EXTRA_EXPANDED_PIP_ASPECT_RATIO_NUMERATOR;
 import static android.server.wm.app.Components.PipActivity.EXTRA_FINISH_SELF_ON_RESUME;
+import static android.server.wm.app.Components.PipActivity.EXTRA_FINISH_TRAMPOLINE_ON_RESUME;
 import static android.server.wm.app.Components.PipActivity.EXTRA_IS_SEAMLESS_RESIZE_ENABLED;
 import static android.server.wm.app.Components.PipActivity.EXTRA_NUMBER_OF_CUSTOM_ACTIONS;
 import static android.server.wm.app.Components.PipActivity.EXTRA_ON_PAUSE_DELAY;
+import static android.server.wm.app.Components.PipActivity.EXTRA_PIP_ON_PAUSE_CALLBACK;
 import static android.server.wm.app.Components.PipActivity.EXTRA_PIP_ORIENTATION;
 import static android.server.wm.app.Components.PipActivity.EXTRA_SET_ASPECT_RATIO_DENOMINATOR;
 import static android.server.wm.app.Components.PipActivity.EXTRA_SET_ASPECT_RATIO_NUMERATOR;
@@ -78,6 +83,7 @@ import static android.server.wm.app.Components.PipActivity.EXTRA_START_ACTIVITY;
 import static android.server.wm.app.Components.PipActivity.EXTRA_SUBTITLE;
 import static android.server.wm.app.Components.PipActivity.EXTRA_TAP_TO_FINISH;
 import static android.server.wm.app.Components.PipActivity.EXTRA_TITLE;
+import static android.server.wm.app.Components.PipActivity.IS_IN_PIP_MODE_RESULT;
 import static android.server.wm.app.Components.PipActivity.UI_STATE_STASHED_RESULT;
 import static android.server.wm.app.Components.RESUME_WHILE_PAUSING_ACTIVITY;
 import static android.server.wm.app.Components.TEST_ACTIVITY;
@@ -163,7 +169,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
     private static final int ROTATION_180 = 2;
     private static final int ROTATION_270 = 3;
 
-    private static final float FLOAT_COMPARE_EPSILON = 0.01f;
+    private static final float FLOAT_COMPARE_EPSILON = 0.005f;
 
     // Corresponds to com.android.internal.R.dimen.config_pictureInPictureMinAspectRatio
     private static final int MIN_ASPECT_RATIO_NUMERATOR = 100;
@@ -194,6 +200,39 @@ public class PinnedStackTests extends ActivityManagerTestBase {
     public void testEnterPictureInPictureMode() {
         pinnedStackTester(getAmStartCmd(PIP_ACTIVITY, extraString(EXTRA_ENTER_PIP, "true")),
                 PIP_ACTIVITY, PIP_ACTIVITY, false /* isFocusable */);
+    }
+
+    @Test
+    public void testIsInPictureInPictureModeInOnPause() throws Exception {
+        // Launch the activity that requests enter pip when receives onUserLeaveHint
+        launchActivity(PIP_ACTIVITY,
+                extraString(EXTRA_ENTER_PIP_ON_USER_LEAVE_HINT, " true"));
+
+        assertIsInPictureInPictureModeInOnPause();
+    }
+
+    @Test
+    public void testAutoEnterPipIsInPictureInPictureModeInOnPause() throws Exception {
+        // Launch the activity that supports auto-enter-pip
+        launchActivity(PIP_ACTIVITY,
+                extraString(EXTRA_ALLOW_AUTO_PIP, "true"));
+
+        assertIsInPictureInPictureModeInOnPause();
+    }
+
+    private void assertIsInPictureInPictureModeInOnPause() throws Exception {
+        final CompletableFuture<Boolean> future = new CompletableFuture<>();
+        final RemoteCallback onPauseCallback = new RemoteCallback(
+                (Bundle result) -> future.complete(result.getBoolean(IS_IN_PIP_MODE_RESULT)));
+        mBroadcastActionTrigger.doActionWithRemoteCallback(ACTION_SET_ON_PAUSE_REMOTE_CALLBACK,
+                EXTRA_PIP_ON_PAUSE_CALLBACK, onPauseCallback);
+
+        pressHomeButton();
+
+        // Ensure Activity#isInPictureInPictureMode returns true when in onPause
+        waitForEnterPipAnimationComplete(PIP_ACTIVITY);
+        assertPinnedStackExists();
+        Truth.assertThat(future.get(5000, TimeUnit.MILLISECONDS)).isEqualTo(true);
     }
 
     // This test is black-listed in cts-known-failures.xml (b/35314835).
@@ -1015,6 +1054,25 @@ public class PinnedStackTests extends ActivityManagerTestBase {
     }
 
     @Test
+    public void testAutoEnterPipFromTaskWithMultipleActivities() {
+        // Try to enter picture-in-picture from an activity that has more than one activity in the
+        // task with auto-enter-pip being enabled
+        launchActivity(LAUNCH_ENTER_PIP_ACTIVITY,
+                extraString(EXTRA_ALLOW_AUTO_PIP, "true"),
+                extraString(EXTRA_ENTER_PIP, "false"));
+
+        // Auto enter pip on going back to home, this assumes device is configured in gesture
+        // navigation mode, otherwise it falls back to non-auto enter pip.
+        pressHomeButton();
+        waitForEnterPip(PIP_ACTIVITY);
+
+        final Task task = mWmState.getTaskByActivity(LAUNCH_ENTER_PIP_ACTIVITY);
+        assertEquals(1, task.mActivities.size());
+        assertPinnedStackExists();
+        waitAndAssertActivityState(PIP_ACTIVITY, STATE_PAUSED, "activity must be paused");
+    }
+
+    @Test
     public void testPipFromTaskWithMultipleActivitiesAndExpandPip() {
         // Try to enter picture-in-picture from an activity that has more than one activity in the
         // task and ensure pinned task can go back to its original task when expand to fullscreen
@@ -1049,7 +1107,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
     @Test
     public void testPipFromTaskWithAnotherFinishingActivity() {
         launchActivityNoWait(LAUNCH_ENTER_PIP_ACTIVITY,
-                extraString(EXTRA_FINISH_SELF_ON_RESUME, "true"));
+                extraString(EXTRA_FINISH_TRAMPOLINE_ON_RESUME, "true"));
 
         waitForEnterPip(PIP_ACTIVITY);
         mWmState.waitForActivityRemoved(LAUNCH_ENTER_PIP_ACTIVITY);
@@ -1151,7 +1209,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
                 });
                 mBroadcastActionTrigger.enterPipAndWait();
                 assertPinnedStackDoesNotExist();
-                launchHomeActivityNoWait();
+                launchHomeActivityNoWaitExpectFailure();
                 mWmState.computeState();
                 assertPinnedStackDoesNotExist();
             } finally {
@@ -1549,6 +1607,18 @@ public class PinnedStackTests extends ActivityManagerTestBase {
     }
 
     @Test
+    public void testAutoPipOnLaunchingTranslucentActivityInAnotherTask() {
+        // Launch the PIP activity and set its pip params to allow auto-pip.
+        launchActivity(PIP_ACTIVITY, extraString(EXTRA_ALLOW_AUTO_PIP, "true"));
+        assertPinnedStackDoesNotExist();
+
+        // Launch a translucent activity as a new Task and
+        // ensure that there is no pinned stack.
+        launchActivity(TRANSLUCENT_TEST_ACTIVITY);
+        assertPinnedStackDoesNotExist();
+    }
+
+    @Test
     public void testAutoPipOnLaunchingActivityWithNoUserAction() {
         // Launch the PIP activity and set its pip params to allow auto-pip.
         launchActivity(PIP_ACTIVITY, extraString(EXTRA_ALLOW_AUTO_PIP, "true"));
@@ -1564,6 +1634,25 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         launchActivityWithNoUserAction(TEST_ACTIVITY);
         assertPinnedStackDoesNotExist();
         waitAndAssertActivityState(PIP_ACTIVITY, STATE_STOPPED, "activity must be stopped");
+    }
+
+    @Test
+    public void testAutoPipOnLaunchingActivityWithNoAnimation() {
+        // Launch the PIP activity and set its pip params to allow auto-pip.
+        launchActivity(PIP_ACTIVITY, extraString(EXTRA_ALLOW_AUTO_PIP, "true"));
+        assertPinnedStackDoesNotExist();
+
+        int windowingMode = mWmState.getTaskByActivity(PIP_ACTIVITY).getWindowingMode();
+        // Skip the test if freeform, since desktops may manually request PIP immediately after
+        // the test activity launch.
+        assumeFalse(windowingMode == WINDOWING_MODE_FREEFORM);
+
+        // Launch a regular activity with FLAG_ACTIVITY_NO_ANIMATION and
+        // ensure that there is pinned stack.
+        launchActivityWithNoAnimation(TEST_ACTIVITY);
+        waitForEnterPip(PIP_ACTIVITY);
+        assertPinnedStackExists();
+        waitAndAssertActivityState(PIP_ACTIVITY, STATE_PAUSED, "activity must be paused");
     }
 
     @Test
@@ -1823,7 +1912,8 @@ public class PinnedStackTests extends ActivityManagerTestBase {
     private void waitForEnterPip(ComponentName activityName) {
         mWmState.waitForWithAmState(wmState -> {
             Task task = wmState.getTaskByActivity(activityName);
-            return task != null && task.getWindowingMode() == WINDOWING_MODE_PINNED;
+            return task != null
+                    && task.getActivity(activityName).getWindowingMode() == WINDOWING_MODE_PINNED;
         }, "checking task windowing mode");
     }
 

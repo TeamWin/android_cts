@@ -29,7 +29,7 @@
     <option name="compatibility:include-filter" value="CtsNetTestCasesUpdateStatsPermission" />
     <option name="compatibility:include-filter" value="CtsOmapiTestCases" />
     <option name="compatibility:include-filter" value="CtsPermissionTestCases" />
-    <option name="compatibility:include-filter" value="CtsPermission2TestCases" />
+    <option name="compatibility:include-filter" value="CtsPermissionPolicyTestCases" />
     <option name="compatibility:include-filter" value="CtsSecureElementAccessControlTestCases1" />
     <option name="compatibility:include-filter" value="CtsSecureElementAccessControlTestCases2" />
     <option name="compatibility:include-filter" value="CtsSecureElementAccessControlTestCases3" />
@@ -46,5 +46,5 @@
     <option name="compatibility:include-filter" value="CtsTetheringTest" />
     <option name="compatibility:include-filter" value="CtsUsageStatsTestCases" />
     <option name="compatibility:include-filter" value="CtsVcnTestCases" />
-
+    <option name="compatibility:include-filter" value="CtsDevicePolicySimTestCases" />
 </configuration>

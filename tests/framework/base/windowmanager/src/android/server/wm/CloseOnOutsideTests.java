@@ -17,6 +17,9 @@
 package android.server.wm;
 
 import static android.server.wm.ActivityManagerTestBase.createFullscreenActivityScenarioRule;
+import static android.server.wm.ActivityManagerTestBase.wakeUpAndUnlock;
+
+import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -51,6 +54,7 @@ public class CloseOnOutsideTests {
 
     @Before
     public void setup() {
+        wakeUpAndUnlock(getInstrumentation().getContext());
         mScenarioRule.getScenario().onActivity(activity -> mTestActivity = activity);
     }
 

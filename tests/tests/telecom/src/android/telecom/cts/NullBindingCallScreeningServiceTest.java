@@ -56,17 +56,19 @@ public class NullBindingCallScreeningServiceTest extends BaseTelecomTestWithMock
 
     @Override
     protected void tearDown() throws Exception {
-        super.tearDown();
-        if (!mShouldTestTelecom) {
-            return;
+        if (mShouldTestTelecom) {
+            // Remove the app from the screening role.
+            removeRoleHolder(ROLE_CALL_SCREENING,
+                    NullBindingCallScreeningService.class.getPackage().getName());
+            NullBindingCallScreeningService.disableNullBindingCallScreeningService(mContext);
         }
-        // Remove the app from the screening role.
-        removeRoleHolder(ROLE_CALL_SCREENING,
-                NullBindingCallScreeningService.class.getPackage().getName());
-        NullBindingCallScreeningService.disableNullBindingCallScreeningService(mContext);
+        super.tearDown();
     }
 
     public void testNullBindingOnIncomingCall() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
         Uri testNumber = createRandomTestNumber();
         Bundle extras = new Bundle();
         extras.putParcelable(TelecomManager.EXTRA_INCOMING_CALL_ADDRESS, testNumber);
@@ -82,9 +84,14 @@ public class NullBindingCallScreeningServiceTest extends BaseTelecomTestWithMock
     }
 
     public void testNullBindingOnOutgoingCall() throws Exception {
+        if (!mShouldTestTelecom  || !TestUtils.hasTelephonyFeature(mContext)) {
+            return;
+        }
         Uri testNumber = createRandomTestNumber();
         Bundle extras = new Bundle();
         extras.putParcelable(TestUtils.EXTRA_PHONE_NUMBER, TEST_OUTGOING_NUMBER);
+        extras.putParcelable(TelecomManager.EXTRA_PHONE_ACCOUNT_HANDLE,
+                TestUtils.TEST_PHONE_ACCOUNT_HANDLE);
 
         // Verify that binding latch counts are reset for testing
         assertBindLatchInit();

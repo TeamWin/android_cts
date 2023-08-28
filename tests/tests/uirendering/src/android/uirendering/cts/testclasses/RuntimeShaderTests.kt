@@ -35,8 +35,6 @@ import android.uirendering.cts.testinfrastructure.CanvasClient
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.MediumTest
 import com.android.compatibility.common.util.ApiTest
-import java.nio.ByteBuffer
-import java.nio.ByteOrder
 import org.junit.Assert
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -322,7 +320,7 @@ class RuntimeShaderTests : ActivityTestBase() {
             rotatedPrimaries[i] = srgb.primaries[(i + 2) % srgb.primaries.size]
         }
         return ColorSpace.Rgb("Rotated sRGB", rotatedPrimaries, srgb.whitePoint,
-                srgb.transferParameters!!)
+                              srgb.transferParameters!!)
     }
 
     @Test

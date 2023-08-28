@@ -20,8 +20,11 @@ import static android.media.drm.Enums.DrmScheme.CLEAR_KEY_DASH_IF;
 import static android.media.drm.Enums.IDrmFrontend.IDRM_JNI;
 import static android.media.drm.Enums.SecurityLevel.SECURITY_LEVEL_MAX;
 import static android.media.drm.Enums.SecurityLevel.SECURITY_LEVEL_SW_SECURE_CRYPTO;
+import static android.media.drm.Enums.Status.ERROR_INVALID_STATE;
+import static android.media.drm.Enums.DrmApi.DRM_API_INIT_CHECK;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.cts.statsdatom.lib.AtomTestUtils;
 import android.cts.statsdatom.lib.ConfigUtils;
@@ -35,12 +38,15 @@ import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.testtype.DeviceTestCase;
 import com.android.tradefed.testtype.IBuildReceiver;
 
+import com.google.common.truth.StandardSubjectBuilder;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
 public class MediaDrmAtomTests extends DeviceTestCase implements IBuildReceiver {
 
+    private static final UUID CLEAR_KEY_UUID = new UUID(0xe2719d58a985b3c9L, 0x781ab030af78d30eL);
     private IBuildInfo mCtsBuild;
 
     @Override
@@ -102,25 +108,89 @@ public class MediaDrmAtomTests extends DeviceTestCase implements IBuildReceiver 
                 openedList.add(opened);
             }
 
-            if (errored != null && errored.getUid() == testAppUid) {
+            if (errored != null && errored.getUid() == testAppUid
+                    && errored.getApi() != DRM_API_INIT_CHECK) {
                 erroredList.add(errored);
             }
         }
-        UUID clearKeyUuid = new UUID(0xe2719d58a985b3c9L, 0x781ab030af78d30eL);
         // verify the events
         assertThat(createdList.size()).isEqualTo(1);
-        assertThat(createdList.get(0).getScheme()).isEqualTo(CLEAR_KEY_DASH_IF);
-        assertThat(createdList.get(0).getUuidMsb())
-                .isEqualTo(clearKeyUuid.getMostSignificantBits());
-        assertThat(createdList.get(0).getUuidLsb())
-                .isEqualTo(clearKeyUuid.getLeastSignificantBits());
-        assertThat(createdList.get(0).getFrontend()).isEqualTo(IDRM_JNI);
-        assertThat(createdList.get(0).getVersion()).isNotEmpty();
+        validateMediaDrmCreated(createdList.get(0));
+
         assertThat(openedList.size()).isEqualTo(2);
-        assertThat(openedList.get(0).getObjectNonce()).isNotEmpty();
-        assertThat(openedList.get(0).getRequestedSecurityLevel()).isEqualTo(SECURITY_LEVEL_MAX);
-        assertThat(openedList.get(0).getOpenedSecurityLevel()).isEqualTo(
-                SECURITY_LEVEL_SW_SECURE_CRYPTO);
-        // TODO : to add check for erroredlist, cdm_error and error_code
+        for (int i = 0; i < openedList.size(); i++) {
+            MediaDrmAtoms.MediaDrmSessionOpened opened = openedList.get(i);
+            validateMediaDrmOpenedListItem(openedList, i);
+        }
+        assertThat(openedList.get(0).getObjectNonce()).isEqualTo(
+                openedList.get(1).getObjectNonce());
+
+        assertThat(erroredList.size()).isEqualTo(2);
+        for (int i = 0; i < erroredList.size(); i++) {
+            validateMediaDrmErroredListItem(erroredList, i);
+        }
+        assertThat(erroredList.get(0).getObjectNonce()).isEqualTo(
+                openedList.get(0).getObjectNonce());
+        assertThat(erroredList.get(0).getObjectNonce()).isEqualTo(
+                erroredList.get(1).getObjectNonce());
+        assertThat(erroredList.get(0).getSessionNonce()).isNotEqualTo(
+                erroredList.get(1).getSessionNonce());
+    }
+    // validating the created media drm events
+    private void validateMediaDrmCreated(MediaDrmAtoms.MediaDrmCreated created) {
+        assertThat(created.getScheme()).isEqualTo(CLEAR_KEY_DASH_IF);
+        assertThat(created.getUuidMsb())
+                .isEqualTo(CLEAR_KEY_UUID.getMostSignificantBits());
+        assertThat(created.getUuidLsb())
+                .isEqualTo(CLEAR_KEY_UUID.getLeastSignificantBits());
+        assertThat(created.getFrontend()).isEqualTo(IDRM_JNI);
+        assertThat(created.getVersion()).isNotEmpty();
+    }
+    // validating the opened media drm events
+    private void validateMediaDrmOpenedListItem(
+            List<MediaDrmAtoms.MediaDrmSessionOpened> openedList, int index) {
+        MediaDrmAtoms.MediaDrmSessionOpened opened = openedList.get(index);
+        StandardSubjectBuilder _assert = assertWithMessage(
+                "index %s atom %s", index, opened);
+        _assert.that(opened.getScheme()).isEqualTo(CLEAR_KEY_DASH_IF);
+        _assert.that(opened.getUuidMsb())
+                .isEqualTo(CLEAR_KEY_UUID.getMostSignificantBits());
+        _assert.that(opened.getUuidLsb())
+                .isEqualTo(CLEAR_KEY_UUID.getLeastSignificantBits());
+        _assert.that(opened.getFrontend()).isEqualTo(IDRM_JNI);
+        _assert.that(opened.getVersion()).isNotEmpty();
+        _assert.that(opened.getObjectNonce()).isNotEmpty();
+        _assert.that(opened.getRequestedSecurityLevel()).isEqualTo(SECURITY_LEVEL_MAX);
+        _assert.that(opened.getOpenedSecurityLevel()).isEqualTo(SECURITY_LEVEL_SW_SECURE_CRYPTO);
+    }
+    // validating the errored media drm events
+    private void validateMediaDrmErroredListItem(List<MediaDrmAtoms.MediaDrmErrored> erroredList,
+            int index) {
+        MediaDrmAtoms.MediaDrmErrored errored = erroredList.get(index);
+        StandardSubjectBuilder _assert = assertWithMessage(
+                "index %s atom %s", index, errored);
+        _assert.that(errored.getScheme()).isEqualTo(CLEAR_KEY_DASH_IF);
+        _assert.that(errored.getUuidMsb())
+                .isEqualTo(CLEAR_KEY_UUID.getMostSignificantBits());
+        _assert.that(errored.getUuidLsb())
+                .isEqualTo(CLEAR_KEY_UUID.getLeastSignificantBits());
+        _assert.that(errored.getFrontend()).isEqualTo(IDRM_JNI);
+        _assert.that(errored.getVersion()).isNotEmpty();
+        _assert.that(errored.getObjectNonce()).isNotEmpty();
+        _assert.that(errored.getSessionNonce()).isNotEmpty();
+        _assert.that(errored.getSecurityLevel()).isEqualTo(SECURITY_LEVEL_SW_SECURE_CRYPTO);
+        _assert.that(errored.getErrorCode()).isEqualTo(ERROR_INVALID_STATE);
+
+        int version;
+        try {
+            version = Integer.parseInt(errored.getVersion());
+        } catch (NumberFormatException e) {
+            version = Integer.MIN_VALUE;
+        }
+        if (version >= 14) { // Android U Clearkey
+            _assert.that(errored.getCdmErr()).isEqualTo(5);
+            _assert.that(errored.getOemErr()).isEqualTo(123);
+            _assert.that(errored.getErrorContext()).isEqualTo(456);
+        }
     }
 }

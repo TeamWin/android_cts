@@ -11,13 +11,15 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.nfc.cardemulation.*;
 import android.nfc.INfcFCardEmulation;
 import android.nfc.NfcAdapter;
+import android.nfc.cardemulation.*;
 import android.os.RemoteException;
-import androidx.test.core.app.ApplicationProvider;
-import androidx.test.InstrumentationRegistry;
 
+import androidx.test.InstrumentationRegistry;
+import androidx.test.core.app.ApplicationProvider;
+
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -25,9 +27,8 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.mockito.internal.util.reflection.FieldReader;
 import org.mockito.internal.util.reflection.FieldSetter;
-
-import java.io.IOException;
 
 @RunWith(JUnit4.class)
 public class NfcFCardEmulationTest {
@@ -35,6 +36,7 @@ public class NfcFCardEmulationTest {
     private static final ComponentName mService =
         new ComponentName("android.nfc.cts", "android.nfc.cts.CtsMyHostApduService");
 
+    private INfcFCardEmulation mOldService;
     @Mock private INfcFCardEmulation mockEmulation;
 
     private boolean supportsHardware() {
@@ -43,12 +45,25 @@ public class NfcFCardEmulationTest {
     }
 
     @Before
-    public void setUp() {
+    public void setUp() throws NoSuchFieldException, RemoteException {
         MockitoAnnotations.initMocks(this);
         assumeTrue(supportsHardware());
         Context mContext = InstrumentationRegistry.getContext();
         mAdapter = NfcAdapter.getDefaultAdapter(mContext);
         Assert.assertNotNull(mAdapter);
+
+        NfcFCardEmulation instance = NfcFCardEmulation.getInstance(mAdapter);
+        FieldReader serviceField = new FieldReader(instance,
+                instance.getClass().getDeclaredField("sService"));
+        mOldService = (INfcFCardEmulation) serviceField.read();
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        if (!supportsHardware()) return;
+        NfcFCardEmulation instance = NfcFCardEmulation.getInstance(mAdapter);
+        FieldSetter.setField(instance,
+                instance.getClass().getDeclaredField("sService"), mOldService);
     }
 
     @Test

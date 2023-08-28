@@ -77,6 +77,7 @@ public class InstrumentationTest {
 
     // Secondary apk we can run tests against.
     static final String SIMPLE_PACKAGE_NAME = "com.android.cts.launcherapps.simpleapp";
+    private static final String TEST_ACTION = "com.android.app.cts.TEST_ACTION";
 
     private Instrumentation mInstrumentation;
     private InstrumentationTestActivity mActivity;
@@ -198,8 +199,9 @@ public class InstrumentationTest {
         assertNull(activity);
         a.finish();
 
-        IntentFilter filter = new IntentFilter();
+        IntentFilter filter = new IntentFilter(TEST_ACTION);
         ActivityMonitor am = mInstrumentation.addMonitor(filter, result, false);
+        intent.setAction(TEST_ACTION);
         mContext.startActivity(intent);
         mInstrumentation.waitForIdleSync();
         activity = am.waitForActivity();

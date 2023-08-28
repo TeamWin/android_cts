@@ -23,6 +23,7 @@ import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 import com.android.tradefed.testtype.junit4.DeviceTestRunOptions;
 import com.android.tradefed.util.Pair;
+import com.android.tradefed.util.RunUtil;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -55,6 +56,9 @@ abstract class BaseBlobStoreHostTest extends BaseHostJUnit4Test {
 
     private static final long REBOOT_TIMEOUT_MS = 3 * 60 * 1000;
     private static final long ONLINE_TIMEOUT_MS = 3 * 60 * 1000;
+
+    private static final String PROPERTY_USERSPACE_REBOOT_IS_SUPPORTED =
+            "init.userspace_reboot.is_supported";
 
     protected void runDeviceTest(String testPkg, String testClass, String testMethod)
             throws Exception {
@@ -95,13 +99,16 @@ abstract class BaseBlobStoreHostTest extends BaseHostJUnit4Test {
     }
 
     protected void rebootAndWaitUntilReady() throws Exception {
-        // TODO: use rebootUserspace()
         TestDeviceOptions options = getDevice().getOptions();
         final long prevRebootTimeoutMs = options.getRebootTimeout();
         final long prevOnlineTimeoutMs = options.getOnlineTimeout();
         updateDeviceOptions(options, REBOOT_TIMEOUT_MS, ONLINE_TIMEOUT_MS);
         try {
-            getDevice().reboot(); // reboot() waits for device available
+            if (getDevice().getBooleanProperty(PROPERTY_USERSPACE_REBOOT_IS_SUPPORTED, false)) {
+                getDevice().rebootUserspace();
+            } else {
+                getDevice().reboot(); // reboot() waits for device to be available
+            }
         } finally {
             updateDeviceOptions(options, prevRebootTimeoutMs, prevOnlineTimeoutMs);
         }
@@ -155,22 +162,21 @@ abstract class BaseBlobStoreHostTest extends BaseHostJUnit4Test {
                 + "--user %d android.app.role.ASSISTANT %s", userId, pkgName);
         runCommand(cmd);
         // Wait for the role holder to be changed.
-        final String regex = "user_id=" + userId + ".+?roles=\\[(.+?)\\]";
-        final Pattern pattern = Pattern.compile(regex, Pattern.MULTILINE | Pattern.DOTALL);
-        final String roleHolder = "name=android.app.role.ASSISTANT" + "holders=" + pkgName;
-        int checkRoleHolderRetries = 10;
-        while (checkRoleHolderRetries > 0) {
-            final String roleServiceDump = getDevice().executeShellCommand("dumpsys role");
-            final Matcher matcher = pattern.matcher(roleServiceDump);
-            if (!matcher.find()) {
-                Thread.sleep(10000);
-                checkRoleHolderRetries--;
-                continue;
-            }
-            if (matcher.group(1).replaceAll("\\s+", "").contains(roleHolder)) {
+        int checkRoleHolderRetries = 20;
+        while (checkRoleHolderRetries-- > 0) {
+            if (Arrays.stream(getAssistRoleHolders(userId)).anyMatch(pkgName::equals)) {
                 break;
             }
+            // Wait and try again.
+            RunUtil.getDefault().sleep(5000);
         }
+    }
+
+    private String[] getAssistRoleHolders(int userId) throws Exception {
+        final String cmd = String.format("cmd role get-role-holders "
+                + "--user %d android.app.role.ASSISTANT", userId);
+        final String output = runCommand(cmd).trim();
+        return output.split(";");
     }
 
     protected void removeAssistRoleHolder(String pkgName, int userId) throws Exception {

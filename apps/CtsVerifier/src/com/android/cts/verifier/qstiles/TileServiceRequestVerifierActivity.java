@@ -151,7 +151,8 @@ public class TileServiceRequestVerifierActivity extends InteractiveVerifierActiv
                     next();
                 }
             };
-            mContext.registerReceiver(br, new IntentFilter(ACTION_REMOVE_PACKAGE));
+            mContext.registerReceiver(br, new IntentFilter(ACTION_REMOVE_PACKAGE),
+                    Context.RECEIVER_EXPORTED);
             return br;
         }
 
@@ -163,7 +164,8 @@ public class TileServiceRequestVerifierActivity extends InteractiveVerifierActiv
             BroadcastReceiver br = registerReceiver();
             try {
                 PendingIntent pi = PendingIntent.getBroadcast(mContext, /* requestCode */ 0,
-                        new Intent(ACTION_REMOVE_PACKAGE), PendingIntent.FLAG_MUTABLE);
+                        new Intent(ACTION_REMOVE_PACKAGE).setPackage(mContext.getPackageName()),
+                        PendingIntent.FLAG_MUTABLE);
                 packageInstaller.uninstall(HELPER_ACTIVITY_COMPONENT.getPackageName(),
                         pi.getIntentSender());
                 status = WAIT_FOR_USER;

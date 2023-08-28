@@ -16,18 +16,10 @@
 
 package android.os.cts;
 
-import java.io.FileDescriptor;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertThrows;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 
 import android.app.Service;
 import android.content.ComponentName;
@@ -49,12 +41,22 @@ import android.util.Log;
 import android.util.SparseArray;
 import android.util.SparseBooleanArray;
 
+import com.android.compatibility.common.util.ApiTest;
+
 import com.google.common.util.concurrent.AbstractFuture;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertThrows;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
+import java.io.FileDescriptor;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 public class ParcelTest extends AndroidTestCase {
 
@@ -4755,6 +4757,54 @@ public class ParcelTest extends AndroidTestCase {
                 p.readParcelable(getClass().getClassLoader(),
                         SimpleParcelableWithoutNestedCreator.class);
         assertEquals(2, parcelable.value);
+        p.recycle();
+    }
+
+    @ApiTest(apis = {"android.os.Parcel#writeTypedSparseArray(android.utilSparseArray, int)",
+            "android.os.Parcel#createTypedSparseArray(android.os.Parcelable.Creator)"})
+    public void testCreateTypedSparseArray() {
+        Parcel p;
+        SparseArray<Signature> s = new SparseArray<>();
+        s.append(1, new Signature("1234"));
+        s.append(2, new Signature("ABCD"));
+        s.append(3, new Signature("abcd"));
+
+        SparseArray<Signature> s2 = new SparseArray<>();
+        s2.append(1, new Signature("1234"));
+        s2.append(2, null);
+        s2.append(3, new Signature("abcd"));
+        SparseArray<Signature> s3;
+
+        // test write null
+        p = Parcel.obtain();
+        p.writeTypedSparseArray(null, 0);
+        p.setDataPosition(0);
+        assertNull(p.createTypedSparseArray(Signature.CREATOR));
+        p.recycle();
+
+        // test write not null
+        p = Parcel.obtain();
+        p.writeTypedSparseArray(s, 0);
+        p.setDataPosition(0);
+        s3 = p.createTypedSparseArray(Signature.CREATOR);
+        assertNotNull(s3);
+        assertEquals(s3.size(), s.size());
+        for (int i = 0; i < s.size(); i++) {
+            assertEquals(s3.keyAt(i), s.keyAt(i));
+            assertEquals(s3.valueAt(i), s.valueAt(i));
+        }
+        p.recycle();
+
+        p = Parcel.obtain();
+        p.writeTypedSparseArray(s2, 0);
+        p.setDataPosition(0);
+        s3 = p.createTypedSparseArray(Signature.CREATOR);
+        assertNotNull(s3);
+        assertEquals(s3.size(), s2.size());
+        for (int i = 0; i < s.size(); i++) {
+            assertEquals(s3.keyAt(i), s2.keyAt(i));
+            assertEquals(s3.valueAt(i), s2.valueAt(i));
+        }
         p.recycle();
     }
 }

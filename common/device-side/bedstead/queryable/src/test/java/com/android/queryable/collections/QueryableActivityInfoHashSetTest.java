@@ -18,14 +18,20 @@ package com.android.queryable.collections;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import com.android.bedstead.harrier.BedsteadJUnit4;
+import com.android.bedstead.harrier.DeviceState;
 import com.android.queryable.info.ActivityInfo;
 
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 
-@RunWith(JUnit4.class)
+@RunWith(BedsteadJUnit4.class)
 public class QueryableActivityInfoHashSetTest {
+
+    @ClassRule @Rule
+    public static final DeviceState sDeviceState = new DeviceState();
 
     private static final ActivityInfo EXPORTED_ACTIVITY_INFO_1 = ActivityInfo
             .builder().activityClass("activityInfo1").exported(true).build();

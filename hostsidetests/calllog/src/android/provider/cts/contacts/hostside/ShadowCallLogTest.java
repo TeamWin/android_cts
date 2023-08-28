@@ -104,7 +104,6 @@ public class ShadowCallLogTest extends BaseHostJUnit4Test {
     private void setupDevicePassword() throws Exception {
         Log.i(TAG, "running device password setup");
         ITestDevice device = getDevice();
-        device.executeShellCommand("settings put global require_password_to_decrypt 0");
         device.executeShellCommand("locksettings set-disabled false");
         device.executeShellCommand("locksettings set-pin 12345");
     }
@@ -114,7 +113,6 @@ public class ShadowCallLogTest extends BaseHostJUnit4Test {
         ITestDevice device = getDevice();
         device.executeShellCommand("locksettings clear --old 12345");
         device.executeShellCommand("locksettings set-disabled true");
-        device.executeShellCommand("settings delete global require_password_to_decrypt");
     }
 
     public static void waitForBootCompleted(ITestDevice device) throws Exception {

@@ -30,6 +30,7 @@ android_test {
         "androidx.test.uiautomator_uiautomator",
         "androidx.test.rules",
         "compatibility-device-util-axt",
+        "platform-test-rules",
     ],
 
     platform_apis: true,

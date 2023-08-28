@@ -72,6 +72,11 @@ public final class DelegatedAdminReceiverQueryHelper<E extends Queryable>
         return mBroadcastReceiverQueryHelper;
     }
 
+    @Override
+    public boolean isEmptyQuery() {
+        return Queryable.isEmptyQuery(mBroadcastReceiverQueryHelper);
+    }
+
     /** {@code true} if all filters are met by {@code value}. */
     @Override
     public boolean matches(DelegatedAdminReceiverInfo value) {

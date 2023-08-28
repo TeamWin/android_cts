@@ -35,6 +35,11 @@ public abstract class QueryableBaseWithMatch<E, F extends Query<E>> extends Quer
         super(in);
     }
 
+    @Override
+    public boolean isEmptyQuery() {
+        return mQuery.isEmptyQuery();
+    }
+
     /**
      * {@code true} if the {@code value} meets the requirements of the query.
      */

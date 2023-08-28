@@ -20,15 +20,16 @@ import static android.os.Process.setThreadPriority;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import android.app.UiAutomation;
+import static org.junit.Assume.assumeTrue;
+
 import android.car.Car;
 import android.car.os.CarPerformanceManager;
 import android.car.os.ThreadPolicyWithPriority;
-import android.car.test.ApiCheckerRule;
+import android.car.test.PermissionsCheckerRule;
+import android.car.test.PermissionsCheckerRule.EnsureHasPermission;
 import android.platform.test.annotations.AppModeFull;
 
 import androidx.test.filters.SmallTest;
-import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.ApiTest;
 
@@ -39,16 +40,14 @@ import org.junit.Test;
 
 @SmallTest
 @AppModeFull(reason = "Instant Apps cannot get car related permissions")
-public class CarPerformanceManagerTest extends CarApiTestBase {
+@EnsureHasPermission(Car.PERMISSION_MANAGE_THREAD_PRIORITY)
+public final class CarPerformanceManagerTest extends AbstractCarTestCase {
+    @Rule
+    public final PermissionsCheckerRule mPermissionsCheckerRule = new PermissionsCheckerRule();
 
-    private UiAutomation mUiAutomation;
+
     private CarPerformanceManager mCarPerformanceManager;
     private ThreadPolicyWithPriority mOriginalPolicyWithPriority;
-
-    // TODO(b/242350638): move to super class (although it would need to call
-    // disableAnnotationsCheck()
-    @Rule
-    public final ApiCheckerRule mApiCheckerRule = new ApiCheckerRule.Builder().build();
 
     private void setThreadPriorityGotThreadPriorityVerify(ThreadPolicyWithPriority p)
             throws Exception {
@@ -62,24 +61,20 @@ public class CarPerformanceManagerTest extends CarApiTestBase {
 
     @Before
     public void setUp() throws Exception {
-        super.setUp();
-        mUiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
-        mUiAutomation.adoptShellPermissionIdentity(Car.PERMISSION_MANAGE_THREAD_PRIORITY);
-
         mCarPerformanceManager = (CarPerformanceManager) getCar().getCarManager(
                 Car.CAR_PERFORMANCE_SERVICE);
         assertThat(mCarPerformanceManager).isNotNull();
-
-        // TODO(b/237015981): it would be cleaner to split this logic into a separate @Before method
-        // which would be annotated with:
-        //   @TestApiRequirements(requiresApi="...", onApiViolation=IGNORE)
-        // But that would require a new rule to wrap the whole test class with
-        // adoptShellPermissionIdentity (otherwise there would be no guarantee that the new method
-        // would be called before the call to adoptShellPermissionIdentity)
+        mOriginalPolicyWithPriority = null;
         if (mApiCheckerRule.isApiSupported("android.car.os.CarPerformanceManager#"
                 + "getThreadPriority")) {
-            mOriginalPolicyWithPriority = mCarPerformanceManager.getThreadPriority();
+            try {
+                mOriginalPolicyWithPriority = mCarPerformanceManager.getThreadPriority();
+            } catch (IllegalStateException e) {
+                mOriginalPolicyWithPriority = null;
+            }
         }
+        assumeTrue("Failed to get original thread priority or the thread prority is not supported",
+                mOriginalPolicyWithPriority != null);
     }
 
     @After
@@ -87,13 +82,11 @@ public class CarPerformanceManagerTest extends CarApiTestBase {
         if (mOriginalPolicyWithPriority != null) {
             mCarPerformanceManager.setThreadPriority(mOriginalPolicyWithPriority);
         }
-
-        mUiAutomation.dropShellPermissionIdentity();
     }
 
     @Test
     @ApiTest(apis = {
-            "android.car.os.CarPerformanceManager#setThreadPriority(ThreadPolicyWithPriority)",
+            "android.car.os.CarPerformanceManager#setThreadPriority",
             "android.car.os.CarPerformanceManager#getThreadPriority"})
     public void testSetThreadPriorityDefault() throws Exception {
         setThreadPriorityGotThreadPriorityVerify(new ThreadPolicyWithPriority(
@@ -102,7 +95,7 @@ public class CarPerformanceManagerTest extends CarApiTestBase {
 
     @Test
     @ApiTest(apis = {
-            "android.car.os.CarPerformanceManager#setThreadPriority(ThreadPolicyWithPriority)",
+            "android.car.os.CarPerformanceManager#setThreadPriority",
             "android.car.os.CarPerformanceManager#getThreadPriority"})
     public void testSetThreadPriorityFIFOMinPriority() throws Exception {
         setThreadPriorityGotThreadPriorityVerify(new ThreadPolicyWithPriority(
@@ -112,7 +105,7 @@ public class CarPerformanceManagerTest extends CarApiTestBase {
 
     @Test
     @ApiTest(apis = {
-            "android.car.os.CarPerformanceManager#setThreadPriority(ThreadPolicyWithPriority)",
+            "android.car.os.CarPerformanceManager#setThreadPriority",
             "android.car.os.CarPerformanceManager#getThreadPriority"})
     public void testSetThreadPriorityFIFOMaxPriority() throws Exception {
         setThreadPriorityGotThreadPriorityVerify(new ThreadPolicyWithPriority(
@@ -122,7 +115,7 @@ public class CarPerformanceManagerTest extends CarApiTestBase {
 
     @Test
     @ApiTest(apis = {
-            "android.car.os.CarPerformanceManager#setThreadPriority(ThreadPolicyWithPriority)",
+            "android.car.os.CarPerformanceManager#setThreadPriority",
             "android.car.os.CarPerformanceManager#getThreadPriority"})
     public void testSetThreadPriorityRRMinPriority() throws Exception {
         setThreadPriorityGotThreadPriorityVerify(new ThreadPolicyWithPriority(
@@ -132,7 +125,7 @@ public class CarPerformanceManagerTest extends CarApiTestBase {
 
     @Test
     @ApiTest(apis = {
-            "android.car.os.CarPerformanceManager#setThreadPriority(ThreadPolicyWithPriority)",
+            "android.car.os.CarPerformanceManager#setThreadPriority",
             "android.car.os.CarPerformanceManager#getThreadPriority"})
     public void testSetThreadPriorityRRMaxPriority() throws Exception {
         setThreadPriorityGotThreadPriorityVerify(new ThreadPolicyWithPriority(
@@ -142,7 +135,7 @@ public class CarPerformanceManagerTest extends CarApiTestBase {
 
     @Test
     @ApiTest(apis = {
-            "android.car.os.CarPerformanceManager#setThreadPriority(ThreadPolicyWithPriority)",
+            "android.car.os.CarPerformanceManager#setThreadPriority",
             "android.car.os.CarPerformanceManager#getThreadPriority"})
     public void testSetThreadPriorityDefaultKeepNiceValue() throws Exception {
         int expectedNiceValue = 10;

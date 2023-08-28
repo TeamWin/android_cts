@@ -16,13 +16,15 @@
 
 package com.android.cts.packagemanager.stats.host;
 
-import com.android.tradefed.util.RunUtil;
 import android.cts.statsdatom.lib.AtomTestUtils;
 import android.cts.statsdatom.lib.ConfigUtils;
 import android.cts.statsdatom.lib.DeviceUtils;
 import android.cts.statsdatom.lib.ReportUtils;
 
 import com.android.os.AtomsProto;
+import com.android.tradefed.util.RunUtil;
+
+import com.google.common.truth.Truth;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -49,6 +51,7 @@ public class InstalledIncrementalPackageStatsTests extends PackageManagerStatsTe
         }
         ConfigUtils.uploadConfigForPulledAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
                 AtomsProto.Atom.INSTALLED_INCREMENTAL_PACKAGE_FIELD_NUMBER);
+        long currentEpochTimeSeconds = Math.floorDiv(getDevice().getDeviceDate(), 1000);
         installPackageUsingIncremental(new String[]{TEST_INSTALL_APK});
         assertTrue(getDevice().isPackageInstalled(TEST_INSTALL_PACKAGE,
                 String.valueOf(getDevice().getCurrentUser())));
@@ -64,6 +67,9 @@ public class InstalledIncrementalPackageStatsTests extends PackageManagerStatsTe
         List<Integer> uidsReported = new ArrayList<>();
         for (AtomsProto.Atom atom : data) {
             uidsReported.add(atom.getInstalledIncrementalPackage().getUid());
+            assertFalse(atom.getInstalledIncrementalPackage().getIsLoading());
+            Truth.assertThat(atom.getInstalledIncrementalPackage().getLoadingCompletedTimestamp()
+                    ).isGreaterThan(currentEpochTimeSeconds);
         }
         assertTrue(uidsReported.contains(getAppUid(TEST_INSTALL_PACKAGE)));
         assertTrue(uidsReported.contains(getAppUid(TEST_INSTALL_PACKAGE2)));

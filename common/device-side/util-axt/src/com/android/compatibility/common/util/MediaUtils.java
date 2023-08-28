@@ -894,6 +894,7 @@ public class MediaUtils {
                 } catch (IllegalArgumentException e) {
                      // mime is not supported
                      Log.w(TAG, "not supported mime: " + mime);
+                     return false;
                 }
             }
         }

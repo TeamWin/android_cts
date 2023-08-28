@@ -44,7 +44,8 @@ public class InstrumentationHelperService extends Service {
         final String action = intent.getAction();
         if (ACTION_START_INSTRUMENTATION.equals(action)) {
             final String instrumentationName = intent.getStringExtra(EXTRA_INSTRUMENTATIION_NAME);
-            final ResultReceiver r = intent.getParcelableExtra(Intent.EXTRA_RESULT_RECEIVER);
+            final ResultReceiver r = intent.getParcelableExtra(Intent.EXTRA_RESULT_RECEIVER,
+                    ResultReceiver.class);
 
             boolean result = false;
             try {

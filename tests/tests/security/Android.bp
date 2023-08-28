@@ -59,6 +59,7 @@ android_test {
         "libpackagelistparser",
         "libcve_2019_2213_jni",
     ],
+    host_required: ["CtsBackupHostTestCases"],
     srcs: [
         "src/**/*.java",
         "src/**/*.kt",
@@ -91,7 +92,6 @@ android_test {
         ":CtsPermissionBackupAppCert34",
         ":CtsPermissionBackupAppCert123",
         ":CtsPermissionBackupAppCert4History124",
-        ":CtsAppThatRequestCustomCameraPermission",
     ],
 }
 

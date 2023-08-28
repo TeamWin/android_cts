@@ -17,7 +17,6 @@ package android.autofillservice.cts.inline;
 
 import static android.autofillservice.cts.testcore.Helper.ID_PASSWORD;
 import static android.autofillservice.cts.testcore.Helper.ID_USERNAME;
-import static android.autofillservice.cts.testcore.Helper.getContext;
 import static android.autofillservice.cts.testcore.InstrumentedAutoFillServiceInlineEnabled.SERVICE_NAME;
 
 import android.autofillservice.cts.commontests.AbstractLoginActivityTestCase;
@@ -52,7 +51,7 @@ public class InlineTooltipTest extends AbstractLoginActivityTestCase {
 
     @Override
     protected void enableService() {
-        Helper.enableAutofillService(getContext(), SERVICE_NAME);
+        Helper.enableAutofillService(SERVICE_NAME);
     }
 
     @Test
@@ -140,7 +139,6 @@ public class InlineTooltipTest extends AbstractLoginActivityTestCase {
 
     @Test
     public void testShowTooltipWithSecondDataset() throws Exception {
-        mUiBot.assumeMinimumResolution(500);
         // Set service.
         enableService();
 

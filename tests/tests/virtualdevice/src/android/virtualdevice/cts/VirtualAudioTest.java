@@ -61,6 +61,7 @@ import static androidx.test.core.app.ApplicationProvider.getApplicationContext;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -82,7 +83,7 @@ import android.media.AudioFormat;
 import android.platform.test.annotations.AppModeFull;
 import android.virtualdevice.cts.common.ActivityResultReceiver;
 import android.virtualdevice.cts.common.AudioHelper;
-import android.virtualdevice.cts.util.FakeAssociationRule;
+import android.virtualdevice.cts.common.FakeAssociationRule;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -153,7 +154,7 @@ public class VirtualAudioTest {
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
         Context context = getApplicationContext();
-        PackageManager packageManager = context.getPackageManager();
+        final PackageManager packageManager = context.getPackageManager();
         assumeTrue(packageManager.hasSystemFeature(PackageManager.FEATURE_COMPANION_DEVICE_SETUP));
         assumeTrue(packageManager.hasSystemFeature(
                 PackageManager.FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS));
@@ -219,6 +220,12 @@ public class VirtualAudioTest {
         assertThat(audioInjection.getPlayState()).isEqualTo(PLAYSTATE_PLAYING);
         audioInjection.stop();
         assertThat(audioInjection.getPlayState()).isEqualTo(PLAYSTATE_STOPPED);
+    }
+
+    @Test
+    public void audioInjection_createWithNull() {
+        assertThrows(NullPointerException.class, () -> mVirtualDevice.createVirtualAudioDevice(
+                null, /* executor= */ null, /* callback= */ null));
     }
 
     @Test

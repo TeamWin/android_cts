@@ -2,7 +2,6 @@ per-file ASurfaceControlBackPressureTest.java = file:platform/frameworks/base:/s
 per-file ASurfaceControlTest.java = file:platform/frameworks/base:/services/core/java/com/android/server/wm/OWNERS
 per-file AttachedSurfaceControlSyncTest.java = file:platform/frameworks/base:/services/core/java/com/android/server/wm/OWNERS
 per-file AttachedSurfaceControlTest.java = file:platform/frameworks/base:/services/core/java/com/android/server/wm/OWNERS
-per-file SetTouchableRegionTest.java = file:platform/frameworks/base:/services/core/java/com/android/server/wm/OWNERS
 per-file SurfaceControlTest.java = file:platform/frameworks/base:/services/core/java/com/android/server/wm/OWNERS
 per-file SurfaceViewSyncTest.java = file:platform/frameworks/base:/services/core/java/com/android/server/wm/OWNERS
 

@@ -46,7 +46,6 @@ java_defaults {
         "gwp_asan_cts_common",
     ],
     test_suites: [
-        "cts",
         "general-tests",
     ],
     jni_libs: ["libgwp_asan_cts_library_jni"],

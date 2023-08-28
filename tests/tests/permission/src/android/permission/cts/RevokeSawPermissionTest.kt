@@ -19,7 +19,6 @@ package android.permission.cts
 import android.content.pm.PackageManager
 import android.platform.test.annotations.AsbSecurityTest
 import androidx.test.platform.app.InstrumentationRegistry
-import com.android.compatibility.common.util.SystemUtil
 import org.junit.After
 import org.junit.Assert
 import org.junit.Test
@@ -33,12 +32,12 @@ private val APK_23 = "/data/local/tmp/cts/permissions/" +
 class RevokeSawPermissionTest {
 
     fun installApp(apk: String) {
-        SystemUtil.runShellCommand("pm install -r $apk")
+        PermissionUtils.install(apk)
     }
 
     @After
     fun uninstallApp() {
-        SystemUtil.runShellCommand("pm uninstall $APP_PKG_NAME")
+        PermissionUtils.uninstallApp(APP_PKG_NAME)
     }
 
     @AsbSecurityTest(cveBugId = [221040577L])

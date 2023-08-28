@@ -16,7 +16,6 @@
 
 package android.media.metrics.cts;
 
-import com.android.tradefed.util.RunUtil;
 import static android.media.cts.MediaMetricsTestConstants.LOG_SESSION_ID_KEY;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -39,6 +38,7 @@ import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.AfterClassWithInfo;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 import com.android.tradefed.testtype.junit4.BeforeClassWithInfo;
+import com.android.tradefed.util.RunUtil;
 
 import com.google.common.truth.Correspondence;
 
@@ -48,11 +48,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.io.FileNotFoundException;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -67,8 +64,8 @@ public class MediaMetricsAtomTests extends BaseHostJUnit4Test {
     public static final String TEST_PKG = "android.media.metrics.cts";
     private static final String FEATURE_AUDIO_OUTPUT = "android.hardware.audio.output";
     private static final String FEATURE_MICROPHONE = "android.hardware.microphone";
+    private static final String FEATURE_MIDI = "android.software.midi";
     private static final int MAX_BUFFER_CAPACITY = 30 * 1024 * 1024; // 30M
-
 
     @BeforeClassWithInfo
     public static void installApp(TestInformation testInfo)
@@ -95,7 +92,6 @@ public class MediaMetricsAtomTests extends BaseHostJUnit4Test {
     public static void uninstallApp(TestInformation testInfo) throws Exception {
         DeviceUtils.uninstallTestApp(testInfo.getDevice(), TEST_PKG);
     }
-
 
     @Test
     public void testPlaybackStateEvent_default() throws Exception {
@@ -635,13 +631,12 @@ public class MediaMetricsAtomTests extends BaseHostJUnit4Test {
         assertThat(result.getNetworkTransferDurationMillis()).isEqualTo(6000);
     }
 
-    private void validateAAudioStreamAtom(int direction) throws Exception {
-        Set<Integer> directionSet = new HashSet<>(Arrays.asList(direction));
-        List<Set<Integer>> directionList = Arrays.asList(directionSet);
-
+    private void validateAAudioStreamAtom(String direction) throws Exception {
         List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
-        AtomTestUtils.assertStatesOccurredInOrder(directionList, data, 0,
-                atom -> atom.getMediametricsAaudiostreamReported().getDirection().getNumber());
+
+        assertThat(data).isNotEmpty();
+
+        int appUid = DeviceUtils.getAppUid(getDevice(), TEST_PKG);
 
         for (StatsLog.EventMetricData event : data) {
             AtomsProto.MediametricsAAudioStreamReported atom =
@@ -652,10 +647,17 @@ public class MediaMetricsAtomTests extends BaseHostJUnit4Test {
             assertThat(atom.getBufferSize()).isAtMost(atom.getBufferCapacity());
             assertThat(atom.getFramesPerBurst()).isGreaterThan(0);
             assertThat(atom.getFramesPerBurst()).isLessThan(atom.getBufferCapacity());
+            assertThat(atom.getUid()).isEqualTo(appUid);
+            assertThat(atom.getDirection().toString()).isEqualTo(direction);
+            assertThat(atom.getChannelCountHardware()).isGreaterThan(0);
+            assertThat(atom.getSampleRateHardware()).isGreaterThan(0);
+            assertThat(atom.getFormatHardware()).isNotEqualTo(0);
+            assertThat(atom.getTotalFramesTransferred()).isGreaterThan(0);
+            assertThat(atom.getXrunCount()).isEqualTo(0);
         }
     }
 
-    private void runAAudioTestAndValidate(String requiredFeature, int direction,
+    private void runAAudioTestAndValidate(String requiredFeature, String direction,
             String testFunctionName) throws Exception {
         if (!DeviceUtils.hasFeature(getDevice(), requiredFeature)) {
             return;
@@ -680,7 +682,7 @@ public class MediaMetricsAtomTests extends BaseHostJUnit4Test {
     @Test
     public void testAAudioLowLatencyInputStream() throws Exception {
         runAAudioTestAndValidate(FEATURE_MICROPHONE,
-                AtomsProto.MediametricsAAudioStreamReported.Direction.DIRECTION_INPUT_VALUE,
+                "DIRECTION_INPUT",
                 "testAAudioLowLatencyInputStream");
     }
 
@@ -693,7 +695,7 @@ public class MediaMetricsAtomTests extends BaseHostJUnit4Test {
     @Test
     public void testAAudioLowLatencyOutputStream() throws Exception {
         runAAudioTestAndValidate(FEATURE_AUDIO_OUTPUT,
-                AtomsProto.MediametricsAAudioStreamReported.Direction.DIRECTION_OUTPUT_VALUE,
+                "DIRECTION_OUTPUT",
                 "testAAudioLowLatencyOutputStream");
     }
 
@@ -706,7 +708,7 @@ public class MediaMetricsAtomTests extends BaseHostJUnit4Test {
     @Test
     public void testAAudioLegacyInputStream() throws Exception {
         runAAudioTestAndValidate(FEATURE_MICROPHONE,
-                AtomsProto.MediametricsAAudioStreamReported.Direction.DIRECTION_INPUT_VALUE,
+                "DIRECTION_INPUT",
                 "testAAudioLegacyInputStream");
     }
 
@@ -719,8 +721,52 @@ public class MediaMetricsAtomTests extends BaseHostJUnit4Test {
     @Test
     public void testAAudioLegacyOutputStream() throws Exception {
         runAAudioTestAndValidate(FEATURE_AUDIO_OUTPUT,
-                AtomsProto.MediametricsAAudioStreamReported.Direction.DIRECTION_OUTPUT_VALUE,
+                "DIRECTION_OUTPUT",
                 "testAAudioLegacyOutputStream");
+    }
+
+    /**
+     * The test try to create and then close a midi stream via media metrics
+     * atom host side test app on the DUT.
+     * After that, the event metric data for MediametricsMidiDeviceCloseReported is pushed to verify
+     * the data is collected correctly.
+     */
+    @Test
+    public void testMidiMetrics() throws Exception {
+        if (!DeviceUtils.hasFeature(getDevice(), FEATURE_MIDI)) {
+            return;
+        }
+        ConfigUtils.uploadConfigForPushedAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                AtomsProto.Atom.MEDIAMETRICS_MIDI_DEVICE_CLOSE_REPORTED_FIELD_NUMBER);
+
+        DeviceUtils.runDeviceTests(getDevice(), TEST_PKG,
+                "android.media.metrics.cts.MediaMetricsAtomHostSideTests", "testMidiMetrics",
+                new LogSessionIdListener());
+        RunUtil.getDefault().sleep(AtomTestUtils.WAIT_TIME_LONG);
+
+        List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
+        List<AtomsProto.MediametricsMidiDeviceCloseReported> eventList = toMyAtoms(data,
+                AtomsProto.Atom::getMediametricsMidiDeviceCloseReported);
+
+        assertThat(eventList).isNotEmpty();
+
+        int appUid = DeviceUtils.getAppUid(getDevice(), TEST_PKG);
+        AtomsProto.MediametricsMidiDeviceCloseReported result = eventList.get(0);
+
+        assertThat(result.getUid()).isEqualTo(appUid);
+        assertThat(result.getMidiDeviceId()).isGreaterThan(0);
+        assertThat(result.getInputPortCount()).isEqualTo(1);
+        assertThat(result.getOutputPortCount()).isEqualTo(1);
+        assertThat(result.getDeviceType().toString()).isEqualTo("MIDI_DEVICE_INFO_TYPE_VIRTUAL");
+        assertThat(result.getIsShared()).isTrue();
+        assertThat(result.getSupportsUmp()).isFalse();
+        assertThat(result.getUsingAlsa()).isFalse();
+        assertThat(result.getDurationNs()).isGreaterThan(0);
+        assertThat(result.getOpenedCount()).isGreaterThan(0);
+        assertThat(result.getClosedCount()).isGreaterThan(0);
+        assertThat(result.getDeviceDisconnected()).isFalse();
+        assertThat(result.getTotalInputBytes()).isGreaterThan(0);
+        assertThat(result.getTotalOutputBytes()).isGreaterThan(0);
     }
 
     private static <T> List<T> toMyAtoms(List<StatsLog.EventMetricData> data,
@@ -743,7 +789,8 @@ public class MediaMetricsAtomTests extends BaseHostJUnit4Test {
         public void testEnded(TestDescription test, long endTime,
                 HashMap<String, MetricMeasurement.Metric> testMetrics) {
             LogUtil.CLog.i("testEnded  MetricMeasurement.Metric " + testMetrics);
-            mLogSessionId = testMetrics.get(LOG_SESSION_ID_KEY).getMeasurements().getSingleString();
+            MetricMeasurement.Metric metric = testMetrics.get(LOG_SESSION_ID_KEY);
+            mLogSessionId = metric == null ? null : metric.getMeasurements().getSingleString();
         }
     }
 }

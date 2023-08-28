@@ -50,7 +50,7 @@ public class PackageInfoTest extends AndroidTestCase {
                                 | PackageManager.GET_INSTRUMENTATION
                                 | PackageManager.GET_PERMISSIONS
                                 | PackageManager.GET_PROVIDERS | PackageManager.GET_RECEIVERS
-                                | PackageManager.GET_SERVICES | PackageManager.GET_ATTRIBUTIONS
+                                | PackageManager.GET_SERVICES | PackageManager.GET_ATTRIBUTIONS_LONG
                                 | PackageManager.GET_SIGNATURES
                                 | PackageManager.GET_UNINSTALLED_PACKAGES));
     }

@@ -385,6 +385,11 @@ public abstract class BaseSensorTestActivity extends PassFailButtons.Activity
         return pm.resolveActivity(new Intent(action), PackageManager.MATCH_DEFAULT_ONLY) != null;
     }
 
+    @Override
+    public boolean requiresReportLog() {
+        return true;
+    }
+
     /**
      * Initializes and shows the {@link GLSurfaceView} available to tests. NOTE: initialization can
      * be performed only once, usually inside {@link #activitySetUp()}.

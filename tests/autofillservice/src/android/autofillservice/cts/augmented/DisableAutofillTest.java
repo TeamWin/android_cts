@@ -86,7 +86,7 @@ public class DisableAutofillTest extends AugmentedAutofillManualActivityLaunchTe
         // Set standard service only, so we don't trigger augmented autofill when we launch the
         // first activity
         enableService();
-        resetAugmentedService();
+        resetAugmentedService(sContext);
 
         // Use PreSimpleSaveActivity disable standard autofill
         sReplier.addResponse(

@@ -28,10 +28,12 @@ import android.app.Instrumentation;
 import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.AsbSecurityTest;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.SdkSuppress;
 
 import com.android.compatibility.common.util.SystemUtil;
 
@@ -42,6 +44,7 @@ import org.junit.Test;
 import com.android.sts.common.util.StsExtraBusinessLogicTestCase;
 
 @AppModeFull(reason = "Instant apps cannot read state of other packages.")
+@SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE, codeName = "UpsideDownCake")
 public class RemovePermissionTest extends StsExtraBusinessLogicTestCase {
     private static final String APP_PKG_NAME_BASE =
             "android.permission.cts.revokepermissionwhenremoved";

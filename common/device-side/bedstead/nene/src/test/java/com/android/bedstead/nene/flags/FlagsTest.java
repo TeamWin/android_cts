@@ -16,10 +16,11 @@
 
 package com.android.bedstead.nene.flags;
 
-import static android.Manifest.permission.WRITE_DEVICE_CONFIG;
+import static android.os.Build.VERSION_CODES.TIRAMISU;
 
 import static com.android.bedstead.nene.flags.CommonFlags.DevicePolicyManager.DISABLE_RESOURCES_UPDATABILITY_FLAG;
 import static com.android.bedstead.nene.flags.CommonFlags.NAMESPACE_DEVICE_POLICY_MANAGER;
+import static com.android.bedstead.nene.permissions.CommonPermissions.WRITE_ALLOWLISTED_DEVICE_CONFIG;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -28,6 +29,7 @@ import android.provider.DeviceConfig;
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
+import com.android.bedstead.harrier.annotations.RequireSdkVersion;
 import com.android.bedstead.nene.TestApis;
 
 import org.junit.ClassRule;
@@ -47,6 +49,7 @@ public final class FlagsTest {
     private static final String DIFFERENT_VALUE = "different-value";
 
     @Test
+    @RequireSdkVersion(min = TIRAMISU)
     public void getFlagSyncEnabled_flagSyncIsEnabled_returnsTrue() {
         TestApis.flags().setFlagSyncEnabled(true);
 
@@ -54,6 +57,7 @@ public final class FlagsTest {
     }
 
     @Test
+    @RequireSdkVersion(min = TIRAMISU)
     public void getFlagSyncEnabled_flagSyncIsNotEnabled_returnsFalse() {
         TestApis.flags().setFlagSyncEnabled(false);
 
@@ -61,7 +65,8 @@ public final class FlagsTest {
     }
 
     @Test
-    @EnsureHasPermission(WRITE_DEVICE_CONFIG)
+    @RequireSdkVersion(min = TIRAMISU)
+    @EnsureHasPermission(WRITE_ALLOWLISTED_DEVICE_CONFIG)
     public void setFlagSyncEnabledFalse_bulkFlagUpdateDoesNotChangeValues() throws Exception {
         TestApis.flags().setFlagSyncEnabled(false);
         TestApis.flags().set(NAMESPACE, KEY, VALUE);
@@ -74,7 +79,8 @@ public final class FlagsTest {
     }
 
     @Test
-    @EnsureHasPermission(WRITE_DEVICE_CONFIG)
+    @RequireSdkVersion(min = TIRAMISU)
+    @EnsureHasPermission(WRITE_ALLOWLISTED_DEVICE_CONFIG)
     public void setFlagSyncEnabledTrue_bulkFlagUpdateDoesChangeValues() throws Exception {
         TestApis.flags().setFlagSyncEnabled(true);
         TestApis.flags().set(NAMESPACE, KEY, VALUE);

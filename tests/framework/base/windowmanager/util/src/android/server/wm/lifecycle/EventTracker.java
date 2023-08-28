@@ -56,6 +56,7 @@ public class EventTracker implements EventLog.EventTrackerCallback {
             String expectedState) {
         final boolean waitResult = waitForConditionWithTimeout(() -> {
             List<String> activityLog = mEventLog.getActivityLog(activityClass);
+            if (activityLog.isEmpty()) return false;
             String currentState = activityLog.get(activityLog.size() - 1);
             return expectedState.equals(currentState);
         });

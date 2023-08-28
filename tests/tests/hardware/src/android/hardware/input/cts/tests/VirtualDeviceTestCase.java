@@ -31,6 +31,7 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.Point;
 import android.graphics.SurfaceTexture;
+import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
 import android.hardware.input.InputManager;
 import android.os.Bundle;
@@ -58,8 +59,12 @@ import java.util.concurrent.TimeUnit;
 
 public abstract class VirtualDeviceTestCase extends InputTestCase {
 
+    private static final String TAG = "VirtualDeviceTestCase";
+
     private static final int ARBITRARY_SURFACE_TEX_ID = 1;
 
+    protected static final int PRODUCT_ID = 1;
+    protected static final int VENDOR_ID = 1;
     protected static final int DISPLAY_WIDTH = 100;
     protected static final int DISPLAY_HEIGHT = 100;
 
@@ -89,8 +94,24 @@ public abstract class VirtualDeviceTestCase extends InputTestCase {
                 }
             };
 
+    InputManager mInputManager;
+
     VirtualDeviceManager.VirtualDevice mVirtualDevice;
     VirtualDisplay mVirtualDisplay;
+
+    /** Helper class to drop permissions temporarily and restore them at the end of a test. */
+    static final class DropShellPermissionsTemporarily implements AutoCloseable {
+        DropShellPermissionsTemporarily() {
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .dropShellPermissionIdentity();
+        }
+
+        @Override
+        public void close() {
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .adoptShellPermissionIdentity();
+        }
+    }
 
     @Override
     void onBeforeLaunchActivity() {
@@ -138,15 +159,11 @@ public abstract class VirtualDeviceTestCase extends InputTestCase {
 
     @Override
     void onSetUp() {
-        InstrumentationRegistry.getTargetContext().getSystemService(InputManager.class)
-                .registerInputDeviceListener(mInputDeviceListener,
-                        new Handler(Looper.getMainLooper()));
+        mInputManager = mInstrumentation.getTargetContext().getSystemService(InputManager.class);
+        mInputManager.registerInputDeviceListener(mInputDeviceListener,
+                new Handler(Looper.getMainLooper()));
         onSetUpVirtualInputDevice();
-        try {
-            mLatch.await(1, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-            fail("Virtual input device setup was interrupted");
-        }
+        waitForInputDevice();
         // Tap to gain window focus on the activity
         tapActivityToFocus();
     }
@@ -169,18 +186,28 @@ public abstract class VirtualDeviceTestCase extends InputTestCase {
             if (mVirtualDevice != null) {
                 mVirtualDevice.close();
             }
+            if (mInputManager != null) {
+                mInputManager.unregisterInputDeviceListener(mInputDeviceListener);
+            }
             final Context context = InstrumentationRegistry.getTargetContext();
-            context.getSystemService(InputManager.class).unregisterInputDeviceListener(
-                    mInputDeviceListener);
             disassociateCompanionDevice(context.getPackageName());
         }
     }
 
     @Override
-    @Nullable Bundle getActivityOptions() {
+    @Nullable
+    Bundle getActivityOptions() {
         return ActivityOptions.makeBasic()
                 .setLaunchDisplayId(mVirtualDisplay.getDisplay().getDisplayId())
                 .toBundle();
+    }
+
+    protected void waitForInputDevice() {
+        try {
+            mLatch.await(1, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            fail("Virtual input device setup was interrupted");
+        }
     }
 
     private void associateCompanionDevice(String packageName) {
@@ -196,7 +223,7 @@ public abstract class VirtualDeviceTestCase extends InputTestCase {
                         Process.myUserHandle().getIdentifier(), packageName));
     }
 
-    private void tapActivityToFocus() {
+    protected void tapActivityToFocus() {
         final Point p = getViewCenterOnScreen(mTestActivity.getWindow().getDecorView());
         final int displayId = mTestActivity.getDisplayId();
 
@@ -223,5 +250,15 @@ public abstract class VirtualDeviceTestCase extends InputTestCase {
         view.getLocationOnScreen(location);
         return new Point(location[0] + view.getWidth() / 2,
                 location[1] + view.getHeight() / 2);
+    }
+
+    public VirtualDisplay createUnownedVirtualDisplay() {
+        return DisplayManager.createVirtualDisplay(
+                "test",
+                /* width= */ DISPLAY_WIDTH,
+                /* height= */ DISPLAY_HEIGHT,
+                /* displayIdToMirror= */ 50,
+                /* surface= */ null
+        );
     }
 }

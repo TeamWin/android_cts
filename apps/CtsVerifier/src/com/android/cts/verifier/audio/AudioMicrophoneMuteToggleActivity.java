@@ -16,6 +16,9 @@
 
 package com.android.cts.verifier.audio;
 
+import static com.android.cts.verifier.TestListActivity.sCurrentDisplayMode;
+import static com.android.cts.verifier.TestListAdapter.setTestNameSuffix;
+
 import android.media.MediaRecorder;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -30,8 +33,6 @@ import com.android.compatibility.common.util.ResultUnit;
 import com.android.cts.verifier.CtsVerifierReportLog;
 import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
-import com.android.cts.verifier.audio.audiolib.AudioCommon;
-import com.android.cts.verifier.audio.wavelib.WavAnalyzer;
 
 /**
  * Test for manual verification of microphone privacy hardware switches
@@ -52,6 +53,7 @@ public class AudioMicrophoneMuteToggleActivity extends PassFailButtons.Activity 
     private int mRecordRate = 0;
 
     // keys for report log
+    private static final String SECTION_MIC_MUTE_TOGGLE = "audio_mic_mute_toggle";
     private static final String KEY_REC_RATE = "rec_rate";
     private static final String KEY_AUDIO_SOURCE = "audio_source";
 
@@ -115,12 +117,12 @@ public class AudioMicrophoneMuteToggleActivity extends PassFailButtons.Activity 
                             @Override
                             public void run() {
                                 double recordingDuration_millis = (1000 * (2.5
-                                        + AudioCommon.PREFIX_LENGTH_S
-                                        + AudioCommon.PAUSE_BEFORE_PREFIX_DURATION_S
-                                        + AudioCommon.PAUSE_AFTER_PREFIX_DURATION_S
-                                        + AudioCommon.PIP_NUM * (AudioCommon.PIP_DURATION_S
-                                        + AudioCommon.PAUSE_DURATION_S)
-                                        * AudioCommon.REPETITIONS));
+                                        + Common.PREFIX_LENGTH_S
+                                        + Common.PAUSE_BEFORE_PREFIX_DURATION_S
+                                        + Common.PAUSE_AFTER_PREFIX_DURATION_S
+                                        + Common.PIP_NUM * (Common.PIP_DURATION_S
+                                        + Common.PAUSE_DURATION_S)
+                                        * Common.REPETITIONS));
                                 Log.d(TAG, "Recording for " + recordingDuration_millis + "ms");
                                 try {
                                     Thread.sleep((long) recordingDuration_millis);
@@ -152,6 +154,16 @@ public class AudioMicrophoneMuteToggleActivity extends PassFailButtons.Activity 
     }
 
     @Override
+    public String getReportFileName() {
+        return PassFailButtons.AUDIO_TESTS_REPORT_LOG_NAME;
+    }
+
+    @Override
+    public final String getReportSectionName() {
+        return setTestNameSuffix(sCurrentDisplayMode, SECTION_MIC_MUTE_TOGGLE);
+    }
+
+    @Override
     public void recordTestResults() {
         CtsVerifierReportLog reportLog = getReportLog();
 
@@ -180,7 +192,7 @@ public class AudioMicrophoneMuteToggleActivity extends PassFailButtons.Activity 
         private final WavAnalyzer mWavAnalyzer;
 
         public WavAnalyzerTask(byte[] recording) {
-            mWavAnalyzer = new WavAnalyzer(recording, AudioCommon.RECORDING_SAMPLE_RATE_HZ,
+            mWavAnalyzer = new WavAnalyzer(recording, Common.RECORDING_SAMPLE_RATE_HZ,
                     WavAnalyzerTask.this);
         }
 

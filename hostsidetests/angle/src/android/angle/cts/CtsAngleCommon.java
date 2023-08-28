@@ -126,9 +126,8 @@ class CtsAngleCommon {
 
     static boolean isAngleOnlySystem(ITestDevice device) throws Exception {
         String angleProp = device.getProperty("ro.hardware.egl");
-        String legacyDriverProp = device.getProperty("ro.hardware.egl_legacy");
 
-        return (angleProp != null) && (angleProp.equals("angle")) && (legacyDriverProp == null);
+        return angleProp != null && angleProp.equals("angle");
     }
 
     static String getTestMethod(ITestDevice device) throws Exception {

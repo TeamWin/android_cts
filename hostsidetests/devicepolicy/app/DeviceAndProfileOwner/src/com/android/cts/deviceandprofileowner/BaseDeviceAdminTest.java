@@ -133,6 +133,7 @@ public abstract class BaseDeviceAdminTest extends InstrumentationTestCase {
             PACKAGE_NAME, BasicAdminReceiver.class.getName());
 
     protected DevicePolicyManager mDevicePolicyManager;
+    protected DevicePolicyManager mLocalDevicePolicyManager;
     protected UserManager mUserManager;
     protected Context mContext;
     protected boolean mHasSecureLockScreen;
@@ -160,6 +161,7 @@ public abstract class BaseDeviceAdminTest extends InstrumentationTestCase {
 
         mDevicePolicyManager = TestAppSystemServiceFactory.getDevicePolicyManager(mContext,
                 BasicAdminReceiver.class, mIsDeviceOwnerTest);
+        mLocalDevicePolicyManager = mContext.getSystemService(DevicePolicyManager.class);
 
         Log.v(TAG, "setup(): dpm for " + getClass() + " and user " + mContext.getUserId() + ": "
                 + mDevicePolicyManager);

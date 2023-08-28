@@ -151,7 +151,8 @@ public class BatteryUsageStatsTests extends DeviceTestCase implements IBuildRece
         // If the test app consumed a measurable amount of power, the break-up
         // by process state should also be present in the atom.
         if (testConsumer != null
-                && testConsumer.getBatteryConsumerData().getTotalConsumedPowerDeciCoulombs() > 0) {
+                && testConsumer.getBatteryConsumerData().getTotalConsumedPowerDeciCoulombs()
+                > 0.1) {
             boolean hasProcStateData = false;
             for (int i = 0; i < testConsumer.getBatteryConsumerData().getSlicesCount(); i++) {
                 final BatteryConsumerData.PowerComponentUsageSlice slice =
@@ -177,6 +178,7 @@ public class BatteryUsageStatsTests extends DeviceTestCase implements IBuildRece
     private void unplugDevice() throws Exception {
         DeviceUtils.unplugDevice(getDevice());
         getDevice().executeShellCommand("dumpsys battery suspend_input");
+        getDevice().executeShellCommand("dumpsys batterystats --reset");
     }
 
     private void plugInDevice() throws Exception {

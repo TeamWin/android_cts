@@ -45,12 +45,11 @@ import android.view.accessibility.AccessibilityManager.TouchExplorationStateChan
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
-import com.android.sts.common.util.StsExtraBusinessLogicTestCase;
-
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.SettingsStateChangerRule;
 import com.android.compatibility.common.util.SystemUtil;
 import com.android.compatibility.common.util.TestUtils;
+import com.android.sts.common.util.StsExtraBusinessLogicTestCase;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -93,13 +92,13 @@ public class AccessibilityManagerTest extends StsExtraBusinessLogicTestCase {
             InstrumentationRegistry.getInstrumentation();
 
     private static final String SPEAKING_ACCESSIBLITY_SERVICE_NAME =
-        "android.view.accessibility.cts.SpeakingAccessibilityService";
+            "android.view.accessibility.cts.SpeakingAccessibilityService";
 
     private static final String VIBRATING_ACCESSIBLITY_SERVICE_NAME =
-        "android.view.accessibility.cts.VibratingAccessibilityService";
+            "android.view.accessibility.cts.VibratingAccessibilityService";
 
     private static final String MULTIPLE_FEEDBACK_TYPES_ACCESSIBILITY_SERVICE_NAME =
-        "android.view.accessibility.cts.SpeakingAndVibratingAccessibilityService";
+            "android.view.accessibility.cts.SpeakingAndVibratingAccessibilityService";
 
     private static final String NO_FEEDBACK_ACCESSIBILITY_SERVICE_NAME =
             "android.view.accessibility.cts.NoFeedbackAccessibilityService";
@@ -206,7 +205,7 @@ public class AccessibilityManagerTest extends StsExtraBusinessLogicTestCase {
     @Test
     public void testGetInstalledAccessibilityServicesList() throws Exception {
         List<AccessibilityServiceInfo> installedServices =
-            mAccessibilityManager.getInstalledAccessibilityServiceList();
+                mAccessibilityManager.getInstalledAccessibilityServiceList();
         assertFalse("There must be at least one installed service.", installedServices.isEmpty());
         boolean speakingServiceInstalled = false;
         boolean vibratingServiceInstalled = false;
@@ -232,8 +231,8 @@ public class AccessibilityManagerTest extends StsExtraBusinessLogicTestCase {
         mSpeakingAccessibilityServiceRule.enableService();
         mVibratingAccessibilityServiceRule.enableService();
         List<AccessibilityServiceInfo> enabledServices =
-            mAccessibilityManager.getEnabledAccessibilityServiceList(
-                    AccessibilityServiceInfo.FEEDBACK_ALL_MASK);
+                mAccessibilityManager.getEnabledAccessibilityServiceList(
+                        AccessibilityServiceInfo.FEEDBACK_ALL_MASK);
         boolean speakingServiceEnabled = false;
         boolean vibratingServiceEnabled = false;
         final int serviceCount = enabledServices.size();
@@ -278,8 +277,8 @@ public class AccessibilityManagerTest extends StsExtraBusinessLogicTestCase {
         mSpeakingAccessibilityServiceRule.enableService();
         mVibratingAccessibilityServiceRule.enableService();
         List<AccessibilityServiceInfo> enabledServices =
-            mAccessibilityManager.getEnabledAccessibilityServiceList(
-                    AccessibilityServiceInfo.FEEDBACK_SPOKEN);
+                mAccessibilityManager.getEnabledAccessibilityServiceList(
+                        AccessibilityServiceInfo.FEEDBACK_SPOKEN);
         assertSame("There should be only one enabled speaking service.", 1, enabledServices.size());
         final int serviceCount = enabledServices.size();
         for (int i = 0; i < serviceCount; i++) {
@@ -633,7 +632,7 @@ public class AccessibilityManagerTest extends StsExtraBusinessLogicTestCase {
 
     private void waitForAtomicBooleanBecomes(AtomicBoolean atomicBoolean,
             boolean expectedValue, Object waitObject, String condition) {
-        long timeoutTime = System.currentTimeMillis() + TIMEOUT_SERVICE_ENABLE;
+        long timeoutTime = TIMEOUT_SERVICE_ENABLE;
         TestUtils.waitOn(waitObject, () -> atomicBoolean.get() == expectedValue, timeoutTime,
                 condition);
     }

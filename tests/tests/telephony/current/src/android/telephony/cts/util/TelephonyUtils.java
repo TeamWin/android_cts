@@ -21,6 +21,7 @@ import android.os.ParcelFileDescriptor;
 import android.telecom.TelecomManager;
 import android.telephony.AccessNetworkConstants;
 import android.telephony.TelephonyManager;
+import android.text.TextUtils;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
@@ -234,6 +235,9 @@ public class TelephonyUtils {
     private static final char[] HEX_DIGITS = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
             'A', 'B', 'C', 'D', 'E', 'F' };
 
+    private static final String COMMAND_CARRIER_RESTRICTION_STATUS =
+            "cmd phone carrier_restriction_status_test --";
+
     public static void addTestEmergencyNumber(Instrumentation instr, String testNumber)
             throws Exception {
         executeShellCommand(instr, COMMAND_ADD_TEST_EMERGENCY_NUMBER + testNumber);
@@ -384,5 +388,28 @@ public class TelephonyUtils {
         }
 
         return buffer;
+    }
+
+    /**
+     * Sets the allowlist package to the Json parsed data in CarrierAllowListInfo.java
+     *
+     * @param instr       Test Instrumentation
+     * @param packageName caller packageName
+     * @param carrierId   carrierId to match with
+     * @param shaId       shaId of the caller
+     */
+    public static void addCarrierRestrictionStatusAllowList(Instrumentation instr,
+            String packageName, int carrierId, String shaId) throws Exception {
+        if (TextUtils.isEmpty(packageName) || TextUtils.isEmpty(shaId)) {
+            return;
+        }
+        String allowList = "package:" + packageName + "," + "carrierId:" + String.valueOf(carrierId)
+                + "," + "callerSHA1Id:" + shaId;
+        executeShellCommand(instr, COMMAND_CARRIER_RESTRICTION_STATUS + allowList);
+    }
+
+    public static void resetCarrierRestrictionStatusAllowList(Instrumentation instr)
+            throws Exception {
+        executeShellCommand(instr, COMMAND_CARRIER_RESTRICTION_STATUS);
     }
 }

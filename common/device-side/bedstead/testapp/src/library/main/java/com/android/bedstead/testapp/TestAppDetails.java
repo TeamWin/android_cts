@@ -59,6 +59,10 @@ class TestAppDetails {
         return mApp.getLabel();
     }
 
+    public boolean crossProfile() {
+        return mApp.getCrossProfile();
+    }
+
     @Override
     public String toString() {
         return "TestAppDetails{"

@@ -16,7 +16,6 @@
 
 package com.android.cts.devicepolicy;
 
-import com.android.tradefed.util.RunUtil;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -34,6 +33,7 @@ import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
+import com.android.tradefed.util.RunUtil;
 
 import com.google.common.base.Strings;
 import com.google.common.io.ByteStreams;
@@ -138,6 +138,7 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
     protected static final int FLAG_GUEST = 0x00000004;
     protected static final int FLAG_EPHEMERAL = 0x00000100;
     protected static final int FLAG_MANAGED_PROFILE = 0x00000020;
+    protected static final int FLAG_INITIALIZED = 0x00000010;
 
     /** Default password to use in tests. */
     protected static final String TEST_PASSWORD = "1234";
@@ -183,7 +184,7 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
     private boolean mSupportsMultiUser;
 
     /** Users we shouldn't delete in the tests */
-    private ArrayList<Integer> mFixedUsers;
+    private final ArrayList<Integer> mFixedUsers = new ArrayList<>();
 
     protected boolean mHasAttestation;
 
@@ -219,15 +220,13 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
                 "settings get global verifier_verify_adb_installs");
         getDevice().executeShellCommand("settings put global verifier_verify_adb_installs 0");
 
-        mFixedUsers = new ArrayList<>();
-
         // Set the value of initial user ID calls in {@link #setUp}.
         if(mSupportsMultiUser) {
             mInitialUserId = getDevice().getCurrentUser();
         }
 
         if (!isHeadlessSystemUserMode()) {
-            mDeviceOwnerUserId = mPrimaryUserId = getPrimaryUser();
+            mDeviceOwnerUserId = mPrimaryUserId = getMainUser();
         } else {
             // For headless system user, all tests will be executed on current user
             // and therefore, initial user is set as primary user for test purpose.
@@ -820,8 +819,15 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
         return commandOutput;
     }
 
-    protected int getPrimaryUser() throws DeviceNotAvailableException {
-        return getDevice().getPrimaryUserId();
+    protected int getMainUser() throws DeviceNotAvailableException {
+        Integer user = getDevice().getMainUserId();
+        if (user == null) {
+            user = getDevice().getPrimaryUserId();
+            if (user == null) {
+                user = 0;
+            }
+        }
+        return user;
     }
 
     protected int getCurrentUser() throws DeviceNotAvailableException {
@@ -1216,16 +1222,13 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
         assumeTrue("not device AB", "true".equalsIgnoreCase(result));
     }
 
-    // TODO (b/174775905) remove after exposing the check from ITestDevice.
     boolean isHeadlessSystemUserMode() throws DeviceNotAvailableException {
         return isHeadlessSystemUserMode(getDevice());
     }
 
-    // TODO (b/174775905) remove after exposing the check from ITestDevice.
     public static boolean isHeadlessSystemUserMode(ITestDevice device)
             throws DeviceNotAvailableException {
-        String result = device.executeShellCommand("dumpsys user");
-        return result.contains("headless-system mode: true");
+        return device.isHeadlessSystemUserMode();
     }
 
     protected void assumeHeadlessSystemUserMode(String reason)

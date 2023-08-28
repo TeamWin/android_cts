@@ -15,15 +15,16 @@
  */
 package android.security.cts;
 
+
 import static android.app.ActivityOptions.ANIM_SCENE_TRANSITION;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_NO_USER_ACTION;
 import static android.view.Window.FEATURE_ACTIVITY_TRANSITIONS;
 
-import static org.junit.Assert.*;
-
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -31,15 +32,13 @@ import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.ActivityOptions;
 import android.app.Application;
-
 import android.app.UiAutomation;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.os.RemoteException;
-
 import android.os.Process;
+import android.os.RemoteException;
 import android.os.UserHandle;
 import android.platform.test.annotations.AsbSecurityTest;
 import android.util.Log;
@@ -52,11 +51,9 @@ import android.window.TransitionInfo;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
-import com.android.compatibility.common.util.SystemUtil;
-
 import com.android.compatibility.common.util.ShellUtils;
+import com.android.compatibility.common.util.SystemUtil;
 import com.android.sts.common.util.StsExtraBusinessLogicTestCase;
-
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -64,7 +61,6 @@ import org.junit.runner.RunWith;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.util.concurrent.Callable;
-
 
 @RunWith(AndroidJUnit4.class)
 public class ActivityManagerTest extends StsExtraBusinessLogicTestCase {
@@ -274,6 +270,28 @@ public class ActivityManagerTest extends StsExtraBusinessLogicTestCase {
         return System.nanoTime() - start;
     }
 
+    static final class UidImportanceObserver implements ActivityManager.OnUidImportanceListener {
+
+        private boolean mObservedNonOwned = false;
+        private int mMyUid;
+
+        UidImportanceObserver() {
+            mMyUid = UserHandle.getUserId(Process.myUid());
+        }
+
+        public void onUidImportance(int uid, int importance) {
+            Log.i("ActivityManagerTestObserver", "Observing change for "
+                    + uid + " by user " + UserHandle.getUserId(uid));
+            if (UserHandle.getUserId(uid) != mMyUid) {
+                mObservedNonOwned = true;
+            }
+        }
+
+        public boolean didObserverOtherUser() {
+            return this.mObservedNonOwned;
+        }
+    }
+
     private boolean waitUntil(Callable<Boolean> test) throws Exception {
         long timeoutMs = 2000;
         final long timeout = System.currentTimeMillis() + timeoutMs;
@@ -375,28 +393,6 @@ public class ActivityManagerTest extends StsExtraBusinessLogicTestCase {
             @Override
             public void onActivityDestroyed(Activity activity) {
             }
-        }
-    }
-
-    static final class UidImportanceObserver implements ActivityManager.OnUidImportanceListener {
-
-        private boolean mObservedNonOwned = false;
-        private int mMyUid;
-
-        UidImportanceObserver() {
-            mMyUid = UserHandle.getUserId(Process.myUid());
-        }
-
-        public void onUidImportance(int uid, int importance) {
-            Log.i("ActivityManagerTestObserver", "Observing change for "
-                    + uid + " by user " + UserHandle.getUserId(uid));
-            if (UserHandle.getUserId(uid) != mMyUid) {
-                mObservedNonOwned = true;
-            }
-        }
-
-        public boolean didObserverOtherUser() {
-            return this.mObservedNonOwned;
         }
     }
 }

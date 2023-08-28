@@ -99,10 +99,6 @@ public class GnssLocationUpdateIntervalTest extends GnssTestCase {
         if (!TestMeasurementUtil.canTestRunOnCurrentDevice(mTestLocationManager, TAG)) {
             return;
         }
-        if (TestMeasurementUtil.isAutomotiveDevice(getContext())) {
-            Log.i(TAG, "Test is being skipped because the system has the AUTOMOTIVE feature.");
-            return;
-        }
 
         // Revoke location permissions from packages before running GnssStatusTest stops
         // active location requests, allowing this test to receive all necessary Gnss callbacks.

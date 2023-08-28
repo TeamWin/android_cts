@@ -34,26 +34,39 @@ import static android.app.admin.DevicePolicyManager.PERMISSION_POLICY_AUTO_DENY;
 import static android.app.admin.DevicePolicyManager.PERMISSION_POLICY_AUTO_GRANT;
 import static android.app.admin.DevicePolicyManager.PERMISSION_POLICY_PROMPT;
 
+import static com.android.bedstead.harrier.UserType.WORK_PROFILE;
+import static com.android.bedstead.nene.utils.Versions.U;
+
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assume.assumeFalse;
+import static org.junit.Assume.assumeTrue;
 import static org.testng.Assert.assertThrows;
+
+import android.app.admin.ManagedSubscriptionsPolicy;
+import android.app.admin.RemoteDevicePolicyManager;
+import android.content.ComponentName;
+import android.provider.Settings;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.AfterClass;
+import com.android.bedstead.harrier.annotations.EnsureGlobalSettingSet;
 import com.android.bedstead.harrier.annotations.EnsureScreenIsOn;
 import com.android.bedstead.harrier.annotations.EnsureUnlocked;
 import com.android.bedstead.harrier.annotations.IntTestParameter;
 import com.android.bedstead.harrier.annotations.NotificationsTest;
+import com.android.bedstead.harrier.annotations.RequireRunOnWorkProfile;
 import com.android.bedstead.harrier.annotations.StringTestParameter;
+import com.android.bedstead.harrier.annotations.enterprise.AdditionalQueryParameters;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyDoesNotApplyTest;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnFinancedDeviceOwnerUser;
 import com.android.bedstead.harrier.policies.SetPermissionGrantState;
+import com.android.bedstead.harrier.policies.SetPermissionPolicy;
 import com.android.bedstead.harrier.policies.SetSensorPermissionGranted;
 import com.android.bedstead.harrier.policies.SetSensorPermissionPolicyPromptForOrganizationOwnedWorkProfile;
 import com.android.bedstead.harrier.policies.SetSmsPermissionGranted;
@@ -66,7 +79,11 @@ import com.android.bedstead.nene.utils.Poll;
 import com.android.bedstead.testapp.TestApp;
 import com.android.bedstead.testapp.TestAppActivity;
 import com.android.bedstead.testapp.TestAppInstance;
+import com.android.queryable.annotations.IntegerQuery;
+import com.android.queryable.annotations.Query;
 
+import org.junit.Assume;
+import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Ignore;
 import org.junit.Rule;
@@ -151,64 +168,16 @@ public final class PermissionGrantTest {
     private static TestAppInstance sTestAppInstance =
             sTestApp.install(TestApis.users().instrumented());
 
+    @Before
+    public void setup() {
+        // TODO(279404339): For some reason this is sometimes uninstalled
+        sTestAppInstance =
+                sTestApp.install(TestApis.users().instrumented());
+    }
+
     @AfterClass
     public static void teardownClass() {
         sTestAppInstance.uninstall();
-    }
-
-    @PolicyDoesNotApplyTest(policy = SetSmsPermissionGranted.class)
-    public void getPermissionGrantState_smsPermission_notAbleToSetState_alsoCantReadState() {
-        int existingGrantState = sDeviceState.dpc().devicePolicyManager()
-                .getPermissionGrantState(sDeviceState.dpc().componentName(),
-                        sTestApp.packageName(), READ_SMS);
-        try {
-            sDeviceState.dpc().devicePolicyManager().setPermissionGrantState(
-                    sDeviceState.dpc().componentName(), sTestApp.packageName(),
-                    READ_SMS, PERMISSION_GRANT_STATE_GRANTED);
-
-            sTestApp.pkg().grantPermission(TestApis.users().instrumented(), READ_SMS);
-            // TODO(b/204041462): Replace granting the permission here with the user pressing the
-            //  "deny" button on the permission
-
-            assertWithMessage("Should not be able to read permission grant state but can")
-                    .that(sDeviceState.dpc().devicePolicyManager().getPermissionGrantState(
-                            sDeviceState.dpc().componentName(), sTestApp.packageName(),
-                            READ_SMS))
-                    .isEqualTo(PERMISSION_GRANT_STATE_DEFAULT);
-        } finally {
-            sDeviceState.dpc().devicePolicyManager().setPermissionGrantState(
-                    sDeviceState.dpc().componentName(), sTestApp.packageName(),
-                    READ_SMS, existingGrantState);
-            sTestApp.pkg().denyPermission(TestApis.users().instrumented(), READ_SMS);
-        }
-    }
-
-    @PolicyDoesNotApplyTest(policy = SetSensorPermissionGranted.class)
-    public void getPermissionGrantState_sensorPermission_notAbleToSetState_alsoCantReadState(
-            @SensorPermissionTestParameter String permission) {
-        int existingGrantState = sDeviceState.dpc().devicePolicyManager()
-                .getPermissionGrantState(sDeviceState.dpc().componentName(),
-                        sTestApp.packageName(), permission);
-        try {
-            sDeviceState.dpc().devicePolicyManager().setPermissionGrantState(
-                    sDeviceState.dpc().componentName(), sTestApp.packageName(),
-                    permission, PERMISSION_GRANT_STATE_GRANTED);
-
-            sTestApp.pkg().grantPermission(TestApis.users().instrumented(), permission);
-            // TODO(b/204041462): Replace granting the permission here with the user pressing the
-            //  "deny" button on the permission
-
-            assertWithMessage("Should not be able to read permission grant state but can")
-                    .that(sDeviceState.dpc().devicePolicyManager().getPermissionGrantState(
-                            sDeviceState.dpc().componentName(), sTestApp.packageName(),
-                            permission))
-                    .isEqualTo(PERMISSION_GRANT_STATE_DEFAULT);
-        } finally {
-            sDeviceState.dpc().devicePolicyManager().setPermissionGrantState(
-                    sDeviceState.dpc().componentName(), sTestApp.packageName(),
-                    permission, existingGrantState);
-            sTestApp.pkg().denyPermission(TestApis.users().instrumented(), permission);
-        }
     }
 
     @CanSetPolicyTest(policy = SetPermissionGrantState.class)
@@ -216,7 +185,6 @@ public final class PermissionGrantTest {
         int existingGrantState = sDeviceState.dpc().devicePolicyManager()
                 .getPermissionGrantState(sDeviceState.dpc().componentName(),
                         sTestApp.packageName(), permission);
-
         try {
             boolean wasSet = sDeviceState.dpc().devicePolicyManager()
                     .setPermissionGrantState(
@@ -328,6 +296,11 @@ public final class PermissionGrantTest {
     }
 
     @PolicyDoesNotApplyTest(policy = SetPermissionGrantState.class)
+    @AdditionalQueryParameters(
+            forTestApp = "dpc",
+            query = @Query(targetSdkVersion =
+            @IntegerQuery(isLessThan = U))
+    )
     public void grantPermission_doesNotApply_permissionIsNotGranted(
             @DeniablePermissionTestParameter String permission) {
         try {
@@ -453,7 +426,6 @@ public final class PermissionGrantTest {
     }
 
     @CanSetPolicyTest(policy = SetSensorPermissionGranted.class)
-    @Ignore("TODO(198280344): Re-enable when we can set sensor permissions using device owner")
     public void grantSensorPermission_setsGrantState(
             @SensorPermissionTestParameter String permission) {
         int existingGrantState = sDeviceState.dpc().devicePolicyManager()
@@ -499,7 +471,6 @@ public final class PermissionGrantTest {
     }
 
     @PolicyAppliesTest(policy = SetSensorPermissionGranted.class)
-    @Ignore("TODO(198280344): Re-enable when we can set sensor permissions using device owner")
     public void grantSensorPermission_permissionIsGranted(
             @SensorPermissionTestParameter String permission) {
         int existingGrantState = sDeviceState.dpc().devicePolicyManager()
@@ -541,7 +512,6 @@ public final class PermissionGrantTest {
     }
 
     @PolicyDoesNotApplyTest(policy = SetSensorPermissionGranted.class)
-    @Ignore("TODO(198280344): Re-enable when we can set sensor permissions using device owner")
     public void grantSensorPermission_doesNotApplyToUser_permissionIsNotGranted(
             @SensorPermissionTestParameter String permission) {
         int existingGrantState = sDeviceState.dpc().devicePolicyManager()
@@ -564,6 +534,7 @@ public final class PermissionGrantTest {
     @CannotSetPolicyTest(policy = SetSmsPermissionGranted.class, includeNonDeviceAdminStates = false)
     public void grantSmsPermission_cannotBeApplied_returnsTrueButDoesNotSetGrantState() {
         skipTestForFinancedDevice();
+        Assume.assumeFalse("Parent throws exception", sDeviceState.dpc().isParentInstance());
 
         int existingGrantState = sDeviceState.dpc().devicePolicyManager()
                 .getPermissionGrantState(sDeviceState.dpc().componentName(),
@@ -588,22 +559,22 @@ public final class PermissionGrantTest {
         }
     }
 
-    @CannotSetPolicyTest(policy = SetSmsPermissionGranted.class, includeDeviceAdminStates = false)
-    public void grantSmsPermission_nonDeviceAdmin_throwsException() {
-        assertThrows(SecurityException.class,
-                () -> sDeviceState.dpc().devicePolicyManager().setPermissionGrantState(
-                        sDeviceState.dpc().componentName(), sTestApp.packageName(),
-                        READ_SMS, PERMISSION_GRANT_STATE_GRANTED));
-    }
-
+    @AdditionalQueryParameters(
+            forTestApp = "dpc",
+            query = @Query(targetSdkVersion =
+            @IntegerQuery(isLessThan = U))
+    )
     @CannotSetPolicyTest(policy = SetSensorPermissionGranted.class)
     public void grantSensorPermission_cannotBeApplied_returnsTrueButDoesNotSetGrantState(
             @SensorPermissionTestParameter String permission) {
         skipTestForFinancedDevice();
+        Assume.assumeFalse("Parent throws exception", sDeviceState.dpc().isParentInstance());
 
         int existingGrantState = sDeviceState.dpc().devicePolicyManager()
                 .getPermissionGrantState(sDeviceState.dpc().componentName(),
                         sTestApp.packageName(), permission);
+        assumeFalse(existingGrantState == PERMISSION_GRANT_STATE_GRANTED);
+
         try {
             boolean wasSet =
                     sDeviceState.dpc().devicePolicyManager().setPermissionGrantState(
@@ -624,6 +595,23 @@ public final class PermissionGrantTest {
         }
     }
 
+    @AdditionalQueryParameters(
+            forTestApp = "dpc",
+            query = @Query(targetSdkVersion =
+            @IntegerQuery(isGreaterThanOrEqualTo = U))
+    )
+    @Ignore("b/273496614 - Reenable once the unicorn APIs are unflagged.")
+    @CannotSetPolicyTest(policy = SetSensorPermissionGranted.class)
+    public void grantSensorPermission_cannotBeApplied_throwsSecurityException(
+            @SensorPermissionTestParameter String permission) {
+        assertThrows(SecurityException.class, () ->
+                sDeviceState.dpc().devicePolicyManager().setPermissionGrantState(
+                    sDeviceState.dpc().componentName(), sTestApp.packageName(),
+                    permission, PERMISSION_GRANT_STATE_GRANTED
+                )
+        );
+    }
+
     @CannotSetPolicyTest(policy = SetPermissionGrantState.class)
     public void getPermissionGrantState_notAllowed_throwsException() {
         assertThrows(SecurityException.class, () -> {
@@ -633,7 +621,7 @@ public final class PermissionGrantTest {
         });
     }
 
-    @CannotSetPolicyTest(policy = SetPermissionGrantState.class)
+    @CannotSetPolicyTest(policy = SetPermissionPolicy.class)
     public void setPermissionPolicy_notAllowed_throwsException() {
         assertThrows(SecurityException.class, () -> {
             sDeviceState.dpc().devicePolicyManager().setPermissionPolicy(
@@ -641,15 +629,14 @@ public final class PermissionGrantTest {
         });
     }
 
-    @CanSetPolicyTest(policy = SetPermissionGrantState.class)
+    @CanSetPolicyTest(policy = SetPermissionPolicy.class)
     public void setPermissionPolicy_setsPolicy(@IntTestParameter(
             {PERMISSION_POLICY_AUTO_GRANT, PERMISSION_POLICY_AUTO_DENY}) int policy) {
         try {
             sDeviceState.dpc().devicePolicyManager().setPermissionPolicy(
                     sDeviceState.dpc().componentName(), policy);
 
-            assertThat(
-                    sDeviceState.dpc().devicePolicyManager().getPermissionPolicy(
+            assertThat(sDeviceState.dpc().devicePolicyManager().getPermissionPolicy(
                             sDeviceState.dpc().componentName())).isEqualTo(policy);
         } finally {
             sDeviceState.dpc().devicePolicyManager().setPermissionPolicy(
@@ -657,10 +644,12 @@ public final class PermissionGrantTest {
         }
     }
 
-    @PolicyAppliesTest(policy = SetPermissionGrantState.class)
+    @PolicyAppliesTest(policy = SetPermissionPolicy.class)
     @EnsureScreenIsOn
     @EnsureUnlocked
     public void setPermissionPolicy_grant_automaticallyGrantsPermissions() {
+        assumeTrue("Test requires showing activities",
+                TestApis.users().instrumented().canShowActivities());
         try (TestAppInstance testApp = sNotInstalledTestApp.install()) {
             // We install fresh so the permissions are not granted
             sDeviceState.dpc().devicePolicyManager().setPermissionPolicy(
@@ -680,10 +669,12 @@ public final class PermissionGrantTest {
         }
     }
 
-    @PolicyAppliesTest(policy = SetPermissionGrantState.class)
+    @PolicyAppliesTest(policy = SetPermissionPolicy.class)
     @EnsureScreenIsOn
     @EnsureUnlocked
     public void setPermissionPolicy_deny_automaticallyDeniesPermissions() {
+        assumeTrue("Test requires showing activities",
+                TestApis.users().instrumented().canShowActivities());
         try (TestAppInstance testApp = sNotInstalledTestApp.install()) {
             // We install fresh so the permissions are not granted
             sDeviceState.dpc().devicePolicyManager().setPermissionPolicy(
@@ -703,10 +694,8 @@ public final class PermissionGrantTest {
         }
     }
 
-
     @PolicyAppliesTest(policy = SetSensorPermissionGranted.class)
     @NotificationsTest
-    @Ignore("TODO(198280344): Re-enable when we can set sensor permissions using device owner")
     public void grantLocationPermission_userNotified(
             @LocationPermissionTestParameter String permission) {
         int existingGrantState = sDeviceState.dpc().devicePolicyManager()
@@ -734,22 +723,31 @@ public final class PermissionGrantTest {
 
     @CanSetPolicyTest(policy = SetPermissionGrantState.class)
     public void setPermissionGrantState_permissionIsNotDeclared_doesNotSetGrantState() {
-        boolean wasSet = sDeviceState.dpc().devicePolicyManager()
-                .setPermissionGrantState(sDeviceState.dpc().componentName(), sTestApp.packageName(),
-                        NOT_DECLARED_PERMISSION, PERMISSION_GRANT_STATE_DENIED);
+        try {
+            boolean wasSet = sDeviceState.dpc().devicePolicyManager()
+                    .setPermissionGrantState(sDeviceState.dpc().componentName(),
+                            sTestApp.packageName(),
+                            NOT_DECLARED_PERMISSION, PERMISSION_GRANT_STATE_DENIED);
 
-        assertWithMessage("setPermissionGrantState did not return false")
-                .that(wasSet).isFalse();
-        assertWithMessage("Permission grant state should not be changed but was")
-                .that(sDeviceState.dpc().devicePolicyManager().getPermissionGrantState(
-                        sDeviceState.dpc().componentName(), sTestApp.packageName(),
-                        NOT_DECLARED_PERMISSION))
-                .isEqualTo(PERMISSION_GRANT_STATE_DEFAULT);
+            assertWithMessage("setPermissionGrantState did not return false")
+                    .that(wasSet).isFalse();
+            assertWithMessage("Permission grant state should not be changed but was")
+                    .that(sDeviceState.dpc().devicePolicyManager().getPermissionGrantState(
+                            sDeviceState.dpc().componentName(), sTestApp.packageName(),
+                            NOT_DECLARED_PERMISSION))
+                    .isEqualTo(PERMISSION_GRANT_STATE_DEFAULT);
+        } finally {
+            sDeviceState.dpc().devicePolicyManager().setPermissionGrantState(
+                    sDeviceState.dpc().componentName(), sTestApp.packageName(),
+                    NOT_DECLARED_PERMISSION, PERMISSION_GRANT_STATE_DEFAULT);
+        }
     }
 
-    @PolicyAppliesTest(policy = SetPermissionGrantState.class)
+    @PolicyAppliesTest(policy = SetPermissionPolicy.class)
     public void setPermissionGrantStateDeny_autoGrantPermission_deniesPermissions(
             @DeniablePermissionTestParameter String permission) {
+        assumeTrue("Test requires showing activities",
+                TestApis.users().instrumented().canShowActivities());
         try (TestAppInstance testApp = sNotInstalledTestApp.install()) {
             // We install fresh so the permissions are not granted
             sDeviceState.dpc().devicePolicyManager()
@@ -776,9 +774,11 @@ public final class PermissionGrantTest {
         }
     }
 
-    @PolicyAppliesTest(policy = SetPermissionGrantState.class)
+    @PolicyAppliesTest(policy = SetPermissionPolicy.class)
     public void setPermissionGrantStateDeny_autoDenyPermission_deniesPermissions(
             @DeniablePermissionTestParameter String permission) {
+        assumeTrue("Test requires showing activities",
+                TestApis.users().instrumented().canShowActivities());
         try (TestAppInstance testApp = sNotInstalledTestApp.install()) {
             // We install fresh so the permissions are not granted
             sDeviceState.dpc().devicePolicyManager()
@@ -805,10 +805,12 @@ public final class PermissionGrantTest {
         }
     }
 
-    @PolicyAppliesTest(policy = SetPermissionGrantState.class)
+    @PolicyAppliesTest(policy = SetPermissionPolicy.class)
     @EnsureScreenIsOn
     @EnsureUnlocked
     public void setPermissionGrantStateDeny_promptPermission_deniesPermissions() {
+        assumeTrue("Test requires showing activities",
+                TestApis.users().instrumented().canShowActivities());
         try (TestAppInstance testApp = sNotInstalledTestApp.install()) {
             // We install fresh so the permissions are not granted
             sDeviceState.dpc().devicePolicyManager()
@@ -834,8 +836,10 @@ public final class PermissionGrantTest {
         }
     }
 
-    @PolicyAppliesTest(policy = SetPermissionGrantState.class)
+    @PolicyAppliesTest(policy = SetPermissionPolicy.class)
     public void setPermissionStateGranted_autoDenyPermission_grantsPermissions() {
+        assumeTrue("Test requires showing activities",
+                TestApis.users().instrumented().canShowActivities());
         try (TestAppInstance testApp = sNotInstalledTestApp.install()) {
             // We install fresh so the permissions are not granted
             sDeviceState.dpc().devicePolicyManager()
@@ -863,10 +867,12 @@ public final class PermissionGrantTest {
         }
     }
 
-    @PolicyAppliesTest(policy = SetPermissionGrantState.class)
+    @PolicyAppliesTest(policy = SetPermissionPolicy.class)
     @EnsureScreenIsOn
     @EnsureUnlocked
     public void setPermissionStateGranted_promptPermission_grantsPermissions() {
+        assumeTrue("Test requires showing activities",
+                TestApis.users().instrumented().canShowActivities());
         try (TestAppInstance testApp = sNotInstalledTestApp.install()) {
             // We install fresh so the permissions are not granted
             sDeviceState.dpc().devicePolicyManager()
@@ -891,11 +897,18 @@ public final class PermissionGrantTest {
                     GRANTABLE_PERMISSION, PERMISSION_GRANT_STATE_DEFAULT);
         }
     }
-
+    
+    @AdditionalQueryParameters(
+            forTestApp = "dpc",
+            query = @Query(targetSdkVersion =
+            @IntegerQuery(isLessThan = U))
+    )
     @PolicyAppliesTest(
             policy = SetSensorPermissionPolicyPromptForOrganizationOwnedWorkProfile.class)
     public void setSensorPermissionStateGranted_promptPermission_denyAsPermissionCantBeGrantedAutomatically(
             @SensorPermissionTestParameter String permission) {
+        assumeTrue("Test requires showing activities",
+                TestApis.users().instrumented().canShowActivities());
         try (TestAppInstance testApp = sNotInstalledTestApp.install()) {
             // We install fresh so the permissions are not granted
             sDeviceState.dpc().devicePolicyManager()
@@ -922,18 +935,24 @@ public final class PermissionGrantTest {
 
     @CanSetPolicyTest(policy = SetPermissionGrantState.class)
     public void setPermissionGrantState_appIsNotInstalled_doesNotSetGrantState() {
-        boolean wasSet = sDeviceState.dpc().devicePolicyManager()
-                .setPermissionGrantState(
-                        sDeviceState.dpc().componentName(), NON_EXISTING_PACKAGE_NAME,
-                        GRANTABLE_PERMISSION, PERMISSION_GRANT_STATE_DENIED);
+        try {
+            boolean wasSet = sDeviceState.dpc().devicePolicyManager()
+                    .setPermissionGrantState(
+                            sDeviceState.dpc().componentName(), NON_EXISTING_PACKAGE_NAME,
+                            GRANTABLE_PERMISSION, PERMISSION_GRANT_STATE_DENIED);
 
-        assertWithMessage("setPermissionGrantState did not return false")
-                .that(wasSet).isFalse();
-        assertWithMessage("Permission grant state should not be changed but was")
-                .that(sDeviceState.dpc().devicePolicyManager().getPermissionGrantState(
-                        sDeviceState.dpc().componentName(), NON_EXISTING_PACKAGE_NAME,
-                        NOT_DECLARED_PERMISSION))
-                .isEqualTo(PERMISSION_GRANT_STATE_DEFAULT);
+            assertWithMessage("setPermissionGrantState did not return false")
+                    .that(wasSet).isFalse();
+            assertWithMessage("Permission grant state should not be changed but was")
+                    .that(sDeviceState.dpc().devicePolicyManager().getPermissionGrantState(
+                            sDeviceState.dpc().componentName(), NON_EXISTING_PACKAGE_NAME,
+                            GRANTABLE_PERMISSION))
+                    .isEqualTo(PERMISSION_GRANT_STATE_DEFAULT);
+        } finally {
+            sDeviceState.dpc().devicePolicyManager().setPermissionGrantState(
+                    sDeviceState.dpc().componentName(), sTestApp.packageName(),
+                    GRANTABLE_PERMISSION, PERMISSION_GRANT_STATE_DEFAULT);
+        }
     }
 
     @CanSetPolicyTest(policy = SetPermissionGrantState.class)
@@ -1024,6 +1043,34 @@ public final class PermissionGrantTest {
             sDeviceState.dpc().devicePolicyManager().setPermissionGrantState(
                     sDeviceState.dpc().componentName(), sDeviceState.dpc().packageName(),
                     READ_PHONE_STATE, existingGrantState);
+        }
+    }
+
+    @EnsureGlobalSettingSet(key =
+            Settings.Global.ALLOW_WORK_PROFILE_TELEPHONY_FOR_NON_DPM_ROLE_HOLDERS, value = "1")
+    @RequireRunOnWorkProfile(isOrganizationOwned = true)
+    @Test
+    public void grantSmsPermission_orgOwnedDeviceWithManagedSubscriptionsPolicySet_granted() {
+        RemoteDevicePolicyManager devicePolicyManager = sDeviceState.profileOwner(
+                WORK_PROFILE).devicePolicyManager();
+        ComponentName componentName = sDeviceState.profileOwner(WORK_PROFILE).componentName();
+        int existingGrantState = devicePolicyManager.getPermissionGrantState(componentName,
+                sTestApp.packageName(), READ_SMS);
+        try {
+            devicePolicyManager.setManagedSubscriptionsPolicy(new ManagedSubscriptionsPolicy(
+                    ManagedSubscriptionsPolicy.TYPE_ALL_MANAGED_SUBSCRIPTIONS));
+
+            boolean wasSet = devicePolicyManager.setPermissionGrantState(componentName,
+                    sTestApp.packageName(), READ_SMS, PERMISSION_GRANT_STATE_GRANTED);
+
+            assertWithMessage("setPermissionGrantState did not return true").that(wasSet).isTrue();
+            assertWithMessage("Permission should be granted but was not")
+                    .that(sTestApp.pkg().hasPermission(READ_SMS)).isTrue();
+        } finally {
+            devicePolicyManager.setPermissionGrantState(componentName, sTestApp.packageName(),
+                    READ_SMS, existingGrantState);
+            devicePolicyManager.setManagedSubscriptionsPolicy(new ManagedSubscriptionsPolicy(
+                    ManagedSubscriptionsPolicy.TYPE_ALL_PERSONAL_SUBSCRIPTIONS));
         }
     }
 

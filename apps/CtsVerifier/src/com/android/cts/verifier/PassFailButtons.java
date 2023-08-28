@@ -60,9 +60,12 @@ import java.util.stream.IntStream;
  * </ol>
  */
 public class PassFailButtons {
-    private static final String TAG = PassFailButtons.class.getSimpleName();
+    private static final String INFO_TAG = "CtsVerifierInstructions";
 
+    // Need different IDs for these alerts or else the first one created
+    // will just be reused, with the old title/message.
     private static final int INFO_DIALOG_ID = 1337;
+    private static final int REPORTLOG_DIALOG_ID = 1338;
 
     private static final String INFO_DIALOG_VIEW_ID = "infoDialogViewId";
     private static final String INFO_DIALOG_TITLE_ID = "infoDialogTitleId";
@@ -557,14 +560,17 @@ public class PassFailButtons {
     }
 
     protected static void showReportLogWarningDialog(final android.app.Activity activity) {
-        showInfoDialog(activity,
-                R.string.reportlog_warning_title, R.string.reportlog_warning_body, -1);
+        Bundle args = new Bundle();
+        args.putInt(INFO_DIALOG_TITLE_ID, R.string.reportlog_warning_title);
+        args.putInt(INFO_DIALOG_MESSAGE_ID, R.string.reportlog_warning_body);
+        args.putInt(INFO_DIALOG_VIEW_ID, -1);
+        activity.showDialog(REPORTLOG_DIALOG_ID, args);
     }
-
 
     protected static Dialog createDialog(final android.app.Activity activity, int id, Bundle args) {
         switch (id) {
             case INFO_DIALOG_ID:
+            case REPORTLOG_DIALOG_ID:
                 return createInfoDialog(activity, id, args);
             default:
                 throw new IllegalArgumentException("Bad dialog id: " + id);
@@ -642,6 +648,12 @@ public class PassFailButtons {
         } else {
             TestResult.setFailedResult(activity, testId, testDetails, reportLog, historyCollection);
         }
+
+        // We store results here straight into the content provider so it can be fetched by the
+        // CTSInteractive host
+        TestResultsProvider.setTestResult(
+                activity, testId, passed ? 1 : 2, testDetails, reportLog, historyCollection,
+                null);
 
         activity.finish();
     }

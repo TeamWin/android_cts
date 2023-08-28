@@ -19,10 +19,10 @@ import os
 
 from mobly import test_runner
 
+import its_base_test
 import camera_properties_utils
 import image_fov_utils
 import image_processing_utils
-import its_base_test
 import its_session_utils
 import opencv_processing_utils
 import video_processing_utils
@@ -97,8 +97,7 @@ def _calculate_center_offset_threshold(image_size):
 
   img_area = image_size[0] * image_size[1]
 
-  normalized_area = ((img_area - _MIN_AREA) /
-                         (_MAX_AREA - _MIN_AREA))
+  normalized_area = (img_area - _MIN_AREA) / (_MAX_AREA - _MIN_AREA)
 
   if normalized_area > 1 or normalized_area < 0:
     raise AssertionError(f'normalized area > 1 or < 0! '
@@ -111,7 +110,8 @@ def _calculate_center_offset_threshold(image_size):
                                   (_MAX_CENTER_THRESHOLD_PERCENT -
                                    _MIN_CENTER_THRESHOLD_PERCENT))
 
-  return (normalized_threshold_percent + _MIN_CENTER_THRESHOLD_PERCENT)
+  return normalized_threshold_percent + _MIN_CENTER_THRESHOLD_PERCENT
+
 
 class PreviewStabilizationFoVTest(its_base_test.ItsBaseTest):
   """Tests if stabilized preview FoV is within spec.
@@ -151,9 +151,8 @@ class PreviewStabilizationFoVTest(its_base_test.ItsBaseTest):
           'First API level should be {} or higher. Found {}.'.format(
               its_session_utils.ANDROID13_API_LEVEL, first_api_level))
 
-      # Get ffmpeg version being used.
-      ffmpeg_version = video_processing_utils.get_ffmpeg_version()
-      logging.debug('ffmpeg_version: %s', ffmpeg_version)
+      # Log ffmpeg version being used
+      video_processing_utils.log_ffmpeg_version()
 
       supported_stabilization_modes = props[
           'android.control.availableVideoStabilizationModes'
@@ -245,9 +244,9 @@ class PreviewStabilizationFoVTest(its_base_test.ItsBaseTest):
 
         # Ensure the circles are equally round w/ and w/o stabilization
         ustab_roundness = ustab_circle['w'] / ustab_circle['h']
-        logging.debug('unstabilized roundess: %f', ustab_roundness)
+        logging.debug('unstabilized roundness: %f', ustab_roundness)
         stab_roundness = stab_circle['w'] / stab_circle['h']
-        logging.debug('stabilized roundess: %f', stab_roundness)
+        logging.debug('stabilized roundness: %f', stab_roundness)
 
         roundness_diff = abs(stab_roundness - ustab_roundness)
         if roundness_diff > _ROUNDESS_DELTA_THRESHOLD:

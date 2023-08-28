@@ -15,6 +15,8 @@
  */
 package android.content.pm.cts;
 
+import static android.content.Context.RECEIVER_EXPORTED;
+
 import android.app.ActivityManager;
 import android.content.Context;
 import android.content.Intent;
@@ -109,7 +111,7 @@ public class FeatureTest extends AndroidTestCase {
 
     private boolean deviceHasBattery() {
         final Intent batteryInfo = getContext().registerReceiver(null,
-                new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
+                new IntentFilter(Intent.ACTION_BATTERY_CHANGED), RECEIVER_EXPORTED);
         return batteryInfo.getBooleanExtra(BatteryManager.EXTRA_PRESENT, true);
     }
 

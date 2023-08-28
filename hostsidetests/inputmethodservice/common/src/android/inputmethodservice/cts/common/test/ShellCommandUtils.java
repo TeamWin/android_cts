@@ -203,8 +203,7 @@ public final class ShellCommandUtils {
 
     /** Command to wait until all broadcast queues have passed barrier. */
     public static String waitForBroadcastBarrier() {
-        // Use wait-for-broadcast-idle until wait-for-broadcast-barrier becomes available in U.
-        return "am wait-for-broadcast-idle";
+        return "am wait-for-broadcast-barrier";
     }
 
     /**

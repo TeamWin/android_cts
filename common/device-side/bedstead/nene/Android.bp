@@ -64,6 +64,7 @@ android_test {
         "general-tests",
     ],
     static_libs: [
+        "Interactive",
         "TestApp",
         "Nene",
         "EventLib",
@@ -77,6 +78,32 @@ android_test {
     data: [":NeneTestApp1"],
     manifest: "src/test/AndroidManifest.xml",
     min_sdk_version: "29"
+}
+
+android_test {
+    name: "InteractiveNeneTest",
+    srcs: [
+        "src/test/java/**/*.java",
+    ],
+    test_suites: [
+        "general-tests",
+    ],
+    static_libs: [
+        "Interactive",
+        "TestApp",
+        "Nene",
+        "EventLib",
+        "Harrier",
+        "androidx.test.ext.junit",
+        "ctstestrunner-axt",
+        "compatibility-device-util-axt",
+        "truth-prebuilt",
+        "testng" // for assertThrows
+    ],
+    data: [":NeneTestApp1"],
+    manifest: "src/test/AndroidManifest.xml",
+    min_sdk_version: "29",
+    test_config: "InteractiveAndroidTest.xml"
 }
 
 android_test {

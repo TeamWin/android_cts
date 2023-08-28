@@ -174,10 +174,6 @@
   <option name="compatibility:exclude-filter"
       value="CtsOsTestCases android.os.cts.AppHibernationIntegrationTest#testAppInfo_RemovePermissionsAndFreeUpSpaceToggleExists" />
   <option name="compatibility:exclude-filter"
-      value="CtsOsTestCases android.os.cts.CompanionDeviceManagerTest#testProfiles" />
-  <option name="compatibility:exclude-filter"
-      value="CtsOsTestCases android.os.cts.CompanionDeviceManagerTest#testRequestNotifications" />
-  <option name="compatibility:exclude-filter"
       value="CtsLocationFineTestCases android.location.cts.fine.ScanningSettingsTest#testWifiScanningSettings" />
   <option name="compatibility:exclude-filter"
       value="CtsLocationFineTestCases android.location.cts.fine.ScanningSettingsTest#testBleScanningSettings" />

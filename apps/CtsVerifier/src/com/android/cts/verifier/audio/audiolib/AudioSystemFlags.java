@@ -18,9 +18,7 @@ package com.android.cts.verifier.audio.audiolib;
 
 import android.content.Context;
 import android.content.pm.PackageManager;
-import android.media.AudioDeviceInfo;
 import android.util.DisplayMetrics;
-import android.util.Log;
 
 public class AudioSystemFlags {
     static final String TAG = AudioSystemFlags.class.getName();

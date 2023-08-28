@@ -17,6 +17,7 @@
 package android.server.wm.jetpack.utils;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeFalse;
@@ -73,6 +74,10 @@ public class ExtensionUtil {
     public static boolean isExtensionVersionAtLeast(Version targetVersion) {
         final Version version = getExtensionVersion();
         return version.compareTo(targetVersion) >= 0;
+    }
+
+    public static boolean isExtensionVersionLatest() {
+        return isExtensionVersionAtLeast(EXTENSION_VERSION_2);
     }
 
     /**
@@ -137,8 +142,8 @@ public class ExtensionUtil {
         if (windowLayoutComponent == null) {
             return null;
         }
-        TestValueCountJavaConsumer<WindowLayoutInfo> windowLayoutInfoConsumer =
-                new TestValueCountJavaConsumer<>();
+        TestValueCountConsumer<WindowLayoutInfo> windowLayoutInfoConsumer =
+                new TestValueCountConsumer<>();
         windowLayoutComponent.addWindowLayoutInfoListener(activity, windowLayoutInfoConsumer);
         WindowLayoutInfo info = windowLayoutInfoConsumer.waitAndGet();
 
@@ -203,6 +208,18 @@ public class ExtensionUtil {
         assertNotNull(windowLayoutInfo);
         assertNotNull(windowLayoutInfo.getDisplayFeatures());
         assumeFalse(windowLayoutInfo.getDisplayFeatures().isEmpty());
+    }
+
+    /**
+     * Asserts that the {@link WindowLayoutInfo} is not empty.
+     */
+    public static void assertHasDisplayFeatures(WindowLayoutInfo windowLayoutInfo) {
+        // If WindowLayoutComponent is implemented, then WindowLayoutInfo and the list of display
+        // features cannot be null. However the list can be empty if the device does not report
+        // any display features.
+        assertNotNull(windowLayoutInfo);
+        assertNotNull(windowLayoutInfo.getDisplayFeatures());
+        assertFalse(windowLayoutInfo.getDisplayFeatures().isEmpty());
     }
 
     /**

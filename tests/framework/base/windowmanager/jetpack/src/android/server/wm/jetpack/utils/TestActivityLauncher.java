@@ -26,9 +26,9 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 public class TestActivityLauncher<T extends Activity> {
-
     /** Key for string extra, ID to track an Activity that is launched. */
     public static final String KEY_ACTIVITY_ID = "ActivityID";
+
     /**
      * Options that will be passed to the instrumentation.
      * @see TestActivityLauncher#launch(Instrumentation)
@@ -65,8 +65,16 @@ public class TestActivityLauncher<T extends Activity> {
         return this;
     }
 
+    public TestActivityLauncher<T> setLaunchDisplayId(int displayId) {
+        mOptions.setLaunchDisplayId(displayId);
+        return this;
+    }
+
+    public Intent getIntent() {
+        return mIntent;
+    }
+
     public T launch(@NonNull Instrumentation instrumentation) {
         return mActivityClass.cast(instrumentation.startActivitySync(mIntent, mOptions.toBundle()));
     }
-
 }

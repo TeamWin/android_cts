@@ -97,6 +97,13 @@ public class ActivityQueryHelper<E extends Queryable> implements ActivityQuery<E
     }
 
     @Override
+    public boolean isEmptyQuery() {
+        return Queryable.isEmptyQuery(mPermission)
+                && Queryable.isEmptyQuery(mActivityClassQueryHelper)
+                && Queryable.isEmptyQuery(mIntentFiltersQueryHelper);
+    }
+
+    @Override
     public boolean matches(ActivityInfo value) {
         if (mPermission == null) {
             if (value.permission() != null) {

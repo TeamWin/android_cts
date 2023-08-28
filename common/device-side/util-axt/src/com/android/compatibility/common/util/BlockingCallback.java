@@ -53,6 +53,25 @@ public abstract class BlockingCallback<E> {
         }
     }
 
+    /**
+     * A default {@link BlockingCallback} used when there is no data passed to the callback.
+     */
+    public static class VoidBlockingCallback extends BlockingCallback<Void> {
+        public void triggerCallback() {
+            callbackTriggered(null);
+        }
+    }
+
+    /**
+     * Blocking version of {@link Runnable}.
+     */
+    public static class BlockingRunnable extends VoidBlockingCallback implements Runnable {
+        @Override
+        public void run() {
+            triggerCallback();
+        }
+    }
+
     /** Call this method from the callback method to mark the response as received. */
     protected void callbackTriggered(E value) {
         mValue.set(value);

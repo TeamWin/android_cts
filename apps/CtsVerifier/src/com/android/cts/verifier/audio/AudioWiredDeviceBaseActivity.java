@@ -85,21 +85,6 @@ abstract class AudioWiredDeviceBaseActivity extends PassFailButtons.Activity {
         }
     }
 
-    protected void storeTestResults() {
-        CtsVerifierReportLog reportLog = getReportLog();
-        reportLog.addValue(
-                KEY_WIRED_PORT_SUPPORTED,
-                mSupportsWiredPeripheral ? 1 : 0,
-                ResultType.NEUTRAL,
-                ResultUnit.NONE);
-
-        reportLog.addValue(
-                KEY_CONNECTED_PERIPHERAL,
-                mConnectedPeripheralName,
-                ResultType.NEUTRAL,
-                ResultUnit.NONE);
-    }
-
     //
     // PassFailButtons Overrides
     //
@@ -115,8 +100,18 @@ abstract class AudioWiredDeviceBaseActivity extends PassFailButtons.Activity {
 
     @Override
     public void recordTestResults() {
-        storeTestResults();
+        // Subclasses should submit after adding their data
+        CtsVerifierReportLog reportLog = getReportLog();
+        reportLog.addValue(
+                KEY_WIRED_PORT_SUPPORTED,
+                mSupportsWiredPeripheral ? 1 : 0,
+                ResultType.NEUTRAL,
+                ResultUnit.NONE);
 
-        getReportLog().submit();
+        reportLog.addValue(
+                KEY_CONNECTED_PERIPHERAL,
+                mConnectedPeripheralName,
+                ResultType.NEUTRAL,
+                ResultUnit.NONE);
     }
 }

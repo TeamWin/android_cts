@@ -64,14 +64,12 @@ public class BatteryConstraintTest extends BaseJobSchedulerTest {
                 Settings.Global.LOW_POWER_MODE_TRIGGER_LEVEL, 0);
 
         mBuilder = new JobInfo.Builder(BATTERY_JOB_ID, kJobServiceComponent);
-        SystemUtil.runShellCommand(getInstrumentation(), "cmd jobscheduler monitor-battery on");
     }
 
     @Override
     public void tearDown() throws Exception {
         mJobScheduler.cancel(BATTERY_JOB_ID);
         // Put battery service back in to normal operation.
-        SystemUtil.runShellCommand(getInstrumentation(), "cmd jobscheduler monitor-battery off");
         SystemUtil.runShellCommand(getInstrumentation(), "cmd battery reset");
 
         // Reset power save mode to its previous state.

@@ -35,8 +35,8 @@ android_test {
         "Harrier",
         "CtsMockInputMethodLib",
         "hamcrest-library",
-        "modules-utils-build_system",
         "platformprotosnano",
+        "device-time-shell-utils",
     ],
     jni_uses_platform_apis: true,
     jni_libs: [
@@ -70,8 +70,5 @@ android_test {
     // Do not compress minijail policy files.
     aaptflags: ["-0 .policy"],
     min_sdk_version: "29",
-    data: [
-        ":CtsCompanionTestApp",
-    ],
     per_testcase_directory: true,
 }

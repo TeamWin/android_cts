@@ -20,6 +20,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeFalse;
 import static org.mockito.Matchers.anyString;
@@ -34,6 +35,8 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.content.pm.ServiceInfo;
+import android.icu.util.ULocale;
+import android.os.Bundle;
 import android.os.Parcel;
 import android.util.Printer;
 import android.view.inputmethod.InputMethod;
@@ -83,6 +86,8 @@ public class InputMethodInfoTest {
     private boolean mSubtypeIsAuxiliary;
     private boolean mSubtypeOverridesImplicitlyEnabledSubtype;
     private int mSubtypeId;
+    private boolean mSupportsStylusHandwriting;
+    private String mSettingsActivityActionForStylusHandwriting;
     private InputMethodSubtype mInputMethodSubtype;
 
     @Before
@@ -93,7 +98,10 @@ public class InputMethodInfoTest {
         mClassName = InputMethodSettingsActivityStub.class.getName();
         mLabel = "test";
         mSettingsActivity = "android.view.inputmethod.cts.InputMethodSettingsActivityStub";
-        mInputMethodInfo = new InputMethodInfo(mPackageName, mClassName, mLabel, mSettingsActivity);
+        mSupportsStylusHandwriting = true;
+        mSettingsActivityActionForStylusHandwriting = mSettingsActivity;
+        mInputMethodInfo = new InputMethodInfo(mPackageName, mClassName, mLabel, mSettingsActivity,
+                mSupportsStylusHandwriting, mSettingsActivityActionForStylusHandwriting);
 
         mSubtypeNameResId = 0;
         mSubtypeIconResId = 0;
@@ -105,6 +113,7 @@ public class InputMethodInfoTest {
         mSubtypeIsAuxiliary = false;
         mSubtypeOverridesImplicitlyEnabledSubtype = false;
         mSubtypeId = 99;
+
         mInputMethodSubtype = new InputMethodSubtype(mSubtypeNameResId, mSubtypeIconResId,
                 mSubtypeLocale, mSubtypeMode, mSubtypeExtraValue, mSubtypeIsAuxiliary,
                 mSubtypeOverridesImplicitlyEnabledSubtype, mSubtypeId);
@@ -163,6 +172,9 @@ public class InputMethodInfoTest {
         String expectedId = component.flattenToShortString();
         assertEquals(expectedId, info.getId());
         assertEquals(mClassName, info.getServiceName());
+        assertEquals(mSupportsStylusHandwriting, info.supportsStylusHandwriting());
+        assertEquals(mSettingsActivityActionForStylusHandwriting,
+                info.createStylusHandwritingSettingsActivityIntent().getComponent().getClassName());
     }
 
     @Test
@@ -206,6 +218,10 @@ public class InputMethodInfoTest {
         assertEquals(mInputMethodInfo.getSettingsActivity(), imi.getSettingsActivity());
         assertEquals(mInputMethodInfo.getId(), imi.getId());
         assertEquals(mInputMethodInfo.getIsDefaultResourceId(), imi.getIsDefaultResourceId());
+        assertEquals(mInputMethodInfo.supportsStylusHandwriting(), imi.supportsStylusHandwriting());
+        assertEquals(mInputMethodInfo.createStylusHandwritingSettingsActivityIntent().getComponent()
+                        .getClassName(),
+                imi.createStylusHandwritingSettingsActivityIntent().getComponent().getClassName());
         assertService(mInputMethodInfo.getServiceInfo(), imi.getServiceInfo());
     }
 
@@ -286,5 +302,30 @@ public class InputMethodInfoTest {
             }
         }
         return null;
+    }
+
+    @Test
+    public void testParsingPhysicalKeyboardAttributes() throws Exception {
+        final ServiceInfo serviceInfo = new ServiceInfo();
+        serviceInfo.applicationInfo = mContext.getApplicationInfo();
+        serviceInfo.packageName = mContext.getPackageName();
+        serviceInfo.name = "TestIme";
+        serviceInfo.metaData = new Bundle();
+        serviceInfo.metaData.putInt(InputMethod.SERVICE_META_DATA, R.xml.ime_meta_subtypes);
+        final ResolveInfo resolveInfo = new ResolveInfo();
+        resolveInfo.serviceInfo = serviceInfo;
+        InputMethodInfo imi = new InputMethodInfo(mContext, resolveInfo);
+
+        assertEquals(2, imi.getSubtypeCount());
+
+        InputMethodSubtype subtype = imi.getSubtypeAt(0);
+        assertEquals("en-US", subtype.getLanguageTag());
+        assertNull(subtype.getPhysicalKeyboardHintLanguageTag());
+        assertEquals("", subtype.getPhysicalKeyboardHintLayoutType());
+
+        subtype = imi.getSubtypeAt(1);
+        assertEquals("zh-CN", subtype.getLanguageTag());
+        assertEquals(new ULocale("en-US"), subtype.getPhysicalKeyboardHintLanguageTag());
+        assertEquals("qwerty", subtype.getPhysicalKeyboardHintLayoutType());
     }
 }

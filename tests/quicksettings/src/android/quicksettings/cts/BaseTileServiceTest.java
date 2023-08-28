@@ -18,8 +18,7 @@ package android.quicksettings.cts;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assume.assumeTrue;
 
 import android.content.ComponentName;
@@ -56,9 +55,7 @@ public abstract class BaseTileServiceTest {
 
     protected abstract String getTag();
     protected abstract String getComponentName();
-    protected abstract TileService getTileServiceInstance();
-    protected abstract void waitForConnected(boolean state) throws InterruptedException;
-    protected abstract void waitForListening(boolean state) throws InterruptedException;
+    protected abstract String getTileServiceClassName();
     protected Context mContext;
 
     static final String PROTO_DUMP_COMMAND =
@@ -79,6 +76,7 @@ public abstract class BaseTileServiceTest {
     @Before
     public void setUp() throws Exception {
         assumeTrue(TileService.isQuickSettingsSupported());
+        CurrentTestState.reset();
         mContext = InstrumentationRegistry.getContext();
         homeIntent = new Intent(Intent.ACTION_MAIN);
         homeIntent.addCategory(Intent.CATEGORY_HOME);
@@ -96,15 +94,13 @@ public abstract class BaseTileServiceTest {
     public void tearDown() throws Exception {
         expandSettings(false);
         toggleServiceAccess(getComponentName(), false);
-        waitForConnected(false);
-        assertNull(TestTileService.getInstance());
+        waitForTileAdded(false);
+        CurrentTestState.reset();
     }
 
     protected void startTileService() throws Exception {
         toggleServiceAccess(getComponentName(), true);
-        waitForConnected(true); // wait for service to be bound
-        mTileService = getTileServiceInstance();
-        assertNotNull(mTileService);
+        waitForTileAdded(true); // wait for service to be bound and added
     }
 
     protected void toggleServiceAccess(String componentName, boolean on) throws Exception {
@@ -162,6 +158,26 @@ public abstract class BaseTileServiceTest {
             }
         }
         return null;
+    }
+
+    protected final void waitForTileAdded(boolean state) throws InterruptedException {
+        int ct = 0;
+        while (CurrentTestState.isTileAdded() != state && (ct++ < CHECK_RETRIES)) {
+            Thread.sleep(CHECK_DELAY);
+        }
+        assertEquals(state, CurrentTestState.isTileAdded());
+        if (state) {
+            assertEquals(getTileServiceClassName(), CurrentTestState.getTileServiceClass());
+        }
+    }
+
+    protected final void waitForListening(boolean state) throws InterruptedException {
+        int ct = 0;
+        while (CurrentTestState.isListening() != state && (ct++ < CHECK_RETRIES)) {
+            Thread.sleep(CHECK_DELAY);
+        }
+        assertEquals(state, CurrentTestState.isListening());
+        mTileService = CurrentTestState.getCurrentInstance();
     }
 
     private QsTileState[] getTilesStates() {

@@ -2,6 +2,8 @@ package android.companion.cts.uiautomation
 
 import android.app.Activity
 import android.companion.AssociationInfo
+import android.companion.AssociationRequest.DEVICE_PROFILE_AUTOMOTIVE_PROJECTION
+import android.companion.AssociationRequest.DEVICE_PROFILE_GLASSES
 import android.companion.AssociationRequest.DEVICE_PROFILE_WATCH
 import android.companion.CompanionDeviceManager
 import android.companion.cts.common.CompanionActivity
@@ -9,14 +11,14 @@ import android.companion.cts.common.RecordingCallback.OnAssociationCreated
 import android.content.Intent
 import android.platform.test.annotations.AppModeFull
 import com.android.compatibility.common.util.FeatureUtil
-import org.junit.Assume.assumeFalse
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.Parameterized
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlin.test.assertNotNull
+import org.junit.Assume.assumeFalse
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
 
 /**
  * Tests the Association Flow end-to-end.
@@ -36,10 +38,14 @@ class AssociationEndToEndSelfManagedTest(
         super.setUp()
 
         assumeFalse(FeatureUtil.isWatch())
-        // TODO(b/211602270): Add support for WATCH and "null" profiles in the
         // confirmation UI (the "self-managed" flow variant).
+        // Watch and glasses profiles are not supported for self-managed association flow.
         assumeFalse(profile == null)
         assumeFalse(profile == DEVICE_PROFILE_WATCH)
+        assumeFalse(profile == DEVICE_PROFILE_GLASSES)
+        // Do not need to test the automotive_projection profile since it does not have
+        // the UI.
+        assumeFalse(profile == DEVICE_PROFILE_AUTOMOTIVE_PROJECTION)
     }
 
     @Test
@@ -53,6 +59,10 @@ class AssociationEndToEndSelfManagedTest(
     @Test
     fun test_userConfirmed() {
         sendRequestAndLaunchConfirmation(selfManaged = true, displayName = DEVICE_DISPLAY_NAME)
+
+        if (profile != null) {
+            confirmationUi.scrollToBottom()
+        }
 
         callback.assertInvokedByActions {
             // User "approves" the request.

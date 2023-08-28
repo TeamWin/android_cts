@@ -19,6 +19,7 @@ package android.companion.cts.uiautomation
 import android.companion.AssociationRequest.DEVICE_PROFILE_APP_STREAMING
 import android.companion.AssociationRequest.DEVICE_PROFILE_AUTOMOTIVE_PROJECTION
 import android.companion.AssociationRequest.DEVICE_PROFILE_COMPUTER
+import android.companion.AssociationRequest.DEVICE_PROFILE_NEARBY_DEVICE_STREAMING
 import android.platform.test.annotations.AppModeFull
 import com.android.compatibility.common.util.FeatureUtil
 import org.junit.Assume.assumeFalse
@@ -43,11 +44,11 @@ class AssociationEndToEndTest(
         super.setUp()
 
         assumeFalse(FeatureUtil.isWatch())
-        // TODO(b/211590680): Add support for APP_STREAMING, AUTOMOTIVE_PROJECTION and COMPUTER
-        // in the confirmation UI (the "multiple devices" flow variant).
+        // Self_managed profiles are not supported for multiple_devices association flow.
         assumeFalse(profile == DEVICE_PROFILE_COMPUTER)
         assumeFalse(profile == DEVICE_PROFILE_APP_STREAMING)
         assumeFalse(profile == DEVICE_PROFILE_AUTOMOTIVE_PROJECTION)
+        assumeFalse(profile == DEVICE_PROFILE_NEARBY_DEVICE_STREAMING)
     }
 
     @Test

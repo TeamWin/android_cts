@@ -77,7 +77,8 @@ public final class LauncherAppsTest {
                     );
 
     private static final TestApp sTestApp = sDeviceState.testApps().query()
-            .whereActivities().contains(MAIN_ACTIVITY_QUERY).get();
+            .whereActivities().contains(MAIN_ACTIVITY_QUERY)
+            .whereTestOnly().isTrue().get();
 
     // TODO(257215214): Unrelated to device policy - move to PackageManager module
     @Test

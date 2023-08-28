@@ -17,7 +17,6 @@
 package com.android.bedstead.nene.packages;
 
 import static android.Manifest.permission.FORCE_STOP_PACKAGES;
-import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
 import static android.Manifest.permission.QUERY_ALL_PACKAGES;
 import static android.content.pm.ApplicationInfo.FLAG_STOPPED;
 import static android.content.pm.ApplicationInfo.FLAG_SYSTEM;
@@ -31,6 +30,7 @@ import static android.os.Build.VERSION_CODES.S;
 import static android.os.Process.myUid;
 
 import static com.android.bedstead.nene.permissions.CommonPermissions.CHANGE_COMPONENT_ENABLED_STATE;
+import static com.android.bedstead.nene.permissions.CommonPermissions.INTERACT_ACROSS_USERS_FULL;
 import static com.android.bedstead.nene.permissions.CommonPermissions.MANAGE_ROLE_HOLDERS;
 
 import static com.google.common.truth.Truth.assertWithMessage;
@@ -43,6 +43,7 @@ import android.app.role.RoleManager;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.ApplicationInfo;
+import android.content.pm.CrossProfileApps;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PermissionInfo;
@@ -66,6 +67,7 @@ import com.android.bedstead.nene.roles.RoleContext;
 import com.android.bedstead.nene.users.UserReference;
 import com.android.bedstead.nene.utils.Poll;
 import com.android.bedstead.nene.utils.ShellCommand;
+import com.android.bedstead.nene.utils.ShellCommandUtils;
 import com.android.bedstead.nene.utils.Versions;
 import com.android.compatibility.common.util.BlockingBroadcastReceiver;
 import com.android.compatibility.common.util.BlockingCallback.DefaultBlockingCallback;
@@ -125,6 +127,7 @@ public final class Package {
                     .validate(
                             (output) -> output.contains("installed for user"))
                     .execute();
+
             return this;
         } catch (AdbException e) {
             throw new NeneException("Could not install-existing package " + this, e);
@@ -304,7 +307,9 @@ public final class Package {
     @Experimental
     public Package disable(UserReference user) {
         try {
-            ShellCommand.builderForUser(user, "pm disable")
+            // TODO(279387509): "pm disable" is currently broken for packages - restore to normal
+            //  disable when fixed
+            ShellCommand.builderForUser(user, "pm disable-user")
                     .addOperand(mPackageName)
                     .validate(o -> o.contains("new state"))
                     .execute();
@@ -381,14 +386,15 @@ public final class Package {
      * <p>You can not deny permissions for the current package on the current user.
      */
     public Package denyPermission(UserReference user, String permission) {
+        if (!hasPermission(user, permission)) {
+            return this; // Already denied
+        }
+
         // There is no readable output upon failure so we need to check ourselves
         checkCanGrantOrRevokePermission(user, permission);
 
         if (packageName().equals(TestApis.context().instrumentedContext().getPackageName())
                 && user.equals(TestApis.users().instrumented())) {
-            if (!hasPermission(user, permission)) {
-                return this; // Already denied
-            }
             throw new NeneException("Cannot deny permission from current package");
         }
 
@@ -402,7 +408,7 @@ public final class Package {
 
             assertWithMessage("Error denying permission " + permission
                     + " to package " + this + " on user " + user
-                    + ". Command appeared successful but not set.")
+                    + ". Command appeared successful but not revoked.")
                     .that(hasPermission(user, permission)).isFalse();
 
             return this;
@@ -479,10 +485,11 @@ public final class Package {
     @Experimental
     @Nullable
     public ProcessReference runningProcess(UserReference user) {
-        return runningProcesses().stream().filter(
+        ProcessReference p = runningProcesses().stream().filter(
                 i -> i.user().equals(user))
                 .findAny()
                 .orElse(null);
+        return p;
     }
 
     /** Get the running {@link ProcessReference} for this package on the given user. */
@@ -561,18 +568,21 @@ public final class Package {
 
     @Nullable
     private PackageInfo packageInfoForUser(UserReference user, int flags) {
+        if (TestApis.packages().instrumented().isInstantApp()
+                || !Versions.meetsMinimumSdkVersionRequirement(S)) {
+            // Can't call API's directly
+            return packageInfoForUserPreS(user, flags);
+        }
+
         if (user.equals(TestApis.users().instrumented())) {
             try {
                 return TestApis.context().instrumentedContext()
                         .getPackageManager()
                         .getPackageInfo(mPackageName, /* flags= */ flags);
             } catch (PackageManager.NameNotFoundException e) {
+                Log.e(LOG_TAG, "Could not find package " + this + " on user " + user, e);
                 return null;
             }
-        }
-
-        if (!Versions.meetsMinimumSdkVersionRequirement(S)) {
-            return packageInfoForUserPreS(user, flags);
         }
 
         if (Permissions.sIgnorePermissions.get()) {
@@ -732,11 +742,19 @@ public final class Package {
     }
 
     /**
-     * Interact with AppOps for the given package.
+     * Interact with AppOps on the instrumented user for the given package.
      */
     @Experimental
     public AppOps appOps() {
-        return new AppOps(this);
+        return appOps(TestApis.users().instrumented());
+    }
+
+    /**
+     * Interact with AppOps on the given user for the given package.
+     */
+    @Experimental
+    public AppOps appOps(UserReference user) {
+        return new AppOps(this, user);
     }
 
     /**
@@ -933,7 +951,7 @@ public final class Package {
     @Experimental
     public RoleContext setAsRoleHolder(String role, UserReference user) {
         try (PermissionContext p = TestApis.permissions().withPermission(
-                MANAGE_ROLE_HOLDERS)) {
+                MANAGE_ROLE_HOLDERS, INTERACT_ACROSS_USERS_FULL)) {
             DefaultBlockingCallback<Boolean> blockingCallback = new DefaultBlockingCallback<>();
 
             sRoleManager.addRoleHolderAsUser(
@@ -988,5 +1006,103 @@ public final class Package {
         } catch (InterruptedException e) {
             throw new NeneException("Error while clearing role holder " + role, e);
         }
+    }
+
+    /**
+     * True if the given package on the instrumented user can have its ability to interact across
+     * profiles configured by the user.
+     */
+    @Experimental
+    public boolean canConfigureInteractAcrossProfiles() {
+        return canConfigureInteractAcrossProfiles(TestApis.users().instrumented());
+    }
+
+    /**
+     * True if the given package can have its ability to interact across profiles configured
+     * by the user.
+     */
+    @Experimental
+    public boolean canConfigureInteractAcrossProfiles(UserReference user) {
+        return TestApis.context().androidContextAsUser(user)
+                .getSystemService(CrossProfileApps.class)
+                .canConfigureInteractAcrossProfiles(packageName());
+    }
+
+    /**
+     * Enable or disable this package from using @TestApis.
+     */
+    @Experimental
+    public void setAllowTestApiAccess(boolean allowed) {
+        ShellCommand.builder("am compat")
+                .addOperand(allowed ? "enable" : "disable")
+                .addOperand("ALLOW_TEST_API_ACCESS")
+                .addOperand(packageName())
+                .validate(s -> s.startsWith(allowed ? "Enabled change" : "Disabled change"))
+                .executeOrThrowNeneException(
+                        "Error allowing/disallowing test api access for " + this);
+    }
+
+    /**
+     * True if the given package is suspended in the given user.
+     */
+    @Experimental
+    public boolean isSuspended(UserReference user) {
+        try (PermissionContext p =
+                     TestApis.permissions().withPermission(INTERACT_ACROSS_USERS_FULL)) {
+            return TestApis.context().androidContextAsUser(user).getPackageManager()
+                    .isPackageSuspended(mPackageName);
+        } catch (PackageManager.NameNotFoundException e) {
+            throw new NeneException("Package " + mPackageName + " not found for user " + user);
+        }
+    }
+
+    /**
+     * Get the app standby bucket of the package.
+     */
+    @Experimental
+    public int getAppStandbyBucket() {
+        return getAppStandbyBucket(TestApis.users().instrumented());
+    }
+
+    /**
+     * Get the app standby bucket of the package.
+     */
+    @Experimental
+    public int getAppStandbyBucket(UserReference user) {
+        try {
+            return ShellCommand.builderForUser(user, "am get-standby-bucket")
+                .addOperand(mPackageName)
+                .executeAndParseOutput(o -> Integer.parseInt(o.trim()));
+        } catch (AdbException e) {
+            throw new NeneException("Could not get app standby bucket " + this, e);
+        }
+    }
+
+    /** Approves all links for an auto verifiable app */
+    @Experimental
+    public void setAppLinksToAllApproved() {
+        try {
+            ShellCommand.builder("pm set-app-links")
+                    .addOption("--package", this.mPackageName)
+                    .addOperand(2) // 2 = STATE_APPROVED
+                    .addOperand("all")
+                    .execute();
+        } catch (AdbException e) {
+            throw new NeneException("Error verifying links ", e);
+        }
+    }
+
+    /** Checks if the current package is a role holder for the given role*/
+    @Experimental
+    public boolean isRoleHolder(String role) {
+        return TestApis.roles().getRoleHolders(role).contains(this.mPackageName);
+    }
+
+    @Experimental
+    public void clearStorage() {
+        ShellCommand.builder("pm clear")
+                .addOperand(mPackageName)
+                .validate(ShellCommandUtils::startsWithSuccess)
+                .executeOrThrowNeneException("Error clearing storage for " + this);
     }
 }

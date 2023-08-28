@@ -16,6 +16,9 @@
 
 package android.view.cts;
 
+import static com.android.compatibility.common.util.SynchronousPixelCopy.copySurface;
+import static com.android.compatibility.common.util.SynchronousPixelCopy.copyWindow;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
@@ -201,6 +204,19 @@ public class PixelCopyTest {
         mCopyHelper.request(mockWindow, dest);
     }
 
+    @Test
+    public void testRequestGetters() {
+        PixelCopyViewProducerActivity activity = waitForWindowProducerActivity();
+        Bitmap dest = Bitmap.createBitmap(5, 5, Config.ARGB_8888);
+        Rect source = new Rect(3, 3, 40, 50);
+        PixelCopy.Request request = PixelCopy.Request.Builder.ofWindow(activity.getWindow())
+                .setSourceRect(source)
+                .setDestinationBitmap(dest)
+                .build();
+        assertEquals(dest, request.getDestinationBitmap());
+        assertEquals(source, request.getSourceRect());
+    }
+
     private PixelCopyGLProducerCtsActivity waitForGlProducerActivity() {
         CountDownLatch swapFence = new CountDownLatch(2);
 
@@ -224,6 +240,19 @@ public class PixelCopyTest {
         Bitmap bitmap = Bitmap.createBitmap(100, 100, Config.ARGB_8888);
         int result = mCopyHelper.request(activity.getView(), bitmap);
         assertEquals("Fullsize copy request failed", PixelCopy.SUCCESS, result);
+        assertEquals(100, bitmap.getWidth());
+        assertEquals(100, bitmap.getHeight());
+        assertEquals(Config.ARGB_8888, bitmap.getConfig());
+        assertBitmapQuadColor(bitmap,
+                Color.RED, Color.GREEN, Color.BLUE, Color.BLACK);
+    }
+
+    @Test
+    public void testGlProducerAutoSize() {
+        PixelCopyGLProducerCtsActivity activity = waitForGlProducerActivity();
+        PixelCopy.Result result = copySurface(activity.getView());
+        assertEquals("Fullsize copy request failed", PixelCopy.SUCCESS, result.getStatus());
+        Bitmap bitmap = result.getBitmap();
         assertEquals(100, bitmap.getWidth());
         assertEquals(100, bitmap.getHeight());
         assertEquals(Config.ARGB_8888, bitmap.getConfig());
@@ -326,14 +355,55 @@ public class PixelCopyTest {
     }
 
     @Test
-    public void testWindowProducer() {
+    public void testViewProducer() {
         PixelCopyViewProducerActivity activity = waitForWindowProducerActivity();
         do {
-            Rect src = makeWindowRect(activity, 0, 0, 100, 100);
-            Bitmap bitmap = Bitmap.createBitmap(src.width(), src.height(), Config.ARGB_8888);
-            int result = mCopyHelper.request(activity.getWindow(), src, bitmap);
+            final Rect src = makeWindowRect(activity, 0, 0, 100, 100);
+            final Bitmap bitmap = Bitmap.createBitmap(src.width(), src.height(),
+                    Config.ARGB_8888);
+            int result = copyWindow(activity.getContentView(), request -> {
+                request.setDestinationBitmap(bitmap);
+                request.setSourceRect(src);
+            }).getStatus();
             assertEquals("Fullsize copy request failed", PixelCopy.SUCCESS, result);
             assertEquals(Config.ARGB_8888, bitmap.getConfig());
+            assertBitmapQuadColor(bitmap,
+                    Color.RED, Color.GREEN, Color.BLUE, Color.BLACK);
+            assertBitmapEdgeColor(bitmap, Color.YELLOW);
+        } while (activity.rotate());
+    }
+
+    @Test
+    public void testWindowProducerAutoSize() {
+        PixelCopyViewProducerActivity activity = waitForWindowProducerActivity();
+        Window window = activity.getWindow();
+        do {
+            PixelCopy.Result result = copyWindow(window);
+            assertEquals("Fullsize copy request failed", PixelCopy.SUCCESS,
+                    result.getStatus());
+            final Bitmap bitmap = result.getBitmap();
+            assertEquals(Config.ARGB_8888, bitmap.getConfig());
+            final View decorView = window.getDecorView();
+            assertTrue(bitmap.getWidth() >= decorView.getWidth());
+            assertTrue(bitmap.getHeight() >= decorView.getHeight());
+            // We can't directly assert qualities of the bitmap because the View's location
+            // is going to be affected by padding/insets.
+        } while (activity.rotate());
+    }
+
+    @Test
+    public void testViewProducerAutoSizeWithSrc() {
+        PixelCopyViewProducerActivity activity = waitForWindowProducerActivity();
+        do {
+            final Rect src = makeWindowRect(activity, 0, 0, 100, 100);
+            PixelCopy.Result result = copyWindow(activity.getContentView(), request -> {
+                request.setSourceRect(src);
+            });
+            assertEquals("Fullsize copy request failed", PixelCopy.SUCCESS, result.getStatus());
+            final Bitmap bitmap = result.getBitmap();
+            assertEquals(Config.ARGB_8888, bitmap.getConfig());
+            assertEquals(src.width(), bitmap.getWidth());
+            assertEquals(src.height(), bitmap.getHeight());
             assertBitmapQuadColor(bitmap,
                     Color.RED, Color.GREEN, Color.BLUE, Color.BLACK);
             assertBitmapEdgeColor(bitmap, Color.YELLOW);
@@ -413,6 +483,23 @@ public class PixelCopyTest {
                         Color.RED, Color.GREEN, Color.BLUE, Color.BLACK);
                 assertBitmapEdgeColor(bitmap, Color.YELLOW);
             }
+        } while (activity.rotate());
+    }
+
+    @Test
+    public void testWindowProducer() {
+        Bitmap bitmap;
+        PixelCopyViewProducerActivity activity = waitForWindowProducerActivity();
+        Window window = activity.getWindow();
+        do {
+            Rect src = makeWindowRect(activity, 0, 0, 100, 100);
+            bitmap = Bitmap.createBitmap(src.width(), src.height(), Config.ARGB_8888);
+            int result = mCopyHelper.request(window, src, bitmap);
+            assertEquals("Fullsize copy request failed", PixelCopy.SUCCESS, result);
+            assertEquals(Config.ARGB_8888, bitmap.getConfig());
+            assertBitmapQuadColor(bitmap,
+                    Color.RED, Color.GREEN, Color.BLUE, Color.BLACK);
+            assertBitmapEdgeColor(bitmap, Color.YELLOW);
         } while (activity.rotate());
     }
 
@@ -868,6 +955,108 @@ public class PixelCopyTest {
         result = Bitmap.createBitmap(20, 20, Config.ARGB_8888);
         status = mCopyHelper.request(reader.getSurface(), new Rect(0, 0, 20, 20), result);
         assertEquals("Copy request failed", PixelCopy.SUCCESS, status);
+        assertBitmapQuadColor(result, Color.RED, Color.GREEN, Color.BLUE, Color.BLACK);
+    }
+
+    @Test
+    public void testAutoSize() throws InterruptedException {
+        ImageReader reader = ImageReader.newInstance(100, 100, PixelFormat.RGBA_8888, 1,
+                HardwareBuffer.USAGE_CPU_WRITE_OFTEN | HardwareBuffer.USAGE_CPU_READ_OFTEN
+                        | HardwareBuffer.USAGE_GPU_SAMPLED_IMAGE);
+        ImageWriter writer = ImageWriter.newInstance(reader.getSurface(), 1);
+        Image image = writer.dequeueInputImage();
+        Image.Plane plane = image.getPlanes()[0];
+        Bitmap bitmap = Bitmap.createBitmap(plane.getRowStride() / 4,
+                image.getHeight(), Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+        Paint paint = new Paint();
+        paint.setAntiAlias(false);
+        paint.setColor(Color.RED);
+        canvas.drawRect(0f, 0f, 50f, 50f, paint);
+        paint.setColor(Color.GREEN);
+        canvas.drawRect(50f, 0f, 100f, 50f, paint);
+        paint.setColor(Color.BLUE);
+        canvas.drawRect(0f, 50f, 50f, 100f, paint);
+        paint.setColor(Color.BLACK);
+        canvas.drawRect(50f, 50f, 100f, 100f, paint);
+        bitmap.copyPixelsToBuffer(plane.getBuffer());
+        writer.queueInputImage(image);
+
+        PixelCopy.Result copyResult = copySurface(reader.getSurface());
+        assertEquals("Copy request failed", PixelCopy.SUCCESS, copyResult.getStatus());
+        Bitmap result = copyResult.getBitmap();
+        assertEquals(100, result.getWidth());
+        assertEquals(100, result.getHeight());
+        assertBitmapQuadColor(result, Color.RED, Color.GREEN, Color.BLUE, Color.BLACK);
+    }
+
+    @Test
+    public void testAutoSizeWithCrop() throws InterruptedException {
+        ImageReader reader = ImageReader.newInstance(100, 100, PixelFormat.RGBA_8888, 1,
+                HardwareBuffer.USAGE_CPU_WRITE_OFTEN | HardwareBuffer.USAGE_CPU_READ_OFTEN
+                        | HardwareBuffer.USAGE_GPU_SAMPLED_IMAGE);
+        ImageWriter writer = ImageWriter.newInstance(reader.getSurface(), 1);
+        Image image = writer.dequeueInputImage();
+        Image.Plane plane = image.getPlanes()[0];
+        Bitmap bitmap = Bitmap.createBitmap(plane.getRowStride() / 4,
+                image.getHeight(), Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+        Paint paint = new Paint();
+        paint.setAntiAlias(false);
+        canvas.drawColor(Color.MAGENTA);
+        canvas.translate(20f, 70f);
+        paint.setColor(Color.RED);
+        canvas.drawRect(0f, 0f, 10f, 10f, paint);
+        paint.setColor(Color.GREEN);
+        canvas.drawRect(10f, 0f, 20f, 10f, paint);
+        paint.setColor(Color.BLUE);
+        canvas.drawRect(0f, 10f, 10f, 20f, paint);
+        paint.setColor(Color.BLACK);
+        canvas.drawRect(10f, 10f, 20f, 20f, paint);
+        bitmap.copyPixelsToBuffer(plane.getBuffer());
+        image.setCropRect(new Rect(20, 70, 40, 90));
+        writer.queueInputImage(image);
+
+        PixelCopy.Result copyResult = copySurface(reader.getSurface());
+        assertEquals("Copy request failed", PixelCopy.SUCCESS, copyResult.getStatus());
+        Bitmap result = copyResult.getBitmap();
+        assertEquals(20, result.getWidth());
+        assertEquals(20, result.getHeight());
+        assertBitmapQuadColor(result, Color.RED, Color.GREEN, Color.BLUE, Color.BLACK);
+    }
+
+    @Test
+    public void testAutoSizeWithSrcRect() throws InterruptedException {
+        ImageReader reader = ImageReader.newInstance(100, 100, PixelFormat.RGBA_8888, 1,
+                HardwareBuffer.USAGE_CPU_WRITE_OFTEN | HardwareBuffer.USAGE_CPU_READ_OFTEN
+                        | HardwareBuffer.USAGE_GPU_SAMPLED_IMAGE);
+        ImageWriter writer = ImageWriter.newInstance(reader.getSurface(), 1);
+        Image image = writer.dequeueInputImage();
+        Image.Plane plane = image.getPlanes()[0];
+        Bitmap bitmap = Bitmap.createBitmap(plane.getRowStride() / 4,
+                image.getHeight(), Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+        Paint paint = new Paint();
+        paint.setAntiAlias(false);
+        canvas.drawColor(Color.MAGENTA);
+        canvas.translate(20f, 70f);
+        paint.setColor(Color.RED);
+        canvas.drawRect(0f, 0f, 10f, 10f, paint);
+        paint.setColor(Color.GREEN);
+        canvas.drawRect(10f, 0f, 20f, 10f, paint);
+        paint.setColor(Color.BLUE);
+        canvas.drawRect(0f, 10f, 10f, 20f, paint);
+        paint.setColor(Color.BLACK);
+        canvas.drawRect(10f, 10f, 20f, 20f, paint);
+        bitmap.copyPixelsToBuffer(plane.getBuffer());
+        writer.queueInputImage(image);
+
+        PixelCopy.Result copyResult = copySurface(reader.getSurface(),
+                request -> request.setSourceRect(new Rect(20, 70, 40, 90)));
+        assertEquals("Copy request failed", PixelCopy.SUCCESS, copyResult.getStatus());
+        Bitmap result = copyResult.getBitmap();
+        assertEquals(20, result.getWidth());
+        assertEquals(20, result.getHeight());
         assertBitmapQuadColor(result, Color.RED, Color.GREEN, Color.BLUE, Color.BLACK);
     }
 

@@ -22,17 +22,30 @@ public class BaseTileServiceTest extends DeviceTestCase {
     // Constants for generating commands below.
     protected static final String PACKAGE = "android.systemui.cts";
     private static final String ACTION_SHOW_DIALOG = "android.sysui.testtile.action.SHOW_DIALOG";
+    private static final String ACTION_START_ACTIVITY_WITH_PENDING_INTENT =
+            "android.sysui.testtile.action.START_ACTIVITY_WITH_PENDING_INTENT";
+    public static final String ACTION_SET_PENDING_INTENT =
+            "android.sysui.testtile.action.SET_PENDING_INTENT";
+    public static final String ACTION_SET_NULL_PENDING_INTENT =
+            "android.sysui.testtile.action.SET_NULL_PENDING_INTENT";
 
     // Commands used on the device.
-    private static final String ADD_TILE   = "cmd statusbar add-tile ";
-    private static final String REM_TILE   = "cmd statusbar remove-tile ";
+    private static final String ADD_TILE = "cmd statusbar add-tile ";
+    private static final String REM_TILE = "cmd statusbar remove-tile ";
     private static final String CLICK_TILE = "cmd statusbar click-tile ";
 
     private static final String OPEN_NOTIFICATIONS = "cmd statusbar expand-notifications";
-    private static final String OPEN_SETTINGS      = "cmd statusbar expand-settings";
-    private static final String COLLAPSE           = "cmd statusbar collapse";
+    private static final String OPEN_SETTINGS = "cmd statusbar expand-settings";
+    private static final String COLLAPSE = "cmd statusbar collapse";
 
-    private static final String SHOW_DIALOG = "am broadcast -a " + ACTION_SHOW_DIALOG;
+    private static final String SHELL_BROADCAST_COMMAND = "am broadcast -a ";
+    private static final String SHOW_DIALOG = SHELL_BROADCAST_COMMAND + ACTION_SHOW_DIALOG;
+    private static final String START_ACTIVITY_WITH_PENDING_INTENT =
+            SHELL_BROADCAST_COMMAND + ACTION_START_ACTIVITY_WITH_PENDING_INTENT;
+    private static final String SET_PENDING_INTENT =
+            SHELL_BROADCAST_COMMAND + ACTION_SET_PENDING_INTENT;
+    private static final String SET_NULL_PENDING_INTENT =
+            SHELL_BROADCAST_COMMAND + ACTION_SET_NULL_PENDING_INTENT;
 
     public static final String REQUEST_SUPPORTED = "cmd statusbar check-support";
     public static final String TEST_PREFIX = "TileTest_";
@@ -74,6 +87,18 @@ public class BaseTileServiceTest extends DeviceTestCase {
 
     protected void showDialog() throws Exception {
         execute(SHOW_DIALOG);
+    }
+
+    protected void startActivityWithPendingIntent() throws Exception {
+        execute(START_ACTIVITY_WITH_PENDING_INTENT);
+    }
+
+    protected void setActivityForLaunch() throws Exception {
+        execute(SET_PENDING_INTENT);
+    }
+
+    protected void setNullPendingIntent() throws Exception {
+        execute(SET_NULL_PENDING_INTENT);
     }
 
     protected void addTile() throws Exception {
@@ -122,7 +147,7 @@ public class BaseTileServiceTest extends DeviceTestCase {
         return logs.contains(str);
     }
 
-    private void clearLogcat() throws DeviceNotAvailableException {
+    protected final void clearLogcat() throws DeviceNotAvailableException {
         getDevice().executeAdbCommand("logcat", "-c");
     }
 
@@ -132,12 +157,12 @@ public class BaseTileServiceTest extends DeviceTestCase {
 
     private boolean supportedSoftware() throws DeviceNotAvailableException {
         String supported = getDevice().executeShellCommand(REQUEST_SUPPORTED);
-        return Boolean.parseBoolean(supported);
+        return Boolean.parseBoolean(supported.trim());
     }
 
     private boolean supportedHardware() throws DeviceNotAvailableException {
         String features = getDevice().executeShellCommand("pm list features");
         return !features.contains("android.hardware.type.television") &&
-               !features.contains("android.hardware.type.watch");
+                !features.contains("android.hardware.type.watch");
     }
 }

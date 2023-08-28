@@ -31,6 +31,7 @@ import static android.util.DisplayMetrics.DENSITY_XHIGH;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
 import android.app.ActivityManager;
 import android.content.Context;
@@ -93,9 +94,8 @@ public class LowRamDeviceTest {
     @CddTest(requirement="7.6.1")
     public void testMinimumMemory() {
         int density = mDisplayMetrics.densityDpi;
-        Boolean supports64Bit = supportsSixtyFourBit();
+        boolean supports64Bit = supportsSixtyFourBit();
         int screenSize = getScreenSize();
-        Boolean lowRamDevice = mActivityManager.isLowRamDevice();
         Boolean watch = mPackageManager.hasSystemFeature(PackageManager.FEATURE_WATCH);
 
         Log.i(TAG, String.format("density=%d, supports64Bit=%s, screenSize=%d, watch=%s",
@@ -150,9 +150,11 @@ public class LowRamDeviceTest {
     @Test
     @CddTest(requirement="7.6.2")
     public void testMinSharedDataPartitionSize() {
+        File externalFilesDir = mContext.getExternalFilesDir(null);
+        assumeTrue(externalFilesDir != null);
         assertDataPartitionMinimumSize(
                 "Shared data",
-                mContext.getExternalFilesDir(null),
+                externalFilesDir,
                 MIN_SHARED_DATA_PARTITION_SIZE_GB);
     }
 
@@ -192,7 +194,7 @@ public class LowRamDeviceTest {
         return memoryInfo.totalMem;
     }
 
-    /** @return the screen size as defined in {@Configuration}. */
+    /** @return the screen size as defined in {@link Configuration}. */
     private int getScreenSize() {
         Configuration config = mContext.getResources().getConfiguration();
         return config.screenLayout & Configuration.SCREENLAYOUT_SIZE_MASK;
@@ -207,19 +209,19 @@ public class LowRamDeviceTest {
     private void assertMinMemoryMb(long minMb) {
 
         long totalMemoryMb = getTotalMemory() / ONE_MEGABYTE;
-        boolean lowRam = totalMemoryMb <= LOW_RAM_MAX;
-        boolean lowRamDevice = mActivityManager.isLowRamDevice();
+        boolean isLowRam = totalMemoryMb <= LOW_RAM_MAX;
+        boolean isLowRamDevice = mActivityManager.isLowRamDevice();
 
         Log.i(TAG, String.format("minMb=%,d", minMb));
         Log.i(TAG, String.format("totalMemoryMb=%,d", totalMemoryMb));
-        Log.i(TAG, "lowRam=" + lowRam);
-        Log.i(TAG, "lowRamDevice=" + lowRamDevice);
+        Log.i(TAG, "lowRam=" + isLowRam);
+        Log.i(TAG, "isLowRamDevice=" + isLowRamDevice);
 
         assertTrue(String.format("Does not meet minimum memory requirements (CDD 7.6.1)."
                 + "Found = %d, Minimum = %d", totalMemoryMb, minMb), totalMemoryMb >= minMb);
 
         assertTrue("Device must specify low RAM property: ro.config.low_ram=true",
-                !lowRam || (lowRam && lowRamDevice));
+                !isLowRam || isLowRamDevice);
     }
 
     private static boolean lessThanDpi(int actualDensityDpi, int expectedDensityDpi,

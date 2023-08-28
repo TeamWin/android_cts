@@ -256,8 +256,7 @@ public class UserRestrictionsParentTest extends InstrumentationTestCase {
             ImmutableSet.of(
                     UserManager.DISALLOW_CONFIG_PRIVATE_DNS,
                     UserManager.DISALLOW_CONFIG_DATE_TIME,
-                    UserManager.DISALLOW_AIRPLANE_MODE,
-                    UserManager.DISALLOW_CELLULAR_2G
+                    UserManager.DISALLOW_AIRPLANE_MODE
             );
 
     public void testPerDeviceUserRestriction_onParent() {

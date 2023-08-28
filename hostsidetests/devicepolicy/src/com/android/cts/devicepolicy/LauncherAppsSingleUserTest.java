@@ -29,7 +29,7 @@ import java.util.Collections;
 /**
  * Set of tests for LauncherApps with managed profiles.
  */
-public class LauncherAppsSingleUserTest extends BaseLauncherAppsTest {
+public final class LauncherAppsSingleUserTest extends BaseLauncherAppsTest {
 
     private final static String FEATURE_INCREMENTAL_DELIVERY =
             "android.software.incremental_delivery";

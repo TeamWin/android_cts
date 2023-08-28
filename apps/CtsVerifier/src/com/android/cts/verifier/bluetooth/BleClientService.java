@@ -16,6 +16,8 @@
 
 package com.android.cts.verifier.bluetooth;
 
+import static android.content.Context.RECEIVER_EXPORTED;
+
 import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -355,8 +357,10 @@ public class BleClientService extends Service {
     public void onCreate() {
         super.onCreate();
 
-        registerReceiver(mBondStatusReceiver,
-                new IntentFilter(BluetoothDevice.ACTION_BOND_STATE_CHANGED));
+        registerReceiver(
+                mBondStatusReceiver,
+                new IntentFilter(BluetoothDevice.ACTION_BOND_STATE_CHANGED),
+                RECEIVER_EXPORTED);
 
         mBluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
         mBluetoothAdapter = mBluetoothManager.getAdapter();

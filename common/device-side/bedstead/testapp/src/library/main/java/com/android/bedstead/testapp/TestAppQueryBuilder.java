@@ -17,6 +17,7 @@
 package com.android.bedstead.testapp;
 
 import com.android.queryable.Queryable;
+import com.android.queryable.annotations.Query;
 import com.android.queryable.info.ActivityInfo;
 import com.android.queryable.info.ServiceInfo;
 import com.android.queryable.queries.BooleanQuery;
@@ -29,6 +30,8 @@ import com.android.queryable.queries.SetQuery;
 import com.android.queryable.queries.SetQueryHelper;
 import com.android.queryable.queries.StringQuery;
 import com.android.queryable.queries.StringQueryHelper;
+
+import com.google.auto.value.AutoAnnotation;
 
 /** Builder for progressively building {@link TestApp} queries. */
 public final class TestAppQueryBuilder implements Queryable {
@@ -43,18 +46,49 @@ public final class TestAppQueryBuilder implements Queryable {
     SetQueryHelper<TestAppQueryBuilder, String> mPermissions =
             new SetQueryHelper<>(this);
     BooleanQueryHelper<TestAppQueryBuilder> mTestOnly = new BooleanQueryHelper<>(this);
+    BooleanQueryHelper<TestAppQueryBuilder> mCrossProfile = new BooleanQueryHelper<>(this);
     SetQueryHelper<TestAppQueryBuilder, ActivityInfo> mActivities =
             new SetQueryHelper<>(this);
     SetQueryHelper<TestAppQueryBuilder, ServiceInfo> mServices =
             new SetQueryHelper<>(this);
     BooleanQueryHelper<TestAppQueryBuilder> mIsDeviceAdmin = new BooleanQueryHelper<>(this);
     StringQueryHelper<TestAppQueryBuilder> mSharedUserId = new StringQueryHelper<>(this);
+    private boolean mAllowInternalBedsteadTestApps = false;
+
+    /**
+     * Returns a {@link TestAppQueryBuilder} not linked to a specific {@link TestAppProvider}.
+     *
+     * <p>Note that attempts to resolve this query will fail.
+     */
+    public static TestAppQueryBuilder queryBuilder() {
+        return new TestAppQueryBuilder();
+    }
+
+    private TestAppQueryBuilder() {
+        mProvider = null;
+    }
 
     TestAppQueryBuilder(TestAppProvider provider) {
         if (provider == null) {
             throw new NullPointerException();
         }
         mProvider = provider;
+    }
+
+    /**
+     * Apply the query parameters inside the {@link Query} to this {@link TestAppQueryBuilder}.
+     */
+    public TestAppQueryBuilder applyAnnotation(Query query) {
+        if (query == null) {
+            return this;
+        }
+
+        TestAppQueryBuilder queryBuilder = this;
+        queryBuilder = queryBuilder.whereTargetSdkVersion().matchesAnnotation(query.targetSdkVersion());
+        queryBuilder = queryBuilder.whereMinSdkVersion().matchesAnnotation(query.minSdkVersion());
+        queryBuilder = queryBuilder.whereMaxSdkVersion().matchesAnnotation(query.maxSdkVersion());
+        queryBuilder = queryBuilder.wherePackageName().matchesAnnotation(query.packageName());
+        return queryBuilder;
     }
 
     /**
@@ -118,6 +152,13 @@ public final class TestAppQueryBuilder implements Queryable {
     }
 
     /**
+     * Query for a {@link TestApp} by the crossProfile attribute.
+     */
+    public BooleanQuery<TestAppQueryBuilder> whereCrossProfile() {
+        return mCrossProfile;
+    }
+
+    /**
      * Query for an app which is a device admin.
      */
     public BooleanQuery<TestAppQueryBuilder> whereIsDeviceAdmin() {
@@ -146,6 +187,14 @@ public final class TestAppQueryBuilder implements Queryable {
     }
 
     /**
+     * Allow the query to return internal bedstead testapps.
+     */
+    public TestAppQueryBuilder allowInternalBedsteadTestApps() {
+        mAllowInternalBedsteadTestApps = true;
+        return this;
+    }
+
+    /**
      * Get the {@link TestApp} matching the query.
      *
      * @throws NotFoundException if there is no matching @{link TestApp}.
@@ -155,7 +204,21 @@ public final class TestAppQueryBuilder implements Queryable {
         return new TestApp(resolveQuery());
     }
 
+    /**
+     * Checks if the query matches the specified test app
+     */
+    public boolean matches(TestApp testApp) {
+        TestAppDetails details = testApp.mDetails;
+        return matches(details);
+    }
+
     private TestAppDetails resolveQuery() {
+        if (mProvider == null) {
+            throw new IllegalStateException("Cannot resolve testApps in an empty query. You must"
+                    + " create the query using a testAppProvider.query() rather than "
+                    + "TestAppQueryBuilder.query() in order to get results");
+        }
+
         for (TestAppDetails details : mProvider.testApps()) {
             if (!matches(details)) {
                 continue;
@@ -166,6 +229,23 @@ public final class TestAppQueryBuilder implements Queryable {
         }
 
         throw new NotFoundException(this);
+    }
+
+    @Override
+    public boolean isEmptyQuery() {
+        return Queryable.isEmptyQuery(mPackageName)
+                && Queryable.isEmptyQuery(mLabel)
+                && Queryable.isEmptyQuery(mMetadata)
+                && Queryable.isEmptyQuery(mMinSdkVersion)
+                && Queryable.isEmptyQuery(mMaxSdkVersion)
+                && Queryable.isEmptyQuery(mTargetSdkVersion)
+                && Queryable.isEmptyQuery(mActivities)
+                && Queryable.isEmptyQuery(mServices)
+                && Queryable.isEmptyQuery(mPermissions)
+                && Queryable.isEmptyQuery(mTestOnly)
+                && Queryable.isEmptyQuery(mCrossProfile)
+                && Queryable.isEmptyQuery(mIsDeviceAdmin)
+                && Queryable.isEmptyQuery(mSharedUserId);
     }
 
     private boolean matches(TestAppDetails details) {
@@ -212,9 +292,13 @@ public final class TestAppQueryBuilder implements Queryable {
             return false;
         }
 
+        if (!BooleanQueryHelper.matches(mCrossProfile, details.mApp.getCrossProfile())) {
+            return false;
+        }
+
         // TODO(b/198419895): Actually query for the correct receiver + metadata
-        boolean isDeviceAdmin = details.mApp.getPackageName().equals(
-                "com.android.bedstead.testapp.DeviceAdminTestApp");
+        boolean isDeviceAdmin = details.mApp.getPackageName().contains(
+                "DeviceAdminTestApp");
         if (!BooleanQueryHelper.matches(mIsDeviceAdmin, isDeviceAdmin)) {
             return false;
         }
@@ -229,7 +313,8 @@ public final class TestAppQueryBuilder implements Queryable {
             }
         }
 
-        if (details.mMetadata.getString("testapp-package-query-only", "false")
+        if (!mAllowInternalBedsteadTestApps
+                && details.mMetadata.getString("testapp-package-query-only", "false")
                 .equals("true")) {
             if (!mPackageName.isQueryingForExactMatch()) {
                 return false;
@@ -253,7 +338,30 @@ public final class TestAppQueryBuilder implements Queryable {
                 mPermissions.describeQuery("permissions"),
                 mSharedUserId.describeQuery("sharedUserId"),
                 mTestOnly.describeQuery("testOnly"),
+                mCrossProfile.describeQuery("crossProfile"),
                 mIsDeviceAdmin.describeQuery("isDeviceAdmin")
         ) + "}";
+    }
+
+    @Override
+    public String toString() {
+        return "TestAppQueryBuilder" + describeQuery(null);
+    }
+
+    public Query toAnnotation() {
+        return query(mPackageName.toAnnotation(),
+                mTargetSdkVersion.toAnnotation(),
+                mMinSdkVersion.toAnnotation(),
+                mMaxSdkVersion.toAnnotation());
+    }
+
+    @AutoAnnotation
+    private static Query query(
+            com.android.queryable.annotations.StringQuery packageName,
+            com.android.queryable.annotations.IntegerQuery targetSdkVersion,
+            com.android.queryable.annotations.IntegerQuery minSdkVersion,
+            com.android.queryable.annotations.IntegerQuery maxSdkVersion) {
+        return new AutoAnnotation_TestAppQueryBuilder_query(
+                packageName, targetSdkVersion, minSdkVersion, maxSdkVersion);
     }
 }

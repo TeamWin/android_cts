@@ -28,6 +28,7 @@ import android.accessibilityservice.cts.activities.AccessibilityViewTreeReportin
 import android.app.Instrumentation;
 import android.app.UiAutomation;
 import android.content.Context;
+import android.platform.test.annotations.Presubmit;
 import android.text.TextUtils;
 import android.view.View;
 import android.view.ViewGroup;
@@ -39,6 +40,8 @@ import android.widget.LinearLayout;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
+
+import com.android.compatibility.common.util.CddTest;
 
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -54,6 +57,8 @@ import org.junit.runner.RunWith;
  * services.
  */
 @RunWith(AndroidJUnit4.class)
+@CddTest(requirements = {"3.10/C-1-1,C-1-2"})
+@Presubmit
 public class AccessibilityViewTreeReportingTest {
     private static final int TIMEOUT_ASYNC_PROCESSING = 5000;
     private static final long TIMEOUT_ACCESSIBILITY_STATE_IDLE = 200;

@@ -83,6 +83,7 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.platform.test.annotations.Presubmit;
+import android.server.wm.RotationSession;
 
 import androidx.test.filters.MediumTest;
 

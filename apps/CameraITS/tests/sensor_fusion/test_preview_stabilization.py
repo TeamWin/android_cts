@@ -38,6 +38,7 @@ _NAME = os.path.splitext(os.path.basename(__file__))[0]
 _NUM_ROTATIONS = 24
 _START_FRAME = 30  # give 3A some frames to warm up
 _TABLET_SERVO_SPEED = 20
+_TEST_REQUIRED_MPC = 33
 _VIDEO_DELAY_TIME = 5.5  # seconds
 _VIDEO_DURATION = 5.5  # seconds
 _PREVIEW_STABILIZATION_FACTOR = 0.7  # 70% of gyro movement allowed
@@ -61,7 +62,13 @@ def _collect_data(cam, tablet_device, video_size, rot_rig):
   """
 
   logging.debug('Starting sensor event collection')
-
+  serial_port = None
+  if rot_rig['cntl'].lower() == sensor_fusion_utils.ARDUINO_STRING.lower():
+    # identify port
+    serial_port = sensor_fusion_utils.serial_port_def(
+        sensor_fusion_utils.ARDUINO_STRING)
+    # send test cmd to Arduino until cmd returns properly
+    sensor_fusion_utils.establish_serial_comm(serial_port)
   # Start camera vibration
   if tablet_device:
     servo_speed = _TABLET_SERVO_SPEED
@@ -76,6 +83,7 @@ def _collect_data(cam, tablet_device, video_size, rot_rig):
           _ARDUINO_ANGLES,
           servo_speed,
           _ARDUINO_MOVE_TIME,
+          serial_port,
       ),
   )
   p.start()
@@ -108,7 +116,7 @@ class PreviewStabilizationTest(its_base_test.ItsBaseTest):
   in gyroscope movement. Test is a PASS if rotation is reduced in video.
   """
 
-  def test_preview_stability(self):
+  def test_preview_stabilization(self):
     rot_rig = {}
     log_path = self.log_path
 
@@ -129,19 +137,23 @@ class PreviewStabilizationTest(its_base_test.ItsBaseTest):
           'android.control.availableVideoStabilizationModes'
       ]
 
-      camera_properties_utils.skip_unless(
-          supported_stabilization_modes is not None
-          and _PREVIEW_STABILIZATION_MODE_PREVIEW
-          in supported_stabilization_modes,
-          'Preview Stabilization not supported',
-      )
+      # Check media performance class
+      should_run = (supported_stabilization_modes is not None and
+                    _PREVIEW_STABILIZATION_MODE_PREVIEW in
+                    supported_stabilization_modes)
+      media_performance_class = its_session_utils.get_media_performance_class(
+          self.dut.serial)
+      if media_performance_class >= _TEST_REQUIRED_MPC and not should_run:
+        its_session_utils.raise_mpc_assertion_error(
+            _TEST_REQUIRED_MPC, _NAME, media_performance_class)
+
+      camera_properties_utils.skip_unless(should_run)
 
       # Calculate camera FoV and convert from string to float
       camera_fov = float(cam.calc_camera_fov(props))
 
-      # Get ffmpeg version being used
-      ffmpeg_version = video_processing_utils.get_ffmpeg_version()
-      logging.debug('ffmpeg_version: %s', ffmpeg_version)
+      # Log ffmpeg version being used
+      video_processing_utils.log_ffmpeg_version()
 
       # Raise error if not FRONT or REAR facing camera
       facing = props['android.lens.facing']

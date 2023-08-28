@@ -305,6 +305,7 @@ public class EnterprisePrivacyTestListActivity extends PassFailButtons.TestListA
     public void finish() {
         super.finish();
         Intent intent = buildCommandIntent(CommandReceiverActivity.COMMAND_CLEAR_POLICIES)
+                .putExtra(CommandReceiverActivity.EXTRA_USE_CURRENT_USER_DPM, true)
                 .putExtra(PolicyTransparencyTestListActivity.EXTRA_MODE,
                         PolicyTransparencyTestListActivity.MODE_DEVICE_OWNER);
         startActivity(intent);

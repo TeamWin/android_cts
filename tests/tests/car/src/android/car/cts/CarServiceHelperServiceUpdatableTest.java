@@ -16,21 +16,24 @@
 
 package android.car.cts;
 
+import static android.Manifest.permission.CREATE_USERS;
+import static android.Manifest.permission.INTERACT_ACROSS_USERS;
+
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.hamcrest.CoreMatchers.containsStringIgnoringCase;
+import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeThat;
-import static org.testng.Assert.fail;
 
 import android.app.UiAutomation;
 import android.car.Car;
 import android.car.annotation.ApiRequirements;
-import android.car.test.ApiCheckerRule;
 import android.car.test.ApiCheckerRule.IgnoreInvalidApi;
 import android.car.test.ApiCheckerRule.SupportedVersionTest;
 import android.car.test.ApiCheckerRule.UnsupportedVersionTest;
 import android.car.test.ApiCheckerRule.UnsupportedVersionTest.Behavior;
+import android.car.test.PermissionsCheckerRule.EnsureHasPermission;
 import android.car.user.CarUserManager;
 import android.car.user.CarUserManager.UserLifecycleEvent;
 import android.car.user.CarUserManager.UserLifecycleListener;
@@ -43,13 +46,11 @@ import android.os.UserManager;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
-import androidx.test.filters.FlakyTest;
 
 import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
 
 import java.io.BufferedReader;
@@ -60,20 +61,14 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 
-public final class CarServiceHelperServiceUpdatableTest extends CarApiTestBase {
+public final class CarServiceHelperServiceUpdatableTest extends AbstractCarTestCase {
 
     private static final String TAG = CarServiceHelperServiceUpdatableTest.class.getSimpleName();
     private static final int TIMEOUT_MS = 60_000;
     private static final int WAIT_TIME_MS = 1_000;
 
-    // TODO(b/242350638): move to super class (although it would need to call
-    // disableAnnotationsCheck()
-    @Rule
-    public final ApiCheckerRule mApiCheckerRule = new ApiCheckerRule.Builder().build();
-
     @Before
-    public void setUp() throws Exception {
-        super.setUp();
+    public void clearLogcat() throws Exception {
         SystemUtil.runShellCommand("logcat -b all -c");
     }
 
@@ -124,6 +119,7 @@ public final class CarServiceHelperServiceUpdatableTest extends CarApiTestBase {
     @ApiTest(apis = {"android.car.user.CarUserManager#USER_LIFECYCLE_EVENT_TYPE_CREATED"})
     @SupportedVersionTest(unsupportedVersionTest =
             "testSendUserLifecycleEventAndOnUserCreated_unsupportedVersion")
+    @EnsureHasPermission({CREATE_USERS, INTERACT_ACROSS_USERS})
     public void testSendUserLifecycleEventAndOnUserCreated_supportedVersion() throws Exception {
         testSendUserLifecycleEventAndOnUserCreated(/*onSupportedVersion=*/ true);
     }
@@ -132,6 +128,7 @@ public final class CarServiceHelperServiceUpdatableTest extends CarApiTestBase {
     @ApiTest(apis = {"android.car.user.CarUserManager#USER_LIFECYCLE_EVENT_TYPE_CREATED"})
     @UnsupportedVersionTest(behavior = Behavior.EXPECT_PASS,
             supportedVersionTest = "testSendUserLifecycleEventAndOnUserCreated_supportedVersion")
+    @EnsureHasPermission({CREATE_USERS, INTERACT_ACROSS_USERS})
     public void testSendUserLifecycleEventAndOnUserCreated_unsupportedVersion() throws Exception {
         testSendUserLifecycleEventAndOnUserCreated(/*onSupportedVersion=*/ false);
     }
@@ -147,17 +144,12 @@ public final class CarServiceHelperServiceUpdatableTest extends CarApiTestBase {
         NewUserResponse response = null;
         UserManager userManager = null;
         try {
-            // get create User permissions
-            InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                    .adoptShellPermissionIdentity(android.Manifest.permission.CREATE_USERS);
-
             // CreateUser
             userManager = mContext.getSystemService(UserManager.class);
             response = userManager.createUser(new NewUserRequest.Builder().build());
             assertThat(response.isSuccessful()).isTrue();
 
             int userId = response.getUser().getIdentifier();
-
             if (onSupportedVersion) {
                 listener.assertEventReceived(
                         userId, CarUserManager.USER_LIFECYCLE_EVENT_TYPE_CREATED);
@@ -172,25 +164,23 @@ public final class CarServiceHelperServiceUpdatableTest extends CarApiTestBase {
             // Clean up the user that was previously created.
             userManager.removeUser(response.getUser());
             carUserManager.removeListener(listener);
-            InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                    .dropShellPermissionIdentity();
         }
     }
 
-    @FlakyTest(bugId = 222167696)
     @Test
     @ApiTest(apis = {"android.car.user.CarUserManager#USER_LIFECYCLE_EVENT_TYPE_REMOVED"})
     @SupportedVersionTest(unsupportedVersionTest =
             "testSendUserLifecycleEventAndOnUserRemoved_unsupportedVersion")
+    @EnsureHasPermission({CREATE_USERS, INTERACT_ACROSS_USERS})
     public void testSendUserLifecycleEventAndOnUserRemoved_supportedVersion() throws Exception {
         testSendUserLifecycleEventAndOnUserRemoved(/*onSupportedVersion=*/ true);
     }
 
-    @FlakyTest(bugId = 222167696)
     @Test
     @ApiTest(apis = {"android.car.user.CarUserManager#USER_LIFECYCLE_EVENT_TYPE_REMOVED"})
     @UnsupportedVersionTest(behavior = Behavior.EXPECT_PASS,
             supportedVersionTest = "testSendUserLifecycleEventAndOnUserRemoved_supportedVersion")
+    @EnsureHasPermission({CREATE_USERS, INTERACT_ACROSS_USERS})
     public void testSendUserLifecycleEventAndOnUserRemoved_unsupportedVersion() throws Exception {
         testSendUserLifecycleEventAndOnUserRemoved(/*onSupportedVersion=*/ false);
     }
@@ -213,10 +203,6 @@ public final class CarServiceHelperServiceUpdatableTest extends CarApiTestBase {
         UserManager userManager = null;
         boolean userRemoved = false;
         try {
-            // get create User permissions
-            InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                    .adoptShellPermissionIdentity(android.Manifest.permission.CREATE_USERS);
-
             // CreateUser
             userManager = mContext.getSystemService(UserManager.class);
             response = userManager.createUser(new NewUserRequest.Builder().build());
@@ -247,8 +233,6 @@ public final class CarServiceHelperServiceUpdatableTest extends CarApiTestBase {
                 userManager.removeUser(response.getUser());
             }
             carUserManager.removeListener(listener);
-            InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                    .dropShellPermissionIdentity();
         }
     }
 

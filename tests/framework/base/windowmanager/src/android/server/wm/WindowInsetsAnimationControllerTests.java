@@ -71,12 +71,14 @@ import android.view.inputmethod.InputMethodManager;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.android.compatibility.common.util.OverrideAnimationScaleRule;
 import com.android.cts.mockime.ImeEventStream;
 import com.android.cts.mockime.ImeSettings;
 import com.android.cts.mockime.MockImeSession;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ErrorCollector;
 import org.junit.runner.RunWith;
@@ -103,6 +105,7 @@ import java.util.stream.Collectors;
  */
 //TODO(b/159167851) @Presubmit
 @RunWith(Parameterized.class)
+@android.server.wm.annotation.Group2
 public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase {
 
     ControllerTestActivity mActivity;
@@ -139,6 +142,10 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
         };
     }
 
+    @Rule
+    public final OverrideAnimationScaleRule mEnableAnimationsRule =
+            new OverrideAnimationScaleRule(1.0f);
+
     public static class ControllerTestActivity extends TestActivity {
         @Override
         protected void onCreate(Bundle savedInstanceState) {
@@ -157,6 +164,8 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
                         + "And if config_remoteInsetsControllerControlsSystemBars is enabled,"
                         + "SystemBar controls doesn't work, so allow skip inset animation tests.",
                 isCar() && (mType == ime() || remoteInsetsControllerControlsSystemBars()));
+        assertEquals("Test precondition failed: ValueAnimator.getDurationScale()",
+                1f, ValueAnimator.getDurationScale(), 0.001);
 
         final ImeEventStream mockImeEventStream;
         if (mType == ime()) {
@@ -649,6 +658,7 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
         WindowInsetsAnimationController mController = null;
         int mTypes = -1;
         RuntimeException mCancelledStack = null;
+        RuntimeException mFinishedStack = null;
 
         ControlListener(ErrorCollector errorCollector) {
             mErrorCollector = errorCollector;
@@ -686,6 +696,7 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
             mErrorCollector.checkThat("isReady", controller.isReady(), is(false));
             mErrorCollector.checkThat("isFinished", controller.isFinished(), is(true));
             mErrorCollector.checkThat("isCancelled", controller.isCancelled(), is(false));
+            mFinishedStack = new RuntimeException("onFinished called here");
             report(FINISHED);
         }
 
@@ -716,7 +727,14 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
                                 "expected " + event + " but instead got " + CANCELLED,
                                 mCancelledStack);
                     }
-                    fail("Timeout waiting for " + event + "; reported events: " + reportedEvents());
+                    Throwable unexpectedStack = null;
+                    if (event == CANCELLED) {
+                        unexpectedStack = mFinishedStack;
+                    } else if (event == FINISHED) {
+                        unexpectedStack = mCancelledStack;
+                    }
+                    throw new AssertionError("Timeout waiting for " + event +
+                            "; reported events: " + reportedEvents(), unexpectedStack);
                 }
             } catch (InterruptedException e) {
                 throw new AssertionError("Interrupted", e);

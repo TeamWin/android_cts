@@ -76,6 +76,7 @@ public class StatusBarManagerTest {
             mStatusBarManager.collapsePanels();
             mStatusBarManager.setDisabledForSetup(false);
             mStatusBarManager.setExpansionDisabledForSimNetworkLock(false);
+            mStatusBarManager.setNavBarMode(StatusBarManager.NAV_BAR_MODE_DEFAULT);
         }
 
         mUiAutomation.dropShellPermissionIdentity();
@@ -175,14 +176,16 @@ public class StatusBarManagerTest {
         // We've adopted shell identity for STATUS_BAR in setUp(), so drop it now
         mUiAutomation.dropShellPermissionIdentity();
 
-        mStatusBarManager.handleSystemKey(KeyEvent.KEYCODE_SYSTEM_NAVIGATION_UP);
+        mStatusBarManager.handleSystemKey(
+                new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_SYSTEM_NAVIGATION_UP));
     }
 
     @Test
     public void testHandleSystemKey_withStatusBarPermission_doesNotThrow() throws Exception {
         // We've adopted shell identity for STATUS_BAR in setUp()
 
-        mStatusBarManager.handleSystemKey(KeyEvent.KEYCODE_SYSTEM_NAVIGATION_UP);
+        mStatusBarManager.handleSystemKey(
+                new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_SYSTEM_NAVIGATION_UP));
 
         // Nothing thrown, passed
     }

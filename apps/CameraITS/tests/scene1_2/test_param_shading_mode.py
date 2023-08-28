@@ -48,8 +48,8 @@ def create_plots(shading_maps, reference_maps, num_map_gains, log_path):
                  label='ref', alpha=0.7)
       pylab.xlim([0, num_map_gains])
       pylab.ylim([0.9, 4.0])
-      name_suffix = 'ls_maps_mode_%d_loop_%d' % (mode, i)
-      pylab.title('%s_%s' % (_NAME, name_suffix))
+      name_suffix = f'ls_maps_mode_{mode}_loop_{i}'
+      pylab.title(f'{_NAME}_{name_suffix}')
       pylab.xlabel('Map gains')
       pylab.ylabel('Lens shading maps')
       pylab.legend(loc='upper center', numpoints=1, fancybox=True)
@@ -114,9 +114,9 @@ class ParamShadingModeTest(its_base_test.ItsBaseTest):
       # lsc devices support all modes
       if set(props.get('android.shading.availableModes')) != set(
           _SHADING_MODES.keys()):
-        raise KeyError('Available modes: %s, SHADING_MODEs: %s.'
-                       % str(props.get('android.shading.availableModes')),
-                       [*_SHADING_MODES])
+        raise KeyError(
+            f"Available modes: {props.get('android.shading.availableModes')}, "
+            f'SHADING_MODEs: {[*_SHADING_MODES]}.')
 
       # define fmt
       mono_camera = camera_properties_utils.mono_camera(props)

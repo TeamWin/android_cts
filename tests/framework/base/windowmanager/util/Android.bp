@@ -43,6 +43,7 @@ java_test_helper_library {
 
     srcs: [
         "src/**/*.java",
+        "src/**/*.aidl",
         ":cts-wm-components",
         ":cts-wm-components-base",
     ],
@@ -52,6 +53,7 @@ java_test_helper_library {
         "compatibility-device-util-axt",
         "androidx.test.rules",
         "hamcrest-library",
+        "CtsMockInputMethodLib",
     ],
 
     sdk_version: "test_current",

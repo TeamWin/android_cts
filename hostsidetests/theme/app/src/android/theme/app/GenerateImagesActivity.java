@@ -73,7 +73,7 @@ public class GenerateImagesActivity extends Activity {
 
         mOutputDir = setupOutputDirectory();
         if (mOutputDir == null) {
-            finish("Failed to create output directory " + mOutputDir.getAbsolutePath(), false);
+            finish("Failed to create output directory " + OUT_DIR, false);
         } else {
             mOutputDir = setupOutputDirectory();
             if (mOutputDir == null) {

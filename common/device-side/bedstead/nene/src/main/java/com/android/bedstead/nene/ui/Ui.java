@@ -16,8 +16,14 @@
 
 package com.android.bedstead.nene.ui;
 
+import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
+
+import android.app.UiAutomation;
+import android.content.Intent;
+
 import androidx.test.uiautomator.UiDevice;
 
+import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.utils.ShellCommandUtils;
 
 /**
@@ -38,4 +44,13 @@ public final class Ui {
         return UiDevice.getInstance(ShellCommandUtils.instrumentation());
     }
 
+    /**
+     * Open the home screen.
+     */
+    public void goHome() {
+        Intent homeIntent = new Intent(Intent.ACTION_MAIN);
+        homeIntent.addCategory(Intent.CATEGORY_HOME);
+        homeIntent.addFlags(FLAG_ACTIVITY_NEW_TASK);
+        TestApis.context().instrumentedContext().startActivity(homeIntent);
+    }
 }

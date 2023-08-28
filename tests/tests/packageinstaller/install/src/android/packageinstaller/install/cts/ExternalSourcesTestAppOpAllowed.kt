@@ -21,9 +21,7 @@ import android.platform.test.annotations.AppModeFull
 import android.provider.Settings
 import android.support.test.uiautomator.By
 import android.support.test.uiautomator.BySelector
-import android.support.test.uiautomator.UiDevice
 import android.support.test.uiautomator.Until
-import androidx.test.InstrumentationRegistry
 import androidx.test.filters.MediumTest
 import androidx.test.runner.AndroidJUnit4
 import com.android.compatibility.common.util.AppOpsUtils
@@ -41,10 +39,7 @@ private const val ALERT_DIALOG_TITLE_ID = "android:id/alertTitle"
 @MediumTest
 @AppModeFull
 class ExternalSourcesTestAppOpAllowed : PackageInstallerTestBase() {
-    private val context = InstrumentationRegistry.getTargetContext()
-    private val pm = context.packageManager
     private val packageName = context.packageName
-    private val uiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
 
     private fun assertUiObject(errorMessage: String, selector: BySelector) {
         assertNotNull(errorMessage, uiDevice.wait(Until.findObject(selector), TIMEOUT))

@@ -539,6 +539,13 @@ public class MediaMetricsAtomHostSideTests {
     @Test
     public native void testAAudioLegacyInputStream();
 
+    @Test
+    public void testMidiMetrics() throws Exception {
+        Context context = InstrumentationRegistry.getInstrumentation().getContext();
+        MidiTestHelper midiTestHelper = new MidiTestHelper(context);
+        midiTestHelper.testEchoVariableMessage(9 /* 9 bytes */);
+    }
+
     private void writeSessionIdToFile(String stringId) {
         Log.i(TAG, LOG_SESSION_ID_KEY + "=" + stringId);
         Bundle b = new Bundle();

@@ -18,14 +18,19 @@ package com.android.queryable.queries;
 
 import static com.android.bedstead.nene.utils.ParcelTest.assertParcelsCorrectly;
 import static com.android.queryable.queries.BundleQuery.bundle;
+import static com.android.queryable.queries.IntegerQuery.integer;
 import static com.android.queryable.queries.SetQuery.set;
 
 import static com.google.common.truth.Truth.assertThat;
 
 import android.os.Bundle;
 
+import com.android.bedstead.harrier.BedsteadJUnit4;
+import com.android.bedstead.harrier.DeviceState;
 import com.android.queryable.Queryable;
 
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -33,8 +38,11 @@ import org.junit.runners.JUnit4;
 import java.util.Arrays;
 import java.util.Set;
 
-@RunWith(JUnit4.class)
+@RunWith(BedsteadJUnit4.class)
 public final class SetQueryHelperTest {
+
+    @ClassRule @Rule
+    public static final DeviceState sDeviceState = new DeviceState();
 
     private final Queryable mQuery = null;
     private static final String BUNDLE_KEY = "key";
@@ -222,5 +230,53 @@ public final class SetQueryHelperTest {
         assertThat(set(Integer.class)
                 .where().contains(1)
                 .matches(Set.of(1))).isTrue();
+    }
+
+    @Test
+    public void isEmptyQuery_isEmpty_returnsTrue() {
+        SetQueryHelper<Queryable, Integer> setQueryHelper =
+                new SetQueryHelper<>(mQuery);
+
+        assertThat(setQueryHelper.isEmptyQuery()).isTrue();
+    }
+
+    @Test
+    public void isEmptyQuery_hasContainsByQueryQuery_returnsFalse() {
+        SetQueryHelper<Queryable, Integer> setQueryHelper =
+                new SetQueryHelper<>(mQuery);
+
+        setQueryHelper.contains(integer().where().isEqualTo(1));
+
+        assertThat(setQueryHelper.isEmptyQuery()).isFalse();
+    }
+
+    @Test
+    public void isEmptyQuery_hasDoesNotContainByQueryQuery_returnsFalse() {
+        SetQueryHelper<Queryable, Integer> setQueryHelper =
+                new SetQueryHelper<>(mQuery);
+
+        setQueryHelper.doesNotContain(integer().where().isEqualTo(1));
+
+        assertThat(setQueryHelper.isEmptyQuery()).isFalse();
+    }
+
+    @Test
+    public void isEmptyQuery_hasContainsByTypeQuery_returnsFalse() {
+        SetQueryHelper<Queryable, Integer> setQueryHelper =
+                new SetQueryHelper<>(mQuery);
+
+        setQueryHelper.contains(1);
+
+        assertThat(setQueryHelper.isEmptyQuery()).isFalse();
+    }
+
+    @Test
+    public void isEmptyQuery_hasDoesNotContainByType_returnsFalse() {
+        SetQueryHelper<Queryable, Integer> setQueryHelper =
+                new SetQueryHelper<>(mQuery);
+
+        setQueryHelper.doesNotContain(1);
+
+        assertThat(setQueryHelper.isEmptyQuery()).isFalse();
     }
 }

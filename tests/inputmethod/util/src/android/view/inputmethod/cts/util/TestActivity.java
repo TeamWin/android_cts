@@ -17,6 +17,7 @@
 package android.view.inputmethod.cts.util;
 
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
+import static android.view.WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM;
 import static android.view.WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
 import static android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_UNCHANGED;
 import static android.view.WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
@@ -44,7 +45,10 @@ import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.SystemUtil;
 
+import com.google.common.util.concurrent.SettableFuture;
+
 import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
@@ -56,6 +60,10 @@ public class TestActivity extends Activity {
             new AtomicReference<>();
 
     private Function<TestActivity, View> mInitializer = null;
+
+    private static final AtomicReference<SettableFuture<TestActivity>> sFutureRef =
+            new AtomicReference<>();
+    private static final long WAIT_TIMEOUT_MS = 5000;
 
     private AtomicBoolean mIgnoreBackKey = new AtomicBoolean();
 
@@ -99,6 +107,16 @@ public class TestActivity extends Activity {
     @UiThread
     public long getOnBackPressedCallCount() {
         return mOnBackPressedCallCount;
+    }
+
+    @Override
+    public void onEnterAnimationComplete() {
+        super.onEnterAnimationComplete();
+
+        final SettableFuture<TestActivity> future = sFutureRef.getAndSet(null);
+        if (future != null) {
+            future.set(this);
+        }
     }
 
     /**
@@ -146,20 +164,26 @@ public class TestActivity extends Activity {
     }
 
     public void showOverlayWindow() {
+        showOverlayWindow(false /* imeFocusable */);
+    }
+    public void showOverlayWindow(boolean imeFocusable) {
         if (mOverlayView != null) {
             throw new IllegalStateException("can only show one overlay at a time.");
         }
-        Context overlayContext = getApplicationContext().createWindowContext(getDisplay(),
-                TYPE_APPLICATION_OVERLAY, null);
-        mOverlayView = new TextView(overlayContext);
-        WindowManager.LayoutParams params =
-                new WindowManager.LayoutParams(MATCH_PARENT, MATCH_PARENT,
-                        TYPE_APPLICATION_OVERLAY, FLAG_NOT_FOCUSABLE, PixelFormat.TRANSLUCENT);
-        params.setTitle(OVERLAY_WINDOW_NAME);
-        mOverlayView.setLayoutParams(params);
-        mOverlayView.setText("IME CTS TestActivity OverlayView");
-        mOverlayView.setBackgroundColor(0x77FFFF00);
-        overlayContext.getSystemService(WindowManager.class).addView(mOverlayView, params);
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            Context overlayContext = getApplicationContext().createWindowContext(getDisplay(),
+                    TYPE_APPLICATION_OVERLAY, null);
+            mOverlayView = new TextView(overlayContext);
+            WindowManager.LayoutParams params = new WindowManager.LayoutParams(MATCH_PARENT,
+                    MATCH_PARENT, TYPE_APPLICATION_OVERLAY,
+                    imeFocusable ? FLAG_NOT_FOCUSABLE | FLAG_ALT_FOCUSABLE_IM : FLAG_NOT_FOCUSABLE,
+                    PixelFormat.TRANSLUCENT);
+            params.setTitle(OVERLAY_WINDOW_NAME);
+            mOverlayView.setLayoutParams(params);
+            mOverlayView.setText("IME CTS TestActivity OverlayView");
+            mOverlayView.setBackgroundColor(0x77FFFF00);
+            overlayContext.getSystemService(WindowManager.class).addView(mOverlayView, params);
+        });
     }
 
     /**
@@ -177,56 +201,7 @@ public class TestActivity extends Activity {
      */
     public static TestActivity startSync(
             @NonNull Function<TestActivity, View> activityInitializer) {
-        return DEFAULT_STARTER.startSync(activityInitializer);
-    }
-
-    /**
-     * Similar to {@link TestActivity#startSync(Function)}, but with the given display ID to
-     * specify the launching target display.
-     * @param displayId The ID of the display
-     * @param activityInitializer initializer to supply {@link View} to be passed to
-     *                            {@link Activity#setContentView(View)}
-     * @return {@link TestActivity} launched
-     * @deprecated Use {@link Starter} instead.
-     */
-    @Deprecated
-    public static TestActivity startSync(int displayId,
-            @NonNull Function<TestActivity, View> activityInitializer) throws Exception {
-        return new Starter().withDisplayId(displayId).startSync(activityInitializer);
-    }
-
-    /**
-     * Launches {@link TestActivity} with the given initialization logic for content view.
-     *
-     * <p>As long as you are using {@link androidx.test.runner.AndroidJUnitRunner}, the test
-     * runner automatically calls {@link Activity#finish()} for the {@link Activity} launched when
-     * the test finished.  You do not need to explicitly call {@link Activity#finish()}.</p>
-     *
-     * @param activityInitializer initializer to supply {@link View} to be passed to
-     *                           {@link Activity#setContentView(View)}
-     * @param additionalFlags flags to be set to {@link Intent#setFlags(int)}
-     * @return {@link TestActivity} launched
-     * @deprecated Use {@link Starter} instead.
-     */
-    @Deprecated
-    public static TestActivity startSync(
-            @NonNull Function<TestActivity, View> activityInitializer,
-            int additionalFlags) {
-        return new Starter().withAdditionalFlags(additionalFlags).startSync(activityInitializer);
-    }
-
-    /** @deprecated Use {@link Starter} instead. */
-    @Deprecated
-    public static TestActivity startNewTaskSync(
-            @NonNull Function<TestActivity, View> activityInitializer) {
-        return new Starter().asNewTask().startSync(activityInitializer);
-    }
-
-    /** @deprecated Use {@link Starter} instead. */
-    @Deprecated
-    public static TestActivity startSameTaskAndClearTopSync(
-            @NonNull Function<TestActivity, View> activityInitializer) {
-        return new Starter().asSameTaskAndClearTop().startSync(activityInitializer);
+        return DEFAULT_STARTER.startSync(activityInitializer, TestActivity.class);
     }
 
     /**
@@ -311,6 +286,18 @@ public class TestActivity extends Activity {
         }
 
         /**
+         * Uses {@link Intent#FLAG_ACTIVITY_NEW_TASK} and {@link Intent#FLAG_ACTIVITY_MULTIPLE_TASK}
+         * for {@link Intent#setFlags(int)}.
+         */
+        public Starter asMultipleTask() {
+            if (mFlags != 0) {
+                throw new IllegalStateException("Conflicting flags are specified.");
+            }
+            mFlags = Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_MULTIPLE_TASK;
+            return this;
+        }
+
+        /**
          * Uses {@link Intent#FLAG_ACTIVITY_NEW_TASK} and {@link Intent#FLAG_ACTIVITY_CLEAR_TOP}
          * for {@link Intent#setFlags(int)}.
          */
@@ -332,9 +319,11 @@ public class TestActivity extends Activity {
          *
          * @param activityInitializer initializer to supply {@link View} to be passed to
          *                            {@link Activity#setContentView(View)}
+         * @param activityClass the target class to start, which extends {@link TestActivity}
          * @return {@link TestActivity} launched
          */
-        public TestActivity startSync(@NonNull Function<TestActivity, View> activityInitializer) {
+        public TestActivity startSync(@NonNull Function<TestActivity, View> activityInitializer,
+                Class<? extends TestActivity> activityClass) {
             final Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
             sInitializer.set(activityInitializer);
 
@@ -343,12 +332,56 @@ public class TestActivity extends Activity {
             }
             final Intent intent = new Intent()
                     .setAction(Intent.ACTION_MAIN)
-                    .setClass(instrumentation.getContext(), TestActivity.class)
+                    .setClass(instrumentation.getContext(), activityClass)
                     .addFlags(mFlags | mAdditionalFlags);
             final Callable<TestActivity> launcher =
                     () -> (TestActivity) instrumentation.startActivitySync(
                             intent, mOptions == null ? null : mOptions.toBundle());
 
+            try {
+                if (mRequireShellPermission) {
+                    return SystemUtil.callWithShellPermissionIdentity(launcher);
+                } else {
+                    return launcher.call();
+                }
+            } catch (Exception e) {
+                fail("Failed to start TestActivity: " + e);
+                return null;
+            }
+        }
+
+        /**
+         * Launches {@link TestActivity} from the given source activity with the given
+         * initialization logic for content view with already specified parameters.
+         *
+         * <p>As long as you are using {@link androidx.test.runner.AndroidJUnitRunner}, the test
+         * runner automatically calls {@link Activity#finish()} for the {@link Activity} launched
+         * when the test finished. You do not need to explicitly call {@link Activity#finish()}.</p>
+         *
+         * @param fromActivity the source activity requests launching the target
+         * @param activityInitializer initializer to supply {@link View} to be passed to
+         *                            {@link Activity#setContentView(View)}
+         * @param activityClass the target class to start, which extends {@link TestActivity}
+         * @return {@link TestActivity} launched
+         */
+        public TestActivity startSync(@NonNull Activity fromActivity,
+                @NonNull Function<TestActivity, View> activityInitializer,
+                Class<? extends TestActivity> activityClass) {
+            sInitializer.set(activityInitializer);
+
+            if (mFlags == 0) {
+                mFlags = DEFAULT_FLAGS;
+            }
+            final Intent intent = new Intent()
+                    .setAction(Intent.ACTION_MAIN)
+                    .setClass(fromActivity, activityClass)
+                    .addFlags(mFlags | mAdditionalFlags);
+            final Callable<TestActivity> launcher = () -> {
+                fromActivity.startActivity(intent, mOptions == null ? null : mOptions.toBundle());
+                final SettableFuture<TestActivity> future = SettableFuture.create();
+                sFutureRef.set(future);
+                return future.get(WAIT_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+            };
             try {
                 if (mRequireShellPermission) {
                     return SystemUtil.callWithShellPermissionIdentity(launcher);

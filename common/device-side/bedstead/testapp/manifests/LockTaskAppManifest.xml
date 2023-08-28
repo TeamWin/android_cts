@@ -17,7 +17,8 @@
   -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="com.android.bedstead.testapp.LockTaskApp">
+          package="com.android.bedstead.testapp.LockTaskApp"
+          android:testOnly="true">
     <application  android:testOnly="true" android:label="LockTaskApp">
         <activity android:name="android.testapp.ifwhitelistedactivity" android:lockTaskMode="if_whitelisted" android:exported="true" />
     </application>

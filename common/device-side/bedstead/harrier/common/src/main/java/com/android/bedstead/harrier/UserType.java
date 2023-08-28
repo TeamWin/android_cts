@@ -86,7 +86,17 @@ public enum UserType {
 
     /** The user of the first person using the device. This will be the parent of any profiles. */
     INITIAL_USER,
-    
+
     /** A {@link UserType#SECONDARY_USER} who is not the {@link UserType#INITIAL_USER}. */
-    ADDITIONAL_USER
+    ADDITIONAL_USER,
+
+    /** A user for whom {@code UserReference#isAdmin} returns true. */
+    ADMIN_USER,
+
+    /**
+     * A user with type {@code android.os.usertype.profile.CLONE}.
+     *
+     * <p>The parent of this profile will be {@link UserType#INITIAL_USER}.
+     */
+    CLONE_PROFILE
 }

@@ -129,10 +129,13 @@ public class ItsTestActivity extends DialogTestListActivity {
             "scene2_c",
             "scene2_d",
             "scene2_e",
+            "scene2_f",
             "scene3",
             "scene4",
             "scene5",
             "scene6",
+            "scene_extensions/scene_hdr",
+            "scene_extensions/scene_night",
             "sensor_fusion");
 
     // This must match scenes of SUB_CAMERA_TESTS in tools/run_all_tests.py
@@ -744,7 +747,7 @@ public class ItsTestActivity extends DialogTestListActivity {
         } else {
             Log.d(TAG, "register ITS result receiver");
             IntentFilter filter = new IntentFilter(ACTION_ITS_RESULT);
-            registerReceiver(mResultsReceiver, filter);
+            registerReceiver(mResultsReceiver, filter, Context.RECEIVER_EXPORTED);
             mReceiverRegistered = true;
         }
     }

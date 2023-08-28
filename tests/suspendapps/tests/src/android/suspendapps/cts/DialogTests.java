@@ -31,6 +31,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.SuspendDialogInfo;
 import android.os.Bundle;
+import android.platform.test.rule.ScreenRecordRule;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
@@ -43,6 +44,7 @@ import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -57,6 +59,9 @@ public class DialogTests {
 
     /** Used to poll for the intents sent by the system to this package */
     static final SynchronousQueue<Intent> sIncomingIntent = new SynchronousQueue<>();
+
+    @Rule
+    public final ScreenRecordRule mScreenRecordRule = new ScreenRecordRule();
 
     private Context mContext;
     private TestAppInterface mTestAppInterface;
@@ -78,6 +83,7 @@ public class DialogTests {
     }
 
     @Test
+    @ScreenRecordRule.ScreenRecord
     public void testInterceptorActivity_unsuspend() throws Exception {
         final SuspendDialogInfo dialogInfo = new SuspendDialogInfo.Builder()
                 .setIcon(R.drawable.ic_settings)

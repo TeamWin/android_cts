@@ -16,18 +16,18 @@
 
 package android.permission3.cts
 
+import android.Manifest.permission_group.CAMERA as CAMERA_PERMISSION_GROUP
+import android.Manifest.permission_group.LOCATION as LOCATION_PERMISSION_GROUP
+import android.Manifest.permission_group.MICROPHONE as MICROPHONE_PERMISSION_GROUP
 import android.content.Intent
 import android.hardware.SensorPrivacyManager
 import android.hardware.SensorPrivacyManager.Sensors.CAMERA
 import android.hardware.SensorPrivacyManager.Sensors.MICROPHONE
 import android.location.LocationManager
-import android.Manifest.permission_group.CAMERA as CAMERA_PERMISSION_GROUP
-import android.Manifest.permission_group.LOCATION as LOCATION_PERMISSION_GROUP
-import android.Manifest.permission_group.MICROPHONE as MICROPHONE_PERMISSION_GROUP
 import android.os.Build
 import android.provider.DeviceConfig
-import android.support.test.uiautomator.By
 import androidx.test.filters.SdkSuppress
+import androidx.test.uiautomator.By
 import com.android.compatibility.common.util.SystemUtil.callWithShellPermissionIdentity
 import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
 import java.util.regex.Pattern

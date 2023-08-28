@@ -122,6 +122,11 @@ public class AudioFrequencyActivity extends PassFailButtons.Activity {
         return true;
     }
 
+    @Override
+    public String getReportFileName() {
+        return PassFailButtons.AUDIO_TESTS_REPORT_LOG_NAME;
+    }
+
     void enableLayout(int layoutId, boolean enable) {
         ViewGroup group = (ViewGroup)findViewById(layoutId);
         for (int i = 0; i < group.getChildCount(); i++) {

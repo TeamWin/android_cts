@@ -26,7 +26,7 @@ import org.junit.Test;
 
 import java.util.concurrent.TimeUnit;
 
-public class ManagedProfileTimeoutTest extends BaseManagedProfileTest {
+public final class ManagedProfileTimeoutTest extends BaseManagedProfileTest {
     // This should be sufficiently larger than ProfileTimeoutTestHelper.TIMEOUT_MS
     private static final int PROFILE_TIMEOUT_DELAY_MS = 60_000;
 

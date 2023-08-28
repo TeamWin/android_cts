@@ -57,7 +57,6 @@ import androidx.test.rule.ActivityTestRule;
 
 import com.android.compatibility.common.util.SettingsStateChangerRule;
 import com.android.compatibility.common.util.SettingsStateManager;
-import com.android.compatibility.common.util.SettingsUtils;
 import com.android.compatibility.common.util.StateKeeperRule;
 import com.android.compatibility.common.util.ThrowingRunnable;
 import com.android.compatibility.common.util.Timeout;
@@ -97,9 +96,9 @@ abstract class AssistTestBase {
     private static final Context sContext = getInstrumentation().getTargetContext();
 
     private static final SettingsStateManager sStructureEnabledMgr = new SettingsStateManager(
-            sContext, SettingsUtils.NAMESPACE_SECURE, ASSIST_STRUCTURE_ENABLED);
+            sContext, ASSIST_STRUCTURE_ENABLED);
     private static final SettingsStateManager sScreenshotEnabledMgr = new SettingsStateManager(
-            sContext, SettingsUtils.NAMESPACE_SECURE, ASSIST_SCREENSHOT_ENABLED);
+            sContext, ASSIST_SCREENSHOT_ENABLED);
 
     private final SettingsStateChangerRule mServiceSetterRule = new SettingsStateChangerRule(
             sContext, Settings.Secure.VOICE_INTERACTION_SERVICE,

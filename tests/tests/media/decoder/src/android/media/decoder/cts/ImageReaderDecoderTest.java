@@ -79,8 +79,7 @@ import java.util.concurrent.TimeUnit;
  * test. For decoder test, hw and sw decoders are tested,
  * </p>
  */
-// TODO(b/210947256) Enable presubmit once this test works on Pixel 4
-//@Presubmit
+@Presubmit
 @SmallTest
 @RequiresDevice
 @AppModeFull(reason = "Instant apps cannot access the SD card")

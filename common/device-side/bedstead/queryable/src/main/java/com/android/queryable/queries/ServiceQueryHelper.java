@@ -84,6 +84,12 @@ public final class ServiceQueryHelper<E extends Queryable> implements ServiceQue
     }
 
     @Override
+    public boolean isEmptyQuery() {
+        return Queryable.isEmptyQuery(mServiceClassQueryHelper)
+                && Queryable.isEmptyQuery(mIntentFiltersQueryHelper);
+    }
+
+    @Override
     public boolean matches(ServiceInfo value) {
         return mServiceClassQueryHelper.matches(value)
                 && mIntentFiltersQueryHelper.matches(value.intentFilters());

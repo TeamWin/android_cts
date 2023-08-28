@@ -17,6 +17,7 @@ message AndroidApp {
   repeated Metadata metadata = 8;
   string sharedUserId = 9;
   string label = 10;
+  bool cross_profile = 11;
 }
 
 message UsesSdk {

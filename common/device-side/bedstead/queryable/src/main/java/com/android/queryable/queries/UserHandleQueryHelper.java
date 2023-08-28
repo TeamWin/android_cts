@@ -86,6 +86,12 @@ public final class UserHandleQueryHelper<E extends Queryable>
         return mIdQuery;
     }
 
+    @Override
+    public boolean isEmptyQuery() {
+        return mEqualsValue == null
+                && Queryable.isEmptyQuery(mIdQuery);
+    }
+
     /**
      * {@code true} if all filters are met by the {@link UserHandle}.
      */

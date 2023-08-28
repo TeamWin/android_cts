@@ -69,6 +69,13 @@ public class TestResult {
             ReportLog reportLog, TestResultHistoryCollection historyCollection) {
         Log.i(TAG, "setPassedResult(activity=" + activity + ", testId=" + testId
                 + ", testDetails=" + testDetails);
+
+        // We store results here straight into the content provider so it can be fetched by the
+        // CTSInteractive host
+        TestResultsProvider.setTestResult(
+                activity, testId, 1, testDetails, reportLog, historyCollection,
+                null);
+
         activity.setResult(Activity.RESULT_OK, createResult(activity, TEST_RESULT_PASSED, testId,
                 testDetails, reportLog, historyCollection));
     }
@@ -89,6 +96,13 @@ public class TestResult {
             ReportLog reportLog, TestResultHistoryCollection historyCollection) {
         Log.e(TAG, "setFailedResult(activity=" + activity + ", testId=" + testId
                 + ", testDetails=" + testDetails);
+
+        // We store results here straight into the content provider so it can be fetched by the
+        // CTSInteractive host
+        TestResultsProvider.setTestResult(
+                activity, testId, 2, testDetails, reportLog, historyCollection,
+                null);
+
         activity.setResult(Activity.RESULT_OK, createResult(activity, TEST_RESULT_FAILED, testId,
                 testDetails, reportLog, historyCollection));
     }
@@ -119,7 +133,16 @@ public class TestResult {
      * {@link TestListActivity}.
      */
     static TestResult fromActivityResult(int resultCode, Intent data) {
-        String name = setTestNameSuffix(sCurrentDisplayMode, data.getStringExtra(TEST_NAME));
+        return fromActivityResultWithDisplayMode(resultCode, data, sCurrentDisplayMode);
+    }
+
+    /**
+     * Convert the test activity's result into a {@link TestResult} with the given display mode.
+     * Only meant to be used by {@link TestListActivity}.
+     */
+    static TestResult fromActivityResultWithDisplayMode(
+            int resultCode, Intent data, String displayMode) {
+        String name = setTestNameSuffix(displayMode, data.getStringExtra(TEST_NAME));
         int result = data.getIntExtra(TEST_RESULT, TEST_RESULT_NOT_EXECUTED);
         String details = data.getStringExtra(TEST_DETAILS);
         ReportLog reportLog = (ReportLog) data.getSerializableExtra(TEST_METRICS);

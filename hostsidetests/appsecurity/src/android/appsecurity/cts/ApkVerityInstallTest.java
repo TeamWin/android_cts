@@ -69,8 +69,6 @@ public final class ApkVerityInstallTest extends BaseAppSecurityTest {
             SPLIT_APK, "split_feature_x.apk",
             SPLIT_APK_DM, "split_feature_x.dm");
 
-    private boolean mDmRequireFsVerity;
-
     private static final Object[] installSingle() {
         // Non-Incremental and Incremental.
         return new Boolean[][]{{NON_INCREMENTAL}, {INCREMENTAL}};
@@ -96,7 +94,6 @@ public final class ApkVerityInstallTest extends BaseAppSecurityTest {
         String apkVerityMode = device.getProperty("ro.apk_verity.mode");
         mLaunchApiLevel = device.getLaunchApiLevel();
         assumeTrue(mLaunchApiLevel >= 30 || APK_VERITY_STANDARD_MODE.equals(apkVerityMode));
-        mDmRequireFsVerity = "true".equals(device.getProperty("pm.dexopt.dm.require_fsverity"));
         assumeSecurityModelCompat();
     }
 
@@ -326,12 +323,8 @@ public final class ApkVerityInstallTest extends BaseAppSecurityTest {
                 .addFile(BASE_APK_DM + FSV_SIG_SUFFIX)
                 .addFile(SPLIT_APK)
                 .addFile(SPLIT_APK_DM);
-        if (mDmRequireFsVerity) {
-            installer.runExpectingFailure();
-        } else {
-            installer.run();
-            verifyFsverityInstall(incremental, BASE_APK_DM);
-        }
+        installer.run();
+        verifyFsverityInstall(incremental, BASE_APK_DM);
     }
 
     @CddTest(requirement = "9.10/C-0-3,C-0-5")
@@ -346,12 +339,8 @@ public final class ApkVerityInstallTest extends BaseAppSecurityTest {
                 .addFile(SPLIT_APK)
                 .addFile(SPLIT_APK_DM)
                 .addFile(SPLIT_APK_DM + FSV_SIG_SUFFIX);
-        if (mDmRequireFsVerity) {
-            installer.runExpectingFailure();
-        } else {
-            installer.run();
-            verifyFsverityInstall(incremental, BASE_APK_DM, SPLIT_APK_DM);
-        }
+        installer.run();
+        verifyFsverityInstall(incremental, BASE_APK_DM, SPLIT_APK_DM);
     }
 
     @CddTest(requirement = "9.10/C-0-3,C-0-5")

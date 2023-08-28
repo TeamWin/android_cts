@@ -1282,6 +1282,7 @@ public class CarrierApiTest extends BaseCarrierApiTest {
                                                         SignalThresholdInfo
                                                                 .SIGNAL_MEASUREMENT_TYPE_RSSI)
                                                 .setThresholds(new int[] {-113, -103, -97, -51})
+                                                .setHysteresisDb(1)
                                                 .build()))
                         .setReportingRequestedWhileIdle(true)
                         .build();

@@ -54,6 +54,14 @@
                 <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST" />
             </intent-filter>
         </activity>
+        <activity android:name="android.widget.cts.TextViewMouseInteractionActivity"
+             android:label="TextViewMouseInteractionActivity"
+             android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST"/>
+            </intent-filter>
+        </activity>
 
         <activity android:name="android.widget.cts.AbsoluteLayoutCtsActivity"
              android:label="AbsoluteLayoutCtsActivity"
@@ -406,6 +414,28 @@
             </intent-filter>
         </activity>
 
+        <activity android:name="android.widget.cts.TextViewFontScalingTest$TextViewFontScalingActivity"
+                  android:label="TextViewFontScalingActivity"
+                  android:screenOrientation="locked"
+                  android:exported="true"
+                  android:windowSoftInputMode="stateAlwaysHidden">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST"/>
+            </intent-filter>
+        </activity>
+
+        <activity android:name="android.widget.cts.TextViewHandwritingCtsActivity"
+                  android:label="TextViewHandwritingCtsActivity"
+                  android:screenOrientation="locked"
+                  android:exported="true"
+                  android:windowSoftInputMode="stateAlwaysHidden">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST"/>
+            </intent-filter>
+        </activity>
+
         <activity android:name="android.widget.cts.EditTextCtsActivity"
              android:label="EditTextCtsActivity"
              android:screenOrientation="nosensor"
@@ -699,15 +729,6 @@
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST"/>
-            </intent-filter>
-        </activity>
-
-        <activity android:name="android.widget.cts.BackInvokedOnWidgetsActivity"
-                  android:label="BackInvokedOnWidgetsActivity"
-                  android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-                <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
 

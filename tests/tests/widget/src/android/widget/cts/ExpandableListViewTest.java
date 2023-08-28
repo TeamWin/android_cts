@@ -43,6 +43,8 @@ import android.util.Xml;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.accessibility.AccessibilityNodeInfo;
+import android.widget.AbsListView;
 import android.widget.ExpandableListAdapter;
 import android.widget.ExpandableListView;
 import android.widget.ListAdapter;
@@ -55,6 +57,7 @@ import androidx.test.filters.MediumTest;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.WidgetTestUtils;
 import com.android.compatibility.common.util.WindowUtil;
 
@@ -177,6 +180,33 @@ public class ExpandableListViewTest {
         assertNull(mExpandableListView.getOnItemClickListener());
         mExpandableListView.setOnItemClickListener(mockOnItemClickListener);
         assertSame(mockOnItemClickListener, mExpandableListView.getOnItemClickListener());
+    }
+
+    @UiThreadTest
+    @ApiTest(apis = {"android.widget.ExpandableListView#onInitializeAccessibilityNodeInfoForItem"})
+    @Test
+    public void testOnInitializeAccessibilityNodeInfoForItem() {
+        ExpandableListAdapter expandableAdapter = new MockExpandableListAdapter();
+        mExpandableListView.setAdapter(expandableAdapter);
+
+        // Need a real view to be used in super.onInitializeAccessibilityNodeInfoForItem method.
+        TextView group = new TextView(mActivity);
+        final AbsListView.LayoutParams layoutParams =
+                new AbsListView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT);
+        group.setLayoutParams(layoutParams);
+
+        assertTrue(mExpandableListView.expandGroup(0));
+        AccessibilityNodeInfo expandedGroupInfo = new AccessibilityNodeInfo();
+        mExpandableListView.onInitializeAccessibilityNodeInfoForItem(group, 0, expandedGroupInfo);
+        assertTrue(expandedGroupInfo.getActionList().contains(
+                AccessibilityNodeInfo.AccessibilityAction.ACTION_COLLAPSE));
+
+        assertTrue(mExpandableListView.collapseGroup(0));
+        AccessibilityNodeInfo collapseGroupInfo = new AccessibilityNodeInfo();
+        mExpandableListView.onInitializeAccessibilityNodeInfoForItem(group, 0, collapseGroupInfo);
+        assertTrue(collapseGroupInfo.getActionList().contains(
+                AccessibilityNodeInfo.AccessibilityAction.ACTION_EXPAND));
     }
 
     @UiThreadTest

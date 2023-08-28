@@ -20,6 +20,7 @@ android_test_helper_app {
     name: "StatusCheckerApp",
     defaults: ["cts_support_defaults"],
     srcs: ["src/**/*.java"],
+    java_resources: [":StatusCheckerApp_Secondary"],
     sdk_version: "module_current",
     // tag this module as a cts test artifact
     test_suites: [
@@ -35,4 +36,11 @@ android_test_helper_app {
     libs: [
         "android.test.base",
     ],
+}
+
+java_library {
+    name: "StatusCheckerApp_Secondary",
+    srcs: ["src-ex/**/*.java"],
+    sdk_version: "module_current",
+    compile_dex: true,
 }

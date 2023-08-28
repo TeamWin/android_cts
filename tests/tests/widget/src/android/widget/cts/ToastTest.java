@@ -16,6 +16,8 @@
 
 package android.widget.cts;
 
+import static android.Manifest.permission.POST_NOTIFICATIONS;
+import static android.Manifest.permission.UNLIMITED_TOASTS;
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
@@ -47,6 +49,7 @@ import android.graphics.drawable.Drawable;
 import android.os.ConditionVariable;
 import android.os.SystemClock;
 import android.provider.Settings;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewTreeObserver;
@@ -68,6 +71,7 @@ import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.SystemUtil;
 import com.android.compatibility.common.util.TestUtils;
+import com.android.compatibility.common.util.UserHelper;
 
 import junit.framework.Assert;
 
@@ -87,6 +91,7 @@ import java.util.stream.Stream;
 @LargeTest
 @RunWith(AndroidJUnit4.class)
 public class ToastTest {
+    private static final String TAG = ToastTest.class.getSimpleName();
     private static final String TEST_TOAST_TEXT = "test toast";
     private static final String TEST_CUSTOM_TOAST_TEXT = "test custom toast";
     private static final String SETTINGS_ACCESSIBILITY_UI_TIMEOUT =
@@ -116,6 +121,7 @@ public class ToastTest {
     private ConditionVariable mToastShown;
     private ConditionVariable mToastHidden;
     private NotificationManager mNotificationManager;
+    private UserHelper mUserHelper;
 
     @Rule
     public ActivityTestRule<CtsActivity> mActivityRule =
@@ -125,6 +131,7 @@ public class ToastTest {
     @Before
     public void setup() {
         mContext = getInstrumentation().getContext();
+        mUserHelper = new UserHelper(mContext);
         mUiAutomation = getInstrumentation().getUiAutomation();
         mLayoutListener = () -> mLayoutDone = true;
         mNotificationManager =
@@ -225,11 +232,17 @@ public class ToastTest {
     }
 
     private void makeTextToast() throws Throwable {
+        makeTextToast(mContext);
+    }
+
+    private void makeTextToast(Context context) throws Throwable {
+        Log.d(TAG, "creating Toast on context " + context + " (user=" + context.getUserId()
+                + ", display=" + context.getDisplayId() + ")");
         mToastShown = new ConditionVariable(false);
         mToastHidden = new ConditionVariable(false);
         mActivityRule.runOnUiThread(
                 () -> {
-                    mToast = Toast.makeText(mContext, TEST_TOAST_TEXT, Toast.LENGTH_LONG);
+                    mToast = Toast.makeText(context, TEST_TOAST_TEXT, Toast.LENGTH_LONG);
                     mToast.addCallback(new ConditionCallback(mToastShown, mToastHidden));
                 });
     }
@@ -286,8 +299,29 @@ public class ToastTest {
     }
 
     @Test
+    @ApiTest(apis = {"android.widget.Toast#show"})
     public void testShow_whenTextToast() throws Throwable {
         makeTextToast();
+
+        mActivityRule.runOnUiThread(() -> showToastWithNotificationPermission(mToast));
+
+        assertTextToastShownAndHidden();
+    }
+
+    @Test
+    @ApiTest(apis = {"android.widget.Toast#show"})
+    public void testShow_activityContext_whenTextToast() throws Throwable {
+        makeTextToast(mActivityRule.getActivity());
+
+        mActivityRule.runOnUiThread(() -> showToastWithNotificationPermission(mToast));
+
+        assertTextToastShownAndHidden();
+    }
+
+    @Test
+    @ApiTest(apis = {"android.widget.Toast#show"})
+    public void testShow_appContext_whenTextToast() throws Throwable {
+        makeTextToast(mContext.getApplicationContext());
 
         mActivityRule.runOnUiThread(() -> showToastWithNotificationPermission(mToast));
 
@@ -420,7 +454,7 @@ public class ToastTest {
     public void testAccessDuration_whenTextToast() throws Throwable {
         long start = SystemClock.uptimeMillis();
         makeTextToast();
-        mActivityRule.runOnUiThread(() -> showToast(mToast, true));
+        mActivityRule.runOnUiThread(() -> showToastWithNotificationPermission(mToast));
         assertEquals(Toast.LENGTH_LONG, mToast.getDuration());
 
         assertTextToastShownAndHidden();
@@ -440,8 +474,15 @@ public class ToastTest {
         assertTrue(longDuration > shortDuration);
     }
 
+    // TODO(b/255426725): remove method, callers, and mUserHelper when A11Y supports it
+    private void requireRunNotOnVisibleBackgroundNonProfileUser() {
+        assumeFalse("Not supported on visible background user",
+                mUserHelper.isVisibleBackgroundUser());
+    }
+
     @Test
     public void testAccessDuration_whenCustomToastAndWithA11yTimeoutEnabled() throws Throwable {
+        requireRunNotOnVisibleBackgroundNonProfileUser();
         makeCustomToast();
         final Runnable showToast = () -> {
             mToast.setDuration(Toast.LENGTH_SHORT);
@@ -473,6 +514,7 @@ public class ToastTest {
 
     @Test
     public void testAccessDuration_whenTextToastAndWithA11yTimeoutEnabled() throws Throwable {
+        requireRunNotOnVisibleBackgroundNonProfileUser();
         makeTextToast();
         final Runnable showToast = () -> {
             mToast.setDuration(Toast.LENGTH_SHORT);
@@ -1070,14 +1112,8 @@ public class ToastTest {
         // We have to show one by one to avoid max number of toasts enqueued by a single package at
         // a time.
         for (TextToastInfo t : toasts) {
-            // The shell has the android.permission.UNLIMITED_TOASTS permission.
-            SystemUtil.runWithShellPermissionIdentity(() -> {
-                try {
-                    showToast(t);
-                } catch (Throwable throwable) {
-                    throw new RuntimeException(throwable);
-                }
-            });
+            // Run with both android.permission.UNLIMITED_TOASTS and POST_NOTIFICATIONS permissions.
+            showToastWithUnlimitedToastAndPostNotificationsPermissions(t);
             assertTextToastShownAndHidden(t);
         }
     }
@@ -1111,14 +1147,15 @@ public class ToastTest {
     private void showToasts(List<? extends ToastInfo> toasts) throws Throwable {
         mActivityRule.runOnUiThread(() -> {
             for (ToastInfo t : toasts) {
-                showToast(t.getToast(), /* run with POST_NOTIFICATION permission */true);
+                showToastWithNotificationPermission(t.getToast());
             }
         });
     }
 
-    private void showToast(ToastInfo toast) throws Throwable {
+    private void showToastWithUnlimitedToastAndPostNotificationsPermissions(ToastInfo toast)
+            throws Throwable {
         mActivityRule.runOnUiThread(() -> {
-            showToast(toast.getToast(), /* run with POST_NOTIFICATION permission */true);
+            showToastWithPermissions(toast.getToast(), POST_NOTIFICATIONS, UNLIMITED_TOASTS);
         });
     }
 
@@ -1136,7 +1173,7 @@ public class ToastTest {
             public void onReceive(Context context, Intent intent) {
                 broadcastReceived.open();
             }
-        }, filter);
+        }, filter, Context.RECEIVER_EXPORTED_UNAUDITED);
         return broadcastReceived;
     }
 
@@ -1202,7 +1239,15 @@ public class ToastTest {
 
     private static void showToast(Toast toast, boolean runWithPostNotificationPermission) {
         if (runWithPostNotificationPermission) {
-            SystemUtil.runWithShellPermissionIdentity(() -> toast.show());
+            SystemUtil.runWithShellPermissionIdentity(() -> toast.show(), POST_NOTIFICATIONS);
+        } else {
+            toast.show();
+        }
+    }
+
+    private static void showToastWithPermissions(Toast toast,  String... permissions) {
+        if (permissions.length > 0) {
+            SystemUtil.runWithShellPermissionIdentity(() -> toast.show(), permissions);
         } else {
             toast.show();
         }

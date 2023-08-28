@@ -21,14 +21,21 @@ import static com.android.queryable.queries.IntegerQuery.integer;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import com.android.bedstead.harrier.BedsteadJUnit4;
+import com.android.bedstead.harrier.DeviceState;
 import com.android.queryable.Queryable;
 
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-@RunWith(JUnit4.class)
+@RunWith(BedsteadJUnit4.class)
 public final class IntegerQueryHelperTest {
+
+    @ClassRule @Rule
+    public static final DeviceState sDeviceState = new DeviceState();
 
     private final Queryable mQuery = null;
     private static final int INTEGER_VALUE = 100;
@@ -183,5 +190,63 @@ public final class IntegerQueryHelperTest {
                 integer()
                         .where().isEqualTo(1)
                         .matches(1)).isTrue();
+    }
+
+    @Test
+    public void isEmptyQuery_isEmpty_returnsTrue() {
+        IntegerQueryHelper<Queryable> integerQueryHelper =
+                new IntegerQueryHelper<>(mQuery);
+
+        assertThat(integerQueryHelper.isEmptyQuery()).isTrue();
+    }
+
+    @Test
+    public void isEmptyQuery_hasIsEqualToQuery_returnsFalse() {
+        IntegerQueryHelper<Queryable> integerQueryHelper =
+                new IntegerQueryHelper<>(mQuery);
+
+        integerQueryHelper.isEqualTo(0);
+
+        assertThat(integerQueryHelper.isEmptyQuery()).isFalse();
+    }
+
+    @Test
+    public void isEmptyQuery_hasIsGreaterThanQuery_returnsFalse() {
+        IntegerQueryHelper<Queryable> integerQueryHelper =
+                new IntegerQueryHelper<>(mQuery);
+
+        integerQueryHelper.isGreaterThan(0);
+
+        assertThat(integerQueryHelper.isEmptyQuery()).isFalse();
+    }
+
+    @Test
+    public void isEmptyQuery_hasIsGreaterThanOrEqualToQuery_returnsFalse() {
+        IntegerQueryHelper<Queryable> integerQueryHelper =
+                new IntegerQueryHelper<>(mQuery);
+
+        integerQueryHelper.isGreaterThanOrEqualTo(0);
+
+        assertThat(integerQueryHelper.isEmptyQuery()).isFalse();
+    }
+
+    @Test
+    public void isEmptyQuery_hasIsLessThanQuery_returnsFalse() {
+        IntegerQueryHelper<Queryable> integerQueryHelper =
+                new IntegerQueryHelper<>(mQuery);
+
+        integerQueryHelper.isLessThan(0);
+
+        assertThat(integerQueryHelper.isEmptyQuery()).isFalse();
+    }
+
+    @Test
+    public void isEmptyQuery_hasIsLessThanOrEqualToQuery_returnsFalse() {
+        IntegerQueryHelper<Queryable> integerQueryHelper =
+                new IntegerQueryHelper<>(mQuery);
+
+        integerQueryHelper.isLessThanOrEqualTo(0);
+
+        assertThat(integerQueryHelper.isEmptyQuery()).isFalse();
     }
 }

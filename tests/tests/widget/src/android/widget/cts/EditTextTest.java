@@ -86,11 +86,14 @@ import java.util.concurrent.atomic.AtomicReference;
 @SmallTest
 @RunWith(AndroidJUnit4.class)
 public class EditTextTest {
+
     private Activity mActivity;
     private EditText mEditText1;
     private EditText mEditText2;
     private AttributeSet mAttributeSet;
     private Instrumentation mInstrumentation;
+    private CtsTouchUtils mCtsTouchUtils;
+    private CtsKeyEventUtil mCtsKeyEventUtil;
 
     @Rule
     public ActivityTestRule<EditTextCtsActivity> mActivityRule =
@@ -101,6 +104,8 @@ public class EditTextTest {
     @Before
     public void setup() {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
+        mCtsTouchUtils = new CtsTouchUtils(mInstrumentation.getTargetContext());
+        mCtsKeyEventUtil = new CtsKeyEventUtil(mInstrumentation.getTargetContext());
         mActivity = mActivityRule.getActivity();
         mEditText1 = (EditText) mActivity.findViewById(R.id.edittext_simple1);
         mEditText2 = (EditText) mActivity.findViewById(R.id.edittext_simple2);
@@ -502,7 +507,7 @@ public class EditTextTest {
 
         // Simulate a drag gesture. The cursor should end up at the position where the finger is
         // lifted.
-        CtsTouchUtils.emulateDragGesture(mInstrumentation, mActivityRule, dragStartEnd.get());
+        mCtsTouchUtils.emulateDragGesture(mInstrumentation, mActivityRule, dragStartEnd.get());
         assertCursorPosition(mEditText1, text.indexOf("el"));
     }
 
@@ -544,12 +549,12 @@ public class EditTextTest {
             mEditText1.requestFocus();
         });
 
-        CtsKeyEventUtil.sendKeyDownUp(mInstrumentation, mEditText1, KeyEvent.KEYCODE_ENTER);
+        mCtsKeyEventUtil.sendKeyDownUp(mInstrumentation, mEditText1, KeyEvent.KEYCODE_ENTER);
         mInstrumentation.waitForIdleSync();
         assertTrue(mEditText2.hasFocus());
 
         mActivityRule.runOnUiThread(() -> mEditText1.requestFocus());
-        CtsKeyEventUtil.sendKeyDownUp(mInstrumentation, mEditText1, KeyEvent.KEYCODE_NUMPAD_ENTER);
+        mCtsKeyEventUtil.sendKeyDownUp(mInstrumentation, mEditText1, KeyEvent.KEYCODE_NUMPAD_ENTER);
         assertTrue(mEditText2.hasFocus());
     }
 

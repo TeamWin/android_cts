@@ -36,7 +36,7 @@ import org.junit.Test;
  */
 // We need managed users to be supported in order to create a profile of the user owner.
 @RequiresAdditionalFeatures({FEATURE_MANAGED_USERS})
-public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
+public final class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
 
     private static final String CLEAR_PROFILE_OWNER_NEGATIVE_TEST_CLASS =
             DEVICE_ADMIN_PKG + ".ClearProfileOwnerNegativeTest";

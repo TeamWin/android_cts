@@ -24,6 +24,7 @@
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD"/>
     <uses-permission android:name="android.permission.BIND_VOICE_INTERACTION"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE"/>
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
     <uses-permission android:name="android.permission.HIDE_OVERLAY_WINDOWS"/>
 
@@ -87,9 +88,6 @@
              android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|fontScale|colorMode|density|touchscreen"
              android:exported="true"
              android:taskAffinity="nobody.but.NoRelaunchActivity"/>
-        <activity android:name=".SlowCreateActivity"
-             android:resizeableActivity="true"
-             android:exported="true"/>
         <activity android:name=".LaunchingActivity"
              android:resizeableActivity="true"
              android:exported="true"
@@ -181,6 +179,10 @@
              android:resizeableActivity="true"
              android:taskAffinity="nobody.but.FreeformActivity"
              android:exported="true"/>
+        <activity android:name=".MultiWindowFullscreenActivity"
+                  android:resizeableActivity="true"
+                  android:taskAffinity="nobody.but.MultiWindowFullscreenActivity"
+                  android:exported="true"/>
         <activity android:name=".TopLeftLayoutActivity"
              android:resizeableActivity="true"
              android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout"
@@ -305,7 +307,7 @@
              android:exported="true"/>
         <activity android:name=".ShowWhenLockedDialogActivity"
              android:exported="true"
-             android:theme="@style/ShowWhenLockedDialogTheme"/>
+             android:theme="@android:style/Theme.Material.Dialog"/>
         <activity android:name=".ShowWhenLockedTranslucentActivity"
              android:exported="true"
              android:theme="@android:style/Theme.Translucent"/>
@@ -513,6 +515,18 @@
             </meta-data>
         </service>
 
+        <service android:name=".InteractiveLiveWallpaper"
+                 android:permission="android.permission.BIND_WALLPAPER"
+                 android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.wallpaper.WallpaperService">
+                </action>
+            </intent-filter>
+            <meta-data android:name="android.service.wallpaper"
+                       android:resource="@xml/wallpaper">
+            </meta-data>
+        </service>
+
         <service android:name=".TestDream"
              android:exported="true"
              android:permission="android.permission.BIND_DREAM_SERVICE">
@@ -609,22 +623,6 @@
              android:launchMode="singleTop"
              android:exported="true"/>
         <activity android:name=".HideOverlayWindowsActivity" android:exported="true"/>
-        <activity android:name=".BackgroundImageActivity"
-             android:theme="@style/BackgroundImage"
-             android:colorMode="wideColorGamut"
-             android:exported="true"/>
-        <activity android:name=".BlurActivity"
-             android:exported="true"
-             android:colorMode="wideColorGamut"
-             android:theme="@style/TranslucentDialog"/>
-        <activity android:name=".BlurAttributesActivity"
-             android:exported="true"
-             android:colorMode="wideColorGamut"
-             android:theme="@style/BlurryDialog"/>
-        <activity android:name=".BadBlurActivity"
-             android:exported="true"
-             android:colorMode="wideColorGamut"
-             android:theme="@style/BadBlurryDialog"/>
         <activity android:name=".KeepClearRectsActivity"
             android:exported="true"
             android:theme="@style/NoInsetsTheme"/>
@@ -652,7 +650,10 @@
                   android:taskAffinity="nobody.but.TestSplashScreenAffinity"/>
 
         <service android:name=".OverlayTestService"
-                 android:exported="true" />
+                 android:foregroundServiceType="specialUse"
+                 android:exported="true" >
+            <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE" android:value="cts" />
+        </service>
 
         <!-- Aspect Ratio Test Activities -->
         <activity android:name=".MaxAspectRatioActivity"
@@ -699,6 +700,9 @@
                   android:minAspectRatio="3.0"
                   android:resizeableActivity="false"
                   android:screenOrientation="portrait"
+                  android:exported="true"/>
+        <activity android:name=".WallpaperTargetActivity"
+                  android:configChanges="@integer/config_changes_assets_paths"
                   android:exported="true"/>
     </application>
 </manifest>

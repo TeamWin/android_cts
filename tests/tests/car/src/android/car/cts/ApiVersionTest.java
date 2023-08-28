@@ -69,7 +69,7 @@ public final class ApiVersionTest {
 
         assertWithMessage("version(42, 108).toString()").that(string).contains("major=42");
         assertWithMessage("version(42, 108).toString()").that(string).contains("minor=108");
-        assertWithMessage("version(42, 108).toString()").that(string).doesNotContain("name=");
+        assertWithMessage("version(42, 108).toString()").that(string).doesNotContain("[name=");
     }
 
     @Test

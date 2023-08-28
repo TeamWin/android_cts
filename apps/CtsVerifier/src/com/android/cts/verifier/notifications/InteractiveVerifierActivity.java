@@ -120,6 +120,11 @@ public abstract class InteractiveVerifierActivity extends PassFailButtons.Activi
             return false;
         }
 
+        /** @return the test's status after autostart. */
+        int autoStartStatus() {
+            return READY;
+        }
+
         /** Set status to {@link #READY} to proceed, or {@link #SETUP} to try again. */
         protected void setUp() { status = READY; next(); };
 
@@ -175,7 +180,22 @@ public abstract class InteractiveVerifierActivity extends PassFailButtons.Activi
         mHandler = mItemList;
         mTestList = new ArrayList<>();
         mTestList.addAll(createTestItems());
-        for (InteractiveTestCase test: mTestList) {
+
+        if (!mTestList.isEmpty()) {
+            setupTests(savedStateIndex, savedStatus, scrollY);
+            view.findViewById(R.id.pass_button).setEnabled(false);
+        } else {
+            view.findViewById(R.id.empty_text).setVisibility(View.VISIBLE);
+            view.findViewById(R.id.fail_button).setEnabled(false);
+        }
+
+        setContentView(view);
+        setPassFailButtonClickListeners();
+        setInfoResources(getTitleResource(), getInstructionsResource(), -1);
+    }
+
+    private void setupTests(int savedStateIndex, int savedStatus, int scrollY) {
+        for (InteractiveTestCase test : mTestList) {
             mItemList.addView(test.getView(mItemList));
         }
         mTestOrder = mTestList.iterator();
@@ -184,17 +204,11 @@ public abstract class InteractiveVerifierActivity extends PassFailButtons.Activi
             mCurrentTest.status = PASS;
             markItem(mCurrentTest);
         }
+
         mCurrentTest = mTestOrder.next();
-
-        mScrollView.post(() -> mScrollView.smoothScrollTo(0, scrollY));
-
         mCurrentTest.status = savedStatus;
 
-        setContentView(view);
-        setPassFailButtonClickListeners();
-        getPassButton().setEnabled(false);
-
-        setInfoResources(getTitleResource(), getInstructionsResource(), -1);
+        mScrollView.post(() -> mScrollView.smoothScrollTo(0, scrollY));
     }
 
     @Override
@@ -213,7 +227,7 @@ public abstract class InteractiveVerifierActivity extends PassFailButtons.Activi
         //To avoid NPE during onResume,before start to iterate next test order
         if (mCurrentTest != null && mCurrentTest.status != SETUP && mCurrentTest.autoStart()) {
             Log.i(TAG, "auto starting: " + mCurrentTest.getClass().getSimpleName());
-            mCurrentTest.status = READY;
+            mCurrentTest.status = mCurrentTest.autoStartStatus();
         }
         next();
     }

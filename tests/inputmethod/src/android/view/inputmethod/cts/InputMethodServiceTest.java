@@ -18,12 +18,14 @@ package android.view.inputmethod.cts;
 
 import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
 import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
+import static android.inputmethodservice.InputMethodService.DISALLOW_INPUT_METHOD_INTERFACE_OVERRIDE;
 import static android.server.wm.jetpack.utils.ExtensionUtil.EXTENSION_VERSION_2;
 import static android.server.wm.jetpack.utils.ExtensionUtil.isExtensionVersionAtLeast;
 import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.WindowManager.DISPLAY_IME_POLICY_LOCAL;
 import static android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN;
 import static android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE;
+import static android.view.inputmethod.cts.util.ConstantsUtils.DISAPPROVE_IME_PACKAGE_NAME;
 import static android.view.inputmethod.cts.util.InputMethodVisibilityVerifier.expectImeInvisible;
 import static android.view.inputmethod.cts.util.InputMethodVisibilityVerifier.expectImeVisible;
 import static android.view.inputmethod.cts.util.TestUtils.getOnMainSync;
@@ -39,6 +41,7 @@ import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEventWithKey
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectNoImeCrash;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.notExpectEvent;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.verificationMatcher;
+import static com.android.cts.mockime.ImeEventStreamTestUtils.withDescription;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -49,6 +52,7 @@ import static org.junit.Assume.assumeTrue;
 
 import android.app.Activity;
 import android.app.Instrumentation;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Matrix;
@@ -70,6 +74,8 @@ import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InputConnectionWrapper;
 import android.view.inputmethod.InputMethodInfo;
 import android.view.inputmethod.InputMethodManager;
+import android.view.inputmethod.TextAppearanceInfo;
+import android.view.inputmethod.cts.disapproveime.DisapproveInputMethodService;
 import android.view.inputmethod.cts.util.EndToEndImeTestBase;
 import android.view.inputmethod.cts.util.SimulatedVirtualDisplaySession;
 import android.view.inputmethod.cts.util.TestActivity;
@@ -84,6 +90,7 @@ import android.widget.LinearLayout;
 import androidx.test.filters.FlakyTest;
 import androidx.test.filters.MediumTest;
 import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.rule.ServiceTestRule;
 import androidx.test.runner.AndroidJUnit4;
 import androidx.window.extensions.layout.DisplayFeature;
 import androidx.window.extensions.layout.WindowLayoutInfo;
@@ -106,6 +113,7 @@ import org.junit.runner.RunWith;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -118,6 +126,7 @@ import java.util.function.Predicate;
 @MediumTest
 @RunWith(AndroidJUnit4.class)
 public class InputMethodServiceTest extends EndToEndImeTestBase {
+    private static final String TAG = "InputMethodServiceTest";
     private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(20);
     private static final long EXPECTED_TIMEOUT = TimeUnit.SECONDS.toMillis(2);
     private static final long ACTIVITY_LAUNCH_INTERVAL = 500;  // msec
@@ -130,11 +139,13 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
 
     @Rule
     public final UnlockScreenRule mUnlockScreenRule = new UnlockScreenRule();
+    @Rule
+    public final ServiceTestRule mServiceRule = new ServiceTestRule();
 
     private Instrumentation mInstrumentation;
 
     private static Predicate<ImeEvent> backKeyDownMatcher(boolean expectedReturnValue) {
-        return event -> {
+        return withDescription("onKeyDown(KEYCODE_BACK) = " + expectedReturnValue, event -> {
             if (!TextUtils.equals("onKeyDown", event.getEventName())) {
                 return false;
             }
@@ -143,7 +154,7 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
                 return false;
             }
             return event.getReturnBooleanValue() == expectedReturnValue;
-        };
+        });
     }
 
     @Before
@@ -155,12 +166,14 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
         return TestActivity.startSync(activity -> createLayout(windowFlags, activity));
     }
 
-    private TestActivity createTestActivity(int windowFlags, int displayId) throws Exception {
-        return TestActivity.startSync(displayId, activity -> createLayout(windowFlags, activity));
+    private TestActivity createTestActivity(int windowFlags, int displayId) {
+        return new TestActivity.Starter().withDisplayId(displayId).startSync(
+                activity -> createLayout(windowFlags, activity), TestActivity.class);
     }
 
     private TestActivity createTestActivity2(int windowFlags) {
-        return TestActivity2.startSync(activity -> createLayout(windowFlags, activity));
+        return new TestActivity.Starter().startSync(activity -> createLayout(windowFlags, activity),
+                TestActivity2.class);
     }
 
     private LinearLayout createLayout(final int windowFlags, final Activity activity) {
@@ -588,7 +601,9 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
                             InputConnection.CURSOR_UPDATE_IMMEDIATE
                             | InputConnection.CURSOR_UPDATE_FILTER_EDITOR_BOUNDS
                             | InputConnection.CURSOR_UPDATE_FILTER_CHARACTER_BOUNDS
-                            | InputConnection.CURSOR_UPDATE_FILTER_INSERTION_MARKER),
+                            | InputConnection.CURSOR_UPDATE_FILTER_INSERTION_MARKER
+                            | InputConnection.CURSOR_UPDATE_FILTER_VISIBLE_LINE_BOUNDS
+                            | InputConnection.CURSOR_UPDATE_FILTER_TEXT_APPEARANCE),
                     TIMEOUT).getReturnBooleanValue());
 
             // Also make sure that requestCursorUpdates() actually gets called only once.
@@ -599,6 +614,8 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
             final CursorAnchorInfo originalCursorAnchorInfo1 = new CursorAnchorInfo.Builder()
                     .setMatrix(new Matrix())
                     .setEditorBoundsInfo(builder.build())
+                    .addVisibleLineBounds(1f, 2f, 3f, 5f)
+                    .setTextAppearanceInfo(new TextAppearanceInfo.Builder().build())
                     .build();
 
             runOnMainSync(() -> editText.getContext().getSystemService(InputMethodManager.class)
@@ -620,13 +637,17 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
             final CursorAnchorInfo originalCursorAnchorInfo2 = new CursorAnchorInfo.Builder()
                     .setMatrix(new Matrix())
                     .setEditorBoundsInfo(builder.build())
+                    .addVisibleLineBounds(1f, 2f, 3f, 4f)
+                    .setTextAppearanceInfo(new TextAppearanceInfo.Builder().build())
                     .build();
             assertTrue(expectCommand(stream,
                     imeSession.callRequestCursorUpdates(
                             InputConnection.CURSOR_UPDATE_IMMEDIATE,
                                     InputConnection.CURSOR_UPDATE_FILTER_EDITOR_BOUNDS
                                     | InputConnection.CURSOR_UPDATE_FILTER_CHARACTER_BOUNDS
-                                    | InputConnection.CURSOR_UPDATE_FILTER_INSERTION_MARKER),
+                                    | InputConnection.CURSOR_UPDATE_FILTER_INSERTION_MARKER
+                                    | InputConnection.CURSOR_UPDATE_FILTER_VISIBLE_LINE_BOUNDS
+                                    | InputConnection.CURSOR_UPDATE_FILTER_TEXT_APPEARANCE),
                     TIMEOUT).getReturnBooleanValue());
 
             // Make sure that requestCursorUpdates() actually gets called only once.
@@ -889,8 +910,7 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
 
                 // MockIME has registered addWindowLayoutInfo, it should be emitting the
                 // current location of hinge now.
-                WindowLayoutInfoParcelable windowLayoutInit = verifyReceivedWindowLayout(
-                        stream);
+                WindowLayoutInfoParcelable windowLayoutInit = verifyReceivedWindowLayout(stream);
                 // Skip the test if the device doesn't support hinges.
                 assertNotNull(windowLayoutInit);
                 assertNotNull(windowLayoutInit.getDisplayFeatures());
@@ -899,10 +919,8 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
                 final Rect windowLayoutInitBounds = windowLayoutInit.getDisplayFeatures().get(0)
                         .getBounds();
 
-                expectEvent(stream, event -> "onStartInput".equals(event.getEventName()),
-                        TIMEOUT);
-                expectEvent(stream, event -> "showSoftInput".equals(event.getEventName()),
-                        TIMEOUT);
+                expectEvent(stream, event -> "onStartInput".equals(event.getEventName()), TIMEOUT);
+                expectEvent(stream, event -> "showSoftInput".equals(event.getEventName()), TIMEOUT);
 
                 // After IME is shown, get the bounds of IME.
                 final Rect imeBoundsInit = expectCommand(stream,
@@ -1042,6 +1060,41 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
         } finally {
             // restore all previous IMEs
             SystemUtil.runShellCommand("ime reset");
+        }
+    }
+
+    @Test
+    public void testImeOverrideSessionInterface_throwLinkageError() {
+        SystemUtil.runCommandAndPrintOnLogcat(TAG, "am compat enable "
+                + DISALLOW_INPUT_METHOD_INTERFACE_OVERRIDE + " " + DISAPPROVE_IME_PACKAGE_NAME);
+
+        final Context context = mInstrumentation.getContext();
+        final CountDownLatch serviceCreateLatch = new CountDownLatch(1);
+        final DisapproveInputMethodService.DisapproveImeCallback disapproveImeCallback =
+                hasLinkageError -> {
+                    if (!hasLinkageError) {
+                        fail("Should throw a LinkageError.");
+                    }
+                    serviceCreateLatch.countDown();
+                };
+
+        try {
+            DisapproveInputMethodService.setCallback(disapproveImeCallback);
+            mServiceRule.bindService(new Intent(context, DisapproveInputMethodService.class));
+        } catch (TimeoutException e) {
+            fail("DisapproveInputMethodService binding timeout.");
+        }
+
+        boolean result = false;
+        try {
+            result = serviceCreateLatch.await(EXPECTED_TIMEOUT, TimeUnit.MILLISECONDS);
+            if (!result) {
+                fail("Timeout before receiving the result.");
+            }
+        } catch (InterruptedException ignored) {
+        } finally {
+            SystemUtil.runCommandAndPrintOnLogcat(TAG, "am compat reset "
+                    + DISALLOW_INPUT_METHOD_INTERFACE_OVERRIDE + " " + DISAPPROVE_IME_PACKAGE_NAME);
         }
     }
 

@@ -38,6 +38,7 @@ import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.NonMainlineTest;
 
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
@@ -1971,6 +1972,30 @@ public class CodecUnitTest {
             mCodec = MediaCodec.createEncoderByType(mediaType);
             mCodec.release();
             tryQueueInputBufferInInvalidState("queueInputBuffer succeeds in release state");
+        }
+
+        @ApiTest(apis = {"MediaCodec#queueInputBuffer", "MediaCodec#queueSecureInputBuffer"})
+        @Test
+        public void testExceptionThrownWhenBufferIsEOSAndDecodeOnly() throws IOException {
+            MediaFormat format = getSampleAudioFormat();
+            String mime = format.getString(MediaFormat.KEY_MIME);
+            mCodec = MediaCodec.createEncoderByType(mime);
+            boolean[] boolStates = {true, false};
+            for (boolean isAsync : boolStates) {
+                configureCodec(format, isAsync, false, true);
+                mCodec.start();
+                final int flags = MediaCodec.BUFFER_FLAG_END_OF_STREAM
+                        | MediaCodec.BUFFER_FLAG_DECODE_ONLY;
+
+                Assert.assertThrows(MediaCodec.InvalidBufferFlagsException.class,
+                        () -> mCodec.queueInputBuffer(0, 0, 0, 0, flags));
+
+                Assert.assertThrows(MediaCodec.InvalidBufferFlagsException.class,
+                        () -> mCodec.queueSecureInputBuffer(0, 0, null, 0, flags));
+                mCodec.stop();
+                mCodec.reset();
+            }
+            mCodec.release();
         }
 
         @ApiTest(apis = "MediaCodec#releaseOutputBuffer")

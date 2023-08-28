@@ -77,6 +77,9 @@ public class Activities {
     public static class TaskAffinity1Activity2 extends BaseActivity {
     }
 
+    public static class TaskAffinity1SingleTopActivity extends BaseActivity {
+    }
+
     public static class TaskAffinity2Activity extends BaseActivity {
     }
 

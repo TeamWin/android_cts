@@ -53,8 +53,8 @@ import android.hardware.display.VirtualDisplay;
 import android.os.Bundle;
 import android.os.ResultReceiver;
 import android.platform.test.annotations.AppModeFull;
+import android.virtualdevice.cts.common.FakeAssociationRule;
 import android.virtualdevice.cts.util.EmptyActivity;
-import android.virtualdevice.cts.util.FakeAssociationRule;
 import android.virtualdevice.cts.util.TestAppHelper;
 import android.virtualdevice.cts.util.TestAppHelper.ServiceConnectionFuture;
 import android.virtualdevice.cts.util.VirtualDeviceTestUtils;
@@ -88,6 +88,7 @@ public class ActivityManagementTest {
 
     private static final VirtualDeviceParams DEFAULT_VIRTUAL_DEVICE_PARAMS =
             new VirtualDeviceParams.Builder().build();
+    private static final int TIMEOUT_MS = 5000;
 
     @Rule
     public AdoptShellPermissionsRule mAdoptShellPermissionsRule = new AdoptShellPermissionsRule(
@@ -117,6 +118,7 @@ public class ActivityManagementTest {
         MockitoAnnotations.initMocks(this);
         Context context = getApplicationContext();
         final PackageManager packageManager = context.getPackageManager();
+        assumeTrue(packageManager.hasSystemFeature(PackageManager.FEATURE_COMPANION_DEVICE_SETUP));
         assumeTrue(packageManager
                 .hasSystemFeature(PackageManager.FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS));
         // TODO(b/261155110): Re-enable tests once freeform mode is supported in Virtual Display.
@@ -170,13 +172,26 @@ public class ActivityManagementTest {
                 eq(virtualDisplay.getDisplay().getDisplayId()),
                 eq(new ComponentName(context, EmptyActivity.class)));
 
-        ArgumentCaptor<Runnable> runnableCaptor = ArgumentCaptor.forClass(Runnable.class);
-        verify(mockExecutor).execute(runnableCaptor.capture());
+        verify(activityListener, never()).onTopActivityChanged(
+                eq(virtualDisplay.getDisplay().getDisplayId()),
+                eq(new ComponentName(context, EmptyActivity.class)),
+                eq(context.getUserId()));
 
-        runnableCaptor.getValue().run();
-        verify(activityListener).onTopActivityChanged(
+        ArgumentCaptor<Runnable> runnableCaptor = ArgumentCaptor.forClass(Runnable.class);
+        verify(mockExecutor, timeout(3000).times(2)).execute(runnableCaptor.capture());
+
+        for (Runnable task: runnableCaptor.getAllValues()) {
+            task.run();
+        }
+
+        verify(activityListener, timeout(3000).times(1)).onTopActivityChanged(
                 eq(virtualDisplay.getDisplay().getDisplayId()),
                 eq(new ComponentName(context, EmptyActivity.class)));
+
+        verify(activityListener, timeout(3000).times(1)).onTopActivityChanged(
+                eq(virtualDisplay.getDisplay().getDisplayId()),
+                eq(new ComponentName(context, EmptyActivity.class)),
+                eq(context.getUserId()));
     }
 
     @Test
@@ -207,6 +222,10 @@ public class ActivityManagementTest {
                 eq(virtualDisplay.getDisplay().getDisplayId()),
                 eq(new ComponentName(context, EmptyActivity.class)));
 
+        verify(activityListener).onTopActivityChanged(
+                eq(virtualDisplay.getDisplay().getDisplayId()),
+                eq(new ComponentName(context, EmptyActivity.class)),
+                eq(context.getUserId()));
 
         mVirtualDevice.removeActivityListener(activityListener);
         emptyActivity.finish();
@@ -242,6 +261,11 @@ public class ActivityManagementTest {
                 eq(virtualDisplay.getDisplay().getDisplayId()),
                 eq(new ComponentName(context, EmptyActivity.class)));
 
+        verify(activityListener).onTopActivityChanged(
+                eq(virtualDisplay.getDisplay().getDisplayId()),
+                eq(new ComponentName(context, EmptyActivity.class)),
+                eq(context.getUserId()));
+
         emptyActivity.finish();
 
         verify(activityListener, timeout(3000))
@@ -268,9 +292,10 @@ public class ActivityManagementTest {
         mVirtualDevice.launchPendingIntent(virtualDisplay.getDisplay().getDisplayId(),
                 pendingIntent, Runnable::run, mLaunchCompleteListener);
 
-        verify(mOnReceiveResultListener, timeout(5000)).onReceiveResult(
+        verify(mOnReceiveResultListener, timeout(TIMEOUT_MS)).onReceiveResult(
                 eq(Activity.RESULT_OK), nullable(Bundle.class));
-        verify(mLaunchCompleteListener).accept(eq(VirtualDeviceManager.LAUNCH_SUCCESS));
+        verify(mLaunchCompleteListener, timeout(TIMEOUT_MS)).accept(
+                eq(VirtualDeviceManager.LAUNCH_SUCCESS));
     }
 
     @Test
@@ -302,9 +327,9 @@ public class ActivityManagementTest {
                 pendingIntent, Runnable::run,
                 mLaunchCompleteListener);
 
-        verify(mOnReceiveResultListener, timeout(5000)).onReceiveResult(
+        verify(mOnReceiveResultListener, timeout(TIMEOUT_MS)).onReceiveResult(
                 eq(Activity.RESULT_OK), nullable(Bundle.class));
-        verify(mLaunchCompleteListener, timeout(5000)).accept(
+        verify(mLaunchCompleteListener, timeout(TIMEOUT_MS)).accept(
                 eq(VirtualDeviceManager.LAUNCH_SUCCESS));
     }
 
@@ -332,9 +357,10 @@ public class ActivityManagementTest {
                 Runnable::run,
                 mLaunchCompleteListener);
 
-        verify(mOnReceiveResultListener, after(5000).never()).onReceiveResult(
+        verify(mOnReceiveResultListener, after(TIMEOUT_MS).never()).onReceiveResult(
                 eq(Activity.RESULT_OK), nullable(Bundle.class));
-        verify(mLaunchCompleteListener).accept(eq(VirtualDeviceManager.LAUNCH_FAILURE_NO_ACTIVITY));
+        verify(mLaunchCompleteListener, timeout(TIMEOUT_MS)).accept(
+                eq(VirtualDeviceManager.LAUNCH_FAILURE_NO_ACTIVITY));
     }
 
     private IStreamedTestApp getTestAppService() throws Exception {

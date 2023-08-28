@@ -130,7 +130,8 @@
             android:layout_gravity="center"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content">
-            <HorizontalScrollView
+            <view
+                class="android.widget.cts.HorizontalScrollViewTest$MyHorizontalScrollView"
                 android:id="@+id/horizontal_scroll_view_stretch"
                 android:layout_width="180px"
                 android:layout_height="180px"
@@ -163,8 +164,15 @@
                         android:background="#F0F"
                         android:layout_width="100px"
                         android:layout_height="180px"/>
+
+                    <SurfaceView
+                        android:id="@+id/surfaceview_stretch_target"
+                        android:visibility="gone"
+                        android:layout_weight="1"
+                        android:layout_width="90px"
+                        android:layout_height="180px"/>
                 </LinearLayout>
-            </HorizontalScrollView>
+            </view>
         </view>
     </FrameLayout>
 </LinearLayout>

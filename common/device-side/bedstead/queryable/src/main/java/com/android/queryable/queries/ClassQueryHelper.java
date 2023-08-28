@@ -87,6 +87,12 @@ public final class ClassQueryHelper<E extends Queryable>
     }
 
     @Override
+    public boolean isEmptyQuery() {
+        return Queryable.isEmptyQuery(mClassName)
+                && Queryable.isEmptyQuery(mSimpleName);
+    }
+
+    @Override
     public boolean matches(ClassInfo value) {
         if (!mClassName.matches(value.className())) {
             return false;

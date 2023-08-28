@@ -65,7 +65,22 @@ public final class ImeEventStreamTestUtils {
          * Only events that return {@code false} from {@link ImeEvent#isEnterEvent()} should be
          * checked
          */
-        CHECK_EXIT_EVENT_ONLY,
+        CHECK_EXIT_EVENT_ONLY;
+
+        private Predicate<ImeEvent> combine(Predicate<ImeEvent> predicate) {
+            switch (this) {
+                case CHECK_ALL:
+                    return predicate;
+                case CHECK_ENTER_EVENT_ONLY:
+                    return withDescription(predicate + " (ENTER_ONLY)",
+                            event -> event.isEnterEvent() && predicate.test(event));
+                case CHECK_EXIT_EVENT_ONLY:
+                    return withDescription(predicate + " (EXIT_ONLY)",
+                            event -> !event.isEnterEvent() && predicate.test(event));
+                default:
+                    throw new IllegalArgumentException("Unknown filter mode: " + this);
+            }
+        }
     }
 
     /**
@@ -112,42 +127,25 @@ public final class ImeEventStreamTestUtils {
     public static ImeEvent expectEvent(@NonNull ImeEventStream stream,
             @NonNull Predicate<ImeEvent> condition, EventFilterMode filterMode, long timeout)
             throws TimeoutException {
+        final var combinedCondition = filterMode.combine(condition);
         try {
-            Optional<ImeEvent> result;
             while (true) {
                 if (timeout < 0) {
                     throw new TimeoutException(
-                            "event not found within the timeout: " + stream.dump());
+                            "event " + combinedCondition + " not found within the timeout: "
+                                    + stream.dump());
                 }
-                final Predicate<ImeEvent> combinedCondition;
-                switch (filterMode) {
-                    case CHECK_ALL:
-                        combinedCondition = condition;
-                        break;
-                    case CHECK_ENTER_EVENT_ONLY:
-                        combinedCondition = event -> event.isEnterEvent() && condition.test(event);
-                        break;
-                    case CHECK_EXIT_EVENT_ONLY:
-                        combinedCondition = event -> !event.isEnterEvent() && condition.test(event);
-                        break;
-                    default:
-                        throw new IllegalArgumentException("Unknown filterMode " + filterMode);
-                }
-                result = stream.seekToFirst(combinedCondition);
+                Optional<ImeEvent> result = stream.seekToFirst(combinedCondition);
                 if (result.isPresent()) {
-                    break;
+                    stream.skip(1);
+                    return result.get();
                 }
                 Thread.sleep(TIME_SLICE);
                 timeout -= TIME_SLICE;
             }
-            final ImeEvent event = result.get();
-            if (event == null) {
-                throw new NullPointerException("found event is null: " + stream.dump());
-            }
-            stream.skip(1);
-            return event;
         } catch (InterruptedException e) {
-            throw new RuntimeException("expectEvent failed: " + stream.dump(), e);
+            throw new RuntimeException(
+                    "expectEvent " + combinedCondition + " interrupted: " + stream.dump(), e);
         }
     }
 
@@ -160,13 +158,13 @@ public final class ImeEventStreamTestUtils {
      */
     public static Predicate<ImeEvent> editorMatcher(
             @NonNull String eventName, @NonNull String marker) {
-        return event -> {
+        return withDescription(eventName + "(marker=" + marker + ")", event -> {
             if (!TextUtils.equals(eventName, event.getEventName())) {
                 return false;
             }
             final EditorInfo editorInfo = event.getArguments().getParcelable("editorInfo");
             return TextUtils.equals(marker, editorInfo.privateImeOptions);
-        };
+        });
     }
 
     /**
@@ -174,8 +172,9 @@ public final class ImeEventStreamTestUtils {
      * {@code MockIme.Tracer#onVerify(String, BooleanSupplier)}
      */
     public static Predicate<ImeEvent> verificationMatcher(@NonNull String name) {
-        return event -> "onVerify".equals(event.getEventName())
-                && name.equals(event.getArguments().getString("name"));
+        return withDescription("onVerify(name=" + name + ")",
+                event -> "onVerify".equals(event.getEventName())
+                        && name.equals(event.getArguments().getString("name")));
     }
 
     /**
@@ -187,14 +186,14 @@ public final class ImeEventStreamTestUtils {
      */
     public static Predicate<ImeEvent> editorMatcherRestartingFalse(
             @NonNull String eventName, @NonNull String marker) {
-        return event -> {
+        return withDescription(eventName + "(marker=" + marker + ", restarting=false)", event -> {
             if (!TextUtils.equals(eventName, event.getEventName())) {
                 return false;
             }
             final EditorInfo editorInfo = event.getArguments().getParcelable("editorInfo");
             final boolean restarting = event.getArguments().getBoolean("restarting");
-            return (TextUtils.equals(marker, editorInfo.privateImeOptions) && !restarting );
-        };
+            return (TextUtils.equals(marker, editorInfo.privateImeOptions) && !restarting);
+        });
     }
 
     /**
@@ -205,13 +204,28 @@ public final class ImeEventStreamTestUtils {
     * @return true if event occurred.
     */
     public static Predicate<ImeEvent> editorMatcher(@NonNull String eventName, int fieldId) {
-        return event -> {
+        return withDescription(eventName + "(fieldId=" + fieldId + ")", event -> {
             if (!TextUtils.equals(eventName, event.getEventName())) {
                 return false;
             }
             final EditorInfo editorInfo = event.getArguments().getParcelable("editorInfo");
             return fieldId == editorInfo.fieldId;
-        };
+        });
+    }
+
+    public static Predicate<ImeEvent> showSoftInputMatcher(int requiredFlags) {
+        return withDescription("showSoftInput(requiredFlags=" + requiredFlags + ")", event -> {
+            if (!TextUtils.equals("showSoftInput", event.getEventName())) {
+                return false;
+            }
+            final int flags = event.getArguments().getInt("flags");
+            return (flags & requiredFlags) == requiredFlags;
+        });
+    }
+
+    public static Predicate<ImeEvent> hideSoftInputMatcher() {
+        return withDescription("hideSoftInput",
+                event -> TextUtils.equals("hideSoftInput", event.getEventName()));
     }
 
     /**
@@ -232,14 +246,15 @@ public final class ImeEventStreamTestUtils {
     @NonNull
     public static ImeEvent expectCommand(@NonNull ImeEventStream stream,
             @NonNull ImeCommand command, long timeout) throws TimeoutException {
-        final Predicate<ImeEvent> predicate = event -> {
-            if (!TextUtils.equals("onHandleCommand", event.getEventName())) {
-                return false;
-            }
-            final ImeCommand eventCommand =
-                    ImeCommand.fromBundle(event.getArguments().getBundle("command"));
-            return eventCommand.getId() == command.getId();
-        };
+        var predicate = withDescription(
+                "onHandleCommand(id=" + command.getId() + ")", event -> {
+                    if (!TextUtils.equals("onHandleCommand", event.getEventName())) {
+                        return false;
+                    }
+                    final ImeCommand eventCommand =
+                            ImeCommand.fromBundle(event.getArguments().getBundle("command"));
+                    return eventCommand.getId() == command.getId();
+                });
         return expectEvent(stream, predicate, EventFilterMode.CHECK_EXIT_EVENT_ONLY, timeout);
     }
 
@@ -278,33 +293,22 @@ public final class ImeEventStreamTestUtils {
      */
     public static void notExpectEvent(@NonNull ImeEventStream stream,
             @NonNull Predicate<ImeEvent> condition, EventFilterMode filterMode, long timeout) {
-        final Predicate<ImeEvent> combinedCondition;
-        switch (filterMode) {
-            case CHECK_ALL:
-                combinedCondition = condition;
-                break;
-            case CHECK_ENTER_EVENT_ONLY:
-                combinedCondition = event -> event.isEnterEvent() && condition.test(event);
-                break;
-            case CHECK_EXIT_EVENT_ONLY:
-                combinedCondition = event -> !event.isEnterEvent() && condition.test(event);
-                break;
-            default:
-                throw new IllegalArgumentException("Unknown filterMode " + filterMode);
-        }
+        final var combinedCondition = filterMode.combine(condition);
         try {
             while (true) {
                 if (timeout < 0) {
                     return;
                 }
                 if (stream.findFirst(combinedCondition).isPresent()) {
-                    throw new AssertionError("notExpectEvent failed: " + stream.dump());
+                    throw new AssertionError(
+                            "notExpectEvent " + combinedCondition + " failed: " + stream.dump());
                 }
                 Thread.sleep(TIME_SLICE);
                 timeout -= TIME_SLICE;
             }
         } catch (InterruptedException e) {
-            throw new RuntimeException("notExpectEvent failed: " + stream.dump(), e);
+            throw new RuntimeException(
+                    "notExpectEvent " + combinedCondition + " failed: " + stream.dump(), e);
         }
     }
 
@@ -337,8 +341,10 @@ public final class ImeEventStreamTestUtils {
     public static void expectEventWithKeyValue(@NonNull ImeEventStream stream,
             @NonNull String eventName, @NonNull String key, int value, long timeout)
             throws TimeoutException {
-        expectEvent(stream, event -> TextUtils.equals(eventName, event.getEventName())
-                && value == event.getArguments().getInt(key), timeout);
+        var condition = withDescription(eventName + "(" + key + "=" + value + ")",
+                event -> TextUtils.equals(eventName, event.getEventName())
+                        && value == event.getArguments().getInt(key));
+        expectEvent(stream, condition, timeout);
     }
 
     /**
@@ -451,6 +457,20 @@ public final class ImeEventStreamTestUtils {
             stream.skip(1);
         }
         return stream.copy();
+    }
+
+    public static Predicate<ImeEvent> withDescription(String description, Predicate<ImeEvent> p) {
+        return new Predicate<>() {
+            @Override
+            public boolean test(ImeEvent ev) {
+                return p.test(ev);
+            }
+
+            @Override
+            public String toString() {
+                return description;
+            }
+        };
     }
 
     /**
