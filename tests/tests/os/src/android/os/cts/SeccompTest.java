@@ -58,8 +58,9 @@ public class SeccompTest extends AndroidTestCase {
     // will not be correct, so skip those tests.
     private boolean isRunningUnderEmulatedAbi() {
         final String primaryAbi = Build.SUPPORTED_ABIS[0];
-        return (CpuFeatures.isArmCpu() || CpuFeatures.isArm64Cpu()) &&
-               !(primaryAbi.equals("armeabi-v7a") || primaryAbi.equals("arm64-v8a"));
+        return ((CpuFeatures.isArmCpu() || CpuFeatures.isArm64Cpu()) &&
+               !(primaryAbi.equals("armeabi-v7a") || primaryAbi.equals("arm64-v8a"))) ||
+               CpuFeatures.isNativeBridgedCpu();
     }
 
     public void testSeccomp() {

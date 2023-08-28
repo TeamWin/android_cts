@@ -17,6 +17,7 @@
 #include <jni.h>
 #include <string.h>
 #include <sys/auxv.h>
+#include <sys/system_properties.h>
 #include <sys/utsname.h>
 
 #include <string>
@@ -73,6 +74,10 @@ jint android_cts_CpuFeatures_getHwCaps(JNIEnv*, jobject)
 
 jboolean android_cts_CpuFeatures_isNativeBridgedCpu(JNIEnv* env, jobject thiz)
 {
+#if defined(__arm__)
+  static const prop_info* pi = __system_property_find("ro.dalvik.vm.isa.arm");
+  return pi != nullptr;
+#endif
 #if defined(__arm__) || defined(__aarch64__)
   // If the test is compiled for arm use uname() to check if host CPU is x86.
   struct utsname uname_data;
