@@ -53,6 +53,16 @@ public class AAudioTests {
         return false;
     }
 
+    static boolean isEchoReferenceSupported() {
+        AudioDeviceInfo[] devices = AudioManager.getDevicesStatic(AudioManager.GET_DEVICES_INPUTS);
+        for (AudioDeviceInfo device : devices) {
+            if (device.getType() == AudioDeviceInfo.TYPE_ECHO_REFERENCE) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     static void enableAudioOutputPermission() {
         // Drop any identity adopted earlier.
         UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();

@@ -412,6 +412,11 @@ bool isIEC61937Supported() {
             nullptr, "android/nativemedia/aaudio/AAudioTests", "isIEC61937Supported", "()Z");
 }
 
+bool isEchoReferenceSupported() {
+    return (bool) callJavaStaticBooleanFunction(
+            nullptr, "android/nativemedia/aaudio/AAudioTests", "isEchoReferenceSupported", "()Z");
+}
+
 void enableAudioOutputPermission() {
     callJavaStaticVoidFunction(
             nullptr, "android/nativemedia/aaudio/AAudioTests", "enableAudioOutputPermission",
