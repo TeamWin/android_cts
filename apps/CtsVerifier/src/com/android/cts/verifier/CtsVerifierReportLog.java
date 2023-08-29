@@ -310,4 +310,15 @@ public class CtsVerifierReportLog extends ReportLog {
     // Serializable writeObject
     private void writeObject(ObjectOutputStream outputStream) throws IOException {
     }
+
+    /**
+     * Adds a JSONArray metric to the report.
+     */
+    public void addValues(String message, JSONArray values) {
+        try {
+            mCurrentJson.put(message, values);
+        } catch (Exception e) {
+            Log.e(TAG, LOG_ERROR_STR + " (JSONArray) ", e);
+        }
+    }
 }
