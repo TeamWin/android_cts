@@ -156,6 +156,13 @@ class LowLatencyZoomTest(its_base_test.ItsBaseTest):
         test_data[i] = {'z': z_result, 'circle': circle, 'r_tol': radius_tol,
                         'o_tol': offset_tol, 'fl': cap_fl}
 
+      # Since we are zooming in, settings_override may change the minimum zoom
+      # value in the result metadata.
+      # This is because zoom values like: [1., 2., 3., ..., 10.] may be applied
+      # as: [4., 4., 4., .... 9., 10., 10.].
+      # If we were zooming out, we would need to change the z_max.
+      z_min = test_data[min(test_data.keys())]['z']
+
       if not zoom_capture_utils.verify_zoom_results(
           test_data, size, z_max, z_min):
         test_failed = True
