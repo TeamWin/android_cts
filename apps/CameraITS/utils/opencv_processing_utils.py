@@ -492,7 +492,7 @@ def find_circle(img, img_name, min_area, color, use_adaptive_threshold=False):
 
   # convert to gray-scale image and binarize using adaptive/global threshold
   if use_adaptive_threshold:
-    img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    img_gray = cv2.cvtColor(img.astype(numpy.uint8), cv2.COLOR_BGR2GRAY)
     img_bw = cv2.adaptiveThreshold(img_gray, 255, cv2.ADAPTIVE_THRESH_MEAN_C,
                                    cv2.THRESH_BINARY, CV2_THRESHOLD_BLOCK_SIZE,
                                    CV2_THRESHOLD_CONSTANT)
