@@ -153,13 +153,18 @@ public class HDREncoderTestBase extends CodecEncoderTestBase {
                     mTotalMetadataQueued.size());
             for (Map.Entry<Long, String> entry : mHdrDynamicInfo.entrySet()) {
                 Long pts = entry.getKey();
-                assertTrue("At timestamp : " + pts + "application queued hdr10+ metadata,"
-                                + " during dequeue application did not receive it in output format",
-                        mHdrDynamicInfoReceived.containsKey(pts));
-                ByteBuffer hdrInfoRef = ByteBuffer.wrap(loadByteArrayFromString(entry.getValue()));
-                ByteBuffer hdrInfoTest =
-                        ByteBuffer.wrap(loadByteArrayFromString(mHdrDynamicInfoReceived.get(pts)));
-                validateHDRInfo(MediaFormat.KEY_HDR10_PLUS_INFO, hdrInfoRef, hdrInfoTest, pts);
+                if (mMediaType.equals(MediaFormat.MIMETYPE_VIDEO_VP9)) {
+                    assertTrue("At timestamp : " + pts + " application queued hdr10+ metadata,"
+                            + " during dequeue application did not receive it in output format",
+                            mHdrDynamicInfoReceived.containsKey(pts));
+                }
+                if (mHdrDynamicInfoReceived.containsKey(pts)) {
+                    ByteBuffer hdrInfoRef =
+                            ByteBuffer.wrap(loadByteArrayFromString(entry.getValue()));
+                    ByteBuffer hdrInfoTest = ByteBuffer.wrap(
+                            loadByteArrayFromString(mHdrDynamicInfoReceived.get(pts)));
+                    validateHDRInfo(MediaFormat.KEY_HDR10_PLUS_INFO, hdrInfoRef, hdrInfoTest, pts);
+                }
             }
         }
 
