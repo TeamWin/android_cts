@@ -1211,6 +1211,18 @@ public final class DeviceState extends HarrierRule {
                 continue;
             }
 
+            if (annotation instanceof RequireHasDefaultBrowser) {
+                RequireHasDefaultBrowser requireHasDefaultBrowser =
+                        (RequireHasDefaultBrowser) annotation;
+                UserReference user =
+                        resolveUserTypeToUser(requireHasDefaultBrowser.forUser());
+
+                checkFailOrSkip("User: " + user + " does not have a default browser",
+                        TestApis.packages().defaultBrowserForUser(user) != null,
+                        requireHasDefaultBrowser.failureMode());
+                continue;
+            }
+
             if (annotation instanceof RequireTelephonySupport requireTelephonySupport) {
                 checkFailOrSkip("Device does not have telephony support",
                         mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY),
