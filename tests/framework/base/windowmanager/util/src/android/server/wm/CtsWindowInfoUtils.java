@@ -41,6 +41,7 @@ import com.android.compatibility.common.util.SystemUtil;
 import com.android.compatibility.common.util.ThrowingRunnable;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 import java.util.Timer;
@@ -304,34 +305,38 @@ public class CtsWindowInfoUtils {
             }
         };
 
-        var waitForWindow = new ThrowingRunnable() {
-            @Override
-            public void run() throws InterruptedException {
-                var listener = new WindowInfosListenerForTest();
-                try {
-                    listener.addWindowInfosListener(windowNotOccluded);
-                    latch.await(timeout, unit);
-                } finally {
-                    listener.removeWindowInfosListener(windowNotOccluded);
-                }
+        runWithSurfaceFlingerPermission(() -> {
+            var listener = new WindowInfosListenerForTest();
+            try {
+                listener.addWindowInfosListener(windowNotOccluded);
+                latch.await(timeout, unit);
+            } finally {
+                listener.removeWindowInfosListener(windowNotOccluded);
             }
-        };
+        });
 
+        return satisfied.get();
+    }
+
+    private interface InterruptableRunnable {
+        void run() throws InterruptedException;
+    };
+
+    private static void runWithSurfaceFlingerPermission(@NonNull InterruptableRunnable runnable)
+            throws InterruptedException {
         Set<String> shellPermissions =
                 InstrumentationRegistry.getInstrumentation().getUiAutomation()
                         .getAdoptedShellPermissions();
         if (shellPermissions.isEmpty()) {
-            SystemUtil.runWithShellPermissionIdentity(waitForWindow,
+            SystemUtil.runWithShellPermissionIdentity(runnable::run,
                     Manifest.permission.ACCESS_SURFACE_FLINGER);
         } else if (shellPermissions.contains(Manifest.permission.ACCESS_SURFACE_FLINGER)) {
-            waitForWindow.run();
+            runnable.run();
         } else {
             throw new IllegalStateException(
                     "waitForWindowOnTop called with adopted shell permissions that don't include "
                             + "ACCESS_SURFACE_FLINGER");
         }
-
-        return satisfied.get();
     }
 
     /**
@@ -362,6 +367,76 @@ public class CtsWindowInfoUtils {
             IBinder windowToken = windowTokenSupplier.get();
             return windowToken != null && windowInfo.windowToken == windowToken;
         });
+    }
+
+    /**
+     * Waits until the set of windows and their geometries are unchanged for 200ms.
+     *
+     * <p>
+     * <strong>Note:</strong>If the caller has any adopted shell permissions, they must include
+     * android.permission.ACCESS_SURFACE_FLINGER.
+     * </p>
+     *
+     * @param timeout The amount of time to wait for the window to be visible.
+     * @param unit    The units associated with timeout.
+     * @return True if window geometry becomes stable before the timeout is reached. False
+     * otherwise.
+     */
+    public static boolean waitForStableWindowGeometry(int timeout, @NonNull TimeUnit unit)
+            throws InterruptedException {
+        var latch = new CountDownLatch(1);
+        var satisfied = new AtomicBoolean();
+
+        var timer = new Timer();
+        TimerTask[] task = {null};
+
+        var previousBounds = new HashMap<IBinder, Rect>();
+        var currentBounds = new HashMap<IBinder, Rect>();
+
+        Consumer<List<WindowInfo>> consumer = windowInfos -> {
+            if (satisfied.get()) {
+                return;
+            }
+
+            currentBounds.clear();
+            for (var windowInfo : windowInfos) {
+                currentBounds.put(windowInfo.windowToken, windowInfo.bounds);
+            }
+
+            if (currentBounds.equals(previousBounds)) {
+                // No changes detected. Let the previously scheduled timer task continue.
+                return;
+            }
+
+            previousBounds.clear();
+            previousBounds.putAll(currentBounds);
+
+            // Something has changed. Cancel the previous timer task and schedule a new task
+            // to countdown the latch in 200ms.
+            if (task[0] != null) {
+                task[0].cancel();
+            }
+            task[0] = new TimerTask() {
+                @Override
+                public void run() {
+                    satisfied.set(true);
+                    latch.countDown();
+                }
+            };
+            timer.schedule(task[0], 200 * HW_TIMEOUT_MULTIPLIER);
+        };
+
+        runWithSurfaceFlingerPermission(() -> {
+            var listener = new WindowInfosListenerForTest();
+            try {
+                listener.addWindowInfosListener(consumer);
+                latch.await(timeout, unit);
+            } finally {
+                listener.removeWindowInfosListener(consumer);
+            }
+        });
+
+        return satisfied.get();
     }
 
     /**
