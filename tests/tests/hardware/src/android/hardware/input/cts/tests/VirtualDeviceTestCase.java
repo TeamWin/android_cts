@@ -44,6 +44,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Process;
 import android.os.SystemClock;
+import android.server.wm.WakeUpAndUnlockRule;
 import android.server.wm.WindowManagerStateHelper;
 import android.view.MotionEvent;
 import android.view.Surface;
@@ -51,7 +52,7 @@ import android.view.View;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.test.InstrumentationRegistry;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.AdoptShellPermissionsRule;
 import com.android.compatibility.common.util.SystemUtil;
@@ -59,6 +60,7 @@ import com.android.compatibility.common.util.SystemUtil;
 import com.google.common.collect.ImmutableList;
 
 import org.junit.Rule;
+import org.junit.rules.RuleChain;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -75,11 +77,12 @@ public abstract class VirtualDeviceTestCase extends InputTestCase {
     protected static final int DISPLAY_HEIGHT = 100;
 
     @Rule
-    public AdoptShellPermissionsRule mAdoptShellPermissionsRule = new AdoptShellPermissionsRule(
-            InstrumentationRegistry.getInstrumentation().getUiAutomation(),
-            INTERNAL_SYSTEM_WINDOW,  // in order to start activities on any display
-            CREATE_VIRTUAL_DEVICE,
-            ADD_TRUSTED_DISPLAY);
+    public RuleChain chain = RuleChain.outerRule(new WakeUpAndUnlockRule())
+            .around(new AdoptShellPermissionsRule(
+                InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+                INTERNAL_SYSTEM_WINDOW,  // in order to start activities on any display
+                CREATE_VIRTUAL_DEVICE,
+                ADD_TRUSTED_DISPLAY));
 
     private final CountDownLatch mLatch = new CountDownLatch(1);
     private final InputManager.InputDeviceListener mInputDeviceListener =
@@ -122,7 +125,7 @@ public abstract class VirtualDeviceTestCase extends InputTestCase {
 
     @Override
     void onBeforeLaunchActivity() {
-        final Context context = InstrumentationRegistry.getTargetContext();
+        final Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
         final PackageManager packageManager = context.getPackageManager();
         // TVs do not support companion
         assumeTrue(packageManager.hasSystemFeature(PackageManager.FEATURE_COMPANION_DEVICE_SETUP));
@@ -202,7 +205,7 @@ public abstract class VirtualDeviceTestCase extends InputTestCase {
             if (mInputManager != null) {
                 mInputManager.unregisterInputDeviceListener(mInputDeviceListener);
             }
-            final Context context = InstrumentationRegistry.getTargetContext();
+            final Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
             disassociateCompanionDevice(context.getPackageName());
         }
     }
@@ -266,7 +269,7 @@ public abstract class VirtualDeviceTestCase extends InputTestCase {
     }
 
     public VirtualDisplay createUnownedVirtualDisplay() {
-        Context context = InstrumentationRegistry.getTargetContext();
+        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
         DisplayManager displayManager = context.getSystemService(DisplayManager.class);
         VirtualDisplayConfig config = new VirtualDisplayConfig.Builder(
                 "testVirtualDisplay", DISPLAY_WIDTH, DISPLAY_HEIGHT, /*densityDpi=*/100)
