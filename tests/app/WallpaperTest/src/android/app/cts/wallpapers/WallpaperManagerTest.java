@@ -47,6 +47,7 @@ import static org.mockito.Mockito.verify;
 
 import android.app.Activity;
 import android.app.WallpaperColors;
+import android.app.WallpaperInfo;
 import android.app.WallpaperManager;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -89,6 +90,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -106,7 +108,8 @@ public class WallpaperManagerTest {
 
     private static final boolean DEBUG = false;
     private static final String TAG = "WallpaperManagerTest";
-    private static final ComponentName DEFAULT_COMPONENT_NAME = new ComponentName(
+
+    private static final ComponentName TEST_COMPONENT_NAME = new ComponentName(
             TestLiveWallpaper.class.getPackageName(), TestLiveWallpaper.class.getName());
     // Default wait time for async operations
     private static final int SLEEP_MS = 500;
@@ -119,6 +122,11 @@ public class WallpaperManagerTest {
     private BroadcastReceiver mBroadcastReceiver;
     private CountDownLatch mCountDownLatch;
     private boolean mEnableWcg;
+
+    // WallpaperInfo object for the built-in default wallpaper of the device.
+    // Always null if the device uses ImageWallpaper by default.
+    private WallpaperInfo mDefaultWallpaperInfo;
+
     private static final WindowManagerStateHelper sWindowManagerStateHelper =
             new WindowManagerStateHelper();
 
@@ -166,6 +174,9 @@ public class WallpaperManagerTest {
                 new IntentFilter(Intent.ACTION_WALLPAPER_CHANGED));
         mEnableWcg = mWallpaperManager.shouldEnableWideColorGamut();
         mWallpaperManager.clear(FLAG_SYSTEM | FLAG_LOCK);
+        if (mDefaultWallpaperInfo == null) {
+            mDefaultWallpaperInfo = mWallpaperManager.getWallpaperInfo(FLAG_SYSTEM);
+        }
 
         assertWithMessage("Home screen wallpaper must be set after setUp()").that(
                 mWallpaperManager.getWallpaperId(FLAG_SYSTEM)).isAtLeast(0);
@@ -214,7 +225,7 @@ public class WallpaperManagerTest {
             throws IOException {
         assumeTrue(mWallpaperManager.isLockscreenLiveWallpaperEnabled());
         runWithShellPermissionIdentity(() -> {
-            setWallpaperComponentAndWait(DEFAULT_COMPONENT_NAME, FLAG_SYSTEM | FLAG_LOCK);
+            setWallpaperComponentAndWait(TEST_COMPONENT_NAME, FLAG_SYSTEM | FLAG_LOCK);
         });
         Bitmap tmpWallpaper = Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(tmpWallpaper);
@@ -366,7 +377,7 @@ public class WallpaperManagerTest {
             throws IOException {
         assumeTrue(mWallpaperManager.isLockscreenLiveWallpaperEnabled());
         runWithShellPermissionIdentity(() -> {
-            setWallpaperComponentAndWait(DEFAULT_COMPONENT_NAME, FLAG_SYSTEM | FLAG_LOCK);
+            setWallpaperComponentAndWait(TEST_COMPONENT_NAME, FLAG_SYSTEM | FLAG_LOCK);
         });
         int origHomeWallpaperId = mWallpaperManager.getWallpaperId(FLAG_SYSTEM);
 
@@ -442,7 +453,7 @@ public class WallpaperManagerTest {
     public void setWallpaperComponent_homeScreen_homeStatic_lockScreenUnset_migratesThenSetsHome() {
         int origHomeWallpaperId = mWallpaperManager.getWallpaperId(FLAG_SYSTEM);
         runWithShellPermissionIdentity(() -> {
-            setWallpaperComponentAndWait(DEFAULT_COMPONENT_NAME, FLAG_SYSTEM);
+            setWallpaperComponentAndWait(TEST_COMPONENT_NAME, FLAG_SYSTEM);
         });
 
         assertWithMessage("System wallpaper must change").that(
@@ -455,7 +466,7 @@ public class WallpaperManagerTest {
     public void setWallpaperComponent_homeScreen_homeLive_lockScreenUnset_migratesThenSetsHome() {
         assumeTrue(mWallpaperManager.isLockscreenLiveWallpaperEnabled());
         runWithShellPermissionIdentity(() -> {
-            setWallpaperComponentAndWait(DEFAULT_COMPONENT_NAME, FLAG_SYSTEM | FLAG_LOCK);
+            setWallpaperComponentAndWait(TEST_COMPONENT_NAME, FLAG_SYSTEM | FLAG_LOCK);
         });
         int origHomeWallpaperId = mWallpaperManager.getWallpaperId(FLAG_SYSTEM);
 
@@ -477,7 +488,7 @@ public class WallpaperManagerTest {
         int origHomeWallpaperId = mWallpaperManager.getWallpaperId(FLAG_SYSTEM);
         int origLockWallpaperId = mWallpaperManager.getWallpaperId(FLAG_LOCK);
         runWithShellPermissionIdentity(() -> {
-            setWallpaperComponentAndWait(DEFAULT_COMPONENT_NAME, FLAG_SYSTEM);
+            setWallpaperComponentAndWait(TEST_COMPONENT_NAME, FLAG_SYSTEM);
         });
         assertThat(mWallpaperManager.getWallpaperId(FLAG_SYSTEM)).isNotEqualTo(origHomeWallpaperId);
         assertThat(mWallpaperManager.getWallpaperId(FLAG_LOCK)).isEqualTo(origLockWallpaperId);
@@ -488,7 +499,7 @@ public class WallpaperManagerTest {
         assumeFalse(mWallpaperManager.isLockscreenLiveWallpaperEnabled());
         int origHomeWallpaperId = mWallpaperManager.getWallpaperId(FLAG_SYSTEM);
         runWithShellPermissionIdentity(() -> {
-            setWallpaperComponentAndWait(DEFAULT_COMPONENT_NAME, FLAG_LOCK);
+            setWallpaperComponentAndWait(TEST_COMPONENT_NAME, FLAG_LOCK);
         });
         assertThat(mWallpaperManager.getWallpaperId(FLAG_SYSTEM)).isNotEqualTo(origHomeWallpaperId);
         assertThat(mWallpaperManager.getWallpaperId(FLAG_LOCK)).isEqualTo(origHomeWallpaperId);
@@ -499,7 +510,7 @@ public class WallpaperManagerTest {
         assumeTrue(mWallpaperManager.isLockscreenLiveWallpaperEnabled());
         int origHomeWallpaperId = mWallpaperManager.getWallpaperId(FLAG_SYSTEM);
         runWithShellPermissionIdentity(() -> {
-            setWallpaperComponentAndWait(DEFAULT_COMPONENT_NAME, FLAG_LOCK);
+            setWallpaperComponentAndWait(TEST_COMPONENT_NAME, FLAG_LOCK);
         });
         assertThat(mWallpaperManager.getWallpaperId(FLAG_SYSTEM)).isEqualTo(origHomeWallpaperId);
         assertThat(mWallpaperManager.getWallpaperId(FLAG_LOCK)).isAtLeast(0);
@@ -513,7 +524,7 @@ public class WallpaperManagerTest {
         int origHomeWallpaperId = mWallpaperManager.getWallpaperId(FLAG_SYSTEM);
         int origLockWallpaperId = mWallpaperManager.getWallpaperId(FLAG_LOCK);
         runWithShellPermissionIdentity(() -> {
-            setWallpaperComponentAndWait(DEFAULT_COMPONENT_NAME, FLAG_LOCK);
+            setWallpaperComponentAndWait(TEST_COMPONENT_NAME, FLAG_LOCK);
         });
         assertThat(mWallpaperManager.getWallpaperId(FLAG_SYSTEM)).isNotEqualTo(origHomeWallpaperId);
         assertThat(mWallpaperManager.getWallpaperId(FLAG_LOCK)).isEqualTo(origLockWallpaperId);
@@ -527,7 +538,7 @@ public class WallpaperManagerTest {
         int origHomeWallpaperId = mWallpaperManager.getWallpaperId(FLAG_SYSTEM);
         int origLockWallpaperId = mWallpaperManager.getWallpaperId(FLAG_LOCK);
         runWithShellPermissionIdentity(() -> {
-            setWallpaperComponentAndWait(DEFAULT_COMPONENT_NAME, FLAG_LOCK);
+            setWallpaperComponentAndWait(TEST_COMPONENT_NAME, FLAG_LOCK);
         });
         assertThat(mWallpaperManager.getWallpaperId(FLAG_SYSTEM)).isEqualTo(origHomeWallpaperId);
         assertThat(mWallpaperManager.getWallpaperId(FLAG_LOCK)).isNotEqualTo(origLockWallpaperId);
@@ -538,7 +549,7 @@ public class WallpaperManagerTest {
         assumeFalse(mWallpaperManager.isLockscreenLiveWallpaperEnabled());
         int origHomeWallpaperId = mWallpaperManager.getWallpaperId(FLAG_SYSTEM);
         runWithShellPermissionIdentity(() -> {
-            setWallpaperComponentAndWait(DEFAULT_COMPONENT_NAME, FLAG_SYSTEM | FLAG_LOCK);
+            setWallpaperComponentAndWait(TEST_COMPONENT_NAME, FLAG_SYSTEM | FLAG_LOCK);
         });
         assertThat(mWallpaperManager.getWallpaperId(FLAG_SYSTEM)).isNotEqualTo(origHomeWallpaperId);
         assertThat(mWallpaperManager.getWallpaperId(FLAG_LOCK)).isEqualTo(origHomeWallpaperId);
@@ -549,7 +560,7 @@ public class WallpaperManagerTest {
         assumeTrue(mWallpaperManager.isLockscreenLiveWallpaperEnabled());
         int origHomeWallpaperId = mWallpaperManager.getWallpaperId(FLAG_SYSTEM);
         runWithShellPermissionIdentity(() -> {
-            setWallpaperComponentAndWait(DEFAULT_COMPONENT_NAME, FLAG_SYSTEM | FLAG_LOCK);
+            setWallpaperComponentAndWait(TEST_COMPONENT_NAME, FLAG_SYSTEM | FLAG_LOCK);
         });
         assertThat(mWallpaperManager.getWallpaperId(FLAG_SYSTEM)).isNotEqualTo(origHomeWallpaperId);
         assertThat(mWallpaperManager.getWallpaperId(FLAG_LOCK)).isLessThan(0);
@@ -563,7 +574,7 @@ public class WallpaperManagerTest {
         int origHomeWallpaperId = mWallpaperManager.getWallpaperId(FLAG_SYSTEM);
         int origLockWallpaperId = mWallpaperManager.getWallpaperId(FLAG_LOCK);
         runWithShellPermissionIdentity(() -> {
-            setWallpaperComponentAndWait(DEFAULT_COMPONENT_NAME, FLAG_SYSTEM | FLAG_LOCK);
+            setWallpaperComponentAndWait(TEST_COMPONENT_NAME, FLAG_SYSTEM | FLAG_LOCK);
         });
         assertThat(mWallpaperManager.getWallpaperId(FLAG_SYSTEM)).isNotEqualTo(origHomeWallpaperId);
         assertThat(mWallpaperManager.getWallpaperId(FLAG_LOCK)).isEqualTo(origLockWallpaperId);
@@ -576,7 +587,7 @@ public class WallpaperManagerTest {
         mWallpaperManager.setResource(R.drawable.icon_red, FLAG_LOCK);
         int origHomeWallpaperId = mWallpaperManager.getWallpaperId(FLAG_SYSTEM);
         runWithShellPermissionIdentity(() -> {
-            setWallpaperComponentAndWait(DEFAULT_COMPONENT_NAME, FLAG_SYSTEM | FLAG_LOCK);
+            setWallpaperComponentAndWait(TEST_COMPONENT_NAME, FLAG_SYSTEM | FLAG_LOCK);
         });
         assertThat(mWallpaperManager.getWallpaperId(FLAG_SYSTEM)).isNotEqualTo(origHomeWallpaperId);
         assertThat(mWallpaperManager.getWallpaperId(FLAG_LOCK)).isLessThan(0);
@@ -587,7 +598,7 @@ public class WallpaperManagerTest {
         assumeFalse(mWallpaperManager.isLockscreenLiveWallpaperEnabled());
         int origHomeWallpaperId = mWallpaperManager.getWallpaperId(FLAG_SYSTEM);
         runWithShellPermissionIdentity(() -> {
-            mWallpaperManager.setWallpaperComponent(DEFAULT_COMPONENT_NAME);
+            mWallpaperManager.setWallpaperComponent(TEST_COMPONENT_NAME);
         });
         assertThat(mWallpaperManager.getWallpaperId(FLAG_SYSTEM)).isNotEqualTo(origHomeWallpaperId);
         assertThat(mWallpaperManager.getWallpaperId(FLAG_LOCK)).isEqualTo(origHomeWallpaperId);
@@ -598,7 +609,7 @@ public class WallpaperManagerTest {
         assumeTrue(mWallpaperManager.isLockscreenLiveWallpaperEnabled());
         int origHomeWallpaperId = mWallpaperManager.getWallpaperId(FLAG_SYSTEM);
         runWithShellPermissionIdentity(() -> {
-            mWallpaperManager.setWallpaperComponent(DEFAULT_COMPONENT_NAME);
+            mWallpaperManager.setWallpaperComponent(TEST_COMPONENT_NAME);
         });
         assertThat(mWallpaperManager.getWallpaperId(FLAG_SYSTEM)).isNotEqualTo(origHomeWallpaperId);
         assertThat(mWallpaperManager.getWallpaperId(FLAG_LOCK)).isLessThan(0);
@@ -606,8 +617,8 @@ public class WallpaperManagerTest {
 
     @Test
     public void setStaticWallpaper_doesNotSetWallpaperInfo() throws IOException {
-        assertThat(mWallpaperManager.getWallpaperInfo(FLAG_SYSTEM)).isNull();
-        assertThat(mWallpaperManager.getWallpaperInfo(FLAG_LOCK)).isNull();
+        assertNullOrDefaultWallpaper(FLAG_SYSTEM);
+        assertNullOrDefaultWallpaper(FLAG_LOCK);
 
         mWallpaperManager.setResource(R.drawable.icon_red, FLAG_SYSTEM);
         mWallpaperManager.setResource(R.drawable.icon_green, FLAG_LOCK);
@@ -618,17 +629,15 @@ public class WallpaperManagerTest {
 
     @Test
     public void setLiveWallpaper_homeScreen_setsHomeWallpaperInfo() {
-        assertThat(mWallpaperManager.getWallpaperInfo(FLAG_SYSTEM)).isNull();
-        assertThat(mWallpaperManager.getWallpaperInfo(FLAG_LOCK)).isNull();
+        assertNullOrDefaultWallpaper(FLAG_SYSTEM);
+        assertNullOrDefaultWallpaper(FLAG_LOCK);
 
         runWithShellPermissionIdentity(() -> {
-            setWallpaperComponentAndWait(DEFAULT_COMPONENT_NAME, FLAG_SYSTEM);
+            setWallpaperComponentAndWait(TEST_COMPONENT_NAME, FLAG_SYSTEM);
         });
 
-        assertWithMessage("Home screen").that(
-                mWallpaperManager.getWallpaperInfo(FLAG_SYSTEM)).isNotNull();
-        assertWithMessage("Lock screen").that(
-                mWallpaperManager.getWallpaperInfo(FLAG_LOCK)).isNull();
+        assertNotNullOrDefaultWallpaper(FLAG_SYSTEM);
+        assertNullOrDefaultWallpaper(FLAG_LOCK);
     }
 
     @Test
@@ -638,7 +647,7 @@ public class WallpaperManagerTest {
         assertThat(mWallpaperManager.getWallpaperInfo(FLAG_LOCK)).isNull();
 
         runWithShellPermissionIdentity(() -> {
-            setWallpaperComponentAndWait(DEFAULT_COMPONENT_NAME, FLAG_LOCK);
+            setWallpaperComponentAndWait(TEST_COMPONENT_NAME, FLAG_LOCK);
         });
 
         assertWithMessage("Home screen").that(
@@ -650,17 +659,15 @@ public class WallpaperManagerTest {
     @Test
     public void setLiveWallpaper_lockScreen_multiEngine_setsLockWallpaperInfo() {
         assumeTrue(mWallpaperManager.isLockscreenLiveWallpaperEnabled());
-        assertThat(mWallpaperManager.getWallpaperInfo(FLAG_SYSTEM)).isNull();
-        assertThat(mWallpaperManager.getWallpaperInfo(FLAG_LOCK)).isNull();
+        assertNullOrDefaultWallpaper(FLAG_SYSTEM);
+        assertNullOrDefaultWallpaper(FLAG_LOCK);
 
         runWithShellPermissionIdentity(() -> {
-            setWallpaperComponentAndWait(DEFAULT_COMPONENT_NAME, FLAG_LOCK);
+            setWallpaperComponentAndWait(TEST_COMPONENT_NAME, FLAG_LOCK);
         });
 
-        assertWithMessage("Home screen").that(
-                mWallpaperManager.getWallpaperInfo(FLAG_SYSTEM)).isNull();
-        assertWithMessage("Lock screen").that(
-                mWallpaperManager.getWallpaperInfo(FLAG_LOCK)).isNotNull();
+        assertNullOrDefaultWallpaper(FLAG_SYSTEM);
+        assertNotNullOrDefaultWallpaper(FLAG_LOCK);
     }
 
     @Test
@@ -701,6 +708,64 @@ public class WallpaperManagerTest {
         } catch (InterruptedException | IOException e) {
             throw new AssertionError(e);
         }
+    }
+
+    /**
+     * Test that {@link WallpaperManager#clear(int)} triggers the correct number of
+     * {@link android.service.wallpaper.WallpaperService.Engine#onDestroy()} in different scenarios.
+     */
+    @Test
+    public void testClear() throws IOException {
+        assumeTrue(mWallpaperManager.isLockscreenLiveWallpaperEnabled());
+
+        // map of: argument passed to clear(int) -> WallpaperState -> expected number of onDestroy
+        Map<Integer, Map<WallpaperState, Integer>> testMap = Map.of(
+                FLAG_LOCK, Map.of(TWO_DIFFERENT_LIVE_WALLPAPERS, 1, TWO_SAME_LIVE_WALLPAPERS, 0),
+                FLAG_SYSTEM, Map.of(TWO_DIFFERENT_LIVE_WALLPAPERS, 1, TWO_SAME_LIVE_WALLPAPERS, 0),
+                FLAG_SYSTEM | FLAG_LOCK, Map.of(
+                        TWO_DIFFERENT_LIVE_WALLPAPERS, 2, TWO_SAME_LIVE_WALLPAPERS, 1));
+
+        Map<WallpaperState, String> stateDescriptions = Map.of(
+                TWO_DIFFERENT_LIVE_WALLPAPERS, "two different live wallpapers",
+                TWO_SAME_LIVE_WALLPAPERS, "a shared live wallpaper");
+
+        Map<Integer, String> flagDescriptions = Map.of(
+                FLAG_LOCK, "FLAG_LOCK",
+                FLAG_SYSTEM, "FLAG_SYSTEM",
+                FLAG_SYSTEM | FLAG_LOCK, "FLAG_SYSTEM | FLAG_LOCK");
+
+        Map<Integer, String> destroyCountDescriptions = Map.of(
+                0, "not destroy any engine",
+                1, "destroy exactly one engine",
+                2, "destroy two engines");
+
+        runWithShellPermissionIdentity(() -> {
+            for (Map.Entry<Integer, Map<WallpaperState, Integer>> entry : testMap.entrySet()) {
+                int which = entry.getKey();
+                Map<WallpaperState, Integer> map = entry.getValue();
+                for (Map.Entry<WallpaperState, Integer> e : map.entrySet()) {
+                    WallpaperState initialState = e.getKey();
+                    int expectedCount = e.getValue();
+                    WallpaperManagerTestUtils.goToState(mWallpaperManager, initialState);
+                    TestWallpaperService.Companion.resetCounts();
+                    mWallpaperManager.clear(which);
+                    for (int testWhich : List.of(FLAG_SYSTEM, FLAG_LOCK)) {
+                        if ((testWhich & which) > 0) {
+                            assertNullOrDefaultWallpaper(testWhich);
+                        } else {
+                            assertNotNullOrDefaultWallpaper(testWhich);
+                        }
+                    }
+                    String expectedBehaviourMessage = String.format("With %s, clear(%s) should %s",
+                            stateDescriptions.get(initialState),
+                            flagDescriptions.get(which),
+                            destroyCountDescriptions.get(expectedCount));
+                    assertWithMessage(expectedBehaviourMessage)
+                            .that(TestWallpaperService.Companion.getDestroyCount())
+                            .isEqualTo(expectedCount);
+                }
+            }
+        });
     }
 
     @Test
@@ -1589,7 +1654,7 @@ public class WallpaperManagerTest {
         TestLiveWallpaper.Companion.resetPrevAction();
 
         runWithShellPermissionIdentity(
-                () -> mWallpaperManager.setWallpaperComponent(DEFAULT_COMPONENT_NAME),
+                () -> mWallpaperManager.setWallpaperComponent(TEST_COMPONENT_NAME),
                 android.Manifest.permission.SET_WALLPAPER_COMPONENT);
 
         /* Overlay an activity to lose focus */
@@ -1794,6 +1859,22 @@ public class WallpaperManagerTest {
         } finally {
             mWallpaperManager.removeOnColorsChangedListener(callback);
             bmp.recycle();
+        }
+    }
+
+    private void assertNullOrDefaultWallpaper(int which) {
+        WallpaperInfo wallpaperInfo = mWallpaperManager.getWallpaperInfo(which);
+        if (mDefaultWallpaperInfo == null) assertThat(wallpaperInfo).isNull();
+        if (wallpaperInfo == null) return;
+        assertThat(wallpaperInfo.getComponent()).isEqualTo(mDefaultWallpaperInfo.getComponent());
+    }
+
+    private void assertNotNullOrDefaultWallpaper(int which) {
+        WallpaperInfo wallpaperInfo = mWallpaperManager.getWallpaperInfo(which);
+        assertThat(wallpaperInfo).isNotNull();
+        if (mDefaultWallpaperInfo != null) {
+            assertThat(wallpaperInfo.getComponent()).isNotEqualTo(
+                    mDefaultWallpaperInfo.getComponent());
         }
     }
 
