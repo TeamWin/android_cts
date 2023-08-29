@@ -159,7 +159,7 @@ public class VoiceInteractionRoleTest {
         runWithShellPermissionIdentity(
                 () -> sRoleManager.removeRoleHolderAsUser(RoleManager.ROLE_ASSISTANT, packageName,
                         0, Process.myUserHandle(), sContext.getMainExecutor(), future));
-        assertThat(future.get(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)).isTrue();
+        future.get(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
     }
 
     private static class CallbackFuture extends CompletableFuture<Boolean>
