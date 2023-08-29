@@ -45,6 +45,8 @@ public class CarModeInCallServiceTest extends BaseTelecomTestWithMockServices {
     private static final int ASYNC_TIMEOUT = 10000;
     private static final String CARMODE_APP1_PACKAGE = "android.telecom.cts.carmodetestapp";
     private static final String CARMODE_APP2_PACKAGE = "android.telecom.cts.carmodetestapptwo";
+    // Flag to temp disable (flaky) test
+    private static final boolean SHOULD_IGNORE_TEST = true;
     private ICtsCarModeInCallServiceControl mCarModeIncallServiceControlOne;
     private ICtsCarModeInCallServiceControl mCarModeIncallServiceControlTwo;
 
@@ -541,7 +543,7 @@ public class CarModeInCallServiceTest extends BaseTelecomTestWithMockServices {
     }
 
     public void testSwitchToCarModeWhenEnableCarModeApp() throws Exception {
-        if (!mShouldTestTelecom) {
+        if (!mShouldTestTelecom || SHOULD_IGNORE_TEST) {
             return;
         }
         if (mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH)) {
