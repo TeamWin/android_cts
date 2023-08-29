@@ -18,6 +18,7 @@ package android.server.wm.window;
 
 import static android.server.wm.ActivityManagerTestBase.launchHomeActivityNoWait;
 import static android.server.wm.BarTestUtils.assumeHasStatusBar;
+import static android.server.wm.CtsWindowInfoUtils.waitForStableWindowGeometry;
 import static android.server.wm.CtsWindowInfoUtils.waitForWindowOnTop;
 import static android.server.wm.UiDeviceUtils.pressUnlockButton;
 import static android.server.wm.UiDeviceUtils.pressWakeupButton;
@@ -297,6 +298,8 @@ public class WindowInputTests {
                     mActivity.addWindow(overlay, p);
                 });
         mInstrumentation.waitForIdleSync();
+        assertTrue("Failed to reach stable window geometry",
+                waitForStableWindowGeometry(5, TimeUnit.SECONDS));
         mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mView);
 
         assertTrue(touchReceived.get());
