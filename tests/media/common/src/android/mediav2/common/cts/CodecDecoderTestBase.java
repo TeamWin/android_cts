@@ -94,8 +94,18 @@ public class CodecDecoderTestBase extends CodecTestBase {
                 if (mIsVideo) {
                     ArrayList<MediaFormat> formatList = new ArrayList<>();
                     formatList.add(format);
-                    boolean selectHBD = doesAnyFormatHaveHDRProfile(mMediaType, formatList)
-                            || srcFile.contains("10bit");
+                    boolean selectHBD = doesAnyFormatHaveHDRProfile(mMediaType, formatList);
+                    if (!selectHBD && srcFile.contains("10bit")) {
+                        selectHBD = true;
+                        if (mMediaType.equals(MediaFormat.MIMETYPE_VIDEO_VP9)) {
+                            // In some cases, webm extractor may not signal profile for 10-bit VP9
+                            // clips. In such cases, set profile to a 10-bit compatible profile.
+                            // TODO (b/295804596) Remove the following once webm extractor signals
+                            // profile correctly for all 10-bit clips
+                            int[] profileArray = CodecTestBase.PROFILE_HDR_MAP.get(mMediaType);
+                            format.setInteger(MediaFormat.KEY_PROFILE, profileArray[0]);
+                        }
+                    }
                     format.setInteger(MediaFormat.KEY_COLOR_FORMAT,
                             getColorFormat(mCodecName, mMediaType, mSurface != null, selectHBD));
                     if (selectHBD && (format.getInteger(MediaFormat.KEY_COLOR_FORMAT)
