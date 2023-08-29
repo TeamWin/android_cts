@@ -20,16 +20,16 @@ import android.app.AppOpsManager
 import android.app.AppOpsManager.OPSTR_READ_CONTACTS
 import android.app.AppOpsManager.OPSTR_WIFI_SCAN
 import android.app.AppOpsManager.OP_FLAGS_ALL
-import android.content.Intent
 import android.content.ComponentName
+import android.content.Intent
 import android.platform.test.annotations.AppModeFull
-import android.platform.test.annotations.FlakyTest
+import androidx.test.filters.FlakyTest
 import androidx.test.platform.app.InstrumentationRegistry
 import com.google.common.truth.Truth.assertThat
+import java.lang.Thread.sleep
 import org.junit.Before
 import org.junit.Ignore
 import org.junit.Test
-import java.lang.Thread.sleep
 
 private const val APK_PATH = "/data/local/tmp/cts/appops/"
 

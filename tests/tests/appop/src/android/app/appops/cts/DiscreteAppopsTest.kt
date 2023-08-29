@@ -18,13 +18,13 @@ package android.app.appops.cts
 import android.app.AppOpsManager
 import android.app.AppOpsManager.HISTORICAL_MODE_ENABLED_ACTIVE
 import android.app.AppOpsManager.HISTORICAL_MODE_ENABLED_PASSIVE
-import android.app.AppOpsManager.HistoricalOps
+import android.app.AppOpsManager.HISTORY_FLAGS_ALL
 import android.app.AppOpsManager.HISTORY_FLAG_AGGREGATE
 import android.app.AppOpsManager.HISTORY_FLAG_DISCRETE
-import android.app.AppOpsManager.HISTORY_FLAGS_ALL
+import android.app.AppOpsManager.HistoricalOps
+import android.app.AppOpsManager.KEY_BG_STATE_SETTLE_TIME
 import android.app.AppOpsManager.KEY_FG_SERVICE_STATE_SETTLE_TIME
 import android.app.AppOpsManager.KEY_TOP_STATE_SETTLE_TIME
-import android.app.AppOpsManager.KEY_BG_STATE_SETTLE_TIME
 import android.app.AppOpsManager.MODE_ALLOWED
 import android.app.AppOpsManager.MODE_IGNORED
 import android.app.AppOpsManager.OPSTR_CAMERA
@@ -40,22 +40,22 @@ import android.content.Intent
 import android.content.ServiceConnection
 import android.os.IBinder
 import android.platform.test.annotations.AppModeFull
-import android.platform.test.annotations.FlakyTest
 import android.provider.DeviceConfig
 import android.provider.DeviceConfig.NAMESPACE_PRIVACY
 import android.provider.Settings
+import androidx.test.filters.FlakyTest
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.UiDevice
 import com.android.compatibility.common.util.SystemUtil
 import com.google.common.truth.Truth.assertThat
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.locks.ReentrantLock
+import java.util.function.Consumer
 import org.junit.After
 import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.locks.ReentrantLock
-import java.util.concurrent.TimeUnit
-import java.util.function.Consumer
 
 private const val PACKAGE_NAME = "android.app.appops.cts.appfordiscretetest"
 private const val TIMEOUT_MILLIS = 45000L
