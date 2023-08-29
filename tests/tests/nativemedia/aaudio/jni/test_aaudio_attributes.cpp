@@ -607,6 +607,7 @@ void InputPresetTest::SetUp() {
 TEST_P(InputPresetTest, checkAttributes) {
     switch (mPreset) {
         case AAUDIO_INPUT_PRESET_SYSTEM_ECHO_REFERENCE:
+            if (!isEchoReferenceSupported()) return;
             enableAudioOutputPermission();
             break;
         case AAUDIO_INPUT_PRESET_SYSTEM_HOTWORD:

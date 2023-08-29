@@ -255,6 +255,8 @@ private:
 
 bool isIEC61937Supported();
 
+bool isEchoReferenceSupported();
+
 void enableAudioOutputPermission();
 
 void enableAudioHotwordPermission();
