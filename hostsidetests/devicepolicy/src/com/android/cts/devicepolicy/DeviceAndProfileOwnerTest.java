@@ -105,9 +105,6 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
 
     private static final String DISALLOW_REMOVE_USER = "no_remove_user";
 
-    private static final String CUSTOMIZATION_APP_PKG = "com.android.cts.customizationapp";
-    private static final String CUSTOMIZATION_APP_APK = "CtsCustomizationApp.apk";
-
     private static final String AUTOFILL_APP_PKG = "com.android.cts.devicepolicy.autofillapp";
     private static final String AUTOFILL_APP_APK = "CtsDevicePolicyAutofillApp.apk";
 
@@ -180,7 +177,6 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         getDevice().uninstallPackage(VPN_APP_NOT_ALWAYS_ON_APK);
         getDevice().uninstallPackage(INTENT_RECEIVER_PKG);
         getDevice().uninstallPackage(INTENT_SENDER_PKG);
-        getDevice().uninstallPackage(CUSTOMIZATION_APP_PKG);
         getDevice().uninstallPackage(AUTOFILL_APP_PKG);
         getDevice().uninstallPackage(CONTENT_CAPTURE_SERVICE_PKG);
         getDevice().uninstallPackage(CONTENT_CAPTURE_APP_PKG);
@@ -507,27 +503,6 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         } finally {
             runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".DelegatedCertInstallerHelper",
                     "testManualClearGeneratedKey", mUserId);
-        }
-    }
-
-    // Sets restrictions and launches non-admin app, that tries to set wallpaper.
-    // Non-admin apps must not violate any user restriction.
-    @Test
-    public void testSetWallpaper_disallowed() throws Exception {
-        // UserManager.DISALLOW_SET_WALLPAPER
-        final String DISALLOW_SET_WALLPAPER = "no_set_wallpaper";
-        if (!hasService("wallpaper")) {
-            CLog.d("testSetWallpaper_disallowed(): device does not support wallpapers");
-            return;
-        }
-
-        installAppAsUser(CUSTOMIZATION_APP_APK, mUserId);
-        try {
-            changeUserRestrictionOrFail(DISALLOW_SET_WALLPAPER, true, mUserId);
-            runDeviceTestsAsUser(CUSTOMIZATION_APP_PKG, ".CustomizationTest",
-                "testSetWallpaper_disallowed", mUserId);
-        } finally {
-            changeUserRestrictionOrFail(DISALLOW_SET_WALLPAPER, false, mUserId);
         }
     }
 

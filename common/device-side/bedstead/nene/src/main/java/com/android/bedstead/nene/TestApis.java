@@ -45,6 +45,7 @@ import com.android.bedstead.nene.telecom.Telecom;
 import com.android.bedstead.nene.telephony.Telephony;
 import com.android.bedstead.nene.ui.Ui;
 import com.android.bedstead.nene.users.Users;
+import com.android.bedstead.nene.wallpaper.Wallpaper;
 import com.android.bedstead.nene.wifi.Wifi;
 
 /**
@@ -203,6 +204,12 @@ public final class TestApis {
         return Adb.INSTANCE;
     }
 
+    /** Access Test APIs related to wallpaper. */
+    public static Wallpaper wallpaper() {
+        return Wallpaper.INSTANCE;
+    }
+
+    /** Access Test APIs related to telephony. */
     public static Telephony telephony() {
         return Telephony.INSTANCE;
     }
