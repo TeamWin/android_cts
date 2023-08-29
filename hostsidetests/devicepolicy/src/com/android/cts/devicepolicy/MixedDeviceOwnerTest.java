@@ -378,13 +378,6 @@ public final class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
 
     @Override
     @Test
-    @IgnoreOnHeadlessSystemUserMode(reason = "Headless system user doesn't have UI / credentials")
-    public void testSetKeyguardDisabledFeatures() throws Exception {
-        super.testSetKeyguardDisabledFeatures();
-    }
-
-    @Override
-    @Test
     @IgnoreOnHeadlessSystemUserMode(reason = "Headless system user doesn't launch activities")
     public void testPermissionAppUpdate() throws Exception {
         super.testPermissionAppUpdate();

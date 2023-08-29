@@ -87,6 +87,8 @@ android_test {
     srcs: [
         "src/test/java/**/*.java",
         "src/test/java/**/*.kt",
+        "src/test/res/**/*.java",
+        "src/test/res/**/*.kt",
     ],
     test_suites: [
         "general-tests",

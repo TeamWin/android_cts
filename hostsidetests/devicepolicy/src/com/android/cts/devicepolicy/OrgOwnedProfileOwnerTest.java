@@ -332,12 +332,6 @@ public final class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".CommonCriteriaModeTest", mUserId);
     }
 
-    @Test
-    public void testSetKeyguardDisabledFeatures() throws Exception {
-        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".KeyguardDisabledFeaturesTest",
-                "testSetKeyguardDisabledFeatures_onParent", mUserId);
-    }
-
     private void removeOrgOwnedProfile() throws Exception {
         sendWipeProfileBroadcast(mUserId);
         waitUntilUserRemoved(mUserId);

@@ -840,24 +840,6 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         executeDeviceTestClass(".KeyManagementTest");
     }
 
-    @TemporarilyIgnoreOnHeadlessSystemUserMode(bugId = "218408549",
-            reason = "Will be migrated to new test infra")
-    @Test
-    public void testInstallKeyPairLogged() throws Exception {
-        assertMetricsLogged(getDevice(), () -> {
-                executeDeviceTestMethod(".KeyManagementTest", "testCanInstallCertChain");
-                }, new DevicePolicyEventWrapper.Builder(EventId.INSTALL_KEY_PAIR_VALUE)
-                .setAdminPackageName(DEVICE_ADMIN_PKG)
-                .setBoolean(false)
-                .setStrings("notCredentialManagementApp")
-                .build(),
-                new DevicePolicyEventWrapper.Builder(EventId.REMOVE_KEY_PAIR_VALUE)
-                .setAdminPackageName(DEVICE_ADMIN_PKG)
-                .setBoolean(false)
-                .setStrings("notCredentialManagementApp")
-                .build());
-    }
-
     @TemporarilyIgnoreOnHeadlessSystemUserMode(bugId = "197859595",
             reason = "Will be migrated to new test infra")
     @Test
@@ -1004,12 +986,6 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
                 .setInt(KEYGUARD_DISABLE_SECURE_CAMERA)
                 .setStrings(NOT_CALLED_FROM_PARENT)
                 .build());
-    }
-
-    @Test
-    public void testSetKeyguardDisabledFeatures() throws Exception {
-        executeDeviceTestMethod(".KeyguardDisabledFeaturesTest",
-                "testSetKeyguardDisabledFeatures");
     }
 
     @Test

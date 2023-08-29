@@ -32,6 +32,7 @@ import com.android.bedstead.harrier.annotations.HiddenApiTest;
 import com.android.bedstead.harrier.annotations.IntTestParameter;
 import com.android.bedstead.harrier.annotations.OtherUser;
 import com.android.bedstead.harrier.annotations.PermissionTest;
+import com.android.bedstead.harrier.annotations.PolicyArgument;
 import com.android.bedstead.harrier.annotations.RequireNotHeadlessSystemUserMode;
 import com.android.bedstead.harrier.annotations.RequireRunOnAdditionalUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnCloneProfile;
@@ -77,6 +78,7 @@ import org.junit.runners.model.TestClass;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -547,7 +549,16 @@ public final class BedsteadJUnit4 extends BlockJUnit4ClassRunner {
             boolean hasParameterised = false;
 
             for (Annotation annotation : annotations) {
-                if (annotation instanceof StringTestParameter) {
+
+                if (annotation instanceof PolicyArgument) {
+                    if (hasParameterised) {
+                        throw new IllegalStateException(
+                                "Each parameter can only have a single parameterised annotation");
+                    }
+                    hasParameterised = true;
+
+                    expandedMethods = generatePolicyArgumentTests(method, expandedMethods);
+                } else if (annotation instanceof StringTestParameter) {
                     if (hasParameterised) {
                         throw new IllegalStateException(
                                 "Each parameter can only have a single parameterised annotation");
@@ -589,6 +600,88 @@ public final class BedsteadJUnit4 extends BlockJUnit4ClassRunner {
             }
         }
 
+        return expandedMethods;
+    }
+
+    private static Stream<FrameworkMethod> generatePolicyArgumentTests(
+            FrameworkMethod frameworkMethod, Stream<FrameworkMethod> expandedMethods) {
+        try {
+            Class<?>[] policyClasses;
+            PolicyAppliesTest policyAppliesTestAnnotation =
+                    frameworkMethod.getMethod().getAnnotation(PolicyAppliesTest.class);
+            PolicyDoesNotApplyTest policyDoesNotApplyTestAnnotation =
+                    frameworkMethod.getMethod().getAnnotation(PolicyDoesNotApplyTest.class);
+            CanSetPolicyTest canSetPolicyTestAnnotation =
+                    frameworkMethod.getMethod().getAnnotation(CanSetPolicyTest.class);
+            CannotSetPolicyTest cannotSetPolicyTestAnnotation =
+                    frameworkMethod.getMethod().getAnnotation(CannotSetPolicyTest.class);
+
+            if (policyAppliesTestAnnotation != null) {
+                policyClasses = policyAppliesTestAnnotation.policy();
+            } else if (policyDoesNotApplyTestAnnotation != null) {
+                policyClasses = policyDoesNotApplyTestAnnotation.policy();
+            } else if (canSetPolicyTestAnnotation != null) {
+                policyClasses = canSetPolicyTestAnnotation.policy();
+            } else if (cannotSetPolicyTestAnnotation != null) {
+                policyClasses = cannotSetPolicyTestAnnotation.policy();
+            } else {
+                throw new NeneException("PolicyArgument annotation can only by used with a test "
+                        + "that is marked with either @PolicyAppliesTest, "
+                        + "@PolicyDoesNotApplyTest, @CanSetPolicyTest or @CannotSetPolicyTest.");
+            }
+
+            Map<String, Set<Annotation>> policyClassToAnnotationsMap =
+                    Policy.getAnnotationsForPolicies(
+                            Policy.getEnterprisePolicyWithCallingClass(policyClasses));
+
+            List<FrameworkMethod> expandedMethodList = expandedMethods.toList();
+            Set<FrameworkMethod> tempExpandedFrameworkMethodSet = new HashSet<>();
+            for (Class<?> policyClass : policyClasses) {
+                Method validArgumentsMethod = policyClass.getDeclaredMethod("validArguments");
+                Set<?> validArguments =
+                        (Set<?>) validArgumentsMethod.invoke(policyClass.newInstance());
+                if (validArguments.isEmpty()) {
+                    throw new NeneException(
+                            "Empty valid arguments passed for "
+                                    + policyClass.getSimpleName() + " policy");
+                }
+
+                Set<Annotation> policyAnnotations =
+                        policyClassToAnnotationsMap.get(policyClass.getName());
+
+                for (FrameworkMethod expandedMethod : expandedMethodList) {
+                    Annotation parameterizedAnnotation =
+                            ((BedsteadFrameworkMethod) expandedMethod).getParameterizedAnnotation();
+                    if ((policyAppliesTestAnnotation != null &&
+                            policyAnnotations.contains((parameterizedAnnotation))) ||
+                            (policyDoesNotApplyTestAnnotation != null) ||
+                            (canSetPolicyTestAnnotation != null &&
+                                    policyAnnotations.contains(parameterizedAnnotation)) ||
+                            (cannotSetPolicyTestAnnotation != null)) {
+                        tempExpandedFrameworkMethodSet.addAll(
+                                applyPolicyArgumentParameter(expandedMethod, validArguments));
+                    }
+                }
+            }
+
+            return tempExpandedFrameworkMethodSet.stream();
+        } catch (NoSuchMethodException | InvocationTargetException
+                 | IllegalAccessException | InstantiationException e) {
+            // Should never happen as validArguments method will always have a default
+            // implementation for every EnterprisePolicy
+            throw new NeneException(
+                    "PolicyArgument parameter annotation cannot be added to a test "
+                            + "without the validArguments method specified for the "
+                            + "EnterprisePolicy", e);
+        }
+    }
+
+    private static List<FrameworkMethodWithParameter> applyPolicyArgumentParameter(
+            FrameworkMethod frameworkMethod, Set<?> validArguments) {
+        List<FrameworkMethodWithParameter> expandedMethods = new ArrayList<>(validArguments.size());
+        for (Object arg : validArguments) {
+            expandedMethods.add(new FrameworkMethodWithParameter(frameworkMethod, arg));
+        }
         return expandedMethods;
     }
 

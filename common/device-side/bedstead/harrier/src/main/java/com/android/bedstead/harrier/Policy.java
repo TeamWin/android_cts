@@ -529,6 +529,72 @@ public final class Policy {
     }
 
     /**
+     * Get annotations that were derived against each passed in {@link EnterprisePolicy}
+     */
+    public static Map<String, Set<Annotation>> getAnnotationsForPolicies(
+            List<EnterprisePolicyWrapper> enterprisePolicies) {
+        Map<String, Set<Annotation>> policyClassToAnnotationsMap = new HashMap<>();
+
+        for (EnterprisePolicyWrapper enterprisePolicyWrapper : enterprisePolicies) {
+            EnterprisePolicy enterprisePolicyAnnotation = enterprisePolicy(
+                    enterprisePolicyWrapper.dpc(),
+                    enterprisePolicyWrapper.permissions(),
+                    enterprisePolicyWrapper.appOps(),
+                    enterprisePolicyWrapper.delegatedScopes());
+            Set<Annotation> annotations = new HashSet<>();
+
+            for (Map.Entry<Function<EnterprisePolicy, Set<Annotation>>, Set<Integer>> annotation :
+                    ANNOTATIONS_MAP.entrySet()) {
+                if (policyWillApply(enterprisePolicyAnnotation.dpc(), annotation.getValue())) {
+                    if (policyClassToAnnotationsMap.get(
+                            enterprisePolicyWrapper.policyClass()) == null) {
+                        annotations.addAll(annotation.getKey().apply(enterprisePolicyAnnotation));
+                        policyClassToAnnotationsMap.put(
+                                enterprisePolicyWrapper.policyClass(), annotations);
+                    } else {
+                        policyClassToAnnotationsMap.get(enterprisePolicyWrapper.policyClass())
+                                .addAll(annotation.getKey().apply(enterprisePolicyAnnotation));
+                    }
+                }
+            }
+        }
+
+        return policyClassToAnnotationsMap;
+    }
+
+    /**
+     * Get {@link EnterprisePolicy} values along with the class it was annotated on
+     */
+    public static List<EnterprisePolicyWrapper> getEnterprisePolicyWithCallingClass(
+            Class<?>[] policies) {
+        if (policies.length == 0) {
+            throw new IllegalStateException("Cannot get EnterprisePolicy for zero policy classes");
+        }
+
+        List<EnterprisePolicyWrapper> enterprisePolicies = new ArrayList<>();
+
+        for (Class<?> policy : policies) {
+            EnterprisePolicy enterprisePolicy = policy.getAnnotation(EnterprisePolicy.class);
+            if (enterprisePolicy == null) {
+                throw new IllegalStateException(
+                        "Policy class must be annotated with EnterprisePolicy");
+            }
+
+            Policy.validateFlags(policy.getName(), enterprisePolicy.dpc());
+
+            enterprisePolicies.add(
+                    new EnterprisePolicyWrapper(
+                            policy.getName(),
+                            enterprisePolicy.dpc(),
+                            enterprisePolicy.permissions(),
+                            enterprisePolicy.appOps(),
+                            enterprisePolicy.delegatedScopes()));
+        }
+
+        return enterprisePolicies;
+    }
+
+    /**
      * Get parameterized test runs for the given policy.
      *
      * <p>These are states which should be run where the policy is able to be applied.

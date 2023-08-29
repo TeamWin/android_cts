@@ -215,14 +215,6 @@ public final class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTes
 
     @Test
     @Override
-    public void testSetKeyguardDisabledFeatures() throws Exception {
-        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".KeyguardDisabledFeaturesTest",
-                "testSetKeyguardDisabledFeatures_onParentSilentIgnoreWhenCallerIsNotOrgOwnedPO",
-                mUserId);
-    }
-
-    @Test
-    @Override
     public void testSetKeyguardDisabledSecureCameraLogged() {
         // Managed profiles are not allowed to set keyguard disabled secure camera
     }

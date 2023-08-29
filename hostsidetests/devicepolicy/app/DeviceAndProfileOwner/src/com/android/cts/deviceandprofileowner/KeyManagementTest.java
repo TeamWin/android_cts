@@ -167,33 +167,6 @@ public class KeyManagementTest extends BaseDeviceAdminTest {
         return certChain;
     }
 
-    public void testCanInstallCertChain() throws Exception {
-        // Use assets/generate-client-cert-chain.sh to regenerate the client cert chain.
-        final PrivateKey privKey = loadPrivateKeyFromAsset("user-cert-chain.key");
-        final Certificate[] certChain = loadCertificateChain("user-cert-chain.crt")
-                .toArray(new Certificate[0]);
-        final String alias = "com.android.test.clientkeychain";
-
-        // Install keypairs.
-        assertThat(mDevicePolicyManager.installKeyPair(getWho(), privKey, certChain, alias, true))
-                .isTrue();
-        try {
-            // Verify only the requested key was actually granted.
-            assertGranted(alias, true);
-
-            // Verify the granted key is actually obtainable in PrivateKey form.
-            assertThat(KeyChain.getPrivateKey(mActivity, alias).getAlgorithm()).isEqualTo("RSA");
-
-            // Verify the certificate chain is correct
-            assertThat(KeyChain.getCertificateChain(mActivity, alias)).isEqualTo(certChain);
-        } finally {
-            // Delete both keypairs.
-            assertThat(mDevicePolicyManager.removeKeyPair(getWho(), alias)).isTrue();
-        }
-        // Verify they're actually gone.
-        assertGranted(alias, false);
-    }
-
     byte[] signDataWithKey(String algoIdentifier, PrivateKey privateKey) throws Exception {
         byte[] data = new String("hello").getBytes();
         Signature sign = Signature.getInstance(algoIdentifier);
