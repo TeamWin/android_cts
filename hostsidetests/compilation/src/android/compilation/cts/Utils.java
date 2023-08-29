@@ -30,10 +30,14 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 public class Utils {
+    private static final Duration SOFT_REBOOT_TIMEOUT = Duration.ofMinutes(3);
+
     private final TestInformation mTestInfo;
 
     public Utils(TestInformation testInfo) throws Exception {
@@ -103,7 +107,29 @@ public class Utils {
         return file;
     }
 
+    public void softReboot() throws Exception {
+        // `waitForBootComplete` relies on `dev.bootcomplete`.
+        mTestInfo.getDevice().executeShellCommand("setprop dev.bootcomplete 0");
+        mTestInfo.getDevice().executeShellCommand("setprop ctl.restart zygote");
+        boolean success = mTestInfo.getDevice().waitForBootComplete(SOFT_REBOOT_TIMEOUT.toMillis());
+        assertWithMessage("Soft reboot didn't complete in %ss", SOFT_REBOOT_TIMEOUT.getSeconds())
+                .that(success)
+                .isTrue();
+    }
+
+    public static void dumpContainsDexFile(String dump, String dexFile) {
+        assertThat(dump).containsMatch(dexFileToPattern(dexFile));
+    }
+
+    public static void dumpDoesNotContainDexFile(String dump, String dexFile) {
+        assertThat(dump).doesNotContainMatch(dexFileToPattern(dexFile));
+    }
+
     private String getDmPath(String apkPath) throws Exception {
         return apkPath.replaceAll("\\.apk$", ".dm");
+    }
+
+    private static Pattern dexFileToPattern(String dexFile) {
+        return Pattern.compile(String.format("[\\s/](%s)\\s?", Pattern.quote(dexFile)));
     }
 }
