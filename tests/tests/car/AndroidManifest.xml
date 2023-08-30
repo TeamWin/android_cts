@@ -35,8 +35,6 @@
     <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS" />
     <!-- Allow query of any normal app on the device -->
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
-    <!-- Allow to get the CarTaskViewController -->
-    <uses-permission android:name="android.car.permission.MANAGE_CAR_SYSTEM_UI" />
     <!-- For CarRemoteAccessManagerTest -->
     <uses-permission android:name="android.car.permission.USE_REMOTE_ACCESS" />
 
