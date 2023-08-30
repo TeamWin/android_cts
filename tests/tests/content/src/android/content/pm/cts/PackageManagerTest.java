@@ -237,6 +237,8 @@ public class PackageManagerTest {
     private static final String HELLO_WORLD_APK = SAMPLE_APK_BASE + "HelloWorld5.apk";
     private static final String HELLO_WORLD_DIFF_SIGNER_APK =
             SAMPLE_APK_BASE + "HelloWorld5DifferentSigner.apk";
+    private static final String HELLO_WORLD_FLAGS_APK =
+            SAMPLE_APK_BASE + "HelloWorld5NonDefaultFlags.apk";
     private static final String HELLO_WORLD_UPDATED_APK = SAMPLE_APK_BASE + "HelloWorld7.apk";
     private static final String HELLO_WORLD_LOTS_OF_FLAGS_APK =
             SAMPLE_APK_BASE + "HelloWorldLotsOfFlags.apk";
@@ -2840,6 +2842,34 @@ public class PackageManagerTest {
         assertEquals("Success\n",
                 SystemUtil.runShellCommand("pm uninstall " + HELLO_WORLD_PACKAGE_NAME));
         assertFalse(isAppInstalled(HELLO_WORLD_PACKAGE_NAME));
+    }
+
+    @Test
+    public void testInstallArchivedCheckFlags() throws Exception {
+        // Install a default APK.
+        assertEquals("Success\n",
+                SystemUtil.runShellCommand("pm install-archived -t " + HELLO_WORLD_APK));
+        assertTrue(isAppInstalled(HELLO_WORLD_PACKAGE_NAME));
+        String pkgFlags = parsePackageDump(HELLO_WORLD_PACKAGE_NAME, "    pkgFlags=[");
+        assertEquals(" ALLOW_CLEAR_USER_DATA ALLOW_BACKUP ]", pkgFlags);
+        String privatePkgFlags = parsePackageDump(HELLO_WORLD_PACKAGE_NAME,
+                "    privatePkgFlags=[");
+        assertEquals(" ALLOW_AUDIO_PLAYBACK_CAPTURE "
+                        + "PRIVATE_FLAG_ALLOW_NATIVE_HEAP_POINTER_TAGGING ]",
+                privatePkgFlags);
+
+        // Install an APK with non default flags.
+        assertEquals("Success\n",
+                SystemUtil.runShellCommand("pm install-archived -t " + HELLO_WORLD_FLAGS_APK));
+        assertTrue(isAppInstalled(HELLO_WORLD_PACKAGE_NAME));
+        pkgFlags = parsePackageDump(HELLO_WORLD_PACKAGE_NAME, "    pkgFlags=[");
+        assertEquals(" ]", pkgFlags);
+        privatePkgFlags = parsePackageDump(HELLO_WORLD_PACKAGE_NAME,
+                "    privatePkgFlags=[");
+        assertEquals(" ALLOW_AUDIO_PLAYBACK_CAPTURE "
+                        + "PRIVATE_FLAG_REQUEST_LEGACY_EXTERNAL_STORAGE "
+                        + "PRIVATE_FLAG_ALLOW_NATIVE_HEAP_POINTER_TAGGING ]",
+                privatePkgFlags);
     }
 
     @Test

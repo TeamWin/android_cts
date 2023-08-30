@@ -48,6 +48,18 @@ android_test {
 
 //-----------------------------------------------------------
 android_test {
+    name: "HelloWorld5NonDefaultFlags",
+    defaults: ["hello_world_defaults"],
+    srcs: ["src5/**/*.java"],
+    manifest: "AndroidManifestNonDefaultFlags.xml",
+    test_suites: [
+        "general-tests",
+    ],
+    v4_signature: true,
+}
+
+//-----------------------------------------------------------
+android_test {
     name: "HelloWorld5DifferentSigner",
     defaults: ["hello_world_defaults"],
     srcs: ["src5/**/*.java"],
