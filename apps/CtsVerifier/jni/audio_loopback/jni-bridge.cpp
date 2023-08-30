@@ -106,6 +106,16 @@ JNIEXPORT jboolean JNICALL
     return false;
 }
 
+JNIEXPORT jint JNICALL
+Java_com_android_cts_verifier_audio_NativeAnalyzerThread_getHardwareFormat
+        (JNIEnv *env __unused, jobject obj __unused, jlong pAnalyzer) {
+    NativeAudioAnalyzer * analyzer = (NativeAudioAnalyzer *) pAnalyzer;
+    if (analyzer != nullptr) {
+        return analyzer->getHardwareFormat();
+    }
+    return (jint) AAUDIO_FORMAT_INVALID;
+}
+
 JNIEXPORT jint JNICALL Java_com_android_cts_verifier_audio_NativeAnalyzerThread_getError
   (JNIEnv *env __unused, jobject obj __unused, jlong pAnalyzer) {
     NativeAudioAnalyzer * analyzer = (NativeAudioAnalyzer *) pAnalyzer;

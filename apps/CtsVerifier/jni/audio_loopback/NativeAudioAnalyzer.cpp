@@ -222,6 +222,10 @@ bool NativeAudioAnalyzer::has24BitHardwareSupport() {
     return mHas24BitHardwareSupport;
 }
 
+int NativeAudioAnalyzer::getHardwareFormat() {
+    return mHardwareFormat;
+}
+
 int NativeAudioAnalyzer::getSampleRate() {
     return mOutputSampleRate;
 }
@@ -264,7 +268,8 @@ aaudio_result_t NativeAudioAnalyzer::openAudio(int inputDeviceId, int outputDevi
     mIsLowLatencyStream =
         AAudioStream_getPerformanceMode(mOutputStream) == AAUDIO_PERFORMANCE_MODE_LOW_LATENCY;
 
-    mHas24BitHardwareSupport = has24BitSupport(AAudioStream_getHardwareFormat(mOutputStream));
+    mHardwareFormat = AAudioStream_getHardwareFormat(mOutputStream);
+    mHas24BitHardwareSupport = has24BitSupport(mHardwareFormat);
 
     int32_t outputFramesPerBurst = AAudioStream_getFramesPerBurst(mOutputStream);
     (void) AAudioStream_setBufferSizeInFrames(mOutputStream, outputFramesPerBurst * kDefaultOutputSizeBursts);

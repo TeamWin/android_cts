@@ -40,6 +40,7 @@ public class NativeAnalyzerThread {
     private volatile double mTimestampLatencyMillis = 0.0;
     private volatile boolean mIsLowLatencyStream = false;
     private volatile boolean mHas24BitHardwareSupport = false;
+    private volatile int mHardwareFormat = 0; // AAUDIO_FORMAT_UNSPECIFIED
 
     private int mInputPreset = 0;
 
@@ -88,6 +89,7 @@ public class NativeAnalyzerThread {
     private native double getConfidence(long audioContext);
     private native boolean isLowlatency(long audioContext);
     private native boolean has24BitHardwareSupport(long audioContext);
+    private native int getHardwareFormat(long audioContext);
 
     private native int getSampleRate(long audio_context);
 
@@ -110,6 +112,10 @@ public class NativeAnalyzerThread {
      */
     public boolean has24BitHardwareSupport() {
         return mHas24BitHardwareSupport;
+    }
+
+    public int getHardwareFormat() {
+        return mHardwareFormat;
     }
 
     public double getTimestampLatencyMillis() {
@@ -170,6 +176,7 @@ public class NativeAnalyzerThread {
             }
             mIsLowLatencyStream = isLowlatency(audioContext);
             mHas24BitHardwareSupport = has24BitHardwareSupport(audioContext);
+            mHardwareFormat = getHardwareFormat(audioContext);
 
             final long timeoutMillis = mSecondsToRun * 1000;
             final long startedAtMillis = System.currentTimeMillis();
