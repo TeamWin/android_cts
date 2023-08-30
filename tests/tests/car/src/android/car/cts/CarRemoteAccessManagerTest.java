@@ -127,6 +127,17 @@ public final class CarRemoteAccessManagerTest extends AbstractCarTestCase {
                 () -> mCarRemoteAccessManager.reportRemoteTaskDone(INVALID_TASK_ID));
     }
 
+    @Test
+    @ApiTest(apis = {
+            "android.car.remoteaccess.CarRemoteAccessManager#isTaskScheduleSupported",
+    })
+    public void testScheduleTask() {
+        assumeTrue("Task scheduling is not supported, skipping the test",
+                mCarRemoteAccessManager.isTaskScheduleSupported());
+
+        // TODO(b/282792374): Implement this.
+    }
+
     private static final class RemoteTaskClientCallbackImpl implements RemoteTaskClientCallback {
         private final Object mLock = new Object();
 
