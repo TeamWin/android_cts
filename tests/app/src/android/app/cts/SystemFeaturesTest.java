@@ -70,12 +70,8 @@ import java.util.Set;
  */
 @RunWith(JUnit4.class)
 public class SystemFeaturesTest {
-    private static final String FEATURE_GOOGLE_BATTERYLESS_DEVICE =
-            "com.google.android.feature.batteryless_device";
-    private static final String FEATURE_GOOGLE_LARGE_DISPLAY =
-            "com.google.android.feature.large_display";
-    private static final String FEATURE_GOOGLE_OTHER_FORM_FACTOR =
-            "com.google.android.feature.other_form_factor";
+    private static final String FEATURE_GOOGLE_ENTERPRISE_DEVICE =
+            "com.google.android.feature.ENTERPRISE_DEVICE";
 
     private Context mContext;
     private PackageManager mPackageManager;
@@ -337,13 +333,10 @@ public class SystemFeaturesTest {
     @Test
     public void testNfcFeatures() {
         if (NfcAdapter.getDefaultAdapter(mContext) != null) {
-            // Watches MAY support all FEATURE_NFC features when an NfcAdapter is available, but
-            // non-watches MUST support them both.
+            // Watches/Enterprise devices MAY support all FEATURE_NFC features when an NfcAdapter
+            // is available, but other MUST support them both.
             if (mPackageManager.hasSystemFeature(PackageManager.FEATURE_WATCH)
-                    || (mPackageManager.hasSystemFeature(FEATURE_GOOGLE_BATTERYLESS_DEVICE)
-                    && mPackageManager.hasSystemFeature(FEATURE_GOOGLE_OTHER_FORM_FACTOR))
-                    || (mPackageManager.hasSystemFeature(FEATURE_GOOGLE_LARGE_DISPLAY)
-                    && mPackageManager.hasSystemFeature(FEATURE_GOOGLE_OTHER_FORM_FACTOR))) {
+                    || mPackageManager.hasSystemFeature(FEATURE_GOOGLE_ENTERPRISE_DEVICE)) {
                 assertOneAvailable(PackageManager.FEATURE_NFC,
                     PackageManager.FEATURE_NFC_HOST_CARD_EMULATION);
             } else {
