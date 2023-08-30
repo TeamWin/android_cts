@@ -47,6 +47,10 @@ import com.android.cts.verifier.audio.audiolib.AudioUtils;
 import com.android.cts.verifier.audio.audiolib.DisplayUtils;
 import com.android.cts.verifier.audio.audiolib.StatUtils;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 /**
  * CtsVerifier Audio Loopback Latency Test
  */
@@ -138,6 +142,8 @@ public class AudioLoopbackLatencyActivity extends PassFailButtons.Activity {
     // The audio stream callback threads should stop and close
     // in less than a few hundred msec. This is a generous timeout value.
     private static final int STOP_TEST_TIMEOUT_MSEC = 2 * 1000;
+
+    private static final String LOG_ERROR_STR = "Could not log metric.";
 
     private TestSpec[] mTestSpecs = new TestSpec[NUM_TEST_ROUTES];
     class TestSpec {
@@ -323,6 +329,48 @@ public class AudioLoopbackLatencyActivity extends PassFailButtons.Activity {
                     mHas24BitHardwareSupport,
                     ResultType.NEUTRAL,
                     ResultUnit.NONE);
+        }
+
+        void addToJson(JSONObject jsonObject) {
+            try {
+                jsonObject.put(
+                        KEY_ROUTEINDEX,
+                        mRouteId);
+
+                jsonObject.put(
+                        KEY_LATENCY,
+                        mMeanLatencyMS);
+
+                jsonObject.put(
+                        KEY_CONFIDENCE,
+                        mMeanConfidence);
+
+                jsonObject.put(
+                        KEY_MEANABSDEVIATION,
+                        mMeanAbsoluteDeviation);
+
+                jsonObject.put(
+                        KEY_TEST_PERIPHERAL_NAME,
+                        mDeviceName);
+
+                jsonObject.put(
+                        KEY_TIMESTAMP_LATENCY,
+                        mMeanTimestampLatencyMS);
+
+                jsonObject.put(
+                        KEY_SAMPLE_RATE,
+                        mSampleRate);
+
+                jsonObject.put(
+                        KEY_IS_LOW_LATENCY,
+                        mIsLowLatencyStream);
+
+                jsonObject.put(
+                        KEY_HAS_24_BIT_HARDWARE_SUPPORT,
+                        mHas24BitHardwareSupport);
+            } catch (JSONException e) {
+                Log.e(TAG, LOG_ERROR_STR, e);
+            }
         }
     }
 
@@ -630,16 +678,16 @@ public class AudioLoopbackLatencyActivity extends PassFailButtons.Activity {
         return setTestNameSuffix(sCurrentDisplayMode, "audio_loopback_latency_activity");
     }
 
-    // Test-Schema
+    // Global Test-Schema
     private static final String KEY_IS_PRO_AUDIO = "is_pro_audio";
     private static final String KEY_TEST_MMAP = "supports_mmap";
     private static final String KEY_TEST_MMAPEXCLUSIVE = "supports_mmap_exclusive";
     private static final String KEY_LEVEL = "level";
 
-    private void recordRouteResults(int routeIndex) {
-        if (mTestSpecs[routeIndex].mTestRun) {
-            CtsVerifierReportLog reportLog = newReportLog();
+    // Contains the results for all routes
+    private static final String KEY_PATHS = "paths";
 
+    private void recordGlobalResults(CtsVerifierReportLog reportLog) {
             int audioLevel = mAudioLevelSeekbar.getProgress();
             reportLog.addValue(
                     KEY_LEVEL,
@@ -664,10 +712,20 @@ public class AudioLoopbackLatencyActivity extends PassFailButtons.Activity {
                     mSupportsMMAPExclusive,
                     ResultType.NEUTRAL,
                     ResultUnit.NONE);
+    }
 
-            mTestSpecs[routeIndex].recordTestResults(reportLog);
+    private void recordAllRoutes(CtsVerifierReportLog reportLog) {
+        JSONArray jsonArray = new JSONArray();
+        for (int route = 0; route < NUM_TEST_ROUTES; route++) {
+            if (mTestSpecs[route].isMeasurementValid()) {
+                JSONObject jsonObject = new JSONObject();
+                mTestSpecs[route].addToJson(jsonObject);
+                jsonArray.put(jsonObject);
+            }
+        }
 
-            reportLog.submit();
+        if (jsonArray.length() > 0) {
+            reportLog.addValues(KEY_PATHS, jsonArray);
         }
     }
 
@@ -684,9 +742,13 @@ public class AudioLoopbackLatencyActivity extends PassFailButtons.Activity {
                 }
             }
         }
-        // Record a single result.
+
         if (bestRoute >= 0) {
-            recordRouteResults(bestRoute);
+            CtsVerifierReportLog reportLog = getReportLog();
+            recordGlobalResults(reportLog);
+            mTestSpecs[bestRoute].recordTestResults(reportLog);
+            recordAllRoutes(reportLog);
+            reportLog.submit();
         }
     }
 
