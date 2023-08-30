@@ -24,10 +24,12 @@ import static android.server.wm.deskresources.Components.DESK_RESOURCES_ACTIVITY
 
 import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
 
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
 import android.content.ComponentName;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.ActivityManagerTestBase;
@@ -49,13 +51,14 @@ public class DockConfigChangeTests extends ActivityManagerTestBase {
         // enabled.
         assumeTrue(getConfigSkipRelaunchOnDock());
 
-        // Set rotation to the same rotation as the device would be rotated to after docking. This
-        // prevents an extraneous config change from the device rotating when docked/undocked.
         RotationSession rotationSession = createManagedRotationSession();
-        rotateToDockRotation(rotationSession);
 
         launchActivity(TEST_ACTIVITY);
         waitAndAssertResumedActivity(TEST_ACTIVITY, "Activity must be resumed");
+
+        // Set rotation to the same rotation as the device would be rotated to after docking. This
+        // prevents an extraneous config change from the device rotating when docked/undocked.
+        rotateToDockRotation(rotationSession, TEST_ACTIVITY);
         separateTestJournal();
 
         final DockTestSession dockTestSession = mObjectTracker.manage(new DockTestSession());
@@ -82,13 +85,14 @@ public class DockConfigChangeTests extends ActivityManagerTestBase {
         // enabled.
         assumeTrue(getConfigSkipRelaunchOnDock());
 
-        // Set rotation to the same rotation as the device would be rotated to after docking. This
-        // prevents an extraneous config change from the device rotating when docked/undocked.
         RotationSession rotationSession = createManagedRotationSession();
-        rotateToDockRotation(rotationSession);
 
         launchActivity(DESK_RESOURCES_ACTIVITY);
         waitAndAssertResumedActivity(DESK_RESOURCES_ACTIVITY, "Activity must be resumed");
+
+        // Set rotation to the same rotation as the device would be rotated to after docking. This
+        // prevents an extraneous config change from the device rotating when docked/undocked.
+        rotateToDockRotation(rotationSession, DESK_RESOURCES_ACTIVITY);
         separateTestJournal();
 
         final DockTestSession dockTestSession = mObjectTracker.manage(new DockTestSession());
@@ -118,11 +122,12 @@ public class DockConfigChangeTests extends ActivityManagerTestBase {
     }
 
     /**
-     * Rotates the device to the same rotation as it would rotate to when docked.
+     * Rotates the device to the same rotation as it would rotate to when docked and wait for the
+     * given activity to rotate.
      *
      * Dock rotation is read from config_deskDockRotation.
      */
-    void rotateToDockRotation(RotationSession rotationSession) {
+    void rotateToDockRotation(RotationSession rotationSession, ComponentName activity) {
         int rotation = rotationDegreesToConst(mContext.getResources().getInteger(
                 Resources.getSystem().getIdentifier("config_deskDockRotation",
                         "integer", "android")));
@@ -132,6 +137,12 @@ public class DockConfigChangeTests extends ActivityManagerTestBase {
             return;
         }
         rotationSession.set(rotation);
+
+        int expectedOrientation = Configuration.ORIENTATION_LANDSCAPE;
+        if (rotation == Surface.ROTATION_0 || rotation == Surface.ROTATION_180) {
+            expectedOrientation = Configuration.ORIENTATION_PORTRAIT;
+        }
+        assertTrue(mWmState.waitForActivityOrientation(activity, expectedOrientation));
     }
 
     /**
@@ -177,10 +188,10 @@ public class DockConfigChangeTests extends ActivityManagerTestBase {
          * Waits until the activity has received the expected uiMode in a configuration change.
          */
         private void waitForUiMode(ComponentName activity, int expectedUiMode) {
-            mWmState.waitFor(state -> {
+            assertTrue(mWmState.waitFor(state -> {
                 int actualUiMode = state.getActivity(activity).getUiMode();
-                return (actualUiMode & UI_MODE_TYPE_MASK) == actualUiMode;
-            }, "Didn't enter expected uiMode in time: " + expectedUiMode);
+                return (actualUiMode & UI_MODE_TYPE_MASK) == expectedUiMode;
+            }, "Didn't enter expected uiMode in time: " + expectedUiMode));
         }
 
         @Override
