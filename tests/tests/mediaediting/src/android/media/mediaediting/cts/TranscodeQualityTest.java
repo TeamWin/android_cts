@@ -25,6 +25,7 @@ import android.platform.test.annotations.AppModeFull;
 import androidx.media3.common.Format;
 import androidx.media3.common.MediaItem;
 import androidx.media3.common.MimeTypes;
+import androidx.media3.transformer.EditedMediaItem;
 import androidx.media3.transformer.TransformationRequest;
 import androidx.media3.transformer.Transformer;
 import androidx.test.core.app.ApplicationProvider;
@@ -143,7 +144,6 @@ public final class TranscodeQualityTest {
         .setTransformationRequest(
             new TransformationRequest.Builder().setVideoMimeType(toMediaType).build())
         .setEncoderFactory(new AndroidTestUtil.ForceEncodeEncoderFactory(context))
-        .setRemoveAudio(true)
         .build();
   }
 
@@ -151,7 +151,6 @@ public final class TranscodeQualityTest {
     return (new Transformer.Builder(context)
         .setTransformationRequest(
             new TransformationRequest.Builder().setVideoMimeType(toMediaType).build())
-        .setRemoveAudio(true)
         .build());
   }
 
@@ -178,7 +177,7 @@ public final class TranscodeQualityTest {
     Context context = ApplicationProvider.getApplicationContext();
     if (!isWithinCddRequirements) {
       Assume.assumeTrue("Skipping transcodeTest for " + testId,
-          !AndroidTestUtil.skipAndLogIfInsufficientCodecSupport(
+          !AndroidTestUtil.skipAndLogIfFormatsUnsupported(
               context, testId, decFormat, encFormat));
     }
 
@@ -189,11 +188,14 @@ public final class TranscodeQualityTest {
       transformer = createTransformer(context, toMediaType);
     }
 
-    TransformationTestResult result =
+    MediaItem mediaItem = MediaItem.fromUri(Uri.parse(MEDIA_DIR + testFile));
+    EditedMediaItem editedMediaItem = new EditedMediaItem.Builder(mediaItem).setRemoveAudio(true)
+        .build();
+    ExportTestResult result =
         new TransformerAndroidTestRunner.Builder(context, transformer)
             .setRequestCalculateSsim(true)
             .build()
-            .run(testId, MediaItem.fromUri(Uri.parse(MEDIA_DIR + testFile)));
+            .run(testId, editedMediaItem);
     assertThat(result.ssim).isGreaterThan(EXPECTED_MINIMUM_SSIM);
   }
 }

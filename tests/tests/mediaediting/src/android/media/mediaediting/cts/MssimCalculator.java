@@ -17,15 +17,18 @@ package android.media.mediaediting.cts;
 
 import static java.lang.Math.pow;
 
+import androidx.media3.common.util.UnstableApi;
+
 /**
  * Image comparison tool that calculates the Mean Structural Similarity (MSSIM) of two images,
  * developed by Wang, Bovik, Sheikh, and Simoncelli.
  *
  * <p>MSSIM divides the image into windows, calculates SSIM of each, then returns the average.
  *
- * @see <a href=https://ece.uwaterloo.ca/~z70wang/publications/ssim.pdf>The SSIM paper</a>.
+ * <p>See <a href=https://ece.uwaterloo.ca/~z70wang/publications/ssim.pdf>the SSIM paper</a>.
  */
-/* package */ final class MssimCalculator {
+@UnstableApi
+public final class MssimCalculator {
   // Referred to as 'L' in the SSIM paper, this constant defines the maximum pixel values. The
   // range of pixel values is 0 to 255 (8 bit unsigned range).
   private static final int PIXEL_MAX_VALUE = 255;
@@ -47,7 +50,7 @@ import static java.lang.Math.pow;
   /**
    * Calculates the Mean Structural Similarity (MSSIM) between two images with window skipping.
    *
-   * @see #calculate(byte[], byte[], int, int, boolean).
+   * @see #calculate(byte[], byte[], int, int, boolean)
    */
   public static double calculate(
       byte[] referenceBuffer, byte[] distortedBuffer, int width, int height) {
