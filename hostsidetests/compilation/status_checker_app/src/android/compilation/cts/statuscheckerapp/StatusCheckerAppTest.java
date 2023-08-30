@@ -21,6 +21,7 @@ import static dalvik.system.DexFile.OptimizationInfo;
 import static com.google.common.truth.Truth.assertThat;
 
 import android.content.Context;
+import android.content.pm.ApplicationInfo;
 import android.os.Bundle;
 
 import androidx.test.core.app.ApplicationProvider;
@@ -30,9 +31,12 @@ import androidx.test.runner.AndroidJUnit4;
 
 import dalvik.system.ApplicationRuntime;
 import dalvik.system.BaseDexClassLoader;
+import dalvik.system.DexFile;
 import dalvik.system.PathClassLoader;
+import dalvik.system.VMRuntime;
 
 import com.google.common.io.ByteStreams;
+import com.google.common.truth.Correspondence;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -82,7 +86,8 @@ public class StatusCheckerAppTest {
 
     private String createAndLoadSecondaryDex(String secondaryDexFilename,
             BiFunction<String, ClassLoader, ClassLoader> classLoaderCtor) throws Exception {
-        File secondaryDexFile = Paths.get(getDataDir(), secondaryDexFilename).toFile();
+        File secondaryDexFile =
+                Paths.get(getApplicationInfo().dataDir, secondaryDexFilename).toFile();
         if (secondaryDexFile.exists()) {
             secondaryDexFile.delete();
         }
@@ -92,14 +97,14 @@ public class StatusCheckerAppTest {
         return secondaryDexFile.getAbsolutePath();
     }
 
-    private String getDataDir() {
+    private ApplicationInfo getApplicationInfo() {
         Context context = ApplicationProvider.getApplicationContext();
-        return context.getApplicationInfo().dataDir;
+        return context.getApplicationInfo();
     }
 
     @Test
     public void testSecondaryDexReporting() throws Exception {
-        String dataDir = getDataDir();
+        String dataDir = getApplicationInfo().dataDir;
         var reporter =
                 (BaseDexClassLoader.Reporter) BaseDexClassLoader.class.getMethod("getReporter")
                         .invoke(null);
@@ -121,6 +126,18 @@ public class StatusCheckerAppTest {
                 Map.of(Paths.get(dataDir, "reported_good_2.apk").toString(), "PCL[bar.jar]"));
         reporter.report(Map.of(Paths.get(dataDir, "reported_good_3.apk").toString(),
                 "=UnsupportedClassLoaderContext="));
+    }
+
+    @Test
+    public void testGetDexFileOutputPaths() throws Exception {
+        String[] paths = DexFile.getDexFileOutputPaths(
+                getApplicationInfo().sourceDir, VMRuntime.getRuntime().vmInstructionSet());
+
+        // We can't be too specific because the paths are ART-internal and are subject to change.
+        assertThat(paths)
+                .asList()
+                .comparingElementsUsing(Correspondence.from(String::endsWith, "ends with"))
+                .containsAtLeast(".odex", ".vdex");
     }
 
     public File copyResourceToFile(String resourceName, File file) throws Exception {
