@@ -58,6 +58,7 @@
         <option name="push" value="CtsContentMaxSharedUserIdTestApp.apk->/data/local/tmp/cts/content/CtsContentMaxSharedUserIdTestApp.apk" />
         <option name="push" value="CtsContentMockLauncherTestApp.apk->/data/local/tmp/cts/content/CtsContentMockLauncherTestApp.apk" />
         <option name="push" value="CtsContentLongLabelNameTestApp.apk->/data/local/tmp/cts/content/CtsContentLongLabelNameTestApp.apk" />
+        <option name="push" value="CtsIntentResolutionTestApp.apk->/data/local/tmp/cts/content/CtsIntentResolutionTestApp.apk" />
         <option name="push" value="CtsSyncAccountAccessStubs.apk->/data/local/tmp/cts/content/CtsSyncAccountAccessStubs.apk" />
         <option name="push" value="CtsSyncAccountAccessStubs_mdpi-v4.apk->/data/local/tmp/cts/content/CtsSyncAccountAccessStubs_mdpi-v4.apk" />
         <option name="push" value="CtsContentLongUsesPermissionNameTestApp.apk->/data/local/tmp/cts/content/CtsContentLongUsesPermissionNameTestApp.apk" />
