@@ -20,7 +20,6 @@ import os
 import pathlib
 import cv2
 import numpy
-from scipy import spatial
 
 import capture_request_utils
 import error_util
@@ -526,9 +525,8 @@ def find_circle(img, img_name, min_area, color, use_adaptive_threshold=False):
           math.isclose(1.0, aspect_ratio, abs_tol=CIRCLE_AR_ATOL) and
           num_pts/radius >= CIRCLE_RADIUS_NUMPTS_THRESH and
           math.isclose(1.0, fill, abs_tol=CIRCLE_COLOR_ATOL)):
-        # spatial.distance.euclidean can handle nested numpy arrays
         radii = [
-            spatial.distance.euclidean((shape['ctx'], shape['cty']), point)
+            math.dist((shape['ctx'], shape['cty']), numpy.squeeze(point))
             for point in contour
         ]
         minimum_radius, maximum_radius = min(radii), max(radii)
@@ -540,7 +538,7 @@ def find_circle(img, img_name, min_area, color, use_adaptive_threshold=False):
           # Based on image height
           center_distance_atol = img_size[0]*CIRCLE_LOCATION_VARIATION_RTOL
           if math.isclose(
-              spatial.distance.euclidean(old_circle_center, new_circle_center),
+              math.dist(old_circle_center, new_circle_center),
               0,
               abs_tol=center_distance_atol
           ) and maximum_radius - minimum_radius < circle['radius_spread']:
