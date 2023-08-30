@@ -91,6 +91,7 @@ public class CarActivityManagerTest {
         Car car = Car.createCar(mContext);
         mUiAutomation.adoptShellPermissionIdentity(
                 Car.PERMISSION_CONTROL_CAR_APP_LAUNCH,  // for CAM.setPersistentActivity
+                Car.PERMISSION_MANAGE_CAR_SYSTEM_UI,  // for CAM.getCarTaskViewController
                 // to launch an Activity in the virtual display
                 Manifest.permission.ACTIVITY_EMBEDDING,
                 Manifest.permission.MANAGE_ACTIVITY_TASKS /* for CAM.getVisibleTasks */);
@@ -217,7 +218,7 @@ public class CarActivityManagerTest {
         }
     }
 
-    @ApiTest(apis = {"android.car.app.CarActivityManager#getVisibleTasks()"})
+    @ApiTest(apis = {"android.car.app.CarActivityManager#getVisibleTasks"})
     @Test
     public void testGetVisibleTasks() throws Exception {
         // launch the activity
@@ -260,8 +261,7 @@ public class CarActivityManagerTest {
     }
 
     @Test
-    @ApiTest(apis = {"android.car.app.CarActivityManager#getCarTaskViewController(Activity,"
-            + "Executor,CarTaskViewControllerCallback)"})
+    @ApiTest(apis = {"android.car.app.CarActivityManager#getCarTaskViewController"})
     public void getCarTaskViewController() throws Exception {
         assumeTrue(mCarActivityManager.isCarSystemUIProxyRegistered());
         Intent startIntent = Intent.makeMainActivity(mTestActivity)
@@ -277,6 +277,7 @@ public class CarActivityManagerTest {
         PollingCheck.waitFor(() -> callback.isConnected());
         assertTrue(callback.isConnected());
         activity.finishAndRemoveTask();
+        activity.waitForDestroyed();
     }
 
     public static final class TestCarTaskViewControllerCallback
