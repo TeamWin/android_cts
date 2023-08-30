@@ -25,6 +25,7 @@ import static com.android.bedstead.harrier.annotations.enterprise.MostImportantC
 import static com.android.bedstead.harrier.annotations.enterprise.MostImportantCoexistenceTest.MORE_IMPORTANT;
 import static com.android.bedstead.harrier.annotations.enterprise.MostRestrictiveCoexistenceTest.DPC_1;
 import static com.android.bedstead.harrier.annotations.enterprise.MostRestrictiveCoexistenceTest.DPC_2;
+import static com.android.bedstead.metricsrecorder.truth.MetricQueryBuilderSubject.assertThat;
 import static com.android.bedstead.nene.flags.CommonFlags.DevicePolicyManager.ENABLE_DEVICE_POLICY_ENGINE_FLAG;
 import static com.android.bedstead.nene.flags.CommonFlags.NAMESPACE_DEVICE_POLICY_MANAGER;
 import static com.android.bedstead.nene.permissions.CommonPermissions.MANAGE_PROFILE_AND_DEVICE_OWNERS;
@@ -35,6 +36,7 @@ import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
 import android.accounts.AccountManager;
+import android.accounts.AccountManagerFuture;
 import android.accounts.OperationCanceledException;
 import android.app.admin.AccountTypePolicyKey;
 import android.app.admin.DevicePolicyManager;
@@ -45,6 +47,7 @@ import android.devicepolicy.cts.utils.PolicyEngineUtils;
 import android.devicepolicy.cts.utils.PolicySetResultUtils;
 import android.os.Bundle;
 import android.os.UserManager;
+import android.stats.devicepolicy.EventId;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
@@ -61,12 +64,12 @@ import com.android.bedstead.harrier.annotations.enterprise.MostRestrictiveCoexis
 import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
 import com.android.bedstead.harrier.policies.AccountManagement;
 import com.android.bedstead.harrier.policies.DisallowModifyAccounts;
+import com.android.bedstead.metricsrecorder.EnterpriseMetricsRecorder;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.accounts.AccountReference;
 import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.compatibility.common.util.ApiTest;
 import com.android.bedstead.nene.userrestrictions.CommonUserRestrictions;
-import com.android.bedstead.remotedpc.RemotePolicyManager;
 
 import org.junit.Assume;
 import org.junit.Before;
@@ -87,8 +90,17 @@ public final class AccountManagementTest {
     private static final Context sContext = TestApis.context().instrumentedContext();
 
     private static final DevicePolicyManager sLocalDevicePolicyManager =
-            TestApis.context().instrumentedContext()
-                    .getSystemService(DevicePolicyManager.class);
+            sContext.getSystemService(DevicePolicyManager.class);
+    private static final AccountManager sLocalAccountManager =
+            sContext.getSystemService(AccountManager.class);
+
+    private static final String ACCOUNT_TYPE = "android.devicepolicy.cts";
+    private static final String AUTH_TOKEN_TYPE = "testAuthTokenType";
+    private static final String[] REQUIRED_FEATURES =
+            new String[]{"testRequiredFeature1", "testRequiredFeature2"};
+    private static final String REQUIRED_FEATURES_STR = "testRequiredFeature1;testRequiredFeature2";
+
+
     private AccountManager mAccountManager;
 
     @Before
@@ -128,7 +140,7 @@ public final class AccountManagementTest {
 
             assertThat(sDeviceState.dpc().devicePolicyManager()
                     .getAccountTypesWithManagementDisabled()).asList().contains(
-                            sDeviceState.accounts().accountType());
+                    sDeviceState.accounts().accountType());
         } finally {
             sDeviceState.dpc().devicePolicyManager().setAccountManagementDisabled(
                     sDeviceState.dpc().componentName(),
@@ -150,7 +162,7 @@ public final class AccountManagementTest {
 
             assertThat(
                     Arrays.stream(sDeviceState.dpc().devicePolicyManager()
-                                            .getAccountTypesWithManagementDisabled())
+                                    .getAccountTypesWithManagementDisabled())
                             .filter(s -> s.equals(sDeviceState.accounts().accountType()))
                             .count()).isEqualTo(1);
         } finally {
@@ -193,7 +205,7 @@ public final class AccountManagementTest {
             // Management is disabled, but the DO/PO is still allowed to use the APIs
 
             try (AccountReference account = TestApis.accounts().wrap(
-                    sDeviceState.dpc().user(),
+                            sDeviceState.dpc().user(),
                             sDeviceState.dpc().accountManager())
                     .addAccount()
                     .type(sDeviceState.accounts().accountType())
@@ -640,7 +652,7 @@ public final class AccountManagementTest {
             assertThat(policyState.getCurrentResolvedPolicy()).isTrue();
             assertThat(sDeviceState.dpc().devicePolicyManager()
                     .getAccountTypesWithManagementDisabled()).asList().contains(
-                            sDeviceState.accounts().accountType());
+                    sDeviceState.accounts().accountType());
             assertThrows(Exception.class, () ->
                     sDeviceState.accounts().addAccount().add());
         } finally {
@@ -723,6 +735,39 @@ public final class AccountManagementTest {
             } catch (Exception e) {
                 // expected if app was uninstalled
             }
+        }
+    }
+
+    @ApiTest(apis = {"android.app.admin.AccountManager#startAddAccountSession"})
+    @Test
+    public void startAddAccountSession_isLogged() {
+        try (EnterpriseMetricsRecorder metrics = EnterpriseMetricsRecorder.create()) {
+            AccountManagerFuture<Bundle> future =
+                    sLocalAccountManager.startAddAccountSession(
+                            sDeviceState.accounts().accountType(),
+                            AUTH_TOKEN_TYPE,
+                            REQUIRED_FEATURES,
+                            /* options= */ null,
+                            /* activity= */ null,
+                            /* callback= */ null,
+                            /* handler= */ null);
+            waitForFutureDone(future);
+
+            // asserting for an empty admin package name, since we do not have an
+            // admin here.
+            assertThat(metrics.query()
+                    .whereAdminPackageName().isEqualTo("")
+                    .whereType().isEqualTo(EventId.ADD_ACCOUNT_VALUE)
+                    .whereStrings().contains(sDeviceState.accounts().accountType(),
+                            ACCOUNT_TYPE, AUTH_TOKEN_TYPE,
+                            REQUIRED_FEATURES_STR)
+            ).wasLogged();
+        }
+    }
+
+    private static void waitForFutureDone(AccountManagerFuture<Bundle> future) {
+        while (!future.isDone()) {
+            // we make sure the task is completed before asserting.
         }
     }
 }
