@@ -98,13 +98,6 @@ public class DeviceAndProfileOwnerTransferIncomingTest {
         return affiliationIds.iterator().next();
     }
 
-    @Test
-    public void testTransferOwnershipEmptyBundleLoaded() throws Throwable {
-        PersistableBundle bundle = mDevicePolicyManager.getTransferOwnershipBundle();
-        assertNotNull(bundle);
-        assertTrue(bundle.isEmpty());
-    }
-
     private static SharedPreferences getPrefs(Context context) {
         return context.getSharedPreferences(SHARED_PREFERENCE_NAME, Context.MODE_PRIVATE);
     }

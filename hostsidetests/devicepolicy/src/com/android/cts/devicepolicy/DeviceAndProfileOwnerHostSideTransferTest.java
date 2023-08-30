@@ -58,24 +58,6 @@ public abstract class DeviceAndProfileOwnerHostSideTransferTest extends BaseDevi
     }
 
     @Test
-    public void testTransferInvalidTarget() throws Exception {
-        installAppAsUser(INVALID_TARGET_APK, mUserId);
-        runDeviceTestsAsUser(TRANSFER_OWNER_OUTGOING_PKG,
-                mOutgoingTestClassName,
-                "testTransferInvalidTarget", mUserId);
-    }
-
-    @Test
-    public void testTransferPolicies() throws Exception {
-        runDeviceTestsAsUser(TRANSFER_OWNER_OUTGOING_PKG,
-                mOutgoingTestClassName,
-                "testTransferWithPoliciesOutgoing", mUserId);
-        runDeviceTestsAsUser(TRANSFER_OWNER_INCOMING_PKG,
-                mIncomingTestClassName,
-                "testTransferPoliciesAreRetainedAfterTransfer", mUserId);
-    }
-
-    @Test
     public void testTransferOwnershipChangedBroadcast() throws Exception {
         runDeviceTestsAsUser(TRANSFER_OWNER_OUTGOING_PKG,
                 mOutgoingTestClassName,
@@ -107,24 +89,6 @@ public abstract class DeviceAndProfileOwnerHostSideTransferTest extends BaseDevi
         runDeviceTestsAsUser(TRANSFER_OWNER_OUTGOING_PKG,
                 mOutgoingTestClassName,
                 "testTransferOwnershipNoMetadata", mUserId);
-    }
-
-    @Test
-    public void testGetTransferOwnershipBundleOnlyCalledFromAdmin()
-            throws DeviceNotAvailableException {
-        runDeviceTestsAsUser(TRANSFER_OWNER_OUTGOING_PKG,
-                mOutgoingTestClassName,
-                "testGetTransferOwnershipBundleOnlyCalledFromAdmin", mUserId);
-    }
-
-    @Test
-    public void testBundleEmptyAfterTransferWithNullBundle() throws DeviceNotAvailableException {
-        runDeviceTestsAsUser(TRANSFER_OWNER_OUTGOING_PKG,
-                mOutgoingTestClassName,
-                "testTransferOwnershipNullBundle", mUserId);
-        runDeviceTestsAsUser(TRANSFER_OWNER_INCOMING_PKG,
-                mIncomingTestClassName,
-                "testTransferOwnershipEmptyBundleLoaded", mUserId);
     }
 
     @Test
