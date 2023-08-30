@@ -304,6 +304,19 @@ public class SELinuxHostTest extends BaseHostJUnit4Test {
     }
 
     /**
+     * Returns VSR (Vendor Software Requirements) api level. Returns 0 if the property
+     * ro.vendor.api_level doesn't exist
+     */
+    private static int getVSRApiLevel(ITestDevice device) throws Exception {
+        try {
+            return Integer.parseInt(device.getProperty("ro.vendor.api_level"));
+        } catch (Exception ex) {
+            CLog.e("getProperty(\"ro.vendor.api_level\") failed: ", ex);
+            return 0;
+        }
+    }
+
+    /**
      * Retrieve the major number of sepolicy version from VINTF device info stored in the given
      * IBuildInfo by {@link DeviceInfoCollector}.
      */
@@ -585,6 +598,18 @@ public class SELinuxHostTest extends BaseHostJUnit4Test {
                 odmSeappFile.getAbsolutePath());
         assertTrue("The seapp_contexts file was invalid:\n"
                    + errorString, errorString.length() == 0);
+
+        /* run checkseapp on vendor contexts to find coredomain violations, starting from V */
+        int vsrVersion = getVSRApiLevel(getDevice());
+        if (vsrVersion > 34) /* V or later */ {
+            errorString = tryRunCommand(checkSeapp.getAbsolutePath(),
+                    "-p", devicePolicyFile.getAbsolutePath(),
+                    "-c", /* coredomain check */
+                    vendorSeappFile.getAbsolutePath(),
+                    odmSeappFile.getAbsolutePath());
+            assertTrue("vendor seapp_contexts contains coredomain:\n"
+                    + errorString, errorString.length() == 0);
+        }
     }
 
     /**
