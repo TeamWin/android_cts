@@ -49,6 +49,7 @@ import android.view.WindowMetrics;
 
 import androidx.annotation.NonNull;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.filters.FlakyTest;
 import androidx.test.filters.LargeTest;
 import androidx.window.extensions.area.WindowAreaComponent;
 import androidx.window.extensions.area.WindowAreaComponent.WindowAreaSessionState;
@@ -272,6 +273,7 @@ public class ExtensionRearDisplayTest extends WindowManagerJetpackTestBase imple
     @ApiTest(apis = {
             "androidx.window.extensions.area.WindowAreaComponent#getRearDisplayMetrics"})
     @Test
+    @FlakyTest(bugId = 295869141)
     public void testGetRearDisplayMetrics() throws Throwable {
         ExtensionUtil.assumeVendorApiLevelAtLeast(3 /* vendorApiLevel */);
         assumeTrue(mRearDisplayAddress != INVALID_DISPLAY_ADDRESS);
@@ -315,6 +317,7 @@ public class ExtensionRearDisplayTest extends WindowManagerJetpackTestBase imple
     @ApiTest(apis = {
             "androidx.window.extensions.area.WindowAreaComponent#getRearDisplayMetrics"})
     @Test
+    @FlakyTest(bugId = 295869141)
     public void testGetRearDisplayMetrics_afterRotation() throws Throwable {
         ExtensionUtil.assumeVendorApiLevelAtLeast(3 /* vendorApiLevel */);
         assumeTrue(mRearDisplayAddress != INVALID_DISPLAY_ADDRESS);
