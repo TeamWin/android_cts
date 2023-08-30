@@ -95,6 +95,8 @@ public class CarTaskViewControllerTest {
     @Before
     public void setUp() {
         Car car = Car.createCar(mContext);
+        mUiAutomation.adoptShellPermissionIdentity(
+                Car.PERMISSION_MANAGE_CAR_SYSTEM_UI /* for CAM.getCarTaskViewController */);
 
         mCarActivityManager =
                 (CarActivityManager) car.getCarManager(Car.CAR_ACTIVITY_SERVICE);
@@ -117,19 +119,23 @@ public class CarTaskViewControllerTest {
     }
 
     @After
-    public void tearDown() {
+    public void tearDown() throws Exception {
         if (mHostActivity != null) {
             mHostActivity.finishAndRemoveTask();
+            mHostActivity.waitForDestroyed();
             mHostActivity = null;
         }
         if (EmbeddedTestActivity1.sInstance != null) {
             EmbeddedTestActivity1.sInstance.finishAndRemoveTask();
+            EmbeddedTestActivity1.sInstance.waitForDestroyed();
             EmbeddedTestActivity1.sInstance = null;
         }
         if (EmbeddedTestActivity2.sInstance != null) {
             EmbeddedTestActivity2.sInstance.finishAndRemoveTask();
+            EmbeddedTestActivity2.sInstance.waitForDestroyed();
             EmbeddedTestActivity2.sInstance = null;
         }
+        mUiAutomation.dropShellPermissionIdentity();
     }
 
     @Test
