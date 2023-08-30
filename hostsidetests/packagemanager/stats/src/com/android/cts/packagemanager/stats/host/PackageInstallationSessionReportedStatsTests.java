@@ -38,6 +38,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 public class PackageInstallationSessionReportedStatsTests extends PackageManagerStatsTestsBase{
+    private static final int STEP_FREEZE_INSTALL = 6;
     private static final String TEST_INSTALL_APK = "CtsStatsdAtomEmptyApp.apk";
     private static final String TEST_INSTALL_APK_V2 = "CtsStatsdAtomEmptyAppV2.apk";
     private static final String TEST_INSTALL_PACKAGE =
@@ -111,11 +112,17 @@ public class PackageInstallationSessionReportedStatsTests extends PackageManager
     private void checkDurationResult(AtomsProto.PackageInstallationSessionReported report) {
         final long totalDuration = report.getTotalDurationMillis();
         assertThat(totalDuration).isGreaterThan(0);
-        assertThat(report.getInstallStepsCount()).isEqualTo(4);
+        assertThat(report.getInstallStepsCount()).isEqualTo(5);
         long sumStepDurations = 0;
-        for (long duration : report.getStepDurationMillisList()) {
-            assertThat(duration).isAtLeast(0);
-            sumStepDurations += duration;
+        int stepCount = report.getInstallStepsCount();
+        for (int i = 0; i < stepCount; i++) {
+            int step = report.getInstallSteps(i);
+            // Don't count freeze step time
+            if (step != STEP_FREEZE_INSTALL) {
+                long duration = report.getStepDurationMillis(i);
+                assertThat(duration).isAtLeast(0);
+                sumStepDurations += duration;
+            }
         }
         assertThat(sumStepDurations).isGreaterThan(0);
         assertThat(sumStepDurations).isLessThan(totalDuration);
