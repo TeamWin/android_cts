@@ -74,8 +74,8 @@ public class InProcessImeTest extends EndToEndImeTestBase {
         final String inProcImeId = new ComponentName(
                 InstrumentationRegistry.getInstrumentation().getContext().getPackageName(),
                 InProcIme.class.getName()).flattenToShortString();
-        SystemUtil.runShellCommand("ime enable " + inProcImeId);
-        SystemUtil.runShellCommand("ime set " + inProcImeId);
+        SystemUtil.runShellCommandOrThrow("ime enable " + inProcImeId);
+        SystemUtil.runShellCommandOrThrow("ime set " + inProcImeId);
     }
 
     @After

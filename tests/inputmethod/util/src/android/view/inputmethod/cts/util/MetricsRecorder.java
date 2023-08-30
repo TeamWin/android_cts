@@ -321,7 +321,7 @@ public final class MetricsRecorder {
      */
     public static void removeConfig() {
         final var cmd = String.join(" ", REMOVE_CONFIG_CMD, CONFIG_ID_STRING);
-        final var output = SystemUtil.runShellCommand(cmd);
+        final var output = SystemUtil.runShellCommandOrThrow(cmd);
         assertThat(output).isEmpty();
     }
 

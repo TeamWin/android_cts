@@ -21,6 +21,7 @@ import static android.server.wm.WindowManagerState.STATE_RESUMED;
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 
 import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
+import static com.android.compatibility.common.util.SystemUtil.runShellCommandOrThrow;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -137,8 +138,8 @@ public class InputMethodManagerMultiDisplayTest extends MultiDisplayTestBase {
     }
 
     private void enableAndSetIme() {
-        runShellCommand("ime enable " + InputMethodManagerMultiDisplayTest.MOCK_IME_ID);
-        runShellCommand("ime set " + InputMethodManagerMultiDisplayTest.MOCK_IME_ID);
+        runShellCommandOrThrow("ime enable " + InputMethodManagerMultiDisplayTest.MOCK_IME_ID);
+        runShellCommandOrThrow("ime set " + InputMethodManagerMultiDisplayTest.MOCK_IME_ID);
     }
 
 }

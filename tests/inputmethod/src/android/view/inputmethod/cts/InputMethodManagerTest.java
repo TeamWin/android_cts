@@ -23,6 +23,7 @@ import static android.view.inputmethod.cts.util.TestUtils.isInputMethodPickerSho
 import static android.view.inputmethod.cts.util.TestUtils.waitOnMainUntil;
 
 import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
+import static com.android.compatibility.common.util.SystemUtil.runShellCommandOrThrow;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -344,7 +345,7 @@ public class InputMethodManagerTest {
 
     private void enableImes(String... ids) {
         for (String id : ids) {
-            runShellCommand("ime enable " + id);
+            runShellCommandOrThrow("ime enable " + id);
         }
         mNeedsImeReset = true;
     }
