@@ -77,6 +77,8 @@
         <option name="push-file" key="HelloWorld5_xxhdpi-v4.apk.idsig" value="/data/local/tmp/cts/content/HelloWorld5_xxhdpi-v4.apk.idsig" />
         <option name="push-file" key="HelloWorld5_xxxhdpi-v4.apk" value="/data/local/tmp/cts/content/HelloWorld5_xxxhdpi-v4.apk" />
         <option name="push-file" key="HelloWorld5_xxxhdpi-v4.apk.idsig" value="/data/local/tmp/cts/content/HelloWorld5_xxxhdpi-v4.apk.idsig" />
+        <option name="push-file" key="HelloWorld5DifferentSigner.apk" value="/data/local/tmp/cts/content/HelloWorld5DifferentSigner.apk" />
+        <option name="push-file" key="HelloWorld5DifferentSigner.apk.idsig" value="/data/local/tmp/cts/content/HelloWorld5DifferentSigner.apk.idsig" />
         <option name="push-file" key="HelloWorld5Profileable.apk" value="/data/local/tmp/cts/content/HelloWorld5Profileable.apk" />
         <option name="push-file" key="HelloWorld5Profileable.apk.idsig" value="/data/local/tmp/cts/content/HelloWorld5Profileable.apk.idsig" />
         <option name="push-file" key="HelloWorld7.apk" value="/data/local/tmp/cts/content/HelloWorld7.apk" />

@@ -235,6 +235,9 @@ public class PackageManagerTest {
     private static final String SHELL_PACKAGE_NAME = "com.android.shell";
     private static final String HELLO_WORLD_PACKAGE_NAME = "com.example.helloworld";
     private static final String HELLO_WORLD_APK = SAMPLE_APK_BASE + "HelloWorld5.apk";
+    private static final String HELLO_WORLD_DIFF_SIGNER_APK =
+            SAMPLE_APK_BASE + "HelloWorld5DifferentSigner.apk";
+    private static final String HELLO_WORLD_UPDATED_APK = SAMPLE_APK_BASE + "HelloWorld7.apk";
     private static final String HELLO_WORLD_LOTS_OF_FLAGS_APK =
             SAMPLE_APK_BASE + "HelloWorldLotsOfFlags.apk";
     private static final String MOCK_LAUNCHER_PACKAGE_NAME = "android.content.cts.mocklauncherapp";
@@ -2809,6 +2812,34 @@ public class PackageManagerTest {
         expectThrows(NameNotFoundException.class,
                 () -> mPackageManager.getPackageInfo(HELLO_WORLD_PACKAGE_NAME,
                         PackageManager.PackageInfoFlags.of(MATCH_UNINSTALLED_PACKAGES)));
+    }
+
+    @Test
+    public void testInstallArchived() throws Exception {
+        // Install archived.
+        assertEquals("Success\n",
+                SystemUtil.runShellCommand("pm install-archived -t " + HELLO_WORLD_APK));
+        assertTrue(isAppInstalled(HELLO_WORLD_PACKAGE_NAME));
+        // Wrong signature.
+        assertThat(SystemUtil.runShellCommand(
+                "pm install -t -g " + HELLO_WORLD_DIFF_SIGNER_APK)).startsWith(
+                "Failure [INSTALL_FAILED_UPDATE_INCOMPATIBLE");
+        // Update fails because we can't derive an existing APK.
+        assertThat(SystemUtil.runShellCommand(
+                "pm install -t -p " + HELLO_WORLD_PACKAGE_NAME + " -g "
+                        + HELLO_WORLD_UPDATED_APK)).startsWith(
+                "Failure [INSTALL_FAILED_INTERNAL_ERROR");
+        // Unarchive/full install succeeds.
+        assertEquals("Success\n", SystemUtil.runShellCommand(
+                "pm install -t -g " + HELLO_WORLD_UPDATED_APK));
+        assertTrue(isAppInstalled(HELLO_WORLD_PACKAGE_NAME));
+        // Uninstall, keep data.
+        assertEquals("Success\n",
+                SystemUtil.runShellCommand("pm uninstall -k " + HELLO_WORLD_PACKAGE_NAME));
+        // Full uninstall.
+        assertEquals("Success\n",
+                SystemUtil.runShellCommand("pm uninstall " + HELLO_WORLD_PACKAGE_NAME));
+        assertFalse(isAppInstalled(HELLO_WORLD_PACKAGE_NAME));
     }
 
     @Test

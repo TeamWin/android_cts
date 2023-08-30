@@ -48,6 +48,18 @@ android_test {
 
 //-----------------------------------------------------------
 android_test {
+    name: "HelloWorld5DifferentSigner",
+    defaults: ["hello_world_defaults"],
+    srcs: ["src5/**/*.java"],
+    certificate: ":cts-testkey1",
+    test_suites: [
+        "general-tests",
+    ],
+    v4_signature: true,
+}
+
+//-----------------------------------------------------------
+android_test {
     name: "HelloWorld5Profileable",
     defaults: ["hello_world_defaults"],
     srcs: ["src5/**/*.java"],
