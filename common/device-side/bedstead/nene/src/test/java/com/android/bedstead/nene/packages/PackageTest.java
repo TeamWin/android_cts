@@ -357,6 +357,13 @@ public class PackageTest {
     }
 
     @Test
+    public void forceStop_whenRestartableApp_doesNotLoopEndlessly() {
+        final int previousId = TestApis.packages().launcher().runningProcess().pid();
+        TestApis.packages().launcher().forceStop();
+        assertThat(TestApis.packages().launcher().runningProcess().pid()).isNotEqualTo(previousId);
+    }
+
+    @Test
     @EnsureHasSecondaryUser
     @RequireRunNotOnSecondaryUser
     public void installedOnUsers_doesNotIncludeUserWithoutPackageInstalled() throws Exception {
