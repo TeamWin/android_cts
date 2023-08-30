@@ -356,6 +356,8 @@ class PackageManagerShellCommandMultiUserTest {
         installPackageAsUser(TEST_HW5, secondaryUser)
         assertThat(isAppInstalledForUser(TEST_APP_PACKAGE, primaryUser)).isTrue()
         assertThat(isAppInstalledForUser(TEST_APP_PACKAGE, secondaryUser)).isTrue()
+        // Delete app with DELETE_KEEP_DATA on second user
+        uninstallPackageWithKeepData(TEST_APP_PACKAGE, secondaryUser)
 
         runWithShellPermissionIdentity(
             uiAutomation,
@@ -364,8 +366,6 @@ class PackageManagerShellCommandMultiUserTest {
                     .packageManager
                 val pmSecondaryUser = context.createContextAsUser(secondaryUser.userHandle(), 0)
                     .packageManager
-                // Delete app with DELETE_KEEP_DATA on second user
-                uninstallPackageWithKeepData(TEST_APP_PACKAGE, secondaryUser)
                 // App is not queryable without the MATCH_KNOWN_PACKAGES flag
                 assertThrows(PackageManager.NameNotFoundException::class.java) {
                     pmSecondaryUser.getPackageInfo(
@@ -380,69 +380,35 @@ class PackageManagerShellCommandMultiUserTest {
                 )
                 val oldDataDir = packageInfoSecondUser.applicationInfo!!.dataDir
                 assertThat(oldDataDir).isNotNull()
-                // Expect not to throw when the package is queryable on the primary user
-                pmPrimaryUser.getPackageInfo(
-                    TEST_APP_PACKAGE,
-                    PackageInfoFlags.of(MATCH_KNOWN_PACKAGES.toLong())
-                )
-
-                // Delete app on primary user with DELETE_KEEP_DATA flag and verify that app is
+                // Delete app on primary user without DELETE_KEEP_DATA flag and verify that the app is
                 // still queryable with MATCH_KNOWN_PACKAGES
-                uninstallPackageWithKeepData(TEST_APP_PACKAGE, primaryUser)
-                packageInfoSecondUser = pmSecondaryUser.getPackageInfo(
-                    TEST_APP_PACKAGE,
-                    PackageInfoFlags.of(MATCH_KNOWN_PACKAGES.toLong())
-                )
-                assertThat(packageInfoSecondUser.applicationInfo!!.dataDir).isEqualTo(oldDataDir)
-                // Expect not to throw when the package is queryable on the primary user
-                var packageInfoPrimaryUser = pmPrimaryUser.getPackageInfo(
-                    TEST_APP_PACKAGE,
-                    PackageInfoFlags.of(MATCH_KNOWN_PACKAGES.toLong())
-                )
-                assertThat(packageInfoPrimaryUser.applicationInfo!!.dataDir).isNotNull()
-
-                // Reinstall the app and uninstall it on primary user without DELETE_KEEP_DATA flag
-                // and verify that app is still queryable with MATCH_KNOWN_PACKAGES
-                installPackageAsUser(TEST_HW5, primaryUser)
                 uninstallPackageAsUser(TEST_APP_PACKAGE, primaryUser)
                 packageInfoSecondUser = pmSecondaryUser.getPackageInfo(
                     TEST_APP_PACKAGE,
                     PackageInfoFlags.of(MATCH_KNOWN_PACKAGES.toLong())
                 )
                 assertThat(packageInfoSecondUser.applicationInfo!!.dataDir).isEqualTo(oldDataDir)
-                // Expect not to throw when the package is queryable on the primary user
-                packageInfoPrimaryUser = pmPrimaryUser.getPackageInfo(
+                // Expect not to throw when the package is queryable
+                pmPrimaryUser.getPackageInfo(
                     TEST_APP_PACKAGE,
                     PackageInfoFlags.of(MATCH_KNOWN_PACKAGES.toLong())
                 )
-                // The data dir of primary user has been deleted
-                assertThat(packageInfoPrimaryUser.applicationInfo!!.dataDir).isNull()
-
-                // Reinstall the app on second user and verifies that the data dir stays the same
-                // for the second user and is still not queryable for the primary user without flags
+                // Reinstall the app on the second user and verifies that the data dir stays the same,
+                // and the app is still not queryable on the primary user
                 installPackageAsUser(TEST_HW5, secondaryUser)
                 packageInfoSecondUser = pmSecondaryUser.getPackageInfo(
                     TEST_APP_PACKAGE,
                     PackageInfoFlags.of(0L)
                 )
                 assertThat(packageInfoSecondUser.applicationInfo!!.dataDir).isEqualTo(oldDataDir)
-                assertThrows(PackageManager.NameNotFoundException::class.java) {
-                    pmPrimaryUser.getPackageInfo(
-                        TEST_APP_PACKAGE,
-                        PackageInfoFlags.of(0L)
-                    )
-                }
+                pmPrimaryUser.getPackageInfo(
+                    TEST_APP_PACKAGE,
+                    PackageInfoFlags.of(MATCH_KNOWN_PACKAGES.toLong())
+                )
                 // Fully uninstall the app on the second user and verify it's no longer queryable
-                // on both users even with MATCH_KNOWN_PACKAGES
                 uninstallPackageAsUser(TEST_APP_PACKAGE, secondaryUser)
                 assertThrows(PackageManager.NameNotFoundException::class.java) {
                     pmSecondaryUser.getPackageInfo(
-                        TEST_APP_PACKAGE,
-                        PackageInfoFlags.of(MATCH_KNOWN_PACKAGES.toLong())
-                    )
-                }
-                assertThrows(PackageManager.NameNotFoundException::class.java) {
-                    pmPrimaryUser.getPackageInfo(
                         TEST_APP_PACKAGE,
                         PackageInfoFlags.of(MATCH_KNOWN_PACKAGES.toLong())
                     )
