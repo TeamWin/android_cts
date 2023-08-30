@@ -719,13 +719,15 @@ public final class Package {
 
             // In most cases this should work first time, however if a user restriction has been
             // recently removed we may need to retry
+            int previousPid = runningProcess().pid();
             Poll.forValue("Application flag", () -> {
                 userActivityManager.forceStopPackage(mPackageName);
 
                 return userPackageManager.getPackageInfo(mPackageName, PackageManager.GET_META_DATA)
                         .applicationInfo.flags;
             })
-                    .toMeet(flag -> (flag & FLAG_STOPPED) == FLAG_STOPPED)
+                    .toMeet(flag ->(flag & FLAG_STOPPED) == FLAG_STOPPED
+                               || previousPid != runningProcess().pid())
                     .errorOnFail("Expected application flags to contain FLAG_STOPPED ("
                             + FLAG_STOPPED + ")")
                     .await();
