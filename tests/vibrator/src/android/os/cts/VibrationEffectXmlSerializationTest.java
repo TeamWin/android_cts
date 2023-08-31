@@ -71,7 +71,7 @@ public class VibrationEffectXmlSerializationTest {
     public void testValidParseDocument_vibrationSelectRootTag(
             VibrationEffect[] expectedEffects, String xml) throws Exception {
         assertWithMessage("Found wrong parse result for " + xml)
-                .that(parseDocument(xml).getVibrationEffectListForTesting())
+                .that(parseDocument(xml).getVibrationEffects())
                 .containsExactly(expectedEffects).inOrder();
     }
 
@@ -89,7 +89,7 @@ public class VibrationEffectXmlSerializationTest {
     public void testValidParseDocument_vibrationEffectRootTag(
             VibrationEffect expectedEffect, String xml) throws Exception {
         assertWithMessage("Found wrong parse result for " + xml)
-                .that(parseDocument(xml).getVibrationEffectListForTesting())
+                .that(parseDocument(xml).getVibrationEffects())
                 .containsExactly(expectedEffect).inOrder();
     }
 
@@ -163,7 +163,7 @@ public class VibrationEffectXmlSerializationTest {
                 </vibration>
 
                 <!-- comment after root tag -->
-                """).getVibrationEffectListForTesting())
+                """).getVibrationEffects())
                 .containsExactly(VibrationEffect.createPredefined(EFFECT_CLICK)).inOrder();
 
         assertThat(parseDocument(
@@ -188,7 +188,7 @@ public class VibrationEffectXmlSerializationTest {
                     <!-- comment before closing root tag -->
                 </vibration-select>
                 <!-- comment after root tag -->
-                """).getVibrationEffectListForTesting())
+                """).getVibrationEffects())
                 .containsExactly(
                         VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK),
                         VibrationEffect.createPredefined(VibrationEffect.EFFECT_TICK))
@@ -299,8 +299,7 @@ public class VibrationEffectXmlSerializationTest {
 
     @Test
     public void testParseEmptyVibrationSelectTagIsEmpty() throws Exception {
-        assertThat(parseDocument("<vibration-select/>").getVibrationEffectListForTesting())
-                .isEmpty();
+        assertThat(parseDocument("<vibration-select/>").getVibrationEffects()).isEmpty();
     }
 
     @Test
