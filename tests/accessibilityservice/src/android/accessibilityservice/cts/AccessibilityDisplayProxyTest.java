@@ -62,6 +62,7 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.hamcrest.CoreMatchers.allOf;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assume.assumeFalse;
+import static org.junit.Assume.assumeNotNull;
 import static org.junit.Assume.assumeTrue;
 
 import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
@@ -302,12 +303,12 @@ public class AccessibilityDisplayProxyTest {
         final Context context = sInstrumentation.getContext();
         assumeTrue(supportsMultiDisplay(context));
         final PackageManager packageManager = context.getPackageManager();
-        assumeTrue(packageManager.hasSystemFeature(PackageManager.FEATURE_COMPANION_DEVICE_SETUP));
         // TODO(b/261155110): Re-enable tests once freeform mode is supported in Virtual Display.
         assumeFalse("Skipping test: VirtualDisplay window policy doesn't support freeform.",
                 packageManager.hasSystemFeature(FEATURE_FREEFORM_WINDOW_MANAGEMENT));
         mA11yManager = context.getSystemService(AccessibilityManager.class);
         mVirtualDeviceManager = context.getSystemService(VirtualDeviceManager.class);
+        assumeNotNull(mVirtualDeviceManager);
         mVirtualDisplay = createVirtualDeviceAndLaunchVirtualDisplay();
         assertThat(mVirtualDisplay).isNotNull();
         mVirtualDisplayId = mVirtualDisplay.getDisplay().getDisplayId();
