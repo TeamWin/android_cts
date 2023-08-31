@@ -19,6 +19,8 @@ package android.virtualdevice.cts.common.util;
 import static com.google.common.util.concurrent.Uninterruptibles.tryAcquireUninterruptibly;
 
 import android.app.ActivityOptions;
+import android.content.Context;
+import android.content.res.Resources;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
 import android.hardware.display.VirtualDisplayConfig;
@@ -60,6 +62,17 @@ public final class VirtualDeviceTestUtils {
         receiver = ResultReceiver.CREATOR.createFromParcel(parcel);
         parcel.recycle();
         return receiver;
+    }
+
+    /**
+     * Returns if VirtualDeviceManager is enabled on the device or not.
+     */
+    public static boolean isVirtualDeviceManagerConfigEnabled(Context context) {
+        return context.getResources().getBoolean(
+                Resources.getSystem().getIdentifier(
+                        "config_enableVirtualDeviceManager",
+                        "bool",
+                        "android"));
     }
 
     /**
