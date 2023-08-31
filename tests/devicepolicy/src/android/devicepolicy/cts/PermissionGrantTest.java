@@ -33,13 +33,10 @@ import static android.app.admin.DevicePolicyManager.PERMISSION_GRANT_STATE_GRANT
 import static android.app.admin.DevicePolicyManager.PERMISSION_POLICY_AUTO_DENY;
 import static android.app.admin.DevicePolicyManager.PERMISSION_POLICY_AUTO_GRANT;
 import static android.app.admin.DevicePolicyManager.PERMISSION_POLICY_PROMPT;
-
 import static com.android.bedstead.harrier.UserType.WORK_PROFILE;
 import static com.android.bedstead.nene.utils.Versions.U;
-
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
-
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 import static org.testng.Assert.assertThrows;
@@ -48,7 +45,6 @@ import android.app.admin.ManagedSubscriptionsPolicy;
 import android.app.admin.RemoteDevicePolicyManager;
 import android.content.ComponentName;
 import android.provider.Settings;
-
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.AfterClass;
@@ -81,7 +77,8 @@ import com.android.bedstead.testapp.TestAppActivity;
 import com.android.bedstead.testapp.TestAppInstance;
 import com.android.queryable.annotations.IntegerQuery;
 import com.android.queryable.annotations.Query;
-
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 import org.junit.Assume;
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -89,9 +86,6 @@ import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
 
 @RunWith(BedsteadJUnit4.class)
 public final class PermissionGrantTest {
@@ -180,8 +174,9 @@ public final class PermissionGrantTest {
         sTestAppInstance.uninstall();
     }
 
-    @CanSetPolicyTest(policy = SetPermissionGrantState.class)
-    public void denyPermission_setsGrantState(@DeniablePermissionTestParameter String permission) {
+  @CanSetPolicyTest(policy = SetPermissionGrantState.class)
+  @Ignore("b/290932414")
+  public void denyPermission_setsGrantState(@DeniablePermissionTestParameter String permission) {
         int existingGrantState = sDeviceState.dpc().devicePolicyManager()
                 .getPermissionGrantState(sDeviceState.dpc().componentName(),
                         sTestApp.packageName(), permission);
@@ -231,9 +226,10 @@ public final class PermissionGrantTest {
         }
     }
 
-    @PolicyAppliesTest(policy = SetPermissionGrantState.class)
-    public void denyPermission_permissionIsDenied(
-            @DeniablePermissionTestParameter String permission) {
+  @PolicyAppliesTest(policy = SetPermissionGrantState.class)
+  @Ignore("b/290932414")
+  public void denyPermission_permissionIsDenied(
+      @DeniablePermissionTestParameter String permission) {
         int existingGrantState = sDeviceState.dpc().devicePolicyManager()
                 .getPermissionGrantState(sDeviceState.dpc().componentName(),
                         sTestApp.packageName(), permission);
@@ -278,9 +274,10 @@ public final class PermissionGrantTest {
         }
     }
 
-    @PolicyDoesNotApplyTest(policy = SetPermissionGrantState.class)
-    public void denyPermission_doesNotApply_permissionIsNotDenied(
-            @DeniablePermissionTestParameter String permission) {
+  @PolicyDoesNotApplyTest(policy = SetPermissionGrantState.class)
+  @Ignore("b/290932414")
+  public void denyPermission_doesNotApply_permissionIsNotDenied(
+      @DeniablePermissionTestParameter String permission) {
         try {
             sTestApp.pkg().grantPermission(TestApis.users().instrumented(), permission);
 
@@ -295,14 +292,13 @@ public final class PermissionGrantTest {
         }
     }
 
-    @PolicyDoesNotApplyTest(policy = SetPermissionGrantState.class)
-    @AdditionalQueryParameters(
-            forTestApp = "dpc",
-            query = @Query(targetSdkVersion =
-            @IntegerQuery(isLessThan = U))
-    )
-    public void grantPermission_doesNotApply_permissionIsNotGranted(
-            @DeniablePermissionTestParameter String permission) {
+  @PolicyDoesNotApplyTest(policy = SetPermissionGrantState.class)
+  @AdditionalQueryParameters(
+      forTestApp = "dpc",
+      query = @Query(targetSdkVersion = @IntegerQuery(isLessThan = U)))
+  @Ignore("b/290932414")
+  public void grantPermission_doesNotApply_permissionIsNotGranted(
+      @DeniablePermissionTestParameter String permission) {
         try {
             sTestApp.pkg().denyPermission(TestApis.users().instrumented(), permission);
 

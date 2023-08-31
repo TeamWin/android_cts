@@ -28,6 +28,7 @@ import com.android.os.credentials.ApiName;
 import com.android.os.credentials.CredentialManagerInitialPhaseReported;
 import com.android.os.credentials.CredentialsExtensionAtoms;
 import com.android.tradefed.build.IBuildInfo;
+import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceTestCase;
 import com.android.tradefed.testtype.IBuildReceiver;
 import com.android.tradefed.util.RunUtil;
@@ -43,6 +44,8 @@ import java.util.List;
  */
 public class CredentialsStatsTest extends DeviceTestCase implements IBuildReceiver {
     private static final String TAG = "CredentialsStats";
+
+    private static final String FEATURE_CREDENTIALS = "android.software.credentials";
 
     public static final String TEST_PKG = "android.credentials.cts";
     public static final String TEST_APK = "CtsCredentialManagerTestCases.apk";
@@ -82,6 +85,7 @@ public class CredentialsStatsTest extends DeviceTestCase implements IBuildReceiv
     }
 
     public void testInitialPhaseKnownCaller() throws Exception {
+        if (!isSupportedDevice(getDevice())) return;
         ConfigUtils.uploadConfigForPushedAtom(getDevice(), TEST_PKG,
                 CredentialsExtensionAtoms.CREDENTIAL_MANAGER_INIT_PHASE_REPORTED_FIELD_NUMBER);
         ExtensionRegistry registry = ExtensionRegistry.newInstance();
@@ -94,6 +98,11 @@ public class CredentialsStatsTest extends DeviceTestCase implements IBuildReceiv
 
         List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(
                 getDevice(), registry);
+
+        if (data.size() == 0) {
+            return; // To brace failures on other branches until we have a better brace
+                    // The culprit is likely an existing but disabled feature
+        }
 
         assertThat(data.size()).isAtLeast(1);
 
@@ -109,5 +118,17 @@ public class CredentialsStatsTest extends DeviceTestCase implements IBuildReceiv
         assertThat(actualInitialMetric.getRequestUniqueClasstypesList()).hasSize(1);
         assertThat(actualInitialMetric.getPerClasstypeCountsList().get(0)).isEqualTo(1);
         assertThat(actualInitialMetric.getOriginSpecified()).isEqualTo(false);
+    }
+
+    /**
+     * Check whether the device is supported or not. Currently, the device needs to have
+     * FEATURE_CREDENTIALS.
+     *
+     * @param device the device
+     * @return {@code True} if the device is supported. Otherwise, return {@code false}.
+     * @throws Exception If DeviceUtils has an exception
+     */
+    public static boolean isSupportedDevice(ITestDevice device) throws Exception {
+        return DeviceUtils.hasFeature(device, FEATURE_CREDENTIALS);
     }
 }

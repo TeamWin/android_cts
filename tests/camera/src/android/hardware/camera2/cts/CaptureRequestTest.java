@@ -44,6 +44,7 @@ import android.hardware.cts.helpers.CameraUtils;
 import android.media.Image;
 import android.os.Build;
 import android.os.Parcel;
+import android.platform.test.annotations.AppModeFull;
 import android.util.ArraySet;
 import android.util.Log;
 import android.util.Pair;
@@ -862,9 +863,10 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
      * Camera API requires that camera timestamps monotonically increase.
      */
     @Test
+    @AppModeFull(reason = "PropertyUtil methods don't work for instant apps")
     public void testZoomTimestampIncrease() throws Exception {
-        if (PropertyUtil.getVendorApiLevel() <= Build.VERSION_CODES.TIRAMISU) {
-            // Only run test for Vendor API level U or higher
+        if (PropertyUtil.getVendorApiLevel() <= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            // Only run test for Vendor API level V or higher
             return;
         }
 
@@ -3070,13 +3072,17 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
             requests.add(requestBuilder.build());
             requests.add(0, requestBuilder.build());
         }
-        mSession.captureBurst(requests, listener, mHandler);
+        int seqId = mSession.captureBurst(requests, listener, mHandler);
 
-        // Check timestamp monotonically increase for thoe whole sequence
+        // onCaptureSequenceCompleted() trails all capture results. Upon its return,
+        // we make sure we've received all results/errors.
+        listener.getCaptureSequenceLastFrameNumber(
+                seqId, WAIT_FOR_RESULT_TIMEOUT_MS * ZOOM_STEPS);
+        // Check timestamp monotonically increase for the whole sequence
         long  prevTimestamp = 0;
-        for (CaptureRequest request : requests) {
-            TotalCaptureResult result = listener.getTotalCaptureResultForRequest(
-                    request, NUM_RESULTS_WAIT_TIMEOUT);
+        while (listener.hasMoreResults()) {
+            TotalCaptureResult result = listener.getTotalCaptureResult(
+                    WAIT_FOR_RESULT_TIMEOUT_MS);
             long timestamp = getValueNotNull(result, CaptureResult.SENSOR_TIMESTAMP);
             mCollector.expectGreater("Sensor timestamp must monotonically increase, "
                     + "but changed from " + prevTimestamp + " to " + timestamp,

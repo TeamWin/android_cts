@@ -50,6 +50,7 @@ import android.content.pm.ShortcutManager;
 import android.graphics.drawable.Icon;
 import android.os.Bundle;
 import android.os.SystemClock;
+import android.os.VibratorManager;
 import android.provider.Settings;
 import android.provider.Settings.Secure;
 import android.service.notification.StatusBarNotification;
@@ -486,6 +487,10 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
         }
     }
 
+    private boolean hasVibrator() {
+        return mContext.getSystemService(VibratorManager.class).getDefaultVibrator().hasVibrator();
+    }
+
     /**
      * Creates a notification channel. Sends the user to the channel settings half-sheet to toggle
      * vibration settings and waits for that to be done.
@@ -496,8 +501,10 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
 
         @Override
         protected View inflate(ViewGroup parent) {
-            mView = createNlsSettingsItem(parent,
-                    R.string.nls_channel_settings_with_filter_instructions);
+            int instructions = hasVibrator()
+                    ? R.string.nls_channel_settings_with_filter_instructions
+                    : R.string.nls_channel_settings_with_filter_instructions_no_vibrator;
+            mView = createNlsSettingsItem(parent, instructions);
             Button button = mView.findViewById(R.id.nls_action_button);
             button.setEnabled(false);
             return mView;
@@ -510,6 +517,7 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
                     new NotificationChannel(
                             mChannelId, "UpdateChannelWithFilterTest", IMPORTANCE_DEFAULT);
             channel.enableVibration(false);
+            channel.setSound(null, null);
             mNm.createNotificationChannel(channel);
             status = READY;
             Button button = mView.findViewById(R.id.nls_action_button);
@@ -524,7 +532,11 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
         @Override
         protected void test() {
             NotificationChannel channel = mNm.getNotificationChannel(mChannelId);
-            status = channel.shouldVibrate() ? PASS : WAIT_FOR_USER;
+            if (hasVibrator()) {
+                status = channel.shouldVibrate() ? PASS : WAIT_FOR_USER;
+            } else {
+                status = channel.getSound() != null ? PASS : WAIT_FOR_USER;
+            }
             next();
         }
 
@@ -552,8 +564,10 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
 
         @Override
         protected View inflate(ViewGroup parent) {
-            return createPassFailItem(parent,
-                    R.string.nls_channel_settings_with_filter_verification);
+            int verification = hasVibrator()
+                    ? R.string.nls_channel_settings_with_filter_verification
+                    : R.string.nls_channel_settings_with_filter_verification_no_vibrator;
+            return createPassFailItem(parent, verification);
         }
 
         @Override

@@ -1017,13 +1017,6 @@ public class AudioDataPathsActivity
             if (mTestStep >= mTestSpecs.size()) {
                 stopTest();
                 completeTest();
-            } else {
-                (mTimer = new Timer()).schedule(new TimerTask() {
-                    @Override
-                    public void run() {
-                        advanceTestStep();
-                    }
-                }, TEST_TIME_IN_SECONDS * MS_PER_SEC);
             }
         }
 
@@ -1121,7 +1114,11 @@ public class AudioDataPathsActivity
 
     @Override
     public void recordTestResults() {
-        mTestManager.generateReportLog();
+// TODO Remove all report logging from this file. This is a quick fix.
+// This code generates multiple records in the JSON file.
+// That duplication is invalid JSON and causes the database
+// ingestion to fail.
+//        mTestManager.generateReportLog();
     }
 
     //
