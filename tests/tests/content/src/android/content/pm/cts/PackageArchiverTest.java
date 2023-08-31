@@ -20,13 +20,9 @@ import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.content.pm.PackageManager.MATCH_ARCHIVED_PACKAGES;
 import static android.content.pm.PackageManager.MATCH_UNINSTALLED_PACKAGES;
 import static android.content.pm.cts.PackageManagerShellCommandIncrementalTest.executeShellCommand;
-
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
-
 import static com.google.common.truth.Truth.assertThat;
-
 import static junit.framework.Assert.fail;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
@@ -162,9 +158,7 @@ public class PackageArchiverTest {
                                         new IntentSender((IIntentSender) mIntentSender))),
                         Manifest.permission.DELETE_PACKAGES);
 
-        assertThat(e).hasMessageThat()
-                .isEqualTo(TextUtils.formatSimple("No installer found to archive app %s.",
-                        PACKAGE_NAME));
+        assertThat(e).hasMessageThat().isEqualTo("No installer found");
     }
 
     @Test
