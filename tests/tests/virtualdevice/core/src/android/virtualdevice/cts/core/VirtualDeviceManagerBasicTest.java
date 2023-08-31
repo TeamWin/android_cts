@@ -45,6 +45,7 @@ import android.annotation.Nullable;
 import android.companion.virtual.VirtualDevice;
 import android.companion.virtual.VirtualDeviceManager;
 import android.companion.virtual.VirtualDeviceParams;
+import android.companion.virtual.flags.Flags;
 import android.companion.virtual.sensor.VirtualSensor;
 import android.companion.virtual.sensor.VirtualSensorCallback;
 import android.companion.virtual.sensor.VirtualSensorConfig;
@@ -56,6 +57,11 @@ import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
 import android.hardware.display.VirtualDisplayConfig;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.RequiresFlagsDisabled;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
+import android.util.Log;
 import android.virtualdevice.cts.common.FakeAssociationRule;
 
 import androidx.annotation.NonNull;
@@ -100,6 +106,9 @@ public class VirtualDeviceManagerBasicTest {
                     .setFlags(DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC
                             | DisplayManager.VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY)
                     .build();
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
 
     @Rule
     public AdoptShellPermissionsRule mAdoptShellPermissionsRule = new AdoptShellPermissionsRule(
@@ -148,6 +157,20 @@ public class VirtualDeviceManagerBasicTest {
         if (mAnotherVirtualDevice != null) {
             mAnotherVirtualDevice.close();
         }
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_MORE_LOGS)
+    public void flags_onlyRunWhenMoreLogsEnabled_shouldBeEnabled() {
+        Log.i(VIRTUAL_DEVICE_NAME, "CTS Flag " + Flags.FLAG_MORE_LOGS + " is " + Flags.moreLogs());
+        assertThat(Flags.moreLogs()).isTrue();
+    }
+
+    @Test
+    @RequiresFlagsDisabled(Flags.FLAG_MORE_LOGS)
+    public void flags_onlyRunWhenMoreLogsDisabled_shouldBeDisabled() {
+        Log.i(VIRTUAL_DEVICE_NAME, "CTS Flag " + Flags.FLAG_MORE_LOGS + " is " + Flags.moreLogs());
+        assertThat(Flags.moreLogs()).isFalse();
     }
 
     @Test
