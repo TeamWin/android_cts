@@ -4526,6 +4526,9 @@
                 android:name="test_parent"
                 android:value="com.android.cts.verifier.presence.PresenceTestActivity" />
             <meta-data
+                android:name="test_required_features"
+                android:value="android.hardware.wifi.aware:android.hardware.wifi.rtt" />
+            <meta-data
                 android:name="display_mode"
                 android:value="single_display_mode" />
             <meta-data
