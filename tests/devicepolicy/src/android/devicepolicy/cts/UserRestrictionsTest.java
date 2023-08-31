@@ -114,6 +114,7 @@ public final class UserRestrictionsTest {
             CommonUserRestrictions.DISALLOW_ADD_USER,
             CommonUserRestrictions.DISALLOW_ADD_MANAGED_PROFILE,
             CommonUserRestrictions.DISALLOW_ADD_CLONE_PROFILE,
+            CommonUserRestrictions.DISALLOW_ADD_PRIVATE_PROFILE,
             CommonUserRestrictions.ENSURE_VERIFY_APPS,
             CommonUserRestrictions.DISALLOW_CONFIG_CELL_BROADCASTS,
             CommonUserRestrictions.DISALLOW_CONFIG_MOBILE_NETWORKS,

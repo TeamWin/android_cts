@@ -33,6 +33,7 @@ import static com.android.bedstead.nene.flags.CommonFlags.DevicePolicyManager.PE
 import static com.android.bedstead.nene.flags.CommonFlags.NAMESPACE_DEVICE_POLICY_MANAGER;
 import static com.android.bedstead.nene.userrestrictions.CommonUserRestrictions.DISALLOW_ADD_CLONE_PROFILE;
 import static com.android.bedstead.nene.userrestrictions.CommonUserRestrictions.DISALLOW_ADD_MANAGED_PROFILE;
+import static com.android.bedstead.nene.userrestrictions.CommonUserRestrictions.DISALLOW_ADD_PRIVATE_PROFILE;
 import static com.android.bedstead.nene.userrestrictions.CommonUserRestrictions.DISALLOW_ADD_USER;
 import static com.android.bedstead.nene.userrestrictions.CommonUserRestrictions.DISALLOW_BLUETOOTH;
 import static com.android.bedstead.nene.users.UserType.MANAGED_PROFILE_TYPE_NAME;
@@ -274,6 +275,7 @@ public final class DeviceState extends HarrierRule {
 
     private static final String TV_PROFILE_TYPE_NAME = "com.android.tv.profile";
     private static final String CLONE_PROFILE_TYPE_NAME = "android.os.usertype.profile.CLONE";
+    private static final String PRIVATE_PROFILE_TYPE_NAME = "android.os.usertype.profile.PRIVATE";
 
 
     // We timeout 10 seconds before the infra would timeout
@@ -2045,6 +2047,42 @@ public final class DeviceState extends HarrierRule {
     }
 
     /**
+     * Get the {@link UserReference} of the private profile for the current user
+     *
+     * <p>This should only be used to get private profiles managed by Harrier (using either the
+     * annotations or calls to the {@link DeviceState} class.
+     *
+     * @throws IllegalStateException if there is no harrier-managed private profile
+     */
+    public UserReference privateProfile() {
+        return privateProfile(/* forUser= */ UserType.INITIAL_USER);
+    }
+
+    /**
+     * Get the {@link UserReference} of the private profile.
+     *
+     * <p>This should only be used to get private profiles managed by Harrier (using either the
+     * annotations or calls to the {@link DeviceState} class.
+     *
+     * @throws IllegalStateException if there is no harrier-managed private profile
+     */
+    public UserReference privateProfile(UserType forUser) {
+        return privateProfile(resolveUserTypeToUser(forUser));
+    }
+
+    /**
+     * Get the {@link UserReference} of the private profile.
+     *
+     * <p>This should only be used to get private profiles managed by Harrier (using either the
+     * annotations or calls to the {@link DeviceState} class.
+     *
+     * @throws IllegalStateException if there is no harrier-managed private profile
+     */
+    public UserReference privateProfile(UserReference forUser) {
+        return profile(PRIVATE_PROFILE_TYPE_NAME, forUser);
+    }
+
+    /**
      * Gets the user ID of the initial user.
      */
     // TODO(b/249047658): cache the initial user at the start of the run.
@@ -2538,6 +2576,8 @@ public final class DeviceState extends HarrierRule {
                 return additionalUser();
             case CLONE_PROFILE:
                 return cloneProfile();
+            case PRIVATE_PROFILE:
+                return privateProfile();
             case ADMIN_USER:
                 return TestApis.users().all().stream().sorted(
                         Comparator.comparing(UserReference::id))
@@ -2821,6 +2861,9 @@ public final class DeviceState extends HarrierRule {
         if (profileType.name().equals("android.os.usertype.profile.CLONE")) {
             // Special case - we can't create a clone profile if this is set
             ensureDoesNotHaveUserRestriction(DISALLOW_ADD_CLONE_PROFILE, parent);
+        } else if (profileType.name().equals("android.os.usertype.profile.PRIVATE")) {
+            // Special case - we can't create a private profile if this is set
+            ensureDoesNotHaveUserRestriction(DISALLOW_ADD_PRIVATE_PROFILE, parent);
         }
 
         try {
@@ -4303,6 +4346,9 @@ public final class DeviceState extends HarrierRule {
             // Special case - set by the system whenever there is a Device Owner
             ensureHasNoDeviceOwner();
         } else if (restriction.equals(DISALLOW_ADD_CLONE_PROFILE)) {
+            // Special case - set by the system whenever there is a Device Owner
+            ensureHasNoDeviceOwner();
+        } else if (restriction.equals(DISALLOW_ADD_PRIVATE_PROFILE)) {
             // Special case - set by the system whenever there is a Device Owner
             ensureHasNoDeviceOwner();
         } else if (restriction.equals(DISALLOW_ADD_USER)) {

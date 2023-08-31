@@ -35,6 +35,7 @@
         <option name="exclude-annotation" value="com.android.bedstead.harrier.annotations.RequireRunOnWorkProfile" />
         <option name="exclude-annotation" value="com.android.bedstead.harrier.annotations.RequireRunOnSecondaryUser" />
         <option name="exclude-annotation" value="com.android.bedstead.harrier.annotations.RequireRunOnCloneProfile" />
+        <option name="exclude-annotation" value="com.android.bedstead.harrier.annotations.RequireRunOnPrivateProfile" />
         <option name="exclude-annotation" value="com.android.interactive.annotations.Interactive" />
         <option name="hidden-api-checks" value="false" />
         <!-- test-timeout unit is ms, value = 10 min -->
