@@ -28,6 +28,8 @@ import static android.virtualdevice.cts.common.util.VirtualDeviceTestUtils.creat
 
 import static androidx.test.core.app.ApplicationProvider.getApplicationContext;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
@@ -43,6 +45,7 @@ import static org.mockito.Mockito.verify;
 import android.annotation.NonNull;
 import android.annotation.Nullable;
 import android.app.Activity;
+import android.app.ActivityManager;
 import android.companion.virtual.VirtualDeviceManager;
 import android.companion.virtual.VirtualDeviceManager.ActivityListener;
 import android.companion.virtual.VirtualDeviceManager.VirtualDevice;
@@ -102,6 +105,7 @@ public class ActivityBlockingTest {
     public FakeAssociationRule mFakeAssociationRule = new FakeAssociationRule();
 
     private VirtualDeviceManager mVirtualDeviceManager;
+    private ActivityManager mActivityManager;
     @Nullable private VirtualDevice mVirtualDevice;
     @Mock
     private VirtualDisplay.Callback mVirtualDisplayCallback;
@@ -110,19 +114,21 @@ public class ActivityBlockingTest {
     private ResultReceiver mResultReceiver;
     @Mock
     private ActivityListener mActivityListener;
+    private Context mTargetContext;
 
     @Before
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
         Context context = getApplicationContext();
+        mTargetContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
         final PackageManager packageManager = context.getPackageManager();
         assumeTrue(packageManager.hasSystemFeature(PackageManager.FEATURE_COMPANION_DEVICE_SETUP));
         assumeTrue(packageManager.hasSystemFeature(
                 PackageManager.FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS));
-        // TODO(b/261155110): Re-enable tests once freeform mode is supported in Virtual Display.
         assumeFalse("Skipping test: VirtualDisplay window policy doesn't support freeform.",
                 packageManager.hasSystemFeature(FEATURE_FREEFORM_WINDOW_MANAGEMENT));
         mVirtualDeviceManager = context.getSystemService(VirtualDeviceManager.class);
+        mActivityManager = context.getSystemService(ActivityManager.class);
         mResultReceiver = createResultReceiver(mOnReceiveResultListener);
     }
 
@@ -140,9 +146,10 @@ public class ActivityBlockingTest {
 
         Intent intent = TestAppHelper.createNoEmbedIntent()
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        assertThrows(SecurityException.class, () ->
-                InstrumentationRegistry.getInstrumentation().getTargetContext()
-                        .startActivity(intent, createActivityOptions(virtualDisplay)));
+        assertThat(mActivityManager.isActivityStartAllowedOnDisplay(
+                mTargetContext, virtualDisplay.getDisplay().getDisplayId(), intent)).isFalse();
+        assertThrows(SecurityException.class,
+                () -> mTargetContext.startActivity(intent, createActivityOptions(virtualDisplay)));
         virtualDisplay.release();
     }
 
@@ -150,25 +157,32 @@ public class ActivityBlockingTest {
     public void cannotDisplayOnRemoteActivity_shouldBeBlockedFromLaunching() {
         VirtualDisplay virtualDisplay = createVirtualDisplay(DEFAULT_VIRTUAL_DEVICE_PARAMS,
                 /* virtualDisplayFlags= */ 0);
+        int virtualDisplayId = virtualDisplay.getDisplay().getDisplayId();
 
+        Intent intent = new Intent(getApplicationContext(), EmptyActivity.class)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        assertThat(mActivityManager.isActivityStartAllowedOnDisplay(
+                mTargetContext, virtualDisplayId, intent)).isTrue();
         EmptyActivity emptyActivity = (EmptyActivity) InstrumentationRegistry.getInstrumentation()
-                .startActivitySync(
-                        new Intent(getApplicationContext(), EmptyActivity.class)
-                                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK
-                                        | Intent.FLAG_ACTIVITY_CLEAR_TASK),
-                        createActivityOptions(virtualDisplay));
+                .startActivitySync(intent, createActivityOptions(virtualDisplay));
 
-        emptyActivity.startActivity(TestAppHelper.createCannotDisplayOnRemoteIntent(
-                /* newTask= */ true, mResultReceiver));
-        verify(mActivityListener, timeout(3000)).onTopActivityChanged(
-                eq(virtualDisplay.getDisplay().getDisplayId()), eq(BLOCKED_ACTIVITY_COMPONENT),
+        Intent blockedIntent = TestAppHelper.createCannotDisplayOnRemoteIntent(
+                /* newTask= */ true, mResultReceiver);
+        assertThat(mActivityManager.isActivityStartAllowedOnDisplay(
+                emptyActivity, virtualDisplayId, blockedIntent)).isFalse();
+        emptyActivity.startActivity(blockedIntent);
+        verify(mActivityListener, timeout(3000).times(1)).onTopActivityChanged(
+                eq(virtualDisplayId), eq(BLOCKED_ACTIVITY_COMPONENT),
                 anyInt());
         verify(mOnReceiveResultListener, never()).onReceiveResult(anyInt(), any());
 
-        emptyActivity.startActivity(TestAppHelper.createCannotDisplayOnRemoteIntent(
-                /* newTask= */ false, mResultReceiver));
+        Intent blockedIntentSameTask = TestAppHelper.createCannotDisplayOnRemoteIntent(
+                /* newTask= */ false, mResultReceiver);
+        assertThat(mActivityManager.isActivityStartAllowedOnDisplay(
+                emptyActivity, virtualDisplayId, blockedIntentSameTask)).isFalse();
+        emptyActivity.startActivity(blockedIntentSameTask);
         verify(mActivityListener, timeout(3000).times(2)).onTopActivityChanged(
-                eq(virtualDisplay.getDisplay().getDisplayId()), eq(BLOCKED_ACTIVITY_COMPONENT),
+                eq(virtualDisplayId), eq(BLOCKED_ACTIVITY_COMPONENT),
                 anyInt());
         verify(mOnReceiveResultListener, never()).onReceiveResult(anyInt(), any());
         virtualDisplay.release();
@@ -178,17 +192,17 @@ public class ActivityBlockingTest {
     public void trustedDisplay_startNonEmbeddableActivity_shouldSucceed() {
         VirtualDisplay virtualDisplay = createVirtualDisplay(DEFAULT_VIRTUAL_DEVICE_PARAMS,
                 DisplayManager.VIRTUAL_DISPLAY_FLAG_TRUSTED);
+        int virtualDisplayId = virtualDisplay.getDisplay().getDisplayId();
 
         Intent intent = TestAppHelper.createActivityLaunchedReceiverIntent(mResultReceiver)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        InstrumentationRegistry.getInstrumentation().getTargetContext()
-                .startActivity(intent, createActivityOptions(virtualDisplay));
+        assertThat(mActivityManager.isActivityStartAllowedOnDisplay(
+                mTargetContext, virtualDisplayId, intent)).isTrue();
+        mTargetContext.startActivity(intent, createActivityOptions(virtualDisplay));
 
         verify(mOnReceiveResultListener, timeout(3000)).onReceiveResult(
                 eq(Activity.RESULT_OK),
-                argThat(result ->
-                        result.getInt(TestAppHelper.EXTRA_DISPLAY)
-                                == virtualDisplay.getDisplay().getDisplayId()));
+                argThat(result -> result.getInt(TestAppHelper.EXTRA_DISPLAY) == virtualDisplayId));
         virtualDisplay.release();
     }
 
@@ -200,21 +214,24 @@ public class ActivityBlockingTest {
                         .setAllowedActivities(Set.of(emptyActivityComponentName))
                         .build(),
                 /* virtualDisplayFlags= */ 0);
+        int virtualDisplayId = virtualDisplay.getDisplay().getDisplayId();
 
+        Intent intent = new Intent().setComponent(emptyActivityComponentName)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        assertThat(mActivityManager.isActivityStartAllowedOnDisplay(
+                mTargetContext, virtualDisplayId, intent)).isTrue();
         EmptyActivity emptyActivity = (EmptyActivity) InstrumentationRegistry.getInstrumentation()
-                .startActivitySync(
-                        new Intent().setComponent(emptyActivityComponentName)
-                                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK
-                                        | Intent.FLAG_ACTIVITY_CLEAR_TASK),
-                        createActivityOptions(virtualDisplay));
+                .startActivitySync(intent, createActivityOptions(virtualDisplay));
 
-        emptyActivity.startActivity(
-                TestAppHelper.createActivityLaunchedReceiverIntent(mResultReceiver));
+        Intent blockedIntent = TestAppHelper.createActivityLaunchedReceiverIntent(mResultReceiver);
+        assertThat(mActivityManager.isActivityStartAllowedOnDisplay(
+                emptyActivity, virtualDisplayId, blockedIntent)).isFalse();
+        emptyActivity.startActivity(blockedIntent);
 
         verify(mActivityListener, timeout(3000)).onTopActivityChanged(
-                eq(virtualDisplay.getDisplay().getDisplayId()), eq(BLOCKED_ACTIVITY_COMPONENT),
-                anyInt());
+                eq(virtualDisplayId), eq(BLOCKED_ACTIVITY_COMPONENT), anyInt());
         verify(mOnReceiveResultListener, never()).onReceiveResult(anyInt(), any());
+
         virtualDisplay.release();
     }
 
@@ -226,6 +243,7 @@ public class ActivityBlockingTest {
                         .setBlockedActivities(Set.of(TestAppHelper.MAIN_ACTIVITY_COMPONENT))
                         .build(),
                 /* virtualDisplayFlags= */ 0);
+        int virtualDisplayId = virtualDisplay.getDisplay().getDisplayId();
 
         EmptyActivity emptyActivity = (EmptyActivity) InstrumentationRegistry.getInstrumentation()
                 .startActivitySync(
@@ -234,12 +252,13 @@ public class ActivityBlockingTest {
                                         | Intent.FLAG_ACTIVITY_CLEAR_TASK),
                         createActivityOptions(virtualDisplay));
 
-        emptyActivity.startActivity(
-                TestAppHelper.createActivityLaunchedReceiverIntent(mResultReceiver));
+        Intent intent = TestAppHelper.createActivityLaunchedReceiverIntent(mResultReceiver);
+        assertThat(mActivityManager.isActivityStartAllowedOnDisplay(
+                emptyActivity, virtualDisplayId, intent)).isFalse();
+        emptyActivity.startActivity(intent);
 
         verify(mActivityListener, timeout(3000)).onTopActivityChanged(
-                eq(virtualDisplay.getDisplay().getDisplayId()), eq(BLOCKED_ACTIVITY_COMPONENT),
-                anyInt());
+                eq(virtualDisplayId), eq(BLOCKED_ACTIVITY_COMPONENT), anyInt());
         verify(mOnReceiveResultListener, never()).onReceiveResult(anyInt(), any());
 
         virtualDisplay.release();
