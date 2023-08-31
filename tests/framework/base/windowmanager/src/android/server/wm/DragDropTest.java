@@ -149,7 +149,8 @@ public class DragDropTest extends WindowManagerTestBase {
             }
             final LogEntry other = (LogEntry) obj;
             return view == other.view && action == other.action
-                    && x == other.x && y == other.y
+                    // Use tolerance in case mInvCompatScale is not 1.
+                    && Math.abs(x - other.x) < 1f && Math.abs(y - other.y) < 1f
                     && compareParcelables(clipData, other.clipData)
                     && compareParcelables(clipDescription, other.clipDescription)
                     && localState == other.localState
