@@ -162,25 +162,25 @@ public class FileIntegrityManagerTest {
     }
 
     @Test
-    @ApiTest(apis = {"android.security.FileIntegrityManager#setupFsverity",
-            "android.security.FileIntegrityManager#getFsverityDigest"})
+    @ApiTest(apis = {"android.security.FileIntegrityManager#setupFsVerity",
+            "android.security.FileIntegrityManager#getFsVerityDigest"})
     @RequiresFlagsEnabled(Flags.FLAG_FSVERITY_API)
-    public void testEnableAndMeasureFsverityByFile() throws Exception {
+    public void testEnableAndMeasureFsVerityByFile() throws Exception {
         var files = newSupportedFiles();
         for (var file : files) {
-            Log.d(TAG, "testEnableAndMeasureFsverityByFile: " + file);
+            Log.d(TAG, "testEnableAndMeasureFsVerityByFile: " + file);
 
             createTestFile(file);
-            mFileIntegrityManager.setupFsverity(file);
+            mFileIntegrityManager.setupFsVerity(file);
 
-            byte[] actualDigest = mFileIntegrityManager.getFsverityDigest(file);
+            byte[] actualDigest = mFileIntegrityManager.getFsVerityDigest(file);
             assertThat(actualDigest).isNotNull();
             assertThat(HexFormat.of().formatHex(actualDigest)).isEqualTo(TEST_FILE_DIGEST);
         }
     }
 
     @Test
-    @ApiTest(apis = {"android.security.FileIntegrityManager#setupFsverity"})
+    @ApiTest(apis = {"android.security.FileIntegrityManager#setupFsVerity"})
     @RequiresFlagsEnabled(Flags.FLAG_FSVERITY_API)
     public void testFailToEnableUnsupportedLocation() throws Exception {
         var files = newUnsupportedFiles();
@@ -188,12 +188,12 @@ public class FileIntegrityManagerTest {
             Log.d(TAG, "testFailToEnableUnsupportedLocation: " + file);
 
             createTestFile(file);
-            assertThrows(Exception.class, () -> mFileIntegrityManager.setupFsverity(file));
+            assertThrows(Exception.class, () -> mFileIntegrityManager.setupFsVerity(file));
         }
     }
 
     @Test
-    @ApiTest(apis = {"android.security.FileIntegrityManager#setupFsverity"})
+    @ApiTest(apis = {"android.security.FileIntegrityManager#setupFsVerity"})
     @RequiresFlagsEnabled(Flags.FLAG_FSVERITY_API)
     public void testFailToEnableWithOpenedWritableFd() throws Exception {
         var files = newSupportedFiles();
@@ -205,21 +205,21 @@ public class FileIntegrityManagerTest {
 
             // With any writable fd, the call will fail.
             assertThrows(IOException.class, () ->
-                    mFileIntegrityManager.setupFsverity(file));
+                    mFileIntegrityManager.setupFsVerity(file));
         }
     }
 
     @Test
-    @ApiTest(apis = {"android.security.FileIntegrityManager#getFsverityDigest"})
+    @ApiTest(apis = {"android.security.FileIntegrityManager#getFsVerityDigest"})
     @RequiresFlagsEnabled(Flags.FLAG_FSVERITY_API)
-    public void testMeasureWithoutFsverity() throws Exception {
+    public void testMeasureWithoutFsVerity() throws Exception {
         var files = newSupportedFiles();
         for (var file : files) {
-            Log.d(TAG, "testMeasureWithoutFsverity: " + file);
+            Log.d(TAG, "testMeasureWithoutFsVerity: " + file);
 
             createTestFile(file);
 
-            byte[] actualDigest = mFileIntegrityManager.getFsverityDigest(file);
+            byte[] actualDigest = mFileIntegrityManager.getFsVerityDigest(file);
             assertThat(actualDigest).isNull();
         }
     }
