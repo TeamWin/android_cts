@@ -121,9 +121,7 @@ import static android.view.Surface.ROTATION_90;
 import static android.view.WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
 import static android.view.WindowManager.LayoutParams.TYPE_BASE_APPLICATION;
 import static android.window.DisplayAreaOrganizer.FEATURE_UNDEFINED;
-
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
@@ -131,7 +129,6 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
-
 import static java.lang.Integer.toHexString;
 
 import android.accessibilityservice.AccessibilityService;
@@ -1391,8 +1388,14 @@ public abstract class ActivityManagerTestBase {
 
     protected boolean supportsMultiWindow() {
         Display defaultDisplay = mDm.getDisplay(DEFAULT_DISPLAY);
-        return ActivityTaskManager.supportsSplitScreenMultiWindow(
-                mContext.createDisplayContext(defaultDisplay));
+        return supportsMultiWindow(mContext.createDisplayContext(defaultDisplay));
+    }
+
+    /**
+     * Returns true if the Context supports multi-window-mode
+     */
+    protected final boolean supportsMultiWindow(Context context) {
+        return ActivityTaskManager.supportsSplitScreenMultiWindow(context);
     }
 
     /** Returns true if the default display supports split screen multi-window. */

@@ -50,12 +50,27 @@ java_library {
 }
 
 java_library {
+    name: "cts_window_extensions_jetpack_util",
+    srcs: [
+        "src/android/server/wm/jetpack/extensions/util/**/*.java",
+    ],
+    static_libs: [
+        "compatibility-device-util-axt",
+        "cts_window-extensions",
+        "cts_window-extensions-core",
+        "cts_window-sidecar",
+    ],
+    sdk_version: "test_current",
+}
+
+java_library {
     name: "cts_window_jetpack_utils",
     srcs: [
         "src/android/server/wm/jetpack/utils/**/*.java",
     ],
     static_libs: [
         "compatibility-device-util-axt",
+        "cts-wm-util",
         "cts_window-extensions",
         "cts_window-extensions-core",
         "cts_window-sidecar",

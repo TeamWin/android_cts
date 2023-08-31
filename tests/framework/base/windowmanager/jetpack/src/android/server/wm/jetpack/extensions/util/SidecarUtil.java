@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,9 @@
  * limitations under the License.
  */
 
-package android.server.wm.jetpack.utils;
-
-import static android.server.wm.jetpack.utils.WindowManagerJetpackTestBase.getActivityWindowToken;
+package android.server.wm.jetpack.extensions.util;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeFalse;
@@ -33,13 +30,12 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.window.extensions.layout.WindowLayoutInfo;
 import androidx.window.sidecar.SidecarDisplayFeature;
 import androidx.window.sidecar.SidecarInterface;
 import androidx.window.sidecar.SidecarProvider;
 import androidx.window.sidecar.SidecarWindowLayoutInfo;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -54,6 +50,9 @@ public class SidecarUtil {
 
     public static final Version MINIMUM_SIDECAR_VERSION = new Version(1, 0, 0, "");
 
+    /**
+     * Returns the Sidecar version in a semantic version format.
+     */
     @SuppressWarnings("deprecation")
     @NonNull
     public static Version getSidecarVersion() {
@@ -70,12 +69,18 @@ public class SidecarUtil {
         return Version.UNKNOWN;
     }
 
+    /**
+     * Returns true if the sidecar version is greater than 0.
+     */
     public static boolean isSidecarVersionValid() {
         final Version version = getSidecarVersion();
         // Check that the sidecar version on the device is at least the minimum valid version.
         return version.compareTo(MINIMUM_SIDECAR_VERSION) >= 0;
     }
 
+    /**
+     * Returns the current {@link SidecarInterface} if present on the device.
+     */
     @SuppressWarnings("deprecation")
     @Nullable
     public static SidecarInterface getSidecarInterface(Context context) {
@@ -89,6 +94,9 @@ public class SidecarUtil {
         return null;
     }
 
+    /**
+     * Assumes that sidecar is present and has a version above 0.
+     */
     public static void assumeSidecarSupportedDevice(Context context) {
         final boolean sidecarInterfaceNotNull = getSidecarInterface(context) != null;
         assumeTrue("Device does not support sidecar", sidecarInterfaceNotNull);
@@ -97,6 +105,14 @@ public class SidecarUtil {
                 + MINIMUM_SIDECAR_VERSION.toString(), isSidecarVersionValid());
     }
 
+    /**
+     * Returns an int array containing the raw values of the currently visible fold types.
+     * @param activity An {@link Activity} that is visible and intersects the folds
+     * @return an int array containing the raw values for the current visible fold types.
+     * @throws InterruptedException when the async collection of the {@link WindowLayoutInfo}
+     * is interrupted.
+     */
+    @SuppressWarnings("deprecation") // SidecarInterface is deprecated but required.
     @NonNull
     public static int[] getSidecarDisplayFeatureTypes(Activity activity) {
         SidecarInterface sidecarInterface = getSidecarInterface(activity);
@@ -115,13 +131,19 @@ public class SidecarUtil {
                 .toArray();
     }
 
+    /**
+     * Assumes that the window associated to the window token has at least one display feature.
+     * @param sidecarInterface the implementation of sidecar from the device.
+     * @param windowToken the token for the active window.
+     */
+    @SuppressWarnings("deprecation") // SidecarInterface is deprecated but required.
     public static void assumeHasDisplayFeatures(SidecarInterface sidecarInterface,
             IBinder windowToken) {
         SidecarWindowLayoutInfo windowLayoutInfo = sidecarInterface.getWindowLayoutInfo(
                 windowToken);
         assertNotNull(windowLayoutInfo); // window layout info cannot be null
         List<SidecarDisplayFeature> displayFeatures = windowLayoutInfo.displayFeatures;
-        assertFalse(displayFeatures == null); // list cannot be null
+        assertNotNull(displayFeatures); // list cannot be null
         assumeFalse(displayFeatures.isEmpty()); // list can be empty
     }
 
@@ -223,5 +245,9 @@ public class SidecarUtil {
                 })
                 .filter(d -> otherOrientationBounds.contains(d.getRect()))
                 .collect(Collectors.toList());
+    }
+
+    private static IBinder getActivityWindowToken(Activity activity) {
+        return activity.getWindow().getAttributes().token;
     }
 }

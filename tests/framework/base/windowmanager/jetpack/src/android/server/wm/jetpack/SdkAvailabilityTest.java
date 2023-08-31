@@ -17,7 +17,6 @@
 package android.server.wm.jetpack;
 
 import static android.view.WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
-
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
@@ -26,8 +25,8 @@ import android.app.ActivityTaskManager;
 import android.content.Context;
 import android.hardware.display.DisplayManager;
 import android.platform.test.annotations.Presubmit;
-import android.server.wm.jetpack.utils.ExtensionUtil;
-import android.server.wm.jetpack.utils.SidecarUtil;
+import android.server.wm.jetpack.extensions.util.ExtensionsUtil;
+import android.server.wm.jetpack.extensions.util.SidecarUtil;
 import android.server.wm.jetpack.utils.WindowManagerJetpackTestBase;
 import android.view.Display;
 import android.view.WindowManager;
@@ -84,7 +83,7 @@ public class SdkAvailabilityTest extends WindowManagerJetpackTestBase {
     @Test
     public void testWindowExtensionsAvailability() {
         assertTrue("WindowExtension version is not latest",
-                ExtensionUtil.isExtensionVersionLatest());
+                ExtensionsUtil.isExtensionVersionLatest());
         assertTrue("Device must declared that the WindowExtension is enabled",
                 WindowManager.hasWindowExtensionsEnabled());
     }
@@ -96,7 +95,7 @@ public class SdkAvailabilityTest extends WindowManagerJetpackTestBase {
     @ApiTest(apis = {"androidx.window.extensions.WindowExtensions#getActivityEmbeddingComponent"})
     @Test
     public void testActivityEmbeddingAvailability() {
-        WindowExtensions windowExtensions = ExtensionUtil.getWindowExtensions();
+        WindowExtensions windowExtensions = ExtensionsUtil.getWindowExtensions();
         assertNotNull("WindowExtensions is not available", windowExtensions);
         ActivityEmbeddingComponent activityEmbeddingComponent =
                 windowExtensions.getActivityEmbeddingComponent();

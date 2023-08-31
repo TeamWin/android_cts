@@ -16,9 +16,9 @@
 
 package android.server.wm.jetpack.layout;
 
-import static android.server.wm.jetpack.utils.ExtensionUtil.assertHasDisplayFeatures;
-import static android.server.wm.jetpack.utils.ExtensionUtil.assumeHasDisplayFeatures;
-import static android.server.wm.jetpack.utils.ExtensionUtil.getExtensionWindowLayoutInfo;
+import static android.server.wm.jetpack.extensions.util.ExtensionsUtil.assertHasDisplayFeatures;
+import static android.server.wm.jetpack.extensions.util.ExtensionsUtil.assumeHasDisplayFeatures;
+import static android.server.wm.jetpack.extensions.util.ExtensionsUtil.getExtensionWindowLayoutInfo;
 
 import android.server.wm.jetpack.utils.TestActivity;
 import android.server.wm.jetpack.utils.TestLetterboxLandscapeActivity;
