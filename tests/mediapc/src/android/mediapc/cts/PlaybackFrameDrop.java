@@ -27,7 +27,6 @@ import android.view.Surface;
 import java.io.File;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -40,7 +39,7 @@ public class PlaybackFrameDrop extends CodecDecoderTestBase {
     private static final int AV1_INITIAL_DELAY = 8;
     private final String mDecoderName;
     private final String[] mTestFiles;
-    private final int mEachFrameTimeIntervalUs;
+    private final long mEachFrameTimeIntervalUs;
     private final boolean mIsAsync;
 
     private int mFrameDropCount;
@@ -60,33 +59,48 @@ public class PlaybackFrameDrop extends CodecDecoderTestBase {
     private Thread mThread;
 
     class OutputHandler implements Runnable {
-        private final LinkedList<Pair<Integer, MediaCodec.BufferInfo>> mQueue = new LinkedList<>();
+        class BufferData {
+            public final int frameCount;  // total count of full frames up to this point
+            public final int bufferIndex;
+            public final MediaCodec.BufferInfo info;
+
+            public BufferData(int frameCount, int bufferIndex, MediaCodec.BufferInfo info) {
+                this.frameCount = frameCount;
+                this.bufferIndex = bufferIndex;
+                this.info = info;
+            }
+        };
+
+        private final ArrayList<BufferData> mQueue = new ArrayList<>();
         private boolean mStop = false;
         private final Lock mLock = new ReentrantLock();
         private final Condition mCondition = mLock.newCondition();
 
-        private Pair<Integer, MediaCodec.BufferInfo> getOutput() throws InterruptedException {
-            Pair<Integer, MediaCodec.BufferInfo> element = null;
+        private BufferData getOutput() throws InterruptedException {
+            BufferData output = null;
             mLock.lock();
-            while (!mStop) {
-                if (mQueue.isEmpty()) {
-                    mCondition.await();
-                } else {
-                    element = mQueue.remove(0);
-                    break;
+            try {
+                while (!mStop) {
+                    if (mQueue.isEmpty()) {
+                        mCondition.await();
+                    } else {
+                        output = mQueue.remove(0);
+                        break;
+                    }
                 }
+            } finally {
+                mLock.unlock();
             }
-            mLock.unlock();
-            return element;
+            return output;
         }
 
         @Override
         public void run() {
             try {
                 while (true) {
-                    Pair<Integer, MediaCodec.BufferInfo> element = getOutput();
-                    if (element != null) {
-                        releaseOutput(element.first, element.second);
+                    BufferData output = getOutput();
+                    if (output != null) {
+                        delayedReleaseOutput(output.frameCount, output.bufferIndex, output.info);
                     } else {
                         break;
                     }
@@ -96,18 +110,24 @@ public class PlaybackFrameDrop extends CodecDecoderTestBase {
             }
         }
 
-        public void add(int bufferIndex, MediaCodec.BufferInfo info) {
+        public void add(int outputCount, int bufferIndex, MediaCodec.BufferInfo info) {
             mLock.lock();
-            mQueue.add(new Pair<>(bufferIndex, info));
-            mCondition.signal();
-            mLock.unlock();
+            try {
+                mQueue.add(new BufferData(outputCount, bufferIndex, info));
+                mCondition.signal();
+            } finally {
+                mLock.unlock();
+            }
         }
 
         public void stop() throws Exception {
             mLock.lock();
-            mStop = true;
-            mCondition.signal();
-            mLock.unlock();
+            try {
+                mStop = true;
+                mCondition.signal();
+            } finally {
+                mLock.unlock();
+            }
         }
     }
 
@@ -260,27 +280,25 @@ public class PlaybackFrameDrop extends CodecDecoderTestBase {
     }
 
     @Override
-    void dequeueOutput(int bufferIndex, MediaCodec.BufferInfo info) {
-        mOutputHandler.add(bufferIndex, info);
-        if ((info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
-            mSawOutputEOS = true;
-        }
+    protected void releaseOutput(int outputCount, int bufferIndex, MediaCodec.BufferInfo info) {
+        mOutputHandler.add(outputCount, bufferIndex, info);
     }
-    void releaseOutput(int bufferIndex, MediaCodec.BufferInfo info) {
+
+    void delayedReleaseOutput(int outputCount, int bufferIndex, MediaCodec.BufferInfo info) {
         // We will limit the playback to 60 fps using the system timestamps.
         long nowUs = System.nanoTime() / 1000;
 
-        if (mOutputCount == 0) {
+        if (outputCount == 0) {
             // delay rendering the first frame by the specific delay
             mRenderStartTimeUs = nowUs + mInitialDelay * mEachFrameTimeIntervalUs;
         }
 
-        if (nowUs > getRenderTimeUs(mOutputCount + 1)) {
+        if (nowUs > getRenderTimeUs(outputCount + 1)) {
             // If the current sample timeStamp is greater than the actual presentation timeStamp
             // of the next sample, we will consider it as a frame drop and don't render.
             mFrameDropCount++;
             mCodec.releaseOutputBuffer(bufferIndex, false);
-        } else if (nowUs > getRenderTimeUs(mOutputCount)) {
+        } else if (nowUs > getRenderTimeUs(outputCount)) {
             // If the current sample timeStamp is greater than the actual presentation timeStamp
             // of the current sample, we can render it.
             mCodec.releaseOutputBuffer(bufferIndex, true);
@@ -289,18 +307,15 @@ public class PlaybackFrameDrop extends CodecDecoderTestBase {
             // We are okay with directly rendering the sample if we are less by not more than
             // half of one sample duration. Otherwise we sleep for how much more we are less
             // than the half of one sample duration.
-            if ((getRenderTimeUs(mOutputCount) - nowUs) > (mEachFrameTimeIntervalUs / 2)) {
+            if ((getRenderTimeUs(outputCount) - nowUs) > (mEachFrameTimeIntervalUs / 2)) {
                 try {
-                    Thread.sleep(((getRenderTimeUs(mOutputCount) - nowUs) -
+                    Thread.sleep(((getRenderTimeUs(outputCount) - nowUs) -
                             (mEachFrameTimeIntervalUs / 2)) / 1000);
                 } catch (InterruptedException e) {
                     // Do nothing.
                 }
             }
             mCodec.releaseOutputBuffer(bufferIndex, true);
-        }
-        if (info.size > 0 && (info.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) == 0) {
-            mOutputCount++;
         }
     }
 }
