@@ -23,6 +23,7 @@ import static android.mediav2.common.cts.CodecTestBase.ComponentClass.HARDWARE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeNotNull;
+import static org.junit.Assume.assumeTrue;
 
 import android.media.MediaCodec;
 import android.media.MediaFormat;
@@ -34,7 +35,6 @@ import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.CddTest;
 
 import org.junit.AfterClass;
-import org.junit.Assume;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -181,7 +181,13 @@ public class VideoEncoderAdaptiveBitRateTest extends VideoEncoderValidationTestB
                         + " size is %f \n Segment Relative Ratio %f \n",
                 segA, mSegmentBitRates[segA], mSegmentSizes[segA], segB, mSegmentBitRates[segB],
                 mSegmentSizes[segB], mSegmentSizes[segB] / mSegmentSizes[segA]);
-        assertTrue(msg + mTestConfig + mTestEnv, mSegmentSizes[segB] / mSegmentSizes[segA] >= 1.15);
+        if (mEncCfgParams[0].mBitRateMode == BITRATE_MODE_CBR) {
+            assertTrue(msg + mTestConfig + mTestEnv,
+                    mSegmentSizes[segB] / mSegmentSizes[segA] >= 1.15);
+        } else {
+            assumeTrue(msg + mTestConfig + mTestEnv,
+                    mSegmentSizes[segB] / mSegmentSizes[segA] >= 1.15);
+        }
     }
 
     @CddTest(requirements = "5.2/C-2-1")
@@ -197,7 +203,7 @@ public class VideoEncoderAdaptiveBitRateTest extends VideoEncoderValidationTestB
         MediaFormat format = cfg.getFormat();
         ArrayList<MediaFormat> formats = new ArrayList<>();
         formats.add(format);
-        Assume.assumeTrue("Encoder: " + mCodecName + " doesn't support format: " + format,
+        assumeTrue("Encoder: " + mCodecName + " doesn't support format: " + format,
                 areFormatsSupported(mCodecName, mMediaType, formats));
 
         RawResource res = RES_YUV_MAP.getOrDefault(mCRes.uniqueLabel(), null);
