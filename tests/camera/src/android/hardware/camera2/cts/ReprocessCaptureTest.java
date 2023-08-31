@@ -92,7 +92,7 @@ public class ReprocessCaptureTest extends Camera2SurfaceViewTestCase  {
      */
     @Test
     public void testBasicYuvToYuvReprocessing() throws Exception {
-        for (String id : mCameraIdsUnderTest) {
+        for (String id : getCameraIdsUnderTest()) {
             if (!isYuvReprocessSupported(id)) {
                 continue;
             }
@@ -107,7 +107,7 @@ public class ReprocessCaptureTest extends Camera2SurfaceViewTestCase  {
      */
     @Test
     public void testBasicYuvToJpegReprocessing() throws Exception {
-        for (String id : mCameraIdsUnderTest) {
+        for (String id : getCameraIdsUnderTest()) {
             if (!isYuvReprocessSupported(id)) {
                 continue;
             }
@@ -122,7 +122,7 @@ public class ReprocessCaptureTest extends Camera2SurfaceViewTestCase  {
      */
     @Test
     public void testBasicYuvToHeicReprocessing() throws Exception {
-        for (String id : mCameraIdsUnderTest) {
+        for (String id : getCameraIdsUnderTest()) {
             if (!isYuvReprocessSupported(id)) {
                 continue;
             }
@@ -140,7 +140,7 @@ public class ReprocessCaptureTest extends Camera2SurfaceViewTestCase  {
      */
     @Test
     public void testBasicOpaqueToYuvReprocessing() throws Exception {
-        for (String id : mCameraIdsUnderTest) {
+        for (String id : getCameraIdsUnderTest()) {
             if (!isOpaqueReprocessSupported(id)) {
                 continue;
             }
@@ -155,7 +155,7 @@ public class ReprocessCaptureTest extends Camera2SurfaceViewTestCase  {
      */
     @Test
     public void testBasicOpaqueToJpegReprocessing() throws Exception {
-        for (String id : mCameraIdsUnderTest) {
+        for (String id : getCameraIdsUnderTest()) {
             if (!isOpaqueReprocessSupported(id)) {
                 continue;
             }
@@ -170,7 +170,7 @@ public class ReprocessCaptureTest extends Camera2SurfaceViewTestCase  {
      */
     @Test
     public void testBasicOpaqueToHeicReprocessing() throws Exception {
-        for (String id : mCameraIdsUnderTest) {
+        for (String id : getCameraIdsUnderTest()) {
             if (!isOpaqueReprocessSupported(id)) {
                 continue;
             }
@@ -188,7 +188,7 @@ public class ReprocessCaptureTest extends Camera2SurfaceViewTestCase  {
      */
     @Test(timeout=400*60*1000) // timeout = 400 mins for long running reprocessing tests
     public void testReprocessingSizeFormat() throws Exception {
-        for (String id : mCameraIdsUnderTest) {
+        for (String id : getCameraIdsUnderTest()) {
             if (!isYuvReprocessSupported(id) && !isOpaqueReprocessSupported(id)) {
                 continue;
             }
@@ -210,7 +210,7 @@ public class ReprocessCaptureTest extends Camera2SurfaceViewTestCase  {
      */
     @Test(timeout=400*60*1000) // timeout = 400 mins for long running reprocessing tests
     public void testReprocessingSizeFormatWithPreview() throws Exception {
-        for (String id : mCameraIdsUnderTest) {
+        for (String id : getCameraIdsUnderTest()) {
             if (!isYuvReprocessSupported(id) && !isOpaqueReprocessSupported(id)) {
                 continue;
             }
@@ -231,7 +231,7 @@ public class ReprocessCaptureTest extends Camera2SurfaceViewTestCase  {
      */
     @Test
     public void testRecreateReprocessingSessions() throws Exception {
-        for (String id : mCameraIdsUnderTest) {
+        for (String id : getCameraIdsUnderTest()) {
             if (!isYuvReprocessSupported(id) && !isOpaqueReprocessSupported(id)) {
                 continue;
             }
@@ -269,7 +269,7 @@ public class ReprocessCaptureTest extends Camera2SurfaceViewTestCase  {
      */
     @Test
     public void testCrossSessionCaptureException() throws Exception {
-        for (String id : mCameraIdsUnderTest) {
+        for (String id : getCameraIdsUnderTest()) {
             // Test one supported input format -> JPEG
             int inputFormat;
             int reprocessOutputFormat = ImageFormat.JPEG;
@@ -347,7 +347,7 @@ public class ReprocessCaptureTest extends Camera2SurfaceViewTestCase  {
     public void testQueueImageWithoutRequest() throws Exception {
         final int MAX_IMAGES = 1;
         final int ITERATIONS = MAX_IMAGES + 3;
-        for (String id : mCameraIdsUnderTest) {
+        for (String id : getCameraIdsUnderTest()) {
             // Test one supported input format -> JPEG
             int inputFormat;
             int reprocessOutputFormat = ImageFormat.JPEG;
@@ -406,7 +406,7 @@ public class ReprocessCaptureTest extends Camera2SurfaceViewTestCase  {
      */
     @Test(timeout=400*60*1000) // timeout = 400 mins for long running reprocessing tests
     public void testBurstReprocessing() throws Exception {
-        for (String id : mCameraIdsUnderTest) {
+        for (String id : getCameraIdsUnderTest()) {
             if (!isYuvReprocessSupported(id) && !isOpaqueReprocessSupported(id)) {
                 continue;
             }
@@ -430,7 +430,7 @@ public class ReprocessCaptureTest extends Camera2SurfaceViewTestCase  {
      */
     @Test(timeout=400*60*1000) // timeout = 400 mins for long running reprocessing tests
     public void testMixedBurstReprocessing() throws Exception {
-        for (String id : mCameraIdsUnderTest) {
+        for (String id : getCameraIdsUnderTest()) {
             if (!isYuvReprocessSupported(id) && !isOpaqueReprocessSupported(id)) {
                 continue;
             }
@@ -456,7 +456,7 @@ public class ReprocessCaptureTest extends Camera2SurfaceViewTestCase  {
      */
     @Test
     public void testReprocessAbort() throws Exception {
-        for (String id : mCameraIdsUnderTest) {
+        for (String id : getCameraIdsUnderTest()) {
             if (!isYuvReprocessSupported(id) && !isOpaqueReprocessSupported(id)) {
                 continue;
             }
@@ -486,7 +486,7 @@ public class ReprocessCaptureTest extends Camera2SurfaceViewTestCase  {
      */
     @Test
     public void testReprocessTimestamps() throws Exception {
-        for (String id : mCameraIdsUnderTest) {
+        for (String id : getCameraIdsUnderTest()) {
             if (!isYuvReprocessSupported(id) && !isOpaqueReprocessSupported(id)) {
                 continue;
             }
@@ -517,7 +517,7 @@ public class ReprocessCaptureTest extends Camera2SurfaceViewTestCase  {
      */
     @Test
     public void testReprocessJpegExif() throws Exception {
-        for (String id : mCameraIdsUnderTest) {
+        for (String id : getCameraIdsUnderTest()) {
             if (!isYuvReprocessSupported(id) && !isOpaqueReprocessSupported(id)) {
                 continue;
             }
@@ -548,7 +548,7 @@ public class ReprocessCaptureTest extends Camera2SurfaceViewTestCase  {
 
     @Test
     public void testReprocessRequestKeys() throws Exception {
-        for (String id : mCameraIdsUnderTest) {
+        for (String id : getCameraIdsUnderTest()) {
             if (!isYuvReprocessSupported(id) && !isOpaqueReprocessSupported(id)) {
                 continue;
             }

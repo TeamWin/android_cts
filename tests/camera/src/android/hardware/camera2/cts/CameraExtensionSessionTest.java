@@ -146,7 +146,7 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
     // Verify that camera extension sessions can be created and closed as expected.
     @Test
     public void testBasicExtensionLifecycle() throws Exception {
-        for (String id : mCameraIdsUnderTest) {
+        for (String id : getCameraIdsUnderTest()) {
             StaticMetadata staticMeta =
                     new StaticMetadata(mTestRule.getCameraManager().getCameraCharacteristics(id));
             if (!staticMeta.isColorOutputSupported()) {
@@ -195,7 +195,7 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
     // session.
     @Test
     public void testCloseCaptureSession() throws Exception {
-        for (String id : mCameraIdsUnderTest) {
+        for (String id : getCameraIdsUnderTest()) {
             StaticMetadata staticMeta =
                     new StaticMetadata(mTestRule.getCameraManager().getCameraCharacteristics(id));
             if (!staticMeta.isColorOutputSupported()) {
@@ -261,7 +261,7 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
     // session.
     @Test
     public void testCloseExtensionSession() throws Exception {
-        for (String id : mCameraIdsUnderTest) {
+        for (String id : getCameraIdsUnderTest()) {
             StaticMetadata staticMeta =
                     new StaticMetadata(mTestRule.getCameraManager().getCameraCharacteristics(id));
             if (!staticMeta.isColorOutputSupported()) {
@@ -322,7 +322,7 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
     // Verify camera device query
     @Test
     public void testGetDevice() throws Exception {
-        for (String id : mCameraIdsUnderTest) {
+        for (String id : getCameraIdsUnderTest()) {
             StaticMetadata staticMeta =
                     new StaticMetadata(mTestRule.getCameraManager().getCameraCharacteristics(id));
             if (!staticMeta.isColorOutputSupported()) {
@@ -380,7 +380,7 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
     // callbacks.
     @Test
     public void testRepeatingCapture() throws Exception {
-        for (String id : mCameraIdsUnderTest) {
+        for (String id : getCameraIdsUnderTest()) {
             StaticMetadata staticMeta =
                     new StaticMetadata(mTestRule.getCameraManager().getCameraCharacteristics(id));
             if (!staticMeta.isColorOutputSupported()) {
@@ -494,7 +494,7 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
                 ImageFormat.YUV_420_888,
                 ImageFormat.JPEG
         };
-        for (String id : mCameraIdsUnderTest) {
+        for (String id : getCameraIdsUnderTest()) {
             StaticMetadata staticMeta =
                     new StaticMetadata(mTestRule.getCameraManager().getCameraCharacteristics(id));
             if (!staticMeta.isColorOutputSupported()) {
@@ -711,7 +711,7 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
                 ImageFormat.YUV_420_888,
                 ImageFormat.JPEG
         };
-        for (String id : mCameraIdsUnderTest) {
+        for (String id : getCameraIdsUnderTest()) {
             StaticMetadata staticMeta =
                     new StaticMetadata(mTestRule.getCameraManager().getCameraCharacteristics(id));
             if (!staticMeta.isColorOutputSupported()) {
@@ -880,7 +880,7 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
             return;
         }
 
-        for (String id : mCameraIdsUnderTest) {
+        for (String id : getCameraIdsUnderTest()) {
             StaticMetadata staticMeta =
                     new StaticMetadata(mTestRule.getCameraManager().getCameraCharacteristics(id));
             if (!staticMeta.isColorOutputSupported()) {
@@ -1023,7 +1023,7 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
     @Test
     public void testRepeatingAndCaptureCombined() throws Exception {
         final double LATENCY_MARGIN = .1f; // Account for system load, capture call duration etc.
-        for (String id : mCameraIdsUnderTest) {
+        for (String id : getCameraIdsUnderTest()) {
             StaticMetadata staticMeta =
                     new StaticMetadata(mTestRule.getCameraManager().getCameraCharacteristics(id));
             if (!staticMeta.isColorOutputSupported()) {
@@ -1665,7 +1665,7 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
                 CaptureResult.CONTROL_AF_STATE};
         final int METERING_REGION_SCALE_RATIO = 8;
         final int WAIT_FOR_FOCUS_DONE_TIMEOUT_MS = 6000;
-        for (String id : mCameraIdsUnderTest) {
+        for (String id : getCameraIdsUnderTest()) {
             StaticMetadata staticMeta =
                     new StaticMetadata(mTestRule.getCameraManager().getCameraCharacteristics(id));
             if (!staticMeta.isColorOutputSupported()) {
@@ -1841,7 +1841,7 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
         final CaptureRequest.Key[] ZOOM_CAPTURE_REQUEST_SET = {CaptureRequest.CONTROL_ZOOM_RATIO};
         final CaptureResult.Key[] ZOOM_CAPTURE_RESULT_SET = {CaptureResult.CONTROL_ZOOM_RATIO};
         final int ZOOM_RATIO_STEPS = 10;
-        for (String id : mCameraIdsUnderTest) {
+        for (String id : getCameraIdsUnderTest()) {
             StaticMetadata staticMeta =
                     new StaticMetadata(mTestRule.getCameraManager().getCameraCharacteristics(id));
             if (!staticMeta.isColorOutputSupported()) {
@@ -1981,7 +1981,7 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
                 CaptureResult.CONTROL_AE_PRECAPTURE_TRIGGER, CaptureResult.CONTROL_AE_LOCK,
                 CaptureResult.CONTROL_AE_STATE, CaptureResult.FLASH_MODE,
                 CaptureResult.FLASH_STATE};
-        for (String id : mCameraIdsUnderTest) {
+        for (String id : getCameraIdsUnderTest()) {
             StaticMetadata staticMeta =
                     new StaticMetadata(mTestRule.getCameraManager().getCameraCharacteristics(id));
             if (!staticMeta.isColorOutputSupported()) {
@@ -2192,7 +2192,7 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
 
     @Test
     public void testIllegalArguments() throws Exception {
-        for (String id : mCameraIdsUnderTest) {
+        for (String id : getCameraIdsUnderTest()) {
             StaticMetadata staticMeta =
                     new StaticMetadata(mTestRule.getCameraManager().getCameraCharacteristics(id));
             if (!staticMeta.isColorOutputSupported()) {

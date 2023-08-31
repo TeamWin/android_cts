@@ -17,7 +17,9 @@
 package android.hardware.camera2.cts;
 
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.hardware.cts.helpers.CameraParameterizedTestCase;
+import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.cts.CameraTestUtils;
 import android.hardware.camera2.CameraManager;
 import android.util.Log;
@@ -31,11 +33,13 @@ import static junit.framework.Assert.assertTrue;
 
 public class Camera2ParameterizedTestCase extends CameraParameterizedTestCase {
     private static final String TAG = "Camera2ParameterizedTestCase";
-    protected CameraManager mCameraManager;
+
     // The list of camera ids we're testing. If we're testing system cameras
     // (mAdoptShellPerm == true), we have only system camera ids in the array and not normal camera
     // ids.
-    protected String[] mCameraIdsUnderTest;
+    private String[] mCameraIdsUnderTest;
+
+    protected CameraManager mCameraManager;
     protected boolean mUseAll = false;
 
     @Override
@@ -91,5 +95,15 @@ public class Camera2ParameterizedTestCase extends CameraParameterizedTestCase {
         }
 
         return idsUnderTest;
+    }
+
+    public String[] getCameraIdsUnderTest() throws Exception {
+        // If external camera is supported, verify that it is connected as part of the camera Ids
+        // under test. If the external camera is not connected, an exception will be thrown to
+        // prevent bypassing CTS testing for external camera
+        CameraTestUtils.verifyExternalCameraConnected(mCameraIdsUnderTest,
+                mContext.getPackageManager(), mCameraManager);
+
+        return mCameraIdsUnderTest;
     }
 }

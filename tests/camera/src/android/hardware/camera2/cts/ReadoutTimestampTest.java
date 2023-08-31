@@ -77,7 +77,7 @@ public class ReadoutTimestampTest extends Camera2SurfaceViewTestCase {
                 OutputConfiguration.TIMESTAMP_BASE_REALTIME,
                 OutputConfiguration.TIMESTAMP_BASE_CHOREOGRAPHER_SYNCED};
 
-        for (String cameraId : mCameraIdsUnderTest) {
+        for (String cameraId : getCameraIdsUnderTest()) {
             if (!mAllStaticInfo.get(cameraId).isColorOutputSupported()) {
                 continue;
             }

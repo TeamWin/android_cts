@@ -149,7 +149,7 @@ public class CameraManagerTest extends Camera2ParameterizedTestCase {
 
     @Test
     public void testCameraManagerGetDeviceIdList() throws Exception {
-        String[] ids = mCameraIdsUnderTest;
+        String[] ids = getCameraIdsUnderTest();
         if (VERBOSE) Log.v(TAG, "CameraManager ids: " + Arrays.toString(ids));
 
         if (mAdoptShellPerm) {
@@ -260,7 +260,8 @@ public class CameraManagerTest extends Camera2ParameterizedTestCase {
      * CameraManager.getConcurrentCameraIds()
      * returns a combination which contains the main front id and main back id, and vice versa.
      */
-    private void testConcurrentCameraFeature(String mainFrontId, String mainBackId) {
+    private void testConcurrentCameraFeature(String mainFrontId, String mainBackId)
+            throws Exception {
         boolean frontBackFeatureAdvertised =
                   mPackageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_CONCURRENT);
         if (frontBackFeatureAdvertised) {
@@ -273,7 +274,8 @@ public class CameraManagerTest extends Camera2ParameterizedTestCase {
         boolean concurrentMainFrontBackCombinationFound =
                 containsMainFrontBackConcurrentCombination(mainFrontId, mainBackId);
 
-        if(mCameraIdsUnderTest.length > 0) {
+        String[] ids = getCameraIdsUnderTest();
+        if (ids.length > 0) {
             assertTrue("System camera feature FEATURE_CAMERA_CONCURRENT = "
                     + frontBackFeatureAdvertised
                     + " and device actually having a main front back combination which can operate "
@@ -286,7 +288,7 @@ public class CameraManagerTest extends Camera2ParameterizedTestCase {
     // Test: that properties can be queried from each device, without exceptions.
     @Test
     public void testCameraManagerGetCameraCharacteristics() throws Exception {
-        String[] ids = mCameraIdsUnderTest;
+        String[] ids = getCameraIdsUnderTest();
         for (int i = 0; i < ids.length; i++) {
             CameraCharacteristics props = mCameraManager.getCameraCharacteristics(ids[i]);
             assertNotNull(
@@ -297,7 +299,7 @@ public class CameraManagerTest extends Camera2ParameterizedTestCase {
     // Test: that properties queried between the Java SDK and the C++ NDK are equivalent.
     @Test
     public void testCameraCharacteristicsNdkFromSdk() throws Exception {
-        String[] ids = mCameraIdsUnderTest;
+        String[] ids = getCameraIdsUnderTest();
         for (int i = 0; i < ids.length; i++) {
             CameraCharacteristics props = mCameraManager.getCameraCharacteristics(ids[i]);
             Integer lensFacing = props.get(CameraCharacteristics.LENS_FACING);
@@ -316,7 +318,7 @@ public class CameraManagerTest extends Camera2ParameterizedTestCase {
     // Test: that an exception is thrown if an invalid device id is passed down.
     @Test
     public void testCameraManagerInvalidDevice() throws Exception {
-        String[] ids = mCameraIdsUnderTest;
+        String[] ids = getCameraIdsUnderTest();
         // Create an invalid id by concatenating all the valid ids together.
         StringBuilder invalidId = new StringBuilder();
         invalidId.append("INVALID");
@@ -342,7 +344,7 @@ public class CameraManagerTest extends Camera2ParameterizedTestCase {
 
     private void testCameraManagerOpenCamerasSerially(boolean useExecutor) throws Exception {
         final Executor executor = useExecutor ? new HandlerExecutor(mHandler) : null;
-        String[] ids = mCameraIdsUnderTest;
+        String[] ids = getCameraIdsUnderTest();
         for (int i = 0; i < ids.length; i++) {
             for (int j = 0; j < NUM_CAMERA_REOPENS; j++) {
                 CameraDevice camera = null;
@@ -384,7 +386,7 @@ public class CameraManagerTest extends Camera2ParameterizedTestCase {
     }
 
     private void testCameraManagerOpenAllCameras(boolean useExecutor) throws Exception {
-        String[] ids = mCameraIdsUnderTest;
+        String[] ids = getCameraIdsUnderTest();
         assertNotNull("Camera ids shouldn't be null", ids);
 
         // Skip test if the device doesn't have multiple cameras.
@@ -530,7 +532,7 @@ public class CameraManagerTest extends Camera2ParameterizedTestCase {
     }
 
     private void testCameraManagerOpenCameraTwice(boolean useExecutor) throws Exception {
-        String[] ids = mCameraIdsUnderTest;
+        String[] ids = getCameraIdsUnderTest();
         final Executor executor = useExecutor ? new HandlerExecutor(mHandler) : null;
 
         // Test across every camera device.
@@ -692,7 +694,7 @@ public class CameraManagerTest extends Camera2ParameterizedTestCase {
         } else {
             mCameraManager.registerAvailabilityCallback(ac, mHandler);
         }
-        String[] cameras = mCameraIdsUnderTest;
+        String[] cameras = getCameraIdsUnderTest();
         if (mAdoptShellPerm) {
             //when mAdoptShellPerm is false, we can't test for
             // onCameraOpened/Closed callbacks (no CAMERA_OPEN_CLOSE_LISTENER permissions).
@@ -887,7 +889,7 @@ public class CameraManagerTest extends Camera2ParameterizedTestCase {
      */
     @Test
     public void testPhysicalCameraAvailabilityConsistency() throws Throwable {
-        CameraTestUtils.testPhysicalCameraAvailabilityConsistencyHelper(mCameraIdsUnderTest,
+        CameraTestUtils.testPhysicalCameraAvailabilityConsistencyHelper(getCameraIdsUnderTest(),
                 mCameraManager, mHandler, true /*expectInitialCallbackAfterOpen*/);
     }
 
@@ -899,7 +901,7 @@ public class CameraManagerTest extends Camera2ParameterizedTestCase {
             // LEGACY still allowed for devices upgrading to Q
             return;
         }
-        String[] ids = mCameraIdsUnderTest;
+        String[] ids = getCameraIdsUnderTest();
         for (int i = 0; i < ids.length; i++) {
             CameraCharacteristics props = mCameraManager.getCameraCharacteristics(ids[i]);
             assertNotNull(
@@ -916,7 +918,7 @@ public class CameraManagerTest extends Camera2ParameterizedTestCase {
 
     @Test
     public void testCameraManagerWithDnD() throws Exception {
-        String[] cameras = mCameraIdsUnderTest;
+        String[] cameras = getCameraIdsUnderTest();
         if (cameras.length == 0) {
             Log.i(TAG, "No cameras present, skipping test");
             return;
@@ -960,7 +962,7 @@ public class CameraManagerTest extends Camera2ParameterizedTestCase {
             return;
         }
 
-        String[] cameraIds = mCameraIdsUnderTest;
+        String[] cameraIds = getCameraIdsUnderTest();
         if (cameraIds.length < 1) {
             Log.i(TAG, "No cameras present, skipping test");
             return;

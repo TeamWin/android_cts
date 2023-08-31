@@ -135,7 +135,7 @@ public class RobustnessTest extends Camera2AndroidTestCase {
      */
     @Test
     public void testBadSurfaceDimensions() throws Exception {
-        for (String id : mCameraIdsUnderTest) {
+        for (String id : getCameraIdsUnderTest()) {
             try {
                 Log.i(TAG, "Testing Camera " + id);
                 openDevice(id);
@@ -230,7 +230,8 @@ public class RobustnessTest extends Camera2AndroidTestCase {
         if (maxResolution) {
             ck = CameraCharacteristics.SCALER_MANDATORY_MAXIMUM_RESOLUTION_STREAM_COMBINATIONS;
         }
-        for (String id : mCameraIdsUnderTest) {
+        String[] cameraIdsUnderTest = getCameraIdsUnderTest();
+        for (String id : cameraIdsUnderTest) {
             openDevice(id);
             MandatoryStreamCombination[] combinations = mStaticInfo.getCharacteristics().get(ck);
 
@@ -262,7 +263,7 @@ public class RobustnessTest extends Camera2AndroidTestCase {
                     Set<String> physicalCameraIds =
                             mStaticInfo.getCharacteristics().getPhysicalCameraIds();
                     for (String physicalId : physicalCameraIds) {
-                        if (Arrays.asList(mCameraIdsUnderTest).contains(physicalId)) {
+                        if (Arrays.asList(cameraIdsUnderTest).contains(physicalId)) {
                             // If physicalId is advertised in camera ID list, do not need to test
                             // its stream combination through logical camera.
                             continue;
@@ -312,7 +313,7 @@ public class RobustnessTest extends Camera2AndroidTestCase {
      */
     @Test
     public void testMandatoryUseCaseOutputCombinations() throws Exception {
-        for (String id : mCameraIdsUnderTest) {
+        for (String id : getCameraIdsUnderTest()) {
             StaticMetadata info = mAllStaticInfo.get(id);
             CameraCharacteristics chars = info.getCharacteristics();
             CameraCharacteristics.Key<MandatoryStreamCombination []> ck =
@@ -347,7 +348,7 @@ public class RobustnessTest extends Camera2AndroidTestCase {
 
     @Test
     public void testMandatoryPreviewStabilizationOutputCombinations() throws Exception {
-        for (String id : mCameraIdsUnderTest) {
+        for (String id : getCameraIdsUnderTest()) {
             StaticMetadata info = mAllStaticInfo.get(id);
             boolean previewStabilizationSupported = isPreviewStabilizationSupported(info);
             CameraCharacteristics chars = info.getCharacteristics();
@@ -674,7 +675,7 @@ public class RobustnessTest extends Camera2AndroidTestCase {
      */
     @Test
     public void testMandatory10BitStreamCombinations() throws Exception {
-        for (String id : mCameraIdsUnderTest) {
+        for (String id : getCameraIdsUnderTest()) {
             openDevice(id);
             CameraCharacteristics chars = mStaticInfo.getCharacteristics();
             if (!CameraTestUtils.hasCapability(
@@ -855,7 +856,7 @@ public class RobustnessTest extends Camera2AndroidTestCase {
      * level and capability work as expected.
      */
     public void testMandatoryReprocessConfigurations(boolean maxResolution) throws Exception {
-        for (String id : mCameraIdsUnderTest) {
+        for (String id : getCameraIdsUnderTest()) {
             openDevice(id);
             CameraCharacteristics chars = mStaticInfo.getCharacteristics();
             if (maxResolution && !CameraTestUtils.hasCapability(
@@ -1099,7 +1100,7 @@ public class RobustnessTest extends Camera2AndroidTestCase {
     @Test
     public void testBasicTriggerSequence() throws Exception {
 
-        for (String id : mCameraIdsUnderTest) {
+        for (String id : getCameraIdsUnderTest()) {
             Log.i(TAG, String.format("Testing Camera %s", id));
 
             try {
@@ -1239,7 +1240,7 @@ public class RobustnessTest extends Camera2AndroidTestCase {
 
     @Test
     public void testSimultaneousTriggers() throws Exception {
-        for (String id : mCameraIdsUnderTest) {
+        for (String id : getCameraIdsUnderTest()) {
             Log.i(TAG, String.format("Testing Camera %s", id));
 
             try {
@@ -1342,7 +1343,7 @@ public class RobustnessTest extends Camera2AndroidTestCase {
 
     @Test
     public void testAfThenAeTrigger() throws Exception {
-        for (String id : mCameraIdsUnderTest) {
+        for (String id : getCameraIdsUnderTest()) {
             Log.i(TAG, String.format("Testing Camera %s", id));
 
             try {
@@ -1459,7 +1460,7 @@ public class RobustnessTest extends Camera2AndroidTestCase {
 
     @Test
     public void testAeThenAfTrigger() throws Exception {
-        for (String id : mCameraIdsUnderTest) {
+        for (String id : getCameraIdsUnderTest()) {
             Log.i(TAG, String.format("Testing Camera %s", id));
 
             try {
@@ -1577,7 +1578,7 @@ public class RobustnessTest extends Camera2AndroidTestCase {
     @Test
     public void testAeAndAfCausality() throws Exception {
 
-        for (String id : mCameraIdsUnderTest) {
+        for (String id : getCameraIdsUnderTest()) {
             Log.i(TAG, String.format("Testing Camera %s", id));
 
             try {
@@ -1759,7 +1760,7 @@ public class RobustnessTest extends Camera2AndroidTestCase {
 
     @Test
     public void testAbandonRepeatingRequestSurface() throws Exception {
-        for (String id : mCameraIdsUnderTest) {
+        for (String id : getCameraIdsUnderTest()) {
             Log.i(TAG, String.format(
                     "Testing Camera %s for abandoning surface of a repeating request", id));
 
@@ -1829,7 +1830,7 @@ public class RobustnessTest extends Camera2AndroidTestCase {
 
     @Test
     public void testConfigureInvalidSensorPixelModes() throws Exception {
-        for (String id : mCameraIdsUnderTest) {
+        for (String id : getCameraIdsUnderTest()) {
             // Go through given, stream configuration map, add the incorrect sensor pixel mode
             // to an OutputConfiguration, make sure the session configuration fails.
             CameraCharacteristics chars = mCameraManager.getCameraCharacteristics(id);
@@ -1851,7 +1852,7 @@ public class RobustnessTest extends Camera2AndroidTestCase {
 
     @Test
     public void testConfigureAbandonedSurface() throws Exception {
-        for (String id : mCameraIdsUnderTest) {
+        for (String id : getCameraIdsUnderTest()) {
             Log.i(TAG, String.format(
                     "Testing Camera %s for configuring abandoned surface", id));
 
@@ -1911,7 +1912,7 @@ public class RobustnessTest extends Camera2AndroidTestCase {
     public void testAfSceneChange() throws Exception {
         final int NUM_FRAMES_VERIFIED = 3;
 
-        for (String id : mCameraIdsUnderTest) {
+        for (String id : getCameraIdsUnderTest()) {
             Log.i(TAG, String.format("Testing Camera %s for AF scene change", id));
 
             StaticMetadata staticInfo =
@@ -1962,7 +1963,7 @@ public class RobustnessTest extends Camera2AndroidTestCase {
     public void testOisDataMode() throws Exception {
         final int NUM_FRAMES_VERIFIED = 3;
 
-        for (String id : mCameraIdsUnderTest) {
+        for (String id : getCameraIdsUnderTest()) {
             Log.i(TAG, String.format("Testing Camera %s for OIS mode", id));
 
             StaticMetadata staticInfo =
@@ -2540,7 +2541,7 @@ public class RobustnessTest extends Camera2AndroidTestCase {
         validityCheckConfigurationTables(tables);
         validityCheckConfigurationTables(useCaseTables, /*useCaseSpecified*/ true);
 
-        for (String id : mCameraIdsUnderTest) {
+        for (String id : getCameraIdsUnderTest()) {
             openDevice(id);
             MandatoryStreamCombination[] combinations =
                     mStaticInfo.getCharacteristics().get(
@@ -2798,7 +2799,7 @@ public class RobustnessTest extends Camera2AndroidTestCase {
 
         validityCheckConfigurationTables(TABLES);
 
-        for (String id : mCameraIdsUnderTest) {
+        for (String id : getCameraIdsUnderTest()) {
             openDevice(id);
             MandatoryStreamCombination[] cs = mStaticInfo.getCharacteristics().get(
                     CameraCharacteristics.SCALER_MANDATORY_STREAM_COMBINATIONS);

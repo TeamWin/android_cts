@@ -76,7 +76,7 @@ public class ZoomCaptureTest extends Camera2AndroidTestCase {
     @Test
     @AppModeFull(reason = "Instant apps can't access Test API")
     public void testJpegZoomCapture() throws Exception {
-        for (String id : mCameraIdsUnderTest) {
+        for (String id : getCameraIdsUnderTest()) {
             try {
                 Log.v(TAG, "Testing jpeg zoom capture for Camera " + id);
                 openDevice(id);
@@ -90,7 +90,7 @@ public class ZoomCaptureTest extends Camera2AndroidTestCase {
     @Test
     @AppModeFull(reason = "Instant apps can't access Test API")
     public void testRawZoomCapture() throws Exception {
-        for (String id : mCameraIdsUnderTest) {
+        for (String id : getCameraIdsUnderTest()) {
             try {
                 Log.v(TAG, "Testing raw zoom capture for camera " + id);
                 openDevice(id);
@@ -112,7 +112,7 @@ public class ZoomCaptureTest extends Camera2AndroidTestCase {
     @AppModeFull(reason = "Instant apps can't access Test API")
     public void test10bitLogicalZoomCapture() throws Exception {
         final int ZOOM_RATIO_STEPS = 100;
-        for (String id : mCameraIdsUnderTest) {
+        for (String id : getCameraIdsUnderTest()) {
             try {
                 Log.v(TAG, "Testing 10-bit logical camera zoom capture for id " + id);
                 openDevice(id);
