@@ -67,6 +67,7 @@ import java.util.List;
 
 @RequireFeature(FEATURE_TELEPHONY)
 @RunWith(BedsteadJUnit4.class)
+@Ignore // because work profile telephony is disabled for Android U
 public final class ManagedSubscriptionsPolicyTest {
     @ClassRule
     @Rule
