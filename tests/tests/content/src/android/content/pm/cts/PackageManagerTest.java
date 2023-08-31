@@ -2867,7 +2867,8 @@ public class PackageManagerTest {
                 "    privatePkgFlags=[");
         assertEquals(" ALLOW_AUDIO_PLAYBACK_CAPTURE "
                         + "PRIVATE_FLAG_REQUEST_LEGACY_EXTERNAL_STORAGE "
-                        + "PRIVATE_FLAG_ALLOW_NATIVE_HEAP_POINTER_TAGGING ]",
+                        + "PRIVATE_FLAG_ALLOW_NATIVE_HEAP_POINTER_TAGGING "
+                        + "PRIVATE_FLAG_HAS_FRAGILE_USER_DATA ]",
                 privatePkgFlags);
     }
 
