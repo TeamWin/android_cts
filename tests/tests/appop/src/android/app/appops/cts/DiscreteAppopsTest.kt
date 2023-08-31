@@ -86,7 +86,6 @@ class DiscreteAppopsTest {
     private lateinit var foregroundControlService: IAppOpsForegroundControlService
     private lateinit var serviceConnection: ServiceConnection
 
-    private var wasPermissionsHubEnabled = false
     private var previousDiscreteHistoryCutoffMillis: String? = null
     private var previousDiscreteHistoryQuantizationMillis: String? = null
     private var previousDiscreteHistoryOpFlags: String? = null
@@ -115,11 +114,6 @@ class DiscreteAppopsTest {
             previousDiscreteHistoryOpsCslist = DeviceConfig.getString(
                     NAMESPACE_PRIVACY, PROPERTY_OPS_LIST, null)
 
-            wasPermissionsHubEnabled = DeviceConfig.getBoolean(NAMESPACE_PRIVACY,
-                    PROPERTY_PERMISSIONS_HUB_ENABLED, false)
-
-            DeviceConfig.setProperty(NAMESPACE_PRIVACY,
-                    PROPERTY_PERMISSIONS_HUB_ENABLED, true.toString(), false)
             appOpsManager.clearHistory()
             appOpsManager.resetHistoryParameters()
 
@@ -167,8 +161,6 @@ class DiscreteAppopsTest {
         runWithShellPermissionIdentity {
             appOpsManager.clearHistory()
             appOpsManager.resetHistoryParameters()
-            DeviceConfig.setProperty(NAMESPACE_PRIVACY, PROPERTY_PERMISSIONS_HUB_ENABLED,
-                    wasPermissionsHubEnabled.toString(), false)
         }
         foregroundControlService.cleanup()
         context.unbindService(serviceConnection)
