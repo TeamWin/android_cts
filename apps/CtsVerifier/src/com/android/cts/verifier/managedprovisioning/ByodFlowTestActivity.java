@@ -91,7 +91,6 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
     private DialogTestListItem mCrossProfileIntentFiltersTestFromWork;
     private TestListItem mCrossProfilePermissionControl;
     private TestListItem mNonMarketAppsTest;
-    private DialogTestListItem mWorkStatusBarIconTest;
     private DialogTestListItem mUserSettingsVisibleTest;
     private DialogTestListItem mAppSettingsVisibleTest;
     private DialogTestListItem mLocationSettingsVisibleTest;
@@ -521,8 +520,6 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
         if (!getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
             adapter.add(mWorkAppVisibleTest);
         }
-
-        adapter.add(mWorkStatusBarIconTest);
 
         /* Disable due to b/111734436.
         adapter.add(mWorkStatusBarToastTest);
