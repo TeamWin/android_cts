@@ -65,6 +65,7 @@ import android.content.pm.Signature;
 import android.content.pm.SigningInfo;
 import android.content.pm.cts.util.AbandonAllPackageSessionsRule;
 import android.os.Bundle;
+import android.os.ConditionVariable;
 import android.os.IBinder;
 import android.os.ParcelFileDescriptor;
 import android.os.RemoteException;
@@ -81,7 +82,6 @@ import com.android.internal.util.HexDump;
 import libcore.util.HexEncoding;
 
 import org.junit.AfterClass;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
@@ -106,7 +106,6 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
@@ -2077,22 +2076,24 @@ public class PackageManagerShellCommandInstallTest {
         }
     }
 
-    static class FullyRemovedBroadcastReceiver extends BroadcastReceiver {
+    static class PackageBroadcastReceiver extends BroadcastReceiver {
         private final String mTargetPackage;
         private final int mTargetUserId;
-        private final CompletableFuture<Boolean> mUserReceivedBroadcast = new CompletableFuture<>();
-        FullyRemovedBroadcastReceiver(String packageName, int targetUserId) {
+        private final ConditionVariable mUserReceivedBroadcast = new ConditionVariable();
+        private final String mAction;
+        PackageBroadcastReceiver(String packageName, int targetUserId, String action) {
             mTargetPackage = packageName;
             mTargetUserId = targetUserId;
+            mAction = action;
+            reset();
         }
         @Override
         public void onReceive(Context context, Intent intent) {
             final String packageName = intent.getData().getEncodedSchemeSpecificPart();
             final int userId = context.getUserId();
-            if (intent.getAction().equals(Intent.ACTION_PACKAGE_FULLY_REMOVED)
+            if (intent.getAction().equals(mAction)
                     && packageName.equals(mTargetPackage) && userId == mTargetUserId) {
-                mUserReceivedBroadcast.complete(true);
-                context.unregisterReceiver(this);
+                mUserReceivedBroadcast.open();
             }
         }
         public void assertBroadcastReceived() throws Exception {
@@ -2100,19 +2101,20 @@ public class PackageManagerShellCommandInstallTest {
             executeShellCommand("pm wait-for-handler --timeout 2000");
             // Make sure broadcast has been dispatched from the queue
             executeShellCommand(String.format(
-                    "am wait-for-broadcast-dispatch -a %s -d package:%s",
-                    Intent.ACTION_PACKAGE_FULLY_REMOVED, mTargetPackage));
+                    "am wait-for-broadcast-dispatch -a %s -d package:%s", mAction, mTargetPackage));
             // Checks that broadcast is delivered here
-            assertTrue(mUserReceivedBroadcast.get(500, TimeUnit.MILLISECONDS));
+            assertTrue(mUserReceivedBroadcast.block(500));
         }
         public void assertBroadcastNotReceived() throws Exception {
             // Make sure broadcast has been sent from PackageManager
             executeShellCommand("pm wait-for-handler --timeout 2000");
             executeShellCommand(String.format(
-                    "am wait-for-broadcast-dispatch -a %s -d package:%s",
-                    Intent.ACTION_PACKAGE_FULLY_REMOVED, mTargetPackage));
-            Assert.assertThrows(TimeoutException.class,
-                    () -> mUserReceivedBroadcast.get(500, TimeUnit.MILLISECONDS));
+                    "am wait-for-broadcast-dispatch -a %s -d package:%s", mAction, mTargetPackage));
+            assertFalse(mUserReceivedBroadcast.block(500));
+        }
+
+        public void reset() {
+            mUserReceivedBroadcast.close();
         }
     }
 
