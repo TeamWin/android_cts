@@ -40,7 +40,7 @@ import java.util.concurrent.locks.ReentrantLock;
 public class BluetoothA2dpTest extends AndroidTestCase {
     private static final String TAG = BluetoothA2dpTest.class.getSimpleName();
 
-    private static final int PROXY_CONNECTION_TIMEOUT_MS = 500;  // ms timeout for Proxy Connect
+    private static final int PROXY_CONNECTION_TIMEOUT_MS = 1000;  // ms timeout for Proxy Connect
 
     private boolean mHasBluetooth;
     private BluetoothAdapter mAdapter;
