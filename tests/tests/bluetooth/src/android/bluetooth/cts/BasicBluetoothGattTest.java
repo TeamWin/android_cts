@@ -24,6 +24,7 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCallback;
+import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothManager;
 import android.content.Context;
@@ -40,7 +41,9 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Tests a small part of the {@link BluetoothGatt} methods without a real Bluetooth device.
@@ -49,6 +52,7 @@ import java.util.List;
 @RunWith(AndroidJUnit4.class)
 public class BasicBluetoothGattTest {
     private static final String TAG = BasicBluetoothGattTest.class.getSimpleName();
+    private static final UUID TEST_UUID = UUID.fromString("0000110a-0000-1000-8000-00805f9b34fb");
 
     private BluetoothAdapter mBluetoothAdapter;
     private BluetoothDevice mBluetoothDevice;
@@ -132,5 +136,22 @@ public class BasicBluetoothGattTest {
     public void testGetDevicesMatchingConnectionStates() {
         assertThrows(UnsupportedOperationException.class,
                 () -> mBluetoothGatt.getDevicesMatchingConnectionStates(null));
+    }
+
+    @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
+    @Test
+    public void testWriteCharacteristic_withValueOverMaxLength() {
+        BluetoothGattCharacteristic characteristic = new BluetoothGattCharacteristic(TEST_UUID,
+                0x0A, 0x11);
+        BluetoothGattService service = new BluetoothGattService(TEST_UUID,
+                BluetoothGattService.SERVICE_TYPE_PRIMARY);
+        service.addCharacteristic(characteristic);
+
+        // 512 is the max attribute length
+        byte[] value = new byte[513];
+        Arrays.fill(value, (byte) 0x01);
+
+        assertThrows(IllegalArgumentException.class, () -> mBluetoothGatt.writeCharacteristic(
+                characteristic, value, BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT));
     }
 }
