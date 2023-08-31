@@ -65,13 +65,10 @@ public final class CarPerformanceManagerTest extends AbstractCarTestCase {
                 Car.CAR_PERFORMANCE_SERVICE);
         assertThat(mCarPerformanceManager).isNotNull();
         mOriginalPolicyWithPriority = null;
-        if (mApiCheckerRule.isApiSupported("android.car.os.CarPerformanceManager#"
-                + "getThreadPriority")) {
-            try {
-                mOriginalPolicyWithPriority = mCarPerformanceManager.getThreadPriority();
-            } catch (IllegalStateException e) {
-                mOriginalPolicyWithPriority = null;
-            }
+        try {
+            mOriginalPolicyWithPriority = mCarPerformanceManager.getThreadPriority();
+        } catch (IllegalStateException e) {
+            mOriginalPolicyWithPriority = null;
         }
         assumeTrue("Failed to get original thread priority or the thread prority is not supported",
                 mOriginalPolicyWithPriority != null);
