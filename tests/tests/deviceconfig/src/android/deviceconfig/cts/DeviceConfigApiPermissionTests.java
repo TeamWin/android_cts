@@ -81,8 +81,8 @@ public final class DeviceConfigApiPermissionTests {
     }
 
     /**
-     * Checks that when application does not have READ_DEVICE_CONFIG or WRITE_DEVICE_CONFIG
-     * permissions it cannot access any of DeviceConfig API methods
+     * Checks that when application does not have WRITE_DEVICE_CONFIG
+     * permissions it cannot access any write DeviceConfig API methods
      * @throws Exception
      */
     @Test
@@ -93,10 +93,6 @@ public final class DeviceConfigApiPermissionTests {
         trySetPropertyWithoutWritePermission(violations);
         trySetPropertiesWithoutWritePermission(violations);
         tryDeletePropertyWithoutWritePermission(violations);
-
-        // getters without read permission
-        tryGetPropertyWithoutReadPermission(violations);
-        tryGetPropertiesWithoutReadPermission(violations);
 
         // Bail if we found any violations
         if (violations.length() > 0) {
@@ -119,10 +115,6 @@ public final class DeviceConfigApiPermissionTests {
         // setters with write permission
         trySetPropertyWithWritePermission(violations);
         trySetPropertiesWithWritePermission(violations);
-
-        // getters without read permission
-        tryGetPropertyWithoutReadPermission(violations);
-        tryGetPropertiesWithoutReadPermission(violations);
 
         // Bail if we found any violations
         if (violations.length() > 0) {
@@ -313,24 +305,6 @@ public final class DeviceConfigApiPermissionTests {
             DeviceConfig.deleteProperty(NAMESPACE, KEY);
             violations.append("DeviceConfig.deleteProperty() must not be accessible without "
                     + "WRITE_DEVICE_CONFIG permission.\n");
-        } catch (SecurityException e) {
-        }
-    }
-
-    private void tryGetPropertyWithoutReadPermission(StringBuilder violations) {
-        try {
-            DeviceConfig.getProperty(NAMESPACE, KEY);
-            violations.append("DeviceConfig.getProperty() must not be accessible without "
-                    + "READ_DEVICE_CONFIG permission.\n");
-        } catch (SecurityException e) {
-        }
-    }
-
-    private void tryGetPropertiesWithoutReadPermission(StringBuilder violations) {
-        try {
-            DeviceConfig.getProperties(NAMESPACE2);
-            violations.append("DeviceConfig.getProperties() must not be accessible without "
-                    + "READ_DEVICE_CONFIG permission.\n");
         } catch (SecurityException e) {
         }
     }
