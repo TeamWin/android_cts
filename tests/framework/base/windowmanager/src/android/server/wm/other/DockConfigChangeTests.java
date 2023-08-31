@@ -29,7 +29,6 @@ import static org.junit.Assume.assumeTrue;
 
 import android.content.ComponentName;
 import android.content.Intent;
-import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.ActivityManagerTestBase;
@@ -58,7 +57,8 @@ public class DockConfigChangeTests extends ActivityManagerTestBase {
 
         // Set rotation to the same rotation as the device would be rotated to after docking. This
         // prevents an extraneous config change from the device rotating when docked/undocked.
-        rotateToDockRotation(rotationSession, TEST_ACTIVITY);
+        rotateToDockRotation(rotationSession);
+        waitAndAssertResumedActivity(TEST_ACTIVITY, "Activity must be resumed");
         separateTestJournal();
 
         final DockTestSession dockTestSession = mObjectTracker.manage(new DockTestSession());
@@ -92,7 +92,8 @@ public class DockConfigChangeTests extends ActivityManagerTestBase {
 
         // Set rotation to the same rotation as the device would be rotated to after docking. This
         // prevents an extraneous config change from the device rotating when docked/undocked.
-        rotateToDockRotation(rotationSession, DESK_RESOURCES_ACTIVITY);
+        rotateToDockRotation(rotationSession);
+        waitAndAssertResumedActivity(DESK_RESOURCES_ACTIVITY, "Activity must be resumed");
         separateTestJournal();
 
         final DockTestSession dockTestSession = mObjectTracker.manage(new DockTestSession());
@@ -122,12 +123,11 @@ public class DockConfigChangeTests extends ActivityManagerTestBase {
     }
 
     /**
-     * Rotates the device to the same rotation as it would rotate to when docked and wait for the
-     * given activity to rotate.
+     * Rotates the device to the same rotation as it would rotate to when docked.
      *
      * Dock rotation is read from config_deskDockRotation.
      */
-    void rotateToDockRotation(RotationSession rotationSession, ComponentName activity) {
+    void rotateToDockRotation(RotationSession rotationSession) {
         int rotation = rotationDegreesToConst(mContext.getResources().getInteger(
                 Resources.getSystem().getIdentifier("config_deskDockRotation",
                         "integer", "android")));
@@ -137,12 +137,6 @@ public class DockConfigChangeTests extends ActivityManagerTestBase {
             return;
         }
         rotationSession.set(rotation);
-
-        int expectedOrientation = Configuration.ORIENTATION_LANDSCAPE;
-        if (rotation == Surface.ROTATION_0 || rotation == Surface.ROTATION_180) {
-            expectedOrientation = Configuration.ORIENTATION_PORTRAIT;
-        }
-        assertTrue(mWmState.waitForActivityOrientation(activity, expectedOrientation));
     }
 
     /**
