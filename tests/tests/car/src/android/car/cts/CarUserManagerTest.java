@@ -40,7 +40,6 @@ import static java.lang.Math.max;
 
 import android.car.CarOccupantZoneManager;
 import android.car.SyncResultCallback;
-import android.car.test.ApiCheckerRule;
 import android.car.test.PermissionsCheckerRule.EnsureHasPermission;
 import android.car.test.util.AndroidHelper;
 import android.car.test.util.UserTestingHelper;
@@ -236,8 +235,6 @@ public final class CarUserManagerTest extends AbstractCarTestCase {
 
     @Test
     @ApiTest(apis = {"android.car.user.CarUserManager#USER_LIFECYCLE_EVENT_TYPE_CREATED"})
-    @ApiCheckerRule.SupportedVersionTest(unsupportedVersionTest =
-            "testLifecycleUserCreatedListener_unsupportedVersion")
     @EnsureHasPermission({CREATE_USERS, INTERACT_ACROSS_USERS})
     public void testLifecycleUserCreatedListener_supportedVersion() throws Exception {
 
@@ -281,55 +278,6 @@ public final class CarUserManagerTest extends AbstractCarTestCase {
     }
 
     @Test
-    @ApiTest(apis = {"android.car.user.CarUserManager#USER_LIFECYCLE_EVENT_TYPE_CREATED"})
-    @ApiCheckerRule.UnsupportedVersionTest(behavior =
-            ApiCheckerRule.UnsupportedVersionTest.Behavior.EXPECT_PASS,
-            supportedVersionTest = "testLifecycleUserCreatedListener_supportedVersion")
-    @EnsureHasPermission({CREATE_USERS, INTERACT_ACROSS_USERS})
-    public void testLifecycleUserCreatedListener_unsupportedVersion() throws Exception {
-
-        BlockingUserLifecycleListener listener = BlockingUserLifecycleListener
-                .forNoExpectedEvent()
-                .setTimeout(NO_EVENTS_TIMEOUT_MS)
-                .addExpectedEvent(USER_LIFECYCLE_EVENT_TYPE_CREATED)
-                .build();
-
-        UserHandle newUser = null;
-        boolean isAdded = false;
-        try {
-            Log.d(TAG, "registering listener: " + listener);
-            mCarUserManager.addListener(Runnable::run, listener);
-            // If adding the listener fails, an exception will be thrown.
-            isAdded = true;
-            Log.v(TAG, "ok");
-
-            newUser = createUser("TestUserToCreate", false);
-
-            Log.d(TAG, "Waiting for events");
-            List<UserLifecycleEvent> events = listener.waitForEvents();
-            Log.d(TAG, "events: " + events);
-
-            for (UserLifecycleEvent event : events) {
-                assertWithMessage("user id on %s", event).that(
-                        event.getUserHandle().getIdentifier()).isNotEqualTo(
-                        newUser.getIdentifier());
-            }
-        } finally {
-            Log.d(TAG, "unregistering listener: " + listener);
-            if (isAdded) {
-                mCarUserManager.removeListener(listener);
-            }
-            Log.v(TAG, "ok");
-
-            if (newUser != null) {
-                removeUser(newUser);
-            }
-        }
-    }
-
-    @Test
-    @ApiCheckerRule.SupportedVersionTest(unsupportedVersionTest =
-            "testLifecycleUserRemovedListener_unsupportedVersion")
     @ApiTest(apis = {"android.car.user.CarUserManager#USER_LIFECYCLE_EVENT_TYPE_REMOVED"})
     @EnsureHasPermission({CREATE_USERS, INTERACT_ACROSS_USERS})
     public void testLifecycleUserRemovedListener_supportedVersion() throws Exception {
@@ -370,51 +318,6 @@ public final class CarUserManagerTest extends AbstractCarTestCase {
             Log.v(TAG, "ok");
         }
     }
-
-    @Test
-    @ApiTest(apis = {"android.car.user.CarUserManager#USER_LIFECYCLE_EVENT_TYPE_REMOVED"})
-    @ApiCheckerRule.UnsupportedVersionTest(behavior =
-            ApiCheckerRule.UnsupportedVersionTest.Behavior.EXPECT_PASS,
-            supportedVersionTest = "testLifecycleUserRemovedListener_supportedVersion")
-    @EnsureHasPermission({CREATE_USERS, INTERACT_ACROSS_USERS})
-    public void testLifecycleUserRemovedListener_unsupportedVersion() throws Exception {
-        UserHandle newUser = createUser("TestUserToRemove", false);
-
-        BlockingUserLifecycleListener listener = BlockingUserLifecycleListener
-                .forNoExpectedEvent()
-                .forUser(newUser.getIdentifier())
-                .setTimeout(NO_EVENTS_TIMEOUT_MS)
-                .addExpectedEvent(USER_LIFECYCLE_EVENT_TYPE_REMOVED)
-                .build();
-
-        boolean isAdded = false;
-        try {
-            Log.d(TAG, "registering listener: " + listener);
-            // If adding the listener fails, an exception will be thrown.
-            mCarUserManager.addListener(Runnable::run, listener);
-            isAdded = true;
-            Log.v(TAG, "ok");
-
-            removeUser(newUser);
-
-            Log.d(TAG, "Waiting for events");
-            List<UserLifecycleEvent> events = listener.waitForEvents();
-            Log.d(TAG, "events: " + events);
-
-            for (UserLifecycleEvent event : events) {
-                assertWithMessage("user id on %s", event).that(
-                        event.getUserHandle().getIdentifier()).isNotEqualTo(
-                        newUser.getIdentifier());
-            }
-        } finally {
-            Log.d(TAG, "unregistering listener: " + listener);
-            if (isAdded) {
-                mCarUserManager.removeListener(listener);
-            }
-            Log.v(TAG, "ok");
-        }
-    }
-
 
     @Test
     @ApiTest(apis = {"android.car.user.CarUserManager#isValidUser(UserHandle)"})
