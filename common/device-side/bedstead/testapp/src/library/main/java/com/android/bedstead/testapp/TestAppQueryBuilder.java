@@ -19,6 +19,7 @@ package com.android.bedstead.testapp;
 import com.android.queryable.Queryable;
 import com.android.queryable.annotations.Query;
 import com.android.queryable.info.ActivityInfo;
+import com.android.queryable.info.ReceiverInfo;
 import com.android.queryable.info.ServiceInfo;
 import com.android.queryable.queries.BooleanQuery;
 import com.android.queryable.queries.BooleanQueryHelper;
@@ -53,6 +54,7 @@ public final class TestAppQueryBuilder implements Queryable {
             new SetQueryHelper<>(this);
     BooleanQueryHelper<TestAppQueryBuilder> mIsDeviceAdmin = new BooleanQueryHelper<>(this);
     StringQueryHelper<TestAppQueryBuilder> mSharedUserId = new StringQueryHelper<>(this);
+    SetQueryHelper<TestAppQueryBuilder, ReceiverInfo> mReceivers = new SetQueryHelper<>(this);
     private boolean mAllowInternalBedsteadTestApps = false;
 
     /**
@@ -187,6 +189,13 @@ public final class TestAppQueryBuilder implements Queryable {
     }
 
     /**
+     * Query for a {@link TestApp} by its receivers.
+     */
+    public SetQuery<TestAppQueryBuilder, ReceiverInfo> whereReceivers() {
+        return mReceivers;
+    }
+
+    /**
      * Allow the query to return internal bedstead testapps.
      */
     public TestAppQueryBuilder allowInternalBedsteadTestApps() {
@@ -293,6 +302,10 @@ public final class TestAppQueryBuilder implements Queryable {
         }
 
         if (!BooleanQueryHelper.matches(mCrossProfile, details.mApp.getCrossProfile())) {
+            return false;
+        }
+
+        if (!SetQueryHelper.matches(mReceivers, details.mReceivers)) {
             return false;
         }
 
