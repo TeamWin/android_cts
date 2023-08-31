@@ -32,6 +32,7 @@ import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
 
 import android.app.Activity;
 import android.app.Instrumentation;
@@ -80,6 +81,7 @@ public class TaskFragmentOrganizerTestBase extends WindowManagerTestBase {
     @Override
     public void setUp() throws Exception {
         super.setUp();
+        assumeTrue(supportsMultiWindow());
         mTaskFragmentOrganizer = new BasicTaskFragmentOrganizer();
         mTaskFragmentOrganizer.registerOrganizer();
         mOwnerActivity = setUpOwnerActivity();

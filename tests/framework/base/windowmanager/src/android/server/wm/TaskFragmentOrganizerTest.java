@@ -26,8 +26,6 @@ import static android.window.TaskFragmentOrganizer.TASK_FRAGMENT_TRANSIT_OPEN;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
-import static org.junit.Assume.assumeTrue;
-
 import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Intent;
@@ -66,7 +64,6 @@ public class TaskFragmentOrganizerTest extends TaskFragmentOrganizerTestBase {
      */
     @Test
     public void testCreateTaskFragment() {
-        assumeTrue("MultiWindow is not supported.", supportsMultiWindow());
         mWmState.computeState(mOwnerActivityName);
         Task parentTask = mWmState.getRootTask(mOwnerActivity.getTaskId());
         final int originalTaskFragCount = parentTask.getTaskFragments().size();
@@ -213,7 +210,7 @@ public class TaskFragmentOrganizerTest extends TaskFragmentOrganizerTestBase {
     @Test
     @ApiTest(apis = {
             "android.window.WindowContainerTransaction#deleteTaskFragment",
-            "android.window.TaskFragmentOrganizer.#onTransactionReady"})
+            "android.window.TaskFragmentOrganizer#onTransactionReady"})
     public void testDeleteTaskFragmentWithActivity() {
         final TaskFragmentInfo taskFragmentInfo = createTaskFragment(mLaunchingActivity);
         final IBinder taskFragToken = taskFragmentInfo.getFragmentToken();
