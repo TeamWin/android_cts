@@ -22,6 +22,7 @@ import static android.Manifest.permission.CREATE_VIRTUAL_DEVICE;
 import static android.companion.virtual.VirtualDeviceParams.DEVICE_POLICY_CUSTOM;
 import static android.companion.virtual.VirtualDeviceParams.DEVICE_POLICY_DEFAULT;
 import static android.companion.virtual.VirtualDeviceParams.POLICY_TYPE_AUDIO;
+import static android.companion.virtual.VirtualDeviceParams.POLICY_TYPE_RECENTS;
 import static android.companion.virtual.VirtualDeviceParams.POLICY_TYPE_SENSORS;
 import static android.content.Context.DEVICE_ID_DEFAULT;
 import static android.content.Context.DEVICE_ID_INVALID;
@@ -574,6 +575,26 @@ public class VirtualDeviceManagerBasicTest {
     }
 
     @Test
+    @RequiresFlagsEnabled(Flags.FLAG_DYNAMIC_POLICY)
+    public void getDevicePolicy_changeAtRuntime_shouldReturnConfiguredValue() {
+        mVirtualDevice = mVirtualDeviceManager.createVirtualDevice(
+                mFakeAssociationRule.getAssociationInfo().getId(),
+                new VirtualDeviceParams.Builder().build());
+
+        mVirtualDevice.setDevicePolicy(POLICY_TYPE_RECENTS, DEVICE_POLICY_CUSTOM);
+        assertThat(
+                mVirtualDeviceManager.getDevicePolicy(mVirtualDevice.getDeviceId(),
+                        POLICY_TYPE_RECENTS))
+                .isEqualTo(DEVICE_POLICY_CUSTOM);
+
+        mVirtualDevice.setDevicePolicy(POLICY_TYPE_RECENTS, DEVICE_POLICY_DEFAULT);
+        assertThat(
+                mVirtualDeviceManager.getDevicePolicy(mVirtualDevice.getDeviceId(),
+                        POLICY_TYPE_RECENTS))
+                .isEqualTo(DEVICE_POLICY_DEFAULT);
+    }
+
+    @Test
     public void getDevicePolicy_virtualDeviceClosed_shouldReturnDefault() {
         mVirtualDevice =
                 mVirtualDeviceManager.createVirtualDevice(
@@ -589,6 +610,22 @@ public class VirtualDeviceManagerBasicTest {
                 .isEqualTo(DEVICE_POLICY_DEFAULT);
 
         mVirtualDevice = null;
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_DYNAMIC_POLICY)
+    public void setDevicePolicy_notDynamicPolicy_shouldThrow() {
+        mVirtualDevice =
+                mVirtualDeviceManager.createVirtualDevice(
+                        mFakeAssociationRule.getAssociationInfo().getId(),
+                        new VirtualDeviceParams.Builder()
+                                .setDevicePolicy(POLICY_TYPE_SENSORS, DEVICE_POLICY_CUSTOM)
+                                .build());
+
+        assertThrows(IllegalArgumentException.class,
+                () -> mVirtualDevice.setDevicePolicy(POLICY_TYPE_SENSORS, DEVICE_POLICY_DEFAULT));
+        assertThrows(IllegalArgumentException.class,
+                () -> mVirtualDevice.setDevicePolicy(POLICY_TYPE_AUDIO, DEVICE_POLICY_CUSTOM));
     }
 
     @Test

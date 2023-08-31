@@ -34,6 +34,7 @@ import android.app.ActivityManager;
 import android.companion.virtual.VirtualDeviceManager;
 import android.companion.virtual.VirtualDeviceManager.VirtualDevice;
 import android.companion.virtual.VirtualDeviceParams;
+import android.companion.virtual.flags.Flags;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -105,6 +106,13 @@ public class RecentTasksTest {
             activity = launchTestActivity(virtualDisplay);
             taskId = activity.getTaskId();
             assertThat(isTaskIncludedInRecents(taskId)).isTrue();
+
+            if (Flags.dynamicPolicy()) {
+                virtualDevice.setDevicePolicy(POLICY_TYPE_RECENTS, DEVICE_POLICY_CUSTOM);
+                assertThat(isTaskIncludedInRecents(taskId)).isFalse();
+                virtualDevice.setDevicePolicy(POLICY_TYPE_RECENTS, DEVICE_POLICY_DEFAULT);
+                assertThat(isTaskIncludedInRecents(taskId)).isTrue();
+            }
         }
 
         // Make sure the policy is respected even after the device / display are gone.
@@ -123,6 +131,13 @@ public class RecentTasksTest {
             activity = launchTestActivity(virtualDisplay);
             taskId = activity.getTaskId();
             assertThat(isTaskIncludedInRecents(taskId)).isFalse();
+
+            if (Flags.dynamicPolicy()) {
+                virtualDevice.setDevicePolicy(POLICY_TYPE_RECENTS, DEVICE_POLICY_DEFAULT);
+                assertThat(isTaskIncludedInRecents(taskId)).isTrue();
+                virtualDevice.setDevicePolicy(POLICY_TYPE_RECENTS, DEVICE_POLICY_CUSTOM);
+                assertThat(isTaskIncludedInRecents(taskId)).isFalse();
+            }
         }
 
         // Make sure the policy is respected even after the device / display are gone.
