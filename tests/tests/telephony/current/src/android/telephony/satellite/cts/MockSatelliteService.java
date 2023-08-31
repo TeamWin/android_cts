@@ -30,9 +30,9 @@ import android.telephony.satellite.stub.NTRadioTechnology;
 import android.telephony.satellite.stub.PointingInfo;
 import android.telephony.satellite.stub.SatelliteCapabilities;
 import android.telephony.satellite.stub.SatelliteDatagram;
-import android.telephony.satellite.stub.SatelliteError;
 import android.telephony.satellite.stub.SatelliteImplBase;
 import android.telephony.satellite.stub.SatelliteModemState;
+import android.telephony.satellite.stub.SatelliteResult;
 import android.telephony.satellite.stub.SatelliteService;
 import android.util.Log;
 
@@ -73,8 +73,8 @@ public class MockSatelliteService extends SatelliteImplBase {
     private final Map<IBinder, ISatelliteListener> mRemoteListeners = new HashMap<>();
     @Nullable private ILocalSatelliteListener mLocalListener;
     private final LocalBinder mBinder = new LocalBinder();
-    @SatelliteError
-    private int mErrorCode = SatelliteError.ERROR_NONE;
+    @SatelliteResult
+    private int mErrorCode = SatelliteResult.SATELLITE_RESULT_SUCCESS;
 
     // For local access of this Service.
     class LocalBinder extends Binder {
@@ -161,7 +161,7 @@ public class MockSatelliteService extends SatelliteImplBase {
         if (!verifySatelliteModemState(errorCallback)) {
             return;
         }
-        if (mErrorCode != SatelliteError.ERROR_NONE) {
+        if (mErrorCode != SatelliteResult.SATELLITE_RESULT_SUCCESS) {
             if (mShouldRespondTelephony.get()) {
                 runWithExecutor(() -> errorCallback.accept(mErrorCode));
             }
@@ -169,7 +169,7 @@ public class MockSatelliteService extends SatelliteImplBase {
         }
 
         if (mShouldRespondTelephony.get()) {
-            runWithExecutor(() -> errorCallback.accept(SatelliteError.ERROR_NONE));
+            runWithExecutor(() -> errorCallback.accept(SatelliteResult.SATELLITE_RESULT_SUCCESS));
         }
         if (enabled) {
             updateSatelliteModemState(SatelliteModemState.SATELLITE_MODEM_STATE_LISTENING);
@@ -185,7 +185,7 @@ public class MockSatelliteService extends SatelliteImplBase {
                 + ", enableSatellite=" + enableSatellite
                 + ", enableDemoMode=" + enableDemoMode
                 + ", mShouldRespondTelephony=" + mShouldRespondTelephony.get());
-        if (mErrorCode != SatelliteError.ERROR_NONE) {
+        if (mErrorCode != SatelliteResult.SATELLITE_RESULT_SUCCESS) {
             if (mShouldRespondTelephony.get()) {
                 runWithExecutor(() -> errorCallback.accept(mErrorCode));
             }
@@ -202,7 +202,7 @@ public class MockSatelliteService extends SatelliteImplBase {
     private void enableSatellite(@NonNull IIntegerConsumer errorCallback) {
         mIsEnabled = true;
         if (mShouldRespondTelephony.get()) {
-            runWithExecutor(() -> errorCallback.accept(SatelliteError.ERROR_NONE));
+            runWithExecutor(() -> errorCallback.accept(SatelliteResult.SATELLITE_RESULT_SUCCESS));
         }
         updateSatelliteModemState(SatelliteModemState.SATELLITE_MODEM_STATE_IDLE);
     }
@@ -210,7 +210,7 @@ public class MockSatelliteService extends SatelliteImplBase {
     private void disableSatellite(@NonNull IIntegerConsumer errorCallback) {
         mIsEnabled = false;
         if (mShouldRespondTelephony.get()) {
-            runWithExecutor(() -> errorCallback.accept(SatelliteError.ERROR_NONE));
+            runWithExecutor(() -> errorCallback.accept(SatelliteResult.SATELLITE_RESULT_SUCCESS));
         }
         updateSatelliteModemState(SatelliteModemState.SATELLITE_MODEM_STATE_OFF);
     }
@@ -219,7 +219,7 @@ public class MockSatelliteService extends SatelliteImplBase {
     public void requestIsSatelliteEnabled(@NonNull IIntegerConsumer errorCallback,
             @NonNull IBooleanConsumer callback) {
         logd("requestIsSatelliteEnabled: mErrorCode=" + mErrorCode);
-        if (mErrorCode != SatelliteError.ERROR_NONE) {
+        if (mErrorCode != SatelliteResult.SATELLITE_RESULT_SUCCESS) {
             if (mShouldRespondTelephony.get()) {
                 runWithExecutor(() -> errorCallback.accept(mErrorCode));
             }
@@ -234,7 +234,7 @@ public class MockSatelliteService extends SatelliteImplBase {
     public void requestIsSatelliteSupported(@NonNull IIntegerConsumer errorCallback,
             @NonNull IBooleanConsumer callback) {
         logd("requestIsSatelliteSupported");
-        if (mErrorCode != SatelliteError.ERROR_NONE) {
+        if (mErrorCode != SatelliteResult.SATELLITE_RESULT_SUCCESS) {
             if (mShouldRespondTelephony.get()) {
                 runWithExecutor(() -> errorCallback.accept(mErrorCode));
             }
@@ -249,7 +249,7 @@ public class MockSatelliteService extends SatelliteImplBase {
     public void requestSatelliteCapabilities(@NonNull IIntegerConsumer errorCallback,
             @NonNull ISatelliteCapabilitiesConsumer callback) {
         logd("requestSatelliteCapabilities: mErrorCode=" + mErrorCode);
-        if (mErrorCode != SatelliteError.ERROR_NONE) {
+        if (mErrorCode != SatelliteResult.SATELLITE_RESULT_SUCCESS) {
             if (mShouldRespondTelephony.get()) {
                 runWithExecutor(() -> errorCallback.accept(mErrorCode));
             }
@@ -280,10 +280,11 @@ public class MockSatelliteService extends SatelliteImplBase {
         }
 
         if (mShouldRespondTelephony.get()) {
-            if (mErrorCode != SatelliteError.ERROR_NONE) {
+            if (mErrorCode != SatelliteResult.SATELLITE_RESULT_SUCCESS) {
                 runWithExecutor(() -> errorCallback.accept(mErrorCode));
             } else {
-                runWithExecutor(() -> errorCallback.accept(SatelliteError.ERROR_NONE));
+                runWithExecutor(() -> errorCallback.accept(
+                        SatelliteResult.SATELLITE_RESULT_SUCCESS));
             }
         }
 
@@ -298,10 +299,11 @@ public class MockSatelliteService extends SatelliteImplBase {
     public void stopSendingSatellitePointingInfo(@NonNull IIntegerConsumer errorCallback) {
         logd("stopSendingSatellitePointingInfo: mErrorCode=" + mErrorCode);
         if (mShouldRespondTelephony.get()) {
-            if (mErrorCode != SatelliteError.ERROR_NONE) {
+            if (mErrorCode != SatelliteResult.SATELLITE_RESULT_SUCCESS) {
                 runWithExecutor(() -> errorCallback.accept(mErrorCode));
             } else {
-                runWithExecutor(() -> errorCallback.accept(SatelliteError.ERROR_NONE));
+                runWithExecutor(() -> errorCallback.accept(
+                        SatelliteResult.SATELLITE_RESULT_SUCCESS));
             }
         }
 
@@ -316,14 +318,14 @@ public class MockSatelliteService extends SatelliteImplBase {
     public void provisionSatelliteService(@NonNull String token, @NonNull byte[] provisionData,
             @NonNull IIntegerConsumer errorCallback) {
         logd("provisionSatelliteService: mErrorCode=" + mErrorCode);
-        if (mErrorCode != SatelliteError.ERROR_NONE) {
+        if (mErrorCode != SatelliteResult.SATELLITE_RESULT_SUCCESS) {
             if (mShouldRespondTelephony.get()) {
                 runWithExecutor(() -> errorCallback.accept(mErrorCode));
             }
             return;
         }
         if (mShouldRespondTelephony.get()) {
-            runWithExecutor(() -> errorCallback.accept(SatelliteError.ERROR_NONE));
+            runWithExecutor(() -> errorCallback.accept(SatelliteResult.SATELLITE_RESULT_SUCCESS));
         }
         updateSatelliteProvisionState(true);
     }
@@ -332,14 +334,14 @@ public class MockSatelliteService extends SatelliteImplBase {
     public void deprovisionSatelliteService(@NonNull String token,
             @NonNull IIntegerConsumer errorCallback) {
         logd("deprovisionSatelliteService: mErrorCode=" + mErrorCode);
-        if (mErrorCode != SatelliteError.ERROR_NONE) {
+        if (mErrorCode != SatelliteResult.SATELLITE_RESULT_SUCCESS) {
             if (mShouldRespondTelephony.get()) {
                 runWithExecutor(() -> errorCallback.accept(mErrorCode));
             }
             return;
         }
         if (mShouldRespondTelephony.get()) {
-            runWithExecutor(() -> errorCallback.accept(SatelliteError.ERROR_NONE));
+            runWithExecutor(() -> errorCallback.accept(SatelliteResult.SATELLITE_RESULT_SUCCESS));
         }
         updateSatelliteProvisionState(false);
     }
@@ -348,7 +350,7 @@ public class MockSatelliteService extends SatelliteImplBase {
     public void requestIsSatelliteProvisioned(@NonNull IIntegerConsumer errorCallback,
             @NonNull IBooleanConsumer callback) {
         logd("requestIsSatelliteProvisioned: mErrorCode=" + mErrorCode);
-        if (mErrorCode != SatelliteError.ERROR_NONE) {
+        if (mErrorCode != SatelliteResult.SATELLITE_RESULT_SUCCESS) {
             if (mShouldRespondTelephony.get()) {
                 runWithExecutor(() -> errorCallback.accept(mErrorCode));
             }
@@ -365,10 +367,11 @@ public class MockSatelliteService extends SatelliteImplBase {
         updateSatelliteModemState(
                 SatelliteModemState.SATELLITE_MODEM_STATE_DATAGRAM_TRANSFERRING);
         if (mShouldRespondTelephony.get()) {
-            if (mErrorCode != SatelliteError.ERROR_NONE) {
+            if (mErrorCode != SatelliteResult.SATELLITE_RESULT_SUCCESS) {
                 runWithExecutor(() -> errorCallback.accept(mErrorCode));
             } else {
-                runWithExecutor(() -> errorCallback.accept(SatelliteError.ERROR_NONE));
+                runWithExecutor(() -> errorCallback.accept(
+                        SatelliteResult.SATELLITE_RESULT_SUCCESS));
             }
         }
 
@@ -402,10 +405,11 @@ public class MockSatelliteService extends SatelliteImplBase {
             updateSatelliteModemState(
                     SatelliteModemState.SATELLITE_MODEM_STATE_DATAGRAM_TRANSFERRING);
             if (mShouldRespondTelephony.get()) {
-                if (mErrorCode != SatelliteError.ERROR_NONE) {
+                if (mErrorCode != SatelliteResult.SATELLITE_RESULT_SUCCESS) {
                     runWithExecutor(() -> errorCallback.accept(mErrorCode));
                 } else {
-                    runWithExecutor(() -> errorCallback.accept(SatelliteError.ERROR_NONE));
+                    runWithExecutor(() -> errorCallback.accept(
+                            SatelliteResult.SATELLITE_RESULT_SUCCESS));
                 }
             }
 
@@ -423,7 +427,7 @@ public class MockSatelliteService extends SatelliteImplBase {
     public void requestSatelliteModemState(@NonNull IIntegerConsumer errorCallback,
             @NonNull IIntegerConsumer callback) {
         logd("requestSatelliteModemState: mErrorCode=" + mErrorCode);
-        if (mErrorCode != SatelliteError.ERROR_NONE) {
+        if (mErrorCode != SatelliteResult.SATELLITE_RESULT_SUCCESS) {
             if (mShouldRespondTelephony.get()) {
                 runWithExecutor(() -> errorCallback.accept(mErrorCode));
             }
@@ -438,7 +442,7 @@ public class MockSatelliteService extends SatelliteImplBase {
     public void requestIsSatelliteCommunicationAllowedForCurrentLocation(
             @NonNull IIntegerConsumer errorCallback, @NonNull IBooleanConsumer callback) {
         logd("requestIsSatelliteCommunicationAllowedForCurrentLocation: mErrorCode=" + mErrorCode);
-        if (mErrorCode != SatelliteError.ERROR_NONE) {
+        if (mErrorCode != SatelliteResult.SATELLITE_RESULT_SUCCESS) {
             if (mShouldRespondTelephony.get()) {
                 runWithExecutor(() -> errorCallback.accept(mErrorCode));
             }
@@ -454,7 +458,7 @@ public class MockSatelliteService extends SatelliteImplBase {
     public void requestTimeForNextSatelliteVisibility(@NonNull IIntegerConsumer errorCallback,
             @NonNull IIntegerConsumer callback) {
         logd("requestTimeForNextSatelliteVisibility: mErrorCode=" + mErrorCode);
-        if (mErrorCode != SatelliteError.ERROR_NONE) {
+        if (mErrorCode != SatelliteResult.SATELLITE_RESULT_SUCCESS) {
             if (mShouldRespondTelephony.get()) {
                 runWithExecutor(() -> errorCallback.accept(mErrorCode));
             }
@@ -470,7 +474,7 @@ public class MockSatelliteService extends SatelliteImplBase {
         mLocalListener = listener;
     }
 
-    public void setErrorCode(@SatelliteError int errorCode) {
+    public void setErrorCode(@SatelliteResult int errorCode) {
         logd("setErrorCode: errorCode=" + errorCode);
         mErrorCode = errorCode;
     }
@@ -515,11 +519,11 @@ public class MockSatelliteService extends SatelliteImplBase {
             }
 
             if (mShouldRespondTelephony.get()) {
-                if (mErrorCode != SatelliteError.ERROR_NONE) {
+                if (mErrorCode != SatelliteResult.SATELLITE_RESULT_SUCCESS) {
                     runWithExecutor(() -> mSendDatagramErrorCallback.accept(mErrorCode));
                 } else {
-                    runWithExecutor(
-                            () -> mSendDatagramErrorCallback.accept(SatelliteError.ERROR_NONE));
+                    runWithExecutor(() -> mSendDatagramErrorCallback.accept(
+                            SatelliteResult.SATELLITE_RESULT_SUCCESS));
                 }
             }
             mSendDatagramErrorCallback = null;
@@ -537,15 +541,18 @@ public class MockSatelliteService extends SatelliteImplBase {
      */
     private boolean verifySatelliteModemState(@NonNull IIntegerConsumer errorCallback) {
         if (!mIsSupported) {
-            runWithExecutor(() -> errorCallback.accept(SatelliteError.REQUEST_NOT_SUPPORTED));
+            runWithExecutor(() -> errorCallback.accept(
+                    SatelliteResult.SATELLITE_RESULT_REQUEST_NOT_SUPPORTED));
             return false;
         }
         if (!mIsProvisioned) {
-            runWithExecutor(() -> errorCallback.accept(SatelliteError.SERVICE_NOT_PROVISIONED));
+            runWithExecutor(() -> errorCallback.accept(
+                    SatelliteResult.SATELLITE_RESULT_SERVICE_NOT_PROVISIONED));
             return false;
         }
         if (!mIsEnabled) {
-            runWithExecutor(() -> errorCallback.accept(SatelliteError.INVALID_MODEM_STATE));
+            runWithExecutor(() -> errorCallback.accept(
+                    SatelliteResult.SATELLITE_RESULT_INVALID_MODEM_STATE));
             return false;
         }
         return true;
