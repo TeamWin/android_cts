@@ -16,6 +16,8 @@
 
 package android.telephony.satellite.cts;
 
+import static android.telephony.satellite.SatelliteManager.SATELLITE_COMMUNICATION_RESTRICTION_REASON_GEOLOCATION;
+
 import static com.android.internal.telephony.satellite.DatagramController.SATELLITE_ALIGN_TIMEOUT;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -30,17 +32,26 @@ import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
 import android.Manifest;
+import android.app.UiAutomation;
 import android.bluetooth.BluetoothAdapter;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.hardware.radio.RadioError;
 import android.net.ConnectivityManager;
 import android.net.wifi.WifiManager;
 import android.nfc.NfcAdapter;
 import android.os.Build;
 import android.os.CancellationSignal;
 import android.os.OutcomeReceiver;
+import android.os.PersistableBundle;
 import android.os.SystemProperties;
 import android.provider.Settings;
+import android.telephony.CarrierConfigManager;
+import android.telephony.SubscriptionInfo;
+import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
 import android.telephony.cts.TelephonyManagerTest.ServiceStateRadioStateListener;
 import android.telephony.satellite.AntennaDirection;
@@ -51,10 +62,12 @@ import android.telephony.satellite.SatelliteDatagram;
 import android.telephony.satellite.SatelliteManager;
 import android.telephony.satellite.stub.SatelliteResult;
 import android.util.Log;
+import android.util.Pair;
 import android.uwb.UwbManager;
 
 import androidx.test.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.ShellIdentityUtils;
 import com.android.internal.telephony.satellite.DatagramController;
 
 import org.junit.After;
@@ -70,6 +83,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -113,6 +127,9 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
     boolean mWifiInitState = false;
     boolean mNfcInitState = false;
     boolean mUwbInitState = false;
+    private static CarrierConfigReceiver sCarrierConfigReceiver;
+
+    private static final int SUB_ID = SubscriptionManager.DEFAULT_SUBSCRIPTION_ID;
 
     @BeforeClass
     public static void beforeAllTests() throws Exception {
@@ -163,6 +180,9 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
             sSatelliteManager.unregisterForSatelliteProvisionStateChanged(
                     satelliteProvisionStateCallback);
         }
+
+        sCarrierConfigReceiver = new CarrierConfigReceiver(SUB_ID);
+
         revokeSatellitePermission();
     }
 
@@ -188,6 +208,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         sSatelliteManager.unregisterForSatelliteModemStateChanged(callback);
         afterAllTestsBase();
         sMockSatelliteServiceManager = null;
+        sCarrierConfigReceiver = null;
         revokeSatellitePermission();
     }
 
@@ -2281,6 +2302,135 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         revokeSatellitePermission();
     }
 
+    @Test
+    public void testSatelliteAttachEnabledForCarrier() {
+        if (!shouldTestSatelliteWithMockService()) return;
+
+        logd("testSatelliteAttachEnabledForCarrier");
+        grantSatellitePermission();
+        beforeSatelliteForCarrierTest();
+        @SatelliteManager.SatelliteResult int expectedSuccess =
+                SatelliteManager.SATELLITE_RESULT_SUCCESS;
+        @SatelliteManager.SatelliteResult int expectedError;
+
+        /** Test when satellite is not supported in the carrier config */
+        PersistableBundle bundle = new PersistableBundle();
+        bundle.putBoolean(
+                CarrierConfigManager.KEY_SATELLITE_ATTACH_SUPPORTED_BOOL, false);
+
+        overrideCarrierConfig(sTestSubIDForCarrierSatellite, bundle);
+        requestSatelliteAttachEnabledForCarrier(true, SatelliteManager.SATELLITE_RESULT_SUCCESS);
+
+        Pair<Boolean, Integer> pair = requestIsSatelliteAttachEnabledForCarrier();
+        assertEquals(true, pair.first.booleanValue());
+        assertNull(pair.second);
+
+
+        /** Test when satellite is supported in the carrier config */
+        setSatelliteError(expectedSuccess);
+        bundle = new PersistableBundle();
+        bundle.putBoolean(
+                CarrierConfigManager.KEY_SATELLITE_ATTACH_SUPPORTED_BOOL, true);
+        PersistableBundle plmnBundle = new PersistableBundle();
+        int[] intArray1 = {3, 5};
+        int[] intArray2 = {3};
+        plmnBundle.putIntArray("123411", intArray1);
+        plmnBundle.putIntArray("123412", intArray2);
+        bundle.putPersistableBundle(
+                CarrierConfigManager.KEY_CARRIER_SUPPORTED_SATELLITE_SERVICES_PER_PROVIDER_BUNDLE,
+                plmnBundle);
+        overrideCarrierConfig(sTestSubIDForCarrierSatellite, bundle);
+
+        ArrayList<String> plmnList = new ArrayList<>();
+        plmnList.add("123411");
+        plmnList.add("123412");
+        assertTrue(sMockSatelliteServiceManager.waitForEventOnSetSatellitePlmn(1));
+        assertEquals(plmnList, getPlmnListFromMockService());
+        requestSatelliteAttachEnabledForCarrier(true, expectedSuccess);
+
+        pair = requestIsSatelliteAttachEnabledForCarrier();
+        assertEquals(true, pair.first.booleanValue());
+        assertNull(pair.second);
+
+        /** Test when satellite is supported, and requested satellite disabled */
+        requestSatelliteAttachEnabledForCarrier(false, expectedSuccess);
+        assertEquals(false, getIsSatelliteEnabledForCarrierFromMockService());
+        pair = requestIsSatelliteAttachEnabledForCarrier();
+        assertEquals(false, pair.first.booleanValue());
+        assertNull(pair.second);
+
+        /** Test when satellite is supported, but modem returns INVALID_MODEM_STATE */
+        expectedError = SatelliteManager.SATELLITE_RESULT_INVALID_MODEM_STATE;
+        setSatelliteError(expectedError);
+        requestSatelliteAttachEnabledForCarrier(true, expectedError);
+
+        pair = requestIsSatelliteAttachEnabledForCarrier();
+        assertEquals(true, pair.first.booleanValue());
+        assertNull(pair.second);
+
+        /** Test when satellite is supported, and requested satellite disabled */
+        expectedError = SatelliteManager.SATELLITE_RESULT_SUCCESS;
+        requestSatelliteAttachEnabledForCarrier(false, expectedError);
+        assertEquals(false, getIsSatelliteEnabledForCarrierFromMockService());
+        pair = requestIsSatelliteAttachEnabledForCarrier();
+        assertEquals(false, pair.first.booleanValue());
+        assertNull(pair.second);
+
+        /** Test when satellite is supported, but modem returns RADIO_NOT_AVAILABLE */
+        expectedError = SatelliteManager.SATELLITE_RESULT_RADIO_NOT_AVAILABLE;
+        setSatelliteError(expectedError);
+        requestSatelliteAttachEnabledForCarrier(true, expectedError);
+
+        pair = requestIsSatelliteAttachEnabledForCarrier();
+        assertEquals(true, pair.first.booleanValue());
+        assertNull(pair.second);
+
+        afterSatelliteForCarrierTest();
+        revokeSatellitePermission();
+    }
+
+    @Test
+    public void testSatelliteAttachRestrictionForCarrier() {
+        if (!shouldTestSatelliteWithMockService()) return;
+
+        logd("testSatelliteAttachRestrictionForCarrier");
+        grantSatellitePermission();
+        beforeSatelliteForCarrierTest();
+        clearSatelliteEnabledForCarrier();
+        @SatelliteManager.SatelliteResult int expectedSuccess =
+                SatelliteManager.SATELLITE_RESULT_SUCCESS;
+
+        /** Test when satellite is supported but there is a restriction reason */
+        setSatelliteError(expectedSuccess);
+        PersistableBundle bundle = new PersistableBundle();
+        bundle.putBoolean(
+                CarrierConfigManager.KEY_SATELLITE_ATTACH_SUPPORTED_BOOL, true);
+        overrideCarrierConfig(sTestSubIDForCarrierSatellite, bundle);
+        requestAddSatelliteAttachRestrictionForCarrier(
+                SATELLITE_COMMUNICATION_RESTRICTION_REASON_GEOLOCATION,
+                SatelliteManager.SATELLITE_RESULT_SUCCESS);
+        requestSatelliteAttachEnabledForCarrier(true, expectedSuccess);
+        Pair<Boolean, Integer> pair = requestIsSatelliteAttachEnabledForCarrier();
+        assertEquals(true, pair.first.booleanValue());
+        assertNull(pair.second);
+        assertEquals(false, getIsSatelliteEnabledForCarrierFromMockService());
+
+        /** If restriction reason is removed, re-evaluate and trigger enable/disable again */
+        requestRemoveSatelliteAttachRestrictionForCarrier(
+                SATELLITE_COMMUNICATION_RESTRICTION_REASON_GEOLOCATION,
+                SatelliteManager.SATELLITE_RESULT_SUCCESS);
+        assertEquals(true, getIsSatelliteEnabledForCarrierFromMockService());
+
+        /** If restriction reason is added again, re-evaluate and trigger enable/disable again */
+        requestAddSatelliteAttachRestrictionForCarrier(
+                SATELLITE_COMMUNICATION_RESTRICTION_REASON_GEOLOCATION,
+                SatelliteManager.SATELLITE_RESULT_SUCCESS);
+        assertEquals(false, getIsSatelliteEnabledForCarrierFromMockService());
+
+        afterSatelliteForCarrierTest();
+        revokeSatellitePermission();
+    }
+
     /**
      * Before calling this function, caller need to make sure the modem is in LISTENING or IDLE
      * state.
@@ -2900,5 +3050,245 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         if (isRadioSatelliteModeSensitive(Settings.Global.RADIO_UWB)) {
             mUwbManager.unregisterAdapterStateCallback(mUwbAdapterStateCallback);
         }
+    }
+
+    private void requestSatelliteAttachEnabledForCarrier(boolean isEnable,
+            int expectedResult) {
+        LinkedBlockingQueue<Integer> resultListener = new LinkedBlockingQueue<>(1);
+        sSatelliteManagerForCarrierSatellite.requestSatelliteAttachEnabledForCarrier(isEnable,
+                getContext().getMainExecutor(), resultListener::offer);
+        Integer result;
+        try {
+            result = resultListener.poll(TIMEOUT, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException ex) {
+            fail("requestSatelliteAttachEnabledForCarrier failed with ex=" + ex);
+            return;
+        }
+        assertNotNull(result);
+        assertEquals(expectedResult, (int) result);
+    }
+
+    private void requestAddSatelliteAttachRestrictionForCarrier(int reason, int expectedResult) {
+        LinkedBlockingQueue<Integer> resultListener = new LinkedBlockingQueue<>(1);
+        sSatelliteManagerForCarrierSatellite.addSatelliteAttachRestrictionForCarrier(reason,
+                getContext().getMainExecutor(), resultListener::offer);
+        Integer result;
+        try {
+            result = resultListener.poll(TIMEOUT, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException ex) {
+            fail("requestAddSatelliteAttachRestrictionForCarrier failed with ex=" + ex);
+            return;
+        }
+        assertNotNull(result);
+        assertEquals(expectedResult, (int) result);
+    }
+
+    private void requestRemoveSatelliteAttachRestrictionForCarrier(int reason, int expectedResult) {
+        LinkedBlockingQueue<Integer> resultListener = new LinkedBlockingQueue<>(1);
+        sSatelliteManagerForCarrierSatellite.removeSatelliteAttachRestrictionForCarrier(reason,
+                getContext().getMainExecutor(), resultListener::offer);
+        Integer result;
+        try {
+            result = resultListener.poll(TIMEOUT, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException ex) {
+            fail("requestRemoveSatelliteAttachRestrictionForCarrier failed with ex=" + ex);
+            return;
+        }
+        assertNotNull(result);
+        assertEquals(expectedResult, (int) result);
+    }
+
+    private Pair<Boolean, Integer> requestIsSatelliteAttachEnabledForCarrier() {
+        final AtomicReference<Boolean> enabled = new AtomicReference<>();
+        final AtomicReference<Integer> callback = new AtomicReference<>();
+        CountDownLatch latch = new CountDownLatch(1);
+        OutcomeReceiver<Boolean, SatelliteManager.SatelliteException> receiver =
+                new OutcomeReceiver<>() {
+                    @Override
+                    public void onResult(Boolean result) {
+                        logd("onResult: result=" + result);
+                        enabled.set(result);
+                        latch.countDown();
+                    }
+
+                    @Override
+                    public void onError(SatelliteManager.SatelliteException exception) {
+                        logd("onError: onError=" + exception);
+                        callback.set(exception.getErrorCode());
+                        latch.countDown();
+                    }
+                };
+
+        sSatelliteManagerForCarrierSatellite.requestIsSatelliteAttachEnabledForCarrier(
+                getContext().getMainExecutor(), receiver);
+        try {
+            assertTrue(latch.await(TIMEOUT, TimeUnit.MILLISECONDS));
+        } catch (InterruptedException e) {
+            fail(e.toString());
+        }
+        return new Pair<>(enabled.get(), callback.get());
+    }
+
+    private abstract static class BaseReceiver extends BroadcastReceiver {
+        protected CountDownLatch mLatch = new CountDownLatch(1);
+
+        void clearQueue() {
+            mLatch = new CountDownLatch(1);
+        }
+
+        void waitForChanged() throws Exception {
+            mLatch.await(5000, TimeUnit.MILLISECONDS);
+        }
+    }
+
+    private static class CarrierConfigReceiver extends BaseReceiver {
+        private final int mSubId;
+
+        CarrierConfigReceiver(int subId) {
+            mSubId = subId;
+        }
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (CarrierConfigManager.ACTION_CARRIER_CONFIG_CHANGED.equals(intent.getAction())) {
+                int subId = intent.getIntExtra(CarrierConfigManager.EXTRA_SUBSCRIPTION_INDEX, -1);
+                if (mSubId == subId) {
+                    mLatch.countDown();
+                }
+            }
+        }
+    }
+
+    private static void overrideCarrierConfig(int subId, PersistableBundle bundle) {
+        try {
+            CarrierConfigManager carrierConfigManager = InstrumentationRegistry.getInstrumentation()
+                    .getContext().getSystemService(CarrierConfigManager.class);
+            sCarrierConfigReceiver.clearQueue();
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(carrierConfigManager,
+                    (m) -> m.overrideConfig(subId, bundle));
+            sCarrierConfigReceiver.waitForChanged();
+        } catch (Exception ex) {
+            loge("overrideCarrierConfig(), ex=" + ex);
+        } finally {
+            grantSatellitePermission();
+        }
+    }
+
+    private void setSatelliteError(@SatelliteManager.SatelliteResult int error) {
+        @RadioError int satelliteError;
+
+        switch(error) {
+            case SatelliteManager.SATELLITE_RESULT_SUCCESS:
+                satelliteError = SatelliteResult.SATELLITE_RESULT_SUCCESS;
+                break;
+            case SatelliteManager.SATELLITE_RESULT_INVALID_MODEM_STATE:
+                satelliteError = SatelliteResult.SATELLITE_RESULT_INVALID_MODEM_STATE;
+                break;
+            case SatelliteManager.SATELLITE_RESULT_MODEM_ERROR:
+                satelliteError = SatelliteResult.SATELLITE_RESULT_MODEM_ERROR;
+                break;
+            case SatelliteManager.SATELLITE_RESULT_RADIO_NOT_AVAILABLE:
+                satelliteError = SatelliteResult.SATELLITE_RESULT_RADIO_NOT_AVAILABLE;
+                break;
+            case SatelliteManager.SATELLITE_RESULT_REQUEST_NOT_SUPPORTED:
+            default:
+                satelliteError = SatelliteResult.SATELLITE_RESULT_REQUEST_NOT_SUPPORTED;
+                break;
+        }
+
+        sMockSatelliteServiceManager.setErrorCode(satelliteError);
+    }
+
+    private List<String> getPlmnListFromMockService() {
+        List<String> receiveList = sMockSatelliteServiceManager.getPlmnList();
+        if (receiveList == null) {
+            receiveList = new ArrayList<>();
+        }
+        return receiveList;
+    }
+
+    private boolean getIsSatelliteEnabledForCarrierFromMockService() {
+        Boolean receivedResult = sMockSatelliteServiceManager.getIsSatelliteEnabledForCarrier();
+        return receivedResult != null ? receivedResult : false;
+    }
+
+    private void clearSatelliteEnabledForCarrier() {
+        sMockSatelliteServiceManager.clearSatelliteEnabledForCarrier();
+    }
+
+
+    static int sTestSubIDForCarrierSatellite;
+    static SatelliteManager sSatelliteManagerForCarrierSatellite;
+    static SubscriptionManager sSubscriptionManager;
+    static boolean sPreviousSatelliteAttachEnabled;
+
+    private void beforeSatelliteForCarrierTest() {
+        sTestSubIDForCarrierSatellite = getActiveSubIDForCarrierSatelliteTest();
+        sSatelliteManagerForCarrierSatellite =
+                sSatelliteManager.createForSubscriptionId(sTestSubIDForCarrierSatellite);
+        sSubscriptionManager = InstrumentationRegistry.getInstrumentation()
+                .getContext().getSystemService(SubscriptionManager.class);
+        // Get the default subscription values for COLUMN_SATELLITE_ATTACH_ENABLED_FOR_CARRIER.
+        sPreviousSatelliteAttachEnabled =
+                sSubscriptionManager.getBooleanSubscriptionProperty(sTestSubIDForCarrierSatellite,
+                        SubscriptionManager.SATELLITE_ATTACH_ENABLED_FOR_CARRIER,
+                        false,
+                        getContext());
+        UiAutomation ui = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        try {
+            ui.adoptShellPermissionIdentity();
+            // Set user Setting as false
+            sSubscriptionManager.setSubscriptionProperty(sTestSubIDForCarrierSatellite,
+                    SubscriptionManager.SATELLITE_ATTACH_ENABLED_FOR_CARRIER, String.valueOf(0));
+        } finally {
+            ui.dropShellPermissionIdentity();
+        }
+    }
+
+    private void afterSatelliteForCarrierTest() {
+        // Set user Setting value to previous one.
+        UiAutomation ui = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        try {
+            ui.adoptShellPermissionIdentity();
+            sSubscriptionManager.setSubscriptionProperty(sTestSubIDForCarrierSatellite,
+                    SubscriptionManager.SATELLITE_ATTACH_ENABLED_FOR_CARRIER,
+                    sPreviousSatelliteAttachEnabled ? "1" : "0");
+        } finally {
+            ui.dropShellPermissionIdentity();
+            sSatelliteManagerForCarrierSatellite = null;
+            sTestSubIDForCarrierSatellite = SubscriptionManager.INVALID_SUBSCRIPTION_ID;
+        }
+    }
+
+    // Get default active subscription ID.
+    private int getActiveSubIDForCarrierSatelliteTest() {
+        Context context = InstrumentationRegistry.getInstrumentation().getContext();
+        SubscriptionManager sm = context.getSystemService(SubscriptionManager.class);
+        List<SubscriptionInfo> infos = ShellIdentityUtils.invokeMethodWithShellPermissions(sm,
+                SubscriptionManager::getActiveSubscriptionInfoList);
+
+        int defaultSubId = SubscriptionManager.getDefaultVoiceSubscriptionId();
+        if (defaultSubId != SubscriptionManager.INVALID_SUBSCRIPTION_ID
+                && isSubIdInInfoList(infos, defaultSubId)) {
+            return defaultSubId;
+        }
+
+        defaultSubId = SubscriptionManager.getDefaultSubscriptionId();
+        if (defaultSubId != SubscriptionManager.INVALID_SUBSCRIPTION_ID
+                && isSubIdInInfoList(infos, defaultSubId)) {
+            return defaultSubId;
+        }
+
+        // Couldn't resolve a default. We can try to resolve a default using the active
+        // subscriptions.
+        if (!infos.isEmpty()) {
+            return infos.get(0).getSubscriptionId();
+        }
+        // There must be at least one active subscription.
+        return SubscriptionManager.INVALID_SUBSCRIPTION_ID;
+    }
+
+    private static boolean isSubIdInInfoList(List<SubscriptionInfo> infos, int subId) {
+        return infos.stream().anyMatch(info -> info.getSubscriptionId() == subId);
     }
 }
