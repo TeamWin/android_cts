@@ -52,6 +52,7 @@ import androidx.annotation.NonNull;
 
 import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.CddTest;
+import com.android.server.telecom.flags.Flags;
 
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -339,7 +340,7 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
             "android.telecom.CallControl#setActive",
             "android.telecom.CallControl#disconnect"})
     public void testAddOutgoingCallHasPropertyIsTransactional() {
-        if (!mShouldTestTelecom) {
+        if (!mShouldTestTelecom || !Flags.voipAppActionsSupport()) {
             return;
         }
         try {
@@ -390,7 +391,7 @@ public class TransactionalApisTest extends BaseTelecomTestWithMockServices {
             "android.telecom.CallControl#setActive",
             "android.telecom.CallControl#disconnect"})
     public void testAddIncomingCallHasPropertyIsTransactional() {
-        if (!mShouldTestTelecom) {
+        if (!mShouldTestTelecom || !Flags.voipAppActionsSupport()) {
             return;
         }
         try {
