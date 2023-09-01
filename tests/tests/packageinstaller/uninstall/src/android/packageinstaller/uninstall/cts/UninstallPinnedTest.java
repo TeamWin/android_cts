@@ -24,7 +24,7 @@ import static com.android.compatibility.common.util.UiAutomatorUtils.waitFindObj
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
 
 import android.app.ActivityTaskManager;
 import android.app.PendingIntent;
@@ -49,8 +49,6 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 public class UninstallPinnedTest {
 
@@ -74,8 +72,11 @@ public class UninstallPinnedTest {
         mContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
         mActivityTaskManager = mContext.getSystemService(ActivityTaskManager.class);
 
+        assumeTrue(isPinningSupported());
+
         // Unblock UI
         mUiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
+
         if (!mUiDevice.isScreenOn()) {
             mUiDevice.wakeUp();
         }
@@ -138,11 +139,16 @@ public class UninstallPinnedTest {
 
     @After
     public void unpinAndUninstall() throws IOException {
+        if (!isPinningSupported()) {
+            return;
+        }
         runWithShellPermissionIdentity(() -> mActivityTaskManager.stopSystemLockTaskMode());
         mUiDevice.executeShellCommand("pm uninstall " + TEST_PKG_NAME);
     }
 
     private void pinActivity(ComponentName component) {
+        assumeTrue(isPinningSupported());
+
         mWmState.computeState();
 
         int stackId = mWmState.getRootTaskIdByActivity(component);
@@ -151,6 +157,12 @@ public class UninstallPinnedTest {
             mActivityTaskManager.startSystemLockTaskMode(
                     stackId);
         });
+    }
+
+    private boolean isPinningSupported() {
+        return !(mContext.getPackageManager().hasSystemFeature(
+                /* PackageManager.FEATURE_CAR_SPLITSCREEN_MULTITASKING */
+                "android.software.car.splitscreen_multitasking"));
     }
 
     private boolean isInstalled() {
