@@ -22,6 +22,7 @@
     <queries>
         <!-- UpdateProviderInfoTest queries widget providers. -->
         <package android:name="android.appwidget.cts.widgetprovider"/>
+        <package android:name="android.appwidget.cts.appbal" />
     </queries>
 
   <application>
