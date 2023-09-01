@@ -17,6 +17,8 @@
 package android.content.pm.cts;
 
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
+import static android.content.pm.PackageManager.MATCH_ARCHIVED_PACKAGES;
+import static android.content.pm.PackageManager.MATCH_UNINSTALLED_PACKAGES;
 
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
 
@@ -42,6 +44,8 @@ import android.content.pm.PackageArchiver;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageInstaller;
 import android.content.pm.PackageManager;
+import android.content.pm.PackageManager.NameNotFoundException;
+import android.content.pm.PackageManager.PackageInfoFlags;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
@@ -83,7 +87,7 @@ public class PackageArchiverTest {
 
     private Context mContext;
     private UiDevice mUiDevice;
-
+    private PackageManager mPackageManager;
     private PackageArchiver mPackageArchiver;
     private StorageStatsManager mStorageStatsManager;
     private ArchiveIntentSender mIntentSender;
@@ -94,7 +98,8 @@ public class PackageArchiverTest {
         mUiDevice = UiDevice.getInstance(
                 androidx.test.InstrumentationRegistry.getInstrumentation());
         mContext = instrumentation.getContext();
-        mPackageArchiver = mContext.getPackageManager().getPackageArchiver();
+        mPackageManager = mContext.getPackageManager();
+        mPackageArchiver = mPackageManager.getPackageArchiver();
         mStorageStatsManager = mContext.getSystemService(StorageStatsManager.class);
         mIntentSender = new ArchiveIntentSender();
     }
@@ -148,22 +153,40 @@ public class PackageArchiverTest {
                         PACKAGE_NAME));
     }
 
-    private static String installAppWithNoInstaller() {
-        return SystemUtil.runShellCommand(String.format("pm install -r -t -g %s", APK_PATH));
+    @Test
+    public void matchArchivedPackages() throws Exception {
+        installPackage();
+
+        runWithShellPermissionIdentity(
+                () -> mPackageArchiver.requestArchive(PACKAGE_NAME,
+                        new IntentSender((IIntentSender) mIntentSender)),
+                Manifest.permission.DELETE_PACKAGES);
+
+        assertThat(mIntentSender.mStatus.get()).isEqualTo(PackageInstaller.STATUS_SUCCESS);
+        assertThat(mPackageManager.getPackageInfo(PACKAGE_NAME,
+                PackageInfoFlags.of(MATCH_UNINSTALLED_PACKAGES)).isArchived).isTrue();
+        assertThat(mPackageManager.getPackageInfo(PACKAGE_NAME,
+                PackageInfoFlags.of(MATCH_ARCHIVED_PACKAGES)).isArchived).isTrue();
+        assertThrows(NameNotFoundException.class,
+                () -> mPackageManager.getPackageInfo(PACKAGE_NAME, /* flags= */ 0));
     }
 
     private void launchTestActivity() {
         final ActivityOptions options = ActivityOptions.makeBasic();
         options.setLaunchWindowingMode(WINDOWING_MODE_FULLSCREEN);
-        mContext.startActivity(createTestActivityIntent(PACKAGE_NAME, ACTIVITY_NAME),
+        mContext.startActivity(createTestActivityIntent(),
                 options.toBundle());
         mUiDevice.wait(Until.hasObject(By.clazz(PACKAGE_NAME, ACTIVITY_NAME)),
                 TimeUnit.SECONDS.toMillis(5));
     }
 
-    private Intent createTestActivityIntent(String pkgName, String className) {
+    private static String installAppWithNoInstaller() {
+        return SystemUtil.runShellCommand(String.format("pm install -r -t -g %s", APK_PATH));
+    }
+
+    private Intent createTestActivityIntent() {
         final Intent intent = new Intent();
-        intent.setClassName(pkgName, className);
+        intent.setClassName(PACKAGE_NAME, ACTIVITY_NAME);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         return intent;
     }
@@ -183,7 +206,7 @@ public class PackageArchiverTest {
         try {
             return mContext.getPackageManager().getPackageInfo(
                     PACKAGE_NAME, /* flags= */ 0);
-        } catch (PackageManager.NameNotFoundException e) {
+        } catch (NameNotFoundException e) {
             fail("Package " + PACKAGE_NAME + " not installed for user "
                     + mContext.getUser() + ": " + e);
         }
