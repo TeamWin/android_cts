@@ -595,8 +595,8 @@ class AutoRevokeTest {
         val rowSelector = By.text(supportedAppPackageName)
 
         val rowItem = if (isAutomotiveDevice()) {
-            val rowItemSelector = By.res("com.android.permissioncontroller:" +
-                    "id/car_ui_first_action_container")
+            val rowItemSelector = By
+                    .res(Pattern.compile(".*id/car_ui_first_action_container"))
                     .hasDescendant(rowSelector)
             waitFindObject(rowItemSelector).parent
         } else {
@@ -604,7 +604,7 @@ class AutoRevokeTest {
         }
 
         val uninstallSelector = if (isAutomotiveDevice()) {
-            By.res("com.android.permissioncontroller:id/car_ui_secondary_action")
+            By.res(Pattern.compile(".*id/car_ui_secondary_action"))
         } else {
             By.desc("Uninstall or disable")
         }
