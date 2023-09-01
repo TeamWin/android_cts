@@ -20,10 +20,12 @@ import static android.server.wm.backlegacyapp.Components.BACK_LEGACY;
 import static android.view.Display.DEFAULT_DISPLAY;
 
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
+import android.os.Bundle;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.ActivityManagerTestBase;
+import android.server.wm.Condition;
 import android.server.wm.TestJournalProvider.TestJournalContainer;
 import android.server.wm.backlegacyapp.Components;
 
@@ -53,10 +55,16 @@ public class BackNavigationLegacyGestureTest extends ActivityManagerTestBase {
         waitAndAssertActivityState(BACK_LEGACY, STATE_RESUMED, "Activity should be resumed");
         waitForActivityFocused(ACTIVITY_FOCUS_TIMEOUT_MS, BACK_LEGACY);
         triggerBackEventByGesture(DEFAULT_DISPLAY);
-        waitForIdle();
-        assertTrue("OnBackPressed should have been called",
-                TestJournalContainer.get(BACK_LEGACY).extras.getBoolean(
-                        Components.KEY_ON_BACK_PRESSED_CALLED));
+        final Bundle resultExtras = Condition.waitForResult(
+                new Condition<Bundle>("wait for onBackPressed")
+                        .setResultSupplier(() -> TestJournalContainer.get(
+                                BACK_LEGACY).extras)
+                        .setResultValidator(extras ->
+                                extras.containsKey(Components.KEY_ON_BACK_PRESSED_CALLED)));
+        if (resultExtras == null
+                || !resultExtras.getBoolean(Components.KEY_ON_BACK_PRESSED_CALLED)) {
+            fail("OnBackPressed should have been called");
+        }
         assertFalse("OnBackInvoked should not have been called",
                 TestJournalContainer.get(BACK_LEGACY).extras.getBoolean(
                         Components.KEY_ON_BACK_INVOKED_CALLED));
