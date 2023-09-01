@@ -28,6 +28,7 @@ import static org.junit.Assume.assumeTrue;
 
 import android.content.ComponentName;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.platform.test.annotations.Presubmit;
 import android.view.Surface;
@@ -47,12 +48,14 @@ public class DockConfigChangeTests extends ActivityManagerTestBase {
         // enabled.
         assumeTrue(getConfigSkipRelaunchOnDock());
 
-        // Set rotation to the same rotation as the device would be rotated to after docking. This
-        // prevents an extraneous config change from the device rotating when docked/undocked.
         RotationSession rotationSession = createManagedRotationSession();
-        rotateToDockRotation(rotationSession);
 
         launchActivity(TEST_ACTIVITY);
+        waitAndAssertResumedActivity(TEST_ACTIVITY, "Activity must be resumed");
+
+        // Set rotation to the same rotation as the device would be rotated to after docking. This
+        // prevents an extraneous config change from the device rotating when docked/undocked.
+        rotateToDockRotation(rotationSession);
         waitAndAssertResumedActivity(TEST_ACTIVITY, "Activity must be resumed");
         separateTestJournal();
 
@@ -80,12 +83,14 @@ public class DockConfigChangeTests extends ActivityManagerTestBase {
         // enabled.
         assumeTrue(getConfigSkipRelaunchOnDock());
 
-        // Set rotation to the same rotation as the device would be rotated to after docking. This
-        // prevents an extraneous config change from the device rotating when docked/undocked.
         RotationSession rotationSession = createManagedRotationSession();
-        rotateToDockRotation(rotationSession);
 
         launchActivity(DESK_RESOURCES_ACTIVITY);
+        waitAndAssertResumedActivity(DESK_RESOURCES_ACTIVITY, "Activity must be resumed");
+
+        // Set rotation to the same rotation as the device would be rotated to after docking. This
+        // prevents an extraneous config change from the device rotating when docked/undocked.
+        rotateToDockRotation(rotationSession);
         waitAndAssertResumedActivity(DESK_RESOURCES_ACTIVITY, "Activity must be resumed");
         separateTestJournal();
 
