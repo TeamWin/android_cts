@@ -526,7 +526,8 @@ def find_circle(img, img_name, min_area, color, use_adaptive_threshold=False):
           num_pts/radius >= CIRCLE_RADIUS_NUMPTS_THRESH and
           math.isclose(1.0, fill, abs_tol=CIRCLE_COLOR_ATOL)):
         radii = [
-            math.dist((shape['ctx'], shape['cty']), numpy.squeeze(point))
+            image_processing_utils.distance(
+                (shape['ctx'], shape['cty']), numpy.squeeze(point))
             for point in contour
         ]
         minimum_radius, maximum_radius = min(radii), max(radii)
@@ -538,7 +539,8 @@ def find_circle(img, img_name, min_area, color, use_adaptive_threshold=False):
           # Based on image height
           center_distance_atol = img_size[0]*CIRCLE_LOCATION_VARIATION_RTOL
           if math.isclose(
-              math.dist(old_circle_center, new_circle_center),
+              image_processing_utils.distance(
+                  old_circle_center, new_circle_center),
               0,
               abs_tol=center_distance_atol
           ) and maximum_radius - minimum_radius < circle['radius_spread']:

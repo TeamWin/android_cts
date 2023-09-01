@@ -1073,6 +1073,16 @@ def point_in_triangle(x1, y1, x2, y2, x3, y3, xp, yp, abs_tol):
   return math.isclose(a, (a1 + a2 + a3), abs_tol=abs_tol)
 
 
+def distance(p, q):
+  """Returns the Euclidean distance from point p to point q.
+
+  Args:
+    p: an Iterable of numbers
+    q: an Iterable of numbers
+  """
+  return math.sqrt(sum((px - qx) ** 2.0 for px, qx in zip(p, q)))
+
+
 def p3_img_has_wide_gamut(wide_img):
   """Check if a DISPLAY_P3 image contains wide gamut pixels.
 
