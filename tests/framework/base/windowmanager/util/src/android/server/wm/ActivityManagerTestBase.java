@@ -783,13 +783,18 @@ public abstract class ActivityManagerTestBase {
         }
     }
 
-    protected ComponentName getDefaultSecondaryHomeComponent() {
-        assumeTrue(supportsMultiDisplay());
+    protected Intent createHomeIntent(String category) {
         int resId = Resources.getSystem().getIdentifier(
                 "config_secondaryHomePackage", "string", "android");
         final Intent intent = new Intent(Intent.ACTION_MAIN);
-        intent.addCategory(Intent.CATEGORY_SECONDARY_HOME);
+        intent.addCategory(category);
         intent.setPackage(mContext.getResources().getString(resId));
+        return intent;
+    }
+
+    protected ComponentName getDefaultSecondaryHomeComponent() {
+        assumeTrue(supportsMultiDisplay());
+        final Intent intent = createHomeIntent(Intent.CATEGORY_SECONDARY_HOME);
         final ResolveInfo resolveInfo =
                 mContext.getPackageManager().resolveActivity(intent, MATCH_DEFAULT_ONLY);
         assertNotNull("Should have default secondary home activity", resolveInfo);
