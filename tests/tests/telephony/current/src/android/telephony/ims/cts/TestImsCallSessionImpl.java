@@ -506,8 +506,12 @@ public class TestImsCallSessionImpl extends ImsCallSessionImplBase {
                     return;
                 }
 
+                TestImsCallSessionImpl confCallSession = mConfSession;
+                if (isTestType(TEST_TYPE_JOIN_EXIST_CONFERENCE_FAILED_AFTER_SWAP)) {
+                    confCallSession = null;
+                }
                 Log.d(LOG_TAG, "invokeCallSessionMergeStarted");
-                mListener.callSessionMergeStarted(mConfSession, mConfCallProfile);
+                mListener.callSessionMergeStarted(confCallSession, mConfCallProfile);
                 ImsUtils.waitInCurrentState(WAIT_IN_CURRENT_STATE);
                 if (isTestType(TEST_TYPE_CONFERENCE_FAILED_REMOTE_TERMINATED)) {
                     return;
