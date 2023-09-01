@@ -67,6 +67,7 @@ import static org.testng.Assert.expectThrows;
 
 import android.annotation.NonNull;
 import android.app.Activity;
+import android.app.ActivityManager;
 import android.app.ActivityOptions;
 import android.app.ActivityThread;
 import android.app.Instrumentation;
@@ -104,6 +105,7 @@ import android.content.pm.ResolveInfo;
 import android.content.pm.ServiceInfo;
 import android.content.pm.SharedLibraryInfo;
 import android.content.pm.Signature;
+import android.content.pm.cts.PackageManagerShellCommandInstallTest.PackageBroadcastReceiver;
 import android.content.pm.cts.util.AbandonAllPackageSessionsRule;
 import android.content.res.Configuration;
 import android.content.res.Resources;
@@ -2142,8 +2144,17 @@ public class PackageManagerTest {
         SystemUtil.runShellCommand("pm uninstall " + packageName);
     }
 
+    private void uninstallPackageForUser(String packageName, int userId) {
+        SystemUtil.runShellCommand("pm uninstall --user " + userId + " " + packageName);
+
+    }
+
     private void uninstallPackageKeepData(String packageName) {
         SystemUtil.runShellCommand("pm uninstall -k " + packageName);
+    }
+
+    private void uninstallPackageKeepDataForUser(String packageName, int userId) {
+        SystemUtil.runShellCommand("pm uninstall -k --user " + userId + " " + packageName);
     }
 
     private static boolean isAppInstalled(String packageName) throws IOException {
@@ -2870,6 +2881,51 @@ public class PackageManagerTest {
                         + "PRIVATE_FLAG_ALLOW_NATIVE_HEAP_POINTER_TAGGING "
                         + "PRIVATE_FLAG_HAS_FRAGILE_USER_DATA ]",
                 privatePkgFlags);
+    }
+
+    @Test
+    public void testPackageRemovedBroadcastsSingleUser() throws Exception {
+        installPackage(HELLO_WORLD_APK);
+        final int currentUser = ActivityManager.getCurrentUser();
+        final PackageBroadcastReceiver
+                removedBroadcastReceiver = new PackageBroadcastReceiver(
+                HELLO_WORLD_PACKAGE_NAME, currentUser, Intent.ACTION_PACKAGE_REMOVED
+        );
+        final PackageBroadcastReceiver fullyRemovedBroadcastReceiver = new PackageBroadcastReceiver(
+                HELLO_WORLD_PACKAGE_NAME, currentUser, Intent.ACTION_PACKAGE_FULLY_REMOVED
+        );
+        final IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(Intent.ACTION_PACKAGE_REMOVED);
+        intentFilter.addAction(Intent.ACTION_PACKAGE_FULLY_REMOVED);
+        intentFilter.addDataScheme("package");
+        mContext.registerReceiver(removedBroadcastReceiver, intentFilter);
+        mContext.registerReceiver(fullyRemovedBroadcastReceiver, intentFilter);
+        // Test uninstall -k without --user
+        uninstallPackageKeepData(HELLO_WORLD_PACKAGE_NAME);
+        removedBroadcastReceiver.assertBroadcastReceived();
+        fullyRemovedBroadcastReceiver.assertBroadcastNotReceived();
+        removedBroadcastReceiver.reset();
+        // Test uninstall -k with --user
+        installPackage(HELLO_WORLD_APK);
+        uninstallPackageKeepDataForUser(HELLO_WORLD_PACKAGE_NAME, currentUser);
+        removedBroadcastReceiver.assertBroadcastReceived();
+        fullyRemovedBroadcastReceiver.assertBroadcastNotReceived();
+        removedBroadcastReceiver.reset();
+        // Test uninstall without -k
+        installPackage(HELLO_WORLD_APK);
+        uninstallPackage(HELLO_WORLD_PACKAGE_NAME);
+        removedBroadcastReceiver.assertBroadcastReceived();
+        fullyRemovedBroadcastReceiver.assertBroadcastReceived();
+        removedBroadcastReceiver.reset();
+        fullyRemovedBroadcastReceiver.reset();
+        // Test uninstall --user without -k
+        installPackage(HELLO_WORLD_APK);
+        uninstallPackageForUser(HELLO_WORLD_PACKAGE_NAME, currentUser);
+        removedBroadcastReceiver.assertBroadcastReceived();
+        fullyRemovedBroadcastReceiver.assertBroadcastReceived();
+        // Clean up
+        mContext.unregisterReceiver(removedBroadcastReceiver);
+        mContext.unregisterReceiver(fullyRemovedBroadcastReceiver);
     }
 
     @Test
