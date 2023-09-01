@@ -37,7 +37,6 @@ import android.app.ActivityOptions;
 import android.car.Car;
 import android.car.CarOccupantZoneManager;
 import android.car.CarOccupantZoneManager.OccupantZoneInfo;
-import android.car.annotation.ApiRequirements;
 import android.car.media.CarAudioManager;
 import android.car.test.PermissionsCheckerRule.EnsureHasPermission;
 import android.content.Intent;
@@ -124,8 +123,6 @@ public final class CarInputTest extends AbstractCarTestCase {
 
     @Test
     @CddTest(requirements = {"TODO(b/262236403)"})
-    @ApiRequirements(minCarVersion = ApiRequirements.CarVersion.UPSIDE_DOWN_CAKE_0,
-            minPlatformVersion = ApiRequirements.PlatformVersion.UPSIDE_DOWN_CAKE_0)
     public void testHomeKeyForAnyPassengerMainDisplay_bringsHomeForThePassengerDisplayOnly() {
         // Launches TestActivity on both driver and passenger displays.
         var intent = new Intent(mContext, TestActivity.class);
@@ -183,8 +180,6 @@ public final class CarInputTest extends AbstractCarTestCase {
 
     @Test
     @CddTest(requirements = {"TODO(b/262236403)"})
-    @ApiRequirements(minCarVersion = ApiRequirements.CarVersion.UPSIDE_DOWN_CAKE_0,
-            minPlatformVersion = ApiRequirements.PlatformVersion.UPSIDE_DOWN_CAKE_0)
     public void testBackKeyForAnyPassengerMainDisplay() {
         // Start TestActivity on passenger's display.
         var intent = new Intent(mContext, TestActivity.class);
@@ -218,8 +213,6 @@ public final class CarInputTest extends AbstractCarTestCase {
 
     @Test
     @CddTest(requirements = {"TODO(b/262236403)"})
-    @ApiRequirements(minCarVersion = ApiRequirements.CarVersion.UPSIDE_DOWN_CAKE_0,
-            minPlatformVersion = ApiRequirements.PlatformVersion.UPSIDE_DOWN_CAKE_0)
     public void testAKeyForAnyPassengerMainDisplay() {
         // Start TestActivity on passenger's display.
         var intent = new Intent(mContext, TestActivity.class);
@@ -252,8 +245,6 @@ public final class CarInputTest extends AbstractCarTestCase {
 
     @Test
     @CddTest(requirements = {"TODO(b/262236403)"})
-    @ApiRequirements(minCarVersion = ApiRequirements.CarVersion.UPSIDE_DOWN_CAKE_0,
-            minPlatformVersion = ApiRequirements.PlatformVersion.UPSIDE_DOWN_CAKE_0)
     public void testPowerKeyForAnyPassengerMainDisplay() {
         // Start TestActivity on passenger's display.
         var intent = new Intent(mContext, TestActivity.class);
@@ -294,8 +285,6 @@ public final class CarInputTest extends AbstractCarTestCase {
 
     @Test
     @CddTest(requirements = {"TODO(b/262236403)"})
-    @ApiRequirements(minCarVersion = ApiRequirements.CarVersion.UPSIDE_DOWN_CAKE_0,
-            minPlatformVersion = ApiRequirements.PlatformVersion.UPSIDE_DOWN_CAKE_0)
     @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_VOLUME)
     public void testVolumeUpKeyForAnyPassengerMainDisplay() {
         var audioManager = getCar().getCarManager(CarAudioManager.class);
@@ -333,8 +322,6 @@ public final class CarInputTest extends AbstractCarTestCase {
 
     @Test
     @CddTest(requirements = {"TODO(b/262236403)"})
-    @ApiRequirements(minCarVersion = ApiRequirements.CarVersion.UPSIDE_DOWN_CAKE_0,
-            minPlatformVersion = ApiRequirements.PlatformVersion.UPSIDE_DOWN_CAKE_0)
     @EnsureHasPermission(Car.PERMISSION_CAR_CONTROL_AUDIO_VOLUME)
     public void testVolumeMuteKeyForAnyPassengerMainDisplay() {
         var audioManager = getCar().getCarManager(CarAudioManager.class);
@@ -373,8 +360,6 @@ public final class CarInputTest extends AbstractCarTestCase {
 
     @Test
     @CddTest(requirements = {"TODO(b/262236403)"})
-    @ApiRequirements(minCarVersion = ApiRequirements.CarVersion.UPSIDE_DOWN_CAKE_0,
-            minPlatformVersion = ApiRequirements.PlatformVersion.UPSIDE_DOWN_CAKE_0)
     public void testSingleTouchForAnyPassengerMainDisplay() {
         // Start activity on both driver and passenger displays.
         var intent = new Intent(mContext, TestActivity.class);
@@ -440,8 +425,6 @@ public final class CarInputTest extends AbstractCarTestCase {
 
     @Test
     @CddTest(requirements = {"TODO(b/262236403)"})
-    @ApiRequirements(minCarVersion = ApiRequirements.CarVersion.UPSIDE_DOWN_CAKE_0,
-            minPlatformVersion = ApiRequirements.PlatformVersion.UPSIDE_DOWN_CAKE_0)
     public void testMultiTouchForAnyPassengerMainDisplay() {
         // Start activity on both driver and passenger displays.
         var intent = new Intent(mContext, TestActivity.class);
