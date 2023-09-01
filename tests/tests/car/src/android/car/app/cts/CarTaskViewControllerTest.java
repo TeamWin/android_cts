@@ -30,7 +30,6 @@ import android.app.ActivityManager;
 import android.app.Instrumentation;
 import android.app.UiAutomation;
 import android.car.Car;
-import android.car.annotation.ApiRequirements;
 import android.car.app.CarActivityManager;
 import android.car.app.CarTaskViewController;
 import android.car.app.CarTaskViewControllerCallback;
@@ -170,8 +169,6 @@ public class CarTaskViewControllerTest {
     // })
     @NonApiTest(exemptionReasons = {}, justification = "Infra doesn't support methods in hidden "
             + "base class")
-    @ApiRequirements(minCarVersion = ApiRequirements.CarVersion.UPSIDE_DOWN_CAKE_1,
-            minPlatformVersion = ApiRequirements.PlatformVersion.UPSIDE_DOWN_CAKE_0)
     public void createMultipleControlledRemoteCarTaskView_startsTheTask() {
         // Act
         CarTaskViewTestHolder taskViewCallback =
@@ -235,8 +232,6 @@ public class CarTaskViewControllerTest {
     // })
     @NonApiTest(exemptionReasons = {}, justification = "Infra doesn't support methods in hidden "
             + "base class")
-    @ApiRequirements(minCarVersion = ApiRequirements.CarVersion.UPSIDE_DOWN_CAKE_1,
-            minPlatformVersion = ApiRequirements.PlatformVersion.UPSIDE_DOWN_CAKE_0)
     public void releaseControlledCarTaskView_releasesTaskView() throws Exception {
         // Arrange
         CarTaskViewTestHolder taskViewCallback =
@@ -372,8 +367,6 @@ public class CarTaskViewControllerTest {
 
     @Test
     @NonApiTest(exemptionReasons = {}, justification = "No CDD Requirement")
-    @ApiRequirements(minCarVersion = ApiRequirements.CarVersion.UPSIDE_DOWN_CAKE_0,
-            minPlatformVersion = ApiRequirements.PlatformVersion.UPSIDE_DOWN_CAKE_0)
     public void remoteCarTaskView_receivesTouchInput() throws Exception {
         // Arrange
         CarTaskViewTestHolder carTaskViewHolder =

@@ -39,7 +39,6 @@ import android.car.VehicleGear;
 import android.car.VehicleIgnitionState;
 import android.car.VehiclePropertyIds;
 import android.car.VehicleUnit;
-import android.car.annotation.ApiRequirements;
 import android.car.cts.utils.VehiclePropertyVerifier;
 import android.car.hardware.CarHvacFanDirection;
 import android.car.hardware.CarPropertyConfig;
@@ -1162,9 +1161,6 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
 
     @CddTest(requirements = {"2.5.1"})
     @Test
-    @ApiRequirements(
-            minCarVersion = ApiRequirements.CarVersion.TIRAMISU_0,
-            minPlatformVersion = ApiRequirements.PlatformVersion.TIRAMISU_0)
     public void testMustSupportGearSelection() {
         getGearSelectionVerifier().verify();
     }
@@ -1183,9 +1179,6 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
 
     @CddTest(requirements = {"2.5.1"})
     @Test
-    @ApiRequirements(
-            minCarVersion = ApiRequirements.CarVersion.TIRAMISU_0,
-            minPlatformVersion = ApiRequirements.PlatformVersion.TIRAMISU_0)
     public void testMustSupportNightMode() {
         getNightModeVerifier().verify();
     }
@@ -1204,9 +1197,6 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
 
     @CddTest(requirements = {"2.5.1"})
     @Test
-    @ApiRequirements(
-            minCarVersion = ApiRequirements.CarVersion.TIRAMISU_0,
-            minPlatformVersion = ApiRequirements.PlatformVersion.TIRAMISU_0)
     public void testMustSupportPerfVehicleSpeed() {
         getPerfVehicleSpeedVerifier().verify();
     }
@@ -1241,9 +1231,6 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
 
     @CddTest(requirements = {"2.5.1"})
     @Test
-    @ApiRequirements(
-            minCarVersion = ApiRequirements.CarVersion.TIRAMISU_0,
-            minPlatformVersion = ApiRequirements.PlatformVersion.TIRAMISU_0)
     public void testMustSupportParkingBrakeOn() {
         getParkingBrakeOnVerifier().verify();
     }

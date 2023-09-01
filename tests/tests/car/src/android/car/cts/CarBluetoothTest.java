@@ -23,7 +23,6 @@ import static org.junit.Assert.fail;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
-import android.car.annotation.ApiRequirements;
 import android.car.test.ApiCheckerRule.Builder;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -364,8 +363,6 @@ public final class CarBluetoothTest extends AbstractCarTestCase {
     // configured timeout. If all required profiles connect, the test passes.
     @Test
     @CddTest(requirements = {"7.4.3/A-0-2"})
-    @ApiRequirements(minCarVersion = ApiRequirements.CarVersion.TIRAMISU_0,
-            minPlatformVersion = ApiRequirements.PlatformVersion.TIRAMISU_0)
     public void testRequiredBluetoothProfilesExist() throws Exception {
         if (DBG) {
             Log.d(TAG, "Begin testRequiredBluetoothProfilesExist()");

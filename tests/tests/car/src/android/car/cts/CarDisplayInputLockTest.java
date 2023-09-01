@@ -31,7 +31,6 @@ import android.app.ActivityOptions;
 import android.app.Instrumentation;
 import android.car.Car;
 import android.car.CarOccupantZoneManager;
-import android.car.annotation.ApiRequirements;
 import android.car.settings.CarSettings;
 import android.content.ContentResolver;
 import android.graphics.Color;
@@ -94,8 +93,6 @@ public class CarDisplayInputLockTest extends AbstractCarTestCase {
     }
 
     @CddTest(requirements = {"TODO(b/262236403)"})
-    @ApiRequirements(minCarVersion = ApiRequirements.CarVersion.UPSIDE_DOWN_CAKE_0,
-            minPlatformVersion = ApiRequirements.PlatformVersion.UPSIDE_DOWN_CAKE_0)
     @Test
     public void testDisplayInputLockForEachPassengerDisplay() throws Exception {
         Display[] displays = getPassengerMainDisplays();
@@ -118,8 +115,6 @@ public class CarDisplayInputLockTest extends AbstractCarTestCase {
     }
 
     @CddTest(requirements = {"TODO(b/262236403)"})
-    @ApiRequirements(minCarVersion = ApiRequirements.CarVersion.UPSIDE_DOWN_CAKE_0,
-            minPlatformVersion = ApiRequirements.PlatformVersion.UPSIDE_DOWN_CAKE_0)
     @Test
     public void testDisplayInputLockForTwoPassengerDisplaysAtOnce() throws Exception {
         Display[] displays = getPassengerMainDisplays();
@@ -155,8 +150,6 @@ public class CarDisplayInputLockTest extends AbstractCarTestCase {
     }
 
     @CddTest(requirements = {"TODO(b/262236403)"})
-    @ApiRequirements(minCarVersion = ApiRequirements.CarVersion.UPSIDE_DOWN_CAKE_0,
-            minPlatformVersion = ApiRequirements.PlatformVersion.UPSIDE_DOWN_CAKE_0)
     @Test
     public void testPassengerDisplayInputLockDoesNotAffectDriverDisplay() throws Exception {
         int driverDisplayId = mCarOccupantZoneManager.getDisplayIdForDriver(

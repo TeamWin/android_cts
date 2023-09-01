@@ -22,7 +22,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import android.car.Car;
-import android.car.annotation.ApiRequirements;
 import android.car.hardware.CarSensorManager;
 import android.car.test.ApiCheckerRule.Builder;
 import android.platform.test.annotations.AppModeFull;
@@ -69,8 +68,6 @@ public final class CarSensorManagerTest extends AbstractCarTestCase {
     }
 
     @CddTest(requirements = {"2.5.1"})
-    @ApiRequirements(minCarVersion = ApiRequirements.CarVersion.TIRAMISU_0,
-            minPlatformVersion = ApiRequirements.PlatformVersion.TIRAMISU_0)
     @Test
     public void testRequiredSensorsForDrivingState() throws Exception {
         boolean foundSpeed =
@@ -81,8 +78,6 @@ public final class CarSensorManagerTest extends AbstractCarTestCase {
     }
 
     @CddTest(requirements = {"2.5.1"})
-    @ApiRequirements(minCarVersion = ApiRequirements.CarVersion.TIRAMISU_0,
-            minPlatformVersion = ApiRequirements.PlatformVersion.TIRAMISU_0)
     @Test
     public void testMustSupportNightSensor() {
         boolean foundNightSensor =
@@ -92,8 +87,6 @@ public final class CarSensorManagerTest extends AbstractCarTestCase {
 
     @CddTest(requirements = {"2.5.1"})
     @Test
-    @ApiRequirements(minCarVersion = ApiRequirements.CarVersion.TIRAMISU_0,
-            minPlatformVersion = ApiRequirements.PlatformVersion.TIRAMISU_0)
     public void testMustSupportParkingBrake() throws Exception {
         boolean foundParkingBrake =
             isSupportSensor(CarSensorManager.SENSOR_TYPE_PARKING_BRAKE);

@@ -28,7 +28,6 @@ import static org.junit.Assume.assumeThat;
 
 import android.app.UiAutomation;
 import android.car.Car;
-import android.car.annotation.ApiRequirements;
 import android.car.test.ApiCheckerRule.IgnoreInvalidApi;
 import android.car.test.PermissionsCheckerRule.EnsureHasPermission;
 import android.car.user.CarUserManager;
@@ -72,8 +71,6 @@ public final class CarServiceHelperServiceUpdatableTest extends AbstractCarTestC
     @Test
     @ApiTest(apis = {"com.android.internal.car.CarServiceHelperService#dump(PrintWriter,String[])"})
     @IgnoreInvalidApi(reason = "Class not in classpath as it's indirectly tested using dumpsys")
-    @ApiRequirements(minCarVersion = ApiRequirements.CarVersion.TIRAMISU_0,
-            minPlatformVersion = ApiRequirements.PlatformVersion.TIRAMISU_0)
     public void testCarServiceHelperServiceDump() throws Exception {
         assumeSystemServerDumpSupported();
 
@@ -87,8 +84,6 @@ public final class CarServiceHelperServiceUpdatableTest extends AbstractCarTestC
             "com.android.internal.car.CarServiceHelperServiceUpdatable#dump(PrintWriter,String[])"
     })
     @IgnoreInvalidApi(reason = "Class not in classpath as it's indirectly tested using dumpsys")
-    @ApiRequirements(minCarVersion = ApiRequirements.CarVersion.TIRAMISU_0,
-            minPlatformVersion = ApiRequirements.PlatformVersion.TIRAMISU_0)
     public void testCarServiceHelperServiceDump_carServiceProxy() throws Exception {
         assumeSystemServerDumpSupported();
 
@@ -102,8 +97,6 @@ public final class CarServiceHelperServiceUpdatableTest extends AbstractCarTestC
             "com.android.internal.car.CarServiceHelperServiceUpdatable#dump(PrintWriter,String[])"
     })
     @IgnoreInvalidApi(reason = "Class not in classpath as it's indirectly tested using dumpsys")
-    @ApiRequirements(minCarVersion = ApiRequirements.CarVersion.TIRAMISU_0,
-            minPlatformVersion = ApiRequirements.PlatformVersion.TIRAMISU_0)
     public void testCarServiceHelperServiceDump_serviceStacks() throws Exception {
         assumeSystemServerDumpSupported();
 
