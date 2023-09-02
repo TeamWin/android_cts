@@ -16,22 +16,15 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-filegroup {
-    name: "CtsAppWidgetSources",
-    srcs: [
-        "packages/src/**/*.java",
-        "common/src/**/*.java",
-    ],
-}
-
 android_test {
-    name: "CtsAppWidgetTestCases",
+    name: "CtsAppWidgetTestCasesBalApp",
     defaults: ["cts_defaults"],
     srcs: [
         "src/**/*.java",
-        "common/src/**/*.java",
     ],
-    sdk_version: "test_current",
+
+    target_sdk_version: "32",
+
     static_libs: [
         "mockito-target-minus-junit4",
         "ctstestrunner-axt",
@@ -45,14 +38,4 @@ android_test {
         "cts",
         "general-tests",
     ],
-    data: [
-        ":CtsAppWidgetLauncher2",
-        ":CtsAppWidgetProvider3",
-        ":CtsAppWidgetLauncher3",
-        ":CtsAppWidgetProvider1",
-        ":CtsAppWidgetLauncher1",
-        ":CtsAppWidgetProvider2",
-        ":CtsAppWidgetTestCasesBalApp",
-    ],
-    per_testcase_directory: true,
 }
