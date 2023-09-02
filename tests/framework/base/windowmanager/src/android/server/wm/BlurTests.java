@@ -17,7 +17,6 @@
 package android.server.wm;
 
 import static android.app.ActivityTaskManager.INVALID_STACK_ID;
-import static android.provider.Settings.Global.ANIMATOR_DURATION_SCALE;
 import static android.server.wm.CliIntentExtra.extraInt;
 import static android.server.wm.ComponentNameUtils.getWindowName;
 import static android.server.wm.app.Components.BACKGROUND_IMAGE_ACTIVITY;
@@ -53,12 +52,14 @@ import android.widget.LinearLayout;
 import androidx.test.filters.FlakyTest;
 
 import com.android.compatibility.common.util.ColorUtils;
+import com.android.compatibility.common.util.DisableAnimationRule;
 import com.android.compatibility.common.util.SystemUtil;
 
 import java.util.function.Consumer;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.Mockito;
 
@@ -71,9 +72,10 @@ public class BlurTests extends WindowManagerTestBase {
     private static final int BLUR_BEHIND_DYNAMIC_UPDATE_WAIT_TIME = 300;
     private static final int BACKGROUND_BLUR_DYNAMIC_UPDATE_WAIT_TIME = 100;
     private static final int DISABLE_BLUR_BROADCAST_WAIT_TIME = 100;
-    private float mSavedAnimatorDurationScale;
     private boolean mSavedWindowBlurDisabledSetting;
     private Rect mSavedActivityBounds;
+    @Rule
+    public DisableAnimationRule mDisableAnimationRule = new DisableAnimationRule();
 
     @Before
     public void setUp() {
@@ -82,13 +84,6 @@ public class BlurTests extends WindowManagerTestBase {
         mSavedWindowBlurDisabledSetting = Settings.Global.getInt(mContext.getContentResolver(),
                 Settings.Global.DISABLE_WINDOW_BLURS, 0) == 1;
         setForceBlurDisabled(false);
-        SystemUtil.runWithShellPermissionIdentity(() -> {
-            final ContentResolver resolver = getInstrumentation().getContext().getContentResolver();
-            mSavedAnimatorDurationScale =
-                    Settings.Global.getFloat(resolver, ANIMATOR_DURATION_SCALE, 1f);
-            Settings.Global.putFloat(resolver, ANIMATOR_DURATION_SCALE, 0);
-        });
-
         // Use the background activity's bounds when taking the device screenshot.
         // This is needed for multi-screen devices (foldables) where
         // the launched activity covers just one screen
@@ -102,11 +97,6 @@ public class BlurTests extends WindowManagerTestBase {
     @After
     public void tearDown() {
         if (!supportsBlur()) return;
-
-        SystemUtil.runWithShellPermissionIdentity(() -> {
-            Settings.Global.putFloat(getInstrumentation().getContext().getContentResolver(),
-                    ANIMATOR_DURATION_SCALE, mSavedAnimatorDurationScale);
-        });
         setForceBlurDisabled(mSavedWindowBlurDisabledSetting);
     }
 
