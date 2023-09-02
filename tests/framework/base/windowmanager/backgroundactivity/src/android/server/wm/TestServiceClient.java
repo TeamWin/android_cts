@@ -22,6 +22,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
+import android.os.ResultReceiver;
 import android.server.wm.backgroundactivity.common.ITestService;
 import android.view.textclassifier.TextClassification;
 
@@ -35,9 +36,16 @@ public class TestServiceClient implements ITestService {
 
     @Override
     public PendingIntent generatePendingIntent(ComponentName componentName, int flags,
+            Bundle createOptions, ResultReceiver resultReceiver)
+            throws RemoteException {
+        return mTestService.generatePendingIntent(componentName, flags, createOptions,
+                resultReceiver);
+    }
+
+    public PendingIntent generatePendingIntent(ComponentName componentName, int flags,
             Bundle createOptions)
             throws RemoteException {
-        return mTestService.generatePendingIntent(componentName, flags, createOptions);
+        return generatePendingIntent(componentName, flags, createOptions, null);
     }
 
     public PendingIntent generatePendingIntent(ComponentName componentName, Bundle createOptions)
@@ -47,13 +55,18 @@ public class TestServiceClient implements ITestService {
 
     public PendingIntent generatePendingIntent(ComponentName componentName)
             throws RemoteException {
-        return mTestService.generatePendingIntent(componentName, 0, Bundle.EMPTY);
+        return generatePendingIntent(componentName, 0, Bundle.EMPTY);
     }
 
     @Override
+    public PendingIntent generatePendingIntentBroadcast(ComponentName componentName,
+            ResultReceiver resultReceiver) throws RemoteException {
+        return mTestService.generatePendingIntentBroadcast(componentName, resultReceiver);
+    }
+
     public PendingIntent generatePendingIntentBroadcast(ComponentName componentName)
             throws RemoteException {
-        return mTestService.generatePendingIntentBroadcast(componentName);
+        return generatePendingIntentBroadcast(componentName, null);
     }
 
     @Override

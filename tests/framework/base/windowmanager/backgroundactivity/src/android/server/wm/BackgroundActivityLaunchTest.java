@@ -591,10 +591,13 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
         startActivity(APP_B.FOREGROUND_ACTIVITY);
         assertTaskStackHasComponents(APP_B.FOREGROUND_ACTIVITY, APP_B.FOREGROUND_ACTIVITY);
 
-        PendingIntent pi =
-                serviceA.generatePendingIntentBroadcast(APP_A.SIMPLE_BROADCAST_RECEIVER);
+        EventReceiver receiver = new EventReceiver(Event.BROADCAST_RECEIVED);
+        PendingIntent pi = serviceA.generatePendingIntentBroadcast(APP_A.SIMPLE_BROADCAST_RECEIVER,
+                receiver.getNotifier());
         // PI broadcast should create token to allow serviceA to start activities later
         serviceB.sendPendingIntent(pi, SEND_OPTIONS_ALLOW_BAL);
+        receiver.waitForEventOrThrow(ACTIVITY_START_TIMEOUT_MS);
+
         // Grace period is still active.
         startBackgroundActivity(serviceA, APP_A);
 
@@ -611,10 +614,13 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
         startActivity(APP_B.FOREGROUND_ACTIVITY);
         assertTaskStackHasComponents(APP_B.FOREGROUND_ACTIVITY, APP_B.FOREGROUND_ACTIVITY);
 
-        PendingIntent pi =
-                serviceA.generatePendingIntentBroadcast(APP_A.SIMPLE_BROADCAST_RECEIVER);
+        EventReceiver receiver = new EventReceiver(Event.BROADCAST_RECEIVED);
+        PendingIntent pi = serviceA.generatePendingIntentBroadcast(APP_A.SIMPLE_BROADCAST_RECEIVER,
+                receiver.getNotifier());
         // PI broadcast should create token to allow serviceA to start activities later
         serviceB.sendPendingIntent(pi, SEND_OPTIONS_ALLOW_BAL);
+        receiver.waitForEventOrThrow(ACTIVITY_START_TIMEOUT_MS);
+
         SystemClock.sleep(1000);
         // Grace period is still active.
         startBackgroundActivity(serviceA, APP_A);
@@ -636,10 +642,13 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
         startActivity(APP_B.FOREGROUND_ACTIVITY);
         assertTaskStackHasComponents(APP_B.FOREGROUND_ACTIVITY, APP_B.FOREGROUND_ACTIVITY);
 
-        PendingIntent pi =
-                serviceA.generatePendingIntentBroadcast(APP_A.SIMPLE_BROADCAST_RECEIVER);
-        // PI broadcast should create token to allow serviceA to start activities for 10s
+        EventReceiver receiver = new EventReceiver(Event.BROADCAST_RECEIVED);
+        PendingIntent pi = serviceA.generatePendingIntentBroadcast(APP_A.SIMPLE_BROADCAST_RECEIVER,
+                receiver.getNotifier());
+        // PI broadcast should create token to allow serviceA to start activities later
         serviceB.sendPendingIntent(pi, SEND_OPTIONS_ALLOW_BAL);
+        receiver.waitForEventOrThrow(ACTIVITY_START_TIMEOUT_MS);
+
         SystemClock.sleep(12000L * HW_TIMEOUT_MULTIPLIER);
         // Grace period is expired.
         startBackgroundActivity(serviceA, APP_A);
