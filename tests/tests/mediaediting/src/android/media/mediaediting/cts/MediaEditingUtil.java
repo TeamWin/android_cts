@@ -31,12 +31,12 @@ import java.io.IOException;
 /** Utilities for Media Editing tests. */
 public final class MediaEditingUtil {
 
-  public static final String MP4_ASSET_H264_WITH_INCREASING_TIMESTAMPS_URI_STRING =
-    "sample_with_increasing_timestamps.mp4";
+  public static final String MP4_ASSET_H264_WITH_INCREASING_TIMESTAMPS_1920W_1080H_1S_URI_STRING =
+    "sample_with_increasing_timestamps_1920x1080_30fps_avc.mp4";
 
   /** Baseline profile level 3.0 H.264 stream, which should be supported on all devices. */
-  public static final String MP4_ASSET_H264_WITH_INCREASING_TIMESTAMPS_320W_240H_15S_URI_STRING =
-    "sample_with_increasing_timestamps_320w_240h.mp4";
+  public static final String MP4_ASSET_H264_WITH_INCREASING_TIMESTAMPS_320W_240H_5S_URI_STRING =
+    "sample_with_increasing_timestamps_320x240_30fps_avc.mp4";
 
   public static final String MP4_ASSET_H264_WITH_INCREASING_TIMESTAMPS_642W_642H_3S_URI_STRING =
     "bbb_642x642_1mbps_30fps_avc.mp4";
@@ -56,8 +56,8 @@ public final class MediaEditingUtil {
   public static final String MKV_ASSET_H264_1280W_720H_10BIT =
       "cosmat_1280x720_24fps_crf22_avc_10bit_nob.mkv";
 
-  public static final String MP4_ASSET_HEVC_WITH_INCREASING_TIMESTAMPS_URI_STRING =
-    "bbb_1920x1080_hevc_main_l40.mp4";
+  public static final String MP4_ASSET_HEVC_WITH_INCREASING_TIMESTAMPS_1920_1080_1S_URI_STRING =
+    "bbb_1920x1080_30fps_hevc_main_l40.mp4";
 
   public static final String MP4_ASSET_HEVC_WITH_INCREASING_TIMESTAMPS_720W_480H_1S_URI_STRING =
     "bbb_720x480_30fps_hevc_main_l3.mp4";
@@ -79,6 +79,9 @@ public final class MediaEditingUtil {
 
   public static final String MKV_ASSET_HEVC_1280W_720H_5S_10BIT =
       "cosmat_1280x720_24fps_crf22_hevc_10bit_nob.mkv";
+
+  public static final String MP4_ASSET_HEVC_WITH_INCREASING_TIMESTAMPS_608W_1080H_4S_URI_STRING =
+      "video_decode_accuracy_and_capability-hevc_608x1080_30fps.mp4";
 
   public static Format getMuxedWidthHeight(String filePath) throws IOException {
     MediaExtractor mediaExtractor = new MediaExtractor();
