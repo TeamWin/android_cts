@@ -921,4 +921,10 @@ public final class DevicePolicy {
     public Intent createAdminSupportIntent(String restriction) {
         return sDevicePolicyManager.createAdminSupportIntent(restriction);
     }
+
+    /** See {@link DevicePolicyManager#isFactoryResetProtectionPolicySupported()} */
+    @Experimental
+    public boolean isFactoryResetProtectionPolicySupported() {
+        return sDevicePolicyManager.isFactoryResetProtectionPolicySupported();
+    }
 }

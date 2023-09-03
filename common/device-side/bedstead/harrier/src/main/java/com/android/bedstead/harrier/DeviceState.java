@@ -81,6 +81,7 @@ import com.android.bedstead.harrier.annotations.EnsureHasAccountAuthenticator;
 import com.android.bedstead.harrier.annotations.EnsureHasAccounts;
 import com.android.bedstead.harrier.annotations.EnsureHasAdditionalUser;
 import com.android.bedstead.harrier.annotations.EnsureHasAppOp;
+import com.android.bedstead.harrier.annotations.RequireFactoryResetProtectionPolicySupported;
 import com.android.bedstead.harrier.annotations.RequireHasDefaultBrowser;
 import com.android.bedstead.harrier.annotations.EnsureHasNoAccounts;
 import com.android.bedstead.harrier.annotations.EnsureHasNoAdditionalUser;
@@ -1418,6 +1419,11 @@ public final class DeviceState extends HarrierRule {
                 ensurePolicyOperationUnsafe(ensurePolicyOperationUnsafeAnnotation.operation(),
                         ensurePolicyOperationUnsafeAnnotation.reason());
 
+                continue;
+            }
+
+            if (annotation instanceof RequireFactoryResetProtectionPolicySupported) {
+                requireFactoryResetProtectionPolicySupported();
                 continue;
             }
         }
@@ -4515,5 +4521,11 @@ public final class DeviceState extends HarrierRule {
             TestApis.devicePolicy().setNextOperationSafety(operation, reason);
         mNextSafetyOperationSet = true;
         TestApis.devicePolicy().setNextOperationSafety(operation, reason);
+    }
+
+    private void requireFactoryResetProtectionPolicySupported() {
+        checkFailOrSkip("Requires factory reset protection policy to be supported",
+                TestApis.devicePolicy().isFactoryResetProtectionPolicySupported(),
+                FailureMode.FAIL);
     }
 }

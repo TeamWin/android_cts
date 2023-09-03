@@ -55,6 +55,7 @@ android_library {
         "NeneCommonAndroid",
         "RemoteFrameworkClasses",
         "androidx.test.uiautomator_uiautomator",
+        "modules-utils-binary-xml",
     ],
     min_sdk_version: "29"
 }
@@ -78,7 +79,8 @@ android_test {
         "ctstestrunner-axt",
         "compatibility-device-util-axt",
         "truth-prebuilt",
-        "testng" // for assertThrows
+        "testng", // for assertThrows
+        "modules-utils-binary-xml",
     ],
     data: [":NeneTestApp1"],
     manifest: "src/test/AndroidManifest.xml",
