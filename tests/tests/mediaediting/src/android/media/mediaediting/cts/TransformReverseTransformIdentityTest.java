@@ -96,21 +96,21 @@ public final class TransformReverseTransformIdentityTest {
             MediaEditingUtil.MP4_ASSET_HEVC_WITH_INCREASING_TIMESTAMPS_720W_480H_1S_URI_STRING,
             "720_480_to_1440_480"},
         {MimeTypes.VIDEO_H265, SET_SCALE,
-            MediaEditingUtil.MP4_ASSET_HEVC_WITH_INCREASING_TIMESTAMPS_URI_STRING,
+            MediaEditingUtil.MP4_ASSET_HEVC_WITH_INCREASING_TIMESTAMPS_1920_1080_1S_URI_STRING,
             "1920_1080_to_1920_2160"},
 
         // Resolution
         {MimeTypes.VIDEO_H264, SET_RESOLUTION,
-            MediaEditingUtil.MP4_ASSET_H264_WITH_INCREASING_TIMESTAMPS_320W_240H_15S_URI_STRING,
+            MediaEditingUtil.MP4_ASSET_H264_WITH_INCREASING_TIMESTAMPS_320W_240H_5S_URI_STRING,
             "320_240_to_640_480"},
         {MimeTypes.VIDEO_H264, SET_RESOLUTION,
-            MediaEditingUtil.MP4_ASSET_H264_WITH_INCREASING_TIMESTAMPS_URI_STRING,
+            MediaEditingUtil.MP4_ASSET_H264_WITH_INCREASING_TIMESTAMPS_1920W_1080H_1S_URI_STRING,
             "1920_1080_to_960_540"},
         {MimeTypes.VIDEO_H265, SET_RESOLUTION,
             MediaEditingUtil.MP4_ASSET_HEVC_WITH_INCREASING_TIMESTAMPS_720W_480H_1S_URI_STRING,
             "720_480_to_1440_960"},
         {MimeTypes.VIDEO_H265, SET_RESOLUTION,
-            MediaEditingUtil.MP4_ASSET_HEVC_WITH_INCREASING_TIMESTAMPS_URI_STRING,
+            MediaEditingUtil.MP4_ASSET_HEVC_WITH_INCREASING_TIMESTAMPS_1920_1080_1S_URI_STRING,
             "1920_1080_to_640_360"},
     }));
     return prepareParamList(exhaustiveArgsList);
