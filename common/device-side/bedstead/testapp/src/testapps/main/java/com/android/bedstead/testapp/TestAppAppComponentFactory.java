@@ -38,6 +38,7 @@ import android.os.UserManager;
 import android.security.KeyChain;
 import android.telecom.TelecomManager;
 import android.telephony.SmsManager;
+import android.telephony.TelephonyManager;
 import android.util.Log;
 
 import com.android.bedstead.testapp.processor.annotations.FrameworkClass;
@@ -69,7 +70,9 @@ import com.android.eventlib.premade.EventLibService;
                 @FrameworkClass(frameworkClass = RestrictionsManager.class, constructor =
                         "context.getSystemService(android.content.RestrictionsManager.class)"),
                 @FrameworkClass(frameworkClass = SmsManager.class, constructor =
-                        "context.getSystemService(android.telephony.SmsManager.class)")
+                        "context.getSystemService(android.telephony.SmsManager.class)"),
+                @FrameworkClass(frameworkClass = TelephonyManager.class, constructor =
+                        "context.getSystemService(android.telephony.TelephonyManager.class)")
         }
 )
 public final class TestAppAppComponentFactory extends AppComponentFactory {

@@ -15,13 +15,10 @@
  */
 package com.android.cts.deviceowner;
 
-import android.platform.test.annotations.AsbSecurityTest;
 import android.content.Context;
-import android.content.pm.PackageManager;
-import android.os.Build;
+import android.platform.test.annotations.AsbSecurityTest;
 import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
-import android.telephony.TelephonyManager;
 
 import com.android.compatibility.common.util.ShellIdentityUtils;
 
@@ -40,33 +37,7 @@ public class DeviceIdentifiersTest extends BaseDeviceOwnerTest {
         // identifiers. However since the TelephonyManager methods can return null this method
         // verifies that the device owner with the READ_PHONE_STATE permission receives the same
         // value that the shell identity receives with the READ_PRIVILEGED_PHONE_STATE permission.
-        TelephonyManager telephonyManager = (TelephonyManager) mContext.getSystemService(
-                Context.TELEPHONY_SERVICE);
         try {
-            assertEquals(String.format(DEVICE_ID_WITH_PERMISSION_ERROR_MESSAGE, "getDeviceId"),
-                    ShellIdentityUtils.invokeMethodWithShellPermissions(telephonyManager,
-                            TelephonyManager::getDeviceId), telephonyManager.getDeviceId());
-            assertEquals(String.format(DEVICE_ID_WITH_PERMISSION_ERROR_MESSAGE, "getImei"),
-                    ShellIdentityUtils.invokeMethodWithShellPermissions(telephonyManager,
-                            TelephonyManager::getImei), telephonyManager.getImei());
-            assertEquals(String.format(DEVICE_ID_WITH_PERMISSION_ERROR_MESSAGE, "getMeid"),
-                    ShellIdentityUtils.invokeMethodWithShellPermissions(telephonyManager,
-                            TelephonyManager::getMeid), telephonyManager.getMeid());
-            assertEquals(String.format(DEVICE_ID_WITH_PERMISSION_ERROR_MESSAGE, "getSubscriberId"),
-                    ShellIdentityUtils.invokeMethodWithShellPermissions(telephonyManager,
-                            TelephonyManager::getSubscriberId), telephonyManager.getSubscriberId());
-            assertEquals(
-                    String.format(DEVICE_ID_WITH_PERMISSION_ERROR_MESSAGE, "getSimSerialNumber"),
-                    ShellIdentityUtils.invokeMethodWithShellPermissions(telephonyManager,
-                            TelephonyManager::getSimSerialNumber),
-                    telephonyManager.getSimSerialNumber());
-            assertEquals(
-                    String.format(DEVICE_ID_WITH_PERMISSION_ERROR_MESSAGE, "getNai"),
-                    ShellIdentityUtils.invokeMethodWithShellPermissions(telephonyManager,
-                            TelephonyManager::getNai), telephonyManager.getNai());
-            assertEquals(String.format(DEVICE_ID_WITH_PERMISSION_ERROR_MESSAGE, "Build#getSerial"),
-                    ShellIdentityUtils.invokeStaticMethodWithShellPermissions(Build::getSerial),
-                    Build.getSerial());
             SubscriptionManager subscriptionManager =
                     (SubscriptionManager) mContext.getSystemService(
                             Context.TELEPHONY_SUBSCRIPTION_SERVICE);
