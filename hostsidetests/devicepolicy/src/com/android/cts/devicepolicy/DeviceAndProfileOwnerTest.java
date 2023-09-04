@@ -765,14 +765,6 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         // Verify that the package is not suspended from the PREVIOUS test and that the app launches
         executeSuspendPackageTestMethod("testPackageNotSuspended");
     }
-
-    @Test
-    public void testTrustAgentInfo() throws Exception {
-        assumeHasSecureLockScreenFeature();
-
-        executeDeviceTestClass(".TrustAgentInfoTest");
-    }
-
     @Test
     public void testRequiredStrongAuthTimeout() throws Exception {
         assumeHasSecureLockScreenFeature();

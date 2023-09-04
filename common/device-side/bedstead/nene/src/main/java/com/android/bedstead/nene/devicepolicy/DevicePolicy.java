@@ -100,8 +100,8 @@ public final class DevicePolicy {
 
         ShellCommand.Builder command =
                 ShellCommand.builderForUser(user, "dpm set-profile-owner")
-                .addOperand(profileOwnerComponent.flattenToShortString())
-                .validate(ShellCommandUtils::startsWithSuccess);
+                        .addOperand(profileOwnerComponent.flattenToShortString())
+                        .validate(ShellCommandUtils::startsWithSuccess);
 
         // TODO(b/187925230): If it fails, we check for terminal failure states - and if not
         //  we retry because if the profile owner was recently removed, it can take some time
@@ -251,19 +251,19 @@ public final class DevicePolicy {
         } else if (Versions.meetsMinimumSdkVersionRequirement(Build.VERSION_CODES.S_V2)) {
             try {
                 DevicePolicyManager.class.getMethod(
-                        "setDeviceOwnerOnly", ComponentName.class, String.class, int.class)
+                                "setDeviceOwnerOnly", ComponentName.class, String.class, int.class)
                         .invoke(devicePolicyManager, component, null, deviceOwnerUserId);
             } catch (IllegalAccessException | InvocationTargetException
-                    | NoSuchMethodException e) {
+                     | NoSuchMethodException e) {
                 throw new NeneException("Error executing setDeviceOwnerOnly", e);
             }
         } else {
             try {
                 DevicePolicyManager.class.getMethod(
-                        "setDeviceOwner", ComponentName.class, String.class, int.class)
+                                "setDeviceOwner", ComponentName.class, String.class, int.class)
                         .invoke(devicePolicyManager, component, null, deviceOwnerUserId);
             } catch (IllegalAccessException | InvocationTargetException
-                    | NoSuchMethodException e) {
+                     | NoSuchMethodException e) {
                 throw new NeneException("Error executing setDeviceOwner", e);
             }
         }
@@ -271,6 +271,7 @@ public final class DevicePolicy {
 
     /**
      * Resets organization ID via @TestApi.
+     *
      * @param user whose organization ID to clear
      */
     public void clearOrganizationId(UserReference user) {
@@ -326,14 +327,14 @@ public final class DevicePolicy {
                 //  we retry because if the DO/PO was recently removed, it can take some time
                 //  to be allowed to set it again
                 Retry.logic(
-                        () -> {
-                            sDevicePolicyManager.setActiveAdmin(
-                                    deviceOwnerComponent,
-                                    /* refreshing= */ true,
-                                    user.id());
-                            setDeviceOwnerOnly(
-                                    sDevicePolicyManager, deviceOwnerComponent, user.id());
-                        })
+                                () -> {
+                                    sDevicePolicyManager.setActiveAdmin(
+                                            deviceOwnerComponent,
+                                            /* refreshing= */ true,
+                                            user.id());
+                                    setDeviceOwnerOnly(
+                                            sDevicePolicyManager, deviceOwnerComponent, user.id());
+                                })
                         .terminalException(
                                 (e) -> checkForTerminalDeviceOwnerFailures(
                                         user,
@@ -366,7 +367,7 @@ public final class DevicePolicy {
         UserReference user = TestApis.users().system();
 
         ShellCommand.Builder command = ShellCommand.builderForUser(
-                user, "dpm set-device-owner")
+                        user, "dpm set-device-owner")
                 .addOperand(deviceOwnerComponent.flattenToShortString())
                 .validate(ShellCommandUtils::startsWithSuccess);
         // TODO(b/187925230): If it fails, we check for terminal failure states - and if not
@@ -508,7 +509,8 @@ public final class DevicePolicy {
 
     @Experimental
     public void forceNetworkLogs() {
-        try (PermissionContext p = TestApis.permissions().withPermission(FORCE_DEVICE_POLICY_MANAGER_LOGS)) {
+        try (PermissionContext p = TestApis.permissions().withPermission(
+                FORCE_DEVICE_POLICY_MANAGER_LOGS)) {
             long throttle = TestApis.context()
                     .instrumentedContext()
                     .getSystemService(DevicePolicyManager.class)
@@ -644,7 +646,9 @@ public final class DevicePolicy {
     }
 
     /**
-     * See {@link DevicePolicyManager#resetShouldAllowBypassingDevicePolicyManagementRoleQualificationState}.
+     * See
+     * {@link
+     * DevicePolicyManager#resetShouldAllowBypassingDevicePolicyManagementRoleQualificationState}.
      */
     @TargetApi(UPSIDE_DOWN_CAKE)
     public void resetShouldAllowBypassingDevicePolicyManagementRoleQualificationState() {
@@ -801,7 +805,10 @@ public final class DevicePolicy {
     }
 
     /**
-     * Get keyguard disabled features for the instrumented user.
+     * Gets configuration for the {@code trustAgent} for the instrumented user.
+     *
+     * <p/>See {@link DevicePolicyManager#getTrustAgentConfiguration(ComponentName,
+     * ComponentName, int)}.
      */
     @Experimental
     public Set<PersistableBundle> getTrustAgentConfiguration(ComponentName trustAgent) {
@@ -809,15 +816,17 @@ public final class DevicePolicy {
     }
 
     /**
-     * See {@link DevicePolicyManager#getTrustAgentConfiguration}.
+     * Gets configuration for the {@code trustAgent} for all admins and {@code user}.
+     *
+     * <p/>See
+     * {@link DevicePolicyManager#getTrustAgentConfiguration(ComponentName, ComponentName)}.
      */
     @Experimental
     public Set<PersistableBundle> getTrustAgentConfiguration(
             ComponentName trustAgent, UserReference user) {
-        try (PermissionContext p =
-                     TestApis.permissions().withPermission(INTERACT_ACROSS_USERS)) {
+        try (PermissionContext p = TestApis.permissions().withPermission(INTERACT_ACROSS_USERS)) {
             List<PersistableBundle> configurations = devicePolicyManager(user)
-                    .getTrustAgentConfiguration(/* componentName= */ null, trustAgent);
+                    .getTrustAgentConfiguration(/* admin= */ null, trustAgent);
             return configurations == null ? Set.of() : Set.copyOf(configurations);
         }
     }
@@ -888,8 +897,10 @@ public final class DevicePolicy {
     /** See {@link DevicePolicyManager#getPermittedAccessibilityServices} */
     @Experimental
     public Set<Package> getPermittedAccessibilityServices(UserReference user) {
-        try (PermissionContext p = TestApis.permissions().withPermission(INTERACT_ACROSS_USERS, QUERY_ADMIN_POLICY)) {
-            List<String> services = sDevicePolicyManager.getPermittedAccessibilityServices(user.id());
+        try (PermissionContext p = TestApis.permissions().withPermission(INTERACT_ACROSS_USERS,
+                QUERY_ADMIN_POLICY)) {
+            List<String> services = sDevicePolicyManager.getPermittedAccessibilityServices(
+                    user.id());
             if (services == null) {
                 return null;
             }
