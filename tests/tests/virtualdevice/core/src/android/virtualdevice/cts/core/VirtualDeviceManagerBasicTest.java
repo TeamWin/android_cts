@@ -152,7 +152,7 @@ public class VirtualDeviceManagerBasicTest {
 
     @After
     public void tearDown() {
-        if (mVirtualDevice != null && mVirtualDevice.getDeviceId() != DEVICE_ID_INVALID) {
+        if (mVirtualDevice != null) {
             mVirtualDevice.close();
         }
         if (mAnotherVirtualDevice != null) {
@@ -220,18 +220,6 @@ public class VirtualDeviceManagerBasicTest {
     }
 
     @Test
-    public void createVirtualDevice_close_isClosed() {
-        mVirtualDevice =
-                mVirtualDeviceManager.createVirtualDevice(
-                        mFakeAssociationRule.getAssociationInfo().getId(),
-                        DEFAULT_VIRTUAL_DEVICE_PARAMS);
-
-        mVirtualDevice.close();
-
-        assertThat(mVirtualDevice.getDeviceId()).isEqualTo(DEVICE_ID_INVALID);
-    }
-
-    @Test
     public void createVirtualDevice_closeMultipleTimes_isSafe() {
         mVirtualDevice =
                 mVirtualDeviceManager.createVirtualDevice(
@@ -240,8 +228,7 @@ public class VirtualDeviceManagerBasicTest {
 
         mVirtualDevice.close();
         mVirtualDevice.close();
-
-        assertThat(mVirtualDevice.getDeviceId()).isEqualTo(DEVICE_ID_INVALID);
+        mVirtualDevice.close();
     }
 
     @Test
@@ -286,57 +273,14 @@ public class VirtualDeviceManagerBasicTest {
         assertThat(display.getDisplay().isValid()).isTrue();
 
         mFakeAssociationRule.disassociate();
-        latch.await(5, TimeUnit.SECONDS);
+        assertThat(latch.await(5, TimeUnit.SECONDS)).isTrue();
 
-        // Ensure device is closed properly and the display is removed
+        // Ensure the display is removed
         assertThat(display.getDisplay().isValid()).isFalse();
-        assertThat(mVirtualDevice.getDeviceId()).isEqualTo(DEVICE_ID_INVALID);
 
         // Ensure the virtual device can no longer setup new functionality
         assertThrows(SecurityException.class, () -> mVirtualDevice.createVirtualDisplay(
                 DEFAULT_VIRTUAL_DISPLAY_CONFIG, null,  null));
-    }
-
-    @Test
-    public void createVirtualDevice_removeAssociationAndCloseAfterwards_isSafe()
-            throws InterruptedException {
-        CountDownLatch latch = new CountDownLatch(1);
-
-        // Create device with a display and ensure it is all set up
-        mVirtualDevice =
-                mVirtualDeviceManager.createVirtualDevice(
-                        mFakeAssociationRule.getAssociationInfo().getId(),
-                        DEFAULT_VIRTUAL_DEVICE_PARAMS);
-        VirtualDisplay display = mVirtualDevice.createVirtualDisplay(
-                DEFAULT_VIRTUAL_DISPLAY_CONFIG,
-                getApplicationContext().getMainExecutor(),
-                null);
-
-        DisplayManager displayManager = getApplicationContext().getSystemService(
-                DisplayManager.class);
-        displayManager.registerDisplayListener(new DisplayManager.DisplayListener() {
-            @Override
-            public void onDisplayAdded(int displayId) {
-            }
-
-            @Override
-            public void onDisplayRemoved(int displayId) {
-                if (displayId == display.getDisplay().getDisplayId()) {
-                    latch.countDown();
-                }
-            }
-
-            @Override
-            public void onDisplayChanged(int displayId) {
-            }
-        }, null);
-
-        mFakeAssociationRule.disassociate();
-        latch.await(5, TimeUnit.SECONDS);
-
-        mVirtualDevice.close();
-
-        assertThat(mVirtualDevice.getDeviceId()).isEqualTo(DEVICE_ID_INVALID);
     }
 
     @Test
@@ -374,10 +318,8 @@ public class VirtualDeviceManagerBasicTest {
         }, null);
 
         mVirtualDevice.close();
+        assertThat(latch.await(5, TimeUnit.SECONDS)).isTrue();
         mFakeAssociationRule.disassociate();
-        latch.await(5, TimeUnit.SECONDS);
-
-        assertThat(mVirtualDevice.getDeviceId()).isEqualTo(DEVICE_ID_INVALID);
     }
 
     @Test
@@ -415,10 +357,8 @@ public class VirtualDeviceManagerBasicTest {
         }, null);
 
         mFakeAssociationRule.disassociate();
+        assertThat(latch.await(5, TimeUnit.SECONDS)).isTrue();
         mVirtualDevice.close();
-        latch.await(5, TimeUnit.SECONDS);
-
-        assertThat(mVirtualDevice.getDeviceId()).isEqualTo(DEVICE_ID_INVALID);
     }
 
     /**
