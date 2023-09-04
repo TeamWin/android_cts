@@ -100,17 +100,6 @@ public abstract class DeviceAndProfileOwnerTransferOutgoingTest {
     }
 
     @Test
-    public void testTransferInvalidTarget() {
-        PersistableBundle b = new PersistableBundle();
-        assertThrows(
-                IllegalArgumentException.class,
-                () -> {
-                    mDevicePolicyManager.transferOwnership(mOutgoingComponentName,
-                            INVALID_TARGET_COMPONENT, b);
-                });
-    }
-
-    @Test
     public void testTransferOwnershipChangedBroadcast() throws Throwable {
         BlockingBroadcastReceiver receiver = new BlockingBroadcastReceiver(mContext,
                 mOwnerChangedBroadcastAction);
@@ -129,12 +118,6 @@ public abstract class DeviceAndProfileOwnerTransferOutgoingTest {
     abstract public void testTransferOwnership() throws Throwable;
 
     @Test
-    public void testTransferOwnershipNullBundle() throws Throwable {
-        mDevicePolicyManager.transferOwnership(mOutgoingComponentName,
-                INCOMING_COMPONENT_NAME, null);
-    }
-
-    @Test
     public void testTransferOwnershipNoMetadata() throws Throwable {
         PersistableBundle b = new PersistableBundle();
         assertThrows(
@@ -148,14 +131,6 @@ public abstract class DeviceAndProfileOwnerTransferOutgoingTest {
     @Test
     public void testSetAffiliationId1() {
         setAffiliationId("id.number.1");
-    }
-
-    @Test
-    public void testGetTransferOwnershipBundleOnlyCalledFromAdmin() throws Throwable {
-        PersistableBundle b = new PersistableBundle();
-        b.putBoolean(ARE_PARAMETERS_SAVED, true);
-        mDevicePolicyManager.transferOwnership(mOutgoingComponentName, INCOMING_COMPONENT_NAME, b);
-        assertThrows(SecurityException.class, mDevicePolicyManager::getTransferOwnershipBundle);
     }
 
     @Test

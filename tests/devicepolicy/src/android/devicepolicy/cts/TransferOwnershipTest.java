@@ -18,15 +18,22 @@ package android.devicepolicy.cts;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.testng.Assert.assertThrows;
+
+import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.os.PersistableBundle;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.Postsubmit;
-import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDeviceOwner;
+import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
+import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasProfileOwner;
+import com.android.bedstead.harrier.policies.TransferOwnership;
 import com.android.bedstead.nene.TestApis;
+import com.android.bedstead.nene.devicepolicy.DeviceOwner;
+import com.android.bedstead.nene.devicepolicy.ProfileOwner;
 import com.android.bedstead.testapp.TestApp;
 import com.android.bedstead.testapp.TestAppInstance;
 import com.android.compatibility.common.util.ApiTest;
@@ -36,6 +43,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+// TODO(b/298202673: Add tests for behavior for all policies)
 @RunWith(BedsteadJUnit4.class)
 public final class TransferOwnershipTest {
 
@@ -46,7 +54,6 @@ public final class TransferOwnershipTest {
             .whereIsDeviceAdmin().isTrue().get();
     private static final String KEY = "VALUE";
     private static final PersistableBundle sBundle = new PersistableBundle();
-
     static {
         sBundle.putBoolean(KEY, true);
     }
@@ -55,12 +62,14 @@ public final class TransferOwnershipTest {
             new ComponentName(sTargetDeviceAdminTestApp.packageName(),
                     sTargetDeviceAdminTestApp.packageName() + ".DeviceAdminReceiver");
 
+    private static final DevicePolicyManager sLocalDevicePolicyManager =
+            TestApis.context().instrumentedContext().getSystemService(DevicePolicyManager.class);
+
     @ApiTest(apis = {"android.app.admin.DevicePolicyManager#transferOwnership",
             "android.app.admin.DevicePolicyManager#getTransferOwnershipBundle"})
     @Postsubmit(reason = "new test")
-    @EnsureHasDeviceOwner
-    @Test
-    public void transferOwnership_deviceOwner_getTransferOwnershipBundle_bundleReceivedByTargetAdmin() {
+    @CanSetPolicyTest(policy = TransferOwnership.class)
+    public void transferOwnership_getTransferOwnershipBundle_bundleReceivedByTargetAdmin() {
         try (TestAppInstance testApp = sTargetDeviceAdminTestApp.install()) {
             try {
                 sDeviceState.dpc().devicePolicyManager().transferOwnership(
@@ -69,25 +78,7 @@ public final class TransferOwnershipTest {
                 assertThat(testApp.devicePolicyManager().getTransferOwnershipBundle()
                         .getBoolean(KEY)).isTrue();
             } finally {
-                TestApis.devicePolicy().getDeviceOwner().remove();
-            }
-        }
-    }
-
-    @ApiTest(apis = {"android.app.admin.DevicePolicyManager#transferOwnership"})
-    @Postsubmit(reason = "new test")
-    @EnsureHasDeviceOwner
-    @Test
-    public void transferOwnership_deviceOwner_ownershipTransferredToTargetAdmin() {
-        try (TestAppInstance testApp = sTargetDeviceAdminTestApp.install()) {
-            try {
-                sDeviceState.dpc().devicePolicyManager().transferOwnership(
-                        sDeviceState.dpc().componentName(), sTargetAdmin, sBundle);
-
-                assertThat(TestApis.devicePolicy().getDeviceOwner()
-                        .componentName()).isEqualTo(sTargetAdmin);
-            } finally {
-                TestApis.devicePolicy().getDeviceOwner().remove();
+                removeDeviceAdmin();
             }
         }
     }
@@ -95,19 +86,84 @@ public final class TransferOwnershipTest {
     @ApiTest(apis = {"android.app.admin.DevicePolicyManager#transferOwnership",
             "android.app.admin.DevicePolicyManager#getTransferOwnershipBundle"})
     @Postsubmit(reason = "new test")
-    @EnsureHasProfileOwner
-    @Test
-    public void transferOwnership_profileOwner_getTransferOwnershipBundle_bundleReceivedByTargetAdmin() {
+    @CannotSetPolicyTest(policy = TransferOwnership.class, includeNonDeviceAdminStates = false)
+    public void transferOwnership_cannotSet_throwsException() {
+        try (TestAppInstance testApp = sTargetDeviceAdminTestApp.install()) {
+                assertThrows(SecurityException.class, () ->
+                        sDeviceState.dpc().devicePolicyManager().transferOwnership(
+                                sDeviceState.dpc().componentName(), sTargetAdmin, sBundle)
+                );
+        }
+    }
+
+    @ApiTest(apis = {"android.app.admin.DevicePolicyManager#transferOwnership",
+            "android.app.admin.DevicePolicyManager#getTransferOwnershipBundle"})
+    @Postsubmit(reason = "new test")
+    @CanSetPolicyTest(policy = TransferOwnership.class)
+    public void transferOwnership_nullBundleTransferred_getTransferOwnershipBundle_emptyBundleReceivedByTargetAdmin() {
+        try (TestAppInstance testApp = sTargetDeviceAdminTestApp.install()) {
+            try {
+                sDeviceState.dpc().devicePolicyManager().transferOwnership(
+                        sDeviceState.dpc().componentName(), sTargetAdmin, /* bundle= */ null);
+
+                assertThat(testApp.devicePolicyManager().getTransferOwnershipBundle()
+                        .isEmpty()).isTrue();
+            } finally {
+                removeDeviceAdmin();
+            }
+        }
+    }
+
+    @ApiTest(apis = {"android.app.admin.DevicePolicyManager#transferOwnership"})
+    @Postsubmit(reason = "new test")
+    @CanSetPolicyTest(policy = TransferOwnership.class)
+    public void transferOwnership_ownershipTransferredToTargetAdmin() {
         try (TestAppInstance testApp = sTargetDeviceAdminTestApp.install()) {
             try {
                 sDeviceState.dpc().devicePolicyManager().transferOwnership(
                         sDeviceState.dpc().componentName(), sTargetAdmin, sBundle);
 
-                assertThat(testApp.devicePolicyManager().getTransferOwnershipBundle()
-                        .getBoolean(KEY)).isTrue();
+                DeviceOwner deviceOwner = TestApis.devicePolicy().getDeviceOwner();
+                if (deviceOwner != null) {
+                    assertThat(TestApis.devicePolicy().getDeviceOwner()
+                            .componentName()).isEqualTo(sTargetAdmin);
+                } else {
+                    assertThat(TestApis.devicePolicy().getProfileOwner()
+                            .componentName()).isEqualTo(sTargetAdmin);
+                }
             } finally {
-                TestApis.devicePolicy().getProfileOwner().remove();
+                removeDeviceAdmin();
             }
+        }
+    }
+
+    @ApiTest(apis = {"android.app.admin.DevicePolicyManager#getTransferOwnershipBundle"})
+    @Postsubmit(reason = "new test")
+    @CanSetPolicyTest(policy = TransferOwnership.class)
+    public void getTransferOwnershipBundle_nonDpc_throwsException() {
+        try (TestAppInstance testApp = sTargetDeviceAdminTestApp.install()) {
+            try {
+                sDeviceState.dpc().devicePolicyManager().transferOwnership(
+                        sDeviceState.dpc().componentName(), sTargetAdmin, sBundle);
+
+                assertThrows(SecurityException.class,
+                        () -> sLocalDevicePolicyManager.getTransferOwnershipBundle());
+            } finally {
+                removeDeviceAdmin();
+            }
+        }
+    }
+
+    @ApiTest(apis = {"android.app.admin.DevicePolicyManager#transferOwnership"})
+    @Postsubmit(reason = "new test")
+    @CanSetPolicyTest(policy = TransferOwnership.class)
+    public void transferOwnership_invalidTarget_throwsException() {
+        try {
+            assertThrows(IllegalArgumentException.class,
+                    () -> sDeviceState.dpc().devicePolicyManager().transferOwnership(
+                            sDeviceState.dpc().componentName(), sTargetAdmin, sBundle));
+        } finally {
+            removeDeviceAdmin();
         }
     }
 
@@ -115,16 +171,35 @@ public final class TransferOwnershipTest {
     @Postsubmit(reason = "new test")
     @EnsureHasProfileOwner
     @Test
-    public void transferOwnership_profileOwner_ownershipTransferredToTargetAdmin() {
+    public void transferOwnership_disableCamera_policyRetainedAfterTransfer() {
         try (TestAppInstance testApp = sTargetDeviceAdminTestApp.install()) {
             try {
+                sDeviceState.dpc().devicePolicyManager().setCameraDisabled(
+                        sDeviceState.dpc().componentName(), true);
+
                 sDeviceState.dpc().devicePolicyManager().transferOwnership(
                         sDeviceState.dpc().componentName(), sTargetAdmin, sBundle);
 
-                assertThat(TestApis.devicePolicy().getProfileOwner()
-                        .componentName()).isEqualTo(sTargetAdmin);
+                assertThat(testApp.devicePolicyManager().getCameraDisabled(sTargetAdmin)).isTrue();
             } finally {
-                TestApis.devicePolicy().getProfileOwner().remove();
+                removeDeviceAdmin();
+            }
+        }
+    }
+
+    /**
+     * Remove whichever device admin (device owner or profile owner) the test is running for.
+     */
+    private void removeDeviceAdmin() {
+        DeviceOwner deviceOwner = TestApis.devicePolicy().getDeviceOwner();
+        if (deviceOwner != null) {
+            // if the test ran for the device owner
+            deviceOwner.remove();
+        } else {
+            ProfileOwner profileOwner = TestApis.devicePolicy().getProfileOwner();
+            if (profileOwner != null) {
+                // else if the test ran for the profile owner
+                profileOwner.remove();
             }
         }
     }
