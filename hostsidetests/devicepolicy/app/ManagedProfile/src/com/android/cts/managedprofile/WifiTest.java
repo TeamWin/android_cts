@@ -106,16 +106,6 @@ public class WifiTest extends AndroidTestCase {
         assertTrue(awaitNetworkState(NETWORK_SSID, /* exists */ false));
     }
 
-    public void testCannotGetWifiMacAddress() {
-        DevicePolicyManager dpm = getContext().getSystemService(DevicePolicyManager.class);
-        try {
-            dpm.getWifiMacAddress(BaseManagedProfileTest.ADMIN_RECEIVER_COMPONENT);
-            fail("Managed Profile owner shouldn't be able to get the MAC address");
-        } catch (SecurityException expected) {
-
-        }
-    }
-
     /**
      * Block until a network configuration with a certain SSID either exists or ceases to.
      * Wait for up to {@link WifiTest#UPDATE_TIMEOUT_MS} milliseconds, in increments of

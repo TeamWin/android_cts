@@ -42,6 +42,7 @@ import com.android.bedstead.harrier.policies.KeyManagement;
 import com.android.bedstead.harrier.policies.KeyManagementWithAdminReceiver;
 import com.android.bedstead.harrier.policies.KeySelection;
 import com.android.bedstead.nene.TestApis;
+import com.android.bedstead.nene.certificates.Certificates;
 import com.android.bedstead.nene.packages.ProcessReference;
 import com.android.bedstead.nene.utils.Poll;
 import com.android.compatibility.common.util.BlockingBroadcastReceiver;
@@ -85,9 +86,10 @@ public final class KeyManagementTest {
     private static final String RSA = "RSA";
     private static final String RSA_ALIAS = "com.android.test.valid-rsa-key-1";
     private static final PrivateKey PRIVATE_KEY =
-            generatePrivateKey(FakeKeys.FAKE_RSA_1.privateKey, RSA);
+            TestApis.certificates().generatePrivateKey(FakeKeys.FAKE_RSA_1.privateKey,
+                    Certificates.KeyAlgorithmType.RSA);
     private static final Certificate CERTIFICATE =
-            generateCertificate(FakeKeys.FAKE_RSA_1.caCertificate);
+            TestApis.certificates().generateCertificate(FakeKeys.FAKE_RSA_1.caCertificate);
     private static final Certificate[] CERTIFICATES = new Certificate[]{CERTIFICATE};
     private static final String NON_EXISTENT_ALIAS = "KeyManagementTest-nonexistent";
     private static final Context sContext = TestApis.context().instrumentedContext();
@@ -124,24 +126,6 @@ public final class KeyManagementTest {
             return KeyChain.getPrivateKey(context, alias);
         } catch (KeyChainException | InterruptedException e) {
             throw new AssertionError("Failed to get private key." + e);
-        }
-    }
-
-    private static PrivateKey generatePrivateKey(final byte[] key, String type) {
-        try {
-            return KeyFactory.getInstance(type).generatePrivate(
-                    new PKCS8EncodedKeySpec(key));
-        } catch (InvalidKeySpecException | NoSuchAlgorithmException e) {
-            throw new AssertionError("Unable to get private key." + e);
-        }
-    }
-
-    private static Certificate generateCertificate(byte[] cert) {
-        try {
-            return CertificateFactory.getInstance("X.509").generateCertificate(
-                    new ByteArrayInputStream(cert));
-        } catch (CertificateException e) {
-            throw new AssertionError("Unable to get certificate." + e);
         }
     }
 
@@ -398,7 +382,8 @@ public final class KeyManagementTest {
                     getPrivateKey(TestApis.context().instrumentedContext(), RSA_ALIAS);
 
             assertThat(privateKey).isNotNull();
-            assertThat(privateKey.getAlgorithm()).isEqualTo(RSA);
+            assertThat(privateKey.getAlgorithm()).isEqualTo(
+                    Certificates.KeyAlgorithmType.RSA.getValue());
 
         } finally {
             // Remove keypair

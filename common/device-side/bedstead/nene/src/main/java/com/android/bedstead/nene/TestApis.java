@@ -23,6 +23,7 @@ import com.android.bedstead.nene.adb.Adb;
 import com.android.bedstead.nene.annotations.Experimental;
 import com.android.bedstead.nene.bluetooth.Bluetooth;
 import com.android.bedstead.nene.broadcasts.Broadcasts;
+import com.android.bedstead.nene.certificates.Certificates;
 import com.android.bedstead.nene.context.Context;
 import com.android.bedstead.nene.content.Content;
 import com.android.bedstead.nene.credentials.Credentials;
@@ -202,6 +203,11 @@ public final class TestApis {
     /** Access Test APIs related to adb. */
     public static Adb adb() {
         return Adb.INSTANCE;
+    }
+
+    /** Access Test APIs related to certificates. */
+    public static Certificates certificates() {
+        return Certificates.sInstance;
     }
 
     /** Access Test APIs related to wallpaper. */
