@@ -689,6 +689,9 @@ public abstract class ActivityManagerTestBase {
     @Before
     public void setUp() throws Exception {
         UiDeviceUtils.wakeUpAndUnlock(mContext);
+        if (isKeyguardLocked()) {
+            unlockUnexpectedLockedKeyguard();
+        }
 
         launchHomeActivityNoWait();
         // TODO(b/242933292): Consider removing all the tasks belonging to android.server.wm
@@ -742,6 +745,20 @@ public abstract class ActivityManagerTestBase {
             mPostAssertionRule.addError(
                     new IllegalStateException("Shell transition left unfinished!"));
         }
+    }
+
+    /** This should only be called if keyguard is still locked unexpectedly. */
+    private void unlockUnexpectedLockedKeyguard() {
+        logE("Try to recover unexpected locked keyguard");
+        // To clear the credential immediately, the screen need to be turned on.
+        pressWakeupButton();
+        if (supportsSecureLock()) {
+            removeLockCredential();
+        }
+        // Off/on to refresh the keyguard state.
+        pressSleepButton();
+        pressWakeupButton();
+        pressUnlockButton();
     }
 
     /**
@@ -2870,15 +2887,7 @@ public abstract class ActivityManagerTestBase {
                 // Try to recover the bad state of device to avoid subsequent test failures.
                 if (isKeyguardLocked()) {
                     mLastError.addSuppressed(new IllegalStateException("Keyguard is locked"));
-                    // To clear the credential immediately, the screen need to be turned on.
-                    pressWakeupButton();
-                    if (supportsSecureLock()) {
-                        removeLockCredential();
-                    }
-                    // Off/on to refresh the keyguard state.
-                    pressSleepButton();
-                    pressWakeupButton();
-                    pressUnlockButton();
+                    unlockUnexpectedLockedKeyguard();
                 }
                 final String overlayDisplaySettings = Settings.Global.getString(
                         mContext.getContentResolver(), Settings.Global.OVERLAY_DISPLAY_DEVICES);
