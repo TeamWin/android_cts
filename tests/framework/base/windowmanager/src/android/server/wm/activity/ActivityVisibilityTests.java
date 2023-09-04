@@ -264,6 +264,7 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
                 isDisplayOn(DEFAULT_DISPLAY));
 
         activity.finish();
+        mWmState.waitForActivityRemoved(activity.getName());
     }
 
     @Test
