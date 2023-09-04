@@ -104,7 +104,6 @@
     <option name="compatibility:exclude-filter" value="CtsAppTestCases android.app.cts.ActivityManagerTest#testTimeTrackingAPI_SwitchAwayTriggers" />
     <option name="compatibility:exclude-filter" value="CtsAppTestCases android.app.cts.BooleanTileServiceTest" />
     <option name="compatibility:exclude-filter" value="CtsAppTestCases android.app.cts.TileServiceTest" />
-    <option name="compatibility:exclude-filter" value="CtsDevicePolicyManagerTestCases com.android.cts.devicepolicy.QuietModeHostsideTest" />
     <option name="compatibility:exclude-filter" value="CtsShortcutManagerLauncher1" />
     <option name="compatibility:exclude-filter" value="CtsShortcutManagerLauncher2" />
     <option name="compatibility:exclude-filter" value="CtsShortcutManagerLauncher3" />
