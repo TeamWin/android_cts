@@ -68,14 +68,11 @@ java_genrule_host {
         "checkfc",
         "property_info_checker",
         "searchpolicy",
-        "seamendc",
         "secilc",
         "sepolicy-analyze",
         "sepolicy_tests",
     ],
     tool_files: [
-        ":apex_sepolicy-33.cil",
-        ":apex_sepolicy-33.decompiled.cil",
         ":general_sepolicy.conf",
     ],
     out: ["CtsSecurityHostTestCases_StaticLibs.jar"],
@@ -84,11 +81,8 @@ java_genrule_host {
         "-f $(location checkfc) " +
         "-f $(location property_info_checker) " +
         "-f $(location searchpolicy) " +
-        "-f $(location seamendc) " +
         "-f $(location secilc) " +
         "-f $(location sepolicy-analyze) " +
         "-f $(location sepolicy_tests) " +
-        "-f $(location :apex_sepolicy-33.cil) " +
-        "-f $(location :apex_sepolicy-33.decompiled.cil) " +
         "-f $(location :general_sepolicy.conf)",
 }
