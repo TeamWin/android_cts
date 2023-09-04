@@ -1845,16 +1845,17 @@ public class InputConnectionEndToEndTest extends EndToEndImeTestBase {
             ImeCommand command = session.callPerformHandwritingGesture(
                     gesture, false /* useDelayedCancellation */);
             expectCommand(stream, command, TIMEOUT);
-            methodCallVerifier.assertCalledOnce(args -> {
-                byte[] bytes = args.getByteArray("gesture");
-                HandwritingGesture gesture1 = HandwritingGesture.fromByteArray(bytes);
-                assertEquals(gesture, gesture1);
-            });
 
             long requestId = command.getId();
             ImeEvent callbackEvent = expectEvent(
                     stream, onPerformHandwritingGestureResultMatcher(requestId), TIMEOUT);
             assertEquals(expectedResult, callbackEvent.getArguments().getInt("result"));
+
+            methodCallVerifier.assertCalledOnce(args -> {
+                byte[] bytes = args.getByteArray("gesture");
+                HandwritingGesture gesture1 = HandwritingGesture.fromByteArray(bytes);
+                assertEquals(gesture, gesture1);
+            });
 
             // Verify that the second callback was filtered out.
             notExpectEvent(stream, onPerformHandwritingGestureResultMatcher(requestId),
