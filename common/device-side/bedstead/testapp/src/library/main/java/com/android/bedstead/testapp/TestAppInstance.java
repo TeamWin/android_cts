@@ -25,6 +25,9 @@ import android.app.RemoteNotificationManagerWrapper;
 import android.app.admin.DevicePolicyManager;
 import android.app.admin.RemoteDevicePolicyManager;
 import android.app.admin.RemoteDevicePolicyManagerWrapper;
+import android.app.WallpaperManager;
+import android.app.RemoteWallpaperManager;
+import android.app.RemoteWallpaperManagerWrapper;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.RemoteBluetoothManager;
 import android.bluetooth.RemoteBluetoothManagerWrapper;
@@ -455,6 +458,15 @@ public class TestAppInstance implements AutoCloseable, ConnectionListener {
      */
     public RemoteRestrictionsManager restrictionsManager() {
         return new RemoteRestrictionsManagerWrapper(mConnector, mUser, mTestApp.pkg());
+    }
+
+    /**
+     * Access {@link WallpaperManager} using this test app.
+     *
+     * <p>Almost all methods are available. Those that are not will be missing from the interface.
+     */
+    public RemoteWallpaperManager wallpaperManager() {
+        return new RemoteWallpaperManagerWrapper(mConnector, mUser, mTestApp.pkg());
     }
 
     /**
