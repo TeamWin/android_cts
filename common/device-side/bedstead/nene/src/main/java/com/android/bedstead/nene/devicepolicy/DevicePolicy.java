@@ -910,7 +910,13 @@ public final class DevicePolicy {
         }
     }
 
-    /** See {@link DevicePolicyManager#createAdminSupportIntent}*/
+    /** See {@link DevicePolicyManager#getStorageEncryptionStatus()} */
+    @Experimental
+    public int getStorageEncryptionStatus() {
+        return sDevicePolicyManager.getStorageEncryptionStatus();
+    }
+
+    /** See {@link DevicePolicyManager#createAdminSupportIntent} */
     @Experimental
     public Intent createAdminSupportIntent(String restriction) {
         return sDevicePolicyManager.createAdminSupportIntent(restriction);

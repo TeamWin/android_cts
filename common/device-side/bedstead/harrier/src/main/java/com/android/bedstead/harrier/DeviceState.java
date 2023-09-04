@@ -17,6 +17,8 @@
 package com.android.bedstead.harrier;
 
 import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
+import static android.app.admin.DevicePolicyManager.ENCRYPTION_STATUS_ACTIVE;
+import static android.app.admin.DevicePolicyManager.ENCRYPTION_STATUS_UNSUPPORTED;
 import static android.app.admin.DevicePolicyManager.OPERATION_SAFETY_REASON_NONE;
 import static android.app.role.RoleManager.ROLE_BROWSER;
 import static android.content.pm.PackageManager.FEATURE_MANAGED_USERS;
@@ -122,6 +124,8 @@ import com.android.bedstead.harrier.annotations.RequireRunNotOnVisibleBackground
 import com.android.bedstead.harrier.annotations.RequireRunOnAdditionalUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnVisibleBackgroundNonProfileUser;
 import com.android.bedstead.harrier.annotations.RequireSdkVersion;
+import com.android.bedstead.harrier.annotations.RequireStorageEncryptionSupported;
+import com.android.bedstead.harrier.annotations.RequireStorageEncryptionUnsupported;
 import com.android.bedstead.harrier.annotations.RequireSystemServiceAvailable;
 import com.android.bedstead.harrier.annotations.RequireTargetSdkVersion;
 import com.android.bedstead.harrier.annotations.RequireTelephonySupport;
@@ -399,7 +403,8 @@ public final class DeviceState extends HarrierRule {
                 if (t != null) {
                     if (t.getStackTrace().length > 0) {
                         if (t.getStackTrace()[0].getMethodName().equals("createExceptionOrNull")) {
-                            SystemServerException s = TestApis.logcat().findSystemServerException(t);
+                            SystemServerException s = TestApis.logcat().findSystemServerException(
+                                    t);
                             if (s != null) {
                                 throw s;
                             }
@@ -437,13 +442,18 @@ public final class DeviceState extends HarrierRule {
             mMinSdkVersionCurrentTest = mMinSdkVersion;
             List<Annotation> annotations = getAnnotations(description);
             applyAnnotations(annotations, /* isTest= */ true);
-            String coexistenceOption = TestApis.instrumentation().arguments().getString("COEXISTENCE", "?");
+            String coexistenceOption = TestApis.instrumentation().arguments().getString(
+                    "COEXISTENCE", "?");
             if (coexistenceOption.equals("true")) {
-                ensureFeatureFlagEnabled(NAMESPACE_DEVICE_POLICY_MANAGER, PERMISSION_BASED_ACCESS_EXPERIMENT_FLAG);
-                ensureFeatureFlagEnabled(NAMESPACE_DEVICE_POLICY_MANAGER, ENABLE_DEVICE_POLICY_ENGINE_FLAG);
+                ensureFeatureFlagEnabled(NAMESPACE_DEVICE_POLICY_MANAGER,
+                        PERMISSION_BASED_ACCESS_EXPERIMENT_FLAG);
+                ensureFeatureFlagEnabled(NAMESPACE_DEVICE_POLICY_MANAGER,
+                        ENABLE_DEVICE_POLICY_ENGINE_FLAG);
             } else if (coexistenceOption.equals("false")) {
-                ensureFeatureFlagNotEnabled(NAMESPACE_DEVICE_POLICY_MANAGER, PERMISSION_BASED_ACCESS_EXPERIMENT_FLAG);
-                ensureFeatureFlagNotEnabled(NAMESPACE_DEVICE_POLICY_MANAGER, ENABLE_DEVICE_POLICY_ENGINE_FLAG);
+                ensureFeatureFlagNotEnabled(NAMESPACE_DEVICE_POLICY_MANAGER,
+                        PERMISSION_BASED_ACCESS_EXPERIMENT_FLAG);
+                ensureFeatureFlagNotEnabled(NAMESPACE_DEVICE_POLICY_MANAGER,
+                        ENABLE_DEVICE_POLICY_ENGINE_FLAG);
             }
 
             Log.d(LOG_TAG, "Finished preparing state for test " + testName);
@@ -1374,6 +1384,17 @@ public final class DeviceState extends HarrierRule {
                 continue;
             }
 
+            if (annotation instanceof RequireStorageEncryptionSupported) {
+                requireStorageEncryptionSupported();
+
+                continue;
+            }
+
+            if (annotation instanceof RequireStorageEncryptionUnsupported) {
+                requireStorageEncryptionUnsupported();
+                continue;
+            }
+
             if (annotation instanceof RequireAdbRoot) {
                 RequireAdbRoot requireAdbRootAnnotation = (RequireAdbRoot) annotation;
                 requireAdbRoot(requireAdbRootAnnotation.failureMode());
@@ -1665,7 +1686,8 @@ public final class DeviceState extends HarrierRule {
                                 + "switchedToUser=ANY");
             } else {
                 throw new IllegalStateException(
-                        "Not permitted to switch to user " + instrumentedUser + "(" + instrumentedUser.getSwitchToUserError() + ")");
+                        "Not permitted to switch to user " + instrumentedUser + "("
+                                + instrumentedUser.getSwitchToUserError() + ")");
             }
         }
 
@@ -1699,7 +1721,8 @@ public final class DeviceState extends HarrierRule {
 
         if (hasProfileOwner) {
             ensureHasProfileOwner(
-                    instrumentedUser, dpcIsPrimary, useParentInstance, affiliationIds, dpcKey, dpcQuery);
+                    instrumentedUser, dpcIsPrimary, useParentInstance, affiliationIds, dpcKey,
+                    dpcQuery);
         } else {
             ensureHasNoProfileOwner(instrumentedUser);
         }
@@ -2360,10 +2383,10 @@ public final class DeviceState extends HarrierRule {
         if (!mCreatedUsers.remove(userReference)) {
             mRemovedUsers.add(
                     new RemovedUser(
-                    TestApis.users().createUser()
-                    .name(userReference.name())
-                    .type(userReference.type())
-                    .parent(userReference.parent()),
+                            TestApis.users().createUser()
+                                    .name(userReference.name())
+                                    .type(userReference.type())
+                                    .parent(userReference.parent()),
                             userReference.isRunning(),
                             Objects.equal(mOriginalSwitchedUser, userReference)));
         }
@@ -2512,7 +2535,8 @@ public final class DeviceState extends HarrierRule {
      * Create and register a {@link BlockingBroadcastReceiver} which will be unregistered after the
      * test has run.
      */
-    public BlockingBroadcastReceiver registerBroadcastReceiverForAllUsers(IntentFilter intentFilter) {
+    public BlockingBroadcastReceiver registerBroadcastReceiverForAllUsers(
+            IntentFilter intentFilter) {
         return registerBroadcastReceiverForAllUsers(intentFilter, /* checker= */ null);
     }
 
@@ -2522,16 +2546,16 @@ public final class DeviceState extends HarrierRule {
      */
     public BlockingBroadcastReceiver registerBroadcastReceiverForAllUsers(
             String action, Function<Intent, Boolean> checker) {
-            try (PermissionContext p =
-                         TestApis.permissions().withPermission(INTERACT_ACROSS_USERS_FULL)) {
-                BlockingBroadcastReceiver broadcastReceiver =
-                        new BlockingBroadcastReceiver(mContext, action, checker);
-                broadcastReceiver.registerForAllUsers();
+        try (PermissionContext p =
+                     TestApis.permissions().withPermission(INTERACT_ACROSS_USERS_FULL)) {
+            BlockingBroadcastReceiver broadcastReceiver =
+                    new BlockingBroadcastReceiver(mContext, action, checker);
+            broadcastReceiver.registerForAllUsers();
 
-                mRegisteredBroadcastReceivers.add(broadcastReceiver);
+            mRegisteredBroadcastReceivers.add(broadcastReceiver);
 
-                return broadcastReceiver;
-            }
+            return broadcastReceiver;
+        }
     }
 
     /**
@@ -2580,7 +2604,7 @@ public final class DeviceState extends HarrierRule {
                 return privateProfile();
             case ADMIN_USER:
                 return TestApis.users().all().stream().sorted(
-                        Comparator.comparing(UserReference::id))
+                                Comparator.comparing(UserReference::id))
                         .filter(UserReference::isAdmin)
                         .findFirst().orElseThrow(
                                 () -> new IllegalStateException("No admin user on device"));
@@ -3067,7 +3091,8 @@ public final class DeviceState extends HarrierRule {
         return ensureTestAppInstalled(/* key= */ null, testApp, user);
     }
 
-    private TestAppInstance ensureTestAppInstalled(String key, TestApp testApp, UserReference user) {
+    private TestAppInstance ensureTestAppInstalled(String key, TestApp testApp,
+            UserReference user) {
         if (!mAdditionalQueryParameters.isEmpty()) {
             assumeFalse("b/276740719 - we don't support custom delegates",
                     DELEGATE_KEY.equals(key));
@@ -3079,7 +3104,8 @@ public final class DeviceState extends HarrierRule {
                 user)) {
             testAppInstance = testApp.instance(user);
         } else {
-            // TODO: Consider if we want to record that we've started it so we can stop it after if needed?
+            // TODO: Consider if we want to record that we've started it so we can stop it after
+            //  if needed?
             user.start();
 
             testAppInstance = testApp.install(user);
@@ -3110,7 +3136,8 @@ public final class DeviceState extends HarrierRule {
     }
 
     private void ensureHasDeviceOwner(FailureMode failureMode, boolean isPrimary,
-            EnsureHasDeviceOwner.HeadlessDeviceOwnerType headlessDeviceOwnerType, Set<String> affiliationIds, int type,
+            EnsureHasDeviceOwner.HeadlessDeviceOwnerType headlessDeviceOwnerType,
+            Set<String> affiliationIds, int type,
             String key, TestAppQueryBuilder dpcQuery) {
 
         // TODO(scottjonathan): Should support non-remotedpc device owner (default to remotedpc)
@@ -3903,7 +3930,7 @@ public final class DeviceState extends HarrierRule {
         }
     }
 
-    private void ensureGlobalSettingSet(String key, String value){
+    private void ensureGlobalSettingSet(String key, String value) {
         if (!mOriginalGlobalSettings.containsKey(key)) {
             mOriginalGlobalSettings.put(key, TestApis.settings().global().getString(value));
         }
@@ -3931,7 +3958,8 @@ public final class DeviceState extends HarrierRule {
         ensureDefaultContentSuggestionsServiceEnabled(resolveUserTypeToUser(user), enabled);
     }
 
-    private void ensureDefaultContentSuggestionsServiceEnabled(UserReference user, boolean enabled) {
+    private void ensureDefaultContentSuggestionsServiceEnabled(UserReference user,
+            boolean enabled) {
         boolean currentValue = TestApis.content().suggestions().defaultServiceEnabled(user);
 
         if (currentValue == enabled) {
@@ -3995,7 +4023,7 @@ public final class DeviceState extends HarrierRule {
         // This is to allow for forcing the coexistence flags on in btest.
         if (namespace == NAMESPACE_DEVICE_POLICY_MANAGER
                 && (key == PERMISSION_BASED_ACCESS_EXPERIMENT_FLAG
-                    || key == ENABLE_DEVICE_POLICY_ENGINE_FLAG)) {
+                || key == ENABLE_DEVICE_POLICY_ENGINE_FLAG)) {
             if (coexistenceOption.equals("true")) {
                 // Forcing the flags on will happen later, so we should skip the check below.
                 return;
@@ -4179,9 +4207,11 @@ public final class DeviceState extends HarrierRule {
         return TestApis.users().isHeadlessSystemUserMode();
     }
 
-    private final Map<Class<? extends AnnotationExecutor>, AnnotationExecutor> mAnnotationExecutors = new HashMap<>();
+    private final Map<Class<? extends AnnotationExecutor>, AnnotationExecutor>
+            mAnnotationExecutors = new HashMap<>();
 
-    private AnnotationExecutor getAnnotationExecutor(Class<? extends AnnotationExecutor> annotationExecutorClass) {
+    private AnnotationExecutor getAnnotationExecutor(
+            Class<? extends AnnotationExecutor> annotationExecutorClass) {
         if (!mAnnotationExecutors.containsKey(annotationExecutorClass)) {
             try {
                 mAnnotationExecutors.put(
@@ -4276,7 +4306,8 @@ public final class DeviceState extends HarrierRule {
         return true;
     }
 
-    private boolean trySetUserRestrictionWithProfileOwner(UserReference onUser, String restriction) {
+    private boolean trySetUserRestrictionWithProfileOwner(UserReference onUser,
+            String restriction) {
         ensureHasProfileOwner(onUser,
                 /* isPrimary= */ false, /* isParentInstance= */ false,
                 /* affiliationIds= */ Set.of(), EnsureHasProfileOwner.DEFAULT_KEY,
@@ -4312,7 +4343,8 @@ public final class DeviceState extends HarrierRule {
         return true;
     }
 
-    private boolean tryClearUserRestrictionWithProfileOwner(UserReference onUser, String restriction) {
+    private boolean tryClearUserRestrictionWithProfileOwner(UserReference onUser,
+            String restriction) {
         ensureHasProfileOwner(onUser,
                 /* isPrimary= */ false, /* isParentInstance= */ false,
                 /* affiliationIds= */ Set.of(), EnsureHasProfileOwner.DEFAULT_KEY,
@@ -4426,22 +4458,35 @@ public final class DeviceState extends HarrierRule {
                 TestApis.services().serviceIsAvailable(serviceClass), failureMode);
     }
 
-        private void requireAdbRoot(FailureMode failureMode) {
-            if (TestApis.adb().isRootAvailable()) {
-                Tags.addTag(Tags.ADB_ROOT);
-            } else {
-                failOrSkip("Device does not have root available.", failureMode);
-            }
-        }
+    private void requireStorageEncryptionSupported() {
+        checkFailOrSkip("Requires storage encryption to be supported.",
+                TestApis.devicePolicy().getStorageEncryptionStatus() != ENCRYPTION_STATUS_UNSUPPORTED,
+                FailureMode.SKIP);
+    }
 
-        private static boolean shouldRunAsRoot() {
-            return Tags.hasTag(Tags.ADB_ROOT);
+    private void requireStorageEncryptionUnsupported() {
+        checkFailOrSkip("Requires storage encryption to not be supported.",
+                TestApis.devicePolicy().getStorageEncryptionStatus()
+                        == ENCRYPTION_STATUS_UNSUPPORTED,
+                FailureMode.SKIP);
+    }
+
+    private void requireAdbRoot(FailureMode failureMode) {
+        if (TestApis.adb().isRootAvailable()) {
+            Tags.addTag(Tags.ADB_ROOT);
+        } else {
+            failOrSkip("Device does not have root available.", failureMode);
+        }
+    }
+
+    private static boolean shouldRunAsRoot() {
+        return Tags.hasTag(Tags.ADB_ROOT);
     }
 
     private void ensurePolicyOperationUnsafe(
             CommonDevicePolicy.DevicePolicyOperation operation,
-            CommonDevicePolicy.OperationSafetyReason reason){
-            mNextSafetyOperationSet = true;
-            TestApis.devicePolicy().setNextOperationSafety(operation, reason);
-        }
+            CommonDevicePolicy.OperationSafetyReason reason) {
+        mNextSafetyOperationSet = true;
+        TestApis.devicePolicy().setNextOperationSafety(operation, reason);
+    }
 }

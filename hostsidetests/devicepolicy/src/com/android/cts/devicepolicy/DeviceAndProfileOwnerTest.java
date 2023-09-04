@@ -67,7 +67,6 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     protected static final String DEVICE_ADMIN_COMPONENT_FLATTENED =
             DEVICE_ADMIN_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS;
 
-    protected static final String STORAGE_ENCRYPTION_TEST_CLASS = ".StorageEncryptionTest";
     protected static final String IS_SYSTEM_USER_PARAM = "isSystemUser";
 
     protected static final String INTENT_RECEIVER_PKG = "com.android.cts.intent.receiver";
@@ -937,14 +936,6 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
                 .setAdminPackageName(DEVICE_ADMIN_PKG)
                 .setStrings(NOT_CALLED_FROM_PARENT, "com.google.pkg.one", "com.google.pkg.two")
                 .build());
-    }
-
-    @Test
-    public void testSetStorageEncryption() throws Exception {
-        Map<String, String> params =
-                ImmutableMap.of(IS_SYSTEM_USER_PARAM, String.valueOf(mUserId == USER_SYSTEM));
-        runDeviceTestsAsUser(
-                DEVICE_ADMIN_PKG, STORAGE_ENCRYPTION_TEST_CLASS, null, mUserId, params);
     }
 
     @Test
