@@ -16,7 +16,7 @@
 
 package com.android.bedstead.harrier.annotations;
 
-import static com.android.bedstead.harrier.annotations.AnnotationRunPrecedence.PRECEDENCE_NOT_IMPORTANT;
+import static com.android.bedstead.harrier.annotations.AnnotationPriorityRunPrecedence.PRECEDENCE_NOT_IMPORTANT;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -40,5 +40,5 @@ import java.lang.annotation.Target;
 public @interface Postsubmit {
     String reason();
 
-    int weight() default PRECEDENCE_NOT_IMPORTANT;
+    int priority() default PRECEDENCE_NOT_IMPORTANT;
 }
