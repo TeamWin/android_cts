@@ -63,4 +63,7 @@
     <!-- CtsNativeMediaAAudioTestCases: b/261824947 -->
     <option name="compatibility:exclude-filter" value="CtsNativeMediaAAudioTestCases android.nativemedia.aaudio.AAudioTests" />
 
+    <!-- CtsVideoCodecTestCases: b/279308238 -->
+    <option name="compatibility:exclude-filter" value="CtsVideoCodecTestCases android.videocodec.cts.VideoEncoderMinMaxTest" />
+
 </configuration>
