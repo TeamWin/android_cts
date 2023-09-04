@@ -103,6 +103,7 @@ import com.android.bedstead.harrier.annotations.EnsureWifiEnabled;
 import com.android.bedstead.harrier.annotations.FailureMode;
 import com.android.bedstead.harrier.annotations.OtherUser;
 import com.android.bedstead.harrier.annotations.RequireAdbRoot;
+import com.android.bedstead.harrier.annotations.RequireAdbOverWifi;
 import com.android.bedstead.harrier.annotations.RequireDoesNotHaveFeature;
 import com.android.bedstead.harrier.annotations.RequireFeature;
 import com.android.bedstead.harrier.annotations.RequireFeatureFlagEnabled;
@@ -1398,6 +1399,13 @@ public final class DeviceState extends HarrierRule {
             if (annotation instanceof RequireAdbRoot) {
                 RequireAdbRoot requireAdbRootAnnotation = (RequireAdbRoot) annotation;
                 requireAdbRoot(requireAdbRootAnnotation.failureMode());
+
+                continue;
+            }
+
+            if (annotation instanceof RequireAdbOverWifi) {
+                RequireAdbOverWifi requireAdbOverWifiAnnotation = (RequireAdbOverWifi) annotation;
+                requireAdbOverWifi(requireAdbOverWifiAnnotation.failureMode());
 
                 continue;
             }
@@ -2849,7 +2857,7 @@ public final class DeviceState extends HarrierRule {
             TestApis.wifi().setEnabled(mOriginalWifiEnabled);
             mOriginalWifiEnabled = null;
         }
-
+        
         for (Map.Entry<UserReference, Boolean> s
                 : mOriginalDefaultContentSuggestionsServiceEnabled.entrySet()) {
             TestApis.content().suggestions().setDefaultServiceEnabled(s.getKey(), s.getValue());
@@ -4458,10 +4466,20 @@ public final class DeviceState extends HarrierRule {
                 TestApis.services().serviceIsAvailable(serviceClass), failureMode);
     }
 
+
     private void requireStorageEncryptionSupported() {
         checkFailOrSkip("Requires storage encryption to be supported.",
                 TestApis.devicePolicy().getStorageEncryptionStatus() != ENCRYPTION_STATUS_UNSUPPORTED,
                 FailureMode.SKIP);
+    }
+
+    private void requireAdbOverWifi(FailureMode failureMode) {
+        String message = "The test requires adb to be connected over wifi.\n "
+                + "Use the below commands to do this: \n"
+                + "adb tcpip 5555 \n"
+                + "adb connect ip-address-of-device:5555\n";
+
+        checkFailOrSkip(message, TestApis.adb().isEnabledOverWifi(), failureMode);
     }
 
     private void requireStorageEncryptionUnsupported() {
@@ -4486,6 +4504,8 @@ public final class DeviceState extends HarrierRule {
     private void ensurePolicyOperationUnsafe(
             CommonDevicePolicy.DevicePolicyOperation operation,
             CommonDevicePolicy.OperationSafetyReason reason) {
+            mNextSafetyOperationSet = true;
+            TestApis.devicePolicy().setNextOperationSafety(operation, reason);
         mNextSafetyOperationSet = true;
         TestApis.devicePolicy().setNextOperationSafety(operation, reason);
     }

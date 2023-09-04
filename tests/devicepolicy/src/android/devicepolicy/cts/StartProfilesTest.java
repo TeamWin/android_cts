@@ -146,7 +146,7 @@ public final class StartProfilesTest {
         // start profile as soon as ACTION_PROFILE_INACCESSIBLE is received
         // verify that ACTION_PROFILE_ACCESSIBLE is received if profile is re-started
         BlockingBroadcastReceiver broadcastReceiver = sDeviceState.registerBroadcastReceiver(
-               Intent.ACTION_PROFILE_ACCESSIBLE, userIsEqual(sDeviceState.workProfile()));
+                Intent.ACTION_PROFILE_ACCESSIBLE, userIsEqual(sDeviceState.workProfile()));
         sActivityManager.startProfile(sDeviceState.workProfile().userHandle());
         Intent broadcast = broadcastReceiver.awaitForBroadcast();
 
