@@ -29,6 +29,7 @@ import static junit.framework.Assert.fail;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
 import android.Manifest;
 import android.app.ActivityOptions;
@@ -59,6 +60,7 @@ import androidx.test.uiautomator.By;
 import androidx.test.uiautomator.UiDevice;
 import androidx.test.uiautomator.Until;
 
+import com.android.compatibility.common.util.FeatureUtil;
 import com.android.compatibility.common.util.SystemUtil;
 
 import com.google.common.truth.Expect;
@@ -94,6 +96,7 @@ public class PackageArchiverTest {
 
     @Before
     public void setup() throws Exception {
+        assumeTrue("Form factor is not supported", isFormFactorSupported());
         Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
         mUiDevice = UiDevice.getInstance(
                 androidx.test.InstrumentationRegistry.getInstrumentation());
@@ -211,6 +214,14 @@ public class PackageArchiverTest {
                     + mContext.getUser() + ": " + e);
         }
         return null;
+    }
+
+    private static boolean isFormFactorSupported() {
+        return !FeatureUtil.isArc()
+                && !FeatureUtil.isAutomotive()
+                && !FeatureUtil.isTV()
+                && !FeatureUtil.isWatch()
+                && !FeatureUtil.isVrHeadset();
     }
 
     static class ArchiveIntentSender extends IIntentSender.Stub {
