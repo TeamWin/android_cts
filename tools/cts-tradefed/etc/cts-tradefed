@@ -17,43 +17,26 @@
 # launcher script for cts-tradefed harness
 # can be used from an Android build environment, or a standalone cts zip
 
-checkFile() {
-    if [ ! -f "$1" ]; then
-        echo "Unable to locate $1"
-        exit
-    fi;
-}
+UTILS_SCRIPT="$(dirname $(realpath $0))/test-utils-script"
 
-checkPath() {
-    if ! type -P $1 &> /dev/null; then
-        echo "Unable to find $1 in path."
-        exit
-    fi;
-}
+if [ ! -f "${UTILS_SCRIPT}" ]
+then
+  UTILS_SCRIPT="${ANDROID_BUILD_TOP}/platform_testing/scripts/test-utils-script"
+fi
 
-# readlink does not work on MacOS so rely on our own realpath
-realpath() {
-    [[ $1 = /* ]] && echo "$1" || echo "$PWD/${1#./}"
-}
+if [ ! -f "${UTILS_SCRIPT}" ]
+then
+  echo -e "Cannot find test-utils-script in the same location as this script" \
+          "and ANDROID_BUILD_TOP is not defined."
+  exit 1
+fi
+
+source ${UTILS_SCRIPT}
 
 checkPath aapt
 checkPath adb
-checkPath java
 
-# check java version
-JAVA_VERSION=$(java -version 2>&1 | grep -m 1 'version [ "]\(1\.8\|9\|11\|17\).*[ "]')
-if [ "${JAVA_VERSION}" == "" ]; then
-    echo "Wrong java version. 1.8, 9, 11 or 17 is required."
-    exit
-fi
-
-# check debug flag and set up remote debugging
-if [ -n "${TF_DEBUG}" ]; then
-  if [ -z "${TF_DEBUG_PORT}" ]; then
-    TF_DEBUG_PORT=10088
-  fi
-  RDBG_FLAG=-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=${TF_DEBUG_PORT}
-fi
+RDBG_FLAG=$(getRemoteDbgFlag)
 
 # get OS
 HOST=`uname`
@@ -67,6 +50,17 @@ else
     echo "Unrecognized OS"
     exit
 fi
+
+if [ -z ${JAVA_BINARY} ]; then
+    JAVA_BINARY=${CTS_ROOT}/android-cts/jdk/bin/java
+fi;
+
+if [ ! -f "${JAVA_BINARY}" ]; then
+    JAVA_BINARY=java
+fi
+
+checkPath ${JAVA_BINARY}
+checkJavaVersion ${JAVA_BINARY}
 
 # check if in Android build env
 if [ ! -z "${ANDROID_BUILD_TOP}" ]; then
@@ -86,14 +80,6 @@ if [ -z ${CTS_ROOT} ]; then
     CTS_ROOT="$(dirname $(realpath $0))/../.."
 fi;
 
-if [ -z ${JAVA_BINARY} ]; then
-    JAVA_BINARY=${CTS_ROOT}/android-cts/jdk/bin/java
-fi;
-
-if [ ! -f "${JAVA_BINARY}" ]; then
-    JAVA_BINARY=java
-fi
-
 JAR_DIR=${CTS_ROOT}/android-cts/tools
 
 for JAR in ${JAR_DIR}/*.jar; do
@@ -104,15 +90,8 @@ TRADEFED_JAR=":${JAR_DIR}/tradefed.jar"
 JAR_PATH="${TRADEFED_JAR}${JAR_PATH/$TRADEFED_JAR}"
 JAR_PATH=${JAR_PATH:1} # Strip off leading ':'
 
-# load any shared libraries for host-side executables
 LIB_DIR=${CTS_ROOT}/android-cts/lib
-if [ "$HOST" == "Linux" ]; then
-    LD_LIBRARY_PATH=${LIB_DIR}:${LIB_DIR}64:${LD_LIBRARY_PATH}
-    export LD_LIBRARY_PATH
-elif [ "$HOST" == "Darwin" ]; then
-    DYLD_LIBRARY_PATH=${LIB_DIR}:${LIB_DIR}64:${DYLD_LIBRARY_PATH}
-    export DYLD_LIBRARY_PATH
-fi
+loadSharedLibraries "$HOST" "$LIB_DIR"
 
 # include any host-side test jars
 for j in $(find ${CTS_ROOT}/android-cts/testcases -name '*.jar'); do
