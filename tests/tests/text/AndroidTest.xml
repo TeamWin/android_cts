@@ -23,6 +23,11 @@
     <option name="config-descriptor:metadata" key="parameter" value="run_on_sdk_sandbox" />
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
         <option name="cleanup-apks" value="true" />
+        <option name="force-install-mode" value="FULL"/>
+        <option name="test-file-name" value="TestIme.apk" />
+    </target_preparer>
+    <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
+        <option name="cleanup-apks" value="true" />
         <option name="test-file-name" value="CtsTextTestResourceData.apk" />
     </target_preparer>
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
@@ -36,6 +41,15 @@
         <option name="hidden-api-checks" value="false" />
     </test>
     <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
+        <option name="test-user-token" value="%TEST_USER%"/>
+        <option name="throw-if-cmd-fail" value="true" />
+        <option name="run-command" value="am wait-for-broadcast-idle" />
+        <option name="run-command" value="sleep 1" />
+        <!-- If 'ime enable' is flaky, increase the sleep time above. see b/188105339. -->
+        <option name="run-command" value="ime enable --user %TEST_USER% com.android.cts.testime/.TestIme" />
+        <option name="run-command" value="ime set --user %TEST_USER% com.android.cts.testime/.TestIme" />
+        <option name="teardown-command" value="ime reset --user %TEST_USER%" />
+
         <!-- disable DeprecatedAbi warning -->
         <option name="run-command" value="setprop debug.wm.disable_deprecated_abi_dialog 1" />
     </target_preparer>

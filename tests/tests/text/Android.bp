@@ -58,6 +58,7 @@ android_test {
     ],
     data: [
         ":CtsTextTestResourceData",
+        ":TestIme",
     ],
     per_testcase_directory: true,
 }
