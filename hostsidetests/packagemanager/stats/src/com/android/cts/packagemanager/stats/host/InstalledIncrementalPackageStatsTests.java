@@ -16,6 +16,8 @@
 
 package com.android.cts.packagemanager.stats.host;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import android.cts.statsdatom.lib.AtomTestUtils;
 import android.cts.statsdatom.lib.ConfigUtils;
 import android.cts.statsdatom.lib.DeviceUtils;
@@ -52,6 +54,7 @@ public class InstalledIncrementalPackageStatsTests extends PackageManagerStatsTe
         ConfigUtils.uploadConfigForPulledAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
                 AtomsProto.Atom.INSTALLED_INCREMENTAL_PACKAGE_FIELD_NUMBER);
         long currentEpochTimeSeconds = Math.floorDiv(getDevice().getDeviceDate(), 1000);
+        // Install 2 incremental packages
         installPackageUsingIncremental(new String[]{TEST_INSTALL_APK});
         assertTrue(getDevice().isPackageInstalled(TEST_INSTALL_PACKAGE,
                 String.valueOf(getDevice().getCurrentUser())));
@@ -62,16 +65,39 @@ public class InstalledIncrementalPackageStatsTests extends PackageManagerStatsTe
         RunUtil.getDefault().sleep(AtomTestUtils.WAIT_TIME_LONG);
 
         List<AtomsProto.Atom> data = ReportUtils.getGaugeMetricAtoms(getDevice());
-        assertEquals(2, data.size());
+        assertThat(data).isNotNull();
+
+        int[] expectedAppIds = new int[]{
+                getAppUid(TEST_INSTALL_PACKAGE), getAppUid(TEST_INSTALL_PACKAGE2)};
+        List<AtomsProto.Atom> filterMetrics = filterTestAppMetrics(expectedAppIds, data);
+        assertEquals(2, filterMetrics.size());
+
         // The order of the UIDs in the metrics can be different from the order of the installations
-        List<Integer> uidsReported = new ArrayList<>();
         for (AtomsProto.Atom atom : data) {
-            uidsReported.add(atom.getInstalledIncrementalPackage().getUid());
             assertFalse(atom.getInstalledIncrementalPackage().getIsLoading());
             Truth.assertThat(atom.getInstalledIncrementalPackage().getLoadingCompletedTimestamp()
                     ).isGreaterThan(currentEpochTimeSeconds);
         }
-        assertTrue(uidsReported.contains(getAppUid(TEST_INSTALL_PACKAGE)));
-        assertTrue(uidsReported.contains(getAppUid(TEST_INSTALL_PACKAGE2)));
+    }
+
+    private List<AtomsProto.Atom> filterTestAppMetrics(int[] appIds,
+            List<AtomsProto.Atom> metricData) {
+        List<AtomsProto.Atom> result = new ArrayList<>();
+        for (AtomsProto.Atom atom : metricData) {
+            int uid = atom.getInstalledIncrementalPackage().getUid();
+            if (contains(appIds, uid)) {
+                result.add(atom);
+            }
+        }
+        return result;
+    }
+
+    private boolean contains(int[] array, int value) {
+        for (int i = 0; i < array.length; i++) {
+            if (array[i] == value) {
+                return true;
+            }
+        }
+        return false;
     }
 }
