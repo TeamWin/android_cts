@@ -34,7 +34,7 @@ _DEFAULT_TABLET_BRIGHTNESS_SCALING = 0.04  # 4% of default brightness
 _EXTENSION_NIGHT = 4  # CameraExtensionCharacteristics.EXTENSION_NIGHT
 _TAP_COORDINATES = (500, 500)  # Location to tap tablet screen via adb
 _TEST_REQUIRED_MPC = 34
-_MIN_AREA = 0
+_MIN_AREA = 0.001  # Circle must be >= 0.1% of image size
 _WHITE = 255
 
 _FMT_NAME = 'yuv'  # To detect noise without conversion to RGB
@@ -86,41 +86,32 @@ def _convert_captures(cap, file_stem=None):
   return y, image_processing_utils.convert_image_to_uint8(img)
 
 
-def _check_dot_intensity_diff(night_img, night_y, no_night_img, no_night_y):
+def _check_dot_intensity_diff(night_img, night_y):
   """Checks the difference between circle and dot intensities with Night ON.
 
-  The performance with Night OFF is logged for debugging purposes.
   This is an optional check, and a successful result can replace the
   overall intensity check.
 
   Args:
     night_img: numpy image from a capture with night mode ON.
     night_y: y_plane from a capture with night mode ON.
-    no_night_img: numpy image from a capture with night mode OFF.
-    no_night_y: y_plane from a capture with night mode OFF.
 
   Returns:
     True if diff between circle and dot intensities is significant.
   """
-  night_circle = opencv_processing_utils.find_circle(
-      night_img,
-      'night_dot_intensity_check.png',
-      _MIN_AREA,
-      _WHITE,
-  )
+  try:
+    night_circle = opencv_processing_utils.find_circle(
+        night_img,
+        'night_dot_intensity_check.png',
+        _MIN_AREA,
+        _WHITE,
+    )
+  except AssertionError as e:
+    logging.debug(e)
+    return False
   night_circle_center_mean = np.mean(
       night_img[night_circle[_Y_STRING], night_circle[_X_STRING]])
   night_dots = _get_dots_from_circle(night_circle)
-
-  no_night_circle = opencv_processing_utils.find_circle(
-      no_night_img,
-      'no_night_dot_intensity_check.png',
-      _MIN_AREA,
-      _WHITE,
-  )
-  no_night_circle_center_mean = np.mean(
-      no_night_img[no_night_circle[_Y_STRING], no_night_circle[_X_STRING]])
-  no_night_dots = _get_dots_from_circle(no_night_circle)
 
   # Skip the first dot, which is of a different intensity
   night_light_gray_dots_mean = np.mean(
@@ -129,27 +120,14 @@ def _check_dot_intensity_diff(night_img, night_y, no_night_img, no_night_y):
           for i in range(1, len(night_dots))
       ]
   )
-  no_night_light_gray_dots_mean = np.mean(
-      [
-          no_night_y[no_night_dots[i][_Y_STRING], no_night_dots[i][_X_STRING]]
-          for i in range(1, len(no_night_dots))
-      ]
-  )
 
   night_dot_intensity_diff = (
       night_circle_center_mean -
       night_light_gray_dots_mean
   )
-  no_night_dot_intensity_diff = (
-      no_night_circle_center_mean -
-      no_night_light_gray_dots_mean
-  )
   logging.debug('With night extension ON, the difference between white '
                 'circle intensity and non-orientation dot intensity was %.2f.',
                 night_dot_intensity_diff)
-  logging.debug('With night extension OFF, the difference between white '
-                'circle intensity and non-orientation dot intensity was %.2f.',
-                no_night_dot_intensity_diff)
   return night_dot_intensity_diff > _DOT_INTENSITY_DIFF_TOL
 
 
@@ -396,7 +374,7 @@ class NightExtensionTest(its_base_test.ItsBaseTest):
       cam.do_3a()
       no_night_capture_duration, no_night_cap = self._time_and_take_captures(
           cam, req, out_surfaces, use_extensions=False)
-      no_night_y, no_night_img = _convert_captures(
+      _, no_night_img = _convert_captures(
           no_night_cap, f'{file_stem}_no_night')
 
       # Assert correct behavior
@@ -413,7 +391,7 @@ class NightExtensionTest(its_base_test.ItsBaseTest):
                     'expected values from the scene')
       # Normalize y planes to [0:255]
       dot_intensities_acceptable = _check_dot_intensity_diff(
-          night_img, night_y * 255, no_night_img, no_night_y * 255)
+          night_img, night_y * 255)
 
       if not dot_intensities_acceptable:
         logging.debug('Comparing overall intensity of capture with '
