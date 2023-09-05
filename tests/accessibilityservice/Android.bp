@@ -20,8 +20,10 @@ android_test {
     name: "CtsAccessibilityServiceTestCases",
     defaults: ["cts_defaults"],
     static_libs: [
+        "com_android_server_accessibility_flags_lib",
         "ctstestrunner-axt",
         "cts-wm-util",
+        "flag-junit",
         "hamcrest-library",
         "mockito-target-minus-junit4",
         "compatibility-device-util-axt",

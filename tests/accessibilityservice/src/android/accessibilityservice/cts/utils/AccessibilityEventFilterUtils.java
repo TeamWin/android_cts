@@ -19,6 +19,8 @@ import static org.hamcrest.CoreMatchers.both;
 
 import android.app.UiAutomation;
 import android.app.UiAutomation.AccessibilityEventFilter;
+import android.util.SparseArray;
+import android.view.Display;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityWindowInfo;
 
@@ -69,9 +71,16 @@ public class AccessibilityEventFilterUtils {
 
     public static AccessibilityEventFilter filterWindowsChangeTypesAndWindowTitle(
             @NonNull UiAutomation uiAutomation, int changeTypes, @NonNull String title) {
+        return filterWindowsChangeTypesAndWindowTitle(uiAutomation, changeTypes, title,
+                Display.DEFAULT_DISPLAY);
+    }
+
+    public static AccessibilityEventFilter filterWindowsChangeTypesAndWindowTitle(
+            @NonNull UiAutomation uiAutomation, int changeTypes, @NonNull String title,
+            int displayId) {
         return allOf(new AccessibilityEventTypeMatcher(AccessibilityEvent.TYPE_WINDOWS_CHANGED),
                 new WindowChangesMatcher(changeTypes),
-                new WindowTitleMatcher(uiAutomation, title))::matches;
+                new WindowTitleMatcher(uiAutomation, title, displayId))::matches;
     }
 
     public static AccessibilityEventFilter filterWindowsChangTypesAndWindowId(int windowId,
@@ -228,16 +237,21 @@ public class AccessibilityEventFilterUtils {
     public static class WindowTitleMatcher extends TypeSafeMatcher<AccessibilityEvent> {
         private final UiAutomation mUiAutomation;
         private final String mTitle;
+        private final int mDisplayId;
 
-        public WindowTitleMatcher(@NonNull UiAutomation uiAutomation, @NonNull String title) {
+        public WindowTitleMatcher(@NonNull UiAutomation uiAutomation, @NonNull String title,
+                int displayId) {
             super();
             mUiAutomation = uiAutomation;
             mTitle = title;
+            mDisplayId = displayId;
         }
 
         @Override
         protected boolean matchesSafely(AccessibilityEvent event) {
-            final List<AccessibilityWindowInfo> windows = mUiAutomation.getWindows();
+            final SparseArray<List<AccessibilityWindowInfo>> windowsOnAllDisplays =
+                    mUiAutomation.getWindowsOnAllDisplays();
+            final List<AccessibilityWindowInfo> windows = windowsOnAllDisplays.get(mDisplayId);
             final int eventWindowId = event.getWindowId();
             for (AccessibilityWindowInfo info : windows) {
                 if (eventWindowId == info.getId() && mTitle.equals(info.getTitle())) {
