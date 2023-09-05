@@ -42,8 +42,8 @@ abstract class OverrideConfigBaseActivity : Activity() {
 
         setContentView(layoutInflater().inflate(R.layout.override_config_test_layout, null))
 
-        textOrientation = findViewById(R.id.textOrientation)
-        textSmallestWidth = findViewById(R.id.textSmallestWidth)
+        textOrientation = requireViewById(R.id.textOrientation)
+        textSmallestWidth = requireViewById(R.id.textSmallestWidth)
     }
 
     open fun layoutInflater() = layoutInflater
