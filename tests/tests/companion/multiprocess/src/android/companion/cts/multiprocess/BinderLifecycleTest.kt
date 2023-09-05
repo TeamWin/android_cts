@@ -17,6 +17,8 @@
 package android.companion.cts.multiprocess
 
 import android.companion.cts.common.DEVICE_DISPLAY_NAME_A
+import android.companion.cts.common.PRIMARY_PROCESS_NAME
+import android.companion.cts.common.SECONDARY_PROCESS_NAME
 import android.companion.cts.common.TestBase
 import android.companion.cts.common.assertApplicationBinds
 import android.companion.cts.common.assertApplicationRemainsBound
@@ -46,7 +48,7 @@ class BinderLifecycleTest : TestBase() {
         assertApplicationBinds(cdm)
 
         // Kill primary process
-        killProcess(":primary")
+        killProcess(PRIMARY_PROCESS_NAME)
         assertApplicationUnbinds(cdm)
     }
 
@@ -63,7 +65,7 @@ class BinderLifecycleTest : TestBase() {
         SystemClock.sleep(2000)
 
         // Kill secondary process
-        killProcess(":secondary")
+        killProcess(SECONDARY_PROCESS_NAME)
         assertApplicationRemainsBound(cdm)
     }
 }

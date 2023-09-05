@@ -366,8 +366,14 @@ fun MacAddress.toUpperCaseString() = toString().toUpperCase()
 fun sleepFor(duration: Duration) = sleep(duration.inWholeMilliseconds)
 
 fun killProcess(name: String) {
-    val pid = SystemUtil.runShellCommand("pgrep -A $name").trim()
-    Process.killProcess(Integer.valueOf(pid))
+    val pids = SystemUtil.runShellCommand("pgrep $name").trim().split("\\s+".toRegex())
+    for (pid: String in pids) {
+        // Make sure that it is the intended process before killing it.
+        val process = SystemUtil.runShellCommand("ps $pid")
+        if (process.contains("android.companion.cts.multiprocess")) {
+            Process.killProcess(Integer.valueOf(pid))
+        }
+    }
 }
 
 fun getAssociationForPackage(
