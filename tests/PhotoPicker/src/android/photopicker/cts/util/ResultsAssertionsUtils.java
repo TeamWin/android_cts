@@ -21,7 +21,6 @@ import static android.provider.MediaStore.PickerMediaColumns;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
-import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.fail;
 
 import android.content.ContentResolver;
@@ -63,33 +62,18 @@ public class ResultsAssertionsUtils {
         assertThat(auth).isEqualTo("picker");
     }
 
-    public static void assertPersistedReadGrants(Uri uri, ContentResolver resolver) {
+    public static void assertPersistedGrant(Uri uri, ContentResolver resolver) {
         resolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
         final List<UriPermission> uriPermissions = resolver.getPersistedUriPermissions();
-        final List<Uri> readUris = new ArrayList<>();
+        final List<Uri> uris = new ArrayList<>();
         for (UriPermission perm : uriPermissions) {
             if (perm.isReadPermission()) {
-                readUris.add(perm.getUri());
+                uris.add(perm.getUri());
             }
         }
-        assertThat(readUris).contains(uri);
-    }
 
-    public static void assertPersistedWriteGrants(Uri uri, ContentResolver resolver) {
-        resolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-        final List<UriPermission> uriPermissions = resolver.getPersistedUriPermissions();
-        final List<Uri> writeUris = new ArrayList<>();
-        for (UriPermission perm : uriPermissions) {
-            if (perm.isWritePermission()) {
-                writeUris.add(perm.getUri());
-            }
-        }
-        assertThat(writeUris).contains(uri);
-    }
-
-    public static void assertNoPersistedWriteGrant(Uri uri, ContentResolver resolver) {
-        assertThrows(SecurityException.class, () -> resolver.takePersistableUriPermission(uri,
-                Intent.FLAG_GRANT_WRITE_URI_PERMISSION));
+        assertThat(uris).contains(uri);
     }
 
     public static void assertMimeType(Uri uri, String expectedMimeType) throws Exception {
