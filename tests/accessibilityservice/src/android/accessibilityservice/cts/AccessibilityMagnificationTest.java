@@ -1231,7 +1231,8 @@ public class AccessibilityMagnificationTest {
         PackageManager pm = context.getPackageManager();
         // TODO(b/285201744): remove automotive check
         boolean isAuto = pm.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE);
-        return pm.hasSystemFeature(FEATURE_WINDOW_MAGNIFICATION) && !isAuto;
+        final boolean isWatch = pm.hasSystemFeature(PackageManager.FEATURE_WATCH);
+        return pm.hasSystemFeature(FEATURE_WINDOW_MAGNIFICATION) && !isAuto && !isWatch;
     }
 
     private static MagnificationConfig.Builder obtainConfigBuilder(MagnificationConfig config) {
