@@ -22,15 +22,14 @@ import static android.car.Car.PERMISSION_CAR_CONTROL_AUDIO_VOLUME;
 import static android.car.media.CarAudioManager.AUDIO_FEATURE_DYNAMIC_ROUTING;
 import static android.car.media.CarAudioManager.PRIMARY_AUDIO_ZONE;
 import static android.media.AudioAttributes.USAGE_MEDIA;
-
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
-
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.UiAutomation;
 import android.car.Car;
+import android.car.cts.permissiontest.AbstractCarManagerPermissionTest;
 import android.car.media.CarAudioManager;
 import android.car.media.CarVolumeGroupInfo;
 import android.car.test.util.CarAudioManagerTestUtils;
@@ -40,7 +39,7 @@ import android.view.KeyEvent;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
-import android.car.cts.permissiontest.AbstractCarManagerPermissionTest;
+import com.android.compatibility.common.util.ApiTest;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -277,6 +276,8 @@ public final class CarAudioManagerPermissionTest extends AbstractCarManagerPermi
     }
 
     @Test
+    @ApiTest(apis = {
+            "android.car.media.CarAudioManager#registerCarVolumeCallback(CarVolumeCallback)"})
     public void registerCarVolumeCallback_nonNullCallback_throwsPermissionError() {
         mCallback = new CarAudioManagerTestUtils.SyncCarVolumeCallback();
 
@@ -287,6 +288,8 @@ public final class CarAudioManagerPermissionTest extends AbstractCarManagerPermi
     }
 
     @Test
+    @ApiTest(apis = {"android.car.media.CarAudioManager"
+            + "#registerCarVolumeGroupEventCallback(Executor, CarVolumeGroupEventCallback)"})
     public void registerCarVolumeGroupEventCallback_nonNullInputs_throwsPermissionError() {
         Executor executor = Executors.newFixedThreadPool(1);
         mEventCallback = new CarAudioManagerTestUtils.TestCarVolumeGroupEventCallback();
@@ -301,13 +304,15 @@ public final class CarAudioManagerPermissionTest extends AbstractCarManagerPermi
     }
 
     @Test
+    @ApiTest(apis = {
+            "android.car.media.CarAudioManager#unregisterCarVolumeCallback(CarVolumeCallback)"})
     public void unregisterCarVolumeCallback_withoutPermission_receivesCallback() {
         assumeDynamicRoutingIsEnabled();
         mCallback = new CarAudioManagerTestUtils.SyncCarVolumeCallback();
         runWithCarControlAudioVolumePermission(
                 () -> mCarAudioManager.registerCarVolumeCallback(mCallback));
 
-        assertThrows(SecurityException.class,
+        Exception e = assertThrows(SecurityException.class,
                 () -> mCarAudioManager.unregisterCarVolumeCallback(mCallback));
 
         injectVolumeDownKeyEvent();
@@ -316,6 +321,8 @@ public final class CarAudioManagerPermissionTest extends AbstractCarManagerPermi
     }
 
     @Test
+    @ApiTest(apis = {
+            "android.car.media.CarAudioManager#unregisterCarVolumeCallback(CarVolumeCallback)"})
     public void unregisterCarVolumeCallback_withoutPermission_throws() {
         mCallback = new CarAudioManagerTestUtils.SyncCarVolumeCallback();
         runWithCarControlAudioVolumePermission(
