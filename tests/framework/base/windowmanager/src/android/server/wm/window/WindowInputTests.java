@@ -29,12 +29,9 @@ import static android.view.WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
 import static android.view.WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE;
 import static android.view.WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL;
 import static android.view.WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH;
-
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
-
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertTrue;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
@@ -69,7 +66,6 @@ import androidx.test.rule.ActivityTestRule;
 
 import com.android.compatibility.common.util.CtsTouchUtils;
 import com.android.compatibility.common.util.SystemUtil;
-import com.android.compatibility.common.util.UiAutomatorUtils;
 import com.android.cts.input.DebugInputRule;
 
 import org.junit.Before;
@@ -115,7 +111,7 @@ public class WindowInputTests {
     private final long EVENT_FLAGS_WAIT_TIME = 2;
 
     @Before
-    public void setUp() {
+    public void setUp() throws InterruptedException {
         pressWakeupButton();
         pressUnlockButton();
         launchHomeActivityNoWait();
@@ -125,9 +121,8 @@ public class WindowInputTests {
         mActivity = mActivityRule.launchActivity(null);
         mInputManager = mActivity.getSystemService(InputManager.class);
         mInstrumentation.waitForIdleSync();
-        // TODO(b/295916860) - Replace this 'uidevice' workaround with an
-        //  WindowInfosListener-based solution
-        UiAutomatorUtils.getUiDevice().waitForIdle();
+        assertTrue("Failed to reach stable window geometry",
+                waitForStableWindowGeometry(5, TimeUnit.SECONDS));
         mClickCount = 0;
     }
 
@@ -257,6 +252,8 @@ public class WindowInputTests {
                     mActivity.addWindow(view2, p);
                 });
         mInstrumentation.waitForIdleSync();
+        assertTrue("Failed to reach stable window geometry",
+                waitForStableWindowGeometry(5, TimeUnit.SECONDS));
 
         mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mView);
         assertEquals(0, mClickCount);
@@ -264,7 +261,6 @@ public class WindowInputTests {
 
     // If a window is obscured by another window from the same app, touches should still get
     // delivered to the bottom window, and the FLAG_WINDOW_IS_OBSCURED should not be set.
-    @DebugInputRule.DebugInput(bug = 295916860)
     @Test
     public void testFilterTouchesWhenObscuredByWindowFromSameUid() throws Throwable {
         final WindowManager.LayoutParams p = new WindowManager.LayoutParams();
@@ -366,6 +362,8 @@ public class WindowInputTests {
                     });
             mInstrumentation.waitForIdleSync();
             waitForWindow(windowName);
+            assertTrue("Failed to reach stable window geometry",
+                    waitForStableWindowGeometry(5, TimeUnit.SECONDS));
             mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mView);
 
             // Touch not received due to setFilterTouchesWhenObscured(true)
@@ -754,6 +752,8 @@ public class WindowInputTests {
                     mActivity.addWindow(viewOverlap, p);
                 });
         mInstrumentation.waitForIdleSync();
+        assertTrue("Failed to reach stable window geometry",
+                waitForStableWindowGeometry(5, TimeUnit.SECONDS));
 
         mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mView);
         assertEquals(0, mClickCount);
@@ -820,6 +820,8 @@ public class WindowInputTests {
                     mActivity.addWindow(mView, p);
                 });
         mInstrumentation.waitForIdleSync();
+        assertTrue("Failed to reach stable window geometry",
+                waitForStableWindowGeometry(5, TimeUnit.SECONDS));
 
         mCtsTouchUtils.emulateTapOnView(mInstrumentation, mActivityRule, mView, size + 5, size + 5);
 
