@@ -1432,7 +1432,8 @@ class ItsSession(object):
         fmt = json_obj[_TAG_STR][:-5]
         bufs[self._camera_id][fmt].append(buf)
         nbufs += 1
-      elif json_obj[_TAG_STR] == 'privImage':
+      # Physical camera is appended to the tag string of a private capture
+      elif json_obj[_TAG_STR].startswith('privImage'):
         # The private image format buffers are opaque to camera clients
         # and cannot be accessed.
         nbufs += 1
