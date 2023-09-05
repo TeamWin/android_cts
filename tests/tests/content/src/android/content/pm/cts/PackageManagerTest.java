@@ -2806,8 +2806,9 @@ public class PackageManagerTest {
         final String newDataDir = packageInfo.applicationInfo.dataDir;
         assertThat(newDataDir).isNotEmpty();
         assertThat(newDataDir).isEqualTo(oldDataDir);
-        final String appDirInDump = parsePackageDump(HELLO_WORLD_PACKAGE_NAME, "    dataDir=");
-        assertThat(appDirInDump).isEqualTo(newDataDir);
+        final String appDirInDump = parsePackageDump(HELLO_WORLD_PACKAGE_NAME,
+                "      dataDir=/data/user/" + mContext.getUserId());
+        assertThat("/data/user/" + mContext.getUserId() + appDirInDump).isEqualTo(newDataDir);
         assertThat(packageInfo.applicationInfo.storageUuid).isNotNull();
         // Verify the stats
         stats = storageStatsManager.queryStatsForPackage(
