@@ -1751,6 +1751,11 @@ public abstract class ActivityManagerTestBase {
         }
 
         public LockScreenSession disableLockScreen() {
+            // Lock credentials need to be cleared before disabling the lock.
+            if (mLockCredentialSet) {
+                removeLockCredential();
+                mLockCredentialSet = false;
+            }
             setLockDisabled(true);
             return this;
         }
@@ -1874,7 +1879,7 @@ public abstract class ActivityManagerTestBase {
          * @param lockDisabled true if should disable, false otherwise.
          */
         protected void setLockDisabled(boolean lockDisabled) {
-            runCommandAndPrintOutput("locksettings set-disabled " + oldIfNeeded() + lockDisabled);
+            runCommandAndPrintOutput("locksettings set-disabled " + lockDisabled);
         }
 
         @NonNull
