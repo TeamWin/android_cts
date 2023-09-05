@@ -18,10 +18,11 @@ package android.server.wm.backgroundactivity.common;
 
 import android.app.PendingIntent;
 import android.content.ComponentName;
+import android.os.ResultReceiver;
 
 interface ITestService {
-    PendingIntent generatePendingIntent(in ComponentName componentName, in Bundle createOptions);
-    PendingIntent generatePendingIntentBroadcast(in ComponentName componentName);
+    PendingIntent generatePendingIntent(in ComponentName componentName, in int flags, in Bundle createOptions, in ResultReceiver resultReceiver);
+    PendingIntent generatePendingIntentBroadcast(in ComponentName componentName, in ResultReceiver resultReceiver);
     void startManageSpaceActivity();
     void sendByTextClassification(in TextClassification classification);
     void sendPendingIntent(in PendingIntent pendingIntent, in Bundle sendOptions);

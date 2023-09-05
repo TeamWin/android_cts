@@ -16,6 +16,8 @@
 
 package android.server.wm.backgroundactivity.common;
 
+import static android.server.wm.backgroundactivity.common.CommonComponents.EVENT_NOTIFIER_EXTRA;
+
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.ComponentName;
@@ -23,6 +25,7 @@ import android.content.Intent;
 import android.os.Binder;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.os.ResultReceiver;
 import android.os.storage.StorageManager;
 import android.util.Log;
 import android.view.View;
@@ -41,23 +44,26 @@ public class TestService extends Service {
 
     private class MyBinder extends ITestService.Stub {
         @Override
-        public PendingIntent generatePendingIntent(ComponentName componentName,
-                Bundle createOptions) {
-            Intent newIntent = new Intent();
-            newIntent.setComponent(componentName);
-            newIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            newIntent.setIdentifier(UUID.randomUUID().toString());
-            return PendingIntent.getActivity(TestService.this, 0, newIntent,
+        public PendingIntent generatePendingIntent(ComponentName componentName, int flags,
+                Bundle createOptions, ResultReceiver resultReceiver) {
+            Intent intent = new Intent();
+            intent.setComponent(componentName);
+            intent.addFlags(flags);
+            intent.setIdentifier(UUID.randomUUID().toString());
+            intent.putExtra(EVENT_NOTIFIER_EXTRA, resultReceiver);
+            return PendingIntent.getActivity(TestService.this, 0, intent,
                     PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE,
                     createOptions);
         }
 
         @Override
-        public PendingIntent generatePendingIntentBroadcast(ComponentName componentName) {
-            Intent newIntent = new Intent();
-            newIntent.setComponent(componentName);
-            newIntent.setIdentifier(UUID.randomUUID().toString());
-            return PendingIntent.getBroadcast(TestService.this, 0, newIntent,
+        public PendingIntent generatePendingIntentBroadcast(ComponentName componentName,
+                ResultReceiver resultReceiver) {
+            Intent intent = new Intent();
+            intent.setComponent(componentName);
+            intent.setIdentifier(UUID.randomUUID().toString());
+            intent.putExtra(EVENT_NOTIFIER_EXTRA, resultReceiver);
+            return PendingIntent.getBroadcast(TestService.this, 0, intent,
                     PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
         }
 

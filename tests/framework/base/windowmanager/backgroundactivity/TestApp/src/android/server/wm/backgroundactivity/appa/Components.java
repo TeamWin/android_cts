@@ -76,6 +76,8 @@ public class Components extends ComponentsBase {
         // .CommonForegroundActivityExtras
         public final String ACTIVITY_ID = "ACTIVITY_ID_EXTRA";
         public final String LAUNCH_INTENTS = "LAUNCH_INTENTS_EXTRA";
+        public final String LAUNCH_PENDING_INTENTS = "LAUNCH_PENDING_INTENTS_EXTRA";
+        public final String LAUNCH_FOR_RESULT_AND_FINISH = "LAUNCH_FOR_RESULT_AND_FINISH";
         public final String FINISH_FIRST = "FINISH_FIRST_EXTRA";
     }
 

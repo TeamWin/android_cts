@@ -32,6 +32,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import android.app.PendingIntent;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -49,6 +50,7 @@ import com.android.compatibility.common.util.DeviceConfigStateHelper;
 import org.junit.After;
 import org.junit.Before;
 
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -76,7 +78,10 @@ public abstract class BackgroundActivityTestBase extends ActivityManagerTestBase
             List.of(APP_A, APP_A_33, APP_B, APP_B_33, APP_C, APP_C_33);
 
     static final String SHELL_PACKAGE = "com.android.shell";
-    static final int ACTIVITY_FOCUS_TIMEOUT_MS = 3000;
+    // This can be long as the activity should start
+    static final Duration ACTIVITY_FOCUS_TIMEOUT = Duration.ofSeconds(10);
+    // Here we don't expect the activity to start, so we always have to wait. Keep this short.
+    static final Duration ACTIVITY_NOT_FOCUS_TIMEOUT = Duration.ofSeconds(3);
 
     // TODO(b/258792202): Cleanup with feature flag
     static final String NAMESPACE_WINDOW_MANAGER = "window_manager";
@@ -146,10 +151,6 @@ public abstract class BackgroundActivityTestBase extends ActivityManagerTestBase
         }
     }
 
-    boolean waitForActivityFocused(ComponentName componentName) {
-        return waitForActivityFocused(ACTIVITY_FOCUS_TIMEOUT_MS, componentName);
-    }
-
     void assertPinnedStackDoesNotExist() {
         mWmState.assertDoesNotContainStack("Must not contain pinned stack.",
                 WINDOWING_MODE_PINNED, ACTIVITY_TYPE_STANDARD);
@@ -213,6 +214,24 @@ public abstract class BackgroundActivityTestBase extends ActivityManagerTestBase
                 })
                 .toArray(Intent[]::new);
         broadcastIntent.putExtra(app.FOREGROUND_ACTIVITY_EXTRA.LAUNCH_INTENTS, intents);
+        return broadcastIntent;
+    }
+
+    Intent getLaunchActivitiesBroadcast(Components app,
+            PendingIntent... pendingIntents) {
+        Intent broadcastIntent = new Intent(
+                app.FOREGROUND_ACTIVITY_ACTIONS.LAUNCH_BACKGROUND_ACTIVITIES);
+        broadcastIntent.putExtra(app.FOREGROUND_ACTIVITY_EXTRA.LAUNCH_PENDING_INTENTS,
+                pendingIntents);
+        return broadcastIntent;
+    }
+
+    Intent getLaunchAndFinishActivitiesBroadcast(Components app, PendingIntent... pendingIntents) {
+        Intent broadcastIntent = new Intent(
+                app.FOREGROUND_ACTIVITY_ACTIONS.LAUNCH_BACKGROUND_ACTIVITIES);
+        broadcastIntent.putExtra(app.FOREGROUND_ACTIVITY_EXTRA.LAUNCH_PENDING_INTENTS,
+                pendingIntents);
+        broadcastIntent.putExtra(app.FOREGROUND_ACTIVITY_EXTRA.LAUNCH_FOR_RESULT_AND_FINISH, true);
         return broadcastIntent;
     }
 
@@ -290,9 +309,11 @@ public abstract class BackgroundActivityTestBase extends ActivityManagerTestBase
 
             ComponentName launchedComponent = mLaunchIntent.getComponent();
             mWmState.waitForValidState(launchedComponent);
-            boolean result = waitForActivityFocused(launchedComponent);
-            assertEquals("Activity: " + launchedComponent.flattenToShortString() + " launch ",
-                    succeeds, result);
+            if (succeeds) {
+                assertActivityFocused(launchedComponent);
+            } else {
+                assertActivityNotFocused(launchedComponent);
+            }
 
             // Reset intents to remove any added flags
             reset();
@@ -353,54 +374,58 @@ public abstract class BackgroundActivityTestBase extends ActivityManagerTestBase
 
 
     protected void assertActivityFocused(ComponentName componentName) {
-        assertActivityFocused(ACTIVITY_FOCUS_TIMEOUT_MS, componentName);
+        assertActivityFocused(ACTIVITY_FOCUS_TIMEOUT, componentName);
     }
 
     protected void assertActivityNotFocused(ComponentName componentName) {
-        assertActivityNotFocused(ACTIVITY_FOCUS_TIMEOUT_MS, componentName);
+        assertActivityNotFocused(ACTIVITY_NOT_FOCUS_TIMEOUT, componentName);
     }
 
     protected void assertActivityFocused(ComponentName componentName, String message) {
-        assertActivityFocused(ACTIVITY_FOCUS_TIMEOUT_MS, componentName, message);
+        assertActivityFocused(ACTIVITY_FOCUS_TIMEOUT, componentName, message);
     }
 
     protected void assertActivityNotFocused(ComponentName componentName, String message) {
-        assertActivityNotFocused(ACTIVITY_FOCUS_TIMEOUT_MS, componentName, message);
+        assertActivityNotFocused(ACTIVITY_NOT_FOCUS_TIMEOUT, componentName, message);
     }
 
     /** Asserts the activity is focused before timeout. */
-    protected void assertActivityFocused(int timeoutMs, ComponentName componentName) {
-        assertActivityFocused(timeoutMs, componentName,
-                "activity should be focused within " + timeoutMs + "ms");
+    protected void assertActivityFocused(Duration timeout, ComponentName componentName) {
+        assertActivityFocused(timeout, componentName,
+                "activity should be focused within " + timeout);
     }
 
     /** Asserts the activity is not focused until timeout. */
-    protected void assertActivityNotFocused(int timeoutMs, ComponentName componentName) {
-        assertActivityNotFocused(timeoutMs, componentName,
-                "activity should not be focused within " + timeoutMs + "ms");
+    protected void assertActivityNotFocused(Duration timeout, ComponentName componentName) {
+        assertActivityNotFocused(timeout, componentName,
+                "activity should not be focused within " + timeout);
+    }
+
+    private void waitForActivityResumed(Duration timeout, ComponentName componentName) {
+        waitForActivityResumed((int) timeout.toMillis(), componentName);
     }
 
     /** Asserts the activity is focused before timeout. */
-    protected void assertActivityFocused(int timeoutMs, ComponentName componentName,
+    protected void assertActivityFocused(Duration timeout, ComponentName componentName,
             String message) {
-        waitForActivityResumed(timeoutMs, componentName);
+        waitForActivityResumed(timeout, componentName);
         assertWithMessage(message).that(mWmState.getFocusedActivity()).isEqualTo(
                 getActivityName(componentName));
     }
 
     /** Asserts the activity is not focused until timeout. */
-    protected void assertActivityNotFocused(int timeoutMs, ComponentName componentName,
+    protected void assertActivityNotFocused(Duration timeout, ComponentName componentName,
             String message) {
-        waitForActivityResumed(timeoutMs, componentName);
+        waitForActivityResumed(timeout, componentName);
         assertWithMessage(message).that(mWmState.getFocusedActivity())
                 .isNotEqualTo(getActivityName(componentName));
     }
 
-    protected ITestService getTestService(Components c) throws Exception {
+    protected TestServiceClient getTestService(Components c) throws Exception {
         return getTestService(new ComponentName(c.APP_PACKAGE_NAME, TEST_SERVICE));
     }
 
-    private ITestService getTestService(ComponentName componentName) throws Exception {
+    private TestServiceClient getTestService(ComponentName componentName) throws Exception {
         FutureConnection<ITestService> futureConnection = mServiceConnections.get(componentName);
         if (futureConnection == null) {
             // need to setup new test service connection for the component
@@ -412,7 +437,7 @@ public abstract class BackgroundActivityTestBase extends ActivityManagerTestBase
                     Context.BIND_AUTO_CREATE);
             assertTrue("Failed to setup " + componentName.toString(), success);
         }
-        return futureConnection.get(TEST_SERVICE_SETUP_TIMEOUT_MS);
+        return new TestServiceClient(futureConnection.get(TEST_SERVICE_SETUP_TIMEOUT_MS));
     }
 
 }

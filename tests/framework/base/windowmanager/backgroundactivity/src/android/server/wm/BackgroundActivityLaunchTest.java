@@ -65,7 +65,6 @@ import android.provider.Settings;
 import android.server.wm.backgroundactivity.appa.Components;
 import android.server.wm.backgroundactivity.common.CommonComponents.Event;
 import android.server.wm.backgroundactivity.common.EventReceiver;
-import android.server.wm.backgroundactivity.common.ITestService;
 import android.util.Log;
 import android.view.textclassifier.TextClassification;
 
@@ -392,8 +391,8 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
 
     @Test
     public void testPendingIntentActivityBlocked() throws Exception {
-        ITestService serviceA = getTestService(APP_A);
-        ITestService serviceB = getTestService(APP_B);
+        TestServiceClient serviceA = getTestService(APP_A);
+        TestServiceClient serviceB = getTestService(APP_B);
 
         // Cannot start activity by pending intent, as both appA and appB are in background
         PendingIntent pi = generatePendingIntent(serviceA, APP_A.BACKGROUND_ACTIVITY);
@@ -437,10 +436,10 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
         // creator's privilege to launch itself. The PendingIntent itself is to launch App B. Since
         // App B is in the background, it should be blocked even though the creator (App A) is in
         // the foreground.
-        ITestService serviceA = getTestService(APP_A);
+        TestServiceClient serviceA = getTestService(APP_A);
         PendingIntent pi = serviceA.generatePendingIntent(APP_B.BACKGROUND_ACTIVITY,
                 CREATE_OPTIONS_DENY_BAL);
-        ITestService serviceB = getTestService(APP_B);
+        TestServiceClient serviceB = getTestService(APP_B);
         sendPendingIntent(pi, serviceB);
         assertActivityNotFocused(APP_B.FOREGROUND_ACTIVITY);
     }
@@ -458,10 +457,10 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
         // the foreground. However, The sender (App B) also tries to override the creator option by
         // setting the creator option from the sender side. This should not work. Creator option
         // cannot be set from the sender side.
-        ITestService serviceA = getTestService(APP_A);
+        TestServiceClient serviceA = getTestService(APP_A);
         PendingIntent pi =
                 serviceA.generatePendingIntent(APP_B.BACKGROUND_ACTIVITY, CREATE_OPTIONS_DENY_BAL);
-        ITestService serviceB = getTestService(APP_B);
+        TestServiceClient serviceB = getTestService(APP_B);
         serviceB.sendPendingIntent(pi, CREATE_OPTIONS_ALLOW_BAL);
         assertActivityNotFocused(APP_B.FOREGROUND_ACTIVITY);
     }
@@ -474,9 +473,9 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
 
         // Send pendingIntent from AppA to AppB, and the AppB launch the pending intent to start
         // activity in App A
-        ITestService serviceA = getTestService(APP_A);
+        TestServiceClient serviceA = getTestService(APP_A);
         PendingIntent pi = generatePendingIntent(serviceA, APP_A.BACKGROUND_ACTIVITY);
-        ITestService serviceB = getTestService(APP_B);
+        TestServiceClient serviceB = getTestService(APP_B);
         sendPendingIntent(pi, serviceB);
 
         assertActivityFocused(APP_A.BACKGROUND_ACTIVITY);
@@ -492,9 +491,9 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
 
         // Send pendingIntent from AppA to AppB, and the AppB launch the pending intent to start
         // activity in App A
-        ITestService serviceA = getTestService(APP_A);
+        TestServiceClient serviceA = getTestService(APP_A);
         PendingIntent pi = generatePendingIntent(serviceA, APP_A.BACKGROUND_ACTIVITY);
-        ITestService serviceB = getTestService(APP_B);
+        TestServiceClient serviceB = getTestService(APP_B);
         sendPendingIntent(pi, serviceB);
 
         assertActivityNotFocused(APP_A.BACKGROUND_ACTIVITY);
@@ -506,8 +505,8 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
             throws Exception {
 
         // setup
-        ITestService appATestService = getTestService(APP_A);
-        ITestService appBTestService = getTestService(APP_B_33);
+        TestServiceClient appATestService = getTestService(APP_A);
+        TestServiceClient appBTestService = getTestService(APP_B_33);
 
         // create PI in appA
         PendingIntent pi = generatePendingIntent(appATestService, APP_A.BACKGROUND_ACTIVITY);
@@ -534,10 +533,10 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
         // ALLOW_BAL_EXTRA_ON_PENDING_INTENT will trigger AppA (the creator) to try to allow BAL on
         // behalf of the sender by adding the BAL option to the Intent's extras, which should have
         // no effect.
-        ITestService serviceA = getTestService(APP_A);
+        TestServiceClient serviceA = getTestService(APP_A);
         PendingIntent pi =
                 serviceA.generatePendingIntent(APP_A.BACKGROUND_ACTIVITY, SEND_OPTIONS_ALLOW_BAL);
-        ITestService serviceB = getTestService(APP_B);
+        TestServiceClient serviceB = getTestService(APP_B);
         sendPendingIntent(pi, serviceB);
 
         assertActivityNotFocused(APP_A.BACKGROUND_ACTIVITY);
@@ -553,10 +552,10 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
 
         // Send pendingIntent from AppA to AppB, and the AppB launch the pending intent to start
         // activity in App A
-        ITestService serviceA = getTestService(APP_A);
+        TestServiceClient serviceA = getTestService(APP_A);
         PendingIntent pi =
                 serviceA.generatePendingIntent(APP_A.BACKGROUND_ACTIVITY, SEND_OPTIONS_ALLOW_BAL);
-        ITestService serviceB = getTestService(APP_B);
+        TestServiceClient serviceB = getTestService(APP_B);
         serviceB.sendPendingIntent(pi, null);
 
         assertActivityNotFocused(APP_A.BACKGROUND_ACTIVITY);
@@ -567,8 +566,8 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
     public void testPendingIntentBroadcastActivity_appBIsForegroundAndAllowsBal_isNotBlocked()
             throws Exception {
         // setup
-        ITestService appATestService = getTestService(APP_A);
-        ITestService appBTestService = getTestService(APP_B);
+        TestServiceClient appATestService = getTestService(APP_A);
+        TestServiceClient appBTestService = getTestService(APP_B);
 
         // create PI in appA
         PendingIntent pi = generatePendingIntent(appATestService, APP_A.BACKGROUND_ACTIVITY);
@@ -585,17 +584,20 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
 
     @Test
     public void testPendingIntentBroadcastTimeout_noDelay_isNotBlocked() throws Exception {
-        ITestService serviceA = getTestService(APP_A);
-        ITestService serviceB = getTestService(APP_B);
+        TestServiceClient serviceA = getTestService(APP_A);
+        TestServiceClient serviceB = getTestService(APP_B);
 
         // Start AppB foreground activity
         startActivity(APP_B.FOREGROUND_ACTIVITY);
         assertTaskStackHasComponents(APP_B.FOREGROUND_ACTIVITY, APP_B.FOREGROUND_ACTIVITY);
 
-        PendingIntent pi =
-                serviceA.generatePendingIntentBroadcast(APP_A.SIMPLE_BROADCAST_RECEIVER);
+        EventReceiver receiver = new EventReceiver(Event.BROADCAST_RECEIVED);
+        PendingIntent pi = serviceA.generatePendingIntentBroadcast(APP_A.SIMPLE_BROADCAST_RECEIVER,
+                receiver.getNotifier());
         // PI broadcast should create token to allow serviceA to start activities later
         serviceB.sendPendingIntent(pi, SEND_OPTIONS_ALLOW_BAL);
+        receiver.waitForEventOrThrow(ACTIVITY_START_TIMEOUT_MS);
+
         // Grace period is still active.
         startBackgroundActivity(serviceA, APP_A);
 
@@ -605,17 +607,20 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
 
     @Test
     public void testPendingIntentBroadcastTimeout_delay1s_isNotBlocked() throws Exception {
-        ITestService serviceA = getTestService(APP_A);
-        ITestService serviceB = getTestService(APP_B);
+        TestServiceClient serviceA = getTestService(APP_A);
+        TestServiceClient serviceB = getTestService(APP_B);
 
         // Start AppB foreground activity
         startActivity(APP_B.FOREGROUND_ACTIVITY);
         assertTaskStackHasComponents(APP_B.FOREGROUND_ACTIVITY, APP_B.FOREGROUND_ACTIVITY);
 
-        PendingIntent pi =
-                serviceA.generatePendingIntentBroadcast(APP_A.SIMPLE_BROADCAST_RECEIVER);
+        EventReceiver receiver = new EventReceiver(Event.BROADCAST_RECEIVED);
+        PendingIntent pi = serviceA.generatePendingIntentBroadcast(APP_A.SIMPLE_BROADCAST_RECEIVER,
+                receiver.getNotifier());
         // PI broadcast should create token to allow serviceA to start activities later
         serviceB.sendPendingIntent(pi, SEND_OPTIONS_ALLOW_BAL);
+        receiver.waitForEventOrThrow(ACTIVITY_START_TIMEOUT_MS);
+
         SystemClock.sleep(1000);
         // Grace period is still active.
         startBackgroundActivity(serviceA, APP_A);
@@ -630,17 +635,20 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
         // timeout. Before the timeout, the start would be allowed because app B (the PI sender) was
         // in the foreground during PI send, so app A (the PI creator) would have
         // (10s * hw_multiplier) to start background activity starts.
-        ITestService serviceA = getTestService(APP_A);
-        ITestService serviceB = getTestService(APP_B);
+        TestServiceClient serviceA = getTestService(APP_A);
+        TestServiceClient serviceB = getTestService(APP_B);
 
         // Start AppB foreground activity
         startActivity(APP_B.FOREGROUND_ACTIVITY);
         assertTaskStackHasComponents(APP_B.FOREGROUND_ACTIVITY, APP_B.FOREGROUND_ACTIVITY);
 
-        PendingIntent pi =
-                serviceA.generatePendingIntentBroadcast(APP_A.SIMPLE_BROADCAST_RECEIVER);
-        // PI broadcast should create token to allow serviceA to start activities for 10s
+        EventReceiver receiver = new EventReceiver(Event.BROADCAST_RECEIVED);
+        PendingIntent pi = serviceA.generatePendingIntentBroadcast(APP_A.SIMPLE_BROADCAST_RECEIVER,
+                receiver.getNotifier());
+        // PI broadcast should create token to allow serviceA to start activities later
         serviceB.sendPendingIntent(pi, SEND_OPTIONS_ALLOW_BAL);
+        receiver.waitForEventOrThrow(ACTIVITY_START_TIMEOUT_MS);
+
         SystemClock.sleep(12000L * HW_TIMEOUT_MULTIPLIER);
         // Grace period is expired.
         startBackgroundActivity(serviceA, APP_A);
@@ -654,9 +662,9 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
         // Send pendingIntent from AppA to AppB, and the AppB launch the pending intent to start
         // activity in App A. Since AppB is not in foreground and has no other privileges to start
         // an activity the start should be blocked.
-        ITestService serviceA = getTestService(APP_A);
+        TestServiceClient serviceA = getTestService(APP_A);
         PendingIntent pi = serviceA.generatePendingIntentBroadcast(APP_B.FOREGROUND_ACTIVITY);
-        ITestService serviceB = getTestService(APP_B);
+        TestServiceClient serviceB = getTestService(APP_B);
         serviceB.sendPendingIntent(pi, null);
 
         assertActivityNotFocused(APP_A.BACKGROUND_ACTIVITY);
@@ -823,7 +831,7 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
     // Test manage space pending intent created by system cannot bypass BAL check.
     @Test
     public void testManageSpacePendingIntentNoBalAllowed() throws Exception {
-        ITestService appATestService = getTestService(APP_A);
+        TestServiceClient appATestService = getTestService(APP_A);
         runWithShellPermissionIdentity(() -> {
             runShellCommandOrThrow("cmd appops set " + APP_A.APP_PACKAGE_NAME
                     + " android:manage_external_storage allow");
@@ -871,8 +879,8 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
 
     @Test
     public void testActivityStartbyTextClassifier_appBInFg_allowsActivityStart() throws Exception {
-        ITestService appATestService = getTestService(APP_A);
-        ITestService appBTestService = getTestService(APP_B);
+        TestServiceClient appATestService = getTestService(APP_A);
+        TestServiceClient appBTestService = getTestService(APP_B);
         // create PI in appA
         PendingIntent pi = generatePendingIntent(appATestService, APP_A.BACKGROUND_ACTIVITY);
 
@@ -891,8 +899,8 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
 
     @Test
     public void testActivityStartbyTextClassifier_appBInBg_blocksActivityStart() throws Exception {
-        ITestService appATestService = getTestService(APP_A);
-        ITestService appBTestService = getTestService(APP_B);
+        TestServiceClient appATestService = getTestService(APP_A);
+        TestServiceClient appBTestService = getTestService(APP_B);
         // create PI in appA
         PendingIntent pi = generatePendingIntent(appATestService, APP_A.BACKGROUND_ACTIVITY);
 
@@ -1026,7 +1034,8 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
 
     private void startPendingIntentSenderActivity(Components appToCreatePendingIntent,
             Components appToSendPendingIntent, boolean allowBal) throws Exception {
-        ITestService testServiceToCreatePendingIntent = getTestService(appToCreatePendingIntent);
+        TestServiceClient testServiceToCreatePendingIntent =
+                getTestService(appToCreatePendingIntent);
         // Get a PendingIntent created by appToCreatePendingIntent.
         final PendingIntent pi;
         try {
@@ -1091,7 +1100,7 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
                 MODE_ALLOWED);
     }
 
-    private static void startBackgroundActivity(ITestService service, Components app)
+    private static void startBackgroundActivity(TestServiceClient service, Components app)
             throws Exception {
         service.startActivityIntent(new Intent().setComponent(app.BACKGROUND_ACTIVITY)
                 .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
@@ -1110,12 +1119,12 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
         receiver.waitForEventOrThrow(ACTIVITY_START_TIMEOUT_MS);
     }
 
-    private static PendingIntent generatePendingIntent(ITestService testService,
+    private static PendingIntent generatePendingIntent(TestServiceClient testService,
             ComponentName activity) throws RemoteException {
         return testService.generatePendingIntent(activity, null);
     }
 
-    private static void sendPendingIntent(PendingIntent pi, ITestService service)
+    private static void sendPendingIntent(PendingIntent pi, TestServiceClient service)
             throws RemoteException {
         service.sendPendingIntent(pi, Bundle.EMPTY);
     }
