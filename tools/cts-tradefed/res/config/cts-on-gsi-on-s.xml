@@ -66,4 +66,7 @@
     <!-- CtsVideoCodecTestCases: b/279308238 -->
     <option name="compatibility:exclude-filter" value="CtsVideoCodecTestCases android.videocodec.cts.VideoEncoderMinMaxTest" />
 
+    <!-- CtsVideoTestCases: b/284192974 -->
+    <option name="compatibility:exclude-filter" value="CtsVideoTestCases android.video.cts.VideoEncoderDecoderTest" />
+
 </configuration>
