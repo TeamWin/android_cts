@@ -20,7 +20,9 @@ import static android.mediapc.cts.CodecTestBase.SELECT_ALL;
 import static android.mediapc.cts.CodecTestBase.SELECT_AUDIO;
 import static android.mediapc.cts.CodecTestBase.SELECT_HARDWARE;
 import static android.mediapc.cts.CodecTestBase.SELECT_VIDEO;
+import static android.mediapc.cts.CodecTestBase.codecPrefix;
 import static android.mediapc.cts.CodecTestBase.getMimesOfAvailableCodecs;
+import static android.mediapc.cts.CodecTestBase.mediaTypePrefix;
 import static android.mediapc.cts.CodecTestBase.selectCodecs;
 import static android.mediapc.cts.CodecTestBase.selectHardwareCodecs;
 
@@ -176,6 +178,9 @@ public class CodecInitializationLatencyTest {
         Set<String> mimeSet = getMimesOfAvailableCodecs(SELECT_VIDEO, SELECT_HARDWARE);
         mimeSet.addAll(getMimesOfAvailableCodecs(SELECT_AUDIO, SELECT_ALL));
         for (String mime : mimeSet) {
+            if (mediaTypePrefix != null && !mime.startsWith(mediaTypePrefix)) {
+                continue;
+            }
             ArrayList<String> listOfCodecs;
             if (mime.startsWith("audio/")) {
                 listOfCodecs = selectCodecs(mime, null, null, true);
@@ -185,6 +190,9 @@ public class CodecInitializationLatencyTest {
                 listOfCodecs.addAll(selectHardwareCodecs(mime, null, null, false));
             }
             for (String codec : listOfCodecs) {
+                if (codecPrefix != null && !codec.startsWith(codecPrefix)) {
+                    continue;
+                }
                 argsList.add(new Object[]{mime, codec});
             }
         }
