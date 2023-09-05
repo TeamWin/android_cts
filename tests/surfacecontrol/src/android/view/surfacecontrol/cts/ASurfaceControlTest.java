@@ -21,7 +21,6 @@ import static android.view.cts.surfacevalidator.ASurfaceControlTestActivity.Rect
 import static android.view.cts.surfacevalidator.ASurfaceControlTestActivity.WAIT_TIMEOUT_S;
 import static android.view.cts.util.ASurfaceControlTestUtils.applyAndDeleteSurfaceTransaction;
 import static android.view.cts.util.ASurfaceControlTestUtils.createSurfaceTransaction;
-import static android.view.cts.util.ASurfaceControlTestUtils.getSolidBuffer;
 import static android.view.cts.util.ASurfaceControlTestUtils.nSurfaceControl_acquire;
 import static android.view.cts.util.ASurfaceControlTestUtils.nSurfaceControl_create;
 import static android.view.cts.util.ASurfaceControlTestUtils.nSurfaceControl_createFromWindow;
@@ -66,7 +65,6 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.hardware.DataSpace;
-import android.hardware.HardwareBuffer;
 import android.os.SystemClock;
 import android.os.Trace;
 import android.platform.test.annotations.RequiresDevice;
@@ -2051,7 +2049,7 @@ public class ASurfaceControlTest {
         ASurfaceControlTestActivity.SurfaceHolderCallback surfaceHolderCallback =
                 new ASurfaceControlTestActivity.SurfaceHolderCallback(
                         new SurfaceHolderCallback(basicSurfaceHolderCallback), readyFence,
-                        mActivity.getParentFrameLayout().getViewTreeObserver());
+                        mActivity.getParentFrameLayout().getRootSurfaceControl());
         mActivity.createSurface(surfaceHolderCallback);
         try {
             assertTrue("timeout", readyFence.await(WAIT_TIMEOUT_S, TimeUnit.SECONDS));
@@ -2086,7 +2084,7 @@ public class ASurfaceControlTest {
         ASurfaceControlTestActivity.SurfaceHolderCallback surfaceHolderCallback =
                 new ASurfaceControlTestActivity.SurfaceHolderCallback(
                         new SurfaceHolderCallback(basicSurfaceHolderCallback), readyFence,
-                        mActivity.getParentFrameLayout().getViewTreeObserver());
+                        mActivity.getParentFrameLayout().getRootSurfaceControl());
         mActivity.createSurface(surfaceHolderCallback);
         try {
             assertTrue("timeout", readyFence.await(WAIT_TIMEOUT_S, TimeUnit.SECONDS));
@@ -2339,8 +2337,6 @@ public class ASurfaceControlTest {
 
         final int extendedDataspace = DataSpace.pack(DataSpace.STANDARD_BT709,
                 DataSpace.TRANSFER_SRGB, DataSpace.RANGE_EXTENDED);
-        final HardwareBuffer buffer = getSolidBuffer(DEFAULT_LAYOUT_WIDTH,
-                DEFAULT_LAYOUT_HEIGHT, Color.RED);
 
         verifyTest(
                 new BasicSurfaceHolderCallback() {
@@ -2349,7 +2345,7 @@ public class ASurfaceControlTest {
                         long surfaceTransaction = nSurfaceTransaction_create();
                         long surfaceControl = createFromWindow(holder.getSurface());
                         setSolidBuffer(surfaceControl, surfaceTransaction, DEFAULT_LAYOUT_WIDTH,
-                                DEFAULT_LAYOUT_HEIGHT, Color.RED);
+                                DEFAULT_LAYOUT_HEIGHT, Color.WHITE);
                         nSurfaceTransaction_setDataSpace(surfaceControl, surfaceTransaction,
                                 extendedDataspace);
                         nSurfaceTransaction_setExtendedRangeBrightness(surfaceControl,
@@ -2358,7 +2354,7 @@ public class ASurfaceControlTest {
                         nSurfaceTransaction_delete(surfaceTransaction);
                     }
                 },
-                new PixelChecker(Color.RED) { //10000
+                new PixelChecker(Color.WHITE) { //10000
                     @Override
                     public boolean checkPixels(int pixelCount, int width, int height) {
                         return pixelCount > 9000 && pixelCount < 11000;
@@ -2379,7 +2375,7 @@ public class ASurfaceControlTest {
                             long surfaceTransaction = nSurfaceTransaction_create();
                             long surfaceControl = createFromWindow(holder.getSurface());
                             setSolidBuffer(surfaceControl, surfaceTransaction, DEFAULT_LAYOUT_WIDTH,
-                                    DEFAULT_LAYOUT_HEIGHT, Color.RED);
+                                    DEFAULT_LAYOUT_HEIGHT, Color.WHITE);
                             nSurfaceTransaction_setDataSpace(surfaceControl, surfaceTransaction,
                                     extendedDataspace);
                             nSurfaceTransaction_setExtendedRangeBrightness(surfaceControl,
@@ -2388,7 +2384,7 @@ public class ASurfaceControlTest {
                             nSurfaceTransaction_delete(surfaceTransaction);
                         }
                     },
-                    new PixelChecker(Color.RED) { //10000
+                    new PixelChecker(Color.WHITE) { //10000
                         @Override
                         public boolean checkPixels(int pixelCount, int width, int height) {
                             return pixelCount > 9000 && pixelCount < 11000;

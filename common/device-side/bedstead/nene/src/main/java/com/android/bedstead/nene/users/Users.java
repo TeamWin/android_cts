@@ -132,7 +132,7 @@ public final class Users {
             try {
                 UserReference user =
                         ShellCommand.builder("cmd car_service get-initial-user")
-                        .executeAndParseOutput(i -> find(Integer.parseInt(i.trim())));
+                                .executeAndParseOutput(i -> find(Integer.parseInt(i.trim())));
 
                 if (user.exists()) {
                     return user;

@@ -2851,10 +2851,12 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.cts.intent.category.MANUAL_TEST" />
             </intent-filter>
+            <meta-data android:name="CddTest" android:value="7.3/C-1-5" />
             <meta-data android:name="test_category" android:value="@string/test_category_sensors" />
             <meta-data android:name="test_applicable_features"
                        android:value="android.hardware.sensor.stepcounter:android.hardware.sensor.stepdetector:android.hardware.sensor.proximity:android.hardware.sensor.light" />
             <meta-data android:name="display_mode" android:value="multi_display_mode" />
+            <meta-data android:name="test_pass_mode" android:value="either_mode" />
         </activity>
 
         <!-- TODO: enable when a more reliable way to identify time synchronization is available -->
@@ -5794,23 +5796,6 @@
             <meta-data android:name="ApiTest"
                 android:value="android.media.AudioRecord#addOnRoutingChangedListener|
                 android.media.AudioRecord.OnRoutingChangedListener#onRoutingChanged" />
-        </activity>
-
-        <activity android:name=".audio.AudioDataPathsActivity"
-            android:exported="true"
-            android:label="@string/audio_datapaths_test">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.cts.intent.category.MANUAL_TEST" />
-            </intent-filter>
-            <meta-data android:name="test_category" android:value="@string/test_category_audio" />
-            <meta-data android:name="test_required_features" android:value="android.hardware.microphone:android.hardware.audio.output" />
-            <meta-data android:name="display_mode" android:value="multi_display_mode" />
-            <meta-data android:name="ApiTest"
-                android:value="android.media.AudioRecord#startRecording|
-                    android.media.AudioRecord#stopRecording|
-                    android.media.AudioTrack#play|
-                    android.media.AudioTrack#stop" />
         </activity>
 
         <activity android:name=".audio.AudioLoopbackLatencyActivity"
