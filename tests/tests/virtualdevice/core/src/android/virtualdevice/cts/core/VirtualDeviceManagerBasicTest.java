@@ -21,6 +21,7 @@ import static android.Manifest.permission.ADD_ALWAYS_UNLOCKED_DISPLAY;
 import static android.Manifest.permission.CREATE_VIRTUAL_DEVICE;
 import static android.companion.virtual.VirtualDeviceParams.DEVICE_POLICY_CUSTOM;
 import static android.companion.virtual.VirtualDeviceParams.DEVICE_POLICY_DEFAULT;
+import static android.companion.virtual.VirtualDeviceParams.POLICY_TYPE_ACTIVITY;
 import static android.companion.virtual.VirtualDeviceParams.POLICY_TYPE_AUDIO;
 import static android.companion.virtual.VirtualDeviceParams.POLICY_TYPE_RECENTS;
 import static android.companion.virtual.VirtualDeviceParams.POLICY_TYPE_SENSORS;
@@ -657,7 +658,7 @@ public class VirtualDeviceManagerBasicTest {
 
     @Test
     @RequiresFlagsEnabled(Flags.FLAG_DYNAMIC_POLICY)
-    public void getDevicePolicy_changeAtRuntime_shouldReturnConfiguredValue() {
+    public void policyTypeRecents_changeAtRuntime_shouldReturnConfiguredValue() {
         mVirtualDevice = mVirtualDeviceManager.createVirtualDevice(
                 mFakeAssociationRule.getAssociationInfo().getId(),
                 new VirtualDeviceParams.Builder().build());
@@ -672,6 +673,26 @@ public class VirtualDeviceManagerBasicTest {
         assertThat(
                 mVirtualDeviceManager.getDevicePolicy(mVirtualDevice.getDeviceId(),
                         POLICY_TYPE_RECENTS))
+                .isEqualTo(DEVICE_POLICY_DEFAULT);
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_DYNAMIC_POLICY)
+    public void policyTypeActivity_changeAtRuntime_shouldReturnConfiguredValue() {
+        mVirtualDevice = mVirtualDeviceManager.createVirtualDevice(
+                mFakeAssociationRule.getAssociationInfo().getId(),
+                new VirtualDeviceParams.Builder().build());
+
+        mVirtualDevice.setDevicePolicy(POLICY_TYPE_ACTIVITY, DEVICE_POLICY_CUSTOM);
+        assertThat(
+                mVirtualDeviceManager.getDevicePolicy(mVirtualDevice.getDeviceId(),
+                        POLICY_TYPE_ACTIVITY))
+                .isEqualTo(DEVICE_POLICY_CUSTOM);
+
+        mVirtualDevice.setDevicePolicy(POLICY_TYPE_ACTIVITY, DEVICE_POLICY_DEFAULT);
+        assertThat(
+                mVirtualDeviceManager.getDevicePolicy(mVirtualDevice.getDeviceId(),
+                        POLICY_TYPE_ACTIVITY))
                 .isEqualTo(DEVICE_POLICY_DEFAULT);
     }
 
