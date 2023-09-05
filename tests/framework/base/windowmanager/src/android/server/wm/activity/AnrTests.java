@@ -65,7 +65,8 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
 /**
- * Test scenarios that lead to ANR dialog being shown.
+ * Test scenarios that lead to "Application Not
+ * Responding" (ANR) dialog being shown.
  *
  * <p>Build/Install/Run:
  *     atest CtsWindowManagerDeviceActivity:AnrTests
@@ -104,9 +105,9 @@ public class AnrTests extends ActivityManagerTestBase {
         mWmState.waitAndAssertAppFocus(UNRESPONSIVE_ACTIVITY.getPackageName(),
                 2000 /* waitTime_ms */);
         // wait for input manager to get the new focus app. This sleep can be removed once we start
-        // listing to input about the focused app.
+        // listening to input about the focused app.
         SystemClock.sleep(500);
-        injectKey(KeyEvent.KEYCODE_BACK, false /* longpress */, false /* sync */);
+        injectKey(KeyEvent.KEYCODE_A, false /* longpress */, false /* sync */);
         clickCloseAppOnAnrDialog(UNRESPONSIVE_ACTIVITY.getPackageName());
         assertEventLogsContainsAnr(UnresponsiveActivity.PROCESS_NAME);
     }
@@ -115,7 +116,7 @@ public class AnrTests extends ActivityManagerTestBase {
     public void slowOnKeyEventHandleTriggersAnr() {
         startUnresponsiveActivity(EXTRA_ON_KEYDOWN_DELAY_MS, true /* waitForCompletion */,
                 UNRESPONSIVE_ACTIVITY);
-        injectKey(KeyEvent.KEYCODE_BACK, false /* longpress */, false /* sync */);
+        injectKey(KeyEvent.KEYCODE_A, false /* longpress */, false /* sync */);
         clickCloseAppOnAnrDialog(UNRESPONSIVE_ACTIVITY.getPackageName());
         assertEventLogsContainsAnr(UnresponsiveActivity.PROCESS_NAME);
     }
