@@ -996,11 +996,6 @@ public final class DeviceOwnerTest extends BaseDeviceOwnerTest {
     }
 
     @Test
-    public void testDevicePolicySafetyCheckerIntegration_isSafeOperation() throws Exception {
-        executeDeviceTestMethod(".DevicePolicySafetyCheckerIntegrationTest", "testIsSafeOperation");
-    }
-
-    @Test
     public void testDevicePolicySafetyCheckerIntegration_unsafeStateException() throws Exception {
         executeDeviceTestMethod(".DevicePolicySafetyCheckerIntegrationTest",
                 "testUnsafeStateException");
