@@ -1877,7 +1877,7 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
                 if (img != null) {
                     img.close();
                 }
-                stopCapture(/*fast*/false);
+                stopCapture(/*fast*/true);
             } finally {
                 closeDefaultImageReader();
             }
