@@ -74,4 +74,12 @@ public class AutoHandwritingTest {
         view.setAutoHandwritingEnabled(true);
         assertTrue(view.isAutoHandwritingEnabled());
     }
+
+    @Test
+    public void autoHandwriting_textView_defaultValueIsTrue() {
+        Activity activity = mActivityRule.getActivity();
+        View view = activity.findViewById(R.id.default_textview);
+
+        assertTrue(view.isAutoHandwritingEnabled());
+    }
 }
