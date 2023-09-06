@@ -945,7 +945,7 @@ public class SELinuxHostTest extends BaseHostJUnit4Test {
      */
     @Test
     public void testCoredomainViolators() throws Exception {
-        assertSepolicyTests("CoredomainViolations", "/treble_sepolicy_tests",
+        assertSepolicyTests("CoredomainViolations", "/sepolicy_tests",
                 PropertyUtil.isVendorApiLevelNewerThan(mDevice, 27) /* includeVendorSepolicy */);
     }
 
