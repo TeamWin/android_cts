@@ -42,17 +42,15 @@ import static android.content.pm.PackageManager.MATCH_DISABLED_COMPONENTS;
 import static android.content.pm.PackageManager.MATCH_FACTORY_ONLY;
 import static android.content.pm.PackageManager.MATCH_HIDDEN_UNTIL_INSTALLED_COMPONENTS;
 import static android.content.pm.PackageManager.MATCH_INSTANT;
+import static android.content.pm.PackageManager.MATCH_KNOWN_PACKAGES;
 import static android.content.pm.PackageManager.MATCH_SYSTEM_ONLY;
 import static android.content.pm.PackageManager.MATCH_UNINSTALLED_PACKAGES;
 import static android.content.pm.cts.PackageManagerShellCommandIncrementalTest.parsePackageDump;
 import static android.os.UserHandle.CURRENT;
 import static android.os.UserHandle.USER_CURRENT;
-
 import static com.android.server.pm.Flags.FLAG_QUARANTINED_ENABLED;
-
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -2827,12 +2825,24 @@ public class PackageManagerTest {
                         PackageManager.PackageInfoFlags.of(MATCH_UNINSTALLED_PACKAGES)));
     }
 
+    private void assertDataAppExists(String packageName) throws Exception {
+        var packageInfo = mPackageManager.getPackageInfo(packageName, MATCH_KNOWN_PACKAGES);
+        assertThat(packageInfo.applicationInfo.dataDir).isNotNull();
+    }
+
     @Test
     public void testInstallArchived() throws Exception {
+        installPackage(HELLO_WORLD_APK);
+        // Try to install archived on top of fully installed app.
+        assertThat(
+                SystemUtil.runShellCommand("pm install-archived -t " + HELLO_WORLD_APK)).startsWith(
+                "Failure [INSTALL_FAILED_SESSION_INVALID: Archived");
+        uninstallPackage(HELLO_WORLD_PACKAGE_NAME);
         // Install archived.
         assertEquals("Success\n",
                 SystemUtil.runShellCommand("pm install-archived -t " + HELLO_WORLD_APK));
         assertTrue(isAppInstalled(HELLO_WORLD_PACKAGE_NAME));
+        assertDataAppExists(HELLO_WORLD_PACKAGE_NAME);
         // Wrong signature.
         assertThat(SystemUtil.runShellCommand(
                 "pm install -t -g " + HELLO_WORLD_DIFF_SIGNER_APK)).startsWith(
@@ -2857,6 +2867,7 @@ public class PackageManagerTest {
 
     @Test
     public void testInstallArchivedCheckFlags() throws Exception {
+        uninstallPackage(HELLO_WORLD_PACKAGE_NAME);
         // Install a default APK.
         assertEquals("Success\n",
                 SystemUtil.runShellCommand("pm install-archived -t " + HELLO_WORLD_APK));
@@ -2869,12 +2880,13 @@ public class PackageManagerTest {
                         + "PRIVATE_FLAG_ALLOW_NATIVE_HEAP_POINTER_TAGGING ]",
                 privatePkgFlags);
 
+        uninstallPackage(HELLO_WORLD_PACKAGE_NAME);
         // Install an APK with non default flags.
         assertEquals("Success\n",
                 SystemUtil.runShellCommand("pm install-archived -t " + HELLO_WORLD_FLAGS_APK));
         assertTrue(isAppInstalled(HELLO_WORLD_PACKAGE_NAME));
         pkgFlags = parsePackageDump(HELLO_WORLD_PACKAGE_NAME, "    pkgFlags=[");
-        assertEquals(" ]", pkgFlags);
+        assertEquals(" ALLOW_CLEAR_USER_DATA ]", pkgFlags);
         privatePkgFlags = parsePackageDump(HELLO_WORLD_PACKAGE_NAME,
                 "    privatePkgFlags=[");
         assertEquals(" ALLOW_AUDIO_PLAYBACK_CAPTURE "
@@ -2882,6 +2894,7 @@ public class PackageManagerTest {
                         + "PRIVATE_FLAG_ALLOW_NATIVE_HEAP_POINTER_TAGGING "
                         + "PRIVATE_FLAG_HAS_FRAGILE_USER_DATA ]",
                 privatePkgFlags);
+        assertDataAppExists(HELLO_WORLD_PACKAGE_NAME);
     }
 
     @Test
