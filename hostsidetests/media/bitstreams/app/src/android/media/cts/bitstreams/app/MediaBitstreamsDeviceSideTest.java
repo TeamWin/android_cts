@@ -338,7 +338,7 @@ public class MediaBitstreamsDeviceSideTest {
                 });
                 return conform.get(15, TimeUnit.SECONDS).toString();
             } catch (Exception e) {
-                return e.toString();
+                return e.toString().replaceAll("\\R", " ");
             } finally {
                 ex.release();
                 if (d != null) {
