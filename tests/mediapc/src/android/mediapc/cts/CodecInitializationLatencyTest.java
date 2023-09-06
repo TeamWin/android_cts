@@ -350,8 +350,8 @@ public class CodecInitializationLatencyTest {
 
         PerformanceClassEvaluator pce = new PerformanceClassEvaluator(this.mTestName);
         PerformanceClassEvaluator.CodecInitLatencyRequirement r5_1__H_1_Latency =
-            isEncoder ? isAudio ? pce.addR5_1__H_1_8() : pce.addR5_1__H_1_7()
-                : isAudio ? pce.addR5_1__H_1_13() : pce.addR5_1__H_1_12();
+                isEncoder ? isAudio ? pce.addR5_1__H_1_8() : pce.addR5_1__H_1_7(mMime)
+                    : isAudio ? pce.addR5_1__H_1_13() : pce.addR5_1__H_1_12();
 
         r5_1__H_1_Latency.setCodecInitLatencyMs(initializationLatency);
 
