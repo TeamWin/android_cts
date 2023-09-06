@@ -38,7 +38,7 @@ import android.jobscheduler.cts.jobtestapp.TestFgsService;
 import android.jobscheduler.cts.jobtestapp.TestJobSchedulerReceiver;
 import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
-import android.os.UserManager;
+import android.os.UserHandle;
 import android.provider.Settings;
 import android.util.Log;
 
@@ -200,7 +200,9 @@ public class UserInitiatedJobTest {
             try (WatchUidRunner uidWatcher = new WatchUidRunner(
                     InstrumentationRegistry.getInstrumentation(), testAppInfo.uid)) {
                 // Taking the app off the temp whitelist should make it go UID idle.
-                SystemUtil.runShellCommand("cmd deviceidle tempwhitelist -r " + TEST_APP_PACKAGE);
+                SystemUtil.runShellCommand("cmd deviceidle tempwhitelist"
+                        + " -u " + UserHandle.myUserId()
+                        + " -r " + TEST_APP_PACKAGE);
                 uidWatcher.waitFor(WatchUidRunner.CMD_IDLE);
                 Thread.sleep(1000); // Wait a bit for JS to process.
             }
@@ -220,8 +222,6 @@ public class UserInitiatedJobTest {
      */
     @Test
     public void testRestrictedToggling() throws Exception {
-        assumeFalse("Skipping test not supported on HSUM devices.",
-                    mContext.getSystemService(UserManager.class).isHeadlessSystemUserMode());
         try (TestNotificationListener.NotificationHelper notificationHelper =
                      new TestNotificationListener.NotificationHelper(
                              mContext, TEST_APP_PACKAGE)) {
@@ -243,7 +243,8 @@ public class UserInitiatedJobTest {
             assertTrue(mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT_MS));
 
             // Take the app off the temp whitelist so it doesn't retain the exemptions.
-            SystemUtil.runShellCommand("cmd deviceidle tempwhitelist -r " + TEST_APP_PACKAGE);
+            SystemUtil.runShellCommand("cmd deviceidle tempwhitelist -u " + UserHandle.myUserId()
+                    + " -r " + TEST_APP_PACKAGE);
 
             // Restrict app. Job should stop immediately and shouldn't restart.
             mTestAppInterface.setTestPackageRestricted(true);
