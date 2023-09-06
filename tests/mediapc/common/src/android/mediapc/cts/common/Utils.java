@@ -123,7 +123,9 @@ public class Utils {
             final double diagonalInch = Math.sqrt(widthInch * widthInch + heightInch * heightInch);
             final double maxDiagonalPixels =
                     Math.sqrt(maxWidthPixels * maxWidthPixels + maxHeightPixels * maxHeightPixels);
-            DISPLAY_DPI = (int) (maxDiagonalPixels / diagonalInch);
+            // Use max of computed dpi and advertised dpi as these values differ in some devices.
+            DISPLAY_DPI = Math.max((int) (maxDiagonalPixels / diagonalInch),
+                    context.getResources().getConfiguration().densityDpi);
 
             ActivityManager activityManager = context.getSystemService(ActivityManager.class);
             ActivityManager.MemoryInfo memoryInfo = new ActivityManager.MemoryInfo();
