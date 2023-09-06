@@ -24,6 +24,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.content.pm.PackageManager.MATCH_KNOWN_PACKAGES
+import android.content.pm.PackageManager.MATCH_UNINSTALLED_PACKAGES
 import android.content.pm.PackageManager.PackageInfoFlags
 import android.content.pm.cts.PackageManagerShellCommandInstallTest.PackageBroadcastReceiver
 import android.content.pm.cts.util.AbandonAllPackageSessionsRule
@@ -31,6 +32,7 @@ import android.os.Handler
 import android.os.HandlerThread
 import android.os.UserManager
 import android.platform.test.annotations.AppModeFull
+import android.platform.test.annotations.RequiresFlagsEnabled
 import androidx.test.platform.app.InstrumentationRegistry
 import com.android.bedstead.harrier.BedsteadJUnit4
 import com.android.bedstead.harrier.DeviceState
@@ -38,6 +40,7 @@ import com.android.bedstead.harrier.annotations.EnsureHasSecondaryUser
 import com.android.bedstead.nene.users.UserReference
 import com.android.compatibility.common.util.SystemUtil
 import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
+import com.android.server.pm.Flags.FLAG_NEW_MATCH_UNINSTALLED_ENABLED
 import com.google.common.truth.Truth.assertThat
 import java.io.File
 import java.util.regex.Pattern
@@ -412,7 +415,17 @@ class PackageManagerShellCommandMultiUserTest {
     }
 
     @Test
+    @RequiresFlagsEnabled(FLAG_NEW_MATCH_UNINSTALLED_ENABLED)
+    fun testUninstallWithKeepDataMultiUserMatchUninstalled() {
+        testUninstallWithKeepDataMultiUser(PackageInfoFlags.of(MATCH_UNINSTALLED_PACKAGES.toLong()))
+    }
+
+    @Test
     fun testUninstallWithKeepDataMultiUser() {
+        testUninstallWithKeepDataMultiUser(PackageInfoFlags.of(MATCH_KNOWN_PACKAGES.toLong()))
+    }
+
+    private fun testUninstallWithKeepDataMultiUser(matchFlag: PackageInfoFlags) {
         // Install this test itself for the secondary user
         installExistingPackageAsUser(context.packageName, secondaryUser)
         assertTrue(isAppInstalledForUser(context.packageName, secondaryUser))
@@ -431,32 +444,32 @@ class PackageManagerShellCommandMultiUserTest {
                     .packageManager
                 val pmSecondaryUser = context.createContextAsUser(secondaryUser.userHandle(), 0)
                     .packageManager
-                // App is not queryable without the MATCH_KNOWN_PACKAGES flag
+                // App is not queryable without the match flag
                 assertThrows(PackageManager.NameNotFoundException::class.java) {
                     pmSecondaryUser.getPackageInfo(
                         TEST_APP_PACKAGE,
                         PackageInfoFlags.of(0L)
                     )
                 }
-                // Queryable with the MATCH_KNOWN_PACKAGES flag
+                // Queryable with the match flag
                 var packageInfoSecondUser = pmSecondaryUser.getPackageInfo(
                     TEST_APP_PACKAGE,
-                    PackageInfoFlags.of(MATCH_KNOWN_PACKAGES.toLong())
+                    matchFlag
                 )
                 val oldDataDir = packageInfoSecondUser.applicationInfo!!.dataDir
                 assertThat(oldDataDir).isNotNull()
                 // Delete app on primary user without DELETE_KEEP_DATA flag and verify that the app is
-                // still queryable with MATCH_KNOWN_PACKAGES
+                // still queryable with the match flag
                 uninstallPackageAsUser(TEST_APP_PACKAGE, primaryUser)
                 packageInfoSecondUser = pmSecondaryUser.getPackageInfo(
                     TEST_APP_PACKAGE,
-                    PackageInfoFlags.of(MATCH_KNOWN_PACKAGES.toLong())
+                    matchFlag
                 )
                 assertThat(packageInfoSecondUser.applicationInfo!!.dataDir).isEqualTo(oldDataDir)
                 // Expect not to throw when the package is queryable
                 pmPrimaryUser.getPackageInfo(
                     TEST_APP_PACKAGE,
-                    PackageInfoFlags.of(MATCH_KNOWN_PACKAGES.toLong())
+                    matchFlag
                 )
                 // Reinstall the app on the second user and verifies that the data dir stays the same,
                 // and the app is still not queryable on the primary user
@@ -468,14 +481,14 @@ class PackageManagerShellCommandMultiUserTest {
                 assertThat(packageInfoSecondUser.applicationInfo!!.dataDir).isEqualTo(oldDataDir)
                 pmPrimaryUser.getPackageInfo(
                     TEST_APP_PACKAGE,
-                    PackageInfoFlags.of(MATCH_KNOWN_PACKAGES.toLong())
+                    matchFlag
                 )
                 // Fully uninstall the app on the second user and verify it's no longer queryable
                 uninstallPackageAsUser(TEST_APP_PACKAGE, secondaryUser)
                 assertThrows(PackageManager.NameNotFoundException::class.java) {
                     pmSecondaryUser.getPackageInfo(
                         TEST_APP_PACKAGE,
-                        PackageInfoFlags.of(MATCH_KNOWN_PACKAGES.toLong())
+                        matchFlag
                     )
                 }
             },
