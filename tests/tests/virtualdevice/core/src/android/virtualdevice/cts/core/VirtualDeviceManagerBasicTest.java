@@ -41,6 +41,8 @@ import static com.google.common.util.concurrent.Uninterruptibles.tryAcquireUnint
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
 
 import android.annotation.Nullable;
 import android.companion.virtual.VirtualDevice;
@@ -64,6 +66,7 @@ import android.platform.test.flag.junit.CheckFlagsRule;
 import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.util.Log;
 import android.virtualdevice.cts.common.FakeAssociationRule;
+import android.virtualdevice.cts.common.util.VirtualDeviceTestUtils;
 
 import androidx.annotation.NonNull;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -96,6 +99,8 @@ public class VirtualDeviceManagerBasicTest {
     private static final String VIRTUAL_DEVICE_NAME = "VirtualDeviceName";
     private static final String SENSOR_NAME = "VirtualSensorName";
 
+    private static final int TIMEOUT_MS = 5000;
+
     private static final VirtualDeviceParams DEFAULT_VIRTUAL_DEVICE_PARAMS =
             new VirtualDeviceParams.Builder().build();
     private static final VirtualDeviceParams NAMED_VIRTUAL_DEVICE_PARAMS =
@@ -120,6 +125,8 @@ public class VirtualDeviceManagerBasicTest {
 
     @Mock
     private VirtualSensorCallback mVirtualSensorCallback;
+    @Mock
+    private VirtualDeviceManager.VirtualDeviceListener mVirtualDeviceListener;
 
     @Rule
     public FakeAssociationRule mFakeAssociationRule = new FakeAssociationRule();
@@ -148,6 +155,11 @@ public class VirtualDeviceManagerBasicTest {
         assumeFalse(FeatureUtil.isWatch());
 
         mVirtualDeviceManager = context.getSystemService(VirtualDeviceManager.class);
+
+        if (Flags.vdmPublicApis()) {
+            mVirtualDeviceManager.registerVirtualDeviceListener(
+                    Runnable::run, mVirtualDeviceListener);
+        }
     }
 
     @After
@@ -157,6 +169,9 @@ public class VirtualDeviceManagerBasicTest {
         }
         if (mAnotherVirtualDevice != null) {
             mAnotherVirtualDevice.close();
+        }
+        if (Flags.vdmPublicApis()) {
+            mVirtualDeviceManager.unregisterVirtualDeviceListener(mVirtualDeviceListener);
         }
     }
 
@@ -229,8 +244,13 @@ public class VirtualDeviceManagerBasicTest {
         mVirtualDevice.close();
         mVirtualDevice.close();
         mVirtualDevice.close();
+
+        if (Flags.vdmPublicApis()) {
+            assertDeviceClosed(mVirtualDevice.getDeviceId());
+        }
     }
 
+    @RequiresFlagsDisabled(Flags.FLAG_VDM_PUBLIC_APIS)
     @Test
     public void createVirtualDevice_removeAssociation_shouldCloseVirtualDevice()
             throws InterruptedException {
@@ -283,6 +303,7 @@ public class VirtualDeviceManagerBasicTest {
                 DEFAULT_VIRTUAL_DISPLAY_CONFIG, null,  null));
     }
 
+    @RequiresFlagsDisabled(Flags.FLAG_VDM_PUBLIC_APIS)
     @Test
     public void createVirtualDevice_closeAndRemoveAssociation_isSafe()
             throws InterruptedException {
@@ -322,6 +343,19 @@ public class VirtualDeviceManagerBasicTest {
         mFakeAssociationRule.disassociate();
     }
 
+    @RequiresFlagsEnabled(Flags.FLAG_VDM_PUBLIC_APIS)
+    @Test
+    public void createVirtualDevice_closeAndRemoveAssociation_isSafe_withListener() {
+        mVirtualDevice = mVirtualDeviceManager.createVirtualDevice(
+                mFakeAssociationRule.getAssociationInfo().getId(),
+                DEFAULT_VIRTUAL_DEVICE_PARAMS);
+        mVirtualDevice.close();
+        assertDeviceClosed(mVirtualDevice.getDeviceId());
+        mFakeAssociationRule.disassociate();
+        assertDeviceClosed(mVirtualDevice.getDeviceId());
+    }
+
+    @RequiresFlagsDisabled(Flags.FLAG_VDM_PUBLIC_APIS)
     @Test
     public void createVirtualDevice_removeAssociationAndClose_isSafe()
             throws InterruptedException {
@@ -359,6 +393,105 @@ public class VirtualDeviceManagerBasicTest {
         mFakeAssociationRule.disassociate();
         assertThat(latch.await(5, TimeUnit.SECONDS)).isTrue();
         mVirtualDevice.close();
+    }
+
+    @RequiresFlagsEnabled(Flags.FLAG_VDM_PUBLIC_APIS)
+    @Test
+    public void createVirtualDevice_removeAssociationAndClose_isSafe_withListener() {
+        mVirtualDevice = mVirtualDeviceManager.createVirtualDevice(
+                mFakeAssociationRule.getAssociationInfo().getId(),
+                DEFAULT_VIRTUAL_DEVICE_PARAMS);
+        mFakeAssociationRule.disassociate();
+        assertDeviceClosed(mVirtualDevice.getDeviceId());
+        mVirtualDevice.close();
+        assertDeviceClosed(mVirtualDevice.getDeviceId());
+    }
+
+    @RequiresFlagsEnabled(Flags.FLAG_VDM_PUBLIC_APIS)
+    @Test
+    public void getVirtualDevice_unknownDeviceId_returnsNull() {
+        mVirtualDevice = mVirtualDeviceManager.createVirtualDevice(
+                mFakeAssociationRule.getAssociationInfo().getId(), DEFAULT_VIRTUAL_DEVICE_PARAMS);
+
+        assertThat(mVirtualDeviceManager.getVirtualDevice(DEVICE_ID_INVALID)).isNull();
+        assertThat(mVirtualDeviceManager.getVirtualDevice(DEVICE_ID_DEFAULT)).isNull();
+        assertThat(mVirtualDeviceManager.getVirtualDevice(mVirtualDevice.getDeviceId() + 1))
+                .isNull();
+    }
+
+    @RequiresFlagsEnabled(Flags.FLAG_VDM_PUBLIC_APIS)
+    @Test
+    public void virtualDeviceListener_calledOnDeviceEvents() {
+        mVirtualDevice = mVirtualDeviceManager.createVirtualDevice(
+                mFakeAssociationRule.getAssociationInfo().getId(),
+                DEFAULT_VIRTUAL_DEVICE_PARAMS);
+        assertDeviceCreated(mVirtualDevice.getDeviceId());
+
+        mAnotherVirtualDevice = mVirtualDeviceManager.createVirtualDevice(
+                mFakeAssociationRule.getAssociationInfo().getId(),
+                NAMED_VIRTUAL_DEVICE_PARAMS);
+        assertDeviceCreated(mAnotherVirtualDevice.getDeviceId());
+
+        mAnotherVirtualDevice.close();
+        assertDeviceClosed(mAnotherVirtualDevice.getDeviceId());
+
+        mVirtualDevice.close();
+        assertDeviceClosed(mVirtualDevice.getDeviceId());
+    }
+
+    @RequiresFlagsEnabled(Flags.FLAG_VDM_PUBLIC_APIS)
+    @Test
+    public void getVirtualDevice_getDisplayIds() {
+        DisplayManager dm = getApplicationContext().getSystemService(DisplayManager.class);
+        VirtualDeviceTestUtils.DisplayListenerForTest displayListener =
+                new VirtualDeviceTestUtils.DisplayListenerForTest();
+        dm.registerDisplayListener(displayListener, /*handler=*/null);
+
+        mVirtualDevice = mVirtualDeviceManager.createVirtualDevice(
+                mFakeAssociationRule.getAssociationInfo().getId(), DEFAULT_VIRTUAL_DEVICE_PARAMS);
+
+        VirtualDisplay firstDisplay = mVirtualDevice.createVirtualDisplay(
+                DEFAULT_VIRTUAL_DISPLAY_CONFIG,
+                getApplicationContext().getMainExecutor(),
+                null);
+        assertThat(firstDisplay).isNotNull();
+        final int firstDisplayId = firstDisplay.getDisplay().getDisplayId();
+        VirtualDevice device = mVirtualDeviceManager.getVirtualDevice(mVirtualDevice.getDeviceId());
+        assertThat(device).isNotNull();
+        assertThat(device.getDisplayIds()).asList().containsExactly(firstDisplayId);
+
+        VirtualDisplay secondDisplay = mVirtualDevice.createVirtualDisplay(
+                DEFAULT_VIRTUAL_DISPLAY_CONFIG,
+                getApplicationContext().getMainExecutor(),
+                null);
+        assertThat(secondDisplay).isNotNull();
+        final int secondDisplayId = secondDisplay.getDisplay().getDisplayId();
+
+        assertThat(device.getDisplayIds()).asList().containsExactly(
+                firstDisplayId, secondDisplayId);
+        assertThat(device.hasCustomSensorSupport()).isFalse();
+
+        firstDisplay.release();
+        displayListener.waitForOnDisplayRemovedCallback();
+        assertThat(device.getDisplayIds()).asList().containsExactly(secondDisplayId);
+
+        secondDisplay.release();
+        displayListener.waitForOnDisplayRemovedCallback(2);
+        assertThat(device.getDisplayIds()).hasLength(0);
+    }
+
+    @RequiresFlagsEnabled(Flags.FLAG_VDM_PUBLIC_APIS)
+    @Test
+    public void getVirtualDevice_hasCustomSensorSupport() {
+        mVirtualDevice = mVirtualDeviceManager.createVirtualDevice(
+                mFakeAssociationRule.getAssociationInfo().getId(),
+                new VirtualDeviceParams.Builder()
+                        .setDevicePolicy(POLICY_TYPE_SENSORS, DEVICE_POLICY_CUSTOM)
+                        .build());
+        VirtualDevice device = mVirtualDeviceManager.getVirtualDevice(mVirtualDevice.getDeviceId());
+        assertThat(device).isNotNull();
+        assertThat(device.hasCustomSensorSupport()).isTrue();
+
     }
 
     /**
@@ -401,12 +534,20 @@ public class VirtualDeviceManagerBasicTest {
         assertThat(device.getPersistentDeviceId())
                 .isEqualTo(mVirtualDevice.getPersistentDeviceId());
         assertThat(device.getName()).isNull();
+        if (Flags.vdmPublicApis()) {
+            assertThat(device.getDisplayIds()).hasLength(0);
+            assertThat(device.hasCustomSensorSupport()).isFalse();
+        }
 
         VirtualDevice anotherDevice = virtualDevices.get(1);
         assertThat(anotherDevice.getDeviceId()).isEqualTo(mAnotherVirtualDevice.getDeviceId());
         assertThat(anotherDevice.getPersistentDeviceId())
                 .isEqualTo(mAnotherVirtualDevice.getPersistentDeviceId());
         assertThat(anotherDevice.getName()).isEqualTo(VIRTUAL_DEVICE_NAME);
+        if (Flags.vdmPublicApis()) {
+            assertThat(anotherDevice.getDisplayIds()).hasLength(0);
+            assertThat(anotherDevice.hasCustomSensorSupport()).isFalse();
+        }
 
         // The persistent IDs must be the same as the underlying association is the same.
         assertThat(device.getPersistentDeviceId()).isEqualTo(anotherDevice.getPersistentDeviceId());
@@ -845,6 +986,16 @@ public class VirtualDeviceManagerBasicTest {
 
         assertThrows(NullPointerException.class,
                 () -> mVirtualDevice.createVirtualNavigationTouchpad(null));
+    }
+
+    private void assertDeviceCreated(int deviceId) {
+        verify(mVirtualDeviceListener, timeout(TIMEOUT_MS).times(1))
+                .onVirtualDeviceCreated(deviceId);
+    }
+
+    private void assertDeviceClosed(int deviceId) {
+        verify(mVirtualDeviceListener, timeout(TIMEOUT_MS).times(1))
+                .onVirtualDeviceClosed(deviceId);
     }
 
     private static class SoundEffectListenerForTest
