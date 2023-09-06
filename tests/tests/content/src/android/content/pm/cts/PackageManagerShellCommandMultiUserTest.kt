@@ -23,6 +23,7 @@ import android.content.Context.RECEIVER_EXPORTED
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
+import android.content.pm.PackageManager.MATCH_ARCHIVED_PACKAGES
 import android.content.pm.PackageManager.MATCH_KNOWN_PACKAGES
 import android.content.pm.PackageManager.MATCH_UNINSTALLED_PACKAGES
 import android.content.pm.PackageManager.PackageInfoFlags
@@ -32,7 +33,6 @@ import android.os.Handler
 import android.os.HandlerThread
 import android.os.UserManager
 import android.platform.test.annotations.AppModeFull
-import android.platform.test.annotations.RequiresFlagsEnabled
 import androidx.test.platform.app.InstrumentationRegistry
 import com.android.bedstead.harrier.BedsteadJUnit4
 import com.android.bedstead.harrier.DeviceState
@@ -40,7 +40,6 @@ import com.android.bedstead.harrier.annotations.EnsureHasSecondaryUser
 import com.android.bedstead.nene.users.UserReference
 import com.android.compatibility.common.util.SystemUtil
 import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
-import com.android.server.pm.Flags.FLAG_NEW_MATCH_UNINSTALLED_ENABLED
 import com.google.common.truth.Truth.assertThat
 import java.io.File
 import java.util.regex.Pattern
@@ -415,14 +414,18 @@ class PackageManagerShellCommandMultiUserTest {
     }
 
     @Test
-    @RequiresFlagsEnabled(FLAG_NEW_MATCH_UNINSTALLED_ENABLED)
     fun testUninstallWithKeepDataMultiUserMatchUninstalled() {
         testUninstallWithKeepDataMultiUser(PackageInfoFlags.of(MATCH_UNINSTALLED_PACKAGES.toLong()))
     }
 
     @Test
-    fun testUninstallWithKeepDataMultiUser() {
+    fun testUninstallWithKeepDataMultiUserMatchKnown() {
         testUninstallWithKeepDataMultiUser(PackageInfoFlags.of(MATCH_KNOWN_PACKAGES.toLong()))
+    }
+
+    @Test
+    fun testUninstallWithKeepDataMultiUserMatchArchived() {
+        testUninstallWithKeepDataMultiUser(PackageInfoFlags.of(MATCH_ARCHIVED_PACKAGES.toLong()))
     }
 
     private fun testUninstallWithKeepDataMultiUser(matchFlag: PackageInfoFlags) {
