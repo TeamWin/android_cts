@@ -31,7 +31,6 @@ android_test {
         "ctstestrunner-axt",
         "platform-test-annotations",
         "truth-prebuilt",
-        "CtsMockInputMethodLib",
         "androidx.test.uiautomator_uiautomator",
         "androidx.test.espresso.core",
         "cts-wm-util",
@@ -56,7 +55,6 @@ android_test {
 
     data: [
         ":TestIme",
-        ":CtsMockInputMethod",
         ":CtsWidgetApp",
     ],
     per_testcase_directory: true,
