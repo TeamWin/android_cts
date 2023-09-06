@@ -16,6 +16,8 @@
 
 package android.car.cts;
 
+import static android.car.settings.CarSettings.Secure.KEY_PACKAGES_DISABLED_ON_RESOURCE_OVERUSE;
+
 import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
 
 import static com.google.common.truth.Truth.assertWithMessage;
@@ -25,17 +27,26 @@ import static org.junit.Assert.fail;
 
 import android.app.UiAutomation;
 import android.car.Car;
+import android.car.cts.utils.watchdog.ResourceOveruseConfigurationSubject;
 import android.car.test.ApiCheckerRule.Builder;
 import android.car.watchdog.CarWatchdogManager;
+import android.car.watchdog.IoOveruseConfiguration;
 import android.car.watchdog.IoOveruseStats;
+import android.car.watchdog.PackageKillableState;
 import android.car.watchdog.PerStateBytes;
+import android.car.watchdog.ResourceOveruseConfiguration;
 import android.car.watchdog.ResourceOveruseStats;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.os.Build;
 import android.os.Process;
 import android.os.SystemProperties;
 import android.os.UserHandle;
 import android.platform.test.annotations.AppModeFull;
+import android.provider.Settings;
+import android.text.TextUtils;
+import android.util.ArrayMap;
+import android.util.ArraySet;
 import android.util.Log;
 
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -52,6 +63,13 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InterruptedIOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -82,7 +100,9 @@ public final class CarWatchdogManagerTest extends AbstractCarTestCase {
             InstrumentationRegistry.getInstrumentation().getTargetContext().getPackageName());
     private static final String START_CUSTOM_COLLECTION_SUCCESS_MSG =
             "Successfully started custom perf collection";
+    public static final String PACKAGES_DISABLED_ON_RESOURCE_OVERUSE_SEPARATOR = ";";
     private static final long FIVE_HUNDRED_KILOBYTES = 1024 * 500;
+    private static final long ONE_MEGABYTE = 1024 * 1024;
     // Wait time to sync I/O stats from proc fs -> watchdog daemon -> CarService.
     private static final int STATS_SYNC_WAIT_MS = 5000;
 
@@ -93,6 +113,8 @@ public final class CarWatchdogManagerTest extends AbstractCarTestCase {
             InstrumentationRegistry.getInstrumentation().getUiAutomation();
 
     private Context mContext;
+    private String mPackageName;
+    private UserHandle mUserHandle;
     private CarWatchdogManager mCarWatchdogManager;
     private File mFile;
 
@@ -105,8 +127,12 @@ public final class CarWatchdogManagerTest extends AbstractCarTestCase {
 
     @Before
     public void setUp() throws Exception {
-        mUiAutomation.adoptShellPermissionIdentity(Car.PERMISSION_USE_CAR_WATCHDOG);
+        mUiAutomation.adoptShellPermissionIdentity(Car.PERMISSION_USE_CAR_WATCHDOG,
+                                                   Car.PERMISSION_COLLECT_CAR_WATCHDOG_METRICS,
+                                                   Car.PERMISSION_CONTROL_CAR_WATCHDOG_CONFIG);
         mContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        mPackageName = mContext.getPackageName();
+        mUserHandle = UserHandle.getUserHandleForUid(Process.myUid());
         mFile = mContext.getFilesDir();
         mCarWatchdogManager = (CarWatchdogManager) getCar().getCarManager(Car.CAR_WATCHDOG_SERVICE);
     }
@@ -247,6 +273,382 @@ public final class CarWatchdogManagerTest extends AbstractCarTestCase {
                 UserHandle.getUserHandleForUid(Process.myUid()));
     }
 
+    @Test
+    public void testGetAllResourceOveruseStats() throws Exception {
+        runShellCommand(RESET_RESOURCE_OVERUSE_CMD);
+
+        startCustomCollection();
+        writeToDisk(mFile, ONE_MEGABYTE);
+        AtomicReference<List<ResourceOveruseStats>> statsList = new AtomicReference<>();
+        PollingCheck.check(
+                "Either" + mPackageName + " stats not found or less than 2 stats found.",
+                STATS_SYNC_WAIT_MS, () -> {
+                    statsList.set(mCarWatchdogManager.getAllResourceOveruseStats(
+                            CarWatchdogManager.FLAG_RESOURCE_OVERUSE_IO,
+                            CarWatchdogManager.FLAG_MINIMUM_STATS_IO_1_MB,
+                            CarWatchdogManager.STATS_PERIOD_CURRENT_DAY));
+                    return statsList.get().size() > 1 && containsPackage(mPackageName,
+                            statsList.get());
+                });
+        runShellCommand(STOP_CUSTOM_PERF_COLLECTION_CMD);
+
+        assertWithMessage(
+                "Package with non-null IoOveruseStats different than the current not found").that(
+                containsPackageWithStatsDifferentThan(mPackageName, statsList.get())).isTrue();
+    }
+
+    @Test
+    public void testThrowsExceptionOnGetAllResourceOveruseStatsWithInvalidResourceType() {
+        assertThrows(IllegalArgumentException.class,
+                () -> mCarWatchdogManager.getAllResourceOveruseStats(
+                        /* resourceOveruseFlag= */ -1,
+                        CarWatchdogManager.FLAG_MINIMUM_STATS_IO_1_MB,
+                        CarWatchdogManager.STATS_PERIOD_CURRENT_DAY));
+    }
+
+    @Test
+    public void testThrowsExceptionOnGetAllResourceOveruseStatsWithInvalidStatsPeriod() {
+        assertThrows(IllegalArgumentException.class,
+                () -> mCarWatchdogManager.getAllResourceOveruseStats(
+                        CarWatchdogManager.FLAG_RESOURCE_OVERUSE_IO,
+                        CarWatchdogManager.FLAG_MINIMUM_STATS_IO_1_MB,
+                        /* maxStatsPeriod= */ -1));
+    }
+
+    @Test
+    public void testGetResourceOveruseStatsForUserPackage() throws Exception {
+        runShellCommand(RESET_RESOURCE_OVERUSE_CMD);
+
+        startCustomCollection();
+        writeToDisk(mFile, FIVE_HUNDRED_KILOBYTES);
+        AtomicReference<ResourceOveruseStats> stats = new AtomicReference<>();
+        PollingCheck.check(
+                "IoOveruseStats for " + mUserHandle + " : " + mPackageName + " not found.",
+                STATS_SYNC_WAIT_MS, () -> {
+                    stats.set(mCarWatchdogManager.getResourceOveruseStatsForUserPackage(
+                            mPackageName, mUserHandle,
+                            CarWatchdogManager.FLAG_RESOURCE_OVERUSE_IO,
+                            CarWatchdogManager.STATS_PERIOD_CURRENT_DAY));
+                    return stats.get().getIoOveruseStats() != null;
+                });
+        runShellCommand(STOP_CUSTOM_PERF_COLLECTION_CMD);
+
+        ResourceOveruseStats actualStats = stats.get();
+        IoOveruseStats ioOveruseStats = actualStats.getIoOveruseStats();
+        assertWithMessage("Package name").that(
+                actualStats.getPackageName()).isEqualTo(mPackageName);
+        assertWithMessage("User handle").that(actualStats.getUserHandle()).isEqualTo(mUserHandle);
+        assertWithMessage("Total bytes written to disk").that(
+                ioOveruseStats.getTotalBytesWritten()).isAtLeast(FIVE_HUNDRED_KILOBYTES);
+    }
+
+    @Test
+    public void testThrowsExceptionOnGetResourceOveruseStatsForUserPackageWithNullPackageName() {
+        assertThrows(NullPointerException.class,
+                () -> mCarWatchdogManager.getResourceOveruseStatsForUserPackage(
+                        /* packageName= */ null, mUserHandle,
+                        CarWatchdogManager.FLAG_RESOURCE_OVERUSE_IO,
+                        CarWatchdogManager.STATS_PERIOD_CURRENT_DAY));
+    }
+
+    @Test
+    public void testThrowsExceptionOnGetResourceOveruseStatsForUserPackageWithNullUserHandle() {
+        assertThrows(NullPointerException.class,
+                () -> mCarWatchdogManager.getResourceOveruseStatsForUserPackage(
+                        mPackageName, /* userHandle= */ null,
+                        CarWatchdogManager.FLAG_RESOURCE_OVERUSE_IO,
+                        CarWatchdogManager.STATS_PERIOD_CURRENT_DAY));
+    }
+
+    @Test
+    public void
+            testThrowsExceptionOnGetResourceOveruseStatsForUserPackageWithInvalidResourceType() {
+        assertThrows(IllegalArgumentException.class,
+                () -> mCarWatchdogManager.getResourceOveruseStatsForUserPackage(
+                        mPackageName, mUserHandle,
+                        /* resourceOveruseFlag= */ -1,
+                        CarWatchdogManager.STATS_PERIOD_CURRENT_DAY));
+    }
+
+    @Test
+    public void testThrowsExceptionOnGetResourceOveruseStatsForUserPackageWithInvalidStatsPeriod() {
+        assertThrows(IllegalArgumentException.class,
+                () -> mCarWatchdogManager.getResourceOveruseStatsForUserPackage(
+                        mPackageName, mUserHandle,
+                        CarWatchdogManager.FLAG_RESOURCE_OVERUSE_IO,
+                        /* maxStatsPeriod= */ -1));
+    }
+
+    @Test
+    public void testResourceOveruseListenerForSystem() {
+        CarWatchdogManager.ResourceOveruseListener listener = resourceOveruseStats -> {
+            // Do nothing
+        };
+
+        mCarWatchdogManager.addResourceOveruseListenerForSystem(mContext.getMainExecutor(),
+                CarWatchdogManager.FLAG_RESOURCE_OVERUSE_IO, listener);
+        mCarWatchdogManager.removeResourceOveruseListenerForSystem(listener);
+    }
+
+    @Test
+    public void testThrowsExceptionOnResourceOveruseListenerForSystemWithNullListener() {
+        assertThrows(NullPointerException.class,
+                () -> mCarWatchdogManager.addResourceOveruseListenerForSystem(
+                        mContext.getMainExecutor(), CarWatchdogManager.FLAG_RESOURCE_OVERUSE_IO,
+                        /* listener= */ null));
+    }
+
+    @Test
+    public void testThrowsExceptionOnResourceOveruseListenerForSystemWithNullExecutor() {
+        CarWatchdogManager.ResourceOveruseListener listener = resourceOveruseStats -> {
+            // Do nothing
+        };
+
+        assertThrows(NullPointerException.class,
+                () -> mCarWatchdogManager.addResourceOveruseListenerForSystem(
+                        /* executor= */ null, CarWatchdogManager.FLAG_RESOURCE_OVERUSE_IO,
+                        listener));
+    }
+
+    @Test
+    public void testThrowsExceptionOnRemoveResourceOveruseListenerForSystemWithNullListener() {
+        assertThrows(NullPointerException.class,
+                () -> mCarWatchdogManager
+                        .removeResourceOveruseListenerForSystem(/* listener= */ null));
+    }
+
+    @Test
+    public void testSetKillablePackageAsUser() {
+        PackageKillableState thisKillableState = getPackageKillableState(mPackageName);
+        assertWithMessage("Ats package is not KILLABLE_STATE_NEVER").that(
+                thisKillableState.getKillableState()).isNotEqualTo(
+                PackageKillableState.KILLABLE_STATE_NEVER);
+        int prevKillableState = thisKillableState.getKillableState();
+        int expectedKillableState = prevKillableState == PackageKillableState.KILLABLE_STATE_YES
+                ? PackageKillableState.KILLABLE_STATE_NO
+                : PackageKillableState.KILLABLE_STATE_YES;
+
+        mCarWatchdogManager.setKillablePackageAsUser(mPackageName, mUserHandle,
+                expectedKillableState == PackageKillableState.KILLABLE_STATE_YES);
+
+        PackageKillableState actualKillableState = getPackageKillableState(mPackageName);
+        assertWithMessage("Ats package new killable state").that(
+                actualKillableState.getKillableState()).isEqualTo(expectedKillableState);
+
+        // Set package back to original killable state
+        mCarWatchdogManager.setKillablePackageAsUser(mPackageName, mUserHandle,
+                prevKillableState == PackageKillableState.KILLABLE_STATE_YES);
+        actualKillableState = getPackageKillableState(mPackageName);
+        assertWithMessage("Ats package original killable state").that(
+                actualKillableState.getKillableState()).isEqualTo(prevKillableState);
+    }
+
+    @Test
+    public void testThrowsExceptionOnSetKillablePackageAsUserWithNullPackageName() {
+        assertThrows(NullPointerException.class,
+                () -> mCarWatchdogManager.setKillablePackageAsUser(/* packageName= */ null,
+                                                                   mUserHandle,
+                                                                   /* isKillable= */ false));
+    }
+
+    @Test
+    public void testThrowsExceptionOnSetKillablePackageAsUserWithNullUserHandle() {
+        assertThrows(NullPointerException.class,
+                () -> mCarWatchdogManager.setKillablePackageAsUser(mPackageName,
+                                                                   /* userHandle= */ null,
+                                                                   /* isKillable= */ false));
+    }
+
+    @Test
+    public void testThrowsExceptionOnGetKillablePackageAsUserWithNullUserHandle() {
+        assertThrows(NullPointerException.class,
+                () -> mCarWatchdogManager.getPackageKillableStatesAsUser(/* userHandle= */ null));
+    }
+
+    @Test
+    public void testThrowsExceptionOnUnkillablePackageSetKillablePackageAsUser() {
+        List<PackageKillableState> killableStates =
+                mCarWatchdogManager.getPackageKillableStatesAsUser(mUserHandle);
+        Optional<PackageKillableState> notKillableState = killableStates.stream().filter(
+                (state) -> state.getKillableState() == PackageKillableState.KILLABLE_STATE_NEVER)
+                .findFirst();
+        String unkillablePackageName = notKillableState.get().getPackageName();
+
+        assertThrows(IllegalArgumentException.class,
+                () -> mCarWatchdogManager.setKillablePackageAsUser(unkillablePackageName,
+                        mUserHandle, /* isKillable= */ true));
+    }
+
+    @Test
+    public void testSetResourceOveruseConfigurations() {
+        Map<String, String> invalidPackageToCategoryTypes = new ArrayMap<>();
+        invalidPackageToCategoryTypes.put("third_party_package.pkg.A",
+                ResourceOveruseConfiguration.APPLICATION_CATEGORY_TYPE_MEDIA);
+        ResourceOveruseConfiguration newThirdPartyConfiguration =
+                new ResourceOveruseConfiguration.Builder(
+                ResourceOveruseConfiguration.COMPONENT_TYPE_THIRD_PARTY,
+                Collections.singletonList("third_party_package.pkg.B"),
+                Collections.singletonList("vendor_invalid_prefix"), invalidPackageToCategoryTypes)
+                .setIoOveruseConfiguration(
+                        new IoOveruseConfiguration.Builder(
+                                new PerStateBytes(6666666, 7777777, 8888888),
+                                new HashMap<>(), new HashMap<>(), new ArrayList<>()).build())
+                .build();
+        List<ResourceOveruseConfiguration> prevConfigurations =
+                mCarWatchdogManager.getResourceOveruseConfigurations(
+                        CarWatchdogManager.FLAG_RESOURCE_OVERUSE_IO);
+        List<ResourceOveruseConfiguration> expectedConfigurations = new ArrayList<>();
+        for (ResourceOveruseConfiguration config : prevConfigurations) {
+            if (config.getComponentType()
+                    == ResourceOveruseConfiguration.COMPONENT_TYPE_THIRD_PARTY) {
+                config = new ResourceOveruseConfiguration.Builder(
+                        ResourceOveruseConfiguration.COMPONENT_TYPE_THIRD_PARTY, new ArrayList<>(),
+                        new ArrayList<>(), new HashMap<>())
+                        .setIoOveruseConfiguration(
+                                newThirdPartyConfiguration.getIoOveruseConfiguration())
+                        .build();
+            }
+            expectedConfigurations.add(config);
+        }
+
+        try {
+            //  Set the resource overuse configuration
+            int returnCode = mCarWatchdogManager.setResourceOveruseConfigurations(
+                    Collections.singletonList(newThirdPartyConfiguration),
+                    CarWatchdogManager.FLAG_RESOURCE_OVERUSE_IO);
+            assertWithMessage("Return code").that(returnCode).isEqualTo(
+                    CarWatchdogManager.RETURN_CODE_SUCCESS);
+
+            //  Get the resource overuse configuration.
+            List<ResourceOveruseConfiguration> actualConfigurations =
+                    mCarWatchdogManager.getResourceOveruseConfigurations(
+                            CarWatchdogManager.FLAG_RESOURCE_OVERUSE_IO);
+
+            ResourceOveruseConfigurationSubject.assertThat(
+                    actualConfigurations).containsExactlyElementsIn(expectedConfigurations);
+        } finally {
+            // Set the config to the original.
+            mCarWatchdogManager.setResourceOveruseConfigurations(
+                    prevConfigurations,
+                    CarWatchdogManager.FLAG_RESOURCE_OVERUSE_IO);
+        }
+    }
+
+    @Test
+    public void testThrowsExceptionOnSetResourceOveruseConfigurationsWithNullConfigurations() {
+        assertThrows(NullPointerException.class,
+                () -> mCarWatchdogManager.setResourceOveruseConfigurations(
+                        /* configurations= */ null, CarWatchdogManager.FLAG_RESOURCE_OVERUSE_IO));
+    }
+
+    @Test
+    public void testThrowsExceptionOnSetResourceOveruseConfigurationsWithEmptyConfigurationList() {
+        assertThrows(IllegalArgumentException.class,
+                () -> mCarWatchdogManager.setResourceOveruseConfigurations(
+                        /* configurations= */ new ArrayList<>(),
+                        CarWatchdogManager.FLAG_RESOURCE_OVERUSE_IO));
+    }
+
+    @Test
+    public void testThrowsExceptionOnSetResourceOveruseConfigurationsWithInvalidResourceType() {
+        ResourceOveruseConfiguration configuration =
+                new ResourceOveruseConfiguration.Builder(
+                ResourceOveruseConfiguration.COMPONENT_TYPE_SYSTEM, new ArrayList<>(),
+                new ArrayList<>(), new HashMap<>()).build();
+
+        assertThrows(IllegalArgumentException.class,
+                () -> mCarWatchdogManager.setResourceOveruseConfigurations(
+                        Collections.singletonList(configuration),
+                        /* resourceOveruseFlag= */ -1));
+    }
+
+    @Test
+    public void testThrowsExceptionOnSetResourceOveruseConfigurationsWithDuplicateComponentType() {
+        ResourceOveruseConfiguration configuration1 =
+                new ResourceOveruseConfiguration.Builder(
+                ResourceOveruseConfiguration.COMPONENT_TYPE_SYSTEM, new ArrayList<>(),
+                new ArrayList<>(), new HashMap<>()).build();
+
+        ResourceOveruseConfiguration configuration2 =
+                new ResourceOveruseConfiguration.Builder(
+                ResourceOveruseConfiguration.COMPONENT_TYPE_SYSTEM, new ArrayList<>(),
+                new ArrayList<>(), new HashMap<>()).build();
+
+        assertThrows(IllegalArgumentException.class,
+                () -> mCarWatchdogManager.setResourceOveruseConfigurations(
+                        Arrays.asList(configuration1, configuration2),
+                        CarWatchdogManager.FLAG_RESOURCE_OVERUSE_IO));
+    }
+
+    @Test
+    public void testThrowsExceptionOnSetResourceOveruseConfigurationsWithNoIoConfiguration() {
+        ResourceOveruseConfiguration configuration =
+                new ResourceOveruseConfiguration.Builder(
+                ResourceOveruseConfiguration.COMPONENT_TYPE_SYSTEM, new ArrayList<>(),
+                new ArrayList<>(), new HashMap<>()).build();
+
+        assertThrows(IllegalArgumentException.class,
+                () -> mCarWatchdogManager.setResourceOveruseConfigurations(
+                        Collections.singletonList(configuration),
+                        CarWatchdogManager.FLAG_RESOURCE_OVERUSE_IO));
+    }
+
+    @Test
+    public void testFailsSetSystemResourceOveruseConfigurationsWithNoSystemWideThreshold() {
+        ResourceOveruseConfiguration configuration =
+                new ResourceOveruseConfiguration.Builder(
+                ResourceOveruseConfiguration.COMPONENT_TYPE_SYSTEM, new ArrayList<>(),
+                new ArrayList<>(), new HashMap<>()).setIoOveruseConfiguration(
+                new IoOveruseConfiguration.Builder(
+                        new PerStateBytes(6666666, 7777777, 8888888),
+                        new HashMap<>(), new HashMap<>(), new ArrayList<>()).build())
+                .build();
+
+        assertThrows(IllegalArgumentException.class,
+                () -> mCarWatchdogManager.setResourceOveruseConfigurations(
+                        Collections.singletonList(configuration),
+                        CarWatchdogManager.FLAG_RESOURCE_OVERUSE_IO));
+    }
+
+    @Test
+    public void testThrowsExceptionOnGetResourceOveruseConfigurationsWithInvalidResourceType() {
+        assertThrows(IllegalArgumentException.class,
+                () -> mCarWatchdogManager
+                        .getResourceOveruseConfigurations(/* resourceOveruseFlag= */ -1));
+    }
+
+    @Test
+    public void testResourceOveruseConfigurationBuilder() {
+        ResourceOveruseConfiguration configuration = new ResourceOveruseConfiguration.Builder(
+                ResourceOveruseConfiguration.COMPONENT_TYPE_THIRD_PARTY, new ArrayList<>(),
+                new ArrayList<>(), new HashMap<>())
+                .setComponentType(ResourceOveruseConfiguration.COMPONENT_TYPE_SYSTEM)
+                .setSafeToKillPackages(List.of("system_package"))
+                .setVendorPackagePrefixes(List.of("vendor"))
+                .setPackagesToAppCategoryTypes(Map.of("media_package",
+                        ResourceOveruseConfiguration.APPLICATION_CATEGORY_TYPE_MEDIA))
+                .build();
+
+        ResourceOveruseConfiguration expectedConfiguration =
+                new ResourceOveruseConfiguration.Builder(
+                        ResourceOveruseConfiguration.COMPONENT_TYPE_SYSTEM,
+                        List.of("system_package"), List.of("vendor"), Map.of("media_package",
+                        ResourceOveruseConfiguration.APPLICATION_CATEGORY_TYPE_MEDIA)).build();
+
+        ResourceOveruseConfigurationSubject.assertThat(Collections.singleton(configuration))
+                .containsExactlyElementsIn(Collections.singleton(expectedConfiguration));
+    }
+
+    @Test
+    public void testVerifyPackagesDisabledOnResourceOveruseSettingsString() throws Exception {
+        ContentResolver contentResolverForUser = mContext.createContextAsUser(mUserHandle,
+                /* flags= */ 0).getContentResolver();
+        ArraySet<String> packages = extractPackages(Settings.Secure.getString(
+                contentResolverForUser, KEY_PACKAGES_DISABLED_ON_RESOURCE_OVERUSE));
+        assertWithMessage("Test package name in %s", KEY_PACKAGES_DISABLED_ON_RESOURCE_OVERUSE)
+                .that(packages).doesNotContain(mPackageName);
+    }
+
     /**
      * Test that no exception is thrown when calling the addResourceOveruseListener and
      * removeResourceOveruseListener client APIs.
@@ -270,7 +672,7 @@ public final class CarWatchdogManagerTest extends AbstractCarTestCase {
         assertThrows(NullPointerException.class,
                 () -> mCarWatchdogManager.addResourceOveruseListener(
                         mContext.getMainExecutor(), CarWatchdogManager.FLAG_RESOURCE_OVERUSE_IO,
-                        null));
+                        /* listener= */ null));
     }
 
     /**
@@ -293,6 +695,20 @@ public final class CarWatchdogManagerTest extends AbstractCarTestCase {
                     String result = runShellCommand(START_CUSTOM_PERF_COLLECTION_CMD);
                     return result.contains(START_CUSTOM_COLLECTION_SUCCESS_MSG) || result.isEmpty();
                 });
+    }
+
+    private PackageKillableState getPackageKillableState(String packageName) {
+        List<PackageKillableState> killableStates =
+                mCarWatchdogManager.getPackageKillableStatesAsUser(mUserHandle);
+        return killableStates.stream().filter(
+                (state) -> state.getPackageName().equals(packageName)).findFirst().orElseThrow(
+                RuntimeException::new);
+    }
+
+    private ArraySet<String> extractPackages(String settingsString) {
+        return TextUtils.isEmpty(settingsString) ? new ArraySet<>()
+                : new ArraySet<>(Arrays.asList(settingsString.split(
+                        PACKAGES_DISABLED_ON_RESOURCE_OVERUSE_SEPARATOR)));
     }
 
     private static long writeToDisk(File dir, long size) throws Exception {
@@ -322,6 +738,19 @@ public final class CarWatchdogManagerTest extends AbstractCarTestCase {
             }
             maxSize -= writeSize;
         }
+    }
+
+    private static boolean containsPackage(String packageName,
+            List<ResourceOveruseStats> statsList) {
+        return statsList.stream().anyMatch(
+                (stats) -> stats.getPackageName().equals(packageName));
+    }
+
+    private static boolean containsPackageWithStatsDifferentThan(String packageName,
+            List<ResourceOveruseStats> statsList) {
+        return statsList.stream().anyMatch(
+                (stats) -> !stats.getPackageName().equals(packageName)
+                        && stats.getIoOveruseStats() != null);
     }
 
     private final class ResourceOveruseStatsPollingCheckCondition
