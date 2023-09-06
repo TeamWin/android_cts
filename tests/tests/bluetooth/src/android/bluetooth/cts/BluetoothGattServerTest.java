@@ -61,6 +61,7 @@ public class BluetoothGattServerTest {
     private BluetoothGattServer mBluetoothGattServer;
     private BluetoothManager mBluetoothManager;
     private UiAutomation mUIAutomation;
+    private CountDownLatch mLatch;
 
     @Before
     public void setUp() throws Exception {
@@ -73,8 +74,13 @@ public class BluetoothGattServerTest {
         mBluetoothAdapter = mContext.getSystemService(BluetoothManager.class).getAdapter();
         assertTrue(BTAdapterUtils.enableAdapter(mBluetoothAdapter, mContext));
         mBluetoothManager = mContext.getSystemService(BluetoothManager.class);
+        mLatch = new CountDownLatch(1);
         mBluetoothGattServer = mBluetoothManager.openGattServer(mContext,
                 new BluetoothGattServerCallback() {
+                    @Override
+                    public void onServiceAdded(int status, BluetoothGattService service) {
+                        mLatch.countDown();
+                    }
                 });
     }
 
@@ -90,6 +96,7 @@ public class BluetoothGattServerTest {
         }
 
         mBluetoothAdapter = null;
+        mLatch = null;
 
         if (mUIAutomation != null) {
             mUIAutomation.dropShellPermissionIdentity();
@@ -120,16 +127,8 @@ public class BluetoothGattServerTest {
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
     public void testGetService() {
-        final CountDownLatch latch = new CountDownLatch(1);
-        final BluetoothGattServerCallback callback = new BluetoothGattServerCallback() {
-            @Override
-            public void onServiceAdded(int status, BluetoothGattService service) {
-                latch.countDown();
-            }
-        };
-        final BluetoothGattServer server = mBluetoothManager.openGattServer(mContext, callback);
         // Service is null after initialization with public constructor
-        assertNull(server.getService(TEST_UUID));
+        assertNull(mBluetoothGattServer.getService(TEST_UUID));
         BluetoothGattCharacteristic characteristic = new BluetoothGattCharacteristic(TEST_UUID,
                 0x0A, 0x11);
         BluetoothGattService service = new BluetoothGattService(TEST_UUID,
@@ -137,14 +136,14 @@ public class BluetoothGattServerTest {
 
         service.addCharacteristic(characteristic);
         // If service is added successfully, latch.countDown() happens in the callback
-        server.addService(service);
+        mBluetoothGattServer.addService(service);
         try {
-            latch.await(LATCH_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+            mLatch.await(LATCH_TIMEOUT_MS, TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
             fail("should not throw an InterruptedException");
         }
 
-        assertEquals(server.getService(TEST_UUID), service);
+        assertEquals(mBluetoothGattServer.getService(TEST_UUID), service);
     }
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
