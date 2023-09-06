@@ -75,6 +75,7 @@ import android.util.Pair;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.View;
+import android.view.ViewTreeObserver;
 import android.view.WindowInsets;
 import android.view.WindowInsetsController;
 import android.view.WindowManager;
@@ -1525,6 +1526,18 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
                             editTextRef.set(editText);
                             return new LinearLayout(activity);
                         }, TestActivity2.class);
+
+                View decor = splitPrimaryActivity.getWindow().getDecorView();
+                CountDownLatch latch = new CountDownLatch(1);
+                ViewTreeObserver observer = decor.getViewTreeObserver();
+                observer.addOnDrawListener(() -> {
+                    if (splitPrimaryActivity.isInMultiWindowMode()) {
+                        // check activity in multi-window mode after relayoutWindow.
+                        latch.countDown();
+                    }
+                });
+
+                latch.await(LAYOUT_STABLE_THRESHOLD, TimeUnit.MILLISECONDS);
 
                 // Tap on the first activity to change focus
                 mCtsTouchUtils.emulateTapOnViewCenter(mInstrumentation,
