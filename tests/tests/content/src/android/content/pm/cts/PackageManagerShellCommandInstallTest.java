@@ -32,9 +32,7 @@ import static android.content.pm.PackageManager.GET_SIGNING_CERTIFICATES;
 import static android.content.pm.PackageManager.MATCH_STATIC_SHARED_AND_SDK_LIBRARIES;
 import static android.content.pm.PackageManager.VERIFICATION_ALLOW;
 import static android.content.pm.PackageManager.VERIFICATION_REJECT;
-
 import static com.google.common.truth.Truth.assertThat;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -43,6 +41,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
+import static org.testng.Assert.expectThrows;
 
 import android.app.UiAutomation;
 import android.content.BroadcastReceiver;
@@ -65,7 +64,6 @@ import android.content.pm.Signature;
 import android.content.pm.SigningInfo;
 import android.content.pm.cts.util.AbandonAllPackageSessionsRule;
 import android.os.Bundle;
-import android.os.ConditionVariable;
 import android.os.IBinder;
 import android.os.ParcelFileDescriptor;
 import android.os.RemoteException;
@@ -106,6 +104,7 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
@@ -2079,7 +2078,7 @@ public class PackageManagerShellCommandInstallTest {
     static class PackageBroadcastReceiver extends BroadcastReceiver {
         private final String mTargetPackage;
         private final int mTargetUserId;
-        private final ConditionVariable mUserReceivedBroadcast = new ConditionVariable();
+        private CompletableFuture<Intent> mUserReceivedBroadcast = new CompletableFuture();
         private final String mAction;
         PackageBroadcastReceiver(String packageName, int targetUserId, String action) {
             mTargetPackage = packageName;
@@ -2093,7 +2092,7 @@ public class PackageManagerShellCommandInstallTest {
             final int userId = context.getUserId();
             if (intent.getAction().equals(mAction)
                     && packageName.equals(mTargetPackage) && userId == mTargetUserId) {
-                mUserReceivedBroadcast.open();
+                mUserReceivedBroadcast.complete(intent);
             }
         }
         public void assertBroadcastReceived() throws Exception {
@@ -2103,18 +2102,23 @@ public class PackageManagerShellCommandInstallTest {
             executeShellCommand(String.format(
                     "am wait-for-broadcast-dispatch -a %s -d package:%s", mAction, mTargetPackage));
             // Checks that broadcast is delivered here
-            assertTrue(mUserReceivedBroadcast.block(500));
+            assertNotNull(mUserReceivedBroadcast.get(500, TimeUnit.MILLISECONDS));
         }
         public void assertBroadcastNotReceived() throws Exception {
             // Make sure broadcast has been sent from PackageManager
             executeShellCommand("pm wait-for-handler --timeout 2000");
             executeShellCommand(String.format(
                     "am wait-for-broadcast-dispatch -a %s -d package:%s", mAction, mTargetPackage));
-            assertFalse(mUserReceivedBroadcast.block(500));
+            expectThrows(TimeoutException.class,
+                    () -> mUserReceivedBroadcast.get(500, TimeUnit.MILLISECONDS));
+        }
+
+        public Intent getBroadcastResult() {
+            return mUserReceivedBroadcast.getNow(null);
         }
 
         public void reset() {
-            mUserReceivedBroadcast.close();
+            mUserReceivedBroadcast = new CompletableFuture();
         }
     }
 

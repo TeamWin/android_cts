@@ -2897,6 +2897,42 @@ public class PackageManagerTest {
         assertDataAppExists(HELLO_WORLD_PACKAGE_NAME);
     }
 
+    /**
+     * Test that broadcasts are sent during archival install.
+     */
+    @Test
+    public void testInstallArchivedBroadcasts() throws Exception {
+        uninstallPackage(HELLO_WORLD_PACKAGE_NAME);
+        int currentUser = ActivityManager.getCurrentUser();
+        PackageBroadcastReceiver addedBroadcastReceiver = new PackageBroadcastReceiver(
+                HELLO_WORLD_PACKAGE_NAME, currentUser, Intent.ACTION_PACKAGE_ADDED
+        );
+        PackageBroadcastReceiver removedBroadcastReceiver = new PackageBroadcastReceiver(
+                HELLO_WORLD_PACKAGE_NAME, currentUser, Intent.ACTION_PACKAGE_REMOVED
+        );
+        final IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(Intent.ACTION_PACKAGE_ADDED);
+        intentFilter.addAction(Intent.ACTION_PACKAGE_REMOVED);
+        intentFilter.addDataScheme("package");
+        mContext.registerReceiver(addedBroadcastReceiver, intentFilter);
+        mContext.registerReceiver(removedBroadcastReceiver, intentFilter);
+
+        assertEquals("Success\n",
+                SystemUtil.runShellCommand("pm install-archived -t " + HELLO_WORLD_APK));
+
+        addedBroadcastReceiver.assertBroadcastReceived();
+        Intent addedIntent = addedBroadcastReceiver.getBroadcastResult();
+        assertNotNull(addedIntent);
+        assertTrue(addedIntent.getExtras().getBoolean(Intent.EXTRA_ARCHIVAL, false));
+        assertFalse(addedIntent.getExtras().getBoolean(Intent.EXTRA_REPLACING, false));
+
+        removedBroadcastReceiver.assertBroadcastReceived();
+        Intent removedIntent = removedBroadcastReceiver.getBroadcastResult();
+        assertNotNull(removedIntent);
+        assertTrue(removedIntent.getExtras().getBoolean(Intent.EXTRA_ARCHIVAL, false));
+        assertTrue(removedIntent.getExtras().getBoolean(Intent.EXTRA_REPLACING, false));
+    }
+
     @Test
     public void testPackageRemovedBroadcastsSingleUser() throws Exception {
         installPackage(HELLO_WORLD_APK);
