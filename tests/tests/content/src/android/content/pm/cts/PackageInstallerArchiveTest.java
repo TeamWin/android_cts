@@ -40,7 +40,7 @@ import android.content.IIntentSender;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.IntentSender;
-import android.content.pm.PackageArchiver;
+import android.content.pm.Flags;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageInstaller;
 import android.content.pm.PackageManager;
@@ -51,6 +51,7 @@ import android.os.IBinder;
 import android.os.RemoteException;
 import android.os.UserHandle;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.text.TextUtils;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -78,7 +79,8 @@ import java.util.concurrent.TimeUnit;
 // TODO(b/290775207) Add more test cases
 @AppModeFull
 @RunWith(AndroidJUnit4.class)
-public class PackageArchiverTest {
+@RequiresFlagsEnabled(Flags.FLAG_ARCHIVING)
+public class PackageInstallerArchiveTest {
 
     private static final String SAMPLE_APK_BASE = "/data/local/tmp/cts/content/";
     private static final String PACKAGE_NAME = "android.content.cts.mocklauncherapp";
@@ -97,7 +99,7 @@ public class PackageArchiverTest {
     private Context mContext;
     private UiDevice mUiDevice;
     private PackageManager mPackageManager;
-    private PackageArchiver mPackageArchiver;
+    private PackageInstaller mPackageInstaller;
     private StorageStatsManager mStorageStatsManager;
     private ArchiveIntentSender mIntentSender;
 
@@ -109,7 +111,7 @@ public class PackageArchiverTest {
                 androidx.test.InstrumentationRegistry.getInstrumentation());
         mContext = instrumentation.getContext();
         mPackageManager = mContext.getPackageManager();
-        mPackageArchiver = mPackageManager.getPackageArchiver();
+        mPackageInstaller = mPackageManager.getPackageInstaller();
         mStorageStatsManager = mContext.getSystemService(StorageStatsManager.class);
         mIntentSender = new ArchiveIntentSender();
     }
@@ -128,7 +130,7 @@ public class PackageArchiverTest {
 
 
         runWithShellPermissionIdentity(
-                () -> mPackageArchiver.requestArchive(PACKAGE_NAME,
+                () -> mPackageInstaller.requestArchive(PACKAGE_NAME,
                         new IntentSender((IIntentSender) mIntentSender)),
                 Manifest.permission.DELETE_PACKAGES);
 
@@ -154,7 +156,7 @@ public class PackageArchiverTest {
                 runWithShellPermissionIdentity(
                         () -> assertThrows(
                                 PackageManager.NameNotFoundException.class,
-                                () -> mPackageArchiver.requestArchive(PACKAGE_NAME,
+                                () -> mPackageInstaller.requestArchive(PACKAGE_NAME,
                                         new IntentSender((IIntentSender) mIntentSender))),
                         Manifest.permission.DELETE_PACKAGES);
 
@@ -166,7 +168,7 @@ public class PackageArchiverTest {
         installPackage(APK_PATH);
 
         runWithShellPermissionIdentity(
-                () -> mPackageArchiver.requestArchive(PACKAGE_NAME,
+                () -> mPackageInstaller.requestArchive(PACKAGE_NAME,
                         new IntentSender((IIntentSender) mIntentSender)),
                 Manifest.permission.DELETE_PACKAGES);
 
@@ -183,7 +185,7 @@ public class PackageArchiverTest {
     public void unarchiveApp() throws IOException, ExecutionException, InterruptedException {
         installPackage(APK_PATH);
         runWithShellPermissionIdentity(
-                () -> mPackageArchiver.requestArchive(PACKAGE_NAME,
+                () -> mPackageInstaller.requestArchive(PACKAGE_NAME,
                         new IntentSender((IIntentSender) mIntentSender)),
                 Manifest.permission.DELETE_PACKAGES);
         assertThat(mIntentSender.mStatus.get()).isEqualTo(PackageInstaller.STATUS_SUCCESS);
@@ -200,7 +202,7 @@ public class PackageArchiverTest {
         );
 
         runWithShellPermissionIdentity(
-                () -> mPackageArchiver.requestUnarchive(PACKAGE_NAME),
+                () -> mPackageInstaller.requestUnarchive(PACKAGE_NAME),
                 Manifest.permission.INSTALL_PACKAGES);
         // Make sure broadcast has been sent from PackageManager
         executeShellCommand("pm wait-for-handler --timeout 2000");
@@ -224,7 +226,7 @@ public class PackageArchiverTest {
                 runWithShellPermissionIdentity(
                         () -> assertThrows(
                                 PackageManager.NameNotFoundException.class,
-                                () -> mPackageArchiver.requestArchive(NO_ACTIVITY_PACKAGE_NAME,
+                                () -> mPackageInstaller.requestArchive(NO_ACTIVITY_PACKAGE_NAME,
                                         new IntentSender((IIntentSender) mIntentSender))),
                         Manifest.permission.DELETE_PACKAGES);
 
@@ -243,10 +245,6 @@ public class PackageArchiverTest {
                 options.toBundle());
         mUiDevice.wait(Until.hasObject(By.clazz(PACKAGE_NAME, ACTIVITY_NAME)),
                 TimeUnit.SECONDS.toMillis(5));
-    }
-
-    private static String installAppWithNoInstaller() {
-        return SystemUtil.runShellCommand(String.format("pm install -r -t -g %s", APK_PATH));
     }
 
     private Intent createTestActivityIntent() {
@@ -303,9 +301,9 @@ public class PackageArchiverTest {
             }
 
             mPackage.complete(
-                    intent.getStringExtra(PackageArchiver.EXTRA_UNARCHIVE_PACKAGE_NAME));
+                    intent.getStringExtra(PackageInstaller.EXTRA_UNARCHIVE_PACKAGE_NAME));
             mAllUsers.complete(
-                    intent.getBooleanExtra(PackageArchiver.EXTRA_UNARCHIVE_ALL_USERS, true));
+                    intent.getBooleanExtra(PackageInstaller.EXTRA_UNARCHIVE_ALL_USERS, true));
         }
     }
 
