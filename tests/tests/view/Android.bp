@@ -48,6 +48,7 @@ android_test {
         "truth-prebuilt",
         "CtsSurfaceValidatorLib",
         "cts-wm-util",
+        "android.view.flags-aconfig-java",
     ],
 
     jni_libs: [
