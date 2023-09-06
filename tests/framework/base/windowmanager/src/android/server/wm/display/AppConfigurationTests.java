@@ -749,25 +749,28 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
         mWmState.assertVisibility(RESIZEABLE_ACTIVITY, true /* visible */);
 
         final int displayId = mWmState.getDisplayByActivity(RESIZEABLE_ACTIVITY);
+        final ComponentName fixedOrientationActivity =
+                mWmState.getDisplay(displayId).getFullConfiguration().orientation
+                        == ORIENTATION_LANDSCAPE
+                        ? LANDSCAPE_ORIENTATION_ACTIVITY : PORTRAIT_ORIENTATION_ACTIVITY;
 
         final RotationSession rotationSession = createManagedRotationSession();
         assumeTrue("Skipping test: no user locked rotation support.",
                 supportsLockedUserRotation(rotationSession, displayId));
 
-        launchActivity(PORTRAIT_ORIENTATION_ACTIVITY, WINDOWING_MODE_FULLSCREEN);
-        assumeNotIgnoringOrientation(PORTRAIT_ORIENTATION_ACTIVITY);
-        mWmState.assertVisibility(PORTRAIT_ORIENTATION_ACTIVITY, true /* visible */);
+        launchActivity(fixedOrientationActivity, WINDOWING_MODE_FULLSCREEN);
+        assumeNotIgnoringOrientation(fixedOrientationActivity);
+        mWmState.assertVisibility(fixedOrientationActivity, true /* visible */);
         final SizeInfo initialSize = activitySession.getConfigInfo().sizeInfo;
 
         // Rotate the display and check that the orientation doesn't change
-        rotationSession.set(ROTATION_0);
-        final int[] rotations = { ROTATION_270, ROTATION_180, ROTATION_90, ROTATION_0 };
+        final int[] rotations = { ROTATION_0, ROTATION_270, ROTATION_180, ROTATION_90 };
         for (final int rotation : rotations) {
             separateTestJournal();
             rotationSession.set(rotation, false /* waitDeviceRotation */);
 
             // Verify lifecycle count and orientation changes.
-            assertRelaunchOrConfigChanged(PORTRAIT_ORIENTATION_ACTIVITY, 0 /* numRelaunch */,
+            assertRelaunchOrConfigChanged(fixedOrientationActivity, 0 /* numRelaunch */,
                     0 /* numConfigChange */);
             final SizeInfo currentSize = activitySession.getConfigInfo().sizeInfo;
             assertEquals("Sizes must not be changed", initialSize, currentSize);
