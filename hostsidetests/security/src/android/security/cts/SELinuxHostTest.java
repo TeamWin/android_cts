@@ -55,6 +55,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -641,6 +642,27 @@ public class SELinuxHostTest extends BaseHostJUnit4Test {
     }
 
     /**
+     * Asserts that the actual file contains all the lines from the expected file.
+     * It does not guarantee the order of the lines.
+     *
+     * @param expectedFile
+     *  The file with the expected contents.
+     * @param actualFile
+     *  The actual file being checked.
+     */
+    private void assertContainsAllLines(File expectedFile, File actualFile) throws Exception {
+        List<String> expectedLines = Files.readAllLines(expectedFile.toPath());
+        List<String> actualLines = Files.readAllLines(actualFile.toPath());
+
+        HashSet<String> expected = new HashSet(expectedLines);
+        HashSet<String> actual = new HashSet(actualLines);
+
+        /* remove all seen lines from expected, ignoring new entries */
+        expected.removeAll(actual);
+        assertTrue("Line removed: " + String.join("\n", expected), expected.isEmpty());
+    }
+
+    /**
      * Tests that the seapp_contexts file on the device contains
      * the standard AOSP entries.
      *
@@ -740,7 +762,7 @@ public class SELinuxHostTest extends BaseHostJUnit4Test {
         /* retrieve the AOSP service_contexts file from jar */
         aospSvcFile = copyResourceToTempFile("/plat_service_contexts");
 
-        assertFileStartsWith(aospSvcFile, deviceSvcFile);
+        assertContainsAllLines(aospSvcFile, deviceSvcFile);
     }
 
     /**
