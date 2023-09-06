@@ -147,8 +147,8 @@ public class DecodeStreamToYuv extends CodecDecoderTestBase {
             writeImage(img);
             if (mOutputCount == 0) {
                 MediaFormat format = mCodec.getOutputFormat();
-                mWidth = format.getInteger(MediaFormat.KEY_WIDTH);
-                mHeight = format.getInteger(MediaFormat.KEY_HEIGHT);
+                mWidth = getWidth(format);
+                mHeight = getHeight(format);
                 int imgFormat = img.getFormat();
                 mBytesPerSample = (ImageFormat.getBitsPerPixel(imgFormat) * 2) / (8 * 3);
             }
