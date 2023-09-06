@@ -18,6 +18,8 @@ package android.backup.cts;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assume.assumeTrue;
+
 import android.Manifest;
 import android.app.UiAutomation;
 import android.app.backup.BackupManager;
@@ -30,11 +32,16 @@ import android.content.Context;
 import android.os.Bundle;
 import android.platform.test.annotations.AppModeFull;
 
+import androidx.test.runner.AndroidJUnit4;
+
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import org.junit.runner.RunWith;
+
 @AppModeFull
+@RunWith(AndroidJUnit4.class)
 public class BackupRestoreEventLoggerTest extends BaseBackupCtsTest {
     private static final String BACKUP_APP_PACKAGE
             = "android.cts.backup.backuprestoreeventloggerapp";
@@ -61,6 +68,8 @@ public class BackupRestoreEventLoggerTest extends BaseBackupCtsTest {
     @Override
     public void setUp() throws Exception {
         super.setUp();
+
+        assumeTrue(isBackupSupported());
 
         Context context = getInstrumentation().getTargetContext();
 
