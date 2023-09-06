@@ -60,8 +60,6 @@ import android.server.wm.CommandSession.ActivitySession;
 import android.server.wm.WindowManagerState;
 import android.server.wm.intent.Activities;
 
-import androidx.test.filters.FlakyTest;
-
 import com.android.compatibility.common.util.ApiTest;
 
 import org.junit.Test;
@@ -148,7 +146,6 @@ public class StartActivityTests extends ActivityManagerTestBase {
     }
 
     @Test
-    @FlakyTest(bugId = 297335387)
     public void testStartActivityTaskLaunchBehind() {
         // launch an activity
         getLaunchActivityBuilder()
