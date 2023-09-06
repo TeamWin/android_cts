@@ -48,7 +48,6 @@ import android.os.Build;
 import android.telephony.TelephonyManager;
 
 import androidx.test.filters.FlakyTest;
-import androidx.test.filters.RequiresDevice;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.CddTest;
@@ -332,7 +331,6 @@ public class SystemFeaturesTest {
     }
 
     @Test
-    @RequiresDevice // TODO(b/297565307): Remove this when virtual device is ready for NFC HCE
     public void testNfcFeatures() {
         if (NfcAdapter.getDefaultAdapter(mContext) != null) {
             // Watches/Enterprise devices MAY support all FEATURE_NFC features when an NfcAdapter
