@@ -491,23 +491,23 @@ public class ActivityEmbeddingUtil {
 
     /** Returns the expected bounds of the primary and secondary containers */
     @NonNull
-    private static Pair<Rect, Rect> getExpectedBoundsPair(@NonNull Activity primaryActivity,
+    private static Pair<Rect, Rect> getExpectedBoundsPair(@NonNull Activity activity,
             @NonNull SplitAttributes splitAttributes) {
         SplitType splitType = splitAttributes.getSplitType();
 
-        final Rect parentBounds = getMaximumActivityBounds(primaryActivity);
+        final Rect parentBounds = getMaximumActivityBounds(activity);
         if (splitType instanceof SplitType.ExpandContainersSplitType) {
             return new Pair<>(new Rect(parentBounds), new Rect(parentBounds));
         }
 
         int layoutDir = (splitAttributes.getLayoutDirection() == LayoutDirection.LOCALE)
-                ? primaryActivity.getResources().getConfiguration().getLayoutDirection()
+                ? activity.getResources().getConfiguration().getLayoutDirection()
                 : splitAttributes.getLayoutDirection();
         final boolean isPrimaryRightOrBottomContainer = isPrimaryRightOrBottomContainer(layoutDir);
 
         FoldingFeature foldingFeature;
         try {
-            foldingFeature = getFoldingFeature(getExtensionWindowLayoutInfo(primaryActivity));
+            foldingFeature = getFoldingFeature(getExtensionWindowLayoutInfo(activity));
         } catch (InterruptedException e) {
             foldingFeature = null;
         }
