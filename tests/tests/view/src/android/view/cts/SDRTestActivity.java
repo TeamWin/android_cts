@@ -23,8 +23,11 @@ import android.view.SurfaceView;
 import android.view.TextureView;
 import android.view.TextureView.SurfaceTextureListener;
 import android.view.ViewGroup.LayoutParams;
-import android.view.WindowInsets.Type;
 import android.widget.FrameLayout;
+
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 public class SDRTestActivity extends Activity
         implements SurfaceHolder.Callback, SurfaceTextureListener {
@@ -33,6 +36,8 @@ public class SDRTestActivity extends Activity
     private SurfaceView mSurfaceView;
     private TextureView mTextureView;
     private SurfaceTexture mSurface;
+
+    private CountDownLatch mEnterAnimationFence = new CountDownLatch(1);
 
     @Override
     public void surfaceCreated(SurfaceHolder holder) {}
@@ -59,8 +64,6 @@ public class SDRTestActivity extends Activity
 
         mSurfaceView.getHolder().addCallback(this);
         setContentView(content);
-        getWindow().getInsetsController().hide(Type.statusBars());
-        getWindow().getInsetsController().hide(Type.navigationBars());
     }
 
     @Override
@@ -71,6 +74,13 @@ public class SDRTestActivity extends Activity
     @Override
     public void onEnterAnimationComplete() {
         super.onEnterAnimationComplete();
+        mEnterAnimationFence.countDown();
+    }
+
+    public void waitForEnterAnimationComplete() throws TimeoutException, InterruptedException {
+        if (!mEnterAnimationFence.await(TIME_OUT_MS, TimeUnit.MILLISECONDS)) {
+            throw new TimeoutException();
+        }
     }
 
     public TextureView getTextureView() {
