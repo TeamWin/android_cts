@@ -28,6 +28,7 @@ import android.content.pm.PackageManager.MATCH_KNOWN_PACKAGES
 import android.content.pm.PackageManager.MATCH_UNINSTALLED_PACKAGES
 import android.content.pm.PackageManager.PackageInfoFlags
 import android.content.pm.cts.PackageManagerShellCommandInstallTest.PackageBroadcastReceiver
+import android.content.pm.cts.PackageManagerTest.getInstalledState
 import android.content.pm.cts.util.AbandonAllPackageSessionsRule
 import android.os.Handler
 import android.os.HandlerThread
@@ -425,7 +426,7 @@ class PackageManagerShellCommandMultiUserTest {
 
     @Test
     fun testUninstallWithKeepDataMultiUserMatchArchived() {
-        testUninstallWithKeepDataMultiUser(PackageInfoFlags.of(MATCH_ARCHIVED_PACKAGES.toLong()))
+        testUninstallWithKeepDataMultiUser(PackageInfoFlags.of(MATCH_ARCHIVED_PACKAGES))
     }
 
     private fun testUninstallWithKeepDataMultiUser(matchFlag: PackageInfoFlags) {
@@ -437,8 +438,14 @@ class PackageManagerShellCommandMultiUserTest {
         installPackageAsUser(TEST_HW5, secondaryUser)
         assertThat(isAppInstalledForUser(TEST_APP_PACKAGE, primaryUser)).isTrue()
         assertThat(isAppInstalledForUser(TEST_APP_PACKAGE, secondaryUser)).isTrue()
+        assertThat(getInstalledState(TEST_APP_PACKAGE, primaryUser.id()))
+            .isEqualTo("true")
+        assertThat(getInstalledState(TEST_APP_PACKAGE, secondaryUser.id()))
+            .isEqualTo("true")
         // Delete app with DELETE_KEEP_DATA on second user
         uninstallPackageWithKeepData(TEST_APP_PACKAGE, secondaryUser)
+        assertThat(getInstalledState(TEST_APP_PACKAGE, primaryUser.id())).isEqualTo("true")
+        assertThat(getInstalledState(TEST_APP_PACKAGE, secondaryUser.id())).isEqualTo("false")
 
         runWithShellPermissionIdentity(
             uiAutomation,
@@ -464,6 +471,10 @@ class PackageManagerShellCommandMultiUserTest {
                 // Delete app on primary user without DELETE_KEEP_DATA flag and verify that the app is
                 // still queryable with the match flag
                 uninstallPackageAsUser(TEST_APP_PACKAGE, primaryUser)
+                assertThat(getInstalledState(TEST_APP_PACKAGE, primaryUser.id()))
+                    .isEqualTo("false")
+                assertThat(getInstalledState(TEST_APP_PACKAGE, secondaryUser.id()))
+                    .isEqualTo("false")
                 packageInfoSecondUser = pmSecondaryUser.getPackageInfo(
                     TEST_APP_PACKAGE,
                     matchFlag
@@ -477,6 +488,10 @@ class PackageManagerShellCommandMultiUserTest {
                 // Reinstall the app on the second user and verifies that the data dir stays the same,
                 // and the app is still not queryable on the primary user
                 installPackageAsUser(TEST_HW5, secondaryUser)
+                assertThat(getInstalledState(TEST_APP_PACKAGE, primaryUser.id()))
+                    .isEqualTo("false")
+                assertThat(getInstalledState(TEST_APP_PACKAGE, secondaryUser.id()))
+                    .isEqualTo("true")
                 packageInfoSecondUser = pmSecondaryUser.getPackageInfo(
                     TEST_APP_PACKAGE,
                     PackageInfoFlags.of(0L)
@@ -488,6 +503,8 @@ class PackageManagerShellCommandMultiUserTest {
                 )
                 // Fully uninstall the app on the second user and verify it's no longer queryable
                 uninstallPackageAsUser(TEST_APP_PACKAGE, secondaryUser)
+                assertThat(getInstalledState(TEST_APP_PACKAGE, primaryUser.id())).isNull()
+                assertThat(getInstalledState(TEST_APP_PACKAGE, secondaryUser.id())).isNull()
                 assertThrows(PackageManager.NameNotFoundException::class.java) {
                     pmSecondaryUser.getPackageInfo(
                         TEST_APP_PACKAGE,
