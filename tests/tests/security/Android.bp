@@ -27,6 +27,7 @@ android_test {
         "androidx.test.runner",
         "android-common",
         "android.security.flags-aconfig-java",
+        "com.android.server.security.flags-aconfig-java",
         "ctstestserver",
         "ctstestrunner-axt",
         "cts-install-lib",

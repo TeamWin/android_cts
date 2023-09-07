@@ -470,6 +470,10 @@ java_test_host {
     data: [
         ":CtsApkVerityTestPrebuiltFiles",
     ],
+    static_libs: [
+        "flag-junit-host",
+        "com.android.server.security.flags-aconfig-java-host",
+    ],
     test_config: "ApkVerityInstallTests.xml",
 }
 

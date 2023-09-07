@@ -121,10 +121,11 @@ public class FileIntegrityManagerTest {
 
     @CddTest(requirement="9.10/C-0-3,C-1-1")
     @Test
-    public void testCtsReleaseCertificateTrusted() throws Exception {
+    public void testIsAppSourceCertificateTrusted() throws Exception {
         boolean isReleaseCertTrusted = mFileIntegrityManager.isAppSourceCertificateTrusted(
                 readAssetAsX509Certificate("fsverity-release.x509.der"));
-        if (mFileIntegrityManager.isApkVeritySupported()) {
+        if (!com.android.server.security.Flags.deprecateFsvSig()
+                && mFileIntegrityManager.isApkVeritySupported()) {
             assertTrue(isReleaseCertTrusted);
         } else {
             assertFalse(isReleaseCertTrusted);
