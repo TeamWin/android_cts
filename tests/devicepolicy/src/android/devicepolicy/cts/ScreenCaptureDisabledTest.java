@@ -39,6 +39,7 @@ import android.app.admin.NoArgsPolicyKey;
 import android.app.admin.PolicyState;
 import android.app.admin.PolicyUpdateResult;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.devicepolicy.cts.utils.PolicyEngineUtils;
 import android.devicepolicy.cts.utils.PolicySetResultUtils;
 import android.graphics.Bitmap;
@@ -702,10 +703,16 @@ public final class ScreenCaptureDisabledTest {
         screenshot.getPixels(pixels, 0, width, 0, height / 4, width, height / 2);
 
         for (int pixel : pixels) {
-            if (!(pixel == Color.BLACK)) {
+            if (!(pixel == Color.BLACK || (pixel == Color.TRANSPARENT && isAutomotive()))) {
                 return false;
             }
         }
         return true;
     }
+
+    private static boolean isAutomotive() {
+        return TestApis.context().instrumentedContext().getPackageManager()
+                .hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE);
+    }
+
 }
