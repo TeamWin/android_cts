@@ -46,7 +46,6 @@ import org.hyphonate.megaaudio.common.StreamBase;
 import org.hyphonate.megaaudio.duplex.DuplexAudioManager;
 import org.hyphonate.megaaudio.player.AudioSource;
 import org.hyphonate.megaaudio.player.AudioSourceProvider;
-import org.hyphonate.megaaudio.player.NativeAudioSource;
 import org.hyphonate.megaaudio.player.sources.SinAudioSourceProvider;
 import org.hyphonate.megaaudio.player.sources.SparseChannelAudioSourceProvider;
 import org.hyphonate.megaaudio.recorder.AudioSinkProvider;
@@ -562,13 +561,8 @@ public class AudioDataPathsActivity
 
         private Timer mTimer;
 
-        private AudioSource mJavaSinSource;
-        private NativeAudioSource mNativeSinSource;
-
         public void initializeTests() {
             AudioSourceProvider sinSourceProvider = new SinAudioSourceProvider();
-            mJavaSinSource = sinSourceProvider.getJavaSource();
-            mNativeSinSource = sinSourceProvider.getNativeSource();
 
             AudioSourceProvider leftSineSourceProvider = new SparseChannelAudioSourceProvider(
                     SparseChannelAudioSourceProvider.CHANNELMASK_LEFT);
@@ -965,11 +959,6 @@ public class AudioDataPathsActivity
                         testSpec.mSourceProvider, testSpec.mSinkProvider);
                 mDuplexAudioManager.setPlayerRouteDevice(outDevInfo);
                 mDuplexAudioManager.setPlayerSampleRate(testSpec.mOutSampleRate);
-                if (mActiveTestAPI == TEST_API_NATIVE) {
-                    mNativeSinSource.setSampleRate(testSpec.mOutSampleRate);
-                } else {
-                    mJavaSinSource.setSampleRate(testSpec.mOutSampleRate);
-                }
                 mDuplexAudioManager.setNumPlayerChannels(testSpec.mOutChannelCount);
 
                 // Recorder
@@ -987,16 +976,19 @@ public class AudioDataPathsActivity
                 Globals.setMMapEnabled(mmapEnabled);
 
                 // Open the streams.
+                // Note AudioSources and AudioSinks get allocated at this point
                 mDuplexAudioManager.setupStreams(mAudioApi, mAudioApi);
+
+                // (potentially) Adjust AudioSource parameters
+                AudioSource audioSource = testSpec.mSourceProvider.getActiveSource();
+
+                // Set the sample rate for the source (the sample rate for the player gets
+                // set in the DuplexAudioManager.Builder.
+                audioSource.setSampleRate(testSpec.mOutSampleRate);
 
                 // Adjust the player frequency to match with the quantized frequency
                 // of the analyzer.
-                float freq = (float) mAnalyzer.getAdjustedFrequency();
-                if (mActiveTestAPI == TEST_API_NATIVE) {
-                    mNativeSinSource.setFreq(freq);
-                } else {
-                    mJavaSinSource.setFreq(freq);
-                }
+                audioSource.setFreq((float) mAnalyzer.getAdjustedFrequency());
 
                 mWaveView.setNumChannels(testSpec.mInChannelCount);
 

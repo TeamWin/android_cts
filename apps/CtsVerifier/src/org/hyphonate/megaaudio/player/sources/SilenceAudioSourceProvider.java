@@ -19,15 +19,19 @@ import org.hyphonate.megaaudio.player.AudioSource;
 import org.hyphonate.megaaudio.player.AudioSourceProvider;
 import org.hyphonate.megaaudio.player.NativeAudioSource;
 
-public class SilenceAudioSourceProvider implements AudioSourceProvider {
+public class SilenceAudioSourceProvider extends AudioSourceProvider {
     @Override
     public AudioSource getJavaSource() {
-        return new SilenceAudioSource();
+        return mActiveSource = mJavaSource != null
+                ? mJavaSource
+                : (mJavaSource = new SilenceAudioSource());
     }
 
     @Override
-    public NativeAudioSource getNativeSource() {
-        return new NativeAudioSource(allocNativeSource());
+    public AudioSource getNativeSource() {
+        return mActiveSource = mNativeSource != null
+                ? mNativeSource
+                : (mNativeSource = new NativeAudioSource(allocNativeSource()));
     }
 
     private native long allocNativeSource();

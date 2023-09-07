@@ -15,16 +15,27 @@
  */
 package org.hyphonate.megaaudio.player;
 
-public interface AudioSourceProvider {
+public abstract class AudioSourceProvider {
+    // Cache sources
+    protected AudioSource mJavaSource;
+    protected NativeAudioSource mNativeSource;
+
+    // Shadow most recently accessed source
+    protected AudioSource mActiveSource;
+
     /**
      * @return return a Java AudioSource subclass object corresponding to the AudioSourceProvider
      * implementation.
      */
-    AudioSource getJavaSource();
+    public abstract AudioSource getJavaSource();
 
     /**
      * @return a native (C/C++) AudioSource subclass object corresponding to the AudioSourceProvider
      * implementation (stored in a long).
      */
-    NativeAudioSource getNativeSource();
+    public abstract AudioSource getNativeSource();
+
+    public AudioSource getActiveSource() {
+        return mActiveSource;
+    }
 }
