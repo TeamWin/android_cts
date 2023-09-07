@@ -19,7 +19,6 @@ package android.content.pm.cts;
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.content.pm.PackageManager.MATCH_ARCHIVED_PACKAGES;
 import static android.content.pm.PackageManager.MATCH_UNINSTALLED_PACKAGES;
-import static android.content.pm.cts.PackageManagerShellCommandIncrementalTest.executeShellCommand;
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
 import static com.google.common.truth.Truth.assertThat;
 import static junit.framework.Assert.fail;
@@ -204,12 +203,6 @@ public class PackageInstallerArchiveTest {
         runWithShellPermissionIdentity(
                 () -> mPackageInstaller.requestUnarchive(PACKAGE_NAME),
                 Manifest.permission.INSTALL_PACKAGES);
-        // Make sure broadcast has been sent from PackageManager
-        executeShellCommand("pm wait-for-handler --timeout 2000");
-        // Make sure broadcast has been dispatched from the queue
-        executeShellCommand(String.format(
-                "am wait-for-broadcast-dispatch -a %s -d package:%s",
-                Intent.ACTION_PACKAGE_FULLY_REMOVED, mContext.getPackageName()));
         assertThat(unarchiveReceiver.mPackage.get()).isEqualTo(PACKAGE_NAME);
         assertThat(unarchiveReceiver.mAllUsers.get()).isFalse();
 
@@ -236,6 +229,49 @@ public class PackageInstallerArchiveTest {
 
         // Reset for other PM tests.
         installPackageWithNoInstaller(NO_ACTIVITY_APK_PATH);
+    }
+
+    @Test
+    public void archiveApp_shellCommand() throws Exception {
+        installPackage(APK_PATH);
+
+        assertThat(
+                SystemUtil.runShellCommand(String.format("pm archive %s", PACKAGE_NAME))).isEqualTo(
+                "Success\n");
+        assertThat(mPackageManager.getPackageInfo(PACKAGE_NAME,
+                PackageInfoFlags.of(MATCH_ARCHIVED_PACKAGES)).isArchived).isTrue();
+    }
+
+    @Test
+    public void unarchiveApp_shellCommand() throws Exception {
+        installPackage(APK_PATH);
+        assertThat(
+                SystemUtil.runShellCommand(String.format("pm archive %s", PACKAGE_NAME))).isEqualTo(
+                "Success\n");
+
+        UnarchiveBroadcastReceiver unarchiveReceiver = registerUnarchiveReceiver();
+        assertThat(
+                SystemUtil.runShellCommand(String.format("pm request-unarchive %s", PACKAGE_NAME)))
+                .isEqualTo("Success\n");
+
+        assertThat(unarchiveReceiver.mPackage.get()).isEqualTo(PACKAGE_NAME);
+        assertThat(unarchiveReceiver.mAllUsers.get()).isFalse();
+
+        mContext.unregisterReceiver(unarchiveReceiver);
+    }
+
+    private UnarchiveBroadcastReceiver registerUnarchiveReceiver() {
+        UnarchiveBroadcastReceiver unarchiveReceiver = new UnarchiveBroadcastReceiver();
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(Intent.ACTION_UNARCHIVE_PACKAGE);
+        mContext.registerReceiver(
+                unarchiveReceiver,
+                intentFilter,
+                null,
+                null,
+                Context.RECEIVER_EXPORTED
+        );
+        return unarchiveReceiver;
     }
 
     private void launchTestActivity() {
