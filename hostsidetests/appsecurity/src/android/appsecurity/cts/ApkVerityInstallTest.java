@@ -24,12 +24,8 @@ import static org.junit.Assume.assumeTrue;
 
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.Presubmit;
-import android.platform.test.annotations.RequiresFlagsDisabled;
-import android.platform.test.flag.junit.CheckFlagsRule;
-import android.platform.test.flag.junit.host.HostFlagsValueProvider;
 
 import com.android.compatibility.common.util.CddTest;
-import com.android.server.security.Flags;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.junit4.DeviceParameterizedRunner;
@@ -37,7 +33,6 @@ import com.android.tradefed.testtype.junit4.DeviceTestRunOptions;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -48,7 +43,6 @@ import junitparams.Parameters;
 @Presubmit
 @RunWith(DeviceParameterizedRunner.class)
 @AppModeFull
-@RequiresFlagsDisabled(Flags.FLAG_DEPRECATE_FSV_SIG)
 public final class ApkVerityInstallTest extends BaseAppSecurityTest {
 
     private static final String PACKAGE_NAME = "android.appsecurity.cts.apkveritytestapp";
@@ -93,17 +87,16 @@ public final class ApkVerityInstallTest extends BaseAppSecurityTest {
         };
     }
 
-    @Rule
-    public final CheckFlagsRule mCheckFlagsRule =
-            HostFlagsValueProvider.createCheckFlagsRule(this::getDevice);
-
     @Before
     public void setUp() throws DeviceNotAvailableException {
         ITestDevice device = getDevice();
         String apkVerityMode = device.getProperty("ro.apk_verity.mode");
-        // Force opt-in, or on a supported device by requirement
-        assumeTrue(APK_VERITY_STANDARD_MODE.equals(apkVerityMode)
-                || device.getLaunchApiLevel() >= 30 /* R */);
+        assumeTrue(
+                // Force opt-in, or...
+                APK_VERITY_STANDARD_MODE.equals(apkVerityMode)
+                // is on a supported device until deprecated in V
+                || (device.getLaunchApiLevel() >= 30 /* R */
+                        && device.getApiLevel() <= 34 /* U */));
         assumeSecurityModelCompat();
     }
 
