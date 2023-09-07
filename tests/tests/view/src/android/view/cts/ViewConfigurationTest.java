@@ -16,13 +16,16 @@
 
 package android.view.cts;
 
+import static android.view.flags.Flags.FLAG_SCROLL_FEEDBACK_API;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
 import android.graphics.Point;
-import android.hardware.input.InputManager;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.util.Pair;
 import android.util.TypedValue;
 import android.view.Display;
 import android.view.InputDevice;
@@ -36,6 +39,7 @@ import androidx.test.runner.AndroidJUnit4;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -143,18 +147,10 @@ public class ViewConfigurationTest {
     @Test
     public void testFlingThresholds_forInvalidInputDeviceIds() {
         Context context = InstrumentationRegistry.getTargetContext();
-        InputManager inputManager = context.getSystemService(InputManager.class);
-
         ViewConfiguration contextBasedVc = ViewConfiguration.get(context);
         ViewConfiguration contextLessVc = new ViewConfiguration();
         for (ViewConfiguration vc : new ViewConfiguration[] {contextBasedVc, contextLessVc}) {
-            // "50" randomly chosen to cover some array of integers.
-            for (int deviceId = -50; deviceId < 50; deviceId++) {
-                InputDevice device = inputManager.getInputDevice(deviceId);
-                if (device != null) {
-                    continue; // Test only invalid device IDs. Continue...
-                }
-
+            runOnInvalidDeviceIds((deviceId) -> {
                 // Test with some source-axis combinations. Any source-axis combination should
                 // provide the no-fling thresholds, since the device ID is known to be invalid.
                 verifyNoFlingThresholds(
@@ -163,34 +159,32 @@ public class ViewConfigurationTest {
                         vc, deviceId, InputDevice.SOURCE_TOUCHSCREEN, MotionEvent.AXIS_Y);
                 verifyNoFlingThresholds(
                         vc, deviceId, InputDevice.SOURCE_ROTARY_ENCODER, MotionEvent.AXIS_SCROLL);
-            }
+            });
         }
     }
 
     @Test
     public void testFlingThresholds_forAllAvailableDevices() {
         Context context = InstrumentationRegistry.getTargetContext();
-        InputManager inputManager = context.getSystemService(InputManager.class);
-        int[] deviceIds = context.getSystemService(InputManager.class).getInputDeviceIds();
-
         ViewConfiguration contextBasedVc = ViewConfiguration.get(context);
         ViewConfiguration contextLessVc = new ViewConfiguration();
         for (ViewConfiguration vc : new ViewConfiguration[] {contextBasedVc, contextLessVc}) {
-            for (int deviceId : deviceIds) {
-                InputDevice device = inputManager.getInputDevice(deviceId);
-                for (InputDevice.MotionRange motionRange : device.getMotionRanges()) {
-                    int axis = motionRange.getAxis();
-                    int source = motionRange.getSource();
+            runOnEveryInputDeviceMotionRange(deviceIdAndMotionRange -> {
+                int deviceId = deviceIdAndMotionRange.first;
+                InputDevice.MotionRange motionRange = deviceIdAndMotionRange.second;
 
-                    int minVel = vc.getScaledMinimumFlingVelocity(deviceId, axis, source);
-                    int maxVel = vc.getScaledMaximumFlingVelocity(deviceId, axis, source);
+                int axis = motionRange.getAxis();
+                int source = motionRange.getSource();
 
-                    // These min/max thresholds are thresholds for a valid InputDevice ID, on a
-                    // source and axis applicable to the InputDevice represented by the ID. Check
-                    // that the provided thresholds are within the valid bounds.
-                    verifyFlingThresholdRange(minVel, maxVel);
-                }
+                int minVel = vc.getScaledMinimumFlingVelocity(deviceId, axis, source);
+                int maxVel = vc.getScaledMaximumFlingVelocity(deviceId, axis, source);
 
+                // These min/max thresholds are thresholds for a valid InputDevice ID, on a
+                // source and axis applicable to the InputDevice represented by the ID. Check
+                // that the provided thresholds are within the valid bounds.
+                verifyFlingThresholdRange(minVel, maxVel);
+            });
+            runOnEveryValidDeviceId((deviceId) -> {
                 // Test with source-axis combinations that we know are not valid. Since the
                 // source-axis combinations will be invalid, we expect the no-fling thresholds,
                 // despite the fact that we're using a valid InputDevice ID.
@@ -198,7 +192,108 @@ public class ViewConfigurationTest {
                         vc, deviceId, InputDevice.SOURCE_ROTARY_ENCODER, MotionEvent.AXIS_X);
                 verifyNoFlingThresholds(
                         vc, deviceId, InputDevice.SOURCE_TOUCHSCREEN, MotionEvent.AXIS_WHEEL);
-            }
+            });
+        }
+    }
+
+    @Test
+    @RequiresFlagsEnabled(FLAG_SCROLL_FEEDBACK_API)
+    public void testIsHapticScrollFeedbackEnabled_forAllAvailableDevices() {
+        Context context = InstrumentationRegistry.getTargetContext();
+        ViewConfiguration contextBasedVc = ViewConfiguration.get(context);
+        ViewConfiguration contextLessVc = new ViewConfiguration();
+        for (ViewConfiguration vc : new ViewConfiguration[] {contextBasedVc, contextLessVc}) {
+            runOnEveryInputDeviceMotionRange(deviceIdAndMotionRange -> {
+                int deviceId = deviceIdAndMotionRange.first;
+                InputDevice.MotionRange motionRange = deviceIdAndMotionRange.second;
+                // Just check that the method returns successfully.
+                vc.isHapticScrollFeedbackEnabled(
+                        deviceId, motionRange.getAxis(), motionRange.getSource());
+            });
+
+            runOnEveryValidDeviceId((deviceId) -> {
+                // Test with source-axis combinations that we know are not valid. Since the
+                // source-axis combinations will be invalid, we expect scroll haptics to be not
+                // supported despite the fact that we're using a valid InputDevice ID.
+                assertFalse(
+                        vc.isHapticScrollFeedbackEnabled(
+                                deviceId, MotionEvent.AXIS_X, InputDevice.SOURCE_ROTARY_ENCODER));
+                assertFalse(
+                        vc.isHapticScrollFeedbackEnabled(
+                                deviceId, MotionEvent.AXIS_WHEEL, InputDevice.SOURCE_TOUCHSCREEN));
+
+            });
+        }
+    }
+
+    @Test
+    @RequiresFlagsEnabled(FLAG_SCROLL_FEEDBACK_API)
+    public void testIsHapticScrollFeedbackEnabled_forInvalidInputDeviceIds() {
+        Context context = InstrumentationRegistry.getTargetContext();
+        ViewConfiguration contextBasedVc = ViewConfiguration.get(context);
+        ViewConfiguration contextLessVc = new ViewConfiguration();
+        for (ViewConfiguration vc : new ViewConfiguration[] {contextBasedVc, contextLessVc}) {
+            runOnInvalidDeviceIds((deviceId) -> {
+                // Test with some valid source-axis combinations. Any source-axis combination should
+                // not support scroll haptics since the device ID is known to be invalid.
+                assertFalse(
+                        vc.isHapticScrollFeedbackEnabled(
+                                deviceId, MotionEvent.AXIS_X, InputDevice.SOURCE_TOUCHSCREEN));
+                assertFalse(
+                        vc.isHapticScrollFeedbackEnabled(
+                                deviceId, MotionEvent.AXIS_Y, InputDevice.SOURCE_TOUCHSCREEN));
+                assertFalse(
+                        vc.isHapticScrollFeedbackEnabled(
+                                deviceId,
+                                MotionEvent.AXIS_SCROLL,
+                                InputDevice.SOURCE_ROTARY_ENCODER));
+            });
+        }
+    }
+
+    @Test
+    @RequiresFlagsEnabled(FLAG_SCROLL_FEEDBACK_API)
+    public void testGetHapticScrollFeedbackTickInterval_forAllAvailableDevices() {
+        Context context = InstrumentationRegistry.getTargetContext();
+        ViewConfiguration contextBasedVc = ViewConfiguration.get(context);
+        ViewConfiguration contextLessVc = new ViewConfiguration();
+        for (ViewConfiguration vc : new ViewConfiguration[] {contextBasedVc, contextLessVc}) {
+            runOnEveryInputDeviceMotionRange(deviceIdAndMotionRange -> {
+                int deviceId = deviceIdAndMotionRange.first;
+                InputDevice.MotionRange motionRange = deviceIdAndMotionRange.second;
+                verifyScrollTickInterval(
+                        vc, deviceId, motionRange.getSource(), motionRange.getAxis());
+            });
+
+            runOnEveryValidDeviceId((deviceId) -> {
+                // Test with source-axis combinations that we know are not valid. Since the
+                // source-axis combinations will be invalid, we expect no scroll tick support.
+                verifyNoHapticScrollTick(
+                        vc, deviceId, InputDevice.SOURCE_ROTARY_ENCODER, MotionEvent.AXIS_X);
+                verifyNoHapticScrollTick(
+                        vc, deviceId, InputDevice.SOURCE_TOUCHSCREEN, MotionEvent.AXIS_WHEEL);
+
+            });
+        }
+    }
+
+    @Test
+    @RequiresFlagsEnabled(FLAG_SCROLL_FEEDBACK_API)
+    public void testGetHapticScrollFeedbackTickInterval_forInvalidInputDeviceIds() {
+        Context context = InstrumentationRegistry.getTargetContext();
+        ViewConfiguration contextBasedVc = ViewConfiguration.get(context);
+        ViewConfiguration contextLessVc = new ViewConfiguration();
+        for (ViewConfiguration vc : new ViewConfiguration[] {contextBasedVc, contextLessVc}) {
+            runOnInvalidDeviceIds((deviceId) -> {
+                // Test with some valid source-axis combinations. Any source-axis combination should
+                // not support scroll tick since the device ID is known to be invalid.
+                verifyNoHapticScrollTick(
+                        vc, deviceId, InputDevice.SOURCE_TOUCHSCREEN, MotionEvent.AXIS_X);
+                verifyNoHapticScrollTick(
+                        vc, deviceId, InputDevice.SOURCE_TOUCHSCREEN, MotionEvent.AXIS_Y);
+                verifyNoHapticScrollTick(
+                        vc, deviceId, InputDevice.SOURCE_ROTARY_ENCODER, MotionEvent.AXIS_SCROLL);
+            });
         }
     }
 
@@ -250,11 +345,66 @@ public class ViewConfigurationTest {
     }
 
     /**
+     * Validates the haptic scroll feedback tick interval for a given input and motion
+     * configuration. The interval must always be positive. In the case where the interval is
+     * positive and not positive-infinity, haptic scroll feedback must be supported.
+     */
+    private static void verifyScrollTickInterval(
+            ViewConfiguration viewConfiguration, int deviceId, int source, int axis) {
+        int scrollTickHapticIntervalPx =
+                viewConfiguration.getHapticScrollFeedbackTickInterval(deviceId, axis, source);
+        assertTrue(scrollTickHapticIntervalPx > 0); // Interval always positive.
+        if (scrollTickHapticIntervalPx != Integer.MAX_VALUE) {
+            assertTrue(viewConfiguration.isHapticScrollFeedbackEnabled(deviceId, axis, source));
+        }
+    }
+
+    private static void verifyNoHapticScrollTick(
+            ViewConfiguration viewConfiguration, int deviceId, int source, int axis) {
+        assertEquals(
+                Integer.MAX_VALUE,
+                viewConfiguration.getHapticScrollFeedbackTickInterval(deviceId, axis, source));
+    }
+
+    /**
      * Verifies that the given min and max fling velocities represent the values used to suppress
      * fling.
      */
     private static void verifyNoFlingThresholds(int minVel, int maxVel) {
         assertEquals(Integer.MAX_VALUE, minVel);
         assertEquals(Integer.MIN_VALUE, maxVel);
+    }
+
+    /** Allows running a logic on some invalid InputDevice IDs. */
+    private static void runOnInvalidDeviceIds(Consumer<Integer> invalidDeviceIdConsumer) {
+        // "50" randomly chosen to cover some array of integers.
+        for (int deviceId = -50; deviceId < 50; deviceId++) {
+            InputDevice device = InputDevice.getDevice(deviceId);
+            if (device == null) {
+                // No InputDevice found, so the ID is invalid.
+                invalidDeviceIdConsumer.accept(deviceId);
+            }
+        }
+    }
+
+    /**
+     * Allows running a logic on every motion range across every InputDevice.
+     * The motion range is provided to the consumer as a pair of the InputDevice ID corresponding to
+     * the motion range and the range itself.
+     */
+    private static void runOnEveryInputDeviceMotionRange(
+            Consumer<Pair<Integer, InputDevice.MotionRange>> motionRangeConsumer) {
+        runOnEveryValidDeviceId((deviceId) -> {
+            InputDevice device = InputDevice.getDevice(deviceId);
+            for (InputDevice.MotionRange motionRange : device.getMotionRanges()) {
+                 motionRangeConsumer.accept(Pair.create(deviceId, motionRange));
+            }
+        });
+    }
+
+    private static void runOnEveryValidDeviceId(Consumer<Integer> deviceIdConsumer) {
+        for (int deviceId : InputDevice.getDeviceIds()) {
+            deviceIdConsumer.accept(deviceId);
+        }
     }
 }
