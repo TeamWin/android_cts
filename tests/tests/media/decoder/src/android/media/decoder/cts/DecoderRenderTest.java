@@ -24,7 +24,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeFalse;
 
-import android.graphics.SurfaceTexture;
 import android.media.MediaCodec;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
@@ -47,7 +46,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.nio.ByteBuffer;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -109,6 +108,7 @@ public class DecoderRenderTest extends MediaTestBase {
     }
 
     public class MutableData {
+        public boolean done = false;
         public long renderTimeNs = 0;
         public long previousPresentationTimeUs = -1;
     }
@@ -124,7 +124,6 @@ public class DecoderRenderTest extends MediaTestBase {
         // simulate a device in its normal steady-state (less chances for dropped frames). This
         // avoids problems, for example, with GPU shaders being compiled when rendering the first
         // video frame after boot which can cause subsequent frames to be delayed and dropped.
-        //
         primeVideoPipeline(fileName);
 
         MediaExtractor videoExtractor = createMediaExtractor(fileName);
@@ -133,12 +132,11 @@ public class DecoderRenderTest extends MediaTestBase {
         MediaFormat videoFormat = videoExtractor.getTrackFormat(videoTrackIndex);
         MediaCodec videoCodec = createCodecFor(videoFormat);
         assumeFalse("No video codec found for " + fileName, videoCodec == null);
-        videoCodec.configure(videoFormat, surface, null, 0);
+        videoCodec.configure(videoFormat, getActivity().getSurfaceHolder().getSurface(), null, 0);
 
         VideoDecoderCallback videoDecoderCallback = new VideoDecoderCallback(videoExtractor);
         videoCodec.setCallback(videoDecoderCallback);
 
-        final MutableData data = new MutableData();
         videoDecoderCallback.setOnInputBufferAvailable(
                 (index, sampleSize, presentationTimeUs, flags) -> {
                     if (sampleSize == -1) {
@@ -148,13 +146,15 @@ public class DecoderRenderTest extends MediaTestBase {
                     videoCodec.queueInputBuffer(index, 0, sampleSize, presentationTimeUs, flags);
                 });
 
-        final Object done = new Object();
-        final List<Long> releasedFrames = new LinkedList<Long>();
+        final MutableData data = new MutableData();
+        final Object doneSync = new Object();
+        final List<Long> releasedFrames = new ArrayList<Long>();
         videoDecoderCallback.setOnOutputBufferAvailable(
                 (index, info) -> {
                     if ((info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
-                        synchronized (done) {
-                            done.notify();
+                        synchronized (doneSync) {
+                            data.done = true;
+                            doneSync.notify();
                         }
                         return;
                     }
@@ -175,15 +175,17 @@ public class DecoderRenderTest extends MediaTestBase {
                     releasedFrames.add(info.presentationTimeUs);
                 });
 
-        final List<Long> renderedFrames = new LinkedList<Long>();
+        final List<Long> renderedFrames = new ArrayList<Long>();
         videoCodec.setOnFrameRenderedListener(
                 (codec, presentationTimeUs, nanoTime) -> {
                     renderedFrames.add(presentationTimeUs);
                 }, null);
 
         videoCodec.start();
-        synchronized (done) {
-            done.wait();
+        while (!data.done) {
+            synchronized (doneSync) {
+                doneSync.wait();
+            }
         }
 
         // sleep until 200ms after the last frame's render time to verify we get a somewhat-timely
@@ -198,7 +200,7 @@ public class DecoderRenderTest extends MediaTestBase {
 
         // Compare the presentation timestamps of the released frames with the rendered frames to
         // detect which frame numbers were skipped
-        List<Integer> skippedFrames = new LinkedList<Integer>();
+        List<Integer> skippedFrames = new ArrayList<Integer>();
         int renderedFrameIndex = 0;
         int releasedFrameIndex = 0;
         for (; releasedFrameIndex < releasedFrames.size(); ++releasedFrameIndex) {
@@ -224,7 +226,150 @@ public class DecoderRenderTest extends MediaTestBase {
         assertEquals(List.of(releasedFrames.size()), skippedFrames);
     }
 
-    // prime the video pipeline by pushing frames at the decoder until a decoded frame
+    /*
+     * Tests that {@link MediaCodec.OnFramerenderedListener#onFrameRendered) is called for every
+     * video frame rendered to the display when playing back a full VP9 video, even when the first
+     * rendered frame has an invalid render time.
+     */
+    @Test
+    @ApiTest(apis = {"android.media.MediaCodec.OnFrameRenderedListener#onFrameRendered"})
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE, codeName = "UpsideDownCake")
+    public void onFrameRendered_whenInvalidRenderTime_indicatesAllFramesRendered_vp9()
+            throws Exception {
+        onFrameRendered_whenInvalidRenderTime_indicatesAllFramesRendered(
+                "bbb_s1_640x360_webm_vp9_0p21_1600kbps_30fps_vorbis_stereo_128kbps_48000hz.webm",
+                // TODO(b/290839444): The framework selects 30Hz refresh rate for 29.97fps, causing
+                // frame drops (and 24Hz for 25fps). Tell SurfaceFlinger that we prefer 60Hz.
+                60f);
+    }
+
+    public class MutableData2 {
+        public boolean done = false;
+        public long renderTimeNs = 0;
+        public long previousPresentationTimeUs = -1;
+        public boolean wasSecondFrameReleased = false;
+    }
+
+    public void onFrameRendered_whenInvalidRenderTime_indicatesAllFramesRendered(String fileName,
+            float fps) throws Exception {
+        Surface surface = getActivity().getSurfaceHolder().getSurface();
+
+        // Disable SurfaceFlinger's frame rate detection that can cause frames to be dropped
+        surface.setFrameRate(fps, Surface.FRAME_RATE_COMPATIBILITY_FIXED_SOURCE);
+
+        // TODO(b/268212517): Preplay some video to prime the video and graphics pipeline to
+        // simulate a device in its normal steady-state (less chances for dropped frames). This
+        // avoids problems, for example, with GPU shaders being compiled when rendering the first
+        // video frame after boot which can cause subsequent frames to be delayed and dropped.
+        primeVideoPipeline(fileName);
+
+        MediaExtractor videoExtractor = createMediaExtractor(fileName);
+        int videoTrackIndex = getFirstVideoTrack(videoExtractor);
+        videoExtractor.selectTrack(videoTrackIndex);
+        MediaFormat videoFormat = videoExtractor.getTrackFormat(videoTrackIndex);
+        MediaCodec videoCodec = createCodecFor(videoFormat);
+        assumeFalse("No video codec found for " + fileName, videoCodec == null);
+        videoCodec.configure(videoFormat, surface, null, 0);
+
+        VideoDecoderCallback videoDecoderCallback = new VideoDecoderCallback(videoExtractor);
+        videoCodec.setCallback(videoDecoderCallback);
+
+        videoDecoderCallback.setOnInputBufferAvailable(
+                (index, sampleSize, presentationTimeUs, flags) -> {
+                    if (sampleSize == -1) {
+                        flags = MediaCodec.BUFFER_FLAG_END_OF_STREAM;
+                        sampleSize = 0;
+                    }
+                    videoCodec.queueInputBuffer(index, 0, sampleSize, presentationTimeUs, flags);
+                });
+
+        final MutableData2 data = new MutableData2();
+        final Object doneSync = new Object();
+        final List<Long> releasedFrames = new ArrayList<Long>();
+        videoDecoderCallback.setOnOutputBufferAvailable(
+                (index, info) -> {
+                    if ((info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
+                        synchronized (doneSync) {
+                            data.done = true;
+                            doneSync.notify();
+                        }
+                        return;
+                    }
+                    if (data.renderTimeNs == 0) {
+                        // Even though the first frame is set to be rendered an hour into the
+                        // future, SurfaceFlinger heuristics and video render tracking should have
+                        // the frame render immediately.
+                        final long secondsToNanos = 1000 * 1000 * 1000;
+                        data.renderTimeNs = System.nanoTime() + 60 * 60 * secondsToNanos;
+                    } else if (!data.wasSecondFrameReleased) {
+                        // The second frame should be rendered within 500 milliseconds, if it isn't,
+                        // it will appear in the frame-dropped list.
+                        data.renderTimeNs = System.nanoTime() + 500 * 1000 * 1000;
+                        data.wasSecondFrameReleased = true;
+                    } else {
+                        // frames should be rendered based on the presentation time delta
+                        data.renderTimeNs +=
+                                (info.presentationTimeUs - data.previousPresentationTimeUs) * 1000L;
+                        // well-formed streams have monotonically-increasing presentation times
+                        assertTrue(info.presentationTimeUs > data.previousPresentationTimeUs);
+                    }
+                    videoCodec.releaseOutputBuffer(index, data.renderTimeNs);
+                    data.previousPresentationTimeUs = info.presentationTimeUs;
+                    releasedFrames.add(info.presentationTimeUs);
+                });
+
+        final List<Long> renderedFrames = new ArrayList<Long>();
+        videoCodec.setOnFrameRenderedListener(
+                (codec, presentationTimeUs, nanoTime) -> {
+                    renderedFrames.add(presentationTimeUs);
+                }, null);
+
+        videoCodec.start();
+        while (!data.done) {
+            synchronized (doneSync) {
+                doneSync.wait();
+            }
+        }
+
+        // sleep until 200ms after the last frame's render time to verify we get a somewhat-timely
+        // onFrameRendered callback
+        long sleepUntilMs = 200 + (data.renderTimeNs - System.nanoTime()) / 1000 / 1000;
+        if (sleepUntilMs > 0) {
+            Thread.sleep(sleepUntilMs);
+        }
+        videoCodec.flush();
+        videoCodec.stop();
+        videoCodec.release();
+
+        // Compare the presentation timestamps of the released frames with the rendered frames to
+        // detect which frame numbers were skipped
+        List<Integer> skippedFrames = new ArrayList<Integer>();
+        int renderedFrameIndex = 0;
+        int releasedFrameIndex = 0;
+        for (; releasedFrameIndex < releasedFrames.size(); ++releasedFrameIndex) {
+            // we have no more rendered frames, so the last few frames must have been dropped
+            if (renderedFrameIndex >= renderedFrames.size()) {
+                skippedFrames.add(releasedFrameIndex);
+                continue;
+            }
+            long releasedTime = releasedFrames.get(releasedFrameIndex);
+            long renderedTime = renderedFrames.get(renderedFrameIndex);
+            if (releasedTime < renderedTime) {
+                // we have one or more missing rendered frames in the beginning or the middle
+                skippedFrames.add(releasedFrameIndex);
+            } else if (releasedTime == renderedTime) {
+                // the next released frame should match the next rendered frame
+                renderedFrameIndex++;
+            }
+        }
+        // add the total number of frames to the skipped frame list and the expected list, to
+        // indicate to the test operator how many total frames we had, so they know where in the
+        // sequence frames were dropped
+        skippedFrames.add(releasedFrames.size());
+        assertEquals(List.of(releasedFrames.size()), skippedFrames);
+    }
+
+    // Prime the video pipeline by pushing frames at the decoder until a decoded frame
     // comes back from the codec. This ensures that the full pipeline has been activated
     // at least once, avoiding some timing and system-settling issues if the test is
     // run immediately after boot (which happens when we're running test suites).
