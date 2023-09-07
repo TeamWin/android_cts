@@ -129,12 +129,12 @@
         <activity android:name="android.server.wm.display.MultiDisplayActivityLaunchTests$ImmediateLaunchTestActivity"
              android:allowEmbedded="true"/>
 
-        <activity android:name="android.server.wm.display.MultiDisplaySystemDecorationTests$ImeTestActivity"
+        <activity android:name="android.server.wm.display.MultiDisplayImeTests$ImeTestActivity"
              android:resizeableActivity="true"
              android:theme="@style/no_starting_window"
              android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|colorMode|density|touchscreen"/>
-        <activity android:name="android.server.wm.display.MultiDisplaySystemDecorationTests$ImeTestActivity2"/>
-        <activity android:name="android.server.wm.display.MultiDisplaySystemDecorationTests$ImeTestActivityWithBrokenContextWrapper"/>
+        <activity android:name="android.server.wm.display.MultiDisplayImeTests$ImeTestActivity2"/>
+        <activity android:name="android.server.wm.display.MultiDisplayImeTests$ImeTestActivityWithBrokenContextWrapper"/>
 
         <activity android:name="android.server.wm.display.MultiDisplayClientTests$ClientTestActivity"/>
         <activity android:name="android.server.wm.display.MultiDisplayClientTests$NoRelaunchActivity"
