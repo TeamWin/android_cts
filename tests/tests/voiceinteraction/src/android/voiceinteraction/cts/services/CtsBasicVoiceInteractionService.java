@@ -36,6 +36,7 @@ import android.service.voice.HotwordDetectionService;
 import android.service.voice.HotwordDetectionServiceFailure;
 import android.service.voice.HotwordDetector;
 import android.service.voice.HotwordRejectedResult;
+import android.service.voice.HotwordTrainingData;
 import android.service.voice.SandboxedDetectionInitializer;
 import android.service.voice.SoundTriggerFailure;
 import android.service.voice.VisualQueryDetectionService;
@@ -63,6 +64,8 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
     private CountDownLatch mAvailabilityChangeLatch;
     // The CountDownLatch waits for a service detect or reject result
     private CountDownLatch mOnDetectRejectLatch;
+    // The CountDownLatch waits for a service training data result.
+    private CountDownLatch mOnTrainingDataLatch;
     // The CountDownLatch waits for a service onError called
     private CountDownLatch mOnErrorLatch;
     // The CountDownLatch waits for a service onFailure called
@@ -80,6 +83,7 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
 
     private AlwaysOnHotwordDetector.EventPayload mDetectedResult;
     private HotwordRejectedResult mRejectedResult;
+    private HotwordTrainingData mTrainingData;
     private ArrayList<String> mStreamedQueries = new ArrayList<>();
     private String mCurrentQuery = "";
     private HotwordDetectionServiceFailure mHotwordDetectionServiceFailure = null;
@@ -87,8 +91,10 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
     private String mUnknownFailure = null;
 
     private int mSoftwareOnDetectedCount = 0;
+    private int mSoftwareOnTrainingDataCount = 0;
     private int mDspOnDetectedCount = 0;
     private int mDspOnRejectedCount = 0;
+    private int mDspOnTrainingDataCount = 0;
 
     public CtsBasicVoiceInteractionService() {
         HandlerThread handlerThread = new HandlerThread("CtsBasicVoiceInteractionService");
@@ -101,6 +107,7 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
         super.resetState();
         mAvailabilityChangeLatch = null;
         mOnDetectRejectLatch = null;
+        mOnTrainingDataLatch = null;
         mOnErrorLatch = null;
         mOnFailureLatch = null;
         mOnQueryFinishRejectLatch = null;
@@ -115,8 +122,10 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
         mSoundTriggerFailure = null;
         mUnknownFailure = null;
         mSoftwareOnDetectedCount = 0;
+        mSoftwareOnTrainingDataCount = 0;
         mDspOnDetectedCount = 0;
         mDspOnRejectedCount = 0;
+        mDspOnTrainingDataCount = 0;
     }
 
     /**
@@ -124,6 +133,13 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
      */
     public int getSoftwareOnDetectedCount() {
         return mSoftwareOnDetectedCount;
+    }
+
+    /**
+     * Returns the onTrainingData() callback count for the software detector.
+     */
+    public int getSoftwareOnTrainingDataCount() {
+        return mSoftwareOnTrainingDataCount;
     }
 
     /**
@@ -138,6 +154,13 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
      */
     public int getDspOnRejectedCount() {
         return mDspOnRejectedCount;
+    }
+
+    /**
+     * Returns the onTrainingData() callback count for the dsp detector.
+     */
+    public int getDspOnTrainingDataCount() {
+        return mDspOnTrainingDataCount;
     }
 
     public void createAlwaysOnHotwordDetectorNoHotwordDetectionService(boolean useExecutor,
@@ -215,6 +238,16 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
                 setIsDetectorCallbackRunningOnMainThread(isRunningOnMainThread());
                 if (mOnDetectRejectLatch != null) {
                     mOnDetectRejectLatch.countDown();
+                }
+            }
+
+            @Override
+            public void onTrainingData(@NonNull HotwordTrainingData data) {
+                Log.i(TAG, "onTrainingData");
+                mTrainingData = data;
+                mDspOnTrainingDataCount++;
+                if (mOnTrainingDataLatch != null) {
+                    mOnTrainingDataLatch.countDown();
                 }
             }
 
@@ -376,6 +409,17 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
             }
 
             @Override
+            public void onTrainingData(@NonNull HotwordTrainingData data) {
+                Log.i(TAG, "onTrainingData");
+                mTrainingData = data;
+                mDspOnTrainingDataCount++;
+                setIsDetectorCallbackRunningOnMainThread(isRunningOnMainThread());
+                if (mOnTrainingDataLatch != null) {
+                    mOnTrainingDataLatch.countDown();
+                }
+            }
+
+            @Override
             public void onError() {
                 Log.i(TAG, "onError");
             }
@@ -488,6 +532,17 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
             }
 
             @Override
+            public void onTrainingData(@NonNull HotwordTrainingData data) {
+                Log.i(TAG, "onTrainingData");
+                mTrainingData = data;
+                mSoftwareOnTrainingDataCount++;
+                setIsDetectorCallbackRunningOnMainThread(isRunningOnMainThread());
+                if (mOnTrainingDataLatch != null) {
+                    mOnTrainingDataLatch.countDown();
+                }
+            }
+
+            @Override
             public void onError() {
                 Log.i(TAG, "onError");
                 setIsDetectorCallbackRunningOnMainThread(isRunningOnMainThread());
@@ -556,9 +611,21 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
             public void onDetected(AlwaysOnHotwordDetector.EventPayload eventPayload) {
                 Log.i(TAG, "onDetected");
                 mDetectedResult = eventPayload;
+                mSoftwareOnDetectedCount++;
                 setIsDetectorCallbackRunningOnMainThread(isRunningOnMainThread());
                 if (mOnDetectRejectLatch != null) {
                     mOnDetectRejectLatch.countDown();
+                }
+            }
+
+            @Override
+            public void onTrainingData(@NonNull HotwordTrainingData data) {
+                Log.i(TAG, "onTrainingData");
+                mTrainingData = data;
+                mSoftwareOnTrainingDataCount++;
+                setIsDetectorCallbackRunningOnMainThread(isRunningOnMainThread());
+                if (mOnTrainingDataLatch != null) {
+                    mOnTrainingDataLatch.countDown();
                 }
             }
 
@@ -770,6 +837,13 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
     }
 
     /**
+     * Create a CountDownLatch that is used to wait for onTrainingData() result.
+     */
+    public void initTrainingDataLatch() {
+        mOnTrainingDataLatch = new CountDownLatch(1);
+    }
+
+    /**
      * Create a CountDownLatch that wait for onQueryFinished() or onQueryRejected() result
      */
     public void initQueryFinishRejectLatch(int numQueries) {
@@ -821,6 +895,13 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
      */
     public HotwordRejectedResult getHotwordServiceOnRejectedResult() {
         return mRejectedResult;
+    }
+
+    /**
+     * Returns the onTrainingData() data.
+     */
+    public HotwordTrainingData getHotwordServiceOnTrainingData() {
+        return mTrainingData;
     }
 
     /**
@@ -919,10 +1000,26 @@ public class CtsBasicVoiceInteractionService extends BaseVoiceInteractionService
         Log.d(TAG, "waitOnDetectOrRejectCalled(), latch=" + mOnDetectRejectLatch);
         if (mOnDetectRejectLatch == null
                 || !mOnDetectRejectLatch.await(WAIT_TIMEOUT_IN_MS, TimeUnit.MILLISECONDS)) {
+            if (mOnDetectRejectLatch == null) {
+                Log.d(TAG, "onDetectReject latch was null!:");
+            }
             mOnDetectRejectLatch = null;
             throw new AssertionError("onDetected or OnRejected() fail.");
         }
         mOnDetectRejectLatch = null;
+    }
+
+    /**
+     * Wait for onTrainingData() callback to be called.
+     */
+    public void waitOnTrainingDataCalled() throws InterruptedException {
+        Log.d(TAG, "waitOnTrainingDataCalled(), latch=" + mOnTrainingDataLatch);
+        if (mOnTrainingDataLatch == null
+                || !mOnTrainingDataLatch.await(WAIT_TIMEOUT_IN_MS, TimeUnit.MILLISECONDS)) {
+            mOnTrainingDataLatch = null;
+            throw new AssertionError("onTrainingData() fail.");
+        }
+        mOnTrainingDataLatch = null;
     }
 
     /**
