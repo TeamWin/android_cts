@@ -18,9 +18,8 @@ package android.voiceinteraction.cts.unittests;
 
 import static android.voiceinteraction.common.AudioStreamHelper.FAKE_AUDIO_FORMAT;
 import static android.voiceinteraction.common.AudioStreamHelper.FAKE_INITIAL_AUDIO_DATA;
-
+import static android.voiceinteraction.common.Utils.FAKE_HOTWORD_TRAINING_DATA_TIMEOUT_STAGE;
 import static com.google.common.truth.Truth.assertThat;
-
 import static org.testng.Assert.assertThrows;
 
 import android.os.Parcel;
@@ -92,15 +91,15 @@ public class HotwordTrainingDataTest {
                         FAKE_AUDIO_FORMAT).build();
         return new HotwordTrainingData.Builder()
                 .addTrainingAudio(hotwordTrainingAudio)
-                .setTimeoutStage(HotwordTrainingData.TIMEOUT_STAGE_EARLY)
+                .setTimeoutStage(FAKE_HOTWORD_TRAINING_DATA_TIMEOUT_STAGE)
                 .build();
     }
 
     private void assertHotwordTrainingData(HotwordTrainingData hotwordTrainingData) {
         assertThat(hotwordTrainingData.getTimeoutStage()).isEqualTo(
-                HotwordTrainingData.TIMEOUT_STAGE_EARLY);
+                FAKE_HOTWORD_TRAINING_DATA_TIMEOUT_STAGE);
         for (HotwordTrainingAudio hotwordTrainingAudio :
-                hotwordTrainingData.getTrainingAudios()) {
+                hotwordTrainingData.getTrainingAudioList()) {
             assertHotwordTrainingAudio(hotwordTrainingAudio);
         }
     }

@@ -248,6 +248,7 @@ public class Utils {
 
     public static final int FAKE_HOTWORD_TRAINING_AUDIO_TYPE = 7;
     public static final int FAKE_HOTWORD_OFFSET_MILLIS = 9;
+    public static final int FAKE_HOTWORD_TRAINING_DATA_TIMEOUT_STAGE = 8;
 
     private static final HotwordAudioStream HOTWORD_AUDIO_STREAM =
             new HotwordAudioStream.Builder(createFakeAudioFormat(), createFakeAudioStream())
