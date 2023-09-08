@@ -818,6 +818,20 @@ public class SatelliteManagerTestBase {
         assertEquals(SatelliteManager.SATELLITE_RESULT_SUCCESS, (long) errorCode);
     }
 
+    protected static int requestSatelliteEnabledWithResult(boolean enabled, long timeoutMillis) {
+        LinkedBlockingQueue<Integer> error = new LinkedBlockingQueue<>(1);
+        sSatelliteManager.requestSatelliteEnabled(
+                enabled, false, getContext().getMainExecutor(), error::offer);
+        Integer errorCode = null;
+        try {
+            errorCode = error.poll(timeoutMillis, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException ex) {
+            fail("requestSatelliteEnabled failed with ex=" + ex);
+        }
+        assertNotNull(errorCode);
+        return errorCode;
+    }
+
 
     protected static void requestSatelliteEnabledForDemoMode(boolean enabled) {
         LinkedBlockingQueue<Integer> error = new LinkedBlockingQueue<>(1);

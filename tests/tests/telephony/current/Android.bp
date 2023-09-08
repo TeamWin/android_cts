@@ -58,6 +58,7 @@ android_test {
         "truth-prebuilt",
         "android.telephony.mockmodem",
         "CtsTelecomUtilLib",
+        "telephony_flags_core_java_lib",
     ],
     srcs: [
         "src/**/*.java",
