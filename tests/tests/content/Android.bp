@@ -147,7 +147,6 @@ android_test {
     defaults: ["cts_content_defaults"],
 
     static_libs: [
-        "com.android.server.security.flags-aconfig-java",
         "flag-junit",
         "pm_flags_lib",
     ],
