@@ -1402,7 +1402,7 @@ public final class ActivityManagerAppExitInfoTest {
     @Test
     public void testFreezerEnabled() throws Exception {
         if (FIRST_SDK_IS_AT_LEAST_U
-                && SystemProperties.get("ro.kernel.version").compareTo("4") > 0) {
+                && SystemProperties.get("ro.kernel.version").compareTo("5") >= 0) {
             // We expect all devices with kernel 5.x that first shipped with U to support Freezer
             assertTrue(ActivityManager.getService().isAppFreezerSupported());
         } else {
