@@ -34,9 +34,12 @@ import android.os.PowerManager
 import android.platform.test.annotations.AppModeFull
 import android.platform.test.annotations.AsbSecurityTest
 import android.support.test.uiautomator.By
+import android.util.Log
 import android.view.KeyEvent
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.UiDevice
+import androidx.test.uiautomator.Until
+import com.android.compatibility.common.util.SystemUtil
 import com.android.compatibility.common.util.SystemUtil.callWithShellPermissionIdentity
 import com.android.compatibility.common.util.SystemUtil.eventually
 import com.android.compatibility.common.util.SystemUtil.runShellCommandOrThrow
@@ -63,6 +66,7 @@ abstract class SensorPrivacyBaseTest(
 ) {
 
     companion object {
+        val TAG = this::class.simpleName
         const val MIC_CAM_ACTIVITY_ACTION =
                 "android.sensorprivacy.cts.usemiccamera.action.USE_MIC_CAM"
         const val MIC_CAM_OVERLAY_ACTIVITY_ACTION =
@@ -85,6 +89,7 @@ abstract class SensorPrivacyBaseTest(
         const val RECORDING_FILE_NAME = "${PKG_NAME}_record.mp4"
         const val ACTIVITY_TITLE_SNIP = "CtsUseMic"
         const val SENSOR_USE_TIME_MS = 5L
+        const val NEW_WINDOW_TIMEOUT_MILLIS = 5_000L
     }
 
     protected val instrumentation = InstrumentationRegistry.getInstrumentation()!!
@@ -104,6 +109,7 @@ abstract class SensorPrivacyBaseTest(
         uiDevice.wakeUp()
         runShellCommandOrThrow("wm dismiss-keyguard")
         uiDevice.waitForIdle()
+        SystemUtil.waitForBroadcastDispatch(FINISH_MIC_CAM_ACTIVITY_ACTION)
     }
 
     @After
@@ -174,20 +180,20 @@ abstract class SensorPrivacyBaseTest(
             setSensor(true)
             val intent = Intent(MIC_CAM_ACTIVITY_ACTION)
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
                     .addFlags(Intent.FLAG_ACTIVITY_MATCH_EXTERNAL)
             for (extra in extras) {
                 intent.putExtra(extra, true)
             }
             intent.putExtra(DELAYED_ACTIVITY_EXTRA, delayedActivity)
             intent.putExtra(DELAYED_ACTIVITY_NEW_TASK_EXTRA, delayedActivityNewTask)
-            context.startActivity(intent)
+            doAndWaitForWindowTransition {
+                context.startActivity(intent)
+            }
             Thread.sleep(3000)
             unblockSensorWithDialogAndAssert()
         } finally {
-            runShellCommandOrThrow("am broadcast" +
-                    " --user ${context.userId}" +
-                    " -a $FINISH_MIC_CAM_ACTIVITY_ACTION" +
-                    " -f ${Intent.FLAG_RECEIVER_VISIBLE_TO_INSTANT_APPS}")
+            broadcastAndWait(FINISH_MIC_CAM_ACTIVITY_ACTION)
         }
     }
 
@@ -551,10 +557,17 @@ abstract class SensorPrivacyBaseTest(
 
     private fun finishTestApp() {
         // instant apps can't broadcast to other instant apps; use the shell
+        broadcastAndWait(FINISH_MIC_CAM_ACTIVITY_ACTION)
+    }
+
+    private fun broadcastAndWait(action: String) {
+        Log.i(TAG, "Broadcasting action '$action'")
         runShellCommandOrThrow("am broadcast" +
                 " --user ${context.userId}" +
-                " -a $FINISH_MIC_CAM_ACTIVITY_ACTION" +
+                " -a $action" +
                 " -f ${Intent.FLAG_RECEIVER_VISIBLE_TO_INSTANT_APPS}")
+        SystemUtil.waitForBroadcastDispatch(FINISH_MIC_CAM_ACTIVITY_ACTION)
+        Log.i(TAG, "Finished broadcasting action '$action'")
     }
 
     protected fun setSensor(enable: Boolean) {
@@ -678,4 +691,21 @@ abstract class SensorPrivacyBaseTest(
             }
         }
     }
+
+    /**
+     * Perform the requested action, then wait both for the action to complete, and for at least
+     * one window transition to occur since the moment the action begins executing.
+     */
+    private inline fun doAndWaitForWindowTransition(
+            crossinline block: () -> Unit
+    ) {
+        val timeoutOccurred = !uiDevice.performActionAndWait({
+            block()
+        }, Until.newWindow(), NEW_WINDOW_TIMEOUT_MILLIS)
+
+        if (timeoutOccurred) {
+            throw RuntimeException("Timed out waiting for window transition.")
+        }
+    }
+
 }
