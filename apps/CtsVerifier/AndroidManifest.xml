@@ -5825,9 +5825,43 @@
                 android.media.AudioRecord.OnRoutingChangedListener#onRoutingChanged" />
         </activity>
 
-        <activity android:name=".audio.AudioDataPathsActivity"
+        <activity android:name=".audio.AudioDataPathsInternalActivity"
             android:exported="true"
-            android:label="@string/audio_datapaths_test">
+            android:label="@string/audio_datapaths_internal_test">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.cts.intent.category.MANUAL_TEST" />
+            </intent-filter>
+            <meta-data android:name="test_category" android:value="@string/test_category_audio" />
+            <meta-data android:name="test_required_features" android:value="android.hardware.microphone:android.hardware.audio.output" />
+            <meta-data android:name="display_mode" android:value="multi_display_mode" />
+            <meta-data android:name="ApiTest"
+                android:value="android.media.AudioRecord#startRecording|
+                    android.media.AudioRecord#stopRecording|
+                    android.media.AudioTrack#play|
+                    android.media.AudioTrack#stop" />
+        </activity>
+
+        <activity android:name=".audio.AudioDataPathsAnalogActivity"
+            android:exported="true"
+            android:label="@string/audio_datapaths_analog_test">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.cts.intent.category.MANUAL_TEST" />
+            </intent-filter>
+            <meta-data android:name="test_category" android:value="@string/test_category_audio" />
+            <meta-data android:name="test_required_features" android:value="android.hardware.microphone:android.hardware.audio.output" />
+            <meta-data android:name="display_mode" android:value="multi_display_mode" />
+            <meta-data android:name="ApiTest"
+                android:value="android.media.AudioRecord#startRecording|
+                    android.media.AudioRecord#stopRecording|
+                    android.media.AudioTrack#play|
+                    android.media.AudioTrack#stop" />
+        </activity>
+
+        <activity android:name=".audio.AudioDataPathsUSBActivity"
+            android:exported="true"
+            android:label="@string/audio_datapaths_USB_test">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.cts.intent.category.MANUAL_TEST" />

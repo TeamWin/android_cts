@@ -46,12 +46,8 @@ import org.hyphonate.megaaudio.common.StreamBase;
 import org.hyphonate.megaaudio.duplex.DuplexAudioManager;
 import org.hyphonate.megaaudio.player.AudioSource;
 import org.hyphonate.megaaudio.player.AudioSourceProvider;
-import org.hyphonate.megaaudio.player.sources.SinAudioSourceProvider;
-import org.hyphonate.megaaudio.player.sources.SparseChannelAudioSourceProvider;
 import org.hyphonate.megaaudio.recorder.AudioSinkProvider;
-import org.hyphonate.megaaudio.recorder.Recorder;
 import org.hyphonate.megaaudio.recorder.sinks.AppCallback;
-import org.hyphonate.megaaudio.recorder.sinks.AppCallbackAudioSinkProvider;
 
 import java.util.ArrayList;
 import java.util.Locale;
@@ -61,7 +57,7 @@ import java.util.TimerTask;
 /**
  * CtsVerifier test for audio data paths.
  */
-public class AudioDataPathsActivity
+public abstract class AudioDataPathsBaseActivity
         extends AudioMultiApiActivity
         implements View.OnClickListener, AppCallback {
     private static final String TAG = "AudioDataPathsActivity";
@@ -95,7 +91,7 @@ public class AudioDataPathsActivity
 
     private DuplexAudioManager mDuplexAudioManager;
 
-    private AppCallback mAnalysisCallbackHandler;
+    protected AppCallback mAnalysisCallbackHandler;
 
     class HtmlFormatter {
         StringBuilder mSB = new StringBuilder();
@@ -185,7 +181,6 @@ public class AudioDataPathsActivity
         mWaveView.setTraceColor(Color.WHITE);
 
         setPassFailButtonClickListeners();
-        setInfoResources(R.string.audio_datapaths_test, R.string.audio_datapaths_info, -1);
 
         mAudioManager = getSystemService(AudioManager.class);
 
@@ -228,7 +223,7 @@ public class AudioDataPathsActivity
         mCancelButton.setEnabled(stopEnabled);
     }
 
-    private class TestSpec {
+    class TestSpec {
         //
         // Stream Attributes
         //
@@ -542,16 +537,18 @@ public class AudioDataPathsActivity
         }
     }
 
+    abstract void gatherTestModules(TestManager testManager);
+
     /*
      * TestManager
      */
-    private class TestManager {
+    class TestManager {
         static final String TAG = "TestManager";
 
         // Audio Device Type ID -> TestProfile
-        private ArrayList<TestSpec> mTestSpecs = new ArrayList<TestSpec>();
+        ArrayList<TestSpec> mTestSpecs = new ArrayList<TestSpec>();
 
-        private int mApi;
+        public int mApi;
 
         private int    mPhaseCount;
 
@@ -562,262 +559,8 @@ public class AudioDataPathsActivity
         private Timer mTimer;
 
         public void initializeTests() {
-            AudioSourceProvider sinSourceProvider = new SinAudioSourceProvider();
-
-            AudioSourceProvider leftSineSourceProvider = new SparseChannelAudioSourceProvider(
-                    SparseChannelAudioSourceProvider.CHANNELMASK_LEFT);
-            AudioSourceProvider rightSineSourceProvider = new SparseChannelAudioSourceProvider(
-                    SparseChannelAudioSourceProvider.CHANNELMASK_RIGHT);
-
-            AudioSinkProvider mMicSinkProvider =
-                    new AppCallbackAudioSinkProvider(mAnalysisCallbackHandler);
-
-            //TODO - Also add test specs for MMAP vs Legacy
-            TestSpec testSpec;
-
-            // These just make it easier to turn on/off various categories
-            boolean doMono = true;
-            boolean doInputPresets = true;
-            boolean doStereo = true;
-            boolean doSampleRates = true;
-            boolean doAnalogJack = true;
-            boolean doUsbHeadset = true;
-            boolean doUsbDevice = true;
-            boolean doSpeakerSafe = true;
-            boolean forceFailure = false;
-
-            //
-            // Built-in Speaker/Mic
-            //
-            // - Mono
-            if (doMono) {
-                testSpec = new TestSpec(
-                        AudioDeviceInfo.TYPE_BUILTIN_SPEAKER, 48000, 1,
-                        AudioDeviceInfo.TYPE_BUILTIN_MIC, 48000, 1);
-                testSpec.setSectionTitle("Mono");
-                testSpec.setSources(sinSourceProvider, mMicSinkProvider);
-                testSpec.setInputPreset(Recorder.INPUT_PRESET_NONE);
-                testSpec.setDescription("Speaker:1 Mic:1:PRESET_NONE");
-                mTestSpecs.add(testSpec);
-
-                if (forceFailure) {
-                    // Failure Case
-                    testSpec = new TestSpec(
-                            AudioDeviceInfo.TYPE_BUILTIN_SPEAKER, 48000, 1,
-                            AudioDeviceInfo.TYPE_BUILTIN_MIC, 42, 1);
-                    testSpec.setSources(sinSourceProvider, mMicSinkProvider);
-                    testSpec.setInputPreset(Recorder.INPUT_PRESET_NONE);
-                    testSpec.setDescription("Speaker:1 Mic:1:PRESET_NONE");
-                    mTestSpecs.add(testSpec);
-                }
-            }
-
-            if (doInputPresets) {
-                // These three ALWAYS fail on Pixel. They require special system permissions.
-                // INPUT_PRESET_VOICE_UPLINK, INPUT_PRESET_VOICE_DOWNLINK, INPUT_PRESET_VOICE_CALL
-                // INPUT_PRESET_REMOTE_SUBMIX requires special system setup
-                // INPUT_PRESET_VOICECOMMUNICATION - the aggressive AEC always causes it to fail
-
-                testSpec = new TestSpec(
-                        AudioDeviceInfo.TYPE_BUILTIN_SPEAKER, 48000, 1,
-                        AudioDeviceInfo.TYPE_BUILTIN_MIC, 48000, 1);
-                testSpec.setSectionTitle("Input Presets");
-                testSpec.setSources(sinSourceProvider, mMicSinkProvider);
-                testSpec.setInputPreset(Recorder.INPUT_PRESET_DEFAULT);
-                testSpec.setDescription("Speaker:1 Mic:1:PRESET_DEFAULT");
-                mTestSpecs.add(testSpec);
-
-                testSpec = new TestSpec(
-                        AudioDeviceInfo.TYPE_BUILTIN_SPEAKER, 48000, 1,
-                        AudioDeviceInfo.TYPE_BUILTIN_MIC, 48000, 1);
-                testSpec.setSources(sinSourceProvider, mMicSinkProvider);
-                testSpec.setInputPreset(Recorder.INPUT_PRESET_GENERIC);
-                testSpec.setDescription("Speaker:1 Mic:1:PRESET_GENERIC");
-                mTestSpecs.add(testSpec);
-
-                testSpec = new TestSpec(
-                        AudioDeviceInfo.TYPE_BUILTIN_SPEAKER, 48000, 1,
-                        AudioDeviceInfo.TYPE_BUILTIN_MIC, 48000, 1);
-                testSpec.setSources(sinSourceProvider, mMicSinkProvider);
-                testSpec.setInputPreset(Recorder.INPUT_PRESET_UNPROCESSED);
-                testSpec.setDescription("Speaker:1 Mic:1:PRESET_UNPROCESSED");
-                mTestSpecs.add(testSpec);
-
-                testSpec = new TestSpec(
-                        AudioDeviceInfo.TYPE_BUILTIN_SPEAKER, 48000, 1,
-                        AudioDeviceInfo.TYPE_BUILTIN_MIC, 48000, 1);
-                testSpec.setSources(sinSourceProvider, mMicSinkProvider);
-                testSpec.setInputPreset(Recorder.INPUT_PRESET_CAMCORDER);
-                testSpec.setDescription("Speaker:1 Mic:1:PRESET_CAMCORDER");
-                mTestSpecs.add(testSpec);
-
-                testSpec = new TestSpec(
-                        AudioDeviceInfo.TYPE_BUILTIN_SPEAKER, 48000, 1,
-                        AudioDeviceInfo.TYPE_BUILTIN_MIC, 48000, 1);
-                testSpec.setSources(sinSourceProvider, mMicSinkProvider);
-                testSpec.setInputPreset(Recorder.INPUT_PRESET_VOICERECOGNITION);
-                testSpec.setDescription("Speaker:1 Mic:1:PRESET_VOICERECOGNITION");
-                mTestSpecs.add(testSpec);
-
-                testSpec = new TestSpec(
-                        AudioDeviceInfo.TYPE_BUILTIN_SPEAKER, 48000, 1,
-                        AudioDeviceInfo.TYPE_BUILTIN_MIC, 48000, 1);
-                testSpec.setSources(sinSourceProvider, mMicSinkProvider);
-                testSpec.setInputPreset(Recorder.INPUT_PRESET_VOICEPERFORMANCE);
-                testSpec.setDescription("Speaker:1 Mic:1:PRESET_VOICEPERFORMANCE");
-                mTestSpecs.add(testSpec);
-            }
-
-            // - Stereo, channels individually
-            if (doStereo) {
-                testSpec = new TestSpec(
-                        AudioDeviceInfo.TYPE_BUILTIN_SPEAKER, 48000, 2,
-                        AudioDeviceInfo.TYPE_BUILTIN_MIC, 48000, 1);
-                testSpec.setSectionTitle("Stereo");
-                testSpec.setSources(leftSineSourceProvider, mMicSinkProvider);
-                testSpec.setDescription("Speaker:2:Left Mic:1");
-                mTestSpecs.add(testSpec);
-
-                testSpec = new TestSpec(
-                        AudioDeviceInfo.TYPE_BUILTIN_SPEAKER, 48000, 2,
-                        AudioDeviceInfo.TYPE_BUILTIN_MIC, 48000, 1);
-                testSpec.setSources(rightSineSourceProvider, mMicSinkProvider);
-                testSpec.setDescription("Speaker:2:Right Mic:1");
-                mTestSpecs.add(testSpec);
-            }
-
-            //
-            // Let's check some sample rates
-            //
-            if (doSampleRates) {
-                testSpec = new TestSpec(
-                        AudioDeviceInfo.TYPE_BUILTIN_SPEAKER, 11025, 2,
-                        AudioDeviceInfo.TYPE_BUILTIN_MIC, 48000, 1);
-                testSpec.setSectionTitle("Sample Rates");
-                testSpec.setSources(sinSourceProvider, mMicSinkProvider);
-                testSpec.setDescription("Speaker:2:11025 Mic:1:48000");
-                mTestSpecs.add(testSpec);
-
-                testSpec = new TestSpec(
-                        AudioDeviceInfo.TYPE_BUILTIN_SPEAKER, 48000, 2,
-                        AudioDeviceInfo.TYPE_BUILTIN_MIC, 44100, 1);
-                testSpec.setSources(sinSourceProvider, mMicSinkProvider);
-                testSpec.setDescription("Speaker:2:48000 Mic:1:44100");
-                mTestSpecs.add(testSpec);
-
-                testSpec = new TestSpec(
-                        AudioDeviceInfo.TYPE_BUILTIN_SPEAKER, 44100, 2,
-                        AudioDeviceInfo.TYPE_BUILTIN_MIC, 48000, 1);
-                testSpec.setSources(sinSourceProvider, mMicSinkProvider);
-                testSpec.setDescription("Speaker:2:44100 Mic:1:48000");
-                mTestSpecs.add(testSpec);
-
-                testSpec = new TestSpec(
-                        AudioDeviceInfo.TYPE_BUILTIN_SPEAKER, 96000, 2,
-                        AudioDeviceInfo.TYPE_BUILTIN_MIC, 48000, 1);
-                testSpec.setSources(sinSourceProvider, mMicSinkProvider);
-                testSpec.setDescription("Speaker:2:96000 Mic:1:48000");
-                mTestSpecs.add(testSpec);
-            }
-
-            //
-            // Analog Headset Jack
-            //
-            if (doAnalogJack) {
-                testSpec = new TestSpec(
-                        AudioDeviceInfo.TYPE_WIRED_HEADSET, 48000, 2,
-                        AudioDeviceInfo.TYPE_WIRED_HEADSET, 48000, 1);
-                testSpec.setSectionTitle("Analog Jack");
-                testSpec.setDescription("Analog:2:Left Analog:1");
-                testSpec.setSources(leftSineSourceProvider, mMicSinkProvider);
-                mTestSpecs.add(testSpec);
-
-                testSpec = new TestSpec(
-                        AudioDeviceInfo.TYPE_WIRED_HEADSET, 48000, 2,
-                        AudioDeviceInfo.TYPE_WIRED_HEADSET, 48000, 1);
-                testSpec.setDescription("Analog:2:Right Analog:1");
-                testSpec.setSources(rightSineSourceProvider, mMicSinkProvider);
-                mTestSpecs.add(testSpec);
-            }
-
-            //
-            // USB Device
-            //
-            if (doUsbDevice) {
-                testSpec = new TestSpec(
-                        AudioDeviceInfo.TYPE_USB_DEVICE, 48000, 2,
-                        AudioDeviceInfo.TYPE_USB_DEVICE, 48000, 2);
-                testSpec.setSectionTitle("USB Device");
-                testSpec.setSources(leftSineSourceProvider, mMicSinkProvider);
-                testSpec.setDescription("USBDevice:2:L USBDevice:2");
-                mTestSpecs.add(testSpec);
-                testSpec = new TestSpec(
-                        AudioDeviceInfo.TYPE_USB_DEVICE, 48000, 2,
-                        AudioDeviceInfo.TYPE_USB_DEVICE, 48000, 2);
-                testSpec.setSources(rightSineSourceProvider, mMicSinkProvider);
-                testSpec.setDescription("USBDevice:2:R USBDevice:2");
-                mTestSpecs.add(testSpec);
-            }
-
-            //
-            // USB Headset
-            //
-            if (doUsbHeadset) {
-                testSpec = new TestSpec(
-                        AudioDeviceInfo.TYPE_USB_HEADSET, 48000, 2,
-                        AudioDeviceInfo.TYPE_USB_HEADSET, 48000, 2);
-                testSpec.setSectionTitle("USB Headset");
-                testSpec.setSources(leftSineSourceProvider, mMicSinkProvider);
-                testSpec.setDescription("USBHeadset:2:L USBHeadset:2");
-                mTestSpecs.add(testSpec);
-                testSpec = new TestSpec(
-                        AudioDeviceInfo.TYPE_USB_HEADSET, 48000, 2,
-                        AudioDeviceInfo.TYPE_USB_HEADSET, 48000, 2);
-                testSpec.setSources(rightSineSourceProvider, mMicSinkProvider);
-                testSpec.setDescription("USBHeadset:2:R USBHeadset:2");
-                mTestSpecs.add(testSpec);
-            }
-
-            if (doSpeakerSafe) {
-                int speakerSafeSampleRate = 48000;
-
-                // Left
-                testSpec = new TestSpec(
-                        AudioDeviceInfo.TYPE_BUILTIN_SPEAKER_SAFE, speakerSafeSampleRate, 2,
-                        AudioDeviceInfo.TYPE_BUILTIN_MIC, speakerSafeSampleRate, 1);
-                testSpec.setSectionTitle("Speaker Safe");
-                testSpec.setSources(leftSineSourceProvider, mMicSinkProvider);
-                testSpec.setDescription("SpeakerSafe:2:Left Mic:1 no MMAP");
-                testSpec.setGlobalAttributes(TestSpec.ATTRIBUTE_DISABLE_MMAP);
-                mTestSpecs.add(testSpec);
-
-                // Right
-                testSpec = new TestSpec(
-                        AudioDeviceInfo.TYPE_BUILTIN_SPEAKER_SAFE, speakerSafeSampleRate, 2,
-                        AudioDeviceInfo.TYPE_BUILTIN_MIC, speakerSafeSampleRate, 1);
-                testSpec.setSources(rightSineSourceProvider, mMicSinkProvider);
-                testSpec.setDescription("SpeakerSafe:2:Right Mic:1 no MMAP");
-                testSpec.setGlobalAttributes(TestSpec.ATTRIBUTE_DISABLE_MMAP);
-                mTestSpecs.add(testSpec);
-
-                if (Globals.isMMapSupported() && mApi == TEST_API_NATIVE) {
-                    testSpec = new TestSpec(
-                            AudioDeviceInfo.TYPE_BUILTIN_SPEAKER_SAFE, speakerSafeSampleRate, 2,
-                            AudioDeviceInfo.TYPE_BUILTIN_MIC, speakerSafeSampleRate, 1);
-                    testSpec.setSources(leftSineSourceProvider, mMicSinkProvider);
-                    testSpec.setDescription("SpeakerSafe:2:Left Mic:1 Maybe MMAP");
-                    testSpec.setGlobalAttributes(0);
-                    mTestSpecs.add(testSpec);
-
-                    testSpec = new TestSpec(
-                            AudioDeviceInfo.TYPE_BUILTIN_SPEAKER_SAFE, speakerSafeSampleRate, 2,
-                            AudioDeviceInfo.TYPE_BUILTIN_MIC, speakerSafeSampleRate, 1);
-                    testSpec.setSources(rightSineSourceProvider, mMicSinkProvider);
-                    testSpec.setDescription("SpeakerSafe:2:Right Mic:1 Maybe MMAP");
-                    testSpec.setGlobalAttributes(0);
-                    mTestSpecs.add(testSpec);
-                }
-            }
+            // Get the test modules from the sub-class
+            gatherTestModules(this);
 
             validateTestDevices();
             displayTestDevices();
