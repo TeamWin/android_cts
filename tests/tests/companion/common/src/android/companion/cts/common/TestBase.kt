@@ -35,6 +35,7 @@ import android.util.Log
 import androidx.test.platform.app.InstrumentationRegistry
 import com.android.compatibility.common.util.SystemUtil
 import java.io.IOException
+import java.util.Locale
 import kotlin.test.assertContains
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
@@ -354,11 +355,17 @@ fun Instrumentation.runShellCommand(cmd: String): String {
 fun Instrumentation.setSystemProp(name: String, value: String) =
         runShellCommand("setprop $name $value")
 
-fun MacAddress.toUpperCaseString() = toString().toUpperCase()
+fun MacAddress.toUpperCaseString() = toString().uppercase(Locale.ROOT)
 
 fun sleepFor(duration: Duration) = sleep(duration.inWholeMilliseconds)
 
 fun killProcess(name: String) {
-    val pid = SystemUtil.runShellCommand("pgrep -A $name").trim()
-    Process.killProcess(Integer.valueOf(pid))
+    val pids = SystemUtil.runShellCommand("pgrep $name").trim().split("\\s+".toRegex())
+    for (pid: String in pids) {
+        // Make sure that it is the intended process before killing it.
+        val process = SystemUtil.runShellCommand("ps $pid")
+        if (process.contains("android.companion.cts.multiprocess")) {
+            Process.killProcess(Integer.valueOf(pid))
+        }
+    }
 }
