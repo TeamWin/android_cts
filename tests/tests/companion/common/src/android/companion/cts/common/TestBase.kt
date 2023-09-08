@@ -36,6 +36,7 @@ import android.util.Log
 import androidx.test.platform.app.InstrumentationRegistry
 import com.android.compatibility.common.util.SystemUtil
 import java.io.IOException
+import java.util.Locale
 import kotlin.test.assertContains
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
@@ -361,7 +362,7 @@ fun Instrumentation.runShellCommand(cmd: String): String {
 fun Instrumentation.setSystemProp(name: String, value: String) =
         runShellCommand("setprop $name $value")
 
-fun MacAddress.toUpperCaseString() = toString().toUpperCase()
+fun MacAddress.toUpperCaseString() = toString().uppercase(Locale.ROOT)
 
 fun sleepFor(duration: Duration) = sleep(duration.inWholeMilliseconds)
 
