@@ -533,6 +533,13 @@ public class CodecInitializationLatencyTest {
         public long calculateInitLatency() throws Exception {
             MediaCodec.BufferInfo outInfo = new MediaCodec.BufferInfo();
             MediaFormat format = setUpSource(mTestFile);
+            ArrayList<MediaFormat> formats = new ArrayList<>();
+            formats.add(format);
+            // If the decoder doesn't support the formats, then return Integer.MAX_VALUE to
+            // indicate that all decode was not successful
+            if (!areFormatsSupported(mDecoderName, formats)) {
+                return Integer.MAX_VALUE;
+            }
             long enqueueTimeStamp = 0;
             long dequeueTimeStamp = 0;
             long baseTimeStamp = SystemClock.elapsedRealtimeNanos();
