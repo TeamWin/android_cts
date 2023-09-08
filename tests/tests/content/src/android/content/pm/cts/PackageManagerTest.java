@@ -2777,7 +2777,10 @@ public class PackageManagerTest {
 
     @Test
     public void testUninstallWithKeepData() throws Exception {
+        final int userId = mContext.getUserId();
         installPackage(HELLO_WORLD_APK);
+        // Test that the installed state is true in the dumpsys
+        assertThat(getInstalledState(HELLO_WORLD_PACKAGE_NAME, userId)).isEqualTo("true");
         PackageInfo packageInfo = mPackageManager.getPackageInfo(HELLO_WORLD_PACKAGE_NAME,
                 PackageManager.PackageInfoFlags.of(0));
         final String oldDataDir = packageInfo.applicationInfo.dataDir;
@@ -2787,7 +2790,7 @@ public class PackageManagerTest {
                 mContext.getSystemService(StorageStatsManager.class);
         StorageStats stats = storageStatsManager.queryStatsForPackage(
                 packageInfo.applicationInfo.storageUuid, HELLO_WORLD_PACKAGE_NAME,
-                UserHandle.of(UserHandle.myUserId()));
+                UserHandle.of(userId));
         assertThat(stats.getDataBytes()).isGreaterThan(0L);
 
         uninstallPackageKeepData(HELLO_WORLD_PACKAGE_NAME);
@@ -2805,9 +2808,11 @@ public class PackageManagerTest {
         assertThat(newDataDir).isNotEmpty();
         assertThat(newDataDir).isEqualTo(oldDataDir);
         final String appDirInDump = parsePackageDump(HELLO_WORLD_PACKAGE_NAME,
-                "      dataDir=/data/user/" + mContext.getUserId());
-        assertThat("/data/user/" + mContext.getUserId() + appDirInDump).isEqualTo(newDataDir);
+                "      dataDir=/data/user/" + userId);
+        assertThat("/data/user/" + userId + appDirInDump).isEqualTo(newDataDir);
         assertThat(packageInfo.applicationInfo.storageUuid).isNotNull();
+        // Test that the installed state is false in the dumpsys
+        assertThat(getInstalledState(HELLO_WORLD_PACKAGE_NAME, userId)).isEqualTo("false");
         // Verify the stats
         stats = storageStatsManager.queryStatsForPackage(
                 packageInfo.applicationInfo.storageUuid, HELLO_WORLD_PACKAGE_NAME,
@@ -2815,11 +2820,13 @@ public class PackageManagerTest {
         assertThat(stats.getDataBytes()).isGreaterThan(0L);
         // Re-install the app and verify that the data dir is the same as before
         installPackage(HELLO_WORLD_APK);
+        assertThat(getInstalledState(HELLO_WORLD_PACKAGE_NAME, userId)).isEqualTo("true");
         packageInfo = mPackageManager.getPackageInfo(HELLO_WORLD_PACKAGE_NAME,
                 PackageManager.PackageInfoFlags.of(0));
         assertThat(packageInfo.applicationInfo.dataDir).isEqualTo(oldDataDir);
         // Fully clean up and test that the query fails
         uninstallPackage(HELLO_WORLD_PACKAGE_NAME);
+        assertThat(getInstalledState(HELLO_WORLD_PACKAGE_NAME, userId)).isNull();
         expectThrows(NameNotFoundException.class,
                 () -> mPackageManager.getPackageInfo(HELLO_WORLD_PACKAGE_NAME,
                         PackageManager.PackageInfoFlags.of(MATCH_UNINSTALLED_PACKAGES)));
@@ -3088,5 +3095,24 @@ public class PackageManagerTest {
                 null /* onFinished */, null /* handler */, null /* requiredPermission */,
                 ActivityOptions.makeBasic().setPendingIntentBackgroundActivityStartMode(
                         ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_ALLOWED).toBundle());
+    }
+
+    static String getInstalledState(String packageName, int userId) {
+        final String commandResult = SystemUtil.runShellCommand("pm dump " + packageName);
+        final String userStatesLine = Arrays.stream(commandResult.split("\\r?\\n"))
+                .filter(line -> line.startsWith("    User " + userId + ":"))
+                .findFirst()
+                .orElse(null);
+        if (userStatesLine == null) {
+            return null;
+        }
+        final String key = "installed=";
+        final int keyStart = userStatesLine.indexOf(key);
+        if (keyStart < 0) {
+            return null;
+        }
+        final int keyEnd = userStatesLine.indexOf(key) + key.length();
+        final int valueEnd = userStatesLine.indexOf(" ", keyEnd);
+        return userStatesLine.substring(keyEnd, valueEnd);
     }
 }
