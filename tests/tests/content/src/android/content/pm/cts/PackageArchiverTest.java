@@ -186,6 +186,8 @@ public class PackageArchiverTest {
                 () -> mPackageArchiver.requestArchive(PACKAGE_NAME,
                         new IntentSender((IIntentSender) mIntentSender)),
                 Manifest.permission.DELETE_PACKAGES);
+        assertThat(mIntentSender.mStatus.get()).isEqualTo(PackageInstaller.STATUS_SUCCESS);
+
         UnarchiveBroadcastReceiver unarchiveReceiver = new UnarchiveBroadcastReceiver();
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(Intent.ACTION_UNARCHIVE_PACKAGE);
