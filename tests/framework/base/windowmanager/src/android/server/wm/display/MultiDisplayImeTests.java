@@ -68,6 +68,8 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 
+import androidx.test.filters.FlakyTest;
+
 import com.android.compatibility.common.util.SystemUtil;
 import com.android.cts.mockime.ImeCommand;
 import com.android.cts.mockime.ImeEventStream;
@@ -427,6 +429,7 @@ public class MultiDisplayImeTests extends MultiDisplayTestBase {
     }
 
     @Test
+    @FlakyTest(bugId = 297051530)
     public void testNoConfigurationChangedWhenSwitchBetweenTwoIdenticalDisplays() throws Exception {
         // If config_perDisplayFocusEnabled, the focus will not move even if touching on
         // the Activity in the different display.
