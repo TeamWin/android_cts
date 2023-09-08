@@ -36,7 +36,7 @@ import java.util.function.Function;
  * Helper for interacting with {@code android.virtualdevice.streamedtestapp}.
  */
 public class TestAppHelper {
-    static final String PACKAGE_NAME = "android.virtualdevice.streamedtestapp";
+    public static final String PACKAGE_NAME = "android.virtualdevice.streamedtestapp";
     static final String MAIN_ACTIVITY = "android.virtualdevice.streamedtestapp.MainActivity";
     static final String REPORTER_ACTIVITY_A =
             "android.virtualdevice.streamedtestapp.ReporterActivityA";
@@ -66,6 +66,10 @@ public class TestAppHelper {
     /** @see android.virtualdevice.streamedtestapp.MainActivity */
     static final String EXTRA_CLIPBOARD_STRING = "clipboardString";
 
+    /** @see android.virtualdevice.streamedtestapp.MainActivity */
+    static final String ACTION_TEST_PERMISSION =
+            "android.virtualdevice.streamedtestapp.TEST_PERMISSION";
+
     static final String ACTION_CALL_RESULT_RECEIVER =
             "android.virtualdevice.streamedtestapp.CALL_RESULT_RECEIVER";
     public static final String EXTRA_ACTIVITY_LAUNCHED_RECEIVER = "activityLaunchedReceiver";
@@ -89,6 +93,15 @@ public class TestAppHelper {
         return new Intent(ACTION_TEST_CLIPBOARD)
                 .setComponent(MAIN_ACTIVITY_COMPONENT)
                 .putExtra(EXTRA_CLIPBOARD_STRING, clipboardString);
+    }
+
+    /**
+     * Creates an Intent that's used to launch the Test app requesting the given runtime permission.
+     */
+    public static Intent createPermissionTestIntent(String permissionName) {
+        return new Intent(ACTION_TEST_PERMISSION)
+                .setComponent(MAIN_ACTIVITY_COMPONENT)
+                .putExtra(Intent.EXTRA_PERMISSION_NAME, permissionName);
     }
 
     public static Intent createNoActionIntent() {

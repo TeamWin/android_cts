@@ -119,6 +119,11 @@ public class MainActivity extends Activity {
     static final String EXTRA_CLIPBOARD_STRING = "clipboardString";
     static final String EXTRA_IS_DEVICE_SECURE = "isDeviceSecure";
 
+    /**
+     * Tell this activity to request a given permission when it is launched.
+     */
+    static final String ACTION_TEST_PERMISSION = PACKAGE_NAME + ".TEST_PERMISSION";
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         setTitle(getClass().getSimpleName());
@@ -205,6 +210,11 @@ public class MainActivity extends Activity {
                             recordAudioToFloatArray(audioRecord);
                             break;
                     }
+                    break;
+                case ACTION_TEST_PERMISSION:
+                    String permission = getIntent().getStringExtra(Intent.EXTRA_PERMISSION_NAME);
+                    String[] permissions = { permission };
+                    requestPermissions(permissions, 10001);
                     break;
                 default:
                     Log.w(TAG, "Unknown action: " + action);
