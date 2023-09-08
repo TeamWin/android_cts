@@ -16,7 +16,6 @@
 
 package android.jdwptunnel.cts;
 
-import com.android.tradefed.util.RunUtil;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -25,9 +24,11 @@ import static org.junit.Assert.fail;
 
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
+import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 import com.android.tradefed.util.AbiUtils;
+import com.android.tradefed.util.RunUtil;
 
 import com.sun.jdi.Bootstrap;
 import com.sun.jdi.ReferenceType;
@@ -130,13 +131,20 @@ public class JdwpTunnelTest extends BaseHostJUnit4Test {
     private String startupForwarding(String packageName, String shortClassName, boolean debug)
           throws Exception {
         moveToHomeScreen();
-        mDevice.executeShellCommand(
-            "cmd activity start-activity "
-                + (debug ? "-D" : "")
-                + " -W -n "
-                + packageName
-                + "/."
-                + shortClassName);
+        new Thread(() -> {
+            try {
+                mDevice.executeShellCommand(
+                        "cmd activity start-activity "
+                        + (debug ? "-D" : "")
+                        + " -W -n "
+                        + packageName
+                        + "/."
+                        + shortClassName);
+            } catch (DeviceNotAvailableException e) {
+                CLog.i("Failed to start activity for package: " + packageName, e);
+            }
+        }).start();
+
         // Don't keep trying after a minute.
         final Instant deadline = Instant.now().plusSeconds(60);
         String pid = "";
