@@ -18,7 +18,7 @@ package android.server.wm.backgroundactivity.appa;
 
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.EMBEDDED_ACTIVITY_ID;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.createWildcardSplitPairRule;
-import static android.server.wm.jetpack.utils.ExtensionUtil.getWindowExtensions;
+import static android.server.wm.jetpack.extensions.util.ExtensionsUtil.getWindowExtensions;
 
 import android.app.Activity;
 import android.content.BroadcastReceiver;
@@ -26,7 +26,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
-import android.server.wm.jetpack.utils.TestValueCountConsumer;
+import android.server.wm.jetpack.extensions.util.TestValueCountConsumer;
 import android.server.wm.jetpack.utils.WindowManagerJetpackTestBase;
 
 import androidx.window.extensions.embedding.ActivityEmbeddingComponent;

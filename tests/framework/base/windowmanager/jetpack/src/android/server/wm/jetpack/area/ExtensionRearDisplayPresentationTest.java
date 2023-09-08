@@ -21,14 +21,11 @@ import static android.server.wm.UiDeviceUtils.pressSleepButton;
 import static android.server.wm.UiDeviceUtils.pressUnlockButton;
 import static android.server.wm.UiDeviceUtils.pressWakeupButton;
 import static android.view.Display.DEFAULT_DISPLAY;
-
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 import static androidx.window.extensions.area.WindowAreaComponent.SESSION_STATE_ACTIVE;
 import static androidx.window.extensions.area.WindowAreaComponent.SESSION_STATE_CONTENT_VISIBLE;
 import static androidx.window.extensions.area.WindowAreaComponent.SESSION_STATE_INACTIVE;
-
 import static com.android.compatibility.common.util.PollingCheck.waitFor;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -520,10 +517,6 @@ public class ExtensionRearDisplayPresentationTest extends WindowManagerJetpackTe
             pressWakeupButton();
             pressUnlockButton();
         }
-    }
-
-    private boolean isKeyguardLocked() {
-        return mKeyguardManager != null && mKeyguardManager.isKeyguardLocked();
     }
 
     private void waitAndAssert(PollingCheck.PollingCheckCondition condition) {

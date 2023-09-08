@@ -28,10 +28,8 @@ import static android.content.pm.PackageManager.FEATURE_SCREEN_PORTRAIT;
 import static android.content.res.Configuration.ORIENTATION_LANDSCAPE;
 import static android.content.res.Configuration.ORIENTATION_PORTRAIT;
 import static android.server.wm.jetpack.utils.TestActivityLauncher.KEY_ACTIVITY_ID;
-
 import static androidx.test.core.app.ApplicationProvider.getApplicationContext;
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -52,6 +50,7 @@ import android.content.Intent;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.server.wm.ActivityManagerTestBase;
 import android.view.WindowManager;
 
 import androidx.annotation.NonNull;
@@ -70,7 +69,7 @@ import java.util.Set;
 import java.util.function.BooleanSupplier;
 
 /** Base class for all tests in the module. */
-public class WindowManagerJetpackTestBase {
+public class WindowManagerJetpackTestBase extends ActivityManagerTestBase {
 
     public static final String EXTRA_EMBED_ACTIVITY = "EmbedActivity";
     public static final String EXTRA_SPLIT_RATIO = "SplitRatio";

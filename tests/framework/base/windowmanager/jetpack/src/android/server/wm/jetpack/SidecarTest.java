@@ -18,13 +18,11 @@ package android.server.wm.jetpack;
 
 import static android.content.res.Configuration.ORIENTATION_LANDSCAPE;
 import static android.content.res.Configuration.ORIENTATION_PORTRAIT;
-import static android.server.wm.jetpack.utils.SidecarUtil.assertEqualWindowLayoutInfo;
-import static android.server.wm.jetpack.utils.SidecarUtil.assumeHasDisplayFeatures;
-import static android.server.wm.jetpack.utils.SidecarUtil.assumeSidecarSupportedDevice;
-import static android.server.wm.jetpack.utils.SidecarUtil.getSidecarInterface;
-
+import static android.server.wm.jetpack.extensions.util.SidecarUtil.assertEqualWindowLayoutInfo;
+import static android.server.wm.jetpack.extensions.util.SidecarUtil.assumeHasDisplayFeatures;
+import static android.server.wm.jetpack.extensions.util.SidecarUtil.assumeSidecarSupportedDevice;
+import static android.server.wm.jetpack.extensions.util.SidecarUtil.getSidecarInterface;
 import static com.google.common.truth.Truth.assertThat;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 

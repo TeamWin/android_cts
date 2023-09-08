@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 The Android Open Source Project
+ * Copyright (C) 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.server.wm.jetpack.utils;
+package android.server.wm.jetpack.extensions.util;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -47,7 +47,7 @@ import java.util.stream.Collectors;
  * extensions, retrieving and validating the extension version, and getting the instance of
  * {@link WindowExtensions}.
  */
-public class ExtensionUtil {
+public class ExtensionsUtil {
 
     private static final String EXTENSION_TAG = "Extension";
 
@@ -55,6 +55,9 @@ public class ExtensionUtil {
 
     public static final Version EXTENSION_VERSION_2 = new Version(1, 1, 0, "");
 
+    /**
+     * Returns the current version of {@link WindowExtensions} if present on the device.
+     */
     @NonNull
     public static Version getExtensionVersion() {
         try {
@@ -71,6 +74,13 @@ public class ExtensionUtil {
         return Version.UNKNOWN;
     }
 
+    /**
+     * Returns {@code true} if the version reported on the device is at least the version provided.
+     * This is used in CTS tests to try to add coverage without strict enforcement. We can not apply
+     * strict enforcement between dessert releases.
+     * @param targetVersion minimum version to be checked.
+     * @return true if the version on the device is at least the target version inclusively.
+     */
     public static boolean isExtensionVersionAtLeast(Version targetVersion) {
         final Version version = getExtensionVersion();
         return version.compareTo(targetVersion) >= 0;
@@ -94,12 +104,18 @@ public class ExtensionUtil {
         );
     }
 
+    /**
+     * Returns {@code true} if the extensions version is greater than 0.
+     */
     public static boolean isExtensionVersionValid() {
         final Version version = getExtensionVersion();
         // Check that the extension version on the device is at least the minimum valid version.
         return version.compareTo(EXTENSION_VERSION_1) >= 0;
     }
 
+    /**
+     * Returns the {@link WindowExtensions} if it is present on the device, {@code null} otherwise.
+     */
     @Nullable
     public static WindowExtensions getWindowExtensions() {
         try {
@@ -112,6 +128,10 @@ public class ExtensionUtil {
         return null;
     }
 
+    /**
+     * Assumes that extensions is present on the device and asserts that the extension version is
+     * valid.
+     */
     public static void assumeExtensionSupportedDevice() {
         final boolean extensionNotNull = getWindowExtensions() != null;
         assumeTrue("Device does not support extensions", extensionNotNull);
@@ -120,6 +140,10 @@ public class ExtensionUtil {
                 + EXTENSION_VERSION_1.toString(), isExtensionVersionValid());
     }
 
+    /**
+     * Returns the {@link WindowLayoutComponent} if it is present on the device, {@code null}
+     * otherwise.
+     */
     @Nullable
     public static WindowLayoutComponent getExtensionWindowLayoutComponent() {
         WindowExtensions extension = getWindowExtensions();
@@ -182,6 +206,13 @@ public class ExtensionUtil {
         return info;
     }
 
+    /**
+     * Returns an int array containing the raw values of the currently visible fold types.
+     * @param activity An {@link Activity} that is visible and intersects the folds
+     * @return an int array containing the raw values for the current visible fold types.
+     * @throws InterruptedException when the async collection of the {@link WindowLayoutInfo}
+     * is interrupted.
+     */
     @NonNull
     public static int[] getExtensionDisplayFeatureTypes(Activity activity)
             throws InterruptedException {

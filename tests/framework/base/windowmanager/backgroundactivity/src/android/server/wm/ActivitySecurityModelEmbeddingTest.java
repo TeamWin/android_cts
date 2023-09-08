@@ -16,9 +16,8 @@
 
 package android.server.wm;
 
-import static android.server.wm.jetpack.utils.ExtensionUtil.assumeExtensionSupportedDevice;
-import static android.server.wm.jetpack.utils.ExtensionUtil.getWindowExtensions;
-
+import static android.server.wm.jetpack.extensions.util.ExtensionsUtil.assumeExtensionSupportedDevice;
+import static android.server.wm.jetpack.extensions.util.ExtensionsUtil.getWindowExtensions;
 import static org.junit.Assume.assumeNotNull;
 
 import android.content.ComponentName;

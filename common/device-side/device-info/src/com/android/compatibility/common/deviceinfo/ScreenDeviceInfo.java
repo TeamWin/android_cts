@@ -20,9 +20,9 @@ import android.content.Context;
 import android.content.res.Configuration;
 import android.os.Build;
 import android.os.Bundle;
-import android.server.wm.jetpack.utils.ExtensionUtil;
-import android.server.wm.jetpack.utils.SidecarUtil;
-import android.server.wm.jetpack.utils.Version;
+import android.server.wm.jetpack.extensions.util.ExtensionsUtil;
+import android.server.wm.jetpack.extensions.util.SidecarUtil;
+import android.server.wm.jetpack.extensions.util.Version;
 import android.util.DisplayMetrics;
 import android.view.Display;
 import android.view.WindowManager;
@@ -70,16 +70,16 @@ public final class ScreenDeviceInfo extends DeviceInfo {
         // Try to get display features from extensions. If extensions is not present, try sidecar.
         // If neither is available, do nothing.
         // TODO (b/202855636) store info from both extensions and sidecar if both are present
-        if (ExtensionUtil.isExtensionVersionValid()) {
+        if (ExtensionsUtil.isExtensionVersionValid()) {
             // Extensions is available on device.
-            final Version extensionVersion = ExtensionUtil.getExtensionVersion();
+            final Version extensionVersion = ExtensionsUtil.getExtensionVersion();
             store.addResult("wm_jetpack_version",
                     "[Extensions]" + extensionVersion.toString());
             final Activity activity = ScreenDeviceInfo.this.launchActivity(
                     "com.android.compatibility.common.deviceinfo",
                     DummyActivity.class,
                     new Bundle());
-            int[] displayFeatureTypes = ExtensionUtil.getExtensionDisplayFeatureTypes(activity);
+            int[] displayFeatureTypes = ExtensionsUtil.getExtensionDisplayFeatureTypes(activity);
             store.addArrayResult("display_features", displayFeatureTypes);
         } else if (SidecarUtil.isSidecarVersionValid()) {
             // Sidecar is available on device.

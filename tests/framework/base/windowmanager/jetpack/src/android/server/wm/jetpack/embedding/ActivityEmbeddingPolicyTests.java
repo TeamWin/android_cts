@@ -21,13 +21,12 @@ import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.server.wm.jetpack.second.Components.SECOND_UNTRUSTED_EMBEDDING_ACTIVITY;
 import static android.server.wm.jetpack.signed.Components.SIGNED_EMBEDDING_ACTIVITY;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.createWildcardSplitPairRule;
-import static android.server.wm.jetpack.utils.ExtensionUtil.assumeExtensionSupportedDevice;
-import static android.server.wm.jetpack.utils.ExtensionUtil.getWindowExtensions;
+import static android.server.wm.jetpack.extensions.util.ExtensionsUtil.assumeExtensionSupportedDevice;
+import static android.server.wm.jetpack.extensions.util.ExtensionsUtil.getWindowExtensions;
 import static android.server.wm.jetpack.utils.WindowManagerJetpackTestBase.EXTRA_EMBED_ACTIVITY;
 import static android.server.wm.jetpack.utils.WindowManagerJetpackTestBase.startActivityFromActivity;
 import static android.server.wm.jetpack.utils.WindowManagerJetpackTestBase.startActivityOnDisplaySingleTop;
 import static android.view.Display.DEFAULT_DISPLAY;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;

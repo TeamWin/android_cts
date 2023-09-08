@@ -22,11 +22,10 @@ import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.createSplitP
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.startActivityAndVerifyNoCallback;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.startActivityAndVerifySplitAttributes;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.waitAndAssertResumed;
-import static android.server.wm.jetpack.utils.ExtensionUtil.assumeExtensionSupportedDevice;
-import static android.server.wm.jetpack.utils.ExtensionUtil.assumeHasDisplayFeatures;
-import static android.server.wm.jetpack.utils.ExtensionUtil.getExtensionWindowLayoutComponent;
-import static android.server.wm.jetpack.utils.ExtensionUtil.getExtensionWindowLayoutInfo;
-
+import static android.server.wm.jetpack.extensions.util.ExtensionsUtil.assumeExtensionSupportedDevice;
+import static android.server.wm.jetpack.extensions.util.ExtensionsUtil.assumeHasDisplayFeatures;
+import static android.server.wm.jetpack.extensions.util.ExtensionsUtil.getExtensionWindowLayoutComponent;
+import static android.server.wm.jetpack.extensions.util.ExtensionsUtil.getExtensionWindowLayoutInfo;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;

@@ -19,8 +19,8 @@ package android.view.inputmethod.cts;
 import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
 import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
 import static android.inputmethodservice.InputMethodService.DISALLOW_INPUT_METHOD_INTERFACE_OVERRIDE;
-import static android.server.wm.jetpack.utils.ExtensionUtil.EXTENSION_VERSION_2;
-import static android.server.wm.jetpack.utils.ExtensionUtil.isExtensionVersionAtLeast;
+import static android.server.wm.jetpack.extensions.util.ExtensionsUtil.EXTENSION_VERSION_2;
+import static android.server.wm.jetpack.extensions.util.ExtensionsUtil.isExtensionVersionAtLeast;
 import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.WindowManager.DISPLAY_IME_POLICY_LOCAL;
 import static android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN;
@@ -31,7 +31,6 @@ import static android.view.inputmethod.cts.util.InputMethodVisibilityVerifier.ex
 import static android.view.inputmethod.cts.util.TestUtils.getOnMainSync;
 import static android.view.inputmethod.cts.util.TestUtils.runOnMainSync;
 import static android.view.inputmethod.cts.util.TestUtils.waitOnMainUntil;
-
 import static com.android.cts.mockime.ImeEventStreamTestUtils.EventFilterMode.CHECK_EXIT_EVENT_ONLY;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.WindowLayoutInfoParcelable;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.editorMatcher;
@@ -42,7 +41,6 @@ import static com.android.cts.mockime.ImeEventStreamTestUtils.expectNoImeCrash;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.notExpectEvent;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.verificationMatcher;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.withDescription;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;

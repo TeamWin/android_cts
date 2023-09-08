@@ -16,7 +16,7 @@
 
 package com.android.cts.mockime;
 
-import static android.server.wm.jetpack.utils.ExtensionUtil.getWindowExtensions;
+import static android.server.wm.jetpack.extensions.util.ExtensionsUtil.getWindowExtensions;
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
 import static android.view.WindowInsets.Type.captionBar;
