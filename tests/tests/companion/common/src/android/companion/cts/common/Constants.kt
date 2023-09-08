@@ -66,3 +66,6 @@ val BACKGROUND_THREAD_EXECUTOR: Executor by lazy {
         Executor { threadHandler.post(it) }
     }
 }
+
+val PRIMARY_PROCESS_NAME = ":primary"
+val SECONDARY_PROCESS_NAME = ":secondary"
