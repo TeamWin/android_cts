@@ -49,7 +49,7 @@ def compute_means_and_save(cap, img_name, log_path):
   patch = image_processing_utils.get_image_patch(
       img, _PATCH_X, _PATCH_Y, _PATCH_W, _PATCH_H)
   rgb_means = image_processing_utils.compute_image_means(patch)
-  logging.debug('%s rbg_means: %s', img_name, rgb_means)
+  logging.debug('%s RGB means: %s', img_name, rgb_means)
   return rgb_means
 
 
