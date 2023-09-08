@@ -18,14 +18,11 @@ package android.server.wm.jetpack.area;
 
 import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED;
-
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 import static androidx.window.extensions.area.WindowAreaComponent.SESSION_STATE_ACTIVE;
 import static androidx.window.extensions.area.WindowAreaComponent.SESSION_STATE_CONTENT_VISIBLE;
 import static androidx.window.extensions.area.WindowAreaComponent.SESSION_STATE_INACTIVE;
-
 import static com.android.compatibility.common.util.PollingCheck.waitFor;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
@@ -45,6 +42,7 @@ import android.server.wm.jetpack.utils.WindowExtensionTestRule;
 import android.view.Display;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.filters.FlakyTest;
 import androidx.window.extensions.area.ExtensionWindowAreaPresentation;
 import androidx.window.extensions.area.ExtensionWindowAreaStatus;
 import androidx.window.extensions.area.WindowAreaComponent;
@@ -136,6 +134,7 @@ public class ExtensionRearDisplayPresentationKeyguardTest
             "androidx.window.extensions.area."
                     + "WindowAreaComponent#startRearDisplayPresentationSession"})
     @Test (expected = SecurityException.class)
+    @FlakyTest(bugId = 295878833)
     public void testStartRearDisplayPresentation_whenKeyguardLocked() {
         assumeTrue(mWindowAreaPresentationStatus.getWindowAreaStatus()
                 == WindowAreaComponent.STATUS_AVAILABLE);
@@ -166,6 +165,7 @@ public class ExtensionRearDisplayPresentationKeyguardTest
             "androidx.window.extensions.area."
                     + "WindowAreaComponent#startRearDisplayPresentationSession"})
     @Test
+    @FlakyTest(bugId = 295878833)
     public void testStartRearDisplayPresentation_afterKeyguardLocked() {
         assumeTrue(mWindowAreaPresentationStatus.getWindowAreaStatus()
                 == WindowAreaComponent.STATUS_AVAILABLE);
@@ -210,6 +210,7 @@ public class ExtensionRearDisplayPresentationKeyguardTest
             "androidx.window.extensions.area."
                     + "WindowAreaComponent#startRearDisplayPresentationSession"})
     @Test
+    @FlakyTest(bugId = 295878833)
     public void testStartRearDisplayPresentation_thenKeyguardLocked() {
         assumeTrue(mWindowAreaPresentationStatus.getWindowAreaStatus()
                 == WindowAreaComponent.STATUS_AVAILABLE);
@@ -257,6 +258,7 @@ public class ExtensionRearDisplayPresentationKeyguardTest
             "androidx.window.extensions.area."
                     + "WindowAreaComponent#startRearDisplayPresentationSession"})
     @Test
+    @FlakyTest(bugId = 295878833)
     public void testStartRearDisplayPresentation_thenKeyguardLocked_activityFinishes() {
         assumeTrue(mWindowAreaPresentationStatus.getWindowAreaStatus()
                 == WindowAreaComponent.STATUS_AVAILABLE);
@@ -309,6 +311,7 @@ public class ExtensionRearDisplayPresentationKeyguardTest
             "androidx.window.extensions.area."
                     + "WindowAreaComponent#startRearDisplayPresentationSession"})
     @Test
+    @FlakyTest(bugId = 295878833)
     public void testStartRearDisplayPresentation_persistsAfterDismissingKeyguard() {
         assumeTrue(mWindowAreaPresentationStatus.getWindowAreaStatus()
                 == WindowAreaComponent.STATUS_AVAILABLE);
@@ -362,6 +365,7 @@ public class ExtensionRearDisplayPresentationKeyguardTest
             "androidx.window.extensions.area."
                     + "WindowAreaComponent#startRearDisplayPresentationSession"})
     @Test
+    @FlakyTest(bugId = 295878833)
     public void testStartRearDisplayPresentation_afterKeyguardLocked_thenScreenOff() {
         assumeTrue(mWindowAreaPresentationStatus.getWindowAreaStatus()
                 == WindowAreaComponent.STATUS_AVAILABLE);
