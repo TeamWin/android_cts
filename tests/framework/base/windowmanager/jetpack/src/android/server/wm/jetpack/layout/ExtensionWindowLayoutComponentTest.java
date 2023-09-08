@@ -26,14 +26,11 @@ import static android.server.wm.jetpack.utils.ExtensionUtil.isExtensionVersionAt
 import static android.server.wm.jetpack.utils.SidecarUtil.assumeSidecarSupportedDevice;
 import static android.server.wm.jetpack.utils.SidecarUtil.getSidecarInterface;
 import static android.view.Display.DEFAULT_DISPLAY;
-
 import static androidx.window.extensions.layout.FoldingFeature.STATE_FLAT;
 import static androidx.window.extensions.layout.FoldingFeature.STATE_HALF_OPENED;
 import static androidx.window.extensions.layout.FoldingFeature.TYPE_FOLD;
 import static androidx.window.extensions.layout.FoldingFeature.TYPE_HINGE;
-
 import static com.google.common.truth.Truth.assertThat;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -59,6 +56,7 @@ import android.view.WindowManager;
 import android.view.WindowMetrics;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.filters.FlakyTest;
 import androidx.test.filters.LargeTest;
 import androidx.window.extensions.layout.DisplayFeature;
 import androidx.window.extensions.layout.FoldingFeature;
@@ -505,6 +503,7 @@ public class ExtensionWindowLayoutComponentTest extends WindowManagerJetpackTest
      */
     @CddTest(requirements = {"7.1.1.1"})
     @Test
+    @FlakyTest(bugId = 295892511)
     public void testSidecarHasSameDisplayFeatures() throws InterruptedException {
         TestActivity activity = startFullScreenActivityNewTask(TestActivity.class,
                 null /* activityId */);
