@@ -32,6 +32,7 @@ import android.media.cts.TestUtils.Monitor;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Looper;
+import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.Presubmit;
 import android.util.Base64;
 import android.util.Log;
@@ -60,6 +61,7 @@ import java.util.Vector;
 /**
  * Tests of MediaPlayer streaming capabilities.
  */
+@AppModeFull(reason = "Instant apps cannot access the SD card")
 public class MediaDrmClearkeyTest extends MediaCodecPlayerTestBase<MediaStubActivity> {
 
     private static final String TAG = MediaDrmClearkeyTest.class.getSimpleName();
