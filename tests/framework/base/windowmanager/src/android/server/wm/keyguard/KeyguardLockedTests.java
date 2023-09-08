@@ -57,6 +57,7 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.FlakyTest;
 
 import com.android.compatibility.common.util.CtsTouchUtils;
 import com.android.compatibility.common.util.PollingCheck;
@@ -379,6 +380,7 @@ public class KeyguardLockedTests extends KeyguardTestBase {
     }
 
     @Test
+    @FlakyTest(bugId = 297247946)
     public void testImeShowsAfterLockScreenOnEditorTap() throws Exception {
         assumeTrue(MSG_NO_MOCK_IME, supportsInstallableIme());
 
