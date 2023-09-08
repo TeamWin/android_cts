@@ -3682,7 +3682,7 @@ public class DecoderTest extends MediaTestBase {
 
         // After 100 ms of playback, simulate a PTS gap of 100 ms
         Thread.sleep(100);
-        mMediaCodecPlayer.setAudioTrackOffsetMs(100);
+        mMediaCodecPlayer.setAudioTrackOffsetNs(100L * 1000000);
 
         // Verify that at some point in time in the future, the framePosition stopped advancing.
         // This should happen when the PTS gap is encountered - silence is rendered to fill the
@@ -4229,7 +4229,7 @@ public class DecoderTest extends MediaTestBase {
 
         // Resume audio playback with a negative offset, in order to simulate a desynchronisation.
         // TODO(b/202710709): Use timestamp relative to last played video frame before pause
-        mMediaCodecPlayer.setAudioTrackOffsetMs(-100);
+        mMediaCodecPlayer.setAudioTrackOffsetNs(-100L * 1000000);
         mMediaCodecPlayer.stopDrainingAudioOutputBuffers(false);
 
         // Wait until audio playback resumes
