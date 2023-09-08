@@ -53,10 +53,10 @@ import android.media.RouteDiscoveryPreference;
 import android.media.RouteListingPreference;
 import android.media.RoutingSessionInfo;
 import android.platform.test.annotations.AppModeFull;
-import android.platform.test.annotations.LargeTest;
 import android.text.TextUtils;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.filters.LargeTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.NonMainlineTest;

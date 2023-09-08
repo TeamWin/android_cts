@@ -4,9 +4,6 @@
       "name": "CtsAppTestCases",
       "options": [
         {
-          "exclude-annotation": "android.platform.test.annotations.LargeTest"
-        },
-        {
           "exclude-annotation": "android.platform.test.annotations.FlakyTest"
         },
         {

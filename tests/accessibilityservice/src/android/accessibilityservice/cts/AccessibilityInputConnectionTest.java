@@ -34,7 +34,6 @@ import android.app.Instrumentation;
 import android.app.UiAutomation;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
-import android.platform.test.annotations.LargeTest;
 import android.platform.test.annotations.Presubmit;
 import android.text.InputType;
 import android.text.TextUtils;
@@ -47,6 +46,7 @@ import android.widget.LinearLayout;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.FlakyTest;
+import androidx.test.filters.LargeTest;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 

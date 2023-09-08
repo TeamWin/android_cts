@@ -38,7 +38,6 @@ import android.graphics.Paint;
 import android.graphics.Rect;
 import android.inputmethodservice.InputMethodService;
 import android.os.Bundle;
-import android.platform.test.annotations.LargeTest;
 import android.provider.Settings;
 import android.server.wm.insets.WindowInsetsAnimationControllerTests.LimitedErrorCollector;
 import android.view.View;
@@ -55,6 +54,7 @@ import android.widget.FrameLayout;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.test.filters.LargeTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.PollingCheck;

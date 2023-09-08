@@ -41,7 +41,6 @@ import android.hardware.devicestate.DeviceStateManager;
 import android.hardware.devicestate.DeviceStateRequest;
 import android.hardware.display.DisplayManager;
 import android.os.PowerManager;
-import android.platform.test.annotations.LargeTest;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.DeviceStateUtils;
 import android.server.wm.jetpack.utils.TestActivity;
@@ -52,6 +51,7 @@ import android.server.wm.jetpack.utils.WindowManagerJetpackTestBase;
 import android.view.Display;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.filters.LargeTest;
 import androidx.window.extensions.area.ExtensionWindowAreaPresentation;
 import androidx.window.extensions.area.ExtensionWindowAreaStatus;
 import androidx.window.extensions.area.WindowAreaComponent;
