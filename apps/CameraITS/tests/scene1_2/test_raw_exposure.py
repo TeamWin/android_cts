@@ -115,6 +115,7 @@ def assert_increasing_means(means, exps, sens, black_levels, white_level):
   lower_thresh = np.array(black_levels) * (1 + _BLK_LVL_RTOL)
   logging.debug('Lower threshold for check: %s', lower_thresh)
   allow_under_saturated = True
+  image_saturated = False
   for i in range(1, len(means)):
     prev_mean = means[i-1]
     mean = means[i]
@@ -122,12 +123,14 @@ def assert_increasing_means(means, exps, sens, black_levels, white_level):
     if math.isclose(max(mean), white_level, rel_tol=_IMG_SAT_RTOL):
       logging.debug('Saturated: white_level %f, max_mean %f',
                     white_level, max(mean))
+      image_saturated = True
       break
 
     if allow_under_saturated and min(mean-lower_thresh) < 0:
       # All channel means are close to black level
       continue
     allow_under_saturated = False
+
     # Check pixel means are increasing (with small tolerance)
     logging.debug('iso: %d, exp: %.3f, means: %s', sens, exps[i-1], mean)
     for ch, color in enumerate(_BAYER_COLORS):
@@ -142,6 +145,10 @@ def assert_increasing_means(means, exps, sens, black_levels, white_level):
         e_msg += (f'exp[i]: {exps[i-1]:.3f}ms, mean[i]: {mean[ch]}, '
                   f'TOL: {_IMG_DELTA_THRESH}')
         raise AssertionError(e_msg)
+
+  # Check image saturates
+  if not image_saturated:
+    raise AssertionError('Image does not saturate at high exposure!')
 
 
 class RawExposureTest(its_base_test.ItsBaseTest):
