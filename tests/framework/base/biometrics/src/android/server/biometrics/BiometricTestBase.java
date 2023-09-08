@@ -92,6 +92,7 @@ abstract class BiometricTestBase extends ActivityManagerTestBase implements Test
     protected static final String DESCRIPTION_VIEW = "description";
 
     protected static final String VIEW_ID_PASSWORD_FIELD = "lockPassword";
+    protected static final String KEY_ENTER = "key_enter";
 
     @NonNull protected Instrumentation mInstrumentation;
     @NonNull protected BiometricManager mBiometricManager;
@@ -226,7 +227,13 @@ abstract class BiometricTestBase extends ActivityManagerTestBase implements Test
         Log.d(TAG, "Focusing, entering, submitting credential");
         passwordField.click();
         passwordField.setText(LOCK_CREDENTIAL);
-        mDevice.pressEnter();
+        if (mInstrumentation.getContext().getPackageManager().hasSystemFeature(
+                PackageManager.FEATURE_AUTOMOTIVE)) {
+            final UiObject2 enterButton = findView(KEY_ENTER);
+            enterButton.click();
+        } else {
+            mDevice.pressEnter();
+        }
         waitForState(STATE_AUTH_IDLE);
 
         state = getCurrentState();
