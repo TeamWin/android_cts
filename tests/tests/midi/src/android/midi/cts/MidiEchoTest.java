@@ -26,6 +26,8 @@ import android.media.midi.MidiManager;
 import android.media.midi.MidiOutputPort;
 import android.media.midi.MidiReceiver;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.test.AndroidTestCase;
 import android.util.Log;
 
@@ -37,6 +39,7 @@ import com.android.midi.MidiUmpEchoTestService;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.concurrent.Executor;
 
 /**
  * Test MIDI using a virtual MIDI device that echos input to output.
@@ -826,8 +829,15 @@ public class MidiEchoTest extends AndroidTestCase {
         }
         MyDeviceCallback deviceCallback = new MyDeviceCallback(echoInfo);
         try {
-
-            midiManager.registerDeviceCallback(deviceCallback, null);
+            final Handler handler = new Handler(Looper.getMainLooper());
+            final Executor executor = handler::post;
+            if (useUmp) {
+                midiManager.registerDeviceCallback(MidiManager.TRANSPORT_UNIVERSAL_MIDI_PACKETS,
+                        executor, deviceCallback);
+            } else {
+                midiManager.registerDeviceCallback(MidiManager.TRANSPORT_MIDI_BYTE_STREAM,
+                        executor, deviceCallback);
+            }
 
             MidiDeviceStatus status = deviceCallback.waitForStatus(TIMEOUT_STATUS_MSEC);
             // The DeviceStatus callback is supposed to be "sticky".
