@@ -46,7 +46,7 @@ def define_raw_stats_fmt(props):
           'gridHeight': aah // _IMG_STATS_GRID}
 
 
-class RawSensitivityBurstTest(its_base_test.ItsBaseTest):
+class RawBurstSensitivityTest(its_base_test.ItsBaseTest):
   """Captures a set of RAW images with increasing sensitivity & measures noise.
 
   Sensitivity range (gain) is determined from camera properties and limited to
@@ -62,8 +62,7 @@ class RawSensitivityBurstTest(its_base_test.ItsBaseTest):
   sensitivity.
   """
 
-  def test_raw_sensitivity_burst(self):
-    logging.debug('Starting %s', _NAME)
+  def test_raw_burst_sensitivity(self):
     with its_session_utils.ItsSession(
         device_id=self.dut.serial,
         camera_id=self.camera_id,
