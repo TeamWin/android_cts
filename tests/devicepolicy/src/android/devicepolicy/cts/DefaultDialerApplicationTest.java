@@ -54,6 +54,8 @@ import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.runner.RunWith;
 
+import java.time.Duration;
+
 @RunWith(BedsteadJUnit4.class)
 public final class DefaultDialerApplicationTest {
     @ClassRule
@@ -171,6 +173,6 @@ public final class DefaultDialerApplicationTest {
                 throw new IllegalStateException(
                         "Error setting default dialer application. Relevant logcat: " + logcat);
             }
-        }).runAndWrapException();
+        }).timeout(Duration.ofMinutes(2)).runAndWrapException();
     }
 }
