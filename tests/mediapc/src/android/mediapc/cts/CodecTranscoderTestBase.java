@@ -17,6 +17,7 @@
 package android.mediapc.cts;
 
 import static android.mediav2.common.cts.CodecTestBase.PROFILE_HLG_MAP;
+import static android.mediapc.cts.CodecTestBase.areFormatsSupported;
 
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -31,6 +32,7 @@ import android.view.Surface;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Objects;
 import java.util.concurrent.Callable;
 
@@ -383,6 +385,13 @@ class Transcode extends CodecTranscoderTestBase implements Callable<Double> {
 
     public Double doTranscode() throws Exception {
         MediaFormat decoderFormat = setUpSource(mTestFile);
+        ArrayList<MediaFormat> formats = new ArrayList<>();
+        formats.add(decoderFormat);
+        // If the decoder doesn't support the formats, then return 0 to indicate that decode failed
+        if (!areFormatsSupported(mDecoderName, formats)) {
+            return (Double) 0.0;
+        }
+
         mDecoder = MediaCodec.createByCodecName(mDecoderName);
         MediaFormat encoderFormat = setUpEncoderFormat(decoderFormat);
         mEncoder = MediaCodec.createByCodecName(mEncoderName);
