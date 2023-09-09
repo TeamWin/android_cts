@@ -2798,6 +2798,8 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
                                 " Preview size is " + previewSize + ", repeating is " + repeating);
                     }
                     requestBuilder.set(CaptureRequest.SCALER_CROP_REGION, cropRegions[i]);
+                    requestBuilder.set(CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
+                            CameraMetadata.CONTROL_VIDEO_STABILIZATION_MODE_OFF);
                     requests[i] = requestBuilder.build();
                     if (VERBOSE) {
                         Log.v(TAG, "submit crop region " + cropRegions[i]);
@@ -2944,6 +2946,8 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
             }
             requestBuilder.set(CaptureRequest.CONTROL_ZOOM_RATIO, zoomFactor);
             requestBuilder.set(CaptureRequest.SCALER_CROP_REGION, defaultCropRegion);
+            requestBuilder.set(CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
+                    CameraMetadata.CONTROL_VIDEO_STABILIZATION_MODE_OFF);
             CaptureRequest request = requestBuilder.build();
             for (int j = 0; j < captureSubmitRepeat; ++j) {
                 mSession.capture(request, listener, mHandler);
