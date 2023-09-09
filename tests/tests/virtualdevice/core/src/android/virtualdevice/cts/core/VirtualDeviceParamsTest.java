@@ -18,6 +18,7 @@ package android.virtualdevice.cts;
 
 import static android.companion.virtual.VirtualDeviceParams.DEVICE_POLICY_CUSTOM;
 import static android.companion.virtual.VirtualDeviceParams.DEVICE_POLICY_DEFAULT;
+import static android.companion.virtual.VirtualDeviceParams.POLICY_TYPE_ACTIVITY;
 import static android.companion.virtual.VirtualDeviceParams.POLICY_TYPE_AUDIO;
 import static android.companion.virtual.VirtualDeviceParams.POLICY_TYPE_RECENTS;
 import static android.companion.virtual.VirtualDeviceParams.POLICY_TYPE_SENSORS;
@@ -33,6 +34,7 @@ import static org.mockito.Mockito.verify;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 import android.companion.virtual.VirtualDeviceParams;
+import android.companion.virtual.flags.Flags;
 import android.companion.virtual.sensor.VirtualSensor;
 import android.companion.virtual.sensor.VirtualSensorCallback;
 import android.companion.virtual.sensor.VirtualSensorConfig;
@@ -43,6 +45,9 @@ import android.os.Binder;
 import android.os.Parcel;
 import android.os.UserHandle;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.virtualdevice.cts.common.util.TestAppHelper;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -50,6 +55,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import com.android.internal.os.BackgroundThread;
 
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -68,6 +74,9 @@ public class VirtualDeviceParamsTest {
     private static final String SENSOR_VENDOR = "VirtualSensorVendor";
     private static final int PLAYBACK_SESSION_ID = 42;
     private static final int RECORDING_SESSION_ID = 77;
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
 
     @Mock
     private VirtualSensorCallback mVirtualSensorCallback;
@@ -132,7 +141,6 @@ public class VirtualDeviceParamsTest {
                     TestAppHelper.MAIN_ACTIVITY_COMPONENT));
             paramsBuilder.setBlockedCrossTaskNavigations(Set.of());
         });
-
     }
 
     @Test
@@ -143,7 +151,6 @@ public class VirtualDeviceParamsTest {
                     TestAppHelper.MAIN_ACTIVITY_COMPONENT));
             paramsBuilder.setAllowedCrossTaskNavigations(Set.of());
         });
-
     }
 
     @Test
@@ -226,6 +233,74 @@ public class VirtualDeviceParamsTest {
                 new ComponentName("test", "test.Activity2"));
         assertThat(params.getDefaultActivityPolicy())
                 .isEqualTo(VirtualDeviceParams.ACTIVITY_POLICY_DEFAULT_ALLOWED);
+    }
+
+    @RequiresFlagsEnabled(Flags.FLAG_DYNAMIC_POLICY)
+    @Test
+    public void setBlockedActivities_activityPolicyCustom_throwsException() {
+        assertThrows(IllegalArgumentException.class,
+                () -> new VirtualDeviceParams.Builder()
+                        .setBlockedActivities(Set.of(TestAppHelper.MAIN_ACTIVITY_COMPONENT))
+                        .setDevicePolicy(POLICY_TYPE_ACTIVITY, DEVICE_POLICY_CUSTOM)
+                .build());
+    }
+
+    @RequiresFlagsEnabled(Flags.FLAG_DYNAMIC_POLICY)
+    @Test
+    public void setBlockedActivities_activityPolicyDefault_isOK() {
+        VirtualDeviceParams params = new VirtualDeviceParams.Builder()
+                .setBlockedActivities(Set.of(TestAppHelper.MAIN_ACTIVITY_COMPONENT))
+                .setDevicePolicy(POLICY_TYPE_ACTIVITY, DEVICE_POLICY_DEFAULT)
+                .build();
+
+        assertThat(params.getBlockedActivities())
+                .containsExactly(TestAppHelper.MAIN_ACTIVITY_COMPONENT);
+        assertThat(params.getDefaultActivityPolicy())
+                .isEqualTo(VirtualDeviceParams.ACTIVITY_POLICY_DEFAULT_ALLOWED);
+        assertThat(params.getDevicePolicy(POLICY_TYPE_ACTIVITY)).isEqualTo(DEVICE_POLICY_DEFAULT);
+    }
+
+    @RequiresFlagsEnabled(Flags.FLAG_DYNAMIC_POLICY)
+    @Test
+    public void setAllowedActivities_activityPolicyDefault_throwsException() {
+        assertThrows(IllegalArgumentException.class,
+                () -> new VirtualDeviceParams.Builder()
+                        .setAllowedActivities(Set.of(TestAppHelper.MAIN_ACTIVITY_COMPONENT))
+                        .setDevicePolicy(POLICY_TYPE_ACTIVITY, DEVICE_POLICY_DEFAULT)
+                        .build());
+    }
+
+    @RequiresFlagsEnabled(Flags.FLAG_DYNAMIC_POLICY)
+    @Test
+    public void setAllowedActivities_activityPolicyCustom_isOK() {
+        VirtualDeviceParams params = new VirtualDeviceParams.Builder()
+                .setAllowedActivities(Set.of(TestAppHelper.MAIN_ACTIVITY_COMPONENT))
+                .setDevicePolicy(POLICY_TYPE_ACTIVITY, DEVICE_POLICY_CUSTOM)
+                .build();
+
+        assertThat(params.getAllowedActivities())
+                .containsExactly(TestAppHelper.MAIN_ACTIVITY_COMPONENT);
+        assertThat(params.getDefaultActivityPolicy())
+                .isEqualTo(VirtualDeviceParams.ACTIVITY_POLICY_DEFAULT_BLOCKED);
+        assertThat(params.getDevicePolicy(POLICY_TYPE_ACTIVITY)).isEqualTo(DEVICE_POLICY_CUSTOM);
+    }
+
+    @RequiresFlagsEnabled(Flags.FLAG_DYNAMIC_POLICY)
+    @Test
+    public void setAllowedActivities_activityPolicyUndefined_setsActivityPolicyCustom() {
+        VirtualDeviceParams params = new VirtualDeviceParams.Builder()
+                .setAllowedActivities(Set.of(TestAppHelper.MAIN_ACTIVITY_COMPONENT))
+                .build();
+        assertThat(params.getDevicePolicy(POLICY_TYPE_ACTIVITY)).isEqualTo(DEVICE_POLICY_CUSTOM);
+    }
+
+    @RequiresFlagsEnabled(Flags.FLAG_DYNAMIC_POLICY)
+    @Test
+    public void setBlockedActivities_activityPolicyUndefined_setsActivityPolicyDefault() {
+        VirtualDeviceParams params = new VirtualDeviceParams.Builder()
+                .setBlockedActivities(Set.of(TestAppHelper.MAIN_ACTIVITY_COMPONENT))
+                .build();
+        assertThat(params.getDevicePolicy(POLICY_TYPE_ACTIVITY)).isEqualTo(DEVICE_POLICY_DEFAULT);
     }
 
     @Test
