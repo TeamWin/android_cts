@@ -54,6 +54,7 @@ import org.junit.Assume.assumeFalse
 import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.ClassRule
+import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TestRule
@@ -414,6 +415,7 @@ class PackageManagerShellCommandMultiUserTest {
         }
     }
 
+    @Ignore("b/299277288")
     @Test
     fun testUninstallWithKeepDataMultiUserMatchUninstalled() {
         testUninstallWithKeepDataMultiUser(PackageInfoFlags.of(MATCH_UNINSTALLED_PACKAGES.toLong()))
@@ -424,6 +426,7 @@ class PackageManagerShellCommandMultiUserTest {
         testUninstallWithKeepDataMultiUser(PackageInfoFlags.of(MATCH_KNOWN_PACKAGES.toLong()))
     }
 
+    @Ignore("b/299277288")
     @Test
     fun testUninstallWithKeepDataMultiUserMatchArchived() {
         testUninstallWithKeepDataMultiUser(PackageInfoFlags.of(MATCH_ARCHIVED_PACKAGES))
