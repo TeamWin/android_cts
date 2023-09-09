@@ -17,6 +17,8 @@
 package android.devicepolicy.cts;
 
 
+import static android.content.pm.PackageManager.FEATURE_TELEPHONY;
+
 import static com.android.queryable.queries.ActivityQuery.activity;
 import static com.android.queryable.queries.IntentFilterQuery.intentFilter;
 
@@ -36,6 +38,7 @@ import android.telephony.TelephonyManager;
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.Postsubmit;
+import com.android.bedstead.harrier.annotations.RequireFeature;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyDoesNotApplyTest;
 import com.android.bedstead.harrier.policies.DefaultDialerApplication;
@@ -82,6 +85,7 @@ public final class DefaultDialerApplicationTest {
     // TODO(b/198588696): Add support is @RequireVoiceCapable and @RequireNotVoiceCapable
     @Postsubmit(reason = "new test")
     @CanSetPolicyTest(policy = DefaultDialerApplication.class)
+    @RequireFeature(FEATURE_TELEPHONY)
     public void setDefaultDialerApplication_works() {
         assumeTrue(mTelephonyManager.isVoiceCapable()
                 || (mRoleManager != null && mRoleManager.isRoleAvailable(RoleManager.ROLE_DIALER)));
