@@ -140,6 +140,9 @@ public class UsageStatsTest extends StsExtraBusinessLogicTestCase {
             AppOpsManager.OPSTR_GET_USAGE_STATS + " {1}";
     private static final String APPOPS_RESET_SHELL_COMMAND = "appops reset {0}";
 
+    private static final String PRUNE_PACKAGE_DATA_SHELL_COMMAND =
+            "cmd usagestats delete-package-data {0} -u {1}";
+
     private static final String GET_SHELL_COMMAND = "settings get global ";
 
     private static final String SET_SHELL_COMMAND = "settings put global ";
@@ -251,8 +254,13 @@ public class UsageStatsTest extends StsExtraBusinessLogicTestCase {
         if (mUiDevice != null) {
             mUiDevice.pressHome();
         }
+
+        // delete any usagestats data that was created for the test packages
+        clearTestPackagesData(mContext.getUserId());
+
         // Destroy the other user if created
         if (mOtherUser != 0) {
+            clearTestPackagesData(mOtherUser);
             stopUser(mOtherUser, true, true);
             removeUser(mOtherUser);
             mOtherUser = 0;
@@ -286,6 +294,17 @@ public class UsageStatsTest extends StsExtraBusinessLogicTestCase {
 
     private void resetAppOpsMode() throws Exception {
         executeShellCmd(MessageFormat.format(APPOPS_RESET_SHELL_COMMAND, mTargetPackage));
+    }
+
+    private void clearTestPackagesData(int userId) throws Exception {
+        executeShellCmd(MessageFormat.format(PRUNE_PACKAGE_DATA_SHELL_COMMAND, mTargetPackage,
+                userId));
+        executeShellCmd(MessageFormat.format(PRUNE_PACKAGE_DATA_SHELL_COMMAND, TEST_APP_PKG,
+                userId));
+        executeShellCmd(MessageFormat.format(PRUNE_PACKAGE_DATA_SHELL_COMMAND, TEST_APP2_PKG,
+                userId));
+        executeShellCmd(MessageFormat.format(PRUNE_PACKAGE_DATA_SHELL_COMMAND, TEST_APP_API_32_PKG,
+                userId));
     }
 
     private String getSetting(String name) throws Exception {
@@ -469,7 +488,7 @@ public class UsageStatsTest extends StsExtraBusinessLogicTestCase {
             SystemClock.sleep(1000);
             stats = getAggregateUsageStats(startTime, endTime, targetPackage);
             assertNotNull(stats);
-            lastTimeAnyComponentUsed = stats.getLastTimeVisible();
+            lastTimeAnyComponentUsed = stats.getLastTimeAnyComponentUsed();
         }
         assertLessThanOrEqual(startTime, lastTimeAnyComponentUsed);
         assertLessThanOrEqual(lastTimeAnyComponentUsed, endTime);
