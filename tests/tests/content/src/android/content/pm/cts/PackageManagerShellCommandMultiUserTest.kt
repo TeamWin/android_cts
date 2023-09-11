@@ -24,7 +24,6 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.content.pm.PackageManager.MATCH_ANY_USER
-import android.content.pm.PackageManager.MATCH_ARCHIVED_PACKAGES
 import android.content.pm.PackageManager.MATCH_KNOWN_PACKAGES
 import android.content.pm.PackageManager.MATCH_UNINSTALLED_PACKAGES
 import android.content.pm.PackageManager.PackageInfoFlags
@@ -415,31 +414,11 @@ class PackageManagerShellCommandMultiUserTest {
         }
     }
 
-    @Test
-    fun testUninstallWithKeepDataMultiUserMatchUninstalled() {
-        testUninstallWithKeepDataMultiUser(PackageInfoFlags.of(MATCH_UNINSTALLED_PACKAGES.toLong()))
-    }
-
-    @Test
-    fun testUninstallWithKeepDataMultiUserMatchKnown() {
-        testUninstallWithKeepDataMultiUser(PackageInfoFlags.of(MATCH_KNOWN_PACKAGES.toLong()))
-    }
-
-    @Test
-    fun testUninstallWithKeepDataMultiUserMatchArchived() {
-        testUninstallWithKeepDataMultiUser(PackageInfoFlags.of(MATCH_ARCHIVED_PACKAGES))
-    }
-
-    @Test
-    fun testUninstallWithKeepDataMultiUserMatchAnyUser() {
-        testUninstallWithKeepDataMultiUser(PackageInfoFlags.of(MATCH_ANY_USER.toLong()))
-    }
-
-    private fun testUninstallWithKeepDataMultiUser(matchFlag: PackageInfoFlags) {
+    private fun testUninstallSetup() {
         // Install this test itself for the secondary user
         installExistingPackageAsUser(context.packageName, secondaryUser)
         assertTrue(isAppInstalledForUser(context.packageName, secondaryUser))
-        // Install the test package
+        // Install the test package on both users
         installPackageAsUser(TEST_HW5, primaryUser)
         installPackageAsUser(TEST_HW5, secondaryUser)
         assertThat(isAppInstalledForUser(TEST_APP_PACKAGE, primaryUser)).isTrue()
@@ -448,94 +427,171 @@ class PackageManagerShellCommandMultiUserTest {
             .isEqualTo("true")
         assertThat(getInstalledState(TEST_APP_PACKAGE, secondaryUser.id()))
             .isEqualTo("true")
-        // Delete app with DELETE_KEEP_DATA on second user
-        uninstallPackageWithKeepData(TEST_APP_PACKAGE, secondaryUser)
-        assertThat(getInstalledState(TEST_APP_PACKAGE, primaryUser.id())).isEqualTo("true")
-        assertThat(getInstalledState(TEST_APP_PACKAGE, secondaryUser.id())).isEqualTo("false")
+    }
 
+    private fun matchFlag(packageName: String, userContext: Context, flag: Int) {
+        // Expect not to throw
+        userContext.packageManager.getPackageInfo(
+            packageName,
+            PackageInfoFlags.of(flag.toLong())
+        )
+    }
+
+    private fun notMatchFlag(packageName: String, userContext: Context, flag: Int) {
+        assertThrows(PackageManager.NameNotFoundException::class.java) {
+            userContext.packageManager.getPackageInfo(
+                packageName,
+                PackageInfoFlags.of(flag.toLong())
+            )
+        }
+    }
+
+    @Test
+    fun testUninstallMultiUser() {
+        testUninstallSetup()
+        // Delete app on both users
+        uninstallPackageAsUser(TEST_APP_PACKAGE, primaryUser)
+        uninstallPackageAsUser(TEST_APP_PACKAGE, secondaryUser)
+        assertThat(getInstalledState(TEST_APP_PACKAGE, primaryUser.id())).isNull()
+        assertThat(getInstalledState(TEST_APP_PACKAGE, secondaryUser.id())).isNull()
+        assertThat(isAppInstalledForUser(TEST_APP_PACKAGE, primaryUser)).isFalse()
+        assertThat(isAppInstalledForUser(TEST_APP_PACKAGE, secondaryUser)).isFalse()
+        // Not queryable with any flag
         runWithShellPermissionIdentity(
             uiAutomation,
             {
-                val pmPrimaryUser = context.createContextAsUser(primaryUser.userHandle(), 0)
-                    .packageManager
-                val pmSecondaryUser = context.createContextAsUser(secondaryUser.userHandle(), 0)
-                    .packageManager
-                // App is not queryable without the match flag
-                assertThrows(PackageManager.NameNotFoundException::class.java) {
-                    pmSecondaryUser.getPackageInfo(
-                        TEST_APP_PACKAGE,
-                        PackageInfoFlags.of(0L)
-                    )
-                }
-                // Queryable with the match flag
-                var packageInfoSecondUser = pmSecondaryUser.getPackageInfo(
-                    TEST_APP_PACKAGE,
-                    matchFlag
-                )
-                val oldDataDir = packageInfoSecondUser.applicationInfo!!.dataDir
-                assertThat(oldDataDir).isNotNull()
-                // Delete app on primary user without DELETE_KEEP_DATA flag and verify the app is
-                // still queryable with the match flag
-                uninstallPackageAsUser(TEST_APP_PACKAGE, primaryUser)
-                assertThat(getInstalledState(TEST_APP_PACKAGE, primaryUser.id()))
-                    .isEqualTo("false")
-                assertThat(getInstalledState(TEST_APP_PACKAGE, secondaryUser.id()))
-                    .isEqualTo("false")
-                packageInfoSecondUser = pmSecondaryUser.getPackageInfo(
-                    TEST_APP_PACKAGE,
-                    matchFlag
-                )
-                assertThat(packageInfoSecondUser.applicationInfo!!.dataDir).isEqualTo(oldDataDir)
-                // Expect not to throw when queried with MATCH_ANY_USER but throws otherwise
-                if (matchFlag.value and MATCH_ANY_USER.toLong() != 0L) {
-                    pmPrimaryUser.getPackageInfo(
-                        TEST_APP_PACKAGE,
-                        matchFlag
-                    )
-                } else {
-                    assertThrows(PackageManager.NameNotFoundException::class.java) {
-                        pmPrimaryUser.getPackageInfo(
-                            TEST_APP_PACKAGE,
-                            matchFlag
-                        )
-                    }
-                }
-                // Reinstall the app on second user and verifies that the data dir stays the same,
-                // and the app is still not queryable on the primary user
-                installPackageAsUser(TEST_HW5, secondaryUser)
-                assertThat(getInstalledState(TEST_APP_PACKAGE, primaryUser.id()))
-                    .isEqualTo("false")
-                assertThat(getInstalledState(TEST_APP_PACKAGE, secondaryUser.id()))
-                    .isEqualTo("true")
-                packageInfoSecondUser = pmSecondaryUser.getPackageInfo(
-                    TEST_APP_PACKAGE,
-                    PackageInfoFlags.of(0L)
-                )
-                assertThat(packageInfoSecondUser.applicationInfo!!.dataDir).isEqualTo(oldDataDir)
-                // Expect not to throw when queried with MATCH_ANY_USER but throws otherwise
-                if (matchFlag.value and MATCH_ANY_USER.toLong() != 0L) {
-                    pmPrimaryUser.getPackageInfo(
-                        TEST_APP_PACKAGE,
-                        matchFlag
-                    )
-                } else {
-                    assertThrows(PackageManager.NameNotFoundException::class.java) {
-                        pmPrimaryUser.getPackageInfo(
-                            TEST_APP_PACKAGE,
-                            matchFlag
-                        )
-                    }
-                }
-                // Fully uninstall the app on the second user and verify it's no longer queryable
-                uninstallPackageAsUser(TEST_APP_PACKAGE, secondaryUser)
-                assertThat(getInstalledState(TEST_APP_PACKAGE, primaryUser.id())).isNull()
-                assertThat(getInstalledState(TEST_APP_PACKAGE, secondaryUser.id())).isNull()
-                assertThrows(PackageManager.NameNotFoundException::class.java) {
-                    pmSecondaryUser.getPackageInfo(
-                        TEST_APP_PACKAGE,
-                        matchFlag
-                    )
-                }
+                val cxtPrimaryUser = context.createContextAsUser(primaryUser.userHandle(), 0)
+                val cxtSecondaryUser = context.createContextAsUser(secondaryUser.userHandle(), 0)
+                notMatchFlag(TEST_APP_PACKAGE, cxtPrimaryUser, 0)
+                notMatchFlag(TEST_APP_PACKAGE, cxtSecondaryUser, 0)
+                notMatchFlag(TEST_APP_PACKAGE, cxtPrimaryUser, MATCH_ANY_USER)
+                notMatchFlag(TEST_APP_PACKAGE, cxtSecondaryUser, MATCH_ANY_USER)
+                notMatchFlag(TEST_APP_PACKAGE, cxtPrimaryUser, MATCH_UNINSTALLED_PACKAGES)
+                notMatchFlag(TEST_APP_PACKAGE, cxtSecondaryUser, MATCH_UNINSTALLED_PACKAGES)
+                notMatchFlag(TEST_APP_PACKAGE, cxtPrimaryUser, MATCH_KNOWN_PACKAGES)
+                notMatchFlag(TEST_APP_PACKAGE, cxtSecondaryUser, MATCH_KNOWN_PACKAGES)
+            },
+            Manifest.permission.INTERACT_ACROSS_USERS,
+            Manifest.permission.INTERACT_ACROSS_USERS_FULL
+        )
+    }
+
+    @Test
+    fun testUninstallWithoutKeepDataOnOneUser() {
+        testUninstallSetup()
+        // Delete app on secondary user
+        uninstallPackageAsUser(TEST_APP_PACKAGE, secondaryUser)
+        assertThat(getInstalledState(TEST_APP_PACKAGE, primaryUser.id())).isEqualTo("true")
+        assertThat(getInstalledState(TEST_APP_PACKAGE, secondaryUser.id())).isEqualTo("false")
+        assertThat(isAppInstalledForUser(TEST_APP_PACKAGE, primaryUser)).isTrue()
+        assertThat(isAppInstalledForUser(TEST_APP_PACKAGE, secondaryUser)).isFalse()
+        runWithShellPermissionIdentity(
+            uiAutomation,
+            {
+                val cxtPrimaryUser = context.createContextAsUser(primaryUser.userHandle(), 0)
+                val cxtSecondaryUser = context.createContextAsUser(secondaryUser.userHandle(), 0)
+                // Queryable without any match flag on primary user
+                matchFlag(TEST_APP_PACKAGE, cxtPrimaryUser, 0)
+                matchFlag(TEST_APP_PACKAGE, cxtPrimaryUser, MATCH_ANY_USER)
+                matchFlag(TEST_APP_PACKAGE, cxtPrimaryUser, MATCH_UNINSTALLED_PACKAGES)
+                matchFlag(TEST_APP_PACKAGE, cxtPrimaryUser, MATCH_KNOWN_PACKAGES)
+                // Queryable with MATCH_ANY_USER/MATCH_KNOWN_PACKAGES on secondary user
+                notMatchFlag(TEST_APP_PACKAGE, cxtSecondaryUser, 0)
+                matchFlag(TEST_APP_PACKAGE, cxtSecondaryUser, MATCH_ANY_USER)
+                notMatchFlag(TEST_APP_PACKAGE, cxtSecondaryUser, MATCH_UNINSTALLED_PACKAGES)
+                matchFlag(TEST_APP_PACKAGE, cxtSecondaryUser, MATCH_KNOWN_PACKAGES)
+            },
+            Manifest.permission.INTERACT_ACROSS_USERS,
+            Manifest.permission.INTERACT_ACROSS_USERS_FULL
+        )
+    }
+
+    @Test
+    fun testUninstallWithKeepDataOnOneUser() {
+        testUninstallSetup()
+        // Delete app on secondary user with DELETE_KEEP_DATA
+        uninstallPackageWithKeepData(TEST_APP_PACKAGE, secondaryUser)
+        assertThat(getInstalledState(TEST_APP_PACKAGE, primaryUser.id())).isEqualTo("true")
+        assertThat(getInstalledState(TEST_APP_PACKAGE, secondaryUser.id())).isEqualTo("false")
+        assertThat(isAppInstalledForUser(TEST_APP_PACKAGE, primaryUser)).isTrue()
+        assertThat(isAppInstalledForUser(TEST_APP_PACKAGE, secondaryUser)).isFalse()
+        runWithShellPermissionIdentity(
+            uiAutomation,
+            {
+                val cxtPrimaryUser = context.createContextAsUser(primaryUser.userHandle(), 0)
+                val cxtSecondaryUser = context.createContextAsUser(secondaryUser.userHandle(), 0)
+                // Queryable without any match flag on primary user
+                matchFlag(TEST_APP_PACKAGE, cxtPrimaryUser, 0)
+                matchFlag(TEST_APP_PACKAGE, cxtPrimaryUser, MATCH_ANY_USER)
+                matchFlag(TEST_APP_PACKAGE, cxtPrimaryUser, MATCH_UNINSTALLED_PACKAGES)
+                matchFlag(TEST_APP_PACKAGE, cxtPrimaryUser, MATCH_KNOWN_PACKAGES)
+                // Queryable with match flags on secondary user
+                notMatchFlag(TEST_APP_PACKAGE, cxtSecondaryUser, 0)
+                matchFlag(TEST_APP_PACKAGE, cxtSecondaryUser, MATCH_ANY_USER)
+                matchFlag(TEST_APP_PACKAGE, cxtSecondaryUser, MATCH_UNINSTALLED_PACKAGES)
+                matchFlag(TEST_APP_PACKAGE, cxtSecondaryUser, MATCH_KNOWN_PACKAGES)
+            },
+            Manifest.permission.INTERACT_ACROSS_USERS,
+            Manifest.permission.INTERACT_ACROSS_USERS_FULL
+        )
+    }
+
+    @Test
+    fun testUninstallWithKeepDataOnBothUsers() {
+        testUninstallSetup()
+        // Delete app on both users with DELETE_KEEP_DATA
+        uninstallPackageWithKeepData(TEST_APP_PACKAGE, primaryUser)
+        uninstallPackageWithKeepData(TEST_APP_PACKAGE, secondaryUser)
+        assertThat(getInstalledState(TEST_APP_PACKAGE, primaryUser.id())).isEqualTo("false")
+        assertThat(getInstalledState(TEST_APP_PACKAGE, secondaryUser.id())).isEqualTo("false")
+        assertThat(isAppInstalledForUser(TEST_APP_PACKAGE, primaryUser)).isFalse()
+        assertThat(isAppInstalledForUser(TEST_APP_PACKAGE, secondaryUser)).isFalse()
+        runWithShellPermissionIdentity(
+            uiAutomation,
+            {
+                val cxtPrimaryUser = context.createContextAsUser(primaryUser.userHandle(), 0)
+                val cxtSecondaryUser = context.createContextAsUser(secondaryUser.userHandle(), 0)
+                // Queryable with match flags
+                notMatchFlag(TEST_APP_PACKAGE, cxtPrimaryUser, 0)
+                matchFlag(TEST_APP_PACKAGE, cxtPrimaryUser, MATCH_ANY_USER)
+                matchFlag(TEST_APP_PACKAGE, cxtPrimaryUser, MATCH_UNINSTALLED_PACKAGES)
+                matchFlag(TEST_APP_PACKAGE, cxtPrimaryUser, MATCH_KNOWN_PACKAGES)
+                notMatchFlag(TEST_APP_PACKAGE, cxtSecondaryUser, 0)
+                matchFlag(TEST_APP_PACKAGE, cxtSecondaryUser, MATCH_ANY_USER)
+                matchFlag(TEST_APP_PACKAGE, cxtSecondaryUser, MATCH_UNINSTALLED_PACKAGES)
+                matchFlag(TEST_APP_PACKAGE, cxtSecondaryUser, MATCH_KNOWN_PACKAGES)
+            },
+            Manifest.permission.INTERACT_ACROSS_USERS,
+            Manifest.permission.INTERACT_ACROSS_USERS_FULL
+        )
+    }
+
+    @Test
+    fun testUninstallWithKeepDataOnOneUsersAndWithoutKeepDataOnAnotherUser() {
+        testUninstallSetup()
+        // Delete app on primary users without DELETE_KEEP_DATA
+        uninstallPackageAsUser(TEST_APP_PACKAGE, primaryUser)
+        // Delete app on secondary users with DELETE_KEEP_DATA
+        uninstallPackageWithKeepData(TEST_APP_PACKAGE, secondaryUser)
+        assertThat(getInstalledState(TEST_APP_PACKAGE, primaryUser.id())).isEqualTo("false")
+        assertThat(getInstalledState(TEST_APP_PACKAGE, secondaryUser.id())).isEqualTo("false")
+        assertThat(isAppInstalledForUser(TEST_APP_PACKAGE, primaryUser)).isFalse()
+        assertThat(isAppInstalledForUser(TEST_APP_PACKAGE, secondaryUser)).isFalse()
+        runWithShellPermissionIdentity(
+            uiAutomation,
+            {
+                val cxtPrimaryUser = context.createContextAsUser(primaryUser.userHandle(), 0)
+                val cxtSecondaryUser = context.createContextAsUser(secondaryUser.userHandle(), 0)
+                // Only queryable with MATCH_KNOWN_PACKAGES flag on primary user
+                notMatchFlag(TEST_APP_PACKAGE, cxtPrimaryUser, 0)
+                notMatchFlag(TEST_APP_PACKAGE, cxtPrimaryUser, MATCH_ANY_USER)
+                notMatchFlag(TEST_APP_PACKAGE, cxtPrimaryUser, MATCH_UNINSTALLED_PACKAGES)
+                matchFlag(TEST_APP_PACKAGE, cxtPrimaryUser, MATCH_KNOWN_PACKAGES)
+                // Queryable on secondary user with MATCH_UNINSTALLED_PACKAGES/MATCH_KNOWN_PACKAGES
+                notMatchFlag(TEST_APP_PACKAGE, cxtSecondaryUser, 0)
+                notMatchFlag(TEST_APP_PACKAGE, cxtSecondaryUser, MATCH_ANY_USER)
+                matchFlag(TEST_APP_PACKAGE, cxtSecondaryUser, MATCH_UNINSTALLED_PACKAGES)
+                matchFlag(TEST_APP_PACKAGE, cxtSecondaryUser, MATCH_KNOWN_PACKAGES)
             },
             Manifest.permission.INTERACT_ACROSS_USERS,
             Manifest.permission.INTERACT_ACROSS_USERS_FULL

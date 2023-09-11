@@ -37,6 +37,7 @@ import static android.content.pm.PackageManager.GET_PERMISSIONS;
 import static android.content.pm.PackageManager.GET_PROVIDERS;
 import static android.content.pm.PackageManager.GET_RECEIVERS;
 import static android.content.pm.PackageManager.GET_SERVICES;
+import static android.content.pm.PackageManager.MATCH_ANY_USER;
 import static android.content.pm.PackageManager.MATCH_APEX;
 import static android.content.pm.PackageManager.MATCH_DISABLED_COMPONENTS;
 import static android.content.pm.PackageManager.MATCH_FACTORY_ONLY;
@@ -2776,6 +2777,25 @@ public class PackageManagerTest {
     }
 
     @Test
+    public void testUninstall() throws Exception {
+        final int userId = mContext.getUserId();
+        installPackage(HELLO_WORLD_APK);
+        // Test that the installed state is true in the dumpsys
+        assertThat(getInstalledState(HELLO_WORLD_PACKAGE_NAME, userId)).isEqualTo("true");
+        // Queryable without special flags
+        mPackageManager.getPackageInfo(HELLO_WORLD_PACKAGE_NAME,
+                PackageManager.PackageInfoFlags.of(0));
+        uninstallPackage(HELLO_WORLD_PACKAGE_NAME);
+        assertThat(isAppInstalled(HELLO_WORLD_PACKAGE_NAME)).isFalse();
+        // Not queryable even MATCH_KNOWN_PACKAGES
+        assertThrows(NameNotFoundException.class,
+                () -> mPackageManager.getPackageInfo(HELLO_WORLD_PACKAGE_NAME,
+                        PackageManager.PackageInfoFlags.of(MATCH_KNOWN_PACKAGES)));
+        // No installed state in dumpsys
+        assertThat(getInstalledState(HELLO_WORLD_PACKAGE_NAME, userId)).isNull();
+    }
+
+    @Test
     public void testUninstallWithKeepData() throws Exception {
         final int userId = mContext.getUserId();
         installPackage(HELLO_WORLD_APK);
@@ -2796,7 +2816,15 @@ public class PackageManagerTest {
         uninstallPackageKeepData(HELLO_WORLD_PACKAGE_NAME);
         assertThat(isAppInstalled(HELLO_WORLD_PACKAGE_NAME)).isFalse();
 
-        // Test query with MATCH_UNINSTALLED_PACKAGES
+        // Queryable with MATCH_UNINSTALLED_PACKAGES and MATCH_KNOWN_PACKAGES flags
+        expectThrows(NameNotFoundException.class,
+                () -> mPackageManager.getPackageInfo(HELLO_WORLD_PACKAGE_NAME,
+                        PackageManager.PackageInfoFlags.of(0)));
+        expectThrows(NameNotFoundException.class,
+                () -> mPackageManager.getPackageInfo(HELLO_WORLD_PACKAGE_NAME,
+                        PackageManager.PackageInfoFlags.of(MATCH_ANY_USER)));
+        mPackageManager.getPackageInfo(HELLO_WORLD_PACKAGE_NAME,
+                PackageManager.PackageInfoFlags.of(MATCH_KNOWN_PACKAGES));
         packageInfo = mPackageManager.getPackageInfo(HELLO_WORLD_PACKAGE_NAME,
                 PackageManager.PackageInfoFlags.of(MATCH_UNINSTALLED_PACKAGES));
         assertThat(packageInfo.packageName).isEqualTo(HELLO_WORLD_PACKAGE_NAME);
