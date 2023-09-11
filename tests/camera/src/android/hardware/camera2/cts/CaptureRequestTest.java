@@ -109,6 +109,8 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
     private static final float FOCUS_DISTANCE_ERROR_PERCENT_UNCALIBRATED = 0.25f;
     // 10 percent error margin for approximate device
     private static final float FOCUS_DISTANCE_ERROR_PERCENT_APPROXIMATE = 0.10f;
+    // 1 percent boundary margin for focus range verify
+    private static final float FOCUS_RANGE_BOUNDARY_MARGIN_PERCENT = 0.01f;
     private static final int ANTI_FLICKERING_50HZ = 1;
     private static final int ANTI_FLICKERING_60HZ = 2;
     // 5 percent error margin for resulting crop regions
@@ -1234,10 +1236,15 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
 
         Pair<Float, Float> focusRange = result.get(CaptureResult.LENS_FOCUS_RANGE);
         if (focusRange != null) {
+            // Prevent differences in floating point precision between manual request and HAL
+            // result, some margin need to be considered for focusRange.near and far check
+            float focusRangeNear = focusRange.first  * (1.0f + FOCUS_RANGE_BOUNDARY_MARGIN_PERCENT);
+            float focusRangeFar  = focusRange.second * (1.0f - FOCUS_RANGE_BOUNDARY_MARGIN_PERCENT);
+
             mCollector.expectLessOrEqual("Focus distance should be less than or equal to "
-                    + "FOCUS_RANGE.near", focusRange.first, focusDistance);
+                    + "FOCUS_RANGE.near (with margin)", focusRangeNear, focusDistance);
             mCollector.expectGreaterOrEqual("Focus distance should be greater than or equal to "
-                    + "FOCUS_RANGE.far", focusRange.second, focusDistance);
+                    + "FOCUS_RANGE.far (with margin)", focusRangeFar, focusDistance);
         } else if (VERBOSE) {
             Log.v(TAG, "FOCUS_RANGE undefined, skipping verification");
         }
