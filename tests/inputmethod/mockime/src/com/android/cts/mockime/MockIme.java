@@ -173,6 +173,12 @@ public final class MockIme extends InputMethodService {
         });
     }
 
+    @Override
+    public void onComputeInsets(Insets outInsets) {
+        super.onComputeInsets(outInsets);
+        Log.i("b/297000797", "MockIme#onComputeInsets, outInsets: " + outInsets);
+    }
+
     @AnyThread
     private void onHandleCommand(@NonNull ImeCommand command) {
         getTracer().onHandleCommand(command, () -> {
@@ -986,6 +992,7 @@ public final class MockIme extends InputMethodService {
 
         @Override
         public WindowInsets onApplyWindowInsets(WindowInsets insets) {
+            Log.i("b/297000797", "MockIme#onApplyWindowInsets, windowInsets: " + insets);
             if (insets.isConsumed()
                     || mDrawsBehindNavBar
                     || (getSystemUiVisibility() & SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION) == 0) {
