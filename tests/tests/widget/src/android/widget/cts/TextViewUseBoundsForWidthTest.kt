@@ -15,10 +15,14 @@
  */
 package android.widget.cts
 
+import android.os.Build
+import android.platform.test.annotations.RequiresFlagsDisabled
+import android.platform.test.annotations.RequiresFlagsEnabled
 import android.widget.TextView
 import androidx.test.InstrumentationRegistry
 import androidx.test.filters.SmallTest
 import androidx.test.runner.AndroidJUnit4
+import com.android.text.flags.Flags.FLAG_USE_BOUNDS_FOR_WIDTH
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -33,6 +37,7 @@ class TextViewUseBoundsForWidthTest {
     private val context = InstrumentationRegistry.getInstrumentation().getTargetContext()
 
     @Test
+    @RequiresFlagsEnabled(FLAG_USE_BOUNDS_FOR_WIDTH)
     fun testSetGetUseBoundsForWidth() {
         val textView = TextView(context)
         textView.useBoundsForWidth = true
@@ -43,6 +48,7 @@ class TextViewUseBoundsForWidthTest {
     }
 
     @Test
+    @RequiresFlagsEnabled(FLAG_USE_BOUNDS_FOR_WIDTH)
     fun testLayoutUseBoundsForTest() {
         val textView = TextView(context)
         textView.text = "Hello, World.\n This is Android."
@@ -54,5 +60,26 @@ class TextViewUseBoundsForWidthTest {
         textView.useBoundsForWidth = false
         textView.measure(1024, 1024)
         assertThat(textView.layout.useBoundsForWidth).isFalse()
+    }
+
+    // TODO: Enable test once RequiredFlagEnabled started working.
+    // @Test
+    // @RequiresFlagsEnabled(FLAG_USE_BOUNDS_FOR_WIDTH)
+    // fun testDefaultUseBoundsForTest_TargetSdk_VIC_FlagOn() {
+    //     context.getApplicationInfo().targetSdkVersion = Build.VERSION_CODES.VANILLA_ICE_CREAM
+    //     assertThat(TextView(context).useBoundsForWidth).isTrue()
+    // }
+
+    @Test
+    @RequiresFlagsDisabled(FLAG_USE_BOUNDS_FOR_WIDTH)
+    fun testDefaultUseBoundsForTest_TargetSdk_VIC_FlagOff() {
+        context.getApplicationInfo().targetSdkVersion = Build.VERSION_CODES.VANILLA_ICE_CREAM
+        assertThat(TextView(context).useBoundsForWidth).isFalse()
+    }
+
+    @Test
+    fun testDefaultUseBoundsForTest_TargetSdk_UDC() {
+        context.getApplicationInfo().targetSdkVersion = Build.VERSION_CODES.UPSIDE_DOWN_CAKE
+        assertThat(TextView(context).useBoundsForWidth).isFalse()
     }
 }

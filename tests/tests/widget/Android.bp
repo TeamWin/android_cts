@@ -36,6 +36,7 @@ android_test {
         "androidx.test.espresso.core",
         "cts-wm-util",
         "testables",
+        "com.android.text.flags-aconfig-java",
     ],
 
     libs: ["android.test.runner"],

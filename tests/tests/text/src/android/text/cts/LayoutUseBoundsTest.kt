@@ -18,12 +18,14 @@ package android.text.cts
 import android.graphics.RectF
 import android.graphics.Typeface
 import android.graphics.text.LineBreaker
+import android.platform.test.annotations.RequiresFlagsEnabled
 import android.text.DynamicLayout
 import android.text.StaticLayout
 import android.text.TextPaint
 import android.text.cts.LayoutUseBoundsUtil.getDrawingHorizontalOffset
 import androidx.test.InstrumentationRegistry
 import androidx.test.filters.SmallTest
+import com.android.text.flags.Flags
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -31,6 +33,7 @@ import org.junit.runners.Parameterized
 
 @SmallTest
 @RunWith(Parameterized::class)
+@RequiresFlagsEnabled(Flags.FLAG_USE_BOUNDS_FOR_WIDTH)
 class LayoutUseBoundsTest(val p: Param) {
 
     // In this test case, the SIMPLE and HIGH_QUALITY line breaker produces the same line break
