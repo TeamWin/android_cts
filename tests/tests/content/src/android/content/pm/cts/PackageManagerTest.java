@@ -56,7 +56,6 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 import static org.testng.Assert.assertThrows;
 
@@ -107,7 +106,6 @@ import android.os.Environment;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.os.SystemClock;
-import android.os.SystemProperties;
 import android.os.UserHandle;
 import android.platform.test.annotations.AppModeFull;
 import android.provider.Settings;
@@ -1582,8 +1580,6 @@ public class PackageManagerTest {
 
     @Test
     public void testGetPackageInfo_ApexSupported_ApexPackage_MatchesApex() throws Exception {
-        assumeTrue("Device doesn't support updating APEX", isUpdatingApexSupported());
-
         final int flags = PackageManager.MATCH_APEX
                 | PackageManager.MATCH_FACTORY_ONLY
                 | PackageManager.GET_SIGNING_CERTIFICATES
@@ -1595,32 +1591,6 @@ public class PackageManagerTest {
 
     @Test
     public void testGetPackageInfo_ApexSupported_ApexPackage_DoesNotMatchApex() {
-        assumeTrue("Device doesn't support updating APEX", isUpdatingApexSupported());
-
-        try {
-            mPackageManager.getPackageInfo(SHIM_APEX_PACKAGE_NAME,
-                    PackageManager.PackageInfoFlags.of(0));
-            fail("NameNotFoundException expected");
-        } catch (NameNotFoundException expected) {
-        }
-    }
-
-    @Test
-    public void testGetPackageInfo_ApexNotSupported_ApexPackage_MatchesApex() {
-        assumeFalse("Device supports updating APEX", isUpdatingApexSupported());
-
-        try {
-            mPackageManager.getPackageInfo(SHIM_APEX_PACKAGE_NAME,
-                    PackageManager.PackageInfoFlags.of(PackageManager.MATCH_APEX));
-            fail("NameNotFoundException expected");
-        } catch (NameNotFoundException expected) {
-        }
-    }
-
-    @Test
-    public void testGetPackageInfo_ApexNotSupported_ApexPackage_DoesNotMatchApex() {
-        assumeFalse("Device supports updating APEX", isUpdatingApexSupported());
-
         try {
             mPackageManager.getPackageInfo(SHIM_APEX_PACKAGE_NAME,
                     PackageManager.PackageInfoFlags.of(0));
@@ -1631,8 +1601,6 @@ public class PackageManagerTest {
 
     @Test
     public void testGetInstalledPackages_ApexSupported_MatchesApex() {
-        assumeTrue("Device doesn't support updating APEX", isUpdatingApexSupported());
-
         final int flags = PackageManager.MATCH_APEX
                 | PackageManager.MATCH_FACTORY_ONLY
                 | PackageManager.GET_SIGNING_CERTIFICATES
@@ -1648,32 +1616,6 @@ public class PackageManagerTest {
 
     @Test
     public void testGetInstalledPackages_ApexSupported_DoesNotMatchApex() {
-        assumeTrue("Device doesn't support updating APEX", isUpdatingApexSupported());
-
-        List<PackageInfo> installedPackages = mPackageManager.getInstalledPackages(
-                PackageManager.PackageInfoFlags.of(0));
-        List<PackageInfo> shimApex = installedPackages.stream().filter(
-                packageInfo -> packageInfo.packageName.equals(SHIM_APEX_PACKAGE_NAME)).collect(
-                Collectors.toList());
-        assertWithMessage("Shim apex wasn't supposed to be found").that(shimApex).isEmpty();
-    }
-
-    @Test
-    public void testGetInstalledPackages_ApexNotSupported_MatchesApex() {
-        assumeFalse("Device supports updating APEX", isUpdatingApexSupported());
-
-        List<PackageInfo> installedPackages = mPackageManager.getInstalledPackages(
-                PackageManager.PackageInfoFlags.of(PackageManager.MATCH_APEX));
-        List<PackageInfo> shimApex = installedPackages.stream().filter(
-                packageInfo -> packageInfo.packageName.equals(SHIM_APEX_PACKAGE_NAME)).collect(
-                Collectors.toList());
-        assertWithMessage("Shim apex wasn't supposed to be found").that(shimApex).isEmpty();
-    }
-
-    @Test
-    public void testGetInstalledPackages_ApexNotSupported_DoesNotMatchApex() {
-        assumeFalse("Device supports updating APEX", isUpdatingApexSupported());
-
         List<PackageInfo> installedPackages = mPackageManager.getInstalledPackages(
                 PackageManager.PackageInfoFlags.of(0));
         List<PackageInfo> shimApex = installedPackages.stream().filter(
@@ -1886,8 +1828,6 @@ public class PackageManagerTest {
 
     @Test
     public void testGetApplicationInfo_ApexSupported_MatchesApex() throws Exception {
-        assumeTrue("Device doesn't support updating APEX", isUpdatingApexSupported());
-
         ApplicationInfo ai = mPackageManager.getApplicationInfo(
                 SHIM_APEX_PACKAGE_NAME,
                 PackageManager.ApplicationInfoFlags.of(PackageManager.MATCH_APEX));
@@ -1906,10 +1846,6 @@ public class PackageManagerTest {
         final ApplicationInfo info = mPackageManager.getApplicationInfo(HELLO_WORLD_PACKAGE_NAME,
                 PackageManager.ApplicationInfoFlags.of(0));
         assertThat(info.icon).isEqualTo((useRoundIcon ? info.roundIconRes : info.iconRes));
-    }
-
-    private boolean isUpdatingApexSupported() {
-        return SystemProperties.getBoolean("ro.apex.updatable", false);
     }
 
     private static void assertShimApexInfoIsCorrect(PackageInfo packageInfo) {

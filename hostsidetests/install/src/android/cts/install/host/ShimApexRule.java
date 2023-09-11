@@ -62,10 +62,6 @@ final class ShimApexRule extends ExternalResource {
      * unnecessary reboots.
      */
     private void uninstallShimApexIfNecessary() throws DeviceNotAvailableException {
-        if (!isUpdatingApexSupported()) {
-            // Device doesn't support updating apex. Nothing to uninstall.
-            return;
-        }
         if (getShimApex().sourceDir.startsWith("/system")) {
             // System version is active, nothing to uninstall.
             return;
@@ -83,11 +79,6 @@ final class ShimApexRule extends ExternalResource {
         ITestDevice.ApexInfo shim = getShimApex();
         assertThat(shim.versionCode).isEqualTo(1L);
         assertThat(shim.sourceDir).startsWith("/system");
-    }
-
-    boolean isUpdatingApexSupported() throws DeviceNotAvailableException {
-        final String updatable = mHostTest.getDevice().getProperty("ro.apex.updatable");
-        return updatable != null && updatable.equals("true");
     }
 
     private ITestDevice.ApexInfo getShimApex() throws DeviceNotAvailableException {
