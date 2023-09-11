@@ -38,6 +38,8 @@ android_test {
         "MetricsRecorder",
         "statsdprotolite",
         "Interactive",
+        "flag-junit",
+        "device_policy_aconfig_flags_lib",
     ],
     srcs: [
         "src/**/*.java",
@@ -71,6 +73,8 @@ android_test {
         "MetricsRecorder",
         "statsdprotolite",
         "Interactive",
+        "flag-junit",
+        "device_policy_aconfig_flags_lib",
     ],
     srcs: [
         "src/**/*.java",
