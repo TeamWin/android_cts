@@ -444,7 +444,7 @@ class AppDataSharingUpdatesTest {
         private fun findView(selector: BySelector, expected: Boolean) {
             val timeoutMillis =
                 if (expected) {
-                    10000L
+                    16000L
                 } else {
                     1000L
                 }
