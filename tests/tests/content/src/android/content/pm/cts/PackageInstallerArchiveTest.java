@@ -43,6 +43,7 @@ import android.content.IIntentSender;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.IntentSender;
+import android.content.pm.ApplicationInfo;
 import android.content.pm.Flags;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageInstaller;
@@ -50,6 +51,10 @@ import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.ApplicationInfoFlags;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.pm.PackageManager.PackageInfoFlags;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
@@ -150,6 +155,23 @@ public class PackageInstallerArchiveTest {
         // This number is bound to fluctuate as the data created during app startup will change
         // over time. We only need to verify that the data directory is kept.
         assertTrue(stats.getDataBytes() > 0L);
+    }
+
+    @Test
+    public void archiveApp_getApplicationIcon() throws Exception {
+        installPackage(APK_PATH);
+        Drawable expectedIcon = mPackageManager.getApplicationIcon(PACKAGE_NAME);
+
+        runWithShellPermissionIdentity(
+                () -> mPackageInstaller.requestArchive(PACKAGE_NAME,
+                        new IntentSender((IIntentSender) mIntentSender)),
+                Manifest.permission.DELETE_PACKAGES);
+        assertThat(mIntentSender.mStatus.get()).isEqualTo(PackageInstaller.STATUS_SUCCESS);
+
+        ApplicationInfo applicationInfo = mPackageManager.getPackageInfo(PACKAGE_NAME,
+                PackageInfoFlags.of(MATCH_ARCHIVED_PACKAGES)).applicationInfo;
+        Drawable actualIcon = mPackageManager.getApplicationIcon(applicationInfo);
+        assertThat(drawableToBitmap(actualIcon).sameAs(drawableToBitmap(expectedIcon))).isTrue();
     }
 
     @Test
@@ -336,6 +358,22 @@ public class PackageInstallerArchiveTest {
                 && !FeatureUtil.isTV()
                 && !FeatureUtil.isWatch()
                 && !FeatureUtil.isVrHeadset();
+    }
+
+    private static Bitmap drawableToBitmap(Drawable drawable) {
+        if (drawable instanceof BitmapDrawable) {
+            return ((BitmapDrawable) drawable).getBitmap();
+
+        }
+
+        Bitmap bitmap = Bitmap.createBitmap(
+                drawable.getIntrinsicWidth(),
+                drawable.getIntrinsicHeight(),
+                Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+        drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
+        drawable.draw(canvas);
+        return bitmap;
     }
 
     static class UnarchiveBroadcastReceiver extends BroadcastReceiver {
