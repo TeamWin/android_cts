@@ -27,6 +27,7 @@ import android.os.SystemProperties;
 import android.view.View;
 import android.view.ViewTreeObserver;
 import android.view.Window;
+import android.view.Display;
 import android.window.WindowInfosListenerForTest;
 import android.window.WindowInfosListenerForTest.WindowInfo;
 
@@ -127,7 +128,9 @@ public class CtsWindowInfoUtils {
                 if (!windowInfo.isVisible) {
                     continue;
                 }
-                if (windowInfo.windowToken == windowToken) {
+                // only wait for default display.
+                if (windowInfo.windowToken == windowToken
+                        && windowInfo.displayId == Display.DEFAULT_DISPLAY) {
                     return predicate.test(windowInfo);
                 }
             }
