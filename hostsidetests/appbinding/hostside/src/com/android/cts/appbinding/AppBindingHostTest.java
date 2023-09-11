@@ -176,8 +176,21 @@ public class AppBindingHostTest extends BaseHostJUnit4Test implements IBuildRece
         return false;
     }
 
-    private void setSmsApp(String pkg, int userId) throws Exception {
-        runCommand("cmd role add-role-holder --user " + userId + " android.app.role.SMS " + pkg);
+    private void setSmsApp(String pkg, int userId) throws Throwable {
+        runWithRetries(300, () -> {
+            String output1 = runCommand("cmd role get-role-holders --user " + userId
+                            + " android.app.role.SMS ");
+            if (output1.equals(pkg)) {
+                CLog.d(pkg + " has been set default sms app.");
+            } else {
+                String output2 = runCommand("cmd role add-role-holder --user " + userId
+                                + " android.app.role.SMS " + pkg);
+                if (output2.contains("TimeoutException")) {
+                    RunUtil.getDefault().sleep(10000);
+                    throw new RuntimeException("cmd role add-role-holder timeout.");
+                }
+            }
+        });
     }
 
     private void uninstallTestApps(boolean always) throws Exception {
