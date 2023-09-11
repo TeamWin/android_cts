@@ -17,15 +17,18 @@
 package android.widget.cts;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
-
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import android.app.INotificationManager;
 import android.content.Context;
 import android.os.Binder;
+import android.os.RemoteException;
 import android.os.ServiceManager;
 import android.testing.TestableContext;
 import android.view.View;
@@ -82,6 +85,26 @@ public class ToastPresenterTest {
         ToastPresenter toastPresenter = createToastPresenter(mContext);
 
         toastPresenter.show(view, token, windowToken, 0, 0, 0, 0, 0, 0, null);
+    }
+
+    @UiThreadTest
+    @Test
+    public void testAddA11yClientOnlyWhenShowing() throws RemoteException {
+        View view = new FrameLayout(mContext);
+        Binder token = new Binder();
+        Binder windowToken = new Binder();
+        IAccessibilityManager a11yManager = mock(IAccessibilityManager.class);
+        ToastPresenter toastPresenter = new ToastPresenter(
+                mContext,
+                a11yManager,
+                INotificationManager.Stub.asInterface(
+                        ServiceManager.getService(Context.NOTIFICATION_SERVICE)),
+                PACKAGE_NAME);
+
+        verify(a11yManager, times(0)).addClient(any(), anyInt());
+        toastPresenter.show(view, token, windowToken, 0, 0, 0, 0, 0, 0, null);
+        verify(a11yManager).addClient(any(), anyInt());
+        verify(a11yManager).removeClient(any(), anyInt());
     }
 
     private static ToastPresenter createToastPresenter(Context context) {
