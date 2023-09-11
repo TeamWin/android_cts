@@ -23,6 +23,7 @@ import android.content.Context.RECEIVER_EXPORTED
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
+import android.content.pm.PackageManager.MATCH_ANY_USER
 import android.content.pm.PackageManager.MATCH_ARCHIVED_PACKAGES
 import android.content.pm.PackageManager.MATCH_KNOWN_PACKAGES
 import android.content.pm.PackageManager.MATCH_UNINSTALLED_PACKAGES
@@ -54,7 +55,6 @@ import org.junit.Assume.assumeFalse
 import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.ClassRule
-import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TestRule
@@ -415,7 +415,6 @@ class PackageManagerShellCommandMultiUserTest {
         }
     }
 
-    @Ignore("b/299277288")
     @Test
     fun testUninstallWithKeepDataMultiUserMatchUninstalled() {
         testUninstallWithKeepDataMultiUser(PackageInfoFlags.of(MATCH_UNINSTALLED_PACKAGES.toLong()))
@@ -426,10 +425,14 @@ class PackageManagerShellCommandMultiUserTest {
         testUninstallWithKeepDataMultiUser(PackageInfoFlags.of(MATCH_KNOWN_PACKAGES.toLong()))
     }
 
-    @Ignore("b/299277288")
     @Test
     fun testUninstallWithKeepDataMultiUserMatchArchived() {
         testUninstallWithKeepDataMultiUser(PackageInfoFlags.of(MATCH_ARCHIVED_PACKAGES))
+    }
+
+    @Test
+    fun testUninstallWithKeepDataMultiUserMatchAnyUser() {
+        testUninstallWithKeepDataMultiUser(PackageInfoFlags.of(MATCH_ANY_USER.toLong()))
     }
 
     private fun testUninstallWithKeepDataMultiUser(matchFlag: PackageInfoFlags) {
@@ -471,7 +474,7 @@ class PackageManagerShellCommandMultiUserTest {
                 )
                 val oldDataDir = packageInfoSecondUser.applicationInfo!!.dataDir
                 assertThat(oldDataDir).isNotNull()
-                // Delete app on primary user without DELETE_KEEP_DATA flag and verify that the app is
+                // Delete app on primary user without DELETE_KEEP_DATA flag and verify the app is
                 // still queryable with the match flag
                 uninstallPackageAsUser(TEST_APP_PACKAGE, primaryUser)
                 assertThat(getInstalledState(TEST_APP_PACKAGE, primaryUser.id()))
@@ -483,12 +486,21 @@ class PackageManagerShellCommandMultiUserTest {
                     matchFlag
                 )
                 assertThat(packageInfoSecondUser.applicationInfo!!.dataDir).isEqualTo(oldDataDir)
-                // Expect not to throw when the package is queryable
-                pmPrimaryUser.getPackageInfo(
-                    TEST_APP_PACKAGE,
-                    matchFlag
-                )
-                // Reinstall the app on the second user and verifies that the data dir stays the same,
+                // Expect not to throw when queried with MATCH_ANY_USER but throws otherwise
+                if (matchFlag.value and MATCH_ANY_USER.toLong() != 0L) {
+                    pmPrimaryUser.getPackageInfo(
+                        TEST_APP_PACKAGE,
+                        matchFlag
+                    )
+                } else {
+                    assertThrows(PackageManager.NameNotFoundException::class.java) {
+                        pmPrimaryUser.getPackageInfo(
+                            TEST_APP_PACKAGE,
+                            matchFlag
+                        )
+                    }
+                }
+                // Reinstall the app on second user and verifies that the data dir stays the same,
                 // and the app is still not queryable on the primary user
                 installPackageAsUser(TEST_HW5, secondaryUser)
                 assertThat(getInstalledState(TEST_APP_PACKAGE, primaryUser.id()))
@@ -500,10 +512,20 @@ class PackageManagerShellCommandMultiUserTest {
                     PackageInfoFlags.of(0L)
                 )
                 assertThat(packageInfoSecondUser.applicationInfo!!.dataDir).isEqualTo(oldDataDir)
-                pmPrimaryUser.getPackageInfo(
-                    TEST_APP_PACKAGE,
-                    matchFlag
-                )
+                // Expect not to throw when queried with MATCH_ANY_USER but throws otherwise
+                if (matchFlag.value and MATCH_ANY_USER.toLong() != 0L) {
+                    pmPrimaryUser.getPackageInfo(
+                        TEST_APP_PACKAGE,
+                        matchFlag
+                    )
+                } else {
+                    assertThrows(PackageManager.NameNotFoundException::class.java) {
+                        pmPrimaryUser.getPackageInfo(
+                            TEST_APP_PACKAGE,
+                            matchFlag
+                        )
+                    }
+                }
                 // Fully uninstall the app on the second user and verify it's no longer queryable
                 uninstallPackageAsUser(TEST_APP_PACKAGE, secondaryUser)
                 assertThat(getInstalledState(TEST_APP_PACKAGE, primaryUser.id())).isNull()
