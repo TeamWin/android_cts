@@ -37,6 +37,7 @@ import android.inputmethodservice.cts.common.test.ShellCommandUtils;
 import android.inputmethodservice.cts.common.test.TestInfo;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.AppModeInstant;
+import android.platform.test.annotations.FlakyTest;
 
 import com.android.compatibility.common.util.FeatureUtil;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -443,6 +444,7 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
      * <p>Regression test for Bug 152876819.</p>
      */
     @AppModeFull
+    @FlakyTest
     @Test
     public void testImeVisibilityAfterImeSwitchingFull() throws Exception {
         testImeVisibilityAfterImeSwitching(false);
@@ -454,6 +456,7 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
      * <p>Regression test for Bug 152876819.</p>
      */
     @AppModeInstant
+    @FlakyTest
     @Test
     public void testImeVisibilityAfterImeSwitchingInstant() throws Exception {
         testImeVisibilityAfterImeSwitching(true);
