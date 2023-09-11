@@ -99,6 +99,7 @@ import java.util.stream.Collectors;
 @NonMainlineTest
 public class MediaRouter2Test {
     private static final String TAG = "MR2Test";
+    private static final String DEFAULT_ROUTE_ID = "DEFAULT_ROUTE";
 
     // Required by Bedstead.
     @ClassRule @Rule public static final DeviceState sDeviceState = new DeviceState();
@@ -1210,6 +1211,25 @@ public class MediaRouter2Test {
         for (MediaRoute2Info route : systemController.getSelectedRoutes()) {
             assertThat(route.isSystemRoute()).isTrue();
         }
+    }
+
+    @Test
+    public void getInstance_withoutSystemRoutingPermissions_fetchesOnlyDefaultSystemRoute() {
+        // MR2 needs a LIVE_AUDIO discovery preference to not filter out system routes.
+        mRouter2.registerRouteCallback(
+                mExecutor, mRouterDummyCallback, LIVE_AUDIO_DISCOVERY_PREFERENCE);
+        assertThat(mRouter2.getRoutes())
+                .comparingElementsUsing(ROUTE_HAS_ORIGINAL_ID)
+                .containsExactly(DEFAULT_ROUTE_ID);
+    }
+
+    @Test
+    public void getSystemController_withoutSystemRoutingPermissions_containsOnlyDefaultRoute() {
+        RoutingController systemController = mRouter2.getSystemController();
+        assertThat(systemController.getSelectedRoutes())
+                .comparingElementsUsing(ROUTE_HAS_ORIGINAL_ID)
+                .containsExactly(DEFAULT_ROUTE_ID);
+        assertThat(systemController.getRoutingSessionInfo().getTransferableRoutes()).isEmpty();
     }
 
     @Test
