@@ -187,8 +187,7 @@ class RawExposureTest(its_base_test.ItsBaseTest):
       sens_max = props['android.sensor.maxAnalogSensitivity']
       sens_step = (sens_max - sens_min) // _NUM_ISO_STEPS
       white_level = float(props['android.sensor.info.whiteLevel'])
-      black_levels = [image_processing_utils.get_black_level(
-          i, props) for i, _ in enumerate(_BAYER_COLORS)]
+      black_levels = image_processing_utils.get_black_levels(props)
 
       # Do captures with exposure list over sensitivity range
       for s in range(sens_min, sens_max, sens_step):
