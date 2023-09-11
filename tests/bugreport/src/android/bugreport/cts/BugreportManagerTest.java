@@ -20,6 +20,8 @@ import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assume.assumeFalse;
+
 import android.Manifest;
 import android.app.ActivityManager;
 import android.app.UiAutomation;
@@ -30,18 +32,25 @@ import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.os.BugreportManager;
 import android.os.BugreportParams;
+import android.os.Build;
+import android.os.ParcelFileDescriptor;
 import android.os.UserHandle;
+import android.text.TextUtils;
 import android.util.Pair;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.LargeTest;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.FileUtils;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -236,7 +245,31 @@ public class BugreportManagerTest {
     }
 
     private void assertThatFileisNotEmpty(String file) throws Exception {
-        String[] fileInfo = runShellCommand("ls -l " + file).split(" ");
+        // Check if the file is under "/data/user_de/0/".
+        boolean isSystemUserFile = TextUtils.equals(file.split("/")[3], "0");
+        String cmdOutput;
+        if (isSystemUserFile) {
+            cmdOutput = runShellCommand(mUiAutomation, "ls -l " + file);
+        } else {
+            // Need to run the shell command as root, to be able to access other user's files.
+            // This is needed in HSUM (Headless System User Mode), where the bugreport is generated
+            // for secondary user (e.g. user 10).
+            // TODO(b/296720745) For now skip the test for "user" build because the bugreport file
+            // cannot be accesses via shell command without running as root. We may need another way
+            // to access the file other than shell command. Note that this affects HSUM device only.
+            assumeFalse(Build.TYPE.equals("user"));
+
+            ParcelFileDescriptor[] pfds = mUiAutomation.executeShellCommandRw("su");
+            try (FileOutputStream outputStream = new ParcelFileDescriptor.AutoCloseOutputStream(
+                    pfds[1])) {
+                outputStream.write(("ls -l " + file + "\n").getBytes());
+            }
+            try (InputStream inputStream = new ParcelFileDescriptor.AutoCloseInputStream(pfds[0])) {
+                cmdOutput = new String(FileUtils.readInputStreamFully(inputStream));
+            }
+        }
+
+        String[] fileInfo = cmdOutput.split(" ");
         // Example output of ls -l: -rw------- 1 shell shell 27039619 2020-04-27 12:36 fileName.zip
         assertThat(fileInfo.length).isEqualTo(8);
         long fileSize = Long.parseLong(fileInfo[4]);
