@@ -83,6 +83,7 @@ public class TestUtils {
     public static final String ACCOUNT_ID_1 = "xtstest_CALL_PROVIDER_ID_1";
     public static final String ACCOUNT_ID_2 = "xtstest_CALL_PROVIDER_ID_2";
     public static final String ACCOUNT_ID_SIM = "sim_acct";
+    public static final String ACCOUNT_ID_SIM_2 = "sim_acct_2";
     public static final String ACCOUNT_ID_EMERGENCY = "xtstest_CALL_PROVIDER_EMERGENCY";
     public static final String EXTRA_PHONE_NUMBER = "android.telecom.cts.extra.PHONE_NUMBER";
     public static final ComponentName TELECOM_CTS_COMPONENT_NAME = new ComponentName(
@@ -91,6 +92,8 @@ public class TestUtils {
             new PhoneAccountHandle(new ComponentName(PACKAGE, COMPONENT), ACCOUNT_ID_1);
     public static final PhoneAccountHandle TEST_SIM_PHONE_ACCOUNT_HANDLE =
             new PhoneAccountHandle(new ComponentName(PACKAGE, COMPONENT), ACCOUNT_ID_SIM);
+    public static final PhoneAccountHandle TEST_SIM_PHONE_ACCOUNT_HANDLE_2 =
+            new PhoneAccountHandle(new ComponentName(PACKAGE, COMPONENT), ACCOUNT_ID_SIM_2);
     public static final PhoneAccountHandle TEST_PHONE_ACCOUNT_HANDLE_2 =
             new PhoneAccountHandle(new ComponentName(PACKAGE, COMPONENT), ACCOUNT_ID_2);
     public static final PhoneAccountHandle TEST_EMERGENCY_PHONE_ACCOUNT_HANDLE =
@@ -178,6 +181,18 @@ public class TestUtils {
             .setSubscriptionAddress(Uri.parse("tel:555-TEST"))
             .setCapabilities(PhoneAccount.CAPABILITY_CALL_PROVIDER |
                     PhoneAccount.CAPABILITY_SIM_SUBSCRIPTION)
+            .setHighlightColor(Color.RED)
+            .setShortDescription(SIM_ACCOUNT_LABEL)
+            .addSupportedUriScheme(PhoneAccount.SCHEME_TEL)
+            .addSupportedUriScheme(PhoneAccount.SCHEME_VOICEMAIL)
+            .build();
+
+    public static final PhoneAccount TEST_SIM_PHONE_ACCOUNT_2 = PhoneAccount.builder(
+                    TEST_SIM_PHONE_ACCOUNT_HANDLE_2, SIM_ACCOUNT_LABEL)
+            .setAddress(Uri.parse("tel:555-TEST-sim2"))
+            .setSubscriptionAddress(Uri.parse("tel:555-TEST-sim2"))
+            .setCapabilities(PhoneAccount.CAPABILITY_SIM_SUBSCRIPTION
+                    | PhoneAccount.CAPABILITY_CALL_PROVIDER /* needed in order to be default sub */)
             .setHighlightColor(Color.RED)
             .setShortDescription(SIM_ACCOUNT_LABEL)
             .addSupportedUriScheme(PhoneAccount.SCHEME_TEL)

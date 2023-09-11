@@ -47,6 +47,10 @@
         <option name="teardown-command" value="am compat reset ALLOW_TEST_API_ACCESS android.telecom.cts" />
         <option name="teardown-command" value="am compat reset ALLOW_TEST_API_ACCESS android.telecom.cts.api29incallservice" />
     </target_preparer>
+    <target_preparer class="com.android.tradefed.targetprep.FeatureFlagTargetPreparer">
+        <option name="flag-value"
+                value="telecom/com.android.server.telecom.flags.only_update_telephony_on_valid_sub_ids=true"/>
+    </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.telecom.cts" />
         <option name="runtime-hint" value="10m20s" />

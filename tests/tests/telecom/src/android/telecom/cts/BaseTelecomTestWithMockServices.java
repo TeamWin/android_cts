@@ -637,6 +637,66 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
         mOnMuteStateChangedCounter = new TestUtils.InvokeCounter("OnMuteStateChanged");
     }
 
+    void registerAndEnablePhoneAccount(PhoneAccount phoneAccount) throws Exception {
+        mTelecomManager.registerPhoneAccount(phoneAccount);
+        TestUtils.enablePhoneAccount(getInstrumentation(), phoneAccount.getAccountHandle());
+        // Wait till the adb commands have executed and account is enabled in Telecom database.
+        assertPhoneAccountEnabled(phoneAccount.getAccountHandle());
+    }
+
+    void registerAccountsAndVerify(List<PhoneAccount> accountsToRegister) throws Exception {
+        for (PhoneAccount account : accountsToRegister) {
+            if (account.hasCapabilities(PhoneAccount.CAPABILITY_SIM_SUBSCRIPTION)) {
+                ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelecomManager,
+                        tm -> tm.registerPhoneAccount(account),
+                        "android.permission.REGISTER_SIM_SUBSCRIPTION");
+            } else {
+                registerAndEnablePhoneAccount(account);
+            }
+            verifyAccountRegistration(account.getAccountHandle(), account);
+        }
+    }
+
+    void unregisterAccountsAndVerify(List<PhoneAccount> accountsToRegister) {
+        for (PhoneAccount account : accountsToRegister) {
+            mTelecomManager.unregisterPhoneAccount(account.getAccountHandle());
+            assertNull(mTelecomManager.getPhoneAccount(account.getAccountHandle()));
+        }
+    }
+
+    /**
+     * helper method to set the default outgoing account handle and verify it was successfully set
+     *
+     * @param handle that will be the new default.
+     */
+    void setDefaultOutgoingPhoneAccountAndVerify(PhoneAccountHandle handle)
+            throws Exception {
+        // set the default outgoing as a self-managed account
+        TestUtils.setDefaultOutgoingPhoneAccount(getInstrumentation(), handle);
+
+        // assert the self-managed is returned
+        assertEquals(handle, mTelecomManager.getUserSelectedOutgoingPhoneAccount());
+    }
+
+    void verifyAccountRegistration(PhoneAccountHandle handle, PhoneAccount phoneAccount) {
+        // The phone account is registered in the setup method.
+        assertPhoneAccountRegistered(handle);
+        assertPhoneAccountEnabled(handle);
+        PhoneAccount registeredAccount = mTelecomManager.getPhoneAccount(handle);
+
+        // It should exist and be the same as the previously registered one.
+        assertNotNull(registeredAccount);
+
+        // We cannot just check for equality of the PhoneAccount since the one we registered is not
+        // enabled, and the one we get back after registration is.
+        assertPhoneAccountEquals(phoneAccount, registeredAccount);
+
+        // An important assumption is that self-managed PhoneAccounts are automatically
+        // enabled by default.
+        assertTrue("Self-managed PhoneAccounts must be enabled by default.",
+                registeredAccount.isEnabled());
+    }
+
     void addAndVerifyNewFailedIncomingCall(Uri incomingHandle, Bundle extras) {
         assertEquals("Lock should have no permits!", 0, mInCallCallbacks.lock.availablePermits());
         int currentCallCount = 0;

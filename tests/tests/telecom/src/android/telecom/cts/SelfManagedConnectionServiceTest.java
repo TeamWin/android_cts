@@ -270,25 +270,6 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
         }
     }
 
-    private void verifyAccountRegistration(PhoneAccountHandle handle, PhoneAccount phoneAccount) {
-        // The phone account is registered in the setup method.
-        assertPhoneAccountRegistered(handle);
-        assertPhoneAccountEnabled(handle);
-        PhoneAccount registeredAccount = mTelecomManager.getPhoneAccount(handle);
-
-        // It should exist and be the same as the previously registered one.
-        assertNotNull(registeredAccount);
-
-        // We cannot just check for equality of the PhoneAccount since the one we registered is not
-        // enabled, and the one we get back after registration is.
-        assertPhoneAccountEquals(phoneAccount, registeredAccount);
-
-        // An important assumption is that self-managed PhoneAccounts are automatically
-        // enabled by default.
-        assertTrue("Self-managed PhoneAccounts must be enabled by default.",
-                registeredAccount.isEnabled());
-    }
-
     /**
      * This test ensures that a {@link android.telecom.PhoneAccount} declared as self-managed cannot
      * but is also registered as a call provider is not permitted.

@@ -16,16 +16,28 @@
 
 package android.telecom.cts;
 
+import static android.telecom.cts.TestUtils.TEST_SELF_MANAGED_HANDLE_1;
+import static android.telecom.cts.TestUtils.TEST_SELF_MANAGED_PHONE_ACCOUNT_1;
+import static android.telecom.cts.TestUtils.TEST_SIM_PHONE_ACCOUNT;
+import static android.telecom.cts.TestUtils.TEST_SIM_PHONE_ACCOUNT_2;
+
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
 
+import android.net.Uri;
 import android.telecom.PhoneAccount;
 import android.telecom.PhoneAccountHandle;
 import android.telecom.TelecomManager;
+import android.util.Log;
 
+import com.android.server.telecom.flags.Flags;
+
+import java.util.ArrayList;
+import java.util.List;
 /**
  * Tests use of APIs related to changing the default outgoing phone account.
  */
 public class DefaultPhoneAccountTest extends BaseTelecomTestWithMockServices {
+    private static final String TAG = DefaultPhoneAccountTest.class.getSimpleName();
 
     @Override
     protected void setUp() throws Exception {
@@ -217,10 +229,171 @@ public class DefaultPhoneAccountTest extends BaseTelecomTestWithMockServices {
         }
     }
 
-    private void registerAndEnablePhoneAccount(PhoneAccount phoneAccount) throws Exception {
-        mTelecomManager.registerPhoneAccount(phoneAccount);
-        TestUtils.enablePhoneAccount(getInstrumentation(), phoneAccount.getAccountHandle());
-        // Wait till the adb commands have executed and account is enabled in Telecom database.
-        assertPhoneAccountEnabled(phoneAccount.getAccountHandle());
+    /**
+     * Verifies the DUT can successfully place a self-managed call when the default outgoing account
+     * handle has the capability {@link android.telecom.PhoneAccount.CAPABILITY_SIM_SUBSCRIPTION}
+     * (aka the default outgoing PhoneAccount is a sim/e-sim).
+     */
+    public void testSelfManagedCallWithSimBasedPhoneAccountAsDefault() throws Exception {
+        if (!mShouldTestTelecom || !Flags.onlyUpdateTelephonyOnValidSubIds()) {
+            return;
+        }
+        // avoid the CtsConnectionService binding which acts as a connection manager
+        PhoneAccount simCallManagerAcct = maybeUnregisterConnectionManagerAccount();
+        // temp save the DUT default
+        PhoneAccountHandle DUT_default_out = mTelecomManager.getUserSelectedOutgoingPhoneAccount();
+        // create the list of accounts that need to registered for this test
+        ArrayList<PhoneAccount> accounts = new ArrayList<>();
+        accounts.add(TEST_SIM_PHONE_ACCOUNT);
+        accounts.add(TEST_SELF_MANAGED_PHONE_ACCOUNT_1);
+
+        try {
+            registerAccountsAndVerify(accounts);
+            setDefaultOutgoingPhoneAccountAndVerify(TestUtils.TEST_SIM_PHONE_ACCOUNT_HANDLE);
+            placeAndVerifySelfManagedCall(TestUtils.TEST_SELF_MANAGED_HANDLE_1, getTestNumber());
+        } finally {
+            cleanupDefaultOutgoingAlteringTest(accounts, DUT_default_out, simCallManagerAcct);
+        }
+    }
+
+    /**
+     * Verifies the DUT can successfully place a self-managed call when the default outgoing account
+     * handle is null (meaning there is no call preference and the user will be prompted to select
+     * an account when placing a call).
+     */
+    public void testSelfManagedCallWithNoCallPreferenceAsDefault() throws Exception {
+        if (!mShouldTestTelecom || !Flags.onlyUpdateTelephonyOnValidSubIds()) {
+            return;
+        }
+        // avoid the CtsConnectionService binding which acts as a connection manager
+        PhoneAccount simCallManagerAcct = maybeUnregisterConnectionManagerAccount();
+        // temp save the DUT default
+        PhoneAccountHandle DUT_default_out = mTelecomManager.getUserSelectedOutgoingPhoneAccount();
+        // create the list of accounts that need to registered for this test
+        ArrayList<PhoneAccount> accounts = new ArrayList<>();
+        accounts.add(TEST_SIM_PHONE_ACCOUNT);
+        accounts.add(TEST_SIM_PHONE_ACCOUNT_2);
+        accounts.add(TEST_SELF_MANAGED_PHONE_ACCOUNT_1);
+
+        try {
+            registerAccountsAndVerify(accounts);
+            setDefaultOutgoingPhoneAccountAndVerify(null);
+            placeAndVerifySelfManagedCall(TEST_SELF_MANAGED_HANDLE_1, getTestNumber());
+        } finally {
+            cleanupDefaultOutgoingAlteringTest(accounts, DUT_default_out, simCallManagerAcct);
+        }
+    }
+
+    /**
+     * Verifies the DUT can place a self-managed call when the default outgoing phoneAccount is
+     * a sim based account and there are multiple sim based accounts registered and enabled.
+     */
+    public void testSelfManagedCallWithMultipleSimBasedAccountsActiveAndAsDefault()
+            throws Exception {
+        if (!mShouldTestTelecom || !Flags.onlyUpdateTelephonyOnValidSubIds()) {
+            return;
+        }
+        // avoid the CtsConnectionService binding which acts as a connection manager
+        PhoneAccount simCallManagerAcct = maybeUnregisterConnectionManagerAccount();
+        // temp save the DUT default
+        PhoneAccountHandle DUT_default_out = mTelecomManager.getUserSelectedOutgoingPhoneAccount();
+        // create the list of accounts that need to registered for this test
+        ArrayList<PhoneAccount> accounts = new ArrayList<>();
+        accounts.add(TEST_SIM_PHONE_ACCOUNT);
+        accounts.add(TEST_SIM_PHONE_ACCOUNT_2);
+        accounts.add(TEST_SELF_MANAGED_PHONE_ACCOUNT_1);
+
+        try {
+            registerAccountsAndVerify(accounts);
+            setDefaultOutgoingPhoneAccountAndVerify(TestUtils.TEST_SIM_PHONE_ACCOUNT_HANDLE_2);
+            placeAndVerifySelfManagedCall(TEST_SELF_MANAGED_HANDLE_1, getTestNumber());
+        } finally {
+            cleanupDefaultOutgoingAlteringTest(accounts, DUT_default_out, simCallManagerAcct);
+        }
+    }
+
+    /**
+     * ===========================================================================================
+     *                                    Helpers
+     * ===========================================================================================
+     */
+
+    /**
+     * query the sim call manager for the DUT and unregister it if non-null. This is useful since
+     * Telecom cts process will bind to the sim call manager and add VoIP calls which will cause
+     * unwanted behavior.
+     *
+     * @return potential sim call manager account
+     */
+    private PhoneAccount maybeUnregisterConnectionManagerAccount() {
+        PhoneAccountHandle simCallManagerHandle = mTelecomManager.getSimCallManager();
+        if (simCallManagerHandle != null) {
+            Log.i(TAG, String.format(
+                    "maybeUnregisterConnectionManagerAccount: unregistering=[%s] for test",
+                    simCallManagerHandle));
+            PhoneAccount simCallManagerAcct = mTelecomManager.getPhoneAccount(simCallManagerHandle);
+            mTelecomManager.unregisterPhoneAccount(simCallManagerHandle);
+            return simCallManagerAcct;
+        }
+        return null;
+    }
+
+    /**
+     * reset the DUT to the previous state it was in before running the test
+     *
+     * @param accountsToUnregister unregister the accounts needed for the test
+     * @param DUT_default_out      reset the default outgoing account
+     * @param simCallManager       maybe re-register the account that was acting as the sim call
+     *                             manager
+     * @throws Exception if there is an issue re-registering the simCallManager account
+     */
+    public void cleanupDefaultOutgoingAlteringTest(List<PhoneAccount> accountsToUnregister,
+            PhoneAccountHandle DUT_default_out, PhoneAccount simCallManager) throws Exception {
+        // unregister any accounts created in order to change the default outgoing account
+        unregisterAccountsAndVerify(accountsToUnregister);
+        // if the test required the sim call manager account to be unregistered, re-register it
+        if (simCallManager != null) {
+            mTelecomManager.registerPhoneAccount(simCallManager);
+        }
+        // reset the DUTs default outgoing calling account to the value before the test ran
+        setDefaultOutgoingPhoneAccountAndVerify(DUT_default_out);
+    }
+
+    private void placeAndVerifySelfManagedCall(PhoneAccountHandle handle, Uri address)
+            throws Exception {
+        // ensure the phoneAccountHandle can place outgoing calls before attempting to place one
+        assertIsOutgoingCallPermitted(true, handle);
+        // send the request to place the call
+        TestUtils.placeOutgoingCall(getInstrumentation(), mTelecomManager, handle, address);
+        // ensure Telecom bound to the self-managed CS
+        if (!CtsSelfManagedConnectionService.waitForBinding()) {
+            fail("Could not bind to Self-Managed ConnectionService");
+        }
+        // fetch the connection object to alter the call state
+        SelfManagedConnection connection = TestUtils.waitForAndGetConnection(address);
+
+        try {
+            assertNotNull("Connection should NOT be null.", connection);
+            assertFalse("Connection should be outgoing.", connection.isIncomingCall());
+            setActiveAndVerify(connection);
+        } finally {
+            setDisconnectedAndVerify(connection);
+        }
+    }
+
+    private void setActiveAndVerify(SelfManagedConnection connection) {
+        // Set the connection active.
+        connection.setActive();
+        // Check with Telecom if we're in a call.
+        assertIsInCall(true);
+        assertIsInManagedCall(false);
+    }
+
+    private void setDisconnectedAndVerify(SelfManagedConnection connection) {
+        if (connection != null) {
+            connection.disconnectAndDestroy();
+            assertIsInCall(false);
+            assertIsInManagedCall(false);
+        }
     }
 }
