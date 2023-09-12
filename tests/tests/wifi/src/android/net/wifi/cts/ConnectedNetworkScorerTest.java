@@ -34,10 +34,8 @@ import static android.net.wifi.WifiUsabilityStatsEntry.WME_ACCESS_CATEGORY_BK;
 import static android.net.wifi.WifiUsabilityStatsEntry.WME_ACCESS_CATEGORY_VI;
 import static android.net.wifi.WifiUsabilityStatsEntry.WME_ACCESS_CATEGORY_VO;
 import static android.os.Process.myUid;
-
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -86,6 +84,7 @@ import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -112,6 +111,8 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
 
     private static boolean sShouldRunTest = false;
     private static boolean sWasScanThrottleEnabled;
+
+    private final Executor mExecutor = Executors.newSingleThreadExecutor();
 
     @BeforeClass
     public static void setUpClass() throws Exception {
@@ -140,10 +141,10 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
         ShellIdentityUtils.invokeWithShellPermissions(
                 () -> sWifiManager.setScanThrottleEnabled(false));
 
-        // enable Wifi
-        if (!sWifiManager.isWifiEnabled()) {
-            ShellIdentityUtils.invokeWithShellPermissions(() -> sWifiManager.setWifiEnabled(true));
-        }
+        // disable then enable Wifi to clean the user selected network
+        ShellIdentityUtils.invokeWithShellPermissions(() -> sWifiManager.setWifiEnabled(false));
+        PollingCheck.check("Wifi not disabled", TIMEOUT, () -> !sWifiManager.isWifiEnabled());
+        ShellIdentityUtils.invokeWithShellPermissions(() -> sWifiManager.setWifiEnabled(true));
         PollingCheck.check("Wifi not enabled", TIMEOUT, () -> sWifiManager.isWifiEnabled());
 
         // turn screen on
@@ -223,8 +224,7 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
                 new TestUsabilityStatsListener(countDownLatch);
         try {
             uiAutomation.adoptShellPermissionIdentity();
-            sWifiManager.addOnWifiUsabilityStatsListener(
-                    Executors.newSingleThreadExecutor(), usabilityStatsListener);
+            sWifiManager.addOnWifiUsabilityStatsListener(mExecutor, usabilityStatsListener);
             // Wait for new usability stats (while connected & screen on this is triggered
             // by platform periodically).
             assertThat(countDownLatch.await(TIMEOUT, TimeUnit.MILLISECONDS)).isTrue();
@@ -569,14 +569,15 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
             TestConnectedNetworkScorer {
         TestConnectedNetworkScorerWithSessionInfo(CountDownLatch countDownLatch) {
             super(countDownLatch);
+            isUserSelected = false;
         }
 
         @Override
         public void onStart(WifiConnectedSessionInfo sessionInfo) {
             super.onStart(sessionInfo);
             synchronized (mCountDownLatch) {
-                this.startSessionId = sessionInfo.getSessionId();
-                this.isUserSelected = sessionInfo.isUserSelected();
+                startSessionId = sessionInfo.getSessionId();
+                isUserSelected = sessionInfo.isUserSelected();
                 // Build a WifiConnectedSessionInfo object
                 WifiConnectedSessionInfo.Builder sessionBuilder =
                         new WifiConnectedSessionInfo.Builder(startSessionId.intValue())
@@ -645,8 +646,7 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
             sWifiManager.clearWifiConnectedNetworkScorer();
             Thread.sleep(500);
 
-            sWifiManager.setWifiConnectedNetworkScorer(
-                    Executors.newSingleThreadExecutor(), connectedNetworkScorer);
+            sWifiManager.setWifiConnectedNetworkScorer(mExecutor, connectedNetworkScorer);
             // Since we're already connected, wait for onStart to be invoked.
             assertThat(countDownLatchScorer.await(TIMEOUT, TimeUnit.MILLISECONDS)).isTrue();
 
@@ -660,8 +660,7 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
             scoreUpdateObserver.notifyScoreUpdate(connectedNetworkScorer.startSessionId, 50);
 
             // Register the usability listener
-            sWifiManager.addOnWifiUsabilityStatsListener(
-                    Executors.newSingleThreadExecutor(), usabilityStatsListener);
+            sWifiManager.addOnWifiUsabilityStatsListener(mExecutor, usabilityStatsListener);
             // Trigger a usability stats update.
             scoreUpdateObserver.triggerUpdateOfWifiUsabilityStats(
                     connectedNetworkScorer.startSessionId);
@@ -737,8 +736,7 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
             sWifiManager.clearWifiConnectedNetworkScorer();
             Thread.sleep(500);
 
-            sWifiManager.setWifiConnectedNetworkScorer(
-                    Executors.newSingleThreadExecutor(), connectedNetworkScorer);
+            sWifiManager.setWifiConnectedNetworkScorer(mExecutor, connectedNetworkScorer);
             // Since we're already connected, wait for onStart to be invoked.
             assertThat(countDownLatchScorer.await(TIMEOUT, TimeUnit.MILLISECONDS)).isTrue();
 
@@ -826,8 +824,7 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
             assertThat(testNetwork).isNotNull();
 
             // Register the external scorer.
-            sWifiManager.setWifiConnectedNetworkScorer(
-                    Executors.newSingleThreadExecutor(), connectedNetworkScorer);
+            sWifiManager.setWifiConnectedNetworkScorer(mExecutor, connectedNetworkScorer);
 
             // Now connect using the provided connection initiator
             networkCallback = connectionInitiator.initiateConnection(testNetwork, executorService);
