@@ -26,7 +26,7 @@ import static android.graphics.text.LineBreaker.JUSTIFICATION_MODE_INTER_WORD;
 import static android.graphics.text.LineBreaker.JUSTIFICATION_MODE_NONE;
 import static android.graphics.text.LineBreaker.ParagraphConstraints;
 import static android.graphics.text.LineBreaker.Result;
-
+import static com.android.text.flags.Flags.FLAG_NO_BREAK_NO_HYPHENATION_SPAN;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -37,8 +37,10 @@ import android.content.Context;
 import android.content.res.AssetManager;
 import android.graphics.Paint;
 import android.graphics.Typeface;
+import android.graphics.text.LineBreakConfig;
 import android.graphics.text.LineBreaker;
 import android.graphics.text.MeasuredText;
+import android.platform.test.annotations.RequiresFlagsEnabled;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.SmallTest;
@@ -655,6 +657,58 @@ public class LineBreakerTest {
         assertEquals(150.0f, r.getLineWidth(0), 0.0f);
         assertEquals(170.0f, r.getLineWidth(1), 0.0f);
         assertEquals(170.0f, r.getLineWidth(2), 0.0f);
+    }
+
+    /**
+     * Test for no hyphenation span
+     */
+    @Test
+    @RequiresFlagsEnabled(FLAG_NO_BREAK_NO_HYPHENATION_SPAN)
+    public void testLineBreak_HighQuality_Hyphenation_NoHyphenation() {
+        // The visual High Quality line break output is like
+        // |This is Android.|
+        // |Here is hyphena-|
+        // |tion            |
+        //
+        // However, in this test case, set the no hyphenation span to the
+        // word "hyphenation", so the hyphenation is prevented and line
+        // break output will be
+        // |This is An-     |
+        // |droid. Here is  |
+        // |hyphenation.    |
+        final String text = "This is Android. Here is hyphenation.";
+        final LineBreaker lb = new LineBreaker.Builder()
+                .setBreakStrategy(BREAK_STRATEGY_HIGH_QUALITY)
+                .setHyphenationFrequency(HYPHENATION_FREQUENCY_FULL)
+                .build();
+        final ParagraphConstraints c = new ParagraphConstraints();
+        c.setWidth(170);
+        LineBreakConfig noHyphenConfig = new LineBreakConfig.Builder()
+                .setHyphenation(LineBreakConfig.HYPHENATION_DISABLED)
+                .build();
+        MeasuredText mt = new MeasuredText.Builder(text.toCharArray())
+                .setComputeHyphenation(MeasuredText.Builder.HYPHENATION_MODE_NORMAL)
+                .appendStyleRun(sPaint, "This is Android. Here is ".length(), false)
+                .appendStyleRun(sPaint, noHyphenConfig, "hyphenation".length(), false)
+                .appendStyleRun(sPaint, ".".length(), false)
+                .build();
+        final Result r = lb.computeLineBreaks(mt, c, 0);
+        assertEquals(3, r.getLineCount());
+        assertEquals(10, r.getLineBreakOffset(0));
+        assertEquals(25, r.getLineBreakOffset(1));
+        assertEquals(37, r.getLineBreakOffset(2));
+        assertEquals(Paint.START_HYPHEN_EDIT_NO_EDIT, r.getStartLineHyphenEdit(0));
+        assertEquals(Paint.END_HYPHEN_EDIT_INSERT_HYPHEN, r.getEndLineHyphenEdit(0));
+        assertEquals(Paint.START_HYPHEN_EDIT_NO_EDIT, r.getStartLineHyphenEdit(1));
+        assertEquals(Paint.END_HYPHEN_EDIT_NO_EDIT, r.getEndLineHyphenEdit(1));
+        assertEquals(Paint.START_HYPHEN_EDIT_NO_EDIT, r.getStartLineHyphenEdit(2));
+        assertEquals(Paint.END_HYPHEN_EDIT_NO_EDIT, r.getEndLineHyphenEdit(2));
+        assertFalse(r.hasLineTab(0));
+        assertFalse(r.hasLineTab(1));
+        assertFalse(r.hasLineTab(2));
+        assertEquals(110.0f, r.getLineWidth(0), 0.0f);
+        assertEquals(140.0f, r.getLineWidth(1), 0.0f);
+        assertEquals(120.0f, r.getLineWidth(2), 0.0f);
     }
 
     @Test
