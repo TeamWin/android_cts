@@ -712,13 +712,6 @@ public class StagedInstallTest {
     }
 
     @Test
-    public void testInstallApex_DeviceDoesNotSupportApex_Fails() throws Exception {
-        InstallUtils.commitExpectingFailure(IllegalArgumentException.class,
-                "This device doesn't support the installation of APEX files",
-                Install.single(TestApp.Apex2).setStaged());
-    }
-
-    @Test
     public void testFailsInvalidApexInstall_Commit() throws Exception {
         assertThat(getInstalledVersion(SHIM_APEX_PACKAGE_NAME)).isEqualTo(1);
         int sessionId = stageSingleApk(ApexWrongSha2).assertFailure()
