@@ -16,6 +16,7 @@
 package android.telephony.cts;
 
 import static android.telephony.mockmodem.MockSimService.MOCK_SIM_PROFILE_ID_TWN_CHT;
+import static android.telephony.mockmodem.MockSimService.MOCK_SIM_PROFILE_ID_TWN_FET;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -35,13 +36,16 @@ import android.os.SystemProperties;
 import android.telephony.AccessNetworkConstants;
 import android.telephony.NetworkRegistrationInfo;
 import android.telephony.ServiceState;
+import android.telephony.SubscriptionInfo;
+import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
 import android.telephony.mockmodem.MockModemManager;
 import android.util.Log;
 
-import androidx.test.InstrumentationRegistry;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.ApiTest;
+import com.android.compatibility.common.util.ShellIdentityUtils;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -49,6 +53,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -66,6 +71,7 @@ public class ConnectivityManagerTestOnMockModem {
     private static CMNetworkCallback sNetworkCallback;
     private static MockModemManager sMockModemManager;
     private static TelephonyManager sTelephonyManager;
+    private static SubscriptionManager sSubscriptionManager;
     private static ConnectivityManager sConnectivityManager;
     private static final String ALLOW_MOCK_MODEM_PROPERTY = "persist.radio.allow_mock_modem";
     private static final String BOOT_ALLOW_MOCK_MODEM_PROPERTY = "ro.boot.radio.allow_mock_modem";
@@ -151,6 +157,10 @@ public class ConnectivityManagerTestOnMockModem {
 
         sConnectivityManager =
                 (ConnectivityManager) getContext().getSystemService(ConnectivityManager.class);
+
+        sSubscriptionManager =
+                InstrumentationRegistry.getInstrumentation().getContext()
+                        .getSystemService(SubscriptionManager.class);
 
         registerNetworkCallback();
 
@@ -320,6 +330,24 @@ public class ConnectivityManagerTestOnMockModem {
         Log.d(TAG, "testNetworkValidated: Enter Service");
         sMockModemManager.changeNetworkService(slotId, MOCK_SIM_PROFILE_ID_TWN_CHT, true);
 
+        // Get the list of available subscriptions
+        List<SubscriptionInfo> subscriptionInfoList =
+                ShellIdentityUtils.invokeMethodWithShellPermissions(
+                        sSubscriptionManager, (sm) -> sm.getActiveSubscriptionInfoList());
+
+        Log.d(TAG, "subscriptionInfoList: " + subscriptionInfoList);
+
+        for (SubscriptionInfo subscriptionInfo : subscriptionInfoList) {
+            InstrumentationRegistry.getInstrumentation()
+                    .getUiAutomation()
+                    .adoptShellPermissionIdentity("android.permission.MODIFY_PHONE_STATE");
+            if (slotId == subscriptionInfo.getSimSlotIndex()) {
+                sSubscriptionManager.setDefaultDataSubId(subscriptionInfo.getSubscriptionId());
+                sTelephonyManager.setDataEnabled(subscriptionInfo.getSubscriptionId(), true);
+                Log.d(TAG, "Set Data on slot: " + slotId);
+            }
+        }
+
         // make sure the network is available
         sNetworkCallback.awaitNetwork();
         assertTrue(getNetworkOnAvailable());
@@ -355,4 +383,63 @@ public class ConnectivityManagerTestOnMockModem {
             }
         }
     }
+
+    @Test
+    public void testDDSChange() throws Throwable {
+        Log.d(TAG, "ConnectivityManagerTestOnMockModem#testDDSChange");
+        assumeTrue("Skip test: Not test on single SIM device", sIsMultiSimDevice);
+
+        int slotId_0 = 0;
+        int slotId_1 = 1;
+
+        // Insert a SIM
+        sMockModemManager.insertSimCard(slotId_0, MOCK_SIM_PROFILE_ID_TWN_CHT);
+        sMockModemManager.insertSimCard(slotId_1, MOCK_SIM_PROFILE_ID_TWN_FET);
+
+        // Enter Service
+        Log.d(TAG, "testDsdsServiceStateChange: Enter Service");
+        sMockModemManager.changeNetworkService(slotId_0, MOCK_SIM_PROFILE_ID_TWN_CHT, true);
+        sMockModemManager.changeNetworkService(slotId_1, MOCK_SIM_PROFILE_ID_TWN_FET, true);
+
+        for (int slotIndex = 0; slotIndex < 2; slotIndex++) {
+            boolean isDataEnabled = sTelephonyManager.getDataEnabled(slotIndex);
+            Log.d(TAG, "Data enabled status for SIM slot " + slotIndex + ":  " + isDataEnabled);
+        }
+
+        String packageName = getContext().getPackageName();
+        Log.d(TAG, "packageName: " + packageName);
+
+        // Get the list of available subscriptions
+        List<SubscriptionInfo> subscriptionInfoList =
+                ShellIdentityUtils.invokeMethodWithShellPermissions(
+                        sSubscriptionManager, (sm) -> sm.getActiveSubscriptionInfoList());
+
+        Log.d(TAG, "subscriptionInfoList: " + subscriptionInfoList);
+
+        // Loop through the subscriptions to get the phone id
+        // Set the data enable by phone id
+        for (SubscriptionInfo subscriptionInfo : subscriptionInfoList) {
+            InstrumentationRegistry.getInstrumentation()
+                    .getUiAutomation()
+                    .adoptShellPermissionIdentity("android.permission.MODIFY_PHONE_STATE");
+            int slotId = subscriptionInfo.getSimSlotIndex();
+            sSubscriptionManager.setDefaultDataSubId(subscriptionInfo.getSubscriptionId());
+            sTelephonyManager.setDataEnabled(subscriptionInfo.getSubscriptionId(), true);
+            Log.d(TAG, "Set Data on slot: " + slotId);
+            // make sure the network is available
+            sNetworkCallback.awaitNetwork();
+            Log.d(TAG, "Check Data : " + getNetworkOnAvailable());
+            assertTrue(getNetworkOnAvailable());
+        }
+
+        // Leave Service
+        Log.d(TAG, "testDsdsServiceStateChange: Leave Service");
+        sMockModemManager.changeNetworkService(slotId_0, MOCK_SIM_PROFILE_ID_TWN_CHT, false);
+        sMockModemManager.changeNetworkService(slotId_1, MOCK_SIM_PROFILE_ID_TWN_FET, false);
+
+        // Remove the SIM
+        sMockModemManager.removeSimCard(slotId_0);
+        sMockModemManager.removeSimCard(slotId_1);
+    }
 }
+

@@ -27,10 +27,7 @@ import android.hardware.radio.data.QosSession;
 import android.hardware.radio.data.SetupDataCallResult;
 import android.hardware.radio.data.SliceInfo;
 import android.hardware.radio.data.TrafficDescriptor;
-import android.telephony.cts.util.TelephonyUtils;
 import android.util.Log;
-
-import androidx.test.platform.app.InstrumentationRegistry;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -39,6 +36,7 @@ import java.util.List;
 
 public class MockDataService {
     private static final String TAG = "MockDataService";
+    private String mTag;
     private Context mContext;
 
     // Data Profile
@@ -70,8 +68,6 @@ public class MockDataService {
     private static final String MOCK_DNS_ADDRESS_TAG = "DnsAddress";
     private static final String MOCK_GATEWAY_ADDRESS_TAG = "GatewayAddress";
     private static final String MOCK_MTU_V4_TAG = "MtuV4";
-    private static String sQueryTelephonyDebugServiceCommand =
-            "dumpsys activity service com.android.phone.TelephonyDebugService";
 
     // Setup data call result parameteres
     int mDataCallFailCause;
@@ -107,23 +103,10 @@ public class MockDataService {
     int mPhoneId;
 
     public MockDataService(Context context, int instanceId) {
+        mTag = TAG + "-" + instanceId;
         mContext = context;
         mPhoneId = instanceId;
         initializeParameter();
-
-        try {
-            setDataCallListFromNetworkAgent();
-        } catch (Exception e) {
-            Log.e(TAG, "Exception error: " + e);
-        }
-    }
-
-    private void setDataCallListFromNetworkAgent() throws Exception {
-        String result =
-                TelephonyUtils.executeShellCommand(
-                        InstrumentationRegistry.getInstrumentation(),
-                        sQueryTelephonyDebugServiceCommand);
-        setBridgeTheDataConnection(result);
     }
 
     /* Default value definition */
@@ -168,7 +151,7 @@ public class MockDataService {
             mDataProfileInfo.clear();
             for (DataProfileInfo dp : dataProfilesInfo) {
                 mDataProfileInfo.add(dp);
-                Log.d(TAG, "setDataProfileInfo: profileId=" + dp.profileId + ", " + dp.apn);
+                Log.d(mTag, "setDataProfileInfo: profileId=" + dp.profileId + ", " + dp.apn);
             }
             return result;
         }
@@ -178,7 +161,7 @@ public class MockDataService {
     public int setInitialAttachProfile(DataProfileInfo dataProfileInfo) {
         int result = RadioError.NONE;
         if (dataProfileInfo != null) {
-            Log.d(TAG, "setInitialAttachProfile: profileId=" + dataProfileInfo.profileId);
+            Log.d(mTag, "setInitialAttachProfile: profileId=" + dataProfileInfo.profileId);
             mInitialAttachProfile = dataProfileInfo;
             mInitialAttachProfileId = dataProfileInfo.profileId;
             return result;
@@ -229,7 +212,7 @@ public class MockDataService {
                 dc.mtuV6 = this.mInternetMtuV6;
                 break;
             default:
-                Log.d(TAG, "Unexpected APN type: " + apnType);
+                Log.d(mTag, "Unexpected APN type: " + apnType);
                 return new SetupDataCallResult();
         }
         dc.defaultQos = this.mDefaultQos;
@@ -287,7 +270,7 @@ public class MockDataService {
         try {
             value = Integer.parseInt(mtuv4);
         } catch (NumberFormatException ex) {
-            Log.e(TAG, "Exception error: " + ex);
+            Log.e(mTag, "Exception error: " + ex);
         }
         return value;
     }
@@ -296,9 +279,9 @@ public class MockDataService {
         String interfaceName = "";
         try {
             interfaceName = string.split("InterfaceName: ")[1].split(" LinkAddresses")[0];
-            Log.d(TAG, "getInterfaceName: " + interfaceName);
+            Log.d(mTag, "getInterfaceName: " + interfaceName);
         } catch (Exception e) {
-            Log.e(TAG, "Exception error: " + e);
+            Log.e(mTag, "Exception error: " + e);
         }
         return interfaceName;
     }
@@ -320,10 +303,10 @@ public class MockDataService {
                 linkAddress.deprecationTime = this.mLaDeprecationTime;
                 linkAddress.expirationTime = this.mLaExpirationTime;
                 arrayLinkAddress[idx] = linkAddress;
-                Log.d(TAG, "getIpAddress:" + linkAddress.address);
+                Log.d(mTag, "getIpAddress:" + linkAddress.address);
             }
         } catch (Exception e) {
-            Log.e(TAG, "Exception error: " + e);
+            Log.e(mTag, "Exception error: " + e);
         }
         return arrayLinkAddress;
     }
@@ -336,9 +319,9 @@ public class MockDataService {
                             .split(" ] Domains:")[0]
                             .replace("/", "")
                             .split(",");
-            Log.d(TAG, "getDnses: " + Arrays.toString(dnses));
+            Log.d(mTag, "getDnses: " + Arrays.toString(dnses));
         } catch (Exception e) {
-            Log.e(TAG, "Exception error: " + e);
+            Log.e(mTag, "Exception error: " + e);
         }
         return dnses;
     }
@@ -350,9 +333,9 @@ public class MockDataService {
                     string.split("Routes: \\[ ")[1]
                             .split("-> ")[1]
                             .split(" ")[0]);
-            Log.d(TAG, "getGateways: " + gateways);
+            Log.d(mTag, "getGateways: " + gateways);
         } catch (Exception e) {
-            Log.e(TAG, "Exception error: " + e);
+            Log.e(mTag, "Exception error: " + e);
         }
         return gateways.toArray(new String[gateways.size()]);
     }
@@ -361,9 +344,9 @@ public class MockDataService {
         String mtu = "";
         try {
             mtu = string.split(" MTU: ")[1].split(" TcpBufferSizes:")[0];
-            Log.d(TAG, "getMtu: " + mtu);
+            Log.d(mTag, "getMtu: " + mtu);
         } catch (Exception e) {
-            Log.e(TAG, "Exception error: " + e);
+            Log.e(mTag, "Exception error: " + e);
         }
         return Integer.valueOf(mtu);
     }
@@ -376,9 +359,9 @@ public class MockDataService {
                             .split(" ] Domains:")[0]
                             .replace("/", "")
                             .split(",");
-            Log.d(TAG, "getPcscf: " + Arrays.toString(pcscf));
+            Log.d(mTag, "getPcscf: " + Arrays.toString(pcscf));
         } catch (Exception e) {
-            Log.e(TAG, "Exception error: " + e);
+            Log.e(mTag, "Exception error: " + e);
         }
         return pcscf;
     }
@@ -387,9 +370,9 @@ public class MockDataService {
         String capabilities = "";
         try {
             capabilities = string.trim().split("Capabilities:")[1].split("LinkUpBandwidth")[0];
-            Log.d(TAG, "getCapabilities: " + capabilities);
+            Log.d(mTag, "getCapabilities: " + capabilities);
         } catch (Exception e) {
-            Log.e(TAG, "getCapabilities(): Exception error: " + e);
+            Log.e(mTag, "getCapabilities(): Exception error: " + e);
         }
         return capabilities;
     }
@@ -399,9 +382,9 @@ public class MockDataService {
         try {
             String strCid = string.split("WWAN cid=")[1].split("WLAN cid")[0].trim();
             cid = Integer.parseInt(strCid);
-            Log.d(TAG, "getCid: " + strCid);
+            Log.d(mTag, "getCid: " + strCid);
         } catch (Exception e) {
-            Log.e(TAG, "getCid(): Exception error: " + e);
+            Log.e(mTag, "getCid(): Exception error: " + e);
         }
         return cid;
     }
@@ -418,7 +401,7 @@ public class MockDataService {
             for (String str : lines) {
                 String capabilities = getCapabilities(str);
                 if (capabilities.contains("INTERNET")) {
-                    Log.d(TAG, "[internet]:" + str);
+                    Log.d(mTag, "[internet]:" + str);
                     sSupportedCapabilities.add("internet");
                     this.mInternetCid = getCid(str);
                     this.mInternetIfname = getInterfaceName(str);
@@ -428,7 +411,7 @@ public class MockDataService {
                     this.mInternetMtuV4 = getMtu(str);
                     this.mInternetMtuV6 = getMtu(str);
                 } else if (capabilities.contains("IMS")) {
-                    Log.d(TAG, "[ims]:" + str);
+                    Log.d(mTag, "[ims]:" + str);
                     sSupportedCapabilities.add("ims");
                     this.mImsCid = getCid(str);
                     this.mImsIfname = getInterfaceName(str);
@@ -440,13 +423,17 @@ public class MockDataService {
                 }
             }
         } catch (Exception e) {
-            Log.e(TAG, "Exception error: [No NetworkAgentInfo]" + e);
+            Log.e(mTag, "Exception error: [No NetworkAgentInfo]" + e);
         }
+    }
+
+    public synchronized void resetCapability() {
+        sSupportedCapabilities = new ArrayList<>();
     }
 
     public synchronized boolean isSupportedCapability(String capability) {
         for (String cap : sSupportedCapabilities) {
-            Log.d(TAG, "Supported Capability:" + cap + ", Requested Capability:" + capability);
+            Log.d(mTag, "Supported Capability:" + cap + ", Requested Capability:" + capability);
             if (cap.contains(capability)) {
                 return true;
             }
