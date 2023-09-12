@@ -16,6 +16,8 @@
 
 package android.mediapc.cts;
 
+import static android.mediapc.cts.CodecTestBase.codecPrefix;
+import static android.mediapc.cts.CodecTestBase.mediaTypePrefix;
 import static android.mediapc.cts.CodecTestBase.selectCodecs;
 import static android.mediapc.cts.CodecTestBase.selectHardwareCodecs;
 
@@ -166,6 +168,9 @@ public class FrameDropTestBase {
         final List<Object[]> argsList = new ArrayList<>();
         final String[] mimesList = new String[] {AVC, HEVC, VP8, VP9, AV1};
         for (String mime : mimesList) {
+            if (mediaTypePrefix != null && !mime.startsWith(mediaTypePrefix)) {
+                continue;
+            }
             MediaFormat format = MediaFormat.createVideoFormat(mime, 1920, 1080);
             format.setInteger(MediaFormat.KEY_FRAME_RATE, 30);
             ArrayList<MediaFormat> formats = new ArrayList<>();
@@ -173,6 +178,9 @@ public class FrameDropTestBase {
             ArrayList<String> listOfDecoders =
                     selectHardwareCodecs(mime, formats, features, false);
             for (String decoder : listOfDecoders) {
+                if (codecPrefix != null && !decoder.startsWith(codecPrefix)) {
+                    continue;
+                }
                 for (boolean isAsync : boolStates) {
                     argsList.add(new Object[]{mime, decoder, isAsync});
                 }

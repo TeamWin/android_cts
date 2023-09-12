@@ -40,6 +40,7 @@ import android.util.Pair;
 import android.view.Surface;
 
 import androidx.annotation.NonNull;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.Assert;
 
@@ -197,6 +198,10 @@ abstract class CodecTestBase {
     static final int RETRY_LIMIT = 100; // max poll counter before test aborts and returns error
     static final String mInpPrefix = WorkDir.getMediaDirString();
     public static final MediaCodecList MCL_ALL = new MediaCodecList(MediaCodecList.ALL_CODECS);
+    public static final String CODEC_PREFIX_KEY = "codec-prefix";
+    public static final String MEDIA_TYPE_PREFIX_KEY = "media-type-prefix";
+    public static String codecPrefix;
+    public static String mediaTypePrefix;
 
     CodecAsyncHandler mAsyncHandle;
     boolean mIsCodecInAsyncMode;
@@ -212,6 +217,12 @@ abstract class CodecTestBase {
 
     MediaCodec mCodec;
     Surface mSurface;
+
+    static {
+        android.os.Bundle args = InstrumentationRegistry.getArguments();
+        codecPrefix = args.getString(CODEC_PREFIX_KEY);
+        mediaTypePrefix = args.getString(MEDIA_TYPE_PREFIX_KEY);
+    }
 
     abstract void enqueueInput(int bufferIndex) throws IOException;
 
