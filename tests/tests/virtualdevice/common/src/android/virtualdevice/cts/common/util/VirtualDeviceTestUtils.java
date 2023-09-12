@@ -19,6 +19,7 @@ package android.virtualdevice.cts.common.util;
 import static com.google.common.util.concurrent.Uninterruptibles.tryAcquireUninterruptibly;
 
 import android.app.ActivityOptions;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.res.Resources;
 import android.hardware.display.DisplayManager;
@@ -32,6 +33,7 @@ import android.os.ResultReceiver;
 import android.view.Surface;
 
 import com.android.internal.annotations.GuardedBy;
+import com.android.internal.app.BlockedAppStreamingActivity;
 
 import java.util.ArrayList;
 import java.util.concurrent.Semaphore;
@@ -41,6 +43,9 @@ import java.util.concurrent.TimeUnit;
  * Test utilities for Virtual Device tests.
  */
 public final class VirtualDeviceTestUtils {
+
+    public static final ComponentName BLOCKED_ACTIVITY_COMPONENT =
+            new ComponentName("android", BlockedAppStreamingActivity.class.getName());
 
     public static VirtualDisplayConfig.Builder createDefaultVirtualDisplayConfigBuilder() {
         return new VirtualDisplayConfig.Builder("testDisplay", 100, 100, 240)

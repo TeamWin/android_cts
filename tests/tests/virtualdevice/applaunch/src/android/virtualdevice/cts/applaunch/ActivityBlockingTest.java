@@ -23,13 +23,11 @@ import static android.companion.virtual.VirtualDeviceParams.DEVICE_POLICY_DEFAUL
 import static android.companion.virtual.VirtualDeviceParams.POLICY_TYPE_ACTIVITY;
 import static android.content.pm.PackageManager.FEATURE_FREEFORM_WINDOW_MANAGEMENT;
 import static android.virtualdevice.cts.common.util.TestAppHelper.EXTRA_DISPLAY;
+import static android.virtualdevice.cts.common.util.VirtualDeviceTestUtils.BLOCKED_ACTIVITY_COMPONENT;
 import static android.virtualdevice.cts.common.util.VirtualDeviceTestUtils.createActivityOptions;
 import static android.virtualdevice.cts.common.util.VirtualDeviceTestUtils.createResultReceiver;
-
 import static androidx.test.core.app.ApplicationProvider.getApplicationContext;
-
 import static com.google.common.truth.Truth.assertThat;
-
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeNotNull;
@@ -71,7 +69,6 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.AdoptShellPermissionsRule;
-import com.android.internal.app.BlockedAppStreamingActivity;
 
 import org.junit.After;
 import org.junit.Before;
@@ -91,8 +88,6 @@ import java.util.Set;
 public class ActivityBlockingTest {
 
     private static final int TIMEOUT_MS = 3000;
-    private static final ComponentName BLOCKED_APP_STREAMING_ACTIVITY_COMPONENT =
-            new ComponentName("android", BlockedAppStreamingActivity.class.getName());
 
     @Rule
     public final CheckFlagsRule mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
@@ -402,7 +397,7 @@ public class ActivityBlockingTest {
     private void assertNoActivityLaunched() {
         verify(mActivityListener, timeout(TIMEOUT_MS).times(1)).onTopActivityChanged(
                 eq(mVirtualDisplay.getDisplay().getDisplayId()),
-                eq(BLOCKED_APP_STREAMING_ACTIVITY_COMPONENT), anyInt());
+                eq(BLOCKED_ACTIVITY_COMPONENT), anyInt());
         verify(mOnReceiveResultListener, never()).onReceiveResult(anyInt(), any());
         reset(mOnReceiveResultListener);
     }
