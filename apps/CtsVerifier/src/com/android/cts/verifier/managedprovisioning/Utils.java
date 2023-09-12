@@ -31,6 +31,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.UserHandle;
 import android.os.UserManager;
+import android.provider.Settings;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -162,6 +163,34 @@ public class Utils {
                 .show();
     }
 
+
+    /**
+     * Depending on form factor, the location of enterprise info page is different.
+     * The helper function opening settings can cause confusion, hence differentiating location
+     * it opens based on type of device.
+     *
+     * @param context The calling context
+     */
+    static Intent getManagedSettingsIntent(Context context) {
+        if (isWatch(context)) {
+            return new Intent(Settings.ACTION_SETTINGS);
+        } else {
+            return new Intent(Settings.ACTION_SECURITY_SETTINGS);
+        }
+    }
+
+    /**
+     * Depending on form factor, device may not have room to show more than an icon
+     * for the enterprise managed cases.
+     * Returning an indicator, so the tests can be adjusted.
+     *
+     * @param context The calling context
+     */
+    static boolean isLockScreenManagedOrgNameSupported(Context context) {
+        return !isWatch(context);
+    }
+
+
     static boolean isLockscreenSupported(Context context) {
         return context.getPackageManager().hasSystemFeature(
                 PackageManager.FEATURE_SECURE_LOCK_SCREEN);
@@ -170,5 +199,9 @@ public class Utils {
     static boolean isTV(Context context) {
         return context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_LEANBACK)
                 || context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_TELEVISION);
+    }
+
+    static boolean isWatch(Context context) {
+        return context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH);
     }
 }
