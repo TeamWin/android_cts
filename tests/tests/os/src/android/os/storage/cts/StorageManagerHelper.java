@@ -32,10 +32,14 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
 
 final class StorageManagerHelper {
+
+    private static final long POLLING_TIMEOUT_MILLIS = TimeUnit.SECONDS.toMillis(20);
+    private static final long POLLING_SLEEP_MILLIS = 100;
 
     /**
      * Creates a virtual disk that simulates SDCard on a device. It is
@@ -96,11 +100,11 @@ final class StorageManagerHelper {
     private static void pollForCondition(Supplier<Boolean> condition, String errorMessage)
             throws Exception {
         Thread.sleep(2000);
-        for (int i = 0; i < 20; i++) {
+        for (int i = 0; i < POLLING_TIMEOUT_MILLIS / POLLING_SLEEP_MILLIS; i++) {
             if (condition.get()) {
                 return;
             }
-            Thread.sleep(100);
+            Thread.sleep(POLLING_SLEEP_MILLIS);
         }
         throw new TimeoutException(errorMessage);
     }
