@@ -20,3 +20,31 @@ Following runs the tests by overriding Build.VERSION.MEDIA_PERFORMANCE_CLASS as 
 ```sh
 $ atest CtsMediaPerformanceClassTestCases -- --module-arg CtsMediaPerformanceClassTestCases:instrumentation-arg:media-performance-class:=31
 ```
+
+### Features
+All tests accepts attributes that offer selective run of tests.
+
+
+#### Select codecs by media type
+To select codecs by media type, *media-type-prefix* can be passed to media codec tests to select one or more codecs that start with a given prefix.
+
+Example: To limit the tests to run for media types whose names start with video/avc
+
+```sh
+atest CtsMediaPerformanceClassTestCases -- --module-arg CtsMediaPerformanceClassTestCases:instrumentation-arg:media-type-prefix:=video/avc
+```
+
+#### Select codecs by name
+To select codecs by name, *codec-prefix* can be passed to media codec tests to select one or more codecs that start with a given prefix.
+
+Example: To limit the tests to run for codecs whose names start with c2.android.
+
+```sh
+atest CtsMediaPerformanceClassTestCases -- --module-arg CtsMediaPerformanceClassTestCases:instrumentation-arg:codec-prefix:=c2.android.
+```
+
+Example: To limit the tests to run for c2.android.hevc.decoder
+
+```sh
+atest CtsMediaPerformanceClassTestCases -- --module-arg CtsMediaPerformanceClassTestCases:instrumentation-arg:codec-prefix:=c2.android.hevc.decoder
+```
