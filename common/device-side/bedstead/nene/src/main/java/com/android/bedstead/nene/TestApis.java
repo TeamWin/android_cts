@@ -80,7 +80,7 @@ public final class TestApis {
 
     /** Access Test APIs relating to Settings. */
     public static Settings settings() {
-        return Settings.sInstance;
+        return Settings.INSTANCE;
     }
 
     /** Access Test APIs related to System Properties. */
