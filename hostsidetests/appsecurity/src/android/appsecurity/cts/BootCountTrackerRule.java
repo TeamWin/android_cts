@@ -82,7 +82,7 @@ public class BootCountTrackerRule implements TestRule {
     private int getBootCount() throws DeviceNotAvailableException {
         CommandResult result = getDevice().executeShellV2Command("settings get global boot_count");
         if (result.getStatus() != CommandStatus.SUCCESS) {
-            CLog.w("Failed to get boot count. Status: %d, Exit code: %d, Error: %s",
+            CLog.w("Failed to get boot count. Status: %s, Exit code: %d, Error: %s",
                     result.getStatus(), result.getExitCode(), result.getStderr());
             return -1;
         }
