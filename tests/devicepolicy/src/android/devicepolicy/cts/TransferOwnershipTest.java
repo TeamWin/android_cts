@@ -62,6 +62,9 @@ public final class TransferOwnershipTest {
             new ComponentName(sTargetDeviceAdminTestApp.packageName(),
                     sTargetDeviceAdminTestApp.packageName() + ".DeviceAdminReceiver");
 
+    private static final ComponentName sInvalidComponentName =
+            new ComponentName("invalid", "invalid");
+
     private static final DevicePolicyManager sLocalDevicePolicyManager =
             TestApis.context().instrumentedContext().getSystemService(DevicePolicyManager.class);
 
@@ -161,7 +164,7 @@ public final class TransferOwnershipTest {
         try {
             assertThrows(IllegalArgumentException.class,
                     () -> sDeviceState.dpc().devicePolicyManager().transferOwnership(
-                            sDeviceState.dpc().componentName(), sTargetAdmin, sBundle));
+                            sDeviceState.dpc().componentName(), sInvalidComponentName, sBundle));
         } finally {
             removeDeviceAdmin();
         }
