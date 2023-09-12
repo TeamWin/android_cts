@@ -17,11 +17,7 @@
 package android.server.wm.jetpack.embedding;
 
 import static android.server.wm.activity.lifecycle.LifecycleConstants.ON_CREATE;
-import static android.server.wm.activity.lifecycle.LifecycleConstants.ON_DESTROY;
 import static android.server.wm.activity.lifecycle.LifecycleConstants.ON_PAUSE;
-import static android.server.wm.activity.lifecycle.LifecycleConstants.ON_RESUME;
-import static android.server.wm.activity.lifecycle.LifecycleConstants.ON_START;
-import static android.server.wm.activity.lifecycle.LifecycleConstants.ON_STOP;
 import static android.server.wm.activity.lifecycle.TransitionVerifier.checkOrder;
 import static android.server.wm.activity.lifecycle.TransitionVerifier.transition;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.createWildcardSplitPairRule;
@@ -31,23 +27,18 @@ import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.startActivit
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.waitAndAssertNotVisible;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.waitAndAssertResumed;
 import static android.server.wm.jetpack.utils.TestActivityLauncher.KEY_ACTIVITY_ID;
+
 import static androidx.window.extensions.embedding.SplitRule.FINISH_ALWAYS;
 import static androidx.window.extensions.embedding.SplitRule.FINISH_NEVER;
+
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import android.app.Activity;
 import android.app.ActivityOptions;
-import android.app.Application;
 import android.content.Intent;
-import android.net.Uri;
-import android.os.Bundle;
 import android.os.IBinder;
 import android.platform.test.annotations.Presubmit;
-import android.server.wm.activity.lifecycle.EventLog;
-import android.server.wm.activity.lifecycle.EventLog.EventLogClient;
-import android.server.wm.activity.lifecycle.EventTracker;
-import android.server.wm.jetpack.extensions.util.TestValueCountConsumer;
 import android.server.wm.jetpack.utils.TestActivityWithId;
 import android.server.wm.jetpack.utils.TestActivityWithId2;
 import android.server.wm.jetpack.utils.TestConfigChangeHandlingActivity;
@@ -74,42 +65,7 @@ import java.util.List;
  */
 @Presubmit
 @RunWith(AndroidJUnit4.class)
-public class ActivityEmbeddingLifecycleTests extends ActivityEmbeddingTestBase {
-    private static final String TEST_OWNER = "TEST_OWNER";
-    private static final String ON_SPLIT_STATES_UPDATED = "ON_SPLIT_STATES_UPDATED";
-
-    private EventLogClient mEventLogClient;
-    private EventLog mEventLog;
-    private EventTracker mLifecycleTracker;
-    private LifecycleCallbacks mLifecycleCallbacks;
-
-    @Override
-    public void setUp() {
-        super.setUp();
-        mSplitInfoConsumer = new SplitInfoLifecycleConsumer<>();
-        mActivityEmbeddingComponent.setSplitInfoCallback(mSplitInfoConsumer);
-
-        mEventLogClient = EventLogClient.create(TEST_OWNER, mInstrumentation.getTargetContext(),
-                Uri.parse("content://android.server.wm.jetpack.logprovider"));
-
-        // Log transitions for all activities that belong to this app.
-        mEventLog = new EventLog();
-        mEventLog.clear();
-
-        // Track transitions and allow waiting for pending activity states.
-        mLifecycleTracker = new EventTracker(mEventLog);
-        mLifecycleCallbacks = new LifecycleCallbacks();
-        mApplication.registerActivityLifecycleCallbacks(mLifecycleCallbacks);
-    }
-
-    @Override
-    public void tearDown() {
-        super.tearDown();
-        mApplication.unregisterActivityLifecycleCallbacks(mLifecycleCallbacks);
-        if (mEventLogClient != null) {
-            mEventLogClient.close();
-        }
-    }
+public class ActivityEmbeddingLifecycleTests extends ActivityEmbeddingLifecycleTestBase {
 
     /**
      * Tests launching activities to the side from the primary activity, each next one replacing the
@@ -567,64 +523,5 @@ public class ActivityEmbeddingLifecycleTests extends ActivityEmbeddingTestBase {
         waitAndAssertResumed("primaryActivity2");
         waitAndAssertResumed("secondaryActivity");
         waitAndAssertNotVisible(primaryActivity);
-    }
-
-    private void waitAndAssertActivityOnStop(Class<? extends Activity> activityClass) {
-        mLifecycleTracker.waitAndAssertActivityCurrentState(activityClass, ON_STOP);
-    }
-
-    private void waitAndAssertActivityOnDestroy(Class<? extends Activity> activityClass) {
-        mLifecycleTracker.waitAndAssertActivityCurrentState(activityClass, ON_DESTROY);
-    }
-
-    private void waitAndAssertSplitStatesUpdated() {
-        assertTrue("Split state change must be observed",
-                mLifecycleTracker.waitForConditionWithTimeout(() -> mEventLog.getLog().contains(
-                        transition(TEST_OWNER, ON_SPLIT_STATES_UPDATED))));
-    }
-
-    private final class LifecycleCallbacks implements
-            Application.ActivityLifecycleCallbacks {
-        @Override
-        public void onActivityCreated(Activity activity, Bundle savedInstanceState) {
-            mEventLogClient.onCallback(ON_CREATE, activity);
-        }
-
-        @Override
-        public void onActivityStarted(Activity activity) {
-            mEventLogClient.onCallback(ON_START, activity);
-        }
-
-        @Override
-        public void onActivityResumed(Activity activity) {
-            mEventLogClient.onCallback(ON_RESUME, activity);
-        }
-
-        @Override
-        public void onActivityPaused(Activity activity) {
-            mEventLogClient.onCallback(ON_PAUSE, activity);
-        }
-
-        @Override
-        public void onActivityStopped(Activity activity) {
-            mEventLogClient.onCallback(ON_STOP, activity);
-        }
-
-        @Override
-        public void onActivityDestroyed(Activity activity) {
-            mEventLogClient.onCallback(ON_DESTROY, activity);
-        }
-
-        @Override
-        public void onActivitySaveInstanceState(Activity activity, Bundle outState) {
-        }
-    }
-
-    private final class SplitInfoLifecycleConsumer<T> extends TestValueCountConsumer<T> {
-        @Override
-        public void accept(T value) {
-            super.accept(value);
-            mEventLogClient.onCallback(ON_SPLIT_STATES_UPDATED, TEST_OWNER);
-        }
     }
 }
