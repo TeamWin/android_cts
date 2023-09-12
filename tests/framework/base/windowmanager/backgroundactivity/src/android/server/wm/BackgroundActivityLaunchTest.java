@@ -176,12 +176,26 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
     }
 
     @Test
-    public void testBackgroundActivity_withinGracePeriod_isBlocked() throws Exception {
+    public void testBackgroundActivity_withinASMGracePeriod_isAllowed() throws Exception {
         // Start AppA foreground activity
         startActivity(APP_A.FOREGROUND_ACTIVITY);
         // Don't press home button to avoid stop app switches
         mContext.sendBroadcast(new Intent(APP_A.FOREGROUND_ACTIVITY_ACTIONS.FINISH_ACTIVITY));
         mWmState.waitAndAssertActivityRemoved(APP_A.FOREGROUND_ACTIVITY);
+        startBackgroundActivity(APP_A);
+        assertActivityFocused(APP_A.BACKGROUND_ACTIVITY);
+    }
+
+    @Test
+    @FlakyTest(bugId = 297339382)
+    public void testBackgroundActivity_withinBalAfterAsmGracePeriod_isBlocked()
+            throws Exception {
+        // Start AppA foreground activity
+        startActivity(APP_A.FOREGROUND_ACTIVITY);
+        // Don't press home button to avoid stop app switches
+        mContext.sendBroadcast(new Intent(APP_A.FOREGROUND_ACTIVITY_ACTIONS.FINISH_ACTIVITY));
+        mWmState.waitAndAssertActivityRemoved(APP_A.FOREGROUND_ACTIVITY);
+        Thread.sleep(1000 * 5);
         startBackgroundActivity(APP_A);
         assertActivityNotFocused(APP_A.BACKGROUND_ACTIVITY);
     }

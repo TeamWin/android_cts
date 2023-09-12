@@ -18,7 +18,6 @@ package android.server.wm;
 
 import static android.server.wm.backgroundactivity.common.CommonComponents.COMMON_FOREGROUND_ACTIVITY_EXTRAS;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 public class ActivitySecurityModelTest extends BackgroundActivityTestBase {
@@ -86,7 +85,6 @@ public class ActivitySecurityModelTest extends BackgroundActivityTestBase {
      * Started: A
      */
     @Test
-    @Ignore(value = "Enable when ag/20721147 merges")
     public void testActivitySandwich_started33_launchAllowed() {
         new ActivityStartVerifier()
                 .setupTaskWithForegroundActivity(APP_A)
