@@ -37,7 +37,6 @@ import android.util.Size;
 
 import androidx.annotation.NonNull;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
-import androidx.test.filters.FlakyTest;
 import androidx.window.extensions.embedding.SplitAttributes;
 import androidx.window.extensions.embedding.SplitAttributes.LayoutDirection;
 import androidx.window.extensions.embedding.SplitAttributes.SplitType;
@@ -71,7 +70,6 @@ public class ActivityEmbeddingBoundsTests extends ActivityEmbeddingTestBase {
      * they can no longer support split activities, then the activities become stacked.
      */
     @ApiTest(apis = {"androidx.window.extensions.embedding.SplitRule#checkParentMetrics"})
-    @FlakyTest(bugId = 293266079)
     @Test
     public void testParentWindowMetricsPredicate() {
         // Launch primary activity
