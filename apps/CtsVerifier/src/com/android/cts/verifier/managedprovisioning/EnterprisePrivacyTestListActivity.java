@@ -132,7 +132,7 @@ public class EnterprisePrivacyTestListActivity extends PassFailButtons.TestListA
                 R.string.enterprise_privacy_page,
                 R.string.enterprise_privacy_page_info,
                 new ButtonInfo(R.string.go_button_text,
-                               new Intent(Settings.ACTION_SECURITY_SETTINGS))));
+                               Utils.getManagedSettingsIntent(this))));
         adapter.add(buildCommandTest(ENTERPRISE_PRIVACY_NETWORK_LOGGING,
                 R.string.enterprise_privacy_network_logging,
                 R.string.enterprise_privacy_network_logging_info,
@@ -250,18 +250,24 @@ public class EnterprisePrivacyTestListActivity extends PassFailButtons.TestListA
                                     buildCommandIntentForCurrentUser(CommandReceiverActivity
                                             .COMMAND_CLEAR_MAXIMUM_PASSWORD_ATTEMPTS))}));
         }
+        ButtonInfo[] buttons;
+        if (Utils.isLockScreenManagedOrgNameSupported(this)) {
+            buttons = new ButtonInfo[] {
+                new ButtonInfo(R.string.enterprise_privacy_clear_organization,
+                    buildCommandIntent(
+                        CommandReceiverActivity.COMMAND_SET_ORGANIZATION_NAME)),
+                    new ButtonInfo(R.string.enterprise_privacy_set_organization,
+                        buildCommandIntent(
+                            CommandReceiverActivity.COMMAND_SET_ORGANIZATION_NAME)
+                        .putExtra(CommandReceiverActivity.EXTRA_ORGANIZATION_NAME,
+                          "Foo, Inc."))};
+        } else {
+            buttons = new ButtonInfo[]{};
+        }
         adapter.add(createInteractiveTestItem(this, ENTERPRISE_PRIVACY_QUICK_SETTINGS,
                 R.string.enterprise_privacy_quick_settings,
                 R.string.enterprise_privacy_quick_settings_info,
-                new ButtonInfo[] {
-                        new ButtonInfo(R.string.enterprise_privacy_clear_organization,
-                                buildCommandIntent(
-                                        CommandReceiverActivity.COMMAND_SET_ORGANIZATION_NAME)),
-                        new ButtonInfo(R.string.enterprise_privacy_set_organization,
-                                buildCommandIntent(
-                                        CommandReceiverActivity.COMMAND_SET_ORGANIZATION_NAME)
-                                        .putExtra(CommandReceiverActivity.EXTRA_ORGANIZATION_NAME,
-                                                "Foo, Inc."))}));
+                buttons));
         if (Utils.isLockscreenSupported(this)
                 && FeatureUtil.isKeyguardShownWhenUserDoesntHaveCredentials(this)) {
             adapter.add(createInteractiveTestItem(this, ENTERPRISE_PRIVACY_KEYGUARD,
