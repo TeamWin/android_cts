@@ -27,11 +27,13 @@ import static com.google.common.truth.Truth.assertThat;
 import static junit.framework.Assert.fail;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
 import android.Manifest;
+import android.app.ActivityManager;
 import android.app.ActivityOptions;
 import android.app.Instrumentation;
 import android.app.usage.StorageStats;
@@ -51,6 +53,7 @@ import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.ApplicationInfoFlags;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.pm.PackageManager.PackageInfoFlags;
+import android.content.pm.cts.PackageManagerShellCommandInstallTest.PackageBroadcastReceiver;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.drawable.BitmapDrawable;
@@ -284,18 +287,6 @@ public class PackageInstallerArchiveTest {
                 SystemUtil.runShellCommand(String.format("pm archive %s", PACKAGE_NAME))).isEqualTo(
                 "Success\n");
 
-        UnarchiveBroadcastReceiver unarchiveReceiver = registerUnarchiveReceiver();
-        assertThat(
-                SystemUtil.runShellCommand(String.format("pm request-unarchive %s", PACKAGE_NAME)))
-                .isEqualTo("Success\n");
-
-        assertThat(unarchiveReceiver.mPackage.get()).isEqualTo(PACKAGE_NAME);
-        assertThat(unarchiveReceiver.mAllUsers.get()).isFalse();
-
-        mContext.unregisterReceiver(unarchiveReceiver);
-    }
-
-    private UnarchiveBroadcastReceiver registerUnarchiveReceiver() {
         UnarchiveBroadcastReceiver unarchiveReceiver = new UnarchiveBroadcastReceiver();
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(Intent.ACTION_UNARCHIVE_PACKAGE);
@@ -306,7 +297,58 @@ public class PackageInstallerArchiveTest {
                 null,
                 Context.RECEIVER_EXPORTED
         );
-        return unarchiveReceiver;
+        assertThat(
+                SystemUtil.runShellCommand(String.format("pm request-unarchive %s", PACKAGE_NAME)))
+                .isEqualTo("Success\n");
+
+        assertThat(unarchiveReceiver.mPackage.get()).isEqualTo(PACKAGE_NAME);
+        assertThat(unarchiveReceiver.mAllUsers.get()).isFalse();
+
+        mContext.unregisterReceiver(unarchiveReceiver);
+    }
+
+    @Test
+    public void archiveApp_broadcasts() throws Exception {
+        installPackage(APK_PATH);
+
+        int currentUser = ActivityManager.getCurrentUser();
+        PackageBroadcastReceiver
+                addedBroadcastReceiver = new PackageBroadcastReceiver(
+                PACKAGE_NAME, currentUser, Intent.ACTION_PACKAGE_ADDED
+        );
+        PackageBroadcastReceiver removedBroadcastReceiver = new PackageBroadcastReceiver(
+                PACKAGE_NAME, currentUser, Intent.ACTION_PACKAGE_REMOVED
+        );
+        final IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(Intent.ACTION_PACKAGE_ADDED);
+        intentFilter.addAction(Intent.ACTION_PACKAGE_REMOVED);
+        intentFilter.addDataScheme("package");
+        try {
+            mContext.registerReceiver(removedBroadcastReceiver, intentFilter);
+
+            runWithShellPermissionIdentity(
+                    () -> mPackageInstaller.requestArchive(PACKAGE_NAME,
+                            new IntentSender((IIntentSender) mIntentSender)),
+                    Manifest.permission.DELETE_PACKAGES);
+            assertThat(mIntentSender.mStatus.get()).isEqualTo(PackageInstaller.STATUS_SUCCESS);
+
+            removedBroadcastReceiver.assertBroadcastReceived();
+            Intent removedIntent = removedBroadcastReceiver.getBroadcastResult();
+            assertNotNull(removedIntent);
+            assertTrue(removedIntent.getExtras().getBoolean(Intent.EXTRA_ARCHIVAL, false));
+            assertTrue(removedIntent.getExtras().getBoolean(Intent.EXTRA_REPLACING, false));
+
+            mContext.registerReceiver(addedBroadcastReceiver, intentFilter);
+            installPackage(APK_PATH);
+
+            addedBroadcastReceiver.assertBroadcastReceived();
+            Intent addedIntent = addedBroadcastReceiver.getBroadcastResult();
+            assertNotNull(addedIntent);
+            assertTrue(addedIntent.getExtras().getBoolean(Intent.EXTRA_REPLACING, false));
+        } finally {
+            mContext.unregisterReceiver(removedBroadcastReceiver);
+            mContext.unregisterReceiver(addedBroadcastReceiver);
+        }
     }
 
     private void launchTestActivity() {
