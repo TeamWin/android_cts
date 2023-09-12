@@ -27,6 +27,6 @@ android_test_helper_app {
         "kotlin-stdlib",
     ],
     certificate: ":cts-testkey2",
-    target_sdk_version: "33",
-    min_sdk_version: "33",
+    target_sdk_version: "34",
+    min_sdk_version: "34",
 }
