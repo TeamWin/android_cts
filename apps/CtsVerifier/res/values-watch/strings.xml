@@ -38,10 +38,29 @@
 
     <string name="device_owner_network_logging_ui_info">
         1) Ensure the device has a lock screen enabled.\n
-        2) Enable network logging by tapping on the left button below.\n
+        2) Enable network logging by tapping on the first button below.\n
         3) View the lock screen by performing a palm press and then pressing a side button.\n
-        4) Check that an icon appeared at the top of the lock screen. Tap the icon and unlock the device.\n
-        5) Verify that a dialog about device monitoring opens, and informs you about: the name of the app that manages this device, details about the device owner\'s capabilities, and information that the admin can see the most recent network traffic log.\n
+        4) Check that an icon is present at the top of the lock screen.\n
+        5) Tapping the icon informs you about: the name of the app that manages this device, details about the device owner\'s capabilities, and information that the admin can see the most recent network traffic log.\n
+        6) Unlock the device and verify that a notification about device monitoring is present.
+        7) Tap the second button below to disable network logging.\n
+        8) Verify that after tapping the icon, screen informs you of what your device owner can do, but it does not include the section about network traffic monitoring.\n
+        \n
+        If this device does not have quick settings, please skip this test and mark it passing.
+    </string>
+
+    <string name="enterprise_privacy_add_account_info">
+        Please do the following:\n
+        1) Press the Clear Org button.\n
+        2) Press the Open Settings button.\n
+        3) In the screen that opens, verify that you are told that the device is managed.\n
+        4) Use the Back button to return to this page.\n
+        5) Press the Set Org button.\n
+        6) Press the Open Settings button.\n
+        7) In the screen that opens, verify that you are told that the device is managed by \"Foo, Inc.\".\n
+        8) Tap the \"Learn more\" link or "Managed Device info" button.\n
+        9) Verify that a screen informing you what your managing organization can do is shown.\n
+        10) Use the Back button to return to this page.
     </string>
 
     <string name="enterprise_privacy_quick_settings_info">
