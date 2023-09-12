@@ -403,10 +403,10 @@
     <string name="read_logs_bg_text">User Consent for Device Logs in Instrumentation Test</string>
     <string name="read_logs_test_info">This test verifies that user consent for per-use prompt is working properly.\nThe test assumes READ_LOGS permission is granted to the app.\nStart this test by clicking \"User Consent for Device Logs Allow in Foreground Test\" button.\nWhen the process is running in foreground, a user will see a prompt. Once a user clicks the prompt, users have an option to choose \"Allow one-time access\" or \"Don\'t Allow\". Choose \"Allow one-time access\" for the \"ALLOW\" test case and \"Don\'t Allow\" for the \"DENY\" test case.\nThe test results can be judged by the adb logcat prints from command \"adb logcat -b all -s ReadLogsTestActivity:*\"\n\"ReadLogsTestActivity: Logcat system allow log contains e.g.: true lineCount: 11 larger than: true\" shows the success of the \"ALLOW\" test case and\n\"ReadLogsTestActivity: Logcat system deny line count:0\" shows the success of the \"DENY\" test case.</string>
 
-    <!-- Strings for lock bound keys test -->
-    <string name="sec_lock_bound_key_test">Lock Bound Keys Test</string>
-    <string name="sec_lock_bound_key_test_info">
-        This test ensures that Keystore cryptographic keys that are bound to lock screen authentication
+    <!-- Strings for lskf bound keys test -->
+    <string name="sec_lskf_bound_key_test">LSKF Bound Keys Test</string>
+    <string name="sec_lskf_bound_key_test_info">
+        This test ensures that Keystore cryptographic keys that are bound to LSKF authentication
         are unusable without a recent enough authentication. You need to set up a screen lock in order to
         complete this test. If available, this test should be run by using fingerprint authentication
         as well as PIN/pattern/password authentication.
@@ -454,8 +454,8 @@
         This test is for Identity Credential presentations with multiple documents.
     </string>
 
-    <string name="sec_unlocked_device_required_test">Unlocked Device Required</string>
-    <string name="sec_unlocked_device_required_test_info">
+    <string name="sec_unlocked_device_required_keys_test">Unlocked Device Required Keys Test</string>
+    <string name="sec_unlocked_device_required_keys_test_info">
         This test ensures that keys created with setUnlockedDeviceRequired are usable when the
         screen is unlocked but not when it is locked.
     </string>
@@ -6213,7 +6213,7 @@ Follow the instructions on the screen to measure the frequency response for the 
         \nAlphanumeric, length at least 4</string>
     <string name="set_complexity_low_desc">Any pattern, PIN or password</string>
     <string name="set_complexity_none_desc">No restrictions</string>
-    <!-- Strings for UnlockedDeviceRequiredTest -->
+    <!-- Strings for UnlockedDeviceRequiredKeysTest -->
     <string name="unlock_req_config_lock_screen">Secure lock screen has not been set up. Go to
         Settings -> Security to set up a lock screen.</string>
     <string name="unlock_req_config_lock_screen_and_biometrics">Secure lock screen has not been set
