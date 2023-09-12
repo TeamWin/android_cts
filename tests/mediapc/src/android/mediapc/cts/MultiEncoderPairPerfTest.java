@@ -16,6 +16,9 @@
 
 package android.mediapc.cts;
 
+import static android.mediapc.cts.CodecTestBase.codecPrefix;
+import static android.mediapc.cts.CodecTestBase.mediaTypePrefix;
+
 import android.media.MediaFormat;
 import android.mediapc.cts.common.PerformanceClassEvaluator;
 import android.mediapc.cts.common.Utils;
@@ -72,8 +75,14 @@ public class MultiEncoderPairPerfTest extends MultiCodecPerfTestBase {
         final List<Object[]> argsList = new ArrayList<>();
         ArrayList<Pair<String, String>> mimeTypeEncoderPairs = new ArrayList<>();
         for (String mime : mMimeList) {
+            if (mediaTypePrefix != null && !mime.startsWith(mediaTypePrefix)) {
+                continue;
+            }
             ArrayList<String> listOfEncoders = getHardwareCodecsForMime(mime, true);
             for (String encoder : listOfEncoders) {
+                if (codecPrefix != null && !encoder.startsWith(codecPrefix)) {
+                    continue;
+                }
                 mimeTypeEncoderPairs.add(Pair.create(mime, encoder));
             }
         }
