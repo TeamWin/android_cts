@@ -140,7 +140,7 @@ int registerAndroidVideoCodecCtsVQUtils(JNIEnv* env) {
     const JNINativeMethod methodTable[] = {
             {"nativeGetBDRate", "([D[D[D[DZLjava/lang/StringBuilder;)D", (void*)nativeGetBDRate},
     };
-    jclass c = env->FindClass("android/videocodec/cts/VideoEncoderQualityRegressionTest");
+    jclass c = env->FindClass("android/videocodec/cts/VideoEncoderQualityRegressionTestBase");
     return env->RegisterNatives(c, methodTable, sizeof(methodTable) / sizeof(JNINativeMethod));
 }
 
