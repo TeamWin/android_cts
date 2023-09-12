@@ -185,6 +185,33 @@ public final class CameraTest {
     }
 
     @Postsubmit(reason = "new test")
+    @CanSetPolicyTest(policy = DisallowCamera.class)
+    @ApiTest(apis = "android.app.admin.DevicePolicyManager#getCameraDisabled")
+    public void getCameraDisabled_forAdmin_setToTrue_returnsTrue() {
+        try {
+            sDeviceState.dpc().devicePolicyManager()
+                    .setCameraDisabled(sDeviceState.dpc().componentName(), true);
+
+            assertThat(sDeviceState.dpc().devicePolicyManager()
+                    .getCameraDisabled(sDeviceState.dpc().componentName())).isTrue();
+        } finally {
+            sDeviceState.dpc().devicePolicyManager()
+                    .setCameraDisabled(sDeviceState.dpc().componentName(), false);
+        }
+    }
+
+    @Postsubmit(reason = "new test")
+    @CanSetPolicyTest(policy = DisallowCamera.class)
+    @ApiTest(apis = "android.app.admin.DevicePolicyManager#getCameraDisabled")
+    public void getCameraDisabled_forAdmin_setToFalse_returnsFalse() {
+        sDeviceState.dpc().devicePolicyManager()
+                .setCameraDisabled(sDeviceState.dpc().componentName(), false);
+
+        assertThat(sDeviceState.dpc().devicePolicyManager()
+                .getCameraDisabled(sDeviceState.dpc().componentName())).isFalse();
+    }
+
+    @Postsubmit(reason = "new test")
     @EnsureHasPermission(CAMERA)
     @CanSetPolicyTest(policy = DisallowCamera.class)
     @ApiTest(apis = "android.app.admin.DevicePolicyManager#setCameraDisabled")
