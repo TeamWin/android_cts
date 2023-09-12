@@ -1399,6 +1399,8 @@ public class DeviceStateTest {
                 .isTrue();
     }
 
+    //TODO(b/300218365): Test that settings are returned to their original values in teardown.
+
     @EnsureSecureSettingSet(key = "testSecureSetting", value = "testValue")
     @Test
     public void ensureSecureSettingSetAnnotation_secureSettingIsSet() {
