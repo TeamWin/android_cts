@@ -22,16 +22,15 @@
 package android.wallpapereffectsgeneration.cts;
 
 import static androidx.test.InstrumentationRegistry.getContext;
-
 import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
-
 import static com.google.common.truth.Truth.assertWithMessage;
-
 import static org.junit.Assert.assertNotNull;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
+import static org.mockito.internal.verification.VerificationModeFactory.atMost;
 
 import android.app.wallpapereffectsgeneration.CinematicEffectRequest;
 import android.app.wallpapereffectsgeneration.CinematicEffectResponse;
@@ -89,10 +88,14 @@ public class WallpaperEffectsGenerationManagerTest {
         // call one method to start the service for these tests.
         mWatcher.verifier = Mockito.mock(CtsWallpaperEffectsGenerationService.class);
         reset(mWatcher.verifier);
+        CtsCinematicEffectListener ctsCinematicEffectListener = new CtsCinematicEffectListener();
         mManager.generateCinematicEffect(mInitialTaskRequest,
                 Executors.newSingleThreadExecutor(),
-                createCinematicEffectListener());
+                ctsCinematicEffectListener);
         await(mWatcher.created, "Waiting for onCreated()");
+        // Check the request the server received is the request sent.
+        await(ctsCinematicEffectListener.mOkResponse, "wait for initial task returned");
+        verifyService().onGenerateCinematicEffect(eq(mInitialTaskRequest));
     }
 
     @After
@@ -104,28 +107,15 @@ public class WallpaperEffectsGenerationManagerTest {
     }
 
     @Test
-    public void testWallpaperEffectsGenerationServiceConnection() {
-        // In test setup, 1st request is already made.
-        assertNotNull(mManager);
-        // Check the 1st call in setup was received by service.
-        await(mWatcher.requested, "Waiting for requested.");
-        await(mWatcher.initialCallReturned, "Result is produced");
-        // Check the request the server received is the request sent.
-        verifyService().onGenerateCinematicEffect(eq(mInitialTaskRequest));
-    }
-
-    @Test
     public void testGenerateCinematicEffect_okResponse() {
         mWatcher.verifier = Mockito.mock(CtsWallpaperEffectsGenerationService.class);
         reset(mWatcher.verifier);
         assertNotNull(mManager);
-        // Let the initial request in setup finishes.
-        await(mWatcher.requested, "Waiting for connect call finishes.");
         CinematicEffectRequest request = createSimpleCinematicEffectRequest("ok-task");
-
+        CtsCinematicEffectListener ctsCinematicEffectListener = new CtsCinematicEffectListener();
         mManager.generateCinematicEffect(request, Executors.newSingleThreadExecutor(),
-                createCinematicEffectListener());
-        await(mWatcher.okResponse, "Result is okay");
+                ctsCinematicEffectListener);
+        await(ctsCinematicEffectListener.mOkResponse, "Result is okay");
         verifyService().onGenerateCinematicEffect(eq(request));
     }
 
@@ -134,12 +124,11 @@ public class WallpaperEffectsGenerationManagerTest {
         mWatcher.verifier = Mockito.mock(CtsWallpaperEffectsGenerationService.class);
         reset(mWatcher.verifier);
         assertNotNull(mManager);
-        // Let the initial request in setup finishes.
-        await(mWatcher.initialCallReturned, "Waiting for connect call finishes.");
         CinematicEffectRequest request = createSimpleCinematicEffectRequest("error-task");
+        CtsCinematicEffectListener ctsCinematicEffectListener = new CtsCinematicEffectListener();
         mManager.generateCinematicEffect(request, Executors.newSingleThreadExecutor(),
-                createCinematicEffectListener());
-        await(mWatcher.errorResponse, "Result is error");
+                ctsCinematicEffectListener);
+        await(ctsCinematicEffectListener.mErrorResponse, "Result is error");
         verifyService().onGenerateCinematicEffect(eq(request));
     }
 
@@ -148,15 +137,20 @@ public class WallpaperEffectsGenerationManagerTest {
         mWatcher.verifier = Mockito.mock(CtsWallpaperEffectsGenerationService.class);
         reset(mWatcher.verifier);
         assertNotNull(mManager);
-        // Let the initial request in setup finishes.
-        await(mWatcher.initialCallReturned, "Waiting for requested call finishes.");
         CinematicEffectRequest request1 = createCinematicEffectRequest("pending-task-id");
         CinematicEffectRequest request2 = createCinematicEffectRequest("pending-task-id");
+        CtsCinematicEffectListener ctsCinematicEffectListener1 = new CtsCinematicEffectListener();
+        CtsCinematicEffectListener ctsCinematicEffectListener2 = new CtsCinematicEffectListener();
         mManager.generateCinematicEffect(request1, Executors.newSingleThreadExecutor(),
-                createCinematicEffectListener());
+                ctsCinematicEffectListener1);
         mManager.generateCinematicEffect(request2, Executors.newSingleThreadExecutor(),
-                createCinematicEffectListener());
-        await(mWatcher.pendingResponse, "Second request immediately fail with pending response");
+                ctsCinematicEffectListener2);
+        await(ctsCinematicEffectListener2.mPendingResponse,
+                "2nd result returned and listener invoked");
+        await(ctsCinematicEffectListener1.mOkResponse,
+                "1st request returned after long processing");
+        verifyService().onGenerateCinematicEffect(eq(request1));
+        verify(mWatcher.verifier, atMost(1)).onGenerateCinematicEffect(any());
     }
 
     @Test
@@ -164,40 +158,46 @@ public class WallpaperEffectsGenerationManagerTest {
         mWatcher.verifier = Mockito.mock(CtsWallpaperEffectsGenerationService.class);
         reset(mWatcher.verifier);
         assertNotNull(mManager);
-        // Let the initial request in setup finishes.
-        await(mWatcher.initialCallReturned, "Waiting for connect call finishes.");
         CinematicEffectRequest request1 = createCinematicEffectRequest("pending-task-id");
         CinematicEffectRequest request2 = createCinematicEffectRequest("other-task-id");
+        CtsCinematicEffectListener ctsCinematicEffectListener1 = new CtsCinematicEffectListener();
+        CtsCinematicEffectListener ctsCinematicEffectListener2 = new CtsCinematicEffectListener();
         mManager.generateCinematicEffect(request1, Executors.newSingleThreadExecutor(),
-                createCinematicEffectListener());
+                ctsCinematicEffectListener1);
         mManager.generateCinematicEffect(request2, Executors.newSingleThreadExecutor(),
-                createCinematicEffectListener());
-        await(mWatcher.tooManyRequestsResponse,
+                ctsCinematicEffectListener2);
+        await(ctsCinematicEffectListener2.mTooManyRequestsResponse,
                 "Second request immediately fail with too many requests response");
+        await(ctsCinematicEffectListener1.mOkResponse,
+                "1st request returned after long processing");
+        verifyService().onGenerateCinematicEffect(eq(request1));
+        verify(mWatcher.verifier, atMost(1)).onGenerateCinematicEffect(any());
     }
 
-    private CinematicEffectListener createCinematicEffectListener() {
-        return cinematicEffectResponse -> {
+    private static final class CtsCinematicEffectListener implements CinematicEffectListener {
+        CountDownLatch mOkResponse = new CountDownLatch(1);
+        CountDownLatch mErrorResponse = new CountDownLatch(1);
+        CountDownLatch mPendingResponse = new CountDownLatch(1);
+        CountDownLatch mTooManyRequestsResponse = new CountDownLatch(1);
+
+        @Override
+        public void onCinematicEffectGenerated(CinematicEffectResponse cinematicEffectResponse) {
             Log.d(TAG, "cinematic effect response taskId = " + cinematicEffectResponse.getTaskId()
                     + ", status code = " + cinematicEffectResponse.getStatusCode());
             if (cinematicEffectResponse.getStatusCode()
                     == CinematicEffectResponse.CINEMATIC_EFFECT_STATUS_OK) {
-                mWatcher.okResponse.countDown();
+                mOkResponse.countDown();
             } else if (cinematicEffectResponse.getStatusCode()
                     == CinematicEffectResponse.CINEMATIC_EFFECT_STATUS_PENDING) {
-                mWatcher.pendingResponse.countDown();
+                mPendingResponse.countDown();
             } else if (cinematicEffectResponse.getStatusCode()
                     == CinematicEffectResponse.CINEMATIC_EFFECT_STATUS_TOO_MANY_REQUESTS) {
-                mWatcher.tooManyRequestsResponse.countDown();
-            } else if (cinematicEffectResponse.getStatusCode()
-                    == CinematicEffectResponse.CINEMATIC_EFFECT_STATUS_NOT_READY) {
-                // This case is used to check the 1st request in the "Setup" method finishes.
-                mWatcher.initialCallReturned.countDown();
+                mTooManyRequestsResponse.countDown();
             } else if (cinematicEffectResponse.getStatusCode()
                     == CinematicEffectResponse.CINEMATIC_EFFECT_STATUS_ERROR) {
-                mWatcher.errorResponse.countDown();
+                mErrorResponse.countDown();
             }
-        };
+        }
     }
 
     private CinematicEffectRequest createCinematicEffectRequest(String taskId) {
