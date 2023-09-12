@@ -68,7 +68,6 @@ import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.MockImeHelper;
 import android.server.wm.WindowManagerTestBase;
-import android.util.Log;
 import android.view.InputDevice;
 import android.view.MotionEvent;
 import android.view.View;
@@ -819,8 +818,6 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
         final int[] dispatchApplyWindowInsetsCount = {0};
         final StringBuilder insetsSb = new StringBuilder();
         rootView.setOnApplyWindowInsetsListener((v, insets) -> {
-            Log.i("b/297000797", "WindowInsetsControllerTests in applyWindowInsetsListener,"
-                    + " insets: " + insets);
             dispatchApplyWindowInsetsCount[0]++;
             insetsSb.append("\n").append(insets);
             return v.onApplyWindowInsets(insets);
@@ -830,14 +827,10 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
         ANIMATION_CALLBACK.reset();
         getInstrumentation().runOnMainSync(() -> {
             rootView.setWindowInsetsAnimationCallback(ANIMATION_CALLBACK);
-
-            Log.i("b/297000797", "WindowInsetsControllerTests calling show(ime())");
             rootView.getWindowInsetsController().show(ime());
         });
         ANIMATION_CALLBACK.waitForFinishing();
-        getInstrumentation().waitForIdleSync();
 
-        Log.i("b/297000797", "WindowInsetsControllerTests before assertion on dispatch count");
         // ... should only trigger one dispatchApplyWindowInsets
         assertWithMessage("insets should be dispatched exactly once, received: " + insetsSb)
                 .that(dispatchApplyWindowInsetsCount[0]).isEqualTo(1);
