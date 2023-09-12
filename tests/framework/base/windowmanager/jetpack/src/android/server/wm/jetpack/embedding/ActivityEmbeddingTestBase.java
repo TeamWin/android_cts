@@ -76,6 +76,8 @@ public class ActivityEmbeddingTestBase extends WindowManagerJetpackTestBase {
     public void tearDown() {
         super.tearDown();
         mReportedDisplayMetrics.restoreDisplayMetrics();
-        mActivityEmbeddingComponent.setEmbeddingRules(Collections.emptySet());
+        if (mActivityEmbeddingComponent != null) {
+            mActivityEmbeddingComponent.setEmbeddingRules(Collections.emptySet());
+        }
     }
 }
