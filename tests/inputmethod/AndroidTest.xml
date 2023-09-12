@@ -144,6 +144,17 @@
         <!-- Dismiss any system dialogs (e.g. crashes, ANR). -->
         <option name="run-command" value="am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS --receiver-foreground"  />
     </target_preparer>
+
+    <!-- Create a place to store files for DumpOnFailure -->
+    <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
+        <option name="run-command" value="mkdir -p /sdcard/DumpOnFailure" />
+    </target_preparer>
+    <!-- Collect the files from DumpOnFailure. -->
+    <metrics_collector class="com.android.tradefed.device.metric.FilePullerLogCollector">
+        <option name="directory-keys" value="/sdcard/DumpOnFailure" />
+        <option name="collect-on-run-ended-only" value="true" />
+    </metrics_collector>
+
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.view.inputmethod.cts" />
         <option name="runtime-hint" value="1m0s" />
