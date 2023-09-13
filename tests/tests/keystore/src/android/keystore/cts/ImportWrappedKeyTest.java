@@ -18,13 +18,28 @@ package android.keystore.cts;
 
 import static android.security.keymaster.KeymasterDefs.KM_ALGORITHM_3DES;
 import static android.security.keymaster.KeymasterDefs.KM_ALGORITHM_AES;
+import static android.security.keymaster.KeymasterDefs.KM_ALGORITHM_RSA;
+import static android.security.keymaster.KeymasterDefs.KM_DIGEST_MD5;
+import static android.security.keymaster.KeymasterDefs.KM_DIGEST_NONE;
+import static android.security.keymaster.KeymasterDefs.KM_DIGEST_SHA1;
+import static android.security.keymaster.KeymasterDefs.KM_DIGEST_SHA_2_224;
+import static android.security.keymaster.KeymasterDefs.KM_DIGEST_SHA_2_256;
+import static android.security.keymaster.KeymasterDefs.KM_DIGEST_SHA_2_384;
+import static android.security.keymaster.KeymasterDefs.KM_DIGEST_SHA_2_512;
+import static android.security.keymaster.KeymasterDefs.KM_KEY_FORMAT_PKCS8;
 import static android.security.keymaster.KeymasterDefs.KM_KEY_FORMAT_RAW;
 import static android.security.keymaster.KeymasterDefs.KM_MODE_CBC;
 import static android.security.keymaster.KeymasterDefs.KM_MODE_ECB;
 import static android.security.keymaster.KeymasterDefs.KM_PAD_NONE;
 import static android.security.keymaster.KeymasterDefs.KM_PAD_PKCS7;
+import static android.security.keymaster.KeymasterDefs.KM_PAD_RSA_OAEP;
+import static android.security.keymaster.KeymasterDefs.KM_PAD_RSA_PKCS1_1_5_ENCRYPT;
+import static android.security.keymaster.KeymasterDefs.KM_PAD_RSA_PKCS1_1_5_SIGN;
+import static android.security.keymaster.KeymasterDefs.KM_PAD_RSA_PSS;
 import static android.security.keymaster.KeymasterDefs.KM_PURPOSE_DECRYPT;
 import static android.security.keymaster.KeymasterDefs.KM_PURPOSE_ENCRYPT;
+import static android.security.keymaster.KeymasterDefs.KM_PURPOSE_SIGN;
+import static android.security.keymaster.KeymasterDefs.KM_PURPOSE_VERIFY;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
@@ -62,8 +77,10 @@ import java.security.KeyPairGenerator;
 import java.security.KeyStore;
 import java.security.KeyStore.Entry;
 import java.security.KeyStoreException;
+import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.SecureRandom;
+import java.security.Signature;
 import java.security.spec.AlgorithmParameterSpec;
 import java.security.spec.MGF1ParameterSpec;
 import java.util.Arrays;
@@ -119,7 +136,8 @@ public class ImportWrappedKeyTest {
                     genKeyPair(WRAPPING_KEY_ALIAS, isStrongBox).getPublic(),
                     keyMaterial,
                     mask,
-                    makeAuthList(keyMaterial.length * 8, KM_ALGORITHM_AES)));
+                    KM_KEY_FORMAT_RAW,
+                    makeAesAuthList(keyMaterial.length * 8)));
         } catch (SecureKeyImportUnavailableException e) {
             assumeNoException("Can only test if secure key import is available", e);
         }
@@ -174,7 +192,8 @@ public class ImportWrappedKeyTest {
                     genKeyPair(WRAPPING_KEY_ALIAS, isStrongBox).getPublic(),
                     keyMaterial,
                     mask,
-                    makeAuthList(keyMaterial.length * 8, KM_ALGORITHM_AES),
+                    KM_KEY_FORMAT_RAW,
+                    makeAesAuthList(keyMaterial.length * 8),
                     false /* incorrect wrapping required*/));
         } catch (SecureKeyImportUnavailableException e) {
             assumeNoException("Can only test if secure key import is available", e);
@@ -241,7 +260,8 @@ public class ImportWrappedKeyTest {
                     genKeyPair(WRAPPING_KEY_ALIAS, isStrongBox).getPublic(),
                     keyMaterial,
                     mask,
-                    makeAuthList(168, KM_ALGORITHM_3DES)));
+                    KM_KEY_FORMAT_RAW,
+                    make3desAuthList(168)));
         } catch (SecureKeyImportUnavailableException e) {
             assumeNoException("Can only test if secure key import is available", e);
         }
@@ -271,6 +291,81 @@ public class ImportWrappedKeyTest {
         assertEquals(new String(c.doFinal(encrypted)), plaintext);
     }
 
+    @Test
+    public void testKeyStore_ImportWrappedKey_RSA() throws Exception {
+        testKeyStore_ImportWrappedKey_RSA(false);
+    }
+
+    @Test
+    public void testKeyStore_ImportWrappedKey_RSA_StrongBox() throws Exception {
+        testKeyStore_ImportWrappedKey_RSA(true);
+    }
+
+    public void testKeyStore_ImportWrappedKey_RSA(boolean isStrongBox) throws Exception {
+        if (isStrongBox) {
+            TestUtils.assumeStrongBox();
+        }
+
+        KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
+        int keySize = 2048;
+        kpg.initialize(keySize);
+        KeyPair kp = kpg.generateKeyPair();
+        PublicKey publicKey = kp.getPublic();
+        PrivateKey privateKey = kp.getPrivate();
+
+        assertEquals(privateKey.getFormat(), "PKCS#8");
+
+        byte[] keyMaterial = privateKey.getEncoded();
+        byte[] mask = new byte[32]; // Zero mask
+
+        try {
+            importWrappedKey(wrapKey(
+                    genKeyPair(WRAPPING_KEY_ALIAS, isStrongBox).getPublic(),
+                    keyMaterial,
+                    mask,
+                    KM_KEY_FORMAT_PKCS8,
+                    makeRsaAuthList(keySize)));
+        } catch (SecureKeyImportUnavailableException e) {
+            assumeNoException("Can only test if secure key import is available", e);
+        }
+
+        // Use Key
+        KeyStore keyStore = KeyStore.getInstance("AndroidKeyStore");
+        keyStore.load(null, null);
+
+        assertTrue("Failed to load key after wrapped import", keyStore.containsAlias(ALIAS));
+
+        String plaintext = "hello, world";
+
+        Key key = keyStore.getKey(ALIAS, null);
+        assertTrue(key instanceof PrivateKey);
+
+        // Encrypt with KS private key, then decrypt with local public key.
+        Cipher c = Cipher.getInstance("RSA/ECB/PKCS1Padding");
+        c.init(Cipher.ENCRYPT_MODE, key);
+        byte[] encrypted = c.doFinal(plaintext.getBytes());
+
+        c.init(Cipher.DECRYPT_MODE, publicKey);
+        assertEquals(new String(c.doFinal(encrypted)), plaintext);
+
+        // Encrypt with local public key, then decrypt with KS private key.
+        c.init(Cipher.ENCRYPT_MODE, publicKey);
+        encrypted = c.doFinal(plaintext.getBytes());
+
+        c.init(Cipher.DECRYPT_MODE, key);
+        assertEquals(new String(c.doFinal(encrypted)), plaintext);
+
+        // Sign with KS private key, then verify with local public key.
+        Signature s = Signature.getInstance("SHA256withRSA");
+        s.initSign((PrivateKey) key);
+        s.update(plaintext.getBytes());
+        byte[] signature = s.sign();
+
+        s.initVerify(publicKey);
+        s.update(plaintext.getBytes());
+        assertTrue(s.verify(signature));
+    }
+
     public void importWrappedKey(byte[] wrappedKey, String wrappingKeyAlias) throws Exception {
         KeyStore keyStore = KeyStore.getInstance("AndroidKeyStore");
         keyStore.load(null, null);
@@ -289,16 +384,16 @@ public class ImportWrappedKeyTest {
     }
 
     public byte[] wrapKey(PublicKey publicKey, byte[] keyMaterial, byte[] mask,
-                          DERSequence authorizationList) throws Exception {
-        return wrapKey(publicKey, keyMaterial, mask, authorizationList, true);
+                          int keyFormat, DERSequence authorizationList) throws Exception {
+        return wrapKey(publicKey, keyMaterial, mask, keyFormat, authorizationList, true);
     }
 
     public byte[] wrapKey(PublicKey publicKey, byte[] keyMaterial, byte[] mask,
-            DERSequence authorizationList, boolean correctWrappingRequired)
+            int keyFormat, DERSequence authorizationList, boolean correctWrappingRequired)
             throws Exception {
         // Build description
         DEREncodableVector descriptionItems = new DEREncodableVector();
-        descriptionItems.add(new DERInteger(KM_KEY_FORMAT_RAW));
+        descriptionItems.add(new DERInteger(keyFormat));
         descriptionItems.add(authorizationList);
         DERSequence wrappedKeyDescription = new DERSequence(descriptionItems);
 
@@ -350,28 +445,13 @@ public class ImportWrappedKeyTest {
         return new DERSequence(items).getEncoded(ASN1Encoding.DER);
     }
 
-    /**
-     * xor of two byte[] for masking or unmasking transit keys
-     */
-    private byte[] xor(byte[] key, byte[] mask) {
-        byte[] out = new byte[key.length];
-
-        for (int i = 0; i < key.length; i++) {
-            out[i] = (byte) (key[i] ^ mask[i]);
-        }
-        return out;
-    }
-
-    private DERSequence makeAuthList(int size,
-            int algorithm_) {
-        // Make an AuthorizationList to describe the secure key
-        // https://developer.android.com/training/articles/security-key-attestation.html#verifying
+    private DERSequence makeSymKeyAuthList(int size, int algo) {
         DEREncodableVector allPurposes = new DEREncodableVector();
         allPurposes.add(new DERInteger(KM_PURPOSE_ENCRYPT));
         allPurposes.add(new DERInteger(KM_PURPOSE_DECRYPT));
         DERSet purposeSet = new DERSet(allPurposes);
         DERTaggedObject purpose = new DERTaggedObject(true, 1, purposeSet);
-        DERTaggedObject algorithm = new DERTaggedObject(true, 2, new DERInteger(algorithm_));
+        DERTaggedObject algorithm = new DERTaggedObject(true, 2, new DERInteger(algo));
         DERTaggedObject keySize =
                 new DERTaggedObject(true, 3, new DERInteger(size));
 
@@ -397,6 +477,70 @@ public class ImportWrappedKeyTest {
         allItems.add(blockMode);
         allItems.add(padding);
         allItems.add(noAuthRequired);
+
+        return new DERSequence(allItems);
+    }
+
+    private DERSequence make3desAuthList(int size) {
+        return makeSymKeyAuthList(size, KM_ALGORITHM_3DES);
+    }
+
+    private DERSequence makeAesAuthList(int size) {
+        return makeSymKeyAuthList(size, KM_ALGORITHM_AES);
+    }
+
+    private DERSequence makeRsaAuthList(int size) {
+        DEREncodableVector allPurposes = new DEREncodableVector();
+        allPurposes.add(new DERInteger(KM_PURPOSE_ENCRYPT));
+        allPurposes.add(new DERInteger(KM_PURPOSE_DECRYPT));
+        allPurposes.add(new DERInteger(KM_PURPOSE_SIGN));
+        allPurposes.add(new DERInteger(KM_PURPOSE_VERIFY));
+        DERSet purposeSet = new DERSet(allPurposes);
+        DERTaggedObject purpose = new DERTaggedObject(true, 1, purposeSet);
+
+        DERTaggedObject algorithm = new DERTaggedObject(true, 2, new DERInteger(KM_ALGORITHM_RSA));
+        DERTaggedObject keySize =
+                new DERTaggedObject(true, 3, new DERInteger(size));
+
+        DEREncodableVector allBlockModes = new DEREncodableVector();
+        allBlockModes.add(new DERInteger(KM_MODE_ECB));
+        allBlockModes.add(new DERInteger(KM_MODE_CBC));
+        DERSet blockModeSet = new DERSet(allBlockModes);
+        DERTaggedObject blockMode = new DERTaggedObject(true, 4, blockModeSet);
+
+        DEREncodableVector allDigests = new DEREncodableVector();
+        allDigests.add(new DERInteger(KM_DIGEST_NONE));
+        allDigests.add(new DERInteger(KM_DIGEST_MD5));
+        allDigests.add(new DERInteger(KM_DIGEST_SHA1));
+        allDigests.add(new DERInteger(KM_DIGEST_SHA_2_224));
+        allDigests.add(new DERInteger(KM_DIGEST_SHA_2_256));
+        allDigests.add(new DERInteger(KM_DIGEST_SHA_2_384));
+        allDigests.add(new DERInteger(KM_DIGEST_SHA_2_512));
+        DERSet digestSet = new DERSet(allDigests);
+        DERTaggedObject digest = new DERTaggedObject(true, 5, digestSet);
+
+        DEREncodableVector allPaddings = new DEREncodableVector();
+        allPaddings.add(new DERInteger(KM_PAD_PKCS7));
+        allPaddings.add(new DERInteger(KM_PAD_NONE));
+        allPaddings.add(new DERInteger(KM_PAD_RSA_OAEP));
+        allPaddings.add(new DERInteger(KM_PAD_RSA_PSS));
+        allPaddings.add(new DERInteger(KM_PAD_RSA_PKCS1_1_5_ENCRYPT));
+        allPaddings.add(new DERInteger(KM_PAD_RSA_PKCS1_1_5_SIGN));
+        DERSet paddingSet = new DERSet(allPaddings);
+        DERTaggedObject padding = new DERTaggedObject(true, 6, paddingSet);
+
+        DERTaggedObject noAuthRequired = new DERTaggedObject(true, 503, DERNull.INSTANCE);
+
+        // Build sequence
+        DEREncodableVector allItems = new DEREncodableVector();
+        allItems.add(purpose);
+        allItems.add(algorithm);
+        allItems.add(keySize);
+        allItems.add(blockMode);
+        allItems.add(digest);
+        allItems.add(padding);
+        allItems.add(noAuthRequired);
+
         return new DERSequence(allItems);
     }
 
