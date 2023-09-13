@@ -53,7 +53,7 @@ public abstract class AugmentedAutofillAutoActivityLaunchTestCase
             new RequiredSystemResourceRule("config_defaultAugmentedAutofillService");
 
     private static final RuleChain sRequiredFeatures = RuleChain
-            .outerRule(sRequiredFeatureRule)
+            .outerRule(sRequiredFeaturesRule)
             .around(sRequiredResource);
 
     public AugmentedAutofillAutoActivityLaunchTestCase() {}
