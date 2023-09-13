@@ -284,6 +284,22 @@ public class ExtensionRearDisplayPresentationTest extends WindowManagerJetpackTe
     }
 
     /**
+     * Tests that attempting to end a rear display presentation session that isn't active, operates
+     * as a no-op instead of throwing an {@link Exception}.
+     */
+    @ApiTest(apis = {
+            "androidx.window.extensions.area."
+                    + "WindowAreaComponent#endRearDisplayPresentationSession"})
+    @Test
+    public void testEndRearDisplayPresentationSession_noActiveSession() {
+        assumeTrue(mWindowAreaPresentationStatus.getWindowAreaStatus()
+                != WindowAreaComponent.STATUS_ACTIVE);
+        assumeTrue(mCurrentDeviceState != mRearDisplayPresentationState);
+
+        mWindowAreaComponent.endRearDisplayPresentationSession();
+    }
+
+    /**
      * Tests that you can start, and then end rear display presentation mode by backgrounding the
      * calling application. Verifies that the {@link ExtensionWindowAreaPresentationSessionCallback}
      * that is provided when calling {@link WindowAreaComponent#startRearDisplayPresentationSession}

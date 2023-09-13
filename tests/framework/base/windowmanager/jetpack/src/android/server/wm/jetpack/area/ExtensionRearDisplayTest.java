@@ -263,6 +263,20 @@ public class ExtensionRearDisplayTest extends WindowManagerJetpackTestBase imple
     }
 
     /**
+     * Tests that attempting to end a rear display session that isn't active, operates as a no-op
+     * instead of throwing an {@link Exception}.
+     */
+    @ApiTest(apis = {
+            "androidx.window.extensions.area.WindowAreaComponent#endRearDisplaySession"})
+    @Test
+    public void testEndRearDisplaySession_noActiveSession() {
+        assumeTrue(mWindowAreaStatus != WindowAreaComponent.STATUS_ACTIVE);
+        assumeTrue(mCurrentDeviceState != mRearDisplayState);
+
+        mWindowAreaComponent.endRearDisplaySession();
+    }
+
+    /**
      * Tests that the {@link DisplayMetrics} returned by
      * {@link WindowAreaComponent#getRearDisplayMetrics} is non-null and matches the expected
      * metrics pertaining to the rear display address.
