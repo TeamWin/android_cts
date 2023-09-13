@@ -43,6 +43,7 @@ import android.content.pm.Flags;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageInstaller;
 import android.content.pm.PackageManager;
+import android.content.pm.PackageManager.ApplicationInfoFlags;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.pm.PackageManager.PackageInfoFlags;
 import android.os.Bundle;
@@ -173,11 +174,19 @@ public class PackageInstallerArchiveTest {
 
         assertThat(mIntentSender.mStatus.get()).isEqualTo(PackageInstaller.STATUS_SUCCESS);
         assertThat(mPackageManager.getPackageInfo(PACKAGE_NAME,
-                PackageInfoFlags.of(MATCH_UNINSTALLED_PACKAGES)).isArchived).isTrue();
+                PackageInfoFlags.of(
+                        MATCH_UNINSTALLED_PACKAGES)).applicationInfo.isArchived).isTrue();
         assertThat(mPackageManager.getPackageInfo(PACKAGE_NAME,
-                PackageInfoFlags.of(MATCH_ARCHIVED_PACKAGES)).isArchived).isTrue();
+                PackageInfoFlags.of(MATCH_ARCHIVED_PACKAGES)).applicationInfo.isArchived).isTrue();
+        assertThat(mPackageManager.getApplicationInfo(PACKAGE_NAME,
+                ApplicationInfoFlags.of(
+                        MATCH_UNINSTALLED_PACKAGES)).isArchived).isTrue();
+        assertThat(mPackageManager.getApplicationInfo(PACKAGE_NAME,
+                ApplicationInfoFlags.of(MATCH_ARCHIVED_PACKAGES)).isArchived).isTrue();
         assertThrows(NameNotFoundException.class,
                 () -> mPackageManager.getPackageInfo(PACKAGE_NAME, /* flags= */ 0));
+        assertThrows(NameNotFoundException.class,
+                () -> mPackageManager.getApplicationInfo(PACKAGE_NAME, /* flags= */ 0));
     }
 
     @Test
