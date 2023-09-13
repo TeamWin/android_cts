@@ -1594,6 +1594,8 @@ public final class DeviceState extends HarrierRule {
                     if (Versions.meetsMinimumSdkVersionRequirement(T)) {
                         TestApis.flags().setFlagSyncEnabled(originalFlagSyncEnabled);
                     }
+
+                    mTestExecutor.shutdown();
                 }
             }
         };

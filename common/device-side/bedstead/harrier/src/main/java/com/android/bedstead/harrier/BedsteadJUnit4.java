@@ -16,6 +16,8 @@
 
 package com.android.bedstead.harrier;
 
+import android.util.Log;
+
 import com.android.bedstead.harrier.annotations.AnnotationPriorityRunPrecedence;
 import com.android.bedstead.harrier.annotations.CrossUserTest;
 import com.android.bedstead.harrier.annotations.EnsureDoesNotHavePermission;
