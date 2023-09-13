@@ -29,8 +29,11 @@ import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
+import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDeviceOwner;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasProfileOwner;
 import com.android.bedstead.harrier.policies.TransferOwnership;
+import com.android.bedstead.harrier.policies.TransferOwnershipForDeviceOwner;
+import com.android.bedstead.harrier.policies.TransferOwnershipForProfileOwner;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.devicepolicy.DeviceOwner;
 import com.android.bedstead.nene.devicepolicy.ProfileOwner;
@@ -54,6 +57,7 @@ public final class TransferOwnershipTest {
             .whereIsDeviceAdmin().isTrue().get();
     private static final String KEY = "VALUE";
     private static final PersistableBundle sBundle = new PersistableBundle();
+
     static {
         sBundle.putBoolean(KEY, true);
     }
@@ -61,6 +65,9 @@ public final class TransferOwnershipTest {
     private static final ComponentName sTargetAdmin =
             new ComponentName(sTargetDeviceAdminTestApp.packageName(),
                     sTargetDeviceAdminTestApp.packageName() + ".DeviceAdminReceiver");
+
+    private static final ComponentName sInvalidComponentName =
+            new ComponentName("invalid", "invalid");
 
     private static final DevicePolicyManager sLocalDevicePolicyManager =
             TestApis.context().instrumentedContext().getSystemService(DevicePolicyManager.class);
@@ -83,16 +90,15 @@ public final class TransferOwnershipTest {
         }
     }
 
-    @ApiTest(apis = {"android.app.admin.DevicePolicyManager#transferOwnership",
-            "android.app.admin.DevicePolicyManager#getTransferOwnershipBundle"})
+    @ApiTest(apis = {"android.app.admin.DevicePolicyManager#transferOwnership"})
     @Postsubmit(reason = "new test")
     @CannotSetPolicyTest(policy = TransferOwnership.class, includeNonDeviceAdminStates = false)
     public void transferOwnership_cannotSet_throwsException() {
         try (TestAppInstance testApp = sTargetDeviceAdminTestApp.install()) {
-                assertThrows(SecurityException.class, () ->
-                        sDeviceState.dpc().devicePolicyManager().transferOwnership(
-                                sDeviceState.dpc().componentName(), sTargetAdmin, sBundle)
-                );
+            assertThrows(SecurityException.class, () ->
+                    sDeviceState.dpc().devicePolicyManager().transferOwnership(
+                            sDeviceState.dpc().componentName(), sTargetAdmin, sBundle)
+            );
         }
     }
 
@@ -116,21 +122,32 @@ public final class TransferOwnershipTest {
 
     @ApiTest(apis = {"android.app.admin.DevicePolicyManager#transferOwnership"})
     @Postsubmit(reason = "new test")
-    @CanSetPolicyTest(policy = TransferOwnership.class)
-    public void transferOwnership_ownershipTransferredToTargetAdmin() {
+    @CanSetPolicyTest(policy = TransferOwnershipForDeviceOwner.class)
+    public void transferOwnership_deviceOwner_ownershipTransferredToTargetAdmin() {
         try (TestAppInstance testApp = sTargetDeviceAdminTestApp.install()) {
             try {
                 sDeviceState.dpc().devicePolicyManager().transferOwnership(
                         sDeviceState.dpc().componentName(), sTargetAdmin, sBundle);
 
-                DeviceOwner deviceOwner = TestApis.devicePolicy().getDeviceOwner();
-                if (deviceOwner != null) {
-                    assertThat(TestApis.devicePolicy().getDeviceOwner()
-                            .componentName()).isEqualTo(sTargetAdmin);
-                } else {
-                    assertThat(TestApis.devicePolicy().getProfileOwner()
-                            .componentName()).isEqualTo(sTargetAdmin);
-                }
+                assertThat(TestApis.devicePolicy().getDeviceOwner().componentName())
+                        .isEqualTo(sTargetAdmin);
+            } finally {
+                removeDeviceAdmin();
+            }
+        }
+    }
+
+    @ApiTest(apis = {"android.app.admin.DevicePolicyManager#transferOwnership"})
+    @Postsubmit(reason = "new test")
+    @CanSetPolicyTest(policy = TransferOwnershipForProfileOwner.class)
+    public void transferOwnership_profileOwner_ownershipTransferredToTargetAdmin() {
+        try (TestAppInstance testApp = sTargetDeviceAdminTestApp.install()) {
+            try {
+                sDeviceState.dpc().devicePolicyManager().transferOwnership(
+                        sDeviceState.dpc().componentName(), sTargetAdmin, sBundle);
+
+                assertThat(TestApis.devicePolicy().getProfileOwner().componentName())
+                        .isEqualTo(sTargetAdmin);
             } finally {
                 removeDeviceAdmin();
             }
@@ -161,7 +178,7 @@ public final class TransferOwnershipTest {
         try {
             assertThrows(IllegalArgumentException.class,
                     () -> sDeviceState.dpc().devicePolicyManager().transferOwnership(
-                            sDeviceState.dpc().componentName(), sTargetAdmin, sBundle));
+                            sDeviceState.dpc().componentName(), sInvalidComponentName, sBundle));
         } finally {
             removeDeviceAdmin();
         }
@@ -195,12 +212,12 @@ public final class TransferOwnershipTest {
         if (deviceOwner != null) {
             // if the test ran for the device owner
             deviceOwner.remove();
-        } else {
-            ProfileOwner profileOwner = TestApis.devicePolicy().getProfileOwner();
-            if (profileOwner != null) {
-                // else if the test ran for the profile owner
-                profileOwner.remove();
-            }
+        }
+
+        ProfileOwner profileOwner = TestApis.devicePolicy().getProfileOwner();
+        if (profileOwner != null) {
+            // if the test ran for the profile owner
+            profileOwner.remove();
         }
     }
 
