@@ -17,6 +17,7 @@
 package android.dpi.cts;
 
 import android.content.Context;
+import android.os.Build;
 import android.platform.test.annotations.Presubmit;
 import android.test.AndroidTestCase;
 import android.util.DisplayMetrics;
@@ -25,6 +26,7 @@ import android.view.WindowManager;
 
 import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.FeatureUtil;
+import com.android.compatibility.common.util.PropertyUtil;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -52,6 +54,9 @@ public class ConfigurationTest extends AndroidTestCase {
         double yInches = (double) mMetrics.heightPixels / mMetrics.ydpi;
         double diagonalInches = Math.sqrt(Math.pow(xInches, 2) + Math.pow(yInches, 2));
         double minSize = 2.5d;
+        if (PropertyUtil.getFirstApiLevel() >= Build.VERSION_CODES.R) {
+            minSize = 3.3d;
+        }
         if (FeatureUtil.isWatch()) {
             // Watches have a different minimum diagonal.
             minSize = 1.0d;
