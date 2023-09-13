@@ -120,17 +120,22 @@ public class IRadioVoiceImpl extends IRadioVoice.Stub {
                         Log.d(mTag, "Received EVENT_CURRENT_CALLS_RESPONSE");
                         ar = (AsyncResult) msg.obj;
                         if (ar != null && ar.exception == null) {
-                            mCallList = (ArrayList<MockCallInfo>) ar.result;
-                            Log.i(
-                                    mTag,
-                                    "num of calls: "
-                                            + mCallList.size()
-                                            + ", num of getCurrentCalls requests: "
-                                            + mGetCurrentCallReqList.size());
-                            for (int i = 0; i < mGetCurrentCallReqList.size(); i++) {
-                                getCurrentCallsRespnose(mGetCurrentCallReqList.get(i).intValue());
+                            final ArrayList<MockCallInfo> callList =
+                                    (ArrayList<MockCallInfo>) ar.result;
+                            synchronized (callList) {
+                                mCallList = callList;
+                                Log.i(
+                                        mTag,
+                                        "num of calls: "
+                                                + mCallList.size()
+                                                + ", num of getCurrentCalls requests: "
+                                                + mGetCurrentCallReqList.size());
+                                for (int i = 0; i < mGetCurrentCallReqList.size(); i++) {
+                                    getCurrentCallsRespnose(
+                                            mGetCurrentCallReqList.get(i).intValue());
+                                }
+                                mGetCurrentCallReqList.clear();
                             }
-                            mGetCurrentCallReqList.clear();
                         } else {
                             Log.e(mTag, msg.what + " failure. Exception: " + ar.exception);
                         }
