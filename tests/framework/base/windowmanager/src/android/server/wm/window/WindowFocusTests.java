@@ -21,6 +21,7 @@ import static android.hardware.display.DisplayManager.VIRTUAL_DISPLAY_FLAG_OWN_F
 import static android.hardware.display.DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC;
 import static android.hardware.display.DisplayManager.VIRTUAL_DISPLAY_FLAG_STEAL_TOP_FOCUS_DISABLED;
 import static android.hardware.display.DisplayManager.VIRTUAL_DISPLAY_FLAG_TRUSTED;
+import static android.server.wm.CtsWindowInfoUtils.waitForStableWindowGeometry;
 import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.Display.INVALID_DISPLAY;
 import static android.view.KeyEvent.ACTION_DOWN;
@@ -37,12 +38,11 @@ import static android.view.KeyEvent.KEYCODE_7;
 import static android.view.KeyEvent.KEYCODE_8;
 import static android.view.KeyEvent.KEYCODE_9;
 import static android.view.KeyEvent.keyCodeToString;
-
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
@@ -73,6 +73,7 @@ import com.android.compatibility.common.util.SystemUtil;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.concurrent.TimeUnit;
 
 import javax.annotation.concurrent.GuardedBy;
 
@@ -388,9 +389,11 @@ public class WindowFocusTests extends WindowManagerTestBase {
      * Pointer capture could be requested after activity regains focus.
      */
     @Test
-    public void testPointerCaptureWhenFocus() {
+    public void testPointerCaptureWhenFocus() throws Throwable {
         final AutoEngagePointerCaptureActivity primaryActivity =
                 startActivity(AutoEngagePointerCaptureActivity.class, DEFAULT_DISPLAY);
+        assertTrue("Failed to reach stable window geometry",
+                waitForStableWindowGeometry(5, TimeUnit.SECONDS));
 
         // Assert primary activity can have pointer capture before we have multiple focused windows.
         primaryActivity.waitAndAssertPointerCaptureState(true /* hasCapture */);
