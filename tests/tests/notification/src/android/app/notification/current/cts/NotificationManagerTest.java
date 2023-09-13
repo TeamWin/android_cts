@@ -33,7 +33,9 @@ import static android.app.NotificationManager.IMPORTANCE_NONE;
 import static android.app.NotificationManager.IMPORTANCE_UNSPECIFIED;
 import static android.content.pm.PackageManager.FEATURE_WATCH;
 import static android.service.notification.NotificationListenerService.META_DATA_DEFAULT_AUTOBIND;
+
 import static com.google.common.truth.Truth.assertThat;
+
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.junit.Assert.assertThat;
 
@@ -69,6 +71,7 @@ import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
 import android.os.Messenger;
+import android.os.SystemProperties;
 import android.os.UserHandle;
 import android.permission.PermissionManager;
 import android.permission.cts.PermissionUtils;
@@ -959,6 +962,30 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
     }
 
     /**
+     *  Function to identify if the device is a cuttlefish instance.
+     *  The testRankingUpdateSentWithPressure CTS test verifies device behavior that requires large
+     *  numbers of notifications sent in a short period of time, which non-production devices like
+     *  cuttlefish cannot support.
+     */
+    public static boolean onCuttlefish() throws IOException {
+        String device = SystemProperties.get("ro.product.device", "");
+        String model = SystemProperties.get("ro.product.model", "");
+        String name = SystemProperties.get("ro.product.name", "");
+
+        // Return true for cuttlefish instances
+        if (!device.startsWith("vsoc_")) {
+            return false;
+        }
+        if (!model.startsWith("Cuttlefish ")) {
+            return false;
+        }
+        if (name.startsWith("cf_") || name.startsWith("aosp_cf_")) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
      * Tests that, given a significant amount of Notification pressure from 500 notifications
      * posted in rapid succession, NotificationListeners don't experience binder errors.
      * Timing in this test is tuned to reduce flakiness while avoiding timeouts. Posting a
@@ -969,6 +996,10 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
     @LargeTest
     @RequiresDevice
     public void testRankingUpdateSentWithPressure() throws Exception {
+        if (onCuttlefish()) {
+            return;
+        }
+
         int notificationsPerApp = 50;
         int totalNotificationsSent = notificationsPerApp * 8 /* number of apps */;
 
