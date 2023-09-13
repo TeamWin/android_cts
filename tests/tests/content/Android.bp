@@ -148,7 +148,6 @@ android_test {
 
     static_libs: [
         "android.content.pm.flags-aconfig-java",
-        "com.android.server.security.flags-aconfig-java",
         "flag-junit",
     ],
     srcs: [
