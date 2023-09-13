@@ -1869,14 +1869,14 @@ public class PkgInstallSignatureVerificationTest extends BaseAppSecurityTest {
 
     private void assertInstallV4Succeeds(String apkFilenameInResources) throws Exception {
         String installResult = installV4PackageFromResource(apkFilenameInResources);
-        if (!installResult.equals("Success\n")) {
+        if (!installResult.equals("Success")) {
             fail("Failed to install " + apkFilenameInResources + ": " + installResult);
         }
     }
 
     private void assertInstallV4FromBuildSucceeds(String apkName) throws Exception {
         String installResult = installV4PackageFromBuild(apkName);
-        if (!installResult.equals("Success\n")) {
+        if (!installResult.equals("Success")) {
             fail("Failed to install " + apkName + ": " + installResult);
         }
     }
@@ -1895,7 +1895,7 @@ public class PkgInstallSignatureVerificationTest extends BaseAppSecurityTest {
     private void assertInstallV4FailsWithError(String apkFilenameInResources, String errorSubstring)
             throws Exception {
         String installResult = installV4PackageFromResource(apkFilenameInResources);
-        if (installResult.equals("Success\n")) {
+        if (installResult.equals("Success")) {
             fail("Install of " + apkFilenameInResources + " succeeded but was expected to fail"
                     + " with \"" + errorSubstring + "\"");
         }
@@ -2035,8 +2035,11 @@ public class PkgInstallSignatureVerificationTest extends BaseAppSecurityTest {
 
     private String installV4Package(String remoteApkPath)
             throws DeviceNotAvailableException {
-        String command = "pm install-incremental --force-queryable -t -g " + remoteApkPath;
-        return getDevice().executeShellCommand(command);
+        return new InstallMultiple()
+            .useIncremental()
+            .forceQueryable()
+            .addRemoteFile(remoteApkPath)
+            .runForResult();
     }
 
     private File getFileFromResource(String filenameInResources)
@@ -2109,5 +2112,16 @@ public class PkgInstallSignatureVerificationTest extends BaseAppSecurityTest {
         uninstallCompanionPackages();
         uninstallDeviceTestPackage();
         uninstallServicePackages();
+    }
+
+    private class InstallMultiple extends BaseInstallMultiple<InstallMultiple> {
+        InstallMultiple() {
+            super(getDevice(), getBuild(), getAbi(), /* grantPermissions */ true);
+        }
+
+        @Override
+        protected String deriveRemoteName(String originalName, int index) {
+            return originalName;
+        }
     }
 }
