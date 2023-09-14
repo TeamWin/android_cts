@@ -30,6 +30,7 @@ import static android.content.pm.PackageInstaller.LOCATION_DATA_APP;
 import static android.content.pm.PackageManager.GET_SIGNING_CERTIFICATES;
 import static android.content.pm.PackageManager.TRUST_ALL;
 import static android.content.pm.PackageManager.TRUST_NONE;
+import static android.security.Flags.FLAG_DEPRECATE_FSV_SIG;
 
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -62,6 +63,9 @@ import android.os.IBinder;
 import android.os.ParcelFileDescriptor;
 import android.os.SystemProperties;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.RequiresFlagsDisabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.util.ExceptionUtils;
 
 import androidx.annotation.NonNull;
@@ -191,6 +195,9 @@ public class ChecksumsTest {
     @Rule
     public AbandonAllPackageSessionsRule mAbandonSessionsRule = new AbandonAllPackageSessionsRule();
 
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
+
     @AfterClass
     public static void onAfterClass() throws Exception {
         uninstallPackageSilently(V4_PACKAGE_NAME);
@@ -318,6 +325,7 @@ public class ChecksumsTest {
 
     @LargeTest
     @Test
+    @RequiresFlagsDisabled(FLAG_DEPRECATE_FSV_SIG)
     public void testFixedFSVerityDefaultChecksums() throws Exception {
         assumeTrue(isApkVerityEnabled());
         uninstallPackageSilently(FIXED_FSVERITY_PACKAGE_NAME);
@@ -349,6 +357,7 @@ public class ChecksumsTest {
 
     @LargeTest
     @Test
+    @RequiresFlagsDisabled(FLAG_DEPRECATE_FSV_SIG)
     public void testFixedFSVerityDefaultChecksumsIncremental() throws Exception {
         assumeTrue(checkIncrementalDeliveryFeature());
 
