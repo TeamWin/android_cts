@@ -28,7 +28,7 @@
     <system_checker class="com.android.tradefed.suite.checker.SystemServerStatusChecker" />
     <system_checker class="com.android.tradefed.suite.checker.SystemServerFileDescriptorChecker" />
     <system_checker class="com.android.tradefed.suite.checker.DeviceBaselineChecker">
-        <option name="enable-experimental-device-baseline-setters" value="verifier_engprod" />
-        <option name="enable-experimental-device-baseline-setters" value="user_setup_complete" />
+        <option name="enable-experimental-device-baseline-setters" value="keep_engprod_mode_on" />
+        <option name="enable-experimental-device-baseline-setters" value="keep_setup_complete_on" />
     </system_checker>
 </configuration>
