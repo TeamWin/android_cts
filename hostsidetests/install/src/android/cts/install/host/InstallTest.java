@@ -17,9 +17,7 @@
 package android.cts.install.host;
 
 import static com.google.common.truth.Truth.assertThat;
-
 import static org.junit.Assume.assumeFalse;
-import static org.junit.Assume.assumeTrue;
 
 import android.cts.install.INSTALL_TYPE;
 import android.platform.test.annotations.LargeTest;
@@ -88,14 +86,6 @@ public final class InstallTest extends BaseHostJUnit4Test {
     @After
     public void cleanUp() throws Exception {
         runPhase(CLEAN_UP_PHASE);
-    }
-
-    @Before
-    public void assumeApexSupported() throws DeviceNotAvailableException {
-        if (mInstallType.containsApex()) {
-            assumeTrue("Device does not support updating APEX",
-                    mShimApexRule.isUpdatingApexSupported());
-        }
     }
 
     @Before
