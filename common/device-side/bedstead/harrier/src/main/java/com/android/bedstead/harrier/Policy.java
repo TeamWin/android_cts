@@ -192,8 +192,8 @@ public final class Policy {
 
                     .put(APPLIED_BY_PARENT_INSTANCE_OF_NON_ORGANIZATIONAL_OWNED_PROFILE_OWNER_PROFILE | APPLIES_TO_OWN_USER | INHERITABLE, multipleAnnotations(includeRunOnCloneProfileAlongsideManagedProfileUsingParentInstance(), includeRunOnPrivateProfileAlongsideManagedProfileUsingParentInstance()))
                     .put(APPLIED_BY_PARENT_INSTANCE_OF_ORGANIZATIONAL_OWNED_PROFILE_OWNER_PROFILE | APPLIES_TO_OWN_USER | INHERITABLE, multipleAnnotations(includeRunOnCloneProfileAlongsideOrganizationOwnedProfileUsingParentInstance(), includeRunOnPrivateProfileAlongsideOrganizationOwnedProfileUsingParentInstance()))
-                    .put(APPLIED_BY_ORGANIZATION_OWNED_PROFILE_OWNER_PROFILE | INHERITABLE, multipleAnnotations(includeRunOnCloneProfileAlongsideOrganizationOwnedProfile(), includeRunOnPrivateProfileAlongsideOrganizationOwnedProfile()))
-                    .put(APPLIED_BY_UNAFFILIATED_PROFILE_OWNER_PROFILE | INHERITABLE, multipleAnnotations(includeRunOnCloneProfileAlongsideManagedProfile(), includeRunOnPrivateProfileAlongsideManagedProfile()))
+                    .put(APPLIED_BY_ORGANIZATION_OWNED_PROFILE_OWNER_PROFILE | APPLIES_TO_PARENT | INHERITABLE, multipleAnnotations(includeRunOnCloneProfileAlongsideOrganizationOwnedProfile(), includeRunOnPrivateProfileAlongsideOrganizationOwnedProfile()))
+                    .put(APPLIED_BY_UNAFFILIATED_PROFILE_OWNER_PROFILE | APPLIES_TO_PARENT | INHERITABLE, multipleAnnotations(includeRunOnCloneProfileAlongsideManagedProfile(), includeRunOnPrivateProfileAlongsideManagedProfile()))
                     .build();
     // This must contain one key for every APPLIED_BY that is being used, and maps to the
     // "default" for testing that DPC type
