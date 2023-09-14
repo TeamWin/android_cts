@@ -77,6 +77,8 @@ public class MockSatelliteService extends SatelliteImplBase {
     @SatelliteResult
     private int mErrorCode = SatelliteResult.SATELLITE_RESULT_SUCCESS;
 
+    @SatelliteResult
+    private int mEnableCellularScanningErrorCode = SatelliteResult.SATELLITE_RESULT_SUCCESS;
     // For local access of this Service.
     class LocalBinder extends Binder {
         MockSatelliteService getService() {
@@ -99,6 +101,8 @@ public class MockSatelliteService extends SatelliteImplBase {
     private List<String> mPlmnList;
     private boolean mIsSatelliteEnabledForCarrier;
 
+    private int[] mSupportedRadioTechnologies;
+
     /**
      * Create MockSatelliteService using the Executor specified for methods being called from
      * the framework.
@@ -112,6 +116,7 @@ public class MockSatelliteService extends SatelliteImplBase {
         mIsProvisioned = false;
         mIsSupported = true;
         mModemState = SatelliteModemState.SATELLITE_MODEM_STATE_OFF;
+        mSupportedRadioTechnologies = SUPPORTED_RADIO_TECHNOLOGIES;
     }
 
     /**
@@ -261,13 +266,20 @@ public class MockSatelliteService extends SatelliteImplBase {
 
         if (mShouldRespondTelephony.get()) {
             SatelliteCapabilities capabilities = new SatelliteCapabilities();
-            capabilities.supportedRadioTechnologies = SUPPORTED_RADIO_TECHNOLOGIES;
+            capabilities.supportedRadioTechnologies = mSupportedRadioTechnologies;
             capabilities.isPointingRequired = POINTING_TO_SATELLITE_REQUIRED;
             capabilities.maxBytesPerOutgoingDatagram = MAX_BYTES_PER_DATAGRAM;
             capabilities.antennaPositionKeys = ANTENNA_POSITION_KEYS;
             capabilities.antennaPositionValues = ANTENNA_POSITION_VALUES;
             runWithExecutor(() -> callback.accept(capabilities));
         }
+    }
+
+    @Override
+    public void enableCellularModemWhileSatelliteModeIsOn(
+            boolean enabled, @NonNull IIntegerConsumer errorCallback) {
+        logd("enableCellularModemWhileSatelliteModeIsOn: enabled=" + enabled);
+        runWithExecutor(() -> errorCallback.accept(mEnableCellularScanningErrorCode));
     }
 
     @Override
@@ -540,6 +552,25 @@ public class MockSatelliteService extends SatelliteImplBase {
         mErrorCode = errorCode;
     }
 
+    /**
+     * This API is used by CTS test cases to set the error code returned when the mock satellite
+     * modem receives requests to enable or disable cellular scanning mode.
+     */
+    public void setEnableCellularScanningErrorCode(@SatelliteResult int errorCode) {
+        logd("setEnableCellularScanningErrorCode: errorCode=" + errorCode);
+        mEnableCellularScanningErrorCode = errorCode;
+    }
+
+    /**
+     * This API is used by CTS test cases to update supported NTN radio technologies of the
+     * mock satellite modem.
+     */
+    public void setSupportedRadioTechnologies(@NonNull int[] supportedRadioTechnologies) {
+        logd("setSupportedRadioTechnologies: supportedRadioTechnologies="
+                + supportedRadioTechnologies[0]);
+        mSupportedRadioTechnologies = supportedRadioTechnologies;
+    }
+
     public void setSatelliteSupport(boolean supported) {
         logd("setSatelliteSupport: supported=" + supported);
         mIsSupported = supported;
@@ -566,6 +597,13 @@ public class MockSatelliteService extends SatelliteImplBase {
         logd("sendOnSatellitePositionChanged");
         mRemoteListeners.values().forEach(listener -> runWithExecutor(() ->
                 listener.onSatellitePositionChanged(pointingInfo)));
+    }
+
+    /**
+     * This API is used by CTS test cases to update satellite modem state.
+     */
+    public void sendOnSatelliteModemStateChanged(int modemState) {
+        updateSatelliteModemState(modemState);
     }
 
     public void setWaitToSend(boolean wait) {

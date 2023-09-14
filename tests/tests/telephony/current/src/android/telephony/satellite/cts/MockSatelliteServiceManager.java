@@ -498,6 +498,11 @@ class MockSatelliteServiceManager {
 
     boolean restoreSatelliteGatewayServicePackageName() {
         logd("restoreSatelliteGatewayServicePackageName");
+        if (mSatelliteGatewayServiceConn != null) {
+            mInstrumentation.getContext().unbindService(mSatelliteGatewayServiceConn);
+        }
+        mSatelliteGatewayServiceConn = null;
+        mSatelliteGatewayService = null;
         try {
             if (!setSatelliteGatewayServicePackageName(null)) {
                 loge("Failed to restore satellite gateway service package name");
@@ -685,6 +690,10 @@ class MockSatelliteServiceManager {
         return true;
     }
 
+    void clearPollPendingDatagramPermits() {
+        mPollPendingDatagramsSemaphore.drainPermits();
+    }
+
     boolean waitForEventOnSendSatelliteDatagram(int expectedNumberOfEvents) {
         for (int i = 0; i < expectedNumberOfEvents; i++) {
             try {
@@ -852,6 +861,33 @@ class MockSatelliteServiceManager {
             return;
         }
         mSatelliteService.setErrorCode(errorCode);
+    }
+
+    void setEnableCellularScanningErrorCode(int errorCode) {
+        logd("setEnableCellularScanningErrorCode: errorCode=" + errorCode);
+        if (mSatelliteService == null) {
+            loge("setEnableCellularScanningErrorCode: mSatelliteService is null");
+            return;
+        }
+        mSatelliteService.setEnableCellularScanningErrorCode(errorCode);
+    }
+
+    void setSupportedRadioTechnologies(@NonNull int[] supportedRadioTechnologies) {
+        logd("setSupportedRadioTechnologies: " + supportedRadioTechnologies[0]);
+        if (mSatelliteService == null) {
+            loge("setSupportedRadioTechnologies: mSatelliteService is null");
+            return;
+        }
+        mSatelliteService.setSupportedRadioTechnologies(supportedRadioTechnologies);
+    }
+
+    void sendOnSatelliteModemStateChanged(int modemState) {
+        logd("sendOnSatelliteModemStateChanged: " + modemState);
+        if (mSatelliteService == null) {
+            loge("sendOnSatelliteModemStateChanged: mSatelliteService is null");
+            return;
+        }
+        mSatelliteService.sendOnSatelliteModemStateChanged(modemState);
     }
 
     void setSatelliteSupport(boolean supported) {
