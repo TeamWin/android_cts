@@ -3014,6 +3014,41 @@ public class PackageManagerTest {
     }
 
     @Test
+    public void testReinstallBroadcastsAfterDeleteKeepData() throws Exception {
+        installPackage(HELLO_WORLD_APK);
+        // Test uninstall -k
+        uninstallPackageKeepData(HELLO_WORLD_PACKAGE_NAME);
+        final int currentUser = ActivityManager.getCurrentUser();
+        final PackageBroadcastReceiver
+                replacedBroadcastReceiver = new PackageBroadcastReceiver(
+                HELLO_WORLD_PACKAGE_NAME, currentUser, Intent.ACTION_PACKAGE_REPLACED
+        );
+        final PackageBroadcastReceiver addedBroadcastReceiver = new PackageBroadcastReceiver(
+                HELLO_WORLD_PACKAGE_NAME, currentUser, Intent.ACTION_PACKAGE_ADDED
+        );
+        final IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(Intent.ACTION_PACKAGE_REPLACED);
+        intentFilter.addAction(Intent.ACTION_PACKAGE_ADDED);
+        intentFilter.addDataScheme("package");
+        mContext.registerReceiver(replacedBroadcastReceiver, intentFilter);
+        mContext.registerReceiver(addedBroadcastReceiver, intentFilter);
+        // Reinstall and verify that the correct broadcasts are received
+        installPackage(HELLO_WORLD_APK);
+        replacedBroadcastReceiver.assertBroadcastReceived();
+        final Intent replacedIntent = replacedBroadcastReceiver.getBroadcastResult();
+        assertThat(replacedIntent).isNotNull();
+        assertThat(replacedIntent.getExtras().getBoolean(Intent.EXTRA_REPLACING, false)).isTrue();
+        addedBroadcastReceiver.assertBroadcastReceived();
+        final Intent addedIntent = addedBroadcastReceiver.getBroadcastResult();
+        assertThat(addedIntent).isNotNull();
+        assertThat(addedIntent.getExtras().getBoolean(Intent.EXTRA_REPLACING, false)).isTrue();
+        // Clean up
+        uninstallPackage(HELLO_WORLD_PACKAGE_NAME);
+        mContext.unregisterReceiver(replacedBroadcastReceiver);
+        mContext.unregisterReceiver(addedBroadcastReceiver);
+    }
+
+    @Test
     @RequiresFlagsDisabled(FLAG_QUARANTINED_ENABLED)
     public void testQasDisabled() throws Exception {
         testQas(false);
