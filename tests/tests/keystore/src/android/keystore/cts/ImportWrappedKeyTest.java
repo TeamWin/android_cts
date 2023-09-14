@@ -314,11 +314,15 @@ public class ImportWrappedKeyTest {
     }
 
     public void testKeyStore_ImportWrappedKey_RSA(boolean isStrongBox) throws Exception {
+        assumeTrue("Only VSR V+ KeyMint implementations are expected to pass.",
+                TestUtils.getVendorApiLevel() >= 35);
+
         if (isStrongBox) {
             TestUtils.assumeStrongBox();
         }
 
         KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
+        // Both TEE and Strongbox must support 2048-bit keys.
         int keySize = 2048;
         kpg.initialize(keySize);
         KeyPair kp = kpg.generateKeyPair();

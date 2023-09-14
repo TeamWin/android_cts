@@ -208,6 +208,13 @@ public class TestUtils {
     }
 
     /**
+     * Returns ro.vendor.api_level.
+     */
+    public static int getVendorApiLevel() {
+        return SystemProperties.getInt("ro.vendor.api_level", 0);
+    }
+
+    /**
      * Returns whether the device has a StrongBox backed KeyStore.
      */
     public static boolean hasStrongBox(Context context) {
