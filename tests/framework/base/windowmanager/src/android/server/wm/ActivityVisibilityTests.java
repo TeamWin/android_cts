@@ -19,6 +19,7 @@ package android.server.wm;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
 import static android.app.WindowConfiguration.WINDOWING_MODE_FREEFORM;
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
+import static android.app.WindowConfiguration.WINDOWING_MODE_MULTI_WINDOW;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_TASK_ON_HOME;
 import static android.server.wm.CliIntentExtra.extraString;
@@ -91,8 +92,13 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
         launchHomeActivity();
         launchActivity(TRANSLUCENT_ACTIVITY, WINDOWING_MODE_FULLSCREEN);
 
+        int expectedWindowingMode = hasAutomotiveSplitscreenMultitaskingFeature()
+                // On auto devices with this feature enabled, the system is in a permanent
+                // split-screen UI where every app opens in MULTI_WINDOW mode.
+                ? WINDOWING_MODE_MULTI_WINDOW
+                : WINDOWING_MODE_FULLSCREEN;
         mWmState.assertFrontStack("Fullscreen stack must be the front stack.",
-                WINDOWING_MODE_FULLSCREEN, ACTIVITY_TYPE_STANDARD);
+                expectedWindowingMode, ACTIVITY_TYPE_STANDARD);
         mWmState.assertVisibility(TRANSLUCENT_ACTIVITY, true);
         mWmState.assertHomeActivityVisible(true);
     }
@@ -745,7 +751,7 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
         // and reported after the activity launch.
         waitForDefaultDisplayState(true /* wantOn */);
         assertTrue("Display turns on", isDisplayOn(DEFAULT_DISPLAY));
-        if (hasSplitscreenMultitaskingFeature()) {
+        if (hasAutomotiveSplitscreenMultitaskingFeature()) {
             // In the scenario when the Launcher HOME activity hosts the TaskView, the HOME activity
             // itself will be resumed first before the Test activity resulting in 2 calls to
             // ON_RESUME rather than 1. Is such case just check if the Test activity is resumed.
@@ -853,7 +859,7 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
     /**
      * Checks whether the device has automotive split-screen multitasking feature enabled
      */
-    private boolean hasSplitscreenMultitaskingFeature() {
+    private boolean hasAutomotiveSplitscreenMultitaskingFeature() {
         return mContext.getPackageManager()
                 .hasSystemFeature(/* PackageManager.FEATURE_CAR_SPLITSCREEN_MULTITASKING */
                         "android.software.car.splitscreen_multitasking") && isCar();
