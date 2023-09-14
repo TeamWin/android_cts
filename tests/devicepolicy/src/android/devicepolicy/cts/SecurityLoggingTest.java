@@ -111,7 +111,7 @@ public final class SecurityLoggingTest {
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.app.admin.DevicePolicyManager#retrieveSecurityLogs")
     public void retrieveSecurityLogs_notPermitted_throwsException() {
-        ensureNoAdditionalUsers();
+        ensureNoAdditionalFullUsers();
 
         assertThrows(SecurityException.class,
                 () -> sDeviceState.dpc().devicePolicyManager().retrieveSecurityLogs(
@@ -122,7 +122,7 @@ public final class SecurityLoggingTest {
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.app.admin.DevicePolicyManager#retrieveSecurityLogs")
     public void retrieveSecurityLogs_returnsSecurityLogs() {
-        ensureNoAdditionalUsers();
+        ensureNoAdditionalFullUsers();
 
         boolean originalSecurityLoggingEnabled =
                 sDeviceState.dpc().devicePolicyManager()
@@ -150,7 +150,7 @@ public final class SecurityLoggingTest {
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.app.admin.DevicePolicyManager#retrievePreRebootSecurityLogs")
     public void retrievePreRebootSecurityLogs_notPermitted_throwsException() {
-        ensureNoAdditionalUsers();
+        ensureNoAdditionalFullUsers();
 
         assertThrows(SecurityException.class,
                 () -> sDeviceState.dpc().devicePolicyManager().retrievePreRebootSecurityLogs(
@@ -161,7 +161,7 @@ public final class SecurityLoggingTest {
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.app.admin.DevicePolicyManager#retrievePreRebootSecurityLogs")
     public void retrievePreRebootSecurityLogs_doesNotThrow() {
-        ensureNoAdditionalUsers();
+        ensureNoAdditionalFullUsers();
         boolean originalSecurityLoggingEnabled =
                 sDeviceState.dpc().devicePolicyManager()
                         .isSecurityLoggingEnabled(sDeviceState.dpc().componentName());
@@ -234,7 +234,7 @@ public final class SecurityLoggingTest {
     @EnsureHasNoAdditionalUser
     @ApiTest(apis = "android.app.admin.DevicePolicyManager#retrieveSecurityLogs")
     public void retrieveSecurityLogs_noAdditionalUser_doesNotThrowException() {
-        ensureNoAdditionalUsers();
+        ensureNoAdditionalFullUsers();
 
         try {
             sDeviceState.dpc().devicePolicyManager().setSecurityLoggingEnabled(
@@ -303,7 +303,7 @@ public final class SecurityLoggingTest {
     @EnsureHasNoAdditionalUser
     @ApiTest(apis = "android.app.admin.DevicePolicyManager#retrievePreRebootSecurityLogs")
     public void retrievePreRebootSecurityLogs_noAdditionalUser_doesNotThrowException() {
-        ensureNoAdditionalUsers();
+        ensureNoAdditionalFullUsers();
 
         try {
             sDeviceState.dpc().devicePolicyManager().setSecurityLoggingEnabled(
@@ -317,13 +317,17 @@ public final class SecurityLoggingTest {
         }
     }
 
-    private void ensureNoAdditionalUsers() {
+    private void ensureNoAdditionalFullUsers() {
         // TODO(273474964): Move into infra
         try {
             TestApis.users().all().stream()
                     .filter(u -> !u.equals(TestApis.users().instrumented())
                             && !u.equals(TestApis.users().system())
-                            && !u.equals(TestApis.users().current()))
+                            && !u.equals(TestApis.users().current())
+                            // We can't remove the profile of the instrumented user for the
+                            // run on parent profile tests. But the profiles of other users
+                            // will be removed when the full-user is removed anyway.
+                            && !u.isProfile())
                     .forEach(UserReference::remove);
         } catch (NeneException e) {
             // Happens when we can't remove a user
