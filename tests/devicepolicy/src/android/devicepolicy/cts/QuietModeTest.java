@@ -477,13 +477,7 @@ public class QuietModeTest {
     public void requestQuietModeEnabled_callerIsNotDefaultLauncher_throwsSecurityException() {
         UserReference workProfile = sDeviceState.workProfile();
         try (TestAppInstance testAppInstance = sTestAppWithLauncherActivity.install()) {
-            // Start the launcher activity in the test app to make it foreground.
-            TestAppActivityReference launcherActivity =
-                    testAppInstance.activities().query().whereActivity().intentFilters()
-                            .contains(intentFilter().where().actions().contains(
-                                            Intent.ACTION_MAIN)
-                                    .where().categories().contains(Intent.CATEGORY_HOME)).get();
-            launcherActivity.start();
+            runTestAppInForeground(testAppInstance);
 
             assertThrows(SecurityException.class,
                     () -> testAppInstance.userManager().requestQuietModeEnabled(true,
@@ -500,14 +494,7 @@ public class QuietModeTest {
     public void requestQuietModeEnabled_callerIsForegroundLauncher_success() {
         UserReference workProfile = sDeviceState.workProfile();
         try (TestAppInstance testAppInstance = sTestAppWithLauncherActivity.install()) {
-            setTestAppAsDefaultLauncher();
-
-            TestAppActivityReference launcherActivity =
-                    testAppInstance.activities().query().whereActivity().intentFilters()
-                            .contains(intentFilter().where().actions().contains(
-                                            Intent.ACTION_MAIN)
-                                    .where().categories().contains(Intent.CATEGORY_HOME)).get();
-            launcherActivity.start();
+            setTestAppAsForegroundDefaultLauncher(testAppInstance);
 
             testAppInstance.userManager().requestQuietModeEnabled(true,
                     workProfile.userHandle());
@@ -581,7 +568,7 @@ public class QuietModeTest {
     public void requestQuietModeEnabled_false_credentialsSet_isNotDisabled() {
         UserReference workProfile = sDeviceState.workProfile();
         try (TestAppInstance testAppInstance = sTestAppWithLauncherActivity.install()) {
-            setTestAppAsDefaultLauncher();
+            setTestAppAsForegroundDefaultLauncher(testAppInstance);
             workProfile.setPassword(PASSWORD);
             UserHandle workProfileUserHandle = workProfile.userHandle();
             testAppInstance.userManager().requestQuietModeEnabled(true,
@@ -619,6 +606,20 @@ public class QuietModeTest {
     private boolean keepProfilesRunningEnabled() throws Exception {
         return ShellCommand.builder("dumpsys device_policy").execute()
                 .contains("Keep profiles running: true");
+    }
+
+    private static void setTestAppAsForegroundDefaultLauncher(TestAppInstance testAppInstance) {
+        setTestAppAsDefaultLauncher();
+        runTestAppInForeground(testAppInstance);
+    }
+
+    private static void runTestAppInForeground(TestAppInstance testAppInstance) {
+        TestAppActivityReference launcherActivity =
+                testAppInstance.activities().query().whereActivity().intentFilters()
+                        .contains(intentFilter().where().actions().contains(
+                                        Intent.ACTION_MAIN)
+                                .where().categories().contains(Intent.CATEGORY_HOME)).get();
+        launcherActivity.start();
     }
 
     private static void setTestAppAsDefaultLauncher() {
