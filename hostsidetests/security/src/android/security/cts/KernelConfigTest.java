@@ -296,6 +296,8 @@ public class KernelConfigTest extends BaseHostJUnit4Test {
         result.put("KHAJE", null);
         result.put("BENGAL-IOT", null);
         result.put("BENGALP-IOT", null);
+        result.put("SCUBAIIOT", null);
+        result.put("SCUBAPIIOT", null);
         result.put("DEFAULT", new String[]{"CONFIG_UNMAP_KERNEL_AT_EL0=y"});
         return result;
     }
