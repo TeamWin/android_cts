@@ -17,6 +17,7 @@
 package android.view.cts;
 
 import static android.view.MotionEvent.AXIS_X;
+import static android.view.MotionEvent.AXIS_SCROLL;
 import static android.view.MotionEvent.AXIS_Y;
 import static android.view.flags.Flags.FLAG_SCROLL_FEEDBACK_API;
 import static org.junit.Assume.assumeTrue;
@@ -25,6 +26,7 @@ import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.view.HapticScrollFeedbackProvider;
 import android.view.InputDevice;
 import android.view.MotionEvent;
+import android.view.cts.util.InputDeviceUtils;
 
 import androidx.test.filters.SmallTest;
 import androidx.test.rule.ActivityTestRule;
@@ -48,108 +50,53 @@ public class HapticScrollFeedbackProviderTest {
 
     private HapticScrollFeedbackProvider mProvider;
 
-    private int mTouchDeviceId = -1;
-
     /** Setup common for all tests. */
     @Before
     public void setup() {
-        InputDevice touchDevice = getTouchScreenInputDevice();
-        if (touchDevice == null) {
-            return;
-        }
-
-        mTouchDeviceId = touchDevice.getId();
         mProvider = new HapticScrollFeedbackProvider(
                 mActivityRule.getActivity().findViewById(R.id.scroll_view));
     }
 
-    /** Test case checking that the MotionEvent based APIs don't crash. */
     @Test
     @RequiresFlagsEnabled(FLAG_SCROLL_FEEDBACK_API)
-    public void testMotionEventApis() {
-        assumeTrue(mTouchDeviceId != -1); // Don't run test if there's no touchscreen device.
+    public void testApisDontCrash_allExistingInputSourceAndAxesCombinations() {
+        InputDeviceUtils.runOnEveryInputDeviceMotionRange(deviceIdAndMotionRange -> {
+            InputDevice.MotionRange motionRange = deviceIdAndMotionRange.second;
+            runScrollScenarios(
+                    deviceIdAndMotionRange.first, motionRange.getSource(), motionRange.getAxis());
 
-        mProvider.onScrollLimit(createTouchMoveEvent(), AXIS_Y, true);
-        mProvider.onScrollLimit(createTouchMoveEvent(), AXIS_Y, false);
-        mProvider.onScrollLimit(createTouchMoveEvent(), AXIS_Y, true);
-
-        mProvider.onScrollProgress(createTouchMoveEvent(), AXIS_Y, 300);
-        mProvider.onScrollProgress(createTouchMoveEvent(), AXIS_X, 0);
-        mProvider.onScrollProgress(createTouchMoveEvent(), AXIS_X, -900);
-        mProvider.onScrollProgress(createTouchMoveEvent(), AXIS_X, -800);
-        mProvider.onScrollProgress(createTouchMoveEvent(), AXIS_Y, 0);
-        mProvider.onScrollProgress(createTouchMoveEvent(), AXIS_Y, -900);
-
-        mProvider.onSnapToItem(createTouchMoveEvent(), AXIS_Y);
-        mProvider.onSnapToItem(createTouchMoveEvent(), AXIS_X);
-        mProvider.onSnapToItem(createTouchMoveEvent(), AXIS_Y);
-
-        mProvider.onScrollLimit(createTouchMoveEvent(), AXIS_Y, false);
-        mProvider.onScrollLimit(createTouchMoveEvent(), AXIS_Y, true);
-        mProvider.onScrollLimit(createTouchMoveEvent(), AXIS_Y, false);
+        });
     }
 
-    /** Test case checking that the non-MotionEvent based APIs don't crash. */
     @Test
     @RequiresFlagsEnabled(FLAG_SCROLL_FEEDBACK_API)
-    public void testNonMotionEventBasedApis() {
-        assumeTrue(mTouchDeviceId != -1); // Don't run test if there's no touchscreen device.
-
-        mProvider.onScrollLimit(mTouchDeviceId, InputDevice.SOURCE_TOUCHSCREEN, AXIS_Y, true);
-        mProvider.onScrollLimit(mTouchDeviceId, InputDevice.SOURCE_TOUCHSCREEN, AXIS_Y, false);
-        mProvider.onScrollLimit(mTouchDeviceId, InputDevice.SOURCE_TOUCHSCREEN, AXIS_Y, true);
-
-        mProvider.onScrollProgress(mTouchDeviceId, InputDevice.SOURCE_TOUCHSCREEN, AXIS_Y, 300);
-        mProvider.onScrollProgress(mTouchDeviceId, InputDevice.SOURCE_TOUCHSCREEN, AXIS_X, 0);
-        mProvider.onScrollProgress(mTouchDeviceId, InputDevice.SOURCE_TOUCHSCREEN, AXIS_X, -900);
-        mProvider.onScrollProgress(mTouchDeviceId, InputDevice.SOURCE_TOUCHSCREEN, AXIS_X, -800);
-        mProvider.onScrollProgress(mTouchDeviceId, InputDevice.SOURCE_TOUCHSCREEN, AXIS_Y, 0);
-        mProvider.onScrollProgress(mTouchDeviceId, InputDevice.SOURCE_TOUCHSCREEN, AXIS_Y, -900);
-
-        mProvider.onSnapToItem(mTouchDeviceId, InputDevice.SOURCE_TOUCHSCREEN, AXIS_Y);
-        mProvider.onSnapToItem(mTouchDeviceId, InputDevice.SOURCE_TOUCHSCREEN, AXIS_X);
-        mProvider.onSnapToItem(mTouchDeviceId, InputDevice.SOURCE_TOUCHSCREEN, AXIS_Y);
-
-        mProvider.onScrollLimit(mTouchDeviceId, InputDevice.SOURCE_TOUCHSCREEN, AXIS_Y, false);
-        mProvider.onScrollLimit(mTouchDeviceId, InputDevice.SOURCE_TOUCHSCREEN, AXIS_Y, true);
-        mProvider.onScrollLimit(mTouchDeviceId, InputDevice.SOURCE_TOUCHSCREEN, AXIS_Y, false);
+    public void testApisDontCrash_invalidDeviceIds() {
+        InputDeviceUtils.runOnInvalidDeviceIds((deviceId) -> {
+            runScrollScenarios(
+                    deviceId, InputDevice.SOURCE_ROTARY_ENCODER, MotionEvent.AXIS_SCROLL);
+        });
     }
 
-    private MotionEvent createTouchMoveEvent() {
-        MotionEvent.PointerProperties pointerProperties = new MotionEvent.PointerProperties();
-        pointerProperties.toolType = MotionEvent.TOOL_TYPE_FINGER;
-        MotionEvent.PointerCoords pointerCoords = new MotionEvent.PointerCoords();
-        pointerCoords.setAxisValue(AXIS_X, 1);
-        pointerCoords.setAxisValue(AXIS_Y, 1);
-
-        return MotionEvent.obtain(
-                0, /* downTime */
-                0, /* eventTime */
-                MotionEvent.ACTION_MOVE, /* action */
-                1, /* pointerCount */
-                new MotionEvent.PointerProperties[] { pointerProperties },
-                new MotionEvent.PointerCoords[] { pointerCoords },
-                0, /* metaState */
-                0, /* buttonState */
-                0f, /* xPrecision */
-                0f, /* yPrecision */
-                mTouchDeviceId,
-                0, /* edgeFlags */
-                InputDevice.SOURCE_TOUCHSCREEN,
-                0 /* flags */
-        );
+    @Test
+    @RequiresFlagsEnabled(FLAG_SCROLL_FEEDBACK_API)
+    public void testApisDontCrash_invalidInputSourceAndAxesCombinations() {
+        InputDeviceUtils.runOnEveryValidDeviceId((deviceId) -> {
+            runScrollScenarios(deviceId, InputDevice.SOURCE_ROTARY_ENCODER, MotionEvent.AXIS_X);
+        });
     }
 
-    private static InputDevice getTouchScreenInputDevice() {
-        for (int deviceId : InputDevice.getDeviceIds()) {
-            InputDevice device = InputDevice.getDevice(deviceId);
-            if (device == null) {
-                continue;
-            }
-            if (device.supportsSource(InputDevice.SOURCE_TOUCHSCREEN)) {
-                return device;
-            }
-        }
-        return null;
+    private void runScrollScenarios(int deviceId, int source, int axis) {
+        mProvider.onScrollLimit(deviceId, source, axis, /* isStart= */ true);
+
+        mProvider.onScrollProgress(deviceId, source, axis, /* deltaInPixels= */ 300);
+        mProvider.onScrollProgress(deviceId, source, axis, /* deltaInPixels= */ 0);
+        mProvider.onScrollProgress(deviceId, source, axis, /* deltaInPixels= */ -900);
+
+        mProvider.onScrollLimit(deviceId, source, axis, /* isStart= */ false);
+
+        mProvider.onSnapToItem(deviceId, source, axis);
+
+        mProvider.onScrollLimit(deviceId, source, axis, /* isStart= */ false);
+        mProvider.onScrollLimit(deviceId, source, axis, /* isStart= */ true);
     }
 }
