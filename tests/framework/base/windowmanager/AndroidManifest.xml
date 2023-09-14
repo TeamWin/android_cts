@@ -630,13 +630,6 @@
                   android:exported="true"
                   android:noHistory="true"
                   android:theme="@style/Floating.NoMove"/>
-
-        <activity android:name="android.server.wm.scvh.SurfaceSyncGroupActivity"
-            android:screenOrientation="locked"
-            android:turnScreenOn="true"
-            android:theme="@style/WhiteBackgroundTheme"
-            android:exported="true"/>
-
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
