@@ -26,17 +26,14 @@ import static android.view.WindowManager.DISPLAY_IME_POLICY_FALLBACK_DISPLAY;
 import static android.view.WindowManager.DISPLAY_IME_POLICY_HIDE;
 import static android.view.WindowManager.DISPLAY_IME_POLICY_LOCAL;
 import static android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_UNCHANGED;
-
 import static com.android.cts.mockime.ImeEventStreamTestUtils.editorMatcher;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectCommand;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEventWithKeyValue;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.hideSoftInputMatcher;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.notExpectEvent;
-
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -472,12 +469,17 @@ public class MultiDisplayImeTests extends MultiDisplayTestBase {
 
         imeTestActivitySession.launchTestActivityOnDisplaySync(ImeTestActivity.class,
                 firstDisplay.mId);
+        // Wait until IME is ready for the IME client to call showSoftInput().
+        expectEvent(stream, editorMatcher("onStartInput",
+                imeTestActivitySession.getActivity().mEditText.getPrivateImeOptions()), TIMEOUT);
+
+        int imeDisplayId = expectCommand(stream, mockImeSession.callGetDisplayId(),
+                TIMEOUT).getReturnIntegerValue();
+        assertThat(imeDisplayId).isEqualTo(firstDisplay.mId);
+
         imeTestActivitySession.runOnMainSyncAndWait(
                 imeTestActivitySession.getActivity()::showSoftInput);
-
         waitOrderedImeEventsThenAssertImeShown(stream, firstDisplay.mId,
-                editorMatcher("onStartInput",
-                        imeTestActivitySession.getActivity().mEditText.getPrivateImeOptions()),
                 event -> "showSoftInput".equals(event.getEventName()));
         try {
             // Launch Ime must not lead to screen size changes.
@@ -509,14 +511,18 @@ public class MultiDisplayImeTests extends MultiDisplayTestBase {
                             + secondDisplay.mId);
             assertThat(mWmState.hasActivityInDisplay(firstDisplay.mId,
                     imeTestActivitySession.getActivity().getComponentName())).isFalse();
+            // Wait until IME is ready for the IME client to call showSoftInput().
+            expectEvent(stream, editorMatcher("onStartInput",
+                    imeTestActivitySession.getActivity().mEditText.getPrivateImeOptions()),
+                    TIMEOUT);
+            imeDisplayId = expectCommand(stream, mockImeSession.callGetDisplayId(),
+                    TIMEOUT).getReturnIntegerValue();
+            assertThat(imeDisplayId).isEqualTo(secondDisplay.mId);
 
             // Show soft input again to trigger IME movement.
             imeTestActivitySession.runOnMainSyncAndWait(
                     imeTestActivitySession.getActivity()::showSoftInput);
-
             waitOrderedImeEventsThenAssertImeShown(stream, secondDisplay.mId,
-                    editorMatcher("onStartInput",
-                            imeTestActivitySession.getActivity().mEditText.getPrivateImeOptions()),
                     event -> "showSoftInput".equals(event.getEventName()));
 
             // Moving IME to the display with the same display metrics must not lead to
