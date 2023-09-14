@@ -27,9 +27,11 @@ import static org.junit.Assert.fail;
 
 import android.app.UiAutomation;
 import android.car.Car;
+import android.car.cts.utils.watchdog.IoOveruseConfigurationSubject;
 import android.car.cts.utils.watchdog.ResourceOveruseConfigurationSubject;
 import android.car.test.ApiCheckerRule.Builder;
 import android.car.watchdog.CarWatchdogManager;
+import android.car.watchdog.IoOveruseAlertThreshold;
 import android.car.watchdog.IoOveruseConfiguration;
 import android.car.watchdog.IoOveruseStats;
 import android.car.watchdog.PackageKillableState;
@@ -535,6 +537,72 @@ public final class CarWatchdogManagerTest extends AbstractCarTestCase {
     }
 
     @Test
+    public void testSetResourceOveruseConfigurationsWithSystemComponent() {
+        Map<String, String> expectedPackageToCategoryTypes = new ArrayMap<>();
+        expectedPackageToCategoryTypes.put("system_package.pkg",
+                ResourceOveruseConfiguration.APPLICATION_CATEGORY_TYPE_MEDIA);
+        ResourceOveruseConfiguration newSystemConfiguration =
+                new ResourceOveruseConfiguration.Builder(
+                ResourceOveruseConfiguration.COMPONENT_TYPE_SYSTEM,
+                Collections.singletonList("system_package.non_critical"),
+                Collections.singletonList("invalid_vendor_prefix"),
+                expectedPackageToCategoryTypes)
+                .setIoOveruseConfiguration(
+                        new IoOveruseConfiguration.Builder(
+                                new PerStateBytes(6666666, 7777777, 8888888),
+                                new HashMap<>(), new HashMap<>(), Collections.singletonList(
+                                        new IoOveruseAlertThreshold(30, 35791394)))
+                        .build())
+                .build();
+        List<ResourceOveruseConfiguration> prevConfigurations =
+                mCarWatchdogManager.getResourceOveruseConfigurations(
+                        CarWatchdogManager.FLAG_RESOURCE_OVERUSE_IO);
+        List<ResourceOveruseConfiguration> expectedConfigurations = new ArrayList<>();
+        for (ResourceOveruseConfiguration config : prevConfigurations) {
+            if (config.getComponentType() == ResourceOveruseConfiguration.COMPONENT_TYPE_SYSTEM) {
+                config = new ResourceOveruseConfiguration.Builder(
+                        ResourceOveruseConfiguration.COMPONENT_TYPE_SYSTEM,
+                        newSystemConfiguration.getSafeToKillPackages(), new ArrayList<>(),
+                        newSystemConfiguration.getPackagesToAppCategoryTypes())
+                        .setIoOveruseConfiguration(
+                                newSystemConfiguration.getIoOveruseConfiguration())
+                        .build();
+            }
+            if (config.getComponentType() == ResourceOveruseConfiguration.COMPONENT_TYPE_VENDOR) {
+                config = new ResourceOveruseConfiguration.Builder(
+                                ResourceOveruseConfiguration.COMPONENT_TYPE_VENDOR,
+                                config.getSafeToKillPackages(), config.getVendorPackagePrefixes(),
+                                expectedPackageToCategoryTypes)
+                        .setIoOveruseConfiguration(config.getIoOveruseConfiguration())
+                        .build();
+            }
+            expectedConfigurations.add(config);
+        }
+
+        try {
+            //  Set the resource overuse configuration
+            int returnCode = mCarWatchdogManager.setResourceOveruseConfigurations(
+                    Collections.singletonList(newSystemConfiguration),
+                    CarWatchdogManager.FLAG_RESOURCE_OVERUSE_IO);
+            assertWithMessage("Return code").that(returnCode).isEqualTo(
+                    CarWatchdogManager.RETURN_CODE_SUCCESS);
+
+            //  Get the resource overuse configuration.
+            List<ResourceOveruseConfiguration> actualConfigurations =
+                    mCarWatchdogManager.getResourceOveruseConfigurations(
+                            CarWatchdogManager.FLAG_RESOURCE_OVERUSE_IO);
+
+            ResourceOveruseConfigurationSubject.assertThat(
+                    actualConfigurations).containsExactlyElementsIn(expectedConfigurations);
+        } finally {
+            // Set the config to the original.
+            mCarWatchdogManager.setResourceOveruseConfigurations(
+                    prevConfigurations,
+                    CarWatchdogManager.FLAG_RESOURCE_OVERUSE_IO);
+        }
+    }
+
+    @Test
     public void testThrowsExceptionOnSetResourceOveruseConfigurationsWithNullConfigurations() {
         assertThrows(NullPointerException.class,
                 () -> mCarWatchdogManager.setResourceOveruseConfigurations(
@@ -594,6 +662,24 @@ public final class CarWatchdogManagerTest extends AbstractCarTestCase {
     }
 
     @Test
+    public void testFailsSetSystemResourceOveruseConfigsWithZeroComponentLevelIoThresholds() {
+        ResourceOveruseConfiguration configuration = new ResourceOveruseConfiguration.Builder(
+                ResourceOveruseConfiguration.COMPONENT_TYPE_SYSTEM, new ArrayList<>(),
+                new ArrayList<>(), new HashMap<>()).setIoOveruseConfiguration(
+                        new IoOveruseConfiguration.Builder(
+                                new PerStateBytes(6666666, 0, 8888888),
+                                new HashMap<>(), new HashMap<>(), Collections.singletonList(
+                                        new IoOveruseAlertThreshold(30, 35791394)))
+                        .build())
+                .build();
+
+        assertThrows(IllegalArgumentException.class,
+                () -> mCarWatchdogManager.setResourceOveruseConfigurations(
+                        Collections.singletonList(configuration),
+                        CarWatchdogManager.FLAG_RESOURCE_OVERUSE_IO));
+    }
+
+    @Test
     public void testFailsSetSystemResourceOveruseConfigurationsWithNoSystemWideThreshold() {
         ResourceOveruseConfiguration configuration =
                 new ResourceOveruseConfiguration.Builder(
@@ -637,6 +723,46 @@ public final class CarWatchdogManagerTest extends AbstractCarTestCase {
 
         ResourceOveruseConfigurationSubject.assertThat(Collections.singleton(configuration))
                 .containsExactlyElementsIn(Collections.singleton(expectedConfiguration));
+    }
+
+    @Test
+    public void testIoOveruseConfigurationBuilder() {
+        Map<String, PerStateBytes> packageSpecificThresholds = new HashMap<>();
+        packageSpecificThresholds.put("system_package", new PerStateBytes(1, 2, 3));
+        Map<String, PerStateBytes> appCategorySpecificThresholds = new HashMap<>();
+        appCategorySpecificThresholds.put(
+                ResourceOveruseConfiguration.APPLICATION_CATEGORY_TYPE_MEDIA,
+                new PerStateBytes(1, 2, 3));
+        IoOveruseConfiguration ioOveruseConfiguration = new IoOveruseConfiguration.Builder(
+                new PerStateBytes(6666666, 7777777, 8888888),
+                new HashMap<>(), new HashMap<>(), new ArrayList<>())
+                .setComponentLevelThresholds(new PerStateBytes(1, 2, 3))
+                .setPackageSpecificThresholds(packageSpecificThresholds)
+                .addPackageSpecificThresholds("vendor_package", new PerStateBytes(1, 2, 3))
+                .setAppCategorySpecificThresholds(appCategorySpecificThresholds)
+                .addAppCategorySpecificThresholds(
+                        ResourceOveruseConfiguration.APPLICATION_CATEGORY_TYPE_MAPS,
+                        new PerStateBytes(1, 2, 3))
+                .setSystemWideThresholds(
+                        new ArrayList<>(Collections.singletonList(
+                                new IoOveruseAlertThreshold(30, 35791394))))
+                .addSystemWideThresholds(new IoOveruseAlertThreshold(100, 234934))
+                .build();
+
+        IoOveruseConfiguration expectedIoOveruseConfiguration = new IoOveruseConfiguration.Builder(
+                new PerStateBytes(1, 2, 3),
+                Map.of("system_package", new PerStateBytes(1, 2, 3),
+                        "vendor_package", new PerStateBytes(1, 2, 3)),
+                Map.of(ResourceOveruseConfiguration.APPLICATION_CATEGORY_TYPE_MEDIA,
+                        new PerStateBytes(1, 2, 3),
+                        ResourceOveruseConfiguration.APPLICATION_CATEGORY_TYPE_MAPS,
+                        new PerStateBytes(1, 2, 3)),
+                List.of(new IoOveruseAlertThreshold(30, 35791394),
+                        new IoOveruseAlertThreshold(100, 234934)))
+                .build();
+
+        IoOveruseConfigurationSubject.assertThat(Collections.singleton(ioOveruseConfiguration))
+                .containsExactlyElementsIn(Collections.singleton(expectedIoOveruseConfiguration));
     }
 
     @Test
