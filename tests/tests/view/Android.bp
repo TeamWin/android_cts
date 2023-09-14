@@ -50,6 +50,7 @@ android_test {
         "cts-wm-util",
         "flag-junit",
         "android.view.flags-aconfig-java",
+        "android.view.inputmethod.flags-aconfig-java",
     ],
 
     jni_libs: [
