@@ -191,7 +191,7 @@ public final class TrustAgentInfoTest {
                     sConfig);
 
             assertThat(TestApis.devicePolicy().getTrustAgentConfiguration(TRUST_AGENT_COMPONENT))
-                    .isNull();
+                    .isEmpty();
         } finally {
             sDeviceState.dpc().devicePolicyManager().setTrustAgentConfiguration(
                     sDeviceState.dpc().componentName(), TRUST_AGENT_COMPONENT, null);
