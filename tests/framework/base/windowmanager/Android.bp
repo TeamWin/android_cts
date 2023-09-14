@@ -166,11 +166,6 @@ filegroup {
 }
 
 filegroup {
-    name: "CtsWindowManagerDeviceScvh-src",
-    srcs: ["src/**/scvh/*.java"],
-}
-
-filegroup {
     name: "CtsWindowManagerDeviceTaskFragment-src",
     srcs: ["src/**/taskfragment/*.java"],
 }
@@ -248,16 +243,6 @@ android_test {
     srcs: [
         ":CtsWindowManagerDeviceHelper-src",
         ":CtsWindowManagerDeviceTaskFragment-src",
-        ":CtsVerifierMockVrListenerServiceFiles",
-    ],
-}
-
-android_test {
-    name: "CtsWindowManagerDeviceScvh",
-    defaults: ["CtsWindowManagerDeviceDefault"],
-
-    srcs: [
-        ":CtsWindowManagerDeviceScvh-src",
         ":CtsVerifierMockVrListenerServiceFiles",
     ],
 }
