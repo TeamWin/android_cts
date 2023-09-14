@@ -17,7 +17,6 @@
 package android.car.cts.permissiontest.cluster;
 
 import static com.google.common.truth.Truth.assertThat;
-
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assume.assumeNotNull;
 import static org.mockito.ArgumentMatchers.any;
@@ -25,16 +24,14 @@ import static org.mockito.ArgumentMatchers.anyInt;
 
 import android.car.Car;
 import android.car.cluster.ClusterHomeManager;
+import android.car.cts.permissiontest.AbstractCarManagerPermissionTest;
 import android.content.Intent;
 import android.os.Bundle;
-
-import android.car.cts.permissiontest.AbstractCarManagerPermissionTest;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-// TODO(b/299522793): Consider removing the usage of mocks in CTS tests.
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 

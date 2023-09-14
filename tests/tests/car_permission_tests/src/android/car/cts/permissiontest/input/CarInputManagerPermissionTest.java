@@ -16,23 +16,19 @@
 package android.car.cts.permissiontest.input;
 
 import static com.google.common.truth.Truth.assertThat;
-
 import static org.junit.Assert.assertThrows;
-// TODO(b/299522793): Consider removing the usage of mocks in CTS tests.
 import static org.mockito.Mockito.mock;
 
 import android.car.Car;
 import android.car.CarOccupantZoneManager;
+import android.car.cts.permissiontest.AbstractCarManagerPermissionTest;
 import android.car.input.CarInputManager;
 import android.os.SystemClock;
 import android.view.KeyEvent;
 
-import android.car.cts.permissiontest.AbstractCarManagerPermissionTest;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-// TODO(b/299522793): Consider removing the usage of mocks in CTS tests.
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
