@@ -24,6 +24,7 @@ import static com.google.common.truth.Truth.assertThat;
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.Postsubmit;
+import com.android.bedstead.harrier.annotations.RequireHandheldDevice;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.roles.RoleContext;
 import com.android.bedstead.testapp.TestApp;
@@ -51,6 +52,7 @@ public final class DeviceIdentifiersTest {
 
     @ApiTest(apis = "android.telephony.TelephonyManager#getDeviceId")
     @Postsubmit(reason = "new test")
+    @RequireHandheldDevice
     @Test
     public void getDeviceId_smsAppReturnsSameValue() {
         String deviceId = TestApis.telephony().getDeviceId();
@@ -64,6 +66,7 @@ public final class DeviceIdentifiersTest {
 
     @ApiTest(apis = "android.telephony.TelephonyManager#getImei")
     @Postsubmit(reason = "new test")
+    @RequireHandheldDevice
     @Test
     public void getImei_withReadPrivilegedPhoneStatePermission_withReadPhoneStatePermission_returnsSameValue() {
         String deviceId = TestApis.telephony().getImei();
@@ -77,6 +80,7 @@ public final class DeviceIdentifiersTest {
 
     @ApiTest(apis = "android.telephony.TelephonyManager#getMeid")
     @Postsubmit(reason = "new test")
+    @RequireHandheldDevice
     @Test
     public void getMeid_withReadPrivilegedPhoneStatePermission_withReadPhoneStatePermission_returnsSameValue() {
         String deviceId = TestApis.telephony().getMeid();
@@ -90,6 +94,7 @@ public final class DeviceIdentifiersTest {
 
     @ApiTest(apis = "android.telephony.TelephonyManager#getSubscriberId")
     @Postsubmit(reason = "new test")
+    @RequireHandheldDevice
     @Test
     public void getSubscriberId_withReadPrivilegedPhoneStatePermission_withReadPhoneStatePermission_returnsSameValue() {
         String subscriberId = TestApis.telephony().getSubscriberId();
@@ -103,6 +108,7 @@ public final class DeviceIdentifiersTest {
 
     @ApiTest(apis = "android.telephony.TelephonyManager#getSimSerialNumber")
     @Postsubmit(reason = "new test")
+    @RequireHandheldDevice
     @Test
     public void getSimSerialNumber_withReadPrivilegedPhoneStatePermission_withReadPhoneStatePermission_returnsSameValue() {
         String simSerialNumber = TestApis.telephony().getSimSerialNumber();
@@ -116,6 +122,7 @@ public final class DeviceIdentifiersTest {
 
     @ApiTest(apis = "android.telephony.TelephonyManager#getNai")
     @Postsubmit(reason = "new test")
+    @RequireHandheldDevice
     @Test
     public void getNai_withReadPrivilegedPhoneStatePermission_withReadPhoneStatePermission_returnsSameValue() {
         String nai = TestApis.telephony().getNai();
