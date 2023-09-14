@@ -303,12 +303,14 @@ public class PinnedStackTests extends ActivityManagerTestBase {
     @FlakyTest(bugId = 300046278)
     @Test
     public void testEnterPipToOtherOrientation() {
+        assumeTrue("Skipping test: no orientation request support", supportsOrientationRequest());
         // Launch a portrait only app on the fullscreen stack
         launchActivity(TEST_ACTIVITY,
                 extraString(EXTRA_FIXED_ORIENTATION, String.valueOf(SCREEN_ORIENTATION_PORTRAIT)));
         // Launch the PiP activity fixed as landscape
         launchActivity(PIP_ACTIVITY,
                 extraString(EXTRA_PIP_ORIENTATION, String.valueOf(SCREEN_ORIENTATION_LANDSCAPE)));
+        mWmState.waitForActivityOrientation(PIP_ACTIVITY, Configuration.ORIENTATION_LANDSCAPE);
         // Enter PiP, and assert that the PiP is within bounds now that the device is back in
         // portrait
         mBroadcastActionTrigger.doAction(ACTION_ENTER_PIP);
