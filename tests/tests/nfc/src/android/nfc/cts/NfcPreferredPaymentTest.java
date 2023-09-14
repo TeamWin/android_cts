@@ -54,6 +54,7 @@ public class NfcPreferredPaymentTest {
     private NfcAdapter mAdapter;
     private CardEmulation mCardEmulation;
     private Context mContext;
+    private String mDefaultComponent;
 
     private boolean supportsHardware() {
         final PackageManager pm = InstrumentationRegistry.getContext().getPackageManager();
@@ -72,6 +73,8 @@ public class NfcPreferredPaymentTest {
         mAdapter = NfcAdapter.getDefaultAdapter(mContext);
         assertNotNull(mAdapter);
         mCardEmulation = CardEmulation.getInstance(mAdapter);
+        mDefaultComponent = Settings.Secure.getString(mContext.getContentResolver(),
+                NFC_PAYMENT_DEFAULT_COMPONENT);
         Settings.Secure.putString(mContext.getContentResolver(),
                 NFC_PAYMENT_DEFAULT_COMPONENT,
                 CtsNfcTestService.flattenToString());
@@ -80,8 +83,9 @@ public class NfcPreferredPaymentTest {
 
     @After
     public void tearDown() throws Exception {
+        if (!supportsHardware()) return;
         Settings.Secure.putString(mContext.getContentResolver(),
-                NFC_PAYMENT_DEFAULT_COMPONENT, "");
+                NFC_PAYMENT_DEFAULT_COMPONENT, mDefaultComponent);
     }
 
     /** Tests getAidsForPreferredPaymentService API */
