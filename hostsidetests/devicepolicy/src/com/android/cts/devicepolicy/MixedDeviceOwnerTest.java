@@ -138,19 +138,6 @@ public final class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
         super.testDelegatedCertInstaller();
     }
 
-    @FlakyTest(bugId = 137088260)
-    @Test
-    public void testWifi() throws Exception {
-        assumeHasWifiFeature();
-
-        executeDeviceTestMethod(".WifiTest", "testGetWifiMacAddress");
-        assertMetricsLogged(getDevice(), () -> {
-            executeDeviceTestMethod(".WifiTest", "testGetWifiMacAddress");
-        }, new DevicePolicyEventWrapper.Builder(EventId.GET_WIFI_MAC_ADDRESS_VALUE)
-                .setAdminPackageName(DEVICE_ADMIN_PKG)
-                .build());
-    }
-
     @Test
     public void testLockScreenInfo() throws Exception {
         executeDeviceTestClass(".LockScreenInfoTest");

@@ -298,14 +298,6 @@ public final class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
         }
     }
 
-    @FlakyTest(bugId = 137088260)
-    @Test
-    public void testWifi() throws Exception {
-        assumeHasWifiFeature();
-
-        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".WifiTest", "testGetWifiMacAddress", mUserId);
-    }
-
     @Test
     public void testFactoryResetProtectionPolicy() throws Exception {
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".FactoryResetProtectionPolicyTest", mUserId);

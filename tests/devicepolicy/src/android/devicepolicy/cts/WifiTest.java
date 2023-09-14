@@ -18,6 +18,8 @@ package android.devicepolicy.cts;
 
 import static android.app.admin.DevicePolicyManager.EXTRA_RESTRICTION;
 import static android.app.admin.DevicePolicyManager.WIFI_SECURITY_PERSONAL;
+import static android.net.wifi.WifiManager.STATUS_NETWORK_SUGGESTIONS_ERROR_ADD_INVALID;
+import static android.net.wifi.WifiManager.STATUS_NETWORK_SUGGESTIONS_SUCCESS;
 
 import static com.android.bedstead.nene.userrestrictions.CommonUserRestrictions.DISALLOW_ADD_WIFI_CONFIG;
 import static com.android.bedstead.nene.userrestrictions.CommonUserRestrictions.DISALLOW_CHANGE_WIFI_STATE;
@@ -33,6 +35,9 @@ import static org.testng.Assert.assertThrows;
 import android.app.admin.DevicePolicyManager;
 import android.app.admin.WifiSsidPolicy;
 import android.content.Intent;
+import android.net.wifi.WifiConfiguration;
+import android.net.wifi.WifiEnterpriseConfig;
+import android.net.wifi.WifiNetworkSuggestion;
 import android.net.wifi.WifiSsid;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
@@ -52,8 +57,11 @@ import com.android.bedstead.harrier.policies.DisallowConfigWifi;
 import com.android.bedstead.harrier.policies.DisallowWifiDirect;
 import com.android.bedstead.harrier.policies.DisallowWifiTethering;
 import com.android.bedstead.harrier.policies.Wifi;
+import com.android.bedstead.harrier.policies.AddNetwork;
 import com.android.bedstead.nene.TestApis;
+import com.android.bedstead.nene.certificates.Certificates;
 import com.android.compatibility.common.util.ApiTest;
+import com.android.compatibility.common.util.FakeKeys;
 import com.android.interactive.Step;
 import com.android.interactive.annotations.Interactive;
 import com.android.interactive.annotations.NotFullyAutomated;
@@ -73,12 +81,18 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.security.PrivateKey;
+import java.security.cert.Certificate;
+import java.security.cert.X509Certificate;
+import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 
 @RunWith(BedsteadJUnit4.class)
 public final class WifiTest {
 
-    @ClassRule @Rule
+    @ClassRule
+    @Rule
     public static final DeviceState sDeviceState = new DeviceState();
 
     private static final int WIFI_SECURITY_LEVEL = WIFI_SECURITY_PERSONAL;
@@ -88,6 +102,23 @@ public final class WifiTest {
 
     private static final DevicePolicyManager sLocalDevicePolicyManager =
             TestApis.context().instrumentedContext().getSystemService(DevicePolicyManager.class);
+
+    private static final String TEST_ALIAS = "test_alias";
+    private static final String TEST_SSID = "\"test_ssid\"";
+    private static final PrivateKey PRIVATE_KEY =
+            TestApis.certificates().generatePrivateKey(FakeKeys.FAKE_RSA_1.privateKey,
+                    Certificates.KeyAlgorithmType.RSA);
+    private static final Certificate CERTIFICATE =
+            TestApis.certificates().generateCertificate(FakeKeys.FAKE_RSA_1.caCertificate);
+    private static final Certificate[] CERTIFICATES = new Certificate[]{CERTIFICATE};
+
+    private static final WifiEnterpriseConfig sWifiEnterpriseConfig = enterpriseWifiConfiguration();
+    private static final WifiConfiguration sWifiConfiguration = wifiConfiguration();
+    private static final List<WifiNetworkSuggestion> sWifiNetworkSuggestions =
+            Collections.singletonList(new WifiNetworkSuggestion.Builder()
+                    .setSsid(TEST_SSID)
+                    .setWpa2EnterpriseConfig(sWifiEnterpriseConfig)
+                    .build());
 
     @CannotSetPolicyTest(policy = DisallowConfigWifi.class, includeNonDeviceAdminStates = false)
     @Postsubmit(reason = "new test")
@@ -179,7 +210,6 @@ public final class WifiTest {
             assertThat(TestApis.devicePolicy().userRestrictions().isSet(DISALLOW_CHANGE_WIFI_STATE))
                     .isTrue();
         } finally {
-
             sDeviceState.dpc().devicePolicyManager().clearUserRestriction(
                     sDeviceState.dpc().componentName(), DISALLOW_CHANGE_WIFI_STATE);
         }
@@ -524,9 +554,10 @@ public final class WifiTest {
     @CanSetPolicyTest(policy = Wifi.class)
     @Postsubmit(reason = "new test")
     @ApiTest(apis = "android.app.admin.DevicePolicyManager#getWifiMacAddress")
+    @EnsureWifiEnabled
     public void getWifiMacAddress_doesNotThrow() {
-        sDeviceState.dpc().devicePolicyManager()
-                .getWifiMacAddress(sDeviceState.dpc().componentName());
+        assertThat(sDeviceState.dpc().devicePolicyManager()
+                .getWifiMacAddress(sDeviceState.dpc().componentName())).isNotNull();
     }
 
     @CannotSetPolicyTest(policy = Wifi.class)
@@ -537,7 +568,7 @@ public final class WifiTest {
                 () -> sDeviceState.dpc().devicePolicyManager()
                         .setMinimumRequiredWifiSecurityLevel(WIFI_SECURITY_LEVEL));
     }
-    
+
     @PolicyAppliesTest(policy = Wifi.class)
     @Postsubmit(reason = "new test")
     @ApiTest(apis = {"android.app.admin.DevicePolicyManager#setMinimumRequiredWifiSecurityLevel",
@@ -683,5 +714,100 @@ public final class WifiTest {
                 DISALLOW_CONFIG_WIFI);
 
         assertThat(intent).isNull();
+    }
+
+    @ApiTest(apis = "android.app.admin.DevicePolicyManager#addNetwork")
+    @CanSetPolicyTest(policy = AddNetwork.class)
+    @Postsubmit(reason = "new test")
+    public void addNetwork_keychainKeyGranted_success() {
+        int networkId = -1;
+        try {
+            sDeviceState.dpc().devicePolicyManager().installKeyPair(
+                    sDeviceState.dpc().componentName(), PRIVATE_KEY, CERTIFICATES,
+                    TEST_ALIAS, /* requestAccess= */ false);
+            sDeviceState.dpc().devicePolicyManager().grantKeyPairToWifiAuth(TEST_ALIAS);
+
+            networkId = sDeviceState.dpc().wifiManager().addNetwork(sWifiConfiguration);
+
+            assertThat(networkId).isNotEqualTo(-1);
+        } finally {
+            sDeviceState.dpc().wifiManager().removeNetwork(networkId);
+            sDeviceState.dpc().devicePolicyManager().removeKeyPair(
+                    sDeviceState.dpc().componentName(), TEST_ALIAS);
+        }
+    }
+
+    @ApiTest(apis = "android.app.admin.DevicePolicyManager#addNetwork")
+    @CanSetPolicyTest(policy = AddNetwork.class)
+    @Postsubmit(reason = "new test")
+    public void addNetwork_keychainKeyNotGranted_failure() {
+        try {
+            sDeviceState.dpc().devicePolicyManager().installKeyPair(
+                    sDeviceState.dpc().componentName(), PRIVATE_KEY, CERTIFICATES,
+                    TEST_ALIAS, /* requestAccess= */ false);
+
+            assertThat(sDeviceState.dpc().wifiManager().addNetwork(sWifiConfiguration))
+                    .isEqualTo(-1);
+        } finally {
+            sDeviceState.dpc().devicePolicyManager().removeKeyPair(
+                    sDeviceState.dpc().componentName(), TEST_ALIAS);
+        }
+    }
+
+    @ApiTest(apis = "android.app.admin.DevicePolicyManager#addNetwork")
+    @CanSetPolicyTest(policy = Wifi.class)
+    @Postsubmit(reason = "new test")
+    public void addNetworkSuggestions_keychainKeyGranted_success() {
+        try {
+            sDeviceState.dpc().devicePolicyManager().installKeyPair(
+                    sDeviceState.dpc().componentName(), PRIVATE_KEY, CERTIFICATES,
+                    TEST_ALIAS, /* requestAccess= */ false);
+            sDeviceState.dpc().devicePolicyManager().grantKeyPairToWifiAuth(TEST_ALIAS);
+
+            assertThat(sDeviceState.dpc().wifiManager().addNetworkSuggestions(
+                    sWifiNetworkSuggestions))
+                    .isEqualTo(STATUS_NETWORK_SUGGESTIONS_SUCCESS);
+        } finally {
+            sDeviceState.dpc().wifiManager().removeNetworkSuggestions(sWifiNetworkSuggestions);
+            sDeviceState.dpc().devicePolicyManager().removeKeyPair(
+                    sDeviceState.dpc().componentName(), TEST_ALIAS);
+        }
+    }
+
+    @ApiTest(apis = "android.app.admin.DevicePolicyManager#addNetworkSuggestions")
+    @CanSetPolicyTest(policy = Wifi.class)
+    @Postsubmit(reason = "new test")
+    public void addNetworkSuggestions_keychainKeyNotGranted_invalid() {
+        try {
+            sDeviceState.dpc().devicePolicyManager().installKeyPair(
+                    sDeviceState.dpc().componentName(), PRIVATE_KEY, CERTIFICATES,
+                    TEST_ALIAS, /* requestAccess= */ false);
+
+            assertThat(sDeviceState.dpc().wifiManager().addNetworkSuggestions(
+                    sWifiNetworkSuggestions))
+                    .isEqualTo(STATUS_NETWORK_SUGGESTIONS_ERROR_ADD_INVALID);
+        } finally {
+            sDeviceState.dpc().wifiManager().removeNetworkSuggestions(sWifiNetworkSuggestions);
+            sDeviceState.dpc().devicePolicyManager().removeKeyPair(
+                    sDeviceState.dpc().componentName(), TEST_ALIAS);
+        }
+    }
+
+    private static WifiEnterpriseConfig enterpriseWifiConfiguration() {
+        WifiEnterpriseConfig enterpriseConfig = new WifiEnterpriseConfig();
+        enterpriseConfig.setEapMethod(WifiEnterpriseConfig.Eap.TLS);
+        enterpriseConfig.setDomainSuffixMatch("some-domain.com");
+        enterpriseConfig.setIdentity("user");
+        enterpriseConfig.setCaCertificate((X509Certificate) CERTIFICATE);
+        enterpriseConfig.setClientKeyPairAlias(TEST_ALIAS);
+        return enterpriseConfig;
+    }
+
+    private static WifiConfiguration wifiConfiguration() {
+        WifiConfiguration config = new WifiConfiguration();
+        config.SSID = TEST_SSID;
+        config.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.WPA_EAP);
+        config.enterpriseConfig = enterpriseWifiConfiguration();
+        return config;
     }
 }

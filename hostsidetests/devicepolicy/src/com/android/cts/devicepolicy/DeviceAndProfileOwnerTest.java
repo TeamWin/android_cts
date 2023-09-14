@@ -1192,34 +1192,6 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
                 "testAdminCannotGrantSensorsPermission");
     }
 
-    @Test
-    public void testAddNetworkWithKeychainKey_granted() throws Exception {
-        assumeHasWifiFeature();
-
-        executeDeviceTestMethod(".WifiTest", "testAddNetworkWithKeychainKey_granted");
-    }
-
-    @Test
-    public void testAddNetworkSuggestionWithKeychainKey_granted() throws Exception {
-        assumeHasWifiFeature();
-
-        executeDeviceTestMethod(".WifiTest", "testAddNetworkSuggestionWithKeychainKey_granted");
-    }
-
-    @Test
-    public void testAddNetworkSuggestionWithKeychainKey_notGranted() throws Exception {
-        assumeHasWifiFeature();
-
-        executeDeviceTestMethod(".WifiTest", "testAddNetworkSuggestionWithKeychainKey_notGranted");
-    }
-
-    @Test
-    public void testAddNetworkWithKeychainKey_notGranted() throws Exception {
-        assumeHasWifiFeature();
-
-        executeDeviceTestMethod(".WifiTest", "testAddNetworkWithKeychainKey_notGranted");
-    }
-
     /**
      * Executes a test class on device. Prior to running, turn off background data usage
      * restrictions, and restore the original restrictions after the test.
