@@ -80,7 +80,7 @@ public class InProcessImeTest extends EndToEndImeTestBase {
 
     @After
     public final void resetIme() {
-        SystemUtil.runShellCommand("ime reset");
+        SystemUtil.runShellCommandOrThrow("ime reset");
     }
 
     /**

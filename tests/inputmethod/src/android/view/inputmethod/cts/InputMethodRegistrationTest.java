@@ -17,6 +17,7 @@
 package android.view.inputmethod.cts;
 
 import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
+import static com.android.compatibility.common.util.SystemUtil.runShellCommandOrThrow;
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
 
 import static com.google.common.truth.Truth.assertWithMessage;
@@ -73,7 +74,7 @@ public class InputMethodRegistrationTest {
     public static void tearDownClass() {
         Log.v("InputMethodRegistrationTest", "Uninstalling package: " + LARGE_RESOURCE_IME_PACKAGE);
         uninstallLargeResourceIme();
-        runShellCommand("ime reset");
+        runShellCommandOrThrow("ime reset");
     }
 
     /**
@@ -244,18 +245,18 @@ public class InputMethodRegistrationTest {
     }
 
     private static void installLargeResourceIme() {
-        runShellCommand("pm install -r --user " + Process.myUserHandle().getIdentifier() + " "
-                + InputMethodRegistrationTest.LARGE_RESOURCE_IME_APK_PATH);
+        runShellCommandOrThrow("pm install -r --user " + Process.myUserHandle().getIdentifier()
+                + " " + InputMethodRegistrationTest.LARGE_RESOURCE_IME_APK_PATH);
     }
 
     private static void uninstallLargeResourceIme() {
-        runShellCommand("pm uninstall --user " + Process.myUserHandle().getIdentifier() + " "
+        runShellCommandOrThrow("pm uninstall --user " + Process.myUserHandle().getIdentifier() + " "
                 + InputMethodRegistrationTest.LARGE_RESOURCE_IME_PACKAGE);
     }
 
     private void enableImes(String... ids) {
         for (String id : ids) {
-            runShellCommand("ime enable " + id);
+            runShellCommandOrThrow("ime enable " + id);
         }
     }
 }
