@@ -16,7 +16,6 @@
 
 package android.devicepolicy.cts;
 
-import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
 import static android.app.admin.DevicePolicyManager.ACTION_DATA_SHARING_RESTRICTION_APPLIED;
 import static android.app.admin.DevicePolicyManager.EXTRA_RESTRICTION;
 import static android.app.admin.DevicePolicyManager.FLAG_MANAGED_CAN_ACCESS_PARENT;
@@ -28,7 +27,7 @@ import static android.content.pm.PackageManager.MATCH_DEFAULT_ONLY;
 import static android.os.UserManager.DISALLOW_SHARE_INTO_MANAGED_PROFILE;
 
 import static com.android.bedstead.harrier.UserType.WORK_PROFILE;
-import static com.android.bedstead.nene.userrestrictions.CommonUserRestrictions.DISALLOW_ADJUST_VOLUME;
+import static com.android.bedstead.nene.permissions.CommonPermissions.INTERACT_ACROSS_USERS_FULL;
 import static com.android.bedstead.nene.userrestrictions.CommonUserRestrictions.DISALLOW_CROSS_PROFILE_COPY_PASTE;
 import static com.android.queryable.queries.ActivityQuery.activity;
 import static com.android.queryable.queries.IntentFilterQuery.intentFilter;
@@ -50,10 +49,6 @@ import com.android.bedstead.harrier.annotations.EnsureHasUserRestriction;
 import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
 import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.RequireRunOnWorkProfile;
-import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
-import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
-import com.android.bedstead.harrier.policies.DisallowAdjustVolume;
-import com.android.bedstead.harrier.policies.DisallowCrossProfileCopyPaste;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.permissions.PermissionContext;
 import com.android.bedstead.nene.users.UserReference;

@@ -74,7 +74,6 @@ import android.os.Bundle;
 import android.os.Parcelable;
 import android.os.PersistableBundle;
 import android.os.UserHandle;
-import android.os.UserManager;
 import android.provider.Settings;
 
 import com.android.bedstead.deviceadminapp.DeviceAdminApp;
@@ -87,7 +86,6 @@ import com.android.bedstead.harrier.annotations.EnsureHasNoWorkProfile;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.EnsureHasSecondaryUser;
 import com.android.bedstead.harrier.annotations.EnsureHasUserRestriction;
-import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
 import com.android.bedstead.harrier.annotations.EnsureIsNotDemoDevice;
 import com.android.bedstead.harrier.annotations.PermissionTest;
 import com.android.bedstead.harrier.annotations.Postsubmit;
@@ -425,7 +423,6 @@ public final class ProvisioningTest {
         }
     }
 
-    @EnsureHasWorkProfile
     @RequireFeature(FEATURE_DEVICE_ADMIN)
     @RequireFeature(FEATURE_MANAGED_USERS)
     @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
@@ -991,7 +988,6 @@ public final class ProvisioningTest {
     @Postsubmit(reason = "New test")
     @Test
     @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
-    @EnsureHasWorkProfile
     @EnsureHasNoProfileOwner
     @ApiTest(apis = "android.app.admin.DevicePolicyManager#checkProvisioningPrecondition")
     public void checkProvisioningPreCondition_actionPO_withWorkProfile_returnsCanNotAddManagedProfile() {
@@ -1362,7 +1358,6 @@ public final class ProvisioningTest {
 
     @Postsubmit(reason = "new test")
     @Test
-    @EnsureHasWorkProfile
     @EnsureDoesNotHavePermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
     public void finalizeWorkProfileProvisioning_withoutPermission_throwsException() {
         assertThrows(SecurityException.class, () ->
@@ -1412,7 +1407,6 @@ public final class ProvisioningTest {
 
     @Postsubmit(reason = "new test")
     @Test
-    @EnsureHasWorkProfile
     @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
     public void finalizeWorkProfileProvisioning_managedProfileUserWithoutProfileOwner_throwsException() {
         RemoteDpc dpc = sDeviceState.profileOwner(sDeviceState.workProfile());
@@ -1432,7 +1426,6 @@ public final class ProvisioningTest {
     @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
     @EnsureHasNoProfileOwner
     @EnsureHasNoDeviceOwner
-    @EnsureHasWorkProfile
     public void finalizeWorkProfileProvisioning_valid_sendsBroadcast() {
         try (TestAppInstance personalInstance = RemoteDpc.forDevicePolicyController(
                 TestApis.devicePolicy().getProfileOwner(
@@ -1458,7 +1451,6 @@ public final class ProvisioningTest {
     @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
     @EnsureHasNoProfileOwner
     @EnsureHasNoDeviceOwner
-    @EnsureHasWorkProfile
     public void finalizeWorkProfileProvisioning_withAccount_broadcastIncludesAccount() {
         try (TestAppInstance personalInstance = RemoteDpc.forDevicePolicyController(
                 TestApis.devicePolicy().getProfileOwner(
@@ -1501,7 +1493,6 @@ public final class ProvisioningTest {
 
     @Test
     @RequireFeature(FEATURE_MANAGED_USERS)
-    @EnsureHasWorkProfile(dpcIsPrimary = true)
     @ApiTest(apis = "android.app.admin.DevicePolicyManager#isProvisioningAllowed")
     public void isProvisioningAllowed_profileIsManaged_returnsFalse() {
         assertThat(sDevicePolicyManager

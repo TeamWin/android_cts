@@ -16,9 +16,9 @@
 
 package android.devicepolicy.cts;
 
-import static android.Manifest.permission.CREATE_USERS;
-import static android.Manifest.permission.INTERACT_ACROSS_USERS;
-import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
+import static com.android.bedstead.nene.permissions.CommonPermissions.CREATE_USERS;
+import static com.android.bedstead.nene.permissions.CommonPermissions.INTERACT_ACROSS_USERS;
+import static com.android.bedstead.nene.permissions.CommonPermissions.INTERACT_ACROSS_USERS_FULL;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
