@@ -2485,7 +2485,7 @@
         Swipe it to either side to dismiss it.\n
         Pass the test if it can be dismissed from the lock screen.</string>
     <string name="non_dismissable_notif_from_the_ls">Lock the screen and find the NotifDismissTest notification.\n
-        Try to dismiss it. Verify that it is non-dismissible.\n
+        Swipe it to either side to dismiss it. Verify that it is non-dismissible.\n
         Fail the test if it could be dismissed from the lock screen.</string>
     <string name="fsi_test">Notification Full Screen Intent Test</string>
     <string name="fsi_test_info">This test checks the behavior of Notifications
