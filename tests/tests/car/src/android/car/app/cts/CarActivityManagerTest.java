@@ -23,6 +23,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 import android.Manifest;
@@ -188,6 +189,10 @@ public class CarActivityManagerTest {
     @ApiTest(apis = {"android.car.app.CarActivityManager#moveRootTaskToDisplay(int,int)",
             "android.car.builtin.app.ActivityManagerHelper#moveRootTaskToDisplay(int,int)"})
     public void testMoveRootTaskToDisplay() throws Exception {
+        // TODO(b/300466988): Create a new API that can move a leaf task to display even when there
+        // are extra nested root tasks in the hierarchy.
+        assumeFalse(hasSplitscreenMultitaskingFeature());
+
         try (VirtualDisplaySession session = new VirtualDisplaySession()) {
             // create a secondary virtual display
             Display secondaryDisplay = session.createDisplay(mContext,
@@ -322,5 +327,14 @@ public class CarActivityManagerTest {
     }
 
     public static final class BlankActivity extends Activity {
+    }
+
+    /**
+     * Checks whether the device has automotive split-screen multitasking feature enabled
+     */
+    private boolean hasSplitscreenMultitaskingFeature() {
+        return mContext.getPackageManager()
+                .hasSystemFeature(/* PackageManager.FEATURE_CAR_SPLITSCREEN_MULTITASKING */
+                        "android.software.car.splitscreen_multitasking");
     }
 }
