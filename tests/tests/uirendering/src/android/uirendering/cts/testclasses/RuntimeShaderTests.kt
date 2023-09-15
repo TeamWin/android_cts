@@ -36,6 +36,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.MediumTest
 import com.android.compatibility.common.util.ApiTest
 import org.junit.Assert
+import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -225,6 +226,7 @@ class RuntimeShaderTests : ActivityTestBase() {
     }
 
     @Test
+    @Ignore("Evaluating null shaders is undefined (and changing) behavior. b/40045168, b/300305231")
     fun testDefaultInputShader() {
         val paint = Paint()
         paint.color = Color.BLUE
@@ -238,6 +240,7 @@ class RuntimeShaderTests : ActivityTestBase() {
     }
 
     @Test
+    @Ignore("Evaluating null shaders is undefined (and changing) behavior. b/40045168, b/300305231")
     fun testDefaultInputShaderWithPaintAlpha() {
         val paint = Paint()
         paint.color = Color.argb(0.5f, 0.0f, 0.0f, 1.0f)
