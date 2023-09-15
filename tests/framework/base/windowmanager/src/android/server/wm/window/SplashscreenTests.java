@@ -223,6 +223,10 @@ public class SplashscreenTests extends ActivityManagerTestBase {
         } else {
             appBounds = new Rect(startingWindow.getFrame());
         }
+
+        insetGivenFrame(startingWindow, WindowManagerState.InsetsSource::isCaptionBar,
+                appBounds);
+
         assertFalse("Couldn't find splash screen bounds. Impossible to assert the colors",
                 appBounds.isEmpty());
 
