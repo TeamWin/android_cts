@@ -150,26 +150,6 @@ public final class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
     }
 
     @Test
-    public void testFactoryResetProtectionPolicy() throws Exception {
-        try {
-            executeDeviceTestMethod(".DeviceFeatureUtils", "testHasFactoryResetProtectionPolicy");
-        } catch (AssertionError e) {
-            // Unable to continue running tests because factory reset protection policy is not
-            // supported on the device
-            return;
-        } catch (Exception e) {
-            // Also skip test in case of other exceptions
-            return;
-        }
-
-        assertMetricsLogged(getDevice(), () -> {
-            executeDeviceTestClass(".FactoryResetProtectionPolicyTest");
-        }, new DevicePolicyEventWrapper.Builder(EventId.SET_FACTORY_RESET_PROTECTION_VALUE)
-                .setAdminPackageName(DEVICE_ADMIN_PKG)
-                .build());
-    }
-
-    @Test
     public void testCommonCriteriaMode() throws Exception {
         executeDeviceTestClass(".CommonCriteriaModeTest");
     }

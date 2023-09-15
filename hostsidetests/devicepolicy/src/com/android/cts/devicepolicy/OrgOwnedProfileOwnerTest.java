@@ -298,11 +298,6 @@ public final class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
         }
     }
 
-    @Test
-    public void testFactoryResetProtectionPolicy() throws Exception {
-        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".FactoryResetProtectionPolicyTest", mUserId);
-    }
-
     @LargeTest
     @Test
     @Ignore("b/145932189")

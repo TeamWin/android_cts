@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 The Android Open Source Project
+ * Copyright (C) 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
-package com.android.cts.deviceandprofileowner;
+package com.android.bedstead.harrier.annotations;
 
-import static com.google.common.truth.Truth.assertThat;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-public class DeviceFeatureUtils extends BaseDeviceAdminTest {
-
-    public void testHasFactoryResetProtectionPolicy() {
-        assertThat(mDevicePolicyManager.isFactoryResetProtectionPolicySupported()).isTrue();
-    }
+@Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE, ElementType.TYPE})
+@Retention(RetentionPolicy.RUNTIME)
+public @interface RequireFactoryResetProtectionPolicySupported {
 }
