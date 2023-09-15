@@ -566,12 +566,15 @@ def get_cam_rotations(frames, facing, h, file_name_stem,
   rot_per_frame_max = max(abs(rotations))
   logging.debug('Max rotation in frame: %.2f degrees',
                 rot_per_frame_max*_RADS_TO_DEGS)
-  if rot_per_frame_max < _ROTATION_PER_FRAME_MIN and not stabilized_video:
-    logging.debug('Checking camera rotations on video.')
-    raise AssertionError(f'Device not moved enough: {rot_per_frame_max:.3f} '
-                         f'movement. THRESH: {_ROTATION_PER_FRAME_MIN} rads.')
-  else:
+  if stabilized_video:
     logging.debug('Skipped camera rotation check due to stabilized video.')
+  else:
+    if rot_per_frame_max < _ROTATION_PER_FRAME_MIN:
+      raise AssertionError(f'Device not moved enough: {rot_per_frame_max:.3f} '
+                           f'movement. THRESH: {_ROTATION_PER_FRAME_MIN} rads.')
+    else:
+      logging.debug('Device movement exceeds %.2f degrees',
+                    _ROTATION_PER_FRAME_MIN*_RADS_TO_DEGS)
   return rotations
 
 
