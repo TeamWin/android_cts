@@ -16,19 +16,30 @@
 
 package android.car.cts;
 
+import static android.car.Car.PERMISSION_CONTROL_REMOTE_ACCESS;
+
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assume.assumeFalse;
+import static org.junit.Assume.assumeNoException;
 import static org.junit.Assume.assumeTrue;
 
 import android.car.Car;
+import android.car.feature.Flags;
 import android.car.remoteaccess.CarRemoteAccessManager;
 import android.car.remoteaccess.CarRemoteAccessManager.CompletableRemoteTaskFuture;
+import android.car.remoteaccess.CarRemoteAccessManager.InVehicleTaskScheduler;
+import android.car.remoteaccess.CarRemoteAccessManager.InVehicleTaskSchedulerException;
 import android.car.remoteaccess.CarRemoteAccessManager.RemoteTaskClientCallback;
+import android.car.remoteaccess.CarRemoteAccessManager.ScheduleInfo;
 import android.car.remoteaccess.RemoteTaskClientRegistrationInfo;
+import android.car.test.PermissionsCheckerRule.EnsureHasPermission;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -42,9 +53,14 @@ import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.ProtoUtils;
 import com.android.internal.annotations.GuardedBy;
 
+import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Executor;
 
 @AppModeFull(reason = "Instant Apps cannot get car related permissions")
@@ -56,9 +72,17 @@ public final class CarRemoteAccessManagerTest extends AbstractCarTestCase {
     private static final String DUMP_COMMAND =
             "dumpsys car_service --services CarRemoteAccessService --proto";
     private static final String SERVERLESS_CLIENT_ID = "TestServerlessClientId";
+    private static final String TEST_SCHEDULE_ID_1 = "TestScheduleId1";
+    private static final String TEST_SCHEDULE_ID_2 = "TestScheduleId2";
+    private static final byte[] TEST_TASK_DATA = "test data".getBytes();
 
     private Executor mExecutor;
     private CarRemoteAccessManager mCarRemoteAccessManager;
+    private boolean mServerlessRemoteTaskClientSet = false;
+    private String mPackageName;
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
 
     @Before
     public void setUp() throws Exception {
@@ -69,26 +93,14 @@ public final class CarRemoteAccessManagerTest extends AbstractCarTestCase {
         mCarRemoteAccessManager = (CarRemoteAccessManager) getCar()
                 .getCarManager(Car.CAR_REMOTE_ACCESS_SERVICE);
         assertThat(mCarRemoteAccessManager).isNotNull();
+        mPackageName = mContext.getPackageName();
     }
 
-    private boolean isTestPkgServerlessClient() {
-        try {
-            CarRemoteAccessDumpProto dump = ProtoUtils.getProto(
-                    InstrumentationRegistry.getInstrumentation().getUiAutomation(),
-                    CarRemoteAccessDumpProto.class, DUMP_COMMAND);
-
-            for  (int i = 0; i < dump.getServerlessClientsCount(); i++) {
-                ServerlessClientInfo serverlessClientInfo = dump.getServerlessClients(i);
-                if (serverlessClientInfo.getPackageName().equals(mContext.getPackageName())) {
-                    return true;
-                }
-            }
-        } catch (Exception e) {
-            Log.w(TAG, "Failed to check whether this test is a serverless remote task client"
-                    + ", default to false", e);
+    @After
+    public void tearDown() throws Exception {
+        if (mServerlessRemoteTaskClientSet) {
+            mCarRemoteAccessManager.removeServerlessRemoteTaskClient(mPackageName);
         }
-
-        return false;
     }
 
     @Test
@@ -113,24 +125,17 @@ public final class CarRemoteAccessManagerTest extends AbstractCarTestCase {
     @ApiTest(apis = {
             "android.car.remoteaccess.CarRemoteAccessManager#setRemoteTaskClient"
     })
+    @EnsureHasPermission(PERMISSION_CONTROL_REMOTE_ACCESS)
+    @RequiresFlagsEnabled(Flags.FLAG_SERVERLESS_REMOTE_ACCESS)
     public void testSetRemoteTaskClient_serverlessClient() throws Exception {
-        String packageName = mContext.getPackageName();
-        mCarRemoteAccessManager.addServerlessRemoteTaskClient(packageName, SERVERLESS_CLIENT_ID);
+        setSelfAsServerlessClient();
 
-        assertWithMessage(
-                "This test requires the test package to be a serverless remote task client").that(
-                isTestPkgServerlessClient()).isTrue();
+        RemoteTaskClientCallbackImpl callback = new RemoteTaskClientCallbackImpl();
 
-        try {
-            RemoteTaskClientCallbackImpl callback = new RemoteTaskClientCallbackImpl();
+        mCarRemoteAccessManager.setRemoteTaskClient(mExecutor, callback);
 
-            mCarRemoteAccessManager.setRemoteTaskClient(mExecutor, callback);
-
-            PollingCheck.waitFor(CALLBACK_WAIT_TIME_MS,
-                    () -> callback.isServerlessClientRegistered());
-        } finally {
-            mCarRemoteAccessManager.removeServerlessRemoteTaskClient(packageName);
-        }
+        PollingCheck.waitFor(CALLBACK_WAIT_TIME_MS,
+                () -> callback.isServerlessClientRegistered());
     }
 
     /**
@@ -184,12 +189,248 @@ public final class CarRemoteAccessManagerTest extends AbstractCarTestCase {
     @Test
     @ApiTest(apis = {
             "android.car.remoteaccess.CarRemoteAccessManager#isTaskScheduleSupported",
+            "android.car.remoteaccess.CarRemoteAccessManager#getInVehicleTaskScheduler",
     })
-    public void testScheduleTask() {
-        assumeTrue("Task scheduling is not supported, skipping the test",
+    @EnsureHasPermission(PERMISSION_CONTROL_REMOTE_ACCESS)
+    @RequiresFlagsEnabled(Flags.FLAG_SERVERLESS_REMOTE_ACCESS)
+    public void testGetInVehicleTaskScheduler_notSupported() {
+        assumeFalse("Task scheduling is supported, skipping the test",
                 mCarRemoteAccessManager.isTaskScheduleSupported());
 
-        // TODO(b/282792374): Implement this.
+        setSelfAsServerlessClient();
+
+        InVehicleTaskScheduler taskScheduler = mCarRemoteAccessManager.getInVehicleTaskScheduler();
+        assertWithMessage("InVehicleTaskScheduler must be null when task schedule is not supported")
+                .that(taskScheduler).isNull();
+    }
+
+    @Test
+    @ApiTest(apis = {
+            "android.car.remoteaccess.CarRemoteAccessManager#isTaskScheduleSupported",
+            "android.car.remoteaccess.CarRemoteAccessManager#getInVehicleTaskScheduler",
+    })
+    @EnsureHasPermission(PERMISSION_CONTROL_REMOTE_ACCESS)
+    @RequiresFlagsEnabled(Flags.FLAG_SERVERLESS_REMOTE_ACCESS)
+    public void testGetInVehicleTaskScheduler_isSupported() {
+        assumeTaskSchedulingSupported();
+        setSelfAsServerlessClient();
+
+        InVehicleTaskScheduler taskScheduler = mCarRemoteAccessManager.getInVehicleTaskScheduler();
+        assertWithMessage("InVehicleTaskScheduler must not be null when task schedule is supported")
+                .that(taskScheduler).isNotNull();
+    }
+
+    @Test
+    @ApiTest(apis = {
+            "android.car.remoteaccess.CarRemoteAccessManager#isTaskScheduleSupported",
+            "android.car.remoteaccess.CarRemoteAccessManager#getInVehicleTaskScheduler",
+            "android.car.remoteaccess.CarRemoteAccessManager.InVehicleTaskScheduler#scheduleTask",
+            "android.car.remoteaccess.CarRemoteAccessManager.InVehicleTaskScheduler#"
+                    + "unscheduleAllTasks",
+    })
+    @EnsureHasPermission(PERMISSION_CONTROL_REMOTE_ACCESS)
+    @RequiresFlagsEnabled(Flags.FLAG_SERVERLESS_REMOTE_ACCESS)
+    public void testScheduleTask() throws Exception {
+        assumeTaskSchedulingSupported();
+        setSelfAsServerlessClient();
+
+        InVehicleTaskScheduler taskScheduler = mCarRemoteAccessManager.getInVehicleTaskScheduler();
+        // Schedule the task to be executed 30s later.
+        long startTimeInEpochSeconds = System.currentTimeMillis() / 1000 + 30;
+        ScheduleInfo scheduleInfo = new ScheduleInfo.Builder(TEST_SCHEDULE_ID_1, TEST_TASK_DATA,
+                startTimeInEpochSeconds).build();
+        try {
+            taskScheduler.scheduleTask(scheduleInfo);
+        } catch (InVehicleTaskSchedulerException e) {
+            assumeNoException("Assume task schedule to succeed", e);
+        }
+
+        taskScheduler.unscheduleAllTasks();
+    }
+
+    @Test
+    @ApiTest(apis = {
+            "android.car.remoteaccess.CarRemoteAccessManager#isTaskScheduleSupported",
+            "android.car.remoteaccess.CarRemoteAccessManager#getInVehicleTaskScheduler",
+            "android.car.remoteaccess.CarRemoteAccessManager.InVehicleTaskScheduler#scheduleTask",
+            "android.car.remoteaccess.CarRemoteAccessManager.InVehicleTaskScheduler#"
+                    + "unscheduleAllTasks",
+    })
+    @EnsureHasPermission(PERMISSION_CONTROL_REMOTE_ACCESS)
+    @RequiresFlagsEnabled(Flags.FLAG_SERVERLESS_REMOTE_ACCESS)
+    public void testScheduleTask_duplicateScheduleIdMustThrowException() throws Exception {
+        assumeTaskSchedulingSupported();
+        setSelfAsServerlessClient();
+
+        InVehicleTaskScheduler taskScheduler = mCarRemoteAccessManager.getInVehicleTaskScheduler();
+        // Schedule the task to be executed 30s later.
+        long startTimeInEpochSeconds = System.currentTimeMillis() / 1000 + 30;
+        ScheduleInfo scheduleInfo = new ScheduleInfo.Builder(TEST_SCHEDULE_ID_1, TEST_TASK_DATA,
+                startTimeInEpochSeconds).build();
+        try {
+            taskScheduler.scheduleTask(scheduleInfo);
+        } catch (InVehicleTaskSchedulerException e) {
+            assumeNoException("Assume task schedule to succeed", e);
+        }
+
+        try {
+            // Schedule the same task twice must cause IllegalArgumentException.
+            assertThrows(IllegalArgumentException.class, () -> taskScheduler.scheduleTask(
+                    scheduleInfo));
+        } finally {
+            taskScheduler.unscheduleAllTasks();
+        }
+    }
+
+    @Test
+    @ApiTest(apis = {
+            "android.car.remoteaccess.CarRemoteAccessManager#isTaskScheduleSupported",
+            "android.car.remoteaccess.CarRemoteAccessManager#getInVehicleTaskScheduler",
+            "android.car.remoteaccess.CarRemoteAccessManager.InVehicleTaskScheduler#scheduleTask",
+            "android.car.remoteaccess.CarRemoteAccessManager.InVehicleTaskScheduler#"
+                    + "unscheduleAllTasks",
+            "android.car.remoteaccess.CarRemoteAccessManager.InVehicleTaskScheduler#"
+                    + "isTaskScheduled",
+    })
+    @EnsureHasPermission(PERMISSION_CONTROL_REMOTE_ACCESS)
+    @RequiresFlagsEnabled(Flags.FLAG_SERVERLESS_REMOTE_ACCESS)
+    public void testIsTaskScheduled() throws Exception {
+        assumeTaskSchedulingSupported();
+        setSelfAsServerlessClient();
+
+        InVehicleTaskScheduler taskScheduler = mCarRemoteAccessManager.getInVehicleTaskScheduler();
+        // Schedule the task to be executed 30s later.
+        long startTimeInEpochSeconds = System.currentTimeMillis() / 1000 + 30;
+        ScheduleInfo scheduleInfo = new ScheduleInfo.Builder(TEST_SCHEDULE_ID_1, TEST_TASK_DATA,
+                startTimeInEpochSeconds).build();
+        try {
+            taskScheduler.scheduleTask(scheduleInfo);
+        } catch (InVehicleTaskSchedulerException e) {
+            assumeNoException("Assume task schedule to succeed", e);
+        }
+
+        try {
+            expectWithMessage("isTaskScheduled for scheduled task").that(
+                    taskScheduler.isTaskScheduled(TEST_SCHEDULE_ID_1)).isTrue();
+            expectWithMessage("isTaskScheduled for unscheduled task").that(
+                    taskScheduler.isTaskScheduled(TEST_SCHEDULE_ID_2)).isFalse();
+        } finally {
+            taskScheduler.unscheduleAllTasks();
+        }
+    }
+
+    @Test
+    @ApiTest(apis = {
+            "android.car.remoteaccess.CarRemoteAccessManager#isTaskScheduleSupported",
+            "android.car.remoteaccess.CarRemoteAccessManager#getInVehicleTaskScheduler",
+            "android.car.remoteaccess.CarRemoteAccessManager.InVehicleTaskScheduler#scheduleTask",
+            "android.car.remoteaccess.CarRemoteAccessManager.InVehicleTaskScheduler#"
+                    + "unscheduleAllTasks",
+            "android.car.remoteaccess.CarRemoteAccessManager.InVehicleTaskScheduler#"
+                    + "getAllScheduledTasks",
+    })
+    @EnsureHasPermission(PERMISSION_CONTROL_REMOTE_ACCESS)
+    @RequiresFlagsEnabled(Flags.FLAG_SERVERLESS_REMOTE_ACCESS)
+    public void testGetAllScheduledTasks() throws Exception {
+        assumeTaskSchedulingSupported();
+        setSelfAsServerlessClient();
+
+        InVehicleTaskScheduler taskScheduler = mCarRemoteAccessManager.getInVehicleTaskScheduler();
+        // Schedule the task to be executed 30s later.
+        long startTimeInEpochSeconds = System.currentTimeMillis() / 1000 + 30;
+        ScheduleInfo scheduleInfo1 = new ScheduleInfo.Builder(TEST_SCHEDULE_ID_1, TEST_TASK_DATA,
+                startTimeInEpochSeconds).build();
+        ScheduleInfo scheduleInfo2 = new ScheduleInfo.Builder(TEST_SCHEDULE_ID_2, TEST_TASK_DATA,
+                startTimeInEpochSeconds).setCount(2).setPeriodic(Duration.ofSeconds(30)).build();
+
+        try {
+            taskScheduler.unscheduleAllTasks();
+            taskScheduler.scheduleTask(scheduleInfo1);
+            taskScheduler.scheduleTask(scheduleInfo2);
+        } catch (InVehicleTaskSchedulerException e) {
+            assumeNoException("Assume task schedule to succeed", e);
+        }
+
+        try {
+            List<ScheduleInfo> scheduleInfo = taskScheduler.getAllScheduledTasks();
+
+            assertWithMessage("Must return two scheduled tasks").that(scheduleInfo).hasSize(2);
+            List<String> gotScheduleIds = new ArrayList<>();
+            for (int i = 0; i < scheduleInfo.size(); i++) {
+                ScheduleInfo info = scheduleInfo.get(i);
+                expectWithMessage("Got expected scheduleId").that(info.getScheduleId())
+                        .isAnyOf(TEST_SCHEDULE_ID_1, TEST_SCHEDULE_ID_2);
+                gotScheduleIds.add(info.getScheduleId());
+                expectWithMessage("Got expected task data").that(info.getTaskData()).isEqualTo(
+                        TEST_TASK_DATA);
+                if (info.getScheduleId().equals(TEST_SCHEDULE_ID_1)) {
+                    expectWithMessage("Got expected count").that(info.getCount()).isEqualTo(1);
+                    expectWithMessage("Got expected periodic").that(info.getPeriodic()).isEqualTo(
+                            Duration.ZERO);
+                } else {
+                    expectWithMessage("Got expected count").that(info.getCount()).isEqualTo(2);
+                    expectWithMessage("Got expected periodic").that(info.getPeriodic()).isEqualTo(
+                            Duration.ofSeconds(30));
+                }
+            }
+            expectWithMessage("Got all expected schedule Ids").that(gotScheduleIds).containsExactly(
+                    TEST_SCHEDULE_ID_1, TEST_SCHEDULE_ID_2);
+        } finally {
+            taskScheduler.unscheduleAllTasks();
+        }
+    }
+
+    @Test
+    @ApiTest(apis = {
+            "android.car.remoteaccess.CarRemoteAccessManager#isTaskScheduleSupported",
+            "android.car.remoteaccess.CarRemoteAccessManager#getInVehicleTaskScheduler",
+            "android.car.remoteaccess.CarRemoteAccessManager.InVehicleTaskScheduler#scheduleTask",
+            "android.car.remoteaccess.CarRemoteAccessManager.InVehicleTaskScheduler#"
+                    + "unscheduleAllTasks",
+            "android.car.remoteaccess.CarRemoteAccessManager.InVehicleTaskScheduler#"
+                    + "getAllScheduledTasks",
+            "android.car.remoteaccess.CarRemoteAccessManager.InVehicleTaskScheduler#"
+                    + "unscheduleTask",
+    })
+    @EnsureHasPermission(PERMISSION_CONTROL_REMOTE_ACCESS)
+    @RequiresFlagsEnabled(Flags.FLAG_SERVERLESS_REMOTE_ACCESS)
+    public void testUnscheduleTask() throws Exception {
+        assumeTaskSchedulingSupported();
+        setSelfAsServerlessClient();
+
+        InVehicleTaskScheduler taskScheduler = mCarRemoteAccessManager.getInVehicleTaskScheduler();
+        // Schedule the task to be executed 30s later.
+        long startTimeInEpochSeconds = System.currentTimeMillis() / 1000 + 30;
+        ScheduleInfo scheduleInfo1 = new ScheduleInfo.Builder(TEST_SCHEDULE_ID_1, TEST_TASK_DATA,
+                startTimeInEpochSeconds).build();
+        ScheduleInfo scheduleInfo2 = new ScheduleInfo.Builder(TEST_SCHEDULE_ID_2, TEST_TASK_DATA,
+                startTimeInEpochSeconds).setCount(2).setPeriodic(Duration.ofSeconds(30)).build();
+
+        try {
+            taskScheduler.unscheduleAllTasks();
+            taskScheduler.scheduleTask(scheduleInfo1);
+            taskScheduler.scheduleTask(scheduleInfo2);
+        } catch (InVehicleTaskSchedulerException e) {
+            assumeNoException("Assume task schedule to succeed", e);
+        }
+
+        taskScheduler.unscheduleTask(TEST_SCHEDULE_ID_2);
+
+        try {
+            List<ScheduleInfo> scheduleInfo = taskScheduler.getAllScheduledTasks();
+
+            assertWithMessage("Must return one scheduled tasks").that(scheduleInfo).hasSize(1);
+            ScheduleInfo info = scheduleInfo.get(0);
+            expectWithMessage("Got expected scheduleId").that(info.getScheduleId())
+                    .isEqualTo(TEST_SCHEDULE_ID_1);
+            expectWithMessage("Got expected task data").that(info.getTaskData()).isEqualTo(
+                    TEST_TASK_DATA);
+            expectWithMessage("Got expected count").that(info.getCount()).isEqualTo(1);
+            expectWithMessage("Got expected periodic").that(info.getPeriodic()).isEqualTo(
+                    Duration.ZERO);
+        } finally {
+            taskScheduler.unscheduleAllTasks();
+        }
     }
 
     private static final class RemoteTaskClientCallbackImpl implements RemoteTaskClientCallback {
@@ -269,5 +510,45 @@ public final class CarRemoteAccessManagerTest extends AbstractCarTestCase {
                 return mServerlessClientRegistered;
             }
         }
+    }
+
+    private boolean isTestPkgServerlessClient() {
+        try {
+            CarRemoteAccessDumpProto dump = ProtoUtils.getProto(
+                    InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+                    CarRemoteAccessDumpProto.class, DUMP_COMMAND);
+
+            for (int i = 0; i < dump.getServerlessClientsCount(); i++) {
+                ServerlessClientInfo serverlessClientInfo = dump.getServerlessClients(i);
+                if (serverlessClientInfo.getPackageName().equals(mContext.getPackageName())) {
+                    return true;
+                }
+            }
+        } catch (Exception e) {
+            Log.w(TAG, "Failed to check whether this test is a serverless remote task client"
+                    + ", default to false", e);
+        }
+
+        return false;
+    }
+
+    private void setSelfAsServerlessClient() {
+        try {
+            mCarRemoteAccessManager.addServerlessRemoteTaskClient(mPackageName,
+                    SERVERLESS_CLIENT_ID);
+            mServerlessRemoteTaskClientSet = true;
+        } catch (IllegalArgumentException e) {
+            Log.w(TAG, "failed to call addServerlessRemoteTaskClient, maybe the test pkg is "
+                    + "already a serverless remote task client?", e);
+        }
+
+        assertWithMessage(
+                "This test requires the test package to be a serverless remote task client").that(
+                isTestPkgServerlessClient()).isTrue();
+    }
+
+    private void assumeTaskSchedulingSupported() {
+        assumeTrue("Task scheduling is not supported, skipping the test",
+                mCarRemoteAccessManager.isTaskScheduleSupported());
     }
 }
