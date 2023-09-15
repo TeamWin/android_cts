@@ -17,11 +17,11 @@
 package com.android.cts.mockime;
 
 import static android.inputmethodservice.InputMethodService.FINISH_INPUT_NO_FALLBACK_CONNECTION;
-
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
-
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
 
+import android.app.ActivityManager;
+import android.app.ApplicationExitInfo;
 import android.app.UiAutomation;
 import android.app.compat.CompatChanges;
 import android.content.BroadcastReceiver;
@@ -65,9 +65,12 @@ import androidx.annotation.Nullable;
 
 import com.android.compatibility.common.util.PollingCheck;
 
+import com.google.common.annotations.VisibleForTesting;
+
 import org.junit.AssumptionViolatedException;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
@@ -86,6 +89,9 @@ public class MockImeSession implements AutoCloseable {
 
     private static final String TAG = "MockImeSession";
 
+    @VisibleForTesting
+    static final String MOCK_IME_PACKAGE_NAME = MockIme.getComponentName().getPackageName();
+
     private final String mImeEventActionName =
             "com.android.cts.mockime.action.IME_EVENT." + SystemClock.elapsedRealtimeNanos();
 
@@ -93,6 +99,7 @@ public class MockImeSession implements AutoCloseable {
 
     @NonNull
     private final Context mContext;
+
     @NonNull
     private final UiAutomation mUiAutomation;
 
@@ -104,6 +111,13 @@ public class MockImeSession implements AutoCloseable {
 
     @Nullable
     private SessionChannel mChannel;
+
+    @NonNull
+    private final ActivityManager mActivityManager;
+
+    // Set with System.currentTimeMillis so it can be compatible with
+    // ApplicationExitInfo.getTimestamp()
+    private long mSessionCreateTimestamp;
 
     private static final class EventStore {
         private static final int INITIAL_ARRAY_SIZE = 32;
@@ -239,6 +253,16 @@ public class MockImeSession implements AutoCloseable {
     private MockImeSession(@NonNull Context context, @NonNull UiAutomation uiAutomation) {
         mContext = context;
         mUiAutomation = uiAutomation;
+        mActivityManager = mContext.getSystemService(ActivityManager.class);
+        updateSessionCreateTimestamp();
+    }
+
+    public long getSessionCreateTimestamp() {
+        return mSessionCreateTimestamp;
+    }
+
+    private void updateSessionCreateTimestamp() {
+        mSessionCreateTimestamp = System.currentTimeMillis();
     }
 
     @Nullable
@@ -346,7 +370,6 @@ public class MockImeSession implements AutoCloseable {
         if (unavailabilityReason != null) {
             throw new AssumptionViolatedException(unavailabilityReason);
         }
-
         final MockImeSession client = new MockImeSession(context, uiAutomation);
         client.initialize(imeSettings);
         return client;
@@ -413,6 +436,12 @@ public class MockImeSession implements AutoCloseable {
      * selected next is up to the system.
      */
     public void close() throws Exception {
+        String exitReason = retrieveExitReasonIfMockImeCrashed();
+        if (exitReason != null) {
+            // TODO(b/290928062): Propagate the exit reason to test logs shown on android build UI.
+            Log.e(TAG, exitReason);
+        }
+
         mActive.set(false);
 
         executeImeCmd("reset");
@@ -437,6 +466,46 @@ public class MockImeSession implements AutoCloseable {
             mSettingsClient.close();
             mSettingsClient = null;
         }
+        updateSessionCreateTimestamp();
+    }
+
+    @Nullable
+    String retrieveExitReasonIfMockImeCrashed() {
+        final ApplicationExitInfo lastExitReason = findLatestMockImeSessionExitInfo();
+        if (lastExitReason == null) {
+            return null;
+        }
+        if (lastExitReason.getTimestamp() <= mSessionCreateTimestamp) {
+            return null;
+        }
+        final StringBuilder err = new StringBuilder();
+        err.append("MockIme crashed and exited with code: ").append(lastExitReason.getReason())
+                .append("; ");
+        err.append("session create time: ").append(mSessionCreateTimestamp).append("; ");
+        err.append("process exit time: ").append(lastExitReason.getTimestamp()).append("; ");
+        err.append("see android.app.ApplicationExitInfo for more info on the exit code ");
+        final String exitDescription = lastExitReason.getDescription();
+        if (exitDescription != null) {
+            err.append("(exit Description: ").append(exitDescription).append(")");
+        }
+        return err.toString();
+    }
+
+    @Nullable
+    private ApplicationExitInfo findLatestMockImeSessionExitInfo() {
+        final ApplicationExitInfo[] exitReasons = new ApplicationExitInfo[1];
+
+        // Requires android.permission.DUMP permission.
+        runWithShellPermissionIdentity(() -> {
+            List<ApplicationExitInfo> latestExitReasons =
+                    mActivityManager.getHistoricalProcessExitReasons(
+                            MOCK_IME_PACKAGE_NAME, /* pid= */ 0, /* maxNum= */ 1);
+            if (!latestExitReasons.isEmpty()) {
+                exitReasons[0] = latestExitReasons.get(0);
+            }
+        });
+
+        return exitReasons[0];
     }
 
     /**
