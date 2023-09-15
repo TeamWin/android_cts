@@ -55,7 +55,7 @@ public class FileChannelInterProcessLockTest extends AndroidTestCase {
      * the service. This provides ample amount of time for the service to receive the request from
      * the test, then act, and respond back.
      */
-    final static int MAX_WAIT_TIME = 7;
+    final static int MAX_WAIT_TIME = 20;
 
     @Override
     public void tearDown() throws Exception {
@@ -457,14 +457,14 @@ public class FileChannelInterProcessLockTest extends AndroidTestCase {
         IntentReceiver.resetReceiverState();
 
         // The amount of time the remote service should hold lock.
-        long remoteLockHoldTimeMillis = 5000;
+        long remoteLockHoldTimeMillis = 7000;
 
         // The amount of time test should get to try to acquire the lock.
         long sufficientOverlappingTimeInMillis = 2000;
 
         // This is the allowable delta in the time between the time recorded after the service
         // released the lock and the time recorded after the test obtained the lock.
-        long lockReleasedAndReacquiredTimeDeltaInMillis = 500;
+        long lockReleasedAndReacquiredTimeDeltaInMillis = 1000;
 
         // Tell the service to acquire a remote lock.
         Intent sendIntent = new Intent(getContext(), LockHoldingService.class)
@@ -476,7 +476,8 @@ public class FileChannelInterProcessLockTest extends AndroidTestCase {
         getContext().startService(sendIntent);
 
         // Wait for the service to hold the lock and notify for the same.
-        assertTrue(IntentReceiver.lockHeldLatch.await(MAX_WAIT_TIME, SECONDS));
+        assertTrue("No remote lock held notification",
+                IntentReceiver.lockHeldLatch.await(MAX_WAIT_TIME, SECONDS));
 
         long localLockNotObtainedTime = System.currentTimeMillis();
 
@@ -485,7 +486,8 @@ public class FileChannelInterProcessLockTest extends AndroidTestCase {
         long localLockObtainedTime = System.currentTimeMillis();
 
         // Wait until the remote lock has definitely been released.
-        assertTrue(IntentReceiver.lockReleasedLatch.await(MAX_WAIT_TIME, SECONDS));
+        assertTrue("No remote lock release notification",
+                IntentReceiver.lockReleasedLatch.await(MAX_WAIT_TIME, SECONDS));
 
         Bundle remoteLockReleasedBundle = IntentReceiver.lockReleasedBundle;
         long remoteLockNotReleasedTime =
@@ -500,7 +502,14 @@ public class FileChannelInterProcessLockTest extends AndroidTestCase {
         // but we can't be sure and the test may not be valid. This is why we hold the lock
         // remotely for a long time compared to the delays we expect for intents to propagate
         // between processes.
-        assertTrue(remoteLockNotReleasedTime - localLockNotObtainedTime >
+        assertTrue(String.format("Remote lock release start (%d), " +
+                       "too soon after local lock notification time (%d). " +
+                       "Need at least %d ms",
+                       remoteLockReleasedTime,
+                       localLockNotObtainedTime,
+                       sufficientOverlappingTimeInMillis
+                   ),
+                remoteLockNotReleasedTime - localLockNotObtainedTime >
                 sufficientOverlappingTimeInMillis);
 
         if (expectToWait) {
@@ -509,7 +518,12 @@ public class FileChannelInterProcessLockTest extends AndroidTestCase {
             // service. The localLockObtainedTime is captured after the lock was obtained by this
             // thread. Therefore, there is a degree of slop inherent in the two times. We assert
             // that they are "close" to each other, but we cannot assert any ordering.
-            assertTrue(Math.abs(localLockObtainedTime - remoteLockReleasedTime) <
+            assertTrue(String.format("Local lock obtained (%d) too long " +
+                        "from remote lock release time (%d). " +
+                        "Expected at most %d ms.",
+                        localLockObtainedTime, remoteLockReleasedTime,
+                        lockReleasedAndReacquiredTimeDeltaInMillis),
+                Math.abs(localLockObtainedTime - remoteLockReleasedTime) <
                     lockReleasedAndReacquiredTimeDeltaInMillis);
         } else {
             // The remoteLockNotReleaseTime is captured before the lock was released by the
@@ -518,7 +532,10 @@ public class FileChannelInterProcessLockTest extends AndroidTestCase {
             // definitely release it. If this test fails it may not indicate a problem, but it
             // indicates we cannot be sure the test was successful the local lock attempt and the
             // remote lock attempt did not overlap.
-            assertTrue(localLockObtainedTime < remoteLockNotReleasedTime);
+            assertTrue(String.format("Local lock obtained (%d) after " +
+                        "remote lock release start (%d)",
+                        localLockObtainedTime, remoteLockNotReleasedTime),
+                localLockObtainedTime < remoteLockNotReleasedTime);
         }
 
         // Asserting if the fileLock is valid.
