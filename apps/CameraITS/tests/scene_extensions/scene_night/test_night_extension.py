@@ -30,8 +30,8 @@ import lighting_control_utils
 import opencv_processing_utils
 
 _NAME = os.path.splitext(os.path.basename(__file__))[0]
-_DEFAULT_TABLET_BRIGHTNESS_SCALING = 0.04  # 4% of default brightness
 _EXTENSION_NIGHT = 4  # CameraExtensionCharacteristics.EXTENSION_NIGHT
+_TABLET_BRIGHTNESS = '0'
 _TAP_COORDINATES = (500, 500)  # Location to tap tablet screen via adb
 _TEST_REQUIRED_MPC = 34
 _MIN_AREA = 0.001  # Circle must be >= 0.1% of image size
@@ -169,75 +169,6 @@ class NightExtensionTest(its_base_test.ItsBaseTest):
     * is brighter OR improves appearance of scene artifacts
   """
 
-  def find_tablet_brightness(self, cam, default_brightness, file_stem,
-                             width, height, use_extensions=True):
-    """Find maximum brightness at which orientation circle in scene is visible.
-
-    Uses binary search on a range of (0, default_brightness), where visibility
-    is defined by an intensity comparison with the center of the outer circle.
-
-    Args:
-      cam: its_session_utils object.
-      default_brightness: int; brightness set by config.yml.
-      file_stem: str; location and name to save files.
-      width: int; width for both extension and non-extension captures.
-      height: int; height for both extension and non-extension captures.
-      use_extensions: bool; whether extension capture should be used.
-    Returns:
-      int; brightness at which orientation circle in scene is visible.
-    """
-    min_brightness = 0
-    max_brightness = default_brightness
-    final_brightness = None
-    out_surfaces = {'format': _FMT_NAME, 'width': width, 'height': height}
-    req = capture_request_utils.auto_capture_request()
-    file_stem += '_night' if use_extensions else '_no_night'
-    while min_brightness < max_brightness:
-      brightness = (min_brightness + max_brightness) // 2
-      self.set_screen_brightness(str(brightness))
-
-      if use_extensions:
-        logging.debug('Taking capture with night mode ON at brightness of %d',
-                      brightness)
-        cap = cam.do_capture_with_extensions(
-            req, _EXTENSION_NIGHT, out_surfaces)
-      else:
-        logging.debug('Taking capture with night mode OFF at brightness of %d',
-                      brightness)
-        cap = cam.do_capture(req, out_surfaces)
-      _, img = _convert_captures(cap, f'{file_stem}_brightness={brightness}')
-
-      try:
-        circle = opencv_processing_utils.find_circle(
-            img,
-            f'{file_stem}_center_circle_brightness={brightness}.png',
-            _MIN_AREA, _WHITE)
-        dots = _get_dots_from_circle(circle)
-        # Compare orientation dot to surrounding circle center
-        dot_mean = np.mean(img[dots[0][_Y_STRING], dots[0][_X_STRING]])
-        circle_mean = np.mean(img[circle[_Y_STRING], circle[_X_STRING]])
-        logging.debug('Dot mean: %.2f, center mean: %.2f',
-                      dot_mean, circle_mean)
-        difference = circle_mean - dot_mean
-        if difference < _DOT_INTENSITY_DIFF_TOL:
-          logging.debug('Orientation dot is washed out at brightness %d',
-                        brightness)
-          max_brightness = brightness
-        else:
-          logging.debug('Found orientation dot at brightness %d', brightness)
-          min_brightness = brightness + 1
-          final_brightness = brightness
-      except AssertionError:
-        logging.debug('Unable to find circle with brightness %d', brightness)
-        max_brightness = brightness
-    if final_brightness is None:
-      logging.debug('Unable to find orientation dot at any brightness, '
-                    'defaulting to %.2f of current tablet brightness.',
-                    _DEFAULT_TABLET_BRIGHTNESS_SCALING)
-      return int(_DEFAULT_TABLET_BRIGHTNESS_SCALING *
-                 self.tablet_screen_brightness)
-    return final_brightness
-
   def _time_and_take_captures(self, cam, req, out_surfaces,
                               use_extensions=True):
     """Find maximum brightness at which orientation circle in scene is visible.
@@ -347,18 +278,9 @@ class NightExtensionTest(its_base_test.ItsBaseTest):
       width, height = extension_capture_sizes[0]
 
       # Set tablet brightness to darken scene
-      file_stem = f'{test_name}_{_FMT_NAME}_{width}x{height}'
-      night_brightness = self.find_tablet_brightness(
-          cam, self.tablet_screen_brightness, file_stem,
-          width, height, use_extensions=True)
-      logging.debug('Night mode ON brightness: %d', night_brightness)
-      no_night_brightness = self.find_tablet_brightness(
-          cam, self.tablet_screen_brightness, file_stem,
-          width, height, use_extensions=False)
-      logging.debug('Night mode OFF brightness: %d', no_night_brightness)
-      brightness = min(night_brightness, no_night_brightness)
-      self.set_screen_brightness(str(brightness))
+      self.set_screen_brightness(_TABLET_BRIGHTNESS)
 
+      file_stem = f'{test_name}_{_FMT_NAME}_{width}x{height}'
       out_surfaces = {'format': _FMT_NAME, 'width': width, 'height': height}
       req = capture_request_utils.auto_capture_request()
 
