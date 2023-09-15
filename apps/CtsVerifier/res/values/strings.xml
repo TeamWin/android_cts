@@ -5649,6 +5649,8 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="midiFailedOverrunLbl">Failed - Data Overrun.</string>
     <string name="midiFailedDeviceLbl">Failed - Device Error.</string>
     <string name="midiFailedJNILbl">Failed - JNI Error.</string>
+    <string name="midiFailedSetupLbl">Failed - Error in Setup.</string>
+    <string name="midiFailedSendLbl">Failed - Error during Send.</string>
 
     <!-- Audio general text -->
     <string name="audio_wired_exists">Does this device support wired USB or Analog audio peripherals?</string>
