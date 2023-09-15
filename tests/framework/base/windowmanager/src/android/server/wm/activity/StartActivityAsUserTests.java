@@ -28,6 +28,7 @@ import android.app.ActivityOptions;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.RemoteCallback;
 import android.os.UserHandle;
@@ -38,6 +39,8 @@ import android.server.wm.WindowManagerStateHelper;
 import android.util.Log;
 
 import androidx.test.platform.app.InstrumentationRegistry;
+
+import com.android.compatibility.common.util.FeatureUtil;
 
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -54,6 +57,7 @@ public class StartActivityAsUserTests {
 
     private static final String PACKAGE = "android.server.wm.cts";
     private static final String CLASS = "android.server.wm.activity.StartActivityAsUserActivity";
+    private static final String USER_CREATION_OVERRIDE = "debug.user.creation_override";
     private static final int INVALID_STACK = -1;
     private static final boolean SUPPORTS_MULTIPLE_USERS = UserManager.supportsMultipleUsers();
 
@@ -72,6 +76,17 @@ public class StartActivityAsUserTests {
             return;
         }
 
+        if (FeatureUtil.isAutomotive()) {
+            if (!Build.isDebuggable()) {
+                // "debug.user.creation_override" only works for debuggable builds. Skip the tests
+                // for non-debuggable builds in Automotive.
+                sCloneProfileSupported = false;
+                return;
+            }
+            // In Automotive, temporarily remove restrictions on user-creation.
+            runShellCommand("setprop " + USER_CREATION_OVERRIDE + " true");
+        }
+
         final Context context = InstrumentationRegistry.getInstrumentation().getContext();
         final String output = runShellCommand(
                 "pm create-user --user-type android.os.usertype.profile.CLONE --profileOf "
@@ -80,13 +95,12 @@ public class StartActivityAsUserTests {
         try {
             sSecondUserId = Integer.parseInt(output.substring(output.lastIndexOf(" ")).trim());
         } catch (StringIndexOutOfBoundsException |  NumberFormatException e) {
-            // AAOS does not support clone profile creation. This causes a parsing exception
-            // TODO (b/282975911)
             Log.e(TAG, "Failed to create user of type android.os.usertype.profile.CLONE");
-            sCloneProfileSupported = false;
         }
 
         if (sSecondUserId == 0) {
+            // A profile user was not successfully created.
+            // This will fail the tests in checkMultipleUsersNotSupportedOrSecondUserCreated().
             return;
         }
         runShellCommand("pm install-existing --user " + sSecondUserId + " android.server.wm.cts");
@@ -101,6 +115,9 @@ public class StartActivityAsUserTests {
         runShellCommand("am stop-user -w -f " + sSecondUserId);
         runShellCommand("pm remove-user " + sSecondUserId);
         sSecondUserId = 0;
+        if (FeatureUtil.isAutomotive() && Build.isDebuggable()) {
+            runShellCommand("setprop " + USER_CREATION_OVERRIDE + " false");
+        }
     }
 
     @Before
