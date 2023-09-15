@@ -31,6 +31,7 @@ import static android.view.inputmethod.cts.util.InputMethodVisibilityVerifier.ex
 import static android.view.inputmethod.cts.util.TestUtils.getOnMainSync;
 import static android.view.inputmethod.cts.util.TestUtils.runOnMainSync;
 import static android.view.inputmethod.cts.util.TestUtils.waitOnMainUntil;
+
 import static com.android.cts.mockime.ImeEventStreamTestUtils.EventFilterMode.CHECK_EXIT_EVENT_ONLY;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.WindowLayoutInfoParcelable;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.editorMatcher;
@@ -41,6 +42,7 @@ import static com.android.cts.mockime.ImeEventStreamTestUtils.expectNoImeCrash;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.notExpectEvent;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.verificationMatcher;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.withDescription;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -209,7 +211,7 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
 
     @Test
     public void testSwitchInputMethod_verifiesEnabledState() throws Exception {
-        SystemUtil.runShellCommand("ime disable " + OTHER_IME_ID);
+        SystemUtil.runShellCommandOrThrow("ime disable " + OTHER_IME_ID);
         try (MockImeSession imeSession = MockImeSession.create(
                 InstrumentationRegistry.getInstrumentation().getContext(),
                 InstrumentationRegistry.getInstrumentation().getUiAutomation(),

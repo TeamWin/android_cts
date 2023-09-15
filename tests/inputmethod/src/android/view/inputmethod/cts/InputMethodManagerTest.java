@@ -22,7 +22,6 @@ import static android.content.pm.PackageManager.FEATURE_INPUT_METHODS;
 import static android.view.inputmethod.cts.util.TestUtils.isInputMethodPickerShown;
 import static android.view.inputmethod.cts.util.TestUtils.waitOnMainUntil;
 
-import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
 import static com.android.compatibility.common.util.SystemUtil.runShellCommandOrThrow;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -104,7 +103,7 @@ public class InputMethodManagerTest {
     @After
     public void resetImes() {
         if (mNeedsImeReset) {
-            runShellCommand("ime reset");
+            runShellCommandOrThrow("ime reset");
             mNeedsImeReset = false;
         }
     }
