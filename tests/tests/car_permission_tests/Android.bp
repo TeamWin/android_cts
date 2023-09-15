@@ -33,8 +33,6 @@ android_test {
         "android.hardware.automotive.vehicle.property-V3-java",
         "android.test.runner",
         "android.test.base",
-
-        // TODO(b/299522793): Avoid using mocks in CTS tests.
         "android.test.mock",
     ],
 
@@ -44,10 +42,7 @@ android_test {
         "androidx.test.ext.junit",
         "androidx.test.rules",
         "compatibility-device-util-axt",
-
-        // TODO(b/299522793): Avoid using mocks in CTS tests.
         "mockito-target-minus-junit4",
-
         "truth-prebuilt",
     ],
 
