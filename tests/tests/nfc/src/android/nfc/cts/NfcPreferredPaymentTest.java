@@ -80,8 +80,6 @@ public class NfcPreferredPaymentTest {
 
     @After
     public void tearDown() throws Exception {
-        Settings.Secure.putString(mContext.getContentResolver(),
-                NFC_PAYMENT_DEFAULT_COMPONENT, "");
     }
 
     /** Tests getAidsForPreferredPaymentService API */
