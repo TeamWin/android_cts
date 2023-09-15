@@ -13,6 +13,7 @@
 # limitations under the License.
 """Verify preview is stable during phone movement."""
 
+import fnmatch
 import logging
 import os
 import threading
@@ -254,6 +255,20 @@ class PreviewStabilizationTest(its_base_test.ItsBaseTest):
               f"Max gyro angle: {max_angles['gyro']:.3f}, "
               f"ratio: {max_angles['cam']/max_angles['gyro']:.3f} "
               f'THRESH: {preview_stabilization_factor}.')
+        # Delete saved frames if the format is a PASS
+        else:
+          try:
+            tmpdir = os.listdir(log_path)
+          except FileNotFoundError:
+            logging.debug('Tmp directory: %s not found', log_path)
+          for file in tmpdir:
+            if fnmatch.fnmatch(file, f'*_{preview_size}_stabilized_frame_*'):
+              file_to_remove = os.path.join(log_path, file)
+              try:
+                os.remove(file_to_remove)
+              except FileNotFoundError:
+                logging.debug('File Not Found: %s', str(file))
+          logging.debug('Format %s passes, frame images has been removed', preview_size)
 
       if test_failures:
         raise AssertionError(test_failures)
