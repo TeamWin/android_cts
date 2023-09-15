@@ -17,9 +17,7 @@
 package com.android.bedstead.harrier;
 
 import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
-import static android.app.admin.DevicePolicyManager.ENCRYPTION_STATUS_ACTIVE;
 import static android.app.admin.DevicePolicyManager.ENCRYPTION_STATUS_UNSUPPORTED;
-import static android.app.admin.DevicePolicyManager.OPERATION_SAFETY_REASON_NONE;
 import static android.app.role.RoleManager.ROLE_BROWSER;
 import static android.content.pm.PackageManager.FEATURE_MANAGED_USERS;
 import static android.os.Build.VERSION.SDK_INT;
@@ -81,8 +79,6 @@ import com.android.bedstead.harrier.annotations.EnsureHasAccountAuthenticator;
 import com.android.bedstead.harrier.annotations.EnsureHasAccounts;
 import com.android.bedstead.harrier.annotations.EnsureHasAdditionalUser;
 import com.android.bedstead.harrier.annotations.EnsureHasAppOp;
-import com.android.bedstead.harrier.annotations.RequireFactoryResetProtectionPolicySupported;
-import com.android.bedstead.harrier.annotations.RequireHasDefaultBrowser;
 import com.android.bedstead.harrier.annotations.EnsureHasNoAccounts;
 import com.android.bedstead.harrier.annotations.EnsureHasNoAdditionalUser;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
@@ -103,13 +99,15 @@ import com.android.bedstead.harrier.annotations.EnsureWifiDisabled;
 import com.android.bedstead.harrier.annotations.EnsureWifiEnabled;
 import com.android.bedstead.harrier.annotations.FailureMode;
 import com.android.bedstead.harrier.annotations.OtherUser;
-import com.android.bedstead.harrier.annotations.RequireAdbRoot;
 import com.android.bedstead.harrier.annotations.RequireAdbOverWifi;
+import com.android.bedstead.harrier.annotations.RequireAdbRoot;
 import com.android.bedstead.harrier.annotations.RequireDoesNotHaveFeature;
+import com.android.bedstead.harrier.annotations.RequireFactoryResetProtectionPolicySupported;
 import com.android.bedstead.harrier.annotations.RequireFeature;
 import com.android.bedstead.harrier.annotations.RequireFeatureFlagEnabled;
 import com.android.bedstead.harrier.annotations.RequireFeatureFlagNotEnabled;
 import com.android.bedstead.harrier.annotations.RequireFeatureFlagValue;
+import com.android.bedstead.harrier.annotations.RequireHasDefaultBrowser;
 import com.android.bedstead.harrier.annotations.RequireHeadlessSystemUserMode;
 import com.android.bedstead.harrier.annotations.RequireInstantApp;
 import com.android.bedstead.harrier.annotations.RequireLowRamDevice;
@@ -294,7 +292,7 @@ public final class DeviceState extends HarrierRule {
     // We allow overriding the limit on a class-by-class basis
     private final Duration mMaxTestDuration;
 
-    private final ExecutorService mTestExecutor = Executors.newSingleThreadExecutor();
+    private ExecutorService mTestExecutor;
     private Thread mTestThread;
 
     private PackageManager mPackageManager = sContext.getPackageManager();
@@ -323,8 +321,6 @@ public final class DeviceState extends HarrierRule {
 
     public DeviceState(Duration maxTestDuration) {
         mMaxTestDuration = maxTestDuration;
-        Future<Thread> testThreadFuture = mTestExecutor.submit(Thread::currentThread);
-
         mSkipTestTeardown = TestApis.instrumentation().arguments().getBoolean(
                 SKIP_TEST_TEARDOWN_KEY, false);
         mSkipClassTeardown = TestApis.instrumentation().arguments().getBoolean(
@@ -343,13 +339,6 @@ public final class DeviceState extends HarrierRule {
             mPermissionsInstrumentationPackagePermissions.addAll(
                     TestApis.packages().find(mPermissionsInstrumentationPackage)
                             .requestedPermissions());
-        }
-
-        try {
-            mTestThread = testThreadFuture.get();
-        } catch (InterruptedException | ExecutionException e) {
-            throw new AssertionError(
-                    "Error setting up DeviceState. Interrupted getting test thread", e);
         }
     }
 
@@ -1514,6 +1503,16 @@ public final class DeviceState extends HarrierRule {
         return new Statement() {
             @Override
             public void evaluate() throws Throwable {
+                mTestExecutor = Executors.newSingleThreadExecutor();
+
+                Future<Thread> testThreadFuture = mTestExecutor.submit(Thread::currentThread);
+                try {
+                    mTestThread = testThreadFuture.get();
+                } catch (InterruptedException | ExecutionException e) {
+                    throw new AssertionError(
+                            "Error setting up DeviceState. Interrupted getting test thread", e);
+                }
+
                 checkValidAnnotations(description);
 
                 TestClass testClass = new TestClass(description.getTestClass());
@@ -1595,6 +1594,9 @@ public final class DeviceState extends HarrierRule {
                     if (Versions.meetsMinimumSdkVersionRequirement(T)) {
                         TestApis.flags().setFlagSyncEnabled(originalFlagSyncEnabled);
                     }
+
+                    Log.i(LOG_TAG, "Shutting down test thread executor");
+                    mTestExecutor.shutdown();
                 }
             }
         };
