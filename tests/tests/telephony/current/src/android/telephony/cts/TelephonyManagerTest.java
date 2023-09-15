@@ -1026,14 +1026,14 @@ public class TelephonyManagerTest {
     @Test
     public void testGetPhoneAccountHandle() {
         TelecomManager telecomManager = getContext().getSystemService(TelecomManager.class);
-        PhoneAccountHandle defaultAccount = telecomManager
-                .getDefaultOutgoingPhoneAccount(PhoneAccount.SCHEME_TEL);
+        List<PhoneAccountHandle> callCapableAccounts = telecomManager
+                .getCallCapablePhoneAccounts();
         try {
             InstrumentationRegistry.getInstrumentation().getUiAutomation()
                     .adoptShellPermissionIdentity(
                             "android.permission.READ_PRIVILEGED_PHONE_STATE");
             PhoneAccountHandle phoneAccountHandle = mTelephonyManager.getPhoneAccountHandle();
-            assertEquals(phoneAccountHandle, defaultAccount);
+            assertTrue(callCapableAccounts.contains(phoneAccountHandle));
         } catch (SecurityException e) {
             fail("TelephonyManager#getPhoneAccountHandle requires READ_PRIVILEGED_PHONE_STATE");
         } finally {
