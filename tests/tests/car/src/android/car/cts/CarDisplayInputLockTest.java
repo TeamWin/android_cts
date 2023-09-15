@@ -32,12 +32,14 @@ import android.app.Instrumentation;
 import android.car.Car;
 import android.car.CarOccupantZoneManager;
 import android.car.settings.CarSettings;
+import android.car.test.PermissionsCheckerRule.EnsureHasPermission;
 import android.content.ContentResolver;
 import android.graphics.Color;
 import android.hardware.display.DisplayManager;
 import android.os.Bundle;
 import android.os.ConditionVariable;
 import android.os.SystemClock;
+import android.os.UserManager;
 import android.provider.Settings;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.view.Display;
@@ -79,6 +81,10 @@ public class CarDisplayInputLockTest extends AbstractCarTestCase {
 
     @Before
     public void setUp() throws Exception {
+        UserManager userManager = mContext.getSystemService(UserManager.class);
+        assumeTrue("This test is enabled only in multi-user/multi-display devices",
+                userManager.isVisibleBackgroundUsersSupported());
+
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
         mContentResolver = mContext.getContentResolver();
         mCarOccupantZoneManager =
@@ -89,7 +95,9 @@ public class CarDisplayInputLockTest extends AbstractCarTestCase {
 
     @After
     public void tearDown() {
-        writeDisplayInputLockSetting(mContentResolver, mInitialSettingValue);
+        if (mContentResolver != null) {
+            writeDisplayInputLockSetting(mContentResolver, mInitialSettingValue);
+        }
     }
 
     @CddTest(requirements = {"TODO(b/262236403)"})
@@ -151,6 +159,7 @@ public class CarDisplayInputLockTest extends AbstractCarTestCase {
 
     @CddTest(requirements = {"TODO(b/262236403)"})
     @Test
+    @EnsureHasPermission(Car.ACCESS_PRIVATE_DISPLAY_ID)
     public void testPassengerDisplayInputLockDoesNotAffectDriverDisplay() throws Exception {
         int driverDisplayId = mCarOccupantZoneManager.getDisplayIdForDriver(
                 CarOccupantZoneManager.DISPLAY_TYPE_MAIN);
