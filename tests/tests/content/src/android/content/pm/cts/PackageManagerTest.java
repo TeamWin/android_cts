@@ -2838,27 +2838,36 @@ public class PackageManagerTest {
         uninstallPackage(HELLO_WORLD_PACKAGE_NAME);
 
         // Install a default APK.
-        assertEquals("Success\n",
-                executeShellCommand("pm install-archived -t -S " + archivedPackage.length,
-                        archivedPackage));
+        assertEquals("Success\n", executeShellCommand(
+                String.format("pm install-archived -r -i %s -t -S %s", mContext.getPackageName(),
+                        archivedPackage.length), archivedPackage));
         assertTrue(isAppInstalled(HELLO_WORLD_PACKAGE_NAME));
+        uninstallPackage(HELLO_WORLD_PACKAGE_NAME);
+
+        // Try to install archived without installer.
+        assertThat(executeShellCommand(
+                String.format("pm install-archived -t -S %s", archivedPackage.length),
+                archivedPackage)).startsWith("Failure [INSTALL_FAILED_SESSION_INVALID: Installer");
     }
 
     @Test
-    public void testInstallArchived() throws Exception {
+    public void testInstallArchivedUpdate() throws Exception {
         installPackage(HELLO_WORLD_APK);
         byte[] archivedPackage = SystemUtil.runShellCommandByteOutput(
                 mInstrumentation.getUiAutomation(),
                 "pm get-archived-package-metadata " + HELLO_WORLD_PACKAGE_NAME);
 
         // Try to install archived on top of fully installed app.
-        assertThat(executeShellCommand("pm install-archived -t -S " + archivedPackage.length,
-                archivedPackage)).startsWith("Failure [INSTALL_FAILED_SESSION_INVALID: Archived");
+        assertThat(executeShellCommand(
+                String.format("pm install-archived -r -i %s -t -S %s", mContext.getPackageName(),
+                        archivedPackage.length), archivedPackage)).startsWith(
+                "Failure [INSTALL_FAILED_SESSION_INVALID: Archived");
+
         // Uninstall and retry.
         uninstallPackage(HELLO_WORLD_PACKAGE_NAME);
-        assertEquals("Success\n",
-                executeShellCommand("pm install-archived -t -S " + archivedPackage.length,
-                        archivedPackage));
+        assertEquals("Success\n", executeShellCommand(
+                String.format("pm install-archived -r -i %s -t -S %s", mContext.getPackageName(),
+                        archivedPackage.length), archivedPackage));
         assertTrue(isAppInstalled(HELLO_WORLD_PACKAGE_NAME));
         assertDataAppExists(HELLO_WORLD_PACKAGE_NAME);
         // Wrong signature.
@@ -2892,9 +2901,9 @@ public class PackageManagerTest {
         uninstallPackage(HELLO_WORLD_PACKAGE_NAME);
 
         // Install a default APK.
-        assertEquals("Success\n",
-                executeShellCommand("pm install-archived -t -S " + archivedPackage.length,
-                        archivedPackage));
+        assertEquals("Success\n", executeShellCommand(
+                String.format("pm install-archived -r -i %s -t -S %s", mContext.getPackageName(),
+                        archivedPackage.length), archivedPackage));
         assertTrue(isAppInstalled(HELLO_WORLD_PACKAGE_NAME));
         String pkgFlags = parsePackageDump(HELLO_WORLD_PACKAGE_NAME, "    pkgFlags=[");
         assertThat(pkgFlags).contains("ALLOW_CLEAR_USER_DATA");
@@ -2912,9 +2921,9 @@ public class PackageManagerTest {
         uninstallPackage(HELLO_WORLD_PACKAGE_NAME);
 
         // Install an APK with non default flags.
-        assertEquals("Success\n",
-                executeShellCommand("pm install-archived -t -S " + archivedPackage.length,
-                        archivedPackageFlags));
+        assertEquals("Success\n", executeShellCommand(
+                String.format("pm install-archived -r -i %s -t -S %s", mContext.getPackageName(),
+                        archivedPackageFlags.length), archivedPackageFlags));
         assertTrue(isAppInstalled(HELLO_WORLD_PACKAGE_NAME));
         pkgFlags = parsePackageDump(HELLO_WORLD_PACKAGE_NAME, "    pkgFlags=[");
         assertThat(pkgFlags).contains("ALLOW_CLEAR_USER_DATA");
@@ -2950,9 +2959,9 @@ public class PackageManagerTest {
         mContext.registerReceiver(addedBroadcastReceiver, intentFilter);
         mContext.registerReceiver(removedBroadcastReceiver, intentFilter);
 
-        assertEquals("Success\n",
-                executeShellCommand("pm install-archived -t -S " + archivedPackage.length,
-                        archivedPackage));
+        assertEquals("Success\n", executeShellCommand(
+                String.format("pm install-archived -r -i %s -t -S %s", mContext.getPackageName(),
+                        archivedPackage.length), archivedPackage));
 
         addedBroadcastReceiver.assertBroadcastReceived();
         Intent addedIntent = addedBroadcastReceiver.getBroadcastResult();
