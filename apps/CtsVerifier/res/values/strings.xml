@@ -2414,6 +2414,9 @@
     <string name="test_access_ringer_mode">Test access ringer mode</string>
     <string name="test_ringer_mode_policy_access">Test ringer mode policy access</string>
     <string name="test_volume_dnd_affected_stream">Test volume change</string>
+    <string name="test_volume_stream_1">Test volume change part 1</string>
+    <string name="test_volume_stream_2">Test volume change part 2</string>
+    <string name="test_volume_stream_3">Test volume change part 3</string>
     <string name="test_mute_dnd_affected_streams">Test mute streams</string>
     <string name="test_ringer_manager">Test RingtoneManager</string>
     <string name="enable_sound_effects">Please enable Tap &amp; click sounds in Sound settings.</string>
