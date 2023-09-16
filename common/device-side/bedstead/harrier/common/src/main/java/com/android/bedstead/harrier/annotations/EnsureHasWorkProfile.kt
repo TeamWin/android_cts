@@ -54,13 +54,14 @@ import com.google.auto.value.AutoAnnotation
  *  instance of the dpc when calling to .dpc(). Only used if [dpcIsPrimary] is true.
  * @param switchedToParentUser Should we ensure that we are switched to the parent of the profile.
  * @param isQuietModeEnabled Is the profile in quiet mode?
- * @param weight Weight sets the order that annotations will be resolved.
- *  Annotations with a lower weight will be resolved before annotations with a higher weight.
+ * @param priority Priority sets the order that annotations will be resolved.
+ *  Annotations with a lower priority will be resolved before annotations with a higher
+ *  priority.
  *
- *  If there is an order requirement between annotations, ensure that the weight of the
+ *  If there is an order requirement between annotations, ensure that the priority of the
  *  annotation which must be resolved first is lower than the one which must be resolved later.
  *
- *  Weight can be set to a [AnnotationRunPrecedence] constant, or to any [int].
+ *  Priority can be set to a [AnnotationPriorityRunPrecedence] constant, or to any [int].
  */
 @Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION, AnnotationTarget.TYPE)
 @Retention(AnnotationRetention.RUNTIME)
@@ -77,7 +78,7 @@ annotation class EnsureHasWorkProfile(
     val useParentInstanceOfDpc: Boolean = false,
     val switchedToParentUser: OptionalBoolean = ANY,
     val isQuietModeEnabled: OptionalBoolean = FALSE,
-    val weight: Int = ENSURE_HAS_WORK_PROFILE_PRIORITY
+    val priority: Int = ENSURE_HAS_WORK_PROFILE_PRIORITY
 )
 
 const val ENSURE_HAS_WORK_PROFILE_PRIORITY = REQUIRE_RUN_ON_PRECEDENCE - 1
