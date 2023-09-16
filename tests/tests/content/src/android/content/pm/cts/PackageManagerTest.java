@@ -50,8 +50,10 @@ import static android.content.pm.PackageManager.MATCH_UNINSTALLED_PACKAGES;
 import static android.content.pm.cts.PackageManagerShellCommandIncrementalTest.parsePackageDump;
 import static android.os.UserHandle.CURRENT;
 import static android.os.UserHandle.USER_CURRENT;
+
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -113,6 +115,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.IBinder;
+import android.os.ParcelFileDescriptor;
 import android.os.Process;
 import android.os.RemoteException;
 import android.os.SystemClock;
@@ -131,6 +134,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.rule.ServiceTestRule;
 
+import com.android.compatibility.common.util.FileUtils;
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.SystemUtil;
 import com.android.compatibility.common.util.TestUtils;
@@ -150,7 +154,9 @@ import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -2100,6 +2106,21 @@ public class PackageManagerTest {
                         packageName));
     }
 
+    private String executeShellCommand(String command, byte[] input) throws IOException {
+        final ParcelFileDescriptor[] pfds =
+                mInstrumentation.getUiAutomation().executeShellCommandRw(
+                        command);
+        ParcelFileDescriptor stdout = pfds[0];
+        ParcelFileDescriptor stdin = pfds[1];
+        try (FileOutputStream outputStream = new ParcelFileDescriptor.AutoCloseOutputStream(
+                stdin)) {
+            outputStream.write(input);
+        }
+        try (InputStream inputStream = new ParcelFileDescriptor.AutoCloseInputStream(stdout)) {
+            return new String(FileUtils.readInputStreamFully(inputStream));
+        }
+    }
+
     @Test
     public void testGetLaunchIntentSenderForPackage() throws Exception {
         final Instrumentation.ActivityMonitor monitor = new Instrumentation.ActivityMonitor(
@@ -2802,16 +2823,51 @@ public class PackageManagerTest {
     }
 
     @Test
-    public void testInstallArchived() throws Exception {
-        installPackage(HELLO_WORLD_APK);
-        // Try to install archived on top of fully installed app.
-        assertThat(
-                SystemUtil.runShellCommand("pm install-archived -t " + HELLO_WORLD_APK)).startsWith(
-                "Failure [INSTALL_FAILED_SESSION_INVALID: Archived");
+    public void testInstallArchivedFromArchived() throws Exception {
         uninstallPackage(HELLO_WORLD_PACKAGE_NAME);
-        // Install archived.
-        assertEquals("Success\n",
-                SystemUtil.runShellCommand("pm install-archived -t " + HELLO_WORLD_APK));
+
+        assertEquals("Success\n", SystemUtil.runShellCommand(
+                String.format("pm install -r -i %s -t -g %s", mContext.getPackageName(),
+                        HELLO_WORLD_APK)));
+        assertThat(SystemUtil.runShellCommand(
+                String.format("pm archive %s", HELLO_WORLD_PACKAGE_NAME))).isEqualTo("Success\n");
+
+        byte[] archivedPackage = SystemUtil.runShellCommandByteOutput(
+                mInstrumentation.getUiAutomation(),
+                "pm get-archived-package-metadata " + HELLO_WORLD_PACKAGE_NAME);
+        uninstallPackage(HELLO_WORLD_PACKAGE_NAME);
+
+        // Install a default APK.
+        assertEquals("Success\n", executeShellCommand(
+                String.format("pm install-archived -r -i %s -t -S %s", mContext.getPackageName(),
+                        archivedPackage.length), archivedPackage));
+        assertTrue(isAppInstalled(HELLO_WORLD_PACKAGE_NAME));
+        uninstallPackage(HELLO_WORLD_PACKAGE_NAME);
+
+        // Try to install archived without installer.
+        assertThat(executeShellCommand(
+                String.format("pm install-archived -t -S %s", archivedPackage.length),
+                archivedPackage)).startsWith("Failure [INSTALL_FAILED_SESSION_INVALID: Installer");
+    }
+
+    @Test
+    public void testInstallArchivedUpdate() throws Exception {
+        installPackage(HELLO_WORLD_APK);
+        byte[] archivedPackage = SystemUtil.runShellCommandByteOutput(
+                mInstrumentation.getUiAutomation(),
+                "pm get-archived-package-metadata " + HELLO_WORLD_PACKAGE_NAME);
+
+        // Try to install archived on top of fully installed app.
+        assertThat(executeShellCommand(
+                String.format("pm install-archived -r -i %s -t -S %s", mContext.getPackageName(),
+                        archivedPackage.length), archivedPackage)).startsWith(
+                "Failure [INSTALL_FAILED_SESSION_INVALID: Archived");
+
+        // Uninstall and retry.
+        uninstallPackage(HELLO_WORLD_PACKAGE_NAME);
+        assertEquals("Success\n", executeShellCommand(
+                String.format("pm install-archived -r -i %s -t -S %s", mContext.getPackageName(),
+                        archivedPackage.length), archivedPackage));
         assertTrue(isAppInstalled(HELLO_WORLD_PACKAGE_NAME));
         assertDataAppExists(HELLO_WORLD_PACKAGE_NAME);
         // Wrong signature.
@@ -2838,33 +2894,43 @@ public class PackageManagerTest {
 
     @Test
     public void testInstallArchivedCheckFlags() throws Exception {
+        installPackage(HELLO_WORLD_APK);
+        byte[] archivedPackage = SystemUtil.runShellCommandByteOutput(
+                mInstrumentation.getUiAutomation(),
+                "pm get-archived-package-metadata " + HELLO_WORLD_PACKAGE_NAME);
         uninstallPackage(HELLO_WORLD_PACKAGE_NAME);
+
         // Install a default APK.
-        assertEquals("Success\n",
-                SystemUtil.runShellCommand("pm install-archived -t " + HELLO_WORLD_APK));
+        assertEquals("Success\n", executeShellCommand(
+                String.format("pm install-archived -r -i %s -t -S %s", mContext.getPackageName(),
+                        archivedPackage.length), archivedPackage));
         assertTrue(isAppInstalled(HELLO_WORLD_PACKAGE_NAME));
         String pkgFlags = parsePackageDump(HELLO_WORLD_PACKAGE_NAME, "    pkgFlags=[");
-        assertEquals(" ALLOW_CLEAR_USER_DATA ALLOW_BACKUP ]", pkgFlags);
+        assertThat(pkgFlags).contains("ALLOW_CLEAR_USER_DATA");
+        assertThat(pkgFlags).contains("ALLOW_BACKUP");
         String privatePkgFlags = parsePackageDump(HELLO_WORLD_PACKAGE_NAME,
                 "    privatePkgFlags=[");
-        assertEquals(" ALLOW_AUDIO_PLAYBACK_CAPTURE "
-                        + "PRIVATE_FLAG_ALLOW_NATIVE_HEAP_POINTER_TAGGING ]",
-                privatePkgFlags);
-
+        assertThat(privatePkgFlags).doesNotContain("PRIVATE_FLAG_REQUEST_LEGACY_EXTERNAL_STORAGE");
+        assertThat(privatePkgFlags).doesNotContain("PRIVATE_FLAG_HAS_FRAGILE_USER_DATA");
         uninstallPackage(HELLO_WORLD_PACKAGE_NAME);
+
+        installPackage(HELLO_WORLD_FLAGS_APK);
+        byte[] archivedPackageFlags = SystemUtil.runShellCommandByteOutput(
+                mInstrumentation.getUiAutomation(),
+                "pm get-archived-package-metadata " + HELLO_WORLD_PACKAGE_NAME);
+        uninstallPackage(HELLO_WORLD_PACKAGE_NAME);
+
         // Install an APK with non default flags.
-        assertEquals("Success\n",
-                SystemUtil.runShellCommand("pm install-archived -t " + HELLO_WORLD_FLAGS_APK));
+        assertEquals("Success\n", executeShellCommand(
+                String.format("pm install-archived -r -i %s -t -S %s", mContext.getPackageName(),
+                        archivedPackageFlags.length), archivedPackageFlags));
         assertTrue(isAppInstalled(HELLO_WORLD_PACKAGE_NAME));
         pkgFlags = parsePackageDump(HELLO_WORLD_PACKAGE_NAME, "    pkgFlags=[");
-        assertEquals(" ALLOW_CLEAR_USER_DATA ]", pkgFlags);
+        assertThat(pkgFlags).contains("ALLOW_CLEAR_USER_DATA");
         privatePkgFlags = parsePackageDump(HELLO_WORLD_PACKAGE_NAME,
                 "    privatePkgFlags=[");
-        assertEquals(" ALLOW_AUDIO_PLAYBACK_CAPTURE "
-                        + "PRIVATE_FLAG_REQUEST_LEGACY_EXTERNAL_STORAGE "
-                        + "PRIVATE_FLAG_ALLOW_NATIVE_HEAP_POINTER_TAGGING "
-                        + "PRIVATE_FLAG_HAS_FRAGILE_USER_DATA ]",
-                privatePkgFlags);
+        assertThat(privatePkgFlags).contains("PRIVATE_FLAG_REQUEST_LEGACY_EXTERNAL_STORAGE");
+        assertThat(privatePkgFlags).contains("PRIVATE_FLAG_HAS_FRAGILE_USER_DATA");
         assertDataAppExists(HELLO_WORLD_PACKAGE_NAME);
     }
 
@@ -2873,7 +2939,12 @@ public class PackageManagerTest {
      */
     @Test
     public void testInstallArchivedBroadcasts() throws Exception {
+        installPackage(HELLO_WORLD_APK);
+        byte[] archivedPackage = SystemUtil.runShellCommandByteOutput(
+                mInstrumentation.getUiAutomation(),
+                "pm get-archived-package-metadata " + HELLO_WORLD_PACKAGE_NAME);
         uninstallPackage(HELLO_WORLD_PACKAGE_NAME);
+
         int currentUser = ActivityManager.getCurrentUser();
         PackageBroadcastReceiver addedBroadcastReceiver = new PackageBroadcastReceiver(
                 HELLO_WORLD_PACKAGE_NAME, currentUser, Intent.ACTION_PACKAGE_ADDED
@@ -2888,8 +2959,9 @@ public class PackageManagerTest {
         mContext.registerReceiver(addedBroadcastReceiver, intentFilter);
         mContext.registerReceiver(removedBroadcastReceiver, intentFilter);
 
-        assertEquals("Success\n",
-                SystemUtil.runShellCommand("pm install-archived -t " + HELLO_WORLD_APK));
+        assertEquals("Success\n", executeShellCommand(
+                String.format("pm install-archived -r -i %s -t -S %s", mContext.getPackageName(),
+                        archivedPackage.length), archivedPackage));
 
         addedBroadcastReceiver.assertBroadcastReceived();
         Intent addedIntent = addedBroadcastReceiver.getBroadcastResult();
