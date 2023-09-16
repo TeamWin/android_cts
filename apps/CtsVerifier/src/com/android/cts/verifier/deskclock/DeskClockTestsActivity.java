@@ -3,6 +3,7 @@
 package com.android.cts.verifier.deskclock;
 
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.database.DataSetObserver;
 import android.os.Bundle;
 import android.provider.AlarmClock;
@@ -156,6 +157,19 @@ public class DeskClockTestsActivity extends PassFailButtons.TestListActivity {
 
     private void addTests(ArrayTestListAdapter adapter, TestInfo[] tests) {
         for (TestInfo info : tests) {
+
+            // TODO(b/291214170): Enable START_ALARM test once Wear Alarm app fixes EXTRA_SKIP_UI.
+            // See b/291214170#comment14.
+            if (isWearDevice() && info.getTestId().equals(START_ALARM_TEST)) {
+                continue;
+            }
+
+            // TODO(b/232182401): Enable START_TIMER test once Wear Timer app fixes EXTRA_SKIP_UI.
+            // See b/232182401#comment7.
+            if (isWearDevice() && info.getTestId().equals(START_TIMER)) {
+                continue;
+            }
+
             int title = info.getTitle();
             String testId = info.getTestId();
             Intent intent = IntentDrivenTestActivity.newIntent(this, testId, title,
@@ -164,6 +178,11 @@ public class DeskClockTestsActivity extends PassFailButtons.TestListActivity {
             adapter.add(TestListItem.newTest(this, title, testId, intent,
                     /* applicableFeatures= */ null));
         }
+    }
+
+    private boolean isWearDevice() {
+        final PackageManager pm = getApplicationContext().getPackageManager();
+        return pm.hasSystemFeature(PackageManager.FEATURE_WATCH);
     }
 
     public static class DeskClockIntentFactory implements IntentFactory {
