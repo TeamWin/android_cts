@@ -44,7 +44,7 @@ import com.google.auto.value.AutoAnnotation
  *  instance of the dpc when calling to .dpc()
  *  Only used if [isPrimary] is true.
  * @param affiliationIds Affiliation ids to be set for the profile owner.
- * @param weight Priority sets the order that annotations will be resolved.
+ * @param priority Priority sets the order that annotations will be resolved.
  *  Annotations with a lower priority will be resolved before annotations with a higher
  *  priority.
  *
@@ -64,7 +64,7 @@ annotation class EnsureHasProfileOwner(val onUser: UserType = INSTRUMENTED_USER,
                                        val isPrimary: Boolean = false,
                                        val useParentInstance: Boolean = false,
                                        val affiliationIds: Array<String> = [],
-                                       val weight: Int = DO_PO_PRIORITY)
+                                       val priority: Int = DO_PO_PRIORITY)
 
 const val DEFAULT_KEY = "profileOwner"
 
