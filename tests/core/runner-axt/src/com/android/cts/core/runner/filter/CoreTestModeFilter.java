@@ -74,8 +74,10 @@ public class CoreTestModeFilter implements Predicate<Description> {
         if (isAnnotated(description.getAnnotations())) {
             return false;
         }
+
         // In addition to the method, check if the test class is annotated.
-        if (isAnnotated(Arrays.asList(description.getTestClass().getAnnotations()))) {
+        Class<?> testClass = description.getTestClass();
+        if (testClass != null && isAnnotated(Arrays.asList(testClass.getAnnotations()))) {
             return false;
         }
         return true;
