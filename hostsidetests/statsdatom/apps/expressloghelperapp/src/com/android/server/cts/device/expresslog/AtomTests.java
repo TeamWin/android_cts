@@ -16,6 +16,7 @@
 package com.android.server.cts.device.expresslog;
 
 import com.android.modules.expresslog.Counter;
+import com.android.modules.expresslog.Histogram;
 
 import org.junit.Test;
 
@@ -30,15 +31,90 @@ public class AtomTests {
     @Test
     public void testCounterMetric() throws Exception {
         Counter.logIncrement("tex_test.value_telemetry_express_test_counter");
+        Thread.sleep(10);
         Counter.logIncrement("tex_test.value_telemetry_express_test_counter", 10);
     }
 
     @Test
     public void testCounterWithUidMetric() throws Exception {
-        Counter.logIncrementWithUid("tex_test.value_telemetry_express_test_counter_with_uid",
-                TEST_UID);
-        Counter.logIncrementWithUid("tex_test.value_telemetry_express_test_counter_with_uid",
-                TEST_UID, 10);
+        Counter.logIncrementWithUid(
+                "tex_test.value_telemetry_express_test_counter_with_uid", TEST_UID);
+        Thread.sleep(10);
+        Counter.logIncrementWithUid(
+                "tex_test.value_telemetry_express_test_counter_with_uid", TEST_UID, 10);
     }
 
+    @Test
+    public void testHistogramUniformMetric() throws Exception {
+        final Histogram histogram =
+                new Histogram(
+                        "tex_test.value_telemetry_express_fixed_range_histogram",
+                        new Histogram.UniformOptions(
+                                /* binCount= */ 50,
+                                /* minValue= */ 1,
+                                /* exclusiveMaxValue= */ 1000000));
+        histogram.logSample(0.f);
+        Thread.sleep(10);
+        histogram.logSample(1.f);
+        Thread.sleep(10);
+        histogram.logSample(100.f);
+        Thread.sleep(10);
+        histogram.logSample(2000000.f);
+    }
+
+    @Test
+    public void testHistogramScaledMetric() throws Exception {
+        final Histogram histogram =
+                new Histogram(
+                        "tex_test.value_telemetry_express_scaled_factor_histogram",
+                        new Histogram.ScaledRangeOptions(
+                                /* binCount= */ 20,
+                                /* minValue= */ 1,
+                                /* firstBinWidth= */ 10,
+                                /* scaleFactor= */ 1.6f));
+        histogram.logSample(0.f);
+        Thread.sleep(10);
+        histogram.logSample(1.f);
+        Thread.sleep(10);
+        histogram.logSample(100.f);
+        Thread.sleep(10);
+        histogram.logSample(2000000.f);
+    }
+
+    @Test
+    public void testHistogramUniformWithUidMetric() throws Exception {
+        final Histogram histogram =
+                new Histogram(
+                        "tex_test.value_telemetry_express_fixed_range_histogram_with_uid",
+                        new Histogram.UniformOptions(
+                                /* binCount= */ 50,
+                                /* minValue= */ 1,
+                                /* exclusiveMaxValue= */ 1000000));
+        histogram.logSampleWithUid(TEST_UID, 0.f);
+        Thread.sleep(10);
+        histogram.logSampleWithUid(TEST_UID, 1.f);
+        Thread.sleep(10);
+        histogram.logSampleWithUid(TEST_UID, 100.f);
+        Thread.sleep(10);
+        histogram.logSampleWithUid(TEST_UID, 2000000.f);
+    }
+
+    @Test
+    public void testHistogramScaledWithUidMetric() throws Exception {
+        final Histogram histogram =
+                new Histogram(
+                        "tex_test.value_telemetry_express_scaled_range_histogram_with_uid",
+                        new Histogram.ScaledRangeOptions(
+                                /* binCount= */ 20,
+                                /* minValue= */ 1,
+                                /* firstBinWidth= */ 10,
+                                /* scaleFactor= */ 1.6f));
+        histogram.logSampleWithUid(TEST_UID, 0.f);
+        Thread.sleep(10);
+        histogram.logSampleWithUid(TEST_UID, 1.f);
+        Thread.sleep(10);
+        histogram.logSampleWithUid(TEST_UID, 100.f);
+        Thread.sleep(10);
+        histogram.logSampleWithUid(TEST_UID, 2000000.f);
+    }
 }
