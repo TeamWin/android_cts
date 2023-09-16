@@ -114,7 +114,7 @@ public final class TransferOwnershipTest {
                 assertThat(testApp.devicePolicyManager().getTransferOwnershipBundle()
                         .getBoolean(KEY)).isTrue();
             } finally {
-                TestApis.devicePolicy().getDeviceOwner().remove();
+                removeDeviceAdmin();
             }
         }
     }
@@ -151,8 +151,8 @@ public final class TransferOwnershipTest {
 
     @ApiTest(apis = {"android.app.admin.DevicePolicyManager#transferOwnership"})
     @Postsubmit(reason = "new test")
-    @CanSetPolicyTest(policy = TransferOwnership.class)
-    public void transferOwnership_ownershipTransferredToTargetAdmin() {
+    @CanSetPolicyTest(policy = TransferOwnershipForDeviceOwner.class)
+    public void transferOwnership_deviceOwner_ownershipTransferredToTargetAdmin() {
         try (TestAppInstance testApp = sTargetDeviceAdminTestAppSupportsTransferOwnership.install()) {
             try {
                 sDeviceState.dpc().devicePolicyManager().transferOwnership(
@@ -235,15 +235,31 @@ public final class TransferOwnershipTest {
 
     @ApiTest(apis = {"android.app.admin.DevicePolicyManager#transferOwnership"})
     @Postsubmit(reason = "new test")
-    @CanSetPolicyTest(policy = TransferOwnership.class)
-    public void transferOwnership_sendsOwnerChangedBroadcast() {
+    @EnsureHasProfileOwner
+    @Test
+    public void transferOwnership_profileOwner_sendsOwnerChangedBroadcast() {
         try (TestAppInstance testApp = sTargetDeviceAdminTestAppSupportsTransferOwnership.install()) {
-             DeviceOwner deviceOwner = TestApis.devicePolicy().getDeviceOwner();
-             String action = deviceOwner == null ?
-                     ACTION_PROFILE_OWNER_CHANGED : ACTION_DEVICE_OWNER_CHANGED;
-
             try (BlockingBroadcastReceiver receiver =
-                     sDeviceState.registerBroadcastReceiver(action)) {
+                     sDeviceState.registerBroadcastReceiver(ACTION_PROFILE_OWNER_CHANGED)) {
+                sDeviceState.dpc().devicePolicyManager().transferOwnership(
+                        sDeviceState.dpc().componentName(), sTargetAdmin, sBundle);
+
+                assertThat(receiver.awaitForBroadcast().getAction()).isEqualTo(
+                        ACTION_PROFILE_OWNER_CHANGED);
+            } finally {
+                removeDeviceAdmin();
+            }
+        }
+    }
+
+    @ApiTest(apis = {"android.app.admin.DevicePolicyManager#transferOwnership"})
+    @Postsubmit(reason = "new test")
+    @EnsureHasDeviceOwner
+    @Test
+    public void transferOwnership_deviceOwner_sendsOwnerChangedBroadcast() {
+        try (TestAppInstance testApp = sTargetDeviceAdminTestAppSupportsTransferOwnership.install()) {
+            try (BlockingBroadcastReceiver receiver =
+                         sDeviceState.registerBroadcastReceiver(ACTION_DEVICE_OWNER_CHANGED)) {
                 sDeviceState.dpc().devicePolicyManager().transferOwnership(
                         sDeviceState.dpc().componentName(), sTargetAdmin, sBundle);
 
