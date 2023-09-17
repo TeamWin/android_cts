@@ -164,4 +164,10 @@
     <option name="compatibility:exclude-filter" value="CtsViewTestCases android.view.surfacecontrol.cts.ASurfaceControlTest#testSurfaceTransaction_setFrameTimeline_preferredIndex" />
     <option name="compatibility:exclude-filter" value="CtsViewTestCases android.view.surfacecontrol.cts.ASurfaceControlTest#testSurfaceTransaction_setFrameTimeline_notPreferredIndex" />
 
+    <!-- b/298915013 Remove CtsKeystoreTestCases android.keystore.cts.KeyAttestationTest from cts-on-gsi -->
+    <option name="compatibility:exclude-filter" value="CtsKeystoreTestCases android.keystore.cts.AttestKeyTest#testEcAttestKey_StrongBox" />
+    <option name="compatibility:exclude-filter" value="CtsKeystoreTestCases android.keystore.cts.AttestKeyTest#testRsaAttestKey_StrongBox" />
+    <option name="compatibility:exclude-filter" value="CtsKeystoreTestCases android.keystore.cts.AttestKeyTest#testAttestationKmVersionMatchesFeatureVersionStrongBox" />
+    <option name="compatibility:exclude-filter" value="CtsKeystoreTestCases android.keystore.cts.AttestKeyTest#testAllVariationsOfDeviceIdAttestationUsingStrongBox" />
+
 </configuration>
