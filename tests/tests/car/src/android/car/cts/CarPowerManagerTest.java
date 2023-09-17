@@ -24,7 +24,6 @@ import static com.google.common.truth.Truth.assertWithMessage;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assume.assumeTrue;
 
-import android.app.UiAutomation;
 import android.car.Car;
 import android.car.CarOccupantZoneManager;
 import android.car.CarOccupantZoneManager.OccupantZoneInfo;
@@ -32,12 +31,12 @@ import android.car.hardware.power.CarPowerManager;
 import android.car.hardware.power.CarPowerPolicy;
 import android.car.hardware.power.CarPowerPolicyFilter;
 import android.car.hardware.power.PowerComponent;
+import android.car.test.PermissionsCheckerRule.EnsureHasPermission;
 import android.car.view.DisplayHelper;
 import android.platform.test.annotations.AppModeFull;
 import android.view.Display;
 
 import androidx.annotation.Nullable;
-import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.PollingCheck;
@@ -63,8 +62,6 @@ public final class CarPowerManagerTest extends AbstractCarTestCase {
     private static final int DISPLAY_POWER_MODE_OFF = 0;
     private static final int DISPLAY_POWER_MODE_ON = 1;
     private static final int DISPLAY_POWER_MODE_ALWAYS_ON = 2;
-    private static final UiAutomation UI_AUTOMATION =
-            InstrumentationRegistry.getInstrumentation().getUiAutomation();
 
     private static String sDefaultDisplayPowerModeValue;
 
@@ -80,8 +77,6 @@ public final class CarPowerManagerTest extends AbstractCarTestCase {
         mCarOccupantZoneManager = (CarOccupantZoneManager) getCar().getCarManager(
                 Car.CAR_OCCUPANT_ZONE_SERVICE);
         mInitialPowerPolicyId = mCarPowerManager.getCurrentPowerPolicy().getPolicyId();
-        UI_AUTOMATION.adoptShellPermissionIdentity(
-                Car.PERMISSION_CAR_POWER, Car.PERMISSION_CONTROL_CAR_POWER_POLICY);
     }
 
     @After
@@ -90,7 +85,6 @@ public final class CarPowerManagerTest extends AbstractCarTestCase {
         if (!mInitialPowerPolicyId.equals(policy.getPolicyId())) {
             applyPowerPolicyForced(mInitialPowerPolicyId);
         }
-        UI_AUTOMATION.dropShellPermissionIdentity();
     }
 
     @BeforeClass
@@ -112,14 +106,13 @@ public final class CarPowerManagerTest extends AbstractCarTestCase {
      * policy is applied.
      */
     @Test
-    @ApiTest(apis = {"android.car.hardware.power.CarPowerManager#addPowerPolicyListener"
-            + "(Executor, CarPowerPolicyFilter, CarPowerPolicyListener)",
-            "android.car.hardware.power.CarPowerManager#removePowerPolicyListener"
-                    + "(CarPowerPolicyListener)",
-            "android.car.hardware.power.CarPowerManager#applyPowerPolicy(String)",
+    @ApiTest(apis = {"android.car.hardware.power.CarPowerManager#addPowerPolicyListener",
+            "android.car.hardware.power.CarPowerManager#removePowerPolicyListener",
+            "android.car.hardware.power.CarPowerManager#applyPowerPolicy",
             "android.car.hardware.power.CarPowerManager#getCurrentPowerPolicy",
             "android.car.hardware.power.CarPowerPolicy#getPolicyId",
-            "android.car.hardware.power.CarPowerPolicy#isComponentEnabled(int)"})
+            "android.car.hardware.power.CarPowerPolicy#isComponentEnabled"})
+    @EnsureHasPermission(Car.PERMISSION_CONTROL_CAR_POWER_POLICY)
     public void testApplyNewPowerPolicy() throws Exception {
         PowerPolicyListenerImpl listenerAudioOne = new PowerPolicyListenerImpl();
         PowerPolicyListenerImpl listenerAudioTwo = new PowerPolicyListenerImpl();
@@ -163,29 +156,32 @@ public final class CarPowerManagerTest extends AbstractCarTestCase {
     }
 
     @Test
-    @ApiTest(apis = {"android.car.hardware.power.CarPowerManager#applyPowerPolicy(String)"})
+    @ApiTest(apis = {"android.car.hardware.power.CarPowerManager#applyPowerPolicy"})
+    @EnsureHasPermission(Car.PERMISSION_CONTROL_CAR_POWER_POLICY)
     public void testApplyPowerPolicy_nullPolicyId() {
         assertThrows(IllegalArgumentException.class,
                 () -> mCarPowerManager.applyPowerPolicy(null));
     }
 
     @Test
-    @ApiTest(apis = {"android.car.hardware.power.CarPowerManager#applyPowerPolicy(String)"})
+    @ApiTest(apis = {"android.car.hardware.power.CarPowerManager#applyPowerPolicy"})
+    @EnsureHasPermission(Car.PERMISSION_CONTROL_CAR_POWER_POLICY)
     public void testApplyPowerPolicy_notDefinedPolicy() {
         assertThrows(IllegalArgumentException.class,
                 () -> mCarPowerManager.applyPowerPolicy("not_defined_policy_id"));
     }
 
     @Test
-    @ApiTest(apis = {"android.car.hardware.power.CarPowerManager#applyPowerPolicy(String)"})
+    @ApiTest(apis = {"android.car.hardware.power.CarPowerManager#applyPowerPolicy"})
+    @EnsureHasPermission(Car.PERMISSION_CONTROL_CAR_POWER_POLICY)
     public void testApplyPowerPolicy_systemPowerPolicy() {
         assertThrows(IllegalArgumentException.class,
                 () -> mCarPowerManager.applyPowerPolicy("system_power_policy_no_user_interaction"));
-
     }
 
     @Test
-    @ApiTest(apis = {"android.car.hardware.power.CarPowerManager#setPowerPolicyGroup(String)"})
+    @ApiTest(apis = {"android.car.hardware.power.CarPowerManager#setPowerPolicyGroup"})
+    @EnsureHasPermission(Car.PERMISSION_CONTROL_CAR_POWER_POLICY)
     public void testSetPowerPolicyGroup() throws Exception {
         String policyIdMediaOn = "power_policy_media_on";
         String policyIdMediaOff = "power_policy_media_off";
@@ -200,22 +196,24 @@ public final class CarPowerManagerTest extends AbstractCarTestCase {
     }
 
     @Test
-    @ApiTest(apis = {"android.car.hardware.power.CarPowerManager#setPowerPolicyGroup(String)"})
+    @ApiTest(apis = {"android.car.hardware.power.CarPowerManager#setPowerPolicyGroup"})
+    @EnsureHasPermission(Car.PERMISSION_CONTROL_CAR_POWER_POLICY)
     public void testSetPowerPolicyGroup_nullGroupId() {
         assertThrows(IllegalArgumentException.class,
                 () -> mCarPowerManager.setPowerPolicyGroup(null));
     }
 
     @Test
-    @ApiTest(apis = {"android.car.hardware.power.CarPowerManager#setPowerPolicyGroup(String)"})
+    @ApiTest(apis = {"android.car.hardware.power.CarPowerManager#setPowerPolicyGroup"})
+    @EnsureHasPermission(Car.PERMISSION_CONTROL_CAR_POWER_POLICY)
     public void testSetPowerPolicyGroup_notDefinedGroup() {
         assertThrows(IllegalArgumentException.class,
                 () -> mCarPowerManager.setPowerPolicyGroup("not_defined_policy_group"));
     }
 
     @Test
-    @ApiTest(apis =
-            {"android.car.hardware.power.CarPowerManager#setDisplayPowerState(int, boolean)"})
+    @ApiTest(apis = {"android.car.hardware.power.CarPowerManager#setDisplayPowerState"})
+    @EnsureHasPermission(Car.PERMISSION_CAR_POWER)
     public void testSetDisplayPowerState_driverDisplayMustNotBeSupported() throws Exception {
         assumeTrue("No driver zone", mCarOccupantZoneManager.hasDriverZone());
 
@@ -236,8 +234,8 @@ public final class CarPowerManagerTest extends AbstractCarTestCase {
     }
 
     @Test
-    @ApiTest(apis =
-            {"android.car.hardware.power.CarPowerManager#setDisplayPowerState(int, boolean)"})
+    @ApiTest(apis = {"android.car.hardware.power.CarPowerManager#setDisplayPowerState"})
+    @EnsureHasPermission(Car.PERMISSION_CAR_POWER)
     public void testSetDisplayPowerState_passengerDisplays_modeOn() throws Exception {
         assumeTrue("No passenger zones", mCarOccupantZoneManager.hasPassengerZones());
 
@@ -273,8 +271,8 @@ public final class CarPowerManagerTest extends AbstractCarTestCase {
     }
 
     @Test
-    @ApiTest(apis =
-            {"android.car.hardware.power.CarPowerManager#setDisplayPowerState(int, boolean)"})
+    @ApiTest(apis = {"android.car.hardware.power.CarPowerManager#setDisplayPowerState"})
+    @EnsureHasPermission(Car.PERMISSION_CAR_POWER)
     public void testSetDisplayPowerState_passengerDisplays_modeOff() throws Exception {
         assumeTrue("No passenger zones", mCarOccupantZoneManager.hasPassengerZones());
 
@@ -310,8 +308,8 @@ public final class CarPowerManagerTest extends AbstractCarTestCase {
     }
 
     @Test
-    @ApiTest(apis =
-            {"android.car.hardware.power.CarPowerManager#setDisplayPowerState(int, boolean)"})
+    @ApiTest(apis = {"android.car.hardware.power.CarPowerManager#setDisplayPowerState"})
+    @EnsureHasPermission(Car.PERMISSION_CAR_POWER)
     public void testSetDisplayPowerState_passengerDisplays_modeAlwaysOn() throws Exception {
         assumeTrue("No passenger zones", mCarOccupantZoneManager.hasPassengerZones());
 
