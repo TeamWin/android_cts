@@ -98,6 +98,11 @@ java_test_host {
         "src/**/StatsdAppSecurityAtomTest.java",
     ],
 
+    static_libs: [
+        "flag-junit-host",
+        "android.security.flags-aconfig-java-host",
+    ],
+
     data: [
         // AppSecurityTests
         ":CtsAppAccessData",

@@ -19,18 +19,22 @@ package android.appsecurity.cts;
 import static org.junit.Assert.fail;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assume.assumeTrue;
 
 import android.platform.test.annotations.AsbSecurityTest;
 import android.platform.test.annotations.Presubmit;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.host.HostFlagsValueProvider;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.compatibility.common.util.CddTest;
 import com.android.tradefed.device.DeviceNotAvailableException;
-import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
+import com.android.tradefed.testtype.junit4.DeviceParameterizedRunner;
 import com.android.tradefed.util.FileUtil;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -44,11 +48,13 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.stream.Stream;
 
+import junitparams.Parameters;
+
 /**
  * Tests for APK signature verification during installation.
  */
 @Presubmit
-@RunWith(DeviceJUnit4ClassRunner.class)
+@RunWith(DeviceParameterizedRunner.class)
 public class PkgInstallSignatureVerificationTest extends BaseAppSecurityTest {
 
     private static final String TEST_PKG = "android.appsecurity.cts.tinyapp";
@@ -71,6 +77,20 @@ public class PkgInstallSignatureVerificationTest extends BaseAppSecurityTest {
     private static final String[] RSA_KEY_NAMES = {"1024", "2048", "3072", "4096", "8192", "16384"};
     private static final String[] RSA_KEY_NAMES_2048_AND_LARGER =
             {"2048", "3072", "4096", "8192", "16384"};
+
+    private static final boolean INCREMENTAL = true;
+    private static final boolean NON_INCREMENTAL = false;
+
+    private static Object[] installOnIncremental() {
+        // Incremental and Non-Incremental.
+        return new Boolean[][]{{INCREMENTAL}, {NON_INCREMENTAL}};
+    }
+
+    private boolean mUseIncrementalForInstallWithIdsig;
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule =
+            HostFlagsValueProvider.createCheckFlagsRule(this::getDevice);
 
     @Before
     public void setUp() throws Exception {
@@ -866,11 +886,9 @@ public class PkgInstallSignatureVerificationTest extends BaseAppSecurityTest {
 
     @CddTest(requirement="4/C-0-9")
     @Test
-    public void testInstallV41UpdateAfterRotation() throws Exception {
-        // V4 is only enabled on devices with Incremental feature
-        if (!hasIncrementalFeature()) {
-            return;
-        }
+    @Parameters(method = "installOnIncremental")
+    public void testInstallV41UpdateAfterRotation(boolean onIncremental) throws Exception {
+        checkAssumptionAndSetIdsigInstallMode(onIncremental);
 
         // This test is the same as above, but using the v4.1 signature scheme for rotation.
         assertInstallV4FromBuildSucceeds("CtsSignatureQueryService.apk");
@@ -890,11 +908,9 @@ public class PkgInstallSignatureVerificationTest extends BaseAppSecurityTest {
 
     @CddTest(requirement="4/C-0-9")
     @Test
-    public void testInstallV41WrongBlockId() throws Exception {
-        // V4 is only enabled on devices with Incremental feature
-        if (!hasIncrementalFeature()) {
-            return;
-        }
+    @Parameters(method = "installOnIncremental")
+    public void testInstallV41WrongBlockId(boolean onIncremental) throws Exception {
+        checkAssumptionAndSetIdsigInstallMode(onIncremental);
 
         // This test is the same as above, but using the v4.1 signature scheme for rotation.
         assertInstallV4FromBuildSucceeds("CtsSignatureQueryService.apk");
@@ -908,11 +924,9 @@ public class PkgInstallSignatureVerificationTest extends BaseAppSecurityTest {
 
     @CddTest(requirement="4/C-0-9")
     @Test
-    public void testInstallV41LegacyV4() throws Exception {
-        // V4 is only enabled on devices with Incremental feature
-        if (!hasIncrementalFeature()) {
-            return;
-        }
+    @Parameters(method = "installOnIncremental")
+    public void testInstallV41LegacyV4(boolean onIncremental) throws Exception {
+        checkAssumptionAndSetIdsigInstallMode(onIncremental);
 
         // This test is the same as above, but using the v4.1 signature scheme for rotation.
         assertInstallV4FromBuildSucceeds("CtsSignatureQueryService.apk");
@@ -926,11 +940,9 @@ public class PkgInstallSignatureVerificationTest extends BaseAppSecurityTest {
 
     @CddTest(requirement="4/C-0-9")
     @Test
-    public void testInstallV41WrongDigest() throws Exception {
-        // V4 is only enabled on devices with Incremental feature
-        if (!hasIncrementalFeature()) {
-            return;
-        }
+    @Parameters(method = "installOnIncremental")
+    public void testInstallV41WrongDigest(boolean onIncremental) throws Exception {
+        checkAssumptionAndSetIdsigInstallMode(onIncremental);
 
         // This test is the same as above, but using the v4.1 signature scheme for rotation.
         assertInstallV4FromBuildSucceeds("CtsSignatureQueryService.apk");
@@ -1413,11 +1425,9 @@ public class PkgInstallSignatureVerificationTest extends BaseAppSecurityTest {
     }
 
     @Test
-    public void testInstallV4WithV2Signer() throws Exception {
-        // V4 is only enabled on devices with Incremental feature
-        if (!hasIncrementalFeature()) {
-            return;
-        }
+    @Parameters(method = "installOnIncremental")
+    public void testInstallV4WithV2Signer(boolean onIncremental) throws Exception {
+        checkAssumptionAndSetIdsigInstallMode(onIncremental);
 
         // APK generated with:
         // apksigner sign --v2-signing-enabled true --v3-signing-enabled false --v4-signing-enabled
@@ -1425,11 +1435,9 @@ public class PkgInstallSignatureVerificationTest extends BaseAppSecurityTest {
     }
 
     @Test
-    public void testInstallV4WithV3Signer() throws Exception {
-        // V4 is only enabled on devices with Incremental feature
-        if (!hasIncrementalFeature()) {
-            return;
-        }
+    @Parameters(method = "installOnIncremental")
+    public void testInstallV4WithV3Signer(boolean onIncremental) throws Exception {
+        checkAssumptionAndSetIdsigInstallMode(onIncremental);
 
         // APK generated with:
         // apksigner sign --v2-signing-enabled false --v3-signing-enabled true --v4-signing-enabled
@@ -1437,11 +1445,9 @@ public class PkgInstallSignatureVerificationTest extends BaseAppSecurityTest {
     }
 
     @Test
-    public void testInstallV4WithV2V3Signer() throws Exception {
-        // V4 is only enabled on devices with Incremental feature
-        if (!hasIncrementalFeature()) {
-            return;
-        }
+    @Parameters(method = "installOnIncremental")
+    public void testInstallV4WithV2V3Signer(boolean onIncremental) throws Exception {
+        checkAssumptionAndSetIdsigInstallMode(onIncremental);
 
         // APK generated with:
         // apksigner sign --v2-signing-enabled true --v3-signing-enabled true --v4-signing-enabled
@@ -1449,11 +1455,9 @@ public class PkgInstallSignatureVerificationTest extends BaseAppSecurityTest {
     }
 
     @Test
-    public void testInstallV4WithV2NoVeritySigner() throws Exception {
-        // V4 is only enabled on devices with Incremental feature
-        if (!hasIncrementalFeature()) {
-            return;
-        }
+    @Parameters(method = "installOnIncremental")
+    public void testInstallV4WithV2NoVeritySigner(boolean onIncremental) throws Exception {
+        checkAssumptionAndSetIdsigInstallMode(onIncremental);
 
         // APK generated with:
         // --v2-signing-enabled true --v3-signing-enabled false --v4-signing-enabled
@@ -1466,11 +1470,9 @@ public class PkgInstallSignatureVerificationTest extends BaseAppSecurityTest {
     }
 
     @Test
-    public void testInstallV4WithV2VeritySigner() throws Exception {
-        // V4 is only enabled on devices with Incremental feature
-        if (!hasIncrementalFeature()) {
-            return;
-        }
+    @Parameters(method = "installOnIncremental")
+    public void testInstallV4WithV2VeritySigner(boolean onIncremental) throws Exception {
+        checkAssumptionAndSetIdsigInstallMode(onIncremental);
 
         // APK generated with:
         // --v2-signing-enabled true --v3-signing-enabled false
@@ -1482,11 +1484,9 @@ public class PkgInstallSignatureVerificationTest extends BaseAppSecurityTest {
     }
 
     @Test
-    public void testInstallV4WithV3NoVeritySigner() throws Exception {
-        // V4 is only enabled on devices with Incremental feature
-        if (!hasIncrementalFeature()) {
-            return;
-        }
+    @Parameters(method = "installOnIncremental")
+    public void testInstallV4WithV3NoVeritySigner(boolean onIncremental) throws Exception {
+        checkAssumptionAndSetIdsigInstallMode(onIncremental);
 
         // APK generated with:
         // --v2-signing-enabled false --v3-signing-enabled true --v4-signing-enabled
@@ -1499,11 +1499,9 @@ public class PkgInstallSignatureVerificationTest extends BaseAppSecurityTest {
     }
 
     @Test
-    public void testInstallV4WithV3VeritySigner() throws Exception {
-        // V4 is only enabled on devices with Incremental feature
-        if (!hasIncrementalFeature()) {
-            return;
-        }
+    @Parameters(method = "installOnIncremental")
+    public void testInstallV4WithV3VeritySigner(boolean onIncremental) throws Exception {
+        checkAssumptionAndSetIdsigInstallMode(onIncremental);
 
         // APK generated with:
         // --v2-signing-enabled false --v3-signing-enabled true
@@ -1515,11 +1513,9 @@ public class PkgInstallSignatureVerificationTest extends BaseAppSecurityTest {
     }
 
     @Test
-    public void testInstallV4WithV2SignerDoesNotVerify() throws Exception {
-        // V4 is only enabled on devices with Incremental feature
-        if (!hasIncrementalFeature()) {
-            return;
-        }
+    @Parameters(method = "installOnIncremental")
+    public void testInstallV4WithV2SignerDoesNotVerify(boolean onIncremental) throws Exception {
+        checkAssumptionAndSetIdsigInstallMode(onIncremental);
 
         // APKs generated with:
         // apksigner sign -v2-signing-enabled true --v3-signing-enabled false --v4-signing-enabled
@@ -1531,11 +1527,9 @@ public class PkgInstallSignatureVerificationTest extends BaseAppSecurityTest {
     }
 
     @Test
-    public void testInstallV4WithV3SignerDoesNotVerify() throws Exception {
-        // V4 is only enabled on devices with Incremental feature
-        if (!hasIncrementalFeature()) {
-            return;
-        }
+    @Parameters(method = "installOnIncremental")
+    public void testInstallV4WithV3SignerDoesNotVerify(boolean onIncremental) throws Exception {
+        checkAssumptionAndSetIdsigInstallMode(onIncremental);
 
         // APKs generated with:
         // apksigner sign -v2-signing-enabled false --v3-signing-enabled true --v4-signing-enabled
@@ -1549,11 +1543,9 @@ public class PkgInstallSignatureVerificationTest extends BaseAppSecurityTest {
     }
 
     @Test
-    public void testInstallV4WithV2V3SignerDoesNotVerify() throws Exception {
-        // V4 is only enabled on devices with Incremental feature
-        if (!hasIncrementalFeature()) {
-            return;
-        }
+    @Parameters(method = "installOnIncremental")
+    public void testInstallV4WithV2V3SignerDoesNotVerify(boolean onIncremental) throws Exception {
+        checkAssumptionAndSetIdsigInstallMode(onIncremental);
 
         // APKs generated with:
         // apksigner sign -v2-signing-enabled true --v3-signing-enabled true --v4-signing-enabled
@@ -1566,46 +1558,53 @@ public class PkgInstallSignatureVerificationTest extends BaseAppSecurityTest {
     }
 
     @Test
-    public void testInstallV4With128BytesAdditionalDataSucceeds() throws Exception {
-        // V4 is only enabled on devices with Incremental feature
-        if (!hasIncrementalFeature()) {
-            return;
-        }
+    @Parameters(method = "installOnIncremental")
+    public void testInstallV4With128BytesAdditionalDataSucceeds(boolean onIncremental)
+            throws Exception {
+        checkAssumptionAndSetIdsigInstallMode(onIncremental);
 
         // Editing apksigner to fill additional data of size 128 bytes.
         assertInstallV4Succeeds("v4-digest-v3-128bytes-additional-data.apk");
     }
 
     @Test
-    public void testInstallV4With256BytesAdditionalDataFails() throws Exception {
-        // V4 is only enabled on devices with Incremental feature
-        if (!hasIncrementalFeature()) {
-            return;
-        }
+    @Parameters(method = "installOnIncremental")
+    public void testInstallV4With256BytesAdditionalDataFails(boolean onIncremental)
+            throws Exception {
+        checkAssumptionAndSetIdsigInstallMode(onIncremental);
 
         // Editing apksigner to fill additional data of size 256 bytes.
-        assertInstallV4FailsWithError("v4-digest-v3-256bytes-additional-data.apk",
-                "additionalData has to be at most 128 bytes");
+        if (onIncremental) {
+            // For incremental, a bad Merkle tree will fail.
+            assertInstallV4FailsWithError("v4-digest-v3-256bytes-additional-data.apk",
+                    "additionalData has to be at most 128 bytes");
+        } else {
+            // For non-incremental, Merkle tree in idsig is not used.
+            assertInstallV4Succeeds("v4-digest-v3-256bytes-additional-data.apk");
+        }
     }
 
     @Test
-    public void testInstallV4With10MBytesAdditionalDataFails() throws Exception {
-        // V4 is only enabled on devices with Incremental feature
-        if (!hasIncrementalFeature()) {
-            return;
-        }
+    @Parameters(method = "installOnIncremental")
+    public void testInstallV4With10MBytesAdditionalDataFails(boolean onIncremental)
+            throws Exception {
+        checkAssumptionAndSetIdsigInstallMode(onIncremental);
 
         // Editing apksigner to fill additional data of size 10 * 1024 * 1024 bytes.
-        assertInstallV4FailsWithError("v4-digest-v3-10mbytes-additional-data.apk",
-                "Failure");
+        if (onIncremental) {
+            // For incremental, a bad Merkle tree will fail.
+            assertInstallV4FailsWithError("v4-digest-v3-10mbytes-additional-data.apk",
+                    "Failure");
+        } else {
+            // For non-incremental, Merkle tree in idsig is not used.
+            assertInstallV4Succeeds("v4-digest-v3-10mbytes-additional-data.apk");
+        }
     }
 
     @Test
-    public void testInstallV4WithWrongBlockSize() throws Exception {
-        // V4 is only enabled on devices with Incremental feature
-        if (!hasIncrementalFeature()) {
-            return;
-        }
+    @Parameters(method = "installOnIncremental")
+    public void testInstallV4WithWrongBlockSize(boolean onIncremental) throws Exception {
+        checkAssumptionAndSetIdsigInstallMode(onIncremental);
 
         // Editing apksigner with the wrong block size in the v4 signature.
         assertInstallV4FailsWithError("v4-digest-v3-wrong-block-size.apk",
@@ -1613,11 +1612,9 @@ public class PkgInstallSignatureVerificationTest extends BaseAppSecurityTest {
     }
 
     @Test
-    public void testInstallV4WithDifferentBlockSize() throws Exception {
-        // V4 is only enabled on devices with Incremental feature
-        if (!hasIncrementalFeature()) {
-            return;
-        }
+    @Parameters(method = "installOnIncremental")
+    public void testInstallV4WithDifferentBlockSize(boolean onIncremental) throws Exception {
+        checkAssumptionAndSetIdsigInstallMode(onIncremental);
 
         // Editing apksigner with the different block size (2048 instead of 4096).
         assertInstallV4FailsWithError("v4-digest-v3-merkle-tree-different-block-size.apk",
@@ -1625,22 +1622,18 @@ public class PkgInstallSignatureVerificationTest extends BaseAppSecurityTest {
     }
 
     @Test
-    public void testInstallV4WithWrongRawRootHash() throws Exception {
-        // V4 is only enabled on devices with Incremental feature
-        if (!hasIncrementalFeature()) {
-            return;
-        }
+    @Parameters(method = "installOnIncremental")
+    public void testInstallV4WithWrongRawRootHash(boolean onIncremental) throws Exception {
+        checkAssumptionAndSetIdsigInstallMode(onIncremental);
 
         // Editing apksigner with the wrong raw root hash in the v4 signature.
         assertInstallV4FailsWithError("v4-digest-v3-wrong-raw-root-hash.apk", "Failure");
     }
 
     @Test
-    public void testInstallV4WithWrongSignatureBytes() throws Exception {
-        // V4 is only enabled on devices with Incremental feature
-        if (!hasIncrementalFeature()) {
-            return;
-        }
+    @Parameters(method = "installOnIncremental")
+    public void testInstallV4WithWrongSignatureBytes(boolean onIncremental) throws Exception {
+        checkAssumptionAndSetIdsigInstallMode(onIncremental);
 
         // Editing apksigner with the wrong signature bytes in the v4 signature.
         assertInstallV4FailsWithError("v4-digest-v3-wrong-sig-bytes.apk",
@@ -1648,11 +1641,9 @@ public class PkgInstallSignatureVerificationTest extends BaseAppSecurityTest {
     }
 
     @Test
-    public void testInstallV4WithWrongSignatureBytesSize() throws Exception {
-        // V4 is only enabled on devices with Incremental feature
-        if (!hasIncrementalFeature()) {
-            return;
-        }
+    @Parameters(method = "installOnIncremental")
+    public void testInstallV4WithWrongSignatureBytesSize(boolean onIncremental) throws Exception {
+        checkAssumptionAndSetIdsigInstallMode(onIncremental);
 
         // Editing apksigner with the wrong signature byte size in the v4 signature.
         assertInstallV4FailsWithError("v4-digest-v3-wrong-sig-bytes-size.apk",
@@ -1660,47 +1651,56 @@ public class PkgInstallSignatureVerificationTest extends BaseAppSecurityTest {
     }
 
     @Test
-    public void testInstallV4WithNoMerkleTree() throws Exception {
-        // V4 is only enabled on devices with Incremental feature
-        if (!hasIncrementalFeature()) {
-            return;
-        }
+    @Parameters(method = "installOnIncremental")
+    public void testInstallV4WithNoMerkleTree(boolean onIncremental) throws Exception {
+        checkAssumptionAndSetIdsigInstallMode(onIncremental);
 
-        // Editing apksigner to not include the Merkle tree.
-        assertInstallV4FailsWithError("v4-digest-v3-no-merkle-tree.apk",
-                "Failure");
+        if (onIncremental) {
+            // Editing apksigner to not include the Merkle tree.
+            assertInstallV4FailsWithError("v4-digest-v3-no-merkle-tree.apk",
+                    "Failure");
+        } else {
+            assertInstallV4Succeeds("v4-digest-v3-no-merkle-tree.apk");
+        }
     }
 
     @Test
-    public void testInstallV4WithWithTrailingDataInMerkleTree() throws Exception {
-        // V4 is only enabled on devices with Incremental feature
-        if (!hasIncrementalFeature()) {
-            return;
-        }
+    @Parameters(method = "installOnIncremental")
+    public void testInstallV4WithWithTrailingDataInMerkleTree(boolean onIncremental)
+            throws Exception {
+        checkAssumptionAndSetIdsigInstallMode(onIncremental);
 
-        // Editing apksigner to add trailing data after the Merkle tree
-        assertInstallV4FailsWithError("v4-digest-v3-merkle-tree-1mb-trailing-data.apk",
-                "Failure");
+        // Editing apksigner to add trailing data after the Merkle tree.
+        if (onIncremental) {
+            // For incremental, a bad Merkle tree will fail.
+            assertInstallV4FailsWithError("v4-digest-v3-merkle-tree-1mb-trailing-data.apk",
+                    "Failure");
+        } else {
+            // For non-incremental, Merkle tree in idsig is not used.
+            assertInstallV4Succeeds("v4-digest-v3-merkle-tree-1mb-trailing-data.apk");
+        }
     }
 
     @Test
-    public void testInstallV4WithMerkleTreeBitsFlipped() throws Exception {
-        // V4 is only enabled on devices with Incremental feature
-        if (!hasIncrementalFeature()) {
-            return;
-        }
+    @Parameters(method = "installOnIncremental")
+    public void testInstallV4WithMerkleTreeBitsFlipped(boolean onIncremental) throws Exception {
+        checkAssumptionAndSetIdsigInstallMode(onIncremental);
 
         // Editing apksigner to flip few bits in the only node of the Merkle tree of a small app.
-        assertInstallV4FailsWithError("v4-digest-v3-merkle-tree-bit-flipped.apk",
-                "Failed to parse");
+        if (onIncremental) {
+            // For incremental, a bad Merkle tree will fail.
+            assertInstallV4FailsWithError("v4-digest-v3-merkle-tree-bit-flipped.apk",
+                    "Failed to parse");
+        } else {
+            // For non-incremental, Merkle tree in idsig is not used.
+            assertInstallV4Succeeds("v4-digest-v3-merkle-tree-bit-flipped.apk");
+        }
     }
 
     @Test
-    public void testV4IncToV3NonIncSameKeyUpgradeSucceeds() throws Exception {
-        // V4 is only enabled on devices with Incremental feature
-        if (!hasIncrementalFeature()) {
-            return;
-        }
+    @Parameters(method = "installOnIncremental")
+    public void testV4IncToV3NonIncSameKeyUpgradeSucceeds(boolean onIncremental) throws Exception {
+        checkAssumptionAndSetIdsigInstallMode(onIncremental);
 
         // See cts/hostsidetests/appsecurity/res/pkgsigverify/generate-apks.sh for the command
         // to generate the apks
@@ -1711,11 +1711,10 @@ public class PkgInstallSignatureVerificationTest extends BaseAppSecurityTest {
     }
 
     @Test
-    public void testV4IncToV3NonIncMismatchingKeyUpgradeFails() throws Exception {
-        // V4 is only enabled on devices with Incremental feature
-        if (!hasIncrementalFeature()) {
-            return;
-        }
+    @Parameters(method = "installOnIncremental")
+    public void testV4IncToV3NonIncMismatchingKeyUpgradeFails(boolean onIncremental)
+            throws Exception {
+        checkAssumptionAndSetIdsigInstallMode(onIncremental);
 
         // See cts/hostsidetests/appsecurity/res/pkgsigverify/generate-apks.sh for the command
         // to generate the apks
@@ -1727,11 +1726,10 @@ public class PkgInstallSignatureVerificationTest extends BaseAppSecurityTest {
     }
 
     @Test
-    public void testV4IncToV3NonIncRotatedKeyUpgradeSucceeds() throws Exception {
-        // V4 is only enabled on devices with Incremental feature
-        if (!hasIncrementalFeature()) {
-            return;
-        }
+    @Parameters(method = "installOnIncremental")
+    public void testV4IncToV3NonIncRotatedKeyUpgradeSucceeds(boolean onIncremental)
+            throws Exception {
+        checkAssumptionAndSetIdsigInstallMode(onIncremental);
 
         // See cts/hostsidetests/appsecurity/res/pkgsigverify/generate-apks.sh for the command
         // to generate the apks
@@ -1742,11 +1740,10 @@ public class PkgInstallSignatureVerificationTest extends BaseAppSecurityTest {
     }
 
     @Test
-    public void testV4IncToV3NonIncMismatchedRotatedKeyUpgradeFails() throws Exception {
-        // V4 is only enabled on devices with Incremental feature
-        if (!hasIncrementalFeature()) {
-            return;
-        }
+    @Parameters(method = "installOnIncremental")
+    public void testV4IncToV3NonIncMismatchedRotatedKeyUpgradeFails(boolean onIncremental)
+            throws Exception {
+        checkAssumptionAndSetIdsigInstallMode(onIncremental);
 
         // See cts/hostsidetests/appsecurity/res/pkgsigverify/generate-apks.sh for the command
         // to generate the apks
@@ -1758,11 +1755,9 @@ public class PkgInstallSignatureVerificationTest extends BaseAppSecurityTest {
     }
 
     @Test
-    public void testV4IncToV2NonIncSameKeyUpgradeSucceeds() throws Exception {
-        // V4 is only enabled on devices with Incremental feature
-        if (!hasIncrementalFeature()) {
-            return;
-        }
+    @Parameters(method = "installOnIncremental")
+    public void testV4IncToV2NonIncSameKeyUpgradeSucceeds(boolean onIncremental) throws Exception {
+        checkAssumptionAndSetIdsigInstallMode(onIncremental);
 
         // See cts/hostsidetests/appsecurity/res/pkgsigverify/generate-apks.sh for the command
         // to generate the apks
@@ -1773,11 +1768,10 @@ public class PkgInstallSignatureVerificationTest extends BaseAppSecurityTest {
     }
 
     @Test
-    public void testV4IncToV2NonIncMismatchingKeyUpgradeFails() throws Exception {
-        // V4 is only enabled on devices with Incremental feature
-        if (!hasIncrementalFeature()) {
-            return;
-        }
+    @Parameters(method = "installOnIncremental")
+    public void testV4IncToV2NonIncMismatchingKeyUpgradeFails(boolean onIncremental)
+            throws Exception {
+        checkAssumptionAndSetIdsigInstallMode(onIncremental);
 
         // See cts/hostsidetests/appsecurity/res/pkgsigverify/generate-apks.sh for the command
         // to generate the apks
@@ -1789,11 +1783,9 @@ public class PkgInstallSignatureVerificationTest extends BaseAppSecurityTest {
     }
 
     @Test
-    public void testInstallV4UpdateAfterRotation() throws Exception {
-        // V4 is only enabled on devices with Incremental feature
-        if (!hasIncrementalFeature()) {
-            return;
-        }
+    @Parameters(method = "installOnIncremental")
+    public void testInstallV4UpdateAfterRotation(boolean onIncremental) throws Exception {
+        checkAssumptionAndSetIdsigInstallMode(onIncremental);
 
         // This test performs an end to end verification of the update of an app with a rotated
         // key. The app under test exports a bound service that performs its own PackageManager key
@@ -1833,6 +1825,21 @@ public class PkgInstallSignatureVerificationTest extends BaseAppSecurityTest {
     private boolean hasIncrementalFeature() throws Exception {
         return "true\n".equals(getDevice().executeShellCommand(
                 "pm has-feature android.software.incremental_delivery"));
+    }
+
+    private void checkAssumptionAndSetIdsigInstallMode(boolean onIncremental) throws Exception {
+        // Due to the limitation of existing test runners (i.e. DeviceParameterizedRunner and
+        // DeviceJUnit4Parameterized), there's no easy way to parameterize only some of the test
+        // methods while avoid recording the parameter manually.
+        mUseIncrementalForInstallWithIdsig = onIncremental;
+
+        if (onIncremental) {
+            // V4 is only enabled on devices with Incremental feature
+            assumeTrue(hasIncrementalFeature());
+        } else {
+            // Install V4 in classic install session
+            assumeTrue(android.security.Flags.extendVbChainToUpdatedApk());
+        }
     }
 
     private void assertInstallSucceeds(String apkFilenameInResources) throws Exception {
@@ -2035,8 +2042,14 @@ public class PkgInstallSignatureVerificationTest extends BaseAppSecurityTest {
 
     private String installV4Package(String remoteApkPath)
             throws DeviceNotAvailableException {
-        return new InstallMultiple()
-            .useIncremental()
+        var installer = new InstallMultiple();
+        if (mUseIncrementalForInstallWithIdsig) {
+            installer.useIncremental();
+        } else {
+            // Add to the install session
+            installer.addRemoteFile(remoteApkPath + ".idsig");
+        }
+        return installer
             .forceQueryable()
             .addRemoteFile(remoteApkPath)
             .runForResult();
