@@ -21,6 +21,7 @@ import static android.os.Build.VERSION_CODES.R;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assume.assumeNotNull;
 import static org.testng.Assert.assertThrows;
 
 import android.content.Context;
@@ -361,6 +362,17 @@ public class PackageTest {
         final int previousId = TestApis.packages().launcher().runningProcess().pid();
         TestApis.packages().launcher().forceStop();
         assertThat(TestApis.packages().launcher().runningProcess().pid()).isNotEqualTo(previousId);
+    }
+
+    @Test
+    public void forceStop_whenNoRunningProcess_doesNotThrowException() {
+        final Package notRunningPackage = TestApis.packages().installedForUser().stream()
+                .filter(aPackage -> aPackage.runningProcess() == null)
+                .findFirst()
+                .get();
+        assumeNotNull(notRunningPackage);
+
+        notRunningPackage.forceStop();
     }
 
     @Test
