@@ -25,6 +25,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
 import android.Manifest;
+import android.annotation.Nullable;
 import android.app.Activity;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
@@ -57,6 +58,7 @@ import com.google.android.mms.pdu.PduPart;
 import com.google.android.mms.pdu.SendConf;
 import com.google.android.mms.pdu.SendReq;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -106,6 +108,7 @@ public class MmsTest {
     private SentReceiver mSentReceiver;
     private SentReceiver mDeliveryReceiver;
     private TelephonyManager mTelephonyManager;
+    @Nullable private String mOriginalDefaultSmsApp;
 
     private static class SentReceiver extends BroadcastReceiver {
         private final Object mLock;
@@ -212,7 +215,15 @@ public class MmsTest {
                 (TelephonyManager) getContext().getSystemService(Context.TELEPHONY_SERVICE);
         assumeTrue(getContext().getPackageManager().hasSystemFeature(
                 PackageManager.FEATURE_TELEPHONY_MESSAGING));
+        mOriginalDefaultSmsApp = DefaultSmsAppHelper.getDefaultSmsApp(getContext());
         DefaultSmsAppHelper.stopBeingDefaultSmsApp();
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        if (!TextUtils.isEmpty(mOriginalDefaultSmsApp)) {
+            assertTrue(DefaultSmsAppHelper.setDefaultSmsApp(getContext(), mOriginalDefaultSmsApp));
+        }
     }
 
     @Test
