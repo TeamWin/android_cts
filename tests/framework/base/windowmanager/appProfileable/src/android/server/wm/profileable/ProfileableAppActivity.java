@@ -49,8 +49,12 @@ public class ProfileableAppActivity extends BasicTestActivity {
     @Override
     public void handleCommand(String command, Bundle data) {
         if (COMMAND_WAIT_FOR_PROFILE_OUTPUT.equals(command)) {
-            mTraceFileObserver.waitForComplete();
-            reply(command);
+            // Do not wait on main thread because the message PROFILER_CONTROL to stop the profile
+            // is also scheduled on main thread.
+            new Thread(() -> {
+                mTraceFileObserver.waitForComplete();
+                runOnUiThread(() -> reply(command));
+            }).start();
             return;
         }
 
