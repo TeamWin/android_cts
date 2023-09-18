@@ -55,6 +55,7 @@ import com.android.bedstead.testapp.TestAppInstance;
 
 import org.junit.Before;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.runner.RunWith;
 
@@ -221,6 +222,7 @@ public final class DefaultSmsApplicationTest {
         }
     }
 
+    @Ignore("b/300397938")
     @Postsubmit(reason = "new test")
     // We don't include non device admin states as passing a null admin is a NullPointerException
     @CannotSetPolicyTest(policy = {

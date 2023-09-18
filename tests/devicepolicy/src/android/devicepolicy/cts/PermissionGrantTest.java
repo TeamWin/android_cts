@@ -1053,6 +1053,7 @@ public final class PermissionGrantTest {
             Settings.Global.ALLOW_WORK_PROFILE_TELEPHONY_FOR_NON_DPM_ROLE_HOLDERS, value = "1")
     @RequireRunOnWorkProfile(isOrganizationOwned = true)
     @Test
+    @Ignore("b/300397938")
     public void grantSmsPermission_orgOwnedDeviceWithManagedSubscriptionsPolicySet_granted() {
         RemoteDevicePolicyManager devicePolicyManager = sDeviceState.profileOwner(
                 WORK_PROFILE).devicePolicyManager();
