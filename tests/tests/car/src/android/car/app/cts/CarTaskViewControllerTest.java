@@ -161,14 +161,10 @@ public class CarTaskViewControllerTest {
     }
 
     @Test
-    // TODO(b/295368210): Enable these once the methods from hidden base class are properly
-    // recognized.
-    // @ApiTest(apis = {
-    //         "android.car.app.ControlledRemoteCarTaskView#isInitialized",
-    //         "android.car.app.ControlledRemoteCarTaskView#getTaskInfo"
-    // })
-    @NonApiTest(exemptionReasons = {}, justification = "Infra doesn't support methods in hidden "
-            + "base class")
+    @ApiTest(apis = {
+            "android.car.app.ControlledRemoteCarTaskView#isInitialized",
+            "android.car.app.ControlledRemoteCarTaskView#getTaskInfo"
+    })
     public void createMultipleControlledRemoteCarTaskView_startsTheTask() {
         // Act
         CarTaskViewTestHolder taskViewCallback =
@@ -225,13 +221,7 @@ public class CarTaskViewControllerTest {
     }
 
     @Test
-    // TODO(b/295368210): Enable these once the methods from hidden base class are properly
-    // recognized.
-    // @ApiTest(apis = {
-    //        "android.car.app.ControlledRemoteCarTaskView#release"
-    // })
-    @NonApiTest(exemptionReasons = {}, justification = "Infra doesn't support methods in hidden "
-            + "base class")
+    @ApiTest(apis = {"android.car.app.ControlledRemoteCarTaskView#release"})
     public void releaseControlledCarTaskView_releasesTaskView() throws Exception {
         // Arrange
         CarTaskViewTestHolder taskViewCallback =
