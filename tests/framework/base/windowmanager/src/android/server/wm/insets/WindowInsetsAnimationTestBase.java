@@ -54,7 +54,6 @@ import com.android.compatibility.common.util.OverrideAnimationScaleRule;
 
 import org.junit.Assert;
 import org.junit.Rule;
-import org.junit.rules.TestRule;
 import org.mockito.InOrder;
 
 import java.util.ArrayList;
@@ -234,6 +233,7 @@ public class WindowInsetsAnimationTestBase extends WindowManagerTestBase {
         WindowInsetsAnimation statusBarAnim;
         WindowInsetsAnimation navBarAnim;
         WindowInsetsAnimation imeAnim;
+        volatile boolean imeAnimStarted;
         volatile boolean animationDone;
         final ArrayList<AnimationStep> statusAnimSteps = new ArrayList<>();
         final ArrayList<AnimationStep> navAnimSteps = new ArrayList<>();
@@ -265,6 +265,9 @@ public class WindowInsetsAnimationTestBase extends WindowManagerTestBase {
                 startRunnable.run();
             }
             runningAnims.add(animation);
+            if (animation.equals(imeAnim)) {
+                imeAnimStarted = true;
+            }
             return bounds;
         }
 

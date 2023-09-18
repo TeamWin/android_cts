@@ -126,7 +126,7 @@ public class WindowInsetsAnimationImeTests extends WindowInsetsAnimationTestBase
         getInstrumentation().runOnMainSync(() -> mRootView.getWindowInsetsController().show(ime()));
 
         ActivityManagerTestBase.waitForOrFail(
-                "Waiting until IME animation starts", () -> callback.imeAnim != null);
+                "Waiting until IME animation starts", () -> callback.imeAnimStarted);
         ActivityManagerTestBase.waitForOrFail(
                 "Waiting until animation done", () -> callback.runningAnims.isEmpty());
 
