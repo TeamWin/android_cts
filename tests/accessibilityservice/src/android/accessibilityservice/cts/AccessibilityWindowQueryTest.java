@@ -786,7 +786,8 @@ public class AccessibilityWindowQueryTest {
                         () -> localeManager.setApplicationLocales(localeList)),
                 event -> {
                     AccessibilityNodeInfo root = sUiAutomation.getRootInActiveWindow();
-                    return root != null && root.getWindow() != null;
+                    return root != null && root.getWindow() != null
+                            && localeManager.getApplicationLocales().equals(localeList);
                 }, DEFAULT_TIMEOUT_MS);
     }
 
