@@ -51,12 +51,18 @@ public final class PowerPolicyHostTest extends CarHostJUnit4TestCase {
             "am start -n " + ANDROID_CLIENT_ACTIVITY + " --es powerpolicy ";
 
     private static final int DEFAULT_TIMEOUT_SEC = 20;
+    private static final int BOOT_TIMEOUT_SEC = 60;
 
     private final PowerPolicyTestAnalyzer mTestAnalyzer = new PowerPolicyTestAnalyzer(this);
 
     @Before
     public void checkPrecondition() throws Exception {
-        checkDefaultPowerPolicySet("pre-condition");
+        waitForOnState();
+        PowerPolicyTestHelper testHelper = new PowerPolicyTestHelper(
+                /* testcase= */ "pre-condition", /* step= */ "testStep1",
+                /* frameCpms= */ getCpmsFrameworkLayerStateInfo(),
+                /* sysCpms= */ getCpmsSystemLayerStateInfo(), /* silentMode= */ null);
+        checkDefaultPowerPolicySet(testHelper);
     }
 
     @After
@@ -77,6 +83,7 @@ public final class PowerPolicyHostTest extends CarHostJUnit4TestCase {
         teststep = "switch to forced silent";
         enterForcedSilentMode();
         testHelper = getTestHelper(testcase, 1, teststep);
+        // Test starts in ON state, state shouldn't change between test start and this check
         testHelper.checkCurrentState(PowerPolicyConstants.CarPowerState.ON);
         testHelper.checkCurrentPolicy(PowerPolicyDef.IdSet.NO_USER_INTERACTION);
         testHelper.checkSilentModeStatus(true);
@@ -86,6 +93,7 @@ public final class PowerPolicyHostTest extends CarHostJUnit4TestCase {
         teststep = "restore to normal mode";
         leaveForcedSilentMode();
         testHelper = getTestHelper(testcase, 2, teststep);
+        // Test starts in ON state, state shouldn't change between test start and this check
         testHelper.checkCurrentState(PowerPolicyConstants.CarPowerState.ON);
         testHelper.checkCurrentPolicy(PowerPolicyDef.IdSet.DEFAULT_ALL_ON);
         testHelper.checkSilentModeStatus(false);
@@ -116,6 +124,7 @@ public final class PowerPolicyHostTest extends CarHostJUnit4TestCase {
         for (int i = 0; i < stepNames.length; i++) {
             triggerVhalPowerStateReq(vhalReqs[i], PowerPolicyConstants.ShutdownParam.NOT_USED);
             PowerPolicyTestHelper testHelper = getTestHelper(testcase, i + 1, stepNames[i]);
+            // power state shouldn't change
             testHelper.checkCurrentState(PowerPolicyConstants.CarPowerState.ON);
             testHelper.checkCurrentPolicy(PowerPolicyDef.IdSet.DEFAULT_ALL_ON);
         }
@@ -130,6 +139,7 @@ public final class PowerPolicyHostTest extends CarHostJUnit4TestCase {
 
         teststep = "check the inital power policies";
         testHelper = getTestHelper(testcase, stepNo++, teststep);
+        // Test starts in ON state, state shouldn't change between test start and this check
         testHelper.checkCurrentState(PowerPolicyConstants.CarPowerState.ON);
         // save number of device power policies
         int registeredPoliciesNumber = testHelper.getNumberOfRegisteredPolicies();
@@ -207,13 +217,27 @@ public final class PowerPolicyHostTest extends CarHostJUnit4TestCase {
         // need to find a way to move reboot device into AfterAll
         rebootDevice();
         teststep = "reboot to clear added test power policies";
+        // device was restarted, need to wait for ON state
+        waitForOnState();
         testHelper = getTestHelper(testcase, stepNo++, teststep);
-        testHelper.checkCurrentState(PowerPolicyConstants.CarPowerState.ON);
         testHelper.checkTotalRegisteredPolicies(registeredPoliciesNumber);
     }
 
     public String fetchActivityDumpsys() throws Exception {
         return executeCommand("dumpsys activity %s", ANDROID_CLIENT_ACTIVITY);
+    }
+
+    private void waitForOnState() throws Exception {
+        //need to wait for ON state
+        CommonTestUtils.waitUntil("timed out (" + BOOT_TIMEOUT_SEC
+                        + "s) waiting for ON state", BOOT_TIMEOUT_SEC,
+                () -> {
+                    CpmsFrameworkLayerStateInfo frameworkLayerStateInfo =
+                            getCpmsFrameworkLayerStateInfo();
+                    return frameworkLayerStateInfo != null
+                            && frameworkLayerStateInfo.getCurrentState()
+                            == PowerPolicyConstants.CarPowerState.ON;
+                });
     }
 
     private PowerPolicyTestHelper getTestHelper(String testcase, int stepNo, String stepName)
@@ -364,11 +388,7 @@ public final class PowerPolicyHostTest extends CarHostJUnit4TestCase {
         }
     }
 
-    private void checkDefaultPowerPolicySet(String testcase) throws Exception {
-        String teststep = "check if the car power is on the ON state";
-        PowerPolicyTestHelper testHelper = new PowerPolicyTestHelper(testcase, teststep,
-                getCpmsFrameworkLayerStateInfo(), getCpmsSystemLayerStateInfo(), null);
-        testHelper.checkCurrentState(PowerPolicyConstants.CarPowerState.ON);
+    private void checkDefaultPowerPolicySet(PowerPolicyTestHelper testHelper) throws Exception {
         testHelper.checkRegisteredPolicy(PowerPolicyDef.PolicySet.INITIAL_ALL_ON);
         testHelper.checkRegisteredPolicy(PowerPolicyDef.PolicySet.DEFAULT_ALL_ON);
     }
