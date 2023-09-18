@@ -43,6 +43,7 @@ import static android.virtualdevice.cts.common.ClipboardTestConstants.RESULT_COD
 import static android.virtualdevice.cts.common.util.VirtualDeviceTestUtils.createActivityOptions;
 import static android.virtualdevice.cts.common.util.VirtualDeviceTestUtils.createDefaultVirtualDisplayConfigBuilder;
 import static android.virtualdevice.cts.common.util.VirtualDeviceTestUtils.createResultReceiver;
+import static android.virtualdevice.cts.common.util.VirtualDeviceTestUtils.isVirtualDeviceManagerConfigEnabled;
 
 import static androidx.test.core.app.ApplicationProvider.getApplicationContext;
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
@@ -71,7 +72,6 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.content.res.Resources;
 import android.graphics.PixelFormat;
 import android.graphics.Point;
 import android.hardware.display.DisplayManager;
@@ -166,11 +166,7 @@ public class StreamedAppClipboardTest {
         MockitoAnnotations.initMocks(this);
         mContext = getApplicationContext();
         final PackageManager packageManager = mContext.getPackageManager();
-        assumeTrue(mContext.getResources().getBoolean(
-                Resources.getSystem().getIdentifier(
-                        "config_enableVirtualDeviceManager",
-                        "bool",
-                        "android")));
+        assumeTrue(isVirtualDeviceManagerConfigEnabled(mContext));
         assumeTrue(packageManager.hasSystemFeature(
                 PackageManager.FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS));
         // TODO(b/261155110): Re-enable tests once freeform mode is supported in Virtual Display.

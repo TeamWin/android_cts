@@ -19,6 +19,7 @@ package android.virtualdevice.cts;
 import static android.Manifest.permission.CREATE_VIRTUAL_DEVICE;
 import static android.Manifest.permission.INJECT_EVENTS;
 import static android.view.Display.DEFAULT_DISPLAY;
+import static android.virtualdevice.cts.common.util.VirtualDeviceTestUtils.isVirtualDeviceManagerConfigEnabled;
 
 import static androidx.test.core.app.ApplicationProvider.getApplicationContext;
 
@@ -29,7 +30,6 @@ import static org.junit.Assume.assumeTrue;
 import android.companion.virtual.VirtualDeviceManager;
 import android.companion.virtual.VirtualDeviceParams;
 import android.content.Context;
-import android.content.res.Resources;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
 import android.hardware.display.VirtualDisplayConfig;
@@ -80,11 +80,7 @@ public class VirtualInputOnUnownedDisplayTest {
     @Before
     public void setUp() {
         final Context context = getApplicationContext();
-        assumeTrue(context.getResources().getBoolean(
-                Resources.getSystem().getIdentifier(
-                        "config_enableVirtualDeviceManager",
-                        "bool",
-                        "android")));
+        assumeTrue(isVirtualDeviceManagerConfigEnabled(context));
         final VirtualDeviceManager vdm = context.getSystemService(VirtualDeviceManager.class);
         mVirtualDevice = vdm.createVirtualDevice(mFakeAssociationRule.getAssociationInfo().getId(),
                 new VirtualDeviceParams.Builder().build());
