@@ -327,6 +327,8 @@ bool CodecEncoderSurfaceTest::dequeueEncoderOutput(size_t bufferIndex,
     if (info->size > 0) {
         size_t buffSize;
         uint8_t* buf = AMediaCodec_getOutputBuffer(mEncoder, bufferIndex, &buffSize);
+        // NdkMediaCodec calls ABuffer::data, which already adds offset
+        info->offset = 0;
         if (mSaveToMem) {
             mOutputBuff->saveToMemory(buf, info);
         }
