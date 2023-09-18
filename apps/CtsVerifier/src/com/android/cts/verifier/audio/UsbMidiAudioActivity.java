@@ -39,7 +39,7 @@ import java.util.concurrent.Executor;
 /**
  * Tests MIDI and Audio for an USB peripheral.
  */
-@CddTest(requirement = "5.9/C-1-3,C-1-2|7.8.2/C-1-1,C-1-2")
+@CddTest(requirements = {"5.9/C-1-2,C-1-3", "7.8.2/C-1-1,C-1-2"})
 public class UsbMidiAudioActivity extends USBAudioPeripheralPlayerActivity {
 
     private static final String TAG = "UsbMidiAudioActivity";
