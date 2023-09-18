@@ -15,8 +15,7 @@
  */
 package android.content.pm.cts;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static com.google.common.truth.Truth.assertThat;
 
 import android.content.ComponentName;
 import android.content.Context;
@@ -69,7 +68,7 @@ public class PackageItemInfoIconTest {
 
         Drawable icon = mPackageManager.loadUnbadgedItemIcon(itemInfo, null);
 
-        assertTrue(comparePixelData(expectedIcon, icon));
+        assertThat(comparePixelData(expectedIcon, icon)).isTrue();
     }
 
     @Test
@@ -84,23 +83,27 @@ public class PackageItemInfoIconTest {
 
         Drawable icon = mPackageManager.loadUnbadgedItemIcon(itemInfo, appInfo);
 
-        assertTrue(comparePixelData(expectedIcon, icon));
+        assertThat(comparePixelData(expectedIcon, icon)).isTrue();
     }
 
     @Test
     public void testFromActivity() throws PackageManager.NameNotFoundException {
         // start is defined as the Activity icon in this test's AndroidManifest.xml
         Drawable expectedIcon = mContext.getDrawable(R.drawable.start);
+        // pass is NOT defined as the Activity icon in this test's AndroidManifest.xml. But it has
+        // the same width and the same height as start.
+        Drawable wrongIcon = mContext.getDrawable(R.drawable.pass);
 
         ApplicationInfo appInfo = mPackageManager.getApplicationInfo(PACKAGE_NAME,
                 PackageManager.ApplicationInfoFlags.of(0));
         PackageItemInfo itemInfo = getTestItemInfo();
 
-        assertEquals(R.drawable.start, itemInfo.icon);
+        assertThat(itemInfo.icon).isEqualTo(R.drawable.start);
 
         Drawable icon = mPackageManager.loadUnbadgedItemIcon(itemInfo, appInfo);
 
-        assertTrue(comparePixelData(expectedIcon, icon));
+        assertThat(comparePixelData(wrongIcon, icon)).isFalse();
+        assertThat(comparePixelData(expectedIcon, icon)).isTrue();
     }
 
     @Test
@@ -113,7 +116,7 @@ public class PackageItemInfoIconTest {
 
         Drawable icon = itemInfo.loadUnbadgedIcon(mPackageManager);
 
-        assertTrue(comparePixelData(expectedIcon, icon));
+        assertThat(comparePixelData(expectedIcon, icon)).isTrue();
     }
 
     @Test
@@ -126,21 +129,25 @@ public class PackageItemInfoIconTest {
 
         Drawable icon = appInfo.loadUnbadgedIcon(mPackageManager);
 
-        assertTrue(comparePixelData(expectedIcon, icon));
+        assertThat(comparePixelData(expectedIcon, icon)).isTrue();
     }
 
     @Test
     public void testDelegatedFromActivity() throws PackageManager.NameNotFoundException {
         // start is defined as the Activity icon in this test's AndroidManifest.xml
         Drawable expectedIcon = mContext.getDrawable(R.drawable.start);
+        // pass is NOT defined as the Activity icon in this test's AndroidManifest.xml. But it has
+        // the same width and the same height as start.
+        Drawable wrongIcon = mContext.getDrawable(R.drawable.pass);
 
         PackageItemInfo itemInfo = getTestItemInfo();
 
-        assertEquals(R.drawable.start, itemInfo.icon);
+        assertThat(itemInfo.icon).isEqualTo(R.drawable.start);
 
         Drawable icon = itemInfo.loadUnbadgedIcon(mPackageManager);
 
-        assertTrue(comparePixelData(expectedIcon, icon));
+        assertThat(comparePixelData(wrongIcon, icon)).isFalse();
+        assertThat(comparePixelData(expectedIcon, icon)).isTrue();
     }
 
     private PackageItemInfo getTestItemInfo() throws PackageManager.NameNotFoundException {
@@ -179,10 +186,12 @@ public class PackageItemInfoIconTest {
     }
 
     private Bitmap drawableToBitmap(Drawable drawable) {
-        Bitmap bitmap = Bitmap.createBitmap(drawable.getIntrinsicWidth(),
-                drawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
+        final int width = drawable.getIntrinsicWidth();
+        final int height = drawable.getIntrinsicHeight();
+        Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
 
         Canvas canvas = new Canvas(bitmap);
+        drawable.setBounds(/* left */ 0, /* top */ 0, width, height);
         drawable.draw(canvas);
         return bitmap;
     }
