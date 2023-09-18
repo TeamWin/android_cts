@@ -41,7 +41,7 @@ _PREVIEW_STABILIZATION_FACTOR = 0.7  # 70% of gyro movement allowed
 _PREVIEW_STABILIZATION_MODE_PREVIEW = 2
 
 
-def _collect_data(cam, tablet_device, video_size, rot_rig):
+def _collect_data(cam, tablet_device, preview_size, rot_rig):
   """Capture a new set of data from the device.
 
   Captures camera preview frames while the user is moving the device in
@@ -50,7 +50,7 @@ def _collect_data(cam, tablet_device, video_size, rot_rig):
   Args:
     cam: camera object
     tablet_device: boolean; based on config file
-    video_size: str; video resolution. ex. '1920x1080'
+    preview_size: str; preview stream resolution. ex. '1920x1080'
     rot_rig: dict with 'cntl' and 'ch' defined
 
   Returns:
@@ -88,7 +88,7 @@ def _collect_data(cam, tablet_device, video_size, rot_rig):
   # Record video and return recording object
   time.sleep(_VIDEO_DELAY_TIME)  # allow time for rig to start moving
 
-  recording_obj = cam.do_preview_recording(video_size, _VIDEO_DURATION, True)
+  recording_obj = cam.do_preview_recording(preview_size, _VIDEO_DURATION, True)
   logging.debug('Recorded output path: %s', recording_obj['recordedOutputPath'])
   logging.debug('Tested quality: %s', recording_obj['quality'])
 
@@ -173,9 +173,9 @@ class PreviewStabilizationTest(its_base_test.ItsBaseTest):
 
       max_cam_gyro_angles = {}
 
-      for video_size in supported_preview_sizes:
+      for preview_size in supported_preview_sizes:
         recording_obj = _collect_data(
-            cam, self.tablet_device, video_size, rot_rig)
+            cam, self.tablet_device, preview_size, rot_rig)
 
         # Grab the video from the save location on DUT
         self.dut.adb.pull([recording_obj['recordedOutputPath'], log_path])
@@ -204,7 +204,7 @@ class PreviewStabilizationTest(its_base_test.ItsBaseTest):
 
         # Extract camera rotations
         img_h = frames[0].shape[0]
-        file_name_stem = f'{os.path.join(log_path, _NAME)}_{video_size}'
+        file_name_stem = f'{os.path.join(log_path, _NAME)}_{preview_size}'
         cam_rots = sensor_fusion_utils.get_cam_rotations(
             frames[_START_FRAME : len(frames)],
             facing,
@@ -214,13 +214,13 @@ class PreviewStabilizationTest(its_base_test.ItsBaseTest):
             stabilized_video=True
         )
         sensor_fusion_utils.plot_camera_rotations(cam_rots, _START_FRAME,
-                                                  video_size, file_name_stem)
+                                                  preview_size, file_name_stem)
         max_camera_angle = sensor_fusion_utils.calc_max_rotation_angle(
             cam_rots, 'Camera')
 
         # Extract gyro rotations
         sensor_fusion_utils.plot_gyro_events(
-            gyro_events, f'{_NAME}_{video_size}', log_path
+            gyro_events, f'{_NAME}_{preview_size}', log_path
         )
         gyro_rots = sensor_fusion_utils.conv_acceleration_to_movement(
             gyro_events, _VIDEO_DELAY_TIME
@@ -229,10 +229,10 @@ class PreviewStabilizationTest(its_base_test.ItsBaseTest):
             gyro_rots, 'Gyro')
         logging.debug(
             'Max deflection (degrees) %s: video: %.3f, gyro: %.3f ratio: %.4f',
-            video_size, max_camera_angle, max_gyro_angle,
+            preview_size, max_camera_angle, max_gyro_angle,
             max_camera_angle / max_gyro_angle)
-        max_cam_gyro_angles[video_size] = {'gyro': max_gyro_angle,
-                                           'cam': max_camera_angle}
+        max_cam_gyro_angles[preview_size] = {'gyro': max_gyro_angle,
+                                             'cam': max_camera_angle}
 
         # Assert phone is moved enough during test
         if max_gyro_angle < _MIN_PHONE_MOVEMENT_ANGLE:
@@ -268,7 +268,7 @@ class PreviewStabilizationTest(its_base_test.ItsBaseTest):
                 os.remove(file_to_remove)
               except FileNotFoundError:
                 logging.debug('File Not Found: %s', str(file))
-          logging.debug('Format %s passes, frame images has been removed', preview_size)
+          logging.debug('Format %s passes, frame images removed', preview_size)
 
       if test_failures:
         raise AssertionError(test_failures)

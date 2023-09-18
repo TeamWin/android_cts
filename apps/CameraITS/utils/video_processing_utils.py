@@ -246,7 +246,7 @@ def extract_last_key_frame_from_recording(log_path, file_name):
     file_name: str file name for saved video
 
   Returns:
-    dictionary of images
+    numpy image of last key frame
   """
   key_frame_files = extract_key_frames_from_video(log_path, file_name)
   logging.debug('key_frame_files: %s', key_frame_files)
@@ -255,7 +255,7 @@ def extract_last_key_frame_from_recording(log_path, file_name):
   last_key_frame_file = get_key_frame_to_process(key_frame_files)
   logging.debug('last_key_frame: %s', last_key_frame_file)
 
-  # Convert lastKeyFrame to numpy array
+  # Convert last_key_frame to numpy array
   np_image = image_processing_utils.convert_image_to_numpy_array(
       os.path.join(log_path, last_key_frame_file))
   logging.debug('last key frame image shape: %s', np_image.shape)
