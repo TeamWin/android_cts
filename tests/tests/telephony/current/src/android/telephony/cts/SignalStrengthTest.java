@@ -30,6 +30,8 @@ import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkCapabilities;
 import android.os.SystemClock;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.telephony.AccessNetworkConstants;
 import android.telephony.CellSignalStrength;
 import android.telephony.CellSignalStrengthCdma;
@@ -44,7 +46,10 @@ import android.telephony.SignalStrength;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 
+import com.android.internal.telephony.flags.Flags;
+
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 
 import java.util.HashSet;
@@ -57,6 +62,10 @@ import java.util.Set;
  */
 public class SignalStrengthTest {
     private static final String TAG = "SignalStrengthTest";
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule =
+            DeviceFlagsValueProvider.createCheckFlagsRule();
 
     private TelephonyManager mTm;
     private PackageManager mPm;
@@ -82,9 +91,17 @@ public class SignalStrengthTest {
 
     @Test
     public void testSignalStrength() {
-        if (!mPm.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
-            Log.d(TAG, "Skipping test that requires FEATURE_TELEPHONY");
-            return;
+        if (Flags.enforceTelephonyFeatureMappingForPublicApis()) {
+            if (!mPm.hasSystemFeature(PackageManager.FEATURE_TELEPHONY_RADIO_ACCESS)) {
+                Log.d(TAG, "Skipping test that requires"
+                        + "FEATURE_TELEPHONY and FEATURE_TELEPHONY_RADIO_ACCESS");
+                return;
+            }
+        } else {
+            if (!mPm.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+                Log.d(TAG, "Skipping test that requires FEATURE_TELEPHONY");
+                return;
+            }
         }
 
         if (!isCamped()) fail("Device is not camped on cellular");

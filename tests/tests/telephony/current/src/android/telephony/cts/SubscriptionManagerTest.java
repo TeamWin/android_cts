@@ -1649,7 +1649,18 @@ public class SubscriptionManagerTest {
 
         final TelephonyManager tm = InstrumentationRegistry.getContext()
                 .getSystemService(TelephonyManager.class);
-        int dataNetworkType = tm.getDataNetworkType(mSubId);
+
+        int dataNetworkType;
+        if (Flags.enforceTelephonyFeatureMappingForPublicApis()) {
+            if (InstrumentationRegistry.getContext().getPackageManager().hasSystemFeature(
+                    PackageManager.FEATURE_TELEPHONY_RADIO_ACCESS)) {
+                dataNetworkType = tm.getDataNetworkType(mSubId);
+            } else {
+                dataNetworkType = TelephonyManager.NETWORK_TYPE_UNKNOWN;
+            }
+        } else {
+            dataNetworkType = tm.getDataNetworkType(mSubId);
+        }
         long supportedRats = ShellIdentityUtils.invokeMethodWithShellPermissions(tm,
                 TelephonyManager::getSupportedRadioAccessFamily);
 
