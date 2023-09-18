@@ -34,7 +34,7 @@ import org.hyphonate.megaaudio.player.sources.SinAudioSourceProvider;
 import org.hyphonate.megaaudio.recorder.sinks.AppCallback;
 import org.hyphonate.megaaudio.recorder.sinks.AppCallbackAudioSinkProvider;
 
-@CddTest(requirement = "7.8.2.2/H-1-1|7.7.2/C-2-1,C-2-2")
+@CddTest(requirements = {"7.8.2.2/H-1-1", "7.7.2/C-2-1,C-2-2"})
 public class USBAudioPeripheralRecordActivity extends USBAudioPeripheralActivity {
     private static final String TAG = "USBAudioPeripheralRecordActivity";
 
