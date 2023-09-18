@@ -23,11 +23,9 @@ import static org.junit.Assert.assertTrue;
 
 import android.car.Car;
 import android.car.hardware.CarSensorManager;
-import android.car.test.ApiCheckerRule.Builder;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.RequiresDevice;
 import android.test.suitebuilder.annotation.SmallTest;
-import android.util.Log;
 
 import androidx.test.runner.AndroidJUnit4;
 
@@ -48,14 +46,6 @@ public final class CarSensorManagerTest extends AbstractCarTestCase {
     private static final String TAG = CarSensorManagerTest.class.getSimpleName();
 
     private int[] mSupportedSensors;
-
-    // TODO(b/242350638): add missing annotations, make sure @ApiRequirements have the right
-    // supported versions, then remove this method (using a child bug of 242350638)
-    @Override
-    protected void configApiCheckerRule(Builder builder) {
-        Log.w(TAG, "Disabling API requirements check");
-        builder.disableAnnotationsCheck();
-    }
 
     @Before
     public void setUp() throws Exception {

@@ -18,21 +18,14 @@ package android.car.cts.builtin;
 
 import android.app.Instrumentation;
 import android.car.test.AbstractExpectableTestCase;
-import android.car.test.ApiCheckerRule;
 import android.content.Context;
 
 import androidx.test.InstrumentationRegistry;
-
-import org.junit.Rule;
 
 /**
  * Base class for all tests, provides most common functionalities.
  */
 public abstract class AbstractCarBuiltinTestCase extends AbstractExpectableTestCase {
-
-    @Rule
-    public final ApiCheckerRule mApiCheckerRule = new ApiCheckerRule.Builder()
-            .disableApiRequirementsCheck().build();
 
     protected final Instrumentation mInstrumentation = InstrumentationRegistry.getInstrumentation();
 

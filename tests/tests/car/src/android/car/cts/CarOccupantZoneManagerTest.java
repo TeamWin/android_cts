@@ -34,7 +34,6 @@ import android.car.CarOccupantZoneManager.OccupantZoneInfo;
 import android.car.PlatformVersion;
 import android.car.cts.utils.ProtoDumpUtils;
 import android.car.input.CarInputManager;
-import android.car.test.ApiCheckerRule.Builder;
 import android.hardware.display.DisplayManager;
 import android.os.Process;
 import android.os.UserHandle;
@@ -79,13 +78,6 @@ public final class CarOccupantZoneManagerTest extends AbstractCarTestCase {
     private List<OccupantZoneInfo> mAllZones;
 
     private UiAutomation mUiAutomation;
-
-    // TODO(b/242350638): add missing annotations, remove (on child bug of 242350638)
-    @Override
-    protected void configApiCheckerRule(Builder builder) {
-        Log.w(TAG, "Disabling API requirements check");
-        builder.disableAnnotationsCheck();
-    }
 
     @Before
     public void setUp() throws Exception {

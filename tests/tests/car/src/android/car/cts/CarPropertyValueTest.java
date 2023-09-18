@@ -26,11 +26,9 @@ import android.car.hardware.CarPropertyValue;
 import android.car.hardware.property.CarInternalErrorException;
 import android.car.hardware.property.CarPropertyManager;
 import android.car.hardware.property.PropertyAccessDeniedSecurityException;
-import android.car.test.ApiCheckerRule.Builder;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.RequiresDevice;
 import android.test.suitebuilder.annotation.SmallTest;
-import android.util.Log;
 import android.util.SparseArray;
 
 import androidx.test.runner.AndroidJUnit4;
@@ -55,13 +53,6 @@ public final class CarPropertyValueTest extends AbstractCarTestCase {
 
     private final List<CarPropertyValue> mCarPropertyValues = new ArrayList<>();
     private final SparseArray<CarPropertyConfig> mPropIdToConfig = new SparseArray<>();
-
-    // TODO(b/242350638): add missing annotations, remove (on child bug of 242350638)
-    @Override
-    protected void configApiCheckerRule(Builder builder) {
-        Log.w(TAG, "Disabling API requirements check");
-        builder.disableAnnotationsCheck();
-    }
 
     @Before
     public void setUp() throws Exception {

@@ -21,11 +21,9 @@ import static com.google.common.truth.Truth.assertWithMessage;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.UiAutomation;
-import android.car.test.ApiCheckerRule.Builder;
 import android.content.ComponentName;
 import android.content.Context;
 import android.os.ParcelFileDescriptor;
-import android.util.Log;
 import android.view.accessibility.AccessibilityManager;
 import android.view.inputmethod.InputMethodManager;
 
@@ -52,13 +50,6 @@ public final class CarRotaryImeTest extends AbstractCarTestCase {
             mContext.getSystemService(AccessibilityManager.class);
     private final InputMethodManager mInputMethodManager =
             mContext.getSystemService(InputMethodManager.class);
-
-    // TODO(b/242350638): add missing annotations, remove (on child bug of 242350638)
-    @Override
-    protected void configApiCheckerRule(Builder builder) {
-        Log.w(TAG, "Disabling API requirements check");
-        builder.disableAnnotationsCheck();
-    }
 
     /**
      * Tests that, if a rotary input method is specified via the {@code rotary_input_method} string

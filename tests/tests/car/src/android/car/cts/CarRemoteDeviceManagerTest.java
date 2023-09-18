@@ -27,14 +27,12 @@ import android.car.CarOccupantZoneManager;
 import android.car.CarOccupantZoneManager.OccupantZoneInfo;
 import android.car.CarRemoteDeviceManager;
 import android.car.CarRemoteDeviceManager.StateCallback;
-import android.car.test.ApiCheckerRule;
 import android.content.pm.PackageInfo;
 import android.content.pm.Signature;
 import android.content.pm.SigningInfo;
 import android.os.UserHandle;
 import android.platform.test.annotations.AppModeFull;
 import android.test.suitebuilder.annotation.SmallTest;
-import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.test.runner.AndroidJUnit4;
@@ -62,13 +60,6 @@ public final class CarRemoteDeviceManagerTest extends AbstractCarTestCase {
     private CarOccupantZoneManager mOccupantZoneManager;
     private OccupantZoneInfo mMyZone;
     private List<OccupantZoneInfo> mAllZones;
-
-    // TODO(b/242350638): add missing annotations, remove (on child bug of 242350638)
-    @Override
-    protected void configApiCheckerRule(ApiCheckerRule.Builder builder) {
-        Log.w(TAG, "Disabling API requirements check");
-        builder.disableAnnotationsCheck();
-    }
 
     @Before
     public void setUp() throws Exception {

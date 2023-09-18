@@ -19,7 +19,6 @@ package android.car.cts;
 import static com.google.common.truth.Truth.assertThat;
 
 import android.car.CarNotConnectedException;
-import android.car.test.ApiCheckerRule.Builder;
 import android.test.suitebuilder.annotation.SmallTest;
 
 import androidx.test.runner.AndroidJUnit4;
@@ -33,12 +32,6 @@ public class ExceptionsTest extends AbstractCarLessTestCase {
 
     private static final String MESSAGE = "Oops!";
     private static final Exception CAUSE = new RuntimeException();
-
-    // TODO(b/242350638): add missing annotations, remove (on child bug of 242350638)
-    @Override
-    protected void configApiCheckerRule(Builder builder) {
-        builder.disableAnnotationsCheck();
-    }
 
     @Test
     public void testCarNotConnectedException() {

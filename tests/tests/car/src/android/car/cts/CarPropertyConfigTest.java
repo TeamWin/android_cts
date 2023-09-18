@@ -27,11 +27,9 @@ import android.car.cts.utils.ShellPermissionUtils;
 import android.car.hardware.CarPropertyConfig;
 import android.car.hardware.property.AreaIdConfig;
 import android.car.hardware.property.CarPropertyManager;
-import android.car.test.ApiCheckerRule.Builder;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.RequiresDevice;
 import android.test.suitebuilder.annotation.SmallTest;
-import android.util.Log;
 
 import androidx.test.runner.AndroidJUnit4;
 
@@ -54,13 +52,6 @@ public final class CarPropertyConfigTest extends AbstractCarTestCase {
     private static final float EPSILON = 0.00001f;
 
     private List<CarPropertyConfig> mConfigs;
-
-    // TODO(b/242350638): add missing annotations, remove (on child bug of 242350638)
-    @Override
-    protected void configApiCheckerRule(Builder builder) {
-        Log.w(TAG, "Disabling API requirements check");
-        builder.disableAnnotationsCheck();
-    }
 
     @Before
     public void setUp() throws Exception {

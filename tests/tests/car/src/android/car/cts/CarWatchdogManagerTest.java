@@ -29,7 +29,6 @@ import android.app.UiAutomation;
 import android.car.Car;
 import android.car.cts.utils.watchdog.IoOveruseConfigurationSubject;
 import android.car.cts.utils.watchdog.ResourceOveruseConfigurationSubject;
-import android.car.test.ApiCheckerRule.Builder;
 import android.car.watchdog.CarWatchdogManager;
 import android.car.watchdog.IoOveruseAlertThreshold;
 import android.car.watchdog.IoOveruseConfiguration;
@@ -119,13 +118,6 @@ public final class CarWatchdogManagerTest extends AbstractCarTestCase {
     private UserHandle mUserHandle;
     private CarWatchdogManager mCarWatchdogManager;
     private File mFile;
-
-    // TODO(b/242350638): add missing annotations, remove (on child bug of 242350638)
-    @Override
-    protected void configApiCheckerRule(Builder builder) {
-        Log.w(TAG, "Disabling API requirements check");
-        builder.disableAnnotationsCheck();
-    }
 
     @Before
     public void setUp() throws Exception {

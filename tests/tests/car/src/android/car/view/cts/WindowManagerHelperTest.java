@@ -18,19 +18,14 @@ package android.car.view.cts;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import android.car.test.ApiCheckerRule;
 import android.car.view.WindowManagerHelper;
 import android.view.WindowManager.LayoutParams;
 
 import com.android.compatibility.common.util.ApiTest;
 
-import org.junit.Rule;
 import org.junit.Test;
 
 public final class WindowManagerHelperTest {
-
-    @Rule
-    public final ApiCheckerRule mApiCheckerRule = new ApiCheckerRule.Builder().build();
 
     @Test
     @ApiTest(apis = {"android.car.view.WindowManagerHelper#setTrustedOverlay(LayoutParams)"})

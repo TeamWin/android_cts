@@ -471,7 +471,8 @@ public final class CarUserManagerTest extends AbstractCarTestCase {
     }
 
     protected String getTestName() {
-        return getClass().getSimpleName() + "." + mApiCheckerRule.getTestMethodName();
+        // TODO(b/300964422): Find out a way to get test name
+        return "";
     }
 
     protected static void fail(String format, Object... args) {
