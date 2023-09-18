@@ -855,6 +855,24 @@ public final class DevicePolicy {
     }
 
     /**
+     * see {@code DevicePolicyManager#isCurrentInputMethodSetByOwner()}.
+     */
+    public boolean isCurrentInputMethodSetByOwner() {
+        try (PermissionContext p = TestApis.permissions().withPermission(QUERY_ADMIN_POLICY)) {
+            return sDevicePolicyManager.isCurrentInputMethodSetByOwner();
+        }
+    }
+
+    /**
+     * see @code DevicePolicyManager#getOwnerInstalledCaCerts()}.
+     */
+    public List<String> getOwnerInstalledCaCerts(UserHandle userHandle) {
+        try (PermissionContext p = TestApis.permissions().withPermission(QUERY_ADMIN_POLICY)) {
+            return sDevicePolicyManager.getOwnerInstalledCaCerts(userHandle);
+        }
+    }
+
+    /**
      * Recalculate the "hasIncompatibleAccounts" cache inside DevicePolicyManager.
      */
     @Experimental

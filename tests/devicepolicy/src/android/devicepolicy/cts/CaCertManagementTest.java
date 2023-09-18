@@ -31,12 +31,16 @@ import android.util.Base64InputStream;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
+import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
 import com.android.bedstead.harrier.policies.CaCertManagement;
 import com.android.bedstead.metricsrecorder.EnterpriseMetricsRecorder;
+import com.android.bedstead.nene.TestApis;
+import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.utils.Poll;
+import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.FakeKeys;
 
 import org.junit.ClassRule;
@@ -44,9 +48,12 @@ import org.junit.Rule;
 import org.junit.runner.RunWith;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.security.KeyFactory;
 import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
@@ -109,6 +116,30 @@ public final class CaCertManagementTest {
                     + "G6byGCNL/1Fz7Y+264fGqABSNTKdZwIU2K4ANEH7F+9scnhoO6OBp+gjBe5O+7jb\n"
                     + "wZmUCAoTka4hmoaOCj7cqt/IkmxozQ==\n";
 
+    private static final String TEST_CERT_WITH_HEADER_FOOTER =
+            "-----BEGIN CERTIFICATE-----\n" + TEST_CERT + "-----END CERTIFICATE-----";
+    private static final byte[] TEST_CERT_BYTES = TEST_CERT_WITH_HEADER_FOOTER.getBytes();
+    private static final KeyStore sKeyStore;
+    private static final Certificate sCertificate;
+
+    static {
+        try {
+            sCertificate = CertificateFactory.getInstance("X.509")
+                    .generateCertificate(new ByteArrayInputStream(TEST_CERT_BYTES));
+        } catch (CertificateException e) {
+            throw new NeneException("Unable to load generate certificate: " + e);
+        }
+
+        try {
+            sKeyStore = KeyStore.getInstance("AndroidCAStore");
+            sKeyStore.load(null, null);
+        } catch (KeyStoreException | CertificateException | IOException |
+                 NoSuchAlgorithmException e) {
+            throw new NeneException("Unable to load keystore: " + e);
+        }
+    }
+
+
     @CanSetPolicyTest(policy = CaCertManagement.class)
     public void getInstalledCaCerts_doesNotReturnNull() throws Exception {
         assertThat(sDeviceState.dpc().devicePolicyManager().getInstalledCaCerts(
@@ -119,7 +150,7 @@ public final class CaCertManagementTest {
     public void getInstalledCaCerts_invalidAdmin_throwsException() throws Exception {
         assertThrows(SecurityException.class, () ->
                 sDeviceState.dpc().devicePolicyManager().getInstalledCaCerts(
-                sDeviceState.dpc().componentName()));
+                        sDeviceState.dpc().componentName()));
     }
 
     @PolicyAppliesTest(policy = CaCertManagement.class)
@@ -142,7 +173,7 @@ public final class CaCertManagementTest {
     public void installCaCert_invalidAdmin_throwsException() throws Exception {
         assertThrows(SecurityException.class,
                 () -> sDeviceState.dpc().devicePolicyManager().installCaCert(
-                    sDeviceState.dpc().componentName(), CA_CERT_1));
+                        sDeviceState.dpc().componentName(), CA_CERT_1));
     }
 
     @PolicyAppliesTest(policy = CaCertManagement.class)
@@ -304,6 +335,27 @@ public final class CaCertManagementTest {
                         .removeKeyPair(sDeviceState.dpc().componentName(), ALIAS));
     }
 
+    @ApiTest(apis = {
+            "android.app.admin.DevicePolicyManager#installCaCert",
+            "android.app.admin.DevicePolicyManager#getOwnerInstalledCaCerts"
+    })
+    @CanSetPolicyTest(policy = CaCertManagement.class)
+    @Postsubmit(reason = "new test")
+    public void getOwnerInstalledCaCerts_returnsCertInstalledByAdmin()
+            throws Exception {
+        try {
+            sDeviceState.dpc().devicePolicyManager().installCaCert(
+                    sDeviceState.dpc().componentName(), TEST_CERT_BYTES);
+            String alias = sKeyStore.getCertificateAlias(sCertificate);
+
+            assertThat(TestApis.devicePolicy().getOwnerInstalledCaCerts(
+                    sDeviceState.dpc().user().userHandle())).contains(alias);
+        } finally {
+            sDeviceState.dpc().devicePolicyManager().uninstallCaCert(
+                    sDeviceState.dpc().componentName(), TEST_CERT_BYTES);
+        }
+    }
+
     private void assertCaCertInstalledForTheDpcAndLocally(byte[] caBytes)
             throws GeneralSecurityException {
         assertCaCertInstalledAndTrusted(caBytes, /* installed= */ true);
@@ -326,7 +378,6 @@ public final class CaCertManagementTest {
      *   <li>Any new instances of {@link TrustManager} should report the certificate among their
      *       accepted issuer list -- older instances may keep the set of issuers they were created
      *       with until explicitly refreshed.</li>
-     *
      */
     private void assertCaCertInstalledAndTrusted(byte[] caBytes, boolean installed)
             throws GeneralSecurityException {
@@ -378,7 +429,7 @@ public final class CaCertManagementTest {
                 .toMeet((acceptedIssuers) -> newStatus == acceptedIssuers.contains(caCert))
                 .errorOnFail(
                         newStatus ? "Couldn't find certificate in trusted certificates list."
-                        : "Found uninstalled certificate in trusted certificates list.")
+                                : "Found uninstalled certificate in trusted certificates list.")
                 .await();
     }
 
