@@ -28,6 +28,8 @@ import static android.app.admin.SecurityLog.LEVEL_WARNING;
 import static android.app.admin.SecurityLog.TAG_ADB_SHELL_CMD;
 import static android.app.admin.SecurityLog.TAG_ADB_SHELL_INTERACTIVE;
 import static android.app.admin.SecurityLog.TAG_APP_PROCESS_START;
+import static android.app.admin.SecurityLog.TAG_BLUETOOTH_CONNECTION;
+import static android.app.admin.SecurityLog.TAG_BLUETOOTH_DISCONNECTION;
 import static android.app.admin.SecurityLog.TAG_CAMERA_POLICY_SET;
 import static android.app.admin.SecurityLog.TAG_CERT_AUTHORITY_INSTALLED;
 import static android.app.admin.SecurityLog.TAG_CERT_AUTHORITY_REMOVED;
@@ -162,6 +164,8 @@ public class SecurityLoggingTest extends BaseDeviceAdminTest {
                     .put(TAG_CAMERA_POLICY_SET, of(S, I, I, I))
                     .put(TAG_PASSWORD_COMPLEXITY_REQUIRED, of(S, I, I, I))
                     .put(TAG_PASSWORD_CHANGED, of(I, I))
+                    .put(TAG_BLUETOOTH_CONNECTION, of(S, I, S))
+                    .put(TAG_BLUETOOTH_DISCONNECTION, of(S, S))
                     .build();
 
     private static final String GENERATED_KEY_ALIAS = "generated_key_alias";
