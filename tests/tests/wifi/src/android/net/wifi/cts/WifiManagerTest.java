@@ -116,6 +116,7 @@ import com.android.compatibility.common.util.FeatureUtil;
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.PropertyUtil;
 import com.android.compatibility.common.util.ShellIdentityUtils;
+import com.android.compatibility.common.util.SystemUtil;
 import com.android.compatibility.common.util.ThrowingRunnable;
 import com.android.modules.utils.build.SdkLevel;
 import com.android.net.module.util.MacAddressUtils;
@@ -1149,6 +1150,14 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
             return;
         }
         boolean wifiEnabled = sWifiManager.isWifiEnabled();
+        if (wifiEnabled) {
+            // Re-enabled Wi-Fi as shell for HalDeviceManager legacy LOHS behavior when there's no
+            // STA+AP concurrency.
+            ShellIdentityUtils.invokeWithShellPermissions(() -> sWifiManager.setWifiEnabled(false));
+            PollingCheck.check("Wifi turn off failed!", 2_000, () -> !sWifiManager.isWifiEnabled());
+            SystemUtil.runShellCommand("cmd wifi set-wifi-enabled enabled");
+            PollingCheck.check("Wifi turn on failed!", 2_000, () -> sWifiManager.isWifiEnabled());
+        }
         TestLocalOnlyHotspotCallback callback = startLocalOnlyHotspot();
 
         // add sleep to avoid calling stopLocalOnlyHotspot before TetherController initialization.
@@ -1922,6 +1931,14 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
         boolean caughtException = false;
 
         boolean wifiEnabled = sWifiManager.isWifiEnabled();
+        if (wifiEnabled) {
+            // Re-enabled Wi-Fi as shell for HalDeviceManager legacy LOHS behavior when there's no
+            // STA+AP concurrency.
+            ShellIdentityUtils.invokeWithShellPermissions(() -> sWifiManager.setWifiEnabled(false));
+            PollingCheck.check("Wifi turn off failed!", 2_000, () -> !sWifiManager.isWifiEnabled());
+            SystemUtil.runShellCommand("cmd wifi set-wifi-enabled enabled");
+            PollingCheck.check("Wifi turn on failed!", 2_000, () -> sWifiManager.isWifiEnabled());
+        }
 
         TestLocalOnlyHotspotCallback callback = startLocalOnlyHotspot();
 
@@ -3636,12 +3653,19 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
     }
 
     /**
-     * Tests {@link WifiManager#isStaApConcurrencySupported().
+     * Tests {@link WifiManager#isStaApConcurrencySupported()}.
      */
     @Test
     public void testIsStaApConcurrencySupported() throws Exception {
         // check that softap mode is supported by the device
         assumeTrue(sWifiManager.isPortableHotspotSupported());
+
+        // Re-enabled Wi-Fi as shell for HalDeviceManager legacy LOHS behavior when there's no
+        // STA+AP concurrency.
+        ShellIdentityUtils.invokeWithShellPermissions(() -> sWifiManager.setWifiEnabled(false));
+        PollingCheck.check("Wifi turn off failed!", 2_000, () -> !sWifiManager.isWifiEnabled());
+        SystemUtil.runShellCommand("cmd wifi set-wifi-enabled enabled");
+        PollingCheck.check("Wifi turn on failed!", 2_000, () -> sWifiManager.isWifiEnabled());
 
         boolean isStaApConcurrencySupported = sWifiManager.isStaApConcurrencySupported();
         // start local only hotspot.
