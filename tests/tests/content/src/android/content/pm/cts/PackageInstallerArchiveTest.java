@@ -19,9 +19,13 @@ package android.content.pm.cts;
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.content.pm.PackageManager.MATCH_ARCHIVED_PACKAGES;
 import static android.content.pm.PackageManager.MATCH_UNINSTALLED_PACKAGES;
+
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
+
 import static com.google.common.truth.Truth.assertThat;
+
 import static junit.framework.Assert.fail;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
@@ -43,6 +47,7 @@ import android.content.pm.Flags;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageInstaller;
 import android.content.pm.PackageManager;
+import android.content.pm.PackageManager.ApplicationInfoFlags;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.pm.PackageManager.PackageInfoFlags;
 import android.os.Bundle;
@@ -173,11 +178,19 @@ public class PackageInstallerArchiveTest {
 
         assertThat(mIntentSender.mStatus.get()).isEqualTo(PackageInstaller.STATUS_SUCCESS);
         assertThat(mPackageManager.getPackageInfo(PACKAGE_NAME,
-                PackageInfoFlags.of(MATCH_UNINSTALLED_PACKAGES)).isArchived).isTrue();
+                PackageInfoFlags.of(
+                        MATCH_UNINSTALLED_PACKAGES)).applicationInfo.isArchived).isTrue();
         assertThat(mPackageManager.getPackageInfo(PACKAGE_NAME,
-                PackageInfoFlags.of(MATCH_ARCHIVED_PACKAGES)).isArchived).isTrue();
+                PackageInfoFlags.of(MATCH_ARCHIVED_PACKAGES)).applicationInfo.isArchived).isTrue();
+        assertThat(mPackageManager.getApplicationInfo(PACKAGE_NAME,
+                ApplicationInfoFlags.of(
+                        MATCH_UNINSTALLED_PACKAGES)).isArchived).isTrue();
+        assertThat(mPackageManager.getApplicationInfo(PACKAGE_NAME,
+                ApplicationInfoFlags.of(MATCH_ARCHIVED_PACKAGES)).isArchived).isTrue();
         assertThrows(NameNotFoundException.class,
                 () -> mPackageManager.getPackageInfo(PACKAGE_NAME, /* flags= */ 0));
+        assertThrows(NameNotFoundException.class,
+                () -> mPackageManager.getApplicationInfo(PACKAGE_NAME, /* flags= */ 0));
     }
 
     @Test
@@ -239,7 +252,7 @@ public class PackageInstallerArchiveTest {
                 SystemUtil.runShellCommand(String.format("pm archive %s", PACKAGE_NAME))).isEqualTo(
                 "Success\n");
         assertThat(mPackageManager.getPackageInfo(PACKAGE_NAME,
-                PackageInfoFlags.of(MATCH_ARCHIVED_PACKAGES)).isArchived).isTrue();
+                PackageInfoFlags.of(MATCH_ARCHIVED_PACKAGES)).applicationInfo.isArchived).isTrue();
     }
 
     @Test
