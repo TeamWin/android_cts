@@ -40,6 +40,13 @@ import static android.security.keymaster.KeymasterDefs.KM_PURPOSE_DECRYPT;
 import static android.security.keymaster.KeymasterDefs.KM_PURPOSE_ENCRYPT;
 import static android.security.keymaster.KeymasterDefs.KM_PURPOSE_SIGN;
 import static android.security.keymaster.KeymasterDefs.KM_PURPOSE_VERIFY;
+import static android.security.keymaster.KeymasterDefs.KM_TAG_PURPOSE;
+import static android.security.keymaster.KeymasterDefs.KM_TAG_ALGORITHM;
+import static android.security.keymaster.KeymasterDefs.KM_TAG_KEY_SIZE;
+import static android.security.keymaster.KeymasterDefs.KM_TAG_BLOCK_MODE;
+import static android.security.keymaster.KeymasterDefs.KM_TAG_DIGEST;
+import static android.security.keymaster.KeymasterDefs.KM_TAG_PADDING;
+import static android.security.keymaster.KeymasterDefs.KM_TAG_NO_AUTH_REQUIRED;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
@@ -107,6 +114,11 @@ public class ImportWrappedKeyTest {
 
     private Context getContext() {
         return InstrumentationRegistry.getInstrumentation().getTargetContext();
+    }
+
+    private int removeTagType(int tag) {
+        int kmTagTypeMask = 0x0FFFFFFF;
+        return tag & kmTagTypeMask;
     }
 
     @Test
@@ -450,24 +462,29 @@ public class ImportWrappedKeyTest {
         allPurposes.add(new DERInteger(KM_PURPOSE_ENCRYPT));
         allPurposes.add(new DERInteger(KM_PURPOSE_DECRYPT));
         DERSet purposeSet = new DERSet(allPurposes);
-        DERTaggedObject purpose = new DERTaggedObject(true, 1, purposeSet);
-        DERTaggedObject algorithm = new DERTaggedObject(true, 2, new DERInteger(algo));
+        DERTaggedObject purpose =
+                new DERTaggedObject(true, removeTagType(KM_TAG_PURPOSE), purposeSet);
+        DERTaggedObject algorithm =
+                new DERTaggedObject(true, removeTagType(KM_TAG_ALGORITHM), new DERInteger(algo));
         DERTaggedObject keySize =
-                new DERTaggedObject(true, 3, new DERInteger(size));
+                new DERTaggedObject(true, removeTagType(KM_TAG_KEY_SIZE), new DERInteger(size));
 
         DEREncodableVector allBlockModes = new DEREncodableVector();
         allBlockModes.add(new DERInteger(KM_MODE_ECB));
         allBlockModes.add(new DERInteger(KM_MODE_CBC));
         DERSet blockModeSet = new DERSet(allBlockModes);
-        DERTaggedObject blockMode = new DERTaggedObject(true, 4, blockModeSet);
+        DERTaggedObject blockMode =
+                new DERTaggedObject(true, removeTagType(KM_TAG_BLOCK_MODE), blockModeSet);
 
         DEREncodableVector allPaddings = new DEREncodableVector();
         allPaddings.add(new DERInteger(KM_PAD_PKCS7));
         allPaddings.add(new DERInteger(KM_PAD_NONE));
         DERSet paddingSet = new DERSet(allPaddings);
-        DERTaggedObject padding = new DERTaggedObject(true, 6, paddingSet);
+        DERTaggedObject padding =
+                new DERTaggedObject(true, removeTagType(KM_TAG_PADDING), paddingSet);
 
-        DERTaggedObject noAuthRequired = new DERTaggedObject(true, 503, DERNull.INSTANCE);
+        DERTaggedObject noAuthRequired =
+                new DERTaggedObject(true, removeTagType(KM_TAG_NO_AUTH_REQUIRED), DERNull.INSTANCE);
 
         // Build sequence
         DEREncodableVector allItems = new DEREncodableVector();
@@ -496,17 +513,21 @@ public class ImportWrappedKeyTest {
         allPurposes.add(new DERInteger(KM_PURPOSE_SIGN));
         allPurposes.add(new DERInteger(KM_PURPOSE_VERIFY));
         DERSet purposeSet = new DERSet(allPurposes);
-        DERTaggedObject purpose = new DERTaggedObject(true, 1, purposeSet);
+        DERTaggedObject purpose =
+                new DERTaggedObject(true, removeTagType(KM_TAG_PURPOSE), purposeSet);
 
-        DERTaggedObject algorithm = new DERTaggedObject(true, 2, new DERInteger(KM_ALGORITHM_RSA));
+        DERTaggedObject algorithm =
+                new DERTaggedObject(true, removeTagType(KM_TAG_ALGORITHM),
+                                    new DERInteger(KM_ALGORITHM_RSA));
         DERTaggedObject keySize =
-                new DERTaggedObject(true, 3, new DERInteger(size));
+                new DERTaggedObject(true, removeTagType(KM_TAG_KEY_SIZE), new DERInteger(size));
 
         DEREncodableVector allBlockModes = new DEREncodableVector();
         allBlockModes.add(new DERInteger(KM_MODE_ECB));
         allBlockModes.add(new DERInteger(KM_MODE_CBC));
         DERSet blockModeSet = new DERSet(allBlockModes);
-        DERTaggedObject blockMode = new DERTaggedObject(true, 4, blockModeSet);
+        DERTaggedObject blockMode =
+                new DERTaggedObject(true, removeTagType(KM_TAG_BLOCK_MODE), blockModeSet);
 
         DEREncodableVector allDigests = new DEREncodableVector();
         allDigests.add(new DERInteger(KM_DIGEST_NONE));
@@ -517,7 +538,8 @@ public class ImportWrappedKeyTest {
         allDigests.add(new DERInteger(KM_DIGEST_SHA_2_384));
         allDigests.add(new DERInteger(KM_DIGEST_SHA_2_512));
         DERSet digestSet = new DERSet(allDigests);
-        DERTaggedObject digest = new DERTaggedObject(true, 5, digestSet);
+        DERTaggedObject digest =
+                new DERTaggedObject(true, removeTagType(KM_TAG_DIGEST), digestSet);
 
         DEREncodableVector allPaddings = new DEREncodableVector();
         allPaddings.add(new DERInteger(KM_PAD_PKCS7));
@@ -527,9 +549,11 @@ public class ImportWrappedKeyTest {
         allPaddings.add(new DERInteger(KM_PAD_RSA_PKCS1_1_5_ENCRYPT));
         allPaddings.add(new DERInteger(KM_PAD_RSA_PKCS1_1_5_SIGN));
         DERSet paddingSet = new DERSet(allPaddings);
-        DERTaggedObject padding = new DERTaggedObject(true, 6, paddingSet);
+        DERTaggedObject padding =
+                new DERTaggedObject(true, removeTagType(KM_TAG_PADDING), paddingSet);
 
-        DERTaggedObject noAuthRequired = new DERTaggedObject(true, 503, DERNull.INSTANCE);
+        DERTaggedObject noAuthRequired =
+                new DERTaggedObject(true, removeTagType(KM_TAG_NO_AUTH_REQUIRED), DERNull.INSTANCE);
 
         // Build sequence
         DEREncodableVector allItems = new DEREncodableVector();
