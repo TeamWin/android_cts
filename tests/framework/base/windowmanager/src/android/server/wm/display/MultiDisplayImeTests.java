@@ -70,6 +70,7 @@ import android.widget.LinearLayout;
 
 import androidx.test.filters.FlakyTest;
 
+import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.SystemUtil;
 import com.android.cts.mockime.ImeCommand;
 import com.android.cts.mockime.ImeEventStream;
@@ -143,6 +144,38 @@ public class MultiDisplayImeTests extends MultiDisplayTestBase {
         // default display.
         assertImeWindowAndDisplayConfiguration(mWmState.getImeWindowState(),
                 mWmState.getDisplay(DEFAULT_DISPLAY));
+    }
+
+    /**
+     * This checks that calling showSoftInput on the incorrect display, requiring the fallback IMM,
+     * will not drop the statsToken tracking the show request.
+     */
+    @Test
+    public void testFallbackImmMaintainsParameters() throws Exception {
+        try (var mockImeSession = createManagedMockImeSession(this);
+                TestActivitySession<ImeTestActivity> imeTestActivitySession =
+                        createManagedTestActivitySession();
+                var displaySession = createManagedVirtualDisplaySession()) {
+            final var newDisplay = displaySession.setSimulateDisplay(true).createDisplay();
+
+            imeTestActivitySession.launchTestActivityOnDisplaySync(
+                    ImeTestActivity.class, newDisplay.mId);
+            final var activity = imeTestActivitySession.getActivity();
+            final var stream = mockImeSession.openEventStream();
+
+            expectEvent(stream, editorMatcher("onStartInput",
+                    activity.mEditText.getPrivateImeOptions()), TIMEOUT);
+
+            imeTestActivitySession.runOnMainSyncAndWait(() -> {
+                final var imm = activity.getApplicationContext()
+                        .getSystemService(InputMethodManager.class);
+                imm.showSoftInput(activity.mEditText, 0 /* flags */);
+            });
+
+            expectImeVisible(TIMEOUT);
+            PollingCheck.waitFor(() -> !mockImeSession.hasPendingImeVisibilityRequests(),
+                    "No pending requests should remain after the IME is visible");
+        }
     }
 
     @Test
