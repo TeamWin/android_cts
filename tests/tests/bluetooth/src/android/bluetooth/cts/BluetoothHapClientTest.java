@@ -18,7 +18,6 @@ package android.bluetooth.cts;
 
 import static android.Manifest.permission.BLUETOOTH_CONNECT;
 import static android.Manifest.permission.BLUETOOTH_PRIVILEGED;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -178,6 +177,22 @@ public class BluetoothHapClientTest {
                 mBluetoothHapClient.getConnectionState(testDevice));
     }
 
+    /**
+     * Verify getHapGroup() return -1 if Bluetooth is disabled.
+     */
+    @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
+    @Test
+    public void testGetHapGroup() {
+        assertTrue(waitForProfileConnect());
+        assertNotNull(mBluetoothHapClient);
+
+        BluetoothDevice testDevice = mAdapter.getRemoteDevice("00:11:22:AA:BB:CC");
+
+        assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
+
+        assertEquals(-1, mBluetoothHapClient.getHapGroup(testDevice));
+    }
+
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
     @Test
     public void testGetActivePresetIndex() {
@@ -188,7 +203,23 @@ public class BluetoothHapClientTest {
 
         assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
 
-        // Verify returns null if bluetooth is not enabled
+        // Verify returns 0 if bluetooth is not enabled
+        assertEquals(0, mBluetoothHapClient.getActivePresetIndex(testDevice));
+    }
+
+    /**
+     * Verify getActivePresetInfo() return null if Bluetooth is disabled.
+     */
+    @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
+    @Test
+    public void testGetActivePresetInfo() {
+        assertTrue(waitForProfileConnect());
+        assertNotNull(mBluetoothHapClient);
+
+        BluetoothDevice testDevice = mAdapter.getRemoteDevice("00:11:22:AA:BB:CC");
+
+        assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
+
         assertNull(mBluetoothHapClient.getActivePresetInfo(testDevice));
     }
 
@@ -214,6 +245,83 @@ public class BluetoothHapClientTest {
         assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
 
         mBluetoothHapClient.selectPresetForGroup(1, 1);
+    }
+
+    /**
+     * Verify switchToNextPreset() will not cause exception when Bluetooth is disabled.
+     */
+    @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
+    @Test
+    public void testSwitchToNextPreset() {
+        assertTrue(waitForProfileConnect());
+        assertNotNull(mBluetoothHapClient);
+
+        BluetoothDevice testDevice = mAdapter.getRemoteDevice("00:11:22:AA:BB:CC");
+
+        assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
+
+        mBluetoothHapClient.switchToNextPreset(testDevice);
+    }
+
+    /**
+     * Verify switchToNextPresetForGroup() will not cause exception when Bluetooth is disabled.
+     */
+    @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
+    @Test
+    public void testSwitchToNextPresetForGroup() {
+        assertTrue(waitForProfileConnect());
+        assertNotNull(mBluetoothHapClient);
+
+        assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
+
+        mBluetoothHapClient.switchToNextPresetForGroup(1);
+    }
+
+    /**
+     * Verify switchToPreviousPreset() doesn't cause exception when Bluetooth is disabled.
+     */
+    @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
+    @Test
+    public void testSwitchToPreviousPreset() {
+        assertTrue(waitForProfileConnect());
+        assertNotNull(mBluetoothHapClient);
+
+        BluetoothDevice testDevice = mAdapter.getRemoteDevice("00:11:22:AA:BB:CC");
+
+        assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
+
+        mBluetoothHapClient.switchToPreviousPreset(testDevice);
+    }
+
+    /**
+     * Verify switchToPreviousPresetForGroup() doesn't cause exception when Bluetooth is disabled.
+     */
+    @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
+    @Test
+    public void testSwitchToPreviousPresetForGroup() {
+        assertTrue(waitForProfileConnect());
+        assertNotNull(mBluetoothHapClient);
+
+        assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
+
+        mBluetoothHapClient.switchToPreviousPresetForGroup(1);
+    }
+
+    /**
+     * Verify switchToNextPresetForGroup() doesn't cause exception when Bluetooth is disabled.
+     */
+    @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
+    @Test
+    public void testGetPresetInfo() {
+        assertTrue(waitForProfileConnect());
+        assertNotNull(mBluetoothHapClient);
+
+        BluetoothDevice testDevice = mAdapter.getRemoteDevice("00:11:22:AA:BB:CC");
+
+        assertTrue(BTAdapterUtils.disableAdapter(mAdapter, mContext));
+
+        // Verify returns null if bluetooth is not enabled
+        assertNull(mBluetoothHapClient.getPresetInfo(testDevice, 1));
     }
 
     @CddTest(requirements = {"7.4.3/C-2-1", "7.4.3/C-3-2"})
