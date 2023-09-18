@@ -487,6 +487,7 @@ public class QuietModeTest {
         }
     }
 
+    @Ignore("(b/298934576): Flaky as test app is not always set as foreground launcher")
     @ApiTest(apis = "android.os.UserManager#requestQuietModeEnabled")
     @Test
     @EnsureHasWorkProfile
@@ -561,6 +562,7 @@ public class QuietModeTest {
         }
     }
 
+    @Ignore("(b/298934576): Flaky as test app is not always set as foreground launcher")
     @ApiTest(apis = "android.os.UserManager#requestQuietModeEnabled")
     @Test
     @EnsureHasWorkProfile
