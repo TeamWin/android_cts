@@ -21,8 +21,11 @@ android_test {
     defaults: ["cts_defaults"],
     platform_apis: true,
     static_libs: [
+        "android.nfc.flags-aconfig-java",
         "ctstestrunner-axt",
         "compatibility-device-util-axt",
+        "flag-junit",
+        "platform-test-annotations",
         "testng",
     ],
     srcs: ["src/**/*.java"],
