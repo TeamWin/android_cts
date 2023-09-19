@@ -859,6 +859,12 @@ class Decode extends CodecDecoderTestBase implements Callable<Double> {
 
     public Double doDecode() throws Exception {
         MediaFormat format = setUpSource(mTestFile);
+        ArrayList<MediaFormat> formats = new ArrayList<>();
+        formats.add(format);
+        // If the decoder doesn't support the formats, then return 0 to indicate that decode failed
+        if (!areFormatsSupported(mDecoderName, formats)) {
+            return (Double) 0.0;
+        }
         mCodec = MediaCodec.createByCodecName(mDecoderName);
         mExtractor.seekTo(0, MediaExtractor.SEEK_TO_CLOSEST_SYNC);
         configureCodec(format, mIsAsync, false, false, mServerURL);
