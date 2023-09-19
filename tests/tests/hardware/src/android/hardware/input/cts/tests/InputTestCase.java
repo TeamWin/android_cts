@@ -341,6 +341,10 @@ public abstract class InputTestCase {
      * test results are consistent, we instead split up the batches so they end up in a
      * consistent and reproducible stream.
      *
+     * Note, however, that this ignores the problem of resampling, as we still don't know how to
+     * distinguish resampled events from real events. Only the latter will be consistent and
+     * reproducible.
+     *
      * @param event The (potentially) batched MotionEvent
      * @return List of MotionEvents, with each event guaranteed to have zero history size, and
      * should otherwise be equivalent to the original batch MotionEvent.
@@ -352,37 +356,19 @@ public abstract class InputTestCase {
         MotionEvent.PointerProperties[] properties =
                 new MotionEvent.PointerProperties[pointerCount];
         MotionEvent.PointerCoords[] currentCoords = new MotionEvent.PointerCoords[pointerCount];
-        boolean currentIsResampled = false;
         for (int p = 0; p < pointerCount; p++) {
             properties[p] = new MotionEvent.PointerProperties();
             event.getPointerProperties(p, properties[p]);
             currentCoords[p] = new MotionEvent.PointerCoords();
             event.getPointerCoords(p, currentCoords[p]);
-            if (p != 0 && currentIsResampled != currentCoords[p].isResampled()) {
-                Log.w(TAG, "Some pointers are resampled but others are not, in " + event);
-            }
-            currentIsResampled |= currentCoords[p].isResampled();
         }
         for (int h = 0; h < historySize; h++) {
             long eventTime = event.getHistoricalEventTime(h);
             MotionEvent.PointerCoords[] coords = new MotionEvent.PointerCoords[pointerCount];
-            boolean historicalIsResampled = false;
+
             for (int p = 0; p < pointerCount; p++) {
                 coords[p] = new MotionEvent.PointerCoords();
                 event.getHistoricalPointerCoords(p, h, coords[p]);
-                if (p != 0 && historicalIsResampled != coords[p].isResampled()) {
-                    Log.w(TAG, "Some pointers are resampled but others are not, in " + event
-                               + " sample " + h);
-                }
-                historicalIsResampled |= coords[p].isResampled();
-            }
-            if (historicalIsResampled) {
-                // If any pointers are resampled, then this set of pointer coordinates doesn't
-                // reflect an actual event from the device. Resampled events aren't consistent,
-                // since they're only produced by certain timings of actual events, causing flakes.
-                // The real events from the device are always preserved, however, so we can just
-                // ignore the resamples.
-                continue;
             }
             MotionEvent singleEvent =
                     MotionEvent.obtain(event.getDownTime(), eventTime, event.getAction(),
@@ -395,17 +381,15 @@ public abstract class InputTestCase {
             events.add(singleEvent);
         }
 
-        if (!currentIsResampled) {
-            MotionEvent singleEvent =
-                    MotionEvent.obtain(event.getDownTime(), event.getEventTime(), event.getAction(),
-                            pointerCount, properties, currentCoords,
-                            event.getMetaState(), event.getButtonState(),
-                            event.getXPrecision(), event.getYPrecision(),
-                            event.getDeviceId(), event.getEdgeFlags(),
-                            event.getSource(), event.getFlags());
-            singleEvent.setActionButton(event.getActionButton());
-            events.add(singleEvent);
-        }
+        MotionEvent singleEvent =
+                MotionEvent.obtain(event.getDownTime(), event.getEventTime(), event.getAction(),
+                        pointerCount, properties, currentCoords,
+                        event.getMetaState(), event.getButtonState(),
+                        event.getXPrecision(), event.getYPrecision(),
+                        event.getDeviceId(), event.getEdgeFlags(),
+                        event.getSource(), event.getFlags());
+        singleEvent.setActionButton(event.getActionButton());
+        events.add(singleEvent);
         return events;
     }
 
