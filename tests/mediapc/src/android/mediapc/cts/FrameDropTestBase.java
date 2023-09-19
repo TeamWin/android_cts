@@ -95,7 +95,8 @@ public class FrameDropTestBase {
         m2160p60FpsTestFiles.put(HEVC, "bbb_3840x2160_18mbps_60fps_hevc.mkv");
         m2160p60FpsTestFiles.put(VP8, "bbb_3840x2160_24mbps_60fps_vp8.webm");
         m2160p60FpsTestFiles.put(VP9, "bbb_3840x2160_18mbps_60fps_vp9.webm");
-        m2160p60FpsTestFiles.put(AV1, "bbb_3840x2160_18mbps_60fps_av1.mp4");
+        // Limit AV1 4k tests to 1080p as per PC14 requirements
+        m2160p60FpsTestFiles.put(AV1, "bbb_1920x1080_6mbps_60fps_av1.mp4");
 
         m540p30FpsTestFiles.put(AVC, "bbb_960x540_2mbps_30fps_avc.mp4");
         m540p30FpsTestFiles.put(HEVC, "bbb_960x540_2mbps_30fps_hevc.mp4");
