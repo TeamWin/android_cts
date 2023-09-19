@@ -418,27 +418,30 @@ public class FileChannelInterProcessLockTest extends AndroidTestCase {
     private void checkTryLockBehavior(LockType localLockType, LockType remoteLockType,
             ChannelType localChannelType, ChannelType remoteChannelType,
             boolean expectToGetLock) throws Exception {
-        IntentReceiver.resetReceiverState();
+        try {
+            IntentReceiver.resetReceiverState();
 
-        // Request that the remote lock be obtained.
-        getContext().startService(new Intent(getContext(), LockHoldingService.class)
-                .putExtra(LockHoldingService.LOCK_TYPE_KEY, remoteLockType)
-                .putExtra(LockHoldingService.CHANNEL_TYPE_KEY, remoteChannelType));
+            // Request that the remote lock be obtained.
+            getContext().startService(new Intent(getContext(), LockHoldingService.class)
+                    .putExtra(LockHoldingService.LOCK_TYPE_KEY, remoteLockType)
+                    .putExtra(LockHoldingService.CHANNEL_TYPE_KEY, remoteChannelType));
 
-        // Wait for a signal that the remote lock is definitely held.
-        assertTrue(IntentReceiver.lockHeldLatch.await(MAX_WAIT_TIME, SECONDS));
+            // Wait for a signal that the remote lock is definitely held.
+            assertTrue(IntentReceiver.lockHeldLatch.await(MAX_WAIT_TIME, SECONDS));
 
-        // Try to acquire the local lock in all cases and check whether it could be acquired or
-        // not as expected.
-        if (expectToGetLock) {
-            FileLock fileLock = acquire(getContext(), localLockType, localChannelType);
-            assertNotNull(fileLock);
-            assertTrue(fileLock.isValid());
-        } else {
-            assertNull(acquire(getContext(), localLockType, localChannelType));
+            // Try to acquire the local lock in all cases and check whether it could be acquired or
+            // not as expected.
+            if (expectToGetLock) {
+                FileLock fileLock = acquire(getContext(), localLockType, localChannelType);
+                assertNotNull(fileLock);
+                assertTrue(fileLock.isValid());
+            } else {
+                assertNull(acquire(getContext(), localLockType, localChannelType));
+            }
+            // Release the remote lock.
+        } finally {
+            stopService();
         }
-        // Release the remote lock.
-        stopService();
     }
 
     /**
@@ -454,93 +457,96 @@ public class FileChannelInterProcessLockTest extends AndroidTestCase {
     private void checkLockBehavior(LockType localLockType, LockType remoteLockType,
             ChannelType localChannelType, ChannelType remoteChannelType,
             boolean expectToWait) throws Exception {
-        IntentReceiver.resetReceiverState();
+        try {
+            IntentReceiver.resetReceiverState();
 
-        // The amount of time the remote service should hold lock.
-        long remoteLockHoldTimeMillis = 7000;
+            // The amount of time the remote service should hold lock.
+            long remoteLockHoldTimeMillis = 7000;
 
-        // The amount of time test should get to try to acquire the lock.
-        long sufficientOverlappingTimeInMillis = 2000;
+            // The amount of time test should get to try to acquire the lock.
+            long sufficientOverlappingTimeInMillis = 2000;
 
-        // This is the allowable delta in the time between the time recorded after the service
-        // released the lock and the time recorded after the test obtained the lock.
-        long lockReleasedAndReacquiredTimeDeltaInMillis = 1000;
+            // This is the allowable delta in the time between the time recorded after the service
+            // released the lock and the time recorded after the test obtained the lock.
+            long lockReleasedAndReacquiredTimeDeltaInMillis = 1000;
 
-        // Tell the service to acquire a remote lock.
-        Intent sendIntent = new Intent(getContext(), LockHoldingService.class)
-                .putExtra(LockHoldingService.TIME_TO_HOLD_LOCK_KEY, remoteLockHoldTimeMillis)
-                .putExtra(LockHoldingService.LOCK_TYPE_KEY, remoteLockType)
-                .putExtra(LockHoldingService.CHANNEL_TYPE_KEY, remoteChannelType)
-                .putExtra(LockHoldingService.LOCK_BEHAVIOR_RELEASE_AND_NOTIFY_KEY, true);
+            // Tell the service to acquire a remote lock.
+            Intent sendIntent = new Intent(getContext(), LockHoldingService.class)
+                    .putExtra(LockHoldingService.TIME_TO_HOLD_LOCK_KEY, remoteLockHoldTimeMillis)
+                    .putExtra(LockHoldingService.LOCK_TYPE_KEY, remoteLockType)
+                    .putExtra(LockHoldingService.CHANNEL_TYPE_KEY, remoteChannelType)
+                    .putExtra(LockHoldingService.LOCK_BEHAVIOR_RELEASE_AND_NOTIFY_KEY, true);
 
-        getContext().startService(sendIntent);
+            getContext().startService(sendIntent);
 
-        // Wait for the service to hold the lock and notify for the same.
-        assertTrue("No remote lock held notification",
-                IntentReceiver.lockHeldLatch.await(MAX_WAIT_TIME, SECONDS));
+            // Wait for the service to hold the lock and notify for the same.
+            assertTrue("No remote lock held notification",
+                    IntentReceiver.lockHeldLatch.await(MAX_WAIT_TIME, SECONDS));
 
-        long localLockNotObtainedTime = System.currentTimeMillis();
+            long localLockNotObtainedTime = System.currentTimeMillis();
 
-        // Acquire the lock locally.
-        FileLock fileLock = acquire(getContext(), localLockType, localChannelType);
-        long localLockObtainedTime = System.currentTimeMillis();
+            // Acquire the lock locally.
+            FileLock fileLock = acquire(getContext(), localLockType, localChannelType);
+            long localLockObtainedTime = System.currentTimeMillis();
 
-        // Wait until the remote lock has definitely been released.
-        assertTrue("No remote lock release notification",
-                IntentReceiver.lockReleasedLatch.await(MAX_WAIT_TIME, SECONDS));
+            // Wait until the remote lock has definitely been released.
+            assertTrue("No remote lock release notification",
+                    IntentReceiver.lockReleasedLatch.await(MAX_WAIT_TIME, SECONDS));
 
-        Bundle remoteLockReleasedBundle = IntentReceiver.lockReleasedBundle;
-        long remoteLockNotReleasedTime =
-                remoteLockReleasedBundle.getLong(LockHoldingService.LOCK_NOT_YET_RELEASED_TIMESTAMP);
-        long remoteLockReleasedTime =
-                remoteLockReleasedBundle.getLong(LockHoldingService.LOCK_DEFINITELY_RELEASED_TIMESTAMP);
+            Bundle remoteLockReleasedBundle = IntentReceiver.lockReleasedBundle;
+            long remoteLockNotReleasedTime =
+                    remoteLockReleasedBundle.getLong(LockHoldingService.LOCK_NOT_YET_RELEASED_TIMESTAMP);
+            long remoteLockReleasedTime =
+                    remoteLockReleasedBundle.getLong(LockHoldingService.LOCK_DEFINITELY_RELEASED_TIMESTAMP);
 
-        // We want the test to be notified well before the service releases the lock, so that
-        // we can be sure that it tried obtaining the lock before the service actually released it.
-        // Therefore, a two seconds time interval provides the test to get prepare and try to obtain
-        // the lock. If this fails, it doesn't mean they definitely didn't overlap
-        // but we can't be sure and the test may not be valid. This is why we hold the lock
-        // remotely for a long time compared to the delays we expect for intents to propagate
-        // between processes.
-        assertTrue(String.format("Remote lock release start (%d), " +
-                       "too soon after local lock notification time (%d). " +
-                       "Need at least %d ms",
-                       remoteLockReleasedTime,
-                       localLockNotObtainedTime,
-                       sufficientOverlappingTimeInMillis
-                   ),
-                remoteLockNotReleasedTime - localLockNotObtainedTime >
-                sufficientOverlappingTimeInMillis);
+            // We want the test to be notified well before the service releases the lock, so that
+            // we can be sure that it tried obtaining the lock before the service actually released it.
+            // Therefore, a two seconds time interval provides the test to get prepare and try to obtain
+            // the lock. If this fails, it doesn't mean they definitely didn't overlap
+            // but we can't be sure and the test may not be valid. This is why we hold the lock
+            // remotely for a long time compared to the delays we expect for intents to propagate
+            // between processes.
+            assertTrue(String.format("Remote lock release start (%d), " +
+                        "too soon after local lock notification time (%d). " +
+                        "Need at least %d ms",
+                        remoteLockReleasedTime,
+                        localLockNotObtainedTime,
+                        sufficientOverlappingTimeInMillis
+                    ),
+                    remoteLockNotReleasedTime - localLockNotObtainedTime >
+                    sufficientOverlappingTimeInMillis);
 
-        if (expectToWait) {
+            if (expectToWait) {
 
-            // The remoteLockReleaseTime is captured after the lock was released by the
-            // service. The localLockObtainedTime is captured after the lock was obtained by this
-            // thread. Therefore, there is a degree of slop inherent in the two times. We assert
-            // that they are "close" to each other, but we cannot assert any ordering.
-            assertTrue(String.format("Local lock obtained (%d) too long " +
-                        "from remote lock release time (%d). " +
-                        "Expected at most %d ms.",
-                        localLockObtainedTime, remoteLockReleasedTime,
-                        lockReleasedAndReacquiredTimeDeltaInMillis),
-                Math.abs(localLockObtainedTime - remoteLockReleasedTime) <
-                    lockReleasedAndReacquiredTimeDeltaInMillis);
-        } else {
-            // The remoteLockNotReleaseTime is captured before the lock was released by the
-            // service. The localLockObtainedTime is captured after the lock was obtained by this
-            // thread. The local thread should be able to get the lock before the remote thread
-            // definitely release it. If this test fails it may not indicate a problem, but it
-            // indicates we cannot be sure the test was successful the local lock attempt and the
-            // remote lock attempt did not overlap.
-            assertTrue(String.format("Local lock obtained (%d) after " +
-                        "remote lock release start (%d)",
-                        localLockObtainedTime, remoteLockNotReleasedTime),
-                localLockObtainedTime < remoteLockNotReleasedTime);
+                // The remoteLockReleaseTime is captured after the lock was released by the
+                // service. The localLockObtainedTime is captured after the lock was obtained by this
+                // thread. Therefore, there is a degree of slop inherent in the two times. We assert
+                // that they are "close" to each other, but we cannot assert any ordering.
+                assertTrue(String.format("Local lock obtained (%d) too long " +
+                            "from remote lock release time (%d). " +
+                            "Expected at most %d ms.",
+                            localLockObtainedTime, remoteLockReleasedTime,
+                            lockReleasedAndReacquiredTimeDeltaInMillis),
+                    Math.abs(localLockObtainedTime - remoteLockReleasedTime) <
+                        lockReleasedAndReacquiredTimeDeltaInMillis);
+            } else {
+                // The remoteLockNotReleaseTime is captured before the lock was released by the
+                // service. The localLockObtainedTime is captured after the lock was obtained by this
+                // thread. The local thread should be able to get the lock before the remote thread
+                // definitely release it. If this test fails it may not indicate a problem, but it
+                // indicates we cannot be sure the test was successful the local lock attempt and the
+                // remote lock attempt did not overlap.
+                assertTrue(String.format("Local lock obtained (%d) after " +
+                            "remote lock release start (%d)",
+                            localLockObtainedTime, remoteLockNotReleasedTime),
+                    localLockObtainedTime < remoteLockNotReleasedTime);
+            }
+
+            // Asserting if the fileLock is valid.
+            assertTrue(fileLock.isValid());
+        } finally {
+            stopService();
         }
-
-        // Asserting if the fileLock is valid.
-        assertTrue(fileLock.isValid());
-        stopService();
     }
 
     /**
