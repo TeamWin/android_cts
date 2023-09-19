@@ -677,9 +677,6 @@ public class MockSatelliteService extends SatelliteImplBase {
      * @param modemState The {@link SatelliteModemState} to update.
      */
     private void updateSatelliteModemState(int modemState) {
-        if (modemState == mModemState) {
-            return;
-        }
         logd("updateSatelliteModemState modemState=" + modemState);
         mRemoteListeners.values().forEach(listener -> runWithExecutor(() ->
                 listener.onSatelliteModemStateChanged(modemState)));
