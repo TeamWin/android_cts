@@ -86,6 +86,7 @@ import com.android.bedstead.harrier.annotations.EnsureHasNoWorkProfile;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.EnsureHasSecondaryUser;
 import com.android.bedstead.harrier.annotations.EnsureHasUserRestriction;
+import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
 import com.android.bedstead.harrier.annotations.EnsureIsNotDemoDevice;
 import com.android.bedstead.harrier.annotations.PermissionTest;
 import com.android.bedstead.harrier.annotations.Postsubmit;
@@ -428,6 +429,7 @@ public final class ProvisioningTest {
     @EnsureHasPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
     @Postsubmit(reason = "new test")
     @Test
+    @EnsureHasWorkProfile
     @ApiTest(apis = "android.app.admin.DevicePolicyManager#createAndProvisionManagedProfile")
     public void createAndProvisionManagedProfile_withExistingProfile_preconditionFails() {
         ProvisioningException exception = assertThrows(ProvisioningException.class, () ->
