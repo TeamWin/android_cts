@@ -16,13 +16,13 @@
 <html>
     <head>
         <title>TEST FAILED</title>
-    </head>
-    <body>
-        <img id='img' src="../images/tomato.png" onload="success()" />
-        <script>
+	<script>
             function success() {
               document.title=document.getElementById('img').naturalHeight;
             }
         </script>
+    </head>
+    <body>
+        <img id='img' src="../images/tomato.png" onload="success()" />
     </body>
 </html>
