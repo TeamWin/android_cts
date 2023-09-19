@@ -15,15 +15,27 @@
  */
 package android.os.cts;
 
-import static android.os.Flags.FLAG_REMOVE_APP_PROFILER_PSS_COLLECTION;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
 import android.os.Debug;
+import android.os.Flags;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.RequiresFlagsEnabled;
-import android.test.AndroidTestCase;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
+
+import androidx.test.core.app.ApplicationProvider;
+import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.TestThread;
+
+import org.junit.After;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -34,24 +46,33 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class DebugTest extends AndroidTestCase {
+@RunWith(AndroidJUnit4.class)
+public class DebugTest {
     private static final Logger Log = Logger.getLogger(DebugTest.class.getName());
 
     // Static list here to avoid R8 optimizations in #testGetAndReset causing wrong alloc counts
     private static final List<int[]> TEST_ALLOC = new ArrayList<>();
 
-    @Override
+    private Context getContext() {
+        return ApplicationProvider.getApplicationContext();
+    }
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
+
+    @After
     public void tearDown() throws Exception {
-        super.tearDown();
         Debug.stopAllocCounting();
         Debug.resetAllCounts();
     }
 
+    @Test
     public void testPrintLoadedClasses() {
         // TODO(b/279710302): Update the test to verify the output.
         Debug.printLoadedClasses(Debug.SHOW_CLASSLOADER | Debug.SHOW_INITIALIZED);
     }
 
+    @Test
     public void testStartMethodTracing() throws InterruptedException {
         final long debugTime = 3000;
         final String traceName = getFileName();
@@ -75,6 +96,7 @@ public class DebugTest extends AndroidTestCase {
     @AppModeFull(
             reason = "Default trace in Context#getExternalFilesDir not accessible by instant apps"
     )
+    @Test
     public void testStartMethodTracingDefaultExternalStorage() throws InterruptedException {
         final long debugTime = 3000;
 
@@ -89,12 +111,14 @@ public class DebugTest extends AndroidTestCase {
         return file.getAbsolutePath();
     }
 
+    @Test
     public void testStartNativeTracing() {
         Debug.startNativeTracing();
 
         Debug.stopNativeTracing();
     }
 
+    @Test
     public void testThreadCpuTimeNanos() throws Exception {
         if (Debug.threadCpuTimeNanos() == -1) {
             // Indicates the system does not support this operation, so we can't test it.
@@ -123,10 +147,12 @@ public class DebugTest extends AndroidTestCase {
         t.join();
     }
 
+    @Test
     public void testWaitingForDebugger() {
         assertFalse(Debug.waitingForDebugger());
     }
 
+    @Test
     public void testGetAndReset() throws IOException {
         final String dumpFile = getFileName();
         Debug.startAllocCounting();
@@ -218,11 +244,13 @@ public class DebugTest extends AndroidTestCase {
 
     // This test is separate from the other Debug.get methods (e.g. Debug.getPss()) in
     // testGetAndReset because getRss() is guarded by FLAG_REMOVE_APP_PROFILER_PSS_COLLECTION.
-    @RequiresFlagsEnabled(FLAG_REMOVE_APP_PROFILER_PSS_COLLECTION)
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_REMOVE_APP_PROFILER_PSS_COLLECTION)
     public void testGetRss() {
         assertTrue(Debug.getRss() >= 0);
     }
 
+    @Test
     public void testDumpService() throws Exception {
         File file = getContext().getFileStreamPath("dump.out");
         file.delete();
@@ -272,6 +300,7 @@ public class DebugTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testGetRuntimeStat() throws Exception {
         // Invoke at least one GC and wait for 20 seconds or so so we get at
         // least one bucket in the histograms.
@@ -298,6 +327,7 @@ public class DebugTest extends AndroidTestCase {
         checkHistogram(blocking_gc_count_rate_histogram);
     }
 
+    @Test
     public void testGetRuntimeStats() throws Exception {
         // Invoke at least one GC and wait for 20 seconds or so so we get at
         // least one bucket in the histograms.
@@ -325,6 +355,7 @@ public class DebugTest extends AndroidTestCase {
         checkHistogram(blocking_gc_count_rate_histogram);
     }
 
+    @Test
     public void testGetMemoryStat() throws Exception {
         Debug.MemoryInfo memoryInfo = new Debug.MemoryInfo();
         Debug.getMemoryInfo(memoryInfo);
@@ -349,6 +380,7 @@ public class DebugTest extends AndroidTestCase {
         checkNumber(summary_total_swap);
     }
 
+    @Test
     public void testGetMemoryStats() throws Exception {
         Debug.MemoryInfo memoryInfo = new Debug.MemoryInfo();
         Debug.getMemoryInfo(memoryInfo);
@@ -374,6 +406,7 @@ public class DebugTest extends AndroidTestCase {
         checkNumber(summary_total_swap);
     }
 
+    @Test
     public void testEnableEmulatorTraceOutput() {
         // The API is no-op and deprecated.
         Debug.enableEmulatorTraceOutput();
