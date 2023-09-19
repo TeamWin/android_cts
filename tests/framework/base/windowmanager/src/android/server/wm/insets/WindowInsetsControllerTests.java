@@ -650,11 +650,15 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
             getInstrumentation().runOnMainSync(() ->  {
                 activity.showAltImDialog();
             });
-
-            for (long time = TIMEOUT; time >= 0; time -= TIME_SLICE) {
-                assertFalse("IME visible when it shouldn't be",
-                        rootView.getRootWindowInsets().isVisible(ime()));
-                SystemClock.sleep(TIME_SLICE);
+            try {
+                for (long time = TIMEOUT; time >= 0; time -= TIME_SLICE) {
+                    assertFalse("IME visible when it shouldn't be",
+                            rootView.getRootWindowInsets().isVisible(ime()));
+                    SystemClock.sleep(TIME_SLICE);
+                }
+            } catch (Throwable t) {
+                imeSession.logEventStream();
+                throw t;
             }
         }
     }
