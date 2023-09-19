@@ -18,8 +18,6 @@ package android.backup.cts;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import static org.junit.Assume.assumeTrue;
-
 import android.Manifest;
 import android.app.UiAutomation;
 import android.app.backup.BackupManager;
@@ -32,20 +30,16 @@ import android.content.Context;
 import android.os.Bundle;
 import android.platform.test.annotations.AppModeFull;
 
-import androidx.test.runner.AndroidJUnit4;
-
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import org.junit.runner.RunWith;
-
 @AppModeFull
-@RunWith(AndroidJUnit4.class)
 public class BackupRestoreEventLoggerTest extends BaseBackupCtsTest {
     private static final String BACKUP_APP_PACKAGE
             = "android.cts.backup.backuprestoreeventloggerapp";
     private static final int OPERATION_TIMEOUT_SECONDS = 30;
+    private static final int BACKUP_APP_RESTART_SLEEP_MS = 3_000;
 
 
     // Copied from LoggingFullBackupAgent.java
@@ -69,8 +63,6 @@ public class BackupRestoreEventLoggerTest extends BaseBackupCtsTest {
     public void setUp() throws Exception {
         super.setUp();
 
-        assumeTrue(isBackupSupported());
-
         Context context = getInstrumentation().getTargetContext();
 
         mUiAutomation = getInstrumentation().getUiAutomation();
@@ -93,6 +85,10 @@ public class BackupRestoreEventLoggerTest extends BaseBackupCtsTest {
     }
 
     public void testBackupRestoreRoundTrip_logsSentToMonitor() throws Exception {
+        if (!isBackupSupported()) {
+            return;
+        }
+
         // Ensure the app is not in stopped state.
         createTestFileOfSize(BACKUP_APP_PACKAGE, /* size */ 1);
 
@@ -102,6 +98,9 @@ public class BackupRestoreEventLoggerTest extends BaseBackupCtsTest {
                 /* observer */ mBackupObserver, mBackupMonitor, /* flags */ 0);
         boolean backupFinished = mOperationLatch.await(OPERATION_TIMEOUT_SECONDS,
                 TimeUnit.SECONDS);
+
+        // Sleep to allow the app to be killed, so that this doesn't disrupt the restore operation
+        Thread.sleep(BACKUP_APP_RESTART_SLEEP_MS);
 
         // Run a restore.
         mOperationLatch = new CountDownLatch(/* count */ 1);
