@@ -20,7 +20,6 @@ import static android.app.admin.DevicePolicyManager.ID_TYPE_BASE_INFO;
 import static android.app.admin.DevicePolicyManager.ID_TYPE_IMEI;
 import static android.app.admin.DevicePolicyManager.ID_TYPE_MEID;
 import static android.app.admin.DevicePolicyManager.ID_TYPE_SERIAL;
-
 import static com.google.android.attestation.ParsedAttestationRecord.createParsedAttestationRecord;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
@@ -129,7 +128,8 @@ public class DeviceOwnerKeyManagementTest {
                                                  String expectedSerial,
                                                  String expectedImei,
                                                  String expectedMeid,
-                                                 String expectedSecondImei)
+                                                 String expectedSecondImei,
+                                                 boolean useStrongbox)
             throws CertificateParsingException {
 
         // find the first cert nearest to root contains the attestation data
@@ -182,10 +182,11 @@ public class DeviceOwnerKeyManagementTest {
         assertThat(teeAttestation.getImei()).isEqualTo(expectedImei);
         assertThat(teeAttestation.getMeid()).isEqualTo(expectedMeid);
 
-        validateSecondImei(teeAttestation.getSecondImei(), expectedSecondImei);
+        validateSecondImei(teeAttestation.getSecondImei(), expectedSecondImei, useStrongbox);
     }
 
-    private void validateSecondImei(String attestedSecondImei, String expectedSecondImei) {
+    private void validateSecondImei(String attestedSecondImei, String expectedSecondImei,
+            boolean useStrongbox) {
         /**
          * Test attestation support for 2nd IMEI:
          * * Attestation of 2nd IMEI (if present on the device) is required for devices shipping
@@ -195,7 +196,8 @@ public class DeviceOwnerKeyManagementTest {
          *   attestation record, it must match what the platform provided.
          * * Other KeyMint implementations must not include anything in this tag.
          */
-        final boolean isKeyMintV3 = TestUtils.getFeatureVersionKeystore(sContext) >= 300;
+        final boolean isKeyMintV3 =
+                TestUtils.getFeatureVersionKeystore(sContext, useStrongbox) >= 300;
         final boolean emptySecondImei = TextUtils.isEmpty(expectedSecondImei);
         final boolean deviceShippedWithKeyMint3 =
                 getDeviceFirstSdkLevel() >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE;
@@ -226,7 +228,8 @@ public class DeviceOwnerKeyManagementTest {
                                                             String expectedSerial,
                                                             String expectedImei,
                                                             String expectedMeid,
-                                                            String expectedSecondImei)
+                                                            String expectedSecondImei,
+                                                            boolean useStrongbox)
             throws CertificateParsingException, IOException {
         ParsedAttestationRecord parsedAttestationRecord =
                 createParsedAttestationRecord(Arrays.asList((X509Certificate[]) certs));
@@ -279,12 +282,13 @@ public class DeviceOwnerKeyManagementTest {
             assertThat(new String(teeAttestation.attestationIdMeid.get()))
                     .isEqualTo(expectedMeid);
         }
-        assertThat(!TextUtils.isEmpty(expectedSecondImei))
-                .isEqualTo(teeAttestation.attestationIdSecondImei.isPresent());
-        if (!TextUtils.isEmpty(expectedSecondImei)) {
-            validateSecondImei(new String(teeAttestation.attestationIdSecondImei.get()),
-                    expectedSecondImei);
+        // We only need to read the second imei from the attestation record if it's available.
+        // All other validations are performed in validateSecondImei function.
+        String attestationIdSecondImei = null;
+        if (teeAttestation.attestationIdSecondImei.isPresent()) {
+            attestationIdSecondImei = new String(teeAttestation.attestationIdSecondImei.get());
         }
+        validateSecondImei(attestationIdSecondImei, expectedSecondImei, useStrongbox);
     }
 
     private void validateAttestationRecord(List<Certificate> attestation, byte[] providedChallenge)
@@ -488,11 +492,11 @@ public class DeviceOwnerKeyManagementTest {
                             expectedSecondImei = secondImei;
                         }
                         validateDeviceIdAttestationData(attestation, expectedSerial,
-                                expectedImei, expectedMeid, expectedSecondImei);
+                                expectedImei, expectedMeid, expectedSecondImei, useStrongBox);
                         // Validate attestation record using external library. As above validation
                         // is successful external library validation should also pass.
                         validateDeviceIdAttestationDataUsingExtLib(attestation, expectedSerial,
-                                expectedImei, expectedMeid, expectedSecondImei);
+                                expectedImei, expectedMeid, expectedSecondImei, useStrongBox);
                     }
                 } catch (UnsupportedOperationException expected) {
                     // Make sure the test only fails if the device is not meant to support Device
