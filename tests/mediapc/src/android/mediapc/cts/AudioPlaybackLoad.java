@@ -126,13 +126,7 @@ class AudioPlaybackLoad extends CodecDecoderTestBase {
     }
 
     @Override
-    void dequeueOutput(int bufferIndex, MediaCodec.BufferInfo info) {
-        if ((info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
-            mSawOutputEOS = true;
-        }
-        if (info.size > 0 && (info.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) == 0) {
-            mOutputCount++;
-        }
+    void releaseOutput(int bufferIndex, MediaCodec.BufferInfo info) {
         final ByteBuffer buffer = mCodec.getOutputBuffer(bufferIndex);
         final byte[] audio = new byte[info.size];
         buffer.clear(); // prepare buffer for reading
