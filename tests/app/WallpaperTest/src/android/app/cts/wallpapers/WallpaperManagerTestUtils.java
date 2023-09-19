@@ -23,11 +23,13 @@ import static com.google.common.truth.Truth.assertThat;
 
 import android.app.WallpaperManager;
 import android.content.ComponentName;
-import android.util.Log;
+
+import com.android.compatibility.common.util.ThrowingRunnable;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 public class WallpaperManagerTestUtils {
@@ -45,6 +47,39 @@ public class WallpaperManagerTestUtils {
     public static final ComponentName TEST_LIVE_WALLPAPER_AMBIENT_COMPONENT = new ComponentName(
             TestLiveWallpaperSupportingAmbientMode.class.getPackageName(),
             TestLiveWallpaperSupportingAmbientMode.class.getName());
+
+    /**
+     * Runs the given runnable and waits until request number of engine events are triggered.
+     *
+     * @param timeout              Amount of time to wait.
+     * @param unit                 Unit for the timeout.
+     * @param onCreateCount        Number of times Engine::onCreate is expected to be called.
+     * @param onDestroyCount       Number of times Engine::onDestroy is expected to be called.
+     * @param surfaceCreationCount Number of times Engine::onSurfaceChanged is expected to be
+     *                             called.
+     * @param runnable             The action to perform that will trigger engine events.
+     * @return True if all events were received, false if there was a timeout waiting for any of
+     * the events.
+     */
+    public static boolean runAndAwaitChanges(long timeout, TimeUnit unit,
+            int onCreateCount, int onDestroyCount, int surfaceCreationCount,
+            ThrowingRunnable runnable) {
+        TestWallpaperService.EngineCallbackCountdown callback =
+                new TestWallpaperService.EngineCallbackCountdown(onCreateCount, onDestroyCount,
+                        surfaceCreationCount);
+        TestWallpaperService.Companion.addCallback(callback);
+        boolean result;
+        try {
+            runnable.run();
+            result = callback.awaitEvents(timeout, unit);
+        } catch (Exception e) {
+            throw new RuntimeException("Caught exception", e);
+        } finally {
+            TestWallpaperService.Companion.removeCallback(callback);
+        }
+
+        return result;
+    }
 
     /**
      * enumeration of all wallpapers used for test purposes: 3 static, 3 live wallpapers:   <br>
@@ -283,19 +318,20 @@ public class WallpaperManagerTestUtils {
      * Uses the provided wallpaperManager instance to perform a {@link WallpaperChange}.
      */
     public static void performChange(
-            WallpaperManager wallpaperManager, WallpaperChange change) throws IOException {
+            WallpaperManager wallpaperManager, WallpaperChange change)
+            throws IOException {
         if (change.mWallpaper.isStatic()) {
             wallpaperManager.setResource(
                     change.mWallpaper.getBitmapResourceId(), change.mDestination);
         } else {
-            wallpaperManager.setWallpaperComponentWithFlags(
-                    change.mWallpaper.getComponentName(), change.mDestination);
-        }
-        try {
-            // Allow time for callbacks
-            Thread.sleep(500);
-        } catch (InterruptedException e) {
-            Log.e(TAG, "wallpaper wait interrupted", e);
+            // Up to one surface is expected to be created when switching wallpapers. It's possible
+            // that this operation ends up being a no-op, in that case the wait will time out.
+            final int expectedSurfaceCreations = 1;
+            runAndAwaitChanges(500, TimeUnit.MILLISECONDS, 0, 0, expectedSurfaceCreations,
+                    () -> {
+                        wallpaperManager.setWallpaperComponentWithFlags(
+                                change.mWallpaper.getComponentName(), change.mDestination);
+                    });
         }
     }
 
@@ -304,7 +340,8 @@ public class WallpaperManagerTestUtils {
      *   - put the home wallpaper on lock and home screens <br>
      *   - put the lock wallpaper on lock screen, if it is different from the home screen wallpaper
      */
-    public static void goToState(WallpaperManager wallpaperManager, WallpaperState state)
+    public static void goToState(
+            WallpaperManager wallpaperManager, WallpaperState state)
             throws IOException {
         WallpaperChange change1 = new WallpaperChange(
                 state.mHomeWallpaper, FLAG_SYSTEM | (state.mSingleEngine ? FLAG_LOCK : 0));
