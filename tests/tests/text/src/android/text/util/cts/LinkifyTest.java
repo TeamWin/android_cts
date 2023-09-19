@@ -633,7 +633,7 @@ public class LinkifyTest {
 
     @Test
     public void testAddLinks_doesNotMatchUrlsWithoutProtocolAndWithUnknownTld() {
-        String url = "thank.you";
+        String url = "thank.unknowntld";
         verifyAddLinksWithWebUrlFails("Should not match URL that does not start with a protocol " +
                 "and does not contain a known TLD", url);
     }
@@ -647,7 +647,7 @@ public class LinkifyTest {
     @Test
     public void testAddLinks_doesNotMatchUrlsWithEmojiWithoutProtocolAndWithoutKnownTld()
             {
-        String url = "Thank\u263A.you";
+        String url = "Thank\u263A.unknowntld";
         verifyAddLinksWithWebUrlFails("Should not match URLs containing emoji and with unknown " +
                 "TLD", url);
     }
