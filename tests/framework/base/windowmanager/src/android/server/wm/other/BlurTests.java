@@ -56,7 +56,6 @@ import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
 import org.mockito.Mockito;
 
-import java.util.Optional;
 import java.util.function.Consumer;
 
 @Presubmit
@@ -103,12 +102,8 @@ public class BlurTests extends WindowManagerTestBase {
         WindowManagerState.WindowState windowState = mWmState.getWindowState(cn);
         WindowManagerState.Activity act = mWmState.getActivity(cn);
         mBackgroundActivityBounds = act.getBounds();
-        Optional<WindowManagerState.InsetsSource> captionInsetsOptional =
-                windowState.getMergedLocalInsetsSources().stream().filter(
-                        insets -> insets.isCaptionBar()).findFirst();
-        captionInsetsOptional.ifPresent(captionInsets -> {
-            captionInsets.insetGivenFrame(mBackgroundActivityBounds);
-        });
+        insetGivenFrame(windowState, WindowManagerState.InsetsSource::isCaptionBar,
+                mBackgroundActivityBounds);
 
         // Wait for the first frame *after* the splash screen is removed to take screenshots.
         // We don't currently have a definite event / callback for this.
