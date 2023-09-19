@@ -137,7 +137,7 @@ public class WallpaperManagerTestUtils {
     }
 
     public static class WallpaperChange {
-        TestWallpaper mWallpaper;
+        final TestWallpaper mWallpaper;
         int mDestination;
         public WallpaperChange(
                 TestWallpaper wallpaper, int destination) {
@@ -150,7 +150,16 @@ public class WallpaperManagerTestUtils {
      * Class representing a state in which our WallpaperManager may be during our tests.
      * A state is fully represented by the wallpaper that are present on home and lock screen.
      */
-    public static class WallpaperState {
+    public enum WallpaperState {
+        LIVE_SAME_SINGLE(TestWallpaper.LIVE1, TestWallpaper.LIVE1, true),
+        LIVE_SAME_MULTI(TestWallpaper.LIVE1, TestWallpaper.LIVE1, false),
+        LIVE_DIFF_MULTI(TestWallpaper.LIVE1, TestWallpaper.LIVE2, false),
+        LIVE_STATIC_MULTI(TestWallpaper.LIVE1, TestWallpaper.STATIC1, false),
+        STATIC_SAME_SINGLE(TestWallpaper.STATIC1, TestWallpaper.STATIC1, true),
+        STATIC_SAME_MULTI(TestWallpaper.STATIC1, TestWallpaper.STATIC1, false),
+        STATIC_DIFF_MULTI(TestWallpaper.STATIC1, TestWallpaper.STATIC2, false),
+        STATIC_LIVE_MULTI(TestWallpaper.STATIC1, TestWallpaper.LIVE1, false);
+
         private final TestWallpaper mHomeWallpaper;
         private final TestWallpaper mLockWallpaper;
 
@@ -161,11 +170,13 @@ public class WallpaperManagerTestUtils {
          */
         private final boolean mSingleEngine;
 
-        public WallpaperState(
+        WallpaperState(
                 TestWallpaper homeWallpaper, TestWallpaper lockWallpaper, boolean singleEngine) {
             mHomeWallpaper = homeWallpaper;
             mLockWallpaper = lockWallpaper;
             assertThat(!singleEngine || (homeWallpaper == lockWallpaper)).isTrue();
+            assertThat(homeWallpaper).isNotNull();
+            assertThat(lockWallpaper).isNotNull();
             mSingleEngine = singleEngine;
         }
 
@@ -350,35 +361,4 @@ public class WallpaperManagerTestUtils {
         WallpaperChange change2 = new WallpaperChange(state.mLockWallpaper, FLAG_LOCK);
         if (!state.mSingleEngine) performChange(wallpaperManager, change2);
     }
-
-    /**
-     * Return a list of all logically different states
-     * Two states are logically different if at least one of this statement: <br>
-     *   - home screen is live <br>
-     *   - lock screen is live <br>
-     *   - home screen and lock screen are the same wallpaper <br>
-     *   - home screen and lock screen share the same engine <br>
-     *  is different between the two states.
-     */
-    public static List<WallpaperState> allPossibleStates() {
-        return List.of(
-                new WallpaperState(TestWallpaper.LIVE1, TestWallpaper.LIVE1, true),
-                new WallpaperState(TestWallpaper.LIVE1, TestWallpaper.LIVE1, false),
-                new WallpaperState(TestWallpaper.LIVE1, TestWallpaper.LIVE2, false),
-                new WallpaperState(TestWallpaper.LIVE1, TestWallpaper.STATIC1, false),
-                new WallpaperState(TestWallpaper.STATIC1, TestWallpaper.STATIC1, true),
-                new WallpaperState(TestWallpaper.STATIC1, TestWallpaper.STATIC1, false),
-                new WallpaperState(TestWallpaper.STATIC1, TestWallpaper.STATIC2, false),
-                new WallpaperState(TestWallpaper.STATIC1, TestWallpaper.LIVE1, false)
-        );
-    }
-
-    public static final WallpaperState LIVE_STATIC_DIFFERENT_WALLPAPERS = new WallpaperState(
-            TestWallpaper.LIVE1, TestWallpaper.STATIC1, false);
-
-    public static final WallpaperState TWO_DIFFERENT_LIVE_WALLPAPERS = new WallpaperState(
-            TestWallpaper.LIVE1, TestWallpaper.LIVE3, false);
-
-    public static final WallpaperState TWO_SAME_LIVE_WALLPAPERS = new WallpaperState(
-            TestWallpaper.LIVE2, TestWallpaper.LIVE2, true);
 }

@@ -19,9 +19,6 @@ package android.app.cts.wallpapers;
 import static android.Manifest.permission.READ_WALLPAPER_INTERNAL;
 import static android.app.WallpaperManager.FLAG_LOCK;
 import static android.app.WallpaperManager.FLAG_SYSTEM;
-import static android.app.cts.wallpapers.WallpaperManagerTestUtils.LIVE_STATIC_DIFFERENT_WALLPAPERS;
-import static android.app.cts.wallpapers.WallpaperManagerTestUtils.TWO_DIFFERENT_LIVE_WALLPAPERS;
-import static android.app.cts.wallpapers.WallpaperManagerTestUtils.TWO_SAME_LIVE_WALLPAPERS;
 import static android.app.cts.wallpapers.WallpaperManagerTestUtils.WallpaperChange;
 import static android.app.cts.wallpapers.WallpaperManagerTestUtils.WallpaperState;
 import static android.app.cts.wallpapers.util.WallpaperTestUtils.isSimilar;
@@ -74,9 +71,11 @@ import android.view.WindowManager;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
-import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.CtsTouchUtils;
+
+import com.google.testing.junit.testparameterinjector.TestParameter;
+import com.google.testing.junit.testparameterinjector.TestParameterInjector;
 
 import org.junit.After;
 import org.junit.Before;
@@ -103,7 +102,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * cyan, magenta, yellow, respectively.
  * </p>
  */
-@RunWith(AndroidJUnit4.class)
+@RunWith(TestParameterInjector.class)
 public class WallpaperManagerTest {
 
     private static final boolean DEBUG = false;
@@ -720,14 +719,16 @@ public class WallpaperManagerTest {
 
         // map of: argument passed to clear(int) -> WallpaperState -> expected number of onDestroy
         Map<Integer, Map<WallpaperState, Integer>> testMap = Map.of(
-                FLAG_LOCK, Map.of(TWO_DIFFERENT_LIVE_WALLPAPERS, 1, TWO_SAME_LIVE_WALLPAPERS, 0),
-                FLAG_SYSTEM, Map.of(TWO_DIFFERENT_LIVE_WALLPAPERS, 1, TWO_SAME_LIVE_WALLPAPERS, 0),
+                FLAG_LOCK,
+                Map.of(WallpaperState.LIVE_DIFF_MULTI, 1, WallpaperState.LIVE_SAME_SINGLE, 0),
+                FLAG_SYSTEM,
+                Map.of(WallpaperState.LIVE_DIFF_MULTI, 1, WallpaperState.LIVE_SAME_SINGLE, 0),
                 FLAG_SYSTEM | FLAG_LOCK, Map.of(
-                        TWO_DIFFERENT_LIVE_WALLPAPERS, 2, TWO_SAME_LIVE_WALLPAPERS, 1));
+                        WallpaperState.LIVE_DIFF_MULTI, 2, WallpaperState.LIVE_SAME_SINGLE, 1));
 
         Map<WallpaperState, String> stateDescriptions = Map.of(
-                TWO_DIFFERENT_LIVE_WALLPAPERS, "two different live wallpapers",
-                TWO_SAME_LIVE_WALLPAPERS, "a shared live wallpaper");
+                WallpaperState.LIVE_DIFF_MULTI, "two different live wallpapers",
+                WallpaperState.LIVE_SAME_SINGLE, "a shared live wallpaper");
 
         Map<Integer, String> flagDescriptions = Map.of(
                 FLAG_LOCK, "FLAG_LOCK",
@@ -1316,41 +1317,41 @@ public class WallpaperManagerTest {
      * {@link TestWallpaperService.FakeEngine#onCreate} are called is correct.
      */
     @Test
-    public void testEngineCallbackCounts() throws IOException {
+    public void testEngineCallbackCountsParam(
+            @TestParameter WallpaperManagerTestUtils.WallpaperState state)
+            throws IOException {
         assumeTrue(mWallpaperManager.isLockscreenLiveWallpaperEnabled());
         ArrayList<String> errorMessages = new ArrayList<>();
         runWithShellPermissionIdentity(() -> {
-            for (WallpaperState state : WallpaperManagerTestUtils.allPossibleStates()) {
-                for (WallpaperChange change: state.allPossibleChanges()) {
-                    WallpaperManagerTestUtils.goToState(mWallpaperManager, state);
-                    TestWallpaperService.Companion.resetCounts();
-                    final int expectedCreateCount =
-                            state.expectedNumberOfLiveWallpaperCreate(change);
-                    final int expectedDestroyCount =
-                            state.expectedNumberOfLiveWallpaperDestroy(change);
+            for (WallpaperChange change: state.allPossibleChanges()) {
+                WallpaperManagerTestUtils.goToState(mWallpaperManager, state);
+                TestWallpaperService.Companion.resetCounts();
+                final int expectedCreateCount =
+                        state.expectedNumberOfLiveWallpaperCreate(change);
+                final int expectedDestroyCount =
+                        state.expectedNumberOfLiveWallpaperDestroy(change);
 
-                    WallpaperManagerTestUtils.runAndAwaitChanges(5, TimeUnit.SECONDS,
-                            expectedCreateCount, expectedDestroyCount, 0, () -> {
-                                WallpaperManagerTestUtils.performChange(mWallpaperManager, change);
-                            });
+                WallpaperManagerTestUtils.runAndAwaitChanges(5, TimeUnit.SECONDS,
+                        expectedCreateCount, expectedDestroyCount, 0, () -> {
+                            WallpaperManagerTestUtils.performChange(mWallpaperManager, change);
+                        });
 
-                    int actualCreateCount = TestWallpaperService.Companion.getCreateCount();
-                    String createMessage = String.format(
-                            "Expected %s calls to Engine#onCreate, got %s. ",
-                            expectedCreateCount, actualCreateCount);
-                    if (actualCreateCount != expectedCreateCount) {
-                        errorMessages.add(
-                                createMessage + "\n" + state.reproduceDescription(change));
-                    }
+                int actualCreateCount = TestWallpaperService.Companion.getCreateCount();
+                String createMessage = String.format(
+                        "Expected %s calls to Engine#onCreate, got %s. ",
+                        expectedCreateCount, actualCreateCount);
+                if (actualCreateCount != expectedCreateCount) {
+                    errorMessages.add(
+                            createMessage + "\n" + state.reproduceDescription(change));
+                }
 
-                    int actualDestroyCount = TestWallpaperService.Companion.getDestroyCount();
-                    String destroyMessage = String.format(
-                            "Expected %s calls to Engine#onDestroy, got %s. ",
-                            expectedDestroyCount, actualDestroyCount);
-                    if (actualDestroyCount != expectedDestroyCount) {
-                        errorMessages.add(
-                                destroyMessage + "\n" + state.reproduceDescription(change));
-                    }
+                int actualDestroyCount = TestWallpaperService.Companion.getDestroyCount();
+                String destroyMessage = String.format(
+                        "Expected %s calls to Engine#onDestroy, got %s. ",
+                        expectedDestroyCount, actualDestroyCount);
+                if (actualDestroyCount != expectedDestroyCount) {
+                    errorMessages.add(
+                            destroyMessage + "\n" + state.reproduceDescription(change));
                 }
             }
         });
@@ -1372,13 +1373,13 @@ public class WallpaperManagerTest {
                     new WallpaperWindowsTestUtils.WallpaperWindowsHelper(sWindowManagerStateHelper);
             // Two independent wallpapers
             WallpaperManagerTestUtils.goToState(
-                    mWallpaperManager, TWO_DIFFERENT_LIVE_WALLPAPERS);
+                    mWallpaperManager, WallpaperState.LIVE_DIFF_MULTI);
             assertWallpapersMatching(wallpaperWindowsHelper,
                     List.of(mWallpaperManager.getWallpaperInfo(FLAG_SYSTEM).getServiceName(),
                             mWallpaperManager.getWallpaperInfo(FLAG_LOCK).getServiceName()));
             // One shared wallpaper
             WallpaperManagerTestUtils.goToState(
-                    mWallpaperManager, TWO_SAME_LIVE_WALLPAPERS);
+                    mWallpaperManager, WallpaperState.LIVE_SAME_SINGLE);
             assertWallpapersMatching(wallpaperWindowsHelper, List.of(
                     mWallpaperManager.getWallpaperInfo(FLAG_SYSTEM).getServiceName()));
         });
@@ -1412,13 +1413,13 @@ public class WallpaperManagerTest {
 
             // Two independent wallpapers
             WallpaperManagerTestUtils.goToState(mWallpaperManager,
-                    TWO_DIFFERENT_LIVE_WALLPAPERS);
+                    WallpaperState.LIVE_DIFF_MULTI);
             assertWallpaperIsShown(wallpaperWindowsHelper, FLAG_SYSTEM,
                     true /* shouldBeShown */, "System wallpaper is hidden on home screen");
 
             // Shared wallpaper
             WallpaperManagerTestUtils.goToState(
-                    mWallpaperManager, TWO_SAME_LIVE_WALLPAPERS);
+                    mWallpaperManager, WallpaperState.LIVE_SAME_SINGLE);
             assertWallpaperIsShown(wallpaperWindowsHelper, FLAG_SYSTEM | FLAG_LOCK,
                     true /* shouldBeShown */, "Shared wallpaper is hidden on home screen");
         });
@@ -1443,7 +1444,7 @@ public class WallpaperManagerTest {
 
                 // Two independent wallpapers
                 WallpaperManagerTestUtils.goToState(mWallpaperManager,
-                        TWO_DIFFERENT_LIVE_WALLPAPERS);
+                        WallpaperState.LIVE_DIFF_MULTI);
                 wallpaperWindowsHelper.showLockScreenAndUpdate();
                 assertWallpaperIsShown(wallpaperWindowsHelper, FLAG_SYSTEM,
                         false /* shouldBeShown */,
@@ -1453,7 +1454,7 @@ public class WallpaperManagerTest {
 
                 // Shared wallpaper
                 WallpaperManagerTestUtils.goToState(
-                        mWallpaperManager, TWO_SAME_LIVE_WALLPAPERS);
+                        mWallpaperManager, WallpaperState.LIVE_SAME_SINGLE);
                 assertWallpaperIsShown(wallpaperWindowsHelper, FLAG_SYSTEM | FLAG_LOCK,
                         true /* shouldBeShown */, "Shared wallpaper is hidden on lock screen");
             });
@@ -1479,7 +1480,7 @@ public class WallpaperManagerTest {
                 startAndWaitActivity();
 
                 WallpaperManagerTestUtils.goToState(mWallpaperManager,
-                        TWO_SAME_LIVE_WALLPAPERS);
+                        WallpaperState.LIVE_SAME_SINGLE);
                 wallpaperWindowsHelper.showLockScreenAndUpdate();
                 assertWallpaperIsShown(wallpaperWindowsHelper, FLAG_SYSTEM | FLAG_LOCK,
                         true /* shouldBeShown */,
@@ -1508,8 +1509,8 @@ public class WallpaperManagerTest {
                 startAndWaitActivity();
 
                 boolean hasTwoWindows = mWallpaperManager.isLockscreenLiveWallpaperEnabled();
-                WallpaperState wallpaperState = hasTwoWindows ? TWO_DIFFERENT_LIVE_WALLPAPERS
-                        : LIVE_STATIC_DIFFERENT_WALLPAPERS;
+                WallpaperState wallpaperState = hasTwoWindows ? WallpaperState.LIVE_DIFF_MULTI
+                        : WallpaperState.LIVE_STATIC_MULTI;
                 WallpaperManagerTestUtils.goToState(mWallpaperManager, wallpaperState);
                 wallpaperWindowsHelper.showLockScreenAndUpdate();
                 if (hasTwoWindows) {
