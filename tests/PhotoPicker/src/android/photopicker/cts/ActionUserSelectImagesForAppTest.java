@@ -162,22 +162,23 @@ public class ActionUserSelectImagesForAppTest extends PhotoPickerBaseTest {
 
     @Test
     public void testUserSelectImagesForAppHandledByPhotopicker() throws Exception {
-        launchActivityForResult(getUserSelectImagesIntent());
-        UiAssertionUtils.assertThatShowsPickerUi();
+        Intent intent = getUserSelectImagesIntent();
+        launchActivityForResult(intent);
+        UiAssertionUtils.assertThatShowsPickerUi(intent.getType());
     }
 
     @Test
     public void testPhotosMimeTypeFilter() throws Exception {
         Intent intent = getUserSelectImagesIntent("image/*");
         launchActivityForResult(intent);
-        UiAssertionUtils.assertThatShowsPickerUi();
+        UiAssertionUtils.assertThatShowsPickerUi(intent.getType());
     }
 
     @Test
     public void testVideosMimeTypeFilter() throws Exception {
         Intent intent = getUserSelectImagesIntent("video/*");
         launchActivityForResult(intent);
-        UiAssertionUtils.assertThatShowsPickerUi();
+        UiAssertionUtils.assertThatShowsPickerUi(intent.getType());
     }
 
     @Test

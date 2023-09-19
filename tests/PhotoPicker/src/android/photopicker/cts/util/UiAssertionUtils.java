@@ -30,7 +30,7 @@ public class UiAssertionUtils {
     /**
      * Verifies PhotoPicker UI is shown.
      */
-    public static void assertThatShowsPickerUi() {
+    public static void assertThatShowsPickerUi(String mimeTypeFilter) {
         // Assert that Bottom Sheet is shown
         // Add a short timeout wait for PhotoPicker to show
         assertThat(new UiObject(new UiSelector().resourceIdMatches(
@@ -42,8 +42,15 @@ public class UiAssertionUtils {
                 PhotoPickerUiUtils.REGEX_PACKAGE_NAME + ":id/privacy_text"))
                 .exists()).isTrue();
 
+        boolean hasVideoMimeTypeFilter = (mimeTypeFilter != null)
+                && mimeTypeFilter.toLowerCase().contains("video/");
+
         // Assert that "Photos" and "Albums" headers are shown.
-        assertThat(new UiObject(new UiSelector().text("Photos")).exists()).isTrue();
+        if (hasVideoMimeTypeFilter) {
+            assertThat(new UiObject(new UiSelector().text("Videos")).exists()).isTrue();
+        } else {
+            assertThat(new UiObject(new UiSelector().text("Photos")).exists()).isTrue();
+        }
         assertThat(new UiObject(new UiSelector().text("Albums")).exists()).isTrue();
     }
 }

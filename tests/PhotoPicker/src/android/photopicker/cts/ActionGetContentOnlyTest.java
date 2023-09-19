@@ -178,7 +178,7 @@ public class ActionGetContentOnlyTest extends PhotoPickerBaseTest {
         mActivity.startActivityForResult(Intent.createChooser(intent, TAG), REQUEST_CODE);
 
         // Should open Picker
-        UiAssertionUtils.assertThatShowsPickerUi();
+        UiAssertionUtils.assertThatShowsPickerUi(intent.getType());
     }
 
     @Test
@@ -200,7 +200,7 @@ public class ActionGetContentOnlyTest extends PhotoPickerBaseTest {
         findAndClickMediaIcon();
 
         // Should open Picker
-        UiAssertionUtils.assertThatShowsPickerUi();
+        UiAssertionUtils.assertThatShowsPickerUi(intent.getType());
     }
 
     private void findAndClickMediaIcon() throws Exception {
