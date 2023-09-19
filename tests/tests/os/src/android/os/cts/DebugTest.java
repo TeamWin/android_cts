@@ -15,9 +15,12 @@
  */
 package android.os.cts;
 
+import static android.os.Flags.FLAG_REMOVE_APP_PROFILER_PSS_COLLECTION;
+
 import android.content.Context;
 import android.os.Debug;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.test.AndroidTestCase;
 
 import com.android.compatibility.common.util.TestThread;
@@ -211,6 +214,13 @@ public class DebugTest extends AndroidTestCase {
 
         Debug.resetAllCounts();
         Debug.dumpHprofData(dumpFile);
+    }
+
+    // This test is separate from the other Debug.get methods (e.g. Debug.getPss()) in
+    // testGetAndReset because getRss() is guarded by FLAG_REMOVE_APP_PROFILER_PSS_COLLECTION.
+    @RequiresFlagsEnabled(FLAG_REMOVE_APP_PROFILER_PSS_COLLECTION)
+    public void testGetRss() {
+        assertTrue(Debug.getRss() >= 0);
     }
 
     public void testDumpService() throws Exception {
