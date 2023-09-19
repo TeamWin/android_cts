@@ -260,7 +260,7 @@ public class ItsService extends Service implements SensorEventListener {
     private volatile BlockingQueue<Object[]> mSerializerQueue =
             new LinkedBlockingDeque<Object[]>();
 
-    private AtomicInteger mCountCallbacksRemaining = new AtomicInteger();
+    private final AtomicInteger mCountCallbacksRemaining = new AtomicInteger();
     private AtomicInteger mCountRawOrDng = new AtomicInteger();
     private AtomicInteger mCountRaw10 = new AtomicInteger();
     private AtomicInteger mCountRaw12 = new AtomicInteger();
@@ -2714,7 +2714,7 @@ public class ItsService extends Service implements SensorEventListener {
         return previewSize;
     }
 
-    private void configureAndCreateExtensionSession(
+    private Surface configureAndCreateExtensionSession(
             Surface captureSurface,
             int extension,
             CameraExtensionSession.StateCallback stateCallback) throws ItsException {
@@ -2739,6 +2739,7 @@ public class ItsService extends Service implements SensorEventListener {
         } catch (CameraAccessException e) {
             throw new ItsException("Error creating extension session: " + e);
         }
+        return previewSurface;
     }
 
     private void configureAndCreateCaptureSession(int requestTemplate, Surface recordSurface,
@@ -2991,11 +2992,6 @@ public class ItsService extends Service implements SensorEventListener {
             List<CaptureRequest.Builder> requests = ItsSerializer.deserializeRequestList(
                     mCamera, params, "captureRequests");
 
-            // optional background preview requests
-            List<CaptureRequest.Builder> backgroundRequests = ItsSerializer.deserializeRequestList(
-                    mCamera, params, "repeatRequests");
-            boolean backgroundRequest = backgroundRequests.size() > 0;
-
             int numSurfaces = 0;
             int numCaptureSurfaces = 0;
             BlockingExtensionSessionCallback sessionListener =
@@ -3013,28 +3009,42 @@ public class ItsService extends Service implements SensorEventListener {
             JSONArray jsonOutputSpecs = ItsUtils.getOutputSpecs(params);
 
             prepareImageReadersWithOutputSpecs(jsonOutputSpecs, /*inputSize*/null,
-                    /*inputFormat*/0, /*maxInputBuffers*/0, backgroundRequest);
+                    /*inputFormat*/0, /*maxInputBuffers*/0, /*backgroundRequest*/ false);
             numSurfaces = mOutputImageReaders.length;
-            numCaptureSurfaces = numSurfaces - (backgroundRequest ? 1 : 0);
+            numCaptureSurfaces = numSurfaces;
 
-            configureAndCreateExtensionSession(mOutputImageReaders[0].getSurface(), extension,
+            Surface previewSurface = configureAndCreateExtensionSession(
+                    mOutputImageReaders[0].getSurface(),
+                    extension,
                     sessionListener);
 
             mExtensionSession = sessionListener.waitAndGetSession(TIMEOUT_IDLE_MS);
 
-            for (int i = 0; i < numSurfaces; i++) {
-                ImageReader.OnImageAvailableListener readerListener;
-                if (backgroundRequest && i == numSurfaces - 1) {
-                    readerListener = createAvailableListenerDropper();
-                } else {
-                    // When image is available, decrements mCountCallbacksRemaining
-                    readerListener = createExtensionAvailableListener(mCaptureCallback);
-                }
-                mOutputImageReaders[i].setOnImageAvailableListener(readerListener,
-                        mSaveHandlers[i]);
+            CaptureRequest.Builder captureBuilder = requests.get(0);
+
+            if (params.optBoolean("waitAE", true)) {
+                // Set repeating request and wait for AE convergence.
+                Logt.i(TAG, "Waiting for AE to converge before taking extensions capture.");
+                captureBuilder.addTarget(previewSurface);
+                ImageReader.OnImageAvailableListener dropperListener =
+                        createAvailableListenerDropper();
+                mOutputImageReaders[0].setOnImageAvailableListener(dropperListener,
+                                                                   mSaveHandlers[0]);
+                mExtensionSession.setRepeatingRequest(captureBuilder.build(),
+                        new HandlerExecutor(mResultHandler),
+                        mExtAEResultListener);
+                mCountCallbacksRemaining.set(1);
+                long timeout = TIMEOUT_CALLBACK * 1000;
+                waitForCallbacks(timeout);
+                mExtensionSession.stopRepeating();
+                captureBuilder.removeTarget(previewSurface);
+                mResultThread.sleep(PIPELINE_WARMUP_TIME_MS);
             }
 
-            CaptureRequest.Builder captureBuilder = requests.get(0);
+            ImageReader.OnImageAvailableListener readerListener =
+                    createExtensionAvailableListener(mCaptureCallback);
+            mOutputImageReaders[0].setOnImageAvailableListener(readerListener,
+                    mSaveHandlers[0]);
             captureBuilder.addTarget(mOutputImageReaders[0].getSurface());
             mExtensionSession.capture(captureBuilder.build(), new HandlerExecutor(mResultHandler),
                     mExtCaptureResultListener);
@@ -3049,6 +3059,8 @@ public class ItsService extends Service implements SensorEventListener {
                 BlockingExtensionSessionCallback.SESSION_CLOSED, TIMEOUT_SESSION_CLOSE);
         } catch (android.hardware.camera2.CameraAccessException e) {
             throw new ItsException("Access error: ", e);
+        } catch (InterruptedException e) {
+            throw new ItsException("Unexpected InterruptedException: ", e);
         }
     }
 
@@ -3848,6 +3860,41 @@ public class ItsService extends Service implements SensorEventListener {
                 synchronized(mCountCallbacksRemaining) {
                     mCountCallbacksRemaining.decrementAndGet();
                     mCountCallbacksRemaining.notify();
+                }
+            } catch (ItsException e) {
+                Logt.e(TAG, "Script error: ", e);
+            } catch (Exception e) {
+                Logt.e(TAG, "Script error: ", e);
+            }
+        }
+
+        @Override
+        public void onCaptureFailed(CameraExtensionSession session, CaptureRequest request) {
+            Logt.e(TAG, "Script error: capture failed");
+        }
+    };
+
+    private final ExtensionCaptureResultListener mExtAEResultListener =
+            new ExtensionCaptureResultListener() {
+        @Override
+        public void onCaptureProcessStarted(CameraExtensionSession session,
+                CaptureRequest request) {
+        }
+
+        @Override
+        public void onCaptureResultAvailable(CameraExtensionSession session,
+                CaptureRequest request,
+                TotalCaptureResult result) {
+            try {
+                if (request == null || result == null) {
+                    throw new ItsException("Request/result is invalid");
+                }
+                if (result.get(CaptureResult.CONTROL_AE_STATE) ==
+                    CaptureResult.CONTROL_AE_STATE_CONVERGED) {
+                    synchronized(mCountCallbacksRemaining) {
+                        mCountCallbacksRemaining.decrementAndGet();
+                        mCountCallbacksRemaining.notify();
+                    }
                 }
             } catch (ItsException e) {
                 Logt.e(TAG, "Script error: ", e);
