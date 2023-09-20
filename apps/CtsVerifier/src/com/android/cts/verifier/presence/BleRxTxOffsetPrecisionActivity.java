@@ -140,6 +140,7 @@ public class BleRxTxOffsetPrecisionActivity extends PassFailButtons.Activity {
         }
         mStartTestButton.setEnabled(false);
         mStopTestButton.setEnabled(true);
+        mDutTestInfoTextView.setVisibility(View.GONE);
         mCurrentReferenceDeviceId = Byte.parseByte(mReferenceDeviceIdInput.getText().toString());
         mIsReferenceDeviceCheckbox.setEnabled(false);
         startAdvertising();
@@ -182,6 +183,7 @@ public class BleRxTxOffsetPrecisionActivity extends PassFailButtons.Activity {
         if (!checkBluetoothEnabled()) {
             return;
         }
+        mRefTestInfoTextView.setVisibility(View.GONE);
         startAdvertising();
         mBleScanner.startScanning((uuids,
                 macAddress,
@@ -252,9 +254,7 @@ public class BleRxTxOffsetPrecisionActivity extends PassFailButtons.Activity {
         mStartTestButton.setEnabled(true);
         mIsReferenceDeviceCheckbox.setEnabled(true);
         mCurrentReferenceDeviceId = 0;
-        mRefTestInfoTextView.setVisibility(View.GONE);
         mDeviceFoundTextView.setVisibility(View.GONE);
-        mDutTestInfoTextView.setVisibility(View.GONE);
     }
 
     private void startAdvertising() {
