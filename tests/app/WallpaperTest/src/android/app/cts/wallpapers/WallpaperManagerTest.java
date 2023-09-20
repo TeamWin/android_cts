@@ -25,6 +25,7 @@ import static android.app.cts.wallpapers.WallpaperManagerTestUtils.runAndAwaitCh
 import static android.app.cts.wallpapers.util.WallpaperTestUtils.isSimilar;
 import static android.content.pm.PackageManager.FEATURE_LIVE_WALLPAPER;
 import static android.content.pm.PackageManager.FEATURE_SECURE_LOCK_SCREEN;
+import static android.content.pm.PackageManager.FEATURE_WATCH;
 import static android.opengl.cts.Egl14Utils.getMaxTextureSize;
 
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
@@ -1434,6 +1435,9 @@ public class WallpaperManagerTest {
      */
     @Test
     public void testSystemAndLockWallpaperVisibility_onLockScreen() throws Exception {
+        // TODO(b/296508731): This test fails and causes flakes in other tests if run on Wear.
+        assumeFalse(mContext.getPackageManager().hasSystemFeature(FEATURE_WATCH));
+
         assumeTrue(mWallpaperManager.isLockscreenLiveWallpaperEnabled());
         assumeTrue("Test requires FEATURE_SECURE_LOCK_SCREEN",
                 mContext.getPackageManager().hasSystemFeature(FEATURE_SECURE_LOCK_SCREEN));
@@ -1469,6 +1473,9 @@ public class WallpaperManagerTest {
      */
     @Test
     public void testSharedWallpaperVisibilityBehindActivity_onLockScreen() throws Exception {
+        // TODO(b/296508731): This test fails and causes flakes in other tests if run on Wear.
+        assumeFalse(mContext.getPackageManager().hasSystemFeature(FEATURE_WATCH));
+
         assumeTrue("Test requires FEATURE_SECURE_LOCK_SCREEN",
                 mContext.getPackageManager().hasSystemFeature(FEATURE_SECURE_LOCK_SCREEN));
         assumeTrue("Test requires FEATURE_LIVE_WALLPAPER",
@@ -1498,6 +1505,9 @@ public class WallpaperManagerTest {
      */
     @Test
     public void testIndependentWallpaperVisibilityBehindActivity_onLockScreen() throws Exception {
+        // TODO(b/296508731): This test fails and causes flakes in other tests if run on Wear.
+        assumeFalse(mContext.getPackageManager().hasSystemFeature(FEATURE_WATCH));
+
         assumeTrue("Test requires FEATURE_SECURE_LOCK_SCREEN",
                 mContext.getPackageManager().hasSystemFeature(FEATURE_SECURE_LOCK_SCREEN));
         assumeTrue("Test requires FEATURE_LIVE_WALLPAPER",
