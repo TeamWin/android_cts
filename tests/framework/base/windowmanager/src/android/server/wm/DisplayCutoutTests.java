@@ -181,8 +181,9 @@ public class DisplayCutoutTests {
     public void setUp() throws Exception {
         final Context context = getInstrumentation().getContext();
         mMaximumSizeForNoLetterbox =
-                (context.getResources().getConfiguration().densityDpi / DENSITY_DEFAULT)
-                        * MAXIMUM_SIZE_FOR_NO_LETTERBOX_IF_DEFAULT_OR_SHORT_EDGE_DP;
+                (int) ((context.getResources().getConfiguration().densityDpi
+                        / (float) DENSITY_DEFAULT)
+                        * MAXIMUM_SIZE_FOR_NO_LETTERBOX_IF_DEFAULT_OR_SHORT_EDGE_DP);
     }
 
     @Test
