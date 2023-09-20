@@ -142,8 +142,6 @@ import android.server.wm.settings.SettingsSession;
 import android.util.Log;
 import android.util.Size;
 
-import androidx.test.filters.FlakyTest;
-
 import com.android.compatibility.common.util.AppOpsUtils;
 import com.android.compatibility.common.util.SystemUtil;
 
@@ -300,7 +298,6 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         assertPinnedStackActivityIsInDisplayBounds(PIP_ACTIVITY);
     }
 
-    @FlakyTest(bugId = 300046278)
     @Test
     public void testEnterPipToOtherOrientation() {
         assumeTrue("Skipping test: no orientation request support", supportsOrientationRequest());
