@@ -64,6 +64,7 @@ import android.net.NetworkRequest;
 import android.net.TetheringManager;
 import android.net.Uri;
 import android.net.wifi.CoexUnsafeChannel;
+import android.net.wifi.OuiKeyedData;
 import android.net.wifi.QosPolicyParams;
 import android.net.wifi.ScanResult;
 import android.net.wifi.SoftApCapability;
@@ -2727,6 +2728,11 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
                         testSoftApConfig.getAllowedAcsChannels(SoftApConfiguration.BAND_6GHZ));
                 assertEquals(currentConfig.getMaxChannelBandwidth(),
                         testSoftApConfig.getMaxChannelBandwidth());
+            }
+            if (ApiLevelUtil.codenameEquals("VanillaIceCream")
+                    || ApiLevelUtil.isAtLeast(Build.VERSION_CODES.VANILLA_ICE_CREAM)) {
+                assertTrue(Objects.equals(
+                        currentConfig.getVendorData(), testSoftApConfig.getVendorData()));
             }
         }
     }
@@ -6486,5 +6492,28 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
             testListener.clear();
             sWifiManager.removeWifiLowLatencyLockListener(testListener);
         }
+    }
+
+    /**
+     * Tests the builder and get methods for {@link OuiKeyedData}.
+     */
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.VANILLA_ICE_CREAM,
+                 codeName = "VanillaIceCream")
+    @Test
+    public void testOuiKeyedDataBuilder() throws Exception {
+        int oui = 0x00112233;
+        WifiSsid parcelable =
+                WifiSsid.fromBytes("TEST_SSID_1".getBytes(StandardCharsets.UTF_8));
+
+        assertThrows("Zero OUI should trigger an exception", IllegalArgumentException.class,
+                () -> new OuiKeyedData.Builder(0, parcelable).build());
+        assertThrows(">24-bit OUI should trigger an exception", IllegalArgumentException.class,
+                () -> new OuiKeyedData.Builder(0x11223344, parcelable).build());
+        assertThrows("Null data should trigger an exception", IllegalArgumentException.class,
+                () -> new OuiKeyedData.Builder(oui, null).build());
+
+        OuiKeyedData ouiKeyedData = new OuiKeyedData.Builder(oui, parcelable).build();
+        assertEquals(oui, ouiKeyedData.getOui());
+        assertTrue(parcelable.equals(ouiKeyedData.getData()));
     }
 }
