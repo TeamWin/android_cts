@@ -24,6 +24,7 @@ android_test {
         "ctstestrunner-axt",
         "androidx.test.core",
         "androidx.test.rules",
+        "TelecomTestAppUtilsLib",
     ],
     libs: [
         "android.test.base",
@@ -39,6 +40,13 @@ android_test {
     test_suites: [
         "cts",
         "general-tests",
+    ],
+    data: [
+        ":ManagedConnectionServiceApp",
+        ":TransactionalVoipAppMain",
+        ":TransactionalVoipAppClone",
+        ":ConnectionServiceVoipAppMain",
+        ":ConnectionServiceVoipAppClone",
     ],
     per_testcase_directory: true,
 }

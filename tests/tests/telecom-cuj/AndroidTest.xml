@@ -25,8 +25,12 @@
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
         <option name="cleanup-apks" value="true" />
         <option name="test-file-name" value="CtsTelecomCujTestCases.apk" />
+        <option name="test-file-name" value="./telecom-apps/ManagedConnectionServiceApp.apk" />
+        <option name="test-file-name" value="./telecom-apps/TransactionalVoipAppMain.apk" />
+        <option name="test-file-name" value="./telecom-apps/TransactionalVoipAppClone.apk" />
+        <option name="test-file-name" value="./telecom-apps/ConnectionServiceVoipAppMain.apk" />
+        <option name="test-file-name" value="./telecom-apps/ConnectionServiceVoipAppClone.apk" />
     </target_preparer>
-
     <!-- Enabling change id ALLOW_TEST_API_ACCESS allows that package to access @TestApi methods -->
     <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
         <option name="run-command" value="am compat enable ALLOW_TEST_API_ACCESS android.telecom.cts.cuj" />
