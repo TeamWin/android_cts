@@ -41,7 +41,7 @@ import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.MostImportantCoexistenceTest;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnDeviceOwnerUser;
-import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnUnaffiliatedProfileOwnerSecondaryUser;
+import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnUnaffiliatedProfileOwnerAdditionalUser;
 import com.android.bedstead.harrier.policies.AffiliatedProfileOwnerOnlyUserRestrictions;
 import com.android.bedstead.harrier.policies.UserRestrictions;
 import com.android.bedstead.nene.TestApis;
@@ -179,7 +179,7 @@ public final class UserRestrictionsTest {
 
     @Test
     @IncludeRunOnDeviceOwnerUser
-    @IncludeRunOnUnaffiliatedProfileOwnerSecondaryUser
+    @IncludeRunOnUnaffiliatedProfileOwnerAdditionalUser
     @Postsubmit(reason = "new test")
     public void getUserRestrictions_allDefaultUserRestrictions_returnFalse(
             @AllUserRestrictions String restriction) {

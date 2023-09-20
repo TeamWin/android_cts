@@ -309,6 +309,30 @@ public final class DevicePolicy {
                 .getSystemService(DevicePolicyManager.class);
     }
 
+    /**
+     * Return true if the given administrator component is currently active (enabled) in the system.
+     * @param component the administrator component to check.
+     * @return true if the admin is enabled in the system.
+     */
+    @Experimental
+    public boolean isAdminActive(ComponentReference component) {
+            return isAdminActive(component, TestApis.users().instrumented());
+    }
+
+    /**
+     * Return true if the given administrator component is currently active (enabled) in the system.
+     * @param component the administrator component to check.
+     * @param user the user
+     * @return true if the admin is enabled in the system.
+     */
+    @Experimental
+    public boolean isAdminActive(ComponentReference component, UserReference user) {
+        try (PermissionContext p = TestApis.permissions().withPermission(
+                             CommonPermissions.INTERACT_ACROSS_USERS)) {
+            return devicePolicyManager(user).isAdminActive(component.componentName());
+        }
+    }
+
     private DeviceOwner setDeviceOwnerPreU(ComponentName deviceOwnerComponent) {
         UserReference user = TestApis.users().system();
 

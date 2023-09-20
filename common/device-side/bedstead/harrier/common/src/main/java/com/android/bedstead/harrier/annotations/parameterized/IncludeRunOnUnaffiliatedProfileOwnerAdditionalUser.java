@@ -16,10 +16,8 @@
 
 package com.android.bedstead.harrier.annotations.parameterized;
 
-import static com.android.bedstead.harrier.annotations.AnnotationPriorityRunPrecedence.EARLY;
-
 import com.android.bedstead.harrier.annotations.AnnotationPriorityRunPrecedence;
-import com.android.bedstead.harrier.annotations.RequireRunOnSecondaryUser;
+import com.android.bedstead.harrier.annotations.RequireRunOnAdditionalUser;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDeviceOwner;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDelegate;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasProfileOwner;
@@ -37,12 +35,12 @@ import java.lang.annotation.Target;
 @Target({ElementType.METHOD, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @ParameterizedAnnotation
-@RequireRunOnSecondaryUser
+@RequireRunOnAdditionalUser
 @EnsureHasDeviceOwner(affiliationIds = "affiliated", key = "dpc")
 @EnsureHasProfileOwner(affiliationIds = "not-affiliated", isPrimary = true, key = "dpc")
 @EnsureHasNoDelegate
-public @interface IncludeRunOnUnaffiliatedProfileOwnerSecondaryUser {
-     /**
+public @interface IncludeRunOnUnaffiliatedProfileOwnerAdditionalUser {
+    /**
      * Priority sets the order that annotations will be resolved.
      *
      * <p>Annotations with a lower priority will be resolved before annotations with a higher
@@ -53,5 +51,5 @@ public @interface IncludeRunOnUnaffiliatedProfileOwnerSecondaryUser {
      *
      * <p>Priority can be set to a {@link AnnotationPriorityRunPrecedence} constant, or to any {@link int}.
      */
-    int priority() default EARLY;
+    int priority() default AnnotationPriorityRunPrecedence.EARLY;
 }
