@@ -75,7 +75,6 @@ import android.car.hardware.property.VehicleTurnSignal;
 import android.car.hardware.property.VehicleVendorPermission;
 import android.car.hardware.property.WindshieldWipersState;
 import android.car.hardware.property.WindshieldWipersSwitch;
-import android.car.test.ApiCheckerRule.Builder;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.RequiresDevice;
@@ -989,16 +988,6 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                             .isEmpty();
                 },
                 requiredPermissions);
-    }
-
-    // TODO(b/242350638): remove once all tests are annotated
-    // Also, while fixing those, make sure the proper versions were set in the ApiRequirements
-    // annotations added to @CddTests
-    // Finally, make these changes on a child bug of 242350638
-    @Override
-    protected void configApiCheckerRule(Builder builder) {
-        Log.w(TAG, "Disabling API requirements check");
-        builder.disableAnnotationsCheck();
     }
 
     @Before

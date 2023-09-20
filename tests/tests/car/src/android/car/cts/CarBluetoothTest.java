@@ -23,7 +23,6 @@ import static org.junit.Assert.fail;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
-import android.car.test.ApiCheckerRule.Builder;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -303,13 +302,6 @@ public final class CarBluetoothTest extends AbstractCarTestCase {
             int profile = sRequiredBluetoothProfiles.keyAt(i);
             sRequiredBluetoothProfiles.get(profile).mConnected = false;
         }
-    }
-
-    // TODO(b/242350638): add missing annotations, remove (on child bug of 242350638)
-    @Override
-    protected void configApiCheckerRule(Builder builder) {
-        Log.w(TAG, "Disabling API requirements check");
-        builder.disableAnnotationsCheck();
     }
 
     @Before

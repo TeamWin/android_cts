@@ -28,7 +28,6 @@ import static org.junit.Assert.fail;
 
 import android.car.Car;
 import android.car.CarAppFocusManager;
-import android.car.test.ApiCheckerRule.Builder;
 import android.content.Context;
 import android.platform.test.annotations.AppModeFull;
 import android.test.suitebuilder.annotation.SmallTest;
@@ -56,13 +55,6 @@ public final class CarAppFocusManagerTest extends AbstractCarTestCase {
     private final Context mContext =
             InstrumentationRegistry.getInstrumentation().getTargetContext();
     private CarAppFocusManager mManager;
-
-    // TODO(b/242350638): add missing annotations, remove (on child bug of 242350638)
-    @Override
-    protected void configApiCheckerRule(Builder builder) {
-        Log.w(TAG, "Disabling API requirements check");
-        builder.disableAnnotationsCheck();
-    }
 
     @Before
     public void setUp() throws Exception {

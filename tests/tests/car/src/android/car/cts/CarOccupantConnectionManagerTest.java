@@ -28,7 +28,6 @@ import android.car.occupantconnection.AbstractReceiverService;
 import android.car.occupantconnection.CarOccupantConnectionManager;
 import android.car.occupantconnection.CarOccupantConnectionManager.ConnectionRequestCallback;
 import android.car.occupantconnection.Payload;
-import android.car.test.ApiCheckerRule;
 import android.car.test.mocks.JavaMockitoHelper;
 import android.content.ComponentName;
 import android.content.Context;
@@ -83,13 +82,6 @@ public final class CarOccupantConnectionManagerTest extends AbstractCarTestCase 
     private TestReceiverService.LocalBinder mBinder;
     private OccupantZoneInfo mMyZone;
     private OccupantZoneInfo mActivePeerZone;
-
-    // TODO(b/242350638): add missing annotations, remove (on child bug of 242350638)
-    @Override
-    protected void configApiCheckerRule(ApiCheckerRule.Builder builder) {
-        Log.w(TAG, "Disabling API requirements check");
-        builder.disableAnnotationsCheck();
-    }
 
     @Before
     public void setUp() {
