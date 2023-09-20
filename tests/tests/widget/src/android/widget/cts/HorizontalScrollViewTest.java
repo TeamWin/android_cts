@@ -1276,8 +1276,8 @@ public class HorizontalScrollViewTest {
             mScrollViewCustomEmpty.setVisibility(View.GONE);
             mScrollViewRegular.setVisibility(View.GONE);
             mSurfaceView.setVisibility(View.GONE);
-            // The stretch HorizontalScrollView is 90x90 pixels
-            Rect exclusionRect = new Rect(0, 0, 90, 90);
+            // The stretch HorizontalScrollView is 180x180 pixels
+            Rect exclusionRect = new Rect(0, 0, 180, 180);
             ArrayList exclusionRects = new ArrayList();
             exclusionRects.add(exclusionRect);
             mScrollViewStretch.setSystemGestureExclusionRects(exclusionRects);
