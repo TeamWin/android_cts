@@ -424,6 +424,13 @@ public class MockImeSession implements AutoCloseable {
     }
 
     /**
+     * Logs the event stream to logcat.
+     */
+    public void logEventStream() {
+        Log.i(TAG, mEventStream.dump());
+    }
+
+    /**
      * @return {@code true} until {@link #close()} gets called.
      */
     @AnyThread
