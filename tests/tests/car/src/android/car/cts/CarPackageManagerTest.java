@@ -16,6 +16,8 @@
 
 package android.car.cts;
 
+import static android.Manifest.permission.QUERY_ALL_PACKAGES;
+
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.fail;
@@ -23,10 +25,14 @@ import static org.junit.Assert.fail;
 import android.app.PendingIntent;
 import android.car.Car;
 import android.car.content.pm.CarPackageManager;
+import android.car.feature.Flags;
+import android.car.test.PermissionsCheckerRule.EnsureHasPermission;
 import android.content.ComponentName;
 import android.content.Intent;
+import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.Build;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.test.suitebuilder.annotation.SmallTest;
 
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -35,6 +41,7 @@ import androidx.test.runner.AndroidJUnit4;
 import com.android.compatibility.common.util.ApiTest;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -145,6 +152,16 @@ public final class CarPackageManagerTest extends AbstractCarTestCase {
         assertThat(mCarPm.isPendingIntentDistractionOptimized(
                 createIntent("com.android.car", ".NonDistractionOptimizedActivityForTesting")))
                         .isFalse();
+    }
+
+    @Test
+    @ApiTest(apis = {"android.car.content.pm.CarPackageManager#requiresDisplayCompat"})
+    @RequiresFlagsEnabled(Flags.FLAG_DISPLAY_COMPATIBILITY)
+    @Ignore("b/303074481") // Can't read flags when using `sdk_version: "test_current",`
+    @EnsureHasPermission({Car.PERMISSION_QUERY_DISPLAY_COMPATIBILITY, QUERY_ALL_PACKAGES})
+    public void testApplicationRequiresDisplayCompat() throws NameNotFoundException {
+        assertThat(mCarPm.requiresDisplayCompat("android.car.cts.apps.displaycompat"))
+                .isTrue();
     }
 
     private PendingIntent createIntent(String packageName, String relativeClassName) {

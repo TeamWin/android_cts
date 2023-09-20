@@ -1,4 +1,4 @@
-// Copyright (C) 2022 The Android Open Source Project
+// Copyright (C) 2023 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,9 +17,8 @@ package {
 }
 
 android_test_helper_app {
-    name: "CtsCarBuiltinSimpleApp",
+    name: "CtsCarDisplayCompatApp",
     defaults: ["cts_defaults"],
-    sdk_version: "current",
     srcs: [
         "src/**/*.java",
     ],
@@ -29,15 +28,7 @@ android_test_helper_app {
         "general-tests",
         "automotive-general-tests",
     ],
-    static_libs: [
-        "compatibility-device-util-axt",
-        "truth",
-        "ctstestrunner-axt",
-    ],
-    libs: [
-        "android.test.base",
-        "android.car-test-stubs",
-    ],
+    sdk_version: "current",
     min_sdk_version: "33", //CTS tests needs to run up to N-2 version to support mainline
     target_sdk_version: "34",
 }

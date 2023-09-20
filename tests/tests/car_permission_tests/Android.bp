@@ -21,6 +21,9 @@ package {
 android_test {
     name: "CarSecurityPermissionTest",
 
+    defaults: [
+        "car-framework-aconfig-libraries",
+    ],
     srcs: [
         "src/**/*.java",
         ":VhalTestVendorProperties",
@@ -43,7 +46,9 @@ android_test {
         "androidx.test.rules",
         "compatibility-device-util-axt",
         "mockito-target-minus-junit4",
-        "truth",
+        "truth-prebuilt",
+        "platform-test-annotations",
+        "flag-junit",
     ],
 
     platform_apis: true,

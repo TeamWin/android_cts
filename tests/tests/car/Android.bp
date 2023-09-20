@@ -18,7 +18,10 @@ package {
 
 android_test {
     name: "CtsCarTestCases",
-    defaults: ["cts_defaults"],
+    defaults: [
+        "cts_defaults",
+        "car-framework-aconfig-libraries",
+    ],
     static_libs: [
         "android.car.test.utils",
         "android.car.testapi",
@@ -31,6 +34,8 @@ android_test {
         "libprotobuf-java-lite",
         "framework-annotations-lib",
         "hamcrest-library",
+        "platform-test-annotations",
+        "flag-junit",
     ],
     libs: [
         "android.test.base",
@@ -54,4 +59,7 @@ android_test {
     target_sdk_version: "34",
     per_testcase_directory: true,
     certificate: ":cts-testkey1",
+    data: [
+        ":CtsCarDisplayCompatApp",
+    ],
 }
