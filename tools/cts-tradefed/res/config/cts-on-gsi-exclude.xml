@@ -150,4 +150,9 @@
     <option name="compatibility:exclude-filter" value="CtsSecurityTestCases android.security.cts.CertificateTest#testNoAddedCertificates" />
     <option name="compatibility:exclude-filter" value="CtsSecurityTestCases android.security.cts.CertificateTest#testNoRemovedCertificates" />
 
+    <!-- b/212223944 -->
+    <option name="compatibility:exclude-filter" value="CtsViewTestCases android.view.cts.ASurfaceControlTest#testSurfaceTransaction_setDesiredPresentTime_30ms" />
+    <option name="compatibility:exclude-filter" value="CtsViewTestCases android.view.cts.ASurfaceControlTest#testSurfaceTransaction_setDesiredPresentTime_100ms" />
+
+
 </configuration>
