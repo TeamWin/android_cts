@@ -18,6 +18,7 @@
                 xmlns:tools="http://schemas.android.com/tools"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
+                android:keepScreenOn="true"
                 android:orientation="vertical"
                 style="@style/RootLayoutPadding"
                 tools:ignore="Autofill">
@@ -48,6 +49,12 @@
                 android:orientation="vertical"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
+
+                <CheckBox
+                    android:id="@+id/is_manual_pass"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/is_manual_pass_text"/>
 
                 <TextView
                     android:id="@+id/test_distance_radio_group_description"

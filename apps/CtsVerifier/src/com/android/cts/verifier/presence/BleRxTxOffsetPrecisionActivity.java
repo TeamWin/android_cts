@@ -74,6 +74,8 @@ public class BleRxTxOffsetPrecisionActivity extends PassFailButtons.Activity {
     private EditText mReferenceDeviceIdInput;
     private String mReferenceDeviceName;
     private CheckBox mIsReferenceDeviceCheckbox;
+    private CheckBox mIsManualPassCheckbox;
+    private boolean mIsManualPass;
     private byte mCurrentReferenceDeviceId = 0;
     private byte mRssiMedianFromReferenceDevice = 0;
     private int mRssiMedianOnDut = 0;
@@ -93,6 +95,7 @@ public class BleRxTxOffsetPrecisionActivity extends PassFailButtons.Activity {
         mDeviceFoundTextView = findViewById(R.id.device_found_info);
         mReferenceDeviceIdInput = findViewById(R.id.ref_device_id_input);
         mIsReferenceDeviceCheckbox = findViewById(R.id.is_reference_device);
+        mIsManualPassCheckbox = findViewById(R.id.is_manual_pass);
         mDutModeLayout = findViewById(R.id.dut_mode_layout);
         mRefModeLayout = findViewById(R.id.ref_mode_layout);
         mDutTestInfoTextView = findViewById(R.id.dut_test_result_info);
@@ -111,10 +114,14 @@ public class BleRxTxOffsetPrecisionActivity extends PassFailButtons.Activity {
         mRefTestInfoTextView.setVisibility(View.GONE);
         mDutTestInfoTextView.setVisibility(View.GONE);
         isReferenceDevice = mIsReferenceDeviceCheckbox.isChecked();
+        mIsManualPass = mIsManualPassCheckbox.isChecked();
         checkUiMode();
         mIsReferenceDeviceCheckbox.setOnCheckedChangeListener((buttonView, isChecked) -> {
             isReferenceDevice = isChecked;
             checkUiMode();
+        });
+        mIsManualPassCheckbox.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            mIsManualPass = isChecked;
         });
         mStartTestButton.setOnClickListener(v -> startTestAsDut());
         mStopTestButton.setOnClickListener(v -> stopTest());
@@ -236,7 +243,11 @@ public class BleRxTxOffsetPrecisionActivity extends PassFailButtons.Activity {
                 && mRssiMedianFromReferenceDevice <= MAX_RSSI_MEDIAN_DBM) {
             makeToast("Test passed! TX Rssi median is: " + rssiMedian + ". Rx Rssi median is: "
                     + mRssiMedianFromReferenceDevice);
-            getPassButton().performClick();
+            if (mIsManualPass) {
+                getPassButton().setEnabled(true);
+            } else {
+                getPassButton().performClick();
+            }
         } else {
             makeToast("Test failed! TX Rssi median is: " + rssiMedian + ". Rx Rssi median is: "
                     + mRssiMedianFromReferenceDevice);
