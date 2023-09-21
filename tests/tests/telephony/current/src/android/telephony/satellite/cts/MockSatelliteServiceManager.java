@@ -19,6 +19,7 @@ package android.telephony.satellite.cts;
 
 import static android.app.ActivityManager.RunningAppProcessInfo.IMPORTANCE_GONE;
 
+import android.annotation.ArrayRes;
 import android.annotation.NonNull;
 import android.annotation.Nullable;
 import android.app.ActivityManager;
@@ -30,6 +31,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
+import android.content.res.Resources;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.telephony.Rlog;
@@ -1015,12 +1017,20 @@ class MockSatelliteServiceManager {
         }
     }
 
-    @Nullable List<String> getPlmnList() {
+    @Nullable List<String> getCarrierPlmnList() {
         if (mSatelliteService == null) {
-            loge("getPlmnList: mSatelliteService is null");
+            loge("getCarrierPlmnList: mSatelliteService is null");
             return null;
         }
-        return mSatelliteService.getPlmnList();
+        return mSatelliteService.getCarrierPlmnList();
+    }
+
+    @Nullable List<String> getAllSatellitePlmnList() {
+        if (mSatelliteService == null) {
+            loge("getAllSatellitePlmnList: mSatelliteService is null");
+            return null;
+        }
+        return mSatelliteService.getAllSatellitePlmnList();
     }
 
     @Nullable Boolean getIsSatelliteEnabledForCarrier() {
@@ -1037,6 +1047,25 @@ class MockSatelliteServiceManager {
             return;
         }
         mSatelliteService.clearSatelliteEnabledForCarrier();
+    }
+
+    @NonNull List<String> getPlmnListFromOverlayConfig() {
+        String[] plmnArr = readStringArrayFromOverlayConfig(
+                R.array.config_satellite_providers);
+        return Arrays.stream(plmnArr).toList();
+    }
+
+    @NonNull private String[] readStringArrayFromOverlayConfig(@ArrayRes int id) {
+        String[] strArray = null;
+        try {
+            strArray = mInstrumentation.getContext().getResources().getStringArray(id);
+        } catch (Resources.NotFoundException ex) {
+            loge("readStringArrayFromOverlayConfig: id= " + id + ", ex=" + ex);
+        }
+        if (strArray == null) {
+            strArray = new String[0];
+        }
+        return strArray;
     }
 
     private boolean setupLocalSatelliteService() {

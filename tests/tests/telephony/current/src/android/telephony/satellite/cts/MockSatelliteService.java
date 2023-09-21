@@ -98,7 +98,8 @@ public class MockSatelliteService extends SatelliteImplBase {
     private Object mSendDatagramWithDelayLock = new Object();
     private static final long TIMEOUT = 1000;
     private final AtomicBoolean mShouldRespondTelephony = new AtomicBoolean(true);
-    private List<String> mPlmnList;
+    @Nullable private List<String> mCarrierPlmnList;
+    @Nullable private List<String> mAllSatellitePlmnList;
     private boolean mIsSatelliteEnabledForCarrier;
 
     private int[] mSupportedRadioTechnologies;
@@ -485,7 +486,9 @@ public class MockSatelliteService extends SatelliteImplBase {
     }
 
     @Override
-    public void setSatellitePlmn(@NonNull int simLogicalSlotIndex, @NonNull List<String> plmnList,
+    public void setSatellitePlmn(@NonNull int simLogicalSlotIndex,
+            @NonNull List<String> carrierPlmnList,
+            @NonNull List<String> allSatellitePlmnList,
             @NonNull IIntegerConsumer errorCallback) {
         logd("setSatellitePlmn: mErrorCode=" + mErrorCode);
         if (mErrorCode != SatelliteResult.SATELLITE_RESULT_SUCCESS) {
@@ -498,7 +501,8 @@ public class MockSatelliteService extends SatelliteImplBase {
             runWithExecutor(() -> errorCallback.accept(SatelliteResult.SATELLITE_RESULT_SUCCESS));
         }
 
-        mPlmnList = plmnList;
+        mCarrierPlmnList = carrierPlmnList;
+        mAllSatellitePlmnList = allSatellitePlmnList;
 
         if (mLocalListener != null) {
             runWithExecutor(() -> mLocalListener.onSetSatellitePlmn());
@@ -630,9 +634,20 @@ public class MockSatelliteService extends SatelliteImplBase {
         }
     }
 
-    public List<String> getPlmnList() {
-        logd("getPlmnList");
-        return mPlmnList;
+    /**
+     * Get the configured PLMN list supported by carrier.
+     */
+    public List<String> getCarrierPlmnList() {
+        logd("getCarrierPlmnList");
+        return mCarrierPlmnList;
+    }
+
+    /**
+     * Get the configured all satellite PLMN list.
+     */
+    public List<String> getAllSatellitePlmnList() {
+        logd("getAllSatellitePlmnList");
+        return mAllSatellitePlmnList;
     }
 
     public boolean getIsSatelliteEnabledForCarrier() {
