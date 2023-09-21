@@ -28,6 +28,9 @@ import android.content.Context;
 import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.telecom.Call;
 import android.telecom.PhoneAccount;
 import android.telecom.TelecomManager;
@@ -51,11 +54,13 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.ShellIdentityUtils;
+import com.android.internal.telephony.flags.Flags;
 
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -93,6 +98,10 @@ public class ImsCallingTest extends ImsCallingBase {
     static {
         initializeLatches();
     }
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule =
+            DeviceFlagsValueProvider.createCheckFlagsRule();
 
     @BeforeClass
     public static void beforeAllTests() throws Exception {
@@ -996,6 +1005,7 @@ public class ImsCallingTest extends ImsCallingBase {
         waitForUnboundService();
     }
 
+    @RequiresFlagsEnabled(Flags.FLAG_CONFERENCE_HOLD_UNHOLD_CHANGED_TO_SEND_MESSAGE)
     @Test
     public void testCallJoinExistingConferenceCallAfterCallSwap() throws Exception {
         if (!ImsUtils.shouldTestImsCall()) {
@@ -1046,6 +1056,7 @@ public class ImsCallingTest extends ImsCallingBase {
         waitForUnboundService();
     }
 
+    @RequiresFlagsEnabled(Flags.FLAG_CONFERENCE_HOLD_UNHOLD_CHANGED_TO_SEND_MESSAGE)
     @Test
     public void testCallJoinExistingConferenceCallAfterCallSwapFail() throws Exception {
         if (!ImsUtils.shouldTestImsCall()) {
