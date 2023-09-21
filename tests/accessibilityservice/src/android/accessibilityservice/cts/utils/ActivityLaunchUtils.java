@@ -320,6 +320,7 @@ public class ActivityLaunchUtils {
             throw new TimeoutException(timeout.getMessage() + "\n\nTimeout exception records : \n"
                     + timeoutExceptionRecords);
         }
+        instrumentation.waitForIdleSync();
         return (T) mTempActivity;
     }
 
