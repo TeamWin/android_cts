@@ -32,6 +32,7 @@ import android.test.AndroidTestCase;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.uiautomator.By;
 import androidx.test.uiautomator.Direction;
+import androidx.test.uiautomator.StaleObjectException;
 import androidx.test.uiautomator.UiDevice;
 import androidx.test.uiautomator.UiObject2;
 import androidx.test.uiautomator.Until;
@@ -148,14 +149,23 @@ public class ScanningSettingsTest extends AndroidTestCase {
             throws PackageManager.NameNotFoundException {
         final Resources res = mPackageManager.getResourcesForApplication(SETTINGS_PACKAGE);
         int resId = res.getIdentifier(name, "string", SETTINGS_PACKAGE);
-        UiObject2 pref;
-        // Scroll to preference if the UI is scrollable
-        UiObject2 scrollable = mDevice.findObject(By.scrollable(true));
-        if (scrollable == null) {
-            pref = mDevice.findObject(By.text(res.getString(resId)));
-        } else {
-            pref = scrollable.scrollUntil(
-                Direction.DOWN, Until.findObject(By.text(res.getString(resId))));
+        UiObject2 pref = mDevice.findObject(By.text(res.getString(resId)));
+        while (pref == null) {
+            // Scroll to preference if the UI is scrollable
+            UiObject2 scrollable = mDevice.findObject(By.scrollable(true));
+            if (scrollable != null) {
+                try {
+                    pref =
+                            scrollable.scrollUntil(
+                                    Direction.DOWN,
+                                    Until.findObject(By.text(res.getString(resId))));
+                } catch (StaleObjectException exception) {
+                    // Ignore
+                }
+            }
+            if (pref == null) {
+                pref = mDevice.findObject(By.text(res.getString(resId)));
+            }
         }
 
         // Click the preference to show the Scanning fragment
