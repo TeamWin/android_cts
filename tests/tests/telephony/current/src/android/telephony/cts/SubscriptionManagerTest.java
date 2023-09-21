@@ -73,6 +73,7 @@ import com.android.compatibility.common.util.PropertyUtil;
 import com.android.compatibility.common.util.ShellIdentityUtils;
 import com.android.compatibility.common.util.SystemUtil;
 import com.android.compatibility.common.util.TestThread;
+import com.android.internal.telephony.flags.Flags;
 import com.android.internal.util.ArrayUtils;
 
 import org.junit.After;
@@ -101,7 +102,6 @@ import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-
 
 public class SubscriptionManagerTest {
     private static final String TAG = "SubscriptionManagerTest";
@@ -1407,6 +1407,28 @@ public class SubscriptionManagerTest {
         } finally {
             overrideCarrierConfig(null, mSubId);
         }
+    }
+
+    @Test
+    public void testIsNtn_enableFlag() throws Exception {
+        if (!Flags.oemEnabledSatelliteFlag()) {
+            return;
+        }
+
+        SubscriptionInfo info = ShellIdentityUtils.invokeMethodWithShellPermissions(mSm,
+                (sm) -> sm.getActiveSubscriptionInfo(mSubId));
+        assertThat(info.isNtn()).isNotNull();
+    }
+
+    @Test
+    public void testIsNtn_disableFlag() throws Exception {
+        if (Flags.oemEnabledSatelliteFlag()) {
+            return;
+        }
+
+        SubscriptionInfo info = ShellIdentityUtils.invokeMethodWithShellPermissions(mSm,
+                (sm) -> sm.getActiveSubscriptionInfo(mSubId));
+        assertThat(info.isNtn()).isFalse();
     }
 
     @Nullable
