@@ -37,6 +37,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
 import android.widget.CompoundButton;
+import android.widget.SearchView;
 import android.widget.Switch;
 import android.widget.Toast;
 
@@ -219,6 +220,28 @@ public class TestListActivity extends AbstractTestListActivity implements View.O
                         handleSwitchItemSelected();
                     }
                 });
+
+        SearchView searchView = (SearchView) menu.findItem(R.id.search_test).getActionView();
+        searchView.setOnQueryTextListener(
+                new SearchView.OnQueryTextListener() {
+
+                    public boolean onQueryTextSubmit(String query) {
+                        Log.i(TAG, "Got submitted query: " + query);
+                        handleQueryUpdated(query);
+                        return true;
+                    }
+
+                    public boolean onQueryTextChange(String newText) {
+                        if (newText == null || newText.isEmpty()) {
+                            Log.i(TAG, "Clear filter");
+                            handleQueryUpdated(newText);
+                            return true;
+                        } else {
+                            return false;
+                        }
+                    }
+                });
+
         return true;
     }
 
@@ -266,6 +289,17 @@ public class TestListActivity extends AbstractTestListActivity implements View.O
         }
 
         return true;
+    }
+
+    /** Triggered when a new query is input. */
+    private void handleQueryUpdated(String query) {
+        if (query != null && !query.isEmpty()) {
+            mAdapter.setTestFilter(query);
+        } else {
+            // Reset the filter as null to show all tests.
+            mAdapter.setTestFilter(/* testFilter= */ null);
+        }
+        mAdapter.loadTestResults();
     }
 
     /**
