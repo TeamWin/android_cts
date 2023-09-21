@@ -31,7 +31,7 @@ import opencv_processing_utils
 
 _NAME = os.path.splitext(os.path.basename(__file__))[0]
 _EXTENSION_NIGHT = 4  # CameraExtensionCharacteristics.EXTENSION_NIGHT
-_TABLET_BRIGHTNESS = '0'
+_TABLET_BRIGHTNESS = '12'  # Highest minimum brightness on a supported tablet
 _TAP_COORDINATES = (500, 500)  # Location to tap tablet screen via adb
 _TEST_REQUIRED_MPC = 34
 _MIN_AREA = 0.001  # Circle must be >= 0.1% of image size
