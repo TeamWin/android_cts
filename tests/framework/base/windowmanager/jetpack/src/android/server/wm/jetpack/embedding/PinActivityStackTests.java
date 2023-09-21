@@ -89,10 +89,24 @@ public class PinActivityStackTests extends ActivityEmbeddingLifecycleTestBase {
     }
 
     /**
-     * Verifies that the activity navigation are isolated after the top ActivityStack is pinned.
+     * Verifies that the activity starts in a new container and the navigation are isolated after
+     * the top ActivityStack is pinned.
      */
     @Test
-    public void testPinTopActivityStack() {
+    public void testPinTopActivityStack_createContainerForNewActivity() {
+        pinTopActivityStackAndVerifyLifecycle(true /* newPrimaryContainer */);
+    }
+
+    /**
+     * Verifies that the activity starts in the same container and the navigation are isolated
+     * after the top ActivityStack is pinned.
+     */
+    @Test
+    public void testPinTopActivityStack_reuseContainerForNewActivity() {
+        pinTopActivityStackAndVerifyLifecycle(false /* newPrimaryContainer */);
+    }
+
+    private void pinTopActivityStackAndVerifyLifecycle(boolean newPrimaryContainer) {
         // Launch a secondary activity to side
         mPinnedActivity = startActivityAndVerifySplitAttributes(mPrimaryActivity,
                 TestActivityWithId.class, mWildcardSplitPairRule,
@@ -101,6 +115,10 @@ public class PinActivityStackTests extends ActivityEmbeddingLifecycleTestBase {
         // Pin the top ActivityStack
         assertTrue(pinTopActivityStack());
         mEventLog.clear();
+
+        if (!newPrimaryContainer) {
+            mActivityEmbeddingComponent.setEmbeddingRules(Collections.emptySet());
+        }
 
         // Start an Activity from the primary ActivityStack
         final String activityId1 = "Activity1";
@@ -135,9 +153,11 @@ public class PinActivityStackTests extends ActivityEmbeddingLifecycleTestBase {
         activity2.finish();
         mPinnedActivity.finish();
 
-        // Verifies both the two activities left are split side-by-side.
         waitAndAssertResumed(activity1);
-        waitAndAssertResumed(mPrimaryActivity);
+        if (newPrimaryContainer) {
+            // Verifies primary activity is resumed due to the two activities split side-by-side.
+            waitAndAssertResumed(mPrimaryActivity);
+        }
     }
 
     /**
