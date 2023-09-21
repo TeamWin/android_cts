@@ -21,6 +21,7 @@ import static android.app.WallpaperManager.FLAG_LOCK;
 import static android.app.WallpaperManager.FLAG_SYSTEM;
 import static android.app.cts.wallpapers.WallpaperManagerTestUtils.WallpaperChange;
 import static android.app.cts.wallpapers.WallpaperManagerTestUtils.WallpaperState;
+import static android.app.cts.wallpapers.WallpaperManagerTestUtils.runAndAwaitChanges;
 import static android.app.cts.wallpapers.util.WallpaperTestUtils.isSimilar;
 import static android.content.pm.PackageManager.FEATURE_LIVE_WALLPAPER;
 import static android.content.pm.PackageManager.FEATURE_SECURE_LOCK_SCREEN;
@@ -749,7 +750,9 @@ public class WallpaperManagerTest {
                     int expectedCount = e.getValue();
                     WallpaperManagerTestUtils.goToState(mWallpaperManager, initialState);
                     TestWallpaperService.Companion.resetCounts();
-                    mWallpaperManager.clear(which);
+                    runAndAwaitChanges(5, TimeUnit.SECONDS, 0, expectedCount, 0, () -> {
+                        mWallpaperManager.clear(which);
+                    });
                     for (int testWhich : List.of(FLAG_SYSTEM, FLAG_LOCK)) {
                         if ((testWhich & which) > 0) {
                             assertNullOrDefaultWallpaper(testWhich);
@@ -1331,7 +1334,7 @@ public class WallpaperManagerTest {
                 final int expectedDestroyCount =
                         state.expectedNumberOfLiveWallpaperDestroy(change);
 
-                WallpaperManagerTestUtils.runAndAwaitChanges(5, TimeUnit.SECONDS,
+                runAndAwaitChanges(5, TimeUnit.SECONDS,
                         expectedCreateCount, expectedDestroyCount, 0, () -> {
                             WallpaperManagerTestUtils.performChange(mWallpaperManager, change);
                         });
@@ -1663,7 +1666,7 @@ public class WallpaperManagerTest {
     public void testAlwaysUpdateWallpaperPermission_allowOutOfFocusWallpaperCommand() {
         TestLiveWallpaper.Companion.resetPrevAction();
 
-        WallpaperManagerTestUtils.runAndAwaitChanges(5, TimeUnit.SECONDS, 1, 0, 1, () -> {
+        runAndAwaitChanges(5, TimeUnit.SECONDS, 1, 0, 1, () -> {
             runWithShellPermissionIdentity(
                     () -> mWallpaperManager.setWallpaperComponent(TEST_COMPONENT_NAME),
                     android.Manifest.permission.SET_WALLPAPER_COMPONENT);
@@ -1867,7 +1870,7 @@ public class WallpaperManagerTest {
 
     private void setWallpaperComponentAndWait(ComponentName component, int which, int created,
             int destroyed) {
-        WallpaperManagerTestUtils.runAndAwaitChanges(
+        runAndAwaitChanges(
                 SLEEP_MS, TimeUnit.MILLISECONDS, created, destroyed, 0,
                 () -> mWallpaperManager.setWallpaperComponentWithFlags(component, which));
     }
