@@ -21,6 +21,7 @@ import static android.Manifest.permission.ADD_TRUSTED_DISPLAY;
 import static android.Manifest.permission.CREATE_VIRTUAL_DEVICE;
 import static android.Manifest.permission.WAKE_LOCK;
 import static android.virtualdevice.cts.common.util.VirtualDeviceTestUtils.createDefaultVirtualDisplayConfigBuilder;
+import static android.virtualdevice.cts.common.util.VirtualDeviceTestUtils.isVirtualDeviceManagerConfigEnabled;
 
 import static androidx.test.core.app.ApplicationProvider.getApplicationContext;
 
@@ -36,7 +37,6 @@ import android.companion.virtual.VirtualDeviceManager.VirtualDevice;
 import android.companion.virtual.VirtualDeviceParams;
 import android.content.Context;
 import android.content.pm.PackageManager;
-import android.content.res.Resources;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
 import android.hardware.display.VirtualDisplayConfig;
@@ -104,11 +104,7 @@ public class VirtualDisplayTest {
         MockitoAnnotations.initMocks(this);
         Context context = getApplicationContext();
         final PackageManager packageManager = context.getPackageManager();
-        assumeTrue(context.getResources().getBoolean(
-                Resources.getSystem().getIdentifier(
-                        "config_enableVirtualDeviceManager",
-                        "bool",
-                        "android")));
+        assumeTrue(isVirtualDeviceManagerConfigEnabled(context));
         assumeTrue(packageManager.hasSystemFeature(
                 PackageManager.FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS));
         mVirtualDeviceManager = context.getSystemService(VirtualDeviceManager.class);
