@@ -171,7 +171,11 @@ public class PackageInstallerArchiveTest {
         ApplicationInfo applicationInfo = mPackageManager.getPackageInfo(PACKAGE_NAME,
                 PackageInfoFlags.of(MATCH_ARCHIVED_PACKAGES)).applicationInfo;
         Drawable actualIcon = mPackageManager.getApplicationIcon(applicationInfo);
-        assertThat(drawableToBitmap(actualIcon).sameAs(drawableToBitmap(expectedIcon))).isTrue();
+        Bitmap actualBitmap = drawableToBitmap(actualIcon);
+        Bitmap expectedBitmap = drawableToBitmap(expectedIcon);
+        assertThat(actualBitmap.sameAs(expectedBitmap)).isTrue();
+
+        recycleBitmaps(expectedIcon, actualIcon, actualBitmap, expectedBitmap);
     }
 
     @Test
@@ -350,6 +354,18 @@ public class PackageInstallerArchiveTest {
                     + mContext.getUser() + ": " + e);
         }
         return null;
+    }
+
+    private static void recycleBitmaps(Drawable expectedIcon, Drawable actualIcon,
+            Bitmap actualBitmap, Bitmap expectedBitmap) {
+        actualBitmap.recycle();
+        expectedBitmap.recycle();
+        if (expectedIcon instanceof BitmapDrawable) {
+            ((BitmapDrawable) expectedIcon).getBitmap().recycle();
+        }
+        if (actualIcon instanceof BitmapDrawable) {
+            ((BitmapDrawable) actualIcon).getBitmap().recycle();
+        }
     }
 
     private static boolean isFormFactorSupported() {
