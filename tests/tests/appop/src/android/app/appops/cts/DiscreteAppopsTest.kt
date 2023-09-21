@@ -45,6 +45,7 @@ import android.platform.test.annotations.AppModeFull
 import android.provider.DeviceConfig
 import android.provider.DeviceConfig.NAMESPACE_PRIVACY
 import android.provider.Settings
+import android.util.Log
 import androidx.test.filters.FlakyTest
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.UiDevice
@@ -59,6 +60,7 @@ import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
 
+private const val LOG_TAG = "DiscreteAppopsTest"
 private const val PACKAGE_NAME = "android.app.appops.cts.appfordiscretetest"
 private const val TIMEOUT_MILLIS = 45000L
 private const val DEFAULT_TIME_QUANT_MILLIS = 60000L
@@ -1127,9 +1129,14 @@ class DiscreteAppopsTest {
             // b/294950507: Make sure the UidState is also foreground to avoid the race condition
             // between AppOpsService#noteOperationUnchecked and
             // ActivityManagerService#noteUidProcessState that caused flakiness
-            if (testPkgAppOpMode == MODE_ALLOWED &&
-                activityManager.getUidProcessState(uid) < PROCESS_STATE_IMPORTANT_BACKGROUND) {
-                break
+            if (testPkgAppOpMode == MODE_ALLOWED) {
+                if (activityManager.getUidProcessState(uid) < PROCESS_STATE_IMPORTANT_BACKGROUND) {
+                    break
+                } else {
+                    Log.i(LOG_TAG, "AppOpMode is MODE_ALLOWED. However, the UidProcessState" +
+                        "is still not in foreground, waiting until the UidProcessState is in" +
+                        "foreground.")
+                }
             }
             Thread.sleep(100)
         }
