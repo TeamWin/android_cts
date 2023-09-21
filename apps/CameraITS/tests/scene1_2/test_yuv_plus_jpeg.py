@@ -98,6 +98,7 @@ class YuvPlusJpegTest(its_base_test.ItsBaseTest):
       req = capture_request_utils.auto_capture_request(
           linear_tonemap=True, props=props, do_af=False)
 
+      cam.do_3a()
       cap_yuv, cap_jpg = cam.do_capture(req, [fmt_yuv, fmt_jpg])
       rgb_means_yuv = compute_means_and_save(cap_yuv, 'yuv', log_path)
       rgb_means_jpg = compute_means_and_save(cap_jpg, 'jpg', log_path)
