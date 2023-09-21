@@ -662,6 +662,9 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
     }
 
     private void sendDatagramWithoutResponse() {
+        SatelliteTransmissionUpdateCallbackTest transmissionUpdateCallback =
+                startTransmissionUpdates();
+
         LinkedBlockingQueue<Integer> resultListener = new LinkedBlockingQueue<>(1);
         String mText = "This is a test datagram message from user";
         SatelliteDatagram datagram = new SatelliteDatagram(mText.getBytes());
@@ -679,12 +682,25 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
             return;
         }
         assertNull(errorCode);
+
+        // Expected datagram transfer state transitions: IDLE -> WAITING_FOR_CONNECTED
+        assertTrue(transmissionUpdateCallback.waitUntilOnSendDatagramStateChanged(1));
+        assertThat(transmissionUpdateCallback.getNumOfSendDatagramStateChanges()).isEqualTo(1);
+        assertThat(transmissionUpdateCallback.getSendDatagramStateChange(0)).isEqualTo(
+                new SatelliteTransmissionUpdateCallbackTest.DatagramStateChangeArgument(
+                        SatelliteManager.SATELLITE_DATAGRAM_TRANSFER_STATE_WAITING_TO_CONNECT,
+                        1, SatelliteManager.SATELLITE_RESULT_SUCCESS));
+
+        stopTransmissionUpdates(transmissionUpdateCallback);
     }
 
     private void verifyNbIotStateTransitionsWithSendingOnConnected(
             @NonNull SatelliteStateCallbackTest callback, boolean moveToIdleState) {
         assertEquals(SatelliteManager.SATELLITE_MODEM_STATE_NOT_CONNECTED, callback.modemState);
         callback.clearModemStates();
+
+        SatelliteTransmissionUpdateCallbackTest transmissionUpdateCallback =
+                startTransmissionUpdates();
 
         // Move satellite to CONNECTED state
         sMockSatelliteServiceManager.sendOnSatelliteModemStateChanged(
@@ -703,11 +719,33 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
             assertEquals(SatelliteManager.SATELLITE_MODEM_STATE_IDLE,
                     callback.getModemState(3));
         }
+
+        // Expected datagram transfer state transitions: WAITING_FOR_CONNECTED -> SENDING
+        // -> SEND_SUCCESS -> IDLE
+        assertTrue(transmissionUpdateCallback.waitUntilOnSendDatagramStateChanged(3));
+        assertThat(transmissionUpdateCallback.getNumOfSendDatagramStateChanges()).isEqualTo(3);
+        assertThat(transmissionUpdateCallback.getSendDatagramStateChange(0)).isEqualTo(
+                new SatelliteTransmissionUpdateCallbackTest.DatagramStateChangeArgument(
+                        SatelliteManager.SATELLITE_DATAGRAM_TRANSFER_STATE_SENDING,
+                        1, SatelliteManager.SATELLITE_RESULT_SUCCESS));
+        assertThat(transmissionUpdateCallback.getSendDatagramStateChange(1)).isEqualTo(
+                new SatelliteTransmissionUpdateCallbackTest.DatagramStateChangeArgument(
+                        SatelliteManager.SATELLITE_DATAGRAM_TRANSFER_STATE_SEND_SUCCESS,
+                        0, SatelliteManager.SATELLITE_RESULT_SUCCESS));
+        assertThat(transmissionUpdateCallback.getSendDatagramStateChange(2)).isEqualTo(
+                new SatelliteTransmissionUpdateCallbackTest.DatagramStateChangeArgument(
+                        SatelliteManager.SATELLITE_DATAGRAM_TRANSFER_STATE_IDLE,
+                        0, SatelliteManager.SATELLITE_RESULT_SUCCESS));
+
+        stopTransmissionUpdates(transmissionUpdateCallback);
     }
 
     private void verifyNbIotStateTransitionsWithTransferringFailureOnIdle(
             @NonNull SatelliteStateCallbackTest callback) {
         assertEquals(SatelliteManager.SATELLITE_MODEM_STATE_IDLE, callback.modemState);
+
+        SatelliteTransmissionUpdateCallbackTest transmissionUpdateCallback =
+                startTransmissionUpdates();
 
         // Test sending failure
         LinkedBlockingQueue<Integer> resultListener = new LinkedBlockingQueue<>(1);
@@ -725,6 +763,23 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
 
         assertFalse(callback.waitUntilResult(1));
         assertEquals(SatelliteManager.SATELLITE_MODEM_STATE_IDLE, callback.modemState);
+
+        // Expected datagram transfer state transitions: IDLE -> WAITING_FOR_CONNECTED -> FAILED
+        // -> IDLE.
+        assertTrue(transmissionUpdateCallback.waitUntilOnSendDatagramStateChanged(3));
+        assertThat(transmissionUpdateCallback.getNumOfSendDatagramStateChanges()).isEqualTo(3);
+        assertThat(transmissionUpdateCallback.getSendDatagramStateChange(0)).isEqualTo(
+                new SatelliteTransmissionUpdateCallbackTest.DatagramStateChangeArgument(
+                        SatelliteManager.SATELLITE_DATAGRAM_TRANSFER_STATE_WAITING_TO_CONNECT,
+                        1, SatelliteManager.SATELLITE_RESULT_SUCCESS));
+        assertThat(transmissionUpdateCallback.getSendDatagramStateChange(1)).isEqualTo(
+                new SatelliteTransmissionUpdateCallbackTest.DatagramStateChangeArgument(
+                        SatelliteManager.SATELLITE_DATAGRAM_TRANSFER_STATE_SEND_FAILED,
+                        1, SatelliteManager.SATELLITE_RESULT_NOT_REACHABLE));
+        assertThat(transmissionUpdateCallback.getSendDatagramStateChange(2)).isEqualTo(
+                new SatelliteTransmissionUpdateCallbackTest.DatagramStateChangeArgument(
+                        SatelliteManager.SATELLITE_DATAGRAM_TRANSFER_STATE_IDLE,
+                        0, SatelliteManager.SATELLITE_RESULT_SUCCESS));
 
         // Datagram wait for connected state timer should have timed out and the send request should
         // have been aborted.
@@ -751,6 +806,23 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         assertFalse(callback.waitUntilResult(1));
         assertEquals(SatelliteManager.SATELLITE_MODEM_STATE_IDLE, callback.modemState);
 
+        assertTrue(transmissionUpdateCallback
+                .waitUntilOnReceiveDatagramStateChanged(3));
+        assertThat(transmissionUpdateCallback.getNumOfReceiveDatagramStateChanges())
+                .isEqualTo(3);
+        assertThat(transmissionUpdateCallback.getReceiveDatagramStateChange(0)).isEqualTo(
+                new SatelliteTransmissionUpdateCallbackTest.DatagramStateChangeArgument(
+                        SatelliteManager.SATELLITE_DATAGRAM_TRANSFER_STATE_WAITING_TO_CONNECT,
+                        0, SatelliteManager.SATELLITE_RESULT_SUCCESS));
+        assertThat(transmissionUpdateCallback.getReceiveDatagramStateChange(1)).isEqualTo(
+                new SatelliteTransmissionUpdateCallbackTest.DatagramStateChangeArgument(
+                        SatelliteManager.SATELLITE_DATAGRAM_TRANSFER_STATE_RECEIVE_FAILED,
+                        0, SatelliteManager.SATELLITE_RESULT_NOT_REACHABLE));
+        assertThat(transmissionUpdateCallback.getReceiveDatagramStateChange(2)).isEqualTo(
+                new SatelliteTransmissionUpdateCallbackTest.DatagramStateChangeArgument(
+                        SatelliteManager.SATELLITE_DATAGRAM_TRANSFER_STATE_IDLE,
+                        0, SatelliteManager.SATELLITE_RESULT_SUCCESS));
+
         // Datagram wait for connected state timer should have timed out and the poll request should
         // have been aborted.
         try {
@@ -768,11 +840,15 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
                 SatelliteManager.SATELLITE_RESULT_SUCCESS);
         sMockSatelliteServiceManager.setSatelliteDeviceAlignedTimeoutDuration(
                 DatagramController.DATAGRAM_WAIT_FOR_CONNECTED_STATE_TIMEOUT);
+        stopTransmissionUpdates(transmissionUpdateCallback);
     }
 
     private void verifyNbIotStateTransitionsWithSendingAborted(
             @NonNull SatelliteStateCallbackTest callback) {
         assertEquals(SatelliteManager.SATELLITE_MODEM_STATE_IDLE, callback.modemState);
+
+        SatelliteTransmissionUpdateCallbackTest transmissionUpdateCallback =
+                startTransmissionUpdates();
 
         LinkedBlockingQueue<Integer> resultListener = new LinkedBlockingQueue<>(1);
         String mText = "This is a test datagram message from user";
@@ -811,13 +887,34 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         assertNotNull(errorCode);
         assertEquals(SatelliteManager.SATELLITE_RESULT_REQUEST_ABORTED, (long) errorCode);
 
+        // Expected datagram transfer state transitions: IDLE -> WAITING_FOR_CONNECTED -> FAILED
+        // -> IDLE.
+        assertTrue(transmissionUpdateCallback.waitUntilOnSendDatagramStateChanged(3));
+        assertThat(transmissionUpdateCallback.getNumOfSendDatagramStateChanges()).isEqualTo(3);
+        assertThat(transmissionUpdateCallback.getSendDatagramStateChange(0)).isEqualTo(
+                new SatelliteTransmissionUpdateCallbackTest.DatagramStateChangeArgument(
+                        SatelliteManager.SATELLITE_DATAGRAM_TRANSFER_STATE_WAITING_TO_CONNECT,
+                        1, SatelliteManager.SATELLITE_RESULT_SUCCESS));
+        assertThat(transmissionUpdateCallback.getSendDatagramStateChange(1)).isEqualTo(
+                new SatelliteTransmissionUpdateCallbackTest.DatagramStateChangeArgument(
+                        SatelliteManager.SATELLITE_DATAGRAM_TRANSFER_STATE_SEND_FAILED,
+                        1, SatelliteManager.SATELLITE_RESULT_REQUEST_ABORTED));
+        assertThat(transmissionUpdateCallback.getSendDatagramStateChange(2)).isEqualTo(
+                new SatelliteTransmissionUpdateCallbackTest.DatagramStateChangeArgument(
+                        SatelliteManager.SATELLITE_DATAGRAM_TRANSFER_STATE_IDLE,
+                        0, SatelliteManager.SATELLITE_RESULT_SUCCESS));
+
         assertTrue(callback.waitUntilResult(1));
         assertEquals(SatelliteManager.SATELLITE_MODEM_STATE_OFF, callback.modemState);
+        stopTransmissionUpdates(transmissionUpdateCallback);
     }
 
     private void verifyNbIotStateTransitionsWithReceivingOnIdle(
             @NonNull SatelliteStateCallbackTest callback, boolean moveToIdleState) {
         assertEquals(SatelliteManager.SATELLITE_MODEM_STATE_IDLE, callback.modemState);
+
+        SatelliteTransmissionUpdateCallbackTest transmissionUpdateCallback =
+                startTransmissionUpdates();
 
         // Verify state transitions: IDLE -> NOT_CONNECTED
         callback.clearModemStates();
@@ -827,9 +924,19 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         assertTrue(callback.waitUntilResult(1));
         assertEquals(1, callback.getTotalCountOfModemStates());
         assertEquals(SatelliteManager.SATELLITE_MODEM_STATE_NOT_CONNECTED, callback.modemState);
+        // Expected datagram transfer state transitions: IDLE -> WAITING_FOR_CONNECTED
+        assertTrue(transmissionUpdateCallback
+                .waitUntilOnReceiveDatagramStateChanged(1));
+        assertThat(transmissionUpdateCallback.getNumOfReceiveDatagramStateChanges())
+                .isEqualTo(1);
+        assertThat(transmissionUpdateCallback.getReceiveDatagramStateChange(0)).isEqualTo(
+                new SatelliteTransmissionUpdateCallbackTest.DatagramStateChangeArgument(
+                        SatelliteManager.SATELLITE_DATAGRAM_TRANSFER_STATE_WAITING_TO_CONNECT,
+                        0, SatelliteManager.SATELLITE_RESULT_SUCCESS));
 
         // Verify state transitions: NOT_CONNECTED -> CONNECTED -> TRANSFERRING
         callback.clearModemStates();
+        transmissionUpdateCallback.clearReceiveDatagramStateChanges();
         sMockSatelliteServiceManager.sendOnSatelliteModemStateChanged(
                 SatelliteManager.SATELLITE_MODEM_STATE_CONNECTED);
         assertTrue(callback.waitUntilResult(2));
@@ -841,16 +948,27 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         // Telephony should send the request pollPendingSatelliteDatagrams to modem
         assertTrue(sMockSatelliteServiceManager.waitForEventOnPollPendingSatelliteDatagrams(1));
 
-        verifyNbIotStateTransitionsWithDatagramReceivedOnTransferring(callback, moveToIdleState);
+        // Expected datagram transfer state transitions: WAITING_FOR_CONNECTED -> RECEIVING
+        assertTrue(transmissionUpdateCallback
+                .waitUntilOnReceiveDatagramStateChanged(1));
+        assertThat(transmissionUpdateCallback.getNumOfReceiveDatagramStateChanges())
+                .isEqualTo(1);
+        assertThat(transmissionUpdateCallback.getReceiveDatagramStateChange(0)).isEqualTo(
+                new SatelliteTransmissionUpdateCallbackTest.DatagramStateChangeArgument(
+                        SatelliteManager.SATELLITE_DATAGRAM_TRANSFER_STATE_RECEIVING,
+                        0, SatelliteManager.SATELLITE_RESULT_SUCCESS));
+
+        verifyNbIotStateTransitionsWithDatagramReceivedOnTransferring(
+                callback, moveToIdleState, transmissionUpdateCallback);
+        stopTransmissionUpdates(transmissionUpdateCallback);
     }
 
     private void verifyNbIotStateTransitionsWithDatagramReceivedOnTransferring(
-            @NonNull SatelliteStateCallbackTest callback, boolean moveToIdleState) {
+            @NonNull SatelliteStateCallbackTest callback, boolean moveToIdleState,
+            SatelliteTransmissionUpdateCallbackTest transmissionUpdateCallback) {
         assertEquals(
                 SatelliteManager.SATELLITE_MODEM_STATE_DATAGRAM_TRANSFERRING, callback.modemState);
 
-        // TODO (b/275086547): remove the below registerForSatelliteDatagram command when the bug
-        // is resolved.
         SatelliteDatagramCallbackTest satelliteDatagramCallback =
                 new SatelliteDatagramCallbackTest();
         sSatelliteManager.registerForSatelliteDatagram(
@@ -862,6 +980,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         receivedDatagram.data = receivedText.getBytes();
 
         callback.clearModemStates();
+        transmissionUpdateCallback.clearReceiveDatagramStateChanges();
         sMockSatelliteServiceManager.sendOnSatelliteDatagramReceived(receivedDatagram, 0);
 
         assertTrue(satelliteDatagramCallback.waitUntilResult(1));
@@ -877,6 +996,20 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
             assertEquals(SatelliteManager.SATELLITE_MODEM_STATE_IDLE,
                     callback.getModemState(1));
         }
+
+        // Expected datagram transfer state transitions: RECEIVING -> RECEIVE_SUCCESS -> IDLE
+        assertTrue(transmissionUpdateCallback
+                .waitUntilOnReceiveDatagramStateChanged(2));
+        assertThat(transmissionUpdateCallback.getNumOfReceiveDatagramStateChanges())
+                .isEqualTo(2);
+        assertThat(transmissionUpdateCallback.getReceiveDatagramStateChange(0)).isEqualTo(
+                new SatelliteTransmissionUpdateCallbackTest.DatagramStateChangeArgument(
+                        SatelliteManager.SATELLITE_DATAGRAM_TRANSFER_STATE_RECEIVE_SUCCESS,
+                        0, SatelliteManager.SATELLITE_RESULT_SUCCESS));
+        assertThat(transmissionUpdateCallback.getReceiveDatagramStateChange(1)).isEqualTo(
+                new SatelliteTransmissionUpdateCallbackTest.DatagramStateChangeArgument(
+                        SatelliteManager.SATELLITE_DATAGRAM_TRANSFER_STATE_IDLE,
+                        0, SatelliteManager.SATELLITE_RESULT_SUCCESS));
 
         sSatelliteManager.unregisterForSatelliteDatagram(satelliteDatagramCallback);
     }
