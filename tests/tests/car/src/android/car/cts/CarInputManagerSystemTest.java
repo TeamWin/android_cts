@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.android.car.ats;
+package android.car.cts;
 
 import static android.car.CarOccupantZoneManager.DISPLAY_TYPE_MAIN;
 
@@ -36,7 +36,7 @@ import android.os.UserManager;
 import android.support.test.uiautomator.UiDevice;
 import android.view.KeyEvent;
 
-import androidx.test.InstrumentationRegistry;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
 

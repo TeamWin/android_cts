@@ -48,8 +48,8 @@ import android.widget.FrameLayout;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.FlakyTest;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.NonApiTest;
@@ -72,9 +72,9 @@ public class CarTaskViewControllerTest {
     private static final String COUNT_OPTION = " -c ";
     private static final String POINTER_OPTION = " -p ";
 
-    private final Context mContext = InstrumentationRegistry.getContext();
     private final Instrumentation mInstrumentation =
             InstrumentationRegistry.getInstrumentation();
+    private final Context mContext = mInstrumentation.getContext();
     private final Context mTargetContext = mInstrumentation.getTargetContext();
     private final ComponentName mTestActivity =
             new ComponentName(mTargetContext, TestActivity.class);
@@ -136,10 +136,9 @@ public class CarTaskViewControllerTest {
 
     @Test
     @ApiTest(apis = {
-            "android.car.app.ControlledRemoteCarTaskViewConfig$Builder#setActivityIntent(Intent)",
-            "android.car.app.ControlledRemoteCarTaskViewCallback#onTaskAppeared(RunningTaskInfo)",
-            "android.car.app.ControlledRemoteCarTaskViewCallback#onTaskViewCreated"
-                    + "(ControlledRemoteCarTaskView)",
+            "android.car.app.ControlledRemoteCarTaskViewConfig.Builder#setActivityIntent",
+            "android.car.app.ControlledRemoteCarTaskViewCallback#onTaskAppeared",
+            "android.car.app.ControlledRemoteCarTaskViewCallback#onTaskViewCreated",
             "android.car.app.ControlledRemoteCarTaskViewCallback#onTaskViewInitialized"})
     public void createControlledRemoteCarTaskView_startsTheTask() {
         // Act

@@ -40,7 +40,7 @@ import android.os.UserHandle;
 import android.os.UserManager;
 import android.util.Log;
 
-import androidx.test.InstrumentationRegistry;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.SystemUtil;
@@ -68,7 +68,7 @@ public final class CarServiceHelperServiceUpdatableTest extends AbstractCarTestC
     }
 
     @Test
-    @ApiTest(apis = {"com.android.internal.car.CarServiceHelperService#dump(PrintWriter,String[])"})
+    @ApiTest(apis = {"com.android.internal.car.CarServiceHelperService#dump"})
     public void testCarServiceHelperServiceDump() throws Exception {
         assumeSystemServerDumpSupported();
 
@@ -79,7 +79,7 @@ public final class CarServiceHelperServiceUpdatableTest extends AbstractCarTestC
 
     @Test
     @ApiTest(apis = {
-            "com.android.internal.car.CarServiceHelperServiceUpdatable#dump(PrintWriter,String[])"
+            "com.android.internal.car.CarServiceHelperServiceUpdatable#dump"
     })
     public void testCarServiceHelperServiceDump_carServiceProxy() throws Exception {
         assumeSystemServerDumpSupported();
@@ -91,7 +91,7 @@ public final class CarServiceHelperServiceUpdatableTest extends AbstractCarTestC
 
     @Test
     @ApiTest(apis = {
-            "com.android.internal.car.CarServiceHelperServiceUpdatable#dump(PrintWriter,String[])"
+            "com.android.internal.car.CarServiceHelperServiceUpdatable#dump"
     })
     public void testCarServiceHelperServiceDump_serviceStacks() throws Exception {
         assumeSystemServerDumpSupported();
