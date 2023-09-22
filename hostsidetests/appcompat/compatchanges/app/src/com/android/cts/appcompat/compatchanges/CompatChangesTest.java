@@ -16,6 +16,8 @@
 
 package com.android.cts.appcompat.compatchanges;
 
+import static android.os.Process.SYSTEM_UID;
+
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertThrows;
@@ -24,6 +26,8 @@ import android.Manifest;
 import android.app.compat.CompatChanges;
 import android.app.compat.PackageOverride;
 import android.content.Context;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Process;
 
 import androidx.test.InstrumentationRegistry;
@@ -31,8 +35,10 @@ import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.testng.Assert;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -244,5 +250,21 @@ public final class CompatChangesTest {
         packageNameToOverridesToRemove.put(OVERRIDE_PACKAGE2,
                 Collections.singleton(CTS_SYSTEM_API_OVERRIDABLE_CHANGEID));
         CompatChanges.removeAllPackageOverrides(packageNameToOverridesToRemove);
+    }
+
+    @Ignore
+    @Test
+    public void testAllPackagesSharingSystemUidTargetLatestSdk()
+            throws PackageManager.NameNotFoundException {
+        Context context = InstrumentationRegistry.getTargetContext();
+        String[] packages = context.getPackageManager().getPackagesForUid(SYSTEM_UID);
+        for (String pkg : packages) {
+            int targetSdk = context.getPackageManager().getTargetSdkVersion(pkg);
+            Assert.assertEquals(targetSdk, Build.VERSION.SDK_INT,
+                    pkg + " should target latest android version - " + Build.VERSION.SDK_INT
+                            + "as it is sharing"
+                            + "uid with system but it is targeting android version - " + targetSdk);
+
+        }
     }
 }
