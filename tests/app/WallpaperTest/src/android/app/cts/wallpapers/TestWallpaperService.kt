@@ -24,6 +24,8 @@ import android.view.MotionEvent
 import android.view.SurfaceHolder
 import android.view.WindowInsets
 import com.google.common.truth.Truth.assertWithMessage
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 /**
  * Wrapper for WallpaperService.
@@ -44,6 +46,7 @@ abstract class TestWallpaperService : WallpaperService() {
         private const val DEBUG = true
         private var assertionError: AssertionError? = null
         private var prevAction: String? = null
+        private var engineStateCallbacks = mutableSetOf<EngineCallback>()
 
         /**
          * Tracks the number of times [FakeEngine.onCreate] is called
@@ -81,6 +84,14 @@ abstract class TestWallpaperService : WallpaperService() {
 
         fun resetPrevAction() {
             prevAction = null
+        }
+
+        fun addCallback(callback: EngineCallback) {
+            engineStateCallbacks.add(callback)
+        }
+
+        fun removeCallback(callback: EngineCallback) {
+            engineStateCallbacks.remove(callback)
         }
     }
 
@@ -140,6 +151,7 @@ abstract class TestWallpaperService : WallpaperService() {
             mCreated = true
             createCount++
             super.onCreate(surfaceHolder)
+            engineStateCallbacks.forEach { it.onEvent(EngineCallback.Event.CREATE) }
         }
 
         override fun onDesiredSizeChanged(desiredWidth: Int, desiredHeight: Int) {
@@ -157,6 +169,7 @@ abstract class TestWallpaperService : WallpaperService() {
             mCreated = false
             destroyCount++
             super.onDestroy()
+            engineStateCallbacks.forEach { it.onEvent(EngineCallback.Event.DESTROY) }
         }
 
         override fun onOffsetsChanged(
@@ -169,8 +182,14 @@ abstract class TestWallpaperService : WallpaperService() {
         ) {
             if (DEBUG) Log.d(TAG, "onOffsetsChanged")
             assertMainThread()
-            super.onOffsetsChanged(xOffset, yOffset, xOffsetStep, yOffsetStep,
-                xPixelOffset, yPixelOffset)
+            super.onOffsetsChanged(
+                xOffset,
+                yOffset,
+                xOffsetStep,
+                yOffsetStep,
+                xPixelOffset,
+                yPixelOffset
+            )
         }
 
         override fun onSurfaceChanged(
@@ -193,6 +212,7 @@ abstract class TestWallpaperService : WallpaperService() {
             assertSurfaceNotCreated()
             mSurfaceCreated = true
             super.onSurfaceCreated(holder)
+            engineStateCallbacks.forEach { it.onEvent(EngineCallback.Event.SURFACE_CREATE) }
         }
 
         override fun onSurfaceDestroyed(holder: SurfaceHolder) {
@@ -234,7 +254,8 @@ abstract class TestWallpaperService : WallpaperService() {
             assertHelper {
                 assertWithMessage(
                     "Engine must be created (with onCreate) " +
-                    "and not destroyed before calling this function")
+                    "and not destroyed before calling this function"
+                )
                     .that(mCreated).isTrue()
             }
         }
@@ -243,7 +264,8 @@ abstract class TestWallpaperService : WallpaperService() {
             assertHelper {
                 assertWithMessage(
                     "Surface must be created (with onSurfaceCreated) " +
-                    "and not destroyed before calling this function")
+                    "and not destroyed before calling this function"
+                )
                     .that(mSurfaceCreated).isTrue()
             }
         }
@@ -252,7 +274,8 @@ abstract class TestWallpaperService : WallpaperService() {
             assertHelper {
                 assertWithMessage(
                     "Engine must not be created (with onCreate) " +
-                    "or must be destroyed before calling this function")
+                    "or must be destroyed before calling this function"
+                )
                     .that(mCreated).isFalse()
             }
         }
@@ -261,7 +284,8 @@ abstract class TestWallpaperService : WallpaperService() {
             assertHelper {
                 assertWithMessage(
                     "Surface must not be created (with onSurfaceCreated) " +
-                    "or must be destroyed before calling this function")
+                    "or must be destroyed before calling this function"
+                )
                     .that(mSurfaceCreated).isFalse()
             }
         }
@@ -275,7 +299,8 @@ abstract class TestWallpaperService : WallpaperService() {
             val callerThread = Thread.currentThread()
             assertWithMessage(
                 "Callback methods from WallpaperService.Engine " +
-                    "must be called by the main thread; but was called by " + callerThread)
+                    "must be called by the main thread; but was called by " + callerThread
+            )
                 .that(callerThread).isSameInstanceAs(mainThread)
         }
     }
@@ -296,4 +321,30 @@ abstract class TestWallpaperService : WallpaperService() {
      * The color that this test wallpaper should draw, for debug purposes.
      */
     protected abstract fun getColor(): Int
+
+    interface EngineCallback {
+        enum class Event { CREATE, DESTROY, SURFACE_CREATE }
+
+        fun onEvent(e: Event)
+    }
+
+    class EngineCallbackCountdown(create: Int, destroy: Int, surfaceCreate: Int) : EngineCallback {
+        private val createLatch = CountDownLatch(create)
+        private val destroyLatch = CountDownLatch(destroy)
+        private val surfaceCreateLatch = CountDownLatch(surfaceCreate)
+
+        override fun onEvent(e: EngineCallback.Event) {
+            when (e) {
+                EngineCallback.Event.CREATE -> createLatch.countDown()
+                EngineCallback.Event.DESTROY -> destroyLatch.countDown()
+                EngineCallback.Event.SURFACE_CREATE -> surfaceCreateLatch.countDown()
+            }
+        }
+
+        fun awaitEvents(time: Long, units: TimeUnit): Boolean {
+            return (createLatch.await(time, units) &&
+                    destroyLatch.await(time, units) &&
+                    surfaceCreateLatch.await(time, units))
+        }
+    }
 }
