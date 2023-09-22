@@ -57,6 +57,7 @@ import android.os.SystemProperties;
 import android.platform.test.annotations.AppModeSdkSandbox;
 import android.platform.test.annotations.Presubmit;
 import android.provider.Settings;
+import android.server.wm.WakeUpAndUnlockRule;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -67,7 +68,6 @@ import android.view.ViewGroup;
 import android.view.WindowManager;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
-import androidx.test.filters.FlakyTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
 
@@ -203,11 +203,14 @@ public class DisplayTest extends TestBase {
                     false /* initialTouchMode */,
                     false /* launchActivity */);
 
+    @Rule(order = 0)
+    public WakeUpAndUnlockRule mWakeUpAndUnlockRule = new WakeUpAndUnlockRule();
+
     /**
      * This rule adopts the Shell process permissions, needed because OVERRIDE_DISPLAY_MODE_REQUESTS
      * and ACCESS_SURFACE_FLINGER are privileged permission.
      */
-    @Rule(order = 0)
+    @Rule(order = 1)
     public AdoptShellPermissionsRule mAdoptShellPermissionsRule = new AdoptShellPermissionsRule(
             InstrumentationRegistry.getInstrumentation().getUiAutomation(),
             Manifest.permission.OVERRIDE_DISPLAY_MODE_REQUESTS,
@@ -216,7 +219,7 @@ public class DisplayTest extends TestBase {
             Manifest.permission.HDMI_CEC,
             Manifest.permission.MODIFY_REFRESH_RATE_SWITCHING_TYPE);
 
-    @Rule(order = 1)
+    @Rule(order = 2)
     public StateKeeperRule<DisplayStateManager.DisplayState>
             mDisplayManagerStateKeeper =
             new StateKeeperRule<>(new DisplayStateManager(
@@ -226,7 +229,6 @@ public class DisplayTest extends TestBase {
     public void setUp() throws Exception {
         mUiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
 
-        launchScreenOnActivity();
         mContext = getInstrumentation().getTargetContext();
         assertTrue("Physical display is expected.", DisplayUtil.isDisplayConnected(mContext)
                 || MediaUtils.onCuttlefish());
@@ -241,11 +243,11 @@ public class DisplayTest extends TestBase {
     }
 
     @After
-    public void tearDown() {
+    public void tearDown() throws InterruptedException {
         if (mDisplayManager != null) {
             mDisplayManager.overrideHdrTypes(DEFAULT_DISPLAY, new int[]{});
         }
-        mUiAutomation.executeShellCommand("settings delete global overlay_display_devices");
+        removeSecondaryDisplays();
     }
 
     private void enableAppOps() {
@@ -315,7 +317,32 @@ public class DisplayTest extends TestBase {
                 "settings put global overlay_display_devices 181x161/214|182x162/214");
 
         // Wait for the secondary display to become available
-        assertTrue(signal.await(5, TimeUnit.SECONDS));
+        assertTrue(signal.await(20, TimeUnit.SECONDS));
+    }
+
+    private void removeSecondaryDisplays() throws InterruptedException {
+        final CountDownLatch signal = new CountDownLatch(1);
+        Handler handler = new Handler(Looper.getMainLooper());
+        mDisplayManager.registerDisplayListener(new DisplayListener() {
+            @Override
+            public void onDisplayAdded(int displayId) {}
+
+            @Override
+            public void onDisplayRemoved(int displayId) {
+                if (getSecondaryDisplay(mDisplayManager.getDisplays()) == null) {
+                    signal.countDown();
+                }
+            }
+
+            @Override
+            public void onDisplayChanged(int displayId) {}
+        }, handler);
+
+        // Remove secondary displays
+        mUiAutomation.executeShellCommand("settings delete global overlay_display_devices");
+
+        // Wait for the change to go through
+        signal.await(20, TimeUnit.SECONDS);
     }
 
     /**
@@ -625,7 +652,6 @@ public class DisplayTest extends TestBase {
      * Test that a mode switch to every reported display mode is successful.
      */
     @Test
-    @FlakyTest(bugId = 231609616)
     public void testModeSwitchOnPrimaryDisplay() throws Exception {
         Display.Mode[] modes = mDefaultDisplay.getSupportedModes();
         assumeTrue("Need two or more display modes to exercise switching.", modes.length > 1);
@@ -910,7 +936,6 @@ public class DisplayTest extends TestBase {
      * Test that refresh rate switch app requests are correctly executed on a secondary display.
      */
     @Test
-    @FlakyTest(bugId = 231609616)
     public void testRefreshRateSwitchOnSecondaryDisplay() throws Exception {
         // Standalone VR devices globally ignore SYSTEM_ALERT_WINDOW via AppOps.
         // Skip this test, which depends on a Presentation SYSTEM_ALERT_WINDOW to pass.
