@@ -49,6 +49,7 @@ import android.widget.FrameLayout;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.FlakyTest;
 
 import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.NonApiTest;
@@ -244,6 +245,7 @@ public class CarTaskViewControllerTest {
     @Test
     @ApiTest(apis = {
             "android.car.app.ControlledRemoteCarTaskViewCallback#onTaskVanished(RunningTaskInfo)"})
+    @FlakyTest(bugId = 300182719)
     public void controlledRemoteCarTaskView_autoRestartDisabled_doesNotRestartTask_whenKilled()
             throws Exception {
         // Arrange
@@ -318,7 +320,7 @@ public class CarTaskViewControllerTest {
         CarActivityManagerTest.TestActivity temporaryActivity =
                 (CarActivityManagerTest.TestActivity) mInstrumentation.startActivitySync(
                         Intent.makeMainActivity(new ComponentName(mTargetContext,
-                                        CarActivityManagerTest.TestActivity.class))
+                                CarActivityManagerTest.TestActivity.class))
                                 .addFlags(FLAG_ACTIVITY_NEW_TASK), /* option */ null);
         PollingCheck.waitFor(() -> mHostActivity.mIsInStoppedState);
         // Finish the temporary activity to bring the host back to the top of the wm stack.
@@ -357,9 +359,9 @@ public class CarTaskViewControllerTest {
         // Arrange
         CarTaskViewTestHolder carTaskViewHolder =
                 createControlledTaskView(/* parentId= */ R.id.top_container,
-                EmbeddedTestActivity1.createLaunchIntent(mTargetContext));
+                        EmbeddedTestActivity1.createLaunchIntent(mTargetContext));
         PollingCheck.waitFor(() -> EmbeddedTestActivity1.sInstance != null
-                && EmbeddedTestActivity1.sInstance.mIsResumed,
+                        && EmbeddedTestActivity1.sInstance.mIsResumed,
                 "EmbeddedTestActivity1 is not running.");
 
         // EmbeddedTestActivity is on the upper part of the screen.
