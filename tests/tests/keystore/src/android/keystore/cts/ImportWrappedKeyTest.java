@@ -18,6 +18,7 @@ package android.keystore.cts;
 
 import static android.security.keymaster.KeymasterDefs.KM_ALGORITHM_3DES;
 import static android.security.keymaster.KeymasterDefs.KM_ALGORITHM_AES;
+import static android.security.keymaster.KeymasterDefs.KM_ALGORITHM_EC;
 import static android.security.keymaster.KeymasterDefs.KM_ALGORITHM_RSA;
 import static android.security.keymaster.KeymasterDefs.KM_DIGEST_MD5;
 import static android.security.keymaster.KeymasterDefs.KM_DIGEST_NONE;
@@ -40,6 +41,13 @@ import static android.security.keymaster.KeymasterDefs.KM_PURPOSE_DECRYPT;
 import static android.security.keymaster.KeymasterDefs.KM_PURPOSE_ENCRYPT;
 import static android.security.keymaster.KeymasterDefs.KM_PURPOSE_SIGN;
 import static android.security.keymaster.KeymasterDefs.KM_PURPOSE_VERIFY;
+import static android.security.keymaster.KeymasterDefs.KM_TAG_PURPOSE;
+import static android.security.keymaster.KeymasterDefs.KM_TAG_ALGORITHM;
+import static android.security.keymaster.KeymasterDefs.KM_TAG_KEY_SIZE;
+import static android.security.keymaster.KeymasterDefs.KM_TAG_BLOCK_MODE;
+import static android.security.keymaster.KeymasterDefs.KM_TAG_DIGEST;
+import static android.security.keymaster.KeymasterDefs.KM_TAG_PADDING;
+import static android.security.keymaster.KeymasterDefs.KM_TAG_NO_AUTH_REQUIRED;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
@@ -109,6 +117,11 @@ public class ImportWrappedKeyTest {
         return InstrumentationRegistry.getInstrumentation().getTargetContext();
     }
 
+    private int removeTagType(int tag) {
+        int kmTagTypeMask = 0x0FFFFFFF;
+        return tag & kmTagTypeMask;
+    }
+
     @Test
     public void testKeyStore_ImportWrappedKey_AES() throws Exception {
         testKeyStore_ImportWrappedKey_AES(false);
@@ -148,16 +161,16 @@ public class ImportWrappedKeyTest {
 
         assertTrue("Failed to load key after wrapped import", keyStore.containsAlias(ALIAS));
 
-        Key key = keyStore.getKey(ALIAS, null);
+        Key importedKey = keyStore.getKey(ALIAS, null);
         String plaintext = "hello, world";
 
         Cipher c = Cipher.getInstance("AES/ECB/PKCS7Padding");
-        c.init(Cipher.ENCRYPT_MODE, key);
+        c.init(Cipher.ENCRYPT_MODE, importedKey);
         byte[] encrypted = c.doFinal(plaintext.getBytes());
 
         // Decrypt using key imported into keystore.
         c = Cipher.getInstance("AES/ECB/PKCS7Padding");
-        c.init(Cipher.DECRYPT_MODE, key);
+        c.init(Cipher.DECRYPT_MODE, importedKey);
         assertEquals(new String(c.doFinal(encrypted)), plaintext);
 
         // Decrypt using local software copy of the key.
@@ -272,17 +285,17 @@ public class ImportWrappedKeyTest {
 
         assertTrue("Failed to load key after wrapped import", keyStore.containsAlias(ALIAS));
 
-        Key key = keyStore.getKey(ALIAS, null);
+        Key importedKey = keyStore.getKey(ALIAS, null);
         String plaintext = "hello, world";
 
         Cipher c = Cipher.getInstance("DESede/CBC/PKCS7Padding");
-        c.init(Cipher.ENCRYPT_MODE, key);
+        c.init(Cipher.ENCRYPT_MODE, importedKey);
         IvParameterSpec paramSpec = new IvParameterSpec(c.getIV());
         byte[] encrypted = c.doFinal(plaintext.getBytes());
 
         // Decrypt using key imported into keystore.
         c = Cipher.getInstance("DESede/CBC/PKCS7Padding");
-        c.init(Cipher.DECRYPT_MODE, key, paramSpec);
+        c.init(Cipher.DECRYPT_MODE, importedKey, paramSpec);
         assertEquals(new String(c.doFinal(encrypted)), plaintext);
 
         // Decrypt using local software copy of the key.
@@ -302,11 +315,15 @@ public class ImportWrappedKeyTest {
     }
 
     public void testKeyStore_ImportWrappedKey_RSA(boolean isStrongBox) throws Exception {
+        assumeTrue("Only VSR V+ KeyMint implementations are expected to pass.",
+                TestUtils.getVendorApiLevel() >= 35);
+
         if (isStrongBox) {
             TestUtils.assumeStrongBox();
         }
 
         KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
+        // Both TEE and Strongbox must support 2048-bit keys.
         int keySize = 2048;
         kpg.initialize(keySize);
         KeyPair kp = kpg.generateKeyPair();
@@ -337,12 +354,12 @@ public class ImportWrappedKeyTest {
 
         String plaintext = "hello, world";
 
-        Key key = keyStore.getKey(ALIAS, null);
-        assertTrue(key instanceof PrivateKey);
+        Key importedKey = keyStore.getKey(ALIAS, null);
+        assertTrue(importedKey instanceof PrivateKey);
 
         // Encrypt with KS private key, then decrypt with local public key.
         Cipher c = Cipher.getInstance("RSA/ECB/PKCS1Padding");
-        c.init(Cipher.ENCRYPT_MODE, key);
+        c.init(Cipher.ENCRYPT_MODE, importedKey);
         byte[] encrypted = c.doFinal(plaintext.getBytes());
 
         c.init(Cipher.DECRYPT_MODE, publicKey);
@@ -352,12 +369,76 @@ public class ImportWrappedKeyTest {
         c.init(Cipher.ENCRYPT_MODE, publicKey);
         encrypted = c.doFinal(plaintext.getBytes());
 
-        c.init(Cipher.DECRYPT_MODE, key);
+        c.init(Cipher.DECRYPT_MODE, importedKey);
         assertEquals(new String(c.doFinal(encrypted)), plaintext);
 
         // Sign with KS private key, then verify with local public key.
         Signature s = Signature.getInstance("SHA256withRSA");
-        s.initSign((PrivateKey) key);
+        s.initSign((PrivateKey) importedKey);
+        s.update(plaintext.getBytes());
+        byte[] signature = s.sign();
+
+        s.initVerify(publicKey);
+        s.update(plaintext.getBytes());
+        assertTrue(s.verify(signature));
+    }
+
+    @Test
+    public void testKeyStore_ImportWrappedKey_EC() throws Exception {
+        testKeyStore_ImportWrappedKey_EC(false);
+    }
+
+    @Test
+    public void testKeyStore_ImportWrappedKey_EC_StrongBox() throws Exception {
+        testKeyStore_ImportWrappedKey_EC(true);
+    }
+
+    public void testKeyStore_ImportWrappedKey_EC(boolean isStrongBox) throws Exception {
+        assumeTrue("Only VSR V+ KeyMint implementations are expected to pass.",
+                TestUtils.getVendorApiLevel() >= 35);
+
+        if (isStrongBox) {
+            TestUtils.assumeStrongBox();
+        }
+
+        KeyPairGenerator kpg = KeyPairGenerator.getInstance("EC");
+        // Both TEE and Strongbox must support P256 curve.
+        int keySize = 256;
+        kpg.initialize(keySize);
+        KeyPair kp = kpg.generateKeyPair();
+        PublicKey publicKey = kp.getPublic();
+        PrivateKey privateKey = kp.getPrivate();
+
+        assertEquals(privateKey.getFormat(), "PKCS#8");
+
+        byte[] keyMaterial = privateKey.getEncoded();
+        byte[] mask = new byte[32]; // Zero mask
+
+        try {
+            importWrappedKey(wrapKey(
+                    genKeyPair(WRAPPING_KEY_ALIAS, isStrongBox).getPublic(),
+                    keyMaterial,
+                    mask,
+                    KM_KEY_FORMAT_PKCS8,
+                    makeEcAuthList(keySize)));
+        } catch (SecureKeyImportUnavailableException e) {
+            assumeNoException("Can only test if secure key import is available", e);
+        }
+
+        // Use Key
+        KeyStore keyStore = KeyStore.getInstance("AndroidKeyStore");
+        keyStore.load(null, null);
+
+        assertTrue("Failed to load key after wrapped import", keyStore.containsAlias(ALIAS));
+
+        String plaintext = "hello, world";
+
+        Key importedKey = keyStore.getKey(ALIAS, null);
+        assertTrue(importedKey instanceof PrivateKey);
+
+        // Sign with KS private key, then verify with local public key.
+        Signature s = Signature.getInstance("SHA256withECDSA");
+        s.initSign((PrivateKey) importedKey);
         s.update(plaintext.getBytes());
         byte[] signature = s.sign();
 
@@ -450,24 +531,29 @@ public class ImportWrappedKeyTest {
         allPurposes.add(new DERInteger(KM_PURPOSE_ENCRYPT));
         allPurposes.add(new DERInteger(KM_PURPOSE_DECRYPT));
         DERSet purposeSet = new DERSet(allPurposes);
-        DERTaggedObject purpose = new DERTaggedObject(true, 1, purposeSet);
-        DERTaggedObject algorithm = new DERTaggedObject(true, 2, new DERInteger(algo));
+        DERTaggedObject purpose =
+                new DERTaggedObject(true, removeTagType(KM_TAG_PURPOSE), purposeSet);
+        DERTaggedObject algorithm =
+                new DERTaggedObject(true, removeTagType(KM_TAG_ALGORITHM), new DERInteger(algo));
         DERTaggedObject keySize =
-                new DERTaggedObject(true, 3, new DERInteger(size));
+                new DERTaggedObject(true, removeTagType(KM_TAG_KEY_SIZE), new DERInteger(size));
 
         DEREncodableVector allBlockModes = new DEREncodableVector();
         allBlockModes.add(new DERInteger(KM_MODE_ECB));
         allBlockModes.add(new DERInteger(KM_MODE_CBC));
         DERSet blockModeSet = new DERSet(allBlockModes);
-        DERTaggedObject blockMode = new DERTaggedObject(true, 4, blockModeSet);
+        DERTaggedObject blockMode =
+                new DERTaggedObject(true, removeTagType(KM_TAG_BLOCK_MODE), blockModeSet);
 
         DEREncodableVector allPaddings = new DEREncodableVector();
         allPaddings.add(new DERInteger(KM_PAD_PKCS7));
         allPaddings.add(new DERInteger(KM_PAD_NONE));
         DERSet paddingSet = new DERSet(allPaddings);
-        DERTaggedObject padding = new DERTaggedObject(true, 6, paddingSet);
+        DERTaggedObject padding =
+                new DERTaggedObject(true, removeTagType(KM_TAG_PADDING), paddingSet);
 
-        DERTaggedObject noAuthRequired = new DERTaggedObject(true, 503, DERNull.INSTANCE);
+        DERTaggedObject noAuthRequired =
+                new DERTaggedObject(true, removeTagType(KM_TAG_NO_AUTH_REQUIRED), DERNull.INSTANCE);
 
         // Build sequence
         DEREncodableVector allItems = new DEREncodableVector();
@@ -496,17 +582,21 @@ public class ImportWrappedKeyTest {
         allPurposes.add(new DERInteger(KM_PURPOSE_SIGN));
         allPurposes.add(new DERInteger(KM_PURPOSE_VERIFY));
         DERSet purposeSet = new DERSet(allPurposes);
-        DERTaggedObject purpose = new DERTaggedObject(true, 1, purposeSet);
+        DERTaggedObject purpose =
+                new DERTaggedObject(true, removeTagType(KM_TAG_PURPOSE), purposeSet);
 
-        DERTaggedObject algorithm = new DERTaggedObject(true, 2, new DERInteger(KM_ALGORITHM_RSA));
+        DERTaggedObject algorithm =
+                new DERTaggedObject(true, removeTagType(KM_TAG_ALGORITHM),
+                                    new DERInteger(KM_ALGORITHM_RSA));
         DERTaggedObject keySize =
-                new DERTaggedObject(true, 3, new DERInteger(size));
+                new DERTaggedObject(true, removeTagType(KM_TAG_KEY_SIZE), new DERInteger(size));
 
         DEREncodableVector allBlockModes = new DEREncodableVector();
         allBlockModes.add(new DERInteger(KM_MODE_ECB));
         allBlockModes.add(new DERInteger(KM_MODE_CBC));
         DERSet blockModeSet = new DERSet(allBlockModes);
-        DERTaggedObject blockMode = new DERTaggedObject(true, 4, blockModeSet);
+        DERTaggedObject blockMode =
+                new DERTaggedObject(true, removeTagType(KM_TAG_BLOCK_MODE), blockModeSet);
 
         DEREncodableVector allDigests = new DEREncodableVector();
         allDigests.add(new DERInteger(KM_DIGEST_NONE));
@@ -517,7 +607,8 @@ public class ImportWrappedKeyTest {
         allDigests.add(new DERInteger(KM_DIGEST_SHA_2_384));
         allDigests.add(new DERInteger(KM_DIGEST_SHA_2_512));
         DERSet digestSet = new DERSet(allDigests);
-        DERTaggedObject digest = new DERTaggedObject(true, 5, digestSet);
+        DERTaggedObject digest =
+                new DERTaggedObject(true, removeTagType(KM_TAG_DIGEST), digestSet);
 
         DEREncodableVector allPaddings = new DEREncodableVector();
         allPaddings.add(new DERInteger(KM_PAD_PKCS7));
@@ -527,9 +618,11 @@ public class ImportWrappedKeyTest {
         allPaddings.add(new DERInteger(KM_PAD_RSA_PKCS1_1_5_ENCRYPT));
         allPaddings.add(new DERInteger(KM_PAD_RSA_PKCS1_1_5_SIGN));
         DERSet paddingSet = new DERSet(allPaddings);
-        DERTaggedObject padding = new DERTaggedObject(true, 6, paddingSet);
+        DERTaggedObject padding =
+                new DERTaggedObject(true, removeTagType(KM_TAG_PADDING), paddingSet);
 
-        DERTaggedObject noAuthRequired = new DERTaggedObject(true, 503, DERNull.INSTANCE);
+        DERTaggedObject noAuthRequired =
+                new DERTaggedObject(true, removeTagType(KM_TAG_NO_AUTH_REQUIRED), DERNull.INSTANCE);
 
         // Build sequence
         DEREncodableVector allItems = new DEREncodableVector();
@@ -539,6 +632,43 @@ public class ImportWrappedKeyTest {
         allItems.add(blockMode);
         allItems.add(digest);
         allItems.add(padding);
+        allItems.add(noAuthRequired);
+
+        return new DERSequence(allItems);
+    }
+
+    private DERSequence makeEcAuthList(int size) {
+        DEREncodableVector allPurposes = new DEREncodableVector();
+        allPurposes.add(new DERInteger(KM_PURPOSE_SIGN));
+        allPurposes.add(new DERInteger(KM_PURPOSE_VERIFY));
+        DERSet purposeSet = new DERSet(allPurposes);
+        DERTaggedObject purpose =
+                new DERTaggedObject(true, removeTagType(KM_TAG_PURPOSE), purposeSet);
+
+        DERTaggedObject algorithm =
+                new DERTaggedObject(true, removeTagType(KM_TAG_ALGORITHM),
+                                    new DERInteger(KM_ALGORITHM_EC));
+        DERTaggedObject keySize =
+                new DERTaggedObject(true, removeTagType(KM_TAG_KEY_SIZE), new DERInteger(size));
+
+        DEREncodableVector allDigests = new DEREncodableVector();
+        allDigests.add(new DERInteger(KM_DIGEST_SHA_2_224));
+        allDigests.add(new DERInteger(KM_DIGEST_SHA_2_256));
+        allDigests.add(new DERInteger(KM_DIGEST_SHA_2_384));
+        allDigests.add(new DERInteger(KM_DIGEST_SHA_2_512));
+        DERSet digestSet = new DERSet(allDigests);
+        DERTaggedObject digest =
+                new DERTaggedObject(true, removeTagType(KM_TAG_DIGEST), digestSet);
+
+        DERTaggedObject noAuthRequired =
+                new DERTaggedObject(true, removeTagType(KM_TAG_NO_AUTH_REQUIRED), DERNull.INSTANCE);
+
+        // Build sequence
+        DEREncodableVector allItems = new DEREncodableVector();
+        allItems.add(purpose);
+        allItems.add(algorithm);
+        allItems.add(keySize);
+        allItems.add(digest);
         allItems.add(noAuthRequired);
 
         return new DERSequence(allItems);
