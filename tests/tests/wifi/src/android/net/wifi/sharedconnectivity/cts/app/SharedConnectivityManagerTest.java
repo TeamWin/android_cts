@@ -225,6 +225,19 @@ public class SharedConnectivityManagerTest {
     }
 
     @Test
+    public void bindIsCalledOnRegisterAfterUnbind() {
+        SharedConnectivityManager manager = SharedConnectivityManager.create(mContext);
+        manager.registerCallback(mExecutor, mClientCallback);
+        manager.getServiceConnection().onServiceConnected(COMPONENT_NAME, mIBinder);
+        manager.unregisterCallback(mClientCallback);
+
+        manager.registerCallback(mExecutor, mClientCallback2);
+
+        verify(mContext, times(2)).bindService(any(Intent.class), any(ServiceConnection.class),
+                anyInt());
+    }
+
+    @Test
     public void registerCallback_serviceNotConnected_canUnregisterAndReregister() {
         SharedConnectivityManager manager = SharedConnectivityManager.create(mContext);
 
