@@ -49,6 +49,7 @@ import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.media.MediaRoute2Info;
 import android.media.MediaRouter2;
 import android.media.MediaRouter2Manager;
@@ -61,6 +62,7 @@ import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.ApiTest;
 
+import com.google.common.truth.Correspondence;
 import com.google.common.truth.Truth;
 
 import org.junit.After;
@@ -90,6 +92,9 @@ public class MediaRouter2DeviceTest {
                             List.of(FEATURE_LIVE_AUDIO, FEATURE_LIVE_VIDEO),
                             /* activeScan= */ false)
                     .build();
+
+    private static final Correspondence<MediaRoute2Info, String> ROUTE_HAS_ORIGINAL_ID =
+            Correspondence.transforming(MediaRoute2Info::getOriginalId, "has original id");
 
     private MediaRouter2 mRouter2;
     private MediaRouter2Manager mRouter2Manager;
@@ -332,7 +337,14 @@ public class MediaRouter2DeviceTest {
     }
 
     @Test
-    public void getRoutes_returnsDefaultDevice() throws TimeoutException {
+    public void getRoutes_withoutBTPermissions_returnsDefaultRoute() throws TimeoutException {
+        assertThat(mContext.checkCallingOrSelfPermission(Manifest.permission.MODIFY_AUDIO_ROUTING))
+                .isEqualTo(PackageManager.PERMISSION_DENIED);
+        assertThat(mContext.checkCallingOrSelfPermission(Manifest.permission.BLUETOOTH_SCAN))
+                .isEqualTo(PackageManager.PERMISSION_DENIED);
+        assertThat(mContext.checkCallingOrSelfPermission(Manifest.permission.BLUETOOTH_CONNECT))
+                .isEqualTo(PackageManager.PERMISSION_DENIED);
+
         assertThat(
                         waitForAndGetRoutes(
                                         SYSTEM_ROUTE_DISCOVERY_PREFERENCE,
@@ -343,7 +355,15 @@ public class MediaRouter2DeviceTest {
     }
 
     @Test
-    public void getRoutes_returnDeviceRoute() throws TimeoutException {
+    public void getRoutes_withBTPermissions_returnsDeviceRoute() throws TimeoutException {
+        assertThat(mContext.checkCallingOrSelfPermission(Manifest.permission.MODIFY_AUDIO_ROUTING))
+                .isEqualTo(PackageManager.PERMISSION_DENIED);
+
+        assertThat(mContext.checkCallingOrSelfPermission(Manifest.permission.BLUETOOTH_SCAN))
+                .isEqualTo(PackageManager.PERMISSION_GRANTED);
+        assertThat(mContext.checkCallingOrSelfPermission(Manifest.permission.BLUETOOTH_CONNECT))
+                .isEqualTo(PackageManager.PERMISSION_GRANTED);
+
         assertThat(
                         waitForAndGetRoutes(
                                         SYSTEM_ROUTE_DISCOVERY_PREFERENCE,
@@ -351,6 +371,37 @@ public class MediaRouter2DeviceTest {
                                                 MediaRoute2Info.ROUTE_ID_DEVICE))
                                 .keySet())
                 .containsExactly(MediaRoute2Info.ROUTE_ID_DEVICE);
+    }
+
+    @Test
+    public void getSystemController_withBTPermissions_returnsDeviceRoute() {
+        assertThat(mContext.checkCallingOrSelfPermission(Manifest.permission.MODIFY_AUDIO_ROUTING))
+                .isEqualTo(PackageManager.PERMISSION_DENIED);
+
+        assertThat(mContext.checkCallingOrSelfPermission(Manifest.permission.BLUETOOTH_SCAN))
+                .isEqualTo(PackageManager.PERMISSION_GRANTED);
+        assertThat(mContext.checkCallingOrSelfPermission(Manifest.permission.BLUETOOTH_CONNECT))
+                .isEqualTo(PackageManager.PERMISSION_GRANTED);
+
+        MediaRouter2.RoutingController systemController = mRouter2.getSystemController();
+        assertThat(systemController.getSelectedRoutes())
+                .comparingElementsUsing(ROUTE_HAS_ORIGINAL_ID)
+                .containsExactly(MediaRoute2Info.ROUTE_ID_DEVICE);
+    }
+
+    @Test
+    public void getSystemController_withoutBTPermissions_returnsDefaultRoute() {
+        assertThat(mContext.checkCallingOrSelfPermission(Manifest.permission.MODIFY_AUDIO_ROUTING))
+                .isEqualTo(PackageManager.PERMISSION_DENIED);
+        assertThat(mContext.checkCallingOrSelfPermission(Manifest.permission.BLUETOOTH_SCAN))
+                .isEqualTo(PackageManager.PERMISSION_DENIED);
+        assertThat(mContext.checkCallingOrSelfPermission(Manifest.permission.BLUETOOTH_CONNECT))
+                .isEqualTo(PackageManager.PERMISSION_DENIED);
+
+        MediaRouter2.RoutingController systemController = mRouter2.getSystemController();
+        assertThat(systemController.getSelectedRoutes())
+                .comparingElementsUsing(ROUTE_HAS_ORIGINAL_ID)
+                .containsExactly(MediaRoute2Info.ROUTE_ID_DEFAULT);
     }
 
     @ApiTest(apis = {"android.media.MediaRouter2"})

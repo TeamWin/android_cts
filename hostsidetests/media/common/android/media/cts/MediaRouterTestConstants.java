@@ -42,6 +42,14 @@ public final class MediaRouterTestConstants {
     public static final String MEDIA_ROUTER_TEST_APK =
             "CtsMediaRouterHostSideTestBluetoothPermissionsApp.apk";
 
+    public static final String MEDIA_ROUTER_TEST_WITH_MODIFY_AUDIO_ROUTING_PACKAGE =
+            "android.media.router.cts.modifyaudioroutingapp";
+    public static final String MEDIA_ROUTER_TEST_WITH_MODIFY_AUDIO_ROUTING_APK =
+            "CtsMediaRouterHostSideTestModifyAudioRoutingApp.apk";
+    public static final String DEVICE_SIDE_TEST_CLASS_WITH_MODIFY_AUDIO_ROUTING =
+            "android.media.router.cts.modifyaudioroutingapp"
+                    + ".MediaRouter2DeviceTestWithModifyAudioRouting";
+
     public static final String ROUTE_ID_APP_1_ROUTE_1 = "route_1-1";
     public static final String ROUTE_ID_APP_1_ROUTE_2 = "route_1-2";
     public static final String ROUTE_ID_APP_1_ROUTE_3 = "route_1-3";
