@@ -25,6 +25,7 @@ import static android.photopicker.cts.util.PhotoPickerUiUtils.findItemList;
 import static android.photopicker.cts.util.ResultsAssertionsUtils.assertPersistedGrant;
 import static android.photopicker.cts.util.ResultsAssertionsUtils.assertPickerUriFormat;
 import static android.photopicker.cts.util.ResultsAssertionsUtils.assertRedactedReadOnlyAccess;
+import static android.provider.MediaStore.ACTION_PICK_IMAGES;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
@@ -74,7 +75,7 @@ public class ActionPickImagesOnlyTest extends PhotoPickerBaseTest {
 
     @Test
     public void testPhotoPickerIntentDelegation() throws Exception {
-        final Intent intent = new Intent(MediaStore.ACTION_PICK_IMAGES);
+        final Intent intent = new Intent(ACTION_PICK_IMAGES);
 
         for (String mimeType: new String[] {
                 null,
@@ -93,7 +94,7 @@ public class ActionPickImagesOnlyTest extends PhotoPickerBaseTest {
 
     @Test
     public void testMultiSelect_invalidParam() throws Exception {
-        final Intent intent = new Intent(MediaStore.ACTION_PICK_IMAGES);
+        final Intent intent = new Intent(ACTION_PICK_IMAGES);
         intent.putExtra(MediaStore.EXTRA_PICK_IMAGES_MAX, MediaStore.getPickImagesMaxLimit() + 1);
         mActivity.startActivityForResult(intent, REQUEST_CODE);
         final GetResultActivity.Result res = mActivity.getResult();
@@ -102,7 +103,7 @@ public class ActionPickImagesOnlyTest extends PhotoPickerBaseTest {
 
     @Test
     public void testMultiSelect_invalidNegativeParam() throws Exception {
-        final Intent intent = new Intent(MediaStore.ACTION_PICK_IMAGES);
+        final Intent intent = new Intent(ACTION_PICK_IMAGES);
         intent.putExtra(MediaStore.EXTRA_PICK_IMAGES_MAX, -1);
         mActivity.startActivityForResult(intent, REQUEST_CODE);
         final GetResultActivity.Result res = mActivity.getResult();
@@ -115,7 +116,7 @@ public class ActionPickImagesOnlyTest extends PhotoPickerBaseTest {
         final int imageCount = maxCount + 1;
         mUriList.addAll(createImagesAndGetUris(imageCount, mContext.getUserId()));
 
-        final Intent intent = new Intent(MediaStore.ACTION_PICK_IMAGES);
+        final Intent intent = new Intent(ACTION_PICK_IMAGES);
         intent.putExtra(MediaStore.EXTRA_PICK_IMAGES_MAX, maxCount);
         mActivity.startActivityForResult(intent, REQUEST_CODE);
 
@@ -146,7 +147,7 @@ public class ActionPickImagesOnlyTest extends PhotoPickerBaseTest {
     public void testDoesNotRespectExtraAllowMultiple() throws Exception {
         final int imageCount = 2;
         mUriList.addAll(createImagesAndGetUris(imageCount, mContext.getUserId()));
-        final Intent intent = new Intent(MediaStore.ACTION_PICK_IMAGES);
+        final Intent intent = new Intent(ACTION_PICK_IMAGES);
         intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
         mActivity.startActivityForResult(intent, REQUEST_CODE);
 
@@ -157,14 +158,14 @@ public class ActionPickImagesOnlyTest extends PhotoPickerBaseTest {
         clickAndWait(sDevice, itemList.get(0));
 
         final Uri uri = mActivity.getResult().data.getData();
-        assertPickerUriFormat(uri, mContext.getUserId());
+        assertPickerUriFormat(ACTION_PICK_IMAGES, uri, mContext.getUserId());
         assertPersistedGrant(uri, mContext.getContentResolver());
         assertRedactedReadOnlyAccess(uri);
     }
 
     @Test
     public void testMimeTypeFilter() throws Exception {
-        final Intent intent = new Intent(MediaStore.ACTION_PICK_IMAGES);
+        final Intent intent = new Intent(ACTION_PICK_IMAGES);
         intent.setType("audio/*");
         assertThrows(ActivityNotFoundException.class,
                 () -> mActivity.startActivityForResult(intent, REQUEST_CODE));
@@ -172,7 +173,7 @@ public class ActionPickImagesOnlyTest extends PhotoPickerBaseTest {
 
     @Test
     public void testExtraMimeTypeFilter() throws Exception {
-        final Intent intent = new Intent(MediaStore.ACTION_PICK_IMAGES);
+        final Intent intent = new Intent(ACTION_PICK_IMAGES);
         intent.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{"audio/*"});
         mActivity.startActivityForResult(intent, REQUEST_CODE);
         final GetResultActivity.Result res = mActivity.getResult();
