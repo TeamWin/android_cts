@@ -595,7 +595,7 @@ public class MediaRecorderTest extends MediaTestBase {
         FileOutputStream fos = new FileOutputStream(OUTPUT_PATH2);
         FileDescriptor fd = fos.getFD();
         mMediaRecorder.setOutputFile(fd);
-        long maxFileSize = MAX_FILE_SIZE * 10;
+        long maxFileSize = mVideoHeight >= 720 ? MAX_FILE_SIZE * 50 : MAX_FILE_SIZE * 10;
         recordMedia(maxFileSize, mOutFile2);
         assertFalse(checkLocationInFile(OUTPUT_PATH2));
         fos.close();
@@ -628,7 +628,11 @@ public class MediaRecorderTest extends MediaTestBase {
         }
         mMediaRecorder.setVideoSize(width, height);
         mMediaRecorder.setOutputFile(mOutFile);
-        long maxFileSize = MAX_FILE_SIZE * 10;
+
+        // For some devices, the QUALITY_LOW profile can be as high as 720p. In that case use
+        // the bigger max file size to make sure the file will be able to contain at least single
+        // valid frame.
+        long maxFileSize = height >= 720 ? MAX_FILE_SIZE * 50 : MAX_FILE_SIZE * 10;
         recordMedia(maxFileSize, mOutFile);
     }
 
