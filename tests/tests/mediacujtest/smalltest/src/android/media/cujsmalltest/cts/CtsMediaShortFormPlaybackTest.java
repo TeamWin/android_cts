@@ -102,6 +102,10 @@ public class CtsMediaShortFormPlaybackTest extends CujTestBase {
             .setTimeoutMilliSeconds(60000)
             .setPlayerListener(PlayerListener.createListenerForOrientationTest(3000)).build(),
             "Avc_360x640_5sec_OrientationTest"},
+        {CujTestParam.builder().setMediaUrls(prepareHevc_480p_15secVideoListForScrollTest())
+            .setTimeoutMilliSeconds(90000)
+            .setPlayerListener(PlayerListener.createListenerForScrollTest(2, 5000)).build(),
+            "Avc_360x640_15sec_ScrollTest"},
     }));
     return exhaustiveArgsList;
   }
@@ -166,6 +170,16 @@ public class CtsMediaShortFormPlaybackTest extends CujTestBase {
         MP4_ELEPHANTSDREAM_ASSET_360x640_AVC_URI_STRING,
         MP4_BIGBUCKBUNNY_ASSET_360x640_AVC_URI_STRING,
         MP4_ELEPHANTSDREAM_ASSET_360x640_AVC_URI_STRING);
+    return videoInput;
+  }
+
+  /**
+   * Prepare Hevc 480p video list for Scroll Test.
+   */
+  public static List<String> prepareHevc_480p_15secVideoListForScrollTest() {
+    List<String> videoInput = Arrays.asList(
+        MP4_FORBIGGERBLAZEA_ASSET_480P_HEVC_URI_STRING,
+        MP4_FORBIGGERESCAPES_ASSET_480P_HEVC_URI_STRING);
     return videoInput;
   }
 
