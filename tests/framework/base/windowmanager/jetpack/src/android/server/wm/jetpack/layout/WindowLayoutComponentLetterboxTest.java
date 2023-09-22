@@ -22,7 +22,9 @@ import static android.server.wm.jetpack.extensions.util.ExtensionsUtil.getExtens
 
 import android.server.wm.jetpack.utils.TestActivity;
 import android.server.wm.jetpack.utils.TestLetterboxLandscapeActivity;
+import android.server.wm.jetpack.utils.TestLetterboxLandscapeSlimActivity;
 import android.server.wm.jetpack.utils.TestLetterboxPortraitActivity;
+import android.server.wm.jetpack.utils.TestLetterboxPortraitSlimActivity;
 import android.server.wm.jetpack.utils.WindowExtensionTestRule;
 import android.server.wm.jetpack.utils.WindowManagerJetpackTestBase;
 
@@ -46,6 +48,10 @@ public class WindowLayoutComponentLetterboxTest extends WindowManagerJetpackTest
     public final WindowExtensionTestRule mWindowExtensionTestRule =
             new WindowExtensionTestRule(WindowLayoutComponent.class);
 
+    /**
+     * Tests that a portrait letterboxed {@link android.app.Activity} receives folding features.
+     * @throws InterruptedException reading folding features requires async calls.
+     */
     @ApiTest(apis = {"androidx.window.extensions.layout.WindowLayoutInfo#getDisplayFeatures"})
     @Test
     public void testWindowLayoutComponent_providesWindowLayoutFromLetterboxPortraitActivity()
@@ -53,13 +59,19 @@ public class WindowLayoutComponentLetterboxTest extends WindowManagerJetpackTest
         TestActivity activity = startActivityNewTask(TestActivity.class);
         WindowLayoutInfo fullInfo = getExtensionWindowLayoutInfo(activity);
         assumeHasDisplayFeatures(fullInfo);
+
         TestLetterboxPortraitActivity letterboxActivity =
                 startActivityNewTask(TestLetterboxPortraitActivity.class);
         WindowLayoutInfo letterboxWindowLayoutInfo =
                 getExtensionWindowLayoutInfo(letterboxActivity);
+
         assertHasDisplayFeatures(letterboxWindowLayoutInfo);
     }
 
+    /**
+     * Tests that a landscape letterboxed {@link android.app.Activity} receives folding features.
+     * @throws InterruptedException reading folding features requires async calls.
+     */
     @ApiTest(apis = {"androidx.window.extensions.layout.WindowLayoutInfo#getDisplayFeatures"})
     @Test
     public void testWindowLayoutComponent_providesWindowLayoutFromLetterboxLandscapeActivity()
@@ -67,10 +79,57 @@ public class WindowLayoutComponentLetterboxTest extends WindowManagerJetpackTest
         TestActivity activity = startActivityNewTask(TestActivity.class);
         WindowLayoutInfo fullInfo = getExtensionWindowLayoutInfo(activity);
         assumeHasDisplayFeatures(fullInfo);
+
         TestLetterboxLandscapeActivity letterboxActivity =
                 startActivityNewTask(TestLetterboxLandscapeActivity.class);
         WindowLayoutInfo letterboxWindowLayoutInfo =
                 getExtensionWindowLayoutInfo(letterboxActivity);
+
+        assertHasDisplayFeatures(letterboxWindowLayoutInfo);
+    }
+
+    /**
+     * Tests that a slim portrait letterboxed {@link android.app.Activity} receives folding
+     * features. A slim portrait letterboxed {@link android.app.Activity} is one that is
+     * letterboxed but the orientation matches the display orientation.
+     * @throws InterruptedException reading folding features requires async calls.
+     */
+    @ApiTest(apis = {"androidx.window.extensions.layout.WindowLayoutInfo#getDisplayFeatures"})
+    @Test
+    public void testWindowLayoutComponent_providesWindowLayoutFromLetterboxSlimPortraitActivity()
+            throws InterruptedException {
+        TestActivity activity = startActivityNewTask(TestActivity.class);
+        WindowLayoutInfo fullInfo = getExtensionWindowLayoutInfo(activity);
+        assumeHasDisplayFeatures(fullInfo);
+
+        TestLetterboxPortraitSlimActivity letterboxActivity =
+                startActivityNewTask(TestLetterboxPortraitSlimActivity.class);
+        WindowLayoutInfo letterboxWindowLayoutInfo =
+                getExtensionWindowLayoutInfo(letterboxActivity);
+
+        assertHasDisplayFeatures(letterboxWindowLayoutInfo);
+    }
+
+
+    /**
+     * Tests that a slim landscape letterboxed {@link android.app.Activity} receives folding
+     * features. A slim landscape letterboxed {@link android.app.Activity} is one that is
+     * letterboxed but the orientation matches the display orientation.
+     * @throws InterruptedException reading folding features requires async calls.
+     */
+    @ApiTest(apis = {"androidx.window.extensions.layout.WindowLayoutInfo#getDisplayFeatures"})
+    @Test
+    public void testWindowLayoutComponent_providesWindowLayoutFromLetterboxSlimLandscapeActivity()
+            throws InterruptedException {
+        TestActivity activity = startActivityNewTask(TestActivity.class);
+        WindowLayoutInfo fullInfo = getExtensionWindowLayoutInfo(activity);
+        assumeHasDisplayFeatures(fullInfo);
+
+        TestLetterboxLandscapeSlimActivity letterboxActivity =
+                startActivityNewTask(TestLetterboxLandscapeSlimActivity.class);
+        WindowLayoutInfo letterboxWindowLayoutInfo =
+                getExtensionWindowLayoutInfo(letterboxActivity);
+
         assertHasDisplayFeatures(letterboxWindowLayoutInfo);
     }
 }
