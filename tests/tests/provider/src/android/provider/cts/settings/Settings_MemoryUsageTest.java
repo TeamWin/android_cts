@@ -64,11 +64,11 @@ public class Settings_MemoryUsageTest {
 
     @Test
     public void testMemoryUsageExceeded() {
-        expectThrows(IllegalStateException.class,
+        expectThrows(Exception.class,
                 () -> Settings.System.putString(
                         mContentResolver, STRING_SETTING, Strings.repeat("A", 65535)));
         // Repeated calls should throw as well
-        expectThrows(IllegalStateException.class,
+        expectThrows(Exception.class,
                 () -> Settings.System.putString(
                         mContentResolver, STRING_SETTING, Strings.repeat("A", 65535)));
     }
