@@ -216,6 +216,9 @@ public class PackageInstallerArchiveTest {
                         MATCH_UNINSTALLED_PACKAGES)).isArchived).isTrue();
         assertThat(mPackageManager.getApplicationInfo(PACKAGE_NAME,
                 ApplicationInfoFlags.of(MATCH_ARCHIVED_PACKAGES)).isArchived).isTrue();
+        // Ensure fully installed app are returned too.
+        assertThat(mPackageManager.getInstalledPackages(
+                PackageInfoFlags.of(MATCH_ARCHIVED_PACKAGES)).size()).isAtLeast(2);
         assertThrows(NameNotFoundException.class,
                 () -> mPackageManager.getPackageInfo(PACKAGE_NAME, /* flags= */ 0));
         assertThrows(NameNotFoundException.class,
@@ -350,8 +353,12 @@ public class PackageInstallerArchiveTest {
             assertNotNull(addedIntent);
             assertTrue(addedIntent.getExtras().getBoolean(Intent.EXTRA_REPLACING, false));
         } finally {
-            mContext.unregisterReceiver(removedBroadcastReceiver);
-            mContext.unregisterReceiver(addedBroadcastReceiver);
+            try {
+                mContext.unregisterReceiver(removedBroadcastReceiver);
+                mContext.unregisterReceiver(addedBroadcastReceiver);
+            } catch (Exception e) {
+                // Already unregistered.
+            }
         }
     }
 
