@@ -23,9 +23,7 @@
     },
     {
       "name": "CtsPackageSettingHostTestCases"
-    }
-  ],
-  "postsubmit": [
+    },
     {
       "name": "CtsDynamicMimeHostTestCases"
     },
