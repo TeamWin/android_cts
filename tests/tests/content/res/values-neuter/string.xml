@@ -15,8 +15,8 @@
   ~ limitations under the License.
   -->
 <resources>
-    <item type="configVarying" name="simple">simple neuter</item>
-    <bag type="configVarying" name="bag">
-        <item name="testString">bag neuter</item>
+    <item type="string" name="simple">simple neuter</item>
+    <bag type="style" name="bag">
+        <item type="string" name="testString">bag neuter</item>
     </bag>
 </resources>

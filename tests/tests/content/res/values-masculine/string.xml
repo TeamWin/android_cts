@@ -15,8 +15,8 @@
   ~ limitations under the License.
   -->
 <resources>
-    <item type="configVarying" name="simple">simple masculine</item>
-    <bag type="configVarying" name="bag">
-        <item name="testString">bag masculine</item>
+    <item type="string" name="simple">simple masculine</item>
+    <bag type="style" name="bag">
+        <item type="string" name="testString">bag masculine</item>
     </bag>
 </resources>
