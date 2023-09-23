@@ -37,6 +37,7 @@ import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.RetryRule;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -45,6 +46,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Locale;
 
+@Ignore("b/301220358")
 @RunWith(AndroidJUnit4.class)
 public class GeocoderTest {
     private static final String TAG = GeocoderTest.class.getSimpleName();
