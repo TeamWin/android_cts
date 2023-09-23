@@ -40,6 +40,17 @@
                   android:supportsPictureInPicture="true"
                   android:screenOrientation="landscape"
         />
+        <activity android:name="android.server.wm.jetpack.utils.TestLetterboxPortraitSlimActivity"
+                  android:screenOrientation="portrait"
+                  android:resizeableActivity="false"
+                  android:minAspectRatio="3"
+        />
+        <activity android:name="android.server.wm.jetpack.utils.TestLetterboxLandscapeSlimActivity"
+                  android:supportsPictureInPicture="true"
+                  android:screenOrientation="landscape"
+                  android:resizeableActivity="false"
+                  android:minAspectRatio="3"
+        />
         <activity android:name="android.server.wm.jetpack.utils.TestGetWindowLayoutInfoActivity" />
         <activity android:name="android.server.wm.jetpack.utils.TestActivityWithId"
                   android:supportsPictureInPicture="true"
