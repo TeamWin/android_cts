@@ -21,12 +21,14 @@ import static com.android.compatibility.common.util.ShellIdentityUtils.invokeMet
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.car.Car;
+import android.car.test.PermissionsCheckerRule;
 import android.content.Context;
 import android.os.Handler;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.After;
+import org.junit.Rule;
 
 import java.util.Objects;
 
@@ -39,6 +41,8 @@ public class AbstractCarManagerPermissionTest {
     protected Car mCar = null;
     protected final Context mContext =
             InstrumentationRegistry.getInstrumentation().getTargetContext();
+    @Rule
+    public final PermissionsCheckerRule mPermissionsCheckerRule = new PermissionsCheckerRule();
 
     public final void connectCar() {
         mCar = Objects.requireNonNull(Car.createCar(mContext, (Handler) null));
