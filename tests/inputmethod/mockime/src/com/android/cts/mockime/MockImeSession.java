@@ -445,8 +445,8 @@ public class MockImeSession implements AutoCloseable {
     public void close() throws Exception {
         String exitReason = retrieveExitReasonIfMockImeCrashed();
         if (exitReason != null) {
-            // TODO(b/290928062): Propagate the exit reason to test logs shown on android build UI.
-            Log.e(TAG, exitReason);
+            Log.e(TAG, String.format("MockIme process exit reason: {%s}, event stream: {%s}",
+                    exitReason, mEventStream.dump()));
         }
 
         mActive.set(false);
