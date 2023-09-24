@@ -18,14 +18,19 @@ package android.media.cujsmalltest.cts;
 
 import android.media.cujcommon.cts.CujTestBase;
 import android.platform.test.annotations.LargeTest;
+
+import androidx.media3.common.C;
+
 import com.android.compatibility.common.util.ApiTest;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
 
 @LargeTest
 @RunWith(Parameterized.class)
@@ -42,19 +47,34 @@ public class CtsMediaShortFormPlaybackTest extends CujTestBase {
 
   private final List<String> mMediaUrls;
   private final long mTimeoutMilliSeconds;
+  private final boolean mIsSeekTest;
+  private final int mNumOfSeekIteration;
+  private final long mSeekStartPosition;
+  private final long mSeekTimeUs;
 
   public CtsMediaShortFormPlaybackTest(List<String> mediaUrls, long timeoutMilliSeconds,
+      boolean isSeekTest, int numOfSeekIteration, long seekStartPosition, long seekTimeUs,
       String testType) {
     super();
     this.mMediaUrls = mediaUrls;
     this.mTimeoutMilliSeconds = timeoutMilliSeconds;
+    this.mIsSeekTest = isSeekTest;
+    this.mNumOfSeekIteration = numOfSeekIteration;
+    this.mSeekStartPosition = seekStartPosition;
+    this.mSeekTimeUs = seekTimeUs;
   }
 
-  @Parameterized.Parameters(name = "{index}_{2}")
+  /**
+   * Returns the list of parameters
+   */
+  @Parameterized.Parameters(name = "{index}_{6}")
   public static Collection<Object[]> input() {
-    // mediaUrl, timeoutMilliSeconds, testId
+    // mediaUrl, timeoutMilliSeconds, isSeekTest, numOfSeekIteration, seekStartPosition, seekTimeUs
     final List<Object[]> exhaustiveArgsList = new ArrayList<>(Arrays.asList(new Object[][]{
-        {prepareHevc_720p_15secVideoList(), 330000, "Hevc_720p_15sec"},
+        {prepareHevc_720p_15secVideoList(), 330000, false, C.LENGTH_UNSET, C.LENGTH_UNSET,
+            C.LENGTH_UNSET, "Hevc_720p_15sec"},
+        {prepareHevc_720p_15secVideoList(), 330000, true, 1, 9000, 5000,
+            "Hevc_720p_15sec_seekTest"},
     }));
     return exhaustiveArgsList;
   }
@@ -84,7 +104,7 @@ public class CtsMediaShortFormPlaybackTest extends CujTestBase {
     return videoInput;
   }
 
-  // Test to Verify video playback time
+  // Test to Verify video playback with and without seek
   @ApiTest(apis = {"android.media.MediaCodec#configure",
       "android.media.MediaCodec#createByCodecName",
       "android.media.MediaCodecInfo#getName",
@@ -92,6 +112,7 @@ public class CtsMediaShortFormPlaybackTest extends CujTestBase {
       "android.media.MediaCodecInfo#isSoftwareOnly"})
   @Test
   public void testVideoPlayback() throws Exception {
-    play(mMediaUrls, mTimeoutMilliSeconds);
+    play(mMediaUrls, mTimeoutMilliSeconds, mIsSeekTest, mNumOfSeekIteration, mSeekStartPosition,
+        mSeekTimeUs);
   }
 }
