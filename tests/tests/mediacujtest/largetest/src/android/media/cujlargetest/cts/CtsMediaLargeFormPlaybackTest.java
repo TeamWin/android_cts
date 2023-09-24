@@ -20,6 +20,8 @@ import android.media.cujcommon.cts.CujTestBase;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.LargeTest;
 
+import androidx.media3.common.C;
+
 import com.android.compatibility.common.util.ApiTest;
 
 import org.junit.Test;
@@ -49,20 +51,38 @@ public class CtsMediaLargeFormPlaybackTest extends CujTestBase {
 
   private final List<String> mMediaUrls;
   private final long mTimeoutMilliSeconds;
+  private final boolean mIsSeekTest;
+  private final int mNumOfSeekIteration;
+  private final long mSeekStartPosition;
+  private final long mSeekTimeUs;
 
   public CtsMediaLargeFormPlaybackTest(List<String> mediaUrls, long timeoutMilliSeconds,
+      boolean isSeekTest, int numOfSeekIteration, long seekStartPosition, long seekTimeUs,
       String testType) {
     super();
     this.mMediaUrls = mediaUrls;
     this.mTimeoutMilliSeconds = timeoutMilliSeconds;
+    this.mIsSeekTest = isSeekTest;
+    this.mNumOfSeekIteration = numOfSeekIteration;
+    this.mSeekStartPosition = seekStartPosition;
+    this.mSeekTimeUs = seekTimeUs;
   }
 
-  @Parameterized.Parameters(name = "{index}_{2}")
+  /**
+   * Returns the list of parameters
+   */
+  @Parameterized.Parameters(name = "{index}_{6}")
   public static Collection<Object[]> input() {
-    // mediaUrl, timeoutMilliSeconds, testId
+    // mediaUrl, timeoutMilliSeconds, isSeekTest, numOfSeekIteration, seekStartPosition, seekTimeUs
     final List<Object[]> exhaustiveArgsList = new ArrayList<>(Arrays.asList(new Object[][]{
-        {prepareVP9_640x480_5minVideoList(), 930000, "VP9_640x480_5min"},
-        {prepareAvc_1080p_30minVideoList(), 1830000, "Avc_1080p_30min"},
+        {prepareVP9_640x480_5minVideoList(), 930000, false, C.LENGTH_UNSET, C.LENGTH_UNSET,
+            C.LENGTH_UNSET, "VP9_640x480_5min"},
+        {prepareVP9_640x480_5minVideoList(), 930000, true, 30, 30000, 10000,
+            "VP9_640x480_5min_seekTest"},
+        {prepareAvc_1080p_30minVideoList(), 1830000, false, C.LENGTH_UNSET, C.LENGTH_UNSET,
+            C.LENGTH_UNSET, "Avc_1080p_30min"},
+        {prepareAvc_1080p_30minVideoList(), 1830000, true, 30, 30000, 10000,
+            "Avc_1080p_30min_seekTest"},
     }));
     return exhaustiveArgsList;
   }
@@ -81,7 +101,7 @@ public class CtsMediaLargeFormPlaybackTest extends CujTestBase {
     return videoInput;
   }
 
-  // Test to Verify video playback time
+  // Test to Verify video playback with and without seek
   @ApiTest(apis = {"android.media.MediaCodec#configure",
       "android.media.MediaCodec#createByCodecName",
       "android.media.MediaCodecInfo#getName",
@@ -89,6 +109,7 @@ public class CtsMediaLargeFormPlaybackTest extends CujTestBase {
       "android.media.MediaCodecInfo#isSoftwareOnly"})
   @Test
   public void testVideoPlayback() throws Exception {
-    play(mMediaUrls, mTimeoutMilliSeconds);
+    play(mMediaUrls, mTimeoutMilliSeconds, mIsSeekTest, mNumOfSeekIteration, mSeekStartPosition,
+        mSeekTimeUs);
   }
 }
