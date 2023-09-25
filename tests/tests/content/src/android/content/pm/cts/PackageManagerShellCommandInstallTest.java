@@ -32,7 +32,9 @@ import static android.content.pm.PackageManager.GET_SIGNING_CERTIFICATES;
 import static android.content.pm.PackageManager.MATCH_STATIC_SHARED_AND_SDK_LIBRARIES;
 import static android.content.pm.PackageManager.VERIFICATION_ALLOW;
 import static android.content.pm.PackageManager.VERIFICATION_REJECT;
+
 import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -66,6 +68,7 @@ import android.content.pm.cts.util.AbandonAllPackageSessionsRule;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.ParcelFileDescriptor;
+import android.os.Process;
 import android.os.RemoteException;
 import android.os.UserHandle;
 import android.platform.test.annotations.AppModeFull;
@@ -74,6 +77,7 @@ import android.util.PackageUtils;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.LargeTest;
 
+import com.android.compatibility.common.util.SystemUtil;
 import com.android.internal.util.ConcurrentUtils;
 import com.android.internal.util.HexDump;
 
@@ -877,6 +881,13 @@ public class PackageManagerShellCommandInstallTest {
 
         installPackage(TEST_SDK1);
         assertTrue(isSdkInstalled(TEST_SDK1_NAME, 1));
+
+        // No uid is assigned for SDK package
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            ApplicationInfo appInfo = getPackageManager().getApplicationInfo(TEST_SDK1_PACKAGE,
+                    PackageManager.ApplicationInfoFlags.of(MATCH_STATIC_SHARED_AND_SDK_LIBRARIES));
+            assertThat(appInfo.uid).isEqualTo(Process.INVALID_UID);
+        });
 
         // Same APK.
         installPackage(TEST_SDK1);
