@@ -26,7 +26,6 @@ import static android.Manifest.permission.WRITE_CALL_LOG;
 import static android.app.role.RoleManager.ROLE_SMS;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.content.pm.PackageManager.FEATURE_TELEPHONY;
-
 import static com.android.bedstead.harrier.UserType.WORK_PROFILE;
 import static com.android.bedstead.nene.appops.CommonAppOps.OPSTR_CALL_PHONE;
 import static com.android.bedstead.nene.permissions.CommonPermissions.MODIFY_PHONE_STATE;
@@ -34,9 +33,7 @@ import static com.android.bedstead.nene.permissions.CommonPermissions.READ_PRIVI
 import static com.android.eventlib.truth.EventLogsSubject.assertThat;
 import static com.android.queryable.queries.ActivityQuery.activity;
 import static com.android.queryable.queries.IntentFilterQuery.intentFilter;
-
 import static com.google.common.truth.Truth.assertThat;
-
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
@@ -105,7 +102,6 @@ import java.util.concurrent.TimeoutException;
 
 @RequireFeature(FEATURE_TELEPHONY)
 @RunWith(BedsteadJUnit4.class)
-@Ignore // because work profile telephony is disabled for Android U
 public final class WorkProfileTelephonyTest {
 
     @ClassRule @Rule
@@ -162,6 +158,7 @@ public final class WorkProfileTelephonyTest {
     @Postsubmit(reason = "new test")
     @Test
     @CddTest(requirements = {"7.4.1.4/C-3-1"})
+    @Ignore("TODO(298915118): Enable after work telephony requirements are re-added")
     public void sendTextMessage_fromWorkProfile_allManagedSubscriptions_smsSentSuccessfully()
         throws ExecutionException, InterruptedException, TimeoutException {
         assumeSmsCapableDevice();
@@ -201,6 +198,7 @@ public final class WorkProfileTelephonyTest {
     @Postsubmit(reason = "new test")
     @Test
     @CddTest(requirements = {"7.4.1.4/C-1-1", "7.4.1.4/C-3-2"})
+    @Ignore("TODO(298915118): Enable after work telephony requirements are re-added")
     public void sendTextMessage_fromPersonalProfile_allManagedSubscriptions_errorUserNotAllowed()
             throws ExecutionException, InterruptedException, TimeoutException {
         assumeSmsCapableDevice();
@@ -263,6 +261,7 @@ public final class WorkProfileTelephonyTest {
     @Postsubmit(reason = "new test")
     @Test
     @CddTest(requirements = {"7.4.1.4/C-3-1"})
+    @Ignore("TODO(298915118): Enable after work telephony requirements are re-added")
     public void allManagedSubscriptions_accessWorkMessageFromPersonalProfile_fails() {
         assumeSmsCapableDevice();
         assertValidSimCardPresent();
@@ -308,6 +307,7 @@ public final class WorkProfileTelephonyTest {
     @Postsubmit(reason = "new test")
     @Test
     @CddTest(requirements = {"7.4.1.4/C-3-1"})
+    @Ignore("TODO(298915118): Enable after work telephony requirements are re-added")
     public void allManagedSubscriptions_accessWorkMessageFromWorkProfile_works()
         throws ExecutionException, InterruptedException, TimeoutException  {
         assumeSmsCapableDevice();
@@ -357,6 +357,7 @@ public final class WorkProfileTelephonyTest {
     @RequireRunOnWorkProfile(isOrganizationOwned = true)
     @Postsubmit(reason = "new test")
     @Test
+    @Ignore("TODO(298915118): Enable after work telephony requirements are re-added")
     public void placeCall_fromWorkProfile_allManagedSubscriptions_works() throws Exception {
         assumeCallCapableDevice();
         assertValidSimCardPresent();
@@ -394,6 +395,7 @@ public final class WorkProfileTelephonyTest {
     @Postsubmit(reason = "new test")
     @Test
     @CddTest(requirements = {"7.4.1.4/C-1-1", "7.4.1.4/C-3-2"})
+    @Ignore("TODO(298915118): Enable after work telephony requirements are re-added")
     public void placeCall_fromPersonalProfile_allManagedSubscriptions_fails() throws Exception {
         assumeCallCapableDevice();
         assertValidSimCardPresent();
@@ -428,6 +430,7 @@ public final class WorkProfileTelephonyTest {
     @Postsubmit(reason = "new test")
     @Test
     @CddTest(requirements = {"7.4.1.4/C-3-3"})
+    @Ignore("TODO(298915118): Enable after work telephony requirements are re-added")
     public void getCallCapablePhoneAccounts_fromWorkProfile_allManagedSubscriptions_notEmpty()
             throws Exception {
         assumeCallCapableDevice();
@@ -459,6 +462,7 @@ public final class WorkProfileTelephonyTest {
     @Postsubmit(reason = "new test")
     @Test
     @CddTest(requirements = {"7.4.1.4/C-3-3"})
+    @Ignore("TODO(298915118): Enable after work telephony requirements are re-added")
     public void getCallCapablePhoneAccounts_fromPersonalProfile_allManagedSubscriptions_emptyList()
             throws Exception {
         assumeCallCapableDevice();
@@ -490,6 +494,7 @@ public final class WorkProfileTelephonyTest {
     @Postsubmit(reason = "new test")
     @Test
     @CddTest(requirements = {"7.4.1.4/C-2-1"})
+    @Ignore("TODO(298915118): Enable after work telephony requirements are re-added")
     public void allManagedSubscriptions_accessWorkCallLogFromWorkProfile_works() throws Exception {
         assumeCallCapableDevice();
         assertValidSimCardPresent();
@@ -535,6 +540,7 @@ public final class WorkProfileTelephonyTest {
     @Postsubmit(reason = "new test")
     @Test
     @CddTest(requirements = {"7.4.1.4/C-2-1"})
+    @Ignore("TODO(298915118): Enable after work telephony requirements are re-added")
     public void allManagedSubscriptions_accessWorkCallLogFromPersonalProfile_fails()
             throws Exception {
         assumeCallCapableDevice();
