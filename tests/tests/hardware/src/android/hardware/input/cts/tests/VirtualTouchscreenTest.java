@@ -17,6 +17,7 @@
 package android.hardware.input.cts.tests;
 
 import static android.view.Display.DEFAULT_DISPLAY;
+import static android.view.InputDevice.SOURCE_TOUCHSCREEN;
 
 import static org.junit.Assert.assertThrows;
 
@@ -25,7 +26,6 @@ import android.hardware.display.VirtualDisplay;
 import android.hardware.input.VirtualTouchEvent;
 import android.hardware.input.VirtualTouchscreen;
 import android.hardware.input.VirtualTouchscreenConfig;
-import android.view.InputDevice;
 import android.view.InputEvent;
 import android.view.MotionEvent;
 
@@ -108,6 +108,11 @@ public class VirtualTouchscreenTest extends VirtualDeviceTestCase {
                 .build());
         expectedEvents.add(
                 createMotionEvent(MotionEvent.ACTION_DOWN, x, y, 1.0f, computedSize, inputSize));
+
+        // We expect to get the exact coordinates in the view that were injected into the
+        // touchscreen. Touch resampling could result in the generation of additional "fake" touch
+        // events. To disable resampling, request unbuffered dispatch.
+        mTestActivity.getWindow().getDecorView().requestUnbufferedDispatch(SOURCE_TOUCHSCREEN);
 
         // Next we send a bunch of ACTION_MOVE events. Each one with a different x and y coordinate.
         // If no property changes (i.e. the same VirtualTouchEvent is sent multiple times) then the
@@ -215,7 +220,7 @@ public class VirtualTouchscreenTest extends VirtualDeviceTestCase {
                 /* yPrecision= */ 1f,
                 /* deviceId= */ 0,
                 /* edgeFlags= */ 0,
-                InputDevice.SOURCE_TOUCHSCREEN,
+                SOURCE_TOUCHSCREEN,
                 /* flags= */ 0);
     }
 
