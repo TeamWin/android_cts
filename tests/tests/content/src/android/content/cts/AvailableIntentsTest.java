@@ -40,6 +40,7 @@ import android.provider.MediaStore;
 import android.provider.Settings;
 import android.provider.Telephony;
 import android.telecom.TelecomManager;
+import android.telephony.TelephonyManager;
 import android.test.AndroidTestCase;
 
 import com.android.compatibility.common.util.CddTest;
@@ -179,7 +180,10 @@ public class AvailableIntentsTest extends AndroidTestCase {
      */
     public void testDialPhoneNumber() {
         PackageManager packageManager = mContext.getPackageManager();
-        if (packageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+        TelephonyManager telephonyManager =
+                mContext.getSystemService(TelephonyManager.class);
+        if (packageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)
+                && telephonyManager.isVoiceCapable()) {
             Uri uri = Uri.parse("tel:(212)5551212");
             Intent intent = new Intent(Intent.ACTION_DIAL, uri);
             assertCanBeHandled(intent);
@@ -191,7 +195,10 @@ public class AvailableIntentsTest extends AndroidTestCase {
      */
     public void testDialVoicemail() {
         PackageManager packageManager = mContext.getPackageManager();
-        if (packageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+        TelephonyManager telephonyManager =
+                mContext.getSystemService(TelephonyManager.class);
+        if (packageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)
+                && telephonyManager.isVoiceCapable()) {
             Uri uri = Uri.parse("voicemail:");
             Intent intent = new Intent(Intent.ACTION_DIAL, uri);
             assertCanBeHandled(intent);
