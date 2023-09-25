@@ -26,6 +26,8 @@ import android.car.Car;
 import android.car.app.CarActivityManager;
 import android.car.app.CarSystemUIProxy;
 import android.car.app.CarTaskViewControllerCallback;
+import android.car.cts.permissiontest.AbstractCarManagerPermissionTest;
+import android.car.test.PermissionsCheckerRule.EnsureHasPermission;
 import android.content.ComponentName;
 import android.os.Binder;
 import android.os.IBinder;
@@ -33,8 +35,6 @@ import android.view.Display;
 import android.window.DisplayAreaOrganizer;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
-
-import android.car.cts.permissiontest.AbstractCarManagerPermissionTest;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -139,7 +139,18 @@ public class CarActivityManagerPermissionTest extends AbstractCarManagerPermissi
     }
 
     @Test
-    public void getCarTaskViewController_requiresPermission() {
+    @EnsureHasPermission(Car.PERMISSION_MANAGE_CAR_SYSTEM_UI)
+    public void getCarTaskViewController_requiresPermission_INTERACT_ACROSS_USERS() {
+        SecurityException e = assertThrows(SecurityException.class,
+                () -> mCarActivityManager.getCarTaskViewController(mock(Activity.class),
+                        mock(Executor.class), mock(CarTaskViewControllerCallback.class)));
+
+        assertThat(e).hasMessageThat().contains(android.Manifest.permission.INTERACT_ACROSS_USERS);
+    }
+
+    @Test
+    @EnsureHasPermission(android.Manifest.permission.INTERACT_ACROSS_USERS)
+    public void getCarTaskViewController_requiresPermission_PERMISSION_MANAGE_CAR_SYSTEM_UI() {
         SecurityException e = assertThrows(SecurityException.class,
                 () -> mCarActivityManager.getCarTaskViewController(mock(Activity.class),
                         mock(Executor.class), mock(CarTaskViewControllerCallback.class)));
