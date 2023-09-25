@@ -1232,6 +1232,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
                         Boolean.class, mCarPropertyManager)
                 .addReadPermission(Car.PERMISSION_READ_ADAS_SETTINGS)
+                .addReadPermission(Car.PERMISSION_CONTROL_ADAS_SETTINGS)
                 .addWritePermission(Car.PERMISSION_CONTROL_ADAS_SETTINGS)
                 .build();
     }
@@ -1280,6 +1281,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
                         Boolean.class, mCarPropertyManager)
                 .addReadPermission(Car.PERMISSION_READ_ADAS_SETTINGS)
+                .addReadPermission(Car.PERMISSION_CONTROL_ADAS_SETTINGS)
                 .addWritePermission(Car.PERMISSION_CONTROL_ADAS_SETTINGS)
                 .build();
     }
@@ -1308,6 +1310,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                                 Car.PERMISSION_CONTROL_ADAS_SETTINGS))
                 .verifyErrorStates()
                 .addReadPermission(Car.PERMISSION_READ_ADAS_STATES)
+                .addReadPermission(Car.PERMISSION_CONTROL_ADAS_STATES)
                 .addWritePermission(Car.PERMISSION_CONTROL_ADAS_STATES)
                 .build();
     }
@@ -1524,6 +1527,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         ImmutableSet.of(Car.PERMISSION_READ_ADAS_SETTINGS,
                                 Car.PERMISSION_CONTROL_ADAS_SETTINGS))
                 .addReadPermission(Car.PERMISSION_READ_ADAS_STATES)
+                .addReadPermission(Car.PERMISSION_CONTROL_ADAS_STATES)
                 .addWritePermission(Car.PERMISSION_CONTROL_ADAS_STATES)
                 .build();
     }
@@ -1599,6 +1603,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
                         Boolean.class, mCarPropertyManager)
                 .addReadPermission(Car.PERMISSION_READ_DRIVER_MONITORING_SETTINGS)
+                .addReadPermission(Car.PERMISSION_CONTROL_DRIVER_MONITORING_SETTINGS)
                 .addWritePermission(Car.PERMISSION_CONTROL_DRIVER_MONITORING_SETTINGS)
                 .build();
     }
@@ -2318,6 +2323,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                 .requireMinMaxValues()
                 .requireMinValuesToBeZero()
                 .addReadPermission(Car.PERMISSION_POWERTRAIN)
+                .addReadPermission(Car.PERMISSION_CONTROL_POWERTRAIN)
                 .addWritePermission(Car.PERMISSION_CONTROL_POWERTRAIN)
                 .build();
     }
@@ -2337,6 +2343,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                 .setAllPossibleEnumValues(EV_STOPPING_MODES)
                 .setAllPossibleUnwritableValues(EV_STOPPING_MODE_UNWRITABLE_STATES)
                 .addReadPermission(Car.PERMISSION_POWERTRAIN)
+                .addReadPermission(Car.PERMISSION_CONTROL_POWERTRAIN)
                 .addWritePermission(Car.PERMISSION_CONTROL_POWERTRAIN)
                 .build();
     }
@@ -2812,6 +2819,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                             }
                         })
                 .addReadPermission(Car.PERMISSION_READ_WINDSHIELD_WIPERS)
+                .addReadPermission(Car.PERMISSION_CONTROL_WINDSHIELD_WIPERS)
                 .addWritePermission(Car.PERMISSION_CONTROL_WINDSHIELD_WIPERS)
                 .build()
                 .verify();
@@ -3272,6 +3280,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                                         .that(rangeRemaining)
                                         .isAtLeast(0))
                 .addReadPermission(Car.PERMISSION_ENERGY)
+                .addReadPermission(Car.PERMISSION_ADJUST_RANGE_REMAINING)
                 .addWritePermission(Car.PERMISSION_ADJUST_RANGE_REMAINING)
                 .build()
                 .verify();
@@ -3299,6 +3308,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
                         Boolean.class, mCarPropertyManager)
                 .addReadPermission(Car.PERMISSION_ENERGY_PORTS)
+                .addReadPermission(Car.PERMISSION_CONTROL_ENERGY_PORTS)
                 .addWritePermission(Car.PERMISSION_CONTROL_ENERGY_PORTS)
                 .build()
                 .verify();
@@ -3313,6 +3323,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
                         Boolean.class, mCarPropertyManager)
                 .addReadPermission(Car.PERMISSION_ENERGY_PORTS)
+                .addReadPermission(Car.PERMISSION_CONTROL_ENERGY_PORTS)
                 .addWritePermission(Car.PERMISSION_CONTROL_ENERGY_PORTS)
                 .build()
                 .verify();
@@ -3375,6 +3386,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                                     .isAtMost(maxCurrentDrawThresholdAmps);
                         })
                 .addReadPermission(Car.PERMISSION_ENERGY)
+                .addReadPermission(Car.PERMISSION_CONTROL_CAR_ENERGY)
                 .addWritePermission(Car.PERMISSION_CONTROL_CAR_ENERGY)
                 .build()
                 .verify();
@@ -3433,6 +3445,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                             }
                         })
                 .addReadPermission(Car.PERMISSION_ENERGY)
+                .addReadPermission(Car.PERMISSION_CONTROL_CAR_ENERGY)
                 .addWritePermission(Car.PERMISSION_CONTROL_CAR_ENERGY)
                 .build()
                 .verify();
@@ -5892,6 +5905,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
                         Boolean.class, mCarPropertyManager)
                 .addReadPermission(Car.PERMISSION_READ_ADAS_SETTINGS)
+                .addReadPermission(Car.PERMISSION_CONTROL_ADAS_SETTINGS)
                 .addWritePermission(Car.PERMISSION_CONTROL_ADAS_SETTINGS)
                 .build()
                 .verify();
@@ -5934,6 +5948,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
                         Boolean.class, mCarPropertyManager)
                 .addReadPermission(Car.PERMISSION_READ_ADAS_SETTINGS)
+                .addReadPermission(Car.PERMISSION_CONTROL_ADAS_SETTINGS)
                 .addWritePermission(Car.PERMISSION_CONTROL_ADAS_SETTINGS)
                 .build()
                 .verify();
@@ -5976,6 +5991,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
                         Boolean.class, mCarPropertyManager)
                 .addReadPermission(Car.PERMISSION_READ_ADAS_SETTINGS)
+                .addReadPermission(Car.PERMISSION_CONTROL_ADAS_SETTINGS)
                 .addWritePermission(Car.PERMISSION_CONTROL_ADAS_SETTINGS)
                 .build()
                 .verify();
@@ -6018,6 +6034,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
                         Boolean.class, mCarPropertyManager)
                 .addReadPermission(Car.PERMISSION_READ_ADAS_SETTINGS)
+                .addReadPermission(Car.PERMISSION_CONTROL_ADAS_SETTINGS)
                 .addWritePermission(Car.PERMISSION_CONTROL_ADAS_SETTINGS)
                 .build()
                 .verify();
@@ -6060,6 +6077,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
                         Boolean.class, mCarPropertyManager)
                 .addReadPermission(Car.PERMISSION_READ_ADAS_SETTINGS)
+                .addReadPermission(Car.PERMISSION_CONTROL_ADAS_SETTINGS)
                 .addWritePermission(Car.PERMISSION_CONTROL_ADAS_SETTINGS)
                 .build()
                 .verify();
@@ -6102,6 +6120,7 @@ public final class CarPropertyManagerTest extends AbstractCarTestCase {
                         CarPropertyConfig.VEHICLE_PROPERTY_CHANGE_MODE_ONCHANGE,
                         Boolean.class, mCarPropertyManager)
                 .addReadPermission(Car.PERMISSION_READ_ADAS_SETTINGS)
+                .addReadPermission(Car.PERMISSION_CONTROL_ADAS_SETTINGS)
                 .addWritePermission(Car.PERMISSION_CONTROL_ADAS_SETTINGS)
                 .build()
                 .verify();
