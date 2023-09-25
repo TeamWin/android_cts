@@ -42,7 +42,6 @@ import androidx.test.uiautomator.UiSelector;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -141,7 +140,6 @@ public class ActionGetContentOnlyTest extends PhotoPickerBaseTest {
     }
 
     @Test
-    @Ignore("Tracking this in b/295151917")
     public void testBrowse_multiSelect() throws Exception {
         final int itemCount = 3;
         List<Pair<Uri, String>> createdImagesData = createImagesAndGetUriAndPath(itemCount,
