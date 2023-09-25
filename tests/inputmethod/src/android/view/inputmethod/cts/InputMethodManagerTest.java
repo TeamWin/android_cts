@@ -19,6 +19,7 @@ package android.view.inputmethod.cts;
 import static android.content.Intent.ACTION_CLOSE_SYSTEM_DIALOGS;
 import static android.content.Intent.FLAG_RECEIVER_FOREGROUND;
 import static android.content.pm.PackageManager.FEATURE_INPUT_METHODS;
+import static android.view.inputmethod.cts.util.TestUtils.getOnMainSync;
 import static android.view.inputmethod.cts.util.TestUtils.isInputMethodPickerShown;
 import static android.view.inputmethod.cts.util.TestUtils.waitOnMainUntil;
 
@@ -175,6 +176,7 @@ public class InputMethodManagerTest {
     @Test
     public void testIsAcceptingText() throws Throwable {
         final AtomicReference<EditText> focusedFakeEditTextRef = new AtomicReference<>();
+        final CountDownLatch latch = new CountDownLatch(1);
         TestActivity.startSync(activity -> {
             final LinearLayout layout = new LinearLayout(activity);
             layout.setOrientation(LinearLayout.VERTICAL);
@@ -183,6 +185,7 @@ public class InputMethodManagerTest {
                 @Override
                 public InputConnection onCreateInputConnection(EditorInfo info) {
                     super.onCreateInputConnection(info);
+                    latch.countDown();
                     return null;
                 }
             };
@@ -191,11 +194,10 @@ public class InputMethodManagerTest {
             focusedFakeEditText.requestFocus();
             return layout;
         });
-        waitOnMainUntil(() -> mImManager.isActive(), TIMEOUT);
-        assertTrue(mImManager.isActive(focusedFakeEditTextRef.get()));
+        assertTrue(latch.await(TIMEOUT, TimeUnit.MICROSECONDS));
         assertFalse("InputMethodManager#isAcceptingText() must return false "
                 + "if target View returns null from onCreateInputConnection().",
-                mImManager.isAcceptingText());
+                getOnMainSync(() -> mImManager.isAcceptingText()));
     }
 
     @Test
