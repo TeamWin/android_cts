@@ -70,6 +70,8 @@ public class BleRssiPrecisionActivity extends PassFailButtons.Activity {
     private EditText mReferenceDeviceIdInput;
     private String mReferenceDeviceName;
     private CheckBox mIsReferenceDeviceCheckbox;
+    private CheckBox mIsManualPassCheckbox;
+    private boolean mIsManualPass;
     private boolean mTestCompleted;
     private int mRssiRange;
 
@@ -87,6 +89,7 @@ public class BleRssiPrecisionActivity extends PassFailButtons.Activity {
         mDeviceFoundTextView = findViewById(R.id.device_found_info);
         mReferenceDeviceIdInput = findViewById(R.id.ref_device_id_input);
         mIsReferenceDeviceCheckbox = findViewById(R.id.is_reference_device);
+        mIsManualPassCheckbox = findViewById(R.id.is_manual_pass);
         mDutModeLayout = findViewById(R.id.dut_mode_layout);
         mRefModeLayout = findViewById(R.id.ref_mode_layout);
         DeviceFeatureChecker.checkFeatureSupported(this, getPassButton(),
@@ -101,10 +104,14 @@ public class BleRssiPrecisionActivity extends PassFailButtons.Activity {
         mDeviceIdInfoTextView.setVisibility(View.GONE);
         mDeviceFoundTextView.setVisibility(View.GONE);
         isReferenceDevice = mIsReferenceDeviceCheckbox.isChecked();
+        mIsManualPass = mIsManualPassCheckbox.isChecked();
         checkUiMode();
         mIsReferenceDeviceCheckbox.setOnCheckedChangeListener((buttonView, isChecked) -> {
             isReferenceDevice = isChecked;
             checkUiMode();
+        });
+        mIsManualPassCheckbox.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            mIsManualPass = isChecked;
         });
         mStartTestButton.setOnClickListener(v -> startTest());
         mStopTestButton.setOnClickListener(v -> stopTest());
@@ -169,7 +176,11 @@ public class BleRssiPrecisionActivity extends PassFailButtons.Activity {
         mTestCompleted = true;
         if (rssiRange <= MAX_RSSI_RANGE_DBM) {
             makeToast("Test passed! Rssi range is: " + rssiRange);
-            getPassButton().performClick();
+            if (mIsManualPass) {
+                getPassButton().setEnabled(true);
+            } else {
+                getPassButton().performClick();
+            }
         } else {
             makeToast("Test failed! Rssi range is: " + rssiRange);
         }
