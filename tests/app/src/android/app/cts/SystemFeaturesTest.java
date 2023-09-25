@@ -534,8 +534,9 @@ public class SystemFeaturesTest {
      */
     @Test
     public void testTelephonyFeatures() {
-        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY) ||
-                !mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELECOM)) {
+        if (!(mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)
+                && mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELECOM)
+                && mTelephonyManager.isVoiceCapable())) {
                 return;
         }
 
