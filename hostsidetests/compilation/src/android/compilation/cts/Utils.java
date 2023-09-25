@@ -55,31 +55,52 @@ public class Utils {
     }
 
     /**
-     * Installs a package from resources.
+     * Implementation details.
      *
-     * @param apkDmResources For each pair, the first item is the APK resource name, and the second
-     *         item is the DM resource name or null.
+     * @param packages A list of packages, where each entry is a list of APK-DM pairs.
+     * @param multiPackage True for {@code install-multi-package}, false for {@code
+     *         install-multiple}.
      */
-    public void installFromResources(IAbi abi, List<Pair<String, String>> apkDmResources)
-            throws Exception {
+    private void installFromResourcesImpl(IAbi abi, List<List<Pair<String, String>>> packages,
+            boolean multiPackage) throws Exception {
         // We cannot use `ITestDevice.installPackage` or `SuiteApkInstaller` here because they don't
         // support DM files.
         List<String> cmd =
                 new ArrayList<>(List.of("adb", "-s", mTestInfo.getDevice().getSerialNumber(),
-                        "install-multiple", "--abi", abi.getName()));
+                        multiPackage ? "install-multi-package" : "install-multiple", "--abi",
+                        abi.getName()));
 
-        for (Pair<String, String> pair : apkDmResources) {
-            String apkResource = pair.first;
-            File apkFile = copyResourceToFile(apkResource, File.createTempFile("temp", ".apk"));
-            apkFile.deleteOnExit();
-            cmd.add(apkFile.getAbsolutePath());
+        if (!multiPackage && packages.size() != 1) {
+            throw new IllegalArgumentException(
+                    "'install-multiple' only supports exactly one package");
+        }
 
-            String dmResource = pair.second;
-            if (dmResource != null) {
-                File dmFile = copyResourceToFile(
-                        dmResource, new File(getDmPath(apkFile.getAbsolutePath())));
-                dmFile.deleteOnExit();
-                cmd.add(dmFile.getAbsolutePath());
+        for (List<Pair<String, String>> apkDmResources : packages) {
+            List<String> files = new ArrayList<>();
+            for (Pair<String, String> pair : apkDmResources) {
+                String apkResource = pair.first;
+                File apkFile = copyResourceToFile(apkResource, File.createTempFile("temp", ".apk"));
+                apkFile.deleteOnExit();
+
+                String dmResource = pair.second;
+                if (dmResource != null) {
+                    File dmFile = copyResourceToFile(
+                            dmResource, new File(getDmPath(apkFile.getAbsolutePath())));
+                    dmFile.deleteOnExit();
+                    files.add(dmFile.getAbsolutePath());
+                }
+
+                // To make `install-multi-package` happy, the last file must end with ".apk".
+                files.add(apkFile.getAbsolutePath());
+            }
+
+            if (multiPackage) {
+                // The format is 'pkg1-base.dm:pkg1-base.apk:pkg1-split1.dm:pkg1-split1.apk
+                // pkg2-base.dm:pkg2-base.apk:pkg2-split1.dm:pkg2-split1.apk'.
+                cmd.add(String.join(":", files));
+            } else {
+                // The format is 'pkg1-base.dm pkg1-base.apk pkg1-split1.dm pkg1-split1.apk'.
+                cmd.addAll(files);
             }
         }
 
@@ -91,6 +112,17 @@ public class Utils {
         assertWithMessage(result.toString()).that(result.getExitCode()).isEqualTo(0);
     }
 
+    /**
+     * Installs a package from resources.
+     *
+     * @param apkDmResources For each pair, the first item is the APK resource name, and the second
+     *         item is the DM resource name or null.
+     */
+    public void installFromResources(IAbi abi, List<Pair<String, String>> apkDmResources)
+            throws Exception {
+        installFromResourcesImpl(abi, List.of(apkDmResources), false /* multiPackage */);
+    }
+
     public void installFromResources(IAbi abi, String apkResource, String dmResource)
             throws Exception {
         installFromResources(abi, List.of(Pair.create(apkResource, dmResource)));
@@ -98,6 +130,11 @@ public class Utils {
 
     public void installFromResources(IAbi abi, String apkResource) throws Exception {
         installFromResources(abi, apkResource, null);
+    }
+
+    public void installFromResourcesMultiPackage(
+            IAbi abi, List<List<Pair<String, String>>> packages) throws Exception {
+        installFromResourcesImpl(abi, packages, true /* multiPackage */);
     }
 
     public void pushFromResource(String resource, String remotePath) throws Exception {
@@ -130,6 +167,10 @@ public class Utils {
 
     public static void dumpDoesNotContainDexFile(String dump, String dexFile) {
         assertThat(dump).doesNotContainMatch(dexFileToPattern(dexFile));
+    }
+
+    public static int countSubstringOccurrence(String str, String subStr) {
+        return str.split(subStr, -1 /* limit */).length - 1;
     }
 
     private String getDmPath(String apkPath) throws Exception {
