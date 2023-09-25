@@ -31,10 +31,10 @@ java_test_host {
         type: "lite",
     },
     libs: [
-        "cts-tradefed",
-        "tradefed",
         "compatibility-host-util",
+        "cts-tradefed",
         "libprotobuf-java-full",
+        "tradefed",
         "truth-prebuilt",
     ],
     // tag this module as a cts test artifact
