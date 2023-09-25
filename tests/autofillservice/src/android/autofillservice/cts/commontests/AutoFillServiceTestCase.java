@@ -232,20 +232,24 @@ public final class AutoFillServiceTestCase {
         }
 
         protected LoginImportantForCredentialManagerActivity
-                    startLoginImportantForCredentialManagerActivity() throws Exception {
+                    startLoginImportantForCredentialManagerActivity(boolean useAutofillHint)
+                throws Exception {
             final Intent intent =
                     new Intent(mContext, LoginImportantForCredentialManagerActivity.class)
-                        .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        .putExtra("useAutofillHint", useAutofillHint);
             mContext.startActivity(intent);
             mUiBot.assertShownByRelativeId(Helper.ID_USERNAME_LABEL);
             return LoginImportantForCredentialManagerActivity.getCurrentActivity();
         }
 
         protected LoginMixedImportantForCredentialManagerActivity
-                startLoginMixedImportantForCredentialManagerActivity() throws Exception {
+                startLoginMixedImportantForCredentialManagerActivity(boolean useAutofillHInt)
+                throws Exception {
             final Intent intent =
                     new Intent(mContext, LoginMixedImportantForCredentialManagerActivity.class)
-                        .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        .putExtra("useAutofillHint", useAutofillHInt);
             mContext.startActivity(intent);
             mUiBot.assertShownByRelativeId(Helper.ID_USERNAME_LABEL);
             return LoginMixedImportantForCredentialManagerActivity.getCurrentActivity();
