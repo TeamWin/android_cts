@@ -96,6 +96,8 @@
 
         <activity android:name="android.view.surfacecontrol.cts.TestActivity"
                   android:exported="true"
+                  android:turnScreenOn="true"
+                  android:showWhenLocked="true"
                   android:theme="@android:style/Theme.NoTitleBar.Fullscreen" />
 
         <activity android:name="android.view.surfacecontrol.cts.HandleConfigurationActivity"
