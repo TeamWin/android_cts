@@ -41,12 +41,14 @@ import static android.content.pm.PackageManager.GET_SERVICES;
 import static android.content.pm.PackageManager.MATCH_ANY_USER;
 import static android.content.pm.PackageManager.MATCH_APEX;
 import static android.content.pm.PackageManager.MATCH_DISABLED_COMPONENTS;
+import static android.content.pm.PackageManager.MATCH_DISABLED_UNTIL_USED_COMPONENTS;
 import static android.content.pm.PackageManager.MATCH_FACTORY_ONLY;
 import static android.content.pm.PackageManager.MATCH_HIDDEN_UNTIL_INSTALLED_COMPONENTS;
 import static android.content.pm.PackageManager.MATCH_INSTANT;
 import static android.content.pm.PackageManager.MATCH_KNOWN_PACKAGES;
 import static android.content.pm.PackageManager.MATCH_SYSTEM_ONLY;
 import static android.content.pm.PackageManager.MATCH_UNINSTALLED_PACKAGES;
+import static android.content.pm.PackageManager.SYSTEM_APP_STATE_HIDDEN_UNTIL_INSTALLED_HIDDEN;
 import static android.content.pm.cts.PackageManagerShellCommandIncrementalTest.parsePackageDump;
 import static android.os.UserHandle.CURRENT;
 import static android.os.UserHandle.USER_CURRENT;
@@ -285,6 +287,7 @@ public class PackageManagerTest {
             ComponentName.createRelative(MOCK_LAUNCHER_PACKAGE_NAME, ".MockService");
     private static final ComponentName RESET_ENABLED_SETTING_PROVIDER_COMPONENT =
             ComponentName.createRelative(MOCK_LAUNCHER_PACKAGE_NAME, ".MockProvider");
+    static final String CTS_SHIM_PACKAGE_NAME = "com.android.cts.ctsshim";
 
     private final ServiceTestRule mServiceTestRule = new ServiceTestRule();
 
@@ -1226,7 +1229,7 @@ public class PackageManagerTest {
     @Test
     public void testGetNamesForUids_valid() throws Exception {
         final int shimId =
-                mPackageManager.getApplicationInfo("com.android.cts.ctsshim",
+                mPackageManager.getApplicationInfo(CTS_SHIM_PACKAGE_NAME,
                         PackageManager.ApplicationInfoFlags.of(0)).uid;
         final int[] uids = new int[]{
                 1000,
@@ -1250,9 +1253,9 @@ public class PackageManagerTest {
         assertEquals(expectedUid, mPackageManager.getPackageUid("android",
                 PackageManager.PackageInfoFlags.of(0)));
 
-        int uid = mPackageManager.getApplicationInfo("com.android.cts.ctsshim",
+        int uid = mPackageManager.getApplicationInfo(CTS_SHIM_PACKAGE_NAME,
                 PackageManager.ApplicationInfoFlags.of(0)).uid;
-        assertEquals(uid, mPackageManager.getPackageUid("com.android.cts.ctsshim",
+        assertEquals(uid, mPackageManager.getPackageUid(CTS_SHIM_PACKAGE_NAME,
                 PackageManager.PackageInfoFlags.of(0)));
     }
 
@@ -1557,7 +1560,7 @@ public class PackageManagerTest {
 
     @Test
     public void testSetSystemAppHiddenUntilInstalled() throws Exception {
-        String packageToManipulate = "com.android.cts.ctsshim";
+        String packageToManipulate = CTS_SHIM_PACKAGE_NAME;
         try {
             mPackageManager.getPackageInfo(packageToManipulate, MATCH_SYSTEM_ONLY);
         } catch (NameNotFoundException e) {
@@ -1571,7 +1574,7 @@ public class PackageManagerTest {
                             PackageManager.SYSTEM_APP_STATE_UNINSTALLED));
             SystemUtil.runWithShellPermissionIdentity(() ->
                     mPackageManager.setSystemAppState(packageToManipulate,
-                            PackageManager.SYSTEM_APP_STATE_HIDDEN_UNTIL_INSTALLED_HIDDEN));
+                            SYSTEM_APP_STATE_HIDDEN_UNTIL_INSTALLED_HIDDEN));
 
             // Setting the state to SYSTEM_APP_STATE_UNINSTALLED is an async operation in
             // PackageManagerService with no way to listen for completion, so poll until the
@@ -2088,6 +2091,10 @@ public class PackageManagerTest {
     private void uninstallPackageForUser(String packageName, int userId) {
         SystemUtil.runShellCommand("pm uninstall --user " + userId + " " + packageName);
 
+    }
+
+    private void installExistingPackageForUser(String packageName, int userId) {
+        SystemUtil.runShellCommand("pm install-existing --user " + userId + " " + packageName);
     }
 
     private void uninstallPackageKeepData(String packageName) {
@@ -3054,6 +3061,42 @@ public class PackageManagerTest {
         uninstallPackage(HELLO_WORLD_PACKAGE_NAME);
         mContext.unregisterReceiver(replacedBroadcastReceiver);
         mContext.unregisterReceiver(addedBroadcastReceiver);
+    }
+
+    @Test
+    public void testDeleteSystemApp() {
+        PackageInfo ctsShimPackageInfo = null;
+        try {
+            ctsShimPackageInfo = mPackageManager.getPackageInfo(
+                    CTS_SHIM_PACKAGE_NAME, MATCH_SYSTEM_ONLY);
+        } catch (NameNotFoundException e) {
+            Log.w(TAG, "Device doesn't have " + CTS_SHIM_PACKAGE_NAME + " installed, skipping");
+        }
+        assumeTrue(ctsShimPackageInfo != null);
+        final int currentUser = ActivityManager.getCurrentUser();
+        try {
+            // Delete the system package with DELETE_SYSTEM_APP
+            uninstallPackageForUser(CTS_SHIM_PACKAGE_NAME, currentUser);
+            assertThat(matchesInstalled(mPackageManager, CTS_SHIM_PACKAGE_NAME, currentUser,
+                    0)).isFalse();
+            assertThat(matchesInstalled(mPackageManager, CTS_SHIM_PACKAGE_NAME, currentUser,
+                    MATCH_DISABLED_COMPONENTS)).isFalse();
+            assertThat(matchesInstalled(mPackageManager, CTS_SHIM_PACKAGE_NAME, currentUser,
+                    MATCH_DISABLED_UNTIL_USED_COMPONENTS)).isFalse();
+            assertThat(matchesInstalled(mPackageManager, CTS_SHIM_PACKAGE_NAME, currentUser,
+                    MATCH_HIDDEN_UNTIL_INSTALLED_COMPONENTS)).isTrue();
+        } finally {
+            installExistingPackageForUser(CTS_SHIM_PACKAGE_NAME, currentUser);
+        }
+    }
+
+    static boolean matchesInstalled(PackageManager pm, String packageName, int userId, long flag) {
+        List<PackageInfo> packageInfos = pm.getInstalledPackagesAsUser(
+                PackageManager.PackageInfoFlags.of(flag), userId);
+        List<String> packageNames = packageInfos.stream()
+                .map(p -> p.packageName)
+                .toList();
+        return packageNames.contains(packageName);
     }
 
     @Test
