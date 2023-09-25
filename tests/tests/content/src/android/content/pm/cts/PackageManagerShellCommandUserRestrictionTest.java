@@ -20,6 +20,7 @@ import static com.android.bedstead.nene.userrestrictions.CommonUserRestrictions.
 
 import static com.google.common.truth.Truth.assertThat;
 
+import android.os.Process;
 import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 
@@ -57,10 +58,10 @@ public class PackageManagerShellCommandUserRestrictionTest {
     @Test
     @EnsureHasUserRestriction(value = DISALLOW_INSTALL_UNKNOWN_SOURCES)
     public void testGetUserRestriction() throws Exception {
-        assertThat(hasUserRestriction("0" /* userId */,
+        assertThat(hasUserRestriction(Process.myUserHandle().getIdentifier(),
                 DISALLOW_INSTALL_UNKNOWN_SOURCES)).isTrue();
 
-        assertThat(hasUserRestriction("100" /* userId */,
+        assertThat(hasUserRestriction(100 /* userId */,
                 DISALLOW_INSTALL_UNKNOWN_SOURCES)).isFalse();
     }
 
@@ -70,20 +71,21 @@ public class PackageManagerShellCommandUserRestrictionTest {
     @Test
     @EnsureHasUserRestriction(value = DISALLOW_INSTALL_UNKNOWN_SOURCES)
     public void testGetUserAllRestrictions() throws Exception {
-        final Set<String> restrictions = getUserAllRestrictions("0" /* userId */);
+        final Set<String> restrictions = getUserAllRestrictions(
+                Process.myUserHandle().getIdentifier());
         Log.d(TAG, "testGetUserAllRestrictions restrictions=" + restrictions.toString());
 
         assertThat(restrictions).contains(DISALLOW_INSTALL_UNKNOWN_SOURCES + "=true");
 
-        final Set<String> noRestrictions = getUserAllRestrictions("100" /* userId */);
+        final Set<String> noRestrictions = getUserAllRestrictions(100 /* userId */);
         Log.d(TAG, "testGetUserAllRestrictions noRestrictions=" + noRestrictions.toString());
 
         assertThat(noRestrictions).doesNotContain(DISALLOW_INSTALL_UNKNOWN_SOURCES + "=true");
     }
 
-    private boolean hasUserRestriction(String userId, String restriction) throws Exception {
+    private boolean hasUserRestriction(int userId, String restriction) throws Exception {
         String output = SystemUtil.runShellCommand(
-                String.format("pm get-user-restriction --user %s %s", userId, restriction)).trim();
+                String.format("pm get-user-restriction --user %d %s", userId, restriction)).trim();
         Log.d(TAG, "hasUserRestriction for userId=" + userId + " and restriction=" + restriction
                 + ", output=" + output);
 
@@ -91,9 +93,9 @@ public class PackageManagerShellCommandUserRestrictionTest {
     }
 
     @SuppressWarnings("MixedMutabilityReturnType")
-    private Set<String> getUserAllRestrictions(String userId) throws Exception {
+    private Set<String> getUserAllRestrictions(int userId) throws Exception {
         String output = SystemUtil.runShellCommand(
-                String.format("pm get-user-restriction --user %s --all", userId)).trim();
+                String.format("pm get-user-restriction --user %d --all", userId)).trim();
         Log.d(TAG, "getUserAllRestrictions for userId=" + userId + ", output=" + output);
         int restrictionsPosition = output.indexOf("Bundle[{");
         if (restrictionsPosition >= 0 && output.endsWith("}]")) {
