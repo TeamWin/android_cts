@@ -25,7 +25,6 @@ import static android.inputmethodservice.cts.common.DeviceEventConstants.RECEIVE
 
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeFalse;
-import static org.junit.Assume.assumeTrue;
 
 import android.inputmethodservice.cts.common.ComponentNameUtils;
 import android.inputmethodservice.cts.common.EditTextAppConstants;
@@ -68,26 +67,10 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
             "DO_NOT_DOWNSCALE_TO_1080P_ON_TV";
 
     /**
-     * {@code true} if {@link #tearDown()} needs to be fully executed.
-     *
-     * <p>When {@link #setUp()} is interrupted by {@link org.junit.AssumptionViolatedException}
-     * before the actual setup tasks are executed, all the corresponding cleanup tasks should also
-     * be skipped.</p>
-     *
-     * <p>Once JUnit 5 becomes available in Android, we can remove this by moving the assumption
-     * checks into a non-static {@link org.junit.BeforeClass} method.</p>
-     */
-    private boolean mNeedsTearDown = false;
-
-    /**
      * Set up test case.
      */
     @Before
     public void setUp() throws Exception {
-        // Skip whole tests when DUT has no android.software.input_methods feature.
-        assumeTrue(hasDeviceFeature(ShellCommandUtils.FEATURE_INPUT_METHODS));
-        mNeedsTearDown = true;
-
         cleanUpTestImes();
         installPackage(DeviceTestConstants.APK, "-r");
         shell(ShellCommandUtils.deleteContent(EventTableConstants.CONTENT_URI));
@@ -98,9 +81,6 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
      */
     @After
     public void tearDown() throws Exception {
-        if (!mNeedsTearDown) {
-            return;
-        }
         shell(ShellCommandUtils.resetImes());
     }
 
