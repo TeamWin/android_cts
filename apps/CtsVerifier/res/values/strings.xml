@@ -6984,6 +6984,7 @@ Follow the instructions on the screen to measure the frequency response for the 
     </string>
     <string name="is_reference_device_checkbox_text">Is Reference Device</string>
     <string name="is_manual_pass_text">Pass test manually after test completion</string>
+    <string name="use_extended_advertisement_text">Use extended advertisement</string>
     <string name="uwb_precision">Uwb Precision Test</string>
     <string name="uwb_short_range">Uwb Short Range Test</string>
     <string name="uwb_precision_instruction">
@@ -7012,6 +7013,7 @@ Follow the instructions on the screen to measure the frequency response for the 
     <string name="dut_test_result_info_presence">Tx RSSI median: %1$d. Rx RSSI median received from reference device: %2$d</string>
     <string name="ref_test_result_info_presence">Rx RSSI median computed: %1$d.</string>
     <string name="reference_device_id_input_presence">Enter the device ID displayed on the advertising device</string>
+    <string name="tx_power_input_presence">Optional. Configure advertising TX power. Default is 1(TX_POWER_HIGH)</string>
 
     <!-- Strings for BLE RSSI Precision Test -->
     <string name="ble_rssi_precision_name">BLE RSSI Precision Test</string>
