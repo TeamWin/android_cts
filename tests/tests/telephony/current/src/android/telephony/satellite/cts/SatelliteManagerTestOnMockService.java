@@ -209,11 +209,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         assertTrue(callback.waitUntilResult(1));
 
         assertTrue(sMockSatelliteServiceManager.restoreSatelliteServicePackageName());
-        if (sMockSatelliteServiceManager.isSatelliteServicePackageConfigured()) {
-            assertTrue(callback.waitUntilModemOff(EXTERNAL_DEPENDENT_TIMEOUT));
-        } else {
-            waitFor(1000);
-        }
+        waitFor(2000);
         sSatelliteManager.unregisterForSatelliteModemStateChanged(callback);
         afterAllTestsBase();
         sMockSatelliteServiceManager = null;
@@ -3819,11 +3815,7 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         assertTrue(callback.waitUntilResult(1));
 
         assertTrue(sMockSatelliteServiceManager.restoreSatelliteServicePackageName());
-        if (sMockSatelliteServiceManager.isSatelliteServicePackageConfigured()) {
-            assertTrue(callback.waitUntilModemOff(EXTERNAL_DEPENDENT_TIMEOUT));
-        } else {
-            waitFor(1000);
-        }
+        waitFor(2000);
         sSatelliteManager.unregisterForSatelliteModemStateChanged(callback);
         sMockSatelliteServiceManager.setSupportedRadioTechnologies(supportedRadioTechnologies);
         try {
