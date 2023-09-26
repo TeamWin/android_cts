@@ -71,6 +71,8 @@ public class KeyGenParameterSpecTest {
             spec.getDigests();
             fail();
         } catch (IllegalStateException expected) {}
+        assertFalse(spec.isMgf1DigestsSpecified());
+        assertThrows(IllegalStateException.class, spec::getMgf1Digests);
         MoreAsserts.assertEmpty(Arrays.asList(spec.getEncryptionPaddings()));
         assertEquals(-1, spec.getKeySize());
         assertNull(spec.getKeyValidityStart());
@@ -118,6 +120,7 @@ public class KeyGenParameterSpecTest {
                 .setCertificateSerialNumber(new BigInteger("13946146"))
                 .setCertificateSubject(new X500Principal("CN=test"))
                 .setDigests(KeyProperties.DIGEST_SHA256, KeyProperties.DIGEST_SHA384)
+                .setMgf1Digests(KeyProperties.DIGEST_SHA256, KeyProperties.DIGEST_SHA384)
                 .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_RSA_OAEP,
                         KeyProperties.ENCRYPTION_PADDING_PKCS7)
                 .setKeySize(1234)
@@ -148,7 +151,11 @@ public class KeyGenParameterSpecTest {
         assertEquals(new BigInteger("13946146"), spec.getCertificateSerialNumber());
         assertEquals(new X500Principal("CN=test"), spec.getCertificateSubject());
         assertTrue(spec.isDigestsSpecified());
+        assertTrue(spec.isMgf1DigestsSpecified());
         MoreAsserts.assertContentsInOrder(Arrays.asList(spec.getDigests()),
+                KeyProperties.DIGEST_SHA256, KeyProperties.DIGEST_SHA384);
+        /* Since getMgf1Digest return type is Set, objects could be in any order. */
+        MoreAsserts.assertContentsInAnyOrder(spec.getMgf1Digests(),
                 KeyProperties.DIGEST_SHA256, KeyProperties.DIGEST_SHA384);
         MoreAsserts.assertContentsInOrder(Arrays.asList(spec.getEncryptionPaddings()),
                 KeyProperties.ENCRYPTION_PADDING_RSA_OAEP, KeyProperties.ENCRYPTION_PADDING_PKCS7);
@@ -247,6 +254,9 @@ public class KeyGenParameterSpecTest {
                 new Date(keyValidityEndDateForConsumption.getTime());
         String[] digests = new String[] {KeyProperties.DIGEST_MD5, KeyProperties.DIGEST_SHA512};
         String[] originalDigests = digests.clone();
+        String[] mgfDigests = new String[] {KeyProperties.DIGEST_SHA256,
+                KeyProperties.DIGEST_SHA512};
+        String[] originalMgfDigests = mgfDigests.clone();
         String[] encryptionPaddings = new String[] {
                 KeyProperties.ENCRYPTION_PADDING_RSA_OAEP, KeyProperties.ENCRYPTION_PADDING_PKCS7};
         String[] originalEncryptionPaddings = encryptionPaddings.clone();
@@ -260,6 +270,7 @@ public class KeyGenParameterSpecTest {
                 .setCertificateNotBefore(certNotBeforeDate)
                 .setCertificateNotAfter(certNotAfterDate)
                 .setDigests(digests)
+                .setMgf1Digests(mgfDigests)
                 .setEncryptionPaddings(encryptionPaddings)
                 .setKeyValidityStart(keyValidityStartDate)
                 .setKeyValidityForOriginationEnd(keyValidityEndDateForOrigination)
@@ -282,6 +293,10 @@ public class KeyGenParameterSpecTest {
         assertEquals(Arrays.asList(originalDigests), Arrays.asList(spec.getDigests()));
         digests[1] = null;
         assertEquals(Arrays.asList(originalDigests), Arrays.asList(spec.getDigests()));
+
+        assertTrue(Arrays.asList(originalMgfDigests).containsAll(spec.getMgf1Digests()));
+        mgfDigests[1] = null;
+        assertTrue(Arrays.asList(originalMgfDigests).containsAll(spec.getMgf1Digests()));
 
         assertEquals(Arrays.asList(originalEncryptionPaddings),
                 Arrays.asList(spec.getEncryptionPaddings()));
@@ -322,6 +337,7 @@ public class KeyGenParameterSpecTest {
                 .setCertificateNotBefore(new Date(System.currentTimeMillis()))
                 .setCertificateNotAfter(new Date(System.currentTimeMillis() + 12345678))
                 .setDigests(KeyProperties.DIGEST_MD5, KeyProperties.DIGEST_SHA512)
+                .setMgf1Digests(KeyProperties.DIGEST_SHA256, KeyProperties.DIGEST_SHA512)
                 .setEncryptionPaddings(
                         KeyProperties.ENCRYPTION_PADDING_RSA_OAEP,
                         KeyProperties.ENCRYPTION_PADDING_PKCS7)
