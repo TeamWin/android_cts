@@ -1849,6 +1849,8 @@ public class PinnedStackTests extends ActivityManagerTestBase {
                 windowState.getDisplayId());
         final Rect displayRect = display.getDisplayRect();
         final Rect pinnedStackBounds = getPinnedStackBounds();
+        Log.d(TAG, "display bounds = " + displayRect
+                + ", PIP bounds = " + pinnedStackBounds);
         assertTrue(displayRect.contains(pinnedStackBounds));
     }
 
