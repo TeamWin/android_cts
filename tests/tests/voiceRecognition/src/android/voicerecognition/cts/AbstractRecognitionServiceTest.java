@@ -85,11 +85,11 @@ abstract class AbstractRecognitionServiceTest {
     private static final long SEQUENCE_TEST_WAIT_TIMEOUT_MS = 5000L;
     private static final long ACTIVITY_INIT_WAIT_TIMEOUT_MS = 5000L;
 
-    private static final String CTS_VOICE_RECOGNITION_SERVICE =
+    /* package */ static final String CTS_VOICE_RECOGNITION_SERVICE =
             "android.recognitionservice.service/android.recognitionservice.service"
                     + ".CtsVoiceRecognitionService";
 
-    private static final String IN_PACKAGE_RECOGNITION_SERVICE =
+    /* package */ static final String IN_PACKAGE_RECOGNITION_SERVICE =
             "android.voicerecognition.cts/android.voicerecognition.cts.CtsRecognitionService";
 
     // Expected to create 1 more recognizer than what the concurrency limit is,
