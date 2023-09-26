@@ -5703,53 +5703,65 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="audio_general_record_colon"> record:</string>
 
     <!-- Audio Data Paths Test-->
+    <string name="audio_datapaths_clearresults">Clear Results</string>
+
     <string name="audio_datapaths_internal_test">Audio Data Paths Internal Test</string>
     <string name="audio_datapaths_internal_info">This test verifies basic functionality over a set of audio routes
-        \nTest Setup:
-        \n - It may be necessary to go to the \"Sound &amp; vibration\" settings panel to set the volume level for the output device.
+        \n\nTest Setup:
+        \n • It may be necessary to go to the \"Sound &amp; vibration\" settings panel to set the volume level for the output device.
         \n   With no audio peripherals connected, adjust the \"Media volume\" to max.
-        \n   The test will display valid data paths with an asterix appended to the data path name.
-        \nTest Execution:
-        \n - Place the device on a flat surface in a quiet room.
-        \n - Select the \"Native API\" button.
-        \n - Press the \"Start\" button. The test will step through the list of valid data paths playing a tone and recording it\'s presence or absence.
-        \n - Select the \"Java API\" button.
-        \n - Press the \"Start\" button to repeat each data path test for the Java API.
-        \nTest Completion:
-        \n - Once each of the data paths and APIs have been measured, the test can be marked successful.
+        \n The test will display valid data paths with an asterisk appended to the data path name.
+        \n\nTest Execution:
+        \n • Place the device on a flat surface in a quiet room.
+        \n • Select the \"Native API\" button.
+        \n • Press the \"Start\" button. The test will step through the list of valid data paths playing a tone and noting its presence or absence.
+        \n • Select the \"Java API\" button.
+        \n • Press the \"Start\" button to repeat each data path test for the Java API.
+        \n\nTest Completion:
+        \n • Once each of the data paths and APIs have been measured, the test can be marked successful.
     </string>
 
+    <string name="audio_datapaths_mic">Internal Mic: </string>
+    <string name="audio_datapatch_speaker">Internal Speaker: </string>
     <string name="audio_datapaths_analog_test">Audio Data Paths Analog Jack Test</string>
     <string name="audio_datapaths_analog_info">This test verifies basic functionality over a set of audio routes
         \n\nNote that if the DUT does not have an analog headset port, this test can be skipped.
         \n\nTest Setup:
-        \n- It may be necessary to go to the \"Sound &amp; vibration\" settings panel to set the volume level for each output device.
-        \n - Insert the analog loopback adapter into the 3.5mm headset jack and adjust the \"Media volume\" to max.
-        \n - Leave the loopback adapter in the jack. (See the \"Audio Loopback Latency Test\" for a description).
-        \n   The test will display valid data paths with an asterix appended to the data path name.
-        \nTest Execution:
-        \n - Select the \"Native API\" button.
-        \n - Press the \"Start\" button. The test will step through the list of valid data paths playing a tone and recording it\'s presence or absence.
-        \n - Select the \"Java API\" button.
-        \n - Press the \"Start\" button to repeat each data path test for the Java API.
-        \nTest Completion:
-        \n - Once each of the data paths and APIs have been measured, the test can be marked successful.
+        \n • It may be necessary to go to the \"Sound &amp; vibration\" settings panel to set the volume level for each output device.
+        \n • Insert the analog loopback adapter into the 3.5mm headset jack and adjust the \"Media volume\" to max.
+        \n • Leave the loopback adapter in the jack. (See the \"Audio Loopback Latency Test\" for a description).
+        \n The test will display valid data paths with an asterisk appended to the data path name.
+        \n\nTest Execution:
+        \n • Select the \"Native API\" button.
+        \n • Press the \"Start\" button. The test will step through the list of valid data paths playing a tone and noting its presence or absence.
+        \n • Select the \"Java API\" button.
+        \n • Press the \"Start\" button to repeat each data path test for the Java API.
+        \n\nTest Completion:
+        \n • Once each of the data paths and APIs have been measured, the test can be marked successful.
     </string>
+    <string name="audio_datapaths_analog_nodevices">There are no peripherals currently available for this test. If the DUT does not support
+        an Analog Headset Jack, the test may PASS. If the DUT does support an Analog Headset Jack, please insert an Analog Loopback Plug
+        into the Analog Headset Jack and run the test.</string>
 
     <string name="audio_datapaths_USB_test">Audio Data Paths USB Test</string>
     <string name="audio_datapaths_USB_info">This test verifies basic functionality over a set of audio routes
         \nTest Setup:
-        \n - It may be necessary to go to the \"Sound &amp; vibration\" settings panel to set the volume level for each output device.
-        \n   Connect a USB audio interface and adjust the \"Media volume\" to max.
-        \n   The test will display valid data paths with an asterix appended to the data path name.
-        \nTest Execution:
-        \n - Select the \"Native API\" button.
-        \n - Press the \"Start\" button. The test will step through the list of valid data paths playing a tone and recording it\'s presence or absence.
-        \n - Select the \"Java API\" button.
-        \n - Press the \"Start\" button to repeat each data path test for the Java API.
-        \nTest Completion:
-        \n - Once each of the data paths and APIs have been measured, the test can be marked successful.
+        \n • It may be necessary to go to the \"Sound &amp; vibration\" settings panel to set the volume level for each output device.
+        \n • Connect a USB audio interface with loopback cabling and adjust the \"Media volume\" to max.
+        \n The test will display valid data paths with an asterisk appended to the data path name.
+        \n\nTest Execution:
+        \n • Select the \"Native API\" button.
+        \n • Press the \"Start\" button. The test will step through the list of valid data paths playing a tone and noting its presence or absence.
+        \n • Select the \"Java API\" button.
+        \n • Press the \"Start\" button to repeat each data path test for the Java API.
+        \n\nTest Completion:
+        \n • Once each of the data paths and APIs have been measured, the test can be marked successful.
     </string>
+    <string name="audio_datapaths_usb_nodevices">There are no peripherals currently available for this test. If the DUT does not support
+        USB audio, the test may PASS. If the DUT does support USB audio, please connect each type of USB audio peripheral and
+        run the test for each type.</string>
+    <string name="audio_datapaths_usb_nextperipheral">Please connect the next USB peripheral to be tested and
+        run the test again.</string>
     <string name="audio_datapaths_noio">"No valid datapaths. PASS."</string>
     <string name="audio_datapaths_results">%1$s\n%2$s -> %3$s</string>
 

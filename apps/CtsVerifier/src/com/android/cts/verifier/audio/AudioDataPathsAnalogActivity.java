@@ -18,6 +18,7 @@ package com.android.cts.verifier.audio;
 
 import android.media.AudioDeviceInfo;
 import android.os.Bundle;
+import android.view.View;
 
 import com.android.cts.verifier.R;
 
@@ -28,12 +29,21 @@ import org.hyphonate.megaaudio.recorder.AudioSinkProvider;
 import org.hyphonate.megaaudio.recorder.sinks.AppCallbackAudioSinkProvider;
 
 public class AudioDataPathsAnalogActivity extends AudioDataPathsBaseActivity {
+    private static final String TAG = "AudioDataPathsAnalogActivity";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        setContentView(R.layout.audio_datapaths_analog);
+
         super.onCreate(savedInstanceState);
         setInfoResources(
                 R.string.audio_datapaths_analog_test, R.string.audio_datapaths_analog_info, -1);
 
+        // Make sure there are devices to test (as in a device without an analog port),
+        // or else enable pass button.
+        if (mTestManager.countValidTestSpecs() == 0) {
+            getPassButton().setEnabled(true);
+        }
     }
 
     void gatherTestModules(TestManager testManager) {
@@ -61,5 +71,14 @@ public class AudioDataPathsAnalogActivity extends AudioDataPathsBaseActivity {
         testSpec.setDescription("Analog:2:Right Analog:1");
         testSpec.setSources(rightSineSourceProvider, micSinkProvider);
         testManager.mTestSpecs.add(testSpec);
+    }
+
+    void postValidateTestDevices(int numValidTestSpecs) {
+        View promptView = findViewById(R.id.audio_datapaths_deviceprompt);
+        if (mTestManager.calculatePass()) {
+            promptView.setVisibility(View.GONE);
+        } else {
+            promptView.setVisibility(numValidTestSpecs == 0 ? View.VISIBLE : View.GONE);
+        }
     }
 }

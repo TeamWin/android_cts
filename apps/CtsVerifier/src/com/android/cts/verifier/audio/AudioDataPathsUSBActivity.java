@@ -18,6 +18,8 @@ package com.android.cts.verifier.audio;
 
 import android.media.AudioDeviceInfo;
 import android.os.Bundle;
+import android.view.View;
+import android.widget.TextView;
 
 import com.android.cts.verifier.R;
 
@@ -30,9 +32,16 @@ import org.hyphonate.megaaudio.recorder.sinks.AppCallbackAudioSinkProvider;
 public class AudioDataPathsUSBActivity extends AudioDataPathsBaseActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        setContentView(R.layout.audio_datapaths_usb);
+
         super.onCreate(savedInstanceState);
         setInfoResources(
                 R.string.audio_datapaths_USB_test, R.string.audio_datapaths_USB_info, -1);
+
+        // Make sure there are devices to test, or else enable pass button.
+        if (mTestManager.countValidTestSpecs() == 0) {
+            getPassButton().setEnabled(true);
+        }
     }
 
     void gatherTestModules(TestManager testManager) {
@@ -41,7 +50,7 @@ public class AudioDataPathsUSBActivity extends AudioDataPathsBaseActivity {
         AudioSourceProvider rightSineSourceProvider = new SparseChannelAudioSourceProvider(
                 SparseChannelAudioSourceProvider.CHANNELMASK_RIGHT);
 
-        AudioSinkProvider micSinkProvider =
+        AudioSinkProvider analysisSinkProvider =
                 new AppCallbackAudioSinkProvider(mAnalysisCallbackHandler);
 
         TestSpec testSpec;
@@ -58,13 +67,13 @@ public class AudioDataPathsUSBActivity extends AudioDataPathsBaseActivity {
                     AudioDeviceInfo.TYPE_USB_DEVICE, 48000, 2,
                     AudioDeviceInfo.TYPE_USB_DEVICE, 48000, 2);
             testSpec.setSectionTitle("USB Device");
-            testSpec.setSources(leftSineSourceProvider, micSinkProvider);
+            testSpec.setSources(leftSineSourceProvider, analysisSinkProvider);
             testSpec.setDescription("USBDevice:2:L USBDevice:2");
             testManager.mTestSpecs.add(testSpec);
             testSpec = new TestSpec(
                     AudioDeviceInfo.TYPE_USB_DEVICE, 48000, 2,
                     AudioDeviceInfo.TYPE_USB_DEVICE, 48000, 2);
-            testSpec.setSources(rightSineSourceProvider, micSinkProvider);
+            testSpec.setSources(rightSineSourceProvider, analysisSinkProvider);
             testSpec.setDescription("USBDevice:2:R USBDevice:2");
             testManager.mTestSpecs.add(testSpec);
         }
@@ -77,15 +86,29 @@ public class AudioDataPathsUSBActivity extends AudioDataPathsBaseActivity {
                     AudioDeviceInfo.TYPE_USB_HEADSET, 48000, 2,
                     AudioDeviceInfo.TYPE_USB_HEADSET, 48000, 2);
             testSpec.setSectionTitle("USB Headset");
-            testSpec.setSources(leftSineSourceProvider, micSinkProvider);
+            testSpec.setSources(leftSineSourceProvider, analysisSinkProvider);
             testSpec.setDescription("USBHeadset:2:L USBHeadset:2");
             testManager.mTestSpecs.add(testSpec);
             testSpec = new TestSpec(
                     AudioDeviceInfo.TYPE_USB_HEADSET, 48000, 2,
                     AudioDeviceInfo.TYPE_USB_HEADSET, 48000, 2);
-            testSpec.setSources(rightSineSourceProvider, micSinkProvider);
+            testSpec.setSources(rightSineSourceProvider, analysisSinkProvider);
             testSpec.setDescription("USBHeadset:2:R USBHeadset:2");
             testManager.mTestSpecs.add(testSpec);
         }
+    }
+
+    void postValidateTestDevices(int numValidTestSpecs) {
+        TextView promptView = findViewById(R.id.audio_datapaths_deviceprompt);
+
+        if (mTestManager.countTestedTestSpecs() != 0) {
+            // There are already tested devices in the list, so they must be attaching
+            // another test peripheral
+            promptView.setText(
+                    getResources().getString(R.string.audio_datapaths_usb_nextperipheral));
+        } else {
+            promptView.setText(getResources().getString(R.string.audio_datapaths_usb_nodevices));
+        }
+        promptView.setVisibility(numValidTestSpecs == 0 ? View.VISIBLE : View.GONE);
     }
 }

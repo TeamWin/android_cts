@@ -18,6 +18,7 @@ package com.android.cts.verifier.audio;
 
 import android.media.AudioDeviceInfo;
 import android.os.Bundle;
+import android.widget.TextView;
 
 import com.android.cts.verifier.R;
 
@@ -33,7 +34,17 @@ import org.hyphonate.megaaudio.recorder.sinks.AppCallbackAudioSinkProvider;
 public class AudioDataPathsInternalActivity extends AudioDataPathsBaseActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        setContentView(R.layout.audio_datapaths_internal);
+
         super.onCreate(savedInstanceState);
+
+        String yesString = getResources().getString(R.string.audio_general_yes);
+        String noString = getResources().getString(R.string.audio_general_no);
+        ((TextView) findViewById(R.id.audio_datapaths_mic))
+                .setText(mHasMic ? yesString : noString);
+        ((TextView) findViewById(R.id.audio_datapaths_speaker))
+                .setText(mHasSpeaker ? yesString : noString);
+
         setInfoResources(
                 R.string.audio_datapaths_internal_test, R.string.audio_datapaths_internal_info, -1);
     }
@@ -233,6 +244,10 @@ public class AudioDataPathsInternalActivity extends AudioDataPathsBaseActivity {
                 testManager.mTestSpecs.add(testSpec);
             }
         }
+    }
+
+    void postValidateTestDevices(int numValidTestSpecs) {
+
     }
 
 }
