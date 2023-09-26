@@ -17,26 +17,15 @@
 package android.keystore.cts;
 
 import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.fail;
 
 import android.content.Context;
-
-import java.math.BigInteger;
-import java.security.PrivateKey;
-import java.security.Provider;
-import java.security.PublicKey;
-import java.security.Security;
-import java.security.interfaces.RSAKey;
-
-import javax.crypto.BadPaddingException;
-import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
-
 import android.keystore.cts.util.EmptyArray;
 import android.keystore.cts.util.ImportedKey;
 import android.keystore.cts.util.TestUtils;
+import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
 
 import androidx.test.InstrumentationRegistry;
@@ -44,6 +33,23 @@ import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import java.math.BigInteger;
+import java.security.InvalidKeyException;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.PrivateKey;
+import java.security.Provider;
+import java.security.PublicKey;
+import java.security.Security;
+import java.security.interfaces.RSAKey;
+import java.security.spec.MGF1ParameterSpec;
+
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.spec.OAEPParameterSpec;
+import javax.crypto.spec.PSource;
 
 @RunWith(AndroidJUnit4.class)
 public class RSACipherTest {
@@ -273,5 +279,27 @@ public class RSACipherTest {
                 throw new RuntimeException("Failed for key " + key.getAlias(), e);
             }
         }
+    }
+
+    @Test
+    public void testRsaOaepDecryptWithWrongMGF1DigestFails() throws Exception {
+        Provider provider = Security.getProvider(EXPECTED_PROVIDER_NAME);
+        KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA", "AndroidKeyStore");
+        generator.initialize(new KeyGenParameterSpec.Builder("test_1",
+                KeyProperties.PURPOSE_ENCRYPT | KeyProperties.PURPOSE_DECRYPT)
+                .setBlockModes(KeyProperties.BLOCK_MODE_ECB)
+                .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_RSA_OAEP)
+                .setDigests(KeyProperties.DIGEST_SHA256)
+                .setMgf1Digests(KeyProperties.DIGEST_SHA256)
+                .build());
+        KeyPair keyPair = generator.generateKeyPair();
+
+        Cipher cipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA-256AndMGF1Padding");
+        assertThrows("RSA cipher should fail to initialize if MGF1 digest specified while key"
+                        + " generation is different than MGF1 digest specified in initialization"
+                        + " parameters.", InvalidKeyException.class,
+                () -> cipher.init(Cipher.DECRYPT_MODE, keyPair.getPrivate(),
+                    new OAEPParameterSpec("SHA-256", "MGF1",
+                            new MGF1ParameterSpec("SHA-1"), PSource.PSpecified.DEFAULT)));
     }
 }
