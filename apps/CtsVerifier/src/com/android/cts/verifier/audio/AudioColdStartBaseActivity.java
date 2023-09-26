@@ -172,13 +172,13 @@ public abstract class AudioColdStartBaseActivity
         int id = v.getId();
         if (id == R.id.audioJavaApiBtn) {
             stopAudioTest();
-            updateTestStateButtons();
             clearResults();
+            updateTestStateButtons();
             mAudioApi = BuilderBase.TYPE_JAVA;
         } else if (id == R.id.audioNativeApiBtn) {
             stopAudioTest();
-            updateTestStateButtons();
             clearResults();
+            updateTestStateButtons();
             mAudioApi = BuilderBase.TYPE_OBOE;
         } else if (id == R.id.coldstart_start_btn) {
             startAudioTest();
