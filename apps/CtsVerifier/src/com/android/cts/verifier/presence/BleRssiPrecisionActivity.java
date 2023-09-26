@@ -49,6 +49,7 @@ public class BleRssiPrecisionActivity extends PassFailButtons.Activity {
 
     // Report log schema
     private static final String KEY_REFERENCE_DEVICE = "reference_device";
+    private static final String KEY_RSSI_RANGE_95_PERCENTILE = "rssi_range_95_percentile";
 
     // Thresholds
     private static final int MAX_RSSI_RANGE_DBM = 18;
@@ -69,7 +70,10 @@ public class BleRssiPrecisionActivity extends PassFailButtons.Activity {
     private EditText mReferenceDeviceIdInput;
     private String mReferenceDeviceName;
     private CheckBox mIsReferenceDeviceCheckbox;
-    private boolean mTestPassed;
+    private CheckBox mIsManualPassCheckbox;
+    private boolean mIsManualPass;
+    private boolean mTestCompleted;
+    private int mRssiRange;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -85,6 +89,7 @@ public class BleRssiPrecisionActivity extends PassFailButtons.Activity {
         mDeviceFoundTextView = findViewById(R.id.device_found_info);
         mReferenceDeviceIdInput = findViewById(R.id.ref_device_id_input);
         mIsReferenceDeviceCheckbox = findViewById(R.id.is_reference_device);
+        mIsManualPassCheckbox = findViewById(R.id.is_manual_pass);
         mDutModeLayout = findViewById(R.id.dut_mode_layout);
         mRefModeLayout = findViewById(R.id.ref_mode_layout);
         DeviceFeatureChecker.checkFeatureSupported(this, getPassButton(),
@@ -99,10 +104,14 @@ public class BleRssiPrecisionActivity extends PassFailButtons.Activity {
         mDeviceIdInfoTextView.setVisibility(View.GONE);
         mDeviceFoundTextView.setVisibility(View.GONE);
         isReferenceDevice = mIsReferenceDeviceCheckbox.isChecked();
+        mIsManualPass = mIsManualPassCheckbox.isChecked();
         checkUiMode();
         mIsReferenceDeviceCheckbox.setOnCheckedChangeListener((buttonView, isChecked) -> {
             isReferenceDevice = isChecked;
             checkUiMode();
+        });
+        mIsManualPassCheckbox.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            mIsManualPass = isChecked;
         });
         mStartTestButton.setOnClickListener(v -> startTest());
         mStopTestButton.setOnClickListener(v -> stopTest());
@@ -116,6 +125,7 @@ public class BleRssiPrecisionActivity extends PassFailButtons.Activity {
     }
 
     private void startTest() {
+        mTestCompleted = false;
         if (!checkBluetoothEnabled()) {
             return;
         }
@@ -162,10 +172,15 @@ public class BleRssiPrecisionActivity extends PassFailButtons.Activity {
         Collections.sort(data);
         // Calculate range at 95th percentile
         int rssiRange = data.get(975) - data.get(25);
+        mRssiRange = rssiRange;
+        mTestCompleted = true;
         if (rssiRange <= MAX_RSSI_RANGE_DBM) {
             makeToast("Test passed! Rssi range is: " + rssiRange);
-            getPassButton().performClick();
-            mTestPassed = true;
+            if (mIsManualPass) {
+                getPassButton().setEnabled(true);
+            } else {
+                getPassButton().performClick();
+            }
         } else {
             makeToast("Test failed! Rssi range is: " + rssiRange);
         }
@@ -244,9 +259,11 @@ public class BleRssiPrecisionActivity extends PassFailButtons.Activity {
 
     @Override
     public void recordTestResults() {
-        if (mTestPassed) {
+        if (mTestCompleted) {
             getReportLog().addValue(KEY_REFERENCE_DEVICE, mReferenceDeviceName,
                     ResultType.NEUTRAL, ResultUnit.NONE);
+            getReportLog().addValue(KEY_RSSI_RANGE_95_PERCENTILE, mRssiRange, ResultType.NEUTRAL,
+                    ResultUnit.NONE);
             getReportLog().submit();
         }
     }

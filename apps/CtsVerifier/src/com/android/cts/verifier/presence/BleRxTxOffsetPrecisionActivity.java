@@ -49,6 +49,8 @@ public class BleRxTxOffsetPrecisionActivity extends PassFailButtons.Activity {
 
     // Report log schema
     private static final String KEY_REFERENCE_DEVICE = "reference_device";
+    private static final String KEY_RSSI_MEDIAN_DUT = "rssi_median_dut";
+    private static final String KEY_RSSI_MEDIAN_REFERENCE = "rssi_median_ref";
 
     // Thresholds
     private static final int MIN_RSSI_MEDIAN_DBM = -65;
@@ -72,9 +74,12 @@ public class BleRxTxOffsetPrecisionActivity extends PassFailButtons.Activity {
     private EditText mReferenceDeviceIdInput;
     private String mReferenceDeviceName;
     private CheckBox mIsReferenceDeviceCheckbox;
-    private boolean mTestPassed;
+    private CheckBox mIsManualPassCheckbox;
+    private boolean mIsManualPass;
     private byte mCurrentReferenceDeviceId = 0;
     private byte mRssiMedianFromReferenceDevice = 0;
+    private int mRssiMedianOnDut = 0;
+    private boolean mTestCompleted;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -90,6 +95,7 @@ public class BleRxTxOffsetPrecisionActivity extends PassFailButtons.Activity {
         mDeviceFoundTextView = findViewById(R.id.device_found_info);
         mReferenceDeviceIdInput = findViewById(R.id.ref_device_id_input);
         mIsReferenceDeviceCheckbox = findViewById(R.id.is_reference_device);
+        mIsManualPassCheckbox = findViewById(R.id.is_manual_pass);
         mDutModeLayout = findViewById(R.id.dut_mode_layout);
         mRefModeLayout = findViewById(R.id.ref_mode_layout);
         mDutTestInfoTextView = findViewById(R.id.dut_test_result_info);
@@ -108,10 +114,14 @@ public class BleRxTxOffsetPrecisionActivity extends PassFailButtons.Activity {
         mRefTestInfoTextView.setVisibility(View.GONE);
         mDutTestInfoTextView.setVisibility(View.GONE);
         isReferenceDevice = mIsReferenceDeviceCheckbox.isChecked();
+        mIsManualPass = mIsManualPassCheckbox.isChecked();
         checkUiMode();
         mIsReferenceDeviceCheckbox.setOnCheckedChangeListener((buttonView, isChecked) -> {
             isReferenceDevice = isChecked;
             checkUiMode();
+        });
+        mIsManualPassCheckbox.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            mIsManualPass = isChecked;
         });
         mStartTestButton.setOnClickListener(v -> startTestAsDut());
         mStopTestButton.setOnClickListener(v -> stopTest());
@@ -125,6 +135,9 @@ public class BleRxTxOffsetPrecisionActivity extends PassFailButtons.Activity {
     }
 
     private void startTestAsDut() {
+        mTestCompleted = false;
+        mRssiMedianFromReferenceDevice = 0;
+        mRssiMedianOnDut = 0;
         if (!checkBluetoothEnabled()) {
             return;
         }
@@ -134,6 +147,7 @@ public class BleRxTxOffsetPrecisionActivity extends PassFailButtons.Activity {
         }
         mStartTestButton.setEnabled(false);
         mStopTestButton.setEnabled(true);
+        mDutTestInfoTextView.setVisibility(View.GONE);
         mCurrentReferenceDeviceId = Byte.parseByte(mReferenceDeviceIdInput.getText().toString());
         mIsReferenceDeviceCheckbox.setEnabled(false);
         startAdvertising();
@@ -176,6 +190,7 @@ public class BleRxTxOffsetPrecisionActivity extends PassFailButtons.Activity {
         if (!checkBluetoothEnabled()) {
             return;
         }
+        mRefTestInfoTextView.setVisibility(View.GONE);
         startAdvertising();
         mBleScanner.startScanning((uuids,
                 macAddress,
@@ -217,6 +232,8 @@ public class BleRxTxOffsetPrecisionActivity extends PassFailButtons.Activity {
             startAdvertising();
             return;
         }
+        mRssiMedianOnDut = rssiMedian;
+        mTestCompleted = true;
         String dutDeviceTestInfo = getString(R.string.dut_test_result_info_presence,
                 rssiMedian, mRssiMedianFromReferenceDevice);
         mDutTestInfoTextView.setVisibility(View.VISIBLE);
@@ -226,8 +243,11 @@ public class BleRxTxOffsetPrecisionActivity extends PassFailButtons.Activity {
                 && mRssiMedianFromReferenceDevice <= MAX_RSSI_MEDIAN_DBM) {
             makeToast("Test passed! TX Rssi median is: " + rssiMedian + ". Rx Rssi median is: "
                     + mRssiMedianFromReferenceDevice);
-            mTestPassed = true;
-            getPassButton().performClick();
+            if (mIsManualPass) {
+                getPassButton().setEnabled(true);
+            } else {
+                getPassButton().performClick();
+            }
         } else {
             makeToast("Test failed! TX Rssi median is: " + rssiMedian + ". Rx Rssi median is: "
                     + mRssiMedianFromReferenceDevice);
@@ -244,11 +264,8 @@ public class BleRxTxOffsetPrecisionActivity extends PassFailButtons.Activity {
         mStopTestButton.setEnabled(false);
         mStartTestButton.setEnabled(true);
         mIsReferenceDeviceCheckbox.setEnabled(true);
-        mRssiMedianFromReferenceDevice = 0;
         mCurrentReferenceDeviceId = 0;
-        mRefTestInfoTextView.setVisibility(View.GONE);
         mDeviceFoundTextView.setVisibility(View.GONE);
-        mDutTestInfoTextView.setVisibility(View.GONE);
     }
 
     private void startAdvertising() {
@@ -319,8 +336,12 @@ public class BleRxTxOffsetPrecisionActivity extends PassFailButtons.Activity {
 
     @Override
     public void recordTestResults() {
-        if (mTestPassed) {
+        if (mTestCompleted) {
             getReportLog().addValue(KEY_REFERENCE_DEVICE, mReferenceDeviceName,
+                    ResultType.NEUTRAL, ResultUnit.NONE);
+            getReportLog().addValue(KEY_RSSI_MEDIAN_DUT, mRssiMedianOnDut, ResultType.NEUTRAL,
+                    ResultUnit.NONE);
+            getReportLog().addValue(KEY_RSSI_MEDIAN_REFERENCE, mRssiMedianFromReferenceDevice,
                     ResultType.NEUTRAL, ResultUnit.NONE);
             getReportLog().submit();
         }
