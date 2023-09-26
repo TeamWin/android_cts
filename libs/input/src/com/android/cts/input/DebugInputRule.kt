@@ -16,6 +16,8 @@
 
 package com.android.cts.input
 
+import android.os.SystemClock
+import android.util.Log
 import com.android.compatibility.common.util.SystemUtil
 import org.junit.AssumptionViolatedException
 import org.junit.rules.TestWatcher
@@ -32,15 +34,34 @@ import org.junit.runner.Description
 class DebugInputRule : TestWatcher() {
 
     private companion object {
+        private val TAG = "DebugInput"
+
         // The list of log tags to enable when additional debugging of the input pipeline is
         // required. These are a special set of log tags that can be dynamically toggled on
         // debuggable builds.
-        val debugInputTags = listOf(
+        private val debugInputTags = listOf(
                 "InputReaderRawEvents",
                 "InputDispatcherInboundEvent",
                 "InputTransportPublisher",
                 "InputTransportResampling",
         )
+
+        @JvmStatic
+        fun dumpInputStateToLogcat() {
+            logShellCommand("dumpsys input")
+        }
+
+        private fun logShellCommand(command: String) {
+            try {
+                for (line in SystemUtil.runShellCommandOrThrow(command).split("\\n")) {
+                    // Sleed to avoid logging too often - otherwise, some lines may be dropped
+                    SystemClock.sleep(10)
+                    Log.i(TAG, line)
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to execute '$command': $e")
+            }
+        }
     }
 
     /**
@@ -60,6 +81,10 @@ class DebugInputRule : TestWatcher() {
                     SystemUtil.runShellCommandOrThrow("getprop log.tag.$tag")!!.trim()
             SystemUtil.runShellCommandOrThrow("setprop log.tag.$tag DEBUG")
         }
+    }
+
+    override fun failed(e: Throwable?, description: Description?) {
+        dumpInputStateToLogcat()
     }
 
     override fun finished(description: Description?) {
