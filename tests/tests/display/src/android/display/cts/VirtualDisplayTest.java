@@ -19,16 +19,23 @@ package android.display.cts;
 import static android.hardware.display.DisplayManager.VIRTUAL_DISPLAY_FLAG_SHOULD_SHOW_SYSTEM_DECORATIONS;
 import static android.hardware.display.DisplayManager.VIRTUAL_DISPLAY_FLAG_TRUSTED;
 
+import static androidx.test.core.app.ApplicationProvider.getApplicationContext;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
 
 import android.Manifest;
+import android.app.ActivityOptions;
 import android.app.Presentation;
 import android.content.Context;
+import android.content.Intent;
+import android.content.pm.ActivityInfo;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.PixelFormat;
 import android.graphics.Point;
@@ -71,6 +78,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.nio.ByteBuffer;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -113,6 +122,7 @@ public class VirtualDisplayTest {
     @Rule(order = 0)
     public AdoptShellPermissionsRule mAdoptShellPermissionsRule = new AdoptShellPermissionsRule(
             InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+            Manifest.permission.ADD_TRUSTED_DISPLAY,
             Manifest.permission.WRITE_SECURE_SETTINGS);
 
     @ClassRule
@@ -284,6 +294,9 @@ public class VirtualDisplayTest {
      */
     @Test
     public void testTrustedVirtualDisplay() throws Exception {
+        InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .dropShellPermissionIdentity();
+
         try {
             VirtualDisplay virtualDisplay = mDisplayManager.createVirtualDisplay(NAME,
                     WIDTH, HEIGHT, DENSITY, mSurface, VIRTUAL_DISPLAY_FLAG_TRUSTED);
@@ -313,6 +326,73 @@ public class VirtualDisplayTest {
             assertEquals(mSurface, virtualDisplay.getSurface());
 
             assertEquals(display.getRefreshRate(), REQUESTED_REFRESH_RATE, 0.1f);
+        } finally {
+            virtualDisplay.release();
+        }
+        assertDisplayUnregistered(display);
+    }
+
+    @Test
+    public void testVirtualDisplayRotatesWithContent() throws Exception {
+        assumeTrue(supportsActivitiesOnSecondaryDisplays());
+
+        VirtualDisplay virtualDisplay = mDisplayManager.createVirtualDisplay(NAME,
+                WIDTH, HEIGHT, DENSITY, mSurface,
+                DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC
+                        | DisplayManager.VIRTUAL_DISPLAY_FLAG_TRUSTED
+                        | DisplayManager.VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY
+                        | DisplayManager.VIRTUAL_DISPLAY_FLAG_ROTATES_WITH_CONTENT);
+        assertNotNull("virtual display must not be null", virtualDisplay);
+
+        Display display = virtualDisplay.getDisplay();
+        assertEquals(Surface.ROTATION_0, display.getRotation());
+        SimpleActivity activity = launchTestActivityOnDisplay(display.getDisplayId());
+        try {
+            {
+                RotationChangeWaiter waiter = new RotationChangeWaiter(display);
+                activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+                assertTrue(waiter.rotationChanged());
+                assertEquals(Surface.ROTATION_270, display.getRotation());
+            }
+            {
+                RotationChangeWaiter waiter = new RotationChangeWaiter(display);
+                activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+                assertTrue(waiter.rotationChanged());
+                assertEquals(Surface.ROTATION_0, display.getRotation());
+            }
+        } finally {
+            virtualDisplay.release();
+        }
+        assertDisplayUnregistered(display);
+    }
+
+    @Test
+    public void testVirtualDisplayDoesNotRotateWithContent() throws Exception {
+        assumeTrue(supportsActivitiesOnSecondaryDisplays());
+
+        VirtualDisplay virtualDisplay = mDisplayManager.createVirtualDisplay(NAME,
+                WIDTH, HEIGHT, DENSITY, mSurface,
+                DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC
+                        | DisplayManager.VIRTUAL_DISPLAY_FLAG_TRUSTED
+                        | DisplayManager.VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY);
+        assertNotNull("virtual display must not be null", virtualDisplay);
+
+        Display display = virtualDisplay.getDisplay();
+        assertEquals(Surface.ROTATION_0, display.getRotation());
+        SimpleActivity activity = launchTestActivityOnDisplay(display.getDisplayId());
+        try {
+            {
+                RotationChangeWaiter waiter = new RotationChangeWaiter(display);
+                activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+                assertFalse(waiter.rotationChanged());
+                assertEquals(Surface.ROTATION_0, display.getRotation());
+            }
+            {
+                RotationChangeWaiter waiter = new RotationChangeWaiter(display);
+                activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+                assertFalse(waiter.rotationChanged());
+                assertEquals(Surface.ROTATION_0, display.getRotation());
+            }
         } finally {
             virtualDisplay.release();
         }
@@ -415,6 +495,20 @@ public class VirtualDisplayTest {
         }
     }
 
+    private SimpleActivity launchTestActivityOnDisplay(int displayId) {
+        Intent intent = new Intent(getApplicationContext(), SimpleActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        ActivityOptions activityOptions = ActivityOptions.makeBasic();
+        activityOptions.setLaunchDisplayId(displayId);
+        return (SimpleActivity) InstrumentationRegistry.getInstrumentation()
+                .startActivitySync(intent, activityOptions.toBundle());
+    }
+
+    private boolean supportsActivitiesOnSecondaryDisplays() {
+        return mContext.getPackageManager().hasSystemFeature(
+                PackageManager.FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS);
+    }
+
     private void runOnUiThread(Runnable runnable) {
         Runnable waiter = new Runnable() {
             @Override
@@ -441,6 +535,47 @@ public class VirtualDisplayTest {
             }
         }
         return null;
+    }
+
+    private final class RotationChangeWaiter {
+        private static final int DISPLAY_CHANGE_TIMEOUT_SECS = 1;
+
+        private final Display mDisplay;
+        private int mCurrentRotation;
+        final CountDownLatch mRotationChangedLatch = new CountDownLatch(1);
+
+        private final DisplayManager.DisplayListener mListener =
+                new DisplayManager.DisplayListener() {
+                    @Override
+                    public void onDisplayAdded(int displayId) {}
+
+                    @Override
+                    public void onDisplayRemoved(int displayId) {}
+
+                    @Override
+                    public void onDisplayChanged(int displayId) {
+                        if (mDisplay.getDisplayId() == displayId
+                                && mCurrentRotation != mDisplay.getRotation()) {
+                            mCurrentRotation = mDisplay.getRotation();
+                            mRotationChangedLatch.countDown();
+                        }
+                    }
+                };
+
+        RotationChangeWaiter(Display display) {
+            mDisplay = display;
+            mCurrentRotation = mDisplay.getRotation();
+            Handler handler = new Handler(Looper.getMainLooper());
+            mDisplayManager.registerDisplayListener(mListener, handler);
+        }
+
+        boolean rotationChanged() throws Exception {
+            try {
+                return mRotationChangedLatch.await(DISPLAY_CHANGE_TIMEOUT_SECS, TimeUnit.SECONDS);
+            } finally {
+                mDisplayManager.unregisterDisplayListener(mListener);
+            }
+        }
     }
 
     private final class TestPresentation extends Presentation {
