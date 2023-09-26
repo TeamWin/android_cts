@@ -16,22 +16,24 @@
 
 package android.server.wm.jetpack.utils;
 
+import static android.server.wm.WindowManagerState.STATE_RESUMED;
 import static android.server.wm.jetpack.extensions.util.ExtensionsUtil.EXTENSION_VERSION_2;
 import static android.server.wm.jetpack.extensions.util.ExtensionsUtil.assumeExtensionSupportedDevice;
 import static android.server.wm.jetpack.extensions.util.ExtensionsUtil.getExtensionWindowLayoutInfo;
 import static android.server.wm.jetpack.extensions.util.ExtensionsUtil.getWindowExtensions;
 import static android.server.wm.jetpack.extensions.util.ExtensionsUtil.isExtensionVersionAtLeast;
 import static android.server.wm.jetpack.utils.WindowManagerJetpackTestBase.getActivityBounds;
-import static android.server.wm.jetpack.utils.WindowManagerJetpackTestBase.getMaximumActivityBounds;
 import static android.server.wm.jetpack.utils.WindowManagerJetpackTestBase.getResumedActivityById;
 import static android.server.wm.jetpack.utils.WindowManagerJetpackTestBase.isActivityResumed;
 import static android.server.wm.jetpack.utils.WindowManagerJetpackTestBase.startActivityFromActivity;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
+
 import static java.util.Objects.requireNonNull;
 
 import android.app.Activity;
@@ -39,6 +41,7 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.graphics.Rect;
 import android.os.Bundle;
+import android.server.wm.WindowManagerStateHelper;
 import android.server.wm.jetpack.extensions.util.ExtensionsUtil;
 import android.server.wm.jetpack.extensions.util.TestValueCountConsumer;
 import android.util.Log;
@@ -152,7 +155,7 @@ public class ActivityEmbeddingUtil {
         assertFalse(isActivityResumed(activityLaunchingFrom));
         TestActivity secondActivity = getResumedActivityById(secondActivityId);
         // Verify the second activity is not split with the first
-        verifyFillsTask(secondActivity);
+        waitAndAssertResumedAndFillsTask(secondActivity);
         return secondActivity;
     }
 
@@ -369,13 +372,37 @@ public class ActivityEmbeddingUtil {
         }
     }
 
-    public static void verifyFillsTask(Activity activity) {
-        assertEquals(getMaximumActivityBounds(activity), getActivityBounds(activity));
+    /**
+     * Waits for the activity specified in {@code activityId} to be in resumed state and verifies
+     * if it fills the task.
+     */
+    public static void waitAndAssertResumedAndFillsTask(@NonNull String activityId) {
+        waitAndAssertResumed(activityId);
+        final Activity activity = getResumedActivityById(activityId);
+        final Rect taskBounds = getTaskBounds(activity, false /* shouldWaitForResume */);
+        PollingCheck.waitFor(WAIT_FOR_LIFECYCLE_TIMEOUT_MS, () ->
+                getActivityBounds(activity).equals(taskBounds));
+        assertEquals(taskBounds, getActivityBounds(activity));
     }
 
-    public static void waitForFillsTask(Activity activity) {
+    /** Waits for the {@code activity} to be in resumed state and verifies if it fills the task. */
+    public static void waitAndAssertResumedAndFillsTask(@NonNull Activity activity) {
+        final Rect taskBounds = getTaskBounds(activity, true /* shouldWaitForResume */);
         PollingCheck.waitFor(WAIT_FOR_LIFECYCLE_TIMEOUT_MS, () ->
-                getActivityBounds(activity).equals(getMaximumActivityBounds(activity)));
+                getActivityBounds(activity).equals(taskBounds));
+        assertEquals(taskBounds, getActivityBounds(activity));
+    }
+
+    @NonNull
+    private static Rect getTaskBounds(@NonNull Activity activity, boolean shouldWaitForResume) {
+        final WindowManagerStateHelper wmState = new WindowManagerStateHelper();
+        final ComponentName activityName = activity.getComponentName();
+        if (shouldWaitForResume) {
+            wmState.waitAndAssertActivityState(activityName, STATE_RESUMED);
+        } else {
+            wmState.waitForValidState(activityName);
+        }
+        return wmState.getTaskByActivity(activityName).getBounds();
     }
 
     private static void waitForActivityBoundsEquals(@NonNull Activity activity,
@@ -495,9 +522,9 @@ public class ActivityEmbeddingUtil {
             @NonNull SplitAttributes splitAttributes) {
         SplitType splitType = splitAttributes.getSplitType();
 
-        final Rect parentBounds = getMaximumActivityBounds(activity);
+        final Rect parentTaskBounds = getTaskBounds(activity, false /* shouldWaitForResume */);
         if (splitType instanceof SplitType.ExpandContainersSplitType) {
-            return new Pair<>(new Rect(parentBounds), new Rect(parentBounds));
+            return new Pair<>(new Rect(parentTaskBounds), new Rect(parentTaskBounds));
         }
 
         int layoutDir = (splitAttributes.getLayoutDirection() == LayoutDirection.LOCALE)
@@ -516,14 +543,14 @@ public class ActivityEmbeddingUtil {
                 // The split pair should be split by hinge if there's exactly one hinge
                 // at the current device state.
                 final Rect hingeArea = foldingFeature.getBounds();
-                final Rect leftContainer = new Rect(parentBounds.left, parentBounds.top,
-                        hingeArea.left, parentBounds.bottom);
-                final Rect topContainer = new Rect(parentBounds.left, parentBounds.top,
-                        parentBounds.right, hingeArea.top);
-                final Rect rightContainer = new Rect(hingeArea.right, parentBounds.top,
-                        parentBounds.right, parentBounds.bottom);
-                final Rect bottomContainer = new Rect(parentBounds.left, hingeArea.bottom,
-                        parentBounds.right, parentBounds.bottom);
+                final Rect leftContainer = new Rect(parentTaskBounds.left, parentTaskBounds.top,
+                        hingeArea.left, parentTaskBounds.bottom);
+                final Rect topContainer = new Rect(parentTaskBounds.left, parentTaskBounds.top,
+                        parentTaskBounds.right, hingeArea.top);
+                final Rect rightContainer = new Rect(hingeArea.right, parentTaskBounds.top,
+                        parentTaskBounds.right, parentTaskBounds.bottom);
+                final Rect bottomContainer = new Rect(parentTaskBounds.left, hingeArea.bottom,
+                        parentTaskBounds.right, parentTaskBounds.bottom);
                 switch (layoutDir) {
                     case LayoutDirection.LEFT_TO_RIGHT: {
                         return new Pair<>(leftContainer, rightContainer);
@@ -560,27 +587,27 @@ public class ActivityEmbeddingUtil {
         final boolean isHorizontal = isHorizontal(layoutDir);
         final Rect leftOrTopContainerBounds = isHorizontal
                 ? new Rect(
-                        parentBounds.left,
-                        parentBounds.top,
-                        parentBounds.right,
-                        (int) (parentBounds.top + parentBounds.height() * splitRatio)
+                        parentTaskBounds.left,
+                        parentTaskBounds.top,
+                        parentTaskBounds.right,
+                        (int) (parentTaskBounds.top + parentTaskBounds.height() * splitRatio)
                 ) : new Rect(
-                        parentBounds.left,
-                        parentBounds.top,
-                        (int) (parentBounds.left + parentBounds.width() * splitRatio),
-                        parentBounds.bottom);
+                        parentTaskBounds.left,
+                        parentTaskBounds.top,
+                        (int) (parentTaskBounds.left + parentTaskBounds.width() * splitRatio),
+                        parentTaskBounds.bottom);
 
         final Rect rightOrBottomContainerBounds = isHorizontal
                 ? new Rect(
-                        parentBounds.left,
-                        (int) (parentBounds.top + parentBounds.height() * splitRatio),
-                        parentBounds.right,
-                        parentBounds.bottom
+                        parentTaskBounds.left,
+                        (int) (parentTaskBounds.top + parentTaskBounds.height() * splitRatio),
+                        parentTaskBounds.right,
+                        parentTaskBounds.bottom
                 ) : new Rect(
-                        (int) (parentBounds.left + parentBounds.width() * splitRatio),
-                        parentBounds.top,
-                        parentBounds.right,
-                        parentBounds.bottom);
+                        (int) (parentTaskBounds.left + parentTaskBounds.width() * splitRatio),
+                        parentTaskBounds.top,
+                        parentTaskBounds.right,
+                        parentTaskBounds.bottom);
 
         // Assign the primary and secondary bounds depending on layout direction
         if (isPrimaryRightOrBottomContainer) {

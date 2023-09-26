@@ -66,7 +66,6 @@ import java.util.List;
 @Presubmit
 @RunWith(AndroidJUnit4.class)
 public class ActivityEmbeddingLifecycleTests extends ActivityEmbeddingLifecycleTestBase {
-
     /**
      * Tests launching activities to the side from the primary activity, each next one replacing the
      * previous one.
