@@ -39,11 +39,15 @@ import android.view.AttachedSurfaceControl;
 import android.view.Gravity;
 import android.view.Surface;
 import android.view.SurfaceControl;
+import android.view.SurfaceControlViewHost;
+import android.view.SurfaceHolder;
+import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewTreeObserver;
 import android.view.cts.surfacevalidator.BitmapPixelChecker;
 import android.widget.FrameLayout;
 
+import androidx.annotation.NonNull;
 import androidx.lifecycle.Lifecycle;
 import androidx.test.core.app.ActivityScenario;
 import androidx.test.filters.SmallTest;
@@ -362,6 +366,126 @@ public class AttachedSurfaceControlTest {
             validateScreenshot(mName, activity[0],
                     new BitmapPixelChecker(Color.GREEN, new Rect(0, 10, 100, 100)),
                     9000 /* expectedMatchingPixels */, Insets.NONE);
+        }
+    }
+
+    private static class ScvhSurfaceView extends SurfaceView implements SurfaceHolder.Callback {
+        CountDownLatch mReadyLatch = new CountDownLatch(1);
+        SurfaceControlViewHost mScvh;
+        final View mView;
+        ScvhSurfaceView(Context context, View view) {
+            super(context);
+            getHolder().addCallback(this);
+            mView = view;
+        }
+
+        @Override
+        public void surfaceCreated(@NonNull SurfaceHolder surfaceHolder) {
+            mView.getViewTreeObserver().addOnWindowAttachListener(
+                    new ViewTreeObserver.OnWindowAttachListener() {
+                        @Override
+                        public void onWindowAttached() {
+                            mReadyLatch.countDown();
+                        }
+
+                        @Override
+                        public void onWindowDetached() {
+                        }
+                    });
+            mScvh = new SurfaceControlViewHost(getContext(), getDisplay(), getHostToken());
+            mScvh.setView(mView, getWidth(), getHeight());
+            setChildSurfacePackage(mScvh.getSurfacePackage());
+        }
+
+        @Override
+        public void surfaceChanged(@NonNull SurfaceHolder surfaceHolder, int i, int i1, int i2) {
+
+        }
+
+        @Override
+        public void surfaceDestroyed(@NonNull SurfaceHolder surfaceHolder) {
+
+        }
+
+        public void waitForReady() throws InterruptedException {
+            assertTrue("Failed to wait for ScvhSurfaceView to get added",
+                    mReadyLatch.await(WAIT_TIMEOUT_S, TimeUnit.SECONDS));
+        }
+    }
+
+    /**
+     * Ensure the synced transaction is applied even if the view isn't visible and won't draw a
+     * frame.
+     */
+    @Test
+    public void testSyncTransactionViewNotVisible() throws Throwable {
+        try (ActivityScenario<TestActivity> scenario =
+                     ActivityScenario.launch(TestActivity.class)) {
+            CountDownLatch countDownLatch = new CountDownLatch(1);
+            final ScvhSurfaceView[] scvhSurfaceView = new ScvhSurfaceView[1];
+            final View[] view = new View[1];
+            final Activity[] activity = new Activity[1];
+            scenario.onActivity(a -> {
+                activity[0] = a;
+                view[0] = new View(a);
+                FrameLayout parentLayout = a.getParentLayout();
+                scvhSurfaceView[0] = new ScvhSurfaceView(a, view[0]);
+                parentLayout.addView(scvhSurfaceView[0],
+                        new FrameLayout.LayoutParams(100, 100, Gravity.LEFT | Gravity.TOP));
+
+                countDownLatch.countDown();
+            });
+            assertTrue("Failed to wait for activity to start",
+                    countDownLatch.await(WAIT_TIMEOUT_S, TimeUnit.SECONDS));
+
+            scvhSurfaceView[0].waitForReady();
+
+            CountDownLatch committedLatch = new CountDownLatch(1);
+            activity[0].runOnUiThread(() -> {
+                view[0].setVisibility(View.INVISIBLE);
+                SurfaceControl.Transaction transaction = new SurfaceControl.Transaction();
+                transaction.addTransactionCommittedListener(Runnable::run,
+                        committedLatch::countDown);
+                view[0].getRootSurfaceControl().applyTransactionOnDraw(transaction);
+            });
+
+            assertTrue("Failed to receive transaction committed callback for scvh with no view",
+                    committedLatch.await(WAIT_TIMEOUT_S, TimeUnit.SECONDS));
+        }
+    }
+
+    /**
+     * Ensure the synced transaction is applied even if there was nothing new to draw
+     */
+    @Test
+    public void testSyncTransactionNothingToDraw() throws Throwable {
+        try (ActivityScenario<TestActivity> scenario =
+                     ActivityScenario.launch(TestActivity.class)) {
+            CountDownLatch countDownLatch = new CountDownLatch(1);
+            final View[] view = new View[1];
+            final Activity[] activity = new Activity[1];
+            scenario.onActivity(a -> {
+                activity[0] = a;
+                view[0] = new View(a);
+                FrameLayout parentLayout = a.getParentLayout();
+                parentLayout.addView(view[0],
+                        new FrameLayout.LayoutParams(100, 100, Gravity.LEFT | Gravity.TOP));
+
+                countDownLatch.countDown();
+            });
+            assertTrue("Failed to wait for activity to start",
+                    countDownLatch.await(WAIT_TIMEOUT_S, TimeUnit.SECONDS));
+
+            CountDownLatch committedLatch = new CountDownLatch(1);
+            activity[0].runOnUiThread(() -> {
+                SurfaceControl.Transaction transaction = new SurfaceControl.Transaction();
+                transaction.addTransactionCommittedListener(Runnable::run,
+                        committedLatch::countDown);
+                view[0].getRootSurfaceControl().applyTransactionOnDraw(transaction);
+            });
+
+            assertTrue("Failed to receive transaction committed callback for scvh with no view",
+                    committedLatch.await(WAIT_TIMEOUT_S, TimeUnit.SECONDS));
         }
     }
 }
