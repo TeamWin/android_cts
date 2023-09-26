@@ -2103,8 +2103,14 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
                 // WPA2_PSK is not allowed in 6GHz band. So test with WPA3_SAE which is
                 // mandatory to support in 6GHz band.
                 if (testBand == SoftApConfiguration.BAND_6GHZ) {
-                    customConfigBuilder.setPassphrase(TEST_PASSPHRASE,
+                    if (lohsSoftApCallback.getCurrentSoftApCapability()
+                            .areFeaturesSupported(SoftApCapability.SOFTAP_FEATURE_WPA3_SAE)) {
+                        customConfigBuilder.setPassphrase(TEST_PASSPHRASE,
                             SoftApConfiguration.SECURITY_TYPE_WPA3_SAE);
+                    } else {
+                        Log.e(TAG, "SoftAp 6GHz capability is advertized without WPA3 support");
+                        continue;
+                    }
                 }
                 customConfigBuilder.setBand(testBand);
                 mWifiManager.startLocalOnlyHotspot(customConfigBuilder.build(), executor, callback);
