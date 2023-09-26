@@ -6896,6 +6896,7 @@ Follow the instructions on the screen to measure the frequency response for the 
         \nIf the TV device is launched on older Android letters, all tests will be disabled. Press Pass to pass this case.
     </string>
     <string name="is_reference_device_checkbox_text">Is Reference Device</string>
+    <string name="is_manual_pass_text">Pass test manually after test completion</string>
     <string name="uwb_precision">Uwb Precision Test</string>
     <string name="uwb_short_range">Uwb Short Range Test</string>
     <string name="uwb_precision_instruction">
