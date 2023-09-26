@@ -113,6 +113,7 @@ public class BackGestureInvokedTest extends ActivityManagerTestBase {
         mWmState.waitForFocusedActivity("Wait for launched activity to be in front.",
                 componentName);
         triggerBackEventByGesture(DEFAULT_DISPLAY);
+        mWmState.waitForActivityState(mActivity.getComponentName(), STATE_RESUMED);
 
         assertEquals(TYPE_CROSS_TASK, mWmState.getBackNavigationState().getLastBackType());
     }
@@ -126,6 +127,7 @@ public class BackGestureInvokedTest extends ActivityManagerTestBase {
         mWmState.waitForFocusedActivity("Wait for launched activity to be in front.",
                 componentName);
         triggerBackEventByGesture(DEFAULT_DISPLAY);
+        mWmState.waitForActivityState(mActivity.getComponentName(), STATE_RESUMED);
 
         assertEquals(TYPE_CROSS_ACTIVITY, mWmState.getBackNavigationState().getLastBackType());
     }
@@ -142,6 +144,8 @@ public class BackGestureInvokedTest extends ActivityManagerTestBase {
         triggerBackEventByGesture(DEFAULT_DISPLAY);
 
         // activity remain focused
+        mWmState.waitForFocusedActivity("top activity to be focused",
+                mActivity.getComponentName());
         mWmState.assertFocusedActivity("Top activity must be focused",
                 mActivity.getComponentName());
 
@@ -157,6 +161,7 @@ public class BackGestureInvokedTest extends ActivityManagerTestBase {
         mWmState.waitAndAssertImeWindowShownOnDisplay(DEFAULT_DISPLAY);
 
         triggerBackEventByGesture(DEFAULT_DISPLAY);
+        mWmState.waitAndAssertImeWindowHiddenOnDisplay(DEFAULT_DISPLAY);
 
         assertEquals(TYPE_CALLBACK, mWmState.getBackNavigationState().getLastBackType());
     }

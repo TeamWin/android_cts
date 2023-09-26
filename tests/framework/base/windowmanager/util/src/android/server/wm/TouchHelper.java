@@ -199,7 +199,6 @@ public class TouchHelper {
         int midWidth = bounds.left + bounds.width() / 2;
         final SwipeSession session = new SwipeSession(displayId, sync, waitForAnimations);
         session.quickSwipe(0, midHeight, midWidth, midHeight, 10);
-        mWmState.waitForAppTransitionIdleOnDisplay(displayId);
     }
 
     /**
