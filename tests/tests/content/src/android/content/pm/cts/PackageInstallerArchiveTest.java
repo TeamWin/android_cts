@@ -47,6 +47,7 @@ import android.content.IntentFilter;
 import android.content.IntentSender;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.Flags;
+import android.content.pm.LauncherApps;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageInstaller;
 import android.content.pm.PackageManager;
@@ -163,7 +164,8 @@ public class PackageInstallerArchiveTest {
     @Test
     public void archiveApp_getApplicationIcon() throws Exception {
         installPackage(APK_PATH);
-        Drawable expectedIcon = mPackageManager.getApplicationIcon(PACKAGE_NAME);
+        Drawable expectedIcon = mContext.getSystemService(LauncherApps.class).getActivityList(
+                PACKAGE_NAME, UserHandle.SYSTEM).get(0).getIcon(/* density= */ 0);
 
         runWithShellPermissionIdentity(
                 () -> mPackageInstaller.requestArchive(PACKAGE_NAME,
