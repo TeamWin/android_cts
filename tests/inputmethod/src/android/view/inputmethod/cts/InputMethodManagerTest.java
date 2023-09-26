@@ -169,8 +169,8 @@ public class InputMethodManagerTest {
         });
         final View focusedEditText = focusedEditTextRef.get();
         waitOnMainUntil(() -> mImManager.hasActiveInputConnection(focusedEditText), TIMEOUT);
-        assertTrue(mImManager.isActive(focusedEditText));
-        assertFalse(mImManager.isActive(nonFocusedEditTextRef.get()));
+        assertTrue(getOnMainSync(() -> mImManager.isActive(focusedEditText)));
+        assertFalse(getOnMainSync(() -> mImManager.isActive(nonFocusedEditTextRef.get())));
     }
 
     @Test
