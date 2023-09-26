@@ -33,6 +33,7 @@ import android.app.UiAutomation;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothManager;
+import android.bluetooth.BluetoothProfile;
 import android.bluetooth.BluetoothSinkAudioPolicy;
 import android.bluetooth.BluetoothStatusCodes;
 import android.bluetooth.OobData;
@@ -391,8 +392,10 @@ public class BluetoothDeviceTest extends AndroidTestCase {
     }
 
     public void test_messageAccessPermission() {
-        if (!mHasBluetooth || !mHasCompanionDevice) {
-            // Skip the test if bluetooth or companion device are not present.
+        if (!mHasBluetooth || !mHasCompanionDevice
+                || !TestUtils.isProfileEnabled(BluetoothProfile.MAP)) {
+            // Skip the test if bluetooth or companion device are not present,
+            // or if MAP is not enabled.
             return;
         }
 
@@ -416,8 +419,10 @@ public class BluetoothDeviceTest extends AndroidTestCase {
     }
 
     public void test_phonebookAccessPermission() {
-        if (!mHasBluetooth || !mHasCompanionDevice) {
-            // Skip the test if bluetooth or companion device are not present.
+        if (!mHasBluetooth || !mHasCompanionDevice
+                || !TestUtils.isProfileEnabled(BluetoothProfile.PBAP)) {
+            // Skip the test if bluetooth or companion device are not present,
+            // of if PBAP is not enabled.
             return;
         }
 
@@ -441,8 +446,10 @@ public class BluetoothDeviceTest extends AndroidTestCase {
     }
 
     public void test_simAccessPermission() {
-        if (!mHasBluetooth || !mHasCompanionDevice) {
-            // Skip the test if bluetooth or companion device are not present.
+        if (!mHasBluetooth || !mHasCompanionDevice
+                || !TestUtils.isProfileEnabled(BluetoothProfile.SAP)) {
+            // Skip the test if bluetooth or companion device are not present,
+            // or if SAP is not enabled.
             return;
         }
 
