@@ -104,23 +104,24 @@ public class OfflineSessionTest extends Camera2SurfaceViewTestCase {
      */
     @Test
     public void testInvalidOutput() throws Exception {
-        for (int i = 0; i < mCameraIdsUnderTest.length; i++) {
+        String[] cameraIdsUnderTest = getCameraIdsUnderTest();
+        for (int i = 0; i < cameraIdsUnderTest.length; i++) {
             try {
-                Log.i(TAG, "Testing camera device " + mCameraIdsUnderTest[i]);
+                Log.i(TAG, "Testing camera device " + cameraIdsUnderTest[i]);
 
-                if (!mAllStaticInfo.get(mCameraIdsUnderTest[i]).isColorOutputSupported()) {
-                    Log.i(TAG, "Camera " + mCameraIdsUnderTest[i] +
+                if (!mAllStaticInfo.get(cameraIdsUnderTest[i]).isColorOutputSupported()) {
+                    Log.i(TAG, "Camera " + cameraIdsUnderTest[i] +
                             " does not support color outputs, skipping");
                     continue;
                 }
 
-                if (!mAllStaticInfo.get(mCameraIdsUnderTest[i]).isOfflineProcessingSupported()) {
-                    Log.i(TAG, "Camera " + mCameraIdsUnderTest[i] +
+                if (!mAllStaticInfo.get(cameraIdsUnderTest[i]).isOfflineProcessingSupported()) {
+                    Log.i(TAG, "Camera " + cameraIdsUnderTest[i] +
                             " does not support offline processing, skipping");
                     continue;
                 }
 
-                openDevice(mCameraIdsUnderTest[i]);
+                openDevice(cameraIdsUnderTest[i]);
 
                 CaptureRequest.Builder previewRequest =
                         mCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
@@ -190,24 +191,25 @@ public class OfflineSessionTest extends Camera2SurfaceViewTestCase {
      */
     @Test
     public void testOfflineCallbacks() throws Exception {
-        for (int i = 0; i < mCameraIdsUnderTest.length; i++) {
+        String[] cameraIdsUnderTest = getCameraIdsUnderTest();
+        for (int i = 0; i < cameraIdsUnderTest.length; i++) {
             try {
-                Log.i(TAG, "Testing camera2 API for camera device " + mCameraIdsUnderTest[i]);
+                Log.i(TAG, "Testing camera2 API for camera device " + cameraIdsUnderTest[i]);
 
-                if (!mAllStaticInfo.get(mCameraIdsUnderTest[i]).isColorOutputSupported()) {
-                    Log.i(TAG, "Camera " + mCameraIdsUnderTest[i] +
+                if (!mAllStaticInfo.get(cameraIdsUnderTest[i]).isColorOutputSupported()) {
+                    Log.i(TAG, "Camera " + cameraIdsUnderTest[i] +
                             " does not support color outputs, skipping");
                     continue;
                 }
 
-                if (!mAllStaticInfo.get(mCameraIdsUnderTest[i]).isOfflineProcessingSupported()) {
-                    Log.i(TAG, "Camera " + mCameraIdsUnderTest[i] +
+                if (!mAllStaticInfo.get(cameraIdsUnderTest[i]).isOfflineProcessingSupported()) {
+                    Log.i(TAG, "Camera " + cameraIdsUnderTest[i] +
                             " does not support offline processing, skipping");
                     continue;
                 }
 
-                openDevice(mCameraIdsUnderTest[i]);
-                camera2OfflineSessionTest(mCameraIdsUnderTest[i], mOrderedStillSizes.get(0),
+                openDevice(cameraIdsUnderTest[i]);
+                camera2OfflineSessionTest(cameraIdsUnderTest[i], mOrderedStillSizes.get(0),
                         ImageFormat.JPEG, OfflineTestSequence.NoExtraSteps);
             } finally {
                 closeDevice();
@@ -223,33 +225,34 @@ public class OfflineSessionTest extends Camera2SurfaceViewTestCase {
      */
     @Test
     public void testOfflineDepthJpeg() throws Exception {
-        for (int i = 0; i < mCameraIdsUnderTest.length; i++) {
+        String[] cameraIdsUnderTest = getCameraIdsUnderTest();
+        for (int i = 0; i < cameraIdsUnderTest.length; i++) {
             try {
-                Log.i(TAG, "Testing camera2 API for camera device " + mCameraIdsUnderTest[i]);
+                Log.i(TAG, "Testing camera2 API for camera device " + cameraIdsUnderTest[i]);
 
-                if (!mAllStaticInfo.get(mCameraIdsUnderTest[i]).isColorOutputSupported()) {
-                    Log.i(TAG, "Camera " + mCameraIdsUnderTest[i] +
+                if (!mAllStaticInfo.get(cameraIdsUnderTest[i]).isColorOutputSupported()) {
+                    Log.i(TAG, "Camera " + cameraIdsUnderTest[i] +
                             " does not support color outputs, skipping");
                     continue;
                 }
 
-                if (!mAllStaticInfo.get(mCameraIdsUnderTest[i]).isOfflineProcessingSupported()) {
-                    Log.i(TAG, "Camera " + mCameraIdsUnderTest[i] +
+                if (!mAllStaticInfo.get(cameraIdsUnderTest[i]).isOfflineProcessingSupported()) {
+                    Log.i(TAG, "Camera " + cameraIdsUnderTest[i] +
                             " does not support offline processing, skipping");
                     continue;
                 }
 
-                if (!mAllStaticInfo.get(mCameraIdsUnderTest[i]).isDepthJpegSupported()) {
-                    Log.i(TAG, "Camera " + mCameraIdsUnderTest[i] +
+                if (!mAllStaticInfo.get(cameraIdsUnderTest[i]).isDepthJpegSupported()) {
+                    Log.i(TAG, "Camera " + cameraIdsUnderTest[i] +
                             " does not support depth jpeg, skipping");
                     continue;
                 }
 
                 List<Size> depthJpegSizes = CameraTestUtils.getSortedSizesForFormat(
-                        mCameraIdsUnderTest[i], mCameraManager, ImageFormat.DEPTH_JPEG,
+                        cameraIdsUnderTest[i], mCameraManager, ImageFormat.DEPTH_JPEG,
                         null /*bound*/);
-                openDevice(mCameraIdsUnderTest[i]);
-                camera2OfflineSessionTest(mCameraIdsUnderTest[i], depthJpegSizes.get(0),
+                openDevice(cameraIdsUnderTest[i]);
+                camera2OfflineSessionTest(cameraIdsUnderTest[i], depthJpegSizes.get(0),
                         ImageFormat.DEPTH_JPEG, OfflineTestSequence.NoExtraSteps);
             } finally {
                 closeDevice();
@@ -265,32 +268,33 @@ public class OfflineSessionTest extends Camera2SurfaceViewTestCase {
      */
     @Test
     public void testOfflineHEIC() throws Exception {
-        for (int i = 0; i < mCameraIdsUnderTest.length; i++) {
+        String[] cameraIdsUnderTest = getCameraIdsUnderTest();
+        for (int i = 0; i < cameraIdsUnderTest.length; i++) {
             try {
-                Log.i(TAG, "Testing camera2 API for camera device " + mCameraIdsUnderTest[i]);
+                Log.i(TAG, "Testing camera2 API for camera device " + cameraIdsUnderTest[i]);
 
-                if (!mAllStaticInfo.get(mCameraIdsUnderTest[i]).isColorOutputSupported()) {
-                    Log.i(TAG, "Camera " + mCameraIdsUnderTest[i] +
+                if (!mAllStaticInfo.get(cameraIdsUnderTest[i]).isColorOutputSupported()) {
+                    Log.i(TAG, "Camera " + cameraIdsUnderTest[i] +
                             " does not support color outputs, skipping");
                     continue;
                 }
 
-                if (!mAllStaticInfo.get(mCameraIdsUnderTest[i]).isOfflineProcessingSupported()) {
-                    Log.i(TAG, "Camera " + mCameraIdsUnderTest[i] +
+                if (!mAllStaticInfo.get(cameraIdsUnderTest[i]).isOfflineProcessingSupported()) {
+                    Log.i(TAG, "Camera " + cameraIdsUnderTest[i] +
                             " does not support offline processing, skipping");
                     continue;
                 }
 
-                if (!mAllStaticInfo.get(mCameraIdsUnderTest[i]).isHeicSupported()) {
-                    Log.i(TAG, "Camera " + mCameraIdsUnderTest[i] +
+                if (!mAllStaticInfo.get(cameraIdsUnderTest[i]).isHeicSupported()) {
+                    Log.i(TAG, "Camera " + cameraIdsUnderTest[i] +
                             " does not support HEIC, skipping");
                     continue;
                 }
 
                 List<Size> heicSizes = CameraTestUtils.getSupportedHeicSizes(
-                        mCameraIdsUnderTest[i], mCameraManager, null /*bound*/);
-                openDevice(mCameraIdsUnderTest[i]);
-                camera2OfflineSessionTest(mCameraIdsUnderTest[i], heicSizes.get(0),
+                        cameraIdsUnderTest[i], mCameraManager, null /*bound*/);
+                openDevice(cameraIdsUnderTest[i]);
+                camera2OfflineSessionTest(cameraIdsUnderTest[i], heicSizes.get(0),
                         ImageFormat.HEIC, OfflineTestSequence.NoExtraSteps);
             } finally {
                 closeDevice();
@@ -310,24 +314,25 @@ public class OfflineSessionTest extends Camera2SurfaceViewTestCase {
                 new ErrorLoggingService.ErrorServiceConnection(mContext);
 
         errorConnection.start();
-        for (int i = 0; i < mCameraIdsUnderTest.length; i++) {
+        String[] cameraIdsUnderTest = getCameraIdsUnderTest();
+        for (int i = 0; i < cameraIdsUnderTest.length; i++) {
             try {
-                Log.i(TAG, "Testing camera2 API for camera device " + mCameraIdsUnderTest[i]);
+                Log.i(TAG, "Testing camera2 API for camera device " + cameraIdsUnderTest[i]);
 
-                if (!mAllStaticInfo.get(mCameraIdsUnderTest[i]).isColorOutputSupported()) {
-                    Log.i(TAG, "Camera " + mCameraIdsUnderTest[i] +
+                if (!mAllStaticInfo.get(cameraIdsUnderTest[i]).isColorOutputSupported()) {
+                    Log.i(TAG, "Camera " + cameraIdsUnderTest[i] +
                             " does not support color outputs, skipping");
                     continue;
                 }
 
-                if (!mAllStaticInfo.get(mCameraIdsUnderTest[i]).isOfflineProcessingSupported()) {
-                    Log.i(TAG, "Camera " + mCameraIdsUnderTest[i] +
+                if (!mAllStaticInfo.get(cameraIdsUnderTest[i]).isOfflineProcessingSupported()) {
+                    Log.i(TAG, "Camera " + cameraIdsUnderTest[i] +
                             " does not support offline processing, skipping");
                     continue;
                 }
 
-                openDevice(mCameraIdsUnderTest[i]);
-                if (camera2OfflineSessionTest(mCameraIdsUnderTest[i], mOrderedStillSizes.get(0),
+                openDevice(cameraIdsUnderTest[i]);
+                if (camera2OfflineSessionTest(cameraIdsUnderTest[i], mOrderedStillSizes.get(0),
                             ImageFormat.JPEG, OfflineTestSequence.CloseDeviceAndOpenRemote)) {
                     // Verify that the remote camera was opened correctly
                     List<ErrorLoggingService.LogEvent> allEvents = null;
@@ -357,24 +362,25 @@ public class OfflineSessionTest extends Camera2SurfaceViewTestCase {
      */
     @Test
     public void testOfflineSessionClose() throws Exception {
-        for (int i = 0; i < mCameraIdsUnderTest.length; i++) {
+        String[] cameraIdsUnderTest = getCameraIdsUnderTest();
+        for (int i = 0; i < cameraIdsUnderTest.length; i++) {
             try {
-                Log.i(TAG, "Testing camera2 API for camera device " + mCameraIdsUnderTest[i]);
+                Log.i(TAG, "Testing camera2 API for camera device " + cameraIdsUnderTest[i]);
 
-                if (!mAllStaticInfo.get(mCameraIdsUnderTest[i]).isColorOutputSupported()) {
-                    Log.i(TAG, "Camera " + mCameraIdsUnderTest[i] +
+                if (!mAllStaticInfo.get(cameraIdsUnderTest[i]).isColorOutputSupported()) {
+                    Log.i(TAG, "Camera " + cameraIdsUnderTest[i] +
                             " does not support color outputs, skipping");
                     continue;
                 }
 
-                if (!mAllStaticInfo.get(mCameraIdsUnderTest[i]).isOfflineProcessingSupported()) {
-                    Log.i(TAG, "Camera " + mCameraIdsUnderTest[i] +
+                if (!mAllStaticInfo.get(cameraIdsUnderTest[i]).isOfflineProcessingSupported()) {
+                    Log.i(TAG, "Camera " + cameraIdsUnderTest[i] +
                             " does not support offline processing, skipping");
                     continue;
                 }
 
-                openDevice(mCameraIdsUnderTest[i]);
-                camera2OfflineSessionTest(mCameraIdsUnderTest[i], mOrderedStillSizes.get(0),
+                openDevice(cameraIdsUnderTest[i]);
+                camera2OfflineSessionTest(cameraIdsUnderTest[i], mOrderedStillSizes.get(0),
                         ImageFormat.JPEG, OfflineTestSequence.CloseOfflineSession);
             } finally {
                 closeDevice();
@@ -390,24 +396,25 @@ public class OfflineSessionTest extends Camera2SurfaceViewTestCase {
      */
     @Test
     public void testOfflineSessionWithRegularSession() throws Exception {
-        for (int i = 0; i < mCameraIdsUnderTest.length; i++) {
+        String[] cameraIdsUnderTest = getCameraIdsUnderTest();
+        for (int i = 0; i < cameraIdsUnderTest.length; i++) {
             try {
-                Log.i(TAG, "Testing camera2 API for camera device " + mCameraIdsUnderTest[i]);
+                Log.i(TAG, "Testing camera2 API for camera device " + cameraIdsUnderTest[i]);
 
-                if (!mAllStaticInfo.get(mCameraIdsUnderTest[i]).isColorOutputSupported()) {
-                    Log.i(TAG, "Camera " + mCameraIdsUnderTest[i] +
+                if (!mAllStaticInfo.get(cameraIdsUnderTest[i]).isColorOutputSupported()) {
+                    Log.i(TAG, "Camera " + cameraIdsUnderTest[i] +
                             " does not support color outputs, skipping");
                     continue;
                 }
 
-                if (!mAllStaticInfo.get(mCameraIdsUnderTest[i]).isOfflineProcessingSupported()) {
-                    Log.i(TAG, "Camera " + mCameraIdsUnderTest[i] +
+                if (!mAllStaticInfo.get(cameraIdsUnderTest[i]).isOfflineProcessingSupported()) {
+                    Log.i(TAG, "Camera " + cameraIdsUnderTest[i] +
                             " does not support offline processing, skipping");
                     continue;
                 }
 
-                openDevice(mCameraIdsUnderTest[i]);
-                camera2OfflineSessionTest(mCameraIdsUnderTest[i], mOrderedStillSizes.get(0),
+                openDevice(cameraIdsUnderTest[i]);
+                camera2OfflineSessionTest(cameraIdsUnderTest[i], mOrderedStillSizes.get(0),
                         ImageFormat.JPEG, OfflineTestSequence.InitializeRegularSession);
             } finally {
                 closeDevice();
@@ -423,24 +430,25 @@ public class OfflineSessionTest extends Camera2SurfaceViewTestCase {
      */
     @Test
     public void testRepeatingSequenceAbort() throws Exception {
-        for (int i = 0; i < mCameraIdsUnderTest.length; i++) {
+        String[] cameraIdsUnderTest = getCameraIdsUnderTest();
+        for (int i = 0; i < cameraIdsUnderTest.length; i++) {
             try {
-                Log.i(TAG, "Testing camera2 API for camera device " + mCameraIdsUnderTest[i]);
+                Log.i(TAG, "Testing camera2 API for camera device " + cameraIdsUnderTest[i]);
 
-                if (!mAllStaticInfo.get(mCameraIdsUnderTest[i]).isColorOutputSupported()) {
-                    Log.i(TAG, "Camera " + mCameraIdsUnderTest[i] +
+                if (!mAllStaticInfo.get(cameraIdsUnderTest[i]).isColorOutputSupported()) {
+                    Log.i(TAG, "Camera " + cameraIdsUnderTest[i] +
                             " does not support color outputs, skipping");
                     continue;
                 }
 
-                if (!mAllStaticInfo.get(mCameraIdsUnderTest[i]).isOfflineProcessingSupported()) {
-                    Log.i(TAG, "Camera " + mCameraIdsUnderTest[i] +
+                if (!mAllStaticInfo.get(cameraIdsUnderTest[i]).isOfflineProcessingSupported()) {
+                    Log.i(TAG, "Camera " + cameraIdsUnderTest[i] +
                             " does not support offline processing, skipping");
                     continue;
                 }
 
-                openDevice(mCameraIdsUnderTest[i]);
-                camera2OfflineSessionTest(mCameraIdsUnderTest[i], mOrderedStillSizes.get(0),
+                openDevice(cameraIdsUnderTest[i]);
+                camera2OfflineSessionTest(cameraIdsUnderTest[i], mOrderedStillSizes.get(0),
                         ImageFormat.JPEG, OfflineTestSequence.RepeatingSequenceAbort);
             } finally {
                 closeDevice();
@@ -458,23 +466,24 @@ public class OfflineSessionTest extends Camera2SurfaceViewTestCase {
      */
     @Test
     public void testUnsupportedOfflineSessionOutputs() throws Exception {
-        for (int i = 0; i < mCameraIdsUnderTest.length; i++) {
+        String[] cameraIdsUnderTest = getCameraIdsUnderTest();
+        for (int i = 0; i < cameraIdsUnderTest.length; i++) {
             try {
-                Log.i(TAG, "Testing camera2 API for camera device " + mCameraIdsUnderTest[i]);
+                Log.i(TAG, "Testing camera2 API for camera device " + cameraIdsUnderTest[i]);
 
-                if (!mAllStaticInfo.get(mCameraIdsUnderTest[i]).isColorOutputSupported()) {
-                    Log.i(TAG, "Camera " + mCameraIdsUnderTest[i] +
+                if (!mAllStaticInfo.get(cameraIdsUnderTest[i]).isColorOutputSupported()) {
+                    Log.i(TAG, "Camera " + cameraIdsUnderTest[i] +
                             " does not support color outputs, skipping");
                     continue;
                 }
 
-                if (!mAllStaticInfo.get(mCameraIdsUnderTest[i]).isOfflineProcessingSupported()) {
-                    Log.i(TAG, "Camera " + mCameraIdsUnderTest[i] +
+                if (!mAllStaticInfo.get(cameraIdsUnderTest[i]).isOfflineProcessingSupported()) {
+                    Log.i(TAG, "Camera " + cameraIdsUnderTest[i] +
                             " does not support offline processing, skipping");
                     continue;
                 }
 
-                openDevice(mCameraIdsUnderTest[i]);
+                openDevice(cameraIdsUnderTest[i]);
                 camera2UnsupportedOfflineOutputTest(true /*useSurfaceGroup*/);
                 camera2UnsupportedOfflineOutputTest(false /*useSurfaceGroup*/);
             } finally {

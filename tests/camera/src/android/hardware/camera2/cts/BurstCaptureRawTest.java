@@ -74,7 +74,7 @@ public class BurstCaptureRawTest extends Camera2SurfaceViewTestCase {
     @Test
     public void testRawSensorSize() throws Exception {
         Log.i(TAG, "Begin testRawSensorSize");
-        for (String id : mCameraIdsUnderTest) {
+        for (String id : getCameraIdsUnderTest()) {
             try {
                 ArrayList<Integer> supportedRawList = new ArrayList<Integer>(RAW_FORMATS.length);
                 if (!checkCapability(id, supportedRawList, RAW_FORMATS)) {
@@ -678,7 +678,7 @@ public class BurstCaptureRawTest extends Camera2SurfaceViewTestCase {
     private void performTestRoutine(TestRoutine routine, int[] testedFormats) throws Exception
     {
         final int PREPARE_TIMEOUT_MS = 10000;
-        for (String id : mCameraIdsUnderTest) {
+        for (String id : getCameraIdsUnderTest()) {
             try {
                 ArrayList<Integer> supportedRawList = new ArrayList<Integer>(RAW_FORMATS.length);
                 if (!checkCapability(id, supportedRawList, testedFormats)) {

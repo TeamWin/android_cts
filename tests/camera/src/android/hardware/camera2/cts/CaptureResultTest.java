@@ -95,7 +95,7 @@ public class CaptureResultTest extends Camera2AndroidTestCase {
      */
     @Test
     public void testCameraCaptureResultAllKeys() throws Exception {
-        for (String id : mCameraIdsUnderTest) {
+        for (String id : getCameraIdsUnderTest()) {
             try {
                 openDevice(id);
                 if (mStaticInfo.isColorOutputSupported()) {
@@ -152,7 +152,7 @@ public class CaptureResultTest extends Camera2AndroidTestCase {
     public void testPartialResult() throws Exception {
         final int NUM_FRAMES_TESTED = 30;
         final int WAIT_FOR_RESULT_TIMOUT_MS = 2000;
-        for (String id : mCameraIdsUnderTest) {
+        for (String id : getCameraIdsUnderTest()) {
             try {
                 // Skip the test if partial result is not supported
                 int partialResultCount = mAllStaticInfo.get(id).getPartialResultCount();
@@ -270,7 +270,7 @@ public class CaptureResultTest extends Camera2AndroidTestCase {
      */
     @Test
     public void testResultTimestamps() throws Exception {
-        for (String id : mCameraIdsUnderTest) {
+        for (String id : getCameraIdsUnderTest()) {
             ImageReader previewReader = null;
             ImageReader jpegReader = null;
 

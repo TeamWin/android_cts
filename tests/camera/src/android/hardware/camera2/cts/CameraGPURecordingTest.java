@@ -89,7 +89,7 @@ public class CameraGPURecordingTest extends Camera2AndroidTestCase {
      */
     @Test
     public void testCameraGpuEncoderPath() throws Exception {
-        for (String id : mCameraIdsUnderTest) {
+        for (String id : getCameraIdsUnderTest()) {
             if (!mAllStaticInfo.get(id).isCapabilitySupported(
                     CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_BACKWARD_COMPATIBLE)) {
                 Log.i(TAG, "Camera " + id + " is not BACKWARD_COMPATIBLE and does not support "

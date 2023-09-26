@@ -20,6 +20,7 @@ import static android.hardware.camera2.cts.CameraTestUtils.*;
 import static com.android.ex.camera2.blocking.BlockingStateCallback.*;
 
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.graphics.Rect;
 
 import android.hardware.camera2.cts.CameraTestUtils;
@@ -110,7 +111,13 @@ public class Camera2AndroidTestRule extends ExternalResource {
         return mContext;
     }
 
-    public String[] getCameraIdsUnderTest() {
+    public String[] getCameraIdsUnderTest() throws Exception {
+        // If external camera is supported, verify that it is connected as part of the camera Ids
+        // under test. If the external camera is not connected, an exception will be thrown to
+        // prevent bypassing CTS testing for external camera
+        CameraTestUtils.verifyExternalCameraConnected(mCameraIdsUnderTest,
+                mContext.getPackageManager(), mCameraManager);
+
         return mCameraIdsUnderTest;
     }
 

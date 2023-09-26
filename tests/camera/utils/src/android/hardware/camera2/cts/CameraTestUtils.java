@@ -18,6 +18,7 @@ package android.hardware.camera2.cts;
 
 import static org.mockito.Mockito.*;
 
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.ColorSpace;
@@ -4429,5 +4430,35 @@ public class CameraTestUtils extends Assert {
             manager.unregisterAvailabilityCallback(ac);
         }
 
+    }
+
+    /**
+     * Use the external feature flag to check if external camera is supported.
+     * If it is, iterate through the camera ids under test to verify that an
+     * external camera is connected.
+     *
+     * @param cameraIds list of camera ids under test
+     * @param packageManager package manager instance for checking feature flag
+     * @param cameraManager camera manager for getting camera characteristics
+     *
+     */
+    public static void verifyExternalCameraConnected(String[] cameraIds,
+            PackageManager packageManager, CameraManager cameraManager) throws Exception {
+        if (packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_EXTERNAL)) {
+            boolean externalCameraConnected = false;
+            for (int i = 0; i < cameraIds.length; i++) {
+                CameraCharacteristics props =
+                        cameraManager.getCameraCharacteristics(cameraIds[i]);
+                assertNotNull("Can't get camera characteristics for camera "
+                        + cameraIds[i], props);
+                Integer lensFacing = props.get(CameraCharacteristics.LENS_FACING);
+                assertNotNull("Can't get lens facing info", lensFacing);
+                if (lensFacing == CameraCharacteristics.LENS_FACING_EXTERNAL) {
+                    externalCameraConnected = true;
+                }
+            }
+            assertTrue("External camera is not connected on device with FEATURE_CAMERA_EXTERNAL",
+                    externalCameraConnected);
+        }
     }
 }

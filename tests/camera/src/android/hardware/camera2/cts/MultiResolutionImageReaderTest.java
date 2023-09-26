@@ -91,7 +91,7 @@ public class MultiResolutionImageReaderTest extends Camera2AndroidTestCase {
 
     @Test
     public void testMultiResolutionCaptureCharacteristics() throws Exception {
-        for (String id : mCameraIdsUnderTest) {
+        for (String id : getCameraIdsUnderTest()) {
             if (VERBOSE) {
                 Log.v(TAG, "Testing multi-resolution capture characteristics for Camera " + id);
             }
@@ -226,7 +226,7 @@ public class MultiResolutionImageReaderTest extends Camera2AndroidTestCase {
      */
     @Test
     public void testMultiResolutionMandatoryStreamCombinationTest() throws Exception {
-        for (String id : mCameraIdsUnderTest) {
+        for (String id : getCameraIdsUnderTest()) {
             StaticMetadata info = mAllStaticInfo.get(id);
             CameraCharacteristics c = info.getCharacteristics();
             MandatoryStreamCombination[] combinations = c.get(
@@ -351,7 +351,7 @@ public class MultiResolutionImageReaderTest extends Camera2AndroidTestCase {
 
     private void testMultiResolutionImageReaderForFormat(int format, boolean repeating)
             throws Exception {
-        for (String id : mCameraIdsUnderTest) {
+        for (String id : getCameraIdsUnderTest()) {
             try {
                 if (VERBOSE) {
                     Log.v(TAG, "Testing multi-resolution capture for Camera " + id

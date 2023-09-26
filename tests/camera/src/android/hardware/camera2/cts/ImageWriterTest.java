@@ -107,7 +107,7 @@ public class ImageWriterTest extends Camera2AndroidTestCase {
      */
     @Test
     public void testYuvImageWriterReaderOperation() throws Exception {
-        for (String id : mCameraIdsUnderTest) {
+        for (String id : getCameraIdsUnderTest()) {
             try {
                 Log.i(TAG, "Testing Camera " + id);
                 if (!mAllStaticInfo.get(id).isColorOutputSupported()) {
@@ -130,7 +130,7 @@ public class ImageWriterTest extends Camera2AndroidTestCase {
      */
     @Test
     public void testYuvImageWriterReaderOperationAlt() throws Exception {
-        for (String id : mCameraIdsUnderTest) {
+        for (String id : getCameraIdsUnderTest()) {
             try {
                 Log.i(TAG, "Testing Camera " + id);
                 if (!mAllStaticInfo.get(id).isColorOutputSupported()) {

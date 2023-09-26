@@ -79,7 +79,7 @@ public final class IdleUidTest extends Camera2ParameterizedTestCase {
      */
     @Test
     public void testCameraAccessForIdleUid() throws Exception {
-        for (String cameraId : mCameraIdsUnderTest) {
+        for (String cameraId : getCameraIdsUnderTest()) {
             testCameraAccessForIdleUidByCamera(cameraId,
                     new Handler(sCallbackThread.getLooper()));
         }
@@ -90,7 +90,7 @@ public final class IdleUidTest extends Camera2ParameterizedTestCase {
      */
     @Test
     public void testCameraAccessBecomingInactiveUid() throws Exception {
-        for (String cameraId : mCameraIdsUnderTest) {
+        for (String cameraId : getCameraIdsUnderTest()) {
             testCameraAccessBecomingInactiveUidByCamera(cameraId,
                     new Handler(sCallbackThread.getLooper()));
         }

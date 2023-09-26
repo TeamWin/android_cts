@@ -53,7 +53,7 @@ public class SurfaceViewExtensionPreviewTest extends Camera2SurfaceViewTestCase 
 
     @Test
     public void testExtensionPreview() throws Exception {
-        for (String id : mCameraIdsUnderTest) {
+        for (String id : getCameraIdsUnderTest()) {
             if (!mAllStaticInfo.get(id).isColorOutputSupported()) {
                 Log.i(TAG, "Camera " + id +
                         " does not support color outputs, skipping");
