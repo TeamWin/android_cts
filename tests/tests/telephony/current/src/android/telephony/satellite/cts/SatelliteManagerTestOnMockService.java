@@ -25,6 +25,7 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -33,6 +34,7 @@ import static org.junit.Assume.assumeTrue;
 
 import android.Manifest;
 import android.annotation.NonNull;
+import android.annotation.Nullable;
 import android.app.UiAutomation;
 import android.bluetooth.BluetoothAdapter;
 import android.content.BroadcastReceiver;
@@ -49,6 +51,9 @@ import android.os.CancellationSignal;
 import android.os.OutcomeReceiver;
 import android.os.PersistableBundle;
 import android.os.SystemProperties;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.provider.Settings;
 import android.telephony.CarrierConfigManager;
 import android.telephony.SubscriptionManager;
@@ -56,6 +61,7 @@ import android.telephony.TelephonyManager;
 import android.telephony.cts.TelephonyManagerTest.ServiceStateRadioStateListener;
 import android.telephony.satellite.AntennaDirection;
 import android.telephony.satellite.AntennaPosition;
+import android.telephony.satellite.NtnSignalStrength;
 import android.telephony.satellite.PointingInfo;
 import android.telephony.satellite.SatelliteCapabilities;
 import android.telephony.satellite.SatelliteDatagram;
@@ -77,6 +83,7 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Rule;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -133,6 +140,10 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
     private static CarrierConfigReceiver sCarrierConfigReceiver;
 
     private static final int SUB_ID = SubscriptionManager.DEFAULT_SUBSCRIPTION_ID;
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule =
+            DeviceFlagsValueProvider.createCheckFlagsRule();
 
     @BeforeClass
     public static void beforeAllTests() throws Exception {
@@ -2956,6 +2967,87 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         revokeSatellitePermission();
     }
 
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_OEM_ENABLED_SATELLITE_FLAG)
+    public void testNtnSignalStrength() {
+        if (!shouldTestSatelliteWithMockService()) return;
+
+        logd("testNtnSignalStrength: start");
+        grantSatellitePermission();
+
+        NtnSignalStrengthCallbackTest ntnSignalStrengthCallbackTest =
+                new NtnSignalStrengthCallbackTest();
+
+        /* register callback for non-terrestrial network signal strength changed event */
+        @SatelliteManager.SatelliteResult int registerError =
+                sSatelliteManager.registerForNtnSignalStrengthChanged(
+                        getContext().getMainExecutor(), ntnSignalStrengthCallbackTest);
+        assertEquals(SatelliteManager.SATELLITE_RESULT_SUCCESS, registerError);
+
+        @NtnSignalStrength.NtnSignalStrengthLevel int expectedLevel =
+                NtnSignalStrength.NTN_SIGNAL_STRENGTH_NONE;
+        @SatelliteManager.SatelliteResult int expectedError;
+        setSatelliteError(SatelliteManager.SATELLITE_RESULT_SUCCESS);
+        setNtnSignalStrength(expectedLevel);
+        Pair<NtnSignalStrength, Integer> pairResult = requestNtnSignalStrength();
+        assertEquals(expectedLevel, pairResult.first.getLevel());
+        assertNull(pairResult.second);
+
+        expectedLevel = NtnSignalStrength.NTN_SIGNAL_STRENGTH_GOOD;
+        expectedError = SatelliteManager.SATELLITE_RESULT_MODEM_ERROR;
+        setSatelliteError(expectedError);
+        setNtnSignalStrength(expectedLevel);
+        pairResult = requestNtnSignalStrength();
+        assertNull(pairResult.first);
+        assertEquals(expectedError, pairResult.second.intValue());
+
+        expectedLevel = NtnSignalStrength.NTN_SIGNAL_STRENGTH_GOOD;
+        expectedError = SatelliteManager.SATELLITE_RESULT_SUCCESS;
+        setSatelliteError(expectedError);
+        setNtnSignalStrength(expectedLevel);
+        pairResult = requestNtnSignalStrength();
+        assertEquals(expectedLevel, pairResult.first.getLevel());
+        assertNull(pairResult.second);
+
+        /* As non-terrestrial network signal strength is cached in framework, simple set won't
+        affect cached value */
+        expectedLevel = NtnSignalStrength.NTN_SIGNAL_STRENGTH_GREAT;
+        setNtnSignalStrength(expectedLevel);
+        pairResult = requestNtnSignalStrength();
+        assertNotEquals(expectedLevel, pairResult.first.getLevel());
+        assertNull(pairResult.second);
+
+        /* Cache will be updated when non-terrestrial network signal strength changed event comes */
+        sendOnNtnSignalStrengthChanged(expectedLevel);
+        assertTrue(ntnSignalStrengthCallbackTest.waitUntilResult(1));
+        pairResult = requestNtnSignalStrength();
+        assertEquals(expectedLevel, pairResult.first.getLevel());
+        assertNull(pairResult.second);
+        assertEquals(expectedLevel, ntnSignalStrengthCallbackTest.mNtnSignalStrength.getLevel());
+
+        expectedLevel = NtnSignalStrength.NTN_SIGNAL_STRENGTH_MODERATE;
+        sendOnNtnSignalStrengthChanged(expectedLevel);
+        assertTrue(ntnSignalStrengthCallbackTest.waitUntilResult(1));
+        pairResult = requestNtnSignalStrength();
+        assertEquals(expectedLevel, pairResult.first.getLevel());
+        assertNull(pairResult.second);
+        assertEquals(expectedLevel, ntnSignalStrengthCallbackTest.mNtnSignalStrength.getLevel());
+
+        /* Initialize the non-terrestrial signal strength cache in the framework */
+        expectedLevel = NtnSignalStrength.NTN_SIGNAL_STRENGTH_NONE;
+        sendOnNtnSignalStrengthChanged(expectedLevel);
+        assertTrue(ntnSignalStrengthCallbackTest.waitUntilResult(1));
+        pairResult = requestNtnSignalStrength();
+        assertEquals(expectedLevel, pairResult.first.getLevel());
+        assertNull(pairResult.second);
+        assertEquals(expectedLevel, ntnSignalStrengthCallbackTest.mNtnSignalStrength.getLevel());
+
+        /* unregister non-terrestrial network signal strength changed event callback */
+        sSatelliteManager.unregisterForNtnSignalStrengthChanged(ntnSignalStrengthCallbackTest);
+
+        revokeSatellitePermission();
+    }
+
     /**
      * Before calling this function, caller need to make sure the modem is in LISTENING or IDLE
      * state.
@@ -3665,6 +3757,36 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         return new Pair<>(enabled.get(), callback.get());
     }
 
+    private Pair<NtnSignalStrength, Integer> requestNtnSignalStrength() {
+        final AtomicReference<NtnSignalStrength> ntnSignalStrength = new AtomicReference<>();
+        final AtomicReference<Integer> callback = new AtomicReference<>();
+        CountDownLatch latch = new CountDownLatch(1);
+        OutcomeReceiver<NtnSignalStrength, SatelliteManager.SatelliteException> receiver =
+                new OutcomeReceiver<>() {
+                    @Override
+                    public void onResult(NtnSignalStrength result) {
+                        logd("onResult: result=" + result);
+                        ntnSignalStrength.set(result);
+                        latch.countDown();
+                    }
+
+                    @Override
+                    public void onError(SatelliteManager.SatelliteException exception) {
+                        logd("onError: onError=" + exception);
+                        callback.set(exception.getErrorCode());
+                        latch.countDown();
+                    }
+                };
+
+        sSatelliteManager.requestNtnSignalStrength(getContext().getMainExecutor(), receiver);
+        try {
+            assertTrue(latch.await(TIMEOUT, TimeUnit.MILLISECONDS));
+        } catch (InterruptedException e) {
+            fail(e.toString());
+        }
+        return new Pair<>(ntnSignalStrength.get(), callback.get());
+    }
+
     private abstract static class BaseReceiver extends BroadcastReceiver {
         protected CountDownLatch mLatch = new CountDownLatch(1);
 
@@ -3733,6 +3855,51 @@ public class SatelliteManagerTestOnMockService extends SatelliteManagerTestBase 
         }
 
         sMockSatelliteServiceManager.setErrorCode(satelliteError);
+    }
+
+    private void setNtnSignalStrength(
+            @NtnSignalStrength.NtnSignalStrengthLevel int ntnSignalStrengthLevel) {
+        sMockSatelliteServiceManager.setNtnSignalStrength(toHAL(ntnSignalStrengthLevel));
+    }
+
+    private void sendOnNtnSignalStrengthChanged(
+            @NtnSignalStrength.NtnSignalStrengthLevel int ntnSignalStrengthLevel) {
+        sMockSatelliteServiceManager.sendOnNtnSignalStrengthChanged(toHAL(ntnSignalStrengthLevel));
+    }
+
+    @Nullable
+    private android.telephony.satellite.stub.NtnSignalStrength toHAL(
+            @NtnSignalStrength.NtnSignalStrengthLevel int signalStrengthLevelFromFramework) {
+        android.telephony.satellite.stub.NtnSignalStrength ntnSignalStrength =
+                new android.telephony.satellite.stub.NtnSignalStrength();
+
+        switch(signalStrengthLevelFromFramework) {
+            case NtnSignalStrength.NTN_SIGNAL_STRENGTH_NONE:
+                ntnSignalStrength.signalStrengthLevel = android.telephony.satellite.stub
+                        .NtnSignalStrengthLevel.NTN_SIGNAL_STRENGTH_NONE;
+                break;
+            case NtnSignalStrength.NTN_SIGNAL_STRENGTH_POOR:
+                ntnSignalStrength.signalStrengthLevel = android.telephony.satellite.stub
+                        .NtnSignalStrengthLevel.NTN_SIGNAL_STRENGTH_POOR;
+                break;
+            case NtnSignalStrength.NTN_SIGNAL_STRENGTH_MODERATE:
+                ntnSignalStrength.signalStrengthLevel = android.telephony.satellite.stub
+                        .NtnSignalStrengthLevel.NTN_SIGNAL_STRENGTH_MODERATE;
+                break;
+            case NtnSignalStrength.NTN_SIGNAL_STRENGTH_GOOD:
+                ntnSignalStrength.signalStrengthLevel = android.telephony.satellite.stub
+                        .NtnSignalStrengthLevel.NTN_SIGNAL_STRENGTH_GOOD;
+                break;
+            case NtnSignalStrength.NTN_SIGNAL_STRENGTH_GREAT:
+                ntnSignalStrength.signalStrengthLevel = android.telephony.satellite.stub
+                        .NtnSignalStrengthLevel.NTN_SIGNAL_STRENGTH_GREAT;
+                break;
+            default:
+                ntnSignalStrength.signalStrengthLevel = android.telephony.satellite.stub
+                        .NtnSignalStrengthLevel.NTN_SIGNAL_STRENGTH_NONE;
+                break;
+        }
+        return ntnSignalStrength;
     }
 
     private boolean getIsSatelliteEnabledForCarrierFromMockService() {

@@ -42,6 +42,8 @@ import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
 import android.telephony.cts.TelephonyManagerTest.ServiceStateRadioStateListener;
+import android.telephony.satellite.NtnSignalStrength;
+import android.telephony.satellite.NtnSignalStrengthCallback;
 import android.telephony.satellite.PointingInfo;
 import android.telephony.satellite.SatelliteDatagram;
 import android.telephony.satellite.SatelliteDatagramCallback;
@@ -533,6 +535,38 @@ public class SatelliteManagerTestBase {
                     }
                 } catch (Exception ex) {
                     loge("onSatelliteDatagramReceived: Got exception=" + ex);
+                    return false;
+                }
+            }
+            return true;
+        }
+    }
+
+    protected static class NtnSignalStrengthCallbackTest implements NtnSignalStrengthCallback {
+        public NtnSignalStrength mNtnSignalStrength;
+        private final Semaphore mSemaphore = new Semaphore(0);
+
+        @Override
+        public void onNtnSignalStrengthChanged(@NonNull NtnSignalStrength ntnSignalStrength) {
+            logd("onNtnSignalStrengthChanged: ntnSignalStrength=" + ntnSignalStrength);
+            mNtnSignalStrength = new NtnSignalStrength(ntnSignalStrength);
+
+            try {
+                mSemaphore.release();
+            } catch (Exception e) {
+                loge("onNtnSignalStrengthChanged: Got exception, ex=" + e);
+            }
+        }
+
+        public boolean waitUntilResult(int expectedNumberOfEvents) {
+            for (int i = 0; i < expectedNumberOfEvents; i++) {
+                try {
+                    if (!mSemaphore.tryAcquire(TIMEOUT, TimeUnit.MILLISECONDS)) {
+                        loge("Timeout to receive onNtnSignalStrengthChanged");
+                        return false;
+                    }
+                } catch (Exception ex) {
+                    loge("onNtnSignalStrengthChanged: Got exception=" + ex);
                     return false;
                 }
             }
