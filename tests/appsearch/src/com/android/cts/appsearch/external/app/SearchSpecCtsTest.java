@@ -58,8 +58,8 @@ public class SearchSpecCtsTest {
                                 SearchSpec.GROUPING_TYPE_PER_NAMESPACE
                                         | SearchSpec.GROUPING_TYPE_PER_PACKAGE,
                                 /*limit=*/ 37)
-                        .addProjection("schemaType1", expectedPropertyPaths1)
-                        .addProjection("schemaType2", expectedPropertyPaths2)
+                        .addProjection("schemaTypes1", expectedPropertyPaths1)
+                        .addProjection("schemaTypes2", expectedPropertyPaths2)
                         .build();
 
         assertThat(searchSpec.getTermMatch()).isEqualTo(SearchSpec.TERM_MATCH_PREFIX);
@@ -85,9 +85,9 @@ public class SearchSpecCtsTest {
                                 | SearchSpec.GROUPING_TYPE_PER_PACKAGE);
         assertThat(searchSpec.getProjections())
                 .containsExactly(
-                        "schemaType1",
+                        "schemaTypes1",
                         expectedPropertyPaths1,
-                        "schemaType2",
+                        "schemaTypes2",
                         expectedPropertyPaths2);
         assertThat(searchSpec.getResultGroupingLimit()).isEqualTo(37);
     }
