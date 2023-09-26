@@ -242,6 +242,7 @@ public abstract class AudioDataPathsBaseActivity
         final int mInDeviceType;  // TYPE_BUILTIN_MIC for example
         final int mInSampleRate;
         final int mInChannelCount;
+        int mAnalysisChannel = 0;
         int mInputPreset;
 
         int mGlobalAttributes;
@@ -283,6 +284,7 @@ public abstract class AudioDataPathsBaseActivity
 
         // Test states that indicate a skipped test are negative
         // Test states that indicate an executed test that failed are positive.
+        public static final int TESTSTATUS_BAD_ANALYSIS_CHANNEL = -3;
         public static final int TESTSTATUS_BAD_ROUTING = -2;
         public static final int TESTSTATUS_NOT_RUN = -1;
         public static final int TESTSTATUS_OK = 0;
@@ -324,6 +326,10 @@ public abstract class AudioDataPathsBaseActivity
 
         String getDescription() {
             return mDescription;
+        }
+
+        void setAnalysisChannel(int channel) {
+            mAnalysisChannel = channel;
         }
 
         void setSources(AudioSourceProvider sourceProvider, AudioSinkProvider sinkProvider) {
@@ -675,6 +681,9 @@ public abstract class AudioDataPathsBaseActivity
                     case TestSpec.TESTSTATUS_BAD_ROUTING:
                         sb.append(" - BAD ROUTE");
                         break;
+                    case TestSpec.TESTSTATUS_BAD_ANALYSIS_CHANNEL:
+                        sb.append(" - BAD ANALYSIS CHANNEL");
+                        break;
                 }
 
                 testStep++;
@@ -710,6 +719,14 @@ public abstract class AudioDataPathsBaseActivity
             if (outDevInfo != null && inDevInfo != null) {
                 mAnalyzer.reset();
                 mAnalyzer.setSampleRate(testSpec.mInSampleRate);
+                if (testSpec.mAnalysisChannel < testSpec.mInChannelCount) {
+                    mAnalyzer.setInputChannel(testSpec.mAnalysisChannel);
+                } else {
+                    Log.e(TAG, "Invalid analysis channel " + testSpec.mAnalysisChannel
+                            + " for " + testSpec.mInChannelCount + " input signal.");
+                    testSpec.setTestState(mApi, TestSpec.TESTSTATUS_BAD_ANALYSIS_CHANNEL);
+                    return TestSpec.TESTSTATUS_BAD_ANALYSIS_CHANNEL;
+                }
 
                 // Player
                 mDuplexAudioManager.setSources(
@@ -925,7 +942,7 @@ public abstract class AudioDataPathsBaseActivity
                 // Description
                 htmlFormatter.openParagraph()
                         .appendText(spec.mDescription);
-                if (spec.hasPassed(mApi)) {
+                if (spec.hasPassed(mApi) && !spec.wasSkipped(mApi)) {
                     htmlFormatter.appendText(" - PASS");
                 } else {
                     int testStatus = spec.getTestState(mApi);
@@ -944,6 +961,11 @@ public abstract class AudioDataPathsBaseActivity
                         case TestSpec.TESTSTATUS_BAD_STATE:
                             htmlFormatter.openTextColor("red");
                             htmlFormatter.appendText(" - BAD STATE");
+                            htmlFormatter.closeTextColor();
+                            break;
+                        case TestSpec.TESTSTATUS_BAD_ANALYSIS_CHANNEL:
+                            htmlFormatter.openTextColor("red");
+                            htmlFormatter.appendText(" - BAD ANALYSIS CHANNEL");
                             htmlFormatter.closeTextColor();
                             break;
                         default: {

@@ -69,12 +69,14 @@ public class AudioDataPathsUSBActivity extends AudioDataPathsBaseActivity {
             testSpec.setSectionTitle("USB Device");
             testSpec.setSources(leftSineSourceProvider, analysisSinkProvider);
             testSpec.setDescription("USBDevice:2:L USBDevice:2");
+            testSpec.setAnalysisChannel(0);
             testManager.mTestSpecs.add(testSpec);
             testSpec = new TestSpec(
                     AudioDeviceInfo.TYPE_USB_DEVICE, 48000, 2,
                     AudioDeviceInfo.TYPE_USB_DEVICE, 48000, 2);
             testSpec.setSources(rightSineSourceProvider, analysisSinkProvider);
             testSpec.setDescription("USBDevice:2:R USBDevice:2");
+            testSpec.setAnalysisChannel(1);
             testManager.mTestSpecs.add(testSpec);
         }
 
@@ -88,12 +90,14 @@ public class AudioDataPathsUSBActivity extends AudioDataPathsBaseActivity {
             testSpec.setSectionTitle("USB Headset");
             testSpec.setSources(leftSineSourceProvider, analysisSinkProvider);
             testSpec.setDescription("USBHeadset:2:L USBHeadset:2");
+            testSpec.setAnalysisChannel(0);
             testManager.mTestSpecs.add(testSpec);
             testSpec = new TestSpec(
                     AudioDeviceInfo.TYPE_USB_HEADSET, 48000, 2,
                     AudioDeviceInfo.TYPE_USB_HEADSET, 48000, 2);
             testSpec.setSources(rightSineSourceProvider, analysisSinkProvider);
             testSpec.setDescription("USBHeadset:2:R USBHeadset:2");
+            testSpec.setAnalysisChannel(1);
             testManager.mTestSpecs.add(testSpec);
         }
     }
