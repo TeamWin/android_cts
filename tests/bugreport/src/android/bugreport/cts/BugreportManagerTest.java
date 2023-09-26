@@ -71,6 +71,9 @@ public class BugreportManagerTest {
     private static final String EXTRA_SCREENSHOT = "android.intent.extra.SCREENSHOT";
     private static final String BUGREPORT_SERVICE = "bugreportd";
 
+    // TODO(b/302094358): remove this once the constant is exposed
+    private static final int BUGREPORT_MODE_ONBOARDING = 7;
+
     private Context mContext;
     private Context mSystemContext;
     private BugreportManager mBugreportManager;
@@ -209,7 +212,7 @@ public class BugreportManagerTest {
     @LargeTest
     @Test
     public void testOnboardingBugreport() throws Exception {
-        Pair<String, String> brFiles = triggerBugreport(BugreportParams.BUGREPORT_MODE_ONBOARDING);
+        Pair<String, String> brFiles = triggerBugreport(BUGREPORT_MODE_ONBOARDING);
         String bugreport = brFiles.first;
         String screenshot = brFiles.second;
 
