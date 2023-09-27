@@ -13,7 +13,7 @@
 # limitations under the License.
 """Verify multiple cameras take images in same time base."""
 
-
+import fnmatch
 import logging
 import os
 import threading
@@ -242,6 +242,19 @@ class MultiCameraFrameSyncTest(its_base_test.ItsBaseTest):
       raise AssertionError(
           f'Too much difference between cameras! Angle 1: {angle_1:.2f}, 2: '
           f'{angle_2:.2f}, diff: {diff:.3f}, TOL: {angular_diff_thresh}.')
+    else: # remove frames on PASS
+      temp_files = []
+      try:
+        temp_files = os.listdir(self.log_path)
+      except FileNotFoundError:
+        logging.debug('/tmp directory: %s not found', self.log_path)
+      for file in temp_files:
+        if fnmatch.fnmatch(file, f'{_NAME}_?_*.png'):
+          file_to_remove = os.path.join(self.log_path, file)
+          try:
+            os.remove(file_to_remove)
+          except FileNotFoundError:
+            logging.debug('File not found: %s', str(file))
 
   def test_multi_camera_frame_sync(self):
     rot_rig = {}

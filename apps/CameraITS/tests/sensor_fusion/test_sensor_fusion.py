@@ -14,6 +14,7 @@
 """Verify image and inertial sensor events are well synchronized."""
 
 
+import fnmatch
 import json
 import logging
 import math
@@ -425,6 +426,21 @@ class SensorFusionTest(its_base_test.ItsBaseTest):
     if abs(offset_ms) > _OFFSET_MS_THRESH_MAX:
       raise AssertionError('Offset too large. Measured (ms): '
                            f'{offset_ms:.3f}, TOL: {_OFFSET_MS_THRESH_MAX}.')
+
+    else: # remove frames if PASS
+      temp_files = []
+      try:
+        temp_files = os.listdir(self.log_path)
+      except FileNotFoundError:
+        logging.debug('/tmp directory: %s not found', self.log_path)
+      for file in temp_files:
+        if fnmatch.fnmatch(file, f'{_NAME}_frame*.png'):
+          file_to_remove = os.path.join(self.log_path, file)
+          try:
+            os.remove(file_to_remove)
+          except FileNotFoundError:
+            logging.debug('File not found: %s', str(file))
+      logging.debug('Test passes, frame images have been removed')
 
 if __name__ == '__main__':
   test_runner.main()
