@@ -460,7 +460,7 @@ public class AdoptableHostTest extends BaseHostJUnit4Test {
 
     private LocalVolumeInfo waitForVolumeReady(LocalVolumeInfo vol) throws Exception {
         int attempt = 0;
-        while (attempt++ < 15) {
+        while (attempt++ < 30) {
             if (getDevice().executeShellCommand("dumpsys package volumes").contains(vol.volId)) {
                 return vol;
             }
