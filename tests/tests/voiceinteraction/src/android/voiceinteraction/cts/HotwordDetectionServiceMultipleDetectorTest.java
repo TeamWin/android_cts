@@ -48,6 +48,7 @@ import android.util.Log;
 import android.voiceinteraction.common.Utils;
 import android.voiceinteraction.cts.services.BaseVoiceInteractionService;
 import android.voiceinteraction.cts.services.CtsBasicVoiceInteractionService;
+import android.voiceinteraction.cts.testcore.AssumptionCheckerRule;
 import android.voiceinteraction.cts.testcore.Helper;
 import android.voiceinteraction.cts.testcore.VoiceInteractionServiceConnectedRule;
 import android.voiceinteraction.service.MainVisualQueryDetectionService;
@@ -78,6 +79,11 @@ public class HotwordDetectionServiceMultipleDetectorTest {
 
     private final SoundTriggerInstrumentationObserver mInstrumentationObserver =
             new SoundTriggerInstrumentationObserver();
+
+    @Rule
+    public AssumptionCheckerRule checkVisualQueryDetectionServiceEnabledRule =
+            new AssumptionCheckerRule(() -> Utils.SYSPROP_VISUAL_QUERY_SERVICE_ENABLED,
+                    "Testing VisualQueryDetectionService requires enabling the feature");
 
     @Rule
     public VoiceInteractionServiceConnectedRule mConnectedRule =
