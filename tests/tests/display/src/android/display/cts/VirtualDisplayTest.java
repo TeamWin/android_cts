@@ -36,6 +36,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
+import android.content.res.Resources;
 import android.graphics.Color;
 import android.graphics.PixelFormat;
 import android.graphics.Point;
@@ -352,7 +353,7 @@ public class VirtualDisplayTest {
                 RotationChangeWaiter waiter = new RotationChangeWaiter(display);
                 activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
                 assertTrue(waiter.rotationChanged());
-                assertEquals(Surface.ROTATION_270, display.getRotation());
+                assertEquals(getExpectedPortraitRotation(), display.getRotation());
             }
             {
                 RotationChangeWaiter waiter = new RotationChangeWaiter(display);
@@ -535,6 +536,15 @@ public class VirtualDisplayTest {
             }
         }
         return null;
+    }
+
+    private int getExpectedPortraitRotation() {
+        if (mContext.getResources().getBoolean(Resources.getSystem().getIdentifier(
+                "config_reverseDefaultRotation", "bool", "android"))) {
+            return Surface.ROTATION_90;
+        } else {
+            return Surface.ROTATION_270;
+        }
     }
 
     private final class RotationChangeWaiter {
