@@ -71,6 +71,7 @@ import android.virtualdevice.cts.common.util.VirtualDeviceTestUtils;
 
 import androidx.annotation.NonNull;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.filters.FlakyTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.AdoptShellPermissionsRule;
@@ -436,6 +437,7 @@ public class VirtualDeviceManagerBasicTest {
         assertDeviceClosed(mVirtualDevice.getDeviceId());
     }
 
+    @FlakyTest(bugId = 301578754)
     @RequiresFlagsEnabled(Flags.FLAG_VDM_PUBLIC_APIS)
     @Test
     public void getVirtualDevice_getDisplayIds() {
