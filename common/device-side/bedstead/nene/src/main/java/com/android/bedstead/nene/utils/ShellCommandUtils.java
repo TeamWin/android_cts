@@ -18,6 +18,8 @@ package com.android.bedstead.nene.utils;
 
 import static android.os.Build.VERSION_CODES.S;
 
+import static java.time.temporal.ChronoUnit.SECONDS;
+
 import android.app.Instrumentation;
 import android.app.UiAutomation;
 import android.os.Build;
@@ -36,6 +38,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.time.Duration;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -344,7 +347,9 @@ public final class ShellCommandUtils {
 
         try {
             // We run a basic command to check if the device can run it as root.
-            String output = ShellCommand.builder("echo hello").asRoot(true).execute();
+            //TODO(b/301478821): Remove the timeout once b/303377922 is fixed.
+            String output = ShellCommand.builder("echo hello").asRoot(true)
+                    .withTimeout(Duration.of(1, SECONDS)).execute();
             if (output.contains("hello")) {
                 sRootAvailable = true;
             }
