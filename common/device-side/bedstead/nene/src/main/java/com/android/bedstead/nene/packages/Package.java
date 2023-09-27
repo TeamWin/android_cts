@@ -39,6 +39,7 @@ import static org.junit.Assert.fail;
 
 import android.annotation.TargetApi;
 import android.app.ActivityManager;
+import android.app.UiAutomation;
 import android.app.role.RoleManager;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -52,6 +53,7 @@ import android.os.UserHandle;
 import android.util.Log;
 
 import androidx.annotation.Nullable;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.annotations.Experimental;
@@ -92,6 +94,9 @@ public final class Package {
             TestApis.context().instrumentedContext().getPackageManager();
     private static final RoleManager sRoleManager = TestApis.context().instrumentedContext()
             .getSystemService(RoleManager.class);
+
+    private static final UiAutomation sUiAutomation =
+            InstrumentationRegistry.getInstrumentation().getUiAutomation();
 
     private final String mPackageName;
 
@@ -405,29 +410,18 @@ public final class Package {
             throw new NeneException("Cannot deny permission from current package");
         }
 
-        try {
-            boolean shouldRunAsRoot = Tags.hasTag(Tags.ADB_ROOT);
+        boolean shouldRunAsRoot = Tags.hasTag(Tags.ADB_ROOT);
 
-            ShellCommand.builderForUser(user, "pm revoke")
-                    .asRoot(shouldRunAsRoot)
-                    .addOperand(packageName())
-                    .addOperand(permission)
-                    .allowEmptyOutput(true)
-                    .validate(String::isEmpty)
-                    .execute();
+        sUiAutomation.revokeRuntimePermission(packageName(), permission);
 
-            String message = "Error denying permission " + permission
-                    + " to package " + this + " on user " + user
-                    + ". Command appeared successful but not revoked."
-                    + (shouldRunAsRoot ? "" : " If this test requires permissions that can only be "
-                    + "granted on devices where adb has root. Add @RequireAdbRoot to the test.");
-            assertWithMessage(message).that(hasPermission(user, permission)).isFalse();
+        String message = "Error denying permission " + permission
+                + " to package " + this + " on user " + user
+                + ". Command appeared successful but not revoked."
+                + (shouldRunAsRoot ? "" : " If this test requires permissions that can only be "
+                + "granted on devices where adb has root. Add @RequireAdbRoot to the test.");
+        assertWithMessage(message).that(hasPermission(user, permission)).isFalse();
 
-            return this;
-        } catch (AdbException e) {
-            throw new NeneException("Error denying permission " + permission + " to package "
-                    + this + " on user " + user, e);
-        }
+        return this;
     }
 
     void checkCanGrantOrRevokePermission(UserReference user, String permission) {
