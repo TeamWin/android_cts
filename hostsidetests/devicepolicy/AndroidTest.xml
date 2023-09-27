@@ -34,7 +34,7 @@
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.FilePusher">
         <!-- The source file current.api is prepared by //cts/tests/signature/api/Android.mk -->
         <!-- The target path should be consistent with CurrentApiHelper#CURRENT_API_FILE -->
-        <option name="push" value="current.api->/data/local/tmp/device-policy-test/current.api" />
+        <option name="push" value="current.api.gz->/data/local/tmp/device-policy-test/current.api.gz" />
     </target_preparer>
 
     <test class="com.android.compatibility.common.tradefed.testtype.JarHostTest" >

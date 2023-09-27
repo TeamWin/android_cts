@@ -23,6 +23,7 @@ genrule_defaults {
     visibility: [
         "//cts/tests/signature/api-check:__subpackages__",
         "//cts/tests/signature/intent-check",
+        "//cts/hostsidetests/devicepolicy",
     ],
 }
 

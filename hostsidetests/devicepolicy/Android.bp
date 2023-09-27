@@ -38,5 +38,5 @@ java_test_host {
         "cts-statsd-atom-host-test-utils",
     ],
     java_resource_dirs: ["res"],
-    data: [":current-api-xml"],
+    data: [":cts-current-api-gz"],
 }
