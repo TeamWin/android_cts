@@ -44,6 +44,20 @@
                 android:layout_height="wrap_content"
                 android:text="@string/is_reference_device_checkbox_text"/>
 
+            <CheckBox
+                android:id="@+id/use_extended_advertisement"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/use_extended_advertisement_text"/>
+
+            <EditText
+                android:id="@+id/tx_power_input"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:inputType="numberSigned"
+                android:hint="@string/tx_power_input_presence"
+                android:visibility="gone"/>
+
             <LinearLayout
                 android:id="@+id/dut_mode_layout"
                 android:orientation="vertical"

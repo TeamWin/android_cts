@@ -18,6 +18,7 @@ package com.android.cts.verifier.presence;
 
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothManager;
+import android.bluetooth.le.AdvertisingSetParameters;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -215,7 +216,7 @@ public class BleRssiPrecisionActivity extends PassFailButtons.Activity {
         }
         mBleAdvertiser.startAdvertising(
                 new BleAdvertisingPacket(packetDeviceName, randomAdvertiserDeviceId,
-                        (byte) 0).toBytes());
+                        (byte) 0).toBytes(), false, AdvertisingSetParameters.TX_POWER_HIGH);
         mStartAdvertisingButton.setEnabled(false);
         mStopAdvertisingButton.setEnabled(true);
     }
