@@ -20,6 +20,7 @@ android_test {
     name: "CtsUiRenderingTestCases",
     sdk_version: "test_current",
     compile_multilib: "both",
+    jarjar_rules: "jarjar_rules.txt",
 
     srcs: [
         "src/**/*.java",
@@ -35,6 +36,8 @@ android_test {
         "kotlin-test",
         "testng",
         "junit-params",
+        "flag-junit",
+        "hwui_flags_java_lib",
     ],
     jni_libs: ["libctsuirendering_jni"],
 
