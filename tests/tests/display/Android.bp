@@ -33,6 +33,7 @@ android_test {
         "compatibility-device-util-axt",
         "flag-junit",
         "CtsSurfaceValidatorLib",
+        "android.companion.virtual.flags-aconfig-java",
     ],
     libs: ["android.test.base"],
     // Tag this module as a cts test artifact
