@@ -381,6 +381,13 @@
                 <action android:name="android.content.cts.BroadcastReceiverTest.BROADCAST_DISABLED"/>
             </intent-filter>
         </receiver>
+        <receiver android:name="android.content.pm.cts.PackageInstallerArchiveTest$UnarchiveBroadcastReceiver"
+                  android:enabled="true"
+                  android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.UNARCHIVE_PACKAGE"/>
+            </intent-filter>
+        </receiver>
 
         <activity android:name="android.content.cts.AvailableIntentsActivity"
              android:label="AvailableIntentsActivity"

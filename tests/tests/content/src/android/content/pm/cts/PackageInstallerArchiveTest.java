@@ -17,6 +17,7 @@
 package android.content.pm.cts;
 
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
+import static android.content.pm.PackageManager.DONT_KILL_APP;
 import static android.content.pm.PackageManager.MATCH_ARCHIVED_PACKAGES;
 import static android.content.pm.PackageManager.MATCH_UNINSTALLED_PACKAGES;
 
@@ -39,6 +40,7 @@ import android.app.Instrumentation;
 import android.app.usage.StorageStats;
 import android.app.usage.StorageStatsManager;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.IIntentReceiver;
 import android.content.IIntentSender;
@@ -89,7 +91,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
-// TODO(b/290775207) Add more test cases
 @AppModeFull
 @RunWith(AndroidJUnit4.class)
 @RequiresFlagsEnabled(Flags.FLAG_ARCHIVING)
@@ -105,6 +106,9 @@ public class PackageInstallerArchiveTest {
 
     private static final String NO_ACTIVITY_APK_PATH =
             SAMPLE_APK_BASE + "CtsIntentResolutionTestApp.apk";
+
+    private static CompletableFuture<String> sUnarchiveReceiverPackageName;
+    private static CompletableFuture<Boolean> sUnarchiveReceiverAllUsers;
 
     @Rule
     public final Expect expect = Expect.create();
@@ -127,6 +131,11 @@ public class PackageInstallerArchiveTest {
         mPackageInstaller = mPackageManager.getPackageInstaller();
         mStorageStatsManager = mContext.getSystemService(StorageStatsManager.class);
         mIntentSender = new ArchiveIntentSender();
+        sUnarchiveReceiverPackageName = new CompletableFuture<>();
+        sUnarchiveReceiverAllUsers = new CompletableFuture<>();
+        mContext.getPackageManager().setComponentEnabledSetting(
+                new ComponentName(mContext, UnarchiveBroadcastReceiver.class),
+                PackageManager.COMPONENT_ENABLED_STATE_ENABLED, DONT_KILL_APP);
     }
 
     @After
@@ -140,7 +149,6 @@ public class PackageInstallerArchiveTest {
         // This creates a data directory which will be verified later.
         launchTestActivity();
         PackageInfo packageInfo = getPackageInfo();
-
 
         runWithShellPermissionIdentity(
                 () -> mPackageInstaller.requestArchive(PACKAGE_NAME,
@@ -199,6 +207,25 @@ public class PackageInstallerArchiveTest {
     }
 
     @Test
+    public void archiveApp_installerDoesntSupportUnarchival() {
+        installPackage(APK_PATH);
+        mContext.getPackageManager().setComponentEnabledSetting(
+                new ComponentName(mContext, UnarchiveBroadcastReceiver.class),
+                PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+                PackageManager.DONT_KILL_APP);
+
+        PackageManager.NameNotFoundException e =
+                runWithShellPermissionIdentity(
+                        () -> assertThrows(
+                                PackageManager.NameNotFoundException.class,
+                                () -> mPackageInstaller.requestArchive(PACKAGE_NAME,
+                                        new IntentSender((IIntentSender) mIntentSender))),
+                        Manifest.permission.DELETE_PACKAGES);
+
+        assertThat(e).hasMessageThat().isEqualTo("Installer does not support unarchival");
+    }
+
+    @Test
     public void matchArchivedPackages() throws Exception {
         installPackage(APK_PATH);
 
@@ -236,24 +263,11 @@ public class PackageInstallerArchiveTest {
                 Manifest.permission.DELETE_PACKAGES);
         assertThat(mIntentSender.mStatus.get()).isEqualTo(PackageInstaller.STATUS_SUCCESS);
 
-        UnarchiveBroadcastReceiver unarchiveReceiver = new UnarchiveBroadcastReceiver();
-        IntentFilter intentFilter = new IntentFilter();
-        intentFilter.addAction(Intent.ACTION_UNARCHIVE_PACKAGE);
-        mContext.registerReceiver(
-                unarchiveReceiver,
-                intentFilter,
-                null,
-                null,
-                Context.RECEIVER_EXPORTED
-        );
-
         runWithShellPermissionIdentity(
                 () -> mPackageInstaller.requestUnarchive(PACKAGE_NAME),
                 Manifest.permission.INSTALL_PACKAGES);
-        assertThat(unarchiveReceiver.mPackage.get()).isEqualTo(PACKAGE_NAME);
-        assertThat(unarchiveReceiver.mAllUsers.get()).isFalse();
-
-        mContext.unregisterReceiver(unarchiveReceiver);
+        assertThat(sUnarchiveReceiverPackageName.get()).isEqualTo(PACKAGE_NAME);
+        assertThat(sUnarchiveReceiverAllUsers.get()).isFalse();
     }
 
     @Test
@@ -296,24 +310,12 @@ public class PackageInstallerArchiveTest {
                 SystemUtil.runShellCommand(String.format("pm archive %s", PACKAGE_NAME))).isEqualTo(
                 "Success\n");
 
-        UnarchiveBroadcastReceiver unarchiveReceiver = new UnarchiveBroadcastReceiver();
-        IntentFilter intentFilter = new IntentFilter();
-        intentFilter.addAction(Intent.ACTION_UNARCHIVE_PACKAGE);
-        mContext.registerReceiver(
-                unarchiveReceiver,
-                intentFilter,
-                null,
-                null,
-                Context.RECEIVER_EXPORTED
-        );
         assertThat(
                 SystemUtil.runShellCommand(String.format("pm request-unarchive %s", PACKAGE_NAME)))
                 .isEqualTo("Success\n");
 
-        assertThat(unarchiveReceiver.mPackage.get()).isEqualTo(PACKAGE_NAME);
-        assertThat(unarchiveReceiver.mAllUsers.get()).isFalse();
-
-        mContext.unregisterReceiver(unarchiveReceiver);
+        assertThat(sUnarchiveReceiverPackageName.get()).isEqualTo(PACKAGE_NAME);
+        assertThat(sUnarchiveReceiverAllUsers.get()).isFalse();
     }
 
     @Test
@@ -443,10 +445,7 @@ public class PackageInstallerArchiveTest {
         return bitmap;
     }
 
-    static class UnarchiveBroadcastReceiver extends BroadcastReceiver {
-
-        final CompletableFuture<String> mPackage = new CompletableFuture<>();
-        final CompletableFuture<Boolean> mAllUsers = new CompletableFuture<>();
+    public static class UnarchiveBroadcastReceiver extends BroadcastReceiver {
 
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -454,9 +453,9 @@ public class PackageInstallerArchiveTest {
                 return;
             }
 
-            mPackage.complete(
+            sUnarchiveReceiverPackageName.complete(
                     intent.getStringExtra(PackageInstaller.EXTRA_UNARCHIVE_PACKAGE_NAME));
-            mAllUsers.complete(
+            sUnarchiveReceiverAllUsers.complete(
                     intent.getBooleanExtra(PackageInstaller.EXTRA_UNARCHIVE_ALL_USERS, true));
         }
     }
