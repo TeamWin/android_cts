@@ -168,7 +168,6 @@ android_test {
         ":CtsContentDirectBootUnawareTestApp",
         ":CtsContentPartiallyDirectBootAwareTestApp",
         ":CtsIntentResolutionTestApp",
-        ":CtsIntentResolutionTestAppApi30",
         ":CtsContentNoApplicationTestApp",
         ":CtsApkVerityTestPrebuiltFiles",
         // v1/v2/v3/v4 signed version of android.appsecurity.cts.tinyapp to keep checksums stable
