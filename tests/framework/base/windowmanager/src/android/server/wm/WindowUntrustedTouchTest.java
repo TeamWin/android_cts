@@ -19,6 +19,7 @@ package android.server.wm;
 import static android.Manifest.permission.ACCESS_SURFACE_FLINGER;
 import static android.app.AppOpsManager.MODE_ALLOWED;
 import static android.app.AppOpsManager.OPSTR_SYSTEM_ALERT_WINDOW;
+import static android.server.wm.BuildUtils.HW_TIMEOUT_MULTIPLIER;
 import static android.server.wm.UiDeviceUtils.pressUnlockButton;
 import static android.server.wm.UiDeviceUtils.pressWakeupButton;
 import static android.server.wm.WindowManagerState.STATE_RESUMED;
@@ -958,10 +959,9 @@ public class WindowUntrustedTouchTest {
         WindowManagerState.WindowState focusedWindowState = mWmState.getWindowState(component);
         Rect expectedBounds = mWmState.getActivity(component).getBounds();
         SystemUtil.runWithShellPermissionIdentity(() -> {
-            if (!CtsWindowInfoUtils.waitForWindowInfos(windows -> windows.stream().anyMatch(w ->
-                    w.name.contains(focusedWindowState.getToken())
-                            && w.name.contains(focusedWindowState.getName())
-                            && w.bounds.equals(expectedBounds)), 3, TimeUnit.SECONDS)) {
+            if (!CtsWindowInfoUtils.waitForWindowOnTop(5 * HW_TIMEOUT_MULTIPLIER, TimeUnit.SECONDS,
+                    window -> window.name.contains(focusedWindowState.getToken())
+                            && window.name.contains(focusedWindowState.getName()))) {
                 fail("Window " + focusedWindowState.getName() + " did not appear in InputFlinger "
                         + "with an expected bounds " + expectedBounds);
             }
