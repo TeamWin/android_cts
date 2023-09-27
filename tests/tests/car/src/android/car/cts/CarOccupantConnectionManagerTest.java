@@ -41,7 +41,6 @@ import android.util.Pair;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.ApiTest;
@@ -72,7 +71,6 @@ public final class CarOccupantConnectionManagerTest extends AbstractCarTestCase 
     private static final Payload PAYLOAD1 = new Payload(HexFormat.of().parseHex("1234"));
     private static final Payload PAYLOAD2 = new Payload(HexFormat.of().parseHex("5678"));
 
-    private final Context mContext = InstrumentationRegistry.getContext();
     private final Executor mExecutor = mContext.getMainExecutor();
     private final TestServiceConnection mServiceConnection = new TestServiceConnection();
 

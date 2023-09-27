@@ -46,7 +46,7 @@ import android.view.Display;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.test.InstrumentationRegistry;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.PollingCheck;
@@ -73,9 +73,9 @@ public class CarActivityManagerTest {
 
     private static final long TIMEOUT_FOR_ACTIVITY_DESTROYED = 1_000;  // ms
 
-    private final Context mContext = InstrumentationRegistry.getContext();
     private final Instrumentation mInstrumentation =
             InstrumentationRegistry.getInstrumentation();
+    private final Context mContext = mInstrumentation.getContext();
     private final Context mTargetContext = mInstrumentation.getTargetContext();
     private final UiAutomation mUiAutomation = mInstrumentation.getUiAutomation();
     private final ComponentName mTestActivity =
@@ -223,7 +223,7 @@ public class CarActivityManagerTest {
         }
     }
 
-    @ApiTest(apis = {"android.car.app.CarActivityManager#getVisibleTasks()"})
+    @ApiTest(apis = {"android.car.app.CarActivityManager#getVisibleTasks"})
     @Test
     public void testGetVisibleTasks() throws Exception {
         // launch the activity

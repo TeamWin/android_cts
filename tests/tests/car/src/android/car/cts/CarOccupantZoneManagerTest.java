@@ -42,7 +42,7 @@ import android.test.suitebuilder.annotation.SmallTest;
 import android.util.Log;
 import android.view.Display;
 
-import androidx.test.InstrumentationRegistry;
+import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.car.occupantzone.CarOccupantZoneDumpProto;
