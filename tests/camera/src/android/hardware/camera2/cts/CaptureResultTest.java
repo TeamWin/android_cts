@@ -621,6 +621,10 @@ public class CaptureResultTest extends Camera2AndroidTestCase {
         waiverKeys.add(CaptureResult.STATISTICS_FACES);
         // Only present in reprocessing capture result.
         waiverKeys.add(CaptureResult.REPROCESS_EFFECTIVE_EXPOSURE_FACTOR);
+        // Only present when manual flash control is supported
+        if (!staticInfo.isManualFlashStrengthControlSupported()) {
+            waiverKeys.add(CaptureResult.FLASH_STRENGTH_LEVEL);
+        }
 
         // LOGICAL_MULTI_CAMERA_ACTIVE_PHYSICAL_ID not required if key is not supported.
         if (!staticInfo.isLogicalMultiCamera() ||
