@@ -11,8 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""CameraITS test that the device will write/read correct exp/gain values.
-"""
+"""CameraITS test that device will request/capture correct exp/gain values."""
 
 import logging
 import os.path
@@ -31,11 +30,10 @@ _RTOL_EXP_GAIN = 0.97
 _TEST_EXP_RANGE = [6E6, 1E9]  # ns [6ms, 1s]
 
 
-class ReadWriteTest(its_base_test.ItsBaseTest):
-  """Test that the device will write/read correct exp/gain values.
-  """
+class RequestCaptureMatchTest(its_base_test.ItsBaseTest):
+  """Test device captures have correct exp/gain values from request."""
 
-  def test_read_write(self):
+  def test_request_capture_match(self):
     with its_session_utils.ItsSession(
         device_id=self.dut.serial,
         camera_id=self.camera_id,
@@ -84,76 +82,76 @@ class ReadWriteTest(its_base_test.ItsBaseTest):
           for sens in sens_range:
             reqs.append(capture_request_utils.manual_capture_request(sens, exp))
             index_list.append((fmt, exp, sens))
-            logging.debug('exp_write: %d, sens_write: %d', exp, sens)
+            logging.debug('exp_req: %d, sens_req: %d', exp, sens)
 
         # take shots
         caps = cam.do_capture(reqs, out_surface)
 
         # extract exp/sensitivity data
         for i, cap in enumerate(caps):
-          exposure_read = cap['metadata']['android.sensor.exposureTime']
-          sensitivity_read = cap['metadata']['android.sensor.sensitivity']
-          data[index_list[i]] = (fmt, exposure_read, sensitivity_read)
+          exposure_cap = cap['metadata']['android.sensor.exposureTime']
+          sensitivity_cap = cap['metadata']['android.sensor.sensitivity']
+          data[index_list[i]] = (fmt, exposure_cap, sensitivity_cap)
 
       # check read/write match across all shots
       e_failed = []  # exposure time FAILs
       s_failed = []  # sensitivity FAILs
       r_failed = []  # sensitivity range FAILs
-      for fmt_write in valid_formats:
-        for e_write in exp_range:
-          for s_write in sens_range:
-            fmt_read, e_read, s_read = data[(fmt_write, e_write, s_write)]
-            if (e_write < e_read or e_read / float(e_write) <= _RTOL_EXP_GAIN):
+      for fmt_req in valid_formats:
+        for e_req in exp_range:
+          for s_req in sens_range:
+            fmt_cap, e_cap, s_cap = data[(fmt_req, e_req, s_req)]
+            if (e_req < e_cap or e_cap / float(e_req) <= _RTOL_EXP_GAIN):
               e_failed.append({
-                  'format': fmt_read,
-                  'e_write': e_write,
-                  'e_read': e_read,
-                  's_write': s_write,
-                  's_read': s_read
+                  'format': fmt_cap,
+                  'e_req': e_req,
+                  'e_cap': e_cap,
+                  's_req': s_req,
+                  's_cap': s_cap
               })
-            if (s_write < s_read or s_read / float(s_write) <= _RTOL_EXP_GAIN):
+            if (s_req < s_cap or s_cap / float(s_req) <= _RTOL_EXP_GAIN):
               s_failed.append({
-                  'format': fmt_read,
-                  'e_write': e_write,
-                  'e_read': e_read,
-                  's_write': s_write,
-                  's_read': s_read
+                  'format': fmt_cap,
+                  'e_req': e_req,
+                  'e_cap': e_cap,
+                  's_req': s_req,
+                  's_cap': s_cap
               })
             if (vendor_api_level >= its_session_utils.ANDROID14_API_LEVEL and
-                s_read < sens_range[0]):
+                s_cap < sens_range[0]):
               r_failed.append({
-                  'format': fmt_read,
-                  'e_write': e_write,
-                  'e_read': e_read,
-                  's_write': s_write,
-                  's_read': s_read
+                  'format': fmt_cap,
+                  'e_req': e_req,
+                  'e_cap': e_cap,
+                  's_req': s_req,
+                  's_cap': s_cap
               })
 
         # print results
         if e_failed:
           logging.debug('FAILs for exposure time')
           for fail in e_failed:
-            logging.debug('format: %s, e_write: %d, e_read: %d, RTOL: %.2f, ',
-                          fail['format'], fail['e_write'], fail['e_read'],
+            logging.debug('format: %s, e_req: %d, e_cap: %d, RTOL: %.2f, ',
+                          fail['format'], fail['e_req'], fail['e_cap'],
                           _RTOL_EXP_GAIN)
-            logging.debug('s_write: %d, s_read: %d, RTOL: %.2f',
-                          fail['s_write'], fail['s_read'], _RTOL_EXP_GAIN)
+            logging.debug('s_req: %d, s_cap: %d, RTOL: %.2f',
+                          fail['s_req'], fail['s_cap'], _RTOL_EXP_GAIN)
         if s_failed:
           logging.debug('FAILs for sensitivity(ISO)')
           for fail in s_failed:
-            logging.debug('format: %s, s_write: %d, s_read: %d, RTOL: %.2f, ',
-                          fail['format'], fail['s_write'], fail['s_read'],
+            logging.debug('format: %s, s_req: %d, s_cap: %d, RTOL: %.2f, ',
+                          fail['format'], fail['s_req'], fail['s_cap'],
                           _RTOL_EXP_GAIN)
-            logging.debug('e_write: %d, e_read: %d, RTOL: %.2f',
-                          fail['e_write'], fail['e_read'], _RTOL_EXP_GAIN)
+            logging.debug('e_req: %d, e_cap: %d, RTOL: %.2f',
+                          fail['e_req'], fail['e_cap'], _RTOL_EXP_GAIN)
         if r_failed:
           logging.debug('FAILs for sensitivity(ISO) range')
           for fail in r_failed:
-            logging.debug('format: %s, s_write: %d, s_read: %d, RTOL: %.2f, ',
-                          fail['format'], fail['s_write'], fail['s_read'],
+            logging.debug('format: %s, s_req: %d, s_cap: %d, RTOL: %.2f, ',
+                          fail['format'], fail['s_req'], fail['s_cap'],
                           _RTOL_EXP_GAIN)
-            logging.debug('e_write: %d, e_read: %d, RTOL: %.2f',
-                          fail['e_write'], fail['e_read'], _RTOL_EXP_GAIN)
+            logging.debug('e_req: %d, e_cap: %d, RTOL: %.2f',
+                          fail['e_req'], fail['e_cap'], _RTOL_EXP_GAIN)
 
         # PASS/FAIL
         if e_failed:
