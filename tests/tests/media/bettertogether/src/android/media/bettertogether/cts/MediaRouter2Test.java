@@ -57,9 +57,9 @@ import android.media.RoutingSessionInfo;
 import android.os.Bundle;
 import android.os.ConditionVariable;
 import android.platform.test.annotations.AppModeFull;
-import android.platform.test.annotations.LargeTest;
 import android.text.TextUtils;
 
+import androidx.test.filters.LargeTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;

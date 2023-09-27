@@ -40,7 +40,6 @@ import android.os.Looper;
 import android.os.Process;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeSdkSandbox;
-import android.platform.test.annotations.LargeTest;
 import android.system.Os;
 import android.text.InputType;
 import android.view.View;
@@ -57,6 +56,7 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 
 import androidx.annotation.NonNull;
+import androidx.test.filters.LargeTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 

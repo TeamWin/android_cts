@@ -29,7 +29,6 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
-import android.platform.test.annotations.LargeTest;
 import android.provider.SimPhonebookContract.ElementaryFiles;
 import android.provider.SimPhonebookContract.SimRecords;
 import android.telephony.PhoneNumberUtils;
@@ -37,6 +36,7 @@ import android.telephony.PhoneNumberUtils;
 import androidx.annotation.NonNull;
 import androidx.test.core.app.ApplicationProvider;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.filters.LargeTest;
 
 import com.android.compatibility.common.util.RequiredFeatureRule;
 

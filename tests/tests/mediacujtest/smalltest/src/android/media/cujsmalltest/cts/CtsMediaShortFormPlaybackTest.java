@@ -17,9 +17,9 @@
 package android.media.cujsmalltest.cts;
 
 import android.media.cujcommon.cts.CujTestBase;
-import android.platform.test.annotations.LargeTest;
 
 import androidx.media3.common.C;
+import androidx.test.filters.LargeTest;
 
 import com.android.compatibility.common.util.ApiTest;
 
