@@ -311,17 +311,14 @@ public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
         final String startTestActivityCmd = "am start -W " + TEST_ACTIVITY.flattenToShortString();
         SystemUtil.runShellCommand(startTestActivityCmd);
 
-        mWmState.computeState();
-        // On multiple screen devices, tasks may be launched in different task display areas. Make
-        // sure the tasks will be launched in the same TDA.
-        int targetDisplayAreaId = mWmState.getTaskDisplayAreaFeatureId(TEST_ACTIVITY);
+        launchHomeActivityNoWait();
+        waitAndAssertActivityState(TEST_ACTIVITY, STATE_STOPPED, "Activity should be stopped");
 
-        launchAndWaitForActivity(SECOND_ACTIVITY, targetDisplayAreaId);
-        separateTestJournal();
-
+        final float originalFontScale = mContext.getResources().getConfiguration().fontScale;
         final FontScaleSession fontScaleSession = createManagedFontScaleSession();
         fontScaleSession.set(fontScaleSession.get() + 0.1f);
-        assertActivityLifecycle(SECOND_ACTIVITY, true /* relaunched */);
+        Condition.waitFor("font scale changed", () ->
+                originalFontScale != mContext.getResources().getConfiguration().fontScale);
 
         // Move the task of test activity to front.
         final String amStartOutput = SystemUtil.runShellCommand(startTestActivityCmd);
@@ -460,22 +457,12 @@ public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
     }
 
     private void launchAndWaitForActivity(ComponentName activity) {
-        getLaunchActivityBuilder(activity)
-                .execute();
-    }
-
-    private void launchAndWaitForActivity(ComponentName activity, int targetDisplayAreaId) {
-        getLaunchActivityBuilder(activity)
-                .setLaunchTaskDisplayAreaFeatureId(targetDisplayAreaId)
-                .execute();
-    }
-
-    private LaunchActivityBuilder getLaunchActivityBuilder(ComponentName activity) {
-        return getLaunchActivityBuilder()
+        getLaunchActivityBuilder()
                 .setUseInstrumentation()
                 .setTargetActivity(activity)
                 .setWindowingMode(WINDOWING_MODE_FULLSCREEN)
-                .setWaitForLaunched(true);
+                .setWaitForLaunched(true)
+                .execute();
     }
 
     @NonNull
