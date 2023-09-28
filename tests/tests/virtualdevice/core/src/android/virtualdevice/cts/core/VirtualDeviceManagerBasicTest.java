@@ -61,6 +61,7 @@ import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
 import android.hardware.display.VirtualDisplayConfig;
 import android.os.SystemClock;
+import android.os.UserManager;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.RequiresFlagsDisabled;
 import android.platform.test.annotations.RequiresFlagsEnabled;
@@ -258,6 +259,8 @@ public class VirtualDeviceManagerBasicTest {
         assumeFalse("Skipping test: not supported on automotive",
                 getApplicationContext().getPackageManager()
                         .hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE));
+        // TODO(b/282629983): Re-enable test for HSUM once CDM Listener supports more users.
+        assumeFalse(UserManager.isHeadlessSystemUserMode());
 
         CountDownLatch latch = new CountDownLatch(1);
 
@@ -359,6 +362,9 @@ public class VirtualDeviceManagerBasicTest {
     @Test
     public void createVirtualDevice_removeAssociationAndClose_isSafe()
             throws InterruptedException {
+        // TODO(b/282629983): Re-enable test for HSUM once CDM Listener supports more users.
+        assumeFalse(UserManager.isHeadlessSystemUserMode());
+
         CountDownLatch latch = new CountDownLatch(1);
 
         // Create device with a display and ensure it is all set up
@@ -398,6 +404,9 @@ public class VirtualDeviceManagerBasicTest {
     @RequiresFlagsEnabled(Flags.FLAG_VDM_PUBLIC_APIS)
     @Test
     public void createVirtualDevice_removeAssociationAndClose_isSafe_withListener() {
+        // TODO(b/282629983): Re-enable test for HSUM once CDM Listener supports more users.
+        assumeFalse(UserManager.isHeadlessSystemUserMode());
+
         mVirtualDevice = mVirtualDeviceManager.createVirtualDevice(
                 mFakeAssociationRule.getAssociationInfo().getId(),
                 DEFAULT_VIRTUAL_DEVICE_PARAMS);
