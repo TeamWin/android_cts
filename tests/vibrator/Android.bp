@@ -21,6 +21,7 @@ android_test {
     defaults: ["cts_defaults"],
     compile_multilib: "both",
     static_libs: [
+        "android.os.vibrator.flags-aconfig-java",
         "androidx.test.core",
         "androidx.test.ext.junit",
         "androidx.test.rules",
@@ -30,6 +31,7 @@ android_test {
         "guava",
         "junit",
         "junit-params",
+        "flag-junit",
         "CtsMockInputMethodLib",
         "hamcrest-library",
     ],
