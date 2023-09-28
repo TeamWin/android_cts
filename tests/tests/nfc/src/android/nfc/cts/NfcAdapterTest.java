@@ -5,13 +5,11 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.anyBoolean;
 import static org.mockito.Mockito.anyInt;
-import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.doNothing;
 
 import android.app.Activity;
 import android.app.PendingIntent;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -20,9 +18,11 @@ import android.nfc.*;
 import android.nfc.tech.*;
 import android.os.Bundle;
 import android.os.RemoteException;
-import androidx.test.core.app.ApplicationProvider;
-import androidx.test.InstrumentationRegistry;
 
+import androidx.test.InstrumentationRegistry;
+import androidx.test.core.app.ApplicationProvider;
+
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -30,15 +30,15 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.mockito.internal.util.reflection.FieldReader;
 import org.mockito.internal.util.reflection.FieldSetter;
 
 import java.util.ArrayList;
-import java.util.concurrent.Executor;
-import java.util.HashMap;
 
 @RunWith(JUnit4.class)
 public class NfcAdapterTest {
     @Mock private INfcAdapter mService;
+    private INfcAdapter mSavedService;
     private Context mContext;
 
     private boolean supportsHardware() {
@@ -47,10 +47,23 @@ public class NfcAdapterTest {
     }
 
     @Before
-    public void setUp() {
+    public void setUp() throws NoSuchFieldException {
         MockitoAnnotations.initMocks(this);
         mContext = InstrumentationRegistry.getContext();
         assumeTrue(supportsHardware());
+        // Backup the original service. It is being overridden
+        // when creating a mocked adapter.
+        NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
+        mSavedService = (INfcAdapter) (
+            new FieldReader(adapter, adapter.getClass().getDeclaredField("sService")).read());
+    }
+
+    @After
+    public void tearDown() throws NoSuchFieldException {
+        // Restore the original service.
+        NfcAdapter adapter = NfcAdapter.getDefaultAdapter(mContext);
+        FieldSetter.setField(adapter,
+                adapter.getClass().getDeclaredField("sService"), mSavedService);
     }
 
     @Test
