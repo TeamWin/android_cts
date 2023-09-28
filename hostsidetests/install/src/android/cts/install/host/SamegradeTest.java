@@ -30,6 +30,7 @@ import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized.Parameter;
@@ -55,6 +56,9 @@ public final class SamegradeTest extends BaseHostJUnit4Test {
             "assert_systemApex_postReboot_phase";
     private static final String ASSERT_PHASE = "assert_phase";
     private static final String CLEAN_UP_PHASE = "cleanUp_phase";
+
+    @Rule
+    public ShimApexRule mShimApexRule = new ShimApexRule(this);
 
     @Parameter(0)
     public INSTALL_TYPE mInstallType;
