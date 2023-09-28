@@ -357,7 +357,11 @@ public class DisplayEventTest {
         intent.putExtra(TEST_MESSENGER, mMessenger);
         intent.putExtra(TEST_DISPLAYS, mDisplayCount);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        mContext.startActivity(intent);
+        SystemUtil.runWithShellPermissionIdentity(
+                () -> {
+                    mContext.startActivity(intent);
+                },
+                android.Manifest.permission.START_ACTIVITIES_FROM_SDK_SANDBOX);
         waitLatch(mLatchActivityLaunch);
     }
 
@@ -368,7 +372,11 @@ public class DisplayEventTest {
         Intent intent = new Intent(Intent.ACTION_MAIN);
         intent.setClassName(TEST_PACKAGE, TEST_ACTIVITY);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-        mContext.startActivity(intent);
+        SystemUtil.runWithShellPermissionIdentity(
+                () -> {
+                    mContext.startActivity(intent);
+                },
+                android.Manifest.permission.START_ACTIVITIES_FROM_SDK_SANDBOX);
     }
 
     /**
@@ -379,13 +387,17 @@ public class DisplayEventTest {
         Intent intent = new Intent(Intent.ACTION_MAIN);
         intent.setClass(mContext, SimpleActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-        mInstrumentation.startActivitySync(intent);
 
         // Launch Home to bring the test activity into cached mode
         Intent home = new Intent(Intent.ACTION_MAIN);
         home.addCategory(Intent.CATEGORY_HOME);
         home.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        mContext.startActivity(home);
+        SystemUtil.runWithShellPermissionIdentity(
+                () -> {
+                    mInstrumentation.startActivitySync(intent);
+                    mContext.startActivity(home);
+                },
+                android.Manifest.permission.START_ACTIVITIES_FROM_SDK_SANDBOX);
         waitLatch(mLatchActivityCached);
     }
 

@@ -217,7 +217,8 @@ public class DisplayTest extends TestBase {
             Manifest.permission.ACCESS_SURFACE_FLINGER,
             Manifest.permission.WRITE_SECURE_SETTINGS,
             Manifest.permission.HDMI_CEC,
-            Manifest.permission.MODIFY_REFRESH_RATE_SWITCHING_TYPE);
+            Manifest.permission.MODIFY_REFRESH_RATE_SWITCHING_TYPE,
+            Manifest.permission.START_ACTIVITIES_FROM_SDK_SANDBOX);
 
     @Rule(order = 2)
     public StateKeeperRule<DisplayStateManager.DisplayState>
