@@ -25,6 +25,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
 
 import android.app.admin.DevicePolicyManager;
 import android.app.admin.RemoteDevicePolicyManager;
@@ -344,7 +345,7 @@ public final class DeviceOwnerTest {
         }
     }
 
-    @ApiTest(apis = "android.app.admin.DevicePolicyManager.ACTION_DEVICE_OWNER_CHANGED")
+    @ApiTest(apis = {"android.app.admin.DevicePolicyManager#ACTION_DEVICE_OWNER_CHANGED"})
     @EnsureHasNoDpc
     @Postsubmit(reason = "new test")
     @Test
@@ -382,7 +383,7 @@ public final class DeviceOwnerTest {
         }
     }
 
-    @ApiTest(apis = "android.app.admin.DevicePolicyManager#isProvisioningAllowed")
+    @ApiTest(apis = {"android.app.admin.DevicePolicyManager#isProvisioningAllowed"})
     @Postsubmit(reason = "new test")
     @Test
     public void isProvisioningAllowed_forManagedDevice_setupWizardIsComplete_returnsFalse() {
@@ -398,8 +399,9 @@ public final class DeviceOwnerTest {
     @Test
     public void clearDeviceOwnerApp_escrowTokenExists_success() {
         RemoteDevicePolicyManager dpm = sDeviceState.dpc().devicePolicyManager();
-        assertThat(dpm.setResetPasswordToken(sDeviceState.dpc().componentName(), new byte[32]))
-                .isTrue();
+        skipTestIfEscrowDisabled(() -> assertThat(dpm.setResetPasswordToken(
+                sDeviceState.dpc().componentName(), new byte[32]))
+                .isTrue());
         // clearDeviceOwnerApp should not throw, and isDeviceOwnerApp should return false afterwards
         dpm.clearDeviceOwnerApp(sDeviceState.dpc().packageName());
         assertThat(dpm.isDeviceOwnerApp(sDeviceState.dpc().packageName())).isFalse();
@@ -433,6 +435,16 @@ public final class DeviceOwnerTest {
             assertThat(e.getCause() instanceof AdbException).isTrue();
             assertThat(((AdbException) e.getCause()).error()).contains(
                     "Cannot disable a protected package: " + sDeviceState.dpc().packageName());
+        }
+    }
+
+    private void skipTestIfEscrowDisabled(Runnable r) {
+        try {
+            r.run();
+        } catch (SecurityException e) {
+            assumeTrue("Escrow token disabled",
+                    !e.getMessage().contains("Escrow token is disabled on the current user"));
+            throw e;
         }
     }
 }
