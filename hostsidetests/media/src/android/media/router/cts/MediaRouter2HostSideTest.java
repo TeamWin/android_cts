@@ -191,13 +191,6 @@ public class MediaRouter2HostSideTest extends BaseHostJUnit4Test {
 
     private void setPermissionEnabled(String packageName, String permission, boolean enabled)
             throws DeviceNotAvailableException {
-        // Trying to grant privileged permissions without root will fail.
-        if (!getDevice().isAdbRoot()) {
-            assertWithMessage("Failed to enable adb root.")
-                    .that(getDevice().enableAdbRoot())
-                    .isTrue();
-        }
-
         String action = enabled ? "grant" : "revoke";
         String result =
                 getDevice()
