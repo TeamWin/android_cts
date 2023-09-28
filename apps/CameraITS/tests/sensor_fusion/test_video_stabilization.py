@@ -13,6 +13,7 @@
 # limitations under the License.
 """Verify video is stable during phone movement."""
 
+import fnmatch
 import logging
 import math
 import os
@@ -254,6 +255,20 @@ class VideoStabilizationTest(its_base_test.ItsBaseTest):
               f"Max gyro angle: {max_angles['gyro']:.3f}, "
               f"ratio: {max_angles['cam']/max_angles['gyro']:.3f} "
               f'THRESH: {video_stabilization_factor}.')
+        else: # remove frames if PASS
+          temp_files = []
+          try:
+            temp_files = os.listdir(log_path)
+          except FileNotFoundError:
+            logging.debug('/tmp directory: %s not found', log_path)
+          for file in temp_files:
+            if fnmatch.fnmatch(file, f'*_{video_quality}_*_stabilized_frame_*.png'):
+              file_to_remove = os.path.join(log_path, file)
+              try:
+                os.remove(file_to_remove)
+              except FileNotFoundError:
+                logging.debug('File not found: %s', str(file))
+          logging.debug('Quality %s passes, frame images have been removed', video_quality)
       if test_failures:
         raise AssertionError(test_failures)
 
