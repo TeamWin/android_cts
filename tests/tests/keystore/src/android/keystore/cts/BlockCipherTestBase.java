@@ -713,8 +713,8 @@ abstract class BlockCipherTestBase {
             assertEquals(getBlockSize(), output.length);
         } catch (NullPointerException e) {
             if (isStrongbox() && output == null) {
-                if (Build.VERSION_CODES.TIRAMISU
-                        > SystemProperties.getInt("ro.vendor.api_level", 0)) {
+                if (Build.VERSION_CODES.UPSIDE_DOWN_CAKE
+                        >= SystemProperties.getInt("ro.vendor.api_level", 0)) {
                     // Known broken on some older vendor implementations.
                     return;
                 }
@@ -830,8 +830,8 @@ abstract class BlockCipherTestBase {
                 boolean compareOutput = true;
                 if (isStrongbox()) {
                     // This is known to be broken on older vendor implementations.
-                    if (Build.VERSION_CODES.TIRAMISU
-                            > SystemProperties.getInt("ro.vendor.api_level", 0)) {
+                    if (Build.VERSION_CODES.UPSIDE_DOWN_CAKE
+                            >= SystemProperties.getInt("ro.vendor.api_level", 0)) {
                         compareOutput = false;
                     } else {
                         additionalInformation = " (b/194134359)";
@@ -929,8 +929,8 @@ abstract class BlockCipherTestBase {
                 boolean compareOutput = true;
                 if (isStrongbox()) {
                     // This is known to be broken on older vendor implementations.
-                    if (Build.VERSION_CODES.TIRAMISU
-                            > SystemProperties.getInt("ro.vendor.api_level", 0)) {
+                    if (Build.VERSION_CODES.UPSIDE_DOWN_CAKE
+                            >= SystemProperties.getInt("ro.vendor.api_level", 0)) {
                         compareOutput = false;
                     } else {
                         additionalInformation = " (b/194134040)";
