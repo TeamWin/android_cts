@@ -16,6 +16,8 @@
 
 package android.uirendering.cts.testclasses;
 
+import static junit.framework.Assert.assertFalse;
+
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
@@ -418,5 +420,20 @@ public class GainmapTests {
         assertChannels(gainmapContents.getColor(1, 3), Color.pack(0xFFFFFFFF), 0f);
         assertChannels(gainmapContents.getColor(1, 4), Color.pack(Color.BLACK), 0f);
         assertChannels(gainmapContents.getColor(2, 4), Color.pack(Color.BLACK), 0f);
+    }
+
+    @Test
+    public void testRenderingDropsGainmap() {
+        Bitmap dest = Bitmap.createBitmap(10, 10, Bitmap.Config.ARGB_8888);
+        Gainmap gainmap = new Gainmap(Bitmap.createBitmap(5, 5, Bitmap.Config.ALPHA_8));
+        dest.setGainmap(gainmap);
+        assertTrue(dest.hasGainmap());
+        Canvas canvas = new Canvas(dest);
+        assertFalse(dest.hasGainmap());
+        canvas.setBitmap(null);
+        dest.setGainmap(gainmap);
+        assertTrue(dest.hasGainmap());
+        canvas.setBitmap(dest);
+        assertFalse(dest.hasGainmap());
     }
 }
