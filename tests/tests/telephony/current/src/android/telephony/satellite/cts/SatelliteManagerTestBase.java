@@ -38,6 +38,8 @@ import android.os.Looper;
 import android.os.OutcomeReceiver;
 import android.provider.Settings;
 import android.telephony.Rlog;
+import android.telephony.SubscriptionInfo;
+import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
 import android.telephony.cts.TelephonyManagerTest.ServiceStateRadioStateListener;
 import android.telephony.satellite.PointingInfo;
@@ -1183,5 +1185,37 @@ public class SatelliteManagerTestBase {
                 logd("waitFor: delayTimeout ex=" + ex);
             }
         }
+    }
+
+    // Get default active subscription ID.
+    protected int getActiveSubIDForCarrierSatelliteTest() {
+        Context context = InstrumentationRegistry.getInstrumentation().getContext();
+        SubscriptionManager sm = context.getSystemService(SubscriptionManager.class);
+        List<SubscriptionInfo> infos = ShellIdentityUtils.invokeMethodWithShellPermissions(sm,
+                SubscriptionManager::getActiveSubscriptionInfoList);
+
+        int defaultSubId = SubscriptionManager.getDefaultVoiceSubscriptionId();
+        if (defaultSubId != SubscriptionManager.INVALID_SUBSCRIPTION_ID
+                && isSubIdInInfoList(infos, defaultSubId)) {
+            return defaultSubId;
+        }
+
+        defaultSubId = SubscriptionManager.getDefaultSubscriptionId();
+        if (defaultSubId != SubscriptionManager.INVALID_SUBSCRIPTION_ID
+                && isSubIdInInfoList(infos, defaultSubId)) {
+            return defaultSubId;
+        }
+
+        // Couldn't resolve a default. We can try to resolve a default using the active
+        // subscriptions.
+        if (!infos.isEmpty()) {
+            return infos.get(0).getSubscriptionId();
+        }
+        // There must be at least one active subscription.
+        return SubscriptionManager.INVALID_SUBSCRIPTION_ID;
+    }
+
+    private static boolean isSubIdInInfoList(List<SubscriptionInfo> infos, int subId) {
+        return infos.stream().anyMatch(info -> info.getSubscriptionId() == subId);
     }
 }
