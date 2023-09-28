@@ -23,6 +23,9 @@ android_library {
     name: "audiorecordpermissiontests_shared",
     defaults: ["cts_support_defaults"],
     srcs: ["src/**/*.kt"],
+    static_libs: [
+        "kotlinx-coroutines-android",
+    ],
     resource_dirs: ["res"],
     sdk_version: "current",
 }

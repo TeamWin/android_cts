@@ -69,39 +69,46 @@ public class AudioRecordPermissionTests {
     private final Instrumentation mInstrumentation = InstrumentationRegistry.getInstrumentation();
     private final Context mContext = mInstrumentation.getContext();
 
-    private String mStartedActivityPackage = null;
-    private String mStartedServicePackage = null;
+    // Package name for the apk being instrumented
+    private String mTestPackage = null;
+    private boolean mActivityStarted = false;
 
     @Before
     public void setup() throws Exception {
-        assumeTrue(mContext.getPackageManager().hasSystemFeature(
-                PackageManager.FEATURE_MICROPHONE));
+        assumeTrue(
+                mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_MICROPHONE));
     }
 
     @After
     public void teardown() throws Exception {
-        // Clean up any left-over activities, services
-        if (mStartedActivityPackage != null) {
-            stopActivity(mStartedActivityPackage);
-        }
-        if (mStartedServicePackage != null) {
-            stopService(mStartedServicePackage);
+        try {
+            if (mActivityStarted) {
+                stopActivity();
+            }
+            final Future future = getFutureForAction(ACTION_FINISHED_TEARDOWN);
+            amShellCommand("startservice", mTestPackage, ACTION_TEARDOWN);
+            future.get(FUTURE_WAIT_SECS, TimeUnit.SECONDS);
+        } finally {
+            // Just in case
+            mInstrumentation
+                    .getTargetContext()
+                    .stopService(
+                            new Intent().setClassName(mTestPackage, mTestPackage + SERVICE_NAME));
         }
     }
 
     @AsbSecurityTest(cveBugId = 268724205)
     @Test
     public void testMovingFromTopToBackground_isSilenced() throws Exception {
-        final String TEST_PACKAGE = API_34_PACKAGE;
+        mTestPackage = API_34_PACKAGE;
         // Start an activity, then start recording in a background service
-        startActivity(TEST_PACKAGE);
-        startBackgroundServiceRecording(TEST_PACKAGE);
+        startActivity();
+        startRecording();
         // Prime future that the stream is silenced
-        final Future future =
-                getFutureForIntent(mContext, TEST_PACKAGE + ACTION_BEGAN_RECEIVE_SILENCE);
+        final Future future = getFutureForAction(ACTION_BEGAN_RECEIVE_SILENCE);
 
         // Move out of TOP to a service state
-        stopActivity(TEST_PACKAGE);
+        stopActivity();
 
         // Future completes when silenced. If not, timeout and throw
         future.get(FUTURE_WAIT_SECS, TimeUnit.SECONDS);
@@ -110,25 +117,25 @@ public class AudioRecordPermissionTests {
     @AsbSecurityTest(cveBugId = 268724205)
     @Test
     public void testMovingFromTopToSleep_isSilenced() throws Exception {
-        final String TEST_PACKAGE = API_34_PACKAGE;
+        mTestPackage = API_34_PACKAGE;
         // Start an activity, then start recording in a background service
-        startActivity(TEST_PACKAGE);
-        startBackgroundServiceRecording(TEST_PACKAGE);
-        // Prime future that the stream is silenced
-        final Future future =
-                getFutureForIntent(mContext, TEST_PACKAGE + ACTION_BEGAN_RECEIVE_SILENCE);
+        startActivity();
+        startRecording();
+
+        // Prime futures that the stream silences then unsilences
+        final Future silenceFuture = getFutureForAction(ACTION_BEGAN_RECEIVE_SILENCE);
+        final Future unsilenceFuture = getFutureForAction(ACTION_BEGAN_RECEIVE_AUDIO);
 
         try {
             // Move out of TOP to TOP_SLEEPING
             SystemUtil.runShellCommand(mInstrumentation, "input keyevent KEYCODE_SLEEP");
             // Future completes when silenced. If not, timeout and throw
-            future.get(FUTURE_WAIT_SECS, TimeUnit.SECONDS);
+            silenceFuture.get(FUTURE_WAIT_SECS, TimeUnit.SECONDS);
         } finally {
             // Wait for unsilence after return to TOP
-            final Future receiveFuture = getFutureForIntent(
-                    mContext, TEST_PACKAGE + ACTION_BEGAN_RECEIVE_AUDIO);
             SystemUtil.runShellCommand(mInstrumentation, "input keyevent KEYCODE_WAKEUP");
-            future.get(FUTURE_WAIT_SECS, TimeUnit.SECONDS);
+            SystemUtil.runShellCommand(mInstrumentation, "wm dismiss-keyguard");
+            unsilenceFuture.get(FUTURE_WAIT_SECS, TimeUnit.SECONDS);
         }
     }
 
@@ -136,16 +143,17 @@ public class AudioRecordPermissionTests {
     @Test
     public void testMovingFromTopToForegroundServiceWithMicCapabilities_isNotSilenced()
             throws Exception {
-        final String TEST_PACKAGE = API_34_PACKAGE;
+        mTestPackage = API_34_PACKAGE;
         // Start an activity, then start recording in a fgs with mic caps
-        startActivity(TEST_PACKAGE);
-        startForegroundServiceRecording(TEST_PACKAGE);
+        startActivity();
+        goForeground();
+        startRecording();
+
         // Prime future that the stream is silenced
-        final Future future =
-                getFutureForIntent(mContext, TEST_PACKAGE + ACTION_BEGAN_RECEIVE_SILENCE);
+        final Future future = getFutureForAction(ACTION_BEGAN_RECEIVE_SILENCE);
 
         // Move out of TOP to a service state
-        stopActivity(TEST_PACKAGE);
+        stopActivity();
 
         // Assert that we timeout (future should not complete, since we should not be silenced)
         try {
@@ -160,16 +168,17 @@ public class AudioRecordPermissionTests {
     @Test
     public void testMovingFromTopToForegroundServiceWithoutMicCapabilities_isSilenced()
             throws Exception {
-        final String TEST_PACKAGE = API_34_NO_CAP_PACKAGE;
+        mTestPackage = API_34_NO_CAP_PACKAGE;
         // Start an activity, then start recording in a fgs WITHOUT mic caps
-        startActivity(TEST_PACKAGE);
-        startForegroundServiceRecording(TEST_PACKAGE);
+        startActivity();
+        goForeground();
+        startRecording();
+
         // Prime future that the stream is silenced
-        final Future future =
-                getFutureForIntent(mContext, TEST_PACKAGE + ACTION_BEGAN_RECEIVE_SILENCE);
+        final Future future = getFutureForAction(ACTION_BEGAN_RECEIVE_SILENCE);
 
         // Move out of TOP to a service state
-        stopActivity(TEST_PACKAGE);
+        stopActivity();
 
         // Future is completes when silenced. If not, timeout and throw
         future.get(FUTURE_WAIT_SECS, TimeUnit.SECONDS);
@@ -178,16 +187,16 @@ public class AudioRecordPermissionTests {
     @AsbSecurityTest(cveBugId = 268724205)
     @Test
     public void testIfTargetPre34_MovingFromTopToBackground_isNotSilenced() throws Exception {
-        final String TEST_PACKAGE = API_33_PACKAGE;
+        mTestPackage = API_33_PACKAGE;
         // Start an activity, then start recording in a background service
-        startActivity(TEST_PACKAGE);
-        startBackgroundServiceRecording(TEST_PACKAGE);
+        startActivity();
+        startRecording();
+
         // Prime future that the stream is silenced
-        final Future future =
-                getFutureForIntent(mContext, TEST_PACKAGE + ACTION_BEGAN_RECEIVE_SILENCE);
+        final Future future = getFutureForAction(ACTION_BEGAN_RECEIVE_SILENCE);
 
         // Move out of TOP to a service state
-        stopActivity(TEST_PACKAGE);
+        stopActivity();
 
         // Assert that we timeout (future should not complete, since we should not be silenced)
         try {
@@ -198,64 +207,62 @@ public class AudioRecordPermissionTests {
         }
     }
 
-    private void startActivity(String packageName) throws Exception {
-        final Future future = getFutureForIntent(mContext, packageName + ACTION_ACTIVITY_STARTED);
+    private void startActivity() throws Exception {
+        final Future future = getFutureForAction(ACTION_ACTIVITY_STARTED);
         final Intent intent =
                 new Intent(Intent.ACTION_MAIN)
-                        .setClassName(packageName, packageName + ".SimpleActivity")
+                        .setClassName(mTestPackage, mTestPackage + ".SimpleActivity")
                         .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         mInstrumentation.getTargetContext().startActivity(intent);
         future.get(FUTURE_WAIT_SECS, TimeUnit.SECONDS);
-        mStartedActivityPackage = packageName;
+        mActivityStarted = true;
     }
 
-    private void stopActivity(String packageName) throws Exception {
-        final Future future = getFutureForIntent(mContext, packageName + ACTION_ACTIVITY_FINISHED);
+    private void stopActivity() throws Exception {
+        final Future future = getFutureForAction(ACTION_ACTIVITY_FINISHED);
         mContext.sendBroadcast(
-                new Intent(packageName + ACTION_ACTIVITY_DO_FINISH).setPackage(packageName));
+                new Intent(mTestPackage + ACTION_ACTIVITY_DO_FINISH).setPackage(mTestPackage));
         future.get(FUTURE_WAIT_SECS, TimeUnit.SECONDS);
-        mStartedActivityPackage = null;
+        mActivityStarted = false;
     }
 
-    private void startForegroundServiceRecording(String packageName) throws Exception {
-        final Future future = getFutureForIntent(
-                mContext, packageName + ACTION_BEGAN_RECEIVE_AUDIO);
-        amShellCommand(
-                "start-foreground-service", packageName, ACTION_START_RECORD, " --ez "
-                + EXTRA_IS_FOREGROUND + " true");
+    private void goForeground() throws Exception {
+        amShellCommand("start-foreground-service", mTestPackage, ACTION_GO_FOREGROUND);
+    }
+
+    private void startRecording() throws Exception {
+        startRecording(true);
+    }
+
+    private void startRecording(boolean expectAudio) throws Exception {
+        final Future recordFuture = getFutureForAction(ACTION_STARTED_RECORD);
+        final Future silenceStateFuture =
+                getFutureForAction(
+                        expectAudio ? ACTION_BEGAN_RECEIVE_AUDIO : ACTION_BEGAN_RECEIVE_SILENCE);
+
+        amShellCommand("startservice", mTestPackage, ACTION_START_RECORD);
+        recordFuture.get(FUTURE_WAIT_SECS, TimeUnit.SECONDS);
         try {
-            future.get(FUTURE_WAIT_SECS, TimeUnit.SECONDS);
+            silenceStateFuture.get(FUTURE_WAIT_SECS, TimeUnit.SECONDS);
         } catch (TimeoutException e) {
             // TODO(b/297259825) we never started recording unsilenced, due to avd sometimes
             // providing only silenced mic data.
-            assumeTrue("AVD mic data may be silenced, preventing this test from working", false);
+            assumeTrue("AVD mic data may be silenced, which breaks this test", false);
         }
-        mStartedServicePackage = packageName;
     }
 
-    private void startBackgroundServiceRecording(String packageName) throws Exception {
-        final Future future = getFutureForIntent(
-                mContext, packageName + ACTION_BEGAN_RECEIVE_AUDIO);
-        amShellCommand("startservice", packageName, ACTION_START_RECORD);
-        try {
-            future.get(FUTURE_WAIT_SECS, TimeUnit.SECONDS);
-        } catch (TimeoutException e) {
-            // TODO(b/297259825) we never started recording unsilenced, due to avd sometimes
-            // providing only silenced mic data.
-            assumeTrue("AVD mic data may be silenced, preventing this test from working", false);
-        }
-        mStartedServicePackage = packageName;
-    }
-
-    private void stopService(String packageName) throws Exception {
-        final Future future = getFutureForIntent(mContext, packageName + ACTION_FINISH_TEARDOWN);
-        amShellCommand("startservice", packageName, ACTION_STOP_RECORD);
+    private void stopService() throws Exception {
+        final Future future = getFutureForAction(ACTION_TEARDOWN);
+        amShellCommand("startservice", mTestPackage, ACTION_FINISHED_TEARDOWN);
         future.get(FUTURE_WAIT_SECS, TimeUnit.SECONDS);
-        mStartedServicePackage = null;
         // Just in case
         mInstrumentation
                 .getTargetContext()
-                .stopService(new Intent().setClassName(packageName, packageName + SERVICE_NAME));
+                .stopService(new Intent().setClassName(mTestPackage, mTestPackage + SERVICE_NAME));
+    }
+
+    private Future getFutureForAction(String action) {
+        return getFutureForIntent(mContext, mTestPackage + action);
     }
 
     private void amShellCommand(String command, String packageName, String action)
@@ -279,12 +286,13 @@ public class AudioRecordPermissionTests {
     }
 
     /**
-     * Return a future for an intent delivered by a broadcast receiver which matches an
-     * action and predicate.
+     * Return a future for an intent delivered by a broadcast receiver which matches an action and
+     * predicate.
+     *
      * @param context - Context to register the receiver with
      * @param action - String representing action to register receiver for
-     * @param pred - Predicate which sets the future if evaluates to true, otherwise, leaves
-     * the future unset. If the predicate throws, the future is set exceptionally
+     * @param pred - Predicate which sets the future if evaluates to true, otherwise, leaves the
+     *     future unset. If the predicate throws, the future is set exceptionally
      * @return - The future representing intent delivery matching predicate.
      */
     private static ListenableFuture<Intent> getFutureForIntent(
@@ -319,21 +327,20 @@ public class AudioRecordPermissionTests {
                 "Intent receiver future for action: " + action);
     }
 
-    /**
-     * Same as previous, but with no predicate.
-     */
+    /** Same as previous, but with no predicate. */
     private static ListenableFuture<Intent> getFutureForIntent(Context context, String action) {
         return getFutureForIntent(context, action, i -> true);
     }
 
     /**
      * Return a future for a callback registered to a listener interface.
+     *
      * @param registerFunc - Function which consumes the callback object for registration
-     * @param unregisterFunc - Function which consumes the callback object for unregistration
-     * This function is called when the future is completed or cancelled
+     * @param unregisterFunc - Function which consumes the callback object for unregistration This
+     *     function is called when the future is completed or cancelled
      * @param instantiateCallback - Factory function for the callback object, provided a completer
-     * object (see {@code CallbackToFutureAdapter.Completer<T>}), which is a logical reference
-     * to the future returned by this function
+     *     object (see {@code CallbackToFutureAdapter.Completer<T>}), which is a logical reference
+     *     to the future returned by this function
      * @param debug - Debug string contained in future {@code toString} representation.
      */
     private static <T, V> ListenableFuture<T> getFutureForListener(
