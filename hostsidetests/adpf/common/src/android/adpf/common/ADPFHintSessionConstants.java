@@ -17,11 +17,6 @@
 package android.adpf.common;
 
 public class ADPFHintSessionConstants {
-    public static final String LOG_KEY_VALUE_SPLITTER = " - ";
-    public static final String LOG_TARGET_DURATION_PREFFIX = "Target" + LOG_KEY_VALUE_SPLITTER;
-    public static final String LOG_ACTUAL_DURATION_PREFIX = "Actual" + LOG_KEY_VALUE_SPLITTER;
-    public static final String LOG_TEST_APP_FAILED_PREFIX = "Test_Failed" + LOG_KEY_VALUE_SPLITTER;
-
     public static final String TEST_NAME_KEY = "Test_Name";
 
     public static final int MINIMUM_VALID_SDK = 32; // T

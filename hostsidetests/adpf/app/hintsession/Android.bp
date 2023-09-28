@@ -20,5 +20,9 @@ android_test_helper_app {
     name: "CtsADPFHintSessionDeviceApp",
     defaults: ["cts_adpf_defaults"],
     srcs: ["src/**/*.java"],
+    static_libs: [
+        "androidx.test.rules",
+        "collector-device-lib",
+    ],
     sdk_version: "current",
 }
