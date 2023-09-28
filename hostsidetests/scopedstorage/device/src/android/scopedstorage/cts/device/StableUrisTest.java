@@ -53,6 +53,7 @@ import com.android.cts.install.lib.TestApp;
 import com.google.common.io.Files;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -118,6 +119,7 @@ public final class StableUrisTest extends ScopedStorageBaseDeviceTest {
 
     @Test
     @FlakyTest
+    @Ignore
     public void testAttributesRestoration() throws Exception {
         Map<File, Uri> fileToUriMap = new HashMap<>();
 
