@@ -19,12 +19,17 @@ package android.text.cts;
 import static android.graphics.text.LineBreaker.BREAK_STRATEGY_HIGH_QUALITY;
 import static android.graphics.text.LineBreaker.BREAK_STRATEGY_SIMPLE;
 
+import static com.android.text.flags.Flags.FLAG_PHRASE_STRICT_FALLBACK;
+
 import static org.junit.Assert.assertEquals;
 
 import android.content.Context;
 import android.graphics.Typeface;
 import android.graphics.text.LineBreakConfig;
 import android.os.LocaleList;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.text.StaticLayout;
 import android.text.TextPaint;
 
@@ -32,12 +37,17 @@ import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
 
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
 public class StaticLayoutLineBreakingVariantsTest {
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule =
+            DeviceFlagsValueProvider.createCheckFlagsRule();
 
     private static TextPaint setupPaint(LocaleList locales) {
         // The test font covers all KATAKANA LETTERS (U+30A1..U+30FC) in Japanese and they all have
@@ -355,6 +365,7 @@ public class StaticLayoutLineBreakingVariantsTest {
                 "\u30FC");
     }
 
+    @RequiresFlagsEnabled(FLAG_PHRASE_STRICT_FALLBACK)
     @Test
     public void testBreakVariant_phrase_text2() {
         LineBreakConfig config = new LineBreakConfig.Builder()
@@ -417,6 +428,7 @@ public class StaticLayoutLineBreakingVariantsTest {
                 "\u3002");
     }
 
+    @RequiresFlagsEnabled(FLAG_PHRASE_STRICT_FALLBACK)
     @Test
     public void testPhraseFallback_Strict_Greedy() {
         LineBreakConfig config = new LineBreakConfig.Builder()
@@ -457,6 +469,7 @@ public class StaticLayoutLineBreakingVariantsTest {
                 "\u30B8");
     }
 
+    @RequiresFlagsEnabled(FLAG_PHRASE_STRICT_FALLBACK)
     @Test
     public void testPhraseFallback_Strict_Optimal() {
         LineBreakConfig config = new LineBreakConfig.Builder()
