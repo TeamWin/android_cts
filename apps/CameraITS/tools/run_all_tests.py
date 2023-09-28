@@ -134,7 +134,7 @@ SUB_CAMERA_TESTS = types.MappingProxyType({
         'test_burst_capture',
         'test_jitter',
         'test_metadata',
-        'test_read_write',
+        'test_request_capture_match',
         'test_sensor_events',
         'test_solid_color_test_pattern',
         'test_unified_timestamps',
