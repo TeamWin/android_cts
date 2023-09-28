@@ -70,6 +70,7 @@ public final class CarOccupantConnectionManagerTest extends AbstractCarTestCase 
     private static final long WAIT_BEFORE_RESPOND_TO_REQUEST_MS = 2_000;
     private static final long CALLBACK_TIMEOUT_MS = WAIT_BEFORE_RESPOND_TO_REQUEST_MS + 2_000;
     private static final long EXCHANGE_PAYLOAD_TIMEOUT_MS = 10_000;
+    private static final long POLLING_CHECK_TIMEOUT_MS = 3_000;
 
     private static final Payload PAYLOAD1 = new Payload(HexFormat.of().parseHex("1234"));
     private static final Payload PAYLOAD2 = new Payload(HexFormat.of().parseHex("5678"));
@@ -104,19 +105,19 @@ public final class CarOccupantConnectionManagerTest extends AbstractCarTestCase 
             "android.car.occupantconnection.CarOccupantConnectionManager#unregisterReceiver",
             "android.car.occupantconnection.AbstractReceiverService#getAllReceiverEndpoints",
             "android.car.occupantconnection.AbstractReceiverService#onLocalServiceBind"})
-    public void testRegisterAndUnregisterReceiver() {
+    public void testRegisterAndUnregisterReceiver() throws Exception {
         mOccupantConnectionManager.registerReceiver(RECEIVER_ID, mExecutor,
                 (senderZone, payload) -> {
                 });
         TestReceiverService receiverService = bindToLocalReceiverServiceAndWait();
 
-        assertWithMessage("Failed to register the receiver").that(
-                receiverService.getAllReceiverEndpoints().contains(RECEIVER_ID)).isTrue();
+        PollingCheck.check("Failed to register the receiver", POLLING_CHECK_TIMEOUT_MS,
+                () -> receiverService.getAllReceiverEndpoints().contains(RECEIVER_ID));
 
         mOccupantConnectionManager.unregisterReceiver(RECEIVER_ID);
 
-        assertWithMessage("Failed to unregister the receiver").that(
-                receiverService.getAllReceiverEndpoints().isEmpty()).isTrue();
+        PollingCheck.check("Failed to unregister the receiver", POLLING_CHECK_TIMEOUT_MS,
+                () -> receiverService.getAllReceiverEndpoints().isEmpty());
     }
 
     @Test
@@ -378,6 +379,7 @@ public final class CarOccupantConnectionManagerTest extends AbstractCarTestCase 
 
         @Override
         public void onReceiverRegistered(String receiverEndpointId) {
+            Log.v(TAG, "onReceiverRegistered:" + receiverEndpointId);
         }
 
         @Override
