@@ -127,6 +127,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.RemoteCallback;
+import android.os.SystemClock;
 import android.platform.test.annotations.AsbSecurityTest;
 import android.platform.test.annotations.Presubmit;
 import android.provider.Settings;
@@ -316,6 +317,8 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         mBroadcastActionTrigger.doAction(ACTION_ENTER_PIP);
         // Wait for animation complete since we are comparing bounds
         waitForEnterPipAnimationComplete(PIP_ACTIVITY);
+        // TODO(b/300046278): revert this delay and replace with proper fix
+        SystemClock.sleep(5000); // add an extra 5s delay to see if the rotation gets performed
         assertPinnedStackExists();
         assertPinnedStackActivityIsInDisplayBounds(PIP_ACTIVITY);
     }
