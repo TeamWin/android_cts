@@ -60,6 +60,7 @@ import android.content.pm.PackageManager;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
 import android.hardware.display.VirtualDisplayConfig;
+import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.RequiresFlagsDisabled;
 import android.platform.test.annotations.RequiresFlagsEnabled;
@@ -71,7 +72,6 @@ import android.virtualdevice.cts.common.util.VirtualDeviceTestUtils;
 
 import androidx.annotation.NonNull;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
-import androidx.test.filters.FlakyTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.AdoptShellPermissionsRule;
@@ -88,7 +88,9 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
@@ -101,7 +103,7 @@ public class VirtualDeviceManagerBasicTest {
     private static final String VIRTUAL_DEVICE_NAME = "VirtualDeviceName";
     private static final String SENSOR_NAME = "VirtualSensorName";
 
-    private static final int TIMEOUT_MS = 5000;
+    private static final int TIMEOUT_MS = 2000;
 
     private static final VirtualDeviceParams DEFAULT_VIRTUAL_DEVICE_PARAMS =
             new VirtualDeviceParams.Builder().build();
@@ -437,7 +439,6 @@ public class VirtualDeviceManagerBasicTest {
         assertDeviceClosed(mVirtualDevice.getDeviceId());
     }
 
-    @FlakyTest(bugId = 301578754)
     @RequiresFlagsEnabled(Flags.FLAG_VDM_PUBLIC_APIS)
     @Test
     public void getVirtualDevice_getDisplayIds() {
@@ -472,11 +473,11 @@ public class VirtualDeviceManagerBasicTest {
 
         firstDisplay.release();
         displayListener.waitForOnDisplayRemovedCallback();
-        assertThat(device.getDisplayIds()).asList().containsExactly(secondDisplayId);
+        waitAndAssertDisplayIds(device, Set.of(secondDisplayId));
 
         secondDisplay.release();
         displayListener.waitForOnDisplayRemovedCallback(2);
-        assertThat(device.getDisplayIds()).hasLength(0);
+        waitAndAssertDisplayIds(device, Collections.emptySet());
     }
 
     @RequiresFlagsEnabled(Flags.FLAG_VDM_PUBLIC_APIS)
@@ -1015,6 +1016,21 @@ public class VirtualDeviceManagerBasicTest {
     private void assertDeviceClosed(int deviceId) {
         verify(mVirtualDeviceListener, timeout(TIMEOUT_MS).times(1))
                 .onVirtualDeviceClosed(deviceId);
+    }
+
+    private void waitAndAssertDisplayIds(VirtualDevice device, Set<Integer> expected) {
+        // There's a race in DisplayManager between notifying DisplayListeners for display removal
+        // event (which is what the test uses to check that display is gone) and notifying the
+        // VirtualDevice about this event (which updates its state and its relevant display ids).
+        // So give some time to the VirtualDevice to reach a consistent state.
+        int iterationCount = 5;
+        for (int i = 0; i < iterationCount; ++i) {
+            if (device.getDisplayIds().length == expected.size()) {
+                break;
+            }
+            SystemClock.sleep(TIMEOUT_MS / iterationCount);
+        }
+        assertThat(device.getDisplayIds()).asList().containsExactlyElementsIn(expected);
     }
 
     private static class SoundEffectListenerForTest
