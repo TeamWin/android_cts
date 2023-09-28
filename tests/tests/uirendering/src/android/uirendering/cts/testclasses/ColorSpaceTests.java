@@ -27,11 +27,16 @@ import android.graphics.BitmapShader;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.ColorSpace;
+import android.graphics.HardwareBufferRenderer;
 import android.graphics.Paint;
 import android.graphics.Point;
+import android.graphics.RecordingCanvas;
+import android.graphics.RenderNode;
 import android.graphics.Shader;
+import android.hardware.HardwareBuffer;
 import android.uirendering.cts.bitmapverifiers.SamplePointVerifier;
 import android.uirendering.cts.testinfrastructure.ActivityTestBase;
+import android.uirendering.cts.util.BitmapDumper;
 
 import androidx.annotation.ColorLong;
 import androidx.annotation.NonNull;
@@ -46,6 +51,8 @@ import org.junit.runner.RunWith;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 @MediumTest
 @RunWith(AndroidJUnit4.class)
@@ -172,6 +179,43 @@ public class ColorSpaceTests extends ActivityTestBase {
         Assert.assertEquals(.58f, bitmapResult.red(), 0.001f);
         Assert.assertEquals(.58f, bitmapResult.green(), 0.001f);
         Assert.assertEquals(.58f, bitmapResult.blue(), 0.001f);
+    }
+
+    @Test
+    public void testEmojiRespectsColorSpace() {
+        HardwareBuffer buffer = HardwareBuffer.create(32, 32, HardwareBuffer.RGBA_8888,
+                1, HardwareBuffer.USAGE_GPU_COLOR_OUTPUT | HardwareBuffer.USAGE_GPU_SAMPLED_IMAGE);
+        final ColorSpace dest = ColorSpace.get(ColorSpace.Named.BT2020_PQ);
+        HardwareBufferRenderer renderer = new HardwareBufferRenderer(buffer);
+        RenderNode content = new RenderNode("emoji");
+        content.setPosition(0, 0, 32, 32);
+        RecordingCanvas canvas = content.beginRecording();
+        Paint p = new Paint();
+        p.setTextSize(32);
+        canvas.drawColor(Color.pack(1.0f, 1.0f, 1.0f, 1.0f, dest));
+        canvas.drawText(Character.toString('\u2B1C'), 0.0f, 32.0f, p);
+        content.endRecording();
+        renderer.setContentRoot(content);
+        CountDownLatch latch = new CountDownLatch(1);
+        renderer.obtainRenderRequest().setColorSpace(dest).draw(Runnable::run, result -> {
+            result.getFence().awaitForever();
+            latch.countDown();
+        });
+        try {
+            Assert.assertTrue(latch.await(5, TimeUnit.SECONDS));
+        } catch (InterruptedException ex) {
+            Assert.fail(ex.getMessage());
+        }
+        Bitmap result = Bitmap.wrapHardwareBuffer(buffer, dest)
+                .copy(Bitmap.Config.ARGB_8888, false);
+        Color color = result.getColor(16, 16).convert(
+                ColorSpace.get(ColorSpace.Named.EXTENDED_SRGB));
+        if (color.red() > 1 || color.blue() > 1 || color.green() > 1) {
+            BitmapDumper.dumpBitmap(result, "testEmojiRespectsColorSpace",
+                    this.getClass().getName());
+            Assert.fail("Emoji failed colorspace conversion; got " + color.red() + ", "
+                    + color.blue() + ", " + color.green());
+        }
     }
 
     private void drawAsset(@NonNull Canvas canvas, Bitmap bitmap) {
