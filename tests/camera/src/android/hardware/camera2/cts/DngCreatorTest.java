@@ -1136,6 +1136,8 @@ public class DngCreatorTest extends Camera2AndroidTestCase {
         // Set up still capture template targeting JPEG/RAW outputs
         CaptureRequest.Builder request =
                 mCamera.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
+        request.set(CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE,
+                CameraMetadata.CONTROL_VIDEO_STABILIZATION_MODE_OFF);
         assertNotNull("Fail to get captureRequest", request);
         for (Surface surface : outputSurfaces) {
             request.addTarget(surface);
