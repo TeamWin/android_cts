@@ -16,11 +16,16 @@
 
 package android.view.animation.cts;
 
+import static android.view.flags.Flags.FLAG_EXPECTED_PRESENTATION_TIME_API;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import android.app.Activity;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.view.animation.AccelerateInterpolator;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
@@ -45,6 +50,10 @@ public class AnimationUtilsTest {
     private Activity mActivity;
 
     private static final long NANOS_PER_MS = 1000000;
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule =
+            DeviceFlagsValueProvider.createCheckFlagsRule();
 
     @Rule
     public ActivityTestRule<AnimationTestCtsActivity> mActivityRule =
@@ -115,6 +124,7 @@ public class AnimationUtilsTest {
     }
 
     @Test
+    @RequiresFlagsEnabled(FLAG_EXPECTED_PRESENTATION_TIME_API)
     public void testGetExpectedPresentationTimeNanos() {
         long vsyncMillis = 1349311227921L;
         long expectedPresentationTimeNanos = 255073580723571L;
