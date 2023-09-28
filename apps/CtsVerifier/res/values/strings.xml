@@ -44,6 +44,16 @@
         <a href="https://source.android.com/compatibility/cts/verifier">https://source.android.com/compatibility/cts/verifier</a>
     </string>
 
+    <!-- Strings for non-SDK interfaces accessibility warning -->
+    <string name="nonsdk_interfaces_warning_title">CTS-Verifier non-SDK interfaces accessibility</string>
+    <string name="nonsdk_interfaces_warning_body">Can\'t access non-SDK interfaces.
+        \n\nPlease allow CTS Verifier to access non-SDK interfaces by running the following commands:
+        \n\n<code>adb shell settings put global hidden_api_policy 1</code>
+        \n\nTest instructions are found in the \"Using CTS Verifier\" document found at
+        <a href="https://source.android.com/compatibility/cts/verifier">https://source.android.com/compatibility/cts/verifier</a>
+        \n\nAfter setting up the CTS test environment, please relaunch the CTS Verifier app to rerun the test.
+    </string>
+
     <!-- Strings for TestListActivity -->
     <string name="test_category_audio">Audio</string>
     <string name="test_category_camera">Camera</string>
@@ -6938,16 +6948,19 @@ Follow the instructions on the screen to measure the frequency response for the 
         AudioDescriptor must only be used to report audio device capabilities that are not able to
         describe by Android defined enums.\n
         \nTo execute test:\n
-        1. Plug in HDMI cable if HDMI is supported on the device.\n
-        2. The test will execute automatically and verify the reported AudioDescriptor when the
-        activity is created and when audio device connection is changed.
+        1. Plug in HDMI cable if there is an HDMI port on the device.\n
+        2. The test will run when clicking TEST button.\n
     </string>
-    <string name="audio_descriptor_HDMI_support_label">HDMI support:</string>
-    <string name="audio_descriptor_has_hdmi_support">Has HDMI support</string>
-    <string name="audio_descriptor_NA">N/A</string>
+    <string name="audio_descriptor_run_test">Test</string>
+    <string name="audio_descriptor_HDMI_support_label">HDMI connection status:</string>
+    <string name="audio_descriptor_has_hdmi_support">Has HDMI Port</string>
+    <string name="audio_descriptor_hdmi_NA">N/A. HDMI support is not claimed.</string>
     <string name="audio_descriptor_hdmi_pending">No HDMI detected. Pending&#8230;</string>
+    <string name="audio_descriptor_hdmi_connected">Connected.</string>
     <string name="audio_descriptor_pass">Pass</string>
-    <string name="audio_descriptor_hdmi_not_reported">No HDMI device connected</string>
+    <string name="audio_descriptor_hdmi_claimed_but_not_connected">
+        HDMI is claimed as supported but not yet connected.
+    </string>
     <string name="audio_descriptor_standard_none">Standard is none.</string>
     <string name="audio_descriptor_is_null">Audio descriptor is null.</string>
     <string name="audio_descriptor_unrecognized_standard">Standard %1$d is unrecognized.</string>
@@ -6971,6 +6984,7 @@ Follow the instructions on the screen to measure the frequency response for the 
     <string name="audio_descriptor_hdmi_message">
         Please connect an HDMI peripheral to validate AudioDescriptor.
     </string>
+
     <string name="uwb">Uwb</string>
     <string name="presence_test">Presence Test</string>
     <string name="presence_test_info">
