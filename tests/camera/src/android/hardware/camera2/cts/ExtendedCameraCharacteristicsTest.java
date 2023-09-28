@@ -3042,6 +3042,37 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
     }
 
     /**
+     * Check manual flash control capability
+     */
+    @Test
+    public void testManualFlashStrengthControlCharacteristics() throws Exception {
+        String[] allCameraIds = getAllCameraIds();
+        for (int i = 0; i < allCameraIds.length; i++) {
+            Log.i(TAG, "testManualFlashStrengthControlCharacteristics: Testing camera ID "
+                    + allCameraIds[i]);
+            CameraCharacteristics c = mCharacteristics.get(i);
+            if (!arrayContains(getCameraIdsUnderTest(), allCameraIds[i])) {
+                // Skip hidden physical cameras
+                continue;
+            }
+            int singleDefaultLevel =
+                    c.get(CameraCharacteristics.FLASH_SINGLE_STRENGTH_DEFAULT_LEVEL);
+            assertTrue("singleDefaultLevel must be >=1", singleDefaultLevel >= 1);
+            int singleMaxLevel = c.get(CameraCharacteristics.FLASH_SINGLE_STRENGTH_MAX_LEVEL);
+            assertTrue("singleMaxLevel must be >=1", singleMaxLevel >= 1);
+            int torchDefaultLevel = c.get(CameraCharacteristics.FLASH_TORCH_STRENGTH_DEFAULT_LEVEL);
+            assertTrue("torchDefaultLevel must be >=1", torchDefaultLevel >= 1);
+            int torchMaxLevel = c.get(CameraCharacteristics.FLASH_TORCH_STRENGTH_MAX_LEVEL);
+            assertTrue("torchMaxLevel must be >=1", torchMaxLevel >= 1);
+            // Verify that the default level is not greater than the max level.
+            assertTrue("singleDefaultLevel cannot be greater than singleMaxLevel",
+                    singleDefaultLevel <= singleMaxLevel);
+            assertTrue("torchDefaultLevel cannot be greater than torchMaxLevel",
+                    torchDefaultLevel <= torchMaxLevel);
+        }
+    }
+
+    /**
      * Check monochrome camera capability
      */
     @Test
