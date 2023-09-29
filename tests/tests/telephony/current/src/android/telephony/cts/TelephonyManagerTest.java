@@ -6158,6 +6158,16 @@ public class TelephonyManagerTest {
         assertTrue(radioPowerOffReasons.contains(reason));
     }
 
+    private void assertRadioOffWithReason(TelephonyManager telephonyManager,
+            ServiceStateRadioStateListener callback, int reason) {
+        assertEquals(TelephonyManager.RADIO_POWER_OFF, callback.mRadioPowerState);
+
+        Set<Integer> radioPowerOffReasons = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                telephonyManager,
+                tm -> tm.getRadioPowerOffReasons(), permission.READ_PRIVILEGED_PHONE_STATE);
+        assertTrue(radioPowerOffReasons.contains(reason));
+    }
+
     /**
      * Verifies that {@link TelephonyManager#getImsPrivateUserIdentity()} does not throw any
      * exception when called and has the correct permissions.
@@ -6384,5 +6394,103 @@ public class TelephonyManagerTest {
             }
             assertTrue(shaIdList.equals(testCarrierInfo.getSHAIdList()));
         }
+    }
+
+    @Test
+    @ApiTest(apis = {
+            "android.telephony.TelephonyManager#requestRadioPowerOffForReason",
+            "android.telephony.TelephonyManager#clearRadioPowerOffForReason",
+            "android.telephony.TelephonyManager#getRadioPowerOffReasons"})
+    public void testSetRadioPowerForMultiSimDevice() {
+        assumeTrue(hasFeature(PackageManager.FEATURE_TELEPHONY_RADIO_ACCESS));
+        if (mTelephonyManager.isMultiSimSupported() != TelephonyManager.MULTISIM_ALLOWED) {
+            Log.d(TAG, "testSetRadioPowerForMultiSimDevice: Multi SIM is not supported");
+            return;
+        }
+        Integer secondTestSubId = getSecondTestSubId();
+        if (secondTestSubId == null) {
+            Log.d(TAG, "Need at least 2 active subscriptions to run this test");
+            return;
+        }
+        Log.d(TAG, "testSetRadioPowerForMultiSimDevice: secondTestSubId=" + secondTestSubId);
+
+        TelephonyManager secondTelephonyManager = getContext().getSystemService(
+                TelephonyManager.class).createForSubscriptionId(secondTestSubId);
+        ServiceStateRadioStateListener callbackForFirstSub = new ServiceStateRadioStateListener(
+                mTelephonyManager.getServiceState(), mTelephonyManager.getRadioPowerState());
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                tm -> tm.registerTelephonyCallback(Runnable::run, callbackForFirstSub));
+        ServiceStateRadioStateListener callbackForSecondSub =
+                new ServiceStateRadioStateListener(secondTelephonyManager.getServiceState(),
+                        secondTelephonyManager.getRadioPowerState());
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(secondTelephonyManager,
+                tm -> tm.registerTelephonyCallback(Runnable::run, callbackForSecondSub));
+
+        boolean turnedRadioOn = false;
+        if (mTelephonyManager.getRadioPowerState() == TelephonyManager.RADIO_POWER_OFF) {
+            Log.i(TAG, "testSetRadioPowerForMultiSimDevice:"
+                    + "turning on radio since it is off");
+            turnRadioOn(callbackForFirstSub, TelephonyManager.RADIO_POWER_REASON_USER);
+            assertEquals(TelephonyManager.RADIO_POWER_ON, callbackForFirstSub.mRadioPowerState);
+            callbackForSecondSub.waitForRadioStateIntent(TelephonyManager.RADIO_POWER_ON);
+            assertEquals(TelephonyManager.RADIO_POWER_ON, callbackForSecondSub.mRadioPowerState);
+            turnedRadioOn = true;
+        }
+
+        Log.i(TAG, "testSetRadioPowerForMultiSimDevice:"
+                + "turning radio off due to nearby device ...");
+        turnRadioOff(callbackForFirstSub, TelephonyManager.RADIO_POWER_REASON_NEARBY_DEVICE);
+        assertRadioOffWithReason(callbackForFirstSub,
+                TelephonyManager.RADIO_POWER_REASON_NEARBY_DEVICE);
+        callbackForSecondSub.waitForRadioStateIntent(TelephonyManager.RADIO_POWER_OFF);
+        assertRadioOffWithReason(secondTelephonyManager, callbackForSecondSub,
+                TelephonyManager.RADIO_POWER_REASON_NEARBY_DEVICE);
+
+        Log.i(TAG, "testSetRadioPowerForMultiSimDevice: turning on airplane mode ...");
+        turnRadioOff(callbackForFirstSub, TelephonyManager.RADIO_POWER_REASON_USER);
+        assertRadioOffWithReason(callbackForFirstSub, TelephonyManager.RADIO_POWER_REASON_USER);
+        callbackForSecondSub.waitForRadioStateIntent(TelephonyManager.RADIO_POWER_OFF);
+        assertRadioOffWithReason(secondTelephonyManager, callbackForSecondSub,
+                TelephonyManager.RADIO_POWER_REASON_USER);
+
+        Log.i(TAG, "testSetRadioPowerForMultiSimDevice: turning off airplane mode ...");
+        turnRadioOn(callbackForFirstSub, TelephonyManager.RADIO_POWER_REASON_USER);
+        assertRadioOffWithReason(callbackForFirstSub,
+                TelephonyManager.RADIO_POWER_REASON_NEARBY_DEVICE);
+        assertRadioOffWithReason(secondTelephonyManager, callbackForSecondSub,
+                TelephonyManager.RADIO_POWER_REASON_NEARBY_DEVICE);
+
+        Log.i(TAG, "testSetRadioPowerForMultiSimDevice:"
+                + " turning on radio due to nearby device...");
+        turnRadioOn(callbackForFirstSub, TelephonyManager.RADIO_POWER_REASON_NEARBY_DEVICE);
+        assertEquals(TelephonyManager.RADIO_POWER_ON, callbackForFirstSub.mRadioPowerState);
+        callbackForSecondSub.waitForRadioStateIntent(TelephonyManager.RADIO_POWER_ON);
+        assertEquals(TelephonyManager.RADIO_POWER_ON, callbackForSecondSub.mRadioPowerState);
+
+        if (turnedRadioOn) {
+            Log.i(TAG, "testSetRadioPowerForMultiSimDevice: turning radio back off");
+            turnRadioOff(callbackForFirstSub, TelephonyManager.RADIO_POWER_REASON_USER);
+            callbackForSecondSub.waitForRadioStateIntent(TelephonyManager.RADIO_POWER_OFF);
+        }
+    }
+
+    private Integer getSecondTestSubId() {
+        try {
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .adoptShellPermissionIdentity(
+                            android.Manifest.permission.READ_PRIVILEGED_PHONE_STATE);
+            for (int subId : mSubscriptionManager.getActiveSubscriptionIdList()) {
+                if (subId != mTestSub) {
+                    return subId;
+                }
+            }
+        } catch (SecurityException e) {
+            fail("SubscriptionManager#getActiveSubscriptionIdList requires "
+                    + "READ_PRIVILEGED_PHONE_STATE");
+        } finally {
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .dropShellPermissionIdentity();
+        }
+        return null;
     }
 }
