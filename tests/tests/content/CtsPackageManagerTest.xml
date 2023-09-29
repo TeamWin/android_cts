@@ -172,7 +172,6 @@
         <option name="test-file-name" value="CtsContentPartiallyDirectBootAwareTestApp.apk" />
         <option name="test-file-name" value="CtsSyncAccountAccessStubs.apk" />
         <option name="test-file-name" value="CtsIntentResolutionTestApp.apk" />
-        <option name="test-file-name" value="CtsIntentResolutionTestAppApi30.apk" />
         <option name="test-file-name" value="CtsContentNoApplicationTestApp.apk" />
     </target_preparer>
 
