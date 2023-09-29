@@ -21,12 +21,10 @@ import static android.telephony.ims.RegistrationManager.SUGGESTED_ACTION_TRIGGER
 import static android.telephony.ims.RegistrationManager.SUGGESTED_ACTION_TRIGGER_PLMN_BLOCK_WITH_TIMEOUT;
 import static android.telephony.ims.stub.ImsRegistrationImplBase.REGISTRATION_TECH_LTE;
 import static android.telephony.ims.stub.ImsRegistrationImplBase.REGISTRATION_TECH_NONE;
-
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertNotNull;
 import static junit.framework.Assert.assertNull;
 import static junit.framework.Assert.assertTrue;
-
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
@@ -965,9 +963,10 @@ public class ImsServiceTest {
         }
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
                 .adoptShellPermissionIdentity("android.permission.MODIFY_PHONE_STATE");
-        Resources mResource = Resources.getSystem();
-        boolean sendSmmaViaIms = mResource.getBoolean(
-                com.android.internal.R.bool.config_smma_notification_supported_over_ims);
+        boolean sendSmmaViaIms =  getContext().getResources().getBoolean(
+                Resources.getSystem().getIdentifier("config_smma_notification_supported_over_ims",
+                        "bool",
+                        "android"));
         if (!sendSmmaViaIms) {
             return;
         }
@@ -1022,9 +1021,9 @@ public class ImsServiceTest {
             return;
         }
 
-        Resources mResource = Resources.getSystem();
-        boolean isViaIms = mResource.getBoolean(
-                    com.android.internal.R.bool.config_smppsim_response_via_ims);
+        boolean isViaIms = getContext().getResources().getBoolean(
+                Resources.getSystem().getIdentifier("config_smppsim_response_via_ims", "bool",
+                        "android"));
         if (!isViaIms) {
             return;
         }
