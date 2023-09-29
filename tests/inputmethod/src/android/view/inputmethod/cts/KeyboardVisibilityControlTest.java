@@ -34,10 +34,12 @@ import static android.view.inputmethod.cts.util.InputMethodVisibilityVerifier.ex
 import static android.view.inputmethod.cts.util.InputMethodVisibilityVerifier.expectImeVisible;
 import static android.view.inputmethod.cts.util.TestUtils.getOnMainSync;
 import static android.view.inputmethod.cts.util.TestUtils.runOnMainSync;
+import static android.view.inputmethod.cts.util.TestUtils.runOnMainSyncWithRethrowing;
 import static android.widget.PopupWindow.INPUT_METHOD_NOT_NEEDED;
 
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.editorMatcher;
+import static com.android.cts.mockime.ImeEventStreamTestUtils.expectCommand;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEventWithKeyValue;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.hideSoftInputMatcher;
@@ -553,6 +555,56 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
                 runOnMainSync(() -> imm.showSoftInput(editText, 0));
                 expectImeVisible(TIMEOUT, "IME should be visible. Interval = " + intervalMillis);
             }
+        }
+    }
+
+    /**
+     * Verifies that a hideSoftInputFromWindow call just after a showSoftInput call can succeed.
+     *
+     * <p>This is a regression test for Bug 21727232.</p>
+     */
+    @Test
+    public void testShowHideKeyboardImmediately() throws Exception {
+        final InputMethodManager imm = mInstrumentation
+                .getTargetContext().getSystemService(InputMethodManager.class);
+
+        try (MockImeSession imeSession = MockImeSession.create(
+                mInstrumentation.getContext(),
+                mInstrumentation.getUiAutomation(),
+                new ImeSettings.Builder())) {
+            final ImeEventStream stream = imeSession.openEventStream();
+            final String marker = getTestMarker();
+            final EditText editText = launchTestActivity(marker);
+
+            expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
+
+            assertTrue("hasActiveInputConnection() must return true if the View has IME focus",
+                    getOnMainSync(() -> imm.hasActiveInputConnection(editText)));
+
+            // Issue a command with no effect to wait until MockIme becomes idle
+            expectCommand(stream, imeSession.callGetWindowLayoutInfo(), TIMEOUT);
+            // Copy event stream to check assertion starting from the start of the stream
+            notExpectEvent(imeSession.openEventStream(), editorMatcher("onStartInputView", marker),
+                    0);
+
+            // Test calling showSoftInput() immediately followed by hideSoftInputFromWindow()
+            runOnMainSyncWithRethrowing(() -> {
+                assertTrue("showSoftInput must success if the View has IME focus",
+                        imm.showSoftInput(editText, 0 /* flags */));
+                assertTrue("hideSoftInputFromWindow must success when called right"
+                                + " after showSoftInput",
+                        imm.hideSoftInputFromWindow(editText.getWindowToken(), 0 /* flags */));
+            });
+
+            // Assert showSoftInput() flow was observed
+            expectEvent(stream, showSoftInputMatcher(InputMethod.SHOW_EXPLICIT), TIMEOUT);
+            expectEvent(stream, editorMatcher("onStartInputView", marker), TIMEOUT);
+
+            // Assert hideSoftInputFromWindow() flow was observed
+            expectEvent(stream, hideSoftInputMatcher(), TIMEOUT);
+            expectEvent(stream, onFinishInputViewMatcher(false), TIMEOUT);
+            expectEventWithKeyValue(stream, "onWindowVisibilityChanged", "visible",
+                    View.GONE, TIMEOUT);
         }
     }
 
