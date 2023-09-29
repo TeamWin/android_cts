@@ -915,10 +915,18 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
         assumeTrue("Skipping test: no rotation support", supportsRotation());
         assumeTrue("Skipping test: no multi-window support", supportsSplitScreenMultiWindow());
 
-        // Launch activities in split screen.
-        launchActivitiesInSplitScreen(
-                getLaunchActivityBuilder().setTargetActivity(LAUNCHING_ACTIVITY),
-                getLaunchActivityBuilder().setTargetActivity(activity));
+        // Launch activity and move it to primary split-screen.
+        launchActivityInPrimarySplit(LAUNCHING_ACTIVITY);
+
+        // Launch target activity in secondary split-screen.
+        mTaskOrganizer.setLaunchRoot(mTaskOrganizer.getSecondarySplitTaskId());
+        getLaunchActivityBuilder()
+                .setTargetActivity(activity)
+                .setUseInstrumentation()
+                .setWaitForLaunched(true)
+                .setNewTask(true)
+                .setMultipleTask(true)
+                .execute();
         mWmState.assertVisibility(activity, true /* visible */);
 
         // Rotate the device and it should always rotate regardless orientation app requested.
