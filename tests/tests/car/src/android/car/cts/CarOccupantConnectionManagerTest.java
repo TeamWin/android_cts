@@ -29,6 +29,7 @@ import android.car.occupantconnection.CarOccupantConnectionManager;
 import android.car.occupantconnection.CarOccupantConnectionManager.ConnectionRequestCallback;
 import android.car.occupantconnection.Payload;
 import android.car.test.ApiCheckerRule;
+import android.car.test.PermissionsCheckerRule.EnsureHasPermission;
 import android.car.test.mocks.JavaMockitoHelper;
 import android.content.ComponentName;
 import android.content.Context;
@@ -60,6 +61,8 @@ import java.util.concurrent.Executor;
 
 @RunWith(AndroidJUnit4.class)
 @AppModeFull(reason = "Test relies on other server to connect to.")
+@EnsureHasPermission({Car.PERMISSION_MANAGE_REMOTE_DEVICE,
+        Car.PERMISSION_MANAGE_OCCUPANT_CONNECTION})
 public final class CarOccupantConnectionManagerTest extends AbstractCarTestCase {
 
     private static final String TAG = CarOccupantConnectionManagerTest.class.getSimpleName();
