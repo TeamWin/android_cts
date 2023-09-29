@@ -44,6 +44,8 @@ android_test {
         "cts-wm-util",
         "cts_window-extensions",
         "statsdprotonano",
+        "android.view.inputmethod.flags-aconfig-java",
+        "flag-junit",
     ],
     srcs: [
         "src/**/*.java",
