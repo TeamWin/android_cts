@@ -23,7 +23,6 @@ import static org.junit.Assume.assumeNotNull;
 import android.car.Car;
 import android.car.CarOccupantZoneManager;
 import android.car.CarOccupantZoneManager.OccupantZoneInfo;
-import android.car.CarRemoteDeviceManager;
 import android.car.occupantconnection.AbstractReceiverService;
 import android.car.occupantconnection.CarOccupantConnectionManager;
 import android.car.occupantconnection.CarOccupantConnectionManager.ConnectionRequestCallback;
@@ -78,24 +77,22 @@ public final class CarOccupantConnectionManagerTest extends AbstractCarTestCase 
     private final TestServiceConnection mServiceConnection = new TestServiceConnection();
 
     private CarOccupantConnectionManager mOccupantConnectionManager;
-    private CarOccupantZoneManager mOccupantZoneManager;
-    private CarRemoteDeviceManager mRemoteDeviceManager;
+
     private TestReceiverService.LocalBinder mBinder;
-    private OccupantZoneInfo mMyZone;
     private OccupantZoneInfo mActivePeerZone;
 
     @Before
     public void setUp() {
         mOccupantConnectionManager = getCar().getCarManager(CarOccupantConnectionManager.class);
-        mRemoteDeviceManager = getCar().getCarManager(CarRemoteDeviceManager.class);
         // CarOccupantConnectionManager is available on multi-display builds only.
         // TODO(b/265091454): annotate the test with @RequireMultipleUsersOnMultipleDisplays.
         assumeNotNull("Skip the test because CarOccupantConnectionManager is not available on"
                 + " this build", mOccupantConnectionManager);
 
-        mOccupantZoneManager = getCar().getCarManager(CarOccupantZoneManager.class);
-        mMyZone = mOccupantZoneManager.getMyOccupantZone();
-        mActivePeerZone = getActivePeerZone();
+        CarOccupantZoneManager occupantZoneManager =
+                getCar().getCarManager(CarOccupantZoneManager.class);
+        // Make the sender app request a connection and send Payloads to itself. See b/302567579.
+        mActivePeerZone = occupantZoneManager.getMyOccupantZone();
     }
 
     @Test
@@ -124,10 +121,6 @@ public final class CarOccupantConnectionManagerTest extends AbstractCarTestCase 
             "android.car.occupantconnection.CarOccupantConnectionManager#requestConnection",
             "android.car.occupantconnection.CarOccupantConnectionManager#cancelConnection"})
     public void testRequestAndCancelConnection() {
-        assumeNotNull("Skip testRequestAndCancelConnection() because there is no active peer"
-                        + " occupant zone with a peer app installed",
-                mActivePeerZone);
-
         ConnectionRequestCallback connectionRequestCallback = new ConnectionRequestCallback() {
             @Override
             public void onConnected(@NonNull OccupantZoneInfo receiverZone) {
@@ -176,10 +169,6 @@ public final class CarOccupantConnectionManagerTest extends AbstractCarTestCase 
             "android.car.occupantconnection.AbstractReceiverService#onPayloadReceived"})
     public void testConnectAndSendPayload()
             throws CarOccupantConnectionManager.PayloadTransferException {
-        assumeNotNull("Skip testConnectAndSendPayload() because there is no active peer"
-                        + " occupant zone with a peer app installed",
-                mActivePeerZone);
-
         TestReceiverService receiverService = bindToLocalReceiverServiceAndWait();
 
         boolean[] onConnectedInvoked = new boolean[1];
@@ -251,23 +240,6 @@ public final class CarOccupantConnectionManagerTest extends AbstractCarTestCase 
         return mBinder.getService();
     }
 
-    /**
-     * Returns a peer occupant zone that has peer app (cts test app) installed, or null if there is
-     * no such occupant zone.
-     */
-    private OccupantZoneInfo getActivePeerZone() {
-        if (mRemoteDeviceManager == null) {
-            return null;
-        }
-        for (OccupantZoneInfo zone : mOccupantZoneManager.getAllOccupantZones()) {
-            if (!zone.equals(mMyZone) && mRemoteDeviceManager.getEndpointPackageInfo(zone)
-                    != null) {
-                return zone;
-            }
-        }
-        return null;
-    }
-
     private final class TestServiceConnection implements ServiceConnection {
 
         public final CountDownLatch latch = new CountDownLatch(1);
@@ -320,40 +292,6 @@ public final class CarOccupantConnectionManagerTest extends AbstractCarTestCase 
                             CarOccupantConnectionManager.class);
                 };
 
-        private final ConnectionRequestCallback mConnectionRequestCallback =
-                new ConnectionRequestCallback() {
-                    @Override
-                    public void onConnected(@NonNull OccupantZoneInfo receiverZone) {
-                        try {
-                            Log.v(TAG, "The sender has accepted the receiver service's second"
-                                    + " connection request, so the receiver service sends"
-                                    + " PAYLOAD2 to it");
-                            mOccupantConnectionManager.sendPayload(receiverZone, PAYLOAD2);
-                        } catch (CarOccupantConnectionManager.PayloadTransferException e) {
-                            throw new RuntimeException(e);
-                        }
-                    }
-
-                    @Override
-                    public void onFailed(@NonNull OccupantZoneInfo receiverZone,
-                            int connectionError) {
-                        if (connectionError != REJECTION_REASON) {
-                            return;
-                        }
-                        // We foresee that the other receiver service would reject the first
-                        // request. This is fine, because it will accept the second request.
-                        Log.v(TAG, "Receiver service requests another connection to the"
-                                + " sender because the first request was rejected");
-                        mOccupantConnectionManager.requestConnection(receiverZone,
-                                TestReceiverService.this.getMainExecutor(),
-                                mConnectionRequestCallback);
-                    }
-
-                    @Override
-                    public void onDisconnected(@NonNull OccupantZoneInfo receiverZone) {
-                    }
-                };
-
         private class LocalBinder extends Binder {
 
             TestReceiverService getService() {
@@ -367,12 +305,14 @@ public final class CarOccupantConnectionManagerTest extends AbstractCarTestCase 
             PollingCheck.waitFor(CALLBACK_TIMEOUT_MS, () -> mOccupantConnectionManager != null);
 
             if (PAYLOAD1.equals(payload)) {
-                // Let the receiver service request a connection to the sender so that it can
-                // send PAYLOAD2 to the sender.
-                Log.v(TAG, "Receiver service receives PAYLOAD1, then requests a connection to the"
-                        + " sender for the first time");
-                mOccupantConnectionManager.requestConnection(senderZone,
-                        TestReceiverService.this.getMainExecutor(), mConnectionRequestCallback);
+                try {
+                    Log.v(TAG, "The receiver service just sends PAYLOAD2 to the sender"
+                            + " without establishing a new connection since they run in the"
+                            + " same occupant zone");
+                    mOccupantConnectionManager.sendPayload(senderZone, PAYLOAD2);
+                } catch (CarOccupantConnectionManager.PayloadTransferException e) {
+                    throw new RuntimeException(e);
+                }
             }
         }
 
