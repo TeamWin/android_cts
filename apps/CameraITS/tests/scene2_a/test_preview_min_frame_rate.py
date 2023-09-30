@@ -70,6 +70,10 @@ class PreviewMinFrameRateTest(its_base_test.ItsBaseTest):
       lighting_control_utils.set_lighting_state(
           arduino_serial_port, self.lighting_ch, 'OFF')
 
+      # turn OFF tablet to darken scene
+      if self.tablet:
+        lighting_control_utils.turn_off_device(self.tablet)
+
       # Validate lighting
       cam.do_3a(do_af=False)
       cap = cam.do_capture(
@@ -77,10 +81,6 @@ class PreviewMinFrameRateTest(its_base_test.ItsBaseTest):
       y_plane, _, _ = image_processing_utils.convert_capture_to_planes(cap)
       its_session_utils.validate_lighting(
           y_plane, self.scene, state='OFF', log_path=self.log_path)
-
-      # turn OFF tablet to darken scene
-      if self.tablet:
-        lighting_control_utils.turn_off_device(self.tablet)
 
       logging.debug('Taking preview recording in darkened scene.')
       # determine camera capabilities for preview
@@ -97,6 +97,10 @@ class PreviewMinFrameRateTest(its_base_test.ItsBaseTest):
           ae_target_fps_min=ae_target_fps_range[0],
           ae_target_fps_max=ae_target_fps_range[1])
       logging.debug('preview_recording_obj: %s', preview_recording_obj)
+
+      # turn lights back ON
+      lighting_control_utils.set_lighting_state(
+          arduino_serial_port, self.lighting_ch, 'ON')
 
       # pull the video recording file from the device.
       self.dut.adb.pull([preview_recording_obj['recordedOutputPath'],
