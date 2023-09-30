@@ -26,11 +26,15 @@ import static android.server.wm.jetpack.extensions.util.ExtensionsUtil.isExtensi
 import static android.server.wm.jetpack.extensions.util.SidecarUtil.assumeSidecarSupportedDevice;
 import static android.server.wm.jetpack.extensions.util.SidecarUtil.getSidecarInterface;
 import static android.view.Display.DEFAULT_DISPLAY;
+
+import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 import static androidx.window.extensions.layout.FoldingFeature.STATE_FLAT;
 import static androidx.window.extensions.layout.FoldingFeature.STATE_HALF_OPENED;
 import static androidx.window.extensions.layout.FoldingFeature.TYPE_FOLD;
 import static androidx.window.extensions.layout.FoldingFeature.TYPE_HINGE;
+
 import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -41,8 +45,11 @@ import static org.junit.Assume.assumeTrue;
 import android.content.Context;
 import android.content.ContextWrapper;
 import android.graphics.Rect;
+import android.hardware.devicestate.DeviceStateManager;
+import android.hardware.devicestate.DeviceStateRequest;
 import android.hardware.display.DisplayManager;
 import android.platform.test.annotations.Presubmit;
+import android.server.wm.DeviceStateUtils;
 import android.server.wm.DisplayMetricsSession;
 import android.server.wm.SetRequestedOrientationRule;
 import android.server.wm.jetpack.extensions.util.TestValueCountConsumer;
@@ -214,6 +221,50 @@ public class ExtensionWindowLayoutComponentTest extends WindowManagerJetpackTest
                 new TestValueCountConsumer<>();
         // Test that adding and removing callback succeeds
         mWindowLayoutComponent.addWindowLayoutInfoListener(activity, windowLayoutInfoConsumer);
+        mWindowLayoutComponent.removeWindowLayoutInfoListener(windowLayoutInfoConsumer);
+    }
+
+    /** Test changing device states and verify no crash. */
+    @Test
+    @ApiTest(apis = {
+            "androidx.window.extensions.layout.WindowLayoutComponent#addWindowLayoutInfoListener"})
+    public void testWindowLayoutComponent_windowLayoutInfoListener_deviceStateChanged()
+            throws Throwable {
+        final Context instrumentationContext = getInstrumentation().getTargetContext();
+        final DeviceStateManager deviceStateManager = instrumentationContext
+                .getSystemService(DeviceStateManager.class);
+        final int[] supportedDeviceStates = deviceStateManager.getSupportedStates();
+        assumeTrue(supportedDeviceStates.length > 1);
+
+        TestActivity testActivity = startFullScreenActivityNewTask(
+                TestActivity.class, null /* activityId */);
+        TestValueCountConsumer<WindowLayoutInfo> windowLayoutInfoConsumer =
+                new TestValueCountConsumer<>();
+        windowLayoutInfoConsumer.setCount(1);
+        mWindowLayoutComponent.addWindowLayoutInfoListener(testActivity, windowLayoutInfoConsumer);
+
+        // Switch to all device states to verify no crash.
+        TestValueCountConsumer<DeviceStateRequest> deviceStateCallbackConsumer =
+                new TestValueCountConsumer<>();
+        deviceStateCallbackConsumer.setCount(1);
+        for (int deviceState : supportedDeviceStates) {
+            DeviceStateRequest request = DeviceStateRequest.newBuilder(deviceState).build();
+            DeviceStateUtils.runWithControlDeviceStatePermission(() ->
+                    deviceStateManager.requestBaseStateOverride(
+                            request,
+                            getInstrumentation().getTargetContext().getMainExecutor(),
+                            new DeviceStateRequest.Callback() {
+                                @Override
+                                public void onRequestActivated(DeviceStateRequest request) {
+                                    deviceStateCallbackConsumer.accept(request);
+                                }
+                            }));
+            deviceStateCallbackConsumer.waitAndGet();
+            deviceStateCallbackConsumer.clearQueue();
+        }
+        DeviceStateUtils.runWithControlDeviceStatePermission(
+                deviceStateManager::cancelBaseStateOverride);
+
         mWindowLayoutComponent.removeWindowLayoutInfoListener(windowLayoutInfoConsumer);
     }
 
