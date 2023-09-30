@@ -140,7 +140,7 @@ android_test {
         "bouncycastle-unbundled",
         "cts-core-test-runner-axt",
         "wycheproof-keystore",
-        "wycheproof-gson",
+        "gson",
         "cts-keystore-test-util",
     ],
     // sdk_version: "test_current",
