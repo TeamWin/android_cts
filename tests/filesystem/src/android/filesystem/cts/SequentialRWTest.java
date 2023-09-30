@@ -54,7 +54,7 @@ public class SequentialRWTest {
     private static final String DIR_SEQ_UPDATE = "SEQ_UPDATE";
     private static final String DIR_SEQ_RD = "SEQ_RD";
     private static final String REPORT_LOG_NAME = "CtsFileSystemTestCases";
-    private static final int BUFFER_SIZE = 10 * 1024 * 1024;
+    private static final int BUFFER_SIZE = 100 * 1024 * 1024;
 
     @Rule
     public final TestName mTestName = new TestName();
