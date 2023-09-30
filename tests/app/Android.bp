@@ -36,6 +36,8 @@ android_test {
         "platformprotosnano",
         "permission-test-util-lib",
         "CtsAppTestStubsShared",
+        "android.content.pm.flags-aconfig-java",
+        "flag-junit",
     ],
     srcs: [
         "src/**/*.java",
