@@ -160,10 +160,10 @@ public final class ActivityManagerHelperTest extends ActivityManagerTestBase {
 
     @Test
     public void testSetFocusedRootTask() throws Exception {
-        // Don't run this test on rickybobby since setFocusedRootTask does not work on rickybobby
-        // due to it having root tasks which are not the leaf nodes in the view hierarchy.
-        // Instead test on rickybobby using setFocusedTask.
-        assumeFalse(isCar() && hasSplitscreenMultitaskingFeature());
+        // Don't run this test on automotive targets with splitscreen multitasking enabled due to
+        // it having root tasks which are not the leaf nodes in the view hierarchy. Instead use
+        // setFocusedTask for those targets.
+        assumeFalse(hasAutomotiveSplitscreenMultitaskingFeature());
         // setup
         ActivityA task1BottomActivity = launchTestActivity(ActivityA.class);
         ActivityB task1TopActivity = launchTestActivity(ActivityB.class);
@@ -608,11 +608,10 @@ public final class ActivityManagerHelperTest extends ActivityManagerTestBase {
     }
 
     /**
-     * Checks whether the device has automotive splitscreen multitasking feature enabled
+     * Checks whether the device has automotive splitscreen multitasking feature enabled.
      */
-    private boolean hasSplitscreenMultitaskingFeature() {
+    private boolean hasAutomotiveSplitscreenMultitaskingFeature() {
         PackageManager pm = mContext.getPackageManager();
-        return pm.hasSystemFeature(/* PackageManager.FEATURE_CAR_SPLITSCREEN_MULTITASKING */
-                "android.software.car.splitscreen_multitasking");
+        return isCar() && pm.hasSystemFeature("android.software.car.splitscreen_multitasking");
     }
 }
