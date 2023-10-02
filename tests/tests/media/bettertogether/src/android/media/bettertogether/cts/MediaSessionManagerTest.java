@@ -420,6 +420,7 @@ public class MediaSessionManagerTest {
     }
 
     @Test
+    @NonMainlineTest
     public void testRemoteUserInfo() throws Exception {
         final Context context = getInstrumentation().getTargetContext();
         Handler handler = createHandler();
