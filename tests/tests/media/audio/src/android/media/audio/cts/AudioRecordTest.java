@@ -708,8 +708,9 @@ public class AudioRecordTest {
             final int BUFFER_FRAMES = 512;
             final int BUFFER_SAMPLES = BUFFER_FRAMES * numChannels;
 
-            final int tries = 2;
+            final int tries = 4;
             for (int i = 0; i < tries; ++i) {
+                Log.d(TEST_NAME, "try " + i);
                 final long trackStartTimeNs = System.nanoTime();
                 final long trackStartTimeBootNs = android.os.SystemClock.elapsedRealtimeNanos();
 
@@ -750,11 +751,6 @@ public class AudioRecordTest {
                         record.getTimestamp(stopTs, AudioTimestamp.TIMEBASE_MONOTONIC));
                 assertEquals(AudioRecord.SUCCESS,
                         record.getTimestamp(stopTsBoot, AudioTimestamp.TIMEBASE_BOOTTIME));
-
-                // printTimestamp("timestamp Monotonic", ts);
-                // printTimestamp("timestamp Boottime", tsBoot);
-                // Log.d(TEST_NAME, "startTime Monotonic " + startTime);
-                // Log.d(TEST_NAME, "startTime Boottime " + startTimeBoot);
 
                 assertEquals(stopTs.framePosition, stopTsBoot.framePosition);
                 assertTrue(stopTs.framePosition >= targetFrames);
