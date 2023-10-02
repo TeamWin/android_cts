@@ -86,6 +86,7 @@ public abstract class BaseFakeRouteProviderService extends MediaRoute2ProviderSe
     @Override
     public void onDeselectRoute(long requestId, String sessionId, String routeId) {}
 
+    @Override
     public void onTransferToRoute(long requestId, String sessionId, String routeId) {}
 
     @Override

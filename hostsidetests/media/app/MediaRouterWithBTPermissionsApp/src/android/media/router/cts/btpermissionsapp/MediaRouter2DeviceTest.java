@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.media.router.cts;
+package android.media.router.cts.bluetoothpermissionsapp;
 
 import static android.media.MediaRoute2Info.FEATURE_LIVE_AUDIO;
 import static android.media.MediaRoute2Info.FEATURE_LIVE_VIDEO;
