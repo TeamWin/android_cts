@@ -96,8 +96,6 @@ public class MultiUserTest extends BaseHostJUnit4Test {
      */
     @Before
     public void setUp() throws Exception {
-        // Skip whole tests when DUT has no android.software.input_methods feature.
-        assumeTrue(hasDeviceFeature(ShellCommandUtils.FEATURE_INPUT_METHODS));
         assumeTrue(getDevice().isMultiUserSupported());
         mInitialUserId = getDevice().getCurrentUser();
         mNeedsTearDown = true;
