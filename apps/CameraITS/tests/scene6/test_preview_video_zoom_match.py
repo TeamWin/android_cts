@@ -33,6 +33,7 @@ _CIRCLE_R = 2
 _CIRCLE_X = 0
 _CIRCLE_Y = 1
 _CIRCLISH_RTOL = 0.15  # contour area vs ideal circle area pi*((w+h)/4)**2
+_JPEG_STR = 'jpg'
 _LENS_FACING_FRONT = 0
 _LINE_COLOR = (255, 0, 0)  # red
 _MAX_STR = 'max'
@@ -142,9 +143,9 @@ class PreviewVideoZoomTest(its_base_test.ItsBaseTest):
       # Skip unless camera has zoom ability
       vendor_api_level = its_session_utils.get_vendor_api_level(
           self.dut.serial)
-      #camera_properties_utils.skip_unless(
-      #    z_range and vendor_api_level >= its_session_utils.ANDROID14_API_LEVEL
-      #)
+      camera_properties_utils.skip_unless(
+          z_range and vendor_api_level >= its_session_utils.ANDROID14_API_LEVEL
+      )
       logging.debug('Testing zoomRatioRange: %s', str(z_range))
 
       # Determine zoom factors
@@ -206,11 +207,14 @@ class PreviewVideoZoomTest(its_base_test.ItsBaseTest):
                 cam, profile_id, quality, zoom_ratio=z)
 
             # Get key frames from the video recording
-            video_img = video_processing_utils.extract_last_key_frame_from_recording(
-                log_path, video_file_name)
+            video_img = (
+                video_processing_utils.extract_last_key_frame_from_recording(
+                    log_path, video_file_name))
 
             # Find the center circle in video img
-            video_img_name = (f'Video_zoomRatio_{z}_{quality}_circle.png')
+            img_name_stem = os.path.join(log_path, 'video_zoomRatio')
+            video_img_name = (
+                f'{img_name_stem}_{z:.2f}_{quality}_circle.png')
             circle = zoom_capture_utils.find_center_circle(
                 video_img, video_img_name, [width, height],
                 z, z_min, min_circle_pts=_MIN_CIRCLE_PTS, debug=debug)
@@ -231,8 +235,9 @@ class PreviewVideoZoomTest(its_base_test.ItsBaseTest):
             height = int(size.split('x')[1])
 
             # Get key frames from the preview recording
-            preview_img = video_processing_utils.extract_last_key_frame_from_recording(
-                log_path, preview_file_name)
+            preview_img = (
+                video_processing_utils.extract_last_key_frame_from_recording(
+                    log_path, preview_file_name))
 
             # If testing front camera, mirror preview image
             # Opencv expects a numpy array but np.flip generates a 'view' which
@@ -241,6 +246,8 @@ class PreviewVideoZoomTest(its_base_test.ItsBaseTest):
               # Preview are flipped on device's natural orientation
               # so for sensor orientation 90 or 270, it is up or down
               # Sensor orientation 0 or 180 is left or right
+              img_name_stem = os.path.join(log_path, 'flipped_preview')
+              img_name = f'{img_name_stem}_zoomRatio_{z:.2f}.{_JPEG_STR}'
               if props['android.sensor.orientation'] in (90, 270):
                 preview_img = np.ndarray.copy(np.flipud(preview_img))
                 logging.debug(
@@ -251,9 +258,13 @@ class PreviewVideoZoomTest(its_base_test.ItsBaseTest):
                 logging.debug(
                     'Found sensor orientation %d, flipping left right',
                     props['android.sensor.orientation'])
+              image_processing_utils.write_image(preview_img / 255, img_name)
+            else:
+              img_name_stem = os.path.join(log_path, 'rear_preview')
 
             # Find the center circle in preview img
-            preview_img_name = (f'Preview_zoomRatio_{z}_{size}_circle.png')
+            preview_img_name = (
+                f'{img_name_stem}_zoomRatio_{z:.2f}_{size}_circle.png')
             circle = zoom_capture_utils.find_center_circle(
                 preview_img, preview_img_name, [width, height],
                 z, z_min, min_circle_pts=_MIN_CIRCLE_PTS, debug=debug)
