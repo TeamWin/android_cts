@@ -101,6 +101,9 @@ import android.os.SystemProperties;
 import android.os.UserHandle;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.AsbSecurityTest;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.provider.DeviceConfig;
 import android.provider.Settings;
 import android.support.test.uiautomator.UiDevice;
@@ -124,12 +127,14 @@ import com.android.compatibility.common.util.SystemUtil;
 import com.android.compatibility.common.util.ThrowingRunnable;
 import com.android.modules.utils.build.SdkLevel;
 import com.android.net.module.util.MacAddressUtils;
+import com.android.wifi.flags.Flags;
 
 import com.google.common.collect.Range;
 
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -254,6 +259,10 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
     private static final SparseArray<Integer> TEST_FREQUENCY_WEIGHTS = new SparseArray<>();
 
     private IntentFilter mIntentFilter;
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule =
+            DeviceFlagsValueProvider.createCheckFlagsRule();
     private static final BroadcastReceiver sReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -4990,6 +4999,7 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
      * Verify the invalid and valid usages of {@code WifiManager#setPnoScanEnabled}.
      */
     @Test
+    @RequiresFlagsEnabled(Flags.FLAG_RUNTIME_DISABLE_PNO_SCAN)
     public void testSetPnoScanEnabled() throws Exception {
         // Test caller with no permission triggers SecurityException.
         assertThrows("No permission should trigger SecurityException", SecurityException.class,

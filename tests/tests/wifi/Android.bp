@@ -47,6 +47,8 @@ android_test {
         "net-utils-framework-common",
         "truth-prebuilt",
         "android.wifi.mockwifi",
+        "wifi_aconfig_flags_lib",
+        "flag-junit",
     ],
 
     test_suites: [
