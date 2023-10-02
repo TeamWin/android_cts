@@ -482,6 +482,7 @@ public class AttachedSurfaceControlTest {
                 transaction.addTransactionCommittedListener(Runnable::run,
                         committedLatch::countDown);
                 view[0].getRootSurfaceControl().applyTransactionOnDraw(transaction);
+                view[0].requestLayout();
             });
 
             assertTrue("Failed to receive transaction committed callback for scvh with no view",
