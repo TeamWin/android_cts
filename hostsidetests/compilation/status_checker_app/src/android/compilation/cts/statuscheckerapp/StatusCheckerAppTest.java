@@ -30,9 +30,12 @@ import androidx.test.runner.AndroidJUnit4;
 
 import dalvik.system.ApplicationRuntime;
 import dalvik.system.BaseDexClassLoader;
+import dalvik.system.DexFile;
 import dalvik.system.PathClassLoader;
+import dalvik.system.VMRuntime;
 
 import com.google.common.io.ByteStreams;
+import com.google.common.truth.Correspondence;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -107,6 +110,19 @@ public class StatusCheckerAppTest {
         reporter.report(Map.of("/absolute/path.apk", "PCL[]"));
         reporter.report(Map.of(fooPath, "PCL[bar.jar]"));
         reporter.report(Map.of(fooPath, "=UnsupportedClassLoaderContext="));
+    }
+
+    @Test
+    public void testGetDexFileOutputPaths() throws Exception {
+        Context context = ApplicationProvider.getApplicationContext();
+        String[] paths = DexFile.getDexFileOutputPaths(
+                context.getApplicationInfo().sourceDir, VMRuntime.getRuntime().vmInstructionSet());
+
+        // We can't be too specific because the paths are ART-internal and are subject to change.
+        assertThat(paths)
+                .asList()
+                .comparingElementsUsing(Correspondence.from(String::endsWith, "ends with"))
+                .containsAtLeast(".odex", ".vdex");
     }
 
     public File copyResourceToFile(String resourceName, File file) throws Exception {
