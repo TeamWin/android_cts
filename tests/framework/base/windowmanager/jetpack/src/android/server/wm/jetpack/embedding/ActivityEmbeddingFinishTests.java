@@ -40,6 +40,7 @@ import android.util.Pair;
 import android.view.WindowMetrics;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.filters.FlakyTest;
 import androidx.window.extensions.embedding.SplitInfo;
 import androidx.window.extensions.embedding.SplitPairRule;
 
@@ -66,6 +67,7 @@ public class ActivityEmbeddingFinishTests extends ActivityEmbeddingTestBase {
      * Tests that finishing the primary activity results in the secondary activity resizing to fill
      * the task.
      */
+    @FlakyTest(bugId = 302112669)
     @Test
     public void testFinishPrimary() throws InterruptedException {
         SplitPairRule splitPairRule = createWildcardSplitPairRule();
@@ -91,6 +93,7 @@ public class ActivityEmbeddingFinishTests extends ActivityEmbeddingTestBase {
      * Tests that finishing the secondary activity results in the primary activity resizing to fill
      * the task.
      */
+    @FlakyTest(bugId = 302192873)
     @Test
     public void testFinishSecondary() throws InterruptedException {
         SplitPairRule splitPairRule = createWildcardSplitPairRule();
