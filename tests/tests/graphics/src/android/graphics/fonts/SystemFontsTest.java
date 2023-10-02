@@ -16,6 +16,8 @@
 
 package android.graphics.fonts;
 
+import static com.android.text.flags.Flags.FLAG_DEPRECATE_FONTS_XML;
+
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertFalse;
@@ -24,12 +26,20 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import android.graphics.Paint;
+import android.graphics.Typeface;
+import android.graphics.text.PositionedGlyphs;
+import android.graphics.text.TextRunShaper;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.system.ErrnoException;
 import android.system.Os;
 import android.system.OsConstants;
 
 import androidx.test.filters.SmallTest;
 
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -47,6 +57,10 @@ import java.util.Set;
 @SmallTest
 @RunWith(Parameterized.class)
 public class SystemFontsTest {
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule =
+            DeviceFlagsValueProvider.createCheckFlagsRule();
 
     @Parameterized.Parameter(0)
     public Set<Font> availableFonts;
@@ -130,6 +144,69 @@ public class SystemFontsTest {
             fail("/system/etc/font_fallback.xml must not be readable.");
         } catch (IOException e) {
             // pass
+        }
+    }
+
+    @RequiresFlagsEnabled(FLAG_DEPRECATE_FONTS_XML)
+    @Test
+    public void testWeightAdjustment() {
+        String text = "Hello, World.";
+        Paint paint = new Paint();
+        for (int w = 100; w < 900; w += 50) {
+            paint.setTypeface(Typeface.create(null, w, false));
+            PositionedGlyphs glyphs = TextRunShaper.shapeTextRun(
+                    text, 0, text.length(), 0, text.length(), 0f, 0f, false, paint);
+
+            for (int i = 0; i < glyphs.glyphCount(); ++i) {
+                assertThat(glyphs.getFakeBold(i)).isFalse();
+                assertThat(glyphs.getFakeItalic(i)).isFalse();
+                assertThat(glyphs.getWeightOverride(i)).isEqualTo(w);
+                assertThat(glyphs.getItalicOverride(i)).isEqualTo(0);
+            }
+        }
+    }
+
+    @RequiresFlagsEnabled(FLAG_DEPRECATE_FONTS_XML)
+    @Test
+    public void testItalicAdjustment() {
+        String text = "Hello, World.";
+        Paint paint = new Paint();
+        for (int w = 100; w < 900; w += 50) {
+            paint.setTypeface(Typeface.create(null, w, true));
+            PositionedGlyphs glyphs = TextRunShaper.shapeTextRun(
+                    text, 0, text.length(), 0, text.length(), 0f, 0f, false, paint);
+
+            for (int i = 0; i < glyphs.glyphCount(); ++i) {
+                assertThat(glyphs.getFakeBold(i)).isFalse();
+                assertThat(glyphs.getFakeItalic(i)).isFalse();
+                assertThat(glyphs.getWeightOverride(i)).isEqualTo(w);
+                assertThat(glyphs.getItalicOverride(i)).isEqualTo(1);
+            }
+        }
+    }
+
+    @RequiresFlagsEnabled(FLAG_DEPRECATE_FONTS_XML)
+    @Test
+    public void testAdjustmentPreserveWidth() {
+        String text = "Hello, World.";
+        Paint paint = new Paint();
+        Typeface typeface = Typeface.create("sans-serif-condensed", Typeface.NORMAL);
+        for (int w = 100; w < 900; w += 50) {
+            paint.setTypeface(Typeface.create(typeface, w, true));
+            PositionedGlyphs glyphs = TextRunShaper.shapeTextRun(
+                    text, 0, text.length(), 0, text.length(), 0f, 0f, false, paint);
+
+            for (int i = 0; i < glyphs.glyphCount(); ++i) {
+                final FontVariationAxis[] axes = glyphs.getFont(i).getAxes();
+                assertThat(axes).isNotEmpty();
+                boolean foundWdthTag = false;
+                for (FontVariationAxis axis : axes) {
+                    if (axis.getTag().equals("wdth")) {
+                        foundWdthTag = true;
+                    }
+                }
+                assertThat(foundWdthTag).isTrue();
+            }
         }
     }
 }
