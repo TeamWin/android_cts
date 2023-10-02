@@ -15,6 +15,7 @@
  */
 package android.input.cts
 
+import android.view.InputDevice
 import android.view.MotionEvent
 import android.view.View
 import androidx.test.ext.junit.rules.ActivityScenarioRule
@@ -61,7 +62,7 @@ class InputShellCommandTest {
      * Check the tool type set by default by "input tap" command
      */
     @Test
-    fun testDefaultToolType() {
+    fun testDefaultTapToolType() {
         val (x, y) = getViewCenterOnScreen(activity.window.decorView)
 
         ShellUtils.runShellCommand("input tap $x $y")
@@ -72,7 +73,7 @@ class InputShellCommandTest {
      * Check that the tool type of the injected events changes according to the event source.
      */
     @Test
-    fun testToolType() {
+    fun testTapToolType() {
         val (x, y) = getViewCenterOnScreen(activity.window.decorView)
 
         ShellUtils.runShellCommand("input touchscreen tap $x $y")
@@ -95,6 +96,50 @@ class InputShellCommandTest {
 
         ShellUtils.runShellCommand("input joystick tap $x $y")
         assertTapToolType(MotionEvent.TOOL_TYPE_UNKNOWN)
+    }
+
+    @Test
+    fun testDefaultScroll() {
+        ShellUtils.runShellCommand("input scroll")
+
+        val event = getMotionEvent()
+        assertThat(event.source).isEqualTo(InputDevice.SOURCE_ROTARY_ENCODER)
+        assertThat(event.action).isEqualTo(MotionEvent.ACTION_SCROLL)
+    }
+
+    @Test
+    fun testPointerScroll() {
+        val (x, y) = getViewCenterOnScreen(activity.window.decorView)
+
+        ShellUtils.runShellCommand("input mouse scroll $x $y --axis VSCROLL,-1")
+
+        val event = getMotionEvent()
+        assertThat(event.source).isEqualTo(InputDevice.SOURCE_MOUSE)
+        assertThat(event.action).isEqualTo(MotionEvent.ACTION_SCROLL)
+        assertThat(event.x).isEqualTo(x)
+        assertThat(event.y).isEqualTo(y)
+        assertThat(event.getAxisValue(MotionEvent.AXIS_VSCROLL)).isEqualTo(-1)
+    }
+
+    @Test
+    fun testNonPointerScroll() {
+        ShellUtils.runShellCommand("input rotaryencoder scroll --axis SCROLL,-8 --axis HSCROLL,2")
+
+        val event = getMotionEvent()
+        assertThat(event.source).isEqualTo(InputDevice.SOURCE_ROTARY_ENCODER)
+        assertThat(event.action).isEqualTo(MotionEvent.ACTION_SCROLL)
+        assertThat(event.getAxisValue(MotionEvent.AXIS_SCROLL)).isEqualTo(-8)
+        assertThat(event.getAxisValue(MotionEvent.AXIS_HSCROLL)).isEqualTo(2)
+    }
+
+    @Test
+    fun testInvalidScroll() {
+        ShellUtils.runShellCommand("input scroll --axis SCROLL -8")
+        ShellUtils.runShellCommand("input scroll --axis scroll,-8")
+        ShellUtils.runShellCommand("input scroll --random_option SCROLL,-8")
+        ShellUtils.runShellCommand("input scroll --axis X,-8")
+
+        assertThat(activity.getInputEvent()).isNull()
     }
 
     private fun getMotionEvent(): MotionEvent {
