@@ -17,6 +17,7 @@
 package android.view.cts;
 
 import static android.server.wm.ActivityManagerTestBase.isTablet;
+import static android.view.flags.Flags.FLAG_VIEW_VELOCITY_API;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -66,6 +67,10 @@ import android.os.Bundle;
 import android.os.Parcelable;
 import android.os.SystemClock;
 import android.os.Vibrator;
+import android.platform.test.annotations.RequiresFlagsDisabled;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.text.format.DateUtils;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -164,6 +169,10 @@ public class ViewTest {
     @Rule
     public ActivityTestRule<CtsActivity> mCtsActivityRule =
             new ActivityTestRule<>(CtsActivity.class, false, false);
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule =
+            DeviceFlagsValueProvider.createCheckFlagsRule();
 
     @Before
     public void setup() {
@@ -4819,6 +4828,60 @@ public class ViewTest {
         View.DragShadowBuilder shadowBuilder = createDragShadowBuidler();
         view.updateDragShadow(shadowBuilder);
         verify(shadowBuilder, never()).onDrawShadow(any(Canvas.class));
+    }
+
+    /**
+     * Test for velocity APIs - it requires the flag to be enabled.
+     * To enable the flag:
+     * adb shell device_config put toolkit android.view.flags.view_velocity_api true
+     */
+    @Test
+    @RequiresFlagsEnabled(FLAG_VIEW_VELOCITY_API)
+    public void testVelocityAPIsFlagEnabled() throws Throwable {
+        final MockView view = (MockView) mActivity.findViewById(R.id.mock_view);
+        view.reset();
+        mActivityRule.runOnUiThread(() -> {
+            // The values of the velocities should be 0 by default
+            assertTrue(view.getFrameContentVelocity() == 0);
+
+            view.setFrameContentVelocity(-10);
+            assertTrue(view.getFrameContentVelocity() == 10);
+
+            view.setFrameContentVelocity(20);
+            assertTrue(view.getFrameContentVelocity() == 20);
+
+            view.requestLayout();
+        });
+        mInstrumentation.waitForIdleSync();
+        // the velocities should be reset once the view is drawn.
+        assertTrue(view.getFrameContentVelocity() == 0);
+    }
+
+    /**
+     * Test for velocity APIs - it requires the flag to be disabled (default value).
+     * To disable the flag:
+     * adb shell device_config put toolkit android.view.flags.view_velocity_api false
+     */
+    @Test
+    @RequiresFlagsDisabled(FLAG_VIEW_VELOCITY_API)
+    public void testVelocityAPIsFlagDisabled() throws Throwable {
+        final MockView view = (MockView) mActivity.findViewById(R.id.mock_view);
+        view.reset();
+        mActivityRule.runOnUiThread(() -> {
+            // The values of the velocities should be 0 by default
+            assertTrue(view.getFrameContentVelocity() == 0);
+
+            view.setFrameContentVelocity(-10);
+            assertTrue(view.getFrameContentVelocity() == 0);
+
+            view.setFrameContentVelocity(20);
+            assertTrue(view.getFrameContentVelocity() == 0);
+
+            view.requestLayout();
+        });
+        mInstrumentation.waitForIdleSync();
+        // the velocities should be reset once the view is drawn.
+        assertTrue(view.getFrameContentVelocity() == 0);
     }
 
     private void setVisibilityOnUiThread(final View view, final int visibility) throws Throwable {
