@@ -23,7 +23,6 @@ import android.widget.TextView;
 import com.android.cts.verifier.R;
 
 // MegaAudio
-import org.hyphonate.megaaudio.common.Globals;
 import org.hyphonate.megaaudio.player.AudioSourceProvider;
 import org.hyphonate.megaaudio.player.sources.SinAudioSourceProvider;
 import org.hyphonate.megaaudio.player.sources.SparseChannelAudioSourceProvider;
@@ -214,7 +213,6 @@ public class AudioDataPathsInternalActivity extends AudioDataPathsBaseActivity {
             testSpec.setSectionTitle("Speaker Safe");
             testSpec.setSources(leftSineSourceProvider, micSinkProvider);
             testSpec.setDescription("SpeakerSafe:2:Left Mic:1 no MMAP");
-            testSpec.setGlobalAttributes(TestSpec.ATTRIBUTE_DISABLE_MMAP);
             testManager.mTestSpecs.add(testSpec);
 
             // Right
@@ -223,26 +221,7 @@ public class AudioDataPathsInternalActivity extends AudioDataPathsBaseActivity {
                     AudioDeviceInfo.TYPE_BUILTIN_MIC, speakerSafeSampleRate, 1);
             testSpec.setSources(rightSineSourceProvider, micSinkProvider);
             testSpec.setDescription("SpeakerSafe:2:Right Mic:1 no MMAP");
-            testSpec.setGlobalAttributes(TestSpec.ATTRIBUTE_DISABLE_MMAP);
             testManager.mTestSpecs.add(testSpec);
-
-            if (Globals.isMMapSupported() && testManager.mApi == TEST_API_NATIVE) {
-                testSpec = new TestSpec(
-                        AudioDeviceInfo.TYPE_BUILTIN_SPEAKER_SAFE, speakerSafeSampleRate, 2,
-                        AudioDeviceInfo.TYPE_BUILTIN_MIC, speakerSafeSampleRate, 1);
-                testSpec.setSources(leftSineSourceProvider, micSinkProvider);
-                testSpec.setDescription("SpeakerSafe:2:Left Mic:1 Maybe MMAP");
-                testSpec.setGlobalAttributes(0);
-                testManager.mTestSpecs.add(testSpec);
-
-                testSpec = new TestSpec(
-                        AudioDeviceInfo.TYPE_BUILTIN_SPEAKER_SAFE, speakerSafeSampleRate, 2,
-                        AudioDeviceInfo.TYPE_BUILTIN_MIC, speakerSafeSampleRate, 1);
-                testSpec.setSources(rightSineSourceProvider, micSinkProvider);
-                testSpec.setDescription("SpeakerSafe:2:Right Mic:1 Maybe MMAP");
-                testSpec.setGlobalAttributes(0);
-                testManager.mTestSpecs.add(testSpec);
-            }
         }
     }
 
