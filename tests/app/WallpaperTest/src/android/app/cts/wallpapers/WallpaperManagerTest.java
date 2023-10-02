@@ -16,7 +16,9 @@
 
 package android.app.cts.wallpapers;
 
+import static android.Manifest.permission.ALWAYS_UPDATE_WALLPAPER;
 import static android.Manifest.permission.READ_WALLPAPER_INTERNAL;
+import static android.Manifest.permission.SET_WALLPAPER_COMPONENT;
 import static android.app.WallpaperManager.FLAG_LOCK;
 import static android.app.WallpaperManager.FLAG_SYSTEM;
 import static android.app.cts.wallpapers.WallpaperManagerTestUtils.WallpaperChange;
@@ -26,6 +28,7 @@ import static android.app.cts.wallpapers.util.WallpaperTestUtils.isSimilar;
 import static android.content.pm.PackageManager.FEATURE_LIVE_WALLPAPER;
 import static android.content.pm.PackageManager.FEATURE_SECURE_LOCK_SCREEN;
 import static android.content.pm.PackageManager.FEATURE_WATCH;
+import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 import static android.opengl.cts.Egl14Utils.getMaxTextureSize;
 
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
@@ -34,6 +37,7 @@ import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -1674,32 +1678,48 @@ public class WallpaperManagerTest {
      */
     @Test
     public void testAlwaysUpdateWallpaperPermission_allowOutOfFocusWallpaperCommand() {
+        InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .adoptShellPermissionIdentity(
+                        SET_WALLPAPER_COMPONENT, ALWAYS_UPDATE_WALLPAPER);
+
+        /* Clear previous wallpaper commands */
         TestLiveWallpaper.Companion.resetPrevAction();
 
-        runAndAwaitChanges(5, TimeUnit.SECONDS, 1, 0, 1, () -> {
-            runWithShellPermissionIdentity(
-                    () -> mWallpaperManager.setWallpaperComponent(TEST_COMPONENT_NAME),
-                    android.Manifest.permission.SET_WALLPAPER_COMPONENT);
-        });
+        runWithShellPermissionIdentity(
+                () -> {
+                    mWallpaperManager.setWallpaperComponent(TEST_COMPONENT_NAME);
 
-        /* Overlay an activity to lose focus */
-        WallpaperOverlayTestActivity overlayActivity =
-                mOverlayActivityTestRule.launchActivity(null);
-        sWindowManagerStateHelper.waitAndAssertActivityState(
-                overlayActivity.getComponentName(),
-                WindowManagerState.STATE_RESUMED);
-        Activity baseActivity = mActivityTestRule.launchActivity(null);
-        sWindowManagerStateHelper.waitAndAssertActivityState(
-                baseActivity.getComponentName(),
-                WindowManagerState.STATE_RESUMED);
+                    /* Activity that will be overlaid and lose focus */
+                    WallpaperOverlayTestActivity overlayActivity =
+                            mOverlayActivityTestRule.launchActivity(null);
+                    sWindowManagerStateHelper.waitAndAssertActivityState(
+                            overlayActivity.getComponentName(),
+                            WindowManagerState.STATE_RESUMED);
+                    assertTrue(
+                            "overlayActivity does not have required permission",
+                            overlayActivity.checkSelfPermission(ALWAYS_UPDATE_WALLPAPER)
+                                    == PERMISSION_GRANTED);
 
-        /* Send wallpaper command with android.permission.ALWAYS_UPDATE_WALLPAPER */
-        overlayActivity.sendWallpaperCommand(
-                WallpaperManager.COMMAND_TAP,
-                true/* alwaysUpdateWallpaper */);
-        assertWithMessage("Wallpaper command is not sent with permission")
-                .that(TestLiveWallpaper.Companion.getPrevAction())
-                .isEqualTo(WallpaperManager.COMMAND_TAP);
+                    /* Launch base activity to cover the overlay activity */
+                    Activity baseActivity = mActivityTestRule.launchActivity(null);
+                    sWindowManagerStateHelper.waitAndAssertActivityState(
+                            baseActivity.getComponentName(),
+                            WindowManagerState.STATE_RESUMED);
+
+                    /* Send wallpaper command with ALWAYS_UPDATE_WALLPAPER permission */
+                    overlayActivity.sendWallpaperCommand(WallpaperManager.COMMAND_TAP);
+
+                    /* Allow time for the wallpaper command to be sent over IPC stack */
+                    try {
+                        Thread.sleep(SLEEP_MS);
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+
+                    assertWithMessage("Wallpaper command is not sent with permission")
+                            .that(TestLiveWallpaper.Companion.getPrevAction())
+                            .isEqualTo(WallpaperManager.COMMAND_TAP);
+                });
     }
 
     private void assertBitmapDimensions(Bitmap bitmap) {

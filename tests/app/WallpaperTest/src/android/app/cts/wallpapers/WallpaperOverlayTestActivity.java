@@ -16,10 +16,6 @@
 
 package android.app.cts.wallpapers;
 
-import static android.Manifest.permission.ALWAYS_UPDATE_WALLPAPER;
-
-import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
-
 import android.app.Activity;
 import android.app.WallpaperManager;
 import android.content.Context;
@@ -52,17 +48,10 @@ public class WallpaperOverlayTestActivity extends Activity {
         setContentView(frameLayout, layoutParams);
     }
 
-    public void sendWallpaperCommand(String command, boolean alwaysUpdateWallpaper) {
+    public void sendWallpaperCommand(String command) {
         Window window = this.getWindow();
         IBinder windowToken = window.getDecorView().getWindowToken();
-        if (alwaysUpdateWallpaper) {
-            runWithShellPermissionIdentity(() -> {
-                mWallpaperManager.sendWallpaperCommand(
-                        windowToken, WallpaperManager.COMMAND_TAP, 50, 50, 0, null);
-            }, ALWAYS_UPDATE_WALLPAPER);
-        } else {
-            mWallpaperManager.sendWallpaperCommand(
-                    windowToken, WallpaperManager.COMMAND_TAP, 50, 50, 0, null);
-        }
+        mWallpaperManager.sendWallpaperCommand(
+                windowToken, WallpaperManager.COMMAND_TAP, 50, 50, 0, null);
     }
 }
