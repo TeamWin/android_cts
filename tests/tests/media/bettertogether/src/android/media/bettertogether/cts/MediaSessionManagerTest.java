@@ -352,6 +352,7 @@ public class MediaSessionManagerTest {
     }
 
     @Test
+    @NonMainlineTest
     public void testSetOnMediaKeyListener() throws Exception {
         Handler handler = createHandler();
         MediaSession session = null;
