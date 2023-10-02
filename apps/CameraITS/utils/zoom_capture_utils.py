@@ -26,7 +26,7 @@ import opencv_processing_utils
 _CIRCLE_COLOR = 0  # [0: black, 255: white]
 _CIRCLE_AR_RTOL = 0.15  # contour width vs height (aspect ratio)
 _CIRCLISH_RTOL = 0.05  # contour area vs ideal circle area pi*((w+h)/4)**2
-_MIN_AREA_RATIO = 0.00015  # based on 2000/(4000x3000) pixels
+_MIN_AREA_RATIO = 0.00013  # Found empirically with partners
 _MIN_CIRCLE_PTS = 25
 _MIN_FOCUS_DIST_TOL = 0.80  # allow charts a little closer than min
 _OFFSET_ATOL = 10  # number of pixels
