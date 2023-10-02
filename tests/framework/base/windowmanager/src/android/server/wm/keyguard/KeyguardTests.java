@@ -483,23 +483,23 @@ public class KeyguardTests extends KeyguardTestBase {
 
         // Launch an activity without SHOW_WHEN_LOCKED and finish it.
         final int tdaFeatureId = mWmState.getTaskDisplayAreaFeatureId(occludingActivity);
-        getLaunchActivityBuilder().setUseInstrumentation()
-                .setMultipleTask(true)
-                // Don't wait for activity visible because keyguard will show.
-                .setWaitForLaunched(false)
-                .setTargetActivity(BROADCAST_RECEIVER_ACTIVITY)
-                .setLaunchTaskDisplayAreaFeatureId(tdaFeatureId)
-                .execute();
+        final ActivitySession nonShowWhenLockedActivitySession =
+                createManagedActivityClientSession().startActivity(getLaunchActivityBuilder()
+                        .setUseInstrumentation()
+                        // Don't wait for activity visible because keyguard will show.
+                        .setWaitForLaunched(false)
+                        .setLaunchTaskDisplayAreaFeatureId(tdaFeatureId)
+                        .setTargetActivity(TEST_ACTIVITY));
+        mWmState.waitForAllStoppedActivities();
         mWmState.waitForKeyguardShowingAndNotOccluded();
         // The activity should be launched in same TDA to ensure that
         // keyguard is showing and not occluded.
         assumeTrue("Should launch in same TDA",
                 mWmState.getTaskDisplayArea(occludingActivity)
-                        == mWmState.getTaskDisplayArea(BROADCAST_RECEIVER_ACTIVITY)
-        );
+                        == mWmState.getTaskDisplayArea(TEST_ACTIVITY));
         mWmState.assertKeyguardShowingAndNotOccluded();
 
-        mBroadcastActionTrigger.finishBroadcastReceiverActivity();
+        nonShowWhenLockedActivitySession.finish();
         mWmState.waitForKeyguardShowingAndOccluded();
 
         // The occluding activity should be resumed because it becomes the top activity.
