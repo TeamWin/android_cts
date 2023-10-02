@@ -26,7 +26,6 @@ import static android.server.wm.other.EnsureBarContrastTest.TestActivity.backgro
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
-import static org.junit.Assume.assumeFalse;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -38,6 +37,7 @@ import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.DumpOnFailure;
+import android.server.wm.WindowManagerTestBase;
 import android.util.SparseIntArray;
 import android.view.View;
 import android.view.ViewGroup;
@@ -63,7 +63,7 @@ import java.util.function.Supplier;
  * setEnsureNavigationBarContrastWhenTransparent.
  */
 @Presubmit
-public class EnsureBarContrastTest {
+public class EnsureBarContrastTest extends WindowManagerTestBase {
 
     private final ErrorCollector mErrorCollector = new ErrorCollector();
     private final DumpOnFailure mDumper = new DumpOnFailure();
