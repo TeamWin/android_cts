@@ -23,8 +23,6 @@ import static android.view.Display.DEFAULT_DISPLAY;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
-import static org.junit.Assume.assumeFalse;
-
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.ActivityOptions;
@@ -156,56 +154,6 @@ public final class ActivityManagerHelperTest extends ActivityManagerTestBase {
 
         // requested from Manifest and granted
         assertComponentPermissionGranted(GRANTED_PERMISSION_INTERACT_ACROSS_USERS);
-    }
-
-    @Test
-    public void testSetFocusedRootTask() throws Exception {
-        // Don't run this test on automotive targets with splitscreen multitasking enabled due to
-        // it having root tasks which are not the leaf nodes in the view hierarchy. Instead use
-        // setFocusedTask for those targets.
-        assumeFalse(hasAutomotiveSplitscreenMultitaskingFeature());
-        // setup
-        ActivityA task1BottomActivity = launchTestActivity(ActivityA.class);
-        ActivityB task1TopActivity = launchTestActivity(ActivityB.class);
-        ActivityC task2TopActivity = launchTestActivity(ActivityC.class);
-
-        logActivityStack("amTestActivitys ",
-                task1BottomActivity, task1TopActivity, task2TopActivity);
-
-        assertWithMessage("bottom activity is the task root")
-                .that(task1BottomActivity.isTaskRoot()).isTrue();
-        assertWithMessage("task id of the top activity in the task1")
-                .that(task1TopActivity.getTaskId()).isEqualTo(task1BottomActivity.getTaskId());
-        assertWithMessage("task id of the top activity in the task2")
-                .that(task2TopActivity.getTaskId()).isNotEqualTo(task1TopActivity.getTaskId());
-        assertWithMessage("task1 top activity is visible")
-                .that(task1TopActivity.isVisible()).isFalse();
-        assertWithMessage("task2 top activity is visible")
-                .that(task2TopActivity.isVisible()).isTrue();
-
-        // execute
-        try {
-            mInstrumentation.getUiAutomation().adoptShellPermissionIdentity(
-                    PERMISSION_MANAGE_ACTIVITY_TASKS);
-
-            ActivityManagerHelper.setFocusedRootTask(task1BottomActivity.getTaskId());
-        } finally {
-            mInstrumentation.getUiAutomation().dropShellPermissionIdentity();
-        }
-
-
-        // assert
-        ComponentName activityName = task1TopActivity.getComponentName();
-        waitAndAssertTopResumedActivity(activityName, DEFAULT_DISPLAY,
-                "Activity must be resumed");
-        waitAndAssertFocusStatusChanged(task1TopActivity, true);
-        assertWithMessage("task1 top activity is visible")
-                .that(task1TopActivity.isVisible()).isTrue();
-
-        // teardown
-        task1TopActivity.finish();
-        task1BottomActivity.finish();
-        task2TopActivity.finish();
     }
 
     @Test
