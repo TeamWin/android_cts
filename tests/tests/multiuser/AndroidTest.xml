@@ -32,5 +32,7 @@
         <option name="runtime-hint" value="8m" />
         <option name="exclude-annotation" value="com.android.bedstead.harrier.annotations.RequireRunOnWorkProfile" />
         <option name="exclude-annotation" value="com.android.bedstead.harrier.annotations.RequireRunOnSecondaryUser" />
+        <!-- No method in the Flags class issue: b/302716159 -->
+        <option name="hidden-api-checks" value="false" />
     </test>
 </configuration>

@@ -32,6 +32,7 @@ android_test {
         "Nene",
         "Harrier",
         "TestApp",
+        "android.os.flags-aconfig-java",
     ],
     libs: ["android.test.base"],
     sdk_version: "test_current",

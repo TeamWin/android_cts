@@ -19,12 +19,14 @@ package android.multiuser.cts;
 import static android.Manifest.permission.CREATE_USERS;
 import static android.Manifest.permission.INTERACT_ACROSS_USERS;
 import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
+import static android.Manifest.permission.MODIFY_QUIET_MODE;
 import static android.Manifest.permission.QUERY_USERS;
 import static android.content.pm.PackageManager.FEATURE_MANAGED_USERS;
 import static android.multiuser.cts.TestingUtils.getBooleanProperty;
 import static android.multiuser.cts.TestingUtils.getContextForOtherUser;
 import static android.multiuser.cts.TestingUtils.getContextForUser;
 import static android.multiuser.cts.TestingUtils.sContext;
+import static android.os.Flags.FLAG_ALLOW_PRIVATE_PROFILE;
 import static android.os.UserManager.USER_OPERATION_SUCCESS;
 import static android.os.UserManager.USER_TYPE_FULL_SECONDARY;
 import static android.os.UserManager.USER_TYPE_PROFILE_CLONE;
@@ -40,6 +42,7 @@ import static com.google.common.truth.Truth.assertWithMessage;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeNoException;
 import static org.junit.Assume.assumeNotNull;
 import static org.junit.Assume.assumeTrue;
@@ -52,6 +55,7 @@ import android.content.pm.UserInfo;
 import android.content.pm.UserProperties;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
+import android.os.Flags;
 import android.os.NewUserRequest;
 import android.os.NewUserResponse;
 import android.os.PersistableBundle;
@@ -70,6 +74,7 @@ import com.android.bedstead.harrier.annotations.EnsureHasAdditionalUser;
 import com.android.bedstead.harrier.annotations.EnsureHasNoAdditionalUser;
 import com.android.bedstead.harrier.annotations.EnsureHasNoWorkProfile;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
+import com.android.bedstead.harrier.annotations.EnsureHasPrivateProfile;
 import com.android.bedstead.harrier.annotations.EnsureHasSecondaryUser;
 import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
 import com.android.bedstead.harrier.annotations.RequireFeature;
@@ -949,6 +954,94 @@ public final class UserManagerTest {
         // Boot user will be most recent user
         assertThat(mUserManager.getBootUser())
                 .isEqualTo(mUserManager.getPreviousForegroundUser());
+    }
+
+    @Test
+    @EnsureHasPrivateProfile
+    @EnsureHasPermission({MODIFY_QUIET_MODE})
+    // TODO(b/301574823) : Limit this test to only when private space is supported.
+    public void testRequestQuietMode_shouldSendProfileUnavailableBroadcast() {
+        assumeTrue(Flags.allowPrivateProfile());
+        final UserHandle profileHandle = sDeviceState.privateProfile().userHandle();
+        presetQuietModeStatus(false, profileHandle);
+        BlockingBroadcastReceiver broadcastReceiver = sDeviceState
+                .registerBroadcastReceiver(Intent.ACTION_PROFILE_UNAVAILABLE, /* checker= */null);
+        mUserManager.requestQuietModeEnabled(true, profileHandle);
+        broadcastReceiver.awaitForBroadcastOrFail();
+    }
+
+    @Test
+    @EnsureHasPrivateProfile
+    @EnsureHasPermission({MODIFY_QUIET_MODE})
+    // TODO(b/301574823) : Limit this test to only when private space is supported.
+    public void testRequestQuietMode_shouldSendProfileAvailableBroadcast() {
+        assumeTrue(Flags.allowPrivateProfile());
+        final UserHandle profileHandle = sDeviceState.privateProfile().userHandle();
+        presetQuietModeStatus(true, profileHandle);
+        BlockingBroadcastReceiver broadcastReceiver = sDeviceState
+                .registerBroadcastReceiver(Intent.ACTION_PROFILE_AVAILABLE, /* checker= */null);
+        mUserManager.requestQuietModeEnabled(false, profileHandle);
+        broadcastReceiver.awaitForBroadcastOrFail();
+    }
+
+    @Test
+    @EnsureHasWorkProfile
+    @EnsureHasPermission({MODIFY_QUIET_MODE})
+    public void testRequestQuietModeOnManaged_shouldSendProfileUnavailableBroadcast() {
+        assumeTrue(Flags.allowPrivateProfile());
+        final UserHandle profileHandle = sDeviceState.workProfile().userHandle();
+        presetQuietModeStatus(false, profileHandle);
+        BlockingBroadcastReceiver broadcastReceiver = sDeviceState
+                .registerBroadcastReceiver(Intent.ACTION_PROFILE_UNAVAILABLE, /* checker= */
+                        null);
+        mUserManager.requestQuietModeEnabled(true, profileHandle);
+        broadcastReceiver.awaitForBroadcastOrFail();
+    }
+
+    @Test
+    @EnsureHasWorkProfile
+    @EnsureHasPermission({MODIFY_QUIET_MODE})
+    public void testRequestQuietModeOnManaged_shouldSendProfileAvailableBroadcast() {
+        assumeTrue(Flags.allowPrivateProfile());
+        final UserHandle profileHandle = sDeviceState.workProfile().userHandle();
+        presetQuietModeStatus(true, profileHandle);
+        BlockingBroadcastReceiver broadcastReceiver = sDeviceState
+                .registerBroadcastReceiver(Intent.ACTION_PROFILE_AVAILABLE, /* checker= */
+                        null);
+        mUserManager.requestQuietModeEnabled(false, profileHandle);
+        broadcastReceiver.awaitForBroadcastOrFail();
+    }
+
+    @Test
+    @EnsureHasWorkProfile
+    @EnsureHasPermission({MODIFY_QUIET_MODE})
+    public void testRequestQuietModeOnManaged_shouldSendManagedProfileUnavailableBroadcast() {
+        final UserHandle profileHandle = sDeviceState.workProfile().userHandle();
+        presetQuietModeStatus(false, profileHandle);
+        BlockingBroadcastReceiver broadcastReceiver = sDeviceState
+                .registerBroadcastReceiver(Intent.ACTION_MANAGED_PROFILE_UNAVAILABLE, /* checker= */
+                        null);
+        mUserManager.requestQuietModeEnabled(true, profileHandle);
+        broadcastReceiver.awaitForBroadcastOrFail();
+    }
+
+    @Test
+    @EnsureHasWorkProfile
+    @EnsureHasPermission({MODIFY_QUIET_MODE})
+    public void testRequestQuietModeOnManaged_shouldSendManagedProfileAvailableBroadcast() {
+        final UserHandle profileHandle = sDeviceState.workProfile().userHandle();
+        presetQuietModeStatus(true, profileHandle);
+        BlockingBroadcastReceiver broadcastReceiver = sDeviceState
+                .registerBroadcastReceiver(Intent.ACTION_MANAGED_PROFILE_AVAILABLE, /* checker= */
+                        null);
+        mUserManager.requestQuietModeEnabled(false, profileHandle);
+        broadcastReceiver.awaitForBroadcastOrFail();
+    }
+
+    private void presetQuietModeStatus(boolean enableQuietMode, UserHandle profileHandle) {
+        if (mUserManager.isQuietModeEnabled(profileHandle) != enableQuietMode) {
+            mUserManager.requestQuietModeEnabled(enableQuietMode, profileHandle);
+        }
     }
 
     private Function<Intent, Boolean> userIsEqual(UserHandle userHandle) {
