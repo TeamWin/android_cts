@@ -25,7 +25,7 @@ java_test_host {
         "cts-tradefed",
         "tradefed",
         "guava",
-        "truth-prebuilt",
+        "truth",
     ],
     // tag this module as a cts test artifact
     test_suites: [

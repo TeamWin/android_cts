@@ -22,7 +22,7 @@ java_library {
     static_libs: [
         "androidx.test.rules",
         "platform-test-annotations",
-        "truth-prebuilt",
+        "truth",
     ],
     sdk_version: "current",
 }

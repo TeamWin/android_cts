@@ -28,13 +28,16 @@ android_test {
         "cts-install-lib",
         "collector-device-lib-platform",
         "mockito-target",
-        "truth-prebuilt",
+        "truth",
     ],
 
     min_sdk_version: "30",
     target_sdk_version: "33",
     certificate: "media",
-    java_resources: [":CtsTranscodeTestAppSupportsHevc", ":CtsTranscodeTestAppSupportsSlowMotion"]
+    java_resources: [
+        ":CtsTranscodeTestAppSupportsHevc",
+        ":CtsTranscodeTestAppSupportsSlowMotion",
+    ],
 }
 
 android_test_helper_app {
@@ -43,8 +46,8 @@ android_test_helper_app {
     sdk_version: "test_current",
     resource_dirs: ["helper/res-hevc"],
     srcs: [
-          "helper/src/**/*.java",
-          "src/android/mediaprovidertranscode/cts/TranscodeTestConstants.java"
+        "helper/src/**/*.java",
+        "src/android/mediaprovidertranscode/cts/TranscodeTestConstants.java",
     ],
     static_libs: ["androidx.legacy_legacy-support-v4"],
     target_sdk_version: "28",
@@ -57,8 +60,8 @@ android_test_helper_app {
     sdk_version: "test_current",
     resource_dirs: ["helper/res-slow-motion"],
     srcs: [
-          "helper/src/**/*.java",
-          "src/android/mediaprovidertranscode/cts/TranscodeTestConstants.java"
+        "helper/src/**/*.java",
+        "src/android/mediaprovidertranscode/cts/TranscodeTestConstants.java",
     ],
     static_libs: ["androidx.legacy_legacy-support-v4"],
     target_sdk_version: "28",

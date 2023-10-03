@@ -79,7 +79,7 @@ android_library {
         "hamcrest-library",
         "junit",
         "testng",
-        "truth-prebuilt",
+        "truth",
     ],
     srcs: ["src_res_hardening_lib/**/*.java"],
     resource_dirs: [],

@@ -45,7 +45,7 @@ android_test {
         "junit",
         "junit-params",
         "net-utils-framework-common",
-        "truth-prebuilt",
+        "truth",
     ],
 
     test_suites: [

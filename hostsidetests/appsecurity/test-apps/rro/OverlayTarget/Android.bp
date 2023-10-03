@@ -24,7 +24,7 @@ android_test_helper_app {
     sdk_version: "test_current",
     certificate: ":cts-testkey1",
     static_libs: [
-        "truth-prebuilt",
+        "truth",
         "androidx.test.rules",
         "compatibility-device-util-axt",
     ],
