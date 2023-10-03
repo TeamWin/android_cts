@@ -37,8 +37,11 @@ import android.os.HandlerThread;
 import android.os.UserHandle;
 import android.os.UserManager;
 import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.util.Log;
 
+import com.android.bedstead.harrier.annotations.EnsureHasSecondaryUser;
 import com.android.bedstead.harrier.annotations.RequireHeadlessSystemUserMode;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.permissions.PermissionContext;
@@ -47,6 +50,7 @@ import com.android.compatibility.common.util.SystemUtil;
 import com.android.ex.camera2.blocking.BlockingStateCallback;
 import com.android.internal.camera.flags.Flags;
 
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -61,6 +65,9 @@ public class Camera2HeadlessSystemUserTest extends Camera2ParameterizedTestCase 
     private ActivityManager mActivityManager;
     private UserManager mUserManager;
     private String[] mCameraIdsUnderTest;
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
 
     @Override
     public void setUp() throws Exception {
@@ -139,6 +146,7 @@ public class Camera2HeadlessSystemUserTest extends Camera2ParameterizedTestCase 
      * This test is only valid for devices running in Headless
      * System User Mode.
      */
+    @EnsureHasSecondaryUser
     @RequireHeadlessSystemUserMode(reason = "tests headless user behaviour")
     @RequiresFlagsEnabled(Flags.FLAG_CAMERA_HSUM_PERMISSION)
     @Test
