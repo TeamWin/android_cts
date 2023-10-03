@@ -55,6 +55,7 @@ import static org.mockito.Mockito.verify;
 
 import android.Manifest;
 import android.app.KeyguardManager.KeyguardLockedStateListener;
+import android.app.WallpaperManager;
 import android.content.ComponentName;
 import android.content.res.Configuration;
 import android.platform.test.annotations.Presubmit;
@@ -77,6 +78,12 @@ import org.junit.Test;
 @Presubmit
 @android.server.wm.annotation.Group2
 public class KeyguardTests extends KeyguardTestBase {
+
+    boolean isLockscreenLiveWpEnabled() {
+        WallpaperManager mWallpaperManager = mContext.getSystemService(WallpaperManager.class);
+        return mWallpaperManager != null && mWallpaperManager.isLockscreenLiveWallpaperEnabled();
+    }
+
     @Before
     @Override
     public void setUp() throws Exception {
@@ -270,7 +277,12 @@ public class KeyguardTests extends KeyguardTestBase {
         waitAndAssertResumedActivity(SHOW_WHEN_LOCKED_TRANSLUCENT_ACTIVITY);
         lockScreenSession.gotoKeyguard(SHOW_WHEN_LOCKED_TRANSLUCENT_ACTIVITY);
         waitAndAssertResumedActivity(SHOW_WHEN_LOCKED_TRANSLUCENT_ACTIVITY);
-        mWmState.waitAndAssertWindowShown(TYPE_WALLPAPER, true);
+        if (isLockscreenLiveWpEnabled()) {
+            // When the flag is not enabled, the behavior of this test is not well-defined.
+            // This check would pass with a shared wallpaper, but not with a separate lock screen
+            // wallpaper.
+            mWmState.waitAndAssertWindowShown(TYPE_WALLPAPER, true);
+        }
         mWmState.assertKeyguardShowingAndOccluded();
     }
 
@@ -299,7 +311,12 @@ public class KeyguardTests extends KeyguardTestBase {
         waitAndAssertResumedActivity(SHOW_WHEN_LOCKED_DIALOG_ACTIVITY);
         lockScreenSession.gotoKeyguard(SHOW_WHEN_LOCKED_DIALOG_ACTIVITY);
         waitAndAssertResumedActivity(SHOW_WHEN_LOCKED_DIALOG_ACTIVITY);
-        mWmState.waitAndAssertWindowShown(TYPE_WALLPAPER, true);
+        if (isLockscreenLiveWpEnabled()) {
+            // When the flag is not enabled, the behavior of this test is not well-defined.
+            // This check would pass with a shared wallpaper, but not with a separate lock screen
+            // wallpaper.
+            mWmState.waitAndAssertWindowShown(TYPE_WALLPAPER, true);
+        }
         mWmState.assertKeyguardShowingAndOccluded();
     }
 
