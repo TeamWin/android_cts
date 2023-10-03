@@ -19,8 +19,6 @@ package android.content.cts;
 import android.app.QueuedWork;
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.content.pm.ApplicationInfo;
-import android.content.pm.PackageManager;
 import android.os.StrictMode;
 import android.platform.test.annotations.AppModeSdkSandbox;
 import android.preference.PreferenceManager;
@@ -55,14 +53,9 @@ public class SharedPreferencesTest extends AndroidTestCase {
 
         SharedPreferences prefs = getPrefs();
         prefs.edit().clear().commit();
-        try {
-            ApplicationInfo applicationInfo = mContext.getPackageManager().getApplicationInfo(
-                    mContext.getPackageName(), PackageManager.ApplicationInfoFlags.of(0));
-            mPrefsFile = new File(applicationInfo.dataDir,
-                    "shared_prefs/android.content.cts_preferences.xml");
-        } catch (PackageManager.NameNotFoundException e) {
-            throw new IllegalStateException(e);
-        }
+        File prefsDir = new File(mContext.getDataDir(), "shared_prefs");
+        mPrefsFile = new File(
+                prefsDir, PreferenceManager.getDefaultSharedPreferencesName(mContext) + ".xml");
         mPrefsFile.delete();
     }
 
