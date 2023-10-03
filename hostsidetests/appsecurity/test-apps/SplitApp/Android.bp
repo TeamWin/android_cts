@@ -28,7 +28,7 @@ java_defaults {
     aapt_include_all_resources: true,
     static_libs: [
         "androidx.test.rules",
-        "truth-prebuilt",
+        "truth",
         "hamcrest-library",
         "compatibility-device-util-axt",
     ],

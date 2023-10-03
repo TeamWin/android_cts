@@ -36,7 +36,7 @@ java_defaults {
         "androidx.annotation_annotation",
         "androidx.test.uiautomator_uiautomator",
         "error_prone_annotations",
-        "truth-prebuilt",
+        "truth",
         "modules-utils-build_system",
     ],
 

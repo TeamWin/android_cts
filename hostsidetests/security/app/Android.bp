@@ -28,7 +28,7 @@ android_test_helper_app {
     ],
     static_libs: [
         "ctstestrunner-axt",
-        "truth-prebuilt",
+        "truth",
         "mockito-target-minus-junit4",
     ],
 

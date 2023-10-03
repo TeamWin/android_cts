@@ -32,7 +32,7 @@ android_test_helper_app {
     ],
     static_libs: [
         "ctstestrunner-axt",
-        "truth-prebuilt",
+        "truth",
         "androidx.test.ext.junit",
     ],
 }

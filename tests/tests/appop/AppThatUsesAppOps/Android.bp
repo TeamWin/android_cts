@@ -59,7 +59,7 @@ android_test_helper_app {
     static_libs: [
         "appops-test-util-lib",
         "AppOpsUserServiceAidl",
-        "truth-prebuilt",
+        "truth",
         "junit",
     ],
 

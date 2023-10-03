@@ -23,7 +23,7 @@ android_test_helper_app {
         "androidx.test.rules",
         "cts-install-lib",
         "junit",
-        "truth-prebuilt",
+        "truth",
     ],
     libs: [
         "android.test.runner",
@@ -50,7 +50,7 @@ android_test_helper_app {
         "androidx.test.rules",
         "cts-install-lib",
         "junit",
-        "truth-prebuilt",
+        "truth",
     ],
     libs: [
         "android.test.runner",

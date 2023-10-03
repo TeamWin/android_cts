@@ -24,7 +24,7 @@ android_test {
         "ctstestserver",
         "framework-annotations-lib",
         "junit",
-        "truth-prebuilt",
+        "truth",
     ],
 
     data: [

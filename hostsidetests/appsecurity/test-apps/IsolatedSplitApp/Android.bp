@@ -35,7 +35,7 @@ android_test_helper_app {
     static_libs: [
         "ctstestrunner-axt",
         "androidx.test.rules",
-        "truth-prebuilt",
+        "truth",
     ],
     srcs: ["src/**/*.java"],
     // Generate a locale split.
@@ -55,7 +55,7 @@ android_test_helper_app {
     static_libs: [
         "ctstestrunner-axt",
         "androidx.test.rules",
-        "truth-prebuilt",
+        "truth",
     ],
     srcs: ["src/**/*.java"],
     // Generate a locale split.
