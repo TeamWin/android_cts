@@ -24,7 +24,7 @@ java_library_host {
         "cts-tradefed",
         "tradefed",
         "compatibility-host-util",
-        "truth-prebuilt",
+        "truth",
         "hamcrest-library",
     ],
 
@@ -56,7 +56,7 @@ java_defaults {
         "cts-tradefed",
         "tradefed",
         "compatibility-host-util",
-        "truth-prebuilt",
+        "truth",
         "hamcrest-library",
     ],
 

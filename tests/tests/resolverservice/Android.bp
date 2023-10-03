@@ -21,17 +21,17 @@ android_test {
     sdk_version: "system_current",
 
     srcs: [
-        "src/**/*.java"
+        "src/**/*.java",
     ],
 
     static_libs: [
         "androidx.test.rules",
         "ctstestrunner-axt",
-        "truth-prebuilt"
+        "truth",
     ],
 
     test_suites: [
         "cts",
         "general-tests",
-    ]
+    ],
 }

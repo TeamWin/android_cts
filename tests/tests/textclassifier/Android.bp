@@ -34,7 +34,7 @@ android_test {
         "androidx.test.rules",
         "compatibility-device-util-axt",
         "ctstestrunner-axt",
-        "truth-prebuilt",
+        "truth",
         "androidx.test.ext.junit",
         "androidx.test.uiautomator_uiautomator",
     ],

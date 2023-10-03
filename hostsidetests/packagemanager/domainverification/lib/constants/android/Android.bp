@@ -28,6 +28,6 @@ android_library {
         "CtsDomainVerificationJavaConstantsLibrary",
         "junit",
         "kotlin-reflect",
-        "truth-prebuilt",
+        "truth",
     ],
 }

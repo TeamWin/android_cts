@@ -32,7 +32,7 @@ java_test_host {
         "compatibility-host-util",
         "cts-tradefed",
         "tradefed",
-        "truth-prebuilt",
+        "truth",
     ],
 
     static_libs: [

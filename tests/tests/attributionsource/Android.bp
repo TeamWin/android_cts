@@ -32,7 +32,7 @@ android_test {
     static_libs: [
         "androidx.test.core",
         "compatibility-device-util-axt",
-        "truth-prebuilt",
+        "truth",
         "ctstestrunner-axt",
         "platform-test-annotations",
         "kotlin-test",

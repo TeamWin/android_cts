@@ -28,7 +28,7 @@ android_test_helper_app {
     static_libs: [
         "androidx.test.rules",
         "androidx.test.uiautomator_uiautomator",
-        "truth-prebuilt",
+        "truth",
         "testng",
         "compatibility-device-util-axt",
     ],
@@ -57,7 +57,7 @@ android_test_helper_app {
     static_libs: [
         "androidx.test.rules",
         "androidx.test.uiautomator_uiautomator",
-        "truth-prebuilt",
+        "truth",
         "testng",
         "compatibility-device-util-axt",
     ],
@@ -86,7 +86,7 @@ android_test_helper_app {
     static_libs: [
         "androidx.test.rules",
         "androidx.test.uiautomator_uiautomator",
-        "truth-prebuilt",
+        "truth",
         "testng",
         "compatibility-device-util-axt",
     ],
@@ -115,7 +115,7 @@ android_test_helper_app {
     static_libs: [
         "androidx.test.rules",
         "androidx.test.uiautomator_uiautomator",
-        "truth-prebuilt",
+        "truth",
         "testng",
         "compatibility-device-util-axt",
     ],
@@ -143,7 +143,7 @@ android_test_helper_app {
     static_libs: [
         "androidx.test.rules",
         "androidx.test.uiautomator_uiautomator",
-        "truth-prebuilt",
+        "truth",
         "testng",
         "compatibility-device-util-axt",
     ],
@@ -170,7 +170,7 @@ android_test_helper_app {
     sdk_version: "test_current",
     static_libs: [
         "androidx.test.rules",
-        "truth-prebuilt",
+        "truth",
         "testng",
         "compatibility-device-util-axt",
     ],

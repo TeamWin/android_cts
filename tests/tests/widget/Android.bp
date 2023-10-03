@@ -30,7 +30,7 @@ android_test {
         "compatibility-device-util-axt",
         "ctstestrunner-axt",
         "platform-test-annotations",
-        "truth-prebuilt",
+        "truth",
         "androidx.test.uiautomator_uiautomator",
         "androidx.test.espresso.core",
         "cts-wm-util",

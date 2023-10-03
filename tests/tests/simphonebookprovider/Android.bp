@@ -19,7 +19,7 @@ android_library {
         "compatibility-device-util-axt",
         "hamcrest-library",
         "junit",
-        "truth-prebuilt",
+        "truth",
     ],
 
     visibility: [
@@ -27,7 +27,7 @@ android_library {
     ],
 
     srcs: [
-        ":cts-simphonebook-rules-sources"
+        ":cts-simphonebook-rules-sources",
     ],
 
     sdk_version: "test_current",
@@ -56,14 +56,14 @@ android_test {
         "hamcrest-library",
         "junit",
         "telephony-common-testing",
-        "truth-prebuilt",
+        "truth",
     ],
 
     srcs: [
         "src/**/*.java",
     ],
     exclude_srcs: [
-        ":cts-simphonebook-rules-sources"
+        ":cts-simphonebook-rules-sources",
     ],
 
     sdk_version: "test_current",

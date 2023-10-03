@@ -35,7 +35,7 @@ java_test_host {
         "cts-tradefed",
         "libprotobuf-java-full",
         "tradefed",
-        "truth-prebuilt",
+        "truth",
     ],
     // tag this module as a cts test artifact
     test_suites: [

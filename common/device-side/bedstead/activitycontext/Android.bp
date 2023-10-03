@@ -30,7 +30,7 @@ android_test {
         "ActivityContext",
         "androidx.test.ext.junit",
         "ctstestrunner-axt",
-        "truth-prebuilt",
+        "truth",
         "testng", // Used for assertThrows
     ],
     manifest: "src/test/AndroidManifest.xml",
@@ -49,10 +49,10 @@ android_test {
         "ActivityContext",
         "androidx.test.ext.junit",
         "ctstestrunner-axt",
-        "truth-prebuilt",
+        "truth",
         "testng", // Used for assertThrows
     ],
     manifest: "src/test/AndroidManifestInstrumentEmptyTestApp.xml",
     data: [":EmptyTestApp"],
-    test_config: "ActivityContextInstrumentOtherAppTest.xml"
+    test_config: "ActivityContextInstrumentOtherAppTest.xml",
 }
