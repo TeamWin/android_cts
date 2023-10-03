@@ -228,6 +228,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     @RequiresDevice
     @Test
     public void testAlwaysOnVpn() throws Exception {
+        assumeIsNotWatch();
         int userId = getUserIdForAlwaysOnVpnTests();
         installAppAsUser(VPN_APP_APK, userId);
         executeDeviceTestClassNoRestrictBackground(".AlwaysOnVpnTest", userId);
@@ -240,6 +241,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     @RequiresDevice
     @Test
     public void testAlwaysOnVpnLockDown() throws Exception {
+        assumeIsNotWatch();
         int userId = getUserIdForAlwaysOnVpnTests();
         installAppAsUser(VPN_APP_APK, userId);
         try {
@@ -254,6 +256,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     @RequiresDevice
     @Test
     public void testAlwaysOnVpnAcrossReboot() throws Exception {
+        assumeIsNotWatch();
         int userId = getUserIdForAlwaysOnVpnTests();
         try {
             installAppAsUser(VPN_APP_APK, userId);
@@ -273,6 +276,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     @RequiresDevice
     @Test
     public void testAlwaysOnVpnPackageUninstalled() throws Exception {
+        assumeIsNotWatch();
         int userId = getUserIdForAlwaysOnVpnTests();
         installAppAsUser(VPN_APP_APK, userId);
         try {
@@ -290,6 +294,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     @RequiresDevice
     @Test
     public void testAlwaysOnVpnUnsupportedPackage() throws Exception {
+        assumeIsNotWatch();
         int userId = getUserIdForAlwaysOnVpnTests();
         try {
             // Target SDK = 23: unsupported
@@ -315,6 +320,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     @RequiresDevice
     @Test
     public void testAlwaysOnVpnUnsupportedPackageReplaced() throws Exception {
+        assumeIsNotWatch();
         int userId = getUserIdForAlwaysOnVpnTests();
         try {
             // Target SDK = 24: supported
@@ -337,6 +343,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     @RequiresDevice
     @Test
     public void testAlwaysOnVpnPackageLogged() throws Exception {
+        assumeIsNotWatch();
         int userId = getUserIdForAlwaysOnVpnTests();
         // Will be uninstalled in tearDown().
         installAppAsUser(VPN_APP_APK, userId);
@@ -557,7 +564,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     @Test
     public void testSetMeteredDataDisabledPackages() throws Exception {
         assumeHasWifiFeature();
-        assumeFalse("is watch", hasDeviceFeature("android.hardware.type.watch"));
+        assumeIsNotWatch();
 
         installAppAsUser(METERED_DATA_APP_APK, mUserId);
 
@@ -1391,5 +1398,9 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     private void restoreRestrictBackgroundPolicyTo(boolean restricted) throws Exception {
         getDevice().executeShellCommand(
                 restricted ? RESTRICT_BACKGROUND_ON_CMD : RESTRICT_BACKGROUND_OFF_CMD);
+    }
+
+    private void assumeIsNotWatch() throws Exception {
+        assumeFalse("is watch", hasDeviceFeature("android.hardware.type.watch"));
     }
 }
