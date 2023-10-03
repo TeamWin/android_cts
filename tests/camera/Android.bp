@@ -72,6 +72,8 @@ android_test {
         "androidx.camera_camera-extensions",
         "androidx.camera_camera-lifecycle",
         "modules-utils-native-coverage-listener",
+        "camera_platform_flags_java_lib",
+        "flag-junit",
     ],
     jni_libs: [
         "libctscamera2_jni",

@@ -76,6 +76,9 @@ import android.mediapc.cts.common.Requirement;
 import android.mediapc.cts.common.RequirementConstants;
 import android.os.Build;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.util.ArraySet;
 import android.util.Log;
 import android.util.Pair;
@@ -97,6 +100,7 @@ import androidx.test.rule.ActivityTestRule;
 
 import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.CddTest;
+import com.android.internal.camera.flags.Flags;
 
 import com.google.common.util.concurrent.ListenableFuture;
 
@@ -207,6 +211,10 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
     @Rule
     public final ActivityTestRule<EmptyActivity> mActivityRule = new ActivityTestRule<>(
             EmptyActivity.class, false, false);
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule =
+            DeviceFlagsValueProvider.createCheckFlagsRule();
 
     @Override
     public void setUp() throws Exception {
@@ -3045,6 +3053,7 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
      * Check manual flash control capability
      */
     @Test
+    @RequiresFlagsEnabled(Flags.FLAG_CAMERA_MANUAL_FLASH_STRENGTH_CONTROL)
     public void testManualFlashStrengthControlCharacteristics() throws Exception {
         String[] allCameraIds = getAllCameraIds();
         for (int i = 0; i < allCameraIds.length; i++) {
