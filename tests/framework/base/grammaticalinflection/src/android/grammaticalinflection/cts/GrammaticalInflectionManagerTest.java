@@ -85,7 +85,7 @@ public class GrammaticalInflectionManagerTest extends ActivityManagerTestBase {
             if (matcher.find()) {
                 mOriginalGrammaticalGender = matcher.group(1);
             }
-            setGrammaticalGender(Integer.parseInt(mOriginalGrammaticalGender));
+            setGrammaticalGender(mOriginalGrammaticalGender);
             setSystemTermsOfAddressFlag(mOriginalSystemTermsOfAddressFlag);
         }
     }
@@ -142,7 +142,7 @@ public class GrammaticalInflectionManagerTest extends ActivityManagerTestBase {
         if (!mOriginalSystemTermsOfAddressFlag.contains("true")) {
             setSystemTermsOfAddressFlag("true");
         }
-        setGrammaticalGender(Configuration.GRAMMATICAL_GENDER_MASCULINE);
+        setGrammaticalGender(String.valueOf(Configuration.GRAMMATICAL_GENDER_MASCULINE));
 
         assertThat(mGrammaticalInflectionManager.getSystemGrammaticalGender())
                 .isEqualTo(Configuration.GRAMMATICAL_GENDER_MASCULINE);
@@ -153,10 +153,10 @@ public class GrammaticalInflectionManagerTest extends ActivityManagerTestBase {
                 "device_config put " + FLAG_SYSTEM_TERMS_OF_ADDRESS_ENABLED + enabled);
     }
 
-    private void setGrammaticalGender(int grammaticalGender) {
+    private void setGrammaticalGender(String grammaticalGender) {
         SystemUtil.runShellCommand(String.format(
                 CMD_SET_GRAMMATICAL_GENDER_ENABLED + " --user %d "
-                        + "--grammaticalGender %d",
+                        + "--grammaticalGender %s",
                 0,
                 grammaticalGender
         ));
