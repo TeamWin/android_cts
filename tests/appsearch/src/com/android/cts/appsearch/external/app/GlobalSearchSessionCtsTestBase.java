@@ -935,18 +935,24 @@ public abstract class GlobalSearchSessionCtsTestBase {
         // Register observer. Note: the type does NOT exist yet!
         mGlobalSearchSession.registerObserverCallback(
                 mContext.getPackageName(),
-                new ObserverSpec.Builder().addFilterSchemas(AppSearchEmail.SCHEMA_TYPE).build(),
+                new ObserverSpec.Builder().addFilterSchemas("TestAddObserver-Type").build(),
                 EXECUTOR,
                 observer);
 
         // Index a document
         mDb1.setSchemaAsync(
-                        new SetSchemaRequest.Builder().addSchemas(AppSearchEmail.SCHEMA).build())
+                        new SetSchemaRequest.Builder()
+                                .addSchemas(
+                                        new AppSearchSchema.Builder("TestAddObserver-Type").build())
+                                .build())
                 .get();
-        AppSearchEmail email1 = new AppSearchEmail.Builder("namespace", "id1").build();
+        GenericDocument document =
+                new GenericDocument.Builder<GenericDocument.Builder<?>>(
+                                "namespace", "testAddObserver-id1", "TestAddObserver-Type")
+                        .build();
         checkIsBatchResultSuccess(
                 mDb1.putAsync(
-                        new PutDocumentsRequest.Builder().addGenericDocuments(email1).build()));
+                        new PutDocumentsRequest.Builder().addGenericDocuments(document).build()));
 
         // Make sure the notification was received.
         observer.waitForNotificationCount(2);
@@ -955,16 +961,15 @@ public abstract class GlobalSearchSessionCtsTestBase {
                         new SchemaChangeInfo(
                                 mContext.getPackageName(),
                                 DB_NAME_1,
-                                /*changedSchemaNames=*/ ImmutableSet.of(
-                                        AppSearchEmail.SCHEMA_TYPE)));
+                                /*changedSchemaNames=*/ ImmutableSet.of("TestAddObserver-Type")));
         assertThat(observer.getDocumentChanges())
                 .containsExactly(
                         new DocumentChangeInfo(
                                 mContext.getPackageName(),
                                 DB_NAME_1,
                                 "namespace",
-                                AppSearchEmail.SCHEMA_TYPE,
-                                /*changedDocumentIds=*/ ImmutableSet.of("id1")));
+                                "TestAddObserver-Type",
+                                /*changedDocumentIds=*/ ImmutableSet.of("testAddObserver-id1")));
     }
 
     @Test
