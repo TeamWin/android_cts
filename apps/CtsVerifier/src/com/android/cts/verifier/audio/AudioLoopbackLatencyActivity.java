@@ -173,6 +173,7 @@ public class AudioLoopbackLatencyActivity extends PassFailButtons.Activity {
         int mSampleRate;
         boolean mIsLowLatencyStream;
         boolean mHas24BitHardwareSupport;
+        int mHardwareFormat;
 
         boolean mRouteAvailable; // Have we seen this route/device at any time
         boolean mRouteConnected; // is the route available NOW
@@ -215,6 +216,7 @@ public class AudioLoopbackLatencyActivity extends PassFailButtons.Activity {
                 mSampleRate = mNativeAnalyzerThread.getSampleRate();
                 mIsLowLatencyStream = mNativeAnalyzerThread.isLowLatencyStream();
                 mHas24BitHardwareSupport = mNativeAnalyzerThread.has24BitHardwareSupport();
+                mHardwareFormat = mNativeAnalyzerThread.getHardwareFormat();
             }
         }
 
@@ -274,6 +276,7 @@ public class AudioLoopbackLatencyActivity extends PassFailButtons.Activity {
         private static final String KEY_IS_LOW_LATENCY = "is_low_latency";
         private static final String KEY_HAS_24_BIT_HARDWARE_SUPPORT =
                 "has_24_bit_hardware_support";
+        private static final String KEY_HARDWARE_FORMAT = "hardware_format";
 
         void recordTestResults(CtsVerifierReportLog reportLog) {
             reportLog.addValue(
@@ -329,6 +332,12 @@ public class AudioLoopbackLatencyActivity extends PassFailButtons.Activity {
                     mHas24BitHardwareSupport,
                     ResultType.NEUTRAL,
                     ResultUnit.NONE);
+
+            reportLog.addValue(
+                    KEY_HARDWARE_FORMAT,
+                    mHardwareFormat,
+                    ResultType.NEUTRAL,
+                    ResultUnit.NONE);
         }
 
         void addToJson(JSONObject jsonObject) {
@@ -368,6 +377,10 @@ public class AudioLoopbackLatencyActivity extends PassFailButtons.Activity {
                 jsonObject.put(
                         KEY_HAS_24_BIT_HARDWARE_SUPPORT,
                         mHas24BitHardwareSupport);
+
+                jsonObject.put(
+                        KEY_HARDWARE_FORMAT,
+                        mHardwareFormat);
             } catch (JSONException e) {
                 Log.e(TAG, LOG_ERROR_STR, e);
             }

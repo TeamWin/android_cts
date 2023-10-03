@@ -101,6 +101,11 @@ public:
      */
     bool has24BitHardwareSupport();
 
+    /**
+     * Gets the hardware format.
+     */
+    int getHardwareFormat();
+
     aaudio_result_t getError() {
         return mInputError ? mInputError : mOutputError;
     }
@@ -145,6 +150,7 @@ private:
     bool               mIsDone = false;
     bool               mIsLowLatencyStream = false;
     bool               mHas24BitHardwareSupport = false;
+    int32_t            mHardwareFormat = 0;
 
     int32_t            mOutputDeviceId = 0;
     int32_t            mInputDeviceId = 0;
