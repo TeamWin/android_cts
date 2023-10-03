@@ -39,6 +39,7 @@ public class GenericDocumentCtsTest {
                     .build();
 
     @Test
+    @SuppressWarnings("deprecation")
     public void testMaxIndexedProperties() {
         assertThat(GenericDocument.getMaxIndexedProperties()).isEqualTo(16);
     }
