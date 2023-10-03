@@ -31,7 +31,7 @@ android_test {
         "compatibility-device-util-axt",
         "ctstestrunner-axt",
         "testng",
-        "truth-prebuilt",
+        "truth",
         "guava",
         "junit",
         "hamcrest-library",

@@ -65,7 +65,7 @@ android_test {
         "junit",
         "junit-params",
         "testng",
-        "truth-prebuilt",
+        "truth",
         "Harrier",
         "mockito-target-minus-junit4",
         "androidx.heifwriter_heifwriter",

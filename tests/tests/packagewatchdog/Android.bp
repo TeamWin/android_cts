@@ -26,13 +26,13 @@ android_test {
         "cts",
         "vts",
         "general-tests",
-        "mts-extservices"
+        "mts-extservices",
     ],
     libs: ["android.test.base"],
     static_libs: [
         "compatibility-device-util-axt",
         "ctstestrunner-axt",
-        "truth-prebuilt",
+        "truth",
     ],
     srcs: [
         "src/**/*.java",

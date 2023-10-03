@@ -41,7 +41,7 @@ android_test {
         "ctstestrunner-axt",
         "services.core",
         "junit",
-        "truth-prebuilt",
+        "truth",
         "accountaccesslib",
         "ub-uiautomator",
         // TODO: remove once Android migrates to JUnit 4.12, which provides assertThrows:

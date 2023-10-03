@@ -20,8 +20,8 @@ android_test_helper_app {
     name: "CtsContextCrossProfileApp",
     defaults: ["cts_defaults"],
     static_libs: [
-    "androidx.test.rules",
-    "truth-prebuilt",
+        "androidx.test.rules",
+        "truth",
     ],
     srcs: ["src/**/*.java"],
     // tag this module as a cts test artifact

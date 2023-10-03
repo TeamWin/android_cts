@@ -28,7 +28,7 @@ java_defaults {
         "cts-tradefed",
         "tradefed",
         "compatibility-host-util",
-        "truth-prebuilt",
+        "truth",
     ],
     data: [
         ":CtsDynamicMimeUpdateAppFirstGroup",

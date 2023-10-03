@@ -31,7 +31,7 @@ android_test_helper_app {
         "ub-uiautomator",
         "androidx.test.rules",
         "guava",
-        "truth-prebuilt",
+        "truth",
         "testng",
         "androidx.legacy_legacy-support-v4",
         "devicepolicy-deviceside-common",

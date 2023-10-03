@@ -33,7 +33,7 @@ java_defaults {
         "tradefed",
         "compatibility-host-util",
         "guava",
-        "truth-prebuilt",
+        "truth",
     ],
 }
 

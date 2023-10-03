@@ -23,7 +23,7 @@ android_test {
         "androidx.annotation_annotation",
         "compatibility-device-util-axt",
         "ctstestrunner-axt",
-        "truth-prebuilt",
+        "truth",
         // TODO: remove once Android migrates to JUnit 4.12,
         // which provides assertThrows
         "testng",

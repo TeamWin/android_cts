@@ -30,7 +30,7 @@ android_test_helper_app {
     ],
     static_libs: [
         "compatibility-device-util-axt",
-        "truth-prebuilt",
+        "truth",
         "ctstestrunner-axt",
     ],
     libs: [

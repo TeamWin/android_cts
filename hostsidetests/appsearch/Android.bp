@@ -29,7 +29,7 @@ java_test_host {
         "tools-common-prebuilt",
         "cts-tradefed",
         "tradefed",
-        "truth-prebuilt",
+        "truth",
     ],
     test_suites: [
         "cts",

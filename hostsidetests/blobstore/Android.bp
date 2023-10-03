@@ -24,7 +24,7 @@ java_test_host {
         "tools-common-prebuilt",
         "cts-tradefed",
         "tradefed",
-        "truth-prebuilt"
+        "truth",
     ],
     static_libs: [
         "cts-statsd-atom-host-test-utils",
@@ -32,7 +32,7 @@ java_test_host {
     // Tag this module as a cts test artifact
     test_suites: [
         "cts",
-        "general-tests"
+        "general-tests",
     ],
     data: [
         ":CtsBlobStoreHostTestHelper",
@@ -43,69 +43,69 @@ java_test_host {
 }
 
 android_test_helper_app {
-  name: "CtsBlobStoreHostTestHelper",
-  srcs:  ["test-apps/BlobStoreHostTestHelper/src/**/*.java"],
-  static_libs: [
-      "compatibility-device-util-axt",
-      "androidx.test.ext.junit",
-      "androidx.test.rules",
-      "BlobStoreTestUtils",
-      "truth-prebuilt",
-      "testng",
-  ],
-  manifest : "test-apps/BlobStoreHostTestHelper/AndroidManifest.xml",
-  sdk_version: "test_current",
-  // Tag this module as a cts test artifact
-  test_suites: [
-    "cts",
-    "general-tests"
-  ]
+    name: "CtsBlobStoreHostTestHelper",
+    srcs: ["test-apps/BlobStoreHostTestHelper/src/**/*.java"],
+    static_libs: [
+        "compatibility-device-util-axt",
+        "androidx.test.ext.junit",
+        "androidx.test.rules",
+        "BlobStoreTestUtils",
+        "truth",
+        "testng",
+    ],
+    manifest: "test-apps/BlobStoreHostTestHelper/AndroidManifest.xml",
+    sdk_version: "test_current",
+    // Tag this module as a cts test artifact
+    test_suites: [
+        "cts",
+        "general-tests",
+    ],
 }
 
 android_test_helper_app {
-  name: "CtsBlobStoreHostTestHelperDev",
-  srcs:  ["test-apps/BlobStoreHostTestHelper/src/**/*.java"],
-  static_libs: [
-    "compatibility-device-util-axt",
-    "androidx.test.ext.junit",
-    "androidx.test.rules",
-    "BlobStoreTestUtils",
-    "truth-prebuilt",
-    "testng",
-  ],
-  manifest : "test-apps/BlobStoreHostTestHelper/AndroidManifest_withPrivPerm.xml",
-  aaptflags: [
-    "--rename-manifest-package com.android.cts.device.blob.dev",
-    "--rename-instrumentation-target-package com.android.cts.device.blob.dev"
-  ],
-  sdk_version: "test_current",
-  // Tag this module as a cts test artifact
-  test_suites: [
-    "cts",
-    "general-tests"
-  ]
+    name: "CtsBlobStoreHostTestHelperDev",
+    srcs: ["test-apps/BlobStoreHostTestHelper/src/**/*.java"],
+    static_libs: [
+        "compatibility-device-util-axt",
+        "androidx.test.ext.junit",
+        "androidx.test.rules",
+        "BlobStoreTestUtils",
+        "truth",
+        "testng",
+    ],
+    manifest: "test-apps/BlobStoreHostTestHelper/AndroidManifest_withPrivPerm.xml",
+    aaptflags: [
+        "--rename-manifest-package com.android.cts.device.blob.dev",
+        "--rename-instrumentation-target-package com.android.cts.device.blob.dev",
+    ],
+    sdk_version: "test_current",
+    // Tag this module as a cts test artifact
+    test_suites: [
+        "cts",
+        "general-tests",
+    ],
 }
 
 android_test_helper_app {
-  name: "CtsBlobStoreHostTestHelperAssist",
-  srcs:  ["test-apps/BlobStoreHostTestHelper/src/**/*.java"],
-  static_libs: [
-    "compatibility-device-util-axt",
-    "androidx.test.ext.junit",
-    "androidx.test.rules",
-    "BlobStoreTestUtils",
-    "truth-prebuilt",
-    "testng"
-  ],
-  manifest : "test-apps/BlobStoreHostTestHelper/AndroidManifest_withAssistRole.xml",
-  aaptflags: [
-    "--rename-manifest-package com.android.cts.device.blob.assist",
-    "--rename-instrumentation-target-package com.android.cts.device.blob.assist"
-  ],
-  sdk_version: "test_current",
-  // Tag this module as a cts test artifact
-  test_suites: [
-    "cts",
-    "general-tests"
-  ]
+    name: "CtsBlobStoreHostTestHelperAssist",
+    srcs: ["test-apps/BlobStoreHostTestHelper/src/**/*.java"],
+    static_libs: [
+        "compatibility-device-util-axt",
+        "androidx.test.ext.junit",
+        "androidx.test.rules",
+        "BlobStoreTestUtils",
+        "truth",
+        "testng",
+    ],
+    manifest: "test-apps/BlobStoreHostTestHelper/AndroidManifest_withAssistRole.xml",
+    aaptflags: [
+        "--rename-manifest-package com.android.cts.device.blob.assist",
+        "--rename-instrumentation-target-package com.android.cts.device.blob.assist",
+    ],
+    sdk_version: "test_current",
+    // Tag this module as a cts test artifact
+    test_suites: [
+        "cts",
+        "general-tests",
+    ],
 }

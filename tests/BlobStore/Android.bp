@@ -24,7 +24,7 @@ android_test {
         "androidx.test.rules",
         "compatibility-device-util-axt",
         "guava",
-        "truth-prebuilt",
+        "truth",
         "testng",
         "BlobStoreTestUtils",
     ],
@@ -50,19 +50,19 @@ android_test_helper_app {
     defaults: ["cts_defaults"],
     static_libs: [
         "androidx.test.ext.junit",
-        "truth-prebuilt",
+        "truth",
         "BlobStoreTestUtils",
     ],
     srcs: [
         "helper-app/src/**/*.java",
-        ":CtsBlobStoreTestsAidl"
+        ":CtsBlobStoreTestsAidl",
     ],
     test_suites: [
         "cts",
-        "general-tests"
+        "general-tests",
     ],
     manifest: "helper-app/AndroidManifest.xml",
-    sdk_version: "test_current"
+    sdk_version: "test_current",
 }
 
 android_test_helper_app {
@@ -70,12 +70,12 @@ android_test_helper_app {
     defaults: ["cts_defaults"],
     static_libs: [
         "androidx.test.ext.junit",
-        "truth-prebuilt",
+        "truth",
         "BlobStoreTestUtils",
     ],
     srcs: [
         "helper-app/src/**/*.java",
-        ":CtsBlobStoreTestsAidl"
+        ":CtsBlobStoreTestsAidl",
     ],
     test_suites: [
         "cts",
@@ -86,7 +86,7 @@ android_test_helper_app {
         "--rename-manifest-package com.android.cts.blob.helper2",
     ],
     certificate: ":cts-blob-helper-cert",
-    sdk_version: "test_current"
+    sdk_version: "test_current",
 }
 
 android_test_helper_app {
@@ -94,12 +94,12 @@ android_test_helper_app {
     defaults: ["cts_defaults"],
     static_libs: [
         "androidx.test.ext.junit",
-        "truth-prebuilt",
+        "truth",
         "BlobStoreTestUtils",
     ],
     srcs: [
         "helper-app/src/**/*.java",
-        ":CtsBlobStoreTestsAidl"
+        ":CtsBlobStoreTestsAidl",
     ],
     test_suites: [
         "cts",
@@ -110,12 +110,12 @@ android_test_helper_app {
         "--rename-manifest-package com.android.cts.blob.helper3",
     ],
     certificate: ":cts-blob-helper-cert2",
-    sdk_version: "test_current"
+    sdk_version: "test_current",
 }
 
 filegroup {
     name: "CtsBlobStoreTestsAidl",
     srcs: [
         "aidl/**/*.aidl",
-    ]
+    ],
 }

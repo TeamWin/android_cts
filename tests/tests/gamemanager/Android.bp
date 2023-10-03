@@ -23,7 +23,7 @@ android_test {
         "ctstestrunner-axt",
         "ctstestserver",
         "junit",
-        "truth-prebuilt",
+        "truth",
     ],
 
     data: [
