@@ -63,7 +63,6 @@ public class SdkAvailabilityTest extends WindowManagerJetpackTestBase {
     @Override
     public void setUp() {
         super.setUp();
-        assumeHasLargeScreenDisplayOrExtensionEnabled();
         assumeMultiWindowSupported();
     }
 
@@ -74,6 +73,7 @@ public class SdkAvailabilityTest extends WindowManagerJetpackTestBase {
      */
     @Test
     public void testWindowExtensionsAvailability() {
+        assumeHasLargeScreenDisplayOrExtensionEnabled();
         assertTrue("WindowExtension version is not latest",
                 ExtensionUtil.isExtensionVersionLatest());
         assertTrue("Device must declared that the WindowExtension is enabled",
@@ -86,6 +86,7 @@ public class SdkAvailabilityTest extends WindowManagerJetpackTestBase {
      */
     @Test
     public void testActivityEmbeddingAvailability() {
+        assumeHasLargeScreenDisplay();
         WindowExtensions windowExtensions = ExtensionUtil.getWindowExtensions();
         assertNotNull("WindowExtensions is not available", windowExtensions);
         ActivityEmbeddingComponent activityEmbeddingComponent =
@@ -100,17 +101,28 @@ public class SdkAvailabilityTest extends WindowManagerJetpackTestBase {
      */
     @Test
     public void testSidecarAvailability() {
+        assumeHasLargeScreenDisplayOrExtensionEnabled();
         assertTrue("Sidecar is not available", SidecarUtil.isSidecarVersionValid());
     }
 
-    private void assumeHasLargeScreenDisplayOrExtensionEnabled() {
+    private boolean hasLargeScreenDisplay() {
         final DisplayManager displayManager = mContext.getSystemService(DisplayManager.class);
-        boolean hasLargeScreenDisplay = Arrays.stream(displayManager.getDisplays())
+        return Arrays.stream(displayManager.getDisplays())
                 .filter(display -> display.getType() == Display.TYPE_INTERNAL)
                 .anyMatch(this::isLargeScreenDisplay);
+    }
+
+    private void assumeHasLargeScreenDisplay() {
         assumeTrue("Device does not has a minimum screen dimension greater than or equal to "
                         + WindowManager.LARGE_SCREEN_SMALLEST_SCREEN_WIDTH_DP + "dp",
-                hasLargeScreenDisplay || WindowManager.hasWindowExtensionsEnabled());
+                hasLargeScreenDisplay());
+    }
+
+    private void assumeHasLargeScreenDisplayOrExtensionEnabled() {
+        assumeTrue("Device does not has a minimum screen dimension greater than or equal to "
+                        + WindowManager.LARGE_SCREEN_SMALLEST_SCREEN_WIDTH_DP + "dp and window "
+                        + "extensions are not enabled.",
+                hasLargeScreenDisplay() || WindowManager.hasWindowExtensionsEnabled());
     }
 
     private void assumeMultiWindowSupported() {
