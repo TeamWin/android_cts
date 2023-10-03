@@ -16,14 +16,17 @@
 
 package com.android.queryable.queries;
 
+import static com.android.queryable.annotations.IntegerQuery.DEFAULT_INT_QUERY_PARAMETERS_VALUE;
 import static com.android.queryable.util.ParcelableUtils.readNullableBoolean;
 import static com.android.queryable.util.ParcelableUtils.writeNullableBoolean;
 
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import com.android.bedstead.nene.types.OptionalBoolean;
 import com.android.queryable.Queryable;
 import com.android.queryable.QueryableBaseWithMatch;
+import com.google.auto.value.AutoAnnotation;
 
 import java.util.Objects;
 
@@ -152,5 +155,26 @@ public final class BooleanQueryHelper<E extends Queryable> implements BooleanQue
     @Override
     public int hashCode() {
         return Objects.hash(mTargetValue);
+    }
+
+    @Override
+    public E matchesAnnotation(com.android.queryable.annotations.BooleanQuery queryAnnotation) {
+        if (queryAnnotation.isEqualTo() != OptionalBoolean.ANY) {
+            isEqualTo(queryAnnotation.isEqualTo() == OptionalBoolean.TRUE);
+        }
+
+        return mQuery;
+    }
+
+    public com.android.queryable.annotations.BooleanQuery toAnnotation() {
+        return booleanQuery(OptionalBoolean.Companion.from(mTargetValue));
+    }
+
+    @AutoAnnotation
+    private static com.android.queryable.annotations.BooleanQuery booleanQuery(
+            OptionalBoolean isEqualTo) {
+        return new AutoAnnotation_BooleanQueryHelper_booleanQuery(
+                isEqualTo
+        );
     }
 }

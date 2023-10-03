@@ -50,6 +50,7 @@ import com.android.bedstead.nene.devicepolicy.ProfileOwner;
 import com.android.bedstead.nene.exceptions.AdbException;
 import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.exceptions.PollValueFailedException;
+import com.android.bedstead.nene.permissions.CommonPermissions;
 import com.android.bedstead.nene.permissions.PermissionContext;
 import com.android.bedstead.nene.utils.Poll;
 import com.android.bedstead.nene.utils.ShellCommand;
@@ -139,6 +140,21 @@ public final class UserReference implements AutoCloseable {
     }
 
     /**
+     * {@code true} if this is the main user.
+     */
+    @Experimental
+    public boolean isMain() {
+        if (!Versions.meetsMinimumSdkVersionRequirement(U)) {
+            return isSystem();
+        }
+
+        try (PermissionContext p =
+                     TestApis.permissions().withPermission(CommonPermissions.CREATE_USERS)) {
+            return mUserManager.isMainUser();
+        }
+    }
+
+    /**
      * Get a {@link UserHandle} for the {@link #id()}.
      */
     public UserHandle userHandle() {
@@ -151,11 +167,11 @@ public final class UserReference implements AutoCloseable {
      * <p>If the user does not exist then nothing will happen. If the removal fails for any other
      * reason, a {@link NeneException} will be thrown.
      */
-    public void remove() {
+    public UserReference remove() {
         Log.i(LOG_TAG, "Trying to remove user " + mId);
         if (!exists()) {
             Log.i(LOG_TAG, "User " + mId + " does not exist or removed already.");
-            return;
+            return this;
         }
 
         try {
@@ -199,6 +215,7 @@ public final class UserReference implements AutoCloseable {
         }
         
         Log.i(LOG_TAG, "Removed user " + mId);
+        return this;
     }
 
     /**

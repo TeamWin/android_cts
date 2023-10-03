@@ -531,10 +531,13 @@ public final class Processor extends AbstractProcessor {
 
             if (signatureReturnOverrides.containsKey(signature)) {
                 methodBuilder.returns(signatureReturnOverrides.get(signature));
+
+                ClassName iClassName = signatureReturnOverrides.get(signature);
+                ClassName implClassName = ClassName.get(iClassName.packageName(), iClassName.simpleName() + "Impl");
+
                 methodBuilder.addStatement(
-                        "$TImpl ret = new $TImpl($L.$L($L))",
-                        signatureReturnOverrides.get(signature),
-                        signatureReturnOverrides.get(signature), frameworkClassName,
+                        "$1T ret = new $1T($2L.$3L($4L))",
+                        implClassName, frameworkClassName,
                         method.getSimpleName(), String.join(", ", paramNames));
                 // We assume all replacements are null-only
                 methodBuilder.addStatement("return null");
@@ -598,6 +601,7 @@ public final class Processor extends AbstractProcessor {
 
     private void getMethods(Map<String, ExecutableElement> methods, TypeElement interfaceClass,
             Elements elements) {
+
         interfaceClass.getEnclosedElements().stream()
                 .filter(e -> e instanceof ExecutableElement)
                 .map(e -> (ExecutableElement) e)
@@ -610,6 +614,14 @@ public final class Processor extends AbstractProcessor {
         interfaceClass.getInterfaces().stream()
                 .map(m -> elements.getTypeElement(m.toString()))
                 .forEach(m -> getMethods(methods, m, elements));
+
+
+        TypeElement superclassElement = (TypeElement) processingEnv.getTypeUtils()
+                .asElement(interfaceClass.getSuperclass());
+
+        if (superclassElement != null) {
+            getMethods(methods, superclassElement, elements);
+        }
     }
 
     private String methodHash(ExecutableElement method) {

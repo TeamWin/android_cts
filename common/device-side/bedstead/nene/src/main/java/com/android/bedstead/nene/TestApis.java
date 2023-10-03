@@ -23,6 +23,7 @@ import com.android.bedstead.nene.adb.Adb;
 import com.android.bedstead.nene.annotations.Experimental;
 import com.android.bedstead.nene.bluetooth.Bluetooth;
 import com.android.bedstead.nene.broadcasts.Broadcasts;
+import com.android.bedstead.nene.bugreports.BugReports;
 import com.android.bedstead.nene.certificates.Certificates;
 import com.android.bedstead.nene.context.Context;
 import com.android.bedstead.nene.content.Content;
@@ -38,6 +39,7 @@ import com.android.bedstead.nene.logcat.Logcat;
 import com.android.bedstead.nene.notifications.Notifications;
 import com.android.bedstead.nene.packages.Packages;
 import com.android.bedstead.nene.permissions.Permissions;
+import com.android.bedstead.nene.properties.Properties;
 import com.android.bedstead.nene.resources.Resources;
 import com.android.bedstead.nene.roles.Roles;
 import com.android.bedstead.nene.services.Services;
@@ -67,7 +69,7 @@ public final class TestApis {
 
     /** Access Test APIs related to device policy. */
     public static DevicePolicy devicePolicy() {
-        return DevicePolicy.sInstance;
+        return DevicePolicy.INSTANCE;
     }
 
     /** Access Test APIs related to permissions. */
@@ -98,7 +100,7 @@ public final class TestApis {
 
     /** Access Test APIs related to notifications. */
     public static Notifications notifications() {
-        return Notifications.sInstance;
+        return Notifications.INSTANCE;
     }
 
     /** Access Test APIs related to the device. */
@@ -219,6 +221,16 @@ public final class TestApis {
     /** Access Test APIs related to telephony. */
     public static Telephony telephony() {
         return Telephony.INSTANCE;
+    }
+
+    /** Access Test APIs related to bug reports. */
+    public static BugReports bugReports() {
+        return BugReports.INSTANCE;
+    }
+
+    /** Test APIs related to System Properties. */
+    public static Properties properties() {
+        return Properties.INSTANCE;
     }
 
     /** @deprecated Use statically */

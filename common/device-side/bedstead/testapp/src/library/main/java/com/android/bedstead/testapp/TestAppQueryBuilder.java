@@ -90,6 +90,7 @@ public final class TestAppQueryBuilder implements Queryable {
         queryBuilder = queryBuilder.whereMinSdkVersion().matchesAnnotation(query.minSdkVersion());
         queryBuilder = queryBuilder.whereMaxSdkVersion().matchesAnnotation(query.maxSdkVersion());
         queryBuilder = queryBuilder.wherePackageName().matchesAnnotation(query.packageName());
+        queryBuilder = queryBuilder.whereIsDeviceAdmin().matchesAnnotation(query.isDeviceAdmin());
         return queryBuilder;
     }
 
@@ -365,7 +366,8 @@ public final class TestAppQueryBuilder implements Queryable {
         return query(mPackageName.toAnnotation(),
                 mTargetSdkVersion.toAnnotation(),
                 mMinSdkVersion.toAnnotation(),
-                mMaxSdkVersion.toAnnotation());
+                mMaxSdkVersion.toAnnotation(),
+                mIsDeviceAdmin.toAnnotation());
     }
 
     @AutoAnnotation
@@ -373,8 +375,9 @@ public final class TestAppQueryBuilder implements Queryable {
             com.android.queryable.annotations.StringQuery packageName,
             com.android.queryable.annotations.IntegerQuery targetSdkVersion,
             com.android.queryable.annotations.IntegerQuery minSdkVersion,
-            com.android.queryable.annotations.IntegerQuery maxSdkVersion) {
+            com.android.queryable.annotations.IntegerQuery maxSdkVersion,
+            com.android.queryable.annotations.BooleanQuery isDeviceAdmin) {
         return new AutoAnnotation_TestAppQueryBuilder_query(
-                packageName, targetSdkVersion, minSdkVersion, maxSdkVersion);
+                packageName, targetSdkVersion, minSdkVersion, maxSdkVersion, isDeviceAdmin);
     }
 }
