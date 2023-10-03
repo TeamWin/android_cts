@@ -21,7 +21,8 @@ android_test_helper_app {
     defaults: ["cts_defaults"],
     static_libs: [
         "androidx.test.rules",
-        "truth-prebuilt",],
+        "truth",
+    ],
     srcs: ["src/**/*.java"],
     // tag this module as a cts test artifact
     test_suites: [

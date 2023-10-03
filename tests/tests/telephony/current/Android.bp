@@ -55,7 +55,7 @@ android_test {
         "ctstestrunner-axt",
         "hamcrest-library",
         "compatibility-device-util-axt",
-        "truth-prebuilt",
+        "truth",
         "android.telephony.mockmodem",
     ],
     srcs: [

@@ -23,7 +23,7 @@ java_library {
         "bouncycastle-bcpkix-unbundled",
         "cbor-java",
         "guava",
-        "truth-prebuilt",
+        "truth",
         "testng",
     ],
     srcs: ["src/**/*.java"],

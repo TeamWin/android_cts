@@ -21,7 +21,7 @@ android_test_helper_app {
     defaults: ["cts_defaults"],
     static_libs: [
         "androidx.test.rules",
-        "truth-prebuilt",
+        "truth",
         "CtsPkgInstallerConstants",
     ],
     srcs: ["src/**/*.kt"],

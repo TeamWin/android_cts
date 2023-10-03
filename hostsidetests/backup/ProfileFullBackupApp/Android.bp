@@ -22,7 +22,7 @@ android_test_helper_app {
     static_libs: [
         "androidx.test.rules",
         "platform-test-annotations",
-        "truth-prebuilt",
+        "truth",
     ],
     srcs: ["src/**/*.java"],
     // tag this module as a cts test artifact

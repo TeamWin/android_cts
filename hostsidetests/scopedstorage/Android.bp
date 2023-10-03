@@ -210,7 +210,7 @@ android_test_helper_app {
     manifest: "AndroidManifest.xml",
     srcs: ["src/**/*.java"],
     static_libs: [
-        "truth-prebuilt",
+        "truth",
         "cts-scopedstorage-lib",
         "modules-utils-build_system",
     ],
@@ -236,7 +236,7 @@ android_test_helper_app {
     manifest: "AndroidManifest.xml",
     srcs: ["src/**/*.java"],
     static_libs: [
-        "truth-prebuilt",
+        "truth",
         "cts-scopedstorage-lib",
         "modules-utils-build_system",
     ],
@@ -258,7 +258,7 @@ android_test_helper_app {
     manifest: "legacy/AndroidManifest.xml",
     srcs: ["legacy/src/**/*.java"],
     static_libs: [
-        "truth-prebuilt",
+        "truth",
         "cts-scopedstorage-lib",
     ],
     compile_multilib: "both",
@@ -449,7 +449,7 @@ android_test {
     test_config: "device/AndroidTest.xml",
     srcs: ["device/**/*.java"],
     static_libs: [
-        "truth-prebuilt",
+        "truth",
         "cts-scopedstorage-lib",
         "androidx.test.uiautomator_uiautomator",
         "modules-utils-build_system",

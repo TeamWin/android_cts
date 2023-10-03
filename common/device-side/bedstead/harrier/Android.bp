@@ -16,7 +16,6 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-
 // TODO(276742331): Restore host/device separation
 java_library_host {
     name: "HarrierCommon",
@@ -30,7 +29,7 @@ java_library_host {
         "guava",
         "NeneCommon",
         "QueryableCommon",
-        "truth-prebuilt",
+        "truth",
     ],
 
     plugins: ["auto_annotation_plugin"],
@@ -48,7 +47,7 @@ android_library {
         "guava",
         "NeneCommonAndroid",
         "QueryableCommonAndroid",
-        "truth-prebuilt",
+        "truth",
     ],
 
     manifest: "src/main/AndroidManifest.xml",
@@ -94,7 +93,7 @@ android_test {
         "ctstestrunner-axt",
         "compatibility-device-util-axt",
         "platform-test-annotations",
-        "truth-prebuilt",
+        "truth",
         "testng", // for assertThrows
     ],
     manifest: "src/test/AndroidManifest.xml",

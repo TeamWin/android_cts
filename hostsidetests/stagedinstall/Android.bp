@@ -27,7 +27,7 @@ java_test_host {
         "cts-tradefed",
         "cts-shim-host-lib",
         "tradefed",
-        "truth-prebuilt",
+        "truth",
         "hamcrest",
         "hamcrest-library",
     ],
@@ -76,7 +76,7 @@ android_test_helper_app {
     static_libs: [
         "androidx.test.runner",
         "androidx.test.core",
-        "truth-prebuilt",
+        "truth",
         "cts-install-lib",
     ],
     sdk_version: "test_current",

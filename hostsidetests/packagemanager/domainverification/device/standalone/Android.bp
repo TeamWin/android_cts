@@ -18,7 +18,7 @@ package {
 
 android_test {
     name: "CtsDomainVerificationDeviceStandaloneTestCases",
-    srcs: [ "src/**/*.kt" ],
+    srcs: ["src/**/*.kt"],
     test_suites: [
         "cts",
         "device-tests",
@@ -34,7 +34,7 @@ android_test {
         "CtsDomainVerificationAndroidConstantsLibrary",
         "CtsDomainVerificationJavaConstantsLibrary",
         "junit",
-        "truth-prebuilt",
+        "truth",
     ],
     data: [
         ":CtsDomainVerificationTestDeclaringApp1",

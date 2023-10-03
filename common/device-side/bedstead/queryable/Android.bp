@@ -6,26 +6,26 @@ java_library_host {
     name: "QueryableCommon",
     static_libs: [
         "NeneCommon",
-        "auto_value_annotations"
+        "auto_value_annotations",
     ],
     srcs: [
         "common/src/main/java/**/*.java",
     ],
-    plugins: ["auto_annotation_plugin"]
+    plugins: ["auto_annotation_plugin"],
 }
 
 android_library {
     name: "QueryableCommonAndroid",
     static_libs: [
         "NeneCommonAndroid",
-         "auto_value_annotations"
+        "auto_value_annotations",
     ],
     srcs: [
         "common/src/main/java/**/*.java",
     ],
     manifest: "src/main/AndroidManifest.xml",
     min_sdk_version: "29",
-    plugins: ["auto_annotation_plugin"]
+    plugins: ["auto_annotation_plugin"],
 }
 
 android_library {
@@ -36,17 +36,17 @@ android_library {
     ],
     static_libs: [
         "androidx.test.ext.junit",
-        "QueryableCommonAndroid"
+        "QueryableCommonAndroid",
     ],
     manifest: "src/main/AndroidManifest.xml",
     min_sdk_version: "29",
-    plugins: ["auto_annotation_plugin"]
+    plugins: ["auto_annotation_plugin"],
 }
 
 android_test {
     name: "BedsteadQueryableTest",
     srcs: [
-        "src/test/java/**/*.java"
+        "src/test/java/**/*.java",
     ],
     test_suites: [
         "general-tests",
@@ -58,9 +58,9 @@ android_test {
         "ActivityContext",
         "androidx.test.ext.junit",
         "ctstestrunner-axt",
-        "truth-prebuilt",
+        "truth",
         "testng", // for assertThrows
     ],
     manifest: "src/test/AndroidManifest.xml",
-    min_sdk_version: "29"
+    min_sdk_version: "29",
 }

@@ -27,7 +27,7 @@ android_test {
         "compatibility-device-util-axt",
         "ctstestrunner-axt",
         "platformprotosnano",
-        "truth-prebuilt",
+        "truth",
         "androidx.test.uiautomator_uiautomator",
     ],
     libs: [

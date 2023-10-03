@@ -25,7 +25,7 @@ android_test {
         "compatibility-device-util-axt",
         "ctstestrunner-axt",
         "cts-net-utils",
-        "truth-prebuilt",
+        "truth",
         "androidx.test.ext.junit",
         "testng", // used for assertThrows
         // TODO: Remove this once we remove ui automator usage

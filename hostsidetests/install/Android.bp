@@ -19,13 +19,13 @@ package {
 java_test_host {
     name: "CtsInstallHostTestCases",
     defaults: ["cts_defaults"],
-    srcs:  ["src/**/*.java"],
+    srcs: ["src/**/*.java"],
     libs: [
         "compatibility-host-util",
         "cts-tradefed",
         "cts-shim-host-lib",
         "tradefed",
-        "truth-prebuilt",
+        "truth",
         "hamcrest",
         "hamcrest-library",
     ],
@@ -40,12 +40,15 @@ java_test_host {
 
 android_test_helper_app {
     name: "InstallTest",
-    srcs:  ["app/src/**/*.java", "src/android/cts/install/*.java"],
-    manifest : "app/AndroidManifest.xml",
+    srcs: [
+        "app/src/**/*.java",
+        "src/android/cts/install/*.java",
+    ],
+    manifest: "app/AndroidManifest.xml",
     static_libs: [
         "androidx.test.runner",
         "androidx.test.core",
-        "truth-prebuilt",
+        "truth",
         "cts-install-lib",
         "cts-rollback-lib",
     ],
