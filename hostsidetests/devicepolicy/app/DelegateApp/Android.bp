@@ -30,7 +30,7 @@ android_test_helper_app {
         "ctstestrunner-axt",
         "androidx.test.rules",
         "ub-uiautomator",
-        "truth-prebuilt",
+        "truth",
         "devicepolicy-deviceside-common",
     ],
     sdk_version: "current",

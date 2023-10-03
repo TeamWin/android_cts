@@ -25,7 +25,7 @@ java_test_host {
         "cts-tradefed",
         "tradefed",
         "compatibility-host-util",
-        "truth-host-prebuilt",
+        "truth",
     ],
     static_libs: [
         "compatibility-host-util-axt",

@@ -25,7 +25,7 @@ java_test {
         "compatibility-device-util-axt",
         "junit",
         "testng", // TODO: remove once Android migrates to JUnit 4.12, which provide assertThrows
-        "truth-prebuilt"
+        "truth",
     ],
 
     sdk_version: "test_current",

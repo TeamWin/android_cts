@@ -29,7 +29,7 @@ android_test {
         "cts-helpers-core",
         "guava",
         "mockito-target",
-        "truth-prebuilt",
+        "truth",
     ],
 
     sdk_version: "test_current",

@@ -28,7 +28,7 @@ android_test {
         "CtsAccessibilityCommon",
         "CtsAccessibilityServiceUtils",
         "ctstestrunner-axt",
-        "truth-prebuilt",
+        "truth",
         "ub-uiautomator",
     ],
     libs: ["android.test.base"],

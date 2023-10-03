@@ -24,7 +24,7 @@ android_test {
         "ctstestrunner-axt",
         "CtsAppTestStubsShared",
         "junit",
-        "truth-prebuilt",
+        "truth",
     ],
     libs: [
         "android.test.runner",
@@ -38,7 +38,7 @@ android_test {
     test_suites: [
         "cts",
         "general-tests",
-        "mts"
+        "mts",
     ],
     sdk_version: "test_current",
     target_sdk_version: "30",

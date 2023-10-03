@@ -42,7 +42,7 @@ android_test_helper_app {
         "androidx.test.rules",
         "cts-input-lib",
         "ctstestrunner-axt",
-        "truth-prebuilt",
+        "truth",
     ],
 
     sdk_version: "test_current",

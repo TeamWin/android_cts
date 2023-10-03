@@ -34,7 +34,7 @@ android_test_helper_app {
         "cts-input-lib",
         "cts-wm-util",
         "ctstestrunner-axt",
-        "truth-prebuilt",
+        "truth",
     ],
     sdk_version: "test_current",
 }

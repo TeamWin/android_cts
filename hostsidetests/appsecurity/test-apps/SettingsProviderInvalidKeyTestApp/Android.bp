@@ -24,7 +24,7 @@ android_test_helper_app {
         "compatibility-device-util-axt",
         "ctstestrunner-axt",
         "junit",
-        "truth-prebuilt",
+        "truth",
         "testng", // for assertThrows
     ],
     libs: [

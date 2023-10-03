@@ -28,11 +28,11 @@ android_test {
         "general-tests",
     ],
     srcs: [
-        "src/**/*.kt"
+        "src/**/*.kt",
     ],
     libs: [
         "android.test.runner",
-        "android.test.base"
+        "android.test.base",
     ],
     static_libs: [
         "CtsResourcesLoaderTests_Providers",
@@ -43,22 +43,25 @@ android_test {
         "compatibility-device-util-axt",
         "ctstestrunner-axt",
         "mockito-target-minus-junit4",
-        "truth-prebuilt"
+        "truth",
     ],
-    resource_dirs: ["res", "resources/provider_stable/res"],
+    resource_dirs: [
+        "res",
+        "resources/provider_stable/res",
+    ],
     aaptflags: ["-0 .txt"],
     data: [
         ":CtsResourcesLoaderTests_ProviderOne_Split",
         ":CtsResourcesLoaderTests_ProviderTwo_Split",
         ":CtsResourcesLoaderTests_ProviderThree_Split",
-        ":CtsResourcesLoaderTests_ProviderFour_Split"
-    ]
+        ":CtsResourcesLoaderTests_ProviderFour_Split",
+    ],
 }
 
 java_genrule {
     name: "CtsResourcesLoaderTests_Providers",
     tools: ["soong_zip"],
-    srcs : [
+    srcs: [
         ":CtsResourcesLoaderTests_ProviderOne",
         ":CtsResourcesLoaderTests_ProviderOne_ARSC",
         ":CtsResourcesLoaderTests_ProviderTwo",
@@ -66,10 +69,10 @@ java_genrule {
         ":CtsResourcesLoaderTests_ProviderThree",
         ":CtsResourcesLoaderTests_ProviderThree_ARSC",
         ":CtsResourcesLoaderTests_ProviderFour",
-        ":CtsResourcesLoaderTests_ProviderFour_ARSC"
+        ":CtsResourcesLoaderTests_ProviderFour_ARSC",
     ],
     out: ["CtsResourcesLoaderTests_Providers.jar"],
     cmd: "mkdir -p $(genDir)/assets/ && cp $(in) $(genDir)/assets/ && " +
-         "$(location soong_zip) -o $(out) " +
-         "-L 0 -C $(genDir) -D $(genDir)/assets/"
+        "$(location soong_zip) -o $(out) " +
+        "-L 0 -C $(genDir) -D $(genDir)/assets/",
 }

@@ -5,17 +5,17 @@ package {
 java_library_host {
     name: "NeneCommon",
     srcs: [
-        "common/src/main/java/**/*.java"
+        "common/src/main/java/**/*.java",
     ],
 }
 
 android_library {
     name: "NeneCommonAndroid",
     srcs: [
-        "common/src/main/java/**/*.java"
+        "common/src/main/java/**/*.java",
     ],
     manifest: "src/main/AndroidManifestInternal.xml",
-    min_sdk_version: "29"
+    min_sdk_version: "29",
 }
 
 // TODO(b/203507664): Remove NeneInternal once we no longer need QUERY_ALL_PACKAGES to install
@@ -23,7 +23,7 @@ android_library {
     name: "NeneInternal",
     sdk_version: "test_current",
     srcs: [
-        "src/main/java/**/*.java"
+        "src/main/java/**/*.java",
     ],
     manifest: "src/main/AndroidManifestInternal.xml",
     static_libs: [
@@ -34,14 +34,14 @@ android_library {
         "RemoteFrameworkClasses",
         "androidx.test.uiautomator_uiautomator",
     ],
-    min_sdk_version: "29"
+    min_sdk_version: "29",
 }
 
 android_library {
     name: "Nene",
     sdk_version: "test_current",
     srcs: [
-        "src/main/java/**/*.java"
+        "src/main/java/**/*.java",
     ],
     manifest: "src/main/AndroidManifest.xml",
     static_libs: [
@@ -52,7 +52,7 @@ android_library {
         "RemoteFrameworkClasses",
         "androidx.test.uiautomator_uiautomator",
     ],
-    min_sdk_version: "29"
+    min_sdk_version: "29",
 }
 
 android_test {
@@ -72,12 +72,12 @@ android_test {
         "androidx.test.ext.junit",
         "ctstestrunner-axt",
         "compatibility-device-util-axt",
-        "truth-prebuilt",
-        "testng" // for assertThrows
+        "truth",
+        "testng", // for assertThrows
     ],
     data: [":NeneTestApp1"],
     manifest: "src/test/AndroidManifest.xml",
-    min_sdk_version: "29"
+    min_sdk_version: "29",
 }
 
 android_test {
@@ -97,13 +97,13 @@ android_test {
         "androidx.test.ext.junit",
         "ctstestrunner-axt",
         "compatibility-device-util-axt",
-        "truth-prebuilt",
-        "testng" // for assertThrows
+        "truth",
+        "testng", // for assertThrows
     ],
     data: [":NeneTestApp1"],
     manifest: "src/test/AndroidManifest.xml",
     min_sdk_version: "29",
-    test_config: "InteractiveAndroidTest.xml"
+    test_config: "InteractiveAndroidTest.xml",
 }
 
 android_test {
@@ -129,14 +129,14 @@ android_test {
     ],
     manifest: "src/benchmarks/AndroidManifest.xml",
     test_config: "src/benchmarks/AndroidTest.xml",
-    min_sdk_version: "29"
+    min_sdk_version: "29",
 }
 
 android_test_helper_app {
     name: "NeneTestApp1",
     static_libs: [
-        "EventLib"
+        "EventLib",
     ],
     manifest: "testapps/TestApp1.xml",
-    min_sdk_version: "29"
+    min_sdk_version: "29",
 }

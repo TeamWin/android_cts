@@ -73,7 +73,7 @@ java_test_host {
         "cts-tradefed",
         "host-libprotobuf-java-full",
         "tradefed",
-        "truth-prebuilt",
+        "truth",
     ],
 
     static_libs: [
@@ -107,6 +107,6 @@ java_library_host {
         "compatibility-host-util",
         "cts-tradefed",
         "tradefed",
-        "truth-prebuilt",
+        "truth",
     ],
 }

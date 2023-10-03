@@ -21,11 +21,11 @@ android_test_helper_app {
     defaults: ["cts_defaults"],
     static_libs: [
         "androidx.test.rules",
-        "truth-prebuilt",
+        "truth",
         "CtsRestoreSessionApp",
     ],
     srcs: [
-        "src/**/*.java"
+        "src/**/*.java",
     ],
     v4_signature: true,
     // tag this module as a cts test artifact

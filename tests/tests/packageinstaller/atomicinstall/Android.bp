@@ -19,17 +19,17 @@ package {
 android_test {
     name: "CtsAtomicInstallTestCases",
 
-    srcs:  ["src/**/*.java"],
+    srcs: ["src/**/*.java"],
 
-    java_resources:  [
-        ":AtomicInstallCorrupt"
+    java_resources: [
+        ":AtomicInstallCorrupt",
     ],
     static_libs: [
         "androidx.annotation_annotation",
         "androidx.core_core",
         "androidx.test.runner",
-        "truth-prebuilt",
-	"cts-install-lib",
+        "truth",
+        "cts-install-lib",
     ],
     sdk_version: "test_current",
     test_suites: [
@@ -42,5 +42,5 @@ android_test {
 filegroup {
     name: "AtomicInstallCorrupt",
     srcs: ["testdata/apk/prebuilt/corrupt.apk"],
-    path: "testdata/apk/prebuilt"
+    path: "testdata/apk/prebuilt",
 }
