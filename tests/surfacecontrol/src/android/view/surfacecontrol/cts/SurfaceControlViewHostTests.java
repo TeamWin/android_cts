@@ -28,9 +28,12 @@ import static android.view.SurfaceControlViewHost.SurfacePackage;
 import static android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON;
 import static android.view.WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
 import static android.view.WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE;
+
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
+
 import static com.android.cts.mockime.ImeEventStreamTestUtils.editorMatcher;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -53,6 +56,7 @@ import android.content.pm.FeatureInfo;
 import android.content.res.Configuration;
 import android.graphics.Color;
 import android.graphics.PixelFormat;
+import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.Region;
 import android.graphics.Point;
@@ -63,6 +67,9 @@ import android.os.RemoteException;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
 import android.platform.test.annotations.RequiresDevice;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.server.wm.ActivityManagerTestBase;
 import android.server.wm.CtsWindowInfoUtils;
 import android.server.wm.FutureConnection;
@@ -92,6 +99,7 @@ import androidx.test.rule.ActivityTestRule;
 import com.android.compatibility.common.util.CtsTouchUtils;
 import com.android.cts.mockime.ImeEventStream;
 import com.android.cts.mockime.MockImeSession;
+import com.android.window.flags.Flags;
 
 import org.junit.After;
 import org.junit.Before;
@@ -141,6 +149,10 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
 
     @Rule
     public TestName mName = new TestName();
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule =
+            DeviceFlagsValueProvider.createCheckFlagsRule();
 
     private Instrumentation mInstrumentation;
     private CtsTouchUtils mCtsTouchUtils;
@@ -1660,5 +1672,48 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
         windowState = mWmState.getWindowState(TEST_ACTIVITY);
         // Assert the KEEP_SCREEN_ON flag is removed from the main window.
         assertNotEquals(FLAG_KEEP_SCREEN_ON, (windowState.getFlags() & FLAG_KEEP_SCREEN_ON));
+    }
+
+    @RequiresFlagsEnabled(Flags.FLAG_TRANSFER_GESTURE_TO_EMBEDDED)
+    @Test
+    public void testTransferHostTouchGestureToEmbedded() throws Throwable {
+        mEmbeddedView = new Button(mActivity);
+        addSurfaceView(DEFAULT_SURFACE_VIEW_WIDTH, DEFAULT_SURFACE_VIEW_HEIGHT, false /* onTop */);
+        waitUntilEmbeddedViewDrawn();
+
+        CountDownLatch receivedTouches = new CountDownLatch(1);
+        boolean[] hostGotEvent = new boolean[1];
+        boolean[] embeddedGotEvent = new boolean[1];
+        mSurfaceViewMotionConsumer = (ev) -> {
+            if (hostGotEvent[0]) {
+                return;
+            }
+            hostGotEvent[0] = true;
+            mSurfaceView.getRootSurfaceControl().transferHostTouchGestureToEmbedded(
+                    mVr.getSurfacePackage());
+            receivedTouches.countDown();
+        };
+
+        mEmbeddedView.setOnTouchListener((v, event) -> {
+            if (embeddedGotEvent[0]) {
+                return false;
+            }
+            embeddedGotEvent[0] = true;
+            receivedTouches.countDown();
+            return false;
+        });
+
+        final int[] viewInWindow = new int[2];
+        mSurfaceView.getLocationInWindow(viewInWindow);
+        Point point = new Point(viewInWindow[0] + 1, viewInWindow[1] + 1);
+
+        CtsWindowInfoUtils.tapOnWindow(mInstrumentation, () -> mSurfaceView.getWindowToken(),
+                point, /* useGlobalInjection= */ false);
+
+        assertTrue("Failed to receive touch from host=" + hostGotEvent[0] + " or embedded="
+                + embeddedGotEvent[0], receivedTouches.await(WAIT_TIMEOUT_S, TimeUnit.SECONDS));
+
+        assertTrue("Failed to receive touch event in host window", hostGotEvent[0]);
+        assertTrue("Failed to receive touch event in embedded window", embeddedGotEvent[0]);
     }
 }
