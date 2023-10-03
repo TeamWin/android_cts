@@ -29,6 +29,7 @@ import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.EnsureHasAccount;
 import com.android.bedstead.harrier.annotations.EnsureHasNoAccounts;
+import com.android.bedstead.harrier.annotations.FailureMode;
 import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDpc;
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasProfileOwner;
@@ -106,7 +107,8 @@ public final class ProfileOwnerTest {
     }
 
     @EnsureHasNoDpc
-    @EnsureHasNoAccounts(onUser = ANY)
+    @EnsureHasNoAccounts(onUser = ANY, allowPreCreatedAccounts = false,
+            failureMode =  FailureMode.SKIP)
     @Test
     public void setProfileOwnerViaAdb_noAccounts_notTestOnly_sets() throws Exception {
         try (TestAppInstance dpcApp = NOT_TEST_ONLY_DPC.install()) {
