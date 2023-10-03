@@ -33,12 +33,14 @@ public final class MediaRouterTestConstants {
             "CtsMediaRouterHostSideTestProviderApp3.apk";
     public static final String MEDIA_ROUTER_PROVIDER_SELF_SCAN_ONLY_APK =
             "CtsMediaRouterHostSideTestProviderSelfScanOnlyApp.apk";
-    public static final String MEDIA_ROUTER_TEST_PACKAGE = "android.media.router.cts";
+    public static final String MEDIA_ROUTER_TEST_PACKAGE =
+            "android.media.router.cts.bluetoothpermissionsapp";
 
     public static final String DEVICE_SIDE_TEST_CLASS =
-            "android.media.router.cts.MediaRouter2DeviceTest";
+            "android.media.router.cts.bluetoothpermissionsapp.MediaRouter2DeviceTest";
 
-    public static final String MEDIA_ROUTER_TEST_APK = "CtsMediaRouterHostSideTestHelperApp.apk";
+    public static final String MEDIA_ROUTER_TEST_APK =
+            "CtsMediaRouterHostSideTestBluetoothPermissionsApp.apk";
 
     public static final String ROUTE_ID_APP_1_ROUTE_1 = "route_1-1";
     public static final String ROUTE_ID_APP_1_ROUTE_2 = "route_1-2";
