@@ -391,6 +391,13 @@ public final class AutoFillServiceTestCase {
                             "include_all_autofill_type_not_none_views_in_assist_structure",
                             Boolean.toString(false)))
 
+
+                //
+                // Max input size to provide autofill suggestion should be 3
+                .around(new DeviceConfigStateChangerRule(sContext, DeviceConfig.NAMESPACE_AUTOFILL,
+                            "max_input_length_for_autofill",
+                            Integer.toString(3)))
+
                 //
                 // Finally, let subclasses add their own rules (like ActivityTestRule)
                 .around(getMainTestRule());
