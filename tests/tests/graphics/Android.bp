@@ -33,6 +33,7 @@ android_test {
         "androidx.annotation_annotation",
         "hamcrest-library",
         "junit",
+        "flag-junit",
         "junit-params",
         "SurfaceFlingerProperties",
         "testng",
