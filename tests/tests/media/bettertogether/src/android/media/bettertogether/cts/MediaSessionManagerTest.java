@@ -48,11 +48,9 @@ import android.view.KeyEvent;
 
 import androidx.test.annotation.UiThreadTest;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
-import androidx.test.filters.SdkSuppress;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
-import com.android.compatibility.common.util.MediaUtils;
 import com.android.compatibility.common.util.NonMainlineTest;
 import com.android.compatibility.common.util.SystemUtil;
 
@@ -104,6 +102,7 @@ public class MediaSessionManagerTest {
     }
 
     @Test
+    @NonMainlineTest
     public void testGetActiveSessions() throws Exception {
         assertThrows("Expected security exception for unauthorized call to getActiveSessions",
                 SecurityException.class,
@@ -112,26 +111,24 @@ public class MediaSessionManagerTest {
     }
 
     @Test
+    @NonMainlineTest
     public void testGetMediaKeyEventSession_throwsSecurityException() {
-        if (!MediaUtils.check(sIsAtLeastS, "test invalid before Android 12")) return;
         assertThrows("Expected security exception for call to getMediaKeyEventSession",
                 SecurityException.class,
                 () -> mSessionManager.getMediaKeyEventSession());
     }
 
     @Test
+    @NonMainlineTest
     public void testGetMediaKeyEventSessionPackageName_throwsSecurityException() {
-        if (!MediaUtils.check(sIsAtLeastS, "test invalid before Android 12")) return;
         assertThrows("Expected security exception for call to getMediaKeyEventSessionPackageName",
                 SecurityException.class,
                 () -> mSessionManager.getMediaKeyEventSessionPackageName());
     }
 
     @Test
+    @NonMainlineTest
     public void testOnMediaKeyEventSessionChangedListener() throws Exception {
-        // The permission can be held only on S+
-        if (!MediaUtils.check(sIsAtLeastS, "test invalid before Android 12")) return;
-
         getInstrumentation().getUiAutomation().adoptShellPermissionIdentity(
                 Manifest.permission.MEDIA_CONTENT_CONTROL,
                 Manifest.permission.MANAGE_EXTERNAL_STORAGE);
@@ -159,10 +156,8 @@ public class MediaSessionManagerTest {
     }
 
     @Test
+    @NonMainlineTest
     public void testOnMediaKeyEventSessionChangedListener_whenSessionIsReleased() throws Exception {
-        // The permission can be held only on S+
-        if (!MediaUtils.check(sIsAtLeastS, "test invalid before Android 12")) return;
-
         getInstrumentation().getUiAutomation().adoptShellPermissionIdentity(
                 Manifest.permission.MEDIA_CONTENT_CONTROL,
                 Manifest.permission.MANAGE_EXTERNAL_STORAGE);
@@ -181,9 +176,7 @@ public class MediaSessionManagerTest {
         assertThat(keyEventSessionListener.mCountDownLatch
                 .await(TIMEOUT_MS, TimeUnit.MILLISECONDS)).isTrue();
         assertThat(keyEventSessionListener.mSessionToken).isNull();
-        if (sIsAtLeastU) {
-            assertThat(keyEventSessionListener.mPackageName).isEmpty();
-        }
+        assertThat(keyEventSessionListener.mPackageName).isEmpty();
 
         assertThat(mSessionManager.getMediaKeyEventSession()).isNull();
         assertThat(mSessionManager.getMediaKeyEventSessionPackageName()).isEqualTo("");
@@ -191,10 +184,8 @@ public class MediaSessionManagerTest {
 
     @Test
     @NonMainlineTest
-    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S)
     public void testOnMediaKeyEventSessionChangedListener_noSession_passesEmptyPackageAndNullToken()
             throws InterruptedException {
-        // The permission can be held only on S+
         getInstrumentation().getUiAutomation().adoptShellPermissionIdentity(
                 Manifest.permission.MEDIA_CONTENT_CONTROL);
 
@@ -226,8 +217,8 @@ public class MediaSessionManagerTest {
     }
 
     @Test
+    @NonMainlineTest
     public void testOnMediaKeyEventSessionChangedListener_noPermission_throwsSecurityException() {
-        if (!MediaUtils.check(sIsAtLeastS, "test invalid before Android 12")) return;
         MediaKeyEventSessionListener keyEventSessionListener = new MediaKeyEventSessionListener();
         assertThrows("Expected security exception for call to"
                         + " addOnMediaKeyEventSessionChangedListener",
@@ -237,10 +228,8 @@ public class MediaSessionManagerTest {
     }
 
     @Test
+    @NonMainlineTest
     public void testOnMediaKeyEventDispatchedListener() throws Exception {
-        // The permission can be held only on S+
-        if (!MediaUtils.check(sIsAtLeastS, "test invalid before Android 12")) return;
-
         getInstrumentation().getUiAutomation().adoptShellPermissionIdentity(
                 Manifest.permission.MEDIA_CONTENT_CONTROL,
                 Manifest.permission.MANAGE_EXTERNAL_STORAGE);
@@ -283,8 +272,8 @@ public class MediaSessionManagerTest {
 
     @Test
     @UiThreadTest
+    @NonMainlineTest
     public void testAddOnActiveSessionsListener() throws Exception {
-        if (!MediaUtils.check(sIsAtLeastS, "test invalid before Android 12")) return;
         assertThrows("Expected NPE for call to addOnActiveSessionsChangedListener",
                 NullPointerException.class,
                 () -> mSessionManager.addOnActiveSessionsChangedListener(null, null));
@@ -310,6 +299,7 @@ public class MediaSessionManagerTest {
     }
 
     @Test
+    @NonMainlineTest
     public void testSetOnVolumeKeyLongPressListener() throws Exception {
         Context context = getInstrumentation().getTargetContext();
         if (context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_LEANBACK)
@@ -610,9 +600,9 @@ public class MediaSessionManagerTest {
     }
 
     @Test
+    @NonMainlineTest
     public void testCustomClassConfigValuesAreValid() throws Exception {
-        if (!MediaUtils.check(sIsAtLeastS, "test invalid before Android 12")) return;
-        final Context context = getInstrumentation().getTargetContext();
+        Context context = getInstrumentation().getTargetContext();
         String customMediaKeyDispatcher = context.getString(
                 android.R.string.config_customMediaKeyDispatcher);
         String customMediaSessionPolicyProvider = context.getString(
@@ -631,6 +621,7 @@ public class MediaSessionManagerTest {
     }
 
     @Test
+    @NonMainlineTest
     public void testIsTrustedForMediaControl_withEnabledNotificationListener() throws Exception {
         List<String> packageNames = getEnabledNotificationListenerPackages();
         for (String packageName : packageNames) {
