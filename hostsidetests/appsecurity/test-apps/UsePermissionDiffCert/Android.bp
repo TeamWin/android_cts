@@ -28,7 +28,7 @@ android_test_helper_app {
         "CtsPermissionDeclareUtilLib",
         "androidx.test.rules",
         "testng",
-        "truth-prebuilt",
+        "truth",
     ],
     libs: ["android.test.base"],
     // tag this module as a cts test artifact

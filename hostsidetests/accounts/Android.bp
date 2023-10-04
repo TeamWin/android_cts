@@ -26,7 +26,7 @@ java_test_host {
         "tradefed",
         "platform-test-annotations-host",
         "compatibility-host-util",
-        "truth-prebuilt",
+        "truth",
         "device-policy-log-verifier-util",
     ],
     // tag this module as a cts test artifact

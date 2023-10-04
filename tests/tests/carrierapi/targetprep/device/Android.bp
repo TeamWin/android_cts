@@ -25,7 +25,7 @@ android_test_helper_app {
         "androidx.test.runner",
         "compatibility-device-util-axt",
         "junit",
-        "truth-prebuilt",
+        "truth",
     ],
     libs: [],
     // Tag this module as a cts test artifact

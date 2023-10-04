@@ -32,6 +32,6 @@ java_test_host {
         "cts-tradefed",
         "tradefed",
         "compatibility-host-util",
-        "truth-prebuilt",
+        "truth",
     ],
 }

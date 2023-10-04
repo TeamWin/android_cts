@@ -10,13 +10,13 @@ android_library {
     ],
     static_libs: ["androidx.test.ext.junit"],
     manifest: "src/main/AndroidManifest.xml",
-    min_sdk_version: "29"
+    min_sdk_version: "29",
 }
 
 android_test {
     name: "BedsteadQueryableTest",
     srcs: [
-        "src/test/java/**/*.java"
+        "src/test/java/**/*.java",
     ],
     test_suites: [
         "general-tests",
@@ -28,9 +28,9 @@ android_test {
         "ActivityContext",
         "androidx.test.ext.junit",
         "ctstestrunner-axt",
-        "truth-prebuilt",
+        "truth",
         "testng", // for assertThrows
     ],
     manifest: "src/test/AndroidManifest.xml",
-    min_sdk_version: "29"
+    min_sdk_version: "29",
 }

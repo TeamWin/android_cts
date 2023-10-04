@@ -35,7 +35,7 @@ java_defaults {
         "ub-uiautomator",
         "androidx.annotation_annotation",
         "androidx.test.uiautomator_uiautomator",
-        "truth-prebuilt",
+        "truth",
         "modules-utils-build_system",
     ],
 

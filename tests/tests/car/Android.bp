@@ -20,7 +20,7 @@ java_library {
     name: "vehicle-property-verifier",
     static_libs: [
         "androidx.test.rules",
-        "truth-prebuilt",
+        "truth",
     ],
     libs: [
         "android.car-test-stubs",
@@ -36,7 +36,7 @@ android_test {
         "androidx.test.rules",
         "android-support-v4",
         "compatibility-device-util-axt",
-        "truth-prebuilt",
+        "truth",
         "ctstestrunner-axt",
         // TODO: remove once Android migrates to JUnit 4.12,
         // which provides assertThrows

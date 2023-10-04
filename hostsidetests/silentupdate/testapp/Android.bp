@@ -29,7 +29,7 @@ android_test_helper_app {
         "androidx.annotation_annotation",
         "androidx.core_core",
         "androidx.test.runner",
-        "truth-prebuilt",
+        "truth",
         "TestApp",
         "Nene",
     ],

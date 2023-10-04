@@ -33,12 +33,12 @@ android_test {
         "ctstestrunner-axt",
         "guava",
         "androidx.test.ext.junit-nodeps",
-        "truth-prebuilt",
-        "permission-test-util-lib"
+        "truth",
+        "permission-test-util-lib",
     ],
     srcs: [
         "src/**/*.java",
-        "src/**/*.kt"
+        "src/**/*.kt",
     ],
     sdk_version: "test_current",
     data: [

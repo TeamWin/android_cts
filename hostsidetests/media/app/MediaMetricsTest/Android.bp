@@ -55,7 +55,7 @@ android_test_helper_app {
         "androidx.test.rules",
         "collector-device-lib",
         "compatibility-device-util-axt",
-        "truth-prebuilt",
+        "truth",
     ],
     sdk_version: "test_current",
     min_sdk_version: "30",

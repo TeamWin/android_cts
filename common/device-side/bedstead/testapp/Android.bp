@@ -74,7 +74,7 @@ android_test {
         "Harrier",
         "EventLib",
         "androidx.test.ext.junit",
-        "truth-prebuilt",
+        "truth",
         "testng", // for assertThrows
     ],
     manifest: "src/test/AndroidManifest.xml",

@@ -29,7 +29,7 @@ android_test {
         "ctstestrunner-axt",
         "compatibility-device-util-axt",
         "androidx.test.ext.junit",
-        "truth-prebuilt",
+        "truth",
         "cts-wm-util",
     ],
     srcs: ["src/**/*.java"],
