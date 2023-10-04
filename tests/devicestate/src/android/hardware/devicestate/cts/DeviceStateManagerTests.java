@@ -21,6 +21,7 @@ import static android.hardware.devicestate.DeviceStateManager.MINIMUM_DEVICE_STA
 import static android.server.wm.DeviceStateUtils.assertValidState;
 import static android.server.wm.DeviceStateUtils.runWithControlDeviceStatePermission;
 import static android.view.Display.DEFAULT_DISPLAY;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -111,17 +112,14 @@ public class DeviceStateManagerTests extends DeviceStateManagerTestBase {
     @ApiTest(apis = {"android.hardware.devicestate.DeviceStateManager#requestBaseStateOverride"})
     @Test
     public void testRequestBaseState() throws Throwable {
-        final ArgumentCaptor<Integer> intAgumentCaptor = ArgumentCaptor.forClass(Integer.class);
-        final DeviceStateManager.DeviceStateCallback callback =
-                mock(DeviceStateManager.DeviceStateCallback.class);
+        final StateTrackingCallback callback = new StateTrackingCallback();
         final DeviceStateManager manager = getDeviceStateManager();
 
         manager.registerCallback(Runnable::run, callback);
 
         DeviceStateRequest request = DeviceStateRequest.newBuilder(0).build();
         runWithRequestActive(request, true, () -> {
-            verify(callback, atLeastOnce()).onStateChanged(intAgumentCaptor.capture());
-            assertEquals(intAgumentCaptor.getValue().intValue(), request.getState());
+            PollingCheck.waitFor(TIMEOUT, () -> callback.mCurrentState == request.getState());
         });
     }
 
@@ -242,7 +240,10 @@ public class DeviceStateManagerTests extends DeviceStateManagerTestBase {
 
         runWithControlDeviceStatePermission(() -> activity.requestDeviceStateChange(nextState));
 
+        // We have to check the state has transitioned first, before checking to verify the activity
+        // has been made visible again.
         PollingCheck.waitFor(TIMEOUT, () -> callback.mCurrentState == nextState);
+        PollingCheck.waitFor(TIMEOUT, () -> activity.mResumed);
 
         assertEquals(nextState, callback.mCurrentState);
         assertFalse(activity.requestStateFailed);

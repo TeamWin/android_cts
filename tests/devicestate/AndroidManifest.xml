@@ -21,7 +21,8 @@
     <application>
         <uses-library android:name="android.test.runner"/>
 
-        <activity android:name=".DeviceStateTestActivity" android:exported="true"/>
+        <activity android:name=".DeviceStateTestActivity" android:exported="true"
+                  android:configChanges="screenSize|smallestScreenSize|orientation|screenLayout" />
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
