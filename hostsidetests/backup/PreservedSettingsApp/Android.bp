@@ -23,7 +23,7 @@ android_test_helper_app {
         "androidx.test.rules",
         "platform-test-annotations",
         "compatibility-device-util-axt",
-        "truth-prebuilt",
+        "truth",
     ],
     srcs: ["src/**/*.java"],
     // tag this module as a cts test artifact

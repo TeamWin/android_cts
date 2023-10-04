@@ -19,6 +19,10 @@ package {
 java_library {
     name: "cts-rollback-lib",
     srcs: ["src/**/*.java"],
-    static_libs: ["androidx.test.rules", "truth-prebuilt", "cts-install-lib"],
+    static_libs: [
+        "androidx.test.rules",
+        "truth",
+        "cts-install-lib",
+    ],
     sdk_version: "test_current",
 }

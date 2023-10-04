@@ -39,7 +39,7 @@ android_test_helper_app {
         "compatibility-device-util-axt",
         "androidx.test.rules",
         "cts-security-test-support-library",
-        "truth-prebuilt",
+        "truth",
         "androidx.legacy_legacy-support-v4",
         "devicepolicy-deviceside-common",
         "DpmWrapper",

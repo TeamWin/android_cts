@@ -56,7 +56,7 @@ android_test_helper_app {
         "collector-device-lib",
         "compatibility-device-util-axt",
         "cts-midi-lib",
-        "truth-prebuilt",
+        "truth",
     ],
     sdk_version: "test_current",
     min_sdk_version: "30",

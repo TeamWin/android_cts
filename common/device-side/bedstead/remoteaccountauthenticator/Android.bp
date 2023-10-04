@@ -6,20 +6,20 @@ android_library {
     name: "RemoteAccountAuthenticator",
     sdk_version: "test_current",
     srcs: [
-        "src/main/java/**/*.java"
+        "src/main/java/**/*.java",
     ],
     static_libs: [
         "Nene",
         "TestApp",
     ],
     manifest: "src/main/AndroidManifest.xml",
-    min_sdk_version: "29"
+    min_sdk_version: "29",
 }
 
 android_test {
     name: "RemoteAccountAuthenticatorTest",
     srcs: [
-        "src/test/java/**/*.java"
+        "src/test/java/**/*.java",
     ],
     test_suites: [
         "general-tests",
@@ -32,9 +32,9 @@ android_test {
         "EventLib",
         "androidx.test.ext.junit",
         "compatibility-device-util-axt",
-        "truth-prebuilt",
-        "testng" // for assertThrows
+        "truth",
+        "testng", // for assertThrows
     ],
     manifest: "src/test/AndroidManifest.xml",
-    min_sdk_version: "29"
+    min_sdk_version: "29",
 }
