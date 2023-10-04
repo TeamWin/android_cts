@@ -19,6 +19,8 @@
      package="android.view.inputmethod.cts"
      android:targetSandboxVersion="2">
 
+    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"/>
+
     <queries>
         <intent>
             <action android:name="android.view.InputMethod" />
@@ -30,6 +32,7 @@
     </queries>
 
     <application android:label="CtsInputMethodTestCases"
+         android:requestLegacyExternalStorage="true"
          android:multiArch="true"
          android:supportsRtl="true"
          android:debuggable="true"
