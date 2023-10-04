@@ -69,6 +69,7 @@ public class TvContractTest extends AndroidTestCase {
         Channels.COLUMN_VIDEO_RESOLUTION,
         Channels.COLUMN_CHANNEL_LIST_ID,
         Channels.COLUMN_BROADCAST_GENRE,
+        Channels.COLUMN_BROADCAST_VISIBILITY_TYPE,
     };
 
     private static final String[] PROGRAMS_PROJECTION = {
@@ -362,6 +363,7 @@ public class TvContractTest extends AndroidTestCase {
             verifyStringColumn(cursor, expectedValues, Channels.COLUMN_VIDEO_RESOLUTION);
             verifyStringColumn(cursor, expectedValues, Channels.COLUMN_CHANNEL_LIST_ID);
             verifyStringColumn(cursor, expectedValues, Channels.COLUMN_BROADCAST_GENRE);
+            verifyIntegerColumn(cursor, expectedValues, Channels.COLUMN_BROADCAST_VISIBILITY_TYPE);
         }
     }
 
@@ -715,6 +717,43 @@ public class TvContractTest extends AndroidTestCase {
             c.moveToNext();
             MoreAsserts.assertEquals(broadcastGenre, Genres.decode(c.getString(0)));
         }
+    }
+
+    public void testChannelsForBroadcastVisibilityType() {
+        if (!Utils.hasTvInputFramework(getContext())) {
+            return;
+        }
+        // Test: insert
+        ContentValues values = createDummyChannelValues(mInputId, true);
+        values.put(
+                Channels.COLUMN_BROADCAST_VISIBILITY_TYPE,
+                Channels.BROADCAST_VISIBILITY_TYPE_VISIBLE
+        );
+        Uri channelUri = mContentResolver.insert(mChannelsUri, values);
+        long channelId = ContentUris.parseId(channelUri);
+        verifyChannel(channelUri, values, channelId);
+
+        // Test: update
+        values = null;
+        values = createDummyChannelValues(mInputId, true);
+        values.put(
+                Channels.COLUMN_BROADCAST_VISIBILITY_TYPE,
+                Channels.BROADCAST_VISIBILITY_TYPE_NUMERIC_SELECTABLE_ONLY
+        );
+        int result = mContentResolver.update(channelUri, values, null, null);
+        assertEquals(1, result);
+        verifyChannel(channelUri, values, channelId);
+
+        // Test: update
+        values = null;
+        values = createDummyChannelValues(mInputId, true);
+        values.put(
+                Channels.COLUMN_BROADCAST_VISIBILITY_TYPE,
+                Channels.BROADCAST_VISIBILITY_TYPE_INVISIBLE
+        );
+        result = mContentResolver.update(channelUri, values, null, null);
+        assertEquals(1, result);
+        verifyChannel(channelUri, values, channelId);
     }
 
     private void verifyProgram(Uri programUri, ContentValues expectedValues, long programId) {
