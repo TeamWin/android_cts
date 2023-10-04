@@ -224,6 +224,7 @@ public class StorageOtherFilesTest {
         String adbCommand =
                 "content call "
                         + " --method grant_media_read_for_package"
+                        + " --user " + UserHandle.myUserId()
                         + " --uri content://media/external/file"
                         + " --extra uri:s:"
                         + pickerUri1
