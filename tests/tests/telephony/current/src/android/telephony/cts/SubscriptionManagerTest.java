@@ -1417,7 +1417,7 @@ public class SubscriptionManagerTest {
 
         SubscriptionInfo info = ShellIdentityUtils.invokeMethodWithShellPermissions(mSm,
                 (sm) -> sm.getActiveSubscriptionInfo(mSubId));
-        assertThat(info.isNtn()).isNotNull();
+        assertThat(info.isOnlyNonTerrestrialNetwork()).isNotNull();
     }
 
     @Test
@@ -1428,7 +1428,7 @@ public class SubscriptionManagerTest {
 
         SubscriptionInfo info = ShellIdentityUtils.invokeMethodWithShellPermissions(mSm,
                 (sm) -> sm.getActiveSubscriptionInfo(mSubId));
-        assertThat(info.isNtn()).isFalse();
+        assertThat(info.isOnlyNonTerrestrialNetwork()).isFalse();
     }
 
     @Nullable
