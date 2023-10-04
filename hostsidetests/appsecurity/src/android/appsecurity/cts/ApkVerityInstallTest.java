@@ -50,6 +50,7 @@ import junitparams.Parameters;
 @RunWith(DeviceParameterizedRunner.class)
 @AppModeFull
 @RequiresFlagsDisabled(Flags.FLAG_DEPRECATE_FSV_SIG)
+@Ignore("b/303068306")
 public final class ApkVerityInstallTest extends BaseAppSecurityTest {
 
     private static final String PACKAGE_NAME = "android.appsecurity.cts.apkveritytestapp";
