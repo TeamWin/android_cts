@@ -42,6 +42,7 @@ import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
 import com.android.bedstead.harrier.annotations.RequireRunOnWorkProfile;
+import com.android.modules.utils.build.SdkLevel;
 
 import org.junit.After;
 import org.junit.ClassRule;
@@ -82,8 +83,15 @@ public class PhotoPickerCrossProfileTest extends PhotoPickerBaseTest {
     @RequireRunOnWorkProfile
     @SdkSuppress(minSdkVersion = 32, codeName = "T")
     public void testWorkApp_canAccessPersonalProfileContents() throws Exception {
+        final int primaryUserId;
+        if (SdkLevel.isAtLeastU()) {
+            primaryUserId = sDeviceState.initialUser().id();
+        } else {
+            primaryUserId = sDeviceState.primaryUser().id();
+        }
+
         final int imageCount = 2;
-        mUriList.addAll(createImagesAndGetUris(imageCount, sDeviceState.primaryUser().id()));
+        mUriList.addAll(createImagesAndGetUris(imageCount, primaryUserId));
 
         Intent intent = new Intent(MediaStore.ACTION_PICK_IMAGES);
         intent.putExtra(MediaStore.EXTRA_PICK_IMAGES_MAX, imageCount);
@@ -112,7 +120,7 @@ public class PhotoPickerCrossProfileTest extends PhotoPickerBaseTest {
         assertThat(count).isEqualTo(imageCount);
         for (int i = 0; i < count; i++) {
             Uri uri = clipData.getItemAt(i).getUri();
-            assertPickerUriFormat(uri, sDeviceState.primaryUser().id());
+            assertPickerUriFormat(uri, primaryUserId);
             assertRedactedReadOnlyAccess(uri);
         }
     }
