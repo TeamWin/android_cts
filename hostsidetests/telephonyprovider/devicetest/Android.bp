@@ -28,7 +28,7 @@ android_test_helper_app {
     ],
     static_libs: [
         "ctstestrunner-axt",
-        "truth-prebuilt",
+        "truth",
     ],
 
     // Tag this module as a cts test artifact

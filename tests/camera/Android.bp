@@ -25,7 +25,7 @@ android_library {
         "ctstestrunner-axt",
         "mockito-target-minus-junit4",
         "CtsCameraUtils",
-        "truth-prebuilt",
+        "truth",
         "androidx.test.rules",
     ],
 
@@ -62,7 +62,7 @@ android_test {
         "mockito-target-minus-junit4",
         "android-ex-camera2",
         "CtsCameraUtils",
-        "truth-prebuilt",
+        "truth",
         "androidx.heifwriter_heifwriter",
         "androidx.test.rules",
         "MediaPerformanceClassCommon",

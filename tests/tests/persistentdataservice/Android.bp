@@ -21,8 +21,8 @@ android_test {
     defaults: ["cts_defaults"],
     static_libs: [
         "ctstestrunner-axt",
-         "Harrier",
-         "truth-prebuilt"
+        "Harrier",
+        "truth",
     ],
     libs: ["android.test.base"],
     srcs: ["src/**/*.java"],

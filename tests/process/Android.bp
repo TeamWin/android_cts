@@ -26,7 +26,7 @@ java_library {
         "androidx.test.rules",
         "compatibility-device-util-axt",
         "guava",
-        "truth-prebuilt",
+        "truth",
         "testng",
     ],
     libs: ["android.test.base"],

@@ -45,7 +45,7 @@ android_test {
         "mockito-target-minus-junit4",
         "platform-test-annotations",
         "ub-uiautomator",
-        "truth-prebuilt",
+        "truth",
         "CtsSurfaceValidatorLib",
         "cts-wm-util",
     ],

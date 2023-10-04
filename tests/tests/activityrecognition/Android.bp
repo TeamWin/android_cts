@@ -26,7 +26,7 @@ android_test {
     ],
     static_libs: [
         "compatibility-device-util-axt",
-        "truth-prebuilt",
+        "truth",
         "ctstestrunner-axt",
         "platform-test-annotations",
     ],

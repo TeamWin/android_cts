@@ -65,7 +65,7 @@ android_test {
         "CtsMockInputMethodLib",
         "CtsAccessibilityCommon",
         "metrics-helper-lib",
-        "truth-prebuilt",
+        "truth",
         "cts-wm-overlayapp-base",
         "cts-wm-shared",
         "platform-compat-test-rules",
