@@ -2184,21 +2184,7 @@ public class UsageStatsTest extends StsExtraBusinessLogicTestCase {
             mUsageStatsManager.reportChooserSelection(null, 0,
                     "text/plain", null, "android.intent.action.SEND");
             fail("Able to report a chooser selection with a null package");
-        } catch (NullPointerException expected) { }
-
-        // attempt to report an event with a null contentType, should fail.
-        try {
-            mUsageStatsManager.reportChooserSelection(TEST_APP_PKG, 0,
-                    null, null, "android.intent.action.SEND");
-            fail("Able to report a chooser selection with a null content type");
-        } catch (NullPointerException expected) { }
-
-        // attempt to report an event with a null/empty action, should fail.
-        try {
-            mUsageStatsManager.reportChooserSelection(TEST_APP_PKG, 0,
-                    "text/plain", null, null);
-            fail("Able to report a chooser selection with a null action");
-        } catch (NullPointerException expected) { }
+        } catch (IllegalArgumentException expected) { }
 
         // attempt to report an event with a non-existent package, should fail.
         long startTime = System.currentTimeMillis();
@@ -2214,8 +2200,10 @@ public class UsageStatsTest extends StsExtraBusinessLogicTestCase {
             }
         }
 
-        // attempt to report an event with an empty contentType, should fail.
+        // attempt to report an event with a null/empty contentType, should fail.
         startTime = System.currentTimeMillis();
+        mUsageStatsManager.reportChooserSelection(TEST_APP_PKG, 0,
+                null, null, "android.intent.action.SEND");
         mUsageStatsManager.reportChooserSelection(TEST_APP_PKG, 0,
                 " ", null, "android.intent.action.SEND");
         events = mUsageStatsManager.queryEvents(
@@ -2224,21 +2212,21 @@ public class UsageStatsTest extends StsExtraBusinessLogicTestCase {
             final Event event = new Event();
             events.getNextEvent(event);
             if (event.mEventType == Event.CHOOSER_ACTION) {
-                fail("Able to report a chooser action event with an empty contentType.");
+                fail("Able to report a chooser action event with a null/empty contentType.");
             }
         }
 
-        // attempt to report an event with an empty action, should fail.
+        // attempt to report an event with a null/empty action, should fail.
         startTime = System.currentTimeMillis();
         mUsageStatsManager.reportChooserSelection(TEST_APP_PKG, 0,
+                "text/plain", null, null);
+        mUsageStatsManager.reportChooserSelection(TEST_APP_PKG, 0,
                 "text/plain", null, " ");
-        events = mUsageStatsManager.queryEvents(
-                startTime - 1000, System.currentTimeMillis() + 1000);
         while (events.hasNextEvent()) {
             final Event event = new Event();
             events.getNextEvent(event);
             if (event.mEventType == Event.CHOOSER_ACTION) {
-                fail("Able to report a chooser action event with an empty action.");
+                fail("Able to report a chooser action event with a null/empty action.");
             }
         }
 
