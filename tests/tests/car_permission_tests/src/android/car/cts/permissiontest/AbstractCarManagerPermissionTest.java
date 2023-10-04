@@ -24,6 +24,8 @@ import android.car.Car;
 import android.car.test.PermissionsCheckerRule;
 import android.content.Context;
 import android.os.Handler;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
@@ -41,8 +43,13 @@ public class AbstractCarManagerPermissionTest {
     protected Car mCar = null;
     protected final Context mContext =
             InstrumentationRegistry.getInstrumentation().getTargetContext();
-    @Rule
-    public final PermissionsCheckerRule mPermissionsCheckerRule = new PermissionsCheckerRule();
+
+    // CheckFlagsRule rule needs to before PermissionsCheckerRule.
+    @Rule(order = 0)
+    public final CheckFlagsRule checkFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
+
+    @Rule(order = 1)
+    public final PermissionsCheckerRule permissionsCheckerRule = new PermissionsCheckerRule();
 
     public final void connectCar() {
         mCar = Objects.requireNonNull(Car.createCar(mContext, (Handler) null));

@@ -30,6 +30,8 @@ import android.content.ServiceConnection;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.ParcelFileDescriptor;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
@@ -68,8 +70,12 @@ abstract class AbstractCarTestCase extends AbstractExpectableTestCase {
                     PortLocationType.FRONT_RIGHT, PortLocationType.REAR_RIGHT,
                     PortLocationType.REAR_LEFT, PortLocationType.FRONT, PortLocationType.REAR);
 
-    @Rule
-    public final PermissionsCheckerRule mPermissionsCheckerRule = new PermissionsCheckerRule();
+    // CheckFlagsRule rule needs to before PermissionsCheckerRule.
+    @Rule(order = 0)
+    public final CheckFlagsRule checkFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
+
+    @Rule(order = 1)
+    public final PermissionsCheckerRule permissionsCheckerRule = new PermissionsCheckerRule();
 
     protected final Context mContext = InstrumentationRegistry.getInstrumentation().getContext();
 
