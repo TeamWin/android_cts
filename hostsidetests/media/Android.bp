@@ -45,6 +45,7 @@ java_test_host {
         ":CtsAudioHostTestApp",
         ":CtsMediaMetricsHostTestApp",
         ":CtsMediaRouterHostSideTestBluetoothPermissionsApp",
+        ":CtsMediaRouterHostSideTestModifyAudioRoutingApp",
         ":CtsMediaRouterHostSideTestProviderApp1",
         ":CtsMediaRouterHostSideTestProviderApp2",
         ":CtsMediaRouterHostSideTestProviderApp3",
