@@ -26,8 +26,11 @@ import static android.virtualdevice.cts.common.util.TestAppHelper.EXTRA_DISPLAY;
 import static android.virtualdevice.cts.common.util.VirtualDeviceTestUtils.BLOCKED_ACTIVITY_COMPONENT;
 import static android.virtualdevice.cts.common.util.VirtualDeviceTestUtils.createActivityOptions;
 import static android.virtualdevice.cts.common.util.VirtualDeviceTestUtils.createResultReceiver;
+
 import static androidx.test.core.app.ApplicationProvider.getApplicationContext;
+
 import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeNotNull;
@@ -301,6 +304,37 @@ public class ActivityBlockingTest {
         assertActivityLaunchBlocked(mMonitoriedIntent);
     }
 
+    @RequiresFlagsEnabled(Flags.FLAG_DYNAMIC_POLICY)
+    @Test
+    public void defaultActivityPolicy_changePolicy_clearsExemptions() {
+        // Initially, allow launches by default except for the monitored component.
+        createVirtualDeviceAndTrustedDisplay(new VirtualDeviceParams.Builder()
+                .setDevicePolicy(POLICY_TYPE_ACTIVITY, DEVICE_POLICY_DEFAULT)
+                .build());
+        mVirtualDevice.addActivityPolicyExemption(mMonitoriedIntent.getComponent());
+        assertActivityLaunchBlocked(mMonitoriedIntent);
+
+        // Changing the policy to block by default still blocks it as it is not exempt anymore.
+        mVirtualDevice.setDevicePolicy(POLICY_TYPE_ACTIVITY, DEVICE_POLICY_CUSTOM);
+        assertActivityLaunchBlocked(mMonitoriedIntent);
+
+        // Making it exempt allows for launching it.
+        mVirtualDevice.addActivityPolicyExemption(mMonitoriedIntent.getComponent());
+        assertActivityLaunchAllowed(mMonitoriedIntent);
+
+        // Changing the policy to allow by default allows it as the exemptions were cleared.
+        mVirtualDevice.setDevicePolicy(POLICY_TYPE_ACTIVITY, DEVICE_POLICY_DEFAULT);
+        assertActivityLaunchAllowed(mMonitoriedIntent);
+
+        // Adding an exemption blocks it from launching.
+        mVirtualDevice.addActivityPolicyExemption(mMonitoriedIntent.getComponent());
+        assertActivityLaunchBlocked(mMonitoriedIntent);
+
+        // Changing the policy to its current value does not affect the exemptions.
+        mVirtualDevice.setDevicePolicy(POLICY_TYPE_ACTIVITY, DEVICE_POLICY_DEFAULT);
+        assertActivityLaunchBlocked(mMonitoriedIntent);
+    }
+
     @Test
     public void setAllowedCrossTaskNavigations_shouldBlockNonAllowedNavigations() {
         createVirtualDeviceAndTrustedDisplay(new VirtualDeviceParams.Builder()
@@ -380,7 +414,6 @@ public class ActivityBlockingTest {
     }
 
     private void assertActivityLaunchBlocked(Intent intent) {
-        reset(mOnReceiveResultListener);
         assertThat(mActivityManager.isActivityStartAllowedOnDisplay(
                 mTargetContext, mVirtualDisplay.getDisplay().getDisplayId(), intent)).isFalse();
         mTargetContext.startActivity(intent, createActivityOptions(mVirtualDisplay));
@@ -395,19 +428,21 @@ public class ActivityBlockingTest {
     }
 
     private void assertNoActivityLaunched() {
-        verify(mActivityListener, timeout(TIMEOUT_MS).times(1)).onTopActivityChanged(
+        verify(mActivityListener, timeout(TIMEOUT_MS).atLeastOnce()).onTopActivityChanged(
                 eq(mVirtualDisplay.getDisplay().getDisplayId()),
                 eq(BLOCKED_ACTIVITY_COMPONENT), anyInt());
         verify(mOnReceiveResultListener, never()).onReceiveResult(anyInt(), any());
+        reset(mActivityListener);
         reset(mOnReceiveResultListener);
     }
 
     private void assertActivityLaunched(ComponentName componentName) {
-        verify(mActivityListener, timeout(TIMEOUT_MS).times(1)).onTopActivityChanged(
+        verify(mActivityListener, timeout(TIMEOUT_MS)).onTopActivityChanged(
                 eq(mVirtualDisplay.getDisplay().getDisplayId()), eq(componentName), anyInt());
         verify(mOnReceiveResultListener, timeout(TIMEOUT_MS)).onReceiveResult(
                 eq(Activity.RESULT_OK), argThat(r ->
                         r.getInt(EXTRA_DISPLAY) == mVirtualDisplay.getDisplay().getDisplayId()));
+        reset(mActivityListener);
         reset(mOnReceiveResultListener);
     }
 }
