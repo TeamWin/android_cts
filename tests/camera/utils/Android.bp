@@ -25,6 +25,8 @@ java_library {
         "compatibility-device-util-axt",
         "mockito-target-minus-junit4",
         "android-ex-camera2",
+        "camera_platform_flags_java_lib",
+        "flag-junit",
     ],
 
     srcs: [

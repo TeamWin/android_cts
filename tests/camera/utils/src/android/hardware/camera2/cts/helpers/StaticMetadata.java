@@ -37,6 +37,8 @@ import android.util.Range;
 import android.util.Rational;
 import android.util.Size;
 
+import com.android.internal.camera.flags.Flags;
+
 import junit.framework.Assert;
 
 import java.lang.reflect.Array;
@@ -622,14 +624,16 @@ public class StaticMetadata {
     }
 
     public Boolean isManualFlashStrengthControlSupported() {
-        Key<Boolean> key = CameraCharacteristics.FLASH_INFO_AVAILABLE;
-        Boolean hasFlash = getValueFromKeyNonNull(key);
-        Key<Integer> singleMaxLevelKey = CameraCharacteristics.FLASH_SINGLE_STRENGTH_MAX_LEVEL;
-        Integer singleMaxLevel = getValueFromKeyNonNull(singleMaxLevelKey);
-        Key<Integer> torchMaxLevelKey = CameraCharacteristics.FLASH_TORCH_STRENGTH_MAX_LEVEL;
-        Integer torchMaxLevel = getValueFromKeyNonNull(torchMaxLevelKey);
-        if (hasFlash && (singleMaxLevel > 1) && (torchMaxLevel > 1)) {
-            return true;
+        if (Flags.cameraManualFlashStrengthControl()) {
+            Key<Boolean> key = CameraCharacteristics.FLASH_INFO_AVAILABLE;
+            Boolean hasFlash = getValueFromKeyNonNull(key);
+            Key<Integer> singleMaxLevelKey = CameraCharacteristics.FLASH_SINGLE_STRENGTH_MAX_LEVEL;
+            Integer singleMaxLevel = getValueFromKeyNonNull(singleMaxLevelKey);
+            Key<Integer> torchMaxLevelKey = CameraCharacteristics.FLASH_TORCH_STRENGTH_MAX_LEVEL;
+            Integer torchMaxLevel = getValueFromKeyNonNull(torchMaxLevelKey);
+            if (hasFlash && (singleMaxLevel > 1) && (torchMaxLevel > 1)) {
+                return true;
+            }
         }
         return false;
     }
