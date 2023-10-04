@@ -34,10 +34,6 @@
            android:exported="true">
       </activity>
 
-      <activity android:name="android.app.uiautomation.cts.UiAutomationTestSecondActivity"
-           android:exported="true">
-      </activity>
-
       <service android:name="android.app.uiautomation.cts.UiAutomationTestA11yService"
            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
            android:exported="true">
