@@ -70,10 +70,6 @@ class PreviewMinFrameRateTest(its_base_test.ItsBaseTest):
       lighting_control_utils.set_lighting_state(
           arduino_serial_port, self.lighting_ch, 'OFF')
 
-      # turn OFF tablet to darken scene
-      if self.tablet:
-        lighting_control_utils.turn_off_device(self.tablet)
-
       # Validate lighting
       cam.do_3a(do_af=False)
       cap = cam.do_capture(

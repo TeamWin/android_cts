@@ -33,7 +33,6 @@ _AE_STATES = {0: 'INACTIVE', 1: 'SEARCHING', 2: 'CONVERGED', 3: 'LOCKED',
 _FLASH_STATES = {0: 'FLASH_STATE_UNAVAILABLE', 1: 'FLASH_STATE_CHARGING',
                  2: 'FLASH_STATE_READY', 3: 'FLASH_STATE_FIRED',
                  4: 'FLASH_STATE_PARTIAL'}
-_GRAD_DELTA_ATOL = 15  # gradiant for tablets as screen aborbs energy
 _MEAN_DELTA_ATOL = 15  # mean used for reflective charts
 
 _FORMAT_NAMES = ('jpeg', 'yuv')
@@ -78,10 +77,6 @@ class AutoFlashTest(its_base_test.ItsBaseTest):
       # turn OFF lights to darken scene
       lighting_control_utils.set_lighting_state(
           arduino_serial_port, self.lighting_ch, 'OFF')
-
-      # turn OFF tablet to darken scene
-      if self.tablet:
-        lighting_control_utils.turn_off_device(self.tablet)
 
       for fmt_name in _FORMAT_NAMES:
         for size in _IMG_SIZES:
@@ -184,13 +179,10 @@ class AutoFlashTest(its_base_test.ItsBaseTest):
           logging.debug('Flash frames Y mean: %.4f', flash_mean)
 
           # document incorrect behavior
-          grad_delta = flash_grad - no_flash_grad
           mean_delta = flash_mean - no_flash_mean
-          if not (grad_delta > _GRAD_DELTA_ATOL or
-                  mean_delta > _MEAN_DELTA_ATOL):
+          if mean_delta <= _MEAN_DELTA_ATOL:
             failure_messages.append(
                 f'format: {fmt_name}, size: {width}x{height}, '
-                f'grad FLASH-OFF: {grad_delta:.3f}, ATOL: {_GRAD_DELTA_ATOL}, '
                 f'mean FLASH-OFF: {mean_delta:.3f}, ATOL: {_MEAN_DELTA_ATOL}')
 
           # Ensure that the flash is turned OFF after flash was fired.
