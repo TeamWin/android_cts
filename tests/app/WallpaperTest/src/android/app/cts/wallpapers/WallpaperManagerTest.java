@@ -18,7 +18,6 @@ package android.app.cts.wallpapers;
 
 import static android.Manifest.permission.ALWAYS_UPDATE_WALLPAPER;
 import static android.Manifest.permission.READ_WALLPAPER_INTERNAL;
-import static android.Manifest.permission.SET_WALLPAPER_COMPONENT;
 import static android.app.WallpaperManager.FLAG_LOCK;
 import static android.app.WallpaperManager.FLAG_SYSTEM;
 import static android.app.cts.wallpapers.WallpaperManagerTestUtils.WallpaperChange;
@@ -1678,9 +1677,6 @@ public class WallpaperManagerTest {
      */
     @Test
     public void testAlwaysUpdateWallpaperPermission_allowOutOfFocusWallpaperCommand() {
-        InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                .adoptShellPermissionIdentity(
-                        SET_WALLPAPER_COMPONENT, ALWAYS_UPDATE_WALLPAPER);
 
         /* Clear previous wallpaper commands */
         TestLiveWallpaper.Companion.resetPrevAction();
