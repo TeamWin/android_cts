@@ -38,7 +38,7 @@ android_test_helper_app {
         "mockito-target-minus-junit4",
         "SurfaceFlingerProperties",
         "testng",
-        "truth-prebuilt",
+        "truth",
     ],
 
     // Tag this module as a cts test artifact

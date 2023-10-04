@@ -27,7 +27,7 @@ android_test_helper_app {
         "compatibility-device-util-axt",
         "ctstestrunner-axt",
         "ub-uiautomator",
-        "truth-prebuilt",
+        "truth",
     ],
     libs: ["android.test.base"],
     srcs: ["src/**/*.java"],

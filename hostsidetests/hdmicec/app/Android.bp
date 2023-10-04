@@ -27,7 +27,7 @@ android_test_helper_app {
         "compatibility-device-util-axt",
         "guava",
         "services.core",
-        "truth-prebuilt",
+        "truth",
     ],
     min_sdk_version: "28",
 }

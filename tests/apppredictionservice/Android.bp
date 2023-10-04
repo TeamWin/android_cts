@@ -23,7 +23,7 @@ android_test {
         "androidx.annotation_annotation",
         "compatibility-device-util-axt",
         "ctstestrunner-axt",
-        "truth-prebuilt",
+        "truth",
     ],
     srcs: ["src/**/*.java"],
     // Tag this module as a cts test artifact

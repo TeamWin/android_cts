@@ -18,7 +18,7 @@ package {
 
 android_test_helper_app {
     name: "CtsDomainVerificationTestCallingApp",
-    srcs: [ "src/**/*.kt" ],
+    srcs: ["src/**/*.kt"],
     defaults: ["cts_defaults"],
     sdk_version: "test_current",
     static_libs: [
@@ -29,6 +29,6 @@ android_test_helper_app {
         "CtsDomainVerificationJavaConstantsLibrary",
         "junit",
         "kotlin-reflect",
-        "truth-prebuilt",
-    ]
+        "truth",
+    ],
 }

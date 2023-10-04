@@ -24,7 +24,7 @@ android_test {
         "androidx.test.ext.truth",
         "ctstestrunner-axt",
         "cts-media-common",
-        "truth-prebuilt",
+        "truth",
         "Harrier",
     ],
     resource_dirs: ["res"],

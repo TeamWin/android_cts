@@ -32,7 +32,7 @@ android_test {
         "junit",
         "junit-params",
         "testng",
-        "truth-prebuilt",
+        "truth",
     ],
     aaptflags: [
         "--auto-add-overlay",

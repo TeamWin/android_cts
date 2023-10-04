@@ -22,7 +22,7 @@ android_test {
     libs: [
         "android.test.runner",
         "android.test.base",
-        "truth-prebuilt",
+        "truth",
     ],
     static_libs: [
         "androidx.test.rules",

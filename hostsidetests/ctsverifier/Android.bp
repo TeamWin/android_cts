@@ -23,7 +23,7 @@ package {
 //         "compatibility-host-util",
 //         "InteractiveCommon",
 //         "HarrierCommon",
-//         "truth-prebuilt",
+//         "truth",
 //     ],
 //     libs: [
 //         "tools-common-prebuilt",

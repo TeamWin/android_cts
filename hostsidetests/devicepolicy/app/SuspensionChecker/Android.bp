@@ -22,7 +22,7 @@ android_library {
     srcs: ["src/**/*.java"],
     manifest: "AndroidManifest.xml",
     static_libs: [
-        "truth-prebuilt",
+        "truth",
         "ctstestrunner-axt",
         "androidx.legacy_legacy-support-v4",
         "androidx.test.uiautomator_uiautomator",
