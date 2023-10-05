@@ -30,7 +30,6 @@ import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized.Parameter;
@@ -53,9 +52,6 @@ public final class UpgradeTest extends BaseHostJUnit4Test {
     private static final String ASSERT_PRE_REBOOT_PHASE = "assert_preReboot_phase";
     private static final String ASSERT_POST_REBOOT_PHASE = "assert_postReboot_phase";
     private static final String CLEAN_UP_PHASE = "cleanUp_phase";
-
-    @Rule
-    public ShimApexRule mShimApexRule = new ShimApexRule(this);
 
     @Parameter(0)
     public INSTALL_TYPE mInstallType;
@@ -86,14 +82,6 @@ public final class UpgradeTest extends BaseHostJUnit4Test {
         if (!CpuFeatures.isNativeAbi(getDevice(), getAbi().getName())) {
             assumeFalse("APEX packages do not work with native bridge",
                     mInstallType.containsApex());
-        }
-    }
-
-    @Before
-    public void assumeApexSupported() throws DeviceNotAvailableException {
-        if (mInstallType.containsApex()) {
-            assumeTrue("Device does not support updating APEX",
-                    mShimApexRule.isUpdatingApexSupported());
         }
     }
 

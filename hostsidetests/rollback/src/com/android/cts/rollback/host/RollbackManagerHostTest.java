@@ -133,8 +133,6 @@ public class RollbackManagerHostTest extends BaseHostJUnit4Test {
      */
     @Test
     public void testApexOnlyStagedRollback() throws Exception {
-        assumeTrue("Device does not support updating APEX", mHostUtils.isApexUpdateSupported());
-
         run("testApexOnlyStagedRollback_Phase1_InstallFirst");
         getDevice().reboot();
         run("testApexOnlyStagedRollback_Phase2_InstallSecond");
@@ -149,8 +147,6 @@ public class RollbackManagerHostTest extends BaseHostJUnit4Test {
      */
     @Test
     public void testApexOnlySystemVersionStagedRollback() throws Exception {
-        assumeTrue("Device does not support updating APEX", mHostUtils.isApexUpdateSupported());
-
         run("testApexOnlySystemVersionStagedRollback_Phase1_Install");
         getDevice().reboot();
         run("testApexOnlySystemVersionStagedRollback_Phase2_RollBack");
@@ -164,7 +160,6 @@ public class RollbackManagerHostTest extends BaseHostJUnit4Test {
     @Test
     public void testApexAndApkStagedRollback() throws Exception {
         assumeSystemUser();
-        assumeTrue("Device does not support updating APEX", mHostUtils.isApexUpdateSupported());
 
         run("testApexAndApkStagedRollback_Phase1_InstallFirst");
         getDevice().reboot();
@@ -186,8 +181,6 @@ public class RollbackManagerHostTest extends BaseHostJUnit4Test {
      */
     @Test
     public void testApexRollbackExpiration() throws Exception {
-        assumeTrue("Device does not support updating APEX", mHostUtils.isApexUpdateSupported());
-
         run("testApexRollbackExpiration_Phase1_InstallFirst");
         getDevice().reboot();
         run("testApexRollbackExpiration_Phase2_InstallSecond");
@@ -200,8 +193,6 @@ public class RollbackManagerHostTest extends BaseHostJUnit4Test {
      */
     @Test
     public void testApexKeyRotationStagedRollback() throws Exception {
-        assumeTrue("Device does not support updating APEX", mHostUtils.isApexUpdateSupported());
-
         run("testApexKeyRotationStagedRollback_Phase1_Install");
         getDevice().reboot();
         run("testApexKeyRotationStagedRollback_Phase2_RollBack");
