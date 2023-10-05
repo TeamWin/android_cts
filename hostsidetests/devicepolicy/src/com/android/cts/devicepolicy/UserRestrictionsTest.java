@@ -106,19 +106,19 @@ public final class UserRestrictionsTest extends BaseDevicePolicyTest {
 
     @Test
     public void testUserRestrictions_primaryProfileOwnerOnly() throws Exception {
-        setPoAsUser(mDeviceOwnerUserId);
+        setPoAsUser(mPrimaryUserId);
 
         try {
             runTests("userrestrictions.PrimaryProfileOwnerUserRestrictionsTest",
-                    "testDefaultRestrictions", mDeviceOwnerUserId);
+                    "testDefaultRestrictions", mPrimaryUserId);
             runTests("userrestrictions.PrimaryProfileOwnerUserRestrictionsTest",
-                    "testSetAllRestrictions", mDeviceOwnerUserId);
+                    "testSetAllRestrictions", mPrimaryUserId);
             runTests("userrestrictions.PrimaryProfileOwnerUserRestrictionsTest",
-                    "testBroadcast", mDeviceOwnerUserId);
+                    "testBroadcast", mPrimaryUserId);
         } finally {
-            // Clear all restrictions restrictions on user 0.
+            // Clear all restrictions restrictions on the main user.
             runTests("userrestrictions.PrimaryProfileOwnerUserRestrictionsTest",
-                    "testClearAllRestrictions", mDeviceOwnerUserId);
+                    "testClearAllRestrictions", mPrimaryUserId);
         }
     }
 
@@ -151,7 +151,7 @@ public final class UserRestrictionsTest extends BaseDevicePolicyTest {
         assumeCanCreateOneManagedUser();
 
         // Create managed profile.
-        final int profileUserId = createManagedProfile(mDeviceOwnerUserId /* parentUserId */);
+        final int profileUserId = createManagedProfile(mPrimaryUserId /* parentUserId */);
         // createManagedProfile doesn't start the user automatically.
         startUser(profileUserId);
         setPoAsUser(profileUserId);
@@ -178,14 +178,11 @@ public final class UserRestrictionsTest extends BaseDevicePolicyTest {
         assumeSupportsMultiUser();
         setDo();
 
-        final int secondaryUserId;
+        final int secondaryUserId = createUserAndWaitStart();
         if (!isHeadlessSystemUserMode()) {
-            // Create another user and set PO.
-            secondaryUserId = createUserAndWaitStart();
+            // In headless a PO is set by default on any new additional users so we only need to
+            // set it on non-headless.
             setPoAsUser(secondaryUserId);
-        } else {
-            // In headless system user mode, PO is set on primary user when DO is set
-            secondaryUserId = mPrimaryUserId;
         }
 
         try {
@@ -227,31 +224,31 @@ public final class UserRestrictionsTest extends BaseDevicePolicyTest {
     }
 
     /**
-     * PO on user-0.  It can set DO restrictions too, but they shouldn't leak to other users.
+     * PO on main-user.  It can set DO restrictions too, but they shouldn't leak to other users.
      */
     @Test
     public void testUserRestrictions_layering_profileOwnerNoLeaking() throws Exception {
         assumeSupportsMultiUser();
 
-        // Set PO on user 0
-        setPoAsUser(mDeviceOwnerUserId);
+        // Set PO on the main user.
+        setPoAsUser(mPrimaryUserId);
 
         // Create another user and set PO.
         final int secondaryUserId = createUserAndWaitStart();
         setPoAsUser(secondaryUserId);
 
         try {
-            // Let user-0 PO sets all restrictions.
+            // Let main-user PO set all restrictions.
             runTests("userrestrictions.PrimaryProfileOwnerUserRestrictionsTest",
-                    "testSetAllRestrictions", mDeviceOwnerUserId);
+                    "testSetAllRestrictions", mPrimaryUserId);
 
             // Secondary users shouldn't see any of them. Leaky user restrictions are excluded.
             runTests("userrestrictions.SecondaryProfileOwnerUserRestrictionsTest",
                     "testDefaultAndLeakyRestrictions", secondaryUserId);
         } finally {
-            // Clear all restrictions restrictions on user 0.
+            // Clear all restrictions restrictions on the main user.
             runTests("userrestrictions.PrimaryProfileOwnerUserRestrictionsTest",
-                    "testClearAllRestrictions", mDeviceOwnerUserId);
+                    "testClearAllRestrictions", mPrimaryUserId);
             // Clear all restrictions restrictions on secondary user.
             runTests("userrestrictions.SecondaryProfileOwnerUserRestrictionsTest",
                     "testClearAllRestrictions", secondaryUserId);
@@ -291,17 +288,17 @@ public final class UserRestrictionsTest extends BaseDevicePolicyTest {
     public void testUserRestrictions_ProfileGlobalRestrictionsAsPo() throws Exception {
         assumeCanCreateOneManagedUser();
 
-        // Set PO on user 0
-        setPoAsUser(mDeviceOwnerUserId);
+        // Set PO on the main user.
+        setPoAsUser(mPrimaryUserId);
 
         // Create another user with PO.
-        final int secondaryUserId = createManagedProfile(mDeviceOwnerUserId /* parentUserId */);
+        final int secondaryUserId = createManagedProfile(mPrimaryUserId /* parentUserId */);
         setPoAsUser(secondaryUserId);
 
-        final int[] usersToCheck = {mDeviceOwnerUserId, secondaryUserId};
+        final int[] usersToCheck = {mPrimaryUserId, secondaryUserId};
 
         // Check the case when primary user's PO sets the restriction.
-        setAndCheckProfileGlobalRestriction(mDeviceOwnerUserId, usersToCheck);
+        setAndCheckProfileGlobalRestriction(mPrimaryUserId, usersToCheck);
 
         // Check the case when managed profile owner sets the restriction.
         setAndCheckProfileGlobalRestriction(secondaryUserId, usersToCheck);
