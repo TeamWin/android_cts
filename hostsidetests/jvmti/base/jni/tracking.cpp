@@ -40,13 +40,10 @@ static std::string GetClassName(JNIEnv* jni_env, jclass cls) {
 
 static std::mutex gLock;
 static std::string gCollection;
+static jthread gExpectedThread = nullptr;
 
-static void JNICALL ObjectAllocated(jvmtiEnv* ti_env ATTRIBUTE_UNUSED,
-                                    JNIEnv* jni_env,
-                                    jthread thread ATTRIBUTE_UNUSED,
-                                    jobject object,
-                                    jclass object_klass,
-                                    jlong size) {
+static void RecordAllocationEvent(JNIEnv* jni_env, jobject object, jclass object_klass,
+                                  jlong size) {
   std::string object_klass_descriptor = GetClassName(jni_env, object_klass);
   ScopedLocalRef<jclass> object_klass2(jni_env, jni_env->GetObjectClass(object));
   std::string object_klass_descriptor2 = GetClassName(jni_env, object_klass2.get());
@@ -58,11 +55,36 @@ static void JNICALL ObjectAllocated(jvmtiEnv* ti_env ATTRIBUTE_UNUSED,
   gCollection += result + "#";
 }
 
+static void JNICALL ObjectAllocatedGlobal(jvmtiEnv* ti_env ATTRIBUTE_UNUSED, JNIEnv* jni_env,
+                                          jthread thread, jobject object, jclass object_klass,
+                                          jlong size) {
+  // Ignore events from threads other than the test thread. It is not possible
+  // to make sure that we don't receive any outstanding callbacks after
+  // disabling the allocation events. So just ignore events from other threads
+  // to make the test stable.
+  if (!jni_env->IsSameObject(thread, gExpectedThread)) {
+    RecordAllocationEvent(jni_env, object, object_klass, size);
+    return;
+  }
+  RecordAllocationEvent(jni_env, object, object_klass, size);
+}
+
+static void JNICALL ObjectAllocatedThread(jvmtiEnv* ti_env ATTRIBUTE_UNUSED, JNIEnv* jni_env,
+                                          jthread thread, jobject object, jclass object_klass,
+                                          jlong size) {
+  CHECK(jni_env->IsSameObject(thread, gExpectedThread));
+  RecordAllocationEvent(jni_env, object, object_klass, size);
+}
+
 extern "C" JNIEXPORT void JNICALL Java_android_jvmti_cts_JvmtiTrackingTest_setupObjectAllocCallback(
-    JNIEnv* env, jclass klass ATTRIBUTE_UNUSED, jboolean enable) {
+        JNIEnv* env, jclass klass ATTRIBUTE_UNUSED, jboolean enable, jboolean global) {
   jvmtiEventCallbacks callbacks;
   memset(&callbacks, 0, sizeof(jvmtiEventCallbacks));
-  callbacks.VMObjectAlloc = enable ? ObjectAllocated : nullptr;
+  if (enable) {
+    callbacks.VMObjectAlloc = global ? ObjectAllocatedGlobal : ObjectAllocatedThread;
+  } else {
+    callbacks.VMObjectAlloc = nullptr;
+  }
 
   jvmtiError ret = jvmti_env->SetEventCallbacks(&callbacks, sizeof(callbacks));
   JvmtiErrorToException(env, jvmti_env, ret);
@@ -74,6 +96,20 @@ extern "C" JNIEXPORT void JNICALL Java_android_jvmti_cts_JvmtiTrackingTest_enabl
       enable ? JVMTI_ENABLE : JVMTI_DISABLE,
       JVMTI_EVENT_VM_OBJECT_ALLOC,
       thread);
+  if (enable) {
+    if (thread == nullptr) {
+      // We are enabling the allocation events globally but can only deterministically check the
+      // ones on the current thread.
+      jthread curr_thread;
+      jvmti_env->GetCurrentThread(&curr_thread);
+      gExpectedThread = env->NewGlobalRef(thread);
+    } else {
+      gExpectedThread = env->NewGlobalRef(thread);
+    }
+  } else if (gExpectedThread != nullptr) {
+    env->DeleteGlobalRef(gExpectedThread);
+    gExpectedThread = nullptr;
+  }
   JvmtiErrorToException(env, jvmti_env, ret);
 }
 
@@ -106,8 +142,8 @@ jstring JNICALL Java_android_jvmti_cts_JvmtiTrackingTest_getAndResetAllocationTr
 }
 
 static JNINativeMethod gMethods[] = {
-  { "setupObjectAllocCallback", "(Z)V",
-          (void*)Java_android_jvmti_cts_JvmtiTrackingTest_setupObjectAllocCallback },
+  { "setupObjectAllocCallback", "(Z;Z)V",
+          (void*)Java_android_jvmti_cts_JvmtiTrackingTest_setupObjectAllocCallback},
 
   { "enableAllocationTracking", "(Ljava/lang/Thread;Z)V",
           (void*)Java_android_jvmti_cts_JvmtiTrackingTest_enableAllocationTracking },
