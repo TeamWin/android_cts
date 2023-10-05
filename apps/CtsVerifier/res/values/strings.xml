@@ -387,6 +387,9 @@
     <string name="biometric_test_set_user_authentication_credential_aead_cipher_label">4j: Aead Cipher, Credential</string>
     <string name="biometric_test_set_user_authentication_biometric_aead_cipher_label">4k: Aead Cipher, Biometric</string>
     <string name="biometric_test_set_user_authentication_biometric_credential_aead_cipher_label">4l: Aead Cipher, Biometric or Credential</string>
+    <string name="biometric_test_set_user_authentication_biometric_or_credential_key_agreement_label">4m: Key Agreement, Biometric or Credential</string>
+    <string name="biometric_test_set_user_authentication_credential_key_agreement_label">4n: Key Agreement, Credential</string>
+    <string name="biometric_test_set_user_authentication_biometric_key_agreement_label">4o: Key Agreement, Biometric</string>
     <string name="biometric_test_set_user_authentication_credential_instructions">This test checks the correctness of the KeyGenParameterSpec.Builder#setUserAuthenticationParameters(int, int) API for AUTH_DEVICE_CREDENTIAL.
         Buttons for completed tasks will become invisible. It\'s normal for buttons to be disabled for a few seconds during this test.</string>
     <string name="biometric_test_set_user_authentication_biometric_instructions">This test checks the correctness of the KeyGenParameterSpec.Builder#setUserAuthenticationParameters(int, int) API for AUTH_BIOMETRIC_STRONG.
