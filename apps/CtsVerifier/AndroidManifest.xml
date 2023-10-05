@@ -1883,6 +1883,75 @@
                        android:value="multi_display_mode" />
         </activity>
 
+        <activity
+            android:name=".biometrics.UserAuthenticationCredentialKeyAgreementTest"
+            android:configChanges="keyboardHidden|orientation|screenSize"
+            android:exported="true"
+            android:label="@string/biometric_test_set_user_authentication_credential_key_agreement_label" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.cts.intent.category.MANUAL_TEST" />
+            </intent-filter>
+
+            <meta-data android:name="test_category" android:value="@string/biometric_test_category_combination" />
+            <meta-data android:name="test_parent"
+                       android:value="com.android.cts.verifier.biometrics.BiometricTestList" />
+            <meta-data android:name="test_required_features" android:value="android.software.secure_lock_screen" />
+            <meta-data android:name="test_excluded_features"
+                       android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.watch" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+            <meta-data android:name="ApiTest"
+                android:value="javax.crypto.KeyAgreement#doPhase|javax.crypto.KeyAgreement#generateSecret" />
+        </activity>
+
+        <activity
+            android:name=".biometrics.UserAuthenticationBiometricKeyAgreementTest"
+            android:configChanges="keyboardHidden|orientation|screenSize"
+            android:exported="true"
+            android:label="@string/biometric_test_set_user_authentication_biometric_key_agreement_label" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.cts.intent.category.MANUAL_TEST" />
+            </intent-filter>
+
+            <meta-data android:name="test_category" android:value="@string/biometric_test_category_combination" />
+            <meta-data android:name="test_parent"
+                       android:value="com.android.cts.verifier.biometrics.BiometricTestList" />
+            <meta-data android:name="test_required_features" android:value="android.software.secure_lock_screen" />
+            <meta-data android:name="test_excluded_features"
+                       android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.watch" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+            <meta-data android:name="ApiTest"
+                android:value="javax.crypto.KeyAgreement#doPhase|javax.crypto.KeyAgreement#generateSecret" />
+        </activity>
+
+        <activity
+            android:name=".biometrics.UserAuthenticationBiometricOrCredentialKeyAgreementTest"
+            android:configChanges="keyboardHidden|orientation|screenSize"
+            android:exported="true"
+            android:label="@string/biometric_test_set_user_authentication_biometric_or_credential_key_agreement_label" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.cts.intent.category.MANUAL_TEST" />
+            </intent-filter>
+
+            <meta-data android:name="test_category" android:value="@string/biometric_test_category_combination" />
+            <meta-data android:name="test_parent"
+                       android:value="com.android.cts.verifier.biometrics.BiometricTestList" />
+            <meta-data android:name="test_required_features" android:value="android.software.secure_lock_screen" />
+            <meta-data android:name="test_excluded_features"
+                       android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.watch" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+            <meta-data android:name="ApiTest"
+                android:value="javax.crypto.KeyAgreement#doPhase|javax.crypto.KeyAgreement#generateSecret" />
+        </activity>
+
         <activity android:name=".security.IdentityCredentialAuthentication"
                 android:label="@string/sec_identity_credential_authentication_test"
                 android:exported="true"
