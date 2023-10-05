@@ -17,8 +17,6 @@ package android.assist.cts;
 
 import static android.assist.common.Utils.SHOW_SESSION_FLAGS_TO_SET;
 
-import static com.google.common.truth.Truth.assertWithMessage;
-
 import android.assist.common.AutoResetLatch;
 import android.assist.common.Utils;
 import android.content.Intent;
@@ -27,6 +25,7 @@ import android.util.Log;
 
 import org.junit.Test;
 
+import static com.google.common.truth.Truth.assertWithMessage;
 public class ExtraAssistDataTest extends AssistTestBase {
     private static final String TAG = "ExtraAssistDataTest";
     private static final String TEST_CASE_TYPE = Utils.EXTRA_ASSIST;
@@ -73,9 +72,6 @@ public class ExtraAssistDataTest extends AssistTestBase {
 
     @Test
     public void testAssistContentAndDataNullWhenNoFlagsToShowSession() throws Exception {
-        if (!Utils.isSupportedDevice(mContext)) {
-            return;
-        }
         if (mActivityManager.isLowRamDevice()) {
             Log.d(TAG, "Not running assist tests on low-RAM device.");
             return;

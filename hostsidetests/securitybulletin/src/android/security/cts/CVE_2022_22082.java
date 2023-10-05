@@ -22,6 +22,7 @@ import android.platform.test.annotations.AsbSecurityTest;
 import com.android.sts.common.tradefed.testtype.NonRootSecurityTestCase;
 import com.android.sts.common.util.TombstoneUtils;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
+import com.android.tradefed.util.RunUtil;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -46,7 +47,7 @@ public class CVE_2022_22082 extends NonRootSecurityTestCase {
                     "am start -a android.intent.action.VIEW -t audio/dsf -d"
                             + " file:///sdcard/cve_2022_22082.dsf",
                     getDevice());
-            Thread.sleep(10000);
+            RunUtil.getDefault().sleep(10000);
         }
     }
 }

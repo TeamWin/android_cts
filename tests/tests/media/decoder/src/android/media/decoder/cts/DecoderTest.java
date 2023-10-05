@@ -3352,8 +3352,6 @@ public class DecoderTest extends MediaTestBase {
         final long durationMs = mMediaCodecPlayer.getDuration();
         final long timeOutMs = System.currentTimeMillis() + durationMs + 5 * 1000; // add 5 sec
         while (!mMediaCodecPlayer.isEnded()) {
-            // Log.d(TAG, "currentPosition: " + mMediaCodecPlayer.getCurrentPosition()
-            //         + "  duration: " + mMediaCodecPlayer.getDuration());
             assertTrue("Tunneled video playback timeout exceeded",
                     timeOutMs > System.currentTimeMillis());
             Thread.sleep(SLEEP_TIME_MS);

@@ -787,6 +787,10 @@ public abstract class CodecTestBase {
                     list.add(MediaFormat.MIMETYPE_AUDIO_AAC);
                 }
                 if (needVideo) {
+                    if ((MediaUtils.isHandheld() || MediaUtils.isTablet() || MediaUtils.isTv())
+                            && IS_AT_LEAST_U) {
+                        list.add(MediaFormat.MIMETYPE_VIDEO_AV1);
+                    }
                     list.add(MediaFormat.MIMETYPE_VIDEO_AVC);
                     list.add(MediaFormat.MIMETYPE_VIDEO_VP8);
                 }

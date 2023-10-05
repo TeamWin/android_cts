@@ -22,6 +22,7 @@ import static android.os.Process.BLUETOOTH_UID;
 import static com.android.bedstead.nene.permissions.CommonPermissions.BLUETOOTH;
 import static com.android.bedstead.nene.permissions.CommonPermissions.BLUETOOTH_CONNECT;
 import static com.android.bedstead.nene.permissions.CommonPermissions.BLUETOOTH_PRIVILEGED;
+import static com.android.bedstead.nene.permissions.CommonPermissions.INTERACT_ACROSS_USERS;
 import static com.android.bedstead.nene.permissions.CommonPermissions.INTERACT_ACROSS_USERS_FULL;
 import static com.android.bedstead.nene.permissions.CommonPermissions.NETWORK_SETTINGS;
 import static com.android.bedstead.nene.utils.Versions.T;
@@ -32,7 +33,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
-import android.os.UserHandle;
 
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.annotations.Experimental;
@@ -50,6 +50,10 @@ public final class Bluetooth {
     private static final BluetoothManager sBluetoothManager =
             sContext.getSystemService(BluetoothManager.class);
     private static final BluetoothAdapter sBluetoothAdapter = sBluetoothManager.getAdapter();
+
+
+    public static final String OPP_LAUNCHER_CLASS =
+            "com.android.bluetooth.opp.BluetoothOppLauncherActivity";
 
     private Bluetooth() {}
 
@@ -140,41 +144,45 @@ public final class Bluetooth {
         if (!Versions.meetsMinimumSdkVersionRequirement(T)) {
             return "com.android.bluetooth";
         }
-        // this activity will always be in the package where the rest of Bluetooth lives
-        var sentinelActivity = "com.android.bluetooth.opp.BluetoothOppLauncherActivity";
-        var packageManager = sContext.createContextAsUser(UserHandle.SYSTEM, 0).getPackageManager();
-        var allPackages = packageManager.getPackagesForUid(BLUETOOTH_UID);
-        String matchedPackage = null;
-        for (String candidatePackage : allPackages) {
-            PackageInfo packageInfo;
-            try {
-                packageInfo =
-                        packageManager.getPackageInfo(
-                                candidatePackage,
-                                PackageManager.GET_ACTIVITIES
-                                        | PackageManager.MATCH_ANY_USER
-                                        | PackageManager.MATCH_UNINSTALLED_PACKAGES
-                                        | PackageManager.MATCH_DISABLED_COMPONENTS);
-            } catch (PackageManager.NameNotFoundException e) {
-                // rethrow
-                throw new NeneException(e);
-            }
-            if (packageInfo.activities == null) {
-                continue;
-            }
-            for (var activity : packageInfo.activities) {
-                if (sentinelActivity.equals(activity.name)) {
-                    if (matchedPackage == null) {
-                        matchedPackage = candidatePackage;
-                    } else {
-                        throw new NeneException("multiple main bluetooth packages found");
+        try (PermissionContext p = TestApis.permissions().withPermission(INTERACT_ACROSS_USERS)) {
+            // this activity will always be in the package where the rest of Bluetooth lives
+            var sentinelActivity = "com.android.bluetooth.opp.BluetoothOppLauncherActivity";
+            var packageManager =
+                    TestApis.context().androidContextAsUser(TestApis.users().system())
+                            .getPackageManager();
+            var allPackages = packageManager.getPackagesForUid(BLUETOOTH_UID);
+            String matchedPackage = null;
+            for (String candidatePackage : allPackages) {
+                PackageInfo packageInfo;
+                try {
+                    packageInfo =
+                            packageManager.getPackageInfo(
+                                    candidatePackage,
+                                    PackageManager.GET_ACTIVITIES
+                                            | PackageManager.MATCH_ANY_USER
+                                            | PackageManager.MATCH_UNINSTALLED_PACKAGES
+                                            | PackageManager.MATCH_DISABLED_COMPONENTS);
+                } catch (PackageManager.NameNotFoundException e) {
+                    // rethrow
+                    throw new NeneException(e);
+                }
+                if (packageInfo.activities == null) {
+                    continue;
+                }
+                for (var activity : packageInfo.activities) {
+                    if (sentinelActivity.equals(activity.name)) {
+                        if (matchedPackage == null) {
+                            matchedPackage = candidatePackage;
+                        } else {
+                            throw new NeneException("multiple main bluetooth packages found");
+                        }
                     }
                 }
             }
+            if (matchedPackage != null) {
+                return matchedPackage;
+            }
+            throw new NeneException("Could not find main bluetooth package");
         }
-        if (matchedPackage != null) {
-            return matchedPackage;
-        }
-        throw new NeneException("Could not find main bluetooth package");
     }
 }

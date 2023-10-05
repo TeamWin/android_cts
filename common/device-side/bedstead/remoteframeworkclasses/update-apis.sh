@@ -19,3 +19,4 @@ cp $SCRIPT_DIR/../../../../../packages/modules/Bluetooth/framework/api/current.t
 cp $SCRIPT_DIR/../../../../../packages/modules/Wifi/framework/api/current.txt $SCRIPT_DIR/src/processor/res/apis/wifi-current.txt
 cp $SCRIPT_DIR/../../../../../frameworks/base/core/api/current.txt $SCRIPT_DIR/src/processor/res/apis/current.txt
 cp $SCRIPT_DIR/../../../../../frameworks/base/core/api/test-current.txt $SCRIPT_DIR/src/processor/res/apis/test-current.txt
+cp $SCRIPT_DIR/../../../../../frameworks/base/core/api/system-current.txt $SCRIPT_DIR/src/processor/res/apis/system-current.txt

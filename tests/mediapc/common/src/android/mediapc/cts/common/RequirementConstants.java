@@ -79,6 +79,7 @@ public class RequirementConstants {
     public static final String R7_5__H_1_14 = "r7_5__h_1_14"; // 7.5/H-1-14
     public static final String R7_5__H_1_15 = "r7_5__h_1_15"; // 7.5/H-1-15
     public static final String R7_5__H_1_16 = "r7_5__h_1_16"; // 7.5/H-1-16
+    public static final String R7_5__H_1_17 = "r7_5__h_1_17"; // 7.5/H-1-17
 
     public static final String R7_1_1_1__H_1_1 = "r7_1_1_1__h_1_1"; // 7.1.1.1/H-1-1
     public static final String R7_1_1_3__H_1_1 = "r7_1_1_3__h_1_1"; // 7.1.1.3/H-1-1
@@ -122,6 +123,8 @@ public class RequirementConstants {
 
     public static final String FRONT_CAMERA_DYNAMIC_TENBITS_SUPPORTED =
             "front_camera_dynamic_tenbits_supported";
+    public static final String FRONT_CAMERA_FACE_DETECTION_SUPPORTED =
+            "front_camera_face_detection_supported";
     public static final String FRONT_CAMERA_HWL_LEVEL = "front_primary_camera_hwl_level";
     public static final String FRONT_CAMERA_LATENCY = "front_camera_latency";
     public static final String FRONT_CAMERA_LOGICAL_MULTI_CAMERA_REQ_MET =
@@ -158,6 +161,8 @@ public class RequirementConstants {
     public static final String REAR_CAMERA_240FPS_SUPPORTED = "rear_camera_240fps_supported";
     public static final String REAR_CAMERA_DYNAMIC_TENBITS_SUPPORTED =
             "rear_camera_dynamic_tenbits_supported";
+    public static final String REAR_CAMERA_FACE_DETECTION_SUPPORTED =
+            "rear_camera_face_detection_supported";
     public static final String REAR_CAMERA_HWL_LEVEL = "rear_primary_camera_hwl_level";
     public static final String REAR_CAMERA_LATENCY = "rear_camera_latency";
     public static final String REAR_CAMERA_LOGICAL_MULTI_CAMERA_REQ_MET =

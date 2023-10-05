@@ -36,6 +36,7 @@ import android.net.wifi.cts.WifiJUnit4TestBase;
 import android.net.wifi.rtt.RangingResult;
 import android.net.wifi.rtt.RangingResultCallback;
 import android.net.wifi.rtt.WifiRttManager;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerExecutor;
 import android.os.HandlerThread;
@@ -100,6 +101,7 @@ public class TestBase extends WifiJUnit4TestBase {
     private static ScanResult sNone11McScanResult;
 
     protected WifiRttManager mWifiRttManager;
+    protected Bundle mCharacteristics;
 
     private final HandlerThread mHandlerThread = new HandlerThread("SingleDeviceTest");
     protected final Executor mExecutor;
@@ -197,6 +199,7 @@ public class TestBase extends WifiJUnit4TestBase {
                     receiver.waitForStateChange());
             assertTrue("Wi-Fi RTT is not available (should be)", mWifiRttManager.isAvailable());
         }
+        mCharacteristics = mWifiRttManager.getRttCharacteristics();
     }
 
     static class WifiRttBroadcastReceiver extends BroadcastReceiver {

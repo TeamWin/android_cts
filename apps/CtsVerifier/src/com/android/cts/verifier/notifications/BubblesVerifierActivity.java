@@ -1086,7 +1086,8 @@ public class BubblesVerifierActivity extends PassFailButtons.Activity {
                 .build();
         RemoteInput remoteInput = new RemoteInput.Builder("reply_key").setLabel("reply").build();
         PendingIntent inputIntent = PendingIntent.getActivity(getApplicationContext(), 0,
-                new Intent(), PendingIntent.FLAG_MUTABLE);
+                new Intent().setPackage(getApplicationContext().getPackageName()),
+                PendingIntent.FLAG_MUTABLE);
         Icon icon = Icon.createWithResource(getApplicationContext(), R.drawable.ic_android);
         Notification.Action replyAction = new Notification.Action.Builder(icon, "Reply",
                 inputIntent).addRemoteInput(remoteInput)

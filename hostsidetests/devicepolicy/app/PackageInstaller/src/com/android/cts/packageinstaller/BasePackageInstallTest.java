@@ -150,12 +150,12 @@ public class BasePackageInstallTest extends InstrumentationTestCase {
                 Context.RECEIVER_EXPORTED_UNAUDITED);
 
         // Create a PendingIntent and use it to generate the IntentSender
-        Intent broadcastIntent = new Intent(action);
+        Intent broadcastIntent = new Intent(action).setPackage(mContext.getPackageName());
         PendingIntent pendingIntent = PendingIntent.getBroadcast(
                 mContext,
                 sessionId,
                 broadcastIntent,
-                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE_UNAUDITED);
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE);
         return pendingIntent.getIntentSender();
     }
 

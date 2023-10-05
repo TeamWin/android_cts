@@ -18,13 +18,20 @@ package com.android.compatibility.common.util;
 
 import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
 
+import android.animation.ValueAnimator;
+import android.text.TextUtils;
+
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 
 
 public class OverrideAnimationScaleRule extends BeforeAfterRule {
+
+    // From javadoc definition, the default animator duration scale is 1
+    private static final String DEFAULT_ANIMATOR_DURATION_SCALE = "1";
 
     @NonNull
     private final GlobalSetting mWindowAnimationScaleSetting = new GlobalSetting(
@@ -34,7 +41,7 @@ public class OverrideAnimationScaleRule extends BeforeAfterRule {
             "transition_animation_scale");
     @NonNull
     private final GlobalSetting mAnimatorDurationScaleSetting = new GlobalSetting(
-            "animator_duration_scale");
+            "animator_duration_scale", DEFAULT_ANIMATOR_DURATION_SCALE);
 
     private final float mAnimationScale;
 
@@ -48,6 +55,10 @@ public class OverrideAnimationScaleRule extends BeforeAfterRule {
         mWindowAnimationScaleSetting.put(value);
         mTransitionAnimationScaleSetting.put(value);
         mAnimatorDurationScaleSetting.put(value);
+        if (mAnimationScale > 0) {
+            PollingCheck.waitFor(() ->
+                    Math.abs(ValueAnimator.getDurationScale() - mAnimationScale) < 0.001);
+        }
     }
 
     @Override
@@ -62,9 +73,15 @@ public class OverrideAnimationScaleRule extends BeforeAfterRule {
         private final String mName;
 
         private String mInitialValue;
+        private String mDefaultValue;
 
         public GlobalSetting(@NonNull String name) {
+            this(name, /* defaultValue= */ null);
+        }
+
+        GlobalSetting(@NonNull String name, @Nullable String defaultValue) {
             mName = name;
+            mDefaultValue = defaultValue;
         }
 
         public void put(@NonNull String value) {
@@ -73,7 +90,13 @@ public class OverrideAnimationScaleRule extends BeforeAfterRule {
         }
 
         public void restore() {
-            runShellCommand("settings put global " + mName + " " + mInitialValue);
+            String restoreValue =
+                    !isEmptyOrNullString(mInitialValue.trim()) ? mInitialValue : mDefaultValue;
+            runShellCommand("settings put global " + mName + " " + restoreValue);
+        }
+
+        private boolean isEmptyOrNullString(String value) {
+            return TextUtils.isEmpty(value) || TextUtils.equals(value.toLowerCase(), "null");
         }
     }
 }

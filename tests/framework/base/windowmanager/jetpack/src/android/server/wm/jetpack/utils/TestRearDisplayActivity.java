@@ -24,10 +24,17 @@ import androidx.annotation.NonNull;
 public class TestRearDisplayActivity extends Activity {
 
     public boolean mConfigurationChanged;
+    public boolean onStopInvoked;
 
     @Override
     public void onConfigurationChanged(@NonNull Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
         mConfigurationChanged = true;
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        onStopInvoked = true;
     }
 }

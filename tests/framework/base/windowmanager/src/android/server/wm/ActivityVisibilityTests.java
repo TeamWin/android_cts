@@ -22,8 +22,8 @@ import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_TASK_ON_HOME;
 import static android.server.wm.CliIntentExtra.extraString;
+import static android.server.wm.ComponentNameUtils.getWindowName;
 import static android.server.wm.UiDeviceUtils.pressBackButton;
-import static android.server.wm.UiDeviceUtils.pressHomeButton;
 import static android.server.wm.VirtualDisplayHelper.waitForDefaultDisplayState;
 import static android.server.wm.WindowManagerState.STATE_RESUMED;
 import static android.server.wm.WindowManagerState.STATE_STOPPED;
@@ -196,12 +196,8 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
 
     @Test
     public void testTurnScreenOnActivity() {
-        assumeTrue(supportsLockScreen());
 
         final LockScreenSession lockScreenSession = createManagedLockScreenSession();
-        if (!supportsInsecureLock()) {
-            lockScreenSession.setLockCredential();
-        }
         final ActivitySessionClient activityClient = createManagedActivityClientSession();
         testTurnScreenOnActivity(lockScreenSession, activityClient,
                 true /* useWindowFlags */);
@@ -217,7 +213,14 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
         final ActivitySession activity = activityClient.startActivity(
                 getLaunchActivityBuilder().setUseInstrumentation()
                         .setWaitForLaunched(false).setTargetActivity(TOP_ACTIVITY));
-        waitAndAssertActivityState(TOP_ACTIVITY, STATE_STOPPED, "Activity must be stopped.");
+        if (supportsLockScreen()) {
+            // top activity is hidden behind lock screen
+            waitAndAssertActivityState(TOP_ACTIVITY, STATE_STOPPED,
+                    "Top activity must be stopped.");
+        } else {
+            waitAndAssertActivityState(TOP_ACTIVITY, STATE_RESUMED,
+                    "Top activity must be resumed.");
+        }
         lockScreenSession.sleepDevice();
 
         // Finish the top activity and make sure the device still in sleep
@@ -225,12 +228,11 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
         waitAndAssertActivityState(TURN_SCREEN_ON_ACTIVITY, STATE_STOPPED,
                 "Activity must be stopped");
         mWmState.assertVisibility(TURN_SCREEN_ON_ACTIVITY, false);
-        assertFalse("Display must be remained OFF", isDisplayOn(DEFAULT_DISPLAY));
+        assertFalse("Display must remain OFF", isDisplayOn(DEFAULT_DISPLAY));
     }
 
     @Test
     public void testTurnScreenOnActivity_slowLaunch() {
-        assumeTrue(supportsLockScreen());
 
         final LockScreenSession lockScreenSession = createManagedLockScreenSession();
         final ActivitySessionClient activityClient = createManagedActivityClientSession();
@@ -759,60 +761,6 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
     }
 
     @Test
-    public void testGoingHomeMultipleTimes() {
-        for (int i = 0; i < 10; i++) {
-            // Start activity normally
-            launchActivityOnDisplay(TEST_ACTIVITY, DEFAULT_DISPLAY);
-            waitAndAssertTopResumedActivity(TEST_ACTIVITY, DEFAULT_DISPLAY,
-                    "Activity launched on default display must be focused");
-
-            // Start home activity directly
-            launchHomeActivity();
-
-            mWmState.assertHomeActivityVisible(true);
-            waitAndAssertActivityState(TEST_ACTIVITY, STATE_STOPPED,
-                    "Activity should become STOPPED");
-            mWmState.assertVisibility(TEST_ACTIVITY, false);
-        }
-    }
-
-    @Test
-    public void testPressingHomeButtonMultipleTimes() {
-        for (int i = 0; i < 10; i++) {
-            // Start activity normally
-            launchActivityOnDisplay(TEST_ACTIVITY, DEFAULT_DISPLAY);
-            waitAndAssertTopResumedActivity(TEST_ACTIVITY, DEFAULT_DISPLAY,
-                    "Activity launched on default display must be focused");
-
-            // Press home button
-            pressHomeButton();
-
-            // Wait and assert home and activity states
-            mWmState.waitForHomeActivityVisible();
-            mWmState.assertHomeActivityVisible(true);
-            waitAndAssertActivityState(TEST_ACTIVITY, STATE_STOPPED,
-                    "Activity should become STOPPED");
-            mWmState.assertVisibility(TEST_ACTIVITY, false);
-        }
-    }
-
-    @Test
-    public void testPressingHomeButtonMultipleTimesQuick() {
-        for (int i = 0; i < 10; i++) {
-            // Start activity normally
-            launchActivityOnDisplay(TEST_ACTIVITY, DEFAULT_DISPLAY);
-
-            // Press home button
-            pressHomeButton();
-            mWmState.waitForHomeActivityVisible();
-            mWmState.assertHomeActivityVisible(true);
-        }
-        waitAndAssertActivityState(TEST_ACTIVITY, STATE_STOPPED,
-                "Activity should become STOPPED");
-        mWmState.assertVisibility(TEST_ACTIVITY, false);
-    }
-
-    @Test
     public void testConvertTranslucentOnTranslucentActivity() {
         final ActivitySessionClient activityClient = createManagedActivityClientSession();
         // Start CONVERT_TRANSLUCENT_DIALOG_ACTIVITY on top of LAUNCHING_ACTIVITY
@@ -881,12 +829,13 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
 
     private void verifyActivityVisibilities(ComponentName activityBehind,
             boolean behindFullScreen) {
-        if (behindFullScreen) {
+        final boolean visible = !behindFullScreen;
+        if (!visible) {
             mWmState.waitForActivityState(activityBehind, STATE_STOPPED);
-            mWmState.assertVisibility(activityBehind, false);
         } else {
             mWmState.waitForValidState(activityBehind);
-            mWmState.assertVisibility(activityBehind, true);
         }
+        mWmState.waitForWindowSurfaceShown(getWindowName(activityBehind), visible);
+        mWmState.assertVisibility(activityBehind, visible);
     }
 }

@@ -16,6 +16,8 @@
 
 package com.android.cts.verifier.bluetooth;
 
+import static android.content.Context.RECEIVER_EXPORTED;
+
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.BroadcastReceiver;
@@ -126,7 +128,7 @@ public class BleServerTestBaseActivity extends PassFailButtons.Activity {
         filter.addAction(BleServerService.BLE_ADD_SERVICE_FAIL);
         filter.addAction(BleServerService.BLE_SERVICE_CHANGED_INDICATION);
 
-        registerReceiver(mBroadcast, filter);
+        registerReceiver(mBroadcast, filter, RECEIVER_EXPORTED);
     }
 
     @Override

@@ -23,14 +23,21 @@ import static com.google.common.truth.Truth.assertThat;
 
 import android.os.Bundle;
 
+import com.android.bedstead.harrier.BedsteadJUnit4;
+import com.android.bedstead.harrier.DeviceState;
 import com.android.queryable.Queryable;
 
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-@RunWith(JUnit4.class)
+@RunWith(BedsteadJUnit4.class)
 public final class BundleQueryHelperTest {
+
+    @ClassRule @Rule
+    public static final DeviceState sDeviceState = new DeviceState();
 
     private static final String KEY = "Key";
     private static final String KEY2 = "Key2";
@@ -110,5 +117,23 @@ public final class BundleQueryHelperTest {
         assertThat(
                 bundle().where().key(KEY).stringValue().isEqualTo(STRING_VALUE)
                         .matches(mBundle)).isTrue();
+    }
+
+    @Test
+    public void isEmptyQuery_isEmpty_returnsTrue() {
+        BundleQueryHelper<Queryable> bundleQueryHelper =
+                new BundleQueryHelper<>(mQuery);
+
+        assertThat(bundleQueryHelper.isEmptyQuery()).isTrue();
+    }
+
+    @Test
+    public void isEmptyQuery_hasKeyQuery_returnsFalse() {
+        BundleQueryHelper<Queryable> bundleQueryHelper =
+                new BundleQueryHelper<>(mQuery);
+
+        bundleQueryHelper.key("a").stringValue().isNotNull();
+
+        assertThat(bundleQueryHelper.isEmptyQuery()).isFalse();
     }
 }

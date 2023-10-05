@@ -247,7 +247,8 @@ public class TelephonyStatsTests extends DeviceTestCase implements IBuildReceive
         List<Map<String, String>> slots = getTelephonyDumpEntries("UiccSlot");
         long count = slots.stream().filter(slot ->
                 "true".equals(slot.get("mActive"))
-                        && "CARDSTATE_PRESENT".equals(slot.get("mCardState"))).count();
+                        && slot.get("mCardState") != null
+                        && slot.get("mCardState").contains("CARDSTATE_PRESENT")).count();
         return Math.toIntExact(count);
     }
 
@@ -260,7 +261,8 @@ public class TelephonyStatsTests extends DeviceTestCase implements IBuildReceive
         List<Map<String, String>> slots = getTelephonyDumpEntries("UiccSlot");
         long count = slots.stream().filter(slot ->
                 "true".equals(slot.get("mActive"))
-                        && "CARDSTATE_PRESENT".equals(slot.get("mCardState"))
+                        && slot.get("mCardState") != null
+                        && slot.get("mCardState").contains("CARDSTATE_PRESENT")
                         && "true".equals(slot.get("mIsEuicc"))).count();
         return Math.toIntExact(count);
     }

@@ -16,6 +16,8 @@
 
 package android.server.wm;
 
+import static android.server.wm.ShellCommandHelper.executeShellCommand;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
@@ -28,11 +30,12 @@ import android.provider.Settings;
 import android.server.wm.annotation.Group3;
 import android.server.wm.app.Components;
 import android.server.wm.settings.SettingsSession;
-import android.support.test.uiautomator.By;
-import android.support.test.uiautomator.UiDevice;
-import android.support.test.uiautomator.UiObject2;
-import android.support.test.uiautomator.Until;
 import android.view.KeyEvent;
+
+import androidx.test.uiautomator.By;
+import androidx.test.uiautomator.UiDevice;
+import androidx.test.uiautomator.UiObject2;
+import androidx.test.uiautomator.Until;
 
 import com.android.compatibility.common.util.SystemUtil;
 

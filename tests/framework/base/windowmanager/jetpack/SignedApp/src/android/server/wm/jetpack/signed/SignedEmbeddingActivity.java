@@ -16,9 +16,8 @@
 
 package android.server.wm.jetpack.signed;
 
-import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.DEFAULT_SPLIT_RATIO;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.EMBEDDED_ACTIVITY_ID;
-import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.createSplitPairRuleBuilderWithJava8Predicate;
+import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.createSplitPairRuleBuilder;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.startActivityCrossUidInSplit;
 import static android.server.wm.jetpack.utils.ExtensionUtil.assumeExtensionSupportedDevice;
 import static android.server.wm.jetpack.utils.ExtensionUtil.getWindowExtensions;
@@ -31,12 +30,12 @@ import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.os.Bundle;
-import android.server.wm.jetpack.utils.JavaConsumerAdapter;
 import android.server.wm.jetpack.utils.TestActivityKnownEmbeddingCerts;
 import android.server.wm.jetpack.utils.TestValueCountConsumer;
 
 import androidx.window.extensions.WindowExtensions;
 import androidx.window.extensions.embedding.ActivityEmbeddingComponent;
+import androidx.window.extensions.embedding.SplitAttributes;
 import androidx.window.extensions.embedding.SplitInfo;
 import androidx.window.extensions.embedding.SplitPairRule;
 
@@ -85,17 +84,16 @@ public class SignedEmbeddingActivity extends Activity {
         }
 
         TestValueCountConsumer<List<SplitInfo>> splitInfoConsumer = new TestValueCountConsumer<>();
-        if (getWindowExtensions().getVendorApiLevel() >= 2) {
-            embeddingComponent.setSplitInfoCallback(splitInfoConsumer);
-        } else {
-            embeddingComponent.setSplitInfoCallback(new JavaConsumerAdapter(splitInfoConsumer));
-        }
+        embeddingComponent.setSplitInfoCallback(splitInfoConsumer);
+        SplitAttributes.SplitType splitType = new SplitAttributes.SplitType.RatioSplitType(
+                getIntent().getFloatExtra(EXTRA_SPLIT_RATIO, 0.5f));
 
-        SplitPairRule splitPairRule = createSplitPairRuleBuilderWithJava8Predicate(
+        SplitPairRule splitPairRule = createSplitPairRuleBuilder(
                 activityActivityPair -> true /* activityActivityPredicate */,
                 activityIntentPair -> true /* activityIntentPredicate */,
                 parentWindowMetrics -> true /* parentWindowMetricsPredicate */)
-                .setSplitRatio(getIntent().getFloatExtra(EXTRA_SPLIT_RATIO, DEFAULT_SPLIT_RATIO))
+                .setDefaultSplitAttributes(new SplitAttributes.Builder()
+                        .setSplitType(splitType).build())
                 .build();
         embeddingComponent.setEmbeddingRules(Collections.singleton(splitPairRule));
 

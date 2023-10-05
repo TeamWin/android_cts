@@ -28,6 +28,7 @@ android_test {
         "junit",
         "permission-test-util-lib",
         "androidx.test.uiautomator_uiautomator",
+        "sts-device-util",
     ],
     libs: [
         "android.test.base",
@@ -43,6 +44,7 @@ android_test {
     test_suites: [
         "cts",
         "general-tests",
+        "sts",
     ],
     data: [
         ":CtsUsageStatsTestApp1",
@@ -77,7 +79,6 @@ java_defaults {
     manifest: "TestApp1/AndroidManifest.xml",
     // Tag this module as a cts test artifact
     test_suites: [
-        "cts",
         "general-tests",
     ],
     sdk_version: "test_current",

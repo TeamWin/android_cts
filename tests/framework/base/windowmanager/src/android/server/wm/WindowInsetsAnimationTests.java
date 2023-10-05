@@ -62,6 +62,7 @@ import java.util.List;
  *     atest CtsWindowManagerDeviceTestCases:WindowInsetsAnimationTests
  */
 @Presubmit
+@android.server.wm.annotation.Group2
 public class WindowInsetsAnimationTests extends WindowInsetsAnimationTestBase {
 
     @Before

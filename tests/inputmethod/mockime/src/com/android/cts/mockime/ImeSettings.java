@@ -20,6 +20,7 @@ import static java.lang.annotation.RetentionPolicy.SOURCE;
 
 import android.os.Bundle;
 import android.os.PersistableBundle;
+import android.view.inputmethod.InputMethodSubtype;
 
 import androidx.annotation.ColorInt;
 import androidx.annotation.IntDef;
@@ -211,6 +212,23 @@ public class ImeSettings {
      */
     public static final class Builder {
         private final PersistableBundle mBundle = new PersistableBundle();
+
+        @Nullable
+        InputMethodSubtype[] mAdditionalSubtypes;
+
+        /**
+         * Specifies additional {@link InputMethodSubtype}s to be set before launching
+         * {@link MockIme} by using
+         * {@link android.view.inputmethod.InputMethodManager#setAdditionalInputMethodSubtypes(
+         * String, InputMethodSubtype[])}.
+         *
+         * @param subtypes An array of {@link InputMethodSubtype}.
+         * @return this {@link Builder} object
+         */
+        public Builder setAdditionalSubtypes(InputMethodSubtype... subtypes) {
+            mAdditionalSubtypes = subtypes;
+            return this;
+        }
 
         /**
          * Controls how MockIme reacts to

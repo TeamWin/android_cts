@@ -24,7 +24,6 @@ import static android.content.pm.PackageManager.MATCH_DEFAULT_ONLY;
 import static android.os.UserManager.DISALLOW_SHARE_INTO_MANAGED_PROFILE;
 
 import static com.android.bedstead.harrier.UserType.WORK_PROFILE;
-import static com.android.bedstead.remotedpc.RemoteDpc.DPC_COMPONENT_NAME;
 import static com.android.queryable.queries.ActivityQuery.activity;
 import static com.android.queryable.queries.IntentFilterQuery.intentFilter;
 
@@ -193,13 +192,15 @@ public final class CrossProfileSharingTest {
             // Set up cross profile intent filters so we can resolve these to find out framework's
             // intent forwarder activity as ground truth
             sDeviceState.profileOwner(WORK_PROFILE).devicePolicyManager()
-                    .addCrossProfileIntentFilter(DPC_COMPONENT_NAME,
+                    .addCrossProfileIntentFilter(sDeviceState.profileOwner(WORK_PROFILE)
+                                    .componentName(),
                             new IntentFilter(CROSS_PROFILE_ACTION), direction);
             try {
                 forwarderInfo = getCrossProfileIntentForwarder(new Intent(CROSS_PROFILE_ACTION));
             } finally {
                 sDeviceState.profileOwner(WORK_PROFILE).devicePolicyManager()
-                        .clearCrossProfileIntentFilters(DPC_COMPONENT_NAME);
+                        .clearCrossProfileIntentFilters(
+                                sDeviceState.profileOwner(WORK_PROFILE).componentName());
             }
         }
         return forwarderInfo;
@@ -227,10 +228,10 @@ public final class CrossProfileSharingTest {
                      BlockingBroadcastReceiver.create(remoteCtx, filter).register()) {
             if (enabled) {
                 remoteDpc.devicePolicyManager().clearUserRestriction(
-                        DPC_COMPONENT_NAME, DISALLOW_SHARE_INTO_MANAGED_PROFILE);
+                        remoteDpc.componentName(), DISALLOW_SHARE_INTO_MANAGED_PROFILE);
             } else {
                 remoteDpc.devicePolicyManager().addUserRestriction(
-                        DPC_COMPONENT_NAME, DISALLOW_SHARE_INTO_MANAGED_PROFILE);
+                        remoteDpc.componentName(), DISALLOW_SHARE_INTO_MANAGED_PROFILE);
             }
         }
     }

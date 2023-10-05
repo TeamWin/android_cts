@@ -22,7 +22,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import android.service.quicksettings.Tile;
-import android.service.quicksettings.TileService;
 
 import com.android.systemui.qs.nano.QsTileState;
 
@@ -89,37 +88,7 @@ public class BooleanTileServiceTest extends BaseTileServiceTest {
     }
 
     @Override
-    protected TileService getTileServiceInstance() {
-        return ToggleableTestTileService.getInstance();
-    }
-
-    /**
-     * Waits for the TileService to be in the expected listening state. If it times out, it fails
-     * the test
-     * @param state desired listening state
-     * @throws InterruptedException
-     */
-    @Override
-    protected void waitForListening(boolean state) throws InterruptedException {
-        int ct = 0;
-        while (ToggleableTestTileService.isListening() != state && (ct++ < CHECK_RETRIES)) {
-            Thread.sleep(CHECK_DELAY);
-        }
-        assertEquals(state, ToggleableTestTileService.isListening());
-    }
-
-    /**
-     * Waits for the TileService to be in the expected connected state. If it times out, it fails
-     * the test
-     * @param state desired connected state
-     * @throws InterruptedException
-     */
-    @Override
-    protected void waitForConnected(boolean state) throws InterruptedException {
-        int ct = 0;
-        while (ToggleableTestTileService.isConnected() != state && (ct++ < CHECK_RETRIES)) {
-            Thread.sleep(CHECK_DELAY);
-        }
-        assertEquals(state, ToggleableTestTileService.isConnected());
+    protected String getTileServiceClassName() {
+        return ToggleableTestTileService.class.getName();
     }
 }

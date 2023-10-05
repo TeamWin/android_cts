@@ -39,8 +39,6 @@ import java.util.Map;
 public class NormalizeScreenStateRule implements TestRule {
     private static final String FEATURE_AUTOMOTIVE = "android.hardware.type.automotive";
 
-    private static final String SETTING_NAMESPACE = "secure";
-
     private final ITestInformationReceiver mTestInformationReceiver;
 
     public NormalizeScreenStateRule(ITestInformationReceiver testInformationReceiver) {
@@ -66,43 +64,26 @@ public class NormalizeScreenStateRule implements TestRule {
 
     private String getSecureSetting(String key) {
         try {
-            return getSecureSettingInternal(key);
-        } catch (DeviceNotAvailableException e) {
-            fail("Get setting failed, could not re-connect to the device: "+ e.getMessage());
-            return null;
-        }
-    }
-    private String getSecureSettingInternal(String key) throws DeviceNotAvailableException {
-        try {
-            return getDevice().getSetting(SETTING_NAMESPACE, key);
-        } catch (DeviceNotAvailableException exp) {
-            // Retry once to recover the device.
-            if (getDevice().waitForDeviceAvailable()) {
-                return getDevice().getSetting(SETTING_NAMESPACE, key);
+            CommandResult res = getDevice().executeShellV2Command("settings get secure " + key);
+            if (res.getStatus() != CommandStatus.SUCCESS) {
+                fail("Could not set setting " + key + ": " + res.getStdout());
             }
-            throw exp;
+            return res.getStdout().trim();
+        } catch (DeviceNotAvailableException e) {
+            fail("Could not connect to device: " + e.getMessage());
+            return null;
         }
     }
 
     private void putSecureSetting(String key, String value) {
         try {
-            putSecureStringInternal(key, value);
-        } catch(DeviceNotAvailableException e) {
-            fail("Put setting failed, could not reconnect to the device: " + e.getMessage());
-        }
-    }
-
-    private void putSecureStringInternal(String key, String value)
-            throws DeviceNotAvailableException {
-        try {
-            getDevice().setSetting(SETTING_NAMESPACE, key, value);
-        } catch (DeviceNotAvailableException exp) {
-            // Retry once to recover the device.
-            if (getDevice().waitForDeviceAvailable()) {
-                getDevice().setSetting(SETTING_NAMESPACE, key, value);
-                return;
+            CommandResult res = getDevice().executeShellV2Command(
+                    "settings put secure " + key + " " + value);
+            if (res.getStatus() != CommandStatus.SUCCESS) {
+                fail("Could not set setting " + key + ": " + res.getStdout());
             }
-            throw exp;
+        } catch (DeviceNotAvailableException e) {
+            fail("Could not connect to device: " + e.getMessage());
         }
     }
 
@@ -114,6 +95,7 @@ public class NormalizeScreenStateRule implements TestRule {
                 if (getDevice().hasFeature(FEATURE_AUTOMOTIVE)) {
                     return;
                 }
+
                 final Map<String, String> initialValues = new HashMap<>();
                 Arrays.stream(DOZE_SETTINGS).forEach(
                         k -> initialValues.put(k, getSecureSetting(k)));

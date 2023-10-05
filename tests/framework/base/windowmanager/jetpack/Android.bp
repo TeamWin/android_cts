@@ -16,32 +16,20 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-android_library_import {
-    name: "cts_window-extensions_nodeps",
-    aars: ["window-extensions-release.aar"],
-    sdk_version: "current",
-}
-
 java_library {
     name: "cts_window-extensions",
-    sdk_version: "current",
+    sdk_version: "test_current",
     static_libs: [
-        "cts_window-extensions_nodeps",
+        "androidx.window.extensions_extensions-nodeps",
     ],
     installable: false,
 }
 
-android_library_import {
-    name: "cts_window-extensions-core_nodeps",
-    aars: ["window-extensions-core-release.aar"],
-    sdk_version: "current",
-}
-
 java_library {
     name: "cts_window-extensions-core",
-    sdk_version: "current",
+    sdk_version: "test_current",
     static_libs: [
-        "cts_window-extensions-core_nodeps",
+        "androidx.window.extensions.core_core-nodeps",
     ],
     installable: false,
 }
@@ -54,7 +42,7 @@ android_library_import {
 
 java_library {
     name: "cts_window-sidecar",
-    sdk_version: "current",
+    sdk_version: "test_current",
     static_libs: [
         "cts_window-sidecar_nodeps",
     ],
@@ -95,7 +83,6 @@ android_test {
     ],
     test_suites: [
         "cts",
-        "vts",
         "general-tests",
     ],
     sdk_version: "test_current",

@@ -441,32 +441,29 @@ public class TouchInteractionControllerTest {
         mTouchListener.assertNonePropagated();
     }
 
-    /**
-     * Test whether service gesture detection remains active when we rebuild the input filter.
-     */
+    /** Test whether service gesture detection remains active when we rebuild the input filter. */
     @Test
     @AppModeFull
     public void testRebuildInputFilter_shouldRetainState() {
         if (!mHasTouchscreen || !mScreenBigEnough) return;
         assertBasicConsistency();
-                                // Set up a touch interaction controller that delegates everything.
+        // Set up a touch interaction controller that records incoming motion events.
         mController.registerCallback(
                 Executors.newSingleThreadExecutor(),
                 new BaseCallback() {
                     public void onMotionEvent(MotionEvent event) {
-                        if (event.getActionMasked() == ACTION_DOWN) {
-                            mController.requestDelegating();
-                        }
+                        mTouchListener.onTouch(null, event);
                     }
                 });
         dispatch(click(mTapLocation));
         mTouchListener.assertPropagated(ACTION_DOWN, ACTION_UP);
         // Start another service
         StubMagnificationAccessibilityService secondService;
-        secondService = InstrumentedAccessibilityService
-                .enableService(StubMagnificationAccessibilityService.class);
+        secondService =
+                InstrumentedAccessibilityService.enableService(
+                        StubMagnificationAccessibilityService.class);
         try {
-            // Service gesture detection should still work.
+            // We should still be recording incoming motion events.
             dispatch(click(mTapLocation));
             mHoverListener.assertNonePropagated();
             mTouchListener.assertPropagated(ACTION_DOWN, ACTION_UP);
@@ -474,7 +471,6 @@ public class TouchInteractionControllerTest {
             secondService.disableSelfAndRemove();
         }
     }
-
 
     private void syncAccessibilityFocusToInputFocus() {
         mService.runOnServiceSync(

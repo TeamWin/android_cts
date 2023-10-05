@@ -68,7 +68,7 @@ public class BaseChainedInstrumentation extends Instrumentation {
             getContext().startInstrumentation(mNestedInstrComp, null, extras);
             scheduleTimeoutCleanup();
         } else {
-            final Messenger messenger = arguments.getParcelable(EXTRA_MESSENGER);
+            final Messenger messenger = arguments.getParcelable(EXTRA_MESSENGER, Messenger.class);
             final Message msg = Message.obtain();
             try {
                 msg.obj = result;

@@ -21,6 +21,8 @@
     <option name="config-descriptor:metadata" key="parameter" value="secondary_user"/>
     <option name="config-descriptor:metadata" key="token" value="SIM_CARD" />
     <option name="config-descriptor:metadata" key="parameter" value="no_foldable_states" />
+    <option name="config-descriptor:metadata" key="mainline-param" value="com.google.android.permission.apex" />
+    <option name="config-descriptor:metadata" key="parameter" value="run_on_sdk_sandbox" />
 
     <object type="module_controller" class="com.android.tradefed.testtype.suite.module.Sdk30ModuleController" />
 
@@ -94,12 +96,17 @@
         <option name="push" value="CtsStorageEscalationApp28.apk->/data/local/tmp/cts/permissions/CtsStorageEscalationApp28.apk" />
         <option name="push" value="CtsStorageEscalationApp29Full.apk->/data/local/tmp/cts/permissions/CtsStorageEscalationApp29Full.apk" />
         <option name="push" value="CtsStorageEscalationApp29Scoped.apk->/data/local/tmp/cts/permissions/CtsStorageEscalationApp29Scoped.apk" />
+        <option name="push" value="CtsAppThatHasNotificationListener.apk->/data/local/tmp/cts/permissions/CtsAppThatHasNotificationListener.apk" />
+        <option name="push" value="CtsAppThatRequestsMultiplePermissionsWithMinMaxSdk.apk->/data/local/tmp/cts/permissions/CtsAppThatRequestsMultiplePermissionsWithMinMaxSdk.apk" />
         <option name="push" value="CtsAppThatRequestsSystemAlertWindow22.apk->/data/local/tmp/cts/permissions/CtsAppThatRequestsSystemAlertWindow22.apk" />
         <option name="push" value="CtsAppThatRequestsSystemAlertWindow23.apk->/data/local/tmp/cts/permissions/CtsAppThatRequestsSystemAlertWindow23.apk" />
+        <option name="push" value="CtsAppThatRequestCustomCameraPermission.apk->/data/local/tmp/cts/permissions/CtsAppThatRequestCustomCameraPermission.apk" />
     </target_preparer>
 
     <!-- Remove additional apps if installed -->
     <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
+        <!-- disable DeprecatedAbi warning -->
+        <option name="run-command" value="setprop debug.wm.disable_deprecated_abi_dialog 1" />
         <option name="teardown-command" value="pm uninstall android.permission.cts.appthatrequestpermission" />
         <option name="teardown-command" value="pm uninstall android.permission.cts.appthatrequestnopermission" />
         <option name="teardown-command" value="pm uninstall android.permission.cts.revokepermissionwhenremoved.AdversarialPermissionDefinerApp" />
@@ -107,6 +114,7 @@
         <option name="teardown-command" value="pm uninstall android.permission.cts.revokepermissionwhenremoved.userapp" />
         <option name="teardown-command" value="pm uninstall android.permission.cts.revokepermissionwhenremoved.runtimepermissiondefinerapp" />
         <option name="teardown-command" value="pm uninstall android.permission.cts.revokepermissionwhenremoved.runtimepermissionuserapp" />
+        <option name="teardown-command" value="pm uninstall android.permission.cts.appthathasnotificationlistener" />
     </target_preparer>
 
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >

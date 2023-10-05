@@ -79,6 +79,10 @@ public final class ProfileOwner extends DevicePolicyController {
     /** Sets whether the current profile is organization owned. */
     @TargetApi(TIRAMISU)
     public void setIsOrganizationOwned(boolean isOrganizationOwned) {
+        if (isOrganizationOwned() == isOrganizationOwned) {
+            return; // Nothing to do
+        }
+
         Versions.requireMinimumVersion(TIRAMISU);
 
         DevicePolicyManager devicePolicyManager =

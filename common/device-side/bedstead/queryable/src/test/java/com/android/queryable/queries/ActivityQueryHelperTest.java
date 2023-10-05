@@ -25,17 +25,24 @@ import static com.google.common.truth.Truth.assertThat;
 import android.app.Activity;
 import android.content.IntentFilter;
 
+import com.android.bedstead.harrier.BedsteadJUnit4;
+import com.android.bedstead.harrier.DeviceState;
 import com.android.queryable.Queryable;
 import com.android.queryable.info.ActivityInfo;
 
+import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import java.util.Set;
 
-@RunWith(JUnit4.class)
+@RunWith(BedsteadJUnit4.class)
 public final class ActivityQueryHelperTest {
+
+    @ClassRule @Rule
+    public static final DeviceState sDeviceState = new DeviceState();
 
     private final Queryable mQuery = null;
 
@@ -151,5 +158,30 @@ public final class ActivityQueryHelperTest {
     @Test
     public void activityQueryBase_queries() {
         assertThat(activity().where().exported().isTrue().matches(EXPORTED_ACTIVITY_INFO)).isTrue();
+    }
+
+    @Test
+    public void isEmptyQuery_isEmpty_returnsTrue() {
+        ActivityQueryHelper<Queryable> activityQueryHelper = new ActivityQueryHelper<>(mQuery);
+
+        assertThat(activityQueryHelper.isEmptyQuery()).isTrue();
+    }
+
+    @Test
+    public void isEmptyQuery_hasActivityClass_returnsFalse() {
+        ActivityQueryHelper<Queryable> activityQueryHelper = new ActivityQueryHelper<>(mQuery);
+
+        activityQueryHelper.activityClass().className().isNotNull();
+
+        assertThat(activityQueryHelper.isEmptyQuery()).isFalse();
+    }
+
+    @Test
+    public void isEmptyQuery_hasIntentFilters_returnsFalse() {
+        ActivityQueryHelper<Queryable> activityQueryHelper = new ActivityQueryHelper<>(mQuery);
+
+        activityQueryHelper.intentFilters().isNotEmpty();
+
+        assertThat(activityQueryHelper.isEmptyQuery()).isFalse();
     }
 }

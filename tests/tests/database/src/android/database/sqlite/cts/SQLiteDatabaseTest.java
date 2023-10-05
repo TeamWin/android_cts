@@ -1868,7 +1868,7 @@ public class SQLiteDatabaseTest extends AndroidTestCase {
         boolean dbStatFound = false;
         SQLiteDebug.PagerStats info = SQLiteDebug.getDatabaseInfo();
         for (SQLiteDebug.DbStats dbStat : info.dbStats) {
-            if (dbStat.dbName.endsWith(mDatabaseFile.getName())) {
+            if (dbStat.dbName.endsWith(mDatabaseFile.getName()) && !dbStat.arePoolStats) {
                 dbStatFound = true;
                 Log.i(TAG, "Lookaside for " + dbStat.dbName + " " + dbStat.lookaside);
                 if (expectDisabled) {

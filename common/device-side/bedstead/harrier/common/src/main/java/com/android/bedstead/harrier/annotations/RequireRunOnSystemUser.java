@@ -17,6 +17,7 @@
 package com.android.bedstead.harrier.annotations;
 
 import static com.android.bedstead.harrier.annotations.AnnotationRunPrecedence.REQUIRE_RUN_ON_PRECEDENCE;
+import static com.android.bedstead.nene.types.OptionalBoolean.ANY;
 import static com.android.bedstead.nene.types.OptionalBoolean.TRUE;
 
 import com.android.bedstead.harrier.annotations.meta.RequireRunOnUserAnnotation;
@@ -47,9 +48,10 @@ public @interface RequireRunOnSystemUser {
     /**
      * Should we ensure that we are switched to the given user.
      *
-     * <p>ANY will be treated as TRUE if no other annotation has forced a switch.
+     * <p>ANY will be treated as TRUE if no other annotation has forced a switch and the user
+     * can be switched to.
      */
-    OptionalBoolean switchedToUser() default TRUE;
+    OptionalBoolean switchedToUser() default ANY;
 
     /**
      * Weight sets the order that annotations will be resolved.

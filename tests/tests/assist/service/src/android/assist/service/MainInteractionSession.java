@@ -85,7 +85,8 @@ public class MainInteractionSession extends VoiceInteractionSession {
         };
         IntentFilter filter = new IntentFilter();
         filter.addAction(Utils.HIDE_SESSION);
-        mContext.registerReceiver(mReceiver, filter, Context.RECEIVER_VISIBLE_TO_INSTANT_APPS);
+        mContext.registerReceiver(mReceiver, filter,
+                Context.RECEIVER_VISIBLE_TO_INSTANT_APPS | Context.RECEIVER_EXPORTED);
     }
 
     @Override

@@ -22,6 +22,20 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
     <uses-sdk android:minSdkVersion="30"/>
 
+    <application>
+        <uses-library android:name="android.test.runner"/>
+
+        <service android:name="com.android.midi.HostSideMidiEchoService"
+             android:permission="android.permission.BIND_MIDI_DEVICE_SERVICE"
+             android:exported="true">
+            <intent-filter>
+                <action android:name="android.media.midi.MidiDeviceService"/>
+            </intent-filter>
+            <meta-data android:name="android.media.midi.MidiDeviceService"
+                 android:resource="@xml/echo_device_info"/>
+        </service>
+    </application>
+
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
          android:targetPackage="android.media.metrics.cts"
          android:label="Media metrics CTS Tests"/>

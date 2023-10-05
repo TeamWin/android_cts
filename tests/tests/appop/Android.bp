@@ -95,7 +95,6 @@ android_test {
         "libnativehelper",
         "libnetdutils",
         "libnetworkstats",
-        "libnetworkstatsfactorytestjni",
         "libpackagelistparser",
         "libpermission",
         "libpcre2",

@@ -43,7 +43,10 @@ public class DeviceOwnerTest {
     @ClassRule @Rule
     public static DeviceState sDeviceState = new DeviceState();
 
-    private static final ComponentName DPC_COMPONENT_NAME = RemoteDpc.DPC_COMPONENT_NAME;
+    private static final ComponentName DPC_COMPONENT_NAME = new ComponentName(
+            RemoteDpc.REMOTE_DPC_APP_PACKAGE_NAME_OR_PREFIX,
+            "com.android.bedstead.testapp.BaseTestAppDeviceAdminReceiver"
+    );
     private static final TestApp sNonTestOnlyDpc = sDeviceState.testApps().query()
             .whereIsDeviceAdmin().isTrue()
             .whereTestOnly().isFalse()

@@ -25,6 +25,7 @@ import android.cts.statsdatom.lib.DeviceUtils;
 import android.cts.statsdatom.lib.ReportUtils;
 
 import com.android.annotations.Nullable;
+import com.android.internal.os.StatsdConfigProto.StatsdConfig;
 import com.android.os.AtomsProto;
 import com.android.os.StatsLog;
 import com.android.tradefed.build.IBuildInfo;
@@ -108,11 +109,19 @@ public class AppStartStatsTests extends DeviceTestCase implements IBuildReceiver
 
     private void runTestAppStartOccurredCommon(@Nullable RunnableWithException prolog,
             @Nullable ConsumerWithException<AtomsProto.AppStartOccurred> epilog) throws Exception {
-        final int atomTag = AtomsProto.Atom.APP_START_OCCURRED_FIELD_NUMBER;
-        ConfigUtils.uploadConfigForPushedAtomWithUid(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
-                atomTag,  /*uidInAttributionChain=*/false);
-        getDevice().executeShellCommand(getGlobalHibernationCommand(
-                DeviceUtils.STATSD_ATOM_TEST_PKG, false));
+        StatsdConfig.Builder config =
+                ConfigUtils.createConfigBuilder(DeviceUtils.STATSD_ATOM_TEST_PKG);
+        ConfigUtils.addEventMetricForUidAtom(
+                config,
+                AtomsProto.Atom.APP_START_OCCURRED_FIELD_NUMBER,
+                /*uidInAttributionChain=*/false,
+                DeviceUtils.STATSD_ATOM_TEST_PKG);
+        ConfigUtils.addEventMetricForUidAtom(
+                config,
+                AtomsProto.Atom.APP_START_FULLY_DRAWN_FIELD_NUMBER,
+                /*uidInAttributionChain=*/false,
+                DeviceUtils.STATSD_ATOM_TEST_PKG);
+        ConfigUtils.uploadConfig(getDevice(), config);
 
         if (prolog != null) {
             prolog.run();
@@ -124,7 +133,7 @@ public class AppStartStatsTests extends DeviceTestCase implements IBuildReceiver
         // Sorted list of events in order in which they occurred.
         List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
 
-        assertThat(data).hasSize(1);
+        assertThat(data).hasSize(2);
         AtomsProto.AppStartOccurred atom = data.get(0).getAtom().getAppStartOccurred();
         assertThat(atom.getPkgName()).isEqualTo(DeviceUtils.STATSD_ATOM_TEST_PKG);
         assertThat(atom.getActivityName())
@@ -133,6 +142,16 @@ public class AppStartStatsTests extends DeviceTestCase implements IBuildReceiver
         assertThat(atom.getActivityStartTimestampMillis()).isGreaterThan(0L);
         assertThat(atom.getTransitionDelayMillis()).isGreaterThan(0);
         assertThat(atom.getIsHibernating()).isFalse();
+
+        AtomsProto.AppStartFullyDrawn fullyDrawnAtom =
+                data.get(1).getAtom().getAppStartFullyDrawn();
+        assertThat(fullyDrawnAtom.getPkgName()).isEqualTo(DeviceUtils.STATSD_ATOM_TEST_PKG);
+        assertThat(fullyDrawnAtom.getActivityName())
+                .isEqualTo("com.android.server.cts.device.statsdatom.StatsdCtsForegroundActivity");
+        // Both events should have the same trigger timestamp so they can be joined.
+        assertThat(fullyDrawnAtom.getActivityStartTimestampMillis())
+                .isEqualTo(atom.getActivityStartTimestampMillis());
+
         if (epilog != null) {
             epilog.accept(atom);
         }

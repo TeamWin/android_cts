@@ -24,6 +24,7 @@
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD"/>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION"/>
     <uses-feature android:name="android.hardware.camera"/>
 
     <application android:label="Android TestCase"
@@ -324,16 +325,6 @@
             </intent-filter>
         </activity>
 
-        <activity android:name="android.view.cts.LongPressBackActivity"
-             android:screenOrientation="locked"
-             android:label="LongPressBackActivity"
-             android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-                <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST"/>
-            </intent-filter>
-        </activity>
-
         <activity android:name="android.view.cts.KeyEventInjectionActivity"
              android:label="KeyEventInjectionActivity"
              android:exported="true">
@@ -424,7 +415,7 @@
         </activity>
 
         <activity android:name="android.view.cts.input.InputDeviceKeyLayoutMapTestActivity"
-             android:configChanges="keyboardHidden|navigation"
+             android:configChanges="keyboardHidden|navigation|keyboard"
              android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
@@ -496,8 +487,15 @@
             </intent-filter>
         </activity>
 
-        <activity android:name="android.view.cts.AutoHandwritingActivity"
+        <activity android:name="android.view.cts.HandwritingActivity"
                   android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+            </intent-filter>
+        </activity>
+
+        <activity android:name="android.view.cts.TrustedPresentationCallbackTest$TestActivity"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
             </intent-filter>

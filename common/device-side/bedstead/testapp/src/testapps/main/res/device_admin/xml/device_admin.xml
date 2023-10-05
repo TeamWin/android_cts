@@ -14,7 +14,8 @@
   ~ limitations under the License.
   -->
 
-<device-admin xmlns:android="http://schemas.android.com/apk/res/android">
+<device-admin>
+    <headless-system-user device-owner-mode="affiliated" />
     <uses-policies>
         <limit-password />
         <watch-login />
@@ -25,5 +26,6 @@
         <force-lock />
         <limit-password />
         <disable-camera />
+        <expire-password />
     </uses-policies>
 </device-admin>

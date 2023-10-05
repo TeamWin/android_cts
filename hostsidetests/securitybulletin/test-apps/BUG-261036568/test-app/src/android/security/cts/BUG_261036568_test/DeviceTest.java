@@ -98,6 +98,7 @@ public class DeviceTest {
         UiDevice device = UiDevice.getInstance(instrumentation);
         Context context = instrumentation.getTargetContext();
         Intent chooserIntent = Intent.createChooser(target, null);
+        chooserIntent.putExtra(Intent.EXTRA_AUTO_LAUNCH_SINGLE_CHOICE, false);
         chooserIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         String chooserPackage = resolveChooserPackage(context);
         context.startActivity(chooserIntent);

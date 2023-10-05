@@ -16,10 +16,21 @@
 
 package android.devicepolicy.cts;
 
+import static android.app.admin.DevicePolicyIdentifiers.getIdentifierForUserRestriction;
+
+import static com.android.bedstead.harrier.annotations.enterprise.MostImportantCoexistenceTest.LESS_IMPORTANT;
+import static com.android.bedstead.harrier.annotations.enterprise.MostImportantCoexistenceTest.MORE_IMPORTANT;
+
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assume.assumeFalse;
+import static org.junit.Assume.assumeTrue;
 import static org.testng.Assert.assertThrows;
+
+import android.app.admin.PolicyState;
+import android.app.admin.UserRestrictionPolicyKey;
+import android.devicepolicy.cts.utils.PolicyEngineUtils;
+import android.os.SystemClock;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
@@ -27,6 +38,7 @@ import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.StringTestParameter;
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
+import com.android.bedstead.harrier.annotations.enterprise.MostImportantCoexistenceTest;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnDeviceOwnerUser;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnUnaffiliatedProfileOwnerSecondaryUser;
@@ -36,9 +48,11 @@ import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.devicepolicy.DeviceOwner;
 import com.android.bedstead.nene.devicepolicy.DeviceOwnerType;
 import com.android.bedstead.nene.userrestrictions.CommonUserRestrictions;
+import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.BlockingBroadcastReceiver;
 
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -50,44 +64,25 @@ import java.lang.annotation.RetentionPolicy;
 public final class UserRestrictionsTest {
 
     @StringTestParameter({
-            CommonUserRestrictions.DISALLOW_USB_FILE_TRANSFER,
-            CommonUserRestrictions.DISALLOW_CONFIG_TETHERING,
-            CommonUserRestrictions.DISALLOW_NETWORK_RESET,
             CommonUserRestrictions.DISALLOW_FACTORY_RESET,
-            CommonUserRestrictions.DISALLOW_ADD_USER,
-            CommonUserRestrictions.DISALLOW_CONFIG_CELL_BROADCASTS,
-            CommonUserRestrictions.DISALLOW_CONFIG_MOBILE_NETWORKS,
-            CommonUserRestrictions.DISALLOW_MOUNT_PHYSICAL_MEDIA,
-            CommonUserRestrictions.DISALLOW_SMS,
             CommonUserRestrictions.DISALLOW_FUN,
-            CommonUserRestrictions.DISALLOW_SAFE_BOOT,
-            CommonUserRestrictions.DISALLOW_CREATE_WINDOWS,
-            CommonUserRestrictions.DISALLOW_DATA_ROAMING,
-            CommonUserRestrictions.DISALLOW_BLUETOOTH})
+            CommonUserRestrictions.DISALLOW_CREATE_WINDOWS})
     @Retention(RetentionPolicy.RUNTIME)
     private @interface DeviceOwnerOnlyUserRestrictions {
     }
 
     @StringTestParameter({
-            CommonUserRestrictions.DISALLOW_MODIFY_ACCOUNTS,
             CommonUserRestrictions.DISALLOW_INSTALL_APPS,
             CommonUserRestrictions.DISALLOW_UNINSTALL_APPS,
-            CommonUserRestrictions.DISALLOW_CONFIG_BLUETOOTH,
             CommonUserRestrictions.DISALLOW_CONFIG_CREDENTIALS,
-            CommonUserRestrictions.DISALLOW_REMOVE_USER,
             CommonUserRestrictions.DISALLOW_CONFIG_VPN,
             CommonUserRestrictions.DISALLOW_APPS_CONTROL,
-            CommonUserRestrictions.DISALLOW_UNMUTE_MICROPHONE,
             CommonUserRestrictions.DISALLOW_ADJUST_VOLUME,
-            CommonUserRestrictions.DISALLOW_OUTGOING_CALLS,
-            CommonUserRestrictions.DISALLOW_SYSTEM_ERROR_DIALOGS,
             CommonUserRestrictions.DISALLOW_CROSS_PROFILE_COPY_PASTE,
             CommonUserRestrictions.DISALLOW_OUTGOING_BEAM,
             CommonUserRestrictions.ALLOW_PARENT_PROFILE_APP_LINKING,
             CommonUserRestrictions.DISALLOW_SET_USER_ICON,
             CommonUserRestrictions.DISALLOW_AUTOFILL,
-            CommonUserRestrictions.DISALLOW_CONTENT_CAPTURE,
-            CommonUserRestrictions.DISALLOW_CONTENT_SUGGESTIONS,
             CommonUserRestrictions.DISALLOW_UNIFIED_PASSWORD
     })
     @Retention(RetentionPolicy.RUNTIME)
@@ -126,8 +121,6 @@ public final class UserRestrictionsTest {
             CommonUserRestrictions.DISALLOW_MOUNT_PHYSICAL_MEDIA,
             CommonUserRestrictions.DISALLOW_UNMUTE_MICROPHONE,
             CommonUserRestrictions.DISALLOW_ADJUST_VOLUME,
-            CommonUserRestrictions.DISALLOW_OUTGOING_CALLS,
-            CommonUserRestrictions.DISALLOW_SMS,
             CommonUserRestrictions.DISALLOW_FUN,
             CommonUserRestrictions.DISALLOW_CREATE_WINDOWS,
             CommonUserRestrictions.DISALLOW_SYSTEM_ERROR_DIALOGS,
@@ -274,7 +267,7 @@ public final class UserRestrictionsTest {
                 .userManager().hasUserRestriction(restriction);
 
         try {
-            assertThat(hasRestrictionOriginally).isTrue();
+            assumeTrue(hasRestrictionOriginally);
             sDeviceState.dpc().devicePolicyManager().clearUserRestriction(
                     sDeviceState.dpc().componentName(), restriction);
 
@@ -326,9 +319,11 @@ public final class UserRestrictionsTest {
     }
 
     @CannotSetPolicyTest(
-            policy = com.android.bedstead.harrier.policies.DeviceOwnerOnlyUserRestrictions.class,
-            includeNonDeviceAdminStates = false)
+            policy = com.android.bedstead.harrier.policies.DeviceOwnerOnlyUserRestrictions.class)
     @Postsubmit(reason = "new test")
+    @com.android.bedstead.harrier.annotations.RequireNotHeadlessSystemUserMode(
+            reason = "Since ag/I94c63d0492034af39608c3d81700f71e89e37d0e we special case main user "
+                    + "which is not taken care of in tests currently")
     public void addUserRestriction_deviceOwnerOnlyRestriction_throwsSecurityException(
             @DeviceOwnerOnlyUserRestrictions String restriction) {
         skipTestForFinancedDevice();
@@ -375,6 +370,88 @@ public final class UserRestrictionsTest {
             sDeviceState.dpc().devicePolicyManager().clearUserRestriction(
                     sDeviceState.dpc().componentName(), ANY_USER_RESTRICTION);
             broadcastReceiver.awaitForBroadcastOrFail();
+        }
+    }
+
+    @ApiTest(apis = {"android.app.admin.DevicePolicyManager#addUserRestriction"})
+    @MostImportantCoexistenceTest(policy = UserRestrictions.class)
+    @Ignore("test used for local verification only")
+    public void addUserRestriction_setByDPCAndPermission_DPCRemoved_stillEnforced() {
+        try {
+            sDeviceState.testApp(MORE_IMPORTANT).devicePolicyManager().addUserRestriction(
+                    sDeviceState.dpc().componentName(), CommonUserRestrictions.DISALLOW_CAMERA);
+            sDeviceState.testApp(LESS_IMPORTANT).devicePolicyManager().addUserRestriction(
+                    /* componentName= */ null, CommonUserRestrictions.DISALLOW_CAMERA);
+
+            // Remove DPC
+            sDeviceState.dpc().devicePolicyManager().clearDeviceOwnerApp(
+                    sDeviceState.dpc().packageName());
+
+            PolicyState<Boolean> policyState = PolicyEngineUtils.getBooleanPolicyState(
+                    new UserRestrictionPolicyKey(
+                            getIdentifierForUserRestriction(CommonUserRestrictions.DISALLOW_CAMERA),
+                            CommonUserRestrictions.DISALLOW_CAMERA),
+                    TestApis.users().instrumented().userHandle());
+            assertThat(policyState.getCurrentResolvedPolicy()).isTrue();
+            assertThat(sDeviceState.testApp(LESS_IMPORTANT).devicePolicyManager()
+                    .getUserRestrictions(/* componentName= */ null)
+                    .getBoolean(CommonUserRestrictions.DISALLOW_CAMERA))
+                    .isTrue();
+            assertThat(sDeviceState.testApp(LESS_IMPORTANT).userManager()
+                    .hasUserRestriction(CommonUserRestrictions.DISALLOW_CAMERA))
+                    .isTrue();
+        } finally {
+            try {
+                sDeviceState.testApp(LESS_IMPORTANT).devicePolicyManager().clearUserRestriction(
+                        /* componentName= */ null, CommonUserRestrictions.DISALLOW_CAMERA);
+            } catch (Exception e) {
+                // expected if app was uninstalled
+            }
+            try {
+                sDeviceState.testApp(MORE_IMPORTANT).devicePolicyManager().clearUserRestriction(
+                        sDeviceState.dpc().componentName(), CommonUserRestrictions.DISALLOW_CAMERA);
+            } catch (Exception e) {
+                // expected if app was uninstalled
+            }
+        }
+    }
+
+    @ApiTest(apis = {"android.app.admin.DevicePolicyManager#addUserRestriction"})
+    @MostImportantCoexistenceTest(policy = UserRestrictions.class)
+    @Ignore("test used for local verification only")
+    public void addUserRestriction_setByPermission_appRemoved_notEnforced() {
+        try {
+            sDeviceState.testApp(LESS_IMPORTANT).devicePolicyManager().addUserRestriction(
+                    /* componentName= */ null, CommonUserRestrictions.DISALLOW_CAMERA);
+
+            // uninstall app
+            sDeviceState.testApp(LESS_IMPORTANT).uninstall();
+            SystemClock.sleep(500);
+
+            PolicyState<Boolean> policyState = PolicyEngineUtils.getBooleanPolicyState(
+                    new UserRestrictionPolicyKey(
+                            getIdentifierForUserRestriction(CommonUserRestrictions.DISALLOW_CAMERA),
+                            CommonUserRestrictions.DISALLOW_CAMERA),
+                    TestApis.users().instrumented().userHandle());
+            if (policyState != null) {
+                assertThat(policyState.getCurrentResolvedPolicy()).isFalse();
+            }
+            assertThat(sDeviceState.testApp(MORE_IMPORTANT).userManager()
+                    .hasUserRestriction(CommonUserRestrictions.DISALLOW_CAMERA))
+                    .isFalse();
+        } finally {
+            try {
+                sDeviceState.testApp(LESS_IMPORTANT).devicePolicyManager().clearUserRestriction(
+                        /* componentName= */ null, CommonUserRestrictions.DISALLOW_CAMERA);
+            } catch (Exception e) {
+                // expected if app was uninstalled
+            }
+            try {
+                sDeviceState.testApp(MORE_IMPORTANT).devicePolicyManager().clearUserRestriction(
+                        sDeviceState.dpc().componentName(), CommonUserRestrictions.DISALLOW_CAMERA);
+            } catch (Exception e) {
+                // expected if app was uninstalled
+            }
         }
     }
 

@@ -18,13 +18,12 @@ import logging
 import math
 import os.path
 from mobly import test_runner
-import numpy as np
 
 import its_base_test
 import camera_properties_utils
 import capture_request_utils
-import image_processing_utils
 import image_fov_utils
+import image_processing_utils
 import its_session_utils
 import opencv_processing_utils
 
@@ -81,6 +80,8 @@ def _create_format_list():
     format_list
   """
   format_list = []
+  format_list.append({'iter': 'jpeg_r', 'iter_max': None,
+                      'cmpr': 'priv', 'cmpr_size': _PREVIEW_SIZE})
   format_list.append({'iter': 'yuv', 'iter_max': None,
                       'cmpr': 'yuv', 'cmpr_size': _PREVIEW_SIZE})
   format_list.append({'iter': 'yuv', 'iter_max': _PREVIEW_SIZE,
@@ -136,7 +137,7 @@ def _is_checked_aspect_ratio(first_api_level, w, h):
   for ar_check in _AR_CHECKED_PRE_API_30:
     match_ar_list = [float(x) for x in ar_check.split(':')]
     match_ar = match_ar_list[0] / match_ar_list[1]
-    if np.isclose(float(w) / h, match_ar, atol=_AR_DIFF_ATOL):
+    if math.isclose(w / h, match_ar, abs_tol=_AR_DIFF_ATOL):
       return True
 
   return False
@@ -161,7 +162,7 @@ class AspectRatioAndCropTest(its_base_test.ItsBaseTest):
   ground truth to account for the possibility that the chart is not well
   positioned to be precisely parallel to image sensor plane.
   The test then compares the ground truth ratio with the same ratio measured
-  on images captued using different stream combinations of varying formats
+  on images captured using different stream combinations of varying formats
   ('jpeg' and 'yuv') and resolutions.
   If raw capture is unavailable, a full resolution JPEG image is used to setup
   ground truth. In this case, the ground truth aspect ratio is defined as 1.0
@@ -218,7 +219,7 @@ class AspectRatioAndCropTest(its_base_test.ItsBaseTest):
       props = cam.override_with_hidden_physical_camera_props(props)
       fls_physical = props['android.lens.info.availableFocalLengths']
       logging.debug('physical available focal lengths: %s', str(fls_physical))
-      log_path = self.log_path
+      name_with_log_path = os.path.join(self.log_path, _NAME)
       if self.hidden_physical_id:
         logging.debug('Testing camera: %s.%s',
                       self.camera_id, self.hidden_physical_id)
@@ -262,10 +263,9 @@ class AspectRatioAndCropTest(its_base_test.ItsBaseTest):
                 for jpeg_ar in _AR_FOR_JPEG_REFERENCE)
         )
 
-      ref_img_name_stem = f'{os.path.join(log_path, _NAME)}'
       ref_fov, cc_ct_gt, aspect_ratio_gt = (
           image_fov_utils.find_fov_reference(
-              cam, req, props, use_raw_fov, ref_img_name_stem))
+              cam, req, props, use_raw_fov, name_with_log_path))
 
       run_crop_test = full_or_better and raw_avlb
       if run_crop_test:
@@ -302,8 +302,7 @@ class AspectRatioAndCropTest(its_base_test.ItsBaseTest):
                         fmt_iter, fmt_cmpr, w_iter, h_iter, w_cmpr, h_cmpr)
           img = image_processing_utils.convert_capture_to_rgb_image(cap)
           img *= 255  # cv2 uses [0, 255].
-          img_name = '%s_%s_with_%s_w%d_h%d.png' % (
-              os.path.join(log_path, _NAME), fmt_iter, fmt_cmpr, w_iter, h_iter)
+          img_name = f'{name_with_log_path}_{fmt_iter}_with_{fmt_cmpr}_w{w_iter}_h{h_iter}.png'
           circle = opencv_processing_utils.find_circle(
               img, img_name, image_fov_utils.CIRCLE_MIN_AREA,
               image_fov_utils.CIRCLE_COLOR)

@@ -16,6 +16,10 @@
 
 package com.android.bedstead.nene.activities;
 
+import static android.content.pm.PackageManager.MATCH_DISABLED_COMPONENTS;
+
+import static com.android.bedstead.nene.permissions.CommonPermissions.INTERACT_ACROSS_USERS_FULL;
+
 import android.content.ComponentName;
 import android.content.pm.PackageManager;
 
@@ -23,6 +27,7 @@ import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.packages.ComponentReference;
 import com.android.bedstead.nene.packages.Package;
+import com.android.bedstead.nene.permissions.PermissionContext;
 import com.android.bedstead.nene.users.UserReference;
 
 /**
@@ -47,10 +52,11 @@ public final class ActivityReference extends ComponentReference {
     public boolean isEnabled(UserReference user) {
         // This currently uses activity-specific methods - it'd be great to have this at the top
         // level and work for any component
-        try {
+        try (PermissionContext p = TestApis.permissions()
+                .withPermission(INTERACT_ACROSS_USERS_FULL)) {
             return TestApis.context().androidContextAsUser(user)
                     .getPackageManager()
-                    .getActivityInfo(componentName(), 0)
+                    .getActivityInfo(componentName(), MATCH_DISABLED_COMPONENTS)
                     .enabled;
         } catch (PackageManager.NameNotFoundException e) {
             throw new NeneException("Activity does not exist or is not activity " + this, e);

@@ -33,14 +33,22 @@ java_test_host {
         "cts-tradefed",
         "tradefed",
         "compatibility-host-util",
-        "CtsMediaHostTestCommon",
+
     ],
     static_libs: [
         "cts-host-utils",
         "cts-statsd-atom-host-test-utils",
+        "CompatChangeGatingTestBase",
+        "CtsMediaHostTestCommon",
     ],
     data: [
+        ":CtsAudioHostTestApp",
         ":CtsMediaMetricsHostTestApp",
+        ":CtsMediaRouterHostSideTestHelperApp",
+        ":CtsMediaRouterHostSideTestProviderApp1",
+        ":CtsMediaRouterHostSideTestProviderApp2",
+        ":CtsMediaRouterHostSideTestProviderApp3",
+        ":CtsMediaRouterHostSideTestProviderSelfScanOnlyApp",
         ":CtsMediaSessionHostTestApp",
         ":CtsMediaSessionTestHelper",
     ],

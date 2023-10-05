@@ -22,6 +22,8 @@ import android.content.pm.ResolveInfo;
 import android.provider.ContactsContract;
 import android.test.AndroidTestCase;
 
+import com.android.compatibility.common.util.CddTest;
+
 import java.util.List;
 
 /**
@@ -55,6 +57,7 @@ public class ContactsContractIntentsTest extends AndroidTestCase {
         assertCanBeHandled(intent);
     }
 
+    @CddTest(requirements={"3.18/C-2-1"})
     public void testSetDefaultAccount() {
         PackageManager packageManager = getContext().getPackageManager();
         if (packageManager.hasSystemFeature(PackageManager.FEATURE_WATCH)) {

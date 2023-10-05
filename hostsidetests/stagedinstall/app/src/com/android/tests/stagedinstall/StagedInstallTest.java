@@ -174,6 +174,8 @@ public class StagedInstallTest {
     private static final TestApp Apex3Rebootless = new TestApp(
             "StagedInstallTestApexV3_Rebootless", SHIM_APEX_PACKAGE_NAME, 3,
             /*isApex*/true, "com.android.apex.cts.shim.v3_rebootless.apex");
+    private static final TestApp Apex2AsApk = new TestApp("Apex2", SHIM_APEX_PACKAGE_NAME, 2,
+            /*isApex*/false, "com.android.apex.cts.shim.v2.apex");
 
     @Before
     public void adoptShellPermissions() {
@@ -181,6 +183,7 @@ public class StagedInstallTest {
                 .getInstrumentation()
                 .getUiAutomation()
                 .adoptShellPermissionIdentity(
+                        Manifest.permission.PACKAGE_USAGE_STATS,
                         Manifest.permission.INSTALL_PACKAGES,
                         Manifest.permission.DELETE_PACKAGES);
     }
@@ -549,7 +552,7 @@ public class StagedInstallTest {
     @Test
     public void testStageApkWithSameNameAsApexShouldFail_Commit() throws Exception {
         assertThat(getInstalledVersion(SHIM_APEX_PACKAGE_NAME)).isEqualTo(1);
-        int sessionId = stageSingleApk(TESTAPP_SAME_NAME_AS_APEX).assertSuccessful().getSessionId();
+        int sessionId = stageSingleApk(Apex2AsApk).assertSuccessful().getSessionId();
         assertSessionReady(sessionId);
         storeSessionId(sessionId);
     }
@@ -559,6 +562,9 @@ public class StagedInstallTest {
         int sessionId = retrieveLastSessionId();
         assertSessionFailed(sessionId);
         assertThat(getInstalledVersion(SHIM_APEX_PACKAGE_NAME)).isEqualTo(1);
+        PackageInstaller.SessionInfo sessionInfo = getSessionInfo(sessionId);
+        assertThat(sessionInfo.getStagedSessionErrorMessage()).contains(
+                "is an APEX package and can't be installed as an APK");
     }
 
     @Test
@@ -566,7 +572,7 @@ public class StagedInstallTest {
         assertThat(getInstalledVersion(SHIM_APEX_PACKAGE_NAME)).isEqualTo(1);
         InstallUtils.commitExpectingFailure(AssertionError.class,
                 "is an APEX package and can't be installed as an APK",
-                Install.single(TESTAPP_SAME_NAME_AS_APEX));
+                Install.single(Apex2AsApk));
         assertThat(getInstalledVersion(SHIM_APEX_PACKAGE_NAME)).isEqualTo(1);
     }
 
@@ -1024,7 +1030,8 @@ public class StagedInstallTest {
                         .getPackageInfo(SHIM_APEX_PACKAGE_NAME, PackageManager.MATCH_APEX);
         assertThat(shim.getLongVersionCode()).isEqualTo(1);
         // Check that APEX on /data wins.
-        assertThat(shim.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM).isEqualTo(0);
+        assertThat(shim.applicationInfo.flags & ApplicationInfo.FLAG_UPDATED_SYSTEM_APP)
+                .isEqualTo(ApplicationInfo.FLAG_UPDATED_SYSTEM_APP);
         assertThat(shim.applicationInfo.flags & ApplicationInfo.FLAG_INSTALLED).isEqualTo(
                 ApplicationInfo.FLAG_INSTALLED);
         assertThat(shim.applicationInfo.sourceDir)
@@ -1211,7 +1218,7 @@ public class StagedInstallTest {
         boolean isSystemApp = (info.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) != 0;
         boolean isUpdatedSystemApp =
                 (info.applicationInfo.flags & ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) != 0;
-        assertThat(isSystemApp).isFalse();
+        assertThat(isSystemApp).isTrue();
         assertThat(isUpdatedSystemApp).isTrue();
     }
 
@@ -1236,7 +1243,8 @@ public class StagedInstallTest {
         {
             PackageInfo apex = pm.getPackageInfo(SHIM_APEX_PACKAGE_NAME, PackageManager.MATCH_APEX);
             assertThat(apex.getLongVersionCode()).isEqualTo(2);
-            assertThat(apex.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM).isEqualTo(0);
+            assertThat(apex.applicationInfo.flags & ApplicationInfo.FLAG_UPDATED_SYSTEM_APP)
+                    .isEqualTo(ApplicationInfo.FLAG_UPDATED_SYSTEM_APP);
             assertThat(apex.applicationInfo.flags & ApplicationInfo.FLAG_INSTALLED)
                     .isEqualTo(ApplicationInfo.FLAG_INSTALLED);
             assertThat(apex.applicationInfo.sourceDir).startsWith("/data/apex/active");
@@ -1247,7 +1255,8 @@ public class StagedInstallTest {
             assertThat(apex.getLongVersionCode()).isEqualTo(1);
             assertThat(apex.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM)
                     .isEqualTo(ApplicationInfo.FLAG_SYSTEM);
-            assertThat(apex.applicationInfo.flags & ApplicationInfo.FLAG_INSTALLED).isEqualTo(0);
+            assertThat(apex.applicationInfo.flags & ApplicationInfo.FLAG_INSTALLED)
+                    .isEqualTo(ApplicationInfo.FLAG_INSTALLED);
             assertThat(apex.applicationInfo.sourceDir).startsWith("/system/apex");
         }
     }
@@ -1264,7 +1273,8 @@ public class StagedInstallTest {
         {
             PackageInfo apex = pm.getPackageInfo(SHIM_APEX_PACKAGE_NAME, PackageManager.MATCH_APEX);
             assertThat(apex.getLongVersionCode()).isEqualTo(3);
-            assertThat(apex.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM).isEqualTo(0);
+            assertThat(apex.applicationInfo.flags & ApplicationInfo.FLAG_UPDATED_SYSTEM_APP)
+                    .isEqualTo(ApplicationInfo.FLAG_UPDATED_SYSTEM_APP);
             assertThat(apex.applicationInfo.flags & ApplicationInfo.FLAG_INSTALLED)
                     .isEqualTo(ApplicationInfo.FLAG_INSTALLED);
             assertThat(apex.applicationInfo.sourceDir).startsWith("/data/apex/active");
@@ -1275,7 +1285,8 @@ public class StagedInstallTest {
             assertThat(apex.getLongVersionCode()).isEqualTo(1);
             assertThat(apex.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM)
                     .isEqualTo(ApplicationInfo.FLAG_SYSTEM);
-            assertThat(apex.applicationInfo.flags & ApplicationInfo.FLAG_INSTALLED).isEqualTo(0);
+            assertThat(apex.applicationInfo.flags & ApplicationInfo.FLAG_INSTALLED)
+                    .isEqualTo(ApplicationInfo.FLAG_INSTALLED);
             assertThat(apex.applicationInfo.sourceDir).startsWith("/system/apex");
         }
     }
@@ -1291,7 +1302,8 @@ public class StagedInstallTest {
         {
             PackageInfo apex = pm.getPackageInfo(SHIM_APEX_PACKAGE_NAME, PackageManager.MATCH_APEX);
             assertThat(apex.getLongVersionCode()).isEqualTo(3);
-            assertThat(apex.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM).isEqualTo(0);
+            assertThat(apex.applicationInfo.flags & ApplicationInfo.FLAG_UPDATED_SYSTEM_APP)
+                    .isEqualTo(ApplicationInfo.FLAG_UPDATED_SYSTEM_APP);
             assertThat(apex.applicationInfo.flags & ApplicationInfo.FLAG_INSTALLED)
                     .isEqualTo(ApplicationInfo.FLAG_INSTALLED);
             assertThat(apex.applicationInfo.sourceDir).startsWith("/data/apex/active");
@@ -1355,7 +1367,7 @@ public class StagedInstallTest {
 
         InstallUtils.commitExpectingFailure(
                 AssertionError.class,
-                "APK container signature of .+ is not compatible with currently installed",
+                "APK container signature of .+ is not compatible with the one currently installed",
                 Install.single(Apex2DifferentCertificate));
         assertThat(getInstalledVersion(SHIM_APEX_PACKAGE_NAME)).isEqualTo(1);
     }
@@ -1409,7 +1421,11 @@ public class StagedInstallTest {
         LocalIntentSender sender = new LocalIntentSender();
         InstallUtils.openPackageInstallerSession(sessionId)
                 .commit(sender.getIntentSender());
-        return sender.getResult();
+        var result = sender.pollResult(5, TimeUnit.MINUTES);
+        if (result == null) {
+            throw new AssertionError("Install timeout, sessionId=" + sessionId);
+        }
+        return result;
     }
 
     private static StageSessionResult stageDowngradeSingleApk(TestApp testApp) throws Exception {
@@ -1560,7 +1576,8 @@ public class StagedInstallTest {
 
         BroadcastCounter(String action) {
             mContext = InstrumentationRegistry.getInstrumentation().getContext();
-            mContext.registerReceiver(this, new IntentFilter(action));
+            mContext.registerReceiver(this, new IntentFilter(action),
+                    Context.RECEIVER_EXPORTED_UNAUDITED);
         }
 
         @Override
@@ -1600,5 +1617,10 @@ public class StagedInstallTest {
 
     private static PackageInstaller.SessionInfo getSessionInfo(int sessionId) {
         return getPackageInstaller().getSessionInfo(sessionId);
+    }
+
+    private static boolean isAuto() {
+        var pm = InstrumentationRegistry.getInstrumentation().getContext().getPackageManager();
+        return pm.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE);
     }
 }

@@ -3,14 +3,13 @@ package android.companion.cts.uiautomation
 import android.companion.AssociationRequest.DEVICE_PROFILE_APP_STREAMING
 import android.companion.AssociationRequest.DEVICE_PROFILE_AUTOMOTIVE_PROJECTION
 import android.companion.AssociationRequest.DEVICE_PROFILE_COMPUTER
-
+import android.companion.AssociationRequest.DEVICE_PROFILE_NEARBY_DEVICE_STREAMING
 import android.platform.test.annotations.AppModeFull
 import com.android.compatibility.common.util.FeatureUtil
+import org.junit.Assume.assumeFalse
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
-
-import org.junit.Assume.assumeFalse
 
 /**
  * Tests the Association Flow end-to-end.
@@ -30,12 +29,11 @@ class AssociationEndToEndSingleDeviceTest(
         super.setUp()
 
         assumeFalse(FeatureUtil.isWatch())
-        // TODO(b/211722613): Add support for DEVICE_PROFILE_APP_STREAMING
-        // DEVICE_PROFILE_COMPUTER and DEVICE_PROFILE_AUTOMOTIVE_PROJECTION
-        // profiles in the confirmation UI (the "single_device" flow variant).
+        // Self_managed profiles are not supported for single_device association flow.
         assumeFalse(profile == DEVICE_PROFILE_COMPUTER)
         assumeFalse(profile == DEVICE_PROFILE_APP_STREAMING)
         assumeFalse(profile == DEVICE_PROFILE_AUTOMOTIVE_PROJECTION)
+        assumeFalse(profile == DEVICE_PROFILE_NEARBY_DEVICE_STREAMING)
     }
 
     @Test

@@ -16,7 +16,6 @@
 
 package android.appsecurity.cts;
 
-import com.android.tradefed.util.RunUtil;
 import static org.junit.Assume.assumeTrue;
 
 import com.android.ddmlib.testrunner.TestResult.TestStatus;
@@ -29,6 +28,8 @@ import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 import com.android.tradefed.testtype.junit4.DeviceTestRunOptions;
 import com.android.tradefed.util.CommandResult;
 import com.android.tradefed.util.CommandStatus;
+import com.android.tradefed.util.RunInterruptedException;
+import com.android.tradefed.util.RunUtil;
 
 import com.google.common.truth.Truth;
 
@@ -36,6 +37,7 @@ import junit.framework.AssertionFailedError;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -49,15 +51,11 @@ public class StorageHostTest extends BaseHostJUnit4Test {
     private static final String PKG_STATS = "com.android.cts.storagestatsapp";
     private static final String PKG_A = "com.android.cts.storageapp_a";
     private static final String PKG_B = "com.android.cts.storageapp_b";
-    private static  final String PKG_NO_APP_STORAGE = "com.android.cts.noappstorage";
     private static final String APK_STATS = "CtsStorageStatsApp.apk";
     private static final String APK_A = "CtsStorageAppA.apk";
     private static final String APK_B = "CtsStorageAppB.apk";
-    private static final String APK_NO_APP_STORAGE = "CtsNoAppDataStorageApp.apk";
     private static final String CLASS_STATS = "com.android.cts.storagestatsapp.StorageStatsTest";
     private static final String CLASS = "com.android.cts.storageapp.StorageTest";
-    private static final String CLASS_NO_APP_STORAGE =
-            "com.android.cts.noappstorage.NoAppDataStorageTest";
     private static final String EXTERNAL_STORAGE_PATH = "/storage/emulated/%d/";
     private static final String ERROR_MESSAGE_TAG = "[ERROR]";
 
@@ -72,7 +70,6 @@ public class StorageHostTest extends BaseHostJUnit4Test {
         installPackage(APK_STATS);
         installPackage(APK_A);
         installPackage(APK_B);
-        installPackage(APK_NO_APP_STORAGE);
 
         for (int user : mUsers) {
             getDevice().executeShellCommand("appops set --user " + user + " " + PKG_STATS
@@ -87,7 +84,6 @@ public class StorageHostTest extends BaseHostJUnit4Test {
         getDevice().uninstallPackage(PKG_STATS);
         getDevice().uninstallPackage(PKG_A);
         getDevice().uninstallPackage(PKG_B);
-        getDevice().uninstallPackage(PKG_NO_APP_STORAGE);
     }
 
     @Test
@@ -162,7 +158,8 @@ public class StorageHostTest extends BaseHostJUnit4Test {
         }
     }
 
-    @Test
+    @Ignore("b/279718458")
+    // Equivalent test for clone profile added in AppCloningStorageHostTest
     public void testVerifyStatsExternalForClonedUser() throws Exception {
         int mCloneUserIdInt = createCloneUserAndInstallDeviceTestApk();
         runDeviceTests(PKG_STATS, CLASS_STATS, "testVerifyStatsExternal", mCloneUserIdInt, true);
@@ -240,23 +237,6 @@ public class StorageHostTest extends BaseHostJUnit4Test {
             Utils.runDeviceTestsAsCurrentUser(getDevice(), PKG_A, CLASS, "testClearSpace");
         } finally {
             getDevice().executeShellCommand("settings delete global hide_error_dialogs");
-        }
-    }
-
-    @Test
-    public void testNoInternalAppStorage() throws Exception {
-        for (int user : mUsers) {
-            runDeviceTests(
-                    PKG_NO_APP_STORAGE, CLASS_NO_APP_STORAGE, "testNoInternalCeStorage", user);
-            runDeviceTests(
-                    PKG_NO_APP_STORAGE, CLASS_NO_APP_STORAGE, "testNoInternalDeStorage", user);
-        }
-    }
-
-    @Test
-    public void testNoExternalAppStorage() throws Exception {
-        for (int user : mUsers) {
-            runDeviceTests(PKG_NO_APP_STORAGE, CLASS_NO_APP_STORAGE, "testNoExternalStorage", user);
         }
     }
 
@@ -342,8 +322,8 @@ public class StorageHostTest extends BaseHostJUnit4Test {
             } catch (Throwable e) {
                 if (System.currentTimeMillis() - start < timeoutMillis) {
                     try {
-                        Thread.sleep(100);
-                    } catch (InterruptedException ignored) {
+                        RunUtil.getDefault().sleep(100);
+                    } catch (RunInterruptedException ignored) {
                         throw new RuntimeException(e);
                     }
                 } else {

@@ -78,6 +78,11 @@ public final class NotificationQueryHelper<E extends Queryable> implements Notif
         return mChannelId;
     }
 
+    @Override
+    public boolean isEmptyQuery() {
+        return Queryable.isEmptyQuery(mChannelId);
+    }
+
     /** {@code true} if all filters are met by {@code value}. */
     @Override
     public boolean matches(Notification value) {

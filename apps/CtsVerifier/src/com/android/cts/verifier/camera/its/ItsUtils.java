@@ -200,7 +200,7 @@ public class ItsUtils {
                     "Invalid image format passed to getDataFromImage: " + image.getFormat());
         }
 
-        if (format == ImageFormat.JPEG) {
+        if ((format == ImageFormat.JPEG) || (format == ImageFormat.JPEG_R)) {
             // JPEG doesn't have pixelstride and rowstride, treat it as 1D buffer.
             ByteBuffer buffer = planes[0].getBuffer();
             if (quota != null) {
@@ -305,6 +305,7 @@ public class ItsUtils {
             case ImageFormat.RAW10:
             case ImageFormat.RAW12:
             case ImageFormat.JPEG:
+            case ImageFormat.JPEG_R:
             case ImageFormat.Y8:
                 return 1 == planes.length;
             default:

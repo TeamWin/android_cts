@@ -41,7 +41,6 @@ import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.media.MediaMetadataRetriever;
 import android.media.cts.CodecUtils;
-import android.media.cts.Preconditions;
 import android.media.cts.TestMediaDataSource;
 import android.net.Uri;
 import android.os.Build;
@@ -59,6 +58,7 @@ import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.MediaUtils;
+import com.android.compatibility.common.util.Preconditions;
 
 import org.junit.After;
 import org.junit.Before;

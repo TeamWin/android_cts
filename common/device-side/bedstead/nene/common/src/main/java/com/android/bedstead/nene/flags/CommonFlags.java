@@ -115,6 +115,7 @@ public final class CommonFlags {
             "ambient_context_manager_service";
     public static final String NAMESPACE_VENDOR_SYSTEM_NATIVE = "vendor_system_native";
     public static final String NAMESPACE_VENDOR_SYSTEM_NATIVE_BOOT = "vendor_system_native_boot";
+    public static final String NAMESPACE_MEMORY_SAFETY_NATIVE_BOOT = "memory_safety_native_boot";
     public static final String NAMESPACE_MEMORY_SAFETY_NATIVE = "memory_safety_native";
     public static final String NAMESPACE_WEAR = "wear";
     public static final String NAMESPACE_TRANSPARENCY_METADATA = "transparency_metadata";
@@ -130,5 +131,12 @@ public final class CommonFlags {
                 "disable_resources_updatability";
         public static final String DEPRECATE_USERMANAGERINTERNAL_DEVICEPOLICY_FLAG =
                 "deprecate_usermanagerinternal_devicepolicy";
+        public static final String PERMISSION_BASED_ACCESS_EXPERIMENT_FLAG =
+                "enable_permission_based_access";
+        public static final String ENABLE_COEXISTENCE_FLAG = "enable_coexistence";
+        public static final String ENABLE_DEVICE_POLICY_ENGINE_FLAG =
+                "enable_device_policy_engine";
+        public static final String ENABLE_WORK_PROFILE_TELEPHONY_FLAG =
+                "enable_work_profile_telephony";
     }
 }
