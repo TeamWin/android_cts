@@ -34,7 +34,7 @@ _PATCH_H = 0.1  # center 10%
 _PATCH_W = 0.1
 _PATCH_X = 0.5 - _PATCH_W/2
 _PATCH_Y = 0.5 - _PATCH_H/2
-_RGB_G_CH = 1
+_RGB_R_CH = 0
 _TMAP_NO_DELTA_FRAMES = list(range(_NUM_CAPTURES-1)) + list(
     range(_NUM_CAPTURES, 2*_NUM_CAPTURES-1))
 
@@ -52,9 +52,9 @@ def do_captures_and_extract_means(
     log_path: location to save images.
 
   Returns:
-    appended means list.
+    appended R channel means list.
   """
-  green_means = []
+  r_means = []
 
   for i in range(_NUM_CAPTURES):
     cap = cam.do_capture([req]*num_frames_per_cap, fmt)
@@ -65,8 +65,8 @@ def do_captures_and_extract_means(
         img, _PATCH_X, _PATCH_Y, _PATCH_W, _PATCH_H)
     rgb_means = image_processing_utils.compute_image_means(patch)
     logging.debug('%s frame %d means: %s', tonemap, i, str(rgb_means))
-    green_means.append(rgb_means[_RGB_G_CH])  # G, note python 2 version used R
-  return green_means
+    r_means.append(rgb_means[_RGB_R_CH])
+  return r_means
 
 
 class TonemapSequenceTest(its_base_test.ItsBaseTest):
