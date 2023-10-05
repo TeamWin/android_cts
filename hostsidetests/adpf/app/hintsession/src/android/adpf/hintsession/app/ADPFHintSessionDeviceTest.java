@@ -18,7 +18,7 @@ package android.adpf.hintsession.app;
 
 import static android.adpf.common.ADPFHintSessionConstants.TEST_NAME_KEY;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import android.app.Instrumentation;
 import android.content.Context;
@@ -39,23 +39,24 @@ public class ADPFHintSessionDeviceTest {
     private final Instrumentation mInstrumentation = InstrumentationRegistry.getInstrumentation();
 
     @Test
-    public void testMetrics() {
+    public void testAdpfHintSession() {
         final Context context = mInstrumentation.getContext();
         final Intent intent = new Intent(context, ADPFHintSessionDeviceActivity.class);
         // TODO: pass config to app
-        intent.putExtra(TEST_NAME_KEY, "testMetrics");
+        intent.putExtra(TEST_NAME_KEY, "testAdpfHintSession");
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        ADPFHintSessionDeviceActivity activity =
-                (ADPFHintSessionDeviceActivity) mInstrumentation.startActivitySync(intent);
-        // this will wait until onCreate finishes
-        mInstrumentation.waitForIdleSync();
 
-        ADPFHintSessionDeviceActivity.Result res = activity.getResult();
-        assertTrue(res.mErrMsg, res.mIsSuccess);
+        ADPFHintSessionDeviceActivity activity = (ADPFHintSessionDeviceActivity) mInstrumentation
+                .startActivitySync(intent);
+        // this will wait until the test is complete
+        activity.waitForTestFinished();
 
         // report metrics
         final Bundle returnBundle = new Bundle();
         Map<String, String> metrics = activity.getMetrics();
+        if (metrics.containsKey("failure")) {
+            fail("Failed with error: " + metrics.get("failure"));
+        }
         metrics.forEach(returnBundle::putString);
         SendToInstrumentation.sendBundle(mInstrumentation, returnBundle);
     }
