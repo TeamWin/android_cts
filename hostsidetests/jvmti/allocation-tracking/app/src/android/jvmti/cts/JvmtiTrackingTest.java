@@ -16,11 +16,10 @@ package android.jvmti.cts;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import java.util.ArrayList;
 import org.junit.Before;
 import org.junit.Test;
 
-import art.Main;
+import java.util.ArrayList;
 
 /**
  * Check tracking-related functionality.
@@ -54,7 +53,7 @@ public class JvmtiTrackingTest extends JvmtiTestBase {
         assertEquals(null, getAndResetAllocationTrackingString());
 
         // Enable actual logging callback.
-        setupObjectAllocCallback(true);
+        setupObjectAllocCallback(/* enable= */ true, /* global= */ true);
 
         enableAllocationTracking(null, true);
 
@@ -72,6 +71,10 @@ public class JvmtiTrackingTest extends JvmtiTestBase {
         l.add(new Float(1.0f));
 
         assertEquals(null, getAndResetAllocationTrackingString());
+
+        // Use a new listener to ensure we don't get any outstanding events from earlier which make
+        // the test flaky.
+        setupObjectAllocCallback(/* enable= */ true, /* global= */ false);
 
         enableAllocationTracking(Thread.currentThread(), true);
 
@@ -107,7 +110,7 @@ public class JvmtiTrackingTest extends JvmtiTestBase {
         // Disable actual logging callback and re-enable tracking, so we can keep the event enabled
         // and
         // check that shutdown works correctly.
-        setupObjectAllocCallback(false);
+        setupObjectAllocCallback(/* enable= */ false, /* global= */ false);
         enableAllocationTracking(null, true);
 
         assertEquals(null, getAndResetAllocationTrackingString());
@@ -167,7 +170,7 @@ public class JvmtiTrackingTest extends JvmtiTestBase {
         }
     }
 
-    private static native void setupObjectAllocCallback(boolean enable);
+    private static native void setupObjectAllocCallback(boolean enable, boolean global);
 
     private static native void enableAllocationTracking(Thread thread, boolean enable);
 
