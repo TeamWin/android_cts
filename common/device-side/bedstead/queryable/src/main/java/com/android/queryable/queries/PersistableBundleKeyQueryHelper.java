@@ -38,6 +38,7 @@ public final class PersistableBundleKeyQueryHelper<E extends Queryable>
     private final transient E mQuery;
     private Boolean mExpectsToExist = null;
     private StringQueryHelper<E> mStringQuery = null;
+    private BooleanQueryHelper<E> mBooleanQuery = null;
     private PersistableBundleQueryHelper<E> mPersistableBundleQuery;
 
     public PersistableBundleKeyQueryHelper(E query) {
@@ -48,6 +49,7 @@ public final class PersistableBundleKeyQueryHelper<E extends Queryable>
         mQuery = null;
         mExpectsToExist = readNullableBoolean(in);
         mStringQuery = in.readParcelable(BundleKeyQueryHelper.class.getClassLoader());
+        mBooleanQuery = in.readParcelable(BundleKeyQueryHelper.class.getClassLoader());
         mPersistableBundleQuery = in.readParcelable(
                 PersistableBundleKeyQueryHelper.class.getClassLoader());
     }
@@ -82,6 +84,15 @@ public final class PersistableBundleKeyQueryHelper<E extends Queryable>
     }
 
     @Override
+    public BooleanQuery<E> booleanValue() {
+        if (mBooleanQuery == null) {
+            checkUntyped();
+            mBooleanQuery = new BooleanQueryHelper<>(mQuery);
+        }
+        return mBooleanQuery;
+    }
+
+    @Override
     public PersistableBundleQuery<E> persistableBundleValue() {
         if (mPersistableBundleQuery == null) {
             checkUntyped();
@@ -91,7 +102,7 @@ public final class PersistableBundleKeyQueryHelper<E extends Queryable>
     }
 
     private void checkUntyped() {
-        if (mStringQuery != null || mPersistableBundleQuery != null) {
+        if (mStringQuery != null || mPersistableBundleQuery != null || mBooleanQuery != null) {
             throw new IllegalStateException("Each key can only be typed once");
         }
     }
@@ -100,7 +111,8 @@ public final class PersistableBundleKeyQueryHelper<E extends Queryable>
     public boolean isEmptyQuery() {
         return mExpectsToExist == null
                 && Queryable.isEmptyQuery(mStringQuery)
-                && Queryable.isEmptyQuery(mPersistableBundleQuery);
+                && Queryable.isEmptyQuery(mPersistableBundleQuery)
+                && Queryable.isEmptyQuery(mBooleanQuery);
     }
 
     public boolean matches(PersistableBundle value, String key) {
@@ -108,6 +120,9 @@ public final class PersistableBundleKeyQueryHelper<E extends Queryable>
             return false;
         }
         if (mStringQuery != null && !mStringQuery.matches(value.getString(key))) {
+            return false;
+        }
+        if (mBooleanQuery != null && !mBooleanQuery.matches(value.getBoolean(key))) {
             return false;
         }
         if (mPersistableBundleQuery != null
@@ -127,6 +142,9 @@ public final class PersistableBundleKeyQueryHelper<E extends Queryable>
         if (mStringQuery != null) {
             queryStrings.add(mStringQuery.describeQuery(fieldName + ".stringValue"));
         }
+        if (mBooleanQuery != null) {
+            queryStrings.add(mBooleanQuery.describeQuery(fieldName + ".booleanValue"));
+        }
         if (mPersistableBundleQuery != null) {
             queryStrings.add(mPersistableBundleQuery.describeQuery(
                     fieldName + ".persistableBundleValue"));
@@ -145,6 +163,7 @@ public final class PersistableBundleKeyQueryHelper<E extends Queryable>
         writeNullableBoolean(out, mExpectsToExist);
 
         out.writeParcelable(mStringQuery, flags);
+        out.writeParcelable(mBooleanQuery, flags);
         out.writeParcelable(mPersistableBundleQuery, flags);
     }
 
@@ -166,11 +185,12 @@ public final class PersistableBundleKeyQueryHelper<E extends Queryable>
         PersistableBundleKeyQueryHelper<?> that = (PersistableBundleKeyQueryHelper<?>) o;
         return Objects.equals(mExpectsToExist, that.mExpectsToExist)
                 && Objects.equals(mStringQuery, that.mStringQuery)
+                && Objects.equals(mBooleanQuery, that.mBooleanQuery)
                 && Objects.equals(mPersistableBundleQuery, that.mPersistableBundleQuery);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(mExpectsToExist, mStringQuery, mPersistableBundleQuery);
+        return Objects.hash(mExpectsToExist, mStringQuery, mBooleanQuery, mPersistableBundleQuery);
     }
 }

@@ -17,6 +17,7 @@
 package com.android.queryable.queries;
 
 import android.app.Notification;
+import android.service.notification.StatusBarNotification;
 
 import com.android.queryable.Queryable;
 
@@ -25,7 +26,7 @@ import com.android.queryable.Queryable;
  *
  * @param <E> The root of the query
  */
-public interface NotificationQuery<E extends Queryable> extends Query<Notification> {
+public interface NotificationQuery<E extends Queryable> extends Query<StatusBarNotification> {
 
     /** Queries a {@link Notification}. */
     static NotificationQueryHelper.NotificationQueryBase notification() {
@@ -34,4 +35,10 @@ public interface NotificationQuery<E extends Queryable> extends Query<Notificati
 
     /** Query the {@link Notification#getChannelId()}. */
     StringQuery<E> channelId();
+
+    /** Query the {@link Notification#extras}. */
+    BundleQuery<E> extras();
+
+    /** Query the {@link StatusBarNotification#getTag()}. */
+    StringQuery<E> tag();
 }

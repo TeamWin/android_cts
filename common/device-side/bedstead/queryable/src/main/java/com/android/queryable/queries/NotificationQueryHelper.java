@@ -19,6 +19,7 @@ package com.android.queryable.queries;
 import android.app.Notification;
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.service.notification.StatusBarNotification;
 
 import com.android.queryable.Queryable;
 import com.android.queryable.QueryableBaseWithMatch;
@@ -38,9 +39,11 @@ public final class NotificationQueryHelper<E extends Queryable> implements Notif
 
     private final transient E mQuery;
     private final StringQueryHelper<E> mChannelId;
+    private final BundleQueryHelper<E> mExtras;
+    private final StringQueryHelper<E> mTag;
 
     public static final class NotificationQueryBase extends
-            QueryableBaseWithMatch<Notification, NotificationQueryHelper<NotificationQueryBase>> {
+            QueryableBaseWithMatch<StatusBarNotification, NotificationQueryHelper<NotificationQueryBase>> {
         NotificationQueryBase() {
             super();
             setQuery(new NotificationQueryHelper<>(this));
@@ -66,11 +69,15 @@ public final class NotificationQueryHelper<E extends Queryable> implements Notif
     public NotificationQueryHelper(E query) {
         mQuery = query;
         mChannelId = new StringQueryHelper<>(query);
+        mExtras = new BundleQueryHelper<>(query);
+        mTag = new StringQueryHelper<>(query);
     }
 
     private NotificationQueryHelper(Parcel in) {
         mQuery = null;
         mChannelId = in.readParcelable(NotificationQueryHelper.class.getClassLoader());
+        mExtras = in.readParcelable(NotificationQueryHelper.class.getClassLoader());
+        mTag = in.readParcelable(NotificationQueryHelper.class.getClassLoader());
     }
 
     @Override
@@ -79,29 +86,50 @@ public final class NotificationQueryHelper<E extends Queryable> implements Notif
     }
 
     @Override
+    public BundleQuery<E> extras() {
+        return mExtras;
+    }
+
+    @Override
+    public StringQuery<E> tag() {
+        return mTag;
+    }
+
+    @Override
     public boolean isEmptyQuery() {
-        return Queryable.isEmptyQuery(mChannelId);
+        return Queryable.isEmptyQuery(mChannelId) && Queryable.isEmptyQuery(mExtras) && Queryable.isEmptyQuery(mTag);
     }
 
     /** {@code true} if all filters are met by {@code value}. */
     @Override
-    public boolean matches(Notification value) {
-        if (!mChannelId.matches(value.getChannelId())) {
+    public boolean matches(StatusBarNotification value) {
+        // TODO: Consider adding another .notification() level here and make this a statusbarnotificationquery?
+        if (!mChannelId.matches(value.getNotification().getChannelId())) {
+            return false;
+        }
+
+        if (!mExtras.matches(value.getNotification().extras)) {
+            return false;
+        }
+
+        if (!mTag.matches(value.getTag())) {
             return false;
         }
 
         return true;
     }
 
-    /** See {@link #matches(Notification)}. */
-    public static boolean matches(NotificationQueryHelper<?> query, Notification value) {
+    /** See {@link #matches(StatusBarNotification)}. */
+    public static boolean matches(NotificationQueryHelper<?> query, StatusBarNotification value) {
         return query.matches(value);
     }
 
     @Override
     public String describeQuery(String fieldName) {
         return Queryable.joinQueryStrings(
-                mChannelId.describeQuery(fieldName + ".channelId")
+                mChannelId.describeQuery(fieldName + ".channelId"),
+                mExtras.describeQuery(fieldName + ".extras"),
+                mTag.describeQuery(fieldName + ".tag")
         );
     }
 
@@ -113,6 +141,8 @@ public final class NotificationQueryHelper<E extends Queryable> implements Notif
     @Override
     public void writeToParcel(Parcel out, int flags) {
         out.writeParcelable(mChannelId, flags);
+        out.writeParcelable(mExtras, flags);
+        out.writeParcelable(mTag, flags);
     }
 
     public static final Parcelable.Creator<NotificationQueryHelper> CREATOR =
@@ -131,11 +161,13 @@ public final class NotificationQueryHelper<E extends Queryable> implements Notif
         if (this == o) return true;
         if (!(o instanceof NotificationQueryHelper)) return false;
         NotificationQueryHelper<?> that = (NotificationQueryHelper<?>) o;
-        return Objects.equals(mChannelId, that.mChannelId);
+        return Objects.equals(mChannelId, that.mChannelId)
+                && Objects.equals(mExtras, that.mExtras)
+                && Objects.equals(mTag, that.mTag);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(mChannelId);
+        return Objects.hash(mChannelId, mExtras, mTag);
     }
 }

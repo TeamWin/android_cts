@@ -94,6 +94,7 @@ import com.android.bedstead.harrier.annotations.EnsureHasWorkProfileKt;
 import com.android.bedstead.harrier.annotations.EnsureNotDemoMode;
 import com.android.bedstead.harrier.annotations.EnsurePackageNotInstalled;
 import com.android.bedstead.harrier.annotations.EnsurePasswordNotSet;
+import com.android.bedstead.harrier.annotations.EnsurePropertySet;
 import com.android.bedstead.harrier.annotations.EnsureScreenIsOn;
 import com.android.bedstead.harrier.annotations.EnsureSecureSettingSet;
 import com.android.bedstead.harrier.annotations.EnsureTestAppDoesNotHavePermission;
@@ -102,6 +103,8 @@ import com.android.bedstead.harrier.annotations.EnsureTestAppHasPermission;
 import com.android.bedstead.harrier.annotations.EnsureTestAppInstalled;
 import com.android.bedstead.harrier.annotations.EnsureWifiDisabled;
 import com.android.bedstead.harrier.annotations.EnsureWifiEnabled;
+import com.android.bedstead.harrier.annotations.EnsureWillNotTakeQuickBugReports;
+import com.android.bedstead.harrier.annotations.EnsureWillTakeQuickBugReports;
 import com.android.bedstead.harrier.annotations.FailureMode;
 import com.android.bedstead.harrier.annotations.OtherUser;
 import com.android.bedstead.harrier.annotations.RequireAdbOverWifi;
@@ -1721,5 +1724,23 @@ public class DeviceStateTest {
     @RequireHasDefaultBrowser
     public void requireHasDefaultBrowser_onDifferentUser_defaultContentSuggestionsServiceIsEnabled() {
         assertThat(TestApis.roles().getRoleHolders(RoleManager.ROLE_BROWSER)).isNotEmpty();
+    }
+
+    @Test
+    @EnsurePropertySet(key = "key", value = "value")
+    public void ensurePropertySetAnnotation_propertyIsSet() {
+        assertThat(TestApis.properties().get("key")).isEqualTo("value");
+    }
+
+    @Test
+    @EnsureWillTakeQuickBugReports
+    public void ensureWillTakeQuickBugReportsAnnotation_willTakeQuickBugReports() {
+        assertThat(TestApis.bugReports().willTakeQuickBugReports()).isTrue();
+    }
+
+    @Test
+    @EnsureWillNotTakeQuickBugReports
+    public void ensureWillNotTakeQuickBugReportsAnnotation_willNotTakeQuickBugReports() {
+        assertThat(TestApis.bugReports().willTakeQuickBugReports()).isFalse();
     }
 }

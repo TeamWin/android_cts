@@ -63,6 +63,7 @@ public final class InputMethodsTest {
     @ApiTest(apis = "android.app.admin.DevicePolicyManager#isCurrentInputMethodSetByOwner")
     @Postsubmit(reason = "new test")
     @Test
+    @PolicyAppliesTest(policy = SetDefaultInputMethod.class)
     public void isCurrentInputMethodSetByOwner_isNotSetByOwner_returnsFalse() {
         try {
             sDeviceState.dpc().devicePolicyManager().setSecureSetting(

@@ -100,18 +100,6 @@ public final class DeviceOwnerTest extends BaseDeviceOwnerTest {
     }
 
     @Test
-    public void testRemoteBugreportWithTwoUsers() throws Exception {
-        assumeCanCreateAdditionalUsers(1);
-        final int userId = createUser();
-        try {
-            executeDeviceTestMethod(".RemoteBugreportTest",
-                    "testRequestBugreportThrowsSecurityException");
-        } finally {
-            removeUser(userId);
-        }
-    }
-
-    @Test
     public void testCreateAndManageUser_MaxUsers() throws Exception {
         assumeCanCreateOneManagedUser();
 
@@ -524,15 +512,11 @@ public final class DeviceOwnerTest extends BaseDeviceOwnerTest {
             // This test will be skipped for headless system user mode since headless system user
             // does not have IME.
             executeDeviceTestMethod(".AdminActionBookkeepingTest",
-                    "testIsDefaultInputMethodSet");
-            executeDeviceTestMethod(".AdminActionBookkeepingTest",
                     "testGetPolicyInstalledCaCerts");
         }
 
         executeDeviceTestMethod(".AdminActionBookkeepingTest",
                 "testRetrieveSecurityLogs");
-        executeDeviceTestMethod(".AdminActionBookkeepingTest",
-                "testRequestBugreport");
         executeDeviceTestMethod(".AdminActionBookkeepingTest",
                 "testGetLastNetworkLogRetrievalTime");
         executeDeviceTestMethod(".AdminActionBookkeepingTest",
@@ -546,11 +530,6 @@ public final class DeviceOwnerTest extends BaseDeviceOwnerTest {
                 .setAdminPackageName(DEVICE_OWNER_PKG)
                 .build(),
         new DevicePolicyEventWrapper.Builder(EventId.RETRIEVE_PRE_REBOOT_SECURITY_LOGS_VALUE)
-                .setAdminPackageName(DEVICE_OWNER_PKG)
-                .build());
-        assertMetricsLogged(getDevice(), () -> {
-            executeDeviceTestMethod(".AdminActionBookkeepingTest", "testRequestBugreport");
-        }, new DevicePolicyEventWrapper.Builder(EventId.REQUEST_BUGREPORT_VALUE)
                 .setAdminPackageName(DEVICE_OWNER_PKG)
                 .build());
     }

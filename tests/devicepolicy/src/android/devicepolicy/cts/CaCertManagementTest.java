@@ -349,7 +349,7 @@ public final class CaCertManagementTest {
             String alias = sKeyStore.getCertificateAlias(sCertificate);
 
             assertThat(TestApis.devicePolicy().getOwnerInstalledCaCerts(
-                    sDeviceState.dpc().user().userHandle())).contains(alias);
+                    sDeviceState.dpc().user())).contains(alias);
         } finally {
             sDeviceState.dpc().devicePolicyManager().uninstallCaCert(
                     sDeviceState.dpc().componentName(), TEST_CERT_BYTES);

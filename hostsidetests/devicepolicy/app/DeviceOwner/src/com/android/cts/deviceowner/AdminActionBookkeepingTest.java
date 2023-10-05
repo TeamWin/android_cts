@@ -40,8 +40,6 @@ public class AdminActionBookkeepingTest extends BaseDeviceOwnerTest {
 
     private static final String TAG = AdminActionBookkeepingTest.class.getSimpleName();
 
-    private static final int NOTIFICATION_TIMEOUT_MS = 5 * 60_000; // 5 minutes
-
     @Override
     protected void tearDown() throws Exception {
         mDevicePolicyManager.setSecurityLoggingEnabled(getWho(), false);
@@ -87,64 +85,6 @@ public class AdminActionBookkeepingTest extends BaseDeviceOwnerTest {
             assertWithMessage("timestamp when device does not support pre-boot security logs")
                     .that(firstTimestamp).isEqualTo(secondTimestamp);
         }
-    }
-
-    /**
-     * Test: Requesting a bug report should update the corresponding timestamp.
-     */
-    public void testRequestBugreport() throws Exception {
-        Log.i(TAG, "testRequestBugreport()");
-
-        // This test leaves a notification which will block future tests that request bug reports
-        // to fix this - we dismiss the bug report before returning
-        CountDownLatch notificationDismissedLatch = initTestRequestBugreport();
-
-        sleep(1);
-        final long previousTimestamp = mDevicePolicyManager.getLastBugReportRequestTime();
-
-        final long timeBefore = System.currentTimeMillis();
-        mDevicePolicyManager.requestBugreport(getWho());
-        final long timeAfter = System.currentTimeMillis();
-
-        final long newTimestamp = mDevicePolicyManager.getLastBugReportRequestTime();
-        assertTimeStamps(timeBefore, previousTimestamp, newTimestamp, timeAfter);
-
-        cleanupTestRequestBugreport(notificationDismissedLatch);
-    }
-
-    private CountDownLatch initTestRequestBugreport() {
-        CountDownLatch notificationDismissedLatch = new CountDownLatch(1);
-        NotificationListener.getInstance().addListener((sbt) -> {
-            Log.i(TAG, "Received notification: " + sbt);
-            // The notification we are looking for is the one which confirms the bug report is
-            // ready and asks for consent to send it
-            if (sbt.getPackageName().equals("android") &&
-                    sbt.getTag().equals("DevicePolicyManager") &&
-                    sbt.getNotification().actions != null) {
-                try {
-                    // The first action is to decline
-                    sbt.getNotification().actions[0].actionIntent.send();
-                    notificationDismissedLatch.countDown();
-                } catch (PendingIntent.CanceledException e) {
-                    String msg = "Could not dismiss bug report notification";
-                    Log.e(TAG, msg, e);
-                    fail(msg);
-                }
-            }
-        });
-        return notificationDismissedLatch;
-    }
-
-    private void cleanupTestRequestBugreport(CountDownLatch notificationDismissedLatch)
-            throws Exception {
-        Log.d(TAG, "Waiting " + NOTIFICATION_TIMEOUT_MS + "ms for bugreport notification");
-        if (!notificationDismissedLatch.await(NOTIFICATION_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
-            String msg = "Didn't receive bugreport notification in " + NOTIFICATION_TIMEOUT_MS
-                    + " ms";
-            Log.e(TAG, msg);
-            fail(msg);
-        }
-        NotificationListener.getInstance().clearListeners();
     }
 
     /**
@@ -195,31 +135,6 @@ public class AdminActionBookkeepingTest extends BaseDeviceOwnerTest {
 
         assertWithMessage("dpm.isDeviceManaged()").that(mDevicePolicyManager.isDeviceManaged())
                 .isTrue();
-    }
-
-    /**
-     * Test: It should be recored whether the Device Owner or the user set the current IME.
-     */
-    public void testIsDefaultInputMethodSet() throws Exception {
-        Log.i(TAG, "testIsDefaultInputMethodSet()");
-
-        final String setting = Settings.Secure.DEFAULT_INPUT_METHOD;
-        final String ime = getSecureSettings(setting);
-
-        setSecureSettings(setting, "com.test.1");
-        sleep(500);
-        assertWithMessage("dpm.isCurrentInputMethodSetByOwner()")
-                .that(mDevicePolicyManager.isCurrentInputMethodSetByOwner()).isFalse();
-
-        mDevicePolicyManager.setSecureSetting(getWho(), setting, "com.test.2");
-        sleep(500);
-        assertWithMessage("%s.isCurrentInputMethodSetByOwner()", mDevicePolicyManager)
-                .that(mDevicePolicyManager.isCurrentInputMethodSetByOwner()).isTrue();
-
-        setSecureSettings(setting, ime);
-        sleep(500);
-        assertWithMessage("%s.isCurrentInputMethodSetByOwner()", mDevicePolicyManager)
-                .that(mDevicePolicyManager.isCurrentInputMethodSetByOwner()).isFalse();
     }
 
     /**
@@ -278,19 +193,5 @@ public class AdminActionBookkeepingTest extends BaseDeviceOwnerTest {
                 .isGreaterThan(timeStamp1);
         assertWithMessage("second timestamp range").that(timeStamp2)
                 .isIn(Range.closed(before, after));
-    }
-
-    private void setSecureSettings(String name, String value) {
-        final ContentResolver resolver = getContext().getContentResolver();
-        Log.d(TAG, "Setting '" + name + "'='" + value + "' on user " + getContext().getUserId());
-        Settings.Secure.putString(resolver, name , value);
-        Log.v(TAG, "Set");
-    }
-
-    private String getSecureSettings(String name) {
-        final ContentResolver resolver = getContext().getContentResolver();
-        String value = Settings.Secure.getString(resolver, name);
-        Log.d(TAG, "Got '" + name + "' for user " + getContext().getUserId() + ": " + value);
-        return value;
     }
 }
