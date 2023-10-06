@@ -17,6 +17,7 @@
 package com.android.bedstead.testapp.processor;
 
 
+import com.android.bedstead.remoteframeworkclasses.processor.MethodSignature;
 import com.android.bedstead.testapp.processor.annotations.FrameworkClass;
 import com.android.bedstead.testapp.processor.annotations.TestAppReceiver;
 import com.android.bedstead.testapp.processor.annotations.TestAppSender;
@@ -24,6 +25,7 @@ import com.android.bedstead.testapp.processor.annotations.TestAppSender;
 import com.google.android.enterprise.connectedapps.annotations.CrossProfile;
 import com.google.android.enterprise.connectedapps.annotations.CrossProfileConfiguration;
 import com.google.android.enterprise.connectedapps.annotations.CrossProfileProvider;
+import com.google.android.enterprise.connectedapps.annotations.CrossUser;
 import com.google.auto.service.AutoService;
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
@@ -150,6 +152,46 @@ public final class Processor extends AbstractProcessor {
     private static final ClassName REMOTE_BLUETOOTH_ADAPTER_WRAPPER_CLASSNAME =
             ClassName.get("android.bluetooth",
                     "RemoteBluetoothAdapterWrapper");
+
+    private static final ClassName NULL_PARCELABLE_REMOTE_DEVICE_POLICY_MANAGER_CLASSNAME =
+            ClassName.get("com.android.bedstead.remoteframeworkclasses",
+                    "NullParcelableRemoteDevicePolicyManager");
+    private static final ClassName NULL_PARCELABLE_REMOTE_CONTENT_RESOLVER_CLASSNAME =
+            ClassName.get("com.android.bedstead.remoteframeworkclasses",
+                    "NullParcelableRemoteContentResolver");
+    private static final ClassName NULL_PARCELABLE_REMOTE_BLUETOOTH_ADAPTER_CLASSNAME =
+            ClassName.get("com.android.bedstead.remoteframeworkclasses",
+                    "NullParcelableRemoteBluetoothAdapter");
+
+    // TODO(b/205562849): These only support passing null, which is fine for existing tests but
+    //  will be misleading
+    private static final ClassName NULL_PARCELABLE_ACTIVITY_CLASSNAME =
+            ClassName.get("com.android.bedstead.remoteframeworkclasses",
+                    "NullParcelableActivity");
+    private static final ClassName NULL_PARCELABLE_ACCOUNT_MANAGER_CALLBACK_CLASSNAME =
+            ClassName.get("com.android.bedstead.remoteframeworkclasses",
+                    "NullParcelableAccountManagerCallback");
+    private static final ClassName NULL_HANDLER_CALLBACK_CLASSNAME =
+            ClassName.get("com.android.bedstead.remoteframeworkclasses",
+                    "NullParcelableHandler");
+
+    private static final ClassName ACCOUNT_MANAGE_FUTURE_WRAPPER_CLASSNAME =
+            ClassName.get(
+                    "com.android.bedstead.remoteframeworkclasses", "AccountManagerFutureWrapper");
+
+    private static final String PARENT_PROFILE_INSTANCE =
+            "public android.app.admin.DevicePolicyManager getParentProfileInstance(android"
+                    + ".content.ComponentName)";
+    private static final String GET_CONTENT_RESOLVER =
+            "public android.content.ContentResolver getContentResolver()";
+
+    private static final String GET_REMOTE_CONTENT_RESOLVER =
+            "public android.content.RemoteContentResolver getContentResolver()";
+    private static final String GET_ADAPTER =
+            "public android.bluetooth.BluetoothAdapter getAdapter()";
+    private static final String GET_DEFAULT_ADAPTER =
+            "public static android.bluetooth.BluetoothAdapter getDefaultAdapter()";
+
 
     /**
      * Extract classes provided in an annotation.
@@ -527,6 +569,34 @@ public final class Processor extends AbstractProcessor {
     }
 
     private void generateTargetedRemoteActivityImpl(TypeElement neneActivityInterface) {
+        MethodSignature parentProfileInstanceSignature =
+                MethodSignature.forApiString(PARENT_PROFILE_INSTANCE, processingEnv.getTypeUtils(),
+                        processingEnv.getElementUtils());
+        MethodSignature getContentResolverSignature =
+                MethodSignature.forApiString(GET_CONTENT_RESOLVER, processingEnv.getTypeUtils(),
+                        processingEnv.getElementUtils());
+        MethodSignature getRemoteContentResolverSignature =
+                MethodSignature.forApiString(GET_REMOTE_CONTENT_RESOLVER, processingEnv.getTypeUtils(),
+                        processingEnv.getElementUtils());
+        MethodSignature getAdapterSignature =
+                MethodSignature.forApiString(GET_ADAPTER, processingEnv.getTypeUtils(),
+                        processingEnv.getElementUtils());
+        MethodSignature getDefaultAdapterSignature =
+                MethodSignature.forApiString(GET_DEFAULT_ADAPTER, processingEnv.getTypeUtils(),
+                        processingEnv.getElementUtils());
+
+        Map<MethodSignature, ClassName> signatureReturnOverrides = new HashMap<>();
+        signatureReturnOverrides.put(parentProfileInstanceSignature,
+                ClassName.get("android.app.admin", "RemoteDevicePolicyManager"));
+        signatureReturnOverrides.put(getContentResolverSignature,
+                ClassName.get("android.content", "RemoteContentResolver"));
+        signatureReturnOverrides.put(getRemoteContentResolverSignature,
+                ClassName.get("android.content", "RemoteContentResolver"));
+        signatureReturnOverrides.put(getAdapterSignature,
+                ClassName.get("android.bluetooth", "RemoteBluetoothAdapter"));
+        signatureReturnOverrides.put(getDefaultAdapterSignature,
+                ClassName.get("android.bluetooth", "RemoteBluetoothAdapter"));
+
         TypeSpec.Builder classBuilder =
                 TypeSpec.classBuilder(
                         TARGETED_REMOTE_ACTIVITY_IMPL_CLASSNAME)
@@ -573,9 +643,16 @@ public final class Processor extends AbstractProcessor {
                         "BaseTestAppActivity.findActivity(mContext, activityClassName).$L($L)",
                         method.getSimpleName(), String.join(", ", paramNames));
             } else {
-                methodBuilder.addStatement(
-                        "return BaseTestAppActivity.findActivity(mContext, activityClassName).$L($L)",
-                        method.getSimpleName(), String.join(", ", paramNames));
+                MethodSignature signature = MethodSignature.forMethod(method,
+                        processingEnv.getElementUtils());
+                if (signatureReturnOverrides.containsKey(signature)) {
+                    // TODO: This is a hack and will cause weird bugs in future...
+                    methodBuilder.addStatement("return null");
+                } else {
+                    methodBuilder.addStatement(
+                            "return BaseTestAppActivity.findActivity(mContext, activityClassName).$L($L)",
+                            method.getSimpleName(), String.join(", ", paramNames));
+                }
             }
 
             classBuilder.addMethod(methodBuilder.build());
@@ -775,6 +852,19 @@ public final class Processor extends AbstractProcessor {
                         TARGETED_REMOTE_ACTIVITY_CLASSNAME)
                         .addModifiers(Modifier.PUBLIC);
 
+        classBuilder.addAnnotation(AnnotationSpec.builder(CrossUser.class)
+                .addMember("parcelableWrappers",
+                        "{$T.class, $T.class, $T.class, $T.class, $T.class, $T.class}",
+                        NULL_PARCELABLE_REMOTE_DEVICE_POLICY_MANAGER_CLASSNAME,
+                        NULL_PARCELABLE_REMOTE_CONTENT_RESOLVER_CLASSNAME,
+                        NULL_PARCELABLE_REMOTE_BLUETOOTH_ADAPTER_CLASSNAME,
+                        NULL_PARCELABLE_ACTIVITY_CLASSNAME,
+                        NULL_PARCELABLE_ACCOUNT_MANAGER_CALLBACK_CLASSNAME,
+                        NULL_HANDLER_CALLBACK_CLASSNAME)
+                .addMember("futureWrappers", "$T.class",
+                        ACCOUNT_MANAGE_FUTURE_WRAPPER_CLASSNAME)
+                .build());
+
         for (ExecutableElement method : getMethods(neneActivityInterface,
                 processingEnv.getElementUtils())) {
             MethodSpec.Builder methodBuilder =
@@ -908,6 +998,13 @@ public final class Processor extends AbstractProcessor {
         interfaceClass.getInterfaces().stream()
                 .map(m -> elements.getTypeElement(m.toString()))
                 .forEach(m -> getMethods(methods, m, elements));
+
+        TypeElement superclassElement = (TypeElement) processingEnv.getTypeUtils()
+                .asElement(interfaceClass.getSuperclass());
+
+        if (superclassElement != null) {
+            getMethods(methods, superclassElement, elements);
+        }
     }
 
     private String methodHash(ExecutableElement method) {
