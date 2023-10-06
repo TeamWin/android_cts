@@ -60,6 +60,7 @@ java_library {
         "cts_window-extensions",
         "cts_window-extensions-core",
         "cts_window-sidecar",
+        "cts-wm-window-manager-helper",
     ],
     sdk_version: "test_current",
 }

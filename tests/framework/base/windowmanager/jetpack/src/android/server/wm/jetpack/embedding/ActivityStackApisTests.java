@@ -22,7 +22,7 @@ import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.createSplitP
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.createWildcardSplitPairRule;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.startActivityAndVerifySplitAttributes;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.waitAndAssertFinishing;
-import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.waitForFillsTask;
+import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.waitAndAssertResumedAndFillsTask;
 import static android.server.wm.jetpack.utils.TestActivityLauncher.KEY_ACTIVITY_ID;
 
 import static org.junit.Assert.assertEquals;
@@ -75,7 +75,7 @@ public class ActivityStackApisTests extends ActivityEmbeddingTestBase {
                 splitInfo.getPrimaryActivityStack().getToken()));
 
         waitAndAssertFinishing(primaryActivity);
-        waitForFillsTask(secondaryActivity);
+        waitAndAssertResumedAndFillsTask(secondaryActivity);
 
         List<SplitInfo> splitInfoList = mSplitInfoConsumer.waitAndGet();
         assertTrue(splitInfoList.isEmpty());
@@ -99,7 +99,7 @@ public class ActivityStackApisTests extends ActivityEmbeddingTestBase {
                 splitInfo.getSecondaryActivityStack().getToken()));
 
         waitAndAssertFinishing(secondaryActivity);
-        waitForFillsTask(primaryActivity);
+        waitAndAssertResumedAndFillsTask(primaryActivity);
 
         List<SplitInfo> splitInfoList = mSplitInfoConsumer.waitAndGet();
         assertTrue(splitInfoList.isEmpty());
@@ -170,7 +170,7 @@ public class ActivityStackApisTests extends ActivityEmbeddingTestBase {
 
         waitAndAssertFinishing(activityB);
         waitAndAssertFinishing(activityC);
-        waitForFillsTask(activityA);
+        waitAndAssertResumedAndFillsTask(activityA);
 
         List<SplitInfo> splitInfoList = mSplitInfoConsumer.waitAndGet();
         assertTrue(splitInfoList.isEmpty());

@@ -23,10 +23,8 @@ import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.assertValidS
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.createSplitPairRuleBuilder;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.startActivityAndVerifySplitAttributes;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.waitAndAssertNotVisible;
-import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.waitForFillsTask;
+import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.waitAndAssertResumedAndFillsTask;
 import static android.server.wm.jetpack.utils.TestActivityLauncher.KEY_ACTIVITY_ID;
-
-import static org.junit.Assert.assertTrue;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -71,7 +69,7 @@ public class ActivityEmbeddingBoundsTests extends ActivityEmbeddingTestBase {
      * Tests that when two activities are in a split and the parent bounds shrink such that
      * they can no longer support split activities, then the activities become stacked.
      */
-    @ApiTest(apis = "androidx.window.extensions.embedding.SplitRule")
+    @ApiTest(apis = {"androidx.window.extensions.embedding.SplitRule#checkParentMetrics"})
     @Test
     public void testParentWindowMetricsPredicate() {
         // Launch primary activity
@@ -105,13 +103,12 @@ public class ActivityEmbeddingBoundsTests extends ActivityEmbeddingTestBase {
             // Shrink the display by 10% to make the activities stacked
             mReportedDisplayMetrics.setSize(new Size((int) (originalDisplaySize.getWidth() * 0.9),
                     (int) (originalDisplaySize.getHeight() * 0.9)));
-            waitForFillsTask(secondaryActivity);
+            waitAndAssertResumedAndFillsTask(secondaryActivity);
             waitAndAssertNotVisible(primaryActivity);
 
             // Return the display to its original size and verify that the activities are split
-            secondaryActivity.resetBoundsChangeCounter();
             mReportedDisplayMetrics.setSize(originalDisplaySize);
-            assertTrue(secondaryActivity.waitForBoundsChange());
+            mInstrumentation.waitForIdleSync();
             assertValidSplit(primaryActivity, secondaryActivity, splitPairRule);
         }
     }
@@ -223,7 +220,7 @@ public class ActivityEmbeddingBoundsTests extends ActivityEmbeddingTestBase {
      * top-most activity split.
      */
     @ApiTest(apis = "androidx.window.extensions.embedding.SplitAttributes"
-            + ".SplitType.RatioSplitType")
+            + ".SplitType.RatioSplitType#getRatio")
     @Test
     public void testSplitRatio() {
         final String activityAId = "activityA";
@@ -272,7 +269,8 @@ public class ActivityEmbeddingBoundsTests extends ActivityEmbeddingTestBase {
         assertValidSplit(activityA, activityB, splitPairRuleAB);
     }
 
-    @ApiTest(apis = "androidx.window.extensions.embedding.SplitAttributes.HingeSplitType")
+    @ApiTest(apis = "androidx.window.extensions.embedding.SplitAttributes.HingeSplitType"
+            + "#HingeSplitType")
     @Test
     public void testHingeSplitType() {
         TestConfigChangeHandlingActivity primaryActivity = startFullScreenActivityNewTask(
@@ -293,8 +291,8 @@ public class ActivityEmbeddingBoundsTests extends ActivityEmbeddingTestBase {
     }
 
     /** Verifies {@link SplitAttributes.SplitType.ExpandContainersSplitType} behavior. */
-    @ApiTest(apis = "androidx.window.extensions.embedding.SplitAttributes"
-            + ".ExpandContainersSplitType")
+    @ApiTest(apis = {"androidx.window.extensions.embedding.SplitAttributes"
+            + ".ExpandContainersSplitType#ExpandContainersSplitType"})
     @Test
     public void testExpandSplitType() {
         SplitPairRule splitPairRule = createSplitPairRuleBuilder(

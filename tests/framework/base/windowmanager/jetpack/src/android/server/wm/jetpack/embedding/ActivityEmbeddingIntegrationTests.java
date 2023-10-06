@@ -22,6 +22,7 @@ import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.createSplitP
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.startActivityAndVerifyNoCallback;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.startActivityAndVerifySplitAttributes;
 import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.waitAndAssertResumed;
+import static android.server.wm.jetpack.utils.ActivityEmbeddingUtil.waitAndAssertResumedAndFillsTask;
 import static android.server.wm.jetpack.utils.ExtensionUtil.assumeExtensionSupportedDevice;
 import static android.server.wm.jetpack.utils.ExtensionUtil.assumeHasDisplayFeatures;
 import static android.server.wm.jetpack.utils.ExtensionUtil.getExtensionWindowLayoutComponent;
@@ -60,7 +61,8 @@ import java.util.Collections;
  * Build/Install/Run:
  *     atest CtsWindowManagerJetpackTestCases:ActivityEmbeddingIntegrationTests
  */
-@ApiTest(apis = {"androidx.window.extensions.embedding.SplitPairRule",
+@ApiTest(apis = {"androidx.window.extensions.embedding.SplitPairRule#checkParentMetrics",
+        "androidx.window.extensions.embedding.SplitPairRule#getDefaultSplitAttributes",
         "androidx.window.extensions.layout.WindowLayoutComponent#addWindowLayoutInfoListener"})
 @Presubmit
 @RunWith(AndroidJUnit4.class)
@@ -108,16 +110,10 @@ public class ActivityEmbeddingIntegrationTests extends ActivityEmbeddingTestBase
         assertEquals(windowLayoutInfo.getDisplayFeatures().size(),
                 newWindowLayoutInfo.getDisplayFeatures().size());
 
-        // Need to reset primary activity bounds change counter because entering the split already
-        // triggered a bounds change.
-        primaryActivity.resetBoundsChangeCounter();
-
         // Finish the secondary activity and verify that the primary activity still receives the
         // display features
         secondaryActivity.finish();
-        assertTrue(primaryActivity.waitForBoundsChange());
-        assertEquals(getMaximumActivityBounds(primaryActivity),
-                getActivityBounds(primaryActivity));
+        waitAndAssertResumedAndFillsTask(primaryActivity);
 
         newWindowLayoutInfo = getExtensionWindowLayoutInfo(primaryActivity);
         assertEquals(windowLayoutInfo.getDisplayFeatures().size(),
