@@ -2614,6 +2614,15 @@ public final class DeviceState extends HarrierRule {
             TestApis.devicePolicy().calculateHasIncompatibleAccounts();
         }
 
+        for (UserReference user : mUsersSetPasswords) {
+            if (mCreatedUsers.contains(user)) {
+                continue; // Will be removed anyway
+            }
+            user.clearPassword();
+        }
+
+        mUsersSetPasswords.clear();
+
         if (mHasChangedDeviceOwner) {
             if (mOriginalDeviceOwner == null) {
                 if (mDeviceOwner != null) {
@@ -2673,15 +2682,6 @@ public final class DeviceState extends HarrierRule {
                     mDevicePolicyManagerRoleHolder.user());
             mDevicePolicyManagerRoleHolder = null;
         }
-
-        for (UserReference user : mUsersSetPasswords) {
-            if (mCreatedUsers.contains(user)) {
-                continue; // Will be removed anyway
-            }
-            user.clearPassword();
-        }
-
-        mUsersSetPasswords.clear();
 
         UserReference ephemeralUser = null;
         UserReference currentUser = TestApis.users().current();
