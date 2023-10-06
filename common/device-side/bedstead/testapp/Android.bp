@@ -412,6 +412,7 @@ java_plugin {
         "auto_service_annotations",
         "TestApp_Annotations",
         "ConnectedAppsSDK_Annotations",
+        "RemoteFrameworkClasses_Processor_Src"
     ],
     srcs: [
         "src/processor/main/java/com/android/bedstead/testapp/processor/Processor.java",
