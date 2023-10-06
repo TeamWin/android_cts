@@ -62,6 +62,7 @@ import android.platform.test.annotations.Presubmit;
 import android.server.wm.CommandSession;
 import android.server.wm.CommandSession.ActivitySession;
 import android.server.wm.CommandSession.ActivitySessionClient;
+import android.server.wm.LockScreenSession;
 import android.server.wm.RotationSession;
 import android.server.wm.UiDeviceUtils;
 import android.server.wm.WindowManagerState;
@@ -760,7 +761,8 @@ public class KeyguardTests extends KeyguardTestBase {
      *        AOD is disabled for the default display, AOD status shouldn't be checked.
      */
     private void testScreenOffWhileOccludedStopsActivity(boolean assertAod) {
-        try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
+        try (LockScreenSession lockScreenSession =
+                    new LockScreenSession(mInstrumentation, mWmState)) {
             separateTestJournal();
             lockScreenSession.gotoKeyguard();
             mWmState.assertKeyguardShowingAndNotOccluded();
@@ -796,7 +798,8 @@ public class KeyguardTests extends KeyguardTestBase {
     }
 
     private void testScreenOffCausesSingleStop() {
-        try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
+        try (LockScreenSession lockScreenSession =
+                    new LockScreenSession(mInstrumentation, mWmState)) {
             separateTestJournal();
             launchActivity(TEST_ACTIVITY);
             waitAndAssertResumedActivity(TEST_ACTIVITY);

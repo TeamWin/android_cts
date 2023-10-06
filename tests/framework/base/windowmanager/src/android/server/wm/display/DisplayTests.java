@@ -31,6 +31,7 @@ import android.content.Context;
 import android.content.res.Configuration;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.DisplayMetricsSession;
+import android.server.wm.LockScreenSession;
 import android.server.wm.MultiDisplayTestBase;
 import android.server.wm.WindowManagerState;
 import android.server.wm.WindowManagerState.DisplayContent;

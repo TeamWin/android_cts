@@ -55,6 +55,7 @@ import android.server.wm.CommandSession.SizeInfo;
 import android.server.wm.Condition;
 import android.server.wm.DeprecatedTargetSdkUtils;
 import android.server.wm.HelperActivities;
+import android.server.wm.LockScreenSession;
 import android.server.wm.MultiDisplayTestBase;
 import android.server.wm.RotationSession;
 import android.server.wm.WaitForValidActivityState;

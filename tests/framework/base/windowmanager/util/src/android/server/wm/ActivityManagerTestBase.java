@@ -185,6 +185,7 @@ import androidx.test.core.app.ApplicationProvider;
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
 
 import com.android.compatibility.common.util.AppOpsUtils;
+import com.android.compatibility.common.util.FeatureUtil;
 import com.android.compatibility.common.util.GestureNavSwitchHelper;
 import com.android.compatibility.common.util.SystemUtil;
 
@@ -263,7 +264,6 @@ public abstract class ActivityManagerTestBase {
 
     private static Boolean sHasHomeScreen = null;
     private static Boolean sSupportsSystemDecorsOnSecondaryDisplays = null;
-    private static Boolean sSupportsInsecureLockScreen = null;
     private static Boolean sIsAssistantOnTop = null;
     private static Boolean sIsTablet = null;
     private static Boolean sDismissDreamOnActivityStart = null;
@@ -1216,15 +1216,13 @@ public abstract class ActivityManagerTestBase {
 
     /** Whether or not the device supports pin/pattern/password lock. */
     protected boolean supportsSecureLock() {
-        return hasDeviceFeature(FEATURE_SECURE_LOCK_SCREEN);
+        return FeatureUtil.hasSystemFeature(FEATURE_SECURE_LOCK_SCREEN);
     }
 
     /** Whether or not the device supports "swipe" lock. */
     protected boolean supportsInsecureLock() {
-        return !hasDeviceFeature(FEATURE_LEANBACK)
-                && !hasDeviceFeature(FEATURE_WATCH)
-                && !hasDeviceFeature(FEATURE_EMBEDDED)
-                && !hasDeviceFeature(FEATURE_AUTOMOTIVE)
+        return !FeatureUtil.hasAnySystemFeature(
+                FEATURE_LEANBACK, FEATURE_WATCH, FEATURE_EMBEDDED, FEATURE_AUTOMOTIVE)
                 && getSupportsInsecureLockScreen();
     }
 
@@ -1429,16 +1427,15 @@ public abstract class ActivityManagerTestBase {
     }
 
     protected boolean getSupportsInsecureLockScreen() {
-        if (sSupportsInsecureLockScreen == null) {
-            try {
-                sSupportsInsecureLockScreen = mContext.getResources().getBoolean(
-                        Resources.getSystem().getIdentifier(
-                                "config_supportsInsecureLockScreen", "bool", "android"));
-            } catch (Resources.NotFoundException e) {
-                sSupportsInsecureLockScreen = true;
-            }
+        boolean insecure;
+        try {
+            insecure = mContext.getResources().getBoolean(
+                    Resources.getSystem().getIdentifier(
+                            "config_supportsInsecureLockScreen", "bool", "android"));
+        } catch (Resources.NotFoundException e) {
+            insecure = true;
         }
-        return sSupportsInsecureLockScreen;
+        return insecure;
     }
 
     protected boolean isAssistantOnTopOfDream() {
@@ -1553,7 +1550,18 @@ public abstract class ActivityManagerTestBase {
 
     /** @see ObjectTracker#manage(AutoCloseable) */
     protected LockScreenSession createManagedLockScreenSession() {
-        return mObjectTracker.manage(new LockScreenSession());
+        return mObjectTracker.manage(new LockScreenSession(mInstrumentation, mWmState));
+    }
+
+    /** @see ObjectTracker#manage(AutoCloseable) */
+    protected LockScreenSession createManagedLockScreenSessionAndClearActivitiesOnClose() {
+        return mObjectTracker.manage(new LockScreenSession(mInstrumentation, mWmState) {
+            @Override
+            public void close() {
+                removeRootTasksWithActivityTypes(ALL_ACTIVITY_TYPE_BUT_HOME);
+                super.close();
+            }
+        });
     }
 
     /** @see ObjectTracker#manage(AutoCloseable) */
@@ -1698,201 +1706,6 @@ public abstract class ActivityManagerTestBase {
             executeShellCommand("cmd package set-home-activity --user "
                     + android.os.Process.myUserHandle().getIdentifier() + " "
                     + componentName.flattenToString());
-        }
-    }
-
-    public class LockScreenSession implements AutoCloseable {
-        private static final boolean DEBUG = false;
-
-        private final boolean mIsLockDisabled;
-        private boolean mLockCredentialSet;
-        private boolean mRemoveActivitiesOnClose;
-        private AmbientDisplayConfiguration mAmbientDisplayConfiguration;
-
-        public static final int FLAG_REMOVE_ACTIVITIES_ON_CLOSE = 1;
-
-        public LockScreenSession() {
-            this(0 /* flags */);
-        }
-
-        public LockScreenSession(int flags) {
-            mIsLockDisabled = isLockDisabled();
-            // Enable lock screen (swipe) by default.
-            setLockDisabled(false);
-            if ((flags & FLAG_REMOVE_ACTIVITIES_ON_CLOSE) != 0) {
-                mRemoveActivitiesOnClose = true;
-            }
-            mAmbientDisplayConfiguration = new AmbientDisplayConfiguration(mContext);
-
-            // On devices that don't support any insecure locks but supports a secure lock, let's
-            // enable a secure lock.
-            if (!supportsInsecureLock() && supportsSecureLock()) {
-                setLockCredential();
-            }
-        }
-
-        public LockScreenSession setLockCredential() {
-            if (mLockCredentialSet) {
-                // "set-pin" command isn't idempotent. We need to provide the old credential in
-                // order to change it to a new one. However we never use a different credential in
-                // CTS so we don't need to do anything if the credential is already set.
-                return this;
-            }
-            mLockCredentialSet = true;
-            runCommandAndPrintOutput("locksettings set-pin " + LOCK_CREDENTIAL);
-            return this;
-        }
-
-        public LockScreenSession enterAndConfirmLockCredential() {
-            // Ensure focus will switch to default display. Meanwhile we cannot tap on center area,
-            // which may tap on input credential area.
-            touchAndCancelOnDisplayCenterSync(DEFAULT_DISPLAY);
-
-            waitForDeviceIdle(3000);
-            SystemUtil.runWithShellPermissionIdentity(() ->
-                    mInstrumentation.sendStringSync(LOCK_CREDENTIAL));
-            pressEnterButton();
-            return this;
-        }
-
-        public LockScreenSession disableLockScreen() {
-            // Lock credentials need to be cleared before disabling the lock.
-            if (mLockCredentialSet) {
-                removeLockCredential();
-                mLockCredentialSet = false;
-            }
-            setLockDisabled(true);
-            return this;
-        }
-
-        public LockScreenSession sleepDevice() {
-            pressSleepButton();
-            // Not all device variants lock when we go to sleep, so we need to explicitly lock the
-            // device. Note that pressSleepButton() above is redundant because the action also
-            // puts the device to sleep, but kept around for clarity.
-            if (isWatch()) {
-                mInstrumentation.getUiAutomation().performGlobalAction(
-                        AccessibilityService.GLOBAL_ACTION_LOCK_SCREEN);
-            }
-            if (mAmbientDisplayConfiguration.alwaysOnEnabled(
-                    android.os.Process.myUserHandle().getIdentifier())) {
-                mWmState.waitForAodShowing();
-            } else {
-                Condition.waitFor("display to turn off", () -> !isDisplayOn(DEFAULT_DISPLAY));
-            }
-            if(!isLockDisabled()) {
-                mWmState.waitFor(state -> state.getKeyguardControllerState().keyguardShowing,
-                        "Keyguard showing");
-            }
-            return this;
-        }
-
-        public LockScreenSession wakeUpDevice() {
-            pressWakeupButton();
-            return this;
-        }
-
-        public LockScreenSession unlockDevice() {
-            // Make sure the unlock button event is send to the default display.
-            touchAndCancelOnDisplayCenterSync(DEFAULT_DISPLAY);
-
-            pressUnlockButton();
-            return this;
-        }
-
-        public LockScreenSession gotoKeyguard(ComponentName... showWhenLockedActivities) {
-            if (DEBUG && isLockDisabled()) {
-                logE("LockScreenSession.gotoKeyguard() is called without lock enabled.");
-            }
-            sleepDevice();
-            wakeUpDevice();
-            if (showWhenLockedActivities.length == 0) {
-                mWmState.waitForKeyguardShowingAndNotOccluded();
-            } else {
-                mWmState.waitForValidState(showWhenLockedActivities);
-            }
-            return this;
-        }
-
-        @Override
-        public void close() {
-            if (mRemoveActivitiesOnClose) {
-                removeRootTasksWithActivityTypes(ALL_ACTIVITY_TYPE_BUT_HOME);
-            }
-
-            final boolean wasCredentialSet = mLockCredentialSet;
-            boolean wasDeviceLocked = false;
-            if (mLockCredentialSet) {
-                wasDeviceLocked = mKm != null && mKm.isDeviceLocked();
-                removeLockCredential();
-                mLockCredentialSet = false;
-            }
-            setLockDisabled(mIsLockDisabled);
-
-            // Dismiss active keyguard after credential is cleared, so keyguard doesn't ask for
-            // the stale credential.
-            // TODO (b/112015010) If keyguard is occluded, credential cannot be removed as expected.
-            // LockScreenSession#close is always called before stopping all test activities,
-            // which could cause the keyguard to stay occluded after wakeup.
-            // If Keyguard is occluded, pressing the back key can hide the ShowWhenLocked activity.
-            wakeUpDevice();
-            pressBackButton();
-
-            // If the credential wasn't set, the steps for restoring can be simpler.
-            if (!wasCredentialSet) {
-                mWmState.computeState();
-                if (WindowManagerStateHelper.isKeyguardShowingAndNotOccluded(mWmState)) {
-                    // Keyguard is showing and not occluded so only need to unlock.
-                    unlockDevice();
-                    return;
-                }
-
-                final ComponentName home = mWmState.getHomeActivityName();
-                if (home != null && mWmState.hasActivityState(home, STATE_RESUMED)) {
-                    // Home is resumed so nothing to do (e.g. after finishing show-when-locked app).
-                    return;
-                }
-            }
-
-            // If device is unlocked, there might have ShowWhenLocked activity runs on,
-            // use home key to clear all activity at foreground.
-            pressHomeButton();
-            if (wasDeviceLocked) {
-                // The removal of credential needs an extra cycle to take effect.
-                sleepDevice();
-                wakeUpDevice();
-            }
-            if (isKeyguardLocked()) {
-                unlockDevice();
-            }
-        }
-
-        /**
-         * Returns whether the lock screen is disabled.
-         *
-         * @return true if the lock screen is disabled, false otherwise.
-         */
-        private boolean isLockDisabled() {
-            final String isLockDisabled = runCommandAndPrintOutput(
-                    "locksettings get-disabled " + oldIfNeeded()).trim();
-            return !"null".equals(isLockDisabled) && Boolean.parseBoolean(isLockDisabled);
-        }
-
-        /**
-         * Disable the lock screen.
-         *
-         * @param lockDisabled true if should disable, false otherwise.
-         */
-        protected void setLockDisabled(boolean lockDisabled) {
-            runCommandAndPrintOutput("locksettings set-disabled " + lockDisabled);
-        }
-
-        @NonNull
-        private String oldIfNeeded() {
-            if (mLockCredentialSet) {
-                return " --old " + LOCK_CREDENTIAL + " ";
-            }
-            return "";
         }
     }
 

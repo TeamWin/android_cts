@@ -36,6 +36,7 @@ import static org.junit.Assume.assumeTrue;
 
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.ActivityManagerTestBase;
+import android.server.wm.LockScreenSession;
 
 import org.junit.Before;
 import org.junit.Test;

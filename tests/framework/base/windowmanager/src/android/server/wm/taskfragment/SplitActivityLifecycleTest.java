@@ -46,6 +46,7 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.os.SystemProperties;
 import android.platform.test.annotations.Presubmit;
+import android.server.wm.LockScreenSession;
 import android.server.wm.RotationSession;
 import android.server.wm.WindowManagerState;
 import android.server.wm.WindowManagerState.TaskFragment;

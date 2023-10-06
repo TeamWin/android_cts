@@ -37,6 +37,7 @@ import android.platform.test.annotations.Presubmit;
 import android.server.wm.ActivityManagerTestBase;
 import android.server.wm.Condition;
 import android.server.wm.DreamCoordinator;
+import android.server.wm.LockScreenSession;
 import android.server.wm.RotationSession;
 import android.server.wm.app.Components;
 import android.view.Surface;

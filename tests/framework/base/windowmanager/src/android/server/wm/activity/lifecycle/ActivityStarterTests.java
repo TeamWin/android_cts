@@ -50,6 +50,7 @@ import android.os.Bundle;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.ActivityLauncher;
 import android.server.wm.HelperActivities;
+import android.server.wm.LockScreenSession;
 import android.server.wm.WaitForValidActivityState;
 import android.server.wm.app.Components;
 

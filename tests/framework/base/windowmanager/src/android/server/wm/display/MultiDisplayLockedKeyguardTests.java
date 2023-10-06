@@ -16,7 +16,6 @@
 
 package android.server.wm.display;
 
-import static android.server.wm.ActivityManagerTestBase.LockScreenSession.FLAG_REMOVE_ACTIVITIES_ON_CLOSE;
 import static android.server.wm.WindowManagerState.STATE_RESUMED;
 import static android.server.wm.WindowManagerState.STATE_STOPPED;
 import static android.server.wm.app.Components.DISMISS_KEYGUARD_ACTIVITY;
@@ -27,6 +26,7 @@ import static android.server.wm.app.Components.VIRTUAL_DISPLAY_ACTIVITY;
 import static org.junit.Assume.assumeTrue;
 
 import android.platform.test.annotations.Presubmit;
+import android.server.wm.LockScreenSession;
 import android.server.wm.MultiDisplayTestBase;
 import android.server.wm.WindowManagerState.DisplayContent;
 
@@ -112,7 +112,7 @@ public class MultiDisplayLockedKeyguardTests extends MultiDisplayTestBase {
     @Test
     public void testDismissKeyguard_secondaryDisplay() {
         final LockScreenSession lockScreenSession =
-                mObjectTracker.manage(new LockScreenSession(FLAG_REMOVE_ACTIVITIES_ON_CLOSE));
+                createManagedLockScreenSessionAndClearActivitiesOnClose();
         lockScreenSession.setLockCredential();
 
         final DisplayContent newDisplay = createManagedVirtualDisplaySession()
@@ -135,7 +135,7 @@ public class MultiDisplayLockedKeyguardTests extends MultiDisplayTestBase {
     @Test
     public void testDismissKeyguard_whileOccluded_secondaryDisplay() {
         final LockScreenSession lockScreenSession =
-                mObjectTracker.manage(new LockScreenSession(FLAG_REMOVE_ACTIVITIES_ON_CLOSE));
+                createManagedLockScreenSessionAndClearActivitiesOnClose();
         lockScreenSession.setLockCredential();
 
         final DisplayContent newDisplay = createManagedVirtualDisplaySession()
