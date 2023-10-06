@@ -6,7 +6,8 @@ android_library {
     name: "RemoteFrameworkClasses",
     sdk_version: "test_current",
     srcs: [
-        "src/types/main/java/**/*.java"
+        "src/types/main/java/**/*.java",
+        "src/types/main/java/**/*.kt",
     ],
     static_libs: [
         "RemoteFrameworkClasses_Annotations",
@@ -21,14 +22,18 @@ android_library {
 java_library {
     name: "RemoteFrameworkClasses_Annotations",
     srcs: [
-        "src/processor/main/java/com/android/bedstead/remoteframeworkclasses/processor/annotations/*.java"
+        "src/processor/main/java/com/android/bedstead/remoteframeworkclasses/processor/annotations/*.java",
+        "src/processor/main/java/com/android/bedstead/remoteframeworkclasses/processor/annotations/*.kt",
     ],
     host_supported: true
 }
 
-java_plugin {
-    name: "RemoteFrameworkClasses_Processor",
-    processor_class: "com.android.bedstead.remoteframeworkclasses.processor.Processor",
+java_library_host {
+    name: "RemoteFrameworkClasses_Processor_Src",
+    srcs: [
+        "src/processor/main/java/com/android/bedstead/remoteframeworkclasses/processor/*.java",
+        "src/processor/main/java/com/android/bedstead/remoteframeworkclasses/processor/*.kt",
+    ],
     static_libs: [
         "guava",
         "javapoet",
@@ -36,12 +41,17 @@ java_plugin {
         "RemoteFrameworkClasses_Annotations",
         "ConnectedAppsSDK_Annotations"
     ],
-    srcs: [
-        "src/processor/main/java/com/android/bedstead/remoteframeworkclasses/processor/*.java"
-    ],
-    plugins: ["auto_service_plugin"],
-    generates_api: true,
     java_resource_dirs: [
         "src/processor/res"
     ],
+    plugins: ["auto_service_plugin"],
+}
+
+java_plugin {
+    name: "RemoteFrameworkClasses_Processor",
+    processor_class: "com.android.bedstead.remoteframeworkclasses.processor.Processor",
+    static_libs: [
+        "RemoteFrameworkClasses_Processor_Src"
+    ],
+    generates_api: true,
 }
