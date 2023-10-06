@@ -994,8 +994,6 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
      * 50 seconds. Tests will time out after approximately 60 seconds, so binding needs to happen
      * in under 10 seconds.
      */
-// TODO (b/300941310): Restore test
-/**
     @LargeTest
     @RequiresDevice
     public void testRankingUpdateSentWithPressure() throws Exception {
@@ -1104,7 +1102,7 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         mListener.removeTestPackage(PRESSURE_APP_06);
         mListener.removeTestPackage(PRESSURE_APP_07);
     }
-*/
+
     public void testSuspendedPackageSendsNotification() throws Exception {
         mListener = mNotificationHelper.enableListener(STUB_PACKAGE_NAME);
         assertNotNull(mListener);
