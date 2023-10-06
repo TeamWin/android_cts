@@ -138,13 +138,6 @@ public final class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
         super.testDelegatedCertInstaller();
     }
 
-    @FlakyTest(bugId = 141161038)
-    @Override
-    @Test
-    public void testCannotRemoveUserIfRestrictionSet() throws Exception {
-        super.testCannotRemoveUserIfRestrictionSet();
-    }
-
     @FlakyTest(bugId = 137088260)
     @Test
     public void testWifi() throws Exception {
@@ -442,13 +435,6 @@ public final class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
     @IgnoreOnHeadlessSystemUserMode(reason = "Headless system user doesn't launch activities")
     public void testCreateAdminSupportIntent() throws Exception {
         super.testCreateAdminSupportIntent();
-    }
-
-    @Override
-    @Test
-    @IgnoreOnHeadlessSystemUserMode(reason = "Headless system user doesn't launch activities")
-    public void testPersistentIntentResolving() throws Exception {
-        super.testPersistentIntentResolving();
     }
 
     @Override

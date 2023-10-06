@@ -66,11 +66,13 @@ android_test {
         "LocationAccessingApp/**/I*.aidl",
         "TestExternalImsServiceApp/**/*.java",
         "TestExternalImsServiceApp/**/I*.aidl",
+        "src/android/telephony/satellite/cts/I*.aidl",
     ],
     aidl: {
         local_include_dirs: [
             "EmbmsMiddlewareTestApp/aidl/",
             "TestExternalImsServiceApp/aidl/",
+            "src/android/telephony/satellite/cts",
         ],
     },
     test_suites: [

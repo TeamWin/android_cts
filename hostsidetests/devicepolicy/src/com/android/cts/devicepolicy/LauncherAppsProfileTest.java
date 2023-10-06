@@ -31,7 +31,7 @@ import java.util.Collections;
  * Set of tests for LauncherApps with managed profiles.
  */
 @RequiresAdditionalFeatures({FEATURE_MANAGED_USERS})
-public class LauncherAppsProfileTest extends BaseLauncherAppsTest {
+public final class LauncherAppsProfileTest extends BaseLauncherAppsTest {
 
     private static final String MANAGED_PROFILE_PKG = "com.android.cts.managedprofile";
     private static final String MANAGED_PROFILE_APK = "CtsManagedProfileApp.apk";

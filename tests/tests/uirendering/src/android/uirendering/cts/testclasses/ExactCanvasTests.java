@@ -48,6 +48,7 @@ import com.android.compatibility.common.util.ApiTest;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.io.File;
 import java.util.Arrays;
 
 @MediumTest
@@ -170,6 +171,12 @@ public class ExactCanvasTests extends ActivityTestBase {
         Paint p = new Paint();
         p.setColor(Color.BLACK);
         p.setAntiAlias(true);
+
+        File file = TypefaceTestUtil.getFirstFont(testString, p);
+        if (!file.getName().startsWith("Roboto")) {
+            p.setTypeface(TypefaceTestUtil.getRobotoTypeface(400, false));
+        }
+
         canvas.drawTextOnPath(testString, path, 0f, 0f, p);
     }
 

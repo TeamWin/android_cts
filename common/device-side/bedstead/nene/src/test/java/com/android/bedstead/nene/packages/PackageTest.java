@@ -180,7 +180,7 @@ public class PackageTest {
         try {
             sTestApp.pkg().uninstall(sDeviceState.secondaryUser());
         } finally {
-            sTestApp.pkg().uninstall(TestApis.users().instrumented());
+            sTestApp.pkg().uninstallFromAllUsers();
         }
     }
 

@@ -82,6 +82,12 @@ public final class IntentQueryHelper<E extends Queryable> implements IntentQuery
         return mExtras;
     }
 
+    @Override
+    public boolean isEmptyQuery() {
+        return Queryable.isEmptyQuery(mAction)
+                && Queryable.isEmptyQuery(mExtras);
+    }
+
     /** {@code true} if all filters are met by {@code value}. */
     @Override
     public boolean matches(Intent value) {

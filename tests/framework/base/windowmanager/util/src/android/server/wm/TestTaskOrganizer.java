@@ -132,8 +132,7 @@ public class TestTaskOrganizer extends TaskOrganizer {
 
             // Set the roots as adjacent to each other.
             final WindowContainerTransaction wct = new WindowContainerTransaction();
-            wct.setAdjacentRoots(mRootPrimary.getToken(), mRootSecondary.getToken(),
-                    true /* moveTogether */);
+            wct.setAdjacentRoots(mRootPrimary.getToken(), mRootSecondary.getToken());
             wct.setLaunchAdjacentFlagRoot(mRootSecondary.getToken());
             applyTransaction(wct);
         }
@@ -164,9 +163,10 @@ public class TestTaskOrganizer extends TaskOrganizer {
     }
 
     public void registerOrganizerIfNeeded() {
-        synchronized(this){
+        synchronized (this) {
             if (mRegistered) return;
-            NestedShellPermission.run(()->{
+
+            NestedShellPermission.run(() -> {
                 registerOrganizer();
             });
             mRegistered = true;
@@ -258,7 +258,7 @@ public class TestTaskOrganizer extends TaskOrganizer {
         dismissSplitScreen(false /* primaryOnTop */);
     }
 
-    void dismissSplitScreen(boolean primaryOnTop) {
+    public void dismissSplitScreen(boolean primaryOnTop) {
         dismissSplitScreen(new WindowContainerTransaction(), primaryOnTop);
     }
 

@@ -16,24 +16,30 @@
 
 package android.os.cts;
 
-import java.io.ByteArrayOutputStream;
-import java.io.FileDescriptor;
-import java.io.PrintWriter;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.Arrays;
+import static org.testng.Assert.assertThrows;
 
+import android.app.ActivityManager;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.Binder;
+import android.os.ConditionVariable;
 import android.os.IBinder;
 import android.os.IInterface;
 import android.os.Parcel;
 import android.os.Process;
 import android.os.RemoteException;
+import android.platform.test.annotations.AppModeFull;
 
-import static org.testng.Assert.assertThrows;
+import com.android.compatibility.common.util.ApiTest;
+
+import java.io.ByteArrayOutputStream;
+import java.io.FileDescriptor;
+import java.io.PrintWriter;
+import java.util.Arrays;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 public class BinderTest extends ActivityTestsBase {
     private static final String DESCRIPTOR_GOOGLE = "google";
@@ -50,6 +56,8 @@ public class BinderTest extends ActivityTestsBase {
     private Binder mStartReceiver;
     private int mStartState;
     private Intent mService;
+    private IEmptyService mEmptyService;
+    private IBinder mWhichBinderDied;
 
     @Override
     protected void setUp() throws Exception {
@@ -335,6 +343,78 @@ public class BinderTest extends ActivityTestsBase {
         assertTrue(mBinder.pingBinder());
 
         assertTrue(IBinder.getSuggestedMaxIpcSizeBytes() > 0);
+    }
+
+    /**
+     * Tests whether onBinderDied passes in the correct IBinder that died
+     */
+    @AppModeFull(reason = "Instant apps cannot hold KILL_BACKGROUND_PROCESSES permission")
+    @ApiTest(apis = {"android.os.IBinder.DeathRecipient#binderDied(IBinder)"})
+    public void testBinderDiedWho() {
+        final ConditionVariable connected = new ConditionVariable();
+        final ConditionVariable died = new ConditionVariable();
+
+        ServiceConnection serviceConnection = new ServiceConnection() {
+            public void onServiceConnected(ComponentName className,
+                    IBinder service) {
+                mEmptyService = IEmptyService.Stub.asInterface(service);
+                connected.open();
+            }
+            public void onServiceDisconnected(ComponentName className) {
+                mEmptyService = null;
+            }
+        };
+
+        // Connect to EmptyService in another process
+        final Intent remoteIntent = new Intent(IEmptyService.class.getName());
+        remoteIntent.setPackage(getContext().getPackageName());
+        getContext().bindService(remoteIntent, serviceConnection, Context.BIND_AUTO_CREATE);
+        if (!connected.block(DELAY_MSEC)) {
+            fail("Couldn't connect to EmptyService");
+        }
+
+        mWhichBinderDied = null;
+
+        // Link to death
+        IBinder token = null;
+        IBinder.DeathRecipient recipient = null;
+        try {
+            token = mEmptyService.getToken();
+            token.linkToDeath(recipient = new IBinder.DeathRecipient() {
+                public void binderDied() {
+                    // Legacy
+                }
+
+                public void binderDied(IBinder who) {
+                    mWhichBinderDied = who;
+                    died.open();
+                }
+            }, 0);
+        } catch (RemoteException re) {
+            fail("Couldn't get token and linkToDeath: " + re);
+        }
+
+        // Unbind and kill background processes
+        getContext().unbindService(serviceConnection);
+
+        // Can take a couple of seconds for the proc state to drop
+        final int nAttempts = 5;
+        for (int trials = 0; trials < nAttempts; trials++) {
+            getContext().getSystemService(ActivityManager.class).killBackgroundProcesses(
+                    getContext().getPackageName()
+            );
+            // Try for a total of DELAY_MSEC
+            if (died.block(DELAY_MSEC / nAttempts)) {
+                break;
+            }
+        }
+
+        // Clean up
+        if (token != null && recipient != null) {
+            token.unlinkToDeath(recipient, 0);
+        }
+        // Verify the IBinder
+        assertEquals("Incorrect token received on binder death", token, mWhichBinderDied);
     }
 
     public void testFlushPendingCommands() {

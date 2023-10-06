@@ -27,15 +27,11 @@
     <activity android:name=".MainActivity"
               android:label="MainActivity"
               android:exported="true" >
-      <intent-filter>
-        <action android:name="android.intent.action.MAIN"/>
-        <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST"/>
-      </intent-filter>
     </activity>
     <receiver android:name="android.localemanager.cts.installer.InstallerBroadcastReceiver"  android:exported="true" android:enabled="true">
       <intent-filter>
         <action android:name="android.intent.action.APPLICATION_LOCALE_CHANGED"/>
-        <action android:name="any.action"/>
+        <action android:name="android.locale.cts.action.RECEIVER_ACTION"/>
       </intent-filter>
     </receiver>
   </application>

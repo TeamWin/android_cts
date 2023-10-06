@@ -73,20 +73,20 @@ public class ImeInsetsControllerTest extends EndToEndImeTestBase {
         final AtomicReference<Window> windowRef = new AtomicReference<>();
         new TestActivity.Starter().withWindowingMode(
                 WindowConfiguration.WINDOWING_MODE_FULLSCREEN).startSync(activity -> {
-            final LinearLayout layout = new LinearLayout(activity);
-            layout.setOrientation(LinearLayout.VERTICAL);
+                    final LinearLayout layout = new LinearLayout(activity);
+                    layout.setOrientation(LinearLayout.VERTICAL);
 
-            final EditText editText = new EditText(activity);
-            editText.setPrivateImeOptions(TEST_MARKER);
-            editText.setHint("editText");
-            editText.requestFocus();
-            editTextRef.set(editText);
+                    final EditText editText = new EditText(activity);
+                    editText.setPrivateImeOptions(TEST_MARKER);
+                    editText.setHint("editText");
+                    editText.requestFocus();
+                    editTextRef.set(editText);
 
-            windowRef.set(activity.getWindow());
+                    windowRef.set(activity.getWindow());
 
-            layout.addView(editText);
-            return layout;
-        });
+                    layout.addView(editText);
+                    return layout;
+                }, TestActivity.class);
         return new Pair<>(editTextRef.get(), windowRef.get());
     }
 

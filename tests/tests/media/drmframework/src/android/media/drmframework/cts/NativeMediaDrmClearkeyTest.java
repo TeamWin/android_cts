@@ -310,8 +310,7 @@ public class NativeMediaDrmClearkeyTest extends MediaPlayerDrmTestBase {
                 VIDEO_WIDTH_CENC, VIDEO_HEIGHT_CENC);
     }
 
-    // TODO(b/208938664) Change this sdk version suppression to T once it's defined to number (33).
-    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.S_V2)
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.TIRAMISU)
     public void testClearKeyGetKeyRequest() throws Exception {
         PlaybackParams params = new PlaybackParams();
         params.surface = mActivity.getSurfaceHolder().getSurface();

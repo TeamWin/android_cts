@@ -87,6 +87,17 @@ public final class PersistableBundleQueryHelper<E extends Queryable>
     }
 
     @Override
+    public boolean isEmptyQuery() {
+        for (Map.Entry<String, PersistableBundleKeyQueryHelper<E>> keyQueries :
+                mKeyQueryHelpers.entrySet()) {
+            if (!Queryable.isEmptyQuery(keyQueries.getValue())) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    @Override
     public boolean matches(PersistableBundle value) {
         for (Map.Entry<String, PersistableBundleKeyQueryHelper<E>> keyQueries :
                 mKeyQueryHelpers.entrySet()) {

@@ -113,13 +113,14 @@ class ApduScriptUtil {
                     "Unable to determine physical slot + port from logical slot: " + logicalSlotId);
         }
 
-        Pair<Integer, Integer> halVersion = getContext().getSystemService(TelephonyManager.class)
-                .getRadioHalVersion();
-        Log.i(TAG, "runApduScript with hal version: " + halVersion.first + "." + halVersion.second);
+        Pair<Integer, Integer> simHalVersion = getContext().getSystemService(TelephonyManager.class)
+                .getHalVersion(TelephonyManager.HAL_SERVICE_SIM);
+        Log.i(TAG, "runApduScript with Sim hal version: " + simHalVersion.first
+                + "." + simHalVersion.second);
         boolean listenToSimCardStateChange = true;
         // After hal version 1.6, powers SIM card down will not generate SIM ABSENT or
         // SIM PRESENT events, we have to switch to listen to SIM application states instead.
-        if ((halVersion.first == 1 && halVersion.second == 6) || halVersion.first == 2) {
+        if ((simHalVersion.first == 1 && simHalVersion.second == 6) || simHalVersion.first == 2) {
             listenToSimCardStateChange = false;
         }
 

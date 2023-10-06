@@ -31,5 +31,11 @@
                 <action android:name="android.service.notification.NotificationListenerService" />
             </intent-filter>
         </service>
+
+        <service
+            android:name="com.android.bedstead.nene.utils.BlockingIntentSenderService"
+            android:label="Blocking Intent Sender Service"
+            android:exported="true">
+        </service>
     </application>
 </manifest>

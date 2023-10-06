@@ -21,6 +21,7 @@ import static com.android.bedstead.harrier.annotations.AnnotationRunPrecedence.E
 import com.android.bedstead.harrier.annotations.AnnotationRunPrecedence;
 import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
 import com.android.bedstead.harrier.annotations.RequireRunOnInitialUser;
+import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDelegate;
 import com.android.bedstead.harrier.annotations.meta.ParameterizedAnnotation;
 
 import java.lang.annotation.ElementType;
@@ -36,7 +37,9 @@ import java.lang.annotation.Target;
 @EnsureHasWorkProfile(
         isOrganizationOwned = true,
         dpcIsPrimary = true,
-        useParentInstanceOfDpc = true)
+        useParentInstanceOfDpc = true,
+        dpcKey = "dpc")
+@EnsureHasNoDelegate
 public @interface IncludeRunOnParentOfOrganizationOwnedProfileOwnerUsingParentInstance {
     /**
      * Weight sets the order that annotations will be resolved.

@@ -135,6 +135,7 @@ public class StatsdCtsForegroundActivity extends Activity {
 
             @Override
             protected void onPostExecute(Void nothing) {
+                reportFullyDrawn();
                 finish();
             }
         }.execute();

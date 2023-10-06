@@ -1402,6 +1402,8 @@ bool AHardwareBufferGLTest::SetUpBuffer(const AHardwareBuffer_Desc& desc) {
     // Do not create the EGLImage if this is a blob format.
     if (desc.format == AHARDWAREBUFFER_FORMAT_BLOB) return true;
 
+    EXPECT_TRUE(HasEGLExtension("EGL_ANDROID_image_native_buffer"));
+
     EGLint attrib_list[3] = { EGL_NONE, EGL_NONE, EGL_NONE };
     if (use_srgb) {
         attrib_list[0] = EGL_GL_COLORSPACE_KHR;

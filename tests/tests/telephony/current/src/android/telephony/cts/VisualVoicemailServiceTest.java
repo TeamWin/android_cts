@@ -23,10 +23,13 @@ import static com.android.internal.telephony.SmsConstants.ENCODING_8BIT;
 import static junit.framework.Assert.assertNotNull;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeNoException;
 import static org.junit.Assume.assumeTrue;
 
+import android.Manifest;
 import android.app.Instrumentation;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -48,6 +51,7 @@ import android.telecom.PhoneAccountHandle;
 import android.telecom.TelecomManager;
 import android.telephony.SmsManager;
 import android.telephony.SmsMessage;
+import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
 import android.telephony.VisualVoicemailSms;
 import android.telephony.VisualVoicemailSmsFilterSettings;
@@ -109,11 +113,29 @@ public class VisualVoicemailServiceTest {
         mPhoneAccountHandle = telecomManager
                 .getDefaultOutgoingPhoneAccount(PhoneAccount.SCHEME_TEL);
         assertNotNull(mPhoneAccountHandle);
-        mPhoneNumber = telecomManager.getLine1Number(mPhoneAccountHandle);
-        assertNotNull(mPhoneNumber, "Tests require a line1 number for the active SIM.");
 
         mTelephonyManager = mContext.getSystemService(TelephonyManager.class)
                 .createForPhoneAccountHandle(mPhoneAccountHandle);
+        try {
+            mTelephonyManager.getHalVersion(TelephonyManager.HAL_SERVICE_RADIO);
+        } catch (IllegalStateException e) {
+            assumeNoException("Skipping tests because Telephony service is null", e);
+        }
+
+        getInstrumentation().getUiAutomation()
+                .adoptShellPermissionIdentity(Manifest.permission.READ_PRIVILEGED_PHONE_STATE);
+        try {
+            int subId = mTelephonyManager.getSubscriptionId(mPhoneAccountHandle);
+            SubscriptionManager subscriptionManager = mContext
+                    .getSystemService(SubscriptionManager.class);
+            mPhoneNumber = subscriptionManager.getPhoneNumber(subId);
+            assertNotNull(mPhoneNumber, "Tests require a line1 number for the active SIM.");
+            assertFalse("[RERUN] SIM card does not provide phone number. Use a suitable SIM Card.",
+                    TextUtils.isEmpty(mPhoneNumber));
+            Log.d(TAG, "mPhoneNumber:" + mPhoneNumber);
+        } finally {
+            getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
+        }
 
         PackageManager packageManager = mContext.getPackageManager();
         packageManager.setComponentEnabledSetting(
@@ -436,6 +458,10 @@ public class VisualVoicemailServiceTest {
     private VisualVoicemailSms getSmsFromText(VisualVoicemailSmsFilterSettings settings,
             String text,
             boolean expectVvmSms) {
+        int carrierId = mTelephonyManager.getSimCarrierId();
+        assertFalse("[RERUN] Carrier [carrier-id: " + carrierId + "] does not support "
+                        + "loop back messages. Use another carrier.",
+                CarrierCapability.UNSUPPORT_LOOP_BACK_MESSAGES.contains(carrierId));
 
         mTelephonyManager.setVisualVoicemailSmsFilterSettings(settings);
 

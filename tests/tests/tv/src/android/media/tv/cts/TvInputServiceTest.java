@@ -17,6 +17,7 @@
 package android.media.tv.cts;
 
 import static androidx.test.ext.truth.view.MotionEventSubject.assertThat;
+
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
@@ -26,6 +27,7 @@ import android.app.Instrumentation;
 import android.content.AttributionSource;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.media.AudioPresentation;
 import android.media.PlaybackParams;
 import android.media.tv.AitInfo;
 import android.media.tv.TvContentRating;
@@ -50,25 +52,31 @@ import android.view.Surface;
 import android.view.SurfaceView;
 import android.view.View;
 import android.widget.LinearLayout;
+
 import androidx.test.core.app.ActivityScenario;
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
+
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.RequiredFeatureRule;
+
 import com.google.common.truth.Truth;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Consumer;
-import java.util.function.Function;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 /**
  * Test {@link android.media.tv.TvInputService}.
@@ -90,12 +98,20 @@ public class TvInputServiceTest {
     private static final Uri CHANNEL_0 = TvContract.buildChannelUri(0);
     /** The maximum time to wait for an operation. */
     private static final long TIME_OUT = 5000L;
+    private static final int AUDIO_PRESENTATION_ID_UNKNOWN =
+            AudioPresentation.PRESENTATION_ID_UNKNOWN;
+    private static final int AUDIO_PROGRAM_ID_UNKNOWN =
+            AudioPresentation.PROGRAM_ID_UNKNOWN;
     private static final TvTrackInfo TEST_TV_TRACK =
             new TvTrackInfo.Builder(TvTrackInfo.TYPE_VIDEO, "testTrackId")
                     .setVideoWidth(1920)
                     .setVideoHeight(1080)
                     .setLanguage("und")
                     .build();
+    private static final AudioPresentation TEST_AUDIO_PRESENTATION =
+            new AudioPresentation.Builder(1)
+                .setProgramId(123)
+                .build();
 
     private TvRecordingClient mTvRecordingClient;
     private Instrumentation mInstrumentation;
@@ -107,6 +123,7 @@ public class TvInputServiceTest {
     private final StubTimeShiftPositionCallback mTimeShiftPositionCallback =
             new StubTimeShiftPositionCallback();
     private final StubRecordingCallback mRecordingCallback = new StubRecordingCallback();
+    private static AttributionSource mAttributionSource;
 
     private static class StubCallback extends TvView.TvInputCallback {
         private int mChannelRetunedCount;
@@ -114,20 +131,34 @@ public class TvInputServiceTest {
         private int mVideoUnavailableCount;
         private int mTrackSelectedCount;
         private int mTrackChangedCount;
+        private int mAudioPresentationSelectedCount;
+        private int mAudioPresentationChangedCount;
         private int mVideoSizeChanged;
         private int mContentAllowedCount;
         private int mContentBlockedCount;
         private int mTimeShiftStatusChangedCount;
         private int mAitInfoUpdatedCount;
+        private int mTimeShiftModeCount;
+        private int mTimeShiftSpeedsCount;
+        private int mCueingMessageAvailabilityCount;
+        private int mTvMessageCount;
 
         private Uri mChannelRetunedUri;
         private Integer mVideoUnavailableReason;
         private Integer mTrackSelectedType;
         private String mTrackSelectedTrackId;
+        private Integer mAudioPresentationId;
+        private Integer mAudioProgramId;
         private List<TvTrackInfo> mTracksChangedTrackList;
+        private List<AudioPresentation> mAudioPresentationsList;
         private TvContentRating mContentBlockedRating;
         private Integer mTimeShiftStatusChangedStatus;
         private AitInfo mAitInfo;
+        private Integer mTimeShiftMode;
+        private float[] mTimeShiftSpeeds;
+        private Boolean mCueingMessageAvailable;
+        private Integer mTvMessageType;
+        private Bundle mTvMessageData;
 
         @Override
         public void onChannelRetuned(String inputId, Uri channelUri) {
@@ -160,6 +191,22 @@ public class TvInputServiceTest {
         }
 
         @Override
+        public void onAudioPresentationSelected(String inputId, int presentationId, int programId) {
+            super.onAudioPresentationSelected(inputId, presentationId, programId);
+            mAudioPresentationSelectedCount++;
+            mAudioPresentationId = presentationId;
+            mAudioProgramId = programId;
+        }
+
+        @Override
+        public void onAudioPresentationsChanged(String inputId,
+                                                List<AudioPresentation> audioPresentations) {
+            super.onAudioPresentationsChanged(inputId, audioPresentations);
+            mAudioPresentationChangedCount++;
+            mAudioPresentationsList = audioPresentations;
+        }
+
+        @Override
         public void onVideoSizeChanged(String inputId, int width, int height) {
             mVideoSizeChanged++;
         }
@@ -186,16 +233,51 @@ public class TvInputServiceTest {
             mAitInfo = aitInfo;
         }
 
+        @Override
+        public void onTimeShiftMode(String inputId, int mode) {
+            super.onTimeShiftMode(inputId, mode);
+            mTimeShiftModeCount++;
+            mTimeShiftMode = mode;
+        }
+
+        @Override
+        public void onAvailableSpeeds(String inputId, float[] speeds) {
+            super.onAvailableSpeeds(inputId, speeds);
+            mTimeShiftSpeedsCount++;
+            mTimeShiftSpeeds = speeds;
+        }
+
+        @Override
+        public void onCueingMessageAvailability(String inputId, boolean available) {
+            super.onCueingMessageAvailability(inputId, available);
+            mCueingMessageAvailabilityCount++;
+            mCueingMessageAvailable = available;
+        }
+
+        @Override
+        public void onTvMessage(String inputId, int type, Bundle data) {
+            super.onTvMessage(inputId, type, data);
+            mTvMessageCount++;
+            mTvMessageData = data;
+            mTvMessageType = type;
+        }
+
         public void resetCounts() {
             mChannelRetunedCount = 0;
             mVideoAvailableCount = 0;
             mVideoUnavailableCount = 0;
             mTrackSelectedCount = 0;
             mTrackChangedCount = 0;
+            mAudioPresentationSelectedCount = 0;
+            mAudioPresentationChangedCount = 0;
             mContentAllowedCount = 0;
             mContentBlockedCount = 0;
             mTimeShiftStatusChangedCount = 0;
             mAitInfoUpdatedCount = 0;
+            mTimeShiftModeCount = 0;
+            mTimeShiftSpeedsCount = 0;
+            mCueingMessageAvailabilityCount = 0;
+            mTvMessageCount = 0;
         }
 
         public void resetPassedValues() {
@@ -204,9 +286,17 @@ public class TvInputServiceTest {
             mTrackSelectedType = null;
             mTrackSelectedTrackId = null;
             mTracksChangedTrackList = null;
+            mAudioPresentationsList = null;
+            mAudioPresentationId = AUDIO_PRESENTATION_ID_UNKNOWN;
+            mAudioProgramId = AUDIO_PROGRAM_ID_UNKNOWN;
             mContentBlockedRating = null;
             mTimeShiftStatusChangedStatus = null;
             mAitInfo = null;
+            mTimeShiftMode = null;
+            mTimeShiftSpeeds = null;
+            mCueingMessageAvailable = null;
+            mTvMessageData = null;
+            mTvMessageType = null;
         }
     }
 
@@ -241,6 +331,7 @@ public class TvInputServiceTest {
         mInstrumentation = InstrumentationRegistry
                 .getInstrumentation();
         mContext = mInstrumentation.getTargetContext();
+        mAttributionSource = mContext.getAttributionSource();
         mTvRecordingClient =
                 new TvRecordingClient(mContext, "TvInputServiceTest", mRecordingCallback, null);
         mManager = (TvInputManager) mContext.getSystemService(Context.TV_INPUT_SERVICE);
@@ -687,6 +778,19 @@ public class TvInputServiceTest {
     }
 
     @Test
+    public void verifyCommandTimeShiftSetMode() {
+        final CountingSession session = tune(CHANNEL_0);
+        resetPassedValues();
+
+        onTvView(tvView -> tvView.timeShiftSetMode(TvInputManager.TIME_SHIFT_MODE_AUTO));
+        mInstrumentation.waitForIdleSync();
+        PollingCheck.waitFor(TIME_OUT, () -> session.mTimeShiftSetModeCount > 0);
+
+        assertThat(session.mTimeShiftSetModeCount).isEqualTo(1);
+        assertThat(session.mTimeShiftMode).isEqualTo(TvInputManager.TIME_SHIFT_MODE_AUTO);
+    }
+
+    @Test
     public void verifyCommandSetTimeShiftPositionCallback() {
         tune(CHANNEL_0);
 
@@ -749,6 +853,63 @@ public class TvInputServiceTest {
         assertThat(session.mInteractiveAppNotificationEnabled).isEqualTo(true);
     }
 
+
+    @Test
+    public void verifyCommandNotifyTvMessage() {
+        tune(CHANNEL_0);
+        Bundle bundle = createTestBundle();
+        resetPassedValues();
+
+        onTvView(tvView -> tvView.notifyTvMessage(TvInputManager.TV_MESSAGE_TYPE_WATERMARK,
+                bundle));
+
+        mInstrumentation.waitForIdleSync();
+        final CountingSession session =
+                waitForSessionCheck(s -> s.mTvMessageCount > 0);
+
+        assertThat(session.mTvMessageCount).isEqualTo(1);
+        assertThat(session.mTvMessageType).isEqualTo(TvInputManager.TV_MESSAGE_TYPE_WATERMARK);
+        assertBundlesAreEqual(session.mTvMessageData, bundle);
+    }
+
+    @Test
+    public void verifyCommandSetTvMessageEnabled() {
+        tune(CHANNEL_0);
+        resetPassedValues();
+
+        onTvView(tvView -> tvView.setTvMessageEnabled(TvInputManager.TV_MESSAGE_TYPE_WATERMARK,
+                true));
+
+        mInstrumentation.waitForIdleSync();
+        final CountingSession session =
+                waitForSessionCheck(s -> s.mTvMessageEnabledCount > 0);
+
+        assertThat(session.mTvMessageEnabledCount).isEqualTo(1);
+        assertThat(session.mTvMessageType).isEqualTo(TvInputManager.TV_MESSAGE_TYPE_WATERMARK);
+        assertThat(session.mTvMessageEnabled).isEqualTo(true);
+    }
+
+    @Test
+    public void verifyCommandSelectAudioPresentation() {
+        final CountingSession session = tune(CHANNEL_0);
+        resetCounts();
+        resetPassedValues();
+
+        session.notifyAudioPresentationChanged(Arrays.asList(TEST_AUDIO_PRESENTATION));
+        PollingCheck.waitFor(TIME_OUT, () -> mCallback.mAudioPresentationChangedCount > 0);
+
+        onTvView(tvView -> tvView.selectAudioPresentation(
+            TEST_AUDIO_PRESENTATION.getPresentationId(),TEST_AUDIO_PRESENTATION.getProgramId()));
+
+        mInstrumentation.waitForIdleSync();
+        PollingCheck.waitFor(TIME_OUT, () -> session.mAudioPresentationSelectCount > 0);
+
+        assertThat(session.mAudioPresentationSelectCount).isEqualTo(1);
+        assertThat(session.mAudioPresentationId)
+                .isEqualTo(TEST_AUDIO_PRESENTATION.getPresentationId());
+        assertThat(session.mAudioProgramId).isEqualTo(TEST_AUDIO_PRESENTATION.getProgramId());
+    }
+
     @Test
     public void verifyCallbackChannelRetuned() {
         final CountingSession session = tune(CHANNEL_0);
@@ -799,6 +960,33 @@ public class TvInputServiceTest {
 
         assertThat(mCallback.mTrackChangedCount).isEqualTo(1);
         assertThat(mCallback.mTracksChangedTrackList).isEqualTo(tracks);
+    }
+
+    @Test
+    public void verifyCallbackAudioPresentationChanged() {
+        final CountingSession session = tune(CHANNEL_0);
+        resetCounts();
+        resetPassedValues();
+        ArrayList<AudioPresentation> audioPresentations = new ArrayList<>();
+        audioPresentations.add(TEST_AUDIO_PRESENTATION);
+        session.notifyAudioPresentationChanged(audioPresentations);
+        PollingCheck.waitFor(TIME_OUT, () -> mCallback.mAudioPresentationChangedCount > 0);
+        assertThat(mCallback.mAudioPresentationChangedCount).isEqualTo(1);
+        assertThat(mCallback.mAudioPresentationsList).isEqualTo(audioPresentations);
+    }
+
+    @Test
+    public void verifyCallbackAudioPresentationSelected() {
+        final CountingSession session = tune(CHANNEL_0);
+        resetCounts();
+        resetPassedValues();
+        session.notifyAudioPresentationSelected(TEST_AUDIO_PRESENTATION.getPresentationId(),
+                                                TEST_AUDIO_PRESENTATION.getProgramId());
+        PollingCheck.waitFor(TIME_OUT, () -> mCallback.mAudioPresentationSelectedCount > 0);
+        assertThat(mCallback.mAudioPresentationSelectedCount).isEqualTo(1);
+        assertThat(mCallback.mAudioPresentationId).isEqualTo(
+            TEST_AUDIO_PRESENTATION.getPresentationId());
+        assertThat(mCallback.mAudioProgramId).isEqualTo(TEST_AUDIO_PRESENTATION.getProgramId());
     }
 
     @Test
@@ -882,6 +1070,61 @@ public class TvInputServiceTest {
         assertThat(mCallback.mAitInfo.getType())
                 .isEqualTo(TvInteractiveAppServiceInfo.INTERACTIVE_APP_TYPE_HBBTV);
         assertThat(mCallback.mAitInfo.getVersion()).isEqualTo(2);
+    }
+
+    @Test
+    public void verifyCallbackTimeShiftMode() {
+        final CountingSession session = tune(CHANNEL_0);
+        resetCounts();
+        resetPassedValues();
+
+        session.notifyTimeShiftMode(TvInputManager.TIME_SHIFT_MODE_AUTO);
+        PollingCheck.waitFor(TIME_OUT, () -> mCallback.mTimeShiftModeCount > 0);
+
+        assertThat(mCallback.mTimeShiftModeCount).isEqualTo(1);
+        assertThat(mCallback.mTimeShiftMode).isEqualTo(TvInputManager.TIME_SHIFT_MODE_AUTO);
+    }
+
+    @Test
+    public void verifyCallbackAvailableSpeeds() {
+        final CountingSession session = tune(CHANNEL_0);
+        resetCounts();
+        resetPassedValues();
+
+        float[] testSpeeds = new float[] {1.0f, 0.0f, 1.5f};
+
+        session.notifyAvailableSpeeds(testSpeeds);
+        PollingCheck.waitFor(TIME_OUT, () -> mCallback.mTimeShiftSpeedsCount > 0);
+
+        assertThat(mCallback.mTimeShiftSpeedsCount).isEqualTo(1);
+        assertThat(mCallback.mTimeShiftSpeeds).isEqualTo(testSpeeds);
+    }
+
+    @Test
+    public void verifyCallbackCueingMessageAvailability() {
+        final CountingSession session = tune(CHANNEL_0);
+        resetCounts();
+        resetPassedValues();
+
+        session.notifyCueingMessageAvailability(true);
+        PollingCheck.waitFor(TIME_OUT, () -> mCallback.mCueingMessageAvailabilityCount > 0);
+
+        assertThat(mCallback.mCueingMessageAvailabilityCount).isEqualTo(1);
+        assertThat(mCallback.mCueingMessageAvailable).isEqualTo(true);
+    }
+
+    @Test
+    public void verifyCallbackTvMessage() {
+        final CountingSession session = tune(CHANNEL_0);
+        resetCounts();
+        resetPassedValues();
+
+        Bundle testBundle = createTestBundle();
+        session.notifyTvMessage(TvInputManager.TV_MESSAGE_TYPE_WATERMARK, testBundle);
+        PollingCheck.waitFor(TIME_OUT, () -> mCallback.mTvMessageCount > 0);
+        assertThat(mCallback.mTvMessageCount).isEqualTo(1);
+        assertThat(mCallback.mTvMessageType).isEqualTo(TvInputManager.TV_MESSAGE_TYPE_WATERMARK);
+        assertBundlesAreEqual(mCallback.mTvMessageData, testBundle);
     }
 
     @Test
@@ -1032,7 +1275,7 @@ public class TvInputServiceTest {
     private CountingSession tune(Uri uri) {
         onTvView(tvView -> {
             tvView.setCallback(mCallback);
-            tvView.overrideTvAppAttributionSource(mContext.getAttributionSource());
+            tvView.overrideTvAppAttributionSource(mAttributionSource);
             tvView.tune(mStubInfo.getId(), CHANNEL_0);
         });
         return waitForSessionCheck(session -> session.mTuneCount > 0);
@@ -1093,7 +1336,8 @@ public class TvInputServiceTest {
         @Override
         public Session onCreateSession(
                 String inputId, String tvInputSessionId, AttributionSource tvAppAttributionSource) {
-            // todo: add AttributionSource equal check
+            assertThat(tvAppAttributionSource).isEqualTo(mAttributionSource);
+            super.onCreateSession(inputId, tvInputSessionId, tvAppAttributionSource);
             return onCreateSession(inputId, tvInputSessionId);
         }
 
@@ -1140,10 +1384,14 @@ public class TvInputServiceTest {
             public volatile int mTimeShiftSeekToCount;
             public volatile int mTimeShiftSetPlaybackParamsCount;
             public volatile int mTimeShiftPlayCount;
+            public volatile int mTimeShiftSetModeCount;
             public volatile long mTimeShiftGetCurrentPositionCount;
             public volatile long mTimeShiftGetStartPositionCount;
             public volatile int mAppPrivateCommandCount;
             public volatile int mSetInteractiveAppNotificationEnabledCount;
+            public volatile int mTvMessageCount;
+            public volatile int mTvMessageEnabledCount;
+            public volatile int mAudioPresentationSelectCount;
 
             public volatile String mAppPrivateCommandAction;
             public volatile Bundle mAppPrivateCommandData;
@@ -1171,6 +1419,12 @@ public class TvInputServiceTest {
             public volatile Integer mOverlayViewSizeChangedWidth;
             public volatile Integer mOverlayViewSizeChangedHeight;
             public volatile Boolean mInteractiveAppNotificationEnabled;
+            public volatile Integer mTvMessageType;
+            public volatile Bundle mTvMessageData;
+            public volatile Boolean mTvMessageEnabled;
+            public volatile Integer mAudioPresentationId;
+            public volatile Integer mAudioProgramId;
+            public volatile Integer mTimeShiftMode;
 
             CountingSession(Context context, @Nullable String sessionId) {
 
@@ -1199,10 +1453,14 @@ public class TvInputServiceTest {
                 mTimeShiftSeekToCount = 0;
                 mTimeShiftSetPlaybackParamsCount = 0;
                 mTimeShiftPlayCount = 0;
+                mTimeShiftSetModeCount = 0;
                 mTimeShiftGetCurrentPositionCount = 0;
                 mTimeShiftGetStartPositionCount = 0;
                 mAppPrivateCommandCount = 0;
                 mSetInteractiveAppNotificationEnabledCount = 0;
+                mTvMessageCount = 0;
+                mTvMessageEnabledCount = 0;
+                mAudioPresentationSelectCount = 0;
             }
 
             public void resetPassedValues() {
@@ -1232,6 +1490,12 @@ public class TvInputServiceTest {
                 mOverlayViewSizeChangedWidth = null;
                 mOverlayViewSizeChangedHeight = null;
                 mInteractiveAppNotificationEnabled = null;
+                mTvMessageType = null;
+                mTvMessageData = null;
+                mTvMessageEnabled = null;
+                mAudioPresentationId = null;
+                mAudioProgramId = null;
+                mTimeShiftMode = null;
             }
 
             @Override
@@ -1376,6 +1640,13 @@ public class TvInputServiceTest {
             }
 
             @Override
+            public void onTimeShiftSetMode(int mode) {
+                super.onTimeShiftSetMode(mode);
+                mTimeShiftMode = mode;
+                mTimeShiftSetModeCount++;
+            }
+
+            @Override
             public long onTimeShiftGetCurrentPosition() {
                 return ++mTimeShiftGetCurrentPositionCount;
             }
@@ -1396,6 +1667,63 @@ public class TvInputServiceTest {
             public void onSetInteractiveAppNotificationEnabled(boolean enabled) {
                 mSetInteractiveAppNotificationEnabledCount++;
                 mInteractiveAppNotificationEnabled = enabled;
+            }
+
+            @Override
+            public void onTvMessage(int type, Bundle data) {
+                super.onTvMessage(type, data);
+                mTvMessageCount++;
+                mTvMessageType = type;
+                mTvMessageData = data;
+            }
+
+            @Override
+            public void onSetTvMessageEnabled(int type, boolean enabled) {
+                super.onSetTvMessageEnabled(type, enabled);
+                mTvMessageEnabledCount++;
+                mTvMessageType = type;
+                mTvMessageEnabled = enabled;
+            }
+
+            @Override
+            public boolean onSelectAudioPresentation(int presentationId, int programId) {
+                super.onSelectAudioPresentation(presentationId, programId);
+                mAudioPresentationSelectCount++;
+                mAudioPresentationId = presentationId;
+                mAudioProgramId = programId;
+                return true;
+            }
+
+            @Override
+            public void notifyAudioPresentationChanged(
+                    @NonNull final List<AudioPresentation> audioPresentations) {
+                super.notifyAudioPresentationChanged(audioPresentations);
+            }
+
+            @Override
+            public void notifyAudioPresentationSelected(
+                    final int presentationId, final int programId) {
+                super.notifyAudioPresentationSelected(presentationId, programId);
+            }
+
+            @Override
+            public void notifyTvMessage(int type, Bundle data) {
+                super.notifyTvMessage(type, data);
+            }
+
+            @Override
+            public void notifyCueingMessageAvailability(boolean available) {
+                super.notifyCueingMessageAvailability(available);
+            }
+
+            @Override
+            public void notifyTimeShiftMode(int mode) {
+                super.notifyTimeShiftMode(mode);
+            }
+
+            @Override
+            public void notifyAvailableSpeeds(float[] speeds) {
+                super.notifyAvailableSpeeds(speeds);
             }
         }
 

@@ -39,9 +39,12 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyStore;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
@@ -51,7 +54,6 @@ public class Utils {
 
     private static final String TAG = "BiometricTestUtils";
     private static final String KEYSTORE_PROVIDER = "AndroidKeyStore";
-    private static final String AIDL_HAL_PATTERN = ", provider: FingerprintProvider";
 
     /** adb command for dumping the biometric proto */
     public static final String DUMPSYS_BIOMETRIC = "dumpsys biometric --proto";
@@ -61,6 +63,28 @@ public class Utils {
      */
     public interface SensorStatesSupplier {
         SensorStates getSensorStates() throws Exception;
+    }
+
+    /**
+     * The Biometric {@link com.android.server.biometrics.SensorConfig}.
+     * Parsed sensor config. See core/res/res/values/config.xml config_biometric_sensors
+     */
+    public static class SensorConfig {
+        public final int id;
+        public final int modality;
+        public final int strength;
+
+        public SensorConfig(String config) {
+            String[] elems = config.split(":");
+            id = Integer.parseInt(elems[0]);
+            modality = Integer.parseInt(elems[1]);
+            strength = Integer.parseInt(elems[2]);
+        }
+    }
+
+    /** Waits for the service to become idle. */
+    public static void waitForIdleService() throws Exception {
+        waitForIdleService(() -> getBiometricServiceCurrentState().mSensorStates);
     }
 
     /**
@@ -77,6 +101,12 @@ public class Utils {
             }
         }
         Log.d(TAG, "Timed out waiting for idle");
+    }
+
+
+    /** Waits for the specified sensor to become non-idle. */
+    public static void waitForBusySensor(int sensorId) throws Exception {
+        waitForBusySensor(sensorId, () -> getBiometricServiceCurrentState().mSensorStates);
     }
 
     /**
@@ -276,20 +306,42 @@ public class Utils {
         return false;
     }
 
-    /**
-     * Retrieves AIDL HAL belonging sensor id
-     *
-     * @return sensorId if there is AIDL HAL, -1 otherwise
-     */
-    public static int getAidlSensorId() {
-        final byte[] dump = executeShellCommand("dumpsys fingerprint");
-        final String fpsDumpSys = new String(dump, StandardCharsets.UTF_8);
-        final int indexOfAidlProvider = fpsDumpSys.indexOf(AIDL_HAL_PATTERN);
+    /** Find the sensor id of the AIDL fingerprint HAL, or -1 if not present. */
+    public static int getAidlFingerprintSensorId() {
+        return getAidlSensorId("dumpsys fingerprint", ", provider: FingerprintProvider");
+    }
 
-        if (indexOfAidlProvider > 0) {
-            return Integer.parseInt(
-                    fpsDumpSys.substring(indexOfAidlProvider - 1, indexOfAidlProvider));
+    /** Find all of the sensor ids of the AIDL fingerprint HALs */
+    public static List<Integer> getAidlFingerprintSensorIds() {
+        return getAidlSensorIds("dumpsys fingerprint", ", provider: FingerprintProvider");
+    }
+
+    /** Find the sensor id of the AIDL face HAL, or -1 if not present. */
+    public static int getAidlFaceSensorId() {
+        return getAidlSensorId("dumpsys face", ", provider: FaceProvider");
+    }
+
+    private static int getAidlSensorId(String adbCommand, String providerRegex) {
+        List<Integer> ids = getAidlSensorIds(adbCommand, providerRegex);
+
+        if (ids.isEmpty()) {
+            return -1;
         }
-        return indexOfAidlProvider /* -1 No AIDL HAL */;
+
+        return ids.get(0);
+    }
+
+    private static List<Integer> getAidlSensorIds(String adbCommand, String providerRegex) {
+        final byte[] dump = executeShellCommand(adbCommand);
+        final String fpsDumpSys = new String(dump, StandardCharsets.UTF_8);
+        final Matcher matcher =
+                Pattern.compile("sensorId: (\\d+)" + providerRegex).matcher(fpsDumpSys);
+
+        final List<Integer> ids = new ArrayList<>();
+        while (matcher.find()) {
+            ids.add(Integer.parseInt(matcher.group(1)));
+        }
+
+        return ids;
     }
 }

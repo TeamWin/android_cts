@@ -25,18 +25,18 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeNoException;
 import static org.junit.Assume.assumeTrue;
 
 import android.annotation.NonNull;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
-import android.os.Handler;
-import android.os.HandlerThread;
 import android.os.Looper;
 import android.telephony.Annotation.RadioPowerState;
 import android.telephony.Annotation.SimActivationState;
 import android.telephony.BarringInfo;
+import android.telephony.CallState;
 import android.telephony.CellIdentity;
 import android.telephony.CellInfo;
 import android.telephony.CellLocation;
@@ -52,6 +52,8 @@ import android.telephony.TelephonyCallback;
 import android.telephony.TelephonyDisplayInfo;
 import android.telephony.TelephonyManager;
 import android.telephony.TelephonyManager.DataEnabledReason;
+import android.telephony.TelephonyManager.EmergencyCallbackModeStopReason;
+import android.telephony.TelephonyManager.EmergencyCallbackModeType;
 import android.telephony.cts.util.TelephonyUtils;
 import android.telephony.emergency.EmergencyNumber;
 import android.telephony.ims.ImsReasonInfo;
@@ -63,7 +65,6 @@ import androidx.test.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.ShellIdentityUtils;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -89,8 +90,10 @@ public class TelephonyCallbackTest {
     private boolean mOnCellInfoChangedCalled;
     private boolean mOnServiceStateChangedCalled;
     private boolean mOnPreciseCallStateChangedCalled;
+    private boolean mOnCallStatesChangedCalled;
     private boolean mOnCallDisconnectCauseChangedCalled;
     private boolean mOnImsCallDisconnectCauseChangedCalled;
+    private ImsReasonInfo mImsReasonInfo;
     private EmergencyNumber mOnOutgoingSmsEmergencyNumberChanged;
     private boolean mOnPreciseDataConnectionStateChanged;
     private boolean mOnRadioPowerStateChangedCalled;
@@ -102,6 +105,7 @@ public class TelephonyCallbackTest {
     private boolean mOnPhysicalChannelConfigCalled;
     private boolean mOnDataEnabledChangedCalled;
     private boolean mOnLinkCapacityEstimateChangedCalled;
+    private boolean mOnEmergencyCallbackModeChangedCalled;
     @RadioPowerState
     private int mRadioPowerState;
     @SimActivationState
@@ -113,13 +117,12 @@ public class TelephonyCallbackTest {
     private BarringInfo mBarringInfo;
     private PreciseDataConnectionState mPreciseDataConnectionState;
     private PreciseCallState mPreciseCallState;
+    private List<CallState> mCallStateList;
     private SignalStrength mSignalStrength;
     private TelephonyManager mTelephonyManager;
     private final Object mLock = new Object();
     private static final String TAG = "TelephonyCallbackTest";
     private static ConnectivityManager mCm;
-    private HandlerThread mHandlerThread;
-    private Handler mHandler;
     private PackageManager mPackageManager;
     private static final List<Integer> DATA_CONNECTION_STATE = Arrays.asList(
             TelephonyManager.DATA_CONNECTED,
@@ -141,6 +144,26 @@ public class TelephonyCallbackTest {
             PreciseCallState.PRECISE_CALL_STATE_WAITING
     );
 
+    private static final List<Integer> NETWORK_TYPES = Arrays.asList(
+            TelephonyManager.NETWORK_TYPE_UNKNOWN,
+            TelephonyManager.NETWORK_TYPE_GPRS,
+            TelephonyManager.NETWORK_TYPE_EDGE,
+            TelephonyManager.NETWORK_TYPE_UMTS,
+            TelephonyManager.NETWORK_TYPE_CDMA,
+            TelephonyManager.NETWORK_TYPE_EVDO_0,
+            TelephonyManager.NETWORK_TYPE_EVDO_A,
+            TelephonyManager.NETWORK_TYPE_1xRTT,
+            TelephonyManager.NETWORK_TYPE_HSDPA,
+            TelephonyManager.NETWORK_TYPE_HSUPA,
+            TelephonyManager.NETWORK_TYPE_HSPA,
+            TelephonyManager.NETWORK_TYPE_HSPAP,
+            TelephonyManager.NETWORK_TYPE_LTE,
+            TelephonyManager.NETWORK_TYPE_EHRPD,
+            TelephonyManager.NETWORK_TYPE_GSM,
+            TelephonyManager.NETWORK_TYPE_IWLAN,
+            TelephonyManager.NETWORK_TYPE_NR
+    );
+
     private final Executor mSimpleExecutor = Runnable::run;
 
     @Before
@@ -151,17 +174,12 @@ public class TelephonyCallbackTest {
 
         mTelephonyManager =
                 (TelephonyManager) getContext().getSystemService(Context.TELEPHONY_SERVICE);
-        mCm = (ConnectivityManager) getContext().getSystemService(Context.CONNECTIVITY_SERVICE);
-        mHandlerThread = new HandlerThread("TelephonyCallbackTest");
-        mHandlerThread.start();
-        mHandler = new Handler(mHandlerThread.getLooper());
-    }
-
-    @After
-    public void tearDown() throws Exception {
-        if (mHandlerThread != null) {
-            mHandlerThread.quitSafely();
+        try {
+            mTelephonyManager.getHalVersion(TelephonyManager.HAL_SERVICE_RADIO);
+        } catch (IllegalStateException e) {
+            assumeNoException("Skipping tests because Telephony service is null", e);
         }
+        mCm = (ConnectivityManager) getContext().getSystemService(Context.CONNECTIVITY_SERVICE);
     }
 
     @Test
@@ -222,10 +240,10 @@ public class TelephonyCallbackTest {
 
         assertFalse(mOnServiceStateChangedCalled);
 
-        mHandler.post(() -> {
-            mServiceStateCallback = new ServiceStateListener();
-            registerTelephonyCallback(mServiceStateCallback);
-        });
+
+        mServiceStateCallback = new ServiceStateListener();
+        registerTelephonyCallback(mServiceStateCallback);
+
         synchronized (mLock) {
             if (!mOnServiceStateChangedCalled) {
                 mLock.wait(WAIT_TIME);
@@ -248,10 +266,9 @@ public class TelephonyCallbackTest {
 
         assertFalse(mOnServiceStateChangedCalled);
 
-        mHandler.post(() -> {
-            mServiceStateCallback = new ServiceStateListener();
-            registerTelephonyCallback(mServiceStateCallback, true, true);
-        });
+        mServiceStateCallback = new ServiceStateListener();
+        registerTelephonyCallback(mServiceStateCallback, true, true);
+
         synchronized (mLock) {
             if (!mOnServiceStateChangedCalled) {
                 mLock.wait(WAIT_TIME);
@@ -274,10 +291,10 @@ public class TelephonyCallbackTest {
         }
 
         assertFalse(mOnServiceStateChangedCalled);
-        mHandler.post(() -> {
-            mServiceStateCallback = new ServiceStateListener();
-            registerTelephonyCallback(mServiceStateCallback, false, true);
-        });
+
+        mServiceStateCallback = new ServiceStateListener();
+        registerTelephonyCallback(mServiceStateCallback, false, true);
+
         synchronized (mLock) {
             if (!mOnServiceStateChangedCalled) {
                 mLock.wait(WAIT_TIME);
@@ -300,10 +317,9 @@ public class TelephonyCallbackTest {
 
         assertFalse(mOnServiceStateChangedCalled);
 
-        mHandler.post(() -> {
-            mServiceStateCallback = new ServiceStateListener();
-            registerTelephonyCallback(mServiceStateCallback, true, false);
-        });
+        mServiceStateCallback = new ServiceStateListener();
+        registerTelephonyCallback(mServiceStateCallback, true, false);
+
         synchronized (mLock) {
             if (!mOnServiceStateChangedCalled) {
                 mLock.wait(WAIT_TIME);
@@ -340,10 +356,9 @@ public class TelephonyCallbackTest {
 
         assertFalse(mOnServiceStateChangedCalled);
 
-        mHandler.post(() -> {
-            mServiceStateCallback = new ServiceStateListener();
-            registerTelephonyCallback(mServiceStateCallback);
-        });
+        mServiceStateCallback = new ServiceStateListener();
+        registerTelephonyCallback(mServiceStateCallback);
+
         synchronized (mLock) {
             if (!mOnServiceStateChangedCalled) {
                 mLock.wait(WAIT_TIME);
@@ -408,10 +423,9 @@ public class TelephonyCallbackTest {
     public void testOnSignalStrengthsChangedByRegisterTelephonyCallback() throws Throwable {
         assertTrue(mSignalStrength == null);
 
-        mHandler.post(() -> {
-            mSignalStrengthsCallback = new SignalStrengthsListener();
-            registerTelephonyCallback(mSignalStrengthsCallback);
-        });
+        mSignalStrengthsCallback = new SignalStrengthsListener();
+        registerTelephonyCallback(mSignalStrengthsCallback);
+
         synchronized (mLock) {
             if (mSignalStrength == null) {
                 mLock.wait(WAIT_TIME);
@@ -444,10 +458,9 @@ public class TelephonyCallbackTest {
             throws Throwable {
         assertFalse(mOnMessageWaitingIndicatorChangedCalled);
 
-        mHandler.post(() -> {
-            mMessageWaitingIndicatorCallback = new MessageWaitingIndicatorListener();
-            registerTelephonyCallback(mMessageWaitingIndicatorCallback);
-        });
+        mMessageWaitingIndicatorCallback = new MessageWaitingIndicatorListener();
+        registerTelephonyCallback(mMessageWaitingIndicatorCallback);
+
         synchronized (mLock) {
             if (!mOnMessageWaitingIndicatorChangedCalled) {
                 mLock.wait(WAIT_TIME);
@@ -479,10 +492,9 @@ public class TelephonyCallbackTest {
     public void testOnPreciseCallStateChangedByRegisterTelephonyCallback() throws Throwable {
         assertThat(mOnPreciseCallStateChangedCalled).isFalse();
 
-        mHandler.post(() -> {
-            mPreciseCallStateCallback = new PreciseCallStateListener();
-            registerTelephonyCallbackWithPermission(mPreciseCallStateCallback);
-        });
+        mPreciseCallStateCallback = new PreciseCallStateListener();
+        registerTelephonyCallbackWithPermission(mPreciseCallStateCallback);
+
         synchronized (mLock) {
             if (!mOnPreciseCallStateChangedCalled) {
                 mLock.wait(WAIT_TIME);
@@ -499,6 +511,51 @@ public class TelephonyCallbackTest {
         // Test unregister
         unRegisterTelephonyCallback(mOnPreciseCallStateChangedCalled,
                 mPreciseCallStateCallback);
+    }
+
+    private CallAttributesListener mCallAttributesListener;
+
+    private class CallAttributesListener extends TelephonyCallback
+            implements TelephonyCallback.CallAttributesListener {
+        @Override
+        public void onCallStatesChanged(List<CallState> callStateList) {
+            synchronized (mLock) {
+                mOnCallStatesChangedCalled = true;
+                mCallStateList = callStateList;
+                mLock.notify();
+            }
+        }
+    }
+
+    @Test
+    public void testOnCallStatesChangedByRegisterTelephonyCallback() throws Throwable {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            Log.d(TAG, "Skipping test that requires FEATURE_TELEPHONY");
+            return;
+        }
+        assertThat(mOnCallStatesChangedCalled).isFalse();
+
+        mCallAttributesListener = new CallAttributesListener();
+        registerTelephonyCallbackWithPermission(mCallAttributesListener);
+
+        synchronized (mLock) {
+            if (!mOnCallStatesChangedCalled) {
+                mLock.wait(WAIT_TIME);
+            }
+        }
+        Log.d(TAG, "testOnCallStatesChangedByRegisterTelephonyCallback: "
+                + mOnCallStatesChangedCalled);
+
+        assertThat(mOnCallStatesChangedCalled).isTrue();
+        assertNotNull(mCallStateList);
+        if (mCallStateList.size() > 0) {
+            assertThat(mCallStateList.get(0).getCallState()).isIn(PRECISE_CALL_STATE);
+            assertThat(mCallStateList.get(0).getNetworkType()).isIn(NETWORK_TYPES);
+        }
+
+        // Test unregister
+        unRegisterTelephonyCallback(mOnCallStatesChangedCalled,
+                mCallAttributesListener);
     }
 
     private CallDisconnectCauseListener mCallDisconnectCauseCallback;
@@ -519,11 +576,9 @@ public class TelephonyCallbackTest {
     public void testOnCallDisconnectCauseChangedByRegisterTelephonyCallback() throws Throwable {
         assertThat(mOnCallDisconnectCauseChangedCalled).isFalse();
 
-        mHandler.post(() -> {
-            mCallDisconnectCauseCallback = new CallDisconnectCauseListener();
-            registerTelephonyCallbackWithPermission(mCallDisconnectCauseCallback);
+        mCallDisconnectCauseCallback = new CallDisconnectCauseListener();
+        registerTelephonyCallbackWithPermission(mCallDisconnectCauseCallback);
 
-        });
         synchronized (mLock) {
             if (!mOnCallDisconnectCauseChangedCalled) {
                 mLock.wait(WAIT_TIME);
@@ -545,6 +600,7 @@ public class TelephonyCallbackTest {
         public void onImsCallDisconnectCauseChanged(ImsReasonInfo imsReason) {
             synchronized (mLock) {
                 mOnImsCallDisconnectCauseChangedCalled = true;
+                mImsReasonInfo = imsReason;
                 mLock.notify();
             }
         }
@@ -554,11 +610,9 @@ public class TelephonyCallbackTest {
     public void testOnImsCallDisconnectCauseChangedByRegisterTelephonyCallback() throws Throwable {
         assertThat(mOnImsCallDisconnectCauseChangedCalled).isFalse();
 
-        mHandler.post(() -> {
-            mImsCallDisconnectCauseCallback = new ImsCallDisconnectCauseListener();
-            registerTelephonyCallbackWithPermission(mImsCallDisconnectCauseCallback);
+        mImsCallDisconnectCauseCallback = new ImsCallDisconnectCauseListener();
+        registerTelephonyCallbackWithPermission(mImsCallDisconnectCauseCallback);
 
-        });
         synchronized (mLock) {
             if (!mOnImsCallDisconnectCauseChangedCalled) {
                 mLock.wait(WAIT_TIME);
@@ -566,6 +620,7 @@ public class TelephonyCallbackTest {
         }
 
         assertThat(mOnImsCallDisconnectCauseChangedCalled).isTrue();
+        assertNotNull(mImsReasonInfo);
 
         // Test unregister
         unRegisterTelephonyCallback(mOnImsCallDisconnectCauseChangedCalled,
@@ -589,11 +644,9 @@ public class TelephonyCallbackTest {
     public void testOnSrvccStateChangedByRegisterTelephonyCallback() throws Throwable {
         assertThat(mSrvccStateChangedCalled).isFalse();
 
-        mHandler.post(() -> {
-            mSrvccStateCallback = new SrvccStateListener();
-            registerTelephonyCallbackWithPermission(mSrvccStateCallback);
+        mSrvccStateCallback = new SrvccStateListener();
+        registerTelephonyCallbackWithPermission(mSrvccStateCallback);
 
-        });
         synchronized (mLock) {
             if (!mSrvccStateChangedCalled) {
                 mLock.wait(WAIT_TIME);
@@ -625,10 +678,9 @@ public class TelephonyCallbackTest {
     public void testOnRadioPowerStateChangedByRegisterTelephonyCallback() throws Throwable {
         assertThat(mOnRadioPowerStateChangedCalled).isFalse();
 
-        mHandler.post(() -> {
-            mRadioPowerStateCallback = new RadioPowerStateListener();
-            registerTelephonyCallbackWithPermission(mRadioPowerStateCallback);
-        });
+        mRadioPowerStateCallback = new RadioPowerStateListener();
+        registerTelephonyCallbackWithPermission(mRadioPowerStateCallback);
+
         synchronized (mLock) {
             if (!mOnRadioPowerStateChangedCalled) {
                 mLock.wait(WAIT_TIME);
@@ -662,11 +714,9 @@ public class TelephonyCallbackTest {
     public void testOnVoiceActivationStateChangedByRegisterTelephonyCallback() throws Throwable {
         assertThat(mVoiceActivationStateChangedCalled).isFalse();
 
-        mHandler.post(() -> {
-            mVoiceActivationStateCallback = new VoiceActivationStateListener();
-            registerTelephonyCallbackWithPermission(mVoiceActivationStateCallback);
+        mVoiceActivationStateCallback = new VoiceActivationStateListener();
+        registerTelephonyCallbackWithPermission(mVoiceActivationStateCallback);
 
-        });
         synchronized (mLock) {
             if (!mVoiceActivationStateChangedCalled) {
                 mLock.wait(WAIT_TIME);
@@ -725,12 +775,10 @@ public class TelephonyCallbackTest {
             throws Throwable {
         assertThat(mOnCallDisconnectCauseChangedCalled).isFalse();
 
-        mHandler.post(() -> {
-            mPreciseDataConnectionStateCallback =
-                    new PreciseDataConnectionStateListener();
-            registerTelephonyCallbackWithPermission(mPreciseDataConnectionStateCallback);
+        mPreciseDataConnectionStateCallback =
+                new PreciseDataConnectionStateListener();
+        registerTelephonyCallbackWithPermission(mPreciseDataConnectionStateCallback);
 
-        });
         synchronized (mLock) {
             if (!mOnPreciseDataConnectionStateChanged) {
                 mLock.wait(WAIT_TIME);
@@ -764,10 +812,8 @@ public class TelephonyCallbackTest {
     public void testOnDisplayInfoChangedByRegisterTelephonyCallback() throws Exception {
         assertThat(mOnTelephonyDisplayInfoChanged).isFalse();
 
-        mHandler.post(() -> {
-            mDisplayInfoCallback = new DisplayInfoListener();
-            registerTelephonyCallback(mDisplayInfoCallback);
-        });
+        mDisplayInfoCallback = new DisplayInfoListener();
+        registerTelephonyCallback(mDisplayInfoCallback);
 
         synchronized (mLock) {
             if (!mOnTelephonyDisplayInfoChanged) {
@@ -798,10 +844,9 @@ public class TelephonyCallbackTest {
             throws Throwable {
         assertFalse(mOnCallForwardingIndicatorChangedCalled);
 
-        mHandler.post(() -> {
-            mCallForwardingIndicatorCallback = new CallForwardingIndicatorListener();
-            registerTelephonyCallback(mCallForwardingIndicatorCallback);
-        });
+        mCallForwardingIndicatorCallback = new CallForwardingIndicatorListener();
+        registerTelephonyCallback(mCallForwardingIndicatorCallback);
+
         synchronized (mLock) {
             if (!mOnCallForwardingIndicatorChangedCalled) {
                 mLock.wait(WAIT_TIME);
@@ -833,10 +878,10 @@ public class TelephonyCallbackTest {
         assertFalse(mOnCellLocationChangedCalled);
 
         TelephonyManagerTest.grantLocationPermissions();
-        mHandler.post(() -> {
-            mCellLocationCallback = new CellLocationListener();
-            registerTelephonyCallback(mCellLocationCallback);
-        });
+
+        mCellLocationCallback = new CellLocationListener();
+        registerTelephonyCallback(mCellLocationCallback);
+
         synchronized (mLock) {
             if (!mOnCellLocationChangedCalled) {
                 mLock.wait(WAIT_TIME);
@@ -903,11 +948,9 @@ public class TelephonyCallbackTest {
         assertFalse(mOnDataConnectionStateChangedCalled);
         assertFalse(mOnDataConnectionStateChangedWithNetworkTypeCalled);
 
-        mHandler.post(() -> {
-            mDataConnectionStateCallback = new DataConnectionStateListener();
-            registerTelephonyCallback(mDataConnectionStateCallback);
+        mDataConnectionStateCallback = new DataConnectionStateListener();
+        registerTelephonyCallback(mDataConnectionStateCallback);
 
-        });
         synchronized (mLock) {
             if (!mOnDataConnectionStateChangedCalled ||
                     !mOnDataConnectionStateChangedWithNetworkTypeCalled) {
@@ -940,11 +983,9 @@ public class TelephonyCallbackTest {
     public void testOnDataActivityByRegisterTelephonyCallback() throws Throwable {
         assertFalse(mOnDataActivityCalled);
 
-        mHandler.post(() -> {
-            mDataActivityCallback = new DataActivityListener();
-            registerTelephonyCallback(mDataActivityCallback);
+        mDataActivityCallback = new DataActivityListener();
+        registerTelephonyCallback(mDataActivityCallback);
 
-        });
         synchronized (mLock) {
             if (!mOnDataActivityCalled) {
                 mLock.wait(WAIT_TIME);
@@ -975,10 +1016,10 @@ public class TelephonyCallbackTest {
         assertFalse(mOnDataActivityCalled);
 
         TelephonyManagerTest.grantLocationPermissions();
-        mHandler.post(() -> {
-            mCellInfoCallback = new CellInfoListener();
-            registerTelephonyCallback(mCellInfoCallback);
-        });
+
+        mCellInfoCallback = new CellInfoListener();
+        registerTelephonyCallback(mCellInfoCallback);
+
         synchronized (mLock) {
             if (!mOnCellInfoChangedCalled) {
                 mLock.wait(WAIT_TIME);
@@ -1008,10 +1049,9 @@ public class TelephonyCallbackTest {
     public void testOnUserMobileDataStateChangedByRegisterTelephonyCallback() throws Throwable {
         assertFalse(mOnUserMobileDataStateChanged);
 
-        mHandler.post(() -> {
-            mUserMobileDataStateCallback = new UserMobileDataStateListener();
-            registerTelephonyCallback(mUserMobileDataStateCallback);
-        });
+        mUserMobileDataStateCallback = new UserMobileDataStateListener();
+        registerTelephonyCallback(mUserMobileDataStateCallback);
+
         synchronized (mLock) {
             if (!mOnUserMobileDataStateChanged) {
                 mLock.wait(WAIT_TIME);
@@ -1047,14 +1087,14 @@ public class TelephonyCallbackTest {
                 InstrumentationRegistry.getInstrumentation(), TEST_EMERGENCY_NUMBER);
         assertNull(mOnOutgoingSmsEmergencyNumberChanged);
 
-        mHandler.post(() -> {
-            mOutgoingEmergencySmsCallback = new OutgoingEmergencySmsListener();
-            registerTelephonyCallbackWithPermission(mOutgoingEmergencySmsCallback);
-            SmsManager.getDefault().sendTextMessage(
-                    TEST_EMERGENCY_NUMBER, null,
-                    "testOutgoingSmsListenerCtsByRegisterTelephonyCallback",
-                    null, null);
-        });
+        mOutgoingEmergencySmsCallback = new OutgoingEmergencySmsListener();
+        registerTelephonyCallbackWithPermission(mOutgoingEmergencySmsCallback);
+        SmsManager smsManager = SmsManager.getDefault();
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(smsManager,
+                (sm) -> sm.sendTextMessage(
+                        TEST_EMERGENCY_NUMBER, null,
+                        "testOutgoingSmsListenerCtsByRegisterTelephonyCallback",
+                        null, null));
         try {
             synchronized (mLock) {
                 if (mOnOutgoingSmsEmergencyNumberChanged == null) {
@@ -1097,11 +1137,10 @@ public class TelephonyCallbackTest {
             throws Throwable {
         assertFalse(mOnActiveDataSubscriptionIdChanged);
 
-        mHandler.post(() -> {
-            mActiveDataSubscriptionIdCallback =
-                    new ActiveDataSubscriptionIdListener();
-            registerTelephonyCallback(mActiveDataSubscriptionIdCallback);
-        });
+        mActiveDataSubscriptionIdCallback =
+                new ActiveDataSubscriptionIdListener();
+        registerTelephonyCallback(mActiveDataSubscriptionIdCallback);
+
         synchronized (mLock) {
             if (!mOnActiveDataSubscriptionIdChanged) {
                 mLock.wait(WAIT_TIME);
@@ -1133,10 +1172,9 @@ public class TelephonyCallbackTest {
     public void testOnBarringInfoChangedByRegisterTelephonyCallback() throws Throwable {
 
         assertFalse(mOnBarringInfoChangedCalled);
-        mHandler.post(() -> {
-            mBarringInfoCallback = new BarringInfoListener();
-            registerTelephonyCallbackWithPermission(mBarringInfoCallback);
-        });
+
+        mBarringInfoCallback = new BarringInfoListener();
+        registerTelephonyCallbackWithPermission(mBarringInfoCallback);
 
         synchronized (mLock) {
             if (!mOnBarringInfoChangedCalled) {
@@ -1238,11 +1276,9 @@ public class TelephonyCallbackTest {
     public void testOnRegistrationFailedByRegisterTelephonyCallback() throws Throwable {
 
         assertFalse(mOnBarringInfoChangedCalled);
-        mHandler.post(() -> {
-            mRegistrationFailedCallback = new RegistrationFailedListener();
-            registerTelephonyCallbackWithPermission(mRegistrationFailedCallback);
 
-        });
+        mRegistrationFailedCallback = new RegistrationFailedListener();
+        registerTelephonyCallbackWithPermission(mRegistrationFailedCallback);
 
         synchronized (mLock) {
             if (!mOnBarringInfoChangedCalled) {
@@ -1279,16 +1315,17 @@ public class TelephonyCallbackTest {
     @Test
     public void testOnPhysicalChannelConfigChanged() throws Throwable {
 
-        Pair<Integer, Integer> radioVersion = mTelephonyManager.getRadioHalVersion();
+        Pair<Integer, Integer> networkHalVersion =
+                mTelephonyManager.getHalVersion(TelephonyManager.HAL_SERVICE_NETWORK);
         // 1.2+ or 1.6 with CAPABILITY_PHYSICAL_CHANNEL_CONFIG_1_6_SUPPORTED or 2.0+
         boolean physicalChannelConfigSupported;
-        if (radioVersion.first == 1 && radioVersion.second == 6) {
+        if (networkHalVersion.first == 1 && networkHalVersion.second == 6) {
             physicalChannelConfigSupported = ShellIdentityUtils.invokeMethodWithShellPermissions(
                     mTelephonyManager, (tm) -> tm.isRadioInterfaceCapabilitySupported(
                             TelephonyManager.CAPABILITY_PHYSICAL_CHANNEL_CONFIG_1_6_SUPPORTED));
         } else {
             physicalChannelConfigSupported =
-                    radioVersion.first > 1 || radioVersion.second >= 2;
+                    networkHalVersion.first > 1 || networkHalVersion.second >= 2;
         }
         if (!physicalChannelConfigSupported) {
             Log.d(TAG, "Skipping test because physical channel configs are not available.");
@@ -1296,10 +1333,9 @@ public class TelephonyCallbackTest {
         }
 
         assertFalse(mOnPhysicalChannelConfigCalled);
-        mHandler.post(() -> {
-            mPhysicalChannelConfigCallback = new PhysicalChannelConfigListener();
-            registerTelephonyCallbackWithPermission(mPhysicalChannelConfigCallback);
-        });
+
+        mPhysicalChannelConfigCallback = new PhysicalChannelConfigListener();
+        registerTelephonyCallbackWithPermission(mPhysicalChannelConfigCallback);
 
         synchronized (mLock) {
             while (!mOnPhysicalChannelConfigCalled) {
@@ -1329,10 +1365,9 @@ public class TelephonyCallbackTest {
     @Test
     public void testOnDataEnabledChangedByRegisterTelephonyCallback() throws Throwable {
         assertFalse(mOnDataEnabledChangedCalled);
-        mHandler.post(() -> {
-            mDataEnabledCallback = new DataEnabledListener();
-            registerTelephonyCallbackWithPermission(mDataEnabledCallback);
-        });
+
+        mDataEnabledCallback = new DataEnabledListener();
+        registerTelephonyCallbackWithPermission(mDataEnabledCallback);
 
         synchronized (mLock) {
             while (!mOnDataEnabledChangedCalled) {
@@ -1370,24 +1405,24 @@ public class TelephonyCallbackTest {
                             TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_USER);
                 });
         assertFalse(mOnAllowedNetworkTypesChangedCalled);
+
         long supportedNetworkTypes =
                 ShellIdentityUtils.invokeMethodWithShellPermissions(
                 mTelephonyManager, (tm) -> {
                         return tm.getSupportedRadioAccessFamily();
                     });
-        mHandler.post(() -> {
-            mAllowedNetworkTypesCallback = new AllowedNetworkTypesListener();
-            registerTelephonyCallbackWithPermission(mAllowedNetworkTypesCallback);
-            long networkTypesToBeTested =
-                    (supportedNetworkTypes & TelephonyManager.NETWORK_TYPE_BITMASK_NR) == 0
-                            ? TelephonyManager.NETWORK_TYPE_BITMASK_LTE
-                            : TelephonyManager.NETWORK_TYPE_BITMASK_NR;
-            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
-                    mTelephonyManager,
-                    (tm) -> tm.setAllowedNetworkTypesForReason(
-                            TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_USER,
-                            networkTypesToBeTested));
-        });
+
+        mAllowedNetworkTypesCallback = new AllowedNetworkTypesListener();
+        registerTelephonyCallbackWithPermission(mAllowedNetworkTypesCallback);
+        long networkTypesToBeTested =
+                (supportedNetworkTypes & TelephonyManager.NETWORK_TYPE_BITMASK_NR) == 0
+                        ? TelephonyManager.NETWORK_TYPE_BITMASK_LTE
+                        : TelephonyManager.NETWORK_TYPE_BITMASK_NR;
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
+                mTelephonyManager,
+                (tm) -> tm.setAllowedNetworkTypesForReason(
+                        TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_USER,
+                        networkTypesToBeTested));
 
         synchronized (mLock) {
             if (!mOnAllowedNetworkTypesChangedCalled) {
@@ -1438,10 +1473,9 @@ public class TelephonyCallbackTest {
     public void testOnLinkCapacityEstimateChangedByRegisterPhoneStateListener() throws Throwable {
 
         assertFalse(mOnLinkCapacityEstimateChangedCalled);
-        mHandler.post(() -> {
-            mLinkCapacityEstimateChangedListener = new LinkCapacityEstimateChangedListener();
-            registerTelephonyCallbackWithPermission(mLinkCapacityEstimateChangedListener);
-        });
+
+        mLinkCapacityEstimateChangedListener = new LinkCapacityEstimateChangedListener();
+        registerTelephonyCallbackWithPermission(mLinkCapacityEstimateChangedListener);
 
         synchronized (mLock) {
             while (!mOnLinkCapacityEstimateChangedCalled) {
@@ -1453,5 +1487,47 @@ public class TelephonyCallbackTest {
         // Test unregister
         unRegisterTelephonyCallback(mOnLinkCapacityEstimateChangedCalled,
                 mLinkCapacityEstimateChangedListener);
+    }
+
+
+    private EmergencyCallbackModeListener mEmergencyCallbackModeListener;
+
+    private class EmergencyCallbackModeListener extends TelephonyCallback
+            implements TelephonyCallback.EmergencyCallbackModeListener {
+        @Override
+        public void onCallBackModeStarted(@EmergencyCallbackModeType int type) {
+
+        }
+        @Override
+        public void onCallBackModeStopped(@EmergencyCallbackModeType int type,
+                @EmergencyCallbackModeStopReason int reason) {
+            synchronized (mLock) {
+                mOnEmergencyCallbackModeChangedCalled = true;
+                mLock.notify();
+            }
+        }
+    }
+
+    @Test
+    public void testOnEmergencyCallbackModeListener() throws Throwable {
+        if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
+            Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
+            return;
+        }
+
+        assertFalse(mOnEmergencyCallbackModeChangedCalled);
+        mEmergencyCallbackModeListener = new EmergencyCallbackModeListener();
+        registerTelephonyCallbackWithPermission(mEmergencyCallbackModeListener);
+
+        synchronized (mLock) {
+            while (!mOnEmergencyCallbackModeChangedCalled) {
+                mLock.wait(WAIT_TIME);
+            }
+        }
+        assertTrue(mOnEmergencyCallbackModeChangedCalled);
+
+        // Test unregister
+        unRegisterTelephonyCallback(mOnEmergencyCallbackModeChangedCalled,
+                mEmergencyCallbackModeListener);
     }
 }

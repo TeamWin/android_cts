@@ -84,8 +84,13 @@ public class AudioDeviceUtils {
      */
     public static String formatDeviceName(AudioDeviceInfo deviceInfo) {
         StringBuilder sb = new StringBuilder();
-        sb.append(deviceInfo.getProductName());
-        sb.append(" - " + getDeviceTypeName(deviceInfo.getType()));
+        if (deviceInfo != null) {
+            sb.append(deviceInfo.getProductName());
+            sb.append(" - " + getDeviceTypeName(deviceInfo.getType()));
+        } else {
+            sb.append("null");
+        }
+
         return sb.toString();
     }
 }

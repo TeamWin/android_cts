@@ -24,6 +24,7 @@ import com.android.bedstead.harrier.UserType;
 import com.android.bedstead.harrier.annotations.AnnotationRunPrecedence;
 import com.android.bedstead.harrier.annotations.RequireFeature;
 import com.android.bedstead.harrier.annotations.RequireNotInstantApp;
+import com.android.queryable.annotations.Query;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -45,6 +46,22 @@ import java.lang.annotation.Target;
 public @interface EnsureHasProfileOwner {
     /** Which user type the profile owner should be installed on. */
     UserType onUser() default INSTRUMENTED_USER;
+
+    String DEFAULT_KEY = "profileOwner";
+
+    /**
+     * The key used to identify this DPC.
+     *
+     * <p>This can be used with {@link AdditionalQueryParameters} to modify the requirements for
+     * the DPC. */
+    String key() default DEFAULT_KEY;
+
+    /**
+     * Requirements for the DPC
+     *
+     * <p>Defaults to the default version of RemoteDPC.
+     */
+    Query dpc() default @Query();
 
     /**
      * Whether this DPC should be returned by calls to {@code Devicestate#dpc()}.

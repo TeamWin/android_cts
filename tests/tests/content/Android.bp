@@ -43,17 +43,18 @@ android_test {
         "junit",
         "truth",
         "accountaccesslib",
-        "ub-uiautomator",
         // TODO: remove once Android migrates to JUnit 4.12, which provides assertThrows:
         "testng",
         "androidx.legacy_legacy-support-v4",
         "androidx.test.core",
+        "androidx.test.uiautomator_uiautomator",
         "cts-install-lib",
         "ShortcutManagerTestUtils",
         "libincfs-prebuilt",
         "HelloWorldResHardeningLib",
         "Nene",
         "Harrier",
+        "platformprotosnano",
     ],
     // Use multi-dex as the compatibility-common-util-devicesidelib dependency
     // on compatibility-device-util-axt pushes us beyond 64k methods.
@@ -82,6 +83,7 @@ android_test {
     data: [
         ":CtsContentDirectBootUnawareTestApp",
         ":CtsContentMockLauncherTestApp",
+        ":CtsContentMockRestrictedApp",
         ":CtsContentLongLabelNameTestApp",
         ":CtsContentPartiallyDirectBootAwareTestApp",
         ":CtsIntentResolutionTestApp",
@@ -94,6 +96,7 @@ android_test {
         ":CtsContentMaxSharedUserIdTestApp",
         ":CtsContentLongPackageNameTestApp",
         ":CtsContentNoApplicationTestApp",
+        ":CtsContentLongUsesPermissionNameTestApp",
         ":CtsApkVerityTestPrebuiltFiles",
         // v1/v2/v3/v4 signed version of android.appsecurity.cts.tinyapp to keep checksums stable
         "data/CtsPkgInstallTinyAppV1.apk",
@@ -130,6 +133,14 @@ android_test {
         ":HelloWorldUsingSdk1",
         ":HelloWorldUsingSdk1And2",
         ":HelloWorldUsingSdk3",
+        ":HelloWorldNoAppStorage",
+        ":HelloWorldLotsOfFlags",
+        ":HelloWorldWithSufficient",
+        ":HelloSufficientVerifierReject",
+        ":HelloVerifierAllow",
+        ":HelloVerifierReject",
+        ":HelloVerifierDelayedReject",
+        ":HelloVerifierDisabled",
     ],
     java_resources: [
         ":PackagePropertyTestApp1",
@@ -145,4 +156,5 @@ android_test {
         "mts-documentsui",
     ],
     min_sdk_version: "29",
+    replace_max_sdk_version_placeholder: "current",
 }

@@ -21,7 +21,6 @@ import static android.appsecurity.cts.Utils.waitForBootCompleted;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeThat;
 import static org.junit.Assume.assumeTrue;
 
@@ -204,7 +203,6 @@ public class AppDataIsolationTests extends BaseAppSecurityTest {
 
         try {
             // Setup screenlock
-            getDevice().executeShellCommand("settings put global require_password_to_decrypt 0");
             getDevice().executeShellCommand("locksettings set-disabled false");
             String response = getDevice().executeShellCommand("locksettings set-pin 1234");
             if (!response.contains("1234")) {
@@ -252,8 +250,6 @@ public class AppDataIsolationTests extends BaseAppSecurityTest {
                 } catch (Exception e) {}
                 getDevice().executeShellCommand("locksettings clear --old 1234");
                 getDevice().executeShellCommand("locksettings set-disabled true");
-                getDevice().executeShellCommand(
-                        "settings delete global require_password_to_decrypt");
             } finally {
                 // Get ourselves back into a known-good state
                 getDevice().rebootUntilOnline();

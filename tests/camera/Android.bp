@@ -67,6 +67,10 @@ android_test {
         "androidx.test.rules",
         "MediaPerformanceClassCommon",
         "cts-wm-util",
+        "cts-install-lib",
+        "androidx.camera_camera-core",
+        "androidx.camera_camera-extensions",
+        "androidx.camera_camera-lifecycle",
     ],
     jni_libs: [
         "libctscamera2_jni",
@@ -75,6 +79,10 @@ android_test {
     stl: "c++_shared",
     srcs: [
         "src/**/*.java",
+    ],
+    java_resources: [
+        ":CameraCtsPropertyTestApp1",
+        ":CameraCtsPropertyTestApp2",
     ],
     test_suites: [
         "cts",

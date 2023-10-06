@@ -693,7 +693,8 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
 
                     mSession.captureBurst(requests, listener, mHandler);
                     TotalCaptureResult[] results = listener.getTotalCaptureResultsForRequests(
-                            requests, WAIT_FOR_RESULT_TIMEOUT_MS);
+                            requests, /*numResultsWait*/0,
+                            /*timeoutForResult*/WAIT_FOR_RESULT_TIMEOUT_MS);
 
                     // Verify result metadata to produce similar field of view.
                     float fov = activeArraySize.width()/(2*focalLengths[i+1]);

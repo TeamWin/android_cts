@@ -35,7 +35,6 @@ android_test {
         "compatibility-device-util-axt",
         "ctstestrunner-axt",
         "truth",
-        "androidx.test.espresso.core",
         "androidx.test.ext.junit",
         "androidx.test.uiautomator_uiautomator",
     ],

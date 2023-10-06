@@ -63,6 +63,7 @@ import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.Presubmit;
 import android.util.Log;
 import android.view.Display;
 import android.view.MotionEvent;
@@ -72,6 +73,8 @@ import android.widget.TextView;
 
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
+
+import com.android.compatibility.common.util.CddTest;
 
 import org.hamcrest.Matcher;
 import org.junit.AfterClass;
@@ -91,6 +94,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 @AppModeFull
 @RunWith(AndroidJUnit4.class)
+@CddTest(requirements = {"3.10/C-1-1,C-1-2"})
+@Presubmit
 public class AccessibilityGestureDispatchTest {
     private static final String TAG = AccessibilityGestureDispatchTest.class.getSimpleName();
 

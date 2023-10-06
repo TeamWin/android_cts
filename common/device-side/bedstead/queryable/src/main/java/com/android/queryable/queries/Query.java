@@ -22,7 +22,6 @@ import com.android.queryable.Queryable;
 
 import java.io.Serializable;
 
-// TODO: We're going to apply Queryable2 further down - but we'll need to move it up here once done
 public interface Query<E> extends Serializable, Queryable, Parcelable {
     boolean matches(E value);
 }

@@ -16,13 +16,14 @@
 
 package android.alarmmanager.util;
 
+import static com.android.compatibility.common.util.TestUtils.waitUntil;
+
 import static org.junit.Assert.assertTrue;
 
 import android.provider.DeviceConfig;
 import android.util.Log;
 
 import com.android.compatibility.common.util.DeviceConfigStateHelper;
-import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.SystemUtil;
 
 import java.util.Collections;
@@ -32,7 +33,7 @@ import java.util.Map;
 public class AlarmManagerDeviceConfigHelper {
     private static final String TAG = AlarmManagerDeviceConfigHelper.class.getSimpleName();
 
-    private static final long UPDATE_TIMEOUT = 30_000;
+    private static final int UPDATE_TIMEOUT_SECONDS = 60;
 
     private volatile Map<String, String> mCommittedMap;
     private final Map<String, String> mInitialPropertiesMap;
@@ -90,9 +91,13 @@ public class AlarmManagerDeviceConfigHelper {
         DeviceConfigStateHelper.callWithSyncEnabledWithShellPermissions(() ->
                 assertTrue("setProperties returned false",
                         DeviceConfig.setProperties(propertiesToSet)));
-        PollingCheck.waitFor(UPDATE_TIMEOUT, () -> (getCurrentConfigVersion() > currentVersion),
-                "Could not update config within " + UPDATE_TIMEOUT + "ms. Current version: "
-                        + currentVersion);
+        try {
+            waitUntil("Could not update config within " + UPDATE_TIMEOUT_SECONDS
+                            + "s. Current version: " + currentVersion, UPDATE_TIMEOUT_SECONDS,
+                    () -> (getCurrentConfigVersion() > currentVersion));
+        } catch (Exception e) {
+            throw new RuntimeException("Unexpected exception while updating config", e);
+        }
     }
 
     public void commitAndAwaitPropagation() {

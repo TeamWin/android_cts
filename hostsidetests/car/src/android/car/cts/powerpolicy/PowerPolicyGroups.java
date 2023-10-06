@@ -73,6 +73,7 @@ public final class PowerPolicyGroups {
         for (int i = 0; i < defStrs.size(); ++i) {
             String line = defStrs.get(i);
             if (line.contains(groupDefDelimiter)) {
+                // this is policy group definition
                 if (line.contains("WaitForVHAL")) {
                     waitForVHALPolicy = parsePolicyGroupDef("WaitForVHAL", line);
                 } else if (line.contains("On")) {

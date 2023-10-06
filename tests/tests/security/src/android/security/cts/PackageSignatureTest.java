@@ -82,6 +82,7 @@ public class PackageSignatureTest extends AndroidTestCase {
         wellKnownSignatures.add(getSignature(R.raw.sig_platform));
         wellKnownSignatures.add(getSignature(R.raw.sig_shared));
         wellKnownSignatures.add(getSignature(R.raw.sig_testkey));
+        wellKnownSignatures.add(getSignature(R.raw.sig_debug));
         wellKnownSignatures.add(getSignature(R.raw.sig_devkeys));
         wellKnownSignatures.add(getSignature(R.raw.sig_networkstack));
         wellKnownSignatures.add(getSignature(R.raw.sig_devkeys_media));
@@ -140,6 +141,8 @@ public class PackageSignatureTest extends AndroidTestCase {
             "android.core.tests.libcore.package.org",
             "android.core.tests.libcore.package.sun",
             "android.core.tests.libcore.package.tests",
+            "com.android.cts.RemoteDPC",
+            "com.android.testutils.connectivitychecker",
 
             // Test package to verify upgrades to privileged applications
             "com.android.cts.priv.ctsshim",

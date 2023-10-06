@@ -25,6 +25,7 @@ import static org.junit.Assert.fail;
 
 import android.content.Context;
 import android.content.res.AssetFileDescriptor;
+import android.media.MediaCodec;
 import android.media.MediaCodec.BufferInfo;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
@@ -97,7 +98,69 @@ public class MediaMuxerTest {
                 "video_480x360_webm_vp9_333kbps_25fps_vorbis_stereo_128kbps_48000hz.webm";
         String outputFilePath = File.createTempFile("testWebmOutput", ".webm")
                 .getAbsolutePath();
-        cloneAndVerify(source, outputFilePath, 2, 90, MediaMuxer.OutputFormat.MUXER_OUTPUT_WEBM);
+        cloneAndVerify(
+                source,
+                outputFilePath,
+                2,
+                90,
+                MediaMuxer.OutputFormat.MUXER_OUTPUT_WEBM,
+                false /* signalEos */);
+    }
+
+    @Test
+    public void testHEICOutputInHEIF() throws Exception {
+        final String source = "sample_heif.heic";
+        String outputFilePath = File.createTempFile("testHEICOutputInHEIF", ".heic")
+            .getAbsolutePath();
+        cloneAndVerify(
+            source,
+            outputFilePath,
+            4 /* expectedTrackCount */,
+            0 /* degrees */,
+            MediaMuxer.OutputFormat.MUXER_OUTPUT_HEIF,
+            false /* signalEos */);
+    }
+
+    @Test
+    public void testAVIFOutputInHEIF() throws Exception {
+        final String source = "sample_avif.avif";
+        String outputFilePath = File.createTempFile("testAVIFOutputInHEIF", ".avif")
+                .getAbsolutePath();
+        cloneAndVerify(
+            source,
+            outputFilePath,
+            1 /* expectedTrackCount */,
+            0 /* degrees */,
+            MediaMuxer.OutputFormat.MUXER_OUTPUT_HEIF,
+            false /* signalEos */);
+    }
+
+    @Test
+    public void testAV1OutputInMP4() throws Exception {
+        final String source =
+                "video_1280x720_mp4_av1_2000kbps_30fps_aac_stereo_128kbps_44100hz.mp4";
+        String outputFilePath = File.createTempFile("testAV1OutputInMP4", ".mp4").getAbsolutePath();
+        cloneAndVerify(
+                source,
+                outputFilePath,
+                2 /* expectedTrackCount */,
+                0 /* degrees */,
+                MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4,
+                true /* signalEos */);
+    }
+
+    @Test
+    public void testAV1VideoOnlyOutputInMP4() throws Exception {
+        final String source = "video_1280x720_mp4_av1_2000kbps_30fps.mp4";
+        String outputFilePath =
+                File.createTempFile("testAV1VideoOnlyOutputInMP4", ".mp4").getAbsolutePath();
+        cloneAndVerify(
+                source,
+                outputFilePath,
+                1 /* expectedTrackCount */,
+                0 /* degrees */,
+                MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4,
+                true /* signalEos */);
     }
 
     /**
@@ -109,8 +172,13 @@ public class MediaMuxerTest {
         String outputFilePath = File.createTempFile("MediaMuxerTest_dolbyvisionP8videoOnly", ".mp4")
                 .getAbsolutePath();
         try {
-            cloneAndVerify(source, outputFilePath, 2 /* expectedTrackCount */, 180 /* degrees */,
+            cloneAndVerify(
+                    source,
+                    outputFilePath,
+                    2 /* expectedTrackCount */,
+                    180 /* degrees */,
                     MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4,
+                    false /* signalEos */,
                     MediaMuxerTest::filterOutNonDolbyVisionFormat);
         } finally {
             new File(outputFilePath).delete();
@@ -126,8 +194,13 @@ public class MediaMuxerTest {
         String outputFilePath = File.createTempFile("MediaMuxerTest_dolbyvisionP9videoOnly", ".mp4")
                 .getAbsolutePath();
         try {
-            cloneAndVerify(source, outputFilePath, 2 /* expectedTrackCount */, 180 /* degrees */,
+            cloneAndVerify(
+                    source,
+                    outputFilePath,
+                    2 /* expectedTrackCount */,
+                    180 /* degrees */,
                     MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4,
+                    false /* signalEos */,
                     MediaMuxerTest::filterOutNonDolbyVisionFormat);
         } finally {
             new File(outputFilePath).delete();
@@ -445,6 +518,7 @@ public class MediaMuxerTest {
                     /* expectedTrackCount= */ 2,
                     /* degrees= */ 0,
                     MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4,
+                    /* signalEOS= */ false,
                     staticMetadataAdditionFunction);
             assertArrayEquals(
                     inputHdrStaticMetadata, getVideoColorInfo(outputFilePath).hdrStaticInfo);
@@ -476,6 +550,7 @@ public class MediaMuxerTest {
                     /* expectedTrackCount= */ 2,
                     /* degrees= */ 0,
                     MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4,
+                    /* signalEOS= */ false,
                     staticMetadataAdditionFunction);
             assertNull(getVideoColorInfo(outputFilePath));
         } finally {
@@ -570,13 +645,22 @@ public class MediaMuxerTest {
         }
     }
 
-    /**
-     * Clones a media file and then compares against the source file to make
-     * sure they match.
-     */
-    private void cloneAndVerify(final String srcMedia, String outputMediaFile,
-            int expectedTrackCount, int degrees, int fmt) throws IOException {
-        cloneAndVerify(srcMedia, outputMediaFile, expectedTrackCount, degrees, fmt,
+    /** Clones a media file and then compares against the source file to make sure they match. */
+    private void cloneAndVerify(
+            final String srcMedia,
+            String outputMediaFile,
+            int expectedTrackCount,
+            int degrees,
+            int fmt,
+            boolean signalEos)
+            throws IOException {
+        cloneAndVerify(
+                srcMedia,
+                outputMediaFile,
+                expectedTrackCount,
+                degrees,
+                fmt,
+                signalEos,
                 Function.identity());
     }
 
@@ -585,8 +669,13 @@ public class MediaMuxerTest {
      *
      * <p>See {@link #cloneMediaUsingMuxer} for information about the parameters.
      */
-    private void cloneAndVerify(final String srcMedia, String outputMediaFile,
-            int expectedTrackCount, int degrees, int fmt,
+    private void cloneAndVerify(
+            final String srcMedia,
+            String outputMediaFile,
+            int expectedTrackCount,
+            int degrees,
+            int fmt,
+            boolean signalEos,
             Function<MediaFormat, MediaFormat> muxerInputTrackFormatTransformer)
             throws IOException {
         try {
@@ -596,6 +685,7 @@ public class MediaMuxerTest {
                     expectedTrackCount,
                     degrees,
                     fmt,
+                    signalEos,
                     muxerInputTrackFormatTransformer);
             if (fmt == MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4 ||
                     fmt == MediaMuxer.OutputFormat.MUXER_OUTPUT_3GPP) {
@@ -610,7 +700,6 @@ public class MediaMuxerTest {
         }
     }
 
-
     /**
      * Clones a given file using MediaMuxer.
      *
@@ -619,10 +708,11 @@ public class MediaMuxerTest {
      * @param expectedTrackCount Expected number of tracks in the input file
      * @param degrees orientation hint in degrees
      * @param fmt one of the values defined in {@link MediaMuxer.OutputFormat}.
-     * @param muxerInputTrackFormatTransformer Function applied on the MediaMuxer input formats.
-     *                                         If the function returns null for a given MediaFormat,
-     *                                         the corresponding track is discarded and not passed
-     *                                         to MediaMuxer.
+     * @param signalEos explicitly signal EOS by sending an empty packet after muxing. Only works
+     *     fmt is MUXER_OUTPUT_MPEG_4.
+     * @param muxerInputTrackFormatTransformer Function applied on the MediaMuxer input formats. If
+     *     the function returns null for a given MediaFormat, the corresponding track is discarded
+     *     and not passed to MediaMuxer.
      * @throws IOException if muxer failed to open output file for write.
      */
     private void cloneMediaUsingMuxer(
@@ -631,6 +721,7 @@ public class MediaMuxerTest {
             int expectedTrackCount,
             int degrees,
             int fmt,
+            boolean signalEos,
             Function<MediaFormat, MediaFormat> muxerInputTrackFormatTransformer)
             throws IOException {
         // Set up MediaExtractor to read from the source.
@@ -719,6 +810,28 @@ public class MediaMuxerTest {
                             " Flags:" + bufferInfo.flags +
                             " TrackIndex:" + trackIndex +
                             " Size(KB) " + bufferInfo.size / 1024);
+                }
+            }
+        }
+
+        // By explicitly passing in an EOS buffer with the correct timestamp, we can control the
+        // duration of the last sample so that the duration of the produced file matches the input
+        // file. This is needed for input files whose last sample's duration doesn't match the
+        // preceding one, because the MP4 MediaMuxer uses the duration of the sample second to last
+        // for the last sample by default.
+        if (signalEos) {
+            assertEquals(
+                    "signalEos is only supported for MP4",
+                    fmt,
+                    MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
+            // Signal EOS with the correct duration for the last frame.
+            bufferInfo.size = 0;
+            bufferInfo.flags = MediaCodec.BUFFER_FLAG_END_OF_STREAM;
+            for (int i = 0; i < trackCount; i++) {
+                MediaFormat format = extractor.getTrackFormat(i);
+                bufferInfo.presentationTimeUs = format.getLong(MediaFormat.KEY_DURATION, 0);
+                if (bufferInfo.presentationTimeUs != 0) {
+                    muxer.writeSampleData(indexMap.get(i), dstBuf, bufferInfo);
                 }
             }
         }

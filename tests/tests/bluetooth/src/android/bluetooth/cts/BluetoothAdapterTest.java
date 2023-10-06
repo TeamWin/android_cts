@@ -257,6 +257,26 @@ public class BluetoothAdapterTest {
     }
 
     @Test
+    public void test_getProfileConnectionState() {
+        if (!mHasBluetooth) {
+            // Skip the test if bluetooth is not present.
+            return;
+        }
+
+        mUiAutomation.dropShellPermissionIdentity();
+        // getProfileConnectionState is caching it's return value and cts test doesn't know how to
+        // deal with it
+        // assertThrows(SecurityException.class,
+        //         () -> mAdapter.getProfileConnectionState(BluetoothProfile.A2DP));
+        mUiAutomation.adoptShellPermissionIdentity(BLUETOOTH_CONNECT);
+        assertEquals(mAdapter.getProfileConnectionState(BluetoothProfile.A2DP),
+                BluetoothAdapter.STATE_DISCONNECTED);
+        assertTrue(BTAdapterUtils.enableAdapter(mAdapter, mContext));
+        assertEquals(mAdapter.getProfileConnectionState(BluetoothProfile.A2DP),
+                BluetoothAdapter.STATE_DISCONNECTED);
+    }
+
+    @Test
     public void test_getRemoteDevice() {
         if (!mHasBluetooth) {
             // Skip the test if bluetooth is not present.

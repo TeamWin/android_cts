@@ -21,7 +21,7 @@ import camera_properties_utils
 import its_session_utils
 
 # This must match MPC12_JPEG_CAPTURE_THRESHOLD in ItsTestActivity.java
-JPEG_CAPTURE_S_PERFORMANCE_CLASS_THRESHOLD = 1000  # ms
+_JPEG_CAPTURE_S_PERFORMANCE_CLASS_THRESHOLD = 1000  # ms
 
 
 class JpegCaptureSPerfClassTest(its_base_test.ItsBaseTest):
@@ -57,10 +57,10 @@ class JpegCaptureSPerfClassTest(its_base_test.ItsBaseTest):
 
     # Assert jpeg capture time if device claims performance class
     if (cam.is_performance_class() and
-        jpeg_capture_ms >= JPEG_CAPTURE_S_PERFORMANCE_CLASS_THRESHOLD):
+        jpeg_capture_ms >= _JPEG_CAPTURE_S_PERFORMANCE_CLASS_THRESHOLD):
       raise AssertionError(f'1080p_jpeg_capture_time_ms: {jpeg_capture_ms}, '
                            f'THRESH: '
-                           f'{JPEG_CAPTURE_S_PERFORMANCE_CLASS_THRESHOLD}')
+                           f'{_JPEG_CAPTURE_S_PERFORMANCE_CLASS_THRESHOLD}')
 
     # Log jpeg capture time so that the corresponding MPC level can be written
     # to report log. Text must match MPC12_JPEG_CAPTURE_PATTERN in

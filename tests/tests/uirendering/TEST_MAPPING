@@ -1,20 +1,14 @@
 {
+  // Presubmit variants
   "presubmit": [
     {
       "name": "CtsUiRenderingTestCases",
       "options": [
         {
           "exclude-annotation": "android.uirendering.cts.runner.SkipPresubmit"
-        }
-      ]
-    }
-  ],
-  "hwasan-postsubmit": [
-    {
-      "name": "CtsUiRenderingTestCases",
-      "options": [
+        },
         {
-          "exclude-annotation": "android.uirendering.cts.runner.SkipPresubmit"
+          "exclude-annotation": "androidx.test.filters.FlakyTest"
         }
       ]
     }
@@ -27,8 +21,7 @@
           "exclude-annotation": "android.uirendering.cts.runner.SkipPresubmit"
         },
         {
-          // TODO(b/219585453)
-          "exclude-filter": "android.uirendering.cts.testclasses.SurfaceViewTests#testMovingWhiteSurfaceView"
+          "exclude-annotation": "androidx.test.filters.FlakyTest"
         },
         {
           // TODO(b/204095269)
@@ -74,6 +67,27 @@
         },
         {
           "exclude-filter": "android.uirendering.cts.testclasses.ViewClippingTests#testConcaveOutlineClip"
+        }
+      ]
+    }
+  ],
+  // Postsubmit variants
+  "postsubmit": [
+    {
+      "name": "CtsUiRenderingTestCases",
+      "options": [
+        {
+          "exclude-annotation": "androidx.test.filters.FlakyTest"
+        }
+      ]
+    }
+  ],
+  "hwasan-postsubmit": [
+    {
+      "name": "CtsUiRenderingTestCases",
+      "options": [
+        {
+          "exclude-annotation": "androidx.test.filters.FlakyTest"
         }
       ]
     }

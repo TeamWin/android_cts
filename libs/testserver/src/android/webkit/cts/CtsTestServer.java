@@ -22,6 +22,7 @@ import android.net.Uri;
 import android.os.Environment;
 import android.util.Base64;
 import android.util.Log;
+import android.util.Pair;
 import android.webkit.MimeTypeMap;
 
 import org.apache.http.Header;
@@ -137,14 +138,6 @@ public class CtsTestServer {
     public static final String MESSAGE_403 = "403 forbidden";
     public static final String MESSAGE_404 = "404 not found";
 
-    public enum SslMode {
-        INSECURE,
-        NO_CLIENT_AUTH,
-        WANTS_CLIENT_AUTH,
-        NEEDS_CLIENT_AUTH,
-        TRUST_ANY_CLIENT
-    }
-
     private static Hashtable<Integer, String> sReasons;
 
     private ServerThread mServerThread;
@@ -152,11 +145,13 @@ public class CtsTestServer {
     private AssetManager mAssets;
     private Context mContext;
     private Resources mResources;
-    private SslMode mSsl;
+    private @SslMode int mSsl;
     private MimeTypeMap mMap;
     private Vector<String> mQueries;
     private ArrayList<HttpEntity> mRequestEntities;
+    private final Map<String, Integer> mRequestCountMap = new HashMap<String, Integer>();
     private final Map<String, HttpRequest> mLastRequestMap = new HashMap<String, HttpRequest>();
+    private final Map<String, HttpResponse> mResponseMap = new HashMap<String, HttpResponse>();
     private long mDocValidity;
     private long mDocAge;
     private X509TrustManager mTrustManager;
@@ -167,7 +162,7 @@ public class CtsTestServer {
      * @throws IOException
      */
     public CtsTestServer(Context context) throws Exception {
-        this(context, false);
+        this(context, SslMode.INSECURE);
     }
 
     public static String getReasonString(int status) {
@@ -186,7 +181,7 @@ public class CtsTestServer {
      * @param context The application context to use for fetching assets.
      * @param ssl True if the server should be using secure sockets.
      * @throws Exception
-     */
+    */
     public CtsTestServer(Context context, boolean ssl) throws Exception {
         this(context, ssl ? SslMode.NO_CLIENT_AUTH : SslMode.INSECURE);
     }
@@ -197,7 +192,7 @@ public class CtsTestServer {
      * @param sslMode Whether to use SSL, and if so, what client auth (if any) to use.
      * @throws Exception
      */
-    public CtsTestServer(Context context, SslMode sslMode) throws Exception {
+    public CtsTestServer(Context context, @SslMode int sslMode) throws Exception {
         this(context, sslMode, 0, 0);
     }
 
@@ -208,7 +203,7 @@ public class CtsTestServer {
      * @param trustManager the trustManager
      * @throws Exception
      */
-    public CtsTestServer(Context context, SslMode sslMode, X509TrustManager trustManager)
+    public CtsTestServer(Context context, @SslMode int sslMode, X509TrustManager trustManager)
             throws Exception {
         this(context, sslMode, trustManager, 0, 0);
     }
@@ -221,7 +216,7 @@ public class CtsTestServer {
      * @param certResId Raw resource ID of the server certificate to use.
      * @throws Exception
      */
-    public CtsTestServer(Context context, SslMode sslMode, int keyResId, int certResId)
+    public CtsTestServer(Context context, @SslMode int sslMode, int keyResId, int certResId)
             throws Exception {
         this(context, sslMode, new CtsTrustManager(), keyResId, certResId);
     }
@@ -235,7 +230,7 @@ public class CtsTestServer {
      * @param certResId Raw resource ID of the server certificate to use.
      * @throws Exception
      */
-    public CtsTestServer(Context context, SslMode sslMode, X509TrustManager trustManager,
+    public CtsTestServer(Context context, @SslMode int sslMode, X509TrustManager trustManager,
             int keyResId, int certResId) throws Exception {
         mContext = context;
         mAssets = mContext.getAssets();
@@ -280,7 +275,7 @@ public class CtsTestServer {
      * for shutdown by blindly trusting the {@link CtsTestServer}'s
      * credentials.
      */
-    private static class CtsTrustManager implements X509TrustManager {
+    static class CtsTrustManager implements X509TrustManager {
         public void checkClientTrusted(X509Certificate[] chain, String authType) {
             // Trust the CtSTestServer's client...
         }
@@ -313,10 +308,47 @@ public class CtsTestServer {
     }
 
     /**
+     * Sets a response to be returned when a particular request path is passed in (with the option
+     * to specify additional headers).
+     *
+     * @param requestPath The path to respond to.
+     * @param responseString The response body that will be returned.
+     * @param responseHeaders Any additional headers that should be returned along with the response
+     *     (null is acceptable).
+     * @return The full URL including the path that should be requested to get the expected
+     *     response.
+     */
+    public synchronized String setResponse(
+            String requestPath, String responseString, List<Pair<String, String>> responseHeaders) {
+        HttpResponse response = createResponse(HttpStatus.SC_OK);
+        response.setEntity(createEntity(responseString));
+        if (responseHeaders != null) {
+            for (Pair<String, String> headerPair : responseHeaders) {
+                response.setHeader(headerPair.first, headerPair.second);
+            }
+        }
+        mResponseMap.put(requestPath, response);
+
+        StringBuilder sb = new StringBuilder(getBaseUri());
+        sb.append(requestPath);
+
+        return sb.toString();
+    }
+
+    /**
      * Return the URI that points to the server root.
      */
     public String getBaseUri() {
         return mServerUri;
+    }
+
+    /**
+     * Return the absolute URL that refers to a path.
+     */
+    public String getAbsoluteUrl(String path) {
+        StringBuilder sb = new StringBuilder(getBaseUri());
+        sb.append(path);
+        return sb.toString();
     }
 
     /**
@@ -558,8 +590,20 @@ public class CtsTestServer {
         return mRequestEntities;
     }
 
+    /**
+     * Returns the total number of requests made.
+     */
     public synchronized int getRequestCount() {
         return mQueries.size();
+    }
+
+    /**
+     * Returns the number of requests made for a path.
+     */
+    public synchronized int getRequestCount(String requestPath) {
+        Integer count = mRequestCountMap.get(requestPath);
+        if (count == null) throw new IllegalArgumentException("Path not set: " + requestPath);
+        return count.intValue();
     }
 
     /**
@@ -590,14 +634,25 @@ public class CtsTestServer {
     }
 
     /**
-     * Returns the last HttpRequest at this path. Can return null if it is never requested.
+     * Returns the last HttpRequest at this path.
+     * Can return null if it is never requested.
+     *
+     * Use this method if the request you're looking for was
+     * for an asset.
      */
-    public synchronized HttpRequest getLastRequest(String requestPath) {
-        String relativeUrl = getRelativeUrl(requestPath);
-        if (!mLastRequestMap.containsKey(relativeUrl))
-            return null;
+    public HttpRequest getLastAssetRequest(String requestPath) {
+        String relativeUrl = getRelativeAssetUrl(requestPath);
         return mLastRequestMap.get(relativeUrl);
     }
+
+    /**
+     * Returns the last HttpRequest at this path.
+     * Can return null if it is never requested.
+     */
+    public HttpRequest getLastRequest(String requestPath) {
+        return mLastRequestMap.get(requestPath);
+    }
+
     /**
      * Hook for adding stuffs for HTTP POST. Default implementation does nothing.
      * @return null to use the default response mechanism of sending the requested uri as it is.
@@ -611,7 +666,7 @@ public class CtsTestServer {
      * Return the relative URL that refers to the given asset.
      * @param path The path of the asset. See {@link AssetManager#open(String)}
      */
-    private String getRelativeUrl(String path) {
+    private String getRelativeAssetUrl(String path) {
         StringBuilder sb = new StringBuilder(ASSET_PREFIX);
         sb.append(path);
         return sb.toString();
@@ -630,6 +685,11 @@ public class CtsTestServer {
 
         synchronized (this) {
             mQueries.add(uriString);
+            int requestCount = 0;
+            if (mRequestCountMap.containsKey(uriString)) {
+                requestCount = mRequestCountMap.get(uriString);
+            }
+            mRequestCountMap.put(uriString, requestCount + 1);
             mLastRequestMap.put(uriString, request);
             if (request instanceof HttpEntityEnclosingRequest) {
                 mRequestEntities.add(((HttpEntityEnclosingRequest)request).getEntity());
@@ -862,6 +922,12 @@ public class CtsTestServer {
                 Log.w(TAG, "Unexpected UnsupportedEncodingException");
             }
         }
+
+        // If a response was set, it should override whatever was generated
+        if (mResponseMap.containsKey(path)) {
+            response = mResponseMap.get(path);
+        }
+
         if (response == null) {
             response = createResponse(HttpStatus.SC_NOT_FOUND);
         }
@@ -976,7 +1042,7 @@ public class CtsTestServer {
     private static class ServerThread extends Thread {
         private CtsTestServer mServer;
         private ServerSocket mSocket;
-        private SslMode mSsl;
+        private @SslMode int mSsl;
         private boolean mWillShutDown = false;
         private SSLContext mSslContext;
         private ExecutorService mExecutorService = Executors.newFixedThreadPool(20);
@@ -1063,7 +1129,7 @@ public class CtsTestServer {
             return keyManagerFactory.getKeyManagers();
         }
 
-        ServerThread(CtsTestServer server, SslMode sslMode, InputStream key,
+        ServerThread(CtsTestServer server, @SslMode int sslMode, InputStream key,
                 InputStream cert) throws Exception {
             super("ServerThread");
             mServer = server;

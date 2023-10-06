@@ -25,8 +25,12 @@ java_defaults {
     java_resource_dirs: ["assets/"],
     java_resources: [
         ":AppUsedByOtherApp",
+        ":AppUsedByOtherApp_1_dm",
+        ":AppUsedByOtherApp_2_prof",
         ":AppUsingOtherApp",
         ":CtsCompilationApp",
+        ":CtsCompilationApp_profile",
+        ":CtsCompilationApp_dm",
     ],
     libs: [
         "cts-tradefed",
@@ -55,4 +59,77 @@ java_test_host {
         "general-tests",
     ],
     test_config: "CompilationTestCases.xml",
+}
+
+// Generates a binary profile from a text profile for an APK.
+// The first input must be the text profile.
+// The second input must be the APK.
+genrule_defaults {
+    name: "profile_defaults",
+    tools: ["profman"],
+    cmd: "inputs=($(in)) && " +
+        "$(location profman) " +
+        "--create-profile-from=$${inputs[0]} " +
+        "--apk=$${inputs[1]} " +
+        "--dex-location=base.apk " +
+        "--reference-profile-file=$(out)",
+}
+
+// Generates a DM file from a binary profile.
+// The input must be the binary profile.
+genrule_defaults {
+    name: "dm_defaults",
+    tools: ["soong_zip"],
+    cmd: "cp $(in) $(genDir)/primary.prof && " +
+        "$(location soong_zip) " +
+        "-j -f $(genDir)/primary.prof " +
+        "-o $(out)",
+}
+
+genrule {
+    name: "CtsCompilationApp_profile",
+    defaults: ["profile_defaults"],
+    srcs: [
+        "assets/primary.prof.txt",
+        ":CtsCompilationApp",
+    ],
+    out: ["CtsCompilationApp.prof"],
+}
+
+genrule {
+    name: "CtsCompilationApp_dm",
+    defaults: ["dm_defaults"],
+    srcs: [
+        ":CtsCompilationApp_profile",
+    ],
+    out: ["CtsCompilationApp.dm"],
+}
+
+genrule {
+    name: "AppUsedByOtherApp_1_prof",
+    defaults: ["profile_defaults"],
+    srcs: [
+        "assets/app_used_by_other_app_1.prof.txt",
+        ":AppUsedByOtherApp",
+    ],
+    out: ["AppUsedByOtherApp_1.prof"],
+}
+
+genrule {
+    name: "AppUsedByOtherApp_1_dm",
+    defaults: ["dm_defaults"],
+    srcs: [
+        ":AppUsedByOtherApp_1_prof",
+    ],
+    out: ["AppUsedByOtherApp_1.dm"],
+}
+
+genrule {
+    name: "AppUsedByOtherApp_2_prof",
+    defaults: ["profile_defaults"],
+    srcs: [
+        "assets/app_used_by_other_app_2.prof.txt",
+        ":AppUsedByOtherApp",
+    ],
+    out: ["AppUsedByOtherApp_2.prof"],
 }

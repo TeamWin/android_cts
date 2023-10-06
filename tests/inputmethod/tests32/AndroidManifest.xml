@@ -21,7 +21,9 @@
     <uses-sdk android:targetSdkVersion="32" />
 
     <queries>
-        <package android:name="com.android.cts.mockime" />
+        <intent>
+            <action android:name="android.view.InputMethod" />
+        </intent>
     </queries>
 
     <application android:label="CtsInputMethodSdk28TestCases" />

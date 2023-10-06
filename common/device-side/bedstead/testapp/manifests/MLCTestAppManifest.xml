@@ -17,10 +17,10 @@
   -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="com.android.bedstead.testapp.NotEmptyTestApp">
+          package="com.android.bedstead.testapp.MLCTestApp">
 
-    <application android:label="MLCTestApp">
-        <meta-data android:name="test-metadata-key" android:value="test-metadata-value" />
+    <application android:label="MLCTestApp" android:icon="@drawable/ic_launcher">
+        <meta-data android:name="test-metadata-key" android:value="test-metadata-value"/>
 
 
         <activity android:name="android.testapp.CrossProfileSharingActivity"
@@ -29,6 +29,16 @@
                 <category android:name="android.intent.category.DEFAULT"/>
                 <action android:name="android.intent.action.SEND_MULTIPLE"/>
                 <data android:mimeType="*/*"/>
+            </intent-filter>
+        </activity>
+        <activity android:name="android.testapp.AutoVerifiableActivity" android:exported="true">
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" />
+                <data android:scheme="https" />
+                <data android:host="www.example.com" />
             </intent-filter>
         </activity>
     </application>

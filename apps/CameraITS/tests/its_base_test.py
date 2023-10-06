@@ -47,11 +47,14 @@ NOT_YET_MANDATED = {
     'scene2_c': [],
     'scene2_d': [['test_num_faces', 30]],
     'scene2_e': [['test_num_faces', 30], ['test_continuous_picture', 30]],
+    'scene2_f': [['test_num_faces', 30]],
     'scene3': [],
     'scene4': [],
     'scene5': [],
     'scene6': [['test_zoom', 30]],
     'sensor_fusion': [],
+    'scene_hdr': [],
+    'scene_night': [],
 }
 
 logging.getLogger('matplotlib.font_manager').disabled = True
@@ -131,7 +134,7 @@ class ItsBaseTest(base_test.BaseTestClass):
 
     arduino_serial_port = lighting_control_utils.lighting_control(
         self.lighting_cntl, self.lighting_ch)
-    if arduino_serial_port:
+    if arduino_serial_port and self.scene != 'scene0':
       lighting_control_utils.set_light_brightness(
           self.lighting_ch, 255, arduino_serial_port)
       logging.debug('Light is turned ON.')
@@ -143,16 +146,19 @@ class ItsBaseTest(base_test.BaseTestClass):
       )
       foldable_state = str(foldable_state_unencoded.decode('utf-8')).strip()
       is_folded = 'CLOSE' in foldable_state
-      scene_with_suffix = self.user_params.get('scene_with_suffix', self.scene)
-      if 'folded' in scene_with_suffix and not is_folded:
-        raise AssertionError(
-            f'Testing folded scene {scene_with_suffix} with unfolded device!')
-      if ('folded' not in scene_with_suffix and is_folded and
-          self.camera.startswith(FRONT_CAMERA_ID_PREFIX)):  # Not rear camera
-        raise AssertionError(
-            f'Testing unfolded scene {scene_with_suffix} with a '
-            'non-rear camera while device is folded!'
-        )
+      scene_with_suffix = self.user_params.get('scene_with_suffix')
+      if scene_with_suffix:
+        if 'folded' in scene_with_suffix and not is_folded:
+          raise AssertionError(
+              f'Testing folded scene {scene_with_suffix} with unfolded device!')
+        if ('folded' not in scene_with_suffix and is_folded and
+            self.camera.startswith(FRONT_CAMERA_ID_PREFIX)):  # Not rear camera
+          raise AssertionError(
+              f'Testing unfolded scene {scene_with_suffix} with a '
+              'non-rear camera while device is folded!'
+          )
+      else:
+        logging.debug('Testing without `run_all_tests`')
 
   def _setup_devices(self, num):
     """Sets up each device in parallel if more than one device."""
@@ -212,20 +218,42 @@ class ItsBaseTest(base_test.BaseTestClass):
     logging.debug('dumpsys window output: %s', output.decode('utf-8').strip())
     output_list = str(output.decode('utf-8')).strip().split(' ')
     for val in output_list:
-        if 'LandscapeRotation' in val:
-            landscape_val = str(val.split('=')[-1])
-            # For some tablets the values are in constant forms such as ROTATION_90
-            if 'ROTATION_90' in landscape_val:
-                landscape_val = '1'
-            elif 'ROTATION_0' in landscape_val:
-                landscape_val = '0'
-            logging.debug('Changing the orientation to landscape mode.')
-            self.tablet.adb.shell(['settings', 'put', 'system', 'user_rotation',
-                                   landscape_val])
-            break
+      if 'LandscapeRotation' in val:
+        landscape_val = str(val.split('=')[-1])
+        # For some tablets the values are in constant forms such as ROTATION_90
+        if 'ROTATION_90' in landscape_val:
+          landscape_val = '1'
+        elif 'ROTATION_0' in landscape_val:
+          landscape_val = '0'
+        logging.debug('Changing the orientation to landscape mode.')
+        self.tablet.adb.shell(['settings', 'put', 'system', 'user_rotation',
+                               landscape_val])
+        break
     logging.debug('Reported tablet orientation is: %d',
                   int(self.tablet.adb.shell(
                       'settings get system user_rotation')))
+
+  def set_screen_brightness(self, brightness_level):
+    """Sets the screen brightness to desired level.
+
+    Args:
+       brightness_level : brightness level to set.
+    """
+    # Turn off the adaptive brightness on tablet.
+    self.tablet.adb.shell(
+        ['settings', 'put', 'system', 'screen_brightness_mode', '0'])
+    # Set the screen brightness
+    self.tablet.adb.shell([
+        'settings', 'put', 'system', 'screen_brightness',
+        brightness_level
+    ])
+    logging.debug('Tablet brightness set to: %s', brightness_level)
+    actual_brightness = self.tablet.adb.shell(
+        'settings get system screen_brightness')
+    if int(actual_brightness) != int(brightness_level):
+      raise AssertionError('Brightness was not set as expected! '
+                           'Requested brightness: {brightness_level}, '
+                           'Actual brightness: {actual_brightness}')
 
   def parse_hidden_camera_id(self):
     """Parse the string of camera ID into an array.
@@ -285,4 +313,5 @@ class ItsBaseTest(base_test.BaseTestClass):
               f'{self.root_output_path}_{self.__class__.__name__}')
     # print root_output_path so that it can be written to report log.
     # Note: Do not replace print with logging.debug here.
-    print('root_output_path:', f'{self.root_output_path}_{self.__class__.__name__}')
+    print('root_output_path:',
+          f'{self.root_output_path}_{self.__class__.__name__}')

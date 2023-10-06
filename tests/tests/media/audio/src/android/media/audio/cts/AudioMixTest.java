@@ -21,11 +21,11 @@ import android.media.AudioFormat;
 import android.media.AudioSystem;
 import android.media.audiopolicy.AudioMix;
 import android.media.audiopolicy.AudioMixingRule;
-import android.media.cts.NonMediaMainlineTest;
 
 import com.android.compatibility.common.util.CtsAndroidTestCase;
+import com.android.compatibility.common.util.NonMainlineTest;
 
-@NonMediaMainlineTest
+@NonMainlineTest
 public class AudioMixTest extends CtsAndroidTestCase {
 
     public void testAudioMixEquals() throws Exception {

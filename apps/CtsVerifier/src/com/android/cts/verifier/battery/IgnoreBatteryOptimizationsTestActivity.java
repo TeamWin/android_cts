@@ -27,8 +27,6 @@ import android.view.View;
 import com.android.cts.verifier.OrderedTestActivity;
 import com.android.cts.verifier.R;
 
-import java.lang.reflect.Method;
-
 /** Test activity to check fulfillment of the ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS intent. */
 public class IgnoreBatteryOptimizationsTestActivity extends OrderedTestActivity {
     private PowerManager mPowerManager;
@@ -72,23 +70,10 @@ public class IgnoreBatteryOptimizationsTestActivity extends OrderedTestActivity 
                 == UsageStatsManager.STANDBY_BUCKET_EXEMPTED;
     }
 
-    private boolean isAppStandbyEnabled() {
-        try {
-            Method method = UsageStatsManager.class.getDeclaredMethod("isAppStandbyEnabled");
-            method.setAccessible(true);
-            return (Boolean) method.invoke(mUsageStatsManager);
-        } catch (Exception e) {
-            // Expected on most builds.
-        }
-
-        // The test previously assumed app standby is enabled.
-        return true;
-    }
-
     private boolean isFullyNotExempted() {
         // Use an OR so we check both values to make sure neither of them say the app is exempted.
         if (mPowerManager.isIgnoringBatteryOptimizations(getPackageName())
-                || (isAppStandbyEnabled()
+                || (mUsageStatsManager.isAppStandbyEnabled()
                     && mUsageStatsManager.getAppStandbyBucket()
                         == UsageStatsManager.STANDBY_BUCKET_EXEMPTED)) {
             return false;
@@ -101,26 +86,13 @@ public class IgnoreBatteryOptimizationsTestActivity extends OrderedTestActivity 
         startActivity(intent);
     }
 
-    private boolean areAutoPowerSaveModesEnabled() {
-        try {
-            Method method = PowerManager.class.getDeclaredMethod("areAutoPowerSaveModesEnabled");
-            method.setAccessible(true);
-            return (Boolean) method.invoke(mPowerManager);
-        } catch (Exception e) {
-            // Expected on most builds.
-        }
-
-        // The test previously assumed auto power save modes were enabled.
-        return true;
-    }
-
     private final Test mCheckAutoPowerModesEnabled =
             new Test(R.string.ibo_auto_power_modes_enabled) {
                 @Override
                 protected void run() {
                     super.run();
 
-                    if (areAutoPowerSaveModesEnabled()) {
+                    if (mPowerManager.areAutoPowerSaveModesEnabled()) {
                         succeed();
                     } else {
                         // Auto power save modes disabled. This test doesn't apply to this device.

@@ -22,6 +22,7 @@ import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP;
 import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
 import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
+import static android.content.pm.PackageManager.FEATURE_PICTURE_IN_PICTURE;
 import static android.content.pm.PackageManager.FEATURE_SCREEN_LANDSCAPE;
 import static android.content.pm.PackageManager.FEATURE_SCREEN_PORTRAIT;
 import static android.content.res.Configuration.ORIENTATION_LANDSCAPE;
@@ -106,41 +107,51 @@ public class WindowManagerJetpackTestBase {
         return mContext.getPackageManager().hasSystemFeature(requiredFeature);
     }
 
+    /** Assume this device supports rotation */
+    protected void assumeSupportsRotation() {
+        assumeTrue(doesDeviceSupportRotation());
+    }
+
     /**
      * Rotation support is indicated by explicitly having both landscape and portrait
      * features or not listing either at all.
      */
-    protected void assumeSupportsRotation() {
+    protected boolean doesDeviceSupportRotation() {
         final boolean supportsLandscape = hasDeviceFeature(FEATURE_SCREEN_LANDSCAPE);
         final boolean supportsPortrait = hasDeviceFeature(FEATURE_SCREEN_PORTRAIT);
-        assumeTrue((supportsLandscape && supportsPortrait)
-                || (!supportsLandscape && !supportsPortrait));
+        return (supportsLandscape && supportsPortrait) || (!supportsLandscape && !supportsPortrait);
+    }
+
+    protected boolean supportsPip() {
+        return hasDeviceFeature(FEATURE_PICTURE_IN_PICTURE);
     }
 
     public <T extends Activity> T startActivityNewTask(@NonNull Class<T> activityClass) {
         return startActivityNewTask(activityClass, null /* activityId */);
     }
 
+    public <T extends Activity> TestActivityLauncher<T> launcherForNewActivity(
+            @NonNull Class<T> activityClass, int launchDisplayId) {
+        return launcherForActivityNewTask(activityClass, null /* activityId */,
+                false /* isFullScreen */, launchDisplayId);
+    }
+
     public <T extends Activity> T startActivityNewTask(@NonNull Class<T> activityClass,
             @Nullable String activityId) {
-        return launcherForActivityNewTask(activityClass, activityId, false /* isFullScreen */)
+        return launcherForActivityNewTask(activityClass, activityId, false /* isFullScreen */,
+                null /* launchDisplayId */)
                 .launch(mInstrumentation);
+    }
+
+    public <T extends Activity> T startFullScreenActivityNewTask(@NonNull Class<T> activityClass) {
+        return startFullScreenActivityNewTask(activityClass, null /* activityId */);
     }
 
     public <T extends  Activity> T startFullScreenActivityNewTask(@NonNull Class<T> activityClass,
             @Nullable String activityId) {
-        return launcherForActivityNewTask(activityClass, activityId, true/* isFullScreen */)
+        return launcherForActivityNewTask(activityClass, activityId, true/* isFullScreen */,
+                null /* launchDisplayId */)
                 .launch(mInstrumentation);
-    }
-
-    private <T extends Activity> TestActivityLauncher<T> launcherForActivityNewTask(
-            @NonNull Class<T> activityClass, @Nullable String activityId, boolean isFullScreen) {
-        final int windowingMode = isFullScreen ? WINDOWING_MODE_FULLSCREEN :
-                WINDOWING_MODE_UNDEFINED;
-        return new TestActivityLauncher<>(mContext, activityClass)
-                .addIntentFlag(FLAG_ACTIVITY_NEW_TASK)
-                .setActivityId(activityId)
-                .setWindowingMode(windowingMode);
     }
 
     public static void waitForOrFail(String message, BooleanSupplier condition) {
@@ -148,6 +159,21 @@ public class WindowManagerJetpackTestBase {
                 .setRetryIntervalMs(500)
                 .setRetryLimit(5)
                 .setOnFailure(unusedResult -> fail("FAILED because unsatisfied: " + message)));
+    }
+
+    private <T extends Activity> TestActivityLauncher<T> launcherForActivityNewTask(
+            @NonNull Class<T> activityClass, @Nullable String activityId, boolean isFullScreen,
+            @Nullable Integer launchDisplayId) {
+        final int windowingMode = isFullScreen ? WINDOWING_MODE_FULLSCREEN :
+                WINDOWING_MODE_UNDEFINED;
+        final TestActivityLauncher launcher = new TestActivityLauncher<>(mContext, activityClass)
+                .addIntentFlag(FLAG_ACTIVITY_NEW_TASK)
+                .setActivityId(activityId)
+                .setWindowingMode(windowingMode);
+        if (launchDisplayId != null) {
+            launcher.setLaunchDisplayId(launchDisplayId);
+        }
+        return launcher;
     }
 
     /**
@@ -162,25 +188,14 @@ public class WindowManagerJetpackTestBase {
         context.startActivity(intent);
     }
 
-
-    public static void startActivityOnDisplaySingleTop(@NonNull Context context,
-            int displayId, @NonNull ComponentName activityComponent, @NonNull Bundle extras) {
-        startActivityOnDisplaySingleTop(
-                context, displayId, activityComponent, extras, false /* fullscreen */);
-    }
-
     /**
      * Start an activity using a component name on the specified display with
      * {@link FLAG_ACTIVITY_SINGLE_TOP}. Can be used for activities from a different UIDs.
      */
     public static void startActivityOnDisplaySingleTop(@NonNull Context context,
-            int displayId, @NonNull ComponentName activityComponent, @NonNull Bundle extras,
-            boolean fullscreen) {
+            int displayId, @NonNull ComponentName activityComponent, @NonNull Bundle extras) {
         final ActivityOptions options = ActivityOptions.makeBasic();
         options.setLaunchDisplayId(displayId);
-        if (fullscreen) {
-            options.setLaunchWindowingMode(WINDOWING_MODE_FULLSCREEN);
-        }
 
         Intent intent = new Intent()
                 .addFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_SINGLE_TOP)

@@ -105,8 +105,7 @@ public class SmsBackupRestoreTest extends TestCaseThatRunsIfTelephonyIsEnabled {
 
     private boolean isFeatureSupported() throws Exception {
         return (ProviderTestUtils.hasBackupTransport(LOCAL_BACKUP_COMPONENT, mUiAutomation)
-              && mContext.getPackageManager()
-              .hasSystemFeature(PackageManager.FEATURE_TELEPHONY_MESSAGING));
+                && mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_TELEPHONY));
     }
 
     private void clearMessages() {

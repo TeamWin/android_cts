@@ -36,6 +36,7 @@ android_test {
         "junit",
         "hamcrest-library",
         "modules-utils-build_system",
+        "safety-center-internal-data",
     ],
     srcs: [
         "src/**/*.kt",

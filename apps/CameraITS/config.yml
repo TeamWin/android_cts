@@ -55,4 +55,3 @@ TestBeds:
       lighting_ch: <controller-channel>
       scene: "sensor_fusion"
 
-

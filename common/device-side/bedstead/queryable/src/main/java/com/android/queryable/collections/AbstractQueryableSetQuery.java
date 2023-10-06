@@ -46,6 +46,11 @@ public abstract class AbstractQueryableSetQuery<E, F extends Query<E>, G extends
     }
 
     @Override
+    public boolean isEmptyQuery() {
+        return mQuery.isEmptyQuery();
+    }
+
+    @Override
     public String describeQuery(String fieldName) {
         return mQuery.describeQuery(fieldName);
     }

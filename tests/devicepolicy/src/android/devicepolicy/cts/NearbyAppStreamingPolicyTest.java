@@ -17,6 +17,7 @@
 package android.devicepolicy.cts;
 
 import static android.Manifest.permission.READ_NEARBY_STREAMING_POLICY;
+import static android.content.pm.PackageManager.FEATURE_DEVICE_ADMIN;
 
 import static com.android.bedstead.nene.permissions.CommonPermissions.INTERACT_ACROSS_USERS;
 import static com.android.bedstead.nene.permissions.CommonPermissions.INTERACT_ACROSS_USERS_FULL;
@@ -36,6 +37,7 @@ import com.android.bedstead.harrier.annotations.EnsureDoesNotHavePermission;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.EnsureHasSecondaryUser;
 import com.android.bedstead.harrier.annotations.Postsubmit;
+import com.android.bedstead.harrier.annotations.RequireFeature;
 import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
@@ -52,6 +54,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @RunWith(BedsteadJUnit4.class)
+@RequireFeature(FEATURE_DEVICE_ADMIN)
 public class NearbyAppStreamingPolicyTest {
 
     @ClassRule
@@ -92,6 +95,23 @@ public class NearbyAppStreamingPolicyTest {
         try {
             assertThat(dpm.getNearbyAppStreamingPolicy())
                     .isEqualTo(DevicePolicyManager.NEARBY_STREAMING_DISABLED);
+        } finally {
+            dpm.setNearbyAppStreamingPolicy(originalPolicy);
+        }
+    }
+
+    @PolicyDoesNotApplyTest(policy = SetNearbyAppStreamingPolicy.class)
+    @EnsureHasPermission(READ_NEARBY_STREAMING_POLICY)
+    public void setNearbyAppStreamingPolicy_policyApplied_otherUsersUnaffected() {
+        RemoteDevicePolicyManager dpm = sDeviceState.dpc().devicePolicyManager();
+        int originalLocalPolicy = sLocalDevicePolicyManager.getNearbyAppStreamingPolicy();
+        int originalPolicy = dpm.getNearbyAppStreamingPolicy();
+
+        dpm.setNearbyAppStreamingPolicy(DevicePolicyManager.NEARBY_STREAMING_DISABLED);
+
+        try {
+            assertThat(sLocalDevicePolicyManager.getNearbyAppStreamingPolicy())
+                    .isEqualTo(originalLocalPolicy);
         } finally {
             dpm.setNearbyAppStreamingPolicy(originalPolicy);
         }

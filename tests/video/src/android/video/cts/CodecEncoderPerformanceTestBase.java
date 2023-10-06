@@ -188,7 +188,7 @@ class CodecEncoderPerformanceTestBase extends CodecPerformanceTestBase {
                 }
                 MediaCodec.BufferInfo outInfo = new MediaCodec.BufferInfo();
                 int outputBufferId = mEncoder.dequeueOutputBuffer(outInfo, Q_DEQ_TIMEOUT_US);
-                if (outputBufferId > 0) {
+                if (outputBufferId >= 0) {
                     dequeueEncoderOutput(outputBufferId, outInfo);
                 }
             }

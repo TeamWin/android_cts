@@ -26,7 +26,7 @@ import android.platform.test.annotations.AppModeFull;
 import android.test.AndroidTestCase;
 import android.util.Log;
 import android.view.Surface;
-
+import android.media.cts.MediaCodecAsyncHelper;
 import androidx.test.filters.SdkSuppress;
 
 import com.android.compatibility.common.util.MediaUtils;
@@ -87,12 +87,11 @@ public class MediaCodecBlockModelHelper extends AndroidTestCase {
         return result.get();
     }
 
-    private static class LinearInputBlock {
+    public static class LinearInputBlock {
         MediaCodec.LinearBlock block;
         ByteBuffer buffer;
         int offset;
     }
-
     private static interface InputSlotListener {
         public void onInputSlot(MediaCodec codec, int index, LinearInputBlock input) throws Exception;
     }
@@ -269,7 +268,7 @@ public class MediaCodecBlockModelHelper extends AndroidTestCase {
         private final List<Long> mTimestampList;
     }
 
-    private static class SurfaceOutputSlotListener implements OutputSlotListener {
+    public static class SurfaceOutputSlotListener implements OutputSlotListener {
         public SurfaceOutputSlotListener(
                 OutputSurface surface,
                 List<Long> timestampList,
@@ -308,15 +307,6 @@ public class MediaCodecBlockModelHelper extends AndroidTestCase {
         private final OutputSurface mOutputSurface;
         private final List<Long> mTimestampList;
         private final List<FormatChangeEvent> mEvents;
-    }
-
-    public static class SlotEvent {
-        public SlotEvent(boolean input, int index) {
-            this.input = input;
-            this.index = index;
-        }
-        public final boolean input;
-        public final int index;
     }
 
     private static final UUID CLEARKEY_SCHEME_UUID =
@@ -436,19 +426,19 @@ public class MediaCodecBlockModelHelper extends AndroidTestCase {
             MediaFormat mediaFormat,
             Surface surface,
             boolean encoder,
-            InputSlotListener inputListener,
-            OutputSlotListener outputListener) throws Exception {
-        final LinkedBlockingQueue<SlotEvent> queue = new LinkedBlockingQueue<>();
+            MediaCodecBlockModelHelper.InputSlotListener inputListener,
+            MediaCodecBlockModelHelper.OutputSlotListener outputListener) throws Exception {
+        final LinkedBlockingQueue<MediaCodecAsyncHelper.SlotEvent> queue = new LinkedBlockingQueue<>();
         mediaCodec.setCallback(new MediaCodec.Callback() {
             @Override
             public void onInputBufferAvailable(MediaCodec codec, int index) {
-                queue.offer(new SlotEvent(true, index));
+                queue.offer(new MediaCodecAsyncHelper.SlotEvent(true, index));
             }
 
             @Override
             public void onOutputBufferAvailable(
                     MediaCodec codec, int index, MediaCodec.BufferInfo info) {
-                queue.offer(new SlotEvent(false, index));
+                queue.offer(new MediaCodecAsyncHelper.SlotEvent(false, index));
             }
 
             @Override
@@ -484,7 +474,7 @@ public class MediaCodecBlockModelHelper extends AndroidTestCase {
         boolean eos = false;
         boolean signaledEos = false;
         while (!eos && !Thread.interrupted()) {
-            SlotEvent event;
+            MediaCodecAsyncHelper.SlotEvent event;
             try {
                 event = queue.take();
             } catch (InterruptedException e) {

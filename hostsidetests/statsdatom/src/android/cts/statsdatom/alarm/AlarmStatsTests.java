@@ -80,6 +80,12 @@ public class AlarmStatsTests extends DeviceTestCase implements IBuildReceiver {
         mCtsBuild = buildInfo;
     }
 
+    private void grantAppOpSEA(String packageName) throws DeviceNotAvailableException {
+        StringBuilder command = new StringBuilder("appops set --uid ")
+                .append(packageName).append(" SCHEDULE_EXACT_ALARM allow");
+        getDevice().executeShellCommand(command.toString());
+    }
+
     private void enableCompatChange(String changeId, String packageName)
             throws DeviceNotAvailableException {
         StringBuilder command = new StringBuilder("am compat enable ")
@@ -192,6 +198,8 @@ public class AlarmStatsTests extends DeviceTestCase implements IBuildReceiver {
 
     public void testAlarmScheduled_exactWithSEA() throws Exception {
         if (DeviceUtils.hasFeature(getDevice(), FEATURE_AUTOMOTIVE)) return;
+
+        grantAppOpSEA(ALARM_ATOM_TEST_PACKAGE_2);
 
         final int atomId = AtomsProto.Atom.ALARM_SCHEDULED_FIELD_NUMBER;
 

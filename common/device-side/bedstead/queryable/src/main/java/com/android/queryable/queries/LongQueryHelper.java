@@ -132,6 +132,15 @@ public final class LongQueryHelper<E extends Queryable> implements LongQuery<E>,
         return matches(value.longValue());
     }
 
+    @Override
+    public boolean isEmptyQuery() {
+        return mEqualToValue == null
+                && mGreaterThanValue == null
+                && mGreaterThanOrEqualToValue == null
+                && mLessThanValue == null
+                && mLessThanOrEqualToValue == null;
+    }
+
     /** {@code true} if all filters are met by {@code value}. */
     public boolean matches(long value) {
         if (mEqualToValue != null && mEqualToValue != value) {

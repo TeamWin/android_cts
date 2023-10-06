@@ -73,6 +73,9 @@ public class DragDropTest extends WindowManagerTestBase {
     final Instrumentation mInstrumentation = InstrumentationRegistry.getInstrumentation();
     final UiAutomation mAutomation = mInstrumentation.getUiAutomation();
 
+    // inverse scaling factor no smaller than 1, also see DragDropCompatTest
+    protected float mInvCompatScale = 1.0f;
+
     private DragDropActivity mActivity;
 
     private CountDownLatch mStartReceived;
@@ -220,7 +223,8 @@ public class DragDropTest extends WindowManagerTestBase {
         release.getLocationOnScreen(releaseLoc);
         int action = DragEvent.ACTION_DRAG_ENDED;
         mExpected.add(new LogEntry(v, action,
-                releaseLoc[0] + 6, releaseLoc[1] + 6, obtainClipData(action),
+                releaseLoc[0] + 6 / mInvCompatScale, releaseLoc[1] + 6 / mInvCompatScale,
+                obtainClipData(action),
                 obtainClipDescription(action), sLocalState, false));
     }
 
@@ -234,8 +238,9 @@ public class DragDropTest extends WindowManagerTestBase {
         int [] locationViewLocation = new int[2];
         locationView.getLocationOnScreen(locationViewLocation);
         mExpected.add(new LogEntry(v, action,
-                locationViewLocation[0] - viewLocation[0] + offset,
-                locationViewLocation[1] - viewLocation[1] + offset, obtainClipData(action),
+                locationViewLocation[0] - viewLocation[0] + offset / mInvCompatScale,
+                locationViewLocation[1] - viewLocation[1] + offset / mInvCompatScale,
+                obtainClipData(action),
                 obtainClipDescription(action), sLocalState, false));
     }
 
@@ -256,7 +261,8 @@ public class DragDropTest extends WindowManagerTestBase {
             v.getLocationOnScreen(destLoc);
             long downTime = SystemClock.uptimeMillis();
             MotionEvent event = MotionEvent.obtain(downTime, downTime, action,
-                    destLoc[0] + offset, destLoc[1] + offset, 1);
+                    destLoc[0] * mInvCompatScale + offset, destLoc[1] * mInvCompatScale + offset,
+                    1);
             event.setSource(InputDevice.SOURCE_MOUSE);
             mAutomation.injectInputEvent(event, false);
         });
@@ -803,9 +809,10 @@ public class DragDropTest extends WindowManagerTestBase {
 
         int [] viewLoc = new int[2];
         v.getLocationOnScreen(viewLoc);
-
-        for (int x = viewLoc[0]; x < viewLoc[0] + v.getWidth(); x++) {
-            for (int y = viewLoc[1]; y < viewLoc[1] + v.getHeight(); y++) {
+        int scaledX = (int) (viewLoc[0] * mInvCompatScale);
+        int scaledY = (int) (viewLoc[1] * mInvCompatScale);
+        for (int x = scaledX; x < scaledX + v.getWidth(); x++) {
+            for (int y = scaledY; y < scaledY + v.getHeight(); y++) {
                 final Color color = screenshot.getColor(x, y);
                 assertTrue("Should show drag shadow", color.toArgb() == Color.RED);
             }

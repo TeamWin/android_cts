@@ -71,7 +71,8 @@ import java.util.List;
 public class FingerprintServiceTest extends ActivityManagerTestBase
         implements TestSessionList.Idler {
     private static final String TAG = "FingerprintServiceTest";
-
+    private static final String DESCRIPTOR =
+            "android.hardware.biometrics.fingerprint.IFingerprint";
     private static final String DUMPSYS_FINGERPRINT = "dumpsys fingerprint --proto --state";
     private static final int FINGERPRINT_ERROR_VENDOR_BASE = 1000;
     private static final long WAIT_MS = 2000;
@@ -247,34 +248,25 @@ public class FingerprintServiceTest extends ActivityManagerTestBase
             assertEquals(0, callbackState.mAcquiredReceived.size());
             assertEquals(0, callbackState.mErrorsReceived.size());
 
-            // AcquiredInfo test below would fail with side fps beside udfps due to a recent
-            // framework change (b/272416953). The root cause of failure has been addressed
-            // by charge id 22532851 which was merged to U. However, this fix introduces Biometric
-            // Prompt public callback API behavior change which may potentially impact existing BP
-            // applications. Given T is close to end of life, instead of merging ag/22532851 over,
-            // this segment of test is skipped
-            //
-            final boolean verifyPartial = false;
-            if (verifyPartial) {
-                final int aidlSensorId = Utils.getAidlSensorId();
-                if (aidlSensorId >= 0 && testSessions.first().equals(
-                        testSessions.find(aidlSensorId))) {
-                    testSessions.first().notifyAcquired(userId, 2 /* AcquiredInfo.PARTIAL */);
-                } else {
-                    testSessions.first().notifyAcquired(userId,
-                            FingerprintManager.FINGERPRINT_ACQUIRED_PARTIAL);
-                }
-
-                mInstrumentation.waitForIdleSync();
-                callbackState = getCallbackState(journal);
-                assertNotNull(callbackState);
-                assertEquals(1, callbackState.mNumAuthRejected);
-                assertEquals(0, callbackState.mNumAuthAccepted);
-                assertEquals(1, callbackState.mAcquiredReceived.size());
-                assertEquals(FingerprintManager.FINGERPRINT_ACQUIRED_PARTIAL,
-                        (int) callbackState.mAcquiredReceived.get(0));
-                assertEquals(0, callbackState.mErrorsReceived.size());
+            // Send an acquire message
+            final int aidlSensorId = Utils.getAidlFingerprintSensorId();
+            if (aidlSensorId >= 0 && testSessions.first().equals(
+                            testSessions.find(aidlSensorId))) {
+                testSessions.first().notifyAcquired(userId, 2 /* AcquiredInfo.PARTIAL */);
+            } else {
+                testSessions.first().notifyAcquired(userId,
+                        FingerprintManager.FINGERPRINT_ACQUIRED_PARTIAL);
             }
+
+            mInstrumentation.waitForIdleSync();
+            callbackState = getCallbackState(journal);
+            assertNotNull(callbackState);
+            assertEquals(1, callbackState.mNumAuthRejected);
+            assertEquals(0, callbackState.mNumAuthAccepted);
+            assertEquals(1, callbackState.mAcquiredReceived.size());
+            assertEquals(FingerprintManager.FINGERPRINT_ACQUIRED_PARTIAL,
+                    (int) callbackState.mAcquiredReceived.get(0));
+            assertEquals(0, callbackState.mErrorsReceived.size());
 
             // Send an error
             testSessions.first().notifyError(userId, FINGERPRINT_ERROR_CANCELED);
@@ -283,13 +275,9 @@ public class FingerprintServiceTest extends ActivityManagerTestBase
             assertNotNull(callbackState);
             assertEquals(1, callbackState.mNumAuthRejected);
             assertEquals(0, callbackState.mNumAuthAccepted);
-            if (verifyPartial) {
-                assertEquals(1, callbackState.mAcquiredReceived.size());
-                assertEquals(FingerprintManager.FINGERPRINT_ACQUIRED_PARTIAL,
-                        (int) callbackState.mAcquiredReceived.get(0));
-            } else {
-                assertEquals(0, callbackState.mAcquiredReceived.size());
-            }
+            assertEquals(1, callbackState.mAcquiredReceived.size());
+            assertEquals(FingerprintManager.FINGERPRINT_ACQUIRED_PARTIAL,
+                    (int) callbackState.mAcquiredReceived.get(0));
             assertEquals(1, callbackState.mErrorsReceived.size());
             assertEquals(FINGERPRINT_ERROR_CANCELED,
                     (int) callbackState.mErrorsReceived.get(0));

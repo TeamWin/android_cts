@@ -18,12 +18,18 @@ package com.android.compatibility.common.deviceinfo;
 
 import android.content.Context;
 import android.location.GnssCapabilities;
+import android.location.GnssMeasurement;
+import android.location.GnssMeasurementsEvent;
 import android.location.LocationManager;
 import android.os.Build;
 
 import com.android.compatibility.common.util.DeviceInfoStore;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Gnss device info collector.
@@ -33,6 +39,7 @@ public final class GnssDeviceInfo extends DeviceInfo {
     private static final String LOG_TAG = "GnssDeviceInfo";
     private static final String UNKNOWN_GNSS_NAME = "unknown";
     private static final String NO_GNSS_HARDWARE = "no_gnss_hardware";
+    public static final int ADR_STATE_VALID = (1 << 0);
 
     @Override
     protected void collectDeviceInfo(DeviceInfoStore store) throws Exception {
@@ -45,6 +52,7 @@ public final class GnssDeviceInfo extends DeviceInfo {
         }
         collectGnssHardwareModelName(store, locationManager);
         collectGnssCapabilities(store, locationManager.getGnssCapabilities());
+        collectAccumulatedDeltaRangeMeasurements(store, locationManager);
     }
 
     /**
@@ -117,5 +125,85 @@ public final class GnssDeviceInfo extends DeviceInfo {
                     gnssCapabilities.hasMeasurementCorrectionsForDriving());
         }
         store.endGroup();
+    }
+
+    /**
+     * Collect Accumulated Delta Range info:
+     * 1. Start measurement with 1s interval and wait for up to 10 measurement events.
+     * 2. Set as true if a measurement has a valid AccumulatedDeltaRange state, false otherwise
+     */
+    private void collectAccumulatedDeltaRangeMeasurements(DeviceInfoStore store,
+            LocationManager locationManager) throws InterruptedException, IOException {
+        final int gnssMeasurementsEventsToCollect = 10;
+        TestGnssMeasurementListener mMeasurementListener = new TestGnssMeasurementListener(
+                gnssMeasurementsEventsToCollect);
+        locationManager.registerGnssMeasurementsCallback(mMeasurementListener);
+        mMeasurementListener.waitFor();
+        boolean hasAccumulatedDeltaRange = false;
+        for (GnssMeasurementsEvent event : mMeasurementListener.getEvents()) {
+            for (GnssMeasurement measurement : event.getMeasurements()) {
+                if ((measurement.getAccumulatedDeltaRangeState() & ADR_STATE_VALID)
+                        == ADR_STATE_VALID) {
+                    hasAccumulatedDeltaRange = true;
+                    break;
+                }
+                if (hasAccumulatedDeltaRange) break;
+            }
+        }
+        locationManager.unregisterGnssMeasurementsCallback(mMeasurementListener);
+        store.addResult("has_valid_accumulated_delta_range", hasAccumulatedDeltaRange);
+    }
+
+    private class TestGnssMeasurementListener extends GnssMeasurementsEvent.Callback {
+        public static final int MEAS_TIMEOUT_IN_SEC = 5;
+        private final List<GnssMeasurementsEvent> mMeasurementsEvents;
+        private final CountDownLatch mCountDownLatch;
+        private static final long STANDARD_WAIT_TIME_MS = 50;
+        private static final long STANDARD_SLEEP_TIME_MS = 50;
+
+        /**
+         * Constructor for TestGnssMeasurementListener
+         *
+         * @param eventsToCollect wait until this number of events collected.
+         */
+        TestGnssMeasurementListener(int eventsToCollect) {
+            mCountDownLatch = new CountDownLatch(eventsToCollect);
+            mMeasurementsEvents = new ArrayList<>(eventsToCollect);
+        }
+
+        @Override
+        public void onGnssMeasurementsReceived(GnssMeasurementsEvent event) {
+            if (event.getMeasurements().size() > 0) {
+                synchronized (mMeasurementsEvents) {
+                    mMeasurementsEvents.add(event);
+                }
+                mCountDownLatch.countDown();
+            }
+        }
+
+        /**
+         * Get the current list of GPS Measurements Events.
+         *
+         * @return the current list of GPS Measurements Events
+         */
+        public List<GnssMeasurementsEvent> getEvents() {
+            synchronized (mMeasurementsEvents) {
+                List<GnssMeasurementsEvent> clone = new ArrayList<>();
+                clone.addAll(mMeasurementsEvents);
+                return clone;
+            }
+        }
+
+        public boolean waitFor() throws InterruptedException {
+            long waitTimeRounds = (TimeUnit.SECONDS.toMillis(MEAS_TIMEOUT_IN_SEC))
+                    / (STANDARD_WAIT_TIME_MS + STANDARD_SLEEP_TIME_MS);
+            for (int i = 0; i < waitTimeRounds; ++i) {
+                Thread.sleep(STANDARD_SLEEP_TIME_MS);
+                if (mCountDownLatch.await(STANDARD_WAIT_TIME_MS, TimeUnit.MILLISECONDS)) {
+                    return true;
+                }
+            }
+            return false;
+        }
     }
 }

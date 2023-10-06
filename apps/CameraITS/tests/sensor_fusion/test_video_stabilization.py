@@ -20,7 +20,6 @@ import os
 import time
 
 from mobly import test_runner
-import numpy as np
 
 import its_base_test
 import camera_properties_utils
@@ -52,33 +51,6 @@ _SIZE_TO_PROFILE = {'176x144': 'QCIF:2', '352x288': 'CIF:3',
                     '320x240': 'QVGA:7'}
 
 
-def _conv_acceleration_to_movement(gyro_events):
-  """Convert gyro_events time and speed to movement during video time.
-
-  Args:
-    gyro_events: sorted dict of entries with 'time', 'x', 'y', and 'z'
-
-  Returns:
-    'z' acceleration converted to movement for times around VIDEO playing.
-  """
-  gyro_times = np.array([e['time'] for e in gyro_events])
-  gyro_speed = np.array([e['z'] for e in gyro_events])
-  gyro_time_min = gyro_times[0]
-  logging.debug('gyro start time: %dns', gyro_time_min)
-  logging.debug('gyro stop time: %dns', gyro_times[-1])
-  gyro_rotations = []
-  video_time_start = gyro_time_min + _VIDEO_DELAY_TIME*_SEC_TO_NSEC
-  video_time_stop = video_time_start + _VIDEO_DURATION*_SEC_TO_NSEC
-  logging.debug('video start time: %dns', video_time_start)
-  logging.debug('video stop time: %dns', video_time_stop)
-
-  for i, t in enumerate(gyro_times):
-    if video_time_start <= t <= video_time_stop:
-      gyro_rotations.append((gyro_times[i]-gyro_times[i-1])/_SEC_TO_NSEC *
-                            gyro_speed[i])
-  return np.array(gyro_rotations)
-
-
 def _collect_data(cam, tablet_device, video_profile, video_quality, rot_rig):
   """Capture a new set of data from the device.
 
@@ -99,6 +71,13 @@ def _collect_data(cam, tablet_device, video_profile, video_quality, rot_rig):
   props = cam.get_camera_properties()
   props = cam.override_with_hidden_physical_camera_props(props)
 
+  serial_port = None
+  if rot_rig['cntl'].lower() == sensor_fusion_utils.ARDUINO_STRING.lower():
+    # identify port
+    serial_port = sensor_fusion_utils.serial_port_def(
+        sensor_fusion_utils.ARDUINO_STRING)
+    # send test cmd to Arduino until cmd returns properly
+    sensor_fusion_utils.establish_serial_comm(serial_port)
   # Start camera vibration
   if tablet_device:
     servo_speed = _TABLET_SERVO_SPEED
@@ -108,8 +87,7 @@ def _collect_data(cam, tablet_device, video_profile, video_quality, rot_rig):
   p = multiprocessing.Process(
       target=sensor_fusion_utils.rotation_rig,
       args=(rot_rig['cntl'], rot_rig['ch'], _NUM_ROTATIONS,
-            _ARDUINO_ANGLES, servo_speed, _ARDUINO_MOVE_TIME,))
-
+            _ARDUINO_ANGLES, servo_speed, _ARDUINO_MOVE_TIME, serial_port))
   p.start()
 
   cam.start_sensor_events()
@@ -162,9 +140,8 @@ class VideoStabilizationTest(its_base_test.ItsBaseTest):
       # Calculate camera FoV and convert from string to float
       camera_fov = float(cam.calc_camera_fov(props))
 
-      # Get ffmpeg version being used
-      ffmpeg_version = video_processing_utils.get_ffmpeg_version()
-      logging.debug('ffmpeg_version: %s', ffmpeg_version)
+      # Log ffmpeg version being used
+      video_processing_utils.log_ffmpeg_version()
 
       # Raise error if not FRONT or REAR facing camera
       facing = props['android.lens.facing']
@@ -176,7 +153,7 @@ class VideoStabilizationTest(its_base_test.ItsBaseTest):
       rot_rig['cntl'] = self.rotator_cntl
       rot_rig['ch'] = self.rotator_ch
       if rot_rig['cntl'].lower() != 'arduino':
-        raise AssertionError(f'You must use the arduino controller for {_NAME}.')
+        raise AssertionError(f'You must use an arduino controller for {_NAME}.')
 
       # Create list of video qualities to test
       excluded_sizes = video_processing_utils.LOW_RESOLUTION_SIZES
@@ -243,7 +220,8 @@ class VideoStabilizationTest(its_base_test.ItsBaseTest):
         # Extract gyro rotations
         sensor_fusion_utils.plot_gyro_events(
             gyro_events, f'{_NAME}_{video_quality}', log_path)
-        gyro_rots = _conv_acceleration_to_movement(gyro_events)
+        gyro_rots = sensor_fusion_utils.conv_acceleration_to_movement(
+            gyro_events, _VIDEO_DELAY_TIME)
         max_gyro_angle = sensor_fusion_utils.calc_max_rotation_angle(
             gyro_rots, 'Gyro')
         logging.debug(

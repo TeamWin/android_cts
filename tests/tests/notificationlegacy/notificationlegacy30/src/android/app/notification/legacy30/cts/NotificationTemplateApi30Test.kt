@@ -28,6 +28,7 @@ class NotificationTemplateApi30Test : NotificationTemplateTestBase() {
 
     override fun setUp() {
         assertThat(mContext.applicationInfo.targetSdkVersion).isEqualTo(30)
+        super.setUp()
     }
 
     fun testWideIcon_inCollapsedState_isSquareForLegacyApps() {
