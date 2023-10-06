@@ -107,7 +107,7 @@ public final class CreateAndManageUserTest {
     }
 
     @Postsubmit(reason = "new test")
-    @CannotSetPolicyTest(policy = CreateAndManageUser.class)
+    @CannotSetPolicyTest(policy = CreateAndManageUser.class, includeNonDeviceAdminStates = false)
     @Test
     public void createAndManageUser_notAllowed_throwsException() {
         assertThrows(SecurityException.class, () -> {
