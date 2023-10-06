@@ -41,6 +41,7 @@ android_test_helper_app {
     optimize: {
         enabled: false,
     },
+    dxflags: ["--multi-dex"],
     sdk_version: "test_current",
     min_sdk_version: "21",
     // tag this module as a cts test artifact
