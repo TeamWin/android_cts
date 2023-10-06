@@ -50,6 +50,7 @@ import static android.server.wm.app.Components.PIP_ACTIVITY_WITH_MINIMAL_SIZE;
 import static android.server.wm.app.Components.PIP_ACTIVITY_WITH_SAME_AFFINITY;
 import static android.server.wm.app.Components.PIP_ACTIVITY_WITH_TINY_MINIMAL_SIZE;
 import static android.server.wm.app.Components.PIP_ON_STOP_ACTIVITY;
+import static android.server.wm.app.Components.PORTRAIT_ORIENTATION_ACTIVITY;
 import static android.server.wm.app.Components.PipActivity.ACTION_ENTER_PIP;
 import static android.server.wm.app.Components.PipActivity.ACTION_FINISH;
 import static android.server.wm.app.Components.PipActivity.ACTION_FINISH_LAUNCH_INTO_PIP_HOST;
@@ -90,7 +91,6 @@ import static android.server.wm.app.Components.TEST_ACTIVITY;
 import static android.server.wm.app.Components.TEST_ACTIVITY_WITH_SAME_AFFINITY;
 import static android.server.wm.app.Components.TRANSLUCENT_TEST_ACTIVITY;
 import static android.server.wm.app.Components.TestActivity.EXTRA_CONFIGURATION;
-import static android.server.wm.app.Components.TestActivity.EXTRA_FIXED_ORIENTATION;
 import static android.server.wm.app.Components.TestActivity.TEST_ACTIVITY_ACTION_FINISH_SELF;
 import static android.server.wm.app27.Components.SDK_27_LAUNCH_ENTER_PIP_ACTIVITY;
 import static android.server.wm.app27.Components.SDK_27_PIP_ACTIVITY;
@@ -127,7 +127,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.RemoteCallback;
-import android.os.SystemClock;
 import android.platform.test.annotations.AsbSecurityTest;
 import android.platform.test.annotations.Presubmit;
 import android.provider.Settings;
@@ -305,20 +304,23 @@ public class PinnedStackTests extends ActivityManagerTestBase {
     @Test
     public void testEnterPipToOtherOrientation() {
         assumeTrue("Skipping test: no orientation request support", supportsOrientationRequest());
+        final TransitionAnimationScaleSession transitionAnimationScaleSession =
+                mObjectTracker.manage(new TransitionAnimationScaleSession());
+        // Skip unimportant animations.
+        transitionAnimationScaleSession.set(0f);
         // Launch a portrait only app on the fullscreen stack
-        launchActivity(TEST_ACTIVITY,
-                extraString(EXTRA_FIXED_ORIENTATION, String.valueOf(SCREEN_ORIENTATION_PORTRAIT)));
+        launchActivity(PORTRAIT_ORIENTATION_ACTIVITY);
+        mInstrumentation.getUiAutomation().syncInputTransactions();
         // Launch the PiP activity fixed as landscape
         launchActivity(PIP_ACTIVITY,
                 extraString(EXTRA_PIP_ORIENTATION, String.valueOf(SCREEN_ORIENTATION_LANDSCAPE)));
         mWmState.waitForActivityOrientation(PIP_ACTIVITY, Configuration.ORIENTATION_LANDSCAPE);
+        mInstrumentation.getUiAutomation().syncInputTransactions();
         // Enter PiP, and assert that the PiP is within bounds now that the device is back in
         // portrait
         mBroadcastActionTrigger.doAction(ACTION_ENTER_PIP);
         // Wait for animation complete since we are comparing bounds
         waitForEnterPipAnimationComplete(PIP_ACTIVITY);
-        // TODO(b/300046278): revert this delay and replace with proper fix
-        SystemClock.sleep(5000); // add an extra 5s delay to see if the rotation gets performed
         assertPinnedStackExists();
         assertPinnedStackActivityIsInDisplayBounds(PIP_ACTIVITY);
     }
