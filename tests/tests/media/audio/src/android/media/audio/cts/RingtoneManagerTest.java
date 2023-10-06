@@ -17,12 +17,12 @@ package android.media.audio.cts;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import android.app.Instrumentation;
+import android.content.ContentProvider;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.pm.PackageManager;
@@ -83,8 +83,9 @@ public class RingtoneManagerTest {
         mRingtoneManager = new RingtoneManager(mActivity);
         mAudioManager = (AudioManager) mContext.getSystemService(Context.AUDIO_SERVICE);
         // backup ringer settings
-        mDefaultUri = RingtoneManager.getActualDefaultRingtoneUri(mContext,
-                RingtoneManager.TYPE_RINGTONE);
+        mDefaultUri = ContentProvider.maybeAddUserId(
+                RingtoneManager.getActualDefaultRingtoneUri(
+                        mContext, RingtoneManager.TYPE_RINGTONE), mContext.getUserId());
 
         mOriginalRingerMode = mAudioManager.getRingerMode();
         if (mAudioManager.getRingerMode() != AudioManager.RINGER_MODE_NORMAL) {
@@ -144,10 +145,15 @@ public class RingtoneManagerTest {
         Uri uri = mRingtoneManager.getRingtoneUri(expectedPosition);
         assertEquals(expectedPosition, mRingtoneManager.getRingtonePosition(uri));
         assertNotNull(RingtoneManager.getValidRingtoneUri(mContext));
+        uri = ContentProvider.maybeAddUserId(uri, mContext.getUserId());
 
         RingtoneManager.setActualDefaultRingtoneUri(mContext, RingtoneManager.TYPE_RINGTONE, uri);
-        assertEquals(uri, RingtoneManager.getActualDefaultRingtoneUri(mContext,
-                RingtoneManager.TYPE_RINGTONE));
+
+        Uri actualDefaultRingtoneUri = ContentProvider.maybeAddUserId(
+                RingtoneManager.getActualDefaultRingtoneUri(
+                        mContext, RingtoneManager.TYPE_RINGTONE), mContext.getUserId());
+
+        assertEquals(uri, actualDefaultRingtoneUri);
 
         try (AssetFileDescriptor afd = RingtoneManager.openDefaultRingtoneUri(
                 mActivity, RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE))) {
