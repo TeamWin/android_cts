@@ -3550,7 +3550,7 @@ public class TelephonyManagerTest {
         assumeTrue(hasFeature(PackageManager.FEATURE_TELEPHONY_RADIO_ACCESS));
 
         // test without permission: verify SecurityException
-        long allowedNetworkTypes = TelephonyManager.NETWORK_TYPE_BITMASK_NR;
+        long allowedNetworkTypes = TelephonyManager.NETWORK_TYPE_BITMASK_LTE;
         try {
             mTelephonyManager.setAllowedNetworkTypes(allowedNetworkTypes);
             fail("testSetAllowedNetworkTypes: SecurityException expected");
@@ -3580,8 +3580,7 @@ public class TelephonyManagerTest {
         assumeTrue(hasFeature(PackageManager.FEATURE_TELEPHONY_RADIO_ACCESS));
 
         long allowedNetworkTypes = ~TelephonyManager.NETWORK_TYPE_BITMASK_NR;
-        long networkTypeBitmask = TelephonyManager.NETWORK_TYPE_BITMASK_NR
-                | TelephonyManager.NETWORK_TYPE_BITMASK_LTE
+        long networkTypeBitmask = TelephonyManager.NETWORK_TYPE_BITMASK_LTE
                 | TelephonyManager.NETWORK_TYPE_BITMASK_LTE_CA;
 
         try {
@@ -3625,7 +3624,7 @@ public class TelephonyManagerTest {
         assumeTrue(hasFeature(PackageManager.FEATURE_TELEPHONY_RADIO_ACCESS));
 
         // test without permission: verify SecurityException
-        long allowedNetworkTypes = TelephonyManager.NETWORK_TYPE_BITMASK_NR;
+        long allowedNetworkTypes = TelephonyManager.NETWORK_TYPE_BITMASK_LTE;
         try {
             mIsAllowedNetworkTypeChanged = true;
             mTelephonyManager.setAllowedNetworkTypesForReason(
@@ -3664,7 +3663,7 @@ public class TelephonyManagerTest {
                     () -> {
                         mTelephonyManager.setAllowedNetworkTypesForReason(
                                 TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_CARRIER,
-                                TelephonyManager.NETWORK_TYPE_BITMASK_NR);
+                                TelephonyManager.NETWORK_TYPE_BITMASK_LTE);
                     }
             );
         } catch (SecurityException se) {
@@ -3684,7 +3683,7 @@ public class TelephonyManagerTest {
                     () -> {
                         mTelephonyManager.setAllowedNetworkTypesForReason(
                                 TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_ENABLE_2G,
-                                TelephonyManager.NETWORK_TYPE_BITMASK_NR);
+                                TelephonyManager.NETWORK_TYPE_BITMASK_LTE);
                     }
             );
         });
@@ -3695,14 +3694,14 @@ public class TelephonyManagerTest {
         assumeTrue(hasFeature(PackageManager.FEATURE_TELEPHONY_RADIO_ACCESS));
 
         // test without permission: verify SecurityException
-        long allowedNetworkTypes1 = TelephonyManager.NETWORK_TYPE_BITMASK_NR
+        long allowedNetworkTypes1 = TelephonyManager.NETWORK_TYPE_BITMASK_LTE
                 | TelephonyManager.NETWORK_TYPE_BITMASK_UMTS;
         long allowedNetworkTypes2 = TelephonyManager.NETWORK_TYPE_BITMASK_LTE;
-        long allowedNetworkTypes3 = TelephonyManager.NETWORK_TYPE_BITMASK_NR
-                | TelephonyManager.NETWORK_TYPE_BITMASK_LTE
+        long allowedNetworkTypes3 = TelephonyManager.NETWORK_TYPE_BITMASK_LTE
+                | TelephonyManager.NETWORK_TYPE_BITMASK_HSPA
                 | TelephonyManager.NETWORK_TYPE_BITMASK_UMTS;
-        long allowedNetworkTypes4 = TelephonyManager.NETWORK_TYPE_LTE
-                | TelephonyManager.NETWORK_TYPE_EVDO_B;
+        long allowedNetworkTypes4 = TelephonyManager.NETWORK_TYPE_BITMASK_LTE
+                | TelephonyManager.NETWORK_TYPE_BITMASK_HSPA;
 
         try {
             mIsAllowedNetworkTypeChanged = true;
@@ -5764,10 +5763,9 @@ public class TelephonyManagerTest {
         assumeTrue(hasFeature(PackageManager.FEATURE_TELEPHONY_RADIO_ACCESS));
 
         // NETWORK_TYPE_BITMASK_LTE_CA is invalid, should be converted into NETWORK_TYPE_BITMASK_LTE
-        long invalidAllowedNetworkTypes = TelephonyManager.NETWORK_TYPE_BITMASK_NR
+        long invalidAllowedNetworkTypes = TelephonyManager.NETWORK_TYPE_BITMASK_LTE
                 | TelephonyManager.NETWORK_TYPE_BITMASK_LTE_CA;
-        long expectedAllowedNetworkTypes = TelephonyManager.NETWORK_TYPE_BITMASK_NR
-                | TelephonyManager.NETWORK_TYPE_BITMASK_LTE;
+        long expectedAllowedNetworkTypes = TelephonyManager.NETWORK_TYPE_BITMASK_LTE;
         try {
             mIsAllowedNetworkTypeChanged = true;
             ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
