@@ -40,6 +40,7 @@ import static org.junit.Assume.assumeTrue;
 
 import android.Manifest;
 import android.app.ActivityOptions;
+import android.app.BroadcastOptions;
 import android.app.PendingIntent;
 import android.app.RemoteAction;
 import android.app.UiAutomation;
@@ -112,6 +113,9 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
      */
     private static final int BROADCAST_DELIVERY_TIMEOUT_MS = 60000;
     public static final Bundle SEND_OPTIONS_ALLOW_BAL = ActivityOptions.makeBasic()
+            .setPendingIntentBackgroundActivityStartMode(
+                    ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_ALLOWED).toBundle();
+    public static final Bundle SEND_BROADCAST_OPTIONS_ALLOW_BAL = BroadcastOptions.makeBasic()
             .setPendingIntentBackgroundActivityStartMode(
                     ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_ALLOWED).toBundle();
     public static final Bundle CREATE_OPTIONS_DENY_BAL =
@@ -609,7 +613,7 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
         PendingIntent pi = serviceA.generatePendingIntentBroadcast(APP_A.SIMPLE_BROADCAST_RECEIVER,
                 receiver.getNotifier());
         // PI broadcast should create token to allow serviceA to start activities later
-        serviceB.sendPendingIntent(pi, SEND_OPTIONS_ALLOW_BAL);
+        serviceB.sendPendingIntent(pi, SEND_BROADCAST_OPTIONS_ALLOW_BAL);
         receiver.waitForEventOrThrow(ACTIVITY_START_TIMEOUT_MS);
 
         // Grace period is still active.
@@ -632,7 +636,7 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
         PendingIntent pi = serviceA.generatePendingIntentBroadcast(APP_A.SIMPLE_BROADCAST_RECEIVER,
                 receiver.getNotifier());
         // PI broadcast should create token to allow serviceA to start activities later
-        serviceB.sendPendingIntent(pi, SEND_OPTIONS_ALLOW_BAL);
+        serviceB.sendPendingIntent(pi, SEND_BROADCAST_OPTIONS_ALLOW_BAL);
         receiver.waitForEventOrThrow(ACTIVITY_START_TIMEOUT_MS);
 
         SystemClock.sleep(1000);
@@ -660,7 +664,7 @@ public class BackgroundActivityLaunchTest extends BackgroundActivityTestBase {
         PendingIntent pi = serviceA.generatePendingIntentBroadcast(APP_A.SIMPLE_BROADCAST_RECEIVER,
                 receiver.getNotifier());
         // PI broadcast should create token to allow serviceA to start activities later
-        serviceB.sendPendingIntent(pi, SEND_OPTIONS_ALLOW_BAL);
+        serviceB.sendPendingIntent(pi, SEND_BROADCAST_OPTIONS_ALLOW_BAL);
         receiver.waitForEventOrThrow(ACTIVITY_START_TIMEOUT_MS);
 
         SystemClock.sleep(12000L * HW_TIMEOUT_MULTIPLIER);
