@@ -33,6 +33,7 @@ import opencv_processing_utils
 
 _NAME = os.path.splitext(os.path.basename(__file__))[0]
 _EXTENSION_HDR = 3
+_TABLET_BRIGHTNESS = '12'  # Highest minimum brightness on a supported tablet
 
 _FMT_NAME = 'jpg'
 _WIDTH = 1920
@@ -211,6 +212,7 @@ class HdrExtensionTest(its_base_test.ItsBaseTest):
           y_plane, self.scene, state='OFF', log_path=self.log_path)
 
       self.setup_tablet()
+      self.set_screen_brightness(_TABLET_BRIGHTNESS)
 
       its_session_utils.load_scene(
           cam, props, self.scene, self.tablet, self.chart_distance,
