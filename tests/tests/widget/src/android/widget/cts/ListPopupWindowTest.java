@@ -35,6 +35,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 import android.app.Activity;
 import android.app.Instrumentation;
+import android.content.pm.ApplicationInfo;
 import android.content.Context;
 import android.graphics.Rect;
 import android.graphics.drawable.ColorDrawable;
@@ -116,7 +117,6 @@ public class ListPopupWindowTest {
         mCtsKeyEventUtil = new CtsKeyEventUtil(mInstrumentation.getTargetContext());
         mActivity = mActivityRule.getActivity();
         mItemClickListener = new PopupItemClickListener();
-        mActivity.getApplicationInfo().setEnableOnBackInvokedCallback(false);
 
         PollingCheck.waitFor(() -> mActivity.hasWindowFocus());
     }
@@ -713,28 +713,41 @@ public class ListPopupWindowTest {
 
     @Test
     public void testCustomDismissalWithBackButton() {
-        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mActivity.getWindow().getDecorView(),
-                () -> {
-                    mPopupWindowBuilder = new Builder().withAnchor(R.id.anchor_upper_left)
-                            .withDismissListener();
-                    mPopupWindowBuilder.show();
-                });
+        ApplicationInfo applicationInfo = mActivity.getApplicationInfo();
+        boolean isOnBackInvokedCallbackEnabled = applicationInfo.isOnBackInvokedCallbackEnabled();
+        // Temporarily opt-out of predictive back
+        applicationInfo.setEnableOnBackInvokedCallback(false);
+        try {
+            WidgetTestUtils.runOnMainAndDrawSync(
+                    mActivityRule,
+                    mActivity.getWindow().getDecorView(),
+                    () -> {
+                        mPopupWindowBuilder = new Builder().withAnchor(R.id.anchor_upper_left)
+                                .withDismissListener();
+                        mPopupWindowBuilder.show();
+                    });
 
-        // "Point" our custom extension of EditText to our ListPopupWindow
-        final MockViewForListPopupWindow anchor =
-                (MockViewForListPopupWindow) mPopupWindow.getAnchorView();
-        anchor.wireTo(mPopupWindow);
-        // Request focus on our EditText
-        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mActivity.getWindow().getDecorView(),
-                anchor::requestFocus);
-        assertTrue(anchor.isFocused());
+            // "Point" our custom extension of EditText to our ListPopupWindow
+            final MockViewForListPopupWindow anchor =
+                    (MockViewForListPopupWindow) mPopupWindow.getAnchorView();
+            anchor.wireTo(mPopupWindow);
+            // Request focus on our EditText
+            WidgetTestUtils.runOnMainAndDrawSync(
+                    mActivityRule,
+                    mActivity.getWindow().getDecorView(),
+                    anchor::requestFocus);
+            assertTrue(anchor.isFocused());
 
-        // Send BACK key event. As our custom extension of EditText calls
-        // ListPopupWindow.onKeyPreIme, the end result should be the dismissal of the
-        // ListPopupWindow
-        mInstrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK);
-        verify(mPopupWindowBuilder.mOnDismissListener, times(1)).onDismiss();
-        assertFalse(mPopupWindow.isShowing());
+            // Send BACK key event. As our custom extension of EditText calls
+            // ListPopupWindow.onKeyPreIme, the end result should be the dismissal of the
+            // ListPopupWindow
+            mInstrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK);
+            verify(mPopupWindowBuilder.mOnDismissListener, times(1)).onDismiss();
+            assertFalse(mPopupWindow.isShowing());
+        } finally {
+            // Restore predictive back
+            applicationInfo.setEnableOnBackInvokedCallback(isOnBackInvokedCallbackEnabled);
+        }
     }
 
     @Test
