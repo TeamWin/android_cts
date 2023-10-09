@@ -64,7 +64,8 @@ public class USBAudioPeripheralPlayActivity extends USBAudioPeripheralPlayerActi
 
     public void updateConnectStatus() {
         mPlayBtn.setEnabled(mIsPeripheralAttached);
-        getPassButton().setEnabled(mIsPeripheralAttached);
+        mHasPassedTest = mIsPeripheralAttached;
+        getPassButton().setEnabled(mHasPassedTest);
     }
 
     public class LocalClickListener implements View.OnClickListener {

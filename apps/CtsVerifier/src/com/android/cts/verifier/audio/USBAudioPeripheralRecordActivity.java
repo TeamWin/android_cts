@@ -144,6 +144,7 @@ public class USBAudioPeripheralRecordActivity extends USBAudioPeripheralActivity
         mRecordBtn.setEnabled(mIsPeripheralAttached);
         mRecordLoopbackBtn.setEnabled(mIsPeripheralAttached);
         getPassButton().setEnabled(mIsPeripheralAttached);
+        mHasPassedTest = mIsPeripheralAttached;
     }
 
     public class LocalClickListener implements View.OnClickListener {
