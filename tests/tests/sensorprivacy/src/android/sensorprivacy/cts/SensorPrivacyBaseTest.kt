@@ -42,6 +42,7 @@ import com.android.compatibility.common.util.SystemUtil.eventually
 import com.android.compatibility.common.util.SystemUtil.runShellCommandOrThrow
 import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
 import com.android.compatibility.common.util.UiAutomatorUtils
+import java.nio.charset.StandardCharsets
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
@@ -639,10 +640,10 @@ abstract class SensorPrivacyBaseTest(
     fun runWhileLocked(r: () -> Unit) {
         val km = context.getSystemService(KeyguardManager::class.java)!!
         val pm = context.getSystemService(PowerManager::class.java)!!
-        val password = byteArrayOf(1, 2, 3, 4)
+        val pin = "1234".toByteArray(StandardCharsets.UTF_8)
         try {
             runWithShellPermissionIdentity {
-                km.setLock(KeyguardManager.PIN, password, KeyguardManager.PIN, null)
+                assertTrue(km.setLock(KeyguardManager.PIN, pin, KeyguardManager.PIN, null))
             }
             eventually {
                 uiDevice.pressKeyCode(KeyEvent.KEYCODE_SLEEP)
@@ -659,7 +660,7 @@ abstract class SensorPrivacyBaseTest(
             r.invoke()
         } finally {
             runWithShellPermissionIdentity {
-                km.setLock(KeyguardManager.PIN, null, KeyguardManager.PIN, password)
+                assertTrue(km.setLock(KeyguardManager.PIN, null, KeyguardManager.PIN, pin))
             }
 
             // Recycle the screen power in case the keyguard is stuck open
