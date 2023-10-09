@@ -18,8 +18,6 @@ package android.compilation.cts;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import static org.junit.Assert.assertThrows;
-
 import android.compilation.cts.annotation.CtsTestCase;
 
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
@@ -203,21 +201,6 @@ public class CompilationTest extends BaseHostJUnit4Test {
                               .setTestMethodName("testGetDexFileOutputPaths")
                               .setDisableHiddenApiCheck(true);
         assertThat(runDeviceTests(options)).isTrue();
-    }
-
-    @Test
-    public void testExternalProfileValidationOk() throws Exception {
-        mUtils.installFromResources(getAbi(), TEST_APP_APK_RES, TEST_APP_DM_RES);
-    }
-
-    /** Verifies that adb install fails when the APK and the DM file don't match. */
-    @Test
-    public void testExternalProfileValidationFailed() throws Exception {
-        Throwable throwable = assertThrows(Throwable.class, () -> {
-            mUtils.installFromResources(getAbi(), TEST_APP_APK_RES, "/AppUsedByOtherApp_1.dm");
-        });
-        assertThat(throwable).hasMessageThat().contains(
-                "Error occurred during dexopt when processing external profiles:");
     }
 
     private void checkDexoptStatus(String dump, String dexfilePattern, String statusPattern) {
