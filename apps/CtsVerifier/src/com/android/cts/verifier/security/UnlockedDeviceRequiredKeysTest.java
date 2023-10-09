@@ -70,8 +70,8 @@ import javax.crypto.SecretKey;
  *   4. When the device is unlocked verify the key is now accessible after the biometric unlock.
  *   5. Repeat steps 2-4, this time prompting the user to unlock using the device credentials.
  */
-public class UnlockedDeviceRequiredTest extends PassFailButtons.Activity {
-    private static final String TAG = "UnlockedDeviceRequiredTest";
+public class UnlockedDeviceRequiredKeysTest extends PassFailButtons.Activity {
+    private static final String TAG = "UnlockedDeviceRequiredKeysTest";
 
     /**
      * This tag is used to display and, when necessary, remove the dialog to display the current
@@ -96,8 +96,8 @@ public class UnlockedDeviceRequiredTest extends PassFailButtons.Activity {
         setContentView(R.layout.sec_screen_lock_keys_main);
         getPassButton().setEnabled(false);
         setPassFailButtonClickListeners();
-        setInfoResources(R.string.sec_unlocked_device_required_test,
-                R.string.sec_unlocked_device_required_test_info, -1);
+        setInfoResources(R.string.sec_unlocked_device_required_keys_test,
+                R.string.sec_unlocked_device_required_keys_test_info, -1);
         mResources = getApplicationContext().getResources();
 
         // There are no broadcasts / notifications when a device state changes between locked and
@@ -350,9 +350,9 @@ public class UnlockedDeviceRequiredTest extends PassFailButtons.Activity {
         private KeyguardManager mKeyguardManager;
         private @TestState int mTestState;
         private boolean mBiometricsSupported;
-        private UnlockedDeviceRequiredTest mActivity;
+        private UnlockedDeviceRequiredKeysTest mActivity;
 
-        private TestController(UnlockedDeviceRequiredTest activity) {
+        private TestController(UnlockedDeviceRequiredKeysTest activity) {
             mBiometricManager = activity.getSystemService(BiometricManager.class);
             mKeyguardManager = activity.getSystemService(KeyguardManager.class);
             // Initially assume biometrics are supported; when checking if test requirements are
