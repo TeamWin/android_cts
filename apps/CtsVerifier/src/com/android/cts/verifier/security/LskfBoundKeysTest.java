@@ -50,7 +50,7 @@ import javax.crypto.KeyGenerator;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 
-public class ScreenLockBoundKeysTest extends PassFailButtons.Activity {
+public class LskfBoundKeysTest extends PassFailButtons.Activity {
 
     /** Alias for our key in the Android Key Store. */
     private static final String KEY_NAME = "my_lock_key";
@@ -65,7 +65,7 @@ public class ScreenLockBoundKeysTest extends PassFailButtons.Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.sec_screen_lock_keys_main);
         setPassFailButtonClickListeners();
-        setInfoResources(R.string.sec_lock_bound_key_test, R.string.sec_lock_bound_key_test_info, -1);
+        setInfoResources(R.string.sec_lskf_bound_key_test, R.string.sec_lskf_bound_key_test_info, -1);
 
         mKeyguardManager = (KeyguardManager) getSystemService(KEYGUARD_SERVICE);
 
