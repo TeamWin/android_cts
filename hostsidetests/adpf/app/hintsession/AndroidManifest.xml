@@ -28,4 +28,7 @@
         </activity>
     </application>
 
+    <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
+         android:targetPackage="android.adpf.hintsession.app"/>
+
 </manifest>

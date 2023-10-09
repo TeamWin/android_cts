@@ -16,9 +16,6 @@
 
 package android.adpf.hintsession.app;
 
-import static android.adpf.common.ADPFHintSessionConstants.LOG_ACTUAL_DURATION_PREFIX;
-import static android.adpf.common.ADPFHintSessionConstants.LOG_TARGET_DURATION_PREFFIX;
-import static android.adpf.common.ADPFHintSessionConstants.LOG_TEST_APP_FAILED_PREFIX;
 import static android.adpf.common.ADPFHintSessionConstants.TEST_NAME_KEY;
 
 import android.app.Activity;
@@ -27,17 +24,39 @@ import android.os.Bundle;
 import android.os.PerformanceHintManager;
 import android.util.Log;
 
-import java.util.Arrays;
+import org.junit.Assert;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
- * A simple activity which logs to Logcat.
+ * A simple activity to create and use hint session APIs.
  */
 public class ADPFHintSessionDeviceActivity extends Activity {
+    public static class Result {
+        public long targetDuration;
+        public List<Long> actualDurations = new ArrayList<>();
+
+        synchronized void setTargetDuration(long target) {
+            targetDuration = target;
+        }
+
+        synchronized void addActualDuration(long duration) {
+            actualDurations.add(duration);
+        }
+    }
+
     private static final String TAG =
             android.adpf.hintsession.app.ADPFHintSessionDeviceActivity.class.getSimpleName();
 
     private PerformanceHintManager.Session mSession;
+
+    private final Map<String, String> mMetrics = new HashMap<>();
+
+    private final Result mResult = new Result();
 
     @Override
     public void onCreate(Bundle icicle) {
@@ -46,10 +65,8 @@ public class ADPFHintSessionDeviceActivity extends Activity {
         String testName = intent.getStringExtra(
                 TEST_NAME_KEY);
         if (testName == null) {
-            Log.e(TAG, LOG_TEST_APP_FAILED_PREFIX + "test starts without name");
-            return;
+            Assert.fail("test starts without name");
         }
-        Log.i(TAG, "Test name " + testName);
 
         if (mSession == null) {
             PerformanceHintManager hintManager = getApplicationContext().getSystemService(
@@ -62,10 +79,15 @@ public class ADPFHintSessionDeviceActivity extends Activity {
                 return;
             }
         }
-        final int targetMillis = 5;
-        // mSession.reportActualWorkDuration(TimeUnit.MILLISECONDS.toNanos(targetMillis));
-        Log.i(TAG, LOG_TARGET_DURATION_PREFFIX + targetMillis);
-        Log.i(TAG, LOG_ACTUAL_DURATION_PREFIX + Arrays.asList(1, 2, 3, 4));
+        final long targetMillis = 10;
+        mSession.updateTargetWorkDuration(TimeUnit.MILLISECONDS.toNanos(targetMillis));
+        final long actualMillis = 5;
+        mResult.setTargetDuration(targetMillis);
+        mSession.reportActualWorkDuration(TimeUnit.MILLISECONDS.toNanos(actualMillis));
+        mResult.addActualDuration(actualMillis);
+        synchronized (mMetrics) {
+            mMetrics.put("foo", "bar");
+        }
     }
 
     @Override
@@ -73,4 +95,24 @@ public class ADPFHintSessionDeviceActivity extends Activity {
         super.onStart();
     }
 
+    /**
+     * Gets the hint session test metrics.
+     */
+    public Map<String, String> getMetrics() {
+        synchronized (mMetrics) {
+            return new HashMap<>(mMetrics);
+        }
+    }
+
+    /**
+     * Gets the hint session test result.
+     */
+    public Result getResult() {
+        Result res = new Result();
+        synchronized (mResult) {
+            res.targetDuration = mResult.targetDuration;
+            res.actualDurations = new ArrayList<>(res.actualDurations);
+        }
+        return res;
+    }
 }
