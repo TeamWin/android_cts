@@ -30,7 +30,8 @@ public final class WorkDir {
   private static final String MEDIA_PATH_INSTR_ARG_KEY = "media-path";
 
   public static File getTopDir() {
-    Assert.assertEquals(Environment.getExternalStorageState(), Environment.MEDIA_MOUNTED);
+    Assert.assertEquals("External Storage is not in correct state",
+                    Environment.MEDIA_MOUNTED, Environment.getExternalStorageState());
     return Environment.getExternalStorageDirectory();
   }
 

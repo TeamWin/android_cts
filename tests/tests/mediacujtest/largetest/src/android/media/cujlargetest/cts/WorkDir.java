@@ -18,16 +18,20 @@ package android.media.cujlargetest.cts;
 
 import android.os.Bundle;
 import android.os.Environment;
+
 import androidx.test.platform.app.InstrumentationRegistry;
-import java.io.File;
+
 import org.junit.Assert;
+
+import java.io.File;
 
 public final class WorkDir {
   private WorkDir() {}
   private static final String MEDIA_PATH_INSTR_ARG_KEY = "media-path";
 
   public static File getTopDir() {
-    Assert.assertEquals(Environment.getExternalStorageState(), Environment.MEDIA_MOUNTED);
+    Assert.assertEquals("External Storage is not in correct state",
+                    Environment.MEDIA_MOUNTED, Environment.getExternalStorageState());
     return Environment.getExternalStorageDirectory();
   }
 
