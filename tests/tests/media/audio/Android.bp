@@ -75,14 +75,17 @@ android_test {
     compile_multilib: "both",
     static_libs: [
         "CtsVirtualDeviceCommonLib",
+        "android.os.vibrator.flags-aconfig-java",
         "androidx.test.ext.junit",
         "compatibility-device-util-axt",
         "cts-media-common",
         "ctstestrunner-axt",
+        "flag-junit",
         "guava-android-testlib",
         "hamcrest-library",
         "junit-params",
         "mediatestutils",
+        "platform-test-annotations",
         "testng",
     ],
     jni_libs: [
