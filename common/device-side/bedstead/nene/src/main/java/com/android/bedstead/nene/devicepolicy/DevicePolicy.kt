@@ -734,7 +734,7 @@ object DevicePolicy {
 
     /** See [DevicePolicyManager.createAdminSupportIntent]  */
     @Experimental
-    fun createAdminSupportIntent(restriction: String): Intent =
+    fun createAdminSupportIntent(restriction: String): Intent? =
         devicePolicyManager.createAdminSupportIntent(restriction)
 
     /** See [DevicePolicyManager.isFactoryResetProtectionPolicySupported]  */
@@ -771,7 +771,7 @@ object DevicePolicy {
     /** See [DevicePolicyManager#getOwnerInstalledCaCerts]. */
     @Experimental
     fun getOwnerInstalledCaCerts(user: UserReference) =
-        TestApis.permissions().withPermission(INTERACT_ACROSS_USERS_FULL).use {
+        TestApis.permissions().withPermission(INTERACT_ACROSS_USERS_FULL, QUERY_ADMIN_POLICY).use {
             devicePolicyManager(user).getOwnerInstalledCaCerts(user.userHandle())
         }
 

@@ -38,7 +38,7 @@ public interface TestAppConnector extends ProfileConnector {
     static TestAppConnector create(Context context, ConnectionBinder binder) {
         return GeneratedTestAppConnector.builder(context)
                 .setBinder(binder)
-                .setScheduledExecutorService(EXECUTOR_SERVICE)
+//                .setScheduledExecutorService(EXECUTOR_SERVICE)
                 .build();
     }
 }

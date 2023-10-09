@@ -28,7 +28,7 @@ public final class ActivityEventsImpl implements ActivityEvents {
 
     ActivityEventsImpl(NeneActivity activity) {
         mComponentName = activity.getComponentName();
-        mUser = activity.getUser();
+        mUser = activity.user();
     }
 
     ActivityEventsImpl(ComponentName componentName, UserHandle user) {

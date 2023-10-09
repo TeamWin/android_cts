@@ -25,6 +25,7 @@ import com.android.bedstead.harrier.annotations.RequireRunOnSystemUser
 import com.android.bedstead.harrier.annotations.enterprise.CanSetPolicyTest
 import com.android.bedstead.harrier.annotations.enterprise.CannotSetPolicyTest
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasDeviceOwner
+import com.android.bedstead.harrier.annotations.enterprise.EnsureHasProfileOwner
 import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest
 import com.android.bedstead.harrier.policies.TransferOwnership
 import com.android.bedstead.harrier.policies.TransferOwnershipForDeviceOwner
@@ -166,6 +167,7 @@ class TransferOwnershipTest {
     }
 
     @ApiTest(apis = ["android.app.admin.DevicePolicyManager#transferOwnership"])
+    @EnsureHasProfileOwner
     @Postsubmit(reason = "new test")
     @Test
     fun transferOwnership_disableCamera_policyRetainedAfterTransfer() {
@@ -186,6 +188,7 @@ class TransferOwnershipTest {
 
     @ApiTest(apis = ["android.app.admin.DevicePolicyManager#transferOwnership"])
     @Postsubmit(reason = "new test")
+    @EnsureHasProfileOwner
     @Test
     fun transferOwnership_profileOwner_sendsOwnerChangedBroadcast() {
         targetDeviceAdminTestAppSupportsTransferOwnership.install().use {

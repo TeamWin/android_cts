@@ -35,7 +35,7 @@ public abstract class TestAppActivity extends TestAppActivityReference implement
     }
 
     @Override
-    public UserHandle getUser() {
+    public UserHandle user() {
         return testAppInstance().user().userHandle();
     }
 }
