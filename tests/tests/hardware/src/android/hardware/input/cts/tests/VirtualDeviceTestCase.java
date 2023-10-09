@@ -255,7 +255,8 @@ public abstract class VirtualDeviceTestCase extends InputTestCase {
             mInstrumentation.sendPointerSync(downEvent);
             mInstrumentation.sendPointerSync(upEvent);
         } catch (IllegalArgumentException e) {
-            fail("Failed to sending taps to the activity. Is the device unlocked?");
+            fail("Failed to sending taps to the activity. Is the device unlocked? Getting "
+                    + "exception " + e);
         }
 
         verifyEvents(ImmutableList.of(downEvent, upEvent));
