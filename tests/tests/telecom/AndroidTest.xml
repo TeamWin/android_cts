@@ -46,6 +46,8 @@
         <option name="run-command" value="am compat enable ALLOW_TEST_API_ACCESS android.telecom.cts.api29incallservice" />
         <option name="teardown-command" value="am compat reset ALLOW_TEST_API_ACCESS android.telecom.cts" />
         <option name="teardown-command" value="am compat reset ALLOW_TEST_API_ACCESS android.telecom.cts.api29incallservice" />
+        <option name="run-command" value="device_config set_sync_disabled_for_tests persistent" />
+        <option name="teardown-command" value="device_config set_sync_disabled_for_tests none" />
     </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.telecom.cts" />
