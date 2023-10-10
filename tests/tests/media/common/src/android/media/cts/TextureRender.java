@@ -79,8 +79,16 @@ public class TextureRender {
     private int muSTMatrixHandle;
     private int maPositionHandle;
     private int maTextureHandle;
+    private boolean mSecureMode = false;
+
+    private static int GL_TEXTURE_PROTECTED_EXT = 0x8BFA;
 
     public TextureRender() {
+        this(false);
+    }
+
+    public TextureRender(boolean secure) {
+        mSecureMode = secure;
         mTriangleVertices = ByteBuffer.allocateDirect(
             mTriangleVerticesData.length * FLOAT_SIZE_BYTES)
                 .order(ByteOrder.nativeOrder()).asFloatBuffer();
@@ -176,6 +184,10 @@ public class TextureRender {
                 GLES20.GL_CLAMP_TO_EDGE);
         GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_WRAP_T,
                 GLES20.GL_CLAMP_TO_EDGE);
+        if (mSecureMode) {
+            GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GL_TEXTURE_PROTECTED_EXT,
+                    GLES20.GL_TRUE);
+        }
         checkGlError("glTexParameter");
     }
 

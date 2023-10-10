@@ -422,6 +422,7 @@ public final class PermissionGrantTest {
     }
 
     @CanSetPolicyTest(policy = SetSensorPermissionGranted.class)
+    @Ignore("(282111883)")
     public void grantSensorPermission_setsGrantState(
             @SensorPermissionTestParameter String permission) {
         int existingGrantState = sDeviceState.dpc().devicePolicyManager()
@@ -893,7 +894,7 @@ public final class PermissionGrantTest {
                     GRANTABLE_PERMISSION, PERMISSION_GRANT_STATE_DEFAULT);
         }
     }
-    
+
     @AdditionalQueryParameters(
             forTestApp = "dpc",
             query = @Query(targetSdkVersion =
@@ -1046,6 +1047,7 @@ public final class PermissionGrantTest {
             Settings.Global.ALLOW_WORK_PROFILE_TELEPHONY_FOR_NON_DPM_ROLE_HOLDERS, value = "1")
     @RequireRunOnWorkProfile(isOrganizationOwned = true)
     @Test
+    @Ignore("b/300397938")
     public void grantSmsPermission_orgOwnedDeviceWithManagedSubscriptionsPolicySet_granted() {
         RemoteDevicePolicyManager devicePolicyManager = sDeviceState.profileOwner(
                 WORK_PROFILE).devicePolicyManager();

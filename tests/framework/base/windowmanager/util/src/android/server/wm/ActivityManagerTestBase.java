@@ -207,12 +207,14 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -3458,5 +3460,20 @@ public abstract class ActivityManagerTestBase {
     public WindowManagerState.Activity getActivityWaitState(ComponentName activityName) {
         mWmState.computeState(new WaitForValidActivityState(activityName));
         return mWmState.getActivity(activityName);
+    }
+
+    /**
+     * Inset given frame if the insets source exist.
+     *
+     * @param windowState The window which have the insets source.
+     * @param predicate Inset source predicate.
+     * @param inOutBounds In/out the given frame from the inset source.
+     */
+    public static void insetGivenFrame(WindowManagerState.WindowState windowState,
+            Predicate<WindowManagerState.InsetsSource> predicate, Rect inOutBounds) {
+        Optional<WindowManagerState.InsetsSource> insetsOptional =
+                windowState.getMergedLocalInsetsSources().stream().filter(
+                        predicate).findFirst();
+        insetsOptional.ifPresent(insets -> insets.insetGivenFrame(inOutBounds));
     }
 }

@@ -16,9 +16,8 @@
 
 package android.accessibilityservice.cts;
 
-import static android.accessibility.cts.common.ShellCommandBuilder.execShellCommand;
-import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.AM_BROADCAST_CLOSE_SYSTEM_DIALOG_COMMAND;
 import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.homeScreenOrBust;
+import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.isHomeScreenShowing;
 
 import static org.junit.Assert.assertTrue;
 
@@ -27,10 +26,10 @@ import android.accessibilityservice.AccessibilityService;
 import android.accessibilityservice.AccessibilityServiceInfo;
 import android.app.Instrumentation;
 import android.app.UiAutomation;
-import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.Presubmit;
 
+import androidx.test.filters.LargeTest;
 import androidx.test.filters.MediumTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
@@ -39,32 +38,19 @@ import com.android.compatibility.common.util.CddTest;
 
 import org.junit.After;
 import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.util.concurrent.TimeoutException;
-
 /**
- * Test global actions
+ * Test invoking the various {@link AccessibilityService#performGlobalAction(int)}} actions.
  */
 @Presubmit
 @AppModeFull
 @RunWith(AndroidJUnit4.class)
 @CddTest(requirements = {"3.10/C-1-1,C-1-2"})
 public class AccessibilityGlobalActionsTest {
-    /**
-     * Timeout required for pending Binder calls or event processing to
-     * complete.
-     */
-    private static final long TIMEOUT_ASYNC_PROCESSING = 5000;
-
-    /**
-     * The timeout since the last accessibility event to consider the device idle.
-     */
-    private static final long TIMEOUT_ACCESSIBILITY_STATE_IDLE = 500;
 
     private static Instrumentation sInstrumentation;
     private static UiAutomation sUiAutomation;
@@ -80,6 +66,8 @@ public class AccessibilityGlobalActionsTest {
         AccessibilityServiceInfo info = sUiAutomation.getServiceInfo();
         info.flags |= AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS;
         sUiAutomation.setServiceInfo(info);
+        // Start on a clean home screen with any system dialogs removed.
+        homeScreenOrBust(sInstrumentation.getContext(), sUiAutomation);
     }
 
     @AfterClass
@@ -87,155 +75,116 @@ public class AccessibilityGlobalActionsTest {
         sUiAutomation.destroy();
     }
 
-    @Before
-    public void setUp() throws Exception {
-        // Make sure we start test on home screen so we can know if clean up is successful
-        // or not in the end.
-        homeScreenOrBust(sInstrumentation.getContext(), sUiAutomation);
-    }
-
     @After
     public void tearDown() throws Exception {
-        // Make sure we clean up and back to home screen again, or let test fail...
-        homeScreenOrBust(sInstrumentation.getContext(), sUiAutomation);
-    }
+        // The majority of system actions involve System UI requests that both:
+        //   - Can take a few seconds to take effect on certain device types.
+        //   - Perform behavior that depends on the specific SystemUI implementation of the device,
+        //     making it untestable to a device-agnostic CTS test like this.
+        // So instead of waiting for any specific condition, we repeatedly try to get to the home
+        // screen to clean up before starting the next test.
 
-    @MediumTest
-    @Test
-    public void testPerformGlobalActionBack() throws Exception {
-        assertTrue(sUiAutomation.performGlobalAction(AccessibilityService.GLOBAL_ACTION_BACK));
-
-        // Sleep a bit so the UI is settled.
-        waitForIdle();
-    }
-
-    @MediumTest
-    @Test
-    public void testPerformGlobalActionHome() throws Exception {
-        assertTrue(sUiAutomation.performGlobalAction(AccessibilityService.GLOBAL_ACTION_HOME));
-
-        // Sleep a bit so the UI is settled.
-        waitForIdle();
-    }
-
-    @MediumTest
-    @Test
-    public void testPerformGlobalActionRecents() throws Exception {
-        // Perform the action.
-        boolean actionWasPerformed = sUiAutomation.performGlobalAction(
-                AccessibilityService.GLOBAL_ACTION_RECENTS);
-
-        // Sleep a bit so the UI is settled.
-        waitForIdle();
-
-        if (actionWasPerformed) {
-            // This is a necessary since the global action does not
-            // dismiss recents until they stop animating. Sigh...
-            SystemClock.sleep(5000);
+        // Arbitrary number of retries. Each attempt may wait at most
+        // AsyncUtils.DEFAULT_TIMEOUT_MS ms before failing, so keep this small.
+        final int numAttempts = 3;
+        for (int attempt = 1; attempt <= numAttempts; attempt++) {
+            if (isHomeScreenShowing(sInstrumentation.getContext(), sUiAutomation)) {
+                break;
+            }
+            try {
+                homeScreenOrBust(sInstrumentation.getContext(), sUiAutomation);
+            } catch (AssertionError e) {
+                if (attempt == numAttempts) {
+                    // Fail if the last attempt still couldn't get to a clean home screen.
+                    throw e;
+                }
+            }
         }
     }
 
     @MediumTest
     @Test
-    public void testPerformGlobalActionNotifications() throws Exception {
-        // Perform the action under test
+    public void testPerformGlobalActionBack() {
+        assertTrue(sUiAutomation.performGlobalAction(AccessibilityService.GLOBAL_ACTION_BACK));
+    }
+
+    @MediumTest
+    @Test
+    public void testPerformGlobalActionHome() {
+        assertTrue(sUiAutomation.performGlobalAction(AccessibilityService.GLOBAL_ACTION_HOME));
+    }
+
+    @MediumTest
+    @Test
+    public void testPerformGlobalActionRecents() {
+        // Not all devices support GLOBAL_ACTION_RECENTS, but there is no current feature flag for
+        // this. Our best hope is to test that this does throw a runtime error.
+        sUiAutomation.performGlobalAction(
+                AccessibilityService.GLOBAL_ACTION_RECENTS);
+    }
+
+    @MediumTest
+    @Test
+    public void testPerformGlobalActionNotifications() {
         assertTrue(sUiAutomation.performGlobalAction(
                 AccessibilityService.GLOBAL_ACTION_NOTIFICATIONS));
-
-        // Sleep a bit so the UI is settled.
-        waitForIdle();
     }
 
     @MediumTest
     @Test
-    public void testPerformGlobalActionQuickSettings() throws Exception {
-        // Check whether the action succeeded.
+    public void testPerformGlobalActionQuickSettings() {
         assertTrue(sUiAutomation.performGlobalAction(
                 AccessibilityService.GLOBAL_ACTION_QUICK_SETTINGS));
-
-        // Sleep a bit so the UI is settled.
-        waitForIdle();
     }
 
     @MediumTest
     @Test
-    public void testPerformGlobalActionPowerDialog() throws Exception {
-        // Check whether the action succeeded.
+    public void testPerformGlobalActionPowerDialog() {
         assertTrue(sUiAutomation.performGlobalAction(
                 AccessibilityService.GLOBAL_ACTION_POWER_DIALOG));
-
-        // Sleep a bit so the UI is settled.
-        waitForIdle();
     }
 
-    @MediumTest
+    @LargeTest
     @Test
-    public void testPerformActionScreenshot() throws Exception {
-        // Action should succeed
+    public void testPerformActionScreenshot() {
         assertTrue(sUiAutomation.performGlobalAction(
                 AccessibilityService.GLOBAL_ACTION_TAKE_SCREENSHOT));
         // Ideally should verify that we actually have a screenshot, but it's also possible
-        // for the screenshot to fail
-        waitForIdle();
-        execShellCommand(sUiAutomation, AM_BROADCAST_CLOSE_SYSTEM_DIALOG_COMMAND);
+        // for the screenshot to fail.
     }
 
     @MediumTest
     @Test
-    public void testPerformGlobalActionDpadUp() throws Exception {
-        // Check whether the action succeeded.
+    public void testPerformGlobalActionDpadUp() {
         assertTrue(sUiAutomation.performGlobalAction(
                 AccessibilityService.GLOBAL_ACTION_DPAD_UP));
-
-        // Sleep a bit so the UI is settled.
-        waitForIdle();
     }
 
     @MediumTest
     @Test
-    public void testPerformGlobalActionDpadDown() throws Exception {
-        // Check whether the action succeeded.
+    public void testPerformGlobalActionDpadDown() {
         assertTrue(sUiAutomation.performGlobalAction(
                 AccessibilityService.GLOBAL_ACTION_DPAD_DOWN));
-
-        // Sleep a bit so the UI is settled.
-        waitForIdle();
     }
 
     @MediumTest
     @Test
-    public void testPerformGlobalActionDpadLeft() throws Exception {
-        // Check whether the action succeeded.
+    public void testPerformGlobalActionDpadLeft() {
         assertTrue(sUiAutomation.performGlobalAction(
                 AccessibilityService.GLOBAL_ACTION_DPAD_LEFT));
-
-        // Sleep a bit so the UI is settled.
-        waitForIdle();
     }
 
     @MediumTest
     @Test
-    public void testPerformGlobalActionDpadRight() throws Exception {
-        // Check whether the action succeeded.
+    public void testPerformGlobalActionDpadRight() {
         assertTrue(sUiAutomation.performGlobalAction(
                 AccessibilityService.GLOBAL_ACTION_DPAD_RIGHT));
-
-        // Sleep a bit so the UI is settled.
-        waitForIdle();
     }
 
     @MediumTest
     @Test
-    public void testPerformGlobalActionDpadCenter() throws Exception {
-        // Check whether the action succeeded.
+    public void testPerformGlobalActionDpadCenter() {
         assertTrue(sUiAutomation.performGlobalAction(
                 AccessibilityService.GLOBAL_ACTION_DPAD_CENTER));
-
-        // Sleep a bit so the UI is settled.
-        waitForIdle();
-    }
-
-    private void waitForIdle() throws TimeoutException {
-        sUiAutomation.waitForIdle(TIMEOUT_ACCESSIBILITY_STATE_IDLE, TIMEOUT_ASYNC_PROCESSING);
     }
 }

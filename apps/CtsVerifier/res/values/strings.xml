@@ -2557,7 +2557,7 @@
         \nPull down the notification shade and look for the NotifPrivacyTest notification.
         \nFail the test if it can be found without unlocking the device.
         \n\nGo back when ready to Pass/Fail the step.</string>
-    <string name="np_public_version_text">NotifPrivacyTefst: REDACTED</string>
+    <string name="np_public_version_text">NotifPrivacyTest: REDACTED</string>
     <string name="np_private_version_text">NotifPrivacyTest: EXPOSED</string>
     <string name="notif_privacy_test">Notification Privacy Test</string>
     <string name="notif_privacy_info">This test checks that Notification privacy is correctly
@@ -4210,7 +4210,7 @@ You should be prompted to select credentials; choose the ones you just installed
         Then press Go to open the WiFi page in Settings.
         Confirm that:\n\n
         - You cannot add a new WiFi configuration.\n
-        - The UI indicates that this is disabled due to admin policy.\n
+        - Tapping on the disabled network shows a dialog explaining the admin restriction.\n
         \n
         Use the Back button to return to this page.
     </string>
@@ -4465,7 +4465,7 @@ You should be prompted to select credentials; choose the ones you just installed
         Set \'%s\' user restriction by turning on the switch below.
     </string>
     <string name="disallow_add_user">Disallow add user</string>
-    <string name="disallow_add_user_action">Adding a new user</string>
+    <string name="disallow_add_user_action">Accessing the multiple users settings page, or if the device allows access to the page, then attempting to add a new user </string>
     <string name="disallow_adjust_volume">Disallow adjust volume</string>
     <string name="disallow_adjust_volume_action">Adjusting the volume\n
         NOTE: If the device does not support volume adjustment in Settings app please skip this test and mark it as passing.\n</string>
@@ -5050,17 +5050,6 @@ You should be prompted to select credentials; choose the ones you just installed
         \n
         When successfully logout and switched back to primary user, confirm that the logout control
         is not available in primary user.
-    </string>
-    <string name="disallow_cellular_2g">Disallow Cellular 2g</string>
-    <string name="disallow_cellular_2g_action">Configuring Cellular 2g</string>
-    <string name="device_owner_disallow_cellular_2g_info">
-        Device should have a sim card to perform this test.
-        Please press the Set restriction button to set the user restriction.
-        Then press Go to open the Mobile network page in Settings.
-        Confirm that:\n\n
-        - Enable 2g is disabled.\n
-        - Enabling 2g is not possible and triggers a support message.\n\n
-        Use the Back button to return to this page.
     </string>
 
     <!-- Strings for JobScheduler Tests -->
@@ -6910,6 +6899,7 @@ Follow the instructions on the screen to measure the frequency response for the 
         \nIf the TV device is launched on older Android letters, all tests will be disabled. Press Pass to pass this case.
     </string>
     <string name="is_reference_device_checkbox_text">Is Reference Device</string>
+    <string name="is_manual_pass_text">Pass test manually after test completion</string>
     <string name="uwb_precision">Uwb Precision Test</string>
     <string name="uwb_short_range">Uwb Short Range Test</string>
     <string name="uwb_precision_instruction">

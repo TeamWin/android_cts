@@ -3809,7 +3809,7 @@ public final class DeviceState extends HarrierRule {
 
     private void ensureGlobalSettingSet(String key, String value){
         if (!mOriginalGlobalSettings.containsKey(key)) {
-            mOriginalGlobalSettings.put(key, TestApis.settings().global().getString(value));
+            mOriginalGlobalSettings.put(key, TestApis.settings().global().getString(key));
         }
 
         TestApis.settings().global().putString(key, value);
@@ -3825,7 +3825,7 @@ public final class DeviceState extends HarrierRule {
         }
         if (!mOriginalSecureSettings.get(user).containsKey(key)) {
             mOriginalSecureSettings.get(user)
-                    .put(key, TestApis.settings().secure().getString(user, value));
+                    .put(key, TestApis.settings().secure().getString(user, key));
         }
 
         TestApis.settings().secure().putString(user, key, value);

@@ -260,7 +260,7 @@ public class ItsService extends Service implements SensorEventListener {
     private volatile BlockingQueue<Object[]> mSerializerQueue =
             new LinkedBlockingDeque<Object[]>();
 
-    private AtomicInteger mCountCallbacksRemaining = new AtomicInteger();
+    private final AtomicInteger mCountCallbacksRemaining = new AtomicInteger();
     private AtomicInteger mCountRawOrDng = new AtomicInteger();
     private AtomicInteger mCountRaw10 = new AtomicInteger();
     private AtomicInteger mCountRaw12 = new AtomicInteger();
@@ -944,6 +944,11 @@ public class ItsService extends Service implements SensorEventListener {
                 } else if ("getSupportedExtensions".equals(cmdObj.getString("cmdName"))) {
                     String cameraId = cmdObj.getString("cameraId");
                     doGetSupportedExtensions(cameraId);
+                } else if ("getSupportedExtensionSizes".equals(cmdObj.getString("cmdName"))) {
+                    String cameraId = cmdObj.getString("cameraId");
+                    int extension = cmdObj.getInt("extension");
+                    int format = cmdObj.getInt("format");
+                    doGetSupportedExtensionSizes(cameraId, extension, format);
                 } else if ("doBasicRecording".equals(cmdObj.getString("cmdName"))) {
                     String cameraId = cmdObj.getString("cameraId");
                     int profileId = cmdObj.getInt("profileId");
@@ -1209,6 +1214,35 @@ public class ItsService extends Service implements SensorEventListener {
                         }
                     }
                     listener.onCaptureAvailable(i, physicalCameraId);
+                } finally {
+                    if (i != null) {
+                        i.close();
+                    }
+                }
+            }
+        };
+    }
+
+    public ImageReader.OnImageAvailableListener
+            createExtensionAvailableListener(final CaptureCallback listener) {
+        return new ImageReader.OnImageAvailableListener() {
+            @Override
+            public void onImageAvailable(ImageReader reader) {
+                Image i = null;
+                try {
+                    i = reader.acquireNextImage();
+                    String physicalCameraId = new String();
+                    for (int idx = 0; idx < mOutputImageReaders.length; idx++) {
+                        if (mOutputImageReaders[idx] == reader) {
+                            physicalCameraId = mPhysicalStreamMap.get(idx);
+                            break;
+                        }
+                    }
+                    listener.onCaptureAvailable(i, physicalCameraId);
+                    synchronized(mCountCallbacksRemaining) {
+                        mCountCallbacksRemaining.decrementAndGet();
+                        mCountCallbacksRemaining.notify();
+                    }
                 } finally {
                     if (i != null) {
                         i.close();
@@ -1683,8 +1717,22 @@ public class ItsService extends Service implements SensorEventListener {
         mSocketRunnableObj.sendResponse("camera1080pJpegCaptureMs", Double.toString(jpegCaptureMs));
     }
 
+    private static long getReaderUsage(int format, boolean has10bitOutput) {
+        // Private image format camera readers will default to ZSL usage unless
+        // explicitly configured to use a common consumer such as display.
+        // We don't support the ZSL use case within the 10-bit use case.
+        return (format == ImageFormat.PRIVATE && has10bitOutput) ?
+                HardwareBuffer.USAGE_COMPOSER_OVERLAY : HardwareBuffer.USAGE_CPU_READ_OFTEN;
+    }
+
     private void prepareImageReaders(Size[] outputSizes, int[] outputFormats, Size inputSize,
             int inputFormat, int maxInputBuffers) {
+        prepareImageReaders(outputSizes, outputFormats, inputSize,
+                inputFormat, maxInputBuffers, /*has10bitOutput*/ false);
+    }
+
+    private void prepareImageReaders(Size[] outputSizes, int[] outputFormats, Size inputSize,
+            int inputFormat, int maxInputBuffers, boolean has10bitOutput) {
         closeImageReaders();
         mOutputImageReaders = new ImageReader[outputSizes.length];
         for (int i = 0; i < outputSizes.length; i++) {
@@ -1692,18 +1740,20 @@ public class ItsService extends Service implements SensorEventListener {
             if (outputSizes[i].equals(inputSize) && outputFormats[i] == inputFormat) {
                 mOutputImageReaders[i] = ImageReader.newInstance(outputSizes[i].getWidth(),
                         outputSizes[i].getHeight(), outputFormats[i],
-                        MAX_CONCURRENT_READER_BUFFERS + maxInputBuffers);
+                        MAX_CONCURRENT_READER_BUFFERS + maxInputBuffers,
+                        getReaderUsage(outputFormats[i], has10bitOutput));
                 mInputImageReader = mOutputImageReaders[i];
             } else {
                 mOutputImageReaders[i] = ImageReader.newInstance(outputSizes[i].getWidth(),
                         outputSizes[i].getHeight(), outputFormats[i],
-                        MAX_CONCURRENT_READER_BUFFERS);
+                        MAX_CONCURRENT_READER_BUFFERS, getReaderUsage(outputFormats[i],
+                            has10bitOutput));
             }
         }
 
         if (inputSize != null && mInputImageReader == null) {
             mInputImageReader = ImageReader.newInstance(inputSize.getWidth(), inputSize.getHeight(),
-                    inputFormat, maxInputBuffers);
+                    inputFormat, maxInputBuffers, getReaderUsage(inputFormat, has10bitOutput));
         }
     }
 
@@ -2227,7 +2277,8 @@ public class ItsService extends Service implements SensorEventListener {
             }
         }
 
-        prepareImageReaders(outputSizes, outputFormats, inputSize, inputFormat, maxInputBuffers);
+        prepareImageReaders(outputSizes, outputFormats, inputSize, inputFormat, maxInputBuffers,
+                is10bitOutputPresent);
 
         return is10bitOutputPresent;
     }
@@ -2322,6 +2373,23 @@ public class ItsService extends Service implements SensorEventListener {
             mSocketRunnableObj.sendResponse("supportedExtensions", extensionsList.toString());
         } catch (CameraAccessException e) {
             throw new ItsException("Failed to get supported extensions list", e);
+        }
+    }
+
+    private void doGetSupportedExtensionSizes(
+            String id, int extension, int format) throws ItsException {
+        try {
+            CameraExtensionCharacteristics chars =
+                    mCameraManager.getCameraExtensionCharacteristics(id);
+            List<Size> extensionSizes = chars.getExtensionSupportedSizes(extension, format);
+            String response = extensionSizes.stream()
+                .distinct()
+                .sorted(Comparator.comparingInt(s -> s.getWidth() * s.getHeight()))
+                .map(Size::toString)
+                .collect(Collectors.joining(";"));
+            mSocketRunnableObj.sendResponse("supportedExtensionSizes", response);
+        } catch (CameraAccessException e) {
+            throw new ItsException("Failed to get supported extensions sizes list", e);
         }
     }
 
@@ -2646,7 +2714,7 @@ public class ItsService extends Service implements SensorEventListener {
         return previewSize;
     }
 
-    private void configureAndCreateExtensionSession(
+    private Surface configureAndCreateExtensionSession(
             Surface captureSurface,
             int extension,
             CameraExtensionSession.StateCallback stateCallback) throws ItsException {
@@ -2671,6 +2739,7 @@ public class ItsService extends Service implements SensorEventListener {
         } catch (CameraAccessException e) {
             throw new ItsException("Error creating extension session: " + e);
         }
+        return previewSurface;
     }
 
     private void configureAndCreateCaptureSession(int requestTemplate, Surface recordSurface,
@@ -2923,11 +2992,6 @@ public class ItsService extends Service implements SensorEventListener {
             List<CaptureRequest.Builder> requests = ItsSerializer.deserializeRequestList(
                     mCamera, params, "captureRequests");
 
-            // optional background preview requests
-            List<CaptureRequest.Builder> backgroundRequests = ItsSerializer.deserializeRequestList(
-                    mCamera, params, "repeatRequests");
-            boolean backgroundRequest = backgroundRequests.size() > 0;
-
             int numSurfaces = 0;
             int numCaptureSurfaces = 0;
             BlockingExtensionSessionCallback sessionListener =
@@ -2945,31 +3009,47 @@ public class ItsService extends Service implements SensorEventListener {
             JSONArray jsonOutputSpecs = ItsUtils.getOutputSpecs(params);
 
             prepareImageReadersWithOutputSpecs(jsonOutputSpecs, /*inputSize*/null,
-                    /*inputFormat*/0, /*maxInputBuffers*/0, backgroundRequest);
+                    /*inputFormat*/0, /*maxInputBuffers*/0, /*backgroundRequest*/ false);
             numSurfaces = mOutputImageReaders.length;
-            numCaptureSurfaces = numSurfaces - (backgroundRequest ? 1 : 0);
+            numCaptureSurfaces = numSurfaces;
 
-            configureAndCreateExtensionSession(mOutputImageReaders[0].getSurface(), extension,
+            Surface previewSurface = configureAndCreateExtensionSession(
+                    mOutputImageReaders[0].getSurface(),
+                    extension,
                     sessionListener);
 
             mExtensionSession = sessionListener.waitAndGetSession(TIMEOUT_IDLE_MS);
 
-            for (int i = 0; i < numSurfaces; i++) {
-                ImageReader.OnImageAvailableListener readerListener;
-                if (backgroundRequest && i == numSurfaces - 1) {
-                    readerListener = createAvailableListenerDropper();
-                } else {
-                    readerListener = createAvailableListener(mCaptureCallback);
-                }
-                mOutputImageReaders[i].setOnImageAvailableListener(readerListener,
-                        mSaveHandlers[i]);
+            CaptureRequest.Builder captureBuilder = requests.get(0);
+
+            if (params.optBoolean("waitAE", true)) {
+                // Set repeating request and wait for AE convergence.
+                Logt.i(TAG, "Waiting for AE to converge before taking extensions capture.");
+                captureBuilder.addTarget(previewSurface);
+                ImageReader.OnImageAvailableListener dropperListener =
+                        createAvailableListenerDropper();
+                mOutputImageReaders[0].setOnImageAvailableListener(dropperListener,
+                                                                   mSaveHandlers[0]);
+                mExtensionSession.setRepeatingRequest(captureBuilder.build(),
+                        new HandlerExecutor(mResultHandler),
+                        mExtAEResultListener);
+                mCountCallbacksRemaining.set(1);
+                long timeout = TIMEOUT_CALLBACK * 1000;
+                waitForCallbacks(timeout);
+                mExtensionSession.stopRepeating();
+                captureBuilder.removeTarget(previewSurface);
+                mResultThread.sleep(PIPELINE_WARMUP_TIME_MS);
             }
 
-            CaptureRequest.Builder captureBuilder = requests.get(0);
+            ImageReader.OnImageAvailableListener readerListener =
+                    createExtensionAvailableListener(mCaptureCallback);
+            mOutputImageReaders[0].setOnImageAvailableListener(readerListener,
+                    mSaveHandlers[0]);
             captureBuilder.addTarget(mOutputImageReaders[0].getSurface());
             mExtensionSession.capture(captureBuilder.build(), new HandlerExecutor(mResultHandler),
                     mExtCaptureResultListener);
-            mCountCallbacksRemaining.set(1);
+            // Two callbacks: one for onCaptureResultAvailable and one for onImageAvailable
+            mCountCallbacksRemaining.set(2);
             long timeout = TIMEOUT_CALLBACK * 1000;
             waitForCallbacks(timeout);
 
@@ -2979,6 +3059,8 @@ public class ItsService extends Service implements SensorEventListener {
                 BlockingExtensionSessionCallback.SESSION_CLOSED, TIMEOUT_SESSION_CLOSE);
         } catch (android.hardware.camera2.CameraAccessException e) {
             throw new ItsException("Access error: ", e);
+        } catch (InterruptedException e) {
+            throw new ItsException("Unexpected InterruptedException: ", e);
         }
     }
 
@@ -3778,6 +3860,41 @@ public class ItsService extends Service implements SensorEventListener {
                 synchronized(mCountCallbacksRemaining) {
                     mCountCallbacksRemaining.decrementAndGet();
                     mCountCallbacksRemaining.notify();
+                }
+            } catch (ItsException e) {
+                Logt.e(TAG, "Script error: ", e);
+            } catch (Exception e) {
+                Logt.e(TAG, "Script error: ", e);
+            }
+        }
+
+        @Override
+        public void onCaptureFailed(CameraExtensionSession session, CaptureRequest request) {
+            Logt.e(TAG, "Script error: capture failed");
+        }
+    };
+
+    private final ExtensionCaptureResultListener mExtAEResultListener =
+            new ExtensionCaptureResultListener() {
+        @Override
+        public void onCaptureProcessStarted(CameraExtensionSession session,
+                CaptureRequest request) {
+        }
+
+        @Override
+        public void onCaptureResultAvailable(CameraExtensionSession session,
+                CaptureRequest request,
+                TotalCaptureResult result) {
+            try {
+                if (request == null || result == null) {
+                    throw new ItsException("Request/result is invalid");
+                }
+                if (result.get(CaptureResult.CONTROL_AE_STATE) ==
+                    CaptureResult.CONTROL_AE_STATE_CONVERGED) {
+                    synchronized(mCountCallbacksRemaining) {
+                        mCountCallbacksRemaining.decrementAndGet();
+                        mCountCallbacksRemaining.notify();
+                    }
                 }
             } catch (ItsException e) {
                 Logt.e(TAG, "Script error: ", e);

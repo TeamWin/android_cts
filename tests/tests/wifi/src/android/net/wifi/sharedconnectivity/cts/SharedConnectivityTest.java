@@ -205,9 +205,15 @@ public class SharedConnectivityTest {
                     };
             // Need to successfully register callback before testing unregister method.
             manager.registerCallback(Runnable::run, callback);
+            assertServiceConnected(callback);
             TestSharedConnectivityService service = getService();
+            CountDownLatch serviceLatch = new CountDownLatch(1);
+            service.setCountdownLatch(serviceLatch);
 
             assertThat(manager.unregisterCallback(callback)).isTrue();
+            // Wait for the unregister call to be executed in the service
+            assertThat(serviceLatch.await(LATCH_TIMEOUT_SECS, TimeUnit.SECONDS)).isTrue();
+
             // Try to use callback and validate that manager was not updated.
             service.setSettingsState(buildSettingsState());
             assertThat(callbackLatch.await(LATCH_TIMEOUT_SECS, TimeUnit.SECONDS)).isFalse();

@@ -189,8 +189,8 @@ public abstract class InteractiveVerifierActivity extends PassFailButtons.Activi
     }
 
     @Override
-    protected void onResume() {
-        super.onResume();
+    protected void onStart() {
+        super.onStart();
         //To avoid NPE during onResume,before start to iterate next test order
         if (mCurrentTest != null && mCurrentTest.autoStart()) {
             mCurrentTest.status = READY;
@@ -201,8 +201,8 @@ public abstract class InteractiveVerifierActivity extends PassFailButtons.Activi
     }
 
     @Override
-    protected void onPause() {
-        super.onPause();
+    protected void onStop() {
+        super.onStop();
         // Makes sure that the tile is removed when test is not running
         setTileState(false);
     }

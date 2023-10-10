@@ -43,5 +43,6 @@ public abstract class YesNoStep extends Step<Boolean> {
             close();
         });
         addFailButton();
+        addSwapButton();
     }
 }

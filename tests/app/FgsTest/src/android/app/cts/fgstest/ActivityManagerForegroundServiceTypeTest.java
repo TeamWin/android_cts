@@ -594,7 +594,8 @@ public final class ActivityManagerForegroundServiceTypeTest {
         if (!ArrayUtils.isEmpty(appops)) {
             for (String appop : appops) {
                 // Because we're adopting the shell identity, we have to set the appop to shell here
-                executeShellCommand("appops set --uid " + SHELL_PKG_NAME + " " + appop + " allow");
+                executeShellCommand("appops set --user " + UserHandle.myUserId()
+                        + " --uid " + SHELL_PKG_NAME + " " + appop + " allow");
             }
         }
         if (!ArrayUtils.isEmpty(specialOps)) {
@@ -604,7 +605,8 @@ public final class ActivityManagerForegroundServiceTypeTest {
         }
         if (!ArrayUtils.isEmpty(roles)) {
             for (String role: roles) {
-                executeShellCommand("cmd role add-role-holder " + role + " " + packageName);
+                executeShellCommand("cmd role add-role-holder --user " + UserHandle.myUserId()
+                        + " " + role + " " + packageName);
             }
         }
     }
@@ -612,7 +614,8 @@ public final class ActivityManagerForegroundServiceTypeTest {
     private void resetPermissions(TestPermissionInfo[] permissions, String packageName)
             throws Exception {
         mInstrumentation.getUiAutomation().dropShellPermissionIdentity();
-        executeShellCommand("appops reset " + SHELL_PKG_NAME);
+        executeShellCommand("appops reset --user " + UserHandle.myUserId()
+                + " " + SHELL_PKG_NAME);
         if (permissions != null) {
             final SpecialPermissionOp[] specialOps = Arrays.stream(permissions)
                     .filter(p-> p.mSpecialOp != null)
@@ -629,7 +632,8 @@ public final class ActivityManagerForegroundServiceTypeTest {
             }
             if (!ArrayUtils.isEmpty(roles)) {
                 for (String role: roles) {
-                    executeShellCommand("cmd role remove-role-holder " + role + " " + packageName);
+                    executeShellCommand("cmd role remove-role-holder --user "
+                            + UserHandle.myUserId() + " " + role + " " + packageName);
                 }
             }
         }

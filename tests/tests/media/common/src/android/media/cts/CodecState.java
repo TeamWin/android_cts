@@ -85,12 +85,6 @@ public class CodecState {
     private volatile OnFirstTunnelFrameReadyListener mOnFirstTunnelFrameReadyListener;
     /** If true, starves the underlying {@link MediaCodec} to simulate an underrun. */
     private boolean mShouldStopDrainingOutputBuffers;
-    /**
-     * An offset (in nanoseconds) to add to presentation timestamps fed to the {@link AudioTrack}.
-     *
-     * This is used to simulate desynchronization between tracks.
-     */
-    private long mAudioOffsetNs;
 
     private static boolean mIsAtLeastS = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S);
 
@@ -135,8 +129,6 @@ public class CodecState {
 
         mIsFirstTunnelFrameReady = false;
         mShouldStopDrainingOutputBuffers = false;
-
-        mAudioOffsetNs = 0;
 
         String mime = mFormat.getString(MediaFormat.KEY_MIME);
         Log.d(TAG, "CodecState::CodecState " + mime);
@@ -467,7 +459,7 @@ public class CodecState {
             buffer.clear();
 
             mAudioTrack.write(ByteBuffer.wrap(audioArray), info.size,
-                    info.presentationTimeUs * 1000 + mAudioOffsetNs);
+                    info.presentationTimeUs * 1000);
 
             mCodec.releaseOutputBuffer(index, false /* render */);
 
@@ -632,16 +624,21 @@ public class CodecState {
     /**
      * Stop draining output buffers which can simulate underrun condition.
      */
-    public void stopDrainingOutputBuffers(boolean enable) {
-        mShouldStopDrainingOutputBuffers = enable;
+    public void stopDrainingOutputBuffers(boolean stop) {
+        mShouldStopDrainingOutputBuffers = stop;
+        if (mAudioTrack != null) {
+            mAudioTrack.setStopWriting(stop);
+        }
     }
 
     /**
-     * Option to introduce an offset (positive or negative, in ms) to content queued to the
+     * Option to introduce an offset (positive or negative, in Ns) to content queued to the
      * {@link AudioTrack}.
      */
-    public void setAudioOffsetMs(int audioOffsetMs) {
-        mAudioOffsetNs = audioOffsetMs * 1000000;
+    public void setAudioOffsetNs(long audioOffsetNs) {
+        if (mAudioTrack != null) {
+            mAudioTrack.setAudioOffsetNs(audioOffsetNs);
+        }
     }
 
     /** Returns the underlying {@code AudioTrack}, if any. */

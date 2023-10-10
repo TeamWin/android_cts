@@ -86,7 +86,6 @@ public class SplitActivityLifecycleTest extends TaskFragmentOrganizerTestBase {
 
     @Override
     public void setUp() throws Exception {
-        assumeTrue(supportsMultiWindow());
         super.setUp();
     }
 

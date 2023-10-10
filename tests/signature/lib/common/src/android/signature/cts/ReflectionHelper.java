@@ -17,6 +17,7 @@ package android.signature.cts;
 
 import android.signature.cts.JDiffClassDescription.JDiffConstructor;
 import android.signature.cts.JDiffClassDescription.JDiffMethod;
+
 import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Constructor;
@@ -611,7 +612,11 @@ public class ReflectionHelper {
 
     public static boolean isOverridingAnnotatedMethod(Method method, String annotationSpec) {
         Class<?> clazz = method.getDeclaringClass();
-        while (!(clazz = clazz.getSuperclass()).equals(Object.class)) {
+        while (true) {
+            clazz = clazz.getSuperclass();
+            if (clazz == null || Object.class.equals(clazz)) {
+                break;
+            }
             try {
                 Method overriddenMethod;
                 overriddenMethod = clazz.getDeclaredMethod(method.getName(),

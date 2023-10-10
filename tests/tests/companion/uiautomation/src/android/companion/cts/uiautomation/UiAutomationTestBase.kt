@@ -229,13 +229,33 @@ open class UiAutomationTestBase(
     ) {
         sendRequestAndLaunchConfirmation(singleDevice = singleDevice)
 
-        if (singleDevice && profile != null) {
-            confirmationUi.scrollToBottom()
+        if (profile != null) {
+            if (singleDevice) {
+                confirmationUi.scrollToBottom()
+                callback.assertInvokedByActions {
+                    confirmationAction()
+                }
+            } else {
+                // First, select the device in the device chooser dialog.
+                confirmationUi.waitAndClickOnFirstFoundDevice()
+                // Do not need to click the positive button if the CDM dialog no longer exists at
+                // this point, which means the OS is running the older flow from udc-dev.
+                if (confirmationUi.isCdmDialogExists()) {
+                    // Second, wait until the permissionList dialog shows up and scroll
+                    // to the bottom.
+                    confirmationUi.scrollToBottom()
+                    // Third, tap the `Allow` bottom.
+                    callback.assertInvokedByActions {
+                        confirmationUi.waitUntilPositiveButtonIsEnabledAndClick()
+                    }
+                }
+            }
+        } else {
+            callback.assertInvokedByActions {
+                confirmationAction()
+            }
         }
 
-        callback.assertInvokedByActions {
-            confirmationAction()
-        }
         // Check callback invocations: there should have been exactly 1 invocation of the
         // OnAssociationCreated() method.
         assertEquals(1, callback.invocations.size)

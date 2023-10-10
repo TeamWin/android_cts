@@ -191,6 +191,12 @@ public class MultiDisplayActivityLaunchTests extends MultiDisplayTestBase {
         waitAndAssertTopResumedActivity(BROADCAST_RECEIVER_ACTIVITY, newDisplay.mId,
                 "Activity should be resumed on secondary display");
 
+        if (isCar()) {
+            // CarLauncher has a TaskView, and which launches the embedded task when it becomes
+            // visible and this can disrupt the top focused state of the test activity.
+            // So we'd like to make Home visible in advance to prevent that.
+            launchHomeActivity();
+        }
         mBroadcastActionTrigger.launchActivityNewTask(getActivityName(TEST_ACTIVITY));
         waitAndAssertTopResumedActivity(TEST_ACTIVITY, newDisplayId,
                 "Activity should be resumed on secondary display");
@@ -296,6 +302,12 @@ public class MultiDisplayActivityLaunchTests extends MultiDisplayTestBase {
         // can get the callbacks which are related to the reparenting.
         nonResizeableSession.takeCallbackHistory();
 
+        if (isCar()) {
+            // CarLauncher has a TaskView, and which launches the embedded task when it becomes
+            // visible and this can disrupt the top focused state of the test activity.
+            // So we'd like to make Home visible in advance to prevent that.
+            launchHomeActivity();
+        }
         // Try to move the non-resizeable activity to the top of the root task on secondary display.
         moveActivityToRootTaskOrOnTop(NON_RESIZEABLE_ACTIVITY, externalFrontRootTaskId);
         // Wait for a while to check that it will move.

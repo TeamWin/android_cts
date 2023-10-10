@@ -62,6 +62,7 @@ public class NanAccuracyActivity extends PassFailButtons.Activity {
     private Button mStartTestButton;
     private Button mStartPublishingButton;
     private CheckBox mReferenceDeviceCheckbox;
+    private CheckBox mIsManualPassCheckbox;
     private LinearLayout mDutModeLayout;
     private LinearLayout mRefModeLayout;
     private TextView mDeviceFoundTextView;
@@ -70,6 +71,7 @@ public class NanAccuracyActivity extends PassFailButtons.Activity {
     private EditText mServiceIdInputEditText;
     private RadioGroup mTestDistanceRadioGroup;
     private String mReferenceDeviceName = "";
+    private boolean mIsManualPass;
     private final WifiAwarePeerListener mWifiAwarePeerListener = new WifiAwarePeerListener() {
         @Override
         public void onDeviceFound(PeerHandle peerHandle) {
@@ -96,6 +98,7 @@ public class NanAccuracyActivity extends PassFailButtons.Activity {
         setPassFailButtonClickListeners();
         getPassButton().setEnabled(false);
         mReferenceDeviceCheckbox = findViewById(R.id.is_reference_device);
+        mIsManualPassCheckbox = findViewById(R.id.is_manual_pass);
         mStartTestButton = findViewById(R.id.start_test);
         Button stopTestButton = findViewById(R.id.stop_test);
         mStartPublishingButton = findViewById(R.id.start_publishing);
@@ -118,8 +121,12 @@ public class NanAccuracyActivity extends PassFailButtons.Activity {
         mWifiAwarePeer = new WifiAwarePeer(this, handler);
         mReceivedSamples = new HashMap<>();
         setUpActivity();
+        mIsManualPass = mIsManualPassCheckbox.isChecked();
         mReferenceDeviceCheckbox.setOnCheckedChangeListener(
                 (buttonView, isChecked) -> setUpActivity());
+        mIsManualPassCheckbox.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            mIsManualPass = isChecked;
+        });
         mStartTestButton.setOnClickListener((view) -> startTest());
         stopTestButton.setOnClickListener((view) -> stopTest());
         mDeviceFoundTextView.setVisibility(View.GONE);
@@ -231,7 +238,11 @@ public class NanAccuracyActivity extends PassFailButtons.Activity {
                     + new DecimalFormat("#.##").format((data.size() / (double) 100) * 100) + "%");
         }
         if (mTestResult.isAllPassed()) {
-            getPassButton().performClick();
+            if (mIsManualPass) {
+                getPassButton().setEnabled(true);
+            } else {
+                getPassButton().performClick();
+            }
         }
         mReceivedSamples.clear();
     }

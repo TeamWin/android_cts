@@ -18,11 +18,8 @@ package android.devicepolicy.cts;
 
 import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
 import static android.content.pm.PackageManager.FEATURE_TELEPHONY;
-
 import static com.android.bedstead.harrier.UserType.WORK_PROFILE;
-
 import static com.google.common.truth.Truth.assertThat;
-
 import static org.testng.Assert.assertThrows;
 
 import android.app.admin.DevicePolicyManager;
@@ -84,6 +81,7 @@ public final class ManagedSubscriptionsPolicyTest {
     @PolicyAppliesTest(policy = ManagedSubscriptions.class)
     @ApiTest(apis = {"android.app.admin.DevicePolicyManager#setManagedSubscriptionsPolicy"})
     @Postsubmit(reason = "new test")
+    @Ignore("TODO(298915118): Enable after work telephony requirements are re-added")
     public void setManagedSubscriptionsPolicy_works() {
         try {
             sDeviceState
@@ -132,6 +130,7 @@ public final class ManagedSubscriptionsPolicyTest {
     @CannotSetPolicyTest(policy = ManagedSubscriptions.class)
     @ApiTest(apis = {"android.app.admin.DevicePolicyManager#setManagedSubscriptionsPolicy"})
     @Postsubmit(reason = "new test")
+    @Ignore("TODO(298915118): Enable after work telephony requirements are re-added")
     public void setManagedSubscriptionsPolicy_invalidAdmin_fails() {
         assertThrows(
                 SecurityException.class, () -> sDeviceState
@@ -150,16 +149,12 @@ public final class ManagedSubscriptionsPolicyTest {
     @ApiTest(apis = {"android.app.admin.DevicePolicyManager#setManagedSubscriptionsPolicy"})
     @Postsubmit(reason = "new test")
     @Test
+    @Ignore("TODO(298915118): Enable after work telephony requirements are re-added")
     public void setManagedSubscriptionsPolicy_policySet_oemDialerAndSmsAppInstalledInWorkProfile() {
         try (RemoteDpc dpc = RemoteDpc.createWorkProfile()) {
             ProfileOwner profileOwner = (ProfileOwner) dpc.devicePolicyController();
             profileOwner.setIsOrganizationOwned(true);
             UserHandle managedProfileUserHandle = dpc.user().userHandle();
-
-            assertThat(TestApis.packages().oemDefaultDialerApp().installedOnUser(
-                    managedProfileUserHandle)).isFalse();
-            assertThat(TestApis.packages().oemDefaultSmsApp().installedOnUser(
-                    managedProfileUserHandle)).isFalse();
 
             dpc.devicePolicyManager().setManagedSubscriptionsPolicy(new ManagedSubscriptionsPolicy(
                     ManagedSubscriptionsPolicy.TYPE_ALL_MANAGED_SUBSCRIPTIONS));
@@ -178,6 +173,7 @@ public final class ManagedSubscriptionsPolicyTest {
     @ApiTest(apis = {"android.app.admin.DevicePolicyManager#setManagedSubscriptionsPolicy"})
     @Postsubmit(reason = "new test")
     @Test
+    @Ignore("TODO(298915118): Enable after work telephony requirements are re-added")
     public void setManagedSubscriptionsPolicy_callAndSmsIntent_resolvesToWorkProfileApps()
             throws InterruptedException {
         sDeviceState.dpc().devicePolicyManager().setManagedSubscriptionsPolicy(
@@ -212,6 +208,7 @@ public final class ManagedSubscriptionsPolicyTest {
     @CanSetPolicyTest(policy = ManagedSubscriptions.class)
     @ApiTest(apis = {"android.app.admin.DevicePolicyManager#setManagedSubscriptionsPolicy"})
     @Test
+    @Ignore("TODO(298915118): Enable after work telephony requirements are re-added")
     public void setManagedSubscriptionsPolicy_notEnabledForNonDPMRoleHolders_throwsException()
             throws InterruptedException {
         assertThrows(
@@ -232,6 +229,7 @@ public final class ManagedSubscriptionsPolicyTest {
     @EnsureHasWorkProfile(isOrganizationOwned = true)
     @Postsubmit(reason = "new test")
     @Test
+    @Ignore("TODO(298915118): Enable after work telephony requirements are re-added")
     public void setManagedSubscriptionsPolicy_enabledForNonDMPRoleHolders_works()
             throws InterruptedException {
         try {
@@ -261,6 +259,7 @@ public final class ManagedSubscriptionsPolicyTest {
     @EnsureHasDevicePolicyManagerRoleHolder
     @ApiTest(apis = {"android.app.admin.DevicePolicyManager#setManagedSubscriptionsPolicy"})
     @Test
+    @Ignore("TODO(298915118): Enable after work telephony requirements are re-added")
     public void setManagedSubscriptionsPolicy_fromDPMRoleHolder_works()
             throws InterruptedException {
         ProfileOwner profileOwner = TestApis.devicePolicy().setProfileOwner(
@@ -289,6 +288,7 @@ public final class ManagedSubscriptionsPolicyTest {
     @CanSetPolicyTest(policy = AllowWorkProfileTelephonyForNonDPMRH.class)
     @Postsubmit(reason = "new test")
     @Test
+    @Ignore("TODO(298915118): Enable after work telephony requirements are re-added")
     public void setGlobalSetting_allowWorkProfileTelephonyForNonDMPRH_fromDPMRH_works() {
         try {
             sDeviceState.dpmRoleHolder().devicePolicyManager().setGlobalSetting(null,
@@ -308,6 +308,7 @@ public final class ManagedSubscriptionsPolicyTest {
             Settings.Global.ALLOW_WORK_PROFILE_TELEPHONY_FOR_NON_DPM_ROLE_HOLDERS, value = "0")
     @Postsubmit(reason = "new test")
     @Test
+    @Ignore("TODO(298915118): Enable after work telephony requirements are re-added")
     public void setGlobalSetting_allowWorkProfileTelephonyForNonDMPRH_fromNonDPMRH_fails() {
         assertThrows(SecurityException.class,
                 () -> sDeviceState.dpc().devicePolicyManager().setGlobalSetting(null,

@@ -34,6 +34,7 @@ _MAX_STABILIZED_RADIUS_RATIO = 1.25  # An FOV reduction of 20% corresponds to an
                                      # increase in lengths of 25%. So the
                                      # stabilized circle's radius can be at most
                                      # 1.25 times that of an unstabilized circle
+_MAX_STABILIZED_RADIUS_ATOL = 1  # 1 pixel tol for radii inaccuracy
 _ROUNDESS_DELTA_THRESHOLD = 0.05
 
 _MAX_CENTER_THRESHOLD_PERCENT = 0.075
@@ -283,7 +284,8 @@ class PreviewStabilizationFoVTest(its_base_test.ItsBaseTest):
         stab_radius = stab_circle['r']
         logging.debug('stabilized radius: %f', stab_radius)
 
-        max_stab_radius = ustab_radius * _MAX_STABILIZED_RADIUS_RATIO
+        max_stab_radius = (ustab_radius * _MAX_STABILIZED_RADIUS_RATIO +
+                           _MAX_STABILIZED_RADIUS_ATOL)
         if stab_radius > max_stab_radius:
           failure_string += (f'Too much FoV reduction: '
                              f'unstabilized radius: {ustab_radius}, '

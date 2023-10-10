@@ -23,11 +23,13 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assume.assumeNotNull;
 import static org.junit.Assume.assumeTrue;
 
+import android.car.Car;
 import android.car.CarOccupantZoneManager;
 import android.car.CarOccupantZoneManager.OccupantZoneInfo;
 import android.car.CarRemoteDeviceManager;
 import android.car.CarRemoteDeviceManager.StateCallback;
 import android.car.test.ApiCheckerRule;
+import android.car.test.PermissionsCheckerRule.EnsureHasPermission;
 import android.content.pm.PackageInfo;
 import android.content.pm.Signature;
 import android.content.pm.SigningInfo;
@@ -53,6 +55,7 @@ import java.util.List;
 @SmallTest
 @RunWith(AndroidJUnit4.class)
 @AppModeFull(reason = "Test relies on other server to connect to.")
+@EnsureHasPermission(Car.PERMISSION_MANAGE_REMOTE_DEVICE)
 public final class CarRemoteDeviceManagerTest extends AbstractCarTestCase {
 
     private static final String TAG = CarRemoteDeviceManagerTest.class.getSimpleName();
@@ -152,6 +155,8 @@ public final class CarRemoteDeviceManagerTest extends AbstractCarTestCase {
     @Test
     @ApiTest(apis = {"android.car.CarRemoteDeviceManager#setOccupantZonePower",
             "android.car.CarRemoteDeviceManager#isOccupantZonePowerOn"})
+    @EnsureHasPermission({Car.PERMISSION_MANAGE_REMOTE_DEVICE,
+            Car.PERMISSION_CAR_POWER})
     public void testSetOccupantZonePower() {
         for (OccupantZoneInfo zone : mAllZones) {
             if (zone.equals(mMyZone)

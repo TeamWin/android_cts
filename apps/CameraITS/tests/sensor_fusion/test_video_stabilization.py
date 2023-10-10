@@ -15,8 +15,8 @@
 
 import logging
 import math
-import multiprocessing
 import os
+import threading
 import time
 
 from mobly import test_runner
@@ -84,7 +84,7 @@ def _collect_data(cam, tablet_device, video_profile, video_quality, rot_rig):
   else:
     servo_speed = _ARDUINO_SERVO_SPEED
 
-  p = multiprocessing.Process(
+  p = threading.Thread(
       target=sensor_fusion_utils.rotation_rig,
       args=(rot_rig['cntl'], rot_rig['ch'], _NUM_ROTATIONS,
             _ARDUINO_ANGLES, servo_speed, _ARDUINO_MOVE_TIME, serial_port))

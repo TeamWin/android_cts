@@ -82,6 +82,7 @@ const val JOB_RUN_WAIT_TIME = 3000L
 
 const val CMD_EXPAND_NOTIFICATIONS = "cmd statusbar expand-notifications"
 const val CMD_COLLAPSE = "cmd statusbar collapse"
+const val CMD_CLEAR_NOTIFS = "service call notification 1"
 
 const val APK_PATH_S_APP = "/data/local/tmp/cts/hibernation/CtsAutoRevokeSApp.apk"
 const val APK_PACKAGE_NAME_S_APP = "android.hibernation.cts.autorevokesapp"
@@ -276,6 +277,15 @@ fun startApp(packageName: String) {
 fun goHome() {
     runShellCommandOrThrow("input keyevent KEYCODE_HOME")
     waitForIdle()
+}
+
+/**
+ * Clear notifications from shade
+ */
+fun clearNotifications() {
+    runWithShellPermissionIdentity {
+        runShellCommandOrThrow(CMD_CLEAR_NOTIFS)
+    }
 }
 
 /**

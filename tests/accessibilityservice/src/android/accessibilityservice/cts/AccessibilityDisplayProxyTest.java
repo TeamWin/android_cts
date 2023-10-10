@@ -1481,9 +1481,13 @@ public class AccessibilityDisplayProxyTest {
     }
 
     private View showTopWindowAndWaitForItToShowUp() throws TimeoutException {
+        final WindowManager wm =
+                mProxiedVirtualDisplayActivity.getSystemService(WindowManager.class);
+        final Rect windowBounds = wm.getCurrentWindowMetrics().getBounds();
         final WindowManager.LayoutParams paramsForTop =
                 WindowCreationUtils.layoutParamsForWindowOnTop(
-                        sInstrumentation, mProxiedVirtualDisplayActivity, TOP_WINDOW_TITLE);
+                        sInstrumentation, mProxiedVirtualDisplayActivity, TOP_WINDOW_TITLE,
+                        WindowManager.LayoutParams.MATCH_PARENT, windowBounds.height() / 2);
         final Button button = new Button(mProxiedVirtualDisplayActivity);
         button.setText(sInstrumentation.getContext().getString(R.string.button1));
         WindowCreationUtils.addWindowAndWaitForEvent(sUiAutomation, sInstrumentation,

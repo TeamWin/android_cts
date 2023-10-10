@@ -15,7 +15,14 @@
  */
 package android.packageinstaller.admin.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
+import android.app.Instrumentation;
 import android.app.PendingIntent;
+import android.app.UiAutomation;
 import android.app.admin.DevicePolicyManager;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -28,8 +35,15 @@ import android.content.pm.PackageInstaller;
 import android.content.pm.PackageManager;
 import android.os.ParcelFileDescriptor;
 import android.os.Process;
-import android.support.test.uiautomator.UiDevice;
-import android.test.InstrumentationTestCase;
+import android.util.Log;
+
+import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.uiautomator.UiDevice;
+
+import com.android.bedstead.nene.TestApis;
+
+import org.junit.After;
+import org.junit.Before;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -42,7 +56,8 @@ import java.util.ArrayList;
 /**
  * Base test case for testing PackageInstaller.
  */
-public class BasePackageInstallTest extends InstrumentationTestCase {
+public class BasePackageInstallTest {
+    private static final String TAG = BasePackageInstallTest.class.getSimpleName();
     protected static final String TEST_APP_LOCATION =
             "/data/local/tmp/cts/packageinstaller/CtsEmptyTestApp.apk";
     protected static final String TEST_APP_PKG = "android.packageinstaller.emptytestapp.cts";
@@ -61,9 +76,13 @@ public class BasePackageInstallTest extends InstrumentationTestCase {
     protected boolean mCallbackReceived;
     protected int mCallbackStatus;
     protected Intent mCallbackIntent;
+    protected ComponentName mDeviceOwner;
 
     protected boolean mHasFeature;
+    protected boolean mAmIDeviceOwner;
 
+    protected Instrumentation mInstrumentation = InstrumentationRegistry.getInstrumentation();
+    protected UiAutomation mUiAutomation = mInstrumentation.getUiAutomation();
     protected final Object mPackageInstallerTimeoutLock = new Object();
 
     private final BroadcastReceiver mBroadcastReceiver = new BroadcastReceiver() {
@@ -85,13 +104,11 @@ public class BasePackageInstallTest extends InstrumentationTestCase {
         }
     };
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        mContext = getInstrumentation().getContext();
-        mDevice = UiDevice.getInstance(getInstrumentation());
-        mDevicePolicyManager = (DevicePolicyManager)
-                mContext.getSystemService(Context.DEVICE_POLICY_SERVICE);
+    @Before
+    public void setUp() throws Exception {
+        mContext = mInstrumentation.getContext();
+        mDevice = UiDevice.getInstance(mInstrumentation);
+        mDevicePolicyManager = mContext.getSystemService(DevicePolicyManager.class);
         mPackageManager = mContext.getPackageManager();
         mPackageInstaller = mPackageManager.getPackageInstaller();
         assertNotNull(mPackageInstaller);
@@ -105,11 +122,23 @@ public class BasePackageInstallTest extends InstrumentationTestCase {
         }
     }
 
-    @Override
-    protected void tearDown() throws Exception {
+    @Before
+    public void addDeviceOwner() {
+        mDeviceOwner = new ComponentName(mContext, BasicAdminReceiver.class);
+        try {
+            TestApis.devicePolicy().setDeviceOwner(mDeviceOwner);
+            mAmIDeviceOwner = true;
+        } catch (Exception e) {
+            mAmIDeviceOwner = false;
+            Log.e(TAG, e.getMessage());
+        }
+    }
+
+    @After
+    public void tearDown() throws Exception {
         if (mDevicePolicyManager.isDeviceOwnerApp(PACKAGE_NAME) ||
                 mDevicePolicyManager.isProfileOwnerApp(PACKAGE_NAME)) {
-            mDevicePolicyManager.setUninstallBlocked(getWho(), TEST_APP_PKG, false);
+            mDevicePolicyManager.setUninstallBlocked(mDeviceOwner, TEST_APP_PKG, false);
         }
         try {
             mContext.unregisterReceiver(mBroadcastReceiver);
@@ -119,12 +148,17 @@ public class BasePackageInstallTest extends InstrumentationTestCase {
         if (mSession != null) {
             mSession.abandon();
         }
-
-        super.tearDown();
+        forceUninstall();
     }
 
-    protected static ComponentName getWho() {
-        return new ComponentName(PACKAGE_NAME, BasicAdminReceiver.class.getName());
+    @After
+    public void removeDeviceOwner() {
+        try {
+            TestApis.devicePolicy().getDeviceOwner().remove();
+        } catch (NullPointerException e) {
+            Log.e(TAG, "Could not find a device owner set by this test. "
+                    + "Maybe an owner already exists?");
+        }
     }
 
     protected void assertInstallPackage() throws Exception {
@@ -220,8 +254,7 @@ public class BasePackageInstallTest extends InstrumentationTestCase {
     }
 
     public ArrayList<String> runShellCommand(String command) throws Exception {
-        ParcelFileDescriptor pfd = getInstrumentation().getUiAutomation()
-                .executeShellCommand(command);
+        ParcelFileDescriptor pfd = mUiAutomation.executeShellCommand(command);
 
         ArrayList<String> ret = new ArrayList<>();
         // Read the input stream fully.

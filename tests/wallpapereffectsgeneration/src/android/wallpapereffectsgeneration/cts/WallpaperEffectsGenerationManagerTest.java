@@ -195,7 +195,10 @@ public class WallpaperEffectsGenerationManagerTest {
                 mWatcher.initialCallReturned.countDown();
             } else if (cinematicEffectResponse.getStatusCode()
                     == CinematicEffectResponse.CINEMATIC_EFFECT_STATUS_ERROR) {
-                mWatcher.errorResponse.countDown();
+                // Ignore the error response when remote service is destroyed after each test.
+                if (mWatcher != null) {
+                    mWatcher.errorResponse.countDown();
+                }
             }
         };
     }

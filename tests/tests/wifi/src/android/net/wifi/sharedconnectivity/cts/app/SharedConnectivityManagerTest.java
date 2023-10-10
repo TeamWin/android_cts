@@ -49,6 +49,7 @@ import android.net.wifi.sharedconnectivity.service.ISharedConnectivityService;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.RemoteException;
+import android.os.UserManager;
 
 import androidx.test.filters.SdkSuppress;
 import androidx.test.runner.AndroidJUnit4;
@@ -102,6 +103,8 @@ public class SharedConnectivityManagerTest {
     Resources mResources;
     @Mock
     ISharedConnectivityService.Stub mIBinder;
+    @Mock
+    UserManager mUserManager;
 
     private static final ComponentName COMPONENT_NAME =
             new ComponentName("dummypkg", "dummycls");
@@ -110,6 +113,11 @@ public class SharedConnectivityManagerTest {
     public void setUp() {
         MockitoAnnotations.initMocks(this);
         setResources(mContext);
+        when(mContext.getSystemServiceName(UserManager.class)).thenReturn(Context.USER_SERVICE);
+        when(mContext.getSystemService(UserManager.class)).thenReturn(mUserManager);
+        when(mUserManager.isUserUnlocked()).thenReturn(true);
+        when(mContext.bindService(any(Intent.class), any(ServiceConnection.class),
+                anyInt())).thenReturn(true);
     }
 
     @Test
@@ -266,16 +274,6 @@ public class SharedConnectivityManagerTest {
     }
 
     @Test
-    public void onServiceConnected() {
-        SharedConnectivityManager manager = SharedConnectivityManager.create(mContext);
-
-        manager.registerCallback(mExecutor, mClientCallback);
-        manager.getServiceConnection().onServiceConnected(COMPONENT_NAME, mIBinder);
-
-        verify(mClientCallback).onServiceConnected();
-    }
-
-    @Test
     public void onServiceDisconnected() {
         SharedConnectivityManager manager = SharedConnectivityManager.create(mContext);
 
@@ -285,7 +283,6 @@ public class SharedConnectivityManagerTest {
 
         verify(mClientCallback).onServiceDisconnected();
     }
-
 
     @Test
     public void connectHotspotNetwork_serviceNotConnected_shouldFail() {

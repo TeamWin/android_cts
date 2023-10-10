@@ -18,6 +18,7 @@ package android.media.audio.cts;
 
 import android.content.pm.PackageManager;
 import android.media.AudioManager;
+import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 
@@ -66,11 +67,14 @@ public class AudioModeListenerTest extends CtsAndroidTestCase {
 
         int waitForModeUpdate() {
             synchronized (mCbLock) {
-                while (!mCalled) {
+                long endTimeMillis = SystemClock.uptimeMillis() + LISTENER_WAIT_TIMEOUT_MS;
+                long waiTimeMillis = endTimeMillis - SystemClock.uptimeMillis();
+                while (!mCalled && waiTimeMillis > 0) {
                     try {
-                        mCbLock.wait(LISTENER_WAIT_TIMEOUT_MS);
+                        mCbLock.wait(waiTimeMillis);
                     } catch (InterruptedException e) {
                     }
+                    waiTimeMillis = endTimeMillis - SystemClock.uptimeMillis();
                 }
                 return mMode;
             }

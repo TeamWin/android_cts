@@ -178,7 +178,7 @@ public class ActivityLaunchUtils {
                 FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS);
     }
 
-    private static boolean isHomeScreenShowing(Context context, UiAutomation uiAutomation) {
+    public static boolean isHomeScreenShowing(Context context, UiAutomation uiAutomation) {
         final List<AccessibilityWindowInfo> windows = uiAutomation.getWindows();
         final PackageManager packageManager = context.getPackageManager();
         final List<ResolveInfo> resolveInfos = packageManager.queryIntentActivities(
@@ -320,6 +320,7 @@ public class ActivityLaunchUtils {
             throw new TimeoutException(timeout.getMessage() + "\n\nTimeout exception records : \n"
                     + timeoutExceptionRecords);
         }
+        instrumentation.waitForIdleSync();
         return (T) mTempActivity;
     }
 

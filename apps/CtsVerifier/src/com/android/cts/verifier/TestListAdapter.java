@@ -25,6 +25,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.database.ContentObserver;
 import android.database.Cursor;
+import android.hardware.devicestate.DeviceStateManager;
 import android.os.AsyncTask;
 import android.os.Environment;
 import android.os.Handler;
@@ -44,10 +45,13 @@ import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 /**
  * {@link BaseAdapter} that handles loading, refreshing, and setting test results. What tests are
@@ -442,12 +446,12 @@ public abstract class TestListAdapter extends BaseAdapter {
         histories.merge(null, mHistories.get(name));
 
         new SetTestResultTask(
-                        name,
-                        testResult.getResult(),
-                        testResult.getDetails(),
-                        testResult.getReportLog(),
-                        histories,
-                        mScreenshotsMetadata.get(name))
+                name,
+                testResult.getResult(),
+                testResult.getDetails(),
+                testResult.getReportLog(),
+                histories,
+                mScreenshotsMetadata.get(name))
                 .execute();
     }
 
@@ -522,13 +526,13 @@ public abstract class TestListAdapter extends BaseAdapter {
     protected abstract List<TestListItem> getRows();
 
     static final String[] REFRESH_PROJECTION = {
-        TestResultsProvider._ID,
-        TestResultsProvider.COLUMN_TEST_NAME,
-        TestResultsProvider.COLUMN_TEST_RESULT,
-        TestResultsProvider.COLUMN_TEST_DETAILS,
-        TestResultsProvider.COLUMN_TEST_METRICS,
-        TestResultsProvider.COLUMN_TEST_RESULT_HISTORY,
-        TestResultsProvider.COLUMN_TEST_SCREENSHOTS_METADATA,
+            TestResultsProvider._ID,
+            TestResultsProvider.COLUMN_TEST_NAME,
+            TestResultsProvider.COLUMN_TEST_RESULT,
+            TestResultsProvider.COLUMN_TEST_DETAILS,
+            TestResultsProvider.COLUMN_TEST_METRICS,
+            TestResultsProvider.COLUMN_TEST_RESULT_HISTORY,
+            TestResultsProvider.COLUMN_TEST_SCREENSHOTS_METADATA,
     };
 
     RefreshResult getRefreshResults(List<TestListItem> items) {
@@ -635,12 +639,12 @@ public abstract class TestListAdapter extends BaseAdapter {
                 ContentResolver resolver = mContext.getContentResolver();
 
                 try (Cursor cursor =
-                        resolver.query(
-                                TestResultsProvider.getTestNameUri(mContext, mTestName),
-                                new String[] {TestResultsProvider.COLUMN_TEST_RESULT_HISTORY},
-                                null,
-                                null,
-                                null)) {
+                             resolver.query(
+                                     TestResultsProvider.getTestNameUri(mContext, mTestName),
+                                     new String[] {TestResultsProvider.COLUMN_TEST_RESULT_HISTORY},
+                                     null,
+                                     null,
+                                     null)) {
                     if (cursor.moveToFirst()) {
                         do {
                             TestResultHistoryCollection historyCollection =
@@ -848,8 +852,8 @@ public abstract class TestListAdapter extends BaseAdapter {
         for (TestListItem item : mRows) {
             if (item != null && item.isTest()
                     && (!mTestResults.containsKey(item.testName)
-                            || (mTestResults.get(item.testName)
-                                    != TestResult.TEST_RESULT_PASSED))) {
+                    || (mTestResults.get(item.testName)
+                    != TestResult.TEST_RESULT_PASSED))) {
                 return false;
             }
         }
@@ -905,6 +909,26 @@ public abstract class TestListAdapter extends BaseAdapter {
         }
 
         return textView;
+    }
+
+    /**
+     * Uses {@link DeviceStateManager} to determine if the device is foldable or not. It relies on
+     * the OEM exposing supported states, and setting
+     * com.android.internal.R.array.config_foldedDeviceStates correctly with the folded states.
+     *
+     * @return true if the device is foldable, false otherwise
+     */
+    public boolean isFoldableDevice() {
+        DeviceStateManager deviceStateManager = mContext.getSystemService(DeviceStateManager.class);
+        if (deviceStateManager == null) {
+            return false;
+        }
+        Set<Integer> supportedStates = Arrays.stream(
+                deviceStateManager.getSupportedStates()).boxed().collect(Collectors.toSet());
+        int identifier = mContext.getResources().getIdentifier(
+                "config_foldedDeviceStates", "array", "android");
+        int[] foldedDeviceStates = mContext.getResources().getIntArray(identifier);
+        return Arrays.stream(foldedDeviceStates).anyMatch(supportedStates::contains);
     }
 
     private int getLayout(int position) {
