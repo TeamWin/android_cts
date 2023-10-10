@@ -28,6 +28,7 @@ java_defaults {
         ":AppUsedByOtherApp_1_dm",
         ":AppUsedByOtherApp_2_prof",
         ":AppUsingOtherApp",
+        ":CompilationTestCases_package-dex-usage",
         ":CtsCompilationApp",
         ":CtsCompilationApp_profile",
         ":CtsCompilationApp_dm",
@@ -132,4 +133,15 @@ genrule {
         ":AppUsedByOtherApp",
     ],
     out: ["AppUsedByOtherApp_2.prof"],
+}
+
+genrule {
+    name: "CompilationTestCases_package-dex-usage",
+    tools: ["aprotoc"],
+    cmd: "$(location aprotoc) " +
+        "--encode=com.android.server.art.proto.DexUseProto " +
+        "art/libartservice/service/proto/dex_use.proto " +
+        "< $(in) > $(out)",
+    srcs: ["assets/package-dex-usage.textproto"],
+    out: ["package-dex-usage.pb"],
 }
