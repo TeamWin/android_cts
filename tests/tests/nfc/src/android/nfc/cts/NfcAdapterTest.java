@@ -161,6 +161,14 @@ public class NfcAdapterTest {
     }
 
     @Test
+    public void testEnableReaderOption() throws NoSuchFieldException, RemoteException {
+        NfcAdapter adapter = createMockedInstance();
+        when(mService.enableReaderOption(anyBoolean())).thenReturn(true);
+        boolean result = adapter.enableReaderOption(true);
+        Assert.assertTrue(result);
+    }
+
+    @Test
     public void testEnableSecureNfc() throws NoSuchFieldException, RemoteException {
         NfcAdapter adapter = createMockedInstance();
         when(mService.setNfcSecure(anyBoolean())).thenReturn(true);
@@ -208,6 +216,22 @@ public class NfcAdapterTest {
         NfcAdapter adapter = createMockedInstance();
         when(mService.getState()).thenReturn(NfcAdapter.STATE_ON);
         boolean result = adapter.isEnabled();
+        Assert.assertTrue(result);
+    }
+
+    @Test
+    public void testIsReaderOptionEnabled() throws NoSuchFieldException, RemoteException {
+        NfcAdapter adapter = createMockedInstance();
+        when(mService.isReaderOptionEnabled()).thenReturn(true);
+        boolean result = adapter.isReaderOptionEnabled();
+        Assert.assertTrue(result);
+    }
+
+    @Test
+    public void testIsReaderOptionSupported() throws NoSuchFieldException, RemoteException {
+        NfcAdapter adapter = createMockedInstance();
+        when(mService.isReaderOptionSupported()).thenReturn(true);
+        boolean result = adapter.isReaderOptionSupported();
         Assert.assertTrue(result);
     }
 
