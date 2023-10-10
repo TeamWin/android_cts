@@ -37,7 +37,9 @@ android_test {
         "cts",
         "general-tests",
     ],
-    sdk_version: "current",
+    // The SDK version is pinned because ScriptC throw an exception starting
+    // at API level 35 (see b/297019750).
+    sdk_version: "34",
 }
 
 genrule {
