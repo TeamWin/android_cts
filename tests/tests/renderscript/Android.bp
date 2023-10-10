@@ -38,8 +38,7 @@ android_test {
     ],
     // The SDK version is pinned because ScriptC throw an exception starting
     // at API level 35 (see b/297019750).
-    // TODO(b/302266221): change 33 to 34 once the SDK 34 is released.
-    sdk_version: "33",
+    sdk_version: "34",
     // Tag this module as a cts test artifact
     test_suites: [
         "cts",
