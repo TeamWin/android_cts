@@ -18,9 +18,7 @@
 
 <resources>
     <dimen name="button_touchable_width_increment_amount">48dp</dimen>
-
-    <dimen name="embedded_hierarchy_host_layout_size">200dp</dimen>
-    <!-- Smaller than embedded_hierarchy_host_layout_size so it can be embedded inside. -->
+    <!-- Smaller than the host activity layout view so that it can be embedded inside. -->
     <dimen name="embedded_hierarchy_embedded_layout_size">150dp</dimen>
     <!-- Amount that the embedded layout can move while still remaining inside the host. -->
     <dimen name="embedded_hierarchy_embedded_layout_movement_size">50dp</dimen>

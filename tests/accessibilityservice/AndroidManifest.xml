@@ -89,7 +89,6 @@
 
         <activity android:label="@string/accessibility_embedded_hierarchy_test_activity"
              android:name=".AccessibilityEmbeddedHierarchyTest$AccessibilityEmbeddedHierarchyActivity"
-             android:theme="@android:style/Theme.Dialog"
              android:screenOrientation="locked"/>
 
         <activity android:label="@string/accessibility_drag_and_drop_test_activity"
