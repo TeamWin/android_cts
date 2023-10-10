@@ -59,6 +59,7 @@ import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
 import android.accessibilityservice.AccessibilityServiceInfo;
 import android.accessibilityservice.cts.activities.AccessibilityWindowQueryActivity;
 import android.accessibilityservice.cts.activities.NonDefaultDisplayActivity;
+import android.accessibilityservice.cts.utils.DisplayUtils;
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.app.LocaleManager;
@@ -1054,7 +1055,7 @@ public class AccessibilityWindowQueryTest {
             window.getBoundsInScreen(mTempBounds);
             final int[] location = new int[2];
             mViewRoot.getLocationOnScreen(location);
-            if (location[0] == mTempBounds.left && location[1] == mTempBounds.top) {
+            if (DisplayUtils.fuzzyBoundsInScreenSameOrigin(location, mTempBounds)) {
                 mTargetWindow = window;
                 return  true;
             }
