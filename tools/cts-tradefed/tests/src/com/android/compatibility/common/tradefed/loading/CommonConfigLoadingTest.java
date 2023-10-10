@@ -109,6 +109,8 @@ public class CommonConfigLoadingTest {
         RUNNER_EXCEPTION.add("repackaged.android.test.InstrumentationTestRunner");
         // Used by a UiRendering scenario where an activity is persisted between tests
         RUNNER_EXCEPTION.add("android.uirendering.cts.runner.UiRenderingRunner");
+        // Used by a text scenario where an activity is persisted between tests
+        RUNNER_EXCEPTION.add("android.text.cts.runner.CtsTextRunner");
         // Used to avoid crashing runner on -eng build due to Log.wtf() - b/216648699
         RUNNER_EXCEPTION.add("com.android.server.uwb.CustomTestRunner");
         RUNNER_EXCEPTION.add("com.android.server.wifi.CustomTestRunner");
