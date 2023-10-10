@@ -35,6 +35,10 @@ android_test {
         "MetricsRecorder",
         "statsdprotolite",
         "Interactive",
+        "flag-junit",
+    ],
+    libs: [
+        "device_policy_aconfig_flags_lib",
     ],
     srcs: ["src/**/*.kt"],
     test_suites: [

@@ -25,12 +25,13 @@ import com.android.bedstead.nene.bluetooth.Bluetooth;
 import com.android.bedstead.nene.broadcasts.Broadcasts;
 import com.android.bedstead.nene.bugreports.BugReports;
 import com.android.bedstead.nene.certificates.Certificates;
-import com.android.bedstead.nene.context.Context;
 import com.android.bedstead.nene.content.Content;
+import com.android.bedstead.nene.context.Context;
 import com.android.bedstead.nene.context.Context;
 import com.android.bedstead.nene.credentials.Credentials;
 import com.android.bedstead.nene.device.Device;
 import com.android.bedstead.nene.devicepolicy.DevicePolicy;
+import com.android.bedstead.nene.dumpsys.Dumpsys;
 import com.android.bedstead.nene.flags.Flags;
 import com.android.bedstead.nene.inputmethods.InputMethods;
 import com.android.bedstead.nene.instrumentation.Instrumentation;
@@ -233,9 +234,15 @@ public final class TestApis {
         return Properties.INSTANCE;
     }
 
+    /** Access Test APIs related to dumpsys. */
+    public static Dumpsys dumpsys() {
+        return Dumpsys.INSTANCE;
+    }
+
     /** @deprecated Use statically */
     @Deprecated()
     public TestApis() {
 
     }
 }
+
