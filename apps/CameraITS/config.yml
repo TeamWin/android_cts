@@ -26,7 +26,7 @@ TestBeds:
             label: tablet
     TestParams:
       brightness: 192
-      chart_distance: 31.0
+      chart_distance: 22.0
       debug_mode: "False"  # quotes needed
       lighting_cntl: <controller-type>  # can be arduino or "None"
       lighting_ch: <controller-channel>
@@ -34,7 +34,8 @@ TestBeds:
       scene: <scene-name>  # if <scene-name> runs all scenes
       foldable_device: "False"  # "True" if testing foldable device
 
-  - Name: TEST_BED_SENSOR_FUSION  # Need 'sensor_fusion' in name for SF tests
+  - Name: TEST_BED_SENSOR_FUSION  # Need 'sensor_fusion' in name for
+    # checkerboard scenes (SF and scene_flash) tests
     # Test configuration for sensor_fusion/test_sensor_fusion.py
     Controllers:
         AndroidDevice:
@@ -46,12 +47,12 @@ TestBeds:
       test_length: 7
       debug_mode: "False"  # quotes are needed here
       chart_distance: 25
-      rotator_cntl: "arduino"  # Note: only sensor fusion supports manual
+      rotator_cntl: <controller-type>  # Note: only SF supports manual
       rotator_ch: <controller-channel>
       camera: <camera-id>
       foldable_device: "False"  # "True" if testing foldable device
       tablet_device: "False"  # "True" if testing tablet device
       lighting_cntl: <controller-type>  # can be arduino or "None"
       lighting_ch: <controller-channel>
-      scene: "sensor_fusion"
+      scene: "checkerboard"  # "checkerboard" for both SF and scene_flash
 
