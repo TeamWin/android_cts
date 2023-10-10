@@ -1,2 +1,0 @@
-# workaround b/301272559
-rule com.android.graphics.hwui.flags.** android.uirendering.graphics.hwui.flags.@1

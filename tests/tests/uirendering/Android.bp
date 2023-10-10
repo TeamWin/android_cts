@@ -20,7 +20,6 @@ android_test {
     name: "CtsUiRenderingTestCases",
     sdk_version: "test_current",
     compile_multilib: "both",
-    jarjar_rules: "jarjar_rules.txt",
 
     srcs: [
         "src/**/*.java",
