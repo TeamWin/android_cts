@@ -40,6 +40,10 @@ java_defaults {
         "guava",
         "truth",
     ],
+    static_libs: [
+        "flag-junit-host",
+        "android.content.pm.flags-aconfig-java-host",
+    ],
 }
 
 java_test_host {
