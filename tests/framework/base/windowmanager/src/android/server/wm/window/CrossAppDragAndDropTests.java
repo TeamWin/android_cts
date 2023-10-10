@@ -48,6 +48,8 @@ import com.google.common.collect.ImmutableSet;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 import java.util.Map;
 
@@ -57,6 +59,7 @@ import java.util.Map;
  */
 @Presubmit
 @AppModeFull(reason = "Requires android.permission.MANAGE_ACTIVITY_TASKS")
+@RunWith(Parameterized.class)
 @android.server.wm.annotation.Group2
 public class CrossAppDragAndDropTests extends ActivityManagerTestBase {
     private static final String TAG = "CrossAppDragAndDrop";
@@ -114,6 +117,37 @@ public class CrossAppDragAndDropTests extends ActivityManagerTestBase {
     private static final String EXTRA_MODE = "mode";
     private static final String EXTRA_LOGTAG = "logtag";
 
+    private static final ActivityLaunchModeContext SPLIT_SCREEN_LAUNCH_MODE_CONTEXT =
+            new ActivityLaunchModeContext() {
+                @Override
+                void assumeDeviceSupportsLaunchMode() {
+                    assumeTrue(mTestCase.supportsSplitScreenMultiWindow());
+                }
+
+                @Override
+                void launchActivities(ComponentName sourceComponentName, String sourceMode,
+                        ComponentName targetComponentName, String targetMode) {
+                    mTestCase.launchSplitScreenActivities(
+                            sourceComponentName, sourceMode, targetComponentName, targetMode);
+                }
+
+                @Override
+                public String toString() {
+                    return "SplitScreen";
+                }
+            };
+
+    @Parameterized.Parameters(name = "{0}")
+    public static Object[] activityLaunchModes() {
+        return new Object[] {
+                SPLIT_SCREEN_LAUNCH_MODE_CONTEXT
+                // TODO(b/303085497): Add freeform cases back.
+        };
+    }
+
+    @Parameterized.Parameter
+    public ActivityLaunchModeContext mActivityLaunchModeContext;
+
     private Map<String, String> mSourceResults;
     private Map<String, String> mTargetResults;
 
@@ -125,7 +159,8 @@ public class CrossAppDragAndDropTests extends ActivityManagerTestBase {
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        assumeTrue(supportsSplitScreenMultiWindow() || supportsFreeform());
+        mActivityLaunchModeContext.mTestCase = this;
+        mActivityLaunchModeContext.assumeDeviceSupportsLaunchMode();
 
         // Use uptime in seconds as unique test invocation id.
         mSessionId = Long.toString(SystemClock.uptimeMillis() / 1000);
@@ -150,10 +185,21 @@ public class CrossAppDragAndDropTests extends ActivityManagerTestBase {
         stopTestPackage(DROP_TARGET_SDK23.getPackageName());
     }
 
+    private void launchFreeformActivities(ComponentName sourceComponentName,
+            String sourceMode, ComponentName targetComponentName, String targetMode)
+            throws Exception {
+        // Fallback to try to launch two freeform windows side by side.
+        Point displaySize = getDisplaySize();
+        launchFreeformActivity(sourceComponentName, sourceMode, mSourceLogTag,
+                displaySize, true /* leftSide */);
+        launchFreeformActivity(targetComponentName, targetMode, mTargetLogTag,
+                displaySize, false /* leftSide */);
+    }
+
     /**
      * @param displaySize size of the display
-     * @param leftSide {@code true} to launch the app taking up the left half of the display,
-     *         {@code false} to launch the app taking up the right half of the display.
+     * @param leftSide    {@code true} to launch the app taking up the left half of the display,
+     *                    {@code false} to launch the app taking up the right half of the display.
      */
     private void launchFreeformActivity(ComponentName componentName, String mode,
             String logtag, Point displaySize, boolean leftSide) throws Exception {
@@ -164,6 +210,29 @@ public class CrossAppDragAndDropTests extends ActivityManagerTestBase {
         resizeActivityTask(componentName, topLeft.x, topLeft.y, bottomRight.x, bottomRight.y);
         waitAndAssertTopResumedActivity(componentName, DEFAULT_DISPLAY,
                 "Activity launched as freeform should be resumed");
+    }
+
+    private void launchSplitScreenActivities(ComponentName sourceComponentName,
+            String sourceMode, ComponentName targetComponentName, String targetMode) {
+        // Launch primary activity.
+        getLaunchActivityBuilder()
+                .setTargetActivity(sourceComponentName)
+                .setUseInstrumentation()
+                .setWaitForLaunched(true)
+                .setIntentExtra(bundle -> {
+                    bundle.putString(EXTRA_MODE, sourceMode);
+                    bundle.putString(EXTRA_LOGTAG, mSourceLogTag);
+                }).execute();
+
+        // Launch secondary activity.
+        getLaunchActivityBuilder().setTargetActivity(targetComponentName)
+                .setUseInstrumentation()
+                .setWaitForLaunched(true)
+                .setIntentExtra(bundle -> {
+                    bundle.putString(EXTRA_MODE, targetMode);
+                    bundle.putString(EXTRA_LOGTAG, mTargetLogTag);
+                }).execute();
+        moveActivitiesToSplitScreen(sourceComponentName, targetComponentName);
     }
 
     private void injectInput(Point from, Point to, int steps) throws Exception {
@@ -206,34 +275,8 @@ public class CrossAppDragAndDropTests extends ActivityManagerTestBase {
         Log.e(TAG, "session: " + mSessionId + ", source: " + sourceMode
                 + ", target: " + targetMode);
 
-        if (supportsFreeform()) {
-            // Fallback to try to launch two freeform windows side by side.
-            Point displaySize = getDisplaySize();
-            launchFreeformActivity(sourceComponentName, sourceMode, mSourceLogTag,
-                displaySize, true /* leftSide */);
-            launchFreeformActivity(targetComponentName, targetMode, mTargetLogTag,
-                displaySize, false /* leftSide */);
-        } else {
-            // Launch primary activity.
-            getLaunchActivityBuilder()
-                    .setTargetActivity(sourceComponentName)
-                    .setUseInstrumentation()
-                    .setWaitForLaunched(true)
-                    .setIntentExtra(bundle -> {
-                        bundle.putString(EXTRA_MODE, sourceMode);
-                        bundle.putString(EXTRA_LOGTAG, mSourceLogTag);
-                    }).execute();
-
-            // Launch secondary activity.
-            getLaunchActivityBuilder().setTargetActivity(targetComponentName)
-                    .setUseInstrumentation()
-                    .setWaitForLaunched(true)
-                    .setIntentExtra(bundle -> {
-                        bundle.putString(EXTRA_MODE, targetMode);
-                        bundle.putString(EXTRA_LOGTAG, mTargetLogTag);
-                    }).execute();
-            moveActivitiesToSplitScreen(sourceComponentName, targetComponentName);
-        }
+        mActivityLaunchModeContext.launchActivities(
+                sourceComponentName, sourceMode, targetComponentName, targetMode);
         if (DROP_TARGET_SDK23.equals(targetComponentName)) {
             DeprecatedTargetSdkUtils.waitAndDismissDeprecatedTargetSdkDialog(mWmState);
         }
@@ -416,5 +459,15 @@ public class CrossAppDragAndDropTests extends ActivityManagerTestBase {
     public void testOnReceiveContentListener_LinearLayout_GrantNone() throws Exception {
         assertDropResult(GRANT_NONE, TARGET_ON_RECEIVE_CONTENT_LISTENER_LINEAR_LAYOUT,
                 RESULT_EXCEPTION);
+    }
+
+    private abstract static class ActivityLaunchModeContext {
+        CrossAppDragAndDropTests mTestCase;
+
+        abstract void assumeDeviceSupportsLaunchMode() throws Exception;
+
+        abstract void launchActivities(ComponentName sourceComponentName,
+                String sourceMode, ComponentName targetComponentName, String targetMode)
+                throws Exception;
     }
 }
