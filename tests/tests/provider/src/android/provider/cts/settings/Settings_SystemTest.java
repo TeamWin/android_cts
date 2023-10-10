@@ -35,8 +35,8 @@ import android.platform.test.annotations.AsbSecurityTest;
 import android.provider.Settings.SettingNotFoundException;
 import android.provider.Settings.System;
 
-import androidx.test.InstrumentationRegistry;
-import androidx.test.runner.AndroidJUnit4;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.sts.common.util.StsExtraBusinessLogicTestCase;
 
@@ -52,15 +52,18 @@ public class Settings_SystemTest extends StsExtraBusinessLogicTestCase {
     private static final String INT_FIELD = System.END_BUTTON_BEHAVIOR;
     private static final String LONG_FIELD = System.SCREEN_OFF_TIMEOUT;
     private static final String FLOAT_FIELD = System.FONT_SCALE;
-    private static final String STRING_FIELD = System.NEXT_ALARM_FORMATTED;
+    private static final String STRING_FIELD = System.VOLUME_RING;
 
     private static final int sUserId = Process.myUserHandle().getIdentifier();
+    private static final String sPackageName =
+            InstrumentationRegistry.getInstrumentation().getTargetContext().getPackageName();
+    private final ContentResolver mContentResolver =
+            InstrumentationRegistry.getInstrumentation().getTargetContext().getContentResolver();
 
     @BeforeClass
     public static void setUp() throws Exception {
-        final String packageName = InstrumentationRegistry.getTargetContext().getPackageName();
         InstrumentationRegistry.getInstrumentation().getUiAutomation().executeShellCommand(
-                "appops set --user " + sUserId + " " + packageName
+                "appops set --user " + sUserId + " " + sPackageName
                         + " android:write_settings allow");
 
         // Wait a beat to persist the change
@@ -69,16 +72,13 @@ public class Settings_SystemTest extends StsExtraBusinessLogicTestCase {
 
     @AfterClass
     public static void tearDown() throws Exception {
-        final String packageName = InstrumentationRegistry.getTargetContext().getPackageName();
         InstrumentationRegistry.getInstrumentation().getUiAutomation().executeShellCommand(
-                "appops set --user " + sUserId + " " + packageName
+                "appops set --user " + sUserId + " " + sPackageName
                         + " android:write_settings default");
     }
 
     @Test
     public void testSystemSettings() throws SettingNotFoundException {
-        final ContentResolver cr = InstrumentationRegistry.getTargetContext().getContentResolver();
-
         /**
          * first query the existing settings in System table, and then insert four
          * rows: an int, a long, a float, a String.
@@ -87,17 +87,17 @@ public class Settings_SystemTest extends StsExtraBusinessLogicTestCase {
          */
 
         // first query existing rows
-        Cursor c = cr.query(System.CONTENT_URI, null, null, null, null);
+        Cursor c = mContentResolver.query(System.CONTENT_URI, null, null, null, null);
 
         // backup fontScale
         Configuration cfg = new Configuration();
-        System.getConfiguration(cr, cfg);
+        System.getConfiguration(mContentResolver, cfg);
         float store = cfg.fontScale;
 
         //store all original values
-        final String originalIntValue = System.getString(cr, INT_FIELD);
-        final String originalLongValue = System.getString(cr, LONG_FIELD);
-        final String originalStringValue = System.getString(cr, STRING_FIELD);
+        final String originalIntValue = System.getString(mContentResolver, INT_FIELD);
+        final String originalLongValue = System.getString(mContentResolver, LONG_FIELD);
+        final String originalStringValue = System.getString(mContentResolver, STRING_FIELD);
 
         try {
             assertNotNull(c);
@@ -106,39 +106,39 @@ public class Settings_SystemTest extends StsExtraBusinessLogicTestCase {
             String stringValue = "cts";
 
             // insert 4 rows, and update 1 rows
-            assertTrue(System.putInt(cr, INT_FIELD, 2));
-            assertTrue(System.putLong(cr, LONG_FIELD, 20l));
-            assertTrue(System.putFloat(cr, FLOAT_FIELD, 1.3f));
-            assertTrue(System.putString(cr, STRING_FIELD, stringValue));
+            assertTrue(System.putInt(mContentResolver, INT_FIELD, 2));
+            assertTrue(System.putLong(mContentResolver, LONG_FIELD, 20L));
+            assertTrue(System.putFloat(mContentResolver, FLOAT_FIELD, 1.3f));
+            assertTrue(System.putString(mContentResolver, STRING_FIELD, stringValue));
 
-            c = cr.query(System.CONTENT_URI, null, null, null, null);
+            c = mContentResolver.query(System.CONTENT_URI, null, null, null, null);
             assertNotNull(c);
             c.close();
 
             // get these rows to assert
-            assertEquals(2, System.getInt(cr, INT_FIELD));
-            assertEquals(20l, System.getLong(cr, LONG_FIELD));
-            assertEquals(1.3f, System.getFloat(cr, FLOAT_FIELD), 0.001);
-            assertEquals(stringValue, System.getString(cr, STRING_FIELD));
+            assertEquals(2, System.getInt(mContentResolver, INT_FIELD));
+            assertEquals(20L, System.getLong(mContentResolver, LONG_FIELD));
+            assertEquals(1.3f, System.getFloat(mContentResolver, FLOAT_FIELD), 0.001);
+            assertEquals(stringValue, System.getString(mContentResolver, STRING_FIELD));
 
-            c = cr.query(System.CONTENT_URI, null, null, null, null);
+            c = mContentResolver.query(System.CONTENT_URI, null, null, null, null);
             assertNotNull(c);
 
             // update fontScale row
             cfg = new Configuration();
             cfg.fontScale = 1.2f;
-            assertTrue(System.putConfiguration(cr, cfg));
+            assertTrue(System.putConfiguration(mContentResolver, cfg));
 
-            System.getConfiguration(cr, cfg);
+            System.getConfiguration(mContentResolver, cfg);
             assertEquals(1.2f, cfg.fontScale, 0.001);
         } finally {
             // TODO should clean up more better
             c.close();
 
             //Restore all original values into system
-            assertTrue(System.putString(cr, INT_FIELD, originalIntValue));
-            assertTrue(System.putString(cr, LONG_FIELD, originalLongValue));
-            assertTrue(System.putString(cr, STRING_FIELD, originalStringValue));
+            assertTrue(System.putString(mContentResolver, INT_FIELD, originalIntValue));
+            assertTrue(System.putString(mContentResolver, LONG_FIELD, originalLongValue));
+            assertTrue(System.putString(mContentResolver, STRING_FIELD, originalStringValue));
 
             // restore the fontScale
             try {
@@ -147,7 +147,7 @@ public class Settings_SystemTest extends StsExtraBusinessLogicTestCase {
             } catch (Exception e){}
 
             cfg.fontScale = store;
-            assertTrue(System.putConfiguration(cr, cfg));
+            assertTrue(System.putConfiguration(mContentResolver, cfg));
         }
     }
 
@@ -157,56 +157,52 @@ public class Settings_SystemTest extends StsExtraBusinessLogicTestCase {
     @Test
     @AsbSecurityTest(cveBugId = 156260178)
     public void testSystemSettingsRejectInvalidFontSizeScale() throws SettingNotFoundException {
-        final ContentResolver cr = InstrumentationRegistry.getTargetContext().getContentResolver();
-        final String originalFloatValue = System.getString(cr, FLOAT_FIELD);
+        final String originalFloatValue = System.getString(mContentResolver, FLOAT_FIELD);
         try {
             // First put in a valid value
-            assertTrue(System.putFloat(cr, FLOAT_FIELD, 1.15f));
-            assertEquals(1.15f, System.getFloat(cr, FLOAT_FIELD), 0.001);
+            assertTrue(System.putFloat(mContentResolver, FLOAT_FIELD, 1.15f));
+            assertEquals(1.15f, System.getFloat(mContentResolver, FLOAT_FIELD), 0.001);
             try {
-                assertFalse(System.putFloat(cr, FLOAT_FIELD, Float.MAX_VALUE));
+                assertFalse(System.putFloat(mContentResolver, FLOAT_FIELD, Float.MAX_VALUE));
                 fail("Should throw");
             } catch (IllegalArgumentException e) {
             }
             try {
-                assertFalse(System.putFloat(cr, FLOAT_FIELD, -1f));
+                assertFalse(System.putFloat(mContentResolver, FLOAT_FIELD, -1f));
                 fail("Should throw");
             } catch (IllegalArgumentException e) {
             }
             try {
-                assertFalse(System.putFloat(cr, FLOAT_FIELD, 0.1f));
+                assertFalse(System.putFloat(mContentResolver, FLOAT_FIELD, 0.1f));
                 fail("Should throw");
             } catch (IllegalArgumentException e) {
             }
             try {
-                assertFalse(System.putFloat(cr, FLOAT_FIELD, 30.0f));
+                assertFalse(System.putFloat(mContentResolver, FLOAT_FIELD, 30.0f));
                 fail("Should throw");
             } catch (IllegalArgumentException e) {
             }
-            assertEquals(1.15f, System.getFloat(cr, FLOAT_FIELD), 0.001);
+            assertEquals(1.15f, System.getFloat(mContentResolver, FLOAT_FIELD), 0.001);
         } finally {
-            assertTrue(System.putString(cr, FLOAT_FIELD, originalFloatValue));
+            assertTrue(System.putString(mContentResolver, FLOAT_FIELD, originalFloatValue));
         }
     }
 
     @Test
     @AsbSecurityTest(cveBugId = 227201030)
     public void testInvalidRingtoneUriIsRejected() {
-        final ContentResolver cr = InstrumentationRegistry.getTargetContext().getContentResolver();
-        final String originalValue = System.getString(cr, System.RINGTONE);
+        final String originalValue = System.getString(mContentResolver, System.RINGTONE);
         final String invalidUri = "content://10@media/external/audio/media/1000000019";
-        System.putString(cr, System.RINGTONE, invalidUri);
+        System.putString(mContentResolver, System.RINGTONE, invalidUri);
         // Assert that the insertion didn't take effect
-        assertThat(System.getString(cr, System.RINGTONE)).isEqualTo(originalValue);
+        assertThat(System.getString(mContentResolver, System.RINGTONE)).isEqualTo(originalValue);
     }
 
     @Test
     public void testGetDefaultValues() {
-        final ContentResolver cr = InstrumentationRegistry.getTargetContext().getContentResolver();
-
-        assertEquals(10, System.getInt(cr, "int", 10));
-        assertEquals(20, System.getLong(cr, "long", 20l));
-        assertEquals(30.0f, System.getFloat(cr, "float", 30.0f), 0.001);
+        assertEquals(10, System.getInt(mContentResolver, "int", 10));
+        assertEquals(20, System.getLong(mContentResolver, "long", 20L));
+        assertEquals(30.0f, System.getFloat(mContentResolver, "float", 30.0f), 0.001);
     }
 
     @Test
@@ -220,27 +216,27 @@ public class Settings_SystemTest extends StsExtraBusinessLogicTestCase {
 
     @Test
     public void testLargeSettingExceedsLimit() {
-        final ContentResolver cr = InstrumentationRegistry.getTargetContext().getContentResolver();
         // Test large value
         expectThrows(IllegalArgumentException.class,
                 () -> System.putString(
-                        cr, STRING_FIELD, Strings.repeat("A", 65535)));
+                        mContentResolver, STRING_FIELD, Strings.repeat("A", 65535)));
         // Test large key
         expectThrows(IllegalArgumentException.class,
                 () -> System.putString(
-                        cr, Strings.repeat("A", 65535), "test"));
+                        mContentResolver, Strings.repeat("A", 65535), "test"));
     }
 
     @Test
-    public void testResetToDefaults() throws SettingNotFoundException {
-        final ContentResolver cr = InstrumentationRegistry.getTargetContext().getContentResolver();
-        final String oldStringValue = System.getString(cr, STRING_FIELD);
+    public void testResetToDefaults() {
+        final String oldStringValue = System.getString(mContentResolver, STRING_FIELD);
         final String newStringValue = "tmp";
-        System.putString(cr, STRING_FIELD, oldStringValue, /* makeDefault= */true, false);
-        System.putString(cr, STRING_FIELD, newStringValue, /* makeDefault= */false, false);
-        assertEquals(newStringValue, System.getString(cr, STRING_FIELD));
+        System.putString(mContentResolver, STRING_FIELD, oldStringValue, /* makeDefault= */true,
+                false);
+        System.putString(mContentResolver, STRING_FIELD, newStringValue, /* makeDefault= */false,
+                false);
+        assertEquals(newStringValue, System.getString(mContentResolver, STRING_FIELD));
 
-        System.resetToDefaults(cr, null);
-        assertEquals(oldStringValue, System.getString(cr, STRING_FIELD));
+        System.resetToDefaults(mContentResolver, null);
+        assertEquals(oldStringValue, System.getString(mContentResolver, STRING_FIELD));
     }
 }

@@ -31,8 +31,8 @@ import android.provider.Settings.Secure;
 import android.provider.Settings.SettingNotFoundException;
 import android.support.test.uiautomator.UiDevice;
 
-import androidx.test.InstrumentationRegistry;
-import androidx.test.runner.AndroidJUnit4;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.ApiTest;
 
@@ -55,7 +55,7 @@ public class Settings_SecureTest {
 
     @Before
     public void setUp() throws Exception {
-        cr = InstrumentationRegistry.getTargetContext().getContentResolver();
+        cr = InstrumentationRegistry.getInstrumentation().getTargetContext().getContentResolver();
         assertNotNull(cr);
         assertSettingsForTests();
     }
