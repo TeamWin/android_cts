@@ -19,12 +19,15 @@ package com.android.bedstead.nene.packages;
 import static android.Manifest.permission.INSTALL_PACKAGES;
 import static android.Manifest.permission.INTERACT_ACROSS_USERS;
 import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
+import static android.content.Intent.ACTION_VIEW;
 import static android.content.pm.PackageInstaller.EXTRA_PACKAGE_NAME;
 import static android.content.pm.PackageInstaller.EXTRA_STATUS;
 import static android.content.pm.PackageInstaller.EXTRA_STATUS_MESSAGE;
 import static android.content.pm.PackageInstaller.STATUS_FAILURE;
 import static android.content.pm.PackageInstaller.STATUS_SUCCESS;
 import static android.content.pm.PackageInstaller.SessionParams.MODE_FULL_INSTALL;
+import static android.content.pm.PackageManager.MATCH_ALL;
+import static android.content.pm.PackageManager.MATCH_DEFAULT_ONLY;
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.R;
 
@@ -41,6 +44,7 @@ import android.content.pm.PackageInstaller;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.content.res.Resources;
+import android.net.Uri;
 import android.os.Build;
 import android.util.Log;
 
@@ -75,6 +79,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -731,6 +736,52 @@ public final class Packages {
         return find(TestApis.ui().device().getLauncherPackageName());
     }
 
+    /**
+     * Finds the browser assigned to handle browsing intents by default for selected user.
+     *
+     * @return the package for the default browser if there is one, null otherwise.
+     */
+    @SuppressWarnings("NewApi")
+    @Experimental
+    public Package defaultBrowserForUser(UserReference user) {
+        ResolveInfo resolvedActivity;
+        List<ResolveInfo> possibleActivities;
+        Intent toResolve = new Intent(ACTION_VIEW, Uri.parse("http://"));
+
+        PackageManager pm = TestApis.context()
+                .instrumentationContextAsUser(user)
+                .getPackageManager();
+
+        if (Versions.meetsMinimumSdkVersionRequirement(Versions.T)) {
+            possibleActivities = pm.queryIntentActivities(toResolve,
+                    PackageManager.ResolveInfoFlags.of(MATCH_ALL));
+            resolvedActivity = pm.resolveActivity(toResolve,
+                    PackageManager.ResolveInfoFlags.of(MATCH_DEFAULT_ONLY));
+        } else {
+            possibleActivities = pm.queryIntentActivities(toResolve, MATCH_ALL);
+            resolvedActivity = pm.resolveActivity(toResolve, MATCH_DEFAULT_ONLY);
+        }
+
+        Set<String> possibleBrowserPackageName =  possibleActivities.stream()
+                .map(Packages::extractPackageName)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+
+        String resolvedBrowserPackageName = extractPackageName(resolvedActivity);
+        if (resolvedBrowserPackageName == null
+                || !possibleBrowserPackageName.contains(resolvedBrowserPackageName)) {
+            return null;
+        }
+
+        return find(resolvedBrowserPackageName);
+    }
+
+    private static String extractPackageName(@Nullable ResolveInfo nullableInfo) {
+        return Optional.ofNullable(nullableInfo)
+                .map(resolveInfo -> resolveInfo.activityInfo)
+                .map(activityInfo -> activityInfo.packageName)
+                .orElse(null);
+    }
 
     /** See {@link PackageManager#queryIntentActivities(Intent, int)}.
      *
