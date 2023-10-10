@@ -10,13 +10,19 @@ The tests are organized into following testcases
 | TransformVideoAspectRatio | Test transform aspects ratio of input videos and validate the output resolution according to the requested aspect ratio. |
 
 
-## List of tests and helper classes imported from [androidx.media3.transformer](https://github.com/androidx/media/tree/release/libraries/transformer when it was at commit https://github.com/androidx/media/commit/2ff5dab0039c44d767dc831fec92724254e5e0aa)and changes done in them.
+## List of tests and helper classes imported from [androidx.media3.transformer](https://github.com/androidx/media/tree/release/libraries/transformer when it was at version 1.1.1) and changes done in them.
 
 ### AndroidTestUtil.java
 No Change.
 
-### FileUtil.java
+### ExportTestResult.java
 No Change.
+
+### FallbackDetails.java
+No Change.
+
+### FileUtil.java
+Commented out the code which asserts if total track count in media is not equal to 2, as this check restricts usage of input clips which are having only one video track which is a valid use case scenario.
 
 ### MssimCalculator.java
 No change.
@@ -24,11 +30,11 @@ No change.
 ### SsimHelper.java
 No change.
 
-### TransformationTestResult.java
-No change.
-
 ### TransformerAndroidTestRunner.java
-TransformerAndroidTestRunner is using `decoderFactory` and `encodeFactory` to instantiates CodecNameForwardingCodecFactory which are the private members of Transformer class and so can't be used directly (need to apply java reflection method to access it). So, I have removed CodecNameForwardingCodecFactory reference from the file to keep minimal changes w.r.t the original file so that it can be easily reviewed/merged/updated in the future.
+Remove usage of NullableType annotation as library is not accessible for it.
+
+### VideoDecodingWrapper.java
+No change.
 
 ### TranscodeQualityTest.java
 Parameterize `TranscodeQualityTest` and added more test vectors in it.
