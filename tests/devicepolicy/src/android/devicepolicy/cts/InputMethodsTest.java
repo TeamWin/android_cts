@@ -24,6 +24,7 @@ import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.enterprise.PolicyAppliesTest;
 import com.android.bedstead.harrier.policies.SetDefaultInputMethod;
 import com.android.bedstead.nene.TestApis;
+import com.android.bedstead.nene.utils.Poll;
 import com.android.compatibility.common.util.ApiTest;
 
 import org.junit.ClassRule;
@@ -54,7 +55,10 @@ public final class InputMethodsTest {
             sDeviceState.dpc().devicePolicyManager().setSecureSetting(
                     sDeviceState.dpc().componentName(), DEFAULT_INPUT_METHOD, SETTING_VALUE_TWO);
 
-            assertThat(TestApis.devicePolicy().isCurrentInputMethodSetByOwner()).isTrue();
+            Poll.forValue("isCurrentInputMethodSetByOwner", () -> TestApis.devicePolicy().isCurrentInputMethodSetByOwner())
+                    .toBeEqualTo(true)
+                    .errorOnFail().
+                    await();
         } finally {
             TestApis.settings().secure().reset(sDeviceState.dpc().user());
         }
@@ -73,7 +77,10 @@ public final class InputMethodsTest {
                     TestApis.context().instrumentedContext().getContentResolver(),
                     DEFAULT_INPUT_METHOD, SETTING_VALUE_TWO);
 
-            assertThat(TestApis.devicePolicy().isCurrentInputMethodSetByOwner()).isFalse();
+            Poll.forValue("isCurrentInputMethodSetByOwner", () -> TestApis.devicePolicy().isCurrentInputMethodSetByOwner())
+                    .toBeEqualTo(false)
+                    .errorOnFail().
+                    await();
         } finally {
             TestApis.settings().secure().reset();
         }
