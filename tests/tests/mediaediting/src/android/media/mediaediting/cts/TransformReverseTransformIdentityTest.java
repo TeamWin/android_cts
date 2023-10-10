@@ -17,9 +17,7 @@
 package android.media.mediaediting.cts;
 
 import static androidx.media3.common.util.Assertions.checkNotNull;
-
 import static com.google.common.truth.Truth.assertThat;
-
 import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
@@ -29,12 +27,18 @@ import android.platform.test.annotations.AppModeFull;
 import androidx.media3.common.Format;
 import androidx.media3.common.MediaItem;
 import androidx.media3.common.MimeTypes;
-import androidx.media3.transformer.TransformationRequest;
+import androidx.media3.effect.Presentation;
+import androidx.media3.effect.ScaleAndRotateTransformation;
+import androidx.media3.exoplayer.mediacodec.MediaCodecUtil.DecoderQueryException;
+import androidx.media3.transformer.EditedMediaItem;
+import androidx.media3.transformer.Effects;
 import androidx.media3.transformer.Transformer;
 import androidx.test.core.app.ApplicationProvider;
 
 import com.android.compatibility.common.util.ApiTest;
 import com.android.compatibility.common.util.Preconditions;
+
+import com.google.common.collect.ImmutableList;
 
 import org.json.JSONException;
 import org.junit.Assume;
@@ -154,40 +158,9 @@ public final class TransformReverseTransformIdentityTest {
     return argsList;
   }
 
-  private static Transformer[] createSetScaleAndInverseTransformers(Context context, int scaleX,
-      int scaleY) {
-    Transformer transformer = (new Transformer.Builder(context)
-        .setTransformationRequest(
-            new TransformationRequest.Builder().setScale((float) scaleX, (float) scaleY)
-                .build())
-        .setRemoveAudio(true)
-        .build());
-    Transformer revTransformer = (new Transformer.Builder(context)
-        .setTransformationRequest(
-            new TransformationRequest.Builder().setScale(1 / (float) scaleX,
-                1 / (float) scaleY).build())
-        .setRemoveAudio(true)
-        .build());
-    return new Transformer[] {transformer, revTransformer};
-  }
-
-  private static Transformer[] createSetResolutionAndInverseTransformers(
-      Context context, int transformOutputHeight, int reverseTransformOutputHeight) {
-    Transformer transformer = (new Transformer.Builder(context)
-        .setTransformationRequest(
-            new TransformationRequest.Builder().setResolution(transformOutputHeight).build())
-        .setRemoveAudio(true)
-        .build());
-    Transformer revTransformer = (new Transformer.Builder(context)
-        .setTransformationRequest(
-            new TransformationRequest.Builder().setResolution(reverseTransformOutputHeight).build())
-        .setRemoveAudio(true)
-        .build());
-    return new Transformer[] {transformer, revTransformer};
-  }
-
   private static boolean checkCodecSupported(Context context, String testId, String mediaType,
-      int inpWidth, int inpHeight, int outWidth, int outHeight) throws JSONException, IOException {
+      int inpWidth, int inpHeight, int outWidth, int outHeight)
+      throws JSONException, IOException, DecoderQueryException {
     Format decFormat = new Format.Builder()
         .setSampleMimeType(mediaType)
         .setWidth(inpWidth)
@@ -198,9 +171,9 @@ public final class TransformReverseTransformIdentityTest {
         .setWidth(outWidth)
         .setHeight(outHeight)
         .build();
-    boolean transformCodecSupported = !AndroidTestUtil.skipAndLogIfInsufficientCodecSupport(
+    boolean transformCodecSupported = !AndroidTestUtil.skipAndLogIfFormatsUnsupported(
         context, testId, decFormat, encFormat);
-    boolean reverseTransformCodecSupported = !AndroidTestUtil.skipAndLogIfInsufficientCodecSupport(
+    boolean reverseTransformCodecSupported = !AndroidTestUtil.skipAndLogIfFormatsUnsupported(
         context, testId, encFormat, decFormat);
     return transformCodecSupported && reverseTransformCodecSupported;
   }
@@ -216,18 +189,29 @@ public final class TransformReverseTransformIdentityTest {
     Assume.assumeTrue("Skipping transformTest for " + testId,
         checkCodecSupported(context, testId, mediaType, inpWidth, inpHeight, outWidth, outHeight));
 
-    Transformer[] transformers;
+    Transformer transformer = new Transformer.Builder(context).build();
+    Effects videoEffects, reverseVideoEffects;
     if (transformationRequestType == SET_SCALE) {
-      transformers = createSetScaleAndInverseTransformers(context, outWidth / inpWidth /* scaleX */,
-          outHeight / inpHeight /* scaleY */);
+      videoEffects = new Effects(/* audioProcessors= */ ImmutableList.of(), ImmutableList.of(
+          new ScaleAndRotateTransformation.Builder().setScale((float) outWidth / inpWidth,
+              (float) outHeight / inpHeight).build()));
+      reverseVideoEffects = new Effects(/* audioProcessors= */ ImmutableList.of(), ImmutableList.of(
+          new ScaleAndRotateTransformation.Builder().setScale((float) inpWidth / outWidth,
+              (float) inpHeight / outHeight).build()));
     } else {
-      transformers = createSetResolutionAndInverseTransformers(context, outHeight, inpHeight);
+      videoEffects = new Effects(/* audioProcessors= */ ImmutableList.of(), ImmutableList.of(
+          Presentation.createForWidthAndHeight(outWidth, outHeight, 0 /* LAYOUT_SCALE_TO_FIT */)));
+      reverseVideoEffects = new Effects(/* audioProcessors= */ ImmutableList.of(), ImmutableList.of(
+          Presentation.createForWidthAndHeight(inpWidth, inpHeight, 0 /* LAYOUT_SCALE_TO_FIT */)));
     }
 
-    TransformationTestResult transformationResult =
-        new TransformerAndroidTestRunner.Builder(context, transformers[0])
+    EditedMediaItem editedMediaItem = new EditedMediaItem.Builder(
+        MediaItem.fromUri(Uri.parse(MEDIA_DIR + testFile))).setEffects(videoEffects)
+        .setRemoveAudio(true).build();
+    ExportTestResult transformationResult =
+        new TransformerAndroidTestRunner.Builder(context, transformer)
             .build()
-            .run(testId, MediaItem.fromUri(Uri.parse(MEDIA_DIR + testFile)));
+            .run(testId, editedMediaItem);
 
     Format muxedOutputFormat = MediaEditingUtil.getMuxedWidthHeight(transformationResult.filePath);
     if (outWidth > outHeight) {
@@ -243,10 +227,13 @@ public final class TransformReverseTransformIdentityTest {
       assertThat(muxedOutputFormat.height).isEqualTo(outWidth);
     }
 
-    TransformationTestResult reverseTransformationResult =
-        new TransformerAndroidTestRunner.Builder(context, transformers[1])
+    EditedMediaItem reverseEditedMediaItem = new EditedMediaItem.Builder(
+        MediaItem.fromUri(transformationResult.filePath)).setEffects(reverseVideoEffects)
+        .setRemoveAudio(true).build();
+    ExportTestResult reverseTransformationResult =
+        new TransformerAndroidTestRunner.Builder(context, transformer)
             .build()
-            .run(testId + "_reverseTransform", MediaItem.fromUri(transformationResult.filePath));
+            .run(testId + "_reverseTransform", reverseEditedMediaItem);
 
     muxedOutputFormat = MediaEditingUtil.getMuxedWidthHeight(reverseTransformationResult.filePath);
     assertThat(muxedOutputFormat.width).isEqualTo(inpWidth);

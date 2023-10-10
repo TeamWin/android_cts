@@ -21,11 +21,7 @@ import static android.media.MediaCodecInfo.CodecProfileLevel.HEVCProfileMain10;
 import static android.media.MediaCodecInfo.CodecProfileLevel.HEVCProfileMain10HDR10;
 import static android.media.MediaCodecInfo.CodecProfileLevel.HEVCProfileMain10HDR10Plus;
 import static android.media.mediaediting.cts.FileUtil.assertFileHasColorTransfer;
-
-import static androidx.media3.common.util.Assertions.checkNotNull;
-
 import static com.google.common.truth.Truth.assertThat;
-
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 
@@ -36,10 +32,10 @@ import android.platform.test.annotations.AppModeFull;
 
 import androidx.annotation.NonNull;
 import androidx.media3.common.C;
+import androidx.media3.common.ColorInfo;
 import androidx.media3.common.MediaItem;
 import androidx.media3.common.MimeTypes;
-import androidx.media3.common.util.Log;
-import androidx.media3.transformer.TransformationException;
+import androidx.media3.transformer.ExportException;
 import androidx.media3.transformer.TransformationRequest;
 import androidx.media3.transformer.Transformer;
 import androidx.test.core.app.ApplicationProvider;
@@ -57,6 +53,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.IntStream;
 
 /**
@@ -65,7 +62,6 @@ import java.util.stream.IntStream;
 @AppModeFull(reason = "Instant apps cannot access the SD card")
 @RunWith(Parameterized.class)
 public final class TransformHdrToSdrToneMapTest {
-  private static final String LOG_TAG = TransformHdrToSdrToneMapTest.class.getSimpleName();
   private static final String MEDIA_DIR = WorkDir.getMediaDirString();
   private static final HashMap<String, int[]> PROFILE_HDR_MAP = new HashMap<>();
   private static final int[] HEVC_HDR_PROFILES = new int[] {HEVCProfileMain10,
@@ -128,7 +124,7 @@ public final class TransformHdrToSdrToneMapTest {
     return new Transformer.Builder(context)
         .setTransformationRequest(
             new TransformationRequest.Builder()
-                .setEnableRequestSdrToneMapping(true)
+                .setHdrMode(TransformationRequest.HDR_MODE_TONE_MAP_HDR_TO_SDR_USING_MEDIACODEC)
                 .build())
         .addListener(
             new Transformer.Listener() {
@@ -138,8 +134,8 @@ public final class TransformHdrToSdrToneMapTest {
                   @NonNull TransformationRequest originalTransformationRequest,
                   @NonNull TransformationRequest fallbackTransformationRequest) {
                 // Tone mapping flag shouldn't change in fallback when tone mapping is requested.
-                assertThat(originalTransformationRequest.enableRequestSdrToneMapping)
-                    .isEqualTo(fallbackTransformationRequest.enableRequestSdrToneMapping);
+                assertThat(originalTransformationRequest.hdrMode)
+                    .isEqualTo(fallbackTransformationRequest.hdrMode);
               }
             })
         .build();
@@ -155,27 +151,34 @@ public final class TransformHdrToSdrToneMapTest {
     Preconditions.assertTestFileExists(MEDIA_DIR + testFile);
     Context context = ApplicationProvider.getApplicationContext();
 
+    Assume.assumeTrue("Skipping transformTest for " + testId,
+        !AndroidTestUtil.skipAndLogIfFormatsUnsupported(context, testId,
+        /* inputFormat= */ MediaEditingUtil.getFormatForTestFile(testFile),
+        /* outputFormat= */ MediaEditingUtil.getFormatForTestFile(testFile)
+            .buildUpon()
+            .setColorInfo(ColorInfo.SDR_BT709_LIMITED)
+            .build()));
+
     Transformer transformer = createTransformer(context);
-    TransformationTestResult transformationTestResult = null;
+    ExportTestResult transformationTestResult;
     try {
       transformationTestResult = new TransformerAndroidTestRunner.Builder(context, transformer)
           .build()
           .run(testId, MediaItem.fromUri(Uri.parse(MEDIA_DIR + testFile)));
-    } catch (TransformationException exception) {
-      Log.i(LOG_TAG, checkNotNull(exception.getCause()).toString());
-      Assume.assumeTrue("Skipping transformHdrToSdrToneMapTest for " + testId
-              + "encoding / decoding not supported",
-          !(exception.errorCode == TransformationException.ERROR_CODE_HDR_ENCODING_UNSUPPORTED
-              || exception.errorCode
-              == TransformationException.ERROR_CODE_DECODING_FORMAT_UNSUPPORTED));
-      assertThat(exception).hasCauseThat().isInstanceOf(IllegalArgumentException.class);
-      assertThat(exception.errorCode)
-          .isAnyOf(
-              TransformationException.ERROR_CODE_HDR_ENCODING_UNSUPPORTED,
-              TransformationException.ERROR_CODE_DECODING_FORMAT_UNSUPPORTED);
-      return;
+    } catch (ExportException exception) {
+      if (exception.getCause() != null
+          && (Objects.equals(
+                  exception.getCause().getMessage(),
+                  "Tone-mapping HDR is not supported on this device.")
+              || Objects.equals(
+                  exception.getCause().getMessage(),
+                  "Tone-mapping requested but not supported by the decoder."))) {
+        // Expected on devices without a tone-mapping plugin for this codec.
+        return;
+      }
+      throw exception;
     }
-    assertFileHasColorTransfer(transformationTestResult.filePath, C.COLOR_TRANSFER_SDR);
+    assertFileHasColorTransfer(context, transformationTestResult.filePath, C.COLOR_TRANSFER_SDR);
     int profile = MediaEditingUtil.getMuxedOutputProfile(transformationTestResult.filePath);
     int[] profileArray = PROFILE_HDR_MAP.get(mediaType);
     assertNotNull("Expected value to be not null", profileArray);
