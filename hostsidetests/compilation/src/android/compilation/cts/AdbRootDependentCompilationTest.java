@@ -53,8 +53,12 @@ public class AdbRootDependentCompilationTest extends BaseHostJUnit4Test {
             "android.compilation.cts.appusedbyotherapp";
     private static final String APP_USING_OTHER_APP_PACKAGE =
             "android.compilation.cts.appusingotherapp";
+    private static final String STATUS_CHECKER_PKG = "android.compilation.cts.statuscheckerapp";
     private static final int PERMISSIONS_LENGTH = 10;
     private static final int READ_OTHER = 7;
+    private static final String PACKAGE_DEX_USAGE_PATH = "/data/system/package-dex-usage.pb";
+    private static final String PACKAGE_DEX_USAGE_BACKUP_PATH =
+            "/data/local/tmp/package-dex-usage.pb.bak";
 
     enum ProfileLocation {
         CUR("/data/misc/profiles/cur/0/"),
@@ -219,6 +223,29 @@ public class AdbRootDependentCompilationTest extends BaseHostJUnit4Test {
         assertFileIsPublic(odexFilePath);
         assertThat(getCompiledMethods(odexFilePath))
                 .containsExactly("android.compilation.cts.appusedbyotherapp.MyActivity.method2()");
+    }
+
+    @Test
+    public void testSecondaryDexUseLoading() throws Exception {
+        mUtils.assertCommandSucceeds(
+                String.format("cp %s %s", PACKAGE_DEX_USAGE_PATH, PACKAGE_DEX_USAGE_BACKUP_PATH));
+        try {
+            mUtils.pushFromResource("/package-dex-usage.pb", PACKAGE_DEX_USAGE_PATH);
+            applyPackageDexUsageChanges();
+
+            String dump = mUtils.assertCommandSucceeds("pm art dump " + STATUS_CHECKER_PKG);
+            Utils.dumpDoesNotContainDexFile(dump, "bad_1.apk");
+            Utils.dumpDoesNotContainDexFile(dump, "bad_2.apk");
+            Utils.dumpDoesNotContainDexFile(dump, "bad_3.apk");
+            Utils.dumpDoesNotContainDexFile(dump, "bad_4.apk");
+            Utils.dumpContainsDexFile(dump, "good_1.apk");
+            Utils.dumpContainsDexFile(dump, "good_2.apk");
+            Utils.dumpContainsDexFile(dump, "good_3.apk");
+        } finally {
+            mUtils.assertCommandSucceeds(String.format(
+                    "cp %s %s", PACKAGE_DEX_USAGE_BACKUP_PATH, PACKAGE_DEX_USAGE_PATH));
+            applyPackageDexUsageChanges();
+        }
     }
 
     /**
@@ -422,5 +449,13 @@ public class AdbRootDependentCompilationTest extends BaseHostJUnit4Test {
         assertWithMessage("Invalid permissions string " + permissions).that(permissions.length())
                 .isEqualTo(PERMISSIONS_LENGTH);
         return permissions;
+    }
+
+    private void applyPackageDexUsageChanges() throws Exception {
+        mUtils.assertCommandSucceeds(
+                String.format("chown system:system %s", PACKAGE_DEX_USAGE_PATH));
+        mUtils.assertCommandSucceeds(String.format("chmod 600 %s", PACKAGE_DEX_USAGE_PATH));
+        mUtils.assertCommandSucceeds(String.format("restorecon %s", PACKAGE_DEX_USAGE_PATH));
+        mUtils.softReboot();
     }
 }
