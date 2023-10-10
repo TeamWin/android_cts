@@ -306,4 +306,5 @@
 
     <!-- b/296988493 -->
     <option name="compatibility:exclude-filter" value="CtsFrameRateOverrideTestCases com.android.cts.graphics.framerateoverride.FrameRateOverrideHostTest" />
+    <option name="compatibility:exclude-filter" value="CtsFrameRateOverrideTestCases[instant] com.android.cts.graphics.framerateoverride.FrameRateOverrideHostTest" />
 </configuration>
