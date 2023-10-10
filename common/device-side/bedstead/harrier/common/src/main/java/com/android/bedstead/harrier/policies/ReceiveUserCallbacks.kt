@@ -11,7 +11,7 @@ import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy.APPL
  * Policy for receiving a callback when user state changes.
  */
 @EnterprisePolicy(
-    dpc = [APPLIED_BY_DEVICE_OWNER or APPLIED_BY_PROFILE_OWNER_USER_WITH_NO_DO or APPLIES_TO_OWN_USER]
+    dpc = [APPLIED_BY_DEVICE_OWNER or APPLIES_TO_OWN_USER]
 )
 class ReceiveUserCallbacks {
 }

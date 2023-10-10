@@ -303,8 +303,7 @@ class UserTest {
         assertThat(
             deviceState.dpc().events().userSwitched()
                 .whereSwitchedUser().id().isEqualTo(deviceState.additionalUser().id())
-        )
-            .eventOccurred()
+        ).eventOccurred()
     }
 
     companion object {

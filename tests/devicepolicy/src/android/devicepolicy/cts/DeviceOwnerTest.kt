@@ -189,11 +189,11 @@ class DeviceOwnerTest {
                     }
                     assertThat(TestApis.devicePolicy().getDeviceOwner()).isNull()
                 } finally {
-                    val deviceOwner = TestApis.devicePolicy().getDeviceOwner()
-                    deviceOwner?.remove()
+                    TestApis.devicePolicy().getDeviceOwner()?.remove()
                 }
             }
         } finally {
+            TestApis.devicePolicy().getDeviceOwner()?.remove()
             // After attempting and failing to set the device owner, it will remain as an active
             // admin for a short while
             Poll.forValue(

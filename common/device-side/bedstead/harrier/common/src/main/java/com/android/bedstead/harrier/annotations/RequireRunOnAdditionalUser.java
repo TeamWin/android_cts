@@ -49,6 +49,8 @@ import java.lang.annotation.Target;
 @Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @RequiresBedsteadJUnit4
+// Note that additional annotations added here will not be applied by default due to special
+// logic (for HSUM) inside BedsteadJUnit4#ANNOTATION_REPLACEMENTS
 public @interface RequireRunOnAdditionalUser {
     /**
      * Should we ensure that we are switched to the given user.

@@ -987,12 +987,12 @@ public final class Package {
                 boolean success = blockingCallback.await();
                 if (!success) {
                     fail("Could not set role holder of " + role + "." + " Relevant logcat: "
-                            + TestApis.logcat().dump((line) -> line.contains(role)));
+                            + TestApis.logcat().dump((line) -> line.contains(role) || line.contains("Role")));
                 }
                 if (!TestApis.roles().getRoleHoldersAsUser(role, user).contains(packageName())) {
                     fail("addRoleHolderAsUser returned true but did not add role holder. "
                             + "Relevant logcat: " + TestApis.logcat().dump(
-                                    (line) -> line.contains(role)));
+                                    (line) -> line.contains(role) || line.contains("Role")));
                 }
             }).terminalException(e -> {
                 // Terminal unless we see logcat output indicating it might be temporary
