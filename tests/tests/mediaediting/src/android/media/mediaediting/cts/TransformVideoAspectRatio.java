@@ -22,10 +22,13 @@ import android.content.Context;
 import android.net.Uri;
 import android.platform.test.annotations.AppModeFull;
 
+import androidx.media3.common.Effect;
 import androidx.media3.common.Format;
 import androidx.media3.common.MediaItem;
 import androidx.media3.common.MimeTypes;
 import androidx.media3.effect.Presentation;
+import androidx.media3.transformer.EditedMediaItem;
+import androidx.media3.transformer.Effects;
 import androidx.media3.transformer.TransformationRequest;
 import androidx.media3.transformer.Transformer;
 import androidx.test.core.app.ApplicationProvider;
@@ -182,15 +185,9 @@ public final class TransformVideoAspectRatio {
         .build();
   }
 
-  private static Transformer createTransformer(
-      Context context, String toMediaType, float aspectRatio) {
-    return (new Transformer.Builder(context)
-        .setTransformationRequest(
-            new TransformationRequest.Builder().setVideoMimeType(toMediaType).build())
-        .setVideoEffects(
-            ImmutableList.of(Presentation.createForAspectRatio(aspectRatio, 0)))
-        .setRemoveAudio(true)
-        .build());
+  private static Transformer createTransformer(Context context, String toMediaType) {
+    return new Transformer.Builder(context).setTransformationRequest(
+        new TransformationRequest.Builder().setVideoMimeType(toMediaType).build()).build();
   }
 
   @Test
@@ -198,14 +195,19 @@ public final class TransformVideoAspectRatio {
     Preconditions.assertTestFileExists(MEDIA_DIR + testFile);
     Context context = ApplicationProvider.getApplicationContext();
     Assume.assumeTrue("Skipping transcodeTest for" + testId,
-        !AndroidTestUtil.skipAndLogIfInsufficientCodecSupport(
+        !AndroidTestUtil.skipAndLogIfFormatsUnsupported(
             context, testId, createDecFormat(), createEncFormat()));
 
-    Transformer transformer = createTransformer(context, mediaType, requestedAspectRatio);
-    TransformationTestResult result =
-        new TransformerAndroidTestRunner.Builder(context, transformer)
-            .build()
-            .run(testId, MediaItem.fromUri(Uri.parse(MEDIA_DIR + testFile)));
+    Transformer transformer = createTransformer(context, mediaType);
+    MediaItem mediaItem = MediaItem.fromUri(Uri.parse(MEDIA_DIR + testFile));
+    ImmutableList<Effect> videoEffects = ImmutableList.of(
+        Presentation.createForAspectRatio(requestedAspectRatio, 0 /* LAYOUT_SCALE_TO_FIT */));
+    EditedMediaItem editedMediaItem = new EditedMediaItem.Builder(mediaItem)
+        .setEffects(new Effects(/* audioProcessors= */ ImmutableList.of(), videoEffects))
+        .setRemoveAudio(true)
+        .build();
+    ExportTestResult result = new TransformerAndroidTestRunner.Builder(context, transformer).build()
+        .run(testId, editedMediaItem);
 
     float inputAspectRatio = (float) width / height;
     Format muxedOutputFormat = MediaEditingUtil.getMuxedWidthHeight(result.filePath);
