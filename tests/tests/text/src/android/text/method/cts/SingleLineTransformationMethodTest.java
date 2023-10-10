@@ -29,9 +29,9 @@ import android.text.style.AlignmentSpan;
 import android.util.TypedValue;
 import android.widget.EditText;
 
-import androidx.test.InstrumentationRegistry;
 import androidx.test.annotation.UiThreadTest;
 import androidx.test.filters.SmallTest;
+import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Test;
@@ -71,7 +71,9 @@ public class SingleLineTransformationMethodTest {
         CharSequence result = method.getTransformation("hello\nworld\r", null);
         assertEquals("hello world\uFEFF", result.toString());
 
-        EditText editText = new EditTextNoIme(InstrumentationRegistry.getTargetContext());
+        EditText editText = new EditTextNoIme(
+                InstrumentationRegistry.getInstrumentation().getTargetContext()
+        );
         editText.setTextSize(TypedValue.COMPLEX_UNIT_SP, 10);
         editText.setText("hello\nworld\r");
         // TODO cannot get transformed text from the view

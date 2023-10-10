@@ -56,8 +56,8 @@ import android.text.style.TypefaceSpan;
 
 import androidx.annotation.IntRange;
 import androidx.annotation.NonNull;
-import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.SmallTest;
+import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Test;

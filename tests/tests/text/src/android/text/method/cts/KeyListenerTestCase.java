@@ -30,12 +30,12 @@ import android.view.KeyEvent;
 import android.view.View;
 import android.widget.EditText;
 
-import androidx.test.InstrumentationRegistry;
+import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
 
 import com.android.compatibility.common.util.CtsKeyEventUtil;
-import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.SystemUtil;
+import com.android.compatibility.common.util.WindowUtil;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -65,9 +65,8 @@ public abstract class KeyListenerTestCase {
         mContext = mInstrumentation.getTargetContext();
         mCtsKeyEventUtil = new CtsKeyEventUtil(mContext);
         mActivity = mActivityRule.getActivity();
+        WindowUtil.waitForFocus(mActivity);
         mTextView = mActivity.findViewById(R.id.keylistener_textview);
-
-        PollingCheck.waitFor(10000, mActivity::hasWindowFocus);
     }
 
     protected void enableAutoCapSettings() throws IOException {

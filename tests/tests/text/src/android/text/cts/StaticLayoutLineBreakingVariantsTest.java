@@ -33,8 +33,8 @@ import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.text.StaticLayout;
 import android.text.TextPaint;
 
-import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.SmallTest;
+import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Rule;
@@ -52,7 +52,7 @@ public class StaticLayoutLineBreakingVariantsTest {
     private static TextPaint setupPaint(LocaleList locales) {
         // The test font covers all KATAKANA LETTERS (U+30A1..U+30FC) in Japanese and they all have
         // 1em width.
-        Context context = InstrumentationRegistry.getTargetContext();
+        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
         TextPaint paint = new TextPaint();
         paint.setTypeface(Typeface.createFromAsset(context.getAssets(),
                   "fonts/BreakVariantsTest.ttf"));

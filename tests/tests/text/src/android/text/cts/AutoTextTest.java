@@ -26,9 +26,9 @@ import android.content.res.Configuration;
 import android.text.AutoText;
 import android.view.View;
 
-import androidx.test.InstrumentationRegistry;
 import androidx.test.annotation.UiThreadTest;
 import androidx.test.filters.SmallTest;
+import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Before;
@@ -44,7 +44,7 @@ public class AutoTextTest {
 
     @Before
     public void setup() {
-        mContext = InstrumentationRegistry.getTargetContext();
+        mContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
 
         // set locale as English.
         Locale.setDefault(Locale.ENGLISH);

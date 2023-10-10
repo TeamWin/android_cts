@@ -20,18 +20,15 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import android.app.Activity;
-import android.content.Context;
-import android.content.Intent;
 import android.text.ClipboardManager;
 
-import androidx.test.InstrumentationRegistry;
+import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
-import androidx.test.uiautomator.By;
-import androidx.test.uiautomator.UiDevice;
-import androidx.test.uiautomator.Until;
+
+import com.android.compatibility.common.util.WindowUtil;
 
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -41,15 +38,18 @@ import org.junit.runner.RunWith;
 @RunWith(AndroidJUnit4.class)
 public class ClipboardManagerTest {
     private ClipboardManager mClipboardManager;
-    private UiDevice mUiDevice;
-    private Context mContext;
+
+    private MockActivity mActivity;
+
+    @Rule
+    public ActivityTestRule<MockActivity> mActivityRule =
+            new ActivityTestRule<>(MockActivity.class);
 
     @Before
     public void setup() {
-        mContext = InstrumentationRegistry.getTargetContext();
-        mClipboardManager = (ClipboardManager) mContext.getSystemService(Context.CLIPBOARD_SERVICE);
-        mUiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
-        launchActivity(MockActivity.class);
+        mActivity = mActivityRule.getActivity();
+        WindowUtil.waitForFocus(mActivity);
+        mClipboardManager = mActivity.getSystemService(ClipboardManager.class);
     }
 
     @Test
@@ -71,13 +71,4 @@ public class ClipboardManagerTest {
         mClipboardManager.setText(null);
         assertFalse(mClipboardManager.hasText());
     }
-
-    private void launchActivity(Class<? extends Activity> clazz) {
-        Intent intent = new Intent(Intent.ACTION_MAIN);
-        intent.setClassName(mContext.getPackageName(), clazz.getName());
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        mContext.startActivity(intent);
-        mUiDevice.wait(Until.hasObject(By.clazz(clazz)), 5000);
-    }
-
 }

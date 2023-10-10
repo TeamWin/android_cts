@@ -23,8 +23,8 @@ import android.text.DynamicLayout
 import android.text.StaticLayout
 import android.text.TextPaint
 import android.text.cts.LayoutUseBoundsUtil.getDrawingHorizontalOffset
-import androidx.test.InstrumentationRegistry
 import androidx.test.filters.SmallTest
+import androidx.test.platform.app.InstrumentationRegistry
 import com.android.text.flags.Flags
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
