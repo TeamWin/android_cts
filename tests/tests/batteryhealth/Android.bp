@@ -28,6 +28,7 @@ android_test {
         "platformprotosnano",
         "truth",
         "ub-uiautomator",
+        "android.os.flags-aconfig-java",
     ],
     libs: [
         "android.test.runner",
