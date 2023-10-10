@@ -25,8 +25,8 @@ import android.text.Layout;
 import android.text.StaticLayout;
 import android.text.TextPaint;
 
-import androidx.test.InstrumentationRegistry;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -43,7 +43,7 @@ public class LayoutFillCharacterBoundsTest {
         // - U+1F600 (GRINNING FACE): The glyph has 3em width.
         // - U+05D0 (HEBREW LETTER ALEF): The glyph has 1 em width.
         // - U+05D1 (HEBREW LETTER BET): The glyph has 3 em width.
-        Context context = InstrumentationRegistry.getTargetContext();
+        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
         sTextPaint.setTypeface(Typeface.createFromAsset(context.getAssets(),
                 "fonts/textrunadvances.ttf"));
         sTextPaint.setTextSize(10.0f);  // Make 1em == 10px.

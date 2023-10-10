@@ -53,8 +53,8 @@ import android.text.style.TextAppearanceSpan;
 import android.text.style.URLSpan;
 import android.util.StringBuilderPrinter;
 
-import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.SmallTest;
+import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Before;
@@ -80,7 +80,7 @@ public class TextUtilsTest  {
 
     @Before
     public void setup() {
-        mContext = InstrumentationRegistry.getTargetContext();
+        mContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
         mEllipsis = getEllipsis();
         resetRange();
     }

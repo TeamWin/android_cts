@@ -44,14 +44,15 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.LinearLayout.LayoutParams;
 
-import androidx.test.InstrumentationRegistry;
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
 import androidx.test.filters.MediumTest;
+import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.CtsKeyEventUtil;
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.UserHelper;
+import com.android.compatibility.common.util.WindowUtil;
 
 import org.junit.After;
 import org.junit.Before;
@@ -103,7 +104,7 @@ public class PasswordTransformationMethodTest {
         mActivityRule.getScenario()
                 .launch(CtsActivity.class, mUserHelper.getActivityOptions().toBundle())
                 .onActivity(activity -> mActivity = activity);
-        PollingCheck.waitFor(1000, mActivity::hasWindowFocus);
+        WindowUtil.waitForFocus(mActivity);
         mMethod = spy(new PasswordTransformationMethod());
 
         runOnUiThread(() -> {

@@ -44,11 +44,13 @@ import android.view.View;
 import android.widget.TextView;
 import android.widget.TextView.BufferType;
 
-import androidx.test.InstrumentationRegistry;
 import androidx.test.annotation.UiThreadTest;
 import androidx.test.filters.MediumTest;
+import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
+
+import com.android.compatibility.common.util.WindowUtil;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -81,6 +83,8 @@ public class LinkMovementMethodTest {
     @Before
     public void setup() throws Throwable {
         mActivity = mActivityRule.getActivity();
+        WindowUtil.waitForFocus(mActivity);
+
         mMethod = new LinkMovementMethod();
 
         // Set the content view with a text view which contains 3 lines,

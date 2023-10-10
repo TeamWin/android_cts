@@ -22,9 +22,9 @@ import android.text.BoringLayout
 import android.text.Layout
 import android.text.TextPaint
 import android.text.cts.LayoutUseBoundsUtil.getDrawingHorizontalOffset
-import androidx.test.InstrumentationRegistry
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.SmallTest
-import androidx.test.runner.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
 import com.android.text.flags.Flags.FLAG_USE_BOUNDS_FOR_WIDTH
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test

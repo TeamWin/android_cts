@@ -25,8 +25,8 @@ import static org.junit.Assert.assertTrue;
 import android.content.Context;
 import android.text.format.DateUtils;
 
-import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.SmallTest;
+import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.After;
@@ -50,7 +50,7 @@ public class DateUtilsTest {
 
     @Before
     public void setup() {
-        mContext = InstrumentationRegistry.getTargetContext();
+        mContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
         mDefaultTimeZone = TimeZone.getDefault();
         // All tests in this class can assume the device time zone is set to GMT.
         TimeZone.setDefault(TimeZone.getTimeZone("GMT"));

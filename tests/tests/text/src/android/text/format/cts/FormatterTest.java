@@ -23,8 +23,8 @@ import android.content.res.Configuration;
 import android.os.LocaleList;
 import android.text.format.Formatter;
 
-import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.SmallTest;
+import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Test;
@@ -46,8 +46,8 @@ public class FormatterTest {
         final BigDecimal bd = new BigDecimal((long) 1000, mc);
         final Configuration config = new Configuration();
         config.setLocales(new LocaleList(Locale.US));
-        final Context context =
-                InstrumentationRegistry.getTargetContext().createConfigurationContext(config);
+        final Context context = InstrumentationRegistry.getInstrumentation()
+                .getTargetContext().createConfigurationContext(config);
 
         // test different long values with various length
         assertEquals("0 B", Formatter.formatFileSize(context, 0));
@@ -86,8 +86,8 @@ public class FormatterTest {
         final BigDecimal bd = new BigDecimal((long) 1000, mc);
         final Configuration config = new Configuration();
         config.setLocales(new LocaleList(Locale.US));
-        final Context context =
-                InstrumentationRegistry.getTargetContext().createConfigurationContext(config);
+        final Context context = InstrumentationRegistry.getInstrumentation()
+                .getTargetContext().createConfigurationContext(config);
 
         // test different long values with various length
         assertEquals("0 B", Formatter.formatShortFileSize(context, 0));
