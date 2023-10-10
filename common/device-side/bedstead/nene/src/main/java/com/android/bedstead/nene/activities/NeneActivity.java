@@ -23,7 +23,6 @@ import android.os.UserHandle;
  * Additional methods which are not direct wrappers of {@link Activity}.
  */
 public interface NeneActivity extends RemoteActivity {
-
     /** Get the user the Activity is running on. */
-    UserHandle getUser();
+    UserHandle user();
 }

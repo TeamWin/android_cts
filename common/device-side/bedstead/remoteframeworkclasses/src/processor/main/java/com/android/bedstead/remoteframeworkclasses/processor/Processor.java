@@ -607,9 +607,7 @@ public final class Processor extends AbstractProcessor {
                 .map(e -> (ExecutableElement) e)
                 .filter(e -> !methods.containsKey(e.getSimpleName().toString()))
                 .filter(e -> e.getModifiers().contains(Modifier.PUBLIC))
-                .forEach(e -> {
-                    methods.put(methodHash(e), e);
-                });
+                .forEach(e -> methods.put(methodHash(e), e));
 
         interfaceClass.getInterfaces().stream()
                 .map(m -> elements.getTypeElement(m.toString()))
