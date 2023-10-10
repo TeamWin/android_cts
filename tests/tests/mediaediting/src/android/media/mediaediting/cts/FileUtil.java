@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,49 +16,57 @@
 
 package android.media.mediaediting.cts;
 
-import static androidx.media3.common.util.Assertions.checkNotNull;
 import static com.google.common.truth.Truth.assertThat;
 
-import android.media.MediaFormat;
+import android.content.Context;
 import androidx.annotation.Nullable;
 import androidx.media3.common.C;
 import androidx.media3.common.ColorInfo;
-import androidx.media3.common.util.MediaFormatUtil;
-import androidx.media3.common.util.Util;
-import androidx.media3.test.utils.DecodeOneFrameUtil;
+import androidx.media3.common.Format;
+import androidx.media3.common.MediaItem;
+import androidx.media3.common.TrackGroup;
+import androidx.media3.exoplayer.MetadataRetriever;
+import androidx.media3.exoplayer.source.TrackGroupArray;
+import java.util.concurrent.ExecutionException;
 
-/** Utilities for reading color info from a file. */
-public class FileUtil {
+/** Utilities for accessing details of media files. */
+/* package */ class FileUtil {
+
+  /**
+   * Asserts that the file has a certain color transfer.
+   *
+   * @param context The current context.
+   * @param filePath The path of the input file.
+   * @param expectedColorTransfer The expected {@link C.ColorTransfer} for the input file.
+   */
   public static void assertFileHasColorTransfer(
-      @Nullable String filePath, @C.ColorTransfer int expectedColorTransfer) throws Exception {
-    if (Util.SDK_INT < 29) {
-      // Skipping on this API version due to lack of support for MediaFormat#getInteger, which is
-      // required for MediaFormatUtil#getColorInfo.
-      return;
+      Context context, @Nullable String filePath, @C.ColorTransfer int expectedColorTransfer) {
+    TrackGroupArray trackGroupArray;
+    try {
+      trackGroupArray =
+          MetadataRetriever.retrieveMetadata(context, MediaItem.fromUri("file://" + filePath))
+              .get();
+    } catch (ExecutionException | InterruptedException e) {
+      throw new IllegalStateException(e);
     }
-    DecodeOneFrameUtil.decodeOneCacheFileFrame(
-        checkNotNull(filePath),
-        new DecodeOneFrameUtil.Listener() {
-          @Override
-          public void onContainerExtracted(MediaFormat mediaFormat) {
-            @Nullable ColorInfo extractedColorInfo = MediaFormatUtil.getColorInfo(mediaFormat);
-            assertColorInfoHasTransfer(extractedColorInfo, expectedColorTransfer);
-          }
 
-          @Override
-          public void onFrameDecoded(MediaFormat mediaFormat) {
-            @Nullable ColorInfo decodedColorInfo = MediaFormatUtil.getColorInfo(mediaFormat);
-            assertColorInfoHasTransfer(decodedColorInfo, expectedColorTransfer);
-          }
-        },
-        /* surface= */ null);
-  }
-
-  private static void assertColorInfoHasTransfer(
-      @Nullable ColorInfo colorInfo, @C.ColorTransfer int expectedColorTransfer) {
-    @C.ColorTransfer
-    int actualColorTransfer = colorInfo == null ? C.COLOR_TRANSFER_SDR : colorInfo.colorTransfer;
-    assertThat(actualColorTransfer).isEqualTo(expectedColorTransfer);
+    int trackGroupCount = trackGroupArray.length;
+//    assertThat(trackGroupCount).isEqualTo(2);
+    for (int i = 0; i < trackGroupCount; i++) {
+      TrackGroup trackGroup = trackGroupArray.get(i);
+      if (trackGroup.type == C.TRACK_TYPE_VIDEO) {
+        assertThat(trackGroup.length).isEqualTo(1);
+        @Nullable ColorInfo colorInfo = trackGroup.getFormat(0).colorInfo;
+        @C.ColorTransfer
+        int actualColorTransfer =
+            colorInfo == null || colorInfo.colorTransfer == Format.NO_VALUE
+                ? C.COLOR_TRANSFER_SDR
+                : colorInfo.colorTransfer;
+        assertThat(actualColorTransfer).isEqualTo(expectedColorTransfer);
+        return;
+      }
+    }
+    throw new IllegalStateException("Couldn't find video track");
   }
 
   private FileUtil() {}
