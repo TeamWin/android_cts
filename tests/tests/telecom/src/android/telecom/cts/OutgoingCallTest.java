@@ -196,6 +196,7 @@ public class OutgoingCallTest extends BaseTelecomTestWithMockServices {
         }
         TestUtils.setSystemDialerOverride(getInstrumentation());
         TestUtils.setTestEmergencyPhoneAccountPackageFilter(getInstrumentation(), mContext);
+        mTelephonyCallback.clearEmergencyNumberQueue();
         TestUtils.addTestEmergencyNumber(getInstrumentation(), TEST_EMERGENCY_NUMBER);
         Map<Integer, List<EmergencyNumber>> emergencyNumbers = null;
 
