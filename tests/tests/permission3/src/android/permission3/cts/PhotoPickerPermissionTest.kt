@@ -31,8 +31,12 @@ import android.provider.DeviceConfig
 import android.provider.DeviceConfig.NAMESPACE_PRIVACY
 import androidx.test.filters.SdkSuppress
 import androidx.test.uiautomator.By
+import androidx.test.uiautomator.BySelector
+import androidx.test.uiautomator.StaleObjectException
+import androidx.test.uiautomator.Until
 import com.android.compatibility.common.util.SystemUtil.eventually
 import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
+import com.android.compatibility.common.util.UiAutomatorUtils2
 import org.junit.AfterClass
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -385,6 +389,26 @@ class PhotoPickerPermissionTest : BaseUsePermissionTest() {
         assertAppHasPermission(ACCESS_MEDIA_LOCATION, false)
     }
 
+    @Test
+    fun testCanSelectPhotosInSettings() {
+        installPackage(APP_APK_PATH_LATEST)
+        navigateToIndividualPermissionSetting(READ_MEDIA_IMAGES)
+        click(By.res(SELECT_RADIO_BUTTON))
+        click(By.res(EDIT_PHOTOS_BUTTON))
+        waitForIdle()
+        eventually {
+            clickImageOrVideo()
+        }
+        clickAllow()
+    }
+
+    @Test
+    fun testEditButtonNotShownInSettingsWhenNoPhotosRequested() {
+        installPackage(APP_APK_PATH_LATEST)
+        navigateToIndividualPermissionSetting(READ_MEDIA_IMAGES)
+        waitUntilObjectGone(By.res(EDIT_PHOTOS_BUTTON))
+    }
+
     private fun clickImageOrVideo() {
         click(By.res(PhotoPickerUtils.getImageOrVideoResId(context)))
     }
@@ -400,5 +424,19 @@ class PhotoPickerPermissionTest : BaseUsePermissionTest() {
 
     private fun findVideo(expected: Boolean) {
         findView(By.res(PhotoPickerUtils.getVideoResId(context)), expected)
+    }
+
+    private fun waitUntilObjectGone(selector: BySelector) {
+        try {
+            if (UiAutomatorUtils2.getUiDevice().wait(Until.gone(selector), 20000L)) {
+                return
+            }
+        } catch (exception: StaleObjectException) {
+            // UiDevice.wait() may cause StaleObjectException if the {@link View} attached to
+            // UiObject2 is no longer in the view tree.
+            return
+        }
+
+        throw RuntimeException("view $selector is still visible after 20000ms")
     }
 }
