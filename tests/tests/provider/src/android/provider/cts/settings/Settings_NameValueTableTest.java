@@ -25,8 +25,8 @@ import android.net.Uri;
 import android.provider.Settings;
 import android.provider.Settings.NameValueTable;
 
-import androidx.test.InstrumentationRegistry;
-import androidx.test.runner.AndroidJUnit4;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.AdoptShellPermissionsRule;
 
@@ -42,7 +42,8 @@ public class Settings_NameValueTableTest {
 
     @Test
     public void testPutString() {
-        final ContentResolver cr = InstrumentationRegistry.getTargetContext().getContentResolver();
+        final ContentResolver cr = InstrumentationRegistry.getInstrumentation().getTargetContext()
+                .getContentResolver();
 
         Uri uri = Settings.System.CONTENT_URI;
         String name = Settings.System.NEXT_ALARM_FORMATTED;
