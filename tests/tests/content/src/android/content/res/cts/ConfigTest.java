@@ -507,24 +507,24 @@ public class ConfigTest {
         config.setProperty(Properties.GRAMMATICAL_GENDER,
                 Configuration.GRAMMATICAL_GENDER_FEMININE);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple feminine");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple feminine");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag feminine"});
 
         config = makeEmptyConfig();
         config.setProperty(Properties.GRAMMATICAL_GENDER,
                 Configuration.GRAMMATICAL_GENDER_MASCULINE);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple masculine");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple masculine");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag masculine"});
 
         config = makeEmptyConfig();
         config.setProperty(Properties.GRAMMATICAL_GENDER,
                 Configuration.GRAMMATICAL_GENDER_NEUTRAL);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple neuter");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple neuter");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag neuter"});
     }
 
@@ -1054,8 +1054,8 @@ public class ConfigTest {
         config.setProperty(Properties.GRAMMATICAL_GENDER,
                 Configuration.GRAMMATICAL_GENDER_FEMININE);
         res = config.getResources();
-        checkValue(res, R.configVarying.simple, "simple feminine");
-        checkValue(res, R.configVarying.bag,
+        checkValue(res, R.string.simple, "simple feminine");
+        checkValue(res, R.style.bag,
                 R.styleable.TestConfig, new String[]{"bag feminine"});
 
         config.setProperty(Properties.LANGUAGE, "xx");
