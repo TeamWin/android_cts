@@ -43,6 +43,7 @@ import com.android.interactive.annotations.Interactive
 import com.android.interactive.steps.enterprise.bugreport.BugReportNotificationDeclineToShareBugReportStep
 import com.android.interactive.steps.enterprise.bugreport.BugReportNotificationShareBugReportStep
 import android.util.Log
+import com.android.bedstead.harrier.annotations.SlowApiTest
 import com.android.bedstead.nene.notifications.NotificationListener
 import com.android.bedstead.nene.utils.Poll
 import com.android.eventlib.truth.EventLogsSubject.assertThat
@@ -62,6 +63,7 @@ import java.util.stream.Collectors
 @RunWith(BedsteadJUnit4::class)
 @EnsureWillTakeQuickBugReports
 @NotificationsTest
+@SlowApiTest("Bug reports are slow - even when skipping most of dumpsys")
 class BugReportTest {
     // TODO: Figure out how to test onBugreportFailed callback
 
