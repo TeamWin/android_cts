@@ -56,9 +56,7 @@ class NotificationListenerQuery internal constructor(private val receivedNotific
         while (Instant.now().isBefore(endTime)) {
             val nextResult = get(skippedPollResults)
             if (nextResult != null) {
-                Log.e("jonathan", "Skipping " + skippedPollResults)
                 skippedPollResults++
-                Log.e("jonathan", "Next skip is " + skippedPollResults)
                 return nextResult
             }
             try {
