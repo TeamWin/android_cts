@@ -2018,7 +2018,7 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
     }
 
     void assertCtsConnectionServiceUnbound() {
-        if (CtsConnectionService.isBound()) {
+        if (CtsConnectionService.isServiceRegisteredToTelecom()) {
             assertTrue("CtsConnectionService not yet unbound!",
                     CtsConnectionService.waitForUnBinding());
         }
