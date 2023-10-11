@@ -1019,11 +1019,6 @@ public class AudioFocusTest extends CtsAndroidTestCase {
 
         void waitForFocusChange(String caller, long timeoutMs, boolean shouldAcquire)
                 throws Exception {
-            synchronized (mLock) {
-                if (mFocusChange != AudioManager.AUDIOFOCUS_NONE) {
-                    return;
-                }
-            }
             boolean acquired = mChangeEventSignal.tryAcquire(timeoutMs, TimeUnit.MILLISECONDS);
             assertWithMessage(caller + " wait acquired").that(acquired).isEqualTo(shouldAcquire);
         }
