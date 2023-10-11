@@ -159,51 +159,38 @@ public class MediaControllerTest {
 
     @Test
     public void testOnBackInvokedCallback() {
-        final AtomicBoolean isOnBackInvokedCallbackEnabledRef = new AtomicBoolean();
-        mInstrumentation.runOnMainSync(() -> isOnBackInvokedCallbackEnabledRef.set(
-                mActivity.getApplicationInfo().isOnBackInvokedCallbackEnabled()));
-        final boolean wasOnBackInvokedCallbackEnabled = isOnBackInvokedCallbackEnabledRef.get();
-
         final AtomicReference<MediaController> mediaControllerRef = new AtomicReference<>();
-        try {
-            mInstrumentation.runOnMainSync(() -> {
-                // Enable the new back dispatch
-                mActivity.getApplicationInfo().setEnableOnBackInvokedCallback(true);
+        mInstrumentation.runOnMainSync(() -> {
+            final MediaController mediaController =
+                    new MediaController(mActivity, true);
+            mediaControllerRef.set(mediaController);
 
-                final MediaController mediaController =
-                        new MediaController(mActivity, true);
-                mediaControllerRef.set(mediaController);
+            final MockMediaPlayerControl mediaPlayerControl = new MockMediaPlayerControl();
+            mediaController.setMediaPlayer(mediaPlayerControl);
 
-                final MockMediaPlayerControl mediaPlayerControl = new MockMediaPlayerControl();
-                mediaController.setMediaPlayer(mediaPlayerControl);
+            final VideoView videoView = mActivity.findViewById(R.id.mediacontroller_videoview);
+            mediaController.setAnchorView(videoView);
 
-                final VideoView videoView = mActivity.findViewById(R.id.mediacontroller_videoview);
-                mediaController.setAnchorView(videoView);
+            // Setting 0 to "timeout" means that MediaController won't be automatically closed.
+            mediaController.show(0 /* timeout */);
+        });
 
-                // Setting 0 to "timeout" means that MediaController won't be automatically closed.
-                mediaController.show(0 /* timeout */);
-            });
+        // Wait until MediaController becomes visible and has focus.
+        PollingCheck.waitFor(TIMEOUT, () -> {
+            final AtomicBoolean isShowingRef = new AtomicBoolean();
+            mInstrumentation.runOnMainSync(() ->
+                    isShowingRef.set(mediaControllerRef.get().isShowing()));
+            return isShowingRef.get() && !mActivity.hasWindowFocus();
+        });
 
-            // Wait until MediaController becomes visible.
-            PollingCheck.waitFor(TIMEOUT, () -> {
-                final AtomicBoolean isShowingRef = new AtomicBoolean();
-                mInstrumentation.runOnMainSync(() ->
-                        isShowingRef.set(mediaControllerRef.get().isShowing()));
-                return isShowingRef.get();
-            });
-
-            // Make sure that KEYCODE_BACK can still dismiss the MediaController.
-            mInstrumentation.sendCharacterSync(KeyEvent.KEYCODE_BACK);
-            PollingCheck.waitFor(TIMEOUT, () -> {
-                final AtomicBoolean isShowingRef = new AtomicBoolean();
-                mInstrumentation.runOnMainSync(() ->
-                        isShowingRef.set(mediaControllerRef.get().isShowing()));
-                return !isShowingRef.get();
-            });
-        } finally {
-            mActivity.getApplicationInfo().setEnableOnBackInvokedCallback(
-                    wasOnBackInvokedCallbackEnabled);
-        }
+        // Make sure that KEYCODE_BACK can still dismiss the MediaController.
+        mInstrumentation.sendCharacterSync(KeyEvent.KEYCODE_BACK);
+        PollingCheck.waitFor(TIMEOUT, () -> {
+            final AtomicBoolean isShowingRef = new AtomicBoolean();
+            mInstrumentation.runOnMainSync(() ->
+                    isShowingRef.set(mediaControllerRef.get().isShowing()));
+            return !isShowingRef.get();
+        });
     }
 
     private String prepareSampleVideo() {
