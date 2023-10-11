@@ -16,7 +16,6 @@
 
 package com.android.cts.verifier.audio;
 
-
 import static android.media.AudioManager.ADJUST_LOWER;
 import static android.media.AudioManager.ADJUST_RAISE;
 import static android.media.AudioManager.ADJUST_SAME;
@@ -80,6 +79,7 @@ public class RingerModeActivity extends InteractiveVerifierActivity {
     private boolean mIsWatch;
     private boolean mSkipRingerTests;
     private boolean mSkipTouchSoundTests;
+    private boolean mIsMusicPlayingBeforeTest;
 
     @Override
     protected int getTitleResource() {
@@ -131,7 +131,9 @@ public class RingerModeActivity extends InteractiveVerifierActivity {
         tests.add(new TestSetRingerModePolicyAccess());
         // TODO: Add a @TestApi method to query the VolumPolicy
         //tests.add(new TestVolumeDndAffectedStream());
-        tests.add(new TestVolume());
+        tests.add(new TestVolumeDownUp());
+        tests.add(new TestVolumeUpDown());
+        tests.add(new TestVolumeMusicStopped());
         tests.add(new TestMuteStreams());
         tests.add(new EnableSoundEffects());
         tests.add(new TestSoundEffects());
@@ -818,10 +820,11 @@ public class RingerModeActivity extends InteractiveVerifierActivity {
         }
     }
 
-    protected class TestVolume extends InteractiveTestCase {
+    protected class TestVolumeDownUp extends InteractiveTestCase {
+
         @Override
         protected View inflate(ViewGroup parent) {
-            return createAutoItem(parent, R.string.test_volume_dnd_affected_stream);
+            return createAutoItem(parent, R.string.test_volume_stream_1);
         }
 
         @Override
@@ -852,6 +855,7 @@ public class RingerModeActivity extends InteractiveVerifierActivity {
                 e.printStackTrace();
             }
             int maxMusicVolume = mAudioManager.getStreamMaxVolume(STREAM_MUSIC);
+            Log.d(TAG, "TestVolume1() maxMusicVolume = " + maxMusicVolume);
 
             for (int stream : streams) {
                 Log.d(TAG, "testing stream: " + stream);
@@ -941,6 +945,7 @@ public class RingerModeActivity extends InteractiveVerifierActivity {
             }
 
             if (mUseFixedVolume) {
+                status = PASS;
                 return;
             }
 
@@ -951,11 +956,32 @@ public class RingerModeActivity extends InteractiveVerifierActivity {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
+            status = PASS;
+        }
+    }
 
-            boolean isMusicPlayingBeforeTest = false;
-            if (mAudioManager.isMusicActive()) {
-                isMusicPlayingBeforeTest = true;
+    // This test is broken into three parts because it was running
+    // too long in the UI thread and causing ANRs.
+    protected class TestVolumeUpDown extends InteractiveTestCase {
+        @Override
+        protected View inflate(ViewGroup parent) {
+            return createAutoItem(parent, R.string.test_volume_stream_2);
+        }
+
+        @Override
+        protected void test() {
+            if (mSkipRingerTests) {
+                status = PASS;
+                return;
             }
+            if (mUseFixedVolume) {
+                status = PASS;
+                return;
+            }
+
+            mIsMusicPlayingBeforeTest = mAudioManager.isMusicActive();
+
+            int maxMusicVolume = mAudioManager.getStreamMaxVolume(STREAM_MUSIC);
 
             MediaPlayer mp = MediaPlayer.create(mContext, MP3_TO_PLAY);
             assertNotNull(mp);
@@ -973,16 +999,18 @@ public class RingerModeActivity extends InteractiveVerifierActivity {
             for (int k = 0; k < maxMusicVolume; k++) {
                 mAudioManager.adjustVolume(ADJUST_SAME, 0);
                 try {
-                    Thread.sleep(ASYNC_TIMING_TOLERANCE_MS);
+                    // If it sleeps too long here then it can cause an ANR.
+                    Thread.sleep(ASYNC_TIMING_TOLERANCE_MS / 2);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
+                // Volume had been set to maximum in previous test.
                 assertEquals(maxMusicVolume, mAudioManager.getStreamVolume(STREAM_MUSIC));
             }
 
             // adjust volume as ADJUST_RAISE
             mAudioManager.setStreamVolume(STREAM_MUSIC, 0, 0);
-            volumeDelta = getVolumeDelta(mAudioManager.getStreamVolume(STREAM_MUSIC));
+            int volumeDelta = getVolumeDelta(mAudioManager.getStreamVolume(STREAM_MUSIC));
             mAudioManager.adjustVolume(ADJUST_RAISE, 0);
             try {
                 Thread.sleep(ASYNC_TIMING_TOLERANCE_MS);
@@ -1007,12 +1035,33 @@ public class RingerModeActivity extends InteractiveVerifierActivity {
 
             mp.stop();
             mp.release();
+            status = PASS;
+        }
+    }
+
+    protected class TestVolumeMusicStopped extends InteractiveTestCase {
+        @Override
+        protected View inflate(ViewGroup parent) {
+            return createAutoItem(parent, R.string.test_volume_stream_3);
+        }
+
+        @Override
+        protected void test() {
+            if (mSkipRingerTests) {
+                status = PASS;
+                return;
+            }
+            if (mUseFixedVolume) {
+                status = PASS;
+                return;
+            }
+
             try {
                 Thread.sleep(TIME_TO_PLAY);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-            if (!isMusicPlayingBeforeTest) {
+            if (!mIsMusicPlayingBeforeTest) {
                 assertFalse(mAudioManager.isMusicActive());
             }
             status = PASS;

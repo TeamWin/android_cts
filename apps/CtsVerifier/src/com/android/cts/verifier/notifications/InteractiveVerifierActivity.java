@@ -371,7 +371,15 @@ public abstract class InteractiveVerifierActivity extends PassFailButtons.Activi
             case RETEST:
                 Log.i(TAG, "running test for: " + mCurrentTest.getClass().getSimpleName());
                 try {
+                    long startTime = System.currentTimeMillis();
                     mCurrentTest.test();
+                    long elapsedTime = System.currentTimeMillis() - startTime;
+                    Log.d(TAG, "elapsed test time = " + elapsedTime + " millis");
+                    final long kAnrTimeoutSeconds = 5;
+                    if (elapsedTime > (kAnrTimeoutSeconds * 1000)) {
+                        Log.w(TAG, "WARNING - Sleeping for more than " + kAnrTimeoutSeconds
+                                + " seconds in the UI thread might cause an ANR!!");
+                    }
                     if (mCurrentTest.status == RETEST_AFTER_LONG_DELAY) {
                         delay(mCurrentTest.delayTime);
                     } else {
