@@ -15,10 +15,9 @@
  */
 package android.os.cts.batteryhealth;
 
+import static android.os.Flags.stateOfHealthPublic;
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
-
 import static com.google.common.truth.Truth.assertThat;
-
 import static org.junit.Assert.fail;
 
 import android.app.UiAutomation;
@@ -109,8 +108,10 @@ public class BatteryHealthTest {
     @Test
     @ApiTest(apis = {"android.os.BatteryManager#BATTERY_PROPERTY_STATE_OF_HEALTH"})
     public void testBatteryStateOfHealth_dataInRange() {
-        mAutomation = getInstrumentation().getUiAutomation();
-        mAutomation.adoptShellPermissionIdentity(android.Manifest.permission.BATTERY_STATS);
+        if (!stateOfHealthPublic()) {
+            mAutomation = getInstrumentation().getUiAutomation();
+            mAutomation.adoptShellPermissionIdentity(android.Manifest.permission.BATTERY_STATS);
+        }
         final int stateOfHealth = mBatteryManager.getIntProperty(BatteryManager
                 .BATTERY_PROPERTY_STATE_OF_HEALTH);
 
@@ -118,8 +119,9 @@ public class BatteryHealthTest {
             assertThat(stateOfHealth).isAtLeast(BATTERY_STATE_OF_HEALTH_MIN);
             assertThat(stateOfHealth).isLessThan(BATTERY_STATE_OF_HEALTH_MAX + 1);
         }
-
-        mAutomation.dropShellPermissionIdentity();
+        if (!stateOfHealthPublic()) {
+            mAutomation.dropShellPermissionIdentity();
+        }
     }
 
     @Test
@@ -164,18 +166,6 @@ public class BatteryHealthTest {
         try {
             final int chargingPolicy = mBatteryManager.getIntProperty(BatteryManager
                     .BATTERY_PROPERTY_CHARGING_POLICY);
-        } catch (SecurityException expected) {
-            return;
-        }
-        fail("Didn't throw SecurityException");
-    }
-
-    @Test
-    @ApiTest(apis = {"android.os.BatteryManager#BATTERY_PROPERTY_STATE_OF_HEALTH"})
-    public void testBatteryStateOfHealth_noPermission() {
-        try {
-            final int stateOfHealth = mBatteryManager.getIntProperty(BatteryManager
-                    .BATTERY_PROPERTY_STATE_OF_HEALTH);
         } catch (SecurityException expected) {
             return;
         }
