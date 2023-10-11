@@ -43,6 +43,8 @@
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.os.cts.batteryhealth" />
         <option name="runtime-hint" value="10m00s" />
+        <!-- No method in the Flags class issue: b/302716159 -->
+        <option name="hidden-api-checks" value="false" />
     </test>
 
     <object type="module_controller"
