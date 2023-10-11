@@ -42,7 +42,6 @@ import com.android.cts.verifier.audio.audiolib.DisplayUtils;
 import com.android.cts.verifier.audio.audiolib.WaveScopeView;
 
 // MegaAudio
-import org.hyphonate.megaaudio.common.Globals;
 import org.hyphonate.megaaudio.common.StreamBase;
 import org.hyphonate.megaaudio.duplex.DuplexAudioManager;
 import org.hyphonate.megaaudio.player.AudioSource;
@@ -225,11 +224,6 @@ public abstract class AudioDataPathsBaseActivity
 
     class TestSpec {
         //
-        // Stream Attributes
-        //
-        static final int ATTRIBUTE_DISABLE_MMAP = 0x00000001;
-
-        //
         // Datapath specifications
         //
         // Playback Specification
@@ -244,8 +238,6 @@ public abstract class AudioDataPathsBaseActivity
         final int mInChannelCount;
         int mAnalysisChannel = 0;
         int mInputPreset;
-
-        int mGlobalAttributes;
 
         AudioDeviceInfo mOutDeviceInfo;
         AudioDeviceInfo mInDeviceInfo;
@@ -282,14 +274,14 @@ public abstract class AudioDataPathsBaseActivity
             mTestResults = new TestResults[NUM_TEST_APIS];
         }
 
-        // Test states that indicate a skipped test are negative
-        // Test states that indicate an executed test that failed are positive.
-        public static final int TESTSTATUS_BAD_ANALYSIS_CHANNEL = -3;
+        // Test states that indicate a not run or successful (not failures) test are
+        // zero or positive
+        // Test states that indicate an executed test that failed are negative.
+        public static final int TESTSTATUS_NOT_RUN = 1;
+        public static final int TESTSTATUS_RUN = 0;
+        public static final int TESTSTATUS_BAD_START = -1;
         public static final int TESTSTATUS_BAD_ROUTING = -2;
-        public static final int TESTSTATUS_NOT_RUN = -1;
-        public static final int TESTSTATUS_OK = 0;
-        public static final int TESTSTATUS_BAD_STATE = 1;
-        public static final int TESTSTATUS_BAD_START = 2;
+        public static final int TESTSTATUS_BAD_ANALYSIS_CHANNEL = -3;
 
         void clearTestState(int api) {
             mTestState[api] = TESTSTATUS_NOT_RUN;
@@ -341,14 +333,6 @@ public abstract class AudioDataPathsBaseActivity
             mInputPreset = preset;
         }
 
-        void setGlobalAttributes(int attributes) {
-            mGlobalAttributes = attributes;
-        }
-
-        int getGlobalAttributes() {
-            return mGlobalAttributes;
-        }
-
         boolean canRun() {
             return mInDeviceInfo != null && mOutDeviceInfo != null;
         }
@@ -367,14 +351,7 @@ public abstract class AudioDataPathsBaseActivity
         //
         // Ran to completion and results supplied
         boolean hasRun(int api) {
-            // return mTestState[api] == TESTSTATUS_OK;
             return mTestResults[api] != null;
-        }
-
-        // Didn't run because of invalid hardware or bad routing.
-        boolean wasSkipped(int api) {
-            // either doesn't have the hardware or the routing failed.
-            return mTestState[api] < 0;
         }
 
         // Ran and passed the criteria
@@ -387,20 +364,31 @@ public abstract class AudioDataPathsBaseActivity
             }
         }
 
-        // Ran, but failed the pass criteria
-        boolean hasFailed(int api) {
-            if (hasRun(api)) {
-                return mTestResults[api].mMaxMagnitude < mMinPassMagnitude
-                        || mTestResults[api].mPhaseJitter > mMaxPassJitter;
-            } else {
-                return false;
-            }
+        // Should've been able to run, but ran into errors opening/starting streams
+        boolean hasError(int api) {
+            // TESTSTATUS_NOT_RUN && TESTSTATUS_RUN are not errors
+            return mTestState[api] < 0;
         }
 
-        // Should've been able to run, but ran into errors opening/starting streams
-        boolean hadError(int api) {
-            // TESTSTATUS_NOT_RUN && TESTSTATUS_BAD_ROUTING are not considered failures
-            return mTestState[api] > 0;
+        //
+        // UI Helpers
+        //
+        String getTestStateString(int api) {
+            int state = getTestState(api);
+            switch (state) {
+                case TESTSTATUS_NOT_RUN:
+                    return " - NOT TESTED";
+                case TESTSTATUS_RUN:
+                    return hasPassed(api) ? " - PASS" : " - FAIL";
+                case TESTSTATUS_BAD_START:
+                    return " - BAD START";
+                case TESTSTATUS_BAD_ROUTING:
+                    return " - BAD ROUTE";
+                case TESTSTATUS_BAD_ANALYSIS_CHANNEL:
+                    return " - BAD ANALYSIS CHANNEL";
+                default:
+                    return " - UNKNOWN STATE ID [" + state + "]";
+            }
         }
 
         //
@@ -664,28 +652,7 @@ public abstract class AudioDataPathsBaseActivity
                     sb.append("<<<");
                 }
 
-                int status = testSpec.getTestState(mApi);
-                switch (status) {
-                    case TestSpec.TESTSTATUS_NOT_RUN:
-                        sb.append(" - NOT TESTED");
-                        break;
-                    case TestSpec.TESTSTATUS_OK:
-                        sb.append(testSpec.hasPassed(mApi) ? " - PASS" : " - FAIL");
-                        break;
-                    case TestSpec.TESTSTATUS_BAD_STATE:
-                        sb.append(" - BAD STATE");
-                        break;
-                    case TestSpec.TESTSTATUS_BAD_START:
-                        sb.append(" - BAD START");
-                        break;
-                    case TestSpec.TESTSTATUS_BAD_ROUTING:
-                        sb.append(" - BAD ROUTE");
-                        break;
-                    case TestSpec.TESTSTATUS_BAD_ANALYSIS_CHANNEL:
-                        sb.append(" - BAD ANALYSIS CHANNEL");
-                        break;
-                }
-
+                sb.append(testSpec.getTestStateString(mApi));
                 testStep++;
             }
             mRoutesTx.setText(sb.toString());
@@ -702,7 +669,7 @@ public abstract class AudioDataPathsBaseActivity
         private int countFailures(int api) {
             int numFailed = 0;
             for (TestSpec spec : mTestSpecs) {
-                if (spec.hadError(api) || spec.hasFailed(api)) {
+                if (spec.hasError(api) || !spec.hasPassed(api)) {
                     numFailed++;
                 }
             }
@@ -741,14 +708,6 @@ public abstract class AudioDataPathsBaseActivity
                 mDuplexAudioManager.setRecorderSampleRate(testSpec.mInSampleRate);
                 mDuplexAudioManager.setNumRecorderChannels(testSpec.mInChannelCount);
 
-                // Set MMAP policy before opening the streams.
-                boolean mmapEnabled =
-                        ((testSpec.getGlobalAttributes() & TestSpec.ATTRIBUTE_DISABLE_MMAP) != 0)
-                        ? false
-                        : Globals.isMMapSupported();
-                Log.d(TAG, "DataPaths: setMMapEnabled(" + mmapEnabled + ")");
-                Globals.setMMapEnabled(mmapEnabled);
-
                 // Open the streams.
                 // Note AudioSources and AudioSinks get allocated at this point
                 mDuplexAudioManager.setupStreams(mAudioApi, mAudioApi);
@@ -777,8 +736,9 @@ public abstract class AudioDataPathsBaseActivity
                     testSpec.setTestState(mApi, TestSpec.TESTSTATUS_BAD_ROUTING);
                     return TestSpec.TESTSTATUS_BAD_ROUTING;
                 }
-                testSpec.setTestState(mApi, TestSpec.TESTSTATUS_OK);
-                return TestSpec.TESTSTATUS_OK;
+
+                testSpec.setTestState(mApi, TestSpec.TESTSTATUS_RUN);
+                return TestSpec.TESTSTATUS_RUN;
             } else {
                 testSpec.setTestState(mApi, TestSpec.TESTSTATUS_NOT_RUN);
                 return TestSpec.TESTSTATUS_NOT_RUN;
@@ -921,7 +881,7 @@ public abstract class AudioDataPathsBaseActivity
                 if (!testSpec.hasPassed(mApi)) {
                     int status = startTest(testSpec);
                     testSpec.setTestState(mApi, status);
-                    if (status == TestSpec.TESTSTATUS_OK
+                    if (status == TestSpec.TESTSTATUS_RUN
                             || status == TestSpec.TESTSTATUS_BAD_ROUTING) {
                         // these are statuses where playing/recording successfully starts, even if
                         // to the wrong route, so allow this test to run to completion.
@@ -942,89 +902,68 @@ public abstract class AudioDataPathsBaseActivity
                 // Description
                 htmlFormatter.openParagraph()
                         .appendText(spec.mDescription);
-                if (spec.hasPassed(mApi) && !spec.wasSkipped(mApi)) {
-                    htmlFormatter.appendText(" - PASS");
+                if (spec.hasPassed(mApi)) {
+                    htmlFormatter.appendText(spec.getTestStateString(mApi));
                 } else {
-                    int testStatus = spec.getTestState(mApi);
-                    switch (testStatus) {
-                        case TestSpec.TESTSTATUS_NOT_RUN:
-                            htmlFormatter.appendText(" - NOT TESTED");
-                            break;
-                        case TestSpec.TESTSTATUS_BAD_ROUTING:
-                            htmlFormatter.appendText(" - BAD ROUTING");
-                            break;
-                        case TestSpec.TESTSTATUS_BAD_START:
-                            htmlFormatter.openTextColor("red");
-                            htmlFormatter.appendText(" - BAD START");
-                            htmlFormatter.closeTextColor();
-                            break;
-                        case TestSpec.TESTSTATUS_BAD_STATE:
-                            htmlFormatter.openTextColor("red");
-                            htmlFormatter.appendText(" - BAD STATE");
-                            htmlFormatter.closeTextColor();
-                            break;
-                        case TestSpec.TESTSTATUS_BAD_ANALYSIS_CHANNEL:
-                            htmlFormatter.openTextColor("red");
-                            htmlFormatter.appendText(" - BAD ANALYSIS CHANNEL");
-                            htmlFormatter.closeTextColor();
-                            break;
-                        default: {
-                            TestResults results = spec.mTestResults[mApi];
-                            if (results != null) {
-                                // we can get null here if the test was cancelled
-                                Locale locale = Locale.getDefault();
-                                String maxMagString = String.format(
-                                        locale, "mag:%.4f ", results.mMaxMagnitude);
-                                String phaseJitterString = String.format(
-                                        locale, "jitter:%.4f ", results.mPhaseJitter);
-
-                                boolean passMagnitude =
-                                        results.mMaxMagnitude >= spec.mMinPassMagnitude;
-                                boolean passJitter =
-                                        results.mPhaseJitter <= spec.mMaxPassJitter;
-
-                                // The play/record was OK, but the analysis failed
-                                htmlFormatter.appendText(" - FAIL");
-
-                                // Values
-                                htmlFormatter.insertBreak();
-                                if (!passMagnitude) {
-                                    htmlFormatter.openTextColor("red")
-                                            .appendText(maxMagString)
-                                            .closeTextColor();
-                                } else {
-                                    htmlFormatter.appendText(maxMagString);
-                                }
-
-                                if (!passJitter) {
-                                    htmlFormatter.openTextColor("red")
-                                            .appendText(phaseJitterString)
-                                            .closeTextColor();
-                                } else {
-                                    htmlFormatter.appendText(phaseJitterString);
-                                }
-
-                                // Criteria
-                                htmlFormatter.insertBreak();
-                                if (!passMagnitude) {
-                                    htmlFormatter.openTextColor("blue")
-                                            .appendText(maxMagString
-                                                    + String.format(locale, " <= %.4f ",
-                                                    spec.mMinPassMagnitude))
-                                            .closeTextColor();
-                                }
-
-                                if (!passJitter) {
-                                    htmlFormatter.openTextColor("blue")
-                                            .appendText(phaseJitterString
-                                                    + String.format(locale, " >= %.4f",
-                                                    spec.mMaxPassJitter))
-                                            .closeTextColor();
-                                }
-                            }
-                        }
-                        break;
+                    boolean isErrorState = spec.hasError(mApi);
+                    if (isErrorState) {
+                        htmlFormatter.openTextColor("red");
                     }
+                    htmlFormatter.appendText(spec.getTestStateString(mApi));
+                    if (isErrorState) {
+                        htmlFormatter.closeTextColor();
+                    }
+                    TestResults results = spec.mTestResults[mApi];
+                    if (results != null) {
+                        // we can get null here if the test was cancelled
+                        Locale locale = Locale.getDefault();
+                        String maxMagString = String.format(
+                                locale, "mag:%.4f ", results.mMaxMagnitude);
+                        String phaseJitterString = String.format(
+                                locale, "jitter:%.4f ", results.mPhaseJitter);
+
+                        boolean passMagnitude =
+                                results.mMaxMagnitude >= spec.mMinPassMagnitude;
+                        boolean passJitter =
+                                results.mPhaseJitter <= spec.mMaxPassJitter;
+
+                        // Values
+                        htmlFormatter.insertBreak();
+                        if (!passMagnitude) {
+                            htmlFormatter.openTextColor("red")
+                                    .appendText(maxMagString)
+                                    .closeTextColor();
+                        } else {
+                            htmlFormatter.appendText(maxMagString);
+                        }
+
+                        if (!passJitter) {
+                            htmlFormatter.openTextColor("red")
+                                    .appendText(phaseJitterString)
+                                    .closeTextColor();
+                        } else {
+                            htmlFormatter.appendText(phaseJitterString);
+                        }
+
+                        // Criteria
+                        htmlFormatter.insertBreak();
+                        if (!passMagnitude) {
+                            htmlFormatter.openTextColor("blue")
+                                    .appendText(maxMagString
+                                            + String.format(locale, " <= %.4f ",
+                                            spec.mMinPassMagnitude))
+                                    .closeTextColor();
+                        }
+
+                        if (!passJitter) {
+                            htmlFormatter.openTextColor("blue")
+                                    .appendText(phaseJitterString
+                                            + String.format(locale, " >= %.4f",
+                                            spec.mMaxPassJitter))
+                                    .closeTextColor();
+                        }
+                    }
+
                     htmlFormatter.insertBreak();
                 } // pass/fail
                 htmlFormatter.closeParagraph();
@@ -1065,7 +1004,6 @@ public abstract class AudioDataPathsBaseActivity
         mTestManager.displayTestDevices();
 
         enableTestButtons(true, false);
-        Globals.setMMapEnabled(Globals.isMMapSupported());
     }
 
     //
