@@ -533,9 +533,12 @@ public class ServiceTest extends ActivityTestsBase {
 
     private void assertNotification(int id, String expectedTitle, boolean shouldHaveFgsFlag) {
         String packageName = getContext().getPackageName();
-        String errorMessage = null;
-        for (int i = 1; i<=2; i++) {
-            errorMessage = null;
+        String titleErrorMsg = null;
+        String flagErrorMsg = null;
+        int i = 0;
+        while (true) {
+            titleErrorMsg = null;
+            flagErrorMsg = null;
             StatusBarNotification[] sbns = getNotificationManager().getActiveNotifications();
             for (StatusBarNotification sbn : sbns) {
                 if (sbn.getId() == id && sbn.getPackageName().equals(packageName)) {
@@ -543,30 +546,40 @@ public class ServiceTest extends ActivityTestsBase {
                     // check title first to make sure the update has propagated
                     String actualTitle = n.extras.getString(Notification.EXTRA_TITLE);
                     if (expectedTitle.equals(actualTitle)) {
+                        titleErrorMsg = null;
                         // make sure notification and service state is in sync
                         if (shouldHaveFgsFlag ==
                                 ((n.flags & Notification.FLAG_FOREGROUND_SERVICE) != 0)) {
+                            flagErrorMsg = null;
+                            // both title and flag matches.
                             return;
+                        } else {
+                            // title match, flag not match.
+                            flagErrorMsg = String.format("Wrong flag for notification #%d: "
+                                    + " actual '%d'", id, n.flags);
                         }
-                        fail(String.format("Wrong flag for notification #%d: "
-                                + " actual '%d'", id, n.flags));
+                    } else {
+                        // It's possible the notification hasn't been updated yet, so save the error
+                        // message to only fail after retrying.
+                        titleErrorMsg = String.format("Wrong title for notification #%d: "
+                                + "expected '%s', actual '%s'", id, expectedTitle, actualTitle);
                     }
-                    // It's possible the notification hasn't been updated yet, so save the error
-                    // message to only fail after retrying.
-                    errorMessage = String.format("Wrong title for notification #%d: "
-                            + "expected '%s', actual '%s'", id, expectedTitle, actualTitle);
-                    Log.w(TAG, errorMessage);
+                    // id and packageName are found, break now.
+                    break;
                 }
             }
-            // Notification might not be rendered yet, wait and try again...
-            try {
-                Thread.sleep(DELAY);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
+            // allow two more retries.
+            if (++i > 2) {
+                break;
             }
+            // Notification might not be rendered yet, wait and try again...
+            SystemClock.sleep(DELAY); // 5 seconds delay
         }
-        if (errorMessage != null) {
-            fail(errorMessage);
+        if (flagErrorMsg != null) {
+            fail(flagErrorMsg);
+        }
+        if (titleErrorMsg != null) {
+            fail(titleErrorMsg);
         }
         fail("No notification with id " + id + " for package " + packageName);
     }
