@@ -362,8 +362,8 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
      * behavior is consistent between SDK and NDK.
      */
     @CddTest(requirements = {"2.2.2", "2.3.2", "2.5.2", "5.1.2"})
-    @ApiTest(apis = {"MediaCodecInfo.CodecCapabilities#COLOR_FormatYUV420Flexible",
-            "MediaCodecInfo.CodecCapabilities#COLOR_FormatYUVP010",
+    @ApiTest(apis = {"android.media.MediaCodecInfo.CodecCapabilities#COLOR_FormatYUV420Flexible",
+            "android.media.MediaCodecInfo.CodecCapabilities#COLOR_FormatYUVP010",
             "android.media.AudioFormat#ENCODING_PCM_16BIT"})
     @LargeTest
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
@@ -873,7 +873,7 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
      * regular sequence and when any frames of that sequence are delivered in parts using the
      * PARTIAL_FRAME flag.
      */
-    @ApiTest(apis = {"MediaCodecInfo.CodecCapabilities#FEATURE_PartialFrame",
+    @ApiTest(apis = {"android.media.MediaCodecInfo.CodecCapabilities#FEATURE_PartialFrame",
             "android.media.MediaCodec#BUFFER_FLAG_PARTIAL_FRAME"})
     @LargeTest
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)

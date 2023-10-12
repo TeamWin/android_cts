@@ -114,7 +114,7 @@ public class CodecInfoTest {
     // display capabilities at native level, till then limit the test to vendor codecs
     @NonMainlineTest
     @CddTest(requirements = "5.1.7/C-2-1")
-    @ApiTest(apis = "MediaCodecInfo.CodecCapabilities#profileLevels")
+    @ApiTest(apis = "android.media.MediaCodecInfo.CodecCapabilities#profileLevels")
     public void testHDRDisplayCapabilities() {
         Assume.assumeTrue("Test needs Android 13", IS_AT_LEAST_T);
         Assume.assumeTrue("Test needs VNDK Android 13", VNDK_IS_AT_LEAST_T);

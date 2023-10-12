@@ -233,7 +233,7 @@ public class AdaptivePlaybackTest extends CodecDecoderTestBase {
     /**
      * Test video decoder for seamless resolution changes.
      */
-    @ApiTest(apis = "MediaCodecInfo.CodecCapabilities#FEATURE_AdaptivePlayback")
+    @ApiTest(apis = "android.media.MediaCodecInfo.CodecCapabilities#FEATURE_AdaptivePlayback")
     @LargeTest
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testAdaptivePlayback() throws IOException, InterruptedException {
