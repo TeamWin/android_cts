@@ -237,6 +237,13 @@ class ItsBaseTest(base_test.BaseTestClass):
                            'Requested brightness: {brightness_level}, '
                            'Actual brightness: {actual_brightness}')
 
+  def turn_off_tablet(self):
+    """Turns off tablet, raising AssertionError if tablet is not found."""
+    if self.tablet:
+      lighting_control_utils.turn_off_device(self.tablet)
+    else:
+      raise AssertionError('Test must be run with tablet.')
+
   def parse_hidden_camera_id(self):
     """Parse the string of camera ID into an array.
 
