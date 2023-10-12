@@ -40,7 +40,7 @@ _MAX_STR = 'max'
 _MIN_STR = 'min'
 _MIN_AREA_RATIO = 0.00015  # based on 2000/(4000x3000) pixels
 _MIN_CIRCLE_PTS = 10
-_MIN_SIZE = 640*480  # VGA
+_MIN_SIZE = 1280*720  # 720P
 _MIN_ZOOM_SCALE_CHART = 0.70  # zoom factor to trigger scaled chart
 _NAME = os.path.splitext(os.path.basename(__file__))[0]
 _OFFSET_TOL = 5  # pixels
@@ -51,7 +51,40 @@ _ZOOM_MIN_THRESH = 2.0
 _ZOOM_RATIO = 2
 
 
-class PreviewVideoZoomTest(its_base_test.ItsBaseTest):
+def _extract_key_frame_from_recording(log_path, file_name):
+  """Extract key frames from recordings.
+
+  Args:
+    log_path: str; file location
+    file_name: str file name for saved video
+
+  Returns:
+    dictionary of images
+  """
+  key_frame_files = []
+  key_frame_files = (
+      video_processing_utils.extract_key_frames_from_video(
+          log_path, file_name)
+  )
+  logging.debug('key_frame_files: %s', key_frame_files)
+
+  # Get the key frame file to process.
+  last_key_frame_file = (
+      video_processing_utils.get_key_frame_to_process(
+          key_frame_files)
+  )
+  logging.debug('last_key_frame: %s', last_key_frame_file)
+  last_key_frame_path = os.path.join(log_path, last_key_frame_file)
+
+  # Convert lastKeyFrame to numpy array
+  np_image = image_processing_utils.convert_image_to_numpy_array(
+      last_key_frame_path)
+  logging.debug('numpy image shape: %s', np_image.shape)
+
+  return np_image
+
+
+class PreviewVideoZoomMatchTest(its_base_test.ItsBaseTest):
   """Tests if preview matches video output when zooming.
 
   Preview and video are recorded while do_3a() iterate through
@@ -64,7 +97,7 @@ class PreviewVideoZoomTest(its_base_test.ItsBaseTest):
   match in zoom factors.
   """
 
-  def test_preview_video_zoom(self):
+  def test_preview_video_zoom_match(self):
     video_test_data = {}
     preview_test_data = {}
     log_path = self.log_path
