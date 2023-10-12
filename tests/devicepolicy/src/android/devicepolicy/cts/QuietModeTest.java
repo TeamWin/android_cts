@@ -70,6 +70,7 @@ import com.android.bedstead.nene.appops.AppOpsMode;
 import com.android.bedstead.nene.location.LocationProvider;
 import com.android.bedstead.nene.packages.Package;
 import com.android.bedstead.nene.permissions.PermissionContext;
+import com.android.bedstead.nene.roles.RoleContext;
 import com.android.bedstead.nene.users.UserReference;
 import com.android.bedstead.nene.utils.Poll;
 import com.android.bedstead.nene.utils.ShellCommand;
@@ -494,8 +495,8 @@ public class QuietModeTest {
     @Postsubmit(reason = "new test")
     public void requestQuietModeEnabled_callerIsForegroundLauncher_success() {
         UserReference workProfile = sDeviceState.workProfile();
-        try (TestAppInstance testAppInstance = sTestAppWithLauncherActivity.install()) {
-            setTestAppAsForegroundDefaultLauncher(testAppInstance);
+        try (TestAppInstance testAppInstance = sTestAppWithLauncherActivity.install();
+            RoleContext r = setTestAppAsForegroundDefaultLauncher(testAppInstance)) {
 
             testAppInstance.userManager().requestQuietModeEnabled(true,
                     workProfile.userHandle());
@@ -569,8 +570,8 @@ public class QuietModeTest {
     @Postsubmit(reason = "new test")
     public void requestQuietModeEnabled_false_credentialsSet_isNotDisabled() {
         UserReference workProfile = sDeviceState.workProfile();
-        try (TestAppInstance testAppInstance = sTestAppWithLauncherActivity.install()) {
-            setTestAppAsForegroundDefaultLauncher(testAppInstance);
+        try (TestAppInstance testAppInstance = sTestAppWithLauncherActivity.install();
+            RoleContext r = setTestAppAsForegroundDefaultLauncher(testAppInstance)) {
             workProfile.setPassword(PASSWORD);
             UserHandle workProfileUserHandle = workProfile.userHandle();
             testAppInstance.userManager().requestQuietModeEnabled(true,
@@ -610,9 +611,10 @@ public class QuietModeTest {
                 .contains("Keep profiles running: true");
     }
 
-    private static void setTestAppAsForegroundDefaultLauncher(TestAppInstance testAppInstance) {
-        setTestAppAsDefaultLauncher();
+    private static RoleContext setTestAppAsForegroundDefaultLauncher(TestAppInstance testAppInstance) {
+        RoleContext c = setTestAppAsDefaultLauncher();
         runTestAppInForeground(testAppInstance);
+        return c;
     }
 
     private static void runTestAppInForeground(TestAppInstance testAppInstance) {
@@ -624,7 +626,7 @@ public class QuietModeTest {
         launcherActivity.start();
     }
 
-    private static void setTestAppAsDefaultLauncher() {
-        sTestAppWithLauncherActivity.pkg().setAsRoleHolder(RoleManager.ROLE_HOME);
+    private static RoleContext setTestAppAsDefaultLauncher() {
+        return sTestAppWithLauncherActivity.pkg().setAsRoleHolder(RoleManager.ROLE_HOME);
     }
 }
