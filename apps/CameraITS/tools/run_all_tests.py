@@ -79,11 +79,17 @@ _TABLET_SCENES = (
 # Scenes that use the 'sensor_fusion' test rig
 _MOTION_SCENES = ('sensor_fusion',)
 
+# Scenes that uses lighting control
+_FLASH_SCENES = ('scene_flash',)
+
+# Scenes that uses checkerboard as chart
+_CHECKERBOARD_SCENES = ('sensor_fusion', 'scene_flash',)
+
 # Scenes that have to be run manually regardless of configuration
 _MANUAL_SCENES = ('scene5',)
 
 # All possible scenes
-_ALL_SCENES = _TABLET_SCENES + _MANUAL_SCENES + _MOTION_SCENES
+_ALL_SCENES = _TABLET_SCENES + _MANUAL_SCENES + _MOTION_SCENES + _FLASH_SCENES
 
 # Scenes that are logically grouped and can be called as group
 _GROUPED_SCENES = types.MappingProxyType({
@@ -127,6 +133,7 @@ _SCENE_REQ = types.MappingProxyType({
                      'See tests/sensor_fusion/SensorFusion.pdf for detailed '
                      'instructions.\nNote that this test will be skipped '
                      'on devices not supporting REALTIME camera timestamp.',
+    'scene_flash': 'A checkerboard pattern chart with lights off.',
 })
 
 SUB_CAMERA_TESTS = types.MappingProxyType({
@@ -574,7 +581,8 @@ def main():
   config_file_contents = get_config_file_contents()
   if testbed_index is None:
     for i in config_file_contents['TestBeds']:
-      if scenes == ['sensor_fusion']:
+      if (scenes == ['sensor_fusion'] or scenes == ['checkerboard'] or
+          scenes == ['scene_flash']):
         if TEST_KEY_SENSOR_FUSION not in i['Name'].lower():
           config_file_contents['TestBeds'].remove(i)
       else:
@@ -639,8 +647,11 @@ def main():
   # Prepend 'scene' if not specified at cmd line
   for i, s in enumerate(scenes):
     if (not s.startswith('scene') and
-        not s.startswith(('sensor_fusion', '<scene-name>'))):
+        not s.startswith(('checkerboard', 'sensor_fusion',
+                          'flash', '<scene-name>'))):
       scenes[i] = f'scene{s}'
+    if s.startswith('flash')):
+      scenes[i] = f'scene_{s}'
 
   # Expand GROUPED_SCENES and remove any duplicates
   scenes = [_GROUPED_SCENES[s] if s in _GROUPED_SCENES else s for s in scenes]
@@ -661,7 +672,7 @@ def main():
     auto_scene_switch = True
   else:
     auto_scene_switch = False
-    logging.info('No tablet: manual, sensor_fusion, or scene5 testing.')
+    logging.info('Manual, checkerboard scenes, or scene5 testing.')
 
   folded_prompted = False
   opened_prompted = False
@@ -713,9 +724,12 @@ def main():
       if auto_scene_switch:
         possible_scenes.remove('sensor_fusion')
     else:
-      possible_scenes = _TABLET_SCENES if auto_scene_switch else _ALL_SCENES
+      if 'checkerboard' in scenes:
+        possible_scenes = _CHECKERBOARD_SCENES
+      else:
+        possible_scenes = _TABLET_SCENES if auto_scene_switch else _ALL_SCENES
 
-    if '<scene-name>' in scenes:
+    if '<scene-name>' in scenes or 'checkerboard' in scenes:
       per_camera_scenes = possible_scenes
     else:
       # Validate user input scene names
