@@ -51,6 +51,7 @@ import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -278,7 +279,7 @@ public final class ActivityManagerHelperTest extends ActivityManagerTestBase {
                 .isEqualTo(expectedLaunchAllowed);
     }
 
-    @FlakyTest(bugId = 242066634)
+    @Ignore("b/304870066")
     @Test
     public void testStopAllTasksForUser() throws Exception {
         int initialCurrentUserId = getCurrentUserId();
