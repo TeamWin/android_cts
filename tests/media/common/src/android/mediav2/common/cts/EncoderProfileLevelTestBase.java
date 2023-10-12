@@ -547,6 +547,10 @@ public class EncoderProfileLevelTestBase extends CodecEncoderTestBase {
         } else if (mMediaType.equals(MediaFormat.MIMETYPE_VIDEO_H263) && got == H263Level45) {
             // If we got level45, then min level must be level10 or level45
             assertEquals(log, H263Level10, min);
+        } else if (mMediaType.equals(MediaFormat.MIMETYPE_VIDEO_MPEG4)
+                && mActiveEncCfg.mProfile == MPEG4ProfileAdvancedSimple && min == MPEG4Level1) {
+            // In mpeg4, for advanced simple profile, level0 and level1 have same limits
+            assertTrue(log, got == MPEG4Level0 || min <= got);
         } else {
             assertTrue(log, min <= got);
         }
