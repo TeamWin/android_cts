@@ -760,8 +760,8 @@ public class CodecDecoderValidationTest extends CodecDecoderTestBase {
     /**
      * Extract, Decode and Validate. Check description of class {@link CodecDecoderValidationTest}
      */
-    @ApiTest(apis = {"MediaCodecInfo.CodecCapabilities#COLOR_FormatYUV420Flexible",
-            "MediaCodecInfo.CodecCapabilities#COLOR_FormatYUVP010",
+    @ApiTest(apis = {"android.media.MediaCodecInfo.CodecCapabilities#COLOR_FormatYUV420Flexible",
+            "android.media.MediaCodecInfo.CodecCapabilities#COLOR_FormatYUVP010",
             "android.media.AudioFormat#ENCODING_PCM_16BIT"})
     // "5.1.3", "5.1.2/C-1-11" are covered partially
     @CddTest(requirements = {"5.1.2/C-1-1", "5.1.2/C-1-2", "5.1.2/C-1-3", "5.1.2/C-1-4",
