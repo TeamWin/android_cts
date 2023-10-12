@@ -5723,6 +5723,10 @@ You should be prompted to select credentials; choose the ones you just installed
 
     <!-- Audio Data Paths Test-->
     <string name="audio_datapaths_clearresults">Clear Results</string>
+    <string name="audio_datapaths_legacy">Legacy</string>
+    <string name="audio_datapaths_mmap_shared">MMAP Shared</string>
+    <string name="audio_datapaths_mmap_exclusive">MMAP Exclusive</string>
+    <string name="audio_datapaths_invalid_transfer">Invalid Transfer Type</string>
 
     <string name="audio_datapaths_internal_test">Audio Data Paths Internal Test</string>
     <string name="audio_datapaths_internal_info">This test verifies basic functionality over a set of audio routes
@@ -5740,8 +5744,10 @@ You should be prompted to select credentials; choose the ones you just installed
         \n • Once each of the data paths and APIs have been measured, the test can be marked successful.
     </string>
 
-    <string name="audio_datapaths_mic">Internal Mic: </string>
-    <string name="audio_datapatch_speaker">Internal Speaker: </string>
+    <string name="audio_datapaths_mic">Mic:</string>
+    <string name="audio_datapaths_speaker">Speaker:</string>
+    <string name="audio_datapaths_MMAP">MMAP:"</string>
+    <string name="audio_datapaths_MMAP_exclusive">MMAP Exclusive:"</string>
     <string name="audio_datapaths_analog_test">Audio Data Paths Analog Jack Test</string>
     <string name="audio_datapaths_analog_info">This test verifies basic functionality over a set of audio routes
         \n\nNote that if the DUT does not have an analog headset port, this test can be skipped.

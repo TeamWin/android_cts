@@ -23,6 +23,8 @@
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
+        <include layout="@layout/audio_datapaths_header"/>
+
         <include layout="@layout/audio_datapaths_activity" />
 
         <TextView

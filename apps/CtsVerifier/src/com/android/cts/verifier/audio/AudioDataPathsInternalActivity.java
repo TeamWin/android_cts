@@ -18,7 +18,6 @@ package com.android.cts.verifier.audio;
 
 import android.media.AudioDeviceInfo;
 import android.os.Bundle;
-import android.widget.TextView;
 
 import com.android.cts.verifier.R;
 
@@ -36,13 +35,6 @@ public class AudioDataPathsInternalActivity extends AudioDataPathsBaseActivity {
         setContentView(R.layout.audio_datapaths_internal);
 
         super.onCreate(savedInstanceState);
-
-        String yesString = getResources().getString(R.string.audio_general_yes);
-        String noString = getResources().getString(R.string.audio_general_no);
-        ((TextView) findViewById(R.id.audio_datapaths_mic))
-                .setText(mHasMic ? yesString : noString);
-        ((TextView) findViewById(R.id.audio_datapaths_speaker))
-                .setText(mHasSpeaker ? yesString : noString);
 
         setInfoResources(
                 R.string.audio_datapaths_internal_test, R.string.audio_datapaths_internal_info, -1);
@@ -67,31 +59,31 @@ public class AudioDataPathsInternalActivity extends AudioDataPathsBaseActivity {
 
         boolean forceFailure = false;
 
-        TestSpec testSpec;
+        TestModule testModule;
 
         //
         // Built-in Speaker/Mic
         //
         // - Mono
         if (doMono) {
-            testSpec = new TestSpec(
+            testModule = new TestModule(
                     AudioDeviceInfo.TYPE_BUILTIN_SPEAKER, 48000, 1,
                     AudioDeviceInfo.TYPE_BUILTIN_MIC, 48000, 1);
-            testSpec.setSectionTitle("Mono");
-            testSpec.setSources(sinSourceProvider, micSinkProvider);
-            testSpec.setInputPreset(Recorder.INPUT_PRESET_NONE);
-            testSpec.setDescription("Speaker:1 Mic:1:PRESET_NONE");
-            testManager.mTestSpecs.add(testSpec);
+            testModule.setSectionTitle("Mono");
+            testModule.setSources(sinSourceProvider, micSinkProvider);
+            testModule.setInputPreset(Recorder.INPUT_PRESET_NONE);
+            testModule.setDescription("Spkr:1 Mic:1:PRESET_NONE");
+            testManager.addTestModule(testModule);
 
             if (forceFailure) {
                 // Failure Case
-                testSpec = new TestSpec(
+                testModule = new TestModule(
                         AudioDeviceInfo.TYPE_BUILTIN_SPEAKER, 48000, 1,
                         AudioDeviceInfo.TYPE_BUILTIN_MIC, 42, 1);
-                testSpec.setSources(sinSourceProvider, micSinkProvider);
-                testSpec.setInputPreset(Recorder.INPUT_PRESET_NONE);
-                testSpec.setDescription("Speaker:1 Mic:1:PRESET_NONE");
-                testManager.mTestSpecs.add(testSpec);
+                testModule.setSources(sinSourceProvider, micSinkProvider);
+                testModule.setInputPreset(Recorder.INPUT_PRESET_NONE);
+                testModule.setDescription("Spkr:1 Mic:1:PRESET_NONE");
+                testManager.addTestModule(testModule);
             }
         }
 
@@ -101,131 +93,131 @@ public class AudioDataPathsInternalActivity extends AudioDataPathsBaseActivity {
             // INPUT_PRESET_REMOTE_SUBMIX requires special system setup
             // INPUT_PRESET_VOICECOMMUNICATION - the aggressive AEC always causes it to fail
 
-            testSpec = new TestSpec(
+            testModule = new TestModule(
                     AudioDeviceInfo.TYPE_BUILTIN_SPEAKER, 48000, 1,
                     AudioDeviceInfo.TYPE_BUILTIN_MIC, 48000, 1);
-            testSpec.setSectionTitle("Input Presets");
-            testSpec.setSources(sinSourceProvider, micSinkProvider);
-            testSpec.setInputPreset(Recorder.INPUT_PRESET_DEFAULT);
-            testSpec.setDescription("Speaker:1 Mic:1:PRESET_DEFAULT");
-            testManager.mTestSpecs.add(testSpec);
+            testModule.setSectionTitle("Input Presets");
+            testModule.setSources(sinSourceProvider, micSinkProvider);
+            testModule.setInputPreset(Recorder.INPUT_PRESET_DEFAULT);
+            testModule.setDescription("Spkr:1 Mic:1:PRESET_DEFAULT");
+            testManager.addTestModule(testModule);
 
-            testSpec = new TestSpec(
+            testModule = new TestModule(
                     AudioDeviceInfo.TYPE_BUILTIN_SPEAKER, 48000, 1,
                     AudioDeviceInfo.TYPE_BUILTIN_MIC, 48000, 1);
-            testSpec.setSources(sinSourceProvider, micSinkProvider);
-            testSpec.setInputPreset(Recorder.INPUT_PRESET_GENERIC);
-            testSpec.setDescription("Speaker:1 Mic:1:PRESET_GENERIC");
-            testManager.mTestSpecs.add(testSpec);
+            testModule.setSources(sinSourceProvider, micSinkProvider);
+            testModule.setInputPreset(Recorder.INPUT_PRESET_GENERIC);
+            testModule.setDescription("Spkr:1 Mic:1:PRESET_GENERIC");
+            testManager.addTestModule(testModule);
 
-            testSpec = new TestSpec(
+            testModule = new TestModule(
                     AudioDeviceInfo.TYPE_BUILTIN_SPEAKER, 48000, 1,
                     AudioDeviceInfo.TYPE_BUILTIN_MIC, 48000, 1);
-            testSpec.setSources(sinSourceProvider, micSinkProvider);
-            testSpec.setInputPreset(Recorder.INPUT_PRESET_UNPROCESSED);
-            testSpec.setDescription("Speaker:1 Mic:1:PRESET_UNPROCESSED");
-            testManager.mTestSpecs.add(testSpec);
+            testModule.setSources(sinSourceProvider, micSinkProvider);
+            testModule.setInputPreset(Recorder.INPUT_PRESET_UNPROCESSED);
+            testModule.setDescription("Spkr:1 Mic:1:PRESET_UNPROCESSED");
+            testManager.addTestModule(testModule);
 
-            testSpec = new TestSpec(
+            testModule = new TestModule(
                     AudioDeviceInfo.TYPE_BUILTIN_SPEAKER, 48000, 1,
                     AudioDeviceInfo.TYPE_BUILTIN_MIC, 48000, 1);
-            testSpec.setSources(sinSourceProvider, micSinkProvider);
-            testSpec.setInputPreset(Recorder.INPUT_PRESET_CAMCORDER);
-            testSpec.setDescription("Speaker:1 Mic:1:PRESET_CAMCORDER");
-            testManager.mTestSpecs.add(testSpec);
+            testModule.setSources(sinSourceProvider, micSinkProvider);
+            testModule.setInputPreset(Recorder.INPUT_PRESET_CAMCORDER);
+            testModule.setDescription("Spkr:1 Mic:1:PRESET_CAMCORDER");
+            testManager.addTestModule(testModule);
 
-            testSpec = new TestSpec(
+            testModule = new TestModule(
                     AudioDeviceInfo.TYPE_BUILTIN_SPEAKER, 48000, 1,
                     AudioDeviceInfo.TYPE_BUILTIN_MIC, 48000, 1);
-            testSpec.setSources(sinSourceProvider, micSinkProvider);
-            testSpec.setInputPreset(Recorder.INPUT_PRESET_VOICERECOGNITION);
-            testSpec.setDescription("Speaker:1 Mic:1:PRESET_VOICERECOGNITION");
-            testManager.mTestSpecs.add(testSpec);
+            testModule.setSources(sinSourceProvider, micSinkProvider);
+            testModule.setInputPreset(Recorder.INPUT_PRESET_VOICERECOGNITION);
+            testModule.setDescription("Spkr:1 Mic:1:PRESET_VOICERECOGNITION");
+            testManager.addTestModule(testModule);
 
-            testSpec = new TestSpec(
+            testModule = new TestModule(
                     AudioDeviceInfo.TYPE_BUILTIN_SPEAKER, 48000, 1,
                     AudioDeviceInfo.TYPE_BUILTIN_MIC, 48000, 1);
-            testSpec.setSources(sinSourceProvider, micSinkProvider);
-            testSpec.setInputPreset(Recorder.INPUT_PRESET_VOICEPERFORMANCE);
-            testSpec.setDescription("Speaker:1 Mic:1:PRESET_VOICEPERFORMANCE");
-            testManager.mTestSpecs.add(testSpec);
+            testModule.setSources(sinSourceProvider, micSinkProvider);
+            testModule.setInputPreset(Recorder.INPUT_PRESET_VOICEPERFORMANCE);
+            testModule.setDescription("Spkr:1 Mic:1:PRESET_VOICEPERFORMANCE");
+            testManager.addTestModule(testModule);
         }
 
         // - Stereo, channels individually
         if (doStereo) {
-            testSpec = new TestSpec(
+            testModule = new TestModule(
                     AudioDeviceInfo.TYPE_BUILTIN_SPEAKER, 48000, 2,
                     AudioDeviceInfo.TYPE_BUILTIN_MIC, 48000, 1);
-            testSpec.setSectionTitle("Stereo");
-            testSpec.setSources(leftSineSourceProvider, micSinkProvider);
-            testSpec.setDescription("Speaker:2:Left Mic:1");
-            testManager.mTestSpecs.add(testSpec);
+            testModule.setSectionTitle("Stereo");
+            testModule.setSources(leftSineSourceProvider, micSinkProvider);
+            testModule.setDescription("Spkr:2:Left Mic:1");
+            testManager.addTestModule(testModule);
 
-            testSpec = new TestSpec(
+            testModule = new TestModule(
                     AudioDeviceInfo.TYPE_BUILTIN_SPEAKER, 48000, 2,
                     AudioDeviceInfo.TYPE_BUILTIN_MIC, 48000, 1);
-            testSpec.setSources(rightSineSourceProvider, micSinkProvider);
-            testSpec.setDescription("Speaker:2:Right Mic:1");
-            testManager.mTestSpecs.add(testSpec);
+            testModule.setSources(rightSineSourceProvider, micSinkProvider);
+            testModule.setDescription("Spkr:2:Right Mic:1");
+            testManager.addTestModule(testModule);
         }
 
         //
         // Let's check some sample rates
         //
         if (doSampleRates) {
-            testSpec = new TestSpec(
+            testModule = new TestModule(
                     AudioDeviceInfo.TYPE_BUILTIN_SPEAKER, 11025, 2,
                     AudioDeviceInfo.TYPE_BUILTIN_MIC, 48000, 1);
-            testSpec.setSectionTitle("Sample Rates");
-            testSpec.setSources(sinSourceProvider, micSinkProvider);
-            testSpec.setDescription("Speaker:2:11025 Mic:1:48000");
-            testManager.mTestSpecs.add(testSpec);
+            testModule.setSectionTitle("Sample Rates");
+            testModule.setSources(sinSourceProvider, micSinkProvider);
+            testModule.setDescription("Spkr:2:11025 Mic:1:48000");
+            testManager.addTestModule(testModule);
 
-            testSpec = new TestSpec(
+            testModule = new TestModule(
                     AudioDeviceInfo.TYPE_BUILTIN_SPEAKER, 48000, 2,
                     AudioDeviceInfo.TYPE_BUILTIN_MIC, 44100, 1);
-            testSpec.setSources(sinSourceProvider, micSinkProvider);
-            testSpec.setDescription("Speaker:2:48000 Mic:1:44100");
-            testManager.mTestSpecs.add(testSpec);
+            testModule.setSources(sinSourceProvider, micSinkProvider);
+            testModule.setDescription("Spkr:2:48000 Mic:1:44100");
+            testManager.addTestModule(testModule);
 
-            testSpec = new TestSpec(
+            testModule = new TestModule(
                     AudioDeviceInfo.TYPE_BUILTIN_SPEAKER, 44100, 2,
                     AudioDeviceInfo.TYPE_BUILTIN_MIC, 48000, 1);
-            testSpec.setSources(sinSourceProvider, micSinkProvider);
-            testSpec.setDescription("Speaker:2:44100 Mic:1:48000");
-            testManager.mTestSpecs.add(testSpec);
+            testModule.setSources(sinSourceProvider, micSinkProvider);
+            testModule.setDescription("Spkr:2:44100 Mic:1:48000");
+            testManager.addTestModule(testModule);
 
-            testSpec = new TestSpec(
+            testModule = new TestModule(
                     AudioDeviceInfo.TYPE_BUILTIN_SPEAKER, 96000, 2,
                     AudioDeviceInfo.TYPE_BUILTIN_MIC, 48000, 1);
-            testSpec.setSources(sinSourceProvider, micSinkProvider);
-            testSpec.setDescription("Speaker:2:96000 Mic:1:48000");
-            testManager.mTestSpecs.add(testSpec);
+            testModule.setSources(sinSourceProvider, micSinkProvider);
+            testModule.setDescription("Spkr:2:96000 Mic:1:48000");
+            testManager.addTestModule(testModule);
         }
 
         if (doSpeakerSafe) {
             int speakerSafeSampleRate = 48000;
 
             // Left
-            testSpec = new TestSpec(
+            testModule = new TestModule(
                     AudioDeviceInfo.TYPE_BUILTIN_SPEAKER_SAFE, speakerSafeSampleRate, 2,
                     AudioDeviceInfo.TYPE_BUILTIN_MIC, speakerSafeSampleRate, 1);
-            testSpec.setSectionTitle("Speaker Safe");
-            testSpec.setSources(leftSineSourceProvider, micSinkProvider);
-            testSpec.setDescription("SpeakerSafe:2:Left Mic:1 no MMAP");
-            testManager.mTestSpecs.add(testSpec);
+            testModule.setSectionTitle("Speaker Safe");
+            testModule.setSources(leftSineSourceProvider, micSinkProvider);
+            testModule.setDescription("SpeakerSafe:2:Left Mic:1");
+            testManager.addTestModule(testModule);
 
             // Right
-            testSpec = new TestSpec(
+            testModule = new TestModule(
                     AudioDeviceInfo.TYPE_BUILTIN_SPEAKER_SAFE, speakerSafeSampleRate, 2,
                     AudioDeviceInfo.TYPE_BUILTIN_MIC, speakerSafeSampleRate, 1);
-            testSpec.setSources(rightSineSourceProvider, micSinkProvider);
-            testSpec.setDescription("SpeakerSafe:2:Right Mic:1 no MMAP");
-            testManager.mTestSpecs.add(testSpec);
+            testModule.setSources(rightSineSourceProvider, micSinkProvider);
+            testModule.setDescription("SpeakerSafe:2:Right Mic:1");
+            testManager.addTestModule(testModule);
         }
     }
 
-    void postValidateTestDevices(int numValidTestSpecs) {
+    void postValidateTestDevices(int numValidTestModules) {
 
     }
 

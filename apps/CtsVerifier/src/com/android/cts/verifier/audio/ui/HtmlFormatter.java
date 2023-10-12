@@ -70,6 +70,42 @@ public class HtmlFormatter {
     }
 
     /**
+     * Opens an HTML bold block.
+     * @return this HtmlFormatter to allow for cascading calls.
+     */
+    public HtmlFormatter openBold() {
+        mSB.append("<b>");
+        return this;
+    }
+
+    /**
+     * Closes an HTML bold block.
+     * @return this HtmlFormatter to allow for cascading calls.
+     */
+    public HtmlFormatter closeBold() {
+        mSB.append("</b>");
+        return this;
+    }
+
+    /**
+     * Opens an HTML italic block.
+     * @return this HtmlFormatter to allow for cascading calls.
+     */
+    public HtmlFormatter openItalic() {
+        mSB.append("<i>");
+        return this;
+    }
+
+    /**
+     * Closes an HTML italic block.
+     * @return this HtmlFormatter to allow for cascading calls.
+     */
+    public HtmlFormatter closeItalic() {
+        mSB.append("</i>");
+        return this;
+    }
+
+    /**
      * Inserts a 'break' in the HTML
      * @return this HtmlFormatter to allow for cascading calls.
      */

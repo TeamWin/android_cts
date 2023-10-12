@@ -69,7 +69,7 @@ public class USBAudioPeripheralRecordActivity extends USBAudioPeripheralActivity
                 withLoopback ? new SinAudioSourceProvider() : null,
                 new AppCallbackAudioSinkProvider(new ScopeRefreshCallback()));
 
-        if (mDuplexManager.setupStreams(
+        if (mDuplexManager.buildStreams(
                 withLoopback ? BuilderBase.TYPE_JAVA : BuilderBase.TYPE_NONE,
                 BuilderBase.TYPE_JAVA) != StreamBase.OK) {
             Toast.makeText(

@@ -108,6 +108,17 @@ public class DuplexAudioManager {
         mRecorderSampleRate = sampleRate;
     }
 
+    private int mPlayerSharingMode = BuilderBase.SHARING_MODE_SHARED;
+    private int mRecorderSharingMode = BuilderBase.SHARING_MODE_SHARED;
+
+    public void setPlayerSharingMode(int mode) {
+        mPlayerSharingMode = mode;
+    }
+
+    public void setRecorderSharingMode(int mode) {
+        mRecorderSharingMode = mode;
+    }
+
     /**
      * Specifies the input preset to use for the recorder.
      * @param preset
@@ -116,7 +127,13 @@ public class DuplexAudioManager {
         mInputPreset = preset;
     }
 
-    public int setupStreams(int playerType, int recorderType) {
+    /**
+     * Initializes (but does not start) the player and recorder streams.
+     * @param playerType    The API constant for the player
+     * @param recorderType  The API constant for the recorder
+     * @return a StreamBase status code specifying the result.
+     */
+    public int buildStreams(int playerType, int recorderType) {
         // Recorder
         if ((recorderType & BuilderBase.TYPE_MASK) != BuilderBase.TYPE_NONE) {
             try {
@@ -127,6 +144,7 @@ public class DuplexAudioManager {
                         .setRecorderType(recorderType)
                         .setAudioSinkProvider(mSinkProvider)
                         .setInputPreset(mInputPreset)
+                        .setSharingMode(mRecorderSharingMode)
                         .setRouteDevice(mRecorderSelectedDevice)
                         .setSampleRate(mRecorderSampleRate)
                         .setChannelCount(mNumRecorderChannels)
@@ -147,6 +165,7 @@ public class DuplexAudioManager {
                         .setSourceProvider(mSourceProvider)
                         .setSampleRate(mPlayerSampleRate)
                         .setChannelCount(mNumPlayerChannels)
+                        .setSharingMode(mPlayerSharingMode)
                         .setRouteDevice(mPlayerSelectedDevice)
                         .setNumExchangeFrames(mNumPlayerBurstFrames)
                         .setPerformanceMode(BuilderBase.PERFORMANCE_MODE_LOWLATENCY);
@@ -258,5 +277,28 @@ public class DuplexAudioManager {
 
         // Everything checks out OK.
         return true;
+    }
+
+    /**
+     * Don't call this until the streams are started
+     * @return true if both player and recorder are using the specified sharing mode set with
+     * with setPlayerSharingMode() and setRecorderSharingMode().
+     */
+    public boolean validateSharingModes() {
+        boolean playerOK = false;
+        if (mPlayer != null) {
+            int sharingMode = mPlayer.getSharingMode();
+            playerOK = sharingMode == mPlayerSharingMode
+                    || sharingMode == BuilderBase.SHARING_MODE_NOTSUPPORTED;
+        }
+
+        boolean recorderOK = false;
+        if (mRecorder != null) {
+            int sharingMode = mRecorder.getSharingMode();
+            recorderOK = sharingMode == mRecorderSharingMode
+                    || sharingMode == BuilderBase.SHARING_MODE_NOTSUPPORTED;
+        }
+
+        return playerOK && recorderOK;
     }
 }

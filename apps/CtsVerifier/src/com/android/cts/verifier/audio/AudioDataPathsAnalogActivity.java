@@ -41,7 +41,7 @@ public class AudioDataPathsAnalogActivity extends AudioDataPathsBaseActivity {
 
         // Make sure there are devices to test (as in a device without an analog port),
         // or else enable pass button.
-        if (mTestManager.countValidTestSpecs() == 0) {
+        if (mTestManager.countValidTestModules() == 0) {
             getPassButton().setEnabled(true);
         }
     }
@@ -55,30 +55,30 @@ public class AudioDataPathsAnalogActivity extends AudioDataPathsBaseActivity {
         AudioSinkProvider micSinkProvider =
                 new AppCallbackAudioSinkProvider(mAnalysisCallbackHandler);
 
-        TestSpec testSpec;
+        TestModule testModule;
 
-        testSpec = new TestSpec(
+        testModule = new TestModule(
                 AudioDeviceInfo.TYPE_WIRED_HEADSET, 48000, 2,
                 AudioDeviceInfo.TYPE_WIRED_HEADSET, 48000, 1);
-        testSpec.setSectionTitle("Analog Jack");
-        testSpec.setDescription("Analog:2:Left Analog:1");
-        testSpec.setSources(leftSineSourceProvider, micSinkProvider);
-        testManager.mTestSpecs.add(testSpec);
+        testModule.setSectionTitle("Analog Jack");
+        testModule.setDescription("Analog:2:Left Analog:1");
+        testModule.setSources(leftSineSourceProvider, micSinkProvider);
+        testManager.addTestModule(testModule);
 
-        testSpec = new TestSpec(
+        testModule = new TestModule(
                 AudioDeviceInfo.TYPE_WIRED_HEADSET, 48000, 2,
                 AudioDeviceInfo.TYPE_WIRED_HEADSET, 48000, 1);
-        testSpec.setDescription("Analog:2:Right Analog:1");
-        testSpec.setSources(rightSineSourceProvider, micSinkProvider);
-        testManager.mTestSpecs.add(testSpec);
+        testModule.setDescription("Analog:2:Right Analog:1");
+        testModule.setSources(rightSineSourceProvider, micSinkProvider);
+        testManager.addTestModule(testModule);
     }
 
-    void postValidateTestDevices(int numValidTestSpecs) {
+    void postValidateTestDevices(int numValidTestModules) {
         View promptView = findViewById(R.id.audio_datapaths_deviceprompt);
         if (mTestManager.calculatePass()) {
             promptView.setVisibility(View.GONE);
         } else {
-            promptView.setVisibility(numValidTestSpecs == 0 ? View.VISIBLE : View.GONE);
+            promptView.setVisibility(numValidTestModules == 0 ? View.VISIBLE : View.GONE);
         }
     }
 }
