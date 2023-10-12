@@ -95,6 +95,12 @@ public class PackageDeviceInfo extends DeviceInfo {
     private static final String CONFIG_ACCESSIBILITY_SERVICE = "config_defaultAccessibilityService";
     private static final String DEFAULT_ACCESSIBILITY_SERVICE = "is_default_accessibility_service";
 
+    private static final String CONFIG_QR_CODE_COMPONENT = "config_defaultQrCodeComponent";
+    private static final String DEFAULT_QR_CODE_COMPONENT = "default_qr_code_component";
+    private static final String IS_PLATFORM_QR_SCANNER_ADOPTED = "is_platform_qr_scanner_adopted";
+    private static final String PLATFORM_QR_CODE_COMPONENT_CLASS_NAME =
+            "com.google.android.gms.mlkit.barcode.ui.PlatformBarcodeScanningActivityProxy";
+
     private static final HashSet<String> ADDITIONAL_ANDROID_PERMISSIONS = new HashSet<>(Arrays.asList(new String[] {
         "com.android.voicemail.permission.ADD_VOICEMAIL",
         "com.android.voicemail.permission.WRITE_VOICEMAIL",
@@ -123,6 +129,8 @@ public class PackageDeviceInfo extends DeviceInfo {
         final Set<String> deviceAdminPackages = getActiveDeviceAdminPackages();
 
         final ComponentName defaultAccessibilityComponent = getDefaultAccessibilityComponent();
+
+        final ComponentName defaultQrCodeComponent = getDefaultQrCodeComponent();
 
         final HashMap<String, List<String>> packageRolesData = getPackageRolesData();
 
@@ -168,6 +176,16 @@ public class PackageDeviceInfo extends DeviceInfo {
             store.endGroup();
         }
         store.endArray(); // "package"
+
+        String defaultQrCodeComponentName = "";
+        boolean isPlatformQrCodeComponentAdopted = false;
+        if (defaultQrCodeComponent != null) {
+            defaultQrCodeComponentName = defaultQrCodeComponent.flattenToString();
+            isPlatformQrCodeComponentAdopted =
+                defaultQrCodeComponent.getClassName().equals(PLATFORM_QR_CODE_COMPONENT_CLASS_NAME);
+        }
+        store.addResult(DEFAULT_QR_CODE_COMPONENT, defaultQrCodeComponentName);
+        store.addResult(IS_PLATFORM_QR_SCANNER_ADOPTED, isPlatformQrCodeComponentAdopted);
     }
 
     private static void collectRequestedPermissions(DeviceInfoStore store,
@@ -329,6 +347,15 @@ public class PackageDeviceInfo extends DeviceInfo {
         final String defaultAccessibilityServiceComponent =
                 getRawDeviceConfig(CONFIG_ACCESSIBILITY_SERVICE);
         return ComponentName.unflattenFromString(defaultAccessibilityServiceComponent);
+    }
+
+    private ComponentName getDefaultQrCodeComponent() {
+        try {
+            final String defaultQrCodeComponent = getRawDeviceConfig(CONFIG_QR_CODE_COMPONENT);
+            return ComponentName.unflattenFromString(defaultQrCodeComponent);
+        } catch (RuntimeException e) {
+            return null;
+        }
     }
 
     /**
