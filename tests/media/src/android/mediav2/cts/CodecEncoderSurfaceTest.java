@@ -759,7 +759,10 @@ public class CodecEncoderSurfaceTest {
      * for PSNR to check if the encoding happened successfully with out any obvious artifacts.
      */
     @CddTest(requirements = {"2.2.2", "2.3.2", "2.5.2"})
-    @ApiTest(apis = {"MediaCodecInfo.CodecCapabilities#COLOR_FormatSurface"})
+    @ApiTest(apis = {"android.media.MediaCodecInfo.CodecCapabilities#COLOR_FormatSurface",
+            "android.media.MediaCodecInfo.CodecCapabilities#COLOR_FormatYUV420Flexible",
+            "android.media.MediaCodecInfo.CodecCapabilities#COLOR_FormatYUVP010",
+            "android.media.MediaFormat#KEY_COLOR_TRANSFER_REQUEST"})
     @LargeTest
     @Test(timeout = CodecTestBase.PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testSimpleEncodeFromSurface() throws IOException, InterruptedException {
@@ -888,7 +891,9 @@ public class CodecEncoderSurfaceTest {
      * Test is similar to {@link #testSimpleEncodeFromSurface()} but uses ndk api
      */
     @CddTest(requirements = {"2.2.2", "2.3.2", "2.5.2"})
-    @ApiTest(apis = {"MediaCodecInfo.CodecCapabilities#COLOR_FormatSurface"})
+    @ApiTest(apis = {"android.media.MediaCodecInfo.CodecCapabilities#COLOR_FormatSurface",
+            "android.media.MediaCodecInfo.CodecCapabilities#COLOR_FormatYUV420Flexible",
+            "android.media.MediaCodecInfo.CodecCapabilities#COLOR_FormatYUVP010"})
     @LargeTest
     @Test(timeout = CodecTestBase.PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testSimpleEncodeFromSurfaceNative() throws IOException, InterruptedException {
