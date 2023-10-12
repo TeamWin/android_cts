@@ -23,6 +23,7 @@ import static android.app.WallpaperManager.FLAG_SYSTEM;
 import static android.app.cts.wallpapers.WallpaperManagerTestUtils.WallpaperChange;
 import static android.app.cts.wallpapers.WallpaperManagerTestUtils.WallpaperState;
 import static android.app.cts.wallpapers.WallpaperManagerTestUtils.runAndAwaitChanges;
+import static android.app.cts.wallpapers.WallpaperManagerTestUtils.runAndAwaitColorChanges;
 import static android.app.cts.wallpapers.util.WallpaperTestUtils.isSimilar;
 import static android.content.pm.PackageManager.FEATURE_LIVE_WALLPAPER;
 import static android.content.pm.PackageManager.FEATURE_SECURE_LOCK_SCREEN;
@@ -85,6 +86,7 @@ import com.google.testing.junit.testparameterinjector.TestParameter;
 import com.google.testing.junit.testparameterinjector.TestParameterInjector;
 
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Rule;
@@ -122,6 +124,7 @@ public class WallpaperManagerTest {
     private static final int DIM_LISTENER_TIMEOUT_SECS = 30;
 
     private WallpaperManager mWallpaperManager;
+    private static WallpaperManager sWallpaperManager = null;
     private final Instrumentation mInstrumentation = InstrumentationRegistry.getInstrumentation();;
     private Context mContext;
     private CtsTouchUtils mCtsTouchUtils;
@@ -160,6 +163,7 @@ public class WallpaperManagerTest {
         WallpaperWindowsTestUtils.setContext(mContext);
         mCtsTouchUtils = new CtsTouchUtils(mContext);
         mWallpaperManager = WallpaperManager.getInstance(mContext);
+        sWallpaperManager = mWallpaperManager;
         assumeTrue("Device does not support wallpapers", mWallpaperManager.isWallpaperSupported());
 
         MockitoAnnotations.initMocks(this);
@@ -179,7 +183,8 @@ public class WallpaperManagerTest {
         mContext.registerReceiver(mBroadcastReceiver,
                 new IntentFilter(Intent.ACTION_WALLPAPER_CHANGED));
         mEnableWcg = mWallpaperManager.shouldEnableWideColorGamut();
-        mWallpaperManager.clear(FLAG_SYSTEM | FLAG_LOCK);
+        runAndAwaitColorChanges(5, TimeUnit.SECONDS, FLAG_SYSTEM | FLAG_LOCK,
+                mWallpaperManager, mHandler, mWallpaperManager::clear);
         if (mDefaultWallpaperInfo == null) {
             mDefaultWallpaperInfo = mWallpaperManager.getWallpaperInfo(FLAG_SYSTEM);
         }
@@ -193,18 +198,26 @@ public class WallpaperManagerTest {
     }
 
     @After
-    public void tearDown() throws Exception {
-
+    public void tearDown() {
         // drop READ_WALLPAPER_INTERNAL
-        mInstrumentation.getUiAutomation()
-                .dropShellPermissionIdentity();
+        mInstrumentation.getUiAutomation().dropShellPermissionIdentity();
 
         if (mBroadcastReceiver != null) {
             mContext.unregisterReceiver(mBroadcastReceiver);
         }
         TestWallpaperService.Companion.checkAssertions();
         TestWallpaperService.Companion.resetCounts();
-        mWallpaperManager.clear(FLAG_SYSTEM | FLAG_LOCK);
+    }
+
+    /**
+     * Reset all wallpapers to default after the test suite has been executed.
+     */
+    @AfterClass
+    public static void tearDownClass() throws IOException {
+        if (sWallpaperManager != null) {
+            sWallpaperManager.clear(FLAG_SYSTEM | FLAG_LOCK);
+        }
+        sWallpaperManager = null;
     }
 
     @Test
