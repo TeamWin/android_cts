@@ -31,6 +31,7 @@ import static org.junit.Assume.assumeTrue;
 
 import android.app.Activity;
 import android.platform.test.annotations.Presubmit;
+import android.server.wm.LockScreenSession;
 
 import androidx.test.filters.MediumTest;
 
@@ -51,7 +52,8 @@ public class ActivityLifecycleKeyguardTests extends ActivityLifecycleClientTestB
     @Test
     public void testSingleLaunch() throws Exception {
         assumeTrue(supportsSecureLock());
-        try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
+        try (LockScreenSession lockScreenSession =
+                    new LockScreenSession(mInstrumentation, mWmState)) {
             lockScreenSession.setLockCredential().gotoKeyguard();
 
             new Launcher(FirstActivity.class)
@@ -70,7 +72,8 @@ public class ActivityLifecycleKeyguardTests extends ActivityLifecycleClientTestB
         final Activity activity = launchActivityAndWait(FirstActivity.class);
 
         // Show and hide lock screen
-        try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
+        try (LockScreenSession lockScreenSession =
+                  new LockScreenSession(mInstrumentation, mWmState)) {
             lockScreenSession.setLockCredential().gotoKeyguard();
             waitAndAssertActivityStates(state(activity, ON_STOP));
 
@@ -101,7 +104,8 @@ public class ActivityLifecycleKeyguardTests extends ActivityLifecycleClientTestB
 
         // Show and hide lock screen
         getTransitionLog().clear();
-        try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
+        try (LockScreenSession lockScreenSession =
+                    new LockScreenSession(mInstrumentation, mWmState)) {
             lockScreenSession.setLockCredential().gotoKeyguard();
             waitAndAssertActivityStates(state(firstActivity, ON_STOP));
             waitAndAssertActivityStates(state(secondaryActivity, ON_STOP));
@@ -142,7 +146,8 @@ public class ActivityLifecycleKeyguardTests extends ActivityLifecycleClientTestB
 
         // Show and hide lock screen
         getTransitionLog().clear();
-        try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
+        try (LockScreenSession lockScreenSession =
+                    new LockScreenSession(mInstrumentation, mWmState)) {
             lockScreenSession.setLockCredential().gotoKeyguard();
             waitAndAssertActivityStates(state(firstActivity, ON_STOP));
             waitAndAssertActivityStates(state(PipActivity.class, ON_STOP));

@@ -35,6 +35,7 @@ import android.hardware.devicestate.DeviceStateManager;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.ActivityManagerTestBase;
 import android.server.wm.DeviceStateUtils;
+import android.server.wm.LockScreenSession;
 import android.server.wm.jetpack.utils.TestRearDisplayActivity;
 import android.server.wm.jetpack.utils.TestRearDisplayShowWhenLockedActivity;
 import android.server.wm.jetpack.utils.WindowExtensionTestRule;

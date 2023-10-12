@@ -37,6 +37,7 @@ import android.platform.test.annotations.Presubmit;
 import android.security.keystore.KeyProperties;
 import android.security.keystore.KeyProtection;
 import android.server.wm.ActivityManagerTestBase;
+import android.server.wm.LockScreenSession;
 import android.server.wm.UiDeviceUtils;
 
 import androidx.test.InstrumentationRegistry;
@@ -305,7 +306,7 @@ public class CipherTest {
 
         public DeviceLockSession() throws Exception {
             setUp();
-            mLockCredential = new LockScreenSession();
+            mLockCredential = new LockScreenSession(mInstrumentation, mWmState);
             mLockCredential.setLockCredential();
         }
 

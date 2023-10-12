@@ -64,6 +64,7 @@ import android.platform.test.annotations.Presubmit;
 import android.server.wm.ActivityManagerTestBase;
 import android.server.wm.CommandSession.ActivitySession;
 import android.server.wm.CommandSession.ActivitySessionClient;
+import android.server.wm.LockScreenSession;
 import android.server.wm.WaitForValidActivityState;
 import android.server.wm.app.Components;
 

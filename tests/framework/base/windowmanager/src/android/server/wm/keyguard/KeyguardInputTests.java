@@ -25,8 +25,8 @@ import static org.junit.Assume.assumeTrue;
 
 import android.content.ComponentName;
 import android.platform.test.annotations.Presubmit;
-import android.server.wm.ActivityManagerTestBase;
 import android.server.wm.KeyEventActivity;
+import android.server.wm.LockScreenSession;
 import android.view.KeyEvent;
 
 import androidx.test.rule.ActivityTestRule;

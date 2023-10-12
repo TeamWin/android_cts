@@ -22,6 +22,7 @@ import static org.junit.Assume.assumeTrue;
 
 import android.car.builtin.app.KeyguardManagerHelper;
 import android.server.wm.ActivityManagerTestBase;
+import android.server.wm.LockScreenSession;
 
 import androidx.test.runner.AndroidJUnit4;
 

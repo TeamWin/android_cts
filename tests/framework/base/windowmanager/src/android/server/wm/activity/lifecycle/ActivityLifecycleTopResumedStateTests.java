@@ -65,6 +65,7 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
+import android.server.wm.LockScreenSession;
 import android.server.wm.WindowManagerState;
 import android.server.wm.WindowManagerState.Task;
 import android.util.Pair;
@@ -688,7 +689,8 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
     public void testTopPositionLaunchedBehindLockScreen() throws Exception {
         assumeTrue(supportsSecureLock());
 
-        try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
+        try (LockScreenSession lockScreenSession =
+                    new LockScreenSession(mInstrumentation, mWmState)) {
             lockScreenSession.setLockCredential().gotoKeyguard();
 
             new Launcher(CallbackTrackingActivity.class)
@@ -720,7 +722,8 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
         final Activity activity = launchActivityAndWait(CallbackTrackingActivity.class);
 
         getTransitionLog().clear();
-        try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
+        try (LockScreenSession lockScreenSession =
+                    new LockScreenSession(mInstrumentation, mWmState)) {
             lockScreenSession.setLockCredential().gotoKeyguard();
 
             waitAndAssertActivityStates(state(activity, ON_STOP));
@@ -747,7 +750,8 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
         assumeTrue(supportsSecureLock());
 
         final Activity showWhenLockedActivity;
-        try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
+        try (LockScreenSession lockScreenSession =
+                    new LockScreenSession(mInstrumentation, mWmState)) {
             lockScreenSession.setLockCredential().gotoKeyguard();
 
             ActivityOptions options = ActivityOptions.makeBasic();

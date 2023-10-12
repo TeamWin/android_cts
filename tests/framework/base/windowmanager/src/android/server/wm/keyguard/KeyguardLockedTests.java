@@ -51,6 +51,7 @@ import android.os.Bundle;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.ActivityManagerTestBase;
+import android.server.wm.LockScreenSession;
 import android.server.wm.WaitForValidActivityState;
 import android.view.View;
 import android.widget.EditText;
@@ -112,7 +113,8 @@ public class KeyguardLockedTests extends KeyguardTestBase {
         final KeyguardManager.KeyguardLock keyguardLock = mContext.getSystemService(
                 KeyguardManager.class).newKeyguardLock("KeyguardLockedTests");
 
-        try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
+        try (LockScreenSession lockScreenSession =
+                    new LockScreenSession(mInstrumentation, mWmState)) {
             lockScreenSession.gotoKeyguard();
             keyguardLock.disableKeyguard();
 

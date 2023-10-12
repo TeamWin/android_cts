@@ -48,6 +48,7 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 
 import android.app.Activity;
+import android.app.Instrumentation;
 import android.app.WallpaperColors;
 import android.app.WallpaperInfo;
 import android.app.WallpaperManager;
@@ -67,6 +68,7 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.Looper;
+import android.server.wm.LockScreenSession;
 import android.server.wm.WindowManagerState;
 import android.server.wm.WindowManagerStateHelper;
 import android.util.Log;
@@ -120,6 +122,7 @@ public class WallpaperManagerTest {
     private static final int DIM_LISTENER_TIMEOUT_SECS = 30;
 
     private WallpaperManager mWallpaperManager;
+    private final Instrumentation mInstrumentation = InstrumentationRegistry.getInstrumentation();;
     private Context mContext;
     private CtsTouchUtils mCtsTouchUtils;
     private Handler mHandler;
@@ -149,9 +152,8 @@ public class WallpaperManagerTest {
 
     @Before
     public void setUp() throws Exception {
-
         // grant READ_WALLPAPER_INTERNAL for all tests
-        InstrumentationRegistry.getInstrumentation().getUiAutomation()
+        mInstrumentation.getUiAutomation()
                 .adoptShellPermissionIdentity(READ_WALLPAPER_INTERNAL);
 
         mContext = InstrumentationRegistry.getTargetContext();
@@ -194,7 +196,7 @@ public class WallpaperManagerTest {
     public void tearDown() throws Exception {
 
         // drop READ_WALLPAPER_INTERNAL
-        InstrumentationRegistry.getInstrumentation().getUiAutomation()
+        mInstrumentation.getUiAutomation()
                 .dropShellPermissionIdentity();
 
         if (mBroadcastReceiver != null) {
@@ -1408,28 +1410,31 @@ public class WallpaperManagerTest {
         assumeTrue(mWallpaperManager.isLockscreenLiveWallpaperEnabled());
         assumeTrue("Test requires FEATURE_LIVE_WALLPAPER",
                 mContext.getPackageManager().hasSystemFeature(FEATURE_LIVE_WALLPAPER));
-        runWithShellPermissionIdentity(() -> {
-            WallpaperWindowsTestUtils.WallpaperWindowsHelper wallpaperWindowsHelper =
-                    new WallpaperWindowsTestUtils.WallpaperWindowsHelper(
-                            sWindowManagerStateHelper);
-            wallpaperWindowsHelper.showHomeScreenAndUpdate();
+        try (LockScreenSession lockScreenSession =
+                     new LockScreenSession(mInstrumentation, sWindowManagerStateHelper)) {
+            runWithShellPermissionIdentity(() -> {
+                WallpaperWindowsTestUtils.WallpaperWindowsHelper wallpaperWindowsHelper =
+                        new WallpaperWindowsTestUtils.WallpaperWindowsHelper(
+                                sWindowManagerStateHelper);
+                lockScreenSession.disableLockScreen().unlockDevice();
 
-            // Launch an activity that shows the wallpaper to make sure it is not behind
-            // opaque activities
-            startAndWaitActivity();
+                // Launch an activity that shows the wallpaper to make sure it is not behind
+                // opaque activities
+                startAndWaitActivity();
 
-            // Two independent wallpapers
-            WallpaperManagerTestUtils.goToState(mWallpaperManager,
-                    WallpaperState.LIVE_DIFF_MULTI);
-            assertWallpaperIsShown(wallpaperWindowsHelper, FLAG_SYSTEM,
-                    true /* shouldBeShown */, "System wallpaper is hidden on home screen");
+                // Two independent wallpapers
+                WallpaperManagerTestUtils.goToState(mWallpaperManager,
+                        WallpaperState.LIVE_DIFF_MULTI);
+                assertWallpaperIsShown(wallpaperWindowsHelper, FLAG_SYSTEM,
+                        true /* shouldBeShown */, "System wallpaper is hidden on home screen");
 
-            // Shared wallpaper
-            WallpaperManagerTestUtils.goToState(
-                    mWallpaperManager, WallpaperState.LIVE_SAME_SINGLE);
-            assertWallpaperIsShown(wallpaperWindowsHelper, FLAG_SYSTEM | FLAG_LOCK,
-                    true /* shouldBeShown */, "Shared wallpaper is hidden on home screen");
-        });
+                // Shared wallpaper
+                WallpaperManagerTestUtils.goToState(
+                        mWallpaperManager, WallpaperState.LIVE_SAME_SINGLE);
+                assertWallpaperIsShown(wallpaperWindowsHelper, FLAG_SYSTEM | FLAG_LOCK,
+                        true /* shouldBeShown */, "Shared wallpaper is hidden on home screen");
+            });
+        }
     }
 
     /**
@@ -1438,15 +1443,16 @@ public class WallpaperManagerTest {
      */
     @Test
     public void testSystemAndLockWallpaperVisibility_onLockScreen() throws Exception {
-        // TODO(b/296508731): This test fails and causes flakes in other tests if run on Wear.
-        assumeFalse(mContext.getPackageManager().hasSystemFeature(FEATURE_WATCH));
+        assumeFalse("Test requires support for different lock and home screen wallpapers",
+                mContext.getPackageManager().hasSystemFeature(FEATURE_WATCH));
 
         assumeTrue(mWallpaperManager.isLockscreenLiveWallpaperEnabled());
         assumeTrue("Test requires FEATURE_SECURE_LOCK_SCREEN",
                 mContext.getPackageManager().hasSystemFeature(FEATURE_SECURE_LOCK_SCREEN));
         assumeTrue("Test requires FEATURE_LIVE_WALLPAPER",
                 mContext.getPackageManager().hasSystemFeature(FEATURE_LIVE_WALLPAPER));
-        WallpaperWindowsTestUtils.runWithKeyguardEnabled(sWindowManagerStateHelper, () -> {
+        try (LockScreenSession lockScreenSession =
+                     new LockScreenSession(mInstrumentation, sWindowManagerStateHelper)) {
             runWithShellPermissionIdentity(() -> {
                 WallpaperWindowsTestUtils.WallpaperWindowsHelper wallpaperWindowsHelper =
                         new WallpaperWindowsTestUtils.WallpaperWindowsHelper(
@@ -1455,7 +1461,8 @@ public class WallpaperManagerTest {
                 // Two independent wallpapers
                 WallpaperManagerTestUtils.goToState(mWallpaperManager,
                         WallpaperState.LIVE_DIFF_MULTI);
-                wallpaperWindowsHelper.showLockScreenAndUpdate();
+
+                lockScreenSession.gotoKeyguard();
                 assertWallpaperIsShown(wallpaperWindowsHelper, FLAG_SYSTEM,
                         false /* shouldBeShown */,
                         "System wallpaper is showing on lock screen");
@@ -1468,7 +1475,7 @@ public class WallpaperManagerTest {
                 assertWallpaperIsShown(wallpaperWindowsHelper, FLAG_SYSTEM | FLAG_LOCK,
                         true /* shouldBeShown */, "Shared wallpaper is hidden on lock screen");
             });
-        });
+        }
     }
 
     /**
@@ -1483,8 +1490,8 @@ public class WallpaperManagerTest {
                 mContext.getPackageManager().hasSystemFeature(FEATURE_SECURE_LOCK_SCREEN));
         assumeTrue("Test requires FEATURE_LIVE_WALLPAPER",
                 mContext.getPackageManager().hasSystemFeature(FEATURE_LIVE_WALLPAPER));
-
-        WallpaperWindowsTestUtils.runWithKeyguardEnabled(sWindowManagerStateHelper, () -> {
+        try (LockScreenSession lockScreenSession =
+                     new LockScreenSession(mInstrumentation, sWindowManagerStateHelper)) {
             runWithShellPermissionIdentity(() -> {
                 WallpaperWindowsTestUtils.WallpaperWindowsHelper wallpaperWindowsHelper =
                         new WallpaperWindowsTestUtils.WallpaperWindowsHelper(
@@ -1494,12 +1501,12 @@ public class WallpaperManagerTest {
 
                 WallpaperManagerTestUtils.goToState(mWallpaperManager,
                         WallpaperState.LIVE_SAME_SINGLE);
-                wallpaperWindowsHelper.showLockScreenAndUpdate();
+                lockScreenSession.gotoKeyguard();
                 assertWallpaperIsShown(wallpaperWindowsHelper, FLAG_SYSTEM | FLAG_LOCK,
                         true /* shouldBeShown */,
                         "Shared wallpaper should be showing behind activity");
             });
-        });
+        }
     }
 
     /**
@@ -1508,15 +1515,15 @@ public class WallpaperManagerTest {
      */
     @Test
     public void testIndependentWallpaperVisibilityBehindActivity_onLockScreen() throws Exception {
-        // TODO(b/296508731): This test fails and causes flakes in other tests if run on Wear.
-        assumeFalse(mContext.getPackageManager().hasSystemFeature(FEATURE_WATCH));
-
+        assumeFalse("Test requires support for different lock and home screen wallpapers",
+                mContext.getPackageManager().hasSystemFeature(FEATURE_WATCH));
         assumeTrue("Test requires FEATURE_SECURE_LOCK_SCREEN",
                 mContext.getPackageManager().hasSystemFeature(FEATURE_SECURE_LOCK_SCREEN));
         assumeTrue("Test requires FEATURE_LIVE_WALLPAPER",
                 mContext.getPackageManager().hasSystemFeature(FEATURE_LIVE_WALLPAPER));
 
-        WallpaperWindowsTestUtils.runWithKeyguardEnabled(sWindowManagerStateHelper, () -> {
+        try (LockScreenSession lockScreenSession =
+                     new LockScreenSession(mInstrumentation, sWindowManagerStateHelper)) {
             runWithShellPermissionIdentity(() -> {
                 WallpaperWindowsTestUtils.WallpaperWindowsHelper wallpaperWindowsHelper =
                         new WallpaperWindowsTestUtils.WallpaperWindowsHelper(
@@ -1528,7 +1535,7 @@ public class WallpaperManagerTest {
                 WallpaperState wallpaperState = hasTwoWindows ? WallpaperState.LIVE_DIFF_MULTI
                         : WallpaperState.LIVE_STATIC_MULTI;
                 WallpaperManagerTestUtils.goToState(mWallpaperManager, wallpaperState);
-                wallpaperWindowsHelper.showLockScreenAndUpdate();
+                lockScreenSession.gotoKeyguard();
                 if (hasTwoWindows) {
                     assertWallpaperIsShown(wallpaperWindowsHelper, FLAG_LOCK,
                             true /* shouldBeShown */,
@@ -1538,7 +1545,7 @@ public class WallpaperManagerTest {
                         false /* shouldBeShown */,
                         "Home wallpaper should not be showing behind an activity on lock screen");
             });
-        });
+        }
     }
 
     @Test
