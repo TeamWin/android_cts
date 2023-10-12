@@ -243,10 +243,6 @@ class NightExtensionTest(its_base_test.ItsBaseTest):
                              'according to '
                              f'{its_session_utils.TABLET_REQUIREMENTS_URL}.')
 
-      its_session_utils.load_scene(
-          cam, props, self.scene, self.tablet, self.chart_distance,
-          log_path=self.log_path)
-
       # Establish connection with lighting controller
       arduino_serial_port = lighting_control_utils.lighting_control(
           self.lighting_cntl, self.lighting_ch)
@@ -254,6 +250,25 @@ class NightExtensionTest(its_base_test.ItsBaseTest):
       # Turn OFF lights to darken scene
       lighting_control_utils.set_lighting_state(
           arduino_serial_port, self.lighting_ch, 'OFF')
+
+      # Check that tablet is connected and turn it off to validate lighting
+      if self.tablet:
+        lighting_control_utils.turn_off_device(self.tablet)
+      else:
+        raise AssertionError('Test must be run with tablet.')
+
+      # Validate lighting, then setup tablet
+      cam.do_3a(do_af=False)
+      cap = cam.do_capture(
+          capture_request_utils.auto_capture_request(), cam.CAP_YUV)
+      y_plane, _, _ = image_processing_utils.convert_capture_to_planes(cap)
+      its_session_utils.validate_lighting(
+          y_plane, self.scene, state='OFF', log_path=self.log_path)
+      self.setup_tablet()
+
+      its_session_utils.load_scene(
+          cam, props, self.scene, self.tablet, self.chart_distance,
+          lighting_check=False, log_path=self.log_path)
 
       # Tap tablet to remove gallery buttons
       if self.tablet:
