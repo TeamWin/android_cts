@@ -641,7 +641,7 @@ def main():
 
   testing_flash_with_controller = False
   if (test_params_content.get('lighting_cntl', 'None').lower() == 'arduino' and
-        'manual' not in config_file_test_key):
+      'manual' not in config_file_test_key):
     testing_flash_with_controller = True
 
   # Prepend 'scene' if not specified at cmd line
@@ -650,7 +650,7 @@ def main():
         not s.startswith(('checkerboard', 'sensor_fusion',
                           'flash', '<scene-name>'))):
       scenes[i] = f'scene{s}'
-    if s.startswith('flash')):
+    if s.startswith('flash'):
       scenes[i] = f'scene_{s}'
 
   # Expand GROUPED_SCENES and remove any duplicates
