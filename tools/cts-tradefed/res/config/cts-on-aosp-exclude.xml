@@ -36,13 +36,13 @@
     <option name="compatibility:exclude-filter" value="CtsNetTestCasesLegacyApi22 android.net.cts.legacy.api22.ConnectivityManagerLegacyTest#testStartUsingNetworkFeature_enableHipri" />
     <option name="compatibility:exclude-filter" value="CtsPermissionPolicyTestCases android.permissionpolicy.cts.NoReceiveSmsPermissionTest#testAppSpecificSmsToken" />
     <option name="compatibility:exclude-filter" value="CtsPermissionPolicyTestCases android.permissionpolicy.cts.NoReceiveSmsPermissionTest#testReceiveTextMessage" />
-    <option name="compatibility:exclude-filter" value="CtsUsageStatsTestCases android.app.usage.cts.NetworkUsageStatsTest#testAppDetails" />
-    <option name="compatibility:exclude-filter" value="CtsUsageStatsTestCases android.app.usage.cts.NetworkUsageStatsTest#testAppSummary" />
-    <option name="compatibility:exclude-filter" value="CtsUsageStatsTestCases android.app.usage.cts.NetworkUsageStatsTest#testCallback" />
-    <option name="compatibility:exclude-filter" value="CtsUsageStatsTestCases android.app.usage.cts.NetworkUsageStatsTest#testDeviceSummary" />
-    <option name="compatibility:exclude-filter" value="CtsUsageStatsTestCases android.app.usage.cts.NetworkUsageStatsTest#testTagDetails" />
-    <option name="compatibility:exclude-filter" value="CtsUsageStatsTestCases android.app.usage.cts.NetworkUsageStatsTest#testUidDetails" />
-    <option name="compatibility:exclude-filter" value="CtsUsageStatsTestCases android.app.usage.cts.NetworkUsageStatsTest#testUserSummary" />
+    <option name="compatibility:exclude-filter" value="CtsNetTestCases android.net.cts.NetworkStatsManagerTest#testAppDetails" />
+    <option name="compatibility:exclude-filter" value="CtsNetTestCases android.net.cts.NetworkStatsManagerTest#testAppSummary" />
+    <option name="compatibility:exclude-filter" value="CtsNetTestCases android.net.cts.NetworkStatsManagerTest#testCallback" />
+    <option name="compatibility:exclude-filter" value="CtsNetTestCases android.net.cts.NetworkStatsManagerTest#testDeviceSummary" />
+    <option name="compatibility:exclude-filter" value="CtsNetTestCases android.net.cts.NetworkStatsManagerTest#testTagDetails" />
+    <option name="compatibility:exclude-filter" value="CtsNetTestCases android.net.cts.NetworkStatsManagerTest#testUidDetails" />
+    <option name="compatibility:exclude-filter" value="CtsNetTestCases android.net.cts.NetworkStatsManagerTest#testUserSummary" />
 
     <!--
         Exclude testcases failing on Pixel devices
