@@ -16,7 +16,9 @@
 
 package android.mediav2.common.cts;
 
+import static android.media.MediaCodecInfo.CodecCapabilities.COLOR_FormatYUVP010;
 import static android.mediav2.common.cts.DecodeStreamToYuv.findDecoderForStream;
+import static android.mediav2.common.cts.DecodeStreamToYuv.getFormatInStream;
 import static android.mediav2.common.cts.DecodeStreamToYuv.getImage;
 import static android.mediav2.common.cts.VideoErrorManager.computeMSE;
 import static android.mediav2.common.cts.VideoErrorManager.computePSNR;
@@ -30,6 +32,10 @@ import android.media.MediaCodec;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.util.Log;
+
+import com.android.compatibility.common.util.MediaUtils;
+
+import org.junit.Assume;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -260,6 +266,21 @@ public class CompareStreams extends CodecDecoderTestBase {
 
     private void generateErrorStats() throws IOException, InterruptedException {
         if (!mGenerateStats) {
+            if (MediaUtils.isTv()) {
+                // Some TV devices support HDR10 display with VO instead of GPU. In this case,
+                // COLOR_FormatYUVP010 may not be supported.
+                MediaFormat format = mStreamFormat != null ? mStreamFormat :
+                        getFormatInStream(mMediaType, mTestFile);
+                ArrayList<MediaFormat> formatList = new ArrayList<>();
+                formatList.add(format);
+                boolean isHBD = doesAnyFormatHaveHDRProfile(mMediaType, formatList);
+                if (isHBD || mTestFile.contains("10bit")) {
+                    if (!hasSupportForColorFormat(mCodecName, mMediaType, COLOR_FormatYUVP010)) {
+                        Assume.assumeTrue("Could not validate the encoded output as"
+                                + " COLOR_FormatYUVP010 is not supported by the decoder", false);
+                    }
+                }
+            }
             if (mStreamFormat != null) {
                 decodeToMemory(mStreamBuffer, mStreamBufferInfos, mStreamFormat, mCodecName);
             } else {
