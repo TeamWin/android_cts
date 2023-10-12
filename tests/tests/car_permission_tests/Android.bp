@@ -46,7 +46,7 @@ android_test {
         "androidx.test.rules",
         "compatibility-device-util-axt",
         "mockito-target-minus-junit4",
-        "truth-prebuilt",
+        "truth",
         "platform-test-annotations",
         "flag-junit",
     ],
