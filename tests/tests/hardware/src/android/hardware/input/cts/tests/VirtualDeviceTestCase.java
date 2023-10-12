@@ -27,6 +27,7 @@ import static org.junit.Assume.assumeNotNull;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.ActivityOptions;
+import android.app.KeyguardManager;
 import android.companion.AssociationInfo;
 import android.companion.CompanionDeviceManager;
 import android.companion.virtual.VirtualDeviceManager;
@@ -56,6 +57,7 @@ import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.AdoptShellPermissionsRule;
 import com.android.compatibility.common.util.SystemUtil;
+import com.android.cts.input.DebugInputRule;
 
 import com.google.common.collect.ImmutableList;
 
@@ -255,8 +257,13 @@ public abstract class VirtualDeviceTestCase extends InputTestCase {
             mInstrumentation.sendPointerSync(downEvent);
             mInstrumentation.sendPointerSync(upEvent);
         } catch (IllegalArgumentException e) {
-            fail("Failed to sending taps to the activity. Is the device unlocked? Getting "
-                    + "exception " + e);
+            DebugInputRule.dumpInputStateToLogcat();
+            final Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+            final KeyguardManager keyguardManager = context.getSystemService(KeyguardManager.class);
+            fail("Failed to send taps to the activity. Device is "
+                    + (keyguardManager != null && keyguardManager.isKeyguardLocked()
+                    ? "locked" : "unlocked")
+                    + ". Getting exception " + e);
         }
 
         verifyEvents(ImmutableList.of(downEvent, upEvent));
