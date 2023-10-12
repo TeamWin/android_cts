@@ -22,6 +22,7 @@ import android.content.Context
 import android.content.Context.RECEIVER_EXPORTED
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.pm.Flags.FLAG_NULLABLE_DATA_DIR
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.content.pm.PackageManager.MATCH_ANY_USER
@@ -40,6 +41,10 @@ import android.os.Handler
 import android.os.HandlerThread
 import android.os.UserManager
 import android.platform.test.annotations.AppModeFull
+import android.platform.test.annotations.RequiresFlagsDisabled
+import android.platform.test.annotations.RequiresFlagsEnabled
+import android.platform.test.flag.junit.CheckFlagsRule
+import android.platform.test.flag.junit.DeviceFlagsValueProvider
 import androidx.test.platform.app.InstrumentationRegistry
 import com.android.bedstead.harrier.BedsteadJUnit4
 import com.android.bedstead.harrier.DeviceState
@@ -71,6 +76,10 @@ import org.junit.runners.model.Statement
 @RunWith(BedsteadJUnit4::class)
 @AppModeFull(reason = "Cannot query other apps if instant")
 class PackageManagerShellCommandMultiUserTest {
+
+    @JvmField
+    @Rule
+    val mCheckFlagsRule: CheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule()
 
     companion object {
 
@@ -450,6 +459,52 @@ class PackageManagerShellCommandMultiUserTest {
                 PackageInfoFlags.of(flag.toLong())
             )
         }
+    }
+
+    @Test
+    @RequiresFlagsDisabled(FLAG_NULLABLE_DATA_DIR)
+    fun testNullableDataDirDisabled() {
+        expectHasDataDirAfterUninstall(true)
+    }
+
+    @Test
+    @RequiresFlagsEnabled(FLAG_NULLABLE_DATA_DIR)
+    fun testNullableDataDirEnabled() {
+        expectHasDataDirAfterUninstall(false)
+    }
+
+    private fun expectHasDataDirAfterUninstall(expectHasDataDir: Boolean) {
+        testUninstallSetup()
+        // Delete data on secondary user but keep data on primary user
+        uninstallPackageWithKeepData(TEST_APP_PACKAGE, primaryUser)
+        uninstallPackageAsUser(TEST_APP_PACKAGE, secondaryUser)
+
+        assertThat(getInstalledState(TEST_APP_PACKAGE, primaryUser.id())).isEqualTo("false")
+        assertThat(getInstalledState(TEST_APP_PACKAGE, secondaryUser.id())).isEqualTo("false")
+        assertThat(isAppInstalledForUser(TEST_APP_PACKAGE, primaryUser)).isFalse()
+        assertThat(isAppInstalledForUser(TEST_APP_PACKAGE, secondaryUser)).isFalse()
+        runWithShellPermissionIdentity(
+                uiAutomation,
+                {
+                    val cxtPrimaryUser = context.createContextAsUser(primaryUser.userHandle(), 0)
+                    val cxtSecondaryUser = context.createContextAsUser(
+                            secondaryUser.userHandle(),
+                            0
+                    )
+                    assertThat(hasDataDir(TEST_APP_PACKAGE, cxtPrimaryUser)).isTrue()
+                    assertThat(hasDataDir(TEST_APP_PACKAGE, cxtSecondaryUser))
+                            .isEqualTo(expectHasDataDir)
+                },
+                Manifest.permission.INTERACT_ACROSS_USERS,
+                Manifest.permission.INTERACT_ACROSS_USERS_FULL
+        )
+    }
+
+    private fun hasDataDir(packageName: String, userContext: Context): Boolean {
+        return userContext.packageManager.getPackageInfo(
+                packageName,
+                PackageInfoFlags.of(MATCH_KNOWN_PACKAGES.toLong())
+        ).applicationInfo!!.dataDir != null
     }
 
     @Test
