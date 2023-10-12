@@ -35,6 +35,9 @@ android_test {
         "cts-inputmethod-util",
         "ctstestrunner-axt",
         "testng",
+        "android.view.inputmethod.flags-aconfig-java",
+        "flag-junit",
+        "platform-test-annotations",
     ],
     srcs: [
         "src/**/*.java",
