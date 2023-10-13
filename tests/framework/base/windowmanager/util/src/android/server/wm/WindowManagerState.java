@@ -2272,7 +2272,7 @@ public class WindowManagerState {
             return mDisplayId;
         }
 
-        int getStackId() {
+        public int getStackId() {
             return mStackId;
         }
 
