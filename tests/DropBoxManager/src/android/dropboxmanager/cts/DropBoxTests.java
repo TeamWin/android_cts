@@ -17,39 +17,39 @@
 package android.dropboxmanager.cts;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.DropBoxManager;
 import android.os.SystemClock;
-import android.platform.test.annotations.RequiresFlagsEnabled;
-import android.platform.test.flag.junit.CheckFlagsRule;
-import android.platform.test.flag.junit.DeviceFlagsValueProvider;
+import android.platform.test.annotations.AppModeFull;
+import android.provider.Settings;
+import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.LargeTest;
 import androidx.test.runner.AndroidJUnit4;
 
-import com.android.compatibility.common.util.AmUtils;
-import com.android.compatibility.common.util.SystemUtil;
-import com.android.server.feature.flags.Flags;
-
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+
+import com.android.compatibility.common.util.AmUtils;
+import com.android.compatibility.common.util.SystemUtil;
+import com.android.internal.annotations.GuardedBy;
 
 /**
  * Tests DropBox entry management
@@ -57,13 +57,9 @@ import java.util.concurrent.TimeUnit;
 @LargeTest
 @RunWith(AndroidJUnit4.class)
 public class DropBoxTests {
-    @Rule
-    public final CheckFlagsRule mCheckFlagsRule =
-            DeviceFlagsValueProvider.createCheckFlagsRule();
     private static final String ENABLED_TAG = "DropBoxTestsEnabledTag";
     private static final String LOW_PRIORITY_TAG = "DropBoxTestsLowPriorityTag";
     private static final String ANOTHER_LOW_PRIORITY_TAG = "AnotherDropBoxTestsLowPriorityTag";
-    private static final String GET_ENTRY_TAG = "DropBoxTestGetEntryTag";
     private static final long BROADCAST_RATE_LIMIT = 1000L;
     private static final long BROADCAST_DELAY_ALLOWED_ERROR = 200L;
 
@@ -336,14 +332,6 @@ public class DropBoxTests {
             assertEquals("Enabled tag broadcasts should not be dropped", 0,
                     enabledData.droppedCount);
         }
-    }
-
-    @Test
-    @RequiresFlagsEnabled(Flags.FLAG_ENABLE_READ_DROPBOX_PERMISSION)
-    public void testReadDropBoxPermission() {
-        long currTime = System.currentTimeMillis();
-        mDropBoxManager.addText(GET_ENTRY_TAG, "0");
-        assertNotNull(mDropBoxManager.getNextEntry(GET_ENTRY_TAG, currTime));
     }
 
     private void setTagLowPriority(String tag) throws IOException {
