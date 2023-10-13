@@ -24,6 +24,8 @@ import camera_properties_utils
 import capture_request_utils
 import its_session_utils
 
+_SENSOR_EVENTS_WAIT_TIME = 2  # seconds
+
 
 class UnifiedTimeStampTest(its_base_test.ItsBaseTest):
   """Test if image and motion sensor events are in the same time domain.
@@ -56,7 +58,7 @@ class UnifiedTimeStampTest(its_base_test.ItsBaseTest):
       logging.debug('Reading sensor measurements')
       sensors = cam.get_sensors()
       cam.start_sensor_events()
-      time.sleep(2.0)
+      time.sleep(_SENSOR_EVENTS_WAIT_TIME)  # run sensors to get events
       events = cam.get_sensor_events()
       ts_sensor_first = {}
       ts_sensor_last = {}
