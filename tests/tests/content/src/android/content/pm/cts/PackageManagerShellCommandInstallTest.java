@@ -58,10 +58,12 @@ import android.content.IntentSender;
 import android.content.pm.ApkChecksum;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.DataLoaderParams;
+import android.content.pm.Flags;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageInstaller;
 import android.content.pm.PackageInstaller.SessionParams;
 import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.content.pm.SharedLibraryInfo;
 import android.content.pm.Signature;
 import android.content.pm.SigningInfo;
@@ -73,6 +75,9 @@ import android.os.Process;
 import android.os.RemoteException;
 import android.os.UserHandle;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.util.PackageUtils;
 
 import androidx.test.InstrumentationRegistry;
@@ -179,6 +184,9 @@ public class PackageManagerShellCommandInstallTest {
 
     @Rule
     public AbandonAllPackageSessionsRule mAbandonSessionsRule = new AbandonAllPackageSessionsRule();
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
 
     @Parameter
     public int mDataLoaderType;
@@ -903,6 +911,22 @@ public class PackageManagerShellCommandInstallTest {
         installPackage(TEST_SDK1);
 
         assertTrue(isSdkInstalled(TEST_SDK1_NAME, 1));
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_PREVENT_SDK_LIB_APP)
+    public void testSdkInstallNoComponentRegistered() throws Exception {
+        onBeforeSdkTests();
+
+        installPackage(TEST_SDK1);
+        assertTrue(isSdkInstalled(TEST_SDK1_NAME, 1));
+
+        Intent intent = new Intent();
+        intent.setClassName(TEST_SDK1_PACKAGE, TEST_SDK1_PACKAGE + ".MainActivity");
+        List<ResolveInfo> resolveInfoList =
+                getPackageManager().queryIntentActivities(intent, 0);
+
+        assertThat(resolveInfoList).isEmpty();
     }
 
     @Test
