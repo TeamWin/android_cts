@@ -108,6 +108,5 @@ android_test {
         "general-tests",
         "mts-media",
     ],
-    min_sdk_version: "29",
     target_sdk_version: "31",
 }
