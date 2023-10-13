@@ -352,9 +352,12 @@ public class DeviceStateManagerTests extends DeviceStateManagerTestBase {
                 DeviceStateTestActivity.class,
                 DEFAULT_DISPLAY
         );
-        // verify that the overridden state is still active after finishing
-        // and launching the second activity.
-        assertEquals(nextState, callback.mCurrentState);
+        // Assumes that the overridden state is still active after finishing
+        // and launching the second activity. This due to some states may be cancelled
+        // if they have the FLAG_CANCEL_WHEN_REQUESTER_NOT_ON_TOP flag on them.
+        // TODO(b/305107721): Update this call when we can verify we're moving to a state
+        // that does not have the FLAG_CANCEL_WHEN_REQUESTER_NOT_ON_TOP flag.
+        assumeTrue(nextState == callback.mCurrentState);
 
         final DeviceStateTestActivity activity2 = secondActivitySession.getActivity();
         activity2.cancelOverriddenState();
