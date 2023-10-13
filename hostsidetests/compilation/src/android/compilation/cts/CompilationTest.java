@@ -18,17 +18,26 @@ package android.compilation.cts;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assert.assertThrows;
+
 import android.compilation.cts.annotation.CtsTestCase;
+import android.content.pm.Flags;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.host.HostFlagsValueProvider;
 
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 import com.android.tradefed.testtype.junit4.DeviceParameterizedRunner;
 import com.android.tradefed.testtype.junit4.DeviceTestRunOptions;
+import com.android.tradefed.util.Pair;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.List;
 import java.util.regex.Pattern;
 
 import junitparams.Parameters;
@@ -45,8 +54,15 @@ public class CompilationTest extends BaseHostJUnit4Test {
     private static final String TEST_APP_PKG = "android.compilation.cts";
     private static final String TEST_APP_APK_RES = "/CtsCompilationApp.apk";
     private static final String TEST_APP_DM_RES = "/CtsCompilationApp.dm";
+    private static final String TEST_APP_2_PKG = "android.compilation.cts.appusedbyotherapp";
+    private static final String TEST_APP_2_APK_RES = "/AppUsedByOtherApp.apk";
+    private static final String TEST_APP_2_DM_RES = "/AppUsedByOtherApp_1.dm";
 
     private Utils mUtils;
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule =
+            HostFlagsValueProvider.createCheckFlagsRule(this::getDevice);
 
     @Before
     public void setUp() throws Exception {
@@ -56,6 +72,7 @@ public class CompilationTest extends BaseHostJUnit4Test {
     @After
     public void tearDown() throws Exception {
         getDevice().uninstallPackage(TEST_APP_PKG);
+        getDevice().uninstallPackage(TEST_APP_2_PKG);
     }
 
     @Test
@@ -201,6 +218,67 @@ public class CompilationTest extends BaseHostJUnit4Test {
                               .setTestMethodName("testGetDexFileOutputPaths")
                               .setDisableHiddenApiCheck(true);
         assertThat(runDeviceTests(options)).isTrue();
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_USE_ART_SERVICE_V2)
+    public void testExternalProfileValidationOk() throws Exception {
+        mUtils.installFromResources(getAbi(), TEST_APP_APK_RES, TEST_APP_DM_RES);
+    }
+
+    /** Verifies that adb install-multiple fails when the APK and the DM file don't match. */
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_USE_ART_SERVICE_V2)
+    public void testExternalProfileValidationFailed() throws Exception {
+        Throwable throwable = assertThrows(Throwable.class, () -> {
+            mUtils.installFromResources(getAbi(), TEST_APP_APK_RES, TEST_APP_2_DM_RES);
+        });
+        assertThat(throwable).hasMessageThat().contains(
+                "Error occurred during dexopt when processing external profiles:");
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_USE_ART_SERVICE_V2)
+    public void testExternalProfileValidationMultiPackageOk() throws Exception {
+        mUtils.installFromResourcesMultiPackage(getAbi(),
+                List.of(List.of(Pair.create(TEST_APP_APK_RES, TEST_APP_DM_RES)),
+                        List.of(Pair.create(TEST_APP_2_APK_RES, TEST_APP_2_DM_RES))));
+    }
+
+    /**
+     * Verifies that adb install-multi-package fails when the mismatch happens on one of the APK-DM
+     * pairs.
+     */
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_USE_ART_SERVICE_V2)
+    public void testExternalProfileValidationMultiPackageFailed() throws Exception {
+        Throwable throwable = assertThrows(Throwable.class, () -> {
+            mUtils.installFromResourcesMultiPackage(getAbi(),
+                    List.of(List.of(Pair.create(TEST_APP_APK_RES, TEST_APP_DM_RES)),
+                            List.of(Pair.create(TEST_APP_2_APK_RES, TEST_APP_DM_RES))));
+        });
+
+        assertThat(Utils.countSubstringOccurrence(throwable.getMessage(),
+                           "Error occurred during dexopt when processing external profiles:"))
+                .isEqualTo(1);
+    }
+
+    /**
+     * Verifies that adb install-multi-package fails with multiple error messages when multiple
+     * APK-DM mismatches happen.
+     */
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_USE_ART_SERVICE_V2)
+    public void testExternalProfileValidationMultiPackageFailedMultipleErrors() throws Exception {
+        Throwable throwable = assertThrows(Throwable.class, () -> {
+            mUtils.installFromResourcesMultiPackage(getAbi(),
+                    List.of(List.of(Pair.create(TEST_APP_APK_RES, TEST_APP_2_DM_RES)),
+                            List.of(Pair.create(TEST_APP_2_APK_RES, TEST_APP_DM_RES))));
+        });
+
+        assertThat(Utils.countSubstringOccurrence(throwable.getMessage(),
+                           "Error occurred during dexopt when processing external profiles:"))
+                .isEqualTo(2);
     }
 
     private void checkDexoptStatus(String dump, String dexfilePattern, String statusPattern) {
