@@ -22,6 +22,8 @@ import its_base_test
 import camera_properties_utils
 import its_session_utils
 
+_SENSOR_EVENTS_WAIT_TIME = 1  # seconds
+
 
 class SensorEventTest(its_base_test.ItsBaseTest):
   """Basic test to query and print out sensor events.
@@ -43,7 +45,7 @@ class SensorEventTest(its_base_test.ItsBaseTest):
 
       sensors = cam.get_sensors()
       cam.start_sensor_events()
-      time.sleep(1)
+      time.sleep(_SENSOR_EVENTS_WAIT_TIME)  # run sensors to get events
       events = cam.get_sensor_events()
       logging.debug('Events over 1s: %d gyro, %d accel, %d mag',
                     len(events['gyro']), len(events['accel']),
