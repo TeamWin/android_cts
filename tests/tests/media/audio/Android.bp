@@ -101,7 +101,6 @@ android_test {
     test_suites: [
         "cts",
         "general-tests",
-        "mts-media",
     ],
     target_sdk_version: "31",
 }
