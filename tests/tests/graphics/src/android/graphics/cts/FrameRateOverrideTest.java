@@ -16,6 +16,8 @@
 
 package android.graphics.cts;
 
+import static android.view.flags.Flags.FLAG_WM_DISPLAY_REFRESH_RATE_TEST;
+
 import android.Manifest;
 import android.app.compat.CompatChanges;
 import android.graphics.cts.FrameRateOverrideCtsActivity.FrameRateObserver;
@@ -23,6 +25,9 @@ import android.hardware.display.DisplayManager;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemProperties;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.support.test.uiautomator.UiDevice;
 import android.sysprop.SurfaceFlingerProperties;
 import android.util.Log;
@@ -49,6 +54,7 @@ import java.util.List;
  * Tests for frame rate override and the behaviour of {@link Display#getRefreshRate()} and
  * {@link Display.Mode#getRefreshRate()} Api.
  */
+@RequiresFlagsEnabled(FLAG_WM_DISPLAY_REFRESH_RATE_TEST)
 @MediumTest
 @RunWith(AndroidJUnit4.class)
 public final class FrameRateOverrideTest {
@@ -67,10 +73,13 @@ public final class FrameRateOverrideTest {
     private UiDevice mUiDevice;
     private final Handler mHandler = new Handler(Looper.getMainLooper());
 
-
     @Rule
     public ActivityTestRule<FrameRateOverrideCtsActivity> mActivityRule =
             new ActivityTestRule<>(FrameRateOverrideCtsActivity.class);
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule =
+            DeviceFlagsValueProvider.createCheckFlagsRule();
 
     @Before
     public void setUp() throws Exception {
