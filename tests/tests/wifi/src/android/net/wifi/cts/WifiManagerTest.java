@@ -6537,6 +6537,7 @@ public class WifiManagerTest extends WifiJUnit4TestBase {
     /**
      * Tests the builder and get methods for {@link OuiKeyedData}.
      */
+    @RequiresFlagsEnabled(Flags.FLAG_VENDOR_PARCELABLE_PARAMETERS)
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.VANILLA_ICE_CREAM,
                  codeName = "VanillaIceCream")
     @Test
