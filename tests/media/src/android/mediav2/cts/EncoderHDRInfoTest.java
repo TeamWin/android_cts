@@ -132,7 +132,7 @@ public class EncoderHDRInfoTest extends HDREncoderTestBase {
      */
     @SmallTest
     @Test(timeout = PER_TEST_TIMEOUT_SMALL_TEST_MS)
-    @CddTest(requirements = {"5.12/C-6-4"})
+    @CddTest(requirements = {"5.12/C-6-4", "5.2.6/C-1-3"})
     public void testHDRInfo() throws IOException, InterruptedException {
         mActiveEncCfg = mEncCfgParams[0];
         mActiveRawRes = EncoderInput.getRawResource(mActiveEncCfg);
