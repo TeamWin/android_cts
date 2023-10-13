@@ -16,6 +16,10 @@
 
 package android.midi.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
+import android.app.Application;
 import android.content.pm.PackageManager;
 import android.media.midi.MidiDevice;
 import android.media.midi.MidiDeviceInfo;
@@ -28,13 +32,24 @@ import android.media.midi.MidiReceiver;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.test.AndroidTestCase;
+import android.platform.test.annotations.RequiresFlagsDisabled;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.util.Log;
 
+import androidx.test.core.app.ApplicationProvider;
+
+import com.android.media.midi.flags.Flags;
 import com.android.midi.CTSMidiEchoTestService;
 import com.android.midi.CTSMidiUmpEchoTestService;
 import com.android.midi.MidiEchoTestService;
 import com.android.midi.MidiUmpEchoTestService;
+
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -44,7 +59,8 @@ import java.util.concurrent.Executor;
 /**
  * Test MIDI using a virtual MIDI device that echos input to output.
  */
-public class MidiEchoTest extends AndroidTestCase {
+@RunWith(JUnit4.class)
+public class MidiEchoTest {
     private static final String TAG = "MidiEchoTest";
     private static final boolean DEBUG = false;
 
@@ -68,6 +84,8 @@ public class MidiEchoTest extends AndroidTestCase {
     // can be sent internally by MidiInputPort in a
     // SOCK_SEQPACKET datagram.
     private static final int MAX_PACKET_DATA_SIZE = 1024 - 9;
+
+    private final Application mContext = ApplicationProvider.getApplicationContext();
 
     // Store device and ports related to the Echo service.
     static class MidiTestContext {
@@ -176,15 +194,9 @@ public class MidiEchoTest extends AndroidTestCase {
         }
     }
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-    }
-
-    @Override
-    protected void tearDown() throws Exception {
-        super.tearDown();
-    }
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule =
+            DeviceFlagsValueProvider.createCheckFlagsRule();
 
     protected MidiTestContext setUpLegacyEchoServer() throws Exception {
         if (DEBUG) {
@@ -424,8 +436,8 @@ public class MidiEchoTest extends AndroidTestCase {
         }
     }
 
-    // Is the MidiManager supported?
-    public void testMidiManager() throws Exception {
+    @Test
+    public void testMidiManagerLegacy() throws Exception {
         PackageManager pm = mContext.getPackageManager();
         if (!pm.hasSystemFeature(PackageManager.FEATURE_MIDI)) {
             return; // Not supported so don't test it.
@@ -434,7 +446,7 @@ public class MidiEchoTest extends AndroidTestCase {
         MidiManager midiManager = mContext.getSystemService(MidiManager.class);
         assertTrue("MidiManager not supported.", midiManager != null);
 
-        // There should be at least two devices for the Echo server.
+        // There should be at least a device for the Echo server.
         MidiDeviceInfo[] infos = midiManager.getDevices();
         assertTrue("device list was null", infos != null);
         assertTrue("device list was empty", infos.length >= 1);
@@ -443,12 +455,43 @@ public class MidiEchoTest extends AndroidTestCase {
                 MidiManager.TRANSPORT_MIDI_BYTE_STREAM);
         assertTrue("Legacy Device list was null.", legacyDeviceInfos != null);
         assertTrue("Legacy Device list was empty", legacyDeviceInfos.size() >= 1);
+    }
+
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_VIRTUAL_UMP)
+    public void testMidiManagerUmp() throws Exception {
+        PackageManager pm = mContext.getPackageManager();
+        if (!pm.hasSystemFeature(PackageManager.FEATURE_MIDI)) {
+            return; // Not supported so don't test it.
+        }
+
+        MidiManager midiManager = mContext.getSystemService(MidiManager.class);
+        assertTrue("MidiManager not supported.", midiManager != null);
+
         Collection<MidiDeviceInfo> universalDeviceInfos = midiManager.getDevicesForTransport(
                 MidiManager.TRANSPORT_UNIVERSAL_MIDI_PACKETS);
         assertTrue("Universal Device list was null.", universalDeviceInfos != null);
         assertTrue("Universal Device list was empty", universalDeviceInfos.size() >= 1);
     }
 
+    @Test
+    @RequiresFlagsDisabled(Flags.FLAG_VIRTUAL_UMP)
+    public void testMidiManagerUmpDisabled() throws Exception {
+        PackageManager pm = mContext.getPackageManager();
+        if (!pm.hasSystemFeature(PackageManager.FEATURE_MIDI)) {
+            return; // Not supported so don't test it.
+        }
+
+        MidiManager midiManager = mContext.getSystemService(MidiManager.class);
+        assertTrue("MidiManager not supported.", midiManager != null);
+
+        Collection<MidiDeviceInfo> universalDeviceInfos = midiManager.getDevicesForTransport(
+                MidiManager.TRANSPORT_UNIVERSAL_MIDI_PACKETS);
+        assertTrue("Universal Device list was null.", universalDeviceInfos != null);
+        assertTrue("Universal Device list was not empty", universalDeviceInfos.size() == 0);
+    }
+
+    @Test
     public void testDeviceInfoLegacy() throws Exception {
         PackageManager pm = mContext.getPackageManager();
         if (!pm.hasSystemFeature(PackageManager.FEATURE_MIDI)) {
@@ -463,6 +506,8 @@ public class MidiEchoTest extends AndroidTestCase {
         tearDownEchoServer(mc, false);
     }
 
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_VIRTUAL_UMP)
     public void testDeviceInfoUmp() throws Exception {
         PackageManager pm = mContext.getPackageManager();
         if (!pm.hasSystemFeature(PackageManager.FEATURE_MIDI)) {
@@ -477,18 +522,24 @@ public class MidiEchoTest extends AndroidTestCase {
         tearDownEchoServer(mc, true);
     }
 
+    @Test
     public void testEchoSmallMessageLegacy() throws Exception {
         checkEchoVariableMessage(3, false);
     }
 
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_VIRTUAL_UMP)
     public void testEchoSmallMessageUmp() throws Exception {
         checkEchoVariableMessage(8, true);
     }
 
+    @Test
     public void testEchoLargeMessageLegacy() throws Exception {
         checkEchoVariableMessage(MAX_PACKET_DATA_SIZE, false);
     }
 
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_VIRTUAL_UMP)
     public void testEchoLargeMessageUmp() throws Exception {
         checkEchoVariableMessage(MAX_PACKET_DATA_SIZE, true);
     }
@@ -496,10 +547,13 @@ public class MidiEchoTest extends AndroidTestCase {
     // This message will not fit in the internal buffer in MidiInputPort.
     // But it is still a legal size according to the API for
     // MidiReceiver.send(). It may be received in multiple packets.
+    @Test
     public void testEchoOversizeMessageLegacy() throws Exception {
         checkEchoVariableMessage(MAX_PACKET_DATA_SIZE + 20, false);
     }
 
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_VIRTUAL_UMP)
     public void testEchoOversizeMessageUmp() throws Exception {
         checkEchoVariableMessage(MAX_PACKET_DATA_SIZE + 20, true);
     }
@@ -588,10 +642,13 @@ public class MidiEchoTest extends AndroidTestCase {
         tearDownEchoServer(mc, useUmp);
     }
 
+    @Test
     public void testEchoLatencyLegacy() throws Exception {
         testEchoLatency(false);
     }
 
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_VIRTUAL_UMP)
     public void testEchoLatencyUmp() throws Exception {
         testEchoLatency(true);
     }
@@ -641,10 +698,13 @@ public class MidiEchoTest extends AndroidTestCase {
         tearDownEchoServer(mc, useUmp);
     }
 
+    @Test
     public void testEchoMultipleMessagesLegacy() throws Exception {
         testEchoMultipleMessages(false);
     }
 
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_VIRTUAL_UMP)
     public void testEchoMultipleMessagesUmp() throws Exception {
         testEchoMultipleMessages(true);
     }
@@ -722,6 +782,7 @@ public class MidiEchoTest extends AndroidTestCase {
     }
 
     // What happens if the app does bad things.
+    @Test
     public void testEchoBadBehaviorLegacy() throws Exception {
         PackageManager pm = mContext.getPackageManager();
         if (!pm.hasSystemFeature(PackageManager.FEATURE_MIDI)) {
@@ -736,6 +797,8 @@ public class MidiEchoTest extends AndroidTestCase {
         tearDownEchoServer(mc, false);
     }
 
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_VIRTUAL_UMP)
     public void testEchoBadBehaviorUmp() throws Exception {
         PackageManager pm = mContext.getPackageManager();
         if (!pm.hasSystemFeature(PackageManager.FEATURE_MIDI)) {
@@ -792,10 +855,13 @@ public class MidiEchoTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testDeviceCallbackLegacy() throws Exception {
         testDeviceCallback(false);
     }
 
+    @Test
+    @RequiresFlagsEnabled(Flags.FLAG_VIRTUAL_UMP)
     public void testDeviceCallbackUmp() throws Exception {
         testDeviceCallback(true);
     }
