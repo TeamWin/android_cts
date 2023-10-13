@@ -1483,9 +1483,6 @@ public class WallpaperManagerTest {
      */
     @Test
     public void testSharedWallpaperVisibilityBehindActivity_onLockScreen() throws Exception {
-        // TODO(b/296508731): This test fails and causes flakes in other tests if run on Wear.
-        assumeFalse(mContext.getPackageManager().hasSystemFeature(FEATURE_WATCH));
-
         assumeTrue("Test requires FEATURE_SECURE_LOCK_SCREEN",
                 mContext.getPackageManager().hasSystemFeature(FEATURE_SECURE_LOCK_SCREEN));
         assumeTrue("Test requires FEATURE_LIVE_WALLPAPER",
@@ -1499,8 +1496,15 @@ public class WallpaperManagerTest {
 
                 startAndWaitActivity();
 
-                WallpaperManagerTestUtils.goToState(mWallpaperManager,
-                        WallpaperState.LIVE_SAME_SINGLE);
+                // Make sure a live wallpaper is configured and used for both home and lock
+                // screens.
+                final WallpaperInfo homeInfo = mWallpaperManager.getWallpaperInfo(FLAG_SYSTEM);
+                final int lockInfo = mWallpaperManager.getWallpaperId(FLAG_LOCK);
+                if (homeInfo == null || lockInfo >= 0) {
+                    WallpaperManagerTestUtils.goToState(mWallpaperManager,
+                            WallpaperState.LIVE_SAME_SINGLE);
+                }
+
                 lockScreenSession.gotoKeyguard();
                 assertWallpaperIsShown(wallpaperWindowsHelper, FLAG_SYSTEM | FLAG_LOCK,
                         true /* shouldBeShown */,
