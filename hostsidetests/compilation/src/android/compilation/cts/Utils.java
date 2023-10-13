@@ -23,6 +23,7 @@ import com.android.tradefed.invoker.TestInformation;
 import com.android.tradefed.testtype.IAbi;
 import com.android.tradefed.util.CommandResult;
 import com.android.tradefed.util.Pair;
+import com.android.tradefed.util.RunUtil;
 
 import com.google.common.io.ByteStreams;
 
@@ -63,7 +64,9 @@ public class Utils {
             throws Exception {
         // We cannot use `ITestDevice.installPackage` or `SuiteApkInstaller` here because they don't
         // support DM files.
-        List<String> cmd = new ArrayList<>(List.of("install-multiple", "--abi", abi.getName()));
+        List<String> cmd =
+                new ArrayList<>(List.of("adb", "-s", mTestInfo.getDevice().getSerialNumber(),
+                        "install-multiple", "--abi", abi.getName()));
 
         for (Pair<String, String> pair : apkDmResources) {
             String apkResource = pair.first;
@@ -80,8 +83,12 @@ public class Utils {
             }
         }
 
-        String result = mTestInfo.getDevice().executeAdbCommand(cmd.toArray(String[] ::new));
-        assertWithMessage("Failed to install").that(result).isNotNull();
+        // We can't use `INativeDevice.executeAdbCommand`. It only returns stdout on success and
+        // returns null on failure, while we want to get the exact error message.
+        CommandResult result = RunUtil.getDefault().runTimedCmd(
+                mTestInfo.getDevice().getOptions().getAdbCommandTimeout(),
+                cmd.toArray(String[] ::new));
+        assertWithMessage(result.toString()).that(result.getExitCode()).isEqualTo(0);
     }
 
     public void installFromResources(IAbi abi, String apkResource, String dmResource)
