@@ -23,6 +23,7 @@ import com.android.bedstead.harrier.annotations.EnsureHasNoAccounts
 import com.android.bedstead.harrier.annotations.FailureMode
 import com.android.bedstead.harrier.annotations.Postsubmit
 import com.android.bedstead.harrier.annotations.enterprise.EnsureHasNoDpc
+import com.android.bedstead.harrier.annotations.enterprise.EnsureHasProfileOwner
 import com.android.bedstead.nene.TestApis
 import com.android.bedstead.nene.exceptions.AdbException
 import com.android.bedstead.nene.exceptions.NeneException
@@ -265,6 +266,7 @@ class ProfileOwnerTest {
 
     @Test
     @Postsubmit(reason = "new test")
+    @EnsureHasProfileOwner
     fun disableComponentInProfileOwnerViaAdb_throwsException() {
         val component = deviceState.dpc().packageName() + "/" +
                 deviceState.dpc().testApp().activities().query().get().className()
@@ -281,6 +283,7 @@ class ProfileOwnerTest {
 
     @Test
     @Postsubmit(reason = "new test")
+    @EnsureHasProfileOwner
     fun disableProfileOwnerViaAdb_throwsException() {
         try {
             deviceState.dpc().pkg().disable()
