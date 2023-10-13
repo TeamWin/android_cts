@@ -19,7 +19,8 @@ package android.hdmicec.cts;
 public enum CecClientMessage {
     CLIENT_CONSOLE_READY("waiting for input"),
     QUIT_CLIENT("q"),
-    POLL("poll");
+    POLL("poll"),
+    CLIENT_CONSOLE_END("communication thread ended");
 
     private final String message;
 
