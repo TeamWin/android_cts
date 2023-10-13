@@ -17,7 +17,6 @@
 package com.android.bedstead.harrier;
 
 import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
-import static android.app.role.RoleManager.ROLE_BROWSER;
 import static android.content.pm.PackageManager.FEATURE_MANAGED_USERS;
 import static android.os.Build.VERSION.SDK_INT;
 
@@ -77,7 +76,6 @@ import com.android.bedstead.harrier.annotations.EnsureHasAccountAuthenticator;
 import com.android.bedstead.harrier.annotations.EnsureHasAccounts;
 import com.android.bedstead.harrier.annotations.EnsureHasAdditionalUser;
 import com.android.bedstead.harrier.annotations.EnsureHasAppOp;
-import com.android.bedstead.harrier.annotations.RequireHasDefaultBrowser;
 import com.android.bedstead.harrier.annotations.EnsureHasNoAccounts;
 import com.android.bedstead.harrier.annotations.EnsureHasNoAdditionalUser;
 import com.android.bedstead.harrier.annotations.EnsureHasPermission;
@@ -102,6 +100,7 @@ import com.android.bedstead.harrier.annotations.RequireFeature;
 import com.android.bedstead.harrier.annotations.RequireFeatureFlagEnabled;
 import com.android.bedstead.harrier.annotations.RequireFeatureFlagNotEnabled;
 import com.android.bedstead.harrier.annotations.RequireFeatureFlagValue;
+import com.android.bedstead.harrier.annotations.RequireHasDefaultBrowser;
 import com.android.bedstead.harrier.annotations.RequireHeadlessSystemUserMode;
 import com.android.bedstead.harrier.annotations.RequireInstantApp;
 import com.android.bedstead.harrier.annotations.RequireLowRamDevice;
@@ -1294,13 +1293,15 @@ public final class DeviceState extends HarrierRule {
                         requireQuickSettingsSupport.failureMode());
                 continue;
             }
+
             if (annotation instanceof RequireHasDefaultBrowser) {
                 RequireHasDefaultBrowser requireHasDefaultBrowser =
                         (RequireHasDefaultBrowser) annotation;
-                    UserReference user =
+                UserReference user =
                             resolveUserTypeToUser(requireHasDefaultBrowser.forUser());
-                    checkFailOrSkip("User: " + user + " does not have a default browser",
-                            !TestApis.roles().getRoleHoldersAsUser(ROLE_BROWSER, user).isEmpty(),
+
+                checkFailOrSkip("User: " + user + " does not have a default browser",
+                            TestApis.packages().defaultBrowserForUser(user) != null,
                             requireHasDefaultBrowser.failureMode());
                     continue;
             }
