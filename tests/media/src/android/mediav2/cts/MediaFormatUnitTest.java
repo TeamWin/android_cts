@@ -18,8 +18,10 @@ package android.mediav2.cts;
 
 import static org.junit.Assert.assertTrue;
 
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
-import androidx.test.runner.AndroidJUnit4;
+
+import com.android.compatibility.common.util.ApiTest;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -40,6 +42,9 @@ public class MediaFormatUnitTest {
     @Rule
     public Timeout timeout = new Timeout(PER_TEST_TIMEOUT_MS, TimeUnit.MILLISECONDS);
 
+    @ApiTest(apis = {"AMediaFormat_getInt32", "AMediaFormat_setInt32",
+            "AMediaFormat_copy", "AMediaFormat_clear", "AMediaFormat_toString",
+            "AMediaFormat_new", "AMediaFormat_delete"})
     @Test
     public void testMediaFormatNativeInt32() {
         assertTrue(nativeTestMediaFormatInt32());
@@ -47,6 +52,9 @@ public class MediaFormatUnitTest {
 
     private native boolean nativeTestMediaFormatInt32();
 
+    @ApiTest(apis = {"AMediaFormat_getInt64", "AMediaFormat_setInt64",
+            "AMediaFormat_copy", "AMediaFormat_clear", "AMediaFormat_toString",
+            "AMediaFormat_new", "AMediaFormat_delete"})
     @Test
     public void testMediaFormatNativeInt64() {
         assertTrue(nativeTestMediaFormatInt64());
@@ -54,6 +62,9 @@ public class MediaFormatUnitTest {
 
     private native boolean nativeTestMediaFormatInt64();
 
+    @ApiTest(apis = {"AMediaFormat_getFloat", "AMediaFormat_setFloat",
+            "AMediaFormat_copy", "AMediaFormat_clear", "AMediaFormat_toString",
+            "AMediaFormat_new", "AMediaFormat_delete"})
     @Test
     public void testMediaFormatNativeFloat() {
         assertTrue(nativeTestMediaFormatFloat());
@@ -61,6 +72,9 @@ public class MediaFormatUnitTest {
 
     private native boolean nativeTestMediaFormatFloat();
 
+    @ApiTest(apis = {"AMediaFormat_getDouble", "AMediaFormat_setDouble",
+            "AMediaFormat_copy", "AMediaFormat_clear", "AMediaFormat_toString",
+            "AMediaFormat_new", "AMediaFormat_delete"})
     @Test
     public void testMediaFormatNativeDouble() {
         assertTrue(nativeTestMediaFormatDouble());
@@ -68,6 +82,9 @@ public class MediaFormatUnitTest {
 
     private native boolean nativeTestMediaFormatDouble();
 
+    @ApiTest(apis = {"AMediaFormat_getSize", "AMediaFormat_setSize",
+            "AMediaFormat_copy", "AMediaFormat_clear", "AMediaFormat_toString",
+            "AMediaFormat_new", "AMediaFormat_delete"})
     @Test
     public void testMediaFormatNativeSize() {
         assertTrue(nativeTestMediaFormatSize());
@@ -75,6 +92,9 @@ public class MediaFormatUnitTest {
 
     private native boolean nativeTestMediaFormatSize();
 
+    @ApiTest(apis = {"AMediaFormat_getString", "AMediaFormat_setString",
+            "AMediaFormat_copy", "AMediaFormat_clear", "AMediaFormat_toString",
+            "AMediaFormat_new", "AMediaFormat_delete"})
     @Test
     public void testMediaFormatNativeString() {
         assertTrue(nativeTestMediaFormatString());
@@ -82,6 +102,9 @@ public class MediaFormatUnitTest {
 
     private native boolean nativeTestMediaFormatString();
 
+    @ApiTest(apis = {"AMediaFormat_getRect", "AMediaFormat_setRect",
+            "AMediaFormat_copy", "AMediaFormat_clear", "AMediaFormat_toString",
+            "AMediaFormat_new", "AMediaFormat_delete"})
     @Test
     public void testMediaFormatNativeRect() {
         assertTrue(nativeTestMediaFormatRect());
@@ -89,6 +112,9 @@ public class MediaFormatUnitTest {
 
     private native boolean nativeTestMediaFormatRect();
 
+    @ApiTest(apis = {"AMediaFormat_getBuffer", "AMediaFormat_setBuffer",
+            "AMediaFormat_copy", "AMediaFormat_clear", "AMediaFormat_toString",
+            "AMediaFormat_new", "AMediaFormat_delete"})
     @Test
     public void testMediaFormatNativeBuffer() {
         assertTrue(nativeTestMediaFormatBuffer());
@@ -96,6 +122,16 @@ public class MediaFormatUnitTest {
 
     private native boolean nativeTestMediaFormatBuffer();
 
+    @ApiTest(apis = {"AMediaFormat_getInt32", "AMediaFormat_setInt32",
+            "AMediaFormat_getInt64", "AMediaFormat_setInt64",
+            "AMediaFormat_getFloat", "AMediaFormat_setFloat",
+            "AMediaFormat_getDouble", "AMediaFormat_setDouble",
+            "AMediaFormat_getString", "AMediaFormat_setString",
+            "AMediaFormat_getSize", "AMediaFormat_setSize",
+            "AMediaFormat_getRect", "AMediaFormat_setRect",
+            "AMediaFormat_getBuffer", "AMediaFormat_setBuffer",
+            "AMediaFormat_copy", "AMediaFormat_clear", "AMediaFormat_toString",
+            "AMediaFormat_new", "AMediaFormat_delete"})
     @Test
     public void testMediaFormatNativeAll() {
         assertTrue(nativeTestMediaFormatAll());

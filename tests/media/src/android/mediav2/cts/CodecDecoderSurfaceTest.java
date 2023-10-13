@@ -220,7 +220,7 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
      * reference list is obtained from the same decoder running in byte buffer mode
      */
     @CddTest(requirements = {"2.2.2", "2.3.2", "2.5.2"})
-    @ApiTest(apis = {"MediaCodecInfo.CodecCapabilities#COLOR_FormatSurface"})
+    @ApiTest(apis = {"android.media.MediaCodecInfo.CodecCapabilities#COLOR_FormatSurface"})
     @LargeTest
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testSimpleDecodeToSurface() throws IOException, InterruptedException {
@@ -488,7 +488,7 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
      * Tests is similar to {@link #testSimpleDecodeToSurface()} but uses ndk api
      */
     @CddTest(requirements = {"2.2.2", "2.3.2", "2.5.2"})
-    @ApiTest(apis = {"MediaCodecInfo.CodecCapabilities#COLOR_FormatSurface"})
+    @ApiTest(apis = {"android.media.MediaCodecInfo.CodecCapabilities#COLOR_FormatSurface"})
     @LargeTest
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testSimpleDecodeToSurfaceNative() throws IOException {

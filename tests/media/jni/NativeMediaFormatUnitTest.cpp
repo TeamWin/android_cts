@@ -613,22 +613,56 @@ testMediaFormatfuncNative(Buffer)
         return static_cast<jboolean>(testMediaFormat##func##Native()); \
     }
 
+//@ApiTest(apis = {"AMediaFormat_getInt32", "AMediaFormat_setInt32",
+//                 "AMediaFormat_copy", "AMediaFormat_clear", "AMediaFormat_toString",
+//                 "AMediaFormat_new", "AMediaFormat_delete"})
 nativeTestMediaFormatfunc(Int32)
 
+//@ApiTest(apis = {"AMediaFormat_getInt64", "AMediaFormat_setInt64",
+//                 "AMediaFormat_copy", "AMediaFormat_clear", "AMediaFormat_toString",
+//                 "AMediaFormat_new", "AMediaFormat_delete"})
 nativeTestMediaFormatfunc(Int64)
 
+//@ApiTest(apis = {"AMediaFormat_getFloat", "AMediaFormat_setFloat",
+//                 "AMediaFormat_copy", "AMediaFormat_clear", "AMediaFormat_toString",
+//                 "AMediaFormat_new", "AMediaFormat_delete"})
 nativeTestMediaFormatfunc(Float)
 
+//@ApiTest(apis = {"AMediaFormat_getDouble", "AMediaFormat_setDouble",
+//                 "AMediaFormat_copy", "AMediaFormat_clear", "AMediaFormat_toString",
+//                 "AMediaFormat_new", "AMediaFormat_delete"})
 nativeTestMediaFormatfunc(Double)
 
+//@ApiTest(apis = {"AMediaFormat_getSize", "AMediaFormat_setSize",
+//                 "AMediaFormat_copy", "AMediaFormat_clear", "AMediaFormat_toString",
+//                 "AMediaFormat_new", "AMediaFormat_delete"})
 nativeTestMediaFormatfunc(Size)
 
+//@ApiTest(apis = {"AMediaFormat_getString", "AMediaFormat_setString",
+//                 "AMediaFormat_copy", "AMediaFormat_clear", "AMediaFormat_toString",
+//                 "AMediaFormat_new", "AMediaFormat_delete"})
 nativeTestMediaFormatfunc(String)
 
+//@ApiTest(apis = {"AMediaFormat_getRect", "AMediaFormat_setRect",
+//                 "AMediaFormat_copy", "AMediaFormat_clear", "AMediaFormat_toString",
+//                 "AMediaFormat_new", "AMediaFormat_delete"})
 nativeTestMediaFormatfunc(Rect)
 
+//@ApiTest(apis = {"AMediaFormat_getBuffer", "AMediaFormat_setBuffer",
+//                 "AMediaFormat_copy", "AMediaFormat_clear", "AMediaFormat_toString",
+//                 "AMediaFormat_new", "AMediaFormat_delete"})
 nativeTestMediaFormatfunc(Buffer)
 
+//@ApiTest(apis = {"AMediaFormat_getInt32", "AMediaFormat_setInt32",
+//                 "AMediaFormat_getInt64", "AMediaFormat_setInt64",
+//                 "AMediaFormat_getFloat", "AMediaFormat_setFloat",
+//                 "AMediaFormat_getDouble", "AMediaFormat_setDouble",
+//                 "AMediaFormat_getString", "AMediaFormat_setString",
+//                 "AMediaFormat_getSize", "AMediaFormat_setSize",
+//                 "AMediaFormat_getRect", "AMediaFormat_setRect",
+//                 "AMediaFormat_getBuffer", "AMediaFormat_setBuffer",
+//                 "AMediaFormat_copy", "AMediaFormat_clear", "AMediaFormat_toString",
+//                 "AMediaFormat_new", "AMediaFormat_delete"})
 nativeTestMediaFormatfunc(All)
 
 int registerAndroidMediaV2CtsMediaFormatUnitTest(JNIEnv* env) {
