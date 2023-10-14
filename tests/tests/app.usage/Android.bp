@@ -21,10 +21,12 @@ android_test {
     defaults: ["cts_defaults"],
     platform_apis: true,
     static_libs: [
+        "android.app.usage.flags-aconfig-java",
         "androidx.test.rules",
         "compatibility-device-util-axt",
         "ctstestrunner-axt",
         "cts-wm-util",
+        "flag-junit",
         "junit",
         "permission-test-util-lib",
         "androidx.test.uiautomator_uiautomator",

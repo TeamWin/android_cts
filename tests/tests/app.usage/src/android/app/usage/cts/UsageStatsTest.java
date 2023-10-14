@@ -49,6 +49,7 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.UiAutomation;
 import android.app.usage.EventStats;
+import android.app.usage.Flags;
 import android.app.usage.UsageEvents;
 import android.app.usage.UsageEvents.Event;
 import android.app.usage.UsageStats;
@@ -73,6 +74,9 @@ import android.permission.cts.PermissionUtils;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.AppModeInstant;
 import android.platform.test.annotations.AsbSecurityTest;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.provider.Settings;
 import android.server.wm.WindowManagerState;
 import android.server.wm.WindowManagerStateHelper;
@@ -99,6 +103,7 @@ import com.android.sts.common.util.StsExtraBusinessLogicTestCase;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -217,6 +222,9 @@ public class UsageStatsTest extends StsExtraBusinessLogicTestCase {
     private Context mOtherUserContext;
     private UsageStatsManager mOtherUsageStats;
     private WindowManagerStateHelper mWMStateHelper;
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
 
     @Before
     public void setUp() throws Exception {
@@ -2174,6 +2182,7 @@ public class UsageStatsTest extends StsExtraBusinessLogicTestCase {
     }
 
     @AppModeFull(reason = "No usage events access in instant apps")
+    @RequiresFlagsEnabled(Flags.FLAG_REPORT_USAGE_STATS_PERMISSION)
     @Test
     @AsbSecurityTest(cveBugId = 229633537)
     public void testReportChooserSelection() throws Exception {
@@ -2250,6 +2259,7 @@ public class UsageStatsTest extends StsExtraBusinessLogicTestCase {
     }
 
     @AppModeFull(reason = "No usage events access in instant apps")
+    @RequiresFlagsEnabled(Flags.FLAG_REPORT_USAGE_STATS_PERMISSION)
     @Test
     public void testReportChooserSelectionAccess() throws Exception {
         try {
@@ -2265,6 +2275,7 @@ public class UsageStatsTest extends StsExtraBusinessLogicTestCase {
     }
 
     @AppModeFull(reason = "No usage events access in instant apps")
+    @RequiresFlagsEnabled(Flags.FLAG_REPORT_USAGE_STATS_PERMISSION)
     @Test
     public void testReportUserInteractionAccess() throws Exception {
         try {
