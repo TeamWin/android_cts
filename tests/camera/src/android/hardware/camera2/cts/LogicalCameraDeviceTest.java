@@ -1035,9 +1035,16 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
         Rect activeArraySize = mStaticInfo.getActiveArraySizeChecked();
         SizeF sensorSize = mStaticInfo.getValueFromKeyNonNull(
                 CameraCharacteristics.SENSOR_INFO_PHYSICAL_SIZE);
+        Size logicalPixelArraySize = mStaticInfo.getValueFromKeyNonNull(
+                CameraCharacteristics.SENSOR_INFO_PIXEL_ARRAY_SIZE);
+        Rect logicalPreCorrActiveArraySize = mStaticInfo.getValueFromKeyNonNull(
+                CameraCharacteristics.SENSOR_INFO_PRE_CORRECTION_ACTIVE_ARRAY_SIZE);
+        Float fovTransferRatio = logicalPreCorrActiveArraySize.width() * 1f /
+                logicalPixelArraySize.getWidth();
+        Float logicalSensorWidth = sensorSize.getWidth() * fovTransferRatio;
 
         // Assume subject distance >> focal length, and subject distance >> camera baseline.
-        double fov = 2 * Math.toDegrees(Math.atan2(sensorSize.getWidth() * cropRegion.width() /
+        double fov = 2 * Math.toDegrees(Math.atan2(logicalSensorWidth * cropRegion.width() /
                 (2 * zoomRatio * activeArraySize.width()),  focalLength));
 
         Map<String, CaptureResult> physicalResultsDual =
@@ -1052,15 +1059,23 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
             SizeF physicalSensorSize = physicalStaticInfo.getValueFromKeyNonNull(
                     CameraCharacteristics.SENSOR_INFO_PHYSICAL_SIZE);
 
+            Size physicalPixelArraySize = physicalStaticInfo.getValueFromKeyNonNull(
+                    CameraCharacteristics.SENSOR_INFO_PIXEL_ARRAY_SIZE);
+            Rect physicalPreCorrActiveArraySize = physicalStaticInfo.getValueFromKeyNonNull(
+                    CameraCharacteristics.SENSOR_INFO_PRE_CORRECTION_ACTIVE_ARRAY_SIZE);
+            Float transferRatio = physicalPreCorrActiveArraySize.width() * 1f /
+                    physicalPixelArraySize.getWidth();
+            Float physicalSensorWidth = physicalSensorSize.getWidth() * transferRatio;
+
             // Physical result metadata's ZOOM_RATIO is 1.0f.
             assertTrue("Physical result metadata ZOOM_RATIO should be 1.0f, but is " +
                     physicalZoomRatio, Math.abs(physicalZoomRatio - 1.0f) < ZOOM_RATIO_THRESHOLD);
 
             double physicalFov = 2 * Math.toDegrees(Math.atan2(
-                    physicalSensorSize.getWidth() * physicalCropRegion.width() /
+                    physicalSensorWidth * physicalCropRegion.width() /
                     (2 * physicalZoomRatio * physicalActiveArraySize.width()), physicalFocalLength));
 
-            double maxPhysicalFov = 2 * Math.toDegrees(Math.atan2(physicalSensorSize.getWidth() / 2,
+            double maxPhysicalFov = 2 * Math.toDegrees(Math.atan2(physicalSensorWidth  / 2,
                     physicalFocalLength));
             double expectedPhysicalFov = Math.min(maxPhysicalFov, fov);
 
