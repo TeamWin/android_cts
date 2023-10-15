@@ -31,7 +31,6 @@ import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DEFAULT;
 import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED;
 import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_ENABLED;
 import static android.content.pm.PackageManager.DONT_KILL_APP;
-import static android.content.pm.PackageManager.FILTER_OUT_QUARANTINED_COMPONENTS;
 import static android.content.pm.PackageManager.FLAG_SUSPEND_QUARANTINED;
 import static android.content.pm.PackageManager.GET_ACTIVITIES;
 import static android.content.pm.PackageManager.GET_META_DATA;
@@ -47,6 +46,7 @@ import static android.content.pm.PackageManager.MATCH_FACTORY_ONLY;
 import static android.content.pm.PackageManager.MATCH_HIDDEN_UNTIL_INSTALLED_COMPONENTS;
 import static android.content.pm.PackageManager.MATCH_INSTANT;
 import static android.content.pm.PackageManager.MATCH_KNOWN_PACKAGES;
+import static android.content.pm.PackageManager.MATCH_QUARANTINED_COMPONENTS;
 import static android.content.pm.PackageManager.MATCH_SYSTEM_ONLY;
 import static android.content.pm.PackageManager.MATCH_UNINSTALLED_PACKAGES;
 import static android.content.pm.PackageManager.SYSTEM_APP_STATE_HIDDEN_UNTIL_INSTALLED_HIDDEN;
@@ -3095,8 +3095,19 @@ public class PackageManagerTest {
         });
 
         // Flag treatment.
-        ApplicationInfo appInfo = mPackageManager.getApplicationInfo(HELLO_WORLD_PACKAGE_NAME,
-                PackageManager.ApplicationInfoFlags.of(FILTER_OUT_QUARANTINED_COMPONENTS));
+        ApplicationInfo appInfo = mPackageManager.getApplicationInfo(HELLO_WORLD_PACKAGE_NAME, 0);
+
+        // Default filtration of activities.
+        List<ResolveInfo> activitiesResult;
+        {
+            final Intent intent = new Intent(ACTIVITY_ACTION_NAME);
+            intent.setPackage(HELLO_WORLD_PACKAGE_NAME);
+            activitiesResult = mPackageManager.queryIntentActivities(intent,
+                    PackageManager.ResolveInfoFlags.of(0));
+            assertEquals(activitiesResult.toString(), 1, activitiesResult.size());
+            assertEquals("com.example.helloworld.MainActivity",
+                    activitiesResult.get(0).activityInfo.name);
+        }
 
         // Default filtration of services.
         List<ResolveInfo> servicesResult;
@@ -3107,6 +3118,21 @@ public class PackageManagerTest {
             if (servicesResult == null) {
                 servicesResult = new ArrayList<>();
             }
+        }
+
+        // Match QAS services.
+        List<ResolveInfo> servicesResult1;
+        {
+            Intent intent = new Intent("com.example.helloworld.service");
+            intent.setPackage(HELLO_WORLD_PACKAGE_NAME);
+            servicesResult1 = mPackageManager.queryIntentServices(intent,
+                    PackageManager.ResolveInfoFlags.of(MATCH_QUARANTINED_COMPONENTS));
+            if (servicesResult1 == null) {
+                servicesResult1 = new ArrayList<>();
+            }
+            assertEquals(servicesResult1.toString(), 1, servicesResult1.size());
+            assertEquals("com.example.helloworld.TestService",
+                    servicesResult1.get(0).serviceInfo.name);
         }
 
         // Default filtration of providers.
