@@ -17,6 +17,8 @@
 package android.media.cts;
 
 import android.os.Environment;
+import android.os.SystemClock;
+import android.util.Log;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
@@ -25,9 +27,46 @@ import org.junit.Assert;
 import java.io.File;
 
 public class WorkDirBase {
+    private static final String TAG = "WorkDirBase";
     private static final String MEDIA_PATH_INSTR_ARG_KEY = "media-path";
 
+    private static final int WAIT_FOR_STORAGE_TIMEOUT_MILLIS = 30000;
+    private static final int WAIT_FOR_STORAGE_SLEEP_MILLIS = 1000;
+
+    private static boolean sPolledForStatus = false;
+
     private static final File getTopDir() {
+        // we wait a bit if storage is not yet ready.
+        // We only do this 1 time per run, so bad storage state doesn't explode runtime.
+        //
+        // we deliberately skip any synchronization here.
+        // a race condition means 2 threads wait, 2 threads check status, and Both of them
+        // set sPolledForStatus to true, which is result we want.
+        // there isn't a deadlock, there isn't data contention, there isn't a count to get wrong.
+        //
+        if (!sPolledForStatus) {
+            int i;
+            long start_millis = SystemClock.elapsedRealtime();
+            for (i = 0; i < WAIT_FOR_STORAGE_TIMEOUT_MILLIS / WAIT_FOR_STORAGE_SLEEP_MILLIS; i++) {
+                String currentState = Environment.getExternalStorageState();
+                if (Environment.MEDIA_MOUNTED.equals(currentState)) {
+                    break;
+                }
+                try {
+                    Thread.sleep(WAIT_FOR_STORAGE_SLEEP_MILLIS);
+                } catch (InterruptedException e) {
+                    Log.w(TAG, "Interrupted sleep while waiting for external storage");
+                    Thread.currentThread().interrupt();
+                    break;
+                }
+            }
+            String finalState = Environment.getExternalStorageState();
+            long end_millis = SystemClock.elapsedRealtime();
+            Log.w(TAG, "Waited " + (end_millis - start_millis)
+                            + " milliseconds for external storage readiness, final: " + finalState);
+            sPolledForStatus = true;
+        }
+        // fatal if not mounted by now
         Assert.assertEquals("Missing external storage, is this running in instant mode?",
                         Environment.MEDIA_MOUNTED, Environment.getExternalStorageState());
         return Environment.getExternalStorageDirectory();
