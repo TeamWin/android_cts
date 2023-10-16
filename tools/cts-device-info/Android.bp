@@ -96,7 +96,5 @@ genrule {
         " -lo androidx.window.sidecar " +
         " -p com.android.compatibility.common.deviceinfo " +
         " -i androidx.test.runner.AndroidJUnitRunner " +
-        " -s 23 " +
-        " -t 23 " +
         " -o $(out)",
 }
