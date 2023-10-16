@@ -74,6 +74,7 @@ import android.permission.cts.PermissionUtils;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.AppModeInstant;
 import android.platform.test.annotations.AsbSecurityTest;
+import android.platform.test.annotations.RequiresFlagsDisabled;
 import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.platform.test.flag.junit.CheckFlagsRule;
 import android.platform.test.flag.junit.DeviceFlagsValueProvider;
@@ -2182,12 +2183,23 @@ public class UsageStatsTest extends StsExtraBusinessLogicTestCase {
     }
 
     @AppModeFull(reason = "No usage events access in instant apps")
-    @RequiresFlagsEnabled(Flags.FLAG_REPORT_USAGE_STATS_PERMISSION)
+    @RequiresFlagsDisabled(Flags.FLAG_REPORT_USAGE_STATS_PERMISSION)
     @Test
     @AsbSecurityTest(cveBugId = 229633537)
     public void testReportChooserSelection() throws Exception {
-        mUiAutomation.adoptShellPermissionIdentity(Manifest.permission.REPORT_USAGE_STATS);
+        testReportChooserSelectionNoPermissionCheck();
+    }
 
+    @AppModeFull(reason = "No usage events access in instant apps")
+    @RequiresFlagsEnabled(Flags.FLAG_REPORT_USAGE_STATS_PERMISSION)
+    @Test
+    @AsbSecurityTest(cveBugId = 229633537)
+    public void testReportChooserSelectionWithPermission() throws Exception {
+        mUiAutomation.adoptShellPermissionIdentity(Manifest.permission.REPORT_USAGE_STATS);
+        testReportChooserSelectionNoPermissionCheck();
+    }
+
+    private void testReportChooserSelectionNoPermissionCheck() throws Exception {
         // attempt to report an event with a null package, should fail.
         try {
             mUsageStatsManager.reportChooserSelection(null, 0,
@@ -2231,6 +2243,8 @@ public class UsageStatsTest extends StsExtraBusinessLogicTestCase {
                 "text/plain", null, null);
         mUsageStatsManager.reportChooserSelection(TEST_APP_PKG, 0,
                 "text/plain", null, " ");
+        events = mUsageStatsManager.queryEvents(
+                startTime - 1000, System.currentTimeMillis() + 1000);
         while (events.hasNextEvent()) {
             final Event event = new Event();
             events.getNextEvent(event);
