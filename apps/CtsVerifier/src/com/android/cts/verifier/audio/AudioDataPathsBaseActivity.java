@@ -40,6 +40,7 @@ import com.android.cts.verifier.audio.audiolib.AudioDeviceUtils;
 import com.android.cts.verifier.audio.audiolib.AudioSystemFlags;
 import com.android.cts.verifier.audio.audiolib.DisplayUtils;
 import com.android.cts.verifier.audio.audiolib.WaveScopeView;
+import com.android.cts.verifier.libs.ui.HtmlFormatter;
 
 // MegaAudio
 import org.hyphonate.megaaudio.common.StreamBase;
@@ -96,60 +97,6 @@ public abstract class AudioDataPathsBaseActivity
     private DuplexAudioManager mDuplexAudioManager;
 
     protected AppCallback mAnalysisCallbackHandler;
-
-    class HtmlFormatter {
-        StringBuilder mSB = new StringBuilder();
-
-        HtmlFormatter clear() {
-            mSB = new StringBuilder();
-            return this;
-        }
-
-        HtmlFormatter openDocument() {
-            mSB.append("<!DOCTYPE html><html lang=\"en-US\"><body>");
-            return this;
-        }
-
-        HtmlFormatter closeDocument() {
-            mSB.append("</body>");
-            return this;
-        }
-
-        HtmlFormatter openParagraph() {
-            mSB.append("<p>");
-            return this;
-        }
-
-        HtmlFormatter closeParagraph() {
-            mSB.append("</p>");
-            return this;
-        }
-
-        HtmlFormatter insertBreak() {
-            mSB.append("<br>");
-            return this;
-        }
-
-        HtmlFormatter openTextColor(String color) {
-            mSB.append("<font color=\"" + color + "\">");
-            return this;
-        }
-
-        HtmlFormatter closeTextColor() {
-            mSB.append("</font>");
-            return this;
-        }
-
-        HtmlFormatter appendText(String text) {
-            mSB.append(text);
-            return this;
-        }
-
-        @Override
-        public String toString() {
-            return mSB.toString();
-        }
-    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -809,21 +756,21 @@ public abstract class AudioDataPathsBaseActivity
                             int numFailures = countFailures(mApi);
                             int numUntested = getNumTestSpecs() - countTestedTestSpecs();
                             mHtmlFormatter.appendText("There were " + numFailures + " failures.");
-                            mHtmlFormatter.insertBreak();
+                            mHtmlFormatter.appendBreak();
                             mHtmlFormatter.appendText(
                                     "There were " + numUntested + " untested paths.");
 
                             if (numFailures == 0 && numUntested == 0) {
-                                mHtmlFormatter.insertBreak();
+                                mHtmlFormatter.appendBreak();
                                 mHtmlFormatter.appendText("All tests passed.");
                             }
                             mHtmlFormatter.closeParagraph();
                             mHtmlFormatter.openParagraph();
                         }
                         mHtmlFormatter.closeParagraph();
-                        mHtmlFormatter.closeDocument();
                     }
 
+                    mHtmlFormatter.closeDocument();
                     mResultsView.loadData(mHtmlFormatter.toString(),
                             "text/html; charset=utf-8", "utf-8");
                     showResultsView();
@@ -928,7 +875,7 @@ public abstract class AudioDataPathsBaseActivity
                                 results.mPhaseJitter <= spec.mMaxPassJitter;
 
                         // Values
-                        htmlFormatter.insertBreak();
+                        htmlFormatter.appendBreak();
                         if (!passMagnitude) {
                             htmlFormatter.openTextColor("red")
                                     .appendText(maxMagString)
@@ -946,7 +893,7 @@ public abstract class AudioDataPathsBaseActivity
                         }
 
                         // Criteria
-                        htmlFormatter.insertBreak();
+                        htmlFormatter.appendBreak();
                         if (!passMagnitude) {
                             htmlFormatter.openTextColor("blue")
                                     .appendText(maxMagString
@@ -964,7 +911,7 @@ public abstract class AudioDataPathsBaseActivity
                         }
                     }
 
-                    htmlFormatter.insertBreak();
+                    htmlFormatter.appendBreak();
                 } // pass/fail
                 htmlFormatter.closeParagraph();
             }
