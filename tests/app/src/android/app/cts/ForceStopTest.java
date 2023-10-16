@@ -31,9 +31,11 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.Flags;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.ConditionVariable;
+import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
 import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.platform.test.flag.junit.CheckFlagsRule;
@@ -71,6 +73,8 @@ public final class ForceStopTest {
     private ActivityManager mActivityManager;
     private PackageManager mPackageManager;
     private Instrumentation mInstrumentation;
+
+    private long mTimestampMs;
 
     @Rule
     public final CheckFlagsRule mCheckFlagsRule = DeviceFlagsValueProvider.createCheckFlagsRule();
@@ -138,10 +142,15 @@ public final class ForceStopTest {
                 final String pkg = uri != null ? uri.getSchemeSpecificPart() : null;
                 if (Intent.ACTION_PACKAGE_RESTARTED.equals(action)
                         && packageName.equals(pkg)) {
+                    mTimestampMs = intent.getLongExtra(Intent.EXTRA_TIME, 0L);
                     gotRestarted.open();
                 }
             }
         };
+
+        mTimestampMs = 0;
+        final long preStopTimestampMs = SystemClock.elapsedRealtime();
+
         final IntentFilter filter = new IntentFilter();
         filter.addDataScheme("package");
         filter.addAction(Intent.ACTION_PACKAGE_RESTARTED);
@@ -155,6 +164,10 @@ public final class ForceStopTest {
 
         if (!gotRestarted.block(DELAY_MILLIS)) {
             fail("Didn't get ACTION_PACKAGE_RESTARTED");
+        }
+        if (Flags.stayStopped()) {
+            assertTrue("EXTRA_TIME " + mTimestampMs + " not after " + preStopTimestampMs,
+                    mTimestampMs >= preStopTimestampMs);
         }
     }
 
@@ -174,16 +187,24 @@ public final class ForceStopTest {
                 final String pkg = uri != null ? uri.getSchemeSpecificPart() : null;
                 if (Intent.ACTION_PACKAGE_UNSTOPPED.equals(action)
                         && packageName.equals(pkg)) {
+                    mTimestampMs = intent.getLongExtra(Intent.EXTRA_TIME, 0L);
                     gotUnstopped.open();
                 }
             }
         };
+
+        mTimestampMs = 0;
+        final long preUnstopTimestampMs = SystemClock.elapsedRealtime();
+
         final IntentFilter filter = new IntentFilter();
         filter.addDataScheme("package");
         filter.addAction(Intent.ACTION_PACKAGE_UNSTOPPED);
         mTargetContext.registerReceiver(receiver, filter);
 
         forceStopAndStartSimpleActivity(intent);
+
+        assertTrue("EXTRA_TIME " + mTimestampMs + " not after " + preUnstopTimestampMs,
+                mTimestampMs >= preUnstopTimestampMs);
 
         if (!gotUnstopped.block(DELAY_MILLIS)) {
             fail("Didn't get ACTION_PACKAGE_UNSTOPPED");
