@@ -16,8 +16,8 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-android_test_helper_app {
-    name: "CtsCompilationApp",
+java_defaults {
+    name: "CtsCompilationApp_defaults",
     defaults: ["cts_support_defaults"],
     srcs: ["src/**/*.java"],
     sdk_version: "29",
@@ -26,4 +26,35 @@ android_test_helper_app {
         "cts",
         "general-tests",
     ],
+}
+
+android_test_helper_app {
+    name: "CtsCompilationApp",
+    defaults: ["CtsCompilationApp_defaults"],
+}
+
+android_test_helper_app {
+    name: "CtsCompilationApp_with_good_profile",
+    defaults: ["CtsCompilationApp_defaults"],
+    assets: [":CtsCompilationApp_assets_good_profile"],
+}
+
+android_test_helper_app {
+    name: "CtsCompilationApp_with_bad_profile",
+    defaults: ["CtsCompilationApp_defaults"],
+    assets: [":CtsCompilationApp_assets_bad_profile"],
+}
+
+genrule {
+    name: "CtsCompilationApp_assets_good_profile",
+    cmd: "cp $(in) $(out)",
+    srcs: [":CtsCompilationApp_profile"],
+    out: ["art-profile/baseline.prof"],
+}
+
+genrule {
+    name: "CtsCompilationApp_assets_bad_profile",
+    cmd: "cp $(in) $(out)",
+    srcs: [":AppUsedByOtherApp_1_prof"],
+    out: ["art-profile/baseline.prof"],
 }
