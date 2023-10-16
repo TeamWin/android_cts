@@ -27,6 +27,7 @@ import static org.testng.Assert.assertThrows;
 import android.app.admin.NoArgsPolicyKey;
 import android.app.admin.PolicyState;
 import android.app.admin.PolicyUpdateResult;
+import android.app.admin.flags.Flags;
 import android.devicepolicy.cts.utils.PolicyEngineUtils;
 import android.devicepolicy.cts.utils.PolicySetResultUtils;
 import android.os.Bundle;
@@ -34,8 +35,6 @@ import android.os.UserHandle;
 import android.platform.test.annotations.RequiresFlagsEnabled;
 import android.platform.test.flag.junit.CheckFlagsRule;
 import android.platform.test.flag.junit.DeviceFlagsValueProvider;
-
-import com.android.server.devicepolicy.flags.Flags;
 
 import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
