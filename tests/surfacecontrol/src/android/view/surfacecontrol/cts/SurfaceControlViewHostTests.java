@@ -55,6 +55,7 @@ import android.graphics.Color;
 import android.graphics.PixelFormat;
 import android.graphics.Rect;
 import android.graphics.Region;
+import android.graphics.Point;
 import android.os.Binder;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -650,7 +651,7 @@ public class SurfaceControlViewHostTests extends ActivityManagerTestBase impleme
 
         assertTrue("Failed to tap on embedded parent",
                 tapOnWindow(mInstrumentation, () -> mEmbeddedView.getWindowToken(),
-                        null /* offset */, /* useGlobalInjection= */ true));
+                        new Point(1, 1) /* offset */, /* useGlobalInjection= */ true));
         // When tapping on the parent embedded window, it should gain focus.
         assertWindowFocused(mEmbeddedView, true);
         // assert child embedded window does not have focus.
