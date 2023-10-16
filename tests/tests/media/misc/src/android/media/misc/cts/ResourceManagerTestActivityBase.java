@@ -135,6 +135,7 @@ public class ResourceManagerTestActivityBase extends Activity {
         Bundle extras = getIntent().getExtras();
         int type = TYPE_NONSECURE;
         boolean highResolution = false;
+        boolean isResolutionSet = true;
         if (extras != null) {
             type = extras.getInt("test-type", type);
             // Check if mime has been passed.
@@ -144,7 +145,8 @@ public class ResourceManagerTestActivityBase extends Activity {
             mHeight = extras.getInt("height");
             if (mWidth == 0 || mHeight == 0) {
                 // Either no resolution has been passed or its invalid.
-                // So, look for high-resolution flag.
+                isResolutionSet = false;
+                // See if the high-resolution flag has been set.
                 highResolution = extras.getBoolean("high-resolution", highResolution);
             } else if (mHeight >= 1080) {
                 highResolution = true;
@@ -167,6 +169,12 @@ public class ResourceManagerTestActivityBase extends Activity {
 
         if (!shouldSkip) {
             if (type == TYPE_SECURE || type == TYPE_MIX) {
+                if (!isResolutionSet && type == TYPE_MIX) {
+                    // clear previously set resolutions by the unsecure codecs,
+                    // so that we read the secure codec resolutions again.
+                    mWidth = 0;
+                    mHeight = 0;
+                }
                 securePlayback = true;
                 MediaCodecInfo info = getTestCodecInfo(securePlayback);
                 if (info != null) {
