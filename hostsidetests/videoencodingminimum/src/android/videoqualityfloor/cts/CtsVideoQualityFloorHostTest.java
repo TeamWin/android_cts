@@ -26,22 +26,14 @@ import com.android.tradefed.testtype.IAbiReceiver;
 import com.android.tradefed.testtype.IBuildReceiver;
 import com.android.tradefed.testtype.IDeviceTest;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.lang.Process;
-import java.lang.Runtime;
-import java.lang.SecurityException;
-
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
 
 /**
  * Run the host-side video quality floor tests.
@@ -56,10 +48,11 @@ import org.junit.runner.RunWith;
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class CtsVideoQualityFloorHostTest implements IAbiReceiver, IBuildReceiver, IDeviceTest {
 
-    public static final String TAG = CtsVideoQualityFloorHostTest.class.getSimpleName();
-    String BASE_URL =
+    static final String TAG = CtsVideoQualityFloorHostTest.class.getSimpleName();
+    static final String BASE_URL =
               "https://dl.google.com/android/xts/cts/hostsidetests/videoqualityfloor/";
-    String[] testClips = {
+    static final String TEST_SCRIPT_TARBALL = "tests-20231004.tgz";
+    static final String[] testClips = {
         "Fireworks.mp4",
         "Motorcycle.mp4",
         "MountainBike.mp4",
@@ -160,15 +153,17 @@ public class CtsVideoQualityFloorHostTest implements IAbiReceiver, IBuildReceive
         }
 
         // get the test script
-        downloadFile("tests.tar.gz", destination);
+        LogUtil.CLog.d("downloading " + TEST_SCRIPT_TARBALL);
+        downloadFile(TEST_SCRIPT_TARBALL, destination);
 
         // we *always* unpack and setup, even if the downloads were cached.
         // this avoids any /tmp cleanup problems.
         //
         // unpack the test scripts
-        runCmd("tar xzf tests.tar.gz", destination);
+        runCmd("tar xzf " + TEST_SCRIPT_TARBALL, destination);
 
         // run the setup scripts
+        LogUtil.CLog.d("running set_up");
         runCmd("./set_up.sh", destination);
 
         // run the test script
@@ -211,7 +206,8 @@ public class CtsVideoQualityFloorHostTest implements IAbiReceiver, IBuildReceive
         } catch (InterruptedException e) {
             result = -3;
         }
-        Assert.assertTrue("runCmd() fails with output\n" + childStdout, result == 0);
+        Assert.assertTrue("runCmd(" + cmd + ") fails result= " + result
+                        + " and output:\n" + childStdout, result == 0);
 
         return childStdout;
     }
@@ -233,7 +229,9 @@ public class CtsVideoQualityFloorHostTest implements IAbiReceiver, IBuildReceive
         }
 
         String url = BASE_URL + fileName;
-        String cmd = "wget -O " + destination.getPath() + " " + url;
+        // wget doesn't do 'file'
+        // String cmd = "wget -O " + destination.getPath() + " " + url;
+        String cmd = "curl --silent --output " + destination.getPath() + " " + url;
         runCmd(cmd, destDir);
     }
 
