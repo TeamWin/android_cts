@@ -2413,15 +2413,19 @@ public class NotificationManagerTest extends BaseNotificationManagerTest {
         List<String> allowedPackages = Arrays.asList(
                 mPackageManager.getPermissionControllerPackageName(),
                 "com.android.shell");
+        StringBuilder sb = new StringBuilder();
         for (PackageInfo pkg : allPackages) {
             if (!pkg.applicationInfo.isSystemApp()
                     && mPackageManager.checkPermission(
                     Manifest.permission.MANAGE_NOTIFICATION_LISTENERS, pkg.packageName)
                     == PackageManager.PERMISSION_GRANTED
                     && !allowedPackages.contains(pkg.packageName)) {
-                fail(pkg.packageName + " can't hold "
-                        + Manifest.permission.MANAGE_NOTIFICATION_LISTENERS);
+                sb.append(pkg.packageName + " can't hold "
+                        + Manifest.permission.MANAGE_NOTIFICATION_LISTENERS + "\n");
             }
+        }
+        if (sb.length() > 0) {
+            fail(sb.toString());
         }
     }
 
