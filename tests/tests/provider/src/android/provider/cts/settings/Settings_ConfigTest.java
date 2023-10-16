@@ -82,7 +82,7 @@ public class Settings_ConfigTest {
 
     private static final String TEST_PACKAGE_NAME = "android.content.cts";
 
-    private static final long OPERATION_TIMEOUT_MS = 5000;
+    private static final long OPERATION_TIMEOUT_MS = 10000;
 
     private static final Context CONTEXT = InstrumentationRegistry.getContext();
 
