@@ -32,6 +32,8 @@ java_defaults {
         ":CtsCompilationApp",
         ":CtsCompilationApp_profile",
         ":CtsCompilationApp_dm",
+        ":CtsCompilationApp_with_bad_profile",
+        ":CtsCompilationApp_with_good_profile",
     ],
     libs: [
         "cts-tradefed",
