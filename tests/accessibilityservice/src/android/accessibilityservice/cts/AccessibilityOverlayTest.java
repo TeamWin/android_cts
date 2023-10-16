@@ -43,6 +43,9 @@ import android.graphics.Rect;
 import android.hardware.display.DisplayManager;
 import android.os.Binder;
 import android.platform.test.annotations.Presubmit;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
 import android.server.wm.CtsWindowInfoUtils;
 import android.util.SparseArray;
 import android.view.Display;
@@ -51,6 +54,7 @@ import android.view.SurfaceControlViewHost;
 import android.view.WindowManager;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.accessibility.AccessibilityWindowInfo;
+import android.view.accessibility.Flags;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.window.WindowInfosListenerForTest;
@@ -96,9 +100,12 @@ public class AccessibilityOverlayTest {
     private AccessibilityDumpOnFailureRule mDumpOnFailureRule =
             new AccessibilityDumpOnFailureRule();
 
+    private CheckFlagsRule mCheckFlagsRule =
+            DeviceFlagsValueProvider.createCheckFlagsRule(sUiAutomation);
+
     @Rule
     public final RuleChain mRuleChain =
-            RuleChain.outerRule(mServiceRule).around(mDumpOnFailureRule);
+            RuleChain.outerRule(mServiceRule).around(mDumpOnFailureRule).around(mCheckFlagsRule);
 
     private Executor mExecutor = Executors.newSingleThreadExecutor();
     private ResultCapturingCallback mCallback = new ResultCapturingCallback();
@@ -193,6 +200,7 @@ public class AccessibilityOverlayTest {
     }
 
     @Test
+    @RequiresFlagsEnabled(Flags.FLAG_A11Y_OVERLAY_CALLBACKS)
     public void testA11yServiceShowsDisplayEmbeddedOverlayWithCallback_shouldAppearAndDisappear()
             throws Exception {
         // Set up a view that will become our accessibility overlay.
@@ -212,6 +220,7 @@ public class AccessibilityOverlayTest {
 
     @Test
     @FlakyTest
+    @RequiresFlagsEnabled(Flags.FLAG_A11Y_OVERLAY_CALLBACKS)
     public void testA11yServiceShowsWindowEmbeddedOverlayWithCallback_shouldAppearAndDisappear()
             throws Exception {
         doOverlayWindowTest(mExecutor, mCallback);
@@ -281,15 +290,22 @@ public class AccessibilityOverlayTest {
 
             // Attach the SurfaceControlViewHost as an accessibility overlay to the activity window.
             sUiAutomation.executeAndWaitForEvent(
-                    () ->
+                    () -> {
+                        if (callback != null && executor != null) {
                             mService.attachAccessibilityOverlayToWindow(
-                                    activityRootNode.getWindowId(), sc, executor, callback),
+                                    activityRootNode.getWindowId(), sc, executor, callback);
+                        } else {
+                            mService.attachAccessibilityOverlayToWindow(
+                                    activityRootNode.getWindowId(), sc);
+                        }
+                    },
                     (event) -> {
                         // Wait until the overlay window is added
                         final AccessibilityWindowInfo overlayWindow =
                                 ActivityLaunchUtils.findWindowByTitle(sUiAutomation, overlayTitle);
-                        if (overlayWindow == null || overlayWindow.getType()
-                                != AccessibilityWindowInfo.TYPE_ACCESSIBILITY_OVERLAY) {
+                        if (overlayWindow == null
+                                || overlayWindow.getType()
+                                        != AccessibilityWindowInfo.TYPE_ACCESSIBILITY_OVERLAY) {
                             return false;
                         }
                         // Refresh the activity's button node to ensure the AccessibilityNodeInfo
@@ -297,10 +313,11 @@ public class AccessibilityOverlayTest {
                         activityNodeToDrawOver.refresh();
 
                         // Wait until overlay is drawn on correct location
-                        final AccessibilityNodeInfo overlayButtonNode = overlayWindow
-                                .getRoot()
-                                .findAccessibilityNodeInfosByText(buttonText)
-                                .get(0);
+                        final AccessibilityNodeInfo overlayButtonNode =
+                                overlayWindow
+                                        .getRoot()
+                                        .findAccessibilityNodeInfosByText(buttonText)
+                                        .get(0);
                         final Rect expectedBoundsInWindow = new Rect();
                         final Rect actualBoundsInWindow = new Rect();
                         activityNodeToDrawOver.getBoundsInWindow(expectedBoundsInWindow);
@@ -313,13 +330,18 @@ public class AccessibilityOverlayTest {
 
                         // Stores the related information including event, bounds
                         // as a timeout exception record.
-                        timeoutExceptionRecords.append(String.format("""
+                        timeoutExceptionRecords.append(
+                                String.format(
+                                        """
                                         { Received event: %s }
                                         Expected bounds in window: %s, actual bounds in window: %s
                                         Expected bounds in screen: %s, actual bounds in screen: %s
                                         """,
-                                event, expectedBoundsInWindow, actualBoundsInWindow,
-                                expectedBoundsInScreen, actualBoundsInScreen));
+                                        event,
+                                        expectedBoundsInWindow,
+                                        actualBoundsInWindow,
+                                        expectedBoundsInScreen,
+                                        actualBoundsInScreen));
 
                         // The overlay button should have the same window-space and screen-space
                         // bounds as the view in the activity, as configured above.
@@ -331,8 +353,10 @@ public class AccessibilityOverlayTest {
             checkTrustedOverlayExists(overlayTitle);
             removeOverlayAndCheck(sc, overlayTitle);
         } catch (TimeoutException timeout) {
-            throw new TimeoutException(timeout.getMessage() + "\n\nTimeout exception records : \n"
-                    + timeoutExceptionRecords);
+            throw new TimeoutException(
+                    timeout.getMessage()
+                            + "\n\nTimeout exception records : \n"
+                            + timeoutExceptionRecords);
         } finally {
             if (activity != null) {
                 activity.finish();
@@ -492,9 +516,14 @@ public class AccessibilityOverlayTest {
             SurfaceControl sc, String overlayTitle, Executor executor, IntConsumer callback)
             throws Exception {
         sUiAutomation.executeAndWaitForEvent(
-                () ->
+                () -> {
+                    if (executor != null && callback != null) {
                         mService.attachAccessibilityOverlayToDisplay(
-                                Display.DEFAULT_DISPLAY, sc, executor, callback),
+                                Display.DEFAULT_DISPLAY, sc, executor, callback);
+                    } else {
+                        mService.attachAccessibilityOverlayToDisplay(Display.DEFAULT_DISPLAY, sc);
+                    }
+                },
                 (event) ->
                         ActivityLaunchUtils.findWindowByTitle(sUiAutomation, overlayTitle) != null,
                 AsyncUtils.DEFAULT_TIMEOUT_MS);

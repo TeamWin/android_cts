@@ -21,6 +21,7 @@ android_test {
     defaults: ["cts_defaults"],
     static_libs: [
         "com_android_server_accessibility_flags_lib",
+        "android.view.accessibility.flags-aconfig-java",
         "ctstestrunner-axt",
         "cts-wm-util",
         "flag-junit",
