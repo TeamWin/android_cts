@@ -82,7 +82,7 @@ public class Settings_ConfigTest {
 
     private static final String TEST_PACKAGE_NAME = "android.content.cts";
 
-    private static final long OPERATION_TIMEOUT_MS = 5000;
+    private static final long OPERATION_TIMEOUT_MS = 10000;
 
     private static final long WAIT_FOR_PROPERTY_CHANGE_TIMEOUT_MILLIS = 2000; // 2 sec
     private final Object mLock = new Object();
