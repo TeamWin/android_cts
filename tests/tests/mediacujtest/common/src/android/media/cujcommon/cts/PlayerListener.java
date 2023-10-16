@@ -19,6 +19,7 @@ package android.media.cujcommon.cts;
 import static android.media.cujcommon.cts.CujTestBase.ORIENTATIONS;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -78,6 +79,13 @@ public class PlayerListener implements Player.Listener {
   private boolean mIsScrollTest;
   private int mNumOfScrollIteration;
   private boolean mScrollRequested;
+  private boolean mIsSwitchAudioTracksTest;
+  private boolean mTrackChangeRequested;
+  private List<Tracks.Group> mAudioTrackGroups;
+  private Format mStartTrackFormat;
+  private Format mCurrentTrackFormat;
+  private Format mConfiguredTrackFormat;
+  private int mNumOfAudioTrack;
 
   /**
    * Create player listener for playback test.
@@ -92,6 +100,8 @@ public class PlayerListener implements Player.Listener {
     playerListener.mSendMessagePosition = 0;
     playerListener.mIsScrollTest = false;
     playerListener.mNumOfScrollIteration = 0;
+    playerListener.mIsSwitchAudioTracksTest = false;
+    playerListener.mNumOfAudioTrack = 0;
     return playerListener;
   }
 
@@ -151,6 +161,21 @@ public class PlayerListener implements Player.Listener {
     PlayerListener playerListener = createListenerForPlaybackTest();
     playerListener.mIsScrollTest = true;
     playerListener.mNumOfScrollIteration = numOfScrollIteration;
+    playerListener.mSendMessagePosition = sendMessagePosition;
+    return playerListener;
+  }
+
+  /**
+   * Create player listener for Switching Audio Tracks test.
+   *
+   * @param numOfAudioTrack     Number of audio track in input clip
+   * @param sendMessagePosition The position at which message will be send
+   */
+  public static PlayerListener createListenerForSwitchAudioTracksTest(int numOfAudioTrack,
+      long sendMessagePosition) {
+    PlayerListener playerListener = createListenerForPlaybackTest();
+    playerListener.mIsSwitchAudioTracksTest = true;
+    playerListener.mNumOfAudioTrack = numOfAudioTrack;
     playerListener.mSendMessagePosition = sendMessagePosition;
     return playerListener;
   }
@@ -260,6 +285,32 @@ public class PlayerListener implements Player.Listener {
   }
 
   /**
+   * Check if two formats are similar.
+   *
+   * @param refFormat  Reference format
+   * @param testFormat Test format
+   * @return True, if two formats are similar, false otherwise
+   */
+  private boolean isFormatSimilar(Format refFormat, Format testFormat) {
+    String refMediaType = refFormat.sampleMimeType;
+    String testMediaType = testFormat.sampleMimeType;
+    if (mIsSwitchAudioTracksTest) {
+      assertTrue(refMediaType.startsWith("audio/") && testMediaType.startsWith("audio/"));
+      if ((refFormat.channelCount != testFormat.channelCount) || (refFormat.sampleRate
+          != testFormat.sampleRate)) {
+        return false;
+      }
+    }
+    if (!refMediaType.equals(testMediaType)) {
+      return false;
+    }
+    if (!refFormat.id.equals(testFormat.id)) {
+      return false;
+    }
+    return true;
+  }
+
+  /**
    * Called when player states changed.
    *
    * @param player The {@link Player} whose state changed. Use the getters to obtain the latest
@@ -301,7 +352,16 @@ public class PlayerListener implements Player.Listener {
             mVideoFormatList = getVideoFormatList();
             mCurrentTrackIndex = 0;
           }
+          if (mIsSwitchAudioTracksTest) {
+            // When player is ready, get the list of audio track groups in the mediaItem
+            mAudioTrackGroups = getAudioTrackGroups();
+          }
         }
+      } else if (mTrackChangeRequested && player.getPlaybackState() == Player.STATE_ENDED) {
+        assertEquals(mConfiguredTrackFormat, mCurrentTrackFormat);
+        assertFalse(isFormatSimilar(mStartTrackFormat, mCurrentTrackFormat));
+        mTrackChangeRequested = false;
+        mStartTrackFormat = mCurrentTrackFormat;
       }
       synchronized (LISTENER_LOCK) {
         if (player.getPlaybackState() == Player.STATE_ENDED) {
@@ -336,6 +396,14 @@ public class PlayerListener implements Player.Listener {
         // Create messages to be executed at different positions
         for (int count = 1; count < totalNumOfVideoTrackChange; count++) {
           createAdaptivePlaybackMessage(mSendMessagePosition * (count));
+        }
+      } else if (mIsSwitchAudioTracksTest) {
+        // Create messages to be executed at different positions
+        // First trackGroupIndex is selected at the time of playback start, so changing
+        // track from second track group Index onwards.
+        for (int trackGroupIndex = 1; trackGroupIndex < mNumOfAudioTrack; trackGroupIndex++) {
+          createSwitchAudioTrackMessage(mSendMessagePosition * trackGroupIndex,
+              trackGroupIndex, 0 /* audioTrackIndex */);
         }
       }
       // In case of scroll test, send the message to scroll the view to change the surface
@@ -432,5 +500,71 @@ public class PlayerListener implements Player.Listener {
     }
     assertEquals(mNumOfVideoTrack, videoFormatList.size());
     return videoFormatList;
+  }
+
+  /**
+   * Create a message at given position to change the audio track
+   *
+   * @param sendMessagePosition Position at which message needs to be executed
+   * @param trackGroupIndex     Index of the current track group
+   * @param trackIndex          Index of the current track
+   */
+  private void createSwitchAudioTrackMessage(long sendMessagePosition, int trackGroupIndex,
+      int trackIndex) {
+    mActivity.mPlayer.createMessage((messageType, payload) -> {
+          TrackSelectionParameters currentParameters =
+              mActivity.mPlayer.getTrackSelectionParameters();
+          TrackSelectionParameters newParameters = currentParameters
+              .buildUpon()
+              .setOverrideForType(
+                  new TrackSelectionOverride(
+                      mAudioTrackGroups.get(trackGroupIndex).getMediaTrackGroup(),
+                      trackIndex))
+              .build();
+          mActivity.mPlayer.setTrackSelectionParameters(newParameters);
+          mConfiguredTrackFormat = mAudioTrackGroups.get(trackGroupIndex)
+              .getTrackFormat(trackIndex);
+          mTrackChangeRequested = true;
+        }).setLooper(Looper.getMainLooper()).setPosition(sendMessagePosition)
+        .setDeleteAfterDelivery(true).send();
+  }
+
+  /**
+   * Called when the value of getCurrentTracks() changes. onEvents(Player, Player.Events) will also
+   * be called to report this event along with other events that happen in the same Looper message
+   * queue iteration.
+   *
+   * @param tracks The available tracks information. Never null, but may be of length zero.
+   */
+  @Override
+  public void onTracksChanged(Tracks tracks) {
+    for (Tracks.Group currentTrackGroup : tracks.getGroups()) {
+      if (currentTrackGroup.isSelected() && (mIsSwitchAudioTracksTest && (
+          currentTrackGroup.getType() == C.TRACK_TYPE_AUDIO))) {
+        for (int trackIndex = 0; trackIndex < currentTrackGroup.length; trackIndex++) {
+          if (currentTrackGroup.isTrackSelected(trackIndex)) {
+            if (!mTrackChangeRequested) {
+              mStartTrackFormat = currentTrackGroup.getTrackFormat(trackIndex);
+            } else {
+              mCurrentTrackFormat = currentTrackGroup.getTrackFormat(trackIndex);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  /**
+   * Get all audio tracks group from the player's Tracks.
+   */
+  private List<Tracks.Group> getAudioTrackGroups() {
+    List<Tracks.Group> audioTrackGroups = new ArrayList<>();
+    Tracks currentTracks = mActivity.mPlayer.getCurrentTracks();
+    for (Tracks.Group currentTrackGroup : currentTracks.getGroups()) {
+      if (currentTrackGroup.getType() == C.TRACK_TYPE_AUDIO) {
+        audioTrackGroups.add(currentTrackGroup);
+      }
+    }
+    return audioTrackGroups;
   }
 }
