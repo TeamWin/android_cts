@@ -38,7 +38,7 @@ import java.lang.reflect.Array;
 import javax.annotation.concurrent.GuardedBy;
 
 public class WindowManagerTestBase extends MultiDisplayTestBase {
-    protected static final long TIMEOUT_WINDOW_FOCUS_CHANGED = 1000; // milliseconds
+    protected static final long TIMEOUT_WINDOW_FOCUS_CHANGED = 3000; // milliseconds
 
     public static <T extends FocusableActivity> T startActivity(Class<T> cls) {
         return startActivity(cls, DEFAULT_DISPLAY);
@@ -103,6 +103,7 @@ public class WindowManagerTestBase extends MultiDisplayTestBase {
 
         @Override
         public void onWindowFocusChanged(boolean hasFocus) {
+            StateLogger.logAlways(getLogTag() + " onWindowFocusChanged: " + hasFocus);
             synchronized (mLockWindowFocus) {
                 mHasWindowFocus = hasFocus;
                 mLockWindowFocus.notify();

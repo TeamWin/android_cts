@@ -179,6 +179,7 @@ public class DisplayCutoutTests {
             sDisplayMetricsSession.close();
             sDisplayMetricsSession = null;
         }
+        getInstrumentation().getUiAutomation().syncInputTransactions();
     }
 
     @Before
