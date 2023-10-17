@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 # Copyright (C) 2015 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -173,8 +173,8 @@ def genXml(data, A=None):
             quality += 1
             if RG == 10:
               # find best pub_lo and pub_hi
-              for i in range(N / 2):
-                pub_lo_, pub_hi_ = min(int(data[N / 2 - i - 1] * T), round(geo), int(med)), max(math.ceil(data[N / 2 + i] / T), round(geo))
+              for i in range(N // 2):
+                pub_lo_, pub_hi_ = min(int(data[N // 2 - i - 1] * T), round(geo), int(med)), max(math.ceil(data[N // 2 + i] / T), round(geo))
                 if pub_hi_ > pub_lo_ * TO:
                   # ???
                   pub_lo = min(pub_lo, math.ceil(pub_hi_ / TO))
@@ -252,18 +252,19 @@ class Data:
         if p95 > 2: # ignore measurements at or below 2fps
           xmlInfo[dev][(not encoder, goog, mime, codec)][size].append(p95)
         else:
-          print >> sys.stderr, "warning: p95 value is suspiciously low: %s" % (
+          print("warning: p95 value is suspiciously low: {}".format(
             nice(dict(config=dict(dev=dev, codec=codec, size=str(size), N=num),
                  data=dict(std=std, avg=avg, p0=p0, p5=p5, p10=p10, p20=p20, p30=p30, p40=p40,
-                           p50=p50, p60=p60, p70=p70, p80=p80, p90=p90, p95=p95, p100=p100))))
+                           p50=p50, p60=p60, p70=p70, p80=p80, p90=p90, p95=p95, p100=p100)))),
+            file=sys.stderr)
     for dev, ddata in xmlInfo.items():
       outFile = '{}.media_codecs_performance.xml'.format(dev)
-      print >> sys.stderr, "generating", outFile
+      print(f"generating {outFile}", file=sys.stderr)
       with open(outFile, "wt") as out:
         for l in genXml(ddata, A=A):
           out.write(l + '\n')
-          print l
-      print >> sys.stderr, "generated", outFile
+          print(l)
+      print(f"generated {outFile}", file=sys.stderr)
 
   def parse_fmt(self, fmt):
     return self.parser._parseDict(fmt)
@@ -299,7 +300,7 @@ class Data:
         self.kind[codec] = (mime, 'decode_to' not in a, codec.lower().startswith('omx.google.'))
         self.devices.add(data[0])
     except (KeyError, ZeroDivisionError):
-      print >> sys.stderr, a
+      print(a, file=sys.stderr)
       raise
 
   def parse_json(self, json, device, build):
@@ -317,7 +318,7 @@ class Data:
   def parse_result(self, result):
     device, build = '', ''
     if not result.endswith('.zip'):
-      print >> sys.stderr, "cannot parse %s" % result
+      print(f"cannot parse %{result}", file=sys.stderr)
       return
 
     try:
@@ -331,16 +332,16 @@ class Data:
         if resultInfo:
           try:
             jsonFile = zip.open(resultInfo)
-            jsonData = json.load(jsonFile, encoding='utf-8')
+            jsonData = json.load(jsonFile)
             device, build = jsonData['build_device'], jsonData['build_id']
           except ValueError:
-            print >> sys.stderr, "could not parse %s" % resultInfo.filename
+            print(f"could not parse %{resultInfo.filename}", file=sys.stderr)
         for info in testInfos:
           jsonFile = zip.open(info)
           try:
-            jsonData = json.load(jsonFile, encoding='utf-8', object_pairs_hook=lambda items: items)
+            jsonData = json.load(jsonFile, object_pairs_hook=lambda items: items)
           except ValueError:
-            print >> sys.stderr, "cannot parse JSON in %s" % info.filename
+            print(f"cannot parse JSON in {info.filename}", file=sys.stderr)
           self.parse_json(jsonData, device, build)
 
     except zipfile.BadZipfile:
